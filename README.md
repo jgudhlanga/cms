@@ -51,11 +51,12 @@ The College Management System is an integrated software solution developed to ma
 
 ``` bash
 git clone git@github.com:Penstej-Systems/hrepoly.git
+cd hrepoly
 chmod -R 777 storage bootstrap/cache
-cp .env.example .env && cp .env.ci .env.testing
+cp .env.example .env
 composer install && npm install
 php artisan key:gen
-php artisan migrate --seed"
+php artisan migrate --seed
 php artisan storage:link
 ```
 
