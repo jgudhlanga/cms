@@ -54,6 +54,7 @@ git clone git@github.com:Penstej-Systems/hrepoly.git
 chmod -R 777 storage bootstrap/cache
 cp .env.example .env && cp .env.ci .env.testing
 composer install && npm install
+php artisan key:gen
 php artisan migrate --seed"
 php artisan storage:link
 ```
