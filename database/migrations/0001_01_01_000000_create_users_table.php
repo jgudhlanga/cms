@@ -27,7 +27,7 @@ return new class extends Migration
             $table->boolean('is_zimbabwean')->default(true);
             $table->string('national_id')->nullable();
             $table->string('passport_number')->nullable();
-            $table->foreignId('country_id')->constrained();
+            $table->foreignId('country_id');
             $table->timestamps();
             $table->softDeletes();
         });
