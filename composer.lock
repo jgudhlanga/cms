@@ -1345,16 +1345,16 @@
         },
         {
             "name": "laravel/framework",
-            "version": "v12.10.1",
+            "version": "v12.10.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/laravel/framework.git",
-                "reference": "3264999c3123f55b7651c275efb6942034c47eda"
+                "reference": "0f123cc857bc177abe4d417448d4f7164f71802a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/laravel/framework/zipball/3264999c3123f55b7651c275efb6942034c47eda",
-                "reference": "3264999c3123f55b7651c275efb6942034c47eda",
+                "url": "https://api.github.com/repos/laravel/framework/zipball/0f123cc857bc177abe4d417448d4f7164f71802a",
+                "reference": "0f123cc857bc177abe4d417448d4f7164f71802a",
                 "shasum": ""
             },
             "require": {
@@ -1556,7 +1556,7 @@
                 "issues": "https://github.com/laravel/framework/issues",
                 "source": "https://github.com/laravel/framework"
             },
-            "time": "2025-04-23T14:49:24+00:00"
+            "time": "2025-04-24T14:11:20+00:00"
         },
         {
             "name": "laravel/prompts",
@@ -4013,16 +4013,16 @@
         },
         {
             "name": "spatie/image",
-            "version": "3.8.2",
+            "version": "3.8.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/spatie/image.git",
-                "reference": "381f6363a07c3ea1cd32636535afde40af1c4744"
+                "reference": "54a7331a4d1ba7712603dd058522613506d2dfe0"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/spatie/image/zipball/381f6363a07c3ea1cd32636535afde40af1c4744",
-                "reference": "381f6363a07c3ea1cd32636535afde40af1c4744",
+                "url": "https://api.github.com/repos/spatie/image/zipball/54a7331a4d1ba7712603dd058522613506d2dfe0",
+                "reference": "54a7331a4d1ba7712603dd058522613506d2dfe0",
                 "shasum": ""
             },
             "require": {
@@ -4070,7 +4070,7 @@
                 "spatie"
             ],
             "support": {
-                "source": "https://github.com/spatie/image/tree/3.8.2"
+                "source": "https://github.com/spatie/image/tree/3.8.3"
             },
             "funding": [
                 {
@@ -4082,7 +4082,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2025-04-24T08:28:20+00:00"
+            "time": "2025-04-25T08:04:51+00:00"
         },
         {
             "name": "spatie/image-optimizer",
@@ -10335,12 +10335,12 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": [],
+    "stability-flags": {},
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
         "php": "^8.2"
     },
-    "platform-dev": [],
+    "platform-dev": {},
     "plugin-api-version": "2.6.0"
 }
