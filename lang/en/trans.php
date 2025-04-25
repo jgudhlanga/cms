@@ -157,5 +157,10 @@ return [
 	"select_one" => "select one ...",
 	"main_branch_code" => "Main branch code",
 	"contact_name" => "Contact name|Contact names",
+    "enrolment" => "Enrolment|Enrolments",
+    "student" => "Student|Students",
+    "examination" => "Examination|Examinations",
+    "accommodation" => "Accommodation|Accommodations",
+    "institution_config" => "Institution config",
 ];
 

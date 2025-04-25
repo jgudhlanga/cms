@@ -42,6 +42,30 @@ export function useSidebarMenu() {
             show: isItTrue(can['view:dashboards'])
         },
         {
+            transChoiceKey: 'trans.enrolment',
+            icon: icons[IconName.user_add],
+            url: route('dashboard'),
+            show: isItTrue(can['view:enrolments'])
+        },
+        {
+            transChoiceKey: 'trans.student',
+            icon: icons[IconName.user_check],
+            url: route('dashboard'),
+            show: isItTrue(can['view:student'])
+        },
+        {
+            transChoiceKey: 'trans.examination',
+            icon: icons[IconName.book_check],
+            url: route('dashboard'),
+            show: isItTrue(can['view:examinations'])
+        },
+        {
+            transChoiceKey: 'trans.accommodation',
+            icon: icons[IconName.bed],
+            url: route('dashboard'),
+            show: isItTrue(can['view:accommodations'])
+        },
+        {
             transChoiceKey: 'trans.communication',
             url: '#',
             icon: icons[IconName.person_chat],
@@ -54,17 +78,23 @@ export function useSidebarMenu() {
             show: isItTrue(can['view:reports'])
         },
         {
+            transKey: 'trans.institution_config',
+            url: route('settings.index'),
+            icon: icons[IconName.school],
+            show: isItTrue(can['view:institution-configs'])
+        },
+        {
+            transKey: 'trans.settings',
+            url: route('settings.index'),
+            icon: icons[IconName.cogs],
+            show: isItTrue(can['view:settings'])
+        },
+        {
             transChoiceKey: 'trans.user',
             url: '#',
             icon: icons[IconName.users],
             show: isItTrue(can['view:users']),
         },
-        {
-            transKey: 'trans.settings',
-            url: route('settings.index'),
-            icon: icons[IconName.settings],
-            show: isItTrue(can['view:settings'])
-        }
     ];
 
     const getTranslation = (item: any, keyIndex?: number) => {

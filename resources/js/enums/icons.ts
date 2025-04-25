@@ -64,4 +64,7 @@ export enum IconName {
     search = 'search',
     check_icon = 'check_icon',
     bed = 'bed',
+    school = 'school',
+    user_check = "user_check",
+    book_check = "book_check"
 }
