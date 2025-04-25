@@ -33,8 +33,8 @@ const activeTenant = ref<TenantInterface>(tenants[0]);
 						class="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
 					>
 						<div
-							class="flex aspect-square size-8 items-center justify-center rounded-full bg-sidebar-primary text-sidebar-primary-foreground">
-							<component :is="activeTenant.attributes.logo" class="size-8" />
+							class="flex aspect-square size-10 items-center justify-center rounded-full bg-sidebar-primary text-sidebar-primary-foreground">
+							<component :is="activeTenant.attributes.logo" class="size-10 rounded-full border-2 border-primary" />
 						</div>
 						<div class="grid flex-1 text-left text-sm leading-tight">
               <span class="truncate font-semibold uppercase">
@@ -61,7 +61,7 @@ const activeTenant = ref<TenantInterface>(tenants[0]);
 						@click="activeTenant = tenant"
 					>
 						<div class="flex size-8 items-center justify-center rounded-sm border">
-							<component :is="tenant.attributes.logo" class="size-6 shrink-0" />
+							<component :is="tenant.attributes.logo" class="size-8 shrink-0" />
 						</div>
 						{{ tenant.attributes.name }}
 						<DropdownMenuShortcut>

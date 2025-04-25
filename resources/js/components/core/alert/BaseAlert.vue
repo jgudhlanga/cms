@@ -10,7 +10,7 @@ const props = withDefaults(defineProps<{ description: string, type?: TypeVariant
 });
 
 const variants: Record<TypeVariant, string> = {
-	[TypeVariant.info]: 'border-picton-400/50 text-picton-400 dark:border-picton-400/50 [&>svg]:text-picton-400',
+	[TypeVariant.info]: 'border-persian-600/50 text-persian-600 dark:border-persian-600/50 [&>svg]:text-persian-600',
 	[TypeVariant.warning]: 'border-amber-600/50 text-amber-600 dark:border-amber-600/50 [&>svg]:text-amber-600',
 	[TypeVariant.danger]: 'border-red-600/50 text-red-600 dark:border-red-600/50 [&>svg]:text-red-600',
 	[TypeVariant.success]: 'border-green-600/50 text-green-600 dark:border-green-600/50 [&>svg]:text-green-600'

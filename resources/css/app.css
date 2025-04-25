@@ -53,35 +53,22 @@
     --color-sidebar-border: hsl(var(--sidebar-border));
     --color-sidebar-ring: hsl(var(--sidebar-ring));
 
-    --color-stone-50: #eef8ff;
-    --color-stone-100: #dcf1ff;
-    --color-stone-200: #b2e6ff;
-    --color-stone-300: #6dd3ff;
-    --color-stone-400: #20bcff;
-    --color-stone-500: #00a4ff;
-    --color-stone-600: #0082df;
-    --color-stone-700: #0067b4;
-    --color-stone-800: #005795;
-    --color-stone-900: #00487a;
-    --color-stone-950: #001e36;
+    --color-persian-50: #ecf5ff;
+    --color-persian-100: #ddecff;
+    --color-persian-200: #c1dcff;
+    --color-persian-300: #9cc2ff;
+    --color-persian-400: #749eff;
+    --color-persian-500: #547bff;
+    --color-persian-600: #2342f5; /** PRIMARY */
+    --color-persian-700: #2940d9;
+    --color-persian-800: #2438af;
+    --color-persian-900: #25368a;
+    --color-persian-950: #161e50;
 
-    --color-picton-50: #eff7ff;
-    --color-picton-100: #dfeeff;
-    --color-picton-200: #b8dfff;
-    --color-picton-300: #78c6ff;
-    --color-picton-400: #30a8ff;
-    --color-picton-500: #068df1;
-    --color-picton-600: #006fce;
-    --color-picton-700: #0058a7;
-    --color-picton-800: #024b8a;
-    --color-picton-900: #083f72;
-    --color-picton-950: #06274b;
 
-    --color-chart-1: hsl(var(--chart-1));
-    --color-chart-2: hsl(var(--chart-2));
-    --color-chart-3: hsl(var(--chart-3));
-    --color-chart-4: hsl(var(--chart-4));
-    --color-chart-5: hsl(var(--chart-5));
+
+
+
 
     --animate-accordion-down: accordion-down 0.2s ease-out;
     --animate-accordion-up: accordion-up 0.2s ease-out;
@@ -105,7 +92,7 @@
 }
 
 /*
-  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  The default border color has changed to `current color` in Tailwind CSS v4,
   so we've added these compatibility styles to make sure everything still
   looks the same as it did with Tailwind CSS v3.
 
@@ -140,7 +127,7 @@
         --card-foreground: 0 0% 3.9%;
         --popover: 0 0% 100%;
         --popover-foreground: 0 0% 3.9%;
-        --primary: 205 81% 59%;
+        --primary: 231 91.3% 54.9%;
         --primary-foreground: 0 0% 98%;
         --secondary: 0 0% 92.1%;
         --secondary-foreground: 0 0% 9%;
@@ -212,7 +199,7 @@
         background-size: cover;
     }
 
-    .bg-picton-stone-gradient {
+    .bg-gradient {
         background: linear-gradient(90deg, #30a8ff 0%, #001e36 100%);
     }
 
@@ -257,7 +244,7 @@
     }
 
     .hava-tr-hightlight-one {
-        @apply bg-picton-100;
+        @apply bg-persian-100;
     }
 
     .hava-td {

@@ -1,6 +1,6 @@
 const DEFAULT_AVATAR: string = '/assets/images/user.png';
 const DEFAULT_IMAGE: string = '/assets/images/object.svg';
-const LOGO: string = '/assets/images/logo.png';
+const LOGO: string = '/assets/images/logo.jpeg';
 const API_BASE_URL = 'https://havasoft.test/api';
 const API_VERSION = 'v1';
 

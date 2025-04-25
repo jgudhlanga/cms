@@ -33,21 +33,21 @@ const props = withDefaults(defineProps<{
 const baseClasses = 'rounded-2xl shadow-lg  m-2';
 
 const typeVariants: Record<TypeVariant, string> = {
-	[TypeVariant.info]: 'bg-white text-picton-400',
+	[TypeVariant.info]: 'bg-white text-persian-600',
 	[TypeVariant.warning]: 'bg-white text-amber-600',
 	[TypeVariant.danger]: 'bg-white text-red-600',
 	[TypeVariant.success]: 'bg-white text-green-600'
 };
 
 const uiVariants: Record<TypeVariant, string> = {
-	[TypeVariant.info]: 'border-picton-200 justify-center',
+	[TypeVariant.info]: 'border-persian-200 justify-center',
 	[TypeVariant.warning]: 'border-amber-200 justify-end',
 	[TypeVariant.danger]: 'border-red-200 justify-end',
 	[TypeVariant.success]: 'border-green-200 justify-center'
 };
 
 const closeButtonVariants: Record<TypeVariant, string> = {
-	[TypeVariant.info]: 'hover:bg-picton-200',
+	[TypeVariant.info]: 'hover:bg-persian-200',
 	[TypeVariant.warning]: 'hover:bg-amber-200',
 	[TypeVariant.danger]: 'hover:bg-red-200',
 	[TypeVariant.success]: 'hover:bg-green-200'

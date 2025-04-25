@@ -58,18 +58,6 @@ export function useSidebarMenu() {
             url: '#',
             icon: icons[IconName.users],
             show: isItTrue(can['view:users']),
-            items: [
-                {
-                    transKey: 'all_users',
-                    url: '#',
-                    show: isItTrue(can['view:users'])
-                },
-                {
-                    transKey: 'trans.create',
-                    url: '#',
-                    show: isItTrue(can['create:users'])
-                }
-            ]
         },
         {
             transKey: 'trans.settings',

@@ -60,8 +60,7 @@ import {
 	Info,
 	CircleAlert as Warning,
 	OctagonAlert as Danger,
-	Search
-
+	Search, Bed
 } from 'lucide-vue-next';
 import { IconName } from '@/enums/icons';
 const icons: Record<IconName, Component> = {
@@ -129,6 +128,7 @@ const icons: Record<IconName, Component> = {
 	[IconName.danger]: Danger,
 	[IconName.search]: Search,
 	[IconName.check_icon]: CheckIcon,
+	[IconName.bed]: Bed,
 };
 
 

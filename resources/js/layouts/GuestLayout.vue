@@ -7,8 +7,9 @@ import AppLogo from '@/components/core/image/AppLogo.vue';
 		<div class="flex w-full max-w-sm flex-col gap-6">
 			<a href="#" class="flex items-center gap-2 self-center font-bold uppercase text-xl">
 				<div
-					class="flex h-[50px] w-[50px] items-center justify-center rounded-full bg-primary text-primary-foreground">
-					<AppLogo />
+					class="flex size-30 items-center justify-center
+					rounded-full ">
+					<AppLogo classes="size-30 rounded-full border-2 border-primary" />
 				</div>
 			</a>
 			<slot />

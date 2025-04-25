@@ -3,9 +3,6 @@ import BaseImage from '@/components/core/image/BaseImage.vue';
 
 import { useDefaults } from '@/composables/core/useDefaults';
 import { twMerge } from 'tailwind-merge';
-
-const appName = import.meta.env.VITE_APP_NAME;
-
 interface Props {
 	classes?: string;
 }
