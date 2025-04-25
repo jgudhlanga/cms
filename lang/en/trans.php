@@ -162,5 +162,12 @@ return [
     "examination" => "Examination|Examinations",
     "accommodation" => "Accommodation|Accommodations",
     "institution_setup" => "Institution setup",
+    "department" => "Department|Departments",
+    "level" => "Level|Levels",
+    "course" => "Course|Courses",
+    "subject" => "Subject|Subjects",
+    "relationship" => "Relationship|Relationships",
+    "grade" => "Grade|Grades",
+    "division" => "Division|Divisions",
 ];
 
