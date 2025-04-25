@@ -44,6 +44,7 @@ const breadcrumbs = [...showBreadcrumbs, ...[{ title: props.role?.attributes?.na
 				<GenericButton
 					@click="() => (can['create:roles'] ? onOpenModal(role, permissions.data) : forbiddenAlert())"
 					:title="$t('trans.edit_role_permissions')"
+                    class="rounded-full"
 				/>
 			</template>
 		</DataTable>

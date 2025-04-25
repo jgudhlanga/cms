@@ -4,12 +4,12 @@ namespace App\Http\Middleware;
 
 use App\Enums\PermissionEnum;
 use App\Http\Resources\Users\UserResource;
-use App\Models\Acl\Permission;
 use App\Models\Users\User;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Inertia\Middleware;
+use Spatie\Permission\Models\Permission;
 use Tighten\Ziggy\Ziggy;
 
 class HandleInertiaRequests extends Middleware

@@ -11,10 +11,6 @@ export function useSettings() {
 			url: route('address-types.index'),
 		},
 		{
-			transChoiceKey: 'bank',
-			url: route('banks-index'),
-		},
-		{
 			transChoiceKey: 'communication_mode',
 			url: route('communication-methods.index'),
 		},
@@ -45,10 +41,6 @@ export function useSettings() {
 		{
 			transChoiceKey: 'status',
 			url: route('statuses.index'),
-		},
-		{
-			transChoiceKey: 'trading_status',
-			url: route('trading-statuses.index'),
 		},
 		{
 			transChoiceKey: 'title',

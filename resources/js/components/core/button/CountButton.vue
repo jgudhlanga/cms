@@ -46,7 +46,7 @@ const computedClass = computed(() =>
 <template>
 	<Button
 		v-bind="$attrs"
-		:class="cn(computedClass, props.classes)">
+		:class="cn(computedClass, props.classes, 'cursor-pointer')">
 		{{ count }}
 	</Button>
 </template>

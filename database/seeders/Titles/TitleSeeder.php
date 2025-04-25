@@ -10,7 +10,6 @@ class TitleSeeder extends Seeder
 {
     public function run(): void
     {
-
         foreach (TitleEnum::cases() as $row) {
             Title::create(['name' => $row->value]);
         }
