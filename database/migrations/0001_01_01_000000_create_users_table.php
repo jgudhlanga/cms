@@ -13,23 +13,15 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
-            $table->string('first_name');
-            $table->string('middle_name')->nullable();
-            $table->string('last_name')->nullable();
+			$table->foreignId('tenant_id')->index()->constrained();
+            $table->string('name');
             $table->string('email')->unique();
-            $table->string('phone_number');
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
-            $table->foreignId('gender_id');
-            $table->foreignId('title_id');
-            $table->date('date_of_birth');
+			$table->json('meta')->nullable();
             $table->rememberToken();
-            $table->boolean('is_zimbabwean')->default(true);
-            $table->string('national_id')->nullable();
-            $table->string('passport_number')->nullable();
-            $table->foreignId('country_id');
             $table->timestamps();
-            $table->softDeletes();
+			$table->softDeletes();
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {

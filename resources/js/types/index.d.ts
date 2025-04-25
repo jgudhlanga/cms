@@ -1,39 +1,35 @@
-import type { PageProps } from '@inertiajs/core';
-import type { LucideIcon } from 'lucide-vue-next';
-import type { Config } from 'ziggy-js';
 
+import { trans, trans_choice } from 'laravel-vue-i18n';
 export interface Auth {
     user: User;
+    can: any;
 }
 
-export interface BreadcrumbItem {
-    title: string;
-    href: string;
-}
+export type PageModule = {
+    default: {
+        layout?: unknown; // Adjust type if you have specific layouts
+    };
+};
 
-export interface NavItem {
-    title: string;
-    href: string;
-    icon?: LucideIcon;
-    isActive?: boolean;
-}
-
-export interface SharedData extends PageProps {
-    name: string;
-    quote: { message: string; author: string };
-    auth: Auth;
+export type PageProps<T extends Record<string, unknown> = Record<string, unknown>> = T & {
+    auth: {
+        user: User;
+        can: any;
+    };
     ziggy: Config & { location: string };
-    sidebarOpen: boolean;
+};
+
+declare module '@tanstack/table-core' {
+    interface ColumnMeta<T, K> {
+        align?: string;
+    }
 }
 
-export interface User {
-    id: number;
-    name: string;
-    email: string;
-    avatar?: string;
-    email_verified_at: string | null;
-    created_at: string;
-    updated_at: string;
-}
 
-export type BreadcrumbItemType = BreadcrumbItem;
+declare module '@vue/runtime-core' {
+    interface ComponentCustomProperties {
+        route: (name: string, params?: RouteParamsWithQueryOverload | undefined, absolute?: boolean | undefined) => string;
+        $t: typeof trans;
+        $tChoice: typeof trans_choice;
+    }
+}

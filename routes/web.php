@@ -1,15 +1,14 @@
 <?php
 
+use App\Http\Controllers\Dashboard\DashboardController;
+use App\Http\Controllers\Site\SiteController;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 
-Route::get('/', function () {
-    return Inertia::render('Welcome');
-})->name('home');
+Route::get('/', SiteController::class)->name('home');
+Route::get('/dashboard', DashboardController::class)->middleware(['auth', 'verified'])->name('dashboard');
 
-Route::get('dashboard', function () {
-    return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
-
-require __DIR__.'/settings.php';
-require __DIR__.'/auth.php';
+require __DIR__.'/web/auth.php';
+require __DIR__.'/web/users.php';
+require __DIR__.'/web/settings.php';
+require __DIR__.'/web/acl.php';
+require __DIR__.'/web/shared.php';

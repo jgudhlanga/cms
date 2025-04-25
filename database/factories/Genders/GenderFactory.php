@@ -2,10 +2,11 @@
 
 namespace Database\Factories\Genders;
 
+use App\Models\Genders\Gender;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Genders\Gender>
+ * @extends Factory<Gender>
  */
 class GenderFactory extends Factory
 {
@@ -17,7 +18,7 @@ class GenderFactory extends Factory
     public function definition(): array
     {
         return [
-            //
+            'title' => fake()->unique()->word,
         ];
     }
 }

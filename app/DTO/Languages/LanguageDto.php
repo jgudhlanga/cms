@@ -1,0 +1,24 @@
+<?php
+
+namespace App\DTO\Languages;
+
+use App\Http\Requests\Languages\LanguageRequest;
+
+class LanguageDto
+{
+	public function __construct(
+		public readonly string $title,
+		public readonly? string $description,
+	)
+	{
+	}
+
+
+	public static function fromLanguageRequest(LanguageRequest $request): LanguageDto
+	{
+		return new self(
+			title: $request->title,
+			description: $request->description,
+		);
+	}
+}
