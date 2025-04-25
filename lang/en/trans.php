@@ -161,6 +161,6 @@ return [
     "student" => "Student|Students",
     "examination" => "Examination|Examinations",
     "accommodation" => "Accommodation|Accommodations",
-    "institution_config" => "Institution config",
+    "institution_setup" => "Institution setup",
 ];
 

@@ -78,10 +78,10 @@ export function useSidebarMenu() {
             show: isItTrue(can['view:reports'])
         },
         {
-            transKey: 'trans.institution_config',
-            url: route('settings.index'),
+            transKey: 'trans.institution_setup',
+            url: route('institution-setup.index'),
             icon: icons[IconName.school],
-            show: isItTrue(can['view:institution-configs'])
+            show: isItTrue(can['view:institution-setup'])
         },
         {
             transKey: 'trans.settings',

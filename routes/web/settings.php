@@ -7,6 +7,7 @@ use App\Http\Controllers\Genders\GenderController;
 use App\Http\Controllers\Languages\LanguageController;
 use App\Http\Controllers\Provinces\ProvinceController;
 use App\Http\Controllers\Races\RaceController;
+use App\Http\Controllers\Settings\InstitutionController;
 use App\Http\Controllers\Settings\SettingsController;
 use App\Http\Controllers\Statuses\StatusController;
 use App\Http\Controllers\Titles\TitleController;
@@ -51,4 +52,7 @@ Route::prefix('settings')->middleware('auth')->group(function () {
 	Route::put('address-types/{address_type}/restore', [AddressTypeController::class, 'restore'])->name('address-types.restore');
 	Route::delete('address-types/{address_type}/force-delete', [AddressTypeController::class, 'forceDelete'])->name('address-types.force-delete');
 	Route::resource('address-types', AddressTypeController::class)->names('address-types');
+});
+Route::prefix('institution-setup')->middleware('auth')->group(function () {
+    Route::get('/', InstitutionController::class)->name('institution-setup.index');
 });
