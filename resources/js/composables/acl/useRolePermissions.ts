@@ -55,7 +55,6 @@ export const useRolePermissions = (role?: Role) => {
 
 	const showBreadcrumbs: Array<Link> = [
 		{ transChoiceKey: 'settings', href: route('settings.index') },
-		{ transChoiceKey: 'acl', href: route('acl.index') },
 		{ transChoiceKey: 'role', href: route('roles.index') },
 	];
 

@@ -109,7 +109,17 @@ enum PermissionEnum: string
     case IMPORT_SETTINGS = 'import:settings';
     case EXPORT_SETTINGS = 'export:settings';
     case VIEW_SETTINGS_AUDIT_TRAIL = 'viewAuditTrail:settings';
-    case VIEW_INSTITUTION_SETUP = 'view:institution-setup';
+
+    /** INSTITUTION SETTINGS */
+    case VIEW_INSTITUTION_SETTINGS = 'view:institution-settings';
+    case CREATE_INSTITUTION_SETTINGS = 'create:institution-settings';
+    case UPDATE_INSTITUTION_SETTINGS = 'update:institution-settings';
+    case DELETE_INSTITUTION_SETTINGS = 'delete:institution-settings';
+    case RESTORE_INSTITUTION_SETTINGS = 'restore:institution-settings';
+    case FORCE_DELETE_INSTITUTION_SETTINGS = 'forceDelete:institution-settings';
+    case IMPORT_INSTITUTION_SETTINGS = 'import:institution-settings';
+    case EXPORT_INSTITUTION_SETTINGS = 'export:institution-settings';
+    case VIEW_INSTITUTION_SETTINGS_AUDIT_TRAIL = 'viewAuditTrail:institution-settings';
 
     /** ROOT / GLOBAL USER */
     case ROOT_MANAGE = 'root:manage';
@@ -252,8 +262,16 @@ enum PermissionEnum: string
             self::IMPORT_SETTINGS => 'import:settings',
             self::EXPORT_SETTINGS => 'export:settings',
             self::VIEW_SETTINGS_AUDIT_TRAIL => 'viewAuditTrail:settings',
-            self::VIEW_INSTITUTION_SETUP => 'view:institution-setup',
-
+            /** INSTITUTION SETTINGS */
+            self::VIEW_INSTITUTION_SETTINGS => 'view:institution-settings',
+            self::CREATE_INSTITUTION_SETTINGS => 'create:institution-settings',
+            self::UPDATE_INSTITUTION_SETTINGS => 'update:institution-settings',
+            self::DELETE_INSTITUTION_SETTINGS => 'delete:institution-settings',
+            self::RESTORE_INSTITUTION_SETTINGS => 'restore:institution-settings',
+            self::FORCE_DELETE_INSTITUTION_SETTINGS => 'forceDelete:institution-settings',
+            self::IMPORT_INSTITUTION_SETTINGS => 'import:institution-settings',
+            self::EXPORT_INSTITUTION_SETTINGS => 'export:institution-settings',
+            self::VIEW_INSTITUTION_SETTINGS_AUDIT_TRAIL => 'viewAuditTrail:institution-settings',
             /** ROOT */
             self::ROOT_MANAGE => 'root:manage',
             self::MANAGE_OWN_TENANT_DATA => 'manageOwnData:tenants',

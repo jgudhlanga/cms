@@ -67,7 +67,6 @@ export const usePermissions = () => {
 
 	const breadcrumbs: Array<Link> = [
 		{ transChoiceKey: 'settings', href: route('settings.index') },
-		{ transChoiceKey: 'acl', href: route('acl.index') },
 		{ transChoiceKey: 'permission' },
 	];
 

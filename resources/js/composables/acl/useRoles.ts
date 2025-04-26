@@ -79,7 +79,6 @@ export const useRoles = () => {
 	};
 	const indexBreadcrumbs: Array<Link> = [
 		{ transChoiceKey: 'settings', href: route('settings.index') },
-		{ transChoiceKey: 'acl', href: route('acl.index') },
 		{ transChoiceKey: 'role' },
 	];
 

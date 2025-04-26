@@ -65,7 +65,6 @@ export const useModules = () => {
 
 	const breadcrumbs: Array<Link> = [
 		{ transChoiceKey: 'settings', href: route('settings.index') },
-		{ transChoiceKey: 'acl', href: route('acl.index') },
 		{ transChoiceKey: 'module' },
 	];
 

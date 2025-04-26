@@ -172,5 +172,11 @@ return [
     "mode_of_study" => "Mode of study|Modes of study",
     "coming_soon" => "Coming Soon",
     "coming_soon_description" => "We are working on it!",
+    "institution" => "Institution|Institutions",
+    "institution_settings_description" => "Institution global settings",
+    "dropdown" => "Dropdown|Dropdowns",
+    "general_settings_description" => "General dropdown settings",
+    "access_control_list" => "Access control list",
+    "acl_settings_description" => "Assign permissions to users and roles",
 ];
 

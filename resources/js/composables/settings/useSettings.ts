@@ -3,10 +3,6 @@ import { Link } from '@/types/ui';
 export function useSettings() {
 	const tabs: Array<Link> = [
 		{
-			transChoiceKey: 'acl',
-			url: route('acl.index'),
-		},
-		{
 			transChoiceKey: 'address_type',
 			url: route('address-types.index'),
 		},
