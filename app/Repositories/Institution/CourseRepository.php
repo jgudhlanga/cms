@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Repositories\Courses;
+namespace App\Repositories\Institution;
 
 
 use App\DTO\Institution\CourseDto;
 use App\Http\Filters\Shared\SharedNameFilter;
 use App\Models\Institution\Course;
 use App\Repositories\Base\BaseRepository;
-use App\Repositories\Courses\interface\ICourseRepository;
+use App\Repositories\Institution\interface\ICourseRepository;
 
 class CourseRepository extends BaseRepository implements ICourseRepository
 {

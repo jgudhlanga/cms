@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Repositories\Departments;
+namespace App\Repositories\Institution;
 
 use App\DTO\Institution\DepartmentDto;
 use App\Http\Filters\Shared\SharedNameFilter;
 use App\Models\Institution\Department;
 use App\Repositories\Base\BaseRepository;
-use App\Repositories\Departments\interface\IDepartmentRepository;
+use App\Repositories\Institution\interface\IDepartmentRepository;
 
 class DepartmentRepository extends BaseRepository implements IDepartmentRepository
 {

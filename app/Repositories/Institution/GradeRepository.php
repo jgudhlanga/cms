@@ -6,7 +6,7 @@ use App\DTO\Institution\GradeDto;
 use App\Http\Filters\Shared\SharedNameFilter;
 use App\Models\Institution\Grade;
 use App\Repositories\Base\BaseRepository;
-use App\Repositories\Grades\interface\IGradeRepository;
+use App\Repositories\Institution\interface\IGradeRepository;
 
 class GradeRepository extends BaseRepository implements IGradeRepository
 {

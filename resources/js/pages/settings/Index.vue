@@ -25,12 +25,16 @@ const can = props?.auth?.can;
     <PageContainer :breadcrumbs="breadcrumbs">
         <HeadingSmall :title="$t('trans.access_control_list')" :description="$t('trans.acl_settings_description')" />
         <AvatarTitleList v-if="can['view:settings']" :tabs="aclTabs" />
-        <HeadingSmall :title="$tChoice('trans.institution', 1)" :description="$t('trans.institution_settings_description')" class="mt-6" />
-        <AvatarTitleList v-if="can['view:institution-setup']" :tabs="institutionTabs" />
-        <HeadingSmall :title="$tChoice('trans.dropdown', 2)" :description="$t('trans.general_settings_description')" class="mt-6" />
-        <AvatarTitleList v-if="can['view:settings']" :tabs="tabs" />
+        <template v-if="can['view:institution-settings']">
+            <HeadingSmall :title="$tChoice('trans.institution', 1)" :description="$t('trans.institution_settings_description')" class="mt-6" />
+            <AvatarTitleList  :tabs="institutionTabs" />
+        </template>
+        <template v-if="can['view:settings']">
+            <HeadingSmall :title="$tChoice('trans.dropdown', 2)" :description="$t('trans.general_settings_description')" class="mt-6" />
+            <AvatarTitleList :tabs="tabs" />
+        </template>
         <BaseAlert
-            v-if="!can['view:institution-setup'] && !can['view:settings']"
+            v-if="!can['view:institution-settings'] && !can['view:settings']"
             :title="$t('trans.forbidden')"
             :description="$t('trans.forbidden_message')"
         />

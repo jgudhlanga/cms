@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Repositories\Courses\interface;
+namespace App\Repositories\Institution\interface;
 
 use App\DTO\Institution\CourseDto;
 use App\Http\Filters\Shared\SharedNameFilter;

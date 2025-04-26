@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Repositories\Grades\interface;
+namespace App\Repositories\Institution\interface;
 
 use App\DTO\Institution\GradeDto;
 use App\Http\Filters\Shared\SharedNameFilter;

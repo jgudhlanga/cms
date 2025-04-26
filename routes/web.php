@@ -13,3 +13,4 @@ require __DIR__.'/web/settings.php';
 require __DIR__.'/web/acl.php';
 require __DIR__.'/web/shared.php';
 require __DIR__.'/web/payments.php';
+require __DIR__.'/web/institution.php';

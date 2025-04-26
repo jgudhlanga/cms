@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Repositories\Divisions;
+namespace App\Repositories\Institution;
 
 use App\DTO\Institution\DivisionDto;
 use App\Http\Filters\Shared\SharedNameFilter;
 use App\Models\Institution\Division;
 use App\Repositories\Base\BaseRepository;
-use App\Repositories\Divisions\interface\IDivisionRepository;
+use App\Repositories\Institution\interface\IDivisionRepository;
 
 class DivisionRepository extends BaseRepository implements IDivisionRepository
 {
