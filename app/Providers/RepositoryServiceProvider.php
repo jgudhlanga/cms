@@ -14,8 +14,22 @@ use App\Repositories\Communications\CommunicationMethodRepository;
 use App\Repositories\Communications\interface\ICommunicationMethodRepository;
 use App\Repositories\Countries\CountryRepository;
 use App\Repositories\Countries\interface\ICountryRepository;
+use App\Repositories\Courses\CourseRepository;
+use App\Repositories\Courses\interface\ICourseRepository;
+use App\Repositories\Departments\DepartmentRepository;
+use App\Repositories\Departments\interface\IDepartmentRepository;
+use App\Repositories\Divisions\DivisionRepository;
+use App\Repositories\Divisions\interface\IDivisionRepository;
 use App\Repositories\Genders\GenderRepository;
 use App\Repositories\Genders\interface\IGenderRepository;
+use App\Repositories\Grades\interface\IGradeRepository;
+use App\Repositories\Institution\GradeRepository;
+use App\Repositories\Institution\interface\ILevelRepository;
+use App\Repositories\Institution\interface\IModeOfStudyRepository;
+use App\Repositories\Institution\interface\ISubjectRepository;
+use App\Repositories\Institution\LevelRepository;
+use App\Repositories\Institution\ModeOfStudyRepository;
+use App\Repositories\Institution\SubjectRepository;
 use App\Repositories\Languages\interface\ILanguageRepository;
 use App\Repositories\Languages\LanguageRepository;
 use App\Repositories\Payments\interface\IPaymentDayRepository;
@@ -28,6 +42,8 @@ use App\Repositories\Provinces\interface\IProvinceRepository;
 use App\Repositories\Provinces\ProvinceRepository;
 use App\Repositories\Races\interface\IRaceRepository;
 use App\Repositories\Races\RaceRepository;
+use App\Repositories\Relationships\interface\IRelationshipRepository;
+use App\Repositories\Relationships\RelationshipRepository;
 use App\Repositories\Shared\AddressRepository;
 use App\Repositories\Shared\BankDetailRepository;
 use App\Repositories\Shared\ContactRepository;
@@ -53,6 +69,7 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->dropdownRepositories();
         $this->paymentsRepositories();
         $this->sharedRepositories();
+        $this->institutionRepositories();
     }
 
     public function boot(): void
@@ -78,6 +95,7 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(IStatusRepository::class, StatusRepository::class);
         $this->app->bind(ITitleRepository::class, TitleRepository::class);
         $this->app->bind(IAddressTypeRepository::class, AddressTypeRepository::class);
+        $this->app->bind(IRelationshipRepository::class, RelationshipRepository::class);
     }
 
     private function paymentsRepositories(): void
@@ -94,5 +112,15 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(IContactRepository::class, ContactRepository::class);
     }
 
+    public function institutionRepositories(): void
+    {
+        $this->app->bind(ICourseRepository::class, CourseRepository::class);
+        $this->app->bind(IDepartmentRepository::class, DepartmentRepository::class);
+        $this->app->bind(IDivisionRepository::class, DivisionRepository::class);
+        $this->app->bind(IGradeRepository::class, GradeRepository::class);
+        $this->app->bind(ILevelRepository::class, LevelRepository::class);
+        $this->app->bind(IModeOfStudyRepository::class, ModeOfStudyRepository::class);
+        $this->app->bind(ISubjectRepository::class, SubjectRepository::class);
+    }
 
 }

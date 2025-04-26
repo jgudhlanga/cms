@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Repositories\Levels;
+namespace App\Repositories\Institution;
 
 use App\DTO\Institution\LevelDto;
 use App\Http\Filters\Shared\SharedNameFilter;
 use App\Models\Institution\Level;
 use App\Repositories\Base\BaseRepository;
-use App\Repositories\Levels\interface\ILevelRepository;
+use App\Repositories\Institution\interface\ILevelRepository;
 
 class LevelRepository extends BaseRepository implements ILevelRepository
 {

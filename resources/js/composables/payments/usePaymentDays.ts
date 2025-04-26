@@ -59,7 +59,7 @@ export const usePaymentDays = () => {
 			const error = trans('trans.item_save_failure', { item: trans_choice('trans.payment_day', 1) });
 			if (paymentDay) {
 				const id = getIdParams(paymentDay.id?.toString() ?? '');
-				form.put(route('payment-days.create', id), buildFormOptions(form, success, error, APP_MODULE_KEYS.payment_days));
+				form.put(route('payment-days.update', id), buildFormOptions(form, success, error, APP_MODULE_KEYS.payment_days));
 			} else {
 				form.post(route('payment-days.store'), buildFormOptions(form, success, error, APP_MODULE_KEYS.payment_days));
 			}

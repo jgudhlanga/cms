@@ -14,7 +14,7 @@ readonly class TitleDto
     }
 
 
-    public static function fromTitleRequest(TitleRequest $request): CourseDto
+    public static function fromTitleRequest(TitleRequest $request): TitleDto
     {
         return new self(
             name: $request->name,

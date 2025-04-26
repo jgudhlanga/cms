@@ -8,7 +8,7 @@ defineProps<{ tabs: Array<any> | null | undefined }>();
 </script>
 
 <template>
-	<div class="w-full grid grid-cols-3 gap-3 mt-3 md:grid-cols-6 md:gap-6">
+	<div class="w-full grid grid-cols-2 gap-3 mt-3 md:grid-cols-5 md:gap-6">
 		<Link v-for="tab in tabs!" :href="tab?.url ?? ''" :key="tab?.url">
 			<div class="flex items-center space-x-2">
 				<div class="hidden md:flex">

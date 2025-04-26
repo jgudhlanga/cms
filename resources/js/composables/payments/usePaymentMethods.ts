@@ -59,7 +59,7 @@ export const usePaymentMethods = () => {
 			const error = trans('trans.item_save_failure', { item: trans_choice('trans.payment_method', 1) });
 			if (paymentMethod) {
 				const id = getIdParams(paymentMethod.id?.toString() ?? '');
-				form.put(route('payment-methods.create', id), buildFormOptions(form, success, error, APP_MODULE_KEYS.payment_methods));
+				form.put(route('payment-methods.update', id), buildFormOptions(form, success, error, APP_MODULE_KEYS.payment_methods));
 			} else {
 				form.post(route('payment-methods.store'), buildFormOptions(form, success, error, APP_MODULE_KEYS.payment_methods));
 			}

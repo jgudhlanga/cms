@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Repositories\ModesOfStudy;
+namespace App\Repositories\Institution;
 
 use App\DTO\Institution\ModeOfStudyDto;
 use App\Http\Filters\Shared\SharedNameFilter;
 use App\Models\Institution\ModeOfStudy;
 use App\Repositories\Base\BaseRepository;
-use App\Repositories\ModesOfStudy\interface\IModeOfStudyRepository;
+use App\Repositories\Institution\interface\IModeOfStudyRepository;
 
 class ModeOfStudyRepository extends BaseRepository implements IModeOfStudyRepository
 {

@@ -79,7 +79,7 @@ export const useAddresses = () => {
 			const id = getIdParams(address?.id?.toString() ?? '');
 			form.put(route('addresses.update', id), buildFormOptions(form, successMessage(), errorMessage(), APP_MODULE_KEYS.addresses));
 		} catch (error: any) {
-			//form.setError(error.format());
+			form.setError(error.format());
 		}
 	};
 

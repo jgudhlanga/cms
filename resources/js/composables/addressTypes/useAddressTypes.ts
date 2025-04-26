@@ -65,7 +65,7 @@ export const useAddressTypes = () => {
 			const error = trans('trans.item_save_failure', { item: trans_choice('trans.address_type', 1) });
 			if (addressType) {
 				const id = getIdParams(addressType.id?.toString() ?? '');
-				form.put(route('address-types.create', id), buildFormOptions(form, success, error, APP_MODULE_KEYS.address_types));
+				form.put(route('address-types.update', id), buildFormOptions(form, success, error, APP_MODULE_KEYS.address_types));
 			} else {
 				form.post(route('address-types.store'), buildFormOptions(form, success, error, APP_MODULE_KEYS.address_types));
 			}

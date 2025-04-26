@@ -19,15 +19,11 @@ export function useInstitutionSetup() {
             url: route('institution-setup.index'),
         },
         {
-            transChoiceKey: 'mode_of_study',
-            url: route('institution-setup.index'),
-        },
-        {
             transChoiceKey: 'level',
             url: route('institution-setup.index'),
         },
         {
-            transChoiceKey: 'relationship',
+            transChoiceKey: 'mode_of_study',
             url: route('institution-setup.index'),
         },
         {

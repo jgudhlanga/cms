@@ -61,7 +61,7 @@ export const useRaces = () => {
 			const error = trans('trans.item_save_failure', { item: trans_choice('trans.race', 1) });
 			if (race) {
 				const id = getIdParams(race.id?.toString() ?? '');
-				form.put(route('races.create', id), buildFormOptions(form, success, error, APP_MODULE_KEYS.races));
+				form.put(route('races.update', id), buildFormOptions(form, success, error, APP_MODULE_KEYS.races));
 			} else {
 				form.post(route('races.store'), buildFormOptions(form, success, error, APP_MODULE_KEYS.races));
 			}

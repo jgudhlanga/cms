@@ -61,7 +61,7 @@ export const useGenders = () => {
 			const error = trans('trans.item_save_failure', { item: trans_choice('trans.gender', 1) });
 			if (gender) {
 				const id = getIdParams(gender.id?.toString() ?? '');
-				form.put(route('genders.create', id), buildFormOptions(form, success, error, APP_MODULE_KEYS.genders));
+				form.put(route('genders.update', id), buildFormOptions(form, success, error, APP_MODULE_KEYS.genders));
 			} else {
 				form.post(route('genders.store'), buildFormOptions(form, success, error, APP_MODULE_KEYS.genders));
 			}

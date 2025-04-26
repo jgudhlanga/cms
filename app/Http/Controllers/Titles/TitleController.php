@@ -2,18 +2,18 @@
 
 namespace App\Http\Controllers\Titles;
 
-use App\DTO\Titles\CourseDto;
+use App\DTO\Titles\TitleDto;
 use App\Http\Controllers\Controller;
 use App\Http\Filters\Shared\SharedNameFilter;
 use App\Http\Requests\Titles\TitleRequest;
 use App\Http\Resources\Titles\TitleResource;
 use App\Models\Titles\Title;
-use App\Repositories\Titles\interface\ICourseRepository;
+use App\Repositories\Titles\interface\ITitleRepository;
 use Inertia\Inertia;
 
 class TitleController extends Controller
 {
-	public function __construct(protected ICourseRepository $repository)
+	public function __construct(protected ITitleRepository $repository)
 	{
 	}
 
@@ -36,7 +36,7 @@ class TitleController extends Controller
 	public function store(TitleRequest $request)
 	{
 		$this->authorize('createSettings');
-		$this->repository->create(CourseDto::fromTitleRequest($request));
+		$this->repository->create(TitleDto::fromTitleRequest($request));
 	}
 
 	public function show(Title $title)
@@ -52,7 +52,7 @@ class TitleController extends Controller
 	public function update(TitleRequest $request, Title $title)
 	{
 		$this->authorize('updateSettings');
-		$this->repository->update($title, CourseDto::fromTitleRequest($request));
+		$this->repository->update($title, TitleDto::fromTitleRequest($request));
 	}
 
 	public function destroy(Title $title)

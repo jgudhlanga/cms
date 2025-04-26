@@ -47,6 +47,7 @@ const APP_MODULE_KEYS = {
 	bank_details: 'bank_details',
 	contacts: 'contacts',
 	addresses: 'addresses',
+    relationships : 'relationships'
 };
 
 export { API_BASE_URL, API_VERSION, DEFAULT_AVATAR, DEFAULT_IMAGE, LOGO, APP_MODULE_KEYS };

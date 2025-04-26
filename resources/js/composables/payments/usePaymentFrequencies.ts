@@ -59,7 +59,7 @@ export const usePaymentFrequencies = () => {
 			const error = trans('trans.item_save_failure', { item: trans_choice('trans.payment_frequency', 1) });
 			if (paymentFrequency) {
 				const id = getIdParams(paymentFrequency.id?.toString() ?? '');
-				form.put(route('payment-frequencies.create', id), buildFormOptions(form, success, error, APP_MODULE_KEYS.payment_frequencies));
+				form.put(route('payment-frequencies.update', id), buildFormOptions(form, success, error, APP_MODULE_KEYS.payment_frequencies));
 			} else {
 				form.post(route('payment-frequencies.store'), buildFormOptions(form, success, error, APP_MODULE_KEYS.payment_frequencies));
 			}

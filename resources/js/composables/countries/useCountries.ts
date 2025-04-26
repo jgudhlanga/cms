@@ -55,7 +55,7 @@ export const useCountries = () => {
 			const error = trans('trans.item_save_failure', { item: trans_choice('trans.country', 1) });
 			if (country) {
 				const id = getIdParams(country.id?.toString() ?? '');
-				form.put(route('countries.create', id), buildFormOptions(form, success, error, APP_MODULE_KEYS.countries));
+				form.put(route('countries.update', id), buildFormOptions(form, success, error, APP_MODULE_KEYS.countries));
 			} else {
 				form.post(route('countries.store'), buildFormOptions(form, success, error, APP_MODULE_KEYS.countries));
 			}

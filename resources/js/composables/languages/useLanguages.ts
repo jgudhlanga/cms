@@ -61,7 +61,7 @@ export const useLanguages = () => {
 			const error = trans('trans.item_save_failure', { item: trans_choice('trans.language', 1) });
 			if (language) {
 				const id = getIdParams(language.id?.toString() ?? '');
-				form.put(route('languages.create', id), buildFormOptions(form, success, error, APP_MODULE_KEYS.languages));
+				form.put(route('languages.update', id), buildFormOptions(form, success, error, APP_MODULE_KEYS.languages));
 			} else {
 				form.post(route('languages.store'), buildFormOptions(form, success, error, APP_MODULE_KEYS.languages));
 			}

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Repositories\Subjects\interface;
+namespace App\Repositories\Institution\interface;
 
 use App\DTO\Institution\SubjectDto;
 use App\Http\Filters\Shared\SharedNameFilter;

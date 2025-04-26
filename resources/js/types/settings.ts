@@ -73,20 +73,6 @@ export type StatusParams = {
 	description?: string;
 };
 
-export type TradingStatus = {
-	type?: string;
-	id?: string;
-	attributes: {
-		title: string;
-		createdAt?: string;
-		updatedAt?: string;
-		deletedAt?: string;
-	};
-};
-export type TradingStatusParams = {
-	title: string;
-	description?: string;
-};
 
 export type Title = {
 	type?: string;
@@ -117,4 +103,19 @@ export type AddressType = {
 export type AddressTypeParams = {
 	title: string;
 	description?: string;
+};
+
+export type Relationship = {
+    type?: string;
+    id?: string;
+    attributes: {
+        name: string;
+        createdAt?: string;
+        updatedAt?: string;
+        deletedAt?: string;
+    };
+};
+export type RelationshipParams = {
+    name: string;
+    description?: string;
 };

@@ -65,7 +65,7 @@ export const useProvinces = () => {
 			const error = trans('trans.item_save_failure', { item: trans_choice('trans.province', 1) });
 			if (province) {
 				const id = getIdParams(province.id?.toString() ?? '');
-				form.put(route('provinces.create', id), buildFormOptions(form, success, error, APP_MODULE_KEYS.provinces));
+				form.put(route('provinces.update', id), buildFormOptions(form, success, error, APP_MODULE_KEYS.provinces));
 			} else {
 				form.post(route('provinces.store'), buildFormOptions(form, success, error, APP_MODULE_KEYS.provinces));
 			}

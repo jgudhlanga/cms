@@ -21,7 +21,7 @@ export const useCommunicationMethods = () => {
 			const error = trans('trans.item_save_failure', { item: trans_choice('trans.communication_mode', 1) });
 			if (communicationMethod) {
 				const id = getIdParams(communicationMethod.id?.toString() ?? '');
-				form.put(route('communication-methods.create', id), buildFormOptions(form, success, error, APP_MODULE_KEYS.communication_methods));
+				form.put(route('communication-methods.update', id), buildFormOptions(form, success, error, APP_MODULE_KEYS.communication_methods));
 			} else {
 				form.post(route('communication-methods.store'), buildFormOptions(form, success, error, APP_MODULE_KEYS.communication_methods));
 			}

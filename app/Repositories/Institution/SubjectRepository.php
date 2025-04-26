@@ -1,31 +1,31 @@
 <?php
 
-namespace App\Repositories\Grades;
+namespace App\Repositories\Institution;
 
-use App\DTO\Institution\GradeDto;
+use App\DTO\Institution\SubjectDto;
 use App\Http\Filters\Shared\SharedNameFilter;
-use App\Models\Institution\Grade;
+use App\Models\Institution\Subject;
 use App\Repositories\Base\BaseRepository;
-use App\Repositories\Grades\interface\IGradeRepository;
+use App\Repositories\Institution\interface\ISubjectRepository;
 
-class GradeRepository extends BaseRepository implements IGradeRepository
+class SubjectRepository extends BaseRepository implements ISubjectRepository
 {
-    public function __construct(protected Grade $grade)
+    public function __construct(protected Subject $subject)
     {
-        parent::__construct($this->grade);
+        parent::__construct($this->subject);
     }
 
-    public function create(GradeDto $dto): Grade
+    public function create(SubjectDto $dto): Subject
     {
-        return $this->grade->create([
+        return $this->subject->create([
             'name' => $dto->name,
             'description' => $dto->description,
         ])->refresh();
     }
 
-    public function update(Grade $grade, GradeDto $dto): Grade
+    public function update(Subject $subject, SubjectDto $dto): Subject
     {
-        return tap($grade)->update([
+        return tap($subject)->update([
             'name' => $dto->name,
             'description' => $dto->description,
         ]);
@@ -33,7 +33,7 @@ class GradeRepository extends BaseRepository implements IGradeRepository
 
     public function allFilter($columns = ['*'], SharedNameFilter $filters = null)
     {
-        return $this->grade
+        return $this->subject
             ->select($columns)
             ->filter($filters)
             ->orderBy('name')

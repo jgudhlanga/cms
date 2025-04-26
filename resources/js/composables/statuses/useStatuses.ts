@@ -65,7 +65,7 @@ export const useStatuses = () => {
 			const error = trans('trans.item_save_failure', { item: trans_choice('trans.status', 1) });
 			if (status) {
 				const id = getIdParams(status.id?.toString() ?? '');
-				form.put(route('statuses.create', id), buildFormOptions(form, success, error, APP_MODULE_KEYS.statuses));
+				form.put(route('statuses.update', id), buildFormOptions(form, success, error, APP_MODULE_KEYS.statuses));
 			} else {
 				form.post(route('statuses.store'), buildFormOptions(form, success, error, APP_MODULE_KEYS.statuses));
 			}
