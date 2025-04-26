@@ -1,36 +1,35 @@
 import { Link } from '@/types/ui';
 
 export function useInstitutionSetup() {
-	const tabs: Array<Link> = [
+    const tabs: Array<Link> = [
         {
             transChoiceKey: 'course',
-            url: route('institution-setup.index'),
+            url: route('courses.index'),
         },
-		{
-			transChoiceKey: 'department',
-			url: route('institution-setup.index'),
-		},
+        {
+            transChoiceKey: 'department',
+            url: route('departments.index'),
+        },
         {
             transChoiceKey: 'division',
-            url: route('institution-setup.index'),
+            url: route('divisions.index'),
         },
         {
             transChoiceKey: 'grade',
-            url: route('institution-setup.index'),
+            url: route('grades.index'),
         },
         {
             transChoiceKey: 'level',
-            url: route('institution-setup.index'),
+            url: route('levels.index'),
         },
         {
             transChoiceKey: 'mode_of_study',
-            url: route('institution-setup.index'),
+            url: route('modes-of-study.index'),
         },
         {
             transChoiceKey: 'subject',
-            url: route('institution-setup.index'),
+            url: route('subjects.index'),
         },
-
-	];
-	return { tabs };
+    ];
+    return { tabs };
 }
