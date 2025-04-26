@@ -1,32 +1,31 @@
 <?php
 
-namespace App\Repositories\Titles;
+namespace App\Repositories\Subjects;
 
-
-use App\DTO\Titles\TitleDto;
+use App\DTO\Institution\SubjectDto;
 use App\Http\Filters\Shared\SharedNameFilter;
-use App\Models\Titles\Title;
+use App\Models\Institution\Subject;
 use App\Repositories\Base\BaseRepository;
-use App\Repositories\Titles\interface\ITitleRepository;
+use App\Repositories\Subjects\interface\ISubjectRepository;
 
-class TitleRepository extends BaseRepository implements ITitleRepository
+class SubjectRepository extends BaseRepository implements ISubjectRepository
 {
-    public function __construct(protected Title $title)
+    public function __construct(protected Subject $subject)
     {
-        parent::__construct($this->title);
+        parent::__construct($this->subject);
     }
 
-    public function create(TitleDto $dto): Title
+    public function create(SubjectDto $dto): Subject
     {
-        return $this->title->create([
+        return $this->subject->create([
             'name' => $dto->name,
             'description' => $dto->description,
         ])->refresh();
     }
 
-    public function update(Title $title, TitleDto $dto): Title
+    public function update(Subject $subject, SubjectDto $dto): Subject
     {
-        return tap($title)->update([
+        return tap($subject)->update([
             'name' => $dto->name,
             'description' => $dto->description,
         ]);
@@ -34,7 +33,7 @@ class TitleRepository extends BaseRepository implements ITitleRepository
 
     public function allFilter($columns = ['*'], SharedNameFilter $filters = null)
     {
-        return $this->title
+        return $this->subject
             ->select($columns)
             ->filter($filters)
             ->orderBy('name')

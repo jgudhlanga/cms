@@ -1,32 +1,32 @@
 <?php
 
-namespace App\Repositories\Titles;
+namespace App\Repositories\Courses;
 
 
-use App\DTO\Titles\TitleDto;
+use App\DTO\Institution\CourseDto;
 use App\Http\Filters\Shared\SharedNameFilter;
-use App\Models\Titles\Title;
+use App\Models\Institution\Course;
 use App\Repositories\Base\BaseRepository;
-use App\Repositories\Titles\interface\ITitleRepository;
+use App\Repositories\Courses\interface\ICourseRepository;
 
-class TitleRepository extends BaseRepository implements ITitleRepository
+class CourseRepository extends BaseRepository implements ICourseRepository
 {
-    public function __construct(protected Title $title)
+    public function __construct(protected Course $course)
     {
-        parent::__construct($this->title);
+        parent::__construct($this->course);
     }
 
-    public function create(TitleDto $dto): Title
+    public function create(CourseDto $dto): Course
     {
-        return $this->title->create([
+        return $this->course->create([
             'name' => $dto->name,
             'description' => $dto->description,
         ])->refresh();
     }
 
-    public function update(Title $title, TitleDto $dto): Title
+    public function update(Course $course, CourseDto $dto): Course
     {
-        return tap($title)->update([
+        return tap($course)->update([
             'name' => $dto->name,
             'description' => $dto->description,
         ]);
@@ -34,7 +34,7 @@ class TitleRepository extends BaseRepository implements ITitleRepository
 
     public function allFilter($columns = ['*'], SharedNameFilter $filters = null)
     {
-        return $this->title
+        return $this->course
             ->select($columns)
             ->filter($filters)
             ->orderBy('name')

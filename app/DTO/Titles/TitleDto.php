@@ -4,17 +4,17 @@ namespace App\DTO\Titles;
 
 use App\Http\Requests\Titles\TitleRequest;
 
-class TitleDto
+readonly class TitleDto
 {
     public function __construct(
-        public readonly string $name,
-		public readonly? string $description,
+        public string   $name,
+		public ? string $description,
     )
     {
     }
 
 
-    public static function fromTitleRequest(TitleRequest $request): TitleDto
+    public static function fromTitleRequest(TitleRequest $request): CourseDto
     {
         return new self(
             name: $request->name,

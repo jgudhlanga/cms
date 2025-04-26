@@ -1,32 +1,31 @@
 <?php
 
-namespace App\Repositories\Titles;
+namespace App\Repositories\Levels;
 
-
-use App\DTO\Titles\TitleDto;
+use App\DTO\Institution\LevelDto;
 use App\Http\Filters\Shared\SharedNameFilter;
-use App\Models\Titles\Title;
+use App\Models\Institution\Level;
 use App\Repositories\Base\BaseRepository;
-use App\Repositories\Titles\interface\ITitleRepository;
+use App\Repositories\Levels\interface\ILevelRepository;
 
-class TitleRepository extends BaseRepository implements ITitleRepository
+class LevelRepository extends BaseRepository implements ILevelRepository
 {
-    public function __construct(protected Title $title)
+    public function __construct(protected Level $level)
     {
-        parent::__construct($this->title);
+        parent::__construct($this->level);
     }
 
-    public function create(TitleDto $dto): Title
+    public function create(LevelDto $dto): Level
     {
-        return $this->title->create([
+        return $this->level->create([
             'name' => $dto->name,
             'description' => $dto->description,
         ])->refresh();
     }
 
-    public function update(Title $title, TitleDto $dto): Title
+    public function update(Level $level, LevelDto $dto): Level
     {
-        return tap($title)->update([
+        return tap($level)->update([
             'name' => $dto->name,
             'description' => $dto->description,
         ]);
@@ -34,7 +33,7 @@ class TitleRepository extends BaseRepository implements ITitleRepository
 
     public function allFilter($columns = ['*'], SharedNameFilter $filters = null)
     {
-        return $this->title
+        return $this->level
             ->select($columns)
             ->filter($filters)
             ->orderBy('name')

@@ -9,9 +9,9 @@ use App\Repositories\Base\Interface\IBaseRepository;
 
 interface ITitleRepository extends IBaseRepository
 {
-	public function create(TitleDto $dto);
+    public function create(TitleDto $dto);
 
-	public function update(Title $title, TitleDto $dto);
+    public function update(Title $title, TitleDto $dto);
 
-	public function allFilter($columns = ['*'], ?SharedNameFilter $filters);
+    public function allFilter($columns = ['*'], SharedNameFilter $filters = null);
 }

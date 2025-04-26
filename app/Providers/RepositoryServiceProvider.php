@@ -93,4 +93,6 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(IBankDetailRepository::class, BankDetailRepository::class);
         $this->app->bind(IContactRepository::class, ContactRepository::class);
     }
+
+
 }

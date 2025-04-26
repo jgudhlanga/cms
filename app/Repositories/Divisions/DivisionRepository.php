@@ -1,32 +1,31 @@
 <?php
 
-namespace App\Repositories\Titles;
+namespace App\Repositories\Divisions;
 
-
-use App\DTO\Titles\TitleDto;
+use App\DTO\Institution\DivisionDto;
 use App\Http\Filters\Shared\SharedNameFilter;
-use App\Models\Titles\Title;
+use App\Models\Institution\Division;
 use App\Repositories\Base\BaseRepository;
-use App\Repositories\Titles\interface\ITitleRepository;
+use App\Repositories\Divisions\interface\IDivisionRepository;
 
-class TitleRepository extends BaseRepository implements ITitleRepository
+class DivisionRepository extends BaseRepository implements IDivisionRepository
 {
-    public function __construct(protected Title $title)
+    public function __construct(protected Division $division)
     {
-        parent::__construct($this->title);
+        parent::__construct($this->division);
     }
 
-    public function create(TitleDto $dto): Title
+    public function create(DivisionDto $dto): Division
     {
-        return $this->title->create([
+        return $this->division->create([
             'name' => $dto->name,
             'description' => $dto->description,
         ])->refresh();
     }
 
-    public function update(Title $title, TitleDto $dto): Title
+    public function update(Division $division, DivisionDto $dto): Division
     {
-        return tap($title)->update([
+        return tap($division)->update([
             'name' => $dto->name,
             'description' => $dto->description,
         ]);
@@ -34,7 +33,7 @@ class TitleRepository extends BaseRepository implements ITitleRepository
 
     public function allFilter($columns = ['*'], SharedNameFilter $filters = null)
     {
-        return $this->title
+        return $this->division
             ->select($columns)
             ->filter($filters)
             ->orderBy('name')
