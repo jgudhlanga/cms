@@ -169,5 +169,8 @@ return [
     "relationship" => "Relationship|Relationships",
     "grade" => "Grade|Grades",
     "division" => "Division|Divisions",
+    "mode_of_study" => "Mode of study|Modes of study",
+    "coming_soon" => "Coming Soon",
+    "coming_soon_description" => "We are working on it!",
 ];
 
