@@ -10,13 +10,14 @@ import type { Link } from '@/types/ui';
 import { InertiaForm, usePage } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 
-export const useModesOfStudy = () => {
+export const useModeOfStudy = () => {
     const { moreActionButton, onDelete, onForceDelete, onRestore } = useDataTables();
     const createModeOfStudyColumns = () => {
         const { props } = usePage();
         const { can } = props?.auth as Auth;
         return [
             { header: trans_choice('trans.name', 1), accessorKey: 'attributes.name' },
+            { header: trans_choice('trans.description', 1), accessorKey: 'attributes.description' },
             {
                 header: trans_choice('trans.action', 2),
                 accessorKey: 'actions',
@@ -29,15 +30,15 @@ export const useModesOfStudy = () => {
                         { key: 'edit', action: () => onOpenModal(can['update:institution-settings'], row.original) },
                         {
                             key: 'archive',
-                            action: () => onDelete(can['delete:institution-settings'], route('modes-of-study.destroy', id), name),
+                            action: () => onDelete(can['delete:institution-settings'], route('mode-of-studies.destroy', id), name),
                         },
                         {
                             key: 'restore',
-                            action: () => onRestore(can['restore:institution-settings'], route('modes-of-study.restore', id), name),
+                            action: () => onRestore(can['restore:institution-settings'], route('mode-of-studies.restore', id), name),
                         },
                         {
                             key: 'delete',
-                            action: () => onForceDelete(can['forceDelete:institution-settings'], route('modes-of-study.force-delete', id), name),
+                            action: () => onForceDelete(can['forceDelete:institution-settings'], route('mode-of-studies.force-delete', id), name),
                         },
                     ]);
                 },
@@ -61,9 +62,9 @@ export const useModesOfStudy = () => {
             const error = trans('trans.item_save_failure', { item: trans_choice('trans.mode_of_study', 1) });
             if (modeOfStudy) {
                 const id = getIdParams(modeOfStudy.id?.toString() ?? '');
-                form.put(route('modes-of-study.update', id), buildFormOptions(form, success, error, APP_MODULE_KEYS.modes_of_study));
+                form.put(route('mode-of-studies.update', id), buildFormOptions(form, success, error, APP_MODULE_KEYS.modes_of_study));
             } else {
-                form.post(route('modes-of-study.store'), buildFormOptions(form, success, error, APP_MODULE_KEYS.modes_of_study));
+                form.post(route('mode-of-studies.store'), buildFormOptions(form, success, error, APP_MODULE_KEYS.modes_of_study));
             }
         } catch (error: any) {
             form.setError(error.format());

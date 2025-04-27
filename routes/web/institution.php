@@ -34,9 +34,9 @@ Route::prefix('institution-setup')->middleware('auth')->group(function () {
     Route::delete('levels/{level}/force-delete', [LevelController::class, 'forceDelete'])->name('levels.force-delete');
     Route::resource('levels', LevelController::class)->names('levels');
     # ==================================== MODES OF STUDY ======================================================
-    Route::put('modes-of-study/{mode_of_study}/restore', [ModeOfStudyController::class, 'restore'])->name('modes-of-study.restore');
-    Route::delete('modes-of-study/{mode_of_study}/force-delete', [ModeOfStudyController::class, 'forceDelete'])->name('modes-of-study.force-delete');
-    Route::resource('modes-of-study', ModeOfStudyController::class)->names('modes-of-study');
+    Route::put('mode-of-studies/{mode_of_study}/restore', [ModeOfStudyController::class, 'restore'])->name('mode-of-studies.restore');
+    Route::delete('mode-of-studies/{mode_of_study}/force-delete', [ModeOfStudyController::class, 'forceDelete'])->name('mode-of-studies.force-delete');
+    Route::resource('mode-of-studies', ModeOfStudyController::class)->names('mode-of-studies');
     # ==================================== SUBJECTS ======================================================
     Route::put('subjects/{subject}/restore', [SubjectController::class, 'restore'])->name('subjects.restore');
     Route::delete('subjects/{subject}/force-delete', [SubjectController::class, 'forceDelete'])->name('subjects.force-delete');

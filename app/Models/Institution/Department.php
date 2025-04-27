@@ -3,6 +3,7 @@
 namespace App\Models\Institution;
 
 use App\Http\Filters\Shared\SharedNameFilter;
+use App\Traits\Filterable;
 use App\Traits\Paginatable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -18,7 +19,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
  */
 class Department extends Model
 {
-    use HasFactory, SoftDeletes, Paginatable, LogsActivity;
+    use HasFactory, SoftDeletes, Filterable, Paginatable, LogsActivity;
 
     protected $fillable = ['name', 'description'];
 

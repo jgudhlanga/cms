@@ -3,14 +3,14 @@ import { Head } from '@inertiajs/vue3';
 
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import DataTable from '@/components/core/table/DataTable.vue';
-import { useCourses } from '@/composables/institution/useCourses';
+import { useModeOfStudy } from '@/composables/institution/useModeOfStudy';
 import { AuthObject, DataFilters, DataListProps } from '@/types/data-pagination';
 import CreateEdit from './partials/CreateEdit.vue';
 
-const { createCourseColumns, breadcrumbs, onOpenModal } = useCourses();
+const { createModeOfStudyColumns, breadcrumbs, onOpenModal } = useModeOfStudy();
 
 const props = defineProps<{
-    courses: DataListProps;
+    modesOfStudy: DataListProps;
     trashedCount: any;
     filters: DataFilters;
     auth: AuthObject;
@@ -20,15 +20,15 @@ const can = props?.auth?.can;
 </script>
 
 <template>
-    <Head :title="$tChoice('trans.course', 2)" />
+    <Head :title="$tChoice('trans.mode_of_study', 2)" />
     <PageContainer :breadcrumbs="breadcrumbs">
         <DataTable
-            :data="courses.data"
+            :data="modesOfStudy.data"
             :trashed-count="trashedCount"
             :filters="filters"
-            :search-url="route('courses.index')"
-            :pagination="{ ...courses.links, ...courses.meta }"
-            :columns="createCourseColumns()"
+            :search-url="route('mode-of-studies.index')"
+            :pagination="{ ...modesOfStudy.links, ...modesOfStudy.meta }"
+            :columns="createModeOfStudyColumns()"
             :on-create="() => onOpenModal(can['create:institution-settings'])"
             :disable-create="!can['create:institution-settings']"
         />

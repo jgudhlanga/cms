@@ -24,7 +24,7 @@ export function useInstitutionSetup() {
         },
         {
             transChoiceKey: 'mode_of_study',
-            url: route('modes-of-study.index'),
+            url: route('mode-of-studies.index'),
         },
         {
             transChoiceKey: 'subject',

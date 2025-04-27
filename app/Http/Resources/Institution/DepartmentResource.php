@@ -15,6 +15,7 @@ class DepartmentResource extends JsonResource
             'id' => $this->resource->id,
             "attributes" => [
                 'name' => $this->resource->name,
+                'description' => $this->resource->description,
                 $this->mergeWhen($request->routeIs('departments.*'), [
                     'createdAt' => $this->resource->created_at,
                     'updatedAt' => $this->resource->updated_at,
