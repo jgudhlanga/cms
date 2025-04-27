@@ -178,5 +178,6 @@ return [
     "general_settings_description" => "General dropdown settings",
     "access_control_list" => "Access control list",
     "acl_settings_description" => "Assign permissions to users and roles",
+    "district" => "District|Districts",
 ];
 

@@ -3,6 +3,7 @@
 use App\Http\Controllers\AddressTypes\AddressTypeController;
 use App\Http\Controllers\Communications\CommunicationMethodController;
 use App\Http\Controllers\Countries\CountryController;
+use App\Http\Controllers\Districts\DistrictController;
 use App\Http\Controllers\Genders\GenderController;
 use App\Http\Controllers\Languages\LanguageController;
 use App\Http\Controllers\Provinces\ProvinceController;
@@ -56,4 +57,8 @@ Route::prefix('settings')->middleware('auth')->group(function () {
     Route::put('address-types/{address_type}/restore', [AddressTypeController::class, 'restore'])->name('address-types.restore');
     Route::delete('address-types/{address_type}/force-delete', [AddressTypeController::class, 'forceDelete'])->name('address-types.force-delete');
     Route::resource('address-types', AddressTypeController::class)->names('address-types');
+    # ==================================== DISTRICTS ======================================================
+    Route::put('districts/{district}/restore', [DistrictController::class, 'restore'])->name('districts.restore');
+    Route::delete('districts/{district}/force-delete', [DistrictController::class, 'forceDelete'])->name('districts.force-delete');
+    Route::resource('districts', DistrictController::class)->names('districts');
 });

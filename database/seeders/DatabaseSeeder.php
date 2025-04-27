@@ -8,6 +8,7 @@ use Database\Seeders\Acl\RolesTableSeeder;
 use Database\Seeders\AddressTypes\AddressTypesTableSeeder;
 use Database\Seeders\Communications\CommunicationMethodSeeder;
 use Database\Seeders\Countries\CountrySeeder;
+use Database\Seeders\Districts\DistrictsTableSeeder;
 use Database\Seeders\Genders\GenderSeeder;
 use Database\Seeders\Institution\CoursesTableSeeder;
 use Database\Seeders\Institution\DepartmentsTableSeeder;
@@ -48,6 +49,7 @@ class DatabaseSeeder extends Seeder
             GenderSeeder::class,
             LanguageSeeder::class,
             ProvinceSeeder::class,
+            DistrictsTableSeeder::class,
             StatusSeeder::class,
             RaceSeeder::class,
             TitleSeeder::class,

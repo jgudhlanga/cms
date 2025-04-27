@@ -14,6 +14,8 @@ use App\Repositories\Communications\CommunicationMethodRepository;
 use App\Repositories\Communications\interface\ICommunicationMethodRepository;
 use App\Repositories\Countries\CountryRepository;
 use App\Repositories\Countries\interface\ICountryRepository;
+use App\Repositories\Districts\DistrictRepository;
+use App\Repositories\Districts\interface\IDistrictRepository;
 use App\Repositories\Genders\GenderRepository;
 use App\Repositories\Genders\interface\IGenderRepository;
 use App\Repositories\Institution\CourseRepository;
@@ -96,6 +98,7 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(ITitleRepository::class, TitleRepository::class);
         $this->app->bind(IAddressTypeRepository::class, AddressTypeRepository::class);
         $this->app->bind(IRelationshipRepository::class, RelationshipRepository::class);
+        $this->app->bind(IDistrictRepository::class, DistrictRepository::class);
     }
 
     private function paymentsRepositories(): void

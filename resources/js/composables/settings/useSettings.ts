@@ -14,6 +14,10 @@ export function useSettings() {
 			transChoiceKey: 'country',
 			url: route('countries.index'),
 		},
+        {
+            transChoiceKey: 'district',
+            url: route('districts.index'),
+        },
 		{
 			transChoiceKey: 'gender',
 			url: route('genders.index'),
