@@ -1,9 +1,9 @@
 import vue from '@vitejs/plugin-vue';
 import laravel from 'laravel-vite-plugin';
 import path from 'path';
-import tailwindcss from "@tailwindcss/vite";
 import { resolve } from 'node:path';
 import { defineConfig } from 'vite';
+import i18n from 'laravel-vue-i18n/vite';
 
 export default defineConfig({
     plugins: [
@@ -12,7 +12,6 @@ export default defineConfig({
             ssr: 'resources/js/ssr.ts',
             refresh: true,
         }),
-        tailwindcss(),
         vue({
             template: {
                 transformAssetUrls: {
@@ -21,6 +20,7 @@ export default defineConfig({
                 },
             },
         }),
+        i18n(),
     ],
     resolve: {
         alias: {

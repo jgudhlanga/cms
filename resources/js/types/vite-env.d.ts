@@ -1,0 +1,18 @@
+/// <reference types="vite/client" />
+
+interface ImportMeta {
+    glob(pattern: string, options?: { eager?: boolean }): Record<string, unknown>;
+}
+
+declare module 'vite/client' {
+    interface ImportMetaEnv {
+        readonly VITE_APP_NAME: string;
+
+        [key: string]: string | boolean | undefined;
+    }
+
+    interface ImportMeta {
+        readonly env: ImportMetaEnv;
+        readonly glob: <T>(pattern: string) => Record<string, () => Promise<T>>;
+    }
+}

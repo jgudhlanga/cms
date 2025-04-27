@@ -1,0 +1,37 @@
+<script setup lang="ts">
+import { Head } from '@inertiajs/vue3';
+
+import PageContainer from '@/components/core/page/PageContainer.vue';
+import DataTable from '@/components/core/table/DataTable.vue';
+import { useGrades } from '@/composables/institution/useGrades';
+import { AuthObject, DataFilters, DataListProps } from '@/types/data-pagination';
+import CreateEdit from './partials/CreateEdit.vue';
+
+const { createGradeColumns, breadcrumbs, onOpenModal } = useGrades();
+
+const props = defineProps<{
+    grades: DataListProps;
+    trashedCount: any;
+    filters: DataFilters;
+    auth: AuthObject;
+    errors: object;
+}>();
+const can = props?.auth?.can;
+</script>
+
+<template>
+    <Head :title="$tChoice('trans.grade', 2)" />
+    <PageContainer :breadcrumbs="breadcrumbs">
+        <DataTable
+            :data="grades.data"
+            :trashed-count="trashedCount"
+            :filters="filters"
+            :search-url="route('grades.index')"
+            :pagination="{ ...grades.links, ...grades.meta }"
+            :columns="createGradeColumns()"
+            :on-create="() => onOpenModal(can['create:institution-settings'])"
+            :disable-create="!can['create:institution-settings']"
+        />
+        <CreateEdit />
+    </PageContainer>
+</template>
