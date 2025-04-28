@@ -79,7 +79,7 @@ export function useSidebarMenu() {
         },
         {
             transKey: 'trans.institution_setup',
-            url: route('institution-setup.index'),
+            url: route('institution.index'),
             icon: icons[IconName.school],
             show: isItTrue(can['view:institution-setup'])
         },

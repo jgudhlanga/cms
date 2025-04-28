@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Settings;
+namespace App\Http\Controllers\Institution;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -11,6 +11,6 @@ class InstitutionController extends Controller
 
     public function __invoke(Request $request)
     {
-        return Inertia::render('settings/InstitutionSetup', []);
+        return Inertia::render('institution/SetupIndex', []);
     }
 }
