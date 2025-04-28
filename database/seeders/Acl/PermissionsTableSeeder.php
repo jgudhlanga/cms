@@ -17,7 +17,6 @@ class PermissionsTableSeeder extends Seeder
         $permissions = [
             'acl' => [
                 ['name' => PermissionEnum::VIEW_ACL_INDEX->value],
-
                 /*** Acl Modules */
                 ['name' => PermissionEnum::VIEW_ANY_MODULES->value],
                 ['name' => PermissionEnum::VIEW_MODULE->value],
@@ -29,7 +28,6 @@ class PermissionsTableSeeder extends Seeder
                 ['name' => PermissionEnum::IMPORT_MODULES->value],
                 ['name' => PermissionEnum::EXPORT_MODULES->value],
                 ['name' => PermissionEnum::VIEW_MODULES_AUDIT_TRAIL->value],
-
                 /*** Acl Roles */
                 ['name' => PermissionEnum::VIEW_ANY_ROLES->value],
                 ['name' => PermissionEnum::VIEW_ROLE->value],
@@ -132,6 +130,17 @@ class PermissionsTableSeeder extends Seeder
                 ['name' => PermissionEnum::IMPORT_INSTITUTION_SETTINGS->value],
                 ['name' => PermissionEnum::EXPORT_INSTITUTION_SETTINGS->value],
                 ['name' => PermissionEnum::VIEW_INSTITUTION_SETTINGS_AUDIT_TRAIL->value],
+            ],
+            'institution' => [
+                ['name' => PermissionEnum::VIEW_INSTITUTION_DEPARTMENTS->value],
+                ['name' => PermissionEnum::CREATE_INSTITUTION_DEPARTMENTS->value],
+                ['name' => PermissionEnum::UPDATE_INSTITUTION_DEPARTMENTS->value],
+                ['name' => PermissionEnum::DELETE_INSTITUTION_DEPARTMENTS->value],
+                ['name' => PermissionEnum::RESTORE_INSTITUTION_DEPARTMENTS->value],
+                ['name' => PermissionEnum::FORCE_DELETE_INSTITUTION_DEPARTMENTS->value],
+                ['name' => PermissionEnum::IMPORT_INSTITUTION_DEPARTMENTS->value],
+                ['name' => PermissionEnum::EXPORT_INSTITUTION_DEPARTMENTS->value],
+                ['name' => PermissionEnum::VIEW_INSTITUTION_DEPARTMENTS_AUDIT_TRAIL->value],
             ],
             'shared' => [
                 ['name' => PermissionEnum::VIEW_ANY_BANK_DETAILS->value],

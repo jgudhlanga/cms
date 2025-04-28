@@ -21,7 +21,7 @@ class ModeOfStudyController extends Controller
     {
         $this->authorize('viewSettings');
         $modesOfStudy = ModeOfStudyResource::collection($this->repository->allFilter(['*'], $filters));
-        return Inertia::render('institution/modesOfStudy/Index', [
+        return Inertia::render('institution/setup/modesOfStudy/Index', [
             'modesOfStudy' => $modesOfStudy,
             'filters' => request()->only(['search', 'trashed']),
             'trashedCount' => $this->repository->allTrashed()->count(),

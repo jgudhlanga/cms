@@ -11,6 +11,6 @@ class InstitutionController extends Controller
 
     public function __invoke(Request $request)
     {
-        return Inertia::render('institution/SetupIndex', []);
+        return Inertia::render('institution/setup/SetupIndex', []);
     }
 }

@@ -11,7 +11,7 @@ use App\Models\Institution\Level;
 use App\Repositories\Institution\interface\ILevelRepository;
 use Inertia\Inertia;
 
-class LevelController extends Controller
+class InstitutionDepartmentController extends Controller
 {
     public function __construct(protected ILevelRepository $repository)
     {
