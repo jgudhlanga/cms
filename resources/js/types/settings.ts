@@ -1,3 +1,5 @@
+import { SelectOption } from '@/types/utils';
+
 export type Gender = {
     type?: string;
     id?: string;
@@ -124,7 +126,7 @@ export type District = {
     id?: string;
     attributes: {
         name: string;
-        provinceId?: number | string;
+        provinceId?: number | string | undefined;
         province?: string;
         description?: string;
         createdAt?: string;
@@ -134,6 +136,7 @@ export type District = {
 };
 export type DistrictParams = {
     name: string;
-    province_id?: string;
+    province_id?: string | number | undefined;
+    province?: SelectOption | null;
     description?: string;
 };

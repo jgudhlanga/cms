@@ -26,7 +26,7 @@ export const useDistricts = () => {
                 meta: { align: 'right' },
                 cell: ({ row }: { row: { original: District } }) => {
                     const id = getIdParams(row.original.id?.toString() ?? '');
-                    const name = trans_choice('trans.name', 1);
+                    const name = trans_choice('trans.district', 1);
                     return moreActionButton(!!row.original?.attributes?.deletedAt, [
                         { key: 'edit', action: () => onOpenModal(can['update:settings'], row.original) },
                         {
