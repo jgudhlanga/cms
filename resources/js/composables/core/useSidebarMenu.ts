@@ -51,7 +51,7 @@ export function useSidebarMenu() {
             transChoiceKey: 'trans.student',
             icon: icons[IconName.user_check],
             url: route('dashboard'),
-            show: isItTrue(can['view:student'])
+            show: isItTrue(can['view:students'])
         },
         {
             transChoiceKey: 'trans.examination',
@@ -81,7 +81,7 @@ export function useSidebarMenu() {
             transKey: 'trans.institution_setup',
             url: route('institution.index'),
             icon: icons[IconName.school],
-            show: isItTrue(can['view:institution-setup'])
+            show: isItTrue(can['view:institution-settings'])
         },
         {
             transKey: 'trans.settings',

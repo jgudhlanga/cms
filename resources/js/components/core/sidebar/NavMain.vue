@@ -22,7 +22,7 @@ const { menuOptions, getTranslation } = useSidebarMenu();
 	<SidebarGroup>
 		<SidebarMenu>
 			<template v-for="item in menuOptions" :key="item.title">
-				<Collapsible v-if="item.items" as-child :default-open="item.isActive" class="group/collapsible">
+				<Collapsible v-if="item.items && item.show" as-child :default-open="item.isActive" class="group/collapsible">
 					<SidebarMenuItem>
 						<CollapsibleTrigger as-child>
 							<SidebarMenuButton :tooltip="getTranslation(item)">
@@ -45,8 +45,8 @@ const { menuOptions, getTranslation } = useSidebarMenu();
 						</CollapsibleContent>
 					</SidebarMenuItem>
 				</Collapsible>
-				<SidebarMenuItem v-else>
-					<SidebarMenuButton as-child :tooltip="getTranslation(item)">
+				<SidebarMenuItem v-if="item.show">
+					<SidebarMenuButton  as-child :tooltip="getTranslation(item)">
 						<Link :href="item.url ?? ''">
 							<MenuIcon :icon="item.icon" />
 							<TransText :item="item" />
