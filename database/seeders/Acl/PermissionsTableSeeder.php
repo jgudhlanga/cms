@@ -132,6 +132,7 @@ class PermissionsTableSeeder extends Seeder
                 ['name' => PermissionEnum::VIEW_INSTITUTION_SETTINGS_AUDIT_TRAIL->value],
             ],
             'institution' => [
+                ['name' => PermissionEnum::VIEW_ANY_INSTITUTION_DEPARTMENTS->value],
                 ['name' => PermissionEnum::VIEW_INSTITUTION_DEPARTMENTS->value],
                 ['name' => PermissionEnum::CREATE_INSTITUTION_DEPARTMENTS->value],
                 ['name' => PermissionEnum::UPDATE_INSTITUTION_DEPARTMENTS->value],

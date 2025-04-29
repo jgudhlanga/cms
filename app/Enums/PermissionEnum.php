@@ -121,6 +121,7 @@ enum PermissionEnum: string
     case VIEW_INSTITUTION_SETTINGS_AUDIT_TRAIL = 'viewAuditTrail:institution-settings';
 
     /** INSTITUTION DEPARTMENTS */
+    case VIEW_ANY_INSTITUTION_DEPARTMENTS = 'viewAny:institution-departments';
     case VIEW_INSTITUTION_DEPARTMENTS = 'view:institution-departments';
     case CREATE_INSTITUTION_DEPARTMENTS = 'create:institution-departments';
     case UPDATE_INSTITUTION_DEPARTMENTS = 'update:institution-departments';
@@ -284,6 +285,7 @@ enum PermissionEnum: string
             self::VIEW_INSTITUTION_SETTINGS_AUDIT_TRAIL => 'viewAuditTrail:institution-settings',
 
             /** INSTITUTION DEPARTMENTS */
+            self::VIEW_ANY_INSTITUTION_DEPARTMENTS => 'viewAny:institution-departments',
             self::VIEW_INSTITUTION_DEPARTMENTS => 'view:institution-departments',
             self::CREATE_INSTITUTION_DEPARTMENTS => 'create:institution-departments',
             self::UPDATE_INSTITUTION_DEPARTMENTS => 'update:institution-departments',

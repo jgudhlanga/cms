@@ -14,6 +14,7 @@ use Database\Seeders\Institution\CoursesTableSeeder;
 use Database\Seeders\Institution\DepartmentsTableSeeder;
 use Database\Seeders\Institution\DivisionsTableSeeder;
 use Database\Seeders\Institution\GradesTableSeeder;
+use Database\Seeders\Institution\InstitutionDepartmentsTableSeeder;
 use Database\Seeders\Institution\LevelsTableSeeder;
 use Database\Seeders\Institution\ModesOfStudyTableSeeder;
 use Database\Seeders\Institution\SubjectsTableSeeder;
@@ -62,6 +63,7 @@ class DatabaseSeeder extends Seeder
             RelationshipsTableSeeder::class,
             SubjectsTableSeeder::class,
             ModesOfStudyTableSeeder::class,
+            InstitutionDepartmentsTableSeeder::class,
         ]);
     }
 }

@@ -2,27 +2,28 @@
 
 namespace App\Http\Controllers\Institution;
 
-use App\DTO\Institution\LevelDto;
+use App\DTO\Institution\InstitutionDepartmentDto;
 use App\Http\Controllers\Controller;
-use App\Http\Filters\Shared\SharedNameFilter;
-use App\Http\Requests\Institution\LevelRequest;
-use App\Http\Resources\Institution\LevelResource;
-use App\Models\Institution\Level;
-use App\Repositories\Institution\interface\ILevelRepository;
+use App\Http\Filters\Institution\DepartmentFilter;
+use App\Http\Requests\Institution\InstitutionDepartmentRequest;
+use App\Http\Resources\Institution\InstitutionDepartmentResource;
+use App\Models\Institution\InstitutionDepartment;
+use App\Repositories\Institution\interface\IInstitutionDepartmentRepository;
 use Inertia\Inertia;
 
 class InstitutionDepartmentController extends Controller
 {
-    public function __construct(protected ILevelRepository $repository)
+    public function __construct(protected IInstitutionDepartmentRepository $repository)
     {
     }
 
-    public function index(SharedNameFilter $filters)
+    public function index(DepartmentFilter $filters)
     {
-        $this->authorize('viewSettings');
-        $levels = LevelResource::collection($this->repository->allFilter(['*'], $filters));
-        return Inertia::render('institution/setup/levels/Index', [
-            'levels' => $levels,
+        $this->authorize('viewAny', InstitutionDepartment::class);
+        $institutionDepartments = InstitutionDepartmentResource::collection($this->repository->allFilter(['*'], $filters));
+
+        return Inertia::render('institution/departments/Index', [
+            'institutionDepartments' => $institutionDepartments,
             'filters' => request()->only(['search', 'trashed']),
             'trashedCount' => $this->repository->allTrashed()->count(),
         ]);
@@ -30,47 +31,51 @@ class InstitutionDepartmentController extends Controller
 
     public function create()
     {
-        $this->authorize('createSettings');
+        $this->authorize('create', InstitutionDepartment::class);
     }
 
-    public function store(LevelRequest $request)
+    public function store(InstitutionDepartmentRequest $request)
     {
-        $this->authorize('createSettings');
-        $this->repository->create(LevelDto::fromLevelRequest($request));
+        $this->authorize('create', InstitutionDepartment::class);
+        $this->repository->create(InstitutionDepartmentDto::fromInstitutionDepartmentRequest($request));
     }
 
-    public function show(Level $level)
+    public function show(InstitutionDepartment $institutionDepartment)
+    {
+        $this->authorize('view', $institutionDepartment);
+        return Inertia::render('institution/departments/Show', [
+            'institutionDepartment' => new InstitutionDepartmentResource($institutionDepartment),
+            'filters' => request()->only(['search', 'trashed']),
+        ]);
+    }
+
+    public function edit(InstitutionDepartment $institutionDepartment)
     {
         //
     }
 
-    public function edit(Level $level)
+    public function update(InstitutionDepartmentRequest $request, InstitutionDepartment $institutionDepartment)
     {
-        //
+        $this->authorize('create', $institutionDepartment);
+        $this->repository->update($institutionDepartment, InstitutionDepartmentDto::fromInstitutionDepartmentRequest($request));
     }
 
-    public function update(LevelRequest $request, Level $level)
+    public function destroy(InstitutionDepartment $institutionDepartment)
     {
-        $this->authorize('updateInstitutionSettings');
-        $this->repository->update($level, LevelDto::fromLevelRequest($request));
-    }
-
-    public function destroy(Level $level)
-    {
-        $this->authorize('deleteInstitutionSettings');
-        $this->repository->delete($level);
+        $this->authorize('delete', $institutionDepartment);
+        $this->repository->delete($institutionDepartment);
     }
 
     public function restore(string $id)
     {
-        $level = $this->repository->findTrashed($id);
-        $this->authorize('restoreInstitutionSettings');
-        $this->repository->restore($level);
+        $institutionDepartment = $this->repository->findTrashed($id);
+        $this->authorize('restore', $institutionDepartment);
+        $this->repository->restore($institutionDepartment);
     }
 
-    public function forceDelete(Level $level)
+    public function forceDelete(InstitutionDepartment $institutionDepartment)
     {
-        $this->authorize('forceDeleteInstitutionSettings');
-        $this->repository->delete($level, true);
+        $this->authorize('forceDelete', $institutionDepartment);
+        $this->repository->delete($institutionDepartment, true);
     }
 }

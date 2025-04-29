@@ -78,7 +78,8 @@ export function useSidebarMenu() {
             show: isItTrue(can['view:reports'])
         },
         {
-            transKey: 'trans.institution_setup',
+            transChoiceKey: 'trans.institution',
+            transChoiceKeyIndex: 1,
             url: route('institution.index'),
             icon: icons[IconName.school],
             show: isItTrue(can['view:institution-settings'])
@@ -97,9 +98,9 @@ export function useSidebarMenu() {
         },
     ];
 
-    const getTranslation = (item: any, keyIndex?: number) => {
+    const getTranslation = (item: any) => {
         if (item?.transChoiceKey) {
-            return trans_choice(item?.transChoiceKey, keyIndex ?? 2);
+            return trans_choice(item?.transChoiceKey, item?.transChoiceKeyIndex ?? 2);
         }
         if (item?.transKey) {
             return trans(item?.transKey);
