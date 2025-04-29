@@ -184,5 +184,6 @@ return [
     "department_description" => "College department setup",
     "manage" => "Manage",
     "add_department" => "Add department|Add departments",
+    "link_department" => "Link institution departments",
 ];
 

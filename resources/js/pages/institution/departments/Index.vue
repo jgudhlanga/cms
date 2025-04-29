@@ -41,7 +41,7 @@ const can = props?.auth?.can;
                     :icon-variant="ColorVariant.white"
                     :variant="ColorVariant.primary"
                     @click="() => linkDepartmentsToInstitution()"
-                    :title="$tChoice('trans.add_department', 2)"
+                    :title="$t('trans.link_department')"
                 />
             </template>
         </DataTable>
