@@ -1,20 +1,25 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
 
+import { GenericButton } from '@/components/core/button';
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import DataTable from '@/components/core/table/DataTable.vue';
 import { useInstitutionDepartments } from '@/composables/institution/useInstitutionDepartments';
+import { ColorVariant } from '@/enums/colors';
+import { IconName } from '@/lib/icons';
 import { AuthObject, DataFilters, DataListProps } from '@/types/data-pagination';
 
-const { createInstitutionDepartmentColumns, breadcrumbs, onOpenModal } = useInstitutionDepartments();
+const { createInstitutionDepartmentColumns, breadcrumbs, linkDepartmentsToInstitution } = useInstitutionDepartments();
 
-const props = defineProps<{
-    institutionDepartments: DataListProps;
+interface Props {
+    departments: DataListProps;
     trashedCount: any;
     filters: DataFilters;
     auth: AuthObject;
     errors: object;
-}>();
+}
+
+const props = defineProps<Props>();
 const can = props?.auth?.can;
 </script>
 
@@ -22,14 +27,23 @@ const can = props?.auth?.can;
     <Head :title="$tChoice('trans.department', 2)" />
     <PageContainer :breadcrumbs="breadcrumbs">
         <DataTable
-            :data="institutionDepartments.data"
+            :data="departments.data"
             :trashed-count="trashedCount"
             :filters="filters"
             :search-url="route('institution-departments.index')"
-            :pagination="{ ...institutionDepartments.links, ...institutionDepartments.meta }"
+            :pagination="{ ...departments.links, ...departments.meta }"
             :columns="createInstitutionDepartmentColumns()"
-            :on-create="() => onOpenModal(can['create:institution-departments'])"
-            :disable-create="!can['create:institution-departments']"
-        />
+        >
+            <template #head-right v-if="can['create:institution-departments']">
+                <GenericButton
+                    :icon="IconName.add"
+                    class="rounded-full"
+                    :icon-variant="ColorVariant.white"
+                    :variant="ColorVariant.primary"
+                    @click="() => linkDepartmentsToInstitution()"
+                    :title="$tChoice('trans.add_department', 2)"
+                />
+            </template>
+        </DataTable>
     </PageContainer>
 </template>

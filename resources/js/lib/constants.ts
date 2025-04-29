@@ -33,6 +33,7 @@ const APP_MODULE_KEYS = {
     modes_of_study: 'modes_of_study',
     subjects: 'subjects',
     districts: 'districts',
+    institution_departments: 'institution_departments',
 };
 
 export { API_BASE_URL, API_VERSION, APP_MODULE_KEYS, DEFAULT_AVATAR, DEFAULT_IMAGE, LOGO };

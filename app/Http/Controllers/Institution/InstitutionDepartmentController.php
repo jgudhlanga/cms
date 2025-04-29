@@ -20,10 +20,10 @@ class InstitutionDepartmentController extends Controller
     public function index(DepartmentFilter $filters)
     {
         $this->authorize('viewAny', InstitutionDepartment::class);
-        $institutionDepartments = InstitutionDepartmentResource::collection($this->repository->allFilter(['*'], $filters));
+        $departments = InstitutionDepartmentResource::collection($this->repository->allFilter(['*'], $filters));
 
         return Inertia::render('institution/departments/Index', [
-            'institutionDepartments' => $institutionDepartments,
+            'departments' => $departments,
             'filters' => request()->only(['search', 'trashed']),
             'trashedCount' => $this->repository->allTrashed()->count(),
         ]);
@@ -40,42 +40,41 @@ class InstitutionDepartmentController extends Controller
         $this->repository->create(InstitutionDepartmentDto::fromInstitutionDepartmentRequest($request));
     }
 
-    public function show(InstitutionDepartment $institutionDepartment)
+    public function show(InstitutionDepartment $department)
     {
-        $this->authorize('view', $institutionDepartment);
+        $this->authorize('view', $department);
         return Inertia::render('institution/departments/Show', [
-            'institutionDepartment' => new InstitutionDepartmentResource($institutionDepartment),
-            'filters' => request()->only(['search', 'trashed']),
+            'department' => new InstitutionDepartmentResource($department),
         ]);
     }
 
-    public function edit(InstitutionDepartment $institutionDepartment)
+    public function edit(InstitutionDepartment $department)
     {
         //
     }
 
-    public function update(InstitutionDepartmentRequest $request, InstitutionDepartment $institutionDepartment)
+    public function update(InstitutionDepartmentRequest $request, InstitutionDepartment $department)
     {
-        $this->authorize('create', $institutionDepartment);
-        $this->repository->update($institutionDepartment, InstitutionDepartmentDto::fromInstitutionDepartmentRequest($request));
+        $this->authorize('create', $department);
+        $this->repository->update($department, InstitutionDepartmentDto::fromInstitutionDepartmentRequest($request));
     }
 
-    public function destroy(InstitutionDepartment $institutionDepartment)
+    public function destroy(InstitutionDepartment $department)
     {
-        $this->authorize('delete', $institutionDepartment);
-        $this->repository->delete($institutionDepartment);
+        $this->authorize('delete', $department);
+        $this->repository->delete($department);
     }
 
     public function restore(string $id)
     {
-        $institutionDepartment = $this->repository->findTrashed($id);
-        $this->authorize('restore', $institutionDepartment);
-        $this->repository->restore($institutionDepartment);
+        $department = $this->repository->findTrashed($id);
+        $this->authorize('restore', $department);
+        $this->repository->restore($department);
     }
 
-    public function forceDelete(InstitutionDepartment $institutionDepartment)
+    public function forceDelete(InstitutionDepartment $department)
     {
-        $this->authorize('forceDelete', $institutionDepartment);
-        $this->repository->delete($institutionDepartment, true);
+        $this->authorize('forceDelete', $department);
+        $this->repository->delete($department, true);
     }
 }
