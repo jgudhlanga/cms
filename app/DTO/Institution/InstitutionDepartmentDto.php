@@ -7,8 +7,7 @@ use App\Http\Requests\Institution\InstitutionDepartmentRequest;
 readonly class InstitutionDepartmentDto
 {
     public function __construct(
-        public string  $department_id,
-        public ?string $description,
+        public array  $department_ids,
     )
     {
     }
@@ -17,8 +16,7 @@ readonly class InstitutionDepartmentDto
     public static function fromInstitutionDepartmentRequest(InstitutionDepartmentRequest $request): InstitutionDepartmentDto
     {
         return new self(
-            department_id: $request->department_id,
-            description: $request->description,
+            department_ids: $request->department_ids,
         );
     }
 }

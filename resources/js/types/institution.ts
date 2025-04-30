@@ -126,7 +126,5 @@ export type InstitutionDepartment = {
 };
 
 export type InstitutionDepartmentParams = {
-    department_id?: string | number | undefined;
-    department?: SelectOption | null;
-    description?: string;
+    department_ids: Array<string | undefined | null> | null,
 };

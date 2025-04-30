@@ -9,9 +9,7 @@ use App\Repositories\Base\Interface\IBaseRepository;
 
 interface IInstitutionDepartmentRepository extends IBaseRepository
 {
-    public function create(InstitutionDepartmentDto $dto);
-
-    public function update(InstitutionDepartment $institutionDepartment, InstitutionDepartmentDto $dto);
+    public function syncInstitutionDepartment(InstitutionDepartmentDto $dto);
 
     public function allFilter($columns = ['*'], DepartmentFilter $filters = null);
 }

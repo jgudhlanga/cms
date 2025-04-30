@@ -15,15 +15,6 @@ class InstitutionDepartmentRepository extends BaseRepository implements IInstitu
         parent::__construct($this->institutionDepartment);
     }
 
-    public function create(InstitutionDepartmentDto $dto): InstitutionDepartment
-    {
-        return $this->institutionDepartment->create($this->getFields($dto))->refresh();
-    }
-
-    public function update(InstitutionDepartment $institutionDepartment, InstitutionDepartmentDto $dto): InstitutionDepartment
-    {
-        return tap($institutionDepartment)->update($this->getFields($dto));
-    }
 
     public function allFilter($columns = ['*'], DepartmentFilter $filters = null)
     {
@@ -35,11 +26,25 @@ class InstitutionDepartmentRepository extends BaseRepository implements IInstitu
             ->withQueryString();
     }
 
-    private function getFields(InstitutionDepartmentDto $dto): array
+    public function syncInstitutionDepartment(InstitutionDepartmentDto $dto): void
     {
-        return [
-            'department_id' => $dto->department_id,
-            'description' => $dto->description,
-        ];
+        // Get existing department_ids linked to this institution
+        $existing = $this->institutionDepartment->pluck('department_id')->toArray();
+
+        $newIds = $dto->department_ids;
+
+        // Determine which IDs to add and which to remove
+        $toAdd = array_diff($newIds, $existing);
+        $toRemove = array_diff($existing, $newIds);
+
+        // Delete removed departments
+        if (!empty($toRemove)) {
+            $this->institutionDepartment->whereIn('department_id', $toRemove)->delete();
+        }
+
+        // Add new departments
+        foreach ($toAdd as $departmentId) {
+            $this->institutionDepartment->create(['department_id' => $departmentId]);
+        }
     }
 }

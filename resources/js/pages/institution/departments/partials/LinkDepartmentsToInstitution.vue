@@ -1,46 +1,80 @@
 <script setup lang="ts">
-import Title from '@/components/core/form/text/Title.vue';
+import { BaseCheckbox } from '@/components/core/form';
+import BaseModal from '@/components/core/modal/BaseModal.vue';
+import SpinnerComponent from '@/components/core/util/SpinnerComponent.vue';
+import { useDepartments } from '@/composables/institution/useDepartments';
+import { useInstitutionDepartments } from '@/composables/institution/useInstitutionDepartments';
 import { getModalEdit } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
 import { useModalStore } from '@/store/core/useModalStore';
-import { Province, ProvinceParams } from '@/types/settings';
+import { Department, InstitutionDepartmentParams } from '@/types/institution';
 import { useForm } from '@inertiajs/vue3';
 import { ref, watch } from 'vue';
-import { clearFormErrors } from '@/lib/forms';
-import BaseModal from '@/components/core/modal/BaseModal.vue';
-import { useProvinces } from '@/composables/provinces/useProvinces';
 
-const province = ref<Province>();
-const form = useForm<ProvinceParams>({
-	title: '',
+const allSelected = ref(false);
+const form = useForm<InstitutionDepartmentParams>({
+    department_ids: [],
 });
 
-
-const { saveProvince } = useProvinces();
-
+const { isLoading, departments, listDepartments } = useDepartments();
+const { syncInstitutionDepartments } = useInstitutionDepartments();
+const selectAll = () => {
+    if (allSelected.value) {
+        form.department_ids = [];
+        allSelected.value = false;
+    } else {
+        form.department_ids = departments.value?.map((item: Department) => item['id']);
+        allSelected.value = true;
+    }
+};
+const updateModel = () => {
+    allSelected.value = form.department_ids?.length == departments.value?.length;
+};
 const { modals } = useModalStore();
 
-watch(modals!, () => {
-	province.value = getModalEdit(APP_MODULE_KEYS.provinces);
-	form.title = province.value?.attributes?.title ?? '';
-	form.defaults();
+watch(modals!, async () => {
+    form.department_ids = getModalEdit(APP_MODULE_KEYS.institution_departments);
+    await listDepartments();
+    form.defaults();
 });
 </script>
 
 <template>
-	<BaseModal
-		:name="APP_MODULE_KEYS.provinces"
-		:title="`${province ? $t('trans.create') : $t('trans.create')} ${$tChoice('trans.province', 1)}`"
-		:on-form-action="() => saveProvince(form, province)"
-		:form="form"
-	>
-		<template #body>
-			<Title
-				:inputAutoFocus="true"
-				v-model="form.title"
-				@input="clearFormErrors(form, 'title')"
-				:error="form.errors.title"
-			/>
-		</template>
-	</BaseModal>
+    <BaseModal
+        :name="APP_MODULE_KEYS.institution_departments"
+        :title="$t('trans.link_department')"
+        :on-form-action="() => syncInstitutionDepartments(form)"
+        :form="form"
+    >
+        <template #body>
+            <div class="flex flex-col space-y-3">
+                <template v-if="isLoading">
+                    <SpinnerComponent class="w-full" />
+                </template>
+                <template v-else>
+                    <div class="flex flex-col space-y-2">
+                        <div class="flex">
+                            <BaseCheckbox
+                                input-id="select_all_departments"
+                                :checked="allSelected"
+                                :label="`${$t('trans.select_all')} ${$tChoice('trans.department', 1).toLowerCase()}`"
+                                @click="selectAll()"
+                            />
+                        </div>
+                        <div class="grid grid-cols-1 gap-x-3 md:grid-cols-2">
+                            <template v-for="department in departments" :key="`department_key_${department['id']}`">
+                                <BaseCheckbox
+                                    :input-id="`department_id_${department['id']}`"
+                                    :value="department['id']"
+                                    v-model="form.department_ids"
+                                    :label="department['attributes']['name']"
+                                    @change="updateModel()"
+                                />
+                            </template>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </template>
+    </BaseModal>
 </template>

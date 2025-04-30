@@ -8,8 +8,9 @@ import { useInstitutionDepartments } from '@/composables/institution/useInstitut
 import { ColorVariant } from '@/enums/colors';
 import { IconName } from '@/lib/icons';
 import { AuthObject, DataFilters, DataListProps } from '@/types/data-pagination';
+import LinkDepartmentsToInstitution from '@/pages/institution/departments/partials/LinkDepartmentsToInstitution.vue';
 
-const { createInstitutionDepartmentColumns, breadcrumbs, linkDepartmentsToInstitution } = useInstitutionDepartments();
+const { createInstitutionDepartmentColumns, breadcrumbs, openInstitutionDepartmentsModal } = useInstitutionDepartments();
 
 interface Props {
     departments: DataListProps;
@@ -17,6 +18,7 @@ interface Props {
     filters: DataFilters;
     auth: AuthObject;
     errors: object;
+    allInstitutionDepartmentIds: Array<string | undefined | null> | null;
 }
 
 const props = defineProps<Props>();
@@ -40,10 +42,11 @@ const can = props?.auth?.can;
                     class="rounded-full"
                     :icon-variant="ColorVariant.white"
                     :variant="ColorVariant.primary"
-                    @click="() => linkDepartmentsToInstitution()"
+                    @click="() => openInstitutionDepartmentsModal(allInstitutionDepartmentIds)"
                     :title="$t('trans.link_department')"
                 />
             </template>
         </DataTable>
+        <LinkDepartmentsToInstitution />
     </PageContainer>
 </template>

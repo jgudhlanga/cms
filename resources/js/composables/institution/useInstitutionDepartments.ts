@@ -1,5 +1,4 @@
 import { useDataTables } from '@/composables/core/useDataTables';
-import { useSharedFormSchema } from '@/composables/core/useSharedFormSchema';
 import { forbiddenAlert, openModal } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
 import { buildFormOptions } from '@/lib/forms';
@@ -11,7 +10,7 @@ import { InertiaForm, usePage } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 
 export const useInstitutionDepartments = () => {
-    const { moreActionButton, onDelete, onForceDelete, onRestore, onView, onEdit, textLink } = useDataTables();
+    const { moreActionButton, onDelete, onForceDelete, onRestore, onView, textLink } = useDataTables();
     const { props } = usePage();
     const { can } = props?.auth as Auth;
     const createInstitutionDepartmentColumns = () => {
@@ -35,7 +34,6 @@ export const useInstitutionDepartments = () => {
                     const name = trans_choice('trans.department', 1);
                     return moreActionButton(!!row.original?.attributes?.deletedAt, [
                         { key: 'view', action: () => viewDepartment(id) },
-                        { key: 'edit', action: () => editDepartment(id) },
                         {
                             key: 'archive',
                             action: () => archiveDepartment(route('institution-departments.destroy', id), name),
@@ -63,36 +61,24 @@ export const useInstitutionDepartments = () => {
         { transChoiceKey: 'department' },
     ];
 
-    const saveInstitutionDepartment = (form: InertiaForm<any>, institutionDepartment?: InstitutionDepartment) => {
-        const { nameSchema } = useSharedFormSchema();
+    const syncInstitutionDepartments = (form: InertiaForm<any>) => {
         try {
-            nameSchema().parse(form);
             const success = trans('trans.item_saved', { item: trans_choice('trans.department', 1) });
             const error = trans('trans.item_save_failure', { item: trans_choice('trans.department', 1) });
-            if (institutionDepartment) {
-                const id = getIdParams(institutionDepartment.id?.toString() ?? '');
-                form.put(route('institution-departments.update', id), buildFormOptions(form, success, error));
-            } else {
-                form.post(route('institution-departments.store'), buildFormOptions(form, success, error));
-            }
+            form.post(route('institution-departments.sync'), buildFormOptions(form, success, error, APP_MODULE_KEYS.institution_departments));
         } catch (error: any) {
             form.setError(error.format());
         }
     };
 
-    const linkDepartmentsToInstitution = () => {
+    const openInstitutionDepartmentsModal = (institutionDepartments: Array<string | undefined | null> | null) => {
         if (!can['create:institution-departments']) return forbiddenAlert();
-        openModal({ name: APP_MODULE_KEYS.institution_departments, edit: null });
+        openModal({ name: APP_MODULE_KEYS.institution_departments, edit: institutionDepartments });
     };
 
     const viewDepartment = (institutionDepartment: string) => {
         const id = getIdParams(institutionDepartment);
         onView(can['view:institution-departments'], route('institution-departments.show', id));
-    };
-
-    const editDepartment = (institutionDepartment: string) => {
-        const id = getIdParams(institutionDepartment);
-        onEdit(can['update:institution-departments'], route('institution-departments.edit', id));
     };
 
     const archiveDepartment = (institutionDepartment: string, name: string) => {
@@ -115,10 +101,9 @@ export const useInstitutionDepartments = () => {
         breadcrumbs,
         createInstitutionDepartmentColumns,
         deleteDepartment,
-        editDepartment,
-        linkDepartmentsToInstitution,
+        openInstitutionDepartmentsModal,
         restoreDepartment,
-        saveInstitutionDepartment,
+        syncInstitutionDepartments,
         viewDepartment,
     };
 };

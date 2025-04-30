@@ -21,11 +21,12 @@ class InstitutionDepartmentController extends Controller
     {
         $this->authorize('viewAny', InstitutionDepartment::class);
         $departments = InstitutionDepartmentResource::collection($this->repository->allFilter(['*'], $filters));
-
+        $allInstitutionDepartmentIds = InstitutionDepartment::all()->pluck('id');
         return Inertia::render('institution/departments/Index', [
             'departments' => $departments,
             'filters' => request()->only(['search', 'trashed']),
             'trashedCount' => $this->repository->allTrashed()->count(),
+            'allInstitutionDepartmentIds' => $allInstitutionDepartmentIds,
         ]);
     }
 
@@ -37,7 +38,6 @@ class InstitutionDepartmentController extends Controller
     public function store(InstitutionDepartmentRequest $request)
     {
         $this->authorize('create', InstitutionDepartment::class);
-        $this->repository->create(InstitutionDepartmentDto::fromInstitutionDepartmentRequest($request));
     }
 
     public function show(InstitutionDepartment $department)
@@ -56,7 +56,12 @@ class InstitutionDepartmentController extends Controller
     public function update(InstitutionDepartmentRequest $request, InstitutionDepartment $department)
     {
         $this->authorize('create', $department);
-        $this->repository->update($department, InstitutionDepartmentDto::fromInstitutionDepartmentRequest($request));
+    }
+
+    public function syncInstitutionDepartment(InstitutionDepartmentRequest $request): void
+    {
+        $this->authorize('create', InstitutionDepartment::class);
+        $this->repository->syncInstitutionDepartment(InstitutionDepartmentDto::fromInstitutionDepartmentRequest($request));
     }
 
     public function destroy(InstitutionDepartment $department)

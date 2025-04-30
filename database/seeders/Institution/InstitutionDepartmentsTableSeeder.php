@@ -6,7 +6,6 @@ use App\Enums\TenantEnum;
 use App\Models\Institution\Department;
 use App\Models\Institution\InstitutionDepartment;
 use App\Models\Tenants\Tenant;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class InstitutionDepartmentsTableSeeder extends Seeder

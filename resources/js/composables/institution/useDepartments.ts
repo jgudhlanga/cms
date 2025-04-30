@@ -1,4 +1,5 @@
 import { useDataTables } from '@/composables/core/useDataTables';
+import { useDropdowns } from '@/composables/core/useDropdowns';
 import { useSharedFormSchema } from '@/composables/core/useSharedFormSchema';
 import { forbiddenAlert, openModal } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
@@ -9,9 +10,12 @@ import { Department } from '@/types/institution';
 import type { Link } from '@/types/ui';
 import { InertiaForm, usePage } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
+import { ref } from 'vue';
 
 export const useDepartments = () => {
     const { moreActionButton, onDelete, onForceDelete, onRestore } = useDataTables();
+    const isLoading = ref(false);
+    const departments = ref<Department[]>([]);
     const createDepartmentColumns = () => {
         const { props } = usePage();
         const { can } = props?.auth as Auth;
@@ -75,10 +79,21 @@ export const useDepartments = () => {
         openModal({ name: APP_MODULE_KEYS.departments, edit: department });
     };
 
+    const listDepartments = async (search?: string) => {
+        const { data, fetchData } = useDropdowns();
+        isLoading.value = true;
+        await fetchData({ url: 'v1/departments?page_size=100', search, transChoiceKey: 'trans.department' });
+        isLoading.value = false;
+        departments.value = data.value;
+    };
+
     return {
         createDepartmentColumns,
         breadcrumbs,
         onOpenModal,
         saveDepartment,
+        isLoading,
+        departments,
+        listDepartments,
     };
 };

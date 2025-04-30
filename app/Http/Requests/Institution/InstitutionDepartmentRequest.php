@@ -4,6 +4,9 @@ namespace App\Http\Requests\Institution;
 
 use Illuminate\Foundation\Http\FormRequest;
 
+/**
+ * @property mixed $department_ids
+ */
 class InstitutionDepartmentRequest extends FormRequest
 {
 
@@ -12,11 +15,21 @@ class InstitutionDepartmentRequest extends FormRequest
         return true;
     }
 
+    public function prepareForValidation(): void
+    {
+        if (is_string($this->department_ids)) {
+            $this->merge([
+                'department_ids' => json_decode($this->department_ids, true),
+            ]);
+        }
+    }
+
 
     public function rules(): array
     {
         return [
-            'department_id' => ['required', 'exists:departments,id'],
+            'department_ids' => ['nullable', 'array'],
+            'department_ids.*' => ['integer', 'exists:departments,id'],
         ];
     }
 }
