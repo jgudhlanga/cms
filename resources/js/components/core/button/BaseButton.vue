@@ -26,7 +26,7 @@ const extendedVariants: Record<ColorVariant, string> = {
 	[ColorVariant.fuchsia_outline]: 'bg-transparent border-[1px] border-purple-500 text-purple-500 hover:bg-purple-300 hover:border-purple-300',
 	[ColorVariant.info]: 'bg-blue-500 text-white hover:bg-blue-600',
 	[ColorVariant.info_outline]: 'bg-transparent border-[1px] border-blue-500 text-blue-500 hover:bg-blue-300 hover:border-blue-300',
-	[ColorVariant.primary]: 'bg-persian-600 text-white hover:bg-persian-600 border border-transparent',
+	[ColorVariant.primary]: 'bg-persian-600 text-white hover:bg-persian-700 border border-transparent',
 	[ColorVariant.primary_outline]: 'bg-transparent border-[1px] border-persian-600 text-persian-600 hover:bg-persian-200 hover:border-persian-200',
 	[ColorVariant.shade]: 'bg-accent text-accent-foreground hover:bg-secondary hover:text-accent-foreground',
 	[ColorVariant.shade_outline]: 'bg-transparent border-[1px] border-accent text-accent-foreground hover:bg-secondary hover:border-secondary',

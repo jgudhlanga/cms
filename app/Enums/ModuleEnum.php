@@ -11,7 +11,7 @@ enum ModuleEnum: string
     case DASHBOARDS = 'Dashboards';
     case ENROLMENTS = 'Enrolments';
     case EXAMINATIONS = 'Examinations';
-    case INSTITUTION_SETUP = 'Institution Setup';
+    case INSTITUTION = 'Institution';
     case OTHER = 'Other';
     case REPORTS = 'Reports';
     case ROOT = 'Root';
@@ -30,7 +30,7 @@ enum ModuleEnum: string
             self::DASHBOARDS => 'Dashboards',
             self::ENROLMENTS => 'Enrolments',
             self::EXAMINATIONS => 'Examinations',
-            self::INSTITUTION_SETUP => 'Institution Setup',
+            self::INSTITUTION => 'Institution',
             self::OTHER => 'Other',
             self::REPORTS => 'Reports',
             self::ROOT => 'Root',

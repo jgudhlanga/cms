@@ -15,7 +15,8 @@ export const useDropdowns = () => {
 
 	const fetchData = async ({ url, search, transKey, transChoiceKey }: DropdownFetchData) => {
 		try {
-			const response = await HttpService.get(`${url}?search=${search || ''}`, false);
+            const appendSearchUrl = url.includes('?') ? (search ? `&search=${search}` : '') : search ? `?search=${search}` : '';
+            const response = await HttpService.get(`${url}${appendSearchUrl}`, false);
 			data.value = response.data;
 		} catch (error: any) {
 			const transValue = transKey ? trans(transKey) : transChoiceKey ? trans_choice(transChoiceKey, 2) : '';

@@ -21,7 +21,7 @@ class LevelController extends Controller
     {
         $this->authorize('viewSettings');
         $levels = LevelResource::collection($this->repository->allFilter(['*'], $filters));
-        return Inertia::render('institution/levels/Index', [
+        return Inertia::render('institution/setup/levels/Index', [
             'levels' => $levels,
             'filters' => request()->only(['search', 'trashed']),
             'trashedCount' => $this->repository->allTrashed()->count(),

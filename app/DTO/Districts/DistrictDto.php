@@ -7,7 +7,8 @@ use App\Http\Requests\Districts\DistrictRequest;
 readonly class DistrictDto
 {
     public function __construct(
-        public string   $title,
+        public string   $name,
+        public ? int $province_id,
         public ? string $description,
     )
     {
@@ -17,7 +18,8 @@ readonly class DistrictDto
     public static function fromDistrictRequest(DistrictRequest $request): DistrictDto
     {
         return new self(
-            title: $request->title,
+            name: $request->name,
+            province_id: $request->province_id,
             description: $request->description,
         );
     }

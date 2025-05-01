@@ -43,7 +43,6 @@ enum PermissionEnum: string
     case EXPORT_PERMISSIONS = 'export:permissions';
     case VIEW_PERMISSIONS_AUDIT_TRAIL = 'viewAuditTrail:permissions';
 
-
     /** COMMUNICATIONS */
     case VIEW_ANY_COMMUNICATIONS = 'viewAny:communications';
     case VIEW_COMMUNICATION = 'view:communications';
@@ -120,6 +119,18 @@ enum PermissionEnum: string
     case IMPORT_INSTITUTION_SETTINGS = 'import:institution-settings';
     case EXPORT_INSTITUTION_SETTINGS = 'export:institution-settings';
     case VIEW_INSTITUTION_SETTINGS_AUDIT_TRAIL = 'viewAuditTrail:institution-settings';
+
+    /** INSTITUTION DEPARTMENTS */
+    case VIEW_ANY_INSTITUTION_DEPARTMENTS = 'viewAny:institution-departments';
+    case VIEW_INSTITUTION_DEPARTMENTS = 'view:institution-departments';
+    case CREATE_INSTITUTION_DEPARTMENTS = 'create:institution-departments';
+    case UPDATE_INSTITUTION_DEPARTMENTS = 'update:institution-departments';
+    case DELETE_INSTITUTION_DEPARTMENTS = 'delete:institution-departments';
+    case RESTORE_INSTITUTION_DEPARTMENTS = 'restore:institution-departments';
+    case FORCE_DELETE_INSTITUTION_DEPARTMENTS = 'forceDelete:institution-departments';
+    case IMPORT_INSTITUTION_DEPARTMENTS = 'import:institution-departments';
+    case EXPORT_INSTITUTION_DEPARTMENTS = 'export:institution-departments';
+    case VIEW_INSTITUTION_DEPARTMENTS_AUDIT_TRAIL = 'viewAuditTrail:institution-departments';
 
     /** ROOT / GLOBAL USER */
     case ROOT_MANAGE = 'root:manage';
@@ -272,6 +283,18 @@ enum PermissionEnum: string
             self::IMPORT_INSTITUTION_SETTINGS => 'import:institution-settings',
             self::EXPORT_INSTITUTION_SETTINGS => 'export:institution-settings',
             self::VIEW_INSTITUTION_SETTINGS_AUDIT_TRAIL => 'viewAuditTrail:institution-settings',
+
+            /** INSTITUTION DEPARTMENTS */
+            self::VIEW_ANY_INSTITUTION_DEPARTMENTS => 'viewAny:institution-departments',
+            self::VIEW_INSTITUTION_DEPARTMENTS => 'view:institution-departments',
+            self::CREATE_INSTITUTION_DEPARTMENTS => 'create:institution-departments',
+            self::UPDATE_INSTITUTION_DEPARTMENTS => 'update:institution-departments',
+            self::DELETE_INSTITUTION_DEPARTMENTS => 'delete:institution-departments',
+            self::RESTORE_INSTITUTION_DEPARTMENTS => 'restore:institution-departments',
+            self::FORCE_DELETE_INSTITUTION_DEPARTMENTS => 'forceDelete:institution-departments',
+            self::IMPORT_INSTITUTION_DEPARTMENTS => 'import:institution-departments',
+            self::EXPORT_INSTITUTION_DEPARTMENTS => 'export:institution-departments',
+            self::VIEW_INSTITUTION_DEPARTMENTS_AUDIT_TRAIL => 'viewAuditTrail:institution-departments',
             /** ROOT */
             self::ROOT_MANAGE => 'root:manage',
             self::MANAGE_OWN_TENANT_DATA => 'manageOwnData:tenants',

@@ -40,7 +40,7 @@ const { defaultAvatarImage } = useDefaults();
 						size="lg"
 						class="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
 					>
-						<Avatar class="h-8 w-8 rounded-lg">
+						<Avatar class="size-6 rounded-lg">
 							<AvatarImage :src="user.attributes.avatar ?? defaultAvatarImage"
 							             :alt="user.attributes.name" />
 							<AvatarFallback class="rounded-lg"> {{ getInitials(user.attributes.name) }}</AvatarFallback>

@@ -5,6 +5,7 @@ export interface BreadcrumbItemInterface {
 	title?: any;
 	href?: any;
 	transChoiceKey?: any;
+	transChoiceKeyIndex?: number;
 	transKey?: any;
 }
 
@@ -12,6 +13,7 @@ export interface MenuItemInterface {
 	groupLabel?: string;
 	title?: string;
 	transChoiceKey?: string;
+	transChoiceKeyIndex?: number;
 	transKey?: string;
 	url?: string;
 	icon?: Component;
@@ -36,6 +38,7 @@ export type BreadcrumbItemType = BreadcrumbItem;
 
 export type Link = {
 	transChoiceKey?: string;
+    transChoiceKeyIndex?: number;
 	transKey?: string;
 	url?: string;
 	href?: string;

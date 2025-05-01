@@ -25,7 +25,7 @@ export const useGrades = () => {
                 meta: { align: 'right' },
                 cell: ({ row }: { row: { original: Grade } }) => {
                     const id = getIdParams(row.original.id?.toString() ?? '');
-                    const name = trans_choice('trans.name', 1);
+                    const name = trans_choice('trans.grade', 1);
                     return moreActionButton(!!row.original?.attributes?.deletedAt, [
                         { key: 'edit', action: () => onOpenModal(can['update:institution-settings'], row.original) },
                         {
