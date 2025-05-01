@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import PageContainer from '@/components/core/page/PageContainer.vue';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import BaseTabs from '@/components/core/tabs/BaseTabs.vue';
 import AboutUs from '@/pages/institution/departments/partials/view/AboutUs.vue';
 import Announcements from '@/pages/institution/departments/partials/view/Announcements.vue';
 import Calendar from '@/pages/institution/departments/partials/view/Calendar.vue';
@@ -14,7 +14,7 @@ import { InstitutionDepartment } from '@/types/institution';
 import type { Link } from '@/types/ui';
 import { CustomTab } from '@/types/utils';
 import { Head } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { ref, h } from 'vue';
 
 interface Props {
     department: InstitutionDepartment;
@@ -32,7 +32,7 @@ const breadcrumbs: Array<Link> = [
 
 const defaultValue = ref('about_us');
 const tabs: Array<CustomTab> = [
-    { label: 'About Us', value: 'about_us', component: AboutUs },
+    { label: 'About Us', value: 'about_us', component: h(AboutUs) },
     { label: 'Courses', value: 'courses', component: Courses },
     { label: 'Levels', value: 'levels', component: Levels },
     { label: 'Staff', value: 'staff', component: Staff },
@@ -46,15 +46,6 @@ const tabs: Array<CustomTab> = [
 <template>
     <Head :title="$tChoice('trans.department', 2)" />
     <PageContainer :breadcrumbs="breadcrumbs">
-        <Tabs :default-value="defaultValue">
-            <TabsList class="w-full">
-                <TabsTrigger v-for="tab in tabs" :key="'tab_' + tab.value" :value="tab.value" class="text-xs font-light uppercase">
-                    {{ tab.label }}
-                </TabsTrigger>
-            </TabsList>
-            <TabsContent v-for="tab in tabs" :value="tab.value" :key="'content_' + tab.value">
-                <component :is="tab.component" />
-            </TabsContent>
-        </Tabs>
+        <BaseTabs :tabs="tabs" :default-value="defaultValue" />
     </PageContainer>
 </template>
