@@ -14,7 +14,7 @@ defineProps<Props>();
     <Tabs :default-value="defaultValue">
         <TabsList class="w-full">
             <TabsTrigger v-for="tab in tabs" :key="'tab_' + tab.value" :value="tab.value" class="text-xs font-light uppercase">
-                {{ tab.label }}
+                {{ tab?.transLabel!() }}
             </TabsTrigger>
         </TabsList>
         <TabsContent v-for="tab in tabs" :value="tab.value" :key="'content_' + tab.value">

@@ -185,5 +185,12 @@ return [
     "manage" => "Manage",
     "add_department" => "Add department|Add departments",
     "link_department" => "Link institution departments",
+    "about" => "About",
+    "staff" => "Staff",
+    "provisional" => "Provisional",
+    "provisional_class" => "Provisional class|Provisional classes",
+    "class" => "Class|Classes",
+    "calendar" => "Calendar|Calendars",
+    "announcement" => "Announcement|Announcements",
 ];
 
