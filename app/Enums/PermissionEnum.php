@@ -87,12 +87,12 @@ enum PermissionEnum: string
 
     /** USERS */
     case VIEW_ANY_USERS = 'viewAny:users';
-    case VIEW_USER = 'view:users';
-    case CREATE_USER = 'create:users';
-    case UPDATE_USER = 'update:users';
-    case DELETE_USER = 'delete:users';
-    case RESTORE_USER = 'restore:users';
-    case FORCE_DELETE_USER = 'forceDelete:users';
+    case VIEW_USERS = 'view:users';
+    case CREATE_USERS = 'create:users';
+    case UPDATE_USERS = 'update:users';
+    case DELETE_USERS = 'delete:users';
+    case RESTORE_USERS = 'restore:users';
+    case FORCE_DELETE_USERS = 'forceDelete:users';
     case IMPORT_USERS = 'import:users';
     case EXPORT_USERS = 'export:users';
     case CRUD_USERS_SETTINGS = 'crud-settings:users';
@@ -252,12 +252,12 @@ enum PermissionEnum: string
 
             /** USERS */
             self::VIEW_ANY_USERS => 'viewAny:users',
-            self::VIEW_USER => 'view:users',
-            self::CREATE_USER => 'create:users',
-            self::UPDATE_USER => 'update:users',
-            self::DELETE_USER => 'delete:users',
-            self::RESTORE_USER => 'restore:users',
-            self::FORCE_DELETE_USER => 'forceDelete:users',
+            self::VIEW_USERS => 'view:users',
+            self::CREATE_USERS => 'create:users',
+            self::UPDATE_USERS => 'update:users',
+            self::DELETE_USERS => 'delete:users',
+            self::RESTORE_USERS => 'restore:users',
+            self::FORCE_DELETE_USERS => 'forceDelete:users',
             self::IMPORT_USERS => 'import:users',
             self::EXPORT_USERS => 'export:users',
             self::CRUD_USERS_SETTINGS => 'crud-settings:users',

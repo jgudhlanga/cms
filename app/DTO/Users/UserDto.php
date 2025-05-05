@@ -10,8 +10,7 @@ class UserDto
 	public function __construct(
 		public readonly string  $name,
 		public readonly string  $email,
-		public readonly ?string $password,
-		public readonly mixed   $meta,
+		public readonly ?string $password
 	)
 	{
 	}
@@ -22,7 +21,6 @@ class UserDto
 			name: $request->name,
 			email: $request->email,
 			password: $request->password,
-			meta: null,
 		);
 	}
 
@@ -32,7 +30,6 @@ class UserDto
 			name: $request->name,
 			email: $request->email,
 			password: $request->password,
-			meta: null,
 		);
 	}
 }

@@ -58,6 +58,8 @@ use App\Repositories\Statuses\interface\IStatusRepository;
 use App\Repositories\Statuses\StatusRepository;
 use App\Repositories\Titles\interface\ITitleRepository;
 use App\Repositories\Titles\TitleRepository;
+use App\Repositories\Users\interface\IUserRepository;
+use App\Repositories\Users\UserRepository;
 use Illuminate\Support\ServiceProvider;
 
 class RepositoryServiceProvider extends ServiceProvider
@@ -74,6 +76,7 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->paymentsRepositories();
         $this->sharedRepositories();
         $this->institutionRepositories();
+        $this->userRepositories();
     }
 
     public function boot(): void
@@ -127,6 +130,11 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(IModeOfStudyRepository::class, ModeOfStudyRepository::class);
         $this->app->bind(ISubjectRepository::class, SubjectRepository::class);
         $this->app->bind(IInstitutionDepartmentRepository::class, InstitutionDepartmentRepository::class);
+    }
+
+    public function userRepositories(): void
+    {
+        $this->app->bind(IUserRepository::class, UserRepository::class);
     }
 
 }

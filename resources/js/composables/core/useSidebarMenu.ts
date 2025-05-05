@@ -1,13 +1,13 @@
+import AppLogo from '@/components/core/image/AppLogo.vue';
+import { useUtils } from '@/composables/core/useUtils';
+import { IconName } from '@/enums/icons';
+import { icons } from '@/lib/icons';
 import { PageProps } from '@/types';
 import { TenantInterface } from '@/types/tenants';
-import AppLogo from '@/components/core/image/AppLogo.vue';
 import { MenuItemInterface } from '@/types/ui';
 import { usePage } from '@inertiajs/vue3';
-import { markRaw } from 'vue';
-import { icons } from '@/lib/icons';
-import { IconName } from '@/enums/icons';
-import { useUtils } from '@/composables/core/useUtils';
 import { trans, trans_choice } from 'laravel-vue-i18n';
+import { markRaw } from 'vue';
 
 export function useSidebarMenu() {
     const { props } = usePage<PageProps>();
@@ -20,8 +20,8 @@ export function useSidebarMenu() {
             attributes: {
                 name: 'Harare Poly',
                 logo: markRaw(AppLogo),
-                bio: 'Software'
-            }
+                bio: 'Software',
+            },
         },
         {
             id: '2',
@@ -29,9 +29,9 @@ export function useSidebarMenu() {
             attributes: {
                 name: 'Penstej Systems',
                 logo: markRaw(AppLogo),
-                bio: 'Elite Software'
-            }
-        }
+                bio: 'Elite Software',
+            },
+        },
     ];
 
     const menuOptions: Array<MenuItemInterface> = [
@@ -39,60 +39,60 @@ export function useSidebarMenu() {
             transChoiceKey: 'trans.dashboard',
             icon: icons[IconName.dashboard],
             url: route('dashboard'),
-            show: isItTrue(can['view:dashboards'])
+            show: isItTrue(can['view:dashboards']),
         },
         {
             transChoiceKey: 'trans.enrolment',
             icon: icons[IconName.user_add],
             url: route('dashboard'),
-            show: isItTrue(can['view:enrolments'])
+            show: isItTrue(can['view:enrolments']),
         },
         {
             transChoiceKey: 'trans.student',
             icon: icons[IconName.user_check],
             url: route('dashboard'),
-            show: isItTrue(can['view:students'])
+            show: isItTrue(can['view:students']),
         },
         {
             transChoiceKey: 'trans.examination',
             icon: icons[IconName.book_check],
             url: route('dashboard'),
-            show: isItTrue(can['view:examinations'])
+            show: isItTrue(can['view:examinations']),
         },
         {
             transChoiceKey: 'trans.accommodation',
             icon: icons[IconName.bed],
             url: route('dashboard'),
-            show: isItTrue(can['view:accommodations'])
+            show: isItTrue(can['view:accommodations']),
         },
         {
             transChoiceKey: 'trans.communication',
             url: '#',
             icon: icons[IconName.person_chat],
-            show: isItTrue(can['view:communications'])
+            show: isItTrue(can['view:communication']),
         },
         {
             transChoiceKey: 'trans.report',
             url: '#',
             icon: icons[IconName.report],
-            show: isItTrue(can['view:reports'])
+            show: isItTrue(can['view:report']),
         },
         {
             transChoiceKey: 'trans.institution',
             transChoiceKeyIndex: 1,
             url: route('institution.index'),
             icon: icons[IconName.school],
-            show: isItTrue(can['view:institution-settings'])
+            show: isItTrue(can['view:institution-settings']),
         },
         {
             transKey: 'trans.settings',
             url: route('settings.index'),
             icon: icons[IconName.cogs],
-            show: isItTrue(can['view:settings'])
+            show: isItTrue(can['view:settings']),
         },
         {
             transChoiceKey: 'trans.user',
-            url: '#',
+            url: route('users.index'),
             icon: icons[IconName.users],
             show: isItTrue(can['view:users']),
         },
