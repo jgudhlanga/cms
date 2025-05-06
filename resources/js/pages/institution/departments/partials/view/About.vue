@@ -3,5 +3,5 @@
 </script>
 
 <template>
-    About Us
+    Department info
 </template>

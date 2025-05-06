@@ -3,5 +3,5 @@
 </script>
 
 <template>
-    Provisional Classes
+    Applications
 </template>

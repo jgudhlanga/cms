@@ -192,5 +192,6 @@ return [
     "class" => "Class|Classes",
     "calendar" => "Calendar|Calendars",
     "announcement" => "Announcement|Announcements",
+    "application" => "Application|Applications",
 ];
 
