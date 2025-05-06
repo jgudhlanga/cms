@@ -37,6 +37,7 @@ class CourseRepository extends BaseRepository implements ICourseRepository
         return $this->course
             ->select($columns)
             ->filter($filters)
+            ->orderBy('description')
             ->orderBy('name')
             ->orderBy('deleted_at')
             ->paginate()

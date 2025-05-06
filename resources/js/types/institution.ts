@@ -1,5 +1,3 @@
-import { SelectOption } from '@/types/utils';
-
 export type Course = {
     type?: string;
     id?: string;
