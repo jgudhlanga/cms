@@ -193,5 +193,6 @@ return [
     "calendar" => "Calendar|Calendars",
     "announcement" => "Announcement|Announcements",
     "application" => "Application|Applications",
+    "application_description" => "Application rules and configurations"
 ];
 
