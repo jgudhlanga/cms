@@ -1,7 +1,6 @@
 <script setup lang="ts">
-
 </script>
 
 <template>
-    Provisional Classes
+	<div>Show user</div>
 </template>

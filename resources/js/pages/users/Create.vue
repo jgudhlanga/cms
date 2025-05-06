@@ -1,7 +1,6 @@
 <script setup lang="ts">
-
 </script>
 
 <template>
-    Courses Here
+	<div>Create user</div>
 </template>

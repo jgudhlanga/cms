@@ -18,8 +18,8 @@ const { navigateTo } = useUtils();
     <Head :title="$tChoice('trans.institution', 1)" />
     <PageContainer :breadcrumbs="breadcrumbs">
         <HeadingSmall :title="$t('trans.administration')" :description="$t('trans.administration_description')" />
-        <SettingsButton :title="$t('trans.manage')" />
+        <SettingsButton class="mt-2" :title="$t('trans.manage')" />
         <HeadingSmall :title="$tChoice('trans.department', 2)" :description="$t('trans.department_description')" class="mt-6" />
-        <SettingsButton @click="navigateTo(route('institution-departments.index'))" :title="$t('trans.manage')" />
+        <SettingsButton class="mt-2" @click="navigateTo(route('institution-departments.index'))" :title="$t('trans.manage')" />
     </PageContainer>
 </template>
