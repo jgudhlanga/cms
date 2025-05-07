@@ -72,28 +72,28 @@ export const useInstitutionDepartments = () => {
     };
 
     const openInstitutionDepartmentsModal = (institutionDepartments: Array<string | undefined | null> | null) => {
-        if (!can['create:institution-departments']) return forbiddenAlert();
+        if (!can['create:department-metadata']) return forbiddenAlert();
         openModal({ name: APP_MODULE_KEYS.institution_departments, edit: institutionDepartments });
     };
 
     const viewDepartment = (institutionDepartment: string) => {
         const id = getIdParams(institutionDepartment);
-        onView(can['view:institution-departments'], route('institution-departments.show', id));
+        onView(can['view:department-metadata'], route('institution-departments.show', id));
     };
 
     const archiveDepartment = (institutionDepartment: string, name: string) => {
         const id = getIdParams(institutionDepartment);
-        onDelete(can['delete:institution-departments'], route('institution-departments.destroy', id), name);
+        onDelete(can['delete:department-metadata'], route('institution-departments.destroy', id), name);
     };
 
     const restoreDepartment = (institutionDepartment: string, name: string) => {
         const id = getIdParams(institutionDepartment);
-        onRestore(can['restore:institution-departments'], route('institution-departments.restore', id), name);
+        onRestore(can['restore:department-metadata'], route('institution-departments.restore', id), name);
     };
 
     const deleteDepartment = (institutionDepartment: string, name: string) => {
         const id = getIdParams(institutionDepartment);
-        onForceDelete(can['forceDelete:institution-settings'], route('institution-departments.force-delete', id), name);
+        onForceDelete(can['forceDelete:department-metadata'], route('institution-departments.force-delete', id), name);
     };
 
     return {

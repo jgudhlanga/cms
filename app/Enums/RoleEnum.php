@@ -4,16 +4,16 @@ namespace App\Enums;
 
 enum RoleEnum: string
 {
-    case ACCOUNTANT = 'Accountant';
-    case AUDITOR = 'Auditor';
+    case REGISTRAR = 'Registrar';
+    case SELECTION_OFFICER = 'Selection officer';
     case SUPER_ADMINISTRATOR = 'Super Administrator';
 
     // extra helper to allow for greater customization of displayed values, without disclosing the name/value data directly
     public function label(): string
     {
         return match ($this) {
-            self::ACCOUNTANT => 'Accountant',
-            self::AUDITOR => 'Auditor',
+            self::REGISTRAR => 'Registrar',
+            self::SELECTION_OFFICER => 'Selection officer',
             self::SUPER_ADMINISTRATOR => 'Super administrator',
         };
     }

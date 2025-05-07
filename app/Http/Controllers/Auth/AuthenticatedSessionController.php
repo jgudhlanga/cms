@@ -33,10 +33,6 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        /* $user = @Auth::user();
-        $token = $user->createToken($user->id)->plainTextToken;
-        $request->session()->put('access_token', $token); */
-
         return redirect()->intended(route('dashboard', absolute: false));
     }
 
@@ -50,7 +46,7 @@ class AuthenticatedSessionController extends Controller
         $request->session()->invalidate();
 
         $request->session()->regenerateToken();
-
+        $request->user()->tokens()->delete();
         return redirect()->intended(route('home'));
     }
 }

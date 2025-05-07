@@ -7,8 +7,8 @@ import DataTable from '@/components/core/table/DataTable.vue';
 import { useInstitutionDepartments } from '@/composables/institution/useInstitutionDepartments';
 import { ColorVariant } from '@/enums/colors';
 import { IconName } from '@/lib/icons';
-import { AuthObject, DataFilters, DataListProps } from '@/types/data-pagination';
 import LinkDepartmentsToInstitution from '@/pages/institution/departments/partials/LinkDepartmentsToInstitution.vue';
+import { AuthObject, DataFilters, DataListProps } from '@/types/data-pagination';
 
 const { createInstitutionDepartmentColumns, breadcrumbs, openInstitutionDepartmentsModal } = useInstitutionDepartments();
 
@@ -36,7 +36,7 @@ const can = props?.auth?.can;
             :pagination="{ ...departments.links, ...departments.meta }"
             :columns="createInstitutionDepartmentColumns()"
         >
-            <template #head-right v-if="can['create:institution-departments']">
+            <template #head-right v-if="can['create:department-metadata']">
                 <GenericButton
                     :icon="IconName.add"
                     class="rounded-full"

@@ -121,16 +121,16 @@ enum PermissionEnum: string
     case VIEW_INSTITUTION_SETTINGS_AUDIT_TRAIL = 'viewAuditTrail:institution-settings';
 
     /** INSTITUTION DEPARTMENTS */
-    case VIEW_ANY_INSTITUTION_DEPARTMENTS = 'viewAny:institution-departments';
-    case VIEW_INSTITUTION_DEPARTMENTS = 'view:institution-departments';
-    case CREATE_INSTITUTION_DEPARTMENTS = 'create:institution-departments';
-    case UPDATE_INSTITUTION_DEPARTMENTS = 'update:institution-departments';
-    case DELETE_INSTITUTION_DEPARTMENTS = 'delete:institution-departments';
-    case RESTORE_INSTITUTION_DEPARTMENTS = 'restore:institution-departments';
-    case FORCE_DELETE_INSTITUTION_DEPARTMENTS = 'forceDelete:institution-departments';
-    case IMPORT_INSTITUTION_DEPARTMENTS = 'import:institution-departments';
-    case EXPORT_INSTITUTION_DEPARTMENTS = 'export:institution-departments';
-    case VIEW_INSTITUTION_DEPARTMENTS_AUDIT_TRAIL = 'viewAuditTrail:institution-departments';
+    case VIEW_ANY_DEPARTMENT_METADATA = 'viewAny:department-metadata';
+    case VIEW_DEPARTMENT_METADATA = 'view:department-metadata';
+    case CREATE_DEPARTMENT_METADATA = 'create:department-metadata';
+    case UPDATE_DEPARTMENT_METADATA = 'update:department-metadata';
+    case DELETE_DEPARTMENT_METADATA = 'delete:department-metadata';
+    case RESTORE_DEPARTMENT_METADATA = 'restore:department-metadata';
+    case FORCE_DELETE_DEPARTMENT_METADATA = 'forceDelete:department-metadata';
+    case IMPORT_DEPARTMENT_METADATA = 'import:department-metadata';
+    case EXPORT_DEPARTMENT_METADATA = 'export:department-metadata';
+    case VIEW_DEPARTMENT_METADATA_AUDIT_TRAIL = 'viewAuditTrail:department-metadata';
 
     /** ROOT / GLOBAL USER */
     case ROOT_MANAGE = 'root:manage';
@@ -285,16 +285,16 @@ enum PermissionEnum: string
             self::VIEW_INSTITUTION_SETTINGS_AUDIT_TRAIL => 'viewAuditTrail:institution-settings',
 
             /** INSTITUTION DEPARTMENTS */
-            self::VIEW_ANY_INSTITUTION_DEPARTMENTS => 'viewAny:institution-departments',
-            self::VIEW_INSTITUTION_DEPARTMENTS => 'view:institution-departments',
-            self::CREATE_INSTITUTION_DEPARTMENTS => 'create:institution-departments',
-            self::UPDATE_INSTITUTION_DEPARTMENTS => 'update:institution-departments',
-            self::DELETE_INSTITUTION_DEPARTMENTS => 'delete:institution-departments',
-            self::RESTORE_INSTITUTION_DEPARTMENTS => 'restore:institution-departments',
-            self::FORCE_DELETE_INSTITUTION_DEPARTMENTS => 'forceDelete:institution-departments',
-            self::IMPORT_INSTITUTION_DEPARTMENTS => 'import:institution-departments',
-            self::EXPORT_INSTITUTION_DEPARTMENTS => 'export:institution-departments',
-            self::VIEW_INSTITUTION_DEPARTMENTS_AUDIT_TRAIL => 'viewAuditTrail:institution-departments',
+            self::VIEW_ANY_DEPARTMENT_METADATA => 'viewAny:department-metadata',
+            self::VIEW_DEPARTMENT_METADATA => 'view:department-metadata',
+            self::CREATE_DEPARTMENT_METADATA => 'create:department-metadata',
+            self::UPDATE_DEPARTMENT_METADATA => 'update:department-metadata',
+            self::DELETE_DEPARTMENT_METADATA => 'delete:department-metadata',
+            self::RESTORE_DEPARTMENT_METADATA => 'restore:department-metadata',
+            self::FORCE_DELETE_DEPARTMENT_METADATA => 'forceDelete:department-metadata',
+            self::IMPORT_DEPARTMENT_METADATA => 'import:department-metadata',
+            self::EXPORT_DEPARTMENT_METADATA => 'export:department-metadata',
+            self::VIEW_DEPARTMENT_METADATA_AUDIT_TRAIL => 'viewAuditTrail:department-metadata',
             /** ROOT */
             self::ROOT_MANAGE => 'root:manage',
             self::MANAGE_OWN_TENANT_DATA => 'manageOwnData:tenants',
