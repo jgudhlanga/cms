@@ -13,7 +13,7 @@ return new class extends Migration {
         Schema::create('department_levels', function (Blueprint $table) {
             $table->id();
             $table->foreignId('tenant_id')->index()->constrained();
-            $table->foreignId('department_id')->constrained();
+            $table->foreignId('institution_department_id')->constrained();
             $table->foreignId('level_id')->constrained();
             $table->timestamps();
             $table->softDeletes();

@@ -25,15 +25,12 @@ class UserResource extends JsonResource
 				'email' => $this->email,
 				'avatar' => $this->avatar,
 				'tenantId' => $this->tenant_id,
-                //'token' => $request->session()->get('access_token', null),
                 $this->mergeWhen($request->routeIs('users.*'), [
                     'createdAt' => $this->created_at,
                     'updatedAt' => $this->updated_at,
                     'deletedAt' => $this->deleted_at,
                 ]),
-            ],
-            'relationships' => [
-            ],
+            ]
         ];
     }
 }

@@ -132,6 +132,8 @@ export type DepartmentLevel = {
     id?: string | number;
     attributes: {
         departmentId: string | number;
+        department: string;
+        levelId: string | number;
         level: string;
         description?: string;
         createdAt?: string;

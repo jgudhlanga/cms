@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Policies\Institution\DepartmentMetaDataPolicy;
 use App\Policies\Settings\InstitutionSetupPolicy;
 use App\Policies\Settings\SettingPolicy;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -26,6 +27,7 @@ class AppServiceProvider extends ServiceProvider
         JsonResource::withoutWrapping();
         $this->registerSettingsPolicies();
         $this->registerInstitutionSettingsPolicies();
+        $this->registerDepartmentMetaDataPolicies();
     }
 
     private function registerSettingsPolicies(): void
@@ -50,5 +52,18 @@ class AppServiceProvider extends ServiceProvider
         Gate::define('forceDeleteInstitutionSettings', [InstitutionSetupPolicy::class, 'forceDeleteInstitutionSettings']);
         Gate::define('importInstitutionSettings', [InstitutionSetupPolicy::class, 'importInstitutionSettings']);
         Gate::define('exportInstitutionSettings', [InstitutionSetupPolicy::class, 'exportInstitutionSettings']);
+    }
+
+    private function registerDepartmentMetaDataPolicies(): void
+    {
+        Gate::define('viewAnyDepartmentMetaData', [DepartmentMetaDataPolicy::class, 'viewAnyDepartmentMetaData']);
+        Gate::define('viewDepartmentMetaData', [DepartmentMetaDataPolicy::class, 'viewDepartmentMetaData']);
+        Gate::define('createDepartmentMetaData', [DepartmentMetaDataPolicy::class, 'createDepartmentMetaData']);
+        Gate::define('updateDepartmentMetaData', [DepartmentMetaDataPolicy::class, 'updateDepartmentMetaData']);
+        Gate::define('deleteIDepartmentMetaData', [DepartmentMetaDataPolicy::class, 'deleteDepartmentMetaData']);
+        Gate::define('restoreDepartmentMetaData', [DepartmentMetaDataPolicy::class, 'restoreDepartmentMetaData']);
+        Gate::define('forceDeleteDepartmentMetaData', [DepartmentMetaDataPolicy::class, 'forceDeleteDepartmentMetaData']);
+        Gate::define('importDepartmentMetaData', [DepartmentMetaDataPolicy::class, 'importDepartmentMetaData']);
+        Gate::define('exportDepartmentMetaData', [DepartmentMetaDataPolicy::class, 'exportDepartmentMetaData']);
     }
 }

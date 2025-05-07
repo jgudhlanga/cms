@@ -19,7 +19,7 @@ class InstitutionDepartmentController extends Controller
 
     public function index(DepartmentFilter $filters)
     {
-        $this->authorize('viewAny', InstitutionDepartment::class);
+        $this->authorize('viewAnyDepartmentMetaData');
         $departments = InstitutionDepartmentResource::collection($this->repository->allFilter(['*'], $filters));
         $allInstitutionDepartmentIds = InstitutionDepartment::all()->pluck('id');
         return Inertia::render('institution/departments/Index', [
@@ -32,17 +32,17 @@ class InstitutionDepartmentController extends Controller
 
     public function create()
     {
-        $this->authorize('create', InstitutionDepartment::class);
+        $this->authorize('createDepartmentMetaData');
     }
 
     public function store(InstitutionDepartmentRequest $request)
     {
-        $this->authorize('create', InstitutionDepartment::class);
+        $this->authorize('createDepartmentMetaData');
     }
 
     public function show(InstitutionDepartment $department)
     {
-        $this->authorize('view', $department);
+        $this->authorize('viewDepartmentMetaData');
         return Inertia::render('institution/departments/Show', [
             'department' => new InstitutionDepartmentResource($department),
         ]);
@@ -55,31 +55,31 @@ class InstitutionDepartmentController extends Controller
 
     public function update(InstitutionDepartmentRequest $request, InstitutionDepartment $department)
     {
-        $this->authorize('create', $department);
+        $this->authorize('createDepartmentMetaData');
     }
 
     public function syncInstitutionDepartment(InstitutionDepartmentRequest $request): void
     {
-        $this->authorize('create', InstitutionDepartment::class);
+        $this->authorize('createDepartmentMetaData');
         $this->repository->syncInstitutionDepartment(InstitutionDepartmentDto::fromInstitutionDepartmentRequest($request));
     }
 
     public function destroy(InstitutionDepartment $department)
     {
-        $this->authorize('delete', $department);
+        $this->authorize('deleteDepartmentMetaData');
         $this->repository->delete($department);
     }
 
     public function restore(string $id)
     {
         $department = $this->repository->findTrashed($id);
-        $this->authorize('restore', $department);
+        $this->authorize('restoreDepartmentMetaData');
         $this->repository->restore($department);
     }
 
     public function forceDelete(InstitutionDepartment $department)
     {
-        $this->authorize('forceDelete', $department);
+        $this->authorize('forceDeleteDepartmentMetaData');
         $this->repository->delete($department, true);
     }
 }
