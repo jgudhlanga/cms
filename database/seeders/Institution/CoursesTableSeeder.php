@@ -11,7 +11,7 @@ class CoursesTableSeeder extends Seeder
     public function run(): void
     {
         $courses = [
-            'Applied arts' => [
+            'Applied Arts' => [
                 ['name' => CourseEnum::BEAUTY_THERAPY->value],
                 ['name' => CourseEnum::COSMETOLOGY->value],
                 ['name' => CourseEnum::HAIRDRESSING->value],
@@ -95,7 +95,7 @@ class CoursesTableSeeder extends Seeder
                 ['name' => CourseEnum::REFRIGERATION_AND_AIR_CONDITIONING->value],
                 ['name' => CourseEnum::VEHICLE_BODY_BUILDING->value],
             ],
-            'Printing and Graphic arts' => [
+            'Printing and Graphic Arts' => [
                 ['name' => CourseEnum::APPLIED_ART_AND_DESIGN->value],
                 ['name' => CourseEnum::DESIGN_FOR_PRINT->value],
                 ['name' => CourseEnum::FINE_ARTS->value],
