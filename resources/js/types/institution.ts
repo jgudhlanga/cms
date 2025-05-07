@@ -1,5 +1,3 @@
-import { SelectOption } from '@/types/utils';
-
 export type Course = {
     type?: string;
     id?: string;
@@ -127,4 +125,21 @@ export type InstitutionDepartment = {
 
 export type InstitutionDepartmentParams = {
     department_ids: Array<string | undefined | null> | null,
+};
+
+export type DepartmentLevel = {
+    type?: string;
+    id?: string | number;
+    attributes: {
+        departmentId: string | number;
+        level: string;
+        description?: string;
+        createdAt?: string;
+        updatedAt?: string;
+        deletedAt?: string;
+    };
+};
+
+export type DepartmentLevelParams = {
+    level_ids: Array<string | undefined | null> | null,
 };
