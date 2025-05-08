@@ -1,7 +1,8 @@
 <?php
 
 use App\Http\Controllers\Api\V1\AddressTypes\AddressTypeController;
-use App\Http\Controllers\Api\V1\Departments\DepartmentController;
+use App\Http\Controllers\Api\V1\Institution\DepartmentController;
+use App\Http\Controllers\Api\V1\Institution\LevelController;
 use App\Http\Controllers\Api\V1\Provinces\ProvinceController;
 use Illuminate\Support\Facades\Route;
 
@@ -13,4 +14,6 @@ Route::prefix('v1')->group(function () {
     Route::apiResource('provinces', ProvinceController::class)->names('v1.provinces');
     # ==================================== DEPARTMENTS ======================================================
     Route::apiResource('departments', DepartmentController::class)->names('v1.departments');
+    # ==================================== LEVELS ======================================================
+    Route::apiResource('levels', LevelController::class)->names('v1.levels');
 });

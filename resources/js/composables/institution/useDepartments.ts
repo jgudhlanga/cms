@@ -82,7 +82,7 @@ export const useDepartments = () => {
     const listDepartments = async (search?: string) => {
         const { data, fetchData } = useDropdowns();
         isLoading.value = true;
-        await fetchData({ url: 'v1/departments?page_size=100', search, transChoiceKey: 'trans.department' });
+        await fetchData({ url: 'api/v1/departments?page_size=100', search, transChoiceKey: 'trans.department' });
         isLoading.value = false;
         departments.value = data.value;
     };

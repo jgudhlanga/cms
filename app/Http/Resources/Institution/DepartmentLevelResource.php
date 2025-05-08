@@ -14,8 +14,7 @@ class DepartmentLevelResource extends JsonResource
             'type' => 'department-level',
             'id' => $this->resource->id,
             "attributes" => [
-                "departmentId" => $this->department_id,
-                'department' => $this->department?->name,
+                "institutionDepartmentId" => $this->institution_department_id,
                 "levelId" => $this->level_id,
                 "level" => $this->level?->name,
                 'description' => $this->resource->description,
@@ -23,7 +22,7 @@ class DepartmentLevelResource extends JsonResource
                     'createdAt' => $this->resource->created_at,
                     'updatedAt' => $this->resource->updated_at,
                     'deletedAt' => $this->resource->deleted_at,
-                ]),
+                ],),
             ]
         ];
     }

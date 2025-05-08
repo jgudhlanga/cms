@@ -25,12 +25,6 @@ class DepartmentLevel extends Model
 
     protected $fillable = ['tenant_id', 'institution_department_id', 'level_id', 'description'];
 
-
-    public function department(): BelongsTo
-    {
-        return $this->belongsTo(Department::class);
-    }
-
     public function level(): BelongsTo
     {
         return $this->belongsTo(Level::class);

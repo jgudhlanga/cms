@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api\V1\Departments;
+namespace App\Http\Controllers\Api\V1\Institution;
 
 use App\Http\Controllers\Api\V1\Utils\ApiDropdownController;
 use App\Http\Filters\Shared\SharedNameFilter;

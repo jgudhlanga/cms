@@ -145,3 +145,8 @@ export type DepartmentLevel = {
 export type DepartmentLevelParams = {
     level_ids: Array<string | undefined | null> | null,
 };
+
+export interface DepartmentMetaData {
+    about: object;
+    levels: DepartmentLevel[];
+}

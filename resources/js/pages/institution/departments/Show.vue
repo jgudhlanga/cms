@@ -1,12 +1,14 @@
 <script setup lang="ts">
+import TableLoading from '@/components/core/loader/TableLoading.vue';
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import BaseTabs from '@/components/core/tabs/BaseTabs.vue';
+import { useInstitution } from '@/composables/institution/useInstitution';
+import LinkLevelsToDepartment from '@/pages/institution/departments/partials/LinkLevelsToDepartment.vue';
 import { AuthObject } from '@/types/data-pagination';
 import { InstitutionDepartment } from '@/types/institution';
 import type { Link } from '@/types/ui';
 import { Head } from '@inertiajs/vue3';
-import { ref } from 'vue';
-import { useInstitution } from '@/composables/institution/useInstitution';
+import { onMounted, ref } from 'vue';
 
 interface Props {
     department: InstitutionDepartment;
@@ -22,13 +24,24 @@ const breadcrumbs: Array<Link> = [
     { title: department.attributes.department },
 ];
 
+const { departmentTabs, loadDepartmentMetaData, isLoading, departmentMetaData } = useInstitution();
+
+onMounted(async () => {
+    await loadDepartmentMetaData(props.department.id?.toString() ?? '');
+});
+
 const defaultValue = ref('about_us');
-const { constDepartmentTabs } = useInstitution();
 </script>
 
 <template>
     <Head :title="$tChoice('trans.department', 2)" />
     <PageContainer :breadcrumbs="breadcrumbs">
-        <BaseTabs :tabs="constDepartmentTabs" :default-value="defaultValue" />
+        <template v-if="isLoading">
+            <TableLoading />
+        </template>
+        <template v-else>
+            <BaseTabs :tabs="departmentTabs" :default-value="defaultValue" />
+        </template>
+        <LinkLevelsToDepartment :institution-department-id="department.id?.toString() ?? ''" />
     </PageContainer>
 </template>
