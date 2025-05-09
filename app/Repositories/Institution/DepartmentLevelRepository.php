@@ -3,7 +3,6 @@
 namespace App\Repositories\Institution;
 
 use App\DTO\Institution\DepartmentLevelDto;
-use App\Http\Filters\Institution\DepartmentLevelFilter;
 use App\Models\Institution\DepartmentLevel;
 use App\Models\Institution\InstitutionDepartment;
 use App\Repositories\Base\BaseRepository;
@@ -17,19 +16,9 @@ class DepartmentLevelRepository extends BaseRepository implements IDepartmentLev
     }
 
 
-    public function allFilter($columns = ['*'], DepartmentLevelFilter $filters = null)
-    {
-        return $this->departmentLevel
-            ->select($columns)
-            ->filter($filters)
-            ->orderBy('deleted_at')
-            ->paginate()
-            ->withQueryString();
-    }
-
     public function syncDepartmentLevels(InstitutionDepartment $institutionDepartment, DepartmentLevelDto $dto): void
     {
-        // Get existing level_ids linked to this institution
+        // Get existing level_ids linked to this department
         $existing = $this->departmentLevel
             ->where('institution_department_id', $institutionDepartment->id)
             ->pluck('level_id')
@@ -41,12 +30,12 @@ class DepartmentLevelRepository extends BaseRepository implements IDepartmentLev
         $toAdd = array_diff($newIds, $existing);
         $toRemove = array_diff($existing, $newIds);
 
-        // Delete removed departments
+        // Delete removed levels
         if (!empty($toRemove)) {
             $this->departmentLevel->whereIn('level_id', $toRemove)->delete();
         }
 
-        // Add new departments
+        // Add new levels
         foreach ($toAdd as $levelId) {
             $this->departmentLevel->create(['institution_department_id' => $institutionDepartment->id, 'level_id' => $levelId]);
         }

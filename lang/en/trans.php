@@ -186,6 +186,7 @@ return [
     "add_department" => "Add department|Add departments",
     "link_department" => "Link institution departments",
     "link_levels" => "Link department levels",
+    "link_courses" => "Link department courses",
     "about" => "About",
     "staff" => "Staff",
     "provisional" => "Provisional",

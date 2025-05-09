@@ -5,7 +5,7 @@ import { useDepartmentLevels } from '@/composables/institution/useDepartmentLeve
 import { ColorVariant } from '@/enums/colors';
 import { IconName } from '@/lib/icons';
 import { PageProps } from '@/types';
-import { DepartmentLevel } from '@/types/institution';
+import { DepartmentLevel } from '@/types/department-meta-data';
 import { usePage } from '@inertiajs/vue3';
 
 interface Props {

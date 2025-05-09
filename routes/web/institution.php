@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Institution\DepartmentCourseController;
 use App\Http\Controllers\Institution\DepartmentLevelController;
 use App\Http\Controllers\Institution\InstitutionController;
 use App\Http\Controllers\Institution\InstitutionDepartmentController;
@@ -15,5 +16,7 @@ Route::prefix('institution')->middleware('auth')->group(function () {
     Route::resource('departments', InstitutionDepartmentController::class)->names('institution-departments');
     # ==================================== DEPARTMENT LEVELS ================================================================
     Route::post('departments/{institution_department}/sync-levels', [DepartmentLevelController::class, 'syncDepartmentLevels'])->name('department-levels.sync');
+    # ==================================== DEPARTMENT COURSES ================================================================
+    Route::post('departments/{institution_department}/sync-courses', [DepartmentCourseController::class, 'syncDepartmentCourses'])->name('department-courses.sync');
 });
 

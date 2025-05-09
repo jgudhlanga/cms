@@ -2,7 +2,7 @@
 
 namespace App\Models\Institution;
 
-use App\Http\Filters\Institution\DepartmentLevelFilter;
+use App\Http\Filters\Institution\DepartmentMetaDataFilter;
 use App\Traits\BelongsToTenant;
 use App\Traits\Filterable;
 use App\Traits\Paginatable;
@@ -17,7 +17,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
 /**
  *
  * @mixin Builder
- * @method static filter(DepartmentLevelFilter $filters)
+ * @method static filter(DepartmentMetaDataFilter $filters)
  */
 class DepartmentLevel extends Model
 {

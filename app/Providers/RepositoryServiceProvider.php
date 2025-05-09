@@ -19,12 +19,14 @@ use App\Repositories\Districts\interface\IDistrictRepository;
 use App\Repositories\Genders\GenderRepository;
 use App\Repositories\Genders\interface\IGenderRepository;
 use App\Repositories\Institution\CourseRepository;
+use App\Repositories\Institution\DepartmentCourseRepository;
 use App\Repositories\Institution\DepartmentLevelRepository;
 use App\Repositories\Institution\DepartmentRepository;
 use App\Repositories\Institution\DivisionRepository;
 use App\Repositories\Institution\GradeRepository;
 use App\Repositories\Institution\InstitutionDepartmentRepository;
 use App\Repositories\Institution\interface\ICourseRepository;
+use App\Repositories\Institution\interface\IDepartmentCourseRepository;
 use App\Repositories\Institution\interface\IDepartmentLevelRepository;
 use App\Repositories\Institution\interface\IDepartmentRepository;
 use App\Repositories\Institution\interface\IDivisionRepository;
@@ -133,6 +135,7 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(ISubjectRepository::class, SubjectRepository::class);
         $this->app->bind(IInstitutionDepartmentRepository::class, InstitutionDepartmentRepository::class);
         $this->app->bind(IDepartmentLevelRepository::class, DepartmentLevelRepository::class);
+        $this->app->bind(IDepartmentCourseRepository::class, DepartmentCourseRepository::class);
     }
 
     public function userRepositories(): void

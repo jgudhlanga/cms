@@ -3,9 +3,10 @@ import TableLoading from '@/components/core/loader/TableLoading.vue';
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import BaseTabs from '@/components/core/tabs/BaseTabs.vue';
 import { useInstitution } from '@/composables/institution/useInstitution';
+import LinkCoursesToDepartment from '@/pages/institution/departments/partials/LinkCoursesToDepartment.vue';
 import LinkLevelsToDepartment from '@/pages/institution/departments/partials/LinkLevelsToDepartment.vue';
 import { AuthObject } from '@/types/data-pagination';
-import { InstitutionDepartment } from '@/types/institution';
+import { DepartmentMetaData, InstitutionDepartment } from '@/types/institution';
 import type { Link } from '@/types/ui';
 import { Head } from '@inertiajs/vue3';
 import { onMounted, ref } from 'vue';
@@ -40,8 +41,9 @@ const defaultValue = ref('about_us');
             <TableLoading />
         </template>
         <template v-else>
-            <BaseTabs :tabs="departmentTabs" :default-value="defaultValue" />
+            <BaseTabs :tabs="departmentTabs(departmentMetaData as DepartmentMetaData)" :default-value="defaultValue" />
         </template>
         <LinkLevelsToDepartment :institution-department-id="department.id?.toString() ?? ''" />
+        <LinkCoursesToDepartment :institution-department-id="department.id?.toString() ?? ''" />
     </PageContainer>
 </template>
