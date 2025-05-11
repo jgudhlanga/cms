@@ -1,4 +1,5 @@
 import { useDataTables } from '@/composables/core/useDataTables';
+import { useDropdowns } from '@/composables/core/useDropdowns';
 import { useSharedFormSchema } from '@/composables/core/useSharedFormSchema';
 import { forbiddenAlert, openModal } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
@@ -9,9 +10,12 @@ import { Level } from '@/types/institution';
 import type { Link } from '@/types/ui';
 import { InertiaForm, usePage } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
+import { ref } from 'vue';
 
 export const useLevels = () => {
     const { moreActionButton, onDelete, onForceDelete, onRestore } = useDataTables();
+    const isLoading = ref(false);
+    const levels = ref<Level[]>([]);
     const createLevelColumns = () => {
         const { props } = usePage();
         const { can } = props?.auth as Auth;
@@ -75,10 +79,21 @@ export const useLevels = () => {
         openModal({ name: APP_MODULE_KEYS.levels, edit: level });
     };
 
+    const listLevels = async (search?: string) => {
+        const { data, fetchData } = useDropdowns();
+        isLoading.value = true;
+        await fetchData({ url: 'api/v1/levels?page_size=100', search, transChoiceKey: 'trans.level' });
+        isLoading.value = false;
+        levels.value = data.value;
+    };
+
     return {
         createLevelColumns,
         breadcrumbs,
         onOpenModal,
         saveLevel,
+        levels,
+        listLevels,
+        isLoading,
     };
 };

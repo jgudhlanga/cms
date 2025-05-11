@@ -4,9 +4,7 @@ namespace App\Http\Controllers\Institution;
 
 use App\DTO\Institution\DepartmentLevelDto;
 use App\Http\Controllers\Controller;
-use App\Http\Filters\Institution\DepartmentLevelFilter;
 use App\Http\Requests\Institution\DepartmentLevelRequest;
-use App\Http\Resources\Institution\DepartmentLevelResource;
 use App\Models\Institution\DepartmentLevel;
 use App\Models\Institution\InstitutionDepartment;
 use App\Repositories\Institution\interface\IDepartmentLevelRepository;

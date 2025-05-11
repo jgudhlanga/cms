@@ -1,26 +1,26 @@
 <?php
 
-namespace App\Http\Controllers\Api\V1\Departments;
+namespace App\Http\Controllers\Api\V1\Institution;
 
 use App\Http\Controllers\Api\V1\Utils\ApiDropdownController;
 use App\Http\Filters\Shared\SharedNameFilter;
-use App\Http\Resources\Institution\DepartmentResource;
-use App\Repositories\Institution\interface\IDepartmentRepository;
+use App\Http\Resources\Institution\CourseResource;
+use App\Repositories\Institution\interface\ICourseRepository;
 use App\Traits\HttpUtil;
 use Illuminate\Http\Request;
 
-class DepartmentController extends ApiDropdownController
+class CourseController extends ApiDropdownController
 {
     use HttpUtil;
 
-    public function __construct(protected IDepartmentRepository $repository)
+    public function __construct(protected ICourseRepository $repository)
     {
 
     }
 
     public function index(SharedNameFilter $filters)
     {
-        return DepartmentResource::collection($this->repository->allFilter(['*'], $filters));
+        return CourseResource::collection($this->repository->allFilter(['*'], $filters));
     }
 
     public function store(Request $request)

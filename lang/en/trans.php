@@ -185,6 +185,8 @@ return [
     "manage" => "Manage",
     "add_department" => "Add department|Add departments",
     "link_department" => "Link institution departments",
+    "link_levels" => "Link department levels",
+    "link_courses" => "Link department courses",
     "about" => "About",
     "staff" => "Staff",
     "provisional" => "Provisional",
@@ -193,6 +195,7 @@ return [
     "calendar" => "Calendar|Calendars",
     "announcement" => "Announcement|Announcements",
     "application" => "Application|Applications",
-    "application_description" => "Application rules and configurations"
+    "application_description" => "Application rules and configurations",
+    "department_meta_data" => "Department meta data",
 ];
 

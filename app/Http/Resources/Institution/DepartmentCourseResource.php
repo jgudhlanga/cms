@@ -5,20 +5,20 @@ namespace App\Http\Resources\Institution;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class DepartmentLevelResource extends JsonResource
+class DepartmentCourseResource extends JsonResource
 {
 
     public function toArray(Request $request): array
     {
         return [
-            'type' => 'department-level',
+            'type' => 'department-course',
             'id' => $this->resource->id,
             "attributes" => [
                 "institutionDepartmentId" => $this->institution_department_id,
-                "levelId" => $this->level_id,
-                "level" => $this->level?->name,
+                "courseId" => $this->course_id,
+                "course" => $this->course?->name,
                 'description' => $this->resource->description,
-                $this->mergeWhen($request->routeIs('department-levels.*'), [
+                $this->mergeWhen($request->routeIs('department-courses.*'), [
                     'createdAt' => $this->resource->created_at,
                     'updatedAt' => $this->resource->updated_at,
                     'deletedAt' => $this->resource->deleted_at,

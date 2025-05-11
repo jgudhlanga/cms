@@ -11,7 +11,7 @@ interface DropdownFetchData {
 }
 export const useDropdowns = () => {
 
-	const data = ref<Array<any>>([]);
+	const data = ref<any>(null);
 
 	const fetchData = async ({ url, search, transKey, transChoiceKey }: DropdownFetchData) => {
 		try {

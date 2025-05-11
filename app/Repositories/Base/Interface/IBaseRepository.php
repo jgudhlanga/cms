@@ -10,6 +10,7 @@ interface IBaseRepository
 
     public function findTrashed(string $id);
     public function allTrashed();
+    public function getAllWithTrashed();
     public function allCount(): int;
 
     public function findBy(array $data);

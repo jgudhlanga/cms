@@ -1,4 +1,5 @@
 import { useDataTables } from '@/composables/core/useDataTables';
+import { useDropdowns } from '@/composables/core/useDropdowns';
 import { useSharedFormSchema } from '@/composables/core/useSharedFormSchema';
 import { forbiddenAlert, openModal } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
@@ -9,9 +10,12 @@ import { Course } from '@/types/institution';
 import type { Link } from '@/types/ui';
 import { InertiaForm, usePage } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
+import { ref } from 'vue';
 
 export const useCourses = () => {
     const { moreActionButton, onDelete, onForceDelete, onRestore } = useDataTables();
+    const isLoading = ref(false);
+    const courses = ref<Course[]>([]);
     const createCourseColumns = () => {
         const { props } = usePage();
         const { can } = props?.auth as Auth;
@@ -75,10 +79,21 @@ export const useCourses = () => {
         openModal({ name: APP_MODULE_KEYS.courses, edit: course });
     };
 
+    const listCourses = async (search?: string) => {
+        const { data, fetchData } = useDropdowns();
+        isLoading.value = true;
+        await fetchData({ url: 'api/v1/courses?page_size=100', search, transChoiceKey: 'trans.course' });
+        isLoading.value = false;
+        courses.value = data.value;
+    };
+
     return {
         createCourseColumns,
         breadcrumbs,
         onOpenModal,
         saveCourse,
+        listCourses,
+        isLoading,
+        courses,
     };
 };
