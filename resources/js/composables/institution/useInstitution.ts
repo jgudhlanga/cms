@@ -32,21 +32,21 @@ export const useInstitution = () => {
         return [
             { transLabel: () => trans('trans.about'), value: 'about_us', component: h(About) },
             {
-                transLabel: () => trans_choice('trans.level', 2),
-                value: 'levels',
-                component: h(Levels, {
-                    institutionDepartmentId: '',
-                    departmentLevels: departmentMetaData?.levels,
-                    departmentLevelsIds: departmentMetaData?.departmentLevelsIds,
-                }),
-            },
-            {
                 transLabel: () => trans_choice('trans.course', 2),
                 value: 'courses',
                 component: h(Courses, {
                     institutionDepartmentId: '',
                     departmentCourses: departmentMetaData?.courses,
                     departmentCoursesIds: departmentMetaData?.departmentCoursesIds,
+                }),
+            },
+            {
+                transLabel: () => trans_choice('trans.level', 2),
+                value: 'levels',
+                component: h(Levels, {
+                    institutionDepartmentId: '',
+                    departmentLevels: departmentMetaData?.levels,
+                    departmentLevelsIds: departmentMetaData?.departmentLevelsIds,
                 }),
             },
             { transLabel: () => trans_choice('trans.application', 2), value: 'applications', component: Applications },

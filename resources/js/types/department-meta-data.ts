@@ -13,7 +13,7 @@ export type DepartmentLevel = {
 };
 
 export type DepartmentLevelParams = {
-    level_ids: Array<string | undefined | null> | null,
+    level_ids: Array<string | undefined | null> | null;
 };
 
 export type DepartmentCourse = {
@@ -31,7 +31,13 @@ export type DepartmentCourse = {
 };
 
 export type DepartmentCourseParams = {
-    course_ids: Array<string | undefined | null> | null,
+    course_ids: Array<string | undefined | null> | null;
+};
+
+export type DepartmentCourseUpdateParams = {
+    level_ids?: Array<any> | null;
+    show_on_current_application_period?: boolean;
+    course_duration?: string | number | null;
 };
 
 export interface DepartmentMetaData {

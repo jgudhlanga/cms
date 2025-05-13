@@ -118,7 +118,7 @@ export type SubjectParams = {
 
 export type InstitutionDepartment = {
     type?: string;
-    id?: string | number;
+    id?: string | number | undefined;
     attributes: {
         departmentId: string | number;
         department: string;
