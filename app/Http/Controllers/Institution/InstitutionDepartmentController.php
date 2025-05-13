@@ -21,12 +21,12 @@ class InstitutionDepartmentController extends Controller
     {
         $this->authorize('viewAnyDepartmentMetaData');
         $departments = InstitutionDepartmentResource::collection($this->repository->allFilter(['*'], $filters));
-        $allInstitutionDepartmentIds = InstitutionDepartment::all()->pluck('id');
+        $institutionDepartmentIds = InstitutionDepartment::all()->pluck('id');
         return Inertia::render('institution/departments/Index', [
             'departments' => $departments,
             'filters' => request()->only(['search', 'trashed']),
             'trashedCount' => $this->repository->allTrashed()->count(),
-            'allInstitutionDepartmentIds' => $allInstitutionDepartmentIds,
+            'institutionDepartmentIds' => $institutionDepartmentIds,
         ]);
     }
 

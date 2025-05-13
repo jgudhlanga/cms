@@ -3,6 +3,8 @@ export enum IconName {
     angle_right = 'angle_right',
     arrow_down_circle = 'arrow_down_circle',
     arrow_up_circle = 'arrow_up_circle',
+    arrow_up = 'arrow_up',
+    arrow_down = 'arrow_down',
     back = 'back',
     back_straight = 'back_straight',
     card = 'card',

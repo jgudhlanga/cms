@@ -15,6 +15,7 @@ class DivisionResource extends JsonResource
             'id' => $this->resource->id,
             "attributes" => [
                 'name' => $this->resource->name,
+                'position' => $this->resource->position,
                 'description' => $this->resource->description,
                 $this->mergeWhen($request->routeIs('divisions.*'), [
                     'createdAt' => $this->resource->created_at,

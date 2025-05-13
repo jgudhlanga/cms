@@ -11,6 +11,7 @@ import { usePage } from '@inertiajs/vue3';
 interface Props {
     institutionDepartmentId: string;
     departmentCourses: DepartmentCourse[];
+    departmentCoursesIds: Array<string | undefined | null> | null;
 }
 
 defineProps<Props>();
@@ -28,7 +29,7 @@ const { createDepartmentCourseColumns, openDepartmentCoursesModal } = useDepartm
                 class="rounded-full"
                 :icon-variant="ColorVariant.white"
                 :variant="ColorVariant.primary"
-                @click="() => openDepartmentCoursesModal([])"
+                @click="() => openDepartmentCoursesModal(departmentCoursesIds)"
                 :title="$t('trans.link_courses')"
             />
         </template>

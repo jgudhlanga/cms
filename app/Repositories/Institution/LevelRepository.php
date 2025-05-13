@@ -36,6 +36,7 @@ class LevelRepository extends BaseRepository implements ILevelRepository
         return $this->level
             ->select($columns)
             ->filter($filters)
+            ->orderBy('position')
             ->orderBy('name')
             ->orderBy('deleted_at')
             ->paginate()

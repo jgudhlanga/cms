@@ -197,5 +197,8 @@ return [
     "application" => "Application|Applications",
     "application_description" => "Application rules and configurations",
     "department_meta_data" => "Department meta data",
+    "show_on_current_application_period" => "Show on current application period",
+    "position" => "Position|Positions",
+    "order" => "Order"
 ];
 
