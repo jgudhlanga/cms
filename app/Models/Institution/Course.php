@@ -21,7 +21,7 @@ class Course extends Model
 {
     use HasFactory, SoftDeletes, Filterable, Paginatable, LogsActivity;
 
-    protected $fillable = ['name', 'description'];
+    protected $fillable = ['name', 'position', 'description'];
 
     public function getActivitylogOptions(): LogOptions
     {

@@ -37,5 +37,7 @@ export type DepartmentCourseParams = {
 export interface DepartmentMetaData {
     about: object;
     levels: DepartmentLevel[];
+    departmentLevelsIds: Array<string | undefined | null> | null;
     courses: DepartmentCourse[];
+    departmentCoursesIds: Array<string | undefined | null> | null;
 }

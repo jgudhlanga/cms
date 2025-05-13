@@ -8,13 +8,20 @@ use Illuminate\Database\Seeder;
 
 class GradesTableSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
+
     public function run(): void
     {
-        foreach (GradeEnum::cases() as $row) {
-            Grade::create(['name' => $row->value]);
+
+        $data = [
+            ['name' => GradeEnum::A->value, 'position' => 1],
+            ['name' => GradeEnum::B->value, 'position' => 2],
+            ['name' => GradeEnum::C->value, 'position' => 3],
+            ['name' => GradeEnum::D->value, 'position' => 4],
+            ['name' => GradeEnum::E->value, 'position' => 5],
+            ['name' => GradeEnum::U->value, 'position' => 6],
+        ];
+        foreach ($data as $row) {
+            Grade::create(['name' => $row['name'], 'position' => $row['position']]);
         }
     }
 }

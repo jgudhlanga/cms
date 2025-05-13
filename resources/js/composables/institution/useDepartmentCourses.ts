@@ -22,6 +22,21 @@ export const useDepartmentCourses = () => {
                     return textLink(route('institution-departments.show', id), row.original.attributes?.course);
                 },
             },
+            {
+                header: trans_choice('trans.level', 2),
+                accessorKey: 'levels',
+                cell: ({ row }: { row: { original: DepartmentCourse } }) => {
+                    return '---';
+                },
+            },
+            {
+                header: trans('trans.show_on_current_application_period'),
+                accessorKey: 'showOnCurrentApplicationPeriod',
+                meta: {align: 'center'},
+                cell: ({ row }: { row: { original: DepartmentCourse } }) => {
+                    return '---';
+                },
+            },
             { header: trans_choice('trans.description', 1), accessorKey: 'attributes.description' },
             {
                 header: trans_choice('trans.action', 2),

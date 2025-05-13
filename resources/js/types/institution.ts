@@ -3,6 +3,7 @@ export type Course = {
     id?: string;
     attributes: {
         name: string;
+        position: string | number;
         description?: string;
         createdAt?: string;
         updatedAt?: string;
@@ -19,6 +20,7 @@ export type Department = {
     id?: string;
     attributes: {
         name: string;
+        position: string | number;
         description?: string;
         createdAt?: string;
         updatedAt?: string;
@@ -35,6 +37,7 @@ export type Division = {
     id?: string;
     attributes: {
         name: string;
+        position: string | number;
         description?: string;
         createdAt?: string;
         updatedAt?: string;
@@ -51,6 +54,7 @@ export type Grade = {
     id?: string;
     attributes: {
         name: string;
+        position: string | number;
         description?: string;
         createdAt?: string;
         updatedAt?: string;
@@ -67,6 +71,7 @@ export type Level = {
     id?: string;
     attributes: {
         name: string;
+        position: string | number;
         description?: string;
         createdAt?: string;
         updatedAt?: string;
@@ -99,6 +104,7 @@ export type Subject = {
     id?: string;
     attributes: {
         name: string;
+        position: string | number;
         description?: string;
         createdAt?: string;
         updatedAt?: string;
@@ -124,5 +130,5 @@ export type InstitutionDepartment = {
 };
 
 export type InstitutionDepartmentParams = {
-    department_ids: Array<string | undefined | null> | null,
+    department_ids: Array<string | undefined | null> | null;
 };

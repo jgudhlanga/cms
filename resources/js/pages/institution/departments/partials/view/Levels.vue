@@ -11,6 +11,7 @@ import { usePage } from '@inertiajs/vue3';
 interface Props {
     institutionDepartmentId: string;
     departmentLevels: DepartmentLevel[];
+    departmentLevelsIds: Array<string | undefined | null> | null;
 }
 
 defineProps<Props>();
@@ -28,7 +29,7 @@ const { createDepartmentLevelColumns, openDepartmentLevelsModal } = useDepartmen
                 class="rounded-full"
                 :icon-variant="ColorVariant.white"
                 :variant="ColorVariant.primary"
-                @click="() => openDepartmentLevelsModal([])"
+                @click="() => openDepartmentLevelsModal(departmentLevelsIds)"
                 :title="$t('trans.link_levels')"
             />
         </template>

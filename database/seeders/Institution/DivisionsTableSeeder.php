@@ -13,8 +13,13 @@ class DivisionsTableSeeder extends Seeder
      */
     public function run(): void
     {
-        foreach (DivisionEnum::cases() as $row) {
-            Division::create(['name' => $row->value]);
+        $data = [
+            ['name' => DivisionEnum::BUSINESS->value, 'position' => 1 ],
+            ['name' => DivisionEnum::MANAGEMENT->value, 'position' => 2 ],
+            ['name' => DivisionEnum::PEDAGOGICS->value, 'position' => 3 ],
+            ];
+        foreach ($data as $row) {
+            Division::create(['name' => $row['name'], 'position' => $row['position']]);
         }
     }
 }
