@@ -199,6 +199,8 @@ return [
     "department_meta_data" => "Department meta data",
     "show_on_current_application_period" => "Show on current application period",
     "position" => "Position|Positions",
-    "order" => "Order"
+    "order" => "Order",
+    "other" => "Other",
+    "duration" => "Duration",
 ];
 

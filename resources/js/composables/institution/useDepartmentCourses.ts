@@ -9,7 +9,7 @@ import { InertiaForm, usePage } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 
 export const useDepartmentCourses = () => {
-    const { moreActionButton, textLink } = useDataTables();
+    const { moreActionButton, textLink, checkStatusIcon, onEdit } = useDataTables();
     const { props } = usePage();
     const { can } = props?.auth as Auth;
     const createDepartmentCourseColumns = () => {
@@ -19,14 +19,14 @@ export const useDepartmentCourses = () => {
                 accessorKey: 'course',
                 cell: ({ row }: { row: { original: DepartmentCourse } }) => {
                     const id = getIdParams(row.original.id?.toString() ?? '');
-                    return textLink(route('institution-departments.show', id), row.original.attributes?.course);
+                    return textLink(route('department-courses.show', id), row.original.attributes?.course);
                 },
             },
             {
                 header: trans_choice('trans.level', 2),
                 accessorKey: 'levels',
                 cell: ({ row }: { row: { original: DepartmentCourse } }) => {
-                    return '---';
+                    return 'NC, ND, HND';
                 },
             },
             {
@@ -34,7 +34,7 @@ export const useDepartmentCourses = () => {
                 accessorKey: 'showOnCurrentApplicationPeriod',
                 meta: {align: 'center'},
                 cell: ({ row }: { row: { original: DepartmentCourse } }) => {
-                    return '---';
+                    return checkStatusIcon('1');
                 },
             },
             { header: trans_choice('trans.description', 1), accessorKey: 'attributes.description' },
@@ -44,8 +44,9 @@ export const useDepartmentCourses = () => {
                 enableSorting: false,
                 meta: { align: 'right' },
                 cell: ({ row }: { row: { original: DepartmentCourse } }) => {
+                    const id = getIdParams(row.original.id?.toString() ?? '');
                     return moreActionButton(!!row.original?.attributes?.deletedAt, [
-                        { key: 'view', action: () => {} },
+                        { key: 'edit', action: () => onEdit(can['update:department-metadata'], route('department-courses.show', id)) },
                         {
                             key: 'archive',
                             action: () => {},
