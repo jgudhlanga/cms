@@ -27,7 +27,7 @@ const props = defineProps<Props>();
 const { institutionDepartment, departmentCourse, departmentLevels } = props;
 const breadcrumbs: Array<Link> = [
     { transChoiceKey: 'institution', transChoiceKeyIndex: 1, href: route('institution.index') },
-    { transChoiceKey: 'department', transChoiceKeyIndex: 1, href: route('institution-departments.index') },
+    { transChoiceKey: 'department', transChoiceKeyIndex: 2, href: route('institution-departments.index') },
     {
         title: institutionDepartment?.attributes.department,
         href: route('institution-departments.show', getIdParams(institutionDepartment?.id?.toString() ?? '')),
