@@ -27,7 +27,7 @@ const props = defineProps<Props>();
 const { institutionDepartment, departmentCourse, departmentLevels } = props;
 const breadcrumbs: Array<Link> = [
     { transChoiceKey: 'institution', transChoiceKeyIndex: 1, href: route('institution.index') },
-    { transChoiceKey: 'department', transChoiceKeyIndex: 1, href: route('institution-departments.index') },
+    { transChoiceKey: 'department', transChoiceKeyIndex: 2, href: route('institution-departments.index') },
     {
         title: institutionDepartment?.attributes.department,
         href: route('institution-departments.show', getIdParams(institutionDepartment?.id?.toString() ?? '')),
@@ -40,21 +40,21 @@ const breadcrumbs: Array<Link> = [
 const { navigateTo } = useUtils();
 const allSelected = ref(false);
 const form = useForm<DepartmentCourseUpdateParams>({
-    level_ids: [],
+    department_leve_id: [],
     show_on_current_application_period: false,
     course_duration: null,
 });
 const selectAll = () => {
     if (allSelected.value) {
-        form.level_ids = [];
+        form.department_leve_id = [];
         allSelected.value = false;
     } else {
-        form.level_ids = departmentLevels?.map((item: DepartmentLevel) => item['id']) ?? [];
+        form.department_leve_id = departmentLevels?.map((item: DepartmentLevel) => item['id']) ?? [];
         allSelected.value = true;
     }
 };
 const updateModel = () => {
-    allSelected.value = form.level_ids?.length == departmentLevels?.length;
+    allSelected.value = form.department_leve_id?.length == departmentLevels?.length;
 };
 
 const updateCourse = () => {};
@@ -81,7 +81,7 @@ const updateCourse = () => {};
                                     <BaseCheckbox
                                         :input-id="`level_id_${level['id']}`"
                                         :value="level['id']"
-                                        v-model="form.level_ids"
+                                        v-model="form.department_leve_id"
                                         :label="level['attributes']['level']"
                                         @change="updateModel()"
                                     />

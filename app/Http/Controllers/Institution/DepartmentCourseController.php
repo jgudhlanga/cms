@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Institution;
 use App\DTO\Institution\DepartmentCourseDto;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Institution\DepartmentCourseRequest;
+use App\Http\Requests\Institution\DepartmentCourseUpdateRequest;
 use App\Http\Resources\Institution\DepartmentCourseResource;
 use App\Http\Resources\Institution\DepartmentLevelResource;
 use App\Http\Resources\Institution\InstitutionDepartmentResource;
@@ -35,6 +36,11 @@ class DepartmentCourseController extends Controller
         return Inertia::render('institution/departments/courses/Edit',
             compact('institutionDepartment', 'departmentCourse', 'departmentLevels'),
         );
+    }
+
+    public function update(DepartmentCourse $departmentCourse, DepartmentCourseUpdateRequest $request)
+    {
+
     }
 
     public function destroy(DepartmentCourse $departmentCourse)

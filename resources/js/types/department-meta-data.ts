@@ -35,7 +35,7 @@ export type DepartmentCourseParams = {
 };
 
 export type DepartmentCourseUpdateParams = {
-    level_ids?: Array<any> | null;
+    department_leve_id?: Array<any> | null;
     show_on_current_application_period?: boolean;
     course_duration?: string | number | null;
 };
