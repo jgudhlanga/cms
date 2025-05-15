@@ -3,6 +3,7 @@
 namespace App\Repositories\Institution;
 
 use App\DTO\Institution\DepartmentCourseDto;
+use App\DTO\Institution\DepartmentCourseUpdateDto;
 use App\Models\Institution\DepartmentCourse;
 use App\Models\Institution\InstitutionDepartment;
 use App\Repositories\Base\BaseRepository;
@@ -39,5 +40,10 @@ class DepartmentCourseRepository extends BaseRepository implements IDepartmentCo
         foreach ($toAdd as $courseId) {
             $this->departmentCourse->create(['institution_department_id' => $institutionDepartment->id, 'course_id' => $courseId]);
         }
+    }
+
+    public function update(DepartmentCourse $departmentCourse, DepartmentCourseUpdateDto $dto)
+    {
+        // TODO: Implement update() method.
     }
 }
