@@ -17,7 +17,6 @@ return new class extends Migration
             $table->foreignId('institution_department_id')->constrained();
             $table->foreignId('course_id')->constrained();
             $table->boolean('show_on_current_application_period')->default(0);
-            $table->string('course_duration')->nullable();
 			$table->timestamps();
 			$table->softDeletes();
         });

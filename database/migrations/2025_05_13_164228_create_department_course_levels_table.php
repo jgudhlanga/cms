@@ -8,8 +8,10 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::create('department_course_levels', function (Blueprint $table) {
+            $table->id();
             $table->foreignId('department_course_id');
-            $table->foreignId('department_leve_id');
+            $table->foreignId('department_level_id');
+            $table->timestamps();
         });
     }
 

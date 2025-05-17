@@ -17,12 +17,16 @@ class DepartmentCourseResource extends JsonResource
                 "institutionDepartmentId" => $this->institution_department_id,
                 "courseId" => $this->course_id,
                 "course" => $this->course?->name,
+                "showOnCurrentApplicationPeriod" => $this->show_on_current_application_period,
                 'description' => $this->resource->description,
                 $this->mergeWhen($request->routeIs('department-courses.*'), [
                     'createdAt' => $this->resource->created_at,
                     'updatedAt' => $this->resource->updated_at,
                     'deletedAt' => $this->resource->deleted_at,
-                ],),
+                ]),
+            ],
+            'relationships' => [
+                'departmentCourseLevels' => DepartmentCourseLevelResource::collection($this->departmentCourseLevels),
             ]
         ];
     }

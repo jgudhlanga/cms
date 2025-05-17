@@ -1,19 +1,24 @@
 <script setup lang="ts">
 import BaseCard from '@/components/core/card/BaseCard.vue';
-import { BaseCheckbox, BaseInput } from '@/components/core/form';
+import { BaseCheckbox } from '@/components/core/form';
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import Empty from '@/components/core/util/Empty.vue';
 import { useUtils } from '@/composables/core/useUtils';
 import { ColorVariant } from '@/enums/colors';
-import { clearFormErrors } from '@/lib/forms';
 import { getIdParams } from '@/lib/utils';
 import { AuthObject } from '@/types/data-pagination';
-import { DepartmentCourse, DepartmentCourseUpdateParams, DepartmentLevel } from '@/types/department-meta-data';
+import {
+    DepartmentCourse,
+    DepartmentCourseLevel,
+    DepartmentCourseUpdateParams,
+    DepartmentLevel
+} from '@/types/department-meta-data';
 import { InstitutionDepartment } from '@/types/institution';
 import type { Link } from '@/types/ui';
 import { Head, useForm } from '@inertiajs/vue3';
 import { ref } from 'vue';
 import BaseButton from '../../../../components/core/button/BaseButton.vue';
+import { useDepartmentCourses } from '@/composables/institution/useDepartmentCourses';
 
 interface Props {
     institutionDepartment: InstitutionDepartment;
@@ -37,31 +42,33 @@ const breadcrumbs: Array<Link> = [
         href: route('department-courses.show', getIdParams(departmentCourse?.id?.toString() ?? '')),
     },
 ];
-const { navigateTo } = useUtils();
+const { navigateTo, isItTrue } = useUtils();
 const allSelected = ref(false);
 const form = useForm<DepartmentCourseUpdateParams>({
-    department_leve_id: [],
-    show_on_current_application_period: false,
-    course_duration: null,
+    department_level_ids: departmentCourse?.relationships?.departmentCourseLevels?.map((item: DepartmentCourseLevel) => item?.departmentLevelId),
+    show_on_current_application_period: isItTrue(departmentCourse?.attributes?.showOnCurrentApplicationPeriod),
 });
 const selectAll = () => {
     if (allSelected.value) {
-        form.department_leve_id = [];
+        form.department_level_ids = [];
         allSelected.value = false;
     } else {
-        form.department_leve_id = departmentLevels?.map((item: DepartmentLevel) => item['id']) ?? [];
+        form.department_level_ids = departmentLevels?.map((item: DepartmentLevel) => item['id']) ?? [];
         allSelected.value = true;
     }
 };
 const updateModel = () => {
-    allSelected.value = form.department_leve_id?.length == departmentLevels?.length;
+    allSelected.value = form.department_level_ids?.length == departmentLevels?.length;
 };
 
-const updateCourse = () => {};
+const {updateDepartmentCourses} = useDepartmentCourses()
+const updateCourse = () => {
+    updateDepartmentCourses(departmentCourse?.id?.toString() ?? '', form)
+};
 </script>
 
 <template>
-    <Head :title="$tChoice('trans.department', 2)" />
+    <Head :title="`${$tChoice('trans.department', 1)} ${$tChoice('trans.course', 1)}`" />
     <PageContainer :breadcrumbs="breadcrumbs">
         <form @submit.prevent="() => updateCourse()" class="flex flex-col">
             <div class="flex space-x-3">
@@ -81,7 +88,7 @@ const updateCourse = () => {};
                                     <BaseCheckbox
                                         :input-id="`level_id_${level['id']}`"
                                         :value="level['id']"
-                                        v-model="form.department_leve_id"
+                                        v-model="form.department_level_ids"
                                         :label="level['attributes']['level']"
                                         @change="updateModel()"
                                     />
@@ -99,13 +106,6 @@ const updateCourse = () => {};
                             input-id="show_on_current_application_period"
                             v-model="form.show_on_current_application_period"
                             :label="`${$t('trans.show_on_current_application_period')}`"
-                        />
-                        <BaseInput
-                            input-id="course_duration"
-                            :label="`${$tChoice('trans.course', 1)} ${$t('trans.duration')}`"
-                            v-model="form.course_duration"
-                            @input="clearFormErrors(form, 'course_duration')"
-                            :error="form.errors.course_duration"
                         />
                     </div>
                 </BaseCard>

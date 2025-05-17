@@ -23,21 +23,32 @@ export type DepartmentCourse = {
         institutionDepartmentId: string | number;
         courseId: string | number;
         course: string;
+        showOnCurrentApplicationPeriod?: boolean;
         description?: string;
         createdAt?: string;
         updatedAt?: string;
         deletedAt?: string;
     };
+    relationships?: {
+        departmentCourseLevels?: DepartmentCourseLevel[]
+    }
 };
+
+
+export type DepartmentCourseLevel = {
+    id?: string | number;
+    departmentCourseId?: string | number;
+    departmentLevelId?: string | number;
+    level?: string;
+}
 
 export type DepartmentCourseParams = {
     course_ids: Array<string | undefined | null> | null;
 };
 
 export type DepartmentCourseUpdateParams = {
-    department_leve_id?: Array<any> | null;
+    department_level_ids?: Array<any> | null;
     show_on_current_application_period?: boolean;
-    course_duration?: string | number | null;
 };
 
 export interface DepartmentMetaData {
@@ -47,3 +58,4 @@ export interface DepartmentMetaData {
     courses: DepartmentCourse[];
     departmentCoursesIds: Array<string | undefined | null> | null;
 }
+

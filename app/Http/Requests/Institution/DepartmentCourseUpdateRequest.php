@@ -5,7 +5,7 @@ namespace App\Http\Requests\Institution;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
- * @property mixed|string $department_leve_ids
+ * @property mixed|string $department_level_ids
  */
 class DepartmentCourseUpdateRequest extends FormRequest
 {
@@ -18,9 +18,9 @@ class DepartmentCourseUpdateRequest extends FormRequest
 
     public function prepareForValidation(): void
     {
-        if (is_string($this->department_leve_ids)) {
+        if (is_string($this->department_level_ids)) {
             $this->merge([
-                'department_leve_ids' => json_decode($this->department_leve_ids, true),
+                'department_level_ids' => json_decode($this->department_level_ids, true),
             ]);
         }
     }
@@ -29,8 +29,8 @@ class DepartmentCourseUpdateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'department_leve_ids' => ['nullable', 'array'],
-            'department_leve_ids.*' => ['integer', 'exists:department_levels,id'],
+            'department_level_ids' => ['nullable', 'array'],
+            'department_level_ids.*' => ['integer', 'exists:department_levels,level_id'],
         ];
     }
 }
