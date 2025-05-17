@@ -19,5 +19,6 @@ Route::prefix('institution')->middleware('auth')->group(function () {
     # ==================================== DEPARTMENT COURSES ================================================================
     Route::post('departments/{institution_department}/sync-courses', [DepartmentCourseController::class, 'syncDepartmentCourses'])->name('department-courses.sync');
     Route::get('departments/{department_course}/show', [DepartmentCourseController::class, 'show'])->name('department-courses.show');
+    Route::post('departments/{department_course}/update', [DepartmentCourseController::class, 'update'])->name('department-courses.update');
 });
 

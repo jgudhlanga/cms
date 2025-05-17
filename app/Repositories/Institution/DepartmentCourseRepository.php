@@ -44,6 +44,33 @@ class DepartmentCourseRepository extends BaseRepository implements IDepartmentCo
 
     public function update(DepartmentCourse $departmentCourse, DepartmentCourseUpdateDto $dto)
     {
-        // TODO: Implement update() method.
+        $departmentCourse = tap($departmentCourse)->update([
+            'show_on_current_application_period' => $dto->show_on_current_application_period,
+        ]);
+        # Get existing department_ linked to this department
+        $existing = $departmentCourse
+            ->departmentCourseLevels()
+            ->where('department_course_id', $departmentCourse->id)
+            ->pluck('department_level_id')
+            ->toArray();
+
+        $newIds = $dto->department_level_ids;
+
+        // Determine which IDs to add and which to remove
+        $toAdd = array_diff($newIds, $existing);
+        $toRemove = array_diff($existing, $newIds);
+
+        // Delete removed courses
+        if (!empty($toRemove)) {
+            $departmentCourse->departmentCourseLevels()->whereIn('department_level_id', $toRemove)->delete();
+        }
+
+        // Add new courses
+        foreach ($toAdd as $departmentLevelId) {
+            $departmentCourse->departmentCourseLevels()->create(['department_course_id' => $departmentCourse->id, 'department_level_id' => $departmentLevelId]);
+        }
+        return $departmentCourse;
     }
+
+
 }

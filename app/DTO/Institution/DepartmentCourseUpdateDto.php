@@ -7,9 +7,8 @@ use App\Http\Requests\Institution\DepartmentCourseUpdateRequest;
 readonly class DepartmentCourseUpdateDto
 {
     public function __construct(
-        public array $department_leve_ids,
+        public array $department_level_ids,
         public bool  $show_on_current_application_period,
-        public int   $course_duration,
     )
     {
     }
@@ -17,9 +16,8 @@ readonly class DepartmentCourseUpdateDto
     public static function fromDepartmentCourseUpdateRequest(DepartmentCourseUpdateRequest $request): DepartmentCourseUpdateDto
     {
         return new self(
-            department_leve_ids: $request->department_leve_ids,
+            department_level_ids: $request->department_level_ids,
             show_on_current_application_period: $request->show_on_current_application_period,
-            course_duration: $request->course_duration,
         );
     }
 }

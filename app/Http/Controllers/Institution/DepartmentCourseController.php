@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Institution;
 
 use App\DTO\Institution\DepartmentCourseDto;
+use App\DTO\Institution\DepartmentCourseUpdateDto;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Institution\DepartmentCourseRequest;
 use App\Http\Requests\Institution\DepartmentCourseUpdateRequest;
@@ -38,9 +39,10 @@ class DepartmentCourseController extends Controller
         );
     }
 
-    public function update(DepartmentCourse $departmentCourse, DepartmentCourseUpdateRequest $request)
+    public function update(DepartmentCourse $departmentCourse, DepartmentCourseUpdateRequest $request): void
     {
-
+        $this->authorize('updateDepartmentMetaData');
+        $this->repository->update($departmentCourse, DepartmentCourseUpdateDto::fromDepartmentCourseUpdateRequest($request));
     }
 
     public function destroy(DepartmentCourse $departmentCourse)

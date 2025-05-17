@@ -2,32 +2,32 @@
 
 namespace App\Models\Institution;
 
-use App\Traits\BelongsToTenant;
-use App\Traits\Filterable;
-use App\Traits\Paginatable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
 /**
  *
  * @mixin Builder
- * @method static filter(Filter $filters)
  */
 class DepartmentCourseLevel extends Model
 {
-   use HasFactory, SoftDeletes, Filterable, BelongsToTenant,Paginatable, LogsActivity;
+    use  LogsActivity;
 
-   protected $fillable = [];
+    protected $fillable = ['department_course_id', 'department_level_id'];
 
-   	public function getActivitylogOptions(): LogOptions
-   	{
-   		return LogOptions::defaults()
-   			->logFillable()
-   			->useLogName('DepartmentCourseLevel')
-   			->logOnlyDirty()
-   			->dontSubmitEmptyLogs();
-   	}
+    public function departmentLevel(): BelongsTo
+    {
+      return $this->belongsTo(DepartmentLevel::class, 'department_level_id');
+    }
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logFillable()
+            ->useLogName('DepartmentCourseLevel')
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs();
+    }
 }

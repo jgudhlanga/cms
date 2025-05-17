@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
@@ -25,7 +26,7 @@ class DepartmentCourse extends Model
 
     protected $fillable = [
         'tenant_id', 'institution_department_id', 'course_id',
-        'description', 'show_on_current_application_period', 'course_duration'
+        'description', 'show_on_current_application_period'
     ];
 
 
@@ -34,9 +35,15 @@ class DepartmentCourse extends Model
         return $this->belongsTo(Course::class);
     }
 
+
     public function institutionDepartment(): BelongsTo
     {
         return $this->belongsTo(InstitutionDepartment::class, 'institution_department_id');
+    }
+
+    public function departmentCourseLevels(): HasMany
+    {
+        return $this->hasMany(DepartmentCourseLevel::class, 'department_course_id');
     }
 
     public function getActivitylogOptions(): LogOptions
