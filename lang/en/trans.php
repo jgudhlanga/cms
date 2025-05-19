@@ -221,6 +221,11 @@ return [
     "house_number" => 'House number|House numbers',
     "street" => 'Street|Streets',
     "suburb_village" => 'Suburb/Village',
-    "confirm_password_description" => "Please confirm your password"
+    "confirm_password_description" => "Please confirm your password",
+    "success" => "Success",
+    "error" =>  "Error",
+    "application_user_created_success_message" => "Thank you for creating an account with us! To complete your registration, please check your email ( :email ) for a verification link. Click the link in the email to verify your account and get started. If you don't see the email in your inbox, please check your spam or junk folder.
+"
+
 ];
 

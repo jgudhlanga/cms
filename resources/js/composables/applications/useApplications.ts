@@ -16,7 +16,7 @@ export function useApplications() {
                 ['titleIdSchema', 'lastNameSchema', 'genderSchema', 'emailSchema', 'passwordSchema', 'passwordConfirmationSchema'],
                 schemaFields['firstNameSchema'](),
             ).parse(form);
-            form.post(route('application.store'), buildFormOptions(form, successMessage(), errorMessage()));
+            form.post(route('applications.store'), buildFormOptions(form, successMessage(), errorMessage()));
             const store = useApplicationFormStore();
             store.$reset();
             store.$dispose();

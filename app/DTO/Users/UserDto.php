@@ -3,12 +3,12 @@
 namespace App\DTO\Users;
 
 use App\Http\Requests\Users\CreateUserRequest;
-use App\Http\Requests\Users\UpdateUserRequest;
-use App\Models\Users\User;
+use App\Models\Tenants\Tenant;
 
 readonly class UserDto
 {
     public function __construct(
+        public int     $tenant_id,
         public int     $title_id,
         public string  $first_name,
         public ?string $middle_name,
@@ -22,9 +22,10 @@ readonly class UserDto
     }
 
 
-    public static function fromCreateUserRequest(CreateUserRequest $request): UserDto
+    public static function fromCreateUserRequest(CreateUserRequest $request, Tenant $tenant): UserDto
     {
         return new self(
+            tenant_id: $tenant->id,
             title_id: $request->title_id,
             first_name: $request->first_name,
             middle_name: $request->middle_name,

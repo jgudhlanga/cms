@@ -12,8 +12,6 @@ export const useApplicationFormStore = defineStore('create-application-form', {
             password_confirmation: '',
             title: null,
             title_id: null,
-            id_number: null,
-            passport_number: null,
             gender: null,
             gender_id: null,
         };
