@@ -51,6 +51,6 @@ onMounted(() => setAutoFocus());
 				:type="type"
 			/>
 		</div>
-		<InputError class="lowercase" :message="error" />
+		<InputError :class="cn('flex w-full lowercase', !verticalLayout && 'justify-end')" :message="error" />
 	</div>
 </template>

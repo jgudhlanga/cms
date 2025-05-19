@@ -2,6 +2,7 @@
 
 namespace App\Models\Applications;
 
+use App\Http\Filters\Applications\ApplicationFilter;
 use App\Traits\BelongsToTenant;
 use App\Traits\Filterable;
 use App\Traits\Paginatable;
@@ -15,20 +16,20 @@ use Spatie\Activitylog\Traits\LogsActivity;
 /**
  *
  * @mixin Builder
- * @method static filter(Filter $filters)
+ * @method static filter(ApplicationFilter $filters)
  */
 class Application extends Model
 {
-   use HasFactory, SoftDeletes, Filterable, BelongsToTenant,Paginatable, LogsActivity;
+    use HasFactory, SoftDeletes, Filterable, BelongsToTenant, Paginatable, LogsActivity;
 
-   protected $fillable = [];
+    protected $fillable = ['tenant_id', 'user_id'];
 
-   	public function getActivitylogOptions(): LogOptions
-   	{
-   		return LogOptions::defaults()
-   			->logFillable()
-   			->useLogName('Application')
-   			->logOnlyDirty()
-   			->dontSubmitEmptyLogs();
-   	}
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logFillable()
+            ->useLogName('Application')
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs();
+    }
 }

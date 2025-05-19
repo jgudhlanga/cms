@@ -64,6 +64,8 @@ use App\Repositories\Titles\interface\ITitleRepository;
 use App\Repositories\Titles\TitleRepository;
 use App\Repositories\Users\interface\IUserRepository;
 use App\Repositories\Users\UserRepository;
+use App\Repositories\Applications\interface\IApplicationRepository;
+use App\Repositories\Applications\ApplicationRepository;
 use Illuminate\Support\ServiceProvider;
 
 class RepositoryServiceProvider extends ServiceProvider
@@ -81,6 +83,7 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->sharedRepositories();
         $this->institutionRepositories();
         $this->userRepositories();
+        $this->applicationRepositories();
     }
 
     public function boot(): void
@@ -141,6 +144,11 @@ class RepositoryServiceProvider extends ServiceProvider
     public function userRepositories(): void
     {
         $this->app->bind(IUserRepository::class, UserRepository::class);
+    }
+
+    public function applicationRepositories(): void
+    {
+        $this->app->bind(IApplicationRepository::class, ApplicationRepository::class);
     }
 
 }

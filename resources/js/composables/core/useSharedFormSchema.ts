@@ -34,6 +34,10 @@ export const useSharedFormSchema = () => {
         z.object({
             password: z.string().nonempty(trans('trans.enter_required_field', { field: trans('trans.password') })),
         });
+    const passwordConfirmationSchema = () =>
+        z.object({
+            password_confirmation: z.string().nonempty(trans('trans.confirm_password_description')),
+        });
     const contactNameSchema = () =>
         z.object({
             contact_name: z.string().nonempty(trans('trans.enter_required_field', { field: trans('trans.representative_name') })),
@@ -103,5 +107,6 @@ export const useSharedFormSchema = () => {
         emailSchema,
         firstNameSchema,
         lastNameSchema,
+        passwordConfirmationSchema,
     };
 };

@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('applications', function (Blueprint $table) {
             $table->id();
             $table->foreignId('tenant_id')->index()->constrained();
+            $table->foreignId('user_id')->index()->constrained();
 			$table->timestamps();
 			$table->softDeletes();
         });

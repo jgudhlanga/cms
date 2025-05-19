@@ -221,5 +221,6 @@ return [
     "house_number" => 'House number|House numbers',
     "street" => 'Street|Streets',
     "suburb_village" => 'Suburb/Village',
+    "confirm_password_description" => "Please confirm your password"
 ];
 
