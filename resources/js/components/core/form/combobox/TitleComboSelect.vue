@@ -12,6 +12,7 @@ interface Props {
 	form: InertiaForm<any>,
     labelUppercase?: boolean,
     verticalLayout?: boolean,
+    isRequired?: boolean,
 }
 const { isLoading, titles, listTitles } = useTitles();
 onMounted(async () => {
@@ -40,6 +41,7 @@ const whenSearch = debounce(async (search: string) => {
         :label-uppercase="labelUppercase"
         :vertical-layout="verticalLayout"
 		v-bind="$attrs"
+        :is-required="isRequired"
 	/>
 </template>
 

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Site;
+namespace App\Http\Controllers\Applications;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
@@ -19,6 +19,6 @@ class ApplicationFormController extends Controller
             request()->session()->invalidate();
             request()->session()->regenerateToken();
         }
-        return Inertia::render('site/ApplicationForm');
+        return Inertia::render('applications/ApplicationForm');
     }
 }
