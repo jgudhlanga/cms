@@ -30,7 +30,6 @@ class DepartmentCourseUpdateRequest extends FormRequest
     {
         return [
             'department_level_ids' => ['nullable', 'array'],
-            'department_level_ids.*' => ['integer', 'exists:department_levels,level_id'],
         ];
     }
 }

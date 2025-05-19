@@ -87,7 +87,7 @@ export const useDepartmentCourses = () => {
         try {
             const success = trans('trans.item_saved', { item: trans_choice('trans.course', 2) });
             const error = trans('trans.item_save_failure', { item: trans_choice('trans.course', 2) });
-            form.post(route('department-courses.update', departmentCourseId), buildFormOptions(form, success, error));
+          form.post(route('department-courses.update', departmentCourseId), buildFormOptions(form, success, error));
         } catch (error: any) {
             form.setError(error.format());
         }

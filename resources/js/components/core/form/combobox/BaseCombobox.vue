@@ -20,6 +20,7 @@ import SpinnerComponent from '@/components/core/util/SpinnerComponent.vue';
 import InputError from '@/components/core/form/InputError.vue';
 import { computed } from 'vue';
 import { trans } from 'laravel-vue-i18n';
+import RequiredIndicator from '@/components/core/form/RequiredIndicator.vue';
 
 interface Props {
 	label?: string;
@@ -30,6 +31,7 @@ interface Props {
 	isLoading?: boolean;
     labelUppercase?: boolean,
     verticalLayout?: boolean,
+    isRequired?: boolean,
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -37,6 +39,7 @@ const props = withDefaults(defineProps<Props>(), {
 	isLoading: false,
     labelUppercase:false,
     verticalLayout:true,
+    isRequired: false
 });
 const valueModel = defineModel<SelectOption>();
 
@@ -54,7 +57,9 @@ const fieldPlaceHolder = computed(() => {
 <template>
 	<div class="flex flex-col">
 		<div :class="cn('flex space-x-3', verticalLayout && 'flex-col space-y-3')">
-			<Label :class="cn(error && 'text-destructive', labelUppercase && 'uppercase', !verticalLayout && 'flex items-center w-1/4')" v-if="label">{{ label }}:</Label>
+			<Label :class="cn(error && 'text-destructive', labelUppercase && 'uppercase', !verticalLayout && 'flex items-center w-1/4')" v-if="label">
+                {{ label }}<RequiredIndicator v-if="isRequired"/>
+            </Label>
 			<Combobox v-model="valueModel" by="label" class="w-full">
 				<ComboboxAnchor as-child class="relative">
 					<ComboboxTrigger as-child>
