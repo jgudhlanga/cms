@@ -9,9 +9,13 @@ import { Gender } from '@/types/settings';
 import type { Link } from '@/types/ui';
 import { InertiaForm, usePage } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
+import { ref } from 'vue';
+import { useDropdowns } from '@/composables/core/useDropdowns';
 
 export const useGenders = () => {
     const { moreActionButton, onDelete, onForceDelete, onRestore } = useDataTables();
+    const isLoading = ref(false);
+    const genders = ref<Gender[]>([]);
     const { titleSchema } = useSharedFormSchema();
     const createGenderColumns = () => {
         const { props } = usePage();
@@ -75,10 +79,19 @@ export const useGenders = () => {
         openModal({ name: APP_MODULE_KEYS.genders, edit: gender });
     };
 
+    const listGenders = async (search?: string) => {
+        const { data, fetchData } = useDropdowns();
+        isLoading.value = true;
+        await fetchData({ url: route('v1.genders.index'), search, transChoiceKey: 'trans.gender' });
+        isLoading.value = false;
+        genders.value = data.value;
+    };
+
     return {
         createGenderColumns,
         breadcrumbs,
         onOpenModal,
         saveGender,
+        isLoading, genders, listGenders,
     };
 };

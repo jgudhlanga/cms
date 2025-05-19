@@ -21,7 +21,7 @@ const { navigateTo } = useUtils();
         <SettingsButton class="mt-2" :title="$t('trans.manage')" />
         <HeadingSmall :title="$tChoice('trans.department', 2)" :description="$t('trans.department_description')" class="mt-6" />
         <SettingsButton class="mt-2" @click="navigateTo(route('institution-departments.index'))" :title="$t('trans.manage')" />
-        <HeadingSmall :title="$tChoice('trans.application', 2)" :description="$t('trans.application_description')" class="mt-6" />
-        <SettingsButton class="mt-2" @click="navigateTo(route('institution-departments.index'))" :title="$t('trans.manage')" />
+        <HeadingSmall :title="$t('trans.application_form_config')" :description="$t('trans.application_description')" class="mt-6" />
+        <SettingsButton class="mt-2" @click="navigateTo(route('applications.setup'))" :title="$t('trans.manage')" />
     </PageContainer>
 </template>

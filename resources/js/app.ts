@@ -14,7 +14,7 @@ import 'vue-final-modal/style.css';
 import { initializeTheme } from '@/composables/core/useAppearance';
 import GuestLayout from '@/layouts/GuestLayout.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
-import SiteLayout from '@/layouts/SiteLayout.vue';
+import PlainLayout from '@/layouts/PlainLayout.vue';
 import { PageModule } from '@/types';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
@@ -30,7 +30,7 @@ createInertiaApp({
         if (name.startsWith('auth/')) {
             page.default.layout = GuestLayout;
         } else if (name.startsWith('site/')) {
-            page.default.layout = SiteLayout;
+            page.default.layout = PlainLayout;
         } else {
             page.default.layout = AppLayout;
         }

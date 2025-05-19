@@ -1,17 +1,26 @@
 <script setup lang="ts">
 
+import { cn } from '@/lib/utils';
+
 const model = defineModel<any>();
-defineProps<{
-	inputId: string,
-	label?: string;
-}>();
+
+interface Props {
+    inputId: string,
+    label?: string;
+    labelUppercase?: boolean,
+}
+
+defineProps<Props>();
 
 </script>
 
 <template>
 	<div class="inline-flex items-center">
+        <label v-if="label" :class="cn('cursor-pointer text-sm font-medium', labelUppercase && 'uppercase')" :for="inputId">
+            {{ label }}
+        </label>
 		<label
-			class="relative flex cursor-pointer items-center rounded-full p-3"
+			:class="cn('relative flex cursor-pointer items-center rounded-full p-3')"
 			:for="inputId"
 			data-ripple-dark="true"
 		>
@@ -43,10 +52,6 @@ defineProps<{
 					></path>
 				  </svg>
     		</span>
-
-		</label>
-		<label v-if="label" class="cursor-pointer text-sm font-medium" :for="inputId">
-			{{ label }}
 		</label>
 	</div>
 </template>

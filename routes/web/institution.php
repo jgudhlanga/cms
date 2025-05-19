@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Institution\ApplicationFormSetupController;
 use App\Http\Controllers\Institution\DepartmentCourseController;
 use App\Http\Controllers\Institution\DepartmentLevelController;
 use App\Http\Controllers\Institution\InstitutionController;
@@ -20,5 +21,7 @@ Route::prefix('institution')->middleware('auth')->group(function () {
     Route::post('departments/{institution_department}/sync-courses', [DepartmentCourseController::class, 'syncDepartmentCourses'])->name('department-courses.sync');
     Route::get('departments/{department_course}/show', [DepartmentCourseController::class, 'show'])->name('department-courses.show');
     Route::post('departments/{department_course}/update', [DepartmentCourseController::class, 'update'])->name('department-courses.update');
+    # ================================== APPLICATIONS ======================================
+    Route::get('applications/setup', ApplicationFormSetupController::class)->name('applications.setup');
 });
 
