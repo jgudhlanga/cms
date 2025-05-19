@@ -4,32 +4,35 @@ namespace App\DTO\Users;
 
 use App\Http\Requests\Users\CreateUserRequest;
 use App\Http\Requests\Users\UpdateUserRequest;
+use App\Models\Users\User;
 
-class UserDto
+readonly class UserDto
 {
-	public function __construct(
-		public readonly string  $name,
-		public readonly string  $email,
-		public readonly ?string $password
-	)
-	{
-	}
+    public function __construct(
+        public int     $title_id,
+        public string  $first_name,
+        public ?string $middle_name,
+        public string  $last_name,
+        public int     $gender_id,
+        public ?int    $race_id,
+        public string  $email,
+        public string  $password,
+    )
+    {
+    }
 
-	public static function fromCreateUserRequest(CreateUserRequest $request): UserDto
-	{
-		return new self(
-			name: $request->name,
-			email: $request->email,
-			password: $request->password,
-		);
-	}
 
-	public static function fromUpdateUseRequest(UpdateUserRequest $request): UserDto
-	{
-		return new self(
-			name: $request->name,
-			email: $request->email,
-			password: $request->password,
-		);
-	}
+    public static function fromCreateUserRequest(CreateUserRequest $request): UserDto
+    {
+        return new self(
+            title_id: $request->title_id,
+            first_name: $request->first_name,
+            middle_name: $request->middle_name,
+            last_name: $request->last_name,
+            gender_id: $request->gender_id,
+            race_id: $request->race_id,
+            email: $request->email,
+            password: $request->password,
+        );
+    }
 }

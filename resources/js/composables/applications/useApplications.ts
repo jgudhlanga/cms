@@ -13,10 +13,10 @@ export function useApplications() {
     const createApplication = (form: InertiaForm<any>) => {
         try {
             mergeValidationSchema(schemaFields)(
-                ['titleIdSchema', 'lastNameSchema', 'genderSchema', 'emailSchema', 'passwordSchema'],
+                ['titleIdSchema', 'lastNameSchema', 'genderSchema', 'emailSchema', 'passwordSchema', 'passwordConfirmationSchema'],
                 schemaFields['firstNameSchema'](),
             ).parse(form);
-            form.post(route('schemes.update'), buildFormOptions(form, successMessage(), errorMessage()));
+            form.post(route('application.store'), buildFormOptions(form, successMessage(), errorMessage()));
             const store = useApplicationFormStore();
             store.$reset();
             store.$dispose();

@@ -12,19 +12,38 @@ use Illuminate\Http\Resources\Json\JsonResource;
  * @property mixed $created_at
  * @property mixed $updated_at
  * @property mixed $deleted_at
+ * @property mixed $first_name
+ * @property mixed $middle_name
+ * @property mixed $last_name
+ * @property mixed $email
+ * @property mixed $tenant_id
  */
 class UserResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
+        // Build the full name
+        $nameParts = array_filter([
+            $this->first_name,
+            $this->middle_name,
+            $this->last_name,
+        ]);
+        $fullName = implode(' ', $nameParts);
         return [
             'type' => 'user',
             'id' => $this->id,
             'attributes' => [
-                'name' => $this->name,
-				'email' => $this->email,
-				'avatar' => $this->avatar,
-				'tenantId' => $this->tenant_id,
+                'name' => $fullName,
+                'first_name' => $this->first_name,
+                'middle_name' => $this->middle_name,
+                'last_name' => $this->last_name,
+                'email' => $this->email,
+                'tenantId' => $this->tenant_id,
+                'tenant' => $this->tenant?->name,
+                'genderId' => $this->gender_id,
+                'gender' => $this->gender?->title,
+                'titleId' => $this->title_id,
+                'title' => $this->title?->name,
                 $this->mergeWhen($request->routeIs('users.*'), [
                     'createdAt' => $this->created_at,
                     'updatedAt' => $this->updated_at,

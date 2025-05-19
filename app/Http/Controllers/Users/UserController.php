@@ -9,12 +9,12 @@ use App\Http\Requests\Users\CreateUserRequest;
 use App\Http\Requests\Users\UpdateUserRequest;
 use App\Http\Resources\Users\UserResource;
 use App\Models\Users\User;
-use App\Repositories\Users\interface\IUserRepository;
+use App\Repositories\Users\interface\IApplicationRepository;
 use Inertia\Inertia;
 
 class UserController extends Controller
 {
-	public function __construct(protected IUserRepository $repository)
+	public function __construct(protected IApplicationRepository $repository)
 	{
 	}
 

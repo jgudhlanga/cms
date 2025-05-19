@@ -6,7 +6,7 @@ use App\Http\Controllers\Site\SiteController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', SiteController::class)->name('home');
-Route::get('/application', [ApplicationFormController::class, 'index'])->name('application');
+
 Route::get('/dashboard', DashboardController::class)->middleware(['auth', 'verified'])->name('dashboard');
 
 
@@ -17,3 +17,4 @@ require __DIR__ . '/web/acl.php';
 require __DIR__ . '/web/shared.php';
 require __DIR__ . '/web/payments.php';
 require __DIR__ . '/web/institution.php';
+require __DIR__ . '/web/applications.php';
