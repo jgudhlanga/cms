@@ -9,12 +9,12 @@ use App\Http\Requests\Users\CreateUserRequest;
 use App\Http\Requests\Users\UpdateUserRequest;
 use App\Http\Resources\Users\UserResource;
 use App\Models\Users\User;
-use App\Repositories\Users\interface\IApplicationRepository;
+use App\Repositories\Users\interface\IUserRepository;
 use Inertia\Inertia;
 
 class UserController extends Controller
 {
-	public function __construct(protected IApplicationRepository $repository)
+	public function __construct(protected IUserRepository $repository)
 	{
 	}
 
@@ -39,7 +39,8 @@ class UserController extends Controller
 	public function store(CreateUserRequest $request)
 	{
 		$this->authorize('create', User::class);
-		$this->repository->create(UserDto::fromCreateUserRequest($request));
+        $tenant = $request->user()->tenant;
+		$this->repository->create(UserDto::fromCreateUserRequest($request, $tenant));
 	}
 
 	public function show(User $user)

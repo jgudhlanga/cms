@@ -22,12 +22,12 @@ class UsersTableSeeder extends Seeder
             'first_name' => 'Super',
             'middle_name' => '',
             'last_name' => 'Administrator',
-            'email' => 'jimmyneds@gmail.com',
+            'email' => 'jgudhlanga@gmail.com',
             'tenant_id' => $hararePoly->id,
             'password' => 'Developer123!',
             'title_id' => fake()->randomElement($titleIds),
             'gender_id' => fake()->randomElement($genderIds),
-            # 'email_verified_at' => now(),
+            'email_verified_at' => now(),
         ]);
         $sdu->assignRole(RoleEnum::SUPER_ADMINISTRATOR);
     }

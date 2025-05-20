@@ -23,7 +23,7 @@ class ApplicationFormController extends Controller
 
     }
 
-    public function index()
+    public function create()
     {
         // Check if the user is authenticated
         if (Auth::check()) {
