@@ -32,9 +32,9 @@ const computedClass = computed(() =>
 
 <template>
 	<Alert :class="computedClass">
-		<component :is="icons[iconVariants[type] as IconName]" class="size-6" />
-		<AlertTitle v-if="title" class="uppercase font-bold mx-3">{{ title }}</AlertTitle>
-		<AlertDescription class="m-3">
+		<component :is="icons[iconVariants[type] as IconName]" class="size-9" />
+		<AlertTitle v-if="title" class="uppercase font-bold mx-4 mt-2">{{ title }}</AlertTitle>
+		<AlertDescription class="m-4">
 			{{ description }}
 		</AlertDescription>
 	</Alert>
