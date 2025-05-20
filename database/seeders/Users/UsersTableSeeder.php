@@ -27,7 +27,7 @@ class UsersTableSeeder extends Seeder
             'password' => 'Developer123!',
             'title_id' => fake()->randomElement($titleIds),
             'gender_id' => fake()->randomElement($genderIds),
-            'email_verified_at' => now(),
+            # 'email_verified_at' => now(),
         ]);
         $sdu->assignRole(RoleEnum::SUPER_ADMINISTRATOR);
     }
