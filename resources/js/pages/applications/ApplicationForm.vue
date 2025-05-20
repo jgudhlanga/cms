@@ -2,24 +2,21 @@
 import { BaseButton } from '@/components/core/button';
 import GenderComboSelect from '@/components/core/form/combobox/GenderComboSelect.vue';
 import TitleComboSelect from '@/components/core/form/combobox/TitleComboSelect.vue';
-import AppLogo from '@/components/core/image/AppLogo.vue';
 import { useApplications } from '@/composables/applications/useApplications';
 import { ButtonSize } from '@/enums/buttons';
 import { TextFieldType } from '@/enums/inputs';
 import { clearFormErrors } from '@/lib/forms';
-import InfiniteBackground from '@/pages/applications/InfiniteBackground.vue';
 import { useApplicationFormStore } from '@/store/applications/useApplicationFormStore';
 import { CreateApplicationParams } from '@/types/applications';
 import { Head, useForm } from '@inertiajs/vue3';
 import { storeToRefs } from 'pinia';
 import BaseInput from '../../components/core/form/text/BaseInput.vue';
+import ApplicationCover from '@/pages/applications/ApplicationCover.vue';
 
 const { createApplication } = useApplications();
 const { email, first_name, last_name, middle_name, password, title, gender, password_confirmation } = storeToRefs(useApplicationFormStore());
 const form = useForm<CreateApplicationParams>({
     password_confirmation: '',
-    id_number: '',
-    passport_number: '',
     email: '',
     first_name: '',
     last_name: '',
@@ -30,20 +27,36 @@ const form = useForm<CreateApplicationParams>({
     gender: null,
     gender_id: null,
 });
+
+const updateForm = () => {
+        form.password_confirmation = password_confirmation.value;
+        form.email = email.value;
+        form.first_name = first_name.value;
+        form.last_name = last_name.value ?? '';
+        form.middle_name = middle_name?.value ?? '';
+        form.password = password.value;
+        form.title = title.value ?? null;
+        form.title_id = title.value?.value ?? null;
+        form.gender = gender.value ?? null;
+        form.gender_id = gender.value?.value ?? null;
+};
+const submitForm = () => {
+    updateForm();
+    createApplication(form);
+};
+
+
+
 </script>
 
 <template>
     <Head :title="$t('trans.application_form')" />
-    <InfiniteBackground />
-    <div class="flex flex-col items-center justify-center space-y-4 overflow-scroll py-8">
-        <div class="my-5 flex size-20 flex-col items-center justify-center">
-            <AppLogo classes="border-2 border-white" />
-        </div>
+    <ApplicationCover>
         <header>
             <h3 class="text-primary my-3 flex items-center justify-center text-lg font-bold uppercase">Harare Polytechnic</h3>
             <p class="text-muted-foreground my-2 text-sm">{{ $t('trans.application_form_description') }}</p>
         </header>
-        <form @submit.prevent="createApplication(form)" class="flex  w-2/5 flex-col">
+        <form @submit.prevent="submitForm()" class="flex  w-2/5 flex-col">
             <div class="flex w-full flex-col space-y-3 py-8">
                 <TitleComboSelect
                     :form="form"
@@ -131,5 +144,5 @@ const form = useForm<CreateApplicationParams>({
                 <BaseButton :size="ButtonSize.lg" type="submit">{{ $t('trans.submit') }}</BaseButton>
             </div>
         </form>
-    </div>
+    </ApplicationCover>
 </template>

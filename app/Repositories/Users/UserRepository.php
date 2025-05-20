@@ -39,6 +39,7 @@ class UserRepository extends BaseRepository implements IUserRepository
     private function getFields(UserDto $dto): array
     {
         return [
+            'tenant_id' => $dto->tenant_id,
             'title_id' => $dto->title_id,
             'first_name' => $dto->first_name,
             'middle_name' => $dto->middle_name,

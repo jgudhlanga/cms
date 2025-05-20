@@ -3,8 +3,12 @@
 namespace App\Http\Controllers\Applications;
 
 use App\DTO\Users\UserDto;
+use App\Enums\TenantEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Users\CreateUserRequest;
+use App\Http\Resources\Users\UserResource;
+use App\Models\Tenants\Tenant;
+use App\Models\Users\User;
 use App\Repositories\Applications\interface\IApplicationRepository;
 use App\Repositories\Users\interface\IUserRepository;
 use Illuminate\Support\Facades\Auth;
@@ -34,7 +38,14 @@ class ApplicationFormController extends Controller
 
     public function store(CreateUserRequest $request)
     {
-        $user = $this->userRepository->create(UserDto::fromCreateUserRequest($request));
+        $tenant = Tenant::where('name', TenantEnum::HARARE_POLY->value)->first();
+        $user = $this->userRepository->create(UserDto::fromCreateUserRequest($request, $tenant));
+        return to_route('applications.confirmation', compact('user'));
+    }
 
+    public function confirmation(User $user)
+    {
+        $user = UserResource::make($user);
+        return Inertia::render('applications/Confirmation', compact('user'));
     }
 }
