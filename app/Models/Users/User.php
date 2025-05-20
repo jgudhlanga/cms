@@ -8,6 +8,7 @@ use App\Models\Genders\Gender;
 use App\Models\Titles\Title;
 use App\Traits\Filterable;
 use App\Traits\Paginatable;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -24,7 +25,7 @@ use Laravel\Sanctum\HasApiTokens;
  * @mixin Builder
  * @method static filter(UserFilter $filters)
  */
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail
 {
     use HasApiTokens, HasFactory, Notifiable, SoftDeletes, Filterable, Paginatable, LogsActivity, HasRoles;
 

@@ -15,8 +15,8 @@ defineProps<{
 const { login } = useAuth();
 
 const form = useForm<Login>({
-    email: 'su@penstejsystems.com',
-    password: 'Deve10per!23',
+    email: 'jgudhlangas@gmail.com',
+    password: 'Developer123!',
     remember: true,
 });
 </script>

@@ -19,7 +19,7 @@ interface Props {
         <div class="flex items-center justify-center p-8">
            <div class="flex w-1/2">
                <BaseAlert
-                   :type="TypeVariant.info"
+                   :type="TypeVariant.success"
                    :title="$t('trans.success')"
                    :description="$t('trans.application_user_created_success_message', { email: user.attributes.email })"
                />

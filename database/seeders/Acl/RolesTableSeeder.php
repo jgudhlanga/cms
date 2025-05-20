@@ -16,13 +16,13 @@ class RolesTableSeeder extends Seeder
 			if (!$exist instanceof Role) {
 				$role = Role::create(['name' => $row->value]);
 				if ($role->name == RoleEnum::SUPER_ADMINISTRATOR->value) {
-					$this->assignSuperAdminstratorPermissions($role);
+					$this->assignSuperAdministratorPermissions($role);
 				}
 			}
 		}
 	}
 
-	private function assignSuperAdminstratorPermissions($role): void {
+	private function assignSuperAdministratorPermissions($role): void {
 	 	$permissions = collect(PermissionEnum::cases())
 				->reject(fn($case) => $case->value === PermissionEnum::MANAGE_OWN_TENANT_DATA->value)
 				->mapWithKeys(fn($case) => [$case->value => $case->value]);

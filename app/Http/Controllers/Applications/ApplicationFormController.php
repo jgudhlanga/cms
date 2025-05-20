@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Applications;
 
 use App\DTO\Users\UserDto;
+use App\Enums\RoleEnum;
 use App\Enums\TenantEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Users\CreateUserRequest;
@@ -22,7 +23,7 @@ class ApplicationFormController extends Controller
 
     }
 
-    public function index()
+    public function create()
     {
         // Check if the user is authenticated
         if (Auth::check()) {
@@ -40,6 +41,7 @@ class ApplicationFormController extends Controller
     {
         $tenant = Tenant::where('name', TenantEnum::HARARE_POLY->value)->first();
         $user = $this->userRepository->create(UserDto::fromCreateUserRequest($request, $tenant));
+        $user->assignRole(RoleEnum::STUDENT);
         return to_route('applications.confirmation', compact('user'));
     }
 
