@@ -24,7 +24,9 @@ class DepartmentLevelController extends Controller
         $this->authorize('updateDepartmentMetaData');
         $departmentLevel = DepartmentLevelResource::make($departmentLevel);
         $institutionDepartment = InstitutionDepartmentResource::make($departmentLevel->institutionDepartment);
-        return Inertia::render('institution/departments/DepartmentLevelRequirements', compact('departmentLevel', 'institutionDepartment'));
+        $levels = DepartmentLevelResource::collection($institutionDepartment->departmentLevels);
+        return Inertia::render('institution/departments/DepartmentLevelRequirements',
+            compact('departmentLevel', 'institutionDepartment', 'levels'));
     }
 
     public function syncDepartmentLevels(InstitutionDepartment $institutionDepartment, DepartmentLevelRequest $request): void

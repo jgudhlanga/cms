@@ -17,6 +17,7 @@ class DepartmentLevelResource extends JsonResource
                 "institutionDepartmentId" => $this->institution_department_id,
                 "levelId" => $this->level_id,
                 "level" => $this->level?->name,
+                'levelPosition' => $this->level?->position,
                 'description' => $this->resource->description,
                 $this->mergeWhen($request->routeIs('department-levels.*'), [
                     'createdAt' => $this->resource->created_at,
