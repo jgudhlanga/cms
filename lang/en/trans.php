@@ -235,5 +235,11 @@ return [
     "only_read_write_required" => "Read/Write required?",
     "requires_previous_level" => "Requires previous level?",
     "requires_previous_level_description" => "This level requires a previous level to be completed",
+    "required_subjects_count" => "Required subjects count",
+    "main_subjects_count" => "Main subjects count",
+    "other_subjects_count" => "Other subjects count",
+    "main_subjects" => "Main subjects",
+    "select_main_required_subjects" => "Select the main subjects required for this Level",
+    "previous_level" => "Previous Level",
 ];
 

@@ -16,7 +16,6 @@ import { Head, useForm } from '@inertiajs/vue3';
 import { computed, onMounted, ref } from 'vue';
 import BaseButton from '../../../components/core/button/BaseButton.vue';
 import BaseCombobox from '@/components/core/form/combobox/BaseCombobox.vue';
-import { Title } from '@/types/settings';
 import { SelectOption } from '@/types/utils';
 
 interface Props {
@@ -111,12 +110,12 @@ const updateLevel = () => {};
                 <div v-if="isOLevelRequired" class="flex flex-col">
                     <div class="my-5 grid grid-cols-4 gap-3">
                         <SharedNumberField
-                            label="Required subjects count"
+                            :label="$t('trans.required_subjects_count')"
                             input-id="required_subjects_count"
                             v-model="form.required_subjects_count"
                         />
-                        <SharedNumberField label="Main subjects count" input-id="main_subjects_count" v-model="form.main_subjects_count" />
-                        <SharedNumberField label="Other subjects count" input-id="other_subjects_count" v-model="form.other_subjects_count" />
+                        <SharedNumberField :label="$t('trans.main_subjects_count')" input-id="main_subjects_count" v-model="form.main_subjects_count" />
+                        <SharedNumberField :label="$t('trans.other_subjects_count')" input-id="other_subjects_count" v-model="form.other_subjects_count" />
                     </div>
                     <template v-if="subjects && subjects.length > 0">
                         <div class="flex flex-col">
@@ -160,7 +159,7 @@ const updateLevel = () => {};
                                 <div class="flex flex-col">
                                     <BaseCombobox
                                         class="w-1/4"
-                                        :label="$tChoice('trans.level', 1)"
+                                        :label="$t('trans.previous_level')"
                                         :options="options"
                                         :label-uppercase="false"
                                         :vertical-layout="true"
