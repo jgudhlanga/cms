@@ -224,8 +224,16 @@ return [
     "confirm_password_description" => "Please confirm your password",
     "success" => "Success",
     "error" =>  "Error",
-    "application_user_created_success_message" => "Thank you for creating an account with us! To complete your registration, please check your email ( :email ) for a verification link. Click the link in the email to verify your account and get started. If you don't see the email in your inbox, please check your spam or junk folder.
-"
-
+    "application_user_created_success_message" => "Thank you for creating an account with us! To complete your registration, please check your email ( :email ) for a verification link. Click the link in the email to verify your account and get started. If you don't see the email in your inbox, please check your spam or junk folder.",
+    "requirement" => "Requirement|Requirements",
+    "level_requirements" => "Level Requirements",
+    "is_o_level_required" => "Is O Level required?",
+    "o_level_subjects" => "O Level Subjects",
+    "select_o_level_subjects" => "Select the subjects required for this Level",
+    "spd_requirements" => "SPD Requirements",
+    "spd_requirements_description" => "Configure the SPD requirements for this Level",
+    "only_read_write_required" => "Read/Write required?",
+    "requires_previous_level" => "Requires previous level?",
+    "requires_previous_level_description" => "This level requires a previous level to be completed",
 ];
 

@@ -17,9 +17,9 @@ interface Props {
     <ApplicationCover>
 
         <div class="flex items-center justify-center p-8">
-           <div class="flex w-1/2">
+           <div class="flex w-2/3">
                <BaseAlert
-                   :type="TypeVariant.success"
+                   :type="TypeVariant.primary"
                    :title="$t('trans.success')"
                    :description="$t('trans.application_user_created_success_message', { email: user.attributes.email })"
                />

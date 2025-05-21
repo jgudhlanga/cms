@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\V1\Institution\CourseController;
 use App\Http\Controllers\Api\V1\Institution\DepartmentController;
 use App\Http\Controllers\Api\V1\Institution\LevelController;
 use App\Http\Controllers\Api\V1\Provinces\ProvinceController;
+use App\Http\Controllers\Api\V1\Subjects\SubjectController;
 use App\Http\Controllers\Api\V1\Titles\TitleController;
 use Illuminate\Support\Facades\Route;
 
@@ -31,4 +32,6 @@ Route::prefix('v1')->group(function () {
     Route::apiResource('countries', CountryController::class)->names('v1.countries');
     # ==================================== DISTRICTS ======================================================
     Route::apiResource('districts', DistrictController::class)->names('v1.districts');
+    # ==================================== SUBJECTS ======================================================
+    Route::apiResource('subjects', SubjectController::class)->names('v1.subjects');
 });

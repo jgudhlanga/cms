@@ -16,9 +16,6 @@ defineProps<Props>();
 
 <template>
 	<div class="inline-flex items-center">
-        <label v-if="label" :class="cn('cursor-pointer text-sm font-medium', labelUppercase && 'uppercase')" :for="inputId">
-            {{ label }}
-        </label>
 		<label
 			:class="cn('relative flex cursor-pointer items-center rounded-full p-3')"
 			:for="inputId"
@@ -53,5 +50,8 @@ defineProps<Props>();
 				  </svg>
     		</span>
 		</label>
+        <label v-if="label" :class="cn('cursor-pointer text-sm font-medium', labelUppercase && 'uppercase')" :for="inputId">
+            {{ label }}
+        </label>
 	</div>
 </template>
