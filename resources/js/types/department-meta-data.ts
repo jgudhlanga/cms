@@ -5,6 +5,7 @@ export type DepartmentLevel = {
         institutionDepartmentId: string | number;
         levelId: string | number;
         level: string;
+        levelPosition: number;
         description?: string;
         createdAt?: string;
         updatedAt?: string;

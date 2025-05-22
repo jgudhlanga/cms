@@ -33,7 +33,7 @@ class InstitutionDepartment extends Model
 
     public function departmentLevels(): HasMany
     {
-        return $this->hasMany(DepartmentLevel::class, 'institution_department_id');
+        return $this->hasMany(DepartmentLevel::class, 'institution_department_id')->orderBy('level_id');
     }
 
     public function departmentCourses(): HasMany

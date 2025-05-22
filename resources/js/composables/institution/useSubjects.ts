@@ -5,13 +5,17 @@ import { APP_MODULE_KEYS } from '@/lib/constants';
 import { buildFormOptions } from '@/lib/forms';
 import { getIdParams } from '@/lib/utils';
 import { Auth } from '@/types';
-import { Subject } from '@/types/institution';
+import {  Subject } from '@/types/institution';
 import type { Link } from '@/types/ui';
 import { InertiaForm, usePage } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
+import { useDropdowns } from '@/composables/core/useDropdowns';
+import { ref } from 'vue';
 
 export const useSubjects = () => {
     const { moreActionButton, onDelete, onForceDelete, onRestore, orderButtons } = useDataTables();
+    const isLoading = ref(false);
+    const subjects = ref<Subject[]>([]);
     const createSubjectColumns = () => {
         const { props } = usePage();
         const { can } = props?.auth as Auth;
@@ -87,10 +91,21 @@ export const useSubjects = () => {
         openModal({ name: APP_MODULE_KEYS.subjects, edit: subject });
     };
 
+    const listSubjects = async (search?: string) => {
+        const { data, fetchData } = useDropdowns();
+        isLoading.value = true;
+        await fetchData({ url: 'api/v1/subjects?page_size=100', search, transChoiceKey: 'trans.subject' });
+        isLoading.value = false;
+        subjects.value = data.value;
+    };
+
     return {
         createSubjectColumns,
         breadcrumbs,
         onOpenModal,
         saveSubject,
+        listSubjects,
+        isLoading,
+        subjects,
     };
 };

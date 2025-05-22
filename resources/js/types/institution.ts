@@ -126,9 +126,20 @@ export type InstitutionDepartment = {
         createdAt?: string;
         updatedAt?: string;
         deletedAt?: string;
-    };
+    },
 };
 
 export type InstitutionDepartmentParams = {
     department_ids: Array<string | undefined | null> | null;
 };
+
+export type DepartmentLevelRequirementParams = {
+    is_o_level_required: boolean;
+    required_subjects_count: number | null;
+    main_subjects_count: number | null;
+    main_subject_ids: Array<string | undefined | null> | null;
+    other_subjects_count: number | null;
+    only_read_write_required: boolean;
+    is_previous_level_required: boolean;
+    previous_level_id: string | null;
+}

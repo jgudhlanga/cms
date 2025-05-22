@@ -29,6 +29,11 @@ class DepartmentLevel extends Model
     {
         return $this->belongsTo(Level::class);
     }
+
+    public function institutionDepartment(): BelongsTo
+    {
+        return $this->belongsTo(InstitutionDepartment::class, 'institution_department_id');
+    }
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()

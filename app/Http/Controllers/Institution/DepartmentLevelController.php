@@ -5,9 +5,13 @@ namespace App\Http\Controllers\Institution;
 use App\DTO\Institution\DepartmentLevelDto;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Institution\DepartmentLevelRequest;
+use App\Http\Resources\Institution\DepartmentLevelResource;
+use App\Http\Resources\Institution\InstitutionDepartmentResource;
 use App\Models\Institution\DepartmentLevel;
 use App\Models\Institution\InstitutionDepartment;
 use App\Repositories\Institution\interface\IDepartmentLevelRepository;
+use Inertia\Inertia;
+use phpDocumentor\Reflection\Types\Compound;
 
 class DepartmentLevelController extends Controller
 {
@@ -15,6 +19,15 @@ class DepartmentLevelController extends Controller
     {
     }
 
+    public function departmentLevelRequirements(DepartmentLevel $departmentLevel)
+    {
+        $this->authorize('updateDepartmentMetaData');
+        $departmentLevel = DepartmentLevelResource::make($departmentLevel);
+        $institutionDepartment = InstitutionDepartmentResource::make($departmentLevel->institutionDepartment);
+        $levels = DepartmentLevelResource::collection($institutionDepartment->departmentLevels);
+        return Inertia::render('institution/departments/DepartmentLevelRequirements',
+            compact('departmentLevel', 'institutionDepartment', 'levels'));
+    }
 
     public function syncDepartmentLevels(InstitutionDepartment $institutionDepartment, DepartmentLevelRequest $request): void
     {
