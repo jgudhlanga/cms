@@ -225,7 +225,7 @@ return [
     "confirm_password_description" => "Please confirm your password",
     "success" => "Success",
     "error" =>  "Error",
-    "application_user_created_success_message" => "Thank you for creating an account with us! To complete your registration, please check your email ( :email ) for a verification link. Click the link in the email to verify your account and get started. If you don't see the email in your inbox, please check your spam or junk folder.",
+    "application_user_created_success_message" => "Thank you for creating an account with us! To complete your registration, please check your email ( :email ) for a verification link. Click the link in the email to verify your account and get started. If you don't see the email in your inbox, please check your spam or junk folder. Also make sure you supplied the correct email ",
     "requirement" => "Requirement|Requirements",
     "level_requirements" => "Level Requirements",
     "is_o_level_required" => "Is O Level required?",
