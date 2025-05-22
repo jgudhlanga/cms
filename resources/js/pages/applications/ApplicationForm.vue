@@ -12,6 +12,7 @@ import { Head, useForm } from '@inertiajs/vue3';
 import { storeToRefs } from 'pinia';
 import BaseInput from '../../components/core/form/text/BaseInput.vue';
 import ApplicationCover from '@/pages/applications/ApplicationCover.vue';
+import TextLink from '@/components/core/util/TextLink.vue';
 
 const { createApplication } = useApplications();
 const { email, first_name, last_name, middle_name, password, title, gender, password_confirmation } = storeToRefs(useApplicationFormStore());
@@ -140,8 +141,12 @@ const submitForm = () => {
                     :error="form.errors.password_confirmation"
                 />
             </div>
-            <div class="flex w-full items-center justify-center">
+            <div class="flex flex-col w-full items-center justify-center space-y-4">
                 <BaseButton :size="ButtonSize.lg" type="submit">{{ $t('trans.submit') }}</BaseButton>
+                <div class="text-muted-foreground text-center text-sm">
+                    {{ $t('trans.have_an_account') }}
+                    <TextLink :href="route('login')" :tabindex="7">{{ $t('trans.login') }}</TextLink>
+                </div>
             </div>
         </form>
     </ApplicationCover>
