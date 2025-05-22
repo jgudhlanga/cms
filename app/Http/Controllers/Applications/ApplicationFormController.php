@@ -42,6 +42,7 @@ class ApplicationFormController extends Controller
         $tenant = Tenant::where('name', TenantEnum::HARARE_POLY->value)->first();
         $user = $this->userRepository->create(UserDto::fromCreateUserRequest($request, $tenant));
         $user->assignRole(RoleEnum::STUDENT);
+        $user->sendEmailVerificationNotification();
         return to_route('applications.confirmation', compact('user'));
     }
 

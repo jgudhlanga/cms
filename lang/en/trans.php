@@ -117,6 +117,7 @@ return [
     'rule' => 'Rule|Rules',
     "select_all" => "Select all",
     "dont_have_an_account" => "Don't have an account?",
+    "have_an_account" => "Have an account?",
     "and" => "and",
     "terms_of_service" => "Terms of service",
     "privacy_policy" => "Privacy policy",
