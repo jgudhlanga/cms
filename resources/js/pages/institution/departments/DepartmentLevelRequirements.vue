@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { BaseCheckbox } from '@/components/core/form';
+import BaseCombobox from '@/components/core/form/combobox/BaseCombobox.vue';
 import SharedNumberField from '@/components/core/form/number/SharedNumberField.vue';
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import Empty from '@/components/core/util/Empty.vue';
 import HeadingSmall from '@/components/core/util/HeadingSmall.vue';
 import { useUtils } from '@/composables/core/useUtils';
+import { useDepartmentLevels } from '@/composables/institution/useDepartmentLevels';
 import { useSubjects } from '@/composables/institution/useSubjects';
 import { ColorVariant } from '@/enums/colors';
 import { getIdParams } from '@/lib/utils';
@@ -12,11 +14,10 @@ import { AuthObject } from '@/types/data-pagination';
 import { DepartmentLevel } from '@/types/department-meta-data';
 import { DepartmentLevelRequirementParams, InstitutionDepartment } from '@/types/institution';
 import type { Link } from '@/types/ui';
+import { SelectOption } from '@/types/utils';
 import { Head, useForm } from '@inertiajs/vue3';
 import { computed, onMounted, ref } from 'vue';
 import BaseButton from '../../../components/core/button/BaseButton.vue';
-import BaseCombobox from '@/components/core/form/combobox/BaseCombobox.vue';
-import { SelectOption } from '@/types/utils';
 
 interface Props {
     institutionDepartment: InstitutionDepartment;
@@ -43,6 +44,7 @@ const isOLevelRequired = ref(false);
 const onlyReadWriteRequired = ref(false);
 const isPreviousLevelRequired = ref(false);
 const { listSubjects, subjects } = useSubjects();
+const { storeDepartmentLevelRequirements } = useDepartmentLevels();
 
 onMounted(async () => {
     await listSubjects();
@@ -50,13 +52,13 @@ onMounted(async () => {
 
 const { navigateTo } = useUtils();
 const form = useForm<DepartmentLevelRequirementParams>({
-    is_o_level_required: isOLevelRequired.value,
+    is_o_level_required: false,
     required_subjects_count: null,
     main_subjects_count: null,
     main_subject_ids: [],
     other_subjects_count: null,
     only_read_write_required: false,
-    is_previous_level_required: isPreviousLevelRequired.value,
+    is_previous_level_required: false,
     previous_level_id: null,
 });
 
@@ -70,12 +72,12 @@ const selectOLevelRequired = (value: any) => {
 
 const SelectOnlyReadWriteRequired = (value: any) => {
     onlyReadWriteRequired.value = value;
-    isPreviousLevelRequired.value = !value;
+    isPreviousLevelRequired.value = false;
 };
 
 const selectPreviousLevelRequired = (value: any) => {
     isPreviousLevelRequired.value = value;
-    onlyReadWriteRequired.value = !value;
+    onlyReadWriteRequired.value = false;
 };
 
 const departmentLevels = computed(() =>
@@ -84,13 +86,21 @@ const departmentLevels = computed(() =>
     ),
 );
 const options = computed(() => {
-    return departmentLevels.value.map((item: DepartmentLevel) => <SelectOption>{
-        value: Number(item?.attributes?.levelId),
-        label: item?.attributes?.level
-    });
+    return departmentLevels.value.map(
+        (item: DepartmentLevel) =>
+            <SelectOption>{
+                value: Number(item?.attributes?.levelId),
+                label: item?.attributes?.level,
+            },
+    );
 });
 
-const updateLevel = () => {};
+const updateLevel = () => {
+    form.is_o_level_required = isOLevelRequired.value;
+    form.only_read_write_required = onlyReadWriteRequired.value;
+    form.is_previous_level_required = isPreviousLevelRequired.value;
+    storeDepartmentLevelRequirements(departmentLevel.id?.toString() ?? '', form);
+};
 </script>
 
 <template>
@@ -114,8 +124,16 @@ const updateLevel = () => {};
                             input-id="required_subjects_count"
                             v-model="form.required_subjects_count"
                         />
-                        <SharedNumberField :label="$t('trans.main_subjects_count')" input-id="main_subjects_count" v-model="form.main_subjects_count" />
-                        <SharedNumberField :label="$t('trans.other_subjects_count')" input-id="other_subjects_count" v-model="form.other_subjects_count" />
+                        <SharedNumberField
+                            :label="$t('trans.main_subjects_count')"
+                            input-id="main_subjects_count"
+                            v-model="form.main_subjects_count"
+                        />
+                        <SharedNumberField
+                            :label="$t('trans.other_subjects_count')"
+                            input-id="other_subjects_count"
+                            v-model="form.other_subjects_count"
+                        />
                     </div>
                     <template v-if="subjects && subjects.length > 0">
                         <div class="flex flex-col">
@@ -146,7 +164,7 @@ const updateLevel = () => {};
                             v-model="onlyReadWriteRequired"
                         />
                     </div>
-                    <div class="mt-5 flex flex-col space-y-3">
+                    <div class="mt-5 flex flex-col space-y-3" v-if="departmentLevels && departmentLevels.length > 0">
                         <HeadingSmall :title="$t('trans.requires_previous_level')" :description="$t('trans.requires_previous_level_description')" />
                         <BaseCheckbox
                             input-id="is_previous_level_required"

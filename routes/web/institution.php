@@ -18,6 +18,7 @@ Route::prefix('institution')->middleware('auth')->group(function () {
     # ==================================== DEPARTMENT LEVELS ================================================================
     Route::post('departments/{institution_department}/sync-levels', [DepartmentLevelController::class, 'syncDepartmentLevels'])->name('department-levels.sync');
     Route::get('departments/{department_level}/requirements', [DepartmentLevelController::class, 'departmentLevelRequirements'])->name('department-levels.requirements');
+    Route::post('departments/{department_level}/requirements', [DepartmentLevelController::class, 'updateDepartmentLevelRequirements'])->name('department-levels.store-requirements');
     # ==================================== DEPARTMENT COURSES ================================================================
     Route::post('departments/{institution_department}/sync-courses', [DepartmentCourseController::class, 'syncDepartmentCourses'])->name('department-courses.sync');
     Route::get('departments/{department_course}/show', [DepartmentCourseController::class, 'show'])->name('department-courses.show');

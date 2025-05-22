@@ -82,6 +82,19 @@ export const useDepartmentLevels = () => {
         }
     };
 
+    const storeDepartmentLevelRequirements = (departmentLevelId: string, form: InertiaForm<any>) => {
+        try {
+            const success = trans('trans.item_saved', { item: trans_choice('trans.level', 2) });
+            const error = trans('trans.item_save_failure', { item: trans_choice('trans.level', 2) });
+            form.post(
+                route('department-levels.store-requirements', departmentLevelId),
+                buildFormOptions(form, success, error),
+            );
+        } catch (error: any) {
+            form.setError(error.format());
+        }
+    };
+
     const openDepartmentLevelsModal = (departmentLevels: Array<string | undefined | null> | null) => {
         if (!can['create:department-metadata']) return forbiddenAlert();
         openModal({ name: APP_MODULE_KEYS.department_levels, edit: departmentLevels });
@@ -91,5 +104,6 @@ export const useDepartmentLevels = () => {
         createDepartmentLevelColumns,
         openDepartmentLevelsModal,
         syncDepartmentLevels,
+        storeDepartmentLevelRequirements
     };
 };

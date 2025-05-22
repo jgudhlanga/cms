@@ -3,6 +3,7 @@
 namespace App\Repositories\Institution;
 
 use App\DTO\Institution\DepartmentLevelDto;
+use App\DTO\Institution\DepartmentLevelRequirementsDto;
 use App\Models\Institution\DepartmentLevel;
 use App\Models\Institution\InstitutionDepartment;
 use App\Repositories\Base\BaseRepository;
@@ -39,5 +40,28 @@ class DepartmentLevelRepository extends BaseRepository implements IDepartmentLev
         foreach ($toAdd as $levelId) {
             $this->departmentLevel->create(['institution_department_id' => $institutionDepartment->id, 'level_id' => $levelId]);
         }
+    }
+
+    public function updateDepartmentLevelRequirements(DepartmentLevel $departmentLevel, DepartmentLevelRequirementsDto $dto): void
+    {
+        if ($departmentLevel->requirements()) {
+            $departmentLevel->requirements()->update($this->getFields($dto));
+        } else {
+            $departmentLevel->requirements()->create($this->getFields($dto));
+        }
+    }
+
+    private function getFields(DepartmentLevelRequirementsDto $dto): array
+    {
+        return [
+            'is_o_level_required' => $dto->is_o_level_required,
+            'required_subjects_count' => $dto->required_subjects_count,
+            'main_subjects_count' => $dto->main_subjects_count,
+            'main_subject_ids' => $dto->main_subject_ids, // Array
+            'other_subjects_count' => $dto->other_subjects_count,
+            'only_read_write_required' => $dto->only_read_write_required,
+            'is_previous_level_required' => $dto->is_previous_level_required,
+            'previous_level_id' => $dto->previous_level_id,
+        ];
     }
 }

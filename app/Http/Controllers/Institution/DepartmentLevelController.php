@@ -29,6 +29,14 @@ class DepartmentLevelController extends Controller
             compact('departmentLevel', 'institutionDepartment', 'levels'));
     }
 
+    public function updateDepartmentLevelRequirements(DepartmentLevel $departmentLevel, DepartmentLevelRequest $request): void
+    {
+        $this->authorize('updateDepartmentMetaData');
+        $departmentLevel = DepartmentLevelResource::make($departmentLevel);
+        dump($request->all());
+        dd($departmentLevel->requirements);
+    }
+
     public function syncDepartmentLevels(InstitutionDepartment $institutionDepartment, DepartmentLevelRequest $request): void
     {
         $this->authorize('createDepartmentMetaData');
