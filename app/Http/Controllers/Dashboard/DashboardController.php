@@ -9,6 +9,7 @@ class DashboardController extends Controller
 {
     public function __invoke()
     {
+        $this->authorize('viewDashboard');
         return Inertia::render('dashboard/Index', []);
     }
 }

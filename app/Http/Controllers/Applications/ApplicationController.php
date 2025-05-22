@@ -15,12 +15,17 @@ use App\Repositories\Users\interface\IUserRepository;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
-class ApplicationFormController extends Controller
+class ApplicationController extends Controller
 {
 
     public function __construct(protected IUserRepository $userRepository, protected IApplicationRepository $applicationRepository)
     {
 
+    }
+
+    public function index(User $user) {
+        $user = UserResource::make($user);
+        return Inertia::render('applications/Applications', compact('user'));
     }
 
     public function create()
@@ -50,5 +55,10 @@ class ApplicationFormController extends Controller
     {
         $user = UserResource::make($user);
         return Inertia::render('applications/Confirmation', compact('user'));
+    }
+
+    public function edit(User $user) {
+        $user = UserResource::make($user);
+        return Inertia::render('applications/EditApplication', compact('user'));
     }
 }

@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\Applications\ApplicationFormController;
+use App\Http\Controllers\Applications\ApplicationController;
 use App\Http\Controllers\Dashboard\DashboardController;
 use App\Http\Controllers\Site\SiteController;
 use Illuminate\Support\Facades\Route;

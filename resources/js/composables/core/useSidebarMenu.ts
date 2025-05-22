@@ -22,16 +22,7 @@ export function useSidebarMenu() {
                 logo: markRaw(AppLogo),
                 bio: 'Software',
             },
-        },
-        {
-            id: '2',
-            type: 'tenant',
-            attributes: {
-                name: 'Penstej Systems',
-                logo: markRaw(AppLogo),
-                bio: 'Elite Software',
-            },
-        },
+        }
     ];
 
     const menuOptions: Array<MenuItemInterface> = [
