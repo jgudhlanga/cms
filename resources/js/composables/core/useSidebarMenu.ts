@@ -8,10 +8,11 @@ import { MenuItemInterface } from '@/types/ui';
 import { usePage } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 import { markRaw } from 'vue';
+import { getIdParams } from '@/lib/utils';
 
 export function useSidebarMenu() {
     const { props } = usePage<PageProps>();
-    const { can } = props?.auth;
+    const { can, user } = props?.auth;
     const { isItTrue } = useUtils();
     const tenants: Array<TenantInterface> = [
         {
@@ -31,6 +32,12 @@ export function useSidebarMenu() {
             icon: icons[IconName.dashboard],
             url: route('dashboard'),
             show: isItTrue(can['view:dashboards']),
+        },
+       {
+            transChoiceKey: 'trans.my_application',
+            icon: icons[IconName.user_add],
+            url: route('applications.index', getIdParams(user?.id?.toString() as string)),
+            show: isItTrue(can['manageOwnData:students']),
         },
         {
             transChoiceKey: 'trans.enrolment',

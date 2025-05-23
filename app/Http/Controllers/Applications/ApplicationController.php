@@ -25,7 +25,7 @@ class ApplicationController extends Controller
 
     public function index(User $user) {
         $user = UserResource::make($user);
-        return Inertia::render('applications/Applications', compact('user'));
+        return Inertia::render('applications/student/Applications', compact('user'));
     }
 
     public function create()
@@ -39,7 +39,7 @@ class ApplicationController extends Controller
             request()->session()->invalidate();
             request()->session()->regenerateToken();
         }
-        return Inertia::render('applications/ApplicationForm');
+        return Inertia::render('applications/guest/ApplicationForm');
     }
 
     public function store(CreateUserRequest $request)
@@ -54,11 +54,11 @@ class ApplicationController extends Controller
     public function confirmation(User $user)
     {
         $user = UserResource::make($user);
-        return Inertia::render('applications/Confirmation', compact('user'));
+        return Inertia::render('applications/guest/ApplicationForm', compact('user'));
     }
 
     public function edit(User $user) {
         $user = UserResource::make($user);
-        return Inertia::render('applications/EditApplication', compact('user'));
+        return Inertia::render('applications/student/EditApplication', compact('user'));
     }
 }

@@ -10,8 +10,8 @@ import { useApplicationFormStore } from '@/store/applications/useApplicationForm
 import { CreateApplicationParams } from '@/types/applications';
 import { Head, useForm } from '@inertiajs/vue3';
 import { storeToRefs } from 'pinia';
-import BaseInput from '../../components/core/form/text/BaseInput.vue';
-import ApplicationCover from '@/pages/applications/ApplicationCover.vue';
+import BaseInput from '../../../components/core/form/text/BaseInput.vue';
+import ApplicationCover from '@/pages/applications/shared/ApplicationCover.vue';
 import TextLink from '@/components/core/util/TextLink.vue';
 
 const { createApplication } = useApplications();

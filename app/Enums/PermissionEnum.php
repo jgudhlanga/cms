@@ -167,6 +167,9 @@ enum PermissionEnum: string
     case IMPORT_CONTACTS = 'import:contacts';
     case EXPORT_CONTACTS = 'export:contacts';
 
+    # STUDENT OWN DATA,
+    case MANAGE_OWN_STUDENT_DATA = 'manageOwnData:students';
+
     public function label(): string
     {
         return match ($this) {
@@ -327,6 +330,7 @@ enum PermissionEnum: string
             self::FORCE_DELETE_CONTACTS => 'forceDelete:contacts',
             self::IMPORT_CONTACTS => 'import:contacts',
             self::EXPORT_CONTACTS => 'export:contacts',
+            self::MANAGE_OWN_STUDENT_DATA => 'manageOwnData:students',
         };
     }
 

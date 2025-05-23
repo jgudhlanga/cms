@@ -29,9 +29,10 @@ createInertiaApp({
         const page = pages[`./pages/${name}.vue`];
         if (name.startsWith('auth/')) {
             page.default.layout = GuestLayout;
-        } else if (name.startsWith('site/') || name.startsWith('applications/')) {
+        } else if (name.startsWith('site/') || name.startsWith('applications/guest')) {
             page.default.layout = PlainLayout;
-        } else {
+        }
+        else {
             page.default.layout = AppLayout;
         }
         return page as { default: DefineComponent };
