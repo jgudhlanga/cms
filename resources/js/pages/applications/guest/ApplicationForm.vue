@@ -142,7 +142,7 @@ const submitForm = () => {
                 />
             </div>
             <div class="flex flex-col w-full items-center justify-center space-y-4">
-                <BaseButton :size="ButtonSize.lg" type="submit">{{ $t('trans.submit') }}</BaseButton>
+                <BaseButton :size="ButtonSize.lg" type="submit" class="w-1/2">{{ $t('trans.submit') }}</BaseButton>
                 <div class="text-muted-foreground text-center text-sm">
                     {{ $t('trans.have_an_account') }}
                     <TextLink :href="route('login')" :tabindex="7">{{ $t('trans.login') }}</TextLink>
