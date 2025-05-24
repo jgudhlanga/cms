@@ -32,7 +32,6 @@ const can = props?.auth?.can;
             :data="departments.data"
             :trashed-count="trashedCount"
             :filters="filters"
-            :search-url="route('institution-departments.index')"
             :pagination="{ ...departments.links, ...departments.meta }"
             :columns="createInstitutionDepartmentColumns()"
         >

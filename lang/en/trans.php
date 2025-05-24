@@ -243,5 +243,7 @@ return [
     "select_main_required_subjects" => "Select the main subjects required for this Level",
     "previous_level" => "Previous Level",
     "my_application" => "My Application|My Applications",
+    "create_new_application" => "Create new application",
+    "finish_your_application" => "Finish your application",
 ];
 

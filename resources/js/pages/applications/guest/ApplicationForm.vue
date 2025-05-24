@@ -2,7 +2,7 @@
 import { BaseButton } from '@/components/core/button';
 import GenderComboSelect from '@/components/core/form/combobox/GenderComboSelect.vue';
 import TitleComboSelect from '@/components/core/form/combobox/TitleComboSelect.vue';
-import { useApplications } from '@/composables/applications/useApplications';
+import { useGuestApplications } from '@/composables/applications/useGuestApplications';
 import { ButtonSize } from '@/enums/buttons';
 import { TextFieldType } from '@/enums/inputs';
 import { clearFormErrors } from '@/lib/forms';
@@ -14,7 +14,7 @@ import BaseInput from '../../../components/core/form/text/BaseInput.vue';
 import ApplicationCover from '@/pages/applications/shared/ApplicationCover.vue';
 import TextLink from '@/components/core/util/TextLink.vue';
 
-const { createApplication } = useApplications();
+const { createApplication } = useGuestApplications();
 const { email, first_name, last_name, middle_name, password, title, gender, password_confirmation } = storeToRefs(useApplicationFormStore());
 const form = useForm<CreateApplicationParams>({
     password_confirmation: '',

@@ -5,7 +5,7 @@ import { InertiaForm } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 import { ZodObject } from 'zod';
 
-export function useApplications() {
+export function useGuestApplications() {
     const schemaFields = useSharedFormSchema() as Record<string, () => ZodObject<any, any>>;
 
     const successMessage = () => trans('trans.item_saved', { item: trans_choice('trans.application', 1) });
