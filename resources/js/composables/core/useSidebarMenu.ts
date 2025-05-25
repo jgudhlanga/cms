@@ -36,7 +36,7 @@ export function useSidebarMenu() {
        {
             transChoiceKey: 'trans.my_application',
             icon: icons[IconName.user_add],
-            url: route('applications.index', getIdParams(user?.id?.toString() as string)),
+            url: route('portal.index', getIdParams(user?.id?.toString() as string)),
             show: isItTrue(can['manageOwnData:students']),
         },
         {

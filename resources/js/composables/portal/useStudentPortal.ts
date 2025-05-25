@@ -6,7 +6,7 @@ import { AddressType } from '@/types/settings';
 import { getIdParams } from '@/lib/utils';
 
 
-export function useStudentApplications() {
+export function useStudentPortal() {
     const { moreActionButton, onDelete, onForceDelete, onRestore, textLink } = useDataTables();
 
     const applicationsTable = () => {

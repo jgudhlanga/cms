@@ -2,7 +2,7 @@
 import { GenericButton } from '@/components/core/button';
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import DataTable from '@/components/core/table/DataTable.vue';
-import { useStudentApplications } from '@/composables/applications/useStudentApplications';
+import { useStudentPortal } from '@/composables/portal/useStudentPortal';
 import { useUtils } from '@/composables/core/useUtils';
 import { ColorVariant } from '@/enums/colors';
 import { IconName } from '@/enums/icons';
@@ -22,7 +22,7 @@ interface Props {
 }
 
 const props = defineProps<Props>();
-const { applicationsTable } = useStudentApplications();
+const { applicationsTable } = useStudentPortal();
 const { navigateTo } = useUtils();
 const { user } = props;
 
@@ -35,7 +35,7 @@ const breadcrumbs: BreadcrumbItemInterface[] = [{ title: user.attributes?.name }
             :data="[]"
             :show-archived-filter="false"
             :filters="filters"
-            :search-url="route('applications.index', getIdParams(user.id.toString() ?? ''))"
+            :search-url="route('portal.index', getIdParams(user.id.toString() ?? ''))"
             :pagination="{ ...applications.links, ...applications.meta }"
             :columns="applicationsTable()"
             :disable-create="false"
@@ -46,7 +46,7 @@ const breadcrumbs: BreadcrumbItemInterface[] = [{ title: user.attributes?.name }
                     class="rounded-full"
                     :icon-variant="ColorVariant.white"
                     :variant="ColorVariant.primary"
-                    @click="() => navigateTo(route('applications.edit', getIdParams(user.id.toString() ?? '')))"
+                    @click="() => navigateTo(route('portal.edit', getIdParams(user.id.toString() ?? '')))"
                     :title="$t('trans.create_new_application')"
                 />
             </template>

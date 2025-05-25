@@ -2,21 +2,21 @@
 import { BaseButton } from '@/components/core/button';
 import GenderComboSelect from '@/components/core/form/combobox/GenderComboSelect.vue';
 import TitleComboSelect from '@/components/core/form/combobox/TitleComboSelect.vue';
-import { useGuestApplications } from '@/composables/applications/useGuestApplications';
+import { useGuestPortal } from '@/composables/portal/useGuestPortal';
 import { ButtonSize } from '@/enums/buttons';
 import { TextFieldType } from '@/enums/inputs';
 import { clearFormErrors } from '@/lib/forms';
-import { useApplicationFormStore } from '@/store/applications/useApplicationFormStore';
-import { CreateApplicationParams } from '@/types/applications';
+import { useCreateUserFormStore } from '@/store/applications/useCreateUserFormStore';
+import { CreateApplicationUserParams } from '@/types/applications';
 import { Head, useForm } from '@inertiajs/vue3';
 import { storeToRefs } from 'pinia';
 import BaseInput from '../../../components/core/form/text/BaseInput.vue';
-import ApplicationCover from '@/pages/applications/shared/ApplicationCover.vue';
+import ApplicationCover from '@/pages/portal/shared/ApplicationCover.vue';
 import TextLink from '@/components/core/util/TextLink.vue';
 
-const { createApplication } = useGuestApplications();
-const { email, first_name, last_name, middle_name, password, title, gender, password_confirmation } = storeToRefs(useApplicationFormStore());
-const form = useForm<CreateApplicationParams>({
+const { createApplication } = useGuestPortal();
+const { email, first_name, last_name, middle_name, password, title, gender, password_confirmation } = storeToRefs(useCreateUserFormStore());
+const form = useForm<CreateApplicationUserParams>({
     password_confirmation: '',
     email: '',
     first_name: '',
@@ -142,7 +142,7 @@ const submitForm = () => {
                 />
             </div>
             <div class="flex flex-col w-full items-center justify-center space-y-4">
-                <BaseButton :size="ButtonSize.lg" type="submit" class="w-1/2">{{ $t('trans.submit') }}</BaseButton>
+                <BaseButton :size="ButtonSize.lg" type="submit" class="w-1/2" :processing="form.processing">{{ $t('trans.submit') }}</BaseButton>
                 <div class="text-muted-foreground text-center text-sm">
                     {{ $t('trans.have_an_account') }}
                     <TextLink :href="route('login')" :tabindex="7">{{ $t('trans.login') }}</TextLink>

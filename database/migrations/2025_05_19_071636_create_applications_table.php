@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('applications', function (Blueprint $table) {
+        Schema::create('portal', function (Blueprint $table) {
             $table->id();
             $table->foreignId('tenant_id')->index()->constrained();
             $table->foreignId('user_id')->index()->constrained();
@@ -25,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('applications');
+        Schema::dropIfExists('portal');
     }
 };

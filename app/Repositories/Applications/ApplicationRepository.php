@@ -2,8 +2,8 @@
 
 namespace App\Repositories\Applications;
 
-use App\DTO\Applications\ApplicationDto;
-use App\Http\Filters\Applications\ApplicationFilter;
+use App\DTO\Portal\ApplicationDto;
+use App\Http\Filters\Portal\ApplicationFilter;
 use App\Models\Applications\Application;
 use App\Repositories\Applications\interface\IApplicationRepository;
 use App\Repositories\Base\BaseRepository;

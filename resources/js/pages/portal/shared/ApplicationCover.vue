@@ -1,7 +1,7 @@
 <script setup lang="ts">
 
 import AppLogo from '@/components/core/image/AppLogo.vue';
-import InfiniteBackground from '@/pages/applications/shared/InfiniteBackground.vue';
+import InfiniteBackground from '@/pages/portal/shared/InfiniteBackground.vue';
 </script>
 
 <template>

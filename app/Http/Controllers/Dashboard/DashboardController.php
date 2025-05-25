@@ -12,7 +12,7 @@ class DashboardController extends Controller
     {
         $user = request()->user();
         if ($user->hasRole(RoleEnum::STUDENT)) {
-            return to_route('applications.index', compact('user'));
+            return to_route('portal.index', compact('user'));
         }
         $this->authorize('viewDashboard');
         return Inertia::render('dashboard/Index', []);

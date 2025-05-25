@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import PageContainer from '@/components/core/page/PageContainer.vue';
-import { useStudentApplications } from '@/composables/applications/useStudentApplications';
+import { useStudentPortal } from '@/composables/portal/useStudentPortal';
 import { useUtils } from '@/composables/core/useUtils';
 import { AuthObject } from '@/types/data-pagination';
 import { BreadcrumbItemInterface } from '@/types/ui';
@@ -19,7 +19,7 @@ interface Props {
 }
 
 const props = defineProps<Props>();
-const {  } = useStudentApplications();
+const {  } = useStudentPortal();
 const { navigateTo } = useUtils();
 const { user } = props;
 const stepIndex = ref(1);

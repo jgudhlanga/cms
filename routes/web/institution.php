@@ -24,6 +24,6 @@ Route::prefix('institution')->middleware('auth')->group(function () {
     Route::get('departments/{department_course}/show', [DepartmentCourseController::class, 'show'])->name('department-courses.show');
     Route::post('departments/{department_course}/update', [DepartmentCourseController::class, 'update'])->name('department-courses.update');
     # ================================== APPLICATIONS ======================================
-    Route::get('applications/setup', ApplicationFormSetupController::class)->name('applications.setup');
+    Route::get('portal/setup', ApplicationFormSetupController::class)->name('portal.setup');
 });
 

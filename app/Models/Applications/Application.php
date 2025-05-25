@@ -2,7 +2,7 @@
 
 namespace App\Models\Applications;
 
-use App\Http\Filters\Applications\ApplicationFilter;
+use App\Http\Filters\Portal\ApplicationFilter;
 use App\Traits\BelongsToTenant;
 use App\Traits\Filterable;
 use App\Traits\Paginatable;

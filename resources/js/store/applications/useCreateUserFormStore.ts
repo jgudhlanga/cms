@@ -1,8 +1,8 @@
-import { CreateApplicationParams } from '@/types/applications';
+import { CreateApplicationUserParams } from '@/types/applications';
 import { defineStore } from 'pinia';
 
-export const useApplicationFormStore = defineStore('create-application-form', {
-    state: (): CreateApplicationParams => {
+export const useCreateUserFormStore = defineStore('create-application-user-form', {
+    state: (): CreateApplicationUserParams => {
         return {
             email: '',
             first_name: '',

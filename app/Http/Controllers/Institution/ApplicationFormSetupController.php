@@ -11,6 +11,6 @@ class ApplicationFormSetupController extends Controller
 
     public function __invoke(Request $request)
     {
-        return Inertia::render('institution/applications/Setup', []);
+        return Inertia::render('institution/portal/Setup', []);
     }
 }

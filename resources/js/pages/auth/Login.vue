@@ -39,7 +39,7 @@ const form = useForm<Login>({
         </div>
         <div class="text-muted-foreground text-center text-sm">
             {{ $t('trans.dont_have_an_account') }}
-            <TextLink :href="route('applications.create')" :tabindex="7">{{ $t('trans.register') }}</TextLink>
+            <TextLink :href="route('portal.create')" :tabindex="7">{{ $t('trans.register') }}</TextLink>
         </div>
     </form>
 </template>

@@ -1,11 +1,11 @@
 import { useSharedFormSchema } from '@/composables/core/useSharedFormSchema';
 import { buildFormOptions, mergeValidationSchema } from '@/lib/forms';
-import { useApplicationFormStore } from '@/store/applications/useApplicationFormStore';
+import { useCreateUserFormStore } from '@/store/applications/useCreateUserFormStore';
 import { InertiaForm } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 import { ZodObject } from 'zod';
 
-export function useGuestApplications() {
+export function useGuestPortal() {
     const schemaFields = useSharedFormSchema() as Record<string, () => ZodObject<any, any>>;
 
     const successMessage = () => trans('trans.item_saved', { item: trans_choice('trans.application', 1) });
@@ -16,8 +16,8 @@ export function useGuestApplications() {
                 ['titleIdSchema', 'lastNameSchema', 'genderSchema', 'emailSchema', 'passwordSchema', 'passwordConfirmationSchema'],
                 schemaFields['firstNameSchema'](),
             ).parse(form);
-            form.post(route('applications.store'), buildFormOptions(form, successMessage(), errorMessage()));
-            const store = useApplicationFormStore();
+            form.post(route('portal.store'), buildFormOptions(form, successMessage(), errorMessage()));
+            const store = useCreateUserFormStore();
             store.$reset();
             store.$dispose();
         } catch (error: any) {

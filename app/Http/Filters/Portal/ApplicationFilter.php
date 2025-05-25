@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Filters\Applications;
+namespace App\Http\Filters\Portal;
 
 use App\Http\Filters\QueryFilter;
 

@@ -2,7 +2,7 @@
 import { User } from '@/types/users';
 
 import { Head } from '@inertiajs/vue3';
-import ApplicationCover from '@/pages/applications/shared/ApplicationCover.vue';
+import ApplicationCover from '@/pages/portal/shared/ApplicationCover.vue';
 import BaseAlert from '@/components/core/alert/BaseAlert.vue';
 import { TypeVariant } from '@/enums/type-variants';
 
