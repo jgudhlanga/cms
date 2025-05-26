@@ -25,6 +25,7 @@ use Database\Seeders\Payments\PaymentMethodSeeder;
 use Database\Seeders\Provinces\ProvinceSeeder;
 use Database\Seeders\Races\RaceSeeder;
 use Database\Seeders\Relationships\RelationshipsTableSeeder;
+use Database\Seeders\Statuses\MaritalStatusSeeder;
 use Database\Seeders\Statuses\StatusSeeder;
 use Database\Seeders\Tenants\TenantsTableSeeder;
 use Database\Seeders\Titles\TitleSeeder;
@@ -54,6 +55,7 @@ class DatabaseSeeder extends Seeder
             ProvinceSeeder::class,
             DistrictsTableSeeder::class,
             StatusSeeder::class,
+            MaritalStatusSeeder::class,
             AddressTypesTableSeeder::class,
             CoursesTableSeeder::class,
             DepartmentsTableSeeder::class,

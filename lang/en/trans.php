@@ -224,7 +224,7 @@ return [
     "suburb_village" => 'Suburb/Village',
     "confirm_password_description" => "Please confirm your password",
     "success" => "Success",
-    "error" =>  "Error",
+    "error" => "Error",
     "application_user_created_success_message" => "Thank you for creating an account with us! To complete your registration, please check your email ( :email ) for a verification link. Click the link in the email to verify your account and get started. If you don't see the email in your inbox, please check your spam or junk folder. Also make sure you supplied the correct email ",
     "requirement" => "Requirement|Requirements",
     "level_requirements" => "Level Requirements",
@@ -250,10 +250,14 @@ return [
     "contact_details_description" => "Provide with contact details",
     "next_of_kin" => "Next of kin",
     "next_of_kin_description" => "Provide with next of kin details",
-    "program" => "Program|Programs",
+    "program" => "Program",
+    "programs" => "Programs",
     "program_description" => "Provide with program details",
     "confirmation" => "Confirmation",
-    "confirmation_description" => "Double check the information provided is correct.",
-    "id_type" => "Type of ID"
+    "confirmation_description" => "Information provided is correct?",
+    "id_type" => "Type of ID",
+    "marital_status" => "Marital Status|Marital Statuses",
+    "study_permit_number" => "Study Permit Number",
+    "date_of_birth" => "Date of birth"
 ];
 

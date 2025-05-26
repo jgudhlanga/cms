@@ -24,6 +24,14 @@ export type CreateApplicationParams = {
     date_of_birth: string | null;
     maritalStatus?: SelectOption | null;
     marital_status_id: string | number | null;
+    email: string;
+    first_name: string | null;
+    last_name: string | null;
+    middle_name: string | null;
+    title: SelectOption | null;
+    title_id: string | number | null;
+    gender: SelectOption | null;
+    gender_id: string | number | null;
     /** Contact details, addresses */
     phone_number?: string | null;
     alt_phone_number?: string | null;

@@ -140,3 +140,18 @@ export type DistrictParams = {
     province?: SelectOption | null;
     description?: string;
 };
+
+export type MaritalStatus = {
+    type?: string;
+    id?: string;
+    attributes: {
+        title: string;
+        createdAt?: string;
+        updatedAt?: string;
+        deletedAt?: string;
+    };
+};
+export type MaritalStatusParams = {
+    title: string;
+    description?: string;
+};

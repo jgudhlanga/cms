@@ -11,7 +11,6 @@ import { Title } from '@/types/settings';
 interface Props {
 	form: InertiaForm<any>,
     labelUppercase?: boolean,
-    verticalLayout?: boolean,
     isRequired?: boolean,
 }
 const { isLoading, titles, listTitles } = useTitles();
@@ -39,7 +38,6 @@ const whenSearch = debounce(async (search: string) => {
 		:on-search="async (search: string) => await whenSearch(search)"
 		:is-loading="isLoading"
         :label-uppercase="labelUppercase"
-        :vertical-layout="verticalLayout"
 		v-bind="$attrs"
         :is-required="isRequired"
 	/>

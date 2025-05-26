@@ -58,7 +58,9 @@ use App\Repositories\Shared\ContactRepository;
 use App\Repositories\Shared\interface\IAddressRepository;
 use App\Repositories\Shared\interface\IBankDetailRepository;
 use App\Repositories\Shared\interface\IContactRepository;
+use App\Repositories\Statuses\interface\IMaritalStatusRepository;
 use App\Repositories\Statuses\interface\IStatusRepository;
+use App\Repositories\Statuses\MaritalStatusRepository;
 use App\Repositories\Statuses\StatusRepository;
 use App\Repositories\Titles\interface\ITitleRepository;
 use App\Repositories\Titles\TitleRepository;
@@ -107,6 +109,7 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(IProvinceRepository::class, ProvinceRepository::class);
         $this->app->bind(IRaceRepository::class, RaceRepository::class);
         $this->app->bind(IStatusRepository::class, StatusRepository::class);
+        $this->app->bind(IMaritalStatusRepository::class, MaritalStatusRepository::class);
         $this->app->bind(ITitleRepository::class, TitleRepository::class);
         $this->app->bind(IAddressTypeRepository::class, AddressTypeRepository::class);
         $this->app->bind(IRelationshipRepository::class, RelationshipRepository::class);

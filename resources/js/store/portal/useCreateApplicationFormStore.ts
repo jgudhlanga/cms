@@ -4,6 +4,14 @@ import { defineStore } from 'pinia';
 export const useCreateApplicationFormStore = defineStore('portal-application-form', {
     state: (): CreateApplicationParams => {
         return {
+            email: '',
+            first_name: '',
+            gender: null,
+            gender_id: null,
+            last_name: null,
+            middle_name: null,
+            title: null,
+            title_id: null,
             address_1: '',
             address_2: '',
             address_3: '',
@@ -28,7 +36,7 @@ export const useCreateApplicationFormStore = defineStore('portal-application-for
             phone_number: '',
             relationship: null,
             relationship_id: null,
-            study_permit_number: '',
+            study_permit_number: ''
         };
     },
     persist: true,

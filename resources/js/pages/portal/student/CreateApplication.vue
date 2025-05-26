@@ -3,7 +3,6 @@ import PageContainer from '@/components/core/page/PageContainer.vue';
 import BaseStepperButtons from '@/components/core/stepper/BaseStepperButtons.vue';
 import BaseStepperItem from '@/components/core/stepper/BaseStepperItem.vue';
 import { Stepper } from '@/components/ui/stepper';
-import { useUtils } from '@/composables/core/useUtils';
 import { useStudentPortal } from '@/composables/portal/useStudentPortal';
 import PersonalDetails from '@/pages/portal/student/partials/PersonalDetails.vue';
 import { AuthObject } from '@/types/data-pagination';
@@ -13,7 +12,9 @@ import { BreadcrumbItemInterface } from '@/types/ui';
 import { User } from '@/types/users';
 import { Head, useForm } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
+import { storeToRefs } from 'pinia';
+import { useCreateApplicationFormStore } from '@/store/portal/useCreateApplicationFormStore';
 
 interface Props {
     user: User;
@@ -22,20 +23,35 @@ interface Props {
 }
 
 const props = defineProps<Props>();
-const {} = useStudentPortal();
+const { steps } = useStudentPortal();
 const { user } = props;
 const stepIndex = ref(1);
 const maxStep = 5;
-const metaValid = ref(false);
+const metaValid = ref(true);
 const breadcrumbs: BreadcrumbItemInterface[] = [{ title: user.attributes?.name }, { transKey: 'finish_your_application' }];
-const steps: Step[] = [
-    { step: 1, title: trans('trans.personal_details'), description: 'trans.personal_details_description' },
-    { step: 2, title: trans('trans.contact_details'), description: 'trans.contact_details_description' },
-    { step: 3, title: trans('trans.next_of_kin'), description: 'trans.next_of_kin_description' },
-    { step: 4, title: trans_choice('trans.program', 2), description: 'trans.program_description' },
-    { step: 5, title: trans('trans.confirmation'), description: 'trans.confirmation_description' },
-];
+const {
+    id_type,
+    id_number,
+    passport_number,
+    country,
+    study_permit_number,
+    date_of_birth,
+    maritalStatus,
+    first_name,
+    middle_name,
+    last_name,
+    title,
+    gender
+} = storeToRefs(useCreateApplicationFormStore());
 const form = useForm<CreateApplicationParams>({
+    email: '',
+    first_name: '',
+    gender: null,
+    gender_id: null,
+    last_name: '',
+    middle_name: '',
+    title: null,
+    title_id: null,
     address_1: '',
     address_2: '',
     address_3: '',
@@ -60,11 +76,33 @@ const form = useForm<CreateApplicationParams>({
     phone_number: '',
     relationship: null,
     relationship_id: null,
-    study_permit_number: '',
+    study_permit_number: ''
 });
 
 const goNext = (next: () => void) => {
-    console.log(next);
+    updateForm();
+    try {
+        next();
+    } catch (error: any) {
+        form.setError(error.format());
+    }
+};
+
+onMounted(() => {
+    first_name.value = user.attributes?.first_name;
+    middle_name.value = user.attributes?.middle_name ?? '';
+    last_name.value = user.attributes?.last_name;
+    title.value = {
+        value: user.attributes?.titleId,
+        label: user.attributes?.title
+    }
+    gender.value = {
+        value: user.attributes?.genderId,
+        label: user.attributes?.gender
+    }
+});
+
+const updateForm = () => {
 };
 </script>
 <template>

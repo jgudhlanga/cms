@@ -17,6 +17,7 @@ use App\Http\Controllers\Provinces\ProvinceController;
 use App\Http\Controllers\Races\RaceController;
 use App\Http\Controllers\Relationships\RelationshipController;
 use App\Http\Controllers\Settings\SettingsController;
+use App\Http\Controllers\Statuses\MaritalStatusController;
 use App\Http\Controllers\Statuses\StatusController;
 use App\Http\Controllers\Titles\TitleController;
 use Illuminate\Support\Facades\Route;
@@ -51,7 +52,10 @@ Route::prefix('settings')->middleware('auth')->group(function () {
     Route::put('statuses/{status}/restore', [StatusController::class, 'restore'])->name('statuses.restore');
     Route::delete('statuses/{status}/force-delete', [StatusController::class, 'forceDelete'])->name('statuses.force-delete');
     Route::resource('statuses', StatusController::class)->names('statuses');
-
+    # ==================================== MARITAL STATUSES ======================================================
+    Route::put('marital-statuses/{marital_status}/restore', [MaritalStatusController::class, 'restore'])->name('marital-statuses.restore');
+    Route::delete('marital-statuses/{marital_status}/force-delete', [MaritalStatusController::class, 'forceDelete'])->name('marital-statuses.force-delete');
+    Route::resource('marital-statuses', MaritalStatusController::class)->names('marital-statuses');
     # ==================================== TITLES ======================================================
     Route::put('titles/{title}/restore', [TitleController::class, 'restore'])->name('titles.restore');
     Route::delete('titles/{title}/force-delete', [TitleController::class, 'forceDelete'])->name('titles.force-delete');
