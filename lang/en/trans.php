@@ -245,5 +245,15 @@ return [
     "my_application" => "My Application|My Applications",
     "create_new_application" => "Create new application",
     "finish_your_application" => "Finish your application",
+    "my_portal" => "My portal",
+    "contact_details" => "Contact details",
+    "contact_details_description" => "Provide with contact details",
+    "next_of_kin" => "Next of kin",
+    "next_of_kin_description" => "Provide with next of kin details",
+    "program" => "Program|Programs",
+    "program_description" => "Provide with program details",
+    "confirmation" => "Confirmation",
+    "confirmation_description" => "Double check the information provided is correct.",
+    "id_type" => "Type of ID"
 ];
 

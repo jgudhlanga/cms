@@ -1,6 +1,6 @@
 import { useSharedFormSchema } from '@/composables/core/useSharedFormSchema';
 import { buildFormOptions, mergeValidationSchema } from '@/lib/forms';
-import { useCreateUserFormStore } from '@/store/applications/useCreateUserFormStore';
+import { useCreateUserFormStore } from '@/store/portal/useCreateUserFormStore';
 import { InertiaForm } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 import { ZodObject } from 'zod';

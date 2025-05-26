@@ -35,7 +35,7 @@ class AuthenticatedSessionController extends Controller
         $request->session()->regenerate();
         $user = $request->user();
         if ($user->hasRole(RoleEnum::STUDENT)) {
-            return to_route('portal.edit', compact('user'));
+            return to_route('portal.application', compact('user'));
         }
         return redirect()->intended(route('dashboard', absolute: false));
     }

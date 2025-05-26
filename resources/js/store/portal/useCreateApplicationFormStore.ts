@@ -1,7 +1,7 @@
-import { CreateApplicationParams } from '@/types/applications';
+import { CreateApplicationParams } from '@/types/portal';
 import { defineStore } from 'pinia';
 
-export const useCreateApplicationFormStore = defineStore('create-application-form', {
+export const useCreateApplicationFormStore = defineStore('portal-application-form', {
     state: (): CreateApplicationParams => {
         return {
             address_1: '',

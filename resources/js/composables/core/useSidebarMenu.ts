@@ -2,13 +2,13 @@ import AppLogo from '@/components/core/image/AppLogo.vue';
 import { useUtils } from '@/composables/core/useUtils';
 import { IconName } from '@/enums/icons';
 import { icons } from '@/lib/icons';
+import { getIdParams } from '@/lib/utils';
 import { PageProps } from '@/types';
 import { TenantInterface } from '@/types/tenants';
 import { MenuItemInterface } from '@/types/ui';
 import { usePage } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 import { markRaw } from 'vue';
-import { getIdParams } from '@/lib/utils';
 
 export function useSidebarMenu() {
     const { props } = usePage<PageProps>();
@@ -23,7 +23,7 @@ export function useSidebarMenu() {
                 logo: markRaw(AppLogo),
                 bio: 'Software',
             },
-        }
+        },
     ];
 
     const menuOptions: Array<MenuItemInterface> = [
@@ -33,8 +33,8 @@ export function useSidebarMenu() {
             url: route('dashboard'),
             show: isItTrue(can['view:dashboards']),
         },
-       {
-            transChoiceKey: 'trans.my_application',
+        {
+            transKey: 'trans.my_portal',
             icon: icons[IconName.user_add],
             url: route('portal.index', getIdParams(user?.id?.toString() as string)),
             show: isItTrue(can['manageOwnData:students']),
