@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { BaseCheckbox } from '@/components/core/form';
-import BaseCombobox from '@/components/core/form/combobox/BaseCombobox.vue';
 import SharedNumberField from '@/components/core/form/number/SharedNumberField.vue';
+import BaseRadioGroup from '@/components/core/form/radio-group/BaseRadioGroup.vue';
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import Empty from '@/components/core/util/Empty.vue';
 import HeadingSmall from '@/components/core/util/HeadingSmall.vue';
@@ -12,9 +12,9 @@ import { ColorVariant } from '@/enums/colors';
 import { getIdParams } from '@/lib/utils';
 import { AuthObject } from '@/types/data-pagination';
 import { DepartmentLevel } from '@/types/department-meta-data';
+import { RadioGroupOption } from '@/types/forms';
 import { DepartmentLevelRequirementParams, InstitutionDepartment } from '@/types/institution';
 import type { Link } from '@/types/ui';
-import { SelectOption } from '@/types/utils';
 import { Head, useForm } from '@inertiajs/vue3';
 import { computed, onMounted, ref } from 'vue';
 import BaseButton from '../../../components/core/button/BaseButton.vue';
@@ -58,7 +58,6 @@ const form = useForm<DepartmentLevelRequirementParams>({
     main_subject_ids: [],
     other_subjects_count: null,
     only_read_write_required: false,
-    is_previous_level_required: false,
     previous_level_id: null,
 });
 
@@ -75,22 +74,18 @@ const SelectOnlyReadWriteRequired = (value: any) => {
     isPreviousLevelRequired.value = false;
 };
 
-const selectPreviousLevelRequired = (value: any) => {
-    isPreviousLevelRequired.value = value;
-    onlyReadWriteRequired.value = false;
-};
 
-const departmentLevels = computed(() =>
-    props.levels.filter(
-        (item: DepartmentLevel) => item.id !== departmentLevel.id && item.attributes.levelPosition < departmentLevel.attributes.levelPosition,
-    ),
-);
+const departmentLevels = computed(() => props.levels.filter((item: DepartmentLevel) => item.id !== departmentLevel.id));
+const onRadioChange = (value: any) => {
+    form.previous_level_id = value;
+};
 const options = computed(() => {
     return departmentLevels.value.map(
         (item: DepartmentLevel) =>
-            <SelectOption>{
-                value: Number(item?.attributes?.levelId),
+            <RadioGroupOption>{
+                value: item?.attributes?.levelId?.toString(),
                 label: item?.attributes?.level,
+                inputId: 'radio_' + item?.attributes?.levelId?.toString(),
             },
     );
 });
@@ -98,7 +93,6 @@ const options = computed(() => {
 const updateLevel = () => {
     form.is_o_level_required = isOLevelRequired.value;
     form.only_read_write_required = onlyReadWriteRequired.value;
-    form.is_previous_level_required = isPreviousLevelRequired.value;
     storeDepartmentLevelRequirements(departmentLevel.id?.toString() ?? '', form);
 };
 </script>
@@ -166,29 +160,20 @@ const updateLevel = () => {
                     </div>
                     <div class="mt-5 flex flex-col space-y-3" v-if="departmentLevels && departmentLevels.length > 0">
                         <HeadingSmall :title="$t('trans.requires_previous_level')" :description="$t('trans.requires_previous_level_description')" />
-                        <BaseCheckbox
-                            input-id="is_previous_level_required"
-                            v-model="isPreviousLevelRequired"
-                            :label="`${$t('trans.requires_previous_level')}`"
-                            @click="selectPreviousLevelRequired($event.target.checked)"
-                        />
-                        <div v-if="isPreviousLevelRequired">
-                            <template v-if="departmentLevels && departmentLevels.length > 0">
-                                <div class="flex flex-col">
-                                    <BaseCombobox
-                                        class="w-1/4"
-                                        :label="$t('trans.previous_level')"
-                                        :options="options"
-                                        :label-uppercase="false"
-                                        :vertical-layout="true"
-                                        :is-required="true"
-                                    />
-                                </div>
-                            </template>
-                            <template v-else>
-                                <Empty />
-                            </template>
-                        </div>
+                        <template v-if="departmentLevels && departmentLevels.length > 0">
+                            <div class="flex flex-col">
+                                <BaseRadioGroup
+                                    :options="options"
+                                    default-value=""
+                                    :label-uppercase="true"
+                                    :is-required="true"
+                                    @update:modelValue="onRadioChange"
+                                />
+                            </div>
+                        </template>
+                        <template v-else>
+                            <Empty />
+                        </template>
                     </div>
                 </template>
             </div>

@@ -21,7 +21,7 @@ class DepartmentLevelRequirement extends Model
 
     protected $fillable = [
         'department_level_id', 'is_o_level_required', 'required_subjects_count', 'main_subjects_count', 'main_subject_ids',
-        'other_subjects_count', 'only_read_write_required', 'is_previous_level_required', 'previous_level_id',
+        'other_subjects_count', 'only_read_write_required', 'required_level_id',
     ];
 
     protected $casts = [

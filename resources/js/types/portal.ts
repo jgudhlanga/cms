@@ -15,7 +15,7 @@ export type CreateApplicationUserParams = {
 
 export type CreateApplicationParams = {
     /** Personal details */
-    id_type: string | number | null;
+    id_type: string;
     id_number?: string | null;
     passport_number?: string | null;
     country?: SelectOption | null;
@@ -39,7 +39,6 @@ export type CreateApplicationParams = {
     address_2: string | null;
     address_3: string | null;
     address_4: string | null;
-    address_5?: string | null;
     /** Next of kin details */
     next_of_kin_name: string;
     relationship: SelectOption | null;
@@ -48,6 +47,5 @@ export type CreateApplicationParams = {
     next_of_kin_address_2: string | null;
     next_of_kin_address_3: string | null;
     next_of_kin_address_4: string | null;
-    next_of_kin_address_5?: string | null;
     next_of_kin_phone_number: string | null;
 };

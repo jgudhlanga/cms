@@ -3,7 +3,6 @@ import InputError from '@/components/core/form/InputError.vue';
 import RequiredIndicator from '@/components/core/form/RequiredIndicator.vue';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
-import { RadioGroupOption } from '@/types/forms';
 import VueDatePicker from '@vuepic/vue-datepicker';
 import '@vuepic/vue-datepicker/dist/main.css';
 
@@ -37,6 +36,7 @@ withDefaults(defineProps<Props>(), {
             <VueDatePicker
                 :id="inputId"
                 v-bind="$attrs"
+                :always-clearable="true"
             />
         </div>
         <InputError :class="cn('flex w-full lowercase', !verticalLayout && 'justify-end')" :message="error" />

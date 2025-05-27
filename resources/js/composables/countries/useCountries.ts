@@ -81,7 +81,7 @@ export const useCountries = () => {
     const listCountries = async (search?: string) => {
         const { data, fetchData } = useDropdowns();
         isLoading.value = true;
-        await fetchData({ url: route('v1.countries.index'), search, transChoiceKey: 'trans.country' });
+        await fetchData({ url: 'api/v1/countries?page_size=200', search, transChoiceKey: 'trans.country' });
         isLoading.value = false;
         countries.value = data.value;
     };

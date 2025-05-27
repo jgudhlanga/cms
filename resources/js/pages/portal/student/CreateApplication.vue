@@ -4,17 +4,17 @@ import BaseStepperButtons from '@/components/core/stepper/BaseStepperButtons.vue
 import BaseStepperItem from '@/components/core/stepper/BaseStepperItem.vue';
 import { Stepper } from '@/components/ui/stepper';
 import { useStudentPortal } from '@/composables/portal/useStudentPortal';
+import ContactDetails from '@/pages/portal/student/partials/ContactDetails.vue';
+import NextOfKinDetails from '@/pages/portal/student/partials/NextOfKinDetails.vue';
 import PersonalDetails from '@/pages/portal/student/partials/PersonalDetails.vue';
+import { useCreateApplicationFormStore } from '@/store/portal/useCreateApplicationFormStore';
 import { AuthObject } from '@/types/data-pagination';
-import { Step } from '@/types/forms';
 import { CreateApplicationParams } from '@/types/portal';
 import { BreadcrumbItemInterface } from '@/types/ui';
 import { User } from '@/types/users';
 import { Head, useForm } from '@inertiajs/vue3';
-import { trans, trans_choice } from 'laravel-vue-i18n';
-import { ref, onMounted } from 'vue';
 import { storeToRefs } from 'pinia';
-import { useCreateApplicationFormStore } from '@/store/portal/useCreateApplicationFormStore';
+import { onMounted, ref } from 'vue';
 
 interface Props {
     user: User;
@@ -29,20 +29,7 @@ const stepIndex = ref(1);
 const maxStep = 5;
 const metaValid = ref(true);
 const breadcrumbs: BreadcrumbItemInterface[] = [{ title: user.attributes?.name }, { transKey: 'finish_your_application' }];
-const {
-    id_type,
-    id_number,
-    passport_number,
-    country,
-    study_permit_number,
-    date_of_birth,
-    maritalStatus,
-    first_name,
-    middle_name,
-    last_name,
-    title,
-    gender
-} = storeToRefs(useCreateApplicationFormStore());
+const { id_type, first_name, middle_name, last_name, title, gender } = storeToRefs(useCreateApplicationFormStore());
 const form = useForm<CreateApplicationParams>({
     email: '',
     first_name: '',
@@ -56,27 +43,25 @@ const form = useForm<CreateApplicationParams>({
     address_2: '',
     address_3: '',
     address_4: '',
-    address_5: '',
     alt_phone_number: '',
     country: null,
     country_id: null,
     date_of_birth: '',
     id_number: '',
-    id_type: null,
+    id_type: '',
     maritalStatus: null,
     marital_status_id: null,
     next_of_kin_address_1: '',
     next_of_kin_address_2: '',
     next_of_kin_address_3: '',
     next_of_kin_address_4: '',
-    next_of_kin_address_5: '',
     next_of_kin_name: '',
     next_of_kin_phone_number: '',
     passport_number: '',
     phone_number: '',
     relationship: null,
     relationship_id: null,
-    study_permit_number: ''
+    study_permit_number: '',
 });
 
 const goNext = (next: () => void) => {
@@ -94,16 +79,16 @@ onMounted(() => {
     last_name.value = user.attributes?.last_name;
     title.value = {
         value: user.attributes?.titleId,
-        label: user.attributes?.title
-    }
+        label: user.attributes?.title,
+    };
     gender.value = {
         value: user.attributes?.genderId,
-        label: user.attributes?.gender
-    }
+        label: user.attributes?.gender,
+    };
+    id_type.value = id_type.value || 'zimbabwean-national-id-number';
 });
 
-const updateForm = () => {
-};
+const updateForm = () => {};
 </script>
 <template>
     <Head :title="$t('trans.create_new_application')" />
@@ -117,13 +102,13 @@ const updateForm = () => {
                         <PersonalDetails :form="form" />
                     </template>
                     <template v-if="stepIndex === 2">
-                        <p>Contacts</p>
+                        <ContactDetails :form="form" />
                     </template>
                     <template v-if="stepIndex === 3">
-                        <p>Programs</p>
+                        <NextOfKinDetails :form="form" />
                     </template>
                     <template v-if="stepIndex === 4">
-                        <p>Next of kin</p>
+                        <p>Programs</p>
                     </template>
                     <template v-if="stepIndex === maxStep">
                         <p>Confirm</p>

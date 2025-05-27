@@ -60,8 +60,7 @@ class DepartmentLevelRepository extends BaseRepository implements IDepartmentLev
             'main_subject_ids' => $dto->main_subject_ids, // Array
             'other_subjects_count' => $dto->other_subjects_count,
             'only_read_write_required' => $dto->only_read_write_required,
-            'is_previous_level_required' => $dto->is_previous_level_required,
-            'previous_level_id' => $dto->previous_level_id,
+            'required_level_id' => $dto->required_level_id,
         ];
     }
 }

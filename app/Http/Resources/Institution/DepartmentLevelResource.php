@@ -5,6 +5,9 @@ namespace App\Http\Resources\Institution;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/**
+ * @property mixed $institution_department_id
+ */
 class DepartmentLevelResource extends JsonResource
 {
 

@@ -22,7 +22,7 @@ export const useDepartmentLevels = () => {
                 accessorKey: 'level',
                 cell: ({ row }: { row: { original: DepartmentLevel } }) => {
                     const id = getIdParams(row.original.id?.toString() ?? '');
-                    return textLink(route('institution-departments.show', id), row.original.attributes?.level);
+                    return textLink(route('department-levels.requirements', id), row.original.attributes?.level);
                 },
             },
             { header: trans_choice('trans.description', 1), accessorKey: 'attributes.description' },

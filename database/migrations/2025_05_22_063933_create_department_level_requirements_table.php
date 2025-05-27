@@ -21,8 +21,7 @@ return new class extends Migration
             $table->json('main_subject_ids')->nullable(); // ✅ JSON for arrays
             $table->integer('other_subjects_count')->nullable();
             $table->boolean('only_read_write_required');
-            $table->boolean('is_previous_level_required');
-            $table->unsignedBigInteger('previous_level_id')->nullable();
+            $table->unsignedBigInteger('required_level_id')->nullable();
 			$table->timestamps();
 			$table->softDeletes();
         });
