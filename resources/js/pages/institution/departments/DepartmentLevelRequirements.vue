@@ -11,9 +11,9 @@ import { useSubjects } from '@/composables/institution/useSubjects';
 import { ColorVariant } from '@/enums/colors';
 import { getIdParams } from '@/lib/utils';
 import { AuthObject } from '@/types/data-pagination';
-import { DepartmentLevel } from '@/types/department-meta-data';
+import { DepartmentLevel, DepartmentLevelRequirement, DepartmentLevelRequirementParams } from '@/types/department-meta-data';
 import { RadioGroupOption } from '@/types/forms';
-import { DepartmentLevelRequirementParams, InstitutionDepartment } from '@/types/institution';
+import { InstitutionDepartment } from '@/types/institution';
 import type { Link } from '@/types/ui';
 import { Head, useForm } from '@inertiajs/vue3';
 import { computed, onMounted, ref } from 'vue';
@@ -23,11 +23,14 @@ interface Props {
     institutionDepartment: InstitutionDepartment;
     departmentLevel: DepartmentLevel;
     levels: DepartmentLevel[];
+    requirements: DepartmentLevelRequirement;
     auth: AuthObject;
     errors: object;
 }
 
 const props = defineProps<Props>();
+const { isItTrue } = useUtils();
+const { requirements } = props;
 const { departmentLevel, institutionDepartment } = props;
 const breadcrumbs: Array<Link> = [
     { transChoiceKey: 'institution', transChoiceKeyIndex: 1, href: route('institution.index') },
@@ -45,19 +48,26 @@ const onlyReadWriteRequired = ref(false);
 const { listSubjects, subjects } = useSubjects();
 const { storeDepartmentLevelRequirements } = useDepartmentLevels();
 
-onMounted(async () => {
-    await listSubjects();
-});
-
 const { navigateTo } = useUtils();
 const form = useForm<DepartmentLevelRequirementParams>({
-    is_o_level_required: false,
+    is_o_level_required: isOLevelRequired.value,
     required_subjects_count: null,
     main_subjects_count: null,
     main_subject_ids: [],
     other_subjects_count: null,
-    only_read_write_required: false,
-    previous_level_id: null,
+    only_read_write_required: onlyReadWriteRequired.value,
+    required_level_id: '',
+});
+
+onMounted(async () => {
+    await listSubjects();
+    form.is_o_level_required = isOLevelRequired.value = isItTrue(requirements?.attributes?.isOLevelRequired);
+    form.required_subjects_count = Number(requirements?.attributes?.requiredSubjectsCount) ?? null;
+    form.main_subjects_count = Number(requirements?.attributes?.mainSubjectsCount) ?? null;
+    form.main_subject_ids = requirements?.attributes?.mainSubjectIds ?? [];
+    form.other_subjects_count = Number(requirements?.attributes?.otherSubjectsCount) ?? null;
+    form.only_read_write_required = onlyReadWriteRequired.value = isItTrue(requirements?.attributes?.onlyReadWriteRequired);
+    form.required_level_id = requirements?.attributes?.requiredLevelId?.toString();
 });
 
 const selectOLevelRequired = (value: any) => {
@@ -70,7 +80,7 @@ const SelectOnlyReadWriteRequired = (value: any) => {
 
 const departmentLevels = computed(() => props.levels.filter((item: DepartmentLevel) => item.id !== departmentLevel.id));
 const onRadioChange = (value: any) => {
-    form.previous_level_id = value;
+    form.required_level_id = value;
 };
 const options = computed(() => {
     return departmentLevels.value.map(
@@ -156,7 +166,7 @@ const updateLevel = () => {
                         <div class="flex flex-col">
                             <BaseRadioGroup
                                 :options="options"
-                                default-value=""
+                                :default-value="requirements?.attributes?.requiredLevelId?.toString()"
                                 :label-uppercase="true"
                                 :is-required="true"
                                 @update:modelValue="onRadioChange"

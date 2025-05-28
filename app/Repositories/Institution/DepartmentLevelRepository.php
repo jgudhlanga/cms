@@ -44,10 +44,10 @@ class DepartmentLevelRepository extends BaseRepository implements IDepartmentLev
 
     public function updateDepartmentLevelRequirements(DepartmentLevel $departmentLevel, DepartmentLevelRequirementsDto $dto): void
     {
-        if (!empty($departmentLevel->requirements)) {
-            $departmentLevel->requirements()->update($this->getFields($dto));
+        if (!empty($departmentLevel->requirement)) {
+            $departmentLevel->requirement()->update($this->getFields($dto));
         } else {
-            $departmentLevel->requirements()->create(array_merge(['department_level_id' => $departmentLevel->id], $this->getFields($dto)));
+            $departmentLevel->requirement()->create(array_merge(['department_level_id' => $departmentLevel->id], $this->getFields($dto)));
         }
     }
 

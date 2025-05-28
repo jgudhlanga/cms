@@ -13,6 +13,7 @@ export type DepartmentLevel = {
     };
 };
 
+
 export type DepartmentLevelParams = {
     level_ids: Array<string | undefined | null> | null;
 };
@@ -60,3 +61,27 @@ export interface DepartmentMetaData {
     departmentCoursesIds: Array<string | undefined | null> | null;
 }
 
+export type DepartmentLevelRequirement = {
+    type: string;
+    id: string | number;
+    attributes: {
+        departmentLeveId: string | number;
+        isOLevelRequired?: boolean;
+        requiredSubjectsCount?: string | number | null;
+        mainSubjectsCount?: string | number | null;
+        mainSubjectIds?: Array<string | number | null>;
+        otherSubjectsCount?: string | number | null;
+        onlyReadWriteRequired?: boolean;
+        requiredLevelId?: string | number | null;
+    };
+};
+
+export type DepartmentLevelRequirementParams = {
+    is_o_level_required?: boolean;
+    required_subjects_count?: string | number | null;
+    main_subjects_count?: string | number | null;
+    main_subject_ids: any;
+    other_subjects_count?: string | number | null;
+    only_read_write_required?: boolean;
+    required_level_id?: string | number | null;
+};

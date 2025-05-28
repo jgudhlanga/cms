@@ -7,7 +7,6 @@ import RequiredIndicator from '@/components/core/form/RequiredIndicator.vue';
 
 interface Props {
     options: RadioGroupOption[];
-    defaultValue: string;
     label?: string;
     error?: string | object;
     labelUppercase?: boolean;
@@ -19,7 +18,7 @@ defineProps<Props>();
 </script>
 
 <template>
-    <RadioGroup :default-value="defaultValue" :orientation="'vertical'">
+    <RadioGroup v-bind="$attrs" :orientation="'vertical'">
         <Label :class="cn(error && 'text-destructive', labelUppercase && 'uppercase')" v-if="label"
             >{{ label }}
             <RequiredIndicator v-if="isRequired" />

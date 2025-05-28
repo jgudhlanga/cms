@@ -7,6 +7,7 @@ use App\DTO\Institution\DepartmentLevelRequirementsDto;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Institution\DepartmentLevelRequest;
 use App\Http\Requests\Institution\DepartmentLevelRequirementRequest;
+use App\Http\Resources\Institution\DepartmentLevelRequirementResource;
 use App\Http\Resources\Institution\DepartmentLevelResource;
 use App\Http\Resources\Institution\InstitutionDepartmentResource;
 use App\Models\Institution\DepartmentLevel;
@@ -28,8 +29,9 @@ class DepartmentLevelController extends Controller
         $departmentLevel = DepartmentLevelResource::make($departmentLevel);
         $institutionDepartment = InstitutionDepartmentResource::make($departmentLevel->institutionDepartment);
         $levels = DepartmentLevelResource::collection($institutionDepartment->departmentLevels);
+        $requirements = $departmentLevel->requirement ?  DepartmentLevelRequirementResource::make($departmentLevel->requirement) : null;
         return Inertia::render('institution/departments/DepartmentLevelRequirements',
-            compact('departmentLevel', 'institutionDepartment', 'levels'));
+            compact('departmentLevel', 'institutionDepartment', 'levels', 'requirements'));
     }
 
     public function updateDepartmentLevelRequirements(DepartmentLevel $departmentLevel, DepartmentLevelRequirementRequest $request): void
