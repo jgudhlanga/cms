@@ -42,7 +42,6 @@ const breadcrumbs: Array<Link> = [
 
 const isOLevelRequired = ref(false);
 const onlyReadWriteRequired = ref(false);
-const isPreviousLevelRequired = ref(false);
 const { listSubjects, subjects } = useSubjects();
 const { storeDepartmentLevelRequirements } = useDepartmentLevels();
 
@@ -63,17 +62,11 @@ const form = useForm<DepartmentLevelRequirementParams>({
 
 const selectOLevelRequired = (value: any) => {
     isOLevelRequired.value = value;
-    if (value) {
-        onlyReadWriteRequired.value = false;
-        isPreviousLevelRequired.value = false;
-    }
 };
 
 const SelectOnlyReadWriteRequired = (value: any) => {
     onlyReadWriteRequired.value = value;
-    isPreviousLevelRequired.value = false;
 };
-
 
 const departmentLevels = computed(() => props.levels.filter((item: DepartmentLevel) => item.id !== departmentLevel.id));
 const onRadioChange = (value: any) => {
@@ -148,34 +141,32 @@ const updateLevel = () => {
                         <Empty />
                     </template>
                 </div>
-                <template v-else>
-                    <div class="flex flex-col">
-                        <HeadingSmall class="mt-5" :title="$t('trans.spd_requirements')" :description="$t('trans.spd_requirements_description')" />
-                        <BaseCheckbox
-                            input-id="only_read_write_required"
-                            @click="SelectOnlyReadWriteRequired($event.target.checked)"
-                            :label="`${$t('trans.only_read_write_required')}`"
-                            v-model="onlyReadWriteRequired"
-                        />
-                    </div>
-                    <div class="mt-5 flex flex-col space-y-3" v-if="departmentLevels && departmentLevels.length > 0">
-                        <HeadingSmall :title="$t('trans.requires_previous_level')" :description="$t('trans.requires_previous_level_description')" />
-                        <template v-if="departmentLevels && departmentLevels.length > 0">
-                            <div class="flex flex-col">
-                                <BaseRadioGroup
-                                    :options="options"
-                                    default-value=""
-                                    :label-uppercase="true"
-                                    :is-required="true"
-                                    @update:modelValue="onRadioChange"
-                                />
-                            </div>
-                        </template>
-                        <template v-else>
-                            <Empty />
-                        </template>
-                    </div>
-                </template>
+                <div class="flex flex-col">
+                    <HeadingSmall class="mt-5" :title="$t('trans.spd_requirements')" :description="$t('trans.spd_requirements_description')" />
+                    <BaseCheckbox
+                        input-id="only_read_write_required"
+                        @click="SelectOnlyReadWriteRequired($event.target.checked)"
+                        :label="`${$t('trans.only_read_write_required')}`"
+                        v-model="onlyReadWriteRequired"
+                    />
+                </div>
+                <div class="mt-5 flex flex-col space-y-3" v-if="departmentLevels && departmentLevels.length > 0">
+                    <HeadingSmall :title="$t('trans.requires_previous_level')" :description="$t('trans.requires_previous_level_description')" />
+                    <template v-if="departmentLevels && departmentLevels.length > 0">
+                        <div class="flex flex-col">
+                            <BaseRadioGroup
+                                :options="options"
+                                default-value=""
+                                :label-uppercase="true"
+                                :is-required="true"
+                                @update:modelValue="onRadioChange"
+                            />
+                        </div>
+                    </template>
+                    <template v-else>
+                        <Empty />
+                    </template>
+                </div>
             </div>
             <div class="flex items-center justify-center space-x-3 p-6">
                 <BaseButton
