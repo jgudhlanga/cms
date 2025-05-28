@@ -7,6 +7,7 @@ import { useStudentPortal } from '@/composables/portal/useStudentPortal';
 import ContactDetails from '@/pages/portal/student/partials/ContactDetails.vue';
 import NextOfKinDetails from '@/pages/portal/student/partials/NextOfKinDetails.vue';
 import PersonalDetails from '@/pages/portal/student/partials/PersonalDetails.vue';
+import Programs from '@/pages/portal/student/partials/Programs.vue';
 import { useCreateApplicationFormStore } from '@/store/portal/useCreateApplicationFormStore';
 import { AuthObject } from '@/types/data-pagination';
 import { CreateApplicationParams } from '@/types/portal';
@@ -108,7 +109,7 @@ const updateForm = () => {};
                         <NextOfKinDetails :form="form" />
                     </template>
                     <template v-if="stepIndex === 4">
-                        <p>Programs</p>
+                        <Programs :form="form" />
                     </template>
                     <template v-if="stepIndex === maxStep">
                         <p>Confirm</p>

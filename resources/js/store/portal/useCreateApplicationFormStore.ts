@@ -34,7 +34,9 @@ export const useCreateApplicationFormStore = defineStore('portal-application-for
             phone_number: '',
             relationship: null,
             relationship_id: null,
-            study_permit_number: ''
+            study_permit_number: '',
+            department: null,
+            department_id: null,
         };
     },
     persist: true,

@@ -48,4 +48,7 @@ export type CreateApplicationParams = {
     next_of_kin_address_3: string | null;
     next_of_kin_address_4: string | null;
     next_of_kin_phone_number: string | null;
+    /** Programs */
+    department: SelectOption | null;
+    department_id: string | number | null;
 };
