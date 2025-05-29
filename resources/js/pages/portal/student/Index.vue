@@ -36,7 +36,7 @@ const breadcrumbs: BreadcrumbItemInterface[] = [{ title: user.attributes?.name }
             :show-archived-filter="false"
             :filters="filters"
             :search-url="route('portal.index', getIdParams(user.id.toString() ?? ''))"
-            :pagination="{ ...applications.links, ...applications.meta }"
+            :pagination="{ ...applications?.links, ...applications?.meta }"
             :columns="applicationsTable()"
             :disable-create="false"
         >

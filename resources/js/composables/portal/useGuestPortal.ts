@@ -16,10 +16,14 @@ export function useGuestPortal() {
                 ['titleIdSchema', 'lastNameSchema', 'genderSchema', 'emailSchema', 'passwordSchema', 'passwordConfirmationSchema'],
                 schemaFields['firstNameSchema'](),
             ).parse(form);
-            form.post(route('portal.store'), buildFormOptions(form, successMessage(), errorMessage()));
-            const store = useCreateUserFormStore();
-            store.$reset();
-            store.$dispose();
+            form.post(
+                route('portal.store'),
+                buildFormOptions(form, successMessage(), errorMessage(), undefined, () => {
+                    const store = useCreateUserFormStore();
+                    store.$reset();
+                    store.$dispose();
+                }),
+            );
         } catch (error: any) {
             form.setError(error.format());
         }

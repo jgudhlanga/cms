@@ -4,7 +4,9 @@ namespace App\Http\Requests\Users;
 
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Validation\Rules\Password;
+use Illuminate\Contracts\Validation\Validator;
 
 class CreateUserRequest extends FormRequest
 {
@@ -13,7 +15,6 @@ class CreateUserRequest extends FormRequest
     {
         return true;
     }
-
 
     public function rules(): array
     {
