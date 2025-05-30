@@ -17,4 +17,4 @@ require __DIR__ . '/web/acl.php';
 require __DIR__ . '/web/shared.php';
 require __DIR__ . '/web/payments.php';
 require __DIR__ . '/web/institution.php';
-require __DIR__ . '/web/applications.php';
+require __DIR__ . '/web/portal.php';
