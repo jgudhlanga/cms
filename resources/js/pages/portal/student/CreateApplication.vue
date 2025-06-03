@@ -32,6 +32,12 @@ const metaValid = ref(true);
 const breadcrumbs: BreadcrumbItemInterface[] = [{ title: user.attributes?.name }, { transKey: 'finish_your_application' }];
 const { id_type, first_name, middle_name, last_name, title, gender } = storeToRefs(useCreateApplicationFormStore());
 const form = useForm<CreateApplicationParams>({
+    course: null,
+    course_id: null,
+    department: null,
+    department_id: null,
+    level: null,
+    level_id: null,
     email: '',
     first_name: '',
     gender: null,

@@ -28,7 +28,7 @@ const options = computed(() => {
 });
 
 const whenSearch = debounce(async (search: string) => {
-    clearFormErrors(props.form, 'country');
+    clearFormErrors(props.form, 'department');
     await listDepartments(search);
 }, 600);
 </script>

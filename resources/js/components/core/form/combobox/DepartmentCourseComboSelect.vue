@@ -10,5 +10,5 @@ defineProps<Props>();
 </script>
 
 <template>
-    <BaseCombobox :label="$tChoice('trans.level', 1)" v-bind="$attrs" />
+    <BaseCombobox :label="$tChoice('trans.course', 1)" v-bind="$attrs" />
 </template>

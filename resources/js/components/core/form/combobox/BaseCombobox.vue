@@ -32,6 +32,7 @@ interface Props {
     labelUppercase?: boolean,
     verticalLayout?: boolean,
     isRequired?: boolean,
+    disabled?: boolean,
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -60,7 +61,7 @@ const fieldPlaceHolder = computed(() => {
 			<Label :class="cn(error && 'text-destructive', labelUppercase && 'uppercase', !verticalLayout && 'flex items-center w-1/4')" v-if="label">
                 {{ label }}<RequiredIndicator v-if="isRequired"/>
             </Label>
-			<Combobox v-model="valueModel" by="label" class="w-full">
+			<Combobox v-model="valueModel" by="label" class="w-full" :disabled="disabled">
 				<ComboboxAnchor as-child class="relative">
 					<ComboboxTrigger as-child>
 						<Button variant="outline" class="w-full justify-between">

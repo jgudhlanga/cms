@@ -51,4 +51,8 @@ export type CreateApplicationParams = {
     /** Programs */
     department: SelectOption | null;
     department_id: string | number | null;
+    level: SelectOption | null;
+    level_id: string | number | null;
+    course: SelectOption | null;
+    course_id: string | number | null;
 };

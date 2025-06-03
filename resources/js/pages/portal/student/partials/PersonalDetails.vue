@@ -43,12 +43,11 @@ const onRadioChange = (value: any) => {
     id_type.value = value;
 };
 const props = defineProps<{ form: InertiaForm<CreateApplicationParams> }>();
-const { form } = props;
 const defaultIdType = ref(id_type.value ?? 'zimbabwean-national-id-number');
 
 const formatIdNumber = () => {
     if (!id_number || typeof id_number.value !== 'string') return;
-    clearFormErrors(form, 'id_number');
+    clearFormErrors(props.form, 'id_number');
     id_number.value = formatZimIdNumber(id_number.value);
 };
 </script>
