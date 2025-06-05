@@ -1,20 +1,21 @@
 import '../css/app.css';
 
+import { initializeTheme } from '@/composables/core/useAppearance';
+import AppLayout from '@/layouts/AppLayout.vue';
+import GuestLayout from '@/layouts/GuestLayout.vue';
+import PlainLayout from '@/layouts/PlainLayout.vue';
+import { PageModule } from '@/types';
 import { createInertiaApp } from '@inertiajs/vue3';
-import type { DefineComponent } from 'vue';
-import { createApp, h } from 'vue';
-import { ZiggyVue } from '../../vendor/tightenco/ziggy';
 import { i18nVue } from 'laravel-vue-i18n';
 import { createPinia } from 'pinia';
 import piniaPluginPersistedstate from 'pinia-plugin-persistedstate';
-import Vue3Toastify from 'vue3-toastify';
+import type { DefineComponent } from 'vue';
+import { createApp, h } from 'vue';
 import { createVfm } from 'vue-final-modal';
-import 'vue3-toastify/dist/index.css';
 import 'vue-final-modal/style.css';
-import { initializeTheme } from '@/composables/core/useAppearance';
-import GuestLayout from '@/layouts/GuestLayout.vue';
-import AppLayout from '@/layouts/AppLayout.vue';
-import { PageModule } from '@/types';
+import Vue3Toastify from 'vue3-toastify';
+import 'vue3-toastify/dist/index.css';
+import { ZiggyVue } from '../../vendor/tightenco/ziggy';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
@@ -22,14 +23,14 @@ const pinia = createPinia();
 pinia.use(piniaPluginPersistedstate);
 const vfm = createVfm(); // MODAL PLUGIN
 createInertiaApp({
-    title: (title) => `${title ? title + ' - ' : ''} ${appName}`,
+    title: (title) => `${title ? title.toUpperCase() + ' - ' : ''} ${appName}`,
     resolve: (name) => {
         const pages = import.meta.glob<PageModule>('./pages/**/*.vue', { eager: true });
         const page = pages[`./pages/${name}.vue`];
         if (name.startsWith('auth/')) {
             page.default.layout = GuestLayout;
-        } else if (name.startsWith('site/')) {
-            page.default.layout = undefined;
+        } else if (name.startsWith('site/') || name.startsWith('portal/guest')) {
+            page.default.layout = PlainLayout;
         } else {
             page.default.layout = AppLayout;
         }
@@ -54,7 +55,7 @@ createInertiaApp({
                         console.error(`Failed to load translations for "${lang}".`, error);
                         return {};
                     }
-                }
+                },
             })
             .use(vfm)
             .use(Vue3Toastify);
@@ -62,9 +63,9 @@ createInertiaApp({
     },
     progress: {
         color: '#30A8FF',
-        showSpinner: true
-    }
-}).then();
+        showSpinner: true,
+    },
+});
 
 // This will set light / dark mode on a page load...
 initializeTheme();

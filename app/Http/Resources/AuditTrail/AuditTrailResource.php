@@ -32,7 +32,7 @@ class AuditTrailResource extends JsonResource
 	private function getCauserName(): string
 	{
 		return User::find($this->resource->causer_id)->name
-			?? User::find(User::SUPER_USER)->name
+			?? User::find(User::SUPER_ADMINISTRATOR)->name
 			?? '';
 	}
 }

@@ -3,4 +3,5 @@ export enum TypeVariant {
 	success = 'success',
 	warning = 'warning',
 	danger = 'danger',
+	primary = 'primary',
 }

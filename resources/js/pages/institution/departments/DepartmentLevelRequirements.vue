@@ -1,0 +1,197 @@
+<script setup lang="ts">
+import { BaseCheckbox } from '@/components/core/form';
+import SharedNumberField from '@/components/core/form/number/SharedNumberField.vue';
+import BaseRadioGroup from '@/components/core/form/radio-group/BaseRadioGroup.vue';
+import PageContainer from '@/components/core/page/PageContainer.vue';
+import Empty from '@/components/core/util/Empty.vue';
+import HeadingSmall from '@/components/core/util/HeadingSmall.vue';
+import { useUtils } from '@/composables/core/useUtils';
+import { useDepartmentLevels } from '@/composables/institution/useDepartmentLevels';
+import { useSubjects } from '@/composables/institution/useSubjects';
+import { ColorVariant } from '@/enums/colors';
+import { getIdParams } from '@/lib/utils';
+import { AuthObject } from '@/types/data-pagination';
+import { DepartmentLevel, DepartmentLevelRequirement, DepartmentLevelRequirementParams } from '@/types/department-meta-data';
+import { RadioGroupOption } from '@/types/forms';
+import { InstitutionDepartment } from '@/types/institution';
+import type { Link } from '@/types/ui';
+import { Head, useForm } from '@inertiajs/vue3';
+import { computed, onMounted, ref } from 'vue';
+import BaseButton from '../../../components/core/button/BaseButton.vue';
+
+interface Props {
+    institutionDepartment: InstitutionDepartment;
+    departmentLevel: DepartmentLevel;
+    levels: DepartmentLevel[];
+    requirements: DepartmentLevelRequirement;
+    auth: AuthObject;
+    errors: object;
+}
+
+const props = defineProps<Props>();
+const { isItTrue } = useUtils();
+const { requirements } = props;
+const { departmentLevel, institutionDepartment } = props;
+const breadcrumbs: Array<Link> = [
+    { transChoiceKey: 'institution', transChoiceKeyIndex: 1, href: route('institution.index') },
+    { transChoiceKey: 'department', href: route('institution-departments.index') },
+    {
+        title: institutionDepartment.attributes.department,
+        href: route('institution-departments.show', getIdParams(institutionDepartment.id?.toString() ?? '')),
+    },
+    { title: departmentLevel.attributes.level },
+    { transKey: 'level_requirements' },
+];
+
+const isOLevelRequired = ref(false);
+const onlyReadWriteRequired = ref(false);
+const { listSubjects, subjects } = useSubjects();
+const { storeDepartmentLevelRequirements } = useDepartmentLevels();
+
+const { navigateTo } = useUtils();
+const form = useForm<DepartmentLevelRequirementParams>({
+    is_o_level_required: isOLevelRequired.value,
+    required_subjects_count: null,
+    main_subjects_count: null,
+    main_subject_ids: [],
+    other_subjects_count: null,
+    only_read_write_required: onlyReadWriteRequired.value,
+    required_level_id: '',
+});
+
+onMounted(async () => {
+    await listSubjects();
+    form.is_o_level_required = isOLevelRequired.value = isItTrue(requirements?.attributes?.isOLevelRequired);
+    form.required_subjects_count = Number(requirements?.attributes?.requiredSubjectsCount) ?? null;
+    form.main_subjects_count = Number(requirements?.attributes?.mainSubjectsCount) ?? null;
+    form.main_subject_ids = requirements?.attributes?.mainSubjectIds ?? [];
+    form.other_subjects_count = Number(requirements?.attributes?.otherSubjectsCount) ?? null;
+    form.only_read_write_required = onlyReadWriteRequired.value = isItTrue(requirements?.attributes?.onlyReadWriteRequired);
+    form.required_level_id = requirements?.attributes?.requiredLevelId?.toString();
+});
+
+const selectOLevelRequired = (value: any) => {
+    isOLevelRequired.value = value;
+};
+
+const SelectOnlyReadWriteRequired = (value: any) => {
+    onlyReadWriteRequired.value = value;
+};
+
+const departmentLevels = computed(() => props.levels.filter((item: DepartmentLevel) => item.id !== departmentLevel.id));
+const onRadioChange = (value: any) => {
+    form.required_level_id = value;
+};
+const options = computed(() => {
+    return departmentLevels.value.map(
+        (item: DepartmentLevel) =>
+            <RadioGroupOption>{
+                value: item?.attributes?.levelId?.toString(),
+                label: item?.attributes?.level,
+                inputId: 'radio_' + item?.attributes?.levelId?.toString(),
+            },
+    );
+});
+
+const updateLevel = () => {
+    form.is_o_level_required = isOLevelRequired.value;
+    form.only_read_write_required = onlyReadWriteRequired.value;
+    storeDepartmentLevelRequirements(departmentLevel.id?.toString() ?? '', form);
+};
+</script>
+
+<template>
+    <Head :title="$t('trans.level_requirements')" />
+    <PageContainer :breadcrumbs="breadcrumbs">
+        <form @submit.prevent="() => updateLevel()" class="flex flex-col">
+            <div class="flex flex-col">
+                <div class="flex flex-col space-y-3">
+                    <HeadingSmall :title="$t('trans.o_level_subjects')" :description="$t('trans.select_o_level_subjects')" />
+                    <BaseCheckbox
+                        input-id="is_o_level_required"
+                        @click="selectOLevelRequired($event.target.checked)"
+                        v-model="isOLevelRequired"
+                        :label="`${$t('trans.is_o_level_required')}`"
+                    />
+                </div>
+                <div v-if="isOLevelRequired" class="flex flex-col">
+                    <div class="my-5 grid grid-cols-4 gap-3">
+                        <SharedNumberField
+                            :label="$t('trans.required_subjects_count')"
+                            input-id="required_subjects_count"
+                            v-model="form.required_subjects_count"
+                        />
+                        <SharedNumberField
+                            :label="$t('trans.main_subjects_count')"
+                            input-id="main_subjects_count"
+                            v-model="form.main_subjects_count"
+                        />
+                        <SharedNumberField
+                            :label="$t('trans.other_subjects_count')"
+                            input-id="other_subjects_count"
+                            v-model="form.other_subjects_count"
+                        />
+                    </div>
+                    <template v-if="subjects && subjects.length > 0">
+                        <div class="flex flex-col">
+                            <HeadingSmall :title="$t('trans.main_subjects')" :description="$t('trans.select_main_required_subjects')" />
+                            <div class="grid grid-cols-1 gap-x-3 md:grid-cols-3">
+                                <template v-for="subject in subjects" :key="`subject_key_${subject['id']}`">
+                                    <BaseCheckbox
+                                        :input-id="`subject_id_${subject['id']}`"
+                                        :value="subject['id']"
+                                        v-model="form.main_subject_ids"
+                                        :label="subject['attributes']['name']"
+                                    />
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+                    <template v-else>
+                        <Empty />
+                    </template>
+                </div>
+                <div class="flex flex-col">
+                    <HeadingSmall class="mt-5" :title="$t('trans.spd_requirements')" :description="$t('trans.spd_requirements_description')" />
+                    <BaseCheckbox
+                        input-id="only_read_write_required"
+                        @click="SelectOnlyReadWriteRequired($event.target.checked)"
+                        :label="`${$t('trans.only_read_write_required')}`"
+                        v-model="onlyReadWriteRequired"
+                    />
+                </div>
+                <div class="mt-5 flex flex-col space-y-3" v-if="departmentLevels && departmentLevels.length > 0">
+                    <HeadingSmall :title="$t('trans.requires_previous_level')" :description="$t('trans.requires_previous_level_description')" />
+                    <template v-if="departmentLevels && departmentLevels.length > 0">
+                        <div class="flex flex-col">
+                            <BaseRadioGroup
+                                :options="options"
+                                :default-value="requirements?.attributes?.requiredLevelId?.toString()"
+                                :label-uppercase="true"
+                                :is-required="true"
+                                @update:modelValue="onRadioChange"
+                            />
+                        </div>
+                    </template>
+                    <template v-else>
+                        <Empty />
+                    </template>
+                </div>
+            </div>
+            <div class="flex items-center justify-center space-x-3 p-6">
+                <BaseButton
+                    type="button"
+                    :variant="ColorVariant.shade"
+                    @click="
+                        () =>
+                            navigateTo(
+                                route('institution-departments.show', getIdParams(institutionDepartment?.attributes?.departmentId.toString() ?? '')),
+                            )
+                    "
+                    >{{ $t('trans.back') }}
+                </BaseButton>
+                <BaseButton :processing="form.processing" :disabled="form.processing"> {{ $t('trans.save') }} </BaseButton>
+            </div>
+        </form>
+    </PageContainer>
+</template>

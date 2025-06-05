@@ -3,3 +3,9 @@ export type Step = {
 	title: string,
 	description: string,
 }
+
+export interface RadioGroupOption {
+    inputId: string,
+    label: string,
+    value: string,
+}

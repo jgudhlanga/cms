@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Policies\Dashboards\DashboardPolicy;
 use App\Policies\Institution\DepartmentMetaDataPolicy;
 use App\Policies\Settings\InstitutionSetupPolicy;
 use App\Policies\Settings\SettingPolicy;
@@ -28,6 +29,7 @@ class AppServiceProvider extends ServiceProvider
         $this->registerSettingsPolicies();
         $this->registerInstitutionSettingsPolicies();
         $this->registerDepartmentMetaDataPolicies();
+        $this->registerDashboardPolicies();
     }
 
     private function registerSettingsPolicies(): void
@@ -65,5 +67,10 @@ class AppServiceProvider extends ServiceProvider
         Gate::define('forceDeleteDepartmentMetaData', [DepartmentMetaDataPolicy::class, 'forceDeleteDepartmentMetaData']);
         Gate::define('importDepartmentMetaData', [DepartmentMetaDataPolicy::class, 'importDepartmentMetaData']);
         Gate::define('exportDepartmentMetaData', [DepartmentMetaDataPolicy::class, 'exportDepartmentMetaData']);
+    }
+
+    private function registerDashboardPolicies(): void
+    {
+        Gate::define('viewDashboard', [DashboardPolicy::class, 'viewDashboard']);
     }
 }

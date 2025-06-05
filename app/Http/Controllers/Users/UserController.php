@@ -39,7 +39,8 @@ class UserController extends Controller
 	public function store(CreateUserRequest $request)
 	{
 		$this->authorize('create', User::class);
-		$this->repository->create(UserDto::fromCreateUserRequest($request));
+        $tenant = $request->user()->tenant;
+		$this->repository->create(UserDto::fromCreateUserRequest($request, $tenant));
 	}
 
 	public function show(User $user)

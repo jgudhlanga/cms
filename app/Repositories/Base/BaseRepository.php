@@ -16,7 +16,7 @@ class BaseRepository implements IBaseRepository
     public function find(Model $model): Model
     {
         return $model->fresh();
-    } 
+    }
 
     public function findTrashed(string $id)
     {
@@ -59,4 +59,9 @@ class BaseRepository implements IBaseRepository
 	{
 		return $this->model->all()->count();
 	}
+
+    public function getAllWithTrashed()
+    {
+       return  $this->model->withTrashed();
+    }
 }

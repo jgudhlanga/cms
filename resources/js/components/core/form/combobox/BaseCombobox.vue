@@ -20,6 +20,7 @@ import SpinnerComponent from '@/components/core/util/SpinnerComponent.vue';
 import InputError from '@/components/core/form/InputError.vue';
 import { computed } from 'vue';
 import { trans } from 'laravel-vue-i18n';
+import RequiredIndicator from '@/components/core/form/RequiredIndicator.vue';
 
 interface Props {
 	label?: string;
@@ -28,11 +29,18 @@ interface Props {
 	error?: string | object;
 	onSearch?: (search: string) => void;
 	isLoading?: boolean;
+    labelUppercase?: boolean,
+    verticalLayout?: boolean,
+    isRequired?: boolean,
+    disabled?: boolean,
 }
 
 const props = withDefaults(defineProps<Props>(), {
 	options: () => [],
-	isLoading: false
+	isLoading: false,
+    labelUppercase:false,
+    verticalLayout:true,
+    isRequired: false
 });
 const valueModel = defineModel<SelectOption>();
 
@@ -49,9 +57,11 @@ const fieldPlaceHolder = computed(() => {
 
 <template>
 	<div class="flex flex-col">
-		<div class="flex flex-col space-y-2">
-			<Label :class="cn(error && 'text-destructive')" v-if="label">{{ label }}</Label>
-			<Combobox v-model="valueModel" by="label">
+		<div :class="cn('flex space-x-3', verticalLayout && 'flex-col space-y-3')">
+			<Label :class="cn(error && 'text-destructive', labelUppercase && 'uppercase', !verticalLayout && 'flex items-center w-1/4')" v-if="label">
+                {{ label }}<RequiredIndicator v-if="isRequired"/>
+            </Label>
+			<Combobox v-model="valueModel" by="label" class="w-full" :disabled="disabled">
 				<ComboboxAnchor as-child class="relative">
 					<ComboboxTrigger as-child>
 						<Button variant="outline" class="w-full justify-between">
@@ -86,6 +96,6 @@ const fieldPlaceHolder = computed(() => {
 				</ComboboxList>
 			</Combobox>
 		</div>
-		<InputError class="lowercase" :message="error" />
+        <InputError :class="cn('flex w-full lowercase', !verticalLayout && 'justify-end')" :message="error" />
 	</div>
 </template>

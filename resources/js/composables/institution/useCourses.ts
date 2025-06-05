@@ -1,22 +1,38 @@
 import { useDataTables } from '@/composables/core/useDataTables';
+import { useDropdowns } from '@/composables/core/useDropdowns';
 import { useSharedFormSchema } from '@/composables/core/useSharedFormSchema';
 import { forbiddenAlert, openModal } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
 import { buildFormOptions } from '@/lib/forms';
 import { getIdParams } from '@/lib/utils';
 import { Auth } from '@/types';
-import { Course } from '@/types/institution';
+import { Course, } from '@/types/institution';
 import type { Link } from '@/types/ui';
 import { InertiaForm, usePage } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
+import { ref } from 'vue';
 
 export const useCourses = () => {
-    const { moreActionButton, onDelete, onForceDelete, onRestore } = useDataTables();
+    const { moreActionButton, onDelete, onForceDelete, onRestore, orderButtons } = useDataTables();
+    const isLoading = ref(false);
+    const courses = ref<Course[]>([]);
     const createCourseColumns = () => {
         const { props } = usePage();
         const { can } = props?.auth as Auth;
         return [
             { header: trans_choice('trans.name', 1), accessorKey: 'attributes.name' },
+            {
+                header: trans_choice('trans.position', 1),
+                accessorKey: 'attributes.position',
+                meta: { align: 'center' }
+            },
+            {
+                header: trans('trans.order'),
+                accessorKey: 'order',
+                enableSorting: false,
+                meta: { align: 'center' },
+                cell: ({ row }: { row: { original: Course } }) => orderButtons(),
+            },
             { header: trans_choice('trans.description', 1), accessorKey: 'attributes.description' },
             {
                 header: trans_choice('trans.action', 2),
@@ -75,10 +91,21 @@ export const useCourses = () => {
         openModal({ name: APP_MODULE_KEYS.courses, edit: course });
     };
 
+    const listCourses = async (search?: string) => {
+        const { data, fetchData } = useDropdowns();
+        isLoading.value = true;
+        await fetchData({ url: 'api/v1/courses?page_size=100', search, transChoiceKey: 'trans.course' });
+        isLoading.value = false;
+        courses.value = data.value;
+    };
+
     return {
         createCourseColumns,
         breadcrumbs,
         onOpenModal,
         saveCourse,
+        listCourses,
+        isLoading,
+        courses,
     };
 };

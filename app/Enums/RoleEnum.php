@@ -7,6 +7,7 @@ enum RoleEnum: string
     case REGISTRAR = 'Registrar';
     case SELECTION_OFFICER = 'Selection officer';
     case SUPER_ADMINISTRATOR = 'Super Administrator';
+    case STUDENT = 'Student';
 
     // extra helper to allow for greater customization of displayed values, without disclosing the name/value data directly
     public function label(): string
@@ -15,6 +16,7 @@ enum RoleEnum: string
             self::REGISTRAR => 'Registrar',
             self::SELECTION_OFFICER => 'Selection officer',
             self::SUPER_ADMINISTRATOR => 'Super administrator',
+            self::STUDENT => 'Student',
         };
     }
 
