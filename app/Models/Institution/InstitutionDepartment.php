@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
@@ -28,6 +29,16 @@ class InstitutionDepartment extends Model
     public function department(): BelongsTo
     {
         return $this->belongsTo(Department::class);
+    }
+
+    public function departmentLevels(): HasMany
+    {
+        return $this->hasMany(DepartmentLevel::class, 'institution_department_id')->orderBy('level_id');
+    }
+
+    public function departmentCourses(): HasMany
+    {
+        return $this->hasMany(DepartmentCourse::class, 'institution_department_id');
     }
 
     public function getActivitylogOptions(): LogOptions

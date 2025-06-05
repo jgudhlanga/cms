@@ -1,10 +1,13 @@
 import { IconName } from '@/enums/icons';
 import {
     FolderArchive as Archive,
+    ArrowDown,
     CircleArrowDown as ArrowDownCircleOutline,
     ArrowLeft,
+    ArrowUp,
     CircleArrowUp as ArrowUpCircleOutline,
     Bed,
+    BookCheck,
     CreditCard as Card,
     Check,
     CircleCheckBig as CheckBox,
@@ -65,7 +68,7 @@ import {
     UserPlus,
     Users,
     UserSearch,
-    CircleAlert as Warning, BookCheck
+    CircleAlert as Warning,
 } from 'lucide-vue-next';
 import type { Component } from 'vue';
 
@@ -138,6 +141,8 @@ const icons: Record<IconName, Component> = {
     [IconName.school]: School,
     [IconName.user_check]: UserCheck,
     [IconName.book_check]: BookCheck,
+    [IconName.arrow_up]: ArrowUp,
+    [IconName.arrow_down]: ArrowDown,
 };
 
 export { IconName, icons };

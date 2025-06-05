@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Enums\RoleEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use Illuminate\Http\RedirectResponse;
@@ -32,7 +33,10 @@ class AuthenticatedSessionController extends Controller
         $request->authenticate();
 
         $request->session()->regenerate();
-
+        $user = $request->user();
+        if ($user->hasRole(RoleEnum::STUDENT)) {
+            return to_route('portal.application', compact('user'));
+        }
         return redirect()->intended(route('dashboard', absolute: false));
     }
 
@@ -46,7 +50,7 @@ class AuthenticatedSessionController extends Controller
         $request->session()->invalidate();
 
         $request->session()->regenerateToken();
-        $request->user()->tokens()->delete();
+        $request->user()?->tokens()?->delete();
         return redirect()->intended(route('home'));
     }
 }

@@ -3,13 +3,19 @@
 namespace App\Http\Controllers\Institution;
 
 use App\DTO\Institution\DepartmentLevelDto;
+use App\DTO\Institution\DepartmentLevelRequirementsDto;
 use App\Http\Controllers\Controller;
-use App\Http\Filters\Institution\DepartmentLevelFilter;
 use App\Http\Requests\Institution\DepartmentLevelRequest;
+use App\Http\Requests\Institution\DepartmentLevelRequirementRequest;
+use App\Http\Resources\Institution\DepartmentLevelRequirementResource;
 use App\Http\Resources\Institution\DepartmentLevelResource;
+use App\Http\Resources\Institution\InstitutionDepartmentResource;
 use App\Models\Institution\DepartmentLevel;
+use App\Models\Institution\DepartmentLevelRequirement;
 use App\Models\Institution\InstitutionDepartment;
 use App\Repositories\Institution\interface\IDepartmentLevelRepository;
+use Inertia\Inertia;
+use phpDocumentor\Reflection\Types\Compound;
 
 class DepartmentLevelController extends Controller
 {
@@ -17,6 +23,22 @@ class DepartmentLevelController extends Controller
     {
     }
 
+    public function departmentLevelRequirements(DepartmentLevel $departmentLevel)
+    {
+        $this->authorize('updateDepartmentMetaData');
+        $departmentLevel = DepartmentLevelResource::make($departmentLevel);
+        $institutionDepartment = InstitutionDepartmentResource::make($departmentLevel->institutionDepartment);
+        $levels = DepartmentLevelResource::collection($institutionDepartment->departmentLevels);
+        $requirements = $departmentLevel->requirement ?  DepartmentLevelRequirementResource::make($departmentLevel->requirement) : null;
+        return Inertia::render('institution/departments/DepartmentLevelRequirements',
+            compact('departmentLevel', 'institutionDepartment', 'levels', 'requirements'));
+    }
+
+    public function updateDepartmentLevelRequirements(DepartmentLevel $departmentLevel, DepartmentLevelRequirementRequest $request): void
+    {
+        $this->authorize('updateDepartmentMetaData');
+        $this->repository->updateDepartmentLevelRequirements($departmentLevel, DepartmentLevelRequirementsDto::fromDepartmentLevelRequirementRequest($request));
+    }
 
     public function syncDepartmentLevels(InstitutionDepartment $institutionDepartment, DepartmentLevelRequest $request): void
     {

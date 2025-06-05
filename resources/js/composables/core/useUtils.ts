@@ -5,6 +5,7 @@ import { router } from '@inertiajs/vue3';
 import { trans } from 'laravel-vue-i18n';
 import moment from 'moment';
 import { h } from 'vue';
+import { clearFormErrors } from '@/lib/forms';
 
 export function useUtils() {
     const renderIcon = (icon: IconName, size: string = '15', color?: ColorVariant) => {
@@ -129,6 +130,19 @@ export function useUtils() {
         router.get(url);
     };
 
+    const formatZimIdNumber = (id_number: string) => {
+        if (!id_number) return;
+
+
+        let raw = id_number.replace(/-/g, '');
+
+        if (raw.length > 1) {
+            raw = raw.slice(0, 2) + '-' + raw.slice(2);
+        }
+
+        return raw;
+    };
+
     return {
         extractInitials,
         formatCurrency,
@@ -149,5 +163,6 @@ export function useUtils() {
         baseInputNumberCurrencyFormat,
         goBack,
         navigateTo,
+        formatZimIdNumber,
     };
 }

@@ -50,7 +50,7 @@ const { isMobile, state } = useSidebar();
                     :side-offset="4"
                 >
                     <DropdownMenuLabel class="text-xs text-muted-foreground">
-                        Tenants {{ state }}
+                        Tenants
                     </DropdownMenuLabel>
                     <DropdownMenuItem
                         v-for="tenant in tenants"

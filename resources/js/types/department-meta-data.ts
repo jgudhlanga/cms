@@ -1,0 +1,87 @@
+export type DepartmentLevel = {
+    type?: string;
+    id?: string | number;
+    attributes: {
+        institutionDepartmentId: string | number;
+        levelId: string | number;
+        level: string;
+        levelPosition: number;
+        description?: string;
+        createdAt?: string;
+        updatedAt?: string;
+        deletedAt?: string;
+    };
+};
+
+
+export type DepartmentLevelParams = {
+    level_ids: Array<string | undefined | null> | null;
+};
+
+export type DepartmentCourse = {
+    type?: string;
+    id?: string | number;
+    attributes: {
+        institutionDepartmentId: string | number;
+        courseId: string | number;
+        course: string;
+        showOnCurrentApplicationPeriod?: boolean;
+        description?: string;
+        createdAt?: string;
+        updatedAt?: string;
+        deletedAt?: string;
+    };
+    relationships?: {
+        departmentCourseLevels?: DepartmentCourseLevel[]
+    }
+};
+
+
+export type DepartmentCourseLevel = {
+    id?: string | number;
+    departmentCourseId?: string | number;
+    departmentLevelId?: string | number;
+    level?: string;
+}
+
+export type DepartmentCourseParams = {
+    course_ids: Array<string | undefined | null> | null;
+};
+
+export type DepartmentCourseUpdateParams = {
+    department_level_ids?: Array<any> | null;
+    show_on_current_application_period?: boolean;
+};
+
+export interface DepartmentMetaData {
+    about: object;
+    levels: DepartmentLevel[];
+    departmentLevelsIds: Array<string | undefined | null> | null;
+    courses: DepartmentCourse[];
+    departmentCoursesIds: Array<string | undefined | null> | null;
+}
+
+export type DepartmentLevelRequirement = {
+    type: string;
+    id: string | number;
+    attributes: {
+        departmentLeveId: string | number;
+        isOLevelRequired?: boolean;
+        requiredSubjectsCount?: string | number | null;
+        mainSubjectsCount?: string | number | null;
+        mainSubjectIds?: Array<string | number | null>;
+        otherSubjectsCount?: string | number | null;
+        onlyReadWriteRequired?: boolean;
+        requiredLevelId?: string | number | null;
+    };
+};
+
+export type DepartmentLevelRequirementParams = {
+    is_o_level_required?: boolean;
+    required_subjects_count?: string | number | null;
+    main_subjects_count?: string | number | null;
+    main_subject_ids: any;
+    other_subjects_count?: string | number | null;
+    only_read_write_required?: boolean;
+    required_level_id?: string | number | null;
+};

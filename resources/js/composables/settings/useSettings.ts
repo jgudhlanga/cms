@@ -26,6 +26,10 @@ export function useSettings() {
 			transChoiceKey: 'language',
 			url: route('languages.index'),
 		},
+        {
+            transChoiceKey: 'marital_status',
+            url: route('marital-statuses.index'),
+        },
 		{
 			transChoiceKey: 'payment',
 			url: route('payments-index'),

@@ -1,0 +1,87 @@
+<script setup lang="ts">
+import { BaseCheckbox } from '@/components/core/form';
+import BaseModal from '@/components/core/modal/BaseModal.vue';
+import SpinnerComponent from '@/components/core/util/SpinnerComponent.vue';
+import { useDepartmentLevels } from '@/composables/institution/useDepartmentLevels';
+import { useLevels } from '@/composables/institution/useLevels';
+import { getModalEdit } from '@/lib/alerts';
+import { APP_MODULE_KEYS } from '@/lib/constants';
+import { useModalStore } from '@/store/core/useModalStore';
+import { DepartmentLevelParams } from '@/types/department-meta-data';
+import { Level } from '@/types/institution';
+import { useForm } from '@inertiajs/vue3';
+import { ref, watch } from 'vue';
+
+interface Props {
+    institutionDepartmentId: string;
+}
+
+defineProps<Props>();
+
+const allSelected = ref(false);
+const form = useForm<DepartmentLevelParams>({
+    level_ids: [],
+});
+
+const { isLoading, levels, listLevels } = useLevels();
+const { syncDepartmentLevels } = useDepartmentLevels();
+const selectAll = () => {
+    if (allSelected.value) {
+        form.level_ids = [];
+        allSelected.value = false;
+    } else {
+        form.level_ids = levels.value?.map((item: Level) => item['id']);
+        allSelected.value = true;
+    }
+};
+const updateModel = () => {
+    allSelected.value = form.level_ids?.length == levels.value?.length;
+};
+const { modals } = useModalStore();
+
+watch(modals!, async () => {
+    form.level_ids = getModalEdit(APP_MODULE_KEYS.department_levels);
+    await listLevels();
+    form.defaults();
+});
+</script>
+
+<template>
+    <BaseModal
+        :name="APP_MODULE_KEYS.department_levels"
+        :title="$t('trans.link_levels')"
+        :on-form-action="() => syncDepartmentLevels(institutionDepartmentId, form)"
+        :form="form"
+    >
+        <template #body>
+            <div class="flex flex-col space-y-3">
+                <template v-if="isLoading">
+                    <SpinnerComponent class="w-full" />
+                </template>
+                <template v-else>
+                    <div class="flex flex-col space-y-2">
+                        <div class="flex">
+                            <BaseCheckbox
+                                input-id="select_all_levels"
+                                :checked="allSelected"
+                                :label="`${$t('trans.select_all')} ${$tChoice('trans.level', 2).toLowerCase()}`"
+                                @click="selectAll()"
+                            />
+                        </div>
+                        <div class="grid grid-cols-1 gap-x-3 md:grid-cols-2">
+                            <template v-for="level in levels" :key="`level_key_${level['id']}`">
+                                <BaseCheckbox
+                                    :input-id="`level_id_${level['id']}`"
+                                    :value="level['id']"
+                                    v-model="form.level_ids"
+                                    :label="level['attributes']['name']"
+                                    @change="updateModel()"
+                                />
+                            </template>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </template>
+    </BaseModal>
+</template>

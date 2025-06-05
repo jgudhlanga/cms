@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('divisions', function (Blueprint $table) {
             $table->id();
             $table->string('name')->unique();
+            $table->integer('position');
             $table->text('description')->nullable();
 			$table->timestamps();
 			$table->softDeletes();

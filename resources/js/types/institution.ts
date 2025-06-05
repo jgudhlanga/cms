@@ -3,6 +3,7 @@ export type Course = {
     id?: string;
     attributes: {
         name: string;
+        position: string | number;
         description?: string;
         createdAt?: string;
         updatedAt?: string;
@@ -19,6 +20,7 @@ export type Department = {
     id?: string;
     attributes: {
         name: string;
+        position: string | number;
         description?: string;
         createdAt?: string;
         updatedAt?: string;
@@ -35,6 +37,7 @@ export type Division = {
     id?: string;
     attributes: {
         name: string;
+        position: string | number;
         description?: string;
         createdAt?: string;
         updatedAt?: string;
@@ -51,6 +54,7 @@ export type Grade = {
     id?: string;
     attributes: {
         name: string;
+        position: string | number;
         description?: string;
         createdAt?: string;
         updatedAt?: string;
@@ -67,6 +71,7 @@ export type Level = {
     id?: string;
     attributes: {
         name: string;
+        position: string | number;
         description?: string;
         createdAt?: string;
         updatedAt?: string;
@@ -99,6 +104,7 @@ export type Subject = {
     id?: string;
     attributes: {
         name: string;
+        position: string | number;
         description?: string;
         createdAt?: string;
         updatedAt?: string;
@@ -112,7 +118,7 @@ export type SubjectParams = {
 
 export type InstitutionDepartment = {
     type?: string;
-    id?: string | number;
+    id?: string | number | undefined;
     attributes: {
         departmentId: string | number;
         department: string;
@@ -124,24 +130,6 @@ export type InstitutionDepartment = {
 };
 
 export type InstitutionDepartmentParams = {
-    department_ids: Array<string | undefined | null> | null,
+    department_ids: Array<string | undefined | null> | null;
 };
 
-export type DepartmentLevel = {
-    type?: string;
-    id?: string | number;
-    attributes: {
-        departmentId: string | number;
-        department: string;
-        levelId: string | number;
-        level: string;
-        description?: string;
-        createdAt?: string;
-        updatedAt?: string;
-        deletedAt?: string;
-    };
-};
-
-export type DepartmentLevelParams = {
-    level_ids: Array<string | undefined | null> | null,
-};

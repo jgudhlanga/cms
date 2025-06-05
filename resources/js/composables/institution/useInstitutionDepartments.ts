@@ -1,4 +1,5 @@
 import { useDataTables } from '@/composables/core/useDataTables';
+import { useDropdowns } from '@/composables/core/useDropdowns';
 import { forbiddenAlert, openModal } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
 import { buildFormOptions } from '@/lib/forms';
@@ -8,11 +9,14 @@ import { InstitutionDepartment } from '@/types/institution';
 import type { Link } from '@/types/ui';
 import { InertiaForm, usePage } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
+import { ref } from 'vue';
 
 export const useInstitutionDepartments = () => {
     const { moreActionButton, onDelete, onForceDelete, onRestore, onView, textLink } = useDataTables();
     const { props } = usePage();
     const { can } = props?.auth as Auth;
+    const isLoading = ref(false);
+    const departments = ref<InstitutionDepartment[]>([]);
     const createInstitutionDepartmentColumns = () => {
         return [
             {
@@ -96,6 +100,18 @@ export const useInstitutionDepartments = () => {
         onForceDelete(can['forceDelete:department-metadata'], route('institution-departments.force-delete', id), name);
     };
 
+    const listDepartments = async (search?: string) => {
+        const { data, fetchData } = useDropdowns();
+        isLoading.value = true;
+        await fetchData({
+            url: 'api/v1/institution-departments?page_size=100',
+            search,
+            transChoiceKey: 'trans.department',
+        });
+        isLoading.value = false;
+        departments.value = data.value;
+    };
+
     return {
         archiveDepartment,
         breadcrumbs,
@@ -105,5 +121,8 @@ export const useInstitutionDepartments = () => {
         restoreDepartment,
         syncInstitutionDepartments,
         viewDepartment,
+        isLoading,
+        departments,
+        listDepartments,
     };
 };

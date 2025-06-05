@@ -16,7 +16,13 @@ defineProps<Props>();
 
 <template>
 	<div class="mt-4 flex items-center justify-between">
-		<BaseButton type="button" :disabled="previousDisabled" :variant="ColorVariant.shade"  @click="prevStepAction()">
+		<BaseButton
+            type="button"
+            :disabled="previousDisabled"
+            :variant="ColorVariant.shade"
+            @click="prevStepAction()"
+            :size="ButtonSize.lg"
+        >
 			{{ $t('trans.back') }}
 		</BaseButton>
 		<div class="flex items-center gap-3">
@@ -24,11 +30,12 @@ defineProps<Props>();
 				v-if="stepIndex !== maxStep"
 				type="button"
 				@click="nextStepAction()"
+                :size="ButtonSize.lg"
 			>
 				{{ $t('trans.next') }}
 			</BaseButton>
 			<BaseButton
-				:size="ButtonSize.md"
+				:size="ButtonSize.lg"
 				v-if="stepIndex === maxStep"
 				type="submit">
 				{{ $t('trans.submit') }}

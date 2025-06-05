@@ -9,9 +9,13 @@ import { District } from '@/types/settings';
 import type { Link } from '@/types/ui';
 import { InertiaForm, usePage } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
+import { ref } from 'vue';
+import { useDropdowns } from '@/composables/core/useDropdowns';
 
 export const useDistricts = () => {
     const { moreActionButton, onDelete, onForceDelete, onRestore } = useDataTables();
+    const isLoading = ref(false);
+    const districts = ref<District[]>([]);
     const createDistrictColumns = () => {
         const { props } = usePage();
         const { can } = props?.auth as Auth;
@@ -76,10 +80,19 @@ export const useDistricts = () => {
         openModal({ name: APP_MODULE_KEYS.districts, edit: district });
     };
 
+    const listDistricts = async (search?: string) => {
+        const { data, fetchData } = useDropdowns();
+        isLoading.value = true;
+        await fetchData({ url: route('v1.districts.index'), search, transChoiceKey: 'trans.district' });
+        isLoading.value = false;
+        districts.value = data.value;
+    };
+
     return {
         createDistrictColumns,
         breadcrumbs,
         onOpenModal,
         saveDistrict,
+        isLoading, districts, listDistricts,
     };
 };

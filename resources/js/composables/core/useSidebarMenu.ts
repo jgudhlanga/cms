@@ -2,6 +2,7 @@ import AppLogo from '@/components/core/image/AppLogo.vue';
 import { useUtils } from '@/composables/core/useUtils';
 import { IconName } from '@/enums/icons';
 import { icons } from '@/lib/icons';
+import { getIdParams } from '@/lib/utils';
 import { PageProps } from '@/types';
 import { TenantInterface } from '@/types/tenants';
 import { MenuItemInterface } from '@/types/ui';
@@ -11,7 +12,7 @@ import { markRaw } from 'vue';
 
 export function useSidebarMenu() {
     const { props } = usePage<PageProps>();
-    const { can } = props?.auth;
+    const { can, user } = props?.auth;
     const { isItTrue } = useUtils();
     const tenants: Array<TenantInterface> = [
         {
@@ -23,15 +24,6 @@ export function useSidebarMenu() {
                 bio: 'Software',
             },
         },
-        {
-            id: '2',
-            type: 'tenant',
-            attributes: {
-                name: 'Penstej Systems',
-                logo: markRaw(AppLogo),
-                bio: 'Elite Software',
-            },
-        },
     ];
 
     const menuOptions: Array<MenuItemInterface> = [
@@ -40,6 +32,12 @@ export function useSidebarMenu() {
             icon: icons[IconName.dashboard],
             url: route('dashboard'),
             show: isItTrue(can['view:dashboards']),
+        },
+        {
+            transKey: 'trans.my_portal',
+            icon: icons[IconName.user_add],
+            url: route('portal.index', getIdParams(user?.id?.toString() as string)),
+            show: isItTrue(can['manageOwnData:students']),
         },
         {
             transChoiceKey: 'trans.enrolment',

@@ -1,4 +1,5 @@
 import { useDataTables } from '@/composables/core/useDataTables';
+import { useDropdowns } from '@/composables/core/useDropdowns';
 import { useSharedFormSchema } from '@/composables/core/useSharedFormSchema';
 import { forbiddenAlert, openModal } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
@@ -9,14 +10,29 @@ import { Level } from '@/types/institution';
 import type { Link } from '@/types/ui';
 import { InertiaForm, usePage } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
+import { ref } from 'vue';
 
 export const useLevels = () => {
-    const { moreActionButton, onDelete, onForceDelete, onRestore } = useDataTables();
+    const { moreActionButton, onDelete, onForceDelete, onRestore, orderButtons } = useDataTables();
+    const isLoading = ref(false);
+    const levels = ref<Level[]>([]);
     const createLevelColumns = () => {
         const { props } = usePage();
         const { can } = props?.auth as Auth;
         return [
             { header: trans_choice('trans.name', 1), accessorKey: 'attributes.name' },
+            {
+                header: trans_choice('trans.position', 1),
+                accessorKey: 'attributes.position',
+                meta: { align: 'center' }
+            },
+            {
+                header: trans('trans.order'),
+                accessorKey: 'order',
+                enableSorting: false,
+                meta: { align: 'center' },
+                cell: ({ row }: { row: { original: Level } }) => orderButtons(),
+            },
             { header: trans_choice('trans.description', 1), accessorKey: 'attributes.description' },
             {
                 header: trans_choice('trans.action', 2),
@@ -25,33 +41,33 @@ export const useLevels = () => {
                 meta: { align: 'right' },
                 cell: ({ row }: { row: { original: Level } }) => {
                     const id = getIdParams(row.original.id?.toString() ?? '');
-                    const name = trans_choice('trans.lavel', 1);
+                    const name = trans_choice('trans.level', 1);
                     return moreActionButton(!!row.original?.attributes?.deletedAt, [
                         { key: 'edit', action: () => onOpenModal(can['update:institution-settings'], row.original) },
                         {
                             key: 'archive',
-                            action: () => onDelete(can['delete:institution-settings'], route('levels.destroy', id), name),
+                            action: () => onDelete(can['delete:institution-settings'], route('levels.destroy', id), name)
                         },
                         {
                             key: 'restore',
-                            action: () => onRestore(can['restore:institution-settings'], route('levels.restore', id), name),
+                            action: () => onRestore(can['restore:institution-settings'], route('levels.restore', id), name)
                         },
                         {
                             key: 'delete',
-                            action: () => onForceDelete(can['forceDelete:institution-settings'], route('levels.force-delete', id), name),
-                        },
+                            action: () => onForceDelete(can['forceDelete:institution-settings'], route('levels.force-delete', id), name)
+                        }
                     ]);
-                },
-            },
+                }
+            }
         ];
     };
 
     const breadcrumbs: Array<Link> = [
         {
             transChoiceKey: 'settings',
-            href: route('settings.index'),
+            href: route('settings.index')
         },
-        { transChoiceKey: 'level' },
+        { transChoiceKey: 'level' }
     ];
 
     const saveLevel = (form: InertiaForm<any>, level?: Level) => {
@@ -75,10 +91,21 @@ export const useLevels = () => {
         openModal({ name: APP_MODULE_KEYS.levels, edit: level });
     };
 
+    const listLevels = async (search?: string) => {
+        const { data, fetchData } = useDropdowns();
+        isLoading.value = true;
+        await fetchData({ url: 'api/v1/levels?page_size=100', search, transChoiceKey: 'trans.level' });
+        isLoading.value = false;
+        levels.value = data.value;
+    };
+
     return {
         createLevelColumns,
         breadcrumbs,
         onOpenModal,
         saveLevel,
+        levels,
+        listLevels,
+        isLoading
     };
 };

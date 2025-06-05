@@ -5,7 +5,7 @@ import BaseInput from './BaseInput.vue';
 <template>
 	<BaseInput
 		input-id="passport_number"
-		:label="$t('passportNumber')"
+		:label="$t('trans.passport_number')"
 		v-bind="$attrs"
 	/>
 </template>
