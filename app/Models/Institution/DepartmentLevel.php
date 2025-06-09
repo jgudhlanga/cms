@@ -37,10 +37,7 @@ class DepartmentLevel extends Model
         return $this->belongsTo(InstitutionDepartment::class, 'institution_department_id');
     }
 
-    public function courses(): HasMany
-    {
-        return $this->hasMany(DepartmentCourseLevel::class, 'department_level_id');
-    }
+
     public function requirement(): HasOne
     {
         return $this->hasOne(DepartmentLevelRequirement::class, 'department_level_id');

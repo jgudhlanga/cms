@@ -15,7 +15,7 @@ class GetDepartmentMetaDataController extends Controller
 
     }
 
-    public function metaData(InstitutionDepartment $institutionDepartment)
+    public function __invoke(InstitutionDepartment $institutionDepartment)
     {
         $levels = DepartmentLevelResource::collection($institutionDepartment->departmentLevels);
         $courses = DepartmentCourseResource::collection($institutionDepartment->departmentCourses);
