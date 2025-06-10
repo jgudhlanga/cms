@@ -28,7 +28,6 @@ const { steps } = useStudentPortal();
 const { user } = props;
 const stepIndex = ref(1);
 const maxStep = 5;
-const metaValid = ref(true);
 const breadcrumbs: BreadcrumbItemInterface[] = [{ title: user.attributes?.name }, { transKey: 'finish_your_application' }];
 const { id_type, first_name, middle_name, last_name, title, gender } = storeToRefs(useCreateApplicationFormStore());
 const form = useForm<CreateApplicationParams>({
@@ -102,7 +101,7 @@ const updateForm = () => {};
     <PageContainer :breadcrumbs="breadcrumbs">
         <form @submit.prevent="() => {}">
             <Stepper orientation="vertical" v-slot="{ isPrevDisabled, nextStep, prevStep }" v-model="stepIndex" class="flex w-full flex-col">
-                <BaseStepperItem :steps="steps" :meta-valid="metaValid" />
+                <BaseStepperItem :steps="steps" />
                 <!-- CONTENT -->
                 <div class="mt-4 flex flex-col gap-4">
                     <template v-if="stepIndex === 1">

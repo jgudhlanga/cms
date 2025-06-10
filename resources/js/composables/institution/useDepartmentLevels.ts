@@ -5,10 +5,12 @@ import { APP_MODULE_KEYS } from '@/lib/constants';
 import { buildFormOptions } from '@/lib/forms';
 import { getIdParams } from '@/lib/utils';
 import { Auth } from '@/types';
-import { DepartmentLevel } from '@/types/department-meta-data';
+import { DepartmentLevel, DepartmentLevelCourse } from '@/types/department-meta-data';
 import { InertiaForm, usePage } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 import { useUtils } from '@/composables/core/useUtils';
+import { ref } from 'vue';
+import { useDropdowns } from '@/composables/core/useDropdowns';
 
 export const useDepartmentLevels = () => {
     const { moreActionButton, textLink, actionButton } = useDataTables();
@@ -100,10 +102,42 @@ export const useDepartmentLevels = () => {
         openModal({ name: APP_MODULE_KEYS.department_levels, edit: departmentLevels });
     };
 
+    const departmentLevels = ref<DepartmentLevel[]>([]);
+    const isLoading = ref(false);
+
+    const listDepartmentLevels = async (institutionDepartmentId: string) => {
+        const { data, fetchData } = useDropdowns();
+        isLoading.value = true;
+        await fetchData({
+            url: `api/v1/institution-departments/${institutionDepartmentId}/levels`,
+            transChoiceKey: 'trans.level',
+        });
+        isLoading.value = false;
+        departmentLevels.value = data.value;
+    };
+
+    const levelCourses = ref<DepartmentLevelCourse[]>([]);
+
+    const listLevelCourses = async (institutionDepartmentId: string, departmentLevelId: string) => {
+        const { data, fetchData } = useDropdowns();
+        isLoading.value = true;
+        await fetchData({
+            url: `api/v1/institution-departments/${institutionDepartmentId}/levels/${departmentLevelId}/courses`,
+            transChoiceKey: 'trans.level',
+        });
+        isLoading.value = false;
+        levelCourses.value = data.value;
+    };
+
     return {
         createDepartmentLevelColumns,
         openDepartmentLevelsModal,
         syncDepartmentLevels,
-        storeDepartmentLevelRequirements
+        storeDepartmentLevelRequirements,
+        listDepartmentLevels,
+        isLoading,
+        departmentLevels,
+        listLevelCourses,
+        levelCourses,
     };
 };

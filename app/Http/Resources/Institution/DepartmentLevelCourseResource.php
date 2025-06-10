@@ -5,7 +5,7 @@ namespace App\Http\Resources\Institution;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class DepartmentCourseLevelResource extends JsonResource
+class DepartmentLevelCourseResource extends JsonResource
 {
 
     public function toArray(Request $request): array

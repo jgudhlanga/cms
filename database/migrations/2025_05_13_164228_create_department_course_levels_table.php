@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
-        Schema::create('department_course_levels', function (Blueprint $table) {
+        Schema::create('department_level_courses', function (Blueprint $table) {
             $table->id();
             $table->foreignId('department_course_id');
             $table->foreignId('department_level_id');

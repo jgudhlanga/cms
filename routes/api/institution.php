@@ -10,5 +10,5 @@ Route::prefix('v1')->group(function () {
         ->middleware('auth:sanctum');
     Route::get('institution-departments', [InstitutionDepartmentController::class, 'index'])->name('v1.institution-departments.index');
     Route::get('institution-departments/{institution_department}/levels', [DepartmentLevelController::class, 'index'])->name('v1.department-levels.index');
-    Route::get('institution-departments/{institution_department}/levels/{level}/courses', [DepartmentLevelCourseController::class, 'index'])->name('v1.department-level-courses.index');
+    Route::get('institution-departments/{institution_department}/levels/{department_level}/courses', [DepartmentLevelCourseController::class, 'index'])->name('v1.department-level-courses.index');
 });

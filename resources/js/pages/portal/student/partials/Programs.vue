@@ -22,28 +22,12 @@ defineProps<Props>();
 
 const { loadDepartmentMetaData, departmentMetaData, isLoading } = useInstitution();
 
+
 watch(department, async (newDepartment) => {
     await loadDepartmentMetaData(newDepartment?.value?.toString() ?? '');
     console.log(departmentMetaData.value);
 });
 
-const levels = computed(() => {
-    return departmentMetaData?.value?.levels?.map((level: DepartmentLevel) => {
-        return <SelectOption>{
-            value: Number(level.attributes.levelId),
-            label: level?.attributes?.level,
-        };
-    });
-});
-
-const courses = computed(() => {
-    return departmentMetaData?.value?.courses?.filter((course: DepartmentCourse) => {
-        return <SelectOption>{
-            value: Number(course.attributes.courseId),
-            label: course?.attributes?.course,
-        };
-    });
-});
 
 </script>
 
