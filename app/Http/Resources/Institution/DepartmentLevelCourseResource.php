@@ -15,6 +15,7 @@ class DepartmentLevelCourseResource extends JsonResource
             'departmentCourseId' => $this->department_course_id,
             'departmentLevelId' => $this->department_level_id,
             'level' => $this->departmentLevel?->level?->name,
+            'course' => $this->departmentCourse?->course?->name,
         ];
     }
 }

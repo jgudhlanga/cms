@@ -8,6 +8,7 @@ use App\Enums\TenantEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Users\CreateUserRequest;
 use App\Http\Resources\Users\UserResource;
+use App\Jobs\Users\SendVerificationEmailJob;
 use App\Models\Tenants\Tenant;
 use App\Models\Users\User;
 use App\Repositories\Applications\interface\IApplicationRepository;
@@ -23,7 +24,8 @@ class PortalController extends Controller
 
     }
 
-    public function index(User $user) {
+    public function index(User $user)
+    {
         $user = UserResource::make($user);
         return Inertia::render('portal/student/Index', [
             'user' => $user,
@@ -52,7 +54,7 @@ class PortalController extends Controller
         $tenant = Tenant::where('name', TenantEnum::HARARE_POLY->value)->first();
         $user = $this->userRepository->create(UserDto::fromCreateUserRequest($request, $tenant));
         $user->assignRole(RoleEnum::STUDENT);
-        $user->sendEmailVerificationNotification();
+        SendVerificationEmailJob::dispatch($user)->withoutDelay();
         return to_route('portal.confirmation', compact('user'));
     }
 
@@ -62,7 +64,8 @@ class PortalController extends Controller
         return Inertia::render('portal/guest/Confirmation', compact('user'));
     }
 
-    public function createApplication(User $user) {
+    public function createApplication(User $user)
+    {
         $user = UserResource::make($user);
         return Inertia::render('portal/student/CreateApplication', compact('user'));
     }

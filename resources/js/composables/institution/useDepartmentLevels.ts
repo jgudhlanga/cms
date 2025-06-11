@@ -1,22 +1,22 @@
 import { useDataTables } from '@/composables/core/useDataTables';
+import { useUtils } from '@/composables/core/useUtils';
 import { ColorVariant } from '@/enums/colors';
 import { forbiddenAlert, openModal } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
 import { buildFormOptions } from '@/lib/forms';
 import { getIdParams } from '@/lib/utils';
+import HttpService from '@/services/http.service';
 import { Auth } from '@/types';
 import { DepartmentLevel, DepartmentLevelCourse } from '@/types/department-meta-data';
 import { InertiaForm, usePage } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
-import { useUtils } from '@/composables/core/useUtils';
 import { ref } from 'vue';
-import { useDropdowns } from '@/composables/core/useDropdowns';
 
 export const useDepartmentLevels = () => {
     const { moreActionButton, textLink, actionButton } = useDataTables();
     const { props } = usePage();
     const { can } = props?.auth as Auth;
-    const {navigateTo} = useUtils()
+    const { navigateTo } = useUtils();
     const createDepartmentLevelColumns = () => {
         return [
             {
@@ -88,10 +88,7 @@ export const useDepartmentLevels = () => {
         try {
             const success = trans('trans.item_saved', { item: trans_choice('trans.level', 2) });
             const error = trans('trans.item_save_failure', { item: trans_choice('trans.level', 2) });
-            form.post(
-                route('department-levels.store-requirements', departmentLevelId),
-                buildFormOptions(form, success, error),
-            );
+            form.post(route('department-levels.store-requirements', departmentLevelId), buildFormOptions(form, success, error));
         } catch (error: any) {
             form.setError(error.format());
         }
@@ -106,27 +103,17 @@ export const useDepartmentLevels = () => {
     const isLoading = ref(false);
 
     const listDepartmentLevels = async (institutionDepartmentId: string) => {
-        const { data, fetchData } = useDropdowns();
         isLoading.value = true;
-        await fetchData({
-            url: `api/v1/institution-departments/${institutionDepartmentId}/levels`,
-            transChoiceKey: 'trans.level',
-        });
+        departmentLevels.value = await HttpService.get(`api/v1/institution-departments/${institutionDepartmentId}/levels`);
         isLoading.value = false;
-        departmentLevels.value = data.value;
     };
 
     const levelCourses = ref<DepartmentLevelCourse[]>([]);
 
-    const listLevelCourses = async (institutionDepartmentId: string, departmentLevelId: string) => {
-        const { data, fetchData } = useDropdowns();
+    const listLevelCourses = async (departmentLevelId: string) => {
         isLoading.value = true;
-        await fetchData({
-            url: `api/v1/institution-departments/${institutionDepartmentId}/levels/${departmentLevelId}/courses`,
-            transChoiceKey: 'trans.level',
-        });
+        levelCourses.value = await HttpService.get(`api/v1/institution-departments/levels/${departmentLevelId}/courses`);
         isLoading.value = false;
-        levelCourses.value = data.value;
     };
 
     return {

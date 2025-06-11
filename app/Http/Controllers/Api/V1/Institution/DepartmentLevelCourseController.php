@@ -11,7 +11,7 @@ use Illuminate\Http\Request;
 
 class DepartmentLevelCourseController extends Controller
 {
-    public function index(InstitutionDepartment $institutionDepartment, DepartmentLevel $departmentLevel)
+    public function index(DepartmentLevel $departmentLevel)
     {
         return DepartmentLevelCourseResource::collection($departmentLevel->courses);
     }

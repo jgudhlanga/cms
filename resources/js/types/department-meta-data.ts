@@ -85,11 +85,9 @@ export type DepartmentLevelRequirementParams = {
 };
 
 export type DepartmentLevelCourse = {
-    type: string;
     id: string | number;
-    attributes: {
-        departmentCourseId: string | number;
-        departmentLevelId: string | number;
-        level: string;
-    };
+    departmentCourseId: string | number;
+    departmentLevelId: string | number;
+    level: string;
+    course: string;
 };

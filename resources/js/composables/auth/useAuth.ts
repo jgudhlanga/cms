@@ -1,3 +1,4 @@
+import { useStores } from '@/composables/core/useStores';
 import HttpService from '@/services/http.service';
 import { InertiaForm } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
@@ -24,5 +25,11 @@ export function useAuth() {
         }
     };
 
-    return { validationSchema, login };
+    const logout = () => {
+        const resetStore = useStores();
+        resetStore.all();
+
+    };
+
+    return { validationSchema, login, logout };
 }
