@@ -263,5 +263,10 @@ return [
     "residential_address" => "Residential Address",
     "residential_address_description" => "Provide residential address",
     "postal_address" => "Postal Address",
+    "my_personal_details" => "My personal details",
+    "my_contacts" => "My contacts",
+    "my_addresses" => "My addresses",
+    "my_programs" => "My programs",
+    "my_dashboard" => "My dashboard",
 ];
 

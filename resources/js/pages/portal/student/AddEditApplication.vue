@@ -4,6 +4,7 @@ import BaseStepperButtons from '@/components/core/stepper/BaseStepperButtons.vue
 import BaseStepperItem from '@/components/core/stepper/BaseStepperItem.vue';
 import { Stepper } from '@/components/ui/stepper';
 import { useStudentPortal } from '@/composables/portal/useStudentPortal';
+import Confirmation from '@/pages/portal/student/partials/Confirmation.vue';
 import ContactDetails from '@/pages/portal/student/partials/ContactDetails.vue';
 import NextOfKinDetails from '@/pages/portal/student/partials/NextOfKinDetails.vue';
 import PersonalDetails from '@/pages/portal/student/partials/PersonalDetails.vue';
@@ -29,7 +30,7 @@ const { user } = props;
 const stepIndex = ref(1);
 const maxStep = 5;
 const breadcrumbs: BreadcrumbItemInterface[] = [{ title: user.attributes?.name }, { transKey: 'finish_your_application' }];
-const { id_type, first_name, middle_name, last_name, title, gender } = storeToRefs(useCreateApplicationFormStore());
+const { id_type, first_name, middle_name, last_name, title, gender, email } = storeToRefs(useCreateApplicationFormStore());
 const form = useForm<CreateApplicationParams>({
     course: null,
     course_id: null,
@@ -83,6 +84,7 @@ onMounted(() => {
     first_name.value = user.attributes?.first_name;
     middle_name.value = user.attributes?.middle_name ?? '';
     last_name.value = user.attributes?.last_name;
+    email.value = user.attributes?.email ?? '';
     title.value = {
         value: user.attributes?.titleId,
         label: user.attributes?.title,
@@ -91,13 +93,13 @@ onMounted(() => {
         value: user.attributes?.genderId,
         label: user.attributes?.gender,
     };
-    id_type.value = id_type.value || 'zimbabwean-national-id-number';
+    id_type.value = id_type.value !== '' ? id_type.value : 'zimbabwean-national-id-number';
 });
 
 const updateForm = () => {};
 </script>
 <template>
-    <Head :title="$t('trans.create_new_application')" />
+    <Head :title="$tChoice('trans.application', 1)" />
     <PageContainer :breadcrumbs="breadcrumbs">
         <form @submit.prevent="() => {}">
             <Stepper orientation="vertical" v-slot="{ isPrevDisabled, nextStep, prevStep }" v-model="stepIndex" class="flex w-full flex-col">
@@ -117,7 +119,7 @@ const updateForm = () => {};
                         <Programs :form="form" />
                     </template>
                     <template v-if="stepIndex === maxStep">
-                        <p>Confirm</p>
+                        <Confirmation />
                     </template>
                 </div>
                 <!-- BUTTONS -->

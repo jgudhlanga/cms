@@ -30,6 +30,7 @@ class PortalController extends Controller
         return Inertia::render('portal/student/Index', [
             'user' => $user,
             'portal' => [],
+            'applications' => [],
             'filters' => request()->only(['search', 'trashed']),
             'trashedCount' => 0,
         ]);
@@ -67,6 +68,36 @@ class PortalController extends Controller
     public function createApplication(User $user)
     {
         $user = UserResource::make($user);
-        return Inertia::render('portal/student/CreateApplication', compact('user'));
+        return Inertia::render('portal/student/AddEditApplication', compact('user'));
+    }
+
+    public function personal(User $user)
+    {
+        $user = UserResource::make($user);
+        return Inertia::render('portal/student/PersonalDetails', compact('user'));
+    }
+
+    public function contacts(User $user)
+    {
+        $user = UserResource::make($user);
+        return Inertia::render('portal/student/Contacts', compact('user'));
+    }
+
+    public function addresses(User $user)
+    {
+        $user = UserResource::make($user);
+        return Inertia::render('portal/student/Addresses', compact('user'));
+    }
+
+    public function nextOfKin(User $user)
+    {
+        $user = UserResource::make($user);
+        return Inertia::render('portal/student/NextOfKin', compact('user'));
+    }
+
+    public function programs(User $user)
+    {
+        $user = UserResource::make($user);
+        return Inertia::render('portal/student/Programs', compact('user'));
     }
 }

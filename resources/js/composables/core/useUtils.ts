@@ -5,7 +5,6 @@ import { router } from '@inertiajs/vue3';
 import { trans } from 'laravel-vue-i18n';
 import moment from 'moment';
 import { h } from 'vue';
-import { clearFormErrors } from '@/lib/forms';
 
 export function useUtils() {
     const renderIcon = (icon: IconName, size: string = '15', color?: ColorVariant) => {

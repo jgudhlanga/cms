@@ -1,6 +1,5 @@
 import { CreateApplicationParams } from '@/types/portal';
 import { defineStore } from 'pinia';
-import { undefined } from 'zod';
 
 export const useCreateApplicationFormStore = defineStore('portal-application-form', {
     state: (): CreateApplicationParams => {

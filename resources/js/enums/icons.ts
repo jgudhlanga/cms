@@ -68,5 +68,8 @@ export enum IconName {
     bed = 'bed',
     school = 'school',
     user_check = "user_check",
-    book_check = "book_check"
+    book_check = "book_check",
+    contact = 'contact',
+    address = 'address',
+    graduation_cape = 'graduation_cape'
 }
