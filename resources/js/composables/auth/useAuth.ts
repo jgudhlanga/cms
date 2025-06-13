@@ -28,7 +28,6 @@ export function useAuth() {
     const logout = () => {
         const resetStore = useStores();
         resetStore.all();
-
     };
 
     return { validationSchema, login, logout };

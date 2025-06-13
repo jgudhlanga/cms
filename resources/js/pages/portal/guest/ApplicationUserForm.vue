@@ -13,6 +13,8 @@ import { storeToRefs } from 'pinia';
 import BaseInput from '../../../components/core/form/text/BaseInput.vue';
 import ApplicationCover from '@/pages/portal/shared/ApplicationCover.vue';
 import TextLink from '@/components/core/util/TextLink.vue';
+import { onMounted } from 'vue';
+import { useAuth } from '@/composables/auth/useAuth';
 
 const { createApplication } = useGuestPortal();
 const { email, first_name, last_name, middle_name, password, title, gender, password_confirmation } = storeToRefs(useCreateUserFormStore());
@@ -45,7 +47,11 @@ const submitForm = () => {
     updateForm();
     createApplication(form);
 };
+const { logout } = useAuth();
 
+onMounted(async () => {
+    logout();
+});
 
 
 </script>

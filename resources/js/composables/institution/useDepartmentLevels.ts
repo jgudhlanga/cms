@@ -7,7 +7,7 @@ import { buildFormOptions } from '@/lib/forms';
 import { getIdParams } from '@/lib/utils';
 import HttpService from '@/services/http.service';
 import { Auth } from '@/types';
-import { DepartmentLevel, DepartmentLevelCourse } from '@/types/department-meta-data';
+import { DepartmentLevel, DepartmentLevelCourse, DepartmentLevelRequirement } from '@/types/department-meta-data';
 import { InertiaForm, usePage } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 import { ref } from 'vue';
@@ -116,6 +116,13 @@ export const useDepartmentLevels = () => {
         isLoading.value = false;
     };
 
+    const levelRequirements =  ref<DepartmentLevelRequirement[]>([]);
+    const listLevelRequirements = async (departmentLevelId: string) => {
+        isLoading.value = true;
+        levelRequirements.value = await HttpService.get(`api/v1/institution-departments/levels/${departmentLevelId}/requirements`);
+        isLoading.value = false;
+    };
+
     return {
         createDepartmentLevelColumns,
         openDepartmentLevelsModal,
@@ -126,5 +133,7 @@ export const useDepartmentLevels = () => {
         departmentLevels,
         listLevelCourses,
         levelCourses,
+        levelRequirements,
+        listLevelRequirements,
     };
 };

@@ -7,6 +7,7 @@ import { SizeVariant } from '@/enums/sizes';
 import { IconName, icons } from '@/lib/icons';
 import { cn } from '@/lib/utils';
 import { useModalStore } from '@/store/core/useModalStore';
+import { ButtonSize } from '@/enums/buttons';
 
 interface Props {
     title: string;
@@ -56,7 +57,7 @@ const destroyModal = () => {
     <Transition name="fade">
         <div v-if="isOpen(name)" class="fixed inset-0 z-50 flex items-center justify-center">
             <!-- Backdrop -->
-            <div class="absolute inset-0 bg-black opacity-50 z-0"></div>
+            <div class="absolute inset-0 z-0 bg-black opacity-50"></div>
             <!-- Modal Container -->
             <div :class="computedClass" class="relative z-10">
                 <!-- Modal Header -->
@@ -73,11 +74,11 @@ const destroyModal = () => {
                         <slot name="body" />
                     </div>
                     <!-- Modal Footer -->
-                    <div class="mt-6 flex w-full justify-end space-x-3 border-t-[1px] px-6 py-5">
-                        <BaseButton type="button" :variant="ColorVariant.shade" @click="() => destroyModal()">
+                    <div class="mt-6 flex w-full justify-center space-x-3 border-t-[1px] px-6 py-5">
+                        <BaseButton type="button" :variant="ColorVariant.shade" @click="() => destroyModal()" :size="ButtonSize.lg">
                             {{ $t(cancelBtnText) }}
                         </BaseButton>
-                        <BaseButton :processing="form.processing" :disabled="form.processing">
+                        <BaseButton :processing="form.processing" :disabled="form.processing" :size="ButtonSize.lg">
                             {{ $t(actionBtnText) }}
                         </BaseButton>
                         <slot name="action-button" />
@@ -88,7 +89,7 @@ const destroyModal = () => {
                         <slot />
                     </div>
                     <div class="mt-6 flex w-full justify-end space-x-3 border-t-[1px] px-6 py-5">
-                        <BaseButton type="button" :variant="ColorVariant.shade" @click="() => destroyModal()">
+                        <BaseButton type="button" :variant="ColorVariant.shade" @click="() => destroyModal()" :size="ButtonSize.lg">
                             {{ $t(cancelBtnText) }}
                         </BaseButton>
                     </div>

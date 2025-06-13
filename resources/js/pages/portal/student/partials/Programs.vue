@@ -8,8 +8,11 @@ import { CreateApplicationParams } from '@/types/portal';
 import { InertiaForm } from '@inertiajs/vue3';
 import { storeToRefs } from 'pinia';
 import { watch, ref } from 'vue';
+import { useDepartmentLevels } from '@/composables/institution/useDepartmentLevels';
+import SpinnerComponent from '@/components/core/util/SpinnerComponent.vue';
 
 const { department, level, course } = storeToRefs(useCreateApplicationFormStore());
+const {listLevelRequirements, levelRequirements, isLoading} = useDepartmentLevels()
 
 interface Props {
     form: InertiaForm<CreateApplicationParams>;
@@ -21,11 +24,15 @@ const courseDisabled = ref(false);
 watch(department, async () => {
     level.value = null;
     courseDisabled.value = true;
+    levelRequirements.value = [];
 });
 
 watch(level, async () => {
     course.value = null;
-    courseDisabled.value = false;
+    courseDisabled.value = level.value === null;
+
+    // fetch level requirements here,
+    await listLevelRequirements(level.value?.value?.toString() ?? '');
 });
 </script>
 
@@ -56,6 +63,15 @@ watch(level, async () => {
                 :is-required="true"
                 :disabled="courseDisabled"
             />
+        </div>
+        <div class="flex flex-col my-4">
+            <template v-if="isLoading">
+                <SpinnerComponent class="flex w-full justify-center items-center"/>
+            </template>
+            <template v-else>
+                {{ levelRequirements }}
+            </template>
+
         </div>
     </BaseCard>
 </template>

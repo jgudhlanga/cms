@@ -1,3 +1,5 @@
+import { Subject } from '@/types/institution';
+
 export type DepartmentLevel = {
     type?: string;
     id?: string | number;
@@ -71,6 +73,9 @@ export type DepartmentLevelRequirement = {
         otherSubjectsCount?: string | number | null;
         onlyReadWriteRequired?: boolean;
         requiredLevelId?: string | number | null;
+    };
+    relationships?: {
+        subjects: Subject[];
     };
 };
 

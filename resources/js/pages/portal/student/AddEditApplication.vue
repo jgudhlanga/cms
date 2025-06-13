@@ -26,10 +26,11 @@ interface Props {
 
 const props = defineProps<Props>();
 const { steps } = useStudentPortal();
+
 const { user } = props;
 const stepIndex = ref(1);
 const maxStep = 5;
-const breadcrumbs: BreadcrumbItemInterface[] = [{ title: user.attributes?.name }, { transKey: 'finish_your_application' }];
+const breadcrumbs: BreadcrumbItemInterface[] = [{ title: user.attributes?.name }, { transKey: 'my_application' }];
 const { id_type, first_name, middle_name, last_name, title, gender, email } = storeToRefs(useCreateApplicationFormStore());
 const form = useForm<CreateApplicationParams>({
     course: null,
