@@ -25,6 +25,7 @@ class DepartmentLevelRequirementResource extends JsonResource
                 "otherSubjectsCount" => $this->other_subjects_count,
                 "onlyReadWriteRequired" => $this->only_read_write_required,
                 "requiredLevelId" => $this->required_level_id,
+                "requiredLevel" => $this->requiredLevel?->level?->name,
             ],
             "relationships" => [
                 'subjects' => SubjectResource::collection($this->main_subjects),

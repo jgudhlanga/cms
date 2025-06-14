@@ -73,6 +73,7 @@ export type DepartmentLevelRequirement = {
         otherSubjectsCount?: string | number | null;
         onlyReadWriteRequired?: boolean;
         requiredLevelId?: string | number | null;
+        requiredLevel?: string | null;
     };
     relationships?: {
         subjects: Subject[];
