@@ -11,6 +11,8 @@ import { DepartmentLevel, DepartmentLevelCourse, DepartmentLevelRequirement } fr
 import { InertiaForm, usePage } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 import { ref } from 'vue';
+import { storeToRefs } from 'pinia';
+import { useCreateApplicationFormStore } from '@/store/portal/useCreateApplicationFormStore';
 
 export const useDepartmentLevels = () => {
     const { moreActionButton, textLink, actionButton } = useDataTables();
@@ -116,10 +118,12 @@ export const useDepartmentLevels = () => {
         isLoading.value = false;
     };
 
-    const levelRequirements =  ref<DepartmentLevelRequirement[]>([]);
+    const {levelRequirements: storeLevelRequirements} = storeToRefs(useCreateApplicationFormStore())
+    const levelRequirements =  ref<DepartmentLevelRequirement|null>(storeLevelRequirements?.value ?? null);
     const listLevelRequirements = async (departmentLevelId: string) => {
         isLoading.value = true;
         levelRequirements.value = await HttpService.get(`api/v1/institution-departments/levels/${departmentLevelId}/requirements`);
+        storeLevelRequirements!.value =  levelRequirements.value;
         isLoading.value = false;
     };
 

@@ -18,7 +18,6 @@ class DepartmentLevelController extends Controller
 
     public function levelRequirements(DepartmentLevel $departmentLevel)
     {
-        sleep(10);
         return $departmentLevel->requirement ? DepartmentLevelRequirementResource::make($departmentLevel->requirement) : null;
     }
 

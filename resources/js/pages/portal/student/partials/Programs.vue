@@ -24,13 +24,12 @@ const courseDisabled = ref(false);
 watch(department, async () => {
     level.value = null;
     courseDisabled.value = true;
-    levelRequirements.value = [];
+    levelRequirements.value = null;
 });
 
 watch(level, async () => {
     course.value = null;
     courseDisabled.value = level.value === null;
-
     // fetch level requirements here,
     await listLevelRequirements(level.value?.value?.toString() ?? '');
 });

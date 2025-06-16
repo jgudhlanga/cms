@@ -4,21 +4,16 @@ import { BaseCheckbox } from '@/components/core/form';
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import Empty from '@/components/core/util/Empty.vue';
 import { useUtils } from '@/composables/core/useUtils';
+import { useDepartmentCourses } from '@/composables/institution/useDepartmentCourses';
 import { ColorVariant } from '@/enums/colors';
 import { getIdParams } from '@/lib/utils';
 import { AuthObject } from '@/types/data-pagination';
-import {
-    DepartmentCourse,
-    DepartmentCourseLevel,
-    DepartmentCourseUpdateParams,
-    DepartmentLevel
-} from '@/types/department-meta-data';
+import { DepartmentCourse, DepartmentCourseLevel, DepartmentCourseUpdateParams, DepartmentLevel } from '@/types/department-meta-data';
 import { InstitutionDepartment } from '@/types/institution';
 import type { Link } from '@/types/ui';
 import { Head, useForm } from '@inertiajs/vue3';
 import { ref } from 'vue';
 import BaseButton from '../../../../components/core/button/BaseButton.vue';
-import { useDepartmentCourses } from '@/composables/institution/useDepartmentCourses';
 
 interface Props {
     institutionDepartment: InstitutionDepartment;
@@ -61,9 +56,10 @@ const updateModel = () => {
     allSelected.value = form.department_level_ids?.length == departmentLevels?.length;
 };
 
-const {updateDepartmentCourses} = useDepartmentCourses()
+const { updateDepartmentCourses } = useDepartmentCourses();
 const updateCourse = () => {
-    updateDepartmentCourses(departmentCourse?.id?.toString() ?? '', form)
+    updateDepartmentCourses(departmentCourse?.id?.toString() ?? '', form);
+    navigateTo(route('institution-departments.show', getIdParams(institutionDepartment?.attributes?.departmentId.toString() ?? '')));
 };
 </script>
 
@@ -122,7 +118,9 @@ const updateCourse = () => {
                     "
                     >{{ $t('trans.back') }}
                 </BaseButton>
-                <BaseButton :processing="form.processing" :disabled="form.processing"> {{ $t('trans.save') }} </BaseButton>
+                <BaseButton :processing="form.processing" :disabled="form.processing">
+                    {{ $t('trans.save') }}
+                </BaseButton>
             </div>
         </form>
     </PageContainer>
