@@ -15,5 +15,6 @@ sixteenYearsAgo.setFullYear(currentDate.getFullYear() - 15);
 		v-bind="$attrs"
         :max-date="sixteenYearsAgo"
         :enable-time-picker="false"
+        prevent-min-max-navigation
 	/>
 </template>

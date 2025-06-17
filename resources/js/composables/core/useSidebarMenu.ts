@@ -34,9 +34,39 @@ export function useSidebarMenu() {
             show: isItTrue(can['view:dashboards']),
         },
         {
-            transKey: 'trans.my_portal',
-            icon: icons[IconName.user_add],
+            transKey: 'trans.my_dashboard',
+            icon: icons[IconName.dashboard],
             url: route('portal.index', getIdParams(user?.id?.toString() as string)),
+            show: isItTrue(can['manageOwnData:students']),
+        },
+        {
+            transKey: 'trans.my_personal_details',
+            icon: icons[IconName.user],
+            url: route('portal.personal-details', getIdParams(user?.id?.toString() as string)),
+            show: isItTrue(can['manageOwnData:students']),
+        },
+        {
+            transKey: 'trans.my_contacts',
+            icon: icons[IconName.contact],
+            url: route('portal.contacts', getIdParams(user?.id?.toString() as string)),
+            show: isItTrue(can['manageOwnData:students']),
+        },
+        {
+            transKey: 'trans.my_addresses',
+            icon: icons[IconName.address],
+            url: route('portal.addresses', getIdParams(user?.id?.toString() as string)),
+            show: isItTrue(can['manageOwnData:students']),
+        },
+        {
+            transKey: 'trans.next_of_kin',
+            icon: icons[IconName.users],
+            url: route('portal.next-of-kin', getIdParams(user?.id?.toString() as string)),
+            show: isItTrue(can['manageOwnData:students']),
+        },
+        {
+            transChoiceKey: 'trans.my_programs',
+            icon: icons[IconName.graduation_cape],
+            url: route('portal.programs', getIdParams(user?.id?.toString() as string)),
             show: isItTrue(can['manageOwnData:students']),
         },
         {

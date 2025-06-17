@@ -5,7 +5,7 @@ namespace App\Http\Resources\Institution;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class DepartmentCourseLevelResource extends JsonResource
+class DepartmentLevelCourseResource extends JsonResource
 {
 
     public function toArray(Request $request): array
@@ -15,6 +15,7 @@ class DepartmentCourseLevelResource extends JsonResource
             'departmentCourseId' => $this->department_course_id,
             'departmentLevelId' => $this->department_level_id,
             'level' => $this->departmentLevel?->level?->name,
+            'course' => $this->departmentCourse?->course?->name,
         ];
     }
 }

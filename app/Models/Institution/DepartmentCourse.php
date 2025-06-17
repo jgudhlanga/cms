@@ -43,7 +43,7 @@ class DepartmentCourse extends Model
 
     public function departmentCourseLevels(): HasMany
     {
-        return $this->hasMany(DepartmentCourseLevel::class, 'department_course_id');
+        return $this->hasMany(DepartmentLevelCourse::class, 'department_course_id');
     }
 
     public function getActivitylogOptions(): LogOptions

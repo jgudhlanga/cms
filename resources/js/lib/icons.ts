@@ -69,6 +69,8 @@ import {
     Users,
     UserSearch,
     CircleAlert as Warning,
+    Contact, MapPinHouse as Address,
+    GraduationCap
 } from 'lucide-vue-next';
 import type { Component } from 'vue';
 
@@ -143,6 +145,9 @@ const icons: Record<IconName, Component> = {
     [IconName.book_check]: BookCheck,
     [IconName.arrow_up]: ArrowUp,
     [IconName.arrow_down]: ArrowDown,
+    [IconName.contact]: Contact,
+    [IconName.address]: Address,
+    [IconName.graduation_cape]: GraduationCap,
 };
 
 export { IconName, icons };

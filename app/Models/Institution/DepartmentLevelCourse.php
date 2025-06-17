@@ -12,7 +12,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
  *
  * @mixin Builder
  */
-class DepartmentCourseLevel extends Model
+class DepartmentLevelCourse extends Model
 {
     use  LogsActivity;
 
@@ -20,8 +20,14 @@ class DepartmentCourseLevel extends Model
 
     public function departmentLevel(): BelongsTo
     {
-      return $this->belongsTo(DepartmentLevel::class, 'department_level_id');
+        return $this->belongsTo(DepartmentLevel::class, 'department_level_id');
     }
+
+    public function departmentCourse(): BelongsTo
+    {
+        return $this->belongsTo(DepartmentCourse::class, 'department_course_id');
+    }
+
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()

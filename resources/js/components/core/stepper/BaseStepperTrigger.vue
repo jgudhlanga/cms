@@ -4,7 +4,7 @@ import { IconName, icons } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
 import { StepperTrigger } from '@/components/ui/stepper';
 
-defineProps<{state: any, metaValid: boolean}>()
+defineProps<{state: any}>()
 </script>
 
 <template>

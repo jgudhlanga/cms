@@ -8,6 +8,7 @@ import HeadingSmall from '@/components/core/util/HeadingSmall.vue';
 import { useUtils } from '@/composables/core/useUtils';
 import { useDepartmentLevels } from '@/composables/institution/useDepartmentLevels';
 import { useSubjects } from '@/composables/institution/useSubjects';
+import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
 import { getIdParams } from '@/lib/utils';
 import { AuthObject } from '@/types/data-pagination';
@@ -23,7 +24,7 @@ interface Props {
     institutionDepartment: InstitutionDepartment;
     departmentLevel: DepartmentLevel;
     levels: DepartmentLevel[];
-    requirements: DepartmentLevelRequirement;
+    requirements?: DepartmentLevelRequirement;
     auth: AuthObject;
     errors: object;
 }
@@ -97,6 +98,9 @@ const updateLevel = () => {
     form.is_o_level_required = isOLevelRequired.value;
     form.only_read_write_required = onlyReadWriteRequired.value;
     storeDepartmentLevelRequirements(departmentLevel.id?.toString() ?? '', form);
+    navigateTo(
+        route('institution-departments.show', getIdParams(institutionDepartment?.attributes?.departmentId.toString() ?? '')),
+    )
 };
 </script>
 
@@ -182,6 +186,7 @@ const updateLevel = () => {
                 <BaseButton
                     type="button"
                     :variant="ColorVariant.shade"
+                    :size="ButtonSize.lg"
                     @click="
                         () =>
                             navigateTo(
@@ -190,7 +195,9 @@ const updateLevel = () => {
                     "
                     >{{ $t('trans.back') }}
                 </BaseButton>
-                <BaseButton :processing="form.processing" :disabled="form.processing"> {{ $t('trans.save') }} </BaseButton>
+                <BaseButton :processing="form.processing" :disabled="form.processing" :size="ButtonSize.lg">
+                    {{ $t('trans.save') }}
+                </BaseButton>
             </div>
         </form>
     </PageContainer>

@@ -1,3 +1,5 @@
+import { Subject } from '@/types/institution';
+
 export type DepartmentLevel = {
     type?: string;
     id?: string | number;
@@ -12,7 +14,6 @@ export type DepartmentLevel = {
         deletedAt?: string;
     };
 };
-
 
 export type DepartmentLevelParams = {
     level_ids: Array<string | undefined | null> | null;
@@ -32,17 +33,16 @@ export type DepartmentCourse = {
         deletedAt?: string;
     };
     relationships?: {
-        departmentCourseLevels?: DepartmentCourseLevel[]
-    }
+        departmentCourseLevels?: DepartmentCourseLevel[];
+    };
 };
-
 
 export type DepartmentCourseLevel = {
     id?: string | number;
     departmentCourseId?: string | number;
     departmentLevelId?: string | number;
     level?: string;
-}
+};
 
 export type DepartmentCourseParams = {
     course_ids: Array<string | undefined | null> | null;
@@ -73,6 +73,10 @@ export type DepartmentLevelRequirement = {
         otherSubjectsCount?: string | number | null;
         onlyReadWriteRequired?: boolean;
         requiredLevelId?: string | number | null;
+        requiredLevel?: string | null;
+    };
+    relationships?: {
+        subjects: Subject[];
     };
 };
 
@@ -84,4 +88,12 @@ export type DepartmentLevelRequirementParams = {
     other_subjects_count?: string | number | null;
     only_read_write_required?: boolean;
     required_level_id?: string | number | null;
+};
+
+export type DepartmentLevelCourse = {
+    id: string | number;
+    departmentCourseId: string | number;
+    departmentLevelId: string | number;
+    level: string;
+    course: string;
 };

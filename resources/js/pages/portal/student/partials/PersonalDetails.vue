@@ -10,7 +10,6 @@ import BaseRadioGroup from '@/components/core/form/radio-group/BaseRadioGroup.vu
 import IdNumber from '@/components/core/form/text/IdNumber.vue';
 import PassportNumber from '@/components/core/form/text/PassportNumber.vue';
 import HeadingSmall from '@/components/core/util/HeadingSmall.vue';
-import { useUtils } from '@/composables/core/useUtils';
 import { clearFormErrors } from '@/lib/forms';
 import { useCreateApplicationFormStore } from '@/store/portal/useCreateApplicationFormStore';
 import { CreateApplicationParams } from '@/types/portal';
@@ -18,7 +17,6 @@ import { InertiaForm } from '@inertiajs/vue3';
 import { storeToRefs } from 'pinia';
 import { ref } from 'vue';
 
-const { formatZimIdNumber } = useUtils();
 const {
     id_type,
     id_number,
@@ -42,14 +40,8 @@ const idTypes = [
 const onRadioChange = (value: any) => {
     id_type.value = value;
 };
-const props = defineProps<{ form: InertiaForm<CreateApplicationParams> }>();
+defineProps<{ form: InertiaForm<CreateApplicationParams> }>();
 const defaultIdType = ref(id_type.value ?? 'zimbabwean-national-id-number');
-
-const formatIdNumber = () => {
-    if (!id_number || typeof id_number.value !== 'string') return;
-    clearFormErrors(props.form, 'id_number');
-    id_number.value = formatZimIdNumber(id_number.value);
-};
 </script>
 
 <template>
@@ -104,7 +96,7 @@ const formatIdNumber = () => {
         </div>
         <div class="grid-col-1 mt-4 grid gap-3 md:grid-cols-3">
             <template v-if="id_type === 'zimbabwean-national-id-number'">
-                <IdNumber v-model="id_number" :is-required="true" @input="formatIdNumber()" :error="form.errors.id_number" />
+                <IdNumber v-model="id_number" :is-required="true" :error="form.errors.id_number" />
             </template>
             <template v-else>
                 <PassportNumber

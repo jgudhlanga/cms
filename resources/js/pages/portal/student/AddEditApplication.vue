@@ -3,7 +3,9 @@ import PageContainer from '@/components/core/page/PageContainer.vue';
 import BaseStepperButtons from '@/components/core/stepper/BaseStepperButtons.vue';
 import BaseStepperItem from '@/components/core/stepper/BaseStepperItem.vue';
 import { Stepper } from '@/components/ui/stepper';
+import { useDepartmentLevels } from '@/composables/institution/useDepartmentLevels';
 import { useStudentPortal } from '@/composables/portal/useStudentPortal';
+import Confirmation from '@/pages/portal/student/partials/Confirmation.vue';
 import ContactDetails from '@/pages/portal/student/partials/ContactDetails.vue';
 import NextOfKinDetails from '@/pages/portal/student/partials/NextOfKinDetails.vue';
 import PersonalDetails from '@/pages/portal/student/partials/PersonalDetails.vue';
@@ -25,12 +27,13 @@ interface Props {
 
 const props = defineProps<Props>();
 const { steps } = useStudentPortal();
+const { listLevelRequirements } = useDepartmentLevels();
+
 const { user } = props;
 const stepIndex = ref(1);
 const maxStep = 5;
-const metaValid = ref(true);
-const breadcrumbs: BreadcrumbItemInterface[] = [{ title: user.attributes?.name }, { transKey: 'finish_your_application' }];
-const { id_type, first_name, middle_name, last_name, title, gender } = storeToRefs(useCreateApplicationFormStore());
+const breadcrumbs: BreadcrumbItemInterface[] = [{ title: user.attributes?.name }, { transKey: 'my_application' }];
+const { id_type, first_name, middle_name, last_name, title, gender, email, level } = storeToRefs(useCreateApplicationFormStore());
 const form = useForm<CreateApplicationParams>({
     course: null,
     course_id: null,
@@ -71,19 +74,25 @@ const form = useForm<CreateApplicationParams>({
     study_permit_number: '',
 });
 
-const goNext = (next: () => void) => {
+const goNext = async (next: () => void) => {
     updateForm();
     try {
         next();
+        if (stepIndex.value === 4) {
+            if (level.value?.value != null) {
+                await listLevelRequirements(level.value?.value?.toString() ?? '');
+            }
+        }
     } catch (error: any) {
         form.setError(error.format());
     }
 };
 
-onMounted(() => {
+onMounted(async () => {
     first_name.value = user.attributes?.first_name;
     middle_name.value = user.attributes?.middle_name ?? '';
     last_name.value = user.attributes?.last_name;
+    email.value = user.attributes?.email ?? '';
     title.value = {
         value: user.attributes?.titleId,
         label: user.attributes?.title,
@@ -92,17 +101,17 @@ onMounted(() => {
         value: user.attributes?.genderId,
         label: user.attributes?.gender,
     };
-    id_type.value = id_type.value || 'zimbabwean-national-id-number';
+    id_type.value = id_type.value !== '' ? id_type.value : 'zimbabwean-national-id-number';
 });
 
 const updateForm = () => {};
 </script>
 <template>
-    <Head :title="$t('trans.create_new_application')" />
+    <Head :title="$tChoice('trans.application', 1)" />
     <PageContainer :breadcrumbs="breadcrumbs">
         <form @submit.prevent="() => {}">
             <Stepper orientation="vertical" v-slot="{ isPrevDisabled, nextStep, prevStep }" v-model="stepIndex" class="flex w-full flex-col">
-                <BaseStepperItem :steps="steps" :meta-valid="metaValid" />
+                <BaseStepperItem :steps="steps" />
                 <!-- CONTENT -->
                 <div class="mt-4 flex flex-col gap-4">
                     <template v-if="stepIndex === 1">
@@ -118,7 +127,7 @@ const updateForm = () => {};
                         <Programs :form="form" />
                     </template>
                     <template v-if="stepIndex === maxStep">
-                        <p>Confirm</p>
+                        <Confirmation />
                     </template>
                 </div>
                 <!-- BUTTONS -->

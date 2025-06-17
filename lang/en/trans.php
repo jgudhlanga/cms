@@ -242,7 +242,6 @@ return [
     "main_subjects" => "Main subjects",
     "select_main_required_subjects" => "Select the main subjects required for this Level",
     "previous_level" => "Previous Level",
-    "my_application" => "My Application|My Applications",
     "create_new_application" => "Create new application",
     "finish_your_application" => "Finish your application",
     "my_portal" => "My portal",
@@ -263,5 +262,13 @@ return [
     "residential_address" => "Residential Address",
     "residential_address_description" => "Provide residential address",
     "postal_address" => "Postal Address",
+    "my_personal_details" => "My personal details",
+    "my_contacts" => "My contacts",
+    "my_addresses" => "My addresses",
+    "my_programs" => "My programs",
+    "my_dashboard" => "My dashboard",
+    "my_application" => "My application",
+    "o_level_results" => "O level results",
+    "o_level_results_description" => "Add your obtained grades at O Level",
 ];
 

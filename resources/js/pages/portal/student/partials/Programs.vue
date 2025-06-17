@@ -3,48 +3,39 @@ import BaseCard from '@/components/core/card/BaseCard.vue';
 import DepartmentCourseComboSelect from '@/components/core/form/combobox/DepartmentCourseComboSelect.vue';
 import DepartmentLevelComboSelect from '@/components/core/form/combobox/DepartmentLevelComboSelect.vue';
 import InstitutionDepartmentComboSelect from '@/components/core/form/combobox/InstitutionDepartmentComboSelect.vue';
-import { useInstitution } from '@/composables/institution/useInstitution';
 import { useCreateApplicationFormStore } from '@/store/portal/useCreateApplicationFormStore';
-import { DepartmentLevel, DepartmentCourse } from '@/types/department-meta-data';
 import { CreateApplicationParams } from '@/types/portal';
-import { SelectOption } from '@/types/utils';
 import { InertiaForm } from '@inertiajs/vue3';
 import { storeToRefs } from 'pinia';
-import { computed, watch } from 'vue';
+import { watch, ref } from 'vue';
+import { useDepartmentLevels } from '@/composables/institution/useDepartmentLevels';
+import SpinnerComponent from '@/components/core/util/SpinnerComponent.vue';
+import { useUtils } from '@/composables/core/useUtils';
+import HeadingSmall from '@/components/core/util/HeadingSmall.vue';
 
 const { department, level, course } = storeToRefs(useCreateApplicationFormStore());
+const {listLevelRequirements, levelRequirements, isLoading} = useDepartmentLevels()
 
 interface Props {
     form: InertiaForm<CreateApplicationParams>;
 }
 
 defineProps<Props>();
+const {isItTrue} = useUtils()
+const courseDisabled = ref(false);
 
-const { loadDepartmentMetaData, departmentMetaData, isLoading } = useInstitution();
-
-watch(department, async (newDepartment) => {
-    await loadDepartmentMetaData(newDepartment?.value?.toString() ?? '');
-    console.log(departmentMetaData.value);
+watch(department, async () => {
+    level.value = null;
+    courseDisabled.value = true;
+    levelRequirements.value = null;
 });
 
-const levels = computed(() => {
-    return departmentMetaData?.value?.levels?.map((level: DepartmentLevel) => {
-        return <SelectOption>{
-            value: Number(level.attributes.levelId),
-            label: level?.attributes?.level,
-        };
-    });
+watch(level, async () => {
+    course.value = null;
+    courseDisabled.value = level.value === null;
+    // fetch level requirements here,
+    await listLevelRequirements(level.value?.value?.toString() ?? '');
 });
-
-const courses = computed(() => {
-    return departmentMetaData?.value?.courses?.filter((course: DepartmentCourse) => {
-        return <SelectOption>{
-            value: Number(course.attributes.courseId),
-            label: course?.attributes?.course,
-        };
-    });
-});
-
 </script>
 
 <template>
@@ -59,22 +50,50 @@ const courses = computed(() => {
             />
             <DepartmentLevelComboSelect
                 :form="form"
+                :institution-department-id="department?.value?.toString() ?? ''"
                 v-model="level"
                 :error="form.errors.level"
                 :label-uppercase="true"
                 :is-required="true"
-                :options="levels"
-                :is-loading="isLoading"
             />
             <DepartmentCourseComboSelect
                 :form="form"
+                :department-level-id="level?.value?.toString() ?? ''"
                 v-model="course"
                 :error="form.errors.course"
                 :label-uppercase="true"
                 :is-required="true"
-                :options="courses"
-                :is-loading="isLoading"
+                :disabled="courseDisabled"
             />
+        </div>
+        <div class="flex flex-col my-4">
+            <template v-if="isLoading">
+                <SpinnerComponent class="flex w-full justify-center items-center"/>
+            </template>
+            <template v-else>
+                <template v-if="levelRequirements && isItTrue(levelRequirements.attributes.isOLevelRequired)">
+                    <HeadingSmall :title="$t('trans.o_level_results')" :description="$t('trans.o_level_results_description')"/>
+                    <template v-if="levelRequirements?.relationships?.subjects && levelRequirements.relationships.subjects.length > 0">
+                        <table class="hava-table my-4">
+                            <thead class="hava-thead">
+                            <tr>
+                                <th class="hava-th" align="left">{{ $tChoice('trans.subject', 1) }}</th>
+                                <th class="hava-th" align="right">{{ $tChoice('trans.grade', 1) }}</th>
+                            </tr>
+                            </thead>
+                            <tbody class="hava-tbody" >
+                            <tr class="hava-tr" v-for="subject in levelRequirements.relationships.subjects" :key="subject?.id ?? ''">
+                                <td class="hava-td" align="left">{{ subject?.attributes?.name }}</td>
+                                <td class="hava-td" align="right">{{ subject?.attributes?.name }}</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </template>
+                    <template></template>
+                </template>
+
+            </template>
+
         </div>
     </BaseCard>
 </template>

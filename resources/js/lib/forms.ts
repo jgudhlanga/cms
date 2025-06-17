@@ -19,9 +19,9 @@ const onFormSuccess = (message: string, modalToClose?: string, onSuccessAction?:
     }
     if (onSuccessAction) {
         onSuccessAction();
-        router.visit(window.location.href, { replace: true });
     }
     successAlert(message);
+    router.visit(window.location.href, { replace: true });
 };
 const onFormError = (message: string, modalToClose?: string) => {
     if (modalToClose) {

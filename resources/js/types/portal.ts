@@ -1,4 +1,5 @@
 import { SelectOption } from '@/types/utils';
+import { DepartmentLevelRequirement } from '@/types/department-meta-data';
 
 export type CreateApplicationUserParams = {
     email: string;
@@ -55,4 +56,5 @@ export type CreateApplicationParams = {
     level_id: string | number | null;
     course: SelectOption | null;
     course_id: string | number | null;
+    levelRequirements?: DepartmentLevelRequirement | null
 };

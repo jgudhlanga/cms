@@ -1,20 +1,24 @@
 import { useDataTables } from '@/composables/core/useDataTables';
+import { useUtils } from '@/composables/core/useUtils';
 import { ColorVariant } from '@/enums/colors';
 import { forbiddenAlert, openModal } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
 import { buildFormOptions } from '@/lib/forms';
 import { getIdParams } from '@/lib/utils';
+import HttpService from '@/services/http.service';
 import { Auth } from '@/types';
-import { DepartmentLevel } from '@/types/department-meta-data';
+import { DepartmentLevel, DepartmentLevelCourse, DepartmentLevelRequirement } from '@/types/department-meta-data';
 import { InertiaForm, usePage } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
-import { useUtils } from '@/composables/core/useUtils';
+import { ref } from 'vue';
+import { storeToRefs } from 'pinia';
+import { useCreateApplicationFormStore } from '@/store/portal/useCreateApplicationFormStore';
 
 export const useDepartmentLevels = () => {
     const { moreActionButton, textLink, actionButton } = useDataTables();
     const { props } = usePage();
     const { can } = props?.auth as Auth;
-    const {navigateTo} = useUtils()
+    const { navigateTo } = useUtils();
     const createDepartmentLevelColumns = () => {
         return [
             {
@@ -86,10 +90,7 @@ export const useDepartmentLevels = () => {
         try {
             const success = trans('trans.item_saved', { item: trans_choice('trans.level', 2) });
             const error = trans('trans.item_save_failure', { item: trans_choice('trans.level', 2) });
-            form.post(
-                route('department-levels.store-requirements', departmentLevelId),
-                buildFormOptions(form, success, error),
-            );
+            form.post(route('department-levels.store-requirements', departmentLevelId), buildFormOptions(form, success, error));
         } catch (error: any) {
             form.setError(error.format());
         }
@@ -100,10 +101,43 @@ export const useDepartmentLevels = () => {
         openModal({ name: APP_MODULE_KEYS.department_levels, edit: departmentLevels });
     };
 
+    const departmentLevels = ref<DepartmentLevel[]>([]);
+    const isLoading = ref(false);
+
+    const listDepartmentLevels = async (institutionDepartmentId: string) => {
+        isLoading.value = true;
+        departmentLevels.value = await HttpService.get(`api/v1/institution-departments/${institutionDepartmentId}/levels`);
+        isLoading.value = false;
+    };
+
+    const levelCourses = ref<DepartmentLevelCourse[]>([]);
+
+    const listLevelCourses = async (departmentLevelId: string) => {
+        isLoading.value = true;
+        levelCourses.value = await HttpService.get(`api/v1/institution-departments/levels/${departmentLevelId}/courses`);
+        isLoading.value = false;
+    };
+
+    const {levelRequirements: storeLevelRequirements} = storeToRefs(useCreateApplicationFormStore())
+    const levelRequirements =  ref<DepartmentLevelRequirement|null>(storeLevelRequirements?.value ?? null);
+    const listLevelRequirements = async (departmentLevelId: string) => {
+        isLoading.value = true;
+        levelRequirements.value = await HttpService.get(`api/v1/institution-departments/levels/${departmentLevelId}/requirements`);
+        storeLevelRequirements!.value =  levelRequirements.value;
+        isLoading.value = false;
+    };
+
     return {
         createDepartmentLevelColumns,
         openDepartmentLevelsModal,
         syncDepartmentLevels,
-        storeDepartmentLevelRequirements
+        storeDepartmentLevelRequirements,
+        listDepartmentLevels,
+        isLoading,
+        departmentLevels,
+        listLevelCourses,
+        levelCourses,
+        levelRequirements,
+        listLevelRequirements,
     };
 };

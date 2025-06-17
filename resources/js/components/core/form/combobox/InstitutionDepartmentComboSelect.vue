@@ -31,6 +31,7 @@ const whenSearch = debounce(async (search: string) => {
     clearFormErrors(props.form, 'department');
     await listDepartments(search);
 }, 600);
+
 </script>
 
 <template>

@@ -7,8 +7,7 @@ import { CreateApplicationParams } from '@/types/portal';
 import { InertiaForm } from '@inertiajs/vue3';
 import { storeToRefs } from 'pinia';
 import { BaseInput } from '@/components/core/form';
-import RelatiohshipComboSelect from '@/components/core/form/combobox/RelatiohshipComboSelect.vue';
-import CountryComboSelect from '@/components/core/form/combobox/CountryComboSelect.vue';
+import RelationshipComboSelect from '@/components/core/form/combobox/RelationshipComboSelect.vue';
 
 
 const {
@@ -43,7 +42,7 @@ const { form } = props;
                 @input="clearFormErrors(form, 'next_of_kin_phone_number')"
                 :error="form.errors.next_of_kin_phone_number"
             />
-            <RelatiohshipComboSelect
+            <RelationshipComboSelect
                 :form="form"
                 v-model="relationship"
                 :error="form.errors.relationship"

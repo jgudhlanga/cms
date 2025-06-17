@@ -7,7 +7,6 @@ import BaseStepperSeparator from '@/components/core/stepper/BaseStepperSeparator
 import { Step } from '@/types/forms';
 interface Props {
 	steps: Step[],
-	metaValid: boolean
 }
 defineProps<Props>()
 </script>
@@ -21,7 +20,7 @@ defineProps<Props>()
 			:step="step.step"
 		>
 			<BaseStepperSeparator v-if="step.step !== steps[steps.length - 1].step" />
-			<BaseStepperTrigger :state="state" :meta-valid="metaValid" />
+			<BaseStepperTrigger :state="state" />
 			<BaseStepperHeading
 				:state="state" :title="$t(step.title)"
 				:description="$t(step.description)" />

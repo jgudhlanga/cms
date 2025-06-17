@@ -32,6 +32,7 @@ const can = props?.auth?.can;
             :data="departments.data"
             :trashed-count="trashedCount"
             :filters="filters"
+            :show-archived-filter="false"
             :pagination="{ ...departments.links, ...departments.meta }"
             :columns="createInstitutionDepartmentColumns()"
         >

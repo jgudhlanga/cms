@@ -12,11 +12,12 @@ import Address3 from '@/components/core/form/text/Address3.vue';
 import Address4 from '@/components/core/form/text/Address4.vue';
 import PhoneNumber from '@/components/core/form/text/PhoneNumber.vue';
 import AltPhoneNumber from '@/components/core/form/text/AltPhoneNumber.vue';
+import EmailAddress from '@/components/core/form/text/EmailAddress.vue';
 
 
 const {
 phone_number,
-    alt_phone_number, address_1, address_2, address_3, address_4,
+    alt_phone_number, address_1, address_2, address_3, address_4, email,
 } = storeToRefs(useCreateApplicationFormStore());
 
 const props = defineProps<{ form: InertiaForm<CreateApplicationParams> }>();
@@ -40,6 +41,12 @@ const { form } = props;
                 :label-uppercase="true"
                 @input="clearFormErrors(form, 'alt_phone_number')"
                 :error="form.errors.alt_phone_number"
+            />
+            <EmailAddress
+                v-model="email"
+                :label-uppercase="true"
+                :is-required="true"
+                :disabled="true"
             />
         </div>
         <div class="flex flex-col">
