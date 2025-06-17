@@ -268,5 +268,7 @@ return [
     "my_programs" => "My programs",
     "my_dashboard" => "My dashboard",
     "my_application" => "My application",
+    "o_level_results" => "O level results",
+    "o_level_results_description" => "Add your obtained grades at O Level",
 ];
 

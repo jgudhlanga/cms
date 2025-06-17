@@ -10,6 +10,8 @@ import { storeToRefs } from 'pinia';
 import { watch, ref } from 'vue';
 import { useDepartmentLevels } from '@/composables/institution/useDepartmentLevels';
 import SpinnerComponent from '@/components/core/util/SpinnerComponent.vue';
+import { useUtils } from '@/composables/core/useUtils';
+import HeadingSmall from '@/components/core/util/HeadingSmall.vue';
 
 const { department, level, course } = storeToRefs(useCreateApplicationFormStore());
 const {listLevelRequirements, levelRequirements, isLoading} = useDepartmentLevels()
@@ -19,6 +21,7 @@ interface Props {
 }
 
 defineProps<Props>();
+const {isItTrue} = useUtils()
 const courseDisabled = ref(false);
 
 watch(department, async () => {
@@ -68,7 +71,27 @@ watch(level, async () => {
                 <SpinnerComponent class="flex w-full justify-center items-center"/>
             </template>
             <template v-else>
-                {{ levelRequirements }}
+                <template v-if="levelRequirements && isItTrue(levelRequirements.attributes.isOLevelRequired)">
+                    <HeadingSmall :title="$t('trans.o_level_results')" :description="$t('trans.o_level_results_description')"/>
+                    <template v-if="levelRequirements?.relationships?.subjects && levelRequirements.relationships.subjects.length > 0">
+                        <table class="hava-table my-4">
+                            <thead class="hava-thead">
+                            <tr>
+                                <th class="hava-th" align="left">{{ $tChoice('trans.subject', 1) }}</th>
+                                <th class="hava-th" align="right">{{ $tChoice('trans.grade', 1) }}</th>
+                            </tr>
+                            </thead>
+                            <tbody class="hava-tbody" >
+                            <tr class="hava-tr" v-for="subject in levelRequirements.relationships.subjects" :key="subject?.id ?? ''">
+                                <td class="hava-td" align="left">{{ subject?.attributes?.name }}</td>
+                                <td class="hava-td" align="right">{{ subject?.attributes?.name }}</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </template>
+                    <template></template>
+                </template>
+
             </template>
 
         </div>
