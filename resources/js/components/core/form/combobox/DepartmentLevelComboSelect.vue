@@ -29,7 +29,7 @@ const options = computed(() => {
     return departmentLevels.value.map(
         (item: DepartmentLevel) =>
             <SelectOption>{
-                value: Number(item.attributes.levelId.toString() ?? ''),
+                value: Number(item.id?.toString() ?? ''),
                 label: item?.attributes?.level,
             },
     );

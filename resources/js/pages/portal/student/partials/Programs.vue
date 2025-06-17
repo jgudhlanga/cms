@@ -3,25 +3,27 @@ import BaseCard from '@/components/core/card/BaseCard.vue';
 import DepartmentCourseComboSelect from '@/components/core/form/combobox/DepartmentCourseComboSelect.vue';
 import DepartmentLevelComboSelect from '@/components/core/form/combobox/DepartmentLevelComboSelect.vue';
 import InstitutionDepartmentComboSelect from '@/components/core/form/combobox/InstitutionDepartmentComboSelect.vue';
+import SpinnerComponent from '@/components/core/util/SpinnerComponent.vue';
+import { useUtils } from '@/composables/core/useUtils';
+import { useDepartmentLevels } from '@/composables/institution/useDepartmentLevels';
+import LevelRequirements from '@/pages/portal/student/partials/LevelRequirements.vue';
+import OLevelRequirements from '@/pages/portal/student/partials/OLevelRequirements.vue';
+import SDPRequirements from '@/pages/portal/student/partials/SDPRequirements.vue';
 import { useCreateApplicationFormStore } from '@/store/portal/useCreateApplicationFormStore';
 import { CreateApplicationParams } from '@/types/portal';
 import { InertiaForm } from '@inertiajs/vue3';
 import { storeToRefs } from 'pinia';
-import { watch, ref } from 'vue';
-import { useDepartmentLevels } from '@/composables/institution/useDepartmentLevels';
-import SpinnerComponent from '@/components/core/util/SpinnerComponent.vue';
-import { useUtils } from '@/composables/core/useUtils';
-import HeadingSmall from '@/components/core/util/HeadingSmall.vue';
+import { ref, watch } from 'vue';
 
 const { department, level, course } = storeToRefs(useCreateApplicationFormStore());
-const {listLevelRequirements, levelRequirements, isLoading} = useDepartmentLevels()
+const { listLevelRequirements, levelRequirements, isLoading } = useDepartmentLevels();
 
 interface Props {
     form: InertiaForm<CreateApplicationParams>;
 }
 
 defineProps<Props>();
-const {isItTrue} = useUtils()
+const { isItTrue } = useUtils();
 const courseDisabled = ref(false);
 
 watch(department, async () => {
@@ -33,7 +35,6 @@ watch(department, async () => {
 watch(level, async () => {
     course.value = null;
     courseDisabled.value = level.value === null;
-    // fetch level requirements here,
     await listLevelRequirements(level.value?.value?.toString() ?? '');
 });
 </script>
@@ -66,34 +67,24 @@ watch(level, async () => {
                 :disabled="courseDisabled"
             />
         </div>
-        <div class="flex flex-col my-4">
+        <div class="my-4 flex flex-col">
             <template v-if="isLoading">
-                <SpinnerComponent class="flex w-full justify-center items-center"/>
+                <SpinnerComponent class="flex w-full items-center justify-center" />
             </template>
             <template v-else>
-                <template v-if="levelRequirements && isItTrue(levelRequirements.attributes.isOLevelRequired)">
-                    <HeadingSmall :title="$t('trans.o_level_results')" :description="$t('trans.o_level_results_description')"/>
-                    <template v-if="levelRequirements?.relationships?.subjects && levelRequirements.relationships.subjects.length > 0">
-                        <table class="hava-table my-4">
-                            <thead class="hava-thead">
-                            <tr>
-                                <th class="hava-th" align="left">{{ $tChoice('trans.subject', 1) }}</th>
-                                <th class="hava-th" align="right">{{ $tChoice('trans.grade', 1) }}</th>
-                            </tr>
-                            </thead>
-                            <tbody class="hava-tbody" >
-                            <tr class="hava-tr" v-for="subject in levelRequirements.relationships.subjects" :key="subject?.id ?? ''">
-                                <td class="hava-td" align="left">{{ subject?.attributes?.name }}</td>
-                                <td class="hava-td" align="right">{{ subject?.attributes?.name }}</td>
-                            </tr>
-                            </tbody>
-                        </table>
+                {{ levelRequirements?.attributes }}
+                <template v-if="levelRequirements">
+                    <template v-if="isItTrue(levelRequirements.attributes.isOLevelRequired)">
+                        <OLevelRequirements :form="form" :level-requirements="levelRequirements" />
                     </template>
-                    <template></template>
+                    <template v-if="levelRequirements.attributes.requiredLevel">
+                        <LevelRequirements :level-requirements="levelRequirements" />
+                    </template>
+                    <template v-if="isItTrue(levelRequirements.attributes.onlyReadWriteRequired)">
+                        <SDPRequirements :level-requirements="levelRequirements" />
+                    </template>
                 </template>
-
             </template>
-
         </div>
     </BaseCard>
 </template>

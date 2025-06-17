@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\V1\AddressTypes\AddressTypeController;
 use App\Http\Controllers\Api\V1\Countries\CountryController;
 use App\Http\Controllers\Api\V1\Districts\DistrictController;
 use App\Http\Controllers\Api\V1\Genders\GenderController;
+use App\Http\Controllers\Api\V1\Grades\GradeController;
 use App\Http\Controllers\Api\V1\Institution\CourseController;
 use App\Http\Controllers\Api\V1\Institution\DepartmentController;
 use App\Http\Controllers\Api\V1\Institution\LevelController;
@@ -36,6 +37,8 @@ Route::prefix('v1')->group(function () {
     Route::apiResource('districts', DistrictController::class)->names('v1.districts');
     # ==================================== SUBJECTS ======================================================
     Route::apiResource('subjects', SubjectController::class)->names('v1.subjects');
+    # ==================================== SUBJECTS ======================================================
+    Route::apiResource('grades', GradeController::class)->names('v1.grades');
     # ==================================== MARITAL STATUSES ======================================================
     Route::apiResource('marital-statuses', MaritalStatusController::class)->names('v1.marital-statuses');
     # ==================================== RELATIONSHIPS ======================================================

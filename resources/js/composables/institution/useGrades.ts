@@ -1,14 +1,16 @@
 import { useDataTables } from '@/composables/core/useDataTables';
+import { useDropdowns } from '@/composables/core/useDropdowns';
 import { useSharedFormSchema } from '@/composables/core/useSharedFormSchema';
 import { forbiddenAlert, openModal } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
 import { buildFormOptions } from '@/lib/forms';
 import { getIdParams } from '@/lib/utils';
 import { Auth } from '@/types';
-import { Grade, } from '@/types/institution';
+import { Grade } from '@/types/institution';
 import type { Link } from '@/types/ui';
 import { InertiaForm, usePage } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
+import { ref } from 'vue';
 
 export const useGrades = () => {
     const { moreActionButton, onDelete, onForceDelete, onRestore, orderButtons } = useDataTables();
@@ -20,7 +22,7 @@ export const useGrades = () => {
             {
                 header: trans_choice('trans.position', 1),
                 accessorKey: 'attributes.position',
-                meta: { align: 'center' }
+                meta: { align: 'center' },
             },
             {
                 header: trans('trans.order'),
@@ -87,10 +89,24 @@ export const useGrades = () => {
         openModal({ name: APP_MODULE_KEYS.grades, edit: grade });
     };
 
+    const isLoading = ref(false);
+    const grades = ref<Grade[]>([]);
+
+    const listGrades = async (search?: string) => {
+        const { data, fetchData } = useDropdowns();
+        isLoading.value = true;
+        await fetchData({ url: 'api/v1/grades?page_size=100', search, transChoiceKey: 'trans.grade' });
+        isLoading.value = false;
+        grades.value = data.value;
+    };
+
     return {
         createGradeColumns,
         breadcrumbs,
         onOpenModal,
         saveGrade,
+        isLoading,
+        grades,
+        listGrades,
     };
 };

@@ -109,7 +109,6 @@ const updateForm = () => {};
 <template>
     <Head :title="$tChoice('trans.application', 1)" />
     <PageContainer :breadcrumbs="breadcrumbs">
-        <form @submit.prevent="() => {}">
             <Stepper orientation="vertical" v-slot="{ isPrevDisabled, nextStep, prevStep }" v-model="stepIndex" class="flex w-full flex-col">
                 <BaseStepperItem :steps="steps" />
                 <!-- CONTENT -->
@@ -139,6 +138,5 @@ const updateForm = () => {};
                     :max-step="maxStep"
                 />
             </Stepper>
-        </form>
     </PageContainer>
 </template>

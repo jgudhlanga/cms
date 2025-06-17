@@ -41,7 +41,10 @@ export const useCreateApplicationFormStore = defineStore('portal-application-for
             course_id: null,
             level: null,
             level_id: null,
-            levelRequirements: null
+            levelRequirements: null,
+            o_level_subject_ids: null,
+            required_level_completed: null,
+            read_write_acknowledged: null,
         };
     },
     persist: true,
