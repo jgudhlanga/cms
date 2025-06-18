@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import BaseCard from '@/components/core/card/BaseCard.vue';
 import LabelValue from '@/components/core/util/LabelValue.vue';
+import { useUtils } from '@/composables/core/useUtils';
 import { useCreateApplicationFormStore } from '@/store/portal/useCreateApplicationFormStore';
 import { ValueAndLabel } from '@/types/utils';
 import { storeToRefs } from 'pinia';
-import { useUtils } from '@/composables/core/useUtils';
+import SDPRequirements from '@/pages/portal/student/partials/SDPRequirements.vue';
+import OLevelRequirements from '@/pages/portal/student/partials/OLevelRequirements.vue';
+import LevelRequirements from '@/pages/portal/student/partials/LevelRequirements.vue';
 
 const {
     email,
@@ -36,8 +39,13 @@ const {
     department,
     course,
     level,
+    levelRequirements,
+    o_level_subject_ids,
+    required_level_completed,
+    read_write_acknowledged,
 } = storeToRefs(useCreateApplicationFormStore());
-const {formatDate} = useUtils();
+const { formatDate, isItTrue } = useUtils();
+const { getIDType, isNativeCitizen } = useUtils();
 const personalDetails: ValueAndLabel[] = [
     { transChoiceKey: 'trans.title', value: title.value?.label ?? '' },
     { transKey: 'trans.first_name', value: first_name.value ?? '' },
@@ -46,13 +54,23 @@ const personalDetails: ValueAndLabel[] = [
     { transChoiceKey: 'trans.gender', value: gender.value?.label ?? '' },
     { transChoiceKey: 'trans.gender', value: gender.value?.label ?? '' },
     { transChoiceKey: 'trans.marital_status', value: maritalStatus?.value?.label ?? '' },
-    { transKey: 'trans.id_type', value: id_type?.value ?? '' },
-    { transKey: 'trans.id_number', value: id_number?.value ?? '' },
-    { transKey: 'trans.passport_number', value: passport_number?.value ?? '' },
-    { transChoiceKey: 'trans.country', value: country?.value?.label ?? '' },
-    { transKey: 'trans.study_permit_number', value: study_permit_number?.value ?? '' },
-    { transKey: 'trans.date_of_birth', value:  formatDate(date_of_birth?.value ?? '') },
+    { transKey: 'trans.id_type', value: getIDType(id_type?.value ?? '') },
 ];
+if (isNativeCitizen(id_type?.value ?? '')) {
+    personalDetails.push({
+        transKey: 'trans.id_number',
+        value: id_number?.value ?? '',
+    });
+} else {
+    personalDetails.push(
+        { transKey: 'trans.passport_number', value: passport_number?.value ?? '' },
+        { transChoiceKey: 'trans.country', value: country?.value?.label ?? '' },
+        { transKey: 'trans.study_permit_number', value: study_permit_number?.value ?? '' },
+    );
+}
+
+personalDetails.push({ transKey: 'trans.date_of_birth', value: formatDate(date_of_birth?.value ?? '') });
+
 const contactDetails: ValueAndLabel[] = [
     { transKey: 'trans.phone_number', value: phone_number?.value ?? '' },
     { transKey: 'trans.alt_phone_number', value: alt_phone_number?.value ?? '' },
@@ -61,16 +79,27 @@ const contactDetails: ValueAndLabel[] = [
     { transKey: 'trans.address_2', value: address_2?.value ?? '' },
     { transKey: 'trans.address_3', value: address_3?.value ?? '' },
     { transKey: 'trans.address_4', value: address_4?.value ?? '' },
-    ];
+];
 
 const nextOfKinDetails: ValueAndLabel[] = [
-    { transKey: 'trans.phone_number', value: phone_number?.value ?? '' },
-    ];
+    { transChoiceKey: 'trans.name', value: next_of_kin_name?.value ?? '' },
+    { transKey: 'trans.phone_number', value: next_of_kin_phone_number?.value ?? '' },
+    { transChoiceKey: 'trans.relationship', value: relationship?.value?.label ?? '' },
+    { transKey: 'trans.address_1', value: next_of_kin_address_1?.value ?? '' },
+    { transKey: 'trans.address_2', value: next_of_kin_address_2?.value ?? '' },
+    { transKey: 'trans.address_3', value: next_of_kin_address_3?.value ?? '' },
+    { transKey: 'trans.address_4', value: next_of_kin_address_4?.value ?? '' },
+];
+const programDetails: ValueAndLabel[] = [
+    { transChoiceKey: 'trans.department', value: department?.value?.label ?? '' },
+    { transChoiceKey: 'trans.level', value: level?.value?.label ?? '' },
+    { transChoiceKey: 'trans.course', value: course?.value?.label ?? '' },
+];
 </script>
 
 <template>
     <BaseCard :title="$t('trans.personal_details')">
-        <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <div class="grid grid-cols-1 gap-2 md:grid-cols-4">
             <LabelValue
                 v-for="(detail, index) in personalDetails"
                 :key="index"
@@ -80,13 +109,46 @@ const nextOfKinDetails: ValueAndLabel[] = [
         </div>
     </BaseCard>
     <BaseCard :title="$t('trans.contact_details')">
-        <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <div class="grid grid-cols-1 gap-2 md:grid-cols-4">
             <LabelValue
                 v-for="(contact, index) in contactDetails"
                 :key="index"
                 :label="`${contact?.transKey ? $t(contact.transKey) : $tChoice(contact.transChoiceKey ?? '', 1)}`"
                 :value="contact.value"
             />
+        </div>
+    </BaseCard>
+
+    <BaseCard :title="$t('trans.next_of_kin')">
+        <div class="grid grid-cols-1 gap-2 md:grid-cols-4">
+            <LabelValue
+                v-for="(detail, index) in nextOfKinDetails"
+                :key="index"
+                :label="`${detail?.transKey ? $t(detail.transKey) : $tChoice(detail.transChoiceKey ?? '', 1)}`"
+                :value="detail.value"
+            />
+        </div>
+    </BaseCard>
+
+    <BaseCard :title="$tChoice('trans.program', 1)">
+        <div class="grid grid-cols-1 gap-2 md:grid-cols-4">
+            <LabelValue
+                v-for="(program, index) in programDetails"
+                :key="index"
+                :label="`${program?.transKey ? $t(program.transKey) : $tChoice(program.transChoiceKey ?? '', 1)}`"
+                :value="program.value"
+            />
+        </div>
+        <div class="flex flex-col mt-5" v-if="levelRequirements">
+            <template v-if="isItTrue(levelRequirements.attributes.isOLevelRequired)">
+                <OLevelRequirements :level-requirements="levelRequirements" :is-view-only="true" />
+            </template>
+            <template v-if="levelRequirements.attributes.requiredLevel">
+                <LevelRequirements :level-requirements="levelRequirements" :is-view-only="true" />
+            </template>
+            <template v-if="isItTrue(levelRequirements.attributes.onlyReadWriteRequired)">
+                <SDPRequirements :level-requirements="levelRequirements" :is-view-only="true" />
+            </template>
         </div>
     </BaseCard>
 </template>

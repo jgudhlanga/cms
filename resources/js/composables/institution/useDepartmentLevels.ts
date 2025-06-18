@@ -27,7 +27,7 @@ export const useDepartmentLevels = () => {
                 cell: ({ row }: { row: { original: DepartmentLevel } }) => {
                     const id = getIdParams(row.original.id?.toString() ?? '');
                     return textLink(route('department-levels.requirements', id), row.original.attributes?.level);
-                },
+                }
             },
             { header: trans_choice('trans.description', 1), accessorKey: 'attributes.description' },
             {
@@ -40,9 +40,9 @@ export const useDepartmentLevels = () => {
                     return actionButton({
                         title: trans_choice('trans.requirement', 2),
                         variant: ColorVariant.primary_outline,
-                        onClick: () => navigateTo(route('department-levels.requirements', id)),
+                        onClick: () => navigateTo(route('department-levels.requirements', id))
                     });
-                },
+                }
             },
             {
                 header: trans_choice('trans.action', 2),
@@ -53,23 +53,27 @@ export const useDepartmentLevels = () => {
                     return moreActionButton(!!row.original?.attributes?.deletedAt, [
                         {
                             key: 'view',
-                            action: () => {},
+                            action: () => {
+                            }
                         },
                         {
                             key: 'archive',
-                            action: () => {},
+                            action: () => {
+                            }
                         },
                         {
                             key: 'restore',
-                            action: () => {},
+                            action: () => {
+                            }
                         },
                         {
                             key: 'delete',
-                            action: () => {},
-                        },
+                            action: () => {
+                            }
+                        }
                     ]);
-                },
-            },
+                }
+            }
         ];
     };
 
@@ -79,7 +83,7 @@ export const useDepartmentLevels = () => {
             const error = trans('trans.item_save_failure', { item: trans_choice('trans.level', 2) });
             form.post(
                 route('department-levels.sync', institutionDepartmentId),
-                buildFormOptions(form, success, error, APP_MODULE_KEYS.department_levels),
+                buildFormOptions(form, success, error, APP_MODULE_KEYS.department_levels)
             );
         } catch (error: any) {
             form.setError(error.format());
@@ -118,12 +122,20 @@ export const useDepartmentLevels = () => {
         isLoading.value = false;
     };
 
-    const {levelRequirements: storeLevelRequirements} = storeToRefs(useCreateApplicationFormStore())
-    const levelRequirements =  ref<DepartmentLevelRequirement|null>(storeLevelRequirements?.value ?? null);
+    const {
+        levelRequirements: storeLevelRequirements,
+        o_level_subject_ids,
+        required_level_completed,
+        read_write_acknowledged
+    } = storeToRefs(useCreateApplicationFormStore());
+    const levelRequirements = ref<DepartmentLevelRequirement | null>(storeLevelRequirements?.value ?? null);
     const listLevelRequirements = async (departmentLevelId: string) => {
         isLoading.value = true;
         levelRequirements.value = await HttpService.get(`api/v1/institution-departments/levels/${departmentLevelId}/requirements`);
-        storeLevelRequirements!.value =  levelRequirements.value;
+        storeLevelRequirements!.value = levelRequirements.value;
+        o_level_subject_ids!.value = null;
+        required_level_completed!.value = null;
+        read_write_acknowledged!.value = null;
         isLoading.value = false;
     };
 
@@ -138,6 +150,6 @@ export const useDepartmentLevels = () => {
         listLevelCourses,
         levelCourses,
         levelRequirements,
-        listLevelRequirements,
+        listLevelRequirements
     };
 };

@@ -1,20 +1,66 @@
 <script setup lang="ts">
 import Empty from '@/components/core/util/Empty.vue';
-import GradeComboSelect from '@/components/core/form/combobox/GradeComboSelect.vue';
 import HeadingSmall from '@/components/core/util/HeadingSmall.vue';
 import { DepartmentLevelRequirement } from '@/types/department-meta-data';
-import { InertiaForm } from '@inertiajs/vue3';
-import { CreateApplicationParams } from '@/types/portal';
 import { storeToRefs } from 'pinia';
 import { useCreateApplicationFormStore } from '@/store/portal/useCreateApplicationFormStore';
+import BaseRadioGroup from '@/components/core/form/radio-group/BaseRadioGroup.vue';
+import { onMounted } from 'vue';
+import { RadioGroupOption } from '@/types/forms';
+import { useGrades } from '@/composables/institution/useGrades';
+import { Grade, Subject } from '@/types/institution';
+import SpinnerComponent from '@/components/core/util/SpinnerComponent.vue';
 
 interface Props {
+    isViewOnly?: boolean
     levelRequirements?: DepartmentLevelRequirement | null;
-    form: InertiaForm<CreateApplicationParams>;
 }
 
-defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+    isViewOnly: false
+});
+const { levelRequirements } = props;
+const { listGrades, isLoading, grades } = useGrades();
+
+onMounted(async () => {
+    await listGrades();
+});
 const { o_level_subject_ids } = storeToRefs(useCreateApplicationFormStore());
+const onRadioChange = (value: string) => {
+    const [subjectId, gradeId] = value.split('|');
+    if (!subjectId || !gradeId) return;
+    if (!o_level_subject_ids) {
+        console.warn('o_level_subject_ids ref is undefined');
+        return;
+    }
+    // Ensure it's initialized
+    if (!o_level_subject_ids.value) {
+        o_level_subject_ids.value = {}; // initialize as empty object
+    }
+    // Update the reactive object
+    o_level_subject_ids.value[subjectId] = gradeId;
+};
+
+const getOptionsForSubject = (subject: Subject): RadioGroupOption[] => {
+    if (!subject || !grades.value) return [];
+    return grades.value.map((grade: Grade) => ({
+        value: `${subject.id}|${grade.id}`,
+        label: grade.attributes?.name,
+        inputId: `radio_${subject.id}_${grade.id}`
+    }));
+};
+
+const getGrade = (subject: Subject) => {
+    const subjectId = subject?.id;
+    if (!subjectId) return '';
+
+    const gradeId = o_level_subject_ids?.value?.[subjectId];
+    if (!gradeId) return '';
+
+    const matchedGrade = grades.value?.find(grade => grade.id == gradeId);
+    return matchedGrade?.attributes?.name ?? '';
+};
+
 </script>
 
 <template>
@@ -22,18 +68,32 @@ const { o_level_subject_ids } = storeToRefs(useCreateApplicationFormStore());
     <template v-if="levelRequirements?.relationships?.subjects && levelRequirements.relationships.subjects.length > 0">
         <table class="hava-table my-4">
             <thead class="hava-thead">
-                <tr>
-                    <th class="hava-th" align="left">{{ $tChoice('trans.subject', 1) }}</th>
-                    <th class="hava-th w-[200px]" align="center">{{ $tChoice('trans.grade', 1) }}</th>
-                </tr>
+            <tr>
+                <th class="hava-th" align="left">{{ $tChoice('trans.subject', 1) }}</th>
+                <th class="hava-th" align="center">{{ $tChoice('trans.grade', 1) }}</th>
+            </tr>
             </thead>
             <tbody class="hava-tbody">
-                <tr class="hava-tr" v-for="subject in levelRequirements.relationships.subjects" :key="subject?.id ?? ''">
-                    <td class="hava-td" align="left">{{ subject?.attributes?.name }}</td>
-                    <td class="hava-td w-[200px]" align="center">
-                        <GradeComboSelect :form="form" :is-required="true" :label="''" v-model="o_level_subject_ids" />
-                    </td>
-                </tr>
+            <tr class="hava-tr" v-for="subject in levelRequirements.relationships.subjects" :key="subject?.id ?? ''">
+                <td class="hava-td" align="left">{{ subject?.attributes?.name }}</td>
+                <td class="hava-td" align="center">
+                    <SpinnerComponent class="flex justify-center items-center" v-if="isLoading" />
+                    <template v-else>
+                        <BaseRadioGroup
+                            v-if="!isViewOnly"
+                            class="flex justify-center items-center"
+                            :options="getOptionsForSubject(subject)"
+                            :label-uppercase="true"
+                            :is-required="true"
+                            orientation="horizontal"
+                            @update:modelValue="onRadioChange"
+                        />
+                        <template v-else>
+                            <span>{{ getGrade(subject)}}</span>
+                        </template>
+                    </template>
+                </td>
+            </tr>
             </tbody>
         </table>
     </template>

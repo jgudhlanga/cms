@@ -132,7 +132,6 @@ export function useUtils() {
     const formatZimIdNumber = (id_number: string) => {
         if (!id_number) return;
 
-
         let raw = id_number.replace(/-/g, '');
 
         if (raw.length > 1) {
@@ -140,6 +139,17 @@ export function useUtils() {
         }
 
         return raw;
+    };
+    const getIDType = (idType: string): string | null => {
+        const types: Record<string, string> = {
+            'zimbabwean-national-id-number': 'Zimbabwean ID Number',
+            'foreign-passport-number': 'Foreign Passport Number',
+        };
+        return types[idType] || null;
+    };
+
+    const isNativeCitizen = (idType: string): boolean => {
+        return idType.toLowerCase() === 'zimbabwean-national-id-number';
     };
 
     return {
@@ -163,5 +173,7 @@ export function useUtils() {
         goBack,
         navigateTo,
         formatZimIdNumber,
+        getIDType,
+        isNativeCitizen,
     };
 }

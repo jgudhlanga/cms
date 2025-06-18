@@ -72,10 +72,9 @@ watch(level, async () => {
                 <SpinnerComponent class="flex w-full items-center justify-center" />
             </template>
             <template v-else>
-                {{ levelRequirements?.attributes }}
                 <template v-if="levelRequirements">
                     <template v-if="isItTrue(levelRequirements.attributes.isOLevelRequired)">
-                        <OLevelRequirements :form="form" :level-requirements="levelRequirements" />
+                        <OLevelRequirements :level-requirements="levelRequirements" />
                     </template>
                     <template v-if="levelRequirements.attributes.requiredLevel">
                         <LevelRequirements :level-requirements="levelRequirements" />

@@ -32,7 +32,7 @@ const { listLevelRequirements } = useDepartmentLevels();
 const { user } = props;
 const stepIndex = ref(1);
 const maxStep = 5;
-const breadcrumbs: BreadcrumbItemInterface[] = [{ title: user.attributes?.name }, { transKey: 'my_application' }];
+const breadcrumbs: BreadcrumbItemInterface[] = [{ title: user.attributes?.name }];
 const { id_type, first_name, middle_name, last_name, title, gender, email, level } = storeToRefs(useCreateApplicationFormStore());
 const form = useForm<CreateApplicationParams>({
     course: null,
