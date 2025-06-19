@@ -40,10 +40,6 @@ class UserResource extends JsonResource
                 'email' => $this->email,
                 'tenantId' => $this->tenant_id,
                 'tenant' => $this->tenant?->name,
-                'genderId' => $this->gender_id,
-                'gender' => $this->gender?->title,
-                'titleId' => $this->title_id,
-                'title' => $this->title?->name,
                 $this->mergeWhen($request->routeIs('users.*'), [
                     'createdAt' => $this->created_at,
                     'updatedAt' => $this->updated_at,

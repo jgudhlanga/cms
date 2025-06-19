@@ -40,12 +40,9 @@ class UserRepository extends BaseRepository implements IUserRepository
     {
         return [
             'tenant_id' => $dto->tenant_id,
-            'title_id' => $dto->title_id,
             'first_name' => $dto->first_name,
             'middle_name' => $dto->middle_name,
             'last_name' => $dto->last_name,
-            'gender_id' => $dto->gender_id,
-            'race_id' => $dto->race_id,
             'email' => $dto->email,
             'password' => $dto->password,
         ];

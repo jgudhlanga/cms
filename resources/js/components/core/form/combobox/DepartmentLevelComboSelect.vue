@@ -18,7 +18,7 @@ interface Props {
 const { isLoading, departmentLevels, listDepartmentLevels } = useDepartmentLevels();
 const { isItTrue } = useUtils();
 onMounted(async () => {
-    if (props.institutionDepartmentId) {
+    if (Number(props.institutionDepartmentId ?? '') > 0) {
         await listDepartmentLevels(props.institutionDepartmentId);
     }
 });
@@ -39,7 +39,7 @@ watch(
     () => props.institutionDepartmentId,
     async (newValue) => {
         clearFormErrors(props.form, 'level');
-        if (isItTrue(props.triggerSearch)) {
+        if (isItTrue(props.triggerSearch) && Number(props.institutionDepartmentId ?? '') > 0) {
             await listDepartmentLevels(newValue?.toString() ?? '');
         }
     },

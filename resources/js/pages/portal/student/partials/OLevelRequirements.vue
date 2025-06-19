@@ -12,19 +12,15 @@ import { Grade, Subject } from '@/types/institution';
 import SpinnerComponent from '@/components/core/util/SpinnerComponent.vue';
 
 interface Props {
-    isViewOnly?: boolean
+    isViewOnly?: boolean;
     levelRequirements?: DepartmentLevelRequirement | null;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-    isViewOnly: false
+    isViewOnly: false,
 });
 const { levelRequirements } = props;
 const { listGrades, isLoading, grades } = useGrades();
-
-onMounted(async () => {
-    await listGrades();
-});
 const { o_level_subject_ids } = storeToRefs(useCreateApplicationFormStore());
 const onRadioChange = (value: string) => {
     const [subjectId, gradeId] = value.split('|');
@@ -46,8 +42,21 @@ const getOptionsForSubject = (subject: Subject): RadioGroupOption[] => {
     return grades.value.map((grade: Grade) => ({
         value: `${subject.id}|${grade.id}`,
         label: grade.attributes?.name,
-        inputId: `radio_${subject.id}_${grade.id}`
+        inputId: `radio_${subject.id}_${grade.id}`,
     }));
+};
+
+onMounted(async () => {
+    await listGrades();
+});
+
+const getDefaultOLevels = (subject: Subject) => {
+    if (!subject || !o_level_subject_ids?.value || !grades.value) return null;
+    const gradeId = o_level_subject_ids.value[subject?.id ?? ''];
+    if (!gradeId) return null;
+    const grade = grades.value.find((g: Grade) => g.id == gradeId);
+    if (!grade) return null;
+    return `${subject.id}|${gradeId}`;
 };
 
 const getGrade = (subject: Subject) => {
@@ -57,10 +66,9 @@ const getGrade = (subject: Subject) => {
     const gradeId = o_level_subject_ids?.value?.[subjectId];
     if (!gradeId) return '';
 
-    const matchedGrade = grades.value?.find(grade => grade.id == gradeId);
+    const matchedGrade = grades.value?.find((grade) => grade.id == gradeId);
     return matchedGrade?.attributes?.name ?? '';
 };
-
 </script>
 
 <template>
@@ -68,32 +76,33 @@ const getGrade = (subject: Subject) => {
     <template v-if="levelRequirements?.relationships?.subjects && levelRequirements.relationships.subjects.length > 0">
         <table class="hava-table my-4">
             <thead class="hava-thead">
-            <tr>
-                <th class="hava-th" align="left">{{ $tChoice('trans.subject', 1) }}</th>
-                <th class="hava-th" align="center">{{ $tChoice('trans.grade', 1) }}</th>
-            </tr>
+                <tr>
+                    <th class="hava-th" align="left">{{ $tChoice('trans.subject', 1) }}</th>
+                    <th class="hava-th" align="center">{{ $tChoice('trans.grade', 1) }}</th>
+                </tr>
             </thead>
             <tbody class="hava-tbody">
-            <tr class="hava-tr" v-for="subject in levelRequirements.relationships.subjects" :key="subject?.id ?? ''">
-                <td class="hava-td" align="left">{{ subject?.attributes?.name }}</td>
-                <td class="hava-td" align="center">
-                    <SpinnerComponent class="flex justify-center items-center" v-if="isLoading" />
-                    <template v-else>
-                        <BaseRadioGroup
-                            v-if="!isViewOnly"
-                            class="flex justify-center items-center"
-                            :options="getOptionsForSubject(subject)"
-                            :label-uppercase="true"
-                            :is-required="true"
-                            orientation="horizontal"
-                            @update:modelValue="onRadioChange"
-                        />
+                <tr class="hava-tr" v-for="subject in levelRequirements.relationships.subjects" :key="subject?.id ?? ''">
+                    <td class="hava-td" align="left">{{ subject?.attributes?.name }}</td>
+                    <td class="hava-td" align="center">
+                        <SpinnerComponent class="flex items-center justify-center" v-if="isLoading" />
                         <template v-else>
-                            <span>{{ getGrade(subject)}}</span>
+                            <BaseRadioGroup
+                                v-if="!isViewOnly"
+                                class="flex items-center justify-center"
+                                :options="getOptionsForSubject(subject)"
+                                :default-value="getDefaultOLevels(subject)"
+                                :label-uppercase="true"
+                                :is-required="true"
+                                orientation="horizontal"
+                                @update:modelValue="onRadioChange"
+                            />
+                            <template v-else>
+                                <span>{{ getGrade(subject) }}</span>
+                            </template>
                         </template>
-                    </template>
-                </td>
-            </tr>
+                    </td>
+                </tr>
             </tbody>
         </table>
     </template>

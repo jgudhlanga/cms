@@ -1,7 +1,5 @@
 <script setup lang="ts">
 import { BaseButton } from '@/components/core/button';
-import GenderComboSelect from '@/components/core/form/combobox/GenderComboSelect.vue';
-import TitleComboSelect from '@/components/core/form/combobox/TitleComboSelect.vue';
 import { useGuestPortal } from '@/composables/portal/useGuestPortal';
 import { ButtonSize } from '@/enums/buttons';
 import { TextFieldType } from '@/enums/inputs';
@@ -16,63 +14,53 @@ import TextLink from '@/components/core/util/TextLink.vue';
 import { onMounted } from 'vue';
 import { useAuth } from '@/composables/auth/useAuth';
 
-const { createApplication } = useGuestPortal();
-const { email, first_name, last_name, middle_name, password, title, gender, password_confirmation } = storeToRefs(useCreateUserFormStore());
+const { createPortalUser } = useGuestPortal();
+const {
+    email,
+    first_name,
+    last_name,
+    middle_name,
+    password,
+    password_confirmation
+} = storeToRefs(useCreateUserFormStore());
 const form = useForm<CreateApplicationUserParams>({
     password_confirmation: '',
     email: '',
     first_name: '',
     last_name: '',
     middle_name: '',
-    password: '',
-    title: null,
-    title_id: null,
-    gender: null,
-    gender_id: null,
+    password: ''
 });
 
 const updateForm = () => {
-        form.password_confirmation = password_confirmation.value;
-        form.email = email.value;
-        form.first_name = first_name.value;
-        form.last_name = last_name.value ?? '';
-        form.middle_name = middle_name?.value ?? '';
-        form.password = password.value;
-        form.title = title.value ?? null;
-        form.title_id = title.value?.value ?? null;
-        form.gender = gender.value ?? null;
-        form.gender_id = gender.value?.value ?? null;
+    form.password_confirmation = password_confirmation.value;
+    form.email = email.value;
+    form.first_name = first_name.value;
+    form.last_name = last_name.value ?? '';
+    form.middle_name = middle_name?.value ?? '';
+    form.password = password.value;
 };
 const submitForm = () => {
     updateForm();
-    createApplication(form);
+    createPortalUser(form);
 };
 const { logout } = useAuth();
 
 onMounted(async () => {
     logout();
 });
-
-
 </script>
 
 <template>
     <Head :title="$t('trans.application_form')" />
     <ApplicationCover>
         <header>
-            <h3 class="text-primary my-3 flex items-center justify-center text-lg font-bold uppercase">Harare Polytechnic</h3>
+            <h3 class="text-primary my-3 flex items-center justify-center text-lg font-bold uppercase">Harare
+                Polytechnic</h3>
             <p class="text-muted-foreground my-2 text-sm">{{ $t('trans.application_form_description') }}</p>
         </header>
-        <form @submit.prevent="submitForm()" class="flex  w-2/5 flex-col">
+        <form @submit.prevent="submitForm()" class="flex w-2/5 flex-col">
             <div class="flex w-full flex-col space-y-3 py-8">
-                <TitleComboSelect
-                    :form="form"
-                    v-model="title"
-                    :error="form.errors.title"
-                    :vertical-layout="false"
-                    :label-uppercase="true"
-                    :is-required="true"
-                />
                 <BaseInput
                     input-id="first_name"
                     :label="$t('trans.first_name')"
@@ -102,14 +90,6 @@ onMounted(async () => {
                     :is-required="true"
                     @input="clearFormErrors(form, 'last_name')"
                     :error="form.errors.last_name"
-                />
-                <GenderComboSelect
-                    :form="form"
-                    v-model="gender"
-                    :error="form.errors.gender"
-                    :vertical-layout="false"
-                    :label-uppercase="true"
-                    :is-required="true"
                 />
                 <BaseInput
                     input-id="email"
@@ -147,8 +127,10 @@ onMounted(async () => {
                     :error="form.errors.password_confirmation"
                 />
             </div>
-            <div class="flex flex-col w-full items-center justify-center space-y-4">
-                <BaseButton :size="ButtonSize.lg" type="submit" class="w-1/2" :processing="form.processing">{{ $t('trans.submit') }}</BaseButton>
+            <div class="flex w-full flex-col items-center justify-center space-y-4">
+                <BaseButton :size="ButtonSize.lg" type="submit" class="w-1/2" :processing="form.processing">
+                    {{ $t('trans.submit') }}
+                </BaseButton>
                 <div class="text-muted-foreground text-center text-sm">
                     {{ $t('trans.have_an_account') }}
                     <TextLink :href="route('login')" :tabindex="7">{{ $t('trans.login') }}</TextLink>

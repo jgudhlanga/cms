@@ -17,9 +17,6 @@ return new class extends Migration
             $table->string('first_name');
             $table->string('middle_name')->nullable();
             $table->string('last_name');
-            $table->foreignId('title_id')->constrained();
-            $table->foreignId('gender_id')->constrained();
-            $table->foreignId('race_id')->nullable();
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');

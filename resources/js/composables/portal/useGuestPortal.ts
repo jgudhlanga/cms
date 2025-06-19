@@ -10,10 +10,10 @@ export function useGuestPortal() {
 
     const successMessage = () => trans('trans.item_saved', { item: trans_choice('trans.application', 1) });
     const errorMessage = () => trans('trans.item_save_failure', { item: trans_choice('trans.application', 1) });
-    const createApplication = (form: InertiaForm<any>) => {
+    const createPortalUser = (form: InertiaForm<any>) => {
         try {
             mergeValidationSchema(schemaFields)(
-                ['titleIdSchema', 'lastNameSchema', 'genderSchema', 'emailSchema', 'passwordSchema', 'passwordConfirmationSchema'],
+                ['lastNameSchema', 'emailSchema', 'passwordSchema', 'passwordConfirmationSchema'],
                 schemaFields['firstNameSchema'](),
             ).parse(form);
             form.post(
@@ -29,5 +29,5 @@ export function useGuestPortal() {
         }
     };
 
-    return { schemaFields, createApplication };
+    return { schemaFields, createPortalUser };
 }

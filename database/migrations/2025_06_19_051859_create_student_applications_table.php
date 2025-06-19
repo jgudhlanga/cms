@@ -11,10 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('portal', function (Blueprint $table) {
+        Schema::create('student_applications', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('tenant_id')->index()->constrained();
-            $table->foreignId('user_id')->index()->constrained();
+            $table->foreignId('tenant_id')->constrained();
+            $table->foreignId('student_id')->constrained();
 			$table->timestamps();
 			$table->softDeletes();
         });
@@ -25,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('portal');
+        Schema::dropIfExists('student_applications');
     }
 };

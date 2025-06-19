@@ -111,7 +111,8 @@ const goNext = async (next: () => void) => {
             return;
         }
         next();
-        if (stepIndex.value === 4 && storeRefs.level.value?.value) {
+        if (stepIndex.value === 4 && storeRefs.level.value?.value != null) {
+            console.log('AddEditApplication')
             await listLevelRequirements(storeRefs.level.value.value.toString());
         }
     } catch (error: any) {

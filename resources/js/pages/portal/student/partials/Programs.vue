@@ -14,6 +14,7 @@ import { CreateApplicationParams } from '@/types/portal';
 import { InertiaForm } from '@inertiajs/vue3';
 import { storeToRefs } from 'pinia';
 import { ref, watch } from 'vue';
+import { clearFormErrors } from '@/lib/forms';
 
 const { department, level, course } = storeToRefs(useCreateApplicationFormStore());
 const { listLevelRequirements, levelRequirements, isLoading } = useDepartmentLevels();
@@ -22,7 +23,8 @@ interface Props {
     form: InertiaForm<CreateApplicationParams>;
 }
 
-defineProps<Props>();
+const props = defineProps<Props>();
+const {form} = props;
 const { isItTrue } = useUtils();
 const courseDisabled = ref(false);
 
@@ -30,12 +32,19 @@ watch(department, async () => {
     level.value = null;
     courseDisabled.value = true;
     levelRequirements.value = null;
+    clearFormErrors(form, 'level');
+    clearFormErrors(form, 'course');
 });
 
 watch(level, async () => {
     course.value = null;
     courseDisabled.value = level.value === null;
     await listLevelRequirements(level.value?.value?.toString() ?? '');
+    clearFormErrors(form, 'level');
+    clearFormErrors(form, 'course');
+});
+watch(course, async () => {
+    clearFormErrors(form, 'course');
 });
 </script>
 

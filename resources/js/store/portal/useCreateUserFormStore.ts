@@ -9,12 +9,8 @@ export const useCreateUserFormStore = defineStore('portal-application-user-form'
             last_name: '',
             middle_name: '',
             password: '',
-            password_confirmation: '',
-            title: null,
-            title_id: null,
-            gender: null,
-            gender_id: null,
+            password_confirmation: ''
         };
     },
-    persist: true,
+    persist: true
 });
