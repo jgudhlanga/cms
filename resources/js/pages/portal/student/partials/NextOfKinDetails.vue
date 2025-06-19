@@ -15,6 +15,7 @@ const {
     next_of_kin_phone_number, relationship, next_of_kin_address_1, next_of_kin_address_2, next_of_kin_address_3, next_of_kin_address_4,
 } = storeToRefs(useCreateApplicationFormStore());
 
+
 const props = defineProps<{ form: InertiaForm<CreateApplicationParams> }>();
 const { form } = props;
 </script>
@@ -61,6 +62,7 @@ const { form } = props;
                 v-model="next_of_kin_address_1"
                 placeholder="enter address line 1 "
                 :label-uppercase="true"
+                @input="clearFormErrors(form, 'next_of_kin_address_1')"
                 :error="form.errors.next_of_kin_address_1"
                 :is-required="true"
             />
@@ -70,6 +72,7 @@ const { form } = props;
                 v-model="next_of_kin_address_2"
                 placeholder="enter address line 2"
                 :label-uppercase="true"
+                @input="clearFormErrors(form, 'next_of_kin_address_2')"
                 :error="form.errors.next_of_kin_address_2"
                 :is-required="true"
             />
@@ -79,6 +82,7 @@ const { form } = props;
                 v-model="next_of_kin_address_3"
                 placeholder="enter address line 3"
                 :label-uppercase="true"
+                @input="clearFormErrors(form, 'next_of_kin_address_3')"
                 :error="form.errors.next_of_kin_address_3"
                 :is-required="true"
             />

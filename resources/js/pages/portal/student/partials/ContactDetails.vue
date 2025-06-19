@@ -57,6 +57,7 @@ const { form } = props;
                 v-model="address_1"
                 placeholder="enter address line 1 "
                 :label-uppercase="true"
+                @input="clearFormErrors(form, 'address_1')"
                 :error="form.errors.address_1"
                 :is-required="true"
             />
@@ -64,6 +65,7 @@ const { form } = props;
                 v-model="address_2"
                 placeholder="enter address line 2"
                 :label-uppercase="true"
+                @input="clearFormErrors(form, 'address_2')"
                 :error="form.errors.address_2"
                 :is-required="true"
             />
@@ -71,6 +73,7 @@ const { form } = props;
                 v-model="address_3"
                 placeholder="enter address line 3"
                 :label-uppercase="true"
+                @input="clearFormErrors(form, 'address_3')"
                 :error="form.errors.address_3"
                 :is-required="true"
             />
@@ -78,6 +81,7 @@ const { form } = props;
                 v-model="address_4"
                 placeholder="enter address line 4"
                 :label-uppercase="true"
+                @input="clearFormErrors(form, 'address_4')"
                 :error="form.errors.address_4"
             />
         </div>

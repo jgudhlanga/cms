@@ -2,12 +2,12 @@
 import BaseCard from '@/components/core/card/BaseCard.vue';
 import LabelValue from '@/components/core/util/LabelValue.vue';
 import { useUtils } from '@/composables/core/useUtils';
+import LevelRequirements from '@/pages/portal/student/partials/LevelRequirements.vue';
+import OLevelRequirements from '@/pages/portal/student/partials/OLevelRequirements.vue';
+import SDPRequirements from '@/pages/portal/student/partials/SDPRequirements.vue';
 import { useCreateApplicationFormStore } from '@/store/portal/useCreateApplicationFormStore';
 import { ValueAndLabel } from '@/types/utils';
 import { storeToRefs } from 'pinia';
-import SDPRequirements from '@/pages/portal/student/partials/SDPRequirements.vue';
-import OLevelRequirements from '@/pages/portal/student/partials/OLevelRequirements.vue';
-import LevelRequirements from '@/pages/portal/student/partials/LevelRequirements.vue';
 
 const {
     email,
@@ -40,9 +40,6 @@ const {
     course,
     level,
     levelRequirements,
-    o_level_subject_ids,
-    required_level_completed,
-    read_write_acknowledged,
 } = storeToRefs(useCreateApplicationFormStore());
 const { formatDate, isItTrue } = useUtils();
 const { getIDType, isNativeCitizen } = useUtils();
@@ -139,7 +136,7 @@ const programDetails: ValueAndLabel[] = [
                 :value="program.value"
             />
         </div>
-        <div class="flex flex-col mt-5" v-if="levelRequirements">
+        <div class="mt-5 flex flex-col" v-if="levelRequirements">
             <template v-if="isItTrue(levelRequirements.attributes.isOLevelRequired)">
                 <OLevelRequirements :level-requirements="levelRequirements" :is-view-only="true" />
             </template>

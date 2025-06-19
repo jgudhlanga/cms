@@ -113,7 +113,6 @@ const defaultIdType = ref(id_type.value ?? 'zimbabwean-national-id-number');
                     @input="clearFormErrors(form, 'study_permit_number')"
                     :error="form.errors.study_permit_number"
                     :label-uppercase="true"
-                    :is-required="true"
                 />
             </template>
             <DateOfBirth v-model="date_of_birth" input-id="date_of_birth" :is-required="true" :label-uppercase="true" />
