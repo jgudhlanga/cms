@@ -97,10 +97,7 @@ const options = computed(() => {
 const updateLevel = () => {
     form.is_o_level_required = isOLevelRequired.value;
     form.only_read_write_required = onlyReadWriteRequired.value;
-    storeDepartmentLevelRequirements(departmentLevel.id?.toString() ?? '', form);
-    navigateTo(
-        route('institution-departments.show', getIdParams(institutionDepartment?.attributes?.departmentId.toString() ?? '')),
-    )
+    storeDepartmentLevelRequirements(departmentLevel.id?.toString() ?? '', form, institutionDepartment?.attributes?.departmentId.toString() ?? '');
 };
 </script>
 

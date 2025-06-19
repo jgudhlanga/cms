@@ -58,8 +58,7 @@ const updateModel = () => {
 
 const { updateDepartmentCourses } = useDepartmentCourses();
 const updateCourse = () => {
-    updateDepartmentCourses(departmentCourse?.id?.toString() ?? '', form);
-    navigateTo(route('institution-departments.show', getIdParams(institutionDepartment?.attributes?.departmentId.toString() ?? '')));
+    updateDepartmentCourses(departmentCourse?.id?.toString() ?? '', form, institutionDepartment?.attributes?.departmentId.toString() ?? '');
 };
 </script>
 

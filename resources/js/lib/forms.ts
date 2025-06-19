@@ -20,6 +20,7 @@ const onFormSuccess = (message: string, modalToClose?: string, onSuccessAction?:
     if (onSuccessAction) {
         onSuccessAction();
     }
+
     successAlert(message);
     router.visit(window.location.href, { replace: true });
 };
