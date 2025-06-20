@@ -210,6 +210,7 @@ onMounted(() => {
                 </div>
                 <!-- BUTTONS -->
                 <BaseStepperButtons
+                    :processing="form.processing"
                     :step-index="stepIndex"
                     :prev-step-action="() => prevStep()"
                     :next-step-action="() => goNext(() => nextStep())"

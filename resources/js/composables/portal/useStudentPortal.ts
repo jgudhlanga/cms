@@ -29,27 +29,32 @@ export function useStudentPortal() {
                     return moreActionButton(!!row.original?.attributes?.deletedAt, [
                         {
                             key: 'edit',
-                            action: () => {},
+                            action: () => {
+                            }
                         },
                         {
                             key: 'view',
-                            action: () => {},
+                            action: () => {
+                            }
                         },
                         {
                             key: 'archive',
-                            action: () => {},
+                            action: () => {
+                            }
                         },
                         {
                             key: 'restore',
-                            action: () => {},
+                            action: () => {
+                            }
                         },
                         {
                             key: 'delete',
-                            action: () => {},
-                        },
+                            action: () => {
+                            }
+                        }
                     ]);
-                },
-            },
+                }
+            }
         ];
     };
 
@@ -58,7 +63,7 @@ export function useStudentPortal() {
         { step: 2, title: trans('trans.contact_details'), description: 'trans.contact_details_description' },
         { step: 3, title: trans('trans.next_of_kin'), description: 'trans.next_of_kin_description' },
         { step: 4, title: trans('trans.programs'), description: 'trans.program_description' },
-        { step: 5, title: trans('trans.confirmation'), description: 'trans.confirmation_description' },
+        { step: 5, title: trans('trans.confirmation'), description: 'trans.confirmation_description' }
     ];
 
     const schemaFields = useSharedFormSchema() as Record<string, () => ZodObject<any, any>>;
@@ -74,7 +79,7 @@ export function useStudentPortal() {
         const personalDetails = mergeValidationSchema(schemaFields)(personal, schemaFields['titleSchema']());
         const contacts = mergeValidationSchema(schemaFields)(
             ['addressOneSchema', 'addressTwoSchema', 'addressThreeSchema', 'emailSchema'],
-            schemaFields['phoneNumberSchema'](),
+            schemaFields['phoneNumberSchema']()
         );
         const nextOfKin = mergeValidationSchema(schemaFields)(
             [
@@ -82,9 +87,9 @@ export function useStudentPortal() {
                 'nextOfKinAddressOneSchema',
                 'nextOfKinAddressTwoSchema',
                 'nextOfKinAddressThreeSchema',
-                'relationshipSchema',
+                'relationshipSchema'
             ],
-            schemaFields['nextOfKinNameSchema'](),
+            schemaFields['nextOfKinNameSchema']()
         );
         const programs = mergeValidationSchema(schemaFields)(['levelSchema', 'courseSchema'], schemaFields['departmentSchema']());
         return [personalDetails, contacts, nextOfKin, programs];
@@ -97,9 +102,9 @@ export function useStudentPortal() {
         const { user } = props?.auth;
         try {
             form.post(route('portal.store-application', getIdParams(user.id ?? '')), buildFormOptions(form, successMessage(), errorMessage()));
-            //const store = useCreateApplicationFormStore();
-            //store.$reset();
-            //store.$dispose();
+            const store = useCreateApplicationFormStore();
+            store.$reset();
+            store.$dispose();
         } catch (error: any) {
             form.setError(error.format());
         }
