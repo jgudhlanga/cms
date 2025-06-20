@@ -1,13 +1,10 @@
 <script setup lang="ts">
 import PageContainer from '@/components/core/page/PageContainer.vue';
-import { AuthObject, DataFilters, DataListProps } from '@/types/data-pagination';
+import { AuthObject, DataFilters } from '@/types/data-pagination';
 import { BreadcrumbItemInterface } from '@/types/ui';
-import { User } from '@/types/users';
 import { Head } from '@inertiajs/vue3';
 
 interface Props {
-    user: User;
-    applications: DataListProps;
     trashedCount: any;
     filters: DataFilters;
     auth: AuthObject;
@@ -15,7 +12,7 @@ interface Props {
 }
 
 const props = defineProps<Props>();
-const { user } = props;
+const { user } = props.auth;
 
 const breadcrumbs: BreadcrumbItemInterface[] = [{ title: user.attributes?.name }, { transChoiceKey: 'dashboard' }];
 </script>

@@ -17,6 +17,7 @@ const placeHolderImage = computed(() => {
 </script>
 <template>
 	<img
+        v-bind="$attrs"
 		:class="twMerge('', classes)"
 		:src="src !== '' ? src : placeHolderImage"
 		alt="image"

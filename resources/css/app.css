@@ -187,8 +187,8 @@
     }
 
     .bg-endless {
-        @apply rounded-tl-xl rounded-tr-xl;
-
+        @apply rounded-tl-md rounded-tr-md opacity-40;
+        background-image: url("https://hrepoly.test/assets/images/endless.svg");
         background-position: center;
         background-repeat: no-repeat;
         background-size: cover;
