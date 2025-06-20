@@ -21,7 +21,9 @@ return new class extends Migration {
             $table->enum('id_type', ['zimbabwean-national-id-number', 'foreign-passport-number']);
             $table->string('id_number')->nullable();
             $table->string('passport_number')->nullable();
+            $table->foreignId('country_id')->nullable();
             $table->string('study_permit_number')->nullable();
+            $table->date('date_of_birth');
             $table->timestamps();
             $table->softDeletes();
         });

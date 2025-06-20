@@ -11,7 +11,6 @@ use App\Http\Resources\Users\UserResource;
 use App\Jobs\Users\SendVerificationEmailJob;
 use App\Models\Tenants\Tenant;
 use App\Models\Users\User;
-use App\Repositories\Applications\interface\IApplicationRepository;
 use App\Repositories\Users\interface\IUserRepository;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -19,7 +18,7 @@ use Inertia\Inertia;
 class PortalController extends Controller
 {
 
-    public function __construct(protected IUserRepository $userRepository, protected IApplicationRepository $applicationRepository)
+    public function __construct(protected IUserRepository $userRepository)
     {
 
     }

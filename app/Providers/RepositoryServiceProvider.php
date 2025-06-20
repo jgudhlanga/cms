@@ -53,21 +53,19 @@ use App\Repositories\Races\RaceRepository;
 use App\Repositories\Relationships\interface\IRelationshipRepository;
 use App\Repositories\Relationships\RelationshipRepository;
 use App\Repositories\Shared\AddressRepository;
-use App\Repositories\Shared\BankDetailRepository;
 use App\Repositories\Shared\ContactRepository;
 use App\Repositories\Shared\interface\IAddressRepository;
-use App\Repositories\Shared\interface\IBankDetailRepository;
 use App\Repositories\Shared\interface\IContactRepository;
 use App\Repositories\Statuses\interface\IMaritalStatusRepository;
 use App\Repositories\Statuses\interface\IStatusRepository;
 use App\Repositories\Statuses\MaritalStatusRepository;
 use App\Repositories\Statuses\StatusRepository;
+use App\Repositories\Students\interface\IStudentRepository;
+use App\Repositories\Students\StudentRepository;
 use App\Repositories\Titles\interface\ITitleRepository;
 use App\Repositories\Titles\TitleRepository;
 use App\Repositories\Users\interface\IUserRepository;
 use App\Repositories\Users\UserRepository;
-use App\Repositories\Applications\interface\IApplicationRepository;
-use App\Repositories\Applications\ApplicationRepository;
 use Illuminate\Support\ServiceProvider;
 
 class RepositoryServiceProvider extends ServiceProvider
@@ -85,7 +83,7 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->sharedRepositories();
         $this->institutionRepositories();
         $this->userRepositories();
-        $this->applicationRepositories();
+        $this->studentRepositories();
     }
 
     public function boot(): void
@@ -126,7 +124,6 @@ class RepositoryServiceProvider extends ServiceProvider
     public function sharedRepositories(): void
     {
         $this->app->bind(IAddressRepository::class, AddressRepository::class);
-        $this->app->bind(IBankDetailRepository::class, BankDetailRepository::class);
         $this->app->bind(IContactRepository::class, ContactRepository::class);
     }
 
@@ -149,9 +146,9 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(IUserRepository::class, UserRepository::class);
     }
 
-    public function applicationRepositories(): void
+    public function studentRepositories(): void
     {
-        $this->app->bind(IApplicationRepository::class, ApplicationRepository::class);
+        $this->app->bind(IStudentRepository::class, StudentRepository::class);
     }
 
 }

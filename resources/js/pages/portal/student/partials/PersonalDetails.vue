@@ -96,7 +96,7 @@ const defaultIdType = ref(id_type.value ?? 'zimbabwean-national-id-number');
         </div>
         <div class="grid-col-1 mt-4 grid gap-3 md:grid-cols-3">
             <template v-if="id_type === 'zimbabwean-national-id-number'">
-                <IdNumber v-model="id_number" :is-required="true" :error="form.errors.id_number" />
+                <IdNumber v-model="id_number" :is-required="true" @input="clearFormErrors(form, 'id_number')" :error="form.errors.id_number" />
             </template>
             <template v-else>
                 <PassportNumber

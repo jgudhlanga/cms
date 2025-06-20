@@ -11,10 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('student_applications', function (Blueprint $table) {
+        Schema::create('next_of_kin', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('tenant_id')->constrained();
-            $table->foreignId('student_id')->constrained();
+            $table->foreignId('tenant_id')->index()->constrained();
+            $table->morphs('kinnable');
+            $table->string('name');
+            $table->foreignId('relationship_id');
 			$table->timestamps();
 			$table->softDeletes();
         });
@@ -25,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('student_applications');
+        Schema::dropIfExists('next_of_kin');
     }
 };

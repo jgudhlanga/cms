@@ -111,7 +111,7 @@ export const useSharedFormSchema = () => {
         });
     const titleSchema = () =>
         z.object({
-            gender: z.any().refine((val) => validateSelectOption(val), {
+            title: z.any().refine((val) => validateSelectOption(val), {
                 message: trans('trans.select_valid_field', { field: trans_choice('trans.title', 1) }),
             }),
         });

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models\Students;
+namespace App\Models\Shared;
 
 use App\Traits\BelongsToTenant;
 use App\Traits\Filterable;
@@ -17,7 +17,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @mixin Builder
  * @method static filter(Filter $filters)
  */
-class StudentApplication extends Model
+class NextOfKin extends Model
 {
    use HasFactory, SoftDeletes, Filterable, BelongsToTenant,Paginatable, LogsActivity;
 
@@ -27,7 +27,7 @@ class StudentApplication extends Model
    	{
    		return LogOptions::defaults()
    			->logFillable()
-   			->useLogName('StudentApplication')
+   			->useLogName('NextOfKin')
    			->logOnlyDirty()
    			->dontSubmitEmptyLogs();
    	}

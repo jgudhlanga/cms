@@ -1,20 +1,12 @@
 <?php
 
 use App\Http\Controllers\Shared\AddressController;
-use App\Http\Controllers\Shared\BankDetailController;
 use App\Http\Controllers\Shared\ContactController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth')->group(function () {
 	# ==================================== SCHEMES ============================================
 	Route::prefix('shared')->group(function () {
-		# =================================== BANK DETAILS ======================================== #
-		Route::prefix('bank-details')->group(function () {
-			Route::put('{bank_detail}/restore', [BankDetailController::class, 'restore'])->name('bank-details.restore');
-			Route::put('{bank_detail}/update', [BankDetailController::class, 'update'])->name('bank-details.update');
-			Route::delete('{bank_detail}/force-delete', [BankDetailController::class, 'forceDelete'])->name('bank-details.force-delete');
-			Route::delete('{bank_detail}/archive', [BankDetailController::class, 'destroy'])->name('bank-details.destroy');
-		});
 		# =================================== CONTACT DETAILS ======================================== #
 		Route::prefix('contacts')->group(function () {
 			Route::put('{contact}/restore', [ContactController::class, 'restore'])->name('contacts.restore');

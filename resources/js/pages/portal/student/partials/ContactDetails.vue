@@ -46,7 +46,8 @@ const { form } = props;
                 v-model="email"
                 :label-uppercase="true"
                 :is-required="true"
-                :disabled="true"
+                @input="clearFormErrors(form, 'email')"
+                :error="form.errors.email"
             />
         </div>
         <div class="flex flex-col">

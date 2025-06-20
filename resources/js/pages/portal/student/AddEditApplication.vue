@@ -106,13 +106,16 @@ const goNext = async (next: () => void) => {
     try {
         const schema = applicationFormSchema(isNativeCitizen(storeRefs.id_type.value ?? ''));
         schema[stepIndex.value - 1].parse(form);
-        if (storeRefs.date_of_birth.value == null) {
-            errorAlert(trans('trans.enter_required_field', { field: trans('trans.date_of_birth').toLowerCase() }));
+        if (!storeRefs.date_of_birth.value) {
+            errorAlert(
+                trans('trans.enter_required_field', {
+                    field: trans('trans.date_of_birth').toLowerCase(),
+                }),
+            );
             return;
         }
         next();
         if (stepIndex.value === 4 && storeRefs.level.value?.value != null) {
-            console.log('AddEditApplication')
             await listLevelRequirements(storeRefs.level.value.value.toString());
         }
     } catch (error: any) {
@@ -127,8 +130,6 @@ const populateInitialForm = () => {
     storeRefs.middle_name.value = attrs?.middle_name ?? '';
     storeRefs.last_name.value = attrs?.last_name;
     storeRefs.email.value = attrs?.email ?? '';
-    storeRefs.title.value = { value: attrs?.titleId, label: attrs?.title };
-    storeRefs.gender.value = { value: attrs?.genderId, label: attrs?.gender };
     storeRefs.id_type.value ||= 'zimbabwean-national-id-number';
 };
 

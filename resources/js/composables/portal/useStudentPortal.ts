@@ -73,7 +73,7 @@ export function useStudentPortal() {
         }
         const personalDetails = mergeValidationSchema(schemaFields)(personal, schemaFields['titleSchema']());
         const contacts = mergeValidationSchema(schemaFields)(
-            ['addressOneSchema', 'addressTwoSchema', 'addressThreeSchema'],
+            ['addressOneSchema', 'addressTwoSchema', 'addressThreeSchema', 'emailSchema'],
             schemaFields['phoneNumberSchema'](),
         );
         const nextOfKin = mergeValidationSchema(schemaFields)(
