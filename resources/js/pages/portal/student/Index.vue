@@ -17,9 +17,9 @@ interface Props {
 const props = defineProps<Props>();
 const { user } = props;
 
-const breadcrumbs: BreadcrumbItemInterface[] = [{ title: user.attributes?.name }, { transKey: 'my_dashboard' }];
+const breadcrumbs: BreadcrumbItemInterface[] = [{ title: user.attributes?.name }, { transChoiceKey: 'dashboard' }];
 </script>
 <template>
-    <Head :title="$t('trans.my_dashboard')" />
+    <Head :title="$tChoice('trans.dashboard', 1)" />
     <PageContainer :breadcrumbs="breadcrumbs"> My Dashboard </PageContainer>
 </template>

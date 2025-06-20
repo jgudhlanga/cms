@@ -12,8 +12,9 @@ Route::prefix('portal')->group(function () {
         Route::get('application/{user}', [PortalController::class, 'createApplication'])->name('portal.application');
         Route::get('{user}/personal-details', [PortalController::class, 'personal'])->name('portal.personal-details');
         Route::get('{user}/contacts', [PortalController::class, 'contacts'])->name('portal.contacts');
-        Route::get('{user}/addresses', [PortalController::class, 'addresses'])->name('portal.addresses');
-        Route::get('{user}/next-of-kin', [PortalController::class, 'nextOfKin'])->name('portal.next-of-kin');
+        Route::get('{user}/sponsors', [PortalController::class, 'sponsors'])->name('portal.sponsors');
+        Route::get('{user}/financial-record', [PortalController::class, 'financialRecord'])->name('portal.financial-record');
+        Route::get('{user}/academic-record', [PortalController::class, 'academicRecord'])->name('portal.academic-record');
         Route::get('{user}/programs', [PortalController::class, 'programs'])->name('portal.programs');
         Route::post('{user}/application', [PortalController::class, 'storeApplication'])->name('portal.store-application');
     });

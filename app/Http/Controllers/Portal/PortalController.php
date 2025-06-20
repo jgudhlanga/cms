@@ -87,27 +87,33 @@ class PortalController extends Controller
         return Inertia::render('portal/student/PersonalDetails', compact('user'));
     }
 
+    public function programs(User $user)
+    {
+        $user = UserResource::make($user);
+        return Inertia::render('portal/student/Programs', compact('user'));
+    }
+
     public function contacts(User $user)
     {
         $user = UserResource::make($user);
         return Inertia::render('portal/student/Contacts', compact('user'));
     }
 
-    public function addresses(User $user)
+    public function sponsors(User $user)
     {
         $user = UserResource::make($user);
-        return Inertia::render('portal/student/Addresses', compact('user'));
+        return Inertia::render('portal/student/Sponsors', compact('user'));
     }
 
-    public function nextOfKin(User $user)
+    public function financialRecord(User $user)
     {
         $user = UserResource::make($user);
-        return Inertia::render('portal/student/NextOfKin', compact('user'));
+        return Inertia::render('portal/student/FinancialRecord', compact('user'));
     }
 
-    public function programs(User $user)
+    public function academicRecord(User $user)
     {
         $user = UserResource::make($user);
-        return Inertia::render('portal/student/Programs', compact('user'));
+        return Inertia::render('portal/student/AcademicRecord', compact('user'));
     }
 }
