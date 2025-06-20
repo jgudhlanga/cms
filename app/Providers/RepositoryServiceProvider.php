@@ -62,7 +62,9 @@ use App\Repositories\Statuses\interface\IMaritalStatusRepository;
 use App\Repositories\Statuses\interface\IStatusRepository;
 use App\Repositories\Statuses\MaritalStatusRepository;
 use App\Repositories\Statuses\StatusRepository;
+use App\Repositories\Students\interface\IStudentProgramRepository;
 use App\Repositories\Students\interface\IStudentRepository;
+use App\Repositories\Students\StudentProgramRepository;
 use App\Repositories\Students\StudentRepository;
 use App\Repositories\Titles\interface\ITitleRepository;
 use App\Repositories\Titles\TitleRepository;
@@ -152,6 +154,7 @@ class RepositoryServiceProvider extends ServiceProvider
     public function studentRepositories(): void
     {
         $this->app->bind(IStudentRepository::class, StudentRepository::class);
+        $this->app->bind(IStudentProgramRepository::class, StudentProgramRepository::class);
     }
 
 }

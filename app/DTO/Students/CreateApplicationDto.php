@@ -43,7 +43,7 @@ readonly class CreateApplicationDto
         public int     $department_id,
         public int     $level_id,
         public int     $course_id,
-        public ?array  $o_level_subject_ids,
+        public ?array  $o_level_subjects,
         public ?bool   $required_level_completed,
         public ?bool   $read_write_acknowledged,
     )
@@ -88,7 +88,7 @@ readonly class CreateApplicationDto
             department_id: $request->department_id,
             level_id: $request->level_id,
             course_id: $request->course_id,
-            o_level_subject_ids: $request->o_level_subject_ids,
+            o_level_subjects: $request->o_level_subject_ids,
             required_level_completed: $request->required_level_completed,
             read_write_acknowledged: $request->read_write_acknowledged,
         );

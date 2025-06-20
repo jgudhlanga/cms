@@ -15,5 +15,6 @@ Route::prefix('portal')->group(function () {
         Route::get('{user}/addresses', [PortalController::class, 'addresses'])->name('portal.addresses');
         Route::get('{user}/next-of-kin', [PortalController::class, 'nextOfKin'])->name('portal.next-of-kin');
         Route::get('{user}/programs', [PortalController::class, 'programs'])->name('portal.programs');
+        Route::post('{user}/application', [PortalController::class, 'storeApplication'])->name('portal.store-application');
     });
 });

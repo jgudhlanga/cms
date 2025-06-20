@@ -17,9 +17,11 @@ return new class extends Migration {
             $table->foreignId('department_id')->constrained();
             $table->foreignId('level_id')->constrained();
             $table->foreignId('course_id')->constrained();
+            $table->foreignId('status_id')->nullable();
             $table->json('o_level_subjects')->nullable();
             $table->boolean('required_level_completed')->nullable();
             $table->boolean('read_write_acknowledged')->nullable();
+            $table->string('application_tracking_number')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });

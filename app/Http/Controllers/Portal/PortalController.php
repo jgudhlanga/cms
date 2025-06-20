@@ -2,15 +2,18 @@
 
 namespace App\Http\Controllers\Portal;
 
+use App\DTO\Students\CreateApplicationDto;
 use App\DTO\Users\UserDto;
 use App\Enums\RoleEnum;
 use App\Enums\TenantEnum;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Students\CreateApplicationRequest;
 use App\Http\Requests\Users\CreateUserRequest;
 use App\Http\Resources\Users\UserResource;
 use App\Jobs\Users\SendVerificationEmailJob;
 use App\Models\Tenants\Tenant;
 use App\Models\Users\User;
+use App\Repositories\Students\interface\IStudentRepository;
 use App\Repositories\Users\interface\IUserRepository;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -18,7 +21,7 @@ use Inertia\Inertia;
 class PortalController extends Controller
 {
 
-    public function __construct(protected IUserRepository $userRepository)
+    public function __construct(protected IUserRepository $userRepository, protected IStudentRepository $studentRepository)
     {
 
     }
@@ -68,6 +71,14 @@ class PortalController extends Controller
     {
         $user = UserResource::make($user);
         return Inertia::render('portal/student/AddEditApplication', compact('user'));
+    }
+
+    public function storeApplication(CreateApplicationRequest $request, User $user)
+    {
+        $this->studentRepository->create(CreateApplicationDto::fromCreateApplicationRequest($request, $user));
+        // we need to and email with a tracking number
+        // we should redirect to a confirmation page
+        return to_route('portal.index', compact('user'));
     }
 
     public function personal(User $user)

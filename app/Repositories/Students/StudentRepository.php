@@ -6,6 +6,7 @@ use App\DTO\Shared\AddressDto;
 use App\DTO\Shared\ContactDto;
 use App\DTO\Shared\NextOfKinDto;
 use App\DTO\Students\CreateApplicationDto;
+use App\DTO\Students\StudentProgramDto;
 use App\Http\Filters\Students\StudentFilter;
 use App\Models\Shared\NextOfKin;
 use App\Models\Students\Student;
@@ -13,15 +14,17 @@ use App\Repositories\Base\BaseRepository;
 use App\Repositories\Shared\interface\IAddressRepository;
 use App\Repositories\Shared\interface\IContactRepository;
 use App\Repositories\Shared\interface\INextOfKinRepository;
+use App\Repositories\Students\interface\IStudentProgramRepository;
 use App\Repositories\Students\interface\IStudentRepository;
 
 class StudentRepository extends BaseRepository implements IStudentRepository
 {
     public function __construct(
-        protected Student              $student,
-        protected IAddressRepository   $addressRepository,
-        protected IContactRepository   $contactRepository,
-        protected INextOfKinRepository $nextOfKinRepository,
+        protected Student                   $student,
+        protected IAddressRepository        $addressRepository,
+        protected IContactRepository        $contactRepository,
+        protected INextOfKinRepository      $nextOfKinRepository,
+        protected IStudentProgramRepository $studentProgramRepository,
     )
     {
         parent::__construct($this->student);
@@ -30,6 +33,7 @@ class StudentRepository extends BaseRepository implements IStudentRepository
     public function create(CreateApplicationDto $dto)
     {
         $student = $this->student->create($this->getFields($dto))->refresh();
+        $this->saveProgram($student, $dto);
         $this->saveContact($student, $dto);
         $this->saveAddress($student, $dto);
         $this->saveNextOfKin($student, $dto);
@@ -67,6 +71,20 @@ class StudentRepository extends BaseRepository implements IStudentRepository
             'study_permit_number' => $dto->study_permit_number,
             'date_of_birth' => $dto->date_of_birth,
         ];
+    }
+
+    private function saveProgram(Student $student, CreateApplicationDto $dto): void
+    {
+        $programDto = new StudentProgramDto(
+            student_id: $student->id,
+            department_id: $dto->department_id,
+            level_id: $dto->level_id,
+            course_id: $dto->course_id,
+            o_level_subjects: $dto->o_level_subjects,
+            required_level_completed: $dto->required_level_completed,
+            read_write_acknowledged: $dto->read_write_acknowledged,
+        );
+        $this->studentProgramRepository->create($programDto);
     }
 
     private function saveContact(Student $student, CreateApplicationDto $dto): void
@@ -108,11 +126,11 @@ class StudentRepository extends BaseRepository implements IStudentRepository
             relationship_id: $dto->relationship_id,
 
         );
-       $nextOfKin =  $this->nextOfKinRepository->create($student, $nextOfKinDto);
-       //create contact
+        $nextOfKin = $this->nextOfKinRepository->create($student, $nextOfKinDto);
+        //create contact
         $this->createNextOfKinContact($nextOfKin, $dto);
-       //create address
-       $this->createNextOfKinAddress($nextOfKin, $dto);
+        //create address
+        $this->createNextOfKinAddress($nextOfKin, $dto);
     }
 
     private function createNextOfKinContact(NextOfKin $nextOfKin, CreateApplicationDto $dto): void

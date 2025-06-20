@@ -30,7 +30,9 @@ class StudentProgram extends Model
         'course_id',
         'o_level_subjects',
         'required_level_completed',
-        'read_write_acknowledged'
+        'read_write_acknowledged',
+        'application_tracking_number',
+        'status_id',
     ];
 
     protected $casts = [

@@ -3,7 +3,7 @@ import { useSharedFormSchema } from '@/composables/core/useSharedFormSchema';
 import { buildFormOptions, mergeValidationSchema } from '@/lib/forms';
 import { getIdParams } from '@/lib/utils';
 import { useCreateApplicationFormStore } from '@/store/portal/useCreateApplicationFormStore';
-import { Auth } from '@/types';
+import { Auth, PageProps } from '@/types';
 import { Step } from '@/types/forms';
 import { AddressType } from '@/types/settings';
 import { InertiaForm, usePage } from '@inertiajs/vue3';
@@ -93,11 +93,13 @@ export function useStudentPortal() {
     const successMessage = () => trans('trans.item_saved', { item: trans_choice('trans.application', 1) });
     const errorMessage = () => trans('trans.item_save_failure', { item: trans_choice('trans.application', 1) });
     const saveApplication = (form: InertiaForm<any>) => {
+        const { props } = usePage<PageProps>();
+        const { user } = props?.auth;
         try {
-            form.post('', buildFormOptions(form, successMessage(), errorMessage()));
-            const store = useCreateApplicationFormStore();
-            store.$reset();
-            store.$dispose();
+            form.post(route('portal.store-application', getIdParams(user.id ?? '')), buildFormOptions(form, successMessage(), errorMessage()));
+            //const store = useCreateApplicationFormStore();
+            //store.$reset();
+            //store.$dispose();
         } catch (error: any) {
             form.setError(error.format());
         }
