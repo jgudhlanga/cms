@@ -16,6 +16,7 @@ use App\Repositories\Shared\interface\IContactRepository;
 use App\Repositories\Shared\interface\INextOfKinRepository;
 use App\Repositories\Students\interface\IStudentProgramRepository;
 use App\Repositories\Students\interface\IStudentRepository;
+use Carbon\Carbon;
 
 class StudentRepository extends BaseRepository implements IStudentRepository
 {
@@ -69,7 +70,7 @@ class StudentRepository extends BaseRepository implements IStudentRepository
             'passport_number' => $dto->passport_number,
             'country_id' => $dto->country_id,
             'study_permit_number' => $dto->study_permit_number,
-            'date_of_birth' => $dto->date_of_birth,
+            'date_of_birth' => Carbon::parse($dto->date_of_birth)->format('Y-m-d'),
         ];
     }
 
