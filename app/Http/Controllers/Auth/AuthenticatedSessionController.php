@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Enums\RoleEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Traits\HttpUtil;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -14,6 +15,8 @@ use Inertia\Response;
 
 class AuthenticatedSessionController extends Controller
 {
+    use HttpUtil;
+
     /**
      * Display the login view.
      */
@@ -33,9 +36,8 @@ class AuthenticatedSessionController extends Controller
         $request->authenticate();
 
         $request->session()->regenerate();
-        $user = $request->user();
-        if ($user->hasRole(RoleEnum::STUDENT)) {
-            return to_route('portal.application', compact('user'));
+        if ($redirect = $this->redirectStudents()) {
+            return $redirect;
         }
         return redirect()->intended(route('dashboard', absolute: false));
     }

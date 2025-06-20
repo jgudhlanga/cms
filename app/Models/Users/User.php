@@ -2,23 +2,22 @@
 
 namespace App\Models\Users;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Http\Filters\Users\UserFilter;
-use App\Models\Genders\Gender;
-use App\Models\Titles\Title;
+use App\Models\Students\Student;
 use App\Traits\Filterable;
 use App\Traits\Paginatable;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Permission\Traits\HasRoles;
-use Laravel\Sanctum\HasApiTokens;
 
 /**
  *
@@ -29,7 +28,7 @@ class User extends Authenticatable implements MustVerifyEmail
 {
     use HasApiTokens, HasFactory, Notifiable, SoftDeletes, Filterable, Paginatable, LogsActivity, HasRoles;
 
-    protected $fillable = ['first_name', 'middle_name', 'last_name', 'gender_id', 'title_id', 'email', 'password', 'tenant_id'];
+    protected $fillable = ['first_name', 'middle_name', 'last_name', 'email', 'password', 'tenant_id', 'email_verified_at'];
 
     protected $hidden = ['password', 'remember_token'];
 
@@ -45,14 +44,14 @@ class User extends Authenticatable implements MustVerifyEmail
         $this->attributes['password'] = bcrypt($password);
     }
 
-    public function gender(): BelongsTo
+    public function studentProfile(): HasOne|User
     {
-        return $this->belongsTo(Gender::class);
+        return $this->hasOne(Student::class);
     }
 
-    public function title(): BelongsTo
+    public function hasStudentProfile(): Attribute
     {
-        return $this->belongsTo(Title::class);
+        return Attribute::get(fn() => $this->studentProfile()->exists());
     }
 
     public function getActivitylogOptions(): LogOptions

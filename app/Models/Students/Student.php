@@ -3,15 +3,18 @@
 namespace App\Models\Students;
 
 use App\Http\Filters\Students\StudentFilter;
+use App\Models\Genders\Gender;
 use App\Models\Shared\Address;
 use App\Models\Shared\Contact;
 use App\Models\Shared\NextOfKin;
+use App\Models\Titles\Title;
 use App\Traits\BelongsToTenant;
 use App\Traits\Filterable;
 use App\Traits\Paginatable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -42,6 +45,16 @@ class Student extends Model
         'study_permit_number',
         'date_of_birth',
     ];
+
+    public function gender(): BelongsTo
+    {
+        return $this->belongsTo(Gender::class);
+    }
+
+    public function title(): BelongsTo
+    {
+        return $this->belongsTo(Title::class);
+    }
 
     public function programmes(): HasMany
     {

@@ -98,7 +98,7 @@ class StudentRepository extends BaseRepository implements IStudentRepository
         $contactDto = new ContactDto(
             name: implode(' ', $nameParts),
             phone_number: $dto->phone_number,
-            alt_phone_number: null,
+            alt_phone_number: $dto->alt_phone_number,
             email_address: $dto->email,
             alt_email_address: null,
             contact_is_main: true,
@@ -137,7 +137,7 @@ class StudentRepository extends BaseRepository implements IStudentRepository
     private function createNextOfKinContact(NextOfKin $nextOfKin, CreateApplicationDto $dto): void
     {
         $contactDto = new ContactDto(
-            name: $dto->first_name,
+            name: $dto->next_of_kin_name,
             phone_number: $dto->next_of_kin_phone_number,
             alt_phone_number: null,
             email_address: null,
