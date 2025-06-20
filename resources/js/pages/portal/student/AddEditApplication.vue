@@ -22,7 +22,6 @@ import { useCreateApplicationFormStore } from '@/store/portal/useCreateApplicati
 import { AuthObject } from '@/types/data-pagination';
 import { CreateApplicationParams } from '@/types/portal';
 import { BreadcrumbItemInterface } from '@/types/ui';
-import { User } from '@/types/users';
 
 // Utilities
 import { errorAlert } from '@/lib/alerts';
@@ -33,13 +32,12 @@ import { onMounted, ref } from 'vue';
 
 // Props
 interface Props {
-    user: User;
     auth: AuthObject;
     errors: object;
 }
 
 const props = defineProps<Props>();
-const { user } = props;
+const { user } = props.auth;
 
 // Composables
 const { steps, applicationFormSchema, saveApplication } = useStudentPortal();

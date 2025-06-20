@@ -124,12 +124,11 @@ trait HttpUtil
     protected function redirectStudents(): ?RedirectResponse
     {
         $user = request()->user();
-
         if ($user->hasRole(RoleEnum::STUDENT)) {
             if (!$user->has_student_profile) {
-                return to_route('portal.application', compact('user'));
+                return to_route('portal.application');
             }
-            return to_route('portal.index', compact('user'));
+            return to_route('portal.dashboard');
         }
         return null;
     }

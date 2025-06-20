@@ -9,7 +9,6 @@ use App\Enums\TenantEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Students\CreateApplicationRequest;
 use App\Http\Requests\Users\CreateUserRequest;
-use App\Http\Resources\Users\UserResource;
 use App\Jobs\Users\SendVerificationEmailJob;
 use App\Models\Tenants\Tenant;
 use App\Models\Users\User;
@@ -23,16 +22,11 @@ class PortalController extends Controller
 
     public function __construct(protected IUserRepository $userRepository, protected IStudentRepository $studentRepository)
     {
-
     }
 
-    public function index(User $user)
+    public function dashboard()
     {
-        $user = UserResource::make($user);
         return Inertia::render('portal/student/Index', [
-            'user' => $user,
-            'portal' => [],
-            'applications' => [],
             'filters' => request()->only(['search', 'trashed']),
             'trashedCount' => 0,
         ]);
@@ -63,57 +57,50 @@ class PortalController extends Controller
 
     public function confirmation(User $user)
     {
-        $user = UserResource::make($user);
-        return Inertia::render('portal/guest/Confirmation', compact('user'));
+        $email = $user->email;
+        return Inertia::render('portal/guest/Confirmation', compact('email'));
     }
 
-    public function createApplication(User $user)
+    public function createApplication()
     {
-        $user = UserResource::make($user);
-        return Inertia::render('portal/student/AddEditApplication', compact('user'));
+        return Inertia::render('portal/student/AddEditApplication');
     }
 
-    public function storeApplication(CreateApplicationRequest $request, User $user)
+    public function storeApplication(CreateApplicationRequest $request)
     {
-        $this->studentRepository->create(CreateApplicationDto::fromCreateApplicationRequest($request, $user));
+        $this->studentRepository->create(CreateApplicationDto::fromCreateApplicationRequest($request, request()->user()));
         // we need to and email with a tracking number
         // we should redirect to a confirmation page
-        return to_route('portal.index', compact('user'));
+        return to_route('portal.dashboard');
     }
 
-    public function personal(User $user)
+    public function personal()
     {
-        $user = UserResource::make($user);
-        return Inertia::render('portal/student/PersonalDetails', compact('user'));
+        return Inertia::render('portal/student/PersonalDetails');
     }
 
-    public function programs(User $user)
+    public function programs()
     {
-        $user = UserResource::make($user);
-        return Inertia::render('portal/student/Programs', compact('user'));
+        return Inertia::render('portal/student/Programs');
     }
 
-    public function contacts(User $user)
+    public function contacts()
     {
-        $user = UserResource::make($user);
-        return Inertia::render('portal/student/Contacts', compact('user'));
+        return Inertia::render('portal/student/Contacts');
     }
 
-    public function sponsors(User $user)
+    public function sponsors()
     {
-        $user = UserResource::make($user);
-        return Inertia::render('portal/student/Sponsors', compact('user'));
+        return Inertia::render('portal/student/Sponsors');
     }
 
-    public function financialRecord(User $user)
+    public function financialRecord()
     {
-        $user = UserResource::make($user);
-        return Inertia::render('portal/student/FinancialRecord', compact('user'));
+        return Inertia::render('portal/student/FinancialRecord');
     }
 
-    public function academicRecord(User $user)
+    public function academicRecord()
     {
-        $user = UserResource::make($user);
-        return Inertia::render('portal/student/AcademicRecord', compact('user'));
+        return Inertia::render('portal/student/AcademicRecord');
     }
 }

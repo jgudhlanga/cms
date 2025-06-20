@@ -3,7 +3,7 @@ import { useSharedFormSchema } from '@/composables/core/useSharedFormSchema';
 import { buildFormOptions, mergeValidationSchema } from '@/lib/forms';
 import { getIdParams } from '@/lib/utils';
 import { useCreateApplicationFormStore } from '@/store/portal/useCreateApplicationFormStore';
-import { Auth, PageProps } from '@/types';
+import { Auth } from '@/types';
 import { Step } from '@/types/forms';
 import { AddressType } from '@/types/settings';
 import { InertiaForm, usePage } from '@inertiajs/vue3';
@@ -29,32 +29,27 @@ export function useStudentPortal() {
                     return moreActionButton(!!row.original?.attributes?.deletedAt, [
                         {
                             key: 'edit',
-                            action: () => {
-                            }
+                            action: () => {},
                         },
                         {
                             key: 'view',
-                            action: () => {
-                            }
+                            action: () => {},
                         },
                         {
                             key: 'archive',
-                            action: () => {
-                            }
+                            action: () => {},
                         },
                         {
                             key: 'restore',
-                            action: () => {
-                            }
+                            action: () => {},
                         },
                         {
                             key: 'delete',
-                            action: () => {
-                            }
-                        }
+                            action: () => {},
+                        },
                     ]);
-                }
-            }
+                },
+            },
         ];
     };
 
@@ -62,8 +57,8 @@ export function useStudentPortal() {
         { step: 1, title: trans('trans.personal_details'), description: 'trans.personal_details_description' },
         { step: 2, title: trans('trans.contact_details'), description: 'trans.contact_details_description' },
         { step: 3, title: trans('trans.next_of_kin'), description: 'trans.next_of_kin_description' },
-        { step: 4, title: trans('trans.programs'), description: 'trans.program_description' },
-        { step: 5, title: trans('trans.confirmation'), description: 'trans.confirmation_description' }
+        { step: 4, title: trans_choice('trans.program', 2), description: 'trans.program_description' },
+        { step: 5, title: trans('trans.confirmation'), description: 'trans.confirmation_description' },
     ];
 
     const schemaFields = useSharedFormSchema() as Record<string, () => ZodObject<any, any>>;
@@ -79,7 +74,7 @@ export function useStudentPortal() {
         const personalDetails = mergeValidationSchema(schemaFields)(personal, schemaFields['titleSchema']());
         const contacts = mergeValidationSchema(schemaFields)(
             ['addressOneSchema', 'addressTwoSchema', 'addressThreeSchema', 'emailSchema'],
-            schemaFields['phoneNumberSchema']()
+            schemaFields['phoneNumberSchema'](),
         );
         const nextOfKin = mergeValidationSchema(schemaFields)(
             [
@@ -87,9 +82,9 @@ export function useStudentPortal() {
                 'nextOfKinAddressOneSchema',
                 'nextOfKinAddressTwoSchema',
                 'nextOfKinAddressThreeSchema',
-                'relationshipSchema'
+                'relationshipSchema',
             ],
-            schemaFields['nextOfKinNameSchema']()
+            schemaFields['nextOfKinNameSchema'](),
         );
         const programs = mergeValidationSchema(schemaFields)(['levelSchema', 'courseSchema'], schemaFields['departmentSchema']());
         return [personalDetails, contacts, nextOfKin, programs];
@@ -98,10 +93,8 @@ export function useStudentPortal() {
     const successMessage = () => trans('trans.item_saved', { item: trans_choice('trans.application', 1) });
     const errorMessage = () => trans('trans.item_save_failure', { item: trans_choice('trans.application', 1) });
     const saveApplication = (form: InertiaForm<any>) => {
-        const { props } = usePage<PageProps>();
-        const { user } = props?.auth;
         try {
-            form.post(route('portal.store-application', getIdParams(user.id ?? '')), buildFormOptions(form, successMessage(), errorMessage()));
+            form.post(route('portal.store-application'), buildFormOptions(form, successMessage(), errorMessage()));
             const store = useCreateApplicationFormStore();
             store.$reset();
             store.$dispose();

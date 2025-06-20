@@ -2,7 +2,6 @@ import AppLogo from '@/components/core/image/AppLogo.vue';
 import { useUtils } from '@/composables/core/useUtils';
 import { IconName } from '@/enums/icons';
 import { icons } from '@/lib/icons';
-import { getIdParams } from '@/lib/utils';
 import { PageProps } from '@/types';
 import { TenantInterface } from '@/types/tenants';
 import { MenuItemInterface } from '@/types/ui';
@@ -12,7 +11,7 @@ import { markRaw } from 'vue';
 
 export function useSidebarMenu() {
     const { props } = usePage<PageProps>();
-    const { can, user } = props?.auth;
+    const { can } = props?.auth;
     const { isItTrue } = useUtils();
     const tenants: Array<TenantInterface> = [
         {
@@ -36,43 +35,43 @@ export function useSidebarMenu() {
         {
             transChoiceKey: 'trans.dashboard',
             icon: icons[IconName.dashboard],
-            url: route('portal.index', getIdParams(user?.id?.toString() as string)),
+            url: route('portal.dashboard'),
             show: isItTrue(can['manageOwnData:students']),
         },
         {
             transKey: 'trans.personal_details',
             icon: icons[IconName.user],
-            url: route('portal.personal-details', getIdParams(user?.id?.toString() as string)),
+            url: route('portal.personal-details'),
             show: isItTrue(can['manageOwnData:students']),
         },
         {
             transChoiceKey: 'trans.program',
             icon: icons[IconName.graduation_cape],
-            url: route('portal.programs', getIdParams(user?.id?.toString() as string)),
+            url: route('portal.programs'),
             show: isItTrue(can['manageOwnData:students']),
         },
         {
             transChoiceKey: 'trans.sponsor',
             icon: icons[IconName.graduation_cape],
-            url: route('portal.sponsors', getIdParams(user?.id?.toString() as string)),
+            url: route('portal.sponsors'),
             show: isItTrue(can['manageOwnData:students']),
         },
         {
             transChoiceKey: 'trans.contact',
             icon: icons[IconName.contact],
-            url: route('portal.contacts', getIdParams(user?.id?.toString() as string)),
+            url: route('portal.contacts'),
             show: isItTrue(can['manageOwnData:students']),
         },
         {
             transKey: 'trans.financial_record',
             icon: icons[IconName.users],
-            url: route('portal.financial-record', getIdParams(user?.id?.toString() as string)),
+            url: route('portal.financial-record'),
             show: isItTrue(can['manageOwnData:students']),
         },
         {
             transKey: 'trans.academic_record',
             icon: icons[IconName.users],
-            url: route('portal.academic-record', getIdParams(user?.id?.toString() as string)),
+            url: route('portal.academic-record'),
             show: isItTrue(can['manageOwnData:students']),
         },
         {
