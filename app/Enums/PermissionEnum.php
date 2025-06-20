@@ -166,6 +166,15 @@ enum PermissionEnum: string
     case FORCE_DELETE_CONTACTS = 'forceDelete:contacts';
     case IMPORT_CONTACTS = 'import:contacts';
     case EXPORT_CONTACTS = 'export:contacts';
+    case VIEW_ANY_NEXT_OF_KINS = 'viewAny:next-of-kins';
+    case VIEW_NEXT_OF_KINS = 'view:next-of-kins';
+    case CREATE_NEXT_OF_KINS = 'create:next-of-kins';
+    case UPDATE_NEXT_OF_KINS = 'update:next-of-kins';
+    case DELETE_NEXT_OF_KINS = 'delete:next-of-kins';
+    case RESTORE_NEXT_OF_KINS = 'restore:next-of-kins';
+    case FORCE_DELETE_NEXT_OF_KINS = 'forceDelete:next-of-kins';
+    case IMPORT_NEXT_OF_KINS = 'import:next-of-kins';
+    case EXPORT_NEXT_OF_KINS = 'export:next-of-kins';
 
     # STUDENT OWN DATA,
     case MANAGE_OWN_STUDENT_DATA = 'manageOwnData:students';
@@ -330,6 +339,15 @@ enum PermissionEnum: string
             self::FORCE_DELETE_CONTACTS => 'forceDelete:contacts',
             self::IMPORT_CONTACTS => 'import:contacts',
             self::EXPORT_CONTACTS => 'export:contacts',
+            self::VIEW_ANY_NEXT_OF_KINS => 'viewAny:next-of-kins',
+            self::VIEW_NEXT_OF_KINS => 'view:next-of-kins',
+            self::CREATE_NEXT_OF_KINS => 'create:next-of-kins',
+            self::UPDATE_NEXT_OF_KINS => 'update:next-of-kins',
+            self::DELETE_NEXT_OF_KINS => 'delete:next-of-kins',
+            self::RESTORE_NEXT_OF_KINS => 'restore:next-of-kins',
+            self::FORCE_DELETE_NEXT_OF_KINS => 'forceDelete:next-of-kins',
+            self::IMPORT_NEXT_OF_KINS => 'import:next-of-kins',
+            self::EXPORT_NEXT_OF_KINS => 'export:next-of-kins',
             self::MANAGE_OWN_STUDENT_DATA => 'manageOwnData:students',
         };
     }

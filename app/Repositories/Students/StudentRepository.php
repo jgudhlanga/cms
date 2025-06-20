@@ -4,29 +4,35 @@ namespace App\Repositories\Students;
 
 use App\DTO\Shared\AddressDto;
 use App\DTO\Shared\ContactDto;
+use App\DTO\Shared\NextOfKinDto;
 use App\DTO\Students\CreateApplicationDto;
 use App\Http\Filters\Students\StudentFilter;
+use App\Models\Shared\NextOfKin;
 use App\Models\Students\Student;
 use App\Repositories\Base\BaseRepository;
 use App\Repositories\Shared\interface\IAddressRepository;
 use App\Repositories\Shared\interface\IContactRepository;
+use App\Repositories\Shared\interface\INextOfKinRepository;
 use App\Repositories\Students\interface\IStudentRepository;
 
 class StudentRepository extends BaseRepository implements IStudentRepository
 {
     public function __construct(
-        protected Student                  $student,
-        protected IAddressRepository  $addressRepository,
-        protected IContactRepository      $contactRepository,
+        protected Student              $student,
+        protected IAddressRepository   $addressRepository,
+        protected IContactRepository   $contactRepository,
+        protected INextOfKinRepository $nextOfKinRepository,
     )
     {
         parent::__construct($this->student);
     }
+
     public function create(CreateApplicationDto $dto)
     {
         $student = $this->student->create($this->getFields($dto))->refresh();
         $this->saveContact($student, $dto);
         $this->saveAddress($student, $dto);
+        $this->saveNextOfKin($student, $dto);
         return $student->refresh();
     }
 
@@ -62,6 +68,7 @@ class StudentRepository extends BaseRepository implements IStudentRepository
             'date_of_birth' => $dto->date_of_birth,
         ];
     }
+
     private function saveContact(Student $student, CreateApplicationDto $dto): void
     {
         $nameParts = array_filter([
@@ -89,8 +96,49 @@ class StudentRepository extends BaseRepository implements IStudentRepository
             address_4: $dto->address_4,
             address_5: null,
             address_6: null,
-            address_is_main:true,
+            address_is_main: true,
         );
         $this->addressRepository->create($student, $addressDto);
+    }
+
+    private function saveNextOfKin(Student $student, CreateApplicationDto $dto): void
+    {
+        $nextOfKinDto = new NextOfKinDto(
+            name: $dto->next_of_kin_name,
+            relationship_id: $dto->relationship_id,
+
+        );
+       $nextOfKin =  $this->nextOfKinRepository->create($student, $nextOfKinDto);
+       //create contact
+        $this->createNextOfKinContact($nextOfKin, $dto);
+       //create address
+       $this->createNextOfKinAddress($nextOfKin, $dto);
+    }
+
+    private function createNextOfKinContact(NextOfKin $nextOfKin, CreateApplicationDto $dto): void
+    {
+        $contactDto = new ContactDto(
+            name: $dto->first_name,
+            phone_number: $dto->next_of_kin_phone_number,
+            alt_phone_number: null,
+            email_address: null,
+            alt_email_address: null,
+            contact_is_main: true,
+        );
+        $this->contactRepository->create($nextOfKin, $contactDto);
+    }
+
+    private function createNextOfKinAddress(NextOfKin $nextOfKin, CreateApplicationDto $dto): void
+    {
+        $addressDto = new AddressDto(
+            address_1: $dto->next_of_kin_address_1,
+            address_2: $dto->next_of_kin_address_2,
+            address_3: $dto->next_of_kin_address_3,
+            address_4: $dto->next_of_kin_address_4,
+            address_5: null,
+            address_6: null,
+            address_is_main: true,
+        );
+        $this->addressRepository->create($nextOfKin, $addressDto);
     }
 }

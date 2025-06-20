@@ -56,6 +56,8 @@ use App\Repositories\Shared\AddressRepository;
 use App\Repositories\Shared\ContactRepository;
 use App\Repositories\Shared\interface\IAddressRepository;
 use App\Repositories\Shared\interface\IContactRepository;
+use App\Repositories\Shared\interface\INextOfKinRepository;
+use App\Repositories\Shared\NextOfKinRepository;
 use App\Repositories\Statuses\interface\IMaritalStatusRepository;
 use App\Repositories\Statuses\interface\IStatusRepository;
 use App\Repositories\Statuses\MaritalStatusRepository;
@@ -125,6 +127,7 @@ class RepositoryServiceProvider extends ServiceProvider
     {
         $this->app->bind(IAddressRepository::class, AddressRepository::class);
         $this->app->bind(IContactRepository::class, ContactRepository::class);
+        $this->app->bind(INextOfKinRepository::class, NextOfKinRepository::class);
     }
 
     public function institutionRepositories(): void

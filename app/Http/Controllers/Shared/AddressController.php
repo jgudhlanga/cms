@@ -17,7 +17,7 @@ class AddressController extends Controller
 
 	public function update(AddressRequest $request, Address $address)
 	{
-		$this->authorize('create', $address);
+		$this->authorize('update', $address);
 		$this->repository->update($address, AddressDto::fromAddressRequest($request));
 	}
 
