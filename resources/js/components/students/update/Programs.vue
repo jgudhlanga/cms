@@ -6,9 +6,9 @@ import InstitutionDepartmentComboSelect from '@/components/core/form/combobox/In
 import SpinnerComponent from '@/components/core/util/SpinnerComponent.vue';
 import { useUtils } from '@/composables/core/useUtils';
 import { useDepartmentLevels } from '@/composables/institution/useDepartmentLevels';
-import LevelRequirements from '@/pages/portal/student/partials/LevelRequirements.vue';
-import OLevelRequirements from '@/pages/portal/student/partials/OLevelRequirements.vue';
-import SDPRequirements from '@/pages/portal/student/partials/SDPRequirements.vue';
+import LevelRequirements from '@/components/students/update/LevelRequirements.vue';
+import OLevelRequirements from '@/components/students/update/OLevelRequirements.vue';
+import SDPRequirements from '@/components/students/update/SDPRequirements.vue';
 import { useCreateApplicationFormStore } from '@/store/portal/useCreateApplicationFormStore';
 import { CreateApplicationParams } from '@/types/portal';
 import { InertiaForm } from '@inertiajs/vue3';

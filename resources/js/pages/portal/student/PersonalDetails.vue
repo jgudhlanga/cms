@@ -18,7 +18,7 @@ const breadcrumbs: BreadcrumbItemInterface[] = [{ title: user.attributes?.name }
     <Head :title="`${$t('trans.personal_details')} ${$t('trans.details')}`" />
     <PageContainer :breadcrumbs="breadcrumbs">
         <div class="flex w-full flex-col">
-            <div class="flex flex-col items-center gap-6 rounded-2xl bg-white px-6 shadow-lg sm:flex-row">
+            <div class="flex flex-col items-start p-5 gap-6 rounded-2xl bg-white px-6 shadow-lg sm:flex-row">
                 <!-- Profile Picture -->
                 <div class="flex overflow-hidden">
                     <BaseImage
@@ -29,8 +29,8 @@ const breadcrumbs: BreadcrumbItemInterface[] = [{ title: user.attributes?.name }
                 </div>
 
                 <!-- Student Info -->
-                <div class="flex-1 p-6">
-                    <h2 class="text-2xl font-bold text-gray-800">James Gudhlanga</h2>
+                <div class="flex-1">
+                    <h2 class="text-2xl font-bold text-gray-800">{{ user.attributes?.name }}</h2>
                     <p class="text-gray-500">BSc Computer Science</p>
                     <p class="mt-2 text-sm text-gray-600">📍 University of Cape Town</p>
 

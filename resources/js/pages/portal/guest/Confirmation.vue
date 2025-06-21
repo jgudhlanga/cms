@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import BaseAlert from '@/components/core/alert/BaseAlert.vue';
 import { TypeVariant } from '@/enums/type-variants';
-import ApplicationCover from '@/pages/portal/shared/ApplicationCover.vue';
+import ApplicationCover from '@/components/auth/ApplicationCover.vue';
 import { Head } from '@inertiajs/vue3';
 
 interface Props {

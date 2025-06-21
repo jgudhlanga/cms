@@ -9,7 +9,7 @@ import { CreateApplicationUserParams } from '@/types/portal';
 import { Head, useForm } from '@inertiajs/vue3';
 import { storeToRefs } from 'pinia';
 import BaseInput from '../../../components/core/form/text/BaseInput.vue';
-import ApplicationCover from '@/pages/portal/shared/ApplicationCover.vue';
+import ApplicationCover from '@/components/auth/ApplicationCover.vue';
 import TextLink from '@/components/core/util/TextLink.vue';
 import { onMounted } from 'vue';
 import { useAuth } from '@/composables/auth/useAuth';

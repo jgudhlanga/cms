@@ -6,11 +6,11 @@ import BaseStepperItem from '@/components/core/stepper/BaseStepperItem.vue';
 import { Stepper } from '@/components/ui/stepper';
 
 // Page sections
-import Confirmation from '@/pages/portal/student/partials/Confirmation.vue';
-import ContactDetails from '@/pages/portal/student/partials/ContactDetails.vue';
-import NextOfKinDetails from '@/pages/portal/student/partials/NextOfKinDetails.vue';
-import PersonalDetails from '@/pages/portal/student/partials/PersonalDetails.vue';
-import Programs from '@/pages/portal/student/partials/Programs.vue';
+import Confirmation from '@/components/students/update/Confirmation.vue';
+import ContactDetails from '@/components/students/update/ContactDetails.vue';
+import NextOfKinDetails from '@/components/students/update/NextOfKinDetails.vue';
+import PersonalDetails from '@/components/students/update/PersonalDetails.vue';
+import Programs from '@/components/students/update/Programs.vue';
 
 // Composables
 import { useUtils } from '@/composables/core/useUtils';
