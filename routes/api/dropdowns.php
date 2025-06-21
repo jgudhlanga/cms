@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\V1\Institution\DepartmentController;
 use App\Http\Controllers\Api\V1\Institution\LevelController;
 use App\Http\Controllers\Api\V1\Provinces\ProvinceController;
 use App\Http\Controllers\Api\V1\Relationships\RelationshipController;
+use App\Http\Controllers\Api\V1\Religions\ReligionController;
 use App\Http\Controllers\Api\V1\Statuses\MaritalStatusController;
 use App\Http\Controllers\Api\V1\Subjects\SubjectController;
 use App\Http\Controllers\Api\V1\Titles\TitleController;
@@ -43,4 +44,6 @@ Route::prefix('v1')->group(function () {
     Route::apiResource('marital-statuses', MaritalStatusController::class)->names('v1.marital-statuses');
     # ==================================== RELATIONSHIPS ======================================================
     Route::apiResource('relationships', RelationshipController::class)->names('v1.relationships');
+    # ==================================== RELIGIONS ======================================================
+    Route::apiResource('religions', ReligionController::class)->names('v1.religions');
 });

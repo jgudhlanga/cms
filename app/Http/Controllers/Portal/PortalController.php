@@ -9,6 +9,7 @@ use App\Enums\TenantEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Students\CreateApplicationRequest;
 use App\Http\Requests\Users\CreateUserRequest;
+use App\Http\Resources\Students\StudentResource;
 use App\Jobs\Users\SendVerificationEmailJob;
 use App\Models\Tenants\Tenant;
 use App\Models\Users\User;
@@ -53,6 +54,7 @@ class PortalController extends Controller
         $user = $this->userRepository->create(UserDto::fromCreateUserRequest($request, $tenant));
         $user->assignRole(RoleEnum::STUDENT);
         SendVerificationEmailJob::dispatch($user)->withoutDelay();
+        Auth::login($user);
         return to_route('portal.confirmation', compact('user'));
     }
 
@@ -80,11 +82,14 @@ class PortalController extends Controller
 
     public function personal()
     {
-        return Inertia::render('portal/student/PersonalDetails');
+        $user = request()->user();
+        $student = StudentResource::make($user->studentProfile);
+        return Inertia::render('portal/student/PersonalDetails', compact('student'));
     }
 
     public function programs()
     {
+
         return Inertia::render('portal/student/Programs');
     }
 

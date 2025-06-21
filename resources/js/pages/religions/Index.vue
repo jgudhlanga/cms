@@ -2,15 +2,15 @@
 import { Head } from '@inertiajs/vue3';
 
 import { AuthObject, DataFilters, DataListProps } from '@/types/data-pagination';
-import { useCountries } from '@/composables/countries/useCountries';
+import { useReligions } from '@/composables/religions/useReligions';
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import DataTable from '@/components/core/table/DataTable.vue';
 import CreateEdit from './partials/CreateEdit.vue';
 
-const { createCountryColumns, breadcrumbs, onOpenModal } = useCountries();
+const { createReligionColumns, breadcrumbs, onOpenModal } = useReligions();
 
 const props = defineProps<{
-	countries: DataListProps,
+	religions: DataListProps,
 	trashedCount: any,
 	filters: DataFilters,
 	auth: AuthObject,
@@ -20,15 +20,15 @@ const can = props?.auth?.can;
 </script>
 
 <template>
-	<Head :title="$tChoice('trans.country', 2)" />
+	<Head :title="$tChoice('trans.religion', 2)" />
 	<PageContainer :breadcrumbs="breadcrumbs">
 		<DataTable
-			:data="countries.data"
+			:data="religions.data"
 			:trashed-count="trashedCount"
 			:filters="filters"
-			:search-url="route('countries.index')"
-			:pagination="{...countries.links, ...countries.meta}"
-			:columns="createCountryColumns()"
+			:search-url="route('religions.index')"
+			:pagination="{...religions.links, ...religions.meta}"
+			:columns="createReligionColumns()"
 			:on-create="() => onOpenModal(can['create:settings'])"
 			:disable-create="!can['create:settings']"
 		/>

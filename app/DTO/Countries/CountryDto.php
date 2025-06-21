@@ -4,11 +4,11 @@ namespace App\DTO\Countries;
 
 use App\Http\Requests\Countries\CountryRequest;
 
-class CountryDto
+readonly class CountryDto
 {
     public function __construct(
-        public readonly string $name,
-        public readonly ?string $flag,
+        public string  $name,
+        public ?string $flag,
     )
     {
     }

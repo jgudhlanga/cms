@@ -52,6 +52,8 @@ use App\Repositories\Races\interface\IRaceRepository;
 use App\Repositories\Races\RaceRepository;
 use App\Repositories\Relationships\interface\IRelationshipRepository;
 use App\Repositories\Relationships\RelationshipRepository;
+use App\Repositories\Religions\interface\IReligionRepository;
+use App\Repositories\Religions\ReligionRepository;
 use App\Repositories\Shared\AddressRepository;
 use App\Repositories\Shared\ContactRepository;
 use App\Repositories\Shared\interface\IAddressRepository;
@@ -116,6 +118,7 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(IAddressTypeRepository::class, AddressTypeRepository::class);
         $this->app->bind(IRelationshipRepository::class, RelationshipRepository::class);
         $this->app->bind(IDistrictRepository::class, DistrictRepository::class);
+        $this->app->bind(IReligionRepository::class, ReligionRepository::class);
     }
 
     private function paymentsRepositories(): void

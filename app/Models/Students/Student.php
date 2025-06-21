@@ -4,9 +4,11 @@ namespace App\Models\Students;
 
 use App\Http\Filters\Students\StudentFilter;
 use App\Models\Genders\Gender;
+use App\Models\Religions\Religion;
 use App\Models\Shared\Address;
 use App\Models\Shared\Contact;
 use App\Models\Shared\NextOfKin;
+use App\Models\Statuses\MaritalStatus;
 use App\Models\Titles\Title;
 use App\Traits\BelongsToTenant;
 use App\Traits\Filterable;
@@ -36,7 +38,6 @@ class Student extends Model
         'title_id',
         'gender_id',
         'marital_status_id',
-        'title_id',
         'race_id',
         'id_type',
         'id_number',
@@ -44,6 +45,10 @@ class Student extends Model
         'country_id',
         'study_permit_number',
         'date_of_birth',
+        'religion_id',
+        'denomination',
+        'height',
+        'weight',
     ];
 
     public function gender(): BelongsTo
@@ -54,6 +59,15 @@ class Student extends Model
     public function title(): BelongsTo
     {
         return $this->belongsTo(Title::class);
+    }
+    public function maritalStatus(): BelongsTo
+    {
+        return $this->belongsTo(MaritalStatus::class);
+    }
+
+    public function religion(): BelongsTo
+    {
+        return $this->belongsTo(Religion::class);
     }
 
     public function programmes(): HasMany

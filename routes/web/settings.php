@@ -16,6 +16,7 @@ use App\Http\Controllers\Languages\LanguageController;
 use App\Http\Controllers\Provinces\ProvinceController;
 use App\Http\Controllers\Races\RaceController;
 use App\Http\Controllers\Relationships\RelationshipController;
+use App\Http\Controllers\Religions\ReligionController;
 use App\Http\Controllers\Settings\SettingsController;
 use App\Http\Controllers\Statuses\MaritalStatusController;
 use App\Http\Controllers\Statuses\StatusController;
@@ -102,4 +103,8 @@ Route::prefix('settings')->middleware('auth')->group(function () {
     Route::put('subjects/{subject}/restore', [SubjectController::class, 'restore'])->name('subjects.restore');
     Route::delete('subjects/{subject}/force-delete', [SubjectController::class, 'forceDelete'])->name('subjects.force-delete');
     Route::resource('subjects', SubjectController::class)->names('subjects');
+    # ==================================== RELIGIONS ======================================================
+    Route::put('religions/{religion}/restore', [ReligionController::class, 'restore'])->name('religions.restore');
+    Route::delete('religions/{religion}/force-delete', [ReligionController::class, 'forceDelete'])->name('religions.force-delete');
+    Route::resource('religions', ReligionController::class)->names('religions');
 });

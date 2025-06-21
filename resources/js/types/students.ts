@@ -1,3 +1,27 @@
+export type Student = {
+    userId: string |number;
+    titleId?: string | number;
+    title?: string;
+    genderId?: string | number;
+    gender?: string;
+    maritalStatusId?: string | number;
+    maritalStatus?: string;
+    raceId?: string | number;
+    race?: string;
+    idType?: string;
+    idNumber?: string;
+    passportNumber?: string;
+    countryId?: string | number;
+    country?: string;
+    studentPermitNumber?: string;
+    dateOfBirth?: string;
+    religionId?: string | number;
+    religion?: string;
+    denomination?: string;
+    height?: string;
+    weight?: string;
+}
+
 export type PersonalDetailView = {
     title: string;
     firstname: string;

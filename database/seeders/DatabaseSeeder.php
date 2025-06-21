@@ -25,6 +25,7 @@ use Database\Seeders\Payments\PaymentMethodSeeder;
 use Database\Seeders\Provinces\ProvinceSeeder;
 use Database\Seeders\Races\RaceSeeder;
 use Database\Seeders\Relationships\RelationshipsTableSeeder;
+use Database\Seeders\Religions\ReligionTableSeeder;
 use Database\Seeders\Statuses\MaritalStatusSeeder;
 use Database\Seeders\Statuses\StatusSeeder;
 use Database\Seeders\Tenants\TenantsTableSeeder;
@@ -48,6 +49,7 @@ class DatabaseSeeder extends Seeder
             UsersTableSeeder::class,
             CommunicationMethodSeeder::class,
             CountrySeeder::class,
+            ReligionTableSeeder::class,
             PaymentFrequencySeeder::class,
             PaymentMethodSeeder::class,
             PaymentDaySeeder::class,

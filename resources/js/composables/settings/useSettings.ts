@@ -43,6 +43,10 @@ export function useSettings() {
 			url: route('races.index'),
 		},
         {
+            transChoiceKey: 'religion',
+            url: route('religions.index'),
+        },
+        {
             transChoiceKey: 'relationship',
             url: route('relationships.index'),
         },

@@ -22,8 +22,12 @@ return new class extends Migration {
             $table->string('id_number')->nullable();
             $table->string('passport_number')->nullable();
             $table->foreignId('country_id')->nullable();
+            $table->foreignId('region_id')->nullable();
             $table->string('study_permit_number')->nullable();
             $table->date('date_of_birth');
+            $table->string('denomination')->nullable();
+            $table->string('height')->nullable();
+            $table->string('weight')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });

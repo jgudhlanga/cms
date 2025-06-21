@@ -4,11 +4,11 @@ namespace App\DTO\Languages;
 
 use App\Http\Requests\Languages\LanguageRequest;
 
-class LanguageDto
+readonly class LanguageDto
 {
 	public function __construct(
-		public readonly string $title,
-		public readonly? string $description,
+		public string   $title,
+		public ? string $description,
 	)
 	{
 	}

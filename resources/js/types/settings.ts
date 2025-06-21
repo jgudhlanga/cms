@@ -155,3 +155,18 @@ export type MaritalStatusParams = {
     title: string;
     description?: string;
 };
+export type Religion = {
+    type?: string;
+    id?: string;
+    attributes: {
+        name: string;
+        description: string;
+        createdAt?: string;
+        updatedAt?: string;
+        deletedAt?: string;
+    };
+};
+export type ReligionParams = {
+    name: string;
+    description?: string;
+};

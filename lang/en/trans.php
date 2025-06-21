@@ -275,5 +275,6 @@ return [
     "sponsor" => "Sponsor|Sponsors",
     "financial_record" => "Financial record",
     "academic_record" => "Academic record",
+    "religion" => "Religion|Religions",
 ];
 

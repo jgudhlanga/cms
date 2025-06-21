@@ -37,6 +37,7 @@ const APP_MODULE_KEYS = {
     department_levels: 'department_levels',
     department_courses: 'department_courses',
     marital_statuses: 'marital_statuses',
+    religions: 'religions',
 };
 
 export { API_BASE_URL, API_VERSION, APP_MODULE_KEYS, DEFAULT_AVATAR, DEFAULT_IMAGE, LOGO };
