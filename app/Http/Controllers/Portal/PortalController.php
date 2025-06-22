@@ -15,14 +15,11 @@ use App\Models\Tenants\Tenant;
 use App\Models\Users\User;
 use App\Repositories\Students\interface\IStudentRepository;
 use App\Repositories\Users\interface\IUserRepository;
-use App\Traits\HttpUtil;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
 class PortalController extends Controller
 {
-    use HttpUtil;
-
     public function __construct(protected IUserRepository $userRepository, protected IStudentRepository $studentRepository)
     {
     }
@@ -66,9 +63,6 @@ class PortalController extends Controller
 
     public function createApplication()
     {
-        if ($redirect = $this->redirectStudents()) {
-            return $redirect;
-        }
         return Inertia::render('portal/student/AddEditApplication');
     }
 
@@ -89,7 +83,6 @@ class PortalController extends Controller
 
     public function programs()
     {
-
         return Inertia::render('portal/student/Programs');
     }
 

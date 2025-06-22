@@ -7,10 +7,12 @@ Route::prefix('portal')->group(function () {
     Route::get('create', [PortalController::class, 'create'])->name('portal.create');
     Route::post('store', [PortalController::class, 'store'])->name('portal.store');
     Route::get('{user}/confirmation', [PortalController::class, 'confirmation'])->name('portal.confirmation');
-    Route::middleware(['auth', 'verified'])->group(function () {
+    Route::middleware(['auth', 'verified', 'redirect.student'])->group(function () {
         Route::get('application', [PortalController::class, 'createApplication'])->name('portal.application');
-        Route::post('application', [PortalController::class, 'storeApplication'])->name('portal.store-application');
         Route::get('dashboard', [PortalController::class, 'dashboard'])->name('portal.dashboard');
+    });
+    Route::middleware(['auth', 'verified'])->group(function () {
+        Route::post('application', [PortalController::class, 'storeApplication'])->name('portal.store-application');
         Route::get('personal-details', [PortalController::class, 'personal'])->name('portal.personal-details');
         Route::get('programs', [PortalController::class, 'programs'])->name('portal.programs');
         Route::get('sponsors', [PortalController::class, 'sponsors'])->name('portal.sponsors');

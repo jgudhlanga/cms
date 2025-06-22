@@ -27,7 +27,6 @@ const submit = () => {
 			<LoaderCircle v-if="form.processing" class="h-4 w-4 animate-spin" />
 			Resend verification email
 		</Button>
-
 		<TextLink :href="route('logout')" method="post" as="button" class="mx-auto block text-sm"> Log out</TextLink>
 	</form>
 </template>

@@ -115,21 +115,4 @@ trait HttpUtil
             return response()->json([$e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
-
-    /**
-     * Redirect students based on profile status.
-     *
-     * @return RedirectResponse|null
-     */
-    protected function redirectStudents(): ?RedirectResponse
-    {
-        $user = request()->user();
-        if ($user->hasRole(RoleEnum::STUDENT)) {
-            if (!$user->has_student_profile) {
-                return to_route('portal.application');
-            }
-            return to_route('portal.dashboard');
-        }
-        return null;
-    }
 }
