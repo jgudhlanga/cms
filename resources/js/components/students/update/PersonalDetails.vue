@@ -41,7 +41,10 @@ const onRadioChange = (value: any) => {
     id_type.value = value;
 };
 defineProps<{ form: InertiaForm<CreateApplicationParams> }>();
-const defaultIdType = ref(id_type.value ?? 'zimbabwean-national-id-number');
+const defaultIdType = ref(id_type.value);
+if (!id_type.value) {
+    defaultIdType.value = 'zimbabwean-national-id-number';
+}
 </script>
 
 <template>

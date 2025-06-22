@@ -45,11 +45,11 @@ if (isNativeCitizen(personal?.idType ?? '')) {
 personalDetails.push({ transKey: 'trans.date_of_birth', value: formatDate(personal?.dateOfBirth ?? '') });
 if(isItTrue(showExtra)) {
     personalDetails.push(
-        { transChoiceKey: 'trans.race', value: personal?.race ?? '--' },
-        { transChoiceKey: 'trans.religion', value: personal?.religion ?? '--' },
-        { transChoiceKey: 'trans.denomination', value: personal?.denomination ?? '---' },
-        { transKey: 'trans.weight', value: personal?.weight ?? '---' },
-        { transKey: 'trans.height', value: personal?.height ?? '---' },
+        { transChoiceKey: 'trans.race', value: personal?.race ?? '' },
+        { transChoiceKey: 'trans.religion', value: personal?.religion ?? '' },
+        { transChoiceKey: 'trans.denomination', value: personal?.denomination ?? '' },
+        { transKey: 'trans.weight', value: personal?.weight ?? '' },
+        { transKey: 'trans.height', value: personal?.height ?? '' },
     );
 }
 </script>

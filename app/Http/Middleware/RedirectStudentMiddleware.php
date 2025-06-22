@@ -20,6 +20,11 @@ class RedirectStudentMiddleware
             if (!$user->has_student_profile && !$request->routeIs('portal.application')) {
                 return to_route('portal.application');
             }
+        } else {
+            // Not a student, redirect to the general dashboard
+            if (!$request->routeIs('dashboard')) {
+                return to_route('dashboard');
+            }
         }
 
         return $next($request);

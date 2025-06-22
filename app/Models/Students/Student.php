@@ -3,6 +3,7 @@
 namespace App\Models\Students;
 
 use App\Http\Filters\Students\StudentFilter;
+use App\Models\Countries\Country;
 use App\Models\Genders\Gender;
 use App\Models\Religions\Religion;
 use App\Models\Shared\Address;
@@ -60,6 +61,7 @@ class Student extends Model
     {
         return $this->belongsTo(Title::class);
     }
+
     public function maritalStatus(): BelongsTo
     {
         return $this->belongsTo(MaritalStatus::class);
@@ -68,6 +70,11 @@ class Student extends Model
     public function religion(): BelongsTo
     {
         return $this->belongsTo(Religion::class);
+    }
+
+    public function country(): BelongsTo
+    {
+        return $this->belongsTo(Country::class);
     }
 
     public function programmes(): HasMany
