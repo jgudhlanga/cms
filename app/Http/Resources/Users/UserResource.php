@@ -34,12 +34,13 @@ class UserResource extends JsonResource
             'id' => $this->id,
             'attributes' => [
                 'name' => $fullName,
-                'first_name' => $this->first_name,
-                'middle_name' => $this->middle_name,
-                'last_name' => $this->last_name,
+                'firstname' => $this->first_name,
+                'middleName' => $this->middle_name,
+                'lastname' => $this->last_name,
                 'email' => $this->email,
                 'tenantId' => $this->tenant_id,
                 'tenant' => $this->tenant?->name,
+                "avatarUrl" => $this?->avatarUrl,
                 $this->mergeWhen($request->routeIs('users.*'), [
                     'createdAt' => $this->created_at,
                     'updatedAt' => $this->updated_at,

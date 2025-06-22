@@ -124,11 +124,13 @@ const goNext = async (next: () => void) => {
 // Populate from user
 const populateInitialForm = () => {
     const attrs = user.attributes;
-    storeRefs.first_name.value = attrs?.first_name;
-    storeRefs.middle_name.value = attrs?.middle_name ?? '';
-    storeRefs.last_name.value = attrs?.last_name;
+    storeRefs.first_name.value = attrs?.firstname;
+    storeRefs.middle_name.value = attrs?.middleName ?? '';
+    storeRefs.last_name.value = attrs?.lastname;
     storeRefs.email.value = attrs?.email ?? '';
-    storeRefs.id_type.value ||= 'zimbabwean-national-id-number';
+    if (!storeRefs.id_type.value) {
+        storeRefs.id_type.value = 'zimbabwean-national-id-number';
+    }
 };
 
 // Sync Pinia refs into form

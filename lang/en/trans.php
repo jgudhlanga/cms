@@ -276,5 +276,8 @@ return [
     "financial_record" => "Financial record",
     "academic_record" => "Academic record",
     "religion" => "Religion|Religions",
+    "denomination" => "Denomination|Denominations",
+    "weight" => "Weight",
+    "height" => "Height",
 ];
 

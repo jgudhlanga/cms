@@ -7,9 +7,12 @@ import { ValueAndLabel } from '@/types/utils';
 interface Props {
     nextOfKin: NextOfKinDetailView;
     title?: string;
+    gridSize?: string;
 }
 
-const props = defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+    gridSize: '4',
+});
 const { nextOfKin } = props;
 
 const nextOfKinDetails: ValueAndLabel[] = [
@@ -25,7 +28,7 @@ const nextOfKinDetails: ValueAndLabel[] = [
 
 <template>
     <BaseCard :title="title ? title : ''">
-        <div class="grid grid-cols-1 gap-2 md:grid-cols-4">
+        <div :class="`grid grid-cols-1 gap-2 md:grid-cols-${gridSize}`">
             <LabelValue
                 v-for="(detail, index) in nextOfKinDetails"
                 :key="index"

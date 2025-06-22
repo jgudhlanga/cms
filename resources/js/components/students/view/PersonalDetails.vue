@@ -1,20 +1,25 @@
 <script setup lang="ts">
 import BaseCard from '@/components/core/card/BaseCard.vue';
+import BaseImage from '@/components/core/image/BaseImage.vue';
 import LabelValue from '@/components/core/util/LabelValue.vue';
 import { useUtils } from '@/composables/core/useUtils';
 import { PersonalDetailView } from '@/types/students';
 import { ValueAndLabel } from '@/types/utils';
 
-const { formatDate } = useUtils();
-const { getIDType, isNativeCitizen } = useUtils();
+const { getIDType, isNativeCitizen, formatDate, isItTrue } = useUtils();
 
 interface Props {
     personal: PersonalDetailView;
     title?: string;
+    gridSize?: string;
+    showExtra?: boolean;
 }
 
-const props = defineProps<Props>();
-const { personal } = props;
+const props = withDefaults(defineProps<Props>(), {
+    gridSize: '4',
+    showExtra: false,
+});
+const { personal, showExtra } = props;
 
 const personalDetails: ValueAndLabel[] = [
     { transChoiceKey: 'trans.title', value: personal?.title ?? '' },
@@ -37,19 +42,35 @@ if (isNativeCitizen(personal?.idType ?? '')) {
         { transKey: 'trans.study_permit_number', value: personal?.studyPermitNumber ?? '' },
     );
 }
-
 personalDetails.push({ transKey: 'trans.date_of_birth', value: formatDate(personal?.dateOfBirth ?? '') });
+if(isItTrue(showExtra)) {
+    personalDetails.push(
+        { transChoiceKey: 'trans.race', value: personal?.race ?? '--' },
+        { transChoiceKey: 'trans.religion', value: personal?.religion ?? '--' },
+        { transChoiceKey: 'trans.denomination', value: personal?.denomination ?? '---' },
+        { transKey: 'trans.weight', value: personal?.weight ?? '---' },
+        { transKey: 'trans.height', value: personal?.height ?? '---' },
+    );
+}
 </script>
 
 <template>
-    <BaseCard :title="title ? title : '' ">
-        <div class="grid grid-cols-1 gap-2 md:grid-cols-4">
-            <LabelValue
-                v-for="(detail, index) in personalDetails"
-                :key="index"
-                :label="`${detail?.transKey ? $t(detail.transKey) : $tChoice(detail.transChoiceKey ?? '', 1)}`"
-                :value="detail.value"
+    <BaseCard :title="title ? title : ''">
+        <div class="flex space-x-3">
+            <BaseImage
+                v-if="personal?.showAvatar"
+                :src="personal?.avatarUrl ?? ''"
+                :is-person="true"
+                classes="w-[130px] h-[130px] rounded-full border-[1px] border-primary shadow-lg"
             />
+            <div :class="`grid w-full grid-cols-1 gap-x-2 md:grid-cols-${gridSize}`">
+                <LabelValue
+                    v-for="(detail, index) in personalDetails"
+                    :key="index"
+                    :label="`${detail?.transKey ? $t(detail.transKey) : $tChoice(detail.transChoiceKey ?? '', 1)}`"
+                    :value="detail.value"
+                />
+            </div>
         </div>
     </BaseCard>
 </template>

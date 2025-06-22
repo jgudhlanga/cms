@@ -17,6 +17,9 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Spatie\Permission\Traits\HasRoles;
 
 /**
@@ -24,11 +27,16 @@ use Spatie\Permission\Traits\HasRoles;
  * @mixin Builder
  * @method static filter(UserFilter $filters)
  */
-class User extends Authenticatable implements MustVerifyEmail
+class User extends Authenticatable implements MustVerifyEmail, HasMedia
 {
-    use HasApiTokens, HasFactory, Notifiable, SoftDeletes, Filterable, Paginatable, LogsActivity, HasRoles;
+    use HasApiTokens, HasFactory, Notifiable, SoftDeletes,
+        Filterable, Paginatable, LogsActivity, HasRoles,InteractsWithMedia;
 
-    protected $fillable = ['first_name', 'middle_name', 'last_name', 'email', 'password', 'tenant_id', 'email_verified_at'];
+    protected $fillable = [
+        'first_name', 'middle_name', 'last_name', 'email', 'password', 'tenant_id',
+        'email_verified_at',
+        'avatar_id'
+    ];
 
     protected $hidden = ['password', 'remember_token'];
 
@@ -52,6 +60,32 @@ class User extends Authenticatable implements MustVerifyEmail
     public function hasStudentProfile(): Attribute
     {
         return Attribute::get(fn() => $this->studentProfile()->exists());
+    }
+
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('avatar')
+            ->singleFile()
+            ->registerMediaConversions(function (Media $media) {
+                $this->addMediaConversion('card')
+                    ->width(400)
+                    ->height(500)
+                    ->nonQueued();
+                $this->addMediaConversion('thumb')
+                    ->width(120)
+                    ->height(120)
+                    ->nonQueued();
+            });
+    }
+
+    public function avatar(): HasOne
+    {
+        return $this->hasOne(Media::class, 'id', 'avatar_id');
+    }
+
+    public function getAvatarUrlAttribute(): ?array
+    {
+        return ($this->avatar_id > 0) ? ['thumb' => $this->image->getFullUrl('thumb'), 'card' => $this->image->getFullUrl('card')] : null;
     }
 
     public function getActivitylogOptions(): LogOptions

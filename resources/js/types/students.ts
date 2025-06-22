@@ -35,10 +35,13 @@ export type PersonalDetailView = {
     passportNumber?: string;
     country?: string;
     studyPermitNumber?: string;
+    race?: string;
     religion?: string;
     denomination?: string;
     height?: string;
     weight?: string;
+    showAvatar?: boolean;
+    avatarUrl?: string;
 };
 
 export type ContactDetailView = {

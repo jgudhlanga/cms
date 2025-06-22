@@ -1,3 +1,5 @@
+import { User } from '@/types/users';
+
 export interface DataListProps {
 	data: Array<any>;
 	meta: PaginationMeta;
@@ -6,7 +8,7 @@ export interface DataListProps {
 
 export interface AuthObject {
 	can: any,
-	user: any,
+	user: User,
 }
 
 export interface DataFilters {
