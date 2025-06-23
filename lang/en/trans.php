@@ -245,6 +245,7 @@ return [
     "create_new_application" => "Create new application",
     "finish_your_application" => "Finish your application",
     "portal" => "Portal",
+    "programs" => "Programs",
     "contact_details" => "Contacts",
     "contact_details_description" => "Provide with contact details",
     "next_of_kin" => "Next of kin",
