@@ -3,7 +3,7 @@ import { Head } from '@inertiajs/vue3';
 
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import DataTable from '@/components/core/table/DataTable.vue';
-import { useAcademicLevels } from '@/composables/academicLevels/useAcademicLevels';
+import { useAcademicLevels } from '@/composables/shared/useAcademicLevels';
 import { AuthObject, DataFilters, DataListProps } from '@/types/data-pagination';
 import CreateEdit from './partials/CreateEdit.vue';
 

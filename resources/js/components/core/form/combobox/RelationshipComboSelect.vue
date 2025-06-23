@@ -6,7 +6,7 @@ import { SelectOption } from '@/types/utils';
 import { InertiaForm } from '@inertiajs/vue3';
 import { debounce } from 'lodash';
 import { computed, onMounted } from 'vue';
-import { useRelationships } from '@/composables/relationships/useRelationships';
+import { useRelationships } from '@/composables/shared/useRelationships';
 
 interface Props {
     form: InertiaForm<any>;

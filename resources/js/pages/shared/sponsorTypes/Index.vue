@@ -2,33 +2,33 @@
 import {Head} from '@inertiajs/vue3';
 
 import {AuthObject, DataFilters, DataListProps} from "@/types/data-pagination"
-import { useProvinces } from '@/composables/shared/useProvinces';
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import DataTable from '@/components/core/table/DataTable.vue';
 import CreateEdit from './partials/CreateEdit.vue';
+import { useSponsorTypes } from '@/composables/shared/useSponsorTypes';
 
-const {createProvinceColumns, breadcrumbs, onOpenModal} = useProvinces();
+const {createSponsorTypeColumns, breadcrumbs, onOpenModal} = useSponsorTypes();
 
 const props = defineProps<{
-	provinces: DataListProps,
+    sponsorTypes: DataListProps,
 	trashedCount: any,
 	filters: DataFilters,
 	auth: AuthObject,
-	errors: Object
+	errors: object
 }>();
 const can = props?.auth?.can;
 </script>
 
 <template>
-	<Head :title="$tChoice('trans.province', 2)"/>
+	<Head :title="$tChoice('trans.sponsor_type', 2)"/>
 	<PageContainer :breadcrumbs="breadcrumbs">
 		<DataTable
-			:data="provinces.data"
+			:data="sponsorTypes.data"
 			:trashed-count="trashedCount"
 			:filters="filters"
-			:search-url="route('provinces.index')"
-			:pagination="{...provinces.links, ...provinces.meta}"
-			:columns="createProvinceColumns()"
+			:search-url="route('sponsor-types.index')"
+			:pagination="{...sponsorTypes.links, ...sponsorTypes.meta}"
+			:columns="createSponsorTypeColumns()"
 			:on-create="() => onOpenModal(can['create:settings']) "
 			:disable-create="!can['create:settings']"
 		/>

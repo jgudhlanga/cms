@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import Title from '@/components/core/form/text/Title.vue';
 import BaseModal from '@/components/core/modal/BaseModal.vue';
-import { useMaritalStatuses } from '@/composables/statuses/useMaritalStatuses';
+import { useMaritalStatuses } from '@/composables/shared/useMaritalStatuses';
 import { getModalEdit } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
 import { clearFormErrors } from '@/lib/forms';

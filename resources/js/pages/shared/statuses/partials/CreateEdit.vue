@@ -8,7 +8,7 @@ import { useForm } from '@inertiajs/vue3';
 import { ref, watch } from 'vue';
 import { clearFormErrors } from '@/lib/forms';
 import BaseModal from '@/components/core/modal/BaseModal.vue';
-import { useStatuses } from '@/composables/statuses/useStatuses';
+import { useStatuses } from '@/composables/shared/useStatuses';
 
 const status = ref<Status>();
 const form = useForm<StatusParams>({

@@ -2,7 +2,7 @@
 import BaseAlert from '@/components/core/alert/BaseAlert.vue';
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import AvatarTitleList from '@/components/core/util/AvatarTitleList.vue';
-import { usePaymentSettings } from '@/composables/payments/usePaymentSettings';
+import { usePaymentSettings } from '@/composables/settings/usePaymentSettings';
 import { AuthObject } from '@/types/data-pagination';
 import { Link } from '@/types/ui';
 import { Head } from '@inertiajs/vue3';

@@ -39,6 +39,7 @@ const APP_MODULE_KEYS = {
     marital_statuses: 'marital_statuses',
     religions: 'religions',
     academic_levels: 'academic_levels',
+    sponsor_types: 'sponsor_types',
 };
 
 export { API_BASE_URL, API_VERSION, APP_MODULE_KEYS, DEFAULT_AVATAR, DEFAULT_IMAGE, LOGO };

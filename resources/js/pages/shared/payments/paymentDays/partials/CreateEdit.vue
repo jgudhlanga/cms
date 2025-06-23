@@ -7,7 +7,7 @@ import { ref, watch } from 'vue';
 import { clearFormErrors } from '@/lib/forms';
 import BaseModal from '@/components/core/modal/BaseModal.vue';
 import Title from '@/components/core/form/text/Title.vue';
-import { usePaymentDays } from '@/composables/payments/usePaymentDays';
+import { usePaymentDays } from '@/composables/shared/usePaymentDays';
 import { PaymentDay, PaymentDayParams } from '@/types/payments';
 
 const { savePaymentDay } = usePaymentDays();

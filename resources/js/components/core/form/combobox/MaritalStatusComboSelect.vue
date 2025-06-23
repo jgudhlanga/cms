@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import BaseCombobox from '@/components/core/form/combobox/BaseCombobox.vue';
-import { useMaritalStatuses } from '@/composables/statuses/useMaritalStatuses';
+import { useMaritalStatuses } from '@/composables/shared/useMaritalStatuses';
 import { clearFormErrors } from '@/lib/forms';
 import { MaritalStatus } from '@/types/settings';
 import { SelectOption } from '@/types/utils';

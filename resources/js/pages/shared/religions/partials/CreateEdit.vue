@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import Name from '@/components/core/form/text/Name.vue';
-import { useReligions } from '@/composables/religions/useReligions';
+import { useReligions } from '@/composables/shared/useReligions';
 import { getModalEdit } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
 import { useModalStore } from '@/store/core/useModalStore';

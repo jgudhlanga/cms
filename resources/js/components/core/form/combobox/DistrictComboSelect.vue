@@ -5,7 +5,7 @@ import BaseCombobox from '@/components/core/form/combobox/BaseCombobox.vue';
 import { clearFormErrors } from '@/lib/forms';
 import { InertiaForm } from '@inertiajs/vue3';
 import { debounce } from 'lodash';
-import { useDistricts } from '@/composables/districts/useDistricts';
+import { useDistricts } from '@/composables/shared/useDistricts';
 import { District } from '@/types/settings';
 
 interface Props {

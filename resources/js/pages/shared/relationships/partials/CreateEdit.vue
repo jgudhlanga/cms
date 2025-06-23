@@ -8,7 +8,7 @@ import { useForm } from '@inertiajs/vue3';
 import { ref, watch } from 'vue';
 import { clearFormErrors } from '@/lib/forms';
 import BaseModal from '@/components/core/modal/BaseModal.vue';
-import { useRelationships } from '@/composables/relationships/useRelationships';
+import { useRelationships } from '@/composables/shared/useRelationships';
 
 const relationship = ref<Relationship>();
 const form = useForm<RelationshipParams>({

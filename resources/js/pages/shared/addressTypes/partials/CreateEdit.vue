@@ -9,7 +9,7 @@ import { useForm } from '@inertiajs/vue3';
 import { ref, watch } from 'vue';
 import { clearFormErrors } from '@/lib/forms';
 import BaseModal from '@/components/core/modal/BaseModal.vue';
-import { useAddressTypes } from '@/composables/addressTypes/useAddressTypes';
+import { useAddressTypes } from '@/composables/shared/useAddressTypes';
 
 const addressType = ref<AddressType>();
 const form = useForm<AddressTypeParams>({

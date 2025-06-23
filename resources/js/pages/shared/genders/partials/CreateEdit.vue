@@ -8,7 +8,7 @@ import { useForm } from '@inertiajs/vue3';
 import { ref, watch } from 'vue';
 import { clearFormErrors } from '@/lib/forms';
 import BaseModal from '@/components/core/modal/BaseModal.vue';
-import { useGenders } from '@/composables/genders/useGenders';
+import { useGenders } from '@/composables/shared/useGenders';
 
 const gender = ref<Gender>();
 const form = useForm<GenderParams>({

@@ -8,7 +8,7 @@ import { useForm } from '@inertiajs/vue3';
 import { ref, watch } from 'vue';
 import { clearFormErrors } from '@/lib/forms';
 import BaseModal from '@/components/core/modal/BaseModal.vue';
-import { useRaces } from '@/composables/races/useRaces';
+import { useRaces } from '@/composables/shared/useRaces';
 
 const race = ref<Race>();
 const form = useForm<RaceParams>({

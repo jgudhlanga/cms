@@ -2,7 +2,7 @@
 import {Head} from '@inertiajs/vue3';
 
 import {AuthObject, DataFilters, DataListProps} from "@/types/data-pagination"
-import { useGenders } from '@/composables/genders/useGenders';
+import { useGenders } from '@/composables/shared/useGenders';
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import DataTable from '@/components/core/table/DataTable.vue';
 import CreateEdit from './partials/CreateEdit.vue';

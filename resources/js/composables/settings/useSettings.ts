@@ -59,6 +59,10 @@ export function useSettings() {
             url: route('statuses.index'),
         },
         {
+            transChoiceKey: 'sponsor_type',
+            url: route('sponsor-types.index'),
+        },
+        {
             transChoiceKey: 'title',
             url: route('titles.index'),
         },

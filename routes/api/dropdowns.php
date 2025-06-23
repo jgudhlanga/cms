@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\V1\Shared\MaritalStatusController;
 use App\Http\Controllers\Api\V1\Shared\ProvinceController;
 use App\Http\Controllers\Api\V1\Shared\RelationshipController;
 use App\Http\Controllers\Api\V1\Shared\ReligionController;
+use App\Http\Controllers\Api\V1\Shared\SponsorTypeController;
 use App\Http\Controllers\Api\V1\Shared\SubjectController;
 use App\Http\Controllers\Api\V1\Shared\TitleController;
 use Illuminate\Support\Facades\Route;
@@ -49,4 +50,6 @@ Route::prefix('v1')->group(function () {
     Route::apiResource('religions', ReligionController::class)->names('v1.religions');
     # ==================================== ACADEMIC LEVELS ======================================================
     Route::apiResource('academic-levels', AcademicLevelController::class)->names('v1.academic-levels');
+    # ==================================== SPONSOR TYPE ======================================================
+    Route::apiResource('sponsor-types', SponsorTypeController::class)->names('v1.sponsor-types');
 });

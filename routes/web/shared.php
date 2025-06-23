@@ -22,7 +22,7 @@ Route::middleware('auth')->group(function () {
             Route::delete('{address}/force-delete', [AddressController::class, 'forceDelete'])->name('addresses.force-delete');
             Route::delete('{address}/archive', [AddressController::class, 'destroy'])->name('addresses.destroy');
         });
-        # =================================== ADDRESS DETAILS ======================================== #
+        # =================================== NEXT OF KIN ======================================== #
         Route::prefix('next-of-kins')->group(function () {
             Route::put('{next_of_kin}/restore', [NextOfKinController::class, 'restore'])->name('next-of-kins.restore');
             Route::put('{next_of_kin}/update', [NextOfKinController::class, 'update'])->name('next-of-kins.update');

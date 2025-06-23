@@ -2,7 +2,7 @@
 import { Head } from '@inertiajs/vue3';
 import { AuthObject, DataFilters, DataListProps } from '@/types/data-pagination';
 import DataTable from '@/components/core/table/DataTable.vue';
-import { usePaymentMethods } from '@/composables/payments/usePaymentMethods';
+import { usePaymentMethods } from '@/composables/shared/usePaymentMethods';
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import CreateEdit from '@/pages/shared/payments/paymentMethods/partials/CreateEdit.vue';
 

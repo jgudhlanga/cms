@@ -7,7 +7,7 @@ import { ref, watch } from 'vue';
 import { clearFormErrors } from '@/lib/forms';
 import BaseModal from '@/components/core/modal/BaseModal.vue';
 import Title from '@/components/core/form/text/Title.vue';
-import { usePaymentFrequencies } from '@/composables/payments/usePaymentFrequencies';
+import { usePaymentFrequencies } from '@/composables/shared/usePaymentFrequencies';
 import { PaymentFrequency, PaymentFrequencyParams } from '@/types/payments';
 
 const { savePaymentFrequency } = usePaymentFrequencies();

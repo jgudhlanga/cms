@@ -8,7 +8,7 @@ import { useForm } from '@inertiajs/vue3';
 import { ref, watch } from 'vue';
 import { clearFormErrors } from '@/lib/forms';
 import BaseModal from '@/components/core/modal/BaseModal.vue';
-import { useLanguages } from '@/composables/languages/useLanguages';
+import { useLanguages } from '@/composables/shared/useLanguages';
 
 const language = ref<Language>();
 const form = useForm<LanguageParams>({

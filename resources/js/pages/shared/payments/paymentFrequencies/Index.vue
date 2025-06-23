@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
 import { AuthObject, DataFilters, DataListProps } from '@/types/data-pagination';
-import { usePaymentFrequencies } from '@/composables/payments/usePaymentFrequencies';
+import { usePaymentFrequencies } from '@/composables/shared/usePaymentFrequencies';
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import DataTable from '@/components/core/table/DataTable.vue';
 import CreateEdit from '@/pages/shared/payments/paymentFrequencies/partials/CreateEdit.vue';

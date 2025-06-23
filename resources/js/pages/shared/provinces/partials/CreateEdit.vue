@@ -8,7 +8,7 @@ import { useForm } from '@inertiajs/vue3';
 import { ref, watch } from 'vue';
 import { clearFormErrors } from '@/lib/forms';
 import BaseModal from '@/components/core/modal/BaseModal.vue';
-import { useProvinces } from '@/composables/provinces/useProvinces';
+import { useProvinces } from '@/composables/shared/useProvinces';
 
 const province = ref<Province>();
 const form = useForm<ProvinceParams>({

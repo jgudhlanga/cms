@@ -8,7 +8,7 @@ import { clearFormErrors } from '@/lib/forms';
 import BaseModal from '@/components/core/modal/BaseModal.vue';
 import Title from '@/components/core/form/text/Title.vue';
 import { CommunicationMethod, CommunicationMethodParams } from '@/types/communications';
-import { useCommunicationMethods } from '@/composables/communications/useCommunicationMethods';
+import { useCommunicationMethods } from '@/composables/shared/useCommunicationMethods';
 
 const { saveCommunicationMethod } = useCommunicationMethods();
 const communicationMethod = ref<CommunicationMethod>();

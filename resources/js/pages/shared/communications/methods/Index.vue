@@ -4,7 +4,7 @@ import DataTable from '@/components/core/table/DataTable.vue';
 import { AuthObject, DataFilters, DataListProps } from '@/types/data-pagination';
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import CreateEdit from './partials/CreateEdit.vue';
-import { useCommunicationMethods } from '@/composables/communications/useCommunicationMethods';
+import { useCommunicationMethods } from '@/composables/shared/useCommunicationMethods';
 
 const { createMethodsColumns, breadcrumbs, onOpenModal } = useCommunicationMethods();
 

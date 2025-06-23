@@ -54,6 +54,7 @@ use App\Repositories\Shared\interface\IProvinceRepository;
 use App\Repositories\Shared\interface\IRaceRepository;
 use App\Repositories\Shared\interface\IRelationshipRepository;
 use App\Repositories\Shared\interface\IReligionRepository;
+use App\Repositories\Shared\interface\ISponsorTypeRepository;
 use App\Repositories\Shared\interface\IStatusRepository;
 use App\Repositories\Shared\interface\ITitleRepository;
 use App\Repositories\Shared\LanguageRepository;
@@ -66,6 +67,7 @@ use App\Repositories\Shared\ProvinceRepository;
 use App\Repositories\Shared\RaceRepository;
 use App\Repositories\Shared\RelationshipRepository;
 use App\Repositories\Shared\ReligionRepository;
+use App\Repositories\Shared\SponsorTypeRepository;
 use App\Repositories\Shared\StatusRepository;
 use App\Repositories\Shared\TitleRepository;
 use App\Repositories\Students\interface\IStudentProgramRepository;
@@ -122,6 +124,7 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(IDistrictRepository::class, DistrictRepository::class);
         $this->app->bind(IReligionRepository::class, ReligionRepository::class);
         $this->app->bind(IAcademicLevelRepository::class, AcademicLevelRepository::class);
+        $this->app->bind(ISponsorTypeRepository::class, SponsorTypeRepository::class);
     }
 
     private function paymentsRepositories(): void

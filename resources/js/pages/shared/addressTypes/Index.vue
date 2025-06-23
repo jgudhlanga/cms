@@ -5,7 +5,7 @@ import {AuthObject, DataFilters, DataListProps} from "@/types/data-pagination"
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import DataTable from '@/components/core/table/DataTable.vue';
 import CreateEdit from './partials/CreateEdit.vue';
-import { useAddressTypes } from '@/composables/addressTypes/useAddressTypes';
+import { useAddressTypes } from '@/composables/shared/useAddressTypes';
 import { Auth } from '@/types';
 
 const {createAddressTypeColumns, breadcrumbs, onOpenModal} = useAddressTypes();

@@ -8,7 +8,7 @@ import { useForm } from '@inertiajs/vue3';
 import { ref, watch } from 'vue';
 import { clearFormErrors } from '@/lib/forms';
 import BaseModal from '@/components/core/modal/BaseModal.vue';
-import { useTitles } from '@/composables/titles/useTitles';
+import { useTitles } from '@/composables/shared/useTitles';
 
 const title = ref<Title>();
 const form = useForm<TitleParams>({

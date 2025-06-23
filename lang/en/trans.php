@@ -274,6 +274,7 @@ return [
     "read_write_required_description" => "Note!, Read/Write required for this course",
     "acknowledge_read_and_write" => "I acknowledge that I can read and write",
     "sponsor" => "Sponsor|Sponsors",
+    "sponsor_type" => "Sponsor type|Sponsor types",
     "financial_record" => "Financial record",
     "academic_record" => "Academic record",
     "religion" => "Religion|Religions",

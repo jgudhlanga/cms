@@ -187,3 +187,19 @@ export type AcademicLevelParams = {
     name: string;
     description?: string;
 };
+
+export type SponsorType = {
+    type?: string;
+    id?: string;
+    attributes: {
+        name: string;
+        description: string;
+        createdAt?: string;
+        updatedAt?: string;
+        deletedAt?: string;
+    };
+};
+export type SponsorTypeParams = {
+    name: string;
+    description?: string;
+};

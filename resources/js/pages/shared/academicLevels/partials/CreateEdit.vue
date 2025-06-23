@@ -2,7 +2,7 @@
 import Description from '@/components/core/form/text/Description.vue';
 import Name from '@/components/core/form/text/Name.vue';
 import BaseModal from '@/components/core/modal/BaseModal.vue';
-import { useAcademicLevels } from '@/composables/academicLevels/useAcademicLevels';
+import { useAcademicLevels } from '@/composables/shared/useAcademicLevels';
 import { getModalEdit } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
 import { clearFormErrors } from '@/lib/forms';

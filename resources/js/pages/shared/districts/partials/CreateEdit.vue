@@ -3,7 +3,7 @@ import ProvinceComboSelect from '@/components/core/form/combobox/ProvinceComboSe
 import Description from '@/components/core/form/text/Description.vue';
 import Name from '@/components/core/form/text/Name.vue';
 import BaseModal from '@/components/core/modal/BaseModal.vue';
-import { useDistricts } from '@/composables/districts/useDistricts';
+import { useDistricts } from '@/composables/shared/useDistricts';
 import { getModalEdit } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
 import { clearFormErrors } from '@/lib/forms';

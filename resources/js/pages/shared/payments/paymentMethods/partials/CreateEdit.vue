@@ -7,7 +7,7 @@ import { ref, watch } from 'vue';
 import { clearFormErrors } from '@/lib/forms';
 import BaseModal from '@/components/core/modal/BaseModal.vue';
 import Title from '@/components/core/form/text/Title.vue';
-import { usePaymentMethods } from '@/composables/payments/usePaymentMethods';
+import { usePaymentMethods } from '@/composables/shared/usePaymentMethods';
 import { PaymentMethod, PaymentMethodParams } from '@/types/payments';
 
 const { savePaymentMethod } = usePaymentMethods();

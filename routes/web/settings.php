@@ -20,6 +20,7 @@ use App\Http\Controllers\Shared\ProvinceController;
 use App\Http\Controllers\Shared\RaceController;
 use App\Http\Controllers\Shared\RelationshipController;
 use App\Http\Controllers\Shared\ReligionController;
+use App\Http\Controllers\Shared\SponsorTypeController;
 use App\Http\Controllers\Shared\StatusController;
 use App\Http\Controllers\Shared\TitleController;
 use Illuminate\Support\Facades\Route;
@@ -112,4 +113,8 @@ Route::prefix('settings')->middleware('auth')->group(function () {
     Route::put('academic-levels/{academic_level}/restore', [AcademicLevelController::class, 'restore'])->name('academic-levels.restore');
     Route::delete('academic-levels/{academic_level}/force-delete', [AcademicLevelController::class, 'forceDelete'])->name('academic-levels.force-delete');
     Route::resource('academic-levels', AcademicLevelController::class)->names('academic-levels');
+    # ==================================== SPONSOR TYPES ======================================================
+    Route::put('sponsor-types/{sponsor_type}/restore', [SponsorTypeController::class, 'restore'])->name('sponsor-types.restore');
+    Route::delete('sponsor-types/{sponsor_type}/force-delete', [SponsorTypeController::class, 'forceDelete'])->name('sponsor-types.force-delete');
+    Route::resource('sponsor-types', SponsorTypeController::class)->names('sponsor-types');
 });
