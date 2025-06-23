@@ -2,7 +2,7 @@
 
 namespace App\DTO\Provinces;
 
-use App\Http\Requests\Provinces\ProvinceRequest;
+use App\Http\Requests\Shared\ProvinceRequest;
 
 class ProvinceDto
 {

@@ -2,8 +2,7 @@
 
 namespace App\Policies\Dashboards;
 
-use App\Enums\PermissionEnum;
-use App\Models\Shared\Address;
+use App\Enums\Shared\PermissionEnum;
 use App\Models\Users\User;
 
 class DashboardPolicy

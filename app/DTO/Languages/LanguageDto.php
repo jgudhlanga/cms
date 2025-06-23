@@ -2,7 +2,7 @@
 
 namespace App\DTO\Languages;
 
-use App\Http\Requests\Languages\LanguageRequest;
+use App\Http\Requests\Shared\LanguageRequest;
 
 readonly class LanguageDto
 {

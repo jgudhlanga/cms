@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Portal;
 
 use App\DTO\Students\CreateApplicationDto;
 use App\DTO\Users\UserDto;
-use App\Enums\RoleEnum;
-use App\Enums\TenantEnum;
+use App\Enums\Shared\RoleEnum;
+use App\Enums\Shared\TenantEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Students\CreateApplicationRequest;
 use App\Http\Requests\Users\CreateUserRequest;

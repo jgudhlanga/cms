@@ -2,13 +2,9 @@
 
 namespace Database\Seeders\Users;
 
-use App\Enums\GenderEnum;
-use App\Enums\RoleEnum;
-use App\Enums\TenantEnum;
-use App\Enums\TitleEnum;
-use App\Models\Genders\Gender;
+use App\Enums\Shared\RoleEnum;
+use App\Enums\Shared\TenantEnum;
 use App\Models\Tenants\Tenant;
-use App\Models\Titles\Title;
 use App\Models\Users\User;
 use Illuminate\Database\Seeder;
 

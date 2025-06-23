@@ -2,7 +2,7 @@
 
 namespace App\DTO\Districts;
 
-use App\Http\Requests\Districts\DistrictRequest;
+use App\Http\Requests\Shared\DistrictRequest;
 
 readonly class DistrictDto
 {

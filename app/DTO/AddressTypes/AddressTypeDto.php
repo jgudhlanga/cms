@@ -2,7 +2,7 @@
 
 namespace App\DTO\AddressTypes;
 
-use App\Http\Requests\AddressTypes\AddressTypeRequest;
+use App\Http\Requests\Shared\AddressTypeRequest;
 
 class AddressTypeDto
 {

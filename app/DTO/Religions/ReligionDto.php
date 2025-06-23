@@ -2,7 +2,7 @@
 
 namespace App\DTO\Religions;
 
-use App\Http\Requests\Religions\ReligionRequest;
+use App\Http\Requests\Shared\ReligionRequest;
 
 readonly class ReligionDto
 {

@@ -2,7 +2,7 @@
 
 namespace App\Models\Scopes\Tenant;
 
-use App\Enums\PermissionEnum;
+use App\Enums\Shared\PermissionEnum;
 use App\Models\Users\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;

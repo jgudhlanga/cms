@@ -2,7 +2,7 @@
 
 namespace App\DTO\AcademicLevels;
 
-use App\Http\Requests\Academiclevels\AcademicLevelRequest;
+use App\Http\Requests\Shared\AcademicLevelRequest;
 
 readonly class AcademicLevelDto
 {

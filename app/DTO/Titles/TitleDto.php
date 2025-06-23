@@ -2,7 +2,7 @@
 
 namespace App\DTO\Titles;
 
-use App\Http\Requests\Titles\TitleRequest;
+use App\Http\Requests\Shared\TitleRequest;
 
 readonly class TitleDto
 {

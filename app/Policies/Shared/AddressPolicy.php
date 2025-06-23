@@ -2,7 +2,7 @@
 
 namespace App\Policies\Shared;
 
-use App\Enums\PermissionEnum;
+use App\Enums\Shared\PermissionEnum;
 use App\Models\Shared\Address;
 use App\Models\Users\User;
 

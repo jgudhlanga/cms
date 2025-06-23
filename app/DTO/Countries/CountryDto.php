@@ -2,7 +2,7 @@
 
 namespace App\DTO\Countries;
 
-use App\Http\Requests\Countries\CountryRequest;
+use App\Http\Requests\Shared\CountryRequest;
 
 readonly class CountryDto
 {

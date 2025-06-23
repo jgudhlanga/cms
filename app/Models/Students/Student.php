@@ -3,14 +3,14 @@
 namespace App\Models\Students;
 
 use App\Http\Filters\Students\StudentFilter;
-use App\Models\Countries\Country;
-use App\Models\Genders\Gender;
-use App\Models\Religions\Religion;
 use App\Models\Shared\Address;
 use App\Models\Shared\Contact;
+use App\Models\Shared\Country;
+use App\Models\Shared\Gender;
+use App\Models\Shared\MaritalStatus;
 use App\Models\Shared\NextOfKin;
-use App\Models\Statuses\MaritalStatus;
-use App\Models\Titles\Title;
+use App\Models\Shared\Religion;
+use App\Models\Shared\Title;
 use App\Traits\BelongsToTenant;
 use App\Traits\Filterable;
 use App\Traits\Paginatable;

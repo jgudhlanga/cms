@@ -2,9 +2,9 @@
 
 namespace Database\Factories\Users;
 
-use App\Models\Genders\Gender;
+use App\Models\Shared\Gender;
+use App\Models\Shared\Title;
 use App\Models\Tenants\Tenant;
-use App\Models\Titles\Title;
 use App\Models\Users\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;

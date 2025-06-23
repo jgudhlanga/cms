@@ -2,10 +2,9 @@
 
 namespace App\Http\Middleware;
 
-use App\Enums\PermissionEnum;
+use App\Enums\Shared\PermissionEnum;
 use App\Http\Resources\Users\UserResource;
 use App\Models\Users\User;
-use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Inertia\Middleware;

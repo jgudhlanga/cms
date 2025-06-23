@@ -2,8 +2,8 @@
 
 namespace Database\Seeders\Acl;
 
-use App\Enums\PermissionEnum;
-use App\Enums\RoleEnum;
+use App\Enums\Shared\PermissionEnum;
+use App\Enums\Shared\RoleEnum;
 use App\Models\Acl\Role;
 use Illuminate\Database\Seeder;
 

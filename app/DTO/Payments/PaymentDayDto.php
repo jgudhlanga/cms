@@ -2,7 +2,7 @@
 
 namespace App\DTO\Payments;
 
-use App\Http\Requests\Payments\PaymentDayRequest;
+use App\Http\Requests\Shared\PaymentDayRequest;
 
 class PaymentDayDto
 {

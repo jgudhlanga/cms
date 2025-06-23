@@ -3,7 +3,7 @@
 namespace App\DTO\Communications;
 
 
-use App\Http\Requests\Communications\CommunicationMethodRequest;
+use App\Http\Requests\Shared\CommunicationMethodRequest;
 
 class CommunicationMethodDto
 {

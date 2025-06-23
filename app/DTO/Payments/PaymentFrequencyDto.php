@@ -2,7 +2,7 @@
 
 namespace App\DTO\Payments;
 
-use App\Http\Requests\Payments\PaymentFrequencyRequest;
+use App\Http\Requests\Shared\PaymentFrequencyRequest;
 
 class PaymentFrequencyDto
 {

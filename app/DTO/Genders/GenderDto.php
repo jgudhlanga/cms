@@ -2,7 +2,7 @@
 
 namespace App\DTO\Genders;
 
-use App\Http\Requests\Genders\GenderRequest;
+use App\Http\Requests\Shared\GenderRequest;
 
 class GenderDto
 {

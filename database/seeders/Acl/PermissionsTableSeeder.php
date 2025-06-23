@@ -2,7 +2,7 @@
 
 namespace Database\Seeders\Acl;
 
-use App\Enums\PermissionEnum;
+use App\Enums\Shared\PermissionEnum;
 use App\Models\Acl\Module;
 use App\Models\Acl\Permission;
 use Illuminate\Database\Seeder;

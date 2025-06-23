@@ -1,20 +1,20 @@
 <?php
 
-use App\Http\Controllers\Api\V1\AcademicLevels\AcademicLevelController;
-use App\Http\Controllers\Api\V1\AddressTypes\AddressTypeController;
-use App\Http\Controllers\Api\V1\Countries\CountryController;
-use App\Http\Controllers\Api\V1\Districts\DistrictController;
-use App\Http\Controllers\Api\V1\Genders\GenderController;
-use App\Http\Controllers\Api\V1\Grades\GradeController;
 use App\Http\Controllers\Api\V1\Institution\CourseController;
 use App\Http\Controllers\Api\V1\Institution\DepartmentController;
 use App\Http\Controllers\Api\V1\Institution\LevelController;
-use App\Http\Controllers\Api\V1\Provinces\ProvinceController;
-use App\Http\Controllers\Api\V1\Relationships\RelationshipController;
-use App\Http\Controllers\Api\V1\Religions\ReligionController;
-use App\Http\Controllers\Api\V1\Statuses\MaritalStatusController;
-use App\Http\Controllers\Api\V1\Subjects\SubjectController;
-use App\Http\Controllers\Api\V1\Titles\TitleController;
+use App\Http\Controllers\Api\V1\Shared\AcademicLevelController;
+use App\Http\Controllers\Api\V1\Shared\AddressTypeController;
+use App\Http\Controllers\Api\V1\Shared\CountryController;
+use App\Http\Controllers\Api\V1\Shared\DistrictController;
+use App\Http\Controllers\Api\V1\Shared\GenderController;
+use App\Http\Controllers\Api\V1\Shared\GradeController;
+use App\Http\Controllers\Api\V1\Shared\MaritalStatusController;
+use App\Http\Controllers\Api\V1\Shared\ProvinceController;
+use App\Http\Controllers\Api\V1\Shared\RelationshipController;
+use App\Http\Controllers\Api\V1\Shared\ReligionController;
+use App\Http\Controllers\Api\V1\Shared\SubjectController;
+use App\Http\Controllers\Api\V1\Shared\TitleController;
 use Illuminate\Support\Facades\Route;
 
 

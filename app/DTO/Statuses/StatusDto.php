@@ -2,7 +2,7 @@
 
 namespace App\DTO\Statuses;
 
-use App\Http\Requests\Statuses\StatusRequest;
+use App\Http\Requests\Shared\StatusRequest;
 
 class StatusDto
 {

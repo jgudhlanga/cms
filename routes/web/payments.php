@@ -1,9 +1,9 @@
 <?php
 
-use App\Http\Controllers\Payments\PaymentDayController;
-use App\Http\Controllers\Payments\PaymentFrequencyController;
-use App\Http\Controllers\Payments\PaymentMethodController;
-use App\Http\Controllers\Payments\PaymentSettingsController;
+use App\Http\Controllers\Shared\PaymentDayController;
+use App\Http\Controllers\Shared\PaymentFrequencyController;
+use App\Http\Controllers\Shared\PaymentMethodController;
+use App\Http\Controllers\Shared\PaymentSettingsController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('settings')->middleware('auth')->group(function () {

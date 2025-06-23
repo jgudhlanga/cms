@@ -2,7 +2,7 @@
 
 namespace App\DTO\Relationships;
 
-use App\Http\Requests\Relationships\RelationshipRequest;
+use App\Http\Requests\Shared\RelationshipRequest;
 
 readonly class RelationshipDto
 {

@@ -1,11 +1,5 @@
 <?php
 
-use App\Http\Controllers\AcademicLevels\AcademicLevelController;
-use App\Http\Controllers\AddressTypes\AddressTypeController;
-use App\Http\Controllers\Communications\CommunicationMethodController;
-use App\Http\Controllers\Countries\CountryController;
-use App\Http\Controllers\Districts\DistrictController;
-use App\Http\Controllers\Genders\GenderController;
 use App\Http\Controllers\Institution\CourseController;
 use App\Http\Controllers\Institution\DepartmentController;
 use App\Http\Controllers\Institution\DivisionController;
@@ -13,15 +7,21 @@ use App\Http\Controllers\Institution\GradeController;
 use App\Http\Controllers\Institution\LevelController;
 use App\Http\Controllers\Institution\ModeOfStudyController;
 use App\Http\Controllers\Institution\SubjectController;
-use App\Http\Controllers\Languages\LanguageController;
-use App\Http\Controllers\Provinces\ProvinceController;
-use App\Http\Controllers\Races\RaceController;
-use App\Http\Controllers\Relationships\RelationshipController;
-use App\Http\Controllers\Religions\ReligionController;
 use App\Http\Controllers\Settings\SettingsController;
-use App\Http\Controllers\Statuses\MaritalStatusController;
-use App\Http\Controllers\Statuses\StatusController;
-use App\Http\Controllers\Titles\TitleController;
+use App\Http\Controllers\Shared\AcademicLevelController;
+use App\Http\Controllers\Shared\AddressTypeController;
+use App\Http\Controllers\Shared\CommunicationMethodController;
+use App\Http\Controllers\Shared\CountryController;
+use App\Http\Controllers\Shared\DistrictController;
+use App\Http\Controllers\Shared\GenderController;
+use App\Http\Controllers\Shared\LanguageController;
+use App\Http\Controllers\Shared\MaritalStatusController;
+use App\Http\Controllers\Shared\ProvinceController;
+use App\Http\Controllers\Shared\RaceController;
+use App\Http\Controllers\Shared\RelationshipController;
+use App\Http\Controllers\Shared\ReligionController;
+use App\Http\Controllers\Shared\StatusController;
+use App\Http\Controllers\Shared\TitleController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('settings')->middleware('auth')->group(function () {

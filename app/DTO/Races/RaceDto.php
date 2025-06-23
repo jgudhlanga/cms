@@ -2,7 +2,7 @@
 
 namespace App\DTO\Races;
 
-use App\Http\Requests\Races\RaceRequest;
+use App\Http\Requests\Shared\RaceRequest;
 
 class RaceDto
 {

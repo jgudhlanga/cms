@@ -2,8 +2,8 @@
 
 namespace Database\Seeders\Statuses;
 
-use App\Enums\StatusEnum;
-use App\Models\Statuses\Status;
+use App\Enums\Shared\StatusEnum;
+use App\Models\Shared\Status;
 use Illuminate\Database\Seeder;
 
 class StatusSeeder extends Seeder

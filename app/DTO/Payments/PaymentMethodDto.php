@@ -2,7 +2,7 @@
 
 namespace App\DTO\Payments;
 
-use App\Http\Requests\Payments\PaymentMethodRequest;
+use App\Http\Requests\Shared\PaymentMethodRequest;
 
 class PaymentMethodDto
 {
