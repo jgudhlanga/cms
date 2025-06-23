@@ -21,7 +21,7 @@ class CountryController extends Controller
 	{
 		$this->authorize('viewSettings');
 		$countries = CountryResource::collection($this->repository->allFilter(['*'], $filters));
-		return Inertia::render('countries/Index', [
+		return Inertia::render('shared/countries/Index', [
 			'countries' => $countries,
 			'filters' => request()->only(['search', 'trashed']),
 			'trashedCount' => $this->repository->allTrashed()->count(),

@@ -21,7 +21,7 @@ class RaceController extends Controller
 	{
 		$this->authorize('viewSettings');
 		$races = RaceResource::collection($this->repository->allFilter(['*'], $filters));
-		return Inertia::render('races/Index', [
+		return Inertia::render('shared/races/Index', [
 			'races' => $races,
 			'filters' => request()->only(['search', 'trashed']),
 			'trashedCount' => $this->repository->allTrashed()->count(),

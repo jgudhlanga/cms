@@ -21,7 +21,7 @@ class RelationshipController extends Controller
     {
         $this->authorize('viewSettings');
         $relationships = RelationshipResource::collection($this->repository->allFilter(['*'], $filters));
-        return Inertia::render('relationships/Index', [
+        return Inertia::render('shared/relationships/Index', [
             'relationships' => $relationships,
             'filters' => request()->only(['search', 'trashed']),
             'trashedCount' => $this->repository->allTrashed()->count(),

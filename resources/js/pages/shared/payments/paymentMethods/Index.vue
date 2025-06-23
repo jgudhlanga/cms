@@ -2,14 +2,14 @@
 import { Head } from '@inertiajs/vue3';
 import { AuthObject, DataFilters, DataListProps } from '@/types/data-pagination';
 import DataTable from '@/components/core/table/DataTable.vue';
-import { usePaymentDays } from '@/composables/payments/usePaymentDays';
+import { usePaymentMethods } from '@/composables/payments/usePaymentMethods';
 import PageContainer from '@/components/core/page/PageContainer.vue';
-import CreateEdit from '@/pages/payments/paymentDays/partials/CreateEdit.vue';
+import CreateEdit from '@/pages/shared/payments/paymentMethods/partials/CreateEdit.vue';
 
-const { createPaymentDayColumns, breadcrumbs, onOpenModal } = usePaymentDays();
+const { createPaymentMethodColumns, breadcrumbs, onOpenModal } = usePaymentMethods();
 
 const props = defineProps<{
-	paymentDays: DataListProps,
+	paymentMethods: DataListProps,
 	trashedCount: any,
 	filters: DataFilters,
 	auth: AuthObject,
@@ -19,16 +19,16 @@ const can = props?.auth?.can;
 </script>
 
 <template>
-	<Head :title="$tChoice('trans.payment_day', 2)" />
+	<Head :title="$tChoice('trans.payment_method', 2)" />
 	<PageContainer :breadcrumbs="breadcrumbs">
 		<DataTable
-			:data="paymentDays.data"
+			:data="paymentMethods.data"
 			:trashed-count="trashedCount"
 			:filters="filters"
-			:search-url="route('payment-days.index')"
-			:pagination="{...paymentDays.links, ...paymentDays.meta}"
-			:columns="createPaymentDayColumns()"
-			:on-create="() => onOpenModal(can['create:settings'])"
+			:search-url="route('payment-methods.index')"
+			:pagination="{...paymentMethods.links, ...paymentMethods.meta}"
+			:columns="createPaymentMethodColumns()"
+			:on-create="() => onOpenModal(can['create:settings']) "
 			:disable-create="!can['create:settings']"
 		/>
 		<CreateEdit />

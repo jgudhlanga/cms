@@ -21,7 +21,7 @@ class ReligionController extends Controller
 	{
 		$this->authorize('viewSettings');
 		$religions = ReligionResource::collection($this->repository->allFilter(['*'], $filters));
-		return Inertia::render('religions/Index', [
+		return Inertia::render('shared/religions/Index', [
 			'religions' => $religions,
 			'filters' => request()->only(['search', 'trashed']),
 			'trashedCount' => $this->repository->allTrashed()->count(),

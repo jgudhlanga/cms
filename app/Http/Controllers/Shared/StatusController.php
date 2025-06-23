@@ -21,7 +21,7 @@ class StatusController extends Controller
 	{
 		$this->authorize('viewSettings');
 		$statuses = StatusResource::collection($this->repository->allFilter(['*'], $filters));
-		return Inertia::render('statuses/Index', [
+		return Inertia::render('shared/statuses/Index', [
 			'statuses' => $statuses,
 			'filters' => request()->only(['search', 'trashed']),
 			'trashedCount' => $this->repository->allTrashed()->count(),

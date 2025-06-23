@@ -21,7 +21,7 @@ class MaritalStatusController extends Controller
     {
         $this->authorize('viewSettings');
         $maritalStatuses = MaritalStatusResource::collection($this->repository->allFilter(['*'], $filters));
-        return Inertia::render('statuses/maritalStatuses/Index', [
+        return Inertia::render('shared/statuses/maritalStatuses/Index', [
             'maritalStatuses' => $maritalStatuses,
             'filters' => request()->only(['search', 'trashed']),
             'trashedCount' => $this->repository->allTrashed()->count(),

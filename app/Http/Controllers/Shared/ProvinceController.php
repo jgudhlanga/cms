@@ -21,7 +21,7 @@ class ProvinceController extends Controller
 	{
 		$this->authorize('viewSettings');
 		$provinces = ProvinceResource::collection($this->repository->allFilter(['*'], $filters));
-		return Inertia::render('provinces/Index', [
+		return Inertia::render('shared/provinces/Index', [
 			'provinces' => $provinces,
 			'filters' => request()->only(['search', 'trashed']),
 			'trashedCount' => $this->repository->allTrashed()->count(),

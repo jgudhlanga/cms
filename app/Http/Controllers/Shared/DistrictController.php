@@ -21,7 +21,7 @@ class DistrictController extends Controller
     {
         $this->authorize('viewSettings');
         $districts = DistrictResource::collection($this->repository->allFilter(['*'], $filters));
-        return Inertia::render('districts/Index', [
+        return Inertia::render('shared/districts/Index', [
             'districts' => $districts,
             'filters' => request()->only(['search', 'trashed']),
             'trashedCount' => $this->repository->allTrashed()->count(),

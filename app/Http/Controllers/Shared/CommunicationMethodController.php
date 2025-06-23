@@ -21,7 +21,7 @@ class CommunicationMethodController extends Controller
 	{
 		$this->authorize('viewSettings');
 		$methods = CommunicationMethodResource::collection($this->repository->allFilter(['*'], $filters));
-		return Inertia::render('communications/methods/Index', [
+		return Inertia::render('shared/communications/methods/Index', [
 			'methods' => $methods,
 			'filters' => request()->only(['search', 'trashed']),
 			'trashedCount' => $this->repository->allTrashed()->count(),

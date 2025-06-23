@@ -21,7 +21,7 @@ class GenderController extends Controller
 	{
 		$this->authorize('viewSettings');
 		$genders = GenderResource::collection($this->repository->allFilter(['*'], $filters));
-		return Inertia::render('genders/Index', [
+		return Inertia::render('shared/genders/Index', [
 			'genders' => $genders,
 			'filters' => request()->only(['search', 'trashed']),
 			'trashedCount' => $this->repository->allTrashed()->count(),

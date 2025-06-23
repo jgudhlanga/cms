@@ -21,7 +21,7 @@ class PaymentDayController extends Controller
 	{
 		$this->authorize('viewSettings');
 		$paymentDays = PaymentDayResource::collection($this->repository->allFilter(['*'], $filters));
-		return Inertia::render('payments/paymentDays/Index', [
+		return Inertia::render('shared/payments/paymentDays/Index', [
 			'paymentDays' => $paymentDays,
 			'filters' => request()->only(['search', 'trashed']),
 			'trashedCount' => $this->repository->allTrashed()->count(),

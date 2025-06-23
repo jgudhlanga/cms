@@ -21,7 +21,7 @@ class LanguageController extends Controller
 	{
 		$this->authorize('viewSettings');
 		$languages = LanguageResource::collection($this->repository->allFilter(['*'], $filters));
-		return Inertia::render('languages/Index', [
+		return Inertia::render('shared/languages/Index', [
 			'languages' => $languages,
 			'filters' => request()->only(['search', 'trashed']),
 			'trashedCount' => $this->repository->allTrashed()->count(),

@@ -22,7 +22,7 @@ class AcademicLevelController extends Controller
     {
         $this->authorize('viewSettings');
         $academicLevels = AcademicLevelResource::collection($this->repository->allFilter(['*'], $filters));
-        return Inertia::render('academicLevels/Index', [
+        return Inertia::render('shared/academicLevels/Index', [
             'academicLevels' => $academicLevels,
             'filters' => request()->only(['search', 'trashed']),
             'trashedCount' => $this->repository->allTrashed()->count(),

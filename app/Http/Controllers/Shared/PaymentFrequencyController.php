@@ -21,7 +21,7 @@ class PaymentFrequencyController extends Controller
 	{
 		$this->authorize('viewSettings');
 		$paymentFrequencies = PaymentFrequencyResource::collection($this->repository->allFilter(['*'], $filters));
-		return Inertia::render('payments/paymentFrequencies/Index', [
+		return Inertia::render('shared/payments/paymentFrequencies/Index', [
 			'paymentFrequencies' => $paymentFrequencies,
 			'filters' => request()->only(['search', 'trashed']),
 			'trashedCount' => $this->repository->allTrashed()->count(),

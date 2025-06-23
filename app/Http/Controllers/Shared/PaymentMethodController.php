@@ -21,7 +21,7 @@ class PaymentMethodController extends Controller
 	{
 		$this->authorize('viewSettings');
 		$paymentMethods = PaymentMethodResource::collection($this->repository->allFilter(['*'], $filters));
-		return Inertia::render('payments/paymentMethods/Index', [
+		return Inertia::render('shared/payments/paymentMethods/Index', [
 			'paymentMethods' => $paymentMethods,
 			'filters' => request()->only(['search', 'trashed']),
 			'trashedCount' => $this->repository->allTrashed()->count(),

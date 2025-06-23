@@ -22,7 +22,7 @@ class AddressTypeController extends Controller
 	{
 		$this->authorize('viewSettings');
 		$addressTypes = AddressTypeResource::collection($this->repository->allFilter(['*'], $filters));
-		return Inertia::render('addressTypes/Index', [
+		return Inertia::render('shared/addressTypes/Index', [
 			'addressTypes' => $addressTypes,
 			'filters' => request()->only(['search', 'trashed']),
 			'trashedCount' => $this->repository->allTrashed()->count(),
