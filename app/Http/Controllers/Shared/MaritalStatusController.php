@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Shared;
 
-use App\DTO\Statuses\MaritalStatusDto;
+use App\DTO\Shared\MaritalStatusDto;
 use App\Http\Controllers\Controller;
 use App\Http\Filters\Shared\SharedTitleFilter;
 use App\Http\Requests\Shared\MaritalStatusRequest;

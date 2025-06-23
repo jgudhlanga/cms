@@ -2,7 +2,7 @@
 
 namespace App\Repositories\Shared\interface;
 
-use App\DTO\Statuses\StatusDto;
+use App\DTO\Shared\StatusDto;
 use App\Http\Filters\Shared\SharedTitleFilter;
 use App\Models\Shared\Status;
 use App\Repositories\Base\Interface\IBaseRepository;

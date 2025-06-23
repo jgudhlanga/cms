@@ -27,7 +27,7 @@ use Database\Seeders\Shared\ProvinceSeeder;
 use Database\Seeders\Shared\RaceSeeder;
 use Database\Seeders\Shared\RelationshipsTableSeeder;
 use Database\Seeders\Shared\ReligionTableSeeder;
-use Database\Seeders\Shared\SponsorTableSeeder;
+use Database\Seeders\Shared\SponsorTypeTableSeeder;
 use Database\Seeders\Shared\TitleSeeder;
 use Database\Seeders\Statuses\MaritalStatusSeeder;
 use Database\Seeders\Statuses\StatusSeeder;
@@ -58,7 +58,7 @@ class DatabaseSeeder extends Seeder
             LanguageSeeder::class,
             ProvinceSeeder::class,
             DistrictsTableSeeder::class,
-            SponsorTableSeeder::class,
+            SponsorTypeTableSeeder::class,
             StatusSeeder::class,
             MaritalStatusSeeder::class,
             AddressTypesTableSeeder::class,

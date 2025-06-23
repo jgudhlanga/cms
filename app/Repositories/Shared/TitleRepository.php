@@ -3,7 +3,7 @@
 namespace App\Repositories\Shared;
 
 
-use App\DTO\Titles\TitleDto;
+use App\DTO\Shared\TitleDto;
 use App\Http\Filters\Shared\SharedNameFilter;
 use App\Models\Shared\Title;
 use App\Repositories\Base\BaseRepository;

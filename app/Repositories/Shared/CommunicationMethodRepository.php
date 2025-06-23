@@ -2,7 +2,7 @@
 
 namespace App\Repositories\Shared;
 
-use App\DTO\Communications\CommunicationMethodDto;
+use App\DTO\Shared\CommunicationMethodDto;
 use App\Http\Filters\Shared\SharedTitleFilter;
 use App\Models\Shared\CommunicationMethod;
 use App\Repositories\Base\BaseRepository;

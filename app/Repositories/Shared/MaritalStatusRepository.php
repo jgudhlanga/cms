@@ -3,7 +3,7 @@
 namespace App\Repositories\Shared;
 
 
-use App\DTO\Statuses\MaritalStatusDto;
+use App\DTO\Shared\MaritalStatusDto;
 use App\Http\Filters\Shared\SharedTitleFilter;
 use App\Models\Shared\MaritalStatus;
 use App\Repositories\Base\BaseRepository;

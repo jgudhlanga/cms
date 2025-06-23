@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Shared;
 
-use App\DTO\Relationships\RelationshipDto;
+use App\DTO\Shared\RelationshipDto;
 use App\Http\Controllers\Controller;
 use App\Http\Filters\Shared\SharedNameFilter;
 use App\Http\Requests\Shared\RelationshipRequest;

@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Shared;
 
-use App\DTO\AddressTypes\AddressTypeDto;
+use App\DTO\Shared\AddressTypeDto;
 use App\Http\Controllers\Controller;
 use App\Http\Filters\Shared\SharedTitleFilter;
 use App\Http\Requests\Shared\AddressTypeRequest;

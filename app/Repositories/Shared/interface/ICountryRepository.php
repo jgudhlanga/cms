@@ -2,7 +2,7 @@
 
 namespace App\Repositories\Shared\interface;
 
-use App\DTO\Countries\CountryDto;
+use App\DTO\Shared\CountryDto;
 use App\Http\Filters\Shared\SharedNameFilter;
 use App\Models\Shared\Country;
 use App\Repositories\Base\Interface\IBaseRepository;

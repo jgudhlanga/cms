@@ -2,7 +2,7 @@
 
 namespace App\Repositories\Shared\interface;
 
-use App\DTO\Religions\ReligionDto;
+use App\DTO\Shared\ReligionDto;
 use App\Http\Filters\Shared\SharedNameFilter;
 use App\Models\Shared\Religion;
 use App\Repositories\Base\Interface\IBaseRepository;

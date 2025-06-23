@@ -2,7 +2,7 @@
 
 namespace App\Repositories\Shared\interface;
 
-use App\DTO\Districts\DistrictDto;
+use App\DTO\Shared\DistrictDto;
 use App\Http\Filters\Shared\SharedNameFilter;
 use App\Models\Shared\District;
 use App\Repositories\Base\Interface\IBaseRepository;

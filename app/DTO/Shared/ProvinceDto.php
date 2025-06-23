@@ -1,13 +1,12 @@
 <?php
 
-namespace App\DTO\Payments;
+namespace App\DTO\Shared;
 
-use App\Http\Requests\Shared\PaymentDayRequest;
+use App\Http\Requests\Shared\ProvinceRequest;
 
-class PaymentDayDto
+class ProvinceDto
 {
     public function __construct(
-
         public readonly string $title,
         public readonly? string $description,
     )
@@ -15,7 +14,7 @@ class PaymentDayDto
     }
 
 
-    public static function fromPaymentDayRequest(PaymentDayRequest $request): PaymentDayDto
+    public static function fromProvinceRequest(ProvinceRequest $request): ProvinceDto
     {
         return new self(
             title: $request->title,

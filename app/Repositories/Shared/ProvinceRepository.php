@@ -3,7 +3,7 @@
 namespace App\Repositories\Shared;
 
 
-use App\DTO\Provinces\ProvinceDto;
+use App\DTO\Shared\ProvinceDto;
 use App\Http\Filters\Shared\SharedTitleFilter;
 use App\Models\Shared\Province;
 use App\Repositories\Base\BaseRepository;

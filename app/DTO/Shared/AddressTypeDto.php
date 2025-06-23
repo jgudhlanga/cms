@@ -1,10 +1,10 @@
 <?php
 
-namespace App\DTO\Provinces;
+namespace App\DTO\Shared;
 
-use App\Http\Requests\Shared\ProvinceRequest;
+use App\Http\Requests\Shared\AddressTypeRequest;
 
-class ProvinceDto
+class AddressTypeDto
 {
     public function __construct(
         public readonly string $title,
@@ -14,11 +14,11 @@ class ProvinceDto
     }
 
 
-    public static function fromProvinceRequest(ProvinceRequest $request): ProvinceDto
+    public static function fromAddressTypeRequest(AddressTypeRequest $request): AddressTypeDto
     {
         return new self(
             title: $request->title,
-            description: $request->description,
+			description: $request->description,
         );
     }
 }

@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Shared;
 
-use App\DTO\Provinces\ProvinceDto;
+use App\DTO\Shared\ProvinceDto;
 use App\Http\Controllers\Controller;
 use App\Http\Filters\Shared\SharedTitleFilter;
 use App\Http\Requests\Shared\ProvinceRequest;

@@ -2,7 +2,7 @@
 
 namespace App\Repositories\Shared\interface;
 
-use App\DTO\Payments\PaymentDayDto;
+use App\DTO\Shared\PaymentDayDto;
 use App\Http\Filters\Shared\SharedTitleFilter;
 use App\Models\Shared\PaymentDay;
 use App\Repositories\Base\Interface\IBaseRepository;

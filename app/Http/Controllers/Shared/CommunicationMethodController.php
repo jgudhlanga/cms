@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Shared;
 
-use App\DTO\Communications\CommunicationMethodDto;
+use App\DTO\Shared\CommunicationMethodDto;
 use App\Http\Controllers\Controller;
 use App\Http\Filters\Shared\SharedTitleFilter;
 use App\Http\Requests\Shared\CommunicationMethodRequest;

@@ -2,7 +2,7 @@
 
 namespace App\Repositories\Shared;
 
-use App\DTO\AcademicLevels\AcademicLevelDto;
+use App\DTO\Shared\AcademicLevelDto;
 use App\Http\Filters\Shared\SharedNameFilter;
 use App\Models\Shared\AcademicLevel;
 use App\Repositories\Base\BaseRepository;

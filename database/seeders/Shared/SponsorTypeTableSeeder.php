@@ -6,7 +6,7 @@ use App\Enums\Shared\SponsorTypeEnum;
 use App\Models\Shared\SponsorType;
 use Illuminate\Database\Seeder;
 
-class SponsorTableSeeder extends Seeder
+class SponsorTypeTableSeeder extends Seeder
 {
     /**
      * Run the database seeds.

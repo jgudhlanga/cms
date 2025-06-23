@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Shared;
 
-use App\DTO\Religions\ReligionDto;
+use App\DTO\Shared\ReligionDto;
 use App\Http\Controllers\Controller;
 use App\Http\Filters\Shared\SharedNameFilter;
 use App\Http\Requests\Shared\ReligionRequest;

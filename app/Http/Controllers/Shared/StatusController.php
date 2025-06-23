@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Shared;
 
-use App\DTO\Statuses\StatusDto;
+use App\DTO\Shared\StatusDto;
 use App\Http\Controllers\Controller;
 use App\Http\Filters\Shared\SharedTitleFilter;
 use App\Http\Requests\Shared\StatusRequest;

@@ -2,7 +2,7 @@
 
 namespace App\Repositories\Shared\interface;
 
-use App\DTO\Payments\PaymentMethodDto;
+use App\DTO\Shared\PaymentMethodDto;
 use App\Http\Filters\Shared\SharedTitleFilter;
 use App\Models\Shared\PaymentMethod;
 use App\Repositories\Base\Interface\IBaseRepository;

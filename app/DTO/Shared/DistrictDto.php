@@ -1,6 +1,6 @@
 <?php
 
-namespace App\DTO\Districts;
+namespace App\DTO\Shared;
 
 use App\Http\Requests\Shared\DistrictRequest;
 

@@ -1,10 +1,10 @@
 <?php
 
-namespace App\DTO\Payments;
+namespace App\DTO\Shared;
 
-use App\Http\Requests\Shared\PaymentFrequencyRequest;
+use App\Http\Requests\Shared\PaymentMethodRequest;
 
-class PaymentFrequencyDto
+class PaymentMethodDto
 {
     public function __construct(
         public readonly string $title,
@@ -14,7 +14,7 @@ class PaymentFrequencyDto
     }
 
 
-    public static function fromPaymentFrequencyRequest(PaymentFrequencyRequest $request): PaymentFrequencyDto
+    public static function fromPaymentMethodRequest(PaymentMethodRequest $request): PaymentMethodDto
     {
         return new self(
             title: $request->title,

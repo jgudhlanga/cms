@@ -1,10 +1,10 @@
 <?php
 
-namespace App\DTO\AddressTypes;
+namespace App\DTO\Shared;
 
-use App\Http\Requests\Shared\AddressTypeRequest;
+use App\Http\Requests\Shared\RaceRequest;
 
-class AddressTypeDto
+class RaceDto
 {
     public function __construct(
         public readonly string $title,
@@ -14,7 +14,7 @@ class AddressTypeDto
     }
 
 
-    public static function fromAddressTypeRequest(AddressTypeRequest $request): AddressTypeDto
+    public static function fromRaceRequest(RaceRequest $request): RaceDto
     {
         return new self(
             title: $request->title,

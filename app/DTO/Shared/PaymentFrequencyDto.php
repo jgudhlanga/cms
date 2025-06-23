@@ -1,10 +1,10 @@
 <?php
 
-namespace App\DTO\Statuses;
+namespace App\DTO\Shared;
 
-use App\Http\Requests\Shared\StatusRequest;
+use App\Http\Requests\Shared\PaymentFrequencyRequest;
 
-class StatusDto
+class PaymentFrequencyDto
 {
     public function __construct(
         public readonly string $title,
@@ -14,7 +14,7 @@ class StatusDto
     }
 
 
-    public static function fromStatusRequest(StatusRequest $request): StatusDto
+    public static function fromPaymentFrequencyRequest(PaymentFrequencyRequest $request): PaymentFrequencyDto
     {
         return new self(
             title: $request->title,

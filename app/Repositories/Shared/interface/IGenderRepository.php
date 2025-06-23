@@ -2,7 +2,7 @@
 
 namespace App\Repositories\Shared\interface;
 
-use App\DTO\Genders\GenderDto;
+use App\DTO\Shared\GenderDto;
 use App\Http\Filters\Shared\SharedTitleFilter;
 use App\Models\Shared\Gender;
 use App\Repositories\Base\Interface\IBaseRepository;

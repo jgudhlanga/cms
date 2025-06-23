@@ -2,7 +2,7 @@
 
 namespace App\Repositories\Shared;
 
-use App\DTO\Relationships\RelationshipDto;
+use App\DTO\Shared\RelationshipDto;
 use App\Http\Filters\Shared\SharedNameFilter;
 use App\Models\Shared\Relationship;
 use App\Repositories\Base\BaseRepository;

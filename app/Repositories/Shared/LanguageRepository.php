@@ -3,7 +3,7 @@
 namespace App\Repositories\Shared;
 
 
-use App\DTO\Languages\LanguageDto;
+use App\DTO\Shared\LanguageDto;
 use App\Http\Filters\Shared\SharedTitleFilter;
 use App\Models\Shared\Language;
 use App\Repositories\Base\BaseRepository;

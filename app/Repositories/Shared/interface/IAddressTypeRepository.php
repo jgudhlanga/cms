@@ -2,7 +2,7 @@
 
 namespace App\Repositories\Shared\interface;
 
-use App\DTO\AddressTypes\AddressTypeDto;
+use App\DTO\Shared\AddressTypeDto;
 use App\Http\Filters\Shared\SharedTitleFilter;
 use App\Models\Shared\AddressType;
 use App\Repositories\Base\Interface\IBaseRepository;

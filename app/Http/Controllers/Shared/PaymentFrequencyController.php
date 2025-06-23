@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Shared;
 
-use App\DTO\Payments\PaymentFrequencyDto;
+use App\DTO\Shared\PaymentFrequencyDto;
 use App\Http\Controllers\Controller;
 use App\Http\Filters\Shared\SharedTitleFilter;
 use App\Http\Requests\Shared\PaymentFrequencyRequest;

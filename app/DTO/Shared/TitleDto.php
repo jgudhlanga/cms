@@ -1,6 +1,6 @@
 <?php
 
-namespace App\DTO\Titles;
+namespace App\DTO\Shared;
 
 use App\Http\Requests\Shared\TitleRequest;
 

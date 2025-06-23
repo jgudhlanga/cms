@@ -2,7 +2,7 @@
 
 namespace App\Repositories\Shared\interface;
 
-use App\DTO\Payments\PaymentFrequencyDto;
+use App\DTO\Shared\PaymentFrequencyDto;
 use App\Http\Filters\Shared\SharedTitleFilter;
 use App\Models\Shared\PaymentFrequency;
 use App\Repositories\Base\Interface\IBaseRepository;

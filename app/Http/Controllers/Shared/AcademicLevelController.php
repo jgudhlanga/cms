@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Shared;
 
-use App\DTO\AcademicLevels\AcademicLevelDto;
+use App\DTO\Shared\AcademicLevelDto;
 use App\Http\Controllers\Controller;
 use App\Http\Filters\Shared\SharedNameFilter;
 use App\Http\Requests\Shared\AcademicLevelRequest;

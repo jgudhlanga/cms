@@ -1,10 +1,10 @@
 <?php
 
-namespace App\DTO\Races;
+namespace App\DTO\Shared;
 
-use App\Http\Requests\Shared\RaceRequest;
+use App\Http\Requests\Shared\GenderRequest;
 
-class RaceDto
+class GenderDto
 {
     public function __construct(
         public readonly string $title,
@@ -14,11 +14,11 @@ class RaceDto
     }
 
 
-    public static function fromRaceRequest(RaceRequest $request): RaceDto
+    public static function fromGenderRequest(GenderRequest $request): GenderDto
     {
         return new self(
             title: $request->title,
-			description: $request->description,
+            description: $request->description,
         );
     }
 }

@@ -1,12 +1,13 @@
 <?php
 
-namespace App\DTO\Genders;
+namespace App\DTO\Shared;
 
-use App\Http\Requests\Shared\GenderRequest;
+use App\Http\Requests\Shared\PaymentDayRequest;
 
-class GenderDto
+class PaymentDayDto
 {
     public function __construct(
+
         public readonly string $title,
         public readonly? string $description,
     )
@@ -14,7 +15,7 @@ class GenderDto
     }
 
 
-    public static function fromGenderRequest(GenderRequest $request): GenderDto
+    public static function fromPaymentDayRequest(PaymentDayRequest $request): PaymentDayDto
     {
         return new self(
             title: $request->title,
