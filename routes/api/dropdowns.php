@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\V1\AcademicLevels\AcademicLevelController;
 use App\Http\Controllers\Api\V1\AddressTypes\AddressTypeController;
 use App\Http\Controllers\Api\V1\Countries\CountryController;
 use App\Http\Controllers\Api\V1\Districts\DistrictController;
@@ -46,4 +47,6 @@ Route::prefix('v1')->group(function () {
     Route::apiResource('relationships', RelationshipController::class)->names('v1.relationships');
     # ==================================== RELIGIONS ======================================================
     Route::apiResource('religions', ReligionController::class)->names('v1.religions');
+    # ==================================== ACADEMIC LEVELS ======================================================
+    Route::apiResource('academic-levels', AcademicLevelController::class)->names('v1.academic-levels');
 });

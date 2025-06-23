@@ -71,5 +71,10 @@ export enum IconName {
     book_check = "book_check",
     contact = 'contact',
     address = 'address',
-    graduation_cape = 'graduation_cape'
+    graduation_cape = 'graduation_cape',
+    gift = 'gift',
+    dollar = 'dollar',
+    award = 'award',
+    wallet_cards = 'wallet_cards',
+
 }

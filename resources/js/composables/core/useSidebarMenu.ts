@@ -52,7 +52,7 @@ export function useSidebarMenu() {
         },
         {
             transChoiceKey: 'trans.sponsor',
-            icon: icons[IconName.graduation_cape],
+            icon: icons[IconName.wallet_cards],
             url: route('portal.sponsors'),
             show: isItTrue(can['manageOwnData:students']),
         },
@@ -64,13 +64,13 @@ export function useSidebarMenu() {
         },
         {
             transKey: 'trans.financial_record',
-            icon: icons[IconName.users],
+            icon: icons[IconName.dollar],
             url: route('portal.financial-record'),
             show: isItTrue(can['manageOwnData:students']),
         },
         {
             transKey: 'trans.academic_record',
-            icon: icons[IconName.users],
+            icon: icons[IconName.award],
             url: route('portal.academic-record'),
             show: isItTrue(can['manageOwnData:students']),
         },

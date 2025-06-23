@@ -47,7 +47,7 @@ return [
     'irreversible_action' => 'This action is irreversible.',
     'archive_action_description' => 'The item will be soft deleted and you will not be able to read it',
     'delete_action_description' => 'The item will be permanently deleted from the database and action cannot be undone',
-    'archive' => 'Archive|Archives',
+    'archive' => 'Archive|Archive',
     'restore' => 'Restore',
     'delete' => 'Delete',
     'force_delete' => 'Force delete',
@@ -279,5 +279,6 @@ return [
     "denomination" => "Denomination|Denominations",
     "weight" => "Weight",
     "height" => "Height",
+    "academic_level" => "Academic level|Academic levels",
 ];
 

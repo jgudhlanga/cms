@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('levels', function (Blueprint $table) {
             $table->id();
             $table->string('name')->unique();
-            $table->integer('position');
+            $table->integer('position')->nullable();
             $table->text('description')->nullable();
 			$table->timestamps();
 			$table->softDeletes();

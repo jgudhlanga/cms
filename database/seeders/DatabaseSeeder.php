@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use Database\Seeders\AcademicLevels\AcademicLevelsTableSeeder;
 use Database\Seeders\Acl\ModulesTableSeeder;
 use Database\Seeders\Acl\PermissionsTableSeeder;
 use Database\Seeders\Acl\RolesTableSeeder;
@@ -64,6 +65,7 @@ class DatabaseSeeder extends Seeder
             DivisionsTableSeeder::class,
             GradesTableSeeder::class,
             LevelsTableSeeder::class,
+            AcademicLevelsTableSeeder::class,
             RelationshipsTableSeeder::class,
             SubjectsTableSeeder::class,
             ModesOfStudyTableSeeder::class,

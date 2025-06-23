@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AcademicLevels\AcademicLevelController;
 use App\Http\Controllers\AddressTypes\AddressTypeController;
 use App\Http\Controllers\Communications\CommunicationMethodController;
 use App\Http\Controllers\Countries\CountryController;
@@ -107,4 +108,8 @@ Route::prefix('settings')->middleware('auth')->group(function () {
     Route::put('religions/{religion}/restore', [ReligionController::class, 'restore'])->name('religions.restore');
     Route::delete('religions/{religion}/force-delete', [ReligionController::class, 'forceDelete'])->name('religions.force-delete');
     Route::resource('religions', ReligionController::class)->names('religions');
+    # ==================================== ACADEMIC LEVELS ======================================================
+    Route::put('academic-levels/{academic_level}/restore', [AcademicLevelController::class, 'restore'])->name('academic-levels.restore');
+    Route::delete('academic-levels/{academic_level}/force-delete', [AcademicLevelController::class, 'forceDelete'])->name('academic-levels.force-delete');
+    Route::resource('academic-levels', AcademicLevelController::class)->names('academic-levels');
 });

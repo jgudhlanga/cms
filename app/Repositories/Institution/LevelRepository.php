@@ -17,18 +17,20 @@ class LevelRepository extends BaseRepository implements ILevelRepository
 
     public function create(LevelDto $dto): Level
     {
-        return $this->level->create([
-            'name' => $dto->name,
-            'description' => $dto->description,
-        ])->refresh();
+        return $this->level->create($this->getFields($dto))->refresh();
     }
 
     public function update(Level $level, LevelDto $dto): Level
     {
-        return tap($level)->update([
+        return tap($level)->update($this->getFields($dto));
+    }
+
+    private function getFields(LevelDto $dto): array
+    {
+        return [
             'name' => $dto->name,
             'description' => $dto->description,
-        ]);
+        ];
     }
 
     public function allFilter($columns = ['*'], SharedNameFilter $filters = null)

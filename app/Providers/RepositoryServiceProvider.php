@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Repositories\AcademicLevels\AcademicLevelRepository;
+use App\Repositories\AcademicLevels\interface\IAcademicLevelRepository;
 use App\Repositories\Acl\Interface\IModuleRepository;
 use App\Repositories\Acl\Interface\IPermissionRepository;
 use App\Repositories\Acl\Interface\IRoleRepository;
@@ -119,6 +121,7 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(IRelationshipRepository::class, RelationshipRepository::class);
         $this->app->bind(IDistrictRepository::class, DistrictRepository::class);
         $this->app->bind(IReligionRepository::class, ReligionRepository::class);
+        $this->app->bind(IAcademicLevelRepository::class, AcademicLevelRepository::class);
     }
 
     private function paymentsRepositories(): void
