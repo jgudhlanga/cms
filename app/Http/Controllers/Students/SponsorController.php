@@ -2,51 +2,70 @@
 
 namespace App\Http\Controllers\Students;
 
-use App\DTO\Shared\TitleDto;
+use App\DTO\Students\SponsorDto;
 use App\Http\Controllers\Controller;
-use App\Http\Filters\Shared\SharedNameFilter;
-use App\Http\Requests\Shared\TitleRequest;
-use App\Http\Resources\Shared\TitleResource;
-use App\Models\Shared\Title;
-use App\Repositories\Shared\interface\ITitleRepository;
+use App\Http\Requests\Students\SponsorRequest;
+use App\Models\Students\Sponsor;
+use App\Repositories\Students\interface\ISponsorRepository;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
 
 class SponsorController extends Controller
 {
-    public function __construct(protected ITitleRepository $repository)
+    public function __construct(protected ISponsorRepository $repository)
     {
     }
 
-    public function store(TitleRequest $request)
+    /**
+     * Store a newly created sponsor.
+     */
+    public function store(SponsorRequest $request)
     {
-        $this->authorize('createSettings');
-        $this->repository->create(TitleDto::fromTitleRequest($request));
+        $this->repository->create(
+            SponsorDto::fromSponsorRequest($request, $this->getStudent($request))
+        );
     }
 
-
-    public function update(TitleRequest $request, Title $title)
+    /**
+     * Update the specified sponsor.
+     */
+    public function update(SponsorRequest $request, Sponsor $sponsor)
     {
-        $this->authorize('updateSettings');
-        $this->repository->update($title, TitleDto::fromTitleRequest($request));
+        $this->repository->update(
+            $sponsor,
+            SponsorDto::fromSponsorRequest($request, $this->getStudent($request))
+        );
     }
 
-    public function destroy(Title $title)
+    /**
+     * Soft delete the specified sponsor.
+     */
+    public function destroy(Sponsor $sponsor)
     {
-        $this->authorize('deleteSettings');
-        $this->repository->delete($title);
+        $this->repository->delete($sponsor);
     }
 
+    /**
+     * Restore a soft-deleted sponsor.
+     */
     public function restore(string $id)
     {
-        $title = $this->repository->findTrashed($id);
-        $this->authorize('restoreSettings');
-        $this->repository->restore($title);
+        $sponsor = $this->repository->findTrashed($id);
+        $this->repository->restore($sponsor);
     }
 
-    public function forceDelete(Title $title)
+    /**
+     * Permanently delete the specified sponsor.
+     */
+    public function forceDelete(Sponsor $sponsor)
     {
-        $this->authorize('forceDeleteSettings');
-        $this->repository->delete($title, true);
+        $this->repository->delete($sponsor, true);
+    }
+
+    /**
+     * Retrieve the student profile from the request user.
+     */
+    private function getStudent(Request $request)
+    {
+        return $request->user()->studentProfile;
     }
 }

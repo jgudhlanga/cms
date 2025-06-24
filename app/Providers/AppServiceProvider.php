@@ -7,6 +7,7 @@ use App\Policies\Institution\DepartmentMetaDataPolicy;
 use App\Policies\Settings\InstitutionSetupPolicy;
 use App\Policies\Settings\SettingPolicy;
 use App\Policies\Students\PortalPolicy;
+use App\Policies\Students\StudentMetaDataPolicy;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
@@ -32,6 +33,7 @@ class AppServiceProvider extends ServiceProvider
         $this->registerDepartmentMetaDataPolicies();
         $this->registerDashboardPolicies();
         $this->registerPortalPolicies();
+        $this->registerStudentMetadataPolicies();
     }
 
     private function registerSettingsPolicies(): void
@@ -85,5 +87,10 @@ class AppServiceProvider extends ServiceProvider
         Gate::define('manageStudentContacts', [PortalPolicy::class, 'manageStudentContacts']);
         Gate::define('manageStudentFinancialRecords', [PortalPolicy::class, 'manageStudentFinancialRecords']);
         Gate::define('manageStudentAcademicRecords', [PortalPolicy::class, 'manageStudentAcademicRecords']);
+    }
+
+    private function registerStudentMetadataPolicies(): void
+    {
+        Gate::define('manageStudentMetadata', [StudentMetaDataPolicy::class, 'manageStudentMetadata']);
     }
 }

@@ -189,6 +189,7 @@ class PermissionsTableSeeder extends Seeder
                 ['name' => PermissionEnum::MANAGE_OWN_STUDENT_CONTACT_DETAILS->value],
                 ['name' => PermissionEnum::MANAGE_OWN_STUDENT_FINANCIAL_DETAILS->value],
                 ['name' => PermissionEnum::MANAGE_OWN_STUDENT_ACADEMIC_DETAILS->value],
+                ['name' => PermissionEnum::MANAGE_STUDENTS_METADATA->value],
             ],
         ];
         foreach ($permissions as $key => $rows) {

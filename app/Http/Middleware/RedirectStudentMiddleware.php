@@ -12,16 +12,21 @@ class RedirectStudentMiddleware
     public function handle(Request $request, Closure $next): Response
     {
         $user = $request->user();
-        if ($user && $user->hasRole(RoleEnum::STUDENT)) {
-            if ($user->has_student_profile && !$request->routeIs('portal.dashboard')) {
-                return to_route('portal.dashboard');
-            }
 
-            if (!$user->has_student_profile && !$request->routeIs('portal.application')) {
-                return to_route('portal.application');
+        if ($user && $user->hasRole(RoleEnum::STUDENT)) {
+            if ($user->has_student_profile) {
+                # Let them go anywhere except back to 'portal.application'
+                if ($request->routeIs('portal.application')) {
+                    return to_route('portal.dashboard');
+                }
+            } else {
+                # If no student profile, always go to application page unless already there
+                if (!$request->routeIs('portal.application')) {
+                    return to_route('portal.application');
+                }
             }
-        } else {
-            // Not a student, redirect to the general dashboard
+        } elseif ($user) {
+            # Any other logged-in role, redirect to general dashboard if not already there
             if (!$request->routeIs('dashboard')) {
                 return to_route('dashboard');
             }
@@ -30,3 +35,4 @@ class RedirectStudentMiddleware
         return $next($request);
     }
 }
+

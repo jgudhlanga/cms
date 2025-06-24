@@ -176,7 +176,7 @@ enum PermissionEnum: string
     case IMPORT_NEXT_OF_KINS = 'import:next-of-kins';
     case EXPORT_NEXT_OF_KINS = 'export:next-of-kins';
 
-    # PORTAL,
+    # PORTAL
     case VIEW_OWN_STUDENT_DASHBOARD = 'viewOwnDashboard:students';
     case MANAGE_OWN_STUDENT_PERSONAL_DETAILS = 'manageOwnStudentPersonalDetails:students';
     case MANAGE_OWN_STUDENT_PROGRAM_DETAILS = 'manageOwnStudentProgramDetails:students';
@@ -185,12 +185,14 @@ enum PermissionEnum: string
     case MANAGE_OWN_STUDENT_FINANCIAL_DETAILS = 'manageOwnStudentFinancialDetails:students';
     case MANAGE_OWN_STUDENT_ACADEMIC_DETAILS = 'manageOwnStudentAcademicDetails:students';
 
+    /** ADMIN STUDENTS */
+    case MANAGE_STUDENTS_METADATA = 'manageStudentMetadata:admin';
+
     public function label(): string
     {
         return match ($this) {
             /** Acl */
             self::VIEW_ACL_INDEX => 'view:acl-settings',
-
             /** Modules */
             self::VIEW_ANY_MODULES => 'viewAny:modules',
             self::VIEW_MODULE => 'view:modules',
@@ -362,6 +364,8 @@ enum PermissionEnum: string
             self::MANAGE_OWN_STUDENT_CONTACT_DETAILS => 'manageOwnStudentContactDetails:students',
             self::MANAGE_OWN_STUDENT_FINANCIAL_DETAILS => 'manageOwnStudentFinancialDetails:students',
             self::MANAGE_OWN_STUDENT_ACADEMIC_DETAILS => 'manageOwnStudentAcademicDetails:students',
+            /** ADMIN STUDENTS */
+            self::MANAGE_STUDENTS_METADATA => 'manageStudentMetadata:admin',
         };
     }
 
