@@ -4,8 +4,8 @@ use App\Http\Controllers\Dashboard\DashboardController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return redirect(route('dashboard'));
-})->name('home');
+    return redirect()->route('dashboard');
+})->middleware(['auth', 'verified', 'redirect.student'])->name('home');
 
 Route::get('/dashboard', DashboardController::class)->middleware(['auth', 'verified', 'redirect.student'])->name('dashboard');
 
