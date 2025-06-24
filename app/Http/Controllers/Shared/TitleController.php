@@ -21,7 +21,7 @@ class TitleController extends Controller
 	{
 		$this->authorize('viewSettings');
 		$titles = TitleResource::collection($this->repository->allFilter(['*'], $filters));
-		return Inertia::render('titles/Index', [
+		return Inertia::render('shared/titles/Index', [
 			'titles' => $titles,
 			'filters' => request()->only(['search', 'trashed']),
 			'trashedCount' => $this->repository->allTrashed()->count(),

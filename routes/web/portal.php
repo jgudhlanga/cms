@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\Portal\PortalController;
+use App\Http\Controllers\Students\PortalController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('portal')->group(function () {

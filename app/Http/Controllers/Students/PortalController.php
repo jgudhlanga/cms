@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Portal;
+namespace App\Http\Controllers\Students;
 
 use App\DTO\Students\CreateApplicationDto;
 use App\DTO\Users\UserDto;

@@ -176,8 +176,14 @@ enum PermissionEnum: string
     case IMPORT_NEXT_OF_KINS = 'import:next-of-kins';
     case EXPORT_NEXT_OF_KINS = 'export:next-of-kins';
 
-    # STUDENT OWN DATA,
-    case MANAGE_OWN_STUDENT_DATA = 'manageOwnData:students';
+    # PORTAL,
+    case VIEW_OWN_STUDENT_DASHBOARD = 'viewOwnDashboard:students';
+    case MANAGE_OWN_STUDENT_PERSONAL_DETAILS = 'manageOwnStudentPersonalDetails:students';
+    case MANAGE_OWN_STUDENT_PROGRAM_DETAILS = 'manageOwnStudentProgramDetails:students';
+    case MANAGE_OWN_STUDENT_SPONSOR_DETAILS = 'manageOwnStudentSponsorDetails:students';
+    case MANAGE_OWN_STUDENT_CONTACT_DETAILS = 'manageOwnStudentContactDetails:students';
+    case MANAGE_OWN_STUDENT_FINANCIAL_DETAILS = 'manageOwnStudentFinancialDetails:students';
+    case MANAGE_OWN_STUDENT_ACADEMIC_DETAILS = 'manageOwnStudentAcademicDetails:students';
 
     public function label(): string
     {
@@ -348,7 +354,14 @@ enum PermissionEnum: string
             self::FORCE_DELETE_NEXT_OF_KINS => 'forceDelete:next-of-kins',
             self::IMPORT_NEXT_OF_KINS => 'import:next-of-kins',
             self::EXPORT_NEXT_OF_KINS => 'export:next-of-kins',
-            self::MANAGE_OWN_STUDENT_DATA => 'manageOwnData:students',
+            /** PORTAL */
+            self::VIEW_OWN_STUDENT_DASHBOARD => 'viewOwnDashboard:students',
+            self::MANAGE_OWN_STUDENT_PERSONAL_DETAILS => 'manageOwnStudentPersonalDetails:students',
+            self::MANAGE_OWN_STUDENT_PROGRAM_DETAILS => 'manageOwnStudentProgramDetails:students',
+            self::MANAGE_OWN_STUDENT_SPONSOR_DETAILS => 'manageOwnStudentSponsorDetails:students',
+            self::MANAGE_OWN_STUDENT_CONTACT_DETAILS => 'manageOwnStudentContactDetails:students',
+            self::MANAGE_OWN_STUDENT_FINANCIAL_DETAILS => 'manageOwnStudentFinancialDetails:students',
+            self::MANAGE_OWN_STUDENT_ACADEMIC_DETAILS => 'manageOwnStudentAcademicDetails:students',
         };
     }
 

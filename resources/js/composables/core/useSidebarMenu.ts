@@ -33,48 +33,6 @@ export function useSidebarMenu() {
             show: isItTrue(can['view:dashboards']),
         },
         {
-            transChoiceKey: 'trans.dashboard',
-            icon: icons[IconName.dashboard],
-            url: route('portal.dashboard'),
-            show: isItTrue(can['manageOwnData:students']),
-        },
-        {
-            transKey: 'trans.personal_details',
-            icon: icons[IconName.user],
-            url: route('portal.personal-details'),
-            show: isItTrue(can['manageOwnData:students']),
-        },
-        {
-            transChoiceKey: 'trans.program',
-            icon: icons[IconName.graduation_cape],
-            url: route('portal.programs'),
-            show: isItTrue(can['manageOwnData:students']),
-        },
-        {
-            transChoiceKey: 'trans.sponsor',
-            icon: icons[IconName.wallet_cards],
-            url: route('portal.sponsors'),
-            show: isItTrue(can['manageOwnData:students']),
-        },
-        {
-            transChoiceKey: 'trans.contact',
-            icon: icons[IconName.contact],
-            url: route('portal.contacts'),
-            show: isItTrue(can['manageOwnData:students']),
-        },
-        {
-            transKey: 'trans.financial_record',
-            icon: icons[IconName.dollar],
-            url: route('portal.financial-record'),
-            show: isItTrue(can['manageOwnData:students']),
-        },
-        {
-            transKey: 'trans.academic_record',
-            icon: icons[IconName.award],
-            url: route('portal.academic-record'),
-            show: isItTrue(can['manageOwnData:students']),
-        },
-        {
             transChoiceKey: 'trans.enrolment',
             icon: icons[IconName.user_add],
             url: route('dashboard'),
@@ -129,6 +87,50 @@ export function useSidebarMenu() {
             icon: icons[IconName.users],
             show: isItTrue(can['view:users']),
         },
+        /** ================ PORTAL STRAT ======================*/
+        {
+            transChoiceKey: 'trans.dashboard',
+            icon: icons[IconName.dashboard],
+            url: route('portal.dashboard'),
+            show: isItTrue(can['viewOwnDashboard:students']),
+        },
+        {
+            transKey: 'trans.personal_details',
+            icon: icons[IconName.user],
+            url: route('portal.personal-details'),
+            show: isItTrue(can['manageOwnStudentPersonalDetails:students']),
+        },
+        {
+            transChoiceKey: 'trans.program',
+            icon: icons[IconName.graduation_cape],
+            url: route('portal.programs'),
+            show: isItTrue(can['manageOwnStudentProgramDetails:students']),
+        },
+        {
+            transChoiceKey: 'trans.sponsor',
+            icon: icons[IconName.wallet_cards],
+            url: route('portal.sponsors'),
+            show: isItTrue(can['manageOwnStudentSponsorDetails:students']),
+        },
+        {
+            transChoiceKey: 'trans.contact',
+            icon: icons[IconName.contact],
+            url: route('portal.contacts'),
+            show: isItTrue(can['manageOwnStudentContactDetails:students']),
+        },
+        {
+            transKey: 'trans.financial_record',
+            icon: icons[IconName.dollar],
+            url: route('portal.financial-record'),
+            show: isItTrue(can['manageOwnStudentFinancialDetails:students']),
+        },
+        {
+            transKey: 'trans.academic_record',
+            icon: icons[IconName.award],
+            url: route('portal.academic-record'),
+            show: isItTrue(can['manageOwnStudentAcademicDetails:students']),
+        },
+        /** ================ PORTAL END ======================*/
     ];
 
     const getTranslation = (item: any) => {

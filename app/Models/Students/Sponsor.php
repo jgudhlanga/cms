@@ -2,12 +2,15 @@
 
 namespace App\Models\Students;
 
+use App\Http\Filters\Shared\SharedNameFilter;
+use App\Models\Shared\SponsorType;
 use App\Traits\BelongsToTenant;
 use App\Traits\Filterable;
 use App\Traits\Paginatable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
@@ -15,20 +18,25 @@ use Spatie\Activitylog\Traits\LogsActivity;
 /**
  *
  * @mixin Builder
- * @method static filter(Filter $filters)
+ * @method static filter(SharedNameFilter $filters)
  */
 class Sponsor extends Model
 {
-   use HasFactory, SoftDeletes, Filterable, BelongsToTenant,Paginatable, LogsActivity;
+    use HasFactory, SoftDeletes, Filterable, BelongsToTenant, Paginatable, LogsActivity;
 
-   protected $fillable = [];
+    protected $fillable = ['name', 'tenant_id', 'student_id', 'sponsor_type_id'];
 
-   	public function getActivitylogOptions(): LogOptions
-   	{
-   		return LogOptions::defaults()
-   			->logFillable()
-   			->useLogName('Sponsor')
-   			->logOnlyDirty()
-   			->dontSubmitEmptyLogs();
-   	}
+    public function sponsorType(): BelongsTo
+    {
+        return $this->belongsTo(SponsorType::class);
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logFillable()
+            ->useLogName('Sponsor')
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs();
+    }
 }

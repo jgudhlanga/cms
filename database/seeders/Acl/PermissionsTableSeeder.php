@@ -182,9 +182,14 @@ class PermissionsTableSeeder extends Seeder
                 ['name' => PermissionEnum::EXPORT_NEXT_OF_KINS->value],
             ],
             'students' => [
-                ['name' => PermissionEnum::MANAGE_OWN_STUDENT_DATA->value],
+                ['name' => PermissionEnum::VIEW_OWN_STUDENT_DASHBOARD->value],
+                ['name' => PermissionEnum::MANAGE_OWN_STUDENT_PERSONAL_DETAILS->value],
+                ['name' => PermissionEnum::MANAGE_OWN_STUDENT_PROGRAM_DETAILS->value],
+                ['name' => PermissionEnum::MANAGE_OWN_STUDENT_SPONSOR_DETAILS->value],
+                ['name' => PermissionEnum::MANAGE_OWN_STUDENT_CONTACT_DETAILS->value],
+                ['name' => PermissionEnum::MANAGE_OWN_STUDENT_FINANCIAL_DETAILS->value],
+                ['name' => PermissionEnum::MANAGE_OWN_STUDENT_ACADEMIC_DETAILS->value],
             ],
-
         ];
         foreach ($permissions as $key => $rows) {
             $module = Module::where('title', $key)->first();

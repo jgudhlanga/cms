@@ -6,6 +6,7 @@ use App\Policies\Dashboards\DashboardPolicy;
 use App\Policies\Institution\DepartmentMetaDataPolicy;
 use App\Policies\Settings\InstitutionSetupPolicy;
 use App\Policies\Settings\SettingPolicy;
+use App\Policies\Students\PortalPolicy;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
@@ -30,6 +31,7 @@ class AppServiceProvider extends ServiceProvider
         $this->registerInstitutionSettingsPolicies();
         $this->registerDepartmentMetaDataPolicies();
         $this->registerDashboardPolicies();
+        $this->registerPortalPolicies();
     }
 
     private function registerSettingsPolicies(): void
@@ -72,5 +74,16 @@ class AppServiceProvider extends ServiceProvider
     private function registerDashboardPolicies(): void
     {
         Gate::define('viewDashboard', [DashboardPolicy::class, 'viewDashboard']);
+    }
+
+    private function registerPortalPolicies(): void
+    {
+        Gate::define('viewStudentDashboard', [PortalPolicy::class, 'viewStudentDashboard']);
+        Gate::define('manageStudentPersonalDetails', [PortalPolicy::class, 'manageStudentPersonalDetails']);
+        Gate::define('manageStudentProgramDetails', [PortalPolicy::class, 'manageStudentProgramDetails']);
+        Gate::define('manageStudentSponsors', [PortalPolicy::class, 'manageStudentSponsors']);
+        Gate::define('manageStudentContacts', [PortalPolicy::class, 'manageStudentContacts']);
+        Gate::define('manageStudentFinancialRecords', [PortalPolicy::class, 'manageStudentFinancialRecords']);
+        Gate::define('manageStudentAcademicRecords', [PortalPolicy::class, 'manageStudentAcademicRecords']);
     }
 }
