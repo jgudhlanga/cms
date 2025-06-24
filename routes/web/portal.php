@@ -10,7 +10,7 @@ Route::prefix('portal')->group(function () {
     Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('application', [PortalController::class, 'storeApplication'])->name('portal.store-application');
     });
-    Route::middleware(['auth', 'verified',  'redirect.student'])->group(function () {
+    Route::middleware(['auth', 'verified', 'redirect.student'])->group(function () {
         Route::get('application', [PortalController::class, 'createApplication'])->name('portal.application');
         Route::get('dashboard', [PortalController::class, 'dashboard'])->name('portal.dashboard');
         Route::get('personal-details', [PortalController::class, 'personal'])->name('portal.personal-details');
@@ -19,5 +19,8 @@ Route::prefix('portal')->group(function () {
         Route::get('contacts', [PortalController::class, 'contacts'])->name('portal.contacts');
         Route::get('financial-record', [PortalController::class, 'financialRecord'])->name('portal.financial-record');
         Route::get('academic-record', [PortalController::class, 'academicRecord'])->name('portal.academic-record');
+        # =============================== META ====================================
+        Route::post('contacts', [PortalController::class, 'storeContactDetails'])->name('portal.contacts.store');
+        Route::post('addresses', [PortalController::class, 'storeAddressDetails'])->name('portal.address.store');
     });
 });

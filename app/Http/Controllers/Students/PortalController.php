@@ -2,25 +2,40 @@
 
 namespace App\Http\Controllers\Students;
 
+use App\DTO\Shared\AddressDto;
+use App\DTO\Shared\ContactDto;
 use App\DTO\Students\CreateApplicationDto;
 use App\DTO\Users\UserDto;
 use App\Enums\Shared\RoleEnum;
 use App\Enums\Shared\TenantEnum;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Shared\AddressRequest;
+use App\Http\Requests\Shared\ContactRequest;
 use App\Http\Requests\Students\CreateApplicationRequest;
 use App\Http\Requests\Users\CreateUserRequest;
+use App\Http\Resources\Shared\AddressResource;
+use App\Http\Resources\Shared\ContactResource;
 use App\Http\Resources\Students\StudentResource;
 use App\Jobs\Users\SendVerificationEmailJob;
 use App\Models\Tenants\Tenant;
 use App\Models\Users\User;
+use App\Repositories\Shared\interface\IAddressRepository;
+use App\Repositories\Shared\interface\IContactRepository;
 use App\Repositories\Students\interface\IStudentRepository;
 use App\Repositories\Users\interface\IUserRepository;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 
 class PortalController extends Controller
 {
-    public function __construct(protected IUserRepository $userRepository, protected IStudentRepository $studentRepository)
+    public function __construct(
+        protected IUserRepository    $userRepository,
+        protected IStudentRepository $studentRepository,
+        protected IContactRepository $contactRepository,
+        protected IAddressRepository $addressRepository,
+    )
     {
     }
 
@@ -80,8 +95,7 @@ class PortalController extends Controller
     public function personal()
     {
         $this->authorize('manageStudentPersonalDetails');
-        $user = request()->user();
-        $student = StudentResource::make($user->studentProfile);
+        $student = StudentResource::make($this->getStudent(request()));
         return Inertia::render('portal/student/PersonalDetails', compact('student'));
     }
 
@@ -93,8 +107,11 @@ class PortalController extends Controller
 
     public function contacts()
     {
+        $student = StudentResource::make($this->getStudent(request()));
+        $addresses = AddressResource::collection($student->addresses);
+        $contacts = ContactResource::collection($student->contacts);
         $this->authorize('manageStudentContacts');
-        return Inertia::render('portal/student/Contacts');
+        return Inertia::render('portal/student/Contacts', compact('addresses', 'contacts'));
     }
 
     public function sponsors()
@@ -113,5 +130,24 @@ class PortalController extends Controller
     {
         $this->authorize('manageStudentAcademicRecords');
         return Inertia::render('portal/student/AcademicRecord');
+    }
+
+    private function getStudent(Request $request)
+    {
+        return $request->user()->studentProfile;
+    }
+
+    public function storeContactDetails(ContactRequest $request)
+    {
+        $student = $this->getStudent(request());
+        $this->authorize('manageStudentContacts');
+        $this->contactRepository->create($student, ContactDto::fromContactRequest($request));
+    }
+
+    public function storeAddressDetails(AddressRequest $request)
+    {
+        $student = $this->getStudent(request());
+        $this->authorize('manageStudentContacts');
+        $this->addressRepository->create($student, AddressDto::fromAddressRequest($request));
     }
 }
