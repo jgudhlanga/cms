@@ -26,6 +26,7 @@ class PortalController extends Controller
 
     public function dashboard()
     {
+        $this->authorize('viewStudentDashboard');
         return Inertia::render('portal/student/Index', [
             'filters' => request()->only(['search', 'trashed']),
             'trashedCount' => 0,
@@ -63,11 +64,13 @@ class PortalController extends Controller
 
     public function createApplication()
     {
+        $this->authorize('manageStudentPersonalDetails');
         return Inertia::render('portal/student/AddEditApplication');
     }
 
     public function storeApplication(CreateApplicationRequest $request)
     {
+        $this->authorize('manageStudentPersonalDetails');
         $this->studentRepository->create(CreateApplicationDto::fromCreateApplicationRequest($request, request()->user()));
         // we need to and email with a tracking number
         // we should redirect to a confirmation page
@@ -76,6 +79,7 @@ class PortalController extends Controller
 
     public function personal()
     {
+        $this->authorize('manageStudentPersonalDetails');
         $user = request()->user();
         $student = StudentResource::make($user->studentProfile);
         return Inertia::render('portal/student/PersonalDetails', compact('student'));
@@ -83,26 +87,31 @@ class PortalController extends Controller
 
     public function programs()
     {
+        $this->authorize('manageStudentProgramDetails');
         return Inertia::render('portal/student/Programs');
     }
 
     public function contacts()
     {
+        $this->authorize('manageStudentContacts');
         return Inertia::render('portal/student/Contacts');
     }
 
     public function sponsors()
     {
+        $this->authorize('manageStudentSponsors');
         return Inertia::render('portal/student/Sponsors');
     }
 
     public function financialRecord()
     {
+        $this->authorize('manageStudentFinancialRecords');
         return Inertia::render('portal/student/FinancialRecord');
     }
 
     public function academicRecord()
     {
+        $this->authorize('manageStudentAcademicRecords');
         return Inertia::render('portal/student/AcademicRecord');
     }
 }
