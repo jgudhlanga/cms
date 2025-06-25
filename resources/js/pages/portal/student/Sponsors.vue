@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import DataTable from '@/components/core/table/DataTable.vue';
-import { useSponsors } from '@/composables/portal/useSponsors';
+import { useSponsors } from '@/composables/students/useSponsors';
 import { AuthObject } from '@/types/data-pagination';
 import { Sponsor } from '@/types/students';
 import { BreadcrumbItemInterface } from '@/types/ui';

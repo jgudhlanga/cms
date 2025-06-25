@@ -77,7 +77,7 @@ class Student extends Model
         return $this->belongsTo(Country::class);
     }
 
-    public function programmes(): HasMany
+    public function programs(): HasMany
     {
         return $this->hasMany(StudentProgram::class, 'student_id')->withTrashed();
     }

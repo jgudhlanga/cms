@@ -15,7 +15,7 @@ import Programs from '@/components/students/update/Programs.vue';
 // Composables
 import { useUtils } from '@/composables/core/useUtils';
 import { useDepartmentLevels } from '@/composables/institution/useDepartmentLevels';
-import { useStudentPortal } from '@/composables/portal/useStudentPortal';
+import { useStudentPortal } from '@/composables/students/useStudentPortal';
 
 // Store & types
 import { useCreateApplicationFormStore } from '@/store/portal/useCreateApplicationFormStore';

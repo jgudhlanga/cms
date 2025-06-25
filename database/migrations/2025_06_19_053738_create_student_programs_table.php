@@ -14,9 +14,9 @@ return new class extends Migration {
             $table->id();
             $table->foreignId('tenant_id')->index()->constrained();
             $table->foreignId('student_id')->constrained();
-            $table->foreignId('department_id')->constrained();
-            $table->foreignId('level_id')->constrained();
-            $table->foreignId('course_id')->constrained();
+            $table->foreignId('institution_department_id')->constrained();
+            $table->foreignId('department_level_id')->constrained();
+            $table->foreignId('department_course_id')->constrained();
             $table->foreignId('status_id')->nullable();
             $table->json('o_level_subjects')->nullable();
             $table->boolean('required_level_completed')->nullable();

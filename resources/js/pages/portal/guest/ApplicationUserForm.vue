@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { BaseButton } from '@/components/core/button';
-import { useGuestPortal } from '@/composables/portal/useGuestPortal';
+import { useGuestPortal } from '@/composables/students/useGuestPortal';
 import { ButtonSize } from '@/enums/buttons';
 import { TextFieldType } from '@/enums/inputs';
 import { clearFormErrors } from '@/lib/forms';

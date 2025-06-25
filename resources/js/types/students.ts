@@ -1,3 +1,5 @@
+import { DepartmentCourse, DepartmentLevel } from '@/types/department-meta-data';
+import { InstitutionDepartment } from '@/types/institution';
 import { SelectOption } from '@/types/utils';
 
 export type Student = {
@@ -101,4 +103,19 @@ export type SponsorParams = {
     address_2?: string;
     address_3?: string;
     address_4?: string;
+};
+
+export type StudentProgram = {
+    type: string;
+    id: string | number;
+    attributes: {
+        institutionDepartmentId: string | number;
+        departmentLevelId: string | number;
+        departmentCourseId: string | number;
+    };
+    relationships?: {
+        institutionDepartment?: InstitutionDepartment;
+        departmentLevel?: DepartmentLevel;
+        departmentCourse?: DepartmentCourse;
+    };
 };

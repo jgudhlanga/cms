@@ -16,8 +16,10 @@ use App\Http\Requests\Users\CreateUserRequest;
 use App\Http\Resources\Shared\AddressResource;
 use App\Http\Resources\Shared\ContactResource;
 use App\Http\Resources\Students\SponsorResource;
+use App\Http\Resources\Students\StudentProgramResource;
 use App\Http\Resources\Students\StudentResource;
 use App\Jobs\Users\SendVerificationEmailJob;
+use App\Models\Students\Student;
 use App\Models\Tenants\Tenant;
 use App\Models\Users\User;
 use App\Repositories\Shared\interface\IAddressRepository;
@@ -102,7 +104,9 @@ class PortalController extends Controller
     public function programs()
     {
         $this->authorize('manageStudentProgramDetails');
-        return Inertia::render('portal/student/Programs');
+        $student = $this->getStudent(request());
+        $programs = StudentProgramResource::collection($student->programs);
+        return Inertia::render('portal/student/Programs', compact('programs'));
     }
 
     public function contacts()

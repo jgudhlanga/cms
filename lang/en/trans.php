@@ -282,6 +282,9 @@ return [
     "weight" => "Weight",
     "height" => "Height",
     "academic_level" => "Academic level|Academic levels",
-    "my" => "My"
+    "my" => "My",
+    "start_date" => "Start date",
+    "end_date" => "End date",
+    "delivery_mode" => "Delivery mode",
 ];
 

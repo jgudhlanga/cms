@@ -42,9 +42,9 @@ class StudentProgramRepository extends BaseRepository implements interface\IStud
     {
         return [
             'student_id' => $dto->student_id,
-            'department_id' => $dto->department_id,
-            'level_id' => $dto->level_id,
-            'course_id' => $dto->course_id,
+            'institution_department_id' => $dto->institution_department_id,
+            'department_level_id' => $dto->department_level_id,
+            'department_course_id' => $dto->department_course_id,
             'o_level_subjects' => $dto->o_level_subjects,
             'required_level_completed' => $dto->required_level_completed,
             'read_write_acknowledged' => $dto->read_write_acknowledged,

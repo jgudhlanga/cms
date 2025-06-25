@@ -16,9 +16,9 @@ class StudentProgramRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'department_id' => ['required', 'integer', 'exists:departments,id'],
-            'level_id' => ['required', 'integer', 'exists:levels,id'],
-            'course_id' => ['required', 'integer', 'exists:courses,id'],
+            'institution_department_id' => ['required', 'integer', 'exists:institution_departments,id'],
+            'department_level_id' => ['required', 'integer', 'exists:department_levels,id'],
+            'department_course_id' => ['required', 'integer', 'exists:department_courses,id'],
         ];
     }
 }

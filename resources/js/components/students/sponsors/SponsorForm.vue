@@ -8,7 +8,7 @@ import EmailAddress from '@/components/core/form/text/EmailAddress.vue';
 import Name from '@/components/core/form/text/Name.vue';
 import PhoneNumber from '@/components/core/form/text/PhoneNumber.vue';
 import BaseModal from '@/components/core/modal/BaseModal.vue';
-import { useSponsors } from '@/composables/portal/useSponsors';
+import { useSponsors } from '@/composables/students/useSponsors';
 import { SizeVariant } from '@/enums/sizes';
 import { getModalEdit } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
