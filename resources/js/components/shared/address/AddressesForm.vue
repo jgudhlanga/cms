@@ -50,11 +50,8 @@ watch(modals!, () => {
 });
 
 
-const updateForm = () => {
-};
 
 const save = () => {
-	updateForm();
 	if (Number(address.value?.id?.toString()) > 0) {
 		updateAddress(form, address.value);
 	} else {

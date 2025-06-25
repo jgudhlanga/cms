@@ -10,6 +10,8 @@ class SponsorResource extends JsonResource
 
     public function toArray(Request $request): array
     {
+        $contact = $this->contacts->first() ?? null;
+        $address = $this->addresses->first() ?? null;
         return [
             'type' => 'sponsor',
             'id' => $this->id,
@@ -17,10 +19,12 @@ class SponsorResource extends JsonResource
                 'name' => $this->name,
                 'sponsorTypeId' => $this->sponsor_type_id,
                 'sponsorType' => $this?->sponsorType?->name,
-                'address1' => $this->address_1,
-                'address2' => $this->address_2,
-                'address3' => $this->address_3,
-                'address4' => $this->address_4,
+                'phoneNumber' => $contact?->phone_number ?? null,
+                'email' => $contact?->email_address ?? null,
+                'address1' => $address?->address_1 ?? null,
+                'address2' => $address?->address_2 ?? null,
+                'address3' => $address?->address_3 ?? null,
+                'address4' => $address?->address_4 ?? null,
                 'createdAt' => $this->created_at,
                 'updatedAt' => $this->updated_at,
                 'deletedAt' => $this->deleted_at,

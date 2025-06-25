@@ -1,5 +1,7 @@
+import { SelectOption } from '@/types/utils';
+
 export type Student = {
-    userId: string |number;
+    userId: string | number;
     titleId?: string | number;
     title?: string;
     genderId?: string | number;
@@ -20,7 +22,7 @@ export type Student = {
     denomination?: string;
     height?: string;
     weight?: string;
-}
+};
 
 export type PersonalDetailView = {
     title: string;
@@ -69,4 +71,34 @@ export type ProgramDetailView = {
     department?: string;
     level?: string;
     course?: string;
+};
+
+export type Sponsor = {
+    type: string;
+    id: string | number;
+    attributes: {
+        name: string;
+        sponsorTypeId?: string | number;
+        sponsorType?: string;
+        phoneNumber?: string;
+        email?: string;
+        address1?: string;
+        address2?: string;
+        address3?: string;
+        address4?: string;
+        createdAt?: string;
+        updatedAt?: string;
+        deletedAt?: string;
+    };
+};
+export type SponsorParams = {
+    name: string;
+    sponsorType?: SelectOption | null;
+    sponsor_type_id: string | number | null;
+    phone_number?: string;
+    email?: string;
+    address_1?: string;
+    address_2?: string;
+    address_3?: string;
+    address_4?: string;
 };

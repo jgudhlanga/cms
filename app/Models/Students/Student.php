@@ -92,6 +92,12 @@ class Student extends Model
         return $this->morphMany(Address::class, 'addressable')->withTrashed();
     }
 
+    public function sponsors(): HasMany
+    {
+        return $this->hasMany(Sponsor::class);
+    }
+
+
     public function nextOfKins(): MorphMany
     {
         return $this->morphMany(NextOfKin::class, 'kinnable')->withTrashed();

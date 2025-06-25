@@ -17,6 +17,7 @@ class SponsorRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
+            'phone_number' => ['required', 'string', 'max:30'],
         ];
     }
 }

@@ -15,6 +15,7 @@ use App\Http\Requests\Students\CreateApplicationRequest;
 use App\Http\Requests\Users\CreateUserRequest;
 use App\Http\Resources\Shared\AddressResource;
 use App\Http\Resources\Shared\ContactResource;
+use App\Http\Resources\Students\SponsorResource;
 use App\Http\Resources\Students\StudentResource;
 use App\Jobs\Users\SendVerificationEmailJob;
 use App\Models\Tenants\Tenant;
@@ -25,7 +26,6 @@ use App\Repositories\Students\interface\IStudentRepository;
 use App\Repositories\Users\interface\IUserRepository;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 
 class PortalController extends Controller
@@ -107,7 +107,7 @@ class PortalController extends Controller
 
     public function contacts()
     {
-        $student = StudentResource::make($this->getStudent(request()));
+        $student = $this->getStudent(request());
         $addresses = AddressResource::collection($student->addresses);
         $contacts = ContactResource::collection($student->contacts);
         $this->authorize('manageStudentContacts');
@@ -117,7 +117,9 @@ class PortalController extends Controller
     public function sponsors()
     {
         $this->authorize('manageStudentSponsors');
-        return Inertia::render('portal/student/Sponsors');
+        $student = $this->getStudent(request());
+        $sponsors = SponsorResource::collection($student->sponsors);
+        return Inertia::render('portal/student/Sponsors', compact('sponsors'));
     }
 
     public function financialRecord()

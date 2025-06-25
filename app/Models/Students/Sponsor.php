@@ -3,6 +3,8 @@
 namespace App\Models\Students;
 
 use App\Http\Filters\Shared\SharedNameFilter;
+use App\Models\Shared\Address;
+use App\Models\Shared\Contact;
 use App\Models\Shared\SponsorType;
 use App\Traits\BelongsToTenant;
 use App\Traits\Filterable;
@@ -11,6 +13,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
@@ -29,6 +32,16 @@ class Sponsor extends Model
     public function sponsorType(): BelongsTo
     {
         return $this->belongsTo(SponsorType::class);
+    }
+
+    public function contacts(): MorphMany
+    {
+        return $this->morphMany(Contact::class, 'contactable');
+    }
+
+    public function addresses(): MorphMany
+    {
+        return $this->morphMany(Address::class, 'addressable');
     }
 
     public function getActivitylogOptions(): LogOptions

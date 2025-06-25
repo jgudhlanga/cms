@@ -5,9 +5,8 @@ import { APP_MODULE_KEYS } from '@/lib/constants';
 import { buildFormOptions, mergeValidationSchema } from '@/lib/forms';
 import { hasAbility } from '@/lib/permissions';
 import { getIdParams } from '@/lib/utils';
-import { Auth } from '@/types';
 import { Address } from '@/types/shared';
-import { InertiaForm, usePage } from '@inertiajs/vue3';
+import { InertiaForm } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 import { ZodObject } from 'zod';
 
@@ -17,13 +16,11 @@ export const useAddresses = () => {
     const successMessage = () => trans('trans.item_saved', { item: getName() });
     const errorMessage = () => trans('trans.item_save_failure', { item: getName() });
     const createAddressColumns = () => {
-        const { props } = usePage();
-        const { can } = props?.auth as Auth;
         return [
-            { header: trans('trans.street_number'), accessorKey: 'attributes.address1' },
-            { header: trans('trans.street_name'), accessorKey: 'attributes.address2' },
-            { header: trans('trans.city_town_suburb'), accessorKey: 'attributes.address3' },
-            { header: trans_choice('trans.code', 1), accessorKey: 'attributes.address4' },
+            { header: trans('trans.address_1'), accessorKey: 'attributes.address1' },
+            { header: trans('trans.address_2'), accessorKey: 'attributes.address2' },
+            { header: trans('trans.address_3'), accessorKey: 'attributes.address3' },
+            { header: trans('trans.address_4'), accessorKey: 'attributes.address4' },
             { header: trans('trans.address_5'), accessorKey: 'attributes.address5' },
             { header: trans('trans.address_6'), accessorKey: 'attributes.address6' },
             {

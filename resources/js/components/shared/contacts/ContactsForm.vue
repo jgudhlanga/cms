@@ -49,11 +49,8 @@ watch(modals!, () => {
 });
 
 
-const updateForm = () => {
-};
 
 const save = () => {
-	updateForm();
 	if (Number(contact.value?.id?.toString()) > 0) {
 		updateContact(form, contact.value);
 	} else {
