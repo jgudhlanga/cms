@@ -12,6 +12,7 @@ defineProps<{ auth: AuthObject; errors: object }>();
 const breadcrumbs: BreadcrumbItemInterface[] = [{ transChoiceKey: 'institution', transChoiceKeyIndex: 1 }];
 
 const { navigateTo } = useUtils();
+
 </script>
 
 <template>
@@ -21,7 +22,7 @@ const { navigateTo } = useUtils();
         <SettingsButton class="mt-2" :title="$t('trans.manage')" />
         <HeadingSmall :title="$tChoice('trans.department', 2)" :description="$t('trans.department_description')" class="mt-6" />
         <SettingsButton class="mt-2" @click="navigateTo(route('institution-departments.index'))" :title="$t('trans.manage')" />
-        <HeadingSmall :title="$t('trans.application_form_config')" :description="$t('trans.application_description')" class="mt-6" />
+        <HeadingSmall :title="$t('trans.portal_config')" :description="$t('trans.portal_config_description')" class="mt-6" />
         <SettingsButton class="mt-2" @click="navigateTo(route('portal.setup'))" :title="$t('trans.manage')" />
     </PageContainer>
 </template>

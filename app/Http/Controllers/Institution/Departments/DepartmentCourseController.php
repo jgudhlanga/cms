@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Institution;
+namespace App\Http\Controllers\Institution\Departments;
 
 use App\DTO\Institution\DepartmentCourseDto;
 use App\DTO\Institution\DepartmentCourseUpdateDto;

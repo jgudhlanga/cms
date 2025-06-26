@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Institution;
+namespace App\Http\Controllers\Institution\Departments;
 
 use App\DTO\Institution\DepartmentLevelDto;
 use App\DTO\Institution\DepartmentLevelRequirementsDto;
@@ -11,11 +11,9 @@ use App\Http\Resources\Institution\DepartmentLevelRequirementResource;
 use App\Http\Resources\Institution\DepartmentLevelResource;
 use App\Http\Resources\Institution\InstitutionDepartmentResource;
 use App\Models\Institution\DepartmentLevel;
-use App\Models\Institution\DepartmentLevelRequirement;
 use App\Models\Institution\InstitutionDepartment;
 use App\Repositories\Institution\interface\IDepartmentLevelRepository;
 use Inertia\Inertia;
-use phpDocumentor\Reflection\Types\Compound;
 
 class DepartmentLevelController extends Controller
 {

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Institution;
+namespace App\Http\Controllers\Institution\Dropdowns;
 
 use App\DTO\Institution\DepartmentDto;
 use App\Http\Controllers\Controller;

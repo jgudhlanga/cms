@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Http\Controllers\Institution;
+namespace App\Http\Controllers\Institution\Setup;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
-class ApplicationFormSetupController extends Controller
+class PortalSetupController extends Controller
 {
 
     public function __invoke(Request $request)

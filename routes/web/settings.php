@@ -1,12 +1,12 @@
 <?php
 
-use App\Http\Controllers\Institution\CourseController;
-use App\Http\Controllers\Institution\DepartmentController;
-use App\Http\Controllers\Institution\DivisionController;
-use App\Http\Controllers\Institution\GradeController;
-use App\Http\Controllers\Institution\LevelController;
-use App\Http\Controllers\Institution\ModeOfStudyController;
-use App\Http\Controllers\Institution\SubjectController;
+use App\Http\Controllers\Institution\Dropdowns\CourseController;
+use App\Http\Controllers\Institution\Dropdowns\DepartmentController;
+use App\Http\Controllers\Institution\Dropdowns\DivisionController;
+use App\Http\Controllers\Institution\Dropdowns\GradeController;
+use App\Http\Controllers\Institution\Dropdowns\LevelController;
+use App\Http\Controllers\Institution\Dropdowns\ModeOfStudyController;
+use App\Http\Controllers\Institution\Dropdowns\SubjectController;
 use App\Http\Controllers\Settings\SettingsController;
 use App\Http\Controllers\Shared\AcademicLevelController;
 use App\Http\Controllers\Shared\AddressTypeController;
