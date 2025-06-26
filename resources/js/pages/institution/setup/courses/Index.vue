@@ -6,6 +6,7 @@ import DataTable from '@/components/core/table/DataTable.vue';
 import { useCourses } from '@/composables/institution/useCourses';
 import { AuthObject, DataFilters, DataListProps } from '@/types/data-pagination';
 import CreateEdit from './partials/CreateEdit.vue';
+import { hasAbility } from '@/lib/permissions';
 
 const { createCourseColumns, breadcrumbs, onOpenModal } = useCourses();
 
@@ -17,6 +18,7 @@ const props = defineProps<{
     errors: object;
 }>();
 const can = props?.auth?.can;
+
 </script>
 
 <template>
@@ -29,8 +31,9 @@ const can = props?.auth?.can;
             :search-url="route('courses.index')"
             :pagination="{ ...courses.links, ...courses.meta }"
             :columns="createCourseColumns()"
-            :on-create="() => onOpenModal(can['create:institution-settings'])"
+            :on-create="() => onOpenModal(hasAbility('create:institution-settings'))"
             :disable-create="!can['create:institution-settings']"
+            :drag-items="true"
         />
         <CreateEdit />
     </PageContainer>

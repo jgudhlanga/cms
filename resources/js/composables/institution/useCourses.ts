@@ -13,7 +13,7 @@ import { trans, trans_choice } from 'laravel-vue-i18n';
 import { ref } from 'vue';
 
 export const useCourses = () => {
-    const { moreActionButton, onDelete, onForceDelete, onRestore, orderButtons } = useDataTables();
+    const { moreActionButton, onDelete, onForceDelete, onRestore } = useDataTables();
     const isLoading = ref(false);
     const courses = ref<Course[]>([]);
     const createCourseColumns = () => {
@@ -25,13 +25,6 @@ export const useCourses = () => {
                 header: trans_choice('trans.position', 1),
                 accessorKey: 'attributes.position',
                 meta: { align: 'center' }
-            },
-            {
-                header: trans('trans.order'),
-                accessorKey: 'order',
-                enableSorting: false,
-                meta: { align: 'center' },
-                cell: ({ row }: { row: { original: Course } }) => orderButtons(),
             },
             { header: trans_choice('trans.description', 1), accessorKey: 'attributes.description' },
             {

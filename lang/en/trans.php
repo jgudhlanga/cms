@@ -299,4 +299,5 @@ return [
     "exam_center" => "Exam center",
     "exam_results" => "Exam results",
     "portal_setup" => "Portal Setup",
+    "draggable_description" => "You can drag item rows to order them as you want",
 ];
