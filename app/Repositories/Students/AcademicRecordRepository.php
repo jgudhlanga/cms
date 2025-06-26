@@ -40,7 +40,8 @@ class AcademicRecordRepository extends BaseRepository implements IAcademicRecord
     private function getFields(AcademicRecordDto $dto): array
     {
         return [
-            'student_id' => $dto->id,
+            'student_id' => $dto->student_id,
+            'academic_level_id' => $dto->academic_level_id,
             'school' => $dto->school,
             'place' => $dto->place,
             'from_level' => $dto->from_level,

@@ -288,5 +288,14 @@ return [
     "delivery_mode" => "Delivery mode",
     "school" => "School|Schools",
     "place" => "Place|Places",
+    "from_level" => "Level from (grade / form)",
+    "to_level" => "Level to  (grade / form)",
+    "from_year" => "Year from",
+    "to_year" => "Year to",
+    "student_unique_number" => "Candidate unique number",
+    "exam_board" => "Exam board",
+    "exam_month" => "Exam month",
+    "exam_year" => "Exam year",
+    "exam_center" => "Exam center",
+    "exam_results" => "Exam results",
 ];
-

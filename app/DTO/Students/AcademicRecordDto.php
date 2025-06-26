@@ -10,8 +10,9 @@ readonly class AcademicRecordDto
     public function __construct(
         /** Programs */
         public int     $student_id,
+        public int     $academic_level_id,
         public string  $school,
-        public string $place,
+        public string  $place,
         public ?int    $from_level,
         public ?int    $to_level,
         public ?string $from_year,
@@ -30,6 +31,7 @@ readonly class AcademicRecordDto
     {
         return new self(
             student_id: $student->id,
+            academic_level_id: $request->academic_level_id,
             school: $request->school,
             place: $request->place,
             from_level: $request->from_level,

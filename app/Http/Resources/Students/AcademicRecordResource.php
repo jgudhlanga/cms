@@ -15,6 +15,8 @@ class AcademicRecordResource extends JsonResource
             'id' => $this->id,
             'attributes' => [
                 'studentId' => $this->student_id,
+                'academicLevelId' => $this->academic_level_id,
+                'academicLevel' => $this->academicLavel?->name ?? null,
                 'school' => $this->school,
                 'place' => $this->place,
                 'fromLevel' => $this->from_level,

@@ -15,10 +15,11 @@ return new class extends Migration
             $table->id();
             $table->foreignId('tenant_id')->index()->constrained();
             $table->foreignId('student_id')->constrained();
+            $table->foreignId('academic_level_id')->constrained();
             $table->string('school');
             $table->string('place');
-            $table->integer('from_level')->nullable();
-            $table->integer('to_level')->nullable();
+            $table->string('from_level')->nullable();
+            $table->string('to_level')->nullable();
             $table->string('from_year')->nullable();
             $table->string('to_year')->nullable();
             $table->string('student_unique_number')->nullable();

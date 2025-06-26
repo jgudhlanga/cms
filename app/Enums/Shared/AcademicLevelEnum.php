@@ -7,6 +7,7 @@ enum AcademicLevelEnum: string
     case PRIMARY_SCHOOL = 'Primary school';
     case SECONDARY_SCHOOL = 'Secondary school';
     case ADVANCED_LEVEL = 'Advanced Level';
+    case TERTIARY_LEVEL = 'Tertiary Level';
 
 
     public function label(): string
@@ -15,6 +16,7 @@ enum AcademicLevelEnum: string
             self::PRIMARY_SCHOOL => 'Primary School',
             self::SECONDARY_SCHOOL => 'Secondary School',
             self::ADVANCED_LEVEL => 'Advanced Level',
+            self::TERTIARY_LEVEL => 'Tertiary Level',
         };
     }
 

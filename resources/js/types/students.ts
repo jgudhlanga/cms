@@ -125,6 +125,8 @@ export type AcademicRecord = {
     id: string | number;
     attributes: {
         studentId: string | number;
+        academicLevelId: string | number;
+        academicLevel: string;
         school: string;
         place: string;
         fromLevel?: string | number;
@@ -141,10 +143,12 @@ export type AcademicRecord = {
 };
 
 export type AcademicRecordParams = {
+    academicLevel: SelectOption | null;
+    academic_level_id: string | number | null;
     school: string;
     place: string;
-    from_level?: string | number;
-    to_level?: string | number;
+    from_level?: string | number | null;
+    to_level?: string | number | null ;
     from_year?: string | number;
     to_year?: string | number;
     student_unique_number: string;

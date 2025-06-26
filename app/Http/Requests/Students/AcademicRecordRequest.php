@@ -27,6 +27,7 @@ class AcademicRecordRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'academic_level_id' => ['required', 'integer', 'exists:academic_levels,id'],
             'school' => ['required', 'string', 'max:255'],
             'place' => ['required', 'string', 'max:255'],
         ];
