@@ -70,6 +70,8 @@ use App\Repositories\Shared\ReligionRepository;
 use App\Repositories\Shared\SponsorTypeRepository;
 use App\Repositories\Shared\StatusRepository;
 use App\Repositories\Shared\TitleRepository;
+use App\Repositories\Students\AcademicRecordRepository;
+use App\Repositories\Students\interface\IAcademicRecordRepository;
 use App\Repositories\Students\interface\ISponsorRepository;
 use App\Repositories\Students\interface\IStudentProgramRepository;
 use App\Repositories\Students\interface\IStudentRepository;
@@ -167,6 +169,7 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(IStudentRepository::class, StudentRepository::class);
         $this->app->bind(IStudentProgramRepository::class, StudentProgramRepository::class);
         $this->app->bind(ISponsorRepository::class, SponsorRepository::class);
+        $this->app->bind(IAcademicRecordRepository::class, AcademicRecordRepository::class);
     }
 
 }

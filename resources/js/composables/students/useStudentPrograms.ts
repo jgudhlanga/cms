@@ -21,26 +21,12 @@ export const useStudentPrograms = () => {
                 },
             },
             {
-                header: trans_choice('trans.code', 1),
-                accessorKey: 'code',
-                cell: ({ row }: { row: { original: StudentProgram } }) => {
-                    return '---';
-                },
-            },
-            {
                 header: trans_choice('trans.department', 1),
                 accessorKey: 'relationships.institutionDepartment.attributes.department',
             },
             {
                 header: trans_choice('trans.level', 1),
                 accessorKey: 'relationships.departmentLevel.attributes.level',
-            },
-            {
-                header: trans('trans.duration'),
-                accessorKey: 'duration',
-                cell: ({ row }: { row: { original: StudentProgram } }) => {
-                    return '---';
-                },
             },
             {
                 header: trans('trans.start_date'),
@@ -52,13 +38,6 @@ export const useStudentPrograms = () => {
             {
                 header: trans('trans.end_date'),
                 accessorKey: 'endDate',
-                cell: ({ row }: { row: { original: StudentProgram } }) => {
-                    return '---';
-                },
-            },
-            {
-                header: trans('trans.delivery_mode'),
-                accessorKey: 'id',
                 cell: ({ row }: { row: { original: StudentProgram } }) => {
                     return '---';
                 },

@@ -1,8 +1,8 @@
 <?php
 
+use App\Http\Controllers\Students\AcademicRecordController;
 use App\Http\Controllers\Students\SponsorController;
 use Illuminate\Support\Facades\Route;
-
 
 Route::prefix('students')->middleware('auth')->group(function () {
     # ==================================== SPONSORS ================================================================
@@ -11,5 +11,11 @@ Route::prefix('students')->middleware('auth')->group(function () {
     Route::put('sponsors/{sponsor}/update', [SponsorController::class, 'update'])->name('sponsors.update');
     Route::delete('sponsors/{sponsor}/delete', [SponsorController::class, 'destroy'])->name('sponsors.destroy');
     Route::delete('sponsors/{sponsor}/force-delete', [SponsorController::class, 'forceDelete'])->name('sponsors.force-delete');
+    # ==================================== ACADEMIC RECORDS ================================================================
+    Route::post('academic-records', [AcademicRecordController::class, 'store'])->name('academic-records.store');
+    Route::put('academic-records/{academic_record}/restore', [AcademicRecordController::class, 'restore'])->name('academic-records.restore');
+    Route::put('academic-records/{academic_record}/update', [AcademicRecordController::class, 'update'])->name('academic-records.update');
+    Route::delete('academic-records/{academic_record}/delete', [AcademicRecordController::class, 'destroy'])->name('academic-records.destroy');
+    Route::delete('academic-records/{academic_record}/force-delete', [AcademicRecordController::class, 'forceDelete'])->name('academic-records.force-delete');
 });
 

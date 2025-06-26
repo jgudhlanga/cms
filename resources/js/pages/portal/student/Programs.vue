@@ -28,6 +28,5 @@ const { createStudentProgramColumns, allowed } = useStudentPrograms();
             :on-create="() => {}"
             :disable-create="!allowed"
         />
-        {{ programs }}
     </PageContainer>
 </template>

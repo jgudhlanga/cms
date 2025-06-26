@@ -30,6 +30,14 @@ export const useSharedFormSchema = () => {
         z.object({
             name: z.string().nonempty(trans('trans.enter_required_field', { field: trans_choice('trans.name', 1) })),
         });
+    const schoolSchema = () =>
+        z.object({
+            school: z.string().nonempty(trans('trans.enter_required_field', { field: trans_choice('trans.school', 1) })),
+        });
+    const placeSchema = () =>
+        z.object({
+            place: z.string().nonempty(trans('trans.enter_required_field', { field: trans_choice('trans.place', 1) })),
+        });
     const codeSchema = () =>
         z.object({
             code: z.string().nonempty(trans('trans.enter_required_field', { field: trans_choice('trans.code', 1) })),
@@ -187,5 +195,7 @@ export const useSharedFormSchema = () => {
         idNumberSchema,
         passportNumberSchema,
         countrySchema,
+        schoolSchema,
+        placeSchema,
     };
 };

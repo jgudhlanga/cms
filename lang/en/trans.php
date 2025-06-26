@@ -286,5 +286,7 @@ return [
     "start_date" => "Start date",
     "end_date" => "End date",
     "delivery_mode" => "Delivery mode",
+    "school" => "School|Schools",
+    "place" => "Place|Places",
 ];
 

@@ -94,9 +94,13 @@ class Student extends Model
 
     public function sponsors(): HasMany
     {
-        return $this->hasMany(Sponsor::class);
+        return $this->hasMany(Sponsor::class, 'student_id');
     }
 
+    public function academicRecord(): HasMany
+    {
+        return $this->hasMany(AcademicRecord::class, 'student_id');
+    }
 
     public function nextOfKins(): MorphMany
     {

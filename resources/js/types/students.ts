@@ -119,3 +119,38 @@ export type StudentProgram = {
         departmentCourse?: DepartmentCourse;
     };
 };
+
+export type AcademicRecord = {
+    type: string;
+    id: string | number;
+    attributes: {
+        studentId: string | number;
+        school: string;
+        place: string;
+        fromLevel?: string | number;
+        toLevel?: string | number;
+        fromYear?: string | number;
+        toYear?: string | number;
+        studentUniqueNumber: string;
+        examBoard?: string;
+        examMonth?: string;
+        examYear?: string;
+        examCenter?: string;
+        examResults?: string;
+    };
+};
+
+export type AcademicRecordParams = {
+    school: string;
+    place: string;
+    from_level?: string | number;
+    to_level?: string | number;
+    from_year?: string | number;
+    to_year?: string | number;
+    student_unique_number: string;
+    exam_board?: string;
+    exam_month?: string;
+    exam_year?: string;
+    exam_center?: string;
+    exam_results?: string;
+};
