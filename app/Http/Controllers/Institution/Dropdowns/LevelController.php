@@ -6,6 +6,7 @@ use App\DTO\Institution\LevelDto;
 use App\Http\Controllers\Controller;
 use App\Http\Filters\Shared\SharedNameFilter;
 use App\Http\Requests\Institution\LevelRequest;
+use App\Http\Requests\Shared\PositionRequest;
 use App\Http\Resources\Institution\LevelResource;
 use App\Models\Institution\Level;
 use App\Repositories\Institution\interface\ILevelRepository;
@@ -53,6 +54,12 @@ class LevelController extends Controller
     {
         $this->authorize('updateInstitutionSettings');
         $this->repository->update($level, LevelDto::fromLevelRequest($request));
+    }
+
+    public function movePosition(PositionRequest $request, Level $level): void
+    {
+        $this->authorize('updateInstitutionSettings');
+        $this->repository->movePosition($level, $request);
     }
 
     public function destroy(Level $level)

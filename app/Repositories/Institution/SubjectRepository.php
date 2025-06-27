@@ -17,18 +17,12 @@ class SubjectRepository extends BaseRepository implements ISubjectRepository
 
     public function create(SubjectDto $dto): Subject
     {
-        return $this->subject->create([
-            'name' => $dto->name,
-            'description' => $dto->description,
-        ])->refresh();
+        return $this->subject->create($this->getFields($dto))->refresh();
     }
 
     public function update(Subject $subject, SubjectDto $dto): Subject
     {
-        return tap($subject)->update([
-            'name' => $dto->name,
-            'description' => $dto->description,
-        ]);
+        return tap($subject)->update($this->getFields($dto))->refresh();
     }
 
     public function allFilter($columns = ['*'], SharedNameFilter $filters = null)
@@ -36,9 +30,18 @@ class SubjectRepository extends BaseRepository implements ISubjectRepository
         return $this->subject
             ->select($columns)
             ->filter($filters)
+            ->orderBy('position')
             ->orderBy('name')
             ->orderBy('deleted_at')
             ->paginate()
             ->withQueryString();
+    }
+
+    private function getFields(SubjectDto $dto): array
+    {
+        return [
+            'name' => $dto->name,
+            'description' => $dto->description,
+        ];
     }
 }

@@ -6,6 +6,7 @@ use App\DTO\Institution\SubjectDto;
 use App\Http\Controllers\Controller;
 use App\Http\Filters\Shared\SharedNameFilter;
 use App\Http\Requests\Institution\SubjectRequest;
+use App\Http\Requests\Shared\PositionRequest;
 use App\Http\Resources\Institution\SubjectResource;
 use App\Models\Institution\Subject;
 use App\Repositories\Institution\interface\ISubjectRepository;
@@ -53,6 +54,12 @@ class SubjectController extends Controller
     {
         $this->authorize('updateInstitutionSettings');
         $this->repository->update($subject, SubjectDto::fromSubjectRequest($request));
+    }
+
+    public function movePosition(PositionRequest $request, Subject $subject): void
+    {
+        $this->authorize('updateInstitutionSettings');
+        $this->repository->movePosition($subject, $request);
     }
 
     public function destroy(Subject $subject)

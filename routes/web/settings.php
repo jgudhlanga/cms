@@ -98,6 +98,7 @@ Route::prefix('settings')->middleware('auth')->group(function () {
     Route::delete('grades/{grade}/force-delete', [GradeController::class, 'forceDelete'])->name('grades.force-delete');
     Route::resource('grades', GradeController::class)->names('grades');
     # ==================================== LEVELS ======================================================
+    Route::put('levels/{level}/move-position', [LevelController::class, 'movePosition'])->name('levels.move-position');
     Route::put('levels/{level}/restore', [LevelController::class, 'restore'])->name('levels.restore');
     Route::delete('levels/{level}/force-delete', [LevelController::class, 'forceDelete'])->name('levels.force-delete');
     Route::resource('levels', LevelController::class)->names('levels');
@@ -106,6 +107,7 @@ Route::prefix('settings')->middleware('auth')->group(function () {
     Route::delete('mode-of-studies/{mode_of_study}/force-delete', [ModeOfStudyController::class, 'forceDelete'])->name('mode-of-studies.force-delete');
     Route::resource('mode-of-studies', ModeOfStudyController::class)->names('mode-of-studies');
     # ==================================== SUBJECTS ======================================================
+    Route::put('subjects/{subject}/move-position', [SubjectController::class, 'movePosition'])->name('subjects.move-position');
     Route::put('subjects/{subject}/restore', [SubjectController::class, 'restore'])->name('subjects.restore');
     Route::delete('subjects/{subject}/force-delete', [SubjectController::class, 'forceDelete'])->name('subjects.force-delete');
     Route::resource('subjects', SubjectController::class)->names('subjects');
