@@ -90,14 +90,16 @@ class PortalController extends Controller
     {
         $this->authorize('manageStudentPersonalDetails');
         $user = request()->user();
-       $student =  $this->studentRepository->create(CreateApplicationDto::fromCreateApplicationRequest($request, $user));
+        $student = $this->studentRepository->create(CreateApplicationDto::fromCreateApplicationRequest($request, $user));
         # send an email with a tracking number
         $name = $user->full_name;
         $email = $user->email;
-        $trackingNumber = null;
+        # get the latest created student application
+        $application = $student->programs()->latest()->first();
+        $trackingNumber = $application->application_tracking_number;
         SendApplicationSubmittedEmail::dispatch($name, $email, $trackingNumber)->withoutDelay();
         # we should redirect to a confirmation page
-        return to_route('portal.dashboard');
+        return to_route('portal.application-confirmation');
     }
 
     public function applicationConfirmation(User $user)
@@ -106,6 +108,7 @@ class PortalController extends Controller
         $student = StudentResource::make($this->getStudent(request()));
         return Inertia::render('portal/student/ApplicationConfirmation', compact('student'));
     }
+
     public function personal()
     {
         $this->authorize('manageStudentPersonalDetails');
