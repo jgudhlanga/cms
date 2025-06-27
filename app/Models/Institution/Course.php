@@ -3,6 +3,7 @@
 namespace App\Models\Institution;
 
 use App\Http\Filters\Shared\SharedNameFilter;
+use App\Traits\AssignsPosition;
 use App\Traits\Filterable;
 use App\Traits\Paginatable;
 use Illuminate\Database\Eloquent\Builder;
@@ -19,9 +20,19 @@ use Spatie\Activitylog\Traits\LogsActivity;
  */
 class Course extends Model
 {
-    use HasFactory, SoftDeletes, Filterable, Paginatable, LogsActivity;
+    use HasFactory, SoftDeletes, Filterable, Paginatable, LogsActivity, AssignsPosition;
 
     protected $fillable = ['name', 'position', 'description'];
+
+    protected static function booted(): void
+    {
+        static::creating(function ($course) {
+            if (is_null($course->position)) {
+                $maxPosition = self::max('position') ?? 0;
+                $course->position = $maxPosition + 1;
+            }
+        });
+    }
 
     public function getActivitylogOptions(): LogOptions
     {

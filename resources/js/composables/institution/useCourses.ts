@@ -6,7 +6,7 @@ import { APP_MODULE_KEYS } from '@/lib/constants';
 import { buildFormOptions } from '@/lib/forms';
 import { getIdParams } from '@/lib/utils';
 import { Auth } from '@/types';
-import { Course, } from '@/types/institution';
+import { Course } from '@/types/institution';
 import type { Link } from '@/types/ui';
 import { InertiaForm, usePage } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
@@ -21,11 +21,6 @@ export const useCourses = () => {
         const { can } = props?.auth as Auth;
         return [
             { header: trans_choice('trans.name', 1), accessorKey: 'attributes.name' },
-            {
-                header: trans_choice('trans.position', 1),
-                accessorKey: 'attributes.position',
-                meta: { align: 'center' }
-            },
             { header: trans_choice('trans.description', 1), accessorKey: 'attributes.description' },
             {
                 header: trans_choice('trans.action', 2),

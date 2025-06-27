@@ -19,6 +19,7 @@ use App\Http\Resources\Students\AcademicRecordResource;
 use App\Http\Resources\Students\SponsorResource;
 use App\Http\Resources\Students\StudentProgramResource;
 use App\Http\Resources\Students\StudentResource;
+use App\Jobs\Students\SendApplicationSubmittedEmail;
 use App\Jobs\Users\SendVerificationEmailJob;
 use App\Models\Tenants\Tenant;
 use App\Models\Users\User;
@@ -60,7 +61,7 @@ class PortalController extends Controller
             request()->session()->invalidate();
             request()->session()->regenerateToken();
         }
-        return Inertia::render('portal/guest/ApplicationUserForm');
+        return Inertia::render('portal/guest/RegistrationUserForm');
     }
 
     public function store(CreateUserRequest $request)
@@ -73,10 +74,10 @@ class PortalController extends Controller
         return to_route('portal.confirmation', compact('user'));
     }
 
-    public function confirmation(User $user)
+    public function registrationConfirmation(User $user)
     {
         $email = $user->email;
-        return Inertia::render('portal/guest/Confirmation', compact('email'));
+        return Inertia::render('portal/guest/RegistrationConfirmation', compact('email'));
     }
 
     public function createApplication()
@@ -88,12 +89,23 @@ class PortalController extends Controller
     public function storeApplication(CreateApplicationRequest $request)
     {
         $this->authorize('manageStudentPersonalDetails');
-        $this->studentRepository->create(CreateApplicationDto::fromCreateApplicationRequest($request, request()->user()));
-        // we need to and email with a tracking number
-        // we should redirect to a confirmation page
+        $user = request()->user();
+       $student =  $this->studentRepository->create(CreateApplicationDto::fromCreateApplicationRequest($request, $user));
+        # send an email with a tracking number
+        $name = $user->full_name;
+        $email = $user->email;
+        $trackingNumber = null;
+        SendApplicationSubmittedEmail::dispatch($name, $email, $trackingNumber)->withoutDelay();
+        # we should redirect to a confirmation page
         return to_route('portal.dashboard');
     }
 
+    public function applicationConfirmation(User $user)
+    {
+        $this->authorize('manageStudentPersonalDetails');
+        $student = StudentResource::make($this->getStudent(request()));
+        return Inertia::render('portal/student/ApplicationConfirmation', compact('student'));
+    }
     public function personal()
     {
         $this->authorize('manageStudentPersonalDetails');

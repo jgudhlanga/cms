@@ -6,6 +6,7 @@ use App\DTO\Institution\CourseDto;
 use App\Http\Controllers\Controller;
 use App\Http\Filters\Shared\SharedNameFilter;
 use App\Http\Requests\Institution\CourseRequest;
+use App\Http\Requests\Shared\PositionRequest;
 use App\Http\Resources\Institution\CourseResource;
 use App\Models\Institution\Course;
 use App\Repositories\Institution\interface\ICourseRepository;
@@ -53,6 +54,12 @@ class CourseController extends Controller
     {
         $this->authorize('updateInstitutionSettings');
         $this->repository->update($course, CourseDto::fromCourseRequest($request));
+    }
+
+    public function movePosition(PositionRequest $request, Course $course)
+    {
+        $this->authorize('updateInstitutionSettings');
+        $this->repository->movePosition($course, $request);
     }
 
     public function destroy(Course $course)

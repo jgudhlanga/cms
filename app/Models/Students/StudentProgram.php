@@ -6,9 +6,11 @@ use App\Http\Filters\Students\StudentProgramFilter;
 use App\Models\Institution\DepartmentCourse;
 use App\Models\Institution\DepartmentLevel;
 use App\Models\Institution\InstitutionDepartment;
+use App\Observers\Students\StudentProgramObserver;
 use App\Traits\BelongsToTenant;
 use App\Traits\Filterable;
 use App\Traits\Paginatable;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -22,6 +24,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @mixin Builder
  * @method static filter(StudentProgramFilter $filters)
  */
+#[ObservedBy([StudentProgramObserver::class])]
 class StudentProgram extends Model
 {
     use HasFactory, SoftDeletes, Filterable, BelongsToTenant, Paginatable, LogsActivity;
@@ -36,7 +39,7 @@ class StudentProgram extends Model
         'required_level_completed',
         'read_write_acknowledged',
         'application_tracking_number',
-        'status_id',
+        'application_status_id',
     ];
 
     protected $casts = [

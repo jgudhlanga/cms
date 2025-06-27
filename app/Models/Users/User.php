@@ -62,6 +62,16 @@ class User extends Authenticatable implements MustVerifyEmail, HasMedia
         return Attribute::get(fn() => $this->studentProfile()->exists());
     }
 
+    public function getFullNameAttribute(): string
+    {
+        $nameParts = array_filter([
+            $this->first_name,
+            $this->middle_name,
+            $this->last_name,
+        ]);
+
+        return implode(' ', $nameParts);
+    }
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('avatar')

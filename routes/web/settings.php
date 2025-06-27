@@ -78,6 +78,7 @@ Route::prefix('settings')->middleware('auth')->group(function () {
 
     # ********************************************* INSTITUTION SPECIFIC ********************************
     # ==================================== COURSES ======================================================
+    Route::put('courses/{course}/move-position', [CourseController::class, 'movePosition'])->name('courses.move-position');
     Route::put('courses/{course}/restore', [CourseController::class, 'restore'])->name('courses.restore');
     Route::delete('courses/{course}/force-delete', [CourseController::class, 'forceDelete'])->name('courses.force-delete');
     Route::resource('courses', CourseController::class)->names('courses');

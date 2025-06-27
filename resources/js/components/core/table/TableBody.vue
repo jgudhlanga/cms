@@ -3,14 +3,16 @@ import Empty from '@/components/core/util/Empty.vue';
 import { FlexRender, type Table } from '@tanstack/vue-table';
 import { ref, watchEffect } from 'vue';
 import draggable from 'vuedraggable';
+import { useShared } from '@/composables/shared/useShared';
 
 interface Props {
     table: Table<any>;
     dragItems?: boolean;
+    draggableUpdateUrl?: string;
 }
 
 const props = defineProps<Props>();
-
+const { movePosition } = useShared();
 // Local list of row data to support dragging
 const draggableRows = ref<any[]>([]);
 
@@ -26,6 +28,9 @@ const getRowByOriginal = (original: any) => {
 };
 
 function onChange(evt: any) {
+    console.log(props.draggableUpdateUrl);
+    const moved = evt?.moved;
+    const {element} = moved;
     console.log('New order:', evt);
 }
 </script>

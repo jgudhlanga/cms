@@ -19,6 +19,7 @@ interface Props {
     disableImport?: boolean;
     disableExport?: boolean;
     showArchivedFilter?: boolean;
+    draggableUpdateUrl?: string;
     dragItems?: boolean;
 }
 
@@ -70,10 +71,10 @@ watch(trashed, trashedWatcher);
                 <slot name="head-right" />
             </div>
         </div>
-        <div  v-if="dragItems" class="flex w-1/4 px-3 py-1 my-2 text-xs bg-slate-300 rounded-full text-dark font-bold">{{ $t('trans.draggable_description')}}</div>
+        <div  v-if="dragItems" class="flex w-1/4 px-3 py-1 my-2 text-xs bg-slate-200 rounded-full text-primary font-bold">{{ $t('trans.draggable_description')}}</div>
         <table class="hava-table">
             <TableHead :table="table" />
-            <TableBody :table="table" :drag-items="dragItems" />
+            <TableBody :table="table" :drag-items="dragItems" :draggable-update-url="draggableUpdateUrl" />
         </table>
     </div>
     <div class="flex items-center justify-between px-6" v-if="pagination">

@@ -34,6 +34,7 @@ const can = props?.auth?.can;
             :on-create="() => onOpenModal(hasAbility('create:institution-settings'))"
             :disable-create="!can['create:institution-settings']"
             :drag-items="true"
+            draggable-update-url="courses.move-position"
         />
         <CreateEdit />
     </PageContainer>

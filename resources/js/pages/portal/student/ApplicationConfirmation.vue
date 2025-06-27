@@ -12,9 +12,11 @@ interface Props {
 const props = defineProps<Props>();
 const { user } = props.auth;
 
-const breadcrumbs: BreadcrumbItemInterface[] = [{ title: user.attributes?.name }, { transChoiceKey: 'dashboard' }];
+const breadcrumbs: BreadcrumbItemInterface[] = [{ title: user.attributes?.name }, { transKey: 'application_confirmation' }];
 </script>
 <template>
-    <Head :title="$tChoice('trans.dashboard', 1)" />
-    <PageContainer :breadcrumbs="breadcrumbs"> My Dashboard </PageContainer>
+    <Head :title="$t('trans.application_confirmation')" />
+    <PageContainer :breadcrumbs="breadcrumbs">
+        {{ $t('trans.application_confirmation_description') }}
+    </PageContainer>
 </template>

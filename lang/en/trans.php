@@ -300,4 +300,6 @@ return [
     "exam_results" => "Exam results",
     "portal_setup" => "Portal Setup",
     "draggable_description" => "You can drag item rows to order them as you want",
+    "application_confirmation" => "Application confirmation",
+    "application_confirmation_description" => "Application confirmation description",
 ];

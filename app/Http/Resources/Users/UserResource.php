@@ -22,18 +22,11 @@ class UserResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
-        // Build the full name
-        $nameParts = array_filter([
-            $this->first_name,
-            $this->middle_name,
-            $this->last_name,
-        ]);
-        $fullName = implode(' ', $nameParts);
         return [
             'type' => 'user',
             'id' => $this->id,
             'attributes' => [
-                'name' => $fullName,
+                'name' => $this->full_name,
                 'firstname' => $this->first_name,
                 'middleName' => $this->middle_name,
                 'lastname' => $this->last_name,
