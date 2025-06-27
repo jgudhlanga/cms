@@ -6,6 +6,7 @@ use App\DTO\Institution\DivisionDto;
 use App\Http\Controllers\Controller;
 use App\Http\Filters\Shared\SharedNameFilter;
 use App\Http\Requests\Institution\DivisionRequest;
+use App\Http\Requests\Shared\PositionRequest;
 use App\Http\Resources\Institution\DivisionResource;
 use App\Models\Institution\Division;
 use App\Repositories\Institution\interface\IDivisionRepository;
@@ -53,6 +54,12 @@ class DivisionController extends Controller
     {
         $this->authorize('updateInstitutionSettings');
         $this->repository->update($division, DivisionDto::fromDivisionRequest($request));
+    }
+
+    public function movePosition(PositionRequest $request, Division $division)
+    {
+        $this->authorize('updateInstitutionSettings');
+        $this->repository->movePosition($division, $request);
     }
 
     public function destroy(Division $division)

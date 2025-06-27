@@ -299,7 +299,8 @@ return [
     "exam_center" => "Exam center",
     "exam_results" => "Exam results",
     "portal_setup" => "Portal Setup",
-    "draggable_description" => "You can drag item rows to order them as you want",
+    "draggable_description" => "You can drag item rows to order them as you wish",
     "application_confirmation" => "Application confirmation",
     "application_confirmation_description" => "Application confirmation description",
+    "reorder_error_description" => "We couldn’t re order items as you intended. Please be advised that there could be multiple reasons for this",
 ];

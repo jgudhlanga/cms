@@ -24,16 +24,6 @@ class Course extends Model
 
     protected $fillable = ['name', 'position', 'description'];
 
-    protected static function booted(): void
-    {
-        static::creating(function ($course) {
-            if (is_null($course->position)) {
-                $maxPosition = self::max('position') ?? 0;
-                $course->position = $maxPosition + 1;
-            }
-        });
-    }
-
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()

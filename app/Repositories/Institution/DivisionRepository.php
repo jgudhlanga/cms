@@ -17,18 +17,12 @@ class DivisionRepository extends BaseRepository implements IDivisionRepository
 
     public function create(DivisionDto $dto): Division
     {
-        return $this->division->create([
-            'name' => $dto->name,
-            'description' => $dto->description,
-        ])->refresh();
+        return $this->division->create($this->getFields($dto))->refresh();
     }
 
     public function update(Division $division, DivisionDto $dto): Division
     {
-        return tap($division)->update([
-            'name' => $dto->name,
-            'description' => $dto->description,
-        ]);
+        return tap($division)->update($this->getFields($dto));
     }
 
     public function allFilter($columns = ['*'], SharedNameFilter $filters = null)
@@ -36,9 +30,18 @@ class DivisionRepository extends BaseRepository implements IDivisionRepository
         return $this->division
             ->select($columns)
             ->filter($filters)
+            ->orderBy('position')
             ->orderBy('name')
             ->orderBy('deleted_at')
             ->paginate()
             ->withQueryString();
+    }
+
+    private function getFields(DivisionDto $dto): array
+    {
+        return [
+            'name' => $dto->name,
+            'description' => $dto->description,
+        ];
     }
 }

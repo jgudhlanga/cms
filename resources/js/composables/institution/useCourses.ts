@@ -20,6 +20,7 @@ export const useCourses = () => {
         const { props } = usePage();
         const { can } = props?.auth as Auth;
         return [
+            { header: trans_choice('#', 1), accessorKey: 'attributes.position', meta: {align: 'left'} },
             { header: trans_choice('trans.name', 1), accessorKey: 'attributes.name' },
             { header: trans_choice('trans.description', 1), accessorKey: 'attributes.description' },
             {

@@ -83,14 +83,17 @@ Route::prefix('settings')->middleware('auth')->group(function () {
     Route::delete('courses/{course}/force-delete', [CourseController::class, 'forceDelete'])->name('courses.force-delete');
     Route::resource('courses', CourseController::class)->names('courses');
     # ==================================== DEPARTMENTS ======================================================
+    Route::put('departments/{department}/move-position', [DepartmentController::class, 'movePosition'])->name('departments.move-position');
     Route::put('departments/{department}/restore', [DepartmentController::class, 'restore'])->name('departments.restore');
     Route::delete('departments/{department}/force-delete', [DepartmentController::class, 'forceDelete'])->name('departments.force-delete');
     Route::resource('departments', DepartmentController::class)->names('departments');
     # ==================================== DIVISIONS ======================================================
+    Route::put('divisions/{division}/move-position', [DivisionController::class, 'movePosition'])->name('divisions.move-position');
     Route::put('divisions/{division}/restore', [DivisionController::class, 'restore'])->name('divisions.restore');
     Route::delete('divisions/{division}/force-delete', [DivisionController::class, 'forceDelete'])->name('divisions.force-delete');
     Route::resource('divisions', DivisionController::class)->names('divisions');
     # ==================================== GRADES ======================================================
+    Route::put('grades/{grade}/move-position', [GradeController::class, 'movePosition'])->name('grades.move-position');
     Route::put('grades/{grade}/restore', [GradeController::class, 'restore'])->name('grades.restore');
     Route::delete('grades/{grade}/force-delete', [GradeController::class, 'forceDelete'])->name('grades.force-delete');
     Route::resource('grades', GradeController::class)->names('grades');

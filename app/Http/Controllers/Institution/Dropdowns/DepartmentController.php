@@ -6,6 +6,7 @@ use App\DTO\Institution\DepartmentDto;
 use App\Http\Controllers\Controller;
 use App\Http\Filters\Shared\SharedNameFilter;
 use App\Http\Requests\Institution\DepartmentRequest;
+use App\Http\Requests\Shared\PositionRequest;
 use App\Http\Resources\Institution\DepartmentResource;
 use App\Models\Institution\Department;
 use App\Repositories\Institution\interface\IDepartmentRepository;
@@ -53,6 +54,12 @@ class DepartmentController extends Controller
     {
         $this->authorize('updateInstitutionSettings');
         $this->repository->update($department, DepartmentDto::fromDepartmentRequest($request));
+    }
+
+    public function movePosition(PositionRequest $request, Department $department)
+    {
+        $this->authorize('updateInstitutionSettings');
+        $this->repository->movePosition($department, $request);
     }
 
     public function destroy(Department $department)

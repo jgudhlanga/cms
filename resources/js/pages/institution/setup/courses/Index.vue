@@ -4,21 +4,20 @@ import { Head } from '@inertiajs/vue3';
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import DataTable from '@/components/core/table/DataTable.vue';
 import { useCourses } from '@/composables/institution/useCourses';
+import { hasAbility } from '@/lib/permissions';
 import { AuthObject, DataFilters, DataListProps } from '@/types/data-pagination';
 import CreateEdit from './partials/CreateEdit.vue';
-import { hasAbility } from '@/lib/permissions';
 
 const { createCourseColumns, breadcrumbs, onOpenModal } = useCourses();
 
-const props = defineProps<{
+defineProps<{
     courses: DataListProps;
     trashedCount: any;
     filters: DataFilters;
     auth: AuthObject;
     errors: object;
 }>();
-const can = props?.auth?.can;
-
+const allowed = hasAbility('create:institution-settings');
 </script>
 
 <template>
@@ -31,8 +30,8 @@ const can = props?.auth?.can;
             :search-url="route('courses.index')"
             :pagination="{ ...courses.links, ...courses.meta }"
             :columns="createCourseColumns()"
-            :on-create="() => onOpenModal(hasAbility('create:institution-settings'))"
-            :disable-create="!can['create:institution-settings']"
+            :on-create="() => onOpenModal(allowed)"
+            :disable-create="!allowed"
             :drag-items="true"
             draggable-update-url="courses.move-position"
         />

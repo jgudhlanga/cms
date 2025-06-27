@@ -18,18 +18,12 @@ class CourseRepository extends BaseRepository implements ICourseRepository
 
     public function create(CourseDto $dto): Course
     {
-        return $this->course->create([
-            'name' => $dto->name,
-            'description' => $dto->description,
-        ])->refresh();
+        return $this->course->create($this->getFields($dto))->refresh();
     }
 
     public function update(Course $course, CourseDto $dto): Course
     {
-        return tap($course)->update([
-            'name' => $dto->name,
-            'description' => $dto->description,
-        ]);
+        return tap($course)->update($this->getFields($dto))->refresh();
     }
 
     public function allFilter($columns = ['*'], SharedNameFilter $filters = null)
@@ -37,11 +31,19 @@ class CourseRepository extends BaseRepository implements ICourseRepository
         return $this->course
             ->select($columns)
             ->filter($filters)
-           #->orderBy('description')
             ->orderBy('position')
+            ->orderBy('description')
             ->orderBy('name')
             ->orderBy('deleted_at')
             ->paginate()
             ->withQueryString();
+    }
+
+    private function getFields(CourseDto $dto): array
+    {
+        return [
+            'name' => $dto->name,
+            'description' => $dto->description,
+        ];
     }
 }

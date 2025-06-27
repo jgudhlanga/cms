@@ -13,24 +13,13 @@ import { trans, trans_choice } from 'laravel-vue-i18n';
 import { ref } from 'vue';
 
 export const useGrades = () => {
-    const { moreActionButton, onDelete, onForceDelete, onRestore, orderButtons } = useDataTables();
+    const { moreActionButton, onDelete, onForceDelete, onRestore } = useDataTables();
     const createGradeColumns = () => {
         const { props } = usePage();
         const { can } = props?.auth as Auth;
         return [
+            { header: trans_choice('#', 1), accessorKey: 'attributes.position', meta: { align: 'left' } },
             { header: trans_choice('trans.name', 1), accessorKey: 'attributes.name' },
-            {
-                header: trans_choice('trans.position', 1),
-                accessorKey: 'attributes.position',
-                meta: { align: 'center' },
-            },
-            {
-                header: trans('trans.order'),
-                accessorKey: 'order',
-                enableSorting: false,
-                meta: { align: 'center' },
-                cell: ({ row }: { row: { original: Grade } }) => orderButtons(),
-            },
             { header: trans_choice('trans.description', 1), accessorKey: 'attributes.description' },
             {
                 header: trans_choice('trans.action', 2),

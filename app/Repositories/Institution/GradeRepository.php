@@ -17,18 +17,12 @@ class GradeRepository extends BaseRepository implements IGradeRepository
 
     public function create(GradeDto $dto): Grade
     {
-        return $this->grade->create([
-            'name' => $dto->name,
-            'description' => $dto->description,
-        ])->refresh();
+        return $this->grade->create($this->getFields($dto))->refresh();
     }
 
     public function update(Grade $grade, GradeDto $dto): Grade
     {
-        return tap($grade)->update([
-            'name' => $dto->name,
-            'description' => $dto->description,
-        ]);
+        return tap($grade)->update($this->getFields($dto));
     }
 
     public function allFilter($columns = ['*'], SharedNameFilter $filters = null)
@@ -36,9 +30,18 @@ class GradeRepository extends BaseRepository implements IGradeRepository
         return $this->grade
             ->select($columns)
             ->filter($filters)
+            ->orderBy('position')
             ->orderBy('name')
             ->orderBy('deleted_at')
             ->paginate()
             ->withQueryString();
+    }
+
+    private function getFields(GradeDto $dto): array
+    {
+        return [
+            'name' => $dto->name,
+            'description' => $dto->description,
+        ];
     }
 }

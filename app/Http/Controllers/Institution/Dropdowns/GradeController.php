@@ -6,6 +6,7 @@ use App\DTO\Institution\GradeDto;
 use App\Http\Controllers\Controller;
 use App\Http\Filters\Shared\SharedNameFilter;
 use App\Http\Requests\Institution\GradeRequest;
+use App\Http\Requests\Shared\PositionRequest;
 use App\Http\Resources\Institution\GradeResource;
 use App\Models\Institution\Grade;
 use App\Repositories\Institution\interface\IGradeRepository;
@@ -53,6 +54,12 @@ class GradeController extends Controller
     {
         $this->authorize('updateInstitutionSettings');
         $this->repository->update($grade, GradeDto::fromGradeRequest($request));
+    }
+
+    public function movePosition(PositionRequest $request, Grade $grade)
+    {
+        $this->authorize('updateInstitutionSettings');
+        $this->repository->movePosition($grade, $request);
     }
 
     public function destroy(Grade $grade)
