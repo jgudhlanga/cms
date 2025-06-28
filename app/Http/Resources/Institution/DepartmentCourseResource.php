@@ -26,7 +26,7 @@ class DepartmentCourseResource extends JsonResource
                 ]),
             ],
             'relationships' => [
-                'departmentCourseLevels' => DepartmentLevelCourseResource::collection($this->departmentCourseLevels),
+                'departmentCourseLevels' => $this->departmentCourseLevels ? DepartmentLevelCourseResource::collection($this->departmentCourseLevels) : null,
             ]
         ];
     }

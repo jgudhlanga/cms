@@ -7,10 +7,22 @@ import {
   NumberFieldIncrement,
   NumberFieldInput,
 } from '@/components/ui/number-field'
-
-withDefaults(defineProps<{ inputId: string, defaultValue?: number | undefined, min?: number, max?: number, label?: string }>(), {
+interface Props {
+    inputId: string,
+    defaultValue?: number | undefined,
+    min?: number,
+    max?: number,
+    label?: string
+    labelUppercase?: boolean,
+    verticalLayout?: boolean,
+    isRequired?: boolean,
+}
+withDefaults(defineProps<Props>(), {
 	min: 0,
 	defaultValue: 0,
+    labelUppercase:false,
+    verticalLayout:true,
+    isRequired: false,
 })
 
 </script>

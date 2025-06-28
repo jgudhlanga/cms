@@ -22,28 +22,18 @@ class UserResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
-        // Build the full name
-        $nameParts = array_filter([
-            $this->first_name,
-            $this->middle_name,
-            $this->last_name,
-        ]);
-        $fullName = implode(' ', $nameParts);
         return [
             'type' => 'user',
             'id' => $this->id,
             'attributes' => [
-                'name' => $fullName,
-                'first_name' => $this->first_name,
-                'middle_name' => $this->middle_name,
-                'last_name' => $this->last_name,
+                'name' => $this->full_name,
+                'firstname' => $this->first_name,
+                'middleName' => $this->middle_name,
+                'lastname' => $this->last_name,
                 'email' => $this->email,
                 'tenantId' => $this->tenant_id,
                 'tenant' => $this->tenant?->name,
-                'genderId' => $this->gender_id,
-                'gender' => $this->gender?->title,
-                'titleId' => $this->title_id,
-                'title' => $this->title?->name,
+                "avatarUrl" => $this?->avatarUrl,
                 $this->mergeWhen($request->routeIs('users.*'), [
                     'createdAt' => $this->created_at,
                     'updatedAt' => $this->updated_at,

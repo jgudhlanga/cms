@@ -27,10 +27,11 @@ class DepartmentLevelRequirement extends Model
     ];
 
     protected $casts = [
-        'main_subject_ids' => 'array', // 👈 Important
+        'main_subject_ids' => 'array',
     ];
 
     protected $appends = ['main_subjects'];
+
     public function getMainSubjectsAttribute(): Collection
     {
         return Subject::whereIn('id', $this->main_subject_ids)->get();
@@ -40,6 +41,7 @@ class DepartmentLevelRequirement extends Model
     {
         return $this->belongsTo(DepartmentLevel::class, 'required_level_id');
     }
+
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()

@@ -18,7 +18,7 @@ interface Props {
 const { isLoading, levelCourses, listLevelCourses } = useDepartmentLevels();
 const { isItTrue } = useUtils();
 onMounted(async () => {
-    if (props.departmentLevelId) {
+    if (Number(props.departmentLevelId ?? '') > 0) {
         await listLevelCourses(props.departmentLevelId);
     }
 });

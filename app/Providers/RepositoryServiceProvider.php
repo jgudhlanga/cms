@@ -8,16 +8,6 @@ use App\Repositories\Acl\Interface\IRoleRepository;
 use App\Repositories\Acl\ModuleRepository;
 use App\Repositories\Acl\PermissionRepository;
 use App\Repositories\Acl\RoleRepository;
-use App\Repositories\AddressTypes\AddressTypeRepository;
-use App\Repositories\AddressTypes\interface\IAddressTypeRepository;
-use App\Repositories\Communications\CommunicationMethodRepository;
-use App\Repositories\Communications\interface\ICommunicationMethodRepository;
-use App\Repositories\Countries\CountryRepository;
-use App\Repositories\Countries\interface\ICountryRepository;
-use App\Repositories\Districts\DistrictRepository;
-use App\Repositories\Districts\interface\IDistrictRepository;
-use App\Repositories\Genders\GenderRepository;
-use App\Repositories\Genders\interface\IGenderRepository;
 use App\Repositories\Institution\CourseRepository;
 use App\Repositories\Institution\DepartmentCourseRepository;
 use App\Repositories\Institution\DepartmentLevelRepository;
@@ -38,36 +28,58 @@ use App\Repositories\Institution\interface\ISubjectRepository;
 use App\Repositories\Institution\LevelRepository;
 use App\Repositories\Institution\ModeOfStudyRepository;
 use App\Repositories\Institution\SubjectRepository;
-use App\Repositories\Languages\interface\ILanguageRepository;
-use App\Repositories\Languages\LanguageRepository;
-use App\Repositories\Payments\interface\IPaymentDayRepository;
-use App\Repositories\Payments\interface\IPaymentFrequencyRepository;
-use App\Repositories\Payments\interface\IPaymentMethodRepository;
-use App\Repositories\Payments\PaymentDayRepository;
-use App\Repositories\Payments\PaymentFrequencyRepository;
-use App\Repositories\Payments\PaymentMethodRepository;
-use App\Repositories\Provinces\interface\IProvinceRepository;
-use App\Repositories\Provinces\ProvinceRepository;
-use App\Repositories\Races\interface\IRaceRepository;
-use App\Repositories\Races\RaceRepository;
-use App\Repositories\Relationships\interface\IRelationshipRepository;
-use App\Repositories\Relationships\RelationshipRepository;
+use App\Repositories\Shared\AcademicLevelRepository;
 use App\Repositories\Shared\AddressRepository;
-use App\Repositories\Shared\BankDetailRepository;
+use App\Repositories\Shared\AddressTypeRepository;
+use App\Repositories\Shared\CommunicationMethodRepository;
 use App\Repositories\Shared\ContactRepository;
+use App\Repositories\Shared\CountryRepository;
+use App\Repositories\Shared\DistrictRepository;
+use App\Repositories\Shared\GenderRepository;
+use App\Repositories\Shared\interface\IAcademicLevelRepository;
 use App\Repositories\Shared\interface\IAddressRepository;
-use App\Repositories\Shared\interface\IBankDetailRepository;
+use App\Repositories\Shared\interface\IAddressTypeRepository;
+use App\Repositories\Shared\interface\ICommunicationMethodRepository;
 use App\Repositories\Shared\interface\IContactRepository;
-use App\Repositories\Statuses\interface\IMaritalStatusRepository;
-use App\Repositories\Statuses\interface\IStatusRepository;
-use App\Repositories\Statuses\MaritalStatusRepository;
-use App\Repositories\Statuses\StatusRepository;
-use App\Repositories\Titles\interface\ITitleRepository;
-use App\Repositories\Titles\TitleRepository;
+use App\Repositories\Shared\interface\ICountryRepository;
+use App\Repositories\Shared\interface\IDistrictRepository;
+use App\Repositories\Shared\interface\IGenderRepository;
+use App\Repositories\Shared\interface\ILanguageRepository;
+use App\Repositories\Shared\interface\IMaritalStatusRepository;
+use App\Repositories\Shared\interface\INextOfKinRepository;
+use App\Repositories\Shared\interface\IPaymentDayRepository;
+use App\Repositories\Shared\interface\IPaymentFrequencyRepository;
+use App\Repositories\Shared\interface\IPaymentMethodRepository;
+use App\Repositories\Shared\interface\IProvinceRepository;
+use App\Repositories\Shared\interface\IRaceRepository;
+use App\Repositories\Shared\interface\IRelationshipRepository;
+use App\Repositories\Shared\interface\IReligionRepository;
+use App\Repositories\Shared\interface\ISponsorTypeRepository;
+use App\Repositories\Shared\interface\IStatusRepository;
+use App\Repositories\Shared\interface\ITitleRepository;
+use App\Repositories\Shared\LanguageRepository;
+use App\Repositories\Shared\MaritalStatusRepository;
+use App\Repositories\Shared\NextOfKinRepository;
+use App\Repositories\Shared\PaymentDayRepository;
+use App\Repositories\Shared\PaymentFrequencyRepository;
+use App\Repositories\Shared\PaymentMethodRepository;
+use App\Repositories\Shared\ProvinceRepository;
+use App\Repositories\Shared\RaceRepository;
+use App\Repositories\Shared\RelationshipRepository;
+use App\Repositories\Shared\ReligionRepository;
+use App\Repositories\Shared\SponsorTypeRepository;
+use App\Repositories\Shared\StatusRepository;
+use App\Repositories\Shared\TitleRepository;
+use App\Repositories\Students\AcademicRecordRepository;
+use App\Repositories\Students\interface\IAcademicRecordRepository;
+use App\Repositories\Students\interface\ISponsorRepository;
+use App\Repositories\Students\interface\IStudentProgramRepository;
+use App\Repositories\Students\interface\IStudentRepository;
+use App\Repositories\Students\SponsorRepository;
+use App\Repositories\Students\StudentProgramRepository;
+use App\Repositories\Students\StudentRepository;
 use App\Repositories\Users\interface\IUserRepository;
 use App\Repositories\Users\UserRepository;
-use App\Repositories\Applications\interface\IApplicationRepository;
-use App\Repositories\Applications\ApplicationRepository;
 use Illuminate\Support\ServiceProvider;
 
 class RepositoryServiceProvider extends ServiceProvider
@@ -85,7 +97,7 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->sharedRepositories();
         $this->institutionRepositories();
         $this->userRepositories();
-        $this->applicationRepositories();
+        $this->studentRepositories();
     }
 
     public function boot(): void
@@ -114,6 +126,9 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(IAddressTypeRepository::class, AddressTypeRepository::class);
         $this->app->bind(IRelationshipRepository::class, RelationshipRepository::class);
         $this->app->bind(IDistrictRepository::class, DistrictRepository::class);
+        $this->app->bind(IReligionRepository::class, ReligionRepository::class);
+        $this->app->bind(IAcademicLevelRepository::class, AcademicLevelRepository::class);
+        $this->app->bind(ISponsorTypeRepository::class, SponsorTypeRepository::class);
     }
 
     private function paymentsRepositories(): void
@@ -126,8 +141,8 @@ class RepositoryServiceProvider extends ServiceProvider
     public function sharedRepositories(): void
     {
         $this->app->bind(IAddressRepository::class, AddressRepository::class);
-        $this->app->bind(IBankDetailRepository::class, BankDetailRepository::class);
         $this->app->bind(IContactRepository::class, ContactRepository::class);
+        $this->app->bind(INextOfKinRepository::class, NextOfKinRepository::class);
     }
 
     public function institutionRepositories(): void
@@ -149,9 +164,12 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(IUserRepository::class, UserRepository::class);
     }
 
-    public function applicationRepositories(): void
+    public function studentRepositories(): void
     {
-        $this->app->bind(IApplicationRepository::class, ApplicationRepository::class);
+        $this->app->bind(IStudentRepository::class, StudentRepository::class);
+        $this->app->bind(IStudentProgramRepository::class, StudentProgramRepository::class);
+        $this->app->bind(ISponsorRepository::class, SponsorRepository::class);
+        $this->app->bind(IAcademicRecordRepository::class, AcademicRecordRepository::class);
     }
 
 }

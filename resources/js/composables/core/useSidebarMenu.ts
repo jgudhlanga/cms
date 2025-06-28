@@ -1,19 +1,13 @@
 import AppLogo from '@/components/core/image/AppLogo.vue';
-import { useUtils } from '@/composables/core/useUtils';
 import { IconName } from '@/enums/icons';
 import { icons } from '@/lib/icons';
-import { getIdParams } from '@/lib/utils';
-import { PageProps } from '@/types';
+import { hasAbility } from '@/lib/permissions';
 import { TenantInterface } from '@/types/tenants';
 import { MenuItemInterface } from '@/types/ui';
-import { usePage } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 import { markRaw } from 'vue';
 
 export function useSidebarMenu() {
-    const { props } = usePage<PageProps>();
-    const { can, user } = props?.auth;
-    const { isItTrue } = useUtils();
     const tenants: Array<TenantInterface> = [
         {
             id: '1',
@@ -31,99 +25,107 @@ export function useSidebarMenu() {
             transChoiceKey: 'trans.dashboard',
             icon: icons[IconName.dashboard],
             url: route('dashboard'),
-            show: isItTrue(can['view:dashboards']),
-        },
-        {
-            transKey: 'trans.my_dashboard',
-            icon: icons[IconName.dashboard],
-            url: route('portal.index', getIdParams(user?.id?.toString() as string)),
-            show: isItTrue(can['manageOwnData:students']),
-        },
-        {
-            transKey: 'trans.my_personal_details',
-            icon: icons[IconName.user],
-            url: route('portal.personal-details', getIdParams(user?.id?.toString() as string)),
-            show: isItTrue(can['manageOwnData:students']),
-        },
-        {
-            transKey: 'trans.my_contacts',
-            icon: icons[IconName.contact],
-            url: route('portal.contacts', getIdParams(user?.id?.toString() as string)),
-            show: isItTrue(can['manageOwnData:students']),
-        },
-        {
-            transKey: 'trans.my_addresses',
-            icon: icons[IconName.address],
-            url: route('portal.addresses', getIdParams(user?.id?.toString() as string)),
-            show: isItTrue(can['manageOwnData:students']),
-        },
-        {
-            transKey: 'trans.next_of_kin',
-            icon: icons[IconName.users],
-            url: route('portal.next-of-kin', getIdParams(user?.id?.toString() as string)),
-            show: isItTrue(can['manageOwnData:students']),
-        },
-        {
-            transChoiceKey: 'trans.my_programs',
-            icon: icons[IconName.graduation_cape],
-            url: route('portal.programs', getIdParams(user?.id?.toString() as string)),
-            show: isItTrue(can['manageOwnData:students']),
+            show: hasAbility('view:dashboards'),
         },
         {
             transChoiceKey: 'trans.enrolment',
             icon: icons[IconName.user_add],
             url: route('dashboard'),
-            show: isItTrue(can['view:enrolments']),
+            show: hasAbility('view:enrolments'),
         },
         {
             transChoiceKey: 'trans.student',
             icon: icons[IconName.user_check],
             url: route('dashboard'),
-            show: isItTrue(can['view:students']),
+            show: hasAbility('view:students'),
         },
         {
             transChoiceKey: 'trans.examination',
             icon: icons[IconName.book_check],
             url: route('dashboard'),
-            show: isItTrue(can['view:examinations']),
+            show: hasAbility('view:examinations'),
         },
         {
             transChoiceKey: 'trans.accommodation',
             icon: icons[IconName.bed],
             url: route('dashboard'),
-            show: isItTrue(can['view:accommodations']),
+            show: hasAbility('view:accommodations'),
         },
         {
             transChoiceKey: 'trans.communication',
             url: '#',
             icon: icons[IconName.person_chat],
-            show: isItTrue(can['view:communication']),
+            show: hasAbility('view:communication'),
         },
         {
             transChoiceKey: 'trans.report',
             url: '#',
             icon: icons[IconName.report],
-            show: isItTrue(can['view:report']),
+            show: hasAbility('view:report'),
         },
         {
             transChoiceKey: 'trans.institution',
             transChoiceKeyIndex: 1,
             url: route('institution.index'),
             icon: icons[IconName.school],
-            show: isItTrue(can['view:institution-settings']),
+            show: hasAbility('view:institution-settings'),
         },
         {
             transKey: 'trans.settings',
             url: route('settings.index'),
             icon: icons[IconName.cogs],
-            show: isItTrue(can['view:settings']),
+            show: hasAbility('view:settings'),
         },
         {
             transChoiceKey: 'trans.user',
             url: route('users.index'),
             icon: icons[IconName.users],
-            show: isItTrue(can['view:users']),
+            show: hasAbility('view:users'),
         },
+        /** ================ PORTAL STRAT ======================*/
+        {
+            transChoiceKey: 'trans.dashboard',
+            icon: icons[IconName.dashboard],
+            url: route('portal.dashboard'),
+            show: hasAbility('viewOwnDashboard:students'),
+        },
+        {
+            transKey: 'trans.personal_details',
+            icon: icons[IconName.user],
+            url: route('portal.personal-details'),
+            show: hasAbility('manageOwnStudentPersonalDetails:students'),
+        },
+        {
+            transChoiceKey: 'trans.program',
+            icon: icons[IconName.graduation_cape],
+            url: route('portal.programs'),
+            show: hasAbility('manageOwnStudentProgramDetails:students'),
+        },
+        {
+            transChoiceKey: 'trans.sponsor',
+            icon: icons[IconName.wallet_cards],
+            url: route('portal.sponsors'),
+            show: hasAbility('manageOwnStudentSponsorDetails:students'),
+        },
+        {
+            transChoiceKey: 'trans.contact',
+            icon: icons[IconName.contact],
+            url: route('portal.contacts'),
+            show: hasAbility('manageOwnStudentContactDetails:students'),
+        },
+        {
+            transKey: 'trans.financial_record',
+            icon: icons[IconName.dollar],
+            url: route('portal.financial-record'),
+            show: hasAbility('manageOwnStudentFinancialDetails:students'),
+        },
+        {
+            transKey: 'trans.academic_record',
+            icon: icons[IconName.award],
+            url: route('portal.academic-record'),
+            show: hasAbility('manageOwnStudentAcademicDetails:students'),
+        },
+        /** ================ PORTAL END ======================*/
     ];
 
     const getTranslation = (item: any) => {

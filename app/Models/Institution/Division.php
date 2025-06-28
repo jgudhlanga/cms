@@ -3,6 +3,7 @@
 namespace App\Models\Institution;
 
 use App\Http\Filters\Shared\SharedNameFilter;
+use App\Traits\AssignsPosition;
 use App\Traits\Filterable;
 use App\Traits\Paginatable;
 use Illuminate\Database\Eloquent\Builder;
@@ -19,7 +20,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
  */
 class Division extends Model
 {
-    use HasFactory, SoftDeletes, Filterable, Paginatable, LogsActivity;
+    use HasFactory, SoftDeletes, Filterable, Paginatable, LogsActivity, AssignsPosition;
 
     protected $fillable = ['name', 'position', 'description'];
 

@@ -1,25 +1,28 @@
 <?php
 
-use App\Http\Controllers\AddressTypes\AddressTypeController;
-use App\Http\Controllers\Communications\CommunicationMethodController;
-use App\Http\Controllers\Countries\CountryController;
-use App\Http\Controllers\Districts\DistrictController;
-use App\Http\Controllers\Genders\GenderController;
-use App\Http\Controllers\Institution\CourseController;
-use App\Http\Controllers\Institution\DepartmentController;
-use App\Http\Controllers\Institution\DivisionController;
-use App\Http\Controllers\Institution\GradeController;
-use App\Http\Controllers\Institution\LevelController;
-use App\Http\Controllers\Institution\ModeOfStudyController;
-use App\Http\Controllers\Institution\SubjectController;
-use App\Http\Controllers\Languages\LanguageController;
-use App\Http\Controllers\Provinces\ProvinceController;
-use App\Http\Controllers\Races\RaceController;
-use App\Http\Controllers\Relationships\RelationshipController;
+use App\Http\Controllers\Institution\Dropdowns\CourseController;
+use App\Http\Controllers\Institution\Dropdowns\DepartmentController;
+use App\Http\Controllers\Institution\Dropdowns\DivisionController;
+use App\Http\Controllers\Institution\Dropdowns\GradeController;
+use App\Http\Controllers\Institution\Dropdowns\LevelController;
+use App\Http\Controllers\Institution\Dropdowns\ModeOfStudyController;
+use App\Http\Controllers\Institution\Dropdowns\SubjectController;
 use App\Http\Controllers\Settings\SettingsController;
-use App\Http\Controllers\Statuses\MaritalStatusController;
-use App\Http\Controllers\Statuses\StatusController;
-use App\Http\Controllers\Titles\TitleController;
+use App\Http\Controllers\Shared\AcademicLevelController;
+use App\Http\Controllers\Shared\AddressTypeController;
+use App\Http\Controllers\Shared\CommunicationMethodController;
+use App\Http\Controllers\Shared\CountryController;
+use App\Http\Controllers\Shared\DistrictController;
+use App\Http\Controllers\Shared\GenderController;
+use App\Http\Controllers\Shared\LanguageController;
+use App\Http\Controllers\Shared\MaritalStatusController;
+use App\Http\Controllers\Shared\ProvinceController;
+use App\Http\Controllers\Shared\RaceController;
+use App\Http\Controllers\Shared\RelationshipController;
+use App\Http\Controllers\Shared\ReligionController;
+use App\Http\Controllers\Shared\SponsorTypeController;
+use App\Http\Controllers\Shared\StatusController;
+use App\Http\Controllers\Shared\TitleController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('settings')->middleware('auth')->group(function () {
@@ -75,22 +78,27 @@ Route::prefix('settings')->middleware('auth')->group(function () {
 
     # ********************************************* INSTITUTION SPECIFIC ********************************
     # ==================================== COURSES ======================================================
+    Route::put('courses/{course}/move-position', [CourseController::class, 'movePosition'])->name('courses.move-position');
     Route::put('courses/{course}/restore', [CourseController::class, 'restore'])->name('courses.restore');
     Route::delete('courses/{course}/force-delete', [CourseController::class, 'forceDelete'])->name('courses.force-delete');
     Route::resource('courses', CourseController::class)->names('courses');
     # ==================================== DEPARTMENTS ======================================================
+    Route::put('departments/{department}/move-position', [DepartmentController::class, 'movePosition'])->name('departments.move-position');
     Route::put('departments/{department}/restore', [DepartmentController::class, 'restore'])->name('departments.restore');
     Route::delete('departments/{department}/force-delete', [DepartmentController::class, 'forceDelete'])->name('departments.force-delete');
     Route::resource('departments', DepartmentController::class)->names('departments');
     # ==================================== DIVISIONS ======================================================
+    Route::put('divisions/{division}/move-position', [DivisionController::class, 'movePosition'])->name('divisions.move-position');
     Route::put('divisions/{division}/restore', [DivisionController::class, 'restore'])->name('divisions.restore');
     Route::delete('divisions/{division}/force-delete', [DivisionController::class, 'forceDelete'])->name('divisions.force-delete');
     Route::resource('divisions', DivisionController::class)->names('divisions');
     # ==================================== GRADES ======================================================
+    Route::put('grades/{grade}/move-position', [GradeController::class, 'movePosition'])->name('grades.move-position');
     Route::put('grades/{grade}/restore', [GradeController::class, 'restore'])->name('grades.restore');
     Route::delete('grades/{grade}/force-delete', [GradeController::class, 'forceDelete'])->name('grades.force-delete');
     Route::resource('grades', GradeController::class)->names('grades');
     # ==================================== LEVELS ======================================================
+    Route::put('levels/{level}/move-position', [LevelController::class, 'movePosition'])->name('levels.move-position');
     Route::put('levels/{level}/restore', [LevelController::class, 'restore'])->name('levels.restore');
     Route::delete('levels/{level}/force-delete', [LevelController::class, 'forceDelete'])->name('levels.force-delete');
     Route::resource('levels', LevelController::class)->names('levels');
@@ -99,7 +107,20 @@ Route::prefix('settings')->middleware('auth')->group(function () {
     Route::delete('mode-of-studies/{mode_of_study}/force-delete', [ModeOfStudyController::class, 'forceDelete'])->name('mode-of-studies.force-delete');
     Route::resource('mode-of-studies', ModeOfStudyController::class)->names('mode-of-studies');
     # ==================================== SUBJECTS ======================================================
+    Route::put('subjects/{subject}/move-position', [SubjectController::class, 'movePosition'])->name('subjects.move-position');
     Route::put('subjects/{subject}/restore', [SubjectController::class, 'restore'])->name('subjects.restore');
     Route::delete('subjects/{subject}/force-delete', [SubjectController::class, 'forceDelete'])->name('subjects.force-delete');
     Route::resource('subjects', SubjectController::class)->names('subjects');
+    # ==================================== RELIGIONS ======================================================
+    Route::put('religions/{religion}/restore', [ReligionController::class, 'restore'])->name('religions.restore');
+    Route::delete('religions/{religion}/force-delete', [ReligionController::class, 'forceDelete'])->name('religions.force-delete');
+    Route::resource('religions', ReligionController::class)->names('religions');
+    # ==================================== ACADEMIC LEVELS ======================================================
+    Route::put('academic-levels/{academic_level}/restore', [AcademicLevelController::class, 'restore'])->name('academic-levels.restore');
+    Route::delete('academic-levels/{academic_level}/force-delete', [AcademicLevelController::class, 'forceDelete'])->name('academic-levels.force-delete');
+    Route::resource('academic-levels', AcademicLevelController::class)->names('academic-levels');
+    # ==================================== SPONSOR TYPES ======================================================
+    Route::put('sponsor-types/{sponsor_type}/restore', [SponsorTypeController::class, 'restore'])->name('sponsor-types.restore');
+    Route::delete('sponsor-types/{sponsor_type}/force-delete', [SponsorTypeController::class, 'forceDelete'])->name('sponsor-types.force-delete');
+    Route::resource('sponsor-types', SponsorTypeController::class)->names('sponsor-types');
 });

@@ -2,7 +2,7 @@
 
 namespace Database\Seeders\Acl;
 
-use App\Enums\ModuleEnum;
+use App\Enums\Shared\ModuleEnum;
 use App\Models\Acl\Module;
 use Illuminate\Database\Seeder;
 

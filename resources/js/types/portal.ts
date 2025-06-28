@@ -8,10 +8,6 @@ export type CreateApplicationUserParams = {
     middle_name?: string | null;
     password: string;
     password_confirmation: string;
-    title: SelectOption | null;
-    title_id: string | number | null;
-    gender: SelectOption | null;
-    gender_id: string | number | null;
 };
 
 export type CreateApplicationParams = {
@@ -56,5 +52,8 @@ export type CreateApplicationParams = {
     level_id: string | number | null;
     course: SelectOption | null;
     course_id: string | number | null;
-    levelRequirements?: DepartmentLevelRequirement | null
+    levelRequirements?: DepartmentLevelRequirement | null,
+    o_level_subject_ids?:  Record<string, string> | null;
+    required_level_completed?: boolean | null;
+    read_write_acknowledged?: boolean | null;
 };

@@ -1,18 +1,18 @@
 import { useDataTables } from '@/composables/core/useDataTables';
 import { useUtils } from '@/composables/core/useUtils';
 import { ColorVariant } from '@/enums/colors';
-import { forbiddenAlert, openModal } from '@/lib/alerts';
+import { errorAlert, forbiddenAlert, openModal, successAlert } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
-import { buildFormOptions } from '@/lib/forms';
+import { buildFormOptions, toggleFormLoader } from '@/lib/forms';
 import { getIdParams } from '@/lib/utils';
 import HttpService from '@/services/http.service';
+import { useCreateApplicationFormStore } from '@/store/portal/useCreateApplicationFormStore';
 import { Auth } from '@/types';
 import { DepartmentLevel, DepartmentLevelCourse, DepartmentLevelRequirement } from '@/types/department-meta-data';
 import { InertiaForm, usePage } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
-import { ref } from 'vue';
 import { storeToRefs } from 'pinia';
-import { useCreateApplicationFormStore } from '@/store/portal/useCreateApplicationFormStore';
+import { ref } from 'vue';
 
 export const useDepartmentLevels = () => {
     const { moreActionButton, textLink, actionButton } = useDataTables();
@@ -86,11 +86,24 @@ export const useDepartmentLevels = () => {
         }
     };
 
-    const storeDepartmentLevelRequirements = (departmentLevelId: string, form: InertiaForm<any>) => {
+    const storeDepartmentLevelRequirements = (departmentLevelId: string, form: InertiaForm<any>, institutionDepartmentId: string) => {
         try {
             const success = trans('trans.item_saved', { item: trans_choice('trans.level', 2) });
             const error = trans('trans.item_save_failure', { item: trans_choice('trans.level', 2) });
-            form.post(route('department-levels.store-requirements', departmentLevelId), buildFormOptions(form, success, error));
+            form.post(route('department-levels.store-requirements', departmentLevelId), {
+                onStart: () => toggleFormLoader(true),
+                onFinish: () => {
+                    form.reset();
+                    toggleFormLoader(false);
+                },
+                onSuccess: () => {
+                    successAlert(success);
+                    navigateTo(route('institution-departments.show', getIdParams(institutionDepartmentId)));
+                },
+                onError: () => {
+                    errorAlert(error);
+                },
+            });
         } catch (error: any) {
             form.setError(error.format());
         }
@@ -118,13 +131,23 @@ export const useDepartmentLevels = () => {
         isLoading.value = false;
     };
 
-    const {levelRequirements: storeLevelRequirements} = storeToRefs(useCreateApplicationFormStore())
-    const levelRequirements =  ref<DepartmentLevelRequirement|null>(storeLevelRequirements?.value ?? null);
+    const {
+        levelRequirements: storeLevelRequirements,
+        o_level_subject_ids,
+        required_level_completed,
+        read_write_acknowledged,
+    } = storeToRefs(useCreateApplicationFormStore());
+    const levelRequirements = ref<DepartmentLevelRequirement | null>(storeLevelRequirements?.value ?? null);
     const listLevelRequirements = async (departmentLevelId: string) => {
-        isLoading.value = true;
-        levelRequirements.value = await HttpService.get(`api/v1/institution-departments/levels/${departmentLevelId}/requirements`);
-        storeLevelRequirements!.value =  levelRequirements.value;
-        isLoading.value = false;
+        if (Number(departmentLevelId) > 0) {
+            isLoading.value = true;
+            levelRequirements.value = await HttpService.get(`api/v1/institution-departments/levels/${departmentLevelId}/requirements`);
+            storeLevelRequirements!.value = levelRequirements.value;
+            o_level_subject_ids!.value = null;
+            required_level_completed!.value = null;
+            read_write_acknowledged!.value = null;
+            isLoading.value = false;
+        }
     };
 
     return {

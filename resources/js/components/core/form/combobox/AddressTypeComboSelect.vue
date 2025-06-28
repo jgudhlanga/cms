@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import BaseCombobox from '@/components/core/form/combobox/BaseCombobox.vue';
-import { useAddressTypes } from '@/composables/addressTypes/useAddressTypes';
+import { useAddressTypes } from '@/composables/shared/useAddressTypes';
 import { clearFormErrors } from '@/lib/forms';
 import { AddressType } from '@/types/settings';
 import { SelectOption } from '@/types/utils';

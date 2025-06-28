@@ -8,9 +8,8 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
-    --font-sans:
-        Instrument Sans, ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
-        'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-sans: Instrument Sans, ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
+    'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 
     --radius-lg: var(--radius);
     --radius-md: calc(var(--radius) - 2px);
@@ -107,10 +106,8 @@
 @layer utilities {
     body,
     html {
-        --font-sans:
-            'Instrument Sans', ui-sans-serif, system-ui, sans-serif,
-            'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
-            'Noto Color Emoji';
+        --font-sans: Instrument Sans, ui-sans-serif, system-ui, sans-serif, Inter, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+        --font-hand: Caveat, cursive;
     }
 }
 
@@ -178,6 +175,14 @@
 }
 
 @layer utilities {
+    .font-inter {
+        font-family: Inter, Instrument Sans, ui-sans-serif, system-ui, sans-serif;
+    }
+
+    .font-caveat {
+        font-family: Caveat, cursive;
+    }
+
     .bg-denim-gradient {
         background: radial-gradient(#144eda, #193c8f, #193c8f);
     }
@@ -187,8 +192,8 @@
     }
 
     .bg-endless {
-        @apply rounded-tl-xl rounded-tr-xl;
-
+        @apply rounded-tl-md rounded-tr-md opacity-40;
+        background-image: url("https://hrepoly.test/assets/images/endless.svg");
         background-position: center;
         background-repeat: no-repeat;
         background-size: cover;

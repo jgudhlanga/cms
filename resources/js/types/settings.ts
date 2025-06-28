@@ -155,3 +155,51 @@ export type MaritalStatusParams = {
     title: string;
     description?: string;
 };
+
+export type Religion = {
+    type?: string;
+    id?: string;
+    attributes: {
+        name: string;
+        description: string;
+        createdAt?: string;
+        updatedAt?: string;
+        deletedAt?: string;
+    };
+};
+export type ReligionParams = {
+    name: string;
+    description?: string;
+};
+
+export type AcademicLevel = {
+    type?: string;
+    id?: string;
+    attributes: {
+        name: string;
+        description: string;
+        createdAt?: string;
+        updatedAt?: string;
+        deletedAt?: string;
+    };
+};
+export type AcademicLevelParams = {
+    name: string;
+    description?: string;
+};
+
+export type SponsorType = {
+    type?: string;
+    id?: string;
+    attributes: {
+        name: string;
+        description: string;
+        createdAt?: string;
+        updatedAt?: string;
+        deletedAt?: string;
+    };
+};
+export type SponsorTypeParams = {
+    name: string;
+    description?: string;
+};

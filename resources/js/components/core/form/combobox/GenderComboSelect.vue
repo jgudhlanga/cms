@@ -5,7 +5,7 @@ import BaseCombobox from '@/components/core/form/combobox/BaseCombobox.vue';
 import { clearFormErrors } from '@/lib/forms';
 import { InertiaForm } from '@inertiajs/vue3';
 import { debounce } from 'lodash';
-import { useGenders } from '@/composables/genders/useGenders';
+import { useGenders } from '@/composables/shared/useGenders';
 import { Gender } from '@/types/settings';
 
 interface Props {

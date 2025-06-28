@@ -17,18 +17,12 @@ class DepartmentRepository extends BaseRepository implements IDepartmentReposito
 
     public function create(DepartmentDto $dto): Department
     {
-        return $this->department->create([
-            'name' => $dto->name,
-            'description' => $dto->description,
-        ])->refresh();
+        return $this->department->create($this->getFields($dto))->refresh();
     }
 
     public function update(Department $department, DepartmentDto $dto): Department
     {
-        return tap($department)->update([
-            'name' => $dto->name,
-            'description' => $dto->description,
-        ]);
+        return tap($department)->update($this->getFields($dto));
     }
 
     public function allFilter($columns = ['*'], SharedNameFilter $filters = null)
@@ -36,9 +30,18 @@ class DepartmentRepository extends BaseRepository implements IDepartmentReposito
         return $this->department
             ->select($columns)
             ->filter($filters)
+            ->orderBy('position')
             ->orderBy('name')
             ->orderBy('deleted_at')
             ->paginate()
             ->withQueryString();
+    }
+
+    private function getFields(DepartmentDto $dto): array
+    {
+        return [
+            'name' => $dto->name,
+            'description' => $dto->description,
+        ];
     }
 }

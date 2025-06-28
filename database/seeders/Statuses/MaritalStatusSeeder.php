@@ -2,8 +2,8 @@
 
 namespace Database\Seeders\Statuses;
 
-use App\Enums\MaritalStatusEnum;
-use App\Models\Statuses\MaritalStatus;
+use App\Enums\Shared\MaritalStatusEnum;
+use App\Models\Shared\MaritalStatus;
 use Illuminate\Database\Seeder;
 
 class MaritalStatusSeeder extends Seeder

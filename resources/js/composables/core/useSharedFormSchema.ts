@@ -11,6 +11,14 @@ export const useSharedFormSchema = () => {
         z.object({
             last_name: z.string().nonempty(trans('trans.enter_required_field', { field: trans('trans.last_name') })),
         });
+    const idNumberSchema = () =>
+        z.object({
+            id_number: z.string().nonempty(trans('trans.enter_required_field', { field: trans('trans.id_number') })),
+        });
+    const passportNumberSchema = () =>
+        z.object({
+            passport_number: z.string().nonempty(trans('trans.enter_required_field', { field: trans('trans.passport_number') })),
+        });
     const emailSchema = () =>
         z.object({
             email: z
@@ -18,13 +26,17 @@ export const useSharedFormSchema = () => {
                 .nonempty(trans('trans.enter_required_field', { field: trans('trans.email_address') }))
                 .email(),
         });
-    const titleSchema = () =>
-        z.object({
-            title: z.string().nonempty(trans('trans.enter_required_field', { field: trans_choice('trans.title', 1) })),
-        });
     const nameSchema = () =>
         z.object({
             name: z.string().nonempty(trans('trans.enter_required_field', { field: trans_choice('trans.name', 1) })),
+        });
+    const schoolSchema = () =>
+        z.object({
+            school: z.string().nonempty(trans('trans.enter_required_field', { field: trans_choice('trans.school', 1) })),
+        });
+    const placeSchema = () =>
+        z.object({
+            place: z.string().nonempty(trans('trans.enter_required_field', { field: trans_choice('trans.place', 1) })),
         });
     const codeSchema = () =>
         z.object({
@@ -66,6 +78,32 @@ export const useSharedFormSchema = () => {
             address_3: z.string().nonempty(trans('trans.enter_required_field', { field: trans('trans.city_town_suburb') })),
         });
 
+    const nextOfKinNameSchema = () =>
+        z.object({
+            next_of_kin_name: z.string().nonempty(trans('trans.enter_required_field', { field: trans_choice('trans.name', 1) })),
+        });
+
+    const nextOfKinPhoneNumberSchema = () =>
+        z.object({
+            next_of_kin_phone_number: z.string().nonempty(trans('trans.enter_required_field', { field: trans('trans.phone_number') })),
+        });
+    const nextOfKinAddressOneSchema = () =>
+        z.object({
+            next_of_kin_address_1: z.string().nonempty(trans('trans.enter_required_field', { field: trans('trans.street_number') })),
+        });
+    const nextOfKinAddressTwoSchema = () =>
+        z.object({
+            next_of_kin_address_2: z.string().nonempty(trans('trans.enter_required_field', { field: trans('trans.street_name') })),
+        });
+    const nextOfKinAddressThreeSchema = () =>
+        z.object({
+            next_of_kin_address_3: z.string().nonempty(trans('trans.enter_required_field', { field: trans('trans.city_town_suburb') })),
+        });
+    const dobSchema = () =>
+        z.object({
+            date_of_birth: z.coerce.date({ required_error: trans('trans.enter_required_field', { field: trans('trans.date_of_birth') }) }),
+        });
+
     /* Dropdown Schema */
     const provinceSchema = () =>
         z.object({
@@ -73,16 +111,52 @@ export const useSharedFormSchema = () => {
                 message: trans('trans.select_valid_field', { field: trans_choice('trans.province', 1) }),
             }),
         });
-    const titleIdSchema = () =>
+    const relationshipSchema = () =>
+        z.object({
+            relationship: z.any().refine((val) => validateSelectOption(val), {
+                message: trans('trans.select_valid_field', { field: trans_choice('trans.relationship', 1) }),
+            }),
+        });
+    const titleSchema = () =>
         z.object({
             title: z.any().refine((val) => validateSelectOption(val), {
                 message: trans('trans.select_valid_field', { field: trans_choice('trans.title', 1) }),
+            }),
+        });
+    const maritalStatusSchema = () =>
+        z.object({
+            maritalStatus: z.any().refine((val) => validateSelectOption(val), {
+                message: trans('trans.select_valid_field', { field: trans_choice('trans.marital_status', 1) }),
             }),
         });
     const genderSchema = () =>
         z.object({
             gender: z.any().refine((val) => validateSelectOption(val), {
                 message: trans('trans.select_valid_field', { field: trans_choice('trans.gender', 1) }),
+            }),
+        });
+    const departmentSchema = () =>
+        z.object({
+            department: z.any().refine((val) => validateSelectOption(val), {
+                message: trans('trans.select_valid_field', { field: trans_choice('trans.department', 1) }),
+            }),
+        });
+    const levelSchema = () =>
+        z.object({
+            level: z.any().refine((val) => validateSelectOption(val), {
+                message: trans('trans.select_valid_field', { field: trans_choice('trans.level', 1) }),
+            }),
+        });
+    const courseSchema = () =>
+        z.object({
+            course: z.any().refine((val) => validateSelectOption(val), {
+                message: trans('trans.select_valid_field', { field: trans_choice('trans.course', 1) }),
+            }),
+        });
+    const countrySchema = () =>
+        z.object({
+            country: z.any().refine((val) => validateSelectOption(val), {
+                message: trans('trans.select_valid_field', { field: trans_choice('trans.country', 1) }),
             }),
         });
 
@@ -102,11 +176,26 @@ export const useSharedFormSchema = () => {
         phoneNumberSchema,
         provinceSchema,
         titleSchema,
-        titleIdSchema,
+        maritalStatusSchema,
         genderSchema,
         emailSchema,
         firstNameSchema,
         lastNameSchema,
         passwordConfirmationSchema,
+        dobSchema,
+        nextOfKinNameSchema,
+        nextOfKinPhoneNumberSchema,
+        nextOfKinAddressOneSchema,
+        nextOfKinAddressTwoSchema,
+        nextOfKinAddressThreeSchema,
+        relationshipSchema,
+        departmentSchema,
+        levelSchema,
+        courseSchema,
+        idNumberSchema,
+        passportNumberSchema,
+        countrySchema,
+        schoolSchema,
+        placeSchema,
     };
 };

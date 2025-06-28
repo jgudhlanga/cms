@@ -2,7 +2,7 @@
 
 namespace Database\Seeders\Institution;
 
-use App\Enums\TenantEnum;
+use App\Enums\Shared\TenantEnum;
 use App\Models\Institution\Department;
 use App\Models\Institution\InstitutionDepartment;
 use App\Models\Tenants\Tenant;

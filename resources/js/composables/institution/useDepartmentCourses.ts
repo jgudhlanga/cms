@@ -1,7 +1,8 @@
 import { useDataTables } from '@/composables/core/useDataTables';
-import { forbiddenAlert, openModal } from '@/lib/alerts';
+import { useUtils } from '@/composables/core/useUtils';
+import { errorAlert, forbiddenAlert, openModal, successAlert } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
-import { buildFormOptions } from '@/lib/forms';
+import { buildFormOptions, toggleFormLoader } from '@/lib/forms';
 import { getIdParams } from '@/lib/utils';
 import { Auth } from '@/types';
 import { DepartmentCourse, DepartmentCourseLevel } from '@/types/department-meta-data';
@@ -12,6 +13,7 @@ export const useDepartmentCourses = () => {
     const { moreActionButton, textLink, checkStatusIcon, onEdit } = useDataTables();
     const { props } = usePage();
     const { can } = props?.auth as Auth;
+    const { navigateTo } = useUtils();
     const createDepartmentCourseColumns = () => {
         return [
             {
@@ -81,11 +83,24 @@ export const useDepartmentCourses = () => {
         }
     };
 
-    const updateDepartmentCourses = (departmentCourseId: string, form: InertiaForm<any>) => {
+    const updateDepartmentCourses = (departmentCourseId: string, form: InertiaForm<any>, institutionDepartmentId: string) => {
         try {
             const success = trans('trans.item_saved', { item: trans_choice('trans.course', 2) });
             const error = trans('trans.item_save_failure', { item: trans_choice('trans.course', 2) });
-            form.post(route('department-courses.update', departmentCourseId), buildFormOptions(form, success, error));
+            form.post(route('department-courses.update', departmentCourseId), {
+                onStart: () => toggleFormLoader(true),
+                onFinish: () => {
+                    form.reset();
+                    toggleFormLoader(false);
+                },
+                onSuccess: () => {
+                    successAlert(success);
+                    navigateTo(route('institution-departments.show', getIdParams(institutionDepartmentId)));
+                },
+                onError: () => {
+                    errorAlert(error);
+                },
+            });
         } catch (error: any) {
             form.setError(error.format());
         }

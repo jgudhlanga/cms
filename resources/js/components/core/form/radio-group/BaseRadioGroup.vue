@@ -12,13 +12,16 @@ interface Props {
     labelUppercase?: boolean;
     verticalLayout?: boolean;
     isRequired?: boolean;
+    orientation?: 'vertical' | 'horizontal'
 }
 
-defineProps<Props>();
+withDefaults(defineProps<Props>(), {
+    orientation: 'vertical'
+});
 </script>
 
 <template>
-    <RadioGroup v-bind="$attrs" :orientation="'vertical'">
+    <RadioGroup v-bind="$attrs" :orientation="orientation">
         <Label :class="cn(error && 'text-destructive', labelUppercase && 'uppercase')" v-if="label"
             >{{ label }}
             <RequiredIndicator v-if="isRequired" />

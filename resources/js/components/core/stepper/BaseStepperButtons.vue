@@ -8,6 +8,7 @@ interface Props {
 	prevStepAction: () => void;
 	nextStepAction: () => void;
 	previousDisabled: boolean;
+	processing?: boolean;
 	maxStep: number;
 }
 
@@ -35,6 +36,7 @@ defineProps<Props>();
 				{{ $t('trans.next') }}
 			</BaseButton>
 			<BaseButton
+                :processing="processing"
 				:size="ButtonSize.lg"
 				v-if="stepIndex === maxStep"
 				type="submit">

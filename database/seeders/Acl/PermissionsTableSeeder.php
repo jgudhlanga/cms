@@ -2,7 +2,7 @@
 
 namespace Database\Seeders\Acl;
 
-use App\Enums\PermissionEnum;
+use App\Enums\Shared\PermissionEnum;
 use App\Models\Acl\Module;
 use App\Models\Acl\Permission;
 use Illuminate\Database\Seeder;
@@ -171,11 +171,26 @@ class PermissionsTableSeeder extends Seeder
                 ['name' => PermissionEnum::FORCE_DELETE_CONTACTS->value],
                 ['name' => PermissionEnum::IMPORT_CONTACTS->value],
                 ['name' => PermissionEnum::EXPORT_CONTACTS->value],
+                ['name' => PermissionEnum::VIEW_ANY_NEXT_OF_KINS->value],
+                ['name' => PermissionEnum::VIEW_NEXT_OF_KINS->value],
+                ['name' => PermissionEnum::CREATE_NEXT_OF_KINS->value],
+                ['name' => PermissionEnum::UPDATE_NEXT_OF_KINS->value],
+                ['name' => PermissionEnum::DELETE_NEXT_OF_KINS->value],
+                ['name' => PermissionEnum::RESTORE_NEXT_OF_KINS->value],
+                ['name' => PermissionEnum::FORCE_DELETE_NEXT_OF_KINS->value],
+                ['name' => PermissionEnum::IMPORT_NEXT_OF_KINS->value],
+                ['name' => PermissionEnum::EXPORT_NEXT_OF_KINS->value],
             ],
             'students' => [
-                ['name' => PermissionEnum::MANAGE_OWN_STUDENT_DATA->value],
+                ['name' => PermissionEnum::VIEW_OWN_STUDENT_DASHBOARD->value],
+                ['name' => PermissionEnum::MANAGE_OWN_STUDENT_PERSONAL_DETAILS->value],
+                ['name' => PermissionEnum::MANAGE_OWN_STUDENT_PROGRAM_DETAILS->value],
+                ['name' => PermissionEnum::MANAGE_OWN_STUDENT_SPONSOR_DETAILS->value],
+                ['name' => PermissionEnum::MANAGE_OWN_STUDENT_CONTACT_DETAILS->value],
+                ['name' => PermissionEnum::MANAGE_OWN_STUDENT_FINANCIAL_DETAILS->value],
+                ['name' => PermissionEnum::MANAGE_OWN_STUDENT_ACADEMIC_DETAILS->value],
+                ['name' => PermissionEnum::MANAGE_STUDENTS_METADATA->value],
             ],
-
         ];
         foreach ($permissions as $key => $rows) {
             $module = Module::where('title', $key)->first();

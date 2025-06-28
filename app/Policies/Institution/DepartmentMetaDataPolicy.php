@@ -2,8 +2,7 @@
 
 namespace App\Policies\Institution;
 
-use App\Enums\PermissionEnum;
-use App\Models\Institution\InstitutionDepartment;
+use App\Enums\Shared\PermissionEnum;
 use App\Models\Users\User;
 
 class DepartmentMetaDataPolicy

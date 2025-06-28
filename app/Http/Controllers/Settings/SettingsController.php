@@ -8,8 +8,9 @@ use Inertia\Inertia;
 
 class SettingsController extends Controller
 {
-	public function __invoke(Request $request)
-	{
-		return Inertia::render('settings/Index', []);
-	}
+    public function __invoke(Request $request)
+    {
+        $this->authorize('viewSettings');
+        return Inertia::render('settings/Index', []);
+    }
 }

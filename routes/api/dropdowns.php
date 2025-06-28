@@ -1,17 +1,21 @@
 <?php
 
-use App\Http\Controllers\Api\V1\AddressTypes\AddressTypeController;
-use App\Http\Controllers\Api\V1\Countries\CountryController;
-use App\Http\Controllers\Api\V1\Districts\DistrictController;
-use App\Http\Controllers\Api\V1\Genders\GenderController;
 use App\Http\Controllers\Api\V1\Institution\CourseController;
 use App\Http\Controllers\Api\V1\Institution\DepartmentController;
 use App\Http\Controllers\Api\V1\Institution\LevelController;
-use App\Http\Controllers\Api\V1\Provinces\ProvinceController;
-use App\Http\Controllers\Api\V1\Relationships\RelationshipController;
-use App\Http\Controllers\Api\V1\Statuses\MaritalStatusController;
-use App\Http\Controllers\Api\V1\Subjects\SubjectController;
-use App\Http\Controllers\Api\V1\Titles\TitleController;
+use App\Http\Controllers\Api\V1\Shared\AcademicLevelController;
+use App\Http\Controllers\Api\V1\Shared\AddressTypeController;
+use App\Http\Controllers\Api\V1\Shared\CountryController;
+use App\Http\Controllers\Api\V1\Shared\DistrictController;
+use App\Http\Controllers\Api\V1\Shared\GenderController;
+use App\Http\Controllers\Api\V1\Shared\GradeController;
+use App\Http\Controllers\Api\V1\Shared\MaritalStatusController;
+use App\Http\Controllers\Api\V1\Shared\ProvinceController;
+use App\Http\Controllers\Api\V1\Shared\RelationshipController;
+use App\Http\Controllers\Api\V1\Shared\ReligionController;
+use App\Http\Controllers\Api\V1\Shared\SponsorTypeController;
+use App\Http\Controllers\Api\V1\Shared\SubjectController;
+use App\Http\Controllers\Api\V1\Shared\TitleController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -36,8 +40,16 @@ Route::prefix('v1')->group(function () {
     Route::apiResource('districts', DistrictController::class)->names('v1.districts');
     # ==================================== SUBJECTS ======================================================
     Route::apiResource('subjects', SubjectController::class)->names('v1.subjects');
+    # ==================================== SUBJECTS ======================================================
+    Route::apiResource('grades', GradeController::class)->names('v1.grades');
     # ==================================== MARITAL STATUSES ======================================================
     Route::apiResource('marital-statuses', MaritalStatusController::class)->names('v1.marital-statuses');
     # ==================================== RELATIONSHIPS ======================================================
     Route::apiResource('relationships', RelationshipController::class)->names('v1.relationships');
+    # ==================================== RELIGIONS ======================================================
+    Route::apiResource('religions', ReligionController::class)->names('v1.religions');
+    # ==================================== ACADEMIC LEVELS ======================================================
+    Route::apiResource('academic-levels', AcademicLevelController::class)->names('v1.academic-levels');
+    # ==================================== SPONSOR TYPE ======================================================
+    Route::apiResource('sponsor-types', SponsorTypeController::class)->names('v1.sponsor-types');
 });

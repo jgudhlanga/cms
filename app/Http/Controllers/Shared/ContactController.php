@@ -18,7 +18,7 @@ class ContactController extends Controller
 
 	public function update(ContactRequest $request, Contact $contact)
 	{
-		$this->authorize('create', $contact);
+		$this->authorize('update', $contact);
 		$this->repository->update($contact, ContactDto::fromContactRequest($request));
 	}
 

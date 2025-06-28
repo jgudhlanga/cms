@@ -6,17 +6,18 @@ import DataTable from '@/components/core/table/DataTable.vue';
 import { useSubjects } from '@/composables/institution/useSubjects';
 import { AuthObject, DataFilters, DataListProps } from '@/types/data-pagination';
 import CreateEdit from './partials/CreateEdit.vue';
+import { hasAbility } from '@/lib/permissions';
 
 const { createSubjectColumns, breadcrumbs, onOpenModal } = useSubjects();
 
-const props = defineProps<{
+ defineProps<{
     subjects: DataListProps;
     trashedCount: any;
     filters: DataFilters;
     auth: AuthObject;
     errors: object;
 }>();
-const can = props?.auth?.can;
+const allowed = hasAbility('create:institution-settings');
 </script>
 
 <template>
@@ -29,8 +30,10 @@ const can = props?.auth?.can;
             :search-url="route('subjects.index')"
             :pagination="{ ...subjects.links, ...subjects.meta }"
             :columns="createSubjectColumns()"
-            :on-create="() => onOpenModal(can['create:institution-settings'])"
-            :disable-create="!can['create:institution-settings']"
+            :on-create="() => onOpenModal(allowed)"
+            :disable-create="!allowed"
+            :drag-items="true"
+            draggable-update-url="subjects.move-position"
         />
         <CreateEdit />
     </PageContainer>

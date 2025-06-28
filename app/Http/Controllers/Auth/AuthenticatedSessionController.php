@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Auth;
 
-use App\Enums\RoleEnum;
+use App\Enums\Shared\RoleEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use Illuminate\Http\RedirectResponse;
@@ -14,6 +14,7 @@ use Inertia\Response;
 
 class AuthenticatedSessionController extends Controller
 {
+
     /**
      * Display the login view.
      */
@@ -31,13 +32,16 @@ class AuthenticatedSessionController extends Controller
     public function store(LoginRequest $request): RedirectResponse
     {
         $request->authenticate();
-
         $request->session()->regenerate();
-        $user = $request->user();
+        $user = request()->user();
         if ($user->hasRole(RoleEnum::STUDENT)) {
-            return to_route('portal.application', compact('user'));
+            if ($user->has_student_profile) {
+                return to_route('portal.dashboard');
+            } else {
+                return to_route('portal.application');
+            }
         }
-        return redirect()->intended(route('dashboard', absolute: false));
+        return redirect()->intended();
     }
 
     /**

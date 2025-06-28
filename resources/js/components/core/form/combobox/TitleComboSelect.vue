@@ -5,7 +5,7 @@ import BaseCombobox from '@/components/core/form/combobox/BaseCombobox.vue';
 import { clearFormErrors } from '@/lib/forms';
 import { InertiaForm } from '@inertiajs/vue3';
 import { debounce } from 'lodash';
-import { useTitles } from '@/composables/titles/useTitles';
+import { useTitles } from '@/composables/shared/useTitles';
 import { Title } from '@/types/settings';
 
 interface Props {
