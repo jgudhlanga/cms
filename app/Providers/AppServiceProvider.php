@@ -8,7 +8,9 @@ use App\Policies\Settings\InstitutionSetupPolicy;
 use App\Policies\Settings\SettingPolicy;
 use App\Policies\Students\PortalPolicy;
 use App\Policies\Students\StudentMetaDataPolicy;
+use Illuminate\Auth\Events\Login;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
@@ -34,6 +36,12 @@ class AppServiceProvider extends ServiceProvider
         $this->registerDashboardPolicies();
         $this->registerPortalPolicies();
         $this->registerStudentMetadataPolicies();
+
+        Event::listen(Login::class, function ($event) {
+            $event->user->update([
+                'last_login_at' => now(),
+            ]);
+        });
     }
 
     private function registerSettingsPolicies(): void
