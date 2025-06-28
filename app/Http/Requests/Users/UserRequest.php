@@ -8,7 +8,7 @@ use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Contracts\Validation\Validator;
 
-class CreateUserRequest extends FormRequest
+class UserRequest extends FormRequest
 {
 
     public function authorize(): bool

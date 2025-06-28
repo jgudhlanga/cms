@@ -17,7 +17,7 @@ defineProps<Props>();
                 {{ tab?.transLabel!() }}
             </TabsTrigger>
         </TabsList>
-        <TabsContent v-for="tab in tabs" :value="tab.value" :key="'content_' + tab.value">
+        <TabsContent v-for="tab in tabs" :value="tab.value" :key="'content_' + tab.value" class="py-4">
             <component :is="tab.component" />
         </TabsContent>
     </Tabs>

@@ -12,7 +12,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Shared\AddressRequest;
 use App\Http\Requests\Shared\ContactRequest;
 use App\Http\Requests\Students\CreateApplicationRequest;
-use App\Http\Requests\Users\CreateUserRequest;
+use App\Http\Requests\Users\UserRequest;
 use App\Http\Resources\Shared\AddressResource;
 use App\Http\Resources\Shared\ContactResource;
 use App\Http\Resources\Students\AcademicRecordResource;
@@ -64,10 +64,10 @@ class PortalController extends Controller
         return Inertia::render('portal/guest/RegistrationUserForm');
     }
 
-    public function store(CreateUserRequest $request)
+    public function store(UserRequest $request)
     {
         $tenant = Tenant::where('name', TenantEnum::HARARE_POLY->value)->first();
-        $user = $this->userRepository->create(UserDto::fromCreateUserRequest($request, $tenant));
+        $user = $this->userRepository->create(UserDto::fromUserRequest($request, $tenant));
         $user->assignRole(RoleEnum::STUDENT);
         SendVerificationEmailJob::dispatch($user)->withoutDelay();
         Auth::login($user);
