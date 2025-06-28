@@ -14,7 +14,7 @@ class SendApplicationSubmittedEmail implements ShouldQueue
     /**
      * Create a new job instance.
      */
-    public function __construct(protected string $name, protected string $email, string $trackingNumber)
+    public function __construct(protected string $name, protected string $email, protected string $trackingNumber)
     {
         //
     }

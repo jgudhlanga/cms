@@ -1,5 +1,5 @@
 @component('mail::message')
-    # Hello {{ $student->full_name }}
+    # Hello {{ $name }}
 
     Your application has been successfully submitted.
 

@@ -9,8 +9,13 @@ use Inertia\Inertia;
 class PortalSetupController extends Controller
 {
 
-    public function __invoke(Request $request)
+    public function index(Request $request)
     {
         return Inertia::render('institution/portal/Setup', []);
+    }
+
+    public function workflows(Request $request)
+    {
+        return Inertia::render('institution/portal/ApplicationWorkflow', []);
     }
 }

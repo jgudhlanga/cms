@@ -17,7 +17,7 @@ class ApplicationSubmittedMail extends Mailable
     /**
      * Create a new message instance.
      */
-    public function __construct(protected string $name, protected string $email, string $trackingNumber)
+    public function __construct(protected string $name, protected string $email, protected string $trackingNumber)
     {
     }
 

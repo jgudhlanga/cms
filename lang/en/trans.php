@@ -303,4 +303,7 @@ return [
     "application_confirmation" => "Application confirmation",
     "application_confirmation_description" => "Application confirmation description",
     "reorder_error_description" => "We couldn’t re order items as you intended. Please be advised that there could be multiple reasons for this",
+    "application_workflows" => "Application workflows",
+    "no_workflows_configured_description" => "No application workflows configured",
+    "link_workflow_steps" => "Config workflow steps",
 ];

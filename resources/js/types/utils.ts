@@ -86,8 +86,14 @@ export type ValueAndLabel = {
     isBoolean?: boolean;
 };
 export type CustomTab = {
-    label?: string
+    label?: string;
     transLabel?: () => string;
     value: string;
     component: Component;
+};
+export type TimelineStep = {
+    title: string;
+    description?: string;
+    timelineMarker?: string;
+    label?: string;
 };

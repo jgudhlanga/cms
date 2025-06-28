@@ -23,7 +23,10 @@ Route::prefix('institution')->middleware('auth')->group(function () {
     Route::post('departments/{institution_department}/sync-courses', [DepartmentCourseController::class, 'syncDepartmentCourses'])->name('department-courses.sync');
     Route::get('departments/{department_course}/show', [DepartmentCourseController::class, 'show'])->name('department-courses.show');
     Route::post('departments/{department_course}/update', [DepartmentCourseController::class, 'update'])->name('department-courses.update');
-    # ================================== APPLICATIONS ======================================
-    Route::get('portal/setup', PortalSetupController::class)->name('portal.setup');
+    # ================================== PORTAL SETUP ======================================
+    Route::prefix('portal/setup')->group(function () {
+        Route::get('/', [PortalSetupController::class, 'index'])->name('portal.setup');
+        Route::get('/workflows', [PortalSetupController::class, 'workflows'])->name('portal.setup.workflows');
+    });
 });
 
