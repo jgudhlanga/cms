@@ -34,8 +34,7 @@ class User extends Authenticatable implements MustVerifyEmail, HasMedia
 
     protected $fillable = [
         'first_name', 'middle_name', 'last_name', 'email', 'password', 'tenant_id',
-        'email_verified_at', 'last_login_at',
-        'avatar_id'
+        'email_verified_at', 'last_login_at', 'login_count', 'avatar_id'
     ];
 
     protected $hidden = ['password', 'remember_token'];

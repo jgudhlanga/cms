@@ -38,8 +38,10 @@ class AppServiceProvider extends ServiceProvider
         $this->registerStudentMetadataPolicies();
 
         Event::listen(Login::class, function ($event) {
-            $event->user->update([
+            $user = $event->user;
+            $user->update([
                 'last_login_at' => now(),
+                'login_count' => ($user->login_count ?? 0) + 1,
             ]);
         });
     }

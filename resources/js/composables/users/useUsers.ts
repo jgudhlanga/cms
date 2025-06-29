@@ -1,5 +1,6 @@
 import { useDataTables } from '@/composables/core/useDataTables';
 import { useSharedFormSchema } from '@/composables/core/useSharedFormSchema';
+import { useUtils } from '@/composables/core/useUtils';
 import { buildFormOptions } from '@/lib/forms';
 import { getIdParams } from '@/lib/utils';
 import { Auth } from '@/types';
@@ -12,6 +13,7 @@ export const useUsers = () => {
     const { moreActionButton, onDelete, onForceDelete, onRestore, textLink, onView } = useDataTables();
     const createUserColumns = () => {
         const { props } = usePage();
+        const { formatDate } = useUtils();
         const { can } = props?.auth as Auth;
         return [
             {
@@ -23,6 +25,10 @@ export const useUsers = () => {
                 },
             },
             { header: trans('trans.email_address'), accessorKey: 'attributes.email' },
+            { header: trans('trans.login_count'), accessorKey: 'attributes.loginCount', meta: {align: 'center'} },
+            { header: trans('trans.last_login'), accessorKey: 'lastLoginAt',  cell: ({ row }: { row: { original: User } }) => {
+                return formatDate(row.original?.attributes?.lastLoginAt ?? '', 'LLLL')
+                } },
             {
                 header: trans_choice('trans.action', 2),
                 accessorKey: 'actions',

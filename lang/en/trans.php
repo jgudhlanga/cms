@@ -306,4 +306,6 @@ return [
     "application_workflows" => "Application workflows",
     "no_workflows_configured_description" => "No application workflows configured",
     "link_workflow_steps" => "Configure workflow steps",
+    "last_login" => "Last login",
+    "login_count" => "Login count",
 ];
