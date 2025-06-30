@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Institution\Setup\IntakePeriodController;
 use App\Http\Controllers\Institution\Setup\PortalSetupController;
 use App\Http\Controllers\Institution\Departments\DepartmentCourseController;
 use App\Http\Controllers\Institution\Departments\DepartmentLevelController;
@@ -23,6 +24,10 @@ Route::prefix('institution')->middleware('auth')->group(function () {
     Route::post('departments/{institution_department}/sync-courses', [DepartmentCourseController::class, 'syncDepartmentCourses'])->name('department-courses.sync');
     Route::get('departments/{department_course}/show', [DepartmentCourseController::class, 'show'])->name('department-courses.show');
     Route::post('departments/{department_course}/update', [DepartmentCourseController::class, 'update'])->name('department-courses.update');
+    # ==================================== INTAKE PERIODS ================================================================
+    Route::put('intake-periods/{intake_period}/restore', [IntakePeriodController::class, 'restore'])->name('intake-periods.restore');
+    Route::delete('intake-periods/{intake_period}/force-delete', [IntakePeriodController::class, 'forceDelete'])->name('intake-periods.force-delete');
+    Route::resource('intake-periods', IntakePeriodController::class)->names('intake-periods');
     # ================================== PORTAL SETUP ======================================
     Route::prefix('portal/setup')->group(function () {
         Route::get('/', [PortalSetupController::class, 'index'])->name('portal.setup');

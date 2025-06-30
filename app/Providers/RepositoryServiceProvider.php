@@ -15,6 +15,7 @@ use App\Repositories\Institution\DepartmentRepository;
 use App\Repositories\Institution\DivisionRepository;
 use App\Repositories\Institution\GradeRepository;
 use App\Repositories\Institution\InstitutionDepartmentRepository;
+use App\Repositories\Institution\IntakePeriodRepository;
 use App\Repositories\Institution\interface\ICourseRepository;
 use App\Repositories\Institution\interface\IDepartmentCourseRepository;
 use App\Repositories\Institution\interface\IDepartmentLevelRepository;
@@ -22,6 +23,7 @@ use App\Repositories\Institution\interface\IDepartmentRepository;
 use App\Repositories\Institution\interface\IDivisionRepository;
 use App\Repositories\Institution\interface\IGradeRepository;
 use App\Repositories\Institution\interface\IInstitutionDepartmentRepository;
+use App\Repositories\Institution\interface\IIntakePeriodRepository;
 use App\Repositories\Institution\interface\ILevelRepository;
 use App\Repositories\Institution\interface\IModeOfStudyRepository;
 use App\Repositories\Institution\interface\ISubjectRepository;
@@ -160,6 +162,7 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(IInstitutionDepartmentRepository::class, InstitutionDepartmentRepository::class);
         $this->app->bind(IDepartmentLevelRepository::class, DepartmentLevelRepository::class);
         $this->app->bind(IDepartmentCourseRepository::class, DepartmentCourseRepository::class);
+        $this->app->bind(IIntakePeriodRepository::class, IntakePeriodRepository::class);
     }
 
     public function userRepositories(): void

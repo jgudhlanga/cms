@@ -133,3 +133,23 @@ export type InstitutionDepartmentParams = {
     department_ids: Array<string | undefined | null> | null;
 };
 
+export type IntakePeriod = {
+    type?: string;
+    id?: string;
+    attributes: {
+        name: string;
+        startDate: string;
+        endDate: string;
+        isActive: boolean | number;
+        description?: string;
+        createdAt?: string;
+        updatedAt?: string;
+        deletedAt?: string;
+    };
+};
+export type IntakePeriodParams = {
+    name: string;
+    start_date: string;
+    end_date: string;
+    description?: string;
+};
