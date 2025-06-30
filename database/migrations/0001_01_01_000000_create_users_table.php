@@ -23,6 +23,7 @@ return new class extends Migration {
             $table->timestamp('last_login_at')->nullable();
             $table->unsignedInteger('login_count')->default(0);
             $table->rememberToken();
+            $table->foreignId('status_id')->constrained();
             $table->timestamps();
             $table->softDeletes();
         });

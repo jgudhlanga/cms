@@ -25,6 +25,7 @@ export const useUsers = () => {
                 },
             },
             { header: trans('trans.email_address'), accessorKey: 'attributes.email' },
+            { header: trans_choice('trans.status', 1), accessorKey: 'attributes.status' },
             { header: trans('trans.login_count'), accessorKey: 'attributes.loginCount', meta: {align: 'center'} },
             { header: trans('trans.last_login'), accessorKey: 'lastLoginAt',  cell: ({ row }: { row: { original: User } }) => {
                 return formatDate(row.original?.attributes?.lastLoginAt ?? '', 'LLLL')

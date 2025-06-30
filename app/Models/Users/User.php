@@ -3,6 +3,7 @@
 namespace App\Models\Users;
 
 use App\Http\Filters\Users\UserFilter;
+use App\Models\Shared\Status;
 use App\Models\Students\Student;
 use App\Traits\Filterable;
 use App\Traits\Paginatable;
@@ -10,6 +11,7 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -49,6 +51,11 @@ class User extends Authenticatable implements MustVerifyEmail, HasMedia
     public function setPasswordAttribute(string $password): void
     {
         $this->attributes['password'] = bcrypt($password);
+    }
+
+    public function status(): BelongsTo
+    {
+        return $this->belongsTo(Status::class, 'status_id');
     }
 
     public function studentProfile(): HasOne|User

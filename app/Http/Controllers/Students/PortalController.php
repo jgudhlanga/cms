@@ -7,6 +7,7 @@ use App\DTO\Shared\ContactDto;
 use App\DTO\Students\CreateApplicationDto;
 use App\DTO\Users\UserDto;
 use App\Enums\Shared\RoleEnum;
+use App\Enums\Shared\StatusEnum;
 use App\Enums\Shared\TenantEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Shared\AddressRequest;
@@ -21,6 +22,7 @@ use App\Http\Resources\Students\StudentProgramResource;
 use App\Http\Resources\Students\StudentResource;
 use App\Jobs\Students\SendApplicationSubmittedEmail;
 use App\Jobs\Users\SendVerificationEmailJob;
+use App\Models\Shared\Status;
 use App\Models\Tenants\Tenant;
 use App\Models\Users\User;
 use App\Repositories\Shared\interface\IAddressRepository;
@@ -67,7 +69,8 @@ class PortalController extends Controller
     public function store(UserRequest $request)
     {
         $tenant = Tenant::where('name', TenantEnum::HARARE_POLY->value)->first();
-        $user = $this->userRepository->create(UserDto::fromUserRequest($request, $tenant));
+        $status = Status::where('title', StatusEnum::ACTIVE->value)->first();
+        $user = $this->userRepository->create(UserDto::fromUserRequest($request, $tenant, $status));
         $user->assignRole(RoleEnum::STUDENT);
         SendVerificationEmailJob::dispatch($user)->withoutDelay();
         Auth::login($user);
