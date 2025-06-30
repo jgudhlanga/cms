@@ -14,8 +14,8 @@ class PortalSetupController extends Controller
         return Inertia::render('institution/portal/Setup', []);
     }
 
-    public function workflows(Request $request)
+    public function intakePeriods(Request $request)
     {
-        return Inertia::render('institution/portal/ApplicationWorkflow', []);
+        return Inertia::render('institution/portal/IntakePeriods', []);
     }
 }

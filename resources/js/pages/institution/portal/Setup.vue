@@ -16,8 +16,8 @@ const breadcrumbs: Array<Link> = [
 
 const tabs: Array<Link> = [
     {
-        transChoiceKey: 'application_workflows',
-        url: route('portal.setup.workflows'),
+        transChoiceKey: 'intake_period',
+        url: route('portal.setup.intake-periods'),
     },
 ];
 const allowed = hasAbility('view:institution-settings');

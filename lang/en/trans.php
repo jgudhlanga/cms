@@ -309,4 +309,6 @@ return [
     "last_login" => "Last login",
     "login_count" => "Login count",
     "application_step" => "Application step|Application steps",
+    "intake_period" => "Intake period|Intake periods",
+    "setup" => "Setup",
 ];

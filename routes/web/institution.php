@@ -26,7 +26,7 @@ Route::prefix('institution')->middleware('auth')->group(function () {
     # ================================== PORTAL SETUP ======================================
     Route::prefix('portal/setup')->group(function () {
         Route::get('/', [PortalSetupController::class, 'index'])->name('portal.setup');
-        Route::get('/workflows', [PortalSetupController::class, 'workflows'])->name('portal.setup.workflows');
+        Route::get('/intake-periods', [PortalSetupController::class, 'intakePeriods'])->name('portal.setup.intake-periods');
     });
 });
 
