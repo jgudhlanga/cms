@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Models\Institution;
+namespace App\Models\Shared;
 
+use App\Http\Filters\Shared\SharedNameFilter;
 use App\Traits\BelongsToTenant;
 use App\Traits\Filterable;
 use App\Traits\Paginatable;
@@ -15,13 +16,13 @@ use Spatie\Activitylog\Traits\LogsActivity;
 /**
  *
  * @mixin Builder
- * @method static filter(Filter $filters)
+ * @method static filter(SharedNameFilter $filters)
  */
 class ApplicationStep extends Model
 {
    use HasFactory, SoftDeletes, Filterable, BelongsToTenant,Paginatable, LogsActivity;
 
-   protected $fillable = [];
+   protected $fillable = ['name', 'description', 'is_active'];
 
    	public function getActivitylogOptions(): LogOptions
    	{

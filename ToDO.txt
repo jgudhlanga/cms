@@ -72,7 +72,3 @@ Action Required: Close the application.
 The student has officially enrolled in the program.
 
 End of workflow (often transitions into Student Information System).
-
-Error messages
-Invoice generation error
-We couldn’t generate some of your invoices. Please be advised that there could be multiple reasons for this. Try again to request the invoice and in case of any challenges, please reach out to our support!

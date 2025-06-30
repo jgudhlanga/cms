@@ -13,7 +13,9 @@ return new class extends Migration
     {
         Schema::create('application_steps', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('tenant_id')->index()->constrained();
+            $table->string('name')->unique();
+            $table->text('description')->nullable();
+            $table->boolean('is_active')->default(true);
 			$table->timestamps();
 			$table->softDeletes();
         });

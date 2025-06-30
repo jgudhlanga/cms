@@ -1,11 +1,12 @@
 <?php
 
-namespace Database\Factories\Institution;
+namespace Database\Factories\Shared;
 
+use App\Models\Shared\ApplicationStep;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Institution\ApplicationStep>
+ * @extends Factory<ApplicationStep>
  */
 class ApplicationStepFactory extends Factory
 {
