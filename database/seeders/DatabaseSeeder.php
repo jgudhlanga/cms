@@ -15,6 +15,7 @@ use Database\Seeders\Institution\ModesOfStudyTableSeeder;
 use Database\Seeders\Institution\SubjectsTableSeeder;
 use Database\Seeders\Shared\AcademicLevelsTableSeeder;
 use Database\Seeders\Shared\AddressTypesTableSeeder;
+use Database\Seeders\Shared\ApplicationStepsSeeder;
 use Database\Seeders\Shared\CommunicationMethodSeeder;
 use Database\Seeders\Shared\CountrySeeder;
 use Database\Seeders\Shared\DistrictsTableSeeder;
@@ -49,6 +50,7 @@ class DatabaseSeeder extends Seeder
             TitleSeeder::class,
             RaceSeeder::class,
             StatusSeeder::class,
+            ApplicationStepsSeeder::class,
             UsersTableSeeder::class,
             CommunicationMethodSeeder::class,
             CountrySeeder::class,
