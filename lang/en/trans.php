@@ -308,4 +308,5 @@ return [
     "link_workflow_steps" => "Configure workflow steps",
     "last_login" => "Last login",
     "login_count" => "Login count",
+    "application_step" => "Application step|Application steps",
 ];

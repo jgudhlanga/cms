@@ -42,6 +42,7 @@ const APP_MODULE_KEYS = {
     sponsor_types: 'sponsor_types',
     sponsors: 'sponsors',
     academic_records: 'academic_records',
+    application_steps:  "application_steps",
 };
 
 export { API_BASE_URL, API_VERSION, APP_MODULE_KEYS, DEFAULT_AVATAR, DEFAULT_IMAGE, LOGO };

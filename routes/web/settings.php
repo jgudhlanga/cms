@@ -10,6 +10,7 @@ use App\Http\Controllers\Institution\Dropdowns\SubjectController;
 use App\Http\Controllers\Settings\SettingsController;
 use App\Http\Controllers\Shared\AcademicLevelController;
 use App\Http\Controllers\Shared\AddressTypeController;
+use App\Http\Controllers\Shared\ApplicationStepController;
 use App\Http\Controllers\Shared\CommunicationMethodController;
 use App\Http\Controllers\Shared\CountryController;
 use App\Http\Controllers\Shared\DistrictController;
@@ -123,4 +124,9 @@ Route::prefix('settings')->middleware('auth')->group(function () {
     Route::put('sponsor-types/{sponsor_type}/restore', [SponsorTypeController::class, 'restore'])->name('sponsor-types.restore');
     Route::delete('sponsor-types/{sponsor_type}/force-delete', [SponsorTypeController::class, 'forceDelete'])->name('sponsor-types.force-delete');
     Route::resource('sponsor-types', SponsorTypeController::class)->names('sponsor-types');
+    # ==================================== APPLICATION STEPS ======================================================
+    Route::put('application-steps/{application_step}/move-position', [ApplicationStepController::class, 'movePosition'])->name('application-steps.move-position');
+    Route::put('application-steps/{application_step}/restore', [ApplicationStepController::class, 'restore'])->name('application-steps.restore');
+    Route::delete('application-steps/{application_step}/force-delete', [ApplicationStepController::class, 'forceDelete'])->name('application-steps.force-delete');
+    Route::resource('application-steps', ApplicationStepController::class)->names('application-steps');
 });

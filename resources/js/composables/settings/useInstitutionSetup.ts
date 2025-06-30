@@ -3,6 +3,10 @@ import { Link } from '@/types/ui';
 export function useInstitutionSetup() {
     const tabs: Array<Link> = [
         {
+            transChoiceKey: 'application_step',
+            url: route('application-steps.index'),
+        },
+        {
             transChoiceKey: 'course',
             url: route('courses.index'),
         },

@@ -3,7 +3,7 @@
 namespace App\Models\Shared;
 
 use App\Http\Filters\Shared\SharedNameFilter;
-use App\Traits\BelongsToTenant;
+use App\Traits\AssignsPosition;
 use App\Traits\Filterable;
 use App\Traits\Paginatable;
 use Illuminate\Database\Eloquent\Builder;
@@ -20,16 +20,16 @@ use Spatie\Activitylog\Traits\LogsActivity;
  */
 class ApplicationStep extends Model
 {
-   use HasFactory, SoftDeletes, Filterable, BelongsToTenant,Paginatable, LogsActivity;
+    use HasFactory, SoftDeletes, Filterable, Paginatable, LogsActivity, AssignsPosition;
 
-   protected $fillable = ['name', 'description', 'is_active'];
+    protected $fillable = ['name', 'description', 'position'];
 
-   	public function getActivitylogOptions(): LogOptions
-   	{
-   		return LogOptions::defaults()
-   			->logFillable()
-   			->useLogName('ApplicationStep')
-   			->logOnlyDirty()
-   			->dontSubmitEmptyLogs();
-   	}
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logFillable()
+            ->useLogName('ApplicationStep')
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs();
+    }
 }
