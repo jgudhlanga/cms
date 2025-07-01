@@ -313,4 +313,7 @@ return [
     "setup" => "Setup",
     "date_must_be_valid" => ":field must be a valid date",
     "end_date_start_date_validation" => "End date must be after or equal to start date",
+    "student_minimum_age_required" =>  "Student must be at least :age years old.",
+    "field_must_be_number" =>  ":field must be a number.",
+    "nothing_has_changed_to_save" => "Nothing has changed to trigger save"
 ];

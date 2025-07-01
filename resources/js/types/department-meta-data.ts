@@ -82,10 +82,10 @@ export type DepartmentLevelRequirement = {
 
 export type DepartmentLevelRequirementParams = {
     is_o_level_required?: boolean;
-    required_subjects_count?: string | number | null;
-    main_subjects_count?: string | number | null;
+    required_subjects_count?: string | number;
+    main_subjects_count?: string | number;
     main_subject_ids: any;
-    other_subjects_count?: string | number | null;
+    other_subjects_count?: string | number;
     only_read_write_required?: boolean;
     required_level_id?: string | number | null;
 };

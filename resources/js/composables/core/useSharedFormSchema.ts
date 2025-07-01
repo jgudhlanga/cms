@@ -1,4 +1,4 @@
-import { SelectOption } from '@/types/utils';
+import { validateSelectOption } from '@/lib/forms';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 import { z } from 'zod';
 
@@ -101,15 +101,27 @@ export const useSharedFormSchema = () => {
         });
     const dobSchema = () =>
         z.object({
-            start_date: z
+            date_of_birth: z
                 .union([z.string(), z.date()])
                 .transform((val) => (typeof val === 'string' ? val : val.toISOString().split('T')[0]))
                 .refine((val) => !isNaN(Date.parse(val)), {
-                    message: trans('trans.date_of_birth_must_be_valid'),
+                    message: trans('trans.date_must_be_valid', { field: trans('trans.date_of_birth') }),
                 })
-           // date_of_birth: z.coerce.date({ required_error: trans('trans.enter_required_field', { field: trans('trans.date_of_birth') }) }),
-        });
+                .refine(
+                    (val) => {
+                        const dob = new Date(val);
+                        const today = new Date();
+                        const age = today.getFullYear() - dob.getFullYear();
+                        const hasHadBirthdayThisYear =
+                            today.getMonth() > dob.getMonth() || (today.getMonth() === dob.getMonth() && today.getDate() >= dob.getDate());
 
+                        return age > 16 || (age === 16 && hasHadBirthdayThisYear);
+                    },
+                    {
+                        message: trans('trans.student_minimum_age_required', { age: '16' }),
+                    },
+                ),
+        });
 
     /* Dropdown Schema */
     const provinceSchema = () =>
@@ -166,10 +178,6 @@ export const useSharedFormSchema = () => {
                 message: trans('trans.select_valid_field', { field: trans_choice('trans.country', 1) }),
             }),
         });
-
-    function validateSelectOption(val: SelectOption) {
-        return val !== null && val?.value !== '';
-    }
 
     return {
         addressOneSchema,

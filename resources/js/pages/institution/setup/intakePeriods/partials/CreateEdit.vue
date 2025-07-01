@@ -37,7 +37,6 @@ const save = () => {
     const result = formSchema().safeParse(form.data());
     if (!result.success) {
         const fieldErrors = result.error.flatten().fieldErrors;
-
         const formattedErrors: Record<keyof IntakePeriodParams, string> = {
             name: '',
             start_date: '',

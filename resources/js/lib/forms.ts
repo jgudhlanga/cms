@@ -3,6 +3,7 @@ import { useLoadersStore } from '@/store/core/loaders.store';
 import { InertiaForm, router } from '@inertiajs/vue3';
 import { storeToRefs } from 'pinia';
 import { ZodObject } from 'zod';
+import { SelectOption } from '@/types/utils';
 
 function clearFormErrors(inertiaForm: InertiaForm<any>, field: any) {
     inertiaForm.clearErrors(field);
@@ -50,4 +51,8 @@ function mergeValidationSchema(schemaFields: Record<string, () => ZodObject<any,
         keys.reduce((schema, key) => schema.merge(schemaFields[key]()), initialSchema);
 }
 
-export { buildFormOptions, clearFormErrors, mergeValidationSchema, onFormError, onFormFinish, onFormSuccess, toggleFormLoader };
+function validateSelectOption(val: SelectOption) {
+    return val !== null && val?.value !== '';
+}
+
+export { buildFormOptions, clearFormErrors, mergeValidationSchema, onFormError, onFormFinish, onFormSuccess, toggleFormLoader, validateSelectOption };

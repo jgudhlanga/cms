@@ -87,17 +87,17 @@ if (!id_type.value) {
                 :is-required="true"
             />
         </div>
-        <div class="flex flex-col">
-            <HeadingSmall :title="$t('trans.id_type')" :description="$t('trans.id_type_description')" class="my-5" />
-            <BaseRadioGroup
-                :options="idTypes"
-                :default-value="defaultIdType"
-                :label-uppercase="true"
-                :is-required="true"
-                @update:modelValue="onRadioChange"
-            />
-        </div>
         <div class="grid-col-1 mt-4 grid gap-3 md:grid-cols-3">
+            <div class="flex flex-col mb-3">
+                <HeadingSmall :title="$t('trans.id_type')" :description="$t('trans.id_type_description')" class="my-5" />
+                <BaseRadioGroup
+                    :options="idTypes"
+                    :default-value="defaultIdType"
+                    :label-uppercase="true"
+                    :is-required="true"
+                    @update:modelValue="onRadioChange"
+                />
+            </div>
             <template v-if="id_type === 'zimbabwean-national-id-number'">
                 <IdNumber v-model="id_number" :is-required="true" @input="clearFormErrors(form, 'id_number')" :error="form.errors.id_number" />
             </template>

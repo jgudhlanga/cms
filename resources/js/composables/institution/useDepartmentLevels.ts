@@ -13,6 +13,7 @@ import { InertiaForm, usePage } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 import { storeToRefs } from 'pinia';
 import { ref } from 'vue';
+import { z } from 'zod';
 
 export const useDepartmentLevels = () => {
     const { moreActionButton, textLink, actionButton } = useDataTables();
@@ -150,6 +151,34 @@ export const useDepartmentLevels = () => {
         }
     };
 
+    const levelRequirementsFormSchema = (isOLevelRequired: boolean) =>
+        z.object({
+            required_subjects_count: isOLevelRequired
+                ? z
+                      .string()
+                      .nonempty(trans('trans.enter_required_field', { field: trans('trans.required_subjects_count') }))
+                      .refine((val) => !isNaN(Number(val)), {
+                          message: trans('trans.field_must_be_number', { field: trans('trans.required_subjects_count') }),
+                      })
+                : z.string().optional(),
+            main_subjects_count: isOLevelRequired
+                ? z
+                      .string()
+                      .nonempty(trans('trans.enter_required_field', { field: trans('trans.main_subjects_count') }))
+                      .refine((val) => !isNaN(Number(val)), {
+                          message: trans('trans.field_must_be_number', { field: trans('trans.main_subjects_count') }),
+                      })
+                : z.string().optional(),
+            other_subjects_count: isOLevelRequired
+                ? z
+                      .string()
+                      .nonempty(trans('trans.enter_required_field', { field: trans('trans.other_subjects_count') }))
+                      .refine((val) => !isNaN(Number(val)), {
+                          message: trans('trans.field_must_be_number', { field: trans('trans.other_subjects_count') }),
+                      })
+                : z.string().optional(),
+        });
+
     return {
         createDepartmentLevelColumns,
         openDepartmentLevelsModal,
@@ -162,5 +191,6 @@ export const useDepartmentLevels = () => {
         levelCourses,
         levelRequirements,
         listLevelRequirements,
+        levelRequirementsFormSchema,
     };
 };
