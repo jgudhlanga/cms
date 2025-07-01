@@ -3,7 +3,6 @@
 namespace App\Models\Institution;
 
 use App\Http\Filters\Shared\SharedNameFilter;
-use App\Models\Insitution\Filter;
 use App\Traits\BelongsToTenant;
 use App\Traits\Filterable;
 use App\Traits\Paginatable;

@@ -101,8 +101,15 @@ export const useSharedFormSchema = () => {
         });
     const dobSchema = () =>
         z.object({
-            date_of_birth: z.coerce.date({ required_error: trans('trans.enter_required_field', { field: trans('trans.date_of_birth') }) }),
+            start_date: z
+                .union([z.string(), z.date()])
+                .transform((val) => (typeof val === 'string' ? val : val.toISOString().split('T')[0]))
+                .refine((val) => !isNaN(Date.parse(val)), {
+                    message: trans('trans.date_of_birth_must_be_valid'),
+                })
+           // date_of_birth: z.coerce.date({ required_error: trans('trans.enter_required_field', { field: trans('trans.date_of_birth') }) }),
         });
+
 
     /* Dropdown Schema */
     const provinceSchema = () =>

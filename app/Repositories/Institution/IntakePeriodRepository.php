@@ -8,6 +8,7 @@ use App\Http\Filters\Shared\SharedNameFilter;
 use App\Models\Institution\IntakePeriod;
 use App\Repositories\Base\BaseRepository;
 use App\Repositories\Institution\interface\IIntakePeriodRepository;
+use Carbon\Carbon;
 
 class IntakePeriodRepository extends BaseRepository implements IIntakePeriodRepository
 {
@@ -43,6 +44,8 @@ class IntakePeriodRepository extends BaseRepository implements IIntakePeriodRepo
     {
         return [
             'name' => $dto->name,
+            'start_date' => Carbon::parse($dto->start_date)->format('Y-m-d'),
+            'end_date' => Carbon::parse($dto->end_date)->format('Y-m-d'),
             'description' => $dto->description,
         ];
     }

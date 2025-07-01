@@ -1,43 +1,96 @@
 <script setup lang="ts">
+import BaseDatePicker from '@/components/core/form/date/BaseDatePicker.vue';
 import Description from '@/components/core/form/text/Description.vue';
 import Name from '@/components/core/form/text/Name.vue';
 import BaseModal from '@/components/core/modal/BaseModal.vue';
-import { useCourses } from '@/composables/institution/useCourses';
+import { useIntakePeriods } from '@/composables/institution/useIntakePeriods';
 import { getModalEdit } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
 import { clearFormErrors } from '@/lib/forms';
 import { useModalStore } from '@/store/core/useModalStore';
-import { Course, CourseParams } from '@/types/institution';
+import { IntakePeriod, IntakePeriodParams } from '@/types/institution';
 import { useForm } from '@inertiajs/vue3';
 import { ref, watch } from 'vue';
 
-const course = ref<Course>();
-const form = useForm<CourseParams>({
+const intakePeriod = ref<IntakePeriod>();
+const form = useForm<IntakePeriodParams>({
     name: '',
+    start_date: '',
+    end_date: '',
     description: '',
 });
 
-const { saveCourse } = useCourses();
+const { saveIntakePeriod, formSchema } = useIntakePeriods();
 
 const { modals } = useModalStore();
 
 watch(modals!, () => {
-    course.value = getModalEdit(APP_MODULE_KEYS.courses);
-    form.name = course.value?.attributes?.name ?? '';
-    form.description = course.value?.attributes?.description ?? '';
+    intakePeriod.value = getModalEdit(APP_MODULE_KEYS.intake_periods);
+    form.name = intakePeriod.value?.attributes?.name ?? '';
+    form.start_date = intakePeriod.value?.attributes?.startDate ?? '';
+    form.end_date = intakePeriod.value?.attributes?.endDate ?? '';
+    form.description = intakePeriod.value?.attributes?.description ?? '';
     form.defaults();
 });
+
+const save = () => {
+    const result = formSchema().safeParse(form.data());
+    if (!result.success) {
+        const fieldErrors = result.error.flatten().fieldErrors;
+
+        const formattedErrors: Record<keyof IntakePeriodParams, string> = {
+            name: '',
+            start_date: '',
+            end_date: '',
+            description: '',
+        };
+
+        (Object.keys(fieldErrors) as (keyof typeof fieldErrors)[]).forEach((key) => {
+            const errors = fieldErrors[key];
+            if (errors && errors.length > 0) {
+                formattedErrors[key as keyof IntakePeriodParams] = errors[0];
+            }
+        });
+
+        form.setError(formattedErrors);
+        return;
+    }
+    saveIntakePeriod(form, intakePeriod.value);
+};
 </script>
 
 <template>
     <BaseModal
-        :name="APP_MODULE_KEYS.courses"
-        :title="`${course ? $t('trans.create') : $t('trans.create')} ${$tChoice('trans.course', 1)}`"
-        :on-form-action="() => saveCourse(form, course)"
+        :name="APP_MODULE_KEYS.intake_periods"
+        :title="`${intakePeriod ? $t('trans.create') : $t('trans.create')} ${$tChoice('trans.intake_period', 1)}`"
+        :on-form-action="() => save()"
         :form="form"
     >
         <template #body>
-            <Name :inputAutoFocus="true" v-model="form.name" @input="clearFormErrors(form, 'name')" :error="form.errors.name" />
+            <Name :inputAutoFocus="true" v-model="form.name" @input="clearFormErrors(form, 'name')" :error="form.errors.name" :is-required="true" />
+            <div class="grid grid-cols-2 gap-2">
+                <BaseDatePicker
+                    input-id="start_date"
+                    :label="$t('trans.start_date')"
+                    :enable-time-picker="false"
+                    v-model="form.start_date"
+                    :is-required="true"
+                    :teleport="true"
+                    :error="form.errors.start_date"
+                    @update:model-value="clearFormErrors(form, 'start_date')"
+                />
+                <BaseDatePicker
+                    input-id="end_date"
+                    :label="$t('trans.end_date')"
+                    :enable-time-picker="false"
+                    v-model="form.end_date"
+                    :is-required="true"
+                    :teleport="true"
+                    :error="form.errors.end_date"
+                    @update:model-value="clearFormErrors(form, 'end_date')"
+                />
+            </div>
+
             <Description v-model="form.description" @input="clearFormErrors(form, 'description')" :error="form.errors.description" />
         </template>
     </BaseModal>

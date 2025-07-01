@@ -55,7 +55,7 @@ const destroyModal = () => {
 
 <template>
     <Transition name="fade">
-        <div v-if="isOpen(name)" class="fixed inset-0 z-50 flex items-center justify-center">
+        <div v-if="isOpen(name)" class="fixed inset-0 z-20 flex items-center justify-center">
             <!-- Backdrop -->
             <div class="absolute inset-0 z-0 bg-black opacity-50"></div>
             <!-- Modal Container -->
@@ -70,7 +70,7 @@ const destroyModal = () => {
                 <div class="my-2 h-1 w-full border-b-[1px]"></div>
                 <form :name="name" v-if="hasForm" @submit.prevent="() => (onFormAction ? onFormAction!() : null)" class="flex flex-col">
                     <!-- Modal Body -->
-                    <div class="flex-auto space-y-6 overflow-y-scroll px-6 py-4">
+                    <div class="flex-auto space-y-6 overflow-visible px-6 py-4">
                         <slot name="body" />
                     </div>
                     <!-- Modal Footer -->
@@ -85,7 +85,7 @@ const destroyModal = () => {
                     </div>
                 </form>
                 <div v-else class="flex flex-col">
-                    <div class="relative flex-auto space-y-6 overflow-y-auto px-6 py-4">
+                    <div class="relative flex-auto space-y-6 overflow-visible px-6 py-4">
                         <slot />
                     </div>
                     <div class="mt-6 flex w-full justify-end space-x-3 border-t-[1px] px-6 py-5">

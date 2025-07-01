@@ -104,19 +104,20 @@ const goNext = async (next: () => void) => {
     try {
         const schema = applicationFormSchema(isNativeCitizen(storeRefs.id_type.value ?? ''));
         schema[stepIndex.value - 1].parse(form);
-        if (!storeRefs.date_of_birth.value) {
+        /*if (!storeRefs.date_of_birth.value) {
             errorAlert(
                 trans('trans.enter_required_field', {
                     field: trans('trans.date_of_birth').toLowerCase(),
                 }),
             );
             return;
-        }
+        }*/
         next();
         if (stepIndex.value === 4 && storeRefs.level.value?.value != null) {
             await listLevelRequirements(storeRefs.level.value.value.toString());
         }
     } catch (error: any) {
+        console.log(error.format())
         form.setError(error.format());
     }
 };

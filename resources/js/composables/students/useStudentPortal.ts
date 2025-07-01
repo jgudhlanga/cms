@@ -64,7 +64,7 @@ export function useStudentPortal() {
     const schemaFields = useSharedFormSchema() as Record<string, () => ZodObject<any, any>>;
 
     const applicationFormSchema = (isNativeCitizen: boolean) => {
-        const personal = ['firstNameSchema', 'lastNameSchema', 'genderSchema', 'maritalStatusSchema'];
+        const personal = ['firstNameSchema', 'lastNameSchema', 'genderSchema', 'maritalStatusSchema', 'dobSchema'];
         if (isNativeCitizen) {
             personal.push('idNumberSchema');
         } else {

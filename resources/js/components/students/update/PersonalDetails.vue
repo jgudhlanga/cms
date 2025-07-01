@@ -118,7 +118,14 @@ if (!id_type.value) {
                     :label-uppercase="true"
                 />
             </template>
-            <DateOfBirth v-model="date_of_birth" input-id="date_of_birth" :is-required="true" :label-uppercase="true" />
+            <DateOfBirth
+                v-model="date_of_birth"
+                :is-required="true"
+                :label-uppercase="true"
+                :teleport="true"
+                :error="form.errors.date_of_birth"
+                @update:model-value="clearFormErrors(form, 'date_of_birth')"
+            />
         </div>
     </BaseCard>
 </template>
