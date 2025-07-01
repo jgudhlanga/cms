@@ -13,6 +13,9 @@ export type DepartmentLevel = {
         updatedAt?: string;
         deletedAt?: string;
     };
+    relationships?: {
+        requirement?: DepartmentLevelRequirement;
+    };
 };
 
 export type DepartmentLevelParams = {

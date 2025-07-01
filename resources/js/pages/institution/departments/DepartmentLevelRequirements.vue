@@ -9,7 +9,7 @@ import { useDepartmentLevels } from '@/composables/institution/useDepartmentLeve
 import { useSubjects } from '@/composables/institution/useSubjects';
 import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
-import { warningAlert } from '@/lib/alerts';
+import { errorAlert } from '@/lib/alerts';
 import { clearFormErrors } from '@/lib/forms';
 import { getIdParams } from '@/lib/utils';
 import { AuthObject } from '@/types/data-pagination';
@@ -48,6 +48,9 @@ const breadcrumbs: Array<Link> = [
 
 const isOLevelRequired = ref(false);
 const onlyReadWriteRequired = ref(false);
+const mainSubjectsCountDisabled = ref(true);
+const otherSubjectsCountDisabled = ref(true);
+const mainSubjectsDisabled = ref(true);
 const { listSubjects, subjects } = useSubjects();
 const { storeDepartmentLevelRequirements, levelRequirementsFormSchema } = useDepartmentLevels();
 
@@ -71,6 +74,9 @@ onMounted(async () => {
     form.other_subjects_count = requirements?.attributes?.otherSubjectsCount ?? '';
     form.only_read_write_required = onlyReadWriteRequired.value = isItTrue(requirements?.attributes?.onlyReadWriteRequired);
     form.required_level_id = requirements?.attributes?.requiredLevelId?.toString();
+    mainSubjectsCountDisabled.value = isItTrue(!requirements?.attributes?.mainSubjectsCount);
+    otherSubjectsCountDisabled.value = isItTrue(!requirements?.attributes?.otherSubjectsCount);
+    mainSubjectsDisabled.value = isItTrue(!requirements?.attributes?.otherSubjectsCount);
 });
 
 const selectOLevelRequired = (value: any) => {
@@ -121,14 +127,30 @@ const updateLevel = () => {
         return;
     }
     if (!isItTrue(isOLevelRequired.value) && !onlyReadWriteRequired.value && !form.required_level_id) {
-        warningAlert(trans('trans.nothing_has_changed_to_save'));
+        errorAlert(trans('trans.nothing_has_changed_to_save'));
+        return;
+    }
+    if (Number(form.main_subjects_count ?? '') > 0 && form.main_subject_ids?.length != Number(form.main_subjects_count)) {
+        errorAlert(trans('trans.main_subject_not_valid', { count: form.main_subjects_count?.toString() ?? '' }));
         return;
     }
     storeDepartmentLevelRequirements(departmentLevel.id?.toString() ?? '', form, institutionDepartment?.attributes?.departmentId.toString() ?? '');
 };
-const mainSubjectsCountDisabled = ref(true);
-const otherSubjectsCountDisabled = ref(true);
 
+const onInputRequiredSubjectsCount = () => {
+    clearFormErrors(form, 'required_subjects_count');
+    mainSubjectsCountDisabled.value = false;
+};
+
+const onInputMainSubjectsCount = () => {
+    clearFormErrors(form, 'main_subjects_count');
+    otherSubjectsCountDisabled.value = false;
+};
+
+const onInputOtherSubjectsCount = () => {
+    clearFormErrors(form, 'other_subjects_count');
+    mainSubjectsDisabled.value = false;
+};
 </script>
 
 <template>
@@ -152,7 +174,7 @@ const otherSubjectsCountDisabled = ref(true);
                             input-id="required_subjects_count"
                             v-model="form.required_subjects_count"
                             :inputAutoFocus="true"
-                            @input="clearFormErrors(form, 'required_subjects_count')"
+                            @input="onInputRequiredSubjectsCount"
                             :error="form.errors.required_subjects_count"
                             :is-required="true"
                         />
@@ -160,7 +182,7 @@ const otherSubjectsCountDisabled = ref(true);
                             :label="$t('trans.main_subjects_count')"
                             input-id="main_subjects_count"
                             v-model="form.main_subjects_count"
-                            @input="clearFormErrors(form, 'main_subjects_count')"
+                            @input="onInputMainSubjectsCount"
                             :error="form.errors.main_subjects_count"
                             :is-required="true"
                             :disabled="mainSubjectsCountDisabled"
@@ -169,7 +191,7 @@ const otherSubjectsCountDisabled = ref(true);
                             :label="$t('trans.other_subjects_count')"
                             input-id="other_subjects_count"
                             v-model="form.other_subjects_count"
-                            @input="clearFormErrors(form, 'other_subjects_count')"
+                            @input="onInputOtherSubjectsCount"
                             :error="form.errors.other_subjects_count"
                             :is-required="true"
                             :disabled="otherSubjectsCountDisabled"
@@ -185,7 +207,7 @@ const otherSubjectsCountDisabled = ref(true);
                                         :value="subject['id']"
                                         v-model="form.main_subject_ids"
                                         :label="subject['attributes']['name']"
-                                        disabled
+                                        :disabled="mainSubjectsDisabled"
                                     />
                                 </template>
                             </div>

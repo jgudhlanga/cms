@@ -4,6 +4,7 @@ import { ColorVariant } from '@/enums/colors';
 import { errorAlert, forbiddenAlert, openModal, successAlert } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
 import { buildFormOptions, toggleFormLoader } from '@/lib/forms';
+import { hasAbility } from '@/lib/permissions';
 import { getIdParams } from '@/lib/utils';
 import HttpService from '@/services/http.service';
 import { useCreateApplicationFormStore } from '@/store/portal/useCreateApplicationFormStore';
@@ -16,7 +17,7 @@ import { ref } from 'vue';
 import { z } from 'zod';
 
 export const useDepartmentLevels = () => {
-    const { moreActionButton, textLink, actionButton } = useDataTables();
+    const { moreActionButton, textLink, actionButton, checkStatusIcon, onEdit } = useDataTables();
     const { props } = usePage();
     const { can } = props?.auth as Auth;
     const { navigateTo } = useUtils();
@@ -30,7 +31,15 @@ export const useDepartmentLevels = () => {
                     return textLink(route('department-levels.requirements', id), row.original.attributes?.level);
                 },
             },
-            { header: trans_choice('trans.description', 1), accessorKey: 'attributes.description' },
+            {
+                header: trans('trans.configured'),
+                accessorKey: 'requirement',
+                meta: { align: 'center' },
+                enableSorting: false,
+                cell: ({ row }: { row: { original: DepartmentLevel } }) => {
+                    return checkStatusIcon(!!row.original.relationships?.requirement);
+                },
+            },
             {
                 header: trans_choice('trans.requirement', 2),
                 accessorKey: 'requirements',
@@ -51,22 +60,12 @@ export const useDepartmentLevels = () => {
                 enableSorting: false,
                 meta: { align: 'right' },
                 cell: ({ row }: { row: { original: DepartmentLevel } }) => {
+                    const allowed = hasAbility('create:department-metadata');
+                    const id = getIdParams(row.original.id?.toString() ?? '');
                     return moreActionButton(!!row.original?.attributes?.deletedAt, [
                         {
-                            key: 'view',
-                            action: () => {},
-                        },
-                        {
-                            key: 'archive',
-                            action: () => {},
-                        },
-                        {
-                            key: 'restore',
-                            action: () => {},
-                        },
-                        {
-                            key: 'delete',
-                            action: () => {},
+                            key: 'edit',
+                            action: () => onEdit(allowed, route('department-levels.requirements', id)),
                         },
                     ]);
                 },

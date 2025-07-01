@@ -315,5 +315,7 @@ return [
     "end_date_start_date_validation" => "End date must be after or equal to start date",
     "student_minimum_age_required" =>  "Student must be at least :age years old.",
     "field_must_be_number" =>  ":field must be a number.",
-    "nothing_has_changed_to_save" => "Nothing has changed to trigger save"
+    "nothing_has_changed_to_save" => "Nothing has changed to save",
+    "configured" => "Configured",
+    "main_subject_not_valid" => "Main subject required should be :count",
 ];
