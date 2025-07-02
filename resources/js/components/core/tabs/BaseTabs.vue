@@ -8,10 +8,14 @@ interface Props {
 }
 
 defineProps<Props>();
+
+const handleTabChange = (value: string) => {
+    console.log("Active tab:", value);
+};
 </script>
 
 <template>
-    <Tabs :default-value="defaultValue">
+    <Tabs :default-value="defaultValue" :onValueChange="handleTabChange" >
         <TabsList class="w-full">
             <TabsTrigger v-for="tab in tabs" :key="'tab_' + tab.value" :value="tab.value" class="text-xs font-light uppercase">
                 {{ tab?.transLabel!() }}

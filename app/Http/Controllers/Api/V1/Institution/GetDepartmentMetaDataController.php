@@ -9,7 +9,6 @@ use App\Models\Institution\InstitutionDepartment;
 
 class GetDepartmentMetaDataController extends Controller
 {
-
     public function __construct()
     {
 
