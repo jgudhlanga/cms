@@ -303,7 +303,7 @@ export function useDataTables() {
         if (!can) {
             return forbiddenAlert();
         }
-        router.get(url);
+        return router.get(url);
     };
 
     /**
@@ -318,7 +318,7 @@ export function useDataTables() {
         if (!can) {
             return forbiddenAlert();
         }
-        router.get(url);
+       return router.get(url);
     };
 
     /**

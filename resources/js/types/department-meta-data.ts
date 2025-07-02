@@ -64,6 +64,16 @@ export interface DepartmentMetaData {
     departmentCoursesIds: Array<string | undefined | null> | null;
 }
 
+export interface DepartmentCourseMetaData {
+    courses: DepartmentCourse[];
+    departmentCoursesIds: Array<string | undefined | null> | null;
+}
+
+export interface DepartmentLevelMetaData {
+    levels: DepartmentCourse[];
+    departmentLevelsIds: Array<string | undefined | null> | null;
+}
+
 export type DepartmentLevelRequirement = {
     type: string;
     id: string | number;

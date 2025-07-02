@@ -68,10 +68,10 @@ const form = useForm<DepartmentLevelRequirementParams>({
 onMounted(async () => {
     await listSubjects();
     form.is_o_level_required = isOLevelRequired.value = isItTrue(requirements?.attributes?.isOLevelRequired);
-    form.required_subjects_count = requirements?.attributes?.requiredSubjectsCount ?? '';
-    form.main_subjects_count = requirements?.attributes?.mainSubjectsCount ?? '';
+    form.required_subjects_count = requirements?.attributes?.requiredSubjectsCount?.toString() ?? '';
+    form.main_subjects_count = requirements?.attributes?.mainSubjectsCount?.toString() ?? '';
+    form.other_subjects_count = requirements?.attributes?.otherSubjectsCount?.toString() ?? '';
     form.main_subject_ids = requirements?.attributes?.mainSubjectIds ?? [];
-    form.other_subjects_count = requirements?.attributes?.otherSubjectsCount ?? '';
     form.only_read_write_required = onlyReadWriteRequired.value = isItTrue(requirements?.attributes?.onlyReadWriteRequired);
     form.required_level_id = requirements?.attributes?.requiredLevelId?.toString();
     mainSubjectsCountDisabled.value = isItTrue(!requirements?.attributes?.mainSubjectsCount);
@@ -130,7 +130,7 @@ const updateLevel = () => {
         errorAlert(trans('trans.nothing_has_changed_to_save'));
         return;
     }
-    if (Number(form.main_subjects_count ?? '') > 0 && form.main_subject_ids?.length != Number(form.main_subjects_count)) {
+    if (Number(form.main_subjects_count ?? '') > 0 && form.main_subject_ids?.length < Number(form.main_subjects_count)) {
         errorAlert(trans('trans.main_subject_not_valid', { count: form.main_subjects_count?.toString() ?? '' }));
         return;
     }

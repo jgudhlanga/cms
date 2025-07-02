@@ -9,7 +9,12 @@ import { getIdParams } from '@/lib/utils';
 import HttpService from '@/services/http.service';
 import { useCreateApplicationFormStore } from '@/store/portal/useCreateApplicationFormStore';
 import { Auth } from '@/types';
-import { DepartmentLevel, DepartmentLevelCourse, DepartmentLevelRequirement } from '@/types/department-meta-data';
+import {
+    DepartmentLevel,
+    DepartmentLevelCourse,
+    DepartmentLevelMetaData,
+    DepartmentLevelRequirement
+} from '@/types/department-meta-data';
 import { InertiaForm, usePage } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 import { storeToRefs } from 'pinia';
@@ -137,7 +142,9 @@ export const useDepartmentLevels = () => {
         required_level_completed,
         read_write_acknowledged,
     } = storeToRefs(useCreateApplicationFormStore());
+
     const levelRequirements = ref<DepartmentLevelRequirement | null>(storeLevelRequirements?.value ?? null);
+
     const listLevelRequirements = async (departmentLevelId: string) => {
         if (Number(departmentLevelId) > 0) {
             isLoading.value = true;
@@ -178,6 +185,19 @@ export const useDepartmentLevels = () => {
                 : z.string().optional(),
         });
 
+    const departmentLevelsMetadata = ref<DepartmentLevelMetaData | null>(null);
+
+    const loadDepartmentLevelsMetadata = async (institutionDepartmentId: string) => {
+        try {
+            isLoading.value = true;
+            departmentLevelsMetadata.value = await HttpService.get(route('v1.department-metadata.levels', institutionDepartmentId));
+        } catch {
+            errorAlert(trans('trans.load_data_failure', { data: trans_choice('trans.levels', 2) }));
+        } finally {
+            isLoading.value = false;
+        }
+    };
+
     return {
         createDepartmentLevelColumns,
         openDepartmentLevelsModal,
@@ -191,5 +211,7 @@ export const useDepartmentLevels = () => {
         levelRequirements,
         listLevelRequirements,
         levelRequirementsFormSchema,
+        departmentLevelsMetadata,
+        loadDepartmentLevelsMetadata,
     };
 };

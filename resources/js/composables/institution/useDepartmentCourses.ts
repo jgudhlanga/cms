@@ -4,10 +4,12 @@ import { errorAlert, forbiddenAlert, openModal, successAlert } from '@/lib/alert
 import { APP_MODULE_KEYS } from '@/lib/constants';
 import { buildFormOptions, toggleFormLoader } from '@/lib/forms';
 import { getIdParams } from '@/lib/utils';
+import HttpService from '@/services/http.service';
 import { Auth } from '@/types';
-import { DepartmentCourse, DepartmentCourseLevel } from '@/types/department-meta-data';
+import { DepartmentCourse, DepartmentCourseLevel, DepartmentCourseMetaData } from '@/types/department-meta-data';
 import { InertiaForm, usePage } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
+import { ref } from 'vue';
 
 export const useDepartmentCourses = () => {
     const { moreActionButton, textLink, checkStatusIcon, onEdit } = useDataTables();
@@ -51,18 +53,6 @@ export const useDepartmentCourses = () => {
                         {
                             key: 'edit',
                             action: () => onEdit(can['update:department-metadata'], route('department-courses.show', id)),
-                        },
-                        {
-                            key: 'archive',
-                            action: () => {},
-                        },
-                        {
-                            key: 'restore',
-                            action: () => {},
-                        },
-                        {
-                            key: 'delete',
-                            action: () => {},
                         },
                     ]);
                 },
@@ -111,10 +101,26 @@ export const useDepartmentCourses = () => {
         openModal({ name: APP_MODULE_KEYS.department_courses, edit: departmentCourses });
     };
 
+    const isLoading = ref(false);
+    const departmentCoursesMetaData = ref<DepartmentCourseMetaData | null>(null);
+
+    const loadDepartmentCoursesMetaData = async (institutionDepartmentId: string) => {
+        try {
+            isLoading.value = true;
+            departmentCoursesMetaData.value = await HttpService.get(route('v1.department-metadata.courses', institutionDepartmentId));
+        } catch {
+            errorAlert(trans('trans.load_data_failure', { data: trans_choice('trans.course', 2) }));
+        } finally {
+            isLoading.value = false;
+        }
+    };
     return {
         createDepartmentCourseColumns,
         openDepartmentCoursesModal,
         syncDepartmentCourses,
         updateDepartmentCourses,
+        isLoading,
+        departmentCoursesMetaData,
+        loadDepartmentCoursesMetaData,
     };
 };

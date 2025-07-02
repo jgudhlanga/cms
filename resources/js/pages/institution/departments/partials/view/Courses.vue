@@ -1,35 +1,41 @@
 <script setup lang="ts">
 import { GenericButton } from '@/components/core/button';
+import TableLoading from '@/components/core/loader/TableLoading.vue';
 import DataTable from '@/components/core/table/DataTable.vue';
 import { useDepartmentCourses } from '@/composables/institution/useDepartmentCourses';
 import { ColorVariant } from '@/enums/colors';
 import { IconName } from '@/lib/icons';
-import { PageProps } from '@/types';
-import { DepartmentCourse } from '@/types/department-meta-data';
-import { usePage } from '@inertiajs/vue3';
+import { hasAbility } from '@/lib/permissions';
+import { computed, onMounted } from 'vue';
 
 interface Props {
     institutionDepartmentId: string;
-    departmentCourses: DepartmentCourse[];
-    departmentCoursesIds: Array<string | undefined | null> | null;
 }
 
-defineProps<Props>();
-const { props: pageProps } = usePage<PageProps>();
-const { can } = pageProps?.auth;
+const props = defineProps<Props>();
 
-const { createDepartmentCourseColumns, openDepartmentCoursesModal } = useDepartmentCourses();
+const { createDepartmentCourseColumns, openDepartmentCoursesModal, isLoading, departmentCoursesMetaData, loadDepartmentCoursesMetaData } =
+    useDepartmentCourses();
+const departmentCourses = computed(() => departmentCoursesMetaData.value?.courses ?? []);
+const departmentCoursesIds = computed(() => departmentCoursesMetaData.value?.departmentCoursesIds ?? []);
+
+onMounted(() => {
+    loadDepartmentCoursesMetaData(props.institutionDepartmentId ?? '');
+});
+
+const allowed = hasAbility('create:department-metadata');
 </script>
 
 <template>
-    <DataTable :data="departmentCourses" :columns="createDepartmentCourseColumns()" :show-archived-filter="false">
-        <template #head-right v-if="can['create:department-metadata']">
+    <TableLoading v-if="isLoading" />
+    <DataTable v-else :data="departmentCourses ?? []" :columns="createDepartmentCourseColumns()" :show-archived-filter="false">
+        <template #head-right v-if="allowed">
             <GenericButton
                 :icon="IconName.add"
                 class="rounded-full"
                 :icon-variant="ColorVariant.white"
                 :variant="ColorVariant.primary"
-                @click="() => openDepartmentCoursesModal(departmentCoursesIds)"
+                @click="() => openDepartmentCoursesModal(departmentCoursesIds ?? [])"
                 :title="$t('trans.link_courses')"
             />
         </template>

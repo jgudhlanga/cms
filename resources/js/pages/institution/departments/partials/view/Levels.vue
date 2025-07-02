@@ -5,22 +5,28 @@ import { useDepartmentLevels } from '@/composables/institution/useDepartmentLeve
 import { ColorVariant } from '@/enums/colors';
 import { IconName } from '@/lib/icons';
 import { hasAbility } from '@/lib/permissions';
-import { DepartmentLevel } from '@/types/department-meta-data';
+import { computed, onMounted } from 'vue';
+import TableLoading from '@/components/core/loader/TableLoading.vue';
 
 interface Props {
     institutionDepartmentId: string;
-    departmentLevels: DepartmentLevel[];
-    departmentLevelsIds: Array<string | undefined | null> | null;
 }
 
-defineProps<Props>();
+const props = defineProps<Props>();
 
-const { createDepartmentLevelColumns, openDepartmentLevelsModal } = useDepartmentLevels();
+const { createDepartmentLevelColumns, openDepartmentLevelsModal, isLoading, departmentLevelsMetadata, loadDepartmentLevelsMetadata } = useDepartmentLevels();
 const allowed = hasAbility('create:department-metadata');
+const departmentLevelsIds = computed(() => departmentLevelsMetadata.value?.departmentLevelsIds ?? []);
+const departmentLevels = computed(() => departmentLevelsMetadata.value?.levels ?? []);
+
+onMounted(() => {
+    loadDepartmentLevelsMetadata(props.institutionDepartmentId ?? '');
+})
 </script>
 
 <template>
-    <DataTable :data="departmentLevels" :columns="createDepartmentLevelColumns()" :show-archived-filter="false">
+    <TableLoading v-if="isLoading"/>
+    <DataTable v-else :data="departmentLevels" :columns="createDepartmentLevelColumns()" :show-archived-filter="false">
         <template #head-right v-if="allowed">
             <GenericButton
                 :icon="IconName.add"
