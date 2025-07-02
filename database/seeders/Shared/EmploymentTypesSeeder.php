@@ -4,7 +4,6 @@ namespace Database\Seeders\Shared;
 
 use App\Enums\Shared\EmploymentTypeEnum;
 use App\Models\Shared\EmploymentType;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class EmploymentTypesSeeder extends Seeder

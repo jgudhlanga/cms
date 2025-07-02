@@ -11,10 +11,10 @@ class RolesTableSeeder extends Seeder
 {
     public function run(): void
     {
-        foreach (RoleEnum::cases() as $row) {
-            $exist = Role::where('name', $row->value)->first();
+        foreach (RoleEnum::cases() as $role) {
+            $exist = Role::where('name', $role->value)->first();
             if (!$exist instanceof Role) {
-                $role = Role::create(['name' => $row->value]);
+                $role = Role::create(['name' => $role->value, 'description' => $role->description()]);
                 if ($role->name == RoleEnum::SUPER_ADMINISTRATOR->value) {
                     $this->assignSuperAdministratorPermissions($role);
                 }

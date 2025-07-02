@@ -4,7 +4,7 @@ namespace App\Http\Filters\Institution;
 
 use App\Http\Filters\QueryFilter;
 
-class DepartmentStaffFilter extends QueryFilter
+class StaffFilter extends QueryFilter
 {
     protected array $sortable = [
         'createdAt' => 'created_at',

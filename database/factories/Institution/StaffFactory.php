@@ -2,13 +2,13 @@
 
 namespace Database\Factories\Institution;
 
-use App\Models\Institution\DepartmentStaff;
+use App\Models\Institution\Staff;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends Factory<DepartmentStaff>
+ * @extends Factory<Staff>
  */
-class DepartmentStaffFactory extends Factory
+class StaffFactory extends Factory
 {
 
     public function definition(): array

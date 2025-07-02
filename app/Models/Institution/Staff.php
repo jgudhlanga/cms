@@ -2,7 +2,7 @@
 
 namespace App\Models\Institution;
 
-use App\Http\Filters\Institution\DepartmentStaffFilter;
+use App\Http\Filters\Institution\StaffFilter;
 use App\Traits\BelongsToTenant;
 use App\Traits\Filterable;
 use App\Traits\Paginatable;
@@ -16,19 +16,42 @@ use Spatie\Activitylog\Traits\LogsActivity;
 /**
  *
  * @mixin Builder
- * @method static filter(DepartmentStaffFilter $filters)
+ * @method static filter(StaffFilter $filters)
  */
-class DepartmentStaff extends Model
+class Staff extends Model
 {
     use HasFactory, SoftDeletes, Filterable, BelongsToTenant, Paginatable, LogsActivity;
 
-    protected $fillable = ['tenant_id', 'institution_department_id', 'user_id', 'employment_type_id', 'start_date', 'end_date', 'status_id'];
+    protected $fillable = [
+        'tenant_id',
+        'user_id',
+        'employment_type_id',
+        'start_date',
+        'end_date',
+        'status_id',
+        'employee_number',
+        'staff_id_number',
+        'title_id',
+        'gender_id',
+        'marital_status_id',
+        'race_id',
+        'id_type',
+        'id_number',
+        'passport_number',
+        'work_permit_number',
+        'country_id',
+        'date_of_birth',
+        'religion_id',
+        'denomination',
+        'height',
+        'weight',
+    ];
 
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
             ->logFillable()
-            ->useLogName('DepartmentStaff')
+            ->useLogName('Staff')
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
     }
