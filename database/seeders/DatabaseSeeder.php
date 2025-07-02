@@ -19,6 +19,7 @@ use Database\Seeders\Shared\ApplicationStepsSeeder;
 use Database\Seeders\Shared\CommunicationMethodSeeder;
 use Database\Seeders\Shared\CountrySeeder;
 use Database\Seeders\Shared\DistrictsTableSeeder;
+use Database\Seeders\Shared\EmploymentTypesSeeder;
 use Database\Seeders\Shared\GenderSeeder;
 use Database\Seeders\Shared\LanguageSeeder;
 use Database\Seeders\Shared\PaymentDaySeeder;
@@ -74,6 +75,7 @@ class DatabaseSeeder extends Seeder
             SubjectsTableSeeder::class,
             ModesOfStudyTableSeeder::class,
             InstitutionDepartmentsTableSeeder::class,
+            EmploymentTypesSeeder::class,
         ]);
     }
 }

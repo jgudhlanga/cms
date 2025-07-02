@@ -317,5 +317,6 @@ return [
     "field_must_be_number" =>  ":field must be a number.",
     "nothing_has_changed_to_save" => "Nothing has changed to save",
     "configured" => "Configured",
-    "main_subject_not_valid" => "Main subject required should be :count",
+    "main_subject_not_valid" => "Main subject required should be at least :count",
+    "employment_type" => "Employment type|Employment types",
 ];

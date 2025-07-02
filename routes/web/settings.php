@@ -14,6 +14,7 @@ use App\Http\Controllers\Shared\ApplicationStepController;
 use App\Http\Controllers\Shared\CommunicationMethodController;
 use App\Http\Controllers\Shared\CountryController;
 use App\Http\Controllers\Shared\DistrictController;
+use App\Http\Controllers\Shared\EmploymentTypeController;
 use App\Http\Controllers\Shared\GenderController;
 use App\Http\Controllers\Shared\LanguageController;
 use App\Http\Controllers\Shared\MaritalStatusController;
@@ -129,4 +130,8 @@ Route::prefix('settings')->middleware('auth')->group(function () {
     Route::put('application-steps/{application_step}/restore', [ApplicationStepController::class, 'restore'])->name('application-steps.restore');
     Route::delete('application-steps/{application_step}/force-delete', [ApplicationStepController::class, 'forceDelete'])->name('application-steps.force-delete');
     Route::resource('application-steps', ApplicationStepController::class)->names('application-steps');
+    # ==================================== EMPLOYMENT TYPES ======================================================
+    Route::put('employment-types/{employment_type}/restore', [EmploymentTypeController::class, 'restore'])->name('employment-types.restore');
+    Route::delete('employment-types/{employment_type}/force-delete', [EmploymentTypeController::class, 'forceDelete'])->name('employment-types.force-delete');
+    Route::resource('employment-types', EmploymentTypeController::class)->names('employment-types');
 });

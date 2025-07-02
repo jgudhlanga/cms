@@ -23,6 +23,10 @@ export function useSettings() {
             url: route('districts.index'),
         },
         {
+            transChoiceKey: 'employment_type',
+            url: route('employment-types.index'),
+        },
+        {
             transChoiceKey: 'gender',
             url: route('genders.index'),
         },

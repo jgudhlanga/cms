@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\V1\Shared\AcademicLevelController;
 use App\Http\Controllers\Api\V1\Shared\AddressTypeController;
 use App\Http\Controllers\Api\V1\Shared\CountryController;
 use App\Http\Controllers\Api\V1\Shared\DistrictController;
+use App\Http\Controllers\Api\V1\Shared\EmploymentTypeController;
 use App\Http\Controllers\Api\V1\Shared\GenderController;
 use App\Http\Controllers\Api\V1\Shared\GradeController;
 use App\Http\Controllers\Api\V1\Shared\MaritalStatusController;
@@ -52,4 +53,6 @@ Route::prefix('v1')->group(function () {
     Route::apiResource('academic-levels', AcademicLevelController::class)->names('v1.academic-levels');
     # ==================================== SPONSOR TYPE ======================================================
     Route::apiResource('sponsor-types', SponsorTypeController::class)->names('v1.sponsor-types');
+    # ==================================== EMPLOYMENT TYPE ======================================================
+    Route::apiResource('employment-types', EmploymentTypeController::class)->names('v1.employment-types');
 });
