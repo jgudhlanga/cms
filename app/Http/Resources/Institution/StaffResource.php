@@ -46,7 +46,7 @@ class StaffResource extends JsonResource
                 'deletedAt' => $this->deleted_at,
             ],
             'relationships' => [
-                'user' => new UserResource($this->user),
+                'user' => UserResource::make($this->user),
                 'roles' => RoleResource::collection($this->roles),
             ]
         ];

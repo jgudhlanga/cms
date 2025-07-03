@@ -23,8 +23,8 @@ export const useInstitution = () => {
                 value: 'levels',
                 component: h(Levels, { institutionDepartmentId }),
             },
+            { transLabel: () => trans('trans.staff'), value: 'staff', component: h(Staff, { institutionDepartmentId })},
             { transLabel: () => trans_choice('trans.application', 2), value: 'applications', component: Applications },
-            { transLabel: () => trans('trans.staff'), value: 'staff', component: Staff },
             { transLabel: () => trans_choice('trans.calendar', 2), value: 'calendar', component: Calendar },
             {
                 transLabel: () => trans_choice('trans.announcement', 2),

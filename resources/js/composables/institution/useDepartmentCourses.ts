@@ -41,7 +41,6 @@ export const useDepartmentCourses = () => {
                     return checkStatusIcon(row.original.attributes?.showOnCurrentApplicationPeriod);
                 },
             },
-            { header: trans_choice('trans.description', 1), accessorKey: 'attributes.description' },
             {
                 header: trans_choice('trans.action', 2),
                 accessorKey: 'actions',

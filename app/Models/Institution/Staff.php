@@ -3,12 +3,15 @@
 namespace App\Models\Institution;
 
 use App\Http\Filters\Institution\StaffFilter;
+use App\Models\Users\User;
 use App\Traits\BelongsToTenant;
 use App\Traits\Filterable;
 use App\Traits\Paginatable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
@@ -22,6 +25,7 @@ class Staff extends Model
 {
     use HasFactory, SoftDeletes, Filterable, BelongsToTenant, Paginatable, LogsActivity;
 
+    protected $table = 'staff';
     protected $fillable = [
         'tenant_id',
         'user_id',
@@ -46,6 +50,16 @@ class Staff extends Model
         'height',
         'weight',
     ];
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function institutionDepartments(): BelongsToMany
+    {
+        return $this->belongsToMany(InstitutionDepartment::class);
+    }
 
     public function getActivitylogOptions(): LogOptions
     {

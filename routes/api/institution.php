@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\V1\Institution\InstitutionDepartmentController;
 Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     Route::get('departments/{institution_department}/courses', [DepartmentMetaDataController::class, 'courses'])->name('v1.department-metadata.courses');
     Route::get('departments/{institution_department}/levels', [DepartmentMetaDataController::class, 'levels'])->name('v1.department-metadata.levels');
+    Route::get('departments/{institution_department}/staff', [DepartmentMetaDataController::class, 'staff'])->name('v1.department-metadata.staff');
 });
 Route::prefix('v1')->group(function () {
     Route::get('institution-departments', [InstitutionDepartmentController::class, 'index'])->name('v1.institution-departments.index');

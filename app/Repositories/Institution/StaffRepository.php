@@ -17,7 +17,7 @@ class StaffRepository extends BaseRepository implements IStaffRepository
 
     public function create(CreateStaffDto $dto): Staff
     {
-        return $this->subject->create($this->getFields($dto))->refresh();
+        return $this->staff->create($this->getFields($dto))->refresh();
     }
 
     public function update(Staff $staff, CreateStaffDto $dto): Staff
@@ -27,7 +27,7 @@ class StaffRepository extends BaseRepository implements IStaffRepository
 
     public function allFilter($columns = ['*'], StaffFilter $filters = null)
     {
-        return $this->subject
+        return $this->staff
             ->select($columns)
             ->filter($filters)
             ->orderBy('created_at')
