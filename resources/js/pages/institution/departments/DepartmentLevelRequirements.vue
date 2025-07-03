@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { BaseCheckbox } from '@/components/core/form';
-import SharedNumberField from '@/components/core/form/number/SharedNumberField.vue';
+import { BaseCheckbox, BaseInput } from '@/components/core/form';
 import BaseRadioGroup from '@/components/core/form/radio-group/BaseRadioGroup.vue';
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import Empty from '@/components/core/util/Empty.vue';
@@ -10,6 +9,8 @@ import { useDepartmentLevels } from '@/composables/institution/useDepartmentLeve
 import { useSubjects } from '@/composables/institution/useSubjects';
 import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
+import { errorAlert } from '@/lib/alerts';
+import { clearFormErrors } from '@/lib/forms';
 import { getIdParams } from '@/lib/utils';
 import { AuthObject } from '@/types/data-pagination';
 import { DepartmentLevel, DepartmentLevelRequirement, DepartmentLevelRequirementParams } from '@/types/department-meta-data';
@@ -17,6 +18,7 @@ import { RadioGroupOption } from '@/types/forms';
 import { InstitutionDepartment } from '@/types/institution';
 import type { Link } from '@/types/ui';
 import { Head, useForm } from '@inertiajs/vue3';
+import { trans } from 'laravel-vue-i18n';
 import { computed, onMounted, ref } from 'vue';
 import BaseButton from '../../../components/core/button/BaseButton.vue';
 
@@ -46,16 +48,19 @@ const breadcrumbs: Array<Link> = [
 
 const isOLevelRequired = ref(false);
 const onlyReadWriteRequired = ref(false);
+const mainSubjectsCountDisabled = ref(true);
+const otherSubjectsCountDisabled = ref(true);
+const mainSubjectsDisabled = ref(true);
 const { listSubjects, subjects } = useSubjects();
-const { storeDepartmentLevelRequirements } = useDepartmentLevels();
+const { storeDepartmentLevelRequirements, levelRequirementsFormSchema } = useDepartmentLevels();
 
 const { navigateTo } = useUtils();
 const form = useForm<DepartmentLevelRequirementParams>({
     is_o_level_required: isOLevelRequired.value,
-    required_subjects_count: null,
-    main_subjects_count: null,
+    required_subjects_count: '',
+    main_subjects_count: '',
     main_subject_ids: [],
-    other_subjects_count: null,
+    other_subjects_count: '',
     only_read_write_required: onlyReadWriteRequired.value,
     required_level_id: '',
 });
@@ -63,12 +68,15 @@ const form = useForm<DepartmentLevelRequirementParams>({
 onMounted(async () => {
     await listSubjects();
     form.is_o_level_required = isOLevelRequired.value = isItTrue(requirements?.attributes?.isOLevelRequired);
-    form.required_subjects_count = Number(requirements?.attributes?.requiredSubjectsCount) ?? null;
-    form.main_subjects_count = Number(requirements?.attributes?.mainSubjectsCount) ?? null;
+    form.required_subjects_count = requirements?.attributes?.requiredSubjectsCount?.toString() ?? '';
+    form.main_subjects_count = requirements?.attributes?.mainSubjectsCount?.toString() ?? '';
+    form.other_subjects_count = requirements?.attributes?.otherSubjectsCount?.toString() ?? '';
     form.main_subject_ids = requirements?.attributes?.mainSubjectIds ?? [];
-    form.other_subjects_count = Number(requirements?.attributes?.otherSubjectsCount) ?? null;
     form.only_read_write_required = onlyReadWriteRequired.value = isItTrue(requirements?.attributes?.onlyReadWriteRequired);
     form.required_level_id = requirements?.attributes?.requiredLevelId?.toString();
+    mainSubjectsCountDisabled.value = isItTrue(!requirements?.attributes?.mainSubjectsCount);
+    otherSubjectsCountDisabled.value = isItTrue(!requirements?.attributes?.otherSubjectsCount);
+    mainSubjectsDisabled.value = isItTrue(!requirements?.attributes?.otherSubjectsCount);
 });
 
 const selectOLevelRequired = (value: any) => {
@@ -97,7 +105,51 @@ const options = computed(() => {
 const updateLevel = () => {
     form.is_o_level_required = isOLevelRequired.value;
     form.only_read_write_required = onlyReadWriteRequired.value;
+    const result = levelRequirementsFormSchema(isOLevelRequired.value).safeParse(form.data());
+    if (!result.success) {
+        const fieldErrors = result.error.flatten().fieldErrors;
+        const formattedErrors: Record<keyof DepartmentLevelRequirementParams, any> = {
+            is_o_level_required: false,
+            required_subjects_count: '',
+            main_subjects_count: '',
+            main_subject_ids: [],
+            other_subjects_count: '',
+            only_read_write_required: false,
+            required_level_id: null,
+        };
+        (Object.keys(fieldErrors) as (keyof typeof fieldErrors)[]).forEach((key) => {
+            const errors = fieldErrors[key];
+            if (errors && errors.length > 0) {
+                formattedErrors[key as keyof DepartmentLevelRequirementParams] = errors[0];
+            }
+        });
+        form.setError(formattedErrors);
+        return;
+    }
+    if (!isItTrue(isOLevelRequired.value) && !onlyReadWriteRequired.value && !form.required_level_id) {
+        errorAlert(trans('trans.nothing_has_changed_to_save'));
+        return;
+    }
+    if (Number(form.main_subjects_count ?? '') > 0 && form.main_subject_ids?.length < Number(form.main_subjects_count)) {
+        errorAlert(trans('trans.main_subject_not_valid', { count: form.main_subjects_count?.toString() ?? '' }));
+        return;
+    }
     storeDepartmentLevelRequirements(departmentLevel.id?.toString() ?? '', form, institutionDepartment?.attributes?.departmentId.toString() ?? '');
+};
+
+const onInputRequiredSubjectsCount = () => {
+    clearFormErrors(form, 'required_subjects_count');
+    mainSubjectsCountDisabled.value = false;
+};
+
+const onInputMainSubjectsCount = () => {
+    clearFormErrors(form, 'main_subjects_count');
+    otherSubjectsCountDisabled.value = false;
+};
+
+const onInputOtherSubjectsCount = () => {
+    clearFormErrors(form, 'other_subjects_count');
+    mainSubjectsDisabled.value = false;
 };
 </script>
 
@@ -117,20 +169,32 @@ const updateLevel = () => {
                 </div>
                 <div v-if="isOLevelRequired" class="flex flex-col">
                     <div class="my-5 grid grid-cols-4 gap-3">
-                        <SharedNumberField
+                        <BaseInput
                             :label="$t('trans.required_subjects_count')"
                             input-id="required_subjects_count"
                             v-model="form.required_subjects_count"
+                            :inputAutoFocus="true"
+                            @input="onInputRequiredSubjectsCount"
+                            :error="form.errors.required_subjects_count"
+                            :is-required="true"
                         />
-                        <SharedNumberField
+                        <BaseInput
                             :label="$t('trans.main_subjects_count')"
                             input-id="main_subjects_count"
                             v-model="form.main_subjects_count"
+                            @input="onInputMainSubjectsCount"
+                            :error="form.errors.main_subjects_count"
+                            :is-required="true"
+                            :disabled="mainSubjectsCountDisabled"
                         />
-                        <SharedNumberField
+                        <BaseInput
                             :label="$t('trans.other_subjects_count')"
                             input-id="other_subjects_count"
                             v-model="form.other_subjects_count"
+                            @input="onInputOtherSubjectsCount"
+                            :error="form.errors.other_subjects_count"
+                            :is-required="true"
+                            :disabled="otherSubjectsCountDisabled"
                         />
                     </div>
                     <template v-if="subjects && subjects.length > 0">
@@ -143,6 +207,7 @@ const updateLevel = () => {
                                         :value="subject['id']"
                                         v-model="form.main_subject_ids"
                                         :label="subject['attributes']['name']"
+                                        :disabled="mainSubjectsDisabled"
                                     />
                                 </template>
                             </div>

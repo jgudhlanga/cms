@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Users;
 use App\DTO\Users\UserDto;
 use App\Http\Controllers\Controller;
 use App\Http\Filters\Users\UserFilter;
-use App\Http\Requests\Users\CreateUserRequest;
+use App\Http\Requests\Users\UserRequest;
 use App\Http\Requests\Users\UpdateUserRequest;
 use App\Http\Resources\Users\UserResource;
 use App\Models\Users\User;
@@ -14,72 +14,69 @@ use Inertia\Inertia;
 
 class UserController extends Controller
 {
-	public function __construct(protected IUserRepository $repository)
-	{
-	}
+    public function __construct(protected IUserRepository $repository)
+    {
+    }
 
-	public function index(UserFilter $filters)
-	{
-		$this->authorize('viewAny', User::class);
-		$users = UserResource::collection($this->repository->allFilter(['*'], $filters));
+    public function index(UserFilter $filters)
+    {
+        $this->authorize('viewAny', User::class);
+        $users = UserResource::collection($this->repository->allFilter(['*'], $filters));
 
-		return Inertia::render('users/Index', [
-			'users' => $users,
-			'filters' => request()->only(['search', 'trashed']),
-			'trashedCount' => $this->repository->allTrashed()->count(),
-		]);
-	}
+        return Inertia::render('users/Index', [
+            'users' => $users,
+            'filters' => request()->only(['search', 'trashed']),
+            'trashedCount' => $this->repository->allTrashed()->count(),
+        ]);
+    }
 
-	public function create()
-	{
-		$this->authorize('create', User::class);
-		return Inertia::render('users/Create', []);
-	}
+    public function create()
+    {
+        $this->authorize('create', User::class);
+        return Inertia::render('users/Create', []);
+    }
 
-	public function store(CreateUserRequest $request)
-	{
-		$this->authorize('create', User::class);
+    public function store(UserRequest $request)
+    {
+        $this->authorize('create', User::class);
         $tenant = $request->user()->tenant;
-		$this->repository->create(UserDto::fromCreateUserRequest($request, $tenant));
-	}
+        $this->repository->create(UserDto::fromUserRequest($request, $tenant));
+    }
 
-	public function show(User $user)
-	{
-		$this->authorize('view', $user);
+    public function show(User $user)
+    {
+        $this->authorize('view', $user);
+        $user = new UserResource($user);
+        return Inertia::render('users/Show', compact('user'));
+    }
 
-		return Inertia::render('users/Show', [
-			'user' => new UserResource($user),
-			'filters' => request()->only(['search', 'trashed']),
-		]);
-	}
+    public function edit(User $user)
+    {
+        //
+    }
 
-	public function edit(User $user)
-	{
-		//
-	}
+    public function update(UserRequest $request, User $user)
+    {
+        $this->authorize('update', $user);
+        $this->repository->update($user, UserDto::fromUserRequest($request));
+    }
 
-	public function update(UpdateUserRequest $request, User $user)
-	{
-		$this->authorize('update', $user);
-		$this->repository->update($user, UserDto::fromUpdateUseRequest($request));
-	}
+    public function destroy(User $user)
+    {
+        $this->authorize('delete', $user);
+        $this->repository->delete($user);
+    }
 
-	public function destroy(User $user)
-	{
-		$this->authorize('delete', $user);
-		$this->repository->delete($user);
-	}
+    public function restore(string $id)
+    {
+        $user = $this->repository->findTrashed($id);
+        $this->authorize('restore', $user);
+        $this->repository->restore($user);
+    }
 
-	public function restore(string $id)
-	{
-		$user = $this->repository->findTrashed($id);
-		$this->authorize('restore', $user);
-		$this->repository->restore($user);
-	}
-
-	public function forceDelete(User $user)
-	{
-		$this->authorize('forceDelete', $user);
-		$this->repository->delete($user, true);
-	}
+    public function forceDelete(User $user)
+    {
+        $this->authorize('forceDelete', $user);
+        $this->repository->delete($user, true);
+    }
 }

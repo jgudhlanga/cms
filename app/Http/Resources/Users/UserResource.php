@@ -33,6 +33,10 @@ class UserResource extends JsonResource
                 'email' => $this->email,
                 'tenantId' => $this->tenant_id,
                 'tenant' => $this->tenant?->name,
+                'statusId' => $this->status_id,
+                'status' => $this->status?->title,
+                'lastLoginAt' => $this->last_login_at,
+                'loginCount' => $this->login_count ?? 0,
                 "avatarUrl" => $this?->avatarUrl,
                 $this->mergeWhen($request->routeIs('users.*'), [
                     'createdAt' => $this->created_at,

@@ -15,9 +15,11 @@ use Database\Seeders\Institution\ModesOfStudyTableSeeder;
 use Database\Seeders\Institution\SubjectsTableSeeder;
 use Database\Seeders\Shared\AcademicLevelsTableSeeder;
 use Database\Seeders\Shared\AddressTypesTableSeeder;
+use Database\Seeders\Shared\ApplicationStepsSeeder;
 use Database\Seeders\Shared\CommunicationMethodSeeder;
 use Database\Seeders\Shared\CountrySeeder;
 use Database\Seeders\Shared\DistrictsTableSeeder;
+use Database\Seeders\Shared\EmploymentTypesSeeder;
 use Database\Seeders\Shared\GenderSeeder;
 use Database\Seeders\Shared\LanguageSeeder;
 use Database\Seeders\Shared\PaymentDaySeeder;
@@ -48,6 +50,8 @@ class DatabaseSeeder extends Seeder
             GenderSeeder::class,
             TitleSeeder::class,
             RaceSeeder::class,
+            StatusSeeder::class,
+            ApplicationStepsSeeder::class,
             UsersTableSeeder::class,
             CommunicationMethodSeeder::class,
             CountrySeeder::class,
@@ -59,7 +63,6 @@ class DatabaseSeeder extends Seeder
             ProvinceSeeder::class,
             DistrictsTableSeeder::class,
             SponsorTypeTableSeeder::class,
-            StatusSeeder::class,
             MaritalStatusSeeder::class,
             AddressTypesTableSeeder::class,
             CoursesTableSeeder::class,
@@ -72,6 +75,7 @@ class DatabaseSeeder extends Seeder
             SubjectsTableSeeder::class,
             ModesOfStudyTableSeeder::class,
             InstitutionDepartmentsTableSeeder::class,
+            EmploymentTypesSeeder::class,
         ]);
     }
 }

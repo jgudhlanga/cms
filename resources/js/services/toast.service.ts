@@ -14,8 +14,8 @@ export interface ToastInterface {
 }
 
 const toastOptions: ToastOption = {
-	position: toast.POSITION.TOP_CENTER,
-	autoClose: 3000,
+	position: toast.POSITION.BOTTOM_RIGHT,
+	autoClose: 6000,
 	theme: 'colored'
 };
 

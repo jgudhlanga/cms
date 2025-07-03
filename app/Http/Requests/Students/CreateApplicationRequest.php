@@ -40,7 +40,7 @@ class CreateApplicationRequest extends FormRequest
             'address_1' => ['required', 'string', 'max:255'],
             'address_2' => ['required', 'string', 'max:255'],
             'address_3' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'max:255', 'email'],
+            'email' => ['required', 'string', 'max:255', 'email', 'unique:users'],
             'phone_number' => ['required', 'string', 'max:30'],
             'next_of_kin_name' => ['required', 'string', 'max:255'],
             'next_of_kin_address_1' => ['required', 'string', 'max:255'],
@@ -48,9 +48,9 @@ class CreateApplicationRequest extends FormRequest
             'next_of_kin_address_3' => ['required', 'string', 'max:255'],
             'relationship_id' => ['required', 'integer', 'exists:relationships,id'],
             'next_of_kin_phone_number' => ['required', 'string', 'max:30'],
-            'department_id' => ['required', 'integer', 'exists:departments,id'],
-            'level_id' => ['required', 'integer', 'exists:levels,id'],
-            'course_id' => ['required', 'integer', 'exists:courses,id'],
+            'department_id' => ['required', 'integer'],
+            'level_id' => ['required', 'integer',],
+            'course_id' => ['required', 'integer',],
             'o_level_subject_ids' => ['nullable', 'array'],
         ];
     }

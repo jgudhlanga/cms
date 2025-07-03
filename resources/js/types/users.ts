@@ -10,6 +10,10 @@ export interface User {
         email: string;
         tenantId: string | number;
         tenant?: string;
+        statusId: string | number;
+        status?: string;
+        loginCount?: string | number;
+        lastLoginAt?: string;
         createdAt: string;
         updatedAt: string;
         deletedAt: string;

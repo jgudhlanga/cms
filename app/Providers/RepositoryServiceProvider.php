@@ -15,6 +15,7 @@ use App\Repositories\Institution\DepartmentRepository;
 use App\Repositories\Institution\DivisionRepository;
 use App\Repositories\Institution\GradeRepository;
 use App\Repositories\Institution\InstitutionDepartmentRepository;
+use App\Repositories\Institution\IntakePeriodRepository;
 use App\Repositories\Institution\interface\ICourseRepository;
 use App\Repositories\Institution\interface\IDepartmentCourseRepository;
 use App\Repositories\Institution\interface\IDepartmentLevelRepository;
@@ -22,27 +23,34 @@ use App\Repositories\Institution\interface\IDepartmentRepository;
 use App\Repositories\Institution\interface\IDivisionRepository;
 use App\Repositories\Institution\interface\IGradeRepository;
 use App\Repositories\Institution\interface\IInstitutionDepartmentRepository;
+use App\Repositories\Institution\interface\IIntakePeriodRepository;
 use App\Repositories\Institution\interface\ILevelRepository;
 use App\Repositories\Institution\interface\IModeOfStudyRepository;
+use App\Repositories\Institution\interface\IStaffRepository;
 use App\Repositories\Institution\interface\ISubjectRepository;
 use App\Repositories\Institution\LevelRepository;
 use App\Repositories\Institution\ModeOfStudyRepository;
+use App\Repositories\Institution\StaffRepository;
 use App\Repositories\Institution\SubjectRepository;
 use App\Repositories\Shared\AcademicLevelRepository;
 use App\Repositories\Shared\AddressRepository;
 use App\Repositories\Shared\AddressTypeRepository;
+use App\Repositories\Shared\ApplicationStepRepository;
 use App\Repositories\Shared\CommunicationMethodRepository;
 use App\Repositories\Shared\ContactRepository;
 use App\Repositories\Shared\CountryRepository;
 use App\Repositories\Shared\DistrictRepository;
+use App\Repositories\Shared\EmploymentTypeRepository;
 use App\Repositories\Shared\GenderRepository;
 use App\Repositories\Shared\interface\IAcademicLevelRepository;
 use App\Repositories\Shared\interface\IAddressRepository;
 use App\Repositories\Shared\interface\IAddressTypeRepository;
+use App\Repositories\Shared\interface\IApplicationStepRepository;
 use App\Repositories\Shared\interface\ICommunicationMethodRepository;
 use App\Repositories\Shared\interface\IContactRepository;
 use App\Repositories\Shared\interface\ICountryRepository;
 use App\Repositories\Shared\interface\IDistrictRepository;
+use App\Repositories\Shared\interface\IEmploymentTypeRepository;
 use App\Repositories\Shared\interface\IGenderRepository;
 use App\Repositories\Shared\interface\ILanguageRepository;
 use App\Repositories\Shared\interface\IMaritalStatusRepository;
@@ -129,6 +137,8 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(IReligionRepository::class, ReligionRepository::class);
         $this->app->bind(IAcademicLevelRepository::class, AcademicLevelRepository::class);
         $this->app->bind(ISponsorTypeRepository::class, SponsorTypeRepository::class);
+        $this->app->bind(IApplicationStepRepository::class, ApplicationStepRepository::class);
+        $this->app->bind(IEmploymentTypeRepository::class, EmploymentTypeRepository::class);
     }
 
     private function paymentsRepositories(): void
@@ -157,6 +167,8 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(IInstitutionDepartmentRepository::class, InstitutionDepartmentRepository::class);
         $this->app->bind(IDepartmentLevelRepository::class, DepartmentLevelRepository::class);
         $this->app->bind(IDepartmentCourseRepository::class, DepartmentCourseRepository::class);
+        $this->app->bind(IIntakePeriodRepository::class, IntakePeriodRepository::class);
+        $this->app->bind(IStaffRepository::class, StaffRepository::class);
     }
 
     public function userRepositories(): void

@@ -1,16 +1,15 @@
 <script setup lang="ts">
-import TableLoading from '@/components/core/loader/TableLoading.vue';
 import PageContainer from '@/components/core/page/PageContainer.vue';
-import BaseTabs from '@/components/core/tabs/BaseTabs.vue';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useInstitution } from '@/composables/institution/useInstitution';
 import LinkCoursesToDepartment from '@/pages/institution/departments/partials/LinkCoursesToDepartment.vue';
 import LinkLevelsToDepartment from '@/pages/institution/departments/partials/LinkLevelsToDepartment.vue';
+import { useDepartmentTabsStore } from '@/store/institution/useDepartmentTabsStore';
 import { AuthObject } from '@/types/data-pagination';
 import { InstitutionDepartment } from '@/types/institution';
-import {DepartmentMetaData} from '@/types/department-meta-data';
 import type { Link } from '@/types/ui';
 import { Head } from '@inertiajs/vue3';
-import { onMounted, ref } from 'vue';
+import { storeToRefs } from 'pinia';
 
 interface Props {
     department: InstitutionDepartment;
@@ -26,24 +25,29 @@ const breadcrumbs: Array<Link> = [
     { title: department.attributes.department },
 ];
 
-const { departmentTabs, loadDepartmentMetaData, isLoading, departmentMetaData } = useInstitution();
+const { departmentTabs } = useInstitution();
 
-onMounted(async () => {
-    await loadDepartmentMetaData(props.department.id?.toString() ?? '');
-});
-
-const defaultValue = ref('about_us');
+const { activeTab } = storeToRefs(useDepartmentTabsStore());
 </script>
 
 <template>
     <Head :title="$tChoice('trans.department', 2)" />
     <PageContainer :breadcrumbs="breadcrumbs">
-        <template v-if="isLoading">
-            <TableLoading />
-        </template>
-        <template v-else>
-            <BaseTabs :tabs="departmentTabs(departmentMetaData as DepartmentMetaData)" :default-value="defaultValue" />
-        </template>
+        <Tabs :default-value="activeTab" v-model="activeTab">
+            <TabsList class="w-full">
+                <TabsTrigger
+                    v-for="tab in departmentTabs(department.id?.toString() ?? '')"
+                    :key="'tab_' + tab.value"
+                    :value="tab.value"
+                    class="text-xs font-light uppercase"
+                >
+                    {{ tab?.transLabel!() }}
+                </TabsTrigger>
+            </TabsList>
+            <TabsContent v-for="tab in departmentTabs(department.id?.toString() ?? '')" :value="tab.value" :key="'content_' + tab.value" class="py-4">
+                <component :is="tab.component" />
+            </TabsContent>
+        </Tabs>
         <LinkLevelsToDepartment :institution-department-id="department.id?.toString() ?? ''" />
         <LinkCoursesToDepartment :institution-department-id="department.id?.toString() ?? ''" />
     </PageContainer>

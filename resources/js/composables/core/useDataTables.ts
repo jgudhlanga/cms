@@ -4,6 +4,7 @@ import DropdownButton from '@/components/core/button/DropdownButton.vue';
 import BaseIcon from '@/components/core/icon/BaseIcon.vue';
 import OrderComponent from '@/components/core/table/OrderComponent.vue';
 import TextLink from '@/components/core/util/TextLink.vue';
+import UserAvatar from '@/components/core/util/UserAvatar.vue';
 import { useUtils } from '@/composables/core/useUtils';
 import { ColorVariant } from '@/enums/colors';
 import { IconName } from '@/enums/icons';
@@ -302,7 +303,7 @@ export function useDataTables() {
         if (!can) {
             return forbiddenAlert();
         }
-        router.get(url);
+        return router.get(url);
     };
 
     /**
@@ -317,7 +318,7 @@ export function useDataTables() {
         if (!can) {
             return forbiddenAlert();
         }
-        router.get(url);
+       return router.get(url);
     };
 
     /**
@@ -381,6 +382,10 @@ export function useDataTables() {
         return h(OrderComponent, {});
     };
 
+    const avatar = (href: string, title: string, src?: string, classes?: string) => {
+        return h(UserAvatar, { href, src, classes }, () => title);
+    };
+
     return {
         initialize,
         toggleColumnVisibility,
@@ -398,6 +403,7 @@ export function useDataTables() {
         checkStatusIcon,
         actionButton,
         textLink,
+        avatar,
         orderButtons,
     };
 }

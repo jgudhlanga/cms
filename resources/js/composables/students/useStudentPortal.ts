@@ -1,58 +1,12 @@
-import { useDataTables } from '@/composables/core/useDataTables';
 import { useSharedFormSchema } from '@/composables/core/useSharedFormSchema';
 import { buildFormOptions, mergeValidationSchema } from '@/lib/forms';
-import { getIdParams } from '@/lib/utils';
 import { useCreateApplicationFormStore } from '@/store/portal/useCreateApplicationFormStore';
-import { Auth } from '@/types';
 import { Step } from '@/types/forms';
-import { AddressType } from '@/types/settings';
-import { InertiaForm, usePage } from '@inertiajs/vue3';
+import { InertiaForm } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 import { ZodObject } from 'zod';
 
 export function useStudentPortal() {
-    const { moreActionButton, onDelete, onForceDelete, onRestore, textLink } = useDataTables();
-
-    const applicationsTable = () => {
-        const { props } = usePage();
-        const { can } = props?.auth as Auth;
-        return [
-            { header: trans_choice('trans.title', 1), accessorKey: 'attributes.title' },
-            {
-                header: trans_choice('trans.action', 2),
-                accessorKey: 'actions',
-                enableSorting: false,
-                meta: { align: 'right' },
-                cell: ({ row }: { row: { original: AddressType } }) => {
-                    const id = getIdParams(row.original.id?.toString() ?? '');
-                    const name = trans_choice('trans.address_type', 1);
-                    return moreActionButton(!!row.original?.attributes?.deletedAt, [
-                        {
-                            key: 'edit',
-                            action: () => {},
-                        },
-                        {
-                            key: 'view',
-                            action: () => {},
-                        },
-                        {
-                            key: 'archive',
-                            action: () => {},
-                        },
-                        {
-                            key: 'restore',
-                            action: () => {},
-                        },
-                        {
-                            key: 'delete',
-                            action: () => {},
-                        },
-                    ]);
-                },
-            },
-        ];
-    };
-
     const steps: Step[] = [
         { step: 1, title: trans('trans.personal_details'), description: 'trans.personal_details_description' },
         { step: 2, title: trans('trans.contact_details'), description: 'trans.contact_details_description' },
@@ -62,9 +16,8 @@ export function useStudentPortal() {
     ];
 
     const schemaFields = useSharedFormSchema() as Record<string, () => ZodObject<any, any>>;
-
     const applicationFormSchema = (isNativeCitizen: boolean) => {
-        const personal = ['firstNameSchema', 'lastNameSchema', 'genderSchema', 'maritalStatusSchema'];
+        const personal = ['firstNameSchema', 'lastNameSchema', 'genderSchema', 'maritalStatusSchema', 'dobSchema'];
         if (isNativeCitizen) {
             personal.push('idNumberSchema');
         } else {
@@ -102,5 +55,5 @@ export function useStudentPortal() {
             form.setError(error.format());
         }
     };
-    return { applicationsTable, steps, applicationFormSchema, saveApplication };
+    return { steps, applicationFormSchema, saveApplication };
 }

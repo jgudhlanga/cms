@@ -10,7 +10,6 @@ use Illuminate\Http\Resources\Json\JsonResource;
  */
 class DepartmentLevelResource extends JsonResource
 {
-
     public function toArray(Request $request): array
     {
         return [
@@ -26,7 +25,10 @@ class DepartmentLevelResource extends JsonResource
                     'createdAt' => $this->resource->created_at,
                     'updatedAt' => $this->resource->updated_at,
                     'deletedAt' => $this->resource->deleted_at,
-                ],),
+                ]),
+            ],
+            "relationships" => [
+                'requirement' => DepartmentLevelRequirementResource::make($this->requirement),
             ]
         ];
     }

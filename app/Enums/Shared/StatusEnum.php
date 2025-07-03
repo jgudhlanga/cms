@@ -7,50 +7,37 @@ enum StatusEnum: string
     case ACTIVE = 'Active';
     case WAITING_APPROVAL = 'Waiting Approval';
     case INACTIVE = 'Inactive';
-    case DRAFT_INCOMPLETE = 'Draft / Incomplete';
-    case SUBMITTED = 'Submitted';
-    case IN_REVIEW = 'In Review';
-    case AWAITING_REQUIREMENTS = 'Awaiting Requirements';
-    case AWAITING_PAYMENT = 'Awaiting Payment';
-    case INTERVIEW_SCHEDULED = 'Interview Scheduled';
-    case INTERVIEW_COMPLETED = 'Interview Completed';
-    case DECISION_PENDING = 'Decision Pending';
-    case ACCEPTED_OFFER_MADE = 'Accepted / Offer Made';
-    case WAITLISTED = 'Waitlisted';
-    case REJECTED = 'Rejected';
-    case OFFER_ACCEPTED = 'Offer Accepted';
 
-    case OFFER_DECLINED = 'Offer Declined';
-    case ENROLLED_REGISTERED = 'Enrolled / Registered';
-
-    public function label(): string
+    public function id(): int
     {
         return match ($this) {
-            self::ACTIVE => 'Active',
-            self::WAITING_APPROVAL => 'Waiting Approval',
-            self::INACTIVE => 'Inactive',
-            self::DRAFT_INCOMPLETE => 'Daft / Incomplete',
-            self::SUBMITTED => 'Submitted',
-            self::IN_REVIEW => 'In Review',
-            self::AWAITING_REQUIREMENTS => 'Awaiting Requirements',
-            self::AWAITING_PAYMENT => 'Awaiting Payment',
-            self::INTERVIEW_SCHEDULED => 'Interview Scheduled',
-            self::INTERVIEW_COMPLETED => 'Interview Completed',
-            self::DECISION_PENDING => 'Decision Pending',
-            self::ACCEPTED_OFFER_MADE => 'Accepted / Offer Made',
-            self::WAITLISTED => 'Waitlisted',
-            self::REJECTED => 'Rejected',
-            self::OFFER_ACCEPTED => 'Offer Accepted',
-            self::OFFER_DECLINED => 'Offer Declined',
-            self::ENROLLED_REGISTERED => 'Enrolled / Registered',
+            self::ACTIVE => 1,
+            self::WAITING_APPROVAL => 2,
+            self::INACTIVE => 3,
         };
     }
 
-    public static function all(): array
+    public function label(): string
     {
-        return array_combine(
-            array_column(self::cases(), 'value'),
-            array_map(fn($case) => $case->label(), self::cases())
-        );
+        return $this->value;
+    }
+
+    public function description(): string
+    {
+        return match ($this) {
+            self::ACTIVE => 'Currently active and in use',
+            self::WAITING_APPROVAL => 'Pending approval from an authority',
+            self::INACTIVE => 'Not currently active',
+        };
+    }
+
+    public static function byId(int $id): ?self
+    {
+        foreach (self::cases() as $case) {
+            if ($case->id() === $id) {
+                return $case;
+            }
+        }
+        return null;
     }
 }

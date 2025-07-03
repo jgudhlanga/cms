@@ -32,6 +32,9 @@ class StudentResource extends JsonResource
             'denomination' => $this?->denomination ?? null,
             'height' => $this?->height ?? null,
             'weight' => $this?->weight ?? null,
+            'createdAt' => $this->created_at,
+            'updatedAt' => $this->updated_at,
+            'deletedAt' => $this->deleted_at,
         ];
     }
 }

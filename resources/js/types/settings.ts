@@ -203,3 +203,35 @@ export type SponsorTypeParams = {
     name: string;
     description?: string;
 };
+
+export type ApplicationStep = {
+    type: string;
+    id: string;
+    attributes: {
+        name: string;
+        description: string;
+        position?: number | string;
+        createdAt?: string;
+        updatedAt?: string;
+        deletedAt?: string;
+    };
+};
+export type ApplicationStepParams = {
+    name: string;
+    description?: string;
+};
+export type EmploymentType = {
+    type?: string;
+    id?: string;
+    attributes: {
+        name: string;
+        description?: string;
+        createdAt?: string;
+        updatedAt?: string;
+        deletedAt?: string;
+    };
+};
+export type EmploymentTypeParams = {
+    name: string;
+    description?: string;
+};

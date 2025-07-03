@@ -20,7 +20,10 @@ return new class extends Migration {
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+            $table->timestamp('last_login_at')->nullable();
+            $table->unsignedInteger('login_count')->default(0);
             $table->rememberToken();
+            $table->foreignId('status_id')->constrained();
             $table->timestamps();
             $table->softDeletes();
         });

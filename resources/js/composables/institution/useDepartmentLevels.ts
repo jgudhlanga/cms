@@ -4,18 +4,25 @@ import { ColorVariant } from '@/enums/colors';
 import { errorAlert, forbiddenAlert, openModal, successAlert } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
 import { buildFormOptions, toggleFormLoader } from '@/lib/forms';
+import { hasAbility } from '@/lib/permissions';
 import { getIdParams } from '@/lib/utils';
 import HttpService from '@/services/http.service';
 import { useCreateApplicationFormStore } from '@/store/portal/useCreateApplicationFormStore';
 import { Auth } from '@/types';
-import { DepartmentLevel, DepartmentLevelCourse, DepartmentLevelRequirement } from '@/types/department-meta-data';
+import {
+    DepartmentLevel,
+    DepartmentLevelCourse,
+    DepartmentLevelMetaData,
+    DepartmentLevelRequirement
+} from '@/types/department-meta-data';
 import { InertiaForm, usePage } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 import { storeToRefs } from 'pinia';
 import { ref } from 'vue';
+import { z } from 'zod';
 
 export const useDepartmentLevels = () => {
-    const { moreActionButton, textLink, actionButton } = useDataTables();
+    const { moreActionButton, textLink, actionButton, checkStatusIcon, onEdit } = useDataTables();
     const { props } = usePage();
     const { can } = props?.auth as Auth;
     const { navigateTo } = useUtils();
@@ -29,7 +36,15 @@ export const useDepartmentLevels = () => {
                     return textLink(route('department-levels.requirements', id), row.original.attributes?.level);
                 },
             },
-            { header: trans_choice('trans.description', 1), accessorKey: 'attributes.description' },
+            {
+                header: trans('trans.configured'),
+                accessorKey: 'requirement',
+                meta: { align: 'center' },
+                enableSorting: false,
+                cell: ({ row }: { row: { original: DepartmentLevel } }) => {
+                    return checkStatusIcon(!!row.original.relationships?.requirement);
+                },
+            },
             {
                 header: trans_choice('trans.requirement', 2),
                 accessorKey: 'requirements',
@@ -50,22 +65,12 @@ export const useDepartmentLevels = () => {
                 enableSorting: false,
                 meta: { align: 'right' },
                 cell: ({ row }: { row: { original: DepartmentLevel } }) => {
+                    const allowed = hasAbility('create:department-metadata');
+                    const id = getIdParams(row.original.id?.toString() ?? '');
                     return moreActionButton(!!row.original?.attributes?.deletedAt, [
                         {
-                            key: 'view',
-                            action: () => {},
-                        },
-                        {
-                            key: 'archive',
-                            action: () => {},
-                        },
-                        {
-                            key: 'restore',
-                            action: () => {},
-                        },
-                        {
-                            key: 'delete',
-                            action: () => {},
+                            key: 'edit',
+                            action: () => onEdit(allowed, route('department-levels.requirements', id)),
                         },
                     ]);
                 },
@@ -137,7 +142,9 @@ export const useDepartmentLevels = () => {
         required_level_completed,
         read_write_acknowledged,
     } = storeToRefs(useCreateApplicationFormStore());
+
     const levelRequirements = ref<DepartmentLevelRequirement | null>(storeLevelRequirements?.value ?? null);
+
     const listLevelRequirements = async (departmentLevelId: string) => {
         if (Number(departmentLevelId) > 0) {
             isLoading.value = true;
@@ -146,6 +153,47 @@ export const useDepartmentLevels = () => {
             o_level_subject_ids!.value = null;
             required_level_completed!.value = null;
             read_write_acknowledged!.value = null;
+            isLoading.value = false;
+        }
+    };
+
+    const levelRequirementsFormSchema = (isOLevelRequired: boolean) =>
+        z.object({
+            required_subjects_count: isOLevelRequired
+                ? z
+                      .string()
+                      .nonempty(trans('trans.enter_required_field', { field: trans('trans.required_subjects_count') }))
+                      .refine((val) => !isNaN(Number(val)), {
+                          message: trans('trans.field_must_be_number', { field: trans('trans.required_subjects_count') }),
+                      })
+                : z.string().optional(),
+            main_subjects_count: isOLevelRequired
+                ? z
+                      .string()
+                      .nonempty(trans('trans.enter_required_field', { field: trans('trans.main_subjects_count') }))
+                      .refine((val) => !isNaN(Number(val)), {
+                          message: trans('trans.field_must_be_number', { field: trans('trans.main_subjects_count') }),
+                      })
+                : z.string().optional(),
+            other_subjects_count: isOLevelRequired
+                ? z
+                      .string()
+                      .nonempty(trans('trans.enter_required_field', { field: trans('trans.other_subjects_count') }))
+                      .refine((val) => !isNaN(Number(val)), {
+                          message: trans('trans.field_must_be_number', { field: trans('trans.other_subjects_count') }),
+                      })
+                : z.string().optional(),
+        });
+
+    const departmentLevelsMetadata = ref<DepartmentLevelMetaData | null>(null);
+
+    const loadDepartmentLevelsMetadata = async (institutionDepartmentId: string) => {
+        try {
+            isLoading.value = true;
+            departmentLevelsMetadata.value = await HttpService.get(route('v1.department-metadata.levels', institutionDepartmentId));
+        } catch {
+            errorAlert(trans('trans.load_data_failure', { data: trans_choice('trans.levels', 2) }));
+        } finally {
             isLoading.value = false;
         }
     };
@@ -162,5 +210,8 @@ export const useDepartmentLevels = () => {
         levelCourses,
         levelRequirements,
         listLevelRequirements,
+        levelRequirementsFormSchema,
+        departmentLevelsMetadata,
+        loadDepartmentLevelsMetadata,
     };
 };

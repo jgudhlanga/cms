@@ -3,6 +3,7 @@
 namespace App\Models\Users;
 
 use App\Http\Filters\Users\UserFilter;
+use App\Models\Shared\Status;
 use App\Models\Students\Student;
 use App\Traits\Filterable;
 use App\Traits\Paginatable;
@@ -10,6 +11,7 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -30,12 +32,11 @@ use Spatie\Permission\Traits\HasRoles;
 class User extends Authenticatable implements MustVerifyEmail, HasMedia
 {
     use HasApiTokens, HasFactory, Notifiable, SoftDeletes,
-        Filterable, Paginatable, LogsActivity, HasRoles,InteractsWithMedia;
+        Filterable, Paginatable, LogsActivity, HasRoles, InteractsWithMedia;
 
     protected $fillable = [
         'first_name', 'middle_name', 'last_name', 'email', 'password', 'tenant_id',
-        'email_verified_at',
-        'avatar_id'
+        'email_verified_at', 'last_login_at', 'login_count', 'avatar_id', 'status_id'
     ];
 
     protected $hidden = ['password', 'remember_token'];
@@ -50,6 +51,11 @@ class User extends Authenticatable implements MustVerifyEmail, HasMedia
     public function setPasswordAttribute(string $password): void
     {
         $this->attributes['password'] = bcrypt($password);
+    }
+
+    public function status(): BelongsTo
+    {
+        return $this->belongsTo(Status::class, 'status_id');
     }
 
     public function studentProfile(): HasOne|User
@@ -72,6 +78,7 @@ class User extends Authenticatable implements MustVerifyEmail, HasMedia
 
         return implode(' ', $nameParts);
     }
+
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('avatar')
