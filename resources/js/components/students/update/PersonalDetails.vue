@@ -16,6 +16,7 @@ import { CreateApplicationParams } from '@/types/portal';
 import { InertiaForm } from '@inertiajs/vue3';
 import { storeToRefs } from 'pinia';
 import { ref } from 'vue';
+import { ID_TYPES } from '@/lib/constants';
 
 const {
     id_type,
@@ -32,10 +33,7 @@ const {
     gender,
 } = storeToRefs(useCreateApplicationFormStore());
 
-const idTypes = [
-    { value: 'zimbabwean-national-id-number', label: 'Zimbabwean ID Number', inputId: 'zimbabwean-national-id-number' },
-    { value: 'foreign-passport-number', label: 'Foreign Passport Number', inputId: 'foreign-passport-number' },
-];
+const idTypes = ID_TYPES;
 
 const onRadioChange = (value: any) => {
     id_type.value = value;

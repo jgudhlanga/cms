@@ -29,10 +29,10 @@ Route::prefix('institution')->middleware('auth')->group(function () {
     Route::put('intake-periods/{intake_period}/restore', [IntakePeriodController::class, 'restore'])->name('intake-periods.restore');
     Route::delete('intake-periods/{intake_period}/force-delete', [IntakePeriodController::class, 'forceDelete'])->name('intake-periods.force-delete');
     Route::resource('intake-periods', IntakePeriodController::class)->names('intake-periods');
-    # ==================================== STAFF ================================================================
+    # ==================================== DEPARTMENT STAFF ================================================================
     Route::put('staff/{staff}/restore', [StaffController::class, 'restore'])->name('staff.restore');
     Route::delete('staff/{staff}/force-delete', [StaffController::class, 'forceDelete'])->name('staff.force-delete');
-    Route::resource('staff', StaffController::class)->names('staff');
+    Route::resource('departments.staff', StaffController::class)->shallow()->names('staff');
     # ================================== PORTAL SETUP ======================================
     Route::prefix('portal/setup')->group(function () {
         Route::get('/', [PortalSetupController::class, 'index'])->name('portal.setup');

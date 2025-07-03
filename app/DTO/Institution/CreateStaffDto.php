@@ -12,6 +12,7 @@ readonly class CreateStaffDto
         public int     $user_id,
         public string  $id_type,
         public ?string $id_number,
+        public int  $institution_department_id,
         public ?string $passport_number,
         public ?int    $country_id,
         public ?string $work_permit_number,
@@ -25,7 +26,9 @@ readonly class CreateStaffDto
         public int     $title_id,
         public int     $gender_id,
         public ?array  $role_ids,
-        public ?array  $institution_department_id,
+        public ?int $employment_type_id,
+        public ?string  $employee_number,
+
     )
     {
     }
@@ -37,6 +40,7 @@ readonly class CreateStaffDto
             user_id: $user->id,
             id_type: $request->id_type,
             id_number: $request->id_number,
+            institution_department_id: $request->institution_department_id,
             passport_number: $request->passport_number,
             country_id: $request->country_id,
             work_permit_number: $request->work_permit_number,
@@ -50,7 +54,8 @@ readonly class CreateStaffDto
             title_id: $request->title_id,
             gender_id: $request->gender_id,
             role_ids: $request->role_ids,
-            institution_department_id: $request->institution_department_id,
+            employment_type_id: $request->employment_type_id,
+            employee_number: $request->employee_number,
         );
     }
 }

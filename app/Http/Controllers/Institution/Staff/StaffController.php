@@ -6,8 +6,14 @@ namespace App\Http\Controllers\Institution\Staff;
 use App\DTO\Institution\CreateStaffDto;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Institution\CreateStaffRequest;
+use App\Http\Resources\Institution\InstitutionDepartmentResource;
+use App\Http\Resources\Institution\StaffResource;
+use App\Http\Resources\Users\UserResource;
+use App\Models\Institution\InstitutionDepartment;
 use App\Models\Institution\Staff;
+use App\Models\Users\User;
 use App\Repositories\Institution\interface\IStaffRepository;
+use Inertia\Inertia;
 
 class StaffController extends Controller
 {
@@ -15,11 +21,26 @@ class StaffController extends Controller
     {
     }
 
+    public function create(InstitutionDepartment $department)
+    {
+        $this->authorize('createDepartmentMetaData');
+        $department = InstitutionDepartmentResource::make($department);
+        return Inertia::render('institution/staff/Create', compact('department'));
+    }
+
+    public function show(Staff $staff)
+    {
+        $this->authorize('viewDepartmentMetaData');
+        $staff = StaffResource::make($staff);
+        return Inertia::render('institution/staff/Show', compact('staff'));
+    }
+
     /**
      * Store a newly created staff.
      */
     public function store(CreateStaffRequest $request)
     {
+        $this->authorize('createDepartmentMetaData');
         $this->repository->create(
             CreateStaffDto::fromStaffRequest($request, $this->getUser())
         );
@@ -30,6 +51,7 @@ class StaffController extends Controller
      */
     public function update(CreateStaffRequest $request, Staff $staff)
     {
+        $this->authorize('updateDepartmentMetaData');
         $this->repository->update(
             $staff,
             CreateStaffDto::fromStaffRequest($request, $this->getUser())
@@ -41,6 +63,7 @@ class StaffController extends Controller
      */
     public function destroy(Staff $staff)
     {
+        $this->authorize('deleteDepartmentMetaData');
         $this->repository->delete($staff);
     }
 
@@ -49,6 +72,7 @@ class StaffController extends Controller
      */
     public function restore(string $id)
     {
+        $this->authorize('restoreDepartmentMetaData');
         $staff = $this->repository->findTrashed($id);
         $this->repository->restore($staff);
     }
@@ -58,6 +82,7 @@ class StaffController extends Controller
      */
     public function forceDelete(Staff $staff)
     {
+        $this->authorize('forceDeleteDepartmentMetaData');
         $this->repository->delete($staff, true);
     }
 

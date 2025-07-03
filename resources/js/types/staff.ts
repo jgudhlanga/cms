@@ -42,13 +42,12 @@ export type Staff = {
     };
 };
 
-export type StaffParams = {
+export type CreateStaffParams = {
     id_type: string;
     id_number?: string | null;
     passport_number?: string | null;
     country?: SelectOption | null;
     country_id: string | number | null;
-    work_permit_number?: string | null;
     date_of_birth: string | null;
     maritalStatus?: SelectOption | null;
     marital_status_id: string | number | null;
@@ -60,9 +59,7 @@ export type StaffParams = {
     title_id: string | number | null;
     gender: SelectOption | null;
     gender_id: string | number | null;
-    employmentType: SelectOption | null;
-    employment_type_id: string | number | null;
-    employee_number?: string | null;
+    role_ids: Array<string | undefined | null> | null;
 };
 
 export type StaffSearchData = {

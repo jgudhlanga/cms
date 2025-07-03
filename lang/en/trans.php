@@ -319,4 +319,10 @@ return [
     "configured" => "Configured",
     "main_subject_not_valid" => "Main subject required should be at least :count",
     "employment_type" => "Employment type|Employment types",
+    "create_staff" => "Create staff",
+    "work_permit_number" => "Work permit number",
+    "identity" => "Identity",
+    "identity_description" => "Provide with your identity details",
+    "employee_number" => "Employee number",
+    "role_details_description" => "What are the roles of this staff member in the department?",
 ];
