@@ -1,18 +1,21 @@
 import { useDataTables } from '@/composables/core/useDataTables';
 import { getIdParams } from '@/lib/utils';
 
+import { useSharedFormSchema } from '@/composables/core/useSharedFormSchema';
+import { useUtils } from '@/composables/core/useUtils';
 import { errorAlert } from '@/lib/alerts';
-import { buildFormOptions } from '@/lib/forms';
+import { buildFormOptions, mergeValidationSchema } from '@/lib/forms';
 import HttpService from '@/services/http.service';
 import { useStaffStore } from '@/store/institution/useStaffStore';
 import { Staff, StaffSearchData } from '@/types/staff';
 import { InertiaForm } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 import { ref } from 'vue';
+import { ZodObject } from 'zod';
 
 export const useStaff = () => {
     const { moreActionButton, textLink } = useDataTables();
-
+    const { navigateTo } = useUtils();
     const createStaffColumns = () => {
         return [
             {
@@ -57,6 +60,25 @@ export const useStaff = () => {
         }
     };
 
+    const schemaFields = useSharedFormSchema() as Record<string, () => ZodObject<any, any>>;
+    const createFormSchema = (isNativeCitizen: boolean) => {
+        const personal = [
+            'firstNameSchema',
+            'lastNameSchema',
+            'genderSchema',
+            'maritalStatusSchema',
+            'dobSchema',
+            'emailSchema',
+            'employmentTypeSchema',
+        ];
+        if (isNativeCitizen) {
+            personal.push('idNumberSchema');
+        } else {
+            personal.push('passportNumberSchema');
+            personal.push('countrySchema');
+        }
+        return mergeValidationSchema(schemaFields)(personal, schemaFields['titleSchema']());
+    };
     const getName = () => trans('trans.staff');
     const successMessage = () => trans('trans.item_saved', { item: getName() });
     const errorMessage = () => trans('trans.item_save_failure', { item: getName() });
@@ -66,6 +88,7 @@ export const useStaff = () => {
             const store = useStaffStore();
             store.$reset();
             store.$dispose();
+            navigateTo(route('institution-departments.show', institutionDepartmentId));
         } catch (error: any) {
             form.setError(error.format());
         }
@@ -77,5 +100,6 @@ export const useStaff = () => {
         staff,
         isLoading,
         saveStaff,
+        createFormSchema,
     };
 };

@@ -14,6 +14,7 @@ import IdNumber from '@/components/core/form/text/IdNumber.vue';
 import PassportNumber from '@/components/core/form/text/PassportNumber.vue';
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import HeadingSmall from '@/components/core/util/HeadingSmall.vue';
+import { useUtils } from '@/composables/core/useUtils';
 import { useStaff } from '@/composables/institution/useStaff';
 import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
@@ -37,10 +38,11 @@ interface Props {
 
 const props = defineProps<Props>();
 const { department } = props;
+const institutionDepartmentId =  department.id?.toString() ?? '';
 const breadcrumbs: Array<Link> = [
     { transChoiceKey: 'institution', transChoiceKeyIndex: 1, href: route('institution.index') },
     { transChoiceKey: 'department', href: route('institution-departments.index') },
-    { title: department.attributes.department },
+    { title: department.attributes.department, href: route('institution-departments.show', institutionDepartmentId) },
     { transKey: 'create_staff' },
 ];
 // Store
@@ -84,13 +86,15 @@ const form = useForm<CreateStaffParams>({
 });
 
 const idTypes = ID_TYPES;
-const { saveStaff } = useStaff();
+const { saveStaff, createFormSchema } = useStaff();
+const { isNativeCitizen } = useUtils();
 const onRadioChange = (value: any) => {
     id_type.value = value;
 };
 const defaultIdType = ref(id_type.value);
 if (!id_type.value) {
     defaultIdType.value = 'zimbabwean-national-id-number';
+    id_type.value = defaultIdType.value;
 }
 const updateForm = () => {
     Object.assign(form, {
@@ -119,7 +123,12 @@ const updateForm = () => {
 
 const save = () => {
     updateForm();
-    saveStaff(form, department.id?.toString() ?? '');
+    try {
+        createFormSchema(isNativeCitizen(id_type.value ?? '')).parse(form);
+        saveStaff(form, institutionDepartmentId);
+    } catch (error: any) {
+        form.setError(error.format());
+    }
 };
 </script>
 
@@ -202,7 +211,7 @@ const save = () => {
                         />
                     </div>
                     <div class="grid-col-1 mt-4 grid gap-3 md:grid-cols-2">
-                        <template v-if="id_type === 'zimbabwean-national-id-number'">
+                        <template v-if="id_type == 'zimbabwean-national-id-number'">
                             <IdNumber
                                 v-model="id_number"
                                 :is-required="true"
