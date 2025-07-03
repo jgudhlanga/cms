@@ -58,7 +58,7 @@ class Staff extends Model
 
     public function institutionDepartments(): BelongsToMany
     {
-        return $this->belongsToMany(InstitutionDepartment::class);
+        return $this->belongsToMany(InstitutionDepartment::class, 'institution_department_staff');
     }
 
     public function getActivitylogOptions(): LogOptions

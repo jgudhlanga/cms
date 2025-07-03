@@ -42,7 +42,7 @@ class StaffController extends Controller
     {
         $this->authorize('createDepartmentMetaData');
         $this->repository->create(
-            CreateStaffDto::fromStaffRequest($request, $this->getUser())
+            CreateStaffDto::fromStaffRequest($request)
         );
     }
 

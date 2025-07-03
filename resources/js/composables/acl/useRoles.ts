@@ -97,7 +97,7 @@ export const useRoles = () => {
     const listRoles = async (search?: string) => {
         const { data, fetchData } = useDropdowns();
         isLoading.value = true;
-        await fetchData({ url: route('v1.roles.index'), search, transChoiceKey: 'trans.role' });
+        await fetchData({ url: 'api/v1/acl/roles?page_size=100', search, transChoiceKey: 'trans.role' });
         isLoading.value = false;
         roles.value = data.value;
     };

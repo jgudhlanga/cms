@@ -2,10 +2,13 @@ import { useDataTables } from '@/composables/core/useDataTables';
 import { getIdParams } from '@/lib/utils';
 
 import { errorAlert } from '@/lib/alerts';
+import { buildFormOptions } from '@/lib/forms';
 import HttpService from '@/services/http.service';
+import { useStaffStore } from '@/store/institution/useStaffStore';
+import { Staff, StaffSearchData } from '@/types/staff';
+import { InertiaForm } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 import { ref } from 'vue';
-import { Staff, StaffSearchData } from '@/types/staff';
 
 export const useStaff = () => {
     const { moreActionButton, textLink } = useDataTables();
@@ -54,10 +57,25 @@ export const useStaff = () => {
         }
     };
 
+    const getName = () => trans('trans.staff');
+    const successMessage = () => trans('trans.item_saved', { item: getName() });
+    const errorMessage = () => trans('trans.item_save_failure', { item: getName() });
+    const saveStaff = (form: InertiaForm<any>, institutionDepartmentId: string) => {
+        try {
+            form.post(route('staff.store', institutionDepartmentId), buildFormOptions(form, successMessage(), errorMessage()));
+            const store = useStaffStore();
+            store.$reset();
+            store.$dispose();
+        } catch (error: any) {
+            form.setError(error.format());
+        }
+    };
+
     return {
         createStaffColumns,
         loadStaff,
         staff,
         isLoading,
+        saveStaff,
     };
 };

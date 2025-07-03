@@ -10,13 +10,13 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::create('department_staff', function (Blueprint $table) {
+        Schema::create('institution_department_staff', function (Blueprint $table) {
             $table->id();
             $table->foreignId('staff_id')->constrained()->onDelete('cascade');
             $table->foreignId('institution_department_id')->constrained()->onDelete('cascade');
             $table->timestamps();
-
-            $table->unique(['staff_id', 'department_id']);
+            // Short, custom name for the unique constraint
+            $table->unique(['staff_id', 'institution_department_id'], 'staff_department_unique');
         });
     }
 
@@ -25,6 +25,6 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::dropIfExists('department_staff');
+        Schema::dropIfExists('institution_department_staff');
     }
 };

@@ -44,6 +44,7 @@ export type Staff = {
 
 export type CreateStaffParams = {
     id_type: string;
+    institution_department_id: string|number;
     id_number?: string | null;
     passport_number?: string | null;
     country?: SelectOption | null;
@@ -51,6 +52,8 @@ export type CreateStaffParams = {
     date_of_birth: string | null;
     maritalStatus?: SelectOption | null;
     marital_status_id: string | number | null;
+    employmentType?: SelectOption | null;
+    employment_type_id: string | number | null;
     email: string;
     first_name: string;
     last_name: string;

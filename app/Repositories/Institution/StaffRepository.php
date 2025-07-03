@@ -3,21 +3,46 @@
 namespace App\Repositories\Institution;
 
 use App\DTO\Institution\CreateStaffDto;
+use App\DTO\Users\UserDto;
+use App\Enums\Shared\RoleEnum;
+use App\Enums\Shared\StatusEnum;
+use App\Helpers\Helper;
 use App\Http\Filters\Institution\StaffFilter;
 use App\Models\Institution\Staff;
 use App\Repositories\Base\BaseRepository;
 use App\Repositories\Institution\interface\IStaffRepository;
+use App\Repositories\Users\interface\IUserRepository;
+use Carbon\Carbon;
 
 class StaffRepository extends BaseRepository implements IStaffRepository
 {
-    public function __construct(protected Staff $staff)
+    public function __construct(protected Staff $staff, protected IUserRepository $userRepository)
     {
         parent::__construct($this->staff);
     }
 
     public function create(CreateStaffDto $dto): Staff
     {
-        return $this->staff->create($this->getFields($dto))->refresh();
+        # Step 1: Create the user
+        $user = $this->createUser($dto);
+
+        // Step 2: Assign roles if provided
+        if (!empty($dto->role_ids)) {
+            $user->assignRole($dto->role_ids);
+        }
+
+        # Step 3: Create staff and associate user
+        $staff = $this->staff->create(array_merge(
+            $this->getFields($dto),
+            ['user_id' => $user->id]
+        ))->refresh();
+
+        # Step 4: Associate staff with departments (single or multiple)
+        if (!empty($dto->institution_department_id)) {
+            $staff->institutionDepartments()->syncWithoutDetaching([$dto->institution_department_id]);
+        }
+
+        return $staff;
     }
 
     public function update(Staff $staff, CreateStaffDto $dto): Staff
@@ -39,8 +64,30 @@ class StaffRepository extends BaseRepository implements IStaffRepository
     private function getFields(CreateStaffDto $dto): array
     {
         return [
-            'name' => $dto->name,
-            'description' => $dto->description,
+            'id_type' => $dto->id_type,
+            'id_number' => $dto->id_number,
+            'passport_number' => $dto->passport_number,
+            'country_id' => $dto->country_id,
+            'date_of_birth' => Carbon::parse($dto->date_of_birth)->format('Y-m-d'),
+            'marital_status_id' => $dto->marital_status_id,
+            'race_id' => $dto->race_id,
+            'title_id' => $dto->title_id,
+            'gender_id' => $dto->gender_id,
+            'employment_type_id' => $dto->employment_type_id,
         ];
+    }
+
+    private function createUser(CreateStaffDto $dto)
+    {
+        $userDto = new UserDto(
+            tenant_id: request()->user()->tenant_id,
+            status_id: StatusEnum::ACTIVE->id(),
+            first_name: $dto->first_name,
+            middle_name: $dto->middle_name,
+            last_name: $dto->last_name,
+            email: $dto->email,
+            password: Helper::generatePasswordFromName($dto->first_name, $dto->last_name),
+        );
+        return $this->userRepository->create($userDto);
     }
 }
