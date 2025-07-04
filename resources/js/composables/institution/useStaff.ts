@@ -25,9 +25,10 @@ export const useStaff = () => {
                 accessorKey: 'name',
                 cell: ({ row }: { row: { original: Staff } }) => {
                     const id = getIdParams(row.original.id?.toString() ?? '');
+                    const title = row.original.attributes?.title ?? '';
                     return avatar({
                         href: route('staff.show', id),
-                        title: row.original.relationships?.user?.attributes?.name ?? '',
+                        title: `${title} ${row.original.relationships?.user?.attributes?.name ?? ''}`,
                         src: row.original.relationships?.user?.attributes?.avatarUrl ?? '',
                         classes: 'size-8 border-2 border-primary rounded-full',
                     });

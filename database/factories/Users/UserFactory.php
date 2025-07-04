@@ -2,6 +2,7 @@
 
 namespace Database\Factories\Users;
 
+use App\Helpers\Helper;
 use App\Models\Shared\Gender;
 use App\Models\Shared\Title;
 use App\Models\Tenants\Tenant;
@@ -16,13 +17,15 @@ class UserFactory extends Factory
 {
     public function definition(): array
     {
+        $firstName = fake()->firstName();
+        $lastName = fake()->lastName();
         return [
             'tenant_id' => function () {
                 return Tenant::factory()->create()->id;
             },
-            'first_name' => fake()->firstName(),
+            'first_name' => $firstName,
             'middle_name' => fake()->firstName(),
-            'last_name' => fake()->lastName(),
+            'last_name' => $lastName,
             'email' => fake()->unique()->safeEmail(),
             'gender_id' => function () {
                 return Gender::factory()->create()->id;
@@ -31,7 +34,7 @@ class UserFactory extends Factory
                 return Title::factory()->create()->id;
             },
             'email_verified_at' => now(),
-            'password' => 'Deve10per!23',
+            'password' => Helper::generatePasswordFromName($firstName, $lastName),
             'remember_token' => Str::random(10),
         ];
     }

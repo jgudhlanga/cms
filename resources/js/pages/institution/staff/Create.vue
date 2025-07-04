@@ -29,6 +29,7 @@ import { Head, useForm } from '@inertiajs/vue3';
 import { storeToRefs } from 'pinia';
 import { ref } from 'vue';
 import BaseButton from '../../../components/core/button/BaseButton.vue';
+import PhoneNumber from '@/components/core/form/text/PhoneNumber.vue';
 
 interface Props {
     department: InstitutionDepartment;
@@ -43,7 +44,7 @@ const breadcrumbs: Array<Link> = [
     { transChoiceKey: 'institution', transChoiceKeyIndex: 1, href: route('institution.index') },
     { transChoiceKey: 'department', href: route('institution-departments.index') },
     { title: department.attributes.department, href: route('institution-departments.show', institutionDepartmentId) },
-    { transKey: 'create_staff' },
+    { transKey: 'create_staff' }
 ];
 // Store
 const store = useStaffCreateFormStore();
@@ -51,6 +52,7 @@ const {
     email,
     first_name,
     gender,
+    phone_number,
     last_name,
     middle_name,
     title,
@@ -61,7 +63,7 @@ const {
     maritalStatus,
     passport_number,
     role_ids,
-    employmentType,
+    employmentType
 } = storeToRefs(store);
 const form = useForm<CreateStaffParams>({
     email: '',
@@ -78,12 +80,13 @@ const form = useForm<CreateStaffParams>({
     date_of_birth: '',
     id_number: '',
     id_type: '',
+    phone_number: '',
     maritalStatus: null,
     marital_status_id: null,
     passport_number: '',
     role_ids: [],
     institution_department_id: '',
-    employment_type_id: '',
+    employment_type_id: ''
 });
 
 const idTypes = ID_TYPES;
@@ -100,6 +103,7 @@ if (!id_type.value) {
 const updateForm = () => {
     Object.assign(form, {
         email: email.value,
+        phone_number: phone_number?.value ?? '',
         first_name: first_name.value,
         gender: gender.value,
         gender_id: gender.value?.value ?? '',
@@ -118,7 +122,7 @@ const updateForm = () => {
         role_ids: role_ids.value ?? [],
         institution_department_id: department.id,
         employmentType: employmentType?.value,
-        employment_type_id: employmentType?.value?.value ?? null,
+        employment_type_id: employmentType?.value?.value ?? null
     });
 };
 
@@ -139,7 +143,8 @@ const save = () => {
         <form @submit.prevent="() => save()">
             <BaseCard :title="$t('trans.personal_details')" :description="$t('trans.personal_details_description')">
                 <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-                    <TitleComboSelect :form="form" v-model="title" :error="form.errors.title" :label-uppercase="true" :is-required="true" />
+                    <TitleComboSelect :form="form" v-model="title" :error="form.errors.title" :label-uppercase="true"
+                                      :is-required="true" />
                     <BaseInput
                         input-id="first_name"
                         :label="$t('trans.first_name')"
@@ -167,7 +172,8 @@ const save = () => {
                         @input="clearFormErrors(form, 'last_name')"
                         :error="form.errors.last_name"
                     />
-                    <GenderComboSelect :form="form" v-model="gender" :error="form.errors.gender" :label-uppercase="true" :is-required="true" />
+                    <GenderComboSelect :form="form" v-model="gender" :error="form.errors.gender" :label-uppercase="true"
+                                       :is-required="true" />
                     <MaritalStatusComboSelect
                         :form="form"
                         v-model="maritalStatus"
@@ -189,6 +195,14 @@ const save = () => {
                         @input="clearFormErrors(form, 'email')"
                         :error="form.errors.email"
                     />
+                    <PhoneNumber
+                        v-model="phone_number"
+                        placeholder="enter phone number"
+                        :label-uppercase="true"
+                        :is-required="true"
+                        @input="clearFormErrors(form, 'phone_number')"
+                        :error="form.errors.phone_number"
+                    />
                     <DateOfBirth
                         v-model="date_of_birth"
                         :is-required="true"
@@ -202,7 +216,8 @@ const save = () => {
             <div class="my-8 grid grid-cols-1 gap-3 md:grid-cols-2">
                 <BaseCard :title="$t('trans.identity')" :description="$t('trans.identity_description')">
                     <div class="mb-3 flex flex-col">
-                        <HeadingSmall :title="$t('trans.id_type')" :description="$t('trans.id_type_description')" class="my-5" />
+                        <HeadingSmall :title="$t('trans.id_type')" :description="$t('trans.id_type_description')"
+                                      class="my-5" />
                         <BaseRadioGroup
                             :options="idTypes"
                             :default-value="defaultIdType"

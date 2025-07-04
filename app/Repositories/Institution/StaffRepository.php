@@ -86,6 +86,7 @@ class StaffRepository extends BaseRepository implements IStaffRepository
             middle_name: $dto->middle_name,
             last_name: $dto->last_name,
             email: $dto->email,
+            phone_number: $dto->phone_number,
             password: Helper::generatePasswordFromName($dto->first_name, $dto->last_name),
         );
         return $this->userRepository->create($userDto);

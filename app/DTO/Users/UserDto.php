@@ -15,6 +15,7 @@ readonly class UserDto
         public ?string $middle_name,
         public string  $last_name,
         public string  $email,
+        public ?string $phone_number,
         public string  $password,
     )
     {
@@ -30,6 +31,7 @@ readonly class UserDto
             middle_name: $request->middle_name,
             last_name: $request->last_name,
             email: $request->email,
+            phone_number: $request->phone_number,
             password: $request->password,
         );
     }

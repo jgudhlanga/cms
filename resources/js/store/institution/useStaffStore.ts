@@ -18,6 +18,7 @@ export const useStaffCreateFormStore = defineStore('staff-create-form', {
             date_of_birth: '',
             id_number: '',
             id_type: '',
+            phone_number: '',
             maritalStatus: null,
             marital_status_id: null,
             passport_number: '',

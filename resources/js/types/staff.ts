@@ -54,6 +54,7 @@ export type CreateStaffParams = {
     employmentType?: SelectOption | null;
     employment_type_id: string | number | null;
     email: string;
+    phone_number?: string;
     first_name: string;
     last_name: string;
     middle_name: string;
