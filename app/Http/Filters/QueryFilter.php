@@ -13,6 +13,8 @@ abstract class QueryFilter
 	protected array $sortable = [];
 	protected array $searchable = [];
 
+	protected array $joins = [];
+
 	public function __construct(Request $request)
 	{
 		$this->request = $request;
@@ -31,6 +33,19 @@ abstract class QueryFilter
 				$this->$name('');
 			}
 		}
+        if(count($this->joins) > 0) {
+            $search = request('search');
+            foreach ($this->joins as $join) {
+                if (!method_exists($this, $join)) {
+                    continue;
+                }
+                if (strlen($search)) {
+                    $this->$join($search);
+                } else {
+                    $this->$join('');
+                }
+            }
+        }
 		foreach ($this->routeModelParams() as $name) {
 			if (!method_exists($this, $name)) {
 				continue;

@@ -3,6 +3,11 @@
 namespace App\Models\Institution;
 
 use App\Http\Filters\Institution\StaffFilter;
+use App\Models\Shared\Country;
+use App\Models\Shared\Gender;
+use App\Models\Shared\MaritalStatus;
+use App\Models\Shared\Religion;
+use App\Models\Shared\Title;
 use App\Models\Users\User;
 use App\Traits\BelongsToTenant;
 use App\Traits\Filterable;
@@ -50,6 +55,31 @@ class Staff extends Model
         'height',
         'weight',
     ];
+
+    public function gender(): BelongsTo
+    {
+        return $this->belongsTo(Gender::class);
+    }
+
+    public function title(): BelongsTo
+    {
+        return $this->belongsTo(Title::class);
+    }
+
+    public function maritalStatus(): BelongsTo
+    {
+        return $this->belongsTo(MaritalStatus::class);
+    }
+
+    public function religion(): BelongsTo
+    {
+        return $this->belongsTo(Religion::class);
+    }
+
+    public function country(): BelongsTo
+    {
+        return $this->belongsTo(Country::class);
+    }
 
     public function user(): BelongsTo
     {

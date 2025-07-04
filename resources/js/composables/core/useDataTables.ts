@@ -9,7 +9,7 @@ import { useUtils } from '@/composables/core/useUtils';
 import { ColorVariant } from '@/enums/colors';
 import { IconName } from '@/enums/icons';
 import { dangerDialog, forbiddenAlert, successAlert, warningDialog } from '@/lib/alerts';
-import { ButtonDropdownOption, TableButton } from '@/types/tables';
+import { AvatarParams, ButtonDropdownOption, TableButton } from '@/types/tables';
 import { router } from '@inertiajs/vue3';
 import {
     getCoreRowModel,
@@ -111,10 +111,19 @@ export function useDataTables() {
      * @param currentPage - A reactive reference to the current page filter.
      * @param onlyTrashed - A reactive reference to the trashed filter.
      * @param url - An optional URL to make the request to.
+     * @param useApi
+     * @param apiFetchAction
      * @returns A debounced function that performs a search on a data table.
      */
-    const tableSearch = (pageSize: Ref, currentPage: Ref, onlyTrashed: Ref, url?: string) => {
-        return debounce(function (value) {
+    const tableSearch = (
+        pageSize: Ref,
+        currentPage: Ref,
+        onlyTrashed: Ref,
+        url?: string,
+        useApi?: boolean,
+        apiFetchAction?: (url: string) => void,
+    ) => {
+        return debounce(async function (value) {
             let data = { search: value };
             if (pageSize.value) {
                 data = { ...data, ...{ page_size: pageSize.value } };
@@ -123,7 +132,14 @@ export function useDataTables() {
                 data = { ...data, ...{ trashed: onlyTrashed.value } };
             }
             if (url) {
-                router.get(url, data, requestOptions);
+                if (useApi) {
+                    const query = new URLSearchParams(data).toString();
+                    if (apiFetchAction) {
+                        apiFetchAction(`${url}?${query}`);
+                    }
+                } else {
+                    router.get(url, data, requestOptions);
+                }
             }
             currentPage.value = 1;
         }, 600);
@@ -137,10 +153,20 @@ export function useDataTables() {
      * @param currentPage - A reactive reference to the current page filter.
      * @param onlyTrashed - A reactive reference to the trashed filter.
      * @param url - An optional URL to make the request to.
+     * @param useApi
+     * @param apiFetchAction
      * @returns A debounced function that sets the page size for a data table.
      */
-    const setPageSize = (filter: Ref, table: Table<any>, currentPage: Ref, onlyTrashed: Ref, url?: string) => {
-        return debounce(function (value) {
+    const setPageSize = (
+        filter: Ref,
+        table: Table<any>,
+        currentPage: Ref,
+        onlyTrashed: Ref,
+        url?: string,
+        useApi?: boolean,
+        apiFetchAction?: (url: string) => void,
+    ) => {
+        return debounce(async function (value) {
             let data = { page_size: value };
             if (filter.value) {
                 data = { ...data, ...{ search: filter.value } };
@@ -149,7 +175,14 @@ export function useDataTables() {
                 data = { ...data, ...{ trashed: onlyTrashed.value } };
             }
             if (url) {
-                router.get(url, data, requestOptions);
+                if (useApi) {
+                    const query = new URLSearchParams(data).toString();
+                    if (apiFetchAction) {
+                        apiFetchAction(`${url}?${query}`);
+                    }
+                } else {
+                    router.get(url, data, requestOptions);
+                }
             }
             table.setPageSize(+value);
             currentPage.value = 1;
@@ -163,10 +196,12 @@ export function useDataTables() {
      * @param pageSize - A reactive reference to the page size filter.
      * @param onlyTrashed - A reactive reference to the trashed filter.
      * @param url - An optional URL to make the request to.
+     * @param useApi
+     * @param apiFetchAction
      * @returns A function that sets the page number for a data table.
      */
-    const goToPage = (filter: Ref, pageSize: Ref, onlyTrashed: Ref, url?: string) => {
-        return function (value: any) {
+    const goToPage = (filter: Ref, pageSize: Ref, onlyTrashed: Ref, url?: string, useApi?: boolean, apiFetchAction?: (url: string) => void) => {
+        return async function (value: any) {
             let data = { page: value };
             if (filter.value) {
                 data = { ...data, ...{ search: filter.value } };
@@ -178,7 +213,14 @@ export function useDataTables() {
                 data = { ...data, ...{ trashed: onlyTrashed.value } };
             }
             if (url) {
-                router.get(url, data, requestOptions);
+                if (useApi) {
+                    const query = new URLSearchParams(data).toString();
+                    if (apiFetchAction) {
+                        apiFetchAction(`${url}?${query}`);
+                    }
+                } else {
+                    router.get(url, data, requestOptions);
+                }
             }
         };
     };
@@ -190,10 +232,12 @@ export function useDataTables() {
      * @param pageSize - A reactive reference to the page size filter.
      * @param currentPage - A reactive reference to the current page filter.
      * @param url - An optional URL to make the request to.
+     * @param useApi
+     * @param apiFetchAction
      * @returns A function that sets the trashed filter for a data table.
      */
-    const loadTrashed = (filter: Ref, pageSize: Ref, currentPage: Ref, url?: string) => {
-        return function (value: any) {
+    const loadTrashed = (filter: Ref, pageSize: Ref, currentPage: Ref, url?: string, useApi?: boolean, apiFetchAction?: (url: string) => void) => {
+        return async function (value: any) {
             let data = { trashed: value };
 
             if (filter.value) {
@@ -203,7 +247,14 @@ export function useDataTables() {
                 data = { ...data, ...{ page_size: pageSize.value } };
             }
             if (url) {
-                router.get(url, data, requestOptions);
+                if (useApi) {
+                    const query = new URLSearchParams(data).toString();
+                    if (apiFetchAction) {
+                        apiFetchAction(`${url}?${query}`);
+                    }
+                } else {
+                    router.get(url, data, requestOptions);
+                }
             }
             currentPage.value = 1;
         };
@@ -318,7 +369,7 @@ export function useDataTables() {
         if (!can) {
             return forbiddenAlert();
         }
-       return router.get(url);
+        return router.get(url);
     };
 
     /**
@@ -382,8 +433,8 @@ export function useDataTables() {
         return h(OrderComponent, {});
     };
 
-    const avatar = (href: string, title: string, src?: string, classes?: string) => {
-        return h(UserAvatar, { href, src, classes }, () => title);
+    const avatar = (params: AvatarParams) => {
+        return h(UserAvatar, { href: params.href, src: params.src, classes: params.classes, title: params.title });
     };
 
     return {

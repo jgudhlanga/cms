@@ -15,16 +15,15 @@ class UsersTableSeeder extends Seeder
 
     public function run(): void
     {
-        $hararePoly = Tenant::where('name', TenantEnum::HARARE_POLY->value)->first();
-        $status = Status::where('title', StatusEnum::ACTIVE->value)->first();
         $sdu = User::create([
             'first_name' => 'Super',
             'middle_name' => '',
             'last_name' => 'Administrator',
             'email' => 'penstejdevelopers@gmail.com',
-            'tenant_id' => $hararePoly->id,
+            'tenant_id' => TenantEnum::HARARE_POLY->id(),
+            "phone_number" => "+27788104809",
             'password' => 'Developer123!',
-            'status_id' => $status->id,
+            'status_id' => StatusEnum::ACTIVE->id(),
             'email_verified_at' => now(),
         ]);
         $sdu->assignRole(RoleEnum::SUPER_ADMINISTRATOR);

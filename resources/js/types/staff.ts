@@ -1,5 +1,4 @@
 import { Role } from '@/types/acl';
-import { DataFilters, DataListProps } from '@/types/data-pagination';
 import { User } from '@/types/users';
 import { SelectOption } from '@/types/utils';
 
@@ -44,7 +43,7 @@ export type Staff = {
 
 export type CreateStaffParams = {
     id_type: string;
-    institution_department_id: string|number;
+    institution_department_id: string | number;
     id_number?: string | null;
     passport_number?: string | null;
     country?: SelectOption | null;
@@ -55,6 +54,7 @@ export type CreateStaffParams = {
     employmentType?: SelectOption | null;
     employment_type_id: string | number | null;
     email: string;
+    phone_number?: string;
     first_name: string;
     last_name: string;
     middle_name: string;
@@ -63,10 +63,4 @@ export type CreateStaffParams = {
     gender: SelectOption | null;
     gender_id: string | number | null;
     role_ids: Array<string | undefined | null> | null;
-};
-
-export type StaffSearchData = {
-    staff: DataListProps;
-    filters: DataFilters;
-    trashedCount: any;
 };

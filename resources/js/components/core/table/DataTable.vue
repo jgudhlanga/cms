@@ -21,6 +21,8 @@ interface Props {
     showArchivedFilter?: boolean;
     draggableUpdateUrl?: string;
     dragItems?: boolean;
+    useApi?: boolean;
+    apiFetchAction?: (url: string) => void | Promise<void>;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -29,6 +31,7 @@ const props = withDefaults(defineProps<Props>(), {
     disableExport: false,
     showArchivedFilter: true,
     dragItems: false,
+    useApi: false,
 });
 
 const filter = ref(props?.filters?.search ?? '');
@@ -37,10 +40,11 @@ const pageSize = ref(props?.pagination?.per_page ?? '10');
 const currentPage = ref(props?.pagination?.current_page ?? '1');
 const { initialize, toggleColumnVisibility, tableSearch, setPageSize, goToPage, loadTrashed } = useDataTables();
 const table = initialize(props);
-const searchWatcher = tableSearch(pageSize, currentPage, trashed, props.searchUrl);
-const pageSizeWatcher = setPageSize(filter, table, currentPage, trashed, props.searchUrl);
-const goToPageWatcher = goToPage(filter, pageSize, trashed, props.searchUrl);
-const trashedWatcher = loadTrashed(filter, pageSize, currentPage, props.searchUrl);
+
+const searchWatcher = tableSearch(pageSize, currentPage, trashed, props.searchUrl, props.useApi, props.apiFetchAction);
+const pageSizeWatcher = setPageSize(filter, table, currentPage, trashed, props.searchUrl, props.useApi, props.apiFetchAction);
+const goToPageWatcher = goToPage(filter, pageSize, trashed, props.searchUrl, props.useApi, props.apiFetchAction);
+const trashedWatcher = loadTrashed(filter, pageSize, currentPage, props.searchUrl, props.useApi, props.apiFetchAction);
 
 onMounted(() => {
     table.setPageSize(+pageSize.value);
@@ -59,7 +63,7 @@ watch(trashed, trashedWatcher);
     <div class="bg-sidebar inline-block min-w-full overflow-auto rounded-xl px-6 pt-4 pb-6 align-middle">
         <div class="text-sidebar-foreground mt-3 mb-6 flex w-full justify-between text-sm">
             <div class="flex w-full items-center space-x-3">
-                <Search v-model="filter" v-if="searchUrl" />
+                <Search v-model="filter" v-if="searchUrl || apiFetchAction" />
                 <Archived v-if="showArchivedFilter" :handle-archived="handleArchived" :trashed="+trashed" :trashed-count="trashedCount" />
                 <slot name="head-left" />
             </div>
@@ -71,7 +75,9 @@ watch(trashed, trashedWatcher);
                 <slot name="head-right" />
             </div>
         </div>
-        <div  v-if="dragItems" class="flex w-1/4 px-3 py-1 my-2 text-xs bg-slate-200 rounded-full text-primary font-bold">{{ $t('trans.draggable_description')}}</div>
+        <div v-if="dragItems" class="text-primary my-2 flex w-1/4 rounded-full bg-slate-200 px-3 py-1 text-xs font-bold">
+            {{ $t('trans.draggable_description') }}
+        </div>
         <table class="hava-table">
             <TableHead :table="table" />
             <TableBody :table="table" :drag-items="dragItems" :draggable-update-url="draggableUpdateUrl" />

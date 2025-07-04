@@ -28,3 +28,7 @@ export type TableActionOption = {
 };
 
 export type ButtonDropdownOption = { key: string, action: () => void }
+
+export interface AvatarParams {
+    href: string, title: string, src?: string, classes?: string
+}

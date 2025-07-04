@@ -28,22 +28,25 @@ class StaffController extends Controller
         return Inertia::render('institution/staff/Create', compact('department'));
     }
 
-    public function show(Staff $staff)
+    public function show(InstitutionDepartment $department, Staff $staff)
     {
         $this->authorize('viewDepartmentMetaData');
+        $department = InstitutionDepartmentResource::make($department);
         $staff = StaffResource::make($staff);
-        return Inertia::render('institution/staff/Show', compact('staff'));
+        return Inertia::render('institution/staff/Show', compact('department', 'staff'));
     }
 
     /**
      * Store a newly created staff.
      */
-    public function store(CreateStaffRequest $request)
+    public function store(InstitutionDepartment $department, CreateStaffRequest $request)
     {
         $this->authorize('createDepartmentMetaData');
-        $this->repository->create(
+        $staff = $this->repository->create(
             CreateStaffDto::fromStaffRequest($request)
         );
+        return to_route('staff.show', ['department' => $department->id, 'staff' => $staff->id])
+            ->with('message', 'Staff created successfully.');
     }
 
     /**

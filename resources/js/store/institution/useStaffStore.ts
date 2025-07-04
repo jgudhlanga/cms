@@ -1,7 +1,8 @@
-import { defineStore } from 'pinia';
+import { ApiFilterResponse } from '@/types/data-pagination';
 import { CreateStaffParams } from '@/types/staff';
+import { defineStore } from 'pinia';
 
-export const useStaffStore = defineStore('staff-create-form', {
+export const useStaffCreateFormStore = defineStore('staff-create-form', {
     state: (): CreateStaffParams => {
         return {
             email: '',
@@ -17,6 +18,7 @@ export const useStaffStore = defineStore('staff-create-form', {
             date_of_birth: '',
             id_number: '',
             id_type: '',
+            phone_number: '',
             maritalStatus: null,
             marital_status_id: null,
             passport_number: '',
@@ -25,6 +27,35 @@ export const useStaffStore = defineStore('staff-create-form', {
             employmentType: null,
             institution_department_id: '',
         };
+    },
+    persist: true,
+});
+
+export const useStaffDataStore = defineStore('staff-data-form', {
+    state: (): ApiFilterResponse => {
+        return {
+            data: [],
+            meta: null,
+            links: null,
+            filters: null,
+            trashedCount: null,
+        };
+    },
+    actions: {
+        setStaff(staff: ApiFilterResponse) {
+            this.data = staff.data;
+            this.meta = staff.meta;
+            this.links = staff.links;
+            this.filters = staff.filters;
+            this.trashedCount = staff.trashedCount;
+        },
+        clearStaff() {
+            this.data = [];
+            this.meta = null;
+            this.links = null;
+            this.filters = null;
+            this.trashedCount = 0;
+        },
     },
     persist: true,
 });

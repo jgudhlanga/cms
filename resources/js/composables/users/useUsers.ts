@@ -10,7 +10,7 @@ import { InertiaForm, usePage } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 
 export const useUsers = () => {
-    const { moreActionButton, onDelete, onForceDelete, onRestore, textLink, onView } = useDataTables();
+    const { moreActionButton, onDelete, onForceDelete, onRestore, avatar, onView } = useDataTables();
     const createUserColumns = () => {
         const { props } = usePage();
         const { formatDate } = useUtils();
@@ -21,15 +21,26 @@ export const useUsers = () => {
                 accessorKey: 'name',
                 cell: ({ row }: { row: { original: User } }) => {
                     const id = getIdParams(row.original.id?.toString() ?? '');
-                    return textLink(route('users.show', id), row.original?.attributes?.name);
+                    return avatar({
+                        href: route('users.show', id),
+                        title: `${row.original.attributes?.name ?? ''}`,
+                        src: row.original.attributes?.avatarUrl ?? '',
+                        classes: 'size-8 rounded-full',
+                    });
                 },
             },
             { header: trans('trans.email_address'), accessorKey: 'attributes.email' },
+            { header: trans('trans.phone_number'), accessorKey: 'attributes.phoneNumber' },
             { header: trans_choice('trans.status', 1), accessorKey: 'attributes.status' },
-            { header: trans('trans.login_count'), accessorKey: 'attributes.loginCount', meta: {align: 'center'} },
-            { header: trans('trans.last_login'), accessorKey: 'lastLoginAt',  cell: ({ row }: { row: { original: User } }) => {
-                return formatDate(row.original?.attributes?.lastLoginAt ?? '', 'LLLL')
-                } },
+            { header: trans('trans.login_count'), accessorKey: 'attributes.loginCount', meta: { align: 'center' } },
+            {
+                header: trans('trans.last_login'),
+                accessorKey: 'lastLoginAt',
+                cell: ({ row }: { row: { original: User } }) => {
+                    const loginDate = row.original?.attributes?.lastLoginAt ?? '';
+                    return loginDate ? formatDate(loginDate, 'LLLL') : '---';
+                },
+            },
             {
                 header: trans_choice('trans.action', 2),
                 accessorKey: 'actions',

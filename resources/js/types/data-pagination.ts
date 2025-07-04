@@ -39,3 +39,10 @@ export type PaginationLink = {
 	label: string | number | null,
 	active: boolean
 }
+export type ApiFilterResponse = {
+    data?: Array<any> | [];
+    meta?: PaginationMeta | null;
+    links?: PaginationRootLink | null,
+    filters?: DataFilters | null
+    trashedCount?: any
+}

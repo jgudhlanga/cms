@@ -32,7 +32,7 @@ Route::prefix('institution')->middleware('auth')->group(function () {
     # ==================================== DEPARTMENT STAFF ================================================================
     Route::put('staff/{staff}/restore', [StaffController::class, 'restore'])->name('staff.restore');
     Route::delete('staff/{staff}/force-delete', [StaffController::class, 'forceDelete'])->name('staff.force-delete');
-    Route::resource('departments.staff', StaffController::class)->shallow()->names('staff');
+    Route::resource('departments.staff', StaffController::class)->names('staff');
     # ================================== PORTAL SETUP ======================================
     Route::prefix('portal/setup')->group(function () {
         Route::get('/', [PortalSetupController::class, 'index'])->name('portal.setup');
