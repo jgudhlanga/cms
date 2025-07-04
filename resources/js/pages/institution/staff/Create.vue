@@ -20,7 +20,7 @@ import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
 import { ID_TYPES } from '@/lib/constants';
 import { clearFormErrors } from '@/lib/forms';
-import { useStaffStore } from '@/store/institution/useStaffStore';
+import { useStaffCreateFormStore } from '@/store/institution/useStaffStore';
 import { AuthObject } from '@/types/data-pagination';
 import { InstitutionDepartment } from '@/types/institution';
 import { CreateStaffParams } from '@/types/staff';
@@ -38,7 +38,7 @@ interface Props {
 
 const props = defineProps<Props>();
 const { department } = props;
-const institutionDepartmentId =  department.id?.toString() ?? '';
+const institutionDepartmentId = department.id?.toString() ?? '';
 const breadcrumbs: Array<Link> = [
     { transChoiceKey: 'institution', transChoiceKeyIndex: 1, href: route('institution.index') },
     { transChoiceKey: 'department', href: route('institution-departments.index') },
@@ -46,6 +46,7 @@ const breadcrumbs: Array<Link> = [
     { transKey: 'create_staff' },
 ];
 // Store
+const store = useStaffCreateFormStore();
 const {
     email,
     first_name,
@@ -61,7 +62,7 @@ const {
     passport_number,
     role_ids,
     employmentType,
-} = storeToRefs(useStaffStore());
+} = storeToRefs(store);
 const form = useForm<CreateStaffParams>({
     email: '',
     first_name: '',

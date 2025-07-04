@@ -32,9 +32,7 @@ class DepartmentMetaDataController extends Controller
 
     public function staff(StaffFilter $filters, InstitutionDepartment $institutionDepartment)
     {
-        $staff = StaffResource::collection($this->staffRepository->allFilter(['*'], $filters));
-        return response()->json([
-            'staff' => $staff,
+        return StaffResource::collection($this->staffRepository->allFilter(['*'], $filters))->additional([
             'filters' => request()->only(['search', 'trashed']),
             'trashedCount' => $this->staffRepository->allTrashed()->count(),
         ]);

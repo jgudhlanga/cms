@@ -47,7 +47,7 @@ class StaffResource extends JsonResource
             ],
             'relationships' => [
                 'user' => UserResource::make($this->user),
-                'roles' => RoleResource::collection($this->roles),
+                'roles' => RoleResource::collection($this->user->roles),
             ]
         ];
     }
