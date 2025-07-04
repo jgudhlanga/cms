@@ -8,6 +8,7 @@ export interface User {
         lastname: string;
         avatarUrl?: string;
         email: string;
+        phoneNumber?: string;
         tenantId: string | number;
         tenant?: string;
         statusId: string | number;

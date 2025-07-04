@@ -14,11 +14,12 @@ import { InertiaForm } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 import { ref } from 'vue';
 import { ZodObject } from 'zod';
+import { hasAbility } from '@/lib/permissions';
 
 export const useStaff = () => {
-    const { moreActionButton, avatar } = useDataTables();
-    const { navigateTo } = useUtils();
-    const createStaffColumns = () => {
+    const { moreActionButton, avatar, onView } = useDataTables();
+    const { formatDate } = useUtils();
+    const createStaffColumns = (institutionDepartmentId: string) => {
         return [
             {
                 header: trans('trans.staff'),
@@ -27,10 +28,10 @@ export const useStaff = () => {
                     const id = getIdParams(row.original.id?.toString() ?? '');
                     const title = row.original.attributes?.title ?? '';
                     return avatar({
-                        href: route('staff.show', id),
+                        href: route('staff.show', {department: institutionDepartmentId, staff: id}),
                         title: `${title} ${row.original.relationships?.user?.attributes?.name ?? ''}`,
                         src: row.original.relationships?.user?.attributes?.avatarUrl ?? '',
-                        classes: 'size-8 border-2 border-primary rounded-full',
+                        classes: 'size-8 rounded-full',
                     });
                 },
             },
@@ -42,10 +43,33 @@ export const useStaff = () => {
                 },
             },
             {
+                header: trans('trans.phone_number'),
+                accessorKey: 'phoneNumber',
+                cell: ({ row }: { row: { original: Staff } }) => {
+                    return row.original.relationships?.user?.attributes?.phoneNumber ?? '---';
+                },
+            },
+            {
                 header: trans_choice('trans.role', 2),
                 accessorKey: 'roles',
                 cell: ({ row }: { row: { original: Staff } }) => {
                     return row.original.relationships?.roles?.map((item: Role) => item?.attributes?.name)?.join(', ');
+                },
+            },
+            {
+                header: trans('trans.login_count'),
+                accessorKey: 'loginCount',
+                meta: { align: 'center' },
+                cell: ({ row }: { row: { original: Staff } }) => {
+                    return row.original.relationships?.user?.attributes?.loginCount ?? '---';
+                },
+            },
+            {
+                header: trans('trans.last_login'),
+                accessorKey: 'lastLoginAt',
+                cell: ({ row }: { row: { original: Staff } }) => {
+                    const loginDate = row.original?.relationships?.user?.attributes?.lastLoginAt ?? '';
+                    return loginDate ? formatDate(loginDate, 'LLLL') : '---';
                 },
             },
             {
@@ -54,10 +78,12 @@ export const useStaff = () => {
                 enableSorting: false,
                 meta: { align: 'right' },
                 cell: ({ row }: { row: { original: Staff } }) => {
+                    const allowed = hasAbility('update:department-metadata');
+                    const id = getIdParams(row.original.id?.toString() ?? '');
                     return moreActionButton(!!row.original?.attributes?.deletedAt, [
                         {
                             key: 'view',
-                            action: () => {},
+                            action: () => onView(allowed, route('staff.show', {department: institutionDepartmentId, staff: id})),
                         },
                         {
                             key: 'edit',
@@ -94,6 +120,7 @@ export const useStaff = () => {
             'dobSchema',
             'emailSchema',
             'employmentTypeSchema',
+            'phoneNumberSchema',
         ];
         if (isNativeCitizen) {
             personal.push('idNumberSchema');
@@ -103,7 +130,7 @@ export const useStaff = () => {
         }
         return mergeValidationSchema(schemaFields)(personal, schemaFields['titleSchema']());
     };
-    const getName = () => trans('trans.staff');
+    const getName = () => trans('trans.staff')
     const successMessage = () => trans('trans.item_saved', { item: getName() });
     const errorMessage = () => trans('trans.item_save_failure', { item: getName() });
     const saveStaff = (form: InertiaForm<any>, institutionDepartmentId: string) => {
@@ -112,7 +139,6 @@ export const useStaff = () => {
             const store = useStaffCreateFormStore();
             store.$reset();
             store.$dispose();
-            navigateTo(route('institution-departments.show', institutionDepartmentId));
         } catch (error: any) {
             form.setError(error.format());
         }

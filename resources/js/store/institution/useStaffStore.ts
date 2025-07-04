@@ -49,6 +49,13 @@ export const useStaffDataStore = defineStore('staff-data-form', {
             this.filters = staff.filters;
             this.trashedCount = staff.trashedCount;
         },
+        clearStaff() {
+            this.data = [];
+            this.meta = null;
+            this.links = null;
+            this.filters = null;
+            this.trashedCount = 0;
+        },
     },
     persist: true,
 });
