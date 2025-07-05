@@ -7,6 +7,7 @@ use App\Models\Shared\Address;
 use App\Models\Shared\Contact;
 use App\Models\Shared\Country;
 use App\Models\Shared\Gender;
+use App\Models\Shared\IdType;
 use App\Models\Shared\MaritalStatus;
 use App\Models\Shared\NextOfKin;
 use App\Models\Shared\Religion;
@@ -40,7 +41,7 @@ class Student extends Model
         'gender_id',
         'marital_status_id',
         'race_id',
-        'id_type',
+        'id_type_id',
         'id_number',
         'passport_number',
         'country_id',
@@ -60,6 +61,11 @@ class Student extends Model
     public function title(): BelongsTo
     {
         return $this->belongsTo(Title::class);
+    }
+
+    public function idType(): BelongsTo
+    {
+        return $this->belongsTo(IdType::class);
     }
 
     public function maritalStatus(): BelongsTo

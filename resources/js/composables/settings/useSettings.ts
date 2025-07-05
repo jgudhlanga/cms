@@ -31,6 +31,10 @@ export function useSettings() {
             url: route('genders.index'),
         },
         {
+            transChoiceKey: 'id_type',
+            url: route('id-types.index'),
+        },
+        {
             transChoiceKey: 'language',
             url: route('languages.index'),
         },

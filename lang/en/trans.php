@@ -253,7 +253,7 @@ return [
     "program_description" => "Provide with program details",
     "confirmation" => "Confirmation",
     "confirmation_description" => "Information provided is correct?",
-    "id_type" => "Type of ID",
+    "id_type" => "Identity type|Identity types",
     "marital_status" => "Marital Status|Marital Statuses",
     "study_permit_number" => "Study Permit Number",
     "date_of_birth" => "Date of birth",

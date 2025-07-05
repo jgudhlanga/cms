@@ -17,6 +17,7 @@ export type Staff = {
         race?: string;
         employmentTypeId?: string | number;
         employmentType?: string | number;
+        idTypeId?: string | number;
         idType?: string;
         idNumber?: string;
         passportNumber?: string;

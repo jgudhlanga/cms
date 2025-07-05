@@ -235,3 +235,18 @@ export type EmploymentTypeParams = {
     name: string;
     description?: string;
 };
+export type IdType = {
+    type?: string;
+    id?: string;
+    attributes: {
+        name: string;
+        description?: string;
+        createdAt?: string;
+        updatedAt?: string;
+        deletedAt?: string;
+    };
+};
+export type IdTypeParams = {
+    name: string;
+    description?: string;
+};

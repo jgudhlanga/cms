@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\V1\Shared\DistrictController;
 use App\Http\Controllers\Api\V1\Shared\EmploymentTypeController;
 use App\Http\Controllers\Api\V1\Shared\GenderController;
 use App\Http\Controllers\Api\V1\Shared\GradeController;
+use App\Http\Controllers\Api\V1\Shared\IdTypeController;
 use App\Http\Controllers\Api\V1\Shared\MaritalStatusController;
 use App\Http\Controllers\Api\V1\Shared\ProvinceController;
 use App\Http\Controllers\Api\V1\Shared\RelationshipController;
@@ -55,4 +56,6 @@ Route::prefix('v1')->group(function () {
     Route::apiResource('sponsor-types', SponsorTypeController::class)->names('v1.sponsor-types');
     # ==================================== EMPLOYMENT TYPE ======================================================
     Route::apiResource('employment-types', EmploymentTypeController::class)->names('v1.employment-types');
+    # ==================================== ID TYPE ======================================================
+    Route::apiResource('id-types', IdTypeController::class)->names('v1.id-types');
 });
