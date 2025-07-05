@@ -12,7 +12,8 @@ export type Student = {
     maritalStatus?: string;
     raceId?: string | number;
     race?: string;
-    idType?: string;
+    idTypeId: string | number;
+    idType: string;
     idNumber?: string;
     passportNumber?: string;
     countryId?: string | number;
@@ -33,7 +34,8 @@ export type PersonalDetailView = {
     lastname: string;
     gender?: string;
     maritalStatus?: string;
-    idType: string;
+    idTypeId?: string | number;
+    idType?: string;
     dateOfBirth: string;
     idNumber?: string;
     passportNumber?: string;

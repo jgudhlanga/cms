@@ -20,6 +20,7 @@ export type PageProps<T extends Record<string, unknown> = Record<string, unknown
 };
 
 declare module '@tanstack/table-core' {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     interface ColumnMeta<T, K> {
         align?: string;
     }

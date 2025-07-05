@@ -13,15 +13,11 @@ export const useStaffCreateFormStore = defineStore('staff-create-form', {
             middle_name: '',
             title: null,
             title_id: null,
-            country: null,
-            country_id: null,
             date_of_birth: '',
-            id_number: '',
-            id_type: '',
+            employee_number: '',
             phone_number: '',
             maritalStatus: null,
             marital_status_id: null,
-            passport_number: '',
             role_ids: [],
             employment_type_id: null,
             employmentType: null,
@@ -48,6 +44,13 @@ export const useStaffDataStore = defineStore('staff-data-form', {
             this.links = staff.links;
             this.filters = staff.filters;
             this.trashedCount = staff.trashedCount;
+        },
+        clearStaff() {
+            this.data = [];
+            this.meta = null;
+            this.links = null;
+            this.filters = null;
+            this.trashedCount = 0;
         },
     },
     persist: true,

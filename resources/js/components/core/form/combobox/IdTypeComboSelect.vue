@@ -1,26 +1,27 @@
 <script lang="ts" setup>
-import { computed, onMounted } from 'vue';
-import { SelectOption } from '@/types/utils';
 import BaseCombobox from '@/components/core/form/combobox/BaseCombobox.vue';
+import { useIdTypes } from '@/composables/shared/useIdTypes';
 import { clearFormErrors } from '@/lib/forms';
+import { IdType } from '@/types/settings';
+import { SelectOption } from '@/types/utils';
 import { InertiaForm } from '@inertiajs/vue3';
 import { debounce } from 'lodash';
-import { EmploymentType } from '@/types/settings';
-import { useEmploymentTypes } from '@/composables/shared/useEmploymentTypes';
+import { computed, onMounted } from 'vue';
 
 interface Props {
     form: InertiaForm<any>;
     labelUppercase?: boolean;
     isRequired?: boolean;
 }
-const { isLoading, employmentTypes, listEmploymentTypes } = useEmploymentTypes();
+
+const { isLoading, idTypes, listIdTypes } = useIdTypes();
 onMounted(async () => {
-    await listEmploymentTypes();
+    await listIdTypes();
 });
 const props = defineProps<Props>();
 const options = computed(() => {
-    return employmentTypes.value.map(
-        (type: EmploymentType) =>
+    return idTypes.value.map(
+        (type: IdType) =>
             <SelectOption>{
                 value: Number(type.id),
                 label: type?.attributes?.name,
@@ -29,14 +30,14 @@ const options = computed(() => {
 });
 
 const whenSearch = debounce(async (search: string) => {
-    clearFormErrors(props.form, 'employmentType');
-    await listEmploymentTypes(search);
+    clearFormErrors(props.form, 'idType');
+    await listIdTypes(search);
 }, 600);
 </script>
 
 <template>
     <BaseCombobox
-        :label="$tChoice('trans.employment_type', 1)"
+        :label="$tChoice('trans.id_type', 1)"
         :options="options"
         :on-search="async (search: string) => await whenSearch(search)"
         :is-loading="isLoading"

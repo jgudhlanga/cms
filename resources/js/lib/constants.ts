@@ -44,7 +44,8 @@ const APP_MODULE_KEYS = {
     academic_records: 'academic_records',
     application_steps: 'application_steps',
     intake_periods: 'intake_periods',
-    employment_types: 'employment_types'
+    employment_types: 'employment_types',
+    id_types: 'id_types',
 };
 
 const ID_TYPES = [

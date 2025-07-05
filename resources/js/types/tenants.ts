@@ -3,6 +3,7 @@ export interface TenantInterface {
     id: string;
     attributes: {
         name: string;
+        isDefault: boolean;
         logo?: any;
         bio?: any;
         createdAt?: string;

@@ -33,7 +33,7 @@ const allowed = hasAbility('create:department-metadata');
         :filters="filters"
         :search-url="route('v1.department-metadata.staff', institutionDepartmentId)"
         :pagination="{ ...staff?.links!, ...staff?.meta! }"
-        :columns="createStaffColumns()"
+        :columns="createStaffColumns(institutionDepartmentId)"
         :on-create="() => navigateTo(route('staff.create', institutionDepartmentId))"
         :disable-create="!allowed"
     />

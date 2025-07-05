@@ -18,18 +18,12 @@ class TitleRepository extends BaseRepository implements ITitleRepository
 
     public function create(TitleDto $dto): Title
     {
-        return $this->title->create([
-            'name' => $dto->name,
-            'description' => $dto->description,
-        ])->refresh();
+        return $this->title->create($this->getFields($dto))->refresh();
     }
 
     public function update(Title $title, TitleDto $dto): Title
     {
-        return tap($title)->update([
-            'name' => $dto->name,
-            'description' => $dto->description,
-        ]);
+        return tap($title)->update($this->getFields($dto));
     }
 
     public function allFilter($columns = ['*'], SharedNameFilter $filters = null)
@@ -41,5 +35,17 @@ class TitleRepository extends BaseRepository implements ITitleRepository
             ->orderBy('deleted_at')
             ->paginate()
             ->withQueryString();
+    }
+
+    /**
+     * @param TitleDto $dto
+     * @return array
+     */
+    public function getFields(TitleDto $dto): array
+    {
+        return [
+            'name' => $dto->name,
+            'description' => $dto->description,
+        ];
     }
 }

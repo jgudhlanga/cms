@@ -65,6 +65,8 @@ export type Status = {
     id?: string;
     attributes: {
         title: string;
+        isDefault: boolean;
+        description?: string;
         createdAt?: string;
         updatedAt?: string;
         deletedAt?: string;
@@ -232,6 +234,22 @@ export type EmploymentType = {
     };
 };
 export type EmploymentTypeParams = {
+    name: string;
+    description?: string;
+};
+export type IdType = {
+    type?: string;
+    id?: string;
+    attributes: {
+        name: string;
+        isDefault: boolean;
+        description?: string;
+        createdAt?: string;
+        updatedAt?: string;
+        deletedAt?: string;
+    };
+};
+export type IdTypeParams = {
     name: string;
     description?: string;
 };

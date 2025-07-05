@@ -42,6 +42,7 @@ use App\Repositories\Shared\CountryRepository;
 use App\Repositories\Shared\DistrictRepository;
 use App\Repositories\Shared\EmploymentTypeRepository;
 use App\Repositories\Shared\GenderRepository;
+use App\Repositories\Shared\IdTypeRepository;
 use App\Repositories\Shared\interface\IAcademicLevelRepository;
 use App\Repositories\Shared\interface\IAddressRepository;
 use App\Repositories\Shared\interface\IAddressTypeRepository;
@@ -52,6 +53,7 @@ use App\Repositories\Shared\interface\ICountryRepository;
 use App\Repositories\Shared\interface\IDistrictRepository;
 use App\Repositories\Shared\interface\IEmploymentTypeRepository;
 use App\Repositories\Shared\interface\IGenderRepository;
+use App\Repositories\Shared\interface\IIdTypeRepository;
 use App\Repositories\Shared\interface\ILanguageRepository;
 use App\Repositories\Shared\interface\IMaritalStatusRepository;
 use App\Repositories\Shared\interface\INextOfKinRepository;
@@ -139,6 +141,7 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(ISponsorTypeRepository::class, SponsorTypeRepository::class);
         $this->app->bind(IApplicationStepRepository::class, ApplicationStepRepository::class);
         $this->app->bind(IEmploymentTypeRepository::class, EmploymentTypeRepository::class);
+        $this->app->bind(IIdTypeRepository::class, IdTypeRepository::class);
     }
 
     private function paymentsRepositories(): void

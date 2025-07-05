@@ -54,6 +54,10 @@ export const useSharedFormSchema = () => {
         z.object({
             contact_name: z.string().nonempty(trans('trans.enter_required_field', { field: trans('trans.representative_name') })),
         });
+    const employeeNumberSchema = () =>
+        z.object({
+            employee_number: z.string().nonempty(trans('trans.enter_required_field', { field: trans('trans.employee_number') })),
+        });
     const emailAddressSchema = () =>
         z.object({
             email_address: z
@@ -218,6 +222,7 @@ export const useSharedFormSchema = () => {
         countrySchema,
         schoolSchema,
         placeSchema,
-        employmentTypeSchema
+        employmentTypeSchema,
+        employeeNumberSchema,
     };
 };

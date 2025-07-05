@@ -16,6 +16,7 @@ use App\Http\Controllers\Shared\CountryController;
 use App\Http\Controllers\Shared\DistrictController;
 use App\Http\Controllers\Shared\EmploymentTypeController;
 use App\Http\Controllers\Shared\GenderController;
+use App\Http\Controllers\Shared\IdTypeController;
 use App\Http\Controllers\Shared\LanguageController;
 use App\Http\Controllers\Shared\MaritalStatusController;
 use App\Http\Controllers\Shared\ProvinceController;
@@ -134,4 +135,8 @@ Route::prefix('settings')->middleware('auth')->group(function () {
     Route::put('employment-types/{employment_type}/restore', [EmploymentTypeController::class, 'restore'])->name('employment-types.restore');
     Route::delete('employment-types/{employment_type}/force-delete', [EmploymentTypeController::class, 'forceDelete'])->name('employment-types.force-delete');
     Route::resource('employment-types', EmploymentTypeController::class)->names('employment-types');
+    # ==================================== ID TYPES ======================================================
+    Route::put('id-types/{id_type}/restore', [IdTypeController::class, 'restore'])->name('id-types.restore');
+    Route::delete('id-types/{id_type}/force-delete', [IdTypeController::class, 'forceDelete'])->name('id-types.force-delete');
+    Route::resource('id-types', IdTypeController::class)->names('id-types');
 });

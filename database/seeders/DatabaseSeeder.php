@@ -21,6 +21,7 @@ use Database\Seeders\Shared\CountrySeeder;
 use Database\Seeders\Shared\DistrictsTableSeeder;
 use Database\Seeders\Shared\EmploymentTypesSeeder;
 use Database\Seeders\Shared\GenderSeeder;
+use Database\Seeders\Shared\IdTypeSeeder;
 use Database\Seeders\Shared\LanguageSeeder;
 use Database\Seeders\Shared\PaymentDaySeeder;
 use Database\Seeders\Shared\PaymentFrequencySeeder;
@@ -48,6 +49,7 @@ class DatabaseSeeder extends Seeder
             PermissionsTableSeeder::class,
             RolesTableSeeder::class,
             GenderSeeder::class,
+            IdTypeSeeder::class,
             TitleSeeder::class,
             RaceSeeder::class,
             StatusSeeder::class,
