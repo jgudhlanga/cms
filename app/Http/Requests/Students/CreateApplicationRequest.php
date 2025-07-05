@@ -39,11 +39,11 @@ class CreateApplicationRequest extends FormRequest
             'id_type_id' => ['required', 'integer', 'exists:id_types,id'],
             'id_number' => ['required_if:id_type_id,' . $idType], // assuming 1 = Zimbabwean
             'passport_number' => ['required_if:id_type_id,' . $passportType], // assuming 2 = Foreign passport
-            'country_id' => ['required_if:id_type_id,' . $passportType, 'integer', 'exists:countries,id'],
+            'country_id' => ['required_if:id_type_id,' . $passportType, 'nullable', 'exists:countries,id'],
             'address_1' => ['required', 'string', 'max:255'],
             'address_2' => ['required', 'string', 'max:255'],
             'address_3' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'max:255', 'email', 'unique:users'],
+            'email' => ['required', 'string', 'max:255', 'email'],
             'phone_number' => ['required', 'string', 'max:30'],
             'next_of_kin_name' => ['required', 'string', 'max:255'],
             'next_of_kin_address_1' => ['required', 'string', 'max:255'],
@@ -57,4 +57,5 @@ class CreateApplicationRequest extends FormRequest
             'o_level_subject_ids' => ['nullable', 'array'],
         ];
     }
+
 }
