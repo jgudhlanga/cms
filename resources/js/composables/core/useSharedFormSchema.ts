@@ -128,6 +128,12 @@ export const useSharedFormSchema = () => {
         });
 
     /* Dropdown Schema */
+    const idTypeSchema = () =>
+        z.object({
+            province: z.any().refine((val) => validateSelectOption(val), {
+                message: trans('trans.select_valid_field', { field: trans_choice('trans.id_type', 1) }),
+            }),
+        });
     const provinceSchema = () =>
         z.object({
             province: z.any().refine((val) => validateSelectOption(val), {
@@ -191,6 +197,7 @@ export const useSharedFormSchema = () => {
 
     return {
         addressOneSchema,
+        idTypeSchema,
         addressThreeSchema,
         addressTwoSchema,
         codeSchema,

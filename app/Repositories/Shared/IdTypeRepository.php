@@ -31,6 +31,7 @@ class IdTypeRepository extends BaseRepository implements IIdTypeRepository
         return $this->idType
             ->select($columns)
             ->filter($filters)
+            ->orderBy('is_default', 'desc')
             ->orderBy('name')
             ->orderBy('deleted_at')
             ->paginate()

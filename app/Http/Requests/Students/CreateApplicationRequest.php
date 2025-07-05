@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Students;
 
+use App\Enums\Shared\IdTypeEnum;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
@@ -27,16 +28,18 @@ class CreateApplicationRequest extends FormRequest
 
     public function rules(): array
     {
+        $idType = IdTypeEnum::ZIMBABWEAN_ID_NUMBER->id();
+        $passportType = IdTypeEnum::FOREIGN_PASSPORT_NUMBER->id();
         return [
             'first_name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
             'gender_id' => ['required', 'integer', 'exists:genders,id'],
             'marital_status_id' => ['required', 'integer', 'exists:marital_statuses,id'],
             'title_id' => ['required', 'integer', 'exists:titles,id'],
-            'id_type' => ["required", "string"],
-            'id_number' => ["required_if:id_type, zimbabwean-national-id-number"],
-            'passport_number' => ["required_if:id_type, foreign-passport-number"],
-            'country_id' => ["required_if:id_type, foreign-passport-number"],
+            'id_type_id' => ['required', 'integer', 'exists:id_types,id'],
+            'id_number' => ['required_if:id_type_id,' . $idType], // assuming 1 = Zimbabwean
+            'passport_number' => ['required_if:id_type_id,' . $passportType], // assuming 2 = Foreign passport
+            'country_id' => ['required_if:id_type_id,' . $passportType, 'integer', 'exists:countries,id'],
             'address_1' => ['required', 'string', 'max:255'],
             'address_2' => ['required', 'string', 'max:255'],
             'address_3' => ['required', 'string', 'max:255'],

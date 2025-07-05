@@ -10,7 +10,7 @@ readonly class CreateApplicationDto
     public function __construct(
         /** Personal details */
         public int  $user_id,
-        public string  $id_type,
+        public string  $id_type_id,
         public ?string $id_number,
         public ?string $passport_number,
         public ?int    $country_id,
@@ -55,7 +55,7 @@ readonly class CreateApplicationDto
         return new self(
         /** Personal details */
             user_id: $user->id,
-            id_type: $request->id_type,
+            id_type_id: $request->id_type_id,
             id_number: $request->id_number,
             passport_number: $request->passport_number,
             country_id: $request->country_id,
