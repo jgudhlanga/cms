@@ -14,6 +14,7 @@ export function useSidebarMenu() {
             type: 'tenant',
             attributes: {
                 name: 'Harare Poly',
+                isDefault: true,
                 logo: markRaw(AppLogo),
                 bio: 'Software',
             },
