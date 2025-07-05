@@ -4,7 +4,6 @@ namespace App\Repositories\Institution;
 
 use App\DTO\Institution\CreateStaffDto;
 use App\DTO\Users\UserDto;
-use App\Enums\Shared\RoleEnum;
 use App\Enums\Shared\StatusEnum;
 use App\Helpers\Helper;
 use App\Http\Filters\Institution\StaffFilter;
@@ -64,10 +63,7 @@ class StaffRepository extends BaseRepository implements IStaffRepository
     private function getFields(CreateStaffDto $dto): array
     {
         return [
-            'id_type' => $dto->id_type,
-            'id_number' => $dto->id_number,
-            'passport_number' => $dto->passport_number,
-            'country_id' => $dto->country_id,
+            'employee_number' => $dto->employee_number,
             'date_of_birth' => Carbon::parse($dto->date_of_birth)->format('Y-m-d'),
             'marital_status_id' => $dto->marital_status_id,
             'race_id' => $dto->race_id,

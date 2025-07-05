@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('id_types', function (Blueprint $table) {
             $table->id();
             $table->string('name')->unique();
+            $table->boolean('is_default')->default(false);
             $table->text('description')->nullable();
 			$table->timestamps();
 			$table->softDeletes();

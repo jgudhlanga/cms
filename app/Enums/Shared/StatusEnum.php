@@ -22,6 +22,14 @@ enum StatusEnum: string
         return $this->value;
     }
 
+    public function isDefault(): bool
+    {
+        return match ($this) {
+            self::ACTIVE => true,
+            self::WAITING_APPROVAL, self::INACTIVE => false,
+        };
+    }
+
     public function description(): string
     {
         return match ($this) {

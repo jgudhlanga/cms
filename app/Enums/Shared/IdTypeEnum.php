@@ -19,7 +19,13 @@ enum IdTypeEnum: string
     {
         return $this->value;
     }
-
+    public function isDefault(): bool
+    {
+        return match ($this) {
+            self::ZIMBABWEAN_ID_NUMBER => true,
+            self::FOREIGN_PASSPORT_NUMBER => false,
+        };
+    }
     public function description(): string
     {
         return match ($this) {

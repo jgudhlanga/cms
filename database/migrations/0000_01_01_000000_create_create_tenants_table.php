@@ -11,6 +11,7 @@ return new class extends Migration
 		Schema::create('tenants', function (Blueprint $table) {
 			$table->id();
 			$table->string('name')->index()->unique();
+            $table->boolean('is_default')->default(false);
 			$table->json('meta')->nullable();
 			$table->timestamps();
 			$table->softDeletes();

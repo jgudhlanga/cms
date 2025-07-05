@@ -13,7 +13,7 @@ class StatusSeeder extends Seeder
     {
 
         foreach (StatusEnum::cases() as $row) {
-			Status::create(['title' => $row->value, 'description' => $row->description()]);
+            Status::create(['title' => $row->value, 'description' => $row->description(), 'is_default' => $row->isDefault()]);
         }
     }
 }

@@ -16,6 +16,7 @@ class IdTypeResource extends JsonResource
             "attributes" => [
                 'name' => $this->resource->name,
                 'description' => $this->resource->description,
+                'isDefault' => $this->is_default,
                 $this->mergeWhen($request->routeIs('id-types.*'), [
                     'createdAt' => $this->resource->created_at,
                     'updatedAt' => $this->resource->updated_at,

@@ -17,7 +17,7 @@ import { ZodObject } from 'zod';
 import { hasAbility } from '@/lib/permissions';
 
 export const useStaff = () => {
-    const { moreActionButton, avatar, onView } = useDataTables();
+    const { moreActionButton, avatar, onView, tag } = useDataTables();
     const { formatDate } = useUtils();
     const createStaffColumns = (institutionDepartmentId: string) => {
         return [
@@ -33,6 +33,13 @@ export const useStaff = () => {
                         src: row.original.relationships?.user?.attributes?.avatarUrl ?? '',
                         classes: 'size-8 rounded-full',
                     });
+                },
+            },
+            {
+                header: trans('trans.employee_number'),
+                accessorKey: 'employee_number',
+                cell: ({ row }: { row: { original: Staff } }) => {
+                    return tag(row.original.attributes?.employeeNumber ?? '---');
                 },
             },
             {
@@ -111,7 +118,7 @@ export const useStaff = () => {
     };
 
     const schemaFields = useSharedFormSchema() as Record<string, () => ZodObject<any, any>>;
-    const createFormSchema = (isNativeCitizen: boolean) => {
+    const createFormSchema = () => {
         const personal = [
             'firstNameSchema',
             'lastNameSchema',
@@ -121,13 +128,8 @@ export const useStaff = () => {
             'emailSchema',
             'employmentTypeSchema',
             'phoneNumberSchema',
+            'employeeNumberSchema',
         ];
-        if (isNativeCitizen) {
-            personal.push('idNumberSchema');
-        } else {
-            personal.push('passportNumberSchema');
-            personal.push('countrySchema');
-        }
         return mergeValidationSchema(schemaFields)(personal, schemaFields['titleSchema']());
     };
     const getName = () => trans('trans.staff')

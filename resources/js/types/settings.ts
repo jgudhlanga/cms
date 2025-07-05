@@ -65,6 +65,8 @@ export type Status = {
     id?: string;
     attributes: {
         title: string;
+        isDefault: boolean;
+        description?: string;
         createdAt?: string;
         updatedAt?: string;
         deletedAt?: string;
@@ -240,6 +242,7 @@ export type IdType = {
     id?: string;
     attributes: {
         name: string;
+        isDefault: boolean;
         description?: string;
         createdAt?: string;
         updatedAt?: string;
