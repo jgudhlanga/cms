@@ -15,7 +15,7 @@ class WorkflowStepsSeeder extends Seeder
     {
         foreach (WorkflowStepEnum::cases() as $row) {
             WorkflowStep::create([
-                'name' => $row->value,
+                'name' => $row->name(),
                 'description' => $row->description(),
                 'position' => $row->position(),
             ]);

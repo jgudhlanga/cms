@@ -19,7 +19,7 @@ enum WorkflowStepEnum: string
     case OFFER_DECLINED = 'offer_declined';
     case ENROLLED_REGISTERED = 'enrolled_registered';
 
-    public function label(): string
+    public function name(): string
     {
         return match ($this) {
             self::DRAFT_INCOMPLETE => 'Draft / Incomplete',
@@ -84,7 +84,7 @@ enum WorkflowStepEnum: string
         return array_map(
             fn($case) => [
                 'value' => $case->value,
-                'label' => $case->label(),
+                'name' => $case->name(),
                 'position' => $case->position(),
                 'description' => $case->description(),
             ],
