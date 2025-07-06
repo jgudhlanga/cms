@@ -206,7 +206,7 @@ export type SponsorTypeParams = {
     description?: string;
 };
 
-export type ApplicationStep = {
+export type WorkflowStep = {
     type: string;
     id: string;
     attributes: {
@@ -218,7 +218,7 @@ export type ApplicationStep = {
         deletedAt?: string;
     };
 };
-export type ApplicationStepParams = {
+export type WorkflowStepParams = {
     name: string;
     description?: string;
 };

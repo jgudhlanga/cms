@@ -21,7 +21,6 @@ class DepartmentCourseController extends Controller
     {
     }
 
-
     public function syncDepartmentCourses(InstitutionDepartment $institutionDepartment, DepartmentCourseRequest $request): void
     {
         $this->authorize('createDepartmentMetaData');

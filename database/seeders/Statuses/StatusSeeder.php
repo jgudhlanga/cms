@@ -11,7 +11,6 @@ class StatusSeeder extends Seeder
 
     public function run(): void
     {
-
         foreach (StatusEnum::cases() as $row) {
             Status::create(['title' => $row->value, 'description' => $row->description(), 'is_default' => $row->isDefault()]);
         }

@@ -2,9 +2,9 @@
 
 namespace App\DTO\Shared;
 
-use App\Http\Requests\Shared\ApplicationStepRequest;
+use App\Http\Requests\Shared\WorkflowStepRequest;
 
-readonly class ApplicationStepDto
+readonly class WorkflowStepDto
 {
     public function __construct(
         public string  $name,
@@ -14,7 +14,7 @@ readonly class ApplicationStepDto
     }
 
 
-    public static function fromApplicationStepRequest(ApplicationStepRequest $request): ApplicationStepDto
+    public static function fromWorkflowStepRequest(WorkflowStepRequest $request): WorkflowStepDto
     {
         return new self(
             name: $request->name,

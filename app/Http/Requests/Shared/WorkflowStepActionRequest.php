@@ -4,7 +4,7 @@ namespace App\Http\Requests\Shared;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class ApplicationStepRequest extends FormRequest
+class WorkflowStepActionRequest extends FormRequest
 {
 
     public function authorize(): bool
@@ -16,7 +16,7 @@ class ApplicationStepRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:255', 'unique:application_steps,name'],
+            'title' => ['required', 'string', 'max:255', 'unique:workflow_step_actions,title'],
         ];
     }
 }

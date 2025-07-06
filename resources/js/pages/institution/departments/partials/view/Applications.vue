@@ -1,31 +1,30 @@
 <script setup lang="ts">
-import { TimelineStep } from '@/types/utils';
-import BaseAlert from '@/components/core/alert/BaseAlert.vue';
-import TimelineOne from '@/components/core/timelines/TimelineOne.vue';
+import { GenericButton } from '@/components/core/button';
+import { useUtils } from '@/composables/core/useUtils';
+import { ColorVariant } from '@/enums/colors';
+import { IconName } from '@/enums/icons';
+import { hasAbility } from '@/lib/permissions';
 
-const steps: TimelineStep[] = [
-    {
-        title: 'Step one description',
-        description: 'Step one action to be done',
-        timelineMarker: '1',
-        label: 'Step one',
-    },
-    {
-        title: 'Step two description',
-        description: 'Step two action to be done',
-        timelineMarker: '2',
-        label: 'Step two',
-    },
-    {
-        title: 'Step three description',
-        description: 'Step three action to be done',
-        timelineMarker: '3',
-        label: 'Step three',
-    },
-];
+interface Props {
+    institutionDepartmentId: string;
+}
+
+ defineProps<Props>();
+const { navigateTo } = useUtils();
 </script>
 
 <template>
-    <TimelineOne v-if="steps?.length > 0" :steps="steps" />
-    <BaseAlert v-else :title="$t('trans.no_data')" :description="$t('trans.no_workflows_configured_description')" />
+    <div class="flex flex-col">
+        <div class="flex justify-end" v-if="hasAbility('create:department-metadata')">
+            <GenericButton
+                :icon="IconName.cogs"
+                class="cursor-pointer rounded-full"
+                :icon-variant="ColorVariant.white"
+                :variant="ColorVariant.primary"
+                @click="() => navigateTo(route('department-application-steps.index', institutionDepartmentId))"
+                :title="$t('trans.application_step_config')"
+            />
+        </div>
+    </div>
+    <div>List Applications here</div>
 </template>

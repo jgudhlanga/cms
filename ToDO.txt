@@ -1,3 +1,51 @@
 Create staff
     use EC number instead of ID and Passport
     DONE
+
+INSTITUTION ROLES
+1. Principal (or Rector / President)
+Role: Overall head of the college, responsible for academic and administrative oversight.
+
+2. Vice Principals / Deputy Principals
+Examples:
+Vice Principal: Academic
+Vice Principal: Administration & Finance
+Vice Principal: Student Affairs
+3. Deans of Faculties / Schools
+Oversee specific academic areas.
+4. Heads of Departments (HoDs)
+Oversee academic departments like Science, Arts, Business, etc.
+
+5. Academic Staff
+Professors / Associate Professors / Senior Lecturers
+Lecturers / Assistant Lecturers / Tutors
+
+6. Administrative Staff (Non-Academic, Managerial)
+a. Registrar
+Handles student records, admissions, examinations.
+b. Human Resources Manager
+Manages staffing, contracts, payroll coordination.
+c. ICT Manager
+Manages technology infrastructure and e-learning platforms.
+d. Librarian
+Oversees academic resource management.
+
+✅ e. Accounting and Finance Team
+Reports typically to the Bursar, Chief Financial Officer (CFO), or Vice Principal for Administration & Finance.
+
+Role	Responsibilities
+Bursar / CFO	Senior finance officer; oversees all financial matters. Prepares budgets, financial statements, ensures regulatory compliance.
+Accountants	Maintain financial records, prepare reports, manage reconciliations, track expenditures, assist in budgeting.
+Finance Officers / Analysts	Assist in budgeting, auditing, forecasting, and financial planning. May liaise with departments.
+Payroll Officer	Manages salaries, deductions, benefits, and compliance with tax/labor regulations.
+Accounts Payable / Receivable Clerks	Process incoming and outgoing payments, handle invoices, maintain vendor/student accounts.
+Cashiers	Handle physical or electronic receipts and disbursements, fee collection, and petty cash.
+Internal Auditor (if applicable)	Monitors financial systems and ensures compliance with policies and internal controls.
+
+7. Support and Service Staff (Non-Academic, Operational)
+Clerks / Secretaries
+Technicians / Lab Assistants
+Catering Staff / Cleaners
+Security Personnel
+Drivers / Transport Staff
+Groundskeepers / Maintenance

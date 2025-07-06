@@ -18,6 +18,7 @@ use App\Http\Controllers\Api\V1\Shared\ReligionController;
 use App\Http\Controllers\Api\V1\Shared\SponsorTypeController;
 use App\Http\Controllers\Api\V1\Shared\SubjectController;
 use App\Http\Controllers\Api\V1\Shared\TitleController;
+use App\Http\Controllers\Api\V1\Shared\WorkflowStepController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -58,4 +59,6 @@ Route::prefix('v1')->group(function () {
     Route::apiResource('employment-types', EmploymentTypeController::class)->names('v1.employment-types');
     # ==================================== ID TYPE ======================================================
     Route::apiResource('id-types', IdTypeController::class)->names('v1.id-types');
+    # ==================================== WORKFLOW STEPS ======================================================
+    Route::apiResource('workflow-steps', WorkflowStepController::class)->names('v1.workflow-steps');
 });

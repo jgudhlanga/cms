@@ -18,7 +18,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @mixin Builder
  * @method static filter(SharedNameFilter $filters)
  */
-class ApplicationStep extends Model
+class WorkflowStep extends Model
 {
     use HasFactory, SoftDeletes, Filterable, Paginatable, LogsActivity, AssignsPosition;
 
@@ -28,7 +28,7 @@ class ApplicationStep extends Model
     {
         return LogOptions::defaults()
             ->logFillable()
-            ->useLogName('ApplicationStep')
+            ->useLogName('WorkflowStep')
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
     }

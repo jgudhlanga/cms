@@ -325,4 +325,8 @@ return [
     "identity_description" => "Provide with your identity details",
     "employee_number" => "EC Number",
     "role_details_description" => "What are the roles of this staff member in the department?",
+    "subscribe_to_application_steps" => "Subscribe to application steps",
+    "step" => "Step|Steps",
+    "application_step_config" => "Application steps config",
+    "workflow_step" => "Workflow step|Workflow steps",
 ];

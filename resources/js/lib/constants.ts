@@ -42,10 +42,11 @@ const APP_MODULE_KEYS = {
     sponsor_types: 'sponsor_types',
     sponsors: 'sponsors',
     academic_records: 'academic_records',
-    application_steps: 'application_steps',
+    workflow_steps: 'workflow_steps',
     intake_periods: 'intake_periods',
     employment_types: 'employment_types',
     id_types: 'id_types',
+    department_application_steps: 'department_application_steps',
 };
 
 const ID_TYPES = [
@@ -53,4 +54,4 @@ const ID_TYPES = [
     { value: 'foreign-passport-number', label: 'Foreign Passport Number', inputId: 'foreign-passport-number' },
 ];
 
-export { API_BASE_URL, API_VERSION, APP_MODULE_KEYS, DEFAULT_AVATAR, DEFAULT_IMAGE, LOGO, ID_TYPES };
+export { API_BASE_URL, API_VERSION, APP_MODULE_KEYS, DEFAULT_AVATAR, DEFAULT_IMAGE, ID_TYPES, LOGO };

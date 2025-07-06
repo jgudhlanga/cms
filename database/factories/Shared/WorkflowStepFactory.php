@@ -2,13 +2,13 @@
 
 namespace Database\Factories\Shared;
 
-use App\Models\Shared\ApplicationStep;
+use App\Models\Shared\WorkflowStep;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends Factory<ApplicationStep>
+ * @extends Factory<WorkflowStep>
  */
-class ApplicationStepFactory extends Factory
+class WorkflowStepFactory extends Factory
 {
 
     public function definition(): array
