@@ -2,7 +2,7 @@
 import BaseAlert from '@/components/core/alert/BaseAlert.vue';
 import { GenericButton } from '@/components/core/button';
 import PageContainer from '@/components/core/page/PageContainer.vue';
-import TimelineOne from '@/components/core/timelines/TimelineOne.vue';
+import TimelineTwo from '@/components/core/timelines/TimelineTwo.vue';
 import { useDepartmentApplications } from '@/composables/institution/useDepartmentApplications';
 import { ColorVariant } from '@/enums/colors';
 import { IconName } from '@/enums/icons';
@@ -39,6 +39,10 @@ const steps = computed(() => {
     );
 });
 
+const stepIds = computed(() => {
+    return (departmentApplicationSteps ?? []).map((step: DepartmentApplicationStep) => step.attributes?.workflowStepId?.toString() ?? '');
+});
+
 const breadcrumbs: Array<Link> = [
     { transChoiceKey: 'institution', transChoiceKeyIndex: 1, href: route('institution.index') },
     { transChoiceKey: 'department', href: route('institution-departments.index') },
@@ -46,7 +50,7 @@ const breadcrumbs: Array<Link> = [
         title: institutionDepartment.attributes.department,
         href: route('institution-departments.show', getIdParams(institutionDepartment.id?.toString() ?? '')),
     },
-    { transChoiceKey: 'step' },
+    { transKey: 'application_workflow_steps' },
 ];
 const { openDepartmentApplicationStepsModal } = useDepartmentApplications();
 </script>
@@ -54,20 +58,20 @@ const { openDepartmentApplicationStepsModal } = useDepartmentApplications();
 <template>
     <Head :title="$tChoice('trans.department', 2)" />
     <PageContainer :breadcrumbs="breadcrumbs">
-        <div class="flex flex-col space-y-4">
+        <div class="flex flex-col space-y-6">
             <div class="flex justify-end">
                 <GenericButton
                     :icon="IconName.add"
                     class="cursor-pointer rounded-full"
                     :icon-variant="ColorVariant.white"
                     :variant="ColorVariant.primary"
-                    @click="() => openDepartmentApplicationStepsModal([])"
+                    @click="() => openDepartmentApplicationStepsModal(stepIds)"
                     :title="$t('trans.subscribe_to_application_steps')"
                 />
             </div>
-
-        <TimelineOne v-if="steps?.length > 0" :steps="steps" />
-        <BaseAlert v-else :title="$t('trans.no_data')" :description="$t('trans.no_workflows_configured_description')" />
+            {{ steps }}
+            <TimelineTwo v-if="steps?.length > 0" :steps="steps" />
+            <BaseAlert v-else :title="$t('trans.no_data')" :description="$t('trans.no_workflows_configured_description')" />
         </div>
         <LinkApplicationStepsToDepartment :institution-department-id="institutionDepartment.id?.toString() ?? ''" />
     </PageContainer>

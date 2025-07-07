@@ -147,7 +147,7 @@ enum RoleEnum: string
             self::LECTURER, self::LECTURER_IN_CHARGE, self::SENIOR_LECTURER, self::TUTOR,
             self::RESEARCHER, self::PROFESSOR => 'academic',
             self::IT_MANAGER, self::ADMISSIONS_OFFICER, self::ACCOUNTANT, self::BURSAR, self::HR_OFFICER,
-            self::ADMINISTRATIVE_ASSISTANT, self::STUDENT_AFFAIRS_OFFICER => 'administrative-managerial',
+            self::ADMINISTRATIVE_ASSISTANT, self::STUDENT_AFFAIRS_OFFICER => 'administrative-and-managerial',
             self::IT_SUPPORT_TECHNICIAN, self::LAB_TECHNICIAN, self::LIBRARIAN,
             self::MAINTENANCE_STAFF, self::SECURITY_OFFICER, self::CUSTODIAN,
             self::GROUNDS_KEEPER, self::TRANSPORT_OFFICER => 'service-and-support',

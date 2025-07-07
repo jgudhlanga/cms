@@ -48,6 +48,7 @@ const APP_MODULE_KEYS = {
     employment_types: 'employment_types',
     id_types: 'id_types',
     department_application_steps: 'department_application_steps',
+    role_groups: 'role_groups',
 };
 
 const ID_TYPES = [

@@ -17,10 +17,7 @@ class RoleRepository extends BaseRepository implements IRoleRepository
 
 	public function create(RoleDto $dto): Role
 	{
-		$role = $this->role->create([
-			'name' => $dto->name,
-			'description' => $dto->description,
-		]);
+		$role = $this->role->create($this->getFields($dto));
 		if (!is_null($dto->permissions)) {
 			$role->syncPermissions(array_values($dto->permissions));
 		}
@@ -29,10 +26,7 @@ class RoleRepository extends BaseRepository implements IRoleRepository
 
 	public function update(Role $role, RoleDto $dto): Role
 	{
-		$role = tap($role)->update([
-			'name' => $dto->name,
-			'description' => $dto->description,
-		]);
+		$role = tap($role)->update($this->getFields($dto));
 
 		if (!is_null($dto->permissions)) {
 			$role->syncPermissions(array_values($dto->permissions));
@@ -45,10 +39,23 @@ class RoleRepository extends BaseRepository implements IRoleRepository
 		return $this->role
 			->select($columns)
 			->filter($filters)
+			->orderBy('role_group_id')
 			->orderBy('name')
 			->orderBy('deleted_at')
 			->paginate()
 			->withQueryString();
 	}
+
+    /**
+     * @param RoleDto $dto
+     * @return array
+     */
+    public function getFields(RoleDto $dto): array
+    {
+        return [
+            'name' => $dto->name,
+            'description' => $dto->description,
+        ];
+    }
 
 }

@@ -8,7 +8,7 @@ enum RoleGroupEnum: string
     case TESC = 'tesc';
     case EXECUTIVE = 'executive';
     case ACADEMIC = 'academic';
-    case ADMINISTRATIVE_MANAGERIAL = 'administrative-managerial';
+    case ADMINISTRATIVE_MANAGERIAL = 'administrative-and-managerial';
     case SERVICE_AND_SUPPORT = 'service-and-support';
     case STUDENT = 'student';
 
@@ -18,9 +18,9 @@ enum RoleGroupEnum: string
             self::SUPER_USER => 'Super User',
             self::TESC => 'TESC',
             self::EXECUTIVE => 'Executive',
-            self::ACADEMIC => 'Academic Staff',
-            self::ADMINISTRATIVE_MANAGERIAL => 'Administrative & Managerial Staff',
-            self::SERVICE_AND_SUPPORT => 'Support Service Staff',
+            self::ACADEMIC => 'Academic',
+            self::ADMINISTRATIVE_MANAGERIAL => 'Administrative and Managerial',
+            self::SERVICE_AND_SUPPORT => 'Service and support',
             self::STUDENT => 'Student',
         };
     }

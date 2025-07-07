@@ -19,6 +19,8 @@ class RoleResource extends JsonResource
 			"attributes" => [
 				'name' => $this->resource->name,
 				'guardName' => $this->resource->guard_name,
+				'roleGroupId' => $this->role_group_id,
+				'roleGroup' => $this->roleGroup?->name,
 				'description' => $this->resource->description,
 				$this->mergeWhen($request->routeIs('roles.*'), [
 					'permissionsCount' => $permissions->count(),

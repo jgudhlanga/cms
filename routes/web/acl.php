@@ -3,6 +3,7 @@
 use App\Http\Controllers\Acl\ModuleController;
 use App\Http\Controllers\Acl\PermissionController;
 use App\Http\Controllers\Acl\RoleController;
+use App\Http\Controllers\Acl\RoleGroupController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('settings')->middleware('auth')->group(function () {
@@ -19,5 +20,8 @@ Route::prefix('settings')->middleware('auth')->group(function () {
         Route::put('roles/{role}/restore', [RoleController::class, 'restore'])->name('roles.restore');
         Route::delete('roles/{role}/force-delete', [RoleController::class, 'forceDelete'])->name('roles.force-delete');
         Route::resource('roles', RoleController::class)->names('roles');
+        Route::put('role-groups/{role_group}/restore', [RoleGroupController::class, 'restore'])->name('role-groups.restore');
+        Route::delete('role-groups/{role_group}/force-delete', [RoleGroupController::class, 'forceDelete'])->name('role-groups.force-delete');
+        Route::resource('role-groups', RoleGroupController::class)->names('role-groups');
     });
 });

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api\V1\Roles;
+namespace App\Http\Controllers\Api\V1\Acl;
 
 use App\Http\Controllers\Api\V1\Utils\ApiDropdownController;
 use App\Http\Filters\Acl\PermissionFilter;

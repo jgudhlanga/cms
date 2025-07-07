@@ -4,9 +4,11 @@ namespace App\Providers;
 
 use App\Repositories\Acl\Interface\IModuleRepository;
 use App\Repositories\Acl\Interface\IPermissionRepository;
+use App\Repositories\Acl\Interface\IRoleGroupRepository;
 use App\Repositories\Acl\Interface\IRoleRepository;
 use App\Repositories\Acl\ModuleRepository;
 use App\Repositories\Acl\PermissionRepository;
+use App\Repositories\Acl\RoleGroupRepository;
 use App\Repositories\Acl\RoleRepository;
 use App\Repositories\Institution\CourseRepository;
 use App\Repositories\Institution\DepartmentApplicationStepRepository;
@@ -122,6 +124,7 @@ class RepositoryServiceProvider extends ServiceProvider
     private function aclRepositories(): void
     {
         $this->app->bind(IModuleRepository::class, ModuleRepository::class);
+        $this->app->bind(IRoleGroupRepository::class, RoleGroupRepository::class);
         $this->app->bind(IRoleRepository::class, RoleRepository::class);
         $this->app->bind(IPermissionRepository::class, PermissionRepository::class);
     }

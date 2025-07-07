@@ -4,26 +4,28 @@ import { useSharedFormSchema } from '@/composables/core/useSharedFormSchema';
 import { forbiddenAlert, openModal } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
 import { buildFormOptions } from '@/lib/forms';
+import { hasAbility } from '@/lib/permissions';
 import { getIdParams } from '@/lib/utils';
-import { Auth } from '@/types';
 import { type Role } from '@/types/acl';
 import type { Link } from '@/types/ui';
-import { InertiaForm, router, usePage } from '@inertiajs/vue3';
+import { InertiaForm, router } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 import { ref } from 'vue';
 
 export const useRoles = () => {
     const { nameSchema } = useSharedFormSchema();
+
+    const getName = () => trans_choice('trans.role', 1);
+    const successMessage = () => trans('trans.item_saved', { item: getName() });
+    const errorMessage = () => trans('trans.item_save_failure', { item: getName() });
     const saveRole = (form: InertiaForm<any>, role?: Role) => {
         try {
             nameSchema().parse(form);
-            const success = trans('trans.item_saved', { item: trans_choice('trans.role', 1) });
-            const error = trans('trans.item_save_failure', { item: trans_choice('trans.role', 1) });
             if (role) {
                 const id = getIdParams(role.id?.toString() ?? '');
-                form.put(route('roles.create', id), buildFormOptions(form, success, error, APP_MODULE_KEYS.roles));
+                form.put(route('roles.update', id), buildFormOptions(form, successMessage(), errorMessage(), APP_MODULE_KEYS.roles));
             } else {
-                form.post(route('roles.store'), buildFormOptions(form, success, error, APP_MODULE_KEYS.roles));
+                form.post(route('roles.store'), buildFormOptions(form, successMessage(), errorMessage(), APP_MODULE_KEYS.roles));
             }
         } catch (error: any) {
             form.setError(error.format());
@@ -32,11 +34,9 @@ export const useRoles = () => {
 
     const { moreActionButton, countActionButton, onDelete, onRestore, onForceDelete, onView } = useDataTables();
     const createRoleColumns = () => {
-        const { props } = usePage();
-        const { can } = props?.auth as Auth;
         return [
             { header: trans_choice('trans.name', 1), accessorKey: 'attributes.name' },
-            { header: trans('trans.guard_name'), accessorKey: 'attributes.guardName' },
+            { header: trans_choice('trans.role_group', 1), accessorKey: 'attributes.roleGroup' },
             { header: trans('trans.description'), accessorKey: 'attributes.description' },
             {
                 header: trans_choice('trans.permission', 2),
@@ -46,7 +46,7 @@ export const useRoles = () => {
                     const id = getIdParams(row.original.id?.toString() ?? '');
                     return countActionButton({
                         title: row.original?.attributes?.permissionsCount?.toString() ?? '0',
-                        onClick: () => (can['view:roles'] ? router.get(route('roles.show', id)) : forbiddenAlert()),
+                        onClick: () => (hasAbility('view:roles') ? router.get(route('roles.show', id)) : forbiddenAlert()),
                     });
                 },
             },
@@ -57,21 +57,20 @@ export const useRoles = () => {
                 meta: { align: 'right' },
                 cell: ({ row }: { row: { original: Role } }) => {
                     const id = getIdParams(row.original.id?.toString() ?? '');
-                    const name = trans_choice('trans.role', 1);
                     return moreActionButton(!!row.original?.attributes?.deletedAt, [
-                        { key: 'edit', action: () => onOpenModal(can['update:roles'], row.original) },
-                        { key: 'view', action: () => onView(can['view:roles'], route('roles.show', id)) },
+                        { key: 'edit', action: () => onOpenModal(hasAbility('update:roles'), row.original) },
+                        { key: 'view', action: () => onView(hasAbility('view:roles'), route('roles.show', id)) },
                         {
                             key: 'archive',
-                            action: () => onDelete(can['delete:roles'], route('roles.destroy', id), name),
+                            action: () => onDelete(hasAbility('delete:roles'), route('roles.destroy', id), getName()),
                         },
                         {
                             key: 'restore',
-                            action: () => onRestore(can['restore:roles'], route('roles.restore', id), name),
+                            action: () => onRestore(hasAbility('restore:roles'), route('roles.restore', id), getName()),
                         },
                         {
                             key: 'delete',
-                            action: () => onForceDelete(can['forceDelete:roles'], route('roles.force-delete', id), name),
+                            action: () => onForceDelete(hasAbility('forceDelete:roles'), route('roles.force-delete', id), getName()),
                         },
                     ]);
                 },
