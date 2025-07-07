@@ -3,7 +3,6 @@
 namespace App\Models\Institution;
 
 use App\Models\Shared\WorkflowStep;
-use App\Traits\AssignsPosition;
 use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -19,7 +18,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
  */
 class DepartmentApplicationStep extends Model
 {
-    use  SoftDeletes, BelongsToTenant, LogsActivity, AssignsPosition;
+    use  SoftDeletes, BelongsToTenant, LogsActivity;
 
     protected $fillable = ['tenant_id', 'institution_department_id', 'workflow_step_id', 'position'];
 
@@ -27,6 +26,7 @@ class DepartmentApplicationStep extends Model
     {
         return $this->belongsTo(WorkflowStep::class, 'workflow_step_id');
     }
+
     public function addresses(): MorphMany
     {
         return $this->morphMany(DepartmentWorkflowStep::class, 'steppable')->withTrashed();

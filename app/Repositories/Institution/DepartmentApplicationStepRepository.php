@@ -6,6 +6,7 @@ use App\DTO\Institution\DepartmentApplicationStepDto;
 use App\DTO\Institution\DepartmentApplicationStepUpdateDto;
 use App\Models\Institution\DepartmentApplicationStep;
 use App\Models\Institution\InstitutionDepartment;
+use App\Models\Shared\WorkflowStep;
 use App\Repositories\Base\BaseRepository;
 use App\Repositories\Institution\interface\IDepartmentApplicationStepRepository;
 
@@ -38,9 +39,21 @@ class DepartmentApplicationStepRepository extends BaseRepository implements IDep
 
         // Add new workflow_steps
         foreach ($toAdd as $workflowStepId) {
-            $this->departmentApplicationStep->create(['institution_department_id' => $institutionDepartment->id, 'workflow_step_id' => $workflowStepId]);
+            //  get step position from the workflow step
+            $position = $this->getStepPosition($workflowStepId);
+            $this->departmentApplicationStep->create([
+                'institution_department_id' => $institutionDepartment->id,
+                'workflow_step_id' => $workflowStepId,
+                'position' => $position,
+            ]);
         }
     }
+
+    private function getStepPosition($stepId)
+    {
+        return WorkflowStep::where('id', $stepId)->value('position');
+    }
+
 
     public function update(DepartmentApplicationStep $departmentApplicationStep, DepartmentApplicationStepUpdateDto $dto)
     {

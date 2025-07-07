@@ -29,12 +29,12 @@ const { institutionDepartment, departmentApplicationSteps } = props;
 
 const steps = computed(() => {
     return departmentApplicationSteps?.map(
-        (step: DepartmentApplicationStep) =>
+        (step: DepartmentApplicationStep, index: number) =>
             <TimelineStep>{
                 title: step.attributes?.workflowStep,
                 description: step.attributes?.workflowStepDescription,
                 timelineMarker: step.attributes?.position?.toString() ?? '',
-                label: `${trans_choice('trans.step', 1)} ${step.attributes?.position}`,
+                label: `${trans_choice('trans.step', 1)} ${index + 1}`,
             },
     );
 });
@@ -69,7 +69,6 @@ const { openDepartmentApplicationStepsModal } = useDepartmentApplications();
                     :title="$t('trans.subscribe_to_application_steps')"
                 />
             </div>
-            {{ steps }}
             <TimelineTwo v-if="steps?.length > 0" :steps="steps" />
             <BaseAlert v-else :title="$t('trans.no_data')" :description="$t('trans.no_workflows_configured_description')" />
         </div>
