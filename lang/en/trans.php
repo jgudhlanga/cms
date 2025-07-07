@@ -332,4 +332,5 @@ return [
     "workflow_step" => "Workflow step|Workflow steps",
     "workflow_step_action" => "Workflow step action|Workflow step actions",
     "application_workflow_steps" => "Application workflow steps",
+    "edit_step" => "Edit step",
 ];

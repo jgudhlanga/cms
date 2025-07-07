@@ -12,6 +12,11 @@ export const useDepartmentApplications = () => {
         if (!hasAbility('create:department-metadata')) return forbiddenAlert();
         openModal({ name: APP_MODULE_KEYS.department_application_steps, edit: departmentSteps });
     };
+
+    const openDepartmentWorkflowActionModal = () => {
+        if (!hasAbility('create:department-metadata')) return forbiddenAlert();
+        openModal({ name: APP_MODULE_KEYS.department_workflow_actions, edit: null });
+    };
     const getName = () => trans_choice('trans.application_step', 1);
     const successMessage = () => trans('trans.item_saved', { item: getName() });
     const errorMessage = () => trans('trans.item_save_failure', { item: getName() });
@@ -51,5 +56,6 @@ export const useDepartmentApplications = () => {
         openDepartmentApplicationStepsModal,
         syncDepartmentApplicationSteps,
         updateDepartmentApplicationSteps,
+        openDepartmentWorkflowActionModal,
     };
 };

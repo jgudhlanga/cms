@@ -2,12 +2,14 @@
 import BaseAlert from '@/components/core/alert/BaseAlert.vue';
 import { GenericButton } from '@/components/core/button';
 import PageContainer from '@/components/core/page/PageContainer.vue';
+import StepMetadata from '@/components/core/timelines/StepMetadata.vue';
 import TimelineTwo from '@/components/core/timelines/TimelineTwo.vue';
 import { useDepartmentApplications } from '@/composables/institution/useDepartmentApplications';
 import { ColorVariant } from '@/enums/colors';
 import { IconName } from '@/enums/icons';
 import { getIdParams } from '@/lib/utils';
 import LinkApplicationStepsToDepartment from '@/pages/institution/departments/partials/LinkApplicationStepsToDepartment.vue';
+import StepActions from '@/pages/institution/departments/partials/StepActions.vue';
 import { AuthObject } from '@/types/data-pagination';
 import { DepartmentApplicationStep } from '@/types/department-meta-data';
 import { InstitutionDepartment } from '@/types/institution';
@@ -26,6 +28,7 @@ interface Props {
 
 const props = defineProps<Props>();
 const { institutionDepartment, departmentApplicationSteps } = props;
+const { openDepartmentApplicationStepsModal, openDepartmentWorkflowActionModal } = useDepartmentApplications();
 
 const steps = computed(() => {
     return departmentApplicationSteps?.map(
@@ -35,6 +38,11 @@ const steps = computed(() => {
                 description: step.attributes?.workflowStepDescription,
                 timelineMarker: step.attributes?.position?.toString() ?? '',
                 label: `${trans_choice('trans.step', 1)} ${index + 1}`,
+                component: StepMetadata,
+                props: {
+                    step,
+                    action: openDepartmentWorkflowActionModal,
+                },
             },
     );
 });
@@ -52,7 +60,6 @@ const breadcrumbs: Array<Link> = [
     },
     { transKey: 'application_workflow_steps' },
 ];
-const { openDepartmentApplicationStepsModal } = useDepartmentApplications();
 </script>
 
 <template>
@@ -73,5 +80,6 @@ const { openDepartmentApplicationStepsModal } = useDepartmentApplications();
             <BaseAlert v-else :title="$t('trans.no_data')" :description="$t('trans.no_workflows_configured_description')" />
         </div>
         <LinkApplicationStepsToDepartment :institution-department-id="institutionDepartment.id?.toString() ?? ''" />
+        <StepActions :institution-department-id="institutionDepartment.id?.toString() ?? ''" />
     </PageContainer>
 </template>
