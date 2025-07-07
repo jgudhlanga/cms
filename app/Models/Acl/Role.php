@@ -3,8 +3,10 @@
 namespace App\Models\Acl;
 
 use App\Http\Filters\Acl\PermissionFilter;
+use App\Observers\Shared\NameSlugObserver;
 use App\Traits\Filterable;
 use App\Traits\Paginatable;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -17,11 +19,12 @@ use Spatie\Permission\Models\Role as SpatieRole;
  * @mixin Builder
  * @method static filter(PermissionFilter $filters)
  */
+#[ObservedBy([NameSlugObserver::class])]
 class Role extends SpatieRole
 {
 	use HasFactory, SoftDeletes, Filterable, Paginatable, LogsActivity;
 
-	protected $fillable = ['name', 'description', 'guard_name'];
+	protected $fillable = ['name', 'slug', 'description', 'guard_name', 'role_group_id'];
 
 	public function getActivitylogOptions(): LogOptions
 	{

@@ -6,7 +6,7 @@ use App\DTO\Shared\AddressDto;
 use App\DTO\Shared\ContactDto;
 use App\DTO\Students\CreateApplicationDto;
 use App\DTO\Users\UserDto;
-use App\Enums\Shared\RoleEnum;
+use App\Enums\Acl\RoleEnum;
 use App\Enums\Shared\StatusEnum;
 use App\Enums\Shared\TenantEnum;
 use App\Http\Controllers\Controller;

@@ -31,8 +31,8 @@ const steps = computed(() => {
     return departmentApplicationSteps?.map(
         (step: DepartmentApplicationStep) =>
             <TimelineStep>{
-                title: step.attributes?.applicationStep,
-                description: step.attributes?.applicationStepDescription,
+                title: step.attributes?.workflowStep,
+                description: step.attributes?.workflowStepDescription,
                 timelineMarker: step.attributes?.position?.toString() ?? '',
                 label: `${trans_choice('trans.step', 1)} ${step.attributes?.position}`,
             },
@@ -54,7 +54,7 @@ const { openDepartmentApplicationStepsModal } = useDepartmentApplications();
 <template>
     <Head :title="$tChoice('trans.department', 2)" />
     <PageContainer :breadcrumbs="breadcrumbs">
-        <div class="flex flex-col">
+        <div class="flex flex-col space-y-4">
             <div class="flex justify-end">
                 <GenericButton
                     :icon="IconName.add"
@@ -65,9 +65,10 @@ const { openDepartmentApplicationStepsModal } = useDepartmentApplications();
                     :title="$t('trans.subscribe_to_application_steps')"
                 />
             </div>
-        </div>
+
         <TimelineOne v-if="steps?.length > 0" :steps="steps" />
         <BaseAlert v-else :title="$t('trans.no_data')" :description="$t('trans.no_workflows_configured_description')" />
+        </div>
         <LinkApplicationStepsToDepartment :institution-department-id="institutionDepartment.id?.toString() ?? ''" />
     </PageContainer>
 </template>

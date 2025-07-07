@@ -127,6 +127,11 @@ export const useSharedFormSchema = () => {
                 ),
         });
 
+    const titleLabelSchema = () =>
+        z.object({
+            title: z.string().nonempty(trans('trans.enter_required_field', { field: trans_choice('trans.title', 1) })),
+        });
+
     /* Dropdown Schema */
     const idTypeSchema = () =>
         z.object({
@@ -231,5 +236,6 @@ export const useSharedFormSchema = () => {
         placeSchema,
         employmentTypeSchema,
         employeeNumberSchema,
+        titleLabelSchema,
     };
 };

@@ -9,7 +9,7 @@ import { getModalEdit } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
 import { useModalStore } from '@/store/core/useModalStore';
 import { DepartmentApplicationStepParams } from '@/types/department-meta-data';
-import { WokflowStep } from '@/types/settings';
+import { WorkflowStep } from '@/types/settings';
 import { useForm } from '@inertiajs/vue3';
 import { ref, watch } from 'vue';
 
@@ -21,28 +21,28 @@ defineProps<Props>();
 
 const allSelected = ref(false);
 const form = useForm<DepartmentApplicationStepParams>({
-    application_step_ids: [],
+    workflow_step_ids: [],
 });
 
-const { isLoading, applicationSteps, listApplicationSteps } = useWorkflowSteps();
+const { isLoading, workflowSteps, listWorkflowSteps } = useWorkflowSteps();
 const { syncDepartmentApplicationSteps } = useDepartmentApplications();
 const selectAll = () => {
     if (allSelected.value) {
-        form.application_step_ids = [];
+        form.workflow_step_ids = [];
         allSelected.value = false;
     } else {
-        form.application_step_ids = applicationSteps.value?.map((item: WokflowStep) => item['id']);
+        form.workflow_step_ids = workflowSteps.value?.map((item: WorkflowStep) => item['id']);
         allSelected.value = true;
     }
 };
 const updateModel = () => {
-    allSelected.value = form.application_step_ids?.length == applicationSteps.value?.length;
+    allSelected.value = form.workflow_step_ids?.length == workflowSteps.value?.length;
 };
 const { modals } = useModalStore();
 
 watch(modals!, async () => {
-    form.application_step_ids = getModalEdit(APP_MODULE_KEYS.department_application_steps);
-    await listApplicationSteps();
+    form.workflow_step_ids = getModalEdit(APP_MODULE_KEYS.department_application_steps);
+    await listWorkflowSteps();
     form.defaults();
 });
 </script>
@@ -71,16 +71,16 @@ watch(modals!, async () => {
                             />
                         </div>
                         <div class="grid grid-cols-4 gap-x-3 md:grid-cols-2">
-                            <template v-for="step in applicationSteps" :key="`step_key_${step['id']}`">
-                                <div class="flex space-x-1 items-center">
+                            <template v-for="step in workflowSteps" :key="`step_key_${step['id']}`">
+                                <div class="flex items-center space-x-1">
                                     <BaseCheckbox
                                         :input-id="`step_id_${step['id']}`"
                                         :value="step['id']"
-                                        v-model="form.application_step_ids"
+                                        v-model="form.workflow_step_ids"
                                         :label="step['attributes']['name']"
                                         @change="updateModel()"
                                     />
-                                    <span class="text-xs text-muted-foreground">{{`(${step.attributes?.description})`}}</span>
+                                    <span class="text-muted-foreground text-xs">{{ `(${step.attributes?.description})` }}</span>
                                 </div>
                             </template>
                         </div>

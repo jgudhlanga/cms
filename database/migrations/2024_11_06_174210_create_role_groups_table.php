@@ -11,10 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('workflow_step_actions', function (Blueprint $table) {
+        Schema::create('role_groups', function (Blueprint $table) {
             $table->id();
-           $table->string('slug');
-           $table->string('title')->unique();
+            $table->string('slug');
+            $table->string('name')->unique();
+            $table->text('description')->nullable();
 			$table->timestamps();
 			$table->softDeletes();
         });
@@ -25,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('workflow_step_actions');
+        Schema::dropIfExists('role_groups');
     }
 };

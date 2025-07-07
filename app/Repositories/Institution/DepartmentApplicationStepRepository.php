@@ -19,26 +19,26 @@ class DepartmentApplicationStepRepository extends BaseRepository implements IDep
 
     public function syncDepartmentApplicationSteps(InstitutionDepartment $institutionDepartment, DepartmentApplicationStepDto $dto): void
     {
-        // Get existing application_step_ids linked to this department
+        // Get existing workflow_step_ids linked to this department
         $existing = $this->departmentApplicationStep
             ->where('institution_department_id', $institutionDepartment->id)
-            ->pluck('application_step_id')
+            ->pluck('workflow_step_id')
             ->toArray();
 
-        $newIds = $dto->application_step_ids;
+        $newIds = $dto->workflow_step_ids;
 
         // Determine which IDs to add and which to remove
         $toAdd = array_diff($newIds, $existing);
         $toRemove = array_diff($existing, $newIds);
 
-        // Delete removed application_steps
+        // Delete removed workflow_steps
         if (!empty($toRemove)) {
-            $this->departmentApplicationStep->whereIn('application_step_id', $toRemove)->delete();
+            $this->departmentApplicationStep->whereIn('workflow_step_id', $toRemove)->delete();
         }
 
-        // Add new application_steps
-        foreach ($toAdd as $applicationStepId) {
-            $this->departmentApplicationStep->create(['institution_department_id' => $institutionDepartment->id, 'application_step_id' => $applicationStepId]);
+        // Add new workflow_steps
+        foreach ($toAdd as $workflowStepId) {
+            $this->departmentApplicationStep->create(['institution_department_id' => $institutionDepartment->id, 'workflow_step_id' => $workflowStepId]);
         }
     }
 

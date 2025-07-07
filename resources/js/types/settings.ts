@@ -222,6 +222,20 @@ export type WorkflowStepParams = {
     name: string;
     description?: string;
 };
+export type WorkflowStepActionParams = {
+    title: string;
+};
+export type WorkflowStepAction = {
+    type: string;
+    id: string;
+    attributes: {
+        name: string;
+        title: string;
+        createdAt?: string;
+        updatedAt?: string;
+        deletedAt?: string;
+    };
+};
 export type EmploymentType = {
     type?: string;
     id?: string;

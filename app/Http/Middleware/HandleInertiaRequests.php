@@ -2,7 +2,7 @@
 
 namespace App\Http\Middleware;
 
-use App\Enums\Shared\PermissionEnum;
+use App\Enums\Acl\PermissionEnum;
 use App\Http\Resources\Users\UserResource;
 use App\Models\Users\User;
 use Illuminate\Http\Request;

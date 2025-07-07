@@ -78,6 +78,10 @@ export function useSettings() {
             transChoiceKey: 'workflow_step',
             url: route('workflow-steps.index'),
         },
+        {
+            transChoiceKey: 'workflow_step_action',
+            url: route('workflow-step-actions.index'),
+        },
     ];
     return { tabs };
 }

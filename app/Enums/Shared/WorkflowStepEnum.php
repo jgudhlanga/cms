@@ -8,7 +8,7 @@ enum WorkflowStepEnum: string
     case SUBMITTED = 'submitted';
     case IN_REVIEW = 'in_review';
     case AWAITING_REQUIREMENTS = 'awaiting_requirements';
-    case AWAITING_PAYMENT = 'awaiting_payment';
+    case AWAITING_APPLICATION_FEE_PAYMENT = 'awaiting_application_fee_payment';
     case INTERVIEW_SCHEDULED = 'interview_scheduled';
     case INTERVIEW_COMPLETED = 'interview_completed';
     case DECISION_PENDING = 'decision_pending';
@@ -26,7 +26,7 @@ enum WorkflowStepEnum: string
             self::SUBMITTED => 'Submitted',
             self::IN_REVIEW => 'In Review',
             self::AWAITING_REQUIREMENTS => 'Awaiting Requirements',
-            self::AWAITING_PAYMENT => 'Awaiting Payment',
+            self::AWAITING_APPLICATION_FEE_PAYMENT => 'Awaiting Application Fee Payment',
             self::INTERVIEW_SCHEDULED => 'Interview Scheduled',
             self::INTERVIEW_COMPLETED => 'Interview Completed',
             self::DECISION_PENDING => 'Decision Pending',
@@ -44,9 +44,9 @@ enum WorkflowStepEnum: string
         return match ($this) {
             self::DRAFT_INCOMPLETE => 1,
             self::SUBMITTED => 2,
-            self::IN_REVIEW => 3,
-            self::AWAITING_REQUIREMENTS => 4,
-            self::AWAITING_PAYMENT => 5,
+            self::AWAITING_APPLICATION_FEE_PAYMENT => 3,
+            self::IN_REVIEW => 4,
+            self::AWAITING_REQUIREMENTS => 5,
             self::INTERVIEW_SCHEDULED => 6,
             self::INTERVIEW_COMPLETED => 7,
             self::DECISION_PENDING => 8,
@@ -66,7 +66,7 @@ enum WorkflowStepEnum: string
             self::SUBMITTED => 'Application has been submitted and is awaiting review.',
             self::IN_REVIEW => 'Application is currently under review by staff.',
             self::AWAITING_REQUIREMENTS => 'Additional documents or info required.',
-            self::AWAITING_PAYMENT => 'Pending payment of application or registration fees.',
+            self::AWAITING_APPLICATION_FEE_PAYMENT => 'Pending payment of application or registration fees.',
             self::INTERVIEW_SCHEDULED => 'Interview has been scheduled with the applicant.',
             self::INTERVIEW_COMPLETED => 'Interview has been completed and is under consideration.',
             self::DECISION_PENDING => 'A final admission decision is being made.',

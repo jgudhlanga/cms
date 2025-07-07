@@ -2,9 +2,10 @@
 
 namespace Database\Seeders\Acl;
 
-use App\Enums\Shared\PermissionEnum;
-use App\Enums\Shared\RoleEnum;
+use App\Enums\Acl\PermissionEnum;
+use App\Enums\Acl\RoleEnum;
 use App\Models\Acl\Role;
+use App\Models\Acl\RoleGroup;
 use Illuminate\Database\Seeder;
 
 class RolesTableSeeder extends Seeder
@@ -12,9 +13,14 @@ class RolesTableSeeder extends Seeder
     public function run(): void
     {
         foreach (RoleEnum::cases() as $role) {
-            $exist = Role::where('name', $role->value)->first();
+            $exist = Role::where('name', $role->name())->first();
             if (!$exist instanceof Role) {
-                $role = Role::create(['name' => $role->value, 'description' => $role->description()]);
+                $role = Role::create(
+                    [
+                        'name' => $role->name,
+                        'role_group_id' => $this->getGroupId($role->group()),
+                        'description' => $role->description()
+                    ]);
                 if ($role->name == RoleEnum::SUPER_ADMINISTRATOR->value) {
                     $this->assignSuperAdministratorPermissions($role);
                 }
@@ -23,6 +29,12 @@ class RolesTableSeeder extends Seeder
                 }
             }
         }
+    }
+
+    private function getGroupId($slug)
+    {
+        $roleGroup = RoleGroup::where('slug', $slug)->first();
+        return $roleGroup ?? null;
     }
 
     private function assignSuperAdministratorPermissions($role): void

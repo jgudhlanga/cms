@@ -2,11 +2,9 @@
 
 namespace Database\Seeders\Users;
 
-use App\Enums\Shared\RoleEnum;
+use App\Enums\Acl\RoleEnum;
 use App\Enums\Shared\StatusEnum;
 use App\Enums\Shared\TenantEnum;
-use App\Models\Shared\Status;
-use App\Models\Tenants\Tenant;
 use App\Models\Users\User;
 use Illuminate\Database\Seeder;
 

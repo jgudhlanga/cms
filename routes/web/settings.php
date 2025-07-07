@@ -10,7 +10,6 @@ use App\Http\Controllers\Institution\Dropdowns\SubjectController;
 use App\Http\Controllers\Settings\SettingsController;
 use App\Http\Controllers\Shared\AcademicLevelController;
 use App\Http\Controllers\Shared\AddressTypeController;
-use App\Http\Controllers\Shared\WorkflowStepController;
 use App\Http\Controllers\Shared\CommunicationMethodController;
 use App\Http\Controllers\Shared\CountryController;
 use App\Http\Controllers\Shared\DistrictController;
@@ -26,6 +25,8 @@ use App\Http\Controllers\Shared\ReligionController;
 use App\Http\Controllers\Shared\SponsorTypeController;
 use App\Http\Controllers\Shared\StatusController;
 use App\Http\Controllers\Shared\TitleController;
+use App\Http\Controllers\Shared\WorkflowStepActionController;
+use App\Http\Controllers\Shared\WorkflowStepController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('settings')->middleware('auth')->group(function () {
@@ -131,6 +132,9 @@ Route::prefix('settings')->middleware('auth')->group(function () {
     Route::put('workflow-steps/{workflow_step}/restore', [WorkflowStepController::class, 'restore'])->name('workflow-steps.restore');
     Route::delete('workflow-steps/{workflow_step}/force-delete', [WorkflowStepController::class, 'forceDelete'])->name('workflow-steps.force-delete');
     Route::resource('workflow-steps', WorkflowStepController::class)->names('workflow-steps');
+    Route::put('workflow-step-actions/{workflow_step_action}/restore', [WorkflowStepActionController::class, 'restore'])->name('workflow-step-actions.restore');
+    Route::delete('workflow-step-actions/{workflow_step_action}/force-delete', [WorkflowStepActionController::class, 'forceDelete'])->name('workflow-step-actions.force-delete');
+    Route::resource('workflow-step-actions', WorkflowStepActionController::class)->names('workflow-step-actions');
     # ==================================== EMPLOYMENT TYPES ======================================================
     Route::put('employment-types/{employment_type}/restore', [EmploymentTypeController::class, 'restore'])->name('employment-types.restore');
     Route::delete('employment-types/{employment_type}/force-delete', [EmploymentTypeController::class, 'forceDelete'])->name('employment-types.force-delete');

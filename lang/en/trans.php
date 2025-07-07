@@ -329,4 +329,5 @@ return [
     "step" => "Step|Steps",
     "application_step_config" => "Application steps config",
     "workflow_step" => "Workflow step|Workflow steps",
+    "workflow_step_action" => "Workflow step action|Workflow step actions",
 ];

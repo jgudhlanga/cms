@@ -43,6 +43,7 @@ const APP_MODULE_KEYS = {
     sponsors: 'sponsors',
     academic_records: 'academic_records',
     workflow_steps: 'workflow_steps',
+    workflow_step_actions: 'workflow_step_actions',
     intake_periods: 'intake_periods',
     employment_types: 'employment_types',
     id_types: 'id_types',

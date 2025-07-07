@@ -8,6 +8,7 @@ use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
@@ -25,6 +26,10 @@ class DepartmentApplicationStep extends Model
     public function workflowStep(): BelongsTo
     {
         return $this->belongsTo(WorkflowStep::class, 'workflow_step_id');
+    }
+    public function addresses(): MorphMany
+    {
+        return $this->morphMany(DepartmentWorkflowStep::class, 'steppable')->withTrashed();
     }
 
     public function getActivitylogOptions(): LogOptions

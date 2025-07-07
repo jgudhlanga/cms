@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Enums\Shared;
+namespace App\Enums\Acl;
 
 enum PermissionEnum: string
 {

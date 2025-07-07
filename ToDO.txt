@@ -1,20 +1,9 @@
-Create staff
-    use EC number instead of ID and Passport
-    DONE
-
-INSTITUTION ROLES
 1. Principal (or Rector / President)
 Role: Overall head of the college, responsible for academic and administrative oversight.
 
 2. Vice Principals / Deputy Principals
 Examples:
-Vice Principal: Academic
-Vice Principal: Administration & Finance
-Vice Principal: Student Affairs
-3. Deans of Faculties / Schools
-Oversee specific academic areas.
-4. Heads of Departments (HoDs)
-Oversee academic departments like Science, Arts, Business, etc.
+
 
 5. Academic Staff
 Professors / Associate Professors / Senior Lecturers

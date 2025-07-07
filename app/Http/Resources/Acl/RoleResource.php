@@ -2,7 +2,7 @@
 
 namespace App\Http\Resources\Acl;
 
-use App\Enums\Shared\PermissionEnum;
+use App\Enums\Acl\PermissionEnum;
 use App\Models\Acl\Permission;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
