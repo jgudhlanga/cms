@@ -24,6 +24,6 @@ class UsersTableSeeder extends Seeder
             'status_id' => StatusEnum::ACTIVE->id(),
             'email_verified_at' => now(),
         ]);
-        $sdu->assignRole(RoleEnum::SUPER_ADMINISTRATOR);
+        $sdu->assignRole(RoleEnum::SUPER_ADMINISTRATOR->name());
     }
 }

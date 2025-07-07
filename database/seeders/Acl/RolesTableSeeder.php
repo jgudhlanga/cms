@@ -12,19 +12,19 @@ class RolesTableSeeder extends Seeder
 {
     public function run(): void
     {
-        foreach (RoleEnum::cases() as $role) {
-            $exist = Role::where('name', $role->name())->first();
+        foreach (RoleEnum::cases() as $row) {
+            $exist = Role::where('name', $row->name())->first();
             if (!$exist instanceof Role) {
                 $role = Role::create(
                     [
-                        'name' => $role->name,
-                        'role_group_id' => $this->getGroupId($role->group()),
-                        'description' => $role->description()
+                        'name' => $row->name(),
+                        'role_group_id' => $this->getGroupId($row->group()),
+                        'description' => $row->description()
                     ]);
-                if ($role->name == RoleEnum::SUPER_ADMINISTRATOR->value) {
+                if ($role->name == RoleEnum::SUPER_ADMINISTRATOR->name()) {
                     $this->assignSuperAdministratorPermissions($role);
                 }
-                if ($role->name == RoleEnum::STUDENT->value) {
+                if ($role->name == RoleEnum::STUDENT->name()) {
                     $role->givePermissionTo($this->portalPermissions());
                 }
             }
@@ -34,7 +34,7 @@ class RolesTableSeeder extends Seeder
     private function getGroupId($slug)
     {
         $roleGroup = RoleGroup::where('slug', $slug)->first();
-        return $roleGroup ?? null;
+        return $roleGroup->id ?? null;
     }
 
     private function assignSuperAdministratorPermissions($role): void
