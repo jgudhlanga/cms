@@ -107,7 +107,7 @@ const save = () => {
         form.setError(error.format());
     }
 };
-const departmentRoles = "head-of-department,head-of-division,lecturer,lecturer-in-charge,senior-lecturer";
+const onlyRoles = "head-of-department,head-of-division,lecturer,lecturer-in-charge,senior-lecturer";
 </script>
 
 <template>
@@ -198,7 +198,7 @@ const departmentRoles = "head-of-department,head-of-division,lecturer,lecturer-i
                 <BaseCard :title="$tChoice('trans.role', 2)" :description="$t('trans.role_details_description')">
                     <div class="mt-4 grid grid-cols-1">
                         <RoleSelect
-                            :url="`api/v1/acl/roles?page_size=all&only=${departmentRoles}`"
+                            :url="`api/v1/acl/roles?page_size=all&only=${onlyRoles}`"
                             :label-uppercase="true"
                             :is-multi="true"
                             :is-searchable="true"

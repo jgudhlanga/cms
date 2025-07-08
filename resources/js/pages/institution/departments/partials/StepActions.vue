@@ -9,6 +9,7 @@ import { SizeVariant } from '@/enums/sizes';
 import { APP_MODULE_KEYS } from '@/lib/constants';
 import { useForm } from '@inertiajs/vue3';
 import { onMounted } from 'vue';
+import { useStaff } from '@/composables/institution/useStaff';
 
 interface Props {
     institutionDepartmentId: string;
@@ -18,9 +19,13 @@ defineProps<Props>();
 
 const { isLoading: actionsLoading, workflowStepActions, listWorkflowStepActions } = useWorkflowStepActions();
 const { isLoading: rolesLoading, roles, listRoles } = useRoles();
-onMounted(() => {
-    listRoles();
-    listWorkflowStepActions();
+const { isLoading: staffLoading, staff, loadStaff } = useStaff();
+const onlyRoles = "head-of-department,head-of-division,lecturer,lecturer-in-charge,senior-lecturer,registrar,selection-officer";
+
+onMounted(async () => {
+    await listRoles(`api/v1/acl/roles?page_size=all&only=${onlyRoles}`);
+    await listWorkflowStepActions();
+    await loadStaff(`api/v1/acl/roles?page_size=all&only=${onlyRoles}`)
 });
 
 const form = useForm<any>({
@@ -46,7 +51,7 @@ const form = useForm<any>({
                     </template>
                     <template v-else>
                         <div class="grid grid-cols-1 gap-x-3 md:grid-cols-3">
-                            <div class="flex items-center space-x-1" v-for="role in roles" :key="`role_key_${role['id']}`">
+                            <div class="flex items-center space-x-1" v-for="role in roles?.data" :key="`role_key_${role['id']}`">
                                 <BaseCheckbox
                                     :input-id="`role_id_${role['id']}`"
                                     :value="role['id']"
@@ -63,7 +68,7 @@ const form = useForm<any>({
                         <SpinnerComponent class="flex w-full" />
                     </template>
                     <template v-else>
-                        <div class="grid grid-cols-1 gap-x-3 md:grid-cols-4">
+                        <div class="grid grid-cols-1 gap-x-3 md:grid-cols-5">
                             <div class="flex items-center space-x-1" v-for="action in workflowStepActions" :key="`action_key_${action['id']}`">
                                 <BaseCheckbox
                                     :input-id="`action_id_${action['id']}`"

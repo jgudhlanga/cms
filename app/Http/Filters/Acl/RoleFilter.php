@@ -37,6 +37,5 @@ class RoleFilter extends QueryFilter
         }
         return $this->builder->when(!empty($only), fn($query) => $query->whereIn('slug', $only));
     }
-
 }
 

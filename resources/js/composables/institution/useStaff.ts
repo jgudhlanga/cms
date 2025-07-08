@@ -5,6 +5,7 @@ import { useSharedFormSchema } from '@/composables/core/useSharedFormSchema';
 import { useUtils } from '@/composables/core/useUtils';
 import { errorAlert } from '@/lib/alerts';
 import { buildFormOptions, mergeValidationSchema } from '@/lib/forms';
+import { hasAbility } from '@/lib/permissions';
 import HttpService from '@/services/http.service';
 import { useStaffCreateFormStore, useStaffDataStore } from '@/store/institution/useStaffStore';
 import { Role } from '@/types/acl';
@@ -14,7 +15,6 @@ import { InertiaForm } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 import { ref } from 'vue';
 import { ZodObject } from 'zod';
-import { hasAbility } from '@/lib/permissions';
 
 export const useStaff = () => {
     const { moreActionButton, avatar, onView, tag } = useDataTables();
@@ -28,7 +28,7 @@ export const useStaff = () => {
                     const id = getIdParams(row.original.id?.toString() ?? '');
                     const title = row.original.attributes?.title ?? '';
                     return avatar({
-                        href: route('staff.show', {department: institutionDepartmentId, staff: id}),
+                        href: route('staff.show', { department: institutionDepartmentId, staff: id }),
                         title: `${title} ${row.original.relationships?.user?.attributes?.name ?? ''}`,
                         src: row.original.relationships?.user?.attributes?.avatarUrl ?? '',
                         classes: 'size-8 rounded-full',
@@ -90,7 +90,14 @@ export const useStaff = () => {
                     return moreActionButton(!!row.original?.attributes?.deletedAt, [
                         {
                             key: 'view',
-                            action: () => onView(allowed, route('staff.show', {department: institutionDepartmentId, staff: id})),
+                            action: () =>
+                                onView(
+                                    allowed,
+                                    route('staff.show', {
+                                        department: institutionDepartmentId,
+                                        staff: id,
+                                    }),
+                                ),
                         },
                         {
                             key: 'edit',
@@ -103,13 +110,13 @@ export const useStaff = () => {
     };
 
     const isLoading = ref(false);
-    const staff = ref<ApiFilterResponse | null>(null);
-    const loadStaff = async (url: string) => {
+    const departmentStaff = ref<ApiFilterResponse | null>(null);
+    const loadDepartmentStaff = async (url: string) => {
         const staffDataStore = useStaffDataStore();
         try {
             isLoading.value = true;
-            staff.value = await HttpService.get(url);
-            staffDataStore.setStaff(staff.value as ApiFilterResponse);
+            departmentStaff.value = await HttpService.get(url);
+            staffDataStore.setStaff(departmentStaff.value as ApiFilterResponse);
         } catch {
             errorAlert(trans('trans.load_data_failure', { data: trans_choice('trans.course', 2) }));
         } finally {
@@ -132,7 +139,7 @@ export const useStaff = () => {
         ];
         return mergeValidationSchema(schemaFields)(personal, schemaFields['titleSchema']());
     };
-    const getName = () => trans('trans.staff')
+    const getName = () => trans('trans.staff');
     const successMessage = () => trans('trans.item_saved', { item: getName() });
     const errorMessage = () => trans('trans.item_save_failure', { item: getName() });
     const saveStaff = (form: InertiaForm<any>, institutionDepartmentId: string) => {
@@ -145,13 +152,25 @@ export const useStaff = () => {
             form.setError(error.format());
         }
     };
-
+    const staff = ref<ApiFilterResponse | null>(null);
+    const loadStaff = async (url: string) => {
+        try {
+            isLoading.value = true;
+            staff.value = await HttpService.get(url);
+        } catch {
+            errorAlert(trans('trans.load_data_failure', { data: trans_choice('trans.staff', 2) }));
+        } finally {
+            isLoading.value = false;
+        }
+    };
     return {
         createStaffColumns,
-        loadStaff,
-        staff,
+        loadDepartmentStaff,
+        departmentStaff,
         isLoading,
         saveStaff,
         createFormSchema,
+        loadStaff,
+        staff,
     };
 };
