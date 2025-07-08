@@ -145,8 +145,8 @@ abstract class QueryFilter
      */
     public function queryJoins(): void
     {
-        if (count($this->joins) > 0) {
-            $search = request('search');
+        $search = request('search');
+        if (!empty( $search ) && count($this->joins) > 0) {
             foreach ($this->joins as $join) {
                 if (!method_exists($this, $join)) {
                     continue;
@@ -165,8 +165,8 @@ abstract class QueryFilter
      */
     public function queryExcludes(): void
     {
-        if (count($this->excludes) > 0) {
-            $params = request('exclude');
+        $params = request('exclude');
+        if ( !empty($params) && count($this->excludes) > 0) {
             foreach ($this->excludes as $exclude) {
                 if (!method_exists($this, $exclude)) {
                     continue;
@@ -185,8 +185,8 @@ abstract class QueryFilter
      */
     public function queryOnly(): void
     {
-        if (count($this->only) > 0) {
-            $params = request('only');
+        $params = request('only');
+        if (!empty($params) && count( $this->only) > 0) {
             foreach ($this->only as $only) {
                 if (!method_exists($this, $only)) {
                     continue;

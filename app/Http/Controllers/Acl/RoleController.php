@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Acl;
 use App\DTO\Acl\RoleDto;
 use App\Http\Controllers\Controller;
 use App\Http\Filters\Acl\PermissionFilter;
-use App\Http\Filters\Acl\RoleFilter;
 use App\Http\Requests\Acl\RoleRequest;
 use App\Http\Resources\Acl\PermissionResource;
 use App\Http\Resources\Acl\RoleResource;
@@ -14,6 +13,7 @@ use App\Models\Acl\Role;
 use App\Repositories\Acl\Interface\IPermissionRepository;
 use App\Repositories\Acl\Interface\IRoleRepository;
 use Inertia\Inertia;
+use App\Http\Filters\Acl\RoleFilter;
 
 class RoleController extends Controller
 {
