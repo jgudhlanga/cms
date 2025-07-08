@@ -70,7 +70,7 @@ watch(modals!, async () => {
                                 @click="selectAll()"
                             />
                         </div>
-                        <div class="grid grid-cols-4 gap-x-3 md:grid-cols-2">
+                        <div class="grid grid-cols-1 gap-x-3 md:grid-cols-2">
                             <template v-for="step in workflowSteps" :key="`step_key_${step['id']}`">
                                 <div class="flex items-center space-x-1">
                                     <BaseCheckbox

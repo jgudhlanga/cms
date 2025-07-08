@@ -107,6 +107,7 @@ const save = () => {
         form.setError(error.format());
     }
 };
+const departmentRoles = "head-of-department,head-of-division,lecturer,lecturer-in-charge,senior-lecturer";
 </script>
 
 <template>
@@ -196,7 +197,12 @@ const save = () => {
             <div class="my-8 grid grid-cols-1 gap-3 md:grid-cols-2">
                 <BaseCard :title="$tChoice('trans.role', 2)" :description="$t('trans.role_details_description')">
                     <div class="mt-4 grid grid-cols-1">
-                        <RoleSelect :label-uppercase="true" :is-multi="true" :is-searchable="true" v-model="role_ids" />
+                        <RoleSelect
+                            :url="`api/v1/acl/roles?page_size=all&only=${departmentRoles}`"
+                            :label-uppercase="true"
+                            :is-multi="true"
+                            :is-searchable="true"
+                            v-model="role_ids" />
                     </div>
                 </BaseCard>
             </div>

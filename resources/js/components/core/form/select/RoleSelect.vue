@@ -6,6 +6,7 @@ import { SelectOption } from '@/types/utils';
 import { computed, onMounted } from 'vue';
 
 interface Props {
+    url: string;
     label?: string;
     placeholder?: string;
     isClearable?: boolean;
@@ -15,15 +16,16 @@ interface Props {
     error?: string | object;
 }
 
-defineProps<Props>();
+const props = defineProps<Props>();
+const {url} = props;
 const { isLoading, listRoles, roles } = useRoles();
 
 onMounted(async () => {
-    await listRoles();
+    await listRoles(url);
 });
 
 const options = computed(() => {
-    return roles.value.map(
+    return roles?.value?.data?.map(
         (role: Role) =>
             <SelectOption>{
                 value: Number(role.id),

@@ -2,7 +2,7 @@
 
 namespace App\Models\Acl;
 
-use App\Http\Filters\Acl\PermissionFilter;
+use App\Http\Filters\Acl\RoleFilter;
 use App\Observers\Shared\NameSlugObserver;
 use App\Traits\Filterable;
 use App\Traits\Paginatable;
@@ -18,7 +18,7 @@ use Spatie\Permission\Models\Role as SpatieRole;
 /**
  *
  * @mixin Builder
- * @method static filter(PermissionFilter $filters)
+ * @method static filter(RoleFilter $filters)
  */
 #[ObservedBy([NameSlugObserver::class])]
 class Role extends SpatieRole

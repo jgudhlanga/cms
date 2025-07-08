@@ -333,4 +333,8 @@ return [
     "workflow_step_action" => "Workflow step action|Workflow step actions",
     "application_workflow_steps" => "Application workflow steps",
     "edit_step" => "Edit step",
+    "workflow_step_action_metadata" => "Workflow step action metadata",
+    "step_action_description" => "Select action items at this step (what will happen to an application)",
+    "step_user_description" => "Select users who will be involved at this step (who will be involved in the action)",
+    "step_role_description" => "Select roles who will be involved at this step (the roles that will be involved in the action)",
 ];
