@@ -17,6 +17,7 @@ class StaffFilter extends QueryFilter
     protected array $routeModels = ['institution_department'];
 
     protected array $joins = ['user'];
+    protected array $only = ['departments', 'roles'];
 
     public function institution_department(): Builder
     {
@@ -24,6 +25,15 @@ class StaffFilter extends QueryFilter
 
         return $this->builder->whereHas('institutionDepartments', function ($q) use ($institutionDepartment) {
             $q->where('institution_department_id', $institutionDepartment->id);
+        });
+    }
+
+    public function roles($value): Builder
+    {
+        return $this->builder->whereHas('user', function ($query) use ($value) {
+            $query->whereHas('roles', function ($roleQuery) use ($value) {
+                $roleQuery->whereIn('slug', (array)$value);
+            });
         });
     }
 

@@ -4,6 +4,7 @@ namespace App\Repositories\Acl;
 
 use App\DTO\Acl\RoleDto;
 use App\Http\Filters\Acl\PermissionFilter;
+use App\Http\Filters\Acl\RoleFilter;
 use App\Models\Acl\Role;
 use App\Repositories\Base\BaseRepository;
 use App\Repositories\Acl\Interface\IRoleRepository;
@@ -34,7 +35,7 @@ class RoleRepository extends BaseRepository implements IRoleRepository
 		return $role->fresh();
 	}
 
-	public function allFilter($columns = ['*'], ?PermissionFilter $filters = null)
+	public function allFilter($columns = ['*'], ?RoleFilter $filters = null)
 	{
 		return $this->role
 			->select($columns)

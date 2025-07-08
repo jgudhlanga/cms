@@ -1,12 +1,14 @@
 import { useDataTables } from '@/composables/core/useDataTables';
 import { useDropdowns } from '@/composables/core/useDropdowns';
 import { useSharedFormSchema } from '@/composables/core/useSharedFormSchema';
-import { forbiddenAlert, openModal } from '@/lib/alerts';
+import { errorAlert, forbiddenAlert, openModal } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
 import { buildFormOptions } from '@/lib/forms';
 import { hasAbility } from '@/lib/permissions';
 import { getIdParams } from '@/lib/utils';
+import HttpService from '@/services/http.service';
 import { type Role } from '@/types/acl';
+import { ApiFilterResponse } from '@/types/data-pagination';
 import type { Link } from '@/types/ui';
 import { InertiaForm, router } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
@@ -91,8 +93,9 @@ export const useRoles = () => {
     };
 
     const isLoading = ref(false);
-    const roles = ref<Role[]>([]);
+    const roles = ref<ApiFilterResponse | null>(null);
 
+/*
     const listRoles = async (search?: string) => {
         const { data, fetchData } = useDropdowns();
         isLoading.value = true;
@@ -100,6 +103,20 @@ export const useRoles = () => {
         isLoading.value = false;
         roles.value = data.value;
     };
+*/
+
+   // const systemRoles = ref<ApiFilterResponse | null>(null);
+    const listRoles = async (url: string) => {
+        try {
+            isLoading.value = true;
+            roles.value = await HttpService.get(url);
+        } catch {
+            errorAlert(trans('trans.load_data_failure', { data: trans_choice('trans.role', 2) }));
+        } finally {
+            isLoading.value = false;
+        }
+    };
+
     return {
         createRoleColumns,
         indexBreadcrumbs,

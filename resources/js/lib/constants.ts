@@ -49,6 +49,7 @@ const APP_MODULE_KEYS = {
     id_types: 'id_types',
     department_application_steps: 'department_application_steps',
     role_groups: 'role_groups',
+    department_workflow_actions: 'department_workflow_actions',
 };
 
 const ID_TYPES = [

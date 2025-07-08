@@ -18,7 +18,7 @@ export const useDropdowns = () => {
             const appendSearchUrl = url.includes('?') ? (search ? `&search=${search}` : '') : search ? `?search=${search}` : '';
             const response = await HttpService.get(`${url}${appendSearchUrl}`);
 			data.value = response.data;
-		} catch (error: any) {
+		} catch {
 			const transValue = transKey ? trans(transKey) : transChoiceKey ? trans_choice(transChoiceKey, 2) : '';
 			errorAlert(trans('trans.load_data_failure', { data: transValue }));
 		}

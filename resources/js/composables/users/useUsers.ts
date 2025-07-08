@@ -1,13 +1,17 @@
 import { useDataTables } from '@/composables/core/useDataTables';
 import { useSharedFormSchema } from '@/composables/core/useSharedFormSchema';
 import { useUtils } from '@/composables/core/useUtils';
+import { errorAlert } from '@/lib/alerts';
 import { buildFormOptions } from '@/lib/forms';
 import { getIdParams } from '@/lib/utils';
+import HttpService from '@/services/http.service';
 import { Auth } from '@/types';
+import { ApiFilterResponse } from '@/types/data-pagination';
 import type { Link } from '@/types/ui';
 import { User } from '@/types/users';
 import { InertiaForm, usePage } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
+import { ref } from 'vue';
 
 export const useUsers = () => {
     const { moreActionButton, onDelete, onForceDelete, onRestore, avatar, onView } = useDataTables();
@@ -94,9 +98,26 @@ export const useUsers = () => {
             form.setError(error.format());
         }
     };
+
+    const isLoading = ref(false);
+    const users = ref<ApiFilterResponse | null>(null);
+    const loadUsers = async (url: string) => {
+        try {
+            isLoading.value = true;
+            users.value = await HttpService.get(url);
+        } catch {
+            errorAlert(trans('trans.load_data_failure', { data: trans_choice('trans.user', 2) }));
+        } finally {
+            isLoading.value = false;
+        }
+    };
+
     return {
         breadcrumbs,
         createUserColumns,
         saveUser,
+        loadUsers,
+        users,
+        isLoading,
     };
 };
