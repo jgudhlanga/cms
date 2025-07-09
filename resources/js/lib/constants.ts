@@ -4,6 +4,8 @@ const LOGO: string = '/assets/images/logo.jpeg';
 const API_BASE_URL = 'https://hrepoly.test/';
 const API_VERSION = 'v1';
 
+const PAGINATION_ITEMS_PER_PAGE = 10;
+const PAGINATION_MAX_LIMIT = 1000;
 const APP_MODULE_KEYS = {
     modules: 'modules',
     permissions: 'permissions',
@@ -57,4 +59,4 @@ const ID_TYPES = [
     { value: 'foreign-passport-number', label: 'Foreign Passport Number', inputId: 'foreign-passport-number' },
 ];
 
-export { API_BASE_URL, API_VERSION, APP_MODULE_KEYS, DEFAULT_AVATAR, DEFAULT_IMAGE, ID_TYPES, LOGO };
+export { API_BASE_URL, API_VERSION, APP_MODULE_KEYS, DEFAULT_AVATAR, DEFAULT_IMAGE, ID_TYPES, LOGO, PAGINATION_ITEMS_PER_PAGE, PAGINATION_MAX_LIMIT };

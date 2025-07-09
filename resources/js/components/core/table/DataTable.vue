@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { CreateButton, ExportButton, ImportButton } from '@/components/core/button';
 import { useDataTables } from '@/composables/core/useDataTables';
+import { PAGINATION_ITEMS_PER_PAGE } from '@/lib/constants';
 import { DataFilters, PaginationMeta, PaginationRootLink } from '@/types/data-pagination';
 import { onMounted, ref, watch } from 'vue';
 import { Archived, ColumnFilter, GotoPage, Paginator, PerPageSize, Search, TableBody, TableHead } from './';
@@ -36,7 +37,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const filter = ref(props?.filters?.search ?? '');
 const trashed = ref(props?.filters?.trashed ?? '0');
-const pageSize = ref(props?.pagination?.per_page ?? '10');
+const pageSize = ref(props?.pagination?.per_page ?? PAGINATION_ITEMS_PER_PAGE);
 const currentPage = ref(props?.pagination?.current_page ?? '1');
 const { initialize, toggleColumnVisibility, tableSearch, setPageSize, goToPage, loadTrashed } = useDataTables();
 const table = initialize(props);
@@ -83,7 +84,7 @@ watch(trashed, trashedWatcher);
             <TableBody :table="table" :drag-items="dragItems" :draggable-update-url="draggableUpdateUrl" />
         </table>
     </div>
-    <div class="flex w-full  items-center justify-between px-6 my-3" v-if="pagination">
+    <div class="my-3 flex w-full items-center justify-between px-6" v-if="pagination">
         <PerPageSize v-model="pageSize" />
         <GotoPage v-model="currentPage" :meta="pagination ?? null" />
         <Paginator :meta="pagination" />
