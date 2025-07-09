@@ -57,3 +57,41 @@ export const employeeNumberUniqueSchema = (url: string) =>
                 },
             ),
     });
+
+export const idNumberUniqueSchema = (url: string) =>
+    z.object({
+        id_number: z
+            .string()
+            .nonempty(trans('trans.enter_required_field', { field: trans('trans.id_number') }))
+            .refine(
+                async (id_number) => {
+                    if (!id_number || id_number.trim() === '') {
+                        return true;
+                    }
+                    const response = await HttpService.get(`${url}${id_number}`);
+                    return response.available;
+                },
+                {
+                    message: trans('trans.id_number_already_taken'),
+                },
+            ),
+    });
+
+export const passportNumberUniqueSchema = (url: string) =>
+    z.object({
+        passport_number: z
+            .string()
+            .nonempty(trans('trans.enter_required_field', { field: trans('trans.passport_number') }))
+            .refine(
+                async (passport_number) => {
+                    if (!passport_number || passport_number.trim() === '') {
+                        return true;
+                    }
+                    const response = await HttpService.get(`${url}${passport_number}`);
+                    return response.available;
+                },
+                {
+                    message: trans('trans.passport_number_already_taken'),
+                },
+            ),
+    });

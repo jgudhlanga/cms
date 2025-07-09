@@ -340,5 +340,7 @@ return [
     "email_already_taken" => "Email is already taken",
     "phone_number_already_taken" => "Phone number is already taken",
     "employee_number_already_taken" => "EC number is already taken",
+    "id_number_already_taken" => "Id number is already taken",
+    "passport_number_already_taken" => "Passport number is already taken",
     "enter_valid_email_address" => "Please enter a valid email address",
 ];
