@@ -43,7 +43,7 @@ watch(modals!, () => {
 				@input="clearFormErrors(form, 'name')"
 				:error="form.errors.name"
 			/>
-			<Description v-model:value="form.description" />
+			<Description v-model="form.description" />
 		</template>
 	</BaseModal>
 </template>

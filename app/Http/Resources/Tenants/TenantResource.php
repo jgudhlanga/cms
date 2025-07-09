@@ -22,6 +22,7 @@ class TenantResource extends JsonResource
 			'id' => $this->id,
 			"attributes" => [
 				'name' => $this->name,
+                'isDefault' => $this->is_default,
 				$this->mergeWhen($request->routeIs('tenants.*'), [
 					'createdAt' => $this->created_at,
 					'updatedAt' => $this->updated_at,

@@ -65,6 +65,8 @@ export type Status = {
     id?: string;
     attributes: {
         title: string;
+        isDefault: boolean;
+        description?: string;
         createdAt?: string;
         updatedAt?: string;
         deletedAt?: string;
@@ -204,7 +206,7 @@ export type SponsorTypeParams = {
     description?: string;
 };
 
-export type ApplicationStep = {
+export type WorkflowStep = {
     type: string;
     id: string;
     attributes: {
@@ -216,9 +218,23 @@ export type ApplicationStep = {
         deletedAt?: string;
     };
 };
-export type ApplicationStepParams = {
+export type WorkflowStepParams = {
     name: string;
     description?: string;
+};
+export type WorkflowStepActionParams = {
+    title: string;
+};
+export type WorkflowStepAction = {
+    type: string;
+    id: string;
+    attributes: {
+        name: string;
+        title: string;
+        createdAt?: string;
+        updatedAt?: string;
+        deletedAt?: string;
+    };
 };
 export type EmploymentType = {
     type?: string;
@@ -232,6 +248,22 @@ export type EmploymentType = {
     };
 };
 export type EmploymentTypeParams = {
+    name: string;
+    description?: string;
+};
+export type IdType = {
+    type?: string;
+    id?: string;
+    attributes: {
+        name: string;
+        isDefault: boolean;
+        description?: string;
+        createdAt?: string;
+        updatedAt?: string;
+        deletedAt?: string;
+    };
+};
+export type IdTypeParams = {
     name: string;
     description?: string;
 };

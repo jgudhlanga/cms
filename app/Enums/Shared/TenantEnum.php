@@ -21,6 +21,14 @@ enum TenantEnum: string
             ->first(fn(self $case) => $case->id() === $id);
     }
 
+    public function isDefault(): bool
+    {
+        return match ($this) {
+            self::HARARE_POLY => true,
+            self::PENSTEJ_SYSTEMS => false,
+        };
+    }
+
     public static function all(): array
     {
         return array_map(

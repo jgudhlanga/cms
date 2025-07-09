@@ -22,7 +22,7 @@ return new class extends Migration
             $table->foreignId('gender_id')->constrained();
             $table->foreignId('marital_status_id')->constrained();
             $table->foreignId('race_id')->nullable();
-            $table->enum('id_type', ['zimbabwean-national-id-number', 'foreign-passport-number']);
+            $table->foreignId('id_type_id')->nullable()->constrained();
             $table->string('id_number')->nullable();
             $table->string('passport_number')->nullable();
             $table->string('work_permit_number')->nullable();

@@ -14,18 +14,18 @@ class UserFilter extends QueryFilter
         'updatedAt' => 'updated_at'
     ];
 
-    public function name($value): Builder
+    protected array $searchable = ['name', 'email'];
+
+    protected array $only = ['departments', 'roles'];
+    public function roles($value): Builder
     {
-        return $this->builder->where('name', 'LIKE', '%' . $value . '%');
+        $only = $value;
+        if (is_string($only)) {
+            $only = explode(',', $only);
+        }
+        return $this->builder->whereHas('roles', function ($query) use ($only) {
+            $query->whereIn('slug', $only);
+        });
     }
 
-    public function email($value): Builder
-    {
-        return $this->builder->where('email', 'LIKE', '%' . $value . '%');
-    }
-
-    public function tenant($value): Builder
-    {
-        return $this->builder->where('tenant_id', $value);
-    }
 }

@@ -65,7 +65,7 @@ class StudentRepository extends BaseRepository implements IStudentRepository
             'gender_id' => $dto->gender_id,
             'marital_status_id' => $dto->marital_status_id,
             'race_id' => $dto->race_id,
-            'id_type' => $dto->id_type,
+            'id_type_id' => $dto->id_type_id,
             'id_number' => $dto->id_number,
             'passport_number' => $dto->passport_number,
             'country_id' => $dto->country_id,

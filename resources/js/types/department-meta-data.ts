@@ -110,3 +110,28 @@ export type DepartmentLevelCourse = {
     level: string;
     course: string;
 };
+
+export type DepartmentApplicationStep = {
+    type: string;
+    id: string | number;
+    attributes: {
+        institutionDepartmentId: string | number;
+        workflowStepId: string | number;
+        workflowStep: string;
+        workflowStepDescription?: string;
+        position: number;
+        createdAt?: string;
+        updatedAt?: string;
+        deletedAt?: string | null;
+    };
+};
+
+export type DepartmentApplicationStepParams = {
+    workflow_step_ids: Array<string | undefined | null> | null;
+};
+export type DepartmentApplicationStepActionParams = {
+    department_application_step_id: string | number;
+    workflow_step_action_ids: Array<string | undefined | null> | null;
+    role_ids: Array<string | undefined | null> | null;
+    staff_ids: Array<string | undefined | null> | null;
+};

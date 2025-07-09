@@ -12,7 +12,8 @@ export type CreateApplicationUserParams = {
 
 export type CreateApplicationParams = {
     /** Personal details */
-    id_type: string;
+    id_type_id: string | number | null;
+    idType: SelectOption | null;
     id_number?: string | null;
     passport_number?: string | null;
     country?: SelectOption | null;

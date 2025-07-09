@@ -10,12 +10,12 @@ use App\Http\Controllers\Institution\Dropdowns\SubjectController;
 use App\Http\Controllers\Settings\SettingsController;
 use App\Http\Controllers\Shared\AcademicLevelController;
 use App\Http\Controllers\Shared\AddressTypeController;
-use App\Http\Controllers\Shared\ApplicationStepController;
 use App\Http\Controllers\Shared\CommunicationMethodController;
 use App\Http\Controllers\Shared\CountryController;
 use App\Http\Controllers\Shared\DistrictController;
 use App\Http\Controllers\Shared\EmploymentTypeController;
 use App\Http\Controllers\Shared\GenderController;
+use App\Http\Controllers\Shared\IdTypeController;
 use App\Http\Controllers\Shared\LanguageController;
 use App\Http\Controllers\Shared\MaritalStatusController;
 use App\Http\Controllers\Shared\ProvinceController;
@@ -25,6 +25,8 @@ use App\Http\Controllers\Shared\ReligionController;
 use App\Http\Controllers\Shared\SponsorTypeController;
 use App\Http\Controllers\Shared\StatusController;
 use App\Http\Controllers\Shared\TitleController;
+use App\Http\Controllers\Shared\WorkflowStepActionController;
+use App\Http\Controllers\Shared\WorkflowStepController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('settings')->middleware('auth')->group(function () {
@@ -125,13 +127,20 @@ Route::prefix('settings')->middleware('auth')->group(function () {
     Route::put('sponsor-types/{sponsor_type}/restore', [SponsorTypeController::class, 'restore'])->name('sponsor-types.restore');
     Route::delete('sponsor-types/{sponsor_type}/force-delete', [SponsorTypeController::class, 'forceDelete'])->name('sponsor-types.force-delete');
     Route::resource('sponsor-types', SponsorTypeController::class)->names('sponsor-types');
-    # ==================================== APPLICATION STEPS ======================================================
-    Route::put('application-steps/{application_step}/move-position', [ApplicationStepController::class, 'movePosition'])->name('application-steps.move-position');
-    Route::put('application-steps/{application_step}/restore', [ApplicationStepController::class, 'restore'])->name('application-steps.restore');
-    Route::delete('application-steps/{application_step}/force-delete', [ApplicationStepController::class, 'forceDelete'])->name('application-steps.force-delete');
-    Route::resource('application-steps', ApplicationStepController::class)->names('application-steps');
+    # ==================================== WORKFLOW STEPS ======================================================
+    Route::put('workflow-steps/{workflow_step}/move-position', [WorkflowStepController::class, 'movePosition'])->name('workflow-steps.move-position');
+    Route::put('workflow-steps/{workflow_step}/restore', [WorkflowStepController::class, 'restore'])->name('workflow-steps.restore');
+    Route::delete('workflow-steps/{workflow_step}/force-delete', [WorkflowStepController::class, 'forceDelete'])->name('workflow-steps.force-delete');
+    Route::resource('workflow-steps', WorkflowStepController::class)->names('workflow-steps');
+    Route::put('workflow-step-actions/{workflow_step_action}/restore', [WorkflowStepActionController::class, 'restore'])->name('workflow-step-actions.restore');
+    Route::delete('workflow-step-actions/{workflow_step_action}/force-delete', [WorkflowStepActionController::class, 'forceDelete'])->name('workflow-step-actions.force-delete');
+    Route::resource('workflow-step-actions', WorkflowStepActionController::class)->names('workflow-step-actions');
     # ==================================== EMPLOYMENT TYPES ======================================================
     Route::put('employment-types/{employment_type}/restore', [EmploymentTypeController::class, 'restore'])->name('employment-types.restore');
     Route::delete('employment-types/{employment_type}/force-delete', [EmploymentTypeController::class, 'forceDelete'])->name('employment-types.force-delete');
     Route::resource('employment-types', EmploymentTypeController::class)->names('employment-types');
+    # ==================================== ID TYPES ======================================================
+    Route::put('id-types/{id_type}/restore', [IdTypeController::class, 'restore'])->name('id-types.restore');
+    Route::delete('id-types/{id_type}/force-delete', [IdTypeController::class, 'forceDelete'])->name('id-types.force-delete');
+    Route::resource('id-types', IdTypeController::class)->names('id-types');
 });

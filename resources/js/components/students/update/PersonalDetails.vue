@@ -3,23 +3,21 @@ import BaseCard from '@/components/core/card/BaseCard.vue';
 import { BaseInput } from '@/components/core/form';
 import CountryComboSelect from '@/components/core/form/combobox/CountryComboSelect.vue';
 import GenderComboSelect from '@/components/core/form/combobox/GenderComboSelect.vue';
+import IdTypeComboSelect from '@/components/core/form/combobox/IdTypeComboSelect.vue';
 import MaritalStatusComboSelect from '@/components/core/form/combobox/MaritalStatusComboSelect.vue';
 import TitleComboSelect from '@/components/core/form/combobox/TitleComboSelect.vue';
 import DateOfBirth from '@/components/core/form/date/DateOfBirth.vue';
-import BaseRadioGroup from '@/components/core/form/radio-group/BaseRadioGroup.vue';
 import IdNumber from '@/components/core/form/text/IdNumber.vue';
 import PassportNumber from '@/components/core/form/text/PassportNumber.vue';
-import HeadingSmall from '@/components/core/util/HeadingSmall.vue';
+import { useUtils } from '@/composables/core/useUtils';
 import { clearFormErrors } from '@/lib/forms';
 import { useCreateApplicationFormStore } from '@/store/portal/useCreateApplicationFormStore';
 import { CreateApplicationParams } from '@/types/portal';
 import { InertiaForm } from '@inertiajs/vue3';
 import { storeToRefs } from 'pinia';
-import { ref } from 'vue';
-import { ID_TYPES } from '@/lib/constants';
 
 const {
-    id_type,
+    idType,
     id_number,
     passport_number,
     country,
@@ -33,16 +31,8 @@ const {
     gender,
 } = storeToRefs(useCreateApplicationFormStore());
 
-const idTypes = ID_TYPES;
-
-const onRadioChange = (value: any) => {
-    id_type.value = value;
-};
 defineProps<{ form: InertiaForm<CreateApplicationParams> }>();
-const defaultIdType = ref(id_type.value);
-if (!id_type.value) {
-    defaultIdType.value = 'zimbabwean-national-id-number';
-}
+const { isNativeCitizen } = useUtils();
 </script>
 
 <template>
@@ -86,17 +76,8 @@ if (!id_type.value) {
             />
         </div>
         <div class="grid-col-1 mt-4 grid gap-3 md:grid-cols-3">
-            <div class="flex flex-col mb-3">
-                <HeadingSmall :title="$t('trans.id_type')" :description="$t('trans.id_type_description')" class="my-5" />
-                <BaseRadioGroup
-                    :options="idTypes"
-                    :default-value="defaultIdType"
-                    :label-uppercase="true"
-                    :is-required="true"
-                    @update:modelValue="onRadioChange"
-                />
-            </div>
-            <template v-if="id_type === 'zimbabwean-national-id-number'">
+            <IdTypeComboSelect :form="form" v-model="idType" :error="form.errors.idType" :label-uppercase="true" :is-required="true" />
+            <template v-if="isNativeCitizen(idType?.label ?? '')">
                 <IdNumber v-model="id_number" :is-required="true" @input="clearFormErrors(form, 'id_number')" :error="form.errors.id_number" />
             </template>
             <template v-else>

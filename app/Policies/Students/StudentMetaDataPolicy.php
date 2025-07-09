@@ -2,8 +2,7 @@
 
 namespace App\Policies\Students;
 
-use App\Enums\Shared\PermissionEnum;
-use App\Models\Shared\Address;
+use App\Enums\Acl\PermissionEnum;
 use App\Models\Users\User;
 
 class StudentMetaDataPolicy

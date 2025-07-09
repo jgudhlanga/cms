@@ -11,7 +11,7 @@ class TenantsTableSeeder extends Seeder
     public function run(): void
     {
         foreach (TenantEnum::cases() as $row) {
-            Tenant::create(['name' => $row->value]);
+            Tenant::create(['name' => $row->value, 'is_default' => $row->isDefault()]);
         }
     }
 }

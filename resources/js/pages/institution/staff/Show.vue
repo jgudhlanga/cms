@@ -2,32 +2,30 @@
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import { AuthObject } from '@/types/data-pagination';
 import { InstitutionDepartment } from '@/types/institution';
+import { Staff } from '@/types/staff';
 import type { Link } from '@/types/ui';
 import { Head } from '@inertiajs/vue3';
-import { Staff } from '@/types/staff';
 
 interface Props {
     department: InstitutionDepartment;
     staff: Staff;
-    message?: string;
     auth: AuthObject;
     errors: object;
 }
 
 const props = defineProps<Props>();
-const { department } = props;
+const { department, staff } = props;
 const institutionDepartmentId = department.id?.toString() ?? '';
 const breadcrumbs: Array<Link> = [
     { transChoiceKey: 'institution', transChoiceKeyIndex: 1, href: route('institution.index') },
     { transChoiceKey: 'department', href: route('institution-departments.index') },
     { title: department.attributes.department, href: route('institution-departments.show', institutionDepartmentId) },
-    { transKey: 'create_staff' },
+    { title: staff.relationships?.user?.attributes?.name },
+    { transChoiceKey: 'profile', transChoiceKeyIndex: 1 },
 ];
 </script>
 
 <template>
-    <Head :title="$t('trans.create_staff')" />
-    <PageContainer :breadcrumbs="breadcrumbs">
-        {{ message }}
-    </PageContainer>
+    <Head :title="`${$t('trans.staff')} ${$tChoice('trans.profile', 1)}`" />
+    <PageContainer :breadcrumbs="breadcrumbs"></PageContainer>
 </template>

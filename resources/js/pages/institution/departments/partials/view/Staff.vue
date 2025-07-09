@@ -12,12 +12,12 @@ interface Props {
 
 const props = defineProps<Props>();
 const { navigateTo } = useUtils();
-const { createStaffColumns, staff, loadStaff, isLoading } = useStaff();
-const data = computed(() => staff.value?.data ?? []);
-const trashedCount = computed(() => staff.value?.trashedCount ?? 0);
-const filters = computed(() => staff.value?.filters ?? { search: '', trashed: '0' });
+const { createStaffColumns, departmentStaff, loadDepartmentStaff, isLoading } = useStaff();
+const data = computed(() => departmentStaff.value?.data ?? []);
+const trashedCount = computed(() => departmentStaff.value?.trashedCount ?? 0);
+const filters = computed(() => departmentStaff.value?.filters ?? { search: '', trashed: '0' });
 onMounted(() => {
-    loadStaff(route('v1.department-metadata.staff', props.institutionDepartmentId));
+    loadDepartmentStaff(route('v1.department-metadata.staff', props.institutionDepartmentId));
 });
 const allowed = hasAbility('create:department-metadata');
 </script>
@@ -28,11 +28,11 @@ const allowed = hasAbility('create:department-metadata');
         v-else
         :data="data"
         :use-api="true"
-        :api-fetch-action="loadStaff"
+        :api-fetch-action="loadDepartmentStaff"
         :trashed-count="trashedCount"
         :filters="filters"
         :search-url="route('v1.department-metadata.staff', institutionDepartmentId)"
-        :pagination="{ ...staff?.links!, ...staff?.meta! }"
+        :pagination="{ ...departmentStaff?.links!, ...departmentStaff?.meta! }"
         :columns="createStaffColumns(institutionDepartmentId)"
         :on-create="() => navigateTo(route('staff.create', institutionDepartmentId))"
         :disable-create="!allowed"

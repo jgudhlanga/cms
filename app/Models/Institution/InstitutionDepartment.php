@@ -47,6 +47,11 @@ class InstitutionDepartment extends Model
         return $this->belongsToMany(Staff::class, 'institution_department_staff');
     }
 
+    public function applicationSteps(): HasMany
+    {
+        return $this->hasMany(DepartmentApplicationStep::class, 'institution_department_id');
+    }
+
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()

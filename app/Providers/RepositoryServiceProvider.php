@@ -4,11 +4,14 @@ namespace App\Providers;
 
 use App\Repositories\Acl\Interface\IModuleRepository;
 use App\Repositories\Acl\Interface\IPermissionRepository;
+use App\Repositories\Acl\Interface\IRoleGroupRepository;
 use App\Repositories\Acl\Interface\IRoleRepository;
 use App\Repositories\Acl\ModuleRepository;
 use App\Repositories\Acl\PermissionRepository;
+use App\Repositories\Acl\RoleGroupRepository;
 use App\Repositories\Acl\RoleRepository;
 use App\Repositories\Institution\CourseRepository;
+use App\Repositories\Institution\DepartmentApplicationStepRepository;
 use App\Repositories\Institution\DepartmentCourseRepository;
 use App\Repositories\Institution\DepartmentLevelRepository;
 use App\Repositories\Institution\DepartmentRepository;
@@ -17,6 +20,7 @@ use App\Repositories\Institution\GradeRepository;
 use App\Repositories\Institution\InstitutionDepartmentRepository;
 use App\Repositories\Institution\IntakePeriodRepository;
 use App\Repositories\Institution\interface\ICourseRepository;
+use App\Repositories\Institution\interface\IDepartmentApplicationStepRepository;
 use App\Repositories\Institution\interface\IDepartmentCourseRepository;
 use App\Repositories\Institution\interface\IDepartmentLevelRepository;
 use App\Repositories\Institution\interface\IDepartmentRepository;
@@ -35,23 +39,23 @@ use App\Repositories\Institution\SubjectRepository;
 use App\Repositories\Shared\AcademicLevelRepository;
 use App\Repositories\Shared\AddressRepository;
 use App\Repositories\Shared\AddressTypeRepository;
-use App\Repositories\Shared\ApplicationStepRepository;
 use App\Repositories\Shared\CommunicationMethodRepository;
 use App\Repositories\Shared\ContactRepository;
 use App\Repositories\Shared\CountryRepository;
 use App\Repositories\Shared\DistrictRepository;
 use App\Repositories\Shared\EmploymentTypeRepository;
 use App\Repositories\Shared\GenderRepository;
+use App\Repositories\Shared\IdTypeRepository;
 use App\Repositories\Shared\interface\IAcademicLevelRepository;
 use App\Repositories\Shared\interface\IAddressRepository;
 use App\Repositories\Shared\interface\IAddressTypeRepository;
-use App\Repositories\Shared\interface\IApplicationStepRepository;
 use App\Repositories\Shared\interface\ICommunicationMethodRepository;
 use App\Repositories\Shared\interface\IContactRepository;
 use App\Repositories\Shared\interface\ICountryRepository;
 use App\Repositories\Shared\interface\IDistrictRepository;
 use App\Repositories\Shared\interface\IEmploymentTypeRepository;
 use App\Repositories\Shared\interface\IGenderRepository;
+use App\Repositories\Shared\interface\IIdTypeRepository;
 use App\Repositories\Shared\interface\ILanguageRepository;
 use App\Repositories\Shared\interface\IMaritalStatusRepository;
 use App\Repositories\Shared\interface\INextOfKinRepository;
@@ -65,6 +69,8 @@ use App\Repositories\Shared\interface\IReligionRepository;
 use App\Repositories\Shared\interface\ISponsorTypeRepository;
 use App\Repositories\Shared\interface\IStatusRepository;
 use App\Repositories\Shared\interface\ITitleRepository;
+use App\Repositories\Shared\interface\IWorkflowStepActionRepository;
+use App\Repositories\Shared\interface\IWorkflowStepRepository;
 use App\Repositories\Shared\LanguageRepository;
 use App\Repositories\Shared\MaritalStatusRepository;
 use App\Repositories\Shared\NextOfKinRepository;
@@ -78,6 +84,8 @@ use App\Repositories\Shared\ReligionRepository;
 use App\Repositories\Shared\SponsorTypeRepository;
 use App\Repositories\Shared\StatusRepository;
 use App\Repositories\Shared\TitleRepository;
+use App\Repositories\Shared\WorkflowStepActionRepository;
+use App\Repositories\Shared\WorkflowStepRepository;
 use App\Repositories\Students\AcademicRecordRepository;
 use App\Repositories\Students\interface\IAcademicRecordRepository;
 use App\Repositories\Students\interface\ISponsorRepository;
@@ -116,6 +124,7 @@ class RepositoryServiceProvider extends ServiceProvider
     private function aclRepositories(): void
     {
         $this->app->bind(IModuleRepository::class, ModuleRepository::class);
+        $this->app->bind(IRoleGroupRepository::class, RoleGroupRepository::class);
         $this->app->bind(IRoleRepository::class, RoleRepository::class);
         $this->app->bind(IPermissionRepository::class, PermissionRepository::class);
     }
@@ -137,8 +146,10 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(IReligionRepository::class, ReligionRepository::class);
         $this->app->bind(IAcademicLevelRepository::class, AcademicLevelRepository::class);
         $this->app->bind(ISponsorTypeRepository::class, SponsorTypeRepository::class);
-        $this->app->bind(IApplicationStepRepository::class, ApplicationStepRepository::class);
+        $this->app->bind(IWorkflowStepRepository::class, WorkflowStepRepository::class);
+        $this->app->bind(IWorkflowStepActionRepository::class, WorkflowStepActionRepository::class);
         $this->app->bind(IEmploymentTypeRepository::class, EmploymentTypeRepository::class);
+        $this->app->bind(IIdTypeRepository::class, IdTypeRepository::class);
     }
 
     private function paymentsRepositories(): void
@@ -167,6 +178,7 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(IInstitutionDepartmentRepository::class, InstitutionDepartmentRepository::class);
         $this->app->bind(IDepartmentLevelRepository::class, DepartmentLevelRepository::class);
         $this->app->bind(IDepartmentCourseRepository::class, DepartmentCourseRepository::class);
+        $this->app->bind(IDepartmentApplicationStepRepository::class, DepartmentApplicationStepRepository::class);
         $this->app->bind(IIntakePeriodRepository::class, IntakePeriodRepository::class);
         $this->app->bind(IStaffRepository::class, StaffRepository::class);
     }

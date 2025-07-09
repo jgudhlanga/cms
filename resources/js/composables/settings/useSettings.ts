@@ -31,6 +31,10 @@ export function useSettings() {
             url: route('genders.index'),
         },
         {
+            transChoiceKey: 'id_type',
+            url: route('id-types.index'),
+        },
+        {
             transChoiceKey: 'language',
             url: route('languages.index'),
         },
@@ -69,6 +73,14 @@ export function useSettings() {
         {
             transChoiceKey: 'title',
             url: route('titles.index'),
+        },
+        {
+            transChoiceKey: 'workflow_step',
+            url: route('workflow-steps.index'),
+        },
+        {
+            transChoiceKey: 'workflow_step_action',
+            url: route('workflow-step-actions.index'),
         },
     ];
     return { tabs };

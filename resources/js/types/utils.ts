@@ -96,4 +96,7 @@ export type TimelineStep = {
     description?: string;
     timelineMarker?: string;
     label?: string;
+    component: Component;
+    onClick?: () => void | null;
+    props?: any,
 };

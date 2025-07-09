@@ -21,6 +21,7 @@ export const useStatuses = () => {
 		const { can } = props?.auth as Auth;
 		return [
 			{ header: trans_choice('trans.title', 1), accessorKey: 'attributes.title' },
+			{ header: trans('trans.description'), accessorKey: 'attributes.description' },
 			{
 				header: trans_choice('trans.action', 2),
 				accessorKey: 'actions',

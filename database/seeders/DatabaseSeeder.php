@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use Database\Seeders\Acl\ModulesTableSeeder;
 use Database\Seeders\Acl\PermissionsTableSeeder;
+use Database\Seeders\Acl\RoleGroupSeeder;
 use Database\Seeders\Acl\RolesTableSeeder;
 use Database\Seeders\Institution\CoursesTableSeeder;
 use Database\Seeders\Institution\DepartmentsTableSeeder;
@@ -15,12 +16,12 @@ use Database\Seeders\Institution\ModesOfStudyTableSeeder;
 use Database\Seeders\Institution\SubjectsTableSeeder;
 use Database\Seeders\Shared\AcademicLevelsTableSeeder;
 use Database\Seeders\Shared\AddressTypesTableSeeder;
-use Database\Seeders\Shared\ApplicationStepsSeeder;
 use Database\Seeders\Shared\CommunicationMethodSeeder;
 use Database\Seeders\Shared\CountrySeeder;
 use Database\Seeders\Shared\DistrictsTableSeeder;
 use Database\Seeders\Shared\EmploymentTypesSeeder;
 use Database\Seeders\Shared\GenderSeeder;
+use Database\Seeders\Shared\IdTypeSeeder;
 use Database\Seeders\Shared\LanguageSeeder;
 use Database\Seeders\Shared\PaymentDaySeeder;
 use Database\Seeders\Shared\PaymentFrequencySeeder;
@@ -31,6 +32,8 @@ use Database\Seeders\Shared\RelationshipsTableSeeder;
 use Database\Seeders\Shared\ReligionTableSeeder;
 use Database\Seeders\Shared\SponsorTypeTableSeeder;
 use Database\Seeders\Shared\TitleSeeder;
+use Database\Seeders\Shared\WorkflowStepActionSeeder;
+use Database\Seeders\Shared\WorkflowStepsSeeder;
 use Database\Seeders\Statuses\MaritalStatusSeeder;
 use Database\Seeders\Statuses\StatusSeeder;
 use Database\Seeders\Tenants\TenantsTableSeeder;
@@ -45,13 +48,16 @@ class DatabaseSeeder extends Seeder
         $this->call([
             TenantsTableSeeder::class,
             ModulesTableSeeder::class,
+            RoleGroupSeeder::class,
             PermissionsTableSeeder::class,
             RolesTableSeeder::class,
             GenderSeeder::class,
+            IdTypeSeeder::class,
             TitleSeeder::class,
             RaceSeeder::class,
             StatusSeeder::class,
-            ApplicationStepsSeeder::class,
+            WorkflowStepsSeeder::class,
+            WorkflowStepActionSeeder::class,
             UsersTableSeeder::class,
             CommunicationMethodSeeder::class,
             CountrySeeder::class,

@@ -2,27 +2,39 @@
 
 namespace Database\Seeders\Acl;
 
-use App\Enums\Shared\PermissionEnum;
-use App\Enums\Shared\RoleEnum;
+use App\Enums\Acl\PermissionEnum;
+use App\Enums\Acl\RoleEnum;
 use App\Models\Acl\Role;
+use App\Models\Acl\RoleGroup;
 use Illuminate\Database\Seeder;
 
 class RolesTableSeeder extends Seeder
 {
     public function run(): void
     {
-        foreach (RoleEnum::cases() as $role) {
-            $exist = Role::where('name', $role->value)->first();
+        foreach (RoleEnum::cases() as $row) {
+            $exist = Role::where('name', $row->name())->first();
             if (!$exist instanceof Role) {
-                $role = Role::create(['name' => $role->value, 'description' => $role->description()]);
-                if ($role->name == RoleEnum::SUPER_ADMINISTRATOR->value) {
+                $role = Role::create(
+                    [
+                        'name' => $row->name(),
+                        'role_group_id' => $this->getGroupId($row->group()),
+                        'description' => $row->description()
+                    ]);
+                if ($role->name == RoleEnum::SUPER_ADMINISTRATOR->name()) {
                     $this->assignSuperAdministratorPermissions($role);
                 }
-                if ($role->name == RoleEnum::STUDENT->value) {
+                if ($role->name == RoleEnum::STUDENT->name()) {
                     $role->givePermissionTo($this->portalPermissions());
                 }
             }
         }
+    }
+
+    private function getGroupId($slug)
+    {
+        $roleGroup = RoleGroup::where('slug', $slug)->first();
+        return $roleGroup->id ?? null;
     }
 
     private function assignSuperAdministratorPermissions($role): void

@@ -2,7 +2,7 @@
 
 namespace App\Policies\Acl;
 
-use App\Enums\Shared\PermissionEnum;
+use App\Enums\Acl\PermissionEnum;
 use App\Models\Acl\Permission;
 use App\Models\Users\User;
 

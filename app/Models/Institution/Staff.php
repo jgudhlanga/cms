@@ -5,6 +5,7 @@ namespace App\Models\Institution;
 use App\Http\Filters\Institution\StaffFilter;
 use App\Models\Shared\Country;
 use App\Models\Shared\Gender;
+use App\Models\Shared\IdType;
 use App\Models\Shared\MaritalStatus;
 use App\Models\Shared\Religion;
 use App\Models\Shared\Title;
@@ -44,7 +45,7 @@ class Staff extends Model
         'gender_id',
         'marital_status_id',
         'race_id',
-        'id_type',
+        'id_type_id',
         'id_number',
         'passport_number',
         'work_permit_number',
@@ -64,6 +65,11 @@ class Staff extends Model
     public function title(): BelongsTo
     {
         return $this->belongsTo(Title::class);
+    }
+
+    public function idType(): BelongsTo
+    {
+        return $this->belongsTo(IdType::class);
     }
 
     public function maritalStatus(): BelongsTo

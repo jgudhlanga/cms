@@ -28,8 +28,8 @@ const can = props?.auth?.can;
 			:search-url="route('roles.index')"
 			:pagination="{ ...roles.links, ...roles.meta }"
 			:columns="createRoleColumns()"
-			:on-create="() => onOpenModal(can['create:modules'])"
-			:disable-create="!can['create:modules']"
+			:on-create="() => onOpenModal(can['create:roles'])"
+			:disable-create="!can['create:roles']"
 		/>
 		<CreateEditRole />
 	</PageContainer>

@@ -23,6 +23,7 @@ import {
 import { trans } from 'laravel-vue-i18n';
 import { debounce } from 'lodash';
 import { h, Ref, ref } from 'vue';
+import BaseTag from '@/components/core/util/BaseTag.vue';
 
 /**
  * Provides a set of utilities for managing data tables. This includes
@@ -437,6 +438,10 @@ export function useDataTables() {
         return h(UserAvatar, { href: params.href, src: params.src, classes: params.classes, title: params.title });
     };
 
+    const tag = (title: string, classes?: string, variant?: ColorVariant) => {
+        return h(BaseTag, { title, classes, variant });
+    };
+
     return {
         initialize,
         toggleColumnVisibility,
@@ -456,5 +461,6 @@ export function useDataTables() {
         textLink,
         avatar,
         orderButtons,
+        tag,
     };
 }

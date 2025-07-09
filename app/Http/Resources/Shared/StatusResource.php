@@ -23,6 +23,8 @@ class StatusResource extends JsonResource
 			'id' => $this->id,
 			"attributes" => [
 				'title' => $this->title,
+				'description' => $this->description,
+				'isDefault' => $this->is_default,
 				$this->mergeWhen($request->routeIs('statuses.*'), [
 					'createdAt' => $this->created_at,
 					'updatedAt' => $this->updated_at,

@@ -9,11 +9,7 @@ use App\Models\Users\User;
 readonly class CreateStaffDto
 {
     public function __construct(
-        public string  $id_type,
-        public ?string $id_number,
         public int  $institution_department_id,
-        public ?string $passport_number,
-        public ?int    $country_id,
         public string  $date_of_birth,
         public ?int    $marital_status_id,
         public ?int    $race_id,
@@ -26,6 +22,7 @@ readonly class CreateStaffDto
         public int     $gender_id,
         public ?array  $role_ids,
         public ?int $employment_type_id,
+        public string $employee_number,
     )
     {
     }
@@ -34,11 +31,7 @@ readonly class CreateStaffDto
     {
         return new self(
         /** Personal details */
-            id_type: $request->id_type,
-            id_number: $request->id_number,
             institution_department_id: $request->institution_department_id,
-            passport_number: $request->passport_number,
-            country_id: $request->country_id,
             date_of_birth: $request->date_of_birth,
             marital_status_id: $request->marital_status_id,
             race_id: $request->race_id,
@@ -51,6 +44,7 @@ readonly class CreateStaffDto
             gender_id: $request->gender_id,
             role_ids: $request->role_ids,
             employment_type_id: $request->employment_type_id,
+            employee_number: $request->employee_number,
         );
     }
 }

@@ -4,6 +4,7 @@ import PageContainer from '@/components/core/page/PageContainer.vue';
 import BaseStepperButtons from '@/components/core/stepper/BaseStepperButtons.vue';
 import BaseStepperItem from '@/components/core/stepper/BaseStepperItem.vue';
 import { Stepper } from '@/components/ui/stepper';
+import { computed, onMounted, ref } from 'vue';
 
 // Page sections
 import Confirmation from '@/components/students/update/Confirmation.vue';
@@ -24,9 +25,9 @@ import { CreateApplicationParams } from '@/types/portal';
 import { BreadcrumbItemInterface } from '@/types/ui';
 
 // Utilities
+import { useIdTypes } from '@/composables/shared/useIdTypes';
 import { Head, useForm } from '@inertiajs/vue3';
 import { storeToRefs } from 'pinia';
-import { onMounted, ref } from 'vue';
 
 // Props
 interface Props {
@@ -36,11 +37,11 @@ interface Props {
 
 const props = defineProps<Props>();
 const { user } = props.auth;
-
 // Composables
+const { idTypes, listIdTypes } = useIdTypes();
 const { steps, applicationFormSchema, saveApplication } = useStudentPortal();
 const { listLevelRequirements } = useDepartmentLevels();
-const { isNativeCitizen } = useUtils();
+const { isNativeCitizen, isItTrue } = useUtils();
 
 // Stepper state
 const stepIndex = ref(1);
@@ -71,7 +72,8 @@ const form = useForm<CreateApplicationParams>({
     country_id: null,
     date_of_birth: '',
     id_number: '',
-    id_type: '',
+    id_type_id: null,
+    idType: null,
     maritalStatus: null,
     marital_status_id: null,
     next_of_kin_address_1: '',
@@ -100,7 +102,7 @@ const form = useForm<CreateApplicationParams>({
 const goNext = async (next: () => void) => {
     updateForm();
     try {
-        const schema = applicationFormSchema(isNativeCitizen(storeRefs.id_type.value ?? ''));
+        const schema = applicationFormSchema(isNativeCitizen(storeRefs.idType?.value?.label ?? ''));
         schema[stepIndex.value - 1].parse(form);
         next();
         if (stepIndex.value === 4 && storeRefs.level.value?.value != null) {
@@ -110,6 +112,9 @@ const goNext = async (next: () => void) => {
         form.setError(error.format());
     }
 };
+const defaultIdType = computed(() => {
+    return idTypes.value.find((type) => isItTrue(type.attributes?.isDefault)) ?? null;
+});
 
 // Populate from user
 const populateInitialForm = () => {
@@ -118,8 +123,11 @@ const populateInitialForm = () => {
     storeRefs.middle_name.value = attrs?.middleName ?? '';
     storeRefs.last_name.value = attrs?.lastname;
     storeRefs.email.value = attrs?.email ?? '';
-    if (!storeRefs.id_type.value) {
-        storeRefs.id_type.value = 'zimbabwean-national-id-number';
+    if (!storeRefs.idType.value) {
+        storeRefs.idType.value = {
+            label: defaultIdType.value?.attributes?.name ?? '',
+            value: Number(defaultIdType.value?.id) || '',
+        };
     }
 };
 
@@ -143,7 +151,8 @@ const updateForm = () => {
         country_id: storeRefs.country?.value?.value ?? null,
         date_of_birth: storeRefs.date_of_birth.value ?? '',
         id_number: storeRefs.id_number?.value ?? '',
-        id_type: storeRefs.id_type.value ?? '',
+        id_type_id: storeRefs.idType.value?.value ?? '',
+        idType: storeRefs.idType.value ?? '',
         maritalStatus: storeRefs.maritalStatus?.value,
         marital_status_id: storeRefs.maritalStatus?.value?.value ?? null,
         next_of_kin_address_1: storeRefs.next_of_kin_address_1.value ?? '',
@@ -170,7 +179,8 @@ const updateForm = () => {
 };
 
 // Lifecycle
-onMounted(() => {
+onMounted(async () => {
+    await listIdTypes();
     populateInitialForm();
 });
 </script>

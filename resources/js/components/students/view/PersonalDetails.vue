@@ -28,7 +28,7 @@ const personalDetails: ValueAndLabel[] = [
     { transKey: 'trans.last_name', value: personal?.lastname ?? '' },
     { transChoiceKey: 'trans.gender', value: personal?.gender ?? '' },
     { transChoiceKey: 'trans.marital_status', value: personal?.maritalStatus ?? '' },
-    { transKey: 'trans.id_type', value: getIDType(personal?.idType ?? '') },
+    { transChoiceKey: 'trans.id_type', value: personal?.idType ?? ''},
 ];
 if (isNativeCitizen(personal?.idType ?? '')) {
     personalDetails.push({

@@ -54,6 +54,10 @@ export const useSharedFormSchema = () => {
         z.object({
             contact_name: z.string().nonempty(trans('trans.enter_required_field', { field: trans('trans.representative_name') })),
         });
+    const employeeNumberSchema = () =>
+        z.object({
+            employee_number: z.string().nonempty(trans('trans.enter_required_field', { field: trans('trans.employee_number') })),
+        });
     const emailAddressSchema = () =>
         z.object({
             email_address: z
@@ -123,7 +127,18 @@ export const useSharedFormSchema = () => {
                 ),
         });
 
+    const titleLabelSchema = () =>
+        z.object({
+            title: z.string().nonempty(trans('trans.enter_required_field', { field: trans_choice('trans.title', 1) })),
+        });
+
     /* Dropdown Schema */
+    const idTypeSchema = () =>
+        z.object({
+            province: z.any().refine((val) => validateSelectOption(val), {
+                message: trans('trans.select_valid_field', { field: trans_choice('trans.id_type', 1) }),
+            }),
+        });
     const provinceSchema = () =>
         z.object({
             province: z.any().refine((val) => validateSelectOption(val), {
@@ -187,6 +202,7 @@ export const useSharedFormSchema = () => {
 
     return {
         addressOneSchema,
+        idTypeSchema,
         addressThreeSchema,
         addressTwoSchema,
         codeSchema,
@@ -218,6 +234,8 @@ export const useSharedFormSchema = () => {
         countrySchema,
         schoolSchema,
         placeSchema,
-        employmentTypeSchema
+        employmentTypeSchema,
+        employeeNumberSchema,
+        titleLabelSchema,
     };
 };

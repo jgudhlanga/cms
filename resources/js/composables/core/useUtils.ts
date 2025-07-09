@@ -146,7 +146,7 @@ export function useUtils() {
     };
 
     const isNativeCitizen = (idType: string): boolean => {
-        return idType.toLowerCase() === 'zimbabwean-national-id-number';
+        return idType.toLowerCase() == 'zimbabwean national id';
     };
 
     return {

@@ -8,10 +8,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Institution\CreateStaffRequest;
 use App\Http\Resources\Institution\InstitutionDepartmentResource;
 use App\Http\Resources\Institution\StaffResource;
-use App\Http\Resources\Users\UserResource;
 use App\Models\Institution\InstitutionDepartment;
 use App\Models\Institution\Staff;
-use App\Models\Users\User;
 use App\Repositories\Institution\interface\IStaffRepository;
 use Inertia\Inertia;
 
@@ -45,8 +43,7 @@ class StaffController extends Controller
         $staff = $this->repository->create(
             CreateStaffDto::fromStaffRequest($request)
         );
-        return to_route('staff.show', ['department' => $department->id, 'staff' => $staff->id])
-            ->with('message', 'Staff created successfully.');
+        return to_route('staff.show', ['department' => $department->id, 'staff' => $staff->id]);
     }
 
     /**
