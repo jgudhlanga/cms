@@ -10,16 +10,18 @@ const pageSizeOptions = ref([
 	{ value: 15, label: '15' },
 	{ value: 20, label: '20' },
 	{ value: 25, label: '25' },
-	{ value: 50, label: '50' }
+	{ value: 50, label: '50' },
+	{ value: 'all', label: 'All' },
 ]);
 
 
 </script>
 
 <template>
-	<div class="flex  items-center space-x-2">
+	<div class="flex w-full  items-center space-x-2">
 		<ItemTitle :title="`${$t('trans.rows_per_page')}:`" :uppercase="false" />
 		<BaseSelect
+            class="w-[100px]"
 			label=""
 			v-bind="$attrs"
 			placeholder=""

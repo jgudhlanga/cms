@@ -83,11 +83,9 @@ watch(trashed, trashedWatcher);
             <TableBody :table="table" :drag-items="dragItems" :draggable-update-url="draggableUpdateUrl" />
         </table>
     </div>
-    <div class="flex items-center justify-between px-6" v-if="pagination">
-        <div class="flex w-full items-center space-x-3">
-            <PerPageSize v-model="pageSize" />
-            <GotoPage v-model="currentPage" :meta="pagination ?? null" />
-        </div>
+    <div class="flex w-full  items-center justify-between px-6 my-3" v-if="pagination">
+        <PerPageSize v-model="pageSize" />
+        <GotoPage v-model="currentPage" :meta="pagination ?? null" />
         <Paginator :meta="pagination" />
     </div>
 </template>
