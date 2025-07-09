@@ -337,4 +337,8 @@ return [
     "step_action_description" => "Select action items at this step (what will happen to an application)",
     "step_user_description" => "Select users who will be involved at this step (who will be involved in the action)",
     "step_role_description" => "Select roles who will be involved at this step (the roles that will be involved in the action)",
+    "email_already_taken" => "Email is already taken",
+    "phone_number_already_taken" => "Phone number is already taken",
+    "employee_number_already_taken" => "EC number is already taken",
+    "enter_valid_email_address" => "Please enter a valid email address",
 ];

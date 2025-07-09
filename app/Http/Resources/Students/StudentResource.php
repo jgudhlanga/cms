@@ -22,6 +22,7 @@ class StudentResource extends JsonResource
             'race' => $this->race?->title ?? null,
             'idTypeId' => $this?->id_type_id ?? null,
             'idType' => $this?->idType?->name ?? null,
+            'studentNumber' => $this?->student_number ?? null,
             'idNumber' => $this?->id_number ?? null,
             'passportNumber' => $this?->passport_number ?? null,
             'countryId' => $this?->country_id ?? null,

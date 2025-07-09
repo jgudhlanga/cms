@@ -46,6 +46,7 @@ class Student extends Model
         'passport_number',
         'country_id',
         'study_permit_number',
+        'student_number',
         'date_of_birth',
         'religion_id',
         'denomination',

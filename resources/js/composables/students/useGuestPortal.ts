@@ -1,5 +1,6 @@
 import { useSharedFormSchema } from '@/composables/core/useSharedFormSchema';
 import { buildFormOptions, mergeValidationSchema } from '@/lib/forms';
+import { emailUniqueSchema } from '@/lib/uniqueValidations';
 import { useCreateUserFormStore } from '@/store/portal/useCreateUserFormStore';
 import { InertiaForm } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
@@ -10,12 +11,17 @@ export function useGuestPortal() {
 
     const successMessage = () => trans('trans.item_saved', { item: trans_choice('trans.application', 1) });
     const errorMessage = () => trans('trans.item_save_failure', { item: trans_choice('trans.application', 1) });
-    const createPortalUser = (form: InertiaForm<any>) => {
+
+    const formSchema = () => {
+        const personal = ['lastNameSchema', 'passwordSchema', 'passwordConfirmationSchema'];
+        return mergeValidationSchema(schemaFields)(
+            personal,
+            schemaFields['firstNameSchema']().merge(emailUniqueSchema('api/v1/validations/check?key=user_email&value=')),
+        );
+    };
+    const createPortalUser = async (form: InertiaForm<any>) => {
         try {
-            mergeValidationSchema(schemaFields)(
-                ['lastNameSchema', 'emailSchema', 'passwordSchema', 'passwordConfirmationSchema'],
-                schemaFields['firstNameSchema'](),
-            ).parse(form);
+            await formSchema().parseAsync(form);
             form.post(
                 route('portal.store'),
                 buildFormOptions(form, successMessage(), errorMessage(), undefined, () => {

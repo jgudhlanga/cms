@@ -17,14 +17,13 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained();
             $table->foreignId('employment_type_id')->nullable()->constrained();
             $table->string('employee_number')->nullable()->unique();
-            $table->string('staff_id_number')->nullable()->unique();
             $table->foreignId('title_id')->constrained();
             $table->foreignId('gender_id')->constrained();
             $table->foreignId('marital_status_id')->constrained();
             $table->foreignId('race_id')->nullable();
             $table->foreignId('id_type_id')->nullable()->constrained();
-            $table->string('id_number')->nullable();
-            $table->string('passport_number')->nullable();
+            $table->string('id_number')->nullable()->unique();
+            $table->string('passport_number')->nullable()->unique();
             $table->string('work_permit_number')->nullable();
             $table->foreignId('country_id')->nullable();
             $table->foreignId('religion_id')->nullable();

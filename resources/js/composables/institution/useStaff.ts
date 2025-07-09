@@ -6,6 +6,7 @@ import { useUtils } from '@/composables/core/useUtils';
 import { errorAlert } from '@/lib/alerts';
 import { buildFormOptions, mergeValidationSchema } from '@/lib/forms';
 import { hasAbility } from '@/lib/permissions';
+import { emailUniqueSchema, employeeNumberUniqueSchema, phoneNumberUniqueSchema } from '@/lib/uniqueValidations';
 import HttpService from '@/services/http.service';
 import { useStaffCreateFormStore, useStaffDataStore } from '@/store/institution/useStaffStore';
 import { Role } from '@/types/acl';
@@ -126,19 +127,16 @@ export const useStaff = () => {
 
     const schemaFields = useSharedFormSchema() as Record<string, () => ZodObject<any, any>>;
     const createFormSchema = () => {
-        const personal = [
-            'firstNameSchema',
-            'lastNameSchema',
-            'genderSchema',
-            'maritalStatusSchema',
-            'dobSchema',
-            'emailSchema',
-            'employmentTypeSchema',
-            'phoneNumberSchema',
-            'employeeNumberSchema',
-        ];
-        return mergeValidationSchema(schemaFields)(personal, schemaFields['titleSchema']());
+        const personal = ['firstNameSchema', 'lastNameSchema', 'genderSchema', 'maritalStatusSchema', 'dobSchema', 'employmentTypeSchema'];
+        return mergeValidationSchema(schemaFields)(
+            personal,
+            schemaFields['titleSchema']()
+                .merge(emailUniqueSchema('api/v1/validations/check?key=user_email&value='))
+                .merge(phoneNumberUniqueSchema('api/v1/validations/check?key=user_phone_number&value='))
+                .merge(employeeNumberUniqueSchema('api/v1/validations/check?key=staff_employee_number&value=')),
+        );
     };
+
     const getName = () => trans('trans.staff');
     const successMessage = () => trans('trans.item_saved', { item: getName() });
     const errorMessage = () => trans('trans.item_save_failure', { item: getName() });

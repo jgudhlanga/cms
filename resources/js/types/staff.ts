@@ -25,7 +25,6 @@ export type Staff = {
         country?: string;
         workPermitNumber?: string;
         employeeNumber?: string;
-        staffIdNumber?: string;
         dateOfBirth?: string;
         religionId?: string | number;
         religion?: string;
