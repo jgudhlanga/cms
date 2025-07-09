@@ -2,6 +2,7 @@
 import { ref } from 'vue';
 import BaseSelect from '../form/select/BaseSelect.vue';
 import ItemTitle from '@/components/core/util/ItemTitle.vue';
+import { PAGINATION_MAX_LIMIT } from '@/lib/constants';
 
 
 const pageSizeOptions = ref([
@@ -11,7 +12,7 @@ const pageSizeOptions = ref([
 	{ value: 20, label: '20' },
 	{ value: 25, label: '25' },
 	{ value: 50, label: '50' },
-	{ value: 'all', label: 'All' },
+	{ value: PAGINATION_MAX_LIMIT, label: 'All' },
 ]);
 
 

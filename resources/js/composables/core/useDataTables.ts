@@ -3,6 +3,7 @@ import CountButton from '@/components/core/button/CountButton.vue';
 import DropdownButton from '@/components/core/button/DropdownButton.vue';
 import BaseIcon from '@/components/core/icon/BaseIcon.vue';
 import OrderComponent from '@/components/core/table/OrderComponent.vue';
+import BaseTag from '@/components/core/util/BaseTag.vue';
 import TextLink from '@/components/core/util/TextLink.vue';
 import UserAvatar from '@/components/core/util/UserAvatar.vue';
 import { useUtils } from '@/composables/core/useUtils';
@@ -18,12 +19,11 @@ import {
     getSortedRowModel,
     SortingState,
     type Table,
-    useVueTable,
+    useVueTable
 } from '@tanstack/vue-table';
 import { trans } from 'laravel-vue-i18n';
 import { debounce } from 'lodash';
 import { h, Ref, ref } from 'vue';
-import BaseTag from '@/components/core/util/BaseTag.vue';
 
 /**
  * Provides a set of utilities for managing data tables. This includes
