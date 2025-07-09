@@ -15,6 +15,7 @@ class CourseResource extends JsonResource
             'id' => $this->resource->id,
             "attributes" => [
                 'name' => $this->resource->name,
+                'slug' => $this->resource->slug,
                 'position' => $this->resource->position,
                 'description' => $this->resource->description,
                 $this->mergeWhen($request->routeIs('courses.*'), [

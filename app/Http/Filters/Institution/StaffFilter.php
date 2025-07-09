@@ -17,7 +17,7 @@ class StaffFilter extends QueryFilter
     protected array $routeModels = ['institution_department'];
 
     protected array $joins = ['user'];
-    protected array $only = ['departments', 'roles'];
+    protected array $only = ['only'];
 
     public function institution_department(): Builder
     {
@@ -30,18 +30,42 @@ class StaffFilter extends QueryFilter
         return $this->builder;
     }
 
-    public function roles($value): Builder
+    public function only($value): Builder
     {
-        $only = $value;
-        if (is_string($only)) {
-            $only = explode(',', $only);
+        $roles = [];
+        $departments = [];
+
+        // Parse roles
+        if (isset($value['roles'])) {
+            $roles = is_array($value['roles']) ? $value['roles'] : [$value['roles']];
+            if (count($roles) === 1 && str_contains($roles[0], ',')) {
+                $roles = explode(',', $roles[0]);
+            }
+            $roles = array_map('trim', $roles);
         }
-        return $this->builder->whereHas('user', function ($query) use ($only) {
-            $query->whereHas('roles', function ($roleQuery) use ($only) {
-                $roleQuery->whereIn('slug', $only);
+
+        // Parse departments
+        if (isset($value['departments'])) {
+            $departments = is_array($value['departments']) ? $value['departments'] : [$value['departments']];
+            if (count($departments) === 1 && str_contains($departments[0], ',')) {
+                $departments = explode(',', $departments[0]);
+            }
+            $departments = array_map('intval', $departments); // cast to integers
+        }
+
+        return $this->builder
+            ->when(!empty($departments), function ($query) use ($departments) {
+                $query->whereHas('institutionDepartments', function ($q) use ($departments) {
+                    $q->whereIn('institution_department_id', $departments);
+                });
+            })
+            ->when(!empty($roles), function ($query) use ($roles) {
+                $query->whereHas('user.roles', function ($q) use ($roles) {
+                    $q->whereIn('slug', $roles);
+                });
             });
-        });
     }
+
 
     public function user($value): Builder
     {

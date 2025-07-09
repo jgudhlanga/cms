@@ -8,7 +8,7 @@ defineProps<{ meta: PaginationRootLink & PaginationMeta }>();
 </script>
 
 <template>
-	<div class="flex w-full justify-end gap-2 pt-5">
+	<div class="flex w-full items-center justify-end gap-2">
 		<NavigationLink
 			:href="meta.first ?? ''"
 			:icon-name="IconName.chevron_double_left"
