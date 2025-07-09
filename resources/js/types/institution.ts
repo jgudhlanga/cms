@@ -3,6 +3,7 @@ export type Course = {
     id?: string;
     attributes: {
         name: string;
+        slug: string;
         position: string | number;
         description?: string;
         createdAt?: string;
@@ -20,6 +21,7 @@ export type Department = {
     id?: string;
     attributes: {
         name: string;
+        slug: string;
         position: string | number;
         description?: string;
         createdAt?: string;

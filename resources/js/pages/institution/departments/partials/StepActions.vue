@@ -42,6 +42,8 @@ const form = useForm<DepartmentApplicationStepActionParams>({
     role_ids: [],
     staff_ids: [],
 });
+
+
 </script>
 
 <template>
@@ -78,7 +80,7 @@ const form = useForm<DepartmentApplicationStepActionParams>({
                     <template v-else>
                         <div class="grid grid-cols-1 gap-x-3">
                             <StaffSelect
-                                :url="`api/v1/staff?page_size=all&only=${onlyStaffRoles}`"
+                                :url="`api/v1/staff?page_size=all&only[roles][]=${onlyStaffRoles}`"
                                 :label-uppercase="true"
                                 :is-multi="true"
                                 :is-searchable="true"

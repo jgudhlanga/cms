@@ -116,6 +116,9 @@ abstract class QueryFilter
     private function queryFilters(): void
     {
         foreach ($this->filters() as $name => $value) {
+            if(is_array($value)) {
+                continue;
+            }
             if (!method_exists($this, $name)) {
                 continue;
             }
@@ -191,7 +194,7 @@ abstract class QueryFilter
                 if (!method_exists($this, $only)) {
                     continue;
                 }
-                if (strlen($params)) {
+                if (!empty($params)) {
                     $this->$only($params);
                 } else {
                     $this->$only('');
