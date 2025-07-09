@@ -2,8 +2,10 @@
 import { IconButton } from '@/components/core/button/index.js';
 import BaseTooltip from '@/components/core/util/BaseTooltip.vue';
 import { IconName, icons } from '@/lib/icons';
+import { TimelineStep } from '@/types/utils';
 
 interface Props {
+    step: TimelineStep;
     action?: () => void;
 }
 

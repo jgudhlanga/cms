@@ -33,6 +33,7 @@ class CreateStaffRequest extends FormRequest
             'marital_status_id' => ['required', 'integer', 'exists:marital_statuses,id'],
             'title_id' => ['required', 'integer', 'exists:titles,id'],
             'email' => ['required', 'string', 'max:255', 'email', 'unique:users'],
+            'phone_number' => ['required', 'nullable', 'max:30', 'unique:users'],
             'role_ids' => ['nullable', 'array'],
             'institution_department_id' => ['nullable', 'integer', 'exists:institution_departments,id'],
         ];

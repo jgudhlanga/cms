@@ -129,3 +129,9 @@ export type DepartmentApplicationStep = {
 export type DepartmentApplicationStepParams = {
     workflow_step_ids: Array<string | undefined | null> | null;
 };
+export type DepartmentApplicationStepActionParams = {
+    department_application_step_id: string | number;
+    workflow_step_action_ids: Array<string | undefined | null> | null;
+    role_ids: Array<string | undefined | null> | null;
+    staff_ids: Array<string | undefined | null> | null;
+};

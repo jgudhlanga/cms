@@ -41,7 +41,7 @@ const steps = computed(() => {
                 component: StepMetadata,
                 props: {
                     step,
-                    action: openDepartmentWorkflowActionModal,
+                    action: () => openDepartmentWorkflowActionModal(step),
                 },
             },
     );

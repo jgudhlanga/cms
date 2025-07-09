@@ -15,4 +15,17 @@ class UserFilter extends QueryFilter
     ];
 
     protected array $searchable = ['name', 'email'];
+
+    protected array $only = ['departments', 'roles'];
+    public function roles($value): Builder
+    {
+        $only = $value;
+        if (is_string($only)) {
+            $only = explode(',', $only);
+        }
+        return $this->builder->whereHas('roles', function ($query) use ($only) {
+            $query->whereIn('slug', $only);
+        });
+    }
+
 }

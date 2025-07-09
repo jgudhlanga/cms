@@ -10,7 +10,7 @@ import RequiredIndicator from '@/components/core/form/RequiredIndicator.vue';
 interface Props {
     label?: string;
     placeholder?: string;
-    options?: Array<SelectOption>;
+    options?: Array<SelectOption>| [];
     isClearable?: boolean;
     isMulti?: boolean;
     isSearchable?: boolean;

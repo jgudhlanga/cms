@@ -22,17 +22,23 @@ class StaffFilter extends QueryFilter
     public function institution_department(): Builder
     {
         $institutionDepartment = Route::input('institution_department');
-
-        return $this->builder->whereHas('institutionDepartments', function ($q) use ($institutionDepartment) {
-            $q->where('institution_department_id', $institutionDepartment->id);
-        });
+        if (!empty($institutionDepartment)) {
+            return $this->builder->whereHas('institutionDepartments', function ($q) use ($institutionDepartment) {
+                $q->where('institution_department_id', $institutionDepartment->id);
+            });
+        };
+        return $this->builder;
     }
 
     public function roles($value): Builder
     {
-        return $this->builder->whereHas('user', function ($query) use ($value) {
-            $query->whereHas('roles', function ($roleQuery) use ($value) {
-                $roleQuery->whereIn('slug', (array)$value);
+        $only = $value;
+        if (is_string($only)) {
+            $only = explode(',', $only);
+        }
+        return $this->builder->whereHas('user', function ($query) use ($only) {
+            $query->whereHas('roles', function ($roleQuery) use ($only) {
+                $roleQuery->whereIn('slug', $only);
             });
         });
     }

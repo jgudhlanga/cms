@@ -6,6 +6,7 @@ import { hasAbility } from '@/lib/permissions';
 import { getIdParams } from '@/lib/utils';
 import { InertiaForm } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
+import { DepartmentApplicationStep } from '@/types/department-meta-data';
 
 export const useDepartmentApplications = () => {
     const openDepartmentApplicationStepsModal = (departmentSteps: Array<string | undefined | null> | null) => {
@@ -13,9 +14,9 @@ export const useDepartmentApplications = () => {
         openModal({ name: APP_MODULE_KEYS.department_application_steps, edit: departmentSteps });
     };
 
-    const openDepartmentWorkflowActionModal = () => {
+    const openDepartmentWorkflowActionModal = (step: DepartmentApplicationStep) => {
         if (!hasAbility('create:department-metadata')) return forbiddenAlert();
-        openModal({ name: APP_MODULE_KEYS.department_workflow_actions, edit: null });
+        openModal({ name: APP_MODULE_KEYS.department_workflow_actions, edit: step });
     };
     const getName = () => trans_choice('trans.application_step', 1);
     const successMessage = () => trans('trans.item_saved', { item: getName() });
