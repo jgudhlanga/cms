@@ -3,6 +3,7 @@ import { getIdParams } from '@/lib/utils';
 
 import { useSharedFormSchema } from '@/composables/core/useSharedFormSchema';
 import { useUtils } from '@/composables/core/useUtils';
+import { ColorVariant } from '@/enums/colors';
 import { errorAlert } from '@/lib/alerts';
 import { buildFormOptions, mergeValidationSchema } from '@/lib/forms';
 import { hasAbility } from '@/lib/permissions';
@@ -40,7 +41,7 @@ export const useStaff = () => {
                 header: trans('trans.employee_number'),
                 accessorKey: 'employee_number',
                 cell: ({ row }: { row: { original: Staff } }) => {
-                    return tag(row.original.attributes?.employeeNumber ?? '---');
+                    return tag(row.original.attributes?.employeeNumber ?? '---', 'py-0.5', ColorVariant.primary);
                 },
             },
             {

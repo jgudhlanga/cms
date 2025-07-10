@@ -31,7 +31,11 @@ class RolesTableSeeder extends Seeder
         }
     }
 
-    private function getGroupId($slug)
+    /**
+     * @param $slug
+     * @return mixed
+     */
+    private function getGroupId($slug): mixed
     {
         $roleGroup = RoleGroup::where('slug', $slug)->first();
         return $roleGroup->id ?? null;

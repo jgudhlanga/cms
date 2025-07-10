@@ -14,7 +14,7 @@ class DepartmentsTableSeeder extends Seeder
     public function run(): void
     {
         foreach (DepartmentEnum::cases() as $row) {
-            Department::create(['name' => $row->value, 'position' => $row->position()]);
+            Department::create(['name' => $row->value, 'position' => $row->position(), 'is_academic' => $row->isAcademic()]);
         }
     }
 }

@@ -23,6 +23,7 @@ export type Department = {
         name: string;
         slug: string;
         position: string | number;
+        isAcademic?: boolean;
         description?: string;
         createdAt?: string;
         updatedAt?: string;
@@ -31,6 +32,7 @@ export type Department = {
 };
 export type DepartmentParams = {
     name: string;
+    is_academic: boolean;
     description?: string;
 };
 
@@ -132,7 +134,8 @@ export type InstitutionDepartment = {
 };
 
 export type InstitutionDepartmentParams = {
-    department_ids: Array<string | undefined | null> | null;
+    is_academic: boolean,
+    department_ids: Array<string | undefined | null>;
 };
 
 export type IntakePeriod = {

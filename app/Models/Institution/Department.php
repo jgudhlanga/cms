@@ -2,6 +2,7 @@
 
 namespace App\Models\Institution;
 
+use App\Http\Filters\Institution\DepartmentFilter;
 use App\Http\Filters\Shared\SharedNameFilter;
 use App\Observers\Shared\NameSlugObserver;
 use App\Traits\AssignsPosition;
@@ -18,14 +19,14 @@ use Spatie\Activitylog\Traits\LogsActivity;
 /**
  *
  * @mixin Builder
- * @method static filter(SharedNameFilter $filters)
+ * @method static filter(DepartmentFilter $filters)
  */
 #[ObservedBy([NameSlugObserver::class])]
 class Department extends Model
 {
     use HasFactory, SoftDeletes, Filterable, Paginatable, LogsActivity, AssignsPosition;
 
-    protected $fillable = ['name', 'slug', 'position', 'description'];
+    protected $fillable = ['name', 'slug', 'position', 'description', 'is_academic'];
 
     public function getActivitylogOptions(): LogOptions
     {

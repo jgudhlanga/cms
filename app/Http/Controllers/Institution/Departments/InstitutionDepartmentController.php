@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Institution\Departments;
 
 use App\DTO\Institution\InstitutionDepartmentDto;
 use App\Http\Controllers\Controller;
-use App\Http\Filters\Institution\DepartmentFilter;
+use App\Http\Filters\Institution\InstitutionDepartmentFilter;
 use App\Http\Requests\Institution\InstitutionDepartmentRequest;
 use App\Http\Resources\Institution\InstitutionDepartmentResource;
 use App\Models\Institution\InstitutionDepartment;
@@ -17,7 +17,7 @@ class InstitutionDepartmentController extends Controller
     {
     }
 
-    public function index(DepartmentFilter $filters)
+    public function index(InstitutionDepartmentFilter $filters)
     {
         $this->authorize('viewAnyDepartmentMetaData');
         $departments = InstitutionDepartmentResource::collection($this->repository->allFilter(['*'], $filters));

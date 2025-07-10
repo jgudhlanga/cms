@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1\Institution;
 
 use App\Http\Controllers\Api\V1\Utils\ApiDropdownController;
 use App\Http\Filters\Institution\DepartmentFilter;
+use App\Http\Filters\Institution\InstitutionDepartmentFilter;
 use App\Http\Resources\Institution\InstitutionDepartmentResource;
 use App\Repositories\Institution\interface\IInstitutionDepartmentRepository;
 use App\Traits\HttpUtil;
@@ -17,7 +18,7 @@ class InstitutionDepartmentController extends ApiDropdownController
     {
     }
 
-    public function index(DepartmentFilter $filters)
+    public function index(InstitutionDepartmentFilter $filters)
     {
         return InstitutionDepartmentResource::collection($this->repository->allFilter(['*'], $filters));
     }

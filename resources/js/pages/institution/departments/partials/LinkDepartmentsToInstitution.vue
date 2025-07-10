@@ -2,6 +2,7 @@
 import { BaseCheckbox } from '@/components/core/form';
 import BaseModal from '@/components/core/modal/BaseModal.vue';
 import SpinnerComponent from '@/components/core/util/SpinnerComponent.vue';
+import { useUtils } from '@/composables/core/useUtils';
 import { useDepartments } from '@/composables/institution/useDepartments';
 import { useInstitutionDepartments } from '@/composables/institution/useInstitutionDepartments';
 import { getModalEdit } from '@/lib/alerts';
@@ -12,10 +13,12 @@ import { useForm } from '@inertiajs/vue3';
 import { ref, watch } from 'vue';
 
 const allSelected = ref(false);
+const params = route().params;
+const { isItTrue } = useUtils();
 const form = useForm<InstitutionDepartmentParams>({
+    is_academic: isItTrue(params?.academic),
     department_ids: [],
 });
-
 const { isLoading, departments, listDepartments } = useDepartments();
 const { syncInstitutionDepartments } = useInstitutionDepartments();
 const selectAll = () => {
@@ -23,18 +26,18 @@ const selectAll = () => {
         form.department_ids = [];
         allSelected.value = false;
     } else {
-        form.department_ids = departments.value?.map((item: Department) => item['id']);
+        form.department_ids = departments.value?.data?.map((item: Department) => item['id']) ?? [];
         allSelected.value = true;
     }
 };
 const updateModel = () => {
-    allSelected.value = form.department_ids?.length == departments.value?.length;
+    allSelected.value = form.department_ids?.length == departments.value?.data?.length;
 };
 const { modals } = useModalStore();
 
 watch(modals!, async () => {
     form.department_ids = getModalEdit(APP_MODULE_KEYS.institution_departments);
-    await listDepartments();
+    await listDepartments(route('v1.departments.index', { academic: params?.academic, page_size: 'all' }));
     form.defaults();
 });
 </script>
@@ -62,7 +65,7 @@ watch(modals!, async () => {
                             />
                         </div>
                         <div class="grid grid-cols-1 gap-x-3 md:grid-cols-2">
-                            <template v-for="department in departments" :key="`department_key_${department['id']}`">
+                            <template v-for="department in departments?.data" :key="`department_key_${department['id']}`">
                                 <BaseCheckbox
                                     :input-id="`department_id_${department['id']}`"
                                     :value="department['id']"

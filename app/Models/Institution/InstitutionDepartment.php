@@ -2,7 +2,7 @@
 
 namespace App\Models\Institution;
 
-use App\Http\Filters\Institution\DepartmentFilter;
+use App\Http\Filters\Institution\InstitutionDepartmentFilter;
 use App\Traits\BelongsToTenant;
 use App\Traits\Filterable;
 use App\Traits\Paginatable;
@@ -19,7 +19,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
 /**
  *
  * @mixin Builder
- * @method static filter(DepartmentFilter $filters)
+ * @method static filter(InstitutionDepartmentFilter $filters)
  */
 class InstitutionDepartment extends Model
 {
