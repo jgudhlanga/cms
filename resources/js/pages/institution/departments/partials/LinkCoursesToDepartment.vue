@@ -69,7 +69,7 @@ watch(modals!, async () => {
                                 @click="selectAll()"
                             />
                         </div>
-                        <div class="grid grid-cols-4 gap-x-3 md:grid-cols-2">
+                        <div class="grid grid-cols-1 gap-x-3 md:grid-cols-3">
                             <template v-for="course in courses" :key="`course_key_${course['id']}`">
                                 <BaseCheckbox
                                     :input-id="`course_id_${course['id']}`"

@@ -103,7 +103,7 @@ const goNext = async (next: () => void) => {
     updateForm();
     try {
         const schema = applicationFormSchema(isNativeCitizen(storeRefs.idType?.value?.label ?? ''));
-        schema[stepIndex.value - 1].parse(form);
+        await schema[stepIndex.value - 1].parseAsync(form);
         next();
         if (stepIndex.value === 4 && storeRefs.level.value?.value != null) {
             await listLevelRequirements(storeRefs.level.value.value.toString());

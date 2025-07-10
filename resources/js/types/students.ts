@@ -13,6 +13,7 @@ export type Student = {
     raceId?: string | number;
     race?: string;
     idTypeId: string | number;
+    studentNumber: string;
     idType: string;
     idNumber?: string;
     passportNumber?: string;

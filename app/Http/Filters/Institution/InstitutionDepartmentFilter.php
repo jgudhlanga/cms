@@ -5,7 +5,7 @@ namespace App\Http\Filters\Institution;
 use App\Http\Filters\QueryFilter;
 use Illuminate\Database\Eloquent\Builder;
 
-class DepartmentFilter extends QueryFilter
+class InstitutionDepartmentFilter extends QueryFilter
 {
     protected array $sortable = [
         'createdAt' => 'created_at',
@@ -13,10 +13,12 @@ class DepartmentFilter extends QueryFilter
         'updatedAt' => 'updated_at'
     ];
 
-    protected array $searchable = ['name', 'academic'];
+    protected array $joins = ['academic'];
 
     public function academic($value): Builder
     {
-        return $this->builder->where('is_academic', $value);
+        return $this->builder->whereHas('department', function ($query) use ($value) {
+            $query->where('is_academic', (int)$value);
+        });
     }
 }

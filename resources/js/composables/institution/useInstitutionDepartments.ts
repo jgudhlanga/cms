@@ -56,15 +56,6 @@ export const useInstitutionDepartments = () => {
         ];
     };
 
-    const breadcrumbs: Array<Link> = [
-        {
-            transChoiceKey: 'institution',
-            transChoiceKeyIndex: 1,
-            href: route('institution.index'),
-        },
-        { transChoiceKey: 'department' },
-    ];
-
     const syncInstitutionDepartments = (form: InertiaForm<any>) => {
         try {
             const success = trans('trans.item_saved', { item: trans_choice('trans.department', 1) });
@@ -114,7 +105,6 @@ export const useInstitutionDepartments = () => {
 
     return {
         archiveDepartment,
-        breadcrumbs,
         createInstitutionDepartmentColumns,
         deleteDepartment,
         openInstitutionDepartmentsModal,

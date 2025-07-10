@@ -8,7 +8,8 @@ enum RoleGroupEnum: string
     case TESC = 'tesc';
     case EXECUTIVE = 'executive';
     case ACADEMIC = 'academic';
-    case ADMINISTRATIVE_MANAGERIAL = 'administrative-and-managerial';
+    case ADMINISTRATIVE = 'administrative';
+    case MANAGERIAL = 'managerial';
     case SERVICE_AND_SUPPORT = 'service-and-support';
     case STUDENT = 'student';
 
@@ -19,7 +20,8 @@ enum RoleGroupEnum: string
             self::TESC => 'TESC',
             self::EXECUTIVE => 'Executive',
             self::ACADEMIC => 'Academic',
-            self::ADMINISTRATIVE_MANAGERIAL => 'Administrative and Managerial',
+            self::ADMINISTRATIVE => 'Administrative',
+            self::MANAGERIAL => 'Managerial',
             self::SERVICE_AND_SUPPORT => 'Service and support',
             self::STUDENT => 'Student',
         };
@@ -30,9 +32,10 @@ enum RoleGroupEnum: string
         return match ($this) {
             self::SUPER_USER => 'System-level user with access to all areas.',
             self::TESC => 'Tertiary Education Service Council (TESC) group.',
-            self::EXECUTIVE => 'Executive leadership including deans, directors, or heads of departments.',
-            self::ACADEMIC => 'Teaching and research personnel such as lecturers and professors.',
-            self::ADMINISTRATIVE_MANAGERIAL => 'Administrative Staff (Non-Academic, Managerial) involved in management or administration.',
+            self::EXECUTIVE => 'Executive leadership including principals, deans, registrars, and bursars.',
+            self::ACADEMIC => 'Teaching and research personnel such as lecturers heads of department.',
+            self::ADMINISTRATIVE => 'Administrative Staff (Non-Academic) involved in administration.',
+            self::MANAGERIAL => 'Managerial Staff (Non-Academic) involved in management.',
             self::SERVICE_AND_SUPPORT => 'Support and Service Staff (Non-Academic, Operational) providing technical, clerical, or facility-related support.',
             self::STUDENT => 'Registered learners in the institution.',
         };

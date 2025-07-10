@@ -1,5 +1,6 @@
 import { useSharedFormSchema } from '@/composables/core/useSharedFormSchema';
 import { buildFormOptions, mergeValidationSchema } from '@/lib/forms';
+import { idNumberUniqueSchema, passportNumberUniqueSchema } from '@/lib/uniqueValidations';
 import { useCreateApplicationFormStore } from '@/store/portal/useCreateApplicationFormStore';
 import { Step } from '@/types/forms';
 import { InertiaForm } from '@inertiajs/vue3';
@@ -18,13 +19,19 @@ export function useStudentPortal() {
     const schemaFields = useSharedFormSchema() as Record<string, () => ZodObject<any, any>>;
     const applicationFormSchema = (isNativeCitizen: boolean) => {
         const personal = ['firstNameSchema', 'lastNameSchema', 'genderSchema', 'maritalStatusSchema', 'dobSchema', 'idTypeSchema'];
+        let personalDetails = null;
         if (isNativeCitizen) {
-            personal.push('idNumberSchema');
+            personalDetails = mergeValidationSchema(schemaFields)(
+                personal,
+                schemaFields['titleSchema']().merge(idNumberUniqueSchema('api/v1/validations/check?key=student_national_id&value=')),
+            );
         } else {
-            personal.push('passportNumberSchema');
             personal.push('countrySchema');
+            personalDetails = mergeValidationSchema(schemaFields)(
+                personal,
+                schemaFields['titleSchema']().merge(passportNumberUniqueSchema('api/v1/validations/check?key=student_passport_number&value=')),
+            );
         }
-        const personalDetails = mergeValidationSchema(schemaFields)(personal, schemaFields['titleSchema']());
         const contacts = mergeValidationSchema(schemaFields)(
             ['addressOneSchema', 'addressTwoSchema', 'addressThreeSchema', 'emailSchema'],
             schemaFields['phoneNumberSchema'](),

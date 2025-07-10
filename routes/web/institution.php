@@ -27,10 +27,11 @@ Route::prefix('institution')->middleware('auth')->group(function () {
     Route::get('departments/{department_course}/show', [DepartmentCourseController::class, 'show'])->name('department-courses.show');
     Route::post('departments/{department_course}/update', [DepartmentCourseController::class, 'update'])->name('department-courses.update');
     # ==================================== DEPARTMENT APPLICATION STEPS ================================================================
-    Route::post('departments/{institution_department}/sync-application-steps', [DepartmentApplicationStepController::class, 'syncDepartmentApplicationSteps'])->name('department-application-steps.sync');
+    Route::post('departments/{institution_department}/sync-application-steps', [DepartmentApplicationStepController::class, 'syncApplicationSteps'])->name('department-application-steps.sync');
     Route::get('departments/{institution_department}/application-steps', [DepartmentApplicationStepController::class, 'index'])->name('department-application-steps.index');
     Route::get('departments/{department_application_step}/application-steps/show', [DepartmentApplicationStepController::class, 'show'])->name('department-application-steps.show');
     Route::post('departments/{department_application_step}/application-steps/update', [DepartmentApplicationStepController::class, 'update'])->name('department-application-steps.update');
+    Route::post('departments/{institution_department}/sync-application-step-metadata', [DepartmentApplicationStepController::class, 'syncWorkflowStepActionMetadata'])->name('department-application-steps.sync-metadata');
     # ==================================== INTAKE PERIODS ================================================================
     Route::put('intake-periods/{intake_period}/restore', [IntakePeriodController::class, 'restore'])->name('intake-periods.restore');
     Route::delete('intake-periods/{intake_period}/force-delete', [IntakePeriodController::class, 'forceDelete'])->name('intake-periods.force-delete');

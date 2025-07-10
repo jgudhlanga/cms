@@ -8,6 +8,7 @@ readonly class InstitutionDepartmentDto
 {
     public function __construct(
         public array  $department_ids,
+        public bool  $is_academic,
     )
     {
     }
@@ -17,6 +18,7 @@ readonly class InstitutionDepartmentDto
     {
         return new self(
             department_ids: $request->department_ids,
+            is_academic: $request->is_academic ?? false,
         );
     }
 }

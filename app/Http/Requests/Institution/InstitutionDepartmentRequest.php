@@ -28,6 +28,7 @@ class InstitutionDepartmentRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'is_academic' => ['required', 'boolean'],
             'department_ids' => ['nullable', 'array'],
             'department_ids.*' => ['integer', 'exists:departments,id'],
         ];

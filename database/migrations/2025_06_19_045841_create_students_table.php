@@ -19,8 +19,9 @@ return new class extends Migration {
             $table->foreignId('marital_status_id')->constrained();
             $table->foreignId('race_id')->nullable();
             $table->foreignId('id_type_id')->constrained();
-            $table->string('id_number')->nullable();
-            $table->string('passport_number')->nullable();
+            $table->string('student_number')->nullable()->unique();
+            $table->string('id_number')->nullable()->unique();
+            $table->string('passport_number')->nullable()->unique();
             $table->foreignId('country_id')->nullable();
             $table->foreignId('religion_id')->nullable();
             $table->string('study_permit_number')->nullable();

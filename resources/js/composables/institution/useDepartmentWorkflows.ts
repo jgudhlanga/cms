@@ -4,11 +4,11 @@ import { APP_MODULE_KEYS } from '@/lib/constants';
 import { buildFormOptions, toggleFormLoader } from '@/lib/forms';
 import { hasAbility } from '@/lib/permissions';
 import { getIdParams } from '@/lib/utils';
+import { DepartmentApplicationStep } from '@/types/department-meta-data';
 import { InertiaForm } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
-import { DepartmentApplicationStep } from '@/types/department-meta-data';
 
-export const useDepartmentApplications = () => {
+export const useDepartmentWorkflows = () => {
     const openDepartmentApplicationStepsModal = (departmentSteps: Array<string | undefined | null> | null) => {
         if (!hasAbility('create:department-metadata')) return forbiddenAlert();
         openModal({ name: APP_MODULE_KEYS.department_application_steps, edit: departmentSteps });
@@ -27,6 +27,16 @@ export const useDepartmentApplications = () => {
             form.post(
                 route('department-application-steps.sync', institutionDepartmentId),
                 buildFormOptions(form, successMessage(), errorMessage(), APP_MODULE_KEYS.department_application_steps),
+            );
+        } catch (error: any) {
+            form.setError(error.format());
+        }
+    };
+    const syncWorkflowStepActionMetadata = (institutionDepartmentId: string, form: InertiaForm<any>) => {
+        try {
+            form.post(
+                route('department-application-steps.sync-metadata', institutionDepartmentId),
+                buildFormOptions(form, successMessage(), errorMessage(), APP_MODULE_KEYS.department_workflow_actions),
             );
         } catch (error: any) {
             form.setError(error.format());
@@ -53,10 +63,12 @@ export const useDepartmentApplications = () => {
             form.setError(error.format());
         }
     };
+
     return {
         openDepartmentApplicationStepsModal,
         syncDepartmentApplicationSteps,
         updateDepartmentApplicationSteps,
         openDepartmentWorkflowActionModal,
+        syncWorkflowStepActionMetadata,
     };
 };

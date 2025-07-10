@@ -3,7 +3,7 @@
 namespace App\Repositories\Institution;
 
 use App\DTO\Institution\DepartmentDto;
-use App\Http\Filters\Shared\SharedNameFilter;
+use App\Http\Filters\Institution\DepartmentFilter;
 use App\Models\Institution\Department;
 use App\Repositories\Base\BaseRepository;
 use App\Repositories\Institution\interface\IDepartmentRepository;
@@ -25,11 +25,12 @@ class DepartmentRepository extends BaseRepository implements IDepartmentReposito
         return tap($department)->update($this->getFields($dto));
     }
 
-    public function allFilter($columns = ['*'], SharedNameFilter $filters = null)
+    public function allFilter($columns = ['*'], DepartmentFilter $filters = null)
     {
         return $this->department
             ->select($columns)
             ->filter($filters)
+            ->orderBy('is_academic', 'DESC')
             ->orderBy('position')
             ->orderBy('name')
             ->orderBy('deleted_at')
@@ -41,6 +42,7 @@ class DepartmentRepository extends BaseRepository implements IDepartmentReposito
     {
         return [
             'name' => $dto->name,
+            'is_academic' => $dto->is_academic,
             'description' => $dto->description,
         ];
     }

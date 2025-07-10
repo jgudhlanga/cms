@@ -5,6 +5,7 @@ import StaffSelect from '@/components/core/form/select/StaffSelect.vue';
 import BaseModal from '@/components/core/modal/BaseModal.vue';
 import SpinnerComponent from '@/components/core/util/SpinnerComponent.vue';
 import { useRoles } from '@/composables/acl/useRoles';
+import { useDepartmentWorkflows } from '@/composables/institution/useDepartmentWorkflows';
 import { useWorkflowStepActions } from '@/composables/shared/useWorkflowStepActions';
 import { SizeVariant } from '@/enums/sizes';
 import { getModalEdit } from '@/lib/alerts';
@@ -31,26 +32,28 @@ onMounted(async () => {
     await listWorkflowStepActions();
 });
 const { modals } = useModalStore();
-
-watch(modals!, async () => {
-    step.value = getModalEdit(APP_MODULE_KEYS.department_workflow_actions);
-    form.defaults();
-});
 const form = useForm<DepartmentApplicationStepActionParams>({
-    department_application_step_id: step.value?.id?.toString() ?? '',
-    workflow_step_action_ids: [],
+    department_application_step_id: null,
+    workflow_action_ids: [],
     role_ids: [],
     staff_ids: [],
 });
-
-
+watch(modals!, async () => {
+    step.value = getModalEdit(APP_MODULE_KEYS.department_workflow_actions);
+    form.department_application_step_id = step.value?.id?.toString() ?? '';
+    form.role_ids = step.value?.relationships?.metadata?.roleIds ?? [];
+    form.staff_ids = step.value?.relationships?.metadata?.staffIds ?? [];
+    form.workflow_action_ids = step.value?.relationships?.metadata?.workflowActionIds ?? [];
+    form.defaults();
+});
+const { syncWorkflowStepActionMetadata } = useDepartmentWorkflows();
 </script>
 
 <template>
     <BaseModal
         :name="APP_MODULE_KEYS.department_workflow_actions"
         :title="`${$t('trans.workflow_step_action_metadata')} (${step?.attributes?.workflowStep}) `"
-        :on-form-action="() => {}"
+        :on-form-action="() => syncWorkflowStepActionMetadata(institutionDepartmentId, form)"
         :form="form"
         :size="SizeVariant.full"
     >
@@ -99,7 +102,7 @@ const form = useForm<DepartmentApplicationStepActionParams>({
                                 <BaseCheckbox
                                     :input-id="`action_id_${action['id']}`"
                                     :value="action['id']"
-                                    v-model="form.workflow_step_action_ids"
+                                    v-model="form.workflow_action_ids"
                                     :label="action['attributes']['title']"
                                 />
                             </div>

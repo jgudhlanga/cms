@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api\V1\Institution;
 
 use App\Http\Controllers\Api\V1\Utils\ApiDropdownController;
-use App\Http\Filters\Shared\SharedNameFilter;
+use App\Http\Filters\Institution\DepartmentFilter;
 use App\Http\Resources\Institution\DepartmentResource;
 use App\Repositories\Institution\interface\IDepartmentRepository;
 use App\Traits\HttpUtil;
@@ -18,7 +18,7 @@ class DepartmentController extends ApiDropdownController
 
     }
 
-    public function index(SharedNameFilter $filters)
+    public function index(DepartmentFilter $filters)
     {
         return DepartmentResource::collection($this->repository->allFilter(['*'], $filters));
     }

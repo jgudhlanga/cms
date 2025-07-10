@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Institution\Dropdowns;
 
 use App\DTO\Institution\DepartmentDto;
 use App\Http\Controllers\Controller;
-use App\Http\Filters\Shared\SharedNameFilter;
+use App\Http\Filters\Institution\DepartmentFilter;
 use App\Http\Requests\Institution\DepartmentRequest;
 use App\Http\Requests\Shared\PositionRequest;
 use App\Http\Resources\Institution\DepartmentResource;
@@ -18,7 +18,7 @@ class DepartmentController extends Controller
     {
     }
 
-    public function index(SharedNameFilter $filters)
+    public function index(DepartmentFilter $filters)
     {
         $this->authorize('viewSettings');
         $departments = DepartmentResource::collection($this->repository->allFilter(['*'], $filters));

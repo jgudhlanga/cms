@@ -35,7 +35,6 @@ class StaffResource extends JsonResource
                 'country' => $this->country?->name ?? null,
                 'workPermitNumber' => $this?->work_permit_number ?? null,
                 'employeeNumber' => $this?->employee_number ?? null,
-                'staffIdNumber' => $this?->staff_id_number ?? null,
                 'dateOfBirth' => $this?->date_of_birth ?? null,
                 'religionId' => $this?->religion_id ?? null,
                 'religion' => $this->religion?->name ?? null,

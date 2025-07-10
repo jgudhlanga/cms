@@ -98,10 +98,10 @@ const updateForm = () => {
     });
 };
 
-const save = () => {
+const save = async () => {
     updateForm();
     try {
-        createFormSchema().parse(form);
+       await  createFormSchema().parseAsync(form);
         saveStaff(form, institutionDepartmentId);
     } catch (error: any) {
         form.setError(error.format());

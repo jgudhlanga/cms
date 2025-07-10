@@ -1,3 +1,6 @@
 # Validation Rules
 
-## Email
+## Email on blur
+## ID Number on blur
+## Passport Number on blur
+## Phone Number on blur

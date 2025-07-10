@@ -40,7 +40,6 @@ class Staff extends Model
         'end_date',
         'status_id',
         'employee_number',
-        'staff_id_number',
         'title_id',
         'gender_id',
         'marital_status_id',

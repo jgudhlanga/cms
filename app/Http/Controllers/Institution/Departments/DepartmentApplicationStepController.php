@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Institution\Departments;
 
 use App\DTO\Institution\DepartmentApplicationStepDto;
 use App\DTO\Institution\DepartmentApplicationStepUpdateDto;
+use App\DTO\Institution\WorkflowStepActionMetadataDto;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Institution\DepartmentApplicationStepRequest;
 use App\Http\Requests\Institution\DepartmentApplicationStepUpdateRequest;
+use App\Http\Requests\Institution\WorkflowStepActionMetadataRequest;
 use App\Http\Resources\Institution\DepartmentApplicationStepResource;
 use App\Http\Resources\Institution\DepartmentLevelResource;
 use App\Http\Resources\Institution\InstitutionDepartmentResource;
@@ -32,10 +34,16 @@ class DepartmentApplicationStepController extends Controller
         );
     }
 
-    public function syncDepartmentApplicationSteps(InstitutionDepartment $institutionDepartment, DepartmentApplicationStepRequest $request): void
+    public function syncApplicationSteps(InstitutionDepartment $institutionDepartment, DepartmentApplicationStepRequest $request): void
     {
         $this->authorize('createDepartmentMetaData');
         $this->repository->syncDepartmentApplicationSteps($institutionDepartment, DepartmentApplicationStepDto::fromDepartmentApplicationStepRequest($request));
+    }
+
+    public function syncWorkflowStepActionMetadata(InstitutionDepartment $institutionDepartment, WorkflowStepActionMetadataRequest $request): void
+    {
+        $this->authorize('createDepartmentMetaData');
+        $this->repository->syncWorkflowStepActionMetadata(WorkflowStepActionMetadataDto::fromWorkflowStepActionMetadataRequest($request));
     }
 
     public function show(DepartmentApplicationStep $departmentApplicationStep)

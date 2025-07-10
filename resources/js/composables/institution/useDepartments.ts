@@ -1,11 +1,12 @@
 import { useDataTables } from '@/composables/core/useDataTables';
-import { useDropdowns } from '@/composables/core/useDropdowns';
 import { useSharedFormSchema } from '@/composables/core/useSharedFormSchema';
-import { forbiddenAlert, openModal } from '@/lib/alerts';
+import { errorAlert, forbiddenAlert, openModal } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
 import { buildFormOptions } from '@/lib/forms';
 import { getIdParams } from '@/lib/utils';
+import HttpService from '@/services/http.service';
 import { Auth } from '@/types';
+import { ApiFilterResponse } from '@/types/data-pagination';
 import { Department } from '@/types/institution';
 import type { Link } from '@/types/ui';
 import { InertiaForm, usePage } from '@inertiajs/vue3';
@@ -13,15 +14,21 @@ import { trans, trans_choice } from 'laravel-vue-i18n';
 import { ref } from 'vue';
 
 export const useDepartments = () => {
-    const { moreActionButton, onDelete, onForceDelete, onRestore } = useDataTables();
-    const isLoading = ref(false);
-    const departments = ref<Department[]>([]);
+    const { moreActionButton, onDelete, onForceDelete, onRestore, checkStatusIcon } = useDataTables();
     const createDepartmentColumns = () => {
         const { props } = usePage();
         const { can } = props?.auth as Auth;
         return [
             { header: trans_choice('#', 1), accessorKey: 'attributes.position', meta: { align: 'left' } },
             { header: trans_choice('trans.name', 1), accessorKey: 'attributes.name' },
+            {
+                header: trans('trans.is_academic'),
+                accessorKey: 'isAcademic',
+                meta: { align: 'center' },
+                cell: ({ row }: { row: { original: Department } }) => {
+                    return checkStatusIcon(row.original?.attributes?.isAcademic);
+                },
+            },
             { header: trans_choice('trans.description', 1), accessorKey: 'attributes.description' },
             {
                 header: trans_choice('trans.action', 2),
@@ -80,12 +87,24 @@ export const useDepartments = () => {
         openModal({ name: APP_MODULE_KEYS.departments, edit: department });
     };
 
-    const listDepartments = async (search?: string) => {
-        const { data, fetchData } = useDropdowns();
-        isLoading.value = true;
-        await fetchData({ url: 'api/v1/departments?page_size=100', search, transChoiceKey: 'trans.department' });
-        isLoading.value = false;
-        departments.value = data.value;
+    /*    const listDepartments = async (search?: string) => {
+            const { data, fetchData } = useDropdowns();
+            isLoading.value = true;
+            await fetchData({ url: 'api/v1/departments?page_size=all', search, transChoiceKey: 'trans.department' });
+            isLoading.value = false;
+            departments.value = data.value;
+        };*/
+    const isLoading = ref(false);
+    const departments = ref<ApiFilterResponse | null>(null);
+    const listDepartments = async (url: string) => {
+        try {
+            isLoading.value = true;
+            departments.value = await HttpService.get(url);
+        } catch {
+            errorAlert(trans('trans.load_data_failure', { data: trans_choice('trans.department', 2) }));
+        } finally {
+            isLoading.value = false;
+        }
     };
 
     return {

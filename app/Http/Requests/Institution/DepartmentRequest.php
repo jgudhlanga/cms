@@ -20,6 +20,7 @@ class DepartmentRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255', 'unique:departments,name,' . $this->department?->id],
+            'is_academic' => ['required', 'boolean'],
         ];
     }
 }

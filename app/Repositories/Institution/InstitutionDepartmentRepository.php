@@ -3,7 +3,7 @@
 namespace App\Repositories\Institution;
 
 use App\DTO\Institution\InstitutionDepartmentDto;
-use App\Http\Filters\Institution\DepartmentFilter;
+use App\Http\Filters\Institution\InstitutionDepartmentFilter;
 use App\Models\Institution\InstitutionDepartment;
 use App\Repositories\Base\BaseRepository;
 use App\Repositories\Institution\interface\IInstitutionDepartmentRepository;
@@ -16,7 +16,7 @@ class InstitutionDepartmentRepository extends BaseRepository implements IInstitu
     }
 
 
-    public function allFilter($columns = ['*'], DepartmentFilter $filters = null)
+    public function allFilter($columns = ['*'], InstitutionDepartmentFilter $filters = null)
     {
         return $this->institutionDepartment
             ->select($columns)
@@ -28,23 +28,43 @@ class InstitutionDepartmentRepository extends BaseRepository implements IInstitu
 
     public function syncInstitutionDepartment(InstitutionDepartmentDto $dto): void
     {
-        // Get existing department_ids linked to this institution
-        $existing = $this->institutionDepartment->pluck('department_id')->toArray();
-
         $newIds = $dto->department_ids;
 
-        // Determine which IDs to add and which to remove
-        $toAdd = array_diff($newIds, $existing);
+        // Fetch all current and soft-deleted department links
+        $allInstitutionDepartments = $this->institutionDepartment->withTrashed()
+            ->whereHas('department', function ($query) use ($dto) {
+                $query->where('is_academic', $dto->is_academic);
+            })->get();
+        // Build a map of department_id => model
+        $allByDepartmentId = $allInstitutionDepartments->keyBy('department_id');
+
+        // Extract current department IDs (including soft-deleted)
+        $existing = $allByDepartmentId->keys()->toArray();
+
         $toRemove = array_diff($existing, $newIds);
 
-        // Delete removed departments
+        // Remove unlinked departments (soft delete)
         if (!empty($toRemove)) {
-            $this->institutionDepartment->whereIn('department_id', $toRemove)->delete();
+            $this->institutionDepartment
+                ->whereIn('department_id', $toRemove)
+                ->delete();
         }
 
-        // Add new departments
-        foreach ($toAdd as $departmentId) {
-            $this->institutionDepartment->create(['department_id' => $departmentId]);
+        // Handle additions/restorations
+        foreach ($newIds as $departmentId) {
+            $existingLink = $allByDepartmentId->get($departmentId);
+
+            if ($existingLink) {
+                if ($existingLink->trashed()) {
+                    $existingLink->restore();
+                }
+                // Already active, nothing to do
+            } else {
+                $this->institutionDepartment->create([
+                    'department_id' => $departmentId,
+                ]);
+            }
         }
     }
+
 }
