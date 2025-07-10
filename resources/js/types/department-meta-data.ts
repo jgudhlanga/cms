@@ -124,14 +124,26 @@ export type DepartmentApplicationStep = {
         updatedAt?: string;
         deletedAt?: string | null;
     };
+    relationships?: {
+        metadata?: DepartmentWorkflowStepMetadata,
+    }
 };
-
+export type DepartmentWorkflowStepMetadata = {
+    type: string;
+    id: string;
+    roleIds: Array<string | undefined | null>;
+    staffIds: Array<string | undefined | null>;
+    workflowActionIds: Array<string | undefined | null>;
+    roles?:  Array<string | undefined | null>;
+    staff?:  Array<string | undefined | null>;
+    actions?:  Array<string | undefined | null>;
+}
 export type DepartmentApplicationStepParams = {
     workflow_step_ids: Array<string | undefined | null> | null;
 };
 export type DepartmentApplicationStepActionParams = {
-    department_application_step_id: string | number;
-    workflow_step_action_ids: Array<string | undefined | null> | null;
-    role_ids: Array<string | undefined | null> | null;
-    staff_ids: Array<string | undefined | null> | null;
+    department_application_step_id: string | number | null;
+    workflow_action_ids: Array<string | undefined | null>;
+    role_ids: Array<string | undefined | null>;
+    staff_ids: Array<string | undefined | null>;
 };

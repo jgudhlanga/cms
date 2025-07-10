@@ -2,7 +2,7 @@
 import { BaseCheckbox } from '@/components/core/form';
 import BaseModal from '@/components/core/modal/BaseModal.vue';
 import SpinnerComponent from '@/components/core/util/SpinnerComponent.vue';
-import { useDepartmentApplications } from '@/composables/institution/useDepartmentApplications';
+import { useDepartmentWorkflows } from '@/composables/institution/useDepartmentWorkflows';
 import { useWorkflowSteps } from '@/composables/shared/useWorkflowSteps';
 import { SizeVariant } from '@/enums/sizes';
 import { getModalEdit } from '@/lib/alerts';
@@ -25,7 +25,7 @@ const form = useForm<DepartmentApplicationStepParams>({
 });
 
 const { isLoading, workflowSteps, listWorkflowSteps } = useWorkflowSteps();
-const { syncDepartmentApplicationSteps } = useDepartmentApplications();
+const { syncDepartmentApplicationSteps } = useDepartmentWorkflows();
 const selectAll = () => {
     if (allSelected.value) {
         form.workflow_step_ids = [];

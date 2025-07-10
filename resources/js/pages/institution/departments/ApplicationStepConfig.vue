@@ -4,7 +4,7 @@ import { GenericButton } from '@/components/core/button';
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import StepMetadata from '@/components/core/timelines/StepMetadata.vue';
 import TimelineTwo from '@/components/core/timelines/TimelineTwo.vue';
-import { useDepartmentApplications } from '@/composables/institution/useDepartmentApplications';
+import { useDepartmentWorkflows } from '@/composables/institution/useDepartmentWorkflows';
 import { ColorVariant } from '@/enums/colors';
 import { IconName } from '@/enums/icons';
 import { getIdParams } from '@/lib/utils';
@@ -28,7 +28,7 @@ interface Props {
 
 const props = defineProps<Props>();
 const { institutionDepartment, departmentApplicationSteps } = props;
-const { openDepartmentApplicationStepsModal, openDepartmentWorkflowActionModal } = useDepartmentApplications();
+const { openDepartmentApplicationStepsModal, openDepartmentWorkflowActionModal } = useDepartmentWorkflows();
 
 const steps = computed(() => {
     return departmentApplicationSteps?.map(

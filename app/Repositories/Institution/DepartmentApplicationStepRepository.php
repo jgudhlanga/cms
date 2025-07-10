@@ -4,6 +4,7 @@ namespace App\Repositories\Institution;
 
 use App\DTO\Institution\DepartmentApplicationStepDto;
 use App\DTO\Institution\DepartmentApplicationStepUpdateDto;
+use App\DTO\Institution\WorkflowStepActionMetadataDto;
 use App\Models\Institution\DepartmentApplicationStep;
 use App\Models\Institution\InstitutionDepartment;
 use App\Models\Shared\WorkflowStep;
@@ -83,5 +84,27 @@ class DepartmentApplicationStepRepository extends BaseRepository implements IDep
             $departmentApplicationStep->departmentApplicationStepLevels()->create(['department_course_id' => $departmentApplicationStep->id, 'department_level_id' => $departmentLevelId]);
         }
         return $departmentApplicationStep;
+    }
+
+    public function syncWorkflowStepActionMetadata(WorkflowStepActionMetadataDto $dto): void
+    {
+        $departmentApplicationStep = $this->departmentApplicationStep->find($dto->department_application_step_id);
+        // Get or create the metadata record for this department step
+        $metadata = $departmentApplicationStep->metadata()->first();
+        if (!$metadata) {
+            // Create new metadata
+            $departmentApplicationStep->metadata()->create([
+                'role_ids' => $dto->role_ids ?? [],
+                'staff_ids' => $dto->staff_ids ?? [],
+                'workflow_action_ids' => $dto->workflow_action_ids ?? [],
+            ]);
+        } else {
+            // Update existing metadata
+            $metadata->update([
+                'role_ids' => $dto->role_ids ?? [],
+                'staff_ids' => $dto->staff_ids ?? [],
+                'workflow_action_ids' => $dto->workflow_action_ids ?? [],
+            ]);
+        }
     }
 }

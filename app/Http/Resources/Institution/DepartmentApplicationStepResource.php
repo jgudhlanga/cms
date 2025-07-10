@@ -23,6 +23,9 @@ class DepartmentApplicationStepResource extends JsonResource
                 'updatedAt' => $this->resource->updated_at,
                 'deletedAt' => $this->resource->deleted_at,
             ],
+            "relationships" => [
+                'metadata' => DepartmentWorkflowStepMetadataResource::make($this->metadata->first()),
+            ],
         ];
     }
 }

@@ -27,7 +27,7 @@ class DepartmentApplicationStep extends Model
         return $this->belongsTo(WorkflowStep::class, 'workflow_step_id');
     }
 
-    public function addresses(): MorphMany
+    public function metadata(): MorphMany
     {
         return $this->morphMany(DepartmentWorkflowStep::class, 'steppable')->withTrashed();
     }
