@@ -32,7 +32,7 @@ defineProps<Props>();
             <!-- Card -->
             <div class="w-[calc(100%-4rem)] border border-slate-200 bg-white p-4 shadow md:w-[calc(50%-2.5rem)] rounded-2xl">
                 <div class="mb-1 flex items-center justify-between space-x-2">
-                    <div class="font-bold uppercase">{{ step.title }}</div>
+                    <div class="font-semibold uppercase text-sm">{{ step.title }}</div>
                     <time class="font-caveat text-primary font-medium">{{ step.label }}</time>
                 </div>
                 <div class="text-muted-foreground">{{ step.description }}</div>

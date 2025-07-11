@@ -3,7 +3,7 @@ import BaseCard from '@/components/core/card/BaseCard.vue';
 import DepartmentCourseComboSelect from '@/components/core/form/combobox/DepartmentCourseComboSelect.vue';
 import DepartmentLevelComboSelect from '@/components/core/form/combobox/DepartmentLevelComboSelect.vue';
 import InstitutionDepartmentComboSelect from '@/components/core/form/combobox/InstitutionDepartmentComboSelect.vue';
-import SpinnerComponent from '@/components/core/util/SpinnerComponent.vue';
+import SpinnerComponent from '@/components/core/loader/SpinnerComponent.vue';
 import { useUtils } from '@/composables/core/useUtils';
 import { useDepartmentLevels } from '@/composables/institution/useDepartmentLevels';
 import LevelRequirements from '@/components/students/update/LevelRequirements.vue';

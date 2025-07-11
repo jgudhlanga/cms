@@ -203,7 +203,7 @@ return [
     "announcement" => "Announcement|Announcements",
     "application" => "Application|Applications",
     "department_meta_data" => "Department meta data",
-    "show_on_current_application_period" => "Show on current application period",
+    "show_on_current_application_period" => "Show on current intake period",
     "position" => "Position|Positions",
     "order" => "Order",
     "other" => "Other",
@@ -349,4 +349,7 @@ return [
     "passport_number_already_taken" => "Passport number is already taken",
     "enter_valid_email_address" => "Please enter a valid email address",
     "is_academic" => "Is academic",
+    "basic_info" => "Basic info",
+    "portal_info" => "Portal info",
+    "loading_data" => "loading data...",
 ];

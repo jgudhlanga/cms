@@ -10,7 +10,4 @@
     @component('mail::button', ['url' => url('/track?ref=' . $trackingNumber)])
         Track Application
     @endcomponent
-
-    Thanks,<br>
-    {{ config('app.name') }}
 @endcomponent

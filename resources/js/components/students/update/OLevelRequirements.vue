@@ -9,7 +9,7 @@ import { onMounted } from 'vue';
 import { RadioGroupOption } from '@/types/forms';
 import { useGrades } from '@/composables/institution/useGrades';
 import { Grade, Subject } from '@/types/institution';
-import SpinnerComponent from '@/components/core/util/SpinnerComponent.vue';
+import SpinnerComponent from '@/components/core/loader/SpinnerComponent.vue';
 
 interface Props {
     isViewOnly?: boolean;

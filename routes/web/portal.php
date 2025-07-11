@@ -16,8 +16,6 @@ Route::prefix('portal')->group(function () {
         Route::get('dashboard', [PortalController::class, 'dashboard'])->name('portal.dashboard');
         Route::get('personal-details', [PortalController::class, 'personal'])->name('portal.personal-details');
         Route::get('programs', [PortalController::class, 'programs'])->name('portal.programs');
-        Route::get('sponsors', [PortalController::class, 'sponsors'])->name('portal.sponsors');
-        Route::get('contacts', [PortalController::class, 'contacts'])->name('portal.contacts');
         Route::get('financial-record', [PortalController::class, 'financialRecord'])->name('portal.financial-record');
         Route::get('academic-record', [PortalController::class, 'academicRecord'])->name('portal.academic-record');
         # =============================== META ====================================

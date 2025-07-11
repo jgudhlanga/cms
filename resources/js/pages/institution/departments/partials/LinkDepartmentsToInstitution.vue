@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { BaseCheckbox } from '@/components/core/form';
 import BaseModal from '@/components/core/modal/BaseModal.vue';
-import SpinnerComponent from '@/components/core/util/SpinnerComponent.vue';
+import SpinnerComponent from '@/components/core/loader/SpinnerComponent.vue';
 import { useUtils } from '@/composables/core/useUtils';
 import { useDepartments } from '@/composables/institution/useDepartments';
 import { useInstitutionDepartments } from '@/composables/institution/useInstitutionDepartments';
@@ -16,7 +16,7 @@ const allSelected = ref(false);
 const params = route().params;
 const { isItTrue } = useUtils();
 const form = useForm<InstitutionDepartmentParams>({
-    is_academic: isItTrue(params?.academic),
+    is_academic: isItTrue(params?.is_academic),
     department_ids: [],
 });
 const { isLoading, departments, listDepartments } = useDepartments();
@@ -37,7 +37,7 @@ const { modals } = useModalStore();
 
 watch(modals!, async () => {
     form.department_ids = getModalEdit(APP_MODULE_KEYS.institution_departments);
-    await listDepartments(route('v1.departments.index', { academic: params?.academic, page_size: 'all' }));
+    await listDepartments(route('v1.departments.index', { is_academic: params?.is_academic, page_size: 'all' }));
     form.defaults();
 });
 </script>

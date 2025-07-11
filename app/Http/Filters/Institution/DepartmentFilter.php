@@ -13,9 +13,9 @@ class DepartmentFilter extends QueryFilter
         'updatedAt' => 'updated_at'
     ];
 
-    protected array $searchable = ['name', 'academic'];
+    protected array $searchable = ['name', 'is_academic'];
 
-    public function academic($value): Builder
+    public function is_academic($value): Builder
     {
         return $this->builder->where('is_academic', $value);
     }

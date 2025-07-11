@@ -3,7 +3,7 @@ import BaseCard from '@/components/core/card/BaseCard.vue';
 import { BaseCheckbox } from '@/components/core/form';
 import StaffSelect from '@/components/core/form/select/StaffSelect.vue';
 import BaseModal from '@/components/core/modal/BaseModal.vue';
-import SpinnerComponent from '@/components/core/util/SpinnerComponent.vue';
+import SpinnerComponent from '@/components/core/loader/SpinnerComponent.vue';
 import { useRoles } from '@/composables/acl/useRoles';
 import { useDepartmentWorkflows } from '@/composables/institution/useDepartmentWorkflows';
 import { useWorkflowStepActions } from '@/composables/shared/useWorkflowStepActions';

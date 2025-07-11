@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { BaseCheckbox } from '@/components/core/form';
 import BaseModal from '@/components/core/modal/BaseModal.vue';
-import SpinnerComponent from '@/components/core/util/SpinnerComponent.vue';
+import SpinnerComponent from '@/components/core/loader/SpinnerComponent.vue';
 import { getModalEdit } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
 import { useModalStore } from '@/store/core/useModalStore';
