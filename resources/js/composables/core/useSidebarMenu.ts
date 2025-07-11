@@ -83,7 +83,7 @@ export function useSidebarMenu() {
             icon: icons[IconName.users],
             show: hasAbility('view:users'),
         },
-        /** ================ PORTAL STRAT ======================*/
+        /** ================ PORTAL START ======================*/
         {
             transChoiceKey: 'trans.dashboard',
             icon: icons[IconName.dashboard],
@@ -101,18 +101,6 @@ export function useSidebarMenu() {
             icon: icons[IconName.graduation_cape],
             url: route('portal.programs'),
             show: hasAbility('manageOwnStudentProgramDetails:students'),
-        },
-        {
-            transChoiceKey: 'trans.sponsor',
-            icon: icons[IconName.wallet_cards],
-            url: route('portal.sponsors'),
-            show: hasAbility('manageOwnStudentSponsorDetails:students'),
-        },
-        {
-            transChoiceKey: 'trans.contact',
-            icon: icons[IconName.contact],
-            url: route('portal.contacts'),
-            show: hasAbility('manageOwnStudentContactDetails:students'),
         },
         {
             transKey: 'trans.financial_record',

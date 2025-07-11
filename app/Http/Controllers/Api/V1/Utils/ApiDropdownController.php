@@ -11,6 +11,6 @@ class ApiDropdownController extends Controller implements HasMiddleware
 
 	public static function middleware(): array
     {
-        return [new Middleware('auth:sanctum', except: ['index', 'withProductCoverageRanges'])];
+        return [new Middleware('auth:sanctum', except: ['index'])];
     }
 }

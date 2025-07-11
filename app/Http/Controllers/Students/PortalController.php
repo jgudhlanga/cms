@@ -127,22 +127,6 @@ class PortalController extends Controller
         return Inertia::render('portal/student/Programs', compact('programs'));
     }
 
-    public function contacts()
-    {
-        $student = $this->getStudent(request());
-        $addresses = AddressResource::collection($student->addresses);
-        $contacts = ContactResource::collection($student->contacts);
-        $this->authorize('manageStudentContacts');
-        return Inertia::render('portal/student/Contacts', compact('addresses', 'contacts'));
-    }
-
-    public function sponsors()
-    {
-        $this->authorize('manageStudentSponsors');
-        $student = $this->getStudent(request());
-        $sponsors = SponsorResource::collection($student->sponsors);
-        return Inertia::render('portal/student/Sponsors', compact('sponsors'));
-    }
 
     public function financialRecord()
     {

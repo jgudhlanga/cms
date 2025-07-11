@@ -349,4 +349,7 @@ return [
     "passport_number_already_taken" => "Passport number is already taken",
     "enter_valid_email_address" => "Please enter a valid email address",
     "is_academic" => "Is academic",
+    "basic_info" => "Basic info",
+    "portal_info" => "Portal info",
+    "loading_data" => "loading data...",
 ];

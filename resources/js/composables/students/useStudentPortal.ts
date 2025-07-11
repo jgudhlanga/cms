@@ -1,10 +1,19 @@
+import StudentAddresses from '@/components/students/tabs/StudentAddresses.vue';
+import StudentBasicInfo from '@/components/students/tabs/StudentBasicInfo.vue';
+import StudentContacts from '@/components/students/tabs/StudentContacts.vue';
+import StudentNextOfKin from '@/components/students/tabs/StudentNextOfKin.vue';
+import StudentSponsors from '@/components/students/tabs/StudentSponsors.vue';
 import { useSharedFormSchema } from '@/composables/core/useSharedFormSchema';
+import { errorAlert } from '@/lib/alerts';
 import { buildFormOptions, mergeValidationSchema } from '@/lib/forms';
 import { idNumberUniqueSchema, passportNumberUniqueSchema } from '@/lib/uniqueValidations';
+import HttpService from '@/services/http.service';
 import { useCreateApplicationFormStore } from '@/store/portal/useCreateApplicationFormStore';
 import { Step } from '@/types/forms';
+import { CustomTab } from '@/types/utils';
 import { InertiaForm } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
+import { h, ref } from 'vue';
 import { ZodObject } from 'zod';
 
 export function useStudentPortal() {
@@ -62,5 +71,29 @@ export function useStudentPortal() {
             form.setError(error.format());
         }
     };
-    return { steps, applicationFormSchema, saveApplication };
+
+    const studentTabs = (): CustomTab[] => {
+        return [
+            { transLabel: () => trans('trans.basic_info'), value: 'basic_info', component: h(StudentBasicInfo) },
+            { transLabel: () => trans_choice('trans.contact', 2), value: 'contacts', component: h(StudentContacts) },
+            { transLabel: () => trans_choice('trans.address', 2), value: 'addresses', component: h(StudentAddresses) },
+            { transLabel: () => trans_choice('trans.sponsor', 2), value: 'sponsors', component: h(StudentSponsors) },
+            { transLabel: () => trans('trans.next_of_kin'), value: 'next_of_kin', component: h(StudentNextOfKin) },
+        ];
+    };
+
+    const isLoading = ref(false);
+
+    const getStudentData = async (url: string) => {
+        try {
+            isLoading.value = true;
+            return await HttpService.get(url);
+        } catch {
+            errorAlert(trans('trans.load_data_failure', { data: trans('trans.portal_info') }));
+        } finally {
+            isLoading.value = false;
+        }
+    };
+
+    return { steps, applicationFormSchema, saveApplication, studentTabs, getStudentData, isLoading };
 }

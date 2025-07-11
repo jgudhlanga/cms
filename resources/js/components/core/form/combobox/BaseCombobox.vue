@@ -16,7 +16,7 @@ import { Check, ChevronsUpDown, Search } from 'lucide-vue-next';
 import { Label } from '@/components/ui/label';
 import { SelectOption } from '@/types/utils';
 import Empty from '@/components/core/util/Empty.vue';
-import SpinnerComponent from '@/components/core/util/SpinnerComponent.vue';
+import SpinnerComponent from '@/components/core/loader/SpinnerComponent.vue';
 import InputError from '@/components/core/form/InputError.vue';
 import { computed } from 'vue';
 import { trans } from 'laravel-vue-i18n';

@@ -2,10 +2,13 @@
 
 namespace App\Traits;
 
+use App\Models\Users\User;
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 trait HttpUtil
@@ -112,5 +115,10 @@ trait HttpUtil
             DB::rollBack();
             return response()->json([$e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
+    }
+
+    protected function getAuthenticatedUser(): User|Authenticatable|null
+    {
+        return Auth::user();
     }
 }
