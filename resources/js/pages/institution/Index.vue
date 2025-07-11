@@ -21,13 +21,13 @@ const { navigateTo } = useUtils();
             :title="`${$t('trans.non_academic')} ${$tChoice('trans.department', 2)}`"
             :description="$t('trans.non_academic_department_description')"
         />
-        <SettingsButton class="mt-2" :title="$t('trans.manage')" @click="navigateTo(route('institution-departments.index', { academic: 0 }))" />
+        <SettingsButton class="mt-2" :title="$t('trans.manage')" @click="navigateTo(route('institution-departments.index', { is_academic: 0 }))" />
         <HeadingSmall
             :title="`${$t('trans.academic')} ${$tChoice('trans.department', 2)}`"
             :description="$t('trans.academic_department_description')"
             class="mt-6"
         />
-        <SettingsButton class="mt-2" @click="navigateTo(route('institution-departments.index', { academic: 1 }))" :title="$t('trans.manage')" />
+        <SettingsButton class="mt-2" @click="navigateTo(route('institution-departments.index', { is_academic: 1 }))" :title="$t('trans.manage')" />
         <HeadingSmall :title="$t('trans.portal_config')" :description="$t('trans.portal_config_description')" class="mt-6" />
         <SettingsButton class="mt-2" @click="navigateTo(route('portal.setup'))" :title="$t('trans.manage')" />
     </PageContainer>

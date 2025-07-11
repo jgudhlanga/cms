@@ -203,7 +203,7 @@ return [
     "announcement" => "Announcement|Announcements",
     "application" => "Application|Applications",
     "department_meta_data" => "Department meta data",
-    "show_on_current_application_period" => "Show on current application period",
+    "show_on_current_application_period" => "Show on current intake period",
     "position" => "Position|Positions",
     "order" => "Order",
     "other" => "Other",

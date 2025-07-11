@@ -21,6 +21,7 @@ class InstitutionDepartmentRepository extends BaseRepository implements IInstitu
         return $this->institutionDepartment
             ->select($columns)
             ->filter($filters)
+            ->orderBy('created_at')
             ->orderBy('deleted_at')
             ->paginate()
             ->withQueryString();

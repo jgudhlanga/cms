@@ -13,12 +13,26 @@ class InstitutionDepartmentFilter extends QueryFilter
         'updatedAt' => 'updated_at'
     ];
 
-    protected array $joins = ['academic'];
+    protected array $joins = ['is_academic'];
 
-    public function academic($value): Builder
+    public function is_academic($value): Builder
     {
-        return $this->builder->whereHas('department', function ($query) use ($value) {
-            $query->where('is_academic', (int)$value);
+        $search = request('search');
+        if (is_null($search)) {
+            return $this->builder->whereHas('department', function ($query) use ($value) {
+                $query->where('is_academic', (int)$value);
+            });
+        } else {
+            return $this->builder;
+        }
+    }
+
+    public function search($value): void
+    {
+        $isAcademic = request('is_academic');
+        $this->builder->whereHas('department', function ($query) use ($value, $isAcademic) {
+            $query->where('name', 'like', '%' . $value . '%')
+                ->where('is_academic', (int)$isAcademic);
         });
     }
 }

@@ -23,8 +23,10 @@ const breadcrumbs: BreadcrumbItemInterface[] = [{ title: user.attributes?.name }
 <template>
     <Head :title="$tChoice('trans.contact', 2)" />
     <PageContainer :breadcrumbs="breadcrumbs">
-        <Contacts :contacts="contacts" :title="`${$t('trans.my')} ${$tChoice('trans.contact', 2)}`" />
-        <Addresses :addresses="addresses" :title="`${$t('trans.my')} ${$tChoice('trans.address', 2)}`" />
+       <div class="flex flex-col space-y-5">
+           <Contacts :contacts="contacts" :title="`${$t('trans.my')} ${$tChoice('trans.contact', 2)}`" />
+           <Addresses :addresses="addresses" :title="`${$t('trans.my')} ${$tChoice('trans.address', 2)}`" />
+       </div>
         <!--MODALS -->
         <ContactsForm :post-url="route('portal.contacts.store')" />
         <AddressesForm :post-url="route('portal.address.store')" />

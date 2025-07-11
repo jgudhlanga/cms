@@ -14,14 +14,14 @@ interface Props {
 
 const { isLoading, departments, listDepartments } = useInstitutionDepartments();
 onMounted(async () => {
-    await listDepartments();
+    await listDepartments(route('v1.institution-departments.index', { is_academic: 1, page_size: 'all' }));
 });
 const props = defineProps<Props>();
 const options = computed(() => {
-    return departments.value.map(
+    return departments.value?.data?.map(
         (institutionDepartment: InstitutionDepartment) =>
             <SelectOption>{
-                value: Number(institutionDepartment?.attributes?.departmentId),
+                value: Number(institutionDepartment.id),
                 label: institutionDepartment?.attributes?.department,
             },
     );
@@ -29,9 +29,8 @@ const options = computed(() => {
 
 const whenSearch = debounce(async (search: string) => {
     clearFormErrors(props.form, 'department');
-    await listDepartments(search);
+    await listDepartments(route('v1.institution-departments.index', { is_academic: 1, page_size: 'all', search }));
 }, 600);
-
 </script>
 
 <template>

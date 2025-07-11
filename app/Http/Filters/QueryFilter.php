@@ -79,35 +79,24 @@ abstract class QueryFilter
     public function search($value): void
     {
         $trashed = request('trashed');
-        $this->builder
-            ->when($value, function ($query, $value) use ($trashed) {
-                foreach ($this->searchable as $index => $searchable) {
-                    if ($index == 0) {
-                        if ($trashed == '2') {
-                            $query->where(function ($query) use ($searchable, $value) {
-                                $query->onlyTrashed()
-                                    ->where($searchable, 'LIKE', '%' . $value . '%');
-                            });
-                        } else {
-                            $query->where($searchable, 'LIKE', '%' . $value . '%');
-                        }
-                    } else {
-                        if ($trashed == '0') {
-                            $query->orWhere(function ($query) use ($searchable, $value) {
-                                $query->withoutTrashed()
-                                    ->where($searchable, 'LIKE', '%' . $value . '%');
-                            });
-                        } else if ($trashed == '2') {
-                            $query->orWhere(function ($query) use ($searchable, $value) {
-                                $query->onlyTrashed()
-                                    ->where($searchable, 'LIKE', '%' . $value . '%');
-                            });
-                        } else {
-                            $query->orWhere($searchable, 'LIKE', '%' . $value . '%');
-                        }
+
+        $this->builder->when($value, function ($query) use ($value, $trashed) {
+            foreach ($this->searchable as $index => $searchable) {
+                $method = $index === 0 ? 'where' : 'orWhere';
+
+                $query->{$method}(function ($query) use ($searchable, $value, $trashed) {
+                    // Apply trashed filter scope
+                    if ($trashed === '0') {
+                        $query->withoutTrashed();
+                    } elseif ($trashed === '2') {
+                        $query->onlyTrashed();
                     }
-                }
-            });
+
+                    // Add the LIKE condition
+                    $query->where($searchable, 'LIKE', '%' . $value . '%');
+                });
+            }
+        });
     }
 
     /**

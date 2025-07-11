@@ -1,6 +1,2 @@
-# Validation Rules
-
-## Email on blur
-## ID Number on blur
-## Passport Number on blur
-## Phone Number on blur
+# Translation file
+*** Break it into modules

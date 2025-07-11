@@ -25,7 +25,7 @@ interface Props {
 
 defineProps<Props>();
 const params = route().params;
-const departmentsType = Number(params?.academic) == 1 ? 'academic_department' : 'non_academic_department';
+const departmentsType = Number(params?.is_academic) == 1 ? 'academic_department' : 'non_academic_department';
 const breadcrumbs: Array<Link> = [
     {
         transChoiceKey: 'institution',
@@ -43,8 +43,8 @@ const breadcrumbs: Array<Link> = [
             :data="departments.data"
             :trashed-count="trashedCount"
             :filters="filters"
-            :show-archived-filter="true"
-            :search-url="route('institution-departments.index', { academic: params?.academic })"
+            :show-archived-filter="false"
+            :search-url="route('institution-departments.index', { is_academic: params?.is_academic })"
             :pagination="{ ...departments.links, ...departments.meta }"
             :columns="createInstitutionDepartmentColumns()"
         >
