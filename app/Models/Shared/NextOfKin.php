@@ -9,6 +9,7 @@ use App\Traits\Paginatable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -31,6 +32,10 @@ class NextOfKin extends Model
         return $this->morphTo();
     }
 
+    public function relationship(): BelongsTo
+    {
+        return $this->belongsTo(Relationship::class, 'relationship_id');
+    }
     public function contacts(): MorphMany
     {
         return $this->morphMany(Contact::class, 'contactable')->withTrashed();
