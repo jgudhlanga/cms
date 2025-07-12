@@ -11,7 +11,7 @@ const countdown = ref({
 });
 
 let intervalId: any;
-const targetDate = new Date('2025-12-31T23:59:59'); // Change to your launch date
+const targetDate = new Date('2025-08-31T23:59:59');
 
 const updateCountdown = () => {
     const now = new Date()
