@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1\Portal;
 
 use App\Http\Resources\Shared\AddressResource;
 use App\Http\Resources\Shared\ContactResource;
+use App\Http\Resources\Shared\NextOfKinResource;
 use App\Http\Resources\Students\SponsorResource;
 use App\Http\Resources\Students\StudentProgramResource;
 use App\Http\Resources\Students\StudentResource;
@@ -61,6 +62,15 @@ class PortalController
     {
         $student = $this->getStudent();
         return SponsorResource::collection($student->sponsors);
+    }
+
+    /**
+     * @throws AuthenticationException
+     */
+    public function nextOfKin()
+    {
+        $student = $this->getStudent();
+        return NextOfKinResource::collection($student->nextOfKins);
     }
 
     /**

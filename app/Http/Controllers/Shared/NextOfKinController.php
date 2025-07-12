@@ -14,7 +14,6 @@ class NextOfKinController extends Controller
     {
     }
 
-
     public function update(NextOfKinRequest $request, NextOfKin $nextOfKin)
     {
         $this->authorize('update', $nextOfKin);

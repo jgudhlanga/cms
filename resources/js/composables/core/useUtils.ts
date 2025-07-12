@@ -5,7 +5,6 @@ import { router } from '@inertiajs/vue3';
 import { trans } from 'laravel-vue-i18n';
 import moment from 'moment';
 import { h } from 'vue';
-import { ID_TYPES } from '@/lib/constants';
 
 export function useUtils() {
     const renderIcon = (icon: IconName, size: string = '15', color?: ColorVariant) => {
@@ -141,9 +140,6 @@ export function useUtils() {
 
         return raw;
     };
-    const getIDType = (idType: string): string | null => {
-        return ID_TYPES.find((type) => type.value === idType)?.label || null;
-    };
 
     const isNativeCitizen = (idType: string): boolean => {
         return idType.toLowerCase() == 'zimbabwean national id';
@@ -170,7 +166,6 @@ export function useUtils() {
         goBack,
         navigateTo,
         formatZimIdNumber,
-        getIDType,
         isNativeCitizen,
     };
 }
