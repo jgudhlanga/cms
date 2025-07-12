@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import PageContainer from '@/components/core/page/PageContainer.vue';
+import ComingSoon from '@/components/core/util/ComingSoon.vue';
 import { AuthObject } from '@/types/data-pagination';
 import { BreadcrumbItemInterface } from '@/types/ui';
 import { Head } from '@inertiajs/vue3';
@@ -15,5 +16,7 @@ const breadcrumbs: BreadcrumbItemInterface[] = [{ title: user.attributes?.name }
 </script>
 <template>
     <Head :title="$t('trans.financial_record')" />
-    <PageContainer :breadcrumbs="breadcrumbs"> </PageContainer>
+    <PageContainer :breadcrumbs="breadcrumbs">
+        <ComingSoon />
+    </PageContainer>
 </template>

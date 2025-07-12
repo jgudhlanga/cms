@@ -3,6 +3,7 @@ import PageContainer from '@/components/core/page/PageContainer.vue';
 import { AuthObject } from '@/types/data-pagination';
 import { BreadcrumbItemInterface } from '@/types/ui';
 import { Head } from '@inertiajs/vue3';
+import ComingSoon from '@/components/core/util/ComingSoon.vue';
 
 interface Props {
     auth: AuthObject;
@@ -16,5 +17,7 @@ const breadcrumbs: BreadcrumbItemInterface[] = [{ title: user.attributes?.name }
 </script>
 <template>
     <Head :title="$tChoice('trans.dashboard', 1)" />
-    <PageContainer :breadcrumbs="breadcrumbs"> My Dashboard </PageContainer>
+    <PageContainer :breadcrumbs="breadcrumbs">
+        <ComingSoon />
+    </PageContainer>
 </template>
