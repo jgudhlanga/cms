@@ -55,12 +55,12 @@ class NextOfKinRepository extends BaseRepository implements INextOfKinRepository
     }
 
     /**
-     * @param bool $nextOfKin
+     * @param NextOfKin $nextOfKin
      * @return void
      */
     public function updateTheFirstAddressIfAnyAddressFieldsArePresent(NextOfKin $nextOfKin): void
     {
-    // Update the first address if any address fields are present
+        # Update the first address if any address fields are present
         if (request()->address_1 || request()->address_2 || request()->address_3 || request()->address_4) {
             $address = $nextOfKin->addresses()->firstOrCreate([], []); // create if not exists
 
