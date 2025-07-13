@@ -8,7 +8,6 @@ use App\DTO\Shared\NextOfKinDto;
 use App\DTO\Students\CreateApplicationDto;
 use App\DTO\Students\StudentProgramDto;
 use App\Http\Filters\Students\StudentFilter;
-use App\Models\Shared\NextOfKin;
 use App\Models\Students\Student;
 use App\Repositories\Base\BaseRepository;
 use App\Repositories\Shared\interface\IAddressRepository;
@@ -125,39 +124,12 @@ class StudentRepository extends BaseRepository implements IStudentRepository
         $nextOfKinDto = new NextOfKinDto(
             name: $dto->next_of_kin_name,
             relationship_id: $dto->relationship_id,
-
-        );
-        $nextOfKin = $this->nextOfKinRepository->create($student, $nextOfKinDto);
-        //create contact
-        $this->createNextOfKinContact($nextOfKin, $dto);
-        //create address
-        $this->createNextOfKinAddress($nextOfKin, $dto);
-    }
-
-    private function createNextOfKinContact(NextOfKin $nextOfKin, CreateApplicationDto $dto): void
-    {
-        $contactDto = new ContactDto(
-            name: $dto->next_of_kin_name,
             phone_number: $dto->next_of_kin_phone_number,
-            alt_phone_number: null,
-            email_address: null,
-            alt_email_address: null,
-            contact_is_main: 1,
-        );
-        $this->contactRepository->create($nextOfKin, $contactDto);
-    }
-
-    private function createNextOfKinAddress(NextOfKin $nextOfKin, CreateApplicationDto $dto): void
-    {
-        $addressDto = new AddressDto(
             address_1: $dto->next_of_kin_address_1,
             address_2: $dto->next_of_kin_address_2,
             address_3: $dto->next_of_kin_address_3,
             address_4: $dto->next_of_kin_address_4,
-            address_5: null,
-            address_6: null,
-            address_is_main: 1,
         );
-        $this->addressRepository->create($nextOfKin, $addressDto);
+        $nextOfKin = $this->nextOfKinRepository->create($student, $nextOfKinDto);
     }
 }
