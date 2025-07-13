@@ -67,26 +67,46 @@ const save = () => {
 		:form="form"
 	>
 		<template #body>
-			<div class="grid grid-cols-2 gap-3">
+			<div class="grid grid-cols-1 gap-3">
 				<Name
 					v-model="form.name"
-					@input="clearFormErrors(form, 'name')" :error="form.errors.name" />
+					@input="clearFormErrors(form, 'name')"
+                    :error="form.errors.name"
+                    :is-required="true"
+                    :label-uppercase="true"
+                />
 				<PhoneNumber
-					v-model="form.phone_number" @input="clearFormErrors(form, 'phone_number')"
-					:error="form.errors.phone_number" />
+					v-model="form.phone_number"
+                    @input="clearFormErrors(form, 'phone_number')"
+					:error="form.errors.phone_number"
+                    :is-required="true"
+                    :label-uppercase="true"
+                />
 				<AltPhoneNumber
-					v-model="form.alt_phone_number" @input="clearFormErrors(form, 'alt_phone_number')"
-					:error="form.errors.alt_phone_number" />
+					v-model="form.alt_phone_number"
+                    @input="clearFormErrors(form, 'alt_phone_number')"
+					:error="form.errors.alt_phone_number"
+                    :label-uppercase="true"
+                />
 				<EmailAddress
-					v-model="form.email_address" @input="clearFormErrors(form, 'email_address')"
-					:error="form.errors.email_address" />
+					v-model="form.email_address"
+                    @input="clearFormErrors(form, 'email_address')"
+					:error="form.errors.email_address"
+                    :is-required="true"
+                    :label-uppercase="true"
+                />
 				<AltEmailAddress
-					v-model="form.alt_email_address" @input="clearFormErrors(form, 'alt_email_address')"
-					:error="form.errors.alt_email_address" />
+					v-model="form.alt_email_address"
+                    @input="clearFormErrors(form, 'alt_email_address')"
+					:error="form.errors.alt_email_address"
+                    :label-uppercase="true"
+                />
 				<BaseCheckbox
 					input-id="contact_is_main"
 					v-model="form.contact_is_main"
-					:label="$t('trans.main')" />
+					:label="$t('trans.main')"
+                    :label-uppercase="true"
+                />
 			</div>
 		</template>
 	</BaseModal>

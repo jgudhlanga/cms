@@ -208,7 +208,7 @@ return [
     "order" => "Order",
     "other" => "Other",
     "duration" => "Duration",
-    "portal_config" => "Portal configuration",
+    "portal_config" => "Portal Config",
     "portal_config_description" => "Application form workflows, rules and configurations for the portal",
     "first_name" => "First name",
     "middle_name" => "Middle name",
@@ -352,4 +352,6 @@ return [
     "basic_info" => "Basic info",
     "portal_info" => "Portal info",
     "loading_data" => "loading data...",
+    "workflow_config" => "Workflows config",
+    "data" => "Data",
 ];

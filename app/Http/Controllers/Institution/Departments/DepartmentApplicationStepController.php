@@ -23,17 +23,6 @@ class DepartmentApplicationStepController extends Controller
     {
     }
 
-    public function index(InstitutionDepartment $institutionDepartment)
-    {
-        $this->authorize('viewDepartmentMetaData');;
-        $institutionDepartment = InstitutionDepartmentResource::make($institutionDepartment);
-        $steps = $institutionDepartment->applicationSteps()->orderBy('position')->get();
-        $departmentApplicationSteps = DepartmentApplicationStepResource::collection($steps);
-        return Inertia::render('institution/departments/ApplicationStepConfig',
-            compact('institutionDepartment', 'departmentApplicationSteps'),
-        );
-    }
-
     public function syncApplicationSteps(InstitutionDepartment $institutionDepartment, DepartmentApplicationStepRequest $request): void
     {
         $this->authorize('createDepartmentMetaData');

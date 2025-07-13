@@ -10,6 +10,9 @@ import { InstitutionDepartment } from '@/types/institution';
 import type { Link } from '@/types/ui';
 import { Head } from '@inertiajs/vue3';
 import { storeToRefs } from 'pinia';
+import LinkApplicationStepsToDepartment
+    from '@/pages/institution/departments/partials/LinkApplicationStepsToDepartment.vue';
+import StepActions from '@/pages/institution/departments/partials/StepActions.vue';
 
 interface Props {
     department: InstitutionDepartment;
@@ -50,5 +53,7 @@ const { activeTab } = storeToRefs(useDepartmentTabsStore());
         </Tabs>
         <LinkLevelsToDepartment :institution-department-id="department.id?.toString() ?? ''" />
         <LinkCoursesToDepartment :institution-department-id="department.id?.toString() ?? ''" />
+        <LinkApplicationStepsToDepartment :institution-department-id="department.id?.toString() ?? ''" />
+        <StepActions :institution-department-id="department.id?.toString() ?? ''" />
     </PageContainer>
 </template>

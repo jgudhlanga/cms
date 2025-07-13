@@ -52,11 +52,7 @@ const APP_MODULE_KEYS = {
     department_application_steps: 'department_application_steps',
     role_groups: 'role_groups',
     department_workflow_actions: 'department_workflow_actions',
+    next_of_kin: 'next_of_kin',
 };
 
-const ID_TYPES = [
-    { value: 'zimbabwean-national-id-number', label: 'Zimbabwean ID Number', inputId: 'zimbabwean-national-id-number' },
-    { value: 'foreign-passport-number', label: 'Foreign Passport Number', inputId: 'foreign-passport-number' },
-];
-
-export { API_BASE_URL, API_VERSION, APP_MODULE_KEYS, DEFAULT_AVATAR, DEFAULT_IMAGE, ID_TYPES, LOGO, PAGINATION_ITEMS_PER_PAGE, PAGINATION_MAX_LIMIT };
+export { API_BASE_URL, API_VERSION, APP_MODULE_KEYS, DEFAULT_AVATAR, DEFAULT_IMAGE, LOGO, PAGINATION_ITEMS_PER_PAGE, PAGINATION_MAX_LIMIT };

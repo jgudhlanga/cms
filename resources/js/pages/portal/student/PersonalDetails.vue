@@ -2,6 +2,7 @@
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import AddressesForm from '@/components/shared/address/AddressesForm.vue';
 import ContactsForm from '@/components/shared/contacts/ContactsForm.vue';
+import NextOfKinForm from '@/components/shared/nextOfKin/NextOfKinForm.vue';
 import SponsorForm from '@/components/students/sponsors/SponsorForm.vue';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import PageHeaderAvatar from '@/components/users/PageHeaderAvatar.vue';
@@ -42,5 +43,6 @@ const { activeTab } = storeToRefs(useStudentTabsStore());
         <SponsorForm />
         <ContactsForm :post-url="route('portal.contacts.store')" />
         <AddressesForm :post-url="route('portal.address.store')" />
+        <NextOfKinForm :post-url="route('portal.next-of-kins.store')" />
     </PageContainer>
 </template>

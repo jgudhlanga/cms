@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import DataLoadingSpinner from '@/components/core/loader/DataLoadingSpinner.vue';
+import TableLoading from '@/components/core/loader/TableLoading.vue';
 import Addresses from '@/components/shared/address/Addresses.vue';
 import { useStudentPortal } from '@/composables/students/useStudentPortal';
 import { Address } from '@/types/shared';
@@ -13,6 +13,6 @@ onMounted(async () => {
 </script>
 
 <template>
-    <DataLoadingSpinner v-if="isLoading" />
+    <TableLoading v-if="isLoading" />
     <Addresses v-else :addresses="addresses" :title="`${$t('trans.my')} ${$tChoice('trans.address', 2)}`" />
 </template>

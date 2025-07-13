@@ -7,6 +7,7 @@ import { AuthObject } from '@/types/data-pagination';
 import { AcademicRecord } from '@/types/students';
 import { BreadcrumbItemInterface } from '@/types/ui';
 import { Head } from '@inertiajs/vue3';
+import ComingSoon from '@/components/core/util/ComingSoon.vue';
 
 interface Props {
     academicRecord: AcademicRecord[];
@@ -22,13 +23,14 @@ const { createAcademicRecordColumns, onOpenModal, allowed } = useAcademicRecords
 <template>
     <Head :title="$t('trans.academic_record')" />
     <PageContainer :breadcrumbs="breadcrumbs">
-        <DataTable
+        <ComingSoon />
+<!--        <DataTable
             :data="academicRecord"
             :show-archived-filter="false"
             :columns="createAcademicRecordColumns()"
             :on-create="() => onOpenModal()"
             :disable-create="!allowed"
         />
-        <AcademicRecordForm />
+        <AcademicRecordForm />-->
     </PageContainer>
 </template>

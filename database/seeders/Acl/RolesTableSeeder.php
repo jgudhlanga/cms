@@ -63,6 +63,11 @@ class RolesTableSeeder extends Seeder
             PermissionEnum::MANAGE_OWN_STUDENT_CONTACT_DETAILS->value,
             PermissionEnum::MANAGE_OWN_STUDENT_FINANCIAL_DETAILS->value,
             PermissionEnum::MANAGE_OWN_STUDENT_ACADEMIC_DETAILS->value,
+            PermissionEnum::VIEW_NEXT_OF_KINS->value,
+            PermissionEnum::CREATE_NEXT_OF_KINS->value,
+            PermissionEnum::UPDATE_NEXT_OF_KINS->value,
+            PermissionEnum::DELETE_NEXT_OF_KINS->value,
+            PermissionEnum::FORCE_DELETE_NEXT_OF_KINS->value,
         ];
     }
 }

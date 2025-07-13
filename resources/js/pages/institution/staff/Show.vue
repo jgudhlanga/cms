@@ -5,6 +5,7 @@ import { InstitutionDepartment } from '@/types/institution';
 import { Staff } from '@/types/staff';
 import type { Link } from '@/types/ui';
 import { Head } from '@inertiajs/vue3';
+import ComingSoonAnimated from '@/components/core/util/ComingSoonAnimated.vue';
 
 interface Props {
     department: InstitutionDepartment;
@@ -27,5 +28,7 @@ const breadcrumbs: Array<Link> = [
 
 <template>
     <Head :title="`${$t('trans.staff')} ${$tChoice('trans.profile', 1)}`" />
-    <PageContainer :breadcrumbs="breadcrumbs"></PageContainer>
+    <PageContainer :breadcrumbs="breadcrumbs">
+        <ComingSoonAnimated/>
+    </PageContainer>
 </template>

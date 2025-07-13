@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Dashboard;
 
+use App\Enums\Acl\RoleEnum;
 use App\Http\Controllers\Controller;
 use Inertia\Inertia;
 

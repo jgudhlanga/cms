@@ -1,6 +1,6 @@
 import About from '@/pages/institution/departments/partials/view/About.vue';
 import Announcements from '@/pages/institution/departments/partials/view/Announcements.vue';
-import Applications from '@/pages/institution/departments/partials/view/Applications.vue';
+import Workflows from '@/pages/institution/departments/partials/view/Workflows.vue';
 import Calendar from '@/pages/institution/departments/partials/view/Calendar.vue';
 import Courses from '@/pages/institution/departments/partials/view/Courses.vue';
 import Levels from '@/pages/institution/departments/partials/view/Levels.vue';
@@ -29,9 +29,9 @@ export const useInstitution = () => {
                 component: h(Staff, { institutionDepartmentId }),
             },
             {
-                transLabel: () => trans_choice('trans.application', 2),
-                value: 'applications',
-                component: h(Applications, { institutionDepartmentId }),
+                transLabel: () => trans_choice('trans.workflow_config', 2),
+                value: 'workflow_config',
+                component: h(Workflows, { institutionDepartmentId }),
             },
             { transLabel: () => trans_choice('trans.calendar', 2), value: 'calendar', component: Calendar },
             {

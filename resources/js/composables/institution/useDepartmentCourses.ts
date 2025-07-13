@@ -113,6 +113,7 @@ export const useDepartmentCourses = () => {
             isLoading.value = false;
         }
     };
+
     return {
         createDepartmentCourseColumns,
         openDepartmentCoursesModal,
