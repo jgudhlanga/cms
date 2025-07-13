@@ -101,7 +101,7 @@ class StudentRepository extends BaseRepository implements IStudentRepository
             alt_phone_number: $dto->alt_phone_number,
             email_address: $dto->email,
             alt_email_address: null,
-            contact_is_main: true,
+            contact_is_main: 1,
         );
         $this->contactRepository->create($student, $contactDto);
     }
@@ -115,7 +115,7 @@ class StudentRepository extends BaseRepository implements IStudentRepository
             address_4: $dto->address_4,
             address_5: null,
             address_6: null,
-            address_is_main: true,
+            address_is_main: 1,
         );
         $this->addressRepository->create($student, $addressDto);
     }
@@ -142,7 +142,7 @@ class StudentRepository extends BaseRepository implements IStudentRepository
             alt_phone_number: null,
             email_address: null,
             alt_email_address: null,
-            contact_is_main: true,
+            contact_is_main: 1,
         );
         $this->contactRepository->create($nextOfKin, $contactDto);
     }
@@ -156,7 +156,7 @@ class StudentRepository extends BaseRepository implements IStudentRepository
             address_4: $dto->next_of_kin_address_4,
             address_5: null,
             address_6: null,
-            address_is_main: true,
+            address_is_main: 1,
         );
         $this->addressRepository->create($nextOfKin, $addressDto);
     }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Students;
 
 use App\DTO\Shared\AddressDto;
 use App\DTO\Shared\ContactDto;
+use App\DTO\Shared\NextOfKinDto;
 use App\DTO\Students\CreateApplicationDto;
 use App\DTO\Users\UserDto;
 use App\Enums\Acl\RoleEnum;
@@ -12,6 +13,7 @@ use App\Enums\Shared\TenantEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Shared\AddressRequest;
 use App\Http\Requests\Shared\ContactRequest;
+use App\Http\Requests\Shared\NextOfKinRequest;
 use App\Http\Requests\Students\CreateApplicationRequest;
 use App\Http\Requests\Users\UserRequest;
 use App\Http\Resources\Students\AcademicRecordResource;
@@ -19,11 +21,13 @@ use App\Http\Resources\Students\StudentProgramResource;
 use App\Http\Resources\Students\StudentResource;
 use App\Jobs\Students\SendApplicationSubmittedEmail;
 use App\Jobs\Users\SendVerificationEmailJob;
+use App\Models\Shared\NextOfKin;
 use App\Models\Shared\Status;
 use App\Models\Tenants\Tenant;
 use App\Models\Users\User;
 use App\Repositories\Shared\interface\IAddressRepository;
 use App\Repositories\Shared\interface\IContactRepository;
+use App\Repositories\Shared\interface\INextOfKinRepository;
 use App\Repositories\Students\interface\IStudentRepository;
 use App\Repositories\Users\interface\IUserRepository;
 use Illuminate\Http\Request;
@@ -33,10 +37,11 @@ use Inertia\Inertia;
 class PortalController extends Controller
 {
     public function __construct(
-        protected IUserRepository    $userRepository,
-        protected IStudentRepository $studentRepository,
-        protected IContactRepository $contactRepository,
-        protected IAddressRepository $addressRepository,
+        protected IUserRepository      $userRepository,
+        protected IStudentRepository   $studentRepository,
+        protected IContactRepository   $contactRepository,
+        protected IAddressRepository   $addressRepository,
+        protected INextOfKinRepository $nextOfKinRepository,
     )
     {
     }
@@ -90,6 +95,15 @@ class PortalController extends Controller
     {
         $this->authorize('manageStudentPersonalDetails');
         $user = request()->user();
+        $user->first_name = $request->input('first_name', $user->first_name);
+        $user->middle_name = $request->input('middle_name', $user->middle_name);
+        $user->last_name = $request->input('last_name', $user->last_name);
+        // Check if any of the fields are dirty before updating
+        if ($user->isDirty(['first_name', 'middle_name', 'last_name'])) {
+            $user->save();
+            Auth::login($user); // Refresh session with updated user
+        }
+
         $student = $this->studentRepository->create(CreateApplicationDto::fromCreateApplicationRequest($request, $user));
         # send an email with a tracking number
         $name = $user->full_name;
@@ -156,5 +170,43 @@ class PortalController extends Controller
         $student = $this->getStudent(request());
         $this->authorize('manageStudentContacts');
         $this->addressRepository->create($student, AddressDto::fromAddressRequest($request));
+    }
+
+    public function storeNextOfKinDetails(NextOfKinRequest $request)
+    {
+        $student = $this->getStudent(request());
+        $this->authorize('manageStudentContacts');
+        $nextOfKin = $this->nextOfKinRepository->create($student, NextOfKinDto::fromNextOfKinRequest($request));
+        // create contact
+        $this->createNextOfKinContact($nextOfKin, $request);
+        // create address
+        $this->createNextOfKinAddress($nextOfKin, $request);
+    }
+
+    private function createNextOfKinContact(NextOfKin $nextOfKin, NextOfKinRequest $request): void
+    {
+        $contactDto = new ContactDto(
+            name: $request->next_of_kin_name,
+            phone_number: $request->phone_number,
+            alt_phone_number: null,
+            email_address: null,
+            alt_email_address: null,
+            contact_is_main: true,
+        );
+        $this->contactRepository->create($nextOfKin, $contactDto);
+    }
+
+    private function createNextOfKinAddress(NextOfKin $nextOfKin, NextOfKinRequest $request): void
+    {
+        $addressDto = new AddressDto(
+            address_1: $request->address_1,
+            address_2: $request->address_2,
+            address_3: $request->address_3,
+            address_4: $request->address_4,
+            address_5: null,
+            address_6: null,
+            address_is_main:  true,
+        );
+        $this->addressRepository->create($nextOfKin, $addressDto);
     }
 }

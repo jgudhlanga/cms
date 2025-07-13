@@ -13,7 +13,7 @@ interface Props {
 }
 
 defineProps<Props>();
-const ability = hasAbility(['create.next-of-kins', 'update.next-of-kins']);
+const ability = hasAbility(['create:next-of-kins', 'update:next-of-kins']);
 </script>
 
 <template>

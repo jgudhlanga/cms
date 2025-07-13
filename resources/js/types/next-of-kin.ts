@@ -18,7 +18,7 @@ export type NextOfKin = {
    }
 };
 export type NextOfKinParams = {
-    name: string;
+    next_of_kin_name: string;
     relationship: SelectOption | null;
     relationship_id: string | number | null;
     address_1: string | null;

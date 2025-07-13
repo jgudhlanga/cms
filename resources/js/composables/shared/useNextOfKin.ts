@@ -55,7 +55,7 @@ export const useNextOfKin = () => {
     };
 
     const onOpenModal = (nextOfKin?: NextOfKin) => {
-        const allowed = hasAbility(['create.next-of-kins', 'update.next-of-kins']);
+        const allowed = hasAbility(['create:next-of-kins', 'update:next-of-kins']);
         if (!allowed) return forbiddenAlert();
         openModal({ name: APP_MODULE_KEYS.next_of_kin, edit: nextOfKin });
     };
@@ -64,7 +64,7 @@ export const useNextOfKin = () => {
 
     function validateForm(form: any) {
         mergeValidationSchema(schemaFields)(
-            ['nameSchema', 'phoneNumberSchema', 'addressTwoSchema', 'addressThreeSchema'],
+            ['nextOfKinNameSchema', 'phoneNumberSchema', 'addressTwoSchema', 'addressThreeSchema', 'relationshipSchema'],
             schemaFields['addressOneSchema'](),
         ).parse(form);
     }

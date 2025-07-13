@@ -12,7 +12,8 @@ use Illuminate\Support\Facades\Auth;
 
 class NextOfKinRepository extends BaseRepository implements INextOfKinRepository
 {
-    public function __construct(protected NextOfKin $nextOfKin)
+    public function __construct(
+        protected NextOfKin $nextOfKin)
     {
         parent::__construct($this->nextOfKin);
     }
@@ -31,7 +32,18 @@ class NextOfKinRepository extends BaseRepository implements INextOfKinRepository
 
     public function update(NextOfKin $nextOfKin, NextOfKinDto $dto): NextOfKin
     {
-        return tap($nextOfKin)->update($this->getFields($dto));
+        $nextOfKin = tap($nextOfKin)->update($this->getFields($dto));
+        // Update the first contact if phone_number or other contact fields are present
+        if (request()->phone_number) {
+            $contact = $nextOfKin->contacts()->firstOrCreate([], []); // create if not exists
+            $contact->update([
+                'name' => $nextOfKin->name,
+                'phone_number' => request()->phone_number ?? $contact->phone_number,
+            ]);
+        }
+        $this->updateTheFirstAddressIfAnyAddressFieldsArePresent($nextOfKin);
+
+        return $nextOfKin;
     }
 
     private function getFields(NextOfKinDto $dto): array
@@ -40,5 +52,24 @@ class NextOfKinRepository extends BaseRepository implements INextOfKinRepository
             'name' => $dto->name,
             'relationship_id' => $dto->relationship_id,
         ];
+    }
+
+    /**
+     * @param bool $nextOfKin
+     * @return void
+     */
+    public function updateTheFirstAddressIfAnyAddressFieldsArePresent(NextOfKin $nextOfKin): void
+    {
+    // Update the first address if any address fields are present
+        if (request()->address_1 || request()->address_2 || request()->address_3 || request()->address_4) {
+            $address = $nextOfKin->addresses()->firstOrCreate([], []); // create if not exists
+
+            $address->update([
+                'address_1' => request()->address_1 ?? $address->address_1,
+                'address_2' => request()->address_2 ?? $address->address_2,
+                'address_3' => request()->address_3 ?? $address->address_3,
+                'address_4' => request()->address_4 ?? $address->address_4,
+            ]);
+        }
     }
 }

@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 
 /**
  *
@@ -23,9 +24,9 @@ use Spatie\Activitylog\Traits\LogsActivity;
  */
 class NextOfKin extends Model
 {
-   use HasFactory, SoftDeletes, Filterable, BelongsToTenant,Paginatable, LogsActivity;
+    use HasFactory, SoftDeletes, Filterable, BelongsToTenant, Paginatable, LogsActivity;
 
-   protected $fillable = ['name', 'relationship_id', 'kinnable_id', 'kinnable_type'];
+    protected $fillable = ['name', 'relationship_id', 'kinnable_id', 'kinnable_type'];
 
     public function kinnable(): MorphTo
     {
@@ -36,6 +37,7 @@ class NextOfKin extends Model
     {
         return $this->belongsTo(Relationship::class, 'relationship_id');
     }
+
     public function contacts(): MorphMany
     {
         return $this->morphMany(Contact::class, 'contactable')->withTrashed();
@@ -45,12 +47,24 @@ class NextOfKin extends Model
     {
         return $this->morphMany(Address::class, 'addressable')->withTrashed();
     }
-   	public function getActivitylogOptions(): LogOptions
-   	{
-   		return LogOptions::defaults()
-   			->logFillable()
-   			->useLogName('NextOfKin')
-   			->logOnlyDirty()
-   			->dontSubmitEmptyLogs();
-   	}
+
+
+    public function firstContact(): Attribute
+    {
+        return Attribute::get(fn() => $this->contacts()->first());
+    }
+
+    public function firstAddress(): Attribute
+    {
+        return Attribute::get(fn() => $this->addresses()->first());
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logFillable()
+            ->useLogName('NextOfKin')
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs();
+    }
 }

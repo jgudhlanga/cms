@@ -12,11 +12,11 @@ class RedirectStudentMiddleware
     public function handle(Request $request, Closure $next): Response
     {
         $user = $request->user();
-        
         if ($user && $user->hasRole(RoleEnum::STUDENT->name())) {
             if ($user->has_student_profile) {
                 # Let them go anywhere except back to 'portal.application'
-                if ($request->routeIs('portal.application')) {
+                $restrictedRoutes = ['portal.application', 'dashboard'];
+                if ($request->routeIs(...$restrictedRoutes)) {
                     return to_route('portal.dashboard');
                 }
             } else {

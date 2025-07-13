@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Filters\Institution\StaffFilter;
 use App\Http\Resources\Institution\DepartmentCourseResource;
 use App\Http\Resources\Institution\DepartmentLevelResource;
+use App\Http\Resources\Institution\InstitutionDepartmentWithWorkflowStepsResource;
 use App\Http\Resources\Institution\StaffResource;
 use App\Models\Institution\InstitutionDepartment;
 use App\Repositories\Institution\interface\IStaffRepository;
@@ -36,5 +37,10 @@ class DepartmentMetaDataController extends Controller
             'filters' => request()->only(['search', 'trashed']),
             'trashedCount' => $this->staffRepository->allTrashed()->count(),
         ]);
+    }
+
+    public function workflowSteps(InstitutionDepartment $institutionDepartment)
+    {
+        return InstitutionDepartmentWithWorkflowStepsResource::make($institutionDepartment);
     }
 }

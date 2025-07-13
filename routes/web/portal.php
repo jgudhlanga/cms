@@ -21,5 +21,6 @@ Route::prefix('portal')->group(function () {
         # =============================== META ====================================
         Route::post('contacts', [PortalController::class, 'storeContactDetails'])->name('portal.contacts.store');
         Route::post('addresses', [PortalController::class, 'storeAddressDetails'])->name('portal.address.store');
+        Route::post('next-of-kins', [PortalController::class, 'storeNextOfKinDetails'])->name('portal.next-of-kins.store');
     });
 });

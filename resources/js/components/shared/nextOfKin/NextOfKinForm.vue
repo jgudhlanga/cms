@@ -4,6 +4,7 @@ import RelationshipComboSelect from '@/components/core/form/combobox/Relationshi
 import BaseModal from '@/components/core/modal/BaseModal.vue';
 import HeadingSmall from '@/components/core/util/HeadingSmall.vue';
 import { useNextOfKin } from '@/composables/shared/useNextOfKin';
+import { SizeVariant } from '@/enums/sizes';
 import { getModalEdit } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
 import { clearFormErrors } from '@/lib/forms';
@@ -26,7 +27,7 @@ const form = useForm<NextOfKinParams>({
     address_4: '',
     relationship: null,
     relationship_id: null,
-    name: '',
+    next_of_kin_name: '',
     phone_number: '',
 });
 
@@ -36,7 +37,7 @@ const { modals } = useModalStore();
 
 watch(modals!, () => {
     nextOfKin.value = getModalEdit(APP_MODULE_KEYS.next_of_kin);
-    form.name = nextOfKin.value?.attributes?.name ?? '';
+    form.next_of_kin_name = nextOfKin.value?.attributes?.name ?? '';
     form.phone_number = nextOfKin.value?.attributes?.phoneNumber ?? '';
     form.address_1 = nextOfKin.value?.attributes?.address1 ?? '';
     form.address_2 = nextOfKin.value?.attributes?.address2 ?? '';
@@ -51,6 +52,7 @@ watch(modals!, () => {
 });
 
 const save = () => {
+    form.relationship_id = form.relationship?.value;
     if (Number(nextOfKin.value?.id?.toString()) > 0) {
         updateNextOfKin(form, nextOfKin.value);
     } else {
@@ -65,18 +67,19 @@ const save = () => {
         :title="`${nextOfKin ? $t('trans.update') : $t('trans.create')} ${$t('trans.next_of_kin')}`"
         :on-form-action="() => save()"
         :form="form"
+        :size="SizeVariant.lg"
     >
         <template #body>
             <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
                 <BaseInput
-                    input-id="name"
+                    input-id="next_of_kin_name"
                     :label="$tChoice('trans.name', 1)"
-                    v-model="form.name"
+                    v-model="form.next_of_kin_name"
                     placeholder="enter next of kin"
                     :label-uppercase="true"
                     :is-required="true"
-                    @input="clearFormErrors(form, 'name')"
-                    :error="form.errors.name"
+                    @input="clearFormErrors(form, 'next_of_kin_name')"
+                    :error="form.errors.next_of_kin_name"
                 />
                 <BaseInput
                     input-id="phone_number"
