@@ -90,6 +90,7 @@ export type CustomTab = {
     transLabel?: () => string;
     value: string;
     component: Component;
+    show?: boolean;
 };
 export type TimelineStep = {
     title: string;
