@@ -27,7 +27,7 @@ const form = useForm<NextOfKinParams>({
     address_4: '',
     relationship: null,
     relationship_id: null,
-    next_of_kin_name: '',
+    name: '',
     phone_number: '',
 });
 
@@ -37,7 +37,7 @@ const { modals } = useModalStore();
 
 watch(modals!, () => {
     nextOfKin.value = getModalEdit(APP_MODULE_KEYS.next_of_kin);
-    form.next_of_kin_name = nextOfKin.value?.attributes?.name ?? '';
+    form.name = nextOfKin.value?.attributes?.name ?? '';
     form.phone_number = nextOfKin.value?.attributes?.phoneNumber ?? '';
     form.address_1 = nextOfKin.value?.attributes?.address1 ?? '';
     form.address_2 = nextOfKin.value?.attributes?.address2 ?? '';
@@ -72,14 +72,14 @@ const save = () => {
         <template #body>
             <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
                 <BaseInput
-                    input-id="next_of_kin_name"
+                    input-id="name"
                     :label="$tChoice('trans.name', 1)"
-                    v-model="form.next_of_kin_name"
+                    v-model="form.name"
                     placeholder="enter next of kin"
                     :label-uppercase="true"
                     :is-required="true"
-                    @input="clearFormErrors(form, 'next_of_kin_name')"
-                    :error="form.errors.next_of_kin_name"
+                    @input="clearFormErrors(form, 'name')"
+                    :error="form.errors.name"
                 />
                 <BaseInput
                     input-id="phone_number"

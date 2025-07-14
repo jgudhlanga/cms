@@ -7,6 +7,7 @@ use App\DTO\Shared\ContactDto;
 use App\DTO\Shared\NextOfKinDto;
 use App\DTO\Students\CreateApplicationDto;
 use App\DTO\Students\StudentProgramDto;
+use App\DTO\Students\UpdateStudentDto;
 use App\Http\Filters\Students\StudentFilter;
 use App\Models\Students\Student;
 use App\Repositories\Base\BaseRepository;
@@ -32,7 +33,7 @@ class StudentRepository extends BaseRepository implements IStudentRepository
 
     public function create(CreateApplicationDto $dto)
     {
-        $student = $this->student->create($this->getFields($dto))->refresh();
+        $student = $this->student->create($this->createFields($dto))->refresh();
         $this->saveProgram($student, $dto);
         $this->saveContact($student, $dto);
         $this->saveAddress($student, $dto);
@@ -40,9 +41,9 @@ class StudentRepository extends BaseRepository implements IStudentRepository
         return $student->refresh();
     }
 
-    public function update(Student $student, CreateApplicationDto $dto)
+    public function update(Student $student, UpdateStudentDto $dto)
     {
-        return tap($student)->update($this->getFields($dto));
+        return tap($student)->update($this->updateFields($dto));
     }
 
     public function allFilter($columns = ['*'], ?StudentFilter $filters = null)
@@ -56,7 +57,7 @@ class StudentRepository extends BaseRepository implements IStudentRepository
             ->withQueryString();
     }
 
-    private function getFields(CreateApplicationDto $dto): array
+    private function createFields(CreateApplicationDto $dto): array
     {
         return [
             'user_id' => $dto->user_id,
@@ -70,6 +71,26 @@ class StudentRepository extends BaseRepository implements IStudentRepository
             'country_id' => $dto->country_id,
             'study_permit_number' => $dto->study_permit_number,
             'date_of_birth' => Carbon::parse($dto->date_of_birth)->format('Y-m-d'),
+        ];
+    }
+
+    private function updateFields(UpdateStudentDto $dto): array
+    {
+        return [
+            'id_type_id' => $dto->id_type_id,
+            'id_number' => $dto->id_number,
+            'passport_number' => $dto->passport_number,
+            'country_id' => $dto->country_id,
+            'date_of_birth' => Carbon::parse($dto->date_of_birth)->format('Y-m-d'),
+            'marital_status_id' => $dto->marital_status_id,
+            'race_id' => $dto->race_id,
+            'title_id' => $dto->title_id,
+            'gender_id' => $dto->gender_id,
+            'religion_id' => $dto->religion_id,
+            'denomination' => $dto->denomination,
+            'height' => $dto->height,
+            'weight' => $dto->weight,
+            'study_permit_number' => $dto->study_permit_number,
         ];
     }
 
@@ -130,6 +151,6 @@ class StudentRepository extends BaseRepository implements IStudentRepository
             address_3: $dto->next_of_kin_address_3,
             address_4: $dto->next_of_kin_address_4,
         );
-        $nextOfKin = $this->nextOfKinRepository->create($student, $nextOfKinDto);
+        $this->nextOfKinRepository->create($student, $nextOfKinDto);
     }
 }

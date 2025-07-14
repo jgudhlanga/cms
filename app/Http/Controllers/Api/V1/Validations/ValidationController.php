@@ -24,6 +24,7 @@ class ValidationController extends Controller
     {
         $key = $request->query('key');
         $value = $request->query('value');
+        $currentId = $request->query('current_id');
 
         if (!isset($this->validationMap[$key]) || empty($value)) {
             return response()->json([
@@ -33,7 +34,14 @@ class ValidationController extends Controller
 
         [$model, $column] = $this->validationMap[$key];
 
-        $exists = $model::where($column, $value)->exists();
+        $query = $model::where($column, $value);
+
+        if (!empty($currentId)) {
+            $keyName = (new $model)->getKeyName(); // usually 'id'
+            $query->where($keyName, '!=', $currentId);
+        }
+
+        $exists = $query->exists();
 
         return response()->json(['available' => !$exists]);
     }

@@ -3,14 +3,16 @@
 namespace App\Repositories\Students\interface;
 
 use App\DTO\Students\CreateApplicationDto;
+use App\DTO\Students\UpdateStudentDto;
 use App\Http\Filters\Students\StudentFilter;
 use App\Models\Students\Student;
 use App\Repositories\Base\Interface\IBaseRepository;
+
 interface IStudentRepository extends IBaseRepository
 {
     public function create(CreateApplicationDto $dto);
 
-    public function update(Student $student, CreateApplicationDto $dto);
+    public function update(Student $student, UpdateStudentDto $dto);
 
-    public function allFilter($columns = ['*'], ?StudentFilter $filters=null);
+    public function allFilter($columns = ['*'], ?StudentFilter $filters = null);
 }

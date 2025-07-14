@@ -53,6 +53,7 @@ const APP_MODULE_KEYS = {
     role_groups: 'role_groups',
     department_workflow_actions: 'department_workflow_actions',
     next_of_kin: 'next_of_kin',
+    student_personal_details: 'student_personal_details',
 };
 
 export { API_BASE_URL, API_VERSION, APP_MODULE_KEYS, DEFAULT_AVATAR, DEFAULT_IMAGE, LOGO, PAGINATION_ITEMS_PER_PAGE, PAGINATION_MAX_LIMIT };
