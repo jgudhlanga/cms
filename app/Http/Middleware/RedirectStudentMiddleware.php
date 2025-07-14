@@ -15,6 +15,7 @@ class RedirectStudentMiddleware
         if ($user && $user->hasRole(RoleEnum::STUDENT->name())) {
             if ($user->has_student_profile) {
                 # Let them go anywhere except back to 'portal.application'
+
                 $restrictedRoutes = ['portal.application', 'dashboard'];
                 if ($request->routeIs(...$restrictedRoutes)) {
                     return to_route('portal.dashboard');
