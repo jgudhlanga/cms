@@ -40,6 +40,7 @@ class StudentProgram extends Model
         'read_write_acknowledged',
         'application_tracking_number',
         'application_status_id',
+        'program_status_id',
     ];
 
     protected $casts = [
