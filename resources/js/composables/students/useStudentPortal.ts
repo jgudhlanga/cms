@@ -103,19 +103,23 @@ export function useStudentPortal() {
         if (!allowed) return forbiddenAlert();
         openModal({ name: APP_MODULE_KEYS.student_personal_details, edit: student });
     };
-    const updateStudentSchema = (isNativeCitizen: boolean) => {
+    const updateStudentSchema = (isNativeCitizen: boolean, studentId: string) => {
         const personal = ['genderSchema', 'maritalStatusSchema', 'dobSchema', 'idTypeSchema'];
         let updateSchema = null;
         if (isNativeCitizen) {
             updateSchema = mergeValidationSchema(schemaFields)(
                 personal,
-                schemaFields['titleSchema']().merge(idNumberUniqueSchema('api/v1/validations/check?key=student_national_id&value=')),
+                schemaFields['titleSchema']().merge(
+                    idNumberUniqueSchema(`api/v1/validations/check?current_id=${studentId}&key=student_national_id&value=`),
+                ),
             );
         } else {
             personal.push('countrySchema');
             updateSchema = mergeValidationSchema(schemaFields)(
                 personal,
-                schemaFields['titleSchema']().merge(passportNumberUniqueSchema('api/v1/validations/check?key=student_passport_number&value=')),
+                schemaFields['titleSchema']().merge(
+                    passportNumberUniqueSchema(`api/v1/validations/check?current_id=${studentId}&key=student_passport_number&value='`),
+                ),
             );
         }
         return updateSchema;

@@ -1,2 +1,12 @@
 # Translation file
 *** Break it into modules
+
+FAILED VALIDATION VIEW
+public function failedValidation(Validator $validator)
+    {
+        throw new HttpResponseException(response()->json([
+            'message' => 'Validation failed',
+            'errors' => $validator->errors(),
+            'input' => $this->all(),
+        ], 422));
+    }

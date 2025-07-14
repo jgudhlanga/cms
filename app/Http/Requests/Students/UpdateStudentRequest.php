@@ -3,7 +3,9 @@
 namespace App\Http\Requests\Students;
 
 use App\Enums\Shared\IdTypeEnum;
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Validation\Rule;
 
 class UpdateStudentRequest extends FormRequest
@@ -26,12 +28,12 @@ class UpdateStudentRequest extends FormRequest
 
             'id_number' => [
                 'required_if:id_type_id,' . $idType,
-                Rule::unique('applicants', 'id_number')->ignore($studentId),
+                Rule::unique('students', 'id_number')->ignore($studentId),
             ],
 
             'passport_number' => [
                 'required_if:id_type_id,' . $passportType,
-                Rule::unique('applicants', 'passport_number')->ignore($studentId),
+                Rule::unique('students', 'passport_number')->ignore($studentId),
             ],
             'country_id' => ['required_if:id_type_id,' . $passportType, 'nullable', 'exists:countries,id'],
         ];
