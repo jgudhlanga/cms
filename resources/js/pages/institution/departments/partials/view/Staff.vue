@@ -4,10 +4,11 @@ import DataTable from '@/components/core/table/DataTable.vue';
 import { useUtils } from '@/composables/core/useUtils';
 import { useStaff } from '@/composables/institution/useStaff';
 import { hasAbility } from '@/lib/permissions';
+import { InstitutionDepartment } from '@/types/institution';
 import { computed, onMounted } from 'vue';
 
 interface Props {
-    institutionDepartmentId: string;
+    department: InstitutionDepartment;
 }
 
 const props = defineProps<Props>();
@@ -16,8 +17,9 @@ const { createStaffColumns, departmentStaff, loadDepartmentStaff, isLoading } = 
 const data = computed(() => departmentStaff.value?.data ?? []);
 const trashedCount = computed(() => departmentStaff.value?.trashedCount ?? 0);
 const filters = computed(() => departmentStaff.value?.filters ?? { search: '', trashed: '0' });
+const institutionDepartmentId = props.department.id?.toString() ?? '';
 onMounted(() => {
-    loadDepartmentStaff(route('v1.department-metadata.staff', props.institutionDepartmentId));
+    loadDepartmentStaff(route('v1.department-metadata.staff', institutionDepartmentId));
 });
 const allowed = hasAbility('create:department-metadata');
 </script>

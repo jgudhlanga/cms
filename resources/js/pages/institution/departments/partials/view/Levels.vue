@@ -7,9 +7,10 @@ import { IconName } from '@/lib/icons';
 import { hasAbility } from '@/lib/permissions';
 import { computed, onMounted } from 'vue';
 import TableLoading from '@/components/core/loader/TableLoading.vue';
+import { InstitutionDepartment } from '@/types/institution';
 
 interface Props {
-    institutionDepartmentId: string;
+    department: InstitutionDepartment;
 }
 
 const props = defineProps<Props>();
@@ -20,7 +21,7 @@ const departmentLevelsIds = computed(() => departmentLevelsMetadata.value?.depar
 const departmentLevels = computed(() => departmentLevelsMetadata.value?.levels ?? []);
 
 onMounted(() => {
-    loadDepartmentLevelsMetadata(props.institutionDepartmentId ?? '');
+    loadDepartmentLevelsMetadata(props.department?.id?.toString() ?? '');
 })
 </script>
 

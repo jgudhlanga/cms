@@ -39,7 +39,7 @@ const { activeTab } = storeToRefs(useDepartmentTabsStore());
         <Tabs :default-value="activeTab" v-model="activeTab">
             <TabsList class="w-full">
                 <TabsTrigger
-                    v-for="tab in departmentTabs(department.id?.toString() ?? '')"
+                    v-for="tab in departmentTabs(department)"
                     :key="'tab_' + tab.value"
                     :value="tab.value"
                     class="text-xs font-light uppercase"
@@ -47,7 +47,7 @@ const { activeTab } = storeToRefs(useDepartmentTabsStore());
                     {{ tab?.transLabel!() }}
                 </TabsTrigger>
             </TabsList>
-            <TabsContent v-for="tab in departmentTabs(department.id?.toString() ?? '')" :value="tab.value" :key="'content_' + tab.value" class="py-4">
+            <TabsContent v-for="tab in departmentTabs(department)" :value="tab.value" :key="'content_' + tab.value" class="py-4">
                 <component :is="tab.component" />
             </TabsContent>
         </Tabs>

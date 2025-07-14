@@ -7,9 +7,10 @@ import { ColorVariant } from '@/enums/colors';
 import { IconName } from '@/lib/icons';
 import { hasAbility } from '@/lib/permissions';
 import { computed, onMounted } from 'vue';
+import { InstitutionDepartment } from '@/types/institution';
 
 interface Props {
-    institutionDepartmentId: string;
+    department: InstitutionDepartment;
 }
 
 const props = defineProps<Props>();
@@ -20,7 +21,7 @@ const departmentCourses = computed(() => departmentCoursesMetaData.value?.course
 const departmentCoursesIds = computed(() => departmentCoursesMetaData.value?.departmentCoursesIds ?? []);
 
 onMounted(() => {
-    loadDepartmentCoursesMetaData(props.institutionDepartmentId ?? '');
+    loadDepartmentCoursesMetaData(props.department?.id?.toString() ?? '');
 });
 
 const allowed = hasAbility('create:department-metadata');

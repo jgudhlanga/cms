@@ -14,6 +14,7 @@ import { createApp, h } from 'vue';
 import { createVfm } from 'vue-final-modal';
 import 'vue-final-modal/style.css';
 import Vue3Toastify from 'vue3-toastify';
+import { MotionPlugin } from '@vueuse/motion'
 import 'vue3-toastify/dist/index.css';
 import { ZiggyVue } from '../../vendor/tightenco/ziggy';
 
@@ -58,6 +59,7 @@ createInertiaApp({
                 },
             })
             .use(vfm)
+            .use(MotionPlugin)
             .use(Vue3Toastify);
         app.mount(el);
     },
