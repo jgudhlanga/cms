@@ -3,6 +3,7 @@ import { InstitutionDepartment } from '@/types/institution';
 import { SelectOption } from '@/types/utils';
 
 export type Student = {
+    id?: string | number;
     userId: string | number;
     titleId?: string | number;
     title?: string;
@@ -161,3 +162,26 @@ export type AcademicRecordParams = {
     exam_center?: string;
     exam_results?: string;
 };
+
+export type StudentPersonalDetailParams = {
+    id_type_id: string | number | null;
+    idType: SelectOption | null;
+    id_number?: string | null;
+    passport_number?: string | null;
+    country?: SelectOption | null;
+    country_id: string | number | null;
+    date_of_birth: string | null;
+    maritalStatus?: SelectOption | null;
+    marital_status_id: string | number | null;
+    title: SelectOption | null;
+    title_id: string | number | null;
+    gender: SelectOption | null;
+    gender_id: string | number | null;
+    race: SelectOption | null;
+    race_id: string | number | null;
+    religion: SelectOption | null;
+    religion_id: string | number | null;
+    denomination?: string | null;
+    height?: string | null;
+    weight?: string | null;
+}

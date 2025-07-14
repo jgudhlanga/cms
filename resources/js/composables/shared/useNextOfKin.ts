@@ -64,7 +64,7 @@ export const useNextOfKin = () => {
 
     function validateForm(form: any) {
         mergeValidationSchema(schemaFields)(
-            ['nextOfKinNameSchema', 'phoneNumberSchema', 'addressTwoSchema', 'addressThreeSchema', 'relationshipSchema'],
+            ['nameSchema', 'phoneNumberSchema', 'addressTwoSchema', 'addressThreeSchema', 'relationshipSchema'],
             schemaFields['addressOneSchema'](),
         ).parse(form);
     }

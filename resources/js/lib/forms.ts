@@ -25,15 +25,16 @@ const onFormSuccess = (message: string, modalToClose?: string, onSuccessAction?:
     successAlert(message);
     router.visit(window.location.href, { replace: true });
 };
-const onFormError = (message: string, modalToClose?: string) => {
-    if (modalToClose) {
+const onFormError = (message: string) => {
+    /*if (modalToClose) {
         closeModal(modalToClose);
-    }
+    }*/
     errorAlert(message);
 };
 
 const onFormFinish = (form: InertiaForm<any>) => {
-    form.reset();
+    //form.reset();
+    console.log('Form reset:');
     toggleFormLoader(false);
 };
 
@@ -42,7 +43,7 @@ function buildFormOptions(form: InertiaForm<any>, successMessage: string, errorM
         onStart: () => toggleFormLoader(true),
         onFinish: () => onFormFinish(form),
         onSuccess: () => onFormSuccess(successMessage, modalToClose, onSuccessAction),
-        onError: () => onFormError(errorMessage, modalToClose),
+        onError: () => onFormError(errorMessage),
     };
 }
 

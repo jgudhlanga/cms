@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\V1\Shared\GradeController;
 use App\Http\Controllers\Api\V1\Shared\IdTypeController;
 use App\Http\Controllers\Api\V1\Shared\MaritalStatusController;
 use App\Http\Controllers\Api\V1\Shared\ProvinceController;
+use App\Http\Controllers\Api\V1\Shared\RaceController;
 use App\Http\Controllers\Api\V1\Shared\RelationshipController;
 use App\Http\Controllers\Api\V1\Shared\ReligionController;
 use App\Http\Controllers\Api\V1\Shared\SponsorTypeController;
@@ -48,6 +49,8 @@ Route::prefix('v1')->group(function () {
     Route::apiResource('grades', GradeController::class)->names('v1.grades');
     # ==================================== MARITAL STATUSES ======================================================
     Route::apiResource('marital-statuses', MaritalStatusController::class)->names('v1.marital-statuses');
+    # ==================================== RACES ======================================================
+    Route::apiResource('races', RaceController::class)->names('v1.races');
     # ==================================== RELATIONSHIPS ======================================================
     Route::apiResource('relationships', RelationshipController::class)->names('v1.relationships');
     # ==================================== RELIGIONS ======================================================

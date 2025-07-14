@@ -21,7 +21,7 @@ readonly class NextOfKinDto
     public static function fromNextOfKinRequest(NextOfKinRequest $request): NextOfKinDto
     {
         return new self(
-            name: $request->next_of_kin_name,
+            name: $request->name,
             relationship_id: $request->relationship_id,
             phone_number: $request->phone_number,
             address_1: $request->address_1,

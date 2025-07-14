@@ -4,12 +4,15 @@ import StudentContacts from '@/components/students/tabs/StudentContacts.vue';
 import StudentNextOfKin from '@/components/students/tabs/StudentNextOfKin.vue';
 import StudentSponsors from '@/components/students/tabs/StudentSponsors.vue';
 import { useSharedFormSchema } from '@/composables/core/useSharedFormSchema';
-import { errorAlert } from '@/lib/alerts';
+import { errorAlert, forbiddenAlert, openModal } from '@/lib/alerts';
+import { APP_MODULE_KEYS } from '@/lib/constants';
 import { buildFormOptions, mergeValidationSchema } from '@/lib/forms';
+import { hasAbility } from '@/lib/permissions';
 import { idNumberUniqueSchema, passportNumberUniqueSchema } from '@/lib/uniqueValidations';
 import HttpService from '@/services/http.service';
 import { useCreateApplicationFormStore } from '@/store/portal/useCreateApplicationFormStore';
 import { Step } from '@/types/forms';
+import { Student } from '@/types/students';
 import { CustomTab } from '@/types/utils';
 import { InertiaForm } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
@@ -95,5 +98,56 @@ export function useStudentPortal() {
         }
     };
 
-    return { steps, applicationFormSchema, saveApplication, studentTabs, getStudentData, isLoading };
+    const allowed = hasAbility('manageOwnStudentPersonalDetails:students');
+    const onOpenPersonalDetailsModal = (student?: Student) => {
+        if (!allowed) return forbiddenAlert();
+        openModal({ name: APP_MODULE_KEYS.student_personal_details, edit: student });
+    };
+    const updateStudentSchema = (isNativeCitizen: boolean, studentId: string) => {
+        const personal = ['genderSchema', 'maritalStatusSchema', 'dobSchema', 'idTypeSchema'];
+        let updateSchema = null;
+        if (isNativeCitizen) {
+            updateSchema = mergeValidationSchema(schemaFields)(
+                personal,
+                schemaFields['titleSchema']().merge(
+                    idNumberUniqueSchema(`api/v1/validations/check?current_id=${studentId}&key=student_national_id&value=`),
+                ),
+            );
+        } else {
+            personal.push('countrySchema');
+            updateSchema = mergeValidationSchema(schemaFields)(
+                personal,
+                schemaFields['titleSchema']().merge(
+                    passportNumberUniqueSchema(`api/v1/validations/check?current_id=${studentId}&key=student_passport_number&value='`),
+                ),
+            );
+        }
+        return updateSchema;
+    };
+
+    const getName = () => trans_choice('trans.student', 1);
+    const updateSuccessMessage = () => trans('trans.item_saved', { item: getName() });
+    const updateErrorMessage = () => trans('trans.item_save_failure', { item: getName() });
+    const updateStudent = async (studentId: string, form: InertiaForm<any>) => {
+        try {
+            form.put(
+                route('students.update', studentId),
+                buildFormOptions(form, updateSuccessMessage(), updateErrorMessage(), APP_MODULE_KEYS.student_personal_details),
+            );
+        } catch (error: any) {
+            form.setError(error.format());
+        }
+    };
+
+    return {
+        steps,
+        applicationFormSchema,
+        saveApplication,
+        studentTabs,
+        getStudentData,
+        isLoading,
+        onOpenPersonalDetailsModal,
+        updateStudent,
+        updateStudentSchema,
+    };
 }

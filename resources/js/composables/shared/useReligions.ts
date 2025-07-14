@@ -81,7 +81,7 @@ export const useReligions = () => {
     const listReligions = async (search?: string) => {
         const { data, fetchData } = useDropdowns();
         isLoading.value = true;
-        await fetchData({ url: 'api/v1/religions?page_size=200', search, transChoiceKey: 'trans.religion' });
+        await fetchData({ url: 'api/v1/religions?page_size=all', search, transChoiceKey: 'trans.religion' });
         isLoading.value = false;
         religions.value = data.value;
     };

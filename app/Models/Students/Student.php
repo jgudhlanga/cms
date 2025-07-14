@@ -3,15 +3,7 @@
 namespace App\Models\Students;
 
 use App\Http\Filters\Students\StudentFilter;
-use App\Models\Shared\Address;
-use App\Models\Shared\Contact;
-use App\Models\Shared\Country;
-use App\Models\Shared\Gender;
-use App\Models\Shared\IdType;
-use App\Models\Shared\MaritalStatus;
-use App\Models\Shared\NextOfKin;
-use App\Models\Shared\Religion;
-use App\Models\Shared\Title;
+use App\Models\Shared\{Address, Contact, Country, Gender, IdType, MaritalStatus, NextOfKin, Race, Religion, Title};
 use App\Traits\BelongsToTenant;
 use App\Traits\Filterable;
 use App\Traits\Paginatable;
@@ -82,6 +74,11 @@ class Student extends Model
     public function country(): BelongsTo
     {
         return $this->belongsTo(Country::class);
+    }
+
+    public function race(): BelongsTo
+    {
+        return $this->belongsTo(Race::class);
     }
 
     public function programs(): HasMany
