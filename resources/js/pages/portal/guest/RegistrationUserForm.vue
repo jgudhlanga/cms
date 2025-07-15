@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import ApplicationCover from '@/components/auth/ApplicationCover.vue';
 import { BaseButton } from '@/components/core/button';
+import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/composables/auth/useAuth';
 import { useUtils } from '@/composables/core/useUtils';
 import { useGuestPortal } from '@/composables/students/useGuestPortal';
@@ -14,7 +15,6 @@ import { Head, useForm } from '@inertiajs/vue3';
 import { storeToRefs } from 'pinia';
 import { onMounted } from 'vue';
 import BaseInput from '../../../components/core/form/text/BaseInput.vue';
-import { Separator } from '@/components/ui/separator';
 
 const { createPortalUser } = useGuestPortal();
 const { navigateTo } = useUtils();
@@ -55,7 +55,7 @@ onMounted(async () => {
             <p class="text-muted-foreground my-1 text-sm">{{ $t('trans.application_form_description') }}</p>
         </header>
         <form @submit.prevent="submitForm()" class="flex w-1/4 flex-col">
-            <div class="flex w-full flex-col space-y-3 p-8 shadow-lg rounded-lg">
+            <div class="flex w-full flex-col space-y-3 rounded-lg p-8 shadow-md">
                 <BaseInput
                     input-id="first_name"
                     :label="$t('trans.first_name')"
@@ -125,6 +125,7 @@ onMounted(async () => {
                     :variant="ColorVariant.primary_outline"
                     type="button"
                     :tabindex="7"
+                    :disabled="form.processing"
                 >
                     {{ $t('trans.existing_student_login') }}
                 </BaseButton>

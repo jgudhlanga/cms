@@ -6,6 +6,7 @@ namespace App\Listeners\Students;
 use App\Events\Students\ApplicationWorkflowStepChanged;
 use App\Notifications\Students\ApplicationSubmitted;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Support\Facades\Notification;
 
 class ApplicationWorkflowStepAction implements ShouldQueue
 {
@@ -24,11 +25,9 @@ class ApplicationWorkflowStepAction implements ShouldQueue
     {
         $user = $event->student->user;
         $name = $user->full_name;
-        $student = $event->student;
         $program = $event->program;
         $newStep = $event->newStep;
         $oldStep = $event->oldStep;
-
-        $user->notify(new ApplicationSubmitted($name, $program, $newStep, $oldStep))->withoutDelay();
+        Notification::sendNow($user, new ApplicationSubmitted($name, $program, $newStep, $oldStep));
     }
 }

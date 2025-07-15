@@ -26,7 +26,7 @@ const { form } = props;
 
 <template>
     <BaseCard>
-        <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
             <PhoneNumber
                 v-model="phone_number"
                 placeholder="enter phone number"
@@ -53,7 +53,7 @@ const { form } = props;
         <div class="flex flex-col">
             <HeadingSmall :title="$t('trans.residential_address')" :description="$t('trans.residential_address_description')" class="my-5" />
         </div>
-        <div class="grid-col-1 grid gap-3 md:grid-cols-4">
+        <div class="grid-col-1 grid gap-6 md:grid-cols-4">
             <Address1
                 v-model="address_1"
                 placeholder="enter address line 1 "
