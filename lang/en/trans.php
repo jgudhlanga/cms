@@ -354,4 +354,6 @@ return [
     "loading_data" => "loading data...",
     "workflow_config" => "Workflows config",
     "data" => "Data",
+    "new_student_registration" => "New student registration",
+    "existing_student_login" => "Existing student login",
 ];

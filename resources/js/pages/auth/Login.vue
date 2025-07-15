@@ -3,6 +3,8 @@ import { BaseButton } from '@/components/core/button';
 import { BaseCheckbox, Email, Password } from '@/components/core/form';
 import TextLink from '@/components/core/util/TextLink.vue';
 import { useAuth } from '@/composables/auth/useAuth';
+import { useUtils } from '@/composables/core/useUtils';
+import { ColorVariant } from '@/enums/colors';
 import { clearFormErrors } from '@/lib/forms';
 import { Login } from '@/types/auth';
 import { Head, useForm } from '@inertiajs/vue3';
@@ -13,7 +15,7 @@ defineProps<{
 }>();
 
 const { login } = useAuth();
-
+const { navigateTo } = useUtils();
 const form = useForm<Login>({
     email: 'penstejdevelopers@gmail.com',
     password: 'Developer123!',
@@ -36,10 +38,15 @@ const form = useForm<Login>({
             <BaseButton class="mt-4" type="submit" :tabindex="6" :processing="form.processing">
                 {{ $t('trans.login') }}
             </BaseButton>
-        </div>
-        <div class="text-muted-foreground text-center text-sm">
-            {{ $t('trans.dont_have_an_account') }}
-            <TextLink :href="route('portal.create')" :tabindex="7">{{ $t('trans.register') }}</TextLink>
+            <BaseButton
+                @click="() => navigateTo(route('portal.create'))"
+                class="mt-2"
+                :variant="ColorVariant.primary_outline"
+                type="button"
+                :tabindex="7"
+            >
+                {{ $t('trans.new_student_registration') }}
+            </BaseButton>
         </div>
     </form>
 </template>

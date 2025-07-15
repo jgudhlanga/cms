@@ -29,9 +29,6 @@ class ApplicationWorkflowStepAction implements ShouldQueue
         $newStep = $event->newStep;
         $oldStep = $event->oldStep;
 
-        $user->notify(new ApplicationSubmitted(
-            $name,
-            $program,
-        ))->withoutDelay();
+        $user->notify(new ApplicationSubmitted($name, $program, $newStep, $oldStep))->withoutDelay();
     }
 }
