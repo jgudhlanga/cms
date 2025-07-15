@@ -1,43 +1,61 @@
+import { useUtils } from '@/composables/core/useUtils';
 import About from '@/pages/institution/departments/partials/view/About.vue';
 import Announcements from '@/pages/institution/departments/partials/view/Announcements.vue';
-import Workflows from '@/pages/institution/departments/partials/view/Workflows.vue';
 import Calendar from '@/pages/institution/departments/partials/view/Calendar.vue';
 import Courses from '@/pages/institution/departments/partials/view/Courses.vue';
 import Levels from '@/pages/institution/departments/partials/view/Levels.vue';
 import Staff from '@/pages/institution/departments/partials/view/Staff.vue';
+import Workflows from '@/pages/institution/departments/partials/view/Workflows.vue';
+import { InstitutionDepartment } from '@/types/institution';
 import { CustomTab } from '@/types/utils';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 import { h } from 'vue';
 
 export const useInstitution = () => {
-    const departmentTabs = (institutionDepartmentId: string): Array<CustomTab> => {
+    const { isItTrue } = useUtils();
+    const departmentTabs = (department: InstitutionDepartment): Array<CustomTab> => {
         return [
-            { transLabel: () => trans('trans.about'), value: 'about_us', component: h(About) },
+            {
+                transLabel: () => trans('trans.about'),
+                value: 'about_us',
+                component: h(About, { department }),
+                show: true,
+            },
             {
                 transLabel: () => trans_choice('trans.course', 2),
                 value: 'courses',
-                component: h(Courses, { institutionDepartmentId }),
+                component: h(Courses, { department }),
+                show: isItTrue(department?.attributes?.isAcademic),
             },
             {
                 transLabel: () => trans_choice('trans.level', 2),
                 value: 'levels',
-                component: h(Levels, { institutionDepartmentId }),
+                component: h(Levels, { department }),
+                show: isItTrue(department?.attributes?.isAcademic),
             },
             {
                 transLabel: () => trans('trans.staff'),
                 value: 'staff',
-                component: h(Staff, { institutionDepartmentId }),
+                component: h(Staff, { department }),
+                show: true,
             },
             {
                 transLabel: () => trans_choice('trans.workflow_config', 2),
                 value: 'workflow_config',
-                component: h(Workflows, { institutionDepartmentId }),
+                component: h(Workflows, { department }),
+                show: isItTrue(department?.attributes?.isAcademic),
             },
-            { transLabel: () => trans_choice('trans.calendar', 2), value: 'calendar', component: Calendar },
+            {
+                transLabel: () => trans_choice('trans.calendar', 1),
+                value: 'calendar',
+                component: Calendar,
+                show: true,
+            },
             {
                 transLabel: () => trans_choice('trans.announcement', 2),
                 value: 'announcements',
                 component: Announcements,
+                show: true,
             },
         ];
     };

@@ -29,6 +29,9 @@
     },
     "dependencies": {
         "@inertiajs/vue3": "^2.0.0-beta.3",
+        "@schedule-x/calendar": "^2.36.0",
+        "@schedule-x/theme-default": "^2.36.0",
+        "@schedule-x/vue": "^2.34.0",
         "@tailwindcss/forms": "^0.5.3",
         "@tailwindcss/vite": "^4.1.1",
         "@tanstack/vue-table": "^8.21.2",
@@ -37,6 +40,7 @@
         "@vitejs/plugin-vue": "^5.2.1",
         "@vuepic/vue-datepicker": "^11.0.2",
         "@vueuse/core": "^12.8.2",
+        "@vueuse/motion": "^3.0.3",
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
         "concurrently": "^9.0.1",

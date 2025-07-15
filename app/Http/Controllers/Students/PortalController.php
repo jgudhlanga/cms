@@ -6,13 +6,15 @@ use App\DTO\Shared\{AddressDto, ContactDto, NextOfKinDto};
 use App\DTO\Students\CreateApplicationDto;
 use App\DTO\Users\UserDto;
 use App\Enums\Acl\RoleEnum;
+use App\Helpers\WorkflowHelper;
+use App\Models\Institution\DepartmentApplicationStep;
 use App\Enums\Shared\{StatusEnum, TenantEnum};
+use App\Events\Students\ApplicationWorkflowStepChanged;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Shared\{AddressRequest, ContactRequest, NextOfKinRequest};
 use App\Http\Requests\Students\CreateApplicationRequest;
 use App\Http\Requests\Users\UserRequest;
 use App\Http\Resources\Students\{AcademicRecordResource, StudentProgramResource, StudentResource};
-use App\Jobs\Students\SendApplicationSubmittedEmail;
 use App\Jobs\Users\SendVerificationEmailJob;
 use App\Models\Shared\Status;
 use App\Models\Tenants\Tenant;
@@ -97,20 +99,21 @@ class PortalController extends Controller
         DB::beginTransaction();
         try {
             $this->updateUserNamesIfChanged($user, $request);
-
             $student = $this->studentRepository->create(
                 CreateApplicationDto::fromCreateApplicationRequest($request, $user)
             );
-
             $application = $student->programs()->latest()->first();
-
+            $stepOne = WorkflowHelper::getDepartmentApplicationStepByPosition(1);
+            $stepTwo = WorkflowHelper::getDepartmentApplicationStepByPosition(2);
+            $application->update(['department_application_step_id' => $stepOne->id]);
             DB::commit();
 
-            SendApplicationSubmittedEmail::dispatch(
+            ApplicationWorkflowStepChanged::dispatch($student, $application, $stepTwo, $stepOne);
+            /*SendApplicationSubmittedEmail::dispatch(
                 $user->full_name,
                 $user->email,
                 $application->application_tracking_number
-            )->withoutDelay();
+            )->withoutDelay();*/
 
             return to_route('portal.application-confirmation');
         } catch (Throwable $e) {

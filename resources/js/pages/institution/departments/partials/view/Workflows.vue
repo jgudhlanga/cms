@@ -16,7 +16,7 @@ import { trans_choice } from 'laravel-vue-i18n';
 import { computed, onMounted, ref } from 'vue';
 
 interface Props {
-    institutionDepartmentId: string;
+    department: InstitutionDepartment;
 }
 
 const props = defineProps<Props>();
@@ -27,7 +27,7 @@ const { loadDepartmentMetadata, isLoading } = useInstitutionDepartmentMetadata()
 const { openDepartmentApplicationStepsModal, openDepartmentWorkflowActionModal } = useDepartmentWorkflows();
 
 onMounted(async () => {
-    const data = await loadDepartmentMetadata(route('v1.department-metadata.workflow-steps', props.institutionDepartmentId));
+    const data = await loadDepartmentMetadata(route('v1.department-metadata.workflow-steps', props.department?.id?.toString()));
     institutionDepartment.value = data?.department;
     departmentApplicationSteps.value = data?.steps;
 });

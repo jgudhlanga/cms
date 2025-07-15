@@ -4,6 +4,7 @@ namespace App\Models\Students;
 
 use App\Http\Filters\Students\StudentFilter;
 use App\Models\Shared\{Address, Contact, Country, Gender, IdType, MaritalStatus, NextOfKin, Race, Religion, Title};
+use App\Models\Users\User;
 use App\Traits\BelongsToTenant;
 use App\Traits\Filterable;
 use App\Traits\Paginatable;
@@ -45,6 +46,11 @@ class Student extends Model
         'height',
         'weight',
     ];
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
 
     public function gender(): BelongsTo
     {

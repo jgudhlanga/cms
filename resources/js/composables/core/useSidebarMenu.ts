@@ -44,19 +44,19 @@ export function useSidebarMenu() {
             transChoiceKey: 'trans.examination',
             icon: icons[IconName.book_check],
             url: route('dashboard'),
-            show: hasAbility('view:examinations'),
+            show: false, /*hasAbility('view:examinations'),*/
         },
         {
             transChoiceKey: 'trans.accommodation',
             icon: icons[IconName.bed],
             url: route('dashboard'),
-            show: hasAbility('view:accommodations'),
+            show: false /*hasAbility('view:accommodations')*/,
         },
         {
             transChoiceKey: 'trans.communication',
             url: '#',
             icon: icons[IconName.person_chat],
-            show: hasAbility('view:communication'),
+            show: false /*hasAbility('view:communication')*/,
         },
         {
             transChoiceKey: 'trans.report',

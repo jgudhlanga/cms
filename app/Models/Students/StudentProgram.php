@@ -3,6 +3,7 @@
 namespace App\Models\Students;
 
 use App\Http\Filters\Students\StudentProgramFilter;
+use App\Models\Institution\DepartmentApplicationStep;
 use App\Models\Institution\DepartmentCourse;
 use App\Models\Institution\DepartmentLevel;
 use App\Models\Institution\InstitutionDepartment;
@@ -39,7 +40,8 @@ class StudentProgram extends Model
         'required_level_completed',
         'read_write_acknowledged',
         'application_tracking_number',
-        'application_status_id',
+        'department_application_step_id',
+        'program_status_id',
     ];
 
     protected $casts = [
@@ -66,6 +68,11 @@ class StudentProgram extends Model
     public function departmentCourse(): BelongsTo
     {
         return $this->belongsTo(DepartmentCourse::class, 'department_course_id');
+    }
+
+    public function departmentWorkflowStep(): BelongsTo
+    {
+        return $this->belongsTo(DepartmentApplicationStep::class, 'department_application_step_id');
     }
 
     public function getActivitylogOptions(): LogOptions

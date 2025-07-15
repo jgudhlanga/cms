@@ -20,6 +20,7 @@ class InstitutionDepartmentResource extends JsonResource
             "attributes" => [
                 "departmentId" => $this->department_id,
                 'department' => $this->department?->name,
+                'isAcademic' => $this->department?->is_academic,
                 'description' => $this->resource->description,
                 $this->mergeWhen($request->routeIs('institution.departments.*'), [
                     'createdAt' => $this->resource->created_at,

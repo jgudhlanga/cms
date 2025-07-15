@@ -6,7 +6,6 @@ enum PermissionEnum: string
 {
     /** Acl View */
     case VIEW_ACL_INDEX = 'view:acl-settings';
-
     /** Acl Modules*/
     case VIEW_ANY_MODULES = 'viewAny:modules';
     case VIEW_MODULE = 'view:modules';
@@ -18,7 +17,6 @@ enum PermissionEnum: string
     case IMPORT_MODULES = 'import:modules';
     case EXPORT_MODULES = 'export:modules';
     case VIEW_MODULES_AUDIT_TRAIL = 'viewAuditTrail:modules';
-
     /** Acl Roles*/
     case VIEW_ANY_ROLES = 'viewAny:roles';
     case VIEW_ROLE = 'view:roles';
@@ -30,7 +28,6 @@ enum PermissionEnum: string
     case IMPORT_ROLES = 'import:roles';
     case EXPORT_ROLES = 'export:roles';
     case VIEW_ROLES_AUDIT_TRAIL = 'viewAuditTrail:roles';
-
     /*** Acl Permissions */
     case VIEW_ANY_PERMISSIONS = 'viewAny:permissions';
     case VIEW_PERMISSION = 'view:permissions';
@@ -42,7 +39,6 @@ enum PermissionEnum: string
     case IMPORT_PERMISSIONS = 'import:permissions';
     case EXPORT_PERMISSIONS = 'export:permissions';
     case VIEW_PERMISSIONS_AUDIT_TRAIL = 'viewAuditTrail:permissions';
-
     /** COMMUNICATIONS */
     case VIEW_ANY_COMMUNICATIONS = 'viewAny:communications';
     case VIEW_COMMUNICATION = 'view:communications';
@@ -55,12 +51,9 @@ enum PermissionEnum: string
     case EXPORT_COMMUNICATIONS = 'export:communications';
     case CRUD_COMMUNICATION_SETTINGS = 'crud-settings:communications';
     case VIEW_COMMUNICATION_AUDIT_TRAIL = 'viewAuditTrail:communications';
-
     /** DASHBOARD */
     case VIEW_ANY_DASHBOARD = 'viewAny:dashboards';
     case VIEW_DASHBOARD = 'view:dashboards';
-
-
     /** REPORTS */
     case VIEW_ANY_REPORTS = 'viewAny:reports';
     case VIEW_REPORT = 'view:reports';
@@ -71,7 +64,6 @@ enum PermissionEnum: string
     case FORCE_DELETE_REPORT = 'forceDelete:reports';
     case IMPORT_REPORTS = 'import:reports';
     case EXPORT_REPORTS = 'export:reports';
-
     /** TENANTS */
     case VIEW_ANY_TENANTS = 'viewAny:tenants';
     case VIEW_TENANT = 'view:tenants';
@@ -84,7 +76,6 @@ enum PermissionEnum: string
     case EXPORT_TENANTS = 'export:tenants';
     case CRUD_TENANTS_SETTINGS = 'crud-settings:tenants';
     case VIEW_TENANTS_AUDIT_TRAIL = 'viewAuditTrail:tenants';
-
     /** USERS */
     case VIEW_ANY_USERS = 'viewAny:users';
     case VIEW_USERS = 'view:users';
@@ -97,7 +88,6 @@ enum PermissionEnum: string
     case EXPORT_USERS = 'export:users';
     case CRUD_USERS_SETTINGS = 'crud-settings:users';
     case VIEW_USERS_AUDIT_TRAIL = 'viewAuditTrail:users';
-
     /** SETTINGS MANAGEMENT */
     case VIEW_SETTINGS = 'view:settings';
     case CREATE_SETTINGS = 'create:settings';
@@ -108,7 +98,6 @@ enum PermissionEnum: string
     case IMPORT_SETTINGS = 'import:settings';
     case EXPORT_SETTINGS = 'export:settings';
     case VIEW_SETTINGS_AUDIT_TRAIL = 'viewAuditTrail:settings';
-
     /** INSTITUTION SETTINGS */
     case VIEW_INSTITUTION_SETTINGS = 'view:institution-settings';
     case CREATE_INSTITUTION_SETTINGS = 'create:institution-settings';
@@ -119,7 +108,6 @@ enum PermissionEnum: string
     case IMPORT_INSTITUTION_SETTINGS = 'import:institution-settings';
     case EXPORT_INSTITUTION_SETTINGS = 'export:institution-settings';
     case VIEW_INSTITUTION_SETTINGS_AUDIT_TRAIL = 'viewAuditTrail:institution-settings';
-
     /** INSTITUTION DEPARTMENTS */
     case VIEW_ANY_DEPARTMENT_METADATA = 'viewAny:department-metadata';
     case VIEW_DEPARTMENT_METADATA = 'view:department-metadata';
@@ -131,13 +119,10 @@ enum PermissionEnum: string
     case IMPORT_DEPARTMENT_METADATA = 'import:department-metadata';
     case EXPORT_DEPARTMENT_METADATA = 'export:department-metadata';
     case VIEW_DEPARTMENT_METADATA_AUDIT_TRAIL = 'viewAuditTrail:department-metadata';
-
     /** ROOT / GLOBAL USER */
     case ROOT_MANAGE = 'root:manage';
-
     /**OWN TENANT DATA MANAGE */
     case MANAGE_OWN_TENANT_DATA = 'manageOwnData:tenants';
-
     /** SHARED */
     case VIEW_ANY_BANK_DETAILS = 'viewAny:bank-details';
     case VIEW_BANK_DETAILS = 'view:bank-details';
@@ -175,7 +160,6 @@ enum PermissionEnum: string
     case FORCE_DELETE_NEXT_OF_KINS = 'forceDelete:next-of-kins';
     case IMPORT_NEXT_OF_KINS = 'import:next-of-kins';
     case EXPORT_NEXT_OF_KINS = 'export:next-of-kins';
-
     # PORTAL
     case VIEW_OWN_STUDENT_DASHBOARD = 'viewOwnDashboard:students';
     case MANAGE_OWN_STUDENT_PERSONAL_DETAILS = 'manageOwnStudentPersonalDetails:students';
@@ -184,9 +168,56 @@ enum PermissionEnum: string
     case MANAGE_OWN_STUDENT_CONTACT_DETAILS = 'manageOwnStudentContactDetails:students';
     case MANAGE_OWN_STUDENT_FINANCIAL_DETAILS = 'manageOwnStudentFinancialDetails:students';
     case MANAGE_OWN_STUDENT_ACADEMIC_DETAILS = 'manageOwnStudentAcademicDetails:students';
-
     /** ADMIN STUDENTS */
     case MANAGE_STUDENTS_METADATA = 'manageStudentMetadata:admin';
+    /** ENROLMENTS*/
+    case VIEW_ANY_ENROLMENTS = 'viewAny:enrolments';
+    case VIEW_ENROLMENTS = 'view:enrolments';
+    case CREATE_ENROLMENTS = 'create:enrolments';
+    case UPDATE_ENROLMENTS = 'update:enrolments';
+    case DELETE_ENROLMENTS = 'delete:enrolments';
+    case RESTORE_ENROLMENTS = 'restore:enrolments';
+    case FORCE_DELETE_ENROLMENTS = 'forceDelete:enrolments';
+    case IMPORT_ENROLMENTS = 'import:enrolments';
+    case EXPORT_ENROLMENTS = 'export:enrolments';
+    case CRUD_ENROLMENTS_SETTINGS = 'crud-settings:enrolments';
+    case VIEW_ENROLMENTS_AUDIT_TRAIL = 'viewAuditTrail:enrolments';
+    /** STUDENTS */
+    case VIEW_ANY_STUDENTS = 'viewAny:students';
+    case VIEW_STUDENTS = 'view:students';
+    case CREATE_STUDENTS = 'create:students';
+    case UPDATE_STUDENTS = 'update:students';
+    case DELETE_STUDENTS = 'delete:students';
+    case RESTORE_STUDENTS = 'restore:students';
+    case FORCE_DELETE_STUDENTS = 'forceDelete:students';
+    case IMPORT_STUDENTS = 'import:students';
+    case EXPORT_STUDENTS = 'export:students';
+    case CRUD_STUDENTS_SETTINGS = 'crud-settings:students';
+    case VIEW_STUDENTS_AUDIT_TRAIL = 'viewAuditTrail:students';
+    /** EXAMINATIONS */
+    case VIEW_ANY_EXAMINATION = 'viewAny:examinations';
+    case VIEW_EXAMINATION = 'view:examinations';
+    case CREATE_EXAMINATION = 'create:examinations';
+    case UPDATE_EXAMINATION = 'update:examinations';
+    case DELETE_EXAMINATION = 'delete:examinations';
+    case RESTORE_EXAMINATION = 'restore:examinations';
+    case FORCE_DELETE_EXAMINATION = 'forceDelete:examinations';
+    case IMPORT_EXAMINATION = 'import:examinations';
+    case EXPORT_EXAMINATION = 'export:examinations';
+    case CRUD_EXAMINATION_SETTINGS = 'crud-settings:examinations';
+    case VIEW_EXAMINATION_AUDIT_TRAIL = 'viewAuditTrail:examinations';
+    /** ACCOMMODATIONS */
+    case VIEW_ANY_ACCOMMODATIONS = 'viewAny:accommodations';
+    case VIEW_ACCOMMODATIONS = 'view:accommodations';
+    case CREATE_ACCOMMODATIONS = 'create:accommodations';
+    case UPDATE_ACCOMMODATIONS = 'update:accommodations';
+    case DELETE_ACCOMMODATIONS = 'delete:accommodations';
+    case RESTORE_ACCOMMODATIONS = 'restore:accommodations';
+    case FORCE_DELETE_ACCOMMODATIONS = 'forceDelete:accommodations';
+    case IMPORT_ACCOMMODATIONS = 'import:accommodations';
+    case EXPORT_ACCOMMODATIONS = 'export:accommodations';
+    case CRUD_ACCOMMODATIONS_SETTINGS = 'crud-settings:accommodations';
+    case VIEW_ACCOMMODATIONS_AUDIT_TRAIL = 'viewAuditTrail:accommodations';
 
     public function label(): string
     {
@@ -204,7 +235,6 @@ enum PermissionEnum: string
             self::IMPORT_MODULES => 'import:modules',
             self::EXPORT_MODULES => 'export:modules',
             self::VIEW_MODULES_AUDIT_TRAIL => 'viewAuditTrail:modules',
-
             /** Roles */
             self::VIEW_ANY_ROLES => 'viewAny:roles',
             self::VIEW_ROLE => 'view:roles',
@@ -216,7 +246,6 @@ enum PermissionEnum: string
             self::IMPORT_ROLES => 'import:roles',
             self::EXPORT_ROLES => 'export:roles',
             self::VIEW_ROLES_AUDIT_TRAIL => 'viewAuditTrail:roles',
-
             /** Permissions */
             self::VIEW_ANY_PERMISSIONS => 'viewAny:permissions',
             self::VIEW_PERMISSION => 'view:permissions',
@@ -228,7 +257,6 @@ enum PermissionEnum: string
             self::IMPORT_PERMISSIONS => 'import:permissions',
             self::EXPORT_PERMISSIONS => 'export:permissions',
             self::VIEW_PERMISSIONS_AUDIT_TRAIL => 'viewAuditTrail:permissions',
-
             /** COMMUNICATIONS */
             self::VIEW_ANY_COMMUNICATIONS => 'viewAny:communications',
             self::VIEW_COMMUNICATION => 'view:communications',
@@ -241,11 +269,9 @@ enum PermissionEnum: string
             self::EXPORT_COMMUNICATIONS => 'export:communications',
             self::CRUD_COMMUNICATION_SETTINGS => 'crud-settings:communications',
             self::VIEW_COMMUNICATION_AUDIT_TRAIL => 'viewAuditTrail:communications',
-
             /** DASHBOARD */
             self::VIEW_ANY_DASHBOARD => 'viewAny:dashboards',
             self::VIEW_DASHBOARD => 'view:dashboards',
-
             /** REPORTS */
             self::VIEW_ANY_REPORTS => 'viewAny:reports',
             self::VIEW_REPORT => 'view:reports',
@@ -256,7 +282,6 @@ enum PermissionEnum: string
             self::FORCE_DELETE_REPORT => 'forceDelete:reports',
             self::IMPORT_REPORTS => 'import:reports',
             self::EXPORT_REPORTS => 'export:reports',
-
             /** TENANTS */
             self::VIEW_ANY_TENANTS => 'viewAny:tenants',
             self::VIEW_TENANT => 'view:tenants',
@@ -269,7 +294,6 @@ enum PermissionEnum: string
             self::EXPORT_TENANTS => 'export:tenants',
             self::CRUD_TENANTS_SETTINGS => 'crud-settings:tenants',
             self::VIEW_TENANTS_AUDIT_TRAIL => 'viewAuditTrail:tenants',
-
             /** USERS */
             self::VIEW_ANY_USERS => 'viewAny:users',
             self::VIEW_USERS => 'view:users',
@@ -282,7 +306,6 @@ enum PermissionEnum: string
             self::EXPORT_USERS => 'export:users',
             self::CRUD_USERS_SETTINGS => 'crud-settings:users',
             self::VIEW_USERS_AUDIT_TRAIL => 'viewAuditTrail:users',
-
             /** SETTINGS */
             self::VIEW_SETTINGS => 'view:settings',
             self::CREATE_SETTINGS => 'create:settings',
@@ -303,7 +326,6 @@ enum PermissionEnum: string
             self::IMPORT_INSTITUTION_SETTINGS => 'import:institution-settings',
             self::EXPORT_INSTITUTION_SETTINGS => 'export:institution-settings',
             self::VIEW_INSTITUTION_SETTINGS_AUDIT_TRAIL => 'viewAuditTrail:institution-settings',
-
             /** INSTITUTION DEPARTMENTS */
             self::VIEW_ANY_DEPARTMENT_METADATA => 'viewAny:department-metadata',
             self::VIEW_DEPARTMENT_METADATA => 'view:department-metadata',
@@ -318,7 +340,6 @@ enum PermissionEnum: string
             /** ROOT */
             self::ROOT_MANAGE => 'root:manage',
             self::MANAGE_OWN_TENANT_DATA => 'manageOwnData:tenants',
-
             /** SHARED */
             self::VIEW_ANY_BANK_DETAILS => 'viewAny:bank-details',
             self::VIEW_BANK_DETAILS => 'view:bank-details',
@@ -366,6 +387,54 @@ enum PermissionEnum: string
             self::MANAGE_OWN_STUDENT_ACADEMIC_DETAILS => 'manageOwnStudentAcademicDetails:students',
             /** ADMIN STUDENTS */
             self::MANAGE_STUDENTS_METADATA => 'manageStudentMetadata:admin',
+            /** ENROLMENTS*/
+            self::VIEW_ANY_ENROLMENTS => 'viewAny:enrolments',
+            self::VIEW_ENROLMENTS => 'view:enrolments',
+            self::CREATE_ENROLMENTS => 'create:enrolments',
+            self::UPDATE_ENROLMENTS => 'update:enrolments',
+            self::DELETE_ENROLMENTS => 'delete:enrolments',
+            self::RESTORE_ENROLMENTS => 'restore:enrolments',
+            self::FORCE_DELETE_ENROLMENTS => 'forceDelete:enrolments',
+            self::IMPORT_ENROLMENTS => 'import:enrolments',
+            self::EXPORT_ENROLMENTS => 'export:enrolments',
+            self::CRUD_ENROLMENTS_SETTINGS => 'crud-settings:enrolments',
+            self::VIEW_ENROLMENTS_AUDIT_TRAIL => 'viewAuditTrail:enrolments',
+            /** STUDENTS */
+            self::VIEW_ANY_STUDENTS => 'viewAny:students',
+            self::VIEW_STUDENTS => 'view:students',
+            self::CREATE_STUDENTS => 'create:students',
+            self::UPDATE_STUDENTS => 'update:students',
+            self::DELETE_STUDENTS => 'delete:students',
+            self::RESTORE_STUDENTS => 'restore:students',
+            self::FORCE_DELETE_STUDENTS => 'forceDelete:students',
+            self::IMPORT_STUDENTS => 'import:students',
+            self::EXPORT_STUDENTS => 'export:students',
+            self::CRUD_STUDENTS_SETTINGS => 'crud-settings:students',
+            self::VIEW_STUDENTS_AUDIT_TRAIL => 'viewAuditTrail:students',
+            /** EXAMINATIONS */
+            self::VIEW_ANY_EXAMINATION => 'viewAny:examinations',
+            self::VIEW_EXAMINATION => 'view:examinations',
+            self::CREATE_EXAMINATION => 'create:examinations',
+            self::UPDATE_EXAMINATION => 'update:examinations',
+            self::DELETE_EXAMINATION => 'delete:examinations',
+            self::RESTORE_EXAMINATION => 'restore:examinations',
+            self::FORCE_DELETE_EXAMINATION => 'forceDelete:examinations',
+            self::IMPORT_EXAMINATION => 'import:examinations',
+            self::EXPORT_EXAMINATION => 'export:examinations',
+            self::CRUD_EXAMINATION_SETTINGS => 'crud-settings:examinations',
+            self::VIEW_EXAMINATION_AUDIT_TRAIL => 'viewAuditTrail:examinations',
+            /** ACCOMMODATIONS */
+            self::VIEW_ANY_ACCOMMODATIONS => 'viewAny:accommodations',
+            self::VIEW_ACCOMMODATIONS => 'view:accommodations',
+            self::CREATE_ACCOMMODATIONS => 'create:accommodations',
+            self::UPDATE_ACCOMMODATIONS => 'update:accommodations',
+            self::DELETE_ACCOMMODATIONS => 'delete:accommodations',
+            self::RESTORE_ACCOMMODATIONS => 'restore:accommodations',
+            self::FORCE_DELETE_ACCOMMODATIONS => 'forceDelete:accommodations',
+            self::IMPORT_ACCOMMODATIONS => 'import:accommodations',
+            self::EXPORT_ACCOMMODATIONS => 'export:accommodations',
+            self::CRUD_ACCOMMODATIONS_SETTINGS => 'crud-settings:accommodations',
+            self::VIEW_ACCOMMODATIONS_AUDIT_TRAIL => 'viewAuditTrail:accommodations',
         };
     }
 
