@@ -1,12 +1,8 @@
 <script setup lang="ts">
 // UI components
-import BaseStepperButtons from '@/components/core/stepper/BaseStepperButtons.vue';
-import BaseStepperItem from '@/components/core/stepper/BaseStepperItem.vue';
-import { Stepper } from '@/components/ui/stepper';
 import { computed, onMounted, ref } from 'vue';
 
 // Page sections
-import Confirmation from '@/components/students/update/Confirmation.vue';
 import ContactDetails from '@/components/students/update/ContactDetails.vue';
 import NextOfKinDetails from '@/components/students/update/NextOfKinDetails.vue';
 import PersonalDetails from '@/components/students/update/PersonalDetails.vue';
@@ -21,13 +17,15 @@ import { useStudentPortal } from '@/composables/students/useStudentPortal';
 import { useCreateApplicationFormStore } from '@/store/portal/useCreateApplicationFormStore';
 import { AuthObject } from '@/types/data-pagination';
 import { CreateApplicationParams } from '@/types/portal';
-import { BreadcrumbItemInterface } from '@/types/ui';
 
 // Utilities
+import CustomSeparator from '@/components/core/util/CustomSeparator.vue';
+import Heading from '@/components/core/util/Heading.vue';
+import TextLink from '@/components/core/util/TextLink.vue';
+import Documents from '@/components/students/update/Documents.vue';
 import { useIdTypes } from '@/composables/shared/useIdTypes';
 import { useForm } from '@inertiajs/vue3';
 import { storeToRefs } from 'pinia';
-import HeadingSmall from '@/components/core/util/HeadingSmall.vue';
 
 // Props
 interface Props {
@@ -39,17 +37,13 @@ const props = defineProps<Props>();
 const { user } = props.auth;
 // Composables
 const { idTypes, listIdTypes } = useIdTypes();
-const { steps, applicationFormSchema, saveApplication } = useStudentPortal();
+const { applicationFormSchema, saveApplication } = useStudentPortal();
 const { listLevelRequirements } = useDepartmentLevels();
 const { isNativeCitizen, isItTrue } = useUtils();
 
 // Stepper state
 const stepIndex = ref(1);
 const maxStep = 6;
-
-// Breadcrumbs
-const breadcrumbs: BreadcrumbItemInterface[] = [{ title: user.attributes?.name }, { transKey: 'complete_application' }];
-
 // Store
 const storeRefs = storeToRefs(useCreateApplicationFormStore());
 
@@ -185,51 +179,35 @@ onMounted(async () => {
 });
 </script>
 <template>
-    <div class="flex flex-col w-full h-screen p-10">
-        <div class="mx-auto flex flex-col w-1/2">
-            <header class="flex flex-col w-full justify-center items-center">
-                <HeadingSmall :title="user.attributes?.name"/>
-                <p class="text-muted-foreground my-1 text-sm">{{ $t('trans.application_form_description') }}</p>
-            </header>
-            <!-- PERSONAL DETAILS -->
-            <div class="grid grid-cols-1 md:grid-cols-2">
-                
+    <nav class="fixed top-0 right-0 left-0 z-50 w-full bg-white shadow">
+        <div class="mx-auto flex w-2/3 items-center justify-center space-x-5 px-4 py-2">
+            <Heading :title="user.attributes?.name" />
+            <div class="flex">
+                <TextLink :href="route('logout')" method="post" as="button" class="text-destructive mx-auto block text-sm uppercase">
+                    {{ $t('trans.logout') }}
+                </TextLink>
             </div>
         </div>
-    </div>
-<!--    <form @submit.prevent="() => saveApplication(form)">
-        <Stepper v-slot="{ isPrevDisabled, nextStep, prevStep }" v-model="stepIndex" class="flex w-full flex-col">
-            <BaseStepperItem :steps="steps" />
-            &lt;!&ndash; CONTENT &ndash;&gt;
-            <div class="mt-4 flex flex-col gap-4">
-                <template v-if="stepIndex === 1">
-                    <PersonalDetails :form="form" />
-                </template>
-                <template v-if="stepIndex === 2">
-                    <ContactDetails :form="form" />
-                </template>
-                <template v-if="stepIndex === 3">
-                    <NextOfKinDetails :form="form" />
-                </template>
-                <template v-if="stepIndex === 4">
-                    <Programs :form="form" />
-                </template>
-                <template v-if="stepIndex === 5">
-                    <p>Upload documents</p>
-                </template>
-                <template v-if="stepIndex === maxStep">
-                    <Confirmation />
-                </template>
+    </nav>
+    <form @submit.prevent="() => saveApplication(form)">
+        <div class="mt-20 flex w-full flex-col p-10">
+            <div class="mx-auto flex w-6/8 flex-col bg-white">
+                <CustomSeparator classes="h-2 mb-4" />
+                <div class="flex flex-col items-center justify-center">
+                    <p class="text-destructive text-md">{{ $t('trans.application_form_description') }}</p>
+                    <CustomSeparator classes="w-1/2" />
+                </div>
+                <!-- PERSONAL DETAILS -->
+                <PersonalDetails :form="form" />
+                <CustomSeparator classes="h-2 my-4" />
+                <ContactDetails :form="form" />
+                <CustomSeparator classes="h-2 mb-4" />
+                <NextOfKinDetails :form="form" />
+                <CustomSeparator classes="h-2 my-4" />
+                <Programs :form="form" />
+                <CustomSeparator classes="h-2 mb-4" />
+                <Documents />
             </div>
-            &lt;!&ndash; BUTTONS &ndash;&gt;
-            <BaseStepperButtons
-                :processing="form.processing"
-                :step-index="stepIndex"
-                :prev-step-action="() => prevStep()"
-                :next-step-action="() => goNext(() => nextStep())"
-                :previous-disabled="isPrevDisabled"
-                :max-step="maxStep"
-            />
-        </Stepper>
-    </form>-->
+        </div>
+    </form>
 </template>

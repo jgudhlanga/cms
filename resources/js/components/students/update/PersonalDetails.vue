@@ -36,47 +36,33 @@ const { isNativeCitizen } = useUtils();
 </script>
 
 <template>
-    <BaseCard>
-        <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
-            <TitleComboSelect :form="form" v-model="title" :error="form.errors.title" :label-uppercase="true" :is-required="true" />
+    <BaseCard :title="$t('trans.personal_details')" :description="$t('trans.personal_details_description')">
+        <div class="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
+            <TitleComboSelect :form="form" v-model="title" :error="form.errors.title" :is-required="true" />
             <BaseInput
                 input-id="first_name"
                 :label="$t('trans.first_name')"
                 v-model="first_name"
                 placeholder="enter firstname"
-                :label-uppercase="true"
                 :is-required="true"
                 @input="clearFormErrors(form, 'first_name')"
                 :error="form.errors.first_name"
             />
-            <BaseInput
-                input-id="middle_name"
-                :label="$t('trans.middle_name')"
-                placeholder="enter middlename"
-                v-model="middle_name"
-                :label-uppercase="true"
-            />
+            <BaseInput input-id="middle_name" :label="$t('trans.middle_name')" placeholder="enter middlename" v-model="middle_name" />
             <BaseInput
                 input-id="last_name"
                 :label="$t('trans.last_name')"
                 placeholder="enter lastname / surname"
                 v-model="last_name"
-                :label-uppercase="true"
                 :is-required="true"
                 @input="clearFormErrors(form, 'last_name')"
                 :error="form.errors.last_name"
             />
-            <GenderComboSelect :form="form" v-model="gender" :error="form.errors.gender" :label-uppercase="true" :is-required="true" />
-            <MaritalStatusComboSelect
-                :form="form"
-                v-model="maritalStatus"
-                :error="form.errors.maritalStatus"
-                :label-uppercase="true"
-                :is-required="true"
-            />
+            <GenderComboSelect :form="form" v-model="gender" :error="form.errors.gender" :is-required="true" />
+            <MaritalStatusComboSelect :form="form" v-model="maritalStatus" :error="form.errors.maritalStatus" :is-required="true" />
         </div>
         <div class="grid-col-1 mt-4 grid gap-3 md:grid-cols-3">
-            <IdTypeComboSelect :form="form" v-model="idType" :error="form.errors.idType" :label-uppercase="true" :is-required="true" />
+            <IdTypeComboSelect :form="form" v-model="idType" :error="form.errors.idType" :is-required="true" />
             <template v-if="isNativeCitizen(idType?.label ?? '')">
                 <IdNumber v-model="id_number" :is-required="true" @input="clearFormErrors(form, 'id_number')" :error="form.errors.id_number" />
             </template>
@@ -87,20 +73,18 @@ const { isNativeCitizen } = useUtils();
                     @input="clearFormErrors(form, 'passport_number')"
                     :error="form.errors.passport_number"
                 />
-                <CountryComboSelect :form="form" v-model="country" :error="form.errors.country" :label-uppercase="true" :is-required="true" />
+                <CountryComboSelect :form="form" v-model="country" :error="form.errors.country" :is-required="true" />
                 <BaseInput
                     input-id="study_permit_number"
                     :label="$t('trans.study_permit_number')"
                     v-model="study_permit_number"
                     @input="clearFormErrors(form, 'study_permit_number')"
                     :error="form.errors.study_permit_number"
-                    :label-uppercase="true"
                 />
             </template>
             <DateOfBirth
                 v-model="date_of_birth"
                 :is-required="true"
-                :label-uppercase="true"
                 :teleport="true"
                 :error="form.errors.date_of_birth"
                 @update:model-value="clearFormErrors(form, 'date_of_birth')"
