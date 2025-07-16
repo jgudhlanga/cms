@@ -1,7 +1,7 @@
 import AppLogo from '@/components/core/image/AppLogo.vue';
 import { IconName } from '@/enums/icons';
 import { icons } from '@/lib/icons';
-import { hasAbility } from '@/lib/permissions';
+import { hasAbility, hasStudentProfile } from '@/lib/permissions';
 import { TenantInterface } from '@/types/tenants';
 import { MenuItemInterface } from '@/types/ui';
 import { trans, trans_choice } from 'laravel-vue-i18n';
@@ -88,31 +88,31 @@ export function useSidebarMenu() {
             transChoiceKey: 'trans.dashboard',
             icon: icons[IconName.dashboard],
             url: route('portal.dashboard'),
-            show: hasAbility('viewOwnDashboard:students'),
+            show: hasAbility('viewOwnDashboard:students') && hasStudentProfile(),
         },
         {
             transKey: 'trans.personal_details',
             icon: icons[IconName.user],
             url: route('portal.personal-details'),
-            show: hasAbility('manageOwnStudentPersonalDetails:students'),
+            show: hasAbility('manageOwnStudentPersonalDetails:students') && hasStudentProfile(),
         },
         {
             transChoiceKey: 'trans.program',
             icon: icons[IconName.graduation_cape],
             url: route('portal.programs'),
-            show: hasAbility('manageOwnStudentProgramDetails:students'),
+            show: hasAbility('manageOwnStudentProgramDetails:students') && hasStudentProfile(),
         },
         {
             transKey: 'trans.financial_record',
             icon: icons[IconName.dollar],
             url: route('portal.financial-record'),
-            show: hasAbility('manageOwnStudentFinancialDetails:students'),
+            show: hasAbility('manageOwnStudentFinancialDetails:students') && hasStudentProfile(),
         },
         {
             transKey: 'trans.academic_record',
             icon: icons[IconName.award],
             url: route('portal.academic-record'),
-            show: hasAbility('manageOwnStudentAcademicDetails:students'),
+            show: hasAbility('manageOwnStudentAcademicDetails:students') && hasStudentProfile(),
         },
         /** ================ PORTAL END ======================*/
     ];

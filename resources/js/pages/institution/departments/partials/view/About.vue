@@ -30,7 +30,7 @@ const csDepartmentData = {
                 :enter="{ opacity: 1, y: 0, transition: { duration: 0.5 } }"
             >
                 <HeadingSmall :title="`Welcome to the Department of ${department.attributes?.department}`" />
-                <blockquote class="flex flex-col w-full md:w-1/2 mt-2 border-x-4 border-primary pl-6 italic">
+                <blockquote class="flex flex-col w-full mt-2 border-x-4 border-primary pl-6 italic">
                     {{ `" ${csDepartmentData.welcomeMessage}"` }}
                 </blockquote>
                 <Separator class="mt-2" />
@@ -39,7 +39,7 @@ const csDepartmentData = {
             <!-- About Us -->
             <div v-motion :initial="{ opacity: 0, y: 40 }" :enter="{ opacity: 1, y: 0, transition: { delay: 0.1 } }">
                 <HeadingSmall title="About Us" />
-                <div class="flex flex-col w-full md:w-1/2 mt-3">
+                <div class="flex flex-col w-full mt-3">
                     {{
                         `The Department of ${department.attributes?.department} at ${csDepartmentData.collegeName} is committed to academic excellence,
                     research innovation, and empowering students with real-world skills in the field of ${csDepartmentData.fieldOfStudy}`

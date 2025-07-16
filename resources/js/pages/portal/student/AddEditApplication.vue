@@ -45,7 +45,7 @@ const { isNativeCitizen, isItTrue } = useUtils();
 
 // Stepper state
 const stepIndex = ref(1);
-const maxStep = 5;
+const maxStep = 6;
 
 // Breadcrumbs
 const breadcrumbs: BreadcrumbItemInterface[] = [{ title: user.attributes?.name }];
@@ -203,6 +203,9 @@ onMounted(async () => {
                     </template>
                     <template v-if="stepIndex === 4">
                         <Programs :form="form" />
+                    </template>
+                    <template v-if="stepIndex === 5">
+                        <p>Upload documents</p>
                     </template>
                     <template v-if="stepIndex === maxStep">
                         <Confirmation />

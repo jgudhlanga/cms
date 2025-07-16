@@ -25,7 +25,7 @@ const { goBack } = useUtils();
 		</div>
 		<IconButton :icon="IconName.back" :variant="ColorVariant.shade_outline" class="px-4" @click="goBack" />
 	</header>
-	<div class="flex flex-col w-full pb-10">
+	<div class="flex flex-col w-full pb-10 h-full">
         <slot />
     </div>
 </template>

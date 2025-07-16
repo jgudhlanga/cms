@@ -89,10 +89,14 @@ const SelectOnlyReadWriteRequired = (value: any) => {
 
 const departmentLevels = computed(() => props.levels.filter((item: DepartmentLevel) => item.id !== departmentLevel.id));
 const onRadioChange = (value: any) => {
+    if(value == 'none') {
+        form.required_level_id = null;
+        return;
+    }
     form.required_level_id = value;
 };
 const options = computed(() => {
-    return departmentLevels.value.map(
+    const toReturn =  departmentLevels.value.map(
         (item: DepartmentLevel) =>
             <RadioGroupOption>{
                 value: item?.attributes?.levelId?.toString(),
@@ -100,6 +104,12 @@ const options = computed(() => {
                 inputId: 'radio_' + item?.attributes?.levelId?.toString(),
             },
     );
+    toReturn.push({
+        value: 'none',
+        label: 'None',
+        inputId: 'radio_none',
+    })
+    return toReturn;
 });
 
 const updateLevel = () => {
