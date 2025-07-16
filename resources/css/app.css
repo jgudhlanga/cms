@@ -204,6 +204,10 @@
         background: linear-gradient(90deg, #30a8ff 0%, #001e36 100%);
     }
 
+    .bg-infinite {
+        @apply bg-[url('/assets/images/body-bg.svg')] bg-cover bg-no-repeat;
+    }
+
     .hava-table {
         @apply min-w-full text-sm font-extralight;
     }
@@ -300,6 +304,6 @@
     }
 
     body {
-        @apply bg-background text-foreground;
+        @apply bg-background text-foreground bg-[url('/assets/images/body-bg.svg')] bg-cover bg-no-repeat;
     }
 }

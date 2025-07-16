@@ -6,10 +6,9 @@ use App\DTO\Shared\{AddressDto, ContactDto, NextOfKinDto};
 use App\DTO\Students\CreateApplicationDto;
 use App\DTO\Users\UserDto;
 use App\Enums\Acl\RoleEnum;
-use App\Helpers\WorkflowHelper;
-use App\Models\Institution\DepartmentApplicationStep;
 use App\Enums\Shared\{StatusEnum, TenantEnum};
 use App\Events\Students\ApplicationWorkflowStepChanged;
+use App\Helpers\WorkflowHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Shared\{AddressRequest, ContactRequest, NextOfKinRequest};
 use App\Http\Requests\Students\CreateApplicationRequest;
@@ -84,7 +83,7 @@ class PortalController extends Controller
     public function createApplication()
     {
         $this->authorize('manageStudentPersonalDetails');
-        return Inertia::render('portal/student/AddEditApplication');
+        return Inertia::render('portal/application/StudentApplication');
     }
 
     /**
@@ -115,7 +114,7 @@ class PortalController extends Controller
                 $application->application_tracking_number
             )->withoutDelay();*/
 
-            return to_route('portal.application-confirmation');
+            return to_route('portal.track-application');
         } catch (Throwable $e) {
             DB::rollBack();
             Log::error('Application submission failed', ['exception' => $e]);
@@ -125,10 +124,10 @@ class PortalController extends Controller
         }
     }
 
-    public function applicationConfirmation(User $user)
+    public function trackApplication(User $user)
     {
         $this->authorize('manageStudentPersonalDetails');
-        return Inertia::render('portal/student/ApplicationConfirmation', [
+        return Inertia::render('portal/student/TrackApplication', [
             'student' => StudentResource::make($this->getStudent(request())),
         ]);
     }

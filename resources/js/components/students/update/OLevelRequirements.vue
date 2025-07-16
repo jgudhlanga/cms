@@ -10,6 +10,9 @@ import { RadioGroupOption } from '@/types/forms';
 import { useGrades } from '@/composables/institution/useGrades';
 import { Grade, Subject } from '@/types/institution';
 import SpinnerComponent from '@/components/core/loader/SpinnerComponent.vue';
+import { IconButton } from '@/components/core/button';
+import { IconName } from '@/enums/icons';
+import { ColorVariant } from '@/enums/colors';
 
 interface Props {
     isViewOnly?: boolean;
@@ -72,7 +75,7 @@ const getGrade = (subject: Subject) => {
 </script>
 
 <template>
-    <HeadingSmall :title="$t('trans.o_level_results')" :description="$t('trans.o_level_results_description')" />
+    <HeadingSmall :title="$t('trans.o_level_main_subjects')" :description="$t('trans.o_level_results_description')" />
     <template v-if="levelRequirements?.relationships?.subjects && levelRequirements.relationships.subjects.length > 0">
         <table class="hava-table my-4">
             <thead class="hava-thead">
@@ -87,16 +90,20 @@ const getGrade = (subject: Subject) => {
                     <td class="hava-td" align="center">
                         <SpinnerComponent class="flex items-center justify-center" v-if="isLoading" />
                         <template v-else>
-                            <BaseRadioGroup
-                                v-if="!isViewOnly"
-                                class="flex items-center justify-center"
-                                :options="getOptionsForSubject(subject)"
-                                :default-value="getDefaultOLevels(subject)"
-                                :label-uppercase="true"
-                                :is-required="true"
-                                orientation="horizontal"
-                                @update:modelValue="onRadioChange"
-                            />
+                            <div v-if="!isViewOnly" class="flex w-full items-center justify-center space-x-8">
+                                <BaseRadioGroup
+                                    class="flex items-center justify-center"
+                                    :options="getOptionsForSubject(subject)"
+                                    :default-value="getDefaultOLevels(subject)"
+                                    :label-uppercase="true"
+                                    :is-required="true"
+                                    orientation="horizontal"
+                                    @update:modelValue="onRadioChange"
+                                />
+                                <IconButton
+                                    :icon="IconName.close" :variant="ColorVariant.shade"
+                                />
+                            </div>
                             <template v-else>
                                 <span>{{ getGrade(subject) }}</span>
                             </template>
@@ -107,6 +114,7 @@ const getGrade = (subject: Subject) => {
         </table>
     </template>
     <template v-else>
-        <Empty :message="$t('trans.no_subjects_found')" />
+        <Empty :message="$t('trans.no_main_subjects_found')" />
     </template>
+    <HeadingSmall :title="$t('trans.any_other_subjects')" :description="$t('trans.o_level_results_description')" class="mt-4" />
 </template>

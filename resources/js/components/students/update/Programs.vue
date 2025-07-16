@@ -4,17 +4,17 @@ import DepartmentCourseComboSelect from '@/components/core/form/combobox/Departm
 import DepartmentLevelComboSelect from '@/components/core/form/combobox/DepartmentLevelComboSelect.vue';
 import InstitutionDepartmentComboSelect from '@/components/core/form/combobox/InstitutionDepartmentComboSelect.vue';
 import SpinnerComponent from '@/components/core/loader/SpinnerComponent.vue';
-import { useUtils } from '@/composables/core/useUtils';
-import { useDepartmentLevels } from '@/composables/institution/useDepartmentLevels';
 import LevelRequirements from '@/components/students/update/LevelRequirements.vue';
 import OLevelRequirements from '@/components/students/update/OLevelRequirements.vue';
 import SDPRequirements from '@/components/students/update/SDPRequirements.vue';
+import { useUtils } from '@/composables/core/useUtils';
+import { useDepartmentLevels } from '@/composables/institution/useDepartmentLevels';
+import { clearFormErrors } from '@/lib/forms';
 import { useCreateApplicationFormStore } from '@/store/portal/useCreateApplicationFormStore';
 import { CreateApplicationParams } from '@/types/portal';
 import { InertiaForm } from '@inertiajs/vue3';
 import { storeToRefs } from 'pinia';
 import { ref, watch } from 'vue';
-import { clearFormErrors } from '@/lib/forms';
 
 const { department, level, course } = storeToRefs(useCreateApplicationFormStore());
 const { listLevelRequirements, levelRequirements, isLoading } = useDepartmentLevels();
@@ -24,7 +24,7 @@ interface Props {
 }
 
 const props = defineProps<Props>();
-const {form} = props;
+const { form } = props;
 const { isItTrue } = useUtils();
 const courseDisabled = ref(false);
 
@@ -49,21 +49,14 @@ watch(course, async () => {
 </script>
 
 <template>
-    <BaseCard>
-        <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-            <InstitutionDepartmentComboSelect
-                :form="form"
-                v-model="department"
-                :error="form.errors.department"
-                :label-uppercase="true"
-                :is-required="true"
-            />
+    <BaseCard :title="$t('trans.programs')" :description="$t('trans.program_description')">
+        <div class="grid grid-cols-1 gap-3 md:grid-cols-3">
+            <InstitutionDepartmentComboSelect :form="form" v-model="department" :error="form.errors.department" :is-required="true" />
             <DepartmentLevelComboSelect
                 :form="form"
                 :institution-department-id="department?.value?.toString() ?? ''"
                 v-model="level"
                 :error="form.errors.level"
-                :label-uppercase="true"
                 :is-required="true"
             />
             <DepartmentCourseComboSelect
@@ -71,7 +64,6 @@ watch(course, async () => {
                 :department-level-id="level?.value?.toString() ?? ''"
                 v-model="course"
                 :error="form.errors.course"
-                :label-uppercase="true"
                 :is-required="true"
                 :disabled="courseDisabled"
             />
