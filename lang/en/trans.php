@@ -259,7 +259,7 @@ return [
     "next_of_kin" => "Next of kin",
     "next_of_kin_description" => "Provide with next of kin details",
     "program_description" => "Select program you want to apply for",
-    "confirmation" => "Confirmation",
+    "confirmation" => "Confirm",
     "confirmation_description" => "Double check information",
     "id_type" => "Identity type|Identity types",
     "marital_status" => "Marital Status|Marital Statuses",
@@ -362,4 +362,5 @@ return [
     "new_student_registration" => "New student registration",
     "existing_student_login" => "Existing student login",
     "track_application" => "Track application",
+    "complete_application" => "Complete your application",
 ];

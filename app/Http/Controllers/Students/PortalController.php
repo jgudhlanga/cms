@@ -83,7 +83,7 @@ class PortalController extends Controller
     public function createApplication()
     {
         $this->authorize('manageStudentPersonalDetails');
-        return Inertia::render('portal/student/AddEditApplication');
+        return Inertia::render('portal/application/StudentApplication');
     }
 
     /**

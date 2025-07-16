@@ -1,6 +1,5 @@
 <script setup lang="ts">
 // UI components
-import PageContainer from '@/components/core/page/PageContainer.vue';
 import BaseStepperButtons from '@/components/core/stepper/BaseStepperButtons.vue';
 import BaseStepperItem from '@/components/core/stepper/BaseStepperItem.vue';
 import { Stepper } from '@/components/ui/stepper';
@@ -26,8 +25,9 @@ import { BreadcrumbItemInterface } from '@/types/ui';
 
 // Utilities
 import { useIdTypes } from '@/composables/shared/useIdTypes';
-import { Head, useForm } from '@inertiajs/vue3';
+import { useForm } from '@inertiajs/vue3';
 import { storeToRefs } from 'pinia';
+import HeadingSmall from '@/components/core/util/HeadingSmall.vue';
 
 // Props
 interface Props {
@@ -48,7 +48,7 @@ const stepIndex = ref(1);
 const maxStep = 6;
 
 // Breadcrumbs
-const breadcrumbs: BreadcrumbItemInterface[] = [{ title: user.attributes?.name }, {transKey: 'complete_application'}];
+const breadcrumbs: BreadcrumbItemInterface[] = [{ title: user.attributes?.name }, { transKey: 'complete_application' }];
 
 // Store
 const storeRefs = storeToRefs(useCreateApplicationFormStore());
@@ -185,42 +185,51 @@ onMounted(async () => {
 });
 </script>
 <template>
-    <Head :title="$tChoice('trans.application', 1)" />
-    <PageContainer :breadcrumbs="breadcrumbs">
-        <form @submit.prevent="() => saveApplication(form)">
-            <Stepper v-slot="{ isPrevDisabled, nextStep, prevStep }" v-model="stepIndex" class="flex w-full flex-col">
-                <BaseStepperItem :steps="steps" />
-                <!-- CONTENT -->
-                <div class="mt-4 flex flex-col gap-4">
-                    <template v-if="stepIndex === 1">
-                        <PersonalDetails :form="form" />
-                    </template>
-                    <template v-if="stepIndex === 2">
-                        <ContactDetails :form="form" />
-                    </template>
-                    <template v-if="stepIndex === 3">
-                        <NextOfKinDetails :form="form" />
-                    </template>
-                    <template v-if="stepIndex === 4">
-                        <Programs :form="form" />
-                    </template>
-                    <template v-if="stepIndex === 5">
-                        <p>Upload documents</p>
-                    </template>
-                    <template v-if="stepIndex === maxStep">
-                        <Confirmation />
-                    </template>
-                </div>
-                <!-- BUTTONS -->
-                <BaseStepperButtons
-                    :processing="form.processing"
-                    :step-index="stepIndex"
-                    :prev-step-action="() => prevStep()"
-                    :next-step-action="() => goNext(() => nextStep())"
-                    :previous-disabled="isPrevDisabled"
-                    :max-step="maxStep"
-                />
-            </Stepper>
-        </form>
-    </PageContainer>
+    <div class="flex flex-col w-full h-screen p-10">
+        <div class="mx-auto flex flex-col w-1/2">
+            <header class="flex flex-col w-full justify-center items-center">
+                <HeadingSmall :title="user.attributes?.name"/>
+                <p class="text-muted-foreground my-1 text-sm">{{ $t('trans.application_form_description') }}</p>
+            </header>
+            <!-- PERSONAL DETAILS -->
+            <div class="grid grid-cols-1 md:grid-cols-2">
+                
+            </div>
+        </div>
+    </div>
+<!--    <form @submit.prevent="() => saveApplication(form)">
+        <Stepper v-slot="{ isPrevDisabled, nextStep, prevStep }" v-model="stepIndex" class="flex w-full flex-col">
+            <BaseStepperItem :steps="steps" />
+            &lt;!&ndash; CONTENT &ndash;&gt;
+            <div class="mt-4 flex flex-col gap-4">
+                <template v-if="stepIndex === 1">
+                    <PersonalDetails :form="form" />
+                </template>
+                <template v-if="stepIndex === 2">
+                    <ContactDetails :form="form" />
+                </template>
+                <template v-if="stepIndex === 3">
+                    <NextOfKinDetails :form="form" />
+                </template>
+                <template v-if="stepIndex === 4">
+                    <Programs :form="form" />
+                </template>
+                <template v-if="stepIndex === 5">
+                    <p>Upload documents</p>
+                </template>
+                <template v-if="stepIndex === maxStep">
+                    <Confirmation />
+                </template>
+            </div>
+            &lt;!&ndash; BUTTONS &ndash;&gt;
+            <BaseStepperButtons
+                :processing="form.processing"
+                :step-index="stepIndex"
+                :prev-step-action="() => prevStep()"
+                :next-step-action="() => goNext(() => nextStep())"
+                :previous-disabled="isPrevDisabled"
+                :max-step="maxStep"
+            />
+        </Stepper>
+    </form>-->
 </template>
