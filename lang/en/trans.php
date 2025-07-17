@@ -364,4 +364,6 @@ return [
     "track_application" => "Track application",
     "complete_application" => "Complete your application",
     "remove" => "Remove",
+    "sitting" => "Sitting|Sittings",
+    "year" => "Year|Years",
 ];

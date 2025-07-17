@@ -68,7 +68,7 @@ watch(course, async () => {
                 :disabled="courseDisabled"
             />
         </div>
-        <div class="my-4 flex flex-col">
+        <div class="my-4 flex flex-col w-full">
             <template v-if="isLoading">
                 <SpinnerComponent class="flex w-full items-center justify-center" />
             </template>

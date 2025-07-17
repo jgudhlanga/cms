@@ -186,8 +186,8 @@ onMounted(async () => {
 });
 </script>
 <template>
-    <nav class="fixed top-0 right-0 left-0 z-50 w-full bg-white shadow">
-        <div class="mx-auto flex w-6/8 items-center justify-between space-x-5 py-3">
+    <nav class="fixed top-0 right-0 left-0 z-50 w-full bg-white shadow px-10">
+        <div class="flex w-full md:w-6/8 md:mx-auto items-center justify-between space-x-5 py-3">
             <div class="flex size-8 items-center justify-start rounded-sm border">
                 <AppLogo class="shrink-0" />
             </div>
@@ -200,11 +200,11 @@ onMounted(async () => {
         </div>
     </nav>
     <form @submit.prevent="() => save()">
-        <div class="mt-20 flex w-full flex-col pb-10">
-            <div class="mx-auto flex w-6/8 flex-col bg-white">
+        <div class="mt-20 flex w-full flex-col px-10 md:p-0">
+            <div class="md:mx-auto flex w-full md:w-6/8 flex-col">
                 <div class="flex flex-col items-center justify-center">
                     <p class="text-destructive text-md">-- {{ $t('trans.application_form_description') }} --</p>
-                    <CustomSeparator classes="w-1/2 mt-4" />
+                    <CustomSeparator classes="w-full md:w-1/2 mt-4" />
                 </div>
                 <PersonalDetails :form="form" />
                 <CustomSeparator classes="h-1 my-5" />
