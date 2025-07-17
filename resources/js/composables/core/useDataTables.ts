@@ -312,8 +312,8 @@ export function useDataTables() {
     const actionButton = (params: TableButton) => {
         return h(BaseButton, {
             title: params.title,
-            variant: params?.variant ?? ColorVariant.fuchsia_outline,
-            classes: params?.classes ?? 'rounded-full capitalize font-normal',
+            variant: params?.variant ?? ColorVariant.danger_outline,
+            classes: params?.classes ?? 'rounded-full capitalize font-normal uppercase',
             size: params?.size ?? ButtonSize.sm,
             onClick: params?.onClick,
         });
