@@ -28,6 +28,9 @@ class ApplicationWorkflowStepAction implements ShouldQueue
         $program = $event->program;
         $newStep = $event->newStep;
         $oldStep = $event->oldStep;
+        $program->update([
+            'department_application_step_id' => $newStep->id,
+        ]);
         Notification::sendNow($user, new ApplicationSubmitted($name, $program, $newStep, $oldStep));
     }
 }

@@ -1,4 +1,4 @@
-import { DepartmentCourse, DepartmentLevel } from '@/types/department-meta-data';
+import { DepartmentApplicationStep, DepartmentCourse, DepartmentLevel } from '@/types/department-meta-data';
 import { InstitutionDepartment } from '@/types/institution';
 import { SelectOption } from '@/types/utils';
 
@@ -121,6 +121,7 @@ export type StudentProgram = {
         institutionDepartment?: InstitutionDepartment;
         departmentLevel?: DepartmentLevel;
         departmentCourse?: DepartmentCourse;
+        departmentWorkflowStep?: DepartmentApplicationStep;
     };
 };
 

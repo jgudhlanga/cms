@@ -1,18 +1,16 @@
 <script setup lang="ts">
+import BaseRadioGroup from '@/components/core/form/radio-group/BaseRadioGroup.vue';
+import SpinnerComponent from '@/components/core/loader/SpinnerComponent.vue';
 import Empty from '@/components/core/util/Empty.vue';
 import HeadingSmall from '@/components/core/util/HeadingSmall.vue';
-import { DepartmentLevelRequirement } from '@/types/department-meta-data';
-import { storeToRefs } from 'pinia';
-import { useCreateApplicationFormStore } from '@/store/portal/useCreateApplicationFormStore';
-import BaseRadioGroup from '@/components/core/form/radio-group/BaseRadioGroup.vue';
-import { onMounted } from 'vue';
-import { RadioGroupOption } from '@/types/forms';
 import { useGrades } from '@/composables/institution/useGrades';
+import { useCreateApplicationFormStore } from '@/store/portal/useCreateApplicationFormStore';
+import { DepartmentLevelRequirement } from '@/types/department-meta-data';
+import { RadioGroupOption } from '@/types/forms';
 import { Grade, Subject } from '@/types/institution';
-import SpinnerComponent from '@/components/core/loader/SpinnerComponent.vue';
-import { IconButton } from '@/components/core/button';
-import { IconName } from '@/enums/icons';
-import { ColorVariant } from '@/enums/colors';
+import { trans } from 'laravel-vue-i18n';
+import { storeToRefs } from 'pinia';
+import { onMounted } from 'vue';
 
 interface Props {
     isViewOnly?: boolean;
@@ -34,19 +32,29 @@ const onRadioChange = (value: string) => {
     }
     // Ensure it's initialized
     if (!o_level_subject_ids.value) {
-        o_level_subject_ids.value = {}; // initialize as empty object
+        o_level_subject_ids.value = {}; // initialize as an empty object
     }
     // Update the reactive object
-    o_level_subject_ids.value[subjectId] = gradeId;
+    if (gradeId == 'remove') {
+        delete o_level_subject_ids.value[subjectId];
+    } else {
+        o_level_subject_ids.value[subjectId] = gradeId;
+    }
 };
 
 const getOptionsForSubject = (subject: Subject): RadioGroupOption[] => {
     if (!subject || !grades.value) return [];
-    return grades.value.map((grade: Grade) => ({
+    const dataOptions = grades.value.map((grade: Grade) => ({
         value: `${subject.id}|${grade.id}`,
         label: grade.attributes?.name,
         inputId: `radio_${subject.id}_${grade.id}`,
     }));
+    dataOptions.push({
+        value: `${subject.id}|remove`,
+        label: trans('trans.remove').toUpperCase() as string,
+        inputId: `radio_${subject.id}_remove`,
+    });
+    return dataOptions;
 };
 
 onMounted(async () => {
@@ -99,9 +107,6 @@ const getGrade = (subject: Subject) => {
                                     :is-required="true"
                                     orientation="horizontal"
                                     @update:modelValue="onRadioChange"
-                                />
-                                <IconButton
-                                    :icon="IconName.close" :variant="ColorVariant.shade"
                                 />
                             </div>
                             <template v-else>

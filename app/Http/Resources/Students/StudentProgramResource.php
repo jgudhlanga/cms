@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\Students;
 
+use App\Http\Resources\Institution\DepartmentApplicationStepResource;
 use App\Http\Resources\Institution\DepartmentCourseResource;
 use App\Http\Resources\Institution\DepartmentLevelResource;
 use App\Http\Resources\Institution\InstitutionDepartmentResource;
@@ -15,6 +16,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
  * @property mixed $institutionDepartment
  * @property mixed $departmentLevel
  * @property mixed $departmentCourse
+ * @property mixed $departmentWorkflowStep
  */
 class StudentProgramResource extends JsonResource
 {
@@ -33,6 +35,7 @@ class StudentProgramResource extends JsonResource
                 'institutionDepartment' => InstitutionDepartmentResource::make($this->institutionDepartment),
                 'departmentLevel' => DepartmentLevelResource::make($this->departmentLevel),
                 'departmentCourse' => DepartmentCourseResource::make($this->departmentCourse),
+                'departmentWorkflowStep' => DepartmentApplicationStepResource::make($this->departmentWorkflowStep)
             ]
         ];
     }

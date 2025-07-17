@@ -363,4 +363,5 @@ return [
     "existing_student_login" => "Existing student login",
     "track_application" => "Track application",
     "complete_application" => "Complete your application",
+    "remove" => "Remove",
 ];

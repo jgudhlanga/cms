@@ -7,6 +7,7 @@ import BaseTag from '@/components/core/util/BaseTag.vue';
 import TextLink from '@/components/core/util/TextLink.vue';
 import UserAvatar from '@/components/core/util/UserAvatar.vue';
 import { useUtils } from '@/composables/core/useUtils';
+import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
 import { IconName } from '@/enums/icons';
 import { dangerDialog, forbiddenAlert, successAlert, warningDialog } from '@/lib/alerts';
@@ -19,7 +20,7 @@ import {
     getSortedRowModel,
     SortingState,
     type Table,
-    useVueTable
+    useVueTable,
 } from '@tanstack/vue-table';
 import { trans } from 'laravel-vue-i18n';
 import { debounce } from 'lodash';
@@ -312,7 +313,8 @@ export function useDataTables() {
         return h(BaseButton, {
             title: params.title,
             variant: params?.variant ?? ColorVariant.fuchsia_outline,
-            classes: params?.classes ?? 'rounded-full h-7 capitalize font-normal',
+            classes: params?.classes ?? 'rounded-full capitalize font-normal',
+            size: params?.size ?? ButtonSize.sm,
             onClick: params?.onClick,
         });
     };

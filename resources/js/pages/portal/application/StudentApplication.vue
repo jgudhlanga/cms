@@ -200,7 +200,7 @@ onMounted(async () => {
         </div>
     </nav>
     <form @submit.prevent="() => save()">
-        <div class="mt-20 flex w-full flex-col">
+        <div class="mt-20 flex w-full flex-col pb-10">
             <div class="mx-auto flex w-6/8 flex-col bg-white">
                 <div class="flex flex-col items-center justify-center">
                     <p class="text-destructive text-md">-- {{ $t('trans.application_form_description') }} --</p>
