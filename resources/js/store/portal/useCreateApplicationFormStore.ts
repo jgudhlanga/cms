@@ -48,6 +48,9 @@ export const useCreateApplicationFormStore = defineStore('portal-application-for
             o_level_sittings: null,
             required_level_completed: null,
             read_write_acknowledged: null,
+            o_level_other_subject_ids: null,
+            o_level_other_years: null,
+            o_level_other_sittings: null,
         };
     },
     persist: true,
