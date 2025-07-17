@@ -71,15 +71,15 @@ export const useSharedFormSchema = () => {
         });
     const addressOneSchema = () =>
         z.object({
-            address_1: z.string().nonempty(trans('trans.enter_required_field', { field: trans('trans.street_number') })),
+            address_1: z.string().nonempty(trans('trans.enter_required_field', { field: trans('trans.address_1') })),
         });
     const addressTwoSchema = () =>
         z.object({
-            address_2: z.string().nonempty(trans('trans.enter_required_field', { field: trans('trans.street_name') })),
+            address_2: z.string().nonempty(trans('trans.enter_required_field', { field: trans('trans.address_2') })),
         });
     const addressThreeSchema = () =>
         z.object({
-            address_3: z.string().nonempty(trans('trans.enter_required_field', { field: trans('trans.city_town_suburb') })),
+            address_3: z.string().nonempty(trans('trans.enter_required_field', { field: trans('trans.address_3') })),
         });
 
     const nextOfKinNameSchema = () =>
@@ -93,15 +93,15 @@ export const useSharedFormSchema = () => {
         });
     const nextOfKinAddressOneSchema = () =>
         z.object({
-            next_of_kin_address_1: z.string().nonempty(trans('trans.enter_required_field', { field: trans('trans.street_number') })),
+            next_of_kin_address_1: z.string().nonempty(trans('trans.enter_required_field', { field: trans('trans.address_1') })),
         });
     const nextOfKinAddressTwoSchema = () =>
         z.object({
-            next_of_kin_address_2: z.string().nonempty(trans('trans.enter_required_field', { field: trans('trans.street_name') })),
+            next_of_kin_address_2: z.string().nonempty(trans('trans.enter_required_field', { field: trans('trans.address_2') })),
         });
     const nextOfKinAddressThreeSchema = () =>
         z.object({
-            next_of_kin_address_3: z.string().nonempty(trans('trans.enter_required_field', { field: trans('trans.city_town_suburb') })),
+            next_of_kin_address_3: z.string().nonempty(trans('trans.enter_required_field', { field: trans('trans.address_3') })),
         });
     const dobSchema = () =>
         z.object({

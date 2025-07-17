@@ -16,6 +16,7 @@ const {
     next_of_kin_address_1,
     next_of_kin_address_2,
     next_of_kin_address_3,
+    next_of_kin_address_4,
 } = storeToRefs(useCreateApplicationFormStore());
 
 const props = defineProps<{ form: InertiaForm<CreateApplicationParams> }>();
@@ -48,7 +49,7 @@ const { form } = props;
         <div class="flex flex-col">
             <HeadingSmall :title="$t('trans.residential_address')" :description="$t('trans.residential_address_description')" class="mt-5" />
         </div>
-        <div class="grid-col-1 grid gap-3 md:grid-cols-3">
+        <div class="grid-col-1 grid gap-3 md:grid-cols-4">
             <BaseInput
                 input-id="next_of_kin_address_1"
                 :label="$t('trans.address_1')"
@@ -75,6 +76,12 @@ const { form } = props;
                 @input="clearFormErrors(form, 'next_of_kin_address_3')"
                 :error="form.errors.next_of_kin_address_3"
                 :is-required="true"
+            />
+            <BaseInput
+                input-id="next_of_kin_address_4"
+                :label="$t('trans.address_4')"
+                v-model="next_of_kin_address_4"
+                placeholder="enter address line 4"
             />
         </div>
     </BaseCard>

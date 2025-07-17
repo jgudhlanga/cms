@@ -30,8 +30,30 @@ export function useStudentPortal() {
     ];
 
     const schemaFields = useSharedFormSchema() as Record<string, () => ZodObject<any, any>>;
+
     const applicationFormSchema = (isNativeCitizen: boolean) => {
-        const personal = ['firstNameSchema', 'lastNameSchema', 'genderSchema', 'maritalStatusSchema', 'dobSchema', 'idTypeSchema'];
+        const personal = [
+            'firstNameSchema',
+            'lastNameSchema',
+            'genderSchema',
+            'maritalStatusSchema',
+            'dobSchema',
+            'idTypeSchema',
+            'addressOneSchema',
+            'addressTwoSchema',
+            'addressThreeSchema',
+            'emailSchema',
+            'phoneNumberSchema',
+            'nextOfKinPhoneNumberSchema',
+            'nextOfKinAddressOneSchema',
+            'nextOfKinAddressTwoSchema',
+            'nextOfKinAddressThreeSchema',
+            'relationshipSchema',
+            'nextOfKinNameSchema',
+            'levelSchema',
+            'courseSchema',
+            'departmentSchema',
+        ];
         let personalDetails = null;
         if (isNativeCitizen) {
             personalDetails = mergeValidationSchema(schemaFields)(
@@ -45,22 +67,7 @@ export function useStudentPortal() {
                 schemaFields['titleSchema']().merge(passportNumberUniqueSchema('api/v1/validations/check?key=student_passport_number&value=')),
             );
         }
-        const contacts = mergeValidationSchema(schemaFields)(
-            ['addressOneSchema', 'addressTwoSchema', 'addressThreeSchema', 'emailSchema'],
-            schemaFields['phoneNumberSchema'](),
-        );
-        const nextOfKin = mergeValidationSchema(schemaFields)(
-            [
-                'nextOfKinPhoneNumberSchema',
-                'nextOfKinAddressOneSchema',
-                'nextOfKinAddressTwoSchema',
-                'nextOfKinAddressThreeSchema',
-                'relationshipSchema',
-            ],
-            schemaFields['nextOfKinNameSchema'](),
-        );
-        const programs = mergeValidationSchema(schemaFields)(['levelSchema', 'courseSchema'], schemaFields['departmentSchema']());
-        return [personalDetails, contacts, nextOfKin, programs];
+        return personalDetails;
     };
 
     const successMessage = () => trans('trans.item_saved', { item: trans_choice('trans.application', 1) });
