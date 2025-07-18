@@ -19,5 +19,6 @@ defineProps<Props>();
         :min-date="new Date(1950, 0, 1)"
         :max-date="new Date()"
         :hide-offset-dates="true"
+        :teleport="true"
     />
 </template>

@@ -108,12 +108,7 @@ class PortalController extends Controller
             DB::commit();
 
             ApplicationWorkflowStepChanged::dispatch($student, $application, $stepTwo, $stepOne);
-            /*SendApplicationSubmittedEmail::dispatch(
-                $user->full_name,
-                $user->email,
-                $application->application_tracking_number
-            )->withoutDelay();*/
-
+            
             return to_route('portal.track-application');
         } catch (Throwable $e) {
             DB::rollBack();

@@ -9,7 +9,7 @@ readonly class CreateApplicationDto
 {
     public function __construct(
         /** Personal details */
-        public int  $user_id,
+        public int     $user_id,
         public string  $id_type_id,
         public ?string $id_number,
         public ?string $passport_number,
@@ -43,9 +43,15 @@ readonly class CreateApplicationDto
         public int     $department_id,
         public int     $level_id,
         public int     $course_id,
-        public ?array  $o_level_subjects,
         public ?bool   $required_level_completed,
         public ?bool   $read_write_acknowledged,
+        public ?array  $o_level_subject_ids,
+        public ?array  $o_level_years,
+        public ?array  $o_level_sittings,
+        public ?array  $o_level_other_subject_ids,
+        public ?array  $o_level_other_grade_ids,
+        public ?array  $o_level_other_years,
+        public ?array  $o_level_other_sittings,
     )
     {
     }
@@ -88,9 +94,15 @@ readonly class CreateApplicationDto
             department_id: $request->department_id,
             level_id: $request->level_id,
             course_id: $request->course_id,
-            o_level_subjects: $request->o_level_subject_ids,
             required_level_completed: $request->required_level_completed,
             read_write_acknowledged: $request->read_write_acknowledged,
+            o_level_subject_ids: $request->o_level_subject_ids,
+            o_level_years: $request->o_level_years,
+            o_level_sittings: $request->o_level_sittings,
+            o_level_other_subject_ids: $request->o_level_other_subject_ids,
+            o_level_other_grade_ids: $request->o_level_other_grade_ids,
+            o_level_other_years: $request->o_level_other_years,
+            o_level_other_sittings: $request->o_level_other_sittings,
         );
     }
 }

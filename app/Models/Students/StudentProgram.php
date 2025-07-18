@@ -36,19 +36,12 @@ class StudentProgram extends Model
         'institution_department_id',
         'department_level_id',
         'department_course_id',
-        'o_level_subjects',
         'required_level_completed',
         'read_write_acknowledged',
         'application_tracking_number',
         'department_application_step_id',
         'program_status_id',
     ];
-
-    protected $casts = [
-        'o_level_subjects' => 'array',
-    ];
-
-    protected $appends = ['o_level_subjects'];
 
     public function student(): BelongsTo
     {

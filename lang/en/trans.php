@@ -216,7 +216,7 @@ return [
     "id_number" => "ID Number",
     "passport_number" => "Passport #",
     "application_form" => "Application form",
-    "application_form_description" => "Please fill the form as required. All fields marked with * (asterisk) are required.",
+    "application_form_description" => "Please fill the form as required, fields marked with * (asterisk) are required.",
     "is_zimbabwean_citizen" => "Is Zimbabwean Citizen",
     "confirm_password" => 'Confirm Password',
     "personal" => "Personal",

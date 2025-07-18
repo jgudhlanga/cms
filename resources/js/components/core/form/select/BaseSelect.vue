@@ -6,6 +6,7 @@ import Empty from '../../util/Empty.vue';
 import InputError from '../InputError.vue';
 import { cn } from '@/lib/utils';
 import RequiredIndicator from '@/components/core/form/RequiredIndicator.vue';
+import BaseDatePicker from '@/components/core/form/date/BaseDatePicker.vue';
 
 interface Props {
     label?: string;

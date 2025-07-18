@@ -112,6 +112,11 @@ class Student extends Model
         return $this->hasMany(AcademicRecord::class, 'student_id');
     }
 
+    public function academicResults(): HasMany
+    {
+        return $this->hasMany(StudentAcademicResult::class, 'student_id');
+    }
+
     public function nextOfKins(): MorphMany
     {
         return $this->morphMany(NextOfKin::class, 'kinnable')->withTrashed();

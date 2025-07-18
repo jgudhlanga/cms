@@ -3,20 +3,29 @@ import BaseRadioGroup from '@/components/core/form/radio-group/BaseRadioGroup.vu
 import SpinnerComponent from '@/components/core/loader/SpinnerComponent.vue';
 import Empty from '@/components/core/util/Empty.vue';
 import HeadingSmall from '@/components/core/util/HeadingSmall.vue';
+import SelectOtherSubject from '@/components/students/update/SelectOtherSubject.vue';
 import SelectSitting from '@/components/students/update/SelectSitting.vue';
 import SelectYear from '@/components/students/update/SelectYear.vue';
 import { useGrades } from '@/composables/institution/useGrades';
 import { useSubjects } from '@/composables/institution/useSubjects';
 import { useCreateApplicationFormStore } from '@/store/portal/useCreateApplicationFormStore';
+import { DepartmentLevelRequirement } from '@/types/department-meta-data';
 import { RadioGroupOption } from '@/types/forms';
 import { Grade, Subject } from '@/types/institution';
-import { trans } from 'laravel-vue-i18n';
+import { SelectOption } from '@/types/utils';
 import { storeToRefs } from 'pinia';
-import { onMounted, Ref } from 'vue';
+import { computed, onMounted, Ref } from 'vue';
+
+interface Props {
+    levelRequirements?: DepartmentLevelRequirement | null;
+}
+
+defineProps<Props>();
 
 const { listSubjects, isLoading: subjectsLoading, subjects } = useSubjects();
 const { listGrades, isLoading: gradesLoading, grades } = useGrades();
-const { o_level_other_subject_ids, o_level_other_years, o_level_other_sittings } = storeToRefs(useCreateApplicationFormStore());
+const { o_level_other_subject_ids, o_level_other_grade_ids, o_level_other_years, o_level_other_sittings } =
+    storeToRefs(useCreateApplicationFormStore());
 
 function ensureObjectRef<T extends object>(refObj: Ref<T | undefined | null> | undefined, defaultValue: T): T {
     if (!refObj) throw new Error('Ref is undefined');
@@ -26,75 +35,82 @@ function ensureObjectRef<T extends object>(refObj: Ref<T | undefined | null> | u
     return refObj.value;
 }
 
-const onRadioChange = (value: string) => {
-    const [subjectId, gradeId] = value.split('|');
-    if (!subjectId || !gradeId) return;
+const options = computed(() => {
+    return subjects.value.map(
+        (subject: Subject) =>
+            <SelectOption>{
+                value: Number(subject.id),
+                label: subject?.attributes?.name,
+            },
+    );
+});
 
-    const subjectData = ensureObjectRef(o_level_other_subject_ids, {});
-    const yearData = ensureObjectRef(o_level_other_years, {});
-    const sittingData = ensureObjectRef(o_level_other_sittings, {});
+const onGradeChange = (value: string) => {
+    const [index, gradeId] = value.split('|');
+    if (!index || !gradeId) return;
 
-    if (gradeId === 'remove') {
-        delete subjectData[subjectId];
-        delete yearData[subjectId];
-        delete sittingData[subjectId];
-    } else {
-        subjectData[subjectId] = gradeId;
-    }
+    const gradeData = ensureObjectRef(o_level_other_grade_ids, {});
+    gradeData[index] = gradeId;
 };
-const onYearChange = (value: string, subjectId: string) => {
+const onYearChange = (value: string, index: string) => {
     if (!o_level_other_years) {
         return;
     }
     if (!o_level_other_years.value) {
         o_level_other_years.value = {};
     }
-    o_level_other_years.value[subjectId] = value;
+    o_level_other_years.value[index] = value;
 };
 
-const onSittingChange = (value: string, subjectId: string) => {
+const onSubjectChange = (value: string, index: string) => {
+    if (!o_level_other_subject_ids) {
+        return;
+    }
+    if (!o_level_other_subject_ids.value) {
+        o_level_other_subject_ids.value = {};
+    }
+    o_level_other_subject_ids.value[index] = value;
+};
+const onSittingChange = (value: string, index: string) => {
     if (!o_level_other_sittings) {
         return;
     }
     if (!o_level_other_sittings.value) {
         o_level_other_sittings.value = {};
     }
-    o_level_other_sittings.value[subjectId] = value;
+    o_level_other_sittings.value[index] = value;
 };
 
-const getOptionsForSubject = (subject: Subject): RadioGroupOption[] => {
-    if (!subject || !grades.value) return [];
-    const dataOptions = grades.value.map((grade: Grade) => ({
-        value: `${subject.id}|${grade.id}`,
+const getOptionsForSubject = (index: string): RadioGroupOption[] => {
+    if (!index || !grades.value) return [];
+    return grades.value.map((grade: Grade) => ({
+        value: `${index}|${grade.id}`,
         label: grade.attributes?.name,
-        inputId: `radio_${subject.id}_${grade.id}`,
+        inputId: `radio_${index}_${grade.id}`,
     }));
-    dataOptions.push({
-        value: `${subject.id}|remove`,
-        label: trans('trans.remove').toUpperCase() as string,
-        inputId: `radio_${subject.id}_remove`,
-    });
-    return dataOptions;
 };
 
-onMounted(async () => {
-    await listGrades();
-    await listSubjects();
+onMounted(() => {
+    listGrades();
+    listSubjects();
 });
 
-const getDefaultOLevels = (subject: Subject) => {
-    if (!subject || !o_level_other_subject_ids?.value || !grades.value) return null;
-    const gradeId = o_level_other_subject_ids.value[subject?.id ?? ''];
+const getDefaultOLevels = (index: string) => {
+    if (!index || !o_level_other_subject_ids?.value || !grades.value) return null;
+    const gradeId = o_level_other_subject_ids.value[index ?? ''];
     if (!gradeId) return null;
     const grade = grades.value.find((g: Grade) => g.id == gradeId);
     if (!grade) return null;
-    return `${subject.id}|${gradeId}`;
+    return `${index}|${gradeId}`;
 };
 </script>
 
 <template>
-    <HeadingSmall :title="$t('trans.o_level_other_subjects')" :description="$t('trans.o_level_results_description')" />
-    <template v-if="subjects && subjects.length > 0">
+    <HeadingSmall
+        :title="`${$t('trans.o_level_other_subjects')} (${levelRequirements?.attributes?.otherSubjectsCount})`"
+        :description="$t('trans.o_level_results_description')"
+    />
+    <template v-if="levelRequirements?.attributes && Number(levelRequirements?.attributes?.otherSubjectsCount) > 0">
         <div class="flex w-full flex-col overflow-auto">
             <table class="hava-table my-4">
                 <thead class="hava-thead">
@@ -106,19 +122,28 @@ const getDefaultOLevels = (subject: Subject) => {
                     </tr>
                 </thead>
                 <tbody class="hava-tbody">
-                    <tr class="hava-tr" v-for="subject in subjects" :key="subject?.id ?? ''">
-                        <td class="hava-td" align="left">{{ subject?.attributes?.name }}</td>
+                    <tr class="hava-tr" v-for="n in levelRequirements?.attributes?.otherSubjectsCount" :key="n">
+                        <td class="hava-td" align="left">
+                            <SpinnerComponent class="flex items-center justify-center" v-if="subjectsLoading || gradesLoading" />
+                            <SelectOtherSubject
+                                v-else
+                                :options="options"
+                                :input-id="`other_subject_${n}`"
+                                :model-value="o_level_other_subject_ids?.[n?.toString() ?? ''] || null"
+                                @update:model-value="(value: string) => onSubjectChange(value, n.toString() ?? '')"
+                            />
+                        </td>
                         <td class="hava-td" align="center">
                             <SelectYear
-                                :input-id="`year_${subject.id}`"
-                                :model-value="o_level_other_years?.[subject?.id?.toString() ?? ''] || null"
-                                @update:model-value="(value) => onYearChange(value, subject?.id ?? '')"
+                                :input-id="`other_year_${n}`"
+                                :model-value="o_level_other_years?.[n?.toString() ?? ''] || null"
+                                @update:model-value="(value: string) => onYearChange(value, n.toString() ?? '')"
                             />
                         </td>
                         <td class="hava-td">
                             <SelectSitting
-                                :model-value="o_level_other_sittings?.[subject?.id?.toString() ?? ''] || null"
-                                @update:modelValue="(value) => onSittingChange(value, subject?.id ?? '')"
+                                :model-value="o_level_other_sittings?.[n.toString() ?? ''] || null"
+                                @update:modelValue="(value) => onSittingChange(value, n.toString() ?? '')"
                             />
                         </td>
                         <td class="hava-td" align="center">
@@ -126,12 +151,12 @@ const getDefaultOLevels = (subject: Subject) => {
                             <template v-else>
                                 <BaseRadioGroup
                                     class="flex items-center justify-center"
-                                    :options="getOptionsForSubject(subject)"
-                                    :default-value="getDefaultOLevels(subject)"
+                                    :options="getOptionsForSubject(n.toString() ?? '')"
+                                    :default-value="getDefaultOLevels(n.toString() ?? '')"
                                     :label-uppercase="true"
                                     :is-required="true"
                                     orientation="horizontal"
-                                    @update:modelValue="onRadioChange"
+                                    @update:modelValue="onGradeChange"
                                 />
                             </template>
                         </td>

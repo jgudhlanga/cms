@@ -13,7 +13,6 @@ readonly class StudentProgramDto
         public int    $institution_department_id,
         public int    $department_level_id,
         public int    $department_course_id,
-        public ?array $o_level_subjects,
         public ?bool  $required_level_completed,
         public ?bool  $read_write_acknowledged,
     )
@@ -27,7 +26,6 @@ readonly class StudentProgramDto
             institution_department_id: $request->department_id,
             department_level_id: $request->level_id,
             department_course_id: $request->course_id,
-            o_level_subjects: $request->o_level_subject_ids,
             required_level_completed: $request->required_level_completed,
             read_write_acknowledged: $request->read_write_acknowledged,
         );

@@ -97,7 +97,10 @@ const getDefaultOLevels = (subject: Subject) => {
 </script>
 
 <template>
-    <HeadingSmall :title="$t('trans.o_level_main_subjects')" :description="$t('trans.o_level_results_description')" />
+    <HeadingSmall
+        :title="`${$t('trans.o_level_main_subjects')} (${levelRequirements?.attributes?.mainSubjectsCount})`"
+        :description="$t('trans.o_level_results_description')"
+    />
     <template v-if="levelRequirements?.relationships?.subjects && levelRequirements.relationships.subjects.length > 0">
         <div class="flex w-full flex-col overflow-auto">
             <table class="hava-table my-4">

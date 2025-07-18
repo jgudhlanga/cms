@@ -75,7 +75,7 @@ watch(course, async () => {
             <template v-else>
                 <template v-if="levelRequirements">
                     <template v-if="isItTrue(levelRequirements.attributes.isOLevelRequired)">
-                        <OLevelRequirements :level-requirements="levelRequirements" />
+                        <OLevelRequirements :level-requirements="levelRequirements" :form="form" />
                     </template>
                     <template v-if="levelRequirements.attributes.requiredLevel">
                         <LevelRequirements :level-requirements="levelRequirements" />
