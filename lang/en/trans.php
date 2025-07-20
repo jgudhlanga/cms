@@ -368,4 +368,10 @@ return [
     "remove" => "Remove",
     "sitting" => "Sitting|Sittings",
     "year" => "Year|Years",
+    "document" => "Document|Documents",
+    "professional_info" => "Professional info",
+    "preferences" => "Preferences",
+    "activity_log" => "Activity log",
+    "security" => "Security",
+    "roles_and_permissions" => "Roles and permissions",
 ];

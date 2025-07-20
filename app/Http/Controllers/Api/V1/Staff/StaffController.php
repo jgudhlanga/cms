@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1\Staff;
 use App\Http\Controllers\Api\V1\Utils\ApiDropdownController;
 use App\Http\Filters\Institution\StaffFilter;
 use App\Http\Resources\Institution\StaffResource;
+use App\Models\Institution\Staff;
 use App\Repositories\Institution\interface\IStaffRepository;
 use App\Traits\HttpUtil;
 use Illuminate\Http\Request;
@@ -30,8 +31,9 @@ class StaffController extends ApiDropdownController
     {
     }
 
-    public function show(string $id)
+    public function show(Staff $staff)
     {
+        return StaffResource::make($staff);
     }
 
     public function update(Request $request, string $id)

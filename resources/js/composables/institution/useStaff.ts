@@ -1,11 +1,17 @@
 import { useDataTables } from '@/composables/core/useDataTables';
 import { getIdParams } from '@/lib/utils';
 
+import Addresses from '@/components/staff/Addresses.vue';
+import BasicInfo from '@/components/staff/BasicInfo.vue';
+import Contacts from '@/components/staff/Contacts.vue';
+import Documents from '@/components/staff/Documents.vue';
+import ProfessionalInfo from '@/components/staff/ProfessionalInfo.vue';
 import { useSharedFormSchema } from '@/composables/core/useSharedFormSchema';
 import { useUtils } from '@/composables/core/useUtils';
 import { ColorVariant } from '@/enums/colors';
 import { errorAlert } from '@/lib/alerts';
 import { buildFormOptions, mergeValidationSchema } from '@/lib/forms';
+import { IconName } from '@/lib/icons';
 import { hasAbility } from '@/lib/permissions';
 import { emailUniqueSchema, employeeNumberUniqueSchema, phoneNumberUniqueSchema } from '@/lib/uniqueValidations';
 import HttpService from '@/services/http.service';
@@ -13,9 +19,10 @@ import { useStaffCreateFormStore, useStaffDataStore } from '@/store/institution/
 import { Role } from '@/types/acl';
 import { ApiFilterResponse } from '@/types/data-pagination';
 import { Staff } from '@/types/staff';
+import { CustomTab } from '@/types/utils';
 import { InertiaForm } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
-import { ref } from 'vue';
+import { h, ref } from 'vue';
 import { ZodObject } from 'zod';
 
 export const useStaff = () => {
@@ -162,6 +169,51 @@ export const useStaff = () => {
             isLoading.value = false;
         }
     };
+
+    const staffTabs = (staff: Staff): CustomTab[] => {
+        return [
+            {
+                transLabel: () => trans('trans.basic_info'),
+                value: 'basic_info',
+                component: h(BasicInfo, {staff}),
+                icon: IconName.user,
+            },
+            {
+                transLabel: () => trans('trans.professional_info'),
+                value: 'professional_info',
+                component: h(ProfessionalInfo),
+                icon: IconName.briefcase,
+            },
+            {
+                transLabel: () => trans_choice('trans.contact', 2),
+                value: 'contacts',
+                component: h(Contacts),
+                icon: IconName.contact,
+            },
+            {
+                transLabel: () => trans_choice('trans.address', 2),
+                value: 'addresses',
+                component: h(Addresses),
+                icon: IconName.address,
+            },
+            {
+                transLabel: () => trans_choice('trans.document', 2),
+                value: 'documents',
+                component: h(Documents),
+                icon: IconName.file_search,
+            },
+        ];
+    };
+    const getStaffData = async (url: string) => {
+        try {
+            isLoading.value = true;
+            return await HttpService.get(url);
+        } catch {
+            errorAlert(trans('trans.load_data_failure', { data: trans('trans.portal_info') }));
+        } finally {
+            isLoading.value = false;
+        }
+    };
     return {
         createStaffColumns,
         loadDepartmentStaff,
@@ -171,5 +223,7 @@ export const useStaff = () => {
         createFormSchema,
         loadStaff,
         staff,
+        staffTabs,
+        getStaffData,
     };
 };

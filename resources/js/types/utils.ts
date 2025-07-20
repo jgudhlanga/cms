@@ -91,6 +91,7 @@ export type CustomTab = {
     value: string;
     component: Component;
     show?: boolean;
+    icon?: IconName,
 };
 export type TimelineStep = {
     title: string;

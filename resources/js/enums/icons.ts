@@ -76,5 +76,7 @@ export enum IconName {
     dollar = 'dollar',
     award = 'award',
     wallet_cards = 'wallet_cards',
-
+    briefcase = 'briefcase',
+    history = 'history',
+    finger_print = 'finger_print'
 }

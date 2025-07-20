@@ -7,6 +7,7 @@ import { useSharedFormSchema } from '@/composables/core/useSharedFormSchema';
 import { errorAlert, forbiddenAlert, openModal } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
 import { buildFormOptions, mergeValidationSchema } from '@/lib/forms';
+import { IconName } from '@/lib/icons';
 import { hasAbility } from '@/lib/permissions';
 import { idNumberUniqueSchema, passportNumberUniqueSchema } from '@/lib/uniqueValidations';
 import HttpService from '@/services/http.service';
@@ -85,11 +86,36 @@ export function useStudentPortal() {
 
     const studentTabs = (): CustomTab[] => {
         return [
-            { transLabel: () => trans('trans.basic_info'), value: 'basic_info', component: h(StudentBasicInfo) },
-            { transLabel: () => trans_choice('trans.contact', 2), value: 'contacts', component: h(StudentContacts) },
-            { transLabel: () => trans_choice('trans.address', 2), value: 'addresses', component: h(StudentAddresses) },
-            { transLabel: () => trans_choice('trans.sponsor', 2), value: 'sponsors', component: h(StudentSponsors) },
-            { transLabel: () => trans('trans.next_of_kin'), value: 'next_of_kin', component: h(StudentNextOfKin) },
+            {
+                transLabel: () => trans('trans.basic_info'),
+                value: 'basic_info',
+                component: h(StudentBasicInfo),
+                icon: IconName.user,
+            },
+            {
+                transLabel: () => trans_choice('trans.contact', 2),
+                value: 'contacts',
+                component: h(StudentContacts),
+                icon: IconName.contact,
+            },
+            {
+                transLabel: () => trans_choice('trans.address', 2),
+                value: 'addresses',
+                component: h(StudentAddresses),
+                icon: IconName.address,
+            },
+            {
+                transLabel: () => trans_choice('trans.sponsor', 2),
+                value: 'sponsors',
+                component: h(StudentSponsors),
+                icon: IconName.wallet_cards,
+            },
+            {
+                transLabel: () => trans('trans.next_of_kin'),
+                value: 'next_of_kin',
+                component: h(StudentNextOfKin),
+                icon: IconName.open_link,
+            },
         ];
     };
 
