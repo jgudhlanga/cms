@@ -14,6 +14,7 @@ import { computed } from 'vue';
 import LinkApplicationStepsToDepartment
     from '@/pages/institution/departments/partials/LinkApplicationStepsToDepartment.vue';
 import StepActions from '@/pages/institution/departments/partials/StepActions.vue';
+import { icons } from '@/lib/icons';
 
 interface Props {
     department: InstitutionDepartment;
@@ -47,7 +48,8 @@ const visibleTabs = computed(() => {
                     :value="tab.value"
                     class="text-sm font-light uppercase"
                 >
-                    {{ tab?.transLabel!() }}
+                    <component :is="icons[tab?.icon!]" />
+                    <span>{{ tab?.transLabel!() }}</span>
                 </TabsTrigger>
             </TabsList>
             <TabsContent v-for="tab in visibleTabs" :value="tab.value" :key="'content_' + tab.value" class="py-4">

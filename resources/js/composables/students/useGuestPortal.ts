@@ -4,6 +4,7 @@ import { emailUniqueSchema } from '@/lib/uniqueValidations';
 import { useCreateUserFormStore } from '@/store/portal/useCreateUserFormStore';
 import { InertiaForm } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
+import { ref } from 'vue';
 import { ZodObject } from 'zod';
 
 export function useGuestPortal() {
@@ -19,8 +20,10 @@ export function useGuestPortal() {
             schemaFields['firstNameSchema']().merge(emailUniqueSchema('api/v1/validations/check?key=user_email&value=')),
         );
     };
+    const isValidating = ref(false);
     const createPortalUser = async (form: InertiaForm<any>) => {
         try {
+            isValidating.value = true;
             await formSchema().parseAsync(form);
             form.post(
                 route('portal.store'),
@@ -32,8 +35,10 @@ export function useGuestPortal() {
             );
         } catch (error: any) {
             form.setError(error.format());
+        } finally {
+            isValidating.value = false;
         }
     };
 
-    return { schemaFields, createPortalUser };
+    return { schemaFields, createPortalUser, isValidating };
 }

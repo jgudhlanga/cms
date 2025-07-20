@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // UI components
-import { computed, onMounted, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 
 // Page sections
 import ContactDetails from '@/components/students/update/ContactDetails.vue';
@@ -19,15 +19,19 @@ import { AuthObject } from '@/types/data-pagination';
 import { CreateApplicationParams } from '@/types/portal';
 
 // Utilities
-import { BaseButton } from '@/components/core/button';
+import { BaseButton, IconButton } from '@/components/core/button';
 import AppLogo from '@/components/core/image/AppLogo.vue';
 import CustomSeparator from '@/components/core/util/CustomSeparator.vue';
 import Heading from '@/components/core/util/Heading.vue';
 import TextLink from '@/components/core/util/TextLink.vue';
 import { useIdTypes } from '@/composables/shared/useIdTypes';
 import { ButtonSize } from '@/enums/buttons';
+import { ColorVariant } from '@/enums/colors';
+import { IconName } from '@/enums/icons';
 import { useForm } from '@inertiajs/vue3';
 import { storeToRefs } from 'pinia';
+import { errorAlert } from '@/lib/alerts';
+import { trans } from 'laravel-vue-i18n';
 
 // Props
 interface Props {
@@ -181,10 +185,21 @@ onMounted(async () => {
     await listIdTypes();
     populateInitialForm();
 });
+
+const isValidating = ref(false);
 const save = async () => {
     updateForm();
     try {
+        isValidating.value = true;
         await applicationFormSchema(isNativeCitizen(storeRefs.idType?.value?.label ?? '')).parseAsync(form);
+        if (!isItTrue(storeRefs.levelRequirements?.value)) {
+            errorAlert(trans('trans.nothing_has_changed_to_save'));
+            return;
+        }
+        if (Number(form.main_subjects_count ?? '') > 0 && form.main_subject_ids?.length < Number(form.main_subjects_count)) {
+            errorAlert(trans('trans.main_subject_not_valid', { count: form.main_subjects_count?.toString() ?? '' }));
+            return;
+        }
         saveApplication(form);
     } catch (error: any) {
         if (error?.format) {
@@ -192,6 +207,8 @@ const save = async () => {
         } else {
             console.error(error); // Unexpected error
         }
+    } finally {
+        isValidating.value = false;
     }
 };
 </script>
@@ -204,13 +221,14 @@ const save = async () => {
             <Heading :title="user.attributes?.name" />
             <div class="flex">
                 <TextLink :href="route('logout')" method="post" as="button" classes="text-destructive block text-sm uppercase">
-                    {{ $t('trans.logout') }}
+                    <IconButton :icon="IconName.logout" :variant="ColorVariant.danger_outline" class="size-3" />
                 </TextLink>
             </div>
         </div>
     </nav>
     <form @submit.prevent="() => save()">
         <div class="mt-20 flex w-full flex-col px-10 md:p-0">
+            {{ storeRefs.levelRequirements.value }}
             <div class="flex w-full flex-col md:mx-auto md:w-6/8">
                 <div class="flex flex-col items-center justify-center">
                     <p class="text-muted-foreground text-sm font-semibold">-- {{ $t('trans.application_form_description') }} --</p>
@@ -225,7 +243,7 @@ const save = async () => {
                 <Programs :form="form" />
                 <CustomSeparator classes="h-1 my-5" />
                 <div class="flex items-center justify-center">
-                    <BaseButton class="w-[200px] mb-10" :size="ButtonSize.xl">
+                    <BaseButton class="mb-10 w-[200px]" :size="ButtonSize.xl">
                         {{ $t('trans.submit') }}
                     </BaseButton>
                 </div>

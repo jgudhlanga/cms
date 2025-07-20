@@ -67,8 +67,8 @@ export enum IconName {
     check_icon = 'check_icon',
     bed = 'bed',
     school = 'school',
-    user_check = "user_check",
-    book_check = "book_check",
+    user_check = 'user_check',
+    book_check = 'book_check',
     contact = 'contact',
     address = 'address',
     graduation_cape = 'graduation_cape',
@@ -78,5 +78,9 @@ export enum IconName {
     wallet_cards = 'wallet_cards',
     briefcase = 'briefcase',
     history = 'history',
-    finger_print = 'finger_print'
+    finger_print = 'finger_print',
+    calendar = 'calendar',
+    megaphone = 'megaphone',
+    bookmark = 'bookmark',
+    route = 'route',
 }
