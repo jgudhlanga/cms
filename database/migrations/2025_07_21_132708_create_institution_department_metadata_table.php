@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('institution_department_metadata', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('institution_department_id')->constrained();
+            $table->unsignedBigInteger('institution_department_id');
             $table->string('code')->nullable()->unique();
             $table->string('welcome_title')->nullable();
             $table->string('welcome_note')->nullable();
@@ -27,6 +27,10 @@ return new class extends Migration
             $table->foreignId('head_of_department_id')->nullable()->constrained('staff', 'id');
 			$table->timestamps();
 			$table->softDeletes();
+            $table->foreign('institution_department_id', 'dept_meta_dept_fk')
+                ->references('id')
+                ->on('institution_departments')
+                ->onDelete('cascade');
         });
     }
 

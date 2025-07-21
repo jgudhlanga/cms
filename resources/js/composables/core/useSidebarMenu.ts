@@ -100,7 +100,7 @@ export function useSidebarMenu() {
             transChoiceKey: 'trans.program',
             icon: icons[IconName.graduation_cape],
             url: route('portal.programs'),
-            show: hasAbility('manageOwnStudentProgramDetails:students') && hasStudentProfile(),
+            show: hasAbility('manageOwnStudentProgramDetails:students') && hasStudentProfile() && hasProgram(),
         },
         {
             transKey: 'trans.financial_record',

@@ -28,7 +28,7 @@ export const useStudentPrograms = () => {
                 header: trans_choice('trans.level', 1),
                 accessorKey: 'relationships.departmentLevel.attributes.level',
             },
-            {
+           /* {
                 header: trans('trans.start_date'),
                 accessorKey: 'startDate',
                 cell: ({ row }: { row: { original: StudentProgram } }) => {
@@ -41,7 +41,7 @@ export const useStudentPrograms = () => {
                 cell: ({ row }: { row: { original: StudentProgram } }) => {
                     return '---';
                 },
-            },
+            },*/
             {
                 header: `${trans_choice('trans.application', 1)} ${trans_choice('trans.status', 1)}`,
                 accessorKey: 'applicationStatus',
@@ -55,13 +55,13 @@ export const useStudentPrograms = () => {
                     });
                 },
             },
-            {
+           /* {
                 header: `${trans_choice('trans.program', 1)} ${trans_choice('trans.status', 1)}`,
                 accessorKey: 'programStatus',
                 cell: ({ row }: { row: { original: StudentProgram } }) => {
                     return '---';
                 },
-            },
+            },*/
             {
                 header: trans_choice('trans.action', 2),
                 accessorKey: 'actions',
