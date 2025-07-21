@@ -97,6 +97,12 @@ export function useSidebarMenu() {
             show: hasAbility('manageOwnStudentPersonalDetails:students') && hasStudentProfile(),
         },
         {
+            transKey: 'trans.track_application',
+            icon: icons[IconName.monitor_check],
+            url: route('portal.view-application'),
+            show: hasAbility('manageOwnStudentPersonalDetails:students') && hasStudentProfile(),
+        },
+        {
             transChoiceKey: 'trans.program',
             icon: icons[IconName.graduation_cape],
             url: route('portal.programs'),

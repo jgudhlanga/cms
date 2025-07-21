@@ -108,7 +108,7 @@ class PortalController extends Controller
             DB::commit();
 
             ApplicationWorkflowStepChanged::dispatch($student, $application, $stepTwo, $stepOne);
-            
+
             return to_route('portal.track-application');
         } catch (Throwable $e) {
             DB::rollBack();
@@ -119,10 +119,18 @@ class PortalController extends Controller
         }
     }
 
-    public function trackApplication(User $user)
+    public function viewApplication()
     {
         $this->authorize('manageStudentPersonalDetails');
-        return Inertia::render('portal/student/TrackApplication', [
+        return Inertia::render('portal/student/ApplicationTrack', [
+            'student' => StudentResource::make($this->getStudent(request())),
+        ]);
+    }
+
+    public function applications()
+    {
+        $this->authorize('manageStudentPersonalDetails');
+        return Inertia::render('portal/student/Applications', [
             'student' => StudentResource::make($this->getStudent(request())),
         ]);
     }

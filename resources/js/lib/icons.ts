@@ -82,7 +82,8 @@ import {
     Users,
     UserSearch,
     WalletCards,
-    X as Close,
+    MonitorCheck,
+    X as Close
 } from 'lucide-vue-next';
 import type { Component } from 'vue';
 
@@ -171,6 +172,7 @@ const icons: Record<IconName, Component> = {
     [IconName.megaphone]: Megaphone,
     [IconName.bookmark]: BookMarked,
     [IconName.route]: Route,
+    [IconName.monitor_check]: MonitorCheck
 };
 
 export { IconName, icons };

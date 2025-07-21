@@ -83,4 +83,5 @@ export enum IconName {
     megaphone = 'megaphone',
     bookmark = 'bookmark',
     route = 'route',
+    monitor_check = 'monitor_check',
 }

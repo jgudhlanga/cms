@@ -45,7 +45,7 @@ class ApplicationSubmitted extends Notification
             ->line("**Previous Status:** {$this->oldStep->workflowStep->name}")
             ->line("**New Status:** {$this->newStep->workflowStep->name}")
             ->line("Go ahead and do the payment of $20 for your application to proceed with the next steps. Use the following link to upload proof of payment")
-            ->action('Upload Proof Of Payment', url("/portal/track-application/{$this->program->application_tracking_number}"))
+            ->action('Upload Proof Of Payment', url(route('portal.view-application')))
             ->line('If you have any questions, please contact support.');
     }
 

@@ -12,7 +12,8 @@ Route::prefix('portal')->group(function () {
     });
     Route::middleware(['auth', 'verified', 'redirect.student'])->group(function () {
         Route::get('application', [PortalController::class, 'createApplication'])->name('portal.application');
-        Route::get('track-application', [PortalController::class, 'trackApplication'])->name('portal.track-application');
+        Route::get('application', [PortalController::class, 'viewApplication'])->name('portal.view-application');
+        Route::get('applications', [PortalController::class, 'applications'])->name('portal.applications');
         Route::get('dashboard', [PortalController::class, 'dashboard'])->name('portal.dashboard');
         Route::get('personal-details', [PortalController::class, 'personal'])->name('portal.personal-details');
         Route::get('programs', [PortalController::class, 'programs'])->name('portal.programs');

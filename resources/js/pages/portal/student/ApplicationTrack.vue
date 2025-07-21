@@ -15,8 +15,8 @@ const { user } = props.auth;
 const breadcrumbs: BreadcrumbItemInterface[] = [{ title: user.attributes?.name }, { transKey: 'track_application' }];
 </script>
 <template>
-    <Head :title="$t('trans.track_application')" />
+    <Head :title="$tChoice('trans.application', 1)" />
     <PageContainer :breadcrumbs="breadcrumbs">
-        {{ $t('trans.track_application') }}
+       My Application
     </PageContainer>
 </template>
