@@ -40,6 +40,7 @@ class UserResource extends JsonResource
                 'loginCount' => $this->login_count ?? 0,
                 "avatarUrl" => $this?->avatarUrl,
                 "hasStudentProfile" => $this->has_student_profile,
+                "hasProgram" => $this->studentProfile?->has_program,
                 $this->mergeWhen($request->routeIs('users.*'), [
                     'createdAt' => $this->created_at,
                     'updatedAt' => $this->updated_at,

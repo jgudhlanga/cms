@@ -16,6 +16,7 @@ export interface User {
         loginCount?: string | number;
         lastLoginAt?: string;
         hasStudentProfile?: boolean;
+        hasProgram?: boolean;
         createdAt: string;
         updatedAt: string;
         deletedAt: string;

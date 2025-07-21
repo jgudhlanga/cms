@@ -9,6 +9,7 @@ use App\Traits\BelongsToTenant;
 use App\Traits\Filterable;
 use App\Traits\Paginatable;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -90,6 +91,13 @@ class Student extends Model
     public function programs(): HasMany
     {
         return $this->hasMany(StudentProgram::class, 'student_id')->withTrashed();
+    }
+
+    protected function hasProgram(): Attribute
+    {
+
+        return Attribute::get(fn() => $this->programs()
+            ->where('department_application_step_id', )->exists());
     }
 
     public function contacts(): MorphMany

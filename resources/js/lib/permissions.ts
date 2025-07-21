@@ -25,3 +25,9 @@ export function hasStudentProfile(): boolean {
     const { auth } = usePage<PageProps>().props;
     return isItTrue(auth?.user?.attributes?.hasStudentProfile);
 }
+
+export function hasProgram(): boolean {
+    const { isItTrue } = useUtils();
+    const { auth } = usePage<PageProps>().props;
+    return isItTrue(auth?.user?.attributes?.hasProgram);
+}

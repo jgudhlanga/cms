@@ -1,7 +1,7 @@
 import AppLogo from '@/components/core/image/AppLogo.vue';
 import { IconName } from '@/enums/icons';
 import { icons } from '@/lib/icons';
-import { hasAbility, hasStudentProfile } from '@/lib/permissions';
+import { hasAbility, hasProgram, hasStudentProfile } from '@/lib/permissions';
 import { TenantInterface } from '@/types/tenants';
 import { MenuItemInterface } from '@/types/ui';
 import { trans, trans_choice } from 'laravel-vue-i18n';
@@ -44,7 +44,7 @@ export function useSidebarMenu() {
             transChoiceKey: 'trans.examination',
             icon: icons[IconName.book_check],
             url: route('dashboard'),
-            show: false, /*hasAbility('view:examinations'),*/
+            show: false /*hasAbility('view:examinations'),*/,
         },
         {
             transChoiceKey: 'trans.accommodation',
@@ -106,13 +106,13 @@ export function useSidebarMenu() {
             transKey: 'trans.financial_record',
             icon: icons[IconName.dollar],
             url: route('portal.financial-record'),
-            show: hasAbility('manageOwnStudentFinancialDetails:students') && hasStudentProfile(),
+            show: hasAbility('manageOwnStudentFinancialDetails:students') && hasStudentProfile() && hasProgram(),
         },
         {
             transKey: 'trans.academic_record',
             icon: icons[IconName.award],
             url: route('portal.academic-record'),
-            show: hasAbility('manageOwnStudentAcademicDetails:students') && hasStudentProfile(),
+            show: hasAbility('manageOwnStudentAcademicDetails:students') && hasStudentProfile() && hasProgram(),
         },
         /** ================ PORTAL END ======================*/
     ];

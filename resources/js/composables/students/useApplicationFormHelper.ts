@@ -99,7 +99,7 @@ export const useApplicationFormHelper = () => {
                 errors.push(`${label}: Subject is required.`);
             }
             if (year == null || isNaN(Number(year))) {
-                errors.push(`${label}: Year is required and must be a number.`);
+                errors.push(`${label}: Year is required.`);
             }
             if (!sitting || sitting.toString().trim() === '') {
                 errors.push(`${label}: Sitting is required.`);

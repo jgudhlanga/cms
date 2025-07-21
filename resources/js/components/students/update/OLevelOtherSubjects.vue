@@ -24,8 +24,9 @@ defineProps<Props>();
 
 const { listSubjects, isLoading: subjectsLoading, subjects } = useSubjects();
 const { listGrades, isLoading: gradesLoading, grades } = useGrades();
-const { o_level_other_subject_ids, o_level_other_grade_ids, o_level_other_years, o_level_other_sittings } =
+const { o_level_other_subject_ids, o_level_other_grade_ids, o_level_other_years, o_level_other_sittings, levelRequirements } =
     storeToRefs(useCreateApplicationFormStore());
+
 
 function ensureObjectRef<T extends object>(refObj: Ref<T | undefined | null> | undefined, defaultValue: T): T {
     if (!refObj) throw new Error('Ref is undefined');
@@ -34,15 +35,17 @@ function ensureObjectRef<T extends object>(refObj: Ref<T | undefined | null> | u
     }
     return refObj.value;
 }
-
+const mainSubjectIds = levelRequirements?.value?.attributes?.mainSubjectIds ?? [];
 const options = computed(() => {
-    return subjects.value.map(
-        (subject: Subject) =>
-            <SelectOption>{
-                value: Number(subject.id),
-                label: subject?.attributes?.name,
-            },
-    );
+    return subjects.value
+        .filter((subject: Subject) => !mainSubjectIds.includes(Number(subject.id)))
+        .map(
+            (subject: Subject) =>
+                <SelectOption>{
+                    value: Number(subject.id),
+                    label: subject?.attributes?.name,
+                },
+        );
 });
 
 const onGradeChange = (value: string) => {
