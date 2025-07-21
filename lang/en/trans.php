@@ -374,4 +374,5 @@ return [
     "activity_log" => "Activity log",
     "security" => "Security",
     "roles_and_permissions" => "Roles and permissions",
+    "user_account" => "User account"
 ];

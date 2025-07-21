@@ -3,7 +3,7 @@ import PageContainer from '@/components/core/page/PageContainer.vue';
 import AddressesForm from '@/components/shared/address/AddressesForm.vue';
 import ContactsForm from '@/components/shared/contacts/ContactsForm.vue';
 import NextOfKinForm from '@/components/shared/nextOfKin/NextOfKinForm.vue';
-import EditBasicInfo from '@/components/students/modals/EditBasicInfo.vue';
+import EditBasicInfo from '@/components/shared/basicInfo/EditBasicInfo.vue';
 import SponsorForm from '@/components/students/sponsors/SponsorForm.vue';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import PageHeaderAvatar from '@/components/users/PageHeaderAvatar.vue';

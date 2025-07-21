@@ -2,7 +2,9 @@
 
 namespace App\Models\Students;
 
+use App\Helpers\WorkflowHelper;
 use App\Http\Filters\Students\StudentFilter;
+use App\Models\Institution\DepartmentApplicationStep;
 use App\Models\Shared\{Address, Contact, Country, Gender, IdType, MaritalStatus, NextOfKin, Race, Religion, Title};
 use App\Models\Users\User;
 use App\Traits\BelongsToTenant;
@@ -95,9 +97,14 @@ class Student extends Model
 
     protected function hasProgram(): Attribute
     {
-
-        return Attribute::get(fn() => $this->programs()
-            ->where('department_application_step_id', )->exists());
+        return Attribute::get(function () {
+            $maxPosition = DepartmentApplicationStep::max('position');
+            if (is_null($maxPosition)) {
+                return false;
+            }
+            $step = WorkflowHelper::getDepartmentApplicationStepByPosition($maxPosition);
+            return $step && $this->programs()->where('department_application_step_id', $step->id)->exists();
+        });
     }
 
     public function contacts(): MorphMany

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { IconButton } from '@/components/core/button';
+import BaseTooltip from '@/components/core/util/BaseTooltip.vue';
 import Breadcrumbs from '@/components/core/util/Breadcrumbs.vue';
 import TextLink from '@/components/core/util/TextLink.vue';
 import { Separator } from '@/components/ui/separator';
@@ -21,10 +22,17 @@ defineProps<{
             <Separator orientation="vertical" class="mr-2 h-4" />
             <Breadcrumbs :breadcrumbs="breadcrumbs ?? []" />
         </div>
-        <div>
-            <TextLink :href="route('logout')" method="post" as="button" classes="text-destructive block text-sm uppercase">
-                <IconButton :icon="IconName.logout" :variant="ColorVariant.danger_outline" class="size-3" />
-            </TextLink>
+        <div class="flex items-center space-x-2">
+            <BaseTooltip :content="`${$t('trans.user_account')}`">
+                <TextLink :href="route('logout')" method="get" as="button" classes="block">
+                    <IconButton :icon="IconName.user_check" :variant="ColorVariant.primary_outline" class="size-3" />
+                </TextLink>
+            </BaseTooltip>
+            <BaseTooltip :content="`${$t('trans.logout')}`">
+                <TextLink :href="route('logout')" method="post" as="button" classes="text-destructive block">
+                    <IconButton :icon="IconName.logout" :variant="ColorVariant.danger_outline" class="size-3" />
+                </TextLink>
+            </BaseTooltip>
         </div>
     </header>
     <div class="flex h-full w-full flex-col pb-10">
