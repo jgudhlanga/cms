@@ -25,13 +25,13 @@ import CustomSeparator from '@/components/core/util/CustomSeparator.vue';
 import Heading from '@/components/core/util/Heading.vue';
 import TextLink from '@/components/core/util/TextLink.vue';
 import { useIdTypes } from '@/composables/shared/useIdTypes';
+import { useApplicationFormHelper } from '@/composables/students/useApplicationFormHelper';
 import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
 import { IconName } from '@/enums/icons';
+import { errorAlert } from '@/lib/alerts';
 import { useForm } from '@inertiajs/vue3';
 import { storeToRefs } from 'pinia';
-import { errorAlert } from '@/lib/alerts';
-import { trans } from 'laravel-vue-i18n';
 
 // Props
 interface Props {
@@ -47,6 +47,7 @@ const { idTypes, listIdTypes } = useIdTypes();
 const { applicationFormSchema, saveApplication } = useStudentPortal();
 const { listLevelRequirements } = useDepartmentLevels();
 const { isNativeCitizen, isItTrue } = useUtils();
+const { validateMainSubjects, validateOtherSubjects, updateForm } = useApplicationFormHelper();
 
 // Store
 const storeRefs = storeToRefs(useCreateApplicationFormStore());
@@ -129,57 +130,6 @@ const populateInitialForm = () => {
 };
 
 // Sync Pinia refs into form
-const updateForm = () => {
-    Object.assign(form, {
-        email: storeRefs.email.value,
-        first_name: storeRefs.first_name.value,
-        gender: storeRefs.gender.value,
-        gender_id: storeRefs.gender.value?.value ?? '',
-        last_name: storeRefs.last_name.value,
-        middle_name: storeRefs.middle_name.value ?? '',
-        title: storeRefs.title.value,
-        title_id: storeRefs.title.value?.value ?? '',
-        address_1: storeRefs.address_1.value,
-        address_2: storeRefs.address_2.value,
-        address_3: storeRefs.address_3.value,
-        address_4: storeRefs.address_4.value,
-        alt_phone_number: storeRefs.alt_phone_number?.value ?? '',
-        country: storeRefs.country?.value,
-        country_id: storeRefs.country?.value?.value ?? null,
-        date_of_birth: storeRefs.date_of_birth.value ?? '',
-        id_number: storeRefs.id_number?.value ?? '',
-        id_type_id: storeRefs.idType.value?.value ?? '',
-        idType: storeRefs.idType.value ?? '',
-        maritalStatus: storeRefs.maritalStatus?.value,
-        marital_status_id: storeRefs.maritalStatus?.value?.value ?? null,
-        next_of_kin_address_1: storeRefs.next_of_kin_address_1.value ?? '',
-        next_of_kin_address_2: storeRefs.next_of_kin_address_2.value ?? '',
-        next_of_kin_address_3: storeRefs.next_of_kin_address_3.value ?? '',
-        next_of_kin_address_4: storeRefs.next_of_kin_address_4.value ?? '',
-        next_of_kin_name: storeRefs.next_of_kin_name.value ?? '',
-        next_of_kin_phone_number: storeRefs.next_of_kin_phone_number.value ?? '',
-        passport_number: storeRefs.passport_number?.value ?? '',
-        phone_number: storeRefs.phone_number?.value ?? '',
-        relationship: storeRefs.relationship.value,
-        relationship_id: storeRefs.relationship.value?.value ?? null,
-        study_permit_number: storeRefs.study_permit_number?.value ?? '',
-        department: storeRefs.department.value,
-        department_id: storeRefs.department.value?.value ?? null,
-        course: storeRefs.course.value,
-        course_id: storeRefs.course.value?.value ?? null,
-        level: storeRefs.level.value,
-        level_id: storeRefs.level.value?.value ?? null,
-        required_level_completed: storeRefs.required_level_completed?.value ?? null,
-        read_write_acknowledged: storeRefs.read_write_acknowledged?.value ?? null,
-        o_level_subject_ids: storeRefs.o_level_subject_ids?.value ?? null,
-        o_level_years: storeRefs.o_level_years?.value ?? null,
-        o_level_sittings: storeRefs.o_level_sittings?.value ?? null,
-        o_level_other_subject_ids: storeRefs.o_level_other_subject_ids?.value ?? null,
-        o_level_other_grade_ids: storeRefs.o_level_other_grade_ids?.value ?? null,
-        o_level_other_years: storeRefs.o_level_other_years?.value ?? null,
-        o_level_other_sittings: storeRefs.o_level_other_sittings?.value ?? null,
-    });
-};
 
 onMounted(async () => {
     await listIdTypes();
@@ -187,17 +137,20 @@ onMounted(async () => {
 });
 
 const isValidating = ref(false);
+
 const save = async () => {
-    updateForm();
+    updateForm(form);
     try {
         isValidating.value = true;
         await applicationFormSchema(isNativeCitizen(storeRefs.idType?.value?.label ?? '')).parseAsync(form);
-        if (!isItTrue(storeRefs.levelRequirements?.value)) {
-            errorAlert(trans('trans.nothing_has_changed_to_save'));
+        const mainErrors = validateMainSubjects();
+        if (mainErrors && mainErrors.length > 0) {
+            errorAlert(mainErrors.join('\n'));
             return;
         }
-        if (Number(form.main_subjects_count ?? '') > 0 && form.main_subject_ids?.length < Number(form.main_subjects_count)) {
-            errorAlert(trans('trans.main_subject_not_valid', { count: form.main_subjects_count?.toString() ?? '' }));
+        const otherErrors = validateOtherSubjects();
+        if (otherErrors && otherErrors.length > 0) {
+            errorAlert(otherErrors.join('\n'));
             return;
         }
         saveApplication(form);
@@ -205,7 +158,7 @@ const save = async () => {
         if (error?.format) {
             form.setError(error.format());
         } else {
-            console.error(error); // Unexpected error
+            console.error(error);
         }
     } finally {
         isValidating.value = false;
@@ -228,7 +181,6 @@ const save = async () => {
     </nav>
     <form @submit.prevent="() => save()">
         <div class="mt-20 flex w-full flex-col px-10 md:p-0">
-            {{ storeRefs.levelRequirements.value }}
             <div class="flex w-full flex-col md:mx-auto md:w-6/8">
                 <div class="flex flex-col items-center justify-center">
                     <p class="text-muted-foreground text-sm font-semibold">-- {{ $t('trans.application_form_description') }} --</p>
