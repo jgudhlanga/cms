@@ -104,12 +104,12 @@ class PortalController extends Controller
             $application = $student->programs()->latest()->first();
             $stepOne = WorkflowHelper::getDepartmentApplicationStepByPosition(1);
             $stepTwo = WorkflowHelper::getDepartmentApplicationStepByPosition(2);
-            $application->update(['department_application_step_id' => $stepOne->id]);
+            $application->update(['department_application_step_id' => $stepOne?->id ?? null]);
             DB::commit();
-
-            ApplicationWorkflowStepChanged::dispatch($student, $application, $stepTwo, $stepOne);
-
-            return to_route('portal.track-application');
+            if ($stepTwo) {
+                ApplicationWorkflowStepChanged::dispatch($student, $application, $stepTwo, $stepOne);
+            }
+            return to_route('portal.application.view');
         } catch (Throwable $e) {
             DB::rollBack();
             Log::error('Application submission failed', ['exception' => $e]);

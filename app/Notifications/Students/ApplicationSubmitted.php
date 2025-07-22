@@ -37,15 +37,14 @@ class ApplicationSubmitted extends Notification
 
     public function toMail(object $notifiable): MailMessage
     {
-
         return (new MailMessage)
             ->subject('Application Status: Update')
             ->greeting("Hello {$this->name},")
             ->line("The status of your application with reference: **{$this->program->application_tracking_number}** has changed.")
             ->line("**Previous Status:** {$this->oldStep->workflowStep->name}")
             ->line("**New Status:** {$this->newStep->workflowStep->name}")
-            ->line("Go ahead and do the payment of $20 for your application to proceed with the next steps. Use the following link to upload proof of payment")
-            ->action('Upload Proof Of Payment', url(route('portal.view-application')))
+            ->line("Go ahead and do the payment of $20 for your application to proceed to the next steps. Use the following link to upload proof of payment")
+            ->action('Upload Proof Of Payment', url(route('portal.application.view')))
             ->line('If you have any questions, please contact support.');
     }
 
@@ -57,7 +56,7 @@ class ApplicationSubmitted extends Notification
     public function toArray(object $notifiable): array
     {
         return [
-            //
+            #
         ];
     }
 }

@@ -11,8 +11,8 @@ Route::prefix('portal')->group(function () {
         Route::post('application', [PortalController::class, 'storeApplication'])->name('portal.store-application');
     });
     Route::middleware(['auth', 'verified', 'redirect.student'])->group(function () {
-        Route::get('application', [PortalController::class, 'createApplication'])->name('portal.application');
-        Route::get('application', [PortalController::class, 'viewApplication'])->name('portal.view-application');
+        Route::get('application/create', [PortalController::class, 'createApplication'])->name('portal.application.create');
+        Route::get('application/view', [PortalController::class, 'viewApplication'])->name('portal.application.view');
         Route::get('applications', [PortalController::class, 'applications'])->name('portal.applications');
         Route::get('dashboard', [PortalController::class, 'dashboard'])->name('portal.dashboard');
         Route::get('personal-details', [PortalController::class, 'personal'])->name('portal.personal-details');

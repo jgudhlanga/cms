@@ -105,7 +105,7 @@ export function useSidebarMenu() {
         {
             transKey: 'trans.track_application',
             icon: icons[IconName.monitor_check],
-            url: route('portal.view-application'),
+            url: route('portal.application.view'),
             show: hasAbility('manageOwnStudentPersonalDetails:students') && hasStudentProfile(),
         },
         {
