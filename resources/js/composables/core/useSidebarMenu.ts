@@ -103,9 +103,9 @@ export function useSidebarMenu() {
             show: hasAbility('manageOwnStudentProgramDetails:students') && hasStudentProfile() && hasProgram(),
         },
         {
-            transKey: 'trans.track_application',
+            transKey: 'trans.my_applications',
             icon: icons[IconName.monitor_check],
-            url: route('portal.application.view'),
+            url: route('portal.applications'),
             show: hasAbility('manageOwnStudentPersonalDetails:students') && hasStudentProfile(),
         },
         {

@@ -6,6 +6,7 @@ use App\DTO\Shared\{AddressDto, ContactDto, NextOfKinDto};
 use App\DTO\Students\CreateApplicationDto;
 use App\DTO\Users\UserDto;
 use App\Enums\Acl\RoleEnum;
+use App\Models\Students\StudentProgram;
 use App\Enums\Shared\{StatusEnum, TenantEnum};
 use App\Events\Students\ApplicationWorkflowStepChanged;
 use App\Helpers\WorkflowHelper;
@@ -119,19 +120,22 @@ class PortalController extends Controller
         }
     }
 
-    public function viewApplication()
+    public function viewApplication(StudentProgram $studentProgram)
     {
         $this->authorize('manageStudentPersonalDetails');
         return Inertia::render('portal/student/ApplicationTrack', [
             'student' => StudentResource::make($this->getStudent(request())),
+            'application' => StudentProgramResource::make($studentProgram),
         ]);
     }
 
     public function applications()
     {
         $this->authorize('manageStudentPersonalDetails');
+        $student = $this->getStudent(request());
         return Inertia::render('portal/student/Applications', [
-            'student' => StudentResource::make($this->getStudent(request())),
+            'student' => StudentResource::make($student),
+            'applications' => StudentProgramResource::collection($student->programs)
         ]);
     }
 

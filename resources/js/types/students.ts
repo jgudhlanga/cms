@@ -116,6 +116,10 @@ export type StudentProgram = {
         institutionDepartmentId: string | number;
         departmentLevelId: string | number;
         departmentCourseId: string | number;
+        applicationTrackingNumber: string;
+        createdAt?: string;
+        updatedAt?: string;
+        deletedAt?: string;
     };
     relationships?: {
         institutionDepartment?: InstitutionDepartment;
@@ -153,7 +157,7 @@ export type AcademicRecordParams = {
     school: string;
     place: string;
     from_level?: string | number | null;
-    to_level?: string | number | null ;
+    to_level?: string | number | null;
     from_year?: string | number;
     to_year?: string | number;
     student_unique_number: string;
@@ -185,4 +189,4 @@ export type StudentPersonalDetailParams = {
     denomination?: string | null;
     height?: string | null;
     weight?: string | null;
-}
+};

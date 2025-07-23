@@ -20,8 +20,8 @@ interface Props {
 }
 
 const props = defineProps<Props>();
-const institutionDepartment: InstitutionDepartment | null = ref(null);
-const departmentApplicationSteps: DepartmentApplicationStep[] | [] = ref([]);
+const institutionDepartment = ref<InstitutionDepartment | null>(null);
+const departmentApplicationSteps = ref<DepartmentApplicationStep[]>([]);
 
 const { loadDepartmentMetadata, isLoading } = useInstitutionDepartmentMetadata();
 const { openDepartmentApplicationStepsModal, openDepartmentWorkflowActionModal } = useDepartmentWorkflows();
@@ -56,7 +56,7 @@ const stepIds = computed(() => {
 
 <template>
     <div class="flex flex-col">
-        <div class="flex justify-end mb-6" v-if="hasAbility('create:department-metadata')">
+        <div class="mb-6 flex justify-end" v-if="hasAbility('create:department-metadata')">
             <GenericButton
                 :icon="IconName.add"
                 class="cursor-pointer rounded-full"

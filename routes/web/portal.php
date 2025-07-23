@@ -12,14 +12,14 @@ Route::prefix('portal')->group(function () {
     });
     Route::middleware(['auth', 'verified', 'redirect.student'])->group(function () {
         Route::get('application/create', [PortalController::class, 'createApplication'])->name('portal.application.create');
-        Route::get('application/view', [PortalController::class, 'viewApplication'])->name('portal.application.view');
+        Route::get('application/{student_program}/view', [PortalController::class, 'viewApplication'])->name('portal.application.view');
         Route::get('applications', [PortalController::class, 'applications'])->name('portal.applications');
         Route::get('dashboard', [PortalController::class, 'dashboard'])->name('portal.dashboard');
         Route::get('personal-details', [PortalController::class, 'personal'])->name('portal.personal-details');
         Route::get('programs', [PortalController::class, 'programs'])->name('portal.programs');
         Route::get('financial-record', [PortalController::class, 'financialRecord'])->name('portal.financial-record');
         Route::get('academic-record', [PortalController::class, 'academicRecord'])->name('portal.academic-record');
-        # =============================== META ====================================
+        # =============================================== META =========================================================
         Route::post('contacts', [PortalController::class, 'storeContactDetails'])->name('portal.contacts.store');
         Route::post('addresses', [PortalController::class, 'storeAddressDetails'])->name('portal.address.store');
         Route::post('next-of-kins', [PortalController::class, 'storeNextOfKinDetails'])->name('portal.next-of-kins.store');

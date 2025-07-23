@@ -374,5 +374,8 @@ return [
     "activity_log" => "Activity log",
     "security" => "Security",
     "roles_and_permissions" => "Roles and permissions",
-    "user_account" => "User account"
+    "user_account" => "User account",
+    "my_applications" => "My Applications",
+    "application_date" => "Application date",
+    "update_date" => "Update date"
 ];

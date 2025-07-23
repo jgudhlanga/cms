@@ -1,23 +1,22 @@
 import { useDataTables } from '@/composables/core/useDataTables';
+import { useUtils } from '@/composables/core/useUtils';
 import { hasAbility } from '@/lib/permissions';
 import { StudentProgram } from '@/types/students';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 
-export const useStudentPrograms = () => {
+export const useStudentApplications = () => {
     const { moreActionButton, actionButton, textLink } = useDataTables();
-    const getName = () => trans_choice('trans.program', 1);
-    const successMessage = () => trans('trans.item_saved', { item: getName() });
-    const errorMessage = () => trans('trans.item_save_failure', { item: getName() });
     const studentAbility = 'manageOwnStudentProgramDetails:students';
     const adminAbility = 'manageStudentMetadata:admin';
     const allowed = hasAbility([adminAbility, studentAbility]);
-    const createStudentProgramColumns = () => {
+    const { formatDate } = useUtils();
+    const createStudentApplicationColumns = () => {
         return [
             {
                 header: trans_choice('trans.program', 1),
                 accessorKey: 'course',
                 cell: ({ row }: { row: { original: StudentProgram } }) => {
-                    return textLink(route('portal.programs'), row.original?.relationships?.departmentCourse?.attributes?.course ?? '');
+                    return textLink(route('portal.application.view', row.original.id), row.original?.relationships?.departmentCourse?.attributes?.course ?? '');
                 },
             },
             {
@@ -29,17 +28,19 @@ export const useStudentPrograms = () => {
                 accessorKey: 'relationships.departmentLevel.attributes.level',
             },
             {
-                header: trans('trans.start_date'),
-                accessorKey: 'startDate',
+                header: trans('trans.application_date'),
+                accessorKey: 'applicationDate',
                 cell: ({ row }: { row: { original: StudentProgram } }) => {
-                    return '---';
+                    const applicationDate = row.original?.attributes?.createdAt ?? '';
+                    return applicationDate ? formatDate(applicationDate , 'L') : '---';
                 },
             },
             {
-                header: trans('trans.end_date'),
-                accessorKey: 'endDate',
+                header: trans('trans.update_date'),
+                accessorKey: 'updateDate',
                 cell: ({ row }: { row: { original: StudentProgram } }) => {
-                    return '---';
+                    const updateDate = row.original?.attributes?.updatedAt ?? '';
+                    return updateDate ? formatDate(updateDate, 'L') : '---';
                 },
             },
             {
@@ -47,19 +48,11 @@ export const useStudentPrograms = () => {
                 accessorKey: 'applicationStatus',
                 meta: { align: 'center' },
                 cell: ({ row }: { row: { original: StudentProgram } }) => {
-                    // process some status meta data
                     const step = row.original?.relationships?.departmentWorkflowStep?.attributes?.workflowStep ?? '';
                     return actionButton({
                         title: step,
                         onClick: () => {},
                     });
-                },
-            },
-           {
-                header: `${trans_choice('trans.program', 1)} ${trans_choice('trans.status', 1)}`,
-                accessorKey: 'programStatus',
-                cell: ({ row }: { row: { original: StudentProgram } }) => {
-                    return '---';
                 },
             },
             {
@@ -80,7 +73,7 @@ export const useStudentPrograms = () => {
     };
 
     return {
-        createStudentProgramColumns,
+        createStudentApplicationColumns,
         allowed,
     };
 };

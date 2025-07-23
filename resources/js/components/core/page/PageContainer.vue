@@ -3,15 +3,24 @@ import { IconButton } from '@/components/core/button';
 import BaseTooltip from '@/components/core/util/BaseTooltip.vue';
 import Breadcrumbs from '@/components/core/util/Breadcrumbs.vue';
 import TextLink from '@/components/core/util/TextLink.vue';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { SidebarTrigger } from '@/components/ui/sidebar';
+import { useDefaults } from '@/composables/core/useDefaults';
+import { useInitials } from '@/composables/core/useInitials';
 import { ColorVariant } from '@/enums/colors';
 import { IconName } from '@/lib/icons';
+import { PageProps } from '@/types';
 import { BreadcrumbItemInterface } from '@/types/ui';
+import { usePage } from '@inertiajs/vue3';
 
 defineProps<{
     breadcrumbs?: BreadcrumbItemInterface[];
 }>();
+const { props } = usePage<PageProps>();
+const { user } = props?.auth;
+const { getInitials } = useInitials();
+const { defaultAvatarImage } = useDefaults();
 </script>
 <template>
     <header
@@ -22,15 +31,20 @@ defineProps<{
             <Separator orientation="vertical" class="mr-2 h-4" />
             <Breadcrumbs :breadcrumbs="breadcrumbs ?? []" />
         </div>
-        <div class="flex items-center space-x-2">
+        <div class="flex items-center justify-center space-x-4">
             <BaseTooltip :content="`${$t('trans.user_account')}`">
-                <TextLink :href="route('logout')" method="get" as="button" classes="block">
-                    <IconButton :icon="IconName.user_check" :variant="ColorVariant.primary_outline" class="size-3" />
+                <TextLink :href="route('logout')" method="get" as="button" classes="flex items-center">
+                    <Avatar class="size-9 rounded-full ">
+                        <AvatarImage :src="user.attributes.avatar ?? defaultAvatarImage" :alt="user.attributes.name" />
+                        <AvatarFallback class="size-9 rounded-full">
+                            {{ getInitials(user.attributes.name) }}
+                        </AvatarFallback>
+                    </Avatar>
                 </TextLink>
             </BaseTooltip>
             <BaseTooltip :content="`${$t('trans.logout')}`">
-                <TextLink :href="route('logout')" method="post" as="button" classes="text-destructive block">
-                    <IconButton :icon="IconName.logout" :variant="ColorVariant.danger_outline" class="size-3" />
+                <TextLink :href="route('logout')" method="post" as="button" classes="text-destructive flex items-center">
+                    <IconButton :icon="IconName.logout" :variant="ColorVariant.danger_outline" />
                 </TextLink>
             </BaseTooltip>
         </div>

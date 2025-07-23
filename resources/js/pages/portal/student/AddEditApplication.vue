@@ -37,7 +37,7 @@ interface Props {
 
 const props = defineProps<Props>();
 const { user } = props.auth;
-// Composables
+// Composable
 const { idTypes, listIdTypes } = useIdTypes();
 const { steps, applicationFormSchema, saveApplication } = useStudentPortal();
 const { listLevelRequirements } = useDepartmentLevels();

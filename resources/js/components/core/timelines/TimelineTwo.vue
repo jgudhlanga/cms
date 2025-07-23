@@ -20,7 +20,7 @@ defineProps<Props>();
         >
             <!-- Icon -->
             <div
-                class="group-[.is-active]:bg-muted-foreground flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white bg-slate-300 text-slate-500 shadow group-[.is-active]:text-emerald-50 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2"
+                class="group-[.is-active]:bg-primary flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white bg-slate-300 text-slate-500 shadow group-[.is-active]:text-emerald-50 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2"
             >
                 <svg class="fill-current" xmlns="http://www.w3.org/2000/svg" width="12" height="10">
                     <path

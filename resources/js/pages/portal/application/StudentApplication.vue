@@ -32,6 +32,7 @@ import { IconName } from '@/enums/icons';
 import { errorAlert } from '@/lib/alerts';
 import { useForm } from '@inertiajs/vue3';
 import { storeToRefs } from 'pinia';
+import BaseTooltip from '@/components/core/util/BaseTooltip.vue';
 
 // Props
 interface Props {
@@ -173,9 +174,11 @@ const save = async () => {
             </div>
             <Heading :title="user.attributes?.name" />
             <div class="flex">
-                <TextLink :href="route('logout')" method="post" as="button" classes="text-destructive block text-sm uppercase">
-                    <IconButton :icon="IconName.logout" :variant="ColorVariant.danger_outline" class="size-3" />
-                </TextLink>
+                <BaseTooltip :content="`${$t('trans.logout')}`">
+                    <TextLink :href="route('logout')" method="post" as="button" classes="text-destructive flex items-center">
+                        <IconButton :icon="IconName.logout" :variant="ColorVariant.danger_outline" />
+                    </TextLink>
+                </BaseTooltip>
             </div>
         </div>
     </nav>
