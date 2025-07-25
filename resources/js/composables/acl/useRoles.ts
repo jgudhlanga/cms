@@ -95,17 +95,6 @@ export const useRoles = () => {
     const isLoading = ref(false);
     const roles = ref<ApiFilterResponse | null>(null);
 
-/*
-    const listRoles = async (search?: string) => {
-        const { data, fetchData } = useDropdowns();
-        isLoading.value = true;
-        await fetchData({ url: 'api/v1/acl/roles?page_size=100', search, transChoiceKey: 'trans.role' });
-        isLoading.value = false;
-        roles.value = data.value;
-    };
-*/
-
-   // const systemRoles = ref<ApiFilterResponse | null>(null);
     const listRoles = async (url: string) => {
         try {
             isLoading.value = true;

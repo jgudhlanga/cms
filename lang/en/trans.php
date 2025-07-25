@@ -377,5 +377,8 @@ return [
     "user_account" => "User account",
     "my_applications" => "My Applications",
     "application_date" => "Application date",
-    "update_date" => "Update date"
+    "update_date" => "Update date",
+    "config" => "Config",
+    "intake_config_description" => "Configure the intake period, class sizes for the department levels and courses",
+    "courses_and_levels_not_found" => "Courses and levels not found for this department",
 ];

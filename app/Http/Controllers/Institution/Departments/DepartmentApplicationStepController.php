@@ -10,6 +10,7 @@ use App\Http\Requests\Institution\DepartmentApplicationStepRequest;
 use App\Http\Requests\Institution\DepartmentApplicationStepUpdateRequest;
 use App\Http\Requests\Institution\WorkflowStepActionMetadataRequest;
 use App\Http\Resources\Institution\DepartmentApplicationStepResource;
+use App\Http\Resources\Institution\DepartmentCourseResource;
 use App\Http\Resources\Institution\DepartmentLevelResource;
 use App\Http\Resources\Institution\InstitutionDepartmentResource;
 use App\Models\Institution\DepartmentApplicationStep;

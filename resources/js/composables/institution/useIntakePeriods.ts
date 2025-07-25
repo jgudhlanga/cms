@@ -1,10 +1,11 @@
 import { useDataTables } from '@/composables/core/useDataTables';
-import { useDropdowns } from '@/composables/core/useDropdowns';
-import { forbiddenAlert, openModal } from '@/lib/alerts';
+import { errorAlert, forbiddenAlert, openModal } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
 import { buildFormOptions } from '@/lib/forms';
 import { getIdParams } from '@/lib/utils';
+import HttpService from '@/services/http.service';
 import { Auth } from '@/types';
+import { ApiFilterResponse } from '@/types/data-pagination';
 import { IntakePeriod } from '@/types/institution';
 import { InertiaForm, usePage } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
@@ -13,8 +14,6 @@ import { z } from 'zod';
 
 export const useIntakePeriods = () => {
     const { moreActionButton, onDelete, onForceDelete, onRestore } = useDataTables();
-    const isLoading = ref(false);
-    const intakePeriods = ref<IntakePeriod[]>([]);
     const createIntakePeriodColumns = () => {
         const { props } = usePage();
         const { can } = props?.auth as Auth;
@@ -51,31 +50,32 @@ export const useIntakePeriods = () => {
         ];
     };
 
-    const formSchema = () =>  z
-        .object({
-            name: z.string().nonempty(trans('trans.enter_required_field', { field: trans_choice('trans.name', 1) })),
-            start_date: z
-                .union([z.string(), z.date()])
-                .transform((val) => (typeof val === 'string' ? val : val.toISOString().split('T')[0]))
-                .refine((val) => !isNaN(Date.parse(val)), {
-                    message: trans('trans.date_must_be_valid', { field: trans('trans.start_date') }),
-                }),
-            end_date: z
-                .union([z.string(), z.date()])
-                .transform((val) => (typeof val === 'string' ? val : val.toISOString().split('T')[0]))
-                .refine((val) => !isNaN(Date.parse(val)), {
-                    message: trans('trans.date_must_be_valid', { field: trans('trans.end_date') }),
-                }),
-        })
-        .refine(
-            (data) => {
-                return new Date(data.end_date) >= new Date(data.start_date);
-            },
-            {
-                message: trans('trans.end_date_start_date_validation'),
-                path: ['end_date'],
-            },
-        );
+    const formSchema = () =>
+        z
+            .object({
+                name: z.string().nonempty(trans('trans.enter_required_field', { field: trans_choice('trans.name', 1) })),
+                start_date: z
+                    .union([z.string(), z.date()])
+                    .transform((val) => (typeof val === 'string' ? val : val.toISOString().split('T')[0]))
+                    .refine((val) => !isNaN(Date.parse(val)), {
+                        message: trans('trans.date_must_be_valid', { field: trans('trans.start_date') }),
+                    }),
+                end_date: z
+                    .union([z.string(), z.date()])
+                    .transform((val) => (typeof val === 'string' ? val : val.toISOString().split('T')[0]))
+                    .refine((val) => !isNaN(Date.parse(val)), {
+                        message: trans('trans.date_must_be_valid', { field: trans('trans.end_date') }),
+                    }),
+            })
+            .refine(
+                (data) => {
+                    return new Date(data.end_date) >= new Date(data.start_date);
+                },
+                {
+                    message: trans('trans.end_date_start_date_validation'),
+                    path: ['end_date'],
+                },
+            );
     const saveIntakePeriod = (form: InertiaForm<any>, intakePeriod?: IntakePeriod) => {
         const success = trans('trans.item_saved', { item: trans_choice('trans.intake_period', 1) });
         const error = trans('trans.item_save_failure', { item: trans_choice('trans.intake_period', 1) });
@@ -91,12 +91,17 @@ export const useIntakePeriods = () => {
         openModal({ name: APP_MODULE_KEYS.intake_periods, edit: intakePeriod });
     };
 
-    const listIntakePeriods = async (search?: string) => {
-        const { data, fetchData } = useDropdowns();
-        isLoading.value = true;
-        await fetchData({ url: 'api/v1/intake-periods?page_size=100', search, transChoiceKey: 'trans.intake_period' });
-        isLoading.value = false;
-        intakePeriods.value = data.value;
+    const isLoading = ref(false);
+    const intakePeriods = ref<ApiFilterResponse | null>(null);
+    const listIntakePeriods = async (url: string) => {
+        try {
+            isLoading.value = true;
+            intakePeriods.value = await HttpService.get(url);
+        } catch {
+            errorAlert(trans('trans.load_data_failure', { data: trans_choice('trans.intake_period', 2) }));
+        } finally {
+            isLoading.value = false;
+        }
     };
 
     return {
