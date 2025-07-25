@@ -3,4 +3,5 @@ export enum TextFieldType {
 	text = 'text',
 	password = 'password',
 	email = 'email',
+	number = 'number',
 }

@@ -128,6 +128,7 @@ export type DepartmentApplicationStep = {
         metadata?: DepartmentWorkflowStepMetadata,
     }
 };
+
 export type DepartmentWorkflowStepMetadata = {
     type: string;
     id: string;
@@ -138,12 +139,25 @@ export type DepartmentWorkflowStepMetadata = {
     staff?:  Array<string | undefined | null>;
     actions?:  Array<string | undefined | null>;
 }
+
 export type DepartmentApplicationStepParams = {
     workflow_step_ids: Array<string | undefined | null> | null;
 };
+
 export type DepartmentApplicationStepActionParams = {
     department_application_step_id: string | number | null;
     workflow_action_ids: Array<string | undefined | null>;
     role_ids: Array<string | undefined | null>;
     staff_ids: Array<string | undefined | null>;
+};
+
+export type ClassSizeEntry = {
+    course_id: number;
+    level_id: number;
+    class_size: number | null;
+};
+
+export type DepartmentIntakeClassSizeParams = {
+    intake_period_id: string | number | null;
+    class_sizes: ClassSizeEntry[];
 };
