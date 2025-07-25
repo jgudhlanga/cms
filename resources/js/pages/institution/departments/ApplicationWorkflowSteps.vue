@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import BaseAlert from '@/components/core/alert/BaseAlert.vue';
 import { GenericButton } from '@/components/core/button';
+import DataLoadingSpinner from '@/components/core/loader/DataLoadingSpinner.vue';
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import StepMetadata from '@/components/core/timelines/StepMetadata.vue';
 import TimelineTwo from '@/components/core/timelines/TimelineTwo.vue';
 import { useDepartmentWorkflows } from '@/composables/institution/useDepartmentWorkflows';
+import { useInstitutionDepartmentMetadata } from '@/composables/institution/useInstitutionDepartmentMetadata';
 import { ColorVariant } from '@/enums/colors';
 import { IconName } from '@/enums/icons';
 import { getIdParams } from '@/lib/utils';
@@ -17,21 +19,29 @@ import type { Link } from '@/types/ui';
 import { TimelineStep } from '@/types/utils';
 import { Head } from '@inertiajs/vue3';
 import { trans_choice } from 'laravel-vue-i18n';
-import { computed } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 
 interface Props {
     institutionDepartment: InstitutionDepartment;
-    departmentApplicationSteps: DepartmentApplicationStep[];
     auth: AuthObject;
     errors: object;
 }
 
 const props = defineProps<Props>();
-const { institutionDepartment, departmentApplicationSteps } = props;
+const { institutionDepartment } = props;
+
+const departmentApplicationSteps = ref<DepartmentApplicationStep[]>([]);
+
+const { loadDepartmentMetadata, isLoading } = useInstitutionDepartmentMetadata();
 const { openDepartmentApplicationStepsModal, openDepartmentWorkflowActionModal } = useDepartmentWorkflows();
 
+onMounted(async () => {
+    const data = await loadDepartmentMetadata(route('v1.department-metadata.workflow-steps', props.institutionDepartment?.id?.toString()));
+    departmentApplicationSteps.value = data?.steps;
+});
+
 const steps = computed(() => {
-    return departmentApplicationSteps?.map(
+    return departmentApplicationSteps.value?.map(
         (step: DepartmentApplicationStep, index: number) =>
             <TimelineStep>{
                 title: step.attributes?.workflowStep,
@@ -48,15 +58,15 @@ const steps = computed(() => {
 });
 
 const stepIds = computed(() => {
-    return (departmentApplicationSteps ?? []).map((step: DepartmentApplicationStep) => step.attributes?.workflowStepId?.toString() ?? '');
+    return (departmentApplicationSteps.value ?? []).map((step: DepartmentApplicationStep) => step.attributes?.workflowStepId?.toString() ?? '');
 });
 
 const breadcrumbs: Array<Link> = [
     { transChoiceKey: 'institution', transChoiceKeyIndex: 1, href: route('institution.index') },
     { transChoiceKey: 'department', href: route('institution-departments.index') },
     {
-        title: institutionDepartment.attributes.department,
-        href: route('institution-departments.show', getIdParams(institutionDepartment.id?.toString() ?? '')),
+        title: institutionDepartment?.attributes.department,
+        href: route('institution-departments.show', getIdParams(institutionDepartment?.id?.toString() ?? '')),
     },
     { transKey: 'application_workflow_steps' },
 ];
@@ -76,8 +86,13 @@ const breadcrumbs: Array<Link> = [
                     :title="$t('trans.subscribe_to_application_steps')"
                 />
             </div>
-            <TimelineTwo v-if="steps?.length > 0" :steps="steps" />
-            <BaseAlert v-else :title="$t('trans.no_data')" :description="$t('trans.no_workflows_configured_description')" />
+            <template v-if="isLoading">
+                <DataLoadingSpinner />
+            </template>
+            <template v-else>
+                <TimelineTwo v-if="steps?.length > 0" :steps="steps" />
+                <BaseAlert v-else :title="$t('trans.no_data')" :description="$t('trans.no_workflows_configured_description')" />
+            </template>
         </div>
         <LinkApplicationStepsToDepartment :institution-department-id="institutionDepartment.id?.toString() ?? ''" />
         <StepActions :institution-department-id="institutionDepartment.id?.toString() ?? ''" />

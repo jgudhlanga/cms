@@ -5,7 +5,7 @@ import Calendar from '@/pages/institution/departments/partials/view/Calendar.vue
 import Courses from '@/pages/institution/departments/partials/view/Courses.vue';
 import Levels from '@/pages/institution/departments/partials/view/Levels.vue';
 import Staff from '@/pages/institution/departments/partials/view/Staff.vue';
-import Workflows from '@/pages/institution/departments/partials/view/Workflows.vue';
+import Settings from '@/pages/institution/departments/partials/view/Settings.vue';
 import { InstitutionDepartment } from '@/types/institution';
 import { CustomTab } from '@/types/utils';
 import { trans, trans_choice } from 'laravel-vue-i18n';
@@ -45,13 +45,6 @@ export const useInstitution = () => {
                 icon: IconName.user_search,
             },
             {
-                transLabel: () => trans_choice('trans.workflow_config', 2),
-                value: 'workflow_config',
-                component: h(Workflows, { department }),
-                show: isItTrue(department?.attributes?.isAcademic),
-                icon: IconName.cogs,
-            },
-            {
                 transLabel: () => trans_choice('trans.calendar', 1),
                 value: 'calendar',
                 component: Calendar,
@@ -64,6 +57,13 @@ export const useInstitution = () => {
                 component: Announcements,
                 show: true,
                 icon: IconName.megaphone,
+            },
+            {
+                transLabel: () => trans('trans.settings'),
+                value: 'settings',
+                component: h(Settings, { department }),
+                show: isItTrue(department?.attributes?.isAcademic),
+                icon: IconName.settings,
             },
         ];
     };

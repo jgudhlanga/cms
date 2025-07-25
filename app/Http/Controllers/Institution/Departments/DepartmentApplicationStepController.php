@@ -35,12 +35,21 @@ class DepartmentApplicationStepController extends Controller
         $this->repository->syncWorkflowStepActionMetadata(WorkflowStepActionMetadataDto::fromWorkflowStepActionMetadataRequest($request));
     }
 
+    public function configSteps(InstitutionDepartment $institutionDepartment)
+    {
+        $this->authorize('viewDepartmentMetaData');
+        $institutionDepartment = InstitutionDepartmentResource::make($institutionDepartment);
+        return Inertia::render('institution/departments/ApplicationWorkflowSteps',
+            compact('institutionDepartment'),
+        );
+    }
+
     public function show(DepartmentApplicationStep $departmentApplicationStep)
     {
         $this->authorize('viewDepartmentMetaData');
         $departmentApplicationStep = DepartmentApplicationStepResource::make($departmentApplicationStep);
         $institutionDepartment = InstitutionDepartmentResource::make($departmentApplicationStep->institutionDepartment);
-        $departmentLevels = DepartmentLevelResource::collection($departmentApplicationStep->institutionDepartment->departmentLevels);;
+        $departmentLevels = DepartmentLevelResource::collection($departmentApplicationStep->institutionDepartment->departmentLevels);
         return Inertia::render('institution/departments/courses/Edit',
             compact('institutionDepartment', 'departmentApplicationStep', 'departmentLevels'),
         );
