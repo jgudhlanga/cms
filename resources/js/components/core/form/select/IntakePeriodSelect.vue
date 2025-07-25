@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { BaseSelect } from '@/components/core/form';
+import { useIntakePeriods } from '@/composables/institution/useIntakePeriods';
 import { IntakePeriod } from '@/types/institution';
 import { SelectOption } from '@/types/utils';
 import { computed, onMounted } from 'vue';
-import { useIntakePeriods } from '@/composables/institution/useIntakePeriods';
 
 interface Props {
-    url: string;
+    url?: string;
+    data?: IntakePeriod[];
     label?: string;
     placeholder?: string;
     isClearable?: boolean;
@@ -17,21 +18,35 @@ interface Props {
 }
 
 const props = defineProps<Props>();
-const {url} = props;
+const { url } = props;
 const { isLoading, listIntakePeriods, intakePeriods } = useIntakePeriods();
 
 onMounted(async () => {
-    await listIntakePeriods(url);
+    if (!url) {
+        return;
+    } else {
+        await listIntakePeriods(url);
+    }
 });
 
 const options = computed(() => {
-    return intakePeriods?.value?.data?.map(
-        (period: IntakePeriod) =>
-            <SelectOption>{
-                value: Number(period.id),
-                label: period?.attributes?.name,
-            },
-    );
+    if (props.data) {
+        return props.data?.map(
+            (period: IntakePeriod) =>
+                <SelectOption>{
+                    value: Number(period.id),
+                    label: period?.attributes?.name,
+                },
+        );
+    } else {
+        return intakePeriods?.value?.data?.map(
+            (period: IntakePeriod) =>
+                <SelectOption>{
+                    value: Number(period.id),
+                    label: period?.attributes?.name,
+                },
+        );
+    }
 });
 </script>
 
@@ -42,5 +57,6 @@ const options = computed(() => {
         v-bind="$attrs"
         :is-multi="isMulti"
         :loading="isLoading"
-        :options="options" />
+        :options="options"
+    />
 </template>

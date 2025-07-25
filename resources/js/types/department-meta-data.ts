@@ -152,12 +152,23 @@ export type DepartmentApplicationStepActionParams = {
 };
 
 export type ClassSizeEntry = {
-    course_id: number;
-    level_id: number;
+    department_course_id: number;
+    department_level_id: number;
     class_size: number | null;
 };
 
 export type DepartmentIntakeClassSizeParams = {
     intake_period_id: string | number | null;
     class_sizes: ClassSizeEntry[];
+};
+export type DepartmentIntakeClassSize = {
+    type: string;
+    id: string | number;
+    attributes: {
+        institutionDepartmentId: string | number;
+        departmentCourseId: string | number;
+        departmentLevelId: string | number;
+        classSize: number | null;
+        intakePeriodId: string | number | null;
+    };
 };

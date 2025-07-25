@@ -6,6 +6,7 @@ use App\Traits\BelongsToTenant;
 use App\Traits\Paginatable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
@@ -26,6 +27,26 @@ class DepartmentIntakeClassSize extends Model
         'class_size',
         'intake_period_id'
     ];
+
+    public function departmentCourse(): BelongsTo
+    {
+        return $this->belongsTo(DepartmentCourse::class, 'department_course_id');
+    }
+
+    public function departmentLevel(): BelongsTo
+    {
+        return $this->belongsTo(DepartmentLevel::class, 'department_level_id');
+    }
+
+    public function institutionDepartment(): BelongsTo
+    {
+        return $this->belongsTo(InstitutionDepartment::class, 'institution_department_id');
+    }
+
+    public function intakePeriod(): BelongsTo
+    {
+        return $this->belongsTo(IntakePeriod::class, 'intake_period_id');
+    }
 
     public function getActivitylogOptions(): LogOptions
     {

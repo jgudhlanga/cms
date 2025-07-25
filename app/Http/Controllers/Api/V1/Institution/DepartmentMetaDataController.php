@@ -7,6 +7,7 @@ use App\Http\Filters\Institution\StaffFilter;
 use App\Http\Resources\Institution\DepartmentCourseResource;
 use App\Http\Resources\Institution\DepartmentLevelResource;
 use App\Http\Resources\Institution\InstitutionDepartmentWithWorkflowStepsResource;
+use App\Http\Resources\Institution\IntakePeriodClassSizeResource;
 use App\Http\Resources\Institution\StaffResource;
 use App\Models\Institution\InstitutionDepartment;
 use App\Repositories\Institution\interface\IStaffRepository;
@@ -42,5 +43,10 @@ class DepartmentMetaDataController extends Controller
     public function workflowSteps(InstitutionDepartment $institutionDepartment)
     {
         return InstitutionDepartmentWithWorkflowStepsResource::make($institutionDepartment);
+    }
+
+    public function classSizes(InstitutionDepartment $institutionDepartment)
+    {
+        return IntakePeriodClassSizeResource::collection($institutionDepartment->intakeClassSizes);
     }
 }

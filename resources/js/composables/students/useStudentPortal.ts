@@ -71,8 +71,11 @@ export function useStudentPortal() {
         return personalDetails;
     };
 
-    const successMessage = () => trans('trans.item_saved', { item: trans_choice('trans.application', 1) });
-    const errorMessage = () => trans('trans.item_save_failure', { item: trans_choice('trans.application', 1) });
+    const getApplicationName = () => {
+        return trans_choice('trans.application', 1);
+    };
+    const successMessage = () => trans('trans.item_saved', { item: getApplicationName() });
+    const errorMessage = () => trans('trans.item_save_failure', { item: getApplicationName() });
     const saveApplication = (form: InertiaForm<any>) => {
         try {
             form.post(route('portal.store-application'), buildFormOptions(form, successMessage(), errorMessage()));

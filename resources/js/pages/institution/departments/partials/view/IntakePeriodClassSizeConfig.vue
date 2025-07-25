@@ -1,44 +1,64 @@
 <script setup lang="ts">
 import BaseAlert from '@/components/core/alert/BaseAlert.vue';
+import { BaseButton } from '@/components/core/button';
 import { BaseInput } from '@/components/core/form';
 import IntakePeriodSelect from '@/components/core/form/select/IntakePeriodSelect.vue';
 import DataLoadingSpinner from '@/components/core/loader/DataLoadingSpinner.vue';
 import HeadingSmall from '@/components/core/util/HeadingSmall.vue';
 import { useInstitutionDepartmentMetadata } from '@/composables/institution/useInstitutionDepartmentMetadata';
+import { useIntakePeriods } from '@/composables/institution/useIntakePeriods';
 import { TextFieldType } from '@/enums/inputs';
-import { ClassSizeEntry, DepartmentCourse, DepartmentIntakeClassSizeParams, DepartmentLevel } from '@/types/department-meta-data';
+import {
+    ClassSizeEntry,
+    DepartmentCourse,
+    DepartmentCourseLevel,
+    DepartmentIntakeClassSize,
+    DepartmentIntakeClassSizeParams,
+    DepartmentLevel,
+} from '@/types/department-meta-data';
 import { InstitutionDepartment } from '@/types/institution';
 import { useForm } from '@inertiajs/vue3';
 import { onMounted, ref } from 'vue';
-import { BaseButton } from '@/components/core/button';
-import { ColorVariant } from '@/enums/colors';
 
 interface Props {
     department: InstitutionDepartment;
 }
 
 const props = defineProps<Props>();
+const { department } = props;
+const institutionDepartmentId = department?.id?.toString() ?? '';
 const courses = ref<DepartmentCourse[]>([]);
 const levels = ref<DepartmentLevel[]>([]);
+const classSizes = ref<DepartmentIntakeClassSize[]>([]);
 
-const { loadDepartmentMetadata, isLoading } = useInstitutionDepartmentMetadata();
-
+const { loadDepartmentMetadata, isLoading, saveClassSizes } = useInstitutionDepartmentMetadata();
+const { isLoading: intakePeriodsLoading, listIntakePeriods, intakePeriods } = useIntakePeriods();
 const form = useForm<DepartmentIntakeClassSizeParams>({
     intake_period_id: null,
     class_sizes: [],
 });
 onMounted(async () => {
-    const coursesRes = await loadDepartmentMetadata(route('v1.department-metadata.courses', props.department?.id?.toString()));
+    await listIntakePeriods(`api/v1/intake-periods?page_size=all`);
+    classSizes.value = await loadDepartmentMetadata(route('v1.department-metadata.class-sizes', institutionDepartmentId));
+    const coursesRes = await loadDepartmentMetadata(route('v1.department-metadata.courses', institutionDepartmentId));
     courses.value = coursesRes?.courses;
-    const levelsRes = await loadDepartmentMetadata(route('v1.department-metadata.levels', props.department?.id?.toString()));
+    const levelsRes = await loadDepartmentMetadata(route('v1.department-metadata.levels', institutionDepartmentId));
     levels.value = levelsRes?.levels;
+
     const filled: ClassSizeEntry[] = [];
+    form.intake_period_id = intakePeriods.value?.data![0]?.id ?? null;
     for (const course of courses.value) {
         for (const level of levels.value) {
+            const existing = classSizes.value.find(
+                (entry) =>
+                    Number(entry.attributes.departmentCourseId) === Number(course.id) &&
+                    Number(entry.attributes.departmentLevelId) === Number(level.id) &&
+                    Number(entry.attributes.intakePeriodId) === Number(form.intake_period_id),
+            );
             filled.push({
-                course_id: Number(course?.id ?? ''),
-                level_id: Number(level?.id ?? ''),
-                class_size: null,
+                department_course_id: Number(course?.id ?? ''),
+                department_level_id: Number(level?.id ?? ''),
+                class_size: existing ? existing.attributes.classSize : null,
             });
         }
     }
@@ -46,10 +66,13 @@ onMounted(async () => {
 });
 
 const getEntry = (courseId: number, levelId: number): ClassSizeEntry | any => {
-    return form.class_sizes.find((e) => e.course_id == courseId && e.level_id == levelId);
+    return form.class_sizes.find((e) => e.department_course_id === courseId && e.department_level_id === levelId);
 };
-const submit = () => {
-    console.log(form.data());
+const submit = async () => {
+    saveClassSizes(institutionDepartmentId, form);
+};
+const checkToDisable = (courseLevels: DepartmentCourseLevel[], levelId: number) => {
+    return courseLevels.some((level: DepartmentCourseLevel) => Number(level.departmentLevelId) === levelId);
 };
 </script>
 
@@ -58,7 +81,8 @@ const submit = () => {
         <HeadingSmall :title="`${$tChoice('trans.intake_period', 2)} ${$t('trans.config')}`" :description="$t('trans.intake_config_description')" />
         <div class="flex w-1/4 flex-col">
             <IntakePeriodSelect
-                :url="`api/v1/intake-periods?page_size=all`"
+                :loading="intakePeriodsLoading"
+                :data="intakePeriods?.data ?? []"
                 :label-uppercase="true"
                 :is-multi="false"
                 :is-searchable="true"
@@ -66,7 +90,7 @@ const submit = () => {
             />
         </div>
         <div class="flex flex-col">
-            <template v-if="isLoading">
+            <template v-if="isLoading || intakePeriodsLoading">
                 <DataLoadingSpinner />
             </template>
             <template v-else>
@@ -89,18 +113,22 @@ const submit = () => {
                                         :type="TextFieldType.number"
                                         :placeholder="$t('trans.enter_class_size')"
                                         v-model.number="getEntry(Number(course.id), Number(level.id)).class_size"
+                                        :disabled="
+                                            !checkToDisable(course?.relationships?.departmentCourseLevels ?? [], Number(level.id)) ||
+                                            !form.intake_period_id
+                                        "
                                     />
                                 </td>
                             </tr>
                         </tbody>
                     </table>
-                    <div class="flex justify-center items-center">
-                        <BaseButton class="mt-4" type="submit"  :processing="form.processing">
+                    <div class="flex items-center justify-center">
+                        <BaseButton type="submit" :processing="form.processing">
                             {{ $t('trans.submit') }}
                         </BaseButton>
                     </div>
                 </form>
-                <BaseAlert v-else :description="$t('trans.courses_and_levels_not_found')" />
+                <BaseAlert v-else :title="$t('trans.no_data')" :description="$t('trans.courses_and_levels_not_found')" />
             </template>
         </div>
     </div>

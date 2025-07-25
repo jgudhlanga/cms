@@ -52,6 +52,11 @@ class InstitutionDepartment extends Model
         return $this->hasMany(DepartmentApplicationStep::class, 'institution_department_id');
     }
 
+    public function intakeClassSizes(): HasMany
+    {
+        return $this->hasMany(DepartmentIntakeClassSize::class, 'institution_department_id');
+    }
+
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
