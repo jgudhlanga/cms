@@ -6,29 +6,28 @@ import Empty from '../../util/Empty.vue';
 import InputError from '../InputError.vue';
 import { cn } from '@/lib/utils';
 import RequiredIndicator from '@/components/core/form/RequiredIndicator.vue';
-import BaseDatePicker from '@/components/core/form/date/BaseDatePicker.vue';
 
 interface Props {
     label?: string;
     placeholder?: string;
-    options?: Array<SelectOption>| [];
+    options?: Array<SelectOption> | [];
     isClearable?: boolean;
     isMulti?: boolean;
     isSearchable?: boolean;
     loading?: boolean;
     error?: string | object;
-    labelUppercase?: boolean,
-    verticalLayout?: boolean,
-    isRequired?: boolean,
+    labelUppercase?: boolean;
+    verticalLayout?: boolean;
+    isRequired?: boolean;
 }
 
 withDefaults(defineProps<Props>(), {
     options: () => [],
     isClearable: true,
     isSearchable: true,
-    labelUppercase:false,
-    verticalLayout:true,
-    isRequired: false
+    labelUppercase: false,
+    verticalLayout: true,
+    isRequired: false,
 });
 
 const model = defineModel<any>();
@@ -36,8 +35,8 @@ const model = defineModel<any>();
 <template>
     <div class="flex flex-col">
         <div :class="cn('flex space-x-3', verticalLayout && 'flex-col space-y-3')">
-            <Label :class="cn(error && 'text-destructive', labelUppercase && 'uppercase', !verticalLayout && 'flex items-center w-1/4')" v-if="label">
-                {{ label }}<RequiredIndicator v-if="isRequired"/>
+            <Label :class="cn(error && 'text-destructive', labelUppercase && 'uppercase', !verticalLayout && 'flex w-1/4 items-center')" v-if="label">
+                {{ label }}<RequiredIndicator v-if="isRequired" />
             </Label>
             <VueSelect
                 :class="cn('custom-select', '')"

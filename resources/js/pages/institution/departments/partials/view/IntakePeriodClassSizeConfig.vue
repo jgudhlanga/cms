@@ -45,8 +45,12 @@ onMounted(async () => {
     const levelsRes = await loadDepartmentMetadata(route('v1.department-metadata.levels', institutionDepartmentId));
     levels.value = levelsRes?.levels;
 
-    const filled: ClassSizeEntry[] = [];
     form.intake_period_id = intakePeriods.value?.data![0]?.id ?? null;
+    fillClassSizeData();
+});
+
+const fillClassSizeData = () => {
+    const filled: ClassSizeEntry[] = [];
     for (const course of courses.value) {
         for (const level of levels.value) {
             const existing = classSizes.value.find(
@@ -63,7 +67,7 @@ onMounted(async () => {
         }
     }
     form.class_sizes = filled;
-});
+}
 
 const getEntry = (courseId: number, levelId: number): ClassSizeEntry | any => {
     return form.class_sizes.find((e) => e.department_course_id === courseId && e.department_level_id === levelId);
@@ -73,6 +77,11 @@ const submit = async () => {
 };
 const checkToDisable = (courseLevels: DepartmentCourseLevel[], levelId: number) => {
     return courseLevels.some((level: DepartmentCourseLevel) => Number(level.departmentLevelId) === levelId);
+};
+
+const handleSelectionChange = async (value: any) => {
+    classSizes.value = await loadDepartmentMetadata(`api/v1/departments/${institutionDepartmentId}/class-sizes?intake_period=${value}&page_size=all`);
+    fillClassSizeData();
 };
 </script>
 
@@ -87,6 +96,7 @@ const checkToDisable = (courseLevels: DepartmentCourseLevel[], levelId: number) 
                 :is-multi="false"
                 :is-searchable="true"
                 v-model="form.intake_period_id"
+                @update:modelValue="handleSelectionChange"
             />
         </div>
         <div class="flex flex-col">
