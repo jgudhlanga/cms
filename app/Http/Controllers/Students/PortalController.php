@@ -6,6 +6,7 @@ use App\DTO\Shared\{AddressDto, ContactDto, NextOfKinDto};
 use App\DTO\Students\CreateApplicationDto;
 use App\DTO\Users\UserDto;
 use App\Enums\Acl\RoleEnum;
+use App\Models\Institution\IntakePeriod;
 use App\Models\Students\StudentProgram;
 use App\Enums\Shared\{StatusEnum, TenantEnum};
 use App\Events\Students\ApplicationWorkflowStepChanged;
@@ -99,8 +100,11 @@ class PortalController extends Controller
         DB::beginTransaction();
         try {
             $this->updateUserNamesIfChanged($user, $request);
+            // get the current intake period
+            $intakePeriodId = $request->has('intake_period_id') && $request->intake_period_id > 0 ? $request->intake_period_id : null;
+            $intakePeriod = $intakePeriodId ?  IntakePeriod::find($intakePeriodId) : IntakePeriod::orderBy('end_date', 'DESC')->first();
             $student = $this->studentRepository->create(
-                CreateApplicationDto::fromCreateApplicationRequest($request, $user)
+                CreateApplicationDto::fromCreateApplicationRequest($request, $user, $intakePeriod)
             );
             $application = $student->programs()->latest()->first();
             $stepOne = WorkflowHelper::getDepartmentApplicationStepByPosition(1);

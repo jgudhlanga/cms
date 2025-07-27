@@ -7,6 +7,7 @@ use App\Models\Institution\DepartmentApplicationStep;
 use App\Models\Institution\DepartmentCourse;
 use App\Models\Institution\DepartmentLevel;
 use App\Models\Institution\InstitutionDepartment;
+use App\Models\Institution\IntakePeriod;
 use App\Observers\Students\StudentProgramObserver;
 use App\Traits\BelongsToTenant;
 use App\Traits\Filterable;
@@ -41,6 +42,7 @@ class StudentProgram extends Model
         'application_tracking_number',
         'department_application_step_id',
         'program_status_id',
+        'intake_period_id',
     ];
 
     public function student(): BelongsTo
@@ -66,6 +68,11 @@ class StudentProgram extends Model
     public function departmentWorkflowStep(): BelongsTo
     {
         return $this->belongsTo(DepartmentApplicationStep::class, 'department_application_step_id');
+    }
+
+    public function intakePeriod(): BelongsTo
+    {
+        return $this->belongsTo(IntakePeriod::class, 'intake_period_id');
     }
 
     public function getActivitylogOptions(): LogOptions

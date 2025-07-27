@@ -104,6 +104,7 @@ class StudentRepository extends BaseRepository implements IStudentRepository
             institution_department_id: $dto->department_id,
             department_level_id: $dto->level_id,
             department_course_id: $dto->course_id,
+            intake_period_id: $dto->intake_period_id,
             required_level_completed: $dto->required_level_completed,
             read_write_acknowledged: $dto->read_write_acknowledged,
         );

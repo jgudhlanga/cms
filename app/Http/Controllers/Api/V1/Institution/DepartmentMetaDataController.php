@@ -48,7 +48,7 @@ class DepartmentMetaDataController extends Controller
     public function classSizes(InstitutionDepartment $institutionDepartment)
     {
         $intakePeriodId = request('intake_period');
-        $filteredClassSizes = $institutionDepartment->intakeClassSizes->where('intake_period_id', $intakePeriodId);
+        $filteredClassSizes = $intakePeriodId ?  $institutionDepartment->intakeClassSizes->where('intake_period_id', $intakePeriodId) : $institutionDepartment->intakeClassSizes;
         return IntakePeriodClassSizeResource::collection($filteredClassSizes);
     }
 }

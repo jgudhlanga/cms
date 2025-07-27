@@ -121,7 +121,7 @@ const handleSelectionChange = async (value: any) => {
                                     <BaseInput
                                         :input-id="`class_size_${course?.id}_${level?.id}`"
                                         :type="TextFieldType.number"
-                                        :placeholder="$t('trans.enter_class_size')"
+                                        :placeholder="$t('trans.class_size')"
                                         v-model.number="getEntry(Number(course.id), Number(level.id)).class_size"
                                         :disabled="
                                             !checkToDisable(course?.relationships?.departmentCourseLevels ?? [], Number(level.id)) ||

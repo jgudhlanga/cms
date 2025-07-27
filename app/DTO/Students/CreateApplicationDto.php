@@ -3,6 +3,7 @@
 namespace App\DTO\Students;
 
 use App\Http\Requests\Students\CreateApplicationRequest;
+use App\Models\Institution\IntakePeriod;
 use App\Models\Users\User;
 
 readonly class CreateApplicationDto
@@ -52,11 +53,12 @@ readonly class CreateApplicationDto
         public ?array  $o_level_other_grade_ids,
         public ?array  $o_level_other_years,
         public ?array  $o_level_other_sittings,
+        public int  $intake_period_id,
     )
     {
     }
 
-    public static function fromCreateApplicationRequest(CreateApplicationRequest $request, User $user): CreateApplicationDto
+    public static function fromCreateApplicationRequest(CreateApplicationRequest $request, User $user, IntakePeriod $intakePeriod): CreateApplicationDto
     {
         return new self(
         /** Personal details */
@@ -103,6 +105,7 @@ readonly class CreateApplicationDto
             o_level_other_grade_ids: $request->o_level_other_grade_ids,
             o_level_other_years: $request->o_level_other_years,
             o_level_other_sittings: $request->o_level_other_sittings,
+            intake_period_id: $intakePeriod->id,
         );
     }
 }
