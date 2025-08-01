@@ -102,7 +102,7 @@ class PortalController extends Controller
             $this->updateUserNamesIfChanged($user, $request);
             // get the current intake period
             $intakePeriodId = $request->has('intake_period_id') && $request->intake_period_id > 0 ? $request->intake_period_id : null;
-            $intakePeriod = $intakePeriodId ?  IntakePeriod::find($intakePeriodId) : IntakePeriod::orderBy('end_date', 'DESC')->first();
+            $intakePeriod = $intakePeriodId ? IntakePeriod::find($intakePeriodId) : IntakePeriod::orderBy('end_date', 'DESC')->first();
             $student = $this->studentRepository->create(
                 CreateApplicationDto::fromCreateApplicationRequest($request, $user, $intakePeriod)
             );
@@ -114,7 +114,7 @@ class PortalController extends Controller
             if ($stepTwo) {
                 ApplicationWorkflowStepChanged::dispatch($student, $application, $stepTwo, $stepOne);
             }
-            return to_route('portal.application.view');
+            return to_route('portal.application.view', $application->id);
         } catch (Throwable $e) {
             DB::rollBack();
             Log::error('Application submission failed', ['exception' => $e]);

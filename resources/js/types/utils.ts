@@ -101,4 +101,5 @@ export type TimelineStep = {
     component: Component;
     onClick?: () => void | null;
     props?: any,
+    status?: 'active' | 'completed' | 'pending' | 'failed';
 };

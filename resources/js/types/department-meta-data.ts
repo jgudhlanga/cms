@@ -137,7 +137,10 @@ export type DepartmentWorkflowStepMetadata = {
     workflowActionIds: Array<string | undefined | null>;
     roles?:  Array<string | undefined | null>;
     staff?:  Array<string | undefined | null>;
-    actions?:  Array<string | undefined | null>;
+    actions?: Array<{
+        title: string;
+        action: string;
+    }>;
 }
 
 export type DepartmentApplicationStepParams = {

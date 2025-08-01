@@ -31,7 +31,9 @@ const styles = 'font-extralight';
             <div class="flex items-center space-x-2 text-xs">
                 <component :is="icons[IconName.cogs]" class="size-4" />
                 <BaseText :variant="ColorVariant.shade" :title="$tChoice('trans.action', 2)" :classes="styles" />
-                <div>{{ step?.relationships?.metadata?.actions?.join(', ') || '---' }}</div>
+                <div>
+                    {{ step?.relationships?.metadata?.actions?.map(a => `${a.title}`).join(', ') || '---'}}
+                </div>
             </div>
         </div>
         <div class="flex justify-end">

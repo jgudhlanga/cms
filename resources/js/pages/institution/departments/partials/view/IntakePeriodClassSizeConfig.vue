@@ -138,7 +138,7 @@ const handleSelectionChange = async (value: any) => {
                         </BaseButton>
                     </div>
                 </form>
-                <BaseAlert v-else :title="$t('trans.no_data')" :description="$t('trans.courses_and_levels_not_found')" />
+                <BaseAlert v-else :title="$t('trans.no_data')" :description="$t('trans.courses_and_levels_not_found'   )" />
             </template>
         </div>
     </div>

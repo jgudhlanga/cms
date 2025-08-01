@@ -47,6 +47,7 @@ class StudentProgramRepository extends BaseRepository implements interface\IStud
             'department_course_id' => $dto->department_course_id,
             'required_level_completed' => $dto->required_level_completed,
             'read_write_acknowledged' => $dto->read_write_acknowledged,
+            'intake_period_id' => $dto->intake_period_id,
         ];
     }
 }

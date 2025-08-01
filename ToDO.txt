@@ -10,3 +10,6 @@ public function failedValidation(Validator $validator)
             'input' => $this->all(),
         ], 422));
     }
+
+# RUN A SPECIFIC SEEDER
+php artisan db:seed --class=Database\\Seeders\\Students\\StudentApplicationSeeder

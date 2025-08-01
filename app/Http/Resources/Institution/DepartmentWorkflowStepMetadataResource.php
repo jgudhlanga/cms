@@ -18,7 +18,10 @@ class DepartmentWorkflowStepMetadataResource extends JsonResource
             'workflowActionIds' => $this->workflow_action_ids,
             'roles' => $this->roles?->pluck('name')->toArray(),
             'staff' => $this->staff?->map(fn($s) => $s->user?->full_name)->toArray(),
-            'actions' => $this->workflowAction?->pluck('title')->toArray(),
+            'actions' => $this->workflowAction?->map(fn($action) => [
+                'title' => $action->title,
+                'action' => $action->slug,
+            ])->toArray(),
         ];
     }
 }
