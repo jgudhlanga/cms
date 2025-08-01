@@ -12,4 +12,7 @@ public function failedValidation(Validator $validator)
     }
 
 # RUN A SPECIFIC SEEDER
+## STAFF SEEDER
+php artisan db:seed --class=Database\\Seeders\\Institution\\StaffSeeder
+## STUDENTS SEEDER
 php artisan db:seed --class=Database\\Seeders\\Students\\StudentApplicationSeeder

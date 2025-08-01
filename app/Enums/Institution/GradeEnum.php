@@ -23,6 +23,30 @@ enum GradeEnum: string
         };
     }
 
+    public function id(): string
+    {
+        return match ($this) {
+            self::A => 1,
+            self::B => 2,
+            self::C => 3,
+            self::D => 4,
+            self::E => 5,
+            self::U => 6,
+        };
+    }
+
+    public function position(): string
+    {
+        return match ($this) {
+            self::A => 1,
+            self::B => 2,
+            self::C => 3,
+            self::D => 4,
+            self::E => 5,
+            self::U => 6,
+        };
+    }
+
     public static function all(): array
     {
         return array_combine(

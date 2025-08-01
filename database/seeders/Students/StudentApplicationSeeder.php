@@ -2,23 +2,25 @@
 
 namespace Database\Seeders\Students;
 
-use App\DTO\Students\UpdateStudentDto;
 use App\Enums\Acl\RoleEnum;
 use App\Enums\Institution\CourseEnum;
 use App\Enums\Institution\DepartmentEnum;
+use App\Enums\Institution\GradeEnum;
 use App\Enums\Institution\LevelEnum;
+use App\Enums\Institution\SubjectEnum;
 use App\Enums\Shared\AcademicLevelEnum;
 use App\Enums\Shared\IdTypeEnum;
 use App\Enums\Shared\TenantEnum;
+use App\Helpers\WorkflowHelper;
 use App\Models\Institution\Course;
 use App\Models\Institution\Department;
+use App\Models\Institution\DepartmentApplicationStep;
 use App\Models\Institution\DepartmentCourse;
 use App\Models\Institution\DepartmentLevel;
 use App\Models\Institution\InstitutionDepartment;
 use App\Models\Institution\IntakePeriod;
 use App\Models\Institution\Level;
 use App\Models\Shared\AcademicLevel;
-use App\Models\Shared\Contact;
 use App\Models\Shared\Gender;
 use App\Models\Shared\MaritalStatus;
 use App\Models\Shared\Race;
@@ -28,6 +30,7 @@ use App\Models\Students\StudentProgram;
 use App\Models\Users\User;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class StudentApplicationSeeder extends Seeder
 {
@@ -38,53 +41,56 @@ class StudentApplicationSeeder extends Seeder
 
     public function run(): void
     {
-        // create users
-        $users = User::factory()->count(100)->create(['tenant_id' => $this->getTenantId(), 'password' => 'Student123!']);
-        $intakePeriod = IntakePeriod::orderBy('end_date', 'DESC')->first();
-        $genderIds = Gender::all()->pluck('id')->toArray();
-        $titleIds = Title::all()->pluck('id')->toArray();
-        $maritalStatusIds = MaritalStatus::all()->pluck('id')->toArray();
-        $raceIds = Race::all()->pluck('id')->toArray();
+        DB::transaction(function () {
+            $users = User::factory()->count(100)->create(['tenant_id' => $this->getTenantId(), 'password' => 'Student123!']);
+            $intakePeriod = IntakePeriod::orderBy('end_date', 'DESC')->first();
+            $genderIds = Gender::all()->pluck('id')->toArray();
+            $titleIds = Title::all()->pluck('id')->toArray();
+            $maritalStatusIds = MaritalStatus::all()->pluck('id')->toArray();
+            $raceIds = Race::all()->pluck('id')->toArray();
 
-        if (!$intakePeriod) {
-            $intakePeriod = IntakePeriod::create(['name' => 'Default Intake Period', 'start_date' => now()->subMonth(),
-                'end_date' => now()->addMonth(), 'is_active' => 1, 'tenant_id' => $this->getTenantId()]);
-        }
-        # date of birth range for students
-        $dateOfBirthStart = Carbon::now()->subYears(70);
-        $dateOfBirthEnd = Carbon::now()->subYears(16);
+            if (!$intakePeriod) {
+                $intakePeriod = IntakePeriod::create(['name' => 'Default Intake Period', 'start_date' => now()->subMonth(),
+                    'end_date' => now()->addMonth(), 'is_active' => 1, 'tenant_id' => $this->getTenantId()]);
+            }
+            # date of birth range for students
+            $dateOfBirthStart = Carbon::now()->subYears(70);
+            $dateOfBirthEnd = Carbon::now()->subYears(16);
 
-        # department, level, course
-        $institutionDepartmentId = $this->getInstitutionDepartmentId();
-        $departmentLevelId = $this->getDepartmentLevelId($institutionDepartmentId);
-        $departmentCourseId = $this->getNcInformationTechnologyCourseId($institutionDepartmentId);
-        # o-level
-        $oLevel = AcademicLevel::where('name', AcademicLevelEnum::SECONDARY_SCHOOL->value)->first();
-        foreach ($users as $user) {
-            $user->assignRole(RoleEnum::STUDENT);
-            $student = Student::create([
-                'tenant_id' => $this->getTenantId(),
-                'user_id' => $user->id,
-                'title_id' => fake()->randomElement($titleIds),
-                'gender_id' => fake()->randomElement($genderIds),
-                'marital_status_id' => fake()->randomElement($maritalStatusIds),
-                'race_id' => fake()->randomElement($raceIds),
-                'id_type_id' => IdTypeEnum::ZIMBABWEAN_ID_NUMBER->id(),
-                'id_number' => strtoupper(fake()->unique()->bothify('##-######?##')),
-                'passport_number' => null,
-                'country_id' => null,
-                'study_permit_number' => null,
-                'date_of_birth' => Carbon::createFromTimestamp(rand($dateOfBirthStart->timestamp, $dateOfBirthEnd->timestamp))->format('Y-m-d'),
-            ]);
-            $this->saveProgram($student, $intakePeriod->id, $institutionDepartmentId, $departmentLevelId, $departmentCourseId);
-            $this->saveContact($student);
-            $this->saveAddress($student);
-            $this->saveNextOfKin($student);
-            $this->saveAcademicResults($student, $oLevel);
-        }
+            # department, level, course
+            $institutionDepartmentId = $this->getInstitutionDepartmentId();
+            $departmentLevelId = $this->getDepartmentLevelId($institutionDepartmentId);
+            $departmentCourseId = $this->getNcInformationTechnologyCourseId($institutionDepartmentId);
+            # o-level
+            $oLevel = AcademicLevel::where('name', AcademicLevelEnum::SECONDARY_SCHOOL->value)->first();
+            # workflow step
+            $stepTwo = WorkflowHelper::getDepartmentApplicationStepByPosition(2);
+            foreach ($users as $user) {
+                $user->assignRole(RoleEnum::STUDENT);
+                $student = Student::create([
+                    'tenant_id' => $this->getTenantId(),
+                    'user_id' => $user->id,
+                    'title_id' => fake()->randomElement($titleIds),
+                    'gender_id' => fake()->randomElement($genderIds),
+                    'marital_status_id' => fake()->randomElement($maritalStatusIds),
+                    'race_id' => fake()->randomElement($raceIds),
+                    'id_type_id' => IdTypeEnum::ZIMBABWEAN_ID_NUMBER->id(),
+                    'id_number' => strtoupper(fake()->unique()->bothify('##-######?##')),
+                    'passport_number' => null,
+                    'country_id' => null,
+                    'study_permit_number' => null,
+                    'date_of_birth' => Carbon::createFromTimestamp(rand($dateOfBirthStart->timestamp, $dateOfBirthEnd->timestamp))->format('Y-m-d'),
+                ]);
+                $this->saveProgram($student, $intakePeriod->id, $institutionDepartmentId, $departmentLevelId, $departmentCourseId, $stepTwo);
+                $this->saveContact($student);
+                $this->saveAddress($student);
+                $this->saveNextOfKin($student);
+                $this->saveAcademicResults($student, $oLevel);
+            }
+        });
     }
 
-    private function saveProgram(Student $student, $intakePeriodId, $institutionDepartmentId, $departmentLevelId, $departmentCourseId): void
+    private function saveProgram(Student $student, $intakePeriodId, $institutionDepartmentId, $departmentLevelId, $departmentCourseId, DepartmentApplicationStep $step): void
     {
         StudentProgram::create([
             'tenant_id' => $this->getTenantId(),
@@ -93,6 +99,7 @@ class StudentApplicationSeeder extends Seeder
             'department_level_id' => $departmentLevelId,
             'department_course_id' => $departmentCourseId,
             'intake_period_id' => $intakePeriodId,
+            'department_application_step_id' => $step->id,
         ]);
     }
 
@@ -141,6 +148,7 @@ class StudentApplicationSeeder extends Seeder
     private function saveAddress(Student $student): void
     {
         $student->addresses()->create([
+            'tenant_id' => $this->getTenantId(),
             'address_1' => fake()->buildingNumber,
             'address_2' => fake()->streetName,
             'address_3' => fake()->city,
@@ -161,12 +169,14 @@ class StudentApplicationSeeder extends Seeder
         if ($nextOfKin) {
             // next of in contact
             $nextOfKin->contacts()->create([
+                'tenant_id' => $this->getTenantId(),
                 'name' => $nextOfKin->name,
                 'phone_number' => fake()->phoneNumber,
                 'contact_is_main' => true,
             ]);
             // next of kin address
             $nextOfKin->addresses()->create([
+                'tenant_id' => $this->getTenantId(),
                 'address_1' => fake()->buildingNumber,
                 'address_2' => fake()->streetName,
                 'address_3' => fake()->city,
@@ -178,18 +188,29 @@ class StudentApplicationSeeder extends Seeder
 
     private function saveAcademicResults(Student $student, AcademicLevel $level): void
     {
-        if (!empty($mainSubjects) && is_array($mainSubjects)) {
-            foreach ($mainSubjects as $subjectId => $gradeId) {
-                $examSitting = $examSittings[$subjectId] ?? null;
-                $examYear = $examYears[$subjectId] ?? null;
-                $student->academicResults()->create([
-                    'academic_level_id' => $level->id,
-                    'subject_id' => $subjectId,
-                    'exam_year' => $examYear,
-                    'exam_sitting' => $examSitting,
-                    'grade_id' => $gradeId,
-                ]);
-            }
+        $grades = [GradeEnum::A->id(), GradeEnum::B->id(), GradeEnum::C->id()];
+        $subjects = [SubjectEnum::ENGLISH->id(), SubjectEnum::MATHEMATICS->id(), SubjectEnum::INTEGRATED_SCIENCE->id()];
+        $otherSubjects = [SubjectEnum::AGRICULTURE->id(), SubjectEnum::BIBLE_KNOWLEDGE->id()];
+        $examYear = 2024;
+        $sitting = 'november';
+        foreach ($subjects as $subjectId) {
+            $student->academicResults()->create([
+                'academic_level_id' => $level->id,
+                'subject_id' => $subjectId,
+                'exam_year' => $examYear,
+                'exam_sitting' => $sitting,
+                'grade_id' => fake()->randomElement($grades),
+            ]);
+        }
+
+        foreach ($otherSubjects as $subjectId) {
+            $student->academicResults()->create([
+                'academic_level_id' => $level->id,
+                'subject_id' => $subjectId,
+                'exam_year' => $examYear,
+                'exam_sitting' => $sitting,
+                'grade_id' => fake()->randomElement($grades),
+            ]);
         }
     }
 }

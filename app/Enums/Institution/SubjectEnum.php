@@ -76,6 +76,44 @@ enum SubjectEnum: string
         };
     }
 
+    public function id(): string
+    {
+        return match ($this) {
+            self::ACCOUNTING => 1,
+            self::AGRICULTURE => 2,
+            self::ART => 3,
+            self::BIBLE_KNOWLEDGE => 4,
+            self::BUILDING_STUDIES => 5,
+            self::BUSINESS_AND_ENTERPRISE_SKILLS => 6,
+            self::BUSINESS_STUDIES => 7,
+            self::CHINESE => 8,
+            self::COMMERCE => 9,
+            self::COMPUTER_SCIENCE => 10,
+            self::DESIGN_AND_TECHNOLOGY => 11,
+            self::ECONOMICS => 12,
+            self::ENGLISH => 13,
+            self::FASHION_AND_FABRICS => 14,
+            self::FOOD_AND_NUTRITION => 15,
+            self::FRENCH => 16,
+            self::GEOGRAPHY => 17,
+            self::GERMAN => 18,
+            self::HISTORY => 19,
+            self::INTEGRATED_SCIENCE => 20,
+            self::LITERATURE_IN_ENGLISH => 21,
+            self::MATHEMATICS => 22,
+            self::METAL_TECHNOLOGY_AND_DESIGN => 23,
+            self::MUSIC => 24,
+            self::NDEBELE => 25,
+            self::PHYSICAL_EDUCATION => 26,
+            self::RELIGIOUS_STUDIES => 27,
+            self::SHONA => 28,
+            self::SPANISH => 29,
+            self::TECHNICAL_GRAPHICS => 30,
+            self::WOOD_TECHNOLOGY_AND_DESIGN => 31,
+
+        };
+    }
+
     public static function all(): array
     {
         return array_combine(
