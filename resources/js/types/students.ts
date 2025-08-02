@@ -1,32 +1,39 @@
 import { DepartmentApplicationStep, DepartmentCourse, DepartmentLevel } from '@/types/department-meta-data';
 import { InstitutionDepartment } from '@/types/institution';
 import { SelectOption } from '@/types/utils';
+import { User } from '@/types/users';
 
 export type Student = {
+    type: string
     id?: string | number;
-    userId: string | number;
-    titleId?: string | number;
-    title?: string;
-    genderId?: string | number;
-    gender?: string;
-    maritalStatusId?: string | number;
-    maritalStatus?: string;
-    raceId?: string | number;
-    race?: string;
-    idTypeId: string | number;
-    studentNumber: string;
-    idType: string;
-    idNumber?: string;
-    passportNumber?: string;
-    countryId?: string | number;
-    country?: string;
-    studentPermitNumber?: string;
-    dateOfBirth?: string;
-    religionId?: string | number;
-    religion?: string;
-    denomination?: string;
-    height?: string;
-    weight?: string;
+    attributes: {
+        userId: string | number;
+        titleId?: string | number;
+        title?: string;
+        genderId?: string | number;
+        gender?: string;
+        maritalStatusId?: string | number;
+        maritalStatus?: string;
+        raceId?: string | number;
+        race?: string;
+        idTypeId: string | number;
+        studentNumber: string;
+        idType: string;
+        idNumber?: string;
+        passportNumber?: string;
+        countryId?: string | number;
+        country?: string;
+        studentPermitNumber?: string;
+        dateOfBirth?: string;
+        religionId?: string | number;
+        religion?: string;
+        denomination?: string;
+        height?: string;
+        weight?: string;
+    },
+    relationships?: {
+        user: User
+    }
 };
 
 export type PersonalDetailView = {

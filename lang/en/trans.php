@@ -385,5 +385,5 @@ return [
     "class_sizes" => "Class sizes",
     "enter_class_size" => "enter class size...",
     "progress" => "Progress",
-    "upload_proof" => "Upload proof",
+    "upload_proof" => "Upload POP",
 ];

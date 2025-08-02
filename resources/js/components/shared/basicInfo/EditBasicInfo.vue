@@ -54,22 +54,22 @@ const { modals } = useModalStore();
 
 watch(modals!, () => {
     student.value = getModalEdit(APP_MODULE_KEYS.student_personal_details);
-    form.title = { value: Number(student.value?.titleId ?? ''), label: student.value?.title ?? '' };
-    form.gender = { value: Number(student.value?.genderId ?? ''), label: student.value?.gender ?? '' };
+    form.title = { value: Number(student.value?.attributes?.titleId ?? ''), label: student.value?.attributes?.title ?? '' };
+    form.gender = { value: Number(student.value?.attributes?.genderId ?? ''), label: student.value?.attributes?.gender ?? '' };
     form.maritalStatus = {
-        value: Number(student.value?.maritalStatusId ?? ''),
-        label: student.value?.maritalStatus ?? '',
+        value: Number(student.value?.attributes?.maritalStatusId ?? ''),
+        label: student.value?.attributes?.maritalStatus ?? '',
     };
-    form.idType = { value: Number(student.value?.idTypeId ?? ''), label: student.value?.idType ?? '' };
-    form.country = { value: Number(student.value?.countryId ?? '') ?? null, label: student.value?.country ?? '' };
-    form.race = { value: Number(student.value?.raceId ?? ''), label: student.value?.race ?? '' };
-    form.religion = { value: Number(student.value?.religionId ?? ''), label: student.value?.religion ?? '' };
-    form.id_number = student.value?.idNumber ?? '';
-    form.passport_number = student.value?.passportNumber ?? '';
-    form.date_of_birth = student.value?.dateOfBirth ?? '';
-    form.denomination = student.value?.denomination ?? '';
-    form.height = student.value?.height ?? '';
-    form.weight = student.value?.weight ?? '';
+    form.idType = { value: Number(student.value?.attributes?.idTypeId ?? ''), label: student.value?.attributes?.idType ?? '' };
+    form.country = { value: Number(student.value?.attributes?.countryId ?? '') ?? null, label: student.value?.attributes?.country ?? '' };
+    form.race = { value: Number(student.value?.attributes?.raceId ?? ''), label: student.value?.attributes?.race ?? '' };
+    form.religion = { value: Number(student.value?.attributes?.religionId ?? ''), label: student.value?.attributes?.religion ?? '' };
+    form.id_number = student.value?.attributes?.idNumber ?? '';
+    form.passport_number = student.value?.attributes?.passportNumber ?? '';
+    form.date_of_birth = student.value?.attributes?.dateOfBirth ?? '';
+    form.denomination = student.value?.attributes?.denomination ?? '';
+    form.height = student.value?.attributes?.height ?? '';
+    form.weight = student.value?.attributes?.weight ?? '';
 });
 
 const updateForm = () => {

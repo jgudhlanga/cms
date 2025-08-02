@@ -19,7 +19,6 @@ Route::prefix('students')->middleware('auth')->group(function () {
     Route::delete('academic-records/{academic_record}/delete', [AcademicRecordController::class, 'destroy'])->name('academic-records.destroy');
     Route::delete('academic-records/{academic_record}/force-delete', [AcademicRecordController::class, 'forceDelete'])->name('academic-records.force-delete');
 });
-// ===================================== ENROLMENTS ================================================================
-Route::middleware('auth')->get('enrolments', [StudentController::class, 'index'])->name('enrolments.index');
+
 // ===================================== STUDENTS ================================================================
 Route::middleware('auth')->resource('students', StudentController::class)->names('students');

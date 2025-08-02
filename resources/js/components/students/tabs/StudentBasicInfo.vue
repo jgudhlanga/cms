@@ -22,29 +22,29 @@ onMounted(async () => {
 
 const personalDetails = computed<ValueAndLabel[]>(() => {
     const details: ValueAndLabel[] = [
-        { transChoiceKey: 'trans.title', value: student.value?.title ?? '' },
-        { transChoiceKey: 'trans.gender', value: student.value?.gender ?? '' },
-        { transChoiceKey: 'trans.marital_status', value: student.value?.maritalStatus ?? '' },
-        { transChoiceKey: 'trans.id_type', value: student.value?.idType ?? '' },
+        { transChoiceKey: 'trans.title', value: student.value?.attributes?.title ?? '' },
+        { transChoiceKey: 'trans.gender', value: student.value?.attributes?.gender ?? '' },
+        { transChoiceKey: 'trans.marital_status', value: student.value?.attributes?.maritalStatus ?? '' },
+        { transChoiceKey: 'trans.id_type', value: student.value?.attributes?.idType ?? '' },
     ];
-    if (isNativeCitizen(student.value?.idType ?? '')) {
+    if (isNativeCitizen(student.value?.attributes?.idType ?? '')) {
         details.push({
             transKey: 'trans.id_number',
-            value: student.value?.idNumber ?? '',
+            value: student.value?.attributes?.idNumber ?? '',
         });
     } else {
         details.push(
-            { transKey: 'trans.passport_number', value: student.value?.passportNumber ?? '' },
-            { transChoiceKey: 'trans.country', value: student.value?.country ?? '' },
+            { transKey: 'trans.passport_number', value: student.value?.attributes?.passportNumber ?? '' },
+            { transChoiceKey: 'trans.country', value: student.value?.attributes?.country ?? '' },
         );
     }
-    details.push({ transKey: 'trans.date_of_birth', value: formatDate(student.value?.dateOfBirth ?? '') });
+    details.push({ transKey: 'trans.date_of_birth', value: formatDate(student.value?.attributes?.dateOfBirth ?? '') });
     details.push(
-        { transChoiceKey: 'trans.race', value: student.value?.race ?? '' },
-        { transChoiceKey: 'trans.religion', value: student.value?.religion ?? '' },
-        { transChoiceKey: 'trans.denomination', value: student.value?.denomination ?? '' },
-        { transKey: 'trans.weight', value: student.value?.weight ?? '' },
-        { transKey: 'trans.height', value: student.value?.height ?? '' },
+        { transChoiceKey: 'trans.race', value: student.value?.attributes?.race ?? '' },
+        { transChoiceKey: 'trans.religion', value: student.value?.attributes?.religion ?? '' },
+        { transChoiceKey: 'trans.denomination', value: student.value?.attributes?.denomination ?? '' },
+        { transKey: 'trans.weight', value: student.value?.attributes?.weight ?? '' },
+        { transKey: 'trans.height', value: student.value?.attributes?.height ?? '' },
     );
 
     return details;

@@ -31,7 +31,7 @@ export function useSidebarMenu() {
         {
             transChoiceKey: 'trans.enrolment',
             icon: icons[IconName.user_add],
-            url: route('enrolments.index'),
+            url: route('students.index', {enrolments: 1}),
             show: hasAbility('view:enrolments'),
         },
         {
