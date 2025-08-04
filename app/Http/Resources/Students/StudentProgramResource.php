@@ -36,6 +36,7 @@ class StudentProgramResource extends JsonResource
                 'deletedAt' => $this->deleted_at,
             ],
             'relationships' => [
+                'student' => StudentResource::make($this->student),
                 'institutionDepartment' => InstitutionDepartmentResource::make($this->institutionDepartment),
                 'departmentLevel' => DepartmentLevelResource::make($this->departmentLevel),
                 'departmentCourse' => DepartmentCourseResource::make($this->departmentCourse),

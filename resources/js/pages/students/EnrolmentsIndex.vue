@@ -3,14 +3,14 @@ import { Head } from '@inertiajs/vue3';
 
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import DataTable from '@/components/core/table/DataTable.vue';
-import { useStudents } from '@/composables/students/useStudents';
+import { useEnrolments } from '@/composables/students/useEnrolments';
 import { AuthObject, DataFilters, DataListProps } from '@/types/data-pagination';
 import { Link } from '@/types/ui';
 
-const { createStudentColumns } = useStudents();
+const { enrolmentColumns } = useEnrolments();
 
 interface Props {
-    students: DataListProps;
+    enrolments: DataListProps;
     trashedCount: any;
     filters: DataFilters;
     auth: AuthObject;
@@ -18,22 +18,20 @@ interface Props {
 }
 
 defineProps<Props>();
-const params = route().params;
-const studentType = Number(params?.enrolments) == 1 ? 'enrolment' : 'student';
-const breadcrumbs: Array<Link> = [{ transKey: 'dashboard', href: route('dashboard') }, { transChoiceKey: studentType }];
+const breadcrumbs: Array<Link> = [{ transKey: 'dashboard', href: route('dashboard') }, { transChoiceKey: 'enrolment' }];
 </script>
 
 <template>
-    <Head :title="$tChoice(studentType, 2)" />
+    <Head :title="$tChoice('enrolment', 2)" />
     <PageContainer :breadcrumbs="breadcrumbs">
         <DataTable
-            :data="students.data"
+            :data="enrolments.data"
             :trashed-count="trashedCount"
             :filters="filters"
             :show-archived-filter="false"
-            :search-url="route('students.index', { enrolments: 1 })"
-            :pagination="{ ...students.links, ...students.meta }"
-            :columns="createStudentColumns()"
+            :search-url="route('enrolments.index')"
+            :pagination="{ ...enrolments.links, ...enrolments.meta }"
+            :columns="enrolmentColumns()"
         />
     </PageContainer>
 </template>

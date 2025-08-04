@@ -28,14 +28,9 @@ class StaffSeeder extends Seeder
     public function run(): void
     {
         DB::transaction(function () {
-            $roles = [
-                RoleEnum::SELECTION_OFFICER,
-                RoleEnum::LECTURER,
-                RoleEnum::LECTURER_IN_CHARGE,
-                RoleEnum::SENIOR_LECTURER,
-            ];
+            $roles = [RoleEnum::LECTURER, RoleEnum::SENIOR_LECTURER];
 
-            $users = User::factory()->count(20)->create(['tenant_id' => $this->getTenantId(), 'password' => 'Staff123!']);
+            $users = User::factory()->count(10)->create(['tenant_id' => $this->getTenantId(), 'password' => 'Staff123!']);
             // Shuffle users to make assignment random
             $shuffledUsers = $users->shuffle();
 
@@ -43,6 +38,14 @@ class StaffSeeder extends Seeder
             $headUser = $shuffledUsers->shift(); // Remove and get the first user
             $headUser->assignRole(RoleEnum::HEAD_OF_DEPARTMENT->name());
             $this->createStaff($headUser);
+            // LIC
+            $lic = $shuffledUsers->shift();
+            $lic->assignRole(RoleEnum::LECTURER_IN_CHARGE->name());
+            $this->createStaff($lic);
+            // SELECTION_OFFICER
+            $selectionOfficer = $shuffledUsers->shift();
+            $selectionOfficer->assignRole(RoleEnum::SELECTION_OFFICER->name());
+            $this->createStaff($selectionOfficer);
             foreach ($shuffledUsers as $user) {
                 $randomRole = $roles[array_rand($roles)];
                 $user->assignRole($randomRole->name());
@@ -52,7 +55,7 @@ class StaffSeeder extends Seeder
     }
 
 
-    private function createStaff(User $user): Staff
+    private function createStaff(User $user): void
     {
         # date of birth range for staff
         $dateOfBirthStart = Carbon::now()->subYears(70);
@@ -75,7 +78,6 @@ class StaffSeeder extends Seeder
         ]);
 
         $staff->institutionDepartments()->syncWithoutDetaching([$this->getInstitutionDepartmentId()]);
-        return $staff;
     }
 
     private function getInstitutionDepartmentId(): int

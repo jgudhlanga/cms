@@ -3,6 +3,7 @@
 use App\Http\Controllers\Students\AcademicRecordController;
 use App\Http\Controllers\Students\SponsorController;
 use App\Http\Controllers\Students\StudentController;
+use App\Http\Controllers\Students\StudentProgramController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('students')->middleware('auth')->group(function () {
@@ -21,4 +22,5 @@ Route::prefix('students')->middleware('auth')->group(function () {
 });
 
 // ===================================== STUDENTS ================================================================
+Route::middleware('auth')->resource('enrolments', StudentProgramController::class)->names('enrolments');
 Route::middleware('auth')->resource('students', StudentController::class)->names('students');

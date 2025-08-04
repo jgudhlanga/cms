@@ -129,6 +129,7 @@ export type StudentProgram = {
         deletedAt?: string;
     };
     relationships?: {
+        student: Student;
         institutionDepartment?: InstitutionDepartment;
         departmentLevel?: DepartmentLevel;
         departmentCourse?: DepartmentCourse;

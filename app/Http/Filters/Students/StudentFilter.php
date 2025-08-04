@@ -19,13 +19,4 @@ class StudentFilter extends QueryFilter
         return $this->builder->where('name', 'LIKE', '%' . $value . '%');
     }
 
-    public function email($value): Builder
-    {
-        return $this->builder->where('email', 'LIKE', '%' . $value . '%');
-    }
-
-    public function tenant($value): Builder
-    {
-        return $this->builder->where('tenant_id', $value);
-    }
 }
