@@ -33,7 +33,7 @@ onMounted(() => {
                 :icon="IconName.add"
                 class="rounded-full"
                 :icon-variant="ColorVariant.white"
-                :variant="ColorVariant.primary"
+                :variant="ColorVariant.primary_outline"
                 @click="() => openDepartmentLevelsModal(departmentLevelsIds)"
                 :title="$t('trans.link_levels')"
             />

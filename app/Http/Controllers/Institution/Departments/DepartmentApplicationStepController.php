@@ -16,7 +16,9 @@ use App\Http\Resources\Institution\InstitutionDepartmentResource;
 use App\Models\Institution\DepartmentApplicationStep;
 use App\Models\Institution\InstitutionDepartment;
 use App\Repositories\Institution\interface\IDepartmentApplicationStepRepository;
+use Illuminate\Auth\Access\AuthorizationException;
 use Inertia\Inertia;
+use Inertia\Response;
 
 class DepartmentApplicationStepController extends Controller
 {
@@ -24,28 +26,29 @@ class DepartmentApplicationStepController extends Controller
     {
     }
 
+    /**
+     * @throws AuthorizationException
+     */
     public function syncApplicationSteps(InstitutionDepartment $institutionDepartment, DepartmentApplicationStepRequest $request): void
     {
         $this->authorize('createDepartmentMetaData');
         $this->repository->syncDepartmentApplicationSteps($institutionDepartment, DepartmentApplicationStepDto::fromDepartmentApplicationStepRequest($request));
     }
 
+    /**
+     * @throws AuthorizationException
+     */
     public function syncWorkflowStepActionMetadata(InstitutionDepartment $institutionDepartment, WorkflowStepActionMetadataRequest $request): void
     {
         $this->authorize('createDepartmentMetaData');
         $this->repository->syncWorkflowStepActionMetadata(WorkflowStepActionMetadataDto::fromWorkflowStepActionMetadataRequest($request));
     }
 
-    public function configSteps(InstitutionDepartment $institutionDepartment)
-    {
-        $this->authorize('viewDepartmentMetaData');
-        $institutionDepartment = InstitutionDepartmentResource::make($institutionDepartment);
-        return Inertia::render('institution/departments/ApplicationWorkflowSteps',
-            compact('institutionDepartment'),
-        );
-    }
 
-    public function show(DepartmentApplicationStep $departmentApplicationStep)
+    /**
+     * @throws AuthorizationException
+     */
+    public function show(DepartmentApplicationStep $departmentApplicationStep): Response
     {
         $this->authorize('viewDepartmentMetaData');
         $departmentApplicationStep = DepartmentApplicationStepResource::make($departmentApplicationStep);
@@ -56,26 +59,38 @@ class DepartmentApplicationStepController extends Controller
         );
     }
 
+    /**
+     * @throws AuthorizationException
+     */
     public function update(DepartmentApplicationStep $departmentApplicationStep, DepartmentApplicationStepUpdateRequest $request): void
     {
         $this->authorize('updateDepartmentMetaData');
         $this->repository->update($departmentApplicationStep, DepartmentApplicationStepUpdateDto::fromDepartmentApplicationStepUpdateRequest($request));
     }
 
-    public function destroy(DepartmentApplicationStep $departmentApplicationStep)
+    /**
+     * @throws AuthorizationException
+     */
+    public function destroy(DepartmentApplicationStep $departmentApplicationStep): void
     {
         $this->authorize('deleteDepartmentMetaData');
         $this->repository->delete($departmentApplicationStep);
     }
 
-    public function restore(string $id)
+    /**
+     * @throws AuthorizationException
+     */
+    public function restore(string $id): void
     {
         $departmentApplicationStep = $this->repository->findTrashed($id);
         $this->authorize('restoreDepartmentMetaData');
         $this->repository->restore($departmentApplicationStep);
     }
 
-    public function forceDelete(DepartmentApplicationStep $departmentApplicationStep)
+    /**
+     * @throws AuthorizationException
+     */
+    public function forceDelete(DepartmentApplicationStep $departmentApplicationStep): void
     {
         $this->authorize('forceDeleteDepartmentMetaData');
         $this->repository->delete($departmentApplicationStep, true);

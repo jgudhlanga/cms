@@ -103,3 +103,10 @@ export type TimelineStep = {
     props?: any,
     status?: 'active' | 'completed' | 'pending' | 'failed';
 };
+
+export type AccordionItemProps = {
+    value: string;
+    title: () => string;
+    description?: () => string;
+    content: Component
+}

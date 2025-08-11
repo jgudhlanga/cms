@@ -4,7 +4,6 @@ import { BaseButton } from '@/components/core/button';
 import { BaseInput } from '@/components/core/form';
 import IntakePeriodSelect from '@/components/core/form/select/IntakePeriodSelect.vue';
 import DataLoadingSpinner from '@/components/core/loader/DataLoadingSpinner.vue';
-import HeadingSmall from '@/components/core/util/HeadingSmall.vue';
 import { useInstitutionDepartmentMetadata } from '@/composables/institution/useInstitutionDepartmentMetadata';
 import { useIntakePeriods } from '@/composables/institution/useIntakePeriods';
 import { TextFieldType } from '@/enums/inputs';
@@ -87,14 +86,15 @@ const handleSelectionChange = async (value: any) => {
 
 <template>
     <div class="flex flex-col space-y-4">
-        <HeadingSmall :title="`${$tChoice('trans.intake_period', 2)} ${$t('trans.config')}`" :description="$t('trans.intake_config_description')" />
-        <div class="flex w-1/4 flex-col">
+        <div class="flex w-2/4 flex-col">
             <IntakePeriodSelect
                 :loading="intakePeriodsLoading"
                 :data="intakePeriods?.data ?? []"
                 :label-uppercase="true"
+                :vertical-layout="false"
                 :is-multi="false"
                 :is-searchable="true"
+                :is-clearable="false"
                 v-model="form.intake_period_id"
                 @update:modelValue="handleSelectionChange"
             />

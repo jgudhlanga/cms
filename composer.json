@@ -19,6 +19,7 @@
         "spatie/laravel-activitylog": "^4.10",
         "spatie/laravel-medialibrary": "^11.12",
         "spatie/laravel-permission": "^6.15",
+        "spatie/laravel-query-builder": "^6.3",
         "tightenco/ziggy": "^2.4"
     },
     "require-dev": {

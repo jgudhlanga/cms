@@ -3,6 +3,7 @@
 namespace App\Models\Institution;
 
 use App\Http\Filters\Institution\InstitutionDepartmentFilter;
+use App\Models\Students\StudentProgram;
 use App\Traits\BelongsToTenant;
 use App\Traits\Filterable;
 use App\Traits\Paginatable;
@@ -55,6 +56,11 @@ class InstitutionDepartment extends Model
     public function intakeClassSizes(): HasMany
     {
         return $this->hasMany(DepartmentIntakeClassSize::class, 'institution_department_id');
+    }
+
+    public function enrolments(): HasMany
+    {
+        return $this->hasMany(StudentProgram::class, 'institution_department_id');
     }
 
     public function getActivitylogOptions(): LogOptions

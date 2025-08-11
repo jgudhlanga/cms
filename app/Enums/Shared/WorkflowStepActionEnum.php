@@ -5,6 +5,8 @@ namespace App\Enums\Shared;
 enum WorkflowStepActionEnum: string
 {
     case SEND_EMAIL_TO_APPLICANT = 'send_email_to_applicant';
+    case GENERATE_APPLICATION_TRACKING_NUMBER = 'generate_application_tracking_number';
+    case GENERATE_STUDENT_NUMBER = 'generate_student_number';
     case SEND_EMAIL_TO_STAFF = 'send_email_to_staff';
     case CREATE_PAYMENT_LINK = 'create_payment_link';
     case REQUEST_DOCUMENTS = 'request_documents';
@@ -19,6 +21,8 @@ enum WorkflowStepActionEnum: string
     {
         return match ($this) {
             self::SEND_EMAIL_TO_APPLICANT => 'Send Email To Applicant',
+            self::GENERATE_APPLICATION_TRACKING_NUMBER => 'Generate Application Tracking Number',
+            self::GENERATE_STUDENT_NUMBER => 'Generate Student Number',
             self::SEND_EMAIL_TO_STAFF => 'Send Email To Staff',
             self::CREATE_PAYMENT_LINK => 'Create Payment Link',
             self::REQUEST_DOCUMENTS => 'Request Documents',

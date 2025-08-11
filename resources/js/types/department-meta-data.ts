@@ -125,8 +125,8 @@ export type DepartmentApplicationStep = {
         deletedAt?: string | null;
     };
     relationships?: {
-        metadata?: DepartmentWorkflowStepMetadata,
-    }
+        metadata?: DepartmentWorkflowStepMetadata;
+    };
 };
 
 export type DepartmentWorkflowStepMetadata = {
@@ -135,13 +135,13 @@ export type DepartmentWorkflowStepMetadata = {
     roleIds: Array<string | undefined | null>;
     staffIds: Array<string | undefined | null>;
     workflowActionIds: Array<string | undefined | null>;
-    roles?:  Array<string | undefined | null>;
-    staff?:  Array<string | undefined | null>;
+    roles?: Array<string | undefined | null>;
+    staff?: Array<string | undefined | null>;
     actions?: Array<{
         title: string;
         action: string;
     }>;
-}
+};
 
 export type DepartmentApplicationStepParams = {
     workflow_step_ids: Array<string | undefined | null> | null;
@@ -173,5 +173,18 @@ export type DepartmentIntakeClassSize = {
         departmentLevelId: string | number;
         classSize: number | null;
         intakePeriodId: string | number | null;
+        enrolmentsCount: string | number | null;
     };
+};
+export type DepartmentEnrolmentCount = {
+    institutionDepartmentId: string | number ;
+    departmentCourseId: string | number;
+    courseName: string;
+    levels: [
+        {
+            departmentLevelId: string | number;
+            levelName: string;
+            enrolmentsCount: string | number | null;
+        },
+    ];
 };

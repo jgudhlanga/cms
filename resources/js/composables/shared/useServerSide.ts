@@ -5,12 +5,12 @@ import { ref } from 'vue';
 
 export const useServerSide = () => {
     const isLoading = ref(false);
-    const getData = async (url: string, name: string) => {
+    const getData = async (url: string, getName: () => string) => {
         try {
             isLoading.value = true;
             return await HttpService.get(url);
         } catch {
-            errorAlert(trans('trans.load_data_failure', { data: name }));
+            errorAlert(trans('trans.load_data_failure', { data: getName() }));
         } finally {
             isLoading.value = false;
         }

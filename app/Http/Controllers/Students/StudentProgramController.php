@@ -9,6 +9,7 @@ use App\Http\Requests\Students\UpdateStudentRequest;
 use App\Http\Resources\Students\StudentProgramResource;
 use App\Models\Students\Student;
 use App\Models\Students\StudentProgram;
+use App\Repositories\Institution\interface\IDepartmentLevelRepository;
 use App\Repositories\Students\interface\IStudentProgramRepository;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\Request;
@@ -19,6 +20,7 @@ class StudentProgramController extends Controller
 {
     public function __construct(
         protected IStudentProgramRepository $repository,
+        protected IDepartmentLevelRepository $departmentLevelRepository,
     )
     {
     }

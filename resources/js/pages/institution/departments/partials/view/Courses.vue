@@ -35,7 +35,7 @@ const allowed = hasAbility('create:department-metadata');
                 :icon="IconName.add"
                 class="rounded-full"
                 :icon-variant="ColorVariant.white"
-                :variant="ColorVariant.primary"
+                :variant="ColorVariant.primary_outline"
                 @click="() => openDepartmentCoursesModal(departmentCoursesIds ?? [])"
                 :title="$t('trans.link_courses')"
             />

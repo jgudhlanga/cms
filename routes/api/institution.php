@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\V1\Institution\DepartmentMetaDataController;
 use App\Http\Controllers\Api\V1\Institution\InstitutionDepartmentController;
 use App\Http\Controllers\Api\V1\Institution\IntakePeriodController;
 use App\Http\Controllers\Api\V1\Staff\StaffController;
+use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     Route::get('departments/{institution_department}/courses', [DepartmentMetaDataController::class, 'courses'])->name('v1.department-metadata.courses');
@@ -13,6 +14,7 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     Route::get('departments/{institution_department}/staff', [DepartmentMetaDataController::class, 'staff'])->name('v1.department-metadata.staff');
     Route::get('departments/{institution_department}/workflow-steps', [DepartmentMetaDataController::class, 'workflowSteps'])->name('v1.department-metadata.workflow-steps');
     Route::get('departments/{institution_department}/class-sizes', [DepartmentMetaDataController::class, 'classSizes'])->name('v1.department-metadata.class-sizes');
+    Route::get('departments/{institution_department}/enrolments', [DepartmentMetaDataController::class, 'departmentEnrolments'])->name('v1.department-metadata.enrolments');
 });
 Route::prefix('v1')->group(function () {
     Route::get('institution-departments', [InstitutionDepartmentController::class, 'index'])->name('v1.institution-departments.index');
