@@ -52,6 +52,7 @@ watch(
 );
 
 const metaDataModalOpen = ref(false);
+
 watch(
   () => modals![APP_MODULE_KEYS.department_workflow_actions],
   async (isOpen) => {
@@ -65,11 +66,9 @@ watch(
   }
 );
 
-
 const steps = computed(() => {
     return departmentApplicationSteps.value?.map(
-        (step: DepartmentApplicationStep, index: number) =>
-            <TimelineStep>{
+        (step: DepartmentApplicationStep, index: number) => <TimelineStep>{
                 title: step.attributes?.workflowStep,
                 description: step.attributes?.workflowStepDescription,
                 timelineMarker: step.attributes?.position?.toString() ?? '',
@@ -86,6 +85,7 @@ const steps = computed(() => {
 const stepIds = computed(() => {
     return (departmentApplicationSteps.value ?? []).map((step: DepartmentApplicationStep) => step.attributes?.workflowStepId?.toString() ?? '');
 });
+
 </script>
 
 <template>
