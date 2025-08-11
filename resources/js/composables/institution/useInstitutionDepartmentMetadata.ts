@@ -1,5 +1,4 @@
-import { errorAlert } from '@/lib/alerts';
-import { buildFormOptions } from '@/lib/forms';
+import { errorAlert, successAlert } from '@/lib/alerts';
 import HttpService from '@/services/http.service';
 import { InertiaForm } from '@inertiajs/vue3';
 import { trans } from 'laravel-vue-i18n';
@@ -15,7 +14,13 @@ export const useInstitutionDepartmentMetadata = () => {
     const errorMessage = () => trans('trans.item_save_failure', { item: getName() });
     const saveClassSizes = (institutionDepartmentId: string, form: InertiaForm<any>) => {
         try {
-            form.post(route('class-sizes.store', institutionDepartmentId), buildFormOptions(form, successMessage(), errorMessage()));
+            form.post(route('class-sizes.store', institutionDepartmentId), {
+                preserveScroll: true,
+                onSuccess: () => {
+                    successAlert(successMessage());
+                },
+                onError: () => errorAlert(errorMessage()),
+            });
         } catch (error: any) {
             form.setError(error.format());
         }

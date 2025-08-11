@@ -1,6 +1,6 @@
 import { useDataTables } from '@/composables/core/useDataTables';
 import { useUtils } from '@/composables/core/useUtils';
-import { errorAlert, forbiddenAlert, openModal, successAlert } from '@/lib/alerts';
+import { closeModal, errorAlert, forbiddenAlert, openModal, successAlert } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
 import { buildFormOptions, toggleFormLoader } from '@/lib/forms';
 import { getIdParams } from '@/lib/utils';
@@ -63,10 +63,14 @@ export const useDepartmentCourses = () => {
         try {
             const success = trans('trans.item_saved', { item: trans_choice('trans.course', 2) });
             const error = trans('trans.item_save_failure', { item: trans_choice('trans.course', 2) });
-            form.post(
-                route('department-courses.sync', institutionDepartmentId),
-                buildFormOptions(form, success, error, APP_MODULE_KEYS.department_courses),
-            );
+            form.post(route('department-courses.sync', institutionDepartmentId), {
+                preserveScroll: true,
+                onSuccess: () => {
+                    successAlert(success);
+                    closeModal(APP_MODULE_KEYS.department_courses);
+                },
+                onError: () => errorAlert(error),
+            });
         } catch (error: any) {
             form.setError(error.format());
         }

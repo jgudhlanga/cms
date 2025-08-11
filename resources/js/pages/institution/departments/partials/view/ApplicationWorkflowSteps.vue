@@ -8,11 +8,13 @@ import { useDepartmentWorkflows } from '@/composables/institution/useDepartmentW
 import { useInstitutionDepartmentMetadata } from '@/composables/institution/useInstitutionDepartmentMetadata';
 import { ColorVariant } from '@/enums/colors';
 import { IconName } from '@/enums/icons';
+import { APP_MODULE_KEYS } from '@/lib/constants';
+import { useModalStore } from '@/store/core/useModalStore';
 import { DepartmentApplicationStep } from '@/types/department-meta-data';
 import { InstitutionDepartment } from '@/types/institution';
 import { TimelineStep } from '@/types/utils';
 import { trans_choice } from 'laravel-vue-i18n';
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 
 interface Props {
     department: InstitutionDepartment;
@@ -20,6 +22,7 @@ interface Props {
 
 const props = defineProps<Props>();
 const { department } = props;
+const departmentId = props.department?.id?.toString() ?? '';
 
 const departmentApplicationSteps = ref<DepartmentApplicationStep[]>([]);
 
@@ -27,9 +30,41 @@ const { loadDepartmentMetadata, isLoading } = useInstitutionDepartmentMetadata()
 const { openDepartmentApplicationStepsModal, openDepartmentWorkflowActionModal } = useDepartmentWorkflows();
 
 onMounted(async () => {
-    const data = await loadDepartmentMetadata(route('v1.department-metadata.workflow-steps', department?.id?.toString()));
+    const data = await loadDepartmentMetadata(route('v1.department-metadata.workflow-steps', departmentId));
     departmentApplicationSteps.value = data?.steps;
 });
+
+const { modals } = useModalStore();
+
+const modalOpen = ref(false);
+
+watch(
+  () => modals![APP_MODULE_KEYS.department_application_steps],
+  async (isOpen) => {
+    if (isOpen) {
+      modalOpen.value = true;
+    } else if (modalOpen.value) {
+        const data = await loadDepartmentMetadata(route('v1.department-metadata.workflow-steps', departmentId));
+        departmentApplicationSteps.value = data?.steps;
+        modalOpen.value = false;
+    }
+  }
+);
+
+const metaDataModalOpen = ref(false);
+watch(
+  () => modals![APP_MODULE_KEYS.department_workflow_actions],
+  async (isOpen) => {
+    if (isOpen) {
+      metaDataModalOpen.value = true;
+    } else if (metaDataModalOpen.value) {
+        const data = await loadDepartmentMetadata(route('v1.department-metadata.workflow-steps', departmentId));
+        departmentApplicationSteps.value = data?.steps;
+        metaDataModalOpen.value = false;
+    }
+  }
+);
+
 
 const steps = computed(() => {
     return departmentApplicationSteps.value?.map(

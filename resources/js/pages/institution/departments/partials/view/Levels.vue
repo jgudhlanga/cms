@@ -5,9 +5,12 @@ import { useDepartmentLevels } from '@/composables/institution/useDepartmentLeve
 import { ColorVariant } from '@/enums/colors';
 import { IconName } from '@/lib/icons';
 import { hasAbility } from '@/lib/permissions';
-import { computed, onMounted } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import TableLoading from '@/components/core/loader/TableLoading.vue';
 import { InstitutionDepartment } from '@/types/institution';
+import { useModalStore } from '@/store/core/useModalStore';
+import { APP_MODULE_KEYS } from '@/lib/constants';
+import { isModalOpen } from '@/lib/alerts';
 
 interface Props {
     department: InstitutionDepartment;
@@ -19,10 +22,27 @@ const { createDepartmentLevelColumns, openDepartmentLevelsModal, isLoading, depa
 const allowed = hasAbility('create:department-metadata');
 const departmentLevelsIds = computed(() => departmentLevelsMetadata.value?.departmentLevelsIds ?? []);
 const departmentLevels = computed(() => departmentLevelsMetadata.value?.levels ?? []);
+const departmentId = props.department?.id?.toString() ?? '';
 
 onMounted(() => {
-    loadDepartmentLevelsMetadata(props.department?.id?.toString() ?? '');
+    loadDepartmentLevelsMetadata(departmentId);
 })
+
+const { modals } = useModalStore();
+
+const levelModalOpen = ref(false);
+
+watch(
+  () => modals![APP_MODULE_KEYS.department_levels],
+  (isOpen) => {
+    if (isOpen) {
+      levelModalOpen.value = true;
+    } else if (levelModalOpen.value) {
+      loadDepartmentLevelsMetadata(departmentId);
+      levelModalOpen.value = false;
+    }
+  }
+);
 </script>
 
 <template>

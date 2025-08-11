@@ -1,7 +1,7 @@
 import { useUtils } from '@/composables/core/useUtils';
-import { errorAlert, forbiddenAlert, openModal, successAlert } from '@/lib/alerts';
+import { closeModal, errorAlert, forbiddenAlert, openModal, successAlert } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
-import { buildFormOptions, toggleFormLoader } from '@/lib/forms';
+import { toggleFormLoader } from '@/lib/forms';
 import { hasAbility } from '@/lib/permissions';
 import { getIdParams } from '@/lib/utils';
 import { DepartmentApplicationStep } from '@/types/department-meta-data';
@@ -24,20 +24,28 @@ export const useDepartmentWorkflows = () => {
     const { navigateTo } = useUtils();
     const syncDepartmentApplicationSteps = (institutionDepartmentId: string, form: InertiaForm<any>) => {
         try {
-            form.post(
-                route('department-application-steps.sync', institutionDepartmentId),
-                buildFormOptions(form, successMessage(), errorMessage(), APP_MODULE_KEYS.department_application_steps),
-            );
+            form.post(route('department-application-steps.sync', institutionDepartmentId), {
+                preserveScroll: true,
+                onSuccess: () => {
+                    successAlert(successMessage());
+                    closeModal(APP_MODULE_KEYS.department_application_steps);
+                },
+                onError: () => errorAlert(errorMessage()),
+            });
         } catch (error: any) {
             form.setError(error.format());
         }
     };
     const syncWorkflowStepActionMetadata = (institutionDepartmentId: string, form: InertiaForm<any>) => {
         try {
-            form.post(
-                route('department-application-steps.sync-metadata', institutionDepartmentId),
-                buildFormOptions(form, successMessage(), errorMessage(), APP_MODULE_KEYS.department_workflow_actions),
-            );
+             form.post(route('department-application-steps.sync-metadata', institutionDepartmentId), {
+                preserveScroll: true,
+                onSuccess: () => {
+                    successAlert(successMessage());
+                    closeModal(APP_MODULE_KEYS.department_workflow_actions);
+                },
+                onError: () => errorAlert(errorMessage()),
+            });
         } catch (error: any) {
             form.setError(error.format());
         }
