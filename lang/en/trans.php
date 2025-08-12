@@ -378,6 +378,7 @@ return [
     "my_applications" => "My Applications",
     "application_date" => "Application date",
     "update_date" => "Update date",
+    "tracking_number" => "Tracking number",
     "config" => "Config",
     "intake_config_description" => "Configure the intake period, class sizes for the department levels and courses",
     "courses_and_levels_not_found" => "Courses and levels not found for this department",
@@ -391,5 +392,6 @@ return [
     "levels_config_description" => "Configure department levels (link levels to department and level requirements for the courses)",
     "intake_class_size_config_description" => "Configure class sizes (per intake period per level and per course)",
     "application_workflow_config_description" => "Configure application workflow (configure steps, roles and action items on each step",
-    "no_data_found_description" => ":data not found"
+    "no_data_found_description" => ":data not found",
+    "score" => "Score|Scores",
 ];

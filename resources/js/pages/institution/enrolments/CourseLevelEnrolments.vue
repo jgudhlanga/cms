@@ -1,20 +1,30 @@
 <script setup lang="ts">
 import PageContainer from '@/components/core/page/PageContainer.vue';
+import { AuthObject, DataListProps } from '@/types/data-pagination';
 import { DepartmentLevel } from '@/types/department-meta-data';
-import { Enrolment } from '@/types/enrolments';
 import { InstitutionDepartment } from '@/types/institution';
 import type { Link } from '@/types/ui';
 import { Head } from '@inertiajs/vue3';
+import DataTable from '@/components/core/table/DataTable.vue';
+import { useDepartmentCourses } from '@/composables/institution/useDepartmentCourses';
+import HeadingSmall from '@/components/core/util/HeadingSmall.vue';
+import { Enrolment } from '@/types/enrolments';
 
 interface Props {
     department: InstitutionDepartment;
     level: DepartmentLevel;
-    enrolments: Enrolment[];
+    enrolments: DataListProps<Enrolment>;
+    auth: AuthObject;
+    errors: object;
 }
 
 const props = defineProps<Props>();
 
-const { department, level } = props;
+const { department, level, enrolments } = props;
+const {createCourseLevelEnrolmentColumns} = useDepartmentCourses();
+
+const institutionDepartmentId = department?.id?.toString() ?? '';
+const departmentLevelId = level?.id?.toString() ?? '';
 
 const breadcrumbs: Array<Link> = [
     { transChoiceKey: 'institution', transChoiceKeyIndex: 1, href: route('institution.index') },
@@ -23,11 +33,20 @@ const breadcrumbs: Array<Link> = [
     { title: level.attributes.level },
     { transChoiceKey: 'enrolment' },
 ];
+const firstCourseName = enrolments.data?.[0]?.attributes?.course ?? '';
 </script>
 
 <template>
     <Head :title="$tChoice('trans.department', 2)" />
     <PageContainer :breadcrumbs="breadcrumbs">
-        {{ enrolments[0] }}
+        <HeadingSmall v-if="firstCourseName" :title="firstCourseName" />
+        {{ enrolments.data[0] }}
+        <DataTable
+            :data="enrolments.data"
+            :show-archived-filter="false"
+            :search-url="route('department-levels.enrolments', {institution_department: institutionDepartmentId, department_level: departmentLevelId,})"
+            :pagination="{ ...enrolments.links, ...enrolments.meta }"
+            :columns="createCourseLevelEnrolmentColumns()"
+        />
     </PageContainer>
 </template>

@@ -22,7 +22,7 @@ interface Props {
 
 const props = defineProps<Props>();
 const { department } = props;
-const departmentId = props.department?.id?.toString() ?? '';
+const departmentId = department?.id?.toString() ?? '';
 
 const departmentApplicationSteps = ref<DepartmentApplicationStep[]>([]);
 

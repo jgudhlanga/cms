@@ -75,6 +75,7 @@ class StudentProgram extends Model
         return $this->belongsTo(IntakePeriod::class, 'intake_period_id');
     }
 
+
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()

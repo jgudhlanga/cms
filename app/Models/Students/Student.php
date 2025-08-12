@@ -5,6 +5,7 @@ namespace App\Models\Students;
 use App\Helpers\WorkflowHelper;
 use App\Http\Filters\Students\StudentFilter;
 use App\Models\Institution\DepartmentApplicationStep;
+use App\Enums\Shared\AcademicLevelEnum;
 use App\Models\Shared\{Address, Contact, Country, Gender, IdType, MaritalStatus, NextOfKin, Race, Religion, Title};
 use App\Models\Users\User;
 use App\Traits\BelongsToTenant;
@@ -127,9 +128,10 @@ class Student extends Model
         return $this->hasMany(AcademicRecord::class, 'student_id');
     }
 
-    public function academicResults(): HasMany
+   public function oLevelResults(): HasMany
     {
-        return $this->hasMany(StudentAcademicResult::class, 'student_id');
+        return $this->hasMany(StudentAcademicResult::class, 'student_id')
+                ->where('academic_level_id', AcademicLevelEnum::SECONDARY_SCHOOL->id());
     }
 
     public function nextOfKins(): MorphMany

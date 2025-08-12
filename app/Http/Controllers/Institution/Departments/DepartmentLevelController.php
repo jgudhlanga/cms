@@ -59,7 +59,8 @@ class DepartmentLevelController extends Controller
         $enrolments = $institutionDepartment->enrolments()
             ->where('department_level_id', $departmentLevel->id)
             ->when($intakePeriodId, fn($q) => $q->where('intake_period_id', $intakePeriodId))
-            ->get();
+            ->paginate()
+            ->withQueryString();
         $enrolments = EnrolmentResource::collection($enrolments);
         return Inertia::render('institution/enrolments/CourseLevelEnrolments',
             compact('department', 'level', 'enrolments'));

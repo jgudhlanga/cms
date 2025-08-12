@@ -7,6 +7,7 @@ import { getIdParams } from '@/lib/utils';
 import HttpService from '@/services/http.service';
 import { Auth } from '@/types';
 import { DepartmentCourse, DepartmentCourseLevel, DepartmentCourseMetaData } from '@/types/department-meta-data';
+import { Enrolment } from '@/types/enrolments';
 import { InertiaForm, usePage } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 import { ref } from 'vue';
@@ -15,7 +16,7 @@ export const useDepartmentCourses = () => {
     const { moreActionButton, textLink, checkStatusIcon, onEdit } = useDataTables();
     const { props } = usePage();
     const { can } = props?.auth as Auth;
-    const { navigateTo } = useUtils();
+    const { navigateTo, formatDate } = useUtils();
     const createDepartmentCourseColumns = () => {
         return [
             {
@@ -47,6 +48,55 @@ export const useDepartmentCourses = () => {
                 enableSorting: false,
                 meta: { align: 'right' },
                 cell: ({ row }: { row: { original: DepartmentCourse } }) => {
+                    const id = getIdParams(row.original.id?.toString() ?? '');
+                    return moreActionButton(!!row.original?.attributes?.deletedAt, [
+                        {
+                            key: 'edit',
+                            action: () => onEdit(can['update:department-metadata'], route('department-courses.show', id)),
+                        },
+                    ]);
+                },
+            },
+        ];
+    };
+
+    const createCourseLevelEnrolmentColumns = () => {
+        return [
+            {
+                header: trans_choice('trans.name', 1),
+                accessorKey: 'studentName',
+                cell: ({ row }: { row: { original: Enrolment } }) => {
+                    const id = getIdParams(row.original.id?.toString() ?? '');
+                    return textLink(route('department-courses.show', id), row.original.attributes?.studentName);
+                },
+            },
+            {
+                header: trans('trans.tracking_number'),
+                accessorKey: 'applicationTrackingNumber',
+                cell: ({ row }: { row: { original: Enrolment } }) => {
+                    return row.original?.attributes?.applicationTrackingNumber;
+                },
+            },
+            {
+                header: trans('trans.application_date'),
+                accessorKey: 'applicationDate',
+                cell: ({ row }: { row: { original: Enrolment } }) => {
+                    return formatDate(row.original?.attributes?.createdAt);
+                },
+            },
+             {
+                header: trans_choice('trans.score', 1),
+                accessorKey: 'score',
+                cell: ({ row }: { row: { original: Enrolment } }) => {
+                    return formatDate(row.original?.attributes?.createdAt);
+                },
+            },
+            {
+                header: trans_choice('trans.action', 2),
+                accessorKey: 'actions',
+                enableSorting: false,
+                meta: { align: 'right' },
+                cell: ({ row }: { row: { original: Enrolment } }) => {
                     const id = getIdParams(row.original.id?.toString() ?? '');
                     return moreActionButton(!!row.original?.attributes?.deletedAt, [
                         {
@@ -126,5 +176,6 @@ export const useDepartmentCourses = () => {
         isLoading,
         departmentCoursesMetaData,
         loadDepartmentCoursesMetaData,
+        createCourseLevelEnrolmentColumns,
     };
 };

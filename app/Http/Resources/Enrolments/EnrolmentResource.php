@@ -3,6 +3,7 @@
 namespace App\Http\Resources\Enrolments;
 
 use App\Http\Resources\Institution\DepartmentApplicationStepResource;
+use App\Http\Resources\Students\AcademicLevelResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -30,6 +31,7 @@ class EnrolmentResource extends JsonResource
                 'deletedAt' => $this->deleted_at,
             ],
             'relationships' => [
+                'oLevelResults' => AcademicLevelResource::collection($this->student?->oLevelResults),
                 'departmentWorkflowStep' => DepartmentApplicationStepResource::make($this->departmentWorkflowStep)
             ]
         ];
