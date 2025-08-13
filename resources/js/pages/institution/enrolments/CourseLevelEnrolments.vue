@@ -8,10 +8,10 @@ import { useDepartmentCourses } from '@/composables/institution/useDepartmentCou
 import HeadingSmall from '@/components/core/util/HeadingSmall.vue';
 import { Enrolment } from '@/types/enrolments';
 import BaseAlert from '@/components/core/alert/BaseAlert.vue';
-import {useUtils} from '@/composables/core/useUtils';
 import CustomSeparator from '@/components/core/util/CustomSeparator.vue';
 import EnrolmentItem from './EnrolmentItem.vue';
 import { computed } from 'vue';
+import { Link } from '@/types/ui';
 
 interface Props {
     department: InstitutionDepartment;

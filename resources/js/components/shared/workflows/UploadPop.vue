@@ -7,15 +7,20 @@ import BaseInput from '@/components/core/form/text/BaseInput.vue';
 import { TextFieldType } from '@/enums/inputs';
 import { ref } from 'vue';
 import { StudentProgram } from '@/types/students';
+import { useStudentApplications } from '@/composables/students/useStudentApplications';
 
 interface Props {
     application: StudentProgram,
+    type: 'application_fee' | 'tuition_fee'
 }
 
 const props = defineProps<Props>();
 
+const { uploadProofOfPayment } = useStudentApplications();
+
 const form = useForm<any>({
-    upload: '',
+    proof_of_payment: '',
+    type: props.type
 });
 
 const uploadPreview = ref<string|null>(null);
@@ -24,7 +29,7 @@ const fileType = ref<string|null>(null);
 const handleFileChange = (event: any) => {
     const upload = event.target.files[0];
     if (!upload) return;
-    form.upload = upload;
+    form.proof_of_payment = upload;
 
    // Clear old preview URL
     if (uploadPreview.value) {
@@ -48,15 +53,15 @@ const handleFileChange = (event: any) => {
     <BaseModal
         :name="APP_MODULE_KEYS.upload_proof_of_payment"
         :title="$t('trans.upload_proof_of_payment')"
-        :on-form-action="() => {}"
+        :on-form-action="() => uploadProofOfPayment(form, application )"
         :form="form"
         :size="SizeVariant.md"
     >
         <template #body>
             <div class="grid grid-cols-1 gap-4">
                 <BaseInput
-                    input-id="upload"
-                    :error="form.errors.upload"
+                    input-id="proof_of_payment"
+                    :error="form.errors.proof_of_payment"
                     :label="$tChoice('trans.file', 1)"
                     :type="TextFieldType.file" @change="handleFileChange"/>
 
@@ -76,13 +81,13 @@ const handleFileChange = (event: any) => {
                     ></iframe>
 
                     <!-- GENERIC FILE PREVIEW -->
-                    <div v-else-if="form.upload" class="flex items-center gap-2 p-2 border rounded">
+                    <div v-else-if="form.proof_of_payment" class="flex items-center gap-2 p-2 border rounded">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-500" fill="none"
                             viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M7 21h10a2 2 0 002-2V7l-5-5H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                         </svg>
-                        <span>{{ form.upload.name }}</span>
+                        <span>{{ form.proof_of_payment.name }}</span>
                     </div>
             </div>
         </template>

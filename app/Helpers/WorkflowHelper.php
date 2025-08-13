@@ -11,6 +11,6 @@ class WorkflowHelper
      */
     public static function getDepartmentApplicationStepByPosition(int $position): ?DepartmentApplicationStep
     {
-        return DepartmentApplicationStep::where('position', $position)->first();
+        return DepartmentApplicationStep::where('position', $position)->first(); 
     }
 }

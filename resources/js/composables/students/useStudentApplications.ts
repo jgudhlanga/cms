@@ -14,7 +14,7 @@ export const useStudentApplications = () => {
     const studentAbility = 'manageOwnStudentProgramDetails:students';
     const adminAbility = 'manageStudentMetadata:admin';
     const allowed = hasAbility([adminAbility, studentAbility]);
-    const { formatDate } = useUtils();
+    const { formatDate, navigateTo } = useUtils();
     const createStudentApplicationColumns = () => {
         return [
             {
@@ -69,7 +69,7 @@ export const useStudentApplications = () => {
                     return moreActionButton(false, [
                         {
                             key: 'view',
-                            action: () => {},
+                            action: () => navigateTo(route('portal.application.view', row.original.id)),
                         },
                     ]);
                 },
@@ -86,7 +86,7 @@ export const useStudentApplications = () => {
         const errorMessage = () => trans('trans.proof_of_payment_failure');
         try {
             const id = getIdParams(application?.id?.toString() ?? '');
-            form.put(route('sponsors.update', id), buildFormOptions(form, successMessage(), errorMessage(), APP_MODULE_KEYS.upload_proof_of_payment));
+            form.post(route('students.upload-proof-of-payment', id), buildFormOptions(form, successMessage(), errorMessage(), APP_MODULE_KEYS.upload_proof_of_payment));
         } catch (error: any) {
             form.setError(error.format());
         }

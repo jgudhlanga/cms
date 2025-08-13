@@ -76,7 +76,7 @@ const completedActiveSteps = computed(() => {
                 component: StepAction,
                 props: {
                     step,
-                    action: () => {},
+                    status: getStepStatus(step),
                 },
             };
         });
@@ -128,6 +128,6 @@ const getStepStatus = (step: DepartmentApplicationStep): string => {
             </template>
             <BaseAlert v-else :title="$t('trans.no_data')" :description="$t('trans.no_workflows_configured_description')" />
         </template>
-        <UploadPop :application="application"/>
+        <UploadPop :application="application" type="application_fee"/>
     </PageContainer>
 </template>

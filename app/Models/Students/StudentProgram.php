@@ -20,6 +20,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
 /**
  *
@@ -27,9 +29,9 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @method static filter(StudentProgramFilter $filters)
  */
 #[ObservedBy([StudentProgramObserver::class])]
-class StudentProgram extends Model
+class StudentProgram extends Model implements HasMedia
 {
-    use HasFactory, SoftDeletes, Filterable, BelongsToTenant, Paginatable, LogsActivity;
+    use HasFactory, SoftDeletes, Filterable, BelongsToTenant, Paginatable, LogsActivity, InteractsWithMedia;
 
     protected $fillable = [
         'tenant_id',
@@ -43,6 +45,7 @@ class StudentProgram extends Model
         'department_application_step_id',
         'program_status_id',
         'intake_period_id',
+        'application_fee_proof_of_payment_id',
     ];
 
     public function student(): BelongsTo
@@ -75,6 +78,20 @@ class StudentProgram extends Model
         return $this->belongsTo(IntakePeriod::class, 'intake_period_id');
     }
 
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('students')->singleFile();
+    }
+
+    public function applicationFeeProofOfPayment(): HasOne
+    {
+        return $this->hasOne(Media::class, 'id', 'application_fee_proof_of_payment_id');
+    }
+
+    public function getApplicationFeeProofOfPaymentUrlAttribute(): ?array
+    {
+        return ($this->application_fee_proof_of_payment_id > 0) ? $this->applicationFeeProofOfPayment->getFullUrl() : null;
+    }
 
     public function getActivitylogOptions(): LogOptions
     {
