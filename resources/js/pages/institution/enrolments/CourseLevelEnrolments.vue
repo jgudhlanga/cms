@@ -3,17 +3,20 @@ import PageContainer from '@/components/core/page/PageContainer.vue';
 import { AuthObject, DataListProps } from '@/types/data-pagination';
 import { DepartmentLevel } from '@/types/department-meta-data';
 import { InstitutionDepartment } from '@/types/institution';
-import type { Link } from '@/types/ui';
 import { Head } from '@inertiajs/vue3';
-import DataTable from '@/components/core/table/DataTable.vue';
 import { useDepartmentCourses } from '@/composables/institution/useDepartmentCourses';
 import HeadingSmall from '@/components/core/util/HeadingSmall.vue';
 import { Enrolment } from '@/types/enrolments';
+import BaseAlert from '@/components/core/alert/BaseAlert.vue';
+import {useUtils} from '@/composables/core/useUtils';
+import CustomSeparator from '@/components/core/util/CustomSeparator.vue';
+import EnrolmentItem from './EnrolmentItem.vue';
+import { computed } from 'vue';
 
 interface Props {
     department: InstitutionDepartment;
     level: DepartmentLevel;
-    enrolments: DataListProps<Enrolment>;
+    enrolments: Enrolment[];
     auth: AuthObject;
     errors: object;
 }
@@ -33,20 +36,35 @@ const breadcrumbs: Array<Link> = [
     { title: level.attributes.level },
     { transChoiceKey: 'enrolment' },
 ];
-const firstCourseName = enrolments.data?.[0]?.attributes?.course ?? '';
+const firstCourseName = enrolments?.[0]?.attributes?.course ?? '';
+
+const sortedEnrolments = computed(() => {
+    return [...enrolments].sort((a, b) => {
+        const totalA = a.relationships?.oLevelResults?.reduce(
+            (sum, result) => sum + Number(result.attributes.gradePosition || 0),
+            0
+        ) ?? 0;
+
+        const totalB = b.relationships?.oLevelResults?.reduce(
+            (sum, result) => sum + Number(result.attributes.gradePosition || 0),
+            0
+        ) ?? 0;
+
+        return totalA - totalB; // lowest total first
+    });
+});
 </script>
 
 <template>
     <Head :title="$tChoice('trans.department', 2)" />
     <PageContainer :breadcrumbs="breadcrumbs">
         <HeadingSmall v-if="firstCourseName" :title="firstCourseName" />
-        {{ enrolments.data[0] }}
-        <DataTable
-            :data="enrolments.data"
-            :show-archived-filter="false"
-            :search-url="route('department-levels.enrolments', {institution_department: institutionDepartmentId, department_level: departmentLevelId,})"
-            :pagination="{ ...enrolments.links, ...enrolments.meta }"
-            :columns="createCourseLevelEnrolmentColumns()"
-        />
+        <CustomSeparator classes="h-[1px] my-6" />
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3" v-if="enrolments.length > 0">
+            <div v-for="enrolment in sortedEnrolments" :key="enrolment.id">
+                <EnrolmentItem :enrolment="enrolment" />
+            </div>
+        </div>
+        <BaseAlert v-else :title="$t('trans.no_data')" :description="$t('trans.no_data_found_description', { data: $tChoice('trans.enrolment', 2) })"/>
     </PageContainer>
 </template>

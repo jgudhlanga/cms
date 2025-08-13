@@ -23,6 +23,7 @@ class AcademicLevelResource extends JsonResource
                 'examSitting' => $this->exam_sitting,
                 'gradeId' => $this->grade_id,
                 'grade' => $this->grade?->name ?? null,
+                'gradePosition' => $this->grade?->position ?? null,
                 'remarks' => $this->remarks,
                 'createdAt' => Carbon::parse($this->created_at)->format('Y-m-d'),
                 'updatedAt' => Carbon::parse($this->updated_at)->format('Y-m-d'),

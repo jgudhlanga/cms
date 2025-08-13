@@ -20,6 +20,7 @@ class EnrolmentResource extends JsonResource
                 'studentName' => $this->student?->user?->full_name,
                 'studentNumber' => $this->student?->student_number,
                 'institutionDepartmentId' => $this->institution_department_id,
+                'gradePosition'=> '',
                 'department' => $this->institutionDepartment?->department?->name,
                 'departmentLevelId' => $this->department_level_id,
                 'level' => $this->departmentLevel?->level?->name,

@@ -387,6 +387,8 @@ return [
     "enter_class_size" => "enter class size...",
     "progress" => "Progress",
     "upload_proof" => "Upload POP",
+    "file" => "File|Files",
+    "upload_proof_of_payment" => "Upload proof of payment",
     "enrolment_class_size_setup" => "Enrolment class size setup",
     "courses_config_description" => "Configure department courses (link courses to department and courses to levels)",
     "levels_config_description" => "Configure department levels (link levels to department and level requirements for the courses)",
@@ -394,4 +396,6 @@ return [
     "application_workflow_config_description" => "Configure application workflow (configure steps, roles and action items on each step",
     "no_data_found_description" => ":data not found",
     "score" => "Score|Scores",
+    "proof_of_payment_uploaded" => "Proof of payment uploaded successfully",
+    "proof_of_payment_failure" => "Proof of payment failed to upload",
 ];

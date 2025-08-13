@@ -19,6 +19,28 @@ export type Enrolment = {
         updatedAt: string;
     };
     relationships?: {
+        oLevelResults: AcademicOLevelResult[],
         departmentWorkflowStep: DepartmentApplicationStep;
     };
 };
+
+export type AcademicOLevelResult = {
+    type: string;
+    id: string | number;
+    attributes: {
+        academicLevelId: string | number;
+        academicLevel: string;
+        subjectId: string | number;
+        subject: string;
+        examYear: string | number;
+        examSitting: string | number;
+        gradeId: string | number;
+        grade: string;
+        gradePosition: string | number;
+        remarks: string;
+        createdAt: string;
+        updatedAt: string;
+        deletedAt: string | null;
+    };
+};
+

@@ -12,6 +12,7 @@ use App\Http\Resources\Institution\DepartmentLevelRequirementResource;
 use App\Http\Resources\Institution\DepartmentLevelResource;
 use App\Http\Resources\Institution\InstitutionDepartmentResource;
 use App\Models\Institution\DepartmentLevel;
+use App\Models\Students\StudentProgram;
 use App\Models\Institution\InstitutionDepartment;
 use App\Repositories\Institution\interface\IDepartmentLevelRepository;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -59,8 +60,7 @@ class DepartmentLevelController extends Controller
         $enrolments = $institutionDepartment->enrolments()
             ->where('department_level_id', $departmentLevel->id)
             ->when($intakePeriodId, fn($q) => $q->where('intake_period_id', $intakePeriodId))
-            ->paginate()
-            ->withQueryString();
+            ->get();
         $enrolments = EnrolmentResource::collection($enrolments);
         return Inertia::render('institution/enrolments/CourseLevelEnrolments',
             compact('department', 'level', 'enrolments'));

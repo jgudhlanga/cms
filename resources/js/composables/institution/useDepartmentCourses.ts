@@ -7,7 +7,7 @@ import { getIdParams } from '@/lib/utils';
 import HttpService from '@/services/http.service';
 import { Auth } from '@/types';
 import { DepartmentCourse, DepartmentCourseLevel, DepartmentCourseMetaData } from '@/types/department-meta-data';
-import { Enrolment } from '@/types/enrolments';
+import { AcademicOLevelResult, Enrolment } from '@/types/enrolments';
 import { InertiaForm, usePage } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 import { ref } from 'vue';
@@ -84,11 +84,30 @@ export const useDepartmentCourses = () => {
                     return formatDate(row.original?.attributes?.createdAt);
                 },
             },
-             {
+            {
+                header: trans_choice('trans.grade', 2),
+                accessorKey: 'grades',
+                cell: ({ row }: { row: { original: Enrolment } }) => {
+                    return row.original.relationships?.oLevelResults?.map((item: AcademicOLevelResult) => item?.attributes?.grade)?.join(', ');
+                },
+            },
+            {
                 header: trans_choice('trans.score', 1),
                 accessorKey: 'score',
+                enableSorting: false,
+                meta: { align: 'center' },
                 cell: ({ row }: { row: { original: Enrolment } }) => {
-                    return formatDate(row.original?.attributes?.createdAt);
+                    const score = row.original.relationships?.oLevelResults?.reduce((acc: number, result) => {
+                        return acc + (result.attributes?.gradePosition ? parseFloat(result.attributes.gradePosition as string) : 0);
+                    }, 0);
+                    return score;
+                },
+            },
+            {
+                header: trans_choice('trans.status', 1),
+                accessorKey: 'status',
+                cell: ({ row }: { row: { original: Enrolment } }) => {
+                    return row.original.relationships?.departmentWorkflowStep?.attributes?.workflowStep ?? '---';
                 },
             },
             {

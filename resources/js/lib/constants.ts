@@ -54,6 +54,7 @@ const APP_MODULE_KEYS = {
     department_workflow_actions: 'department_workflow_actions',
     next_of_kin: 'next_of_kin',
     student_personal_details: 'student_personal_details',
+    upload_proof_of_payment: 'upload_proof_of_payment',
 };
 const EXAM_SITTINGS = [
     {value: 'june', label: 'June'},

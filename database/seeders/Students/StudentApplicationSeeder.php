@@ -42,7 +42,7 @@ class StudentApplicationSeeder extends Seeder
     public function run(): void
     {
         DB::transaction(function () {
-            $users = User::factory()->count(100)->create(['tenant_id' => $this->getTenantId(), 'password' => 'Student123!']);
+            $users = User::factory()->count(50)->create(['tenant_id' => $this->getTenantId(), 'password' => 'Student123!']);
             $intakePeriod = IntakePeriod::orderBy('end_date', 'DESC')->first();
             $genderIds = Gender::all()->pluck('id')->toArray();
             $titleIds = Title::all()->pluck('id')->toArray();
@@ -194,7 +194,7 @@ class StudentApplicationSeeder extends Seeder
         $examYear = 2024;
         $sitting = 'november';
         foreach ($subjects as $subjectId) {
-            $student->academicResults()->create([
+            $student->oLevelResults()->create([
                 'academic_level_id' => $level->id,
                 'subject_id' => $subjectId,
                 'exam_year' => $examYear,
@@ -204,7 +204,7 @@ class StudentApplicationSeeder extends Seeder
         }
 
         foreach ($otherSubjects as $subjectId) {
-            $student->academicResults()->create([
+            $student->oLevelResults()->create([
                 'academic_level_id' => $level->id,
                 'subject_id' => $subjectId,
                 'exam_year' => $examYear,

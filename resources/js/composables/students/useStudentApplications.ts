@@ -3,6 +3,11 @@ import { useUtils } from '@/composables/core/useUtils';
 import { hasAbility } from '@/lib/permissions';
 import { StudentProgram } from '@/types/students';
 import { trans, trans_choice } from 'laravel-vue-i18n';
+import { openModal } from '@/lib/alerts';
+import { APP_MODULE_KEYS } from '@/lib/constants';
+import { InertiaForm } from '@inertiajs/vue3';
+import { getIdParams } from '@/lib/utils';
+import { buildFormOptions } from '@/lib/forms';
 
 export const useStudentApplications = () => {
     const { moreActionButton, actionButton, textLink } = useDataTables();
@@ -72,8 +77,26 @@ export const useStudentApplications = () => {
         ];
     };
 
+    const onUploadPopModal = () => {
+        openModal({ name: APP_MODULE_KEYS.upload_proof_of_payment, edit: null });
+    };
+
+    const uploadProofOfPayment = (form: InertiaForm<any>, application: StudentProgram) => {
+        const successMessage = () => trans('trans.proof_of_payment_uploaded');
+        const errorMessage = () => trans('trans.proof_of_payment_failure');
+        try {
+            const id = getIdParams(application?.id?.toString() ?? '');
+            form.put(route('sponsors.update', id), buildFormOptions(form, successMessage(), errorMessage(), APP_MODULE_KEYS.upload_proof_of_payment));
+        } catch (error: any) {
+            form.setError(error.format());
+        }
+    };
+
     return {
         createStudentApplicationColumns,
         allowed,
+        onUploadPopModal,
+        uploadProofOfPayment,
     };
 };
+

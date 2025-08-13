@@ -13,6 +13,7 @@ import { computed, onMounted, ref } from 'vue';
 import TimelineTwo from '@/components/core/timelines/TimelineTwo.vue';
 import BaseAlert from '@/components/core/alert/BaseAlert.vue';
 import StepAction from '@/components/core/timelines/StepAction.vue';
+import UploadPop from '@/components/shared/workflows/UploadPop.vue';
 
 interface Props {
     auth: AuthObject;
@@ -127,5 +128,6 @@ const getStepStatus = (step: DepartmentApplicationStep): string => {
             </template>
             <BaseAlert v-else :title="$t('trans.no_data')" :description="$t('trans.no_workflows_configured_description')" />
         </template>
+        <UploadPop :application="application"/>
     </PageContainer>
 </template>

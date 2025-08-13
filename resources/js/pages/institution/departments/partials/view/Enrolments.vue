@@ -60,6 +60,7 @@ const handleSelectionChange = async () => {
         <div class="flex flex-col" v-else>
             <template v-if="enrolments && enrolments.length > 0">
                 <div v-for="enrolment in enrolments" :key="enrolment.departmentCourseId" class="flex flex-col space-y-4">
+                    <CustomSeparator classes="h-[1px] mb-6" />
                     <HeadingSmall :title="enrolment.courseName" />
                     <Link
                         v-for="level in enrolment.levels"
@@ -76,7 +77,7 @@ const handleSelectionChange = async () => {
                             <Avatar src="" :name="level.enrolmentsCount" :is-number="true" class="bg-primary text-white" />
                         </div>
                     </Link>
-                    <CustomSeparator classes="h-1" />
+                    <CustomSeparator classes="h-[1px]" />
                 </div>
             </template>
             <BaseAlert
