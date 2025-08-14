@@ -18,6 +18,7 @@ use App\Repositories\Institution\interface\IDepartmentLevelRepository;
 use Illuminate\Auth\Access\AuthorizationException;
 use Inertia\Inertia;
 use Inertia\Response;
+use App\Helpers\WorkflowHelper;
 
 class DepartmentLevelController extends Controller
 {
@@ -57,11 +58,29 @@ class DepartmentLevelController extends Controller
         $intakePeriodId = request('intake_period');
         $department = InstitutionDepartmentResource::make($institutionDepartment);
         $level = DepartmentLevelResource::make($departmentLevel);
+
+        $maxStep = WorkflowHelper::getMaxStep();
         $enrolments = $institutionDepartment->enrolments()
             ->where('department_level_id', $departmentLevel->id)
+            ->whereHas('departmentWorkflowStep', function ($q) use ($maxStep) {
+                $q->where('position', '<', $maxStep->position);
+            })
             ->when($intakePeriodId, fn($q) => $q->where('intake_period_id', $intakePeriodId))
-            ->get();
-        $enrolments = EnrolmentResource::collection($enrolments);
+            ->with([
+                'departmentWorkflowStep',
+                'student.user',
+                'institutionDepartment.department',
+                'departmentLevel.level',
+                'departmentCourse.course',
+                'student.oLevelResults',
+            ])
+            ->orderBy('student_programs.created_at', 'ASC')
+            ->get()
+            ->groupBy(fn($enrolment) => $enrolment->departmentWorkflowStep->workflowStep->name)
+            ->sortByDesc(function ($group, $workflowStepName) {
+                return $group->first()->departmentWorkflowStep->position ?? 0;
+            })
+            ->map(fn($group) => EnrolmentResource::collection($group));
         return Inertia::render('institution/enrolments/CourseLevelEnrolments',
             compact('department', 'level', 'enrolments'));
     }

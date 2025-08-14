@@ -28,12 +28,12 @@ export function useSidebarMenu() {
             url: route('dashboard'),
             show: hasAbility('view:dashboards'),
         },
-        {
+        /* {
             transChoiceKey: 'trans.enrolment',
             icon: icons[IconName.user_add],
             url: route('enrolments.index'),
             show: hasAbility('view:student-programs'),
-        },
+        }, */
         {
             transChoiceKey: 'trans.student',
             icon: icons[IconName.user_check],
