@@ -6,7 +6,7 @@ use App\DTO\Institution\{DepartmentLevelDto, DepartmentLevelRequirementsDto};
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Institution\{DepartmentLevelRequest, DepartmentLevelRequirementRequest};
 use App\Http\Resources\Enrolments\EnrolmentResource;
-use App\Http\Resources\Institution\{DepartmentLevelResource, InstitutionDepartmentResource, DepartmentApplicationStepResource};
+use App\Http\Resources\Institution\{DepartmentLevelResource, InstitutionDepartmentResource, DepartmentApplicationStepResource, DepartmentLevelRequirementResource};
 use App\Models\Institution\DepartmentLevel;
 use App\Models\Students\StudentProgram;
 use App\Models\Institution\InstitutionDepartment;
