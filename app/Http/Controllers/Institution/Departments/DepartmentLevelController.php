@@ -2,15 +2,11 @@
 
 namespace App\Http\Controllers\Institution\Departments;
 
-use App\DTO\Institution\DepartmentLevelDto;
-use App\DTO\Institution\DepartmentLevelRequirementsDto;
+use App\DTO\Institution\{DepartmentLevelDto, DepartmentLevelRequirementsDto};
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Institution\DepartmentLevelRequest;
-use App\Http\Requests\Institution\DepartmentLevelRequirementRequest;
+use App\Http\Requests\Institution\{DepartmentLevelRequest, DepartmentLevelRequirementRequest};
 use App\Http\Resources\Enrolments\EnrolmentResource;
-use App\Http\Resources\Institution\DepartmentLevelRequirementResource;
-use App\Http\Resources\Institution\DepartmentLevelResource;
-use App\Http\Resources\Institution\InstitutionDepartmentResource;
+use App\Http\Resources\Institution\{DepartmentLevelResource, InstitutionDepartmentResource, DepartmentApplicationStepResource};
 use App\Models\Institution\DepartmentLevel;
 use App\Models\Students\StudentProgram;
 use App\Models\Institution\InstitutionDepartment;
@@ -58,8 +54,8 @@ class DepartmentLevelController extends Controller
         $intakePeriodId = request('intake_period');
         $department = InstitutionDepartmentResource::make($institutionDepartment);
         $level = DepartmentLevelResource::make($departmentLevel);
-
-        $maxStep = WorkflowHelper::getMaxStep();
+        $workflowSteps = DepartmentApplicationStepResource::collection(WorkflowHelper::getAllSteps($institutionDepartment->id));
+        $maxStep = WorkflowHelper::getMaxStep($institutionDepartment->id);
         $enrolments = $institutionDepartment->enrolments()
             ->where('department_level_id', $departmentLevel->id)
             ->whereHas('departmentWorkflowStep', function ($q) use ($maxStep) {
@@ -82,7 +78,7 @@ class DepartmentLevelController extends Controller
             })
             ->map(fn($group) => EnrolmentResource::collection($group));
         return Inertia::render('institution/enrolments/CourseLevelEnrolments',
-            compact('department', 'level', 'enrolments'));
+            compact('department', 'level', 'enrolments', 'workflowSteps'));
     }
 
     /**

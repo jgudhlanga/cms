@@ -116,8 +116,8 @@ class PortalController extends Controller
                 CreateApplicationDto::fromCreateApplicationRequest($request, $user, $intakePeriod)
             );
             $application = $student->programs()->latest()->first();
-            $stepOne = WorkflowHelper::getDepartmentApplicationStepByPosition(1); 
-            $stepTwo = WorkflowHelper::getDepartmentApplicationStepByPosition(2);
+            $stepOne = WorkflowHelper::getDepartmentApplicationStepByPosition($applictaion->institution_department_id, 1);
+            $stepTwo = WorkflowHelper::getDepartmentApplicationStepByPosition($applictaion->institution_department_id,2);
             $application->update(['department_application_step_id' => $stepOne?->id ?? null]);
             DB::commit();
             if ($stepTwo) {

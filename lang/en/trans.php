@@ -398,4 +398,5 @@ return [
     "score" => "Score|Scores",
     "proof_of_payment_uploaded" => "Proof of payment uploaded successfully",
     "proof_of_payment_failure" => "Proof of payment failed to upload",
+    "send_all_applications_to" => "Send all applications to",
 ];

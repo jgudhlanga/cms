@@ -3,11 +3,13 @@ import { DepartmentLevel } from '@/types/department-meta-data';
 import { AcademicOLevelResult, Enrolment } from '@/types/enrolments';
 import { computed } from 'vue';
 import { useUtils } from '@/composables/core/useUtils';
+import EclipseButton from '@/components/core/button/EclipseButton.vue';
 
 
 interface Props {
     level: DepartmentLevel;
     enrolments: Enrolment[];
+    stepOptions: Array<any>;
 }
 
 const props = defineProps<Props>();
@@ -52,7 +54,12 @@ const calculateScore = (results: AcademicOLevelResult[]) => results?.reduce((acc
                         {{ calculateScore(enrolment?.relationships?.oLevelResults!).toString() }}
                     </span>
                 </td>
-                <td class="j-td text-center">Actions</td>
+                <td class="j-td text-center">
+                    <EclipseButton
+                       :options="stepOptions"
+                        :show-only-icon="true"
+                    />
+                </td>
             </tr>
         </tbody>
     </table>

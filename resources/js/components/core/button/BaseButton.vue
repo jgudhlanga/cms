@@ -64,7 +64,7 @@ const computedClass = computed(() =>
 		v-bind="$attrs"
 		:class="cn('uppercase rounded-md cursor-pointer', computedClass, props.classes)" :disabled="processing">
 		<component :is="icons[IconName.loader]" v-if="processing" class="h-4 w-4 animate-spin" />
+        <span v-if="title">{{ title }}</span>
 		<slot />
-		<span v-if="title">{{ title }}</span>
 	</Button>
 </template>

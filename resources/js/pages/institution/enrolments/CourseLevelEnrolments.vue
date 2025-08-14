@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import { AuthObject } from '@/types/data-pagination';
-import { DepartmentLevel } from '@/types/department-meta-data';
+import { DepartmentApplicationStep, DepartmentLevel } from '@/types/department-meta-data';
 import { InstitutionDepartment } from '@/types/institution';
 import { Head } from '@inertiajs/vue3';
 import HeadingSmall from '@/components/core/util/HeadingSmall.vue';
@@ -12,12 +12,14 @@ import { computed } from 'vue';
 import { Link } from '@/types/ui';
 import { useUtils } from '@/composables/core/useUtils';
 import OLevelBased from './OLevelBased.vue';
+import EclipseButton from '@/components/core/button/EclipseButton.vue';
 
 
 interface Props {
     department: InstitutionDepartment;
     level: DepartmentLevel;
     enrolments: Record<string, Enrolment[]>;
+    workflowSteps: DepartmentApplicationStep[];
     auth: AuthObject;
     errors: object;
 }
@@ -61,10 +63,39 @@ const sortedEnrolmentsByStep = computed(() => {
 
   return sorted;
 });
+
+const getNextSteps = (currentStepName: string) => {
+  const currentStepObj = props.workflowSteps.find(
+    (step: DepartmentApplicationStep) => step.attributes.workflowStep === currentStepName
+  );
+
+  if (!currentStepObj) {
+    return []; // No matching step found
+  }
+
+  return props.workflowSteps.filter(
+    (step: DepartmentApplicationStep) =>
+      step.attributes.position > currentStepObj.attributes.position
+  );
+};
+
 const levelRequirements = computed(() => {
     return level?.relationships?.requirement;
 });
 
+
+const buttonOptions = (currentStepName: string) => {
+    const options = getNextSteps(currentStepName);
+    let choices = [];
+    for(const option of options) {
+        choices.push({
+            key: option.id,
+            action: () => {},
+            title: option?.attributes?.workflowStep
+        })
+    }
+    return choices;
+}
 
 </script>
 
@@ -75,10 +106,19 @@ const levelRequirements = computed(() => {
         <CustomSeparator classes="h-[1px] my-3" />
         <template v-if="sortedEnrolmentsByStep">
             <div v-for="(enrolmentsInStep, step) in sortedEnrolmentsByStep" :key="step" class="flex flex-col space-y-3">
-                <HeadingSmall :title="step" class="mt-7" />
+                <div class="flex justify-between items-center mt-7">
+		            <div class="flex mb-0.5 text-sm uppercase text-accent-foreground font-bold">{{ step }}</div>
+                    <div class="flex space-x-2">
+                       <EclipseButton
+                       :options="buttonOptions(step)"
+                        :group-title="$t('trans.send_all_applications_to')"
+                        :show-group-icon="true"
+                    />
+                    </div>
+                </div>
                 <div class="inline-block min-w-full overflow-auto align-middle">
                     <template v-if="isItTrue(levelRequirements?.attributes?.isOLevelRequired)">
-                        <OLevelBased :enrolments="enrolmentsInStep" :level="level"/>
+                        <OLevelBased :enrolments="enrolmentsInStep" :level="level" :step-options="buttonOptions(step)"/>
                     </template>
                 </div>
             </div>
