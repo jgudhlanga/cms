@@ -52,8 +52,7 @@ const steps = computed(() => {
                 label: `${trans_choice('trans.step', 1)} ${index + 1}`,
                 status: getStepStatus(step),
                 props: {
-                    step,
-                    action: () => {},
+                    step
                 },
             },
     );

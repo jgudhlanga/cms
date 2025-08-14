@@ -3,11 +3,14 @@ import { useUtils } from '@/composables/core/useUtils';
 import { hasAbility } from '@/lib/permissions';
 import { StudentProgram } from '@/types/students';
 import { trans, trans_choice } from 'laravel-vue-i18n';
-import { openModal } from '@/lib/alerts';
+import { errorAlert, openModal, successAlert } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
 import { InertiaForm } from '@inertiajs/vue3';
 import { getIdParams } from '@/lib/utils';
 import { buildFormOptions } from '@/lib/forms';
+import { DepartmentApplicationStep } from '@/types/department-meta-data';
+import HttpService from '@/services/http.service';
+import { Enrolment } from '@/types/enrolments';
 
 export const useStudentApplications = () => {
     const { moreActionButton, actionButton, textLink } = useDataTables();
@@ -92,11 +95,36 @@ export const useStudentApplications = () => {
         }
     };
 
+     const approveApplication = async (applicationId: string, nextStepId: string) => {
+        const successMessage = () => trans('trans.application_approval_success');
+        const errorMessage = () => trans('trans.application_approval_failure');
+        try {
+            await HttpService.post(route('students.approve-application', {student_program: applicationId, department_application_step: nextStepId}), {});
+            successAlert(successMessage())
+        } catch (error: any) {
+             errorAlert(errorMessage())
+        }
+    };
+
+      const bulkApproveApplication = (institutionDepartmentId: string, nextStepId: string) => {
+        console.log('Bulk approval')
+        /* const successMessage = () => trans('trans.proof_of_payment_uploaded');
+        const errorMessage = () => trans('trans.proof_of_payment_failure');
+        try {
+            const id = getIdParams(application?.id?.toString() ?? '');
+            form.post(route('students.upload-proof-of-payment', {}), buildFormOptions(form, successMessage(), errorMessage(), APP_MODULE_KEYS.upload_proof_of_payment));
+        } catch (error: any) {
+            form.setError(error.format());
+        } */
+    };
+
     return {
         createStudentApplicationColumns,
         allowed,
         onUploadPopModal,
         uploadProofOfPayment,
+        approveApplication,
+        bulkApproveApplication,
     };
 };
 

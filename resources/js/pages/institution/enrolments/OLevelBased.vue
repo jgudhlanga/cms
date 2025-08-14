@@ -4,6 +4,8 @@ import { AcademicOLevelResult, Enrolment } from '@/types/enrolments';
 import { computed } from 'vue';
 import { useUtils } from '@/composables/core/useUtils';
 import EclipseButton from '@/components/core/button/EclipseButton.vue';
+import TextLink from '@/components/core/util/TextLink.vue';
+import { useStudentApplications } from '@/composables/students/useStudentApplications';
 
 
 interface Props {
@@ -16,7 +18,7 @@ const props = defineProps<Props>();
 
 const {  level } = props;
 const {formatDate} = useUtils();
-
+const { approveApplication } = useStudentApplications();
 
 const levelRequirements = computed(() => {
     return level?.relationships?.requirement;
@@ -29,12 +31,14 @@ const requirementSubjects = computed(() => {
 const calculateScore = (results: AcademicOLevelResult[]) => results?.reduce((acc: number, result) => {
     return acc + (result.attributes?.gradePosition ? parseFloat(result.attributes.gradePosition as string) : 0);
 }, 0);
+
+
 </script>
 
 <template>
     <table class="j-table">
         <thead class="j-thead">
-            <th class="j-th text-left">{{ $tChoice('trans.name', 1) }}</th>
+            <th class="j-th text-left"> {{ $tChoice('trans.name', 1) }}</th>
             <th class="j-th text-left">{{ $t('trans.tracking_number') }}</th>
             <th class="j-th text-left">{{ $t('trans.application_date') }}</th>
             <th class="j-th text-center"  v-for="subject in requirementSubjects">{{ subject?.attributes?.name }}</th>
@@ -44,7 +48,9 @@ const calculateScore = (results: AcademicOLevelResult[]) => results?.reduce((acc
         </thead>
         <tbody class="j-tbody">
             <tr class="j-tr" v-for="enrolment in enrolments" :key="enrolment.id">
-                <td class="j-td"> {{  enrolment?.attributes?.studentName }} </td>
+                <td class="j-td">
+                    <TextLink :href="''" :title=" enrolment?.attributes?.studentName"/>
+                 </td>
                 <td class="j-td"> {{  enrolment?.attributes?.applicationTrackingNumber }} </td>
                 <td class="j-td"> {{  formatDate(enrolment?.attributes?.createdAt, 'LLL') }} </td>
                 <td class="j-td text-center" v-for="subject in requirementSubjects">A</td>

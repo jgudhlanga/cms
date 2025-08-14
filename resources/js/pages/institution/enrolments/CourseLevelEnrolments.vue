@@ -13,6 +13,7 @@ import { Link } from '@/types/ui';
 import { useUtils } from '@/composables/core/useUtils';
 import OLevelBased from './OLevelBased.vue';
 import EclipseButton from '@/components/core/button/EclipseButton.vue';
+import { useStudentApplications } from '@/composables/students/useStudentApplications';
 
 
 interface Props {
@@ -28,6 +29,8 @@ const props = defineProps<Props>();
 
 const { department, level, enrolments } = props;
 const {isItTrue} = useUtils();
+
+const { bulkApproveApplication } = useStudentApplications();
 
 const breadcrumbs: Array<Link> = [
     { transChoiceKey: 'institution', transChoiceKeyIndex: 1, href: route('institution.index') },
@@ -90,8 +93,9 @@ const buttonOptions = (currentStepName: string) => {
     for(const option of options) {
         choices.push({
             key: option.id,
-            action: () => {},
-            title: option?.attributes?.workflowStep
+            id: option.id,
+            title: option?.attributes?.workflowStep,
+            action: () => bulkApproveApplication(department.id?.toString() ?? '', option.id?.toString() ?? '')
         })
     }
     return choices;
@@ -109,11 +113,11 @@ const buttonOptions = (currentStepName: string) => {
                 <div class="flex justify-between items-center mt-7">
 		            <div class="flex mb-0.5 text-sm uppercase text-accent-foreground font-bold">{{ step }}</div>
                     <div class="flex space-x-2">
-                       <EclipseButton
-                       :options="buttonOptions(step)"
-                        :group-title="$t('trans.send_all_applications_to')"
-                        :show-group-icon="true"
-                    />
+                        <EclipseButton
+                            :options="buttonOptions(step)"
+                            :group-title="$t('trans.send_all_applications_to')"
+                            :show-group-icon="true"
+                        />
                     </div>
                 </div>
                 <div class="inline-block min-w-full overflow-auto align-middle">

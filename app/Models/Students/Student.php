@@ -103,7 +103,7 @@ class Student extends Model
             if (is_null($maxPosition)) {
                 return false;
             }
-            $step = WorkflowHelper::getDepartmentApplicationStepByPosition($maxPosition);
+            $step = WorkflowHelper::getDepartmentApplicationStepByPosition($maxPosition, 13);
             return $step && $this->programs()->where('department_application_step_id', $step->id)->exists();
         });
     }

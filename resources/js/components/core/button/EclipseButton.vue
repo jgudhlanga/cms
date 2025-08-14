@@ -12,16 +12,15 @@ import { IconName, icons } from '@/lib/icons';
 import BaseButton from './BaseButton.vue';
 import { ColorVariant } from '@/enums/colors';
 import { ButtonSize } from '@/enums/buttons';
-
- withDefaults(defineProps<{
+interface Props {
+    options: Array<any>;
 	groupTitle?: string;
 	icon?: IconName;
     showOnlyIcon?: boolean;
     showGroupIcon?: boolean;
-	options: Array<any>;
-}>(), {
+}
 
-});
+defineProps<Props>();
 
 </script>
 
@@ -36,7 +35,7 @@ import { ButtonSize } from '@/enums/buttons';
 		<DropdownMenuContent>
 			<DropdownMenuGroup>
 				<DropdownMenuItem v-for="option in options" :key="option.key">
-					<button class="flex w-full items-center space-x-2" @click="() => option.action()">
+					<button class="flex w-full items-center space-x-2" @click="() => option?.action!()">
 						<component :is="icons[option.icon as IconName]" size="12" />
 						<TransText :item="option" :key-index="1" />
 					</button>
