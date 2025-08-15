@@ -1,32 +1,39 @@
-import { DepartmentCourse, DepartmentLevel } from '@/types/department-meta-data';
+import { DepartmentApplicationStep, DepartmentCourse, DepartmentLevel } from '@/types/department-meta-data';
 import { InstitutionDepartment } from '@/types/institution';
 import { SelectOption } from '@/types/utils';
+import { User } from '@/types/users';
 
 export type Student = {
+    type: string
     id?: string | number;
-    userId: string | number;
-    titleId?: string | number;
-    title?: string;
-    genderId?: string | number;
-    gender?: string;
-    maritalStatusId?: string | number;
-    maritalStatus?: string;
-    raceId?: string | number;
-    race?: string;
-    idTypeId: string | number;
-    studentNumber: string;
-    idType: string;
-    idNumber?: string;
-    passportNumber?: string;
-    countryId?: string | number;
-    country?: string;
-    studentPermitNumber?: string;
-    dateOfBirth?: string;
-    religionId?: string | number;
-    religion?: string;
-    denomination?: string;
-    height?: string;
-    weight?: string;
+    attributes: {
+        userId: string | number;
+        titleId?: string | number;
+        title?: string;
+        genderId?: string | number;
+        gender?: string;
+        maritalStatusId?: string | number;
+        maritalStatus?: string;
+        raceId?: string | number;
+        race?: string;
+        idTypeId: string | number;
+        studentNumber: string;
+        idType: string;
+        idNumber?: string;
+        passportNumber?: string;
+        countryId?: string | number;
+        country?: string;
+        studentPermitNumber?: string;
+        dateOfBirth?: string;
+        religionId?: string | number;
+        religion?: string;
+        denomination?: string;
+        height?: string;
+        weight?: string;
+    },
+    relationships?: {
+        user: User
+    }
 };
 
 export type PersonalDetailView = {
@@ -116,11 +123,17 @@ export type StudentProgram = {
         institutionDepartmentId: string | number;
         departmentLevelId: string | number;
         departmentCourseId: string | number;
+        applicationTrackingNumber: string;
+        createdAt?: string;
+        updatedAt?: string;
+        deletedAt?: string;
     };
     relationships?: {
+        student: Student;
         institutionDepartment?: InstitutionDepartment;
         departmentLevel?: DepartmentLevel;
         departmentCourse?: DepartmentCourse;
+        departmentWorkflowStep?: DepartmentApplicationStep;
     };
 };
 
@@ -152,7 +165,7 @@ export type AcademicRecordParams = {
     school: string;
     place: string;
     from_level?: string | number | null;
-    to_level?: string | number | null ;
+    to_level?: string | number | null;
     from_year?: string | number;
     to_year?: string | number;
     student_unique_number: string;
@@ -184,4 +197,4 @@ export type StudentPersonalDetailParams = {
     denomination?: string | null;
     height?: string | null;
     weight?: string | null;
-}
+};

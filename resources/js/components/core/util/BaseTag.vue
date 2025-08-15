@@ -10,7 +10,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-    variant: ColorVariant.fuchsia,
+    variant: ColorVariant.primary,
 });
 
 const extendedVariants: Record<ColorVariant | any, string> = {
@@ -35,7 +35,7 @@ const computedClass = computed(() => cn(extendedVariants[props.variant as ColorV
 </script>
 
 <template>
-    <span :class="cn('w-auto cursor-pointer rounded-full px-2 uppercase', computedClass, classes)">
+    <span :class="cn('w-auto cursor-pointer rounded-full px-2', computedClass, classes)">
         {{ title }}
     </span>
 </template>

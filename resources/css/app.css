@@ -204,6 +204,10 @@
         background: linear-gradient(90deg, #30a8ff 0%, #001e36 100%);
     }
 
+    .bg-infinite {
+        @apply bg-[url('/assets/images/body-bg.svg')] bg-cover bg-no-repeat;
+    }
+
     .hava-table {
         @apply min-w-full text-sm font-extralight;
     }
@@ -256,6 +260,32 @@
         @apply text-red-300;
     }
 
+    /** Table for large data not paginated */
+
+    .j-table {
+        @apply min-w-full text-[10px] font-extralight;
+    }
+
+    .j-thead {
+        @apply text-[10px] uppercase bg-sidebar-accent;
+    }
+
+    .j-th {
+        @apply p-3 text-[10px] text-sidebar-accent-foreground font-bold;
+    }
+
+    .j-tbody {
+        @apply flex-col;
+    }
+
+    .j-tr {
+        @apply odd:bg-white even:bg-muted;
+    }
+
+    .j-td {
+        @apply whitespace-nowrap px-3 py-2 text-[12px] text-sidebar-accent-foreground;
+    }
+
     .fade-enter-active,
     .fade-leave-active {
         transition: opacity 0.5s ease-in-out;
@@ -300,6 +330,6 @@
     }
 
     body {
-        @apply bg-background text-foreground;
+        @apply bg-background text-foreground bg-[url('/assets/images/body-bg.svg')] bg-cover bg-no-repeat;
     }
 }

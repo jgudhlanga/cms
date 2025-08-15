@@ -21,6 +21,7 @@ import { CreateStaffParams } from '@/types/staff';
 import type { Link } from '@/types/ui';
 import { Head, useForm } from '@inertiajs/vue3';
 import { storeToRefs } from 'pinia';
+import { ref } from 'vue';
 import BaseButton from '../../../components/core/button/BaseButton.vue';
 
 interface Props {
@@ -98,16 +99,20 @@ const updateForm = () => {
     });
 };
 
+const isValidating = ref(false);
 const save = async () => {
     updateForm();
     try {
-       await  createFormSchema().parseAsync(form);
+        isValidating.value = true;
+        await createFormSchema().parseAsync(form);
         saveStaff(form, institutionDepartmentId);
     } catch (error: any) {
         form.setError(error.format());
+    } finally {
+        isValidating.value = false;
     }
 };
-const onlyRoles = "head-of-department,head-of-division,lecturer,lecturer-in-charge,senior-lecturer";
+const onlyRoles = 'head-of-department,head-of-division,lecturer,lecturer-in-charge,senior-lecturer';
 </script>
 
 <template>
@@ -202,7 +207,8 @@ const onlyRoles = "head-of-department,head-of-division,lecturer,lecturer-in-char
                             :label-uppercase="true"
                             :is-multi="true"
                             :is-searchable="true"
-                            v-model="role_ids" />
+                            v-model="role_ids"
+                        />
                     </div>
                 </BaseCard>
             </div>
@@ -210,7 +216,7 @@ const onlyRoles = "head-of-department,head-of-division,lecturer,lecturer-in-char
                 <BaseButton type="button" :variant="ColorVariant.shade" @click="() => {}" :size="ButtonSize.lg">
                     {{ $t('trans.back') }}
                 </BaseButton>
-                <BaseButton :processing="form.processing" :disabled="form.processing" :size="ButtonSize.lg">
+                <BaseButton :processing="form.processing || isValidating" :size="ButtonSize.lg">
                     {{ $t('trans.save') }}
                 </BaseButton>
                 <slot name="action-button" />

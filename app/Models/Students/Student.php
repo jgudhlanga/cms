@@ -2,13 +2,17 @@
 
 namespace App\Models\Students;
 
+use App\Helpers\WorkflowHelper;
 use App\Http\Filters\Students\StudentFilter;
+use App\Models\Institution\DepartmentApplicationStep;
+use App\Enums\Shared\AcademicLevelEnum;
 use App\Models\Shared\{Address, Contact, Country, Gender, IdType, MaritalStatus, NextOfKin, Race, Religion, Title};
 use App\Models\Users\User;
 use App\Traits\BelongsToTenant;
 use App\Traits\Filterable;
 use App\Traits\Paginatable;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -92,6 +96,18 @@ class Student extends Model
         return $this->hasMany(StudentProgram::class, 'student_id')->withTrashed();
     }
 
+    protected function hasProgram(): Attribute
+    {
+        return Attribute::get(function () {
+            $maxPosition = DepartmentApplicationStep::max('position');
+            if (is_null($maxPosition)) {
+                return false;
+            }
+            $step = WorkflowHelper::getDepartmentApplicationStepByPosition($maxPosition, 13);
+            return $step && $this->programs()->where('department_application_step_id', $step->id)->exists();
+        });
+    }
+
     public function contacts(): MorphMany
     {
         return $this->morphMany(Contact::class, 'contactable')->withTrashed();
@@ -110,6 +126,12 @@ class Student extends Model
     public function academicRecord(): HasMany
     {
         return $this->hasMany(AcademicRecord::class, 'student_id');
+    }
+
+   public function oLevelResults(): HasMany
+    {
+        return $this->hasMany(StudentAcademicResult::class, 'student_id')
+                ->where('academic_level_id', AcademicLevelEnum::SECONDARY_SCHOOL->id());
     }
 
     public function nextOfKins(): MorphMany

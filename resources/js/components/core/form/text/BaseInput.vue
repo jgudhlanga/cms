@@ -40,7 +40,7 @@ onMounted(() => setAutoFocus());
 
 <template>
 	<div class="flex flex-col">
-		<div :class="cn('flex space-x-3', verticalLayout && 'flex-col space-y-3')">
+		<div :class="cn('flex space-x-3', verticalLayout && 'flex-col space-y-2')">
 			<Label :class="cn(error && 'text-destructive', labelUppercase && 'uppercase', !verticalLayout && 'flex items-center w-1/4')" v-if="label" :for="inputId">
                 {{ label }}<RequiredIndicator v-if="isRequired"/>
             </Label>

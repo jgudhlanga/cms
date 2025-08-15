@@ -54,6 +54,11 @@ const APP_MODULE_KEYS = {
     department_workflow_actions: 'department_workflow_actions',
     next_of_kin: 'next_of_kin',
     student_personal_details: 'student_personal_details',
+    upload_proof_of_payment: 'upload_proof_of_payment',
 };
-
-export { API_BASE_URL, API_VERSION, APP_MODULE_KEYS, DEFAULT_AVATAR, DEFAULT_IMAGE, LOGO, PAGINATION_ITEMS_PER_PAGE, PAGINATION_MAX_LIMIT };
+const EXAM_SITTINGS = [
+    {value: 'june', label: 'June'},
+    {value: 'november', label: 'November'},
+    {value: 'other', label: 'Other'},
+];
+export { API_BASE_URL, API_VERSION, APP_MODULE_KEYS, DEFAULT_AVATAR, DEFAULT_IMAGE, LOGO, PAGINATION_ITEMS_PER_PAGE, PAGINATION_MAX_LIMIT, EXAM_SITTINGS };

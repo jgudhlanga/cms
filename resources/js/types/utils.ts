@@ -91,6 +91,7 @@ export type CustomTab = {
     value: string;
     component: Component;
     show?: boolean;
+    icon?: IconName,
 };
 export type TimelineStep = {
     title: string;
@@ -100,4 +101,12 @@ export type TimelineStep = {
     component: Component;
     onClick?: () => void | null;
     props?: any,
+    status?: 'active' | 'completed' | 'pending' | 'failed';
 };
+
+export type AccordionItemProps = {
+    value: string;
+    title: () => string;
+    description?: () => string;
+    content: Component
+}

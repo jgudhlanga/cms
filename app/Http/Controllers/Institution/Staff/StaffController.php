@@ -23,10 +23,18 @@ class StaffController extends Controller
     {
         $this->authorize('createDepartmentMetaData');
         $department = InstitutionDepartmentResource::make($department);
-        return Inertia::render('institution/staff/Create', compact('department'));
+        return Inertia::render('institution/staff/CreateOrEdit', compact('department'));
     }
 
     public function show(InstitutionDepartment $department, Staff $staff)
+    {
+        $this->authorize('viewDepartmentMetaData');
+        $department = InstitutionDepartmentResource::make($department);
+        $staff = StaffResource::make($staff);
+        return Inertia::render('institution/staff/Show', compact('department', 'staff'));
+    }
+
+    public function edit(InstitutionDepartment $department, Staff $staff)
     {
         $this->authorize('viewDepartmentMetaData');
         $department = InstitutionDepartmentResource::make($department);

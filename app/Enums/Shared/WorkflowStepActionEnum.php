@@ -5,29 +5,31 @@ namespace App\Enums\Shared;
 enum WorkflowStepActionEnum: string
 {
     case SEND_EMAIL_TO_APPLICANT = 'send_email_to_applicant';
+    case GENERATE_APPLICATION_TRACKING_NUMBER = 'generate_application_tracking_number';
+    case GENERATE_STUDENT_NUMBER = 'generate_student_number';
     case SEND_EMAIL_TO_STAFF = 'send_email_to_staff';
     case CREATE_PAYMENT_LINK = 'create_payment_link';
     case REQUEST_DOCUMENTS = 'request_documents';
+    case VERIFY_PAYMENT_WITH_ACCOUNTS = 'verify_payment_with_accounts';
+    case GENERATE_OFFER_LETTER = 'generate_offer_letter`';
     case VERIFY_IDENTITY = 'verify_identity';
-    case MARK_STEP_COMPLETE = 'mark_step_complete';
-    case REVERT_STEP = 'revert_step';
     case UPLOAD_RECEIPT = 'upload_receipt';
-    case ADD_NOTE = 'add_note';
     case ASSIGN_STAFF = 'assign_staff';
 
     public function title(): string
     {
         return match ($this) {
             self::SEND_EMAIL_TO_APPLICANT => 'Send Email To Applicant',
+            self::GENERATE_APPLICATION_TRACKING_NUMBER => 'Generate Application Tracking Number',
+            self::GENERATE_STUDENT_NUMBER => 'Generate Student Number',
             self::SEND_EMAIL_TO_STAFF => 'Send Email To Staff',
             self::CREATE_PAYMENT_LINK => 'Create Payment Link',
             self::REQUEST_DOCUMENTS => 'Request Documents',
             self::VERIFY_IDENTITY => 'Verify Identity',
-            self::MARK_STEP_COMPLETE => 'Mark Step Complete',
-            self::REVERT_STEP => 'Revert Step',
             self::UPLOAD_RECEIPT => 'Upload Receipt',
-            self::ADD_NOTE => 'Add Internal Note',
+            self::GENERATE_OFFER_LETTER => 'Generate Offer Letter',
             self::ASSIGN_STAFF => 'Assign Staff',
+            self::VERIFY_PAYMENT_WITH_ACCOUNTS => 'Verify Payment with Accounts',
         };
     }
 

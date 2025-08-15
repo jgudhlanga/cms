@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
+import { cn } from '@/lib/utils';
 
 interface Props {
     href: string;
@@ -7,6 +8,7 @@ interface Props {
     method?: 'get' | 'post' | 'put' | 'patch' | 'delete';
     as?: string;
     title?: string;
+    classes?: string;
 }
 
 withDefaults(defineProps<Props>(), {
@@ -20,7 +22,7 @@ withDefaults(defineProps<Props>(), {
         :method="method"
         :tabindex="tabindex"
         :as="as"
-        class="hover:text-accent-foreground text-primary decoration-persian-200 cursor-pointer underline-offset-4 transition-colors duration-300 ease-out"
+        :class="cn('hover:text-accent-foreground text-primary decoration-persian-200 cursor-pointer underline-offset-4 transition-colors duration-300 ease-out', classes)"
     >
         <slot />
         <span v-if="title">{{ title }}</span>

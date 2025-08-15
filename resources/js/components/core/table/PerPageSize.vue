@@ -20,7 +20,7 @@ const pageSizeOptions = ref([
 	<div class="flex w-full  items-center space-x-2">
 		<ItemTitle :title="`${$t('trans.rows_per_page')}:`" :uppercase="false" />
 		<BaseSelect
-            class="w-[100px]"
+            class="w-[200px]"
 			label=""
 			v-bind="$attrs"
 			placeholder=""

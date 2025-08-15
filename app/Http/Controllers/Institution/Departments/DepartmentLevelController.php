@@ -2,18 +2,20 @@
 
 namespace App\Http\Controllers\Institution\Departments;
 
-use App\DTO\Institution\DepartmentLevelDto;
-use App\DTO\Institution\DepartmentLevelRequirementsDto;
+use App\DTO\Institution\{DepartmentLevelDto, DepartmentLevelRequirementsDto};
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Institution\DepartmentLevelRequest;
-use App\Http\Requests\Institution\DepartmentLevelRequirementRequest;
-use App\Http\Resources\Institution\DepartmentLevelRequirementResource;
-use App\Http\Resources\Institution\DepartmentLevelResource;
-use App\Http\Resources\Institution\InstitutionDepartmentResource;
+use App\Http\Requests\Institution\{DepartmentLevelRequest, DepartmentLevelRequirementRequest};
+use App\Http\Resources\Enrolments\EnrolmentResource;
+use App\Http\Resources\Institution\{DepartmentLevelResource, InstitutionDepartmentResource, DepartmentApplicationStepResource, DepartmentLevelRequirementResource};
 use App\Models\Institution\DepartmentLevel;
+use App\Models\Students\StudentProgram;
 use App\Models\Institution\InstitutionDepartment;
 use App\Repositories\Institution\interface\IDepartmentLevelRepository;
+use Illuminate\Auth\Access\AuthorizationException;
 use Inertia\Inertia;
+use Inertia\Response;
+use App\Helpers\WorkflowHelper;
+use App\Models\Institution\IntakePeriod;
 
 class DepartmentLevelController extends Controller
 {
@@ -21,43 +23,98 @@ class DepartmentLevelController extends Controller
     {
     }
 
-    public function departmentLevelRequirements(DepartmentLevel $departmentLevel)
+    /**
+     * @throws AuthorizationException
+     */
+    public function departmentLevelRequirements(DepartmentLevel $departmentLevel): Response
     {
         $this->authorize('updateDepartmentMetaData');
         $departmentLevel = DepartmentLevelResource::make($departmentLevel);
         $institutionDepartment = InstitutionDepartmentResource::make($departmentLevel->institutionDepartment);
         $levels = DepartmentLevelResource::collection($institutionDepartment->departmentLevels);
-        $requirements = $departmentLevel->requirement ?  DepartmentLevelRequirementResource::make($departmentLevel->requirement) : null;
+        $requirements = $departmentLevel->requirement ? DepartmentLevelRequirementResource::make($departmentLevel->requirement) : null;
         return Inertia::render('institution/departments/DepartmentLevelRequirements',
             compact('departmentLevel', 'institutionDepartment', 'levels', 'requirements'));
     }
 
+    /**
+     * @throws AuthorizationException
+     */
     public function updateDepartmentLevelRequirements(DepartmentLevel $departmentLevel, DepartmentLevelRequirementRequest $request): void
     {
         $this->authorize('updateDepartmentMetaData');
         $this->repository->updateDepartmentLevelRequirements($departmentLevel, DepartmentLevelRequirementsDto::fromDepartmentLevelRequirementRequest($request));
     }
 
+    /**
+     * @throws AuthorizationException
+     */
+    public function enrolments(InstitutionDepartment $institutionDepartment, DepartmentLevel $departmentLevel): Response
+    {
+        $this->authorize('viewAnyDepartmentMetaData');
+        $intakePeriodId = request()->has('intake_period_id') && request('intake_period_id') > 0 ? request('intake_period_id') : null;
+        $intakePeriod = $intakePeriodId ? IntakePeriod::find($intakePeriodId) : IntakePeriod::orderBy('end_date', 'DESC')->first();
+        $department = InstitutionDepartmentResource::make($institutionDepartment);
+        $level = DepartmentLevelResource::make($departmentLevel);
+        $workflowSteps = DepartmentApplicationStepResource::collection(WorkflowHelper::getAllSteps($institutionDepartment->id));
+        $maxStep = WorkflowHelper::getMaxStep($institutionDepartment->id);
+        $enrolments = $institutionDepartment->enrolments()
+            ->where('department_level_id', $departmentLevel->id)
+            ->whereHas('departmentWorkflowStep', function ($q) use ($maxStep) {
+                $q->where('position', '<', $maxStep->position);
+            })
+            ->when($intakePeriodId, fn($q) => $q->where('intake_period_id', $intakePeriodId))
+            ->with([
+                'departmentWorkflowStep',
+                'student.user',
+                'institutionDepartment.department',
+                'departmentLevel.level',
+                'departmentCourse.course',
+                'student.oLevelResults',
+            ])
+            ->orderBy('student_programs.created_at', 'ASC')
+            ->get()
+            ->groupBy(fn($enrolment) => $enrolment->departmentWorkflowStep->workflowStep->name)
+            ->sortByDesc(function ($group, $workflowStepName) {
+                return $group->first()->departmentWorkflowStep->position ?? 0;
+            })
+            ->map(fn($group) => EnrolmentResource::collection($group));
+        return Inertia::render('institution/enrolments/CourseLevelEnrolments',
+            compact('department', 'level', 'enrolments', 'workflowSteps', 'intakePeriod'));
+    }
+
+    /**
+     * @throws AuthorizationException
+     */
     public function syncDepartmentLevels(InstitutionDepartment $institutionDepartment, DepartmentLevelRequest $request): void
     {
         $this->authorize('createDepartmentMetaData');
         $this->repository->syncDepartmentLevels($institutionDepartment, DepartmentLevelDto::fromDepartmentLevelRequest($request));
     }
 
-    public function destroy(DepartmentLevel $departmentLevel)
+    /**
+     * @throws AuthorizationException
+     */
+    public function destroy(DepartmentLevel $departmentLevel): void
     {
         $this->authorize('deleteDepartmentMetaData');
         $this->repository->delete($departmentLevel);
     }
 
-    public function restore(string $id)
+    /**
+     * @throws AuthorizationException
+     */
+    public function restore(string $id): void
     {
         $departmentLevel = $this->repository->findTrashed($id);
         $this->authorize('restoreDepartmentMetaData');
         $this->repository->restore($departmentLevel);
     }
 
-    public function forceDelete(DepartmentLevel $departmentLevel)
+    /**
+     * @throws AuthorizationException
+     */
+    public function forceDelete(DepartmentLevel $departmentLevel): void
     {
         $this->authorize('forceDeleteDepartmentMetaData');
         $this->repository->delete($departmentLevel, true);

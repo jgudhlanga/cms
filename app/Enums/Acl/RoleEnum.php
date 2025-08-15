@@ -51,7 +51,7 @@ enum RoleEnum: string
     public function name(): string
     {
         return match ($this) {
-            // Super Users
+            // Superusers
             self::SUPER_USER => 'Super User',
             self::SUPER_ADMINISTRATOR => 'Super Administrator',
 

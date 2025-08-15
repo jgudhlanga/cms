@@ -6,10 +6,14 @@ use App\DTO\Shared\{AddressDto, ContactDto, NextOfKinDto};
 use App\DTO\Students\CreateApplicationDto;
 use App\DTO\Users\UserDto;
 use App\Enums\Acl\RoleEnum;
-use App\Helpers\WorkflowHelper;
-use App\Models\Institution\DepartmentApplicationStep;
+use App\Models\Institution\IntakePeriod;
+use App\Models\Students\StudentProgram;
+use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Http\RedirectResponse;
+use Inertia\Response;
 use App\Enums\Shared\{StatusEnum, TenantEnum};
 use App\Events\Students\ApplicationWorkflowStepChanged;
+use App\Helpers\WorkflowHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Shared\{AddressRequest, ContactRequest, NextOfKinRequest};
 use App\Http\Requests\Students\CreateApplicationRequest;
@@ -41,7 +45,10 @@ class PortalController extends Controller
 
     // ========= Dashboard and Registration =========
 
-    public function dashboard()
+    /**
+     * @throws AuthorizationException
+     */
+    public function dashboard(): Response
     {
         $this->authorize('viewStudentDashboard');
         return Inertia::render('portal/student/Index', [
@@ -50,13 +57,13 @@ class PortalController extends Controller
         ]);
     }
 
-    public function create()
+    public function create(): Response
     {
         $this->logoutIfAuthenticated();
         return Inertia::render('portal/guest/RegistrationUserForm');
     }
 
-    public function store(UserRequest $request)
+    public function store(UserRequest $request): RedirectResponse
     {
         $tenant = Tenant::where('name', TenantEnum::HARARE_POLY->value)->first();
         $status = Status::where('title', StatusEnum::ACTIVE->value)->first();
@@ -72,7 +79,7 @@ class PortalController extends Controller
         return to_route('portal.confirmation', compact('user'));
     }
 
-    public function registrationConfirmation(User $user)
+    public function registrationConfirmation(User $user): Response
     {
         return Inertia::render('portal/guest/RegistrationConfirmation', [
             'email' => $user->email,
@@ -81,16 +88,19 @@ class PortalController extends Controller
 
     // ========= Application Workflow =========
 
-    public function createApplication()
+    /**
+     * @throws AuthorizationException
+     */
+    public function createApplication(): Response
     {
         $this->authorize('manageStudentPersonalDetails');
-        return Inertia::render('portal/student/AddEditApplication');
+        return Inertia::render('portal/application/StudentApplication');
     }
 
     /**
      * @throws Throwable
      */
-    public function storeApplication(CreateApplicationRequest $request)
+    public function storeApplication(CreateApplicationRequest $request): RedirectResponse
     {
         $this->authorize('manageStudentPersonalDetails');
 
@@ -99,23 +109,21 @@ class PortalController extends Controller
         DB::beginTransaction();
         try {
             $this->updateUserNamesIfChanged($user, $request);
+            // get the current intake period
+            $intakePeriodId = $request->has('intake_period_id') && $request->intake_period_id > 0 ? $request->intake_period_id : null;
+            $intakePeriod = $intakePeriodId ? IntakePeriod::find($intakePeriodId) : IntakePeriod::orderBy('end_date', 'DESC')->first();
             $student = $this->studentRepository->create(
-                CreateApplicationDto::fromCreateApplicationRequest($request, $user)
+                CreateApplicationDto::fromCreateApplicationRequest($request, $user, $intakePeriod)
             );
             $application = $student->programs()->latest()->first();
-            $stepOne = WorkflowHelper::getDepartmentApplicationStepByPosition(1);
-            $stepTwo = WorkflowHelper::getDepartmentApplicationStepByPosition(2);
-            $application->update(['department_application_step_id' => $stepOne->id]);
+            $stepOne = WorkflowHelper::getDepartmentApplicationStepByPosition($application->institution_department_id, 1);
+            $stepTwo = WorkflowHelper::getDepartmentApplicationStepByPosition($application->institution_department_id,2);
+            $application->update(['department_application_step_id' => $stepOne?->id ?? null]);
             DB::commit();
-
-            ApplicationWorkflowStepChanged::dispatch($student, $application, $stepTwo, $stepOne);
-            /*SendApplicationSubmittedEmail::dispatch(
-                $user->full_name,
-                $user->email,
-                $application->application_tracking_number
-            )->withoutDelay();*/
-
-            return to_route('portal.application-confirmation');
+            if ($stepTwo) {
+                ApplicationWorkflowStepChanged::dispatch($student, $application, $stepTwo, $stepOne);
+            }
+            return to_route('portal.application.view', $application->id);
         } catch (Throwable $e) {
             DB::rollBack();
             Log::error('Application submission failed', ['exception' => $e]);
@@ -125,17 +133,37 @@ class PortalController extends Controller
         }
     }
 
-    public function applicationConfirmation(User $user)
+    /**
+     * @throws AuthorizationException
+     */
+    public function viewApplication(StudentProgram $studentProgram): Response
     {
         $this->authorize('manageStudentPersonalDetails');
-        return Inertia::render('portal/student/ApplicationConfirmation', [
+        return Inertia::render('portal/student/ApplicationTrack', [
             'student' => StudentResource::make($this->getStudent(request())),
+            'application' => StudentProgramResource::make($studentProgram),
+        ]);
+    }
+
+    /**
+     * @throws AuthorizationException
+     */
+    public function applications(): Response
+    {
+        $this->authorize('manageStudentPersonalDetails');
+        $student = $this->getStudent(request());
+        return Inertia::render('portal/student/Applications', [
+            'student' => StudentResource::make($student),
+            'applications' => StudentProgramResource::collection($student->programs)
         ]);
     }
 
     // ========= Student Profile =========
 
-    public function personal()
+    /**
+     * @throws AuthorizationException
+     */
+    public function personal(): Response
     {
         $this->authorize('manageStudentPersonalDetails');
         return Inertia::render('portal/student/PersonalDetails', [
@@ -143,7 +171,10 @@ class PortalController extends Controller
         ]);
     }
 
-    public function programs()
+    /**
+     * @throws AuthorizationException
+     */
+    public function programs(): Response
     {
         $this->authorize('manageStudentProgramDetails');
         $student = $this->getStudent(request());
@@ -153,7 +184,10 @@ class PortalController extends Controller
         ]);
     }
 
-    public function academicRecord()
+    /**
+     * @throws AuthorizationException
+     */
+    public function academicRecord(): Response
     {
         $this->authorize('manageStudentAcademicRecords');
         $student = $this->getStudent(request());
@@ -163,7 +197,10 @@ class PortalController extends Controller
         ]);
     }
 
-    public function financialRecord()
+    /**
+     * @throws AuthorizationException
+     */
+    public function financialRecord(): Response
     {
         $this->authorize('manageStudentFinancialRecords');
         return Inertia::render('portal/student/FinancialRecord');
@@ -171,7 +208,10 @@ class PortalController extends Controller
 
     // ========= Contact Details =========
 
-    public function storeContactDetails(ContactRequest $request)
+    /**
+     * @throws AuthorizationException
+     */
+    public function storeContactDetails(ContactRequest $request): void
     {
         $this->authorize('manageStudentContacts');
         $this->contactRepository->create(
@@ -180,7 +220,10 @@ class PortalController extends Controller
         );
     }
 
-    public function storeAddressDetails(AddressRequest $request)
+    /**
+     * @throws AuthorizationException
+     */
+    public function storeAddressDetails(AddressRequest $request): void
     {
         $this->authorize('manageStudentContacts');
         $this->addressRepository->create(
@@ -189,7 +232,10 @@ class PortalController extends Controller
         );
     }
 
-    public function storeNextOfKinDetails(NextOfKinRequest $request)
+    /**
+     * @throws AuthorizationException
+     */
+    public function storeNextOfKinDetails(NextOfKinRequest $request): void
     {
         $this->authorize('manageStudentContacts');
         $this->nextOfKinRepository->create(

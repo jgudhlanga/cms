@@ -1,9 +1,9 @@
 import { useDataTables } from '@/composables/core/useDataTables';
 import { useUtils } from '@/composables/core/useUtils';
 import { ColorVariant } from '@/enums/colors';
-import { errorAlert, forbiddenAlert, openModal, successAlert } from '@/lib/alerts';
+import { closeModal, errorAlert, forbiddenAlert, openModal, successAlert } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
-import { buildFormOptions, toggleFormLoader } from '@/lib/forms';
+import { toggleFormLoader } from '@/lib/forms';
 import { hasAbility } from '@/lib/permissions';
 import { getIdParams } from '@/lib/utils';
 import HttpService from '@/services/http.service';
@@ -15,7 +15,7 @@ import {
     DepartmentLevelMetaData,
     DepartmentLevelRequirement
 } from '@/types/department-meta-data';
-import { InertiaForm, usePage } from '@inertiajs/vue3';
+import { InertiaForm, router, usePage } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 import { storeToRefs } from 'pinia';
 import { ref } from 'vue';
@@ -82,10 +82,14 @@ export const useDepartmentLevels = () => {
         try {
             const success = trans('trans.item_saved', { item: trans_choice('trans.level', 2) });
             const error = trans('trans.item_save_failure', { item: trans_choice('trans.level', 2) });
-            form.post(
-                route('department-levels.sync', institutionDepartmentId),
-                buildFormOptions(form, success, error, APP_MODULE_KEYS.department_levels),
-            );
+            form.post(route('department-levels.sync', institutionDepartmentId), {
+                preserveScroll: true,
+                onSuccess: () => {
+                    successAlert(success);
+                    closeModal(APP_MODULE_KEYS.department_levels);
+                },
+                onError: () => errorAlert(error),
+            });
         } catch (error: any) {
             form.setError(error.format());
         }

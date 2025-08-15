@@ -9,7 +9,9 @@ use App\Http\Requests\Institution\InstitutionDepartmentRequest;
 use App\Http\Resources\Institution\InstitutionDepartmentResource;
 use App\Models\Institution\InstitutionDepartment;
 use App\Repositories\Institution\interface\IInstitutionDepartmentRepository;
+use Illuminate\Auth\Access\AuthorizationException;
 use Inertia\Inertia;
+use Inertia\Response;
 
 class InstitutionDepartmentController extends Controller
 {
@@ -17,7 +19,10 @@ class InstitutionDepartmentController extends Controller
     {
     }
 
-    public function index(InstitutionDepartmentFilter $filters)
+    /**
+     * @throws AuthorizationException
+     */
+    public function index(InstitutionDepartmentFilter $filters): Response
     {
         $this->authorize('viewAnyDepartmentMetaData');
         $departments = InstitutionDepartmentResource::collection($this->repository->allFilter(['*'], $filters));
@@ -30,17 +35,26 @@ class InstitutionDepartmentController extends Controller
         ]);
     }
 
-    public function create()
+    /**
+     * @throws AuthorizationException
+     */
+    public function create(): void
     {
         $this->authorize('createDepartmentMetaData');
     }
 
-    public function store(InstitutionDepartmentRequest $request)
+    /**
+     * @throws AuthorizationException
+     */
+    public function store(InstitutionDepartmentRequest $request): void
     {
         $this->authorize('createDepartmentMetaData');
     }
 
-    public function show(InstitutionDepartment $department)
+    /**
+     * @throws AuthorizationException
+     */
+    public function show(InstitutionDepartment $department): Response
     {
         $this->authorize('viewDepartmentMetaData');
         return Inertia::render('institution/departments/Show', [
@@ -53,31 +67,46 @@ class InstitutionDepartmentController extends Controller
         //
     }
 
-    public function update(InstitutionDepartmentRequest $request, InstitutionDepartment $department)
+    /**
+     * @throws AuthorizationException
+     */
+    public function update(InstitutionDepartmentRequest $request, InstitutionDepartment $department): void
     {
         $this->authorize('createDepartmentMetaData');
     }
 
+    /**
+     * @throws AuthorizationException
+     */
     public function syncInstitutionDepartment(InstitutionDepartmentRequest $request): void
     {
         $this->authorize('createDepartmentMetaData');
         $this->repository->syncInstitutionDepartment(InstitutionDepartmentDto::fromInstitutionDepartmentRequest($request));
     }
 
-    public function destroy(InstitutionDepartment $department)
+    /**
+     * @throws AuthorizationException
+     */
+    public function destroy(InstitutionDepartment $department): void
     {
         $this->authorize('deleteDepartmentMetaData');
         $this->repository->delete($department);
     }
 
-    public function restore(string $id)
+    /**
+     * @throws AuthorizationException
+     */
+    public function restore(string $id): void
     {
         $department = $this->repository->findTrashed($id);
         $this->authorize('restoreDepartmentMetaData');
         $this->repository->restore($department);
     }
 
-    public function forceDelete(InstitutionDepartment $department)
+    /**
+     * @throws AuthorizationException
+     */
+    public function forceDelete(InstitutionDepartment $department): void
     {
         $this->authorize('forceDeleteDepartmentMetaData');
         $this->repository->delete($department, true);

@@ -1,39 +1,46 @@
-import UserAcl from '@/components/users/UserAcl.vue';
-import UserActivity from '@/components/users/UserActivity.vue';
-import UserInfo from '@/components/users/UserInfo.vue';
-import UserPreferences from '@/components/users/UserPreferences.vue';
-import UserSecurity from '@/components/users/UserSecurity.vue';
+import UserAcl from '@/components/users/tabs/UserAcl.vue';
+import UserActivity from '@/components/users/tabs/UserActivity.vue';
+import UserInfo from '@/components/users/tabs/UserInfo.vue';
+import UserPreferences from '@/components/users/tabs/UserPreferences.vue';
+import UserSecurity from '@/components/users/tabs/UserSecurity.vue';
+import { IconName } from '@/lib/icons';
 import { User } from '@/types/users';
 import { CustomTab } from '@/types/utils';
+import { trans } from 'laravel-vue-i18n';
 import { h } from 'vue';
 
 export const useShowUser = () => {
     const userProfileTabs = (user: User): Array<CustomTab> => {
         return [
             {
-                transLabel: () => 'Basic Info',
-                value: 'info',
-                component: h(UserInfo, {user}),
+                transLabel: () => trans('trans.basic_info'),
+                value: 'basic_info',
+                component: h(UserInfo, { user }),
+                icon: IconName.user,
             },
             {
-                transLabel: () => 'Roles & Permissions',
+                transLabel: () => trans('trans.roles_and_permissions'),
                 value: 'acl',
                 component: h(UserAcl),
+                icon: IconName.shield,
             },
             {
-                transLabel: () => 'Security',
+                transLabel: () => trans('trans.security'),
                 value: 'security',
                 component: h(UserSecurity),
+                icon: IconName.finger_print,
             },
             {
-                transLabel: () => 'Preferences',
+                transLabel: () => trans('trans.preferences'),
                 value: 'preferences',
                 component: h(UserPreferences),
+                icon: IconName.settings,
             },
             {
-                transLabel: () => 'Activity log',
+                transLabel: () => trans('trans.activity_log'),
                 value: 'activity',
                 component: h(UserActivity),
+                icon: IconName.history,
             },
         ];
     };

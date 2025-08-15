@@ -3,11 +3,12 @@ import PageContainer from '@/components/core/page/PageContainer.vue';
 import AddressesForm from '@/components/shared/address/AddressesForm.vue';
 import ContactsForm from '@/components/shared/contacts/ContactsForm.vue';
 import NextOfKinForm from '@/components/shared/nextOfKin/NextOfKinForm.vue';
-import EditBasicInfo from '@/components/students/modals/EditBasicInfo.vue';
+import EditBasicInfo from '@/components/shared/basicInfo/EditBasicInfo.vue';
 import SponsorForm from '@/components/students/sponsors/SponsorForm.vue';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import PageHeaderAvatar from '@/components/users/PageHeaderAvatar.vue';
 import { useStudentPortal } from '@/composables/students/useStudentPortal';
+import { icons } from '@/lib/icons';
 import { useStudentTabsStore } from '@/store/portal/useStudentTabsStore';
 import { AuthObject } from '@/types/data-pagination';
 import { Student } from '@/types/students';
@@ -33,8 +34,14 @@ const { activeTab } = storeToRefs(useStudentTabsStore());
         <PageHeaderAvatar :line-one="user.attributes?.name" :line-two="user.attributes?.email" />
         <Tabs :default-value="activeTab" v-model="activeTab">
             <TabsList class="w-full">
-                <TabsTrigger v-for="tab in studentTabs()" :key="'tab_' + tab.value" :value="tab.value" class="text-xs font-light uppercase">
-                    {{ tab?.transLabel!() }}
+                <TabsTrigger
+                    v-for="tab in studentTabs()"
+                    :key="'tab_' + tab.value"
+                    :value="tab.value"
+                    class="flex items-center text-xs font-light uppercase"
+                >
+                    <component :is="icons[tab?.icon!]" />
+                    <span>{{ tab?.transLabel!() }}</span>
                 </TabsTrigger>
             </TabsList>
             <TabsContent v-for="tab in studentTabs()" :value="tab.value" :key="'content_' + tab.value" class="py-4">

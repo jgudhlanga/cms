@@ -55,6 +55,12 @@ export type CreateApplicationParams = {
     course_id: string | number | null;
     levelRequirements?: DepartmentLevelRequirement | null,
     o_level_subject_ids?:  Record<string, string> | null;
+    o_level_years?:  Record<string, string> | null;
+    o_level_sittings?:  Record<string, string> | null;
     required_level_completed?: boolean | null;
     read_write_acknowledged?: boolean | null;
+    o_level_other_subject_ids?:  Record<string, string> | null;
+    o_level_other_grade_ids?:  Record<string, string> | null;
+    o_level_other_years?:  Record<string, string> | null;
+    o_level_other_sittings?:  Record<string, string> | null;
 };

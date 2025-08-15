@@ -6,8 +6,10 @@ import { useDepartmentCourses } from '@/composables/institution/useDepartmentCou
 import { ColorVariant } from '@/enums/colors';
 import { IconName } from '@/lib/icons';
 import { hasAbility } from '@/lib/permissions';
-import { computed, onMounted } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { InstitutionDepartment } from '@/types/institution';
+import { APP_MODULE_KEYS } from '@/lib/constants';
+import { useModalStore } from '@/store/core/useModalStore';
 
 interface Props {
     department: InstitutionDepartment;
@@ -19,10 +21,26 @@ const { createDepartmentCourseColumns, openDepartmentCoursesModal, isLoading, de
     useDepartmentCourses();
 const departmentCourses = computed(() => departmentCoursesMetaData.value?.courses ?? []);
 const departmentCoursesIds = computed(() => departmentCoursesMetaData.value?.departmentCoursesIds ?? []);
+const departmentId = props.department?.id?.toString() ?? '';
 
 onMounted(() => {
-    loadDepartmentCoursesMetaData(props.department?.id?.toString() ?? '');
+    loadDepartmentCoursesMetaData(departmentId);
 });
+
+const courseModalOpen = ref(false);
+const { modals } = useModalStore();
+
+watch(
+  () => modals![APP_MODULE_KEYS.department_courses],
+  (isOpen) => {
+    if (isOpen) {
+      courseModalOpen.value = true;
+    } else if (courseModalOpen.value) {
+      loadDepartmentCoursesMetaData(departmentId);
+      courseModalOpen.value = false;
+    }
+  }
+);
 
 const allowed = hasAbility('create:department-metadata');
 </script>
@@ -35,7 +53,7 @@ const allowed = hasAbility('create:department-metadata');
                 :icon="IconName.add"
                 class="rounded-full"
                 :icon-variant="ColorVariant.white"
-                :variant="ColorVariant.primary"
+                :variant="ColorVariant.primary_outline"
                 @click="() => openDepartmentCoursesModal(departmentCoursesIds ?? [])"
                 :title="$t('trans.link_courses')"
             />

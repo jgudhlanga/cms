@@ -2,9 +2,8 @@
 
 namespace Database\Factories\Users;
 
+use App\Enums\Shared\StatusEnum;
 use App\Helpers\Helper;
-use App\Models\Shared\Gender;
-use App\Models\Shared\Title;
 use App\Models\Tenants\Tenant;
 use App\Models\Users\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -27,15 +26,11 @@ class UserFactory extends Factory
             'middle_name' => fake()->firstName(),
             'last_name' => $lastName,
             'email' => fake()->unique()->safeEmail(),
-            'gender_id' => function () {
-                return Gender::factory()->create()->id;
-            },
-            'title_id' => function () {
-                return Title::factory()->create()->id;
-            },
+            'phone_number' => fake()->phoneNumber(),
             'email_verified_at' => now(),
             'password' => Helper::generatePasswordFromName($firstName, $lastName),
             'remember_token' => Str::random(10),
+            'status_id' => StatusEnum::ACTIVE->id(),
         ];
     }
 

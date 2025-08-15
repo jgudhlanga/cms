@@ -1,7 +1,7 @@
 import { User } from '@/types/users';
 
-export interface DataListProps {
-	data: Array<any>;
+export interface DataListProps<T = any> {
+	data: Array<T>;
 	meta: PaginationMeta;
 	links: PaginationRootLink,
 }

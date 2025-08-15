@@ -1,26 +1,29 @@
 <script setup lang="ts">
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
-import HeadingSmall from '../util/HeadingSmall.vue';
+import CustomSeparator from '@/components/core/util/CustomSeparator.vue';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { AccordionItemProps } from '@/types/utils';
+import { ref } from 'vue';
+import HeadingSmall from '@/components/core/util/HeadingSmall.vue';
 
 interface Props {
-	value: string;
-	title?: string;
-	defaultValue?: string,
+    defaultValue: string;
+    items: AccordionItemProps[];
 }
 
 defineProps<Props>();
-
+const openItem = ref('courses');
 </script>
-
 <template>
-  <Accordion type="single" class="w-full" collapsible :default-value="defaultValue">
-    <AccordionItem class="border-b-0"  :value="value">
-      <AccordionTrigger class="hover:no-underline">
-		<HeadingSmall v-if="title" :title="title"/>
-	  </AccordionTrigger>
-      <AccordionContent>
-		<slot />
-      </AccordionContent>
-    </AccordionItem>
-  </Accordion>
+    {{ openItem }}
+    <Accordion :value="openItem" type="single" class="w-full" collapsible :default-value="defaultValue" @onValueChange="openItem = $event">
+        <AccordionItem v-for="item in items" class="border-0" :value="item.value" :key="item.value">
+            <AccordionTrigger class="cursor-pointer hover:no-underline">
+                <HeadingSmall :title="item.title()" :description="item.description ? item.description() : ''" />
+            </AccordionTrigger>
+            <AccordionContent>
+                <component :is="item.content" />
+            </AccordionContent>
+            <CustomSeparator classes="h-1" />
+        </AccordionItem>
+    </Accordion>
 </template>

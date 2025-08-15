@@ -10,7 +10,10 @@ import {
     Award,
     Bed,
     BookCheck,
+    BookMarked,
+    BriefcaseBusiness,
     Building2 as Company,
+    Calendar,
     Check,
     CheckCheck as Done,
     CheckIcon,
@@ -39,12 +42,13 @@ import {
     Eye,
     File,
     FileSearch,
-    Fingerprint as Shield,
+    Fingerprint,
     Folder,
     FolderArchive as Archive,
     Gift,
     GitPullRequestArrow as Request,
     GraduationCap,
+    History,
     Info,
     LayoutDashboard as Dashboard,
     List,
@@ -54,6 +58,7 @@ import {
     MailCheck as PersonChat,
     MapPinCheck as Location,
     MapPinHouse as Address,
+    Megaphone,
     Menu,
     MoonStar as Dark,
     OctagonAlert as Danger,
@@ -62,10 +67,12 @@ import {
     Plus,
     Recycle,
     RefreshCcw as Refresh,
+    Route,
     School,
     Search,
     Settings,
     Settings2 as Types,
+    Shield,
     SquareArrowOutUpRight as OpenLink,
     Sun as Light,
     Trash2 as Trash,
@@ -74,8 +81,9 @@ import {
     UserPlus,
     Users,
     UserSearch,
-    X as Close,
-    WalletCards
+    WalletCards,
+    MonitorCheck,
+    X as Close
 } from 'lucide-vue-next';
 import type { Component } from 'vue';
 
@@ -157,6 +165,14 @@ const icons: Record<IconName, Component> = {
     [IconName.dollar]: CircleDollarSignIcon,
     [IconName.award]: Award,
     [IconName.wallet_cards]: WalletCards,
+    [IconName.briefcase]: BriefcaseBusiness,
+    [IconName.history]: History,
+    [IconName.finger_print]: Fingerprint,
+    [IconName.calendar]: Calendar,
+    [IconName.megaphone]: Megaphone,
+    [IconName.bookmark]: BookMarked,
+    [IconName.route]: Route,
+    [IconName.monitor_check]: MonitorCheck
 };
 
 export { IconName, icons };

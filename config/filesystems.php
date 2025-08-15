@@ -46,6 +46,12 @@ return [
             'throw' => false,
             'report' => false,
         ],
+        'students' => [
+            'driver' => 'local',
+            'root' => storage_path('app/students'),
+            'url' => env('APP_URL').'/students',
+            'visibility' => 'public',
+        ],
 
         's3' => [
             'driver' => 's3',
@@ -74,6 +80,7 @@ return [
     */
 
     'links' => [
+        public_path('students') => storage_path('app/students'),
         public_path('storage') => storage_path('app/public'),
     ],
 

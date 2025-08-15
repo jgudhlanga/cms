@@ -62,7 +62,7 @@ enum WorkflowStepEnum: string
     public function description(): string
     {
         return match ($this) {
-            self::SUBMITTED => 'Application has been submitted and is awaiting review.',
+            self::SUBMITTED => 'Application has been submitted.',
             self::AWAITING_APPLICATION_FEE_PAYMENT => 'Pending payment of application or registration fees.',
             self::IN_REVIEW => 'Application is currently under review by staff.',
             self::AWAITING_REQUIREMENTS => 'Additional documents or info required.',

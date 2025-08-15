@@ -4,22 +4,37 @@ namespace App\Http\Controllers\Students;
 
 use App\DTO\Students\UpdateStudentDto;
 use App\Http\Controllers\Controller;
+use App\Http\Filters\Students\StudentFilter;
 use App\Http\Requests\Students\UpdateStudentRequest;
+use App\Http\Resources\Institution\CourseResource;
+use App\Http\Resources\Students\StudentResource;
 use App\Models\Students\Student;
 use App\Repositories\Students\interface\IStudentRepository;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class StudentController extends Controller
 {
     public function __construct(
-        protected IStudentRepository $studentRepository,
+        protected IStudentRepository $repository,
     )
     {
     }
 
-    public function index()
+    /**
+     * @throws AuthorizationException
+     */
+    public function index(StudentFilter $filters): Response
     {
-        //
+        $this->authorize('viewAny', Student::class);
+        $students = StudentResource::collection($this->repository->allFilter(['*'], $filters));
+        return Inertia::render('students/Index', [
+            'students' => $students,
+            'filters' => request()->only(['search', 'trashed']),
+            'trashedCount' => $this->repository->allTrashed()->count(),
+        ]);
     }
 
 
@@ -47,9 +62,9 @@ class StudentController extends Controller
     }
 
 
-    public function update(UpdateStudentRequest $request, Student $student)
+    public function update(UpdateStudentRequest $request, Student $student): void
     {
-        $this->studentRepository->update($student, UpdateStudentDto::fromUpdateStudentRequest($request));
+        $this->repository->update($student, UpdateStudentDto::fromUpdateStudentRequest($request));
     }
 
     public function destroy(string $id)

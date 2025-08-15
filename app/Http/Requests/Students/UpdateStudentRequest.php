@@ -27,15 +27,25 @@ class UpdateStudentRequest extends FormRequest
             'id_type_id' => ['required', 'integer', 'exists:id_types,id'],
 
             'id_number' => [
+                'nullable',
                 'required_if:id_type_id,' . $idType,
                 Rule::unique('students', 'id_number')->ignore($studentId),
             ],
 
             'passport_number' => [
+                'nullable',
                 'required_if:id_type_id,' . $passportType,
                 Rule::unique('students', 'passport_number')->ignore($studentId),
             ],
             'country_id' => ['required_if:id_type_id,' . $passportType, 'nullable', 'exists:countries,id'],
         ];
+    }
+    public function failedValidation(Validator $validator)
+    {
+        throw new HttpResponseException(response()->json([
+            'message' => 'Validation failed',
+            'errors' => $validator->errors(),
+            'input' => $this->all(),
+        ], 422));
     }
 }

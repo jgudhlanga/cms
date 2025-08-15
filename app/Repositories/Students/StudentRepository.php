@@ -8,7 +8,9 @@ use App\DTO\Shared\NextOfKinDto;
 use App\DTO\Students\CreateApplicationDto;
 use App\DTO\Students\StudentProgramDto;
 use App\DTO\Students\UpdateStudentDto;
+use App\Enums\Shared\AcademicLevelEnum;
 use App\Http\Filters\Students\StudentFilter;
+use App\Models\Shared\AcademicLevel;
 use App\Models\Students\Student;
 use App\Repositories\Base\BaseRepository;
 use App\Repositories\Shared\interface\IAddressRepository;
@@ -38,6 +40,7 @@ class StudentRepository extends BaseRepository implements IStudentRepository
         $this->saveContact($student, $dto);
         $this->saveAddress($student, $dto);
         $this->saveNextOfKin($student, $dto);
+        $this->saveAcademicResults($student, $dto);
         return $student->refresh();
     }
 
@@ -101,7 +104,7 @@ class StudentRepository extends BaseRepository implements IStudentRepository
             institution_department_id: $dto->department_id,
             department_level_id: $dto->level_id,
             department_course_id: $dto->course_id,
-            o_level_subjects: $dto->o_level_subjects,
+            intake_period_id: $dto->intake_period_id,
             required_level_completed: $dto->required_level_completed,
             read_write_acknowledged: $dto->read_write_acknowledged,
         );
@@ -152,5 +155,44 @@ class StudentRepository extends BaseRepository implements IStudentRepository
             address_4: $dto->next_of_kin_address_4,
         );
         $this->nextOfKinRepository->create($student, $nextOfKinDto);
+    }
+
+    private function saveAcademicResults(Student $student, CreateApplicationDto $dto): void
+    {
+        $mainSubjects = $dto->o_level_subject_ids;
+        $examSittings = $dto->o_level_sittings;
+        $examYears = $dto->o_level_years;
+        $otherSubjects = $dto->o_level_other_subject_ids;
+        $otherGrades = $dto->o_level_other_grade_ids;
+        $otherExamYears = $dto->o_level_other_years;
+        $otherSittings = $dto->o_level_other_sittings;
+        $level = AcademicLevel::where('name', AcademicLevelEnum::SECONDARY_SCHOOL->value)->first();
+        if (!empty($mainSubjects) && is_array($mainSubjects)) {
+            foreach ($mainSubjects as $subjectId => $gradeId) {
+                $examSitting = $examSittings[$subjectId] ?? null;
+                $examYear = $examYears[$subjectId] ?? null;
+                $student->oLevelResults()->create([
+                    'academic_level_id' => $level->id,
+                    'subject_id' => $subjectId,
+                    'exam_year' => $examYear,
+                    'exam_sitting' => $examSitting,
+                    'grade_id' => $gradeId,
+                ]);
+            }
+        }
+        if (!empty($otherSubjects) && is_array($otherSubjects)) {
+            foreach ($otherSubjects as $key => $subjectId) {
+                $otherGrade = $otherGrades[$key] ?? null;
+                $otherSitting = $otherSittings[$key] ?? null;
+                $otherExamYear = $otherExamYears[$key] ?? null;
+                $student->oLevelResults()->create([
+                    'academic_level_id' => $level->id,
+                    'subject_id' => $subjectId,
+                    'exam_year' => $otherExamYear,
+                    'exam_sitting' => $otherSitting,
+                    'grade_id' => $otherGrade,
+                ]);
+            }
+        }
     }
 }

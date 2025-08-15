@@ -4,7 +4,7 @@ import { StudentProgram } from '@/types/students';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 
 export const useStudentPrograms = () => {
-    const { moreActionButton, onDelete, onForceDelete, onRestore, textLink } = useDataTables();
+    const { moreActionButton, actionButton, textLink } = useDataTables();
     const getName = () => trans_choice('trans.program', 1);
     const successMessage = () => trans('trans.item_saved', { item: getName() });
     const errorMessage = () => trans('trans.item_save_failure', { item: getName() });
@@ -43,8 +43,21 @@ export const useStudentPrograms = () => {
                 },
             },
             {
-                header: trans_choice('trans.status', 1),
-                accessorKey: 'id',
+                header: `${trans_choice('trans.application', 1)} ${trans_choice('trans.status', 1)}`,
+                accessorKey: 'applicationStatus',
+                meta: { align: 'center' },
+                cell: ({ row }: { row: { original: StudentProgram } }) => {
+                    // process some status meta data
+                    const step = row.original?.relationships?.departmentWorkflowStep?.attributes?.workflowStep ?? '';
+                    return actionButton({
+                        title: step,
+                        onClick: () => {},
+                    });
+                },
+            },
+           {
+                header: `${trans_choice('trans.program', 1)} ${trans_choice('trans.status', 1)}`,
+                accessorKey: 'programStatus',
                 cell: ({ row }: { row: { original: StudentProgram } }) => {
                     return '---';
                 },
@@ -58,10 +71,6 @@ export const useStudentPrograms = () => {
                     return moreActionButton(false, [
                         {
                             key: 'view',
-                            action: () => {},
-                        },
-                        {
-                            key: 'edit',
                             action: () => {},
                         },
                     ]);

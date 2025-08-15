@@ -5,8 +5,14 @@ FAILED VALIDATION VIEW
 public function failedValidation(Validator $validator)
     {
         throw new HttpResponseException(response()->json([
-            'message' => 'Validation failed',
+            'message' => 'Validation failed,'
             'errors' => $validator->errors(),
             'input' => $this->all(),
         ], 422));
     }
+
+# RUN A SPECIFIC SEEDER
+## STAFF SEEDER
+php artisan db:seed --class=Database\\Seeders\\Institution\\StaffSeeder
+## STUDENTS SEEDER
+php artisan db:seed --class=Database\\Seeders\\Students\\StudentApplicationSeeder

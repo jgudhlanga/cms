@@ -33,6 +33,7 @@ interface Props {
     verticalLayout?: boolean,
     isRequired?: boolean,
     disabled?: boolean,
+    widthClass?: string,
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -40,7 +41,8 @@ const props = withDefaults(defineProps<Props>(), {
 	isLoading: false,
     labelUppercase:false,
     verticalLayout:true,
-    isRequired: false
+    isRequired: false,
+    widthClass: 'w-full'
 });
 const valueModel = defineModel<SelectOption>();
 
@@ -61,7 +63,7 @@ const fieldPlaceHolder = computed(() => {
 			<Label :class="cn(error && 'text-destructive', labelUppercase && 'uppercase', !verticalLayout && 'flex items-center w-1/4')" v-if="label">
                 {{ label }}<RequiredIndicator v-if="isRequired"/>
             </Label>
-			<Combobox v-model="valueModel" by="label" class="w-full" :disabled="disabled">
+			<Combobox v-model="valueModel" by="label" :class="cn('', widthClass)" :disabled="disabled">
 				<ComboboxAnchor as-child class="relative">
 					<ComboboxTrigger as-child>
 						<Button variant="outline" class="w-full justify-between">
@@ -71,7 +73,7 @@ const fieldPlaceHolder = computed(() => {
 						</Button>
 					</ComboboxTrigger>
 				</ComboboxAnchor>
-				<ComboboxList class="w-[376px]">
+				<ComboboxList :class="cn('', widthClass)">
 					<div class="relative items-center">
 						<ComboboxInput
 							:placeholder="placeholder ?? $t('trans.select_one')"

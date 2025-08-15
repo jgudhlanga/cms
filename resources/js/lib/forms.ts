@@ -34,7 +34,6 @@ const onFormError = (message: string) => {
 
 const onFormFinish = (form: InertiaForm<any>) => {
     //form.reset();
-    console.log('Form reset:');
     toggleFormLoader(false);
 };
 

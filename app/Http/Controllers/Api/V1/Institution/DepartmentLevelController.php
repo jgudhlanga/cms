@@ -13,6 +13,7 @@ class DepartmentLevelController extends Controller
 {
     public function index(InstitutionDepartment $institutionDepartment)
     {
+
         return DepartmentLevelResource::collection($institutionDepartment->departmentLevels);
     }
 

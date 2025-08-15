@@ -39,13 +39,4 @@ enum StatusEnum: string
         };
     }
 
-    public static function byId(int $id): ?self
-    {
-        foreach (self::cases() as $case) {
-            if ($case->id() === $id) {
-                return $case;
-            }
-        }
-        return null;
-    }
 }

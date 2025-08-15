@@ -20,6 +20,16 @@ enum AcademicLevelEnum: string
         };
     }
 
+    public function id(): string
+    {
+        return match ($this) {
+            self::PRIMARY_SCHOOL => 1,
+            self::SECONDARY_SCHOOL => 2,
+            self::ADVANCED_LEVEL => 3,
+            self::TERTIARY_LEVEL => 4,
+        };
+    }
+
     public static function all(): array
     {
         return array_combine(

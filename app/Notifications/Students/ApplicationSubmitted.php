@@ -37,26 +37,26 @@ class ApplicationSubmitted extends Notification
 
     public function toMail(object $notifiable): MailMessage
     {
-
         return (new MailMessage)
             ->subject('Application Status: Update')
             ->greeting("Hello {$this->name},")
-            ->line("The status of your application (Reference: {$this->program->application_tracking_number}) has changed.")
+            ->line("The status of your application with reference: **{$this->program->application_tracking_number}** has changed.")
             ->line("**Previous Status:** {$this->oldStep->workflowStep->name}")
             ->line("**New Status:** {$this->newStep->workflowStep->name}")
-            ->action('Track Application', url("/portal/applications/{$this->program->id}"))
+            ->line("Go ahead and do the payment of $20 for your application to proceed to the next steps. Use the following link to upload proof of payment")
+            ->action('Upload Proof Of Payment', url(route('portal.application.view', $this->program->id)))
             ->line('If you have any questions, please contact support.');
     }
 
     /**
-     * Get the array representation of the notification.
+     * Get the array representation of the notification.o
      *
      * @return array<string, mixed>
      */
     public function toArray(object $notifiable): array
     {
         return [
-            //
+            #
         ];
     }
 }

@@ -7,6 +7,7 @@ use App\Models\Institution\DepartmentApplicationStep;
 use App\Models\Institution\DepartmentCourse;
 use App\Models\Institution\DepartmentLevel;
 use App\Models\Institution\InstitutionDepartment;
+use App\Models\Institution\IntakePeriod;
 use App\Observers\Students\StudentProgramObserver;
 use App\Traits\BelongsToTenant;
 use App\Traits\Filterable;
@@ -19,6 +20,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
 /**
  *
@@ -26,9 +29,9 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @method static filter(StudentProgramFilter $filters)
  */
 #[ObservedBy([StudentProgramObserver::class])]
-class StudentProgram extends Model
+class StudentProgram extends Model implements HasMedia
 {
-    use HasFactory, SoftDeletes, Filterable, BelongsToTenant, Paginatable, LogsActivity;
+    use HasFactory, SoftDeletes, Filterable, BelongsToTenant, Paginatable, LogsActivity, InteractsWithMedia;
 
     protected $fillable = [
         'tenant_id',
@@ -36,19 +39,17 @@ class StudentProgram extends Model
         'institution_department_id',
         'department_level_id',
         'department_course_id',
-        'o_level_subjects',
         'required_level_completed',
         'read_write_acknowledged',
         'application_tracking_number',
         'department_application_step_id',
         'program_status_id',
+        'intake_period_id',
+        'application_fee_proof_of_payment_id',
+        'tuition_fee_proof_of_payment_id',
+        'application_fee_paid',
+        'tuition_fee_paid',
     ];
-
-    protected $casts = [
-        'o_level_subjects' => 'array',
-    ];
-
-    protected $appends = ['o_level_subjects'];
 
     public function student(): BelongsTo
     {
@@ -73,6 +74,26 @@ class StudentProgram extends Model
     public function departmentWorkflowStep(): BelongsTo
     {
         return $this->belongsTo(DepartmentApplicationStep::class, 'department_application_step_id');
+    }
+
+    public function intakePeriod(): BelongsTo
+    {
+        return $this->belongsTo(IntakePeriod::class, 'intake_period_id');
+    }
+
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('students')->singleFile();
+    }
+
+    public function applicationFeeProofOfPayment(): HasOne
+    {
+        return $this->hasOne(Media::class, 'id', 'application_fee_proof_of_payment_id');
+    }
+
+    public function getApplicationFeeProofOfPaymentUrlAttribute(): ?array
+    {
+        return ($this->application_fee_proof_of_payment_id > 0) ? $this->applicationFeeProofOfPayment->getFullUrl() : null;
     }
 
     public function getActivitylogOptions(): LogOptions

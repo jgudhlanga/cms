@@ -15,15 +15,14 @@ class RedirectStudentMiddleware
         if ($user && $user->hasRole(RoleEnum::STUDENT->name())) {
             if ($user->has_student_profile) {
                 # Let them go anywhere except back to 'portal.application'
-
-                $restrictedRoutes = ['portal.application', 'dashboard'];
+                $restrictedRoutes = ['portal.application.create', 'dashboard'];
                 if ($request->routeIs(...$restrictedRoutes)) {
                     return to_route('portal.dashboard');
                 }
             } else {
                 # If no student profile, always go to application page unless already there
-                if (!$request->routeIs('portal.application')) {
-                    return to_route('portal.application');
+                if (!$request->routeIs('portal.application.create')) {
+                    return to_route('portal.application.create');
                 }
             }
         } elseif ($user) {

@@ -170,18 +170,18 @@ enum PermissionEnum: string
     case MANAGE_OWN_STUDENT_ACADEMIC_DETAILS = 'manageOwnStudentAcademicDetails:students';
     /** ADMIN STUDENTS */
     case MANAGE_STUDENTS_METADATA = 'manageStudentMetadata:admin';
-    /** ENROLMENTS*/
-    case VIEW_ANY_ENROLMENTS = 'viewAny:enrolments';
-    case VIEW_ENROLMENTS = 'view:enrolments';
-    case CREATE_ENROLMENTS = 'create:enrolments';
-    case UPDATE_ENROLMENTS = 'update:enrolments';
-    case DELETE_ENROLMENTS = 'delete:enrolments';
-    case RESTORE_ENROLMENTS = 'restore:enrolments';
-    case FORCE_DELETE_ENROLMENTS = 'forceDelete:enrolments';
-    case IMPORT_ENROLMENTS = 'import:enrolments';
-    case EXPORT_ENROLMENTS = 'export:enrolments';
-    case CRUD_ENROLMENTS_SETTINGS = 'crud-settings:enrolments';
-    case VIEW_ENROLMENTS_AUDIT_TRAIL = 'viewAuditTrail:enrolments';
+    /** STUDENT_PROGRAMS*/
+    case VIEW_ANY_STUDENT_PROGRAMS = 'viewAny:student-programs';
+    case VIEW_STUDENT_PROGRAMS = 'view:student-programs';
+    case CREATE_STUDENT_PROGRAMS = 'create:student-programs';
+    case UPDATE_STUDENT_PROGRAMS = 'update:student-programs';
+    case DELETE_STUDENT_PROGRAMS = 'delete:student-programs';
+    case RESTORE_STUDENT_PROGRAMS = 'restore:student-programs';
+    case FORCE_DELETE_STUDENT_PROGRAMS = 'forceDelete:student-programs';
+    case IMPORT_STUDENT_PROGRAMS = 'import:student-programs';
+    case EXPORT_STUDENT_PROGRAMS = 'export:student-programs';
+    case CRUD_STUDENT_PROGRAMS_SETTINGS = 'crud-settings:student-programs';
+    case VIEW_STUDENT_PROGRAMS_AUDIT_TRAIL = 'viewAuditTrail:student-programs';
     /** STUDENTS */
     case VIEW_ANY_STUDENTS = 'viewAny:students';
     case VIEW_STUDENTS = 'view:students';
@@ -387,18 +387,18 @@ enum PermissionEnum: string
             self::MANAGE_OWN_STUDENT_ACADEMIC_DETAILS => 'manageOwnStudentAcademicDetails:students',
             /** ADMIN STUDENTS */
             self::MANAGE_STUDENTS_METADATA => 'manageStudentMetadata:admin',
-            /** ENROLMENTS*/
-            self::VIEW_ANY_ENROLMENTS => 'viewAny:enrolments',
-            self::VIEW_ENROLMENTS => 'view:enrolments',
-            self::CREATE_ENROLMENTS => 'create:enrolments',
-            self::UPDATE_ENROLMENTS => 'update:enrolments',
-            self::DELETE_ENROLMENTS => 'delete:enrolments',
-            self::RESTORE_ENROLMENTS => 'restore:enrolments',
-            self::FORCE_DELETE_ENROLMENTS => 'forceDelete:enrolments',
-            self::IMPORT_ENROLMENTS => 'import:enrolments',
-            self::EXPORT_ENROLMENTS => 'export:enrolments',
-            self::CRUD_ENROLMENTS_SETTINGS => 'crud-settings:enrolments',
-            self::VIEW_ENROLMENTS_AUDIT_TRAIL => 'viewAuditTrail:enrolments',
+            /** STUDENT_PROGRAMS*/
+            self::VIEW_ANY_STUDENT_PROGRAMS => 'viewAny:student-programs',
+            self::VIEW_STUDENT_PROGRAMS => 'view:student-programs',
+            self::CREATE_STUDENT_PROGRAMS => 'create:student-programs',
+            self::UPDATE_STUDENT_PROGRAMS => 'update:student-programs',
+            self::DELETE_STUDENT_PROGRAMS => 'delete:student-programs',
+            self::RESTORE_STUDENT_PROGRAMS => 'restore:student-programs',
+            self::FORCE_DELETE_STUDENT_PROGRAMS => 'forceDelete:student-programs',
+            self::IMPORT_STUDENT_PROGRAMS => 'import:student-programs',
+            self::EXPORT_STUDENT_PROGRAMS => 'export:student-programs',
+            self::CRUD_STUDENT_PROGRAMS_SETTINGS => 'crud-settings:student-programs',
+            self::VIEW_STUDENT_PROGRAMS_AUDIT_TRAIL => 'viewAuditTrail:student-programs',
             /** STUDENTS */
             self::VIEW_ANY_STUDENTS => 'viewAny:students',
             self::VIEW_STUDENTS => 'view:students',

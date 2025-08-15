@@ -1,12 +1,13 @@
 import { useDataTables } from '@/composables/core/useDataTables';
 import { useUtils } from '@/composables/core/useUtils';
-import { errorAlert, forbiddenAlert, openModal, successAlert } from '@/lib/alerts';
+import { closeModal, errorAlert, forbiddenAlert, openModal, successAlert } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
 import { buildFormOptions, toggleFormLoader } from '@/lib/forms';
 import { getIdParams } from '@/lib/utils';
 import HttpService from '@/services/http.service';
 import { Auth } from '@/types';
 import { DepartmentCourse, DepartmentCourseLevel, DepartmentCourseMetaData } from '@/types/department-meta-data';
+import { AcademicOLevelResult, Enrolment } from '@/types/enrolments';
 import { InertiaForm, usePage } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 import { ref } from 'vue';
@@ -15,7 +16,7 @@ export const useDepartmentCourses = () => {
     const { moreActionButton, textLink, checkStatusIcon, onEdit } = useDataTables();
     const { props } = usePage();
     const { can } = props?.auth as Auth;
-    const { navigateTo } = useUtils();
+    const { navigateTo, formatDate } = useUtils();
     const createDepartmentCourseColumns = () => {
         return [
             {
@@ -59,14 +60,86 @@ export const useDepartmentCourses = () => {
         ];
     };
 
+    const createCourseLevelEnrolmentColumns = () => {
+        return [
+            {
+                header: trans_choice('trans.name', 1),
+                accessorKey: 'studentName',
+                cell: ({ row }: { row: { original: Enrolment } }) => {
+                    const id = getIdParams(row.original.id?.toString() ?? '');
+                    return textLink(route('department-courses.show', id), row.original.attributes?.studentName);
+                },
+            },
+            {
+                header: trans('trans.tracking_number'),
+                accessorKey: 'applicationTrackingNumber',
+                cell: ({ row }: { row: { original: Enrolment } }) => {
+                    return row.original?.attributes?.applicationTrackingNumber;
+                },
+            },
+            {
+                header: trans('trans.application_date'),
+                accessorKey: 'applicationDate',
+                cell: ({ row }: { row: { original: Enrolment } }) => {
+                    return formatDate(row.original?.attributes?.createdAt);
+                },
+            },
+            {
+                header: trans_choice('trans.grade', 2),
+                accessorKey: 'grades',
+                cell: ({ row }: { row: { original: Enrolment } }) => {
+                    return row.original.relationships?.oLevelResults?.map((item: AcademicOLevelResult) => item?.attributes?.grade)?.join(', ');
+                },
+            },
+            {
+                header: trans_choice('trans.score', 1),
+                accessorKey: 'score',
+                enableSorting: false,
+                meta: { align: 'center' },
+                cell: ({ row }: { row: { original: Enrolment } }) => {
+                    const score = row.original.relationships?.oLevelResults?.reduce((acc: number, result) => {
+                        return acc + (result.attributes?.gradePosition ? parseFloat(result.attributes.gradePosition as string) : 0);
+                    }, 0);
+                    return score;
+                },
+            },
+            {
+                header: trans_choice('trans.status', 1),
+                accessorKey: 'status',
+                cell: ({ row }: { row: { original: Enrolment } }) => {
+                    return row.original.relationships?.departmentWorkflowStep?.attributes?.workflowStep ?? '---';
+                },
+            },
+            {
+                header: trans_choice('trans.action', 2),
+                accessorKey: 'actions',
+                enableSorting: false,
+                meta: { align: 'right' },
+                cell: ({ row }: { row: { original: Enrolment } }) => {
+                    const id = getIdParams(row.original.id?.toString() ?? '');
+                    return moreActionButton(!!row.original?.attributes?.deletedAt, [
+                        {
+                            key: 'edit',
+                            action: () => onEdit(can['update:department-metadata'], route('department-courses.show', id)),
+                        },
+                    ]);
+                },
+            },
+        ];
+    };
+
     const syncDepartmentCourses = (institutionDepartmentId: string, form: InertiaForm<any>) => {
         try {
             const success = trans('trans.item_saved', { item: trans_choice('trans.course', 2) });
             const error = trans('trans.item_save_failure', { item: trans_choice('trans.course', 2) });
-            form.post(
-                route('department-courses.sync', institutionDepartmentId),
-                buildFormOptions(form, success, error, APP_MODULE_KEYS.department_courses),
-            );
+            form.post(route('department-courses.sync', institutionDepartmentId), {
+                preserveScroll: true,
+                onSuccess: () => {
+                    successAlert(success);
+                    closeModal(APP_MODULE_KEYS.department_courses);
+                },
+                onError: () => errorAlert(error),
+            });
         } catch (error: any) {
             form.setError(error.format());
         }
@@ -122,5 +195,6 @@ export const useDepartmentCourses = () => {
         isLoading,
         departmentCoursesMetaData,
         loadDepartmentCoursesMetaData,
+        createCourseLevelEnrolmentColumns,
     };
 };
