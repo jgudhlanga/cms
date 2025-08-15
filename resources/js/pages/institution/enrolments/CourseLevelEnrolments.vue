@@ -95,7 +95,7 @@ const buttonOptions = (currentStepName: string) => {
             key: option.id,
             id: option.id,
             title: option?.attributes?.workflowStep,
-            action: () => bulkApproveApplication(department.id?.toString() ?? '', option.id?.toString() ?? '')
+            action: () => bulkApproveApplication(department.id?.toString() ?? '', level.id?.toString() ?? '', option.id?.toString() ?? '')
         })
     }
     return choices;
@@ -122,7 +122,7 @@ const buttonOptions = (currentStepName: string) => {
                 </div>
                 <div class="inline-block min-w-full overflow-auto align-middle">
                     <template v-if="isItTrue(levelRequirements?.attributes?.isOLevelRequired)">
-                        <OLevelBased :enrolments="enrolmentsInStep" :level="level" :step-options="buttonOptions(step)"/>
+                        <OLevelBased :enrolments="enrolmentsInStep" :level="level" :steps="getNextSteps(step)" />
                     </template>
                 </div>
             </div>

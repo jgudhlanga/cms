@@ -106,16 +106,15 @@ export const useStudentApplications = () => {
         }
     };
 
-      const bulkApproveApplication = (institutionDepartmentId: string, nextStepId: string) => {
-        console.log('Bulk approval')
-        /* const successMessage = () => trans('trans.proof_of_payment_uploaded');
-        const errorMessage = () => trans('trans.proof_of_payment_failure');
+      const bulkApproveApplication = async(institutionDepartmentId: string, departmentLevelId: string, nextStepId: string) => {
+        const successMessage = () => trans('trans.bulk_application_approval_success');
+        const errorMessage = () => trans('trans.bulk_application_approval_failure');
         try {
-            const id = getIdParams(application?.id?.toString() ?? '');
-            form.post(route('students.upload-proof-of-payment', {}), buildFormOptions(form, successMessage(), errorMessage(), APP_MODULE_KEYS.upload_proof_of_payment));
+            await HttpService.post(route('students.bulk-approve-applications', {institution_department: institutionDepartmentId, department_level: departmentLevelId,  department_application_step: nextStepId}), {});
+            successAlert(successMessage())
         } catch (error: any) {
-            form.setError(error.format());
-        } */
+             errorAlert(errorMessage())
+        }
     };
 
     return {

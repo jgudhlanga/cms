@@ -64,7 +64,7 @@ class StudentApplicationSeeder extends Seeder
             # o-level
             $oLevel = AcademicLevel::where('name', AcademicLevelEnum::SECONDARY_SCHOOL->value)->first();
             # workflow step
-            $stepTwo = WorkflowHelper::getDepartmentApplicationStepByPosition(2);
+            $stepTwo = WorkflowHelper::getDepartmentApplicationStepByPosition($institutionDepartmentId, 2);
             foreach ($users as $user) {
                 $user->assignRole(RoleEnum::STUDENT);
                 $student = Student::create([

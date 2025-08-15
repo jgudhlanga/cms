@@ -46,10 +46,10 @@ class ApplicationWorkflowController extends Controller
         }
     }
 
-    public function bulkApproveApplication(InstitutionDepartment $institutionDepartment, BulkApplicationApproveRequest $request) {
+    public function bulkApproveApplication(InstitutionDepartment $institutionDepartment, DepartmentLevel $departmentLevel,DepartmentApplicationStep $departmentApplicationStep) {
         DB::beginTransaction();
         try {
-
+            # get all the applications at level
             DB::commit();
             return back()->with('success', 'Bulk application done succefully');
         } catch (Throwable $e) {

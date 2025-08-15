@@ -400,5 +400,7 @@ return [
     "proof_of_payment_failure" => "Proof of payment failed to upload",
     "send_all_applications_to" => "Send all applications to",
     "application_approval_success" => "Application successfully approved",
-    "application_approval_failure" => "Application approval failure"
+    "application_approval_failure" => "Application approval failure",
+    "bulk_application_approval_success" => "Application bulk successfully approved",
+    "bulk_application_approval_failure" => "Application bulk approval failure"
 ];
