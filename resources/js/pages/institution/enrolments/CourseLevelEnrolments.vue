@@ -14,6 +14,9 @@ import { useUtils } from '@/composables/core/useUtils';
 import OLevelBased from './OLevelBased.vue';
 import EclipseButton from '@/components/core/button/EclipseButton.vue';
 import { useStudentApplications } from '@/composables/students/useStudentApplications';
+import { ColorVariant } from '@/enums/colors';
+import { ButtonSize } from '@/enums/buttons';
+import BaseButton from '../../../components/core/button/BaseButton.vue';
 
 
 interface Props {
@@ -92,7 +95,7 @@ const levelRequirements = computed(() => {
 
 const buttonOptions = (currentStepName: string) => {
     const options = getNextSteps(currentStepName);
-    let choices = [];
+    const choices = [];
     for(const option of options) {
         choices.push({
             key: option.id,
@@ -121,6 +124,13 @@ const buttonOptions = (currentStepName: string) => {
                 <div class="flex justify-between items-center mt-7">
 		            <div class="flex mb-0.5 text-sm uppercase text-accent-foreground font-bold">{{ step }}</div>
                     <div class="flex space-x-2">
+                        <div class="flex flex-col space-y-3" v-for="action in getCurrentStep(step)?.relationships?.metadata?.actions" :key="action.action">
+                            <template v-if="action.action.toLowerCase() == 'verify-payment-with-accounts'">
+                                <BaseButton  :variant="ColorVariant.success_outline" :size="ButtonSize.xs" classes="rounded-full">
+                                    {{ $t('trans.verify_all_payments_with_accounts')}}
+                                </BaseButton>
+                            </template>
+                        </div>
                         <EclipseButton
                             :options="buttonOptions(step)"
                             :group-title="$t('trans.send_all_applications_to')"

@@ -42,7 +42,7 @@ class StudentApplicationSeeder extends Seeder
     public function run(): void
     {
         DB::transaction(function () {
-            $users = User::factory()->count(50)->create(['tenant_id' => $this->getTenantId(), 'password' => 'Student123!']);
+            $users = User::factory()->count(40)->create(['tenant_id' => $this->getTenantId(), 'password' => 'Student123!']);
             $intakePeriod = IntakePeriod::orderBy('end_date', 'DESC')->first();
             $genderIds = Gender::all()->pluck('id')->toArray();
             $titleIds = Title::all()->pluck('id')->toArray();

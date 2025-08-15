@@ -69,11 +69,14 @@ const onSittingChange = (value: string, subjectId: string) => {
 
 const getOptionsForSubject = (subject: Subject): RadioGroupOption[] => {
     if (!subject || !grades.value) return [];
-    const dataOptions = grades.value.map((grade: Grade) => ({
-        value: `${subject.id}|${grade.id}`,
-        label: grade.attributes?.name,
-        inputId: `radio_${subject.id}_${grade.id}`,
-    }));
+
+    const dataOptions = grades.value
+        .filter((grade: Grade) => Number(grade.attributes.position) < 4)
+        .map((grade: Grade) => ({
+            value: `${subject.id}|${grade.id}`,
+            label: grade.attributes?.name,
+            inputId: `radio_${subject.id}_${grade.id}`,
+        }));
     dataOptions.push({
         value: `${subject.id}|remove`,
         label: trans('trans.remove').toUpperCase() as string,

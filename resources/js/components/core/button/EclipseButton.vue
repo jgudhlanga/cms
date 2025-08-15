@@ -28,7 +28,7 @@ defineProps<Props>();
 	<DropdownMenu>
 		<DropdownMenuTrigger as-child>
             <MoreButton :icon="icon" v-if="showOnlyIcon" />
-            <BaseButton v-else="groupTitle" :title="groupTitle" :variant="ColorVariant.primary_outline" :size="ButtonSize.xs" classes="rounded-full">
+            <BaseButton v-else :title="groupTitle" :variant="ColorVariant.primary_outline" :size="ButtonSize.xs" classes="rounded-full">
                 <MoreButton :icon="icon" v-if="showGroupIcon" />
             </BaseButton>
 		</DropdownMenuTrigger>

@@ -16,7 +16,6 @@ const { onUploadPopModal } = useStudentApplications();
 </script>
 
 <template>
-    {{status}}
     <div class="flex flex-col" v-if="step?.relationships?.metadata?.actions">
         <div class="flex flex-col space-y-3" v-for="action in step?.relationships?.metadata?.actions" :key="action.action">
             <template v-if="action.action.toLowerCase() == 'upload-receipt' && status != 'completed'">

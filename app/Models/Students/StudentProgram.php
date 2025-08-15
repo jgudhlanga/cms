@@ -46,6 +46,9 @@ class StudentProgram extends Model implements HasMedia
         'program_status_id',
         'intake_period_id',
         'application_fee_proof_of_payment_id',
+        'tuition_fee_proof_of_payment_id',
+        'application_fee_paid',
+        'tuition_fee_paid',
     ];
 
     public function student(): BelongsTo

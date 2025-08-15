@@ -402,5 +402,6 @@ return [
     "application_approval_success" => "Application successfully approved",
     "application_approval_failure" => "Application approval failure",
     "bulk_application_approval_success" => "Application bulk successfully approved",
-    "bulk_application_approval_failure" => "Application bulk approval failure"
+    "bulk_application_approval_failure" => "Application bulk approval failure",
+    "verify_all_payments_with_accounts" => "Verify all payment with accounts"
 ];

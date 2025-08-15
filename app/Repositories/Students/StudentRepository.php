@@ -171,7 +171,7 @@ class StudentRepository extends BaseRepository implements IStudentRepository
             foreach ($mainSubjects as $subjectId => $gradeId) {
                 $examSitting = $examSittings[$subjectId] ?? null;
                 $examYear = $examYears[$subjectId] ?? null;
-                $student->academicResults()->create([
+                $student->oLevelResults()->create([
                     'academic_level_id' => $level->id,
                     'subject_id' => $subjectId,
                     'exam_year' => $examYear,
@@ -185,7 +185,7 @@ class StudentRepository extends BaseRepository implements IStudentRepository
                 $otherGrade = $otherGrades[$key] ?? null;
                 $otherSitting = $otherSittings[$key] ?? null;
                 $otherExamYear = $otherExamYears[$key] ?? null;
-                $student->academicResults()->create([
+                $student->oLevelResults()->create([
                     'academic_level_id' => $level->id,
                     'subject_id' => $subjectId,
                     'exam_year' => $otherExamYear,
