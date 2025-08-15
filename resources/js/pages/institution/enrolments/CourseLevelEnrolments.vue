@@ -2,7 +2,7 @@
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import { AuthObject } from '@/types/data-pagination';
 import { DepartmentApplicationStep, DepartmentLevel } from '@/types/department-meta-data';
-import { InstitutionDepartment } from '@/types/institution';
+import { InstitutionDepartment, IntakePeriod } from '@/types/institution';
 import { Head } from '@inertiajs/vue3';
 import HeadingSmall from '@/components/core/util/HeadingSmall.vue';
 import { Enrolment } from '@/types/enrolments';
@@ -21,13 +21,14 @@ interface Props {
     level: DepartmentLevel;
     enrolments: Record<string, Enrolment[]>;
     workflowSteps: DepartmentApplicationStep[];
+    intakePeriod: IntakePeriod;
     auth: AuthObject;
     errors: object;
 }
 
 const props = defineProps<Props>();
 
-const { department, level, enrolments } = props;
+const { department, level, enrolments, intakePeriod } = props;
 const {isItTrue} = useUtils();
 
 const { bulkApproveApplication } = useStudentApplications();
@@ -68,9 +69,7 @@ const sortedEnrolmentsByStep = computed(() => {
 });
 
 const getNextSteps = (currentStepName: string) => {
-  const currentStepObj = props.workflowSteps.find(
-    (step: DepartmentApplicationStep) => step.attributes.workflowStep === currentStepName
-  );
+  const currentStepObj = getCurrentStep(currentStepName);
 
   if (!currentStepObj) {
     return []; // No matching step found
@@ -80,6 +79,10 @@ const getNextSteps = (currentStepName: string) => {
     (step: DepartmentApplicationStep) =>
       step.attributes.position > currentStepObj.attributes.position
   );
+};
+
+const getCurrentStep = (currentStepName: string) => {
+   return props.workflowSteps.find((step: DepartmentApplicationStep) => step.attributes.workflowStep === currentStepName);
 };
 
 const levelRequirements = computed(() => {
@@ -95,7 +98,12 @@ const buttonOptions = (currentStepName: string) => {
             key: option.id,
             id: option.id,
             title: option?.attributes?.workflowStep,
-            action: () => bulkApproveApplication(department.id?.toString() ?? '', level.id?.toString() ?? '', option.id?.toString() ?? '')
+            action: () => bulkApproveApplication(department.id?.toString() ?? '',{
+                intake_period_id: intakePeriod?.id?.toString() ?? '',
+                department_level_id: level.id?.toString() ?? '',
+                current_step_id: getCurrentStep(currentStepName)?.id?.toString() ?? '',
+                new_step_id: option.id?.toString() ?? '',
+            })
         })
     }
     return choices;

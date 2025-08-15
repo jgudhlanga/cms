@@ -7,5 +7,5 @@ Route::prefix('workflows')->middleware('auth')->group(function () {
     # ==================================== APPLICATIONS ================================================================
     Route::post('students/{student_program}/upload-proof-of-payment', [ApplicationWorkflowController::class, 'uploadProofOfPayment'])->name('students.upload-proof-of-payment');
     Route::post('students/{student_program}/approve-application/{department_application_step}', [ApplicationWorkflowController::class, 'approveApplication'])->name('students.approve-application');
-    Route::post('students/{institution_department/level/{department_level}}bulk-approve-applications/{department_application_step}', [ApplicationWorkflowController::class, 'bulkApproveApplication'])->name('students.bulk-approve-applications');
+    Route::post('students/{institution_department}', [ApplicationWorkflowController::class, 'bulkApproveApplication'])->name('students.bulk-approve-applications');
 });

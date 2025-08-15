@@ -15,6 +15,7 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Inertia\Inertia;
 use Inertia\Response;
 use App\Helpers\WorkflowHelper;
+use App\Models\Institution\IntakePeriod;
 
 class DepartmentLevelController extends Controller
 {
@@ -51,7 +52,8 @@ class DepartmentLevelController extends Controller
     public function enrolments(InstitutionDepartment $institutionDepartment, DepartmentLevel $departmentLevel): Response
     {
         $this->authorize('viewAnyDepartmentMetaData');
-        $intakePeriodId = request('intake_period');
+        $intakePeriodId = request()->has('intake_period_id') && request('intake_period_id') > 0 ? request('intake_period_id') : null;
+        $intakePeriod = $intakePeriodId ? IntakePeriod::find($intakePeriodId) : IntakePeriod::orderBy('end_date', 'DESC')->first();
         $department = InstitutionDepartmentResource::make($institutionDepartment);
         $level = DepartmentLevelResource::make($departmentLevel);
         $workflowSteps = DepartmentApplicationStepResource::collection(WorkflowHelper::getAllSteps($institutionDepartment->id));
@@ -78,7 +80,7 @@ class DepartmentLevelController extends Controller
             })
             ->map(fn($group) => EnrolmentResource::collection($group));
         return Inertia::render('institution/enrolments/CourseLevelEnrolments',
-            compact('department', 'level', 'enrolments', 'workflowSteps'));
+            compact('department', 'level', 'enrolments', 'workflowSteps', 'intakePeriod'));
     }
 
     /**

@@ -44,3 +44,9 @@ export type AcademicOLevelResult = {
     };
 };
 
+export type BulkApplicationApprovalParams = {
+    intake_period_id: string | number;
+    department_level_id: string | number;
+    current_step_id: string | number;
+    new_step_id: string | number;
+};

@@ -5,12 +5,11 @@ import { StudentProgram } from '@/types/students';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 import { errorAlert, openModal, successAlert } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
-import { InertiaForm } from '@inertiajs/vue3';
+import { InertiaForm, router } from '@inertiajs/vue3';
 import { getIdParams } from '@/lib/utils';
 import { buildFormOptions } from '@/lib/forms';
-import { DepartmentApplicationStep } from '@/types/department-meta-data';
 import HttpService from '@/services/http.service';
-import { Enrolment } from '@/types/enrolments';
+import { BulkApplicationApprovalParams } from '@/types/enrolments';
 
 export const useStudentApplications = () => {
     const { moreActionButton, actionButton, textLink } = useDataTables();
@@ -101,17 +100,19 @@ export const useStudentApplications = () => {
         try {
             await HttpService.post(route('students.approve-application', {student_program: applicationId, department_application_step: nextStepId}), {});
             successAlert(successMessage())
+            router.visit(window.location.href, { replace: true });
         } catch (error: any) {
              errorAlert(errorMessage())
         }
     };
 
-      const bulkApproveApplication = async(institutionDepartmentId: string, departmentLevelId: string, nextStepId: string) => {
+      const bulkApproveApplication = async(institutionDepartmentId: string, params: BulkApplicationApprovalParams ) => {
         const successMessage = () => trans('trans.bulk_application_approval_success');
         const errorMessage = () => trans('trans.bulk_application_approval_failure');
         try {
-            await HttpService.post(route('students.bulk-approve-applications', {institution_department: institutionDepartmentId, department_level: departmentLevelId,  department_application_step: nextStepId}), {});
+            await HttpService.post(route('students.bulk-approve-applications', institutionDepartmentId), params);
             successAlert(successMessage())
+            router.visit(window.location.href, { replace: true });
         } catch (error: any) {
              errorAlert(errorMessage())
         }

@@ -3,8 +3,6 @@
 namespace App\Http\Requests\Workflows;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rules\Enum;
-use App\Enums\Shared\POPTypeEnum;
 
 
 class BulkApplicationApproveRequest extends FormRequest
@@ -19,8 +17,10 @@ class BulkApplicationApproveRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'type' => ['required', new Enum(POPTypeEnum::class)],
-            'proof_of_payment' => ['required', 'file', 'max:5009'],
+            'intake_period_id' => ['required', 'integer', 'exists:intake_periods,id'],
+            'department_level_id' => ['required', 'integer', 'exists:department_levels,id'],
+            'current_step_id' => ['required', 'integer', 'exists:department_application_steps,id'],
+            'new_step_id' => ['required', 'integer', 'exists:department_application_steps,id'],
         ];
     }
 }

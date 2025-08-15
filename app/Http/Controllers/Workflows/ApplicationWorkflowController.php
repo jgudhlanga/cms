@@ -46,17 +46,28 @@ class ApplicationWorkflowController extends Controller
         }
     }
 
-    public function bulkApproveApplication(InstitutionDepartment $institutionDepartment, DepartmentLevel $departmentLevel,DepartmentApplicationStep $departmentApplicationStep) {
+    public function bulkApproveApplication(InstitutionDepartment $institutionDepartment,  BulkApplicationApproveRequest $request) {
+        $intakePeriodId = $request->filled('intake_period_id') ? $request->intake_period_id : null;
+        $departmentLevelId = $request->filled('department_level_id') ? $request->department_level_id : null;
+        $currentStepId = $request->filled('current_step_id') ? $request->current_step_id : null;
+        $newStepId = $request->filled('new_step_id') ? $request->new_step_id : null;
+
         DB::beginTransaction();
         try {
-            # get all the applications at level
+             $institutionDepartment->enrolments()
+                ->when($departmentLevelId, fn($q) => $q->where('department_level_id', $departmentLevelId))
+                ->when($currentStepId, fn($q) => $q->where('department_application_step_id', $currentStepId))
+                ->when($intakePeriodId, fn($q) => $q->where('intake_period_id', $intakePeriodId))
+                ->update(['department_application_step_id' => $newStepId]);
             DB::commit();
-            return back()->with('success', 'Bulk application done succefully');
+            return back()->with('success', 'Bulk application done successfully.');
         } catch (Throwable $e) {
             DB::rollBack();
+            report($e); // optional: log for debugging
             return back()->withErrors([
                 'error' => 'An error occurred while bulk approving applications. Please try again.',
             ]);
         }
     }
+
 }
