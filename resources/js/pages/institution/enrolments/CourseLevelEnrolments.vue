@@ -93,7 +93,7 @@ const levelRequirements = computed(() => {
 });
 
 
-const buttonOptions = (currentStepName: string) => {
+const buttonOptions = (currentStepName: string, enrolments: Enrolment[]) => {
     const options = getNextSteps(currentStepName);
     const choices = [];
     for(const option of options) {
@@ -106,7 +106,7 @@ const buttonOptions = (currentStepName: string) => {
                 department_level_id: level.id?.toString() ?? '',
                 current_step_id: getCurrentStep(currentStepName)?.id?.toString() ?? '',
                 new_step_id: option.id?.toString() ?? '',
-            })
+            }, enrolments)
         })
     }
     return choices;
@@ -125,14 +125,19 @@ const buttonOptions = (currentStepName: string) => {
 		            <div class="flex mb-0.5 text-sm uppercase text-accent-foreground font-bold">{{ step }}</div>
                     <div class="flex space-x-2">
                         <div class="flex flex-col space-y-3" v-for="action in getCurrentStep(step)?.relationships?.metadata?.actions" :key="action.action">
-                            <template v-if="action.action.toLowerCase() == 'verify-payment-with-accounts'">
-                                <BaseButton  :variant="ColorVariant.success_outline" :size="ButtonSize.xs" classes="rounded-full">
-                                    {{ $t('trans.verify_all_payments_with_accounts')}}
+                            <template v-if="action.action.toLowerCase() == 'verify-application-fee-payment-with-accounts'">
+                                <BaseButton  :variant="ColorVariant.success" :size="ButtonSize.xs" classes="rounded-full">
+                                    {{ $t('trans.generate_application_fee_verification_report')}}
+                                </BaseButton>
+                            </template>
+                            <template v-if="action.action.toLowerCase() == 'verify-tuition-fee-payment-with-accounts'">
+                                <BaseButton  :variant="ColorVariant.success" :size="ButtonSize.xs" classes="rounded-full">
+                                    {{ $t('trans.generate_tuition_fee_verification_report')}}
                                 </BaseButton>
                             </template>
                         </div>
                         <EclipseButton
-                            :options="buttonOptions(step)"
+                            :options="buttonOptions(step, enrolmentsInStep)"
                             :group-title="$t('trans.send_all_applications_to')"
                             :show-group-icon="true"
                         />
@@ -140,7 +145,7 @@ const buttonOptions = (currentStepName: string) => {
                 </div>
                 <div class="inline-block min-w-full overflow-auto align-middle">
                     <template v-if="isItTrue(levelRequirements?.attributes?.isOLevelRequired)">
-                        <OLevelBased :enrolments="enrolmentsInStep" :level="level" :steps="getNextSteps(step)" />
+                        <OLevelBased :enrolments="enrolmentsInStep" :level="level" :steps="getNextSteps(step)" :step="getCurrentStep(step)!" />
                     </template>
                 </div>
             </div>

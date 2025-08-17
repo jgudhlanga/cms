@@ -97,7 +97,7 @@ const { syncWorkflowStepActionMetadata } = useDepartmentWorkflows();
                         <SpinnerComponent class="flex w-full" />
                     </template>
                     <template v-else>
-                        <div class="grid grid-cols-1 gap-x-3 md:grid-cols-5">
+                        <div class="grid grid-cols-1 gap-x-3 md:grid-cols-4">
                             <div class="flex items-center space-x-1" v-for="action in workflowStepActions" :key="`action_key_${action['id']}`">
                                 <BaseCheckbox
                                     :input-id="`action_id_${action['id']}`"

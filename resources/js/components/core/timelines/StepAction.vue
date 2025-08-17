@@ -11,14 +11,14 @@ interface Props {
 
 defineProps<Props>();
 
-const { onUploadPopModal } = useStudentApplications();
+const { onUploadPopModal, uploadProofRequired } = useStudentApplications();
 
 </script>
 
 <template>
     <div class="flex flex-col" v-if="step?.relationships?.metadata?.actions">
         <div class="flex flex-col space-y-3" v-for="action in step?.relationships?.metadata?.actions" :key="action.action">
-            <template v-if="action.action.toLowerCase() == 'upload-receipt' && status != 'completed'">
+            <template v-if="uploadProofRequired(step) && status != 'completed'">
                 <BaseButton @click="onUploadPopModal" :variant="ColorVariant.danger_outline" classes="w-1/3 mt-3 rounded-full">{{ $t('trans.upload_proof') }}</BaseButton>
             </template>
         </div>

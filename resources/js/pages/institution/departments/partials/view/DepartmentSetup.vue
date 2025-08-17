@@ -17,16 +17,16 @@ const { department } = props;
 
 <template>
     <div class="flex flex-col space-y-3">
-        <!-- COURSE SETUP -->
-        <div class="flex flex-col">
-            <HeadingSmall :title="`${$tChoice('trans.course', 1)} ${$t('trans.setup')}`" :description="$t('trans.courses_config_description')" />
-            <Courses :department="department" />
-            <CustomSeparator classes="h-1 my-4" />
-        </div>
         <!-- LEVEL SETUP -->
         <div class="flex flex-col">
             <HeadingSmall :title="`${$tChoice('trans.level', 1)} ${$t('trans.setup')}`" :description="$t('trans.levels_config_description')" />
             <Levels :department="department" />
+            <CustomSeparator classes="h-1 my-4" />
+        </div>
+        <!-- COURSE SETUP -->
+        <div class="flex flex-col">
+            <HeadingSmall :title="`${$tChoice('trans.course', 1)} ${$t('trans.setup')}`" :description="$t('trans.courses_config_description')" />
+            <Courses :department="department" />
             <CustomSeparator classes="h-1 my-4" />
         </div>
         <!-- INTAKE CLASS SIZE SETUP -->

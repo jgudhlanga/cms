@@ -7,6 +7,10 @@ export type Enrolment = {
         studentId: string | number;
         studentName: string;
         studentNumber?: string;
+        applicationFeeProofOfPaymentId: string | number;
+        tuitionFeeProofOfPaymentId: string | number;
+        applicationFeePaid: boolean;
+        tuitionFeePaid: boolean;
         institutionDepartmentId: string | number;
         departmentLevelId: string | number;
         departmentCourseId: string | number;
@@ -14,6 +18,7 @@ export type Enrolment = {
         level: string;
         course: string;
         applicationTrackingNumber: string;
+        requiredExamSittingCount: string | number;
         createdAt: string;
         deletedAt: string;
         updatedAt: string;

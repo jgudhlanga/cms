@@ -57,7 +57,5 @@ const visibleTabs = computed(() => {
         <LinkCoursesToDepartment :institution-department-id="institutionDepartmentId" />
         <LinkApplicationStepsToDepartment :institution-department-id="institutionDepartmentId" />
         <StepActions :institution-department-id="institutionDepartmentId" />
-        <LinkApplicationStepsToDepartment :institution-department-id="institutionDepartmentId" />
-        <StepActions :institution-department-id="institutionDepartmentId" />
     </PageContainer>
 </template>

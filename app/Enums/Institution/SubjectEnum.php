@@ -24,7 +24,7 @@ enum SubjectEnum: string
     case GEOGRAPHY = "Geography";
     case GERMAN = "German";
     case HISTORY = "History";
-    case INTEGRATED_SCIENCE = "Integrated Science";
+    case INTEGRATED_SCIENCE = "Science";
     case LITERATURE_IN_ENGLISH = "Literature in English";
     case MATHEMATICS = "Mathematics";
     case METAL_TECHNOLOGY_AND_DESIGN = "Metal Technology and Design";
@@ -60,7 +60,7 @@ enum SubjectEnum: string
             self::GEOGRAPHY => "Geography",
             self::GERMAN => "German",
             self::HISTORY => "History",
-            self::INTEGRATED_SCIENCE => "Integrated Science",
+            self::INTEGRATED_SCIENCE => "Science",
             self::LITERATURE_IN_ENGLISH => "Literature in English",
             self::MATHEMATICS => "Mathematics",
             self::METAL_TECHNOLOGY_AND_DESIGN => "Metal Technology and Design",

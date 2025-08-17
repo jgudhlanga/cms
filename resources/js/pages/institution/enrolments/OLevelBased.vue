@@ -3,6 +3,8 @@ import EclipseButton from '@/components/core/button/EclipseButton.vue';
 import TextLink from '@/components/core/util/TextLink.vue';
 import { useUtils } from '@/composables/core/useUtils';
 import { useStudentApplications } from '@/composables/students/useStudentApplications';
+import ApplicationFeePaymentStatus from '@/pages/institution/enrolments/ApplicationFeePaymentStatus.vue';
+import TuitionFeePaymentStatus from '@/pages/institution/enrolments/TuitionFeePaymentStatus.vue';
 import { DepartmentApplicationStep, DepartmentLevel } from '@/types/department-meta-data';
 import { AcademicOLevelResult, Enrolment } from '@/types/enrolments';
 import { computed } from 'vue';
@@ -11,13 +13,14 @@ interface Props {
     level: DepartmentLevel;
     enrolments: Enrolment[];
     steps: DepartmentApplicationStep[];
+    step: DepartmentApplicationStep;
 }
 
 const props = defineProps<Props>();
 
 const { level } = props;
 const { formatDate } = useUtils();
-const { approveApplication } = useStudentApplications();
+const { approveApplication, applicationFeePaymentRequired, tuitionFeePaymentRequired } = useStudentApplications();
 
 const levelRequirements = computed(() => {
     return level?.relationships?.requirement;
@@ -53,14 +56,14 @@ const getOtherSubjectGrades = (results: AcademicOLevelResult[]): Record<number, 
     );
 };
 
-const buttonOptions = (applicationId: string) => {
+const buttonOptions = (enrolment: Enrolment) => {
     const choices = [];
     for (const option of props.steps) {
         choices.push({
             key: option.id,
             id: option.id,
             title: option?.attributes?.workflowStep,
-            action: () => approveApplication(applicationId, option.id?.toString() ?? ''),
+            action: () => approveApplication(enrolment, option.id?.toString() ?? '', props.step),
         });
     }
     return choices;
@@ -70,15 +73,19 @@ const buttonOptions = (applicationId: string) => {
 <template>
     <table class="j-table">
         <thead class="j-thead">
-            <th class="j-th text-left">{{ $tChoice('trans.name', 1) }}</th>
-            <th class="j-th text-left">{{ $t('trans.tracking_number') }}</th>
-            <th class="j-th text-left">{{ $t('trans.application_date') }}</th>
-            <th class="j-th text-center" v-for="subject in requirementSubjects" :key="subject.id">{{ subject?.attributes?.name }}</th>
-            <th class="j-th text-center" v-for="sub in levelRequirements?.attributes.otherSubjectsCount" :key="`${sub}_other_sub`">
-                {{ `${$t('trans.other')} ${Number(sub)}` }}
-            </th>
-            <th class="j-th text-center">{{ $tChoice('trans.score', 1) }}</th>
-            <th class="j-th text-center">{{ $tChoice('trans.action', 2) }}</th>
+            <tr class="j-th">
+                <th class="j-th text-left">{{ $tChoice('trans.name', 1) }}</th>
+                <th class="j-th text-left">{{ $t('trans.tracking_number') }}</th>
+                <th class="j-th text-left" v-if="applicationFeePaymentRequired(step)">{{ $t('trans.application_fee') }}</th>
+                <th class="j-th text-left" v-if="tuitionFeePaymentRequired(step)">{{ $t('trans.tuition_fee') }}</th>
+                <th class="j-th text-left">{{ $t('trans.application_date') }}</th>
+                <th class="j-th text-center" v-for="subject in requirementSubjects" :key="subject.id">{{ subject?.attributes?.name }}</th>
+                <th class="j-th text-center" v-for="sub in levelRequirements?.attributes.otherSubjectsCount" :key="`${sub}_other_sub`">
+                    {{ `${$t('trans.other')} ${Number(sub)}` }}
+                </th>
+                <th class="j-th text-center">{{ $tChoice('trans.score', 1) }}</th>
+                <th class="j-th text-center">{{ $tChoice('trans.action', 2) }}</th>
+            </tr>
         </thead>
         <tbody class="j-tbody">
             <tr class="j-tr" v-for="enrolment in enrolments" :key="enrolment.id">
@@ -86,6 +93,12 @@ const buttonOptions = (applicationId: string) => {
                     <TextLink :href="''" :title="enrolment?.attributes?.studentName" />
                 </td>
                 <td class="j-td">{{ enrolment?.attributes?.applicationTrackingNumber }}</td>
+                <td class="j-td text-center" v-if="applicationFeePaymentRequired(step)">
+                    <ApplicationFeePaymentStatus :enrolment="enrolment" />
+                </td>
+                <td class="j-td text-center" v-if="tuitionFeePaymentRequired(step)">
+                    <TuitionFeePaymentStatus :enrolment="enrolment" />
+                </td>
                 <td class="j-td">{{ formatDate(enrolment?.attributes?.createdAt, 'LLL') }}</td>
                 <td class="j-td text-center" v-for="subject in requirementSubjects" :key="`${subject.id}_td`">
                     {{ getMainSubjectGrade(enrolment?.relationships?.oLevelResults!, subject?.id?.toString() ?? '') }}
@@ -103,7 +116,7 @@ const buttonOptions = (applicationId: string) => {
                     </span>
                 </td>
                 <td class="j-td text-center">
-                    <EclipseButton :options="buttonOptions(enrolment.id?.toString() ?? '')" :show-only-icon="true" />
+                    <EclipseButton :options="buttonOptions(enrolment)" :show-only-icon="true" />
                 </td>
             </tr>
         </tbody>

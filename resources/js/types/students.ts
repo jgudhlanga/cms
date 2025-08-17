@@ -24,6 +24,7 @@ export type Student = {
         countryId?: string | number;
         country?: string;
         studentPermitNumber?: string;
+        requiredExamSittingCount: string | number;
         dateOfBirth?: string;
         religionId?: string | number;
         religion?: string;
