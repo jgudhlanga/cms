@@ -2,7 +2,7 @@ import { useDataTables } from '@/composables/core/useDataTables';
 import { useUtils } from '@/composables/core/useUtils';
 import { closeModal, errorAlert, forbiddenAlert, openModal, successAlert } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
-import { buildFormOptions, toggleFormLoader } from '@/lib/forms';
+import { toggleFormLoader } from '@/lib/forms';
 import { getIdParams } from '@/lib/utils';
 import HttpService from '@/services/http.service';
 import { Auth } from '@/types';
@@ -169,7 +169,7 @@ export const useDepartmentCourses = () => {
     };
 
     const openDepartmentCoursesModal = (departmentCourses: Array<string | undefined | null> | null) => {
-        if (!can['create:department-metadata']) return forbiddenAlert();
+        if (!can['department-setup:courses']) return forbiddenAlert();
         openModal({ name: APP_MODULE_KEYS.department_courses, edit: departmentCourses });
     };
 

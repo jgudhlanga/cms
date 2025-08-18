@@ -119,6 +119,10 @@ enum PermissionEnum: string
     case IMPORT_DEPARTMENT_METADATA = 'import:department-metadata';
     case EXPORT_DEPARTMENT_METADATA = 'export:department-metadata';
     case VIEW_DEPARTMENT_METADATA_AUDIT_TRAIL = 'viewAuditTrail:department-metadata';
+    case SETUP_DEPARTMENT_LEVELS = 'department-setup:levels';
+    case SETUP_DEPARTMENT_COURSES = 'department-setup:courses';
+    case SETUP_DEPARTMENT_CLASS_SIZES = 'department-setup:class-sizes';
+    case SETUP_DEPARTMENT_WORKFLOWS = 'department-setup:workflows';
     /** ROOT / GLOBAL USER */
     case ROOT_MANAGE = 'root:manage';
     /**OWN TENANT DATA MANAGE */
@@ -337,6 +341,10 @@ enum PermissionEnum: string
             self::IMPORT_DEPARTMENT_METADATA => 'import:department-metadata',
             self::EXPORT_DEPARTMENT_METADATA => 'export:department-metadata',
             self::VIEW_DEPARTMENT_METADATA_AUDIT_TRAIL => 'viewAuditTrail:department-metadata',
+            self::SETUP_DEPARTMENT_LEVELS => 'department-setup:levels',
+            self::SETUP_DEPARTMENT_COURSES => 'department-setup:courses',
+            self::SETUP_DEPARTMENT_CLASS_SIZES => 'department-setup:class-sizes',
+            self::SETUP_DEPARTMENT_WORKFLOWS => 'department-setup:workflows',
             /** ROOT */
             self::ROOT_MANAGE => 'root:manage',
             self::MANAGE_OWN_TENANT_DATA => 'manageOwnData:tenants',

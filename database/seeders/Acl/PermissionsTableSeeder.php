@@ -141,6 +141,10 @@ class PermissionsTableSeeder extends Seeder
                 ['name' => PermissionEnum::IMPORT_DEPARTMENT_METADATA->value],
                 ['name' => PermissionEnum::EXPORT_DEPARTMENT_METADATA->value],
                 ['name' => PermissionEnum::VIEW_DEPARTMENT_METADATA_AUDIT_TRAIL->value],
+                ['name' => PermissionEnum::SETUP_DEPARTMENT_LEVELS->value],
+                ['name' => PermissionEnum::SETUP_DEPARTMENT_COURSES->value],
+                ['name' => PermissionEnum::SETUP_DEPARTMENT_CLASS_SIZES->value],
+                ['name' => PermissionEnum::SETUP_DEPARTMENT_WORKFLOWS->value],
             ],
             'shared' => [
                 ['name' => PermissionEnum::VIEW_ANY_BANK_DETAILS->value],

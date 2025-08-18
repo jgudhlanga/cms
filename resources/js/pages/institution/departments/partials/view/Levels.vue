@@ -10,7 +10,6 @@ import TableLoading from '@/components/core/loader/TableLoading.vue';
 import { InstitutionDepartment } from '@/types/institution';
 import { useModalStore } from '@/store/core/useModalStore';
 import { APP_MODULE_KEYS } from '@/lib/constants';
-import { isModalOpen } from '@/lib/alerts';
 
 interface Props {
     department: InstitutionDepartment;

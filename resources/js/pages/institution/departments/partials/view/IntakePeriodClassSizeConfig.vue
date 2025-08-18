@@ -18,12 +18,14 @@ import {
 import { InstitutionDepartment } from '@/types/institution';
 import { useForm } from '@inertiajs/vue3';
 import { onMounted, ref } from 'vue';
+import {hasAbility} from '@/lib/permissions';
 
 interface Props {
     department: InstitutionDepartment;
 }
 
 const props = defineProps<Props>();
+
 const { department } = props;
 const institutionDepartmentId = department?.id?.toString() ?? '';
 const courses = ref<DepartmentCourse[]>([]);
@@ -133,7 +135,7 @@ const handleSelectionChange = async (value: any) => {
                         </tbody>
                     </table>
                     <div class="flex items-center justify-center">
-                        <BaseButton type="submit" :processing="form.processing">
+                        <BaseButton type="submit" :processing="form.processing" v-if="hasAbility('department-setup:class-sizes')">
                             {{ $t('trans.submit') }}
                         </BaseButton>
                     </div>

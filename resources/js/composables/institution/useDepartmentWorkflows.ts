@@ -10,12 +10,12 @@ import { trans, trans_choice } from 'laravel-vue-i18n';
 
 export const useDepartmentWorkflows = () => {
     const openDepartmentApplicationStepsModal = (departmentSteps: Array<string | undefined | null> | null) => {
-        if (!hasAbility('create:department-metadata')) return forbiddenAlert();
+        if (!hasAbility('department-setup:workflows')) return forbiddenAlert();
         openModal({ name: APP_MODULE_KEYS.department_application_steps, edit: departmentSteps });
     };
 
     const openDepartmentWorkflowActionModal = (step: DepartmentApplicationStep) => {
-        if (!hasAbility('create:department-metadata')) return forbiddenAlert();
+        if (!hasAbility('department-setup:workflows')) return forbiddenAlert();
         openModal({ name: APP_MODULE_KEYS.department_workflow_actions, edit: step });
     };
     const getName = () => trans_choice('trans.application_step', 1);
