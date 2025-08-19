@@ -6,6 +6,7 @@ use App\DTO\Shared\{AddressDto, ContactDto, NextOfKinDto};
 use App\DTO\Students\CreateApplicationDto;
 use App\DTO\Users\UserDto;
 use App\Enums\Acl\RoleEnum;
+use App\Http\Resources\AuditTrail\AuditTrailResource;
 use App\Models\Institution\IntakePeriod;
 use App\Models\Students\StudentProgram;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -139,10 +140,10 @@ class PortalController extends Controller
     public function viewApplication(StudentProgram $studentProgram): Response
     {
         $this->authorize('manageStudentPersonalDetails');
-        return Inertia::render('portal/student/ApplicationTrack', [
-            'student' => StudentResource::make($this->getStudent(request())),
-            'application' => StudentProgramResource::make($studentProgram),
-        ]);
+        $application = StudentProgramResource::make($studentProgram);
+        $student = StudentResource::make($this->getStudent(request()));
+        $audit = AuditTrailResource::collection($studentProgram->activities);
+        return Inertia::render('portal/student/ApplicationTrack', compact('application', 'student', 'audit'));
     }
 
     /**
@@ -257,7 +258,7 @@ class PortalController extends Controller
 
         if ($user->isDirty(['first_name', 'middle_name', 'last_name'])) {
             $user->save();
-            Auth::login($user); // Refresh session with updated info
+            Auth::login($user);
         }
     }
 

@@ -19,6 +19,7 @@ export type Enrolment = {
         course: string;
         applicationTrackingNumber: string;
         requiredExamSittingCount: string | number;
+        applicationFeeProofOfPaymentUrl?: string;
         createdAt: string;
         deletedAt: string;
         updatedAt: string;

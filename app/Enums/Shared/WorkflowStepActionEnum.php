@@ -11,8 +11,10 @@ enum WorkflowStepActionEnum: string
     case REQUEST_DOCUMENTS = 'request_documents';
     case VERIFY_APPLICATION_FEE_PAYMENT_WITH_ACCOUNTS = 'verify_application_fee_payment_with_accounts';
     case VERIFY_TUITION_FEE_PAYMENT_WITH_ACCOUNTS = 'verify_tuition_fee_payment_with_accounts';
-    case GENERATE_OFFER_LETTER = 'generate_offer_letter`';
-    case UPLOAD_RECEIPT = 'upload_receipt';
+    case GENERATE_OFFER_LETTER = 'generate_offer_letter';
+    case ACCEPT_OFFER = 'accept_offer';
+    case REJECT_OFFER = 'reject_offer';
+    case UPLOAD_PROOF_OF_PAYMENT = 'upload_proof_of_payment';
     case ASSIGN_STAFF = 'assign_staff';
 
     public function title(): string
@@ -23,8 +25,10 @@ enum WorkflowStepActionEnum: string
             self::SEND_EMAIL_TO_STAFF => 'Send Email To Staff',
             self::CREATE_PAYMENT_LINK => 'Create Payment Link',
             self::REQUEST_DOCUMENTS => 'Request Documents',
-            self::UPLOAD_RECEIPT => 'Upload Receipt',
+            self::UPLOAD_PROOF_OF_PAYMENT => 'Upload Proof Of Payment',
             self::GENERATE_OFFER_LETTER => 'Generate Offer Letter',
+            self::ACCEPT_OFFER => 'Accept Offer',
+            self::REJECT_OFFER => 'Reject Offer',
             self::ASSIGN_STAFF => 'Assign Staff',
             self::VERIFY_APPLICATION_FEE_PAYMENT_WITH_ACCOUNTS => 'Verify Application Fee Payment with Accounts',
             self::VERIFY_TUITION_FEE_PAYMENT_WITH_ACCOUNTS => 'Verify Tuition Fee Payment with Accounts',

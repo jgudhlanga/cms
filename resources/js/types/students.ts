@@ -125,6 +125,7 @@ export type StudentProgram = {
         departmentLevelId: string | number;
         departmentCourseId: string | number;
         applicationTrackingNumber: string;
+        applicationFeeProofOfPaymentUrl?: string;
         createdAt?: string;
         updatedAt?: string;
         deletedAt?: string;

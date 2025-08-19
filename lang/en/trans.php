@@ -420,4 +420,5 @@ return [
     "tuition_fee_required" => "Tuition fee is required to be paid before application can be approved",
     "all_application_fee_required_to_be_paid" => "All applications are required to have application fee paid before applications are approved",
     "all_tuition_fee_required_to_be_paid" => "All applications are required to have tuition fee paid before applications are approved",
+    "payment_proof" => "Payment proof",
 ];

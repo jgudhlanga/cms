@@ -62,7 +62,7 @@ export const useStudentApplications = () => {
                     const step = row.original?.relationships?.departmentWorkflowStep?.attributes?.workflowStep ?? '';
                     return actionButton({
                         title: step,
-                        onClick: () => {},
+                        onClick: () => navigateTo(route('portal.application.view', row.original.id)),
                     });
                 },
             },
@@ -182,8 +182,8 @@ export const useStudentApplications = () => {
         return step?.relationships?.metadata?.actions?.some((action) => action.action == 'verify-tuition-fee-payment-with-accounts');
     };
 
-    const uploadProofRequired = (step: DepartmentApplicationStep) => {
-        return step?.relationships?.metadata?.actions?.some((action) => action.action == 'upload-receipt');
+    const proofOfPaymentRequired = (step: DepartmentApplicationStep) => {
+        return step?.relationships?.metadata?.actions?.some((action) => action.action == 'upload-proof-of-payment');
     };
 
     const allApplicationFeesPaid = (enrolments: Enrolment[]): boolean => {
@@ -205,7 +205,7 @@ export const useStudentApplications = () => {
         markTuitionFeeAsPaid,
         applicationFeePaymentRequired,
         tuitionFeePaymentRequired,
-        uploadProofRequired,
+        proofOfPaymentRequired,
         allApplicationFeesPaid,
         allTuitionFeesPaid,
     };

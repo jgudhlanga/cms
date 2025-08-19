@@ -14,12 +14,14 @@ import TimelineTwo from '@/components/core/timelines/TimelineTwo.vue';
 import BaseAlert from '@/components/core/alert/BaseAlert.vue';
 import StepAction from '@/components/core/timelines/StepAction.vue';
 import UploadPop from '@/components/shared/workflows/UploadPop.vue';
+import { Audit } from '@/types/audit';
 
 interface Props {
     auth: AuthObject;
     errors: object;
     student: Student;
     application: StudentProgram;
+    audit: Audit[];
 }
 
 const props = defineProps<Props>();
@@ -39,6 +41,11 @@ onMounted(async () => {
         route('v1.department-metadata.workflow-steps', props.application?.attributes?.institutionDepartmentId?.toString()),
     );
     workflowSteps.value = data?.steps;
+});
+
+const auditSteps = computed(() => {
+    return props.audit?.map((entry) => entry.attributes.properties.department_application_step_id)
+        .filter((id) => id !== undefined && id !== null);
 });
 
 const steps = computed(() => {
@@ -63,7 +70,8 @@ const completedActiveSteps = computed(() => {
     return workflowSteps.value
         .filter((step) => {
             const position = Number(step.attributes?.position);
-            return  position <= Number(currentStep.value?.attributes.position);
+            const inAudit = auditSteps.value.includes(step.id); // check audit
+            return position <= Number(currentStep.value?.attributes.position) && inAudit;
         })
         .map((step, index) => {
             return <TimelineStep>{
@@ -87,11 +95,12 @@ const currentStepIndex = computed(() => {
 });
 
 // Progress % for progress bar
-const progressPercent = computed(() => {
+/*const progressPercent = computed(() => {
     const total = workflowSteps.value.length;
     const index = currentStepIndex.value;
     return Math.round(((index + 1) / total) * 100);
-});
+});*/
+
 const currentStep = computed(() => {
     return props.application?.relationships?.departmentWorkflowStep;
 });
@@ -113,14 +122,14 @@ const getStepStatus = (step: DepartmentApplicationStep): string => {
         </template>
         <template v-else>
             <template v-if="steps?.length > 0">
-                <div class="my-5">
+<!--                <div class="my-5">
                     <div class="h-6 w-full overflow-hidden rounded-full bg-gray-200">
                         <div class="bg-primary h-full transition-all duration-300" :style="{ width: progressPercent + '%' }"></div>
                     </div>
                     <p class="text-muted-foreground my-3 text-sm font-bold">
                         {{ $t('trans.progress') }}: {{ progressPercent }}% ({{ currentStep?.attributes?.workflowStep }})
                     </p>
-                </div>
+                </div>-->
                 <div class="flex flex-col gap-4">
                     <TimelineTwo  :steps="completedActiveSteps" />
                 </div>

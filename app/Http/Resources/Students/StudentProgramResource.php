@@ -31,6 +31,7 @@ class StudentProgramResource extends JsonResource
                 'departmentLevelId' => $this->department_level_id,
                 'departmentCourseId' => $this->department_course_id,
                 'applicationTrackingNumber' => $this->application_tracking_number,
+                'applicationFeeProofOfPaymentUrl' => $this->application_fee_proof_of_payment_url,
                 'createdAt' => $this->created_at,
                 'updatedAt' => $this->updated_at,
                 'deletedAt' => $this->deleted_at,

@@ -76,8 +76,14 @@ const buttonOptions = (enrolment: Enrolment) => {
             <tr class="j-th">
                 <th class="j-th text-left">{{ $tChoice('trans.name', 1) }}</th>
                 <th class="j-th text-left">{{ $t('trans.tracking_number') }}</th>
-                <th class="j-th text-left" v-if="applicationFeePaymentRequired(step)">{{ $t('trans.application_fee') }}</th>
-                <th class="j-th text-left" v-if="tuitionFeePaymentRequired(step)">{{ $t('trans.tuition_fee') }}</th>
+                <template v-if="applicationFeePaymentRequired(step)">
+                    <th class="j-th text-left">{{ $t('trans.payment_proof') }}</th>
+                    <th class="j-th text-left">{{ $t('trans.application_fee') }}</th>
+                </template>
+                <template v-if="tuitionFeePaymentRequired(step)">
+                    <th class="j-th text-left">{{ $t('trans.payment_proof') }}</th>
+                    <th class="j-th text-left">{{ $t('trans.tuition_fee') }}</th>
+                </template>
                 <th class="j-th text-left">{{ $t('trans.application_date') }}</th>
                 <th class="j-th text-center" v-for="subject in requirementSubjects" :key="subject.id">{{ subject?.attributes?.name }}</th>
                 <th class="j-th text-center" v-for="sub in levelRequirements?.attributes.otherSubjectsCount" :key="`${sub}_other_sub`">
@@ -93,12 +99,18 @@ const buttonOptions = (enrolment: Enrolment) => {
                     <TextLink :href="''" :title="enrolment?.attributes?.studentName" />
                 </td>
                 <td class="j-td">{{ enrolment?.attributes?.applicationTrackingNumber }}</td>
-                <td class="j-td text-center" v-if="applicationFeePaymentRequired(step)">
-                    <ApplicationFeePaymentStatus :enrolment="enrolment" />
-                </td>
-                <td class="j-td text-center" v-if="tuitionFeePaymentRequired(step)">
-                    <TuitionFeePaymentStatus :enrolment="enrolment" />
-                </td>
+                <template v-if="applicationFeePaymentRequired(step)">
+                    <td class="j-td text-center">---</td>
+                    <td class="j-td text-center">
+                        <ApplicationFeePaymentStatus :enrolment="enrolment" />
+                    </td>
+                </template>
+                <template v-if="tuitionFeePaymentRequired(step)">
+                    <td class="j-td text-center">---</td>
+                    <td class="j-td text-center">
+                        <TuitionFeePaymentStatus :enrolment="enrolment" />
+                    </td>
+                </template>
                 <td class="j-td">{{ formatDate(enrolment?.attributes?.createdAt, 'LLL') }}</td>
                 <td class="j-td text-center" v-for="subject in requirementSubjects" :key="`${subject.id}_td`">
                     {{ getMainSubjectGrade(enrolment?.relationships?.oLevelResults!, subject?.id?.toString() ?? '') }}
