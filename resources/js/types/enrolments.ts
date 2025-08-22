@@ -9,6 +9,8 @@ export type Enrolment = {
         studentNumber?: string;
         applicationFeeProofOfPaymentId: string | number;
         tuitionFeeProofOfPaymentId: string | number;
+        modeOfStudyId: string | number;
+        modeOfStudy: string;
         applicationFeePaid: boolean;
         tuitionFeePaid: boolean;
         institutionDepartmentId: string | number;
@@ -55,4 +57,9 @@ export type BulkApplicationApprovalParams = {
     department_level_id: string | number;
     current_step_id: string | number;
     new_step_id: string | number;
+};
+
+export type PaymentProofPreview = {
+    enrolmentId: string | number;
+    url: string;
 };

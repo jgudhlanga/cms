@@ -55,6 +55,7 @@ const APP_MODULE_KEYS = {
     next_of_kin: 'next_of_kin',
     student_personal_details: 'student_personal_details',
     upload_proof_of_payment: 'upload_proof_of_payment',
+    preview_payment_proof: 'preview_payment_proof',
 };
 const EXAM_SITTINGS = [
     {value: 'june', label: 'June'},

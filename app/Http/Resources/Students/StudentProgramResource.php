@@ -30,6 +30,8 @@ class StudentProgramResource extends JsonResource
                 'institutionDepartmentId' => $this->institution_department_id,
                 'departmentLevelId' => $this->department_level_id,
                 'departmentCourseId' => $this->department_course_id,
+                'modeOfStudyId' => $this->mode_of_study_id,
+                'modeOfStudy' => $this->modeOfStudy?->name,
                 'applicationTrackingNumber' => $this->application_tracking_number,
                 'applicationFeeProofOfPaymentUrl' => $this->application_fee_proof_of_payment_url,
                 'createdAt' => $this->created_at,

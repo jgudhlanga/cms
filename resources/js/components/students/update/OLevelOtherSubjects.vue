@@ -8,26 +8,19 @@ import SelectSitting from '@/components/students/update/SelectSitting.vue';
 import SelectYear from '@/components/students/update/SelectYear.vue';
 import { useGrades } from '@/composables/institution/useGrades';
 import { useSubjects } from '@/composables/institution/useSubjects';
+import { useStudentPortal } from '@/composables/students/useStudentPortal';
 import { useCreateApplicationFormStore } from '@/store/portal/useCreateApplicationFormStore';
-import { DepartmentLevelRequirement } from '@/types/department-meta-data';
 import { RadioGroupOption } from '@/types/forms';
 import { Grade, Subject } from '@/types/institution';
 import { SelectOption } from '@/types/utils';
 import { storeToRefs } from 'pinia';
-import { computed, onMounted, Ref } from 'vue';
-
-interface Props {
-    levelRequirements?: DepartmentLevelRequirement | null;
-}
-
-defineProps<Props>();
+import { computed, onMounted, ref, Ref } from 'vue';
 
 const { listSubjects, isLoading: subjectsLoading, subjects } = useSubjects();
 const { listGrades, isLoading: gradesLoading, grades } = useGrades();
 const { o_level_other_subject_ids, o_level_other_grade_ids, o_level_other_years, o_level_other_sittings, levelRequirements } =
     storeToRefs(useCreateApplicationFormStore());
-
-
+const { getMainSittingYear, getMainSitting } = useStudentPortal();
 function ensureObjectRef<T extends object>(refObj: Ref<T | undefined | null> | undefined, defaultValue: T): T {
     if (!refObj) throw new Error('Ref is undefined');
     if (!refObj.value) {
@@ -65,7 +58,7 @@ const onYearChange = (value: string, index: string) => {
     o_level_other_years.value[index] = value;
 };
 
-const onSubjectChange = (value: string, index: string) => {
+const onSubjectChange = (value: any, index: string) => {
     if (!o_level_other_subject_ids) {
         return;
     }
@@ -74,7 +67,7 @@ const onSubjectChange = (value: string, index: string) => {
     }
     o_level_other_subject_ids.value[index] = value;
 };
-const onSittingChange = (value: string, index: string) => {
+const onSittingChange = (value: any, index: string) => {
     if (!o_level_other_sittings) {
         return;
     }
@@ -89,25 +82,74 @@ const getOptionsForSubject = (index: string): RadioGroupOption[] => {
     return grades.value
         .filter((grade: Grade) => Number(grade.attributes.position) < 4)
         .map((grade: Grade) => ({
-        value: `${index}|${grade.id}`,
-        label: grade.attributes?.name,
-        inputId: `radio_${index}_${grade.id}`,
-    }));
+            value: `${index}|${grade.id}`,
+            label: grade.attributes?.name,
+            inputId: `radio_${index}_${grade.id}`,
+        }));
 };
 
-onMounted(() => {
-    listGrades();
-    listSubjects();
-});
-
 const getDefaultOLevels = (index: string) => {
-    if (!index || !o_level_other_subject_ids?.value || !grades.value) return null;
-    const gradeId = o_level_other_subject_ids.value[index ?? ''];
+    if (!index || !o_level_other_grade_ids?.value || !grades.value) return null;
+    const gradeId = o_level_other_grade_ids.value[index ?? ''];
     if (!gradeId) return null;
     const grade = grades.value.find((g: Grade) => g.id == gradeId);
     if (!grade) return null;
     return `${index}|${gradeId}`;
 };
+
+const mainSitting = ref<SelectOption | null>(null);
+const onMainSittingChange = (value: SelectOption | null) => {
+    mainSitting.value = value;
+    // Ensure o_level_other_sittings is defined
+    if (!o_level_other_sittings) return;
+    // Initialize value object if needed
+    if (!o_level_other_sittings.value) {
+        o_level_other_sittings.value = {};
+    }
+    const subjectCount = Number(levelRequirements?.value?.attributes.otherSubjectsCount);
+    if (subjectCount == 0) return; // nothing to update
+    for (let i = 1; i <= subjectCount; i++) {
+        if (value) {
+            o_level_other_sittings.value![i] = value;
+        } else {
+            delete o_level_other_sittings.value![i];
+        }
+    }
+};
+
+const mainYear = ref<string | null>(null);
+const onMainYearChange = (value: string | null) => {
+    mainYear.value = value;
+    // Ensure o_level_other_years is defined
+    if (!o_level_other_years) return;
+    // Initialize value object if needed
+    if (!o_level_other_years.value) {
+        o_level_other_years.value = {};
+    }
+    const subjectCount = Number(levelRequirements?.value?.attributes.otherSubjectsCount);
+    if (subjectCount == 0) return; // nothing to update
+    for (let i = 1; i <= subjectCount; i++) {
+        if (value) {
+            o_level_other_years.value![i] = value;
+        } else {
+            delete o_level_other_years.value![i];
+        }
+    }
+};
+onMounted(() => {
+    listGrades();
+    listSubjects();
+
+    // === Main Year logic ===
+    if (o_level_other_years?.value) {
+        mainYear.value = getMainSittingYear(o_level_other_years.value);
+    }
+
+    // === Main Sitting logic ===
+    if (o_level_other_sittings?.value) {
+        mainSitting.value = getMainSitting(o_level_other_sittings.value);
+    }
+});
 </script>
 
 <template>
@@ -120,38 +162,54 @@ const getDefaultOLevels = (index: string) => {
             <table class="hava-table my-4">
                 <thead class="hava-thead">
                     <tr>
-                        <th class="hava-th" align="left">{{ $tChoice('trans.subject', 1) }}</th>
-                        <th class="hava-th" align="center">{{ $tChoice('trans.year', 1) }}</th>
-                        <th class="hava-th">{{ $tChoice('trans.sitting', 1) }}</th>
-                        <th class="hava-th" align="center">{{ $tChoice('trans.grade', 1) }}</th>
+                        <th class="hava-th text-left">{{ $tChoice('trans.subject', 1) }}</th>
+                        <th class="hava-th text-center">{{ $tChoice('trans.year', 1) }}</th>
+                        <th class="hava-th text-center">{{ $tChoice('trans.sitting', 1) }}</th>
+                        <th class="hava-th text-center">{{ $tChoice('trans.grade', 1) }}</th>
                     </tr>
                 </thead>
                 <tbody class="hava-tbody">
+                    <tr class="hava-tr">
+                        <td class="hava-td">
+                            <span class="text-primary font-bold">{{ $t('trans.select_for_all') }}</span>
+                        </td>
+                        <td class="hava-td">
+                            <div class="flex items-center justify-center">
+                                <SelectYear input-id="main_year" :model-value="mainYear" @update:model-value="(value) => onMainYearChange(value)" />
+                            </div>
+                        </td>
+                        <td class="hava-td">
+                            <SelectSitting :model-value="mainSitting" @update:modelValue="(option: SelectOption) => onMainSittingChange(option)" />
+                        </td>
+                        <td class="hava-td"></td>
+                    </tr>
                     <tr class="hava-tr" v-for="n in levelRequirements?.attributes?.otherSubjectsCount" :key="n">
-                        <td class="hava-td" align="left">
+                        <td class="hava-td text-left">
                             <SpinnerComponent class="flex items-center justify-center" v-if="subjectsLoading || gradesLoading" />
                             <SelectOtherSubject
                                 v-else
                                 :options="options"
                                 :input-id="`other_subject_${n}`"
                                 :model-value="o_level_other_subject_ids?.[n?.toString() ?? ''] || null"
-                                @update:model-value="(value: string) => onSubjectChange(value, n.toString() ?? '')"
-                            />
-                        </td>
-                        <td class="hava-td" align="center">
-                            <SelectYear
-                                :input-id="`other_year_${n}`"
-                                :model-value="o_level_other_years?.[n?.toString() ?? ''] || null"
-                                @update:model-value="(value: string) => onYearChange(value, n.toString() ?? '')"
+                                @update:model-value="(option: SelectOption) => onSubjectChange(option, n.toString() ?? '')"
                             />
                         </td>
                         <td class="hava-td">
+                            <div class="flex items-center justify-center">
+                                <SelectYear
+                                    :input-id="`other_year_${n}`"
+                                    :model-value="o_level_other_years?.[n?.toString() ?? ''] || null"
+                                    @update:model-value="(value: string) => onYearChange(value, n.toString() ?? '')"
+                                />
+                            </div>
+                        </td>
+                        <td class="hava-td text-center">
                             <SelectSitting
                                 :model-value="o_level_other_sittings?.[n.toString() ?? ''] || null"
-                                @update:modelValue="(value) => onSittingChange(value, n.toString() ?? '')"
+                                @update:modelValue="(option: SelectOption) => onSittingChange(option, n.toString() ?? '')"
                             />
                         </td>
-                        <td class="hava-td" align="center">
+                        <td class="hava-td text-center">
                             <SpinnerComponent class="flex items-center justify-center" v-if="gradesLoading || subjectsLoading" />
                             <template v-else>
                                 <BaseRadioGroup

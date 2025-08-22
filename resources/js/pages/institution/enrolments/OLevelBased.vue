@@ -8,6 +8,7 @@ import TuitionFeePaymentStatus from '@/pages/institution/enrolments/TuitionFeePa
 import { DepartmentApplicationStep, DepartmentLevel } from '@/types/department-meta-data';
 import { AcademicOLevelResult, Enrolment } from '@/types/enrolments';
 import { computed } from 'vue';
+import PaymentProofPreviewButton from '@/pages/institution/enrolments/PaymentProofPreviewButton.vue';
 
 interface Props {
     level: DepartmentLevel;
@@ -100,13 +101,17 @@ const buttonOptions = (enrolment: Enrolment) => {
                 </td>
                 <td class="j-td">{{ enrolment?.attributes?.applicationTrackingNumber }}</td>
                 <template v-if="applicationFeePaymentRequired(step)">
-                    <td class="j-td text-center">---</td>
+                    <td class="j-td text-center">
+                        <PaymentProofPreviewButton :enrolment="enrolment" />
+                    </td>
                     <td class="j-td text-center">
                         <ApplicationFeePaymentStatus :enrolment="enrolment" />
                     </td>
                 </template>
                 <template v-if="tuitionFeePaymentRequired(step)">
-                    <td class="j-td text-center">---</td>
+                    <td class="j-td text-center">
+                        <PaymentProofPreviewButton :enrolment="enrolment" />
+                    </td>
                     <td class="j-td text-center">
                         <TuitionFeePaymentStatus :enrolment="enrolment" />
                     </td>

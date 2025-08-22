@@ -2,6 +2,7 @@
 
 namespace Database\Seeders\Institution;
 
+use App\Enums\Institution\InstitutionDepartmentEnum;
 use App\Enums\Shared\TenantEnum;
 use App\Models\Institution\Department;
 use App\Models\Institution\InstitutionDepartment;
@@ -16,11 +17,13 @@ class InstitutionDepartmentsTableSeeder extends Seeder
         # Tenant
         $tenant = Tenant::where('name', TenantEnum::HARARE_POLY->value)->first();
         # departments
-        $departmentIds = Department::pluck('id')->toArray();
-        foreach ($departmentIds as $departmentId) {
+        foreach (InstitutionDepartmentEnum::cases() as $case) {
+            // get the department id from the enum
+            $department = Department::where('name', $case->value)->first();
             InstitutionDepartment::create([
-                'department_id' => $departmentId,
+                'department_id' => $department->id,
                 'tenant_id' => $tenant->id,
+                'department_code' => $case->departmentCode(),
             ]);
         }
     }

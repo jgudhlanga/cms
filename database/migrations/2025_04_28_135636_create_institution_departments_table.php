@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('tenant_id')->index()->constrained();
             $table->foreignId('department_id')->constrained();
+            $table->string('department_code')->nullable()->unique();
             $table->text('description')->nullable();
 			$table->timestamps();
 			$table->softDeletes();

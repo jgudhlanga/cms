@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Dashboard\DashboardController;
+use App\Http\Controllers\Dashboard\TestController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -8,6 +9,7 @@ Route::get('/', function () {
 })->middleware(['auth', 'verified'])->name('home');
 
 Route::get('/dashboard', DashboardController::class)->middleware(['auth', 'verified', 'redirect.student'])->name('dashboard');
+Route::get('/pdf/{student_program}', [TestController::class, 'pdf'])->name('generate-pdf');
 
 require __DIR__ . '/web/auth.php';
 require __DIR__ . '/web/users.php';

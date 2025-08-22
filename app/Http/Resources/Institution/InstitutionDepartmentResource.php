@@ -19,6 +19,7 @@ class InstitutionDepartmentResource extends JsonResource
             'id' => $this->resource->id,
             "attributes" => [
                 "departmentId" => $this->department_id,
+                'departmentCode' => $this->resource->department_code,
                 'department' => $this->department?->name,
                 'isAcademic' => $this->department?->is_academic,
                 'description' => $this->resource->description,

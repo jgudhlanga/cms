@@ -10,6 +10,7 @@ export type CreateApplicationUserParams = {
     password_confirmation: string;
 };
 
+
 export type CreateApplicationParams = {
     /** Personal details */
     id_type_id: string | number | null;
@@ -47,6 +48,8 @@ export type CreateApplicationParams = {
     next_of_kin_address_4: string | null;
     next_of_kin_phone_number: string | null;
     /** Programs */
+    modeOfStudy: SelectOption | null;
+    mode_of_study_id: string | number | null;
     department: SelectOption | null;
     department_id: string | number | null;
     level: SelectOption | null;
@@ -56,11 +59,11 @@ export type CreateApplicationParams = {
     levelRequirements?: DepartmentLevelRequirement | null,
     o_level_subject_ids?:  Record<string, string> | null;
     o_level_years?:  Record<string, string> | null;
-    o_level_sittings?:  Record<string, string> | null;
+    o_level_sittings?:  Record<string, SelectOption> | null;
     required_level_completed?: boolean | null;
     read_write_acknowledged?: boolean | null;
-    o_level_other_subject_ids?:  Record<string, string> | null;
+    o_level_other_subject_ids?:  Record<string, SelectOption> | null;
     o_level_other_grade_ids?:  Record<string, string> | null;
     o_level_other_years?:  Record<string, string> | null;
-    o_level_other_sittings?:  Record<string, string> | null;
+    o_level_other_sittings?:  Record<string, SelectOption> | null;
 };

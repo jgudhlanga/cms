@@ -20,6 +20,8 @@ class EnrolmentResource extends JsonResource
                 'studentName' => $this->student?->user?->full_name,
                 'studentNumber' => $this->student?->student_number,
                 'requiredExamSittingCount' => $this->student?->required_exam_sitting_count ?? null,
+                'modeOfStudyId' => $this->mode_of_study_id,
+                'modeOfStudy' => $this->modeOfStudy?->name,
                 'applicationFeeProofOfPaymentId' => $this->application_fee_proof_of_payment_id,
                 'tuitionFeeProofOfPaymentId' => $this->tuition_fee_proof_of_payment_id,
                 'applicationFeePaid' => $this->application_fee_paid,

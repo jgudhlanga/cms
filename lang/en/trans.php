@@ -129,6 +129,7 @@ return [
     "select_dependency_description" => "select :field first",
     "no_options_found" => "No options found",
     "are_you_sure" => "Are you sure?",
+    "please_confirm_action" => "One more step: please confirm you’re happy to proceed.",
     "website" => "Website",
     "address" => "Address|Addresses",
     "contact" => "Contact|Contacts",
@@ -421,4 +422,8 @@ return [
     "all_application_fee_required_to_be_paid" => "All applications are required to have application fee paid before applications are approved",
     "all_tuition_fee_required_to_be_paid" => "All applications are required to have tuition fee paid before applications are approved",
     "payment_proof" => "Payment proof",
+    "preview" => "Preview",
+    "no_proof_of_application_fee_payment_uploaded" => "No proof of application fee payment uploaded / found",
+    "no_proof_of_tuition_fee_payment_uploaded" => "No proof of tuition fee payment uploaded / found",
+    "select_for_all" => "Select once for all",
 ];

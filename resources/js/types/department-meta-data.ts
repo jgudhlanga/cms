@@ -118,6 +118,7 @@ export type DepartmentApplicationStep = {
         institutionDepartmentId: string | number;
         workflowStepId: string | number;
         workflowStep: string;
+        slug: string;
         workflowStepDescription?: string;
         position: number;
         createdAt?: string;

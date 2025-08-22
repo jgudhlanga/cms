@@ -16,6 +16,7 @@ enum WorkflowStepEnum: string
     case APPLICANT_ACCEPTED_OFFER = 'applicant_accepted_offer';
     case APPLICANT_REJECTED_OFFER = 'applicant_rejected_offer';
     case AWAITING_TUITION_FEES_PAYMENT = 'awaiting_tuition_fees_payment';
+    case FINAL_DECISION_PENDING = 'final_decision_pending';
     case STUDENT_ENROLLED = 'student_enrolled';
 
     public function name(): string
@@ -32,7 +33,8 @@ enum WorkflowStepEnum: string
             self::APPLICANT_ACCEPTED_OFFER => 'Applicant accepted offer',
             self::APPLICANT_REJECTED_OFFER => 'Applicant rejected offer',
             self::APPLICATION_WAITLISTED => 'Application waitlisted',
-            self::AWAITING_TUITION_FEES_PAYMENT => 'Awaiting tuition fees payment',
+            self::AWAITING_TUITION_FEES_PAYMENT => 'Awaiting tuition fee payment',
+            self::FINAL_DECISION_PENDING => 'Final decision pending',
             self::STUDENT_ENROLLED => 'Student enrolled',
         };
     }
@@ -52,7 +54,8 @@ enum WorkflowStepEnum: string
             self::APPLICANT_REJECTED_OFFER => 10,
             self::APPLICATION_WAITLISTED => 11,
             self::AWAITING_TUITION_FEES_PAYMENT => 12,
-            self::STUDENT_ENROLLED => 13,
+            self::FINAL_DECISION_PENDING => 13,
+            self::STUDENT_ENROLLED => 14,
         };
     }
 
@@ -71,6 +74,7 @@ enum WorkflowStepEnum: string
             self::APPLICANT_REJECTED_OFFER => 'The applicant has declined the admission offer.',
             self::APPLICATION_WAITLISTED => 'The applicant has been placed on the waitlist and may be reconsidered later.',
             self::AWAITING_TUITION_FEES_PAYMENT => 'The applicant has accepted the offer and is required to pay tuition fees.',
+            self::FINAL_DECISION_PENDING => 'The selection officers are currently considering the final decision.',
             self::STUDENT_ENROLLED => 'The applicant has paid tuition fees and is now officially enrolled as a student.',
         };
     }

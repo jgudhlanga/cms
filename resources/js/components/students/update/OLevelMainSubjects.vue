@@ -6,22 +6,18 @@ import HeadingSmall from '@/components/core/util/HeadingSmall.vue';
 import SelectSitting from '@/components/students/update/SelectSitting.vue';
 import SelectYear from '@/components/students/update/SelectYear.vue';
 import { useGrades } from '@/composables/institution/useGrades';
+import { useStudentPortal } from '@/composables/students/useStudentPortal';
 import { useCreateApplicationFormStore } from '@/store/portal/useCreateApplicationFormStore';
-import { DepartmentLevelRequirement } from '@/types/department-meta-data';
 import { RadioGroupOption } from '@/types/forms';
 import { Grade, Subject } from '@/types/institution';
+import { SelectOption } from '@/types/utils';
 import { trans } from 'laravel-vue-i18n';
 import { storeToRefs } from 'pinia';
-import { onMounted, Ref } from 'vue';
+import { onMounted, ref, Ref } from 'vue';
 
-interface Props {
-    levelRequirements?: DepartmentLevelRequirement | null;
-}
-
-const props = defineProps<Props>();
-const { levelRequirements } = props;
 const { listGrades, isLoading, grades } = useGrades();
-const { o_level_subject_ids, o_level_years, o_level_sittings } = storeToRefs(useCreateApplicationFormStore());
+const { o_level_subject_ids, o_level_years, o_level_sittings, levelRequirements } = storeToRefs(useCreateApplicationFormStore());
+const { getMainSittingYear, getMainSitting } = useStudentPortal();
 
 function ensureObjectRef<T extends object>(refObj: Ref<T | undefined | null> | undefined, defaultValue: T): T {
     if (!refObj) throw new Error('Ref is undefined');
@@ -57,7 +53,7 @@ const onYearChange = (value: string, subjectId: string) => {
     o_level_years.value[subjectId] = value;
 };
 
-const onSittingChange = (value: string, subjectId: string) => {
+const onSittingChange = (value: any, subjectId: string) => {
     if (!o_level_sittings) {
         return;
     }
@@ -85,10 +81,6 @@ const getOptionsForSubject = (subject: Subject): RadioGroupOption[] => {
     return dataOptions;
 };
 
-onMounted(async () => {
-    await listGrades();
-});
-
 const getDefaultOLevels = (subject: Subject) => {
     if (!subject || !o_level_subject_ids?.value || !grades.value) return null;
     const gradeId = o_level_subject_ids.value[subject?.id ?? ''];
@@ -97,6 +89,65 @@ const getDefaultOLevels = (subject: Subject) => {
     if (!grade) return null;
     return `${subject.id}|${gradeId}`;
 };
+
+const mainSitting = ref<SelectOption | null>(null);
+const onMainSittingChange = (value: SelectOption | null) => {
+    mainSitting.value = value;
+    // Ensure o_level_sittings is defined
+    if (!o_level_sittings) return;
+    // Initialize value object if needed
+    if (!o_level_sittings.value) {
+        o_level_sittings.value = {};
+    }
+    // Safely access levelRequirements.relationships
+    const subjects = levelRequirements?.value?.relationships?.subjects;
+    if (!subjects) return; // nothing to update
+    subjects.forEach((subject: Subject) => {
+        const subjectId = subject.id?.toString() ?? '';
+        if (!subjectId) return; // skip invalid IDs
+        if (value) {
+            o_level_sittings.value![subjectId] = value;
+        } else {
+            delete o_level_sittings.value![subjectId];
+        }
+    });
+};
+
+const mainYear = ref<string | null>(null);
+const onMainYearChange = (value: string | null) => {
+    mainYear.value = value;
+    // Ensure o_level_years is defined
+    if (!o_level_years) return;
+    // Initialize value object if needed
+    if (!o_level_years.value) {
+        o_level_years.value = {};
+    }
+    // Safely access levelRequirements.relationships
+    const subjects = levelRequirements?.value?.relationships?.subjects;
+    if (!subjects) return; // nothing to update
+    subjects.forEach((subject: Subject) => {
+        const subjectId = subject.id?.toString() ?? '';
+        if (!subjectId) return; // skip invalid IDs
+        if (value) {
+            o_level_years.value![subjectId] = value;
+        } else {
+            delete o_level_years.value![subjectId];
+        }
+    });
+};
+onMounted(async () => {
+    await listGrades();
+
+    // === Main Year logic ===
+    if (o_level_years?.value) {
+        mainYear.value = getMainSittingYear(o_level_years.value);
+    }
+
+    // === Main Sitting logic ===
+    if (o_level_sittings?.value) {
+        mainSitting.value = getMainSitting(o_level_sittings.value);
+    }
+});
 </script>
 
 <template>
@@ -109,29 +160,47 @@ const getDefaultOLevels = (subject: Subject) => {
             <table class="hava-table my-4">
                 <thead class="hava-thead">
                     <tr>
-                        <th class="hava-th" align="left">{{ $tChoice('trans.subject', 1) }}</th>
-                        <th class="hava-th" align="center">{{ $tChoice('trans.year', 1) }}</th>
-                        <th class="hava-th">{{ $tChoice('trans.sitting', 1) }}</th>
-                        <th class="hava-th" align="center">{{ $tChoice('trans.grade', 1) }}</th>
+                        <th class="hava-th text-left">{{ $tChoice('trans.subject', 1) }}</th>
+                        <th class="hava-th text-center">
+                            {{ $tChoice('trans.year', 1) }}
+                        </th>
+                        <th class="hava-th text-center">{{ $tChoice('trans.sitting', 1) }}</th>
+                        <th class="hava-th text-center">{{ $tChoice('trans.grade', 1) }}</th>
                     </tr>
                 </thead>
                 <tbody class="hava-tbody">
+                    <tr class="hava-tr">
+                        <td class="hava-td">
+                            <span class="text-primary font-bold">{{ $t('trans.select_for_all') }}</span>
+                        </td>
+                        <td class="hava-td">
+                            <div class="flex items-center justify-center">
+                                <SelectYear input-id="main_year" :model-value="mainYear" @update:model-value="(value) => onMainYearChange(value)" />
+                            </div>
+                        </td>
+                        <td class="hava-td">
+                            <SelectSitting :model-value="mainSitting" @update:modelValue="(option: SelectOption) => onMainSittingChange(option)" />
+                        </td>
+                        <td class="hava-td"></td>
+                    </tr>
                     <tr class="hava-tr" v-for="subject in levelRequirements.relationships.subjects" :key="subject?.id ?? ''">
-                        <td class="hava-td" align="left">{{ subject?.attributes?.name }}</td>
-                        <td class="hava-td" align="center">
-                            <SelectYear
-                                :input-id="`year_${subject.id}`"
-                                :model-value="o_level_years?.[subject?.id?.toString() ?? ''] || null"
-                                @update:model-value="(value) => onYearChange(value, subject?.id ?? '')"
-                            />
+                        <td class="hava-td">{{ subject?.attributes?.name }}</td>
+                        <td class="hava-td">
+                            <div class="flex items-center justify-center">
+                                <SelectYear
+                                    :input-id="`year_${subject.id}`"
+                                    :model-value="o_level_years?.[subject?.id?.toString() ?? ''] || null"
+                                    @update:model-value="(value) => onYearChange(value, subject?.id ?? '')"
+                                />
+                            </div>
                         </td>
                         <td class="hava-td">
                             <SelectSitting
                                 :model-value="o_level_sittings?.[subject?.id?.toString() ?? ''] || null"
-                                @update:modelValue="(value) => onSittingChange(value, subject?.id ?? '')"
+                                @update:modelValue="(option: SelectOption) => onSittingChange(option, subject?.id ?? '')"
                             />
                         </td>
-                        <td class="hava-td" align="center">
+                        <td class="hava-td">
                             <SpinnerComponent class="flex items-center justify-center" v-if="isLoading" />
                             <template v-else>
                                 <BaseRadioGroup

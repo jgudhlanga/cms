@@ -41,6 +41,7 @@ readonly class CreateApplicationDto
         public ?string $next_of_kin_address_4,
         public string  $next_of_kin_phone_number,
         /** Programs */
+        public int     $mode_of_study_id,
         public int     $department_id,
         public int     $level_id,
         public int     $course_id,
@@ -93,6 +94,7 @@ readonly class CreateApplicationDto
             next_of_kin_address_4: $request->next_of_kin_address_4,
             next_of_kin_phone_number: $request->next_of_kin_phone_number,
             /** Programs */
+            mode_of_study_id: $request->mode_of_study_id,
             department_id: $request->department_id,
             level_id: $request->level_id,
             course_id: $request->course_id,

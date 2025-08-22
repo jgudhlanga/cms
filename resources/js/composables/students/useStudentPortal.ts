@@ -14,7 +14,7 @@ import HttpService from '@/services/http.service';
 import { useCreateApplicationFormStore } from '@/store/portal/useCreateApplicationFormStore';
 import { Step } from '@/types/forms';
 import { Student } from '@/types/students';
-import { CustomTab } from '@/types/utils';
+import { CustomTab, SelectOption } from '@/types/utils';
 import { InertiaForm } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 import { h, ref } from 'vue';
@@ -54,6 +54,7 @@ export function useStudentPortal() {
             'levelSchema',
             'courseSchema',
             'departmentSchema',
+            'modeOfStudySchema',
         ];
         let personalDetails = null;
         if (isNativeCitizen) {
@@ -176,6 +177,40 @@ export function useStudentPortal() {
         }
     };
 
+    const getMainSittingYear = (yearData: Record<string, string>): string | null => {
+        if (yearData) {
+            const years: any = Object.values(yearData).filter(Boolean);
+            if (years.length > 0) {
+                // Check if all values are the same
+                const firstYear = years[0];
+                const allSame = years.every((year: string) => year == firstYear);
+                if (allSame) {
+                    return firstYear;
+                }
+            }
+        }
+        return null;
+    };
+
+    const getMainSitting = (sittingData: Record<string, SelectOption>): SelectOption | null => {
+        if (sittingData) {
+            const sittings = Object.values(sittingData).filter(Boolean);
+            if (sittings.length > 0) {
+                const firstSitting = sittings[0];
+                const allSame = sittings.every(
+                    (sitting) =>
+                        sitting.label === firstSitting.label &&
+                        sitting.value === firstSitting.value
+                );
+                if (allSame) {
+                    return firstSitting;
+                }
+            }
+        }
+        return null;
+    };
+
+
     return {
         steps,
         applicationFormSchema,
@@ -186,5 +221,7 @@ export function useStudentPortal() {
         onOpenPersonalDetailsModal,
         updateStudent,
         updateStudentSchema,
+        getMainSittingYear,
+        getMainSitting,
     };
 }

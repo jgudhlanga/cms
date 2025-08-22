@@ -126,6 +126,7 @@ export type InstitutionDepartment = {
     attributes: {
         departmentId: string | number;
         department: string;
+        departmentCode?: string;
         isAcademic: boolean | number;
         description?: string;
         createdAt?: string;

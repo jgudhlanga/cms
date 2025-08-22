@@ -124,7 +124,7 @@ class PortalController extends Controller
             if ($stepTwo) {
                 ApplicationWorkflowStepChanged::dispatch($student, $application, $stepTwo, $stepOne);
             }
-            return to_route('portal.application.view', $application->id);
+            return to_route('portal.applications');
         } catch (Throwable $e) {
             DB::rollBack();
             Log::error('Application submission failed', ['exception' => $e]);

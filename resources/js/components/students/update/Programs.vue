@@ -3,6 +3,7 @@ import BaseCard from '@/components/core/card/BaseCard.vue';
 import DepartmentCourseComboSelect from '@/components/core/form/combobox/DepartmentCourseComboSelect.vue';
 import DepartmentLevelComboSelect from '@/components/core/form/combobox/DepartmentLevelComboSelect.vue';
 import InstitutionDepartmentComboSelect from '@/components/core/form/combobox/InstitutionDepartmentComboSelect.vue';
+import ModeOfStudyComboSelect from '@/components/core/form/combobox/ModeOfStudyComboSelect.vue';
 import SpinnerComponent from '@/components/core/loader/SpinnerComponent.vue';
 import LevelRequirements from '@/components/students/update/LevelRequirements.vue';
 import OLevelRequirements from '@/components/students/update/OLevelRequirements.vue';
@@ -16,7 +17,7 @@ import { InertiaForm } from '@inertiajs/vue3';
 import { storeToRefs } from 'pinia';
 import { ref, watch } from 'vue';
 
-const { department, level, course } = storeToRefs(useCreateApplicationFormStore());
+const { department, level, course, modeOfStudy } = storeToRefs(useCreateApplicationFormStore());
 const { listLevelRequirements, levelRequirements, isLoading } = useDepartmentLevels();
 
 interface Props {
@@ -50,7 +51,8 @@ watch(course, async () => {
 
 <template>
     <BaseCard :title="$t('trans.programs')" :description="$t('trans.program_description')">
-        <div class="grid grid-cols-1 gap-3 md:grid-cols-3">
+        <div class="grid grid-cols-1 gap-3 md:grid-cols-4">
+            <ModeOfStudyComboSelect :form="form" v-model="modeOfStudy" :error="form.errors.modeOfStudy" :is-required="true" />
             <InstitutionDepartmentComboSelect :form="form" v-model="department" :error="form.errors.department" :is-required="true" />
             <DepartmentLevelComboSelect
                 :form="form"
@@ -68,14 +70,14 @@ watch(course, async () => {
                 :disabled="courseDisabled"
             />
         </div>
-        <div class="my-4 flex flex-col w-full">
+        <div class="my-4 flex w-full flex-col">
             <template v-if="isLoading">
                 <SpinnerComponent class="flex w-full items-center justify-center" />
             </template>
             <template v-else>
                 <template v-if="levelRequirements">
                     <template v-if="isItTrue(levelRequirements.attributes.isOLevelRequired)">
-                        <OLevelRequirements :level-requirements="levelRequirements" :form="form" />
+                        <OLevelRequirements />
                     </template>
                     <template v-if="levelRequirements.attributes.requiredLevel">
                         <LevelRequirements :level-requirements="levelRequirements" />

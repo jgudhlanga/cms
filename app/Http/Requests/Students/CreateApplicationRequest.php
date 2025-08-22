@@ -71,6 +71,7 @@ class CreateApplicationRequest extends FormRequest
             'gender_id' => ['required', 'integer', 'exists:genders,id'],
             'marital_status_id' => ['required', 'integer', 'exists:marital_statuses,id'],
             'title_id' => ['required', 'integer', 'exists:titles,id'],
+            'mode_of_study_id' => ['required', 'integer', 'exists:mode_of_studies,id'],
             'id_type_id' => ['required', 'integer', 'exists:id_types,id'],
             'id_number' => ['required_if:id_type_id,' . $idType], // assuming 1 = Zimbabwean
             'passport_number' => ['required_if:id_type_id,' . $passportType], // assuming 2 = Foreign passport

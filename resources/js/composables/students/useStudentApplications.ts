@@ -1,13 +1,13 @@
 import { useDataTables } from '@/composables/core/useDataTables';
 import { useUtils } from '@/composables/core/useUtils';
-import { errorAlert, openModal, successAlert } from '@/lib/alerts';
+import { errorAlert, openModal, successAlert, warningDialog } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
 import { buildFormOptions } from '@/lib/forms';
 import { hasAbility } from '@/lib/permissions';
 import { getIdParams } from '@/lib/utils';
 import HttpService from '@/services/http.service';
 import { DepartmentApplicationStep } from '@/types/department-meta-data';
-import { BulkApplicationApprovalParams, Enrolment } from '@/types/enrolments';
+import { BulkApplicationApprovalParams, Enrolment, PaymentProofPreview } from '@/types/enrolments';
 import { StudentProgram } from '@/types/students';
 import { InertiaForm, router } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
@@ -87,6 +87,10 @@ export const useStudentApplications = () => {
         openModal({ name: APP_MODULE_KEYS.upload_proof_of_payment, edit: null });
     };
 
+    const onPaymentProofModal = (preview: PaymentProofPreview) => {
+        openModal({ name: APP_MODULE_KEYS.preview_payment_proof, edit: preview });
+    };
+
     const uploadProofOfPayment = (form: InertiaForm<any>, application: StudentProgram) => {
         const successMessage = () => trans('trans.proof_of_payment_uploaded');
         const errorMessage = () => trans('trans.proof_of_payment_failure');
@@ -116,25 +120,32 @@ export const useStudentApplications = () => {
         const successMessage = () => trans('trans.application_approval_success');
         const errorMessage = () => trans('trans.application_approval_failure');
         try {
-            await HttpService.post(
-                route('students.approve-application', { student_program: enrolment.id.toString(), department_application_step: nextStepId }),
-                {},
-            );
-            successAlert(successMessage());
-            router.visit(window.location.href, { replace: true });
+            warningDialog(async () => {
+                await HttpService.post(
+                    route('students.approve-application', { student_program: enrolment.id.toString(), department_application_step: nextStepId }),
+                    {},
+                );
+                successAlert(successMessage());
+                router.visit(window.location.href, { replace: true });
+            });
         } catch {
             errorAlert(errorMessage());
         }
     };
 
-    const bulkApproveApplication = async (institutionDepartmentId: string, params: BulkApplicationApprovalParams, enrolments: Enrolment[]) => {
-        if (!allApplicationFeesPaid(enrolments)) {
+    const bulkApproveApplication = async (
+        institutionDepartmentId: string,
+        params: BulkApplicationApprovalParams,
+        enrolments: Enrolment[],
+        step: DepartmentApplicationStep,
+    ) => {
+        if (!allApplicationFeesPaid(enrolments) && applicationFeePaymentRequired(step)) {
             const applicationFeeRequiredMessage = () => trans('trans.all_application_fee_required_to_be_paid');
             errorAlert(applicationFeeRequiredMessage());
             return;
         }
 
-        if (!allTuitionFeesPaid(enrolments)) {
+        if (!allTuitionFeesPaid(enrolments) && tuitionFeePaymentRequired(step)) {
             const tuitionFeeRequiredMessage = () => trans('trans.all_tuition_fee_required_to_be_paid');
             errorAlert(tuitionFeeRequiredMessage());
             return;
@@ -142,33 +153,49 @@ export const useStudentApplications = () => {
         const successMessage = () => trans('trans.bulk_application_approval_success');
         const errorMessage = () => trans('trans.bulk_application_approval_failure');
         try {
-            await HttpService.post(route('students.bulk-approve-applications', institutionDepartmentId), params);
-            successAlert(successMessage());
-            router.visit(window.location.href, { replace: true });
+            warningDialog(async () => {
+                await HttpService.post(route('students.bulk-approve-applications', institutionDepartmentId), params);
+                successAlert(successMessage());
+                router.visit(window.location.href, { replace: true });
+            });
         } catch {
             errorAlert(errorMessage());
         }
     };
 
-    const markApplicationFeeAsPaid = async (applicationId: string, paid: boolean) => {
+    const markApplicationFeeAsPaid = async (enrolment: Enrolment, paid: boolean) => {
+        if (!allProofOfPaymentUploaded([enrolment], 'application-fee')) {
+            const errorMessage = () => trans('trans.no_proof_of_application_fee_payment_uploaded');
+            errorAlert(errorMessage());
+            return;
+        }
         const successMessage = () => trans('trans.application_fee_payment_message', { action: paid ? trans('trans.unpaid') : trans('trans.paid') });
         const errorMessage = () => trans('trans.application_fee_payment_failure', { action: paid ? trans('trans.unpaid') : trans('trans.paid') });
         try {
-            await HttpService.post(route('students.mark-application-fee-payment', { student_program: applicationId }), {});
-            successAlert(successMessage());
-            router.visit(window.location.href, { replace: true });
+            warningDialog(async () => {
+                await HttpService.post(route('students.mark-application-fee-payment', { student_program: enrolment.id?.toString() ?? '' }), {});
+                successAlert(successMessage());
+                router.visit(window.location.href, { replace: true });
+            });
         } catch {
             errorAlert(errorMessage());
         }
     };
 
-    const markTuitionFeeAsPaid = async (applicationId: string, paid: boolean) => {
+    const markTuitionFeeAsPaid = async (enrolment: Enrolment, paid: boolean) => {
+        if (!allProofOfPaymentUploaded([enrolment], 'tuition-fee')) {
+            const errorMessage = () => trans('trans.no_proof_of_tuition_fee_payment_uploaded');
+            errorAlert(errorMessage());
+            return;
+        }
         const successMessage = () => trans('trans.tuition_fee_payment_message', { action: paid ? trans('trans.unpaid') : trans('trans.paid') });
         const errorMessage = () => trans('trans.tuition_fee_payment_failure', { action: paid ? trans('trans.unpaid') : trans('trans.paid') });
         try {
-            await HttpService.post(route('students.mark-tuition-fee-payment', { student_program: applicationId }), {});
-            successAlert(successMessage());
-            router.visit(window.location.href, { replace: true });
+            warningDialog(async () => {
+                await HttpService.post(route('students.mark-tuition-fee-payment', { student_program: enrolment?.id?.toString() ?? '' }), {});
+                successAlert(successMessage());
+                router.visit(window.location.href, { replace: true });
+            });
         } catch {
             errorAlert(errorMessage());
         }
@@ -176,6 +203,14 @@ export const useStudentApplications = () => {
 
     const applicationFeePaymentRequired = (step: DepartmentApplicationStep) => {
         return step?.relationships?.metadata?.actions?.some((action) => action.action == 'verify-application-fee-payment-with-accounts');
+    };
+
+    const awaitApplicationPaymentProof = (step: DepartmentApplicationStep) => {
+        return step?.attributes?.slug == 'awaiting-application-fee-payment';
+    };
+
+    const awaitTuitionPaymentProof = (step: DepartmentApplicationStep) => {
+        return step?.attributes?.slug == 'awaiting-tuition-fee-payment';
     };
 
     const tuitionFeePaymentRequired = (step: DepartmentApplicationStep) => {
@@ -194,6 +229,15 @@ export const useStudentApplications = () => {
         return enrolments.every((e) => isItTrue(e.attributes.tuitionFeePaid));
     };
 
+    const allProofOfPaymentUploaded = (enrolments: Enrolment[], type: 'application-fee' | 'tuition-fee'): boolean => {
+        if (type === 'application-fee') {
+            return enrolments.every((e) => Number(e.attributes.applicationFeeProofOfPaymentId) > 0);
+        } else if (type === 'tuition-fee') {
+            return enrolments.every((e) => Number(e.attributes.tuitionFeeProofOfPaymentId) > 0);
+        }
+        return false;
+    };
+
     return {
         createStudentApplicationColumns,
         allowed,
@@ -208,5 +252,9 @@ export const useStudentApplications = () => {
         proofOfPaymentRequired,
         allApplicationFeesPaid,
         allTuitionFeesPaid,
+        onPaymentProofModal,
+        allProofOfPaymentUploaded,
+        awaitApplicationPaymentProof,
+        awaitTuitionPaymentProof,
     };
 };

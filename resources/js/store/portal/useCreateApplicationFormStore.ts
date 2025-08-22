@@ -36,6 +36,8 @@ export const useCreateApplicationFormStore = defineStore('portal-application-for
             relationship: null,
             relationship_id: null,
             study_permit_number: '',
+            modeOfStudy: null,
+            mode_of_study_id: null,
             department: null,
             department_id: null,
             course: null,

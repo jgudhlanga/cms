@@ -19,6 +19,7 @@ use App\Repositories\Shared\interface\INextOfKinRepository;
 use App\Repositories\Students\interface\IStudentProgramRepository;
 use App\Repositories\Students\interface\IStudentRepository;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Model;
 
 class StudentRepository extends BaseRepository implements IStudentRepository
 {
@@ -33,7 +34,7 @@ class StudentRepository extends BaseRepository implements IStudentRepository
         parent::__construct($this->student);
     }
 
-    public function create(CreateApplicationDto $dto)
+    public function create(CreateApplicationDto $dto): Model
     {
         $student = $this->student->create($this->createFields($dto))->refresh();
         $this->saveProgram($student, $dto);
@@ -73,6 +74,7 @@ class StudentRepository extends BaseRepository implements IStudentRepository
             'passport_number' => $dto->passport_number,
             'country_id' => $dto->country_id,
             'study_permit_number' => $dto->study_permit_number,
+            'required_exam_sitting_count' => $this->getRequiredExamSittingCount($dto->o_level_years, $dto->o_level_other_years),
             'date_of_birth' => Carbon::parse($dto->date_of_birth)->format('Y-m-d'),
         ];
     }
@@ -101,6 +103,7 @@ class StudentRepository extends BaseRepository implements IStudentRepository
     {
         $programDto = new StudentProgramDto(
             student_id: $student->id,
+            mode_of_study_id: $dto->mode_of_study_id,
             institution_department_id: $dto->department_id,
             department_level_id: $dto->level_id,
             department_course_id: $dto->course_id,
@@ -175,24 +178,37 @@ class StudentRepository extends BaseRepository implements IStudentRepository
                     'academic_level_id' => $level->id,
                     'subject_id' => $subjectId,
                     'exam_year' => $examYear,
-                    'exam_sitting' => $examSitting,
+                    'exam_sitting' => $examSitting['value'] ?? null,
                     'grade_id' => $gradeId,
                 ]);
             }
         }
         if (!empty($otherSubjects) && is_array($otherSubjects)) {
-            foreach ($otherSubjects as $key => $subjectId) {
+            foreach ($otherSubjects as $key => $subject) {
                 $otherGrade = $otherGrades[$key] ?? null;
                 $otherSitting = $otherSittings[$key] ?? null;
                 $otherExamYear = $otherExamYears[$key] ?? null;
                 $student->oLevelResults()->create([
                     'academic_level_id' => $level->id,
-                    'subject_id' => $subjectId,
+                    'subject_id' => $subject['value'] ?? null,
                     'exam_year' => $otherExamYear,
-                    'exam_sitting' => $otherSitting,
+                    'exam_sitting' => $otherSitting['value'] ?? null,
                     'grade_id' => $otherGrade,
                 ]);
             }
         }
+    }
+
+    private function getRequiredExamSittingCount($examYears, $otherExamYears): int
+    {
+        $uniqueExamYears = array_values(
+            array_unique(
+                array_merge(
+                    array_values($examYears ?? []),
+                    array_values($otherExamYears ?? [])
+                )
+            )
+        );
+        return count($uniqueExamYears);
     }
 }

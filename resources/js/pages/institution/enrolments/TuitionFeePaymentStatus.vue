@@ -31,7 +31,7 @@ const buttonVariant = computed(() => (isPaid.value ? ColorVariant.danger_outline
     <div class="flex items-center justify-center space-x-2">
         <BaseIcon :name="iconName" :class="['size-5', iconClass]" />
         <BaseButton
-            @click="markTuitionFeeAsPaid(enrolment.id.toString() ?? '', isPaid)"
+            @click="markTuitionFeeAsPaid(enrolment, isPaid)"
             :title="buttonTitle"
             :size="ButtonSize.xs"
             classes="rounded-full lowercase"

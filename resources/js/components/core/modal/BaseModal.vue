@@ -88,7 +88,7 @@ const destroyModal = () => {
                     <div class="relative flex-auto space-y-6 overflow-visible px-6 py-4">
                         <slot />
                     </div>
-                    <div class="mt-6 flex w-full justify-end space-x-3 border-t-[1px] px-6 py-5">
+                    <div class="mt-6 flex w-full justify-center space-x-3 border-t-[1px] px-6 py-5">
                         <BaseButton type="button" :variant="ColorVariant.shade" @click="() => destroyModal()" :size="ButtonSize.lg">
                             {{ $t(cancelBtnText) }}
                         </BaseButton>

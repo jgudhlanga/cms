@@ -12,7 +12,7 @@ import { trans, trans_choice } from 'laravel-vue-i18n';
 import { ref } from 'vue';
 
 export const useInstitutionDepartments = () => {
-    const { moreActionButton, onDelete, onForceDelete, onRestore, onView, textLink } = useDataTables();
+    const { moreActionButton, onDelete, onForceDelete, onRestore, onView, textLink, textEditLink } = useDataTables();
     const createInstitutionDepartmentColumns = () => {
         return [
             {
@@ -23,7 +23,14 @@ export const useInstitutionDepartments = () => {
                     return textLink(route('institution-departments.show', id), row.original.attributes?.department);
                 },
             },
-            { header: trans_choice('trans.description', 1), accessorKey: 'attributes.description' },
+            {
+                header: trans_choice('trans.code', 1),
+                accessorKey: 'departmentCode',
+                cell: ({ row }: { row: { original: InstitutionDepartment } }) => {
+                    const id = getIdParams(row.original.id?.toString() ?? '');
+                    return textEditLink(row.original?.attributes?.departmentCode ?? '', () => {console.log('Edit department code')});
+                },
+            },
             {
                 header: trans_choice('trans.action', 2),
                 accessorKey: 'actions',

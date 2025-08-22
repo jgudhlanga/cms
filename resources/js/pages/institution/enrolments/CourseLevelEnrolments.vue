@@ -17,6 +17,7 @@ import { useStudentApplications } from '@/composables/students/useStudentApplica
 import { ColorVariant } from '@/enums/colors';
 import { ButtonSize } from '@/enums/buttons';
 import BaseButton from '../../../components/core/button/BaseButton.vue';
+import PaymentProofPreviewModal from '@/pages/institution/enrolments/partials/PaymentProofPreviewModal.vue';
 
 
 interface Props {
@@ -106,7 +107,7 @@ const buttonOptions = (currentStepName: string, enrolments: Enrolment[]) => {
                 department_level_id: level.id?.toString() ?? '',
                 current_step_id: getCurrentStep(currentStepName)?.id?.toString() ?? '',
                 new_step_id: option.id?.toString() ?? '',
-            }, enrolments)
+            }, enrolments, getCurrentStep(currentStepName)!)
         })
     }
     return choices;
@@ -151,5 +152,6 @@ const buttonOptions = (currentStepName: string, enrolments: Enrolment[]) => {
             </div>
         </template>
         <BaseAlert v-else :title="$t('trans.no_data')" :description="$t('trans.no_data_found_description', { data: $tChoice('trans.enrolment', 2) })"/>
+        <PaymentProofPreviewModal />
     </PageContainer>
 </template>

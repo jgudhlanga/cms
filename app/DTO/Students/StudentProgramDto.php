@@ -10,6 +10,7 @@ readonly class StudentProgramDto
     public function __construct(
         /** Programs */
         public int    $student_id,
+        public int    $mode_of_study_id,
         public int    $institution_department_id,
         public int    $department_level_id,
         public int    $department_course_id,
@@ -24,6 +25,7 @@ readonly class StudentProgramDto
     {
         return new self(
             student_id: $student->id,
+            mode_of_study_id: $request->mode_of_study_id,
             institution_department_id: $request->department_id,
             department_level_id: $request->level_id,
             department_course_id: $request->course_id,

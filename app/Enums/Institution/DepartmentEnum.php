@@ -8,6 +8,7 @@ enum DepartmentEnum: string
     case APPLIED_ARTS = "Applied Arts";
     case AUTOMOTIVE_ENGINEERING = "Automotive Engineering";
     case BUSINESS_AND_MANAGEMENT_STUDIES = "Business And Management Studies";
+    case CHEMICAL_TECHNOLOGY = "Chemical Technology";
     case CIVIL_ENGINEERING = "Civil Engineering";
     case CLINIC = "Clinic";
     case CONSTRUCTION_ENGINEERING = "Construction Engineering";
@@ -43,6 +44,7 @@ enum DepartmentEnum: string
             self::APPLIED_ARTS,
             self::AUTOMOTIVE_ENGINEERING,
             self::BUSINESS_AND_MANAGEMENT_STUDIES,
+            self::CHEMICAL_TECHNOLOGY,
             self::CIVIL_ENGINEERING,
             self::CONSTRUCTION_ENGINEERING,
             self::ELECTRICAL_ENGINEERING,
@@ -64,24 +66,25 @@ enum DepartmentEnum: string
             self::APPLIED_ARTS => 2,
             self::AUTOMOTIVE_ENGINEERING => 3,
             self::BUSINESS_AND_MANAGEMENT_STUDIES => 4,
-            self::CIVIL_ENGINEERING => 5,
-            self::CLINIC => 6,
-            self::CONSTRUCTION_ENGINEERING => 7,
-            self::DEAN_OF_STUDENTS => 8,
-            self::ELECTRICAL_ENGINEERING => 9,
-            self::EXECUTIVE => 10,
-            self::FINANCE => 11,
-            self::HUMAN_RESOURCES => 12,
-            self::INFORMATION_COMMUNICATION_TECHNOLOGY => 13,
-            self::IT_UNIT => 14,
-            self::LIBRARY_AND_INFORMATION_SCIENCES => 15,
-            self::MASS_COMMUNICATION => 16,
-            self::MECHANICAL_AND_PRODUCTION_ENGINEERING => 17,
-            self::OFFICE_MANAGEMENT => 18,
-            self::PRINTING_AND_GRAPHIC_ARTS => 19,
-            self::PROCUREMENT_MANAGEMENT_UNIT => 20,
-            self::SCIENCE_TECHNOLOGY => 21,
-            self::TOURISM_AND_HOSPITALITY => 22,
+            self::CHEMICAL_TECHNOLOGY => 5,
+            self::CIVIL_ENGINEERING => 6,
+            self::CLINIC => 7,
+            self::CONSTRUCTION_ENGINEERING => 8,
+            self::DEAN_OF_STUDENTS => 9,
+            self::ELECTRICAL_ENGINEERING => 10,
+            self::EXECUTIVE => 11,
+            self::FINANCE => 12,
+            self::HUMAN_RESOURCES => 13,
+            self::INFORMATION_COMMUNICATION_TECHNOLOGY => 14,
+            self::IT_UNIT => 15,
+            self::LIBRARY_AND_INFORMATION_SCIENCES => 16,
+            self::MASS_COMMUNICATION => 17,
+            self::MECHANICAL_AND_PRODUCTION_ENGINEERING => 18,
+            self::OFFICE_MANAGEMENT => 19,
+            self::PRINTING_AND_GRAPHIC_ARTS => 20,
+            self::PROCUREMENT_MANAGEMENT_UNIT => 21,
+            self::SCIENCE_TECHNOLOGY => 22,
+            self::TOURISM_AND_HOSPITALITY => 23,
         };
     }
 
