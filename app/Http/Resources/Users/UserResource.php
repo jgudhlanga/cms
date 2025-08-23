@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\Users;
 
+use App\Http\Resources\Acl\RoleResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -41,11 +42,17 @@ class UserResource extends JsonResource
                 "avatarUrl" => $this?->avatarUrl,
                 "hasStudentProfile" => $this->has_student_profile,
                 "hasProgram" => $this->studentProfile?->has_program,
+                "hasStaffProfile" => $this->has_staff_profile,
+                "staffId" => $this->staffProfile?->id,
+                "staffDepartmentIds" => $this->staffProfile?->institutionDepartments->pluck('id'),
                 $this->mergeWhen($request->routeIs('users.*'), [
                     'createdAt' => $this->created_at,
                     'updatedAt' => $this->updated_at,
                     'deletedAt' => $this->deleted_at,
                 ]),
+            ],
+            'relationships' => [
+                'roles' => RoleResource::collection($this->whenLoaded('roles')),
             ]
         ];
     }

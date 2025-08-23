@@ -6,10 +6,12 @@ import { buildFormOptions } from '@/lib/forms';
 import { hasAbility } from '@/lib/permissions';
 import { getIdParams } from '@/lib/utils';
 import HttpService from '@/services/http.service';
+import { PageProps } from '@/types';
+import { Role } from '@/types/acl';
 import { DepartmentApplicationStep } from '@/types/department-meta-data';
 import { BulkApplicationApprovalParams, Enrolment, PaymentProofPreview } from '@/types/enrolments';
 import { StudentProgram } from '@/types/students';
-import { InertiaForm, router } from '@inertiajs/vue3';
+import { InertiaForm, router, usePage } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 
 export const useStudentApplications = () => {
@@ -238,6 +240,24 @@ export const useStudentApplications = () => {
         return false;
     };
 
+    const canApproveWorkflowStepApplications = (step: DepartmentApplicationStep): boolean => {
+        const { user } = usePage<PageProps>().props?.auth;
+        if (!user) {
+            return false; // no user means no approval rights
+        }
+        // super roles always have access
+        /*const roles = user.relationships?.roles ?? [];
+        if (roles.some((role: Role) => ['super-user', 'super-administrator'].includes(role.attributes.slug))) {
+            return true;
+        }*/
+        // get user role IDs (normalize to number, filter out null/undefined)
+        const userRoleIds = user?.relationships?.roles?.map((role: Role) => Number(role.id)) ?? [];
+
+        // normalize step role IDs to number (filter out null/undefined)
+        const stepRoleIds = (step?.relationships?.metadata?.roleIds ?? []).filter((id): id is string => id != null).map((id) => Number(id));
+        return userRoleIds.some((roleId: any) => stepRoleIds.includes(roleId));
+    };
+
     return {
         createStudentApplicationColumns,
         allowed,
@@ -256,5 +276,6 @@ export const useStudentApplications = () => {
         allProofOfPaymentUploaded,
         awaitApplicationPaymentProof,
         awaitTuitionPaymentProof,
+        canApproveWorkflowStepApplications,
     };
 };

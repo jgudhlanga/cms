@@ -4,11 +4,11 @@ import TextLink from '@/components/core/util/TextLink.vue';
 import { useUtils } from '@/composables/core/useUtils';
 import { useStudentApplications } from '@/composables/students/useStudentApplications';
 import ApplicationFeePaymentStatus from '@/pages/institution/enrolments/ApplicationFeePaymentStatus.vue';
+import PaymentProofPreviewButton from '@/pages/institution/enrolments/PaymentProofPreviewButton.vue';
 import TuitionFeePaymentStatus from '@/pages/institution/enrolments/TuitionFeePaymentStatus.vue';
 import { DepartmentApplicationStep, DepartmentLevel } from '@/types/department-meta-data';
 import { AcademicOLevelResult, Enrolment } from '@/types/enrolments';
 import { computed } from 'vue';
-import PaymentProofPreviewButton from '@/pages/institution/enrolments/PaymentProofPreviewButton.vue';
 
 interface Props {
     level: DepartmentLevel;
@@ -21,7 +21,7 @@ const props = defineProps<Props>();
 
 const { level } = props;
 const { formatDate } = useUtils();
-const { approveApplication, applicationFeePaymentRequired, tuitionFeePaymentRequired } = useStudentApplications();
+const { approveApplication, applicationFeePaymentRequired, tuitionFeePaymentRequired, canApproveWorkflowStepApplications } = useStudentApplications();
 
 const levelRequirements = computed(() => {
     return level?.relationships?.requirement;
@@ -133,7 +133,7 @@ const buttonOptions = (enrolment: Enrolment) => {
                     </span>
                 </td>
                 <td class="j-td text-center">
-                    <EclipseButton :options="buttonOptions(enrolment)" :show-only-icon="true" />
+                    <EclipseButton :disabled="!canApproveWorkflowStepApplications(step)" :options="buttonOptions(enrolment)" :show-only-icon="true" />
                 </td>
             </tr>
         </tbody>

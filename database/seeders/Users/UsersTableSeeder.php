@@ -16,7 +16,7 @@ class UsersTableSeeder extends Seeder
         $sdu = User::create([
             'first_name' => 'Super',
             'middle_name' => '',
-            'last_name' => 'Administrator',
+            'last_name' => 'User',
             'email' => 'penstejdevelopers@gmail.com',
             'tenant_id' => TenantEnum::HARARE_POLY->id(),
             "phone_number" => "0788104809",
@@ -24,6 +24,6 @@ class UsersTableSeeder extends Seeder
             'status_id' => StatusEnum::ACTIVE->id(),
             'email_verified_at' => now(),
         ]);
-        $sdu->assignRole(RoleEnum::SUPER_ADMINISTRATOR->name());
+        $sdu->assignRole(RoleEnum::SUPER_USER->name());
     }
 }

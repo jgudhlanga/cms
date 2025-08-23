@@ -3,6 +3,7 @@
 namespace App\Models\Users;
 
 use App\Http\Filters\Users\UserFilter;
+use App\Models\Institution\Staff;
 use App\Models\Shared\Status;
 use App\Models\Students\Student;
 use App\Traits\Filterable;
@@ -68,6 +69,16 @@ class User extends Authenticatable implements MustVerifyEmail, HasMedia
         return Attribute::get(fn() => $this->studentProfile()->exists());
     }
 
+    public function staffProfile(): HasOne|User
+    {
+        return $this->hasOne(Staff::class);
+    }
+
+    public function hasStaffProfile(): Attribute
+    {
+        return Attribute::get(fn() => $this->staffProfile()->exists());
+    }
+
     public function getFullNameAttribute(): string
     {
         $nameParts = array_filter([
@@ -81,18 +92,7 @@ class User extends Authenticatable implements MustVerifyEmail, HasMedia
 
     public function registerMediaCollections(): void
     {
-        $this->addMediaCollection('avatar')
-            ->singleFile()
-            ->registerMediaConversions(function (Media $media) {
-                $this->addMediaConversion('card')
-                    ->width(400)
-                    ->height(500)
-                    ->nonQueued();
-                $this->addMediaConversion('thumb')
-                    ->width(120)
-                    ->height(120)
-                    ->nonQueued();
-            });
+        $this->addMediaCollection('user-avatar')->singleFile();
     }
 
     public function avatar(): HasOne

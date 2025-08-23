@@ -35,7 +35,7 @@ const props = defineProps<Props>();
 const { department, level, enrolments, intakePeriod } = props;
 const {isItTrue} = useUtils();
 
-const { bulkApproveApplication } = useStudentApplications();
+const { bulkApproveApplication, canApproveWorkflowStepApplications } = useStudentApplications();
 
 const breadcrumbs: Array<Link> = [
     { transChoiceKey: 'institution', transChoiceKeyIndex: 1, href: route('institution.index') },
@@ -138,6 +138,7 @@ const buttonOptions = (currentStepName: string, enrolments: Enrolment[]) => {
                             </template>
                         </div>
                         <EclipseButton
+                            :disabled="!canApproveWorkflowStepApplications(getCurrentStep(step)!)"
                             :options="buttonOptions(step, enrolmentsInStep)"
                             :group-title="$t('trans.send_all_applications_to')"
                             :show-group-icon="true"
