@@ -9,19 +9,32 @@ import { debounce } from 'lodash';
 import { computed, onMounted } from 'vue';
 
 interface Props {
-    form: InertiaForm<any>;
-    labelUppercase?: boolean;
-    isRequired?: boolean;
+    data?: ModeOfStudy[];
+    form?: InertiaForm<any>;
 }
 
 const { isLoading, listModesOfStudy, modesOfStudy } = useModeOfStudy();
 const props = defineProps<Props>();
 
 onMounted(async () => {
-    await listModesOfStudy();
+    if (props.data) {
+        return;
+    } else {
+        await listModesOfStudy();
+    }
 });
 
 const options = computed(() => {
+    if (props.data && props.data.length) {
+        return props.data.map(
+            (mode: ModeOfStudy) =>
+                <SelectOption>{
+                    value: Number(mode.id),
+                    label: mode?.attributes?.name,
+                },
+        );
+    } else {
+    }
     return modesOfStudy.value.map(
         (mode: ModeOfStudy) =>
             <SelectOption>{
@@ -32,8 +45,12 @@ const options = computed(() => {
 });
 
 const whenSearch = debounce(async (search: string) => {
-    clearFormErrors(props.form, 'modeOfStudy');
-    await listModesOfStudy(search);
+    if (props.form) {
+        clearFormErrors(props.form, 'modeOfStudy');
+    }
+    if (!props.data?.length) {
+        await listModesOfStudy(search);
+    }
 }, 600);
 </script>
 
@@ -43,8 +60,6 @@ const whenSearch = debounce(async (search: string) => {
         :options="options"
         :on-search="async (search: string) => await whenSearch(search)"
         :is-loading="isLoading"
-        :label-uppercase="labelUppercase"
         v-bind="$attrs"
-        :is-required="isRequired"
     />
 </template>

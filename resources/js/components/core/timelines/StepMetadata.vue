@@ -18,11 +18,11 @@ const styles = 'font-extralight';
 <template>
     <div class="mt-4 flex justify-between">
         <div class="flex flex-col space-y-2">
-            <div class="flex items-center space-x-2 text-xs">
+<!--            <div class="flex items-center space-x-2 text-xs">
                 <component :is="icons[IconName.user]" class="size-4" />
                 <BaseText :variant="ColorVariant.shade" :title="$tChoice('trans.staff', 1)" :classes="styles" />
-                <div>{{ step?.relationships?.metadata?.staff?.join(', ') || '---' }}</div>
-            </div>
+                <div>{{ step?.relationships?.metadata?.staff?.join(', ') || '-&#45;&#45;' }}</div>
+            </div>-->
             <div class="flex items-center space-x-2 text-xs">
                 <component :is="icons[IconName.shield]" class="size-4" />
                 <BaseText :variant="ColorVariant.shade" :title="$tChoice('trans.role', 2)" :classes="styles" />

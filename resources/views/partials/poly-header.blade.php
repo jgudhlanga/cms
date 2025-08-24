@@ -28,5 +28,5 @@
         {{-- Right Logo --}}
         <img src="{{ url('assets/images/logo.jpeg') }}" alt="Right Logo" class="h-16 w-auto">
     </div>
-    <div class="flex w-full my-1 h-[1px] bg-primary"></div>
+    <div class="flex w-full my-3 h-[1px] bg-primary"></div>
 </header>

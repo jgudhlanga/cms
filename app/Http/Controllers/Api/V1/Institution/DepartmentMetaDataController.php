@@ -49,19 +49,26 @@ class DepartmentMetaDataController extends Controller
 
     public function classSizes(InstitutionDepartment $institutionDepartment): AnonymousResourceCollection
     {
-        $intakePeriodId = request('intake_period');
-        $filteredClassSizes = $intakePeriodId ? $institutionDepartment->intakeClassSizes->where('intake_period_id', $intakePeriodId) : $institutionDepartment->intakeClassSizes;
+        $filteredClassSizes = $institutionDepartment->intakeClassSizes
+            ->when(request('intake_period'), function ($query, $intakePeriodId) {
+                return $query->where('intake_period_id', $intakePeriodId);
+            })
+            ->when(request('mode_of_study'), function ($query, $modeOfStudyId) {
+                return $query->where('mode_of_study_id', $modeOfStudyId);
+            });
         return IntakePeriodClassSizeResource::collection($filteredClassSizes);
     }
 
     public function departmentEnrolments(InstitutionDepartment $institutionDepartment): JsonResponse
     {
-        $intakePeriodId = request('intake_period');
+        $intakePeriodId = request('intake_period_id');
+        $modeOfStudyId = request('mode_of_study_id');
 
         // Eager-load relationships to avoid N+1
         $enrolments = $institutionDepartment->enrolments()
             ->with(['departmentCourse', 'departmentLevel.level'])
             ->when($intakePeriodId, fn($q) => $q->where('intake_period_id', $intakePeriodId))
+            ->when($modeOfStudyId, fn($q) => $q->where('mode_of_study_id', $modeOfStudyId))
             ->get();
 
         // Group by department_course_id

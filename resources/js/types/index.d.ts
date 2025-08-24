@@ -34,3 +34,13 @@ declare module '@vue/runtime-core' {
         $tChoice: typeof trans_choice;
     }
 }
+
+// shims-wangeditor.d.ts (in your src/ or types/ folder)
+declare module '@wangeditor/editor-for-vue' {
+    import Editor from '@wangeditor/editor-for-vue/dist/src/index'
+    export * from '@wangeditor/editor-for-vue/dist/src/index'
+    export default Editor
+}
+
+// shims-wangeditor.d.ts
+declare module '@wangeditor/editor-for-vue';

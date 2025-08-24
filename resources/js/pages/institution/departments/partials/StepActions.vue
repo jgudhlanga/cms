@@ -58,13 +58,13 @@ const { syncWorkflowStepActionMetadata } = useDepartmentWorkflows();
         :size="SizeVariant.full"
     >
         <template #body>
-            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div class="grid grid-cols-1 gap-4">
                 <BaseCard :title="$tChoice('trans.role', 2)" :description="$t('trans.step_role_description')">
                     <template v-if="rolesLoading">
                         <SpinnerComponent class="flex w-full" />
                     </template>
                     <template v-else>
-                        <div class="grid grid-cols-1 gap-x-3 md:grid-cols-3">
+                        <div class="grid grid-cols-1 gap-x-3 md:grid-cols-4">
                             <div class="flex items-center space-x-1" v-for="role in roles?.data" :key="`role_key_${role['id']}`">
                                 <BaseCheckbox
                                     :input-id="`role_id_${role['id']}`"
@@ -76,7 +76,7 @@ const { syncWorkflowStepActionMetadata } = useDepartmentWorkflows();
                         </div>
                     </template>
                 </BaseCard>
-                <BaseCard :title="$tChoice('trans.staff', 2)" :description="$t('trans.step_user_description')">
+<!--                <BaseCard :title="$tChoice('trans.staff', 2)" :description="$t('trans.step_user_description')">
                     <template v-if="rolesLoading">
                         <SpinnerComponent class="flex w-full" />
                     </template>
@@ -91,7 +91,7 @@ const { syncWorkflowStepActionMetadata } = useDepartmentWorkflows();
                             />
                         </div>
                     </template>
-                </BaseCard>
+                </BaseCard>-->
                 <BaseCard class="col-span-2" :title="$tChoice('trans.action', 2)" :description="$t('trans.step_action_description')">
                     <template v-if="actionsLoading">
                         <SpinnerComponent class="flex w-full" />

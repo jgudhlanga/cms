@@ -8,7 +8,7 @@ enum WorkflowStepActionEnum: string
     case GENERATE_STUDENT_NUMBER = 'generate_student_number';
     case SEND_EMAIL_TO_STAFF = 'send_email_to_staff';
     case CREATE_PAYMENT_LINK = 'create_payment_link';
-    case REQUEST_DOCUMENTS = 'request_documents';
+    case UPLOAD_DOCUMENTS = 'upload_documents';
     case VERIFY_APPLICATION_FEE_PAYMENT_WITH_ACCOUNTS = 'verify_application_fee_payment_with_accounts';
     case VERIFY_TUITION_FEE_PAYMENT_WITH_ACCOUNTS = 'verify_tuition_fee_payment_with_accounts';
     case GENERATE_OFFER_LETTER = 'generate_offer_letter';
@@ -24,7 +24,7 @@ enum WorkflowStepActionEnum: string
             self::GENERATE_STUDENT_NUMBER => 'Generate Student Number',
             self::SEND_EMAIL_TO_STAFF => 'Send Email To Staff',
             self::CREATE_PAYMENT_LINK => 'Create Payment Link',
-            self::REQUEST_DOCUMENTS => 'Request Documents',
+            self::UPLOAD_DOCUMENTS => 'Upload Documents',
             self::UPLOAD_PROOF_OF_PAYMENT => 'Upload Proof Of Payment',
             self::GENERATE_OFFER_LETTER => 'Generate Offer Letter',
             self::ACCEPT_OFFER => 'Accept Offer',

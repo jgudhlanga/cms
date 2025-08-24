@@ -21,8 +21,8 @@ class RolesTableSeeder extends Seeder
                         'role_group_id' => $this->getGroupId($row->group()),
                         'description' => $row->description()
                     ]);
-                if ($role->name == RoleEnum::SUPER_ADMINISTRATOR->name()) {
-                    $this->assignSuperAdministratorPermissions($role);
+                if ($role->name == RoleEnum::SUPER_USER->name()) {
+                    $this->assignSuperUserPermissions($role);
                 }
                 if ($role->name == RoleEnum::STUDENT->name()) {
                     $role->givePermissionTo($this->portalPermissions());
@@ -41,7 +41,7 @@ class RolesTableSeeder extends Seeder
         return $roleGroup->id ?? null;
     }
 
-    private function assignSuperAdministratorPermissions($role): void
+    private function assignSuperUserPermissions($role): void
     {
         $excludedPermissions = collect(array_merge(
             $this->portalPermissions(),
