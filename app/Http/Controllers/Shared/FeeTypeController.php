@@ -2,20 +2,20 @@
 
 namespace App\Http\Controllers\Shared;
 
-use App\DTO\Shared\IdTypeDto;
+use App\DTO\Shared\FeeTypeDto;
 use App\Http\Controllers\Controller;
 use App\Http\Filters\Shared\SharedNameFilter;
-use App\Http\Requests\Shared\IdTypeRequest;
-use App\Http\Resources\Shared\IdTypeResource;
-use App\Models\Shared\IdType;
-use App\Repositories\Shared\interface\IIdTypeRepository;
+use App\Http\Requests\Shared\FeeTypeRequest;
+use App\Http\Resources\Shared\FeeTypeResource;
+use App\Models\Shared\FeeType;
+use App\Repositories\Shared\interface\IFeeTypeRepository;
 use Illuminate\Auth\Access\AuthorizationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
-class IdTypeController extends Controller
+class FeeTypeController extends Controller
 {
-	public function __construct(protected IIdTypeRepository $repository)
+	public function __construct(protected IFeeTypeRepository $repository)
 	{
 	}
 
@@ -25,9 +25,9 @@ class IdTypeController extends Controller
     public function index(SharedNameFilter $filters): Response
     {
 		$this->authorize('viewSettings');
-		$idTypes = IdTypeResource::collection($this->repository->allFilter(['*'], $filters));
-		return Inertia::render('shared/idTypes/Index', [
-			'idTypes' => $idTypes,
+		$feeTypes = FeeTypeResource::collection($this->repository->allFilter(['*'], $filters));
+		return Inertia::render('shared/feeTypes/Index', [
+			'feeTypes' => $feeTypes,
 			'filters' => request()->only(['search', 'trashed']),
 			'trashedCount' => $this->repository->allTrashed()->count(),
 		]);
@@ -44,18 +44,18 @@ class IdTypeController extends Controller
     /**
      * @throws AuthorizationException
      */
-    public function store(IdTypeRequest $request): void
+    public function store(FeeTypeRequest $request): void
     {
 		$this->authorize('createSettings');
-		$this->repository->create(IdTypeDto::fromIdTypeRequest($request));
+		$this->repository->create(FeeTypeDto::fromFeeTypeRequest($request));
 	}
 
-	public function show(IdType $idType)
+	public function show(FeeType $feeType)
 	{
 		//
 	}
 
-	public function edit(IdType $idType)
+	public function edit(FeeType $feeType)
 	{
 		//
 	}
@@ -63,19 +63,19 @@ class IdTypeController extends Controller
     /**
      * @throws AuthorizationException
      */
-    public function update(IdTypeRequest $request, IdType $idType): void
+    public function update(FeeTypeRequest $request, FeeType $feeType): void
     {
 		$this->authorize('updateSettings');
-		$this->repository->update($idType, IdTypeDto::fromIdTypeRequest($request));
+		$this->repository->update($feeType, FeeTypeDto::fromFeeTypeRequest($request));
 	}
 
     /**
      * @throws AuthorizationException
      */
-    public function destroy(IdType $idType): void
+    public function destroy(FeeType $feeType): void
     {
 		$this->authorize('deleteSettings');
-		$this->repository->delete($idType);
+		$this->repository->delete($feeType);
 	}
 
     /**
@@ -83,17 +83,17 @@ class IdTypeController extends Controller
      */
     public function restore(string $id): void
     {
-		$idType = $this->repository->findTrashed($id);
+		$feeType = $this->repository->findTrashed($id);
 		$this->authorize('restoreSettings');
-		$this->repository->restore($idType);
+		$this->repository->restore($feeType);
 	}
 
     /**
      * @throws AuthorizationException
      */
-    public function forceDelete(IdType $idType): void
+    public function forceDelete(FeeType $feeType): void
     {
 		$this->authorize('forceDeleteSettings');
-		$this->repository->delete($idType, true);
+		$this->repository->delete($feeType, true);
 	}
 }

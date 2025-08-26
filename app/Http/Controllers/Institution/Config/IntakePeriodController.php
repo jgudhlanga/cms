@@ -22,7 +22,7 @@ class IntakePeriodController extends Controller
     {
         $this->authorize('viewSettings');
         $intakePeriods = IntakePeriodResource::collection($this->repository->allFilter(['*'], $filters));
-        return Inertia::render('institution/config/intakePeriods/Index', [
+        return Inertia::render('institution/dropdowns/intakePeriods/Index', [
             'intakePeriods' => $intakePeriods,
             'filters' => request()->only(['search', 'trashed']),
             'trashedCount' => $this->repository->allTrashed()->count(),

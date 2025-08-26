@@ -13,7 +13,9 @@ use App\Http\Controllers\Shared\AddressTypeController;
 use App\Http\Controllers\Shared\CommunicationMethodController;
 use App\Http\Controllers\Shared\CountryController;
 use App\Http\Controllers\Shared\DistrictController;
+use App\Http\Controllers\Shared\DocumentTypeController;
 use App\Http\Controllers\Shared\EmploymentTypeController;
+use App\Http\Controllers\Shared\FeeTypeController;
 use App\Http\Controllers\Shared\GenderController;
 use App\Http\Controllers\Shared\IdTypeController;
 use App\Http\Controllers\Shared\LanguageController;
@@ -143,4 +145,12 @@ Route::prefix('settings')->middleware('auth')->group(function () {
     Route::put('id-types/{id_type}/restore', [IdTypeController::class, 'restore'])->name('id-types.restore');
     Route::delete('id-types/{id_type}/force-delete', [IdTypeController::class, 'forceDelete'])->name('id-types.force-delete');
     Route::resource('id-types', IdTypeController::class)->names('id-types');
+    # ==================================== DOCUMENT TYPES ======================================================
+    Route::put('document-types/{document_type}/restore', [DocumentTypeController::class, 'restore'])->name('document-types.restore');
+    Route::delete('document-types/{document_type}/force-delete', [DocumentTypeController::class, 'forceDelete'])->name('document-types.force-delete');
+    Route::resource('document-types', DocumentTypeController::class)->names('document-types');
+    # ==================================== FEE TYPES ======================================================
+    Route::put('fee-types/{fee_type}/restore', [FeeTypeController::class, 'restore'])->name('fee-types.restore');
+    Route::delete('fee-types/{fee_type}/force-delete', [FeeTypeController::class, 'forceDelete'])->name('fee-types.force-delete');
+    Route::resource('fee-types', FeeTypeController::class)->names('fee-types');
 });

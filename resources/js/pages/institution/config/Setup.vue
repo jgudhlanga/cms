@@ -21,7 +21,11 @@ const tabs: Array<Link> = [
     },
     {
         transChoiceKey: 'document_template',
-        url: route('intake-periods.index'),
+        url: route('document-templates.index'),
+    },
+    {
+        transChoiceKey: 'fee_levy_structure',
+        url: route('document-templates.index'),
     },
 ];
 const allowed = hasAbility('view:institution-settings');

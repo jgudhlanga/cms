@@ -7,7 +7,9 @@ use App\Http\Controllers\Api\V1\Shared\AcademicLevelController;
 use App\Http\Controllers\Api\V1\Shared\AddressTypeController;
 use App\Http\Controllers\Api\V1\Shared\CountryController;
 use App\Http\Controllers\Api\V1\Shared\DistrictController;
+use App\Http\Controllers\Api\V1\Shared\DocumentTypeController;
 use App\Http\Controllers\Api\V1\Shared\EmploymentTypeController;
+use App\Http\Controllers\Api\V1\Shared\FeeTypeController;
 use App\Http\Controllers\Api\V1\Shared\GenderController;
 use App\Http\Controllers\Api\V1\Shared\GradeController;
 use App\Http\Controllers\Api\V1\Shared\IdTypeController;
@@ -66,4 +68,8 @@ Route::prefix('v1')->group(function () {
     # ==================================== WORKFLOW STEPS ======================================================
     Route::apiResource('workflow-steps', WorkflowStepController::class)->names('v1.workflow-steps');
     Route::apiResource('workflow-step-actions', WorkflowStepActionController::class)->names('v1.workflow-step-actions');
+    # ==================================== DOCUMENT TYPE ======================================================
+    Route::apiResource('document-types', DocumentTypeController::class)->names('v1.document-types');
+    # ==================================== FEE TYPE ======================================================
+    Route::apiResource('fee-types', FeeTypeController::class)->names('v1.fee-types');
 });

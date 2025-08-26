@@ -3,16 +3,14 @@ import { Head } from '@inertiajs/vue3';
 
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import DataTable from '@/components/core/table/DataTable.vue';
-import { useIntakePeriods } from '@/composables/institution/useIntakePeriods';
 import { hasAbility } from '@/lib/permissions';
 import { AuthObject, DataFilters, DataListProps } from '@/types/data-pagination';
-import CreateEdit from './partials/CreateEdit.vue';
 import type { Link } from '@/types/ui';
+import { DocumentTemplate } from '@/types/institution';
 
-const { createIntakePeriodColumns, onOpenModal } = useIntakePeriods();
 
 defineProps<{
-    intakePeriods: DataListProps;
+    documentTemplates: DataListProps<DocumentTemplate>;
     trashedCount: any;
     filters: DataFilters;
     auth: AuthObject;
@@ -21,7 +19,7 @@ defineProps<{
 const breadcrumbs: Array<Link> = [
     { transChoiceKey: 'institution', href: route('institution.index') },
     { transKey: 'config', href: route('institution.setup') },
-    { transChoiceKey: 'intake_period' },
+    { transChoiceKey: 'document_template' },
 ];
 const allowed = hasAbility('create:institution-settings');
 </script>
@@ -29,7 +27,7 @@ const allowed = hasAbility('create:institution-settings');
 <template>
     <Head :title="$tChoice('trans.intake_period', 2)" />
     <PageContainer :breadcrumbs="breadcrumbs">
-        <DataTable
+<!--        <DataTable
             :data="intakePeriods.data"
             :trashed-count="trashedCount"
             :filters="filters"
@@ -39,6 +37,6 @@ const allowed = hasAbility('create:institution-settings');
             :on-create="() => onOpenModal(allowed)"
             :disable-create="!allowed"
         />
-        <CreateEdit />
+        <CreateEdit />-->
     </PageContainer>
 </template>

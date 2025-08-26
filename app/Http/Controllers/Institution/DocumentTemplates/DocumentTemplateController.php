@@ -2,82 +2,103 @@
 
 namespace App\Http\Controllers\Institution\DocumentTemplates;
 
-use App\DTO\Institution\SubjectDto;
+use App\DTO\DocumentTemplates\DocumentTemplateDto;
 use App\Http\Controllers\Controller;
 use App\Http\Filters\Shared\SharedNameFilter;
-use App\Http\Requests\Institution\SubjectRequest;
-use App\Http\Requests\Shared\PositionRequest;
-use App\Http\Resources\Institution\SubjectResource;
-use App\Models\Institution\Subject;
-use App\Repositories\Institution\interface\ISubjectRepository;
+use App\Http\Requests\DocumentTemplates\DocumentTemplateRequest;
+use App\Http\Resources\DocumentTemplates\DocumentTemplateResource;
+use App\Models\Acl\Role;
+use App\Models\Institution\DocumentTemplate;
+use App\Repositories\Institution\interface\IDocumentTemplateRepository;
+use Illuminate\Auth\Access\AuthorizationException;
 use Inertia\Inertia;
+use Inertia\Response;
 
 class DocumentTemplateController extends Controller
 {
-    public function __construct(protected ISubjectRepository $repository)
+    public function __construct(protected IDocumentTemplateRepository $repository)
     {
     }
 
-    public function index(SharedNameFilter $filters)
+    /**
+     * @throws AuthorizationException
+     */
+    public function index(SharedNameFilter $filters): Response
     {
-        $this->authorize('viewSettings');
-        $subjects = SubjectResource::collection($this->repository->allFilter(['*'], $filters));
-        return Inertia::render('institution/dropdowns/subjects/Index', [
-            'subjects' => $subjects,
+        $this->authorize('viewAny', DocumentTemplate::class);
+        $documentTemplates = DocumentTemplateResource::collection($this->repository->allFilter(['*'], $filters));
+        return Inertia::render('institution/document-templates/Index', [
+            'documentTemplates' => $documentTemplates,
             'filters' => request()->only(['search', 'trashed']),
             'trashedCount' => $this->repository->allTrashed()->count(),
         ]);
     }
 
-    public function create()
+    /**
+     * @throws AuthorizationException
+     */
+    public function create(): void
     {
-        $this->authorize('createSettings');
+        $this->authorize('create', DocumentTemplate::class);
     }
 
-    public function store(SubjectRequest $request)
+    /**
+     * @throws AuthorizationException
+     */
+    public function store(DocumentTemplateRequest $request): void
     {
-        $this->authorize('createSettings');
-        $this->repository->create(SubjectDto::fromSubjectRequest($request));
+        $this->authorize('create', DocumentTemplate::class);
+        $this->repository->create(DocumentTemplateDto::fromDocumentTemplateRequest($request));
     }
 
-    public function show(Subject $subject)
+    /**
+     * @throws AuthorizationException
+     */
+    public function show(DocumentTemplate $documentTemplate): void
+    {
+        $this->authorize('view', $documentTemplate);
+        //
+    }
+
+    public function edit(Role $role)
     {
         //
     }
 
-    public function edit(Subject $subject)
+    /**
+     * @throws AuthorizationException
+     */
+    public function update(DocumentTemplateRequest $request, DocumentTemplate $documentTemplate): void
     {
-        //
+        $this->authorize('update', $documentTemplate);
+        $this->repository->update($documentTemplate, DocumentTemplateDto::fromDocumentTemplateRequest($request));
     }
 
-    public function update(SubjectRequest $request, Subject $subject)
+    /**
+     * @throws AuthorizationException
+     */
+    public function destroy(DocumentTemplate $documentTemplate): void
     {
-        $this->authorize('updateInstitutionSettings');
-        $this->repository->update($subject, SubjectDto::fromSubjectRequest($request));
+        $this->authorize('delete', $documentTemplate);
+        $this->repository->delete($documentTemplate);
     }
 
-    public function movePosition(PositionRequest $request, Subject $subject): void
+    /**
+     * @throws AuthorizationException
+     */
+    public function restore(string $id): void
     {
-        $this->authorize('updateInstitutionSettings');
-        $this->repository->movePosition($subject, $request);
+        $documentTemplate = $this->repository->findTrashed($id);
+        $this->authorize('restore', $documentTemplate);
+        $this->repository->restore($documentTemplate);
     }
 
-    public function destroy(Subject $subject)
+    /**
+     * @throws AuthorizationException
+     */
+    public function forceDelete(DocumentTemplate $documentTemplate): void
     {
-        $this->authorize('deleteInstitutionSettings');
-        $this->repository->delete($subject);
-    }
-
-    public function restore(string $id)
-    {
-        $subject = $this->repository->findTrashed($id);
-        $this->authorize('restoreInstitutionSettings');
-        $this->repository->restore($subject);
-    }
-
-    public function forceDelete(Subject $subject)
-    {
-        $this->authorize('forceDeleteInstitutionSettings');
-        $this->repository->delete($subject, true);
+        $this->authorize('forceDelete', $documentTemplate);
+        $this->repository->delete($documentTemplate, true);
     }
 }

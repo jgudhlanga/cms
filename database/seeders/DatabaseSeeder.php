@@ -19,7 +19,9 @@ use Database\Seeders\Shared\AddressTypesTableSeeder;
 use Database\Seeders\Shared\CommunicationMethodSeeder;
 use Database\Seeders\Shared\CountrySeeder;
 use Database\Seeders\Shared\DistrictsTableSeeder;
+use Database\Seeders\Shared\DocumentTypeSeeder;
 use Database\Seeders\Shared\EmploymentTypesSeeder;
+use Database\Seeders\Shared\FeeTypeSeeder;
 use Database\Seeders\Shared\GenderSeeder;
 use Database\Seeders\Shared\IdTypeSeeder;
 use Database\Seeders\Shared\LanguageSeeder;
@@ -82,6 +84,8 @@ class DatabaseSeeder extends Seeder
             ModesOfStudyTableSeeder::class,
             InstitutionDepartmentsTableSeeder::class,
             EmploymentTypesSeeder::class,
+            FeeTypeSeeder::class,
+            DocumentTypeSeeder::class,
         ]);
     }
 }

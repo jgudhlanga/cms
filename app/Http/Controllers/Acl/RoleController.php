@@ -12,8 +12,10 @@ use App\Models\Acl\Permission;
 use App\Models\Acl\Role;
 use App\Repositories\Acl\Interface\IPermissionRepository;
 use App\Repositories\Acl\Interface\IRoleRepository;
+use Illuminate\Auth\Access\AuthorizationException;
 use Inertia\Inertia;
 use App\Http\Filters\Acl\RoleFilter;
+use Inertia\Response;
 
 class RoleController extends Controller
 {
@@ -21,7 +23,10 @@ class RoleController extends Controller
     {
     }
 
-    public function index(RoleFilter $filters)
+    /**
+     * @throws AuthorizationException
+     */
+    public function index(RoleFilter $filters): Response
     {
         $this->authorize('viewAny', Role::class);
         $roles = RoleResource::collection($this->repository->allFilter(['*'], $filters));
@@ -33,18 +38,27 @@ class RoleController extends Controller
         ]);
     }
 
-    public function create()
+    /**
+     * @throws AuthorizationException
+     */
+    public function create(): void
     {
         $this->authorize('create', Role::class);
     }
 
-    public function store(RoleRequest $request)
+    /**
+     * @throws AuthorizationException
+     */
+    public function store(RoleRequest $request): void
     {
         $this->authorize('create', Role::class);
         $this->repository->create(RoleDto::fromRoleRequest($request));
     }
 
-    public function show(Role $role, PermissionFilter $filters)
+    /**
+     * @throws AuthorizationException
+     */
+    public function show(Role $role, PermissionFilter $filters): Response
     {
         $this->authorize('view', $role);
         $permissions = PermissionResource::collection($this->permissionRepository->allFilter(['*'], $filters));
@@ -63,26 +77,38 @@ class RoleController extends Controller
         //
     }
 
-    public function update(RoleRequest $request, Role $role)
+    /**
+     * @throws AuthorizationException
+     */
+    public function update(RoleRequest $request, Role $role): void
     {
-        $this->authorize('create', $role);
+        $this->authorize('update', $role);
         $this->repository->update($role, RoleDto::fromRoleRequest($request));
     }
 
-    public function destroy(Role $role)
+    /**
+     * @throws AuthorizationException
+     */
+    public function destroy(Role $role): void
     {
         $this->authorize('delete', $role);
         $this->repository->delete($role);
     }
 
-    public function restore(string $id)
+    /**
+     * @throws AuthorizationException
+     */
+    public function restore(string $id): void
     {
         $role = $this->repository->findTrashed($id);
         $this->authorize('restore', $role);
         $this->repository->restore($role);
     }
 
-    public function forceDelete(Role $role)
+    /**
+     * @throws AuthorizationException
+     */
+    public function forceDelete(Role $role): void
     {
         $this->authorize('forceDelete', $role);
         $this->repository->delete($role, true);

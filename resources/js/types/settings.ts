@@ -267,3 +267,33 @@ export type IdTypeParams = {
     name: string;
     description?: string;
 };
+export type DocumentType = {
+    type?: string;
+    id?: string;
+    attributes: {
+        name: string;
+        description?: string;
+        createdAt?: string;
+        updatedAt?: string;
+        deletedAt?: string;
+    };
+};
+export type DocumentTypeParams = {
+    name: string;
+    description?: string;
+};
+export type FeeType = {
+    type?: string;
+    id?: string;
+    attributes: {
+        name: string;
+        description?: string;
+        createdAt?: string;
+        updatedAt?: string;
+        deletedAt?: string;
+    };
+};
+export type FeeTypeParams = {
+    name: string;
+    description?: string;
+};

@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('tenant_id')->constrained();
             $table->string('name')->unique();
+            $table->foreignId('document_type_id');
             $table->string('header_line_1')->nullable();
             $table->string('header_line_2')->nullable();
             $table->string('header_address_line_1')->nullable();

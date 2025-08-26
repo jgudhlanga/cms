@@ -23,8 +23,16 @@ export function useSettings() {
             url: route('districts.index'),
         },
         {
+            transChoiceKey: 'document_type',
+            url: route('document-types.index'),
+        },
+        {
             transChoiceKey: 'employment_type',
             url: route('employment-types.index'),
+        },
+        {
+            transChoiceKey: 'fee_type',
+            url: route('fee-types.index'),
         },
         {
             transChoiceKey: 'gender',

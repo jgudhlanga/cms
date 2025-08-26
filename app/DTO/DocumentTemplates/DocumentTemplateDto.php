@@ -15,8 +15,6 @@ readonly class DocumentTemplateDto
         public ? string $header_telephone,
         public ? string $header_email,
         public ? string $header_website,
-        public ? string $header_logo_1,
-        public ? string $header_logo_2,
         public ? string $body,
     )
     {
@@ -33,8 +31,6 @@ readonly class DocumentTemplateDto
             header_telephone: $request->header_telephone,
             header_email: $request->header_email,
             header_website: $request->header_website,
-            header_logo_1: $request->header_logo_1,
-            header_logo_2: $request->header_logo_2,
             body: $request->body,
         );
     }

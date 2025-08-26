@@ -426,5 +426,10 @@ return [
     "no_proof_of_application_fee_payment_uploaded" => "No proof of application fee payment uploaded / found",
     "no_proof_of_tuition_fee_payment_uploaded" => "No proof of tuition fee payment uploaded / found",
     "select_for_all" => "Select once for all",
-    "document_template" => "Document template|Document templates"
+    "document_template" => "Document template|Document templates",
+    "fee" => "Fee|Fees",
+    "levy" => "Levy|Levies",
+    "fee_levy_structure" => "Fee / Levy structure|Fees / Levies structure",
+    "fee_type" => "Fee Type|Fee Types",
+    "document_type" => "Document type|Document types",
 ];
