@@ -98,6 +98,7 @@ enum PermissionEnum: string
     case IMPORT_SETTINGS = 'import:settings';
     case EXPORT_SETTINGS = 'export:settings';
     case VIEW_SETTINGS_AUDIT_TRAIL = 'viewAuditTrail:settings';
+
     /** INSTITUTION SETTINGS */
     case VIEW_INSTITUTION_SETTINGS = 'view:institution-settings';
     case CREATE_INSTITUTION_SETTINGS = 'create:institution-settings';
@@ -119,6 +120,10 @@ enum PermissionEnum: string
     case IMPORT_DEPARTMENT_METADATA = 'import:department-metadata';
     case EXPORT_DEPARTMENT_METADATA = 'export:department-metadata';
     case VIEW_DEPARTMENT_METADATA_AUDIT_TRAIL = 'viewAuditTrail:department-metadata';
+    case SETUP_DEPARTMENT_LEVELS = 'department-setup:levels';
+    case SETUP_DEPARTMENT_COURSES = 'department-setup:courses';
+    case SETUP_DEPARTMENT_CLASS_SIZES = 'department-setup:class-sizes';
+    case SETUP_DEPARTMENT_WORKFLOWS = 'department-setup:workflows';
     /** ROOT / GLOBAL USER */
     case ROOT_MANAGE = 'root:manage';
     /**OWN TENANT DATA MANAGE */
@@ -218,6 +223,18 @@ enum PermissionEnum: string
     case EXPORT_ACCOMMODATIONS = 'export:accommodations';
     case CRUD_ACCOMMODATIONS_SETTINGS = 'crud-settings:accommodations';
     case VIEW_ACCOMMODATIONS_AUDIT_TRAIL = 'viewAuditTrail:accommodations';
+    /** DOCUMENT TEMPLATES */
+    case VIEW_ANY_DOCUMENT_TEMPLATES = 'viewAny:document-templates';
+    case VIEW_DOCUMENT_TEMPLATES = 'view:document-templates';
+    case CREATE_DOCUMENT_TEMPLATES = 'create:document-templates';
+    case UPDATE_DOCUMENT_TEMPLATES = 'update:document-templates';
+    case DELETE_DOCUMENT_TEMPLATES = 'delete:document-templates';
+    case RESTORE_DOCUMENT_TEMPLATES = 'restore:document-templates';
+    case FORCE_DELETE_DOCUMENT_TEMPLATES = 'forceDelete:document-templates';
+    case IMPORT_DOCUMENT_TEMPLATES = 'import:document-templates';
+    case EXPORT_DOCUMENT_TEMPLATES = 'export:document-templates';
+    case CRUD_DOCUMENTS_SETTING_TEMPLATES = 'crud-settings:document-templates';
+    case VIEW_DOCUMENT_TEMPLATES_AUDIT_TRAIL = 'viewAuditTrail:document-templates';
 
     public function label(): string
     {
@@ -337,6 +354,10 @@ enum PermissionEnum: string
             self::IMPORT_DEPARTMENT_METADATA => 'import:department-metadata',
             self::EXPORT_DEPARTMENT_METADATA => 'export:department-metadata',
             self::VIEW_DEPARTMENT_METADATA_AUDIT_TRAIL => 'viewAuditTrail:department-metadata',
+            self::SETUP_DEPARTMENT_LEVELS => 'department-setup:levels',
+            self::SETUP_DEPARTMENT_COURSES => 'department-setup:courses',
+            self::SETUP_DEPARTMENT_CLASS_SIZES => 'department-setup:class-sizes',
+            self::SETUP_DEPARTMENT_WORKFLOWS => 'department-setup:workflows',
             /** ROOT */
             self::ROOT_MANAGE => 'root:manage',
             self::MANAGE_OWN_TENANT_DATA => 'manageOwnData:tenants',
@@ -435,6 +456,18 @@ enum PermissionEnum: string
             self::EXPORT_ACCOMMODATIONS => 'export:accommodations',
             self::CRUD_ACCOMMODATIONS_SETTINGS => 'crud-settings:accommodations',
             self::VIEW_ACCOMMODATIONS_AUDIT_TRAIL => 'viewAuditTrail:accommodations',
+            /** DOCUMENT TEMPLATES */
+            self::VIEW_ANY_DOCUMENT_TEMPLATES => 'viewAny:document-templates',
+            self::VIEW_DOCUMENT_TEMPLATES => 'view:document-templates',
+            self::CREATE_DOCUMENT_TEMPLATES => 'create:document-templates',
+            self::UPDATE_DOCUMENT_TEMPLATES => 'update:document-templates',
+            self::DELETE_DOCUMENT_TEMPLATES => 'delete:document-templates',
+            self::RESTORE_DOCUMENT_TEMPLATES => 'restore:document-templates',
+            self::FORCE_DELETE_DOCUMENT_TEMPLATES => 'forceDelete:document-templates',
+            self::IMPORT_DOCUMENT_TEMPLATES => 'import:document-templates',
+            self::EXPORT_DOCUMENT_TEMPLATES => 'export:document-templates',
+            self::CRUD_DOCUMENTS_SETTING_TEMPLATES => 'crud-settings:document-templates',
+            self::VIEW_DOCUMENT_TEMPLATES_AUDIT_TRAIL => 'viewAuditTrail:document-templates',
         };
     }
 

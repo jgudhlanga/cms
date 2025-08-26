@@ -26,7 +26,7 @@ class InstitutionDepartment extends Model
 {
     use HasFactory, SoftDeletes, Filterable, BelongsToTenant, Paginatable, LogsActivity;
 
-    protected $fillable = ['tenant_id', 'department_id', 'description'];
+    protected $fillable = ['tenant_id', 'department_id', 'description', 'department_code'];
 
     public function department(): BelongsTo
     {

@@ -24,6 +24,7 @@ export type Student = {
         countryId?: string | number;
         country?: string;
         studentPermitNumber?: string;
+        requiredExamSittingCount: string | number;
         dateOfBirth?: string;
         religionId?: string | number;
         religion?: string;
@@ -124,6 +125,9 @@ export type StudentProgram = {
         departmentLevelId: string | number;
         departmentCourseId: string | number;
         applicationTrackingNumber: string;
+        modeOfStudyId: string | number;
+        modeOfStudy: string;
+        applicationFeeProofOfPaymentUrl?: string;
         createdAt?: string;
         updatedAt?: string;
         deletedAt?: string;

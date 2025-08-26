@@ -1,4 +1,5 @@
 import { Subject } from '@/types/institution';
+import { SelectOption } from '@/types/utils';
 
 export type DepartmentLevel = {
     type?: string;
@@ -118,6 +119,7 @@ export type DepartmentApplicationStep = {
         institutionDepartmentId: string | number;
         workflowStepId: string | number;
         workflowStep: string;
+        slug: string;
         workflowStepDescription?: string;
         position: number;
         createdAt?: string;
@@ -162,6 +164,9 @@ export type ClassSizeEntry = {
 
 export type DepartmentIntakeClassSizeParams = {
     intake_period_id: string | number | null;
+    intakePeriod: SelectOption | null|undefined;
+    mode_of_study_id: string | number | null;
+    modeOfStudy: SelectOption | null| undefined;
     class_sizes: ClassSizeEntry[];
 };
 export type DepartmentIntakeClassSize = {
@@ -173,11 +178,12 @@ export type DepartmentIntakeClassSize = {
         departmentLevelId: string | number;
         classSize: number | null;
         intakePeriodId: string | number | null;
+        modeOfStudyId: string | number | null;
         enrolmentsCount: string | number | null;
     };
 };
 export type DepartmentEnrolmentCount = {
-    institutionDepartmentId: string | number ;
+    institutionDepartmentId: string | number;
     departmentCourseId: string | number;
     courseName: string;
     levels: [

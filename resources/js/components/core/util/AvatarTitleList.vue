@@ -5,6 +5,7 @@ import ItemTitle from '@/components/core/util/ItemTitle.vue';
 import Avatar from './Avatar.vue';
 
 defineProps<{ tabs: Array<any> | null | undefined }>();
+
 </script>
 
 <template>

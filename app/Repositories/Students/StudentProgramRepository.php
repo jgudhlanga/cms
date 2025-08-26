@@ -6,6 +6,7 @@ use App\DTO\Students\StudentProgramDto;
 use App\Http\Filters\Students\StudentProgramFilter;
 use App\Models\Students\StudentProgram;
 use App\Repositories\Base\BaseRepository;
+use Illuminate\Database\Eloquent\Model;
 
 class StudentProgramRepository extends BaseRepository implements interface\IStudentProgramRepository
 {
@@ -17,7 +18,7 @@ class StudentProgramRepository extends BaseRepository implements interface\IStud
         parent::__construct($this->studentProgram);
     }
 
-    public function create(StudentProgramDto $dto)
+    public function create(StudentProgramDto $dto): Model
     {
         return $this->studentProgram->create($this->getFields($dto))->refresh();
     }
@@ -42,6 +43,7 @@ class StudentProgramRepository extends BaseRepository implements interface\IStud
     {
         return [
             'student_id' => $dto->student_id,
+            'mode_of_study_id' => $dto->mode_of_study_id,
             'institution_department_id' => $dto->institution_department_id,
             'department_level_id' => $dto->department_level_id,
             'department_course_id' => $dto->department_course_id,

@@ -25,6 +25,7 @@ import {
 import { trans } from 'laravel-vue-i18n';
 import { debounce } from 'lodash';
 import { h, Ref, ref } from 'vue';
+import TextEditLink from '@/components/core/util/TextEditLink.vue';
 
 /**
  * Provides a set of utilities for managing data tables. This includes
@@ -347,6 +348,10 @@ export function useDataTables() {
         return h(TextLink, { href }, () => title);
     };
 
+    const textEditLink = (title: string, onEdit: () => void) => {
+        return h(TextEditLink, { title: title, onEdit: onEdit });
+    };
+
     /**
      * Open a view route if the user has the necessary permissions.
      * Otherwise, it will show a forbidden alert.
@@ -464,5 +469,6 @@ export function useDataTables() {
         avatar,
         orderButtons,
         tag,
+        textEditLink,
     };
 }

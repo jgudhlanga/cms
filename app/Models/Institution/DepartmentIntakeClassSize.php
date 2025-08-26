@@ -25,7 +25,8 @@ class DepartmentIntakeClassSize extends Model
         'department_course_id',
         'department_level_id',
         'class_size',
-        'intake_period_id'
+        'intake_period_id',
+        'mode_of_study_id',
     ];
 
     public function departmentCourse(): BelongsTo
@@ -46,6 +47,11 @@ class DepartmentIntakeClassSize extends Model
     public function intakePeriod(): BelongsTo
     {
         return $this->belongsTo(IntakePeriod::class, 'intake_period_id');
+    }
+
+    public function modelOfStudy(): BelongsTo
+    {
+        return $this->belongsTo(ModeOfStudy::class, 'mode_of_study_id');
     }
 
     public function getActivitylogOptions(): LogOptions

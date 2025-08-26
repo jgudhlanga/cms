@@ -1,3 +1,5 @@
+import { Role } from '@/types/acl';
+
 export interface User {
     type: string;
     id: string | number;
@@ -17,8 +19,14 @@ export interface User {
         lastLoginAt?: string;
         hasStudentProfile?: boolean;
         hasProgram?: boolean;
+        hasStaffProfile?: boolean;
+        staffId?: string | number;
+        staffDepartmentIds?: string[] | number[] | null;
         createdAt: string;
         updatedAt: string;
         deletedAt: string;
+    };
+    relationships: {
+        roles: Role[];
     };
 }

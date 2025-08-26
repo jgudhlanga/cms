@@ -11,7 +11,7 @@ const breadcrumbs: Array<Link> = [
         transChoiceKey: 'institution',
         href: route('institution.index'),
     },
-    { transKey: 'portal_setup' },
+    { transKey: 'institution_setup' },
 ];
 
 const tabs: Array<Link> = [
@@ -19,12 +19,20 @@ const tabs: Array<Link> = [
         transChoiceKey: 'intake_period',
         url: route('intake-periods.index'),
     },
+    {
+        transChoiceKey: 'document_template',
+        url: route('document-templates.index'),
+    },
+    {
+        transChoiceKey: 'fee_levy_structure',
+        url: route('document-templates.index'),
+    },
 ];
 const allowed = hasAbility('view:institution-settings');
 </script>
 
 <template>
-    <Head :title="$t('trans.portal_setup')" />
+    <Head :title="$t('trans.institution_setup')" />
     <PageContainer :breadcrumbs="breadcrumbs">
         <template v-if="allowed">
             <AvatarTitleList :tabs="tabs" />

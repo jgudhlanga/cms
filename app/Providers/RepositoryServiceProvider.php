@@ -16,6 +16,7 @@ use App\Repositories\Institution\DepartmentCourseRepository;
 use App\Repositories\Institution\DepartmentLevelRepository;
 use App\Repositories\Institution\DepartmentRepository;
 use App\Repositories\Institution\DivisionRepository;
+use App\Repositories\Institution\DocumentTemplateRepository;
 use App\Repositories\Institution\GradeRepository;
 use App\Repositories\Institution\InstitutionDepartmentRepository;
 use App\Repositories\Institution\IntakePeriodRepository;
@@ -25,6 +26,7 @@ use App\Repositories\Institution\interface\IDepartmentCourseRepository;
 use App\Repositories\Institution\interface\IDepartmentLevelRepository;
 use App\Repositories\Institution\interface\IDepartmentRepository;
 use App\Repositories\Institution\interface\IDivisionRepository;
+use App\Repositories\Institution\interface\IDocumentTemplateRepository;
 use App\Repositories\Institution\interface\IGradeRepository;
 use App\Repositories\Institution\interface\IInstitutionDepartmentRepository;
 use App\Repositories\Institution\interface\IIntakePeriodRepository;
@@ -43,7 +45,9 @@ use App\Repositories\Shared\CommunicationMethodRepository;
 use App\Repositories\Shared\ContactRepository;
 use App\Repositories\Shared\CountryRepository;
 use App\Repositories\Shared\DistrictRepository;
+use App\Repositories\Shared\DocumentTypeRepository;
 use App\Repositories\Shared\EmploymentTypeRepository;
+use App\Repositories\Shared\FeeTypeRepository;
 use App\Repositories\Shared\GenderRepository;
 use App\Repositories\Shared\IdTypeRepository;
 use App\Repositories\Shared\interface\IAcademicLevelRepository;
@@ -53,7 +57,9 @@ use App\Repositories\Shared\interface\ICommunicationMethodRepository;
 use App\Repositories\Shared\interface\IContactRepository;
 use App\Repositories\Shared\interface\ICountryRepository;
 use App\Repositories\Shared\interface\IDistrictRepository;
+use App\Repositories\Shared\interface\IDocumentTypeRepository;
 use App\Repositories\Shared\interface\IEmploymentTypeRepository;
+use App\Repositories\Shared\interface\IFeeTypeRepository;
 use App\Repositories\Shared\interface\IGenderRepository;
 use App\Repositories\Shared\interface\IIdTypeRepository;
 use App\Repositories\Shared\interface\ILanguageRepository;
@@ -150,6 +156,8 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(IWorkflowStepActionRepository::class, WorkflowStepActionRepository::class);
         $this->app->bind(IEmploymentTypeRepository::class, EmploymentTypeRepository::class);
         $this->app->bind(IIdTypeRepository::class, IdTypeRepository::class);
+        $this->app->bind(IDocumentTypeRepository::class, DocumentTypeRepository::class);
+        $this->app->bind(IFeeTypeRepository::class, FeeTypeRepository::class);
     }
 
     private function paymentsRepositories(): void
@@ -181,6 +189,7 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(IDepartmentApplicationStepRepository::class, DepartmentApplicationStepRepository::class);
         $this->app->bind(IIntakePeriodRepository::class, IntakePeriodRepository::class);
         $this->app->bind(IStaffRepository::class, StaffRepository::class);
+        $this->app->bind(IDocumentTemplateRepository::class, DocumentTemplateRepository::class);
     }
 
     public function userRepositories(): void

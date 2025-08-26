@@ -25,6 +25,7 @@ class IntakePeriodClassSizeRequest extends FormRequest
     {
         return [
             'intake_period_id' => ['required', 'exists:intake_periods,id'],
+            'mode_of_study_id' => ['required', 'exists:mode_of_studies,id'],
             'class_sizes' => ['required', 'array'],
             'class_sizes.*.department_course_id' => 'required|exists:department_courses,id',
             'class_sizes.*.department_level_id' => 'required|exists:department_levels,id',

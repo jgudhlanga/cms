@@ -21,6 +21,7 @@ import { CreateApplicationParams } from '@/types/portal';
 // Utilities
 import { BaseButton, IconButton } from '@/components/core/button';
 import AppLogo from '@/components/core/image/AppLogo.vue';
+import BaseTooltip from '@/components/core/util/BaseTooltip.vue';
 import CustomSeparator from '@/components/core/util/CustomSeparator.vue';
 import Heading from '@/components/core/util/Heading.vue';
 import TextLink from '@/components/core/util/TextLink.vue';
@@ -29,10 +30,9 @@ import { useApplicationFormHelper } from '@/composables/students/useApplicationF
 import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
 import { IconName } from '@/enums/icons';
-import { errorAlert } from '@/lib/alerts';
+import { errorAlert, warningDialog } from '@/lib/alerts';
 import { useForm } from '@inertiajs/vue3';
 import { storeToRefs } from 'pinia';
-import BaseTooltip from '@/components/core/util/BaseTooltip.vue';
 
 // Props
 interface Props {
@@ -87,6 +87,8 @@ const form = useForm<CreateApplicationParams>({
     relationship: null,
     relationship_id: null,
     study_permit_number: '',
+    modeOfStudy: null,
+    mode_of_study_id: null,
     department: null,
     department_id: null,
     course: null,
@@ -168,7 +170,7 @@ const save = async () => {
 </script>
 <template>
     <nav class="fixed top-0 right-0 left-0 z-50 w-full bg-white px-10 shadow">
-        <div class="flex w-full items-center justify-between space-x-5 py-3 md:mx-auto md:w-6/8">
+        <div class="flex w-full items-center justify-between space-x-5 py-3 md:mx-auto md:w-7/8">
             <div class="flex size-8 items-center justify-start rounded-sm border">
                 <AppLogo class="shrink-0" />
             </div>
@@ -184,7 +186,7 @@ const save = async () => {
     </nav>
     <form @submit.prevent="() => save()">
         <div class="mt-20 flex w-full flex-col px-10 md:p-0">
-            <div class="flex w-full flex-col md:mx-auto md:w-6/8">
+            <div class="flex w-full flex-col md:mx-auto md:w-7/8">
                 <div class="flex flex-col items-center justify-center">
                     <p class="text-muted-foreground text-sm font-semibold">-- {{ $t('trans.application_form_description') }} --</p>
                     <CustomSeparator classes="w-full md:w-1/2 mt-4" />

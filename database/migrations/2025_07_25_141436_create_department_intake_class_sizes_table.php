@@ -17,6 +17,7 @@ return new class extends Migration {
             $table->foreignId('institution_department_id')->constrained();
             $table->foreignId('department_course_id')->constrained();
             $table->foreignId('department_level_id')->constrained();
+            $table->foreignId('mode_of_study_id')->constrained();
             $table->bigInteger('class_size')->default(0);
             $table->timestamps();
             $table->softDeletes();

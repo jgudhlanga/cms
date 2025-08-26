@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Institution\Departments;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Institution\IntakePeriodClassSizeRequest;
 use App\Models\Institution\InstitutionDepartment;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -28,7 +29,7 @@ class DepartmentClassSizeController extends Controller
     /**
      * @throws Throwable
      */
-    public function store(InstitutionDepartment $institutionDepartment, IntakePeriodClassSizeRequest $request)
+    public function store(InstitutionDepartment $institutionDepartment, IntakePeriodClassSizeRequest $request): RedirectResponse
     {
         DB::beginTransaction();
         try {
@@ -37,6 +38,7 @@ class DepartmentClassSizeController extends Controller
                     'tenant_id' => auth()->user()->tenant_id,
                     'institution_department_id' => $institutionDepartment->id,
                     'intake_period_id' => $request->intake_period_id,
+                    'mode_of_study_id' => $request->mode_of_study_id,
                     'department_course_id' => $entry['department_course_id'],
                     'department_level_id' => $entry['department_level_id'],
                 ], [

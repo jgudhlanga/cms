@@ -49,6 +49,7 @@ class Student extends Model
         'denomination',
         'height',
         'weight',
+        'required_exam_sitting_count',
     ];
 
     public function user(): BelongsTo

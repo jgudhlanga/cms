@@ -55,10 +55,23 @@ const APP_MODULE_KEYS = {
     next_of_kin: 'next_of_kin',
     student_personal_details: 'student_personal_details',
     upload_proof_of_payment: 'upload_proof_of_payment',
+    preview_payment_proof: 'preview_payment_proof',
+    document_types: 'document_types',
+    fee_types: 'fee_types',
 };
 const EXAM_SITTINGS = [
-    {value: 'june', label: 'June'},
-    {value: 'november', label: 'November'},
-    {value: 'other', label: 'Other'},
+    { value: 'june', label: 'June' },
+    { value: 'november', label: 'November' },
+    { value: 'other', label: 'Other' },
 ];
-export { API_BASE_URL, API_VERSION, APP_MODULE_KEYS, DEFAULT_AVATAR, DEFAULT_IMAGE, LOGO, PAGINATION_ITEMS_PER_PAGE, PAGINATION_MAX_LIMIT, EXAM_SITTINGS };
+export {
+    API_BASE_URL,
+    API_VERSION,
+    APP_MODULE_KEYS,
+    DEFAULT_AVATAR,
+    DEFAULT_IMAGE,
+    EXAM_SITTINGS,
+    LOGO,
+    PAGINATION_ITEMS_PER_PAGE,
+    PAGINATION_MAX_LIMIT,
+};

@@ -7,6 +7,7 @@ use App\Enums\Institution\CourseEnum;
 use App\Enums\Institution\DepartmentEnum;
 use App\Enums\Institution\GradeEnum;
 use App\Enums\Institution\LevelEnum;
+use App\Enums\Institution\ModeOfStudyEnum;
 use App\Enums\Institution\SubjectEnum;
 use App\Enums\Shared\AcademicLevelEnum;
 use App\Enums\Shared\IdTypeEnum;
@@ -20,6 +21,7 @@ use App\Models\Institution\DepartmentLevel;
 use App\Models\Institution\InstitutionDepartment;
 use App\Models\Institution\IntakePeriod;
 use App\Models\Institution\Level;
+use App\Models\Institution\ModeOfStudy;
 use App\Models\Shared\AcademicLevel;
 use App\Models\Shared\Gender;
 use App\Models\Shared\MaritalStatus;
@@ -42,12 +44,13 @@ class StudentApplicationSeeder extends Seeder
     public function run(): void
     {
         DB::transaction(function () {
-            $users = User::factory()->count(40)->create(['tenant_id' => $this->getTenantId(), 'password' => 'Student123!']);
+            $users = User::factory()->count(30)->create(['tenant_id' => $this->getTenantId(), 'password' => 'Student123!']);
             $intakePeriod = IntakePeriod::orderBy('end_date', 'DESC')->first();
             $genderIds = Gender::all()->pluck('id')->toArray();
             $titleIds = Title::all()->pluck('id')->toArray();
             $maritalStatusIds = MaritalStatus::all()->pluck('id')->toArray();
             $raceIds = Race::all()->pluck('id')->toArray();
+            $modesOfStudyIds = ModeOfStudy::whereIn('name', [ModeOfStudyEnum::FULL_TIME->value, ModeOfStudyEnum::PART_TIME->value])->pluck('id')->toArray();
 
             if (!$intakePeriod) {
                 $intakePeriod = IntakePeriod::create(['name' => 'Default Intake Period', 'start_date' => now()->subMonth(),
@@ -81,7 +84,7 @@ class StudentApplicationSeeder extends Seeder
                     'study_permit_number' => null,
                     'date_of_birth' => Carbon::createFromTimestamp(rand($dateOfBirthStart->timestamp, $dateOfBirthEnd->timestamp))->format('Y-m-d'),
                 ]);
-                $this->saveProgram($student, $intakePeriod->id, $institutionDepartmentId, $departmentLevelId, $departmentCourseId, $stepTwo);
+                $this->saveProgram($student, $intakePeriod->id, $institutionDepartmentId, $departmentLevelId, $departmentCourseId, $stepTwo, $modesOfStudyIds);
                 $this->saveContact($student);
                 $this->saveAddress($student);
                 $this->saveNextOfKin($student);
@@ -90,7 +93,13 @@ class StudentApplicationSeeder extends Seeder
         });
     }
 
-    private function saveProgram(Student $student, $intakePeriodId, $institutionDepartmentId, $departmentLevelId, $departmentCourseId, DepartmentApplicationStep $step): void
+    private function saveProgram(
+        Student                   $student,
+                                  $intakePeriodId,
+                                  $institutionDepartmentId,
+                                  $departmentLevelId,
+                                  $departmentCourseId,
+        DepartmentApplicationStep $step, array $modesOfStudyIds): void
     {
         StudentProgram::create([
             'tenant_id' => $this->getTenantId(),
@@ -100,6 +109,7 @@ class StudentApplicationSeeder extends Seeder
             'department_course_id' => $departmentCourseId,
             'intake_period_id' => $intakePeriodId,
             'department_application_step_id' => $step->id,
+            'mode_of_study_id' => fake()->randomElement($modesOfStudyIds),
         ]);
     }
 

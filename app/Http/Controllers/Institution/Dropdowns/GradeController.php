@@ -22,7 +22,7 @@ class GradeController extends Controller
     {
         $this->authorize('viewSettings');
         $grades = GradeResource::collection($this->repository->allFilter(['*'], $filters));
-        return Inertia::render('institution/setup/grades/Index', [
+        return Inertia::render('institution/dropdowns/grades/Index', [
             'grades' => $grades,
             'filters' => request()->only(['search', 'trashed']),
             'trashedCount' => $this->repository->allTrashed()->count(),

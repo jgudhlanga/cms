@@ -19,6 +19,7 @@ class IntakePeriodClassSizeResource extends JsonResource
                 'departmentLevelId' => $this->department_level_id,
                 'classSize' => $this->class_size,
                 'intakePeriodId' => $this->intake_period_id,
+                'modeOfStudyId' => $this->mode_of_study_id,
             ],
         ];
     }

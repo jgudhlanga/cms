@@ -15,6 +15,7 @@ class WorkflowStepActionResource extends JsonResource
             'id' => $this->resource->id,
             "attributes" => [
                 'name' => $this->resource->name,
+                'slug' => $this->resource->slug,
                 'title' => $this->resource->title,
                 $this->mergeWhen($request->routeIs('workflow-step-actions.*'), [
                     'createdAt' => $this->resource->created_at,

@@ -4,80 +4,81 @@ namespace App\Enums\Shared;
 
 enum WorkflowStepEnum: string
 {
-    case SUBMITTED = 'submitted';
+    case APPLICATION_SUBMITTED = 'application_submitted';
     case AWAITING_APPLICATION_FEE_PAYMENT = 'awaiting_application_fee_payment';
-    case IN_REVIEW = 'in_review';
+    case APPLICATION_IN_REVIEW = 'application_in_review';
     case AWAITING_REQUIREMENTS = 'awaiting_requirements';
     case INTERVIEW_SCHEDULED = 'interview_scheduled';
     case INTERVIEW_COMPLETED = 'interview_completed';
-    case DECISION_PENDING = 'decision_pending';
-    case ACCEPTED_OFFER_MADE = 'accepted_offer_made';
-    case WAITLISTED = 'waitlisted';
-    case REJECTED = 'rejected';
-    case OFFER_ACCEPTED = 'offer_accepted';
-    case OFFER_DECLINED = 'offer_declined';
-    case AWAITING_FEES_PAYMENT = 'awaiting_fees_payment';
-    case ENROLLED_REGISTERED = 'enrolled_registered';
+    case APPLICATION_ACCEPTED_AND_OFFER_MADE = 'application_accepted_and_offer_made';
+    case APPLICATION_REJECTED = 'application_rejected';
+    case APPLICATION_WAITLISTED = 'application_waitlisted';
+    case APPLICANT_ACCEPTED_OFFER = 'applicant_accepted_offer';
+    case APPLICANT_REJECTED_OFFER = 'applicant_rejected_offer';
+    case AWAITING_TUITION_FEES_PAYMENT = 'awaiting_tuition_fees_payment';
+    case FINAL_DECISION_PENDING = 'final_decision_pending';
+    case STUDENT_ENROLLED = 'student_enrolled';
 
     public function name(): string
     {
         return match ($this) {
-            self::SUBMITTED => 'Submitted',
-            self::AWAITING_REQUIREMENTS => 'Awaiting Requirements',
-            self::IN_REVIEW => 'In Review',
-            self::AWAITING_APPLICATION_FEE_PAYMENT => 'Awaiting Application Fee Payment',
-            self::INTERVIEW_SCHEDULED => 'Interview Scheduled',
-            self::INTERVIEW_COMPLETED => 'Interview Completed',
-            self::DECISION_PENDING => 'Decision Pending',
-            self::ACCEPTED_OFFER_MADE => 'Accepted / Offer Made',
-            self::WAITLISTED => 'Waitlisted',
-            self::REJECTED => 'Rejected',
-            self::OFFER_ACCEPTED => 'Offer Accepted',
-            self::OFFER_DECLINED => 'Offer Declined',
-            self::AWAITING_FEES_PAYMENT => 'Awaiting fees payment',
-            self::ENROLLED_REGISTERED => 'Enrolled / Registered',
+            self::APPLICATION_SUBMITTED => 'Application submitted',
+            self::AWAITING_APPLICATION_FEE_PAYMENT => 'Awaiting application fee payment',
+            self::APPLICATION_IN_REVIEW => 'Application in review',
+            self::AWAITING_REQUIREMENTS => 'Awaiting requirements',
+            self::INTERVIEW_SCHEDULED => 'Interview scheduled',
+            self::INTERVIEW_COMPLETED => 'Interview completed',
+            self::APPLICATION_ACCEPTED_AND_OFFER_MADE => 'Application accepted and offer made',
+            self::APPLICATION_REJECTED => 'Application rejected',
+            self::APPLICANT_ACCEPTED_OFFER => 'Applicant accepted offer',
+            self::APPLICANT_REJECTED_OFFER => 'Applicant rejected offer',
+            self::APPLICATION_WAITLISTED => 'Application waitlisted',
+            self::AWAITING_TUITION_FEES_PAYMENT => 'Awaiting tuition fee payment',
+            self::FINAL_DECISION_PENDING => 'Final decision pending',
+            self::STUDENT_ENROLLED => 'Student enrolled',
         };
     }
 
     public function position(): int
     {
         return match ($this) {
-            self::SUBMITTED => 1,
+            self::APPLICATION_SUBMITTED => 1,
             self::AWAITING_APPLICATION_FEE_PAYMENT => 2,
-            self::IN_REVIEW => 3,
+            self::APPLICATION_IN_REVIEW => 3,
             self::AWAITING_REQUIREMENTS => 4,
             self::INTERVIEW_SCHEDULED => 5,
             self::INTERVIEW_COMPLETED => 6,
-            self::DECISION_PENDING => 7,
-            self::ACCEPTED_OFFER_MADE => 8,
-            self::WAITLISTED => 9,
-            self::REJECTED => 10,
-            self::OFFER_ACCEPTED => 11,
-            self::OFFER_DECLINED => 12,
-            self::AWAITING_FEES_PAYMENT => 13,
-            self::ENROLLED_REGISTERED => 14,
+            self::APPLICATION_ACCEPTED_AND_OFFER_MADE => 7,
+            self::APPLICATION_REJECTED => 8,
+            self::APPLICANT_ACCEPTED_OFFER => 9,
+            self::APPLICANT_REJECTED_OFFER => 10,
+            self::APPLICATION_WAITLISTED => 11,
+            self::AWAITING_TUITION_FEES_PAYMENT => 12,
+            self::FINAL_DECISION_PENDING => 13,
+            self::STUDENT_ENROLLED => 14,
         };
     }
 
     public function description(): string
     {
         return match ($this) {
-            self::SUBMITTED => 'Application has been submitted.',
-            self::AWAITING_APPLICATION_FEE_PAYMENT => 'Pending payment of application or registration fees.',
-            self::IN_REVIEW => 'Application is currently under review by staff.',
-            self::AWAITING_REQUIREMENTS => 'Additional documents or info required.',
-            self::INTERVIEW_SCHEDULED => 'Interview has been scheduled with the applicant.',
-            self::INTERVIEW_COMPLETED => 'Interview has been completed and is under consideration.',
-            self::DECISION_PENDING => 'A final admission decision is being made.',
-            self::ACCEPTED_OFFER_MADE => 'Offer has been made to the applicant.',
-            self::WAITLISTED => 'Applicant has been waitlisted.',
-            self::REJECTED => 'Application has been rejected.',
-            self::OFFER_ACCEPTED => 'Offer has been accepted by the applicant.',
-            self::OFFER_DECLINED => 'Applicant declined the offer.',
-            self::AWAITING_FEES_PAYMENT => 'Awaiting fees payment.',
-            self::ENROLLED_REGISTERED => 'Applicant has enrolled and completed registration.',
+            self::APPLICATION_SUBMITTED => 'The applicant has successfully submitted their application.',
+            self::AWAITING_APPLICATION_FEE_PAYMENT => 'The application fee has not yet been paid by the applicant.',
+            self::APPLICATION_IN_REVIEW => 'The selection officers are currently reviewing the submitted application.',
+            self::AWAITING_REQUIREMENTS => 'The applicant needs to provide additional documents or requirements.',
+            self::INTERVIEW_SCHEDULED => 'An interview has been scheduled for the applicant.',
+            self::INTERVIEW_COMPLETED => 'The interview with the applicant has been completed and is awaiting outcome.',
+            self::APPLICATION_ACCEPTED_AND_OFFER_MADE => 'The application has been accepted and an offer has been made to the applicant.',
+            self::APPLICATION_REJECTED => 'The application has been reviewed and was not successful.',
+            self::APPLICANT_ACCEPTED_OFFER => 'The applicant has accepted the admission offer.',
+            self::APPLICANT_REJECTED_OFFER => 'The applicant has declined the admission offer.',
+            self::APPLICATION_WAITLISTED => 'The applicant has been placed on the waitlist and may be reconsidered later.',
+            self::AWAITING_TUITION_FEES_PAYMENT => 'The applicant has accepted the offer and is required to pay tuition fees.',
+            self::FINAL_DECISION_PENDING => 'The selection officers are currently considering the final decision.',
+            self::STUDENT_ENROLLED => 'The applicant has paid tuition fees and is now officially enrolled as a student.',
         };
     }
+
 
     public static function all(): array
     {

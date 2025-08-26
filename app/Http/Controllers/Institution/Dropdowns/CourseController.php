@@ -22,7 +22,7 @@ class CourseController extends Controller
     {
         $this->authorize('viewSettings');
         $courses = CourseResource::collection($this->repository->allFilter(['*'], $filters));
-        return Inertia::render('institution/setup/courses/Index', [
+        return Inertia::render('institution/dropdowns/courses/Index', [
             'courses' => $courses,
             'filters' => request()->only(['search', 'trashed']),
             'trashedCount' => $this->repository->allTrashed()->count(),

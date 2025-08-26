@@ -9,7 +9,9 @@ use App\Http\Requests\Shared\IdTypeRequest;
 use App\Http\Resources\Shared\IdTypeResource;
 use App\Models\Shared\IdType;
 use App\Repositories\Shared\interface\IIdTypeRepository;
+use Illuminate\Auth\Access\AuthorizationException;
 use Inertia\Inertia;
+use Inertia\Response;
 
 class IdTypeController extends Controller
 {
@@ -17,8 +19,11 @@ class IdTypeController extends Controller
 	{
 	}
 
-	public function index(SharedNameFilter $filters)
-	{
+    /**
+     * @throws AuthorizationException
+     */
+    public function index(SharedNameFilter $filters): Response
+    {
 		$this->authorize('viewSettings');
 		$idTypes = IdTypeResource::collection($this->repository->allFilter(['*'], $filters));
 		return Inertia::render('shared/idTypes/Index', [
@@ -28,13 +33,19 @@ class IdTypeController extends Controller
 		]);
 	}
 
-	public function create()
-	{
+    /**
+     * @throws AuthorizationException
+     */
+    public function create(): void
+    {
 		$this->authorize('createSettings');
 	}
 
-	public function store(IdTypeRequest $request)
-	{
+    /**
+     * @throws AuthorizationException
+     */
+    public function store(IdTypeRequest $request): void
+    {
 		$this->authorize('createSettings');
 		$this->repository->create(IdTypeDto::fromIdTypeRequest($request));
 	}
@@ -49,27 +60,39 @@ class IdTypeController extends Controller
 		//
 	}
 
-	public function update(IdTypeRequest $request, IdType $idType)
-	{
+    /**
+     * @throws AuthorizationException
+     */
+    public function update(IdTypeRequest $request, IdType $idType): void
+    {
 		$this->authorize('updateSettings');
 		$this->repository->update($idType, IdTypeDto::fromIdTypeRequest($request));
 	}
 
-	public function destroy(IdType $idType)
-	{
+    /**
+     * @throws AuthorizationException
+     */
+    public function destroy(IdType $idType): void
+    {
 		$this->authorize('deleteSettings');
 		$this->repository->delete($idType);
 	}
 
-	public function restore(string $id)
-	{
+    /**
+     * @throws AuthorizationException
+     */
+    public function restore(string $id): void
+    {
 		$idType = $this->repository->findTrashed($id);
 		$this->authorize('restoreSettings');
 		$this->repository->restore($idType);
 	}
 
-	public function forceDelete(IdType $idType)
-	{
+    /**
+     * @throws AuthorizationException
+     */
+    public function forceDelete(IdType $idType): void
+    {
 		$this->authorize('forceDeleteSettings');
 		$this->repository->delete($idType, true);
 	}

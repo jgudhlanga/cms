@@ -23,4 +23,5 @@ class UploadProofOfPaymentRequest extends FormRequest
             'proof_of_payment' => ['required', 'file', 'max:5009'],
         ];
     }
+
 }

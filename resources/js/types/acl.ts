@@ -28,6 +28,7 @@ export type Role = {
     id?: string;
     attributes: {
         name: string;
+        slug: string;
         guardName?: string;
         roleGroupId?: string | number;
         roleGroup?: string;

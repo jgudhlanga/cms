@@ -1,7 +1,13 @@
 <script setup lang="ts">
+import BaseAlert from '@/components/core/alert/BaseAlert.vue';
 import DataLoadingSpinner from '@/components/core/loader/DataLoadingSpinner.vue';
 import PageContainer from '@/components/core/page/PageContainer.vue';
+import StepAction from '@/components/core/timelines/StepAction.vue';
+import TimelineTwo from '@/components/core/timelines/TimelineTwo.vue';
+import UploadPop from '@/components/shared/workflows/UploadPop.vue';
 import { useInstitutionDepartmentMetadata } from '@/composables/institution/useInstitutionDepartmentMetadata';
+import { useStudentApplications } from '@/composables/students/useStudentApplications';
+import { Audit } from '@/types/audit';
 import { AuthObject } from '@/types/data-pagination';
 import { DepartmentApplicationStep } from '@/types/department-meta-data';
 import { Student, StudentProgram } from '@/types/students';
@@ -10,16 +16,13 @@ import { TimelineStep } from '@/types/utils';
 import { Head } from '@inertiajs/vue3';
 import { trans_choice } from 'laravel-vue-i18n';
 import { computed, onMounted, ref } from 'vue';
-import TimelineTwo from '@/components/core/timelines/TimelineTwo.vue';
-import BaseAlert from '@/components/core/alert/BaseAlert.vue';
-import StepAction from '@/components/core/timelines/StepAction.vue';
-import UploadPop from '@/components/shared/workflows/UploadPop.vue';
 
 interface Props {
     auth: AuthObject;
     errors: object;
     student: Student;
     application: StudentProgram;
+    audit: Audit[];
 }
 
 const props = defineProps<Props>();
@@ -33,12 +36,17 @@ const breadcrumbs: BreadcrumbItemInterface[] = [
 
 const workflowSteps = ref<DepartmentApplicationStep[]>([]);
 const { loadDepartmentMetadata, isLoading } = useInstitutionDepartmentMetadata();
+const { awaitTuitionPaymentProof, awaitApplicationPaymentProof } = useStudentApplications();
 
 onMounted(async () => {
     const data = await loadDepartmentMetadata(
         route('v1.department-metadata.workflow-steps', props.application?.attributes?.institutionDepartmentId?.toString()),
     );
     workflowSteps.value = data?.steps;
+});
+
+const auditSteps = computed(() => {
+    return props.audit?.map((entry) => entry.attributes.properties.department_application_step_id).filter((id) => id !== undefined && id !== null);
 });
 
 const steps = computed(() => {
@@ -52,18 +60,20 @@ const steps = computed(() => {
                 label: `${trans_choice('trans.step', 1)} ${index + 1}`,
                 status: getStepStatus(step),
                 props: {
-                    step
+                    step,
                 },
             },
     );
 });
+
 const completedActiveSteps = computed(() => {
     if (!workflowSteps.value || currentStep.value == null) return [];
 
     return workflowSteps.value
         .filter((step) => {
             const position = Number(step.attributes?.position);
-            return  position <= Number(currentStep.value?.attributes.position);
+            const inAudit = auditSteps.value.includes(step.id); // check audit
+            return position <= Number(currentStep.value?.attributes.position) && inAudit;
         })
         .map((step, index) => {
             return <TimelineStep>{
@@ -87,13 +97,24 @@ const currentStepIndex = computed(() => {
 });
 
 // Progress % for progress bar
-const progressPercent = computed(() => {
+/*const progressPercent = computed(() => {
     const total = workflowSteps.value.length;
     const index = currentStepIndex.value;
     return Math.round(((index + 1) / total) * 100);
-});
+});*/
+
 const currentStep = computed(() => {
     return props.application?.relationships?.departmentWorkflowStep;
+});
+
+const paymentProofType = computed(() => {
+    if (awaitApplicationPaymentProof(currentStep.value!)) {
+        return 'application_fee';
+    }
+    if (awaitTuitionPaymentProof(currentStep.value!)) {
+        return 'tuition_fee';
+    }
+    return 'other';
 });
 
 const getStepStatus = (step: DepartmentApplicationStep): string => {
@@ -113,20 +134,20 @@ const getStepStatus = (step: DepartmentApplicationStep): string => {
         </template>
         <template v-else>
             <template v-if="steps?.length > 0">
-                <div class="my-5">
+                <!--                <div class="my-5">
                     <div class="h-6 w-full overflow-hidden rounded-full bg-gray-200">
                         <div class="bg-primary h-full transition-all duration-300" :style="{ width: progressPercent + '%' }"></div>
                     </div>
                     <p class="text-muted-foreground my-3 text-sm font-bold">
                         {{ $t('trans.progress') }}: {{ progressPercent }}% ({{ currentStep?.attributes?.workflowStep }})
                     </p>
-                </div>
+                </div> -->
                 <div class="flex flex-col gap-4">
-                    <TimelineTwo  :steps="completedActiveSteps" />
+                    <TimelineTwo :steps="completedActiveSteps" />
                 </div>
             </template>
             <BaseAlert v-else :title="$t('trans.no_data')" :description="$t('trans.no_workflows_configured_description')" />
         </template>
-        <UploadPop :application="application" type="application_fee"/>
+        <UploadPop :application="application" :type="paymentProofType" />
     </PageContainer>
 </template>

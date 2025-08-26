@@ -19,6 +19,7 @@ return new class extends Migration {
             $table->foreignId('department_course_id')->constrained();
             $table->foreignId('department_application_step_id')->nullable();
             $table->foreignId('intake_period_id')->nullable();
+            $table->foreignId('mode_of_study_id')->nullable();
             $table->unsignedBigInteger('program_status_id')->nullable();
             $table->boolean('required_level_completed')->nullable();
             $table->boolean('read_write_acknowledged')->nullable();
@@ -27,6 +28,7 @@ return new class extends Migration {
             $table->unsignedBigInteger('tuition_fee_proof_of_payment_id')->nullable();
             $table->boolean('application_fee_paid')->default(false);
             $table->boolean('tuition_fee_paid')->default(false);
+            $table->unsignedBigInteger('offer_letter_id')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });

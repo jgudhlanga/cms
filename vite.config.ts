@@ -22,6 +22,9 @@ export default defineConfig({
         }),
         i18n(),
     ],
+    optimizeDeps: {
+        include: ['@wangeditor/editor-for-vue']
+    },
     resolve: {
         alias: {
             '@': path.resolve(__dirname, './resources/js'),

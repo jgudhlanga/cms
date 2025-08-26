@@ -1,4 +1,5 @@
 import { useDataTables } from '@/composables/core/useDataTables';
+import { useDropdowns } from '@/composables/core/useDropdowns';
 import { useSharedFormSchema } from '@/composables/core/useSharedFormSchema';
 import { forbiddenAlert, openModal } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
@@ -9,6 +10,7 @@ import { ModeOfStudy } from '@/types/institution';
 import type { Link } from '@/types/ui';
 import { InertiaForm, usePage } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
+import { ref } from 'vue';
 
 export const useModeOfStudy = () => {
     const { moreActionButton, onDelete, onForceDelete, onRestore } = useDataTables();
@@ -75,10 +77,24 @@ export const useModeOfStudy = () => {
         openModal({ name: APP_MODULE_KEYS.modes_of_study, edit: modeOfStudy });
     };
 
+    const isLoading = ref(false);
+    const modesOfStudy = ref<ModeOfStudy[]>([]);
+
+    const listModesOfStudy = async (search?: string) => {
+        const { data, fetchData } = useDropdowns();
+        isLoading.value = true;
+        await fetchData({ url: route('v1.modes-of-study.index'), search, transChoiceKey: 'trans.mode_of_study' });
+        isLoading.value = false;
+        modesOfStudy.value = data.value;
+    };
+
     return {
         createModeOfStudyColumns,
         breadcrumbs,
         onOpenModal,
         saveModeOfStudy,
+        listModesOfStudy,
+        modesOfStudy,
+        isLoading,
     };
 };

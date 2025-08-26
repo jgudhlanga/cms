@@ -1,10 +1,10 @@
-import { storeToRefs } from 'pinia';
 import { useCreateApplicationFormStore } from '@/store/portal/useCreateApplicationFormStore';
-import { InertiaForm } from '@inertiajs/vue3';
 import { CreateApplicationParams } from '@/types/portal';
+import { InertiaForm } from '@inertiajs/vue3';
+import { storeToRefs } from 'pinia';
 
+type SittingOption = { value: string; label: string };
 export const useApplicationFormHelper = () => {
-
     const storeRefs = storeToRefs(useCreateApplicationFormStore());
 
     const updateForm = (form: InertiaForm<CreateApplicationParams>) => {
@@ -41,6 +41,8 @@ export const useApplicationFormHelper = () => {
             relationship: storeRefs.relationship.value,
             relationship_id: storeRefs.relationship.value?.value ?? null,
             study_permit_number: storeRefs.study_permit_number?.value ?? '',
+            modeOfStudy: storeRefs.modeOfStudy.value,
+            mode_of_study_id: storeRefs.modeOfStudy.value?.value ?? null,
             department: storeRefs.department.value,
             department_id: storeRefs.department.value?.value ?? null,
             course: storeRefs.course.value,
@@ -68,7 +70,10 @@ export const useApplicationFormHelper = () => {
         Object.keys(selectedSubjects).forEach((subjectId, index) => {
             const subjectLabel = `Main subject #${index + 1} (ID: ${subjectId})`;
             const year = storeRefs.o_level_years?.value?.[subjectId];
-            const sitting = storeRefs.o_level_sittings?.value?.[subjectId];
+
+            const sittingObj = storeRefs.o_level_sittings?.value?.[subjectId] as SittingOption | undefined;
+            const sitting = sittingObj?.value;
+
             if (!year || isNaN(Number(year))) {
                 errors.push(`${subjectLabel}: Exam year is required.`);
             }
@@ -79,36 +84,63 @@ export const useApplicationFormHelper = () => {
         return errors;
     };
 
+    const extractSubjectId = (subject: unknown): number | null => {
+        if (!subject) return null;
+        if (typeof subject === "number") return subject;
+        if (typeof subject === "object" && "value" in (subject as any)) {
+            return Number((subject as any).value);
+        }
+        return null;
+    };
+
+
     const validateOtherSubjects = (): string[] => {
         const errors: string[] = [];
-        const subjectIds = storeRefs.o_level_other_subject_ids?.value || {};
+
+        const selectedSubjectIds = storeRefs.o_level_other_subject_ids?.value || {};
         const gradeIds = storeRefs.o_level_other_grade_ids?.value || {};
         const years = storeRefs.o_level_other_years?.value || {};
         const sittings = storeRefs.o_level_other_sittings?.value || {};
-        const keys = Object.keys(subjectIds);
+
+        const keys = Object.keys(selectedSubjectIds);
+
+        // Must have exactly 2 subjects
         if (keys.length !== 2) {
-            errors.push(`You must provide 2 other subjects. Currently: ${keys.length}`);
+            errors.push(`You must provide exactly 2 other subjects. Provided: ${keys.length}`);
         }
+
+        const seenSubjects = new Set<number>();
+
         keys.forEach((key, index) => {
             const label = `Other subject #${index + 1}`;
-            const subjectId = subjectIds[key]; // value
+            const subjectId = extractSubjectId(selectedSubjectIds[key]); // 👈 safe extraction
             const gradeId = gradeIds[key];
             const year = years[key];
             const sitting = sittings[key];
-            if (subjectId == null || isNaN(Number(subjectId))) {
+
+            if (!subjectId || isNaN(subjectId)) {
                 errors.push(`${label}: Subject is required.`);
+            } else {
+                if (seenSubjects.has(subjectId)) {
+                    errors.push(`${label}: Duplicate subject selected.`);
+                }
+                seenSubjects.add(subjectId);
             }
-            if (year == null || isNaN(Number(year))) {
+
+            if (!year || isNaN(Number(year))) {
                 errors.push(`${label}: Year is required.`);
             }
+
             if (!sitting || sitting.toString().trim() === '') {
                 errors.push(`${label}: Sitting is required.`);
             }
-            if (gradeId == null || gradeId.toString().trim() === '') {
+
+            if (!gradeId || gradeId.toString().trim() === '') {
                 errors.push(`${label}: Grade is required.`);
             }
         });
         return errors;
     };
-    return { validateMainSubjects, validateOtherSubjects, updateForm}
-}
+
+    return { validateMainSubjects, validateOtherSubjects, updateForm };
+};

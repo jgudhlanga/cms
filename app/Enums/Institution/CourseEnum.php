@@ -116,6 +116,9 @@ enum CourseEnum: string
     case PROFESSIONAL_COOKERY = "Professional Cookery";
     case TOURISM_AND_HOSPITALITY_MANAGEMENT = "Tourism and Hospitality Management";
 
+    # CHEMICAL TECHNOLOGY
+    case BACHELOR_OF_TECHNOLOGY_DEGREE = "Bachelor of Technology Degree";
+
     public function label(): string
     {
         return match ($this) {
@@ -217,6 +220,8 @@ enum CourseEnum: string
             self::CULINARY_ARTS => "Culinary Arts",
             self::TOURISM_AND_HOSPITALITY_MANAGEMENT => "Tourism and Hospitality Management",
             self::PROFESSIONAL_COOKERY => "Professional Cookery",
+            # CHEMICAL TECHNOLOGY
+            self::BACHELOR_OF_TECHNOLOGY_DEGREE => "Bachelor of Technology Degree",
         };
     }
 
@@ -319,6 +324,8 @@ enum CourseEnum: string
             self::CULINARY_ARTS,
             self::TOURISM_AND_HOSPITALITY_MANAGEMENT,
             self::PROFESSIONAL_COOKERY => "Tourism And Hospitality",
+            # CHEMICAL TECHNOLOGY
+            self::BACHELOR_OF_TECHNOLOGY_DEGREE => "Chemical Technology",
         };
     }
 
@@ -436,6 +443,8 @@ enum CourseEnum: string
             self::CULINARY_ARTS => 82,
             self::TOURISM_AND_HOSPITALITY_MANAGEMENT => 83,
             self::PROFESSIONAL_COOKERY => 84,
+            # CHEMICAL TECHNOLOGY
+            self::BACHELOR_OF_TECHNOLOGY_DEGREE => 85,
         };
     }
 

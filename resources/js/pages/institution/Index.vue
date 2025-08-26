@@ -31,7 +31,7 @@ const gotToDepartments = (is_academic: number) => {
             class="mt-6"
         />
         <SettingsButton class="mt-2" @click="gotToDepartments(1)" :title="$t('trans.manage')" />
-        <HeadingSmall :title="$t('trans.portal_config')" :description="$t('trans.portal_config_description')" class="mt-6" />
-        <SettingsButton class="mt-2" @click="navigateTo(route('portal.setup'))" :title="$t('trans.manage')" />
+        <HeadingSmall :title="$t('trans.institution_config')" :description="$t('trans.institution_config_description')" class="mt-6" />
+        <SettingsButton class="mt-2" @click="navigateTo(route('institution.setup'))" :title="$t('trans.setup')" />
     </PageContainer>
 </template>

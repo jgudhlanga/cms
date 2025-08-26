@@ -22,7 +22,7 @@ class SubjectController extends Controller
     {
         $this->authorize('viewSettings');
         $subjects = SubjectResource::collection($this->repository->allFilter(['*'], $filters));
-        return Inertia::render('institution/setup/subjects/Index', [
+        return Inertia::render('institution/dropdowns/subjects/Index', [
             'subjects' => $subjects,
             'filters' => request()->only(['search', 'trashed']),
             'trashedCount' => $this->repository->allTrashed()->count(),

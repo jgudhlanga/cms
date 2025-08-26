@@ -126,6 +126,7 @@ export type InstitutionDepartment = {
     attributes: {
         departmentId: string | number;
         department: string;
+        departmentCode?: string;
         isAcademic: boolean | number;
         description?: string;
         createdAt?: string;
@@ -135,7 +136,7 @@ export type InstitutionDepartment = {
 };
 
 export type InstitutionDepartmentParams = {
-    is_academic: boolean,
+    is_academic: boolean;
     department_ids: Array<string | undefined | null>;
 };
 
@@ -158,4 +159,27 @@ export type IntakePeriodParams = {
     start_date: string;
     end_date: string;
     description?: string;
+};
+export type DocumentTemplate = {
+    type: string;
+    id: string;
+    attributes: {
+        name: string;
+        headerLine1: string;
+        headerLine2: string;
+        headerAddressLine1: string;
+        headerAddressLine2: string;
+        headerTelephone: string;
+        headerEmail: string;
+        headerWebsite: string;
+        headerLogoOne: string;
+        headerLogoOneUrl: string;
+        headerLogo2: string;
+        headerLogo2Url: string;
+        body: string;
+        logoOneUrl: string;
+        createdAt: string;
+        updatedAt: string;
+        deletedAt: string;
+    };
 };

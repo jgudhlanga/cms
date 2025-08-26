@@ -3,16 +3,23 @@
 
 FAILED VALIDATION VIEW
 public function failedValidation(Validator $validator)
-    {
-        throw new HttpResponseException(response()->json([
-            'message' => 'Validation failed,'
-            'errors' => $validator->errors(),
-            'input' => $this->all(),
-        ], 422));
-    }
+{
+    throw new HttpResponseException(response()->json([
+        'message' => 'Validation failed',
+        'errors'  => $validator->errors(),
+        'input'   => $this->all(),
+    ], 422));
+}
+
+## Add Mode of study to the application form
+
 
 # RUN A SPECIFIC SEEDER
 ## STAFF SEEDER
 php artisan db:seed --class=Database\\Seeders\\Institution\\StaffSeeder
 ## STUDENTS SEEDER
 php artisan db:seed --class=Database\\Seeders\\Students\\StudentApplicationSeeder
+
+
+## TOOLS
+### https://www.wangeditor.com/en/v5/i18n.html | use this for WYSWIG editor for vue in the future

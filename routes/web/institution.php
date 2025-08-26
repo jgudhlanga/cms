@@ -5,9 +5,10 @@ use App\Http\Controllers\Institution\Departments\DepartmentClassSizeController;
 use App\Http\Controllers\Institution\Departments\DepartmentCourseController;
 use App\Http\Controllers\Institution\Departments\DepartmentLevelController;
 use App\Http\Controllers\Institution\Departments\InstitutionDepartmentController;
+use App\Http\Controllers\Institution\DocumentTemplates\DocumentTemplateController;
 use App\Http\Controllers\Institution\InstitutionController;
-use App\Http\Controllers\Institution\Setup\IntakePeriodController;
-use App\Http\Controllers\Institution\Setup\PortalSetupController;
+use App\Http\Controllers\Institution\Config\IntakePeriodController;
+use App\Http\Controllers\Institution\Config\InstitutionConfigController;
 use App\Http\Controllers\Institution\Staff\StaffController;
 use Illuminate\Support\Facades\Route;
 
@@ -37,16 +38,19 @@ Route::prefix('institution')->middleware('auth')->group(function () {
     Route::put('intake-periods/{intake_period}/restore', [IntakePeriodController::class, 'restore'])->name('intake-periods.restore');
     Route::delete('intake-periods/{intake_period}/force-delete', [IntakePeriodController::class, 'forceDelete'])->name('intake-periods.force-delete');
     Route::resource('intake-periods', IntakePeriodController::class)->names('intake-periods');
+    # ==================================== DOCUMENT TEMPLATES ==============================================================
+    Route::put('document-templates/{document_template}/restore', [DocumentTemplateController::class, 'restore'])->name('document-templates.restore');
+    Route::delete('document-templates/{document_template}/force-delete', [DocumentTemplateController::class, 'forceDelete'])->name('document-templates.force-delete');
+    Route::resource('document-templates', DocumentTemplateController::class)->names('document-templates');
     # ==================================== DEPARTMENT STAFF ============================================================
     Route::put('staff/{staff}/restore', [StaffController::class, 'restore'])->name('staff.restore');
     Route::delete('staff/{staff}/force-delete', [StaffController::class, 'forceDelete'])->name('staff.force-delete');
     Route::resource('departments.staff', StaffController::class)->names('staff');
     #====================================== DEPARTMENT CLASS SIZES =====================================================
     Route::post('{institution_department}/class-sizes', [DepartmentClassSizeController::class, 'store'])->name('class-sizes.store');
-    # ============================================= PORTAL SETUP =======================================================
-    Route::prefix('portal/setup')->group(function () {
-        Route::get('/', [PortalSetupController::class, 'index'])->name('portal.setup');
-        Route::get('/intake-periods', [PortalSetupController::class, 'intakePeriods'])->name('portal.setup.intake-periods');
+    # ============================================= INSTITUTION SETUP =======================================================
+    Route::prefix('config')->group(function () {
+        Route::get('/', [InstitutionConfigController::class, 'index'])->name('institution.setup');
     });
 });
 

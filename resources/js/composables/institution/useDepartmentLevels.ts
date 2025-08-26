@@ -119,7 +119,7 @@ export const useDepartmentLevels = () => {
     };
 
     const openDepartmentLevelsModal = (departmentLevels: Array<string | undefined | null> | null) => {
-        if (!can['create:department-metadata']) return forbiddenAlert();
+        if (!can['department-setup:levels']) return forbiddenAlert();
         openModal({ name: APP_MODULE_KEYS.department_levels, edit: departmentLevels });
     };
 

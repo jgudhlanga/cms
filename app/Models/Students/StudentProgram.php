@@ -8,6 +8,7 @@ use App\Models\Institution\DepartmentCourse;
 use App\Models\Institution\DepartmentLevel;
 use App\Models\Institution\InstitutionDepartment;
 use App\Models\Institution\IntakePeriod;
+use App\Models\Institution\ModeOfStudy;
 use App\Observers\Students\StudentProgramObserver;
 use App\Traits\BelongsToTenant;
 use App\Traits\Filterable;
@@ -17,11 +18,13 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 /**
  *
@@ -49,6 +52,8 @@ class StudentProgram extends Model implements HasMedia
         'tuition_fee_proof_of_payment_id',
         'application_fee_paid',
         'tuition_fee_paid',
+        'offer_letter_id',
+        'mode_of_study_id',
     ];
 
     public function student(): BelongsTo
@@ -81,9 +86,16 @@ class StudentProgram extends Model implements HasMedia
         return $this->belongsTo(IntakePeriod::class, 'intake_period_id');
     }
 
+    public function modeOfStudy(): BelongsTo
+    {
+        return $this->belongsTo(ModeOfStudy::class, 'mode_of_study_id');
+    }
+
     public function registerMediaCollections(): void
     {
-        $this->addMediaCollection('students')->singleFile();
+        $this->addMediaCollection('application-fee')->singleFile();
+        $this->addMediaCollection('tuition-fee')->singleFile();
+        $this->addMediaCollection('offer-letter')->singleFile();
     }
 
     public function applicationFeeProofOfPayment(): HasOne
@@ -91,9 +103,29 @@ class StudentProgram extends Model implements HasMedia
         return $this->hasOne(Media::class, 'id', 'application_fee_proof_of_payment_id');
     }
 
-    public function getApplicationFeeProofOfPaymentUrlAttribute(): ?array
+    public function getApplicationFeeProofOfPaymentUrlAttribute(): ?string
     {
         return ($this->application_fee_proof_of_payment_id > 0) ? $this->applicationFeeProofOfPayment->getFullUrl() : null;
+    }
+
+    public function tuitionFeeProofOfPayment(): HasOne
+    {
+        return $this->hasOne(Media::class, 'id', 'tuition_fee_proof_of_payment_id');
+    }
+
+    public function getTuitionFeeProofOfPaymentUrlAttribute(): ?string
+    {
+        return ($this->tuition_fee_proof_of_payment_id > 0) ? $this->tuitionFeeProofOfPayment->getFullUrl() : null;
+    }
+
+    public function offerLetter(): HasOne
+    {
+        return $this->hasOne(Media::class, 'id', 'offer_letter_id');
+    }
+
+    public function getOfferLetterUrlAttribute(): ?string
+    {
+        return ($this->offer_letter_id > 0) ? $this->offerLetter->getFullUrl() : null;
     }
 
     public function getActivitylogOptions(): LogOptions

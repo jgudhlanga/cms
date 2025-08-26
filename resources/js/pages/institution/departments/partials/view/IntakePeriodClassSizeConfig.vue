@@ -2,11 +2,14 @@
 import BaseAlert from '@/components/core/alert/BaseAlert.vue';
 import { BaseButton } from '@/components/core/button';
 import { BaseInput } from '@/components/core/form';
-import IntakePeriodSelect from '@/components/core/form/select/IntakePeriodSelect.vue';
+import IntakePeriodComboSelect from '@/components/core/form/combobox/IntakePeriodComboSelect.vue';
+import ModeOfStudyComboSelect from '@/components/core/form/combobox/ModeOfStudyComboSelect.vue';
 import DataLoadingSpinner from '@/components/core/loader/DataLoadingSpinner.vue';
 import { useInstitutionDepartmentMetadata } from '@/composables/institution/useInstitutionDepartmentMetadata';
 import { useIntakePeriods } from '@/composables/institution/useIntakePeriods';
+import { useModeOfStudy } from '@/composables/institution/useModeOfStudy';
 import { TextFieldType } from '@/enums/inputs';
+import { hasAbility } from '@/lib/permissions';
 import {
     ClassSizeEntry,
     DepartmentCourse,
@@ -15,7 +18,7 @@ import {
     DepartmentIntakeClassSizeParams,
     DepartmentLevel,
 } from '@/types/department-meta-data';
-import { InstitutionDepartment } from '@/types/institution';
+import { InstitutionDepartment, ModeOfStudy } from '@/types/institution';
 import { useForm } from '@inertiajs/vue3';
 import { onMounted, ref } from 'vue';
 
@@ -24,6 +27,7 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+
 const { department } = props;
 const institutionDepartmentId = department?.id?.toString() ?? '';
 const courses = ref<DepartmentCourse[]>([]);
@@ -32,19 +36,28 @@ const classSizes = ref<DepartmentIntakeClassSize[]>([]);
 
 const { loadDepartmentMetadata, isLoading, saveClassSizes } = useInstitutionDepartmentMetadata();
 const { isLoading: intakePeriodsLoading, listIntakePeriods, intakePeriods } = useIntakePeriods();
+const { isLoading: modesOfStudyLoading, listModesOfStudy, modesOfStudy } = useModeOfStudy();
 const form = useForm<DepartmentIntakeClassSizeParams>({
     intake_period_id: null,
+    intakePeriod: null,
+    mode_of_study_id: null,
+    modeOfStudy: null,
     class_sizes: [],
 });
+
 onMounted(async () => {
     await listIntakePeriods(`api/v1/intake-periods?page_size=all`);
+    await listModesOfStudy();
     classSizes.value = await loadDepartmentMetadata(route('v1.department-metadata.class-sizes', institutionDepartmentId));
     const coursesRes = await loadDepartmentMetadata(route('v1.department-metadata.courses', institutionDepartmentId));
     courses.value = coursesRes?.courses;
     const levelsRes = await loadDepartmentMetadata(route('v1.department-metadata.levels', institutionDepartmentId));
     levels.value = levelsRes?.levels;
 
-    form.intake_period_id = intakePeriods.value?.data![0]?.id ?? null;
+    const intakeOption = intakePeriods.value?.data![0] ?? null;
+    const modeOption = modesOfStudy.value?.filter((row: ModeOfStudy) => row.attributes.name.toLowerCase() == 'full time')[0] ?? null;
+    form.intakePeriod = intakeOption ? { value: Number(intakeOption.id), label: intakeOption.attributes.name } : null;
+    form.modeOfStudy = modeOption ? { value: Number(modeOption.id), label: modeOption.attributes.name } : null;
     fillClassSizeData();
 });
 
@@ -56,7 +69,8 @@ const fillClassSizeData = () => {
                 (entry) =>
                     Number(entry.attributes.departmentCourseId) === Number(course.id) &&
                     Number(entry.attributes.departmentLevelId) === Number(level.id) &&
-                    Number(entry.attributes.intakePeriodId) === Number(form.intake_period_id),
+                    Number(entry.attributes.intakePeriodId) === Number(form.intakePeriod?.value) &&
+                    Number(entry.attributes.modeOfStudyId) === Number(form.modeOfStudy?.value),
             );
             filled.push({
                 department_course_id: Number(course?.id ?? ''),
@@ -66,41 +80,67 @@ const fillClassSizeData = () => {
         }
     }
     form.class_sizes = filled;
-}
+};
 
 const getEntry = (courseId: number, levelId: number): ClassSizeEntry | any => {
     return form.class_sizes.find((e) => e.department_course_id === courseId && e.department_level_id === levelId);
 };
 const submit = async () => {
+    form.intake_period_id = form.intakePeriod?.value ?? null;
+    form.mode_of_study_id = form.modeOfStudy?.value ?? null;
     saveClassSizes(institutionDepartmentId, form);
 };
 const checkToDisable = (courseLevels: DepartmentCourseLevel[], levelId: number) => {
     return courseLevels.some((level: DepartmentCourseLevel) => Number(level.departmentLevelId) === levelId);
 };
 
-const handleSelectionChange = async (value: any) => {
-    classSizes.value = await loadDepartmentMetadata(`api/v1/departments/${institutionDepartmentId}/class-sizes?intake_period=${value}&page_size=all`);
+const handleIntakePeriodChange = async (value: any) => {
+    const modeOfStudyId = form.modeOfStudy?.value?.toString() ?? '';
+    const intakePeriodId = value.value?.toString() ?? '';
+    classSizes.value = await loadDepartmentMetadata(
+        `api/v1/departments/${institutionDepartmentId}/class-sizes?intake_period=${intakePeriodId}&mode_of_study=${modeOfStudyId}&page_size=all`,
+    );
+    fillClassSizeData();
+};
+
+const handleModeOfStudyChange = async (value: any) => {
+    const modeOfStudyId = value.value?.toString() ?? '';
+    const intakePeriodId = form.intakePeriod?.value?.toString() ?? '';
+    classSizes.value = await loadDepartmentMetadata(
+        `api/v1/departments/${institutionDepartmentId}/class-sizes?intake_period=${intakePeriodId}&mode_of_study=${modeOfStudyId}&page_size=all`,
+    );
     fillClassSizeData();
 };
 </script>
 
 <template>
     <div class="flex flex-col space-y-4">
-        <div class="flex w-2/4 flex-col">
-            <IntakePeriodSelect
-                :loading="intakePeriodsLoading"
-                :data="intakePeriods?.data ?? []"
-                :label-uppercase="true"
-                :vertical-layout="false"
-                :is-multi="false"
-                :is-searchable="true"
-                :is-clearable="false"
-                v-model="form.intake_period_id"
-                @update:modelValue="handleSelectionChange"
-            />
+        <div class="mt-4 flex w-full justify-between space-x-4">
+            <div class="flex w-1/2">
+                <IntakePeriodComboSelect
+                    :data="intakePeriods?.data ?? []"
+                    v-model="form.intakePeriod!"
+                    @update:modelValue="handleIntakePeriodChange"
+                    :vertical-layout="false"
+                    :label-uppercase="true"
+                    :is-required="true"
+                    class="w-full"
+                />
+            </div>
+            <div class="flex w-1/2">
+                <ModeOfStudyComboSelect
+                    :data="modesOfStudy ?? []"
+                    v-model="form.modeOfStudy!"
+                    @update:modelValue="handleModeOfStudyChange"
+                    :vertical-layout="false"
+                    :label-uppercase="true"
+                    :is-required="true"
+                    class="w-full"
+                />
+            </div>
         </div>
         <div class="flex flex-col">
-            <template v-if="isLoading || intakePeriodsLoading">
+            <template v-if="isLoading || intakePeriodsLoading || modesOfStudyLoading">
                 <DataLoadingSpinner />
             </template>
             <template v-else>
@@ -125,7 +165,7 @@ const handleSelectionChange = async (value: any) => {
                                         v-model.number="getEntry(Number(course.id), Number(level.id)).class_size"
                                         :disabled="
                                             !checkToDisable(course?.relationships?.departmentCourseLevels ?? [], Number(level.id)) ||
-                                            !form.intake_period_id
+                                            !form.intakePeriod
                                         "
                                     />
                                 </td>
@@ -133,12 +173,12 @@ const handleSelectionChange = async (value: any) => {
                         </tbody>
                     </table>
                     <div class="flex items-center justify-center">
-                        <BaseButton type="submit" :processing="form.processing">
+                        <BaseButton type="submit" :processing="form.processing" v-if="hasAbility('department-setup:class-sizes')">
                             {{ $t('trans.submit') }}
                         </BaseButton>
                     </div>
                 </form>
-                <BaseAlert v-else :title="$t('trans.no_data')" :description="$t('trans.courses_and_levels_not_found'   )" />
+                <BaseAlert v-else :title="$t('trans.no_data')" :description="$t('trans.courses_and_levels_not_found')" />
             </template>
         </div>
     </div>

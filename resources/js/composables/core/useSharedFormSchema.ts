@@ -175,6 +175,12 @@ export const useSharedFormSchema = () => {
                 message: trans('trans.select_valid_field', { field: trans_choice('trans.gender', 1) }),
             }),
         });
+    const modeOfStudySchema = () =>
+        z.object({
+            modeOfStudy: z.any().refine((val) => validateSelectOption(val), {
+                message: trans('trans.select_valid_field', { field: trans_choice('trans.mode_of_study', 1) }),
+            }),
+        });
     const departmentSchema = () =>
         z.object({
             department: z.any().refine((val) => validateSelectOption(val), {
@@ -237,5 +243,6 @@ export const useSharedFormSchema = () => {
         employmentTypeSchema,
         employeeNumberSchema,
         titleLabelSchema,
+        modeOfStudySchema,
     };
 };
