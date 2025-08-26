@@ -209,8 +209,8 @@ return [
     "order" => "Order",
     "other" => "Other",
     "duration" => "Duration",
-    "portal_config" => "Portal Config",
-    "portal_config_description" => "Application form workflows, rules and configurations for the portal",
+    "institution_config" => "Institution Config",
+    "institution_config_description" => "Institution setup, rules and system-wide settings",
     "first_name" => "First name",
     "middle_name" => "Middle name",
     "last_name" => "Last name",
@@ -426,4 +426,5 @@ return [
     "no_proof_of_application_fee_payment_uploaded" => "No proof of application fee payment uploaded / found",
     "no_proof_of_tuition_fee_payment_uploaded" => "No proof of tuition fee payment uploaded / found",
     "select_for_all" => "Select once for all",
+    "document_template" => "Document template|Document templates"
 ];

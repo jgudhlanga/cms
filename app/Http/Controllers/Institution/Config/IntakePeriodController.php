@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Institution\Setup;
+namespace App\Http\Controllers\Institution\Config;
 
 use App\DTO\Institution\IntakePeriodDto;
 use App\Http\Controllers\Controller;
@@ -22,7 +22,7 @@ class IntakePeriodController extends Controller
     {
         $this->authorize('viewSettings');
         $intakePeriods = IntakePeriodResource::collection($this->repository->allFilter(['*'], $filters));
-        return Inertia::render('institution/setup/intakePeriods/Index', [
+        return Inertia::render('institution/config/intakePeriods/Index', [
             'intakePeriods' => $intakePeriods,
             'filters' => request()->only(['search', 'trashed']),
             'trashedCount' => $this->repository->allTrashed()->count(),

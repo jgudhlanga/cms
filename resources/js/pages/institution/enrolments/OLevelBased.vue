@@ -105,7 +105,7 @@ const buttonOptions = (enrolment: Enrolment) => {
                         <PaymentProofPreviewButton :enrolment="enrolment" />
                     </td>
                     <td class="j-td text-center">
-                        <ApplicationFeePaymentStatus :enrolment="enrolment" />
+                        <ApplicationFeePaymentStatus :enrolment="enrolment" :step="step" />
                     </td>
                 </template>
                 <template v-if="tuitionFeePaymentRequired(step)">
@@ -113,7 +113,7 @@ const buttonOptions = (enrolment: Enrolment) => {
                         <PaymentProofPreviewButton :enrolment="enrolment" />
                     </td>
                     <td class="j-td text-center">
-                        <TuitionFeePaymentStatus :enrolment="enrolment" />
+                        <TuitionFeePaymentStatus :enrolment="enrolment" :step="step" />
                     </td>
                 </template>
                 <td class="j-td">{{ formatDate(enrolment?.attributes?.createdAt, 'LLL') }}</td>

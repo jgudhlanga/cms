@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Institution\Dropdowns;
+namespace App\Http\Controllers\Institution\DocumentTemplates;
 
 use App\DTO\Institution\SubjectDto;
 use App\Http\Controllers\Controller;
@@ -12,7 +12,7 @@ use App\Models\Institution\Subject;
 use App\Repositories\Institution\interface\ISubjectRepository;
 use Inertia\Inertia;
 
-class SubjectController extends Controller
+class DocumentTemplateController extends Controller
 {
     public function __construct(protected ISubjectRepository $repository)
     {

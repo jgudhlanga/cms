@@ -9,13 +9,15 @@ import { Enrolment } from '@/types/enrolments';
 import { trans } from 'laravel-vue-i18n';
 import { computed } from 'vue';
 import { useStudentApplications } from '@/composables/students/useStudentApplications';
+import { DepartmentApplicationStep } from '@/types/department-meta-data';
 
 interface Props {
     enrolment: Enrolment;
+    step: DepartmentApplicationStep;
 }
 const props = defineProps<Props>();
 
-const { markTuitionFeeAsPaid } = useStudentApplications();
+const { markTuitionFeeAsPaid, canApproveWorkflowStepApplications } = useStudentApplications();
 
 const { isItTrue } = useUtils();
 
@@ -31,6 +33,7 @@ const buttonVariant = computed(() => (isPaid.value ? ColorVariant.danger_outline
     <div class="flex items-center justify-center space-x-2">
         <BaseIcon :name="iconName" :class="['size-5', iconClass]" />
         <BaseButton
+            :disabled="!canApproveWorkflowStepApplications(step)"
             @click="markTuitionFeeAsPaid(enrolment, isPaid)"
             :title="buttonTitle"
             :size="ButtonSize.xs"

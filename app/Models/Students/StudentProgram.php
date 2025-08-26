@@ -125,7 +125,7 @@ class StudentProgram extends Model implements HasMedia
 
     public function getOfferLetterUrlAttribute(): ?string
     {
-        return ($this->offer_letter_id > 0) ? $this->getOfferLetterUrlAttribute->getFullUrl() : null;
+        return ($this->offer_letter_id > 0) ? $this->offerLetter->getFullUrl() : null;
     }
 
     public function getActivitylogOptions(): LogOptions

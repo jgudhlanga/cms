@@ -22,7 +22,7 @@ class DivisionController extends Controller
     {
         $this->authorize('viewSettings');
         $divisions = DivisionResource::collection($this->repository->allFilter(['*'], $filters));
-        return Inertia::render('institution/setup/divisions/Index', [
+        return Inertia::render('institution/dropdowns/divisions/Index', [
             'divisions' => $divisions,
             'filters' => request()->only(['search', 'trashed']),
             'trashedCount' => $this->repository->allTrashed()->count(),

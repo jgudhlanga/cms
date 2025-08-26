@@ -146,7 +146,7 @@ const handleFilterChange = () => {
 <template>
     <Head :title="$tChoice('trans.department', 2)" />
     <PageContainer :breadcrumbs="breadcrumbs">
-        <div class="flex w-full items-center justify-between space-x-4">
+        <div class="mt-4 flex w-full items-center justify-between space-x-4">
             <IntakePeriodComboSelect
                 :loading="intakePeriodsLoading"
                 :data="intakePeriods?.data ?? []"
@@ -180,12 +180,22 @@ const handleFilterChange = () => {
                             :key="action.action"
                         >
                             <template v-if="action.action.toLowerCase() == 'verify-application-fee-payment-with-accounts'">
-                                <BaseButton :variant="ColorVariant.success" :size="ButtonSize.xs" classes="rounded-full">
+                                <BaseButton
+                                    :variant="ColorVariant.success"
+                                    :size="ButtonSize.xs"
+                                    classes="rounded-full"
+                                    :disabled="!canApproveWorkflowStepApplications(getCurrentStep(step)!)"
+                                >
                                     {{ $t('trans.generate_application_fee_verification_report') }}
                                 </BaseButton>
                             </template>
                             <template v-if="action.action.toLowerCase() == 'verify-tuition-fee-payment-with-accounts'">
-                                <BaseButton :variant="ColorVariant.success" :size="ButtonSize.xs" classes="rounded-full">
+                                <BaseButton
+                                    :variant="ColorVariant.success"
+                                    :size="ButtonSize.xs"
+                                    classes="rounded-full"
+                                    :disabled="!canApproveWorkflowStepApplications(getCurrentStep(step)!)"
+                                >
                                     {{ $t('trans.generate_tuition_fee_verification_report') }}
                                 </BaseButton>
                             </template>

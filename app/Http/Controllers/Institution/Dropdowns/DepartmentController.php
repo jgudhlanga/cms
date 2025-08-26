@@ -22,7 +22,7 @@ class DepartmentController extends Controller
     {
         $this->authorize('viewSettings');
         $departments = DepartmentResource::collection($this->repository->allFilter(['*'], $filters));
-        return Inertia::render('institution/setup/departments/Index', [
+        return Inertia::render('institution/dropdowns/departments/Index', [
             'departments' => $departments,
             'filters' => request()->only(['search', 'trashed']),
             'trashedCount' => $this->repository->allTrashed()->count(),

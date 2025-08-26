@@ -246,10 +246,10 @@ export const useStudentApplications = () => {
             return false; // no user means no approval rights
         }
         // super roles always have access
-        /*const roles = user.relationships?.roles ?? [];
+        const roles = user.relationships?.roles ?? [];
         if (roles.some((role: Role) => ['super-user', 'super-administrator'].includes(role.attributes.slug))) {
             return true;
-        }*/
+        }
         // get user role IDs (normalize to number, filter out null/undefined)
         const userRoleIds = user?.relationships?.roles?.map((role: Role) => Number(role.id)) ?? [];
 
