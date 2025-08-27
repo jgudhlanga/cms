@@ -3,11 +3,11 @@ import { Head } from '@inertiajs/vue3';
 
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import DataTable from '@/components/core/table/DataTable.vue';
+import { useDepartmentTemplates } from '@/composables/institution/useDepartmentTemplates';
 import { hasAbility } from '@/lib/permissions';
 import { AuthObject, DataFilters, DataListProps } from '@/types/data-pagination';
-import type { Link } from '@/types/ui';
 import { DocumentTemplate } from '@/types/institution';
-
+import type { Link } from '@/types/ui';
 
 defineProps<{
     documentTemplates: DataListProps<DocumentTemplate>;
@@ -21,22 +21,22 @@ const breadcrumbs: Array<Link> = [
     { transKey: 'config', href: route('institution.setup') },
     { transChoiceKey: 'document_template' },
 ];
-const allowed = hasAbility('create:institution-settings');
+
+const { createDocumentTemplateColumns } = useDepartmentTemplates();
 </script>
 
 <template>
     <Head :title="$tChoice('trans.intake_period', 2)" />
     <PageContainer :breadcrumbs="breadcrumbs">
-<!--        <DataTable
-            :data="intakePeriods.data"
+        <DataTable
+            :data="documentTemplates.data"
             :trashed-count="trashedCount"
             :filters="filters"
-            :search-url="route('intake-periods.index')"
-            :pagination="{ ...intakePeriods.links, ...intakePeriods.meta }"
-            :columns="createIntakePeriodColumns()"
-            :on-create="() => onOpenModal(allowed)"
-            :disable-create="!allowed"
+            :search-url="route('document-templates.index')"
+            :pagination="{ ...documentTemplates.links, ...documentTemplates.meta }"
+            :columns="createDocumentTemplateColumns()"
+            :on-create="() => {}"
+            :disable-create="!hasAbility('viewAny:document-templates')"
         />
-        <CreateEdit />-->
     </PageContainer>
 </template>
