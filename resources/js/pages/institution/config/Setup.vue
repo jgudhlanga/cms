@@ -25,7 +25,7 @@ const tabs: Array<Link> = [
     },
     {
         transChoiceKey: 'fee_levy_structure',
-        url: route('document-templates.index'),
+        url: route('fee-structures.index'),
     },
 ];
 const allowed = hasAbility('view:institution-settings');

@@ -4,6 +4,7 @@ namespace App\Models\Shared;
 
 use App\Http\Filters\Shared\SharedNameFilter;
 use App\Observers\Shared\NameSlugObserver;
+use App\Traits\AssignsPosition;
 use App\Traits\Filterable;
 use App\Traits\Paginatable;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
@@ -22,9 +23,9 @@ use Spatie\Activitylog\Traits\LogsActivity;
 #[ObservedBy([NameSlugObserver::class])]
 class FeeType extends Model
 {
-    use HasFactory, SoftDeletes, Filterable, Paginatable, LogsActivity;
+    use HasFactory, SoftDeletes, Filterable, Paginatable, LogsActivity, AssignsPosition;
 
-    protected $fillable = ['name', 'description', 'slug'];
+    protected $fillable = ['name', 'description', 'slug', 'position'];
 
     public function getActivitylogOptions(): LogOptions
     {

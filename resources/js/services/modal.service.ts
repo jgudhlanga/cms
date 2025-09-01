@@ -3,6 +3,7 @@ import { useModalStore } from '@/store/core/useModalStore';
 export type IModalParams = {
 	name: string,
 	edit?: any,
+	parent?: any,
 };
 
 export interface IModal {
@@ -20,7 +21,7 @@ class ModalService implements IModal {
 
 	open(params: IModalParams) {
 		const { openModal } = useModalStore();
-		openModal(params.name, params.edit);
+		openModal(params.name, params.edit, params.parent);
 	}
 
 	close(name: string): void {
@@ -32,6 +33,11 @@ class ModalService implements IModal {
 		const { getEdit } = useModalStore();
 		return getEdit(name);
 	}
+
+    getParent(name: string): any {
+        const { getParent } = useModalStore();
+        return getParent(name);
+    }
 }
 
 

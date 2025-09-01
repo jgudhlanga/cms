@@ -32,6 +32,7 @@ class FeeTypeRepository extends BaseRepository implements IFeeTypeRepository
         return $this->feeType
             ->select($columns)
             ->filter($filters)
+            ->orderBy('position')
             ->orderBy('name')
             ->orderBy('deleted_at')
             ->paginate()

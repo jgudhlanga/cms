@@ -16,6 +16,7 @@ class FeeTypeResource extends JsonResource
             "attributes" => [
                 'name' => $this->resource->name,
                 'description' => $this->resource->description,
+                'position' => $this->resource->position,
                 $this->mergeWhen($request->routeIs('fee-types.*'), [
                     'createdAt' => $this->resource->created_at,
                     'updatedAt' => $this->resource->updated_at,

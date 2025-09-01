@@ -73,9 +73,9 @@ export function useUtils() {
 
     const formatCurrency = (amount?: string) => {
         if (!amount) return '---';
-        const currency = Intl.NumberFormat('en-ZA', {
+        const currency = Intl.NumberFormat('en-US', {
             style: 'currency',
-            currency: 'ZAR',
+            currency: 'USD',
             minimumFractionDigits: 2,
         });
         return currency.format(+amount!);

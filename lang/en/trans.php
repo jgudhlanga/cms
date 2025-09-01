@@ -432,4 +432,8 @@ return [
     "fee_levy_structure" => "Fee / Levy structure|Fees / Levies structure",
     "fee_type" => "Fee Type|Fee Types",
     "document_type" => "Document type|Document types",
+    "fee_structure" => "Fee structure|Fee structures",
+    "amount" => "Amount|Amounts",
+    "local_amount" => "ZiG equivalency",
+    "amount_in_us" => "Amount in USD",
 ];

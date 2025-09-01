@@ -288,6 +288,7 @@ export type FeeType = {
     attributes: {
         name: string;
         description?: string;
+        position?: number | string;
         createdAt?: string;
         updatedAt?: string;
         deletedAt?: string;

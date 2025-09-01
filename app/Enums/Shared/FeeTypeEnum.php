@@ -33,6 +33,22 @@ enum FeeTypeEnum: string
         };
     }
 
+    public function position(): string
+    {
+        return match($this) {
+            self::TUITION_FEE => 1,
+            self::REGISTRATION_FEE => 2,
+            self::EXAMINATION_FEE => 3,
+            self::GRADUATION_FEE => 4,
+            self::STUDENT_ID_FEE => 5,
+            self::PENALTY_FEE => 6,
+            self::STUDENT_ACCOMMODATION_FEE => 7,
+            self::GUEST_ACCOMMODATION_FEE => 8,
+            self::LABORATORY_FEE => 9,
+            self::LIBRARY_FEE => 10,
+            self::OTHER_FEE => 11,
+        };
+    }
     public function description(): string
     {
         return match($this) {

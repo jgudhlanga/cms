@@ -1,3 +1,5 @@
+import { SelectOption } from '@/types/utils';
+
 export type Course = {
     type?: string;
     id?: string;
@@ -183,3 +185,28 @@ export type DocumentTemplate = {
         deletedAt: string;
     };
 };
+export type FeeStructure = {
+    type: string;
+    id: string;
+    attributes: {
+        feeTypeId?: string|number;
+        feeType?: string;
+        levelId?: string|number;
+        level?: string;
+        modeOfStudyId?: string|number;
+        modeOfStudy?: string;
+        amount?: string;
+        localFcaAmount?: string;
+        createdAt?: string;
+        updatedAt?: string;
+        deletedAt?: string;
+    };
+};
+export type FeeStructureParams = {
+    fee_type_id: string | number | null;
+    level_id: string | number | null;
+    mode_of_study_id: string | number | null;
+    amount: string | null;
+    local_fca_amount: string | null;
+};
+

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Institution\Config\FeeStructureController;
 use App\Http\Controllers\Institution\Departments\DepartmentApplicationStepController;
 use App\Http\Controllers\Institution\Departments\DepartmentClassSizeController;
 use App\Http\Controllers\Institution\Departments\DepartmentCourseController;
@@ -42,6 +43,10 @@ Route::prefix('institution')->middleware('auth')->group(function () {
     Route::put('document-templates/{document_template}/restore', [DocumentTemplateController::class, 'restore'])->name('document-templates.restore');
     Route::delete('document-templates/{document_template}/force-delete', [DocumentTemplateController::class, 'forceDelete'])->name('document-templates.force-delete');
     Route::resource('document-templates', DocumentTemplateController::class)->names('document-templates');
+    # ==================================== FEE STRUCTURE ==============================================================
+    Route::put('fee-structures/{fee_structure}/restore', [FeeStructureController::class, 'restore'])->name('fee-structures.restore');
+    Route::delete('fee-structures/{fee_structure}/force-delete', [FeeStructureController::class, 'forceDelete'])->name('fee-structures.force-delete');
+    Route::resource('fee-structures', FeeStructureController::class)->names('fee-structures');
     # ==================================== DEPARTMENT STAFF ============================================================
     Route::put('staff/{staff}/restore', [StaffController::class, 'restore'])->name('staff.restore');
     Route::delete('staff/{staff}/force-delete', [StaffController::class, 'forceDelete'])->name('staff.force-delete');

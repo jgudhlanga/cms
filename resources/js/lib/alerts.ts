@@ -18,6 +18,9 @@ const isModalOpen = (name: string) => {
 const getModalEdit = (name: string): any => {
 	return ModalService.getEdit(name);
 };
+const getModalParent = (name: string): any => {
+    return ModalService.getParent(name);
+};
 const successAlert = (message: string) => {
 	ToastService.success(message);
 };
@@ -61,6 +64,7 @@ export {
 	errorAlert,
 	forbiddenAlert,
 	getModalEdit,
+    getModalParent,
 	infoAlert,
 	infoDialog,
 	successAlert,

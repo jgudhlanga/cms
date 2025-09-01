@@ -3,6 +3,7 @@ import { defineStore } from 'pinia';
 type ModalItem = {
 	opened?: boolean,
 	edit?: any,
+	parent?: any,
 }
 
 interface IModalStore {
@@ -14,8 +15,8 @@ export const useModalStore = defineStore('modal', {
 		modals: {}
 	}),
 	actions: {
-		openModal(name: string, edit?: any) {
-			this.modals![name] = { opened: true, edit: edit };
+		openModal(name: string, edit?: any, parent?: any) {
+			this.modals![name] = { opened: true, edit: edit, parent: parent };
 		},
 		closeModal(name: string) {
 			delete this.modals![name];
@@ -25,6 +26,9 @@ export const useModalStore = defineStore('modal', {
 		},
 		getEdit(name: string) {
 			return this.modals![name]?.edit;
-		}
+		},
+        getParent(name: string) {
+            return this.modals![name]?.parent;
+        }
 	}
 });

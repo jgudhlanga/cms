@@ -17,6 +17,7 @@ use App\Repositories\Institution\DepartmentLevelRepository;
 use App\Repositories\Institution\DepartmentRepository;
 use App\Repositories\Institution\DivisionRepository;
 use App\Repositories\Institution\DocumentTemplateRepository;
+use App\Repositories\Institution\FeeStructureRepository;
 use App\Repositories\Institution\GradeRepository;
 use App\Repositories\Institution\InstitutionDepartmentRepository;
 use App\Repositories\Institution\IntakePeriodRepository;
@@ -27,6 +28,7 @@ use App\Repositories\Institution\interface\IDepartmentLevelRepository;
 use App\Repositories\Institution\interface\IDepartmentRepository;
 use App\Repositories\Institution\interface\IDivisionRepository;
 use App\Repositories\Institution\interface\IDocumentTemplateRepository;
+use App\Repositories\Institution\interface\IFeeStructureRepository;
 use App\Repositories\Institution\interface\IGradeRepository;
 use App\Repositories\Institution\interface\IInstitutionDepartmentRepository;
 use App\Repositories\Institution\interface\IIntakePeriodRepository;
@@ -190,6 +192,7 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(IIntakePeriodRepository::class, IntakePeriodRepository::class);
         $this->app->bind(IStaffRepository::class, StaffRepository::class);
         $this->app->bind(IDocumentTemplateRepository::class, DocumentTemplateRepository::class);
+        $this->app->bind(IFeeStructureRepository::class, FeeStructureRepository::class);
     }
 
     public function userRepositories(): void

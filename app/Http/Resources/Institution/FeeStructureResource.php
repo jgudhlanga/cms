@@ -15,8 +15,11 @@ class FeeStructureResource extends JsonResource
             'id' => $this->id,
             'attributes' => [
                 'feeTypeId' => $this->fee_type_id,
+                'feeType' => $this->feeType->name,
                 'levelId' => $this->level_id,
+                'level' => $this->level->name,
                 'modeOfStudyId' => $this->mode_of_study_id,
+                'modeOfStudy' => $this->modeOfStudy->name,
                 'amount' => $this->amount,
                 'localFcaAmount' => $this->local_fca_amount,
                 $this->mergeWhen($request->routeIs('fee-structures.*'), [
