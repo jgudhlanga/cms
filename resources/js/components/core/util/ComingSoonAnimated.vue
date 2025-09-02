@@ -2,7 +2,7 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 import lottie from 'lottie-web';
 
-const targetDate = new Date('2025-08-31T23:59:59');
+const targetDate = new Date('2025-11-31T23:59:59');
 
 const days = ref(0);
 const hours = ref(0);

@@ -28,7 +28,7 @@ class FeeStructureController extends Controller
     {
         $this->authorize('viewAny', FeeStructure::class);
 
-        $query = FeeStructure::with(['feeType', 'level', 'modeOfStudy'])->orderBy('fee_type_id');
+        $query = FeeStructure::withTrashed()->with(['feeType', 'level', 'modeOfStudy'])->orderBy('level_id');
         $feeStructures = $query->get()
             ->groupBy(fn($feeStructure) => $feeStructure->feeType->name)
             ->map(fn($group) => FeeStructureResource::collection($group));

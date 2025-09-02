@@ -1,13 +1,12 @@
 <script setup lang="ts">
 import SimpleAlert from '@/components/core/alert/SimpleAlert.vue';
-import { BaseButton } from '@/components/core/button';
+import DeleteButton from '@/components/core/button/DeleteButton.vue';
+import EditButton from '@/components/core/button/EditButton.vue';
+import ForceDeleteButton from '@/components/core/button/ForceDeleteButton.vue';
+import RestoreButton from '@/components/core/button/RestoreButton.vue';
 import { useDataTables } from '@/composables/core/useDataTables';
 import { useUtils } from '@/composables/core/useUtils';
 import { useFeeStructures } from '@/composables/institution/useFeeStructures';
-import { ButtonSize } from '@/enums/buttons';
-import { ColorVariant } from '@/enums/colors';
-import { IconName } from '@/enums/icons';
-import { icons } from '@/lib/icons';
 import { hasAbility } from '@/lib/permissions';
 import { FeeStructure } from '@/types/institution';
 import { FeeType } from '@/types/settings';
@@ -44,8 +43,8 @@ const { formatCurrency } = useUtils();
                     <td class="j-td">{{ formatCurrency(fee?.attributes?.amount) }}</td>
                     <td class="j-td space-x-2 text-center">
                         <template v-if="!!fee?.attributes?.deletedAt">
-                            <BaseButton
-                                @click="
+                            <RestoreButton
+                                :action="
                                     () =>
                                         onRestore(
                                             hasAbility('restore:fee-structures'),
@@ -53,26 +52,12 @@ const { formatCurrency } = useUtils();
                                             $tChoice('trans.fee_structure', 1),
                                         )
                                 "
-                                :title="$t('trans.restore')"
-                                :size="ButtonSize.sm"
-                                :variant="ColorVariant.success_outline"
-                                classes="rounded-full"
-                            >
-                                <component :is="icons[IconName.restore]" />
-                            </BaseButton>
+                            />
                         </template>
                         <template v-else>
-                            <BaseButton
-                                @click="onOpenModal(fee, feeType)"
-                                :title="$t('trans.edit')"
-                                :size="ButtonSize.sm"
-                                :variant="ColorVariant.fuchsia_outline"
-                                classes="rounded-full"
-                            >
-                                <component :is="icons[IconName.edit]" />
-                            </BaseButton>
-                            <BaseButton
-                                @click="
+                            <EditButton :action="() => onOpenModal(fee, feeType)" />
+                            <DeleteButton
+                                :action="
                                     () =>
                                         onDelete(
                                             hasAbility('delete:fee-structures'),
@@ -80,16 +65,10 @@ const { formatCurrency } = useUtils();
                                             $tChoice('trans.fee_structure', 1),
                                         )
                                 "
-                                :title="$tChoice('trans.archive', 1)"
-                                :size="ButtonSize.sm"
-                                :variant="ColorVariant.danger_outline"
-                                classes="rounded-full"
-                            >
-                                <component :is="icons[IconName.archive]" />
-                            </BaseButton>
+                            />
 
-                            <BaseButton
-                                @click="
+                            <ForceDeleteButton
+                                :action="
                                     () =>
                                         onForceDelete(
                                             hasAbility('forceDelete:fee-structures'),
@@ -97,13 +76,7 @@ const { formatCurrency } = useUtils();
                                             $tChoice('trans.fee_structure', 1),
                                         )
                                 "
-                                :title="$t('trans.force_delete')"
-                                :size="ButtonSize.sm"
-                                :variant="ColorVariant.danger"
-                                classes="rounded-full"
-                            >
-                                <component :is="icons[IconName.trash]" />
-                            </BaseButton>
+                            />
                         </template>
                     </td>
                 </tr>
