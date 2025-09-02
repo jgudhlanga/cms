@@ -45,7 +45,7 @@ export const useFeeStructures = () => {
                 meta: { align: 'right' },
                 cell: ({ row }: { row: { original: FeeStructure } }) => {
                     const id = getIdParams(row.original.id?.toString() ?? '');
-                    const name = trans_choice('trans.feeStructure', 1);
+                    const name = trans_choice('trans.fee_structure', 1);
                     return moreActionButton(!!row.original?.attributes?.deletedAt, [
                         { key: 'edit', action: () => onOpenModal(row.original, undefined) },
                         {
