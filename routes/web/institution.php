@@ -40,6 +40,7 @@ Route::prefix('institution')->middleware('auth')->group(function () {
     Route::delete('intake-periods/{intake_period}/force-delete', [IntakePeriodController::class, 'forceDelete'])->name('intake-periods.force-delete');
     Route::resource('intake-periods', IntakePeriodController::class)->names('intake-periods');
     # ==================================== DOCUMENT TEMPLATES ==============================================================
+    Route::get('document-templates/{document_template}/preview', [DocumentTemplateController::class, 'preview'])->name('document-templates.preview');
     Route::put('document-templates/{document_template}/restore', [DocumentTemplateController::class, 'restore'])->name('document-templates.restore');
     Route::delete('document-templates/{document_template}/force-delete', [DocumentTemplateController::class, 'forceDelete'])->name('document-templates.force-delete');
     Route::resource('document-templates', DocumentTemplateController::class)->names('document-templates');

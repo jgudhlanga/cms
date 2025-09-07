@@ -15,6 +15,8 @@ class DocumentTemplateResource extends JsonResource
             'id' => $this->id,
             'attributes' => [
                 'name' => $this->name,
+                'documentTypeId' => $this->document_type_id,
+                'documentType' => $this->documentType?->name ?? null,
                 'headerLine1' => $this->header_line_1,
                 'headerLine2' => $this->header_line_2,
                 'headerAddressLine1' => $this->header_address_line_1,

@@ -1,5 +1,3 @@
-import { SelectOption } from '@/types/utils';
-
 export type Course = {
     type?: string;
     id?: string;
@@ -167,6 +165,8 @@ export type DocumentTemplate = {
     id: string;
     attributes: {
         name: string;
+        documentTypeId: string | number;
+        documentType: string;
         headerLine1: string;
         headerLine2: string;
         headerAddressLine1: string;
@@ -185,15 +185,29 @@ export type DocumentTemplate = {
         deletedAt: string;
     };
 };
+export type DocumentTemplateParams = {
+    document_type_id: string | number | null;
+    name: string;
+    header_line_1: string;
+    header_line_2: string;
+    header_address_line_1: string;
+    header_address_line_2: string;
+    header_telephone: string;
+    header_email: string;
+    header_website: string;
+    header_logo_1: string;
+    header_logo_2: string;
+    body: string;
+};
 export type FeeStructure = {
     type: string;
     id: string;
     attributes: {
-        feeTypeId?: string|number;
+        feeTypeId?: string | number;
         feeType?: string;
-        levelId?: string|number;
+        levelId?: string | number;
         level?: string;
-        modeOfStudyId?: string|number;
+        modeOfStudyId?: string | number;
         modeOfStudy?: string;
         amount?: string;
         localFcaAmount?: string;
@@ -209,4 +223,3 @@ export type FeeStructureParams = {
     amount: string | null;
     local_fca_amount: string | null;
 };
-

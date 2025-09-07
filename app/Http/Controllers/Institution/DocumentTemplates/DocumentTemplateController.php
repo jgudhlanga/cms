@@ -11,8 +11,12 @@ use App\Models\Acl\Role;
 use App\Models\Institution\DocumentTemplate;
 use App\Repositories\Institution\interface\IDocumentTemplateRepository;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
+use Spatie\LaravelPdf\Facades\Pdf;
+use Throwable;
+use function Spatie\LaravelPdf\Support\pdf;
 
 class DocumentTemplateController extends Controller
 {
@@ -37,18 +41,37 @@ class DocumentTemplateController extends Controller
     /**
      * @throws AuthorizationException
      */
-    public function create(): void
+    public function create(): Response
     {
         $this->authorize('create', DocumentTemplate::class);
+        return Inertia::render('institution/document-templates/Create');
     }
 
     /**
      * @throws AuthorizationException
+     * @throws Throwable
      */
-    public function store(DocumentTemplateRequest $request): void
+    public function store(DocumentTemplateRequest $request)
     {
         $this->authorize('create', DocumentTemplate::class);
-        $this->repository->create(DocumentTemplateDto::fromDocumentTemplateRequest($request));
+        DB::transaction(function () use ($request) {
+            $template = $this->repository->create(
+                DocumentTemplateDto::fromDocumentTemplateRequest($request)
+            );
+
+            if ($request->hasFile('header_logo_1')) {
+                $media = $template->addMedia($request->file('header_logo_1'))
+                    ->toMediaCollection('logo-1');
+                $template->update(['header_logo_1' => $media->id]);
+            }
+
+            if ($request->hasFile('header_logo_2')) {
+                $media = $template->addMedia($request->file('header_logo_2'))
+                    ->toMediaCollection('logo-2');
+                $template->update(['header_logo_2' => $media->id]);
+            }
+        });
+        return to_route('document-templates.index');
     }
 
     /**
@@ -100,5 +123,12 @@ class DocumentTemplateController extends Controller
     {
         $this->authorize('forceDelete', $documentTemplate);
         $this->repository->delete($documentTemplate, true);
+    }
+
+    public function preview(DocumentTemplate $documentTemplate)
+    {
+        $this->authorize('view', $documentTemplate);
+        $fileName = 'offer-letter-' . time() . '.pdf';
+        return pdf()->view('students.offer-letter', compact('documentTemplate'))->name($fileName);
     }
 }

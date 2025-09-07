@@ -7,6 +7,7 @@ use App\Http\Requests\DocumentTemplates\DocumentTemplateRequest;
 readonly class DocumentTemplateDto
 {
     public function __construct(
+        public string   $document_type_id,
         public string   $name,
 		public ? string $header_line_1,
 		public ? string $header_line_2,
@@ -23,6 +24,7 @@ readonly class DocumentTemplateDto
     public static function fromDocumentTemplateRequest(DocumentTemplateRequest $request): DocumentTemplateDto
     {
         return new self(
+            document_type_id: $request->document_type_id,
             name: $request->name,
 			header_line_1: $request->header_line_1,
             header_line_2: $request->header_line_2,

@@ -20,6 +20,13 @@ export type TableButton = {
     size?: ButtonSize;
 };
 
+export type AnchorParams = {
+    title: string;
+    href: string;
+    classes?: string;
+
+};
+
 export type TableActionOption = {
     key: string;
     action: () => void;
