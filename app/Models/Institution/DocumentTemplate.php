@@ -3,12 +3,14 @@
 namespace App\Models\Institution;
 
 use App\Http\Filters\Shared\SharedNameFilter;
+use App\Models\Shared\DocumentType;
 use App\Traits\BelongsToTenant;
 use App\Traits\Filterable;
 use App\Traits\Paginatable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
@@ -27,10 +29,15 @@ class DocumentTemplate extends Model implements HasMedia
    use HasFactory, SoftDeletes, Filterable, BelongsToTenant,Paginatable, LogsActivity, InteractsWithMedia;
 
 
-   protected $fillable = ['tenant_id', 'name', 'document_type_id', 'header_line_1', 'header_line_2', 'header_address_line_1',
+   protected $fillable = ['tenant_id','document_type_id', 'name', 'document_type_id', 'header_line_1', 'header_line_2', 'header_address_line_1',
        'header_address_line_2', 'header_telephone', 'header_email', 'header_website', 'header_logo_1', 'header_logo_2',
        'body'
    ];
+
+   public function documentType(): BelongsTo
+   {
+       return $this->belongsTo(DocumentType::class, 'document_type_id');
+   }
 
    	public function getActivitylogOptions(): LogOptions
    	{
@@ -63,6 +70,7 @@ class DocumentTemplate extends Model implements HasMedia
 
     public function registerMediaCollections(): void
     {
-        $this->addMediaCollection('document-templates');
+        $this->addMediaCollection('logo-1')->singleFile();
+        $this->addMediaCollection('logo-2')->singleFile();
     }
 }

@@ -40,6 +40,7 @@ class DocumentTemplateRepository extends BaseRepository implements IDocumentTemp
     private function getFields(DocumentTemplateDto $dto): array
     {
         return [
+            'document_type_id' => $dto->document_type_id,
             'name' => $dto->name,
             'header_line_1' =>  $dto->header_line_1,
             'header_line_2' =>  $dto->header_line_2,

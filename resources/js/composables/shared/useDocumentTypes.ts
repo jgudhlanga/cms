@@ -81,7 +81,7 @@ export const useDocumentTypes = () => {
     const listDocumentTypes = async (search?: string) => {
         const { data, fetchData } = useDropdowns();
         isLoading.value = true;
-        await fetchData({ url: route('v1.document-types.index'), search, transChoiceKey: 'trans.document_type' });
+        await fetchData({ url: 'api/v1/document-types?page_size=100', search, transChoiceKey: 'trans.document_type' });
         isLoading.value = false;
         documentTypes.value = data.value;
     };

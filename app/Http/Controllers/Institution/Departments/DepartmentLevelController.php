@@ -146,8 +146,7 @@ class DepartmentLevelController extends Controller
     {
         $query = $institutionDepartment->enrolments()
             ->where('department_level_id', $departmentLevel->id)
-            ->whereHas('departmentWorkflowStep', fn($q) => $q->where('position', '<', $maxStep->position)
-            )
+            ->whereHas('departmentWorkflowStep', fn($q) => $q->where('position', '<', $maxStep->position))
             ->when($intakePeriodId, fn($q) => $q->where('intake_period_id', $intakePeriodId))
             ->when($modeOfStudyId, fn($q) => $q->where('mode_of_study_id', $modeOfStudyId))
             ->with([

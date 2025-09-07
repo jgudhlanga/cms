@@ -235,6 +235,18 @@ enum PermissionEnum: string
     case EXPORT_DOCUMENT_TEMPLATES = 'export:document-templates';
     case CRUD_DOCUMENTS_SETTING_TEMPLATES = 'crud-settings:document-templates';
     case VIEW_DOCUMENT_TEMPLATES_AUDIT_TRAIL = 'viewAuditTrail:document-templates';
+    /** FEE STRUCTURE */
+    case VIEW_ANY_FEE_STRUCTURES = 'viewAny:fee-structures';
+    case VIEW_FEE_STRUCTURES = 'view:fee-structures';
+    case CREATE_FEE_STRUCTURES = 'create:fee-structures';
+    case UPDATE_FEE_STRUCTURES = 'update:fee-structures';
+    case DELETE_FEE_STRUCTURES = 'delete:fee-structures';
+    case RESTORE_FEE_STRUCTURES = 'restore:fee-structures';
+    case FORCE_DELETE_FEE_STRUCTURES = 'forceDelete:fee-structures';
+    case IMPORT_FEE_STRUCTURES = 'import:fee-structures';
+    case EXPORT_FEE_STRUCTURES = 'export:fee-structures';
+    case CRUD_FEE_STRUCTURES = 'crud-settings:fee-structures';
+    case VIEW_FEE_STRUCTURES_AUDIT_TRAIL = 'viewAuditTrail:fee-structures';
 
     public function label(): string
     {
@@ -468,6 +480,18 @@ enum PermissionEnum: string
             self::EXPORT_DOCUMENT_TEMPLATES => 'export:document-templates',
             self::CRUD_DOCUMENTS_SETTING_TEMPLATES => 'crud-settings:document-templates',
             self::VIEW_DOCUMENT_TEMPLATES_AUDIT_TRAIL => 'viewAuditTrail:document-templates',
+            /** FEE STRUCTURE */
+            self::VIEW_ANY_FEE_STRUCTURES => 'viewAny:fee-structures',
+            self::VIEW_FEE_STRUCTURES => 'view:fee-structures',
+            self::CREATE_FEE_STRUCTURES => 'create:fee-structures',
+            self::UPDATE_FEE_STRUCTURES => 'update:fee-structures',
+            self::DELETE_FEE_STRUCTURES => 'delete:fee-structures',
+            self::RESTORE_FEE_STRUCTURES => 'restore:fee-structures',
+            self::FORCE_DELETE_FEE_STRUCTURES => 'forceDelete:fee-structures',
+            self::IMPORT_FEE_STRUCTURES => 'import:fee-structures',
+            self::EXPORT_FEE_STRUCTURES => 'export:fee-structures',
+            self::CRUD_FEE_STRUCTURES => 'crud-settings:fee-structures',
+            self::VIEW_FEE_STRUCTURES_AUDIT_TRAIL => 'viewAuditTrail:fee-structures',
         };
     }
 

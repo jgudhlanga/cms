@@ -7,6 +7,7 @@ enum ModeOfStudyEnum: string
     case FULL_TIME = "Full Time";
     case PART_TIME = "Part Time";
     case BLOCK_RELEASE = "Block Release";
+    case OJET = "Ojet";
 
     public function label(): string
     {
@@ -14,6 +15,7 @@ enum ModeOfStudyEnum: string
             self::FULL_TIME => 'Full Time',
             self::PART_TIME => 'Part Time',
             self::BLOCK_RELEASE => 'Block Release',
+            self::OJET => 'Ojet',
         };
     }
 

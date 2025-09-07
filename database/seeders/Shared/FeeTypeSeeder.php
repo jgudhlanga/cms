@@ -16,6 +16,7 @@ class FeeTypeSeeder extends Seeder
         foreach (FeeTypeEnum::cases() as $row) {
             FeeType::create([
                 'name' => $row->name(),
+                'position' => $row->position(),
                 'description' => $row->description(),
             ]);
         }

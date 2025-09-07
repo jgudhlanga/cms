@@ -52,7 +52,7 @@ watch(course, async () => {
 <template>
     <BaseCard :title="$t('trans.programs')" :description="$t('trans.program_description')">
         <div class="grid grid-cols-1 gap-3 md:grid-cols-4">
-            <ModeOfStudyComboSelect :form="form" v-model="modeOfStudy" :error="form.errors.modeOfStudy" :is-required="true" />
+            <ModeOfStudyComboSelect :form="form" v-model="modeOfStudy" :error="form.errors.modeOfStudy" :is-required="true"   />
             <InstitutionDepartmentComboSelect :form="form" v-model="department" :error="form.errors.department" :is-required="true" />
             <DepartmentLevelComboSelect
                 :form="form"

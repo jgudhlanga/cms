@@ -17,6 +17,7 @@ class DocumentTemplateRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255', 'unique:document_templates,name,' . $this->document_template_id],
+            'document_type_id' => ['required', 'integer', 'exists:document_types,id'],
             'header_logo_1' => ['nullable', 'file', 'max:5009'],
             'header_logo_2' => ['nullable', 'file', 'max:5009'],
         ];

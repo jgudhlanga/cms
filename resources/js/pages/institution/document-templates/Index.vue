@@ -3,11 +3,12 @@ import { Head } from '@inertiajs/vue3';
 
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import DataTable from '@/components/core/table/DataTable.vue';
+import { useDocumentTemplates } from '@/composables/institution/useDocumentTemplates';
 import { hasAbility } from '@/lib/permissions';
 import { AuthObject, DataFilters, DataListProps } from '@/types/data-pagination';
-import type { Link } from '@/types/ui';
 import { DocumentTemplate } from '@/types/institution';
-
+import type { Link } from '@/types/ui';
+import { useUtils } from '@/composables/core/useUtils';
 
 defineProps<{
     documentTemplates: DataListProps<DocumentTemplate>;
@@ -21,22 +22,23 @@ const breadcrumbs: Array<Link> = [
     { transKey: 'config', href: route('institution.setup') },
     { transChoiceKey: 'document_template' },
 ];
-const allowed = hasAbility('create:institution-settings');
+
+const { createDocumentTemplateColumns } = useDocumentTemplates();
+const {navigateTo} = useUtils();
 </script>
 
 <template>
-    <Head :title="$tChoice('trans.intake_period', 2)" />
+    <Head :title="$tChoice('trans.document_template', 2)" />
     <PageContainer :breadcrumbs="breadcrumbs">
-<!--        <DataTable
-            :data="intakePeriods.data"
+        <DataTable
+            :data="documentTemplates.data"
             :trashed-count="trashedCount"
             :filters="filters"
-            :search-url="route('intake-periods.index')"
-            :pagination="{ ...intakePeriods.links, ...intakePeriods.meta }"
-            :columns="createIntakePeriodColumns()"
-            :on-create="() => onOpenModal(allowed)"
-            :disable-create="!allowed"
+            :search-url="route('document-templates.index')"
+            :pagination="{ ...documentTemplates.links, ...documentTemplates.meta }"
+            :columns="createDocumentTemplateColumns()"
+            :on-create="() => navigateTo(route('document-templates.create'))"
+            :disable-create="!hasAbility('create:document-templates')"
         />
-        <CreateEdit />-->
     </PageContainer>
 </template>

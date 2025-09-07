@@ -9,6 +9,7 @@ use Database\Seeders\Acl\RolesTableSeeder;
 use Database\Seeders\Institution\CoursesTableSeeder;
 use Database\Seeders\Institution\DepartmentsTableSeeder;
 use Database\Seeders\Institution\DivisionsTableSeeder;
+use Database\Seeders\Institution\FeeStructureSeeder;
 use Database\Seeders\Institution\GradesTableSeeder;
 use Database\Seeders\Institution\InstitutionDepartmentsTableSeeder;
 use Database\Seeders\Institution\LevelsTableSeeder;
@@ -86,6 +87,7 @@ class DatabaseSeeder extends Seeder
             EmploymentTypesSeeder::class,
             FeeTypeSeeder::class,
             DocumentTypeSeeder::class,
+            FeeStructureSeeder::class,
         ]);
     }
 }

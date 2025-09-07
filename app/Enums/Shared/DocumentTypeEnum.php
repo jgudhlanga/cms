@@ -14,6 +14,7 @@ enum DocumentTypeEnum: string
     case IDENTITY_DOCUMENT = 'identity_document';
     case MEDICAL_REPORT = 'medical_report';
     case NATIONAL_EXAM_CERTIFICATE = 'national_exam_certificate';
+    case OFFER_LETTER = 'offer_letter';
     case PASSPORT_PHOTO = 'passport_photo';
     case PROOF_OF_PAYMENT = 'proof_of_payment';
     case RECEIPT = 'receipt';
@@ -33,6 +34,7 @@ enum DocumentTypeEnum: string
             self::IDENTITY_DOCUMENT => 'Identity Document',
             self::MEDICAL_REPORT => 'Medical Report',
             self::NATIONAL_EXAM_CERTIFICATE => 'National Exam Certificate',
+            self::OFFER_LETTER => 'Offer Letter',
             self::PASSPORT_PHOTO => 'Passport Photo',
             self::PROOF_OF_PAYMENT => 'Proof of Payment',
             self::RECEIPT => 'Receipt',
@@ -54,6 +56,7 @@ enum DocumentTypeEnum: string
             self::IDENTITY_DOCUMENT => 'National ID, driver’s licence, or valid passport.',
             self::MEDICAL_REPORT => 'Certified health or fitness report for enrollment requirements.',
             self::NATIONAL_EXAM_CERTIFICATE => 'Certificate of completion from a recognized national exam.',
+            self::OFFER_LETTER => 'Offer letter.',
             self::PASSPORT_PHOTO => 'Recent passport-sized photograph for identification.',
             self::PROOF_OF_PAYMENT => 'Receipt or confirmation of fee payment.',
             self::RECEIPT => 'Issued acknowledgment of a payment made.',

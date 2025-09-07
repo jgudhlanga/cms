@@ -219,7 +219,6 @@ const onlyRoles = 'head-of-department,head-of-division,lecturer,lecturer-in-char
                 <BaseButton :processing="form.processing || isValidating" :size="ButtonSize.lg">
                     {{ $t('trans.save') }}
                 </BaseButton>
-                <slot name="action-button" />
             </div>
         </form>
     </PageContainer>

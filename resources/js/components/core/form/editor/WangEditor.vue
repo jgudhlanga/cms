@@ -125,14 +125,14 @@ onBeforeUnmount(() => {
 <style src="@wangeditor/editor/dist/css/style.css"></style>
 <style scoped>
 .editor-container {
-    max-width: 1000px;
-    margin: 40px auto;
+    max-width: 100%;
+    margin: auto;
     min-height: 400px;
-    border-radius: 16px;
+    /*border-radius: 16px;*/
     overflow: hidden;
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
     background-color: #fff;
-    border: 1px solid #e2e8f0;
+    /*border: 1px solid #e2e8f0;*/
 }
 
 .editor-toolbar {
@@ -140,7 +140,7 @@ onBeforeUnmount(() => {
     background-color: #f9fafb;
     padding: 8px 12px;
     box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.05);
-    border-radius: 16px 16px 0 0;
+    /*border-radius: 16px 16px 0 0;*/
 }
 
 .editor-content {

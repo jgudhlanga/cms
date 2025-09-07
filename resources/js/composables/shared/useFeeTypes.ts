@@ -81,7 +81,11 @@ export const useFeeTypes = () => {
     const listFeeTypes = async (search?: string) => {
         const { data, fetchData } = useDropdowns();
         isLoading.value = true;
-        await fetchData({ url: route('v1.fee-types.index'), search, transChoiceKey: 'trans.fee_type' });
+        await fetchData({
+            url: 'api/v1/fee-types?page_size=all',
+            search,
+            transChoiceKey: 'trans.fee_type',
+        });
         isLoading.value = false;
         feeTypes.value = data.value;
     };

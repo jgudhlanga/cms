@@ -11,7 +11,7 @@ import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
 import { IconName } from '@/enums/icons';
 import { dangerDialog, forbiddenAlert, successAlert, warningDialog } from '@/lib/alerts';
-import { AvatarParams, ButtonDropdownOption, TableButton } from '@/types/tables';
+import { AnchorParams, AvatarParams, ButtonDropdownOption, TableButton } from '@/types/tables';
 import { router } from '@inertiajs/vue3';
 import {
     getCoreRowModel,
@@ -26,6 +26,7 @@ import { trans } from 'laravel-vue-i18n';
 import { debounce } from 'lodash';
 import { h, Ref, ref } from 'vue';
 import TextEditLink from '@/components/core/util/TextEditLink.vue';
+import BaseAnchor from '@/components/core/util/BaseAnchor.vue';
 
 /**
  * Provides a set of utilities for managing data tables. This includes
@@ -449,6 +450,15 @@ export function useDataTables() {
         return h(BaseTag, { title, classes, variant });
     };
 
+    const anchorTag = (params: AnchorParams) => {
+        return h(BaseAnchor, {
+            title: params.title,
+            href: params.href,
+            classes: params?.classes ?? 'rounded-full capitalize font-normal uppercase',
+
+        });
+    };
+
     return {
         initialize,
         toggleColumnVisibility,
@@ -470,5 +480,6 @@ export function useDataTables() {
         orderButtons,
         tag,
         textEditLink,
+        anchorTag,
     };
 }

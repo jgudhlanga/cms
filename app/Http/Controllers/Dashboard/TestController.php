@@ -8,9 +8,15 @@ use App\Models\Students\StudentProgram;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Spatie\LaravelPdf\Facades\Pdf;
+use Spatie\MediaLibrary\MediaCollections\Exceptions\FileDoesNotExist;
+use Spatie\MediaLibrary\MediaCollections\Exceptions\FileIsTooBig;
 
 class TestController extends Controller
 {
+    /**
+     * @throws FileIsTooBig
+     * @throws FileDoesNotExist
+     */
     public function pdf(StudentProgram $studentProgram)
     {
         $fileName = 'offer-letter-' . $studentProgram->id . '.pdf';

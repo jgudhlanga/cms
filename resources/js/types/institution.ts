@@ -165,6 +165,8 @@ export type DocumentTemplate = {
     id: string;
     attributes: {
         name: string;
+        documentTypeId: string | number;
+        documentType: string;
         headerLine1: string;
         headerLine2: string;
         headerAddressLine1: string;
@@ -182,4 +184,42 @@ export type DocumentTemplate = {
         updatedAt: string;
         deletedAt: string;
     };
+};
+export type DocumentTemplateParams = {
+    document_type_id: string | number | null;
+    name: string;
+    header_line_1: string;
+    header_line_2: string;
+    header_address_line_1: string;
+    header_address_line_2: string;
+    header_telephone: string;
+    header_email: string;
+    header_website: string;
+    header_logo_1: string;
+    header_logo_2: string;
+    body: string;
+};
+export type FeeStructure = {
+    type: string;
+    id: string;
+    attributes: {
+        feeTypeId?: string | number;
+        feeType?: string;
+        levelId?: string | number;
+        level?: string;
+        modeOfStudyId?: string | number;
+        modeOfStudy?: string;
+        amount?: string;
+        localFcaAmount?: string;
+        createdAt?: string;
+        updatedAt?: string;
+        deletedAt?: string;
+    };
+};
+export type FeeStructureParams = {
+    fee_type_id: string | number | null;
+    level_id: string | number | null;
+    mode_of_study_id: string | number | null;
+    amount: string | null;
+    local_fca_amount: string | null;
 };

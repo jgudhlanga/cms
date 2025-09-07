@@ -83,7 +83,7 @@ export const useLevels = () => {
     const listLevels = async (search?: string) => {
         const { data, fetchData } = useDropdowns();
         isLoading.value = true;
-        await fetchData({ url: 'api/v1/levels?page_size=100', search, transChoiceKey: 'trans.level' });
+        await fetchData({ url: 'api/v1/levels?page_size=all', search, transChoiceKey: 'trans.level' });
         isLoading.value = false;
         levels.value = data.value;
     };
