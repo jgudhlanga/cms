@@ -1,4 +1,5 @@
 import { useDataTables } from '@/composables/core/useDataTables';
+import { useUtils } from '@/composables/core/useUtils';
 import { buildFormOptions } from '@/lib/forms';
 import { getIdParams } from '@/lib/utils';
 import { Auth } from '@/types';
@@ -9,6 +10,7 @@ import { ref } from 'vue';
 
 export const useDocumentTemplates = () => {
     const { moreActionButton, onDelete, onForceDelete, onRestore, anchorTag } = useDataTables();
+    const { navigateTo } = useUtils();
     const isLoading = ref(false);
     const documentTemplates = ref<DocumentTemplate[]>([]);
     const createDocumentTemplateColumns = () => {
@@ -40,7 +42,7 @@ export const useDocumentTemplates = () => {
                     const id = getIdParams(row.original.id?.toString() ?? '');
                     const name = trans_choice('trans.document_template', 1);
                     return moreActionButton(!!row.original?.attributes?.deletedAt, [
-                        { key: 'edit', action: () => {} },
+                        { key: 'edit', action: () => navigateTo(route('document-templates.edit', id)) },
                         {
                             key: 'archive',
                             action: () => onDelete(can['delete:institution-settings'], route('document-templates.destroy', id), name),

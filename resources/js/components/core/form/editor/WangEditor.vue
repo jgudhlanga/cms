@@ -89,6 +89,7 @@ const { toolbarConfig, editorConfig, defaultHtml, mode } = toRefs(state);
 
 const handleCreated = (editor: IDomEditor) => {
     editorRef.value = editor;
+    editor.setHtml(props.modelValue);
 };
 
 function handleChange(editor: IDomEditor) {
