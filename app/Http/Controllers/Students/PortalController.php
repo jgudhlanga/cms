@@ -87,6 +87,11 @@ class PortalController extends Controller
         ]);
     }
 
+    public function registrationFeePaymentOptions(): Response
+    {
+        return Inertia::render('portal/application/RegistrationFeePaymentOptions');
+    }
+
     // ========= Application Workflow =========
 
     /**
@@ -122,7 +127,7 @@ class PortalController extends Controller
             $application->update(['department_application_step_id' => $stepOne?->id ?? null]);
             DB::commit();
             if ($stepTwo) {
-                ApplicationWorkflowStepChanged::dispatch($student, $application, $stepTwo, $stepOne);
+                ApplicationWorkflowStepChanged::dispatch($student, $application, $stepOne, $stepOne);
             }
             return to_route('portal.applications');
         } catch (Throwable $e) {
