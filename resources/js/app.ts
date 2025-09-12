@@ -1,6 +1,7 @@
 import '../css/app.css';
 
 import { initializeTheme } from '@/composables/core/useAppearance';
+import 'temporal-polyfill/global';
 import AppLayout from '@/layouts/AppLayout.vue';
 import GuestLayout from '@/layouts/GuestLayout.vue';
 import PlainLayout from '@/layouts/PlainLayout.vue';

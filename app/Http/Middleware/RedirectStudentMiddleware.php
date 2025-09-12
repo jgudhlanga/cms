@@ -21,8 +21,8 @@ class RedirectStudentMiddleware
                 }
             } else {
                 # If no student profile, always go to application page unless already there
-                if (!$request->routeIs('portal.application.create')) {
-                    return to_route('portal.application.create');
+                if (!$request->routeIs('portal.application.fee-payment')) {
+                    return to_route('portal.application.fee-payment');
                 }
             }
         } elseif ($user) {

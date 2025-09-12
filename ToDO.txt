@@ -2,6 +2,8 @@
 *** Break it into modules
 
 FAILED VALIDATION VIEW
+use Illuminate\Contracts\Validation\Validator;
+use Illuminate\Http\Exceptions\HttpResponseException;
 public function failedValidation(Validator $validator)
 {
     throw new HttpResponseException(response()->json([

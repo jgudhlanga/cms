@@ -30,7 +30,7 @@ import { useApplicationFormHelper } from '@/composables/students/useApplicationF
 import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
 import { IconName } from '@/enums/icons';
-import { errorAlert, warningDialog } from '@/lib/alerts';
+import { errorAlert } from '@/lib/alerts';
 import { useForm } from '@inertiajs/vue3';
 import { storeToRefs } from 'pinia';
 

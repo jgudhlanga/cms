@@ -6,23 +6,25 @@ import type { Link } from '@/types/ui';
 import { Head } from '@inertiajs/vue3';
 
 interface Props {
+    documentTemplate: any;
     auth: AuthObject;
     errors: object;
 }
 
-defineProps<Props>();
+const props = defineProps<Props>();
 
 const breadcrumbs: Array<Link> = [
     { transChoiceKey: 'institution', href: route('institution.index') },
     { transKey: 'config', href: route('institution.setup') },
     { transChoiceKey: 'document_template', href: route('document-templates.index') },
-    { transKey: 'create' },
+    { title: props.documentTemplate.name ?? '' },
+    { transKey: 'edit' },
 ];
 </script>
 
 <template>
-    <Head :title="$tChoice('trans.document_template', 2)" />
+    <Head :title="documentTemplate.name ?? ''" />
     <PageContainer :breadcrumbs="breadcrumbs">
-        <CreateEditForm />
+        <CreateEditForm :documentTemplate="documentTemplate" />
     </PageContainer>
 </template>

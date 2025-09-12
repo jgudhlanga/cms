@@ -4,8 +4,7 @@ namespace App\Enums\Shared;
 
 enum WorkflowStepEnum: string
 {
-    case APPLICATION_SUBMITTED = 'application_submitted';
-    case AWAITING_APPLICATION_FEE_PAYMENT = 'awaiting_application_fee_payment';
+    case SUBMITTED = 'submitted';
     case APPLICATION_IN_REVIEW = 'application_in_review';
     case AWAITING_REQUIREMENTS = 'awaiting_requirements';
     case INTERVIEW_SCHEDULED = 'interview_scheduled';
@@ -22,8 +21,7 @@ enum WorkflowStepEnum: string
     public function name(): string
     {
         return match ($this) {
-            self::APPLICATION_SUBMITTED => 'Application submitted',
-            self::AWAITING_APPLICATION_FEE_PAYMENT => 'Awaiting application fee payment',
+            self::SUBMITTED => 'Submitted',
             self::APPLICATION_IN_REVIEW => 'Application in review',
             self::AWAITING_REQUIREMENTS => 'Awaiting requirements',
             self::INTERVIEW_SCHEDULED => 'Interview scheduled',
@@ -42,28 +40,26 @@ enum WorkflowStepEnum: string
     public function position(): int
     {
         return match ($this) {
-            self::APPLICATION_SUBMITTED => 1,
-            self::AWAITING_APPLICATION_FEE_PAYMENT => 2,
-            self::APPLICATION_IN_REVIEW => 3,
-            self::AWAITING_REQUIREMENTS => 4,
-            self::INTERVIEW_SCHEDULED => 5,
-            self::INTERVIEW_COMPLETED => 6,
-            self::APPLICATION_ACCEPTED_AND_OFFER_MADE => 7,
-            self::APPLICATION_REJECTED => 8,
-            self::APPLICANT_ACCEPTED_OFFER => 9,
-            self::APPLICANT_REJECTED_OFFER => 10,
-            self::APPLICATION_WAITLISTED => 11,
-            self::AWAITING_TUITION_FEES_PAYMENT => 12,
-            self::FINAL_DECISION_PENDING => 13,
-            self::STUDENT_ENROLLED => 14,
+            self::SUBMITTED => 1,
+            self::APPLICATION_IN_REVIEW => 2,
+            self::AWAITING_REQUIREMENTS => 3,
+            self::INTERVIEW_SCHEDULED => 4,
+            self::INTERVIEW_COMPLETED => 5,
+            self::APPLICATION_ACCEPTED_AND_OFFER_MADE => 6,
+            self::APPLICATION_REJECTED => 7,
+            self::APPLICANT_ACCEPTED_OFFER => 8,
+            self::APPLICANT_REJECTED_OFFER => 9,
+            self::APPLICATION_WAITLISTED => 10,
+            self::AWAITING_TUITION_FEES_PAYMENT => 11,
+            self::FINAL_DECISION_PENDING => 12,
+            self::STUDENT_ENROLLED => 13,
         };
     }
 
     public function description(): string
     {
         return match ($this) {
-            self::APPLICATION_SUBMITTED => 'The applicant has successfully submitted their application.',
-            self::AWAITING_APPLICATION_FEE_PAYMENT => 'The application fee has not yet been paid by the applicant.',
+            self::SUBMITTED => 'The application has been submitted and is awaiting review.',
             self::APPLICATION_IN_REVIEW => 'The selection officers are currently reviewing the submitted application.',
             self::AWAITING_REQUIREMENTS => 'The applicant needs to provide additional documents or requirements.',
             self::INTERVIEW_SCHEDULED => 'An interview has been scheduled for the applicant.',

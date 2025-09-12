@@ -1,14 +1,13 @@
 <script setup lang="ts">
-import ApplicationCover from '@/components/auth/ApplicationCover.vue';
 import { BaseButton } from '@/components/core/button';
-import { Separator } from '@/components/ui/separator';
+import AppLogo from '@/components/core/image/AppLogo.vue';
 import { useAuth } from '@/composables/auth/useAuth';
 import { useUtils } from '@/composables/core/useUtils';
 import { useGuestPortal } from '@/composables/students/useGuestPortal';
-import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
 import { TextFieldType } from '@/enums/inputs';
 import { clearFormErrors } from '@/lib/forms';
+import RegistrationGuide from '@/pages/portal/guest/RegistrationGuide.vue';
 import { useCreateUserFormStore } from '@/store/portal/useCreateUserFormStore';
 import { CreateApplicationUserParams } from '@/types/portal';
 import { Head, useForm } from '@inertiajs/vue3';
@@ -49,87 +48,99 @@ onMounted(async () => {
 
 <template>
     <Head :title="$t('trans.application_form')" />
-    <ApplicationCover>
-        <header>
-            <h3 class="text-primary mt-3 flex items-center justify-center text-lg font-bold uppercase">Harare Polytechnic</h3>
-            <p class="text-muted-foreground my-1 text-sm">{{ $t('trans.application_form_description') }}</p>
-        </header>
-        <form @submit.prevent="submitForm()" class="flex w-1/4 flex-col">
-            <div class="flex w-full flex-col space-y-3 rounded-lg p-8 shadow-md">
-                <BaseInput
-                    input-id="first_name"
-                    :label="$t('trans.first_name')"
-                    v-model="first_name"
-                    placeholder="enter firstname"
-                    :label-uppercase="true"
-                    :is-required="true"
-                    @input="clearFormErrors(form, 'first_name')"
-                    :error="form.errors.first_name"
-                />
-                <BaseInput
-                    input-id="middle_name"
-                    :label="$t('trans.middle_name')"
-                    placeholder="enter middlename"
-                    v-model="middle_name"
-                    :label-uppercase="true"
-                />
-                <BaseInput
-                    input-id="last_name"
-                    :label="$t('trans.last_name')"
-                    placeholder="enter lastname / surname"
-                    v-model="last_name"
-                    :label-uppercase="true"
-                    :is-required="true"
-                    @input="clearFormErrors(form, 'last_name')"
-                    :error="form.errors.last_name"
-                />
-                <BaseInput
-                    input-id="email"
-                    :label="$t('trans.email')"
-                    v-model="email"
-                    :label-uppercase="true"
-                    :is-required="true"
-                    placeholder="enter email"
-                    @input="clearFormErrors(form, 'email')"
-                    :error="form.errors.email"
-                />
-                <BaseInput
-                    input-id="password"
-                    :label="$t('trans.password')"
-                    :label-uppercase="true"
-                    placeholder="enter password"
-                    v-model="password"
-                    :type="TextFieldType.password"
-                    :is-required="true"
-                    @input="clearFormErrors(form, 'password')"
-                    :error="form.errors.password"
-                />
-                <BaseInput
-                    input-id="password_confirmation"
-                    :label="$t('trans.confirm_password')"
-                    :label-uppercase="true"
-                    placeholder="confirm password"
-                    v-model="password_confirmation"
-                    :type="TextFieldType.password"
-                    :is-required="true"
-                    @input="clearFormErrors(form, 'password_confirmation')"
-                    :error="form.errors.password_confirmation"
-                />
-                <Separator class="my-4" />
-                <BaseButton :size="ButtonSize.lg" type="submit" class="w-full" :processing="form.processing">
-                    {{ $t('trans.submit') }}
-                </BaseButton>
-                <BaseButton
-                    @click="() => navigateTo(route('login'))"
-                    class="mt-1 w-full"
-                    :variant="ColorVariant.primary_outline"
-                    type="button"
-                    :tabindex="7"
-                    :disabled="form.processing"
-                >
-                    {{ $t('trans.existing_student_login') }}
-                </BaseButton>
-            </div>
-        </form>
-    </ApplicationCover>
+    <div class="flex justify-between">
+        <div class="flex w-1/2 flex-col p-16">
+            <form @submit.prevent="submitForm()" class="flex flex-col rounded-2xl shadow-md p-10">
+                <div class="flex w-full items-center justify-center">
+                    <div class="size-20">
+                        <AppLogo classes="flex justify-center border-2 border-white" />
+                    </div>
+                </div>
+                <div class="text-primary mt-13 mb-7 flex items-center justify-center text-lg font-bold uppercase">Harare Polytechnic</div>
+                <div class="flex w-full flex-col space-y-3">
+                    <BaseInput
+                        input-id="first_name"
+                        :label="$t('trans.first_name')"
+                        v-model="first_name"
+                        placeholder="enter firstname"
+                        :vertical-layout="false"
+                        :label-uppercase="true"
+                        :is-required="true"
+                        @input="clearFormErrors(form, 'first_name')"
+                        :error="form.errors.first_name"
+                    />
+                    <BaseInput
+                        input-id="middle_name"
+                        :label="$t('trans.middle_name')"
+                        placeholder="enter middlename"
+                        v-model="middle_name"
+                        :label-uppercase="true"
+                        :vertical-layout="false"
+                    />
+                    <BaseInput
+                        input-id="last_name"
+                        :label="$t('trans.last_name')"
+                        placeholder="enter lastname / surname"
+                        v-model="last_name"
+                        :label-uppercase="true"
+                        :is-required="true"
+                        :vertical-layout="false"
+                        @input="clearFormErrors(form, 'last_name')"
+                        :error="form.errors.last_name"
+                    />
+                    <BaseInput
+                        input-id="email"
+                        :label="$t('trans.email')"
+                        v-model="email"
+                        :label-uppercase="true"
+                        :is-required="true"
+                        :vertical-layout="false"
+                        placeholder="enter email"
+                        @input="clearFormErrors(form, 'email')"
+                        :error="form.errors.email"
+                    />
+                    <BaseInput
+                        input-id="password"
+                        :label="$t('trans.password')"
+                        :label-uppercase="true"
+                        placeholder="enter password"
+                        v-model="password"
+                        :type="TextFieldType.password"
+                        :vertical-layout="false"
+                        :is-required="true"
+                        @input="clearFormErrors(form, 'password')"
+                        :error="form.errors.password"
+                    />
+                    <BaseInput
+                        input-id="password_confirmation"
+                        :label="$t('trans.confirm_password')"
+                        :label-uppercase="true"
+                        placeholder="confirm password"
+                        v-model="password_confirmation"
+                        :type="TextFieldType.password"
+                        :is-required="true"
+                        :vertical-layout="false"
+                        @input="clearFormErrors(form, 'password_confirmation')"
+                        :error="form.errors.password_confirmation"
+                    />
+                    <div class="flex flex-col items-center justify-center space-y-3 mt-5">
+                        <BaseButton type="submit" class="w-1/2" :processing="form.processing">
+                            {{ $t('trans.submit') }}
+                        </BaseButton>
+                        <BaseButton
+                            @click="() => navigateTo(route('login'))"
+                            class="w-1/2"
+                            :variant="ColorVariant.primary_outline"
+                            type="button"
+                            :tabindex="7"
+                            :disabled="form.processing"
+                        >
+                            {{ $t('trans.returning_student_login') }}
+                        </BaseButton>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <RegistrationGuide />
+    </div>
 </template>

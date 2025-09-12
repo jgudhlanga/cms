@@ -7,14 +7,14 @@ use App\Http\Controllers\Controller;
 use App\Http\Filters\Shared\SharedNameFilter;
 use App\Http\Requests\DocumentTemplates\DocumentTemplateRequest;
 use App\Http\Resources\DocumentTemplates\DocumentTemplateResource;
-use App\Models\Acl\Role;
 use App\Models\Institution\DocumentTemplate;
 use App\Repositories\Institution\interface\IDocumentTemplateRepository;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
-use Spatie\LaravelPdf\Facades\Pdf;
+use Spatie\MediaLibrary\MediaCollections\Exceptions\FileDoesNotExist;
+use Spatie\MediaLibrary\MediaCollections\Exceptions\FileIsTooBig;
 use Throwable;
 use function Spatie\LaravelPdf\Support\pdf;
 
@@ -55,21 +55,8 @@ class DocumentTemplateController extends Controller
     {
         $this->authorize('create', DocumentTemplate::class);
         DB::transaction(function () use ($request) {
-            $template = $this->repository->create(
-                DocumentTemplateDto::fromDocumentTemplateRequest($request)
-            );
-
-            if ($request->hasFile('header_logo_1')) {
-                $media = $template->addMedia($request->file('header_logo_1'))
-                    ->toMediaCollection('logo-1');
-                $template->update(['header_logo_1' => $media->id]);
-            }
-
-            if ($request->hasFile('header_logo_2')) {
-                $media = $template->addMedia($request->file('header_logo_2'))
-                    ->toMediaCollection('logo-2');
-                $template->update(['header_logo_2' => $media->id]);
-            }
+            $template = $this->repository->create(DocumentTemplateDto::fromDocumentTemplateRequest($request));
+            $this->uploadLogos($request, $template);
         });
         return to_route('document-templates.index');
     }
@@ -83,18 +70,25 @@ class DocumentTemplateController extends Controller
         //
     }
 
-    public function edit(Role $role)
+    public function edit(DocumentTemplate $documentTemplate): Response
     {
-        //
+        $this->authorize('update', $documentTemplate);
+        $documentTemplate = DocumentTemplateResource::make($documentTemplate);
+        return Inertia::render('institution/document-templates/Edit', compact('documentTemplate'));
     }
 
     /**
-     * @throws AuthorizationException
+     * @throws AuthorizationException|Throwable
      */
-    public function update(DocumentTemplateRequest $request, DocumentTemplate $documentTemplate): void
+    public function update(DocumentTemplateRequest $request, DocumentTemplate $documentTemplate)
     {
+
         $this->authorize('update', $documentTemplate);
-        $this->repository->update($documentTemplate, DocumentTemplateDto::fromDocumentTemplateRequest($request));
+        DB::transaction(function () use ($request, $documentTemplate) {
+            $template = $this->repository->update($documentTemplate, DocumentTemplateDto::fromDocumentTemplateRequest($request));
+            $this->uploadLogos($request, $template);
+        });
+        return to_route('document-templates.index');
     }
 
     /**
@@ -130,5 +124,26 @@ class DocumentTemplateController extends Controller
         $this->authorize('view', $documentTemplate);
         $fileName = 'offer-letter-' . time() . '.pdf';
         return pdf()->view('students.offer-letter', compact('documentTemplate'))->name($fileName);
+    }
+
+    /**
+     * @param DocumentTemplateRequest $request
+     * @param DocumentTemplate $template
+     * @throws FileDoesNotExist
+     * @throws FileIsTooBig
+     */
+    public function uploadLogos(DocumentTemplateRequest $request, DocumentTemplate $template): void
+    {
+        if ($request->hasFile('header_logo_1') && $request->file('header_logo_1')->isValid() && $request->file('header_logo_1')->getSize() > 0) {
+            $media = $template->addMedia($request->file('header_logo_1'))
+                ->toMediaCollection('logo-1');
+            $template->update(['header_logo_1' => $media->id]);
+        }
+
+        if ($request->hasFile('header_logo_2') && $request->file('header_logo_2')->isValid() && $request->file('header_logo_2')->getSize() > 0) {
+            $media = $template->addMedia($request->file('header_logo_2'))
+                ->toMediaCollection('logo-2');
+            $template->update(['header_logo_2' => $media->id]);
+        }
     }
 }
