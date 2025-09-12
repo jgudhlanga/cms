@@ -363,7 +363,7 @@ return [
     "workflow_config" => "Workflows config",
     "data" => "Data",
     "new_student_registration" => "New student registration",
-    "existing_student_login" => "Existing student login",
+    "returning_student_login" => "Returning students login",
     "track_application" => "Track application",
     "complete_application" => "Complete your application",
     "remove" => "Remove",

@@ -1,60 +1,65 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import BaseAlert from '@/components/core/alert/BaseAlert.vue';
+import { IconButton } from '@/components/core/button';
+import AppLogo from '@/components/core/image/AppLogo.vue';
+import DataLoadingSpinner from '@/components/core/loader/DataLoadingSpinner.vue';
+import BaseTooltip from '@/components/core/util/BaseTooltip.vue';
+import Heading from '@/components/core/util/Heading.vue';
+import TextLink from '@/components/core/util/TextLink.vue';
+import { useLevels } from '@/composables/institution/useLevels';
+import { ColorVariant } from '@/enums/colors';
+import { IconName } from '@/enums/icons';
+import { TypeVariant } from '@/enums/type-variants';
+import { AuthObject } from '@/types/data-pagination';
+import { onMounted } from 'vue';
 
+interface Props {
+    auth: AuthObject;
+    errors: object;
+}
+
+const props = defineProps<Props>();
+const { user } = props.auth;
+const { isLoading, levels, listLevels } = useLevels();
+
+onMounted(async () => {
+    await listLevels();
+});
+</script>
 <template>
-    <div class="bg-indigo-800 dark:bg-gray-800 py-16 mt-16">
-        <div class="mx-auto max-w-7xl px-6 lg:px-8">
-            <div class="mx-auto max-w-7xl sm:text-center mb-14">
-                <p class="mt-2 text-3xl font-bold tracking-tight text-white sm:text-4xl">Effortless Integration</p>
-                <p class="mt-2 text-lg sm:text-center leading-8 text-gray-300">Experience seamless integration with our platform. If you encounter any issues with the integration process, <a class="text-custom-primary font-medium" target="_blank" href="https://app.example-service.io/demo">watch a demonstration here</a> or contact our <a class="text-custom-primary font-medium" href="mailto:support@example-service.io">support team</a>.</p>
+    <nav class="fixed top-0 right-0 left-0 z-50 w-full bg-white px-10 shadow">
+        <div class="flex w-full items-center justify-between space-x-5 py-3 md:mx-auto md:w-7/8">
+            <div class="flex size-8 items-center justify-start rounded-sm border">
+                <AppLogo class="shrink-0" />
             </div>
-            <div class="mx-auto grid max-w-2xl grid-cols-1 gap-8 overflow-hidden lg:mx-0 lg:max-w-none lg:grid-cols-4">
-                <div>
-                    <div class="flex items-center text-sm font-semibold leading-6 text-blue-400">
-                        <svg viewBox="0 0 4 4" class="mr-4 h-1 w-1 flex-none" aria-hidden="true">
-                            <circle cx="2" cy="2" r="2" fill="currentColor"></circle>
-                        </svg>
-                        Step 1
-                        <div class="absolute -ml-2 h-px w-screen -translate-x-full bg-gray-500/80 sm:-ml-4 lg:static lg:-mr-6 lg:ml-8 lg:w-auto lg:flex-auto lg:translate-x-0" aria-hidden="true"></div>
-                    </div>
-                    <p class="mt-6 text-lg font-semibold leading-8 tracking-wide text-white">Create an Account:</p>
-                    <p class="mt-1 text-base leading-7 text-gray-300 dark:text-gray-400">Get started by registering for an account. No complex onboarding processes.</p>
-                </div>
-                <div>
-                    <div class="flex items-center text-sm font-semibold leading-6 text-blue-400">
-                        <svg viewBox="0 0 4 4" class="mr-4 h-1 w-1 flex-none" aria-hidden="true">
-                            <circle cx="2" cy="2" r="2" fill="currentColor"></circle>
-                        </svg>
-                        Step 2
-                        <div class="absolute -ml-2 h-px w-screen -translate-x-full bg-gray-500/80 sm:-ml-4 lg:static lg:-mr-6 lg:ml-8 lg:w-auto lg:flex-auto lg:translate-x-0" aria-hidden="true"></div>
-                    </div>
-                    <p class="mt-6 text-lg font-semibold leading-8 tracking-wide text-white">Choose Features:</p>
-                    <p class="mt-1 text-base leading-7 text-gray-300 dark:text-gray-400">Select from a variety of features and functionalities tailored to your needs.</p>
-                </div>
-                <div>
-                    <div class="flex items-center text-sm font-semibold leading-6 text-blue-400">
-                        <svg viewBox="0 0 4 4" class="mr-4 h-1 w-1 flex-none" aria-hidden="true">
-                            <circle cx="2" cy="2" r="2" fill="currentColor"></circle>
-                        </svg>
-                        Step 3
-                        <div class="absolute -ml-2 h-px w-screen -translate-x-full bg-gray-500/80 sm:-ml-4 lg:static lg:-mr-6 lg:ml-8 lg:w-auto lg:flex-auto lg:translate-x-0" aria-hidden="true"></div>
-                    </div>
-                    <p class="mt-6 text-lg font-semibold leading-8 tracking-wide text-white">Customize Settings:</p>
-                    <p class="mt-1 text-base leading-7 text-gray-300 dark:text-gray-400">Tailor the platform to your preferences. Define settings, alerts, and integrations.</p>
-                </div>
-                <div>
-                    <div class="flex items-center text-sm font-semibold leading-6 text-blue-400">
-                        <svg viewBox="0 0 4 4" class="mr-4 h-1 w-1 flex-none" aria-hidden="true">
-                            <circle cx="2" cy="2" r="2" fill="currentColor"></circle>
-                        </svg>
-                        Step 4
-                        <div class="absolute -ml-2 h-px w-screen -translate-x-full bg-gray-500/80 sm:-ml-4 lg:static lg:-mr-6 lg:ml-8 lg:w-auto lg:flex-auto lg:translate-x-0" aria-hidden="true"></div>
-                    </div>
-                    <p class="mt-6 text-lg font-semibold leading-8 tracking-wide text-white">Activate and Explore:</p>
-                    <p class="mt-1 text-base leading-7 text-gray-300 dark:text-gray-400">Activate your account and start exploring the possibilities of our platform.</p>
-                </div>
+            <Heading :title="user.attributes?.name" />
+            <div class="flex">
+                <BaseTooltip :content="`${$t('trans.logout')}`">
+                    <TextLink :href="route('logout')" method="post" as="button" classes="text-destructive flex items-center">
+                        <IconButton :icon="IconName.logout" :variant="ColorVariant.danger_outline" />
+                    </TextLink>
+                </BaseTooltip>
             </div>
         </div>
+    </nav>
+    <div class="flex flex-1 items-center py-16">
+        <div class="flex w-full flex-col space-y-6 p-6">
+            <div class="flex items-center justify-center p-5"></div>
+            <DataLoadingSpinner v-if="isLoading" />
+            <template v-else>
+                <div class="mx-auto space-y-3" v-if="levels.length > 0">
+                    <div v-for="level in levels" :key="level.id" class="flex  bg-sidebar rounded-2xl p-3 shadow">
+                        <div class="flex justify-between items-center">
+                            <div class="text-accent-foreground text-sm font-medium">{{ level.attributes?.name }}</div>
+                        </div>
+                    </div>
+                </div>
+                <BaseAlert
+                    v-else
+                    :type="TypeVariant.warning"
+                    :description="$t('trans.no_data_found_description', { data: $tChoice('trans.level', 2) })"
+                />
+            </template>
+        </div>
     </div>
-
 </template>
-

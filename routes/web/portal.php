@@ -4,7 +4,7 @@ use App\Http\Controllers\Students\PortalController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('portal')->group(function () {
-    Route::get('create', [PortalController::class, 'create'])->name('portal.create');
+    Route::get('create-account', [PortalController::class, 'create'])->name('portal.create');
     Route::post('store', [PortalController::class, 'store'])->name('portal.store');
     Route::get('{user}/confirmation', [PortalController::class, 'registrationConfirmation'])->name('portal.confirmation');
     Route::middleware(['auth', 'verified'])->group(function () {
