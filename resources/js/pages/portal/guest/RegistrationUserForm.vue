@@ -17,13 +17,12 @@ import BaseInput from '../../../components/core/form/text/BaseInput.vue';
 
 const { createPortalUser } = useGuestPortal();
 const { navigateTo } = useUtils();
-const { email, first_name, last_name, middle_name, password, password_confirmation } = storeToRefs(useCreateUserFormStore());
+const { email, first_name, last_name, password, password_confirmation } = storeToRefs(useCreateUserFormStore());
 const form = useForm<CreateApplicationUserParams>({
     password_confirmation: '',
     email: '',
     first_name: '',
     last_name: '',
-    middle_name: '',
     password: '',
 });
 
@@ -32,7 +31,6 @@ const updateForm = () => {
     form.email = email.value;
     form.first_name = first_name.value;
     form.last_name = last_name.value ?? '';
-    form.middle_name = middle_name?.value ?? '';
     form.password = password.value;
 };
 const submitForm = () => {
@@ -68,14 +66,6 @@ onMounted(async () => {
                         :is-required="true"
                         @input="clearFormErrors(form, 'first_name')"
                         :error="form.errors.first_name"
-                    />
-                    <BaseInput
-                        input-id="middle_name"
-                        :label="$t('trans.middle_name')"
-                        placeholder="enter middlename"
-                        v-model="middle_name"
-                        :label-uppercase="true"
-                        :vertical-layout="false"
                     />
                     <BaseInput
                         input-id="last_name"

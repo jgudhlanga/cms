@@ -25,3 +25,8 @@ php artisan db:seed --class=Database\\Seeders\\Students\\StudentApplicationSeede
 
 ## TOOLS
 ### https://www.wangeditor.com/en/v5/i18n.html | use this for WYSWIG editor for vue in the future
+
+## SMILE AND PAY API INTEGRATION
+### KEY: 50f9f09e-549a-414c-97ec-09c39fee0112
+### SECRET: 13394bc1-8ba0-48e4-b928-d530cf638ba6
+### BASE URL: https://zbnet.zb.co.zw/wallet_sandbox-api/payments-gateway
