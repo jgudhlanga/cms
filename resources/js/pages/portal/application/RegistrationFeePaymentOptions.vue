@@ -10,7 +10,11 @@ import { useDefaults } from '@/composables/core/useDefaults';
 import { ColorVariant } from '@/enums/colors';
 import { IconName } from '@/enums/icons';
 import { TypeVariant } from '@/enums/type-variants';
+import { errorAlert } from '@/lib/alerts';
 import { AuthObject } from '@/types/data-pagination';
+import axios from 'axios';
+import { trans } from 'laravel-vue-i18n';
+import { onMounted } from 'vue';
 
 interface Props {
     auth: AuthObject;
@@ -21,6 +25,34 @@ const props = defineProps<Props>();
 const { user } = props.auth;
 const { paymentMethods } = useDefaults();
 const registrationFee = 'USD 20.00';
+
+onMounted(() => {});
+
+const formData = {
+    orderReference: 'TN2501',
+    amount: '20.00',
+    itemName: 'Registration Fee',
+    itemDescription: 'Registration Fee Payment',
+    currencyCode: '840',
+    firstName: 'James',
+    lastName: 'Gudhlanga',
+    mobilePhoneNumber: '0788104809',
+    email: 'jimmyneds@gmail.com',
+    paymentMethod: 'CARD',
+};
+
+const submit = async () => {
+    try {
+        const response = await axios.post(route('integrations.payments.initiate'), formData);
+        if (response.data.paymentUrl) {
+            window.location.href = response.data.paymentUrl;
+        } else {
+            errorAlert(response.data.responseMessage);
+        }
+    } catch {
+        errorAlert(trans('trans.payment_error_description'));
+    }
+};
 </script>
 <template>
     <nav class="fixed top-0 right-0 left-0 z-50 w-full bg-white px-10 shadow">
@@ -48,7 +80,9 @@ const registrationFee = 'USD 20.00';
                 <div class="amount-value">{{ registrationFee }}</div>
             </div>
             <div class="mx-auto flex w-1/3">
-                <button id="payButton" class="payment-button">{{ $t('trans.proceed_to_payment') }}</button>
+                <button @click="submit" class="payment-button">
+                    {{ $t('trans.proceed_to_payment') }}
+                </button>
             </div>
             <div class="flex flex-col">
                 <div class="text-muted-foreground flex items-center justify-center space-x-3 text-xs font-bold">

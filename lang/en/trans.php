@@ -451,4 +451,5 @@ return [
     "amount_to_pay" => "Amount to pay",
     "secure_payment_processed_by" => "Secure payment processed by :payment_processor",
     "proceed_to_payment" => "Proceed to payment",
+    "payment_error_description" => "An error occurred while initiating your payment. Please try again.",
 ];

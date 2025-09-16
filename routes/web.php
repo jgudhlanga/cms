@@ -11,6 +11,7 @@ Route::get('/', function () {
 Route::get('/dashboard', DashboardController::class)->middleware(['auth', 'verified', 'redirect.student'])->name('dashboard');
 Route::get('/pdf/{student_program}', [TestController::class, 'pdf'])->name('generate-pdf');
 
+require __DIR__ . '/web/integrations.php';
 require __DIR__ . '/web/auth.php';
 require __DIR__ . '/web/users.php';
 require __DIR__ . '/web/settings.php';
