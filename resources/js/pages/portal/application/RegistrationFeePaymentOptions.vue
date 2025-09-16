@@ -56,7 +56,7 @@ const registrationFee = 'USD 20.00';
                 </div>
 
                 <div class="payment-methods">
-                    <BaseImage :src="paymentMethods" classes="rounded-full h-10" />
+                    <BaseImage :src="paymentMethods" classes="rounded-sm h-10" />
                 </div>
             </div>
         </div>

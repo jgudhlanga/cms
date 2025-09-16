@@ -40,6 +40,8 @@ use App\Repositories\Institution\LevelRepository;
 use App\Repositories\Institution\ModeOfStudyRepository;
 use App\Repositories\Institution\StaffRepository;
 use App\Repositories\Institution\SubjectRepository;
+use App\Repositories\Ledgers\interface\ILedgerRepository;
+use App\Repositories\Ledgers\LedgerRepository;
 use App\Repositories\Shared\AcademicLevelRepository;
 use App\Repositories\Shared\AddressRepository;
 use App\Repositories\Shared\AddressTypeRepository;
@@ -122,6 +124,7 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->institutionRepositories();
         $this->userRepositories();
         $this->studentRepositories();
+        $this->ledgerRepositories();
     }
 
     public function boot(): void
@@ -206,6 +209,11 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(IStudentProgramRepository::class, StudentProgramRepository::class);
         $this->app->bind(ISponsorRepository::class, SponsorRepository::class);
         $this->app->bind(IAcademicRecordRepository::class, AcademicRecordRepository::class);
+    }
+
+    public function ledgerRepositories(): void
+    {
+        $this->app->bind(ILedgerRepository::class, LedgerRepository::class);
     }
 
 }

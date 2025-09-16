@@ -48,10 +48,6 @@ class StudentProgram extends Model implements HasMedia
         'department_application_step_id',
         'program_status_id',
         'intake_period_id',
-        'application_fee_proof_of_payment_id',
-        'tuition_fee_proof_of_payment_id',
-        'application_fee_paid',
-        'tuition_fee_paid',
         'offer_letter_id',
         'mode_of_study_id',
     ];
@@ -93,30 +89,9 @@ class StudentProgram extends Model implements HasMedia
 
     public function registerMediaCollections(): void
     {
-        $this->addMediaCollection('application-fee')->singleFile();
-        $this->addMediaCollection('tuition-fee')->singleFile();
         $this->addMediaCollection('offer-letter')->singleFile();
     }
 
-    public function applicationFeeProofOfPayment(): HasOne
-    {
-        return $this->hasOne(Media::class, 'id', 'application_fee_proof_of_payment_id');
-    }
-
-    public function getApplicationFeeProofOfPaymentUrlAttribute(): ?string
-    {
-        return ($this->application_fee_proof_of_payment_id > 0) ? $this->applicationFeeProofOfPayment->getFullUrl() : null;
-    }
-
-    public function tuitionFeeProofOfPayment(): HasOne
-    {
-        return $this->hasOne(Media::class, 'id', 'tuition_fee_proof_of_payment_id');
-    }
-
-    public function getTuitionFeeProofOfPaymentUrlAttribute(): ?string
-    {
-        return ($this->tuition_fee_proof_of_payment_id > 0) ? $this->tuitionFeeProofOfPayment->getFullUrl() : null;
-    }
 
     public function offerLetter(): HasOne
     {
