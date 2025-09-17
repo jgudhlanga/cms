@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Enums\Acl\RoleEnum;
+use App\Helpers\PaymentHelper;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -20,9 +21,15 @@ class RedirectStudentMiddleware
                     return to_route('portal.dashboard');
                 }
             } else {
-                # If no student profile, always go to application page unless already there
-                if (!$request->routeIs('portal.application.fee-payment')) {
-                    return to_route('portal.application.fee-payment');
+                if (PaymentHelper::hasPaidRegistrationFee()) {
+                    if (!$request->routeIs('portal.application.create')) {
+                        return to_route('portal.application.create');
+                    }
+                } else {
+                    # If no student profile, always go to application page unless already there
+                    if (!$request->routeIs('portal.application.fee-payment')) {
+                        return to_route('portal.application.fee-payment');
+                    }
                 }
             }
         } elseif ($user) {

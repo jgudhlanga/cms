@@ -1,48 +1,49 @@
 <script setup lang="ts">
 import BaseAlert from '@/components/core/alert/BaseAlert.vue';
-import { IconButton } from '@/components/core/button';
-import AppLogo from '@/components/core/image/AppLogo.vue';
 import BaseImage from '@/components/core/image/BaseImage.vue';
-import BaseTooltip from '@/components/core/util/BaseTooltip.vue';
-import Heading from '@/components/core/util/Heading.vue';
-import TextLink from '@/components/core/util/TextLink.vue';
+import StudentPageHeader from '@/components/shared/students/StudentPageHeader.vue';
 import { useDefaults } from '@/composables/core/useDefaults';
-import { ColorVariant } from '@/enums/colors';
+import { useUtils } from '@/composables/core/useUtils';
 import { IconName } from '@/enums/icons';
 import { TypeVariant } from '@/enums/type-variants';
 import { errorAlert } from '@/lib/alerts';
-import { AuthObject } from '@/types/data-pagination';
+import { icons } from '@/lib/icons';
+import { FeeStructure } from '@/types/institution';
 import axios from 'axios';
 import { trans } from 'laravel-vue-i18n';
-import { onMounted } from 'vue';
+import { ref } from 'vue';
+import { AuthObject } from '@/types/data-pagination';
 
 interface Props {
+    registrationFee: FeeStructure;
     auth: AuthObject;
     errors: object;
 }
 
 const props = defineProps<Props>();
-const { user } = props.auth;
-const { paymentMethods } = useDefaults();
-const registrationFee = 'USD 20.00';
+const {user} = props.auth;
 
-onMounted(() => {});
+const { paymentMethods } = useDefaults();
+const { generateRandomCode, formatCurrency } = useUtils();
+const registrationFeeAmount = props.registrationFee?.attributes?.localFcaAmount ?? '20.00';
+
+const isLoading = ref(false);
 
 const formData = {
-    orderReference: 'TN2501',
-    amount: '20.00',
-    itemName: 'Registration Fee',
-    itemDescription: 'Registration Fee Payment',
+    orderReference: generateRandomCode('ORD'),
+    feeTypeId: props.registrationFee?.attributes?.feeTypeId ?? '',
+    amount: registrationFeeAmount,
+    itemName: props.registrationFee?.attributes?.feeType ?? '',
+    itemDescription: props.registrationFee?.attributes?.feeType ?? '',
     currencyCode: '840',
-    firstName: 'James',
-    lastName: 'Gudhlanga',
-    mobilePhoneNumber: '0788104809',
-    email: 'jimmyneds@gmail.com',
-    paymentMethod: 'CARD',
+    firstName: user.attributes.firstname ?? '',
+    lastName: user.attributes.lastname ?? '',
+    email: user.attributes.email ?? '',
 };
 
 const submit = async () => {
     try {
+        isLoading.value = true;
         const response = await axios.post(route('integrations.payments.initiate'), formData);
         if (response.data.paymentUrl) {
             window.location.href = response.data.paymentUrl;
@@ -51,37 +52,29 @@ const submit = async () => {
         }
     } catch {
         errorAlert(trans('trans.payment_error_description'));
+    } finally {
+        isLoading.value = false;
     }
 };
 </script>
 <template>
-    <nav class="fixed top-0 right-0 left-0 z-50 w-full bg-white px-10 shadow">
-        <div class="flex w-full items-center justify-between space-x-5 py-3 md:mx-auto md:w-7/8">
-            <div class="flex size-8 items-center justify-start rounded-full border">
-                <AppLogo class="shrink-0 rounded-full" />
-            </div>
-            <Heading :title="user.attributes?.name" />
-            <div class="flex">
-                <BaseTooltip :content="`${$t('trans.logout')}`">
-                    <TextLink :href="route('logout')" method="post" as="button" classes="text-destructive flex items-center">
-                        <IconButton :icon="IconName.logout" :variant="ColorVariant.danger_outline" />
-                    </TextLink>
-                </BaseTooltip>
-            </div>
-        </div>
-    </nav>
+    <StudentPageHeader />
     <div class="flex h-screen flex-1 items-center bg-gray-50 py-16">
         <div class="flex h-full w-full flex-col justify-around space-y-6 p-6">
             <div class="mx-auto flex items-center justify-center">
-                <BaseAlert :description="$t('trans.registration_fee_payment_description', { amount: registrationFee })" :type="TypeVariant.info" />
+                <BaseAlert
+                    :description="$t('trans.registration_fee_payment_description', { amount: formatCurrency(registrationFeeAmount) })"
+                    :type="TypeVariant.info"
+                />
             </div>
             <div class="amount">
                 <div class="amount-label">{{ $t('trans.amount_to_pay') }}:</div>
-                <div class="amount-value">{{ registrationFee }}</div>
+                <div class="amount-value">{{ formatCurrency(registrationFeeAmount) }}</div>
             </div>
             <div class="mx-auto flex w-1/3">
-                <button @click="submit" class="payment-button">
+                <button @click="submit" class="payment-button" :disabled="isLoading">
                     {{ $t('trans.proceed_to_payment') }}
+                    <component :is="icons[IconName.loader]" v-if="isLoading" class="ml-2 h-6 w-5 animate-spin" />
                 </button>
             </div>
             <div class="flex flex-col">
@@ -117,7 +110,7 @@ const submit = async () => {
 }
 
 .payment-button {
-    display: block;
+    display: inline-flex;
     width: 100%;
     padding: 20px;
     background: linear-gradient(135deg, #2342f5 0%, #00d2ff 100%);
@@ -126,6 +119,8 @@ const submit = async () => {
     border-radius: 20px;
     font-size: 18px;
     font-weight: 600;
+    justify-content: center;
+    align-items: center;
     text-transform: uppercase;
     cursor: pointer;
     transition: all 0.3s ease;

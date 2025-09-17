@@ -2,11 +2,15 @@
 
 namespace App\Http\Controllers\Integrations;
 
+use App\Enums\Shared\FeeTypeEnum;
+use App\Helpers\PaymentHelper;
 use App\Http\Controllers\Controller;
+use App\Http\Resources\Integrations\LedgerResource;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Inertia\Inertia;
+use Illuminate\Support\Str;
 
 class PaymentController extends Controller
 {
@@ -21,7 +25,7 @@ class PaymentController extends Controller
             'Content-Type' => 'application/json',
             'x-api-key' => config('custom.payments.payment-gateway.api_key'),
             'x-api-secret' => config('custom.payments.payment-gateway.secret'),
-        ])->post(config('custom.payments.payment-gateway.base_url').'/payments/initiate-transaction', [
+        ])->post(config('custom.payments.payment-gateway.base_url') . '/payments/initiate-transaction', [
             'orderReference' => $request->orderReference,
             'amount' => $request->amount,
             'returnUrl' => config('custom.payments.payment-gateway.return_url'),
@@ -38,25 +42,70 @@ class PaymentController extends Controller
             'paymentMethod' => $request->paymentMethod,
         ]);
 
-        return $response->json();
+        $data = $response->json();
+
+        if (!empty($data['paymentUrl'])) {
+            PaymentHelper::createInvoiceEntry(PaymentHelper::assembleInvoiceData($request, $data));
+            PaymentHelper::createReceiptEntry(PaymentHelper::assembleReceiptData($request, $data));
+        }
+        return $data;
     }
+
+    /**
+     * @throws ConnectionException
+     */
     public function feedback()
     {
-        return Inertia::render('integrations/payments/Feedback');
+        $invoice = PaymentHelper::getLatestLedgerRecord(FeeTypeEnum::REGISTRATION_FEE->name(), 'invoice');
+        $receipt = PaymentHelper::getLatestLedgerRecord(FeeTypeEnum::REGISTRATION_FEE->name(), 'receipt');
+        $check = $this->checkStatus($invoice->system_reference);
+        // check the payment status from the payment gateway using the system_reference
+        if (!empty($check['status']) && Str::lower($check['status']) == 'paid') {
+            // update a receipt entry and invoice payment status
+            $receipt = PaymentHelper::updateReceiptEntry($receipt, PaymentHelper::assembleReceiptUpdateData($check));
+            $invoice->update(['payment_status' => $check['status']]);
+        } else {
+            $invoice->update(['payment_status' => $check['status'] ?? 'pending']);
+            $receipt->update(['payment_status' => $check['status'] ?? 'pending']);
+        }
+
+        $details = LedgerResource::make($receipt);
+        return Inertia::render('integrations/payments/Feedback', compact('details'));
     }
 
     public function cancelled()
     {
-        return Inertia::render('integrations/payments/Cancelled');
+        $invoice = PaymentHelper::getLatestLedgerRecord(FeeTypeEnum::REGISTRATION_FEE->name(), 'invoice');
+        $receipt = PaymentHelper::getLatestLedgerRecord(FeeTypeEnum::REGISTRATION_FEE->name(), 'receipt');
+        $invoice->update(['payment_status' => 'cancelled']);
+        $receipt->update(['payment_status' => 'cancelled']);
+        $details = LedgerResource::make($invoice);
+        return Inertia::render('integrations/payments/Cancelled', compact('details'));
     }
 
     public function failed()
     {
-        return Inertia::render('integrations/payments/Failure');
+        $details = PaymentHelper::getLatestLedgerRecord(FeeTypeEnum::REGISTRATION_FEE->name(), 'invoice');
+        $details->update(['payment_status' => 'failed']);
+        $details = LedgerResource::make($details);
+        return Inertia::render('integrations/payments/Failure', compact('details'));
     }
 
     public function result(): void
     {
-        // Nothing to do here
+
     }
+
+    /**
+     * @throws ConnectionException
+     */
+    public function checkStatus(string $orderReference)
+    {
+        $response = Http::withHeaders([
+            'Accept' => 'application/json',
+            'Content-Type' => 'application/json',
+        ])->get(config('custom.payments.payment-gateway.base_url') . '/payments/transaction/' . $orderReference . '/status/check');
+        return $response->json();
+    }
+
 }

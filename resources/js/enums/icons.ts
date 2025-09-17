@@ -84,4 +84,6 @@ export enum IconName {
     bookmark = 'bookmark',
     route = 'route',
     monitor_check = 'monitor_check',
+    receipt = 'receipt',
+    circle_x = 'circle_x',
 }

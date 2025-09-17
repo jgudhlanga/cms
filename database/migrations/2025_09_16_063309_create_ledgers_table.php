@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
@@ -16,16 +15,23 @@ return new class extends Migration
             $table->foreignId('tenant_id')->constrained();
             $table->morphs('ledgerable');
             $table->foreignId('fee_type_id')->constrained();
-            $table->foreignId('payment_method_id')->nullable();
-            $table->enum('type', ['receipt', 'invoice'])->default('receipt');
-            $table->enum('payment_status', ['success', 'cancelled', 'failed', 'pending'])->nullable();
+            $table->foreignId('level_id')->nullable();
+            $table->foreignId('student_program_id')->nullable();
+            $table->string('payment_option')->nullable();
+            $table->enum('type', ['receipt', 'invoice'])->default('invoice');
+            $table->enum('payment_status', ['cancelled', 'failed', 'pending', 'paid'])->nullable();
             $table->float('amount');
-            $table->string('system_reference')->unique(); // Internal reference number
+            $table->float('client_fee')->nullable();
+            $table->float('merchant_fee')->nullable();
+            $table->string('currency')->nullable();
+            $table->string('system_reference'); // Internal reference number
             $table->string('payment_reference')->nullable(); // External gateway reference
             $table->date('due_date')->nullable(); // For invoices
+            $table->string('response_message')->nullable(); // For invoices
+            $table->string('response_code')->nullable(); // For invoices
             $table->timestamp('payment_date')->nullable(); // When payment was actually made
-			$table->timestamps();
-			$table->softDeletes();
+            $table->timestamps();
+            $table->softDeletes();
         });
     }
 

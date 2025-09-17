@@ -1,0 +1,170 @@
+<?php
+
+namespace App\Helpers;
+
+use App\DTO\Integrations\CreateInvoiceDto;
+use App\DTO\Integrations\CreateReceiptDto;
+use App\DTO\Integrations\UpdateReceiptDto;
+use App\Enums\Shared\FeeTypeEnum;
+use App\Models\Ledgers\Ledger;
+use App\Models\Shared\FeeType;
+use App\Models\Students\StudentProgram;
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
+
+class PaymentHelper
+{
+    public static function getFeeTypeByName(string $name): ?FeeType
+    {
+        return FeeType::where('slug', Str::slug($name))->first();
+    }
+
+    public static function getLatestLedgerRecord(string $feeTypeName, ?string $recordType = null): ?Ledger
+    {
+        $feeType = self::getFeeTypeByName($feeTypeName);
+        $user = auth()->user();
+        return $user->ledgerTransactions()->where('fee_type_id', $feeType?->id)
+            ->when($recordType, fn($query, $recordType) => $query->where('type', $recordType))
+            ->orderByDesc('created_at')
+            ->first();
+    }
+
+    /**
+     * @throws ConnectionException
+     */
+    public static function checkTransactionStatus(string $orderReference)
+    {
+        $response = Http::withHeaders([
+            'Accept' => 'application/json',
+            'Content-Type' => 'application/json',
+        ])->get(config('custom.payments.payment-gateway.base_url') . '/payments/transaction/' . $orderReference . '/status/check');
+        return $response->json();
+    }
+
+    public static function getUser()
+    {
+        return request()->user();
+    }
+
+    public static function createInvoiceEntry(CreateInvoiceDto $dto): Ledger
+    {
+        $user = self::getUser();
+        return $user->ledgerTransactions()->create([
+            'tenant_id' => $dto->tenant_id,
+            'fee_type_id' => $dto->fee_type_id,
+            'type' => $dto->type,
+            'payment_status' => $dto->payment_status,
+            'amount' => $dto->amount,
+            'system_reference' => $dto->system_reference,
+            'payment_reference' => $dto->payment_reference,
+            'response_code' => $dto->response_code,
+            'response_message' => $dto->response_message,
+        ]);
+    }
+
+    public static function createReceiptEntry(CreateReceiptDto $dto): Ledger
+    {
+        $user = self::getUser();
+        return $user->ledgerTransactions()->create([
+            'tenant_id' => $dto->tenant_id,
+            'fee_type_id' => $dto->fee_type_id,
+            'type' => $dto->type,
+            'payment_status' => $dto->payment_status,
+            'amount' => $dto->amount,
+            'system_reference' => $dto->system_reference,
+            'payment_reference' => $dto->payment_reference,
+        ]);
+    }
+
+    public static function updateReceiptEntry(Ledger $ledger, UpdateReceiptDto $dto): Ledger
+    {
+        return tap($ledger)->update([
+            'payment_status' => $dto->payment_status ?? null,
+            'payment_option' => $dto->payment_option ?? null,
+            'amount' => $dto->amount,
+            'payment_date' => $dto->payment_date,
+            'system_reference' => $dto->system_reference ?? null,
+            'payment_reference' => $dto->payment_reference ?? null,
+            'currency' => $dto->currency ?? null,
+            'client_fee' => $dto->client_fee ?? null,
+            'merchant_fee' => $dto->merchant_fee ?? null,
+        ]);
+    }
+
+    /**
+     * @param Request $request
+     * @param mixed $data
+     * @return CreateInvoiceDto
+     */
+    public static function assembleInvoiceData(Request $request, mixed $data): CreateInvoiceDto
+    {
+        return new CreateInvoiceDto(
+            tenant_id: self::getUser()->tenant_id,
+            fee_type_id: $request->feeTypeId,
+            type: 'invoice',
+            payment_status: 'pending',
+            amount: $request->amount,
+            system_reference: $request->orderReference,
+            payment_reference: $data['transactionReference'],
+            response_code: $data['responseCode'],
+            response_message: $data['responseMessage'],
+        );
+    }
+
+    public static function assembleReceiptData(Request $request, mixed $data): CreateReceiptDto
+    {
+        return new CreateReceiptDto(
+            tenant_id: self::getUser()?->tenant_id,
+            fee_type_id: $request->feeTypeId,
+            type: 'receipt',
+            payment_status: 'pending',
+            amount: 0.00,
+            system_reference: $request->orderReference,
+            payment_reference: $data['transactionReference'] ?? null,
+        );
+    }
+
+    public static function assembleReceiptUpdateData(mixed $data): UpdateReceiptDto
+    {
+        return new UpdateReceiptDto(
+            payment_status: $data['status'],
+            payment_option: $data['paymentOption'] ?? null,
+            payment_date: $data['createdDate'],
+            amount: $data['amount'],
+            system_reference: $data['orderReference'],
+            payment_reference: $data['reference'],
+            currency: $data['currency'],
+            client_fee: $data['clientFee'],
+            merchant_fee: $data['merchantFee'],
+        );
+    }
+
+    public static function hasPaidRegistrationFee(): bool
+    {
+        $user = auth()->user();
+        $feeType = self::getFeeTypeByName(FeeTypeEnum::REGISTRATION_FEE->name());
+
+        if (!$feeType) {
+            return false;
+        }
+
+        return $user->ledgerTransactions()
+            ->where('fee_type_id', $feeType->id)
+            ->where('type', 'receipt')
+            ->where('payment_status', 'paid')
+            ->whereNull('student_program_id')
+            ->whereNull('level_id')
+            ->latest()
+            ->exists();
+    }
+
+    public static function updateRegistrationFeeLedgerEntries(StudentProgram $studentProgram)
+    {
+        $invoice = PaymentHelper::getLatestLedgerRecord(FeeTypeEnum::REGISTRATION_FEE->name(), 'invoice');
+        $receipt = PaymentHelper::getLatestLedgerRecord(FeeTypeEnum::REGISTRATION_FEE->name(), 'receipt');
+        $invoice->update(['student_program_id' => $studentProgram->id, 'level_id' => $studentProgram->departmentLevel->level_id]);
+        $receipt->update(['student_program_id' => $studentProgram->id, 'level_id' => $studentProgram->departmentLevel->level_id]);
+    }
+}

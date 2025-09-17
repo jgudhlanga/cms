@@ -185,7 +185,7 @@ const save = async () => {
         </div>
     </nav>
     <form @submit.prevent="() => save()">
-        <div class="mt-20 flex w-full flex-col px-10 md:p-0">
+        <div class="mt-20 flex w-full flex-col px-10 md:p-0 bg-white">
             <div class="flex w-full flex-col md:mx-auto md:w-7/8">
                 <div class="flex flex-col items-center justify-center">
                     <p class="text-muted-foreground text-sm font-semibold">-- {{ $t('trans.application_form_description') }} --</p>

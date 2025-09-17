@@ -2,6 +2,8 @@
 
 namespace App\Helpers;
 
+use App\Models\Institution\InstitutionDepartment;
+use App\Models\Students\Student;
 use Carbon\Carbon;
 use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Database\Eloquent\Model;
@@ -16,6 +18,22 @@ class Helper
 		return $prefix . $id . $suffix;
 	}
 
+    public static function generateStudentNumber(Student $student, InstitutionDepartment $department): string
+    {
+        // current year (two-digit format)
+        $year = Carbon::now()->format('y');
+
+        // department code (uppercased)
+        $departmentCode = strtoupper($department->department_code);
+
+        // always prefix the student ID with a 0
+        $studentIdPadded = '0' . $student->id;
+
+        // college code
+        $collegeCode = 'HP';
+
+        return $year . $departmentCode . $studentIdPadded . $collegeCode;
+    }
 
 	public static function formatDate($stringDate): string
 	{
