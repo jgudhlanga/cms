@@ -46,7 +46,7 @@ onMounted(async () => {
 
 <template>
     <Head :title="$t('trans.application_form')" />
-    <div class="flex justify-between">
+    <div class="flex justify-between bg-white">
         <div class="flex w-1/2 flex-col p-16">
             <form @submit.prevent="submitForm()" class="flex flex-col rounded-2xl shadow-md p-10">
                 <div class="flex w-full items-center justify-center">

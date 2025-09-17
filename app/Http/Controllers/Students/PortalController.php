@@ -6,6 +6,7 @@ use App\DTO\Shared\{AddressDto, ContactDto, NextOfKinDto};
 use App\DTO\Students\CreateApplicationDto;
 use App\DTO\Users\UserDto;
 use App\Enums\Acl\RoleEnum;
+use App\Helpers\Helper;
 use App\Helpers\PaymentHelper;
 use App\Http\Resources\AuditTrail\AuditTrailResource;
 use App\Http\Resources\Institution\FeeStructureResource;
@@ -133,9 +134,12 @@ class PortalController extends Controller
             $application->update(['department_application_step_id' => $stepOne?->id ?? null]);
             // update payment status of registration fee to 'paid'
             PaymentHelper::updateRegistrationFeeLedgerEntries($application);
+            // generate student number
+            $studentNumber = Helper::generateStudentNumber($student, $application->institutionDepartment);
+            $student->update(['student_number' => $studentNumber]);
             DB::commit();
             if ($stepTwo) {
-                ApplicationWorkflowStepChanged::dispatch($student, $application, $stepOne, $stepOne);
+                ApplicationWorkflowStepChanged::dispatch($student, $application, $stepTwo, $stepOne);
             }
             return to_route('portal.applications');
         } catch (Throwable $e) {
