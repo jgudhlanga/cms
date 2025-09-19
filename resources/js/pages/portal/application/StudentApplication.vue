@@ -19,21 +19,16 @@ import { AuthObject } from '@/types/data-pagination';
 import { CreateApplicationParams } from '@/types/portal';
 
 // Utilities
-import { BaseButton, IconButton } from '@/components/core/button';
-import AppLogo from '@/components/core/image/AppLogo.vue';
-import BaseTooltip from '@/components/core/util/BaseTooltip.vue';
+import { BaseButton } from '@/components/core/button';
 import CustomSeparator from '@/components/core/util/CustomSeparator.vue';
-import Heading from '@/components/core/util/Heading.vue';
-import TextLink from '@/components/core/util/TextLink.vue';
+import StudentPageHeader from '@/components/shared/students/StudentPageHeader.vue';
 import { useIdTypes } from '@/composables/shared/useIdTypes';
 import { useApplicationFormHelper } from '@/composables/students/useApplicationFormHelper';
 import { ButtonSize } from '@/enums/buttons';
-import { ColorVariant } from '@/enums/colors';
-import { IconName } from '@/enums/icons';
 import { errorAlert } from '@/lib/alerts';
 import { useForm } from '@inertiajs/vue3';
-import { storeToRefs } from 'pinia';
 import { trans } from 'laravel-vue-i18n';
+import { storeToRefs } from 'pinia';
 
 // Props
 interface Props {
@@ -123,7 +118,6 @@ const defaultIdType = computed(() => {
 const populateInitialForm = () => {
     const attrs = user.attributes;
     storeRefs.first_name.value = attrs?.firstname;
-    storeRefs.middle_name.value = attrs?.middleName ?? '';
     storeRefs.last_name.value = attrs?.lastname;
     storeRefs.email.value = attrs?.email ?? '';
     if (!storeRefs.idType.value) {
@@ -148,8 +142,7 @@ const save = async () => {
     try {
         isValidating.value = true;
         await applicationFormSchema(isNativeCitizen(storeRefs.idType?.value?.label ?? '')).parseAsync(form);
-        if(isItTrue(levelRequirements.value?.attributes?.isOLevelRequired))
-        {
+        if (isItTrue(levelRequirements.value?.attributes?.isOLevelRequired)) {
             const mainErrors = validateMainSubjects();
             if (mainErrors && mainErrors.length > 0) {
                 errorAlert(mainErrors.join('\n'));
@@ -162,20 +155,20 @@ const save = async () => {
             }
         }
 
-        if(isItTrue(Number(String(levelRequirements.value?.attributes?.requiredLevelId)) > 0)){
-            if(!isItTrue(storeRefs.required_level_completed?.value)){
+        if (isItTrue(Number(String(levelRequirements.value?.attributes?.requiredLevelId)) > 0)) {
+            if (!isItTrue(storeRefs.required_level_completed?.value)) {
                 errorAlert(trans('trans.acknowledge_level_completed'));
                 return;
             }
         }
-        if(isItTrue(levelRequirements.value?.attributes?.onlyReadWriteRequired)){
-            if(!isItTrue(storeRefs.read_write_acknowledged?.value)){
+        if (isItTrue(levelRequirements.value?.attributes?.onlyReadWriteRequired)) {
+            if (!isItTrue(storeRefs.read_write_acknowledged?.value)) {
                 errorAlert(trans('trans.acknowledge_read_write'));
                 return;
             }
         }
 
-       saveApplication(form);
+        saveApplication(form);
     } catch (error: any) {
         if (error?.format) {
             form.setError(error.format());
@@ -188,28 +181,14 @@ const save = async () => {
 };
 </script>
 <template>
-    <nav class="fixed top-0 right-0 left-0 z-50 w-full bg-white px-10 shadow">
-        <div class="flex w-full items-center justify-between space-x-5 py-3 md:mx-auto md:w-7/8">
-            <div class="flex size-8 items-center justify-start rounded-sm border">
-                <AppLogo class="shrink-0" />
-            </div>
-            <Heading :title="user.attributes?.name" />
-            <div class="flex">
-                <BaseTooltip :content="`${$t('trans.logout')}`">
-                    <TextLink :href="route('logout')" method="post" as="button" classes="text-destructive flex items-center">
-                        <IconButton :icon="IconName.logout" :variant="ColorVariant.danger_outline" />
-                    </TextLink>
-                </BaseTooltip>
-            </div>
-        </div>
-    </nav>
+    <StudentPageHeader />
     <form @submit.prevent="() => save()">
-        <div class="mt-20 flex w-full flex-col px-10 md:p-0 bg-white">
+        <div class="mt-20 flex w-full flex-col bg-white px-10 md:p-0">
             <div class="flex w-full flex-col md:mx-auto md:w-7/8">
-                <div class="flex flex-col items-center justify-center">
-                    <p class="text-muted-foreground text-sm font-semibold">-- {{ $t('trans.application_form_description') }} --</p>
+                <!--<div class="flex flex-col items-center justify-center">
+                    <p class="text-muted-foreground text-sm font-semibold">&#45;&#45; {{ $t('trans.application_form_description') }} &#45;&#45;</p>
                     <CustomSeparator classes="w-full md:w-1/2 mt-4" />
-                </div>
+                </div>-->
                 <PersonalDetails :form="form" />
                 <CustomSeparator classes="h-1 my-5" />
                 <ContactDetails :form="form" />
