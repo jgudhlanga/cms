@@ -330,6 +330,6 @@
     }
 
     body {
-        @apply bg-background text-foreground bg-[url('/assets/images/body-bg.svg')] bg-cover bg-no-repeat;
+        /*@apply bg-background text-foreground bg-[url('/assets/images/body-bg.svg')] bg-cover bg-no-repeat;*/
     }
 }

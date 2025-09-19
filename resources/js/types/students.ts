@@ -1,10 +1,10 @@
 import { DepartmentApplicationStep, DepartmentCourse, DepartmentLevel } from '@/types/department-meta-data';
 import { InstitutionDepartment } from '@/types/institution';
-import { SelectOption } from '@/types/utils';
 import { User } from '@/types/users';
+import { SelectOption } from '@/types/utils';
 
 export type Student = {
-    type: string
+    type: string;
     id?: string | number;
     attributes: {
         userId: string | number;
@@ -31,10 +31,10 @@ export type Student = {
         denomination?: string;
         height?: string;
         weight?: string;
-    },
+    };
     relationships?: {
-        user: User
-    }
+        user: User;
+    };
 };
 
 export type PersonalDetailView = {
@@ -125,9 +125,12 @@ export type StudentProgram = {
         departmentLevelId: string | number;
         departmentCourseId: string | number;
         applicationTrackingNumber: string;
+        registrationFeePaid: boolean;
+        tuitionFeePaid: boolean;
+        registrationFeeConfirmed: boolean;
+        tuitionFeeConfirmed: boolean;
         modeOfStudyId: string | number;
         modeOfStudy: string;
-        applicationFeeProofOfPaymentUrl?: string;
         createdAt?: string;
         updatedAt?: string;
         deletedAt?: string;

@@ -5,6 +5,7 @@ import { router } from '@inertiajs/vue3';
 import { trans } from 'laravel-vue-i18n';
 import moment from 'moment';
 import { h } from 'vue';
+import { v4 as uuidv4 } from "uuid";
 
 export function useUtils() {
     const renderIcon = (icon: IconName, size: string = '15', color?: ColorVariant) => {
@@ -145,6 +146,10 @@ export function useUtils() {
         return idType.toLowerCase() == 'zimbabwean national id';
     };
 
+    const generateRandomCode = (prefix: string): string =>  {
+        return `${prefix}-${uuidv4().replace(/-/g, "").substring(0, 8).toUpperCase()}`;
+    }
+
     return {
         extractInitials,
         formatCurrency,
@@ -167,5 +172,6 @@ export function useUtils() {
         navigateTo,
         formatZimIdNumber,
         isNativeCitizen,
+        generateRandomCode
     };
 }

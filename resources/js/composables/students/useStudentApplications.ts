@@ -108,7 +108,7 @@ export const useStudentApplications = () => {
     };
 
     const approveApplication = async (enrolment: Enrolment, nextStepId: string, currentStep: DepartmentApplicationStep) => {
-        if (applicationFeePaymentRequired(currentStep) && !enrolment.attributes.applicationFeePaid) {
+        if (applicationFeePaymentRequired(currentStep) && !enrolment.attributes.registrationFeePaid) {
             const applicationFeeRequiredMessage = () => trans('trans.application_fee_required');
             errorAlert(applicationFeeRequiredMessage());
             return;
@@ -166,11 +166,6 @@ export const useStudentApplications = () => {
     };
 
     const markApplicationFeeAsPaid = async (enrolment: Enrolment, paid: boolean) => {
-        if (!allProofOfPaymentUploaded([enrolment], 'application-fee')) {
-            const errorMessage = () => trans('trans.no_proof_of_application_fee_payment_uploaded');
-            errorAlert(errorMessage());
-            return;
-        }
         const successMessage = () => trans('trans.application_fee_payment_message', { action: paid ? trans('trans.unpaid') : trans('trans.paid') });
         const errorMessage = () => trans('trans.application_fee_payment_failure', { action: paid ? trans('trans.unpaid') : trans('trans.paid') });
         try {
@@ -185,11 +180,6 @@ export const useStudentApplications = () => {
     };
 
     const markTuitionFeeAsPaid = async (enrolment: Enrolment, paid: boolean) => {
-        if (!allProofOfPaymentUploaded([enrolment], 'tuition-fee')) {
-            const errorMessage = () => trans('trans.no_proof_of_tuition_fee_payment_uploaded');
-            errorAlert(errorMessage());
-            return;
-        }
         const successMessage = () => trans('trans.tuition_fee_payment_message', { action: paid ? trans('trans.unpaid') : trans('trans.paid') });
         const errorMessage = () => trans('trans.tuition_fee_payment_failure', { action: paid ? trans('trans.unpaid') : trans('trans.paid') });
         try {
@@ -224,21 +214,21 @@ export const useStudentApplications = () => {
     };
 
     const allApplicationFeesPaid = (enrolments: Enrolment[]): boolean => {
-        return enrolments.every((e) => isItTrue(e.attributes.applicationFeePaid));
+        return enrolments.every((e) => isItTrue(e.attributes.registrationFeePaid));
     };
 
     const allTuitionFeesPaid = (enrolments: Enrolment[]): boolean => {
         return enrolments.every((e) => isItTrue(e.attributes.tuitionFeePaid));
     };
 
-    const allProofOfPaymentUploaded = (enrolments: Enrolment[], type: 'application-fee' | 'tuition-fee'): boolean => {
+   /* const allProofOfPaymentUploaded = (enrolments: Enrolment[], type: 'application-fee' | 'tuition-fee'): boolean => {
         if (type === 'application-fee') {
             return enrolments.every((e) => Number(e.attributes.applicationFeeProofOfPaymentId) > 0);
         } else if (type === 'tuition-fee') {
             return enrolments.every((e) => Number(e.attributes.tuitionFeeProofOfPaymentId) > 0);
         }
         return false;
-    };
+    };*/
 
     const canApproveWorkflowStepApplications = (step: DepartmentApplicationStep): boolean => {
         const { user } = usePage<PageProps>().props?.auth;
@@ -273,7 +263,6 @@ export const useStudentApplications = () => {
         allApplicationFeesPaid,
         allTuitionFeesPaid,
         onPaymentProofModal,
-        allProofOfPaymentUploaded,
         awaitApplicationPaymentProof,
         awaitTuitionPaymentProof,
         canApproveWorkflowStepApplications,

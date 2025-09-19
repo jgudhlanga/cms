@@ -2,6 +2,7 @@
 
 namespace App\Models\Students;
 
+use App\Enums\Shared\FeeTypeEnum;
 use App\Http\Filters\Students\StudentProgramFilter;
 use App\Models\Institution\DepartmentApplicationStep;
 use App\Models\Institution\DepartmentCourse;
@@ -9,12 +10,14 @@ use App\Models\Institution\DepartmentLevel;
 use App\Models\Institution\InstitutionDepartment;
 use App\Models\Institution\IntakePeriod;
 use App\Models\Institution\ModeOfStudy;
+use App\Models\Ledgers\Ledger;
 use App\Observers\Students\StudentProgramObserver;
 use App\Traits\BelongsToTenant;
 use App\Traits\Filterable;
 use App\Traits\Paginatable;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -48,12 +51,10 @@ class StudentProgram extends Model implements HasMedia
         'department_application_step_id',
         'program_status_id',
         'intake_period_id',
-        'application_fee_proof_of_payment_id',
-        'tuition_fee_proof_of_payment_id',
-        'application_fee_paid',
-        'tuition_fee_paid',
         'offer_letter_id',
         'mode_of_study_id',
+        'registration_fee_confirmed',
+        'tuition_fee_confirmed',
     ];
 
     public function student(): BelongsTo
@@ -93,30 +94,28 @@ class StudentProgram extends Model implements HasMedia
 
     public function registerMediaCollections(): void
     {
-        $this->addMediaCollection('application-fee')->singleFile();
-        $this->addMediaCollection('tuition-fee')->singleFile();
         $this->addMediaCollection('offer-letter')->singleFile();
     }
 
-    public function applicationFeeProofOfPayment(): HasOne
+
+    public function receiptFor(FeeTypeEnum $feeType): HasOne
     {
-        return $this->hasOne(Media::class, 'id', 'application_fee_proof_of_payment_id');
+        return $this->hasOne(Ledger::class, 'student_program_id')
+            ->where('type', 'receipt')
+            ->whereRelation('feeType', 'slug', $feeType->slug());
     }
 
-    public function getApplicationFeeProofOfPaymentUrlAttribute(): ?string
+    public function receipt(FeeTypeEnum $feeType): ?Ledger
     {
-        return ($this->application_fee_proof_of_payment_id > 0) ? $this->applicationFeeProofOfPayment->getFullUrl() : null;
+        return $this->receiptFor($feeType)->first();
     }
 
-    public function tuitionFeeProofOfPayment(): HasOne
+
+    public function hasPaid(FeeTypeEnum $feeType): bool
     {
-        return $this->hasOne(Media::class, 'id', 'tuition_fee_proof_of_payment_id');
+        return $this->receiptFor($feeType)->exists();
     }
 
-    public function getTuitionFeeProofOfPaymentUrlAttribute(): ?string
-    {
-        return ($this->tuition_fee_proof_of_payment_id > 0) ? $this->tuitionFeeProofOfPayment->getFullUrl() : null;
-    }
 
     public function offerLetter(): HasOne
     {

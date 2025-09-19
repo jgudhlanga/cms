@@ -32,7 +32,7 @@ const steps = ref([
     {
         id: 'create-account',
         title: 'Step 1 – Create an Account',
-        subtitle: 'Register by providing your personal details to establish a profile within the application portal.',
+        subtitle: 'Register by providing your personal details to establish a profile within the portal.',
         icon: UserIcon
     },
     {
@@ -43,8 +43,8 @@ const steps = ref([
     },
     {
         id: 'choose-programs',
-        title: 'Step 3 – Choose Program and Pay Processing Fee',
-        subtitle: 'Select your preferred program(s) and complete the required processing fee payment through the secure online system.',
+        title: 'Step 3 – Pay Registration Fee',
+        subtitle: 'Complete the required registration fee payment through the secure online payment system.',
         icon: CreditCardIcon
     },
     {

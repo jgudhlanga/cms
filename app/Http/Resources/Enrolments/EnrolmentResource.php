@@ -2,7 +2,9 @@
 
 namespace App\Http\Resources\Enrolments;
 
+use App\Enums\Shared\FeeTypeEnum;
 use App\Http\Resources\Institution\DepartmentApplicationStepResource;
+use App\Http\Resources\Integrations\LedgerResource;
 use App\Http\Resources\Students\AcademicLevelResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -22,10 +24,6 @@ class EnrolmentResource extends JsonResource
                 'requiredExamSittingCount' => $this->student?->required_exam_sitting_count ?? null,
                 'modeOfStudyId' => $this->mode_of_study_id,
                 'modeOfStudy' => $this->modeOfStudy?->name,
-                'applicationFeeProofOfPaymentId' => $this->application_fee_proof_of_payment_id,
-                'tuitionFeeProofOfPaymentId' => $this->tuition_fee_proof_of_payment_id,
-                'applicationFeePaid' => $this->application_fee_paid,
-                'tuitionFeePaid' => $this->tuition_fee_paid,
                 'institutionDepartmentId' => $this->institution_department_id,
                 'department' => $this->institutionDepartment?->department?->name,
                 'departmentLevelId' => $this->department_level_id,
@@ -33,12 +31,17 @@ class EnrolmentResource extends JsonResource
                 'departmentCourseId' => $this->department_course_id,
                 'course' => $this->departmentCourse?->course?->name,
                 'applicationTrackingNumber' => $this->application_tracking_number,
-                'applicationFeeProofOfPaymentUrl' => $this->application_fee_proof_of_payment_url,
+                'registrationFeePaid' => $this->hasPaid(FeeTypeEnum::REGISTRATION_FEE),
+                'tuitionFeePaid' => $this->hasPaid(FeeTypeEnum::TUITION_FEE),
+                'registrationFeeConfirmed' => $this->registration_fee_confirmed,
+                'tuitionFeeConfirmed' => $this->tuition_fee_confirmed,
                 'createdAt' => $this->created_at,
                 'updatedAt' => $this->updated_at,
                 'deletedAt' => $this->deleted_at,
             ],
             'relationships' => [
+                'registrationReceipt' => $this->hasPaid(FeeTypeEnum::REGISTRATION_FEE) ? LedgerResource::make($this->receipt(FeeTypeEnum::REGISTRATION_FEE)) : null,
+                'tuitionReceipt' => $this->hasPaid(FeeTypeEnum::TUITION_FEE) ? LedgerResource::make($this->receipt(FeeTypeEnum::TUITION_FEE)) : null,
                 'oLevelResults' => AcademicLevelResource::collection($this->student?->oLevelResults),
                 'departmentWorkflowStep' => DepartmentApplicationStepResource::make($this->departmentWorkflowStep)
             ]

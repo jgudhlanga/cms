@@ -46,6 +46,7 @@ export const useCreateApplicationFormStore = defineStore('portal-application-for
             level_id: null,
             levelRequirements: null,
             required_level_completed: null,
+            required_level_upload: null,
             read_write_acknowledged: null,
             o_level_subject_ids: null,
             o_level_years: null,

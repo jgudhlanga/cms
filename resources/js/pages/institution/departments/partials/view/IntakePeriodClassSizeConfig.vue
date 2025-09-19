@@ -174,7 +174,7 @@ const handleModeOfStudyChange = async (value: any) => {
                     </table>
                     <div class="flex items-center justify-center">
                         <BaseButton type="submit" :processing="form.processing" v-if="hasAbility('department-setup:class-sizes')">
-                            {{ $t('trans.submit') }}
+                            {{ $t('trans.save') }}
                         </BaseButton>
                     </div>
                 </form>

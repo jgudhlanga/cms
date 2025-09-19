@@ -1,65 +1,156 @@
 <script setup lang="ts">
 import BaseAlert from '@/components/core/alert/BaseAlert.vue';
-import { IconButton } from '@/components/core/button';
-import AppLogo from '@/components/core/image/AppLogo.vue';
-import DataLoadingSpinner from '@/components/core/loader/DataLoadingSpinner.vue';
-import BaseTooltip from '@/components/core/util/BaseTooltip.vue';
-import Heading from '@/components/core/util/Heading.vue';
-import TextLink from '@/components/core/util/TextLink.vue';
-import { useLevels } from '@/composables/institution/useLevels';
-import { ColorVariant } from '@/enums/colors';
+import BaseImage from '@/components/core/image/BaseImage.vue';
+import StudentPageHeader from '@/components/shared/students/StudentPageHeader.vue';
+import { useDefaults } from '@/composables/core/useDefaults';
+import { useUtils } from '@/composables/core/useUtils';
 import { IconName } from '@/enums/icons';
 import { TypeVariant } from '@/enums/type-variants';
+import { errorAlert } from '@/lib/alerts';
+import { icons } from '@/lib/icons';
+import { FeeStructure } from '@/types/institution';
+import axios from 'axios';
+import { trans } from 'laravel-vue-i18n';
+import { ref } from 'vue';
 import { AuthObject } from '@/types/data-pagination';
-import { onMounted } from 'vue';
 
 interface Props {
+    registrationFee: FeeStructure;
     auth: AuthObject;
     errors: object;
 }
 
 const props = defineProps<Props>();
-const { user } = props.auth;
-const { isLoading, levels, listLevels } = useLevels();
+const {user} = props.auth;
 
-onMounted(async () => {
-    await listLevels();
-});
+const { paymentMethods } = useDefaults();
+const { generateRandomCode, formatCurrency } = useUtils();
+const registrationFeeAmount = props.registrationFee?.attributes?.localFcaAmount ?? '20.00';
+
+const isLoading = ref(false);
+
+const formData = {
+    orderReference: generateRandomCode('ORD'),
+    feeTypeId: props.registrationFee?.attributes?.feeTypeId ?? '',
+    amount: registrationFeeAmount,
+    itemName: props.registrationFee?.attributes?.feeType ?? '',
+    itemDescription: props.registrationFee?.attributes?.feeType ?? '',
+    currencyCode: '840',
+    firstName: user.attributes.firstname ?? '',
+    lastName: user.attributes.lastname ?? '',
+    email: user.attributes.email ?? '',
+};
+
+const submit = async () => {
+    try {
+        isLoading.value = true;
+        const response = await axios.post(route('integrations.payments.initiate'), formData);
+        if (response.data.paymentUrl) {
+            window.location.href = response.data.paymentUrl;
+        } else {
+            errorAlert(response.data.responseMessage);
+        }
+    } catch {
+        errorAlert(trans('trans.payment_error_description'));
+    } finally {
+        isLoading.value = false;
+    }
+};
 </script>
 <template>
-    <nav class="fixed top-0 right-0 left-0 z-50 w-full bg-white px-10 shadow">
-        <div class="flex w-full items-center justify-between space-x-5 py-3 md:mx-auto md:w-7/8">
-            <div class="flex size-8 items-center justify-start rounded-sm border">
-                <AppLogo class="shrink-0" />
-            </div>
-            <Heading :title="user.attributes?.name" />
-            <div class="flex">
-                <BaseTooltip :content="`${$t('trans.logout')}`">
-                    <TextLink :href="route('logout')" method="post" as="button" classes="text-destructive flex items-center">
-                        <IconButton :icon="IconName.logout" :variant="ColorVariant.danger_outline" />
-                    </TextLink>
-                </BaseTooltip>
-            </div>
-        </div>
-    </nav>
-    <div class="flex flex-1 items-center py-16">
-        <div class="flex w-full flex-col space-y-6 p-6">
-            <div class="flex items-center justify-center p-5"></div>
-            <DataLoadingSpinner v-if="isLoading" />
-            <template v-else>
-                <div class="mx-auto space-y-3" v-if="levels.length > 0">
-                    <div v-for="level in levels" :key="level.id" class="flex  bg-sidebar rounded-2xl p-3 shadow">
-                        <div class="flex justify-between items-center">
-                            <div class="text-accent-foreground text-sm font-medium">{{ level.attributes?.name }}</div>
-                        </div>
-                    </div>
-                </div>
+    <StudentPageHeader />
+    <div class="flex h-screen flex-1 items-center bg-gray-50 py-16">
+        <div class="flex h-full w-full flex-col justify-around space-y-6 p-6">
+            <div class="mx-auto flex items-center justify-center">
                 <BaseAlert
-                    v-else
-                    :type="TypeVariant.warning"
-                    :description="$t('trans.no_data_found_description', { data: $tChoice('trans.level', 2) })"
+                    :description="$t('trans.registration_fee_payment_description', { amount: formatCurrency(registrationFeeAmount) })"
+                    :type="TypeVariant.info"
                 />
-            </template>
+            </div>
+            <div class="amount">
+                <div class="amount-label">{{ $t('trans.amount_to_pay') }}:</div>
+                <div class="amount-value">{{ formatCurrency(registrationFeeAmount) }}</div>
+            </div>
+            <div class="mx-auto flex w-1/3">
+                <button @click="submit" class="payment-button" :disabled="isLoading">
+                    {{ $t('trans.proceed_to_payment') }}
+                    <component :is="icons[IconName.loader]" v-if="isLoading" class="ml-2 h-6 w-5 animate-spin" />
+                </button>
+            </div>
+            <div class="flex flex-col">
+                <div class="text-muted-foreground flex items-center justify-center space-x-3 text-xs font-bold">
+                    <span>🔒</span><span>{{ $t('trans.secure_payment_processed_by', { payment_processor: 'Smile N Pay' }) }}</span>
+                </div>
+
+                <div class="payment-methods">
+                    <BaseImage :src="paymentMethods" classes="rounded-sm h-10" />
+                </div>
+            </div>
         </div>
     </div>
 </template>
+<style scoped>
+.amount {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.amount-label {
+    font-size: 16px;
+    color: #6c757d;
+    margin-bottom: 8px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.amount-value {
+    font-size: 32px;
+    font-weight: 700;
+    color: #2342f5;
+}
+
+.payment-button {
+    display: inline-flex;
+    width: 100%;
+    padding: 20px;
+    background: linear-gradient(135deg, #2342f5 0%, #00d2ff 100%);
+    color: white;
+    border: none;
+    border-radius: 20px;
+    font-size: 18px;
+    font-weight: 600;
+    justify-content: center;
+    align-items: center;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.payment-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(58, 123, 213, 0.35);
+}
+
+.payment-button:active {
+    transform: translateY(0);
+}
+
+.payment-methods {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 25px;
+}
+
+.payment-method {
+    width: 50px;
+    height: 30px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+}
+</style>

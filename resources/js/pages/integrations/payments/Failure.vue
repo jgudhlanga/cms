@@ -1,0 +1,42 @@
+<script setup lang="ts">
+import { BaseButton } from '@/components/core/button';
+import BaseIcon from '@/components/core/icon/BaseIcon.vue';
+import AnimatedErrorIcon from '@/components/core/util/AnimatedErrorIcon.vue';
+import { useUtils } from '@/composables/core/useUtils';
+import { ColorVariant } from '@/enums/colors';
+import { IconName } from '@/enums/icons';
+import Base from '@/pages/integrations/payments/partials/Base.vue';
+import { Ledger } from '@/types/integrations';
+
+interface Props {
+    details: Ledger;
+}
+
+defineProps<Props>();
+
+const { navigateTo } = useUtils();
+</script>
+
+<template>
+    <Base :details="details" color="amber" :message="$t('trans.no_amount_deducted_description')">
+        <template #header>
+            <div :class="`flex flex-col items-center bg-gradient-to-br from-amber-400 to-amber-600 px-6 py-8`">
+                <AnimatedErrorIcon />
+                <h1 class="text-2xl font-bold text-amber-100">{{ $t('trans.payment_failed') }}!</h1>
+                <p :class="`mt-2 text-center text-amber-100`">{{ $t('trans.payment_failed_description') }}</p>
+            </div>
+        </template>
+        <template #status>
+            <BaseIcon :name="IconName.circle_x" size="18" class="mr-2 text-amber-600" />
+            {{ details.attributes.paymentStatus }}
+        </template>
+        <template #action-buttons>
+            <BaseButton
+                classes="rounded-full"
+                :title="$t('trans.back')"
+                @click="navigateTo(route('portal.application.fee-payment'))"
+                :variant="ColorVariant.warning"
+            />
+        </template>
+    </Base>
+</template>

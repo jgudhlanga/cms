@@ -25,3 +25,4 @@ php artisan db:seed --class=Database\\Seeders\\Students\\StudentApplicationSeede
 
 ## TOOLS
 ### https://www.wangeditor.com/en/v5/i18n.html | use this for WYSWIG editor for vue in the future
+

@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\Students;
 
+use App\Enums\Shared\FeeTypeEnum;
 use App\Http\Resources\Institution\DepartmentApplicationStepResource;
 use App\Http\Resources\Institution\DepartmentCourseResource;
 use App\Http\Resources\Institution\DepartmentLevelResource;
@@ -33,7 +34,10 @@ class StudentProgramResource extends JsonResource
                 'modeOfStudyId' => $this->mode_of_study_id,
                 'modeOfStudy' => $this->modeOfStudy?->name,
                 'applicationTrackingNumber' => $this->application_tracking_number,
-                'applicationFeeProofOfPaymentUrl' => $this->application_fee_proof_of_payment_url,
+                'registrationFeePaid' => $this->hasPaid(FeeTypeEnum::REGISTRATION_FEE),
+                'tuitionFeePaid' => $this->hasPaid(FeeTypeEnum::TUITION_FEE),
+                'registrationFeeConfirmed' => $this->registration_fee_confirmed,
+                'tuitionFeeConfirmed' => $this->tuition_fee_confirmed,
                 'createdAt' => $this->created_at,
                 'updatedAt' => $this->updated_at,
                 'deletedAt' => $this->deleted_at,

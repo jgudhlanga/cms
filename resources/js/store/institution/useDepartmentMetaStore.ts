@@ -7,7 +7,7 @@ export type IDepartmentTabsStore = {
 export const useDepartmentMetaStore = defineStore('department-meta-store', {
     state: (): IDepartmentTabsStore => {
         return {
-            activeTab: 'about_us',
+            activeTab: 'enrolments',
         };
     },
     persist: true,

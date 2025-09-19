@@ -15,9 +15,8 @@ interface Props {
 }
 
 const props = defineProps<Props>();
-const { user } = props.auth;
 
-const breadcrumbs: BreadcrumbItemInterface[] = [{ title: user.attributes?.name }, { transChoiceKey: 'application' }];
+const breadcrumbs: BreadcrumbItemInterface[] = [{ transChoiceKey: 'dashboard', href: route('portal.dashboard') }, { transChoiceKey: 'application' }];
 const { createStudentApplicationColumns, allowed } = useStudentApplications();
 </script>
 <template>

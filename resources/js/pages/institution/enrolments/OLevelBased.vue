@@ -1,11 +1,12 @@
 <script setup lang="ts">
+import { BaseButton } from '@/components/core/button';
 import EclipseButton from '@/components/core/button/EclipseButton.vue';
 import TextLink from '@/components/core/util/TextLink.vue';
 import { useUtils } from '@/composables/core/useUtils';
 import { useStudentApplications } from '@/composables/students/useStudentApplications';
-import ApplicationFeePaymentStatus from '@/pages/institution/enrolments/ApplicationFeePaymentStatus.vue';
-import PaymentProofPreviewButton from '@/pages/institution/enrolments/PaymentProofPreviewButton.vue';
-import TuitionFeePaymentStatus from '@/pages/institution/enrolments/TuitionFeePaymentStatus.vue';
+import { ButtonSize } from '@/enums/buttons';
+import { ColorVariant } from '@/enums/colors';
+import PaymentStatusButton from '@/pages/institution/enrolments/partials/PaymentStatusButton.vue';
 import { DepartmentApplicationStep, DepartmentLevel } from '@/types/department-meta-data';
 import { AcademicOLevelResult, Enrolment } from '@/types/enrolments';
 import { computed } from 'vue';
@@ -76,13 +77,11 @@ const buttonOptions = (enrolment: Enrolment) => {
         <thead class="j-thead">
             <tr class="j-th">
                 <th class="j-th text-left">{{ $tChoice('trans.name', 1) }}</th>
-                <th class="j-th text-left">{{ $t('trans.tracking_number') }}</th>
+                <th class="j-th text-left">{{ $tChoice('trans.student_number', 1) }}</th>
                 <template v-if="applicationFeePaymentRequired(step)">
-                    <th class="j-th text-left">{{ $t('trans.payment_proof') }}</th>
-                    <th class="j-th text-left">{{ $t('trans.application_fee') }}</th>
+                    <th class="j-th text-center">{{ $t('trans.application_fee') }}</th>
                 </template>
                 <template v-if="tuitionFeePaymentRequired(step)">
-                    <th class="j-th text-left">{{ $t('trans.payment_proof') }}</th>
                     <th class="j-th text-left">{{ $t('trans.tuition_fee') }}</th>
                 </template>
                 <th class="j-th text-left">{{ $t('trans.application_date') }}</th>
@@ -95,28 +94,31 @@ const buttonOptions = (enrolment: Enrolment) => {
             </tr>
         </thead>
         <tbody class="j-tbody">
+            <template v-if="applicationFeePaymentRequired(step)">
+                <tr class="j-tr">
+                    <td class="j-td">{{ $t('trans.action_all') }}</td>
+                    <td class="j-td"></td>
+                    <td class="j-td text-center">
+                        <BaseButton :size="ButtonSize.xs" :title="$t('trans.confirm_all_payments')" :variant="ColorVariant.fuchsia" />
+                    </td>
+                </tr>
+            </template>
             <tr class="j-tr" v-for="enrolment in enrolments" :key="enrolment.id">
                 <td class="j-td">
                     <TextLink :href="''" :title="enrolment?.attributes?.studentName" />
                 </td>
-                <td class="j-td">{{ enrolment?.attributes?.applicationTrackingNumber }}</td>
+                <td class="j-td">{{ enrolment?.attributes?.studentNumber }}</td>
                 <template v-if="applicationFeePaymentRequired(step)">
                     <td class="j-td text-center">
-                        <PaymentProofPreviewButton :enrolment="enrolment" />
-                    </td>
-                    <td class="j-td text-center">
-                        <ApplicationFeePaymentStatus :enrolment="enrolment" :step="step" />
+                        <PaymentStatusButton :enrolment="enrolment" :step="step" type="registration" />
                     </td>
                 </template>
                 <template v-if="tuitionFeePaymentRequired(step)">
                     <td class="j-td text-center">
-                        <PaymentProofPreviewButton :enrolment="enrolment" />
-                    </td>
-                    <td class="j-td text-center">
-                        <TuitionFeePaymentStatus :enrolment="enrolment" :step="step" />
+                        <PaymentStatusButton :enrolment="enrolment" :step="step" type="tuition" />
                     </td>
                 </template>
-                <td class="j-td">{{ formatDate(enrolment?.attributes?.createdAt, 'LLL') }}</td>
+                <td class="j-td">{{ formatDate(enrolment?.attributes?.createdAt, 'L') }}</td>
                 <td class="j-td text-center" v-for="subject in requirementSubjects" :key="`${subject.id}_td`">
                     {{ getMainSubjectGrade(enrolment?.relationships?.oLevelResults!, subject?.id?.toString() ?? '') }}
                 </td>

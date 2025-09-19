@@ -6,14 +6,17 @@ use App\DTO\Shared\{AddressDto, ContactDto, NextOfKinDto};
 use App\DTO\Students\CreateApplicationDto;
 use App\DTO\Users\UserDto;
 use App\Enums\Acl\RoleEnum;
+use App\Helpers\Helper;
+use App\Helpers\PaymentHelper;
 use App\Http\Resources\AuditTrail\AuditTrailResource;
+use App\Http\Resources\Institution\FeeStructureResource;
+use App\Models\Institution\FeeStructure;
 use App\Models\Institution\IntakePeriod;
 use App\Models\Students\StudentProgram;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Response;
-use App\Enums\Shared\{StatusEnum, TenantEnum};
-use App\Events\Students\ApplicationWorkflowStepChanged;
+use App\Enums\Shared\{FeeTypeEnum, StatusEnum, TenantEnum};
 use App\Helpers\WorkflowHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Shared\{AddressRequest, ContactRequest, NextOfKinRequest};
@@ -89,7 +92,10 @@ class PortalController extends Controller
 
     public function registrationFeePaymentOptions(): Response
     {
-        return Inertia::render('portal/application/RegistrationFeePaymentOptions');
+        $feeType = PaymentHelper::getFeeTypeBySlug(FeeTypeEnum::REGISTRATION_FEE->slug());
+        $registrationFee = FeeStructure::where('fee_type_id', $feeType->id)->first();
+        $registrationFee = FeeStructureResource::make($registrationFee);
+        return Inertia::render('portal/application/RegistrationFeePaymentOptions', compact('registrationFee'));
     }
 
     // ========= Application Workflow =========
@@ -123,11 +129,18 @@ class PortalController extends Controller
             );
             $application = $student->programs()->latest()->first();
             $stepOne = WorkflowHelper::getDepartmentApplicationStepByPosition($application->institution_department_id, 1);
-            $stepTwo = WorkflowHelper::getDepartmentApplicationStepByPosition($application->institution_department_id,2);
+            $stepTwo = WorkflowHelper::getDepartmentApplicationStepByPosition($application->institution_department_id, 2);
             $application->update(['department_application_step_id' => $stepOne?->id ?? null]);
+            // update payment status of registration fee to 'paid'
+            PaymentHelper::updateRegistrationFeeLedgerEntries($application);
+            // generate student number
+            $studentNumber = Helper::generateStudentNumber($student, $application->institutionDepartment);
+            $student->update(['student_number' => $studentNumber]);
             DB::commit();
             if ($stepTwo) {
-                ApplicationWorkflowStepChanged::dispatch($student, $application, $stepOne, $stepOne);
+                $application->update([
+                    'department_application_step_id' => $stepTwo->id,
+                ]);
             }
             return to_route('portal.applications');
         } catch (Throwable $e) {

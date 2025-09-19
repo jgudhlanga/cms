@@ -1,4 +1,5 @@
 import { DepartmentApplicationStep } from '@/types/department-meta-data';
+import { Ledger } from '@/types/integrations';
 
 export type Enrolment = {
     type: string;
@@ -7,12 +8,8 @@ export type Enrolment = {
         studentId: string | number;
         studentName: string;
         studentNumber?: string;
-        applicationFeeProofOfPaymentId: string | number;
-        tuitionFeeProofOfPaymentId: string | number;
         modeOfStudyId: string | number;
         modeOfStudy: string;
-        applicationFeePaid: boolean;
-        tuitionFeePaid: boolean;
         institutionDepartmentId: string | number;
         departmentLevelId: string | number;
         departmentCourseId: string | number;
@@ -21,13 +18,18 @@ export type Enrolment = {
         course: string;
         applicationTrackingNumber: string;
         requiredExamSittingCount: string | number;
-        applicationFeeProofOfPaymentUrl?: string;
+        registrationFeePaid: boolean;
+        tuitionFeePaid: boolean;
+        registrationFeeConfirmed: boolean;
+        tuitionFeeConfirmed: boolean;
         createdAt: string;
         deletedAt: string;
         updatedAt: string;
     };
     relationships?: {
-        oLevelResults: AcademicOLevelResult[],
+        registrationReceipt?: Ledger;
+        tuitionReceipt?: Ledger;
+        oLevelResults: AcademicOLevelResult[];
         departmentWorkflowStep: DepartmentApplicationStep;
     };
 };

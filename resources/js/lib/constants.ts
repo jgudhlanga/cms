@@ -1,6 +1,7 @@
 const DEFAULT_AVATAR: string = '/assets/images/user.png';
 const DEFAULT_IMAGE: string = '/assets/images/object.svg';
 const LOGO: string = '/assets/images/logo.jpeg';
+const PAYMENT_METHODS: string = '/assets/images/payment_methods.png';
 const API_BASE_URL = 'https://hrepoly.test/';
 const API_VERSION = 'v1';
 
@@ -72,7 +73,7 @@ export {
     DEFAULT_AVATAR,
     DEFAULT_IMAGE,
     EXAM_SITTINGS,
-    LOGO,
+    LOGO,PAYMENT_METHODS,
     PAGINATION_ITEMS_PER_PAGE,
     PAGINATION_MAX_LIMIT,
 };

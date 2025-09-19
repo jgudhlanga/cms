@@ -4,6 +4,7 @@ namespace App\Models\Users;
 
 use App\Http\Filters\Users\UserFilter;
 use App\Models\Institution\Staff;
+use App\Models\Ledgers\Ledger;
 use App\Models\Shared\Status;
 use App\Models\Students\Student;
 use App\Traits\Filterable;
@@ -14,6 +15,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -74,6 +76,10 @@ class User extends Authenticatable implements MustVerifyEmail, HasMedia
         return $this->hasOne(Staff::class);
     }
 
+    public function ledgerTransactions(): MorphMany
+    {
+        return $this->morphMany(Ledger::class, 'ledgerable')->withTrashed();
+    }
     public function hasStaffProfile(): Attribute
     {
         return Attribute::get(fn() => $this->staffProfile()->exists());
