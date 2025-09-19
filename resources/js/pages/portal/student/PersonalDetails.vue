@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import AddressesForm from '@/components/shared/address/AddressesForm.vue';
+import EditBasicInfo from '@/components/shared/basicInfo/EditBasicInfo.vue';
 import ContactsForm from '@/components/shared/contacts/ContactsForm.vue';
 import NextOfKinForm from '@/components/shared/nextOfKin/NextOfKinForm.vue';
-import EditBasicInfo from '@/components/shared/basicInfo/EditBasicInfo.vue';
 import SponsorForm from '@/components/students/sponsors/SponsorForm.vue';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import PageHeaderAvatar from '@/components/users/PageHeaderAvatar.vue';
@@ -24,7 +24,7 @@ interface Props {
 
 const props = defineProps<Props>();
 const { user } = props.auth;
-const breadcrumbs: BreadcrumbItemInterface[] = [{ title: user.attributes?.name }, { transKey: 'personal_details' }];
+const breadcrumbs: BreadcrumbItemInterface[] = [{ transChoiceKey: 'dashboard', href: route('portal.dashboard') }, { transKey: 'personal_details' }];
 const { studentTabs } = useStudentPortal();
 const { activeTab } = storeToRefs(useStudentTabsStore());
 </script>

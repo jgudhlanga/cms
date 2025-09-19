@@ -17,7 +17,6 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Response;
 use App\Enums\Shared\{FeeTypeEnum, StatusEnum, TenantEnum};
-use App\Events\Students\ApplicationWorkflowStepChanged;
 use App\Helpers\WorkflowHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Shared\{AddressRequest, ContactRequest, NextOfKinRequest};
@@ -93,7 +92,7 @@ class PortalController extends Controller
 
     public function registrationFeePaymentOptions(): Response
     {
-        $feeType = PaymentHelper::getFeeTypeByName(FeeTypeEnum::REGISTRATION_FEE->name());
+        $feeType = PaymentHelper::getFeeTypeBySlug(FeeTypeEnum::REGISTRATION_FEE->slug());
         $registrationFee = FeeStructure::where('fee_type_id', $feeType->id)->first();
         $registrationFee = FeeStructureResource::make($registrationFee);
         return Inertia::render('portal/application/RegistrationFeePaymentOptions', compact('registrationFee'));
@@ -139,7 +138,9 @@ class PortalController extends Controller
             $student->update(['student_number' => $studentNumber]);
             DB::commit();
             if ($stepTwo) {
-                ApplicationWorkflowStepChanged::dispatch($student, $application, $stepTwo, $stepOne);
+                $application->update([
+                    'department_application_step_id' => $stepTwo->id,
+                ]);
             }
             return to_route('portal.applications');
         } catch (Throwable $e) {

@@ -33,6 +33,7 @@ import { IconName } from '@/enums/icons';
 import { errorAlert } from '@/lib/alerts';
 import { useForm } from '@inertiajs/vue3';
 import { storeToRefs } from 'pinia';
+import { trans } from 'laravel-vue-i18n';
 
 // Props
 interface Props {
@@ -46,7 +47,7 @@ const { user } = props.auth;
 // Composable
 const { idTypes, listIdTypes } = useIdTypes();
 const { applicationFormSchema, saveApplication } = useStudentPortal();
-const { listLevelRequirements } = useDepartmentLevels();
+const { listLevelRequirements, levelRequirements } = useDepartmentLevels();
 const { isNativeCitizen, isItTrue } = useUtils();
 const { validateMainSubjects, validateOtherSubjects, updateForm } = useApplicationFormHelper();
 
@@ -96,6 +97,7 @@ const form = useForm<CreateApplicationParams>({
     level: null,
     level_id: null,
     required_level_completed: null,
+    required_level_upload: null,
     read_write_acknowledged: null,
     o_level_subject_ids: null,
     o_level_years: null,
@@ -146,17 +148,34 @@ const save = async () => {
     try {
         isValidating.value = true;
         await applicationFormSchema(isNativeCitizen(storeRefs.idType?.value?.label ?? '')).parseAsync(form);
-        const mainErrors = validateMainSubjects();
-        if (mainErrors && mainErrors.length > 0) {
-            errorAlert(mainErrors.join('\n'));
-            return;
+        if(isItTrue(levelRequirements.value?.attributes?.isOLevelRequired))
+        {
+            const mainErrors = validateMainSubjects();
+            if (mainErrors && mainErrors.length > 0) {
+                errorAlert(mainErrors.join('\n'));
+                return;
+            }
+            const otherErrors = validateOtherSubjects();
+            if (otherErrors && otherErrors.length > 0) {
+                errorAlert(otherErrors.join('\n'));
+                return;
+            }
         }
-        const otherErrors = validateOtherSubjects();
-        if (otherErrors && otherErrors.length > 0) {
-            errorAlert(otherErrors.join('\n'));
-            return;
+
+        if(isItTrue(Number(String(levelRequirements.value?.attributes?.requiredLevelId)) > 0)){
+            if(!isItTrue(storeRefs.required_level_completed?.value)){
+                errorAlert(trans('trans.acknowledge_level_completed'));
+                return;
+            }
         }
-        saveApplication(form);
+        if(isItTrue(levelRequirements.value?.attributes?.onlyReadWriteRequired)){
+            if(!isItTrue(storeRefs.read_write_acknowledged?.value)){
+                errorAlert(trans('trans.acknowledge_read_write'));
+                return;
+            }
+        }
+
+       saveApplication(form);
     } catch (error: any) {
         if (error?.format) {
             form.setError(error.format());

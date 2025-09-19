@@ -2,6 +2,8 @@
 
 namespace App\Enums\Shared;
 
+use Illuminate\Support\Str;
+
 enum FeeTypeEnum: string
 {
     case EXAMINATION_FEE = 'examination_fee';
@@ -64,6 +66,11 @@ enum FeeTypeEnum: string
             self::TUITION_FEE => 'Covers the cost of instruction for courses.',
             self::OTHER_FEE => 'Miscellaneous charges not covered under other categories.',
         };
+    }
+
+    public function slug(): string
+    {
+        return Str::slug($this->name);
     }
 
     public static function all(): array

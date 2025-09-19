@@ -29,8 +29,8 @@ const props = defineProps<Props>();
 const { user } = props.auth;
 
 const breadcrumbs: BreadcrumbItemInterface[] = [
-    { title: user.attributes?.name },
-    { transKey: 'track_application' },
+    { title: user.attributes?.name, href: route('portal.dashboard') },
+    { transChoiceKey: 'application', href: route('portal.applications') },
     { title: props.application?.attributes?.applicationTrackingNumber },
 ];
 
@@ -96,12 +96,6 @@ const currentStepIndex = computed(() => {
     return index >= 0 ? index : 0;
 });
 
-// Progress % for progress bar
-/*const progressPercent = computed(() => {
-    const total = workflowSteps.value.length;
-    const index = currentStepIndex.value;
-    return Math.round(((index + 1) / total) * 100);
-});*/
 
 const currentStep = computed(() => {
     return props.application?.relationships?.departmentWorkflowStep;
@@ -134,14 +128,6 @@ const getStepStatus = (step: DepartmentApplicationStep): string => {
         </template>
         <template v-else>
             <template v-if="steps?.length > 0">
-                <!--                <div class="my-5">
-                    <div class="h-6 w-full overflow-hidden rounded-full bg-gray-200">
-                        <div class="bg-primary h-full transition-all duration-300" :style="{ width: progressPercent + '%' }"></div>
-                    </div>
-                    <p class="text-muted-foreground my-3 text-sm font-bold">
-                        {{ $t('trans.progress') }}: {{ progressPercent }}% ({{ currentStep?.attributes?.workflowStep }})
-                    </p>
-                </div> -->
                 <div class="flex flex-col gap-4">
                     <TimelineTwo :steps="completedActiveSteps" />
                 </div>

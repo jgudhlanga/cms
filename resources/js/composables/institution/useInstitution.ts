@@ -19,14 +19,14 @@ export const useInstitution = () => {
                 transLabel: () => trans('trans.about'),
                 value: 'about_us',
                 component: h(About, { department }),
-                show: true,
+                show: false,
                 icon: IconName.info,
             },
             {
                 transLabel: () => trans_choice('trans.enrolment', 2),
                 value: 'enrolments',
                 component: h(Enrolments, { department }),
-                show: isItTrue(department?.attributes?.isAcademic),
+                show: true,//isItTrue(department?.attributes?.isAcademic),
                 icon: IconName.user_add,
             },
             {
@@ -40,14 +40,14 @@ export const useInstitution = () => {
                 transLabel: () => trans_choice('trans.calendar', 1),
                 value: 'calendar',
                 component: Calendar,
-                show: true,
+                show: false,
                 icon: IconName.calendar,
             },
             {
                 transLabel: () => trans_choice('trans.announcement', 2),
                 value: 'announcements',
                 component: Announcements,
-                show: true,
+                show: false,
                 icon: IconName.megaphone,
             },
             {

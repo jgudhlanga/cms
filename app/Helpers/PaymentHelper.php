@@ -16,14 +16,14 @@ use Illuminate\Support\Str;
 
 class PaymentHelper
 {
-    public static function getFeeTypeByName(string $name): ?FeeType
+    public static function getFeeTypeBySlug(string $slug): ?FeeType
     {
-        return FeeType::where('slug', Str::slug($name))->first();
+        return FeeType::where('slug', $slug)->first();
     }
 
-    public static function getLatestLedgerRecord(string $feeTypeName, ?string $recordType = null): ?Ledger
+    public static function getLatestLedgerRecord(string $slug, ?string $recordType = null): ?Ledger
     {
-        $feeType = self::getFeeTypeByName($feeTypeName);
+        $feeType = self::getFeeTypeBySlug($slug);
         $user = auth()->user();
         return $user->ledgerTransactions()->where('fee_type_id', $feeType?->id)
             ->when($recordType, fn($query, $recordType) => $query->where('type', $recordType))
@@ -144,7 +144,7 @@ class PaymentHelper
     public static function hasPaidRegistrationFee(): bool
     {
         $user = auth()->user();
-        $feeType = self::getFeeTypeByName(FeeTypeEnum::REGISTRATION_FEE->name());
+        $feeType = self::getFeeTypeBySlug(FeeTypeEnum::REGISTRATION_FEE->slug());
 
         if (!$feeType) {
             return false;
@@ -160,10 +160,10 @@ class PaymentHelper
             ->exists();
     }
 
-    public static function updateRegistrationFeeLedgerEntries(StudentProgram $studentProgram)
+    public static function updateRegistrationFeeLedgerEntries(StudentProgram $studentProgram): void
     {
-        $invoice = PaymentHelper::getLatestLedgerRecord(FeeTypeEnum::REGISTRATION_FEE->name(), 'invoice');
-        $receipt = PaymentHelper::getLatestLedgerRecord(FeeTypeEnum::REGISTRATION_FEE->name(), 'receipt');
+        $invoice = PaymentHelper::getLatestLedgerRecord(FeeTypeEnum::REGISTRATION_FEE->slug(), 'invoice');
+        $receipt = PaymentHelper::getLatestLedgerRecord(FeeTypeEnum::REGISTRATION_FEE->slug(), 'receipt');
         $invoice->update(['student_program_id' => $studentProgram->id, 'level_id' => $studentProgram->departmentLevel->level_id]);
         $receipt->update(['student_program_id' => $studentProgram->id, 'level_id' => $studentProgram->departmentLevel->level_id]);
     }

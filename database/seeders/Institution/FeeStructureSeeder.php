@@ -90,7 +90,7 @@ class FeeStructureSeeder extends Seeder
             'fee_type_id' => $registrationFeeType->id ?? null,
             'level_id' => null,
             'mode_of_study_id' => null,
-            'local_fca_amount' => 20,
+            'local_fca_amount' => 20.00,
         ]);
     }
 }

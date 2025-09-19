@@ -30,7 +30,7 @@ defineProps<Props>();
                 :title="groupTitle"
                 :variant="ColorVariant.primary"
                 :size="ButtonSize.xs"
-                :classes="cn('rounded-full', classes)"
+                :classes="cn('', classes)"
             >
                 <MoreButton :icon="icon" v-if="showGroupIcon" />
             </BaseButton>

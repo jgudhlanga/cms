@@ -50,6 +50,7 @@ export const useApplicationFormHelper = () => {
             level: storeRefs.level.value,
             level_id: storeRefs.level.value?.value ?? null,
             required_level_completed: storeRefs.required_level_completed?.value ?? null,
+            required_level_upload: storeRefs.required_level_upload?.value ?? null,
             read_write_acknowledged: storeRefs.read_write_acknowledged?.value ?? null,
             o_level_subject_ids: storeRefs.o_level_subject_ids?.value ?? null,
             o_level_years: storeRefs.o_level_years?.value ?? null,

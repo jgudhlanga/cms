@@ -12,6 +12,7 @@ use App\Enums\Institution\SubjectEnum;
 use App\Enums\Shared\AcademicLevelEnum;
 use App\Enums\Shared\IdTypeEnum;
 use App\Enums\Shared\TenantEnum;
+use App\Helpers\Helper;
 use App\Helpers\WorkflowHelper;
 use App\Models\Institution\Course;
 use App\Models\Institution\Department;
@@ -33,6 +34,7 @@ use App\Models\Users\User;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Throwable;
 
 class StudentApplicationSeeder extends Seeder
 {
@@ -41,10 +43,13 @@ class StudentApplicationSeeder extends Seeder
         return TenantEnum::HARARE_POLY->id();
     }
 
+    /**
+     * @throws Throwable
+     */
     public function run(): void
     {
         DB::transaction(function () {
-            $users = User::factory()->count(30)->create(['tenant_id' => $this->getTenantId(), 'password' => 'Student123!']);
+            $users = User::factory()->count(20)->create(['tenant_id' => $this->getTenantId(), 'password' => 'Student123!']);
             $intakePeriod = IntakePeriod::orderBy('end_date', 'DESC')->first();
             $genderIds = Gender::all()->pluck('id')->toArray();
             $titleIds = Title::all()->pluck('id')->toArray();
@@ -67,7 +72,7 @@ class StudentApplicationSeeder extends Seeder
             # o-level
             $oLevel = AcademicLevel::where('name', AcademicLevelEnum::SECONDARY_SCHOOL->value)->first();
             # workflow step
-            $stepTwo = WorkflowHelper::getDepartmentApplicationStepByPosition($institutionDepartmentId, 2);
+            $stepOne = WorkflowHelper::getDepartmentApplicationStepByPosition($institutionDepartmentId, 1);
             foreach ($users as $user) {
                 $user->assignRole(RoleEnum::STUDENT);
                 $student = Student::create([
@@ -84,7 +89,9 @@ class StudentApplicationSeeder extends Seeder
                     'study_permit_number' => null,
                     'date_of_birth' => Carbon::createFromTimestamp(rand($dateOfBirthStart->timestamp, $dateOfBirthEnd->timestamp))->format('Y-m-d'),
                 ]);
-                $this->saveProgram($student, $intakePeriod->id, $institutionDepartmentId, $departmentLevelId, $departmentCourseId, $stepTwo, $modesOfStudyIds);
+                $department = InstitutionDepartment::find($institutionDepartmentId);
+                $student->update(['student_number' => Helper::generateStudentNumber($student, $department)]);
+                $this->saveProgram($student, $intakePeriod->id, $institutionDepartmentId, $departmentLevelId, $departmentCourseId, $stepOne, $modesOfStudyIds);
                 $this->saveContact($student);
                 $this->saveAddress($student);
                 $this->saveNextOfKin($student);

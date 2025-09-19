@@ -88,7 +88,11 @@ const getNextSteps = (currentStepName: string) => {
         return []; // No matching step found
     }
 
-    return props.workflowSteps.filter((step: DepartmentApplicationStep) => step.attributes.position > currentStepObj.attributes.position);
+    return props.workflowSteps.filter((step: DepartmentApplicationStep) => {
+        const roles = step.relationships?.metadata?.roles ?? [];
+        const hasStudent = roles.some(role => role?.toLowerCase() === "student");
+        return step.attributes.position > currentStepObj.attributes.position && !hasStudent;
+    });
 };
 
 const getCurrentStep = (currentStepName: string) => {
@@ -183,20 +187,18 @@ const handleFilterChange = () => {
                                 <BaseButton
                                     :variant="ColorVariant.success"
                                     :size="ButtonSize.xs"
-                                    classes="rounded-full"
                                     :disabled="!canApproveWorkflowStepApplications(getCurrentStep(step)!)"
                                 >
-                                    {{ $t('trans.generate_application_fee_verification_report') }}
+                                    {{ $t('trans.verification_report') }}
                                 </BaseButton>
                             </template>
                             <template v-if="action.action.toLowerCase() == 'verify-tuition-fee-payment-with-accounts'">
                                 <BaseButton
                                     :variant="ColorVariant.success"
                                     :size="ButtonSize.xs"
-                                    classes="rounded-full"
                                     :disabled="!canApproveWorkflowStepApplications(getCurrentStep(step)!)"
                                 >
-                                    {{ $t('trans.generate_tuition_fee_verification_report') }}
+                                    {{ $t('trans.verification_report') }}
                                 </BaseButton>
                             </template>
                         </div>

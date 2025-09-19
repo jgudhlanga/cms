@@ -7,7 +7,7 @@ withDefaults(defineProps<{ icon?: IconName }>(), {
 
 </script>
 <template>
-	<button class="rounded-full p-1 hover:bg-muted">
+	<button class="rounded-full p-1">
 		<component :is="icons[icon]" size="24" stroke-width="1" />
 	</button>
 </template>

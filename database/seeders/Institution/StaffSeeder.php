@@ -30,7 +30,7 @@ class StaffSeeder extends Seeder
         DB::transaction(function () {
             $roles = [RoleEnum::LECTURER, RoleEnum::SENIOR_LECTURER];
 
-            $users = User::factory()->count(10)->create(['tenant_id' => $this->getTenantId(), 'password' => 'Staff123!']);
+            $users = User::factory()->count(6)->create(['tenant_id' => $this->getTenantId(), 'password' => 'Staff123!']);
             // Shuffle users to make assignment random
             $shuffledUsers = $users->shuffle();
 

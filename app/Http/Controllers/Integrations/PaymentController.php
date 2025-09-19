@@ -56,8 +56,8 @@ class PaymentController extends Controller
      */
     public function feedback()
     {
-        $invoice = PaymentHelper::getLatestLedgerRecord(FeeTypeEnum::REGISTRATION_FEE->name(), 'invoice');
-        $receipt = PaymentHelper::getLatestLedgerRecord(FeeTypeEnum::REGISTRATION_FEE->name(), 'receipt');
+        $invoice = PaymentHelper::getLatestLedgerRecord(FeeTypeEnum::REGISTRATION_FEE->slug(), 'invoice');
+        $receipt = PaymentHelper::getLatestLedgerRecord(FeeTypeEnum::REGISTRATION_FEE->slug(), 'receipt');
         $check = $this->checkStatus($invoice->system_reference);
         // check the payment status from the payment gateway using the system_reference
         if (!empty($check['status']) && Str::lower($check['status']) == 'paid') {
@@ -75,8 +75,8 @@ class PaymentController extends Controller
 
     public function cancelled()
     {
-        $invoice = PaymentHelper::getLatestLedgerRecord(FeeTypeEnum::REGISTRATION_FEE->name(), 'invoice');
-        $receipt = PaymentHelper::getLatestLedgerRecord(FeeTypeEnum::REGISTRATION_FEE->name(), 'receipt');
+        $invoice = PaymentHelper::getLatestLedgerRecord(FeeTypeEnum::REGISTRATION_FEE->slug(), 'invoice');
+        $receipt = PaymentHelper::getLatestLedgerRecord(FeeTypeEnum::REGISTRATION_FEE->slug(), 'receipt');
         $invoice->update(['payment_status' => 'cancelled']);
         $receipt->update(['payment_status' => 'cancelled']);
         $details = LedgerResource::make($invoice);
@@ -85,7 +85,7 @@ class PaymentController extends Controller
 
     public function failed()
     {
-        $details = PaymentHelper::getLatestLedgerRecord(FeeTypeEnum::REGISTRATION_FEE->name(), 'invoice');
+        $details = PaymentHelper::getLatestLedgerRecord(FeeTypeEnum::REGISTRATION_FEE->slug(), 'invoice');
         $details->update(['payment_status' => 'failed']);
         $details = LedgerResource::make($details);
         return Inertia::render('integrations/payments/Failure', compact('details'));
