@@ -4,8 +4,10 @@ import DataTable from '@/components/core/table/DataTable.vue';
 import { useUsers } from '@/composables/users/useUsers';
 import { AuthObject, DataFilters, DataListProps } from '@/types/data-pagination';
 import { Head } from '@inertiajs/vue3';
+import { useUtils } from '@/composables/core/useUtils';
 
 const { createUserColumns, breadcrumbs } = useUsers();
+const {navigateTo} = useUtils();
 
 const props = defineProps<{
 	users: DataListProps;
@@ -27,7 +29,7 @@ const can = props?.auth?.can;
 			:search-url="route('users.index')"
 			:pagination="{ ...users.links, ...users.meta }"
 			:columns="createUserColumns()"
-			:on-create="() => {}"
+			:on-create="() => navigateTo(route('users.create'))"
 			:disable-create="!can['create:users']"
 		/>
 	</PageContainer>

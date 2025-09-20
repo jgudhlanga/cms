@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Institution\Staff;
 
 use App\DTO\Institution\CreateStaffDto;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Institution\CreateStaffRequest;
+use App\Http\Requests\Institution\StaffRequest;
 use App\Http\Resources\Institution\InstitutionDepartmentResource;
 use App\Http\Resources\Institution\StaffResource;
 use App\Models\Institution\InstitutionDepartment;
@@ -23,7 +23,7 @@ class StaffController extends Controller
     {
         $this->authorize('createDepartmentMetaData');
         $department = InstitutionDepartmentResource::make($department);
-        return Inertia::render('institution/staff/CreateOrEdit', compact('department'));
+        return Inertia::render('institution/staff/Create', compact('department'));
     }
 
     public function show(InstitutionDepartment $department, Staff $staff)
@@ -39,13 +39,13 @@ class StaffController extends Controller
         $this->authorize('viewDepartmentMetaData');
         $department = InstitutionDepartmentResource::make($department);
         $staff = StaffResource::make($staff);
-        return Inertia::render('institution/staff/Show', compact('department', 'staff'));
+        return Inertia::render('institution/staff/Edit', compact('department', 'staff'));
     }
 
     /**
      * Store a newly created staff.
      */
-    public function store(InstitutionDepartment $department, CreateStaffRequest $request)
+    public function store(InstitutionDepartment $department, StaffRequest $request)
     {
         $this->authorize('createDepartmentMetaData');
         $staff = $this->repository->create(
@@ -57,13 +57,14 @@ class StaffController extends Controller
     /**
      * Update the specified staff.
      */
-    public function update(CreateStaffRequest $request, Staff $staff)
+    public function update(InstitutionDepartment $department, StaffRequest $request, Staff $staff)
     {
         $this->authorize('updateDepartmentMetaData');
         $this->repository->update(
             $staff,
-            CreateStaffDto::fromStaffRequest($request, $this->getUser())
+            CreateStaffDto::fromStaffRequest($request)
         );
+        return to_route('staff.show', ['department' => $department->id, 'staff' => $staff->id]);
     }
 
     /**

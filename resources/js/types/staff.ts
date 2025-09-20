@@ -16,7 +16,7 @@ export type Staff = {
         raceId?: string | number;
         race?: string;
         employmentTypeId?: string | number;
-        employmentType?: string | number;
+        employmentType?: string;
         idTypeId?: string | number;
         idType?: string;
         idNumber?: string;

@@ -27,7 +27,7 @@ import { ZodObject } from 'zod';
 
 export const useStaff = () => {
     const { moreActionButton, avatar, onView, tag } = useDataTables();
-    const { formatDate } = useUtils();
+    const { formatDate, navigateTo } = useUtils();
     const createStaffColumns = (institutionDepartmentId: string) => {
         return [
             {
@@ -110,7 +110,7 @@ export const useStaff = () => {
                         },
                         {
                             key: 'edit',
-                            action: () => {},
+                            action: () => navigateTo(route('staff.edit', { department: institutionDepartmentId, staff: id })),
                         },
                     ]);
                 },
@@ -134,23 +134,30 @@ export const useStaff = () => {
     };
 
     const schemaFields = useSharedFormSchema() as Record<string, () => ZodObject<any, any>>;
-    const createFormSchema = () => {
+    const validateFormSchema = (staff?: Staff) => {
         const personal = ['firstNameSchema', 'lastNameSchema', 'genderSchema', 'maritalStatusSchema', 'dobSchema', 'employmentTypeSchema'];
         return mergeValidationSchema(schemaFields)(
             personal,
             schemaFields['titleSchema']()
-                .merge(emailUniqueSchema('api/v1/validations/check?key=user_email&value='))
-                .merge(phoneNumberUniqueSchema('api/v1/validations/check?key=user_phone_number&value='))
-                .merge(employeeNumberUniqueSchema('api/v1/validations/check?key=staff_employee_number&value=')),
+                .merge(emailUniqueSchema(`api/v1/validations/check?current_id=${staff?.attributes?.userId}&key=user_email&value=`))
+                .merge(phoneNumberUniqueSchema(`api/v1/validations/check?current_id=${staff?.attributes?.userId}&key=user_phone_number&value=`))
+                .merge(employeeNumberUniqueSchema(`api/v1/validations/check?current_id=${staff?.id}&key=staff_employee_number&value=`)),
         );
     };
 
     const getName = () => trans('trans.staff');
     const successMessage = () => trans('trans.item_saved', { item: getName() });
     const errorMessage = () => trans('trans.item_save_failure', { item: getName() });
-    const saveStaff = (form: InertiaForm<any>, institutionDepartmentId: string) => {
+    const saveStaff = (form: InertiaForm<any>, institutionDepartmentId: string, staffId?: string) => {
         try {
-            form.post(route('staff.store', institutionDepartmentId), buildFormOptions(form, successMessage(), errorMessage()));
+            if (Number(staffId) > 0) {
+                form.put(
+                    route('staff.update', { department: institutionDepartmentId, staff: staffId }),
+                    buildFormOptions(form, successMessage(), errorMessage()),
+                );
+            } else {
+                form.post(route('staff.store', institutionDepartmentId), buildFormOptions(form, successMessage(), errorMessage()));
+            }
             const store = useStaffCreateFormStore();
             store.$reset();
             store.$dispose();
@@ -170,12 +177,12 @@ export const useStaff = () => {
         }
     };
 
-    const staffTabs = (staff: Staff): CustomTab[] => {
+    const staffTabs = (staff: Staff, institutionDepartmentId: string): CustomTab[] => {
         return [
             {
                 transLabel: () => trans('trans.basic_info'),
                 value: 'basic_info',
-                component: h(BasicInfo, {staff}),
+                component: h(BasicInfo, { staff, institutionDepartmentId }),
                 icon: IconName.user,
             },
             {
@@ -220,7 +227,7 @@ export const useStaff = () => {
         departmentStaff,
         isLoading,
         saveStaff,
-        createFormSchema,
+        validateFormSchema,
         loadStaff,
         staff,
         staffTabs,

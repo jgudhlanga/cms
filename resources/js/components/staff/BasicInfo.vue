@@ -12,9 +12,10 @@ import { computed } from 'vue';
 
 interface Props {
     staff: Staff;
+    institutionDepartmentId: string;
 }
 
-const { formatDate } = useUtils();
+const { formatDate, navigateTo } = useUtils();
 
 const { staff } = defineProps<Props>();
 
@@ -39,7 +40,11 @@ const details = computed<ValueAndLabel[]>(() => {
         <div class="flex flex-col space-y-3">
             <div class="flex justify-end">
                 <BaseTooltip :content="`${$t('trans.edit')} ${$t('trans.personal_details')}`">
-                    <IconButton :variant="ColorVariant.primary_outline" :icon="IconName.edit" @click="() => {}" />
+                    <IconButton
+                        :variant="ColorVariant.primary_outline"
+                        :icon="IconName.edit"
+                        @click="() => navigateTo(route('staff.edit', { department: institutionDepartmentId, staff: staff.id.toString() }))"
+                    />
                 </BaseTooltip>
             </div>
             <div :class="`grid w-full grid-cols-1 gap-2 md:grid-cols-4`">
