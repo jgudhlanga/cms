@@ -1,5 +1,5 @@
 <template>
-    <div class="flex flex-1 h-screen items-center bg-gray-800 py-16">
+    <div class="hidden md:flex md:flex-1 h-screen items-center bg-gray-800 py-16">
     <div class="max-w-3xl mx-auto p-6 space-y-6">
         <header class="text-center">
             <h1 class="text-2xl font-semibold text-white">Application Steps</h1>
