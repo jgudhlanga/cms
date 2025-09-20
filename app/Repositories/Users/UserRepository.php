@@ -2,6 +2,7 @@
 
 namespace App\Repositories\Users;
 
+use App\DTO\Users\UpdateUserDto;
 use App\DTO\Users\UserDto;
 use App\Http\Filters\Users\UserFilter;
 use App\Models\Users\User;
@@ -20,9 +21,9 @@ class UserRepository extends BaseRepository implements IUserRepository
         return $this->user->create($this->getFields($dto))->refresh();
     }
 
-    public function update(User $user, UserDto $dto): User
+    public function update(User $user, UpdateUserDto $dto): User
     {
-        return tap($user)->update($this->getFields($dto));
+        return tap($user)->update($this->getUpdateFields($dto));
     }
 
     public function allFilter($columns = ['*'], UserFilter $filters = null)
@@ -47,6 +48,17 @@ class UserRepository extends BaseRepository implements IUserRepository
             'phone_number' => $dto->phone_number,
             'status_id' => $dto->status_id,
             'password' => $dto->password,
+        ];
+    }
+
+    private function getUpdateFields(UpdateUserDto $dto): array
+    {
+        return [
+            'first_name' => $dto->first_name,
+            'middle_name' => $dto->middle_name,
+            'last_name' => $dto->last_name,
+            'email' => $dto->email,
+            'phone_number' => $dto->phone_number,
         ];
     }
 }

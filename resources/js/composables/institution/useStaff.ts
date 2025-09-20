@@ -134,14 +134,14 @@ export const useStaff = () => {
     };
 
     const schemaFields = useSharedFormSchema() as Record<string, () => ZodObject<any, any>>;
-    const createFormSchema = () => {
+    const validateFormSchema = (staff?: Staff) => {
         const personal = ['firstNameSchema', 'lastNameSchema', 'genderSchema', 'maritalStatusSchema', 'dobSchema', 'employmentTypeSchema'];
         return mergeValidationSchema(schemaFields)(
             personal,
             schemaFields['titleSchema']()
-                .merge(emailUniqueSchema('api/v1/validations/check?key=user_email&value='))
-                .merge(phoneNumberUniqueSchema('api/v1/validations/check?key=user_phone_number&value='))
-                .merge(employeeNumberUniqueSchema('api/v1/validations/check?key=staff_employee_number&value=')),
+                .merge(emailUniqueSchema(`api/v1/validations/check?current_id=${staff?.attributes?.userId}&key=user_email&value=`))
+                .merge(phoneNumberUniqueSchema(`api/v1/validations/check?current_id=${staff?.attributes?.userId}&key=user_phone_number&value=`))
+                .merge(employeeNumberUniqueSchema(`api/v1/validations/check?current_id=${staff?.id}&key=staff_employee_number&value=`)),
         );
     };
 
@@ -227,7 +227,7 @@ export const useStaff = () => {
         departmentStaff,
         isLoading,
         saveStaff,
-        createFormSchema,
+        validateFormSchema,
         loadStaff,
         staff,
         staffTabs,

@@ -3,7 +3,9 @@
 namespace App\Repositories\Institution;
 
 use App\DTO\Institution\CreateStaffDto;
+use App\DTO\Users\UpdateUserDto;
 use App\DTO\Users\UserDto;
+use App\Models\Users\User;
 use App\Enums\Shared\StatusEnum;
 use App\Helpers\Helper;
 use App\Http\Filters\Institution\StaffFilter;
@@ -46,6 +48,8 @@ class StaffRepository extends BaseRepository implements IStaffRepository
 
     public function update(Staff $staff, CreateStaffDto $dto): Staff
     {
+        // Step 1: Update the associated user
+        $this->updateUser($staff->user, $dto);
         return tap($staff)->update($this->getFields($dto))->refresh();
     }
 
@@ -86,5 +90,18 @@ class StaffRepository extends BaseRepository implements IStaffRepository
             password: Helper::generatePasswordFromName($dto->first_name, $dto->last_name),
         );
         return $this->userRepository->create($userDto);
+    }
+
+    private function updateUser(User $user, CreateStaffDto $dto)
+    {
+        $userDto = new UpdateUserDto(
+            first_name: $dto->first_name,
+            middle_name: $dto->middle_name,
+            last_name: $dto->last_name,
+            email: $dto->email,
+            phone_number: $dto->phone_number,
+
+        );
+        return $this->userRepository->update($user, $userDto);
     }
 }

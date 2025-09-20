@@ -2,7 +2,7 @@
 
 namespace App\DTO\Institution;
 
-use App\Http\Requests\Institution\CreateStaffRequest;
+use App\Http\Requests\Institution\StaffRequest;
 use App\Http\Requests\Students\CreateApplicationRequest;
 use App\Models\Users\User;
 
@@ -27,7 +27,7 @@ readonly class CreateStaffDto
     {
     }
 
-    public static function fromStaffRequest(CreateStaffRequest $request): CreateStaffDto
+    public static function fromStaffRequest(StaffRequest $request): CreateStaffDto
     {
         return new self(
         /** Personal details */

@@ -65,7 +65,7 @@ const form = useForm<CreateStaffParams>({
     employee_number: '',
 });
 
-const { saveStaff, createFormSchema } = useStaff();
+const { saveStaff, validateFormSchema } = useStaff();
 
 const updateForm = () => {
     Object.assign(form, {
@@ -94,7 +94,7 @@ const save = async () => {
     updateForm();
     try {
         isValidating.value = true;
-        await createFormSchema().parseAsync(form);
+        await validateFormSchema(staff).parseAsync(form);
         saveStaff(form, institutionDepartmentId, staff?.id?.toString() ?? '');
     } catch (error: any) {
         form.setError(error.format());
