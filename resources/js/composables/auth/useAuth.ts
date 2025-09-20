@@ -9,7 +9,7 @@ export function useAuth() {
         z.object({
             email: z.string().email(trans('trans.enter_valid_field', { field: trans_choice('trans.email', 1) })),
             password: z.string().nonempty(trans('trans.enter_required_field', { field: trans('trans.password') })),
-            remember: z.boolean(),
+            remember_me: z.boolean(),
         });
 
     const login = (form: InertiaForm<any>) => {

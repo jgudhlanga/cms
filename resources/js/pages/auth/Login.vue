@@ -19,7 +19,7 @@ const { navigateTo } = useUtils();
 const form = useForm<Login>({
     email: '',
     password: '',
-    remember_me: true,
+    remember_me: false,
 });
 </script>
 
@@ -45,7 +45,7 @@ const form = useForm<Login>({
                 :is-required="true"
             />
             <div class="flex items-center justify-between" :tabindex="3">
-                <BaseCheckbox input-id="remember" v-model="form.remember" :tabindex="4" :label="$t('trans.remember_me')" />
+                <BaseCheckbox input-id="remember" v-model="form.remember_me" :tabindex="4" :label="$t('trans.remember_me')" />
                 <TextLink v-if="canResetPassword" :href="route('password.request')" class="text-sm" :tabindex="5">
                     {{ $t('trans.forgot_password') }}
                 </TextLink>

@@ -4,6 +4,7 @@ namespace App\Models\Institution;
 
 use App\Http\Filters\Institution\StaffFilter;
 use App\Models\Shared\Country;
+use App\Models\Shared\EmploymentType;
 use App\Models\Shared\Gender;
 use App\Models\Shared\IdType;
 use App\Models\Shared\MaritalStatus;
@@ -89,6 +90,11 @@ class Staff extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function employmentType(): BelongsTo
+    {
+        return $this->belongsTo(EmploymentType::class);
     }
 
     public function institutionDepartments(): BelongsToMany

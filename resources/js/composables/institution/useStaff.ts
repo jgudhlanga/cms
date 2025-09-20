@@ -27,7 +27,7 @@ import { ZodObject } from 'zod';
 
 export const useStaff = () => {
     const { moreActionButton, avatar, onView, tag } = useDataTables();
-    const { formatDate } = useUtils();
+    const { formatDate, navigateTo } = useUtils();
     const createStaffColumns = (institutionDepartmentId: string) => {
         return [
             {
@@ -110,7 +110,7 @@ export const useStaff = () => {
                         },
                         {
                             key: 'edit',
-                            action: () => {},
+                            action: () => navigateTo(route('staff.edit', { department: institutionDepartmentId, staff: id })),
                         },
                     ]);
                 },
@@ -148,9 +148,16 @@ export const useStaff = () => {
     const getName = () => trans('trans.staff');
     const successMessage = () => trans('trans.item_saved', { item: getName() });
     const errorMessage = () => trans('trans.item_save_failure', { item: getName() });
-    const saveStaff = (form: InertiaForm<any>, institutionDepartmentId: string) => {
+    const saveStaff = (form: InertiaForm<any>, institutionDepartmentId: string, staffId?: string) => {
         try {
-            form.post(route('staff.store', institutionDepartmentId), buildFormOptions(form, successMessage(), errorMessage()));
+            if (Number(staffId) > 0) {
+                form.put(
+                    route('staff.update', { department: institutionDepartmentId, staff: staffId }),
+                    buildFormOptions(form, successMessage(), errorMessage()),
+                );
+            } else {
+                form.post(route('staff.store', institutionDepartmentId), buildFormOptions(form, successMessage(), errorMessage()));
+            }
             const store = useStaffCreateFormStore();
             store.$reset();
             store.$dispose();
@@ -170,12 +177,12 @@ export const useStaff = () => {
         }
     };
 
-    const staffTabs = (staff: Staff): CustomTab[] => {
+    const staffTabs = (staff: Staff, institutionDepartmentId: string): CustomTab[] => {
         return [
             {
                 transLabel: () => trans('trans.basic_info'),
                 value: 'basic_info',
-                component: h(BasicInfo, {staff}),
+                component: h(BasicInfo, { staff, institutionDepartmentId }),
                 icon: IconName.user,
             },
             {

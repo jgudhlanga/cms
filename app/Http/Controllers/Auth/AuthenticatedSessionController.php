@@ -38,7 +38,7 @@ class AuthenticatedSessionController extends Controller
             if ($user->has_student_profile) {
                 return to_route('portal.dashboard');
             } else {
-                return to_route('portal.application');
+                return to_route('portal.application.create');
             }
         }
         return redirect()->intended();

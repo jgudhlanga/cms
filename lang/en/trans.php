@@ -334,6 +334,7 @@ return [
     "main_subject_not_valid" => "Main subject required should be at least :count",
     "employment_type" => "Employment type|Employment types",
     "create_staff" => "Create staff",
+    "edit_staff" => "Edit staff",
     "work_permit_number" => "Work permit number",
     "identity" => "Identity",
     "identity_description" => "Provide with your identity details",
