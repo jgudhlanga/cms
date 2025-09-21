@@ -17,22 +17,26 @@ readonly class UserDto
         public string  $email,
         public ?string $phone_number,
         public string  $password,
+        public ?array  $role_ids,
     )
     {
     }
 
 
-    public static function fromUserRequest(UserRequest $request, ?Tenant $tenant = null, ?Status $status = null): UserDto
+    public static function fromUserRequest(UserRequest $request, int $tenantId, int $statusId): UserDto
     {
         return new self(
-            tenant_id: $tenant?->id,
-            status_id: $status?->id,
+            tenant_id: $tenantId,
+            status_id: $statusId,
             first_name: $request->first_name,
             middle_name: $request?->middle_name,
             last_name: $request->last_name,
             email: $request->email,
             phone_number: $request->phone_number,
             password: $request->password,
+            role_ids: $request->role_ids,
         );
     }
+
+
 }

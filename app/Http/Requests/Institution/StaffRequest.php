@@ -3,8 +3,6 @@
 namespace App\Http\Requests\Institution;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Contracts\Validation\Validator;
-use Illuminate\Http\Exceptions\HttpResponseException;
 
 class StaffRequest extends FormRequest
 {
@@ -41,13 +39,4 @@ class StaffRequest extends FormRequest
         ];
     }
 
-
-    public function failedValidation(Validator $validator)
-    {
-        throw new HttpResponseException(response()->json([
-            'message' => 'Validation failed',
-            'errors' => $validator->errors(),
-            'input' => $this->all(),
-        ], 422));
-    }
 }

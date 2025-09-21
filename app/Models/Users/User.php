@@ -7,6 +7,7 @@ use App\Models\Institution\Staff;
 use App\Models\Ledgers\Ledger;
 use App\Models\Shared\Status;
 use App\Models\Students\Student;
+use App\Models\Tenants\Tenant;
 use App\Traits\Filterable;
 use App\Traits\Paginatable;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -61,6 +62,11 @@ class User extends Authenticatable implements MustVerifyEmail, HasMedia
         return $this->belongsTo(Status::class, 'status_id');
     }
 
+    public function tenant(): BelongsTo
+    {
+        return $this->belongsTo(Tenant::class, 'tenant_id');
+    }
+
     public function studentProfile(): HasOne|User
     {
         return $this->hasOne(Student::class);
@@ -80,6 +86,7 @@ class User extends Authenticatable implements MustVerifyEmail, HasMedia
     {
         return $this->morphMany(Ledger::class, 'ledgerable')->withTrashed();
     }
+
     public function hasStaffProfile(): Attribute
     {
         return Attribute::get(fn() => $this->staffProfile()->exists());

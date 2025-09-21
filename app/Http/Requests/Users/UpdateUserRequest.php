@@ -13,6 +13,15 @@ class UpdateUserRequest extends FormRequest
         return true;
     }
 
+    public function prepareForValidation(): void
+    {
+        if (is_string($this->role_ids)) {
+            $this->merge([
+                'role_ids' => json_decode($this->role_ids, true),
+            ]);
+        }
+    }
+
 
     public function rules(): array
     {

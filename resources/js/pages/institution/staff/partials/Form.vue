@@ -10,6 +10,7 @@ import DateOfBirth from '@/components/core/form/date/DateOfBirth.vue';
 import RoleSelect from '@/components/core/form/select/RoleSelect.vue';
 import EmailAddress from '@/components/core/form/text/EmailAddress.vue';
 import PhoneNumber from '@/components/core/form/text/PhoneNumber.vue';
+import { useUtils } from '@/composables/core/useUtils';
 import { useStaff } from '@/composables/institution/useStaff';
 import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
@@ -66,6 +67,7 @@ const form = useForm<CreateStaffParams>({
 });
 
 const { saveStaff, validateFormSchema } = useStaff();
+const { navigateTo } = useUtils();
 
 const updateForm = () => {
     Object.assign(form, {
@@ -207,7 +209,12 @@ const onlyRoles = 'head-of-department,head-of-division,lecturer,lecturer-in-char
             </BaseCard>
         </div>
         <div class="mt-6 flex w-full justify-center space-x-3 border-t-[1px] px-6 py-5">
-            <BaseButton type="button" :variant="ColorVariant.shade" @click="() => {}" :size="ButtonSize.lg">
+            <BaseButton
+                type="button"
+                :variant="ColorVariant.shade"
+                @click="() => navigateTo(route('institution-departments.show', { department: institutionDepartmentId }))"
+                :size="ButtonSize.lg"
+            >
                 {{ $t('trans.back') }}
             </BaseButton>
             <BaseButton :processing="form.processing || isValidating" :size="ButtonSize.lg">
