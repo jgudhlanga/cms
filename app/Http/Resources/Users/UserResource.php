@@ -52,7 +52,7 @@ class UserResource extends JsonResource
                 ]),
             ],
             'relationships' => [
-                'roles' => RoleResource::collection($this->whenLoaded('roles')),
+                'roles' => $request->routeIs('users.*') ? RoleResource::collection($this->roles) : null,
             ]
         ];
     }

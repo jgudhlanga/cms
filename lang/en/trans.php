@@ -223,7 +223,7 @@ return [
     "personal" => "Personal",
     "personal_details_description" => "Provide with personal details",
     "login_details" => "Login details",
-    "login_details_description" => "Provide with personal details",
+    "login_details_description" => "Provide with login details",
     "address_details" => "Address details",
     "documents" => "Documents",
     "documents_description" => "Upload required documents",

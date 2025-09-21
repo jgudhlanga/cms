@@ -92,7 +92,7 @@ class StaffRepository extends BaseRepository implements IStaffRepository
         return $this->userRepository->create($userDto);
     }
 
-    private function updateUser(User $user, CreateStaffDto $dto)
+    private function updateUser(User $user, CreateStaffDto $dto): void
     {
         $userDto = new UpdateUserDto(
             first_name: $dto->first_name,
@@ -100,8 +100,7 @@ class StaffRepository extends BaseRepository implements IStaffRepository
             last_name: $dto->last_name,
             email: $dto->email,
             phone_number: $dto->phone_number,
-
         );
-        return $this->userRepository->update($user, $userDto);
+        $this->userRepository->update($user, $userDto);
     }
 }

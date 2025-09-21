@@ -2,7 +2,8 @@ import { useDataTables } from '@/composables/core/useDataTables';
 import { useSharedFormSchema } from '@/composables/core/useSharedFormSchema';
 import { useUtils } from '@/composables/core/useUtils';
 import { errorAlert } from '@/lib/alerts';
-import { buildFormOptions } from '@/lib/forms';
+import { buildFormOptions, mergeValidationSchema } from '@/lib/forms';
+import { emailUniqueSchema, phoneNumberUniqueSchema } from '@/lib/uniqueValidations';
 import { getIdParams } from '@/lib/utils';
 import HttpService from '@/services/http.service';
 import { Auth } from '@/types';
@@ -12,12 +13,13 @@ import { User } from '@/types/users';
 import { InertiaForm, usePage } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 import { ref } from 'vue';
+import { ZodObject } from 'zod';
 
 export const useUsers = () => {
     const { moreActionButton, onDelete, onForceDelete, onRestore, avatar, onView } = useDataTables();
     const createUserColumns = () => {
         const { props } = usePage();
-        const { formatDate } = useUtils();
+        const { formatDate, navigateTo } = useUtils();
         const { can } = props?.auth as Auth;
         return [
             {
@@ -42,7 +44,7 @@ export const useUsers = () => {
                 accessorKey: 'lastLoginAt',
                 cell: ({ row }: { row: { original: User } }) => {
                     const loginDate = row.original?.attributes?.lastLoginAt ?? '';
-                    return loginDate ? formatDate(loginDate, 'LLLL') : '---';
+                    return loginDate ? formatDate(loginDate, 'LL') : '---';
                 },
             },
             {
@@ -60,7 +62,7 @@ export const useUsers = () => {
                         },
                         {
                             key: 'edit',
-                            action: () => {},
+                            action: () => navigateTo(route('users.edit', id)),
                         },
                         {
                             key: 'archive',
@@ -82,15 +84,22 @@ export const useUsers = () => {
 
     const breadcrumbs: Array<Link> = [{ transChoiceKey: 'user' }];
 
-    const saveUser = (form: InertiaForm<any>, user?: User) => {
-        const { titleSchema } = useSharedFormSchema();
+    const schemaFields = useSharedFormSchema() as Record<string, () => ZodObject<any, any>>;
+    const validateFormSchema = (userId?: string) => {
+        const personal = ['firstNameSchema', 'lastNameSchema'];
+        return mergeValidationSchema(schemaFields)(
+            personal,
+            schemaFields['titleSchema']()
+                .merge(emailUniqueSchema(`api/v1/validations/check?current_id=${userId}&key=user_email&value=`))
+                .merge(phoneNumberUniqueSchema(`api/v1/validations/check?current_id=${userId}&key=user_phone_number&value=`)),
+        );
+    };
+    const saveUser = (form: InertiaForm<any>, userId?: string) => {
         try {
-            titleSchema().parse(form);
             const success = trans('trans.item_saved', { item: trans_choice('trans.user', 1) });
             const error = trans('trans.item_save_failure', { item: trans_choice('trans.user', 1) });
-            if (user) {
-                const id = getIdParams(user.id?.toString() ?? '');
-                form.put(route('users.update', id), buildFormOptions(form, success, error));
+            if (Number(userId) > 0) {
+                form.put(route('users.update', userId), buildFormOptions(form, success, error));
             } else {
                 form.post(route('users.store'), buildFormOptions(form, success, error));
             }
@@ -119,5 +128,6 @@ export const useUsers = () => {
         loadUsers,
         users,
         isLoading,
+        validateFormSchema,
     };
 };

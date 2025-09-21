@@ -16,6 +16,15 @@ class UserRequest extends FormRequest
         return true;
     }
 
+    public function prepareForValidation(): void
+    {
+        if (is_string($this->role_ids)) {
+            $this->merge([
+                'role_ids' => json_decode($this->role_ids, true),
+            ]);
+        }
+    }
+
     public function rules(): array
     {
         return [
@@ -29,5 +38,14 @@ class UserRequest extends FormRequest
                     ->symbols()
                     ->mixedCase()],
         ];
+    }
+
+    public function failedValidation(Validator $validator)
+    {
+        throw new HttpResponseException(response()->json([
+            'message' => 'Validation failed',
+            'errors' => $validator->errors(),
+            'input' => $this->all(),
+        ], 422));
     }
 }

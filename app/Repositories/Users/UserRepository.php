@@ -18,11 +18,18 @@ class UserRepository extends BaseRepository implements IUserRepository
 
     public function create(UserDto $dto): User
     {
-        return $this->user->create($this->getFields($dto))->refresh();
+        $user = $this->user->create($this->getFields($dto));
+        if (!empty($dto->role_ids)) {
+            $user->assignRole($dto->role_ids);
+        }
+        return $user->refresh();
     }
 
     public function update(User $user, UpdateUserDto $dto): User
     {
+        if (!empty($dto->role_ids)) {
+            $user->assignRole($dto->role_ids);
+        }
         return tap($user)->update($this->getUpdateFields($dto));
     }
 

@@ -12,6 +12,7 @@ readonly class UpdateUserDto
         public string  $last_name,
         public string  $email,
         public ?string $phone_number,
+        public ?array  $role_ids,
     )
     {
     }
@@ -25,6 +26,7 @@ readonly class UpdateUserDto
             last_name: $request->last_name,
             email: $request->email,
             phone_number: $request->phone_number,
+            role_ids: $request->role_ids,
         );
     }
 }

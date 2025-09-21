@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\Users;
 
+use App\DTO\Users\UpdateUserDto;
 use App\DTO\Users\UserDto;
+use App\Enums\Shared\StatusEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Filters\Users\UserFilter;
 use App\Http\Requests\Users\UserRequest;
@@ -39,8 +41,8 @@ class UserController extends Controller
     public function store(UserRequest $request)
     {
         $this->authorize('create', User::class);
-        $tenant = $request->user()->tenant;
-        $this->repository->create(UserDto::fromUserRequest($request, $tenant));
+        $tenantId = request()->user()->tenant_id;
+        $this->repository->create(UserDto::fromUserRequest($request, $tenantId, StatusEnum::ACTIVE->id()));
     }
 
     public function show(User $user)
@@ -52,13 +54,15 @@ class UserController extends Controller
 
     public function edit(User $user)
     {
-        //
+        $this->authorize('update', $user);
+        $user = new UserResource($user);
+        return Inertia::render('users/Edit', compact('user'));
     }
 
-    public function update(UserRequest $request, User $user)
+    public function update(UpdateUserRequest $request, User $user)
     {
         $this->authorize('update', $user);
-        $this->repository->update($user, UserDto::fromUserRequest($request));
+        $this->repository->update($user, UpdateUserDto::fromUpdateUserRequest($request));
     }
 
     public function destroy(User $user)
