@@ -20,6 +20,7 @@ export function useGuestPortal() {
             schemaFields['firstNameSchema']().merge(emailUniqueSchema('api/v1/validations/check?key=user_email&value=')),
         );
     };
+
     const isValidating = ref(false);
     const createPortalUser = async (form: InertiaForm<any>) => {
         try {
