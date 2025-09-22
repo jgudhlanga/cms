@@ -20,6 +20,7 @@ import { CreateApplicationParams } from '@/types/portal';
 
 // Utilities
 import { BaseButton } from '@/components/core/button';
+import ComingSoonAnimated from '@/components/core/util/ComingSoonAnimated.vue';
 import CustomSeparator from '@/components/core/util/CustomSeparator.vue';
 import StudentPageHeader from '@/components/shared/students/StudentPageHeader.vue';
 import { useIdTypes } from '@/composables/shared/useIdTypes';
@@ -179,16 +180,19 @@ const save = async () => {
         isValidating.value = false;
     }
 };
+const maintenanceMode = import.meta.env.VITE_MAINTENANCE_MODE;
 </script>
 <template>
     <StudentPageHeader />
     <form @submit.prevent="() => save()">
         <div class="mt-20 flex w-full flex-col bg-white px-10 md:p-0">
-            <div class="flex w-full flex-col md:mx-auto md:w-7/8">
+            <ComingSoonAnimated v-if="maintenanceMode" />
+            <div v-else class="flex w-full flex-col md:mx-auto md:w-7/8">
                 <!--<div class="flex flex-col items-center justify-center">
                     <p class="text-muted-foreground text-sm font-semibold">&#45;&#45; {{ $t('trans.application_form_description') }} &#45;&#45;</p>
                     <CustomSeparator classes="w-full md:w-1/2 mt-4" />
                 </div>-->
+
                 <PersonalDetails :form="form" />
                 <CustomSeparator classes="h-1 my-5" />
                 <ContactDetails :form="form" />

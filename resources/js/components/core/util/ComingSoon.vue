@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref } from 'vue';
 
-const showCountdown = true;
+const showCountdown = false;
 
 const countdown = ref({
     days: '00',

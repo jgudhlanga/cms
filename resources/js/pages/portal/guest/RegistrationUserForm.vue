@@ -14,6 +14,7 @@ import { Head, useForm } from '@inertiajs/vue3';
 import { storeToRefs } from 'pinia';
 import { onMounted, ref } from 'vue';
 import BaseInput from '../../../components/core/form/text/BaseInput.vue';
+import ComingSoonAnimated from '@/components/core/util/ComingSoonAnimated.vue';
 
 const { createPortalUser } = useGuestPortal();
 const { navigateTo } = useUtils();
@@ -50,12 +51,14 @@ const { logout } = useAuth();
 onMounted(async () => {
     logout();
 });
+const maintenanceMode = import.meta.env.VITE_MAINTENANCE_MODE;
 </script>
 
 <template>
     <Head :title="$t('trans.application_form')" />
     <div class="flex justify-between bg-white">
-        <div class="flex w-full flex-col p-3 md:w-1/2 md:p-16">
+        <ComingSoonAnimated v-if="maintenanceMode"/>
+        <div v-else class="flex w-full flex-col p-3 md:w-1/2 md:p-16">
             <form @submit.prevent="submitForm()" class="flex flex-col rounded-2xl p-10 shadow-md">
                 <div class="flex w-full items-center justify-center">
                     <div class="size-20">
