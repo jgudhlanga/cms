@@ -65,7 +65,7 @@ const getOptions = () => {
 <template>
 	<DropdownMenu>
 		<DropdownMenuTrigger as-child>
-			<MoreButton v-if="onlyIcon" :icon="icon" />
+			<MoreButton v-if="onlyIcon" :icon="icon" class="text-primary" />
 			<BaseButton v-else :variant="ColorVariant.shade_outline">
 				<component :is="icons[icon as IconName]" size="12" />
 				{{ groupTitle }}

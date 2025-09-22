@@ -9,7 +9,7 @@ import HttpService from '@/services/http.service';
 import { PageProps } from '@/types';
 import { Role } from '@/types/acl';
 import { DepartmentApplicationStep } from '@/types/department-meta-data';
-import { BulkApplicationApprovalParams, Enrolment, PaymentProofPreview } from '@/types/enrolments';
+import { BulkApplicationApprovalParams, BulkUpdatePaymentStatusParams, Enrolment, PaymentProofPreview } from '@/types/enrolments';
 import { StudentProgram } from '@/types/students';
 import { InertiaForm, router, usePage } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
@@ -108,13 +108,13 @@ export const useStudentApplications = () => {
     };
 
     const approveApplication = async (enrolment: Enrolment, nextStepId: string, currentStep: DepartmentApplicationStep) => {
-        if (applicationFeePaymentRequired(currentStep) && !enrolment.attributes.registrationFeePaid) {
+        if (registrationFeePaymentRequired(currentStep) && !enrolment.attributes.registrationFeeConfirmed) {
             const applicationFeeRequiredMessage = () => trans('trans.application_fee_required');
             errorAlert(applicationFeeRequiredMessage());
             return;
         }
 
-        if (tuitionFeePaymentRequired(currentStep) && !enrolment.attributes.tuitionFeePaid) {
+        if (tuitionFeePaymentRequired(currentStep) && !enrolment.attributes.tuitionFeeConfirmed) {
             const tuitionFeeRequiredMessage = () => trans('trans.tuition_fee_required');
             errorAlert(tuitionFeeRequiredMessage());
             return;
@@ -141,7 +141,7 @@ export const useStudentApplications = () => {
         enrolments: Enrolment[],
         step: DepartmentApplicationStep,
     ) => {
-        if (!allApplicationFeesPaid(enrolments) && applicationFeePaymentRequired(step)) {
+        if (!allRegistrationFeesPaid(enrolments) && registrationFeePaymentRequired(step)) {
             const applicationFeeRequiredMessage = () => trans('trans.all_application_fee_required_to_be_paid');
             errorAlert(applicationFeeRequiredMessage());
             return;
@@ -165,26 +165,62 @@ export const useStudentApplications = () => {
         }
     };
 
-    const markApplicationFeeAsPaid = async (enrolment: Enrolment, paid: boolean) => {
-        const successMessage = () => trans('trans.application_fee_payment_message', { action: paid ? trans('trans.unpaid') : trans('trans.paid') });
-        const errorMessage = () => trans('trans.application_fee_payment_failure', { action: paid ? trans('trans.unpaid') : trans('trans.paid') });
+    const bulkUpdatePaymentStatus = async (
+        institutionDepartmentId: string,
+        step: DepartmentApplicationStep,
+        enrolments: Enrolment[],
+        params: BulkUpdatePaymentStatusParams,
+    ) => {
+        if (!allRegistrationFeesPaid(enrolments) && registrationFeePaymentRequired(step)) {
+            const applicationFeeRequiredMessage = () => trans('trans.all_application_fee_required_to_be_paid');
+            errorAlert(applicationFeeRequiredMessage());
+            return;
+        }
+
+        if (!allTuitionFeesPaid(enrolments) && tuitionFeePaymentRequired(step)) {
+            const tuitionFeeRequiredMessage = () => trans('trans.all_tuition_fee_required_to_be_paid');
+            errorAlert(tuitionFeeRequiredMessage());
+            return;
+        }
+        const successMessage = () => trans('trans.bulk_payment_status_update_success');
+        const errorMessage = () => trans('trans.bulk_payment_status_update_failure');
+        const alertMessage = () =>
+            trans('trans.mark_all_payment_as', {
+                step: step?.attributes?.workflowStep,
+                as: params.field_value ? trans('trans.paid') : trans('trans.unpaid'),
+            });
         try {
             warningDialog(async () => {
-                await HttpService.post(route('students.mark-application-fee-payment', { student_program: enrolment.id?.toString() ?? '' }), {});
+                await HttpService.post(route('students.bulk-update-payment-statuses', institutionDepartmentId), params);
                 successAlert(successMessage());
                 router.visit(window.location.href, { replace: true });
-            });
+            }, alertMessage());
         } catch {
             errorAlert(errorMessage());
         }
     };
 
-    const markTuitionFeeAsPaid = async (enrolment: Enrolment, paid: boolean) => {
+    const confirmRegistrationFeeAsPaid = async (enrolment: Enrolment, paid: boolean) => {
+        const successMessage = () => trans('trans.application_fee_payment_message', { action: paid ? trans('trans.unpaid') : trans('trans.paid') });
+        const errorMessage = () => trans('trans.application_fee_payment_failure', { action: paid ? trans('trans.unpaid') : trans('trans.paid') });
+        const markAsMessage = () => trans('trans.mark_payment_as', { as: paid ? trans('trans.unpaid') : trans('trans.paid') });
+        try {
+            warningDialog(async () => {
+                await HttpService.post(route('students.confirm-registration-fee-payment', { student_program: enrolment.id?.toString() ?? '' }), {});
+                successAlert(successMessage());
+                router.visit(window.location.href, { replace: true });
+            }, markAsMessage());
+        } catch {
+            errorAlert(errorMessage());
+        }
+    };
+
+    const confirmTuitionFeeAsPaid = async (enrolment: Enrolment, paid: boolean) => {
         const successMessage = () => trans('trans.tuition_fee_payment_message', { action: paid ? trans('trans.unpaid') : trans('trans.paid') });
         const errorMessage = () => trans('trans.tuition_fee_payment_failure', { action: paid ? trans('trans.unpaid') : trans('trans.paid') });
         try {
             warningDialog(async () => {
-                await HttpService.post(route('students.mark-tuition-fee-payment', { student_program: enrolment?.id?.toString() ?? '' }), {});
+                await HttpService.post(route('students.confirm-tuition-fee-payment', { student_program: enrolment?.id?.toString() ?? '' }), {});
                 successAlert(successMessage());
                 router.visit(window.location.href, { replace: true });
             });
@@ -193,7 +229,7 @@ export const useStudentApplications = () => {
         }
     };
 
-    const applicationFeePaymentRequired = (step: DepartmentApplicationStep) => {
+    const registrationFeePaymentRequired = (step: DepartmentApplicationStep) => {
         return step?.relationships?.metadata?.actions?.some((action) => action.action == 'verify-application-fee-payment-with-accounts');
     };
 
@@ -213,15 +249,15 @@ export const useStudentApplications = () => {
         return step?.relationships?.metadata?.actions?.some((action) => action.action == 'upload-proof-of-payment');
     };
 
-    const allApplicationFeesPaid = (enrolments: Enrolment[]): boolean => {
-        return enrolments.every((e) => isItTrue(e.attributes.registrationFeePaid));
+    const allRegistrationFeesPaid = (enrolments: Enrolment[]): boolean => {
+        return enrolments.every((e) => Number(e?.relationships?.registrationReceipt?.attributes?.amount) > 0);
     };
 
     const allTuitionFeesPaid = (enrolments: Enrolment[]): boolean => {
-        return enrolments.every((e) => isItTrue(e.attributes.tuitionFeePaid));
+        return enrolments.every((e) => Number(e?.relationships?.tuitionReceipt?.attributes?.amount) > 0);
     };
 
-   /* const allProofOfPaymentUploaded = (enrolments: Enrolment[], type: 'application-fee' | 'tuition-fee'): boolean => {
+    /* const allProofOfPaymentUploaded = (enrolments: Enrolment[], type: 'application-fee' | 'tuition-fee'): boolean => {
         if (type === 'application-fee') {
             return enrolments.every((e) => Number(e.attributes.applicationFeeProofOfPaymentId) > 0);
         } else if (type === 'tuition-fee') {
@@ -255,16 +291,17 @@ export const useStudentApplications = () => {
         uploadProofOfPayment,
         approveApplication,
         bulkApproveApplication,
-        markApplicationFeeAsPaid,
-        markTuitionFeeAsPaid,
-        applicationFeePaymentRequired,
+        confirmRegistrationFeeAsPaid,
+        confirmTuitionFeeAsPaid,
+        registrationFeePaymentRequired,
         tuitionFeePaymentRequired,
         proofOfPaymentRequired,
-        allApplicationFeesPaid,
+        allRegistrationFeesPaid,
         allTuitionFeesPaid,
         onPaymentProofModal,
         awaitApplicationPaymentProof,
         awaitTuitionPaymentProof,
         canApproveWorkflowStepApplications,
+        bulkUpdatePaymentStatus,
     };
 };

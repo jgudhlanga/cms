@@ -3,10 +3,11 @@
 namespace App\Http\Controllers\Workflows;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Workflows\BulkUpdatePaymentStatusRequest;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use App\Models\Students\StudentProgram;
-use App\Http\Requests\Workflows\{UploadProofOfPaymentRequest, BulkApplicationApproveRequest};
+use App\Http\Requests\Workflows\UploadProofOfPaymentRequest;
+use App\Http\Requests\Workflows\BulkApplicationApproveRequest;
 use App\Helpers\WorkflowHelper;
 use Illuminate\Support\Facades\DB;
 use Throwable;
@@ -15,6 +16,9 @@ use App\Models\Institution\InstitutionDepartment;
 
 class ApplicationWorkflowController extends Controller
 {
+    /**
+     * @throws Throwable
+     */
     public function uploadProofOfPayment(StudentProgram $studentProgram, UploadProofOfPaymentRequest $request): RedirectResponse
     {
         DB::beginTransaction();
@@ -41,6 +45,9 @@ class ApplicationWorkflowController extends Controller
         }
     }
 
+    /**
+     * @throws Throwable
+     */
     public function approveApplication(StudentProgram $studentProgram, DepartmentApplicationStep $departmentApplicationStep): RedirectResponse
     {
         DB::beginTransaction();
@@ -56,9 +63,13 @@ class ApplicationWorkflowController extends Controller
         }
     }
 
+    /**
+     * @throws Throwable
+     */
     public function bulkApproveApplication(InstitutionDepartment $institutionDepartment, BulkApplicationApproveRequest $request): RedirectResponse
     {
         $intakePeriodId = $request->filled('intake_period_id') ? $request->intake_period_id : null;
+        $modeOfStudyId = $request->filled('mode_of_study_id') ? $request->mode_of_study_id : null;
         $departmentLevelId = $request->filled('department_level_id') ? $request->department_level_id : null;
         $currentStepId = $request->filled('current_step_id') ? $request->current_step_id : null;
         $newStepId = $request->filled('new_step_id') ? $request->new_step_id : null;
@@ -69,9 +80,10 @@ class ApplicationWorkflowController extends Controller
                 ->when($departmentLevelId, fn($q) => $q->where('department_level_id', $departmentLevelId))
                 ->when($currentStepId, fn($q) => $q->where('department_application_step_id', $currentStepId))
                 ->when($intakePeriodId, fn($q) => $q->where('intake_period_id', $intakePeriodId))
+                ->when($modeOfStudyId, fn($q) => $q->where('mode_of_study_id', $modeOfStudyId))
                 ->update(['department_application_step_id' => $newStepId]);
             DB::commit();
-            return back()->with('success', 'Bulk application done successfully.');
+            return back()->with('success', 'Bulk application approval done successfully.');
         } catch (Throwable $e) {
             DB::rollBack();
             report($e); // optional: log for debugging
@@ -81,32 +93,69 @@ class ApplicationWorkflowController extends Controller
         }
     }
 
-    public function markApplicationFeePayment(StudentProgram $studentProgram): RedirectResponse
+    /**
+     * @throws Throwable
+     */
+    public function bulkUpdatePaymentStatuses(InstitutionDepartment $institutionDepartment, BulkUpdatePaymentStatusRequest $request): RedirectResponse
     {
+        $intakePeriodId = $request->filled('intake_period_id') ? $request->intake_period_id : null;
+        $modeOfStudyId = $request->filled('mode_of_study_id') ? $request->mode_of_study_id : null;
+        $departmentLevelId = $request->filled('department_level_id') ? $request->department_level_id : null;
+        $currentStepId = $request->filled('current_step_id') ? $request->current_step_id : null;
+        $fieldToUpdate = $request->filled('field_to_update') ? $request->field_to_update : 'registration_fee_confirmed';
+        $fieldValue = $request->filled('field_value') ? $request->field_value : false;
+
         DB::beginTransaction();
         try {
-            $studentProgram->update(['application_fee_paid' => !$studentProgram->application_fee_paid]);
+            $institutionDepartment->enrolments()
+                ->when($departmentLevelId, fn($q) => $q->where('department_level_id', $departmentLevelId))
+                ->when($currentStepId, fn($q) => $q->where('department_application_step_id', $currentStepId))
+                ->when($intakePeriodId, fn($q) => $q->where('intake_period_id', $intakePeriodId))
+                ->when($modeOfStudyId, fn($q) => $q->where('mode_of_study_id', $modeOfStudyId))
+                ->update([$fieldToUpdate => $fieldValue]);
             DB::commit();
-            return back()->with('success', 'Application fee payment successfully updated');
+            return back()->with('success', 'Bulk payment status done successfully.');
         } catch (Throwable $e) {
             DB::rollBack();
+            report($e); // optional: log for debugging
             return back()->withErrors([
-                'error' => 'An error occurred while updating application fee payment. Please try again.',
+                'error' => 'An error occurred while bulk updating payment status. Please try again.',
             ]);
         }
     }
 
-    public function markTuitionFeePayment(StudentProgram $studentProgram): RedirectResponse
+    /**
+     * @throws Throwable
+     */
+    public function confirmRegistrationFeePayment(StudentProgram $studentProgram): RedirectResponse
     {
         DB::beginTransaction();
         try {
-            $studentProgram->update(['tuition_fee_paid' => !$studentProgram->tuition_fee_paid]);
+            $studentProgram->update(['registration_fee_confirmed' => !$studentProgram->registration_fee_confirmed]);
             DB::commit();
-            return back()->with('success', 'Tuition fee payment successfully updated');
+            return back()->with('success', 'Registration fee successfully confirmed');
         } catch (Throwable $e) {
             DB::rollBack();
             return back()->withErrors([
-                'error' => 'An error occurred while updating tuition fee payment. Please try again.',
+                'error' => 'An error occurred while confirming registration fee payment. Please try again.',
+            ]);
+        }
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function confirmTuitionFeePayment(StudentProgram $studentProgram): RedirectResponse
+    {
+        DB::beginTransaction();
+        try {
+            $studentProgram->update(['tuition_fee_confirmed' => !$studentProgram->tuition_fee_confirmed]);
+            DB::commit();
+            return back()->with('success', 'Tuition fee successfully confirmed');
+        } catch (Throwable $e) {
+            DB::rollBack();
+            return back()->withErrors([
+                'error' => 'An error occurred while confirming tuition fee payment. Please try again.',
             ]);
         }
     }
