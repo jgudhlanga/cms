@@ -73,7 +73,7 @@ class PortalController extends Controller
         $status = Status::where('title', StatusEnum::ACTIVE->value)->first();
 
         $user = $this->userRepository->create(
-            UserDto::fromUserRequest($request, $tenant, $status)
+            UserDto::fromUserRequest($request, $tenant->id, $status->id)
         );
 
         $user->assignRole(RoleEnum::STUDENT);
