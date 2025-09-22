@@ -25,6 +25,7 @@ interface Props {
     dragItems?: boolean;
     useApi?: boolean;
     apiFetchAction?: (url: string) => void | Promise<void>;
+    pageSize?: number;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -34,11 +35,12 @@ const props = withDefaults(defineProps<Props>(), {
     showArchivedFilter: true,
     dragItems: false,
     useApi: false,
+    pageSize: PAGINATION_ITEMS_PER_PAGE,
 });
 
 const filter = ref(props?.filters?.search ?? '');
 const trashed = ref(props?.filters?.trashed ?? '0');
-const pageSize = ref(props?.pagination?.per_page ?? PAGINATION_ITEMS_PER_PAGE);
+const pageSize = ref(props?.pagination?.per_page ?? props.pageSize);
 const currentPage = ref(props?.pagination?.current_page ?? '1');
 const { initialize, toggleColumnVisibility, tableSearch, setPageSize, goToPage, loadTrashed } = useDataTables();
 const table = initialize(props);
