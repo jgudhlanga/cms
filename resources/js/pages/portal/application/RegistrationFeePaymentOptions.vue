@@ -63,13 +63,13 @@ const submit = async () => {
         <div class="flex h-full w-full flex-col justify-around space-y-6 p-6">
             <div class="mx-auto flex items-center justify-center">
                 <BaseAlert
-                    :description="$t('trans.registration_fee_payment_description', { amount: formatCurrency(registrationFeeAmount) })"
+                    :description="$t('trans.registration_fee_payment_description', { amount: `USD${formatCurrency(registrationFeeAmount)}` })"
                     :type="TypeVariant.info"
                 />
             </div>
             <div class="amount">
                 <div class="amount-label">{{ $t('trans.amount_to_pay') }}:</div>
-                <div class="amount-value">{{ formatCurrency(registrationFeeAmount) }}</div>
+                <div class="amount-value">{{ `USD${formatCurrency(registrationFeeAmount)}` }}</div>
             </div>
             <div class="mx-auto flex w-1/3">
                 <button @click="submit" class="payment-button" :disabled="isLoading">
