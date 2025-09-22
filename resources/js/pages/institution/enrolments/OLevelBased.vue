@@ -1,28 +1,29 @@
 <script setup lang="ts">
-import { BaseButton } from '@/components/core/button';
 import EclipseButton from '@/components/core/button/EclipseButton.vue';
 import TextLink from '@/components/core/util/TextLink.vue';
 import { useUtils } from '@/composables/core/useUtils';
 import { useStudentApplications } from '@/composables/students/useStudentApplications';
-import { ButtonSize } from '@/enums/buttons';
-import { ColorVariant } from '@/enums/colors';
 import PaymentStatusButton from '@/pages/institution/enrolments/partials/PaymentStatusButton.vue';
+import UpdateAllPaymentsButton from '@/pages/institution/enrolments/partials/UpdateAllPaymentsButton.vue';
 import { DepartmentApplicationStep, DepartmentLevel } from '@/types/department-meta-data';
-import { AcademicOLevelResult, Enrolment } from '@/types/enrolments';
+import { AcademicOLevelResult, BulkUpdatePaymentStatus, Enrolment } from '@/types/enrolments';
 import { computed } from 'vue';
 
 interface Props {
     level: DepartmentLevel;
+    departmentId: string;
     enrolments: Enrolment[];
     steps: DepartmentApplicationStep[];
     step: DepartmentApplicationStep;
+    updatePaymentStatusParams: BulkUpdatePaymentStatus;
 }
 
 const props = defineProps<Props>();
 
 const { level } = props;
 const { formatDate } = useUtils();
-const { approveApplication, applicationFeePaymentRequired, tuitionFeePaymentRequired, canApproveWorkflowStepApplications } = useStudentApplications();
+const { approveApplication, registrationFeePaymentRequired, tuitionFeePaymentRequired, canApproveWorkflowStepApplications } =
+    useStudentApplications();
 
 const levelRequirements = computed(() => {
     return level?.relationships?.requirement;
@@ -78,7 +79,7 @@ const buttonOptions = (enrolment: Enrolment) => {
             <tr class="j-th">
                 <th class="j-th text-left">{{ $tChoice('trans.name', 1) }}</th>
                 <th class="j-th text-left">{{ $tChoice('trans.student_number', 1) }}</th>
-                <template v-if="applicationFeePaymentRequired(step)">
+                <template v-if="registrationFeePaymentRequired(step)">
                     <th class="j-th text-center">{{ $t('trans.application_fee') }}</th>
                 </template>
                 <template v-if="tuitionFeePaymentRequired(step)">
@@ -94,12 +95,16 @@ const buttonOptions = (enrolment: Enrolment) => {
             </tr>
         </thead>
         <tbody class="j-tbody">
-            <template v-if="applicationFeePaymentRequired(step)">
+            <template v-if="registrationFeePaymentRequired(step)">
                 <tr class="j-tr">
                     <td class="j-td">{{ $t('trans.action_all') }}</td>
                     <td class="j-td"></td>
                     <td class="j-td text-center">
-                        <BaseButton :size="ButtonSize.xs" :title="$t('trans.confirm_all_payments')" :variant="ColorVariant.fuchsia" />
+                        <UpdateAllPaymentsButton
+                            :department-id="departmentId"
+                            :enrolments="enrolments"
+                            :params="updatePaymentStatusParams"
+                        />
                     </td>
                 </tr>
             </template>
@@ -108,7 +113,7 @@ const buttonOptions = (enrolment: Enrolment) => {
                     <TextLink :href="''" :title="enrolment?.attributes?.studentName" />
                 </td>
                 <td class="j-td">{{ enrolment?.attributes?.studentNumber }}</td>
-                <template v-if="applicationFeePaymentRequired(step)">
+                <template v-if="registrationFeePaymentRequired(step)">
                     <td class="j-td text-center">
                         <PaymentStatusButton :enrolment="enrolment" :step="step" type="registration" />
                     </td>

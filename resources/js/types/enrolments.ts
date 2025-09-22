@@ -18,8 +18,6 @@ export type Enrolment = {
         course: string;
         applicationTrackingNumber: string;
         requiredExamSittingCount: string | number;
-        registrationFeePaid: boolean;
-        tuitionFeePaid: boolean;
         registrationFeeConfirmed: boolean;
         tuitionFeeConfirmed: boolean;
         createdAt: string;
@@ -58,7 +56,24 @@ export type BulkApplicationApprovalParams = {
     intake_period_id: string | number;
     department_level_id: string | number;
     current_step_id: string | number;
+    mode_of_study_id: string;
     new_step_id: string | number;
+};
+
+export type BulkUpdatePaymentStatus = {
+    intake_period_id: string;
+    department_level_id: string;
+    mode_of_study_id: string;
+    step: DepartmentApplicationStep | null;
+};
+
+export type BulkUpdatePaymentStatusParams = {
+    intake_period_id: string;
+    department_level_id: string;
+    mode_of_study_id: string;
+    current_step_id: string;
+    field_to_update: 'registration_fee_confirmed' | 'tuition_fee_confirmed';
+    field_value: boolean;
 };
 
 export type PaymentProofPreview = {
