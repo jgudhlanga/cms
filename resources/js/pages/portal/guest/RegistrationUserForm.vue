@@ -12,7 +12,7 @@ import { useCreateUserFormStore } from '@/store/portal/useCreateUserFormStore';
 import { CreateApplicationUserParams } from '@/types/portal';
 import { Head, useForm } from '@inertiajs/vue3';
 import { storeToRefs } from 'pinia';
-import { onMounted } from 'vue';
+import { onMounted, ref } from 'vue';
 import BaseInput from '../../../components/core/form/text/BaseInput.vue';
 
 const { createPortalUser } = useGuestPortal();
@@ -26,6 +26,8 @@ const form = useForm<CreateApplicationUserParams>({
     password: '',
 });
 
+const passwordMatches = ref(true);
+
 const updateForm = () => {
     form.password_confirmation = password_confirmation.value;
     form.email = email.value;
@@ -35,6 +37,12 @@ const updateForm = () => {
 };
 const submitForm = () => {
     updateForm();
+    if (password_confirmation.value !== password.value) {
+        passwordMatches.value = false;
+        return;
+    } else {
+        passwordMatches.value = true;
+    }
     createPortalUser(form);
 };
 const { logout } = useAuth();
@@ -47,8 +55,8 @@ onMounted(async () => {
 <template>
     <Head :title="$t('trans.application_form')" />
     <div class="flex justify-between bg-white">
-        <div class="flex w-full md:w-1/2 flex-col p-3 md:p-16">
-            <form @submit.prevent="submitForm()" class="flex flex-col rounded-2xl shadow-md p-10">
+        <div class="flex w-full flex-col p-3 md:w-1/2 md:p-16">
+            <form @submit.prevent="submitForm()" class="flex flex-col rounded-2xl p-10 shadow-md">
                 <div class="flex w-full items-center justify-center">
                     <div class="size-20">
                         <AppLogo classes="flex justify-center border-2 border-white" />
@@ -113,7 +121,10 @@ onMounted(async () => {
                         @input="clearFormErrors(form, 'password_confirmation')"
                         :error="form.errors.password_confirmation"
                     />
-                    <div class="flex flex-col items-center justify-center space-y-3 mt-5">
+                    <div class="flex justify-end text-sm font-extralight text-red-600 lowercase dark:text-red-500" v-if="!passwordMatches">
+                        Password and Confirm Password do not match
+                    </div>
+                    <div class="mt-5 flex flex-col items-center justify-center space-y-3">
                         <BaseButton type="submit" class="w-1/2" :processing="form.processing">
                             {{ $t('trans.submit') }}
                         </BaseButton>

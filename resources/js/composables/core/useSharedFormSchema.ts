@@ -44,7 +44,12 @@ export const useSharedFormSchema = () => {
         });
     const passwordSchema = () =>
         z.object({
-            password: z.string().nonempty(trans('trans.enter_required_field', { field: trans('trans.password') })),
+            password: z.string()
+                .min(8, "Password must be at least 8 characters")
+                .regex(/[a-z]/, "Must contain at least one lowercase letter")
+                .regex(/[A-Z]/, "Must contain at least one uppercase letter")
+                .regex(/[0-9]/, "Must contain at least one number")
+                .regex(/[^a-zA-Z0-9]/, "Must contain at least one symbol"),
         });
     const passwordConfirmationSchema = () =>
         z.object({
