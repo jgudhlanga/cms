@@ -54,7 +54,7 @@ onUnmounted(() => {
         <!-- Text content -->
         <div class="flex flex-col w-full space-y-4 text-center">
             <h1 class="text-5xl font-bold uppercase text-destructive">Coming Soon</h1>
-            <div class="flex items-center justify-center w-full text-lg sm:text-lg">We're working on it. Stay tuned!</div>
+            <div class="flex items-center justify-center w-full text-lg sm:text-lg">We're still configuring the system. Stay tuned!</div>
 
             <!-- Countdown Timer -->
             <div v-if="showCountdown" class="mt-4 flex justify-center space-x-6 font-mono text-2xl">
