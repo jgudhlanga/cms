@@ -1,45 +1,47 @@
 <script setup lang="ts">
+import BaseAlert from '@/components/core/alert/BaseAlert.vue';
 import InputError from '@/components/core/form/InputError.vue';
 import TextLink from '@/components/core/util/TextLink.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { TypeVariant } from '@/enums/type-variants';
 import { Head, useForm } from '@inertiajs/vue3';
 import { LoaderCircle } from 'lucide-vue-next';
 
 defineProps<{
-	status?: string;
+    status?: string;
 }>();
 
 const form = useForm<any>({
-	email: ''
+    email: '',
 });
 
 const submit = () => {
-	form.post(route('password.email'));
+    form.post(route('password.email'));
 };
 </script>
 
 <template>
-	<Head title="Forgot password" />
-	<div class="space-y-6">
-		<form @submit.prevent="submit">
-			<div class="grid gap-2">
-				<Label for="email">Email address</Label>
-				<Input id="email" type="email" name="email" autocomplete="off" v-model="form.email" autofocus
-				       placeholder="email@example.com" />
-				<InputError :message="form.errors.email" />
-			</div>
-			<div class="my-6 flex items-center justify-start">
-				<Button class="w-full" :disabled="form.processing">
-					<LoaderCircle v-if="form.processing" class="h-4 w-4 animate-spin" />
-					Email password reset link
-				</Button>
-			</div>
-		</form>
-		<div class="space-x-1 text-center text-sm text-muted-foreground">
-			<span>Or, return to</span>
-			<TextLink :href="route('login')">log in</TextLink>
-		</div>
-	</div>
+    <Head title="Forgot password" />
+    <div class="space-y-6">
+        <BaseAlert v-if="status" :type="TypeVariant.success" :description="status" />
+        <form @submit.prevent="submit">
+            <div class="grid gap-2">
+                <Label for="email">Email address</Label>
+                <Input id="email" type="email" name="email" autocomplete="off" v-model="form.email" autofocus placeholder="email@example.com" />
+                <InputError :message="form.errors.email" />
+            </div>
+            <div class="my-6 flex items-center justify-start">
+                <Button class="w-full" :disabled="form.processing">
+                    <LoaderCircle v-if="form.processing" class="h-4 w-4 animate-spin" />
+                    Email password reset link
+                </Button>
+            </div>
+        </form>
+        <div class="text-muted-foreground space-x-1 text-center text-sm">
+            <span>Or, return to</span>
+            <TextLink :href="route('login')">log in</TextLink>
+        </div>
+    </div>
 </template>
