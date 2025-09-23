@@ -5,8 +5,8 @@ import AnimatedErrorIcon from '@/components/core/util/AnimatedErrorIcon.vue';
 import { useUtils } from '@/composables/core/useUtils';
 import { ColorVariant } from '@/enums/colors';
 import { IconName } from '@/enums/icons';
-import Base from '@/pages/integrations/payments/partials/Base.vue';
 import { Ledger } from '@/types/integrations';
+import BasePaymentStatus from '@/components/shared/integraions/BasePaymentStatus.vue';
 
 interface Props {
     details: Ledger;
@@ -18,7 +18,7 @@ const { navigateTo } = useUtils();
 </script>
 
 <template>
-    <Base :details="details" color="red" :message="$t('trans.no_amount_deducted_description')">
+    <BasePaymentStatus :details="details" color="red" :message="$t('trans.no_amount_deducted_description')">
         <template #header>
             <div :class="`flex flex-col items-center bg-gradient-to-br from-red-400 to-red-600 px-6 py-8`">
                 <AnimatedErrorIcon />
@@ -38,5 +38,5 @@ const { navigateTo } = useUtils();
                 :variant="ColorVariant.danger"
             />
         </template>
-    </Base>
+    </BasePaymentStatus>
 </template>

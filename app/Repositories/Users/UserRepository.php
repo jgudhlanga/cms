@@ -51,7 +51,7 @@ class UserRepository extends BaseRepository implements IUserRepository
             'first_name' => $dto->first_name,
             'middle_name' => $dto->middle_name,
             'last_name' => $dto->last_name,
-            'email' => $dto->email,
+            'email' => trim(strtolower($dto->email)),
             'phone_number' => $dto->phone_number,
             'status_id' => $dto->status_id,
             'password' => $dto->password,

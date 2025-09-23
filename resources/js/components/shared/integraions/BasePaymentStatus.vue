@@ -5,9 +5,9 @@ import { IconName } from '@/enums/icons';
 import { Ledger } from '@/types/integrations';
 
 interface Props {
-    details: Ledger;
+    details?: Ledger|any;
     color: string;
-    message: string;
+    message?: string;
 }
 
 defineProps<Props>();
@@ -24,30 +24,30 @@ const currentDate = new Date();
             <!-- Content -->
             <div class="px-6 py-6">
                 <!-- Transaction Details -->
-                <div class="mb-6 rounded-xl border border-gray-100 bg-gray-50 p-5">
+                <div class="mb-6 rounded-xl border border-gray-100 bg-gray-50 p-5" v-if="details">
                     <h2 class="mb-3 flex items-center text-lg font-semibold text-gray-700">
                         <BaseIcon :name="IconName.receipt" size="18" :class="`mr-2 text-${color}-600`" />{{ $t('trans.transaction_details') }}
                     </h2>
                     <div class="space-y-3">
                         <div class="flex justify-between">
                             <span class="text-gray-600">{{ $t('trans.reference') }}</span>
-                            <span class="font-mono text-gray-800">#{{ details.attributes.paymentReference }}</span>
+                            <span class="font-mono text-gray-800">#{{ details?.attributes?.paymentReference ?? '---' }}</span>
                         </div>
-                        <div class="flex justify-between">
+                        <div class="flex justify-between" v-if="details?.attributes?.feeType">
                             <span class="text-gray-600">{{ $tChoice('trans.type', 1) }}</span>
-                            <span class="font-mono text-gray-800">{{ details.attributes.feeType }}</span>
+                            <span class="font-mono text-gray-800">{{ details?.attributes?.feeType ?? '---' }}</span>
                         </div>
                         <div class="flex justify-between">
                             <span class="text-gray-600">{{ $tChoice('trans.amount', 1) }}</span>
-                            <span :class="`font-semibold text-${color}-600`">{{ formatCurrency(String(details.attributes.amount)) }}</span>
+                            <span :class="`font-semibold text-${color}-600`">{{ formatCurrency(String(details?.attributes?.amount)) ?? '---'}}</span>
                         </div>
                         <div class="flex justify-between">
                             <span class="text-gray-600">{{ $tChoice('trans.payment_option', 1) }}</span>
-                            <span class="flex items-center text-gray-800">{{ details.attributes.paymentOption ?? '---' }}</span>
+                            <span class="flex items-center text-gray-800">{{ details?.attributes?.paymentOption ?? '---' }}</span>
                         </div>
                         <div class="flex justify-between">
                             <span class="text-gray-600">{{ $t('trans.date') }}</span>
-                            <span class="text-gray-800">{{ formatDate(details.attributes.paymentDate ?? currentDate) }}</span>
+                            <span class="text-gray-800">{{ formatDate(details?.attributes?.paymentDate ?? currentDate) }}</span>
                         </div>
                         <div class="flex justify-between border-t border-gray-200 pt-2">
                             <div class="text-gray-600">{{ $tChoice('trans.status', 1) }}</div>
@@ -59,7 +59,7 @@ const currentDate = new Date();
                 </div>
 
                 <!-- Message -->
-                <div :class="`mb-6 rounded-lg border border-${color}-100 bg-${color}-50 p-4`">
+                <div :class="`mb-6 rounded-lg border border-${color}-100 bg-${color}-50 p-4`" v-if="message">
                     <div :class="`flex items-center justify-center text-${color}-700`">
                         <BaseIcon :name="IconName.info" size="18" :class="`mr-2 text-${color}-600`" />
                         {{ message }}

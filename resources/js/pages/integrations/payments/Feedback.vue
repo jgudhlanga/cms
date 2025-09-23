@@ -2,10 +2,10 @@
 import { BaseButton } from '@/components/core/button';
 import BaseIcon from '@/components/core/icon/BaseIcon.vue';
 import AnimatedCheckMark from '@/components/core/util/AnimatedCheckMark.vue';
+import BasePaymentStatus from '@/components/shared/integraions/BasePaymentStatus.vue';
 import { useUtils } from '@/composables/core/useUtils';
 import { ColorVariant } from '@/enums/colors';
 import { IconName } from '@/enums/icons';
-import Base from '@/pages/integrations/payments/partials/Base.vue';
 import { Ledger } from '@/types/integrations';
 
 interface Props {
@@ -18,7 +18,7 @@ const { navigateTo } = useUtils();
 </script>
 
 <template>
-    <Base :details="details" color="green" :message="$t('trans.payment_recorded_description')">
+    <BasePaymentStatus :details="details" color="green" :message="$t('trans.payment_recorded_description')">
         <template #header>
             <div :class="`flex flex-col items-center bg-gradient-to-br from-green-400 to-green-600 px-6 py-8`">
                 <AnimatedCheckMark />
@@ -46,5 +46,5 @@ const { navigateTo } = useUtils();
                 :variant="ColorVariant.success"
             />
         </template>
-    </Base>
+    </BasePaymentStatus>
 </template>

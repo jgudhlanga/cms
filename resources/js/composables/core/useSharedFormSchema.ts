@@ -42,6 +42,11 @@ export const useSharedFormSchema = () => {
         z.object({
             code: z.string().nonempty(trans('trans.enter_required_field', { field: trans_choice('trans.code', 1) })),
         });
+
+    const orderReferenceSchema = () =>
+        z.object({
+            order_reference: z.string().nonempty(trans('trans.enter_required_field', { field: trans('trans.order_reference') })),
+        });
     const passwordSchema = () =>
         z.object({
             password: z.string()
@@ -249,5 +254,6 @@ export const useSharedFormSchema = () => {
         employeeNumberSchema,
         titleLabelSchema,
         modeOfStudySchema,
+        orderReferenceSchema,
     };
 };

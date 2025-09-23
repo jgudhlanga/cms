@@ -63,6 +63,7 @@ class StudentRepository extends BaseRepository implements IStudentRepository
 
     private function createFields(CreateApplicationDto $dto): array
     {
+        $cleanIdNumber = str_replace(' ', '', trim($dto->id_number));
         return [
             'user_id' => $dto->user_id,
             'title_id' => $dto->title_id,
@@ -70,7 +71,7 @@ class StudentRepository extends BaseRepository implements IStudentRepository
             'marital_status_id' => $dto->marital_status_id,
             'race_id' => $dto->race_id,
             'id_type_id' => $dto->id_type_id,
-            'id_number' => $dto->id_number,
+            'id_number' => $cleanIdNumber,
             'passport_number' => $dto->passport_number,
             'country_id' => $dto->country_id,
             'study_permit_number' => $dto->study_permit_number,
