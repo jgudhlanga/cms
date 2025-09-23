@@ -103,10 +103,15 @@ class PaymentController extends Controller
      */
     public function checkStatus(string $orderReference)
     {
+        // get either system_reference or payment_reference
+        $reference = Ledger::where('system_reference', $orderReference)->first();
+        if (!$reference) {
+            $reference = Ledger::where('payment_reference', $orderReference)->first();
+        }
         $response = Http::withHeaders([
             'Accept' => 'application/json',
             'Content-Type' => 'application/json',
-        ])->get(config('custom.payments.payment-gateway.base_url') . '/payments/transaction/' . trim($orderReference) . '/status/check');
+        ])->get(config('custom.payments.payment-gateway.base_url') . '/payments/transaction/' . trim($reference->system_reference) . '/status/check');
         return $response->json();
     }
 

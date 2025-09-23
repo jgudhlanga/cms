@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, useForm } from '@inertiajs/vue3';
+import { Head, router, useForm } from '@inertiajs/vue3';
 
 import { BaseButton } from '@/components/core/button';
 import BaseIcon from '@/components/core/icon/BaseIcon.vue';
@@ -97,6 +97,7 @@ const updateLedgers = async () => {
     try {
         await HttpService.post(route('integrations.payments.update-status'), composeDetails.value?.attributes);
         successAlert('Payments status updated!');
+        router.visit(window.location.href, { replace: true });
     } catch (error: any) {
         errorAlert('Error updating ledgers: ' + error);
     } finally {
