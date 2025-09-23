@@ -171,10 +171,10 @@ onMounted(() => {
 <template>
     <Head :title="$tChoice('trans.dashboard', 2)" />
     <PageContainer :breadcrumbs="breadcrumbs">
-        <div class="flex w-full flex-col sm:px-6 lg:px-8">
-            <!-- REGISTRATION -->
+<!--        <div class="flex w-full flex-col sm:px-6 lg:px-8">
+            &lt;!&ndash; REGISTRATION &ndash;&gt;
             <ComponentHeader header-title="Registration Stats" description="Overview of portal registration trends and statistics" />
-            <!-- Stats Cards -->
+            &lt;!&ndash; Stats Cards &ndash;&gt;
             <div class="my-6 grid grid-cols-1 gap-5 px-4 sm:grid-cols-2 sm:px-0 lg:grid-cols-4">
                 <StatsCard title="Total Registrations" :value="formatNumber(totalStudents)" icon="users" icon-bg-color="indigo"/>
                 <StatsCard title="This Month" :value="formatNumber(thisMonthEnrollments)" icon="checkDone" icon-bg-color="green"/>
@@ -204,9 +204,9 @@ onMounted(() => {
                 </div>
             </div>
 
-            <!-- Charts Section -->
+            &lt;!&ndash; Charts Section &ndash;&gt;
             <div class="grid grid-cols-1 gap-6 px-4 sm:px-0 lg:grid-cols-2">
-                <!-- Enrollment Trends Chart -->
+                &lt;!&ndash; Enrollment Trends Chart &ndash;&gt;
                 <div class="rounded-lg bg-white p-6 shadow">
                     <h3 class="mb-4 text-lg font-medium text-gray-900">Enrollment Trends</h3>
                     <div class="h-80">
@@ -214,7 +214,7 @@ onMounted(() => {
                     </div>
                 </div>
 
-                <!-- Program Distribution Chart -->
+                &lt;!&ndash; Program Distribution Chart &ndash;&gt;
                 <div class="rounded-lg bg-white p-6 shadow">
                     <h3 class="mb-4 text-lg font-medium text-gray-900">Program Distribution</h3>
                     <div class="h-80">
@@ -222,7 +222,7 @@ onMounted(() => {
                     </div>
                 </div>
 
-                <!-- Monthly Comparison Chart -->
+                &lt;!&ndash; Monthly Comparison Chart &ndash;&gt;
                 <div class="rounded-lg bg-white p-6 shadow lg:col-span-2">
                     <h3 class="mb-4 text-lg font-medium text-gray-900">Monthly Comparison (Current Year vs Last Year)</h3>
                     <div class="h-80">
@@ -230,6 +230,6 @@ onMounted(() => {
                     </div>
                 </div>
             </div>
-        </div>
+        </div>-->
     </PageContainer>
 </template>
