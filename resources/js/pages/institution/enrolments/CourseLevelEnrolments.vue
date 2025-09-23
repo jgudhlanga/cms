@@ -11,6 +11,7 @@ import { useModeOfStudy } from '@/composables/institution/useModeOfStudy';
 import { useStudentApplications } from '@/composables/students/useStudentApplications';
 import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
+import GeneralEnrolments from '@/pages/institution/enrolments/GeneralEnrolments.vue';
 import PaymentProofPreviewModal from '@/pages/institution/enrolments/partials/PaymentProofPreviewModal.vue';
 import { AuthObject } from '@/types/data-pagination';
 import { DepartmentApplicationStep, DepartmentLevel } from '@/types/department-meta-data';
@@ -89,9 +90,10 @@ const getNextSteps = (currentStepName: string) => {
     }
 
     return props.workflowSteps.filter((step: DepartmentApplicationStep) => {
-        const roles = step.relationships?.metadata?.roles ?? [];
-        const hasStudent = roles.some((role) => role?.toLowerCase() === 'student');
-        return step.attributes.position > currentStepObj.attributes.position && !hasStudent;
+        return step;
+        // const roles = step.relationships?.metadata?.roles ?? [];
+        // const hasStudent = roles.some((role) => role?.toLowerCase() === 'student');
+        //return step.attributes.position > currentStepObj.attributes.position && !hasStudent;
     });
 };
 
@@ -214,6 +216,21 @@ const handleFilterChange = () => {
                 <div class="inline-block min-w-full overflow-auto align-middle">
                     <template v-if="isItTrue(levelRequirements?.attributes?.isOLevelRequired)">
                         <OLevelBased
+                            :enrolments="enrolmentsInStep"
+                            :level="level"
+                            :steps="getNextSteps(step)"
+                            :step="getCurrentStep(step)!"
+                            :departmentId="department?.id?.toString() ?? ''"
+                            :update-payment-status-params="{
+                                intake_period_id: intakePeriod?.id?.toString() ?? '',
+                                mode_of_study_id: modeOfStudy?.id?.toString() ?? '',
+                                department_level_id: level?.id?.toString() ?? '',
+                                step: getCurrentStep(step) ?? null,
+                            }"
+                        />
+                    </template>
+                    <template v-else>
+                        <GeneralEnrolments
                             :enrolments="enrolmentsInStep"
                             :level="level"
                             :steps="getNextSteps(step)"
