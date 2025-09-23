@@ -1,14 +1,14 @@
 import vue from '@vitejs/plugin-vue';
 import laravel from 'laravel-vite-plugin';
-import path from 'path';
-import { resolve } from 'node:path';
-import { defineConfig } from 'vite';
 import i18n from 'laravel-vue-i18n/vite';
+import { resolve } from 'node:path';
+import path from 'path';
+import { defineConfig } from 'vite';
 
 export default defineConfig({
     plugins: [
         laravel({
-            input: ['resources/js/app.ts'],
+            input: ['resources/css/app.css', 'resources/js/app.ts'],
             ssr: 'resources/js/ssr.ts',
             refresh: true,
         }),
@@ -23,7 +23,7 @@ export default defineConfig({
         i18n(),
     ],
     optimizeDeps: {
-        include: ['@wangeditor/editor-for-vue']
+        include: ['@wangeditor/editor-for-vue'],
     },
     resolve: {
         alias: {
