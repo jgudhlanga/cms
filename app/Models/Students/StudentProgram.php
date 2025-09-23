@@ -21,6 +21,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
@@ -97,23 +98,22 @@ class StudentProgram extends Model implements HasMedia
         $this->addMediaCollection('offer-letter')->singleFile();
     }
 
-
-    public function receiptFor(FeeTypeEnum $feeType): HasOne
+    public function hasPaid(FeeTypeEnum $feeType): bool
     {
-        return $this->hasOne(Ledger::class, 'student_program_id')
-            ->where('type', 'receipt')
-            ->whereRelation('feeType', 'slug', $feeType->slug());
+        return $this->receipt($feeType) !== null;
+    }
+
+    public function receipts(): HasMany
+    {
+        return $this->hasMany(Ledger::class, 'student_program_id')
+            ->where('type', 'receipt');
     }
 
     public function receipt(FeeTypeEnum $feeType): ?Ledger
     {
-        return $this->receiptFor($feeType)->first();
-    }
-
-
-    public function hasPaid(FeeTypeEnum $feeType): bool
-    {
-        return $this->receiptFor($feeType)->exists();
+        return $this->receipts()->whereRelation('feeType', 'slug', $feeType->slug())
+            ->latest()
+            ->first();
     }
 
 

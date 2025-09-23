@@ -31,7 +31,7 @@ class EnrolmentResource extends JsonResource
                 'departmentCourseId' => $this->department_course_id,
                 'course' => $this->departmentCourse?->course?->name,
                 'applicationTrackingNumber' => $this->application_tracking_number,
-                'registrationFeePaid' => $this->hasPaid(FeeTypeEnum::REGISTRATION_FEE),
+                'registrationFeePaid' => $this->hasPaid(FeeTypeEnum::APPLICATION_FEE),
                 'tuitionFeePaid' => $this->hasPaid(FeeTypeEnum::TUITION_FEE),
                 'registrationFeeConfirmed' => $this->registration_fee_confirmed,
                 'tuitionFeeConfirmed' => $this->tuition_fee_confirmed,
@@ -40,7 +40,7 @@ class EnrolmentResource extends JsonResource
                 'deletedAt' => $this->deleted_at,
             ],
             'relationships' => [
-                'registrationReceipt' => $this->hasPaid(FeeTypeEnum::REGISTRATION_FEE) ? LedgerResource::make($this->receipt(FeeTypeEnum::REGISTRATION_FEE)) : null,
+                'registrationReceipt' => $this->hasPaid(FeeTypeEnum::APPLICATION_FEE) ? LedgerResource::make($this->receipt(FeeTypeEnum::APPLICATION_FEE)) : null,
                 'tuitionReceipt' => $this->hasPaid(FeeTypeEnum::TUITION_FEE) ? LedgerResource::make($this->receipt(FeeTypeEnum::TUITION_FEE)) : null,
                 'oLevelResults' => AcademicLevelResource::collection($this->student?->oLevelResults),
                 'departmentWorkflowStep' => DepartmentApplicationStepResource::make($this->departmentWorkflowStep)

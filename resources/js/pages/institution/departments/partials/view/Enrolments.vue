@@ -106,7 +106,7 @@ const handleSelectionChange = async () => {
                             </div>
                         </Link>
                     </div>
-                    <CustomSeparator classes="h-[1px]" />
+                    <CustomSeparator classes="h-[1px] my-3" />
                 </div>
             </template>
             <BaseAlert
