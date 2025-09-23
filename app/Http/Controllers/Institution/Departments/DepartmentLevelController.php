@@ -97,7 +97,7 @@ class DepartmentLevelController extends Controller
     public function enrolments(InstitutionDepartment $institutionDepartment, DepartmentLevel $departmentLevel): Response
     {
         $this->authorize('viewAnyDepartmentMetaData');
-        [$intakePeriodId, $modeOfStudyId] = $this->extractFilters();
+        [$intakePeriodId, $modeOfStudyId, $courseId] = $this->extractFilters();
 
         $intakePeriod = $this->resolveIntakePeriod($intakePeriodId);
         $modeOfStudy = $this->resolveModeOfStudy($modeOfStudyId);
@@ -108,7 +108,7 @@ class DepartmentLevelController extends Controller
 
         $maxStep = WorkflowHelper::getMaxStep($institutionDepartment->id);
 
-        $enrolments = $this->fetchEnrolments($institutionDepartment, $departmentLevel, $intakePeriodId, $modeOfStudyId, $maxStep);
+        $enrolments = $this->fetchEnrolments($institutionDepartment, $departmentLevel, $intakePeriodId, $modeOfStudyId, $maxStep, $courseId);
 
         return Inertia::render('institution/enrolments/CourseLevelEnrolments', [
             'department' => InstitutionDepartmentResource::make($institutionDepartment),
@@ -124,8 +124,9 @@ class DepartmentLevelController extends Controller
     {
         $intakePeriodId = request('intake_period_id') > 0 ? (int)request('intake_period_id') : null;
         $modeOfStudyId = request('mode_of_study_id') > 0 ? (int)request('mode_of_study_id') : null;
+        $courseId = request('department_course_id') > 0 ? (int)request('department_course_id') : null;
 
-        return [$intakePeriodId, $modeOfStudyId];
+        return [$intakePeriodId, $modeOfStudyId, $courseId];
     }
 
     private function resolveIntakePeriod(?int $intakePeriodId): ?IntakePeriod
@@ -142,13 +143,14 @@ class DepartmentLevelController extends Controller
             : ModeOfStudy::where('name', ModeOfStudyEnum::FULL_TIME->value)->first();
     }
 
-    private function fetchEnrolments(InstitutionDepartment $institutionDepartment, DepartmentLevel $departmentLevel, ?int $intakePeriodId, ?int $modeOfStudyId, $maxStep)
+    private function fetchEnrolments(InstitutionDepartment $institutionDepartment, DepartmentLevel $departmentLevel, ?int $intakePeriodId, ?int $modeOfStudyId, $maxStep, $courseId)
     {
         $query = $institutionDepartment->enrolments()
             ->where('department_level_id', $departmentLevel->id)
             ->whereHas('departmentWorkflowStep', fn($q) => $q->where('position', '<', $maxStep->position))
             ->when($intakePeriodId, fn($q) => $q->where('intake_period_id', $intakePeriodId))
             ->when($modeOfStudyId, fn($q) => $q->where('mode_of_study_id', $modeOfStudyId))
+            ->when($courseId, fn($q) => $q->where('department_course_id', $courseId))
             ->with([
                 'departmentWorkflowStep',
                 'student.user',
