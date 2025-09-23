@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Integrations;
 use App\Enums\Shared\FeeTypeEnum;
 use App\Helpers\PaymentHelper;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Integrations\UpdateLedgerRequest;
 use App\Http\Resources\Integrations\LedgerResource;
+use App\Models\Ledgers\Ledger;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -104,8 +106,54 @@ class PaymentController extends Controller
         $response = Http::withHeaders([
             'Accept' => 'application/json',
             'Content-Type' => 'application/json',
-        ])->get(config('custom.payments.payment-gateway.base_url') . '/payments/transaction/' . $orderReference . '/status/check');
+        ])->get(config('custom.payments.payment-gateway.base_url') . '/payments/transaction/' . trim($orderReference) . '/status/check');
         return $response->json();
     }
 
+    public function updateLedgerRecords(UpdateLedgerRequest $request)
+    {
+        [
+            $amount, $clientFee, $createdDate, $currency, $merchantFee, $paymentOption,
+            $orderReference, $paymentReference, $paymentStatus,] = $this->extractFilters($request);
+        $records = Ledger::where('system_reference', $orderReference)->get();
+        if (!$records->isEmpty()) {
+            foreach ($records as $record) {
+                if (!empty($paymentStatus) && Str::lower($paymentStatus) === 'paid' && $record->type == 'receipt') {
+                    PaymentHelper::updateReceiptEntry($record, PaymentHelper::assembleReceiptUpdateData([
+                            'status' => $paymentStatus,
+                            'paymentOption' => $paymentOption,
+                            'createdDate' => $createdDate,
+                            'amount' => $amount,
+                            'orderReference' => $orderReference,
+                            'reference' => $paymentReference,
+                            'currency' => $currency,
+                            'clientFee' => $clientFee,
+                            'merchantFee' => $merchantFee,]
+                    ));
+                } else {
+                    $record->update(['payment_status' => $paymentStatus ?? 'pending']);
+                }
+            }
+        }
+    }
+
+    public function createCheckStatus()
+    {
+        return Inertia::render('institution/tools/CheckPaymentStatus');
+    }
+
+    private function extractFilters(UpdateLedgerRequest $request): array
+    {
+        $amount = $request->amount ? $request->amount : null;
+        $clientFee = $request->clientFee ? $request->clientFee : null;
+        $createdDate = $request->createdDate ? $request->createdDate : null;
+        $currency = $request->currency ? $request->currency : null;
+        $merchantFee = $request->merchantFee ? $request->merchantFee : 0;
+        $orderReference = $request->orderReference ? $request->orderReference : null;
+        $paymentReference = $request->paymentReference ? $request->paymentReference : null;
+        $paymentStatus = $request->paymentStatus ? $request->paymentStatus : null;
+        $paymentOption = $request->paymentOption ? $request->paymentOption : null;
+        return [$amount, $clientFee, $createdDate, $currency, $merchantFee, $paymentOption,
+            $orderReference, $paymentReference, $paymentStatus,];
+    }
 }
