@@ -85,7 +85,6 @@ const handleSelectionChange = async () => {
         <div class="flex flex-col" v-else>
             <template v-if="enrolments && enrolments.length > 0">
                 <div v-for="enrolment in enrolments" :key="enrolment.departmentCourseId" class="flex flex-col space-y-4">
-                    <CustomSeparator classes="h-[1px] mb-6" />
                     <HeadingSmall :title="enrolment.courseName" />
                     <div class="grid grid-cols-1 gap-4 md:grid-cols-5">
                         <Link
@@ -97,6 +96,7 @@ const handleSelectionChange = async () => {
                                     department_level: level.departmentLevelId,
                                     intake_period_id: intakePeriod?.value.toString(),
                                     mode_of_study_id: modeOfStudy?.value.toString(),
+                                    department_course_id: enrolment?.departmentCourseId ?? '',
                                 })
                             "
                         >
