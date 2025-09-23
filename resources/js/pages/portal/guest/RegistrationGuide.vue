@@ -43,8 +43,8 @@ const steps = ref([
     },
     {
         id: 'choose-programs',
-        title: 'Step 3 – Pay Registration Fee',
-        subtitle: 'Complete the required registration fee payment through the secure online payment system.',
+        title: 'Step 3 – Pay Application Fee',
+        subtitle: 'Complete the required application fee payment through the secure online payment system.',
         icon: CreditCardIcon
     },
     {
