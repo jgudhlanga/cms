@@ -180,7 +180,7 @@ const save = async () => {
         isValidating.value = false;
     }
 };
-const maintenanceMode = import.meta.env.VITE_MAINTENANCE_MODE;
+const maintenanceMode = isItTrue(import.meta.env.VITE_MAINTENANCE_MODE);
 </script>
 <template>
     <StudentPageHeader />
