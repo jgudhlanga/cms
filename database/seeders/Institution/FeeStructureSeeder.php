@@ -22,7 +22,7 @@ class FeeStructureSeeder extends Seeder
     public function run(): void
     {
         $tuitionFeeType = FeeType::where('slug', Str::slug(FeeTypeEnum::TUITION_FEE->name()))->first();
-        $registrationFeeType = FeeType::where('slug', Str::slug(FeeTypeEnum::REGISTRATION_FEE->name()))->first();
+        $registrationFeeType = FeeType::where('slug', Str::slug(FeeTypeEnum::APPLICATION_FEE->name()))->first();
         $tenant = Tenant::where('name', TenantEnum::HARARE_POLY->value)->first();
         $levels = [
             LevelEnum::ABMA_LEVEL_3->value => [

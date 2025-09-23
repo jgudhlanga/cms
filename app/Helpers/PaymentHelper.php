@@ -144,7 +144,7 @@ class PaymentHelper
     public static function hasPaidRegistrationFee(): bool
     {
         $user = auth()->user();
-        $feeType = self::getFeeTypeBySlug(FeeTypeEnum::REGISTRATION_FEE->slug());
+        $feeType = self::getFeeTypeBySlug(FeeTypeEnum::APPLICATION_FEE->slug());
 
         if (!$feeType) {
             return false;
@@ -162,8 +162,8 @@ class PaymentHelper
 
     public static function updateRegistrationFeeLedgerEntries(StudentProgram $studentProgram): void
     {
-        $invoice = PaymentHelper::getLatestLedgerRecord(FeeTypeEnum::REGISTRATION_FEE->slug(), 'invoice');
-        $receipt = PaymentHelper::getLatestLedgerRecord(FeeTypeEnum::REGISTRATION_FEE->slug(), 'receipt');
+        $invoice = PaymentHelper::getLatestLedgerRecord(FeeTypeEnum::APPLICATION_FEE->slug(), 'invoice');
+        $receipt = PaymentHelper::getLatestLedgerRecord(FeeTypeEnum::APPLICATION_FEE->slug(), 'receipt');
         $invoice->update(['student_program_id' => $studentProgram->id, 'level_id' => $studentProgram->departmentLevel->level_id]);
         $receipt->update(['student_program_id' => $studentProgram->id, 'level_id' => $studentProgram->departmentLevel->level_id]);
     }

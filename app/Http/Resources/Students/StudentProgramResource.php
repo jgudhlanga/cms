@@ -34,7 +34,7 @@ class StudentProgramResource extends JsonResource
                 'modeOfStudyId' => $this->mode_of_study_id,
                 'modeOfStudy' => $this->modeOfStudy?->name,
                 'applicationTrackingNumber' => $this->application_tracking_number,
-                'registrationFeePaid' => $this->hasPaid(FeeTypeEnum::REGISTRATION_FEE),
+                'registrationFeePaid' => $this->hasPaid(FeeTypeEnum::APPLICATION_FEE),
                 'tuitionFeePaid' => $this->hasPaid(FeeTypeEnum::TUITION_FEE),
                 'registrationFeeConfirmed' => $this->registration_fee_confirmed,
                 'tuitionFeeConfirmed' => $this->tuition_fee_confirmed,

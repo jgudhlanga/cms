@@ -12,7 +12,7 @@ enum FeeTypeEnum: string
     case LABORATORY_FEE = 'laboratory_fee';
     case LIBRARY_FEE = 'library_fee';
     case PENALTY_FEE = 'penalty_fee';
-    case REGISTRATION_FEE = 'registration_fee';
+    case APPLICATION_FEE = 'application_fee';
     case STUDENT_ACCOMMODATION_FEE = 'student_accommodation_fee';
     case STUDENT_ID_FEE = 'student_id_fee';
     case TUITION_FEE = 'tuition_fee';
@@ -27,7 +27,7 @@ enum FeeTypeEnum: string
             self::LABORATORY_FEE => 'Laboratory Fee',
             self::LIBRARY_FEE => 'Library Fee',
             self::PENALTY_FEE => 'Penalty Fee',
-            self::REGISTRATION_FEE => 'Registration Fee',
+            self::APPLICATION_FEE => 'Application Fee',
             self::STUDENT_ACCOMMODATION_FEE => 'Student Accommodation Fee',
             self::STUDENT_ID_FEE => 'Student ID Fee',
             self::TUITION_FEE => 'Tuition Fee',
@@ -39,7 +39,7 @@ enum FeeTypeEnum: string
     {
         return match($this) {
             self::TUITION_FEE => 1,
-            self::REGISTRATION_FEE => 2,
+            self::APPLICATION_FEE => 2,
             self::EXAMINATION_FEE => 3,
             self::GRADUATION_FEE => 4,
             self::STUDENT_ID_FEE => 5,
@@ -60,7 +60,7 @@ enum FeeTypeEnum: string
             self::LABORATORY_FEE => 'Covers the use of labs, materials, and equipment.',
             self::LIBRARY_FEE => 'Access to library facilities and resources.',
             self::PENALTY_FEE => 'Fines for late payments, misconduct, or breaches.',
-            self::REGISTRATION_FEE => 'Fee required upon enrollment or course registration.',
+            self::APPLICATION_FEE => 'Fee required upon enrolment or course application.',
             self::STUDENT_ACCOMMODATION_FEE => 'Charges for on-campus student housing.',
             self::STUDENT_ID_FEE => 'Fee for issuing and maintaining student ID cards.',
             self::TUITION_FEE => 'Covers the cost of instruction for courses.',

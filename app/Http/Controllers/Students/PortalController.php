@@ -92,7 +92,7 @@ class PortalController extends Controller
 
     public function registrationFeePaymentOptions(): Response
     {
-        $feeType = PaymentHelper::getFeeTypeBySlug(FeeTypeEnum::REGISTRATION_FEE->slug());
+        $feeType = PaymentHelper::getFeeTypeBySlug(FeeTypeEnum::APPLICATION_FEE->slug());
         $registrationFee = FeeStructure::where('fee_type_id', $feeType->id)->first();
         $registrationFee = FeeStructureResource::make($registrationFee);
         return Inertia::render('portal/application/RegistrationFeePaymentOptions', compact('registrationFee'));
