@@ -62,11 +62,12 @@ const maintenanceMode = isItTrue(import.meta.env.VITE_MAINTENANCE_MODE);
         <div v-else class="flex w-full flex-col p-3 md:w-1/2 md:p-16">
             <form @submit.prevent="submitForm()" class="flex flex-col rounded-2xl p-10 shadow-md">
                 <div class="flex w-full items-center justify-center">
-                    <div class="size-20">
+                    <div class="size-18">
                         <AppLogo classes="flex justify-center border-2 border-white" />
                     </div>
                 </div>
                 <div class="text-primary mt-13 mb-7 flex items-center justify-center text-lg font-bold uppercase">Harare Polytechnic</div>
+                <div class="uppercase px-1 mb-4">Attention <code class="text-red-600 font-bold">EcoCash</code> users: To avoid network failures, please use separate devices when making your payments. Thank you for your cooperation.</div>
                 <div class="flex w-full flex-col space-y-3">
                     <BaseInput
                         input-id="first_name"
