@@ -13,9 +13,9 @@ defineProps<Props>();
 
 <template>
     <div class="overflow-hidden rounded-lg bg-white shadow">
-        <div class="px-4 py-5 sm:p-6">
+        <div class="px-3 py-1">
             <div class="flex items-center">
-                <div :class="`flex-shrink-0 rounded-md bg-${iconBgColor}-100 p-3`">
+                <div :class="`flex-shrink-0`">
                     <div v-html="svgIcons[icon]"></div>
                 </div>
                 <div class="ml-5 w-0 flex-1">

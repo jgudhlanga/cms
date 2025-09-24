@@ -20,8 +20,8 @@ class Helper
 
     public static function generateStudentNumber(Student $student, InstitutionDepartment $department): string
     {
-        // current year (two-digit format)
-        $year = Carbon::now()->format('y');
+        // next year in 2-digit format
+        $year = Carbon::now()->addYear()->format('y');
 
         // department code (uppercased)
         $departmentCode = strtoupper($department->department_code);
