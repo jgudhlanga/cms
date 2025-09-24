@@ -1,20 +1,41 @@
 <script setup lang="ts">
+import IntakePeriodComboSelect from '@/components/core/form/combobox/IntakePeriodComboSelect.vue';
 import PageContainer from '@/components/core/page/PageContainer.vue';
+import { useIntakePeriods } from '@/composables/institution/useIntakePeriods';
 import ComponentHeader from '@/pages/dashboard/partials/ComponentHeader.vue';
+import StatsCard from '@/pages/dashboard/partials/StatsCard.vue';
 import { BreadcrumbItemInterface } from '@/types/ui';
+import { SelectOption } from '@/types/utils';
 import { Head } from '@inertiajs/vue3';
 import { Chart, registerables } from 'chart.js';
 import { onMounted, ref } from 'vue';
-import StatsCard from '@/pages/dashboard/partials/StatsCard.vue';
-
-Chart.register(...registerables);
 
 const breadcrumbs: BreadcrumbItemInterface[] = [{ transChoiceKey: 'dashboard' }];
+Chart.register(...registerables);
+interface Props {
+    users: string | number;
+    totalApplications: string | number;
+    maleApplications: string | number;
+    femaleApplications: string | number;
+}
+
+const props = defineProps<Props>();
 
 const totalStudents = ref(1245);
 const thisMonthEnrollments = ref(87);
 const growthRate = ref(12.5);
 const avgProcessingTime = ref(3.2);
+
+const { isLoading, listIntakePeriods, intakePeriods } = useIntakePeriods();
+
+const intakePeriodModel = ref<SelectOption | null>(null);
+
+onMounted(async () => {
+    await listIntakePeriods(`api/v1/intake-periods?page_size=all`);
+    if (intakePeriods?.value?.data) {
+        intakePeriodModel.value = { value: Number(intakePeriods.value.data[0].id), label: intakePeriods.value.data[0].attributes.name };
+    }
+});
 
 const enrollmentData = ref({
     labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
@@ -167,53 +188,65 @@ onMounted(() => {
         },
     });
 });
+
+const handleFilterChange = () => {
+    const intakePeriodId = intakePeriodModel.value?.value ?? null;
+    /*router.get(
+        route('department-levels.enrolments', {
+            institution_department: department.id?.toString(),
+            department_level: level.id?.toString(),
+            intake_period_id: intakePeriodId,
+            mode_of_study_id: modeOfStudyId,
+        }),
+        {
+            preserveScroll: true,
+            preserveState: false, // full reload
+            replace: true, // don’t pollute browser history
+        },
+    );*/
+};
 </script>
 <template>
     <Head :title="$tChoice('trans.dashboard', 2)" />
     <PageContainer :breadcrumbs="breadcrumbs">
-        <!--<div class="flex w-full flex-col sm:px-6 lg:px-8">
-
-            <ComponentHeader header-title="Registration Stats" description="Overview of portal registration trends and statistics" />
-
-            <div class="my-6 grid grid-cols-1 gap-5 px-4 sm:grid-cols-2 sm:px-0 lg:grid-cols-4">
-                <StatsCard title="Total Registrations" :value="formatNumber(totalStudents)" icon="users" icon-bg-color="indigo"/>
-                <StatsCard title="This Month" :value="formatNumber(thisMonthEnrollments)" icon="checkDone" icon-bg-color="green"/>
-                <StatsCard title="Growth Rate" :value="growthRate" icon="chartGrowth" icon-bg-color="yellow"/>
-
-                <div class="overflow-hidden rounded-lg bg-white shadow">
-                    <div class="px-4 py-5 sm:p-6">
-                        <div class="flex items-center">
-                            <div class="flex-shrink-0 rounded-md bg-red-100 p-3">
-                                <svg class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                                    />
-                                </svg>
-                            </div>
-                            <div class="ml-5 w-0 flex-1">
-                                <dl>
-                                    <dt class="truncate text-sm font-medium text-gray-500">Avg. Processing Time</dt>
-                                    <dd class="text-lg font-medium text-gray-900">{{ avgProcessingTime }} days</dd>
-                                </dl>
-                            </div>
-                        </div>
-                    </div>
+        <div class="flex w-full flex-col">
+            <div class="flex items-center justify-between mt-3">
+                <ComponentHeader header-title="Applications metrics" description="Overview of portal application metrics and stats" />
+                <div>
+                    <IntakePeriodComboSelect
+                        :loading="isLoading"
+                        :data="intakePeriods?.data ?? []"
+                        :label-uppercase="true"
+                        v-model="intakePeriodModel"
+                        :vertical-layout="false"
+                        :is-required="true"
+                        @update:modelValue="handleFilterChange"
+                        class="w-full"
+                    />
                 </div>
             </div>
+            <div class="mt-3 pt-4 grid grid-cols-1 gap-5 px-4 sm:px-0 md:grid-cols-4">
+                <StatsCard title="User accounts created" :value="formatNumber(Number(users))" icon="checkDone" icon-bg-color="green" />
+                <StatsCard title="Total Applications" :value="formatNumber(Number(totalApplications))" icon="users" icon-bg-color="indigo" />
+                <StatsCard title="Males" :value="formatNumber(Number(maleApplications))" icon="male" icon-bg-color="persian" />
+                <StatsCard title="Females" :value="formatNumber(Number(femaleApplications))" icon="female" icon-bg-color="pink" />
+            </div>
 
-
+            <div class="my-3 pt-4 flex flex-col">
+                <ComponentHeader header-title="Payments" description="Overview of payments" />
+                <div class="my-3 grid grid-cols-1 gap-5 px-4 sm:px-0 md:grid-cols-4">
+                    <StatsCard title="Successful Payments" :value="growthRate" icon="paymentSuccess" icon-bg-color="green" />
+                    <StatsCard title="Unsuccessful Payments" :value="growthRate" icon="paymentFailed" icon-bg-color="red" />
+                    <StatsCard title="Pending payments" :value="growthRate" icon="time" icon-bg-color="yellow" />
+                </div>
+            </div>
             <div class="grid grid-cols-1 gap-6 px-4 sm:px-0 lg:grid-cols-2">
-
                 <div class="rounded-lg bg-white p-6 shadow">
                     <h3 class="mb-4 text-lg font-medium text-gray-900">Enrollment Trends</h3>
                     <div class="h-80">
                         <canvas id="enrollmentChart" ref="enrollmentChart"></canvas>
                     </div>
                 </div>
-
 
                 <div class="rounded-lg bg-white p-6 shadow">
                     <h3 class="mb-4 text-lg font-medium text-gray-900">Program Distribution</h3>
@@ -222,7 +255,6 @@ onMounted(() => {
                     </div>
                 </div>
 
-
                 <div class="rounded-lg bg-white p-6 shadow lg:col-span-2">
                     <h3 class="mb-4 text-lg font-medium text-gray-900">Monthly Comparison (Current Year vs Last Year)</h3>
                     <div class="h-80">
@@ -230,6 +262,6 @@ onMounted(() => {
                     </div>
                 </div>
             </div>
-        </div>-->
+        </div>
     </PageContainer>
 </template>

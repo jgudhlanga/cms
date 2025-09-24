@@ -129,14 +129,14 @@ class DepartmentLevelController extends Controller
         return [$intakePeriodId, $modeOfStudyId, $courseId];
     }
 
-    private function resolveIntakePeriod(?int $intakePeriodId): ?IntakePeriod
+    private function resolveIntakePeriod(?int $intakePeriodId)
     {
         return $intakePeriodId
             ? IntakePeriod::find($intakePeriodId)
             : IntakePeriod::orderByDesc('end_date')->first();
     }
 
-    private function resolveModeOfStudy(?int $modeOfStudyId): ?ModeOfStudy
+    private function resolveModeOfStudy(?int $modeOfStudyId)
     {
         return $modeOfStudyId
             ? ModeOfStudy::find($modeOfStudyId)
