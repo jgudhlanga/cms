@@ -3,6 +3,7 @@ import SettingsButton from '@/components/core/button/SettingsButton.vue';
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import HeadingSmall from '@/components/core/util/HeadingSmall.vue';
 import { useUtils } from '@/composables/core/useUtils';
+import { hasAbility } from '@/lib/permissions';
 import { AuthObject } from '@/types/data-pagination';
 import { BreadcrumbItemInterface } from '@/types/ui';
 import { Head } from '@inertiajs/vue3';
@@ -33,7 +34,9 @@ const gotToDepartments = (is_academic: number) => {
         <SettingsButton class="mt-2" @click="gotToDepartments(1)" :title="$t('trans.manage')" />
         <HeadingSmall :title="$t('trans.institution_config')" :description="$t('trans.institution_config_description')" class="mt-6" />
         <SettingsButton class="mt-2" @click="navigateTo(route('institution.setup'))" :title="$t('trans.setup')" />
-        <HeadingSmall title="Payments Debug" description="Debug and check payment statuses" class="mt-6" />
-        <SettingsButton class="mt-2" @click="navigateTo(route('integrations.payments.check-status-create'))" title="Debug" />
+        <template v-if="hasAbility('root:manage')">
+            <HeadingSmall title="Payments Debug" description="Debug and check payment statuses" class="mt-6" />
+            <SettingsButton class="mt-2" @click="navigateTo(route('integrations.payments.check-status-create'))" title="Debug" />
+        </template>
     </PageContainer>
 </template>

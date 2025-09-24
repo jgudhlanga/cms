@@ -9,14 +9,14 @@ class UserFilter extends QueryFilter
 {
     protected array $sortable = [
         'createdAt' => 'created_at',
-        'name',
         'tenant' => 'tenant_id',
         'updatedAt' => 'updated_at'
     ];
 
-    protected array $searchable = ['name', 'email'];
+    protected array $searchable = ['first_name', 'middle_name', 'last_name', 'email'];
 
     protected array $only = ['departments', 'roles'];
+
     public function roles($value): Builder
     {
         $only = $value;
@@ -27,5 +27,4 @@ class UserFilter extends QueryFilter
             $query->whereIn('slug', $only);
         });
     }
-
 }
