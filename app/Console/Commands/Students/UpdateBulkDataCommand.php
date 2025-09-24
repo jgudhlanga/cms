@@ -2,6 +2,10 @@
 
 namespace App\Console\Commands\Students;
 
+use App\Enums\Institution\GradeEnum;
+use App\Enums\Institution\SubjectEnum;
+use App\Enums\Shared\AcademicLevelEnum;
+use App\Models\Shared\AcademicLevel;
 use App\Models\Students\Student;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
@@ -42,5 +46,33 @@ class UpdateBulkDataCommand extends Command
             }
         });
         $this->info('Done!');
+    }
+
+    private function saveAcademicResults(Student $student): void
+    {
+        $level = AcademicLevel::where('name', AcademicLevelEnum::SECONDARY_SCHOOL->value)->first();
+        $subjects = [SubjectEnum::ENGLISH->id() => GradeEnum::C->id(), SubjectEnum::MATHEMATICS->id() => GradeEnum::C->id(), SubjectEnum::INTEGRATED_SCIENCE->id() => GradeEnum::C->id()];
+        $otherSubjects = [SubjectEnum::HISTORY->id() => GradeEnum::A->id(), SubjectEnum::SHONA->id() => GradeEnum::B->id()];
+        $examYear = 2024;
+        $sitting = 'november';
+        foreach ($subjects as $subjectId => $gradeId) {
+            $student->oLevelResults()->create([
+                'academic_level_id' => $level->id,
+                'subject_id' => $subjectId,
+                'exam_year' => $examYear,
+                'exam_sitting' => $sitting,
+                'grade_id' => $gradeId,
+            ]);
+        }
+
+        foreach ($otherSubjects as $subjectId => $gradeId) {
+            $student->oLevelResults()->create([
+                'academic_level_id' => $level->id,
+                'subject_id' => $subjectId,
+                'exam_year' => $examYear,
+                'exam_sitting' => $sitting,
+                'grade_id' => $gradeId,
+            ]);
+        }
     }
 }
