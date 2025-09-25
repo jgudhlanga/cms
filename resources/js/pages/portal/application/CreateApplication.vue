@@ -195,7 +195,7 @@ const maintenanceMode = isItTrue(import.meta.env.VITE_MAINTENANCE_MODE);
                 <Programs :form="form" />
                 <CustomSeparator classes="h-1 my-5" />
                 <div class="flex items-center justify-center">
-                    <BaseButton class="mb-10 w-[200px]" :size="ButtonSize.xl">
+                    <BaseButton class="mb-10 w-full md:w-[200px]" :size="ButtonSize.xl">
                         {{ $t('trans.submit') }}
                     </BaseButton>
                 </div>
