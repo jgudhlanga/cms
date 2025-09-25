@@ -1,17 +1,24 @@
 <script setup lang="ts">
 import DateRangePicker from '@/components/core/form/date/DateRangePicker.vue';
+import DataLoadingSpinner from '@/components/core/loader/DataLoadingSpinner.vue';
 import PageContainer from '@/components/core/page/PageContainer.vue';
+import { useMetrics } from '@/composables/metrics/useMetrics';
 import ComponentHeader from '@/pages/dashboard/partials/ComponentHeader.vue';
 import StatsCard from '@/pages/dashboard/partials/StatsCard.vue';
+import { AuthObject } from '@/types/data-pagination';
 import { BreadcrumbItemInterface } from '@/types/ui';
 import { Head } from '@inertiajs/vue3';
 import { Chart, registerables } from 'chart.js';
 import { onMounted, ref } from 'vue';
-import { clearFormErrors } from '@/lib/forms';
 
 const breadcrumbs: BreadcrumbItemInterface[] = [{ transChoiceKey: 'dashboard' }];
 Chart.register(...registerables);
 interface Props {
+    auth: AuthObject;
+    errors: object;
+}
+
+interface DashboardMetrics {
     users: string | number;
     totalApplications: string | number;
     maleApplications: string | number;
@@ -22,6 +29,9 @@ const props = defineProps<Props>();
 const rangeData = ref();
 const startDate = new Date();
 rangeData.value = [startDate, null];
+const today = new Date();
+const metricsData = ref<DashboardMetrics | null>(null);
+const { isLoading, loadAdminDashboardMetrics } = useMetrics();
 
 const totalStudents = ref(1245);
 const thisMonthEnrollments = ref(87);
@@ -42,7 +52,6 @@ const enrollmentData = ref({
         },
     ],
 });
-
 
 const programData = ref({
     labels: ['Computer Science', 'Business Administration', 'Engineering', 'Health Sciences', 'Arts & Humanities', 'Other'],
@@ -102,12 +111,13 @@ const formatNumber = (num: number) => {
     return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 };
 
-const handleDateChange = (value: any) => {
-    console.log(value);
-}
+const handleDateChange = async (value: any) => {
+    metricsData.value = await loadAdminDashboardMetrics(value);
+};
 
 // Initialize charts when component is mounted
-onMounted(() => {
+onMounted(async () => {
+    metricsData.value = await loadAdminDashboardMetrics(rangeData.value);
     // Enrollment Trends Chart (Line Chart)
     /*new Chart(enrollmentChart.value!, {
         type: 'line',
@@ -192,15 +202,37 @@ onMounted(() => {
             <div class="mt-3 flex items-center justify-between">
                 <ComponentHeader header-title="Applications metrics" description="Overview of portal application metrics and stats" />
                 <div>
-                    <DateRangePicker v-model="rangeData" :label-uppercase="true" @update:model-value="handleDateChange" />
+                    <DateRangePicker
+                        class="rounded-full"
+                        v-model="rangeData"
+                        :label-uppercase="false"
+                        :vertical-layout="false"
+                        @update:model-value="handleDateChange"
+                        :max-date="today"
+                    />
                 </div>
             </div>
-            <div class="mt-3 grid grid-cols-1 gap-5 px-4 pt-4 sm:px-0 md:grid-cols-4">
-                <StatsCard title="User accounts created" :value="formatNumber(Number(users))" icon="checkDone" icon-bg-color="green" />
-                <StatsCard title="Total Applications" :value="formatNumber(Number(totalApplications))" icon="users" icon-bg-color="indigo" />
-                <StatsCard title="Males" :value="formatNumber(Number(maleApplications))" icon="male" icon-bg-color="persian" />
-                <StatsCard title="Females" :value="formatNumber(Number(femaleApplications))" icon="female" icon-bg-color="pink" />
-            </div>
+            <template v-if="isLoading">
+                <DataLoadingSpinner message="loading metrics..." />
+            </template>
+            <template v-else>
+                <div class="mt-3 grid grid-cols-1 gap-5 px-4 pt-4 sm:px-0 md:grid-cols-4">
+                    <StatsCard
+                        title="User accounts created"
+                        :value="formatNumber(Number(metricsData?.users))"
+                        icon="checkDone"
+                        icon-bg-color="green"
+                    />
+                    <StatsCard
+                        title="Total Applications"
+                        :value="formatNumber(Number(metricsData?.totalApplications))"
+                        icon="users"
+                        icon-bg-color="indigo"
+                    />
+                    <StatsCard title="Males" :value="formatNumber(Number(metricsData?.maleApplications))" icon="male" icon-bg-color="persian" />
+                    <StatsCard title="Females" :value="formatNumber(Number(metricsData?.femaleApplications))" icon="female" icon-bg-color="pink" />
+                </div>
+            </template>
 
             <!--            <div class="my-3 pt-4 flex flex-col">
                 <ComponentHeader header-title="Payments" description="Overview of payments" />
