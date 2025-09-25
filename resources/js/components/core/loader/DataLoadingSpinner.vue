@@ -1,4 +1,10 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+interface Props {
+    message?: string;
+}
+
+defineProps<Props>();
+</script>
 
 <template>
     <div class="flex h-64 w-full items-center justify-center">
@@ -7,7 +13,7 @@
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
             </svg>
-            <span class="text-sm">{{$t('trans.loading_data')}}</span>
+            <span class="text-sm">{{  message ?? $t('trans.loading_data')}}</span>
         </div>
     </div>
 </template>

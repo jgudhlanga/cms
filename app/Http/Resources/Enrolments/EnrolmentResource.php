@@ -35,6 +35,8 @@ class EnrolmentResource extends JsonResource
                 'tuitionFeePaid' => $this->hasPaid(FeeTypeEnum::TUITION_FEE),
                 'registrationFeeConfirmed' => $this->registration_fee_confirmed,
                 'tuitionFeeConfirmed' => $this->tuition_fee_confirmed,
+                'requiredLevelCompleted' => $this->required_level_completed,
+                'readWriteAcknowledged' => $this->read_write_acknowledged,
                 'createdAt' => $this->created_at,
                 'updatedAt' => $this->updated_at,
                 'deletedAt' => $this->deleted_at,

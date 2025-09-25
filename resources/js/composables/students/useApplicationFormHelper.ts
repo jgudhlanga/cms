@@ -1,13 +1,38 @@
 import { useCreateApplicationFormStore } from '@/store/portal/useCreateApplicationFormStore';
-import { CreateApplicationParams } from '@/types/portal';
+import { useUpdateProgramFormStore } from '@/store/portal/useUpdateProgramFormStore';
+import { CreateApplicationParams, UpdateProgramParams } from '@/types/portal';
 import { InertiaForm } from '@inertiajs/vue3';
 import { storeToRefs } from 'pinia';
 
 type SittingOption = { value: string; label: string };
-export const useApplicationFormHelper = () => {
-    const storeRefs = storeToRefs(useCreateApplicationFormStore());
+export const useApplicationFormHelper = (isEditing?: boolean) => {
+    const store = isEditing ? useUpdateProgramFormStore() : useCreateApplicationFormStore();
+    const storeRefs = storeToRefs(store);
 
-    const updateForm = (form: InertiaForm<CreateApplicationParams>) => {
+    const updateProgramForm = (form: InertiaForm<UpdateProgramParams>) => {
+        Object.assign(form, {
+            modeOfStudy: storeRefs.modeOfStudy.value,
+            mode_of_study_id: storeRefs.modeOfStudy.value?.value ?? null,
+            department: storeRefs.department.value,
+            department_id: storeRefs.department.value?.value ?? null,
+            course: storeRefs.course.value,
+            course_id: storeRefs.course.value?.value ?? null,
+            level: storeRefs.level.value,
+            level_id: storeRefs.level.value?.value ?? null,
+            required_level_completed: storeRefs.required_level_completed?.value ?? null,
+            required_level_upload: storeRefs.required_level_upload?.value ?? null,
+            read_write_acknowledged: storeRefs.read_write_acknowledged?.value ?? null,
+            o_level_subject_ids: storeRefs.o_level_subject_ids?.value ?? null,
+            o_level_years: storeRefs.o_level_years?.value ?? null,
+            o_level_sittings: storeRefs.o_level_sittings?.value ?? null,
+            o_level_other_subject_ids: storeRefs.o_level_other_subject_ids?.value ?? null,
+            o_level_other_grade_ids: storeRefs.o_level_other_grade_ids?.value ?? null,
+            o_level_other_years: storeRefs.o_level_other_years?.value ?? null,
+            o_level_other_sittings: storeRefs.o_level_other_sittings?.value ?? null,
+        });
+    };
+    const updateCreateForm = (form: InertiaForm<CreateApplicationParams>) => {
+        const storeRefs = storeToRefs(useCreateApplicationFormStore());
         Object.assign(form, {
             email: storeRefs.email.value,
             first_name: storeRefs.first_name.value,
@@ -78,7 +103,7 @@ export const useApplicationFormHelper = () => {
             if (!year || isNaN(Number(year))) {
                 errors.push(`${subjectLabel}: Exam year is required.`);
             }
-            if (!sitting || sitting.trim() === '') {
+            if (!sitting || String(sitting).trim() === '') {
                 errors.push(`${subjectLabel}: Sitting is required.`);
             }
         });
@@ -87,13 +112,12 @@ export const useApplicationFormHelper = () => {
 
     const extractSubjectId = (subject: unknown): number | null => {
         if (!subject) return null;
-        if (typeof subject === "number") return subject;
-        if (typeof subject === "object" && "value" in (subject as any)) {
+        if (typeof subject === 'number') return subject;
+        if (typeof subject === 'object' && 'value' in (subject as any)) {
             return Number((subject as any).value);
         }
         return null;
     };
-
 
     const validateOtherSubjects = (): string[] => {
         const errors: string[] = [];
@@ -143,5 +167,5 @@ export const useApplicationFormHelper = () => {
         return errors;
     };
 
-    return { validateMainSubjects, validateOtherSubjects, updateForm };
+    return { validateMainSubjects, validateOtherSubjects, updateCreateForm, updateProgramForm };
 };

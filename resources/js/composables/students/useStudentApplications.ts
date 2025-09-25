@@ -9,10 +9,16 @@ import HttpService from '@/services/http.service';
 import { PageProps } from '@/types';
 import { Role } from '@/types/acl';
 import { DepartmentApplicationStep } from '@/types/department-meta-data';
-import { BulkApplicationApprovalParams, BulkUpdatePaymentStatusParams, Enrolment, PaymentProofPreview } from '@/types/enrolments';
+import {
+    BulkApplicationApprovalParams,
+    BulkUpdatePaymentStatusParams,
+    Enrolment,
+    PaymentProofPreview
+} from '@/types/enrolments';
 import { StudentProgram } from '@/types/students';
 import { InertiaForm, router, usePage } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
+import { ColorVariant } from '@/enums/colors';
 
 export const useStudentApplications = () => {
     const { moreActionButton, actionButton, textLink } = useDataTables();
@@ -74,12 +80,11 @@ export const useStudentApplications = () => {
                 enableSorting: false,
                 meta: { align: 'right' },
                 cell: ({ row }: { row: { original: StudentProgram } }) => {
-                    return moreActionButton(false, [
-                        {
-                            key: 'view',
-                            action: () => navigateTo(route('portal.application.view', row.original.id)),
-                        },
-                    ]);
+                    return actionButton({
+                        title: 'Edit',
+                        variant: ColorVariant.success_outline,
+                        onClick: () => navigateTo(route('portal.application.edit', row.original.id)),
+                    });
                 },
             },
         ];

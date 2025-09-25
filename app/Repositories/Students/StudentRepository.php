@@ -12,6 +12,7 @@ use App\Enums\Shared\AcademicLevelEnum;
 use App\Http\Filters\Students\StudentFilter;
 use App\Models\Shared\AcademicLevel;
 use App\Models\Students\Student;
+use App\Models\Students\StudentProgram;
 use App\Repositories\Base\BaseRepository;
 use App\Repositories\Shared\interface\IAddressRepository;
 use App\Repositories\Shared\interface\IContactRepository;

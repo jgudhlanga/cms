@@ -17,28 +17,14 @@ import { AuthObject } from '@/types/data-pagination';
 import { Link } from '@/types/ui';
 import { computed, ref } from 'vue';
 import BaseInput from '../../../components/core/form/text/BaseInput.vue';
+import { PaymentCheckResponse } from '@/types/tools';
 
 interface Props {
     auth: AuthObject;
     errors: object;
 }
 
-interface PaymentCheckResponse {
-    status?: string;
-    message?: string;
-    amount?: string | number;
-    clientFee?: number | string;
-    createdDate?: string;
-    currency?: string;
-    itemName?: string;
-    merchantFee?: number | string;
-    merchantId?: string;
-    orderReference?: string;
-    paymentOption?: string;
-    reference?: string;
-    resultUrl?: string;
-    returnUrl?: string;
-}
+
 
 const { orderReferenceSchema } = useSharedFormSchema();
 

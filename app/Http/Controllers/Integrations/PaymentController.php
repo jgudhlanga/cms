@@ -115,6 +115,34 @@ class PaymentController extends Controller
         return $response->json();
     }
 
+    /**
+     * @throws ConnectionException
+     */
+    public function checkPaymentStatusForCurrenUser()
+    {
+        // get either system_reference or payment_reference
+        $invoice = PaymentHelper::getLatestLedgerRecord(FeeTypeEnum::APPLICATION_FEE->slug(), 'invoice');
+        $receipt = PaymentHelper::getLatestLedgerRecord(FeeTypeEnum::APPLICATION_FEE->slug(), 'receipt');
+        if (!$invoice) {
+            return response()->json(['status' => 'not invoice']);
+        }
+        $response = Http::withHeaders([
+            'Accept' => 'application/json',
+            'Content-Type' => 'application/json',
+        ])->get(config('custom.payments.payment-gateway.base_url') . '/payments/transaction/' . trim($invoice->system_reference) . '/status/check');
+        $check = $response->json();
+        if (!empty($check['status']) && Str::lower($check['status']) == 'paid') {
+            // update a receipt entry and invoice payment status
+            PaymentHelper::updateReceiptEntry($receipt, PaymentHelper::assembleReceiptUpdateData($check));
+            $invoice->update(['payment_status' => $check['status']]);
+            return response()->json(['status' => $check['status']]);
+        } else {
+            $invoice->update(['payment_status' => $check['status'] ?? 'pending']);
+            $receipt->update(['payment_status' => $check['status'] ?? 'pending']);
+        }
+        return response()->json(['status' => 'not paid']);
+    }
+
     public function updateLedgerRecords(UpdateLedgerRequest $request)
     {
         [

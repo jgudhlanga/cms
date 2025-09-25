@@ -15,14 +15,16 @@ import {
     DepartmentLevelMetaData,
     DepartmentLevelRequirement
 } from '@/types/department-meta-data';
-import { InertiaForm, router, usePage } from '@inertiajs/vue3';
+import { InertiaForm,  usePage } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 import { storeToRefs } from 'pinia';
 import { ref } from 'vue';
 import { z } from 'zod';
+import { useUpdateProgramFormStore } from '@/store/portal/useUpdateProgramFormStore';
 
-export const useDepartmentLevels = () => {
+export const useDepartmentLevels = (isEditingProgram?: boolean) => {
     const { moreActionButton, textLink, actionButton, checkStatusIcon, onEdit } = useDataTables();
+    const store = isEditingProgram ? useUpdateProgramFormStore() : useCreateApplicationFormStore();
     const { props } = usePage();
     const { can } = props?.auth as Auth;
     const { navigateTo } = useUtils();
@@ -145,7 +147,7 @@ export const useDepartmentLevels = () => {
         o_level_subject_ids,
         required_level_completed,
         read_write_acknowledged,
-    } = storeToRefs(useCreateApplicationFormStore());
+    } = storeToRefs(store);
 
     const levelRequirements = ref<DepartmentLevelRequirement | null>(storeLevelRequirements?.value ?? null);
 

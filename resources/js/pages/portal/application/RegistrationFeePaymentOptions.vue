@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import BaseAlert from '@/components/core/alert/BaseAlert.vue';
 import BaseImage from '@/components/core/image/BaseImage.vue';
+import DataLoadingSpinner from '@/components/core/loader/DataLoadingSpinner.vue';
 import StudentPageHeader from '@/components/shared/students/StudentPageHeader.vue';
 import { useDefaults } from '@/composables/core/useDefaults';
 import { useUtils } from '@/composables/core/useUtils';
@@ -8,11 +9,12 @@ import { IconName } from '@/enums/icons';
 import { TypeVariant } from '@/enums/type-variants';
 import { errorAlert } from '@/lib/alerts';
 import { icons } from '@/lib/icons';
+import HttpService from '@/services/http.service';
+import { AuthObject } from '@/types/data-pagination';
 import { FeeStructure } from '@/types/institution';
 import axios from 'axios';
 import { trans } from 'laravel-vue-i18n';
-import { ref } from 'vue';
-import { AuthObject } from '@/types/data-pagination';
+import { onMounted, ref } from 'vue';
 
 interface Props {
     registrationFee: FeeStructure;
@@ -21,7 +23,9 @@ interface Props {
 }
 
 const props = defineProps<Props>();
-const {user} = props.auth;
+const { user } = props.auth;
+const checkData = ref<{ status: string } | null>(null);
+const isCheckingPayment = ref(false);
 
 const { paymentMethods } = useDefaults();
 const { generateRandomCode, formatCurrency } = useUtils();
@@ -41,6 +45,18 @@ const formData = {
     email: user.attributes.email ?? '',
 };
 
+const checkPaymentStatus = async () => {
+    isCheckingPayment.value = true;
+    try {
+        checkData.value = await HttpService.post(route('check-payment-status-for-current-user'), {});
+    } catch (error: any) {
+        checkData.value = null;
+        errorAlert('Failed to check payment status. ' + error);
+    } finally {
+        isCheckingPayment.value = false;
+    }
+};
+
 const submit = async () => {
     try {
         isLoading.value = true;
@@ -56,11 +72,19 @@ const submit = async () => {
         isLoading.value = false;
     }
 };
+
+onMounted(async () => {
+    await checkPaymentStatus();
+    if (String(checkData?.value?.status)?.toLowerCase() === 'paid') {
+        window.location.href = route('portal.application.create');
+    }
+});
 </script>
 <template>
     <StudentPageHeader />
     <div class="flex h-screen flex-1 items-center bg-gray-50 py-16">
-        <div class="flex h-full w-full flex-col justify-around space-y-6 p-6">
+        <DataLoadingSpinner v-if="isCheckingPayment" message="checking if you already pay" />
+        <div v-else class="flex h-full w-full flex-col justify-around space-y-6 p-6">
             <div class="mx-auto flex items-center justify-center">
                 <BaseAlert
                     :description="$t('trans.registration_fee_payment_description', { amount: `USD${formatCurrency(registrationFeeAmount)}` })"

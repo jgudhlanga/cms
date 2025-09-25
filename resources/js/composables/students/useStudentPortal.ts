@@ -12,6 +12,7 @@ import { hasAbility } from '@/lib/permissions';
 import { idNumberUniqueSchema, passportNumberUniqueSchema } from '@/lib/uniqueValidations';
 import HttpService from '@/services/http.service';
 import { useCreateApplicationFormStore } from '@/store/portal/useCreateApplicationFormStore';
+import { useUpdateProgramFormStore } from '@/store/portal/useUpdateProgramFormStore';
 import { Step } from '@/types/forms';
 import { Student } from '@/types/students';
 import { CustomTab, SelectOption } from '@/types/utils';
@@ -71,6 +72,11 @@ export function useStudentPortal() {
         }
         return personalDetails;
     };
+    const updateProgramFormSchema = () => {
+        const validations = ['courseSchema', 'departmentSchema', 'modeOfStudySchema'];
+
+        return mergeValidationSchema(schemaFields)(validations, schemaFields['levelSchema']());
+    };
 
     const getApplicationName = () => {
         return trans_choice('trans.application', 1);
@@ -81,6 +87,17 @@ export function useStudentPortal() {
         try {
             form.post(route('portal.store-application'), buildFormOptions(form, successMessage(), errorMessage()));
             const store = useCreateApplicationFormStore();
+            store.$reset();
+            store.$dispose();
+        } catch (error: any) {
+            form.setError(error.format());
+        }
+    };
+
+    const updateApplication = (applicationId: string, form: InertiaForm<any>) => {
+        try {
+            form.put(route('portal.application.update', applicationId), buildFormOptions(form, successMessage(), errorMessage()));
+            const store = useUpdateProgramFormStore();
             store.$reset();
             store.$dispose();
         } catch (error: any) {
@@ -197,11 +214,7 @@ export function useStudentPortal() {
             const sittings = Object.values(sittingData).filter(Boolean);
             if (sittings.length > 0) {
                 const firstSitting = sittings[0];
-                const allSame = sittings.every(
-                    (sitting) =>
-                        sitting.label === firstSitting.label &&
-                        sitting.value === firstSitting.value
-                );
+                const allSame = sittings.every((sitting) => sitting.label === firstSitting.label && sitting.value === firstSitting.value);
                 if (allSame) {
                     return firstSitting;
                 }
@@ -209,7 +222,6 @@ export function useStudentPortal() {
         }
         return null;
     };
-
 
     return {
         steps,
@@ -223,5 +235,7 @@ export function useStudentPortal() {
         updateStudentSchema,
         getMainSittingYear,
         getMainSitting,
+        updateApplication,
+        updateProgramFormSchema,
     };
 }

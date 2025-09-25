@@ -9,17 +9,30 @@ import SelectYear from '@/components/students/update/SelectYear.vue';
 import { useGrades } from '@/composables/institution/useGrades';
 import { useSubjects } from '@/composables/institution/useSubjects';
 import { useStudentPortal } from '@/composables/students/useStudentPortal';
+import { EXAM_SITTINGS } from '@/lib/constants';
 import { useCreateApplicationFormStore } from '@/store/portal/useCreateApplicationFormStore';
+import { useUpdateProgramFormStore } from '@/store/portal/useUpdateProgramFormStore';
+import { Enrolment } from '@/types/enrolments';
 import { RadioGroupOption } from '@/types/forms';
 import { Grade, Subject } from '@/types/institution';
 import { SelectOption } from '@/types/utils';
 import { storeToRefs } from 'pinia';
-import { computed, onMounted, ref, Ref } from 'vue';
+import { computed, onMounted, ref, Ref, watchEffect } from 'vue';
 
+interface Props {
+    application?: Enrolment | null;
+}
+
+const props = defineProps<Props>();
+const { application } = props;
+
+const isEditing = Number(String(application?.id)) > 0;
+
+const store = isEditing ? useUpdateProgramFormStore() : useCreateApplicationFormStore();
+const { o_level_other_subject_ids, o_level_other_grade_ids, o_level_other_years, o_level_other_sittings, levelRequirements } = storeToRefs(store);
 const { listSubjects, isLoading: subjectsLoading, subjects } = useSubjects();
 const { listGrades, isLoading: gradesLoading, grades } = useGrades();
-const { o_level_other_subject_ids, o_level_other_grade_ids, o_level_other_years, o_level_other_sittings, levelRequirements } =
-    storeToRefs(useCreateApplicationFormStore());
+
 const { getMainSittingYear, getMainSitting } = useStudentPortal();
 function ensureObjectRef<T extends object>(refObj: Ref<T | undefined | null> | undefined, defaultValue: T): T {
     if (!refObj) throw new Error('Ref is undefined');
@@ -39,6 +52,10 @@ const options = computed(() => {
                     label: subject?.attributes?.name,
                 },
         );
+});
+
+const otherSubjects = computed(() => {
+    return subjects.value.filter((subject: Subject) => !mainSubjectIds.includes(Number(subject.id)));
 });
 
 const onGradeChange = (value: string) => {
@@ -149,7 +166,76 @@ onMounted(() => {
     if (o_level_other_sittings?.value) {
         mainSitting.value = getMainSitting(o_level_other_sittings.value);
     }
+
+    watchEffect(() => {
+        if (!subjectsLoading.value && subjects.value?.length) {
+            populateCurrentDataFromApplication();
+        }
+    });
 });
+const populateCurrentDataFromApplication = () => {
+    const oLevelResults = application?.relationships?.oLevelResults ?? [];
+    const subjects = otherSubjects.value as Subject[] | undefined;
+    if (!subjects?.length || !oLevelResults.length) return;
+
+    const count = Number(levelRequirements?.value?.attributes?.otherSubjectsCount) || 0;
+    if (!count) return;
+
+    // Filter subjects to only those that have matching O-Level results
+    const matchedSubjects = subjects
+        .map((subject) => {
+            const subjectId = subject.id?.toString();
+            if (!subjectId) return null;
+
+            const result = oLevelResults.find((r) => r.attributes?.subjectId?.toString().trim() === subjectId);
+            if (!result) return null;
+
+            return {
+                subjectId,
+                label: String(result.attributes.subject),
+                examYear: String(result.attributes.examYear),
+                examSitting: String(result.attributes.examSitting),
+                gradeId: String(result.attributes.gradeId),
+            };
+        })
+        .filter(Boolean) as { subjectId: string; label: string; examYear: string; examSitting: string; gradeId: string }[];
+
+    // Take only the first `count` unique subjects
+
+    matchedSubjects.slice(0, count).forEach((subj, index) => {
+        //============== SUBJECTS ===========================
+        if (!o_level_other_subject_ids) return;
+        if (!o_level_other_subject_ids.value) o_level_other_subject_ids.value = {};
+        o_level_other_subject_ids.value[String(index + 1)] = {
+            value: subj.subjectId,
+            label: subj.label,
+        };
+        // ============== YEARS ===========================
+        if (!o_level_other_years) {
+            return;
+        }
+        if (!o_level_other_years.value) {
+            o_level_other_years.value = {};
+        }
+        o_level_other_years.value[index + 1] = subj.examYear;
+        // ============== SITTING ===========================
+        if (!o_level_other_sittings) {
+            return;
+        }
+        if (!o_level_other_sittings.value) {
+            o_level_other_sittings.value = {};
+        }
+        const sittingLabel = EXAM_SITTINGS.find((sitting) => sitting.value === subj.examSitting)?.label ?? subj.examSitting;
+        o_level_other_sittings.value[index + 1] = {
+            value: subj.examSitting,
+            label: sittingLabel,
+        };
+        // ============== GRADES ===========================
+        if (!o_level_other_grade_ids) return;
+        if (!o_level_other_grade_ids.value) o_level_other_grade_ids.value = {};
+        o_level_other_grade_ids.value[index + 1] = subj.gradeId;
+    });
+};
 </script>
 
 <template>

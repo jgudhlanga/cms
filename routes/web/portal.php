@@ -14,6 +14,8 @@ Route::prefix('portal')->group(function () {
         Route::get('application/fee-payment', [PortalController::class, 'registrationFeePaymentOptions'])->name('portal.application.fee-payment');
         Route::get('application/create', [PortalController::class, 'createApplication'])->name('portal.application.create');
         Route::get('application/{student_program}/view', [PortalController::class, 'viewApplication'])->name('portal.application.view');
+        Route::get('application/{student_program}/edit', [PortalController::class, 'editApplication'])->name('portal.application.edit');
+        Route::put('application/{student_program}/update', [PortalController::class, 'updateApplication'])->name('portal.application.update');
         Route::get('applications', [PortalController::class, 'applications'])->name('portal.applications');
         Route::get('dashboard', [PortalController::class, 'dashboard'])->name('portal.dashboard');
         Route::get('personal-details', [PortalController::class, 'personal'])->name('portal.personal-details');
