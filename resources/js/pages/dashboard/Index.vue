@@ -112,6 +112,7 @@ const formatNumber = (num: number) => {
 };
 
 const handleDateChange = async (value: any) => {
+    if (value == null) return;
     metricsData.value = await loadAdminDashboardMetrics(value);
 };
 
