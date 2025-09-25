@@ -7,6 +7,7 @@ import SelectSitting from '@/components/students/update/SelectSitting.vue';
 import SelectYear from '@/components/students/update/SelectYear.vue';
 import { useGrades } from '@/composables/institution/useGrades';
 import { useStudentPortal } from '@/composables/students/useStudentPortal';
+import { EXAM_SITTINGS } from '@/lib/constants';
 import { useCreateApplicationFormStore } from '@/store/portal/useCreateApplicationFormStore';
 import { useUpdateProgramFormStore } from '@/store/portal/useUpdateProgramFormStore';
 import { AcademicOLevelResult, Enrolment } from '@/types/enrolments';
@@ -16,7 +17,6 @@ import { SelectOption } from '@/types/utils';
 import { trans } from 'laravel-vue-i18n';
 import { storeToRefs } from 'pinia';
 import { onMounted, ref, Ref } from 'vue';
-import { EXAM_SITTINGS } from '@/lib/constants';
 
 interface Props {
     application?: Enrolment | null;
@@ -189,9 +189,8 @@ const populateCurrentDataFromApplication = () => {
             if (!o_level_sittings.value) {
                 o_level_sittings.value = {};
             }
-            const sittingLabel = EXAM_SITTINGS.find(
-                sitting => sitting.value === result?.attributes?.examSitting
-            )?.label ?? result?.attributes?.examSitting;
+            const sittingLabel =
+                EXAM_SITTINGS.find((sitting) => sitting.value === result?.attributes?.examSitting)?.label ?? result?.attributes?.examSitting;
             if (result) {
                 o_level_sittings.value[subjectId] = { value: result?.attributes?.examSitting, label: String(sittingLabel ?? '') };
             }
