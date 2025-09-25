@@ -2,9 +2,9 @@
 import BaseAlert from '@/components/core/alert/BaseAlert.vue';
 import { BaseButton } from '@/components/core/button';
 import { BaseCheckbox, Email, Password } from '@/components/core/form';
-import TextLink from '@/components/core/util/TextLink.vue';
 import { useAuth } from '@/composables/auth/useAuth';
 import { useUtils } from '@/composables/core/useUtils';
+import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
 import { TypeVariant } from '@/enums/type-variants';
 import { clearFormErrors } from '@/lib/forms';
@@ -49,9 +49,24 @@ const form = useForm<Login>({
             />
             <div class="flex items-center justify-between" :tabindex="3">
                 <BaseCheckbox input-id="remember" v-model="form.remember_me" :tabindex="4" :label="$t('trans.remember_me')" />
-                <TextLink classes="dark:text-primary" v-if="canResetPassword" :href="route('password.request')" class="text-sm dark:text-primary" :tabindex="5">
+                <!--                <TextLink
+                    classes="dark:text-primary"
+                    v-if="canResetPassword"
+                    :href="route('password.request')"
+                    class="dark:text-primary text-sm"
+                    :tabindex="5"
+                >
                     {{ $t('trans.forgot_password') }}
-                </TextLink>
+                </TextLink>-->
+                <BaseButton
+                    type="button"
+                    :variant="ColorVariant.danger_outline"
+                    @click="() => navigateTo(route('password.request'))"
+                    :size="ButtonSize.xs"
+                    classes="rounded-full"
+                >
+                    {{ $t('trans.forgot_password') }}
+                </BaseButton>
             </div>
             <BaseButton class="mt-4" type="submit" :tabindex="6" :processing="form.processing">
                 {{ $t('trans.login') }}

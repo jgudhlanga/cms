@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import BaseAlert from '@/components/core/alert/BaseAlert.vue';
+import { BaseButton } from '@/components/core/button';
 import InputError from '@/components/core/form/InputError.vue';
-import TextLink from '@/components/core/util/TextLink.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useUtils } from '@/composables/core/useUtils';
+import { ButtonSize } from '@/enums/buttons';
+import { ColorVariant } from '@/enums/colors';
 import { TypeVariant } from '@/enums/type-variants';
 import { Head, useForm } from '@inertiajs/vue3';
 import { LoaderCircle } from 'lucide-vue-next';
@@ -16,6 +19,8 @@ defineProps<{
 const form = useForm<any>({
     email: '',
 });
+
+const { navigateTo } = useUtils();
 
 const submit = () => {
     form.post(route('password.email'));
@@ -41,7 +46,16 @@ const submit = () => {
         </form>
         <div class="text-muted-foreground space-x-1 text-center text-sm">
             <span>Or, return to</span>
-            <TextLink :href="route('login')">log in</TextLink>
+            <BaseButton
+                type="button"
+                :variant="ColorVariant.danger_outline"
+                @click="() => navigateTo(route('login'))"
+                :size="ButtonSize.xs"
+                classes="rounded-full"
+            >
+                {{ $t('trans.login') }}
+            </BaseButton>
+            <!--            <TextLink :href="route('login')">log in</TextLink>-->
         </div>
     </div>
 </template>
