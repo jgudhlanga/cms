@@ -135,7 +135,7 @@ const maintenanceMode = isItTrue(import.meta.env.VITE_MAINTENANCE_MODE);
                         </BaseButton>
                         <BaseButton
                             @click="() => navigateTo(route('login'))"
-                            class="w-1/2"
+                            class="w-full md:w-1/2"
                             :variant="ColorVariant.primary_outline"
                             type="button"
                             :tabindex="7"

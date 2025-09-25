@@ -449,7 +449,7 @@ return [
     "header_logo_2" => "Header logo 2",
     "body" => "Body",
     "logo" => "Logo",
-    "registration_fee_payment_description" => "Please note! You are required to pay an application fee of :amount to proceed to the next phase of the application",
+    "registration_fee_payment_description" => "Please note! You are required to pay a NON-REFUNDABLE application fee of :amount to proceed to the next phase of the application",
     "amount_to_pay" => "Amount to pay",
     "secure_payment_processed_by" => "Secure payment processed by :payment_processor",
     "proceed_to_payment" => "Proceed to payment",
