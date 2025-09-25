@@ -12,6 +12,7 @@ Route::prefix('integrations')->middleware('auth')->group(function () {
         Route::get('failure', [PaymentController::class, 'failed'])->name('integrations.payments.failure');
         Route::post('result', [PaymentController::class, 'result'])->name('integrations.payments.result');
         Route::post('payment-status/{order_reference}', [PaymentController::class, 'checkStatus'])->name('integrations.payments.check-status');
+        Route::post('check-payment-status-for-current-user', [PaymentController::class, 'checkPaymentStatusForCurrenUser'])->name('check-payment-status-for-current-user');
         Route::post('update-status', [PaymentController::class, 'updateLedgerRecords'])->name('integrations.payments.update-status');
         Route::get('payment-status', [PaymentController::class, 'createCheckStatus'])->name('integrations.payments.check-status-create');
     });

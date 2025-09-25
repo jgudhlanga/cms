@@ -4,19 +4,24 @@ namespace App\Http\Controllers\Students;
 
 use App\DTO\Shared\{AddressDto, ContactDto, NextOfKinDto};
 use App\DTO\Students\CreateApplicationDto;
+use App\DTO\Students\UpdateStudentProgramDto;
 use App\DTO\Users\UserDto;
 use App\Enums\Acl\RoleEnum;
 use App\Helpers\Helper;
 use App\Helpers\PaymentHelper;
+use App\Http\Requests\Students\UpdateProgramRequest;
 use App\Http\Resources\AuditTrail\AuditTrailResource;
+use App\Http\Resources\Enrolments\EnrolmentResource;
 use App\Http\Resources\Institution\FeeStructureResource;
 use App\Models\Institution\FeeStructure;
 use App\Models\Institution\IntakePeriod;
+use App\Models\Shared\AcademicLevel;
 use App\Models\Students\StudentProgram;
+use App\Repositories\Students\interface\IStudentProgramRepository;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Response;
-use App\Enums\Shared\{FeeTypeEnum, StatusEnum, TenantEnum};
+use App\Enums\Shared\{AcademicLevelEnum, FeeTypeEnum, StatusEnum, TenantEnum};
 use App\Helpers\WorkflowHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Shared\{AddressRequest, ContactRequest, NextOfKinRequest};
@@ -38,11 +43,12 @@ use Throwable;
 class PortalController extends Controller
 {
     public function __construct(
-        protected IUserRepository      $userRepository,
-        protected IStudentRepository   $studentRepository,
-        protected IContactRepository   $contactRepository,
-        protected IAddressRepository   $addressRepository,
-        protected INextOfKinRepository $nextOfKinRepository,
+        protected IUserRepository           $userRepository,
+        protected IStudentRepository        $studentRepository,
+        protected IContactRepository        $contactRepository,
+        protected IAddressRepository        $addressRepository,
+        protected INextOfKinRepository      $nextOfKinRepository,
+        protected IStudentProgramRepository $studentProgramRepository,
     )
     {
     }
@@ -106,7 +112,7 @@ class PortalController extends Controller
     public function createApplication(): Response
     {
         $this->authorize('manageStudentPersonalDetails');
-        return Inertia::render('portal/application/StudentApplication');
+        return Inertia::render('portal/application/CreateApplication');
     }
 
     /**
@@ -162,6 +168,43 @@ class PortalController extends Controller
         $student = StudentResource::make($this->getStudent(request()));
         $audit = AuditTrailResource::collection($studentProgram->activities);
         return Inertia::render('portal/student/ApplicationTrack', compact('application', 'student', 'audit'));
+    }
+
+    /**
+     * @throws AuthorizationException
+     */
+    public function editApplication(StudentProgram $studentProgram): Response
+    {
+        $this->authorize('manageStudentPersonalDetails');
+        $application = EnrolmentResource::make($studentProgram);
+        return Inertia::render('portal/application/EditProgram', compact('application'));
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function updateApplication(StudentProgram $studentProgram, UpdateProgramRequest $request): RedirectResponse
+    {
+        $this->authorize('manageStudentPersonalDetails');
+
+        DB::beginTransaction();
+        try {
+            $this->studentProgramRepository->update($studentProgram, UpdateStudentProgramDto::fromUpdateProgramRequest($request));
+            $filters = $this->extractUpdateFilters();
+
+            if (collect($filters)->flatten()->filter()->isNotEmpty()) {
+                $this->updateAcademicResults();
+            }
+
+            DB::commit();
+            return to_route('portal.applications');
+        } catch (Throwable $e) {
+            DB::rollBack();
+            Log::error('Application update failed', ['exception' => $e]);
+            return back()->withErrors([
+                'error' => 'An error occurred while updating your application. Please try again.',
+            ]);
+        }
     }
 
     /**
@@ -288,4 +331,79 @@ class PortalController extends Controller
             request()->session()->regenerateToken();
         }
     }
+
+    private function updateAcademicResults(): void
+    {
+        $student = $this->getStudent(request());
+        [
+            $mainSubjects,
+            $examSittings,
+            $examYears,
+            $otherSubjects,
+            $otherGrades,
+            $otherExamYears,
+            $otherSittings,
+        ] = $this->extractUpdateFilters();
+
+        $level = AcademicLevel::where('name', AcademicLevelEnum::SECONDARY_SCHOOL->value)->first();
+
+        // 🔹 Delete all existing O-Level results for this student/level
+        $student->oLevelResults()->where('academic_level_id', $level->id)->delete();
+
+        // 🔹 Insert main subjects
+        if (!empty($mainSubjects) && is_array($mainSubjects)) {
+            foreach ($mainSubjects as $subjectId => $gradeId) {
+                $examSitting = $examSittings[$subjectId] ?? null;
+                $examYear = $examYears[$subjectId] ?? null;
+
+                $student->oLevelResults()->create([
+                    'academic_level_id' => $level->id,
+                    'subject_id' => $subjectId,
+                    'exam_year' => $examYear,
+                    'exam_sitting' => $examSitting['value'] ?? null,
+                    'grade_id' => $gradeId,
+                ]);
+            }
+        }
+
+        // 🔹 Insert other subjects
+        if (!empty($otherSubjects) && is_array($otherSubjects)) {
+            foreach ($otherSubjects as $key => $subject) {
+                $otherGrade = $otherGrades[$key] ?? null;
+                $otherSitting = $otherSittings[$key] ?? null;
+                $otherExamYear = $otherExamYears[$key] ?? null;
+
+                $student->oLevelResults()->create([
+                    'academic_level_id' => $level->id,
+                    'subject_id' => $subject['value'] ?? null,
+                    'exam_year' => $otherExamYear,
+                    'exam_sitting' => $otherSitting['value'] ?? null,
+                    'grade_id' => $otherGrade,
+                ]);
+            }
+        }
+    }
+
+
+    private function extractUpdateFilters(): array
+    {
+        $mainSubjects = request()->has('o_level_subject_ids') ? request('o_level_subject_ids') : null;
+        $examSittings = request()->has('o_level_sittings') ? request('o_level_sittings') : null;
+        $examYears = request()->has('o_level_years') ? request('o_level_years') : null;
+        $otherSubjects = request()->has('o_level_other_subject_ids') ? request('o_level_other_subject_ids') : null;
+        $otherGrades = request()->has('o_level_other_grade_ids') ? request('o_level_other_grade_ids') : null;
+        $otherExamYears = request()->has('o_level_other_years') ? request('o_level_other_years') : null;
+        $otherSittings = request()->has('o_level_other_sittings') ? request('o_level_other_sittings') : null;
+
+        return [
+            $mainSubjects,
+            $examSittings,
+            $examYears,
+            $otherSubjects,
+            $otherGrades,
+            $otherExamYears,
+            $otherSittings,
+        ];
+    }
+
 }

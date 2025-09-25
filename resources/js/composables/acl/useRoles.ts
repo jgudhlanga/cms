@@ -1,5 +1,4 @@
 import { useDataTables } from '@/composables/core/useDataTables';
-import { useDropdowns } from '@/composables/core/useDropdowns';
 import { useSharedFormSchema } from '@/composables/core/useSharedFormSchema';
 import { errorAlert, forbiddenAlert, openModal } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';

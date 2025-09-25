@@ -67,3 +67,26 @@ export type CreateApplicationParams = {
     o_level_other_years?:  Record<string, string> | null;
     o_level_other_sittings?:  Record<string, SelectOption> | null;
 };
+
+export type UpdateProgramParams = {
+    /** Programs */
+    modeOfStudy: SelectOption | null;
+    mode_of_study_id: string | number | null;
+    department: SelectOption | null;
+    department_id: string | number | null;
+    level: SelectOption | null;
+    level_id: string | number | null;
+    course: SelectOption | null;
+    course_id: string | number | null;
+    levelRequirements?: DepartmentLevelRequirement | null,
+    o_level_subject_ids?:  Record<string, string> | null;
+    o_level_years?:  Record<string, string> | null;
+    o_level_sittings?:  Record<string, SelectOption> | null;
+    required_level_completed?: boolean | null;
+    required_level_upload?: any;
+    read_write_acknowledged?: boolean | null;
+    o_level_other_subject_ids?:  Record<string, SelectOption> | null;
+    o_level_other_grade_ids?:  Record<string, string> | null;
+    o_level_other_years?:  Record<string, string> | null;
+    o_level_other_sittings?:  Record<string, SelectOption> | null;
+};

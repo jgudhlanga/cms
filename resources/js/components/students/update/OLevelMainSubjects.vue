@@ -8,15 +8,27 @@ import SelectYear from '@/components/students/update/SelectYear.vue';
 import { useGrades } from '@/composables/institution/useGrades';
 import { useStudentPortal } from '@/composables/students/useStudentPortal';
 import { useCreateApplicationFormStore } from '@/store/portal/useCreateApplicationFormStore';
+import { useUpdateProgramFormStore } from '@/store/portal/useUpdateProgramFormStore';
+import { AcademicOLevelResult, Enrolment } from '@/types/enrolments';
 import { RadioGroupOption } from '@/types/forms';
 import { Grade, Subject } from '@/types/institution';
 import { SelectOption } from '@/types/utils';
 import { trans } from 'laravel-vue-i18n';
 import { storeToRefs } from 'pinia';
 import { onMounted, ref, Ref } from 'vue';
+import { EXAM_SITTINGS } from '@/lib/constants';
 
+interface Props {
+    application?: Enrolment | null;
+}
+
+const props = defineProps<Props>();
+const { application } = props;
+
+const isEditing = Number(String(application?.id)) > 0;
+const store = isEditing ? useUpdateProgramFormStore() : useCreateApplicationFormStore();
+const { o_level_subject_ids, o_level_years, o_level_sittings, levelRequirements } = storeToRefs(store);
 const { listGrades, isLoading, grades } = useGrades();
-const { o_level_subject_ids, o_level_years, o_level_sittings, levelRequirements } = storeToRefs(useCreateApplicationFormStore());
 const { getMainSittingYear, getMainSitting } = useStudentPortal();
 
 function ensureObjectRef<T extends object>(refObj: Ref<T | undefined | null> | undefined, defaultValue: T): T {
@@ -138,6 +150,8 @@ const onMainYearChange = (value: string | null) => {
 onMounted(async () => {
     await listGrades();
 
+    //set all subjects to main year and sitting from application
+    populateCurrentDataFromApplication();
     // === Main Year logic ===
     if (o_level_years?.value) {
         mainYear.value = getMainSittingYear(o_level_years.value);
@@ -148,6 +162,52 @@ onMounted(async () => {
         mainSitting.value = getMainSitting(o_level_sittings.value);
     }
 });
+
+const populateCurrentDataFromApplication = () => {
+    if (application?.relationships?.oLevelResults?.length) {
+        const subjects = levelRequirements?.value?.relationships?.subjects as Subject[] | undefined;
+        if (!subjects?.length) return;
+        subjects.forEach((subject) => {
+            const subjectId = subject.id?.toString();
+            if (!subjectId) return;
+            // find the matching O-Level result for this subject
+            const result = application?.relationships?.oLevelResults?.find(
+                (r: AcademicOLevelResult) => r.attributes.subjectId.toString() === subjectId,
+            );
+            //===================== YEARS =============================
+            if (!o_level_years) return;
+            if (!o_level_years.value) {
+                o_level_years.value = {};
+            }
+            if (result) {
+                o_level_years.value[subjectId] = String(result.attributes.examYear);
+            } else {
+                delete o_level_years.value[subjectId];
+            }
+            //===================== SITTINGS =============================
+            if (!o_level_sittings) return;
+            if (!o_level_sittings.value) {
+                o_level_sittings.value = {};
+            }
+            const sittingLabel = EXAM_SITTINGS.find(
+                sitting => sitting.value === result?.attributes?.examSitting
+            )?.label ?? result?.attributes?.examSitting;
+            if (result) {
+                o_level_sittings.value[subjectId] = { value: result?.attributes?.examSitting, label: String(sittingLabel ?? '') };
+            }
+            //===================== GRADES =============================
+            if (!o_level_subject_ids) return;
+            if (!o_level_subject_ids.value) {
+                o_level_subject_ids.value = {};
+            }
+            if (result) {
+                o_level_subject_ids.value[subjectId] = String(result?.attributes?.gradeId);
+            } else {
+                delete o_level_sittings.value[subjectId];
+            }
+        });
+    }
+};
 </script>
 
 <template>

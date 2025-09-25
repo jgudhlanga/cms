@@ -20,6 +20,8 @@ export type Enrolment = {
         requiredExamSittingCount: string | number;
         registrationFeeConfirmed: boolean;
         tuitionFeeConfirmed: boolean;
+        requiredLevelCompleted: boolean;
+        readWriteAcknowledged: boolean;
         createdAt: string;
         deletedAt: string;
         updatedAt: string;

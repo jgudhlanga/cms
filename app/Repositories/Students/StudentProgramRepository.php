@@ -3,6 +3,7 @@
 namespace App\Repositories\Students;
 
 use App\DTO\Students\StudentProgramDto;
+use App\DTO\Students\UpdateStudentProgramDto;
 use App\Http\Filters\Students\StudentProgramFilter;
 use App\Models\Students\StudentProgram;
 use App\Repositories\Base\BaseRepository;
@@ -23,9 +24,9 @@ class StudentProgramRepository extends BaseRepository implements interface\IStud
         return $this->studentProgram->create($this->getFields($dto))->refresh();
     }
 
-    public function update(StudentProgram $studentProgram, StudentProgramDto $dto)
+    public function update(StudentProgram $studentProgram, UpdateStudentProgramDto $dto)
     {
-        return tap($studentProgram)->update($this->getFields($dto));
+        return tap($studentProgram)->update($this->getUpdateFields($dto));
     }
 
     public function allFilter($columns = ['*'], ?StudentProgramFilter $filters = null)
@@ -50,6 +51,18 @@ class StudentProgramRepository extends BaseRepository implements interface\IStud
             'required_level_completed' => $dto->required_level_completed,
             'read_write_acknowledged' => $dto->read_write_acknowledged,
             'intake_period_id' => $dto->intake_period_id,
+        ];
+    }
+
+    private function getUpdateFields(UpdateStudentProgramDto $dto): array
+    {
+        return [
+            'mode_of_study_id' => $dto->mode_of_study_id,
+            'institution_department_id' => $dto->institution_department_id,
+            'department_level_id' => $dto->department_level_id,
+            'department_course_id' => $dto->department_course_id,
+            'required_level_completed' => $dto->required_level_completed,
+            'read_write_acknowledged' => $dto->read_write_acknowledged,
         ];
     }
 }

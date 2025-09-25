@@ -45,7 +45,7 @@ const { idTypes, listIdTypes } = useIdTypes();
 const { applicationFormSchema, saveApplication } = useStudentPortal();
 const { listLevelRequirements, levelRequirements } = useDepartmentLevels();
 const { isNativeCitizen, isItTrue } = useUtils();
-const { validateMainSubjects, validateOtherSubjects, updateForm } = useApplicationFormHelper();
+const { validateMainSubjects, validateOtherSubjects, updateCreateForm } = useApplicationFormHelper();
 
 // Store
 const storeRefs = storeToRefs(useCreateApplicationFormStore());
@@ -129,8 +129,6 @@ const populateInitialForm = () => {
     }
 };
 
-// Sync Pinia refs into form
-
 onMounted(async () => {
     await listIdTypes();
     populateInitialForm();
@@ -139,7 +137,7 @@ onMounted(async () => {
 const isValidating = ref(false);
 
 const save = async () => {
-    updateForm(form);
+    updateCreateForm(form);
     try {
         isValidating.value = true;
         await applicationFormSchema(isNativeCitizen(storeRefs.idType?.value?.label ?? '')).parseAsync(form);
@@ -188,11 +186,6 @@ const maintenanceMode = isItTrue(import.meta.env.VITE_MAINTENANCE_MODE);
         <div class="mt-20 flex w-full flex-col bg-white px-10 md:p-0">
             <ComingSoonAnimated v-if="maintenanceMode" />
             <div v-else class="flex w-full flex-col md:mx-auto md:w-7/8">
-                <!--<div class="flex flex-col items-center justify-center">
-                    <p class="text-muted-foreground text-sm font-semibold">&#45;&#45; {{ $t('trans.application_form_description') }} &#45;&#45;</p>
-                    <CustomSeparator classes="w-full md:w-1/2 mt-4" />
-                </div>-->
-
                 <PersonalDetails :form="form" />
                 <CustomSeparator classes="h-1 my-5" />
                 <ContactDetails :form="form" />

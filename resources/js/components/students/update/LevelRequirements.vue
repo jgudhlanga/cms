@@ -4,21 +4,29 @@ import HeadingSmall from '@/components/core/util/HeadingSmall.vue';
 import { useUtils } from '@/composables/core/useUtils';
 import { IconName, icons } from '@/lib/icons';
 import { useCreateApplicationFormStore } from '@/store/portal/useCreateApplicationFormStore';
+import { useUpdateProgramFormStore } from '@/store/portal/useUpdateProgramFormStore';
 import { DepartmentLevelRequirement } from '@/types/department-meta-data';
+import { Enrolment } from '@/types/enrolments';
 import { storeToRefs } from 'pinia';
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 
 interface Props {
     isViewOnly?: boolean;
     levelRequirements?: DepartmentLevelRequirement | null;
+    application?: Enrolment | null;
 }
 
-withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<Props>(), {
     isViewOnly: false,
 });
 
-const { level, required_level_completed } = storeToRefs(useCreateApplicationFormStore());
 const { isItTrue } = useUtils();
+const { application } = props;
+
+const isEditing = Number(String(application?.id)) > 0;
+const store = isEditing ? useUpdateProgramFormStore() : useCreateApplicationFormStore();
+
+const { level, required_level_completed } = storeToRefs(store);
 
 const requiredLevelCompleted = ref(required_level_completed?.value ?? false);
 
@@ -28,6 +36,9 @@ const acknowledgeLevelCompleted = (value: any) => {
         required_level_completed.value = isItTrue(value);
     }
 };
+onMounted(() => {
+    requiredLevelCompleted.value = isItTrue(required_level_completed?.value);
+});
 /*const handleUploadFileChange = (event: any) => {
     const upload = event.target.files[0];
     if (!upload) return;

@@ -18,6 +18,6 @@ const breadcrumbs: BreadcrumbItemInterface[] = [{ transChoiceKey: 'dashboard' },
 <template>
     <Head :title="$tChoice('trans.dashboard', 1)" />
     <PageContainer :breadcrumbs="breadcrumbs">
-        <ComingSoonAnimated />
+
     </PageContainer>
 </template>

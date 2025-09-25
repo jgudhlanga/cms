@@ -113,7 +113,7 @@ const formatNumber = (num: number) => {
 // Initialize charts when component is mounted
 onMounted(() => {
     // Enrollment Trends Chart (Line Chart)
-    new Chart(enrollmentChart.value!, {
+    /*new Chart(enrollmentChart.value!, {
         type: 'line',
         data: enrollmentData.value,
         options: {
@@ -186,7 +186,7 @@ onMounted(() => {
                 },
             },
         },
-    });
+    });*/
 });
 
 const handleFilterChange = () => {
@@ -232,7 +232,7 @@ const handleFilterChange = () => {
                 <StatsCard title="Females" :value="formatNumber(Number(femaleApplications))" icon="female" icon-bg-color="pink" />
             </div>
 
-            <div class="my-3 pt-4 flex flex-col">
+<!--            <div class="my-3 pt-4 flex flex-col">
                 <ComponentHeader header-title="Payments" description="Overview of payments" />
                 <div class="my-3 grid grid-cols-1 gap-5 px-4 sm:px-0 md:grid-cols-4">
                     <StatsCard title="Successful Payments" :value="growthRate" icon="paymentSuccess" icon-bg-color="green" />
@@ -261,7 +261,7 @@ const handleFilterChange = () => {
                         <canvas id="comparisonChart" ref="comparisonChart"></canvas>
                     </div>
                 </div>
-            </div>
+            </div>-->
         </div>
     </PageContainer>
 </template>
