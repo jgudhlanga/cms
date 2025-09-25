@@ -11,7 +11,6 @@ sixteenYearsAgo.setFullYear(currentDate.getFullYear() - 15);
         input-id="date_of_birth"
         :label="$t('trans.date_of_birth')"
         v-bind="$attrs"
-        :max-date="sixteenYearsAgo"
         :enable-time-picker="false"
         prevent-min-max-navigation
     />

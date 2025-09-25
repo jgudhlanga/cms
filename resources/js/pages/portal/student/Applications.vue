@@ -15,6 +15,11 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+const { applications } = props;
+const eligibleForMoreApplications = () => {
+    const maxApplications = 3; // Assuming a student can apply for a maximum of 5 programs
+    return applications.length < maxApplications;
+};
 
 const breadcrumbs: BreadcrumbItemInterface[] = [{ transChoiceKey: 'dashboard', href: route('portal.dashboard') }, { transChoiceKey: 'application' }];
 const { createStudentApplicationColumns, allowed } = useStudentApplications();
@@ -22,12 +27,16 @@ const { createStudentApplicationColumns, allowed } = useStudentApplications();
 <template>
     <Head :title="$tChoice('trans.application', 2)" />
     <PageContainer :breadcrumbs="breadcrumbs">
+<!--        <div v-if="eligibleForMoreApplications()" class="text-destructive flex w-fit rounded-full bg-amber-200 px-5 py-1 leading-tight">
+            You can apply for two more courses from other departments
+        </div>-->
         <DataTable
             :data="applications"
             :show-archived-filter="false"
             :columns="createStudentApplicationColumns()"
             :on-create="() => {}"
             :disable-create="!allowed"
-        />
+        >
+        </DataTable>
     </PageContainer>
 </template>

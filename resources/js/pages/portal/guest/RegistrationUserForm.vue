@@ -71,9 +71,9 @@ const maintenanceMode = isItTrue(import.meta.env.VITE_MAINTENANCE_MODE);
                 <div class="flex w-full flex-col space-y-3">
                     <BaseInput
                         input-id="first_name"
-                        :label="$t('trans.first_name')"
+                        label=""
                         v-model="first_name"
-                        placeholder="enter firstname"
+                        placeholder="ENTER FIRST NAME"
                         :vertical-layout="false"
                         :label-uppercase="true"
                         :is-required="true"
@@ -82,8 +82,8 @@ const maintenanceMode = isItTrue(import.meta.env.VITE_MAINTENANCE_MODE);
                     />
                     <BaseInput
                         input-id="last_name"
-                        :label="$t('trans.last_name')"
-                        placeholder="enter lastname / surname"
+                        label=""
+                        placeholder="ENTER SURNAME"
                         v-model="last_name"
                         :label-uppercase="true"
                         :is-required="true"
@@ -93,20 +93,20 @@ const maintenanceMode = isItTrue(import.meta.env.VITE_MAINTENANCE_MODE);
                     />
                     <BaseInput
                         input-id="email"
-                        :label="$t('trans.email')"
+                        label=""
                         v-model="email"
                         :label-uppercase="true"
                         :is-required="true"
                         :vertical-layout="false"
-                        placeholder="enter email"
+                        placeholder="ENTER EMAIL"
                         @input="clearFormErrors(form, 'email')"
                         :error="form.errors.email"
                     />
                     <BaseInput
                         input-id="password"
-                        :label="$t('trans.password')"
+                        label=""
                         :label-uppercase="true"
-                        placeholder="enter password"
+                        placeholder="ENTER PASSWORD"
                         v-model="password"
                         :type="TextFieldType.password"
                         :vertical-layout="false"
@@ -116,9 +116,9 @@ const maintenanceMode = isItTrue(import.meta.env.VITE_MAINTENANCE_MODE);
                     />
                     <BaseInput
                         input-id="password_confirmation"
-                        :label="$t('trans.confirm_password')"
+                        label=""
                         :label-uppercase="true"
-                        placeholder="confirm password"
+                        placeholder="CONFIRM PASSWORD"
                         v-model="password_confirmation"
                         :type="TextFieldType.password"
                         :is-required="true"
