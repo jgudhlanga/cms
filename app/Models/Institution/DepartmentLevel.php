@@ -29,7 +29,7 @@ class DepartmentLevel extends Model
 
     public function level(): BelongsTo
     {
-        return $this->belongsTo(Level::class);
+        return $this->belongsTo(Level::class, 'level_id');
     }
 
     public function institutionDepartment(): BelongsTo

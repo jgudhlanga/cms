@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\Institution;
 
+use App\Models\Institution\Level;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -13,6 +14,7 @@ class DepartmentLevelRequirementResource extends JsonResource
 
     public function toArray(Request $request): array
     {
+        $level = Level::where('id', $this->required_level_id)->first();
         return [
             'type' => 'department-level-requirement',
             'id' => $this->resource->id,
@@ -25,7 +27,7 @@ class DepartmentLevelRequirementResource extends JsonResource
                 "otherSubjectsCount" => $this->other_subjects_count,
                 "onlyReadWriteRequired" => $this->only_read_write_required,
                 "requiredLevelId" => $this->required_level_id,
-                "requiredLevel" => $this->requiredLevel?->level?->name,
+                "requiredLevel" => $level?->name,//$this->requiredLevel?->level?->name,
             ],
             "relationships" => [
                 'subjects' => SubjectResource::collection($this->main_subjects),
