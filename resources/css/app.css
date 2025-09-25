@@ -5,7 +5,7 @@
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 
-@custom-variant dark (&:is(.dark *));
+@variant dark (&:is(.dark *));
 
 @theme {
     --font-sans: Instrument Sans, ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
@@ -330,6 +330,5 @@
     }
 
     body {
-        /*@apply bg-background text-foreground bg-[url('/assets/images/body-bg.svg')] bg-cover bg-no-repeat;*/
     }
 }
