@@ -97,14 +97,14 @@ watch(course, async () => {
                 <SpinnerComponent class="flex w-full items-center justify-center" />
             </template>
             <template v-else>
-                <template v-if="levelRequirements">
-                    <template v-if="isItTrue(levelRequirements.attributes.isOLevelRequired)">
+                <template v-if="Number(String(levelRequirements?.id)) > 0">
+                    <template v-if="isItTrue(levelRequirements?.attributes?.isOLevelRequired)">
                         <OLevelRequirements :application="application" />
                     </template>
-                    <template v-if="levelRequirements.attributes.requiredLevel">
+                    <template v-if="Number(String(levelRequirements?.attributes?.requiredLevelId)) > 0">
                         <LevelRequirements :level-requirements="levelRequirements" :application="application" />
                     </template>
-                    <template v-if="isItTrue(levelRequirements.attributes.onlyReadWriteRequired)">
+                    <template v-if="isItTrue(levelRequirements?.attributes?.onlyReadWriteRequired)">
                         <SDPRequirements :level-requirements="levelRequirements" :application="application" />
                     </template>
                 </template>

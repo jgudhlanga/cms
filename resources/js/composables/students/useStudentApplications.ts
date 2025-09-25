@@ -21,11 +21,11 @@ import { trans, trans_choice } from 'laravel-vue-i18n';
 import { ColorVariant } from '@/enums/colors';
 
 export const useStudentApplications = () => {
-    const { moreActionButton, actionButton, textLink } = useDataTables();
+    const {  actionButton, textLink } = useDataTables();
     const studentAbility = 'manageOwnStudentProgramDetails:students';
     const adminAbility = 'manageStudentMetadata:admin';
     const allowed = hasAbility([adminAbility, studentAbility]);
-    const { formatDate, navigateTo, isItTrue } = useUtils();
+    const { formatDate, navigateTo } = useUtils();
     const createStudentApplicationColumns = () => {
         return [
             {
@@ -83,7 +83,15 @@ export const useStudentApplications = () => {
                     return actionButton({
                         title: 'Edit',
                         variant: ColorVariant.success_outline,
-                        onClick: () => navigateTo(route('portal.application.edit', row.original.id)),
+                        onClick: () => {
+                            router.visit(route('portal.application.edit', row.original.id), {
+                                preserveState: false,
+                                preserveScroll: false,
+                                replace: true,
+                                onFinish: () => window.location.reload(),
+                            });
+                        },
+                        //onClick: () => navigateTo(route('portal.application.edit', row.original.id)),
                     });
                 },
             },

@@ -202,8 +202,6 @@ const populateCurrentDataFromApplication = () => {
             }
             if (result) {
                 o_level_subject_ids.value[subjectId] = String(result?.attributes?.gradeId);
-            } else {
-                delete o_level_sittings.value[subjectId];
             }
         });
     }
