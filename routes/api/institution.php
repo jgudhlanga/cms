@@ -17,7 +17,7 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     Route::get('departments/{institution_department}/workflow-steps', [DepartmentMetaDataController::class, 'workflowSteps'])->name('v1.department-metadata.workflow-steps');
     Route::get('departments/{institution_department}/class-sizes', [DepartmentMetaDataController::class, 'classSizes'])->name('v1.department-metadata.class-sizes');
     Route::get('departments/{institution_department}/enrolments', [DepartmentMetaDataController::class, 'departmentEnrolments'])->name('v1.department-metadata.enrolments');
-    Route::get('institution/dashboard/metrics', [DashboardController::class, 'index'])->name('v1.institution.dashboard.metrics');
+    Route::post('institution/dashboard/metrics', [DashboardController::class, 'index'])->name('v1.institution.dashboard.metrics');
 });
 Route::prefix('v1')->group(function () {
     Route::get('institution-departments', [InstitutionDepartmentController::class, 'index'])->name('v1.institution-departments.index');

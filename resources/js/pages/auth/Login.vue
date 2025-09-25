@@ -49,7 +49,7 @@ const form = useForm<Login>({
             />
             <div class="flex items-center justify-between" :tabindex="3">
                 <BaseCheckbox input-id="remember" v-model="form.remember_me" :tabindex="4" :label="$t('trans.remember_me')" />
-                <TextLink v-if="canResetPassword" :href="route('password.request')" class="text-sm" :tabindex="5">
+                <TextLink classes="dark:text-primary" v-if="canResetPassword" :href="route('password.request')" class="text-sm dark:text-primary" :tabindex="5">
                     {{ $t('trans.forgot_password') }}
                 </TextLink>
             </div>

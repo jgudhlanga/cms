@@ -2,19 +2,23 @@
 
 namespace App\Services;
 
-
 use App\Enums\Shared\GenderEnum;
 use App\Models\Shared\Gender;
 use App\Models\Students\StudentProgram;
 use App\Models\Users\User;
+use Carbon\Carbon;
 
 class ApplicationMetricsService
 {
-    protected int $intakePeriodId;
+    protected Carbon $startDate;
+    protected Carbon $endDate;
 
-    public function __construct(int $intakePeriodId)
+    public function __construct(string $startDate, ?string $endDate = null)
     {
-        $this->intakePeriodId = $intakePeriodId;
+        $this->startDate = Carbon::parse($startDate)->startOfDay();
+        $this->endDate = $endDate
+            ? Carbon::parse($endDate)->endOfDay()
+            : $this->startDate->copy()->endOfDay();
     }
 
     /**
@@ -23,7 +27,7 @@ class ApplicationMetricsService
     public function applications(?GenderEnum $gender = null): int
     {
         $query = StudentProgram::query()
-            ->where('student_programs.intake_period_id', $this->intakePeriodId);
+            ->whereBetween('student_programs.created_at', [$this->startDate, $this->endDate]);
 
         if ($gender) {
             $genderId = Gender::where('title', $gender->label())->value('id');
@@ -35,31 +39,27 @@ class ApplicationMetricsService
         return $query->count();
     }
 
+    /**
+     * Count total users (students only).
+     */
     public function users(): int
     {
-        $query = User::query()->role('student');
-        return $query->count();
+        return User::query()
+            ->role('student')
+            ->whereBetween('users.created_at', [$this->startDate, $this->endDate])
+            ->count();
     }
 
-    /**
-     * Shortcut: total applications.
-     */
     public function total(): int
     {
         return $this->applications();
     }
 
-    /**
-     * Shortcut: male applications.
-     */
     public function male(): int
     {
         return $this->applications(GenderEnum::MALE);
     }
 
-    /**
-     * Shortcut: female applications.
-     */
     public function female(): int
     {
         return $this->applications(GenderEnum::FEMALE);

@@ -16,10 +16,8 @@ class DashboardController extends Controller
 
     public function index()
     {
-        $this->authorize('viewDashboard');
-        [$intakePeriodId] = $this->extractFilters();
-        $intakePeriod = $this->resolveIntakePeriod($intakePeriodId);
-        $metrics = new ApplicationMetricsService($intakePeriod->id);
+        [$startDate, $endDate] = $this->extractFilters();
+        $metrics = new ApplicationMetricsService($startDate, $endDate);
         return response()->json([
             'users' => $metrics->users(),
             'totalApplications' => $metrics->total(),
@@ -30,17 +28,10 @@ class DashboardController extends Controller
 
     private function extractFilters(): array
     {
-        $intakePeriodId = request('intake_period_id') > 0 ? (int)request('intake_period_id') : null;
-        $dateRange  = request()->has('date_range') ? request('date_range') : null;
-        dd($dateRange);
-        return [$intakePeriodId];
-    }
-
-    private function resolveIntakePeriod(?int $intakePeriodId)
-    {
-        return $intakePeriodId
-            ? IntakePeriod::find($intakePeriodId)
-            : IntakePeriod::orderByDesc('end_date')->first();
+        $dateRange = request()->has('date_range') ? request('date_range') : null;
+        $startDate = $dateRange[0] ?? null;
+        $endDate = $dateRange[1] ?? null;
+        return [$startDate, $endDate];
     }
 
 }
