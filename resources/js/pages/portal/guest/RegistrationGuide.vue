@@ -50,13 +50,13 @@ const steps = ref([
     {
         id: 'complete-application',
         title: 'Step 4 – Complete Your Application',
-        subtitle: 'Provide all required information, upload supporting documents, and carefully review your application before submission.',
+        subtitle: 'Provide all required information and carefully review your application before submission.',
         icon: FileTextIcon
     },
     {
         id: 'track-status',
         title: 'Step 5 – Track Application Status',
-        subtitle: 'Log in to your account at any time to monitor the progress of your application and receive updates from the admissions office.',
+        subtitle: 'Log in to your account at any time to monitor the progress of your application and receive updates or update your application',
         icon: ClipboardListIcon
     }
 ])
