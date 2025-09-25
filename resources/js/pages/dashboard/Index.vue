@@ -202,9 +202,8 @@ onMounted(async () => {
         <div class="flex w-full flex-col">
             <div class="mt-3 flex items-center justify-between">
                 <ComponentHeader header-title="Applications metrics" description="Overview of portal application metrics and stats" />
-                <div>
+                <div class="flex w-1/2 justify-end">
                     <DateRangePicker
-                        class="rounded-full"
                         v-model="rangeData"
                         :label-uppercase="false"
                         :vertical-layout="false"

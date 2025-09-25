@@ -36,7 +36,7 @@ withDefaults(defineProps<Props>(), {
             <VueDatePicker
                 :id="inputId"
                 v-bind="$attrs"
-                :always-clearable="true"
+                :always-clearable="false"
             />
         </div>
         <InputError :class="cn('flex w-full lowercase', !verticalLayout && 'justify-end')" :message="error" />
