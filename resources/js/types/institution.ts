@@ -76,6 +76,7 @@ export type Level = {
     attributes: {
         name: string;
         position: string | number;
+        allowedApplicationsPerLevel: string | number;
         description?: string;
         createdAt?: string;
         updatedAt?: string;
@@ -85,6 +86,7 @@ export type Level = {
 export type LevelParams = {
     name: string;
     description?: string;
+    allowed_applications_per_level?: string|number;
 };
 
 export type ModeOfStudy = {

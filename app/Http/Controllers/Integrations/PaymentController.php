@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Integrations\UpdateLedgerRequest;
 use App\Http\Resources\Integrations\LedgerResource;
 use App\Models\Ledgers\Ledger;
+use App\Models\Users\User;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -107,6 +108,17 @@ class PaymentController extends Controller
         $reference = Ledger::where('system_reference', $orderReference)->first();
         if (!$reference) {
             $reference = Ledger::where('payment_reference', $orderReference)->first();
+        }
+        //we can search by email to the user, use the id as ledgerable_id and user as ledgerable_type in ledgers table
+        if (!$reference) {
+            // If not found, try searching by email
+            $user = User::where('email', $orderReference)->first();
+
+            if ($user) {
+                $reference = Ledger::where('ledgerable_id', $user->id)
+                    ->where('ledgerable_type', User::class)
+                    ->first();
+            }
         }
         $response = Http::withHeaders([
             'Accept' => 'application/json',

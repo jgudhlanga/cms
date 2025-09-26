@@ -15,6 +15,7 @@ use App\Http\Resources\Enrolments\EnrolmentResource;
 use App\Http\Resources\Institution\FeeStructureResource;
 use App\Models\Institution\FeeStructure;
 use App\Models\Institution\IntakePeriod;
+use App\Models\Institution\Level;
 use App\Models\Shared\AcademicLevel;
 use App\Models\Students\StudentProgram;
 use App\Repositories\Students\interface\IStudentProgramRepository;
@@ -214,9 +215,11 @@ class PortalController extends Controller
     {
         $this->authorize('manageStudentPersonalDetails');
         $student = $this->getStudent(request());
+        $multipleApplicationsLevels = Level::where('allowed_applications_per_level', '>', '1')->pluck('id')->toArray();
         return Inertia::render('portal/student/Applications', [
             'student' => StudentResource::make($student),
-            'applications' => StudentProgramResource::collection($student->programs)
+            'applications' => EnrolmentResource::collection($student->programs),
+            'multipleApplicationsLevelIds' => $multipleApplicationsLevels,
         ]);
     }
 

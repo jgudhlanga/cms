@@ -30,6 +30,7 @@ class LevelRepository extends BaseRepository implements ILevelRepository
         return [
             'name' => $dto->name,
             'description' => $dto->description,
+            'allowed_applications_per_level' => $dto->allowed_applications_per_level,
         ];
     }
 

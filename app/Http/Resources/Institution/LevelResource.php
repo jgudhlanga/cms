@@ -17,6 +17,7 @@ class LevelResource extends JsonResource
                 'name' => $this->resource->name,
                 'position' => $this->resource->position,
                 'description' => $this->resource->description,
+                'allowedApplicationsPerLevel' => $this->resource->allowed_applications_per_level,
                 $this->mergeWhen($request->routeIs('levels.*'), [
                     'createdAt' => $this->resource->created_at,
                     'updatedAt' => $this->resource->updated_at,

@@ -20,6 +20,7 @@ import CustomSeparator from '@/components/core/util/CustomSeparator.vue';
 import StudentPageHeader from '@/components/shared/students/StudentPageHeader.vue';
 import { useApplicationFormHelper } from '@/composables/students/useApplicationFormHelper';
 import { ButtonSize } from '@/enums/buttons';
+import { ColorVariant } from '@/enums/colors';
 import { errorAlert } from '@/lib/alerts';
 import { useUpdateProgramFormStore } from '@/store/portal/useUpdateProgramFormStore';
 import { Enrolment } from '@/types/enrolments';
@@ -40,7 +41,7 @@ const { application } = props;
 // Composable
 const { updateApplication, updateProgramFormSchema } = useStudentPortal();
 const { listLevelRequirements, levelRequirements: levelRequirements } = useDepartmentLevels();
-const { isItTrue } = useUtils();
+const { isItTrue, goBack } = useUtils();
 const { validateMainSubjects, validateOtherSubjects, updateProgramForm } = useApplicationFormHelper(true);
 
 // Store
@@ -140,8 +141,11 @@ const save = async () => {
             <div class="flex w-full flex-col md:mx-auto md:w-7/8">
                 <Programs :form="form" :application="application" />
                 <CustomSeparator classes="h-1 my-5" />
-                <div class="flex items-center justify-center">
-                    <BaseButton class="mb-10 w-[200px]" :size="ButtonSize.xl">
+                <div class="mb-10 flex items-center justify-center space-x-3">
+                    <BaseButton @click="goBack" type="button" :variant="ColorVariant.shade" class="w-1/2 md:w-[200px]" :size="ButtonSize.xl">
+                        {{ $t('trans.cancel') }}
+                    </BaseButton>
+                    <BaseButton class="w-1/2 md:w-[200px]" :size="ButtonSize.xl">
                         {{ $t('trans.submit') }}
                     </BaseButton>
                 </div>

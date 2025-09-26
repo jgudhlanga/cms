@@ -28,6 +28,8 @@ class EnrolmentResource extends JsonResource
                 'department' => $this->institutionDepartment?->department?->name,
                 'departmentLevelId' => $this->department_level_id,
                 'level' => $this->departmentLevel?->level?->name,
+                'levelId' => $this->departmentLevel?->level?->id,
+                'allowedApplicationsPerLevel' => $this->departmentLevel?->level?->allowed_applications_per_level,
                 'departmentCourseId' => $this->department_course_id,
                 'course' => $this->departmentCourse?->course?->name,
                 'applicationTrackingNumber' => $this->application_tracking_number,
