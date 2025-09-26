@@ -39,9 +39,9 @@ const { createStudentApplicationColumns, allowed } = useStudentApplications();
 <template>
     <Head :title="$tChoice('trans.application', 2)" />
     <PageContainer :breadcrumbs="breadcrumbs">
-<!--        <div v-if="eligibleForMoreApplications()" class="text-destructive flex w-fit rounded-full bg-amber-200 px-5 py-1 leading-tight">
+        <div v-if="eligibleForMoreApplications()" class="text-destructive flex w-fit rounded-full bg-amber-200 px-5 py-1 leading-tight">
             You can apply for two more courses from other departments
-        </div>-->
+        </div>
         <DataTable
             :data="applications"
             :show-archived-filter="false"
