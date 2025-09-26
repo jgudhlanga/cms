@@ -22,7 +22,7 @@ class Level extends Model
 {
     use HasFactory, SoftDeletes, Filterable, Paginatable, LogsActivity, AssignsPosition;
 
-    protected $fillable = ['name', 'position', 'description'];
+    protected $fillable = ['name', 'position', 'description', 'allowed_applications_per_level'];
 
     public function getActivitylogOptions(): LogOptions
     {

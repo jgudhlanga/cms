@@ -3,7 +3,8 @@ import PageContainer from '@/components/core/page/PageContainer.vue';
 import DataTable from '@/components/core/table/DataTable.vue';
 import { useStudentApplications } from '@/composables/students/useStudentApplications';
 import { AuthObject } from '@/types/data-pagination';
-import { Student, StudentProgram } from '@/types/students';
+import { Enrolment } from '@/types/enrolments';
+import { Student } from '@/types/students';
 import { BreadcrumbItemInterface } from '@/types/ui';
 import { Head } from '@inertiajs/vue3';
 
@@ -11,14 +12,25 @@ interface Props {
     auth: AuthObject;
     errors: object;
     student: Student;
-    applications: StudentProgram[];
+    applications: Enrolment[];
+    multipleApplicationsLevelIds: string[] | number[];
 }
 
 const props = defineProps<Props>();
-const { applications } = props;
+const { applications, multipleApplicationsLevelIds } = props;
+
 const eligibleForMoreApplications = () => {
-    const maxApplications = 3; // Assuming a student can apply for a maximum of 5 programs
-    return applications.length < maxApplications;
+    return multipleApplicationsLevelIds.some((levelId) => {
+        // Get applications in this level
+        const sameLevelApplications = applications.filter((app: Enrolment) => {
+            return app?.attributes?.levelId === levelId;
+        });
+        // How many are allowed at this level
+        const allowed = Number(sameLevelApplications[0]?.attributes.allowedApplicationsPerLevel ?? 0);
+        if (allowed <= 0) return false;
+        // Student can apply if current count < allowed
+        return sameLevelApplications.length < allowed;
+    });
 };
 
 const breadcrumbs: BreadcrumbItemInterface[] = [{ transChoiceKey: 'dashboard', href: route('portal.dashboard') }, { transChoiceKey: 'application' }];

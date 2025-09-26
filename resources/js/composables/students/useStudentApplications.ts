@@ -31,25 +31,25 @@ export const useStudentApplications = () => {
             {
                 header: trans_choice('trans.program', 1),
                 accessorKey: 'course',
-                cell: ({ row }: { row: { original: StudentProgram } }) => {
+                cell: ({ row }: { row: { original: Enrolment } }) => {
                     return textLink(
                         route('portal.application.view', row.original.id),
-                        row.original?.relationships?.departmentCourse?.attributes?.course ?? '',
+                        row.original?.attributes?.course ?? '',
                     );
                 },
             },
             {
                 header: trans_choice('trans.department', 1),
-                accessorKey: 'relationships.institutionDepartment.attributes.department',
+                accessorKey: 'attributes.department',
             },
             {
                 header: trans_choice('trans.level', 1),
-                accessorKey: 'relationships.departmentLevel.attributes.level',
+                accessorKey: 'attributes.level',
             },
             {
                 header: trans('trans.application_date'),
                 accessorKey: 'applicationDate',
-                cell: ({ row }: { row: { original: StudentProgram } }) => {
+                cell: ({ row }: { row: { original: Enrolment } }) => {
                     const applicationDate = row.original?.attributes?.createdAt ?? '';
                     return applicationDate ? formatDate(applicationDate, 'L') : '---';
                 },
@@ -57,7 +57,7 @@ export const useStudentApplications = () => {
             {
                 header: trans('trans.update_date'),
                 accessorKey: 'updateDate',
-                cell: ({ row }: { row: { original: StudentProgram } }) => {
+                cell: ({ row }: { row: { original: Enrolment } }) => {
                     const updateDate = row.original?.attributes?.updatedAt ?? '';
                     return updateDate ? formatDate(updateDate, 'L') : '---';
                 },
@@ -66,7 +66,7 @@ export const useStudentApplications = () => {
                 header: `${trans_choice('trans.application', 1)} ${trans_choice('trans.status', 1)}`,
                 accessorKey: 'applicationStatus',
                 meta: { align: 'center' },
-                cell: ({ row }: { row: { original: StudentProgram } }) => {
+                cell: ({ row }: { row: { original: Enrolment } }) => {
                     const step = row.original?.relationships?.departmentWorkflowStep?.attributes?.workflowStep ?? '';
                     return actionButton({
                         title: step,
@@ -79,10 +79,10 @@ export const useStudentApplications = () => {
                 accessorKey: 'actions',
                 enableSorting: false,
                 meta: { align: 'right' },
-                cell: ({ row }: { row: { original: StudentProgram } }) => {
+                cell: ({ row }: { row: { original: Enrolment } }) => {
                     return actionButton({
-                        title: 'Edit',
-                        variant: ColorVariant.success_outline,
+                        title: 'Edit Application',
+                        variant: ColorVariant.success,
                         onClick: () => {
                             router.visit(route('portal.application.edit', row.original.id), {
                                 preserveState: false,
@@ -91,7 +91,6 @@ export const useStudentApplications = () => {
                                 onFinish: () => window.location.reload(),
                             });
                         },
-                        //onClick: () => navigateTo(route('portal.application.edit', row.original.id)),
                     });
                 },
             },

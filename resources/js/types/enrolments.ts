@@ -15,6 +15,8 @@ export type Enrolment = {
         departmentCourseId: string | number;
         department: string;
         level: string;
+        levelId: string | number;
+        allowedApplicationsPerLevel: string | number;
         course: string;
         applicationTrackingNumber: string;
         requiredExamSittingCount: string | number;

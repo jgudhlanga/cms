@@ -23,6 +23,7 @@ export const useLevels = () => {
             { header: trans_choice('#', 1), accessorKey: 'attributes.position', meta: { align: 'left' } },
             { header: trans_choice('trans.name', 1), accessorKey: 'attributes.name' },
             { header: trans_choice('trans.description', 1), accessorKey: 'attributes.description' },
+            { header: trans('trans.allowed_applications_per_level'), accessorKey: 'attributes.allowedApplicationsPerLevel', meta: { align: 'center' } },
             {
                 header: trans_choice('trans.action', 2),
                 accessorKey: 'actions',
