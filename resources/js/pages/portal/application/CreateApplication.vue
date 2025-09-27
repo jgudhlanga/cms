@@ -142,12 +142,14 @@ const save = async () => {
         isValidating.value = true;
         await applicationFormSchema(isNativeCitizen(storeRefs.idType?.value?.label ?? '')).parseAsync(form);
         if (isItTrue(levelRequirements.value?.attributes?.isOLevelRequired)) {
-            const mainErrors = validateMainSubjects();
+            const mainSubjectsCount = Number(String(levelRequirements?.value?.attributes?.mainSubjectsCount ?? '0'));
+            const mainErrors = validateMainSubjects(mainSubjectsCount);
             if (mainErrors && mainErrors.length > 0) {
                 errorAlert(mainErrors.join('\n'));
                 return;
             }
-            const otherErrors = validateOtherSubjects();
+            const otherSubjectCount = Number(String(levelRequirements?.value?.attributes?.otherSubjectsCount ?? '0'));
+            const otherErrors = validateOtherSubjects(otherSubjectCount);
             if (otherErrors && otherErrors.length > 0) {
                 errorAlert(otherErrors.join('\n'));
                 return;
@@ -194,7 +196,7 @@ const maintenanceMode = isItTrue(import.meta.env.VITE_MAINTENANCE_MODE);
                 <CustomSeparator classes="h-1 my-5" />
                 <Programs :form="form" />
                 <CustomSeparator classes="h-1 my-5" />
-                <div class="flex items-center justify-center mb-10">
+                <div class="mb-10 flex items-center justify-center">
                     <BaseButton class="w-full md:w-[200px]" :size="ButtonSize.xl">
                         {{ $t('trans.submit') }}
                     </BaseButton>
