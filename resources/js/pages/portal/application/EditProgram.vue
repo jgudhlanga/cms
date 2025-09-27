@@ -113,7 +113,6 @@ const save = async () => {
                 return;
             }
         }
-
         if (isItTrue(Number(String(levelRequirements.value?.attributes?.requiredLevelId)) > 0)) {
             if (!isItTrue(required_level_completed?.value)) {
                 errorAlert(trans('trans.acknowledge_level_completed'));
