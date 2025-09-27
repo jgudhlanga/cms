@@ -155,7 +155,6 @@ const save = async () => {
                 return;
             }
         }
-
         if (isItTrue(Number(String(levelRequirements.value?.attributes?.requiredLevelId)) > 0)) {
             if (!isItTrue(storeRefs.required_level_completed?.value)) {
                 errorAlert(trans('trans.acknowledge_level_completed'));
@@ -168,7 +167,6 @@ const save = async () => {
                 return;
             }
         }
-
         saveApplication(form);
     } catch (error: any) {
         if (error?.format) {
