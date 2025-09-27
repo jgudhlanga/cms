@@ -67,6 +67,8 @@ class PaymentController extends Controller
             // update a receipt entry and invoice payment status
             $receipt = PaymentHelper::updateReceiptEntry($receipt, PaymentHelper::assembleReceiptUpdateData($check));
             $invoice->update(['payment_status' => $check['status']]);
+            // delete not paid entries for the same ledgerable_id and ledgerable_type
+            PaymentHelper::deleteNotPaidLedgerEntries($invoice->system_reference);
         } else {
             $invoice->update(['payment_status' => $check['status'] ?? 'pending']);
             $receipt->update(['payment_status' => $check['status'] ?? 'pending']);
@@ -127,6 +129,42 @@ class PaymentController extends Controller
         return $response->json();
     }
 
+    public function getLedgerEntries(string $search)
+    {
+        // Try to find a ledger by system or payment reference
+        $reference = Ledger::where('system_reference', $search)
+            ->orWhere('payment_reference', $search)
+            ->withTrashed()
+            ->first();
+
+        // If not found, try by user email
+        if (!$reference) {
+            $user = User::where('email', $search)->first();
+
+            if ($user) {
+                $reference = Ledger::where('ledgerable_id', $user->id)
+                    ->withTrashed()
+                    ->where('ledgerable_type', User::class)
+                    ->first();
+            }
+        }
+
+        if (!$reference) {
+            return response()->json([
+                "message" => "No ledger entries found for the provided search {$search}"
+            ], 404);
+        }
+
+        // Fetch all ledger entries for that ledgerable
+        $entries = Ledger::where('ledgerable_id', $reference->ledgerable_id)
+            ->where('ledgerable_type', $reference->ledgerable_type)
+            ->where('type', 'invoice')
+            ->get();
+
+        return LedgerResource::collection($entries);
+    }
+
+
     /**
      * @throws ConnectionException
      */
@@ -147,6 +185,8 @@ class PaymentController extends Controller
             // update a receipt entry and invoice payment status
             PaymentHelper::updateReceiptEntry($receipt, PaymentHelper::assembleReceiptUpdateData($check));
             $invoice->update(['payment_status' => $check['status']]);
+            // delete not paid entries for the same ledgerable_id and ledgerable_type
+            PaymentHelper::deleteNotPaidLedgerEntries($invoice->system_reference);
             return response()->json(['status' => $check['status']]);
         } else {
             $invoice->update(['payment_status' => $check['status'] ?? 'pending']);

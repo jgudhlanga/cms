@@ -1,32 +1,25 @@
 <script setup lang="ts">
-import { Head, router, useForm } from '@inertiajs/vue3';
+import { Head, router } from '@inertiajs/vue3';
 
 import { BaseButton } from '@/components/core/button';
 import BaseIcon from '@/components/core/icon/BaseIcon.vue';
 import PageContainer from '@/components/core/page/PageContainer.vue';
-import AnimatedCheckMark from '@/components/core/util/AnimatedCheckMark.vue';
-import AnimatedErrorIcon from '@/components/core/util/AnimatedErrorIcon.vue';
-import BasePaymentStatus from '@/components/shared/integraions/BasePaymentStatus.vue';
-import { useSharedFormSchema } from '@/composables/core/useSharedFormSchema';
-import { ColorVariant } from '@/enums/colors';
+import HeadingSmall from '@/components/core/util/HeadingSmall.vue';
 import { IconName } from '@/enums/icons';
 import { errorAlert, successAlert } from '@/lib/alerts';
-import { clearFormErrors } from '@/lib/forms';
 import HttpService from '@/services/http.service';
 import { AuthObject } from '@/types/data-pagination';
+import { Ledger } from '@/types/integrations';
+import { PaymentCheckResponse } from '@/types/tools';
 import { Link } from '@/types/ui';
 import { computed, ref } from 'vue';
 import BaseInput from '../../../components/core/form/text/BaseInput.vue';
-import { PaymentCheckResponse } from '@/types/tools';
+import LedgerList from './partials/LedgerList.vue';
 
 interface Props {
     auth: AuthObject;
     errors: object;
 }
-
-
-
-const { orderReferenceSchema } = useSharedFormSchema();
 
 defineProps<Props>();
 
@@ -39,22 +32,22 @@ const breadcrumbs: Array<Link> = [
     { title: 'Payments Debug' },
 ];
 
-const isLoading = ref(false);
+const isSearching = ref(false);
 const processingUpdate = ref(false);
 const checkData = ref<PaymentCheckResponse | null>(null);
-const form = useForm<any>({
-    order_reference: '',
-});
-const submitForm = async () => {
-    isLoading.value = true;
+
+const search = ref('');
+const ledgers = ref<Ledger[] | null>([]);
+
+const searchLedger = async () => {
+    isSearching.value = true;
     try {
-        orderReferenceSchema().parse(form);
-        checkData.value = await HttpService.post(route('integrations.payments.check-status', { order_reference: form.order_reference }), {});
+        ledgers.value = await HttpService.get(`integrations/payments/ledger-entries/${search.value}`);
     } catch (error: any) {
-        checkData.value = null;
-        form.setError(error.format());
+        const message = error?.response?.data?.message;
+        if (message) errorAlert(error?.response?.data?.message);
     } finally {
-        isLoading.value = false;
+        isSearching.value = false;
     }
 };
 
@@ -95,71 +88,33 @@ const updateLedgers = async () => {
 <template>
     <Head title="Payment Debug" />
     <PageContainer :breadcrumbs="breadcrumbs">
-        <div class="mx-auto my-5 flex w-full">
-            <form @submit.prevent="submitForm()" class="mx-auto flex w-2/3 flex-col rounded-2xl p-10 shadow-md">
+        <div class="mx-auto my-5 flex w-full flex-col">
+            <div class="mx-auto flex w-2/3 flex-col rounded-2xl px-10 py-3 shadow-md">
                 <div class="flex w-full flex-col">
                     <BaseInput
                         classes="w-full p-6"
                         input-id="order_reference"
-                        label="Order Reference"
-                        v-model="form.order_reference"
-                        placeholder="enter order reference"
-                        :vertical-layout="false"
+                        label="Order Reference / Payment Reference / User Email"
+                        v-model="search"
+                        placeholder="enter order reference / payment reference / user email"
+                        :vertical-layout="true"
                         :label-uppercase="true"
                         :is-required="true"
-                        @input="clearFormErrors(form, 'order_reference')"
-                        :error="form.errors.order_reference"
                     />
                 </div>
                 <div class="mt-6 flex w-full justify-center md:w-auto">
-                    <BaseButton type="submit" :processing="isLoading"> Check Payment Status </BaseButton>
+                    <BaseButton @click="searchLedger" type="button" :processing="isSearching">
+                        <BaseIcon :name="IconName.search" />
+                        Search
+                    </BaseButton>
                 </div>
-            </form>
+            </div>
+            <div v-if="ledgers && ledgers.length > 0 && !isSearching" class="mt-6 flex w-full flex-col">
+                <div class="mx-auto flex w-2/3 mb-3 justify-center">
+                    <HeadingSmall title="Found Invoices / Payments" />
+                </div>
+                <LedgerList :ledgers="ledgers" />
+            </div>
         </div>
-        <template v-if="checkData?.message?.toLocaleLowerCase() === 'transaction not found'">
-            <BasePaymentStatus color="red" :message="checkData?.message">
-                <template #header>
-                    <div :class="`flex flex-col items-center bg-gradient-to-br from-red-400 to-red-600 px-6 py-8`">
-                        <AnimatedErrorIcon />
-                        <h1 class="text-2xl font-bold text-red-100">{{ checkData?.status }}!</h1>
-                    </div>
-                </template>
-                <template #status>
-                    <BaseIcon :name="IconName.circle_x" size="18" class="mr-2 text-red-600" />
-                    {{ checkData?.message }}
-                </template>
-
-                <template #action-buttons v-if="checkData?.message?.toLocaleLowerCase() !== 'transaction not found'">
-                    <BaseButton classes="rounded-full" title="Update Ledger" @click="() => {}" :variant="ColorVariant.danger" />
-                </template>
-            </BasePaymentStatus>
-        </template>
-        <template v-else-if="checkData">
-            <form @submit.prevent="updateLedgers()">
-                <BasePaymentStatus :details="composeDetails" color="green">
-                    <template #header>
-                        <div :class="`flex flex-col items-center bg-gradient-to-br from-green-400 to-green-600 px-6 py-8`">
-                            <AnimatedCheckMark />
-                            <h1 class="text-2xl font-bold text-green-100">{{ composeDetails?.attributes?.paymentStatus }}!</h1>
-                            <p :class="`mt-2 text-center text-green-100`">Transaction found</p>
-                        </div>
-                    </template>
-                    <template #status>
-                        <BaseIcon :name="IconName.check_done" size="18" class="mr-2 text-green-600" />
-                        {{ composeDetails?.attributes?.paymentStatus }}
-                    </template>
-                    <template #action-buttons>
-                        <BaseButton
-                            :processing="processingUpdate"
-                            type="submit"
-                            classes="rounded-full"
-                            title="Update Student Payment Status"
-                            @click="() => {}"
-                            :variant="ColorVariant.success"
-                        />
-                    </template>
-                </BasePaymentStatus>
-            </form>
-        </template>
     </PageContainer>
 </template>

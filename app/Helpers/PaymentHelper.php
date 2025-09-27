@@ -93,6 +93,24 @@ class PaymentHelper
         ]);
     }
 
+    public static function deleteNotPaidLedgerEntries(string $orderReference): void
+    {
+        // Find a ledger with the provided order reference
+        $ledger = Ledger::where('system_reference', $orderReference)->first();
+
+        if (!$ledger) {
+            return; // No matching ledger found
+        }
+
+        // Delete (soft delete) all related ledgers for the same ledgerable
+        // where payment_status is not 'paid'
+        Ledger::where('ledgerable_id', $ledger->ledgerable_id)
+            ->where('ledgerable_type', $ledger->ledgerable_type)
+            ->where('payment_status', '!=', 'paid')
+            ->delete();
+
+    }
+
     /**
      * @param Request $request
      * @param mixed $data
