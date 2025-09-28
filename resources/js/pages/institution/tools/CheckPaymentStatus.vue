@@ -40,6 +40,10 @@ const search = ref('');
 const ledgers = ref<Ledger[] | null>([]);
 
 const searchLedger = async () => {
+    if(search.value === '') {
+        errorAlert('Please enter a search term');
+        return;
+    }
     isSearching.value = true;
     try {
         ledgers.value = await HttpService.get(`integrations/payments/ledger-entries/${search.value}`);
