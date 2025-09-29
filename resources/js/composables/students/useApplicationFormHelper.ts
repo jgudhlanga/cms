@@ -52,6 +52,7 @@ export const useApplicationFormHelper = (isEditing?: boolean) => {
             date_of_birth: storeRefs.date_of_birth.value ?? '',
             id_number: storeRefs.id_number?.value ?? '',
             id_type_id: storeRefs.idType.value?.value ?? '',
+            disability_status: storeRefs.disability_status?.value ?? null,
             idType: storeRefs.idType.value ?? '',
             maritalStatus: storeRefs.maritalStatus?.value,
             marital_status_id: storeRefs.maritalStatus?.value?.value ?? null,

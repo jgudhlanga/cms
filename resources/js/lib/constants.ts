@@ -1,3 +1,5 @@
+import { RadioGroupOption } from '@/types/forms';
+
 const DEFAULT_AVATAR: string = '/assets/images/user.png';
 const DEFAULT_IMAGE: string = '/assets/images/object.svg';
 const LOGO: string = '/assets/images/logo.jpeg';
@@ -67,14 +69,21 @@ const EXAM_SITTINGS = [
     { value: 'november', label: 'November' },
     { value: 'other', label: 'Other' },
 ];
+const DISABILITY_OPTIONS: RadioGroupOption[] = [
+    { label: 'Yes', value: 'yes', inputId: 'disability_yes' },
+    { label: 'No', value: 'no', inputId: 'disability_nno' },
+    { label: 'Prefer not to say', value: 'prefer_not_to_say', inputId: 'disability_prefer_not_to_say' },
+];
 export {
     API_BASE_URL,
     API_VERSION,
     APP_MODULE_KEYS,
     DEFAULT_AVATAR,
     DEFAULT_IMAGE,
+    DISABILITY_OPTIONS,
     EXAM_SITTINGS,
-    LOGO,PAYMENT_METHODS,
+    LOGO,
     PAGINATION_ITEMS_PER_PAGE,
     PAGINATION_MAX_LIMIT,
+    PAYMENT_METHODS,
 };

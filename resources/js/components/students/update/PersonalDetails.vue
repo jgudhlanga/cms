@@ -7,9 +7,11 @@ import IdTypeComboSelect from '@/components/core/form/combobox/IdTypeComboSelect
 import MaritalStatusComboSelect from '@/components/core/form/combobox/MaritalStatusComboSelect.vue';
 import TitleComboSelect from '@/components/core/form/combobox/TitleComboSelect.vue';
 import DateOfBirth from '@/components/core/form/date/DateOfBirth.vue';
+import BaseRadioGroup from '@/components/core/form/radio-group/BaseRadioGroup.vue';
 import IdNumber from '@/components/core/form/text/IdNumber.vue';
 import PassportNumber from '@/components/core/form/text/PassportNumber.vue';
 import { useUtils } from '@/composables/core/useUtils';
+import { DISABILITY_OPTIONS } from '@/lib/constants';
 import { clearFormErrors } from '@/lib/forms';
 import { useCreateApplicationFormStore } from '@/store/portal/useCreateApplicationFormStore';
 import { CreateApplicationParams } from '@/types/portal';
@@ -29,7 +31,14 @@ const {
     last_name,
     title,
     gender,
+    disability_status,
 } = storeToRefs(useCreateApplicationFormStore());
+
+const disabilityOptions = DISABILITY_OPTIONS;
+const onRadioChange = (value: any) => {
+    console.log(value);
+    disability_status.value = value;
+};
 
 defineProps<{ form: InertiaForm<CreateApplicationParams> }>();
 const { isNativeCitizen } = useUtils();
@@ -88,6 +97,16 @@ const { isNativeCitizen } = useUtils();
                 :teleport="true"
                 :error="form.errors.date_of_birth"
                 @update:model-value="clearFormErrors(form, 'date_of_birth')"
+            />
+        </div>
+        <div class="mt-3 flex w-full flex-col items-start">
+            <BaseRadioGroup
+                label="Do you have a disability?"
+                class="flex items-center justify-center"
+                :options="disabilityOptions"
+                :label-uppercase="true"
+                orientation="horizontal"
+                @update:modelValue="onRadioChange"
             />
         </div>
     </BaseCard>

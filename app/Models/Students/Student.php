@@ -50,6 +50,7 @@ class Student extends Model
         'height',
         'weight',
         'required_exam_sitting_count',
+        'disability_status',
     ];
 
     public function user(): BelongsTo
@@ -129,10 +130,10 @@ class Student extends Model
         return $this->hasMany(AcademicRecord::class, 'student_id');
     }
 
-   public function oLevelResults(): HasMany
+    public function oLevelResults(): HasMany
     {
         return $this->hasMany(StudentAcademicResult::class, 'student_id')
-                ->where('academic_level_id', AcademicLevelEnum::SECONDARY_SCHOOL->id());
+            ->where('academic_level_id', AcademicLevelEnum::SECONDARY_SCHOOL->id());
     }
 
     public function nextOfKins(): MorphMany

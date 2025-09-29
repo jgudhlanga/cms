@@ -78,6 +78,7 @@ class StudentRepository extends BaseRepository implements IStudentRepository
             'study_permit_number' => $dto->study_permit_number,
             'required_exam_sitting_count' => $this->getRequiredExamSittingCount($dto->o_level_years, $dto->o_level_other_years),
             'date_of_birth' => Carbon::parse($dto->date_of_birth)->format('Y-m-d'),
+            'disability_status' => $dto->disability_status,
         ];
     }
 

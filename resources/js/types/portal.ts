@@ -1,5 +1,5 @@
-import { SelectOption } from '@/types/utils';
 import { DepartmentLevelRequirement } from '@/types/department-meta-data';
+import { SelectOption } from '@/types/utils';
 
 export type CreateApplicationUserParams = {
     email: string;
@@ -8,7 +8,6 @@ export type CreateApplicationUserParams = {
     password: string;
     password_confirmation: string;
 };
-
 
 export type CreateApplicationParams = {
     /** Personal details */
@@ -30,6 +29,7 @@ export type CreateApplicationParams = {
     title_id: string | number | null;
     gender: SelectOption | null;
     gender_id: string | number | null;
+    disability_status: 'yes' | 'no' | 'prefer_not_to_say' | null;
     /** Contact details, addresses */
     phone_number?: string | null;
     alt_phone_number?: string | null;
@@ -55,17 +55,17 @@ export type CreateApplicationParams = {
     level_id: string | number | null;
     course: SelectOption | null;
     course_id: string | number | null;
-    levelRequirements?: DepartmentLevelRequirement | null,
-    o_level_subject_ids?:  Record<string, string> | null;
-    o_level_years?:  Record<string, string> | null;
-    o_level_sittings?:  Record<string, SelectOption> | null;
+    levelRequirements?: DepartmentLevelRequirement | null;
+    o_level_subject_ids?: Record<string, string> | null;
+    o_level_years?: Record<string, string> | null;
+    o_level_sittings?: Record<string, SelectOption> | null;
     required_level_completed?: boolean | null;
     required_level_upload?: any;
     read_write_acknowledged?: boolean | null;
-    o_level_other_subject_ids?:  Record<string, SelectOption> | null;
-    o_level_other_grade_ids?:  Record<string, string> | null;
-    o_level_other_years?:  Record<string, string> | null;
-    o_level_other_sittings?:  Record<string, SelectOption> | null;
+    o_level_other_subject_ids?: Record<string, SelectOption> | null;
+    o_level_other_grade_ids?: Record<string, string> | null;
+    o_level_other_years?: Record<string, string> | null;
+    o_level_other_sittings?: Record<string, SelectOption> | null;
 };
 
 export type UpdateProgramParams = {
@@ -78,15 +78,15 @@ export type UpdateProgramParams = {
     level_id: string | number | null;
     course: SelectOption | null;
     course_id: string | number | null;
-    levelRequirements?: DepartmentLevelRequirement | null,
-    o_level_subject_ids?:  Record<string, string> | null;
-    o_level_years?:  Record<string, string> | null;
-    o_level_sittings?:  Record<string, SelectOption> | null;
+    levelRequirements?: DepartmentLevelRequirement | null;
+    o_level_subject_ids?: Record<string, string> | null;
+    o_level_years?: Record<string, string> | null;
+    o_level_sittings?: Record<string, SelectOption> | null;
     required_level_completed?: boolean | null;
     required_level_upload?: any;
     read_write_acknowledged?: boolean | null;
-    o_level_other_subject_ids?:  Record<string, SelectOption> | null;
-    o_level_other_grade_ids?:  Record<string, string> | null;
-    o_level_other_years?:  Record<string, string> | null;
-    o_level_other_sittings?:  Record<string, SelectOption> | null;
+    o_level_other_subject_ids?: Record<string, SelectOption> | null;
+    o_level_other_grade_ids?: Record<string, string> | null;
+    o_level_other_years?: Record<string, string> | null;
+    o_level_other_sittings?: Record<string, SelectOption> | null;
 };

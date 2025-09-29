@@ -20,6 +20,7 @@ export const useCreateApplicationFormStore = defineStore('portal-application-for
             country: null,
             country_id: null,
             date_of_birth: '',
+            disability_status: null,
             id_number: '',
             id_type_id: null,
             idType: null,
