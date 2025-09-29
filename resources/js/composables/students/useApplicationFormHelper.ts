@@ -52,6 +52,7 @@ export const useApplicationFormHelper = (isEditing?: boolean) => {
             date_of_birth: storeRefs.date_of_birth.value ?? '',
             id_number: storeRefs.id_number?.value ?? '',
             id_type_id: storeRefs.idType.value?.value ?? '',
+            disability_status: storeRefs.disability_status?.value ?? null,
             idType: storeRefs.idType.value ?? '',
             maritalStatus: storeRefs.maritalStatus?.value,
             marital_status_id: storeRefs.maritalStatus?.value?.value ?? null,
@@ -86,12 +87,12 @@ export const useApplicationFormHelper = (isEditing?: boolean) => {
             o_level_other_sittings: storeRefs.o_level_other_sittings?.value ?? null,
         });
     };
-    const validateMainSubjects = (): string[] => {
+    const validateMainSubjects = (mainSubjectCount: number): string[] => {
         const selectedSubjects = storeRefs.o_level_subject_ids?.value ?? {};
         const selectedCount = Object.keys(selectedSubjects).length;
         const errors: string[] = [];
-        if (selectedCount !== 3) {
-            errors.push(`You must provide exactly 3 main subjects grades. Currently: ${selectedCount}`);
+        if (selectedCount !== mainSubjectCount) {
+            errors.push(`You must provide exactly ${mainSubjectCount} main subjects grades. Currently: ${selectedCount}`);
         }
         Object.keys(selectedSubjects).forEach((subjectId, index) => {
             const subjectLabel = `Main subject #${index + 1} (ID: ${subjectId})`;
@@ -119,7 +120,7 @@ export const useApplicationFormHelper = (isEditing?: boolean) => {
         return null;
     };
 
-    const validateOtherSubjects = (): string[] => {
+    const validateOtherSubjects = (otherSubjectCount: number): string[] => {
         const errors: string[] = [];
 
         const selectedSubjectIds = storeRefs.o_level_other_subject_ids?.value || {};
@@ -130,8 +131,8 @@ export const useApplicationFormHelper = (isEditing?: boolean) => {
         const keys = Object.keys(selectedSubjectIds);
 
         // Must have exactly 2 subjects
-        if (keys.length !== 2) {
-            errors.push(`You must provide exactly 2 other subjects. Provided: ${keys.length}`);
+        if (keys.length !== otherSubjectCount) {
+            errors.push(`You must provide exactly ${otherSubjectCount} other subjects. Provided: ${keys.length}`);
         }
 
         const seenSubjects = new Set<number>();

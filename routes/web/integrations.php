@@ -15,5 +15,6 @@ Route::prefix('integrations')->middleware('auth')->group(function () {
         Route::post('check-payment-status-for-current-user', [PaymentController::class, 'checkPaymentStatusForCurrenUser'])->name('check-payment-status-for-current-user');
         Route::post('update-status', [PaymentController::class, 'updateLedgerRecords'])->name('integrations.payments.update-status');
         Route::get('payment-status', [PaymentController::class, 'createCheckStatus'])->name('integrations.payments.check-status-create');
+        Route::get('ledger-entries/{search}', [PaymentController::class, 'getLedgerEntries'])->name('integrations.payments.ledger-entries');
     });
 });

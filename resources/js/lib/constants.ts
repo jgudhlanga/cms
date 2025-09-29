@@ -1,3 +1,5 @@
+import { RadioGroupOption } from '@/types/forms';
+
 const DEFAULT_AVATAR: string = '/assets/images/user.png';
 const DEFAULT_IMAGE: string = '/assets/images/object.svg';
 const LOGO: string = '/assets/images/logo.jpeg';
@@ -60,11 +62,17 @@ const APP_MODULE_KEYS = {
     document_types: 'document_types',
     fee_types: 'fee_types',
     fee_structures: 'fee_structures',
+    show_payment_status: 'show_payment_status',
 };
 const EXAM_SITTINGS = [
     { value: 'june', label: 'June' },
     { value: 'november', label: 'November' },
     { value: 'other', label: 'Other' },
+];
+const DISABILITY_OPTIONS: RadioGroupOption[] = [
+    { label: 'Yes', value: 'yes', inputId: 'disability_yes' },
+    { label: 'No', value: 'no', inputId: 'disability_nno' },
+    { label: 'Prefer not to say', value: 'prefer_not_to_say', inputId: 'disability_prefer_not_to_say' },
 ];
 export {
     API_BASE_URL,
@@ -72,8 +80,10 @@ export {
     APP_MODULE_KEYS,
     DEFAULT_AVATAR,
     DEFAULT_IMAGE,
+    DISABILITY_OPTIONS,
     EXAM_SITTINGS,
-    LOGO,PAYMENT_METHODS,
+    LOGO,
     PAGINATION_ITEMS_PER_PAGE,
     PAGINATION_MAX_LIMIT,
+    PAYMENT_METHODS,
 };
