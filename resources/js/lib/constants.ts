@@ -60,6 +60,7 @@ const APP_MODULE_KEYS = {
     document_types: 'document_types',
     fee_types: 'fee_types',
     fee_structures: 'fee_structures',
+    show_payment_status: 'show_payment_status',
 };
 const EXAM_SITTINGS = [
     { value: 'june', label: 'June' },
