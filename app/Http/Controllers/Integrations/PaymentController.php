@@ -219,6 +219,9 @@ class PaymentController extends Controller
                     $record->update(['payment_status' => $paymentStatus ?? 'pending']);
                 }
             }
+            if (!empty($paymentStatus) && Str::lower($paymentStatus) === 'paid') {
+                PaymentHelper::deleteNotPaidLedgerEntries($orderReference);
+            }
         }
     }
 

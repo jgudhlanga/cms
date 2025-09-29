@@ -3,10 +3,12 @@ import { BaseButton } from '@/components/core/button';
 import { useUtils } from '@/composables/core/useUtils';
 import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
-import { errorAlert } from '@/lib/alerts';
+import { errorAlert, openModal } from '@/lib/alerts';
 import HttpService from '@/services/http.service';
+import { PaymentCheckResponse } from '@/types/tools';
 import { Ledger } from '@/types/integrations';
 import { ref } from 'vue';
+import { APP_MODULE_KEYS } from '@/lib/constants';
 
 interface Props {
     ledgers: Ledger[];
@@ -15,6 +17,7 @@ interface Props {
 defineProps<Props>();
 const { formatDate } = useUtils();
 const isChecking = ref(false);
+const checkData = ref<PaymentCheckResponse | null>(null);
 const checkStatus = async (orderReference: string) => {
     isChecking.value = true;
     try {
@@ -23,7 +26,8 @@ const checkStatus = async (orderReference: string) => {
         if (message) {
             errorAlert(`${message} (${orderReference})`);
         } else {
-
+            checkData.value = response;
+            openModal({ name: APP_MODULE_KEYS.show_payment_status, edit: checkData.value });
         }
     } catch (error: any) {
         const message = error?.response?.data?.message;
