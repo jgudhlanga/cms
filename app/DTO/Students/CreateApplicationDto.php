@@ -25,6 +25,7 @@ readonly class CreateApplicationDto
         public string  $last_name,
         public int     $title_id,
         public int     $gender_id,
+        public ?string  $disability_status,
         /** Contact details, addresses */
         public string  $phone_number,
         public ?string $alt_phone_number,
@@ -78,6 +79,7 @@ readonly class CreateApplicationDto
             last_name: $request->last_name,
             title_id: $request->title_id,
             gender_id: $request->gender_id,
+            disability_status: $request->disability_status,
             /** Contact details, addresses */
             phone_number: $request->phone_number,
             alt_phone_number: $request->alt_phone_number,
