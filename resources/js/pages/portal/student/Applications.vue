@@ -1,8 +1,11 @@
 <script setup lang="ts">
+import { GenericButton } from '@/components/core/button';
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import DataTable from '@/components/core/table/DataTable.vue';
 import { useUtils } from '@/composables/core/useUtils';
 import { useStudentApplications } from '@/composables/students/useStudentApplications';
+import { ColorVariant } from '@/enums/colors';
+import { IconName } from '@/enums/icons';
 import { AuthObject } from '@/types/data-pagination';
 import { Enrolment } from '@/types/enrolments';
 import { Student } from '@/types/students';
@@ -40,9 +43,7 @@ const remainingSlots = () => {
             return app?.attributes?.levelId === levelId;
         });
 
-        const allowed = Number(
-            sameLevelApplications[0]?.attributes?.allowedApplicationsPerLevel ?? 0
-        );
+        const allowed = Number(sameLevelApplications[0]?.attributes?.allowedApplicationsPerLevel ?? 0);
         const currentCount = Number(sameLevelApplications.length);
 
         if (allowed > 0) {
@@ -54,8 +55,6 @@ const remainingSlots = () => {
     }, 0);
 };
 
-
-
 const breadcrumbs: BreadcrumbItemInterface[] = [{ transChoiceKey: 'dashboard', href: route('portal.dashboard') }, { transChoiceKey: 'application' }];
 const { createStudentApplicationColumns, allowed } = useStudentApplications();
 </script>
@@ -65,13 +64,17 @@ const { createStudentApplicationColumns, allowed } = useStudentApplications();
         <div v-if="eligibleForMoreApplications()" class="text-destructive flex w-fit rounded-full bg-amber-200 px-5 py-1 leading-tight">
             {{ `You can apply for ${remainingSlots()} more courses` }}
         </div>
-        <DataTable
-            :data="applications"
-            :show-archived-filter="false"
-            :columns="createStudentApplicationColumns()"
-            :on-create="() => eligibleForMoreApplications() ? navigateTo(route('portal.add-program', { student: props.student.id })) : null"
-            :disable-create="!allowed"
-        >
+        <DataTable :data="applications" :show-archived-filter="false" :columns="createStudentApplicationColumns()">
+            <template #head-right v-if="eligibleForMoreApplications()">
+                <GenericButton
+                    :icon="IconName.add"
+                    class="rounded-full"
+                    :icon-variant="ColorVariant.white"
+                    :variant="ColorVariant.primary_outline"
+                    @click="() => navigateTo(route('portal.add-program', { student: props.student.id }))"
+                    title="New Application"
+                />
+            </template>
         </DataTable>
     </PageContainer>
 </template>
