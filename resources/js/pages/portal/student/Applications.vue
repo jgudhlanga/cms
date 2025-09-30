@@ -56,7 +56,7 @@ const remainingSlots = () => {
 };
 
 const breadcrumbs: BreadcrumbItemInterface[] = [{ transChoiceKey: 'dashboard', href: route('portal.dashboard') }, { transChoiceKey: 'application' }];
-const { createStudentApplicationColumns, allowed } = useStudentApplications();
+const { createStudentApplicationColumns } = useStudentApplications();
 </script>
 <template>
     <Head :title="$tChoice('trans.application', 2)" />
