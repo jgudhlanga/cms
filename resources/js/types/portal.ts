@@ -68,7 +68,7 @@ export type CreateApplicationParams = {
     o_level_other_sittings?: Record<string, SelectOption> | null;
 };
 
-export type UpdateProgramParams = {
+export type ProgramParams = {
     /** Programs */
     modeOfStudy: SelectOption | null;
     mode_of_study_id: string | number | null;

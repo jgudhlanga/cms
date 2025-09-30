@@ -10,6 +10,7 @@ import { computed, onMounted } from 'vue';
 
 interface Props {
     form: InertiaForm<any>;
+    disallowedDepartments?: string[] | number[];
 }
 
 const { isLoading, departments, listDepartments } = useInstitutionDepartments();
@@ -17,14 +18,23 @@ onMounted(async () => {
     await listDepartments(route('v1.institution-departments.index', { is_academic: 1, page_size: 'all' }));
 });
 const props = defineProps<Props>();
+
 const options = computed(() => {
-    return departments.value?.data?.map(
-        (institutionDepartment: InstitutionDepartment) =>
-            <SelectOption>{
-                value: Number(institutionDepartment.id),
-                label: institutionDepartment?.attributes?.department,
-            },
-    );
+    return departments.value?.data
+        ?.filter((item: InstitutionDepartment) => {
+            if (!props.disallowedDepartments?.length) return true;
+
+            const departmentId = Number(item.attributes.departmentId);
+            // ✅ exclude if departmentId is in disallowedDepartments
+            return !props.disallowedDepartments.map(Number).includes(departmentId);
+        })
+        .map(
+            (item: InstitutionDepartment) =>
+                <SelectOption>{
+                    value: Number(item.id?.toString() ?? ''),
+                    label: item?.attributes?.department,
+                },
+        );
 });
 
 const whenSearch = debounce(async (search: string) => {

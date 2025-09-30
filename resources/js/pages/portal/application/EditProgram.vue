@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // UI components
-import { onMounted, watch } from 'vue';
+import { onBeforeUnmount, onMounted, watch } from 'vue';
 
 // Page sections
 import Programs from '@/components/students/update/Programs.vue';
@@ -12,7 +12,7 @@ import { useStudentPortal } from '@/composables/students/useStudentPortal';
 
 // Store & types
 import { AuthObject } from '@/types/data-pagination';
-import { UpdateProgramParams } from '@/types/portal';
+import { ProgramParams } from '@/types/portal';
 
 // Utilities
 import { BaseButton } from '@/components/core/button';
@@ -39,12 +39,13 @@ const props = defineProps<Props>();
 const { application } = props;
 
 // Composable
-const { updateApplication, updateProgramFormSchema } = useStudentPortal();
+const { updateApplication, programFormSchema } = useStudentPortal();
 const { listLevelRequirements, levelRequirements: levelRequirements } = useDepartmentLevels();
-const { isItTrue, goBack } = useUtils();
+const { isItTrue, navigateTo } = useUtils();
 const { validateMainSubjects, validateOtherSubjects, updateProgramForm } = useApplicationFormHelper(true);
 
 // Store
+const store = useUpdateProgramFormStore();
 const {
     modeOfStudy,
     department,
@@ -53,10 +54,10 @@ const {
     required_level_completed,
     read_write_acknowledged,
     levelRequirements: levelRequirementsStore,
-} = storeToRefs(useUpdateProgramFormStore());
+} = storeToRefs(store);
 
 // Form
-const form = useForm<UpdateProgramParams>({
+const form = useForm<ProgramParams>({
     modeOfStudy: null,
     mode_of_study_id: null,
     department: null,
@@ -98,7 +99,7 @@ onMounted(async () => {
 const save = async () => {
     updateProgramForm(form);
     try {
-        updateProgramFormSchema().parse(form);
+        programFormSchema().parse(form);
         if (isItTrue(levelRequirements.value?.attributes?.isOLevelRequired)) {
             const mainSubjectsCount = Number(String(levelRequirements?.value?.attributes?.mainSubjectsCount ?? '0'));
             const mainErrors = validateMainSubjects(mainSubjectsCount);
@@ -134,6 +135,10 @@ const save = async () => {
         }
     }
 };
+onBeforeUnmount(() => {
+    store.$reset();
+    store.$dispose();
+});
 </script>
 <template>
     <StudentPageHeader />
@@ -143,7 +148,13 @@ const save = async () => {
                 <Programs :form="form" :application="application" />
                 <CustomSeparator classes="h-1 my-5" />
                 <div class="mb-10 flex items-center justify-center space-x-3">
-                    <BaseButton @click="goBack" type="button" :variant="ColorVariant.shade" class="w-1/2 md:w-[200px]" :size="ButtonSize.xl">
+                    <BaseButton
+                        @click="navigateTo(route('portal.applications'))"
+                        type="button"
+                        :variant="ColorVariant.shade"
+                        class="w-1/2 md:w-[200px]"
+                        :size="ButtonSize.xl"
+                    >
                         {{ $t('trans.cancel') }}
                     </BaseButton>
                     <BaseButton class="w-1/2 md:w-[200px]" :size="ButtonSize.xl">

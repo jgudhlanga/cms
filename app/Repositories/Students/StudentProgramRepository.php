@@ -3,7 +3,7 @@
 namespace App\Repositories\Students;
 
 use App\DTO\Students\StudentProgramDto;
-use App\DTO\Students\UpdateStudentProgramDto;
+use App\DTO\Students\ProgramDto;
 use App\Http\Filters\Students\StudentProgramFilter;
 use App\Models\Students\StudentProgram;
 use App\Repositories\Base\BaseRepository;
@@ -24,7 +24,7 @@ class StudentProgramRepository extends BaseRepository implements interface\IStud
         return $this->studentProgram->create($this->getFields($dto))->refresh();
     }
 
-    public function update(StudentProgram $studentProgram, UpdateStudentProgramDto $dto)
+    public function update(StudentProgram $studentProgram, ProgramDto $dto)
     {
         return tap($studentProgram)->update($this->getUpdateFields($dto));
     }
@@ -54,7 +54,7 @@ class StudentProgramRepository extends BaseRepository implements interface\IStud
         ];
     }
 
-    private function getUpdateFields(UpdateStudentProgramDto $dto): array
+    private function getUpdateFields(ProgramDto $dto): array
     {
         return [
             'mode_of_study_id' => $dto->mode_of_study_id,

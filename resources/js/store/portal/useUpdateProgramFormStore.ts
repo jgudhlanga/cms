@@ -1,8 +1,8 @@
-import { UpdateProgramParams } from '@/types/portal';
+import { ProgramParams } from '@/types/portal';
 import { defineStore } from 'pinia';
 
 export const useUpdateProgramFormStore = defineStore('update-program-form', {
-    state: (): UpdateProgramParams => {
+    state: (): ProgramParams => {
         return {
             modeOfStudy: null,
             mode_of_study_id: null,

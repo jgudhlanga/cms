@@ -14,13 +14,13 @@ import { clearFormErrors } from '@/lib/forms';
 import { useCreateApplicationFormStore } from '@/store/portal/useCreateApplicationFormStore';
 import { useUpdateProgramFormStore } from '@/store/portal/useUpdateProgramFormStore';
 import { Enrolment } from '@/types/enrolments';
-import { CreateApplicationParams, UpdateProgramParams } from '@/types/portal';
+import { CreateApplicationParams, ProgramParams } from '@/types/portal';
 import { InertiaForm } from '@inertiajs/vue3';
 import { storeToRefs } from 'pinia';
 import { ref, watch } from 'vue';
 
 interface Props {
-    form: InertiaForm<CreateApplicationParams | UpdateProgramParams>;
+    form: InertiaForm<CreateApplicationParams | ProgramParams>;
     application?: Enrolment | null;
 }
 
