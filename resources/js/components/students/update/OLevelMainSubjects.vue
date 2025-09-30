@@ -16,7 +16,7 @@ import { Grade, Subject } from '@/types/institution';
 import { SelectOption } from '@/types/utils';
 import { trans } from 'laravel-vue-i18n';
 import { storeToRefs } from 'pinia';
-import { onMounted, ref, Ref } from 'vue';
+import { onMounted, ref, Ref, watchEffect } from 'vue';
 
 interface Props {
     application?: Enrolment | null;
@@ -151,7 +151,11 @@ onMounted(async () => {
     await listGrades();
 
     //set all subjects to main year and sitting from application
-    populateCurrentDataFromApplication();
+    watchEffect(() => {
+        if (!isLoading.value && grades.value?.length) {
+            populateCurrentDataFromApplication();
+        }
+    });
     // === Main Year logic ===
     if (o_level_years?.value) {
         mainYear.value = getMainSittingYear(o_level_years.value);

@@ -3,10 +3,10 @@
 namespace App\DTO\Students;
 
 use App\Http\Requests\Students\StudentProgramRequest;
-use App\Http\Requests\Students\UpdateProgramRequest;
+use App\Http\Requests\Students\ProgramRequest;
 use App\Models\Students\Student;
 
-readonly class UpdateStudentProgramDto
+readonly class ProgramDto
 {
     public function __construct(
         /** Programs */
@@ -20,7 +20,7 @@ readonly class UpdateStudentProgramDto
     {
     }
 
-    public static function fromUpdateProgramRequest(UpdateProgramRequest $request): UpdateStudentProgramDto
+    public static function fromProgramRequest(ProgramRequest $request): ProgramDto
     {
         return new self(
             mode_of_study_id: $request->mode_of_study_id,

@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests\Students;
 
-use App\Enums\Shared\IdTypeEnum;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
@@ -14,7 +13,7 @@ use Illuminate\Foundation\Http\FormRequest;
  * @property mixed $o_level_other_years
  * @property mixed $o_level_other_sittings
  */
-class UpdateProgramRequest extends FormRequest
+class ProgramRequest extends FormRequest
 {
 
     public function authorize(): bool

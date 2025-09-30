@@ -72,7 +72,7 @@ export function useStudentPortal() {
         }
         return personalDetails;
     };
-    const updateProgramFormSchema = () => {
+    const programFormSchema = () => {
         const validations = ['courseSchema', 'departmentSchema', 'modeOfStudySchema'];
 
         return mergeValidationSchema(schemaFields)(validations, schemaFields['levelSchema']());
@@ -98,6 +98,17 @@ export function useStudentPortal() {
         try {
             form.put(route('portal.application.update', applicationId), buildFormOptions(form, successMessage(), errorMessage()));
             const store = useUpdateProgramFormStore();
+            store.$reset();
+            store.$dispose();
+        } catch (error: any) {
+            form.setError(error.format());
+        }
+    };
+
+    const addProgram = (studentId: string, form: InertiaForm<any>) => {
+        try {
+            form.post(route('portal.program.store', studentId), buildFormOptions(form, successMessage(), errorMessage()));
+            const store = useCreateApplicationFormStore();
             store.$reset();
             store.$dispose();
         } catch (error: any) {
@@ -236,6 +247,7 @@ export function useStudentPortal() {
         getMainSittingYear,
         getMainSitting,
         updateApplication,
-        updateProgramFormSchema,
+        programFormSchema,
+        addProgram,
     };
 }

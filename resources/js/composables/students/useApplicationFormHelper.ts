@@ -1,6 +1,6 @@
 import { useCreateApplicationFormStore } from '@/store/portal/useCreateApplicationFormStore';
 import { useUpdateProgramFormStore } from '@/store/portal/useUpdateProgramFormStore';
-import { CreateApplicationParams, UpdateProgramParams } from '@/types/portal';
+import { CreateApplicationParams, ProgramParams } from '@/types/portal';
 import { InertiaForm } from '@inertiajs/vue3';
 import { storeToRefs } from 'pinia';
 
@@ -9,7 +9,7 @@ export const useApplicationFormHelper = (isEditing?: boolean) => {
     const store = isEditing ? useUpdateProgramFormStore() : useCreateApplicationFormStore();
     const storeRefs = storeToRefs(store);
 
-    const updateProgramForm = (form: InertiaForm<UpdateProgramParams>) => {
+    const updateProgramForm = (form: InertiaForm<ProgramParams>) => {
         Object.assign(form, {
             modeOfStudy: storeRefs.modeOfStudy.value,
             mode_of_study_id: storeRefs.modeOfStudy.value?.value ?? null,

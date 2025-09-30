@@ -12,6 +12,7 @@ import { computed, onMounted, watch } from 'vue';
 interface Props {
     form: InertiaForm<any>;
     institutionDepartmentId: string;
+    allowedLevels?: string[] | number[];
     triggerSearch?: boolean;
 }
 
@@ -25,15 +26,25 @@ onMounted(async () => {
 const props = withDefaults(defineProps<Props>(), {
     triggerSearch: true,
 });
+
 const options = computed(() => {
-    return departmentLevels.value.map(
-        (item: DepartmentLevel) =>
-            <SelectOption>{
-                value: Number(item.id?.toString() ?? ''),
-                label: item?.attributes?.level,
-            },
-    );
+    return departmentLevels.value
+        .filter((item: DepartmentLevel) => {
+            if (!props.allowedLevels?.length) return true;
+
+            // normalize both to numbers for safe comparison
+            const levelId = Number(item.attributes.levelId);
+            return props.allowedLevels.map(Number).includes(levelId);
+        })
+        .map(
+            (item: DepartmentLevel) =>
+                <SelectOption>{
+                    value: Number(item.id?.toString() ?? ''),
+                    label: item?.attributes?.level,
+                },
+        );
 });
+
 
 watch(
     () => props.institutionDepartmentId,

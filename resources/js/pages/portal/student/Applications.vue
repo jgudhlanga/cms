@@ -1,7 +1,11 @@
 <script setup lang="ts">
+import { GenericButton } from '@/components/core/button';
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import DataTable from '@/components/core/table/DataTable.vue';
+import { useUtils } from '@/composables/core/useUtils';
 import { useStudentApplications } from '@/composables/students/useStudentApplications';
+import { ColorVariant } from '@/enums/colors';
+import { IconName } from '@/enums/icons';
 import { AuthObject } from '@/types/data-pagination';
 import { Enrolment } from '@/types/enrolments';
 import { Student } from '@/types/students';
@@ -18,7 +22,7 @@ interface Props {
 
 const props = defineProps<Props>();
 const { applications, multipleApplicationsLevelIds } = props;
-
+const { navigateTo } = useUtils();
 const eligibleForMoreApplications = () => {
     return multipleApplicationsLevelIds.some((levelId) => {
         // Get applications in this level
@@ -33,22 +37,44 @@ const eligibleForMoreApplications = () => {
     });
 };
 
+const remainingSlots = () => {
+    return multipleApplicationsLevelIds.reduce((total: number, levelId) => {
+        const sameLevelApplications = applications.filter((app: Enrolment) => {
+            return app?.attributes?.levelId === levelId;
+        });
+
+        const allowed = Number(sameLevelApplications[0]?.attributes?.allowedApplicationsPerLevel ?? 0);
+        const currentCount = Number(sameLevelApplications.length);
+
+        if (allowed > 0) {
+            const remaining = Math.max(allowed - currentCount, 0);
+            return total + remaining; // now always number
+        }
+
+        return total;
+    }, 0);
+};
+
 const breadcrumbs: BreadcrumbItemInterface[] = [{ transChoiceKey: 'dashboard', href: route('portal.dashboard') }, { transChoiceKey: 'application' }];
-const { createStudentApplicationColumns, allowed } = useStudentApplications();
+const { createStudentApplicationColumns } = useStudentApplications();
 </script>
 <template>
     <Head :title="$tChoice('trans.application', 2)" />
     <PageContainer :breadcrumbs="breadcrumbs">
-<!--        <div v-if="eligibleForMoreApplications()" class="text-destructive flex w-fit rounded-full bg-amber-200 px-5 py-1 leading-tight">
-            You can apply for two more courses from other departments
-        </div>-->
-        <DataTable
-            :data="applications"
-            :show-archived-filter="false"
-            :columns="createStudentApplicationColumns()"
-            :on-create="() => {}"
-            :disable-create="!allowed"
-        >
+        <div v-if="eligibleForMoreApplications()" class="text-destructive flex w-fit rounded-full bg-amber-200 px-5 py-1 leading-tight">
+            {{ `You can apply for ${remainingSlots()} more courses` }}
+        </div>
+        <DataTable :data="applications" :show-archived-filter="false" :columns="createStudentApplicationColumns()">
+            <template #head-right v-if="eligibleForMoreApplications()">
+                <GenericButton
+                    :icon="IconName.add"
+                    class="rounded-full"
+                    :icon-variant="ColorVariant.white"
+                    :variant="ColorVariant.primary_outline"
+                    @click="() => navigateTo(route('portal.add-program', { student: props.student.id }))"
+                    title="New Application"
+                />
+            </template>
         </DataTable>
     </PageContainer>
 </template>
