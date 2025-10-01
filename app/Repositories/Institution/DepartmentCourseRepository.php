@@ -4,6 +4,7 @@ namespace App\Repositories\Institution;
 
 use App\DTO\Institution\DepartmentCourseDto;
 use App\DTO\Institution\DepartmentCourseUpdateDto;
+use App\DTO\Institution\CourseRequirementsDto;
 use App\Models\Institution\DepartmentCourse;
 use App\Models\Institution\InstitutionDepartment;
 use App\Repositories\Base\BaseRepository;
@@ -72,5 +73,28 @@ class DepartmentCourseRepository extends BaseRepository implements IDepartmentCo
         return $departmentCourse;
     }
 
+    public function updateLevelCourseRequirements(DepartmentCourse $departmentCourse, CourseRequirementsDto $dto): void
+    {
+        if (!empty($departmentCourse->requirement)) {
+            $departmentCourse->requirement()->update($this->getFields($dto));
+        } else {
+            $departmentCourse->requirement()->create(array_merge([
+                'department_course_id' => $departmentCourse->id,
+            ], $this->getFields($dto)));
+        }
+    }
+
+    private function getFields(CourseRequirementsDto $dto): array
+    {
+        return [
+            'is_o_level_required' => $dto->is_o_level_required,
+            'required_subjects_count' => $dto->required_subjects_count,
+            'main_subjects_count' => $dto->main_subjects_count,
+            'main_subject_ids' => $dto->main_subject_ids, // Array
+            'other_subjects_count' => $dto->other_subjects_count,
+            'only_read_write_required' => $dto->only_read_write_required,
+            'required_level_id' => $dto->required_level_id,
+        ];
+    }
 
 }

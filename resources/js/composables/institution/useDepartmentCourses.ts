@@ -1,5 +1,6 @@
 import { useDataTables } from '@/composables/core/useDataTables';
 import { useUtils } from '@/composables/core/useUtils';
+import { ColorVariant } from '@/enums/colors';
 import { closeModal, errorAlert, forbiddenAlert, openModal, successAlert } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
 import { toggleFormLoader } from '@/lib/forms';
@@ -13,10 +14,10 @@ import { trans, trans_choice } from 'laravel-vue-i18n';
 import { ref } from 'vue';
 
 export const useDepartmentCourses = () => {
-    const { moreActionButton, textLink, checkStatusIcon, onEdit } = useDataTables();
+    const { moreActionButton, textLink, checkStatusIcon, onEdit, actionButton } = useDataTables();
     const { props } = usePage();
     const { can } = props?.auth as Auth;
-    const { navigateTo, formatDate } = useUtils();
+    const { navigateTo, formatDate, isItTrue } = useUtils();
     const createDepartmentCourseColumns = () => {
         return [
             {
@@ -40,6 +41,29 @@ export const useDepartmentCourses = () => {
                 meta: { align: 'center' },
                 cell: ({ row }: { row: { original: DepartmentCourse } }) => {
                     return checkStatusIcon(row.original.attributes?.showOnCurrentApplicationPeriod);
+                },
+            },
+            {
+                header: 'Has Enrolment Requirements',
+                accessorKey: 'hasEnrolmentRequirements',
+                meta: { align: 'center' },
+                cell: ({ row }: { row: { original: DepartmentCourse } }) => {
+                    return checkStatusIcon(row.original.attributes?.hasEnrolmentRequirements);
+                },
+            },
+            {
+                header: 'Requirements',
+                accessorKey: 'requirements',
+                enableSorting: false,
+                meta: { align: 'center' },
+                cell: ({ row }: { row: { original: DepartmentCourse } }) => {
+                    return isItTrue(row.original.attributes?.hasEnrolmentRequirements)
+                        ? actionButton({
+                              title: 'Config Requirements',
+                              variant: ColorVariant.primary_outline,
+                              onClick: () => navigateTo(route('department-courses.requirements', getIdParams(row.original.id?.toString() ?? ''))),
+                          })
+                        : null;
                 },
             },
             {

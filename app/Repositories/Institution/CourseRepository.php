@@ -44,6 +44,7 @@ class CourseRepository extends BaseRepository implements ICourseRepository
         return [
             'name' => $dto->name,
             'description' => $dto->description,
+            'has_enrolment_requirements' => $dto->has_enrolment_requirements,
         ];
     }
 }

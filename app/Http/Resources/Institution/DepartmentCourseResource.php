@@ -18,6 +18,7 @@ class DepartmentCourseResource extends JsonResource
                 "courseId" => $this->course_id,
                 "course" => $this->course?->name,
                 "showOnCurrentApplicationPeriod" => $this->show_on_current_application_period,
+                'hasEnrolmentRequirements' => $this->course?->has_enrolment_requirements,
                 'description' => $this->resource->description,
                 $this->mergeWhen($request->routeIs('department-courses.*'), [
                     'createdAt' => $this->resource->created_at,

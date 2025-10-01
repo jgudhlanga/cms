@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
@@ -44,6 +45,11 @@ class DepartmentCourse extends Model
     public function departmentCourseLevels(): HasMany
     {
         return $this->hasMany(DepartmentLevelCourse::class, 'department_course_id');
+    }
+
+    public function requirement(): HasOne
+    {
+        return $this->hasOne(CourseRequirement::class, 'department_course_id');
     }
 
     public function getActivitylogOptions(): LogOptions

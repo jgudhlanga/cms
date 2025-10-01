@@ -9,6 +9,7 @@ readonly class CourseDto
     public function __construct(
         public string  $name,
         public ?string $description,
+        public ?bool $has_enrolment_requirements,
     )
     {
     }
@@ -19,6 +20,7 @@ readonly class CourseDto
         return new self(
             name: $request->name,
             description: $request->description,
+            has_enrolment_requirements: $request->has_enrolment_requirements,
         );
     }
 }

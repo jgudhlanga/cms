@@ -29,6 +29,8 @@ Route::prefix('institution')->middleware('auth')->group(function () {
     # ==================================== DEPARTMENT COURSES ==========================================================
     Route::post('departments/{institution_department}/sync-courses', [DepartmentCourseController::class, 'syncDepartmentCourses'])->name('department-courses.sync');
     Route::get('departments/{department_course}/show', [DepartmentCourseController::class, 'show'])->name('department-courses.show');
+    Route::get('departments/{department_course}/course-requirements', [DepartmentCourseController::class, 'courseRequirements'])->name('department-courses.requirements');
+    Route::post('departments/{department_course}/course-requirements', [DepartmentCourseController::class, 'updateCourseRequirements'])->name('department-courses.store-requirements');
     Route::post('departments/{department_course}/update', [DepartmentCourseController::class, 'update'])->name('department-courses.update');
     # ==================================== DEPARTMENT APPLICATION STEPS ================================================
     Route::post('departments/{institution_department}/sync-application-steps', [DepartmentApplicationStepController::class, 'syncApplicationSteps'])->name('department-application-steps.sync');

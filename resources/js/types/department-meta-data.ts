@@ -31,6 +31,7 @@ export type DepartmentCourse = {
         courseId: string | number;
         course: string;
         showOnCurrentApplicationPeriod?: boolean;
+        hasEnrolmentRequirements: boolean;
         description?: string;
         createdAt?: string;
         updatedAt?: string;
@@ -164,9 +165,9 @@ export type ClassSizeEntry = {
 
 export type DepartmentIntakeClassSizeParams = {
     intake_period_id: string | number | null;
-    intakePeriod: SelectOption | null|undefined;
+    intakePeriod: SelectOption | null | undefined;
     mode_of_study_id: string | number | null;
-    modeOfStudy: SelectOption | null| undefined;
+    modeOfStudy: SelectOption | null | undefined;
     class_sizes: ClassSizeEntry[];
 };
 export type DepartmentIntakeClassSize = {

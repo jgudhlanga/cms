@@ -25,7 +25,7 @@ class Course extends Model
 {
     use HasFactory, SoftDeletes, Filterable, Paginatable, LogsActivity, AssignsPosition;
 
-    protected $fillable = ['name', 'slug', 'position', 'description'];
+    protected $fillable = ['name', 'slug', 'position', 'description', 'has_enrolment_requirements'];
 
     public function getActivitylogOptions(): LogOptions
     {
