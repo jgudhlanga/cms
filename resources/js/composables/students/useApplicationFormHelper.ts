@@ -91,7 +91,7 @@ export const useApplicationFormHelper = (isEditing?: boolean) => {
         const selectedSubjects = storeRefs.o_level_subject_ids?.value ?? {};
         const selectedCount = Object.keys(selectedSubjects).length;
         const errors: string[] = [];
-        if (selectedCount !== mainSubjectCount) {
+        if (selectedCount < mainSubjectCount) {
             errors.push(`You must provide exactly ${mainSubjectCount} main subjects grades. Currently: ${selectedCount}`);
         }
         Object.keys(selectedSubjects).forEach((subjectId, index) => {
@@ -131,7 +131,7 @@ export const useApplicationFormHelper = (isEditing?: boolean) => {
         const keys = Object.keys(selectedSubjectIds);
 
         // Must have exactly 2 subjects
-        if (keys.length !== otherSubjectCount) {
+        if (keys.length < otherSubjectCount) {
             errors.push(`You must provide exactly ${otherSubjectCount} other subjects. Provided: ${keys.length}`);
         }
 

@@ -25,6 +25,7 @@ export type SelectOption = {
     relationshipOneLabel?: string;
     relationshipOneValue?: string;
     value: string | number;
+    triggerActionValue?: boolean;
 };
 
 export type DropdownButtonOption = {

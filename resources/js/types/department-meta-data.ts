@@ -31,6 +31,7 @@ export type DepartmentCourse = {
         courseId: string | number;
         course: string;
         showOnCurrentApplicationPeriod?: boolean;
+        hasEnrolmentRequirements: boolean;
         description?: string;
         createdAt?: string;
         updatedAt?: string;
@@ -104,10 +105,42 @@ export type DepartmentLevelRequirementParams = {
     required_level_id?: string | number | null;
 };
 
+export type CourseRequirement = {
+    type: string;
+    id: string | number;
+    attributes: {
+        departmentLeveId: string | number;
+        departmentCourseId: string | number;
+        isOLevelRequired?: boolean;
+        requiredSubjectsCount?: string | number | null;
+        mainSubjectsCount?: string | number | null;
+        mainSubjectIds?: Array<string | number | null>;
+        otherSubjectsCount?: string | number | null;
+        onlyReadWriteRequired?: boolean;
+        requiredLevelId?: string | number | null;
+        requiredLevel?: string | null;
+    };
+    relationships?: {
+        subjects: Subject[];
+    };
+};
+
+export type CourseRequirementParams = {
+    department_level_id: string|number,
+    is_o_level_required?: boolean;
+    required_subjects_count?: string | number;
+    main_subjects_count?: string | number;
+    main_subject_ids: any;
+    other_subjects_count?: string | number;
+    only_read_write_required?: boolean;
+    required_level_id?: string | number | null;
+};
+
 export type DepartmentLevelCourse = {
     id: string | number;
     departmentCourseId: string | number;
     departmentLevelId: string | number;
+    hasEnrolmentRequirements: boolean;
     level: string;
     course: string;
 };
@@ -164,9 +197,9 @@ export type ClassSizeEntry = {
 
 export type DepartmentIntakeClassSizeParams = {
     intake_period_id: string | number | null;
-    intakePeriod: SelectOption | null|undefined;
+    intakePeriod: SelectOption | null | undefined;
     mode_of_study_id: string | number | null;
-    modeOfStudy: SelectOption | null| undefined;
+    modeOfStudy: SelectOption | null | undefined;
     class_sizes: ClassSizeEntry[];
 };
 export type DepartmentIntakeClassSize = {

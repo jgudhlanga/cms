@@ -9,6 +9,7 @@ import LevelRequirements from '@/components/students/update/LevelRequirements.vu
 import OLevelRequirements from '@/components/students/update/OLevelRequirements.vue';
 import SDPRequirements from '@/components/students/update/SDPRequirements.vue';
 import { useUtils } from '@/composables/core/useUtils';
+import { useDepartmentCourses } from '@/composables/institution/useDepartmentCourses';
 import { useDepartmentLevels } from '@/composables/institution/useDepartmentLevels';
 import { clearFormErrors } from '@/lib/forms';
 import { useCreateApplicationFormStore } from '@/store/portal/useCreateApplicationFormStore';
@@ -17,7 +18,7 @@ import { Enrolment } from '@/types/enrolments';
 import { CreateApplicationParams, ProgramParams } from '@/types/portal';
 import { InertiaForm } from '@inertiajs/vue3';
 import { storeToRefs } from 'pinia';
-import { ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 
 interface Props {
     form: InertiaForm<CreateApplicationParams | ProgramParams>;
@@ -37,9 +38,9 @@ let skipFirstLevelWatch = isEditing;
 
 const { department, level, course, modeOfStudy } = storeToRefs(store);
 
-const { listLevelRequirements, levelRequirements, isLoading } = useDepartmentLevels(isEditing);
+const { listLevelRequirements, levelRequirements, isLoading: levelRequirementsLoading } = useDepartmentLevels(isEditing);
+const { listCourseRequirements, courseRequirements, isLoading: courseRequirementsLoading } = useDepartmentCourses(isEditing);
 
-const courseDisabled = ref(false);
 
 watch(department, async () => {
     if (skipFirstDepartmentWatch) {
@@ -47,9 +48,8 @@ watch(department, async () => {
         return;
     }
     level.value = null;
-    courseDisabled.value = true;
     levelRequirements.value = null;
-
+    courseRequirements.value = null;
     clearFormErrors(form, 'level');
     clearFormErrors(form, 'course');
 });
@@ -59,15 +59,31 @@ watch(level, async () => {
         skipFirstLevelWatch = false;
         return;
     }
-    course.value = null;
-    courseDisabled.value = level.value === null;
-
-    await listLevelRequirements(level.value?.value?.toString() ?? '');
     clearFormErrors(form, 'level');
     clearFormErrors(form, 'course');
 });
 watch(course, async () => {
+    levelRequirements.value = null;
+    courseRequirements.value = null;
+    if (skipFirstLevelWatch) {
+        skipFirstLevelWatch = false;
+        return;
+    }
+    if (Number(course.value?.value) > 0) {
+        if (course.value?.triggerActionValue) {
+            await listCourseRequirements(level.value?.value?.toString() ?? '', course.value?.value?.toString() ?? '');
+            if (Number(requirements.value?.attributes?.departmentLeveId) !== Number(level.value?.value)) {
+                await listLevelRequirements(level.value?.value?.toString() ?? '');
+            }
+        } else {
+            if (Number(level.value?.value) > 0) await listLevelRequirements(level.value?.value?.toString() ?? '');
+        }
+    }
     clearFormErrors(form, 'course');
+});
+
+const requirements = computed(() => {
+    return courseRequirements.value && Number(String(courseRequirements.value?.id)) > 0 ? courseRequirements.value : levelRequirements.value;
 });
 </script>
 
@@ -89,23 +105,22 @@ watch(course, async () => {
                 v-model="course"
                 :error="form.errors.course"
                 :is-required="true"
-                :disabled="courseDisabled"
             />
         </div>
         <div class="my-4 flex w-full flex-col">
-            <template v-if="isLoading">
+            <template v-if="levelRequirementsLoading || courseRequirementsLoading">
                 <SpinnerComponent class="flex w-full items-center justify-center" />
             </template>
             <template v-else>
-                <template v-if="Number(String(levelRequirements?.id)) > 0">
-                    <template v-if="isItTrue(levelRequirements?.attributes?.isOLevelRequired)">
+                <template v-if="Number(String(requirements?.id)) > 0">
+                    <template v-if="isItTrue(requirements?.attributes?.isOLevelRequired)">
                         <OLevelRequirements :application="application" />
                     </template>
-                    <template v-if="Number(String(levelRequirements?.attributes?.requiredLevelId)) > 0">
-                        <LevelRequirements :level-requirements="levelRequirements" :application="application" />
+                    <template v-if="Number(String(requirements?.attributes?.requiredLevelId)) > 0">
+                        <LevelRequirements :requirements="requirements" :application="application" />
                     </template>
-                    <template v-if="isItTrue(levelRequirements?.attributes?.onlyReadWriteRequired)">
-                        <SDPRequirements :level-requirements="levelRequirements" :application="application" />
+                    <template v-if="isItTrue(requirements?.attributes?.onlyReadWriteRequired)">
+                        <SDPRequirements :application="application" />
                     </template>
                 </template>
             </template>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // UI components
-import { computed, onBeforeUnmount, onMounted, ref, watch, watchEffect } from 'vue';
+import { onBeforeUnmount, onMounted, ref, watch, watchEffect } from 'vue';
 
 // Composable
 import { useUtils } from '@/composables/core/useUtils';
@@ -25,6 +25,7 @@ import StudentPageHeader from '@/components/shared/students/StudentPageHeader.vu
 import LevelRequirements from '@/components/students/update/LevelRequirements.vue';
 import OLevelRequirements from '@/components/students/update/OLevelRequirements.vue';
 import SDPRequirements from '@/components/students/update/SDPRequirements.vue';
+import { useDepartmentCourses } from '@/composables/institution/useDepartmentCourses';
 import { useSubjects } from '@/composables/institution/useSubjects';
 import { useApplicationFormHelper } from '@/composables/students/useApplicationFormHelper';
 import { ButtonSize } from '@/enums/buttons';
@@ -34,6 +35,7 @@ import { errorAlert } from '@/lib/alerts';
 import { EXAM_SITTINGS } from '@/lib/constants';
 import { clearFormErrors } from '@/lib/forms';
 import { useCreateApplicationFormStore } from '@/store/portal/useCreateApplicationFormStore';
+import { CourseRequirement, DepartmentLevelRequirement } from '@/types/department-meta-data';
 import { AcademicOLevelResult } from '@/types/enrolments';
 import { Subject } from '@/types/institution';
 import { Student } from '@/types/students';
@@ -57,7 +59,8 @@ const props = defineProps<Props>();
 const { student, oLevelResults } = props;
 
 // Composable
-const { listLevelRequirements, levelRequirements: levelRequirements, isLoading } = useDepartmentLevels();
+const { listLevelRequirements, levelRequirements, isLoading: levelRequirementsLoading } = useDepartmentLevels();
+const { listCourseRequirements, courseRequirements, isLoading: courseRequirementsLoading } = useDepartmentCourses();
 const { isItTrue, navigateTo } = useUtils();
 const { validateMainSubjects, validateOtherSubjects, updateProgramForm } = useApplicationFormHelper(false);
 const { programFormSchema, addProgram } = useStudentPortal();
@@ -106,11 +109,21 @@ const courseDisabled = ref(false);
 const sameDepartmentAndLevelError = ref(false);
 const sameDepartmentAndLevelErrorMessage =
     'You already have an application for this department, level and course. Please choose a different department or level or course';
+const requirements = ref<CourseRequirement | DepartmentLevelRequirement | null>(null);
+/*const requirements = computed(() => {
+    if (courseRequirements && courseRequirements.value && Number(String(courseRequirements.value?.id)) > 0) {
+        return courseRequirements.value;
+    }
+    if (levelRequirements && levelRequirements.value && Number(String(levelRequirements.value?.id)) > 0) {
+        return levelRequirements.value;
+    }
+    return null;
+});*/
 
 watch(department, async () => {
     level.value = null;
     courseDisabled.value = true;
-    levelRequirements.value = null;
+    requirements.value = null;
     clearFormErrors(form, 'level');
     clearFormErrors(form, 'course');
 });
@@ -118,7 +131,6 @@ watch(department, async () => {
 watch(level, async () => {
     course.value = null;
     courseDisabled.value = level.value === null;
-    await listLevelRequirements(level.value?.value?.toString() ?? '');
     clearFormErrors(form, 'level');
     clearFormErrors(form, 'course');
 });
@@ -132,17 +144,19 @@ watch(course, async () => {
         props.currentLevels.map(Number).includes(levelId) &&
         props.currentCourses.map(Number).includes(courseId);
     clearFormErrors(form, 'course');
-});
-
-watch(
-    () => level.value?.value,
-    (levelId) => {
-        if (levelId && !sameDepartmentAndLevelError.value) listLevelRequirements(levelId.toString());
-    },
-);
-const mainSubjectIds = levelRequirements?.value?.attributes?.mainSubjectIds ?? [];
-const otherSubjects = computed(() => {
-    return subjects.value.filter((subject: Subject) => !mainSubjectIds.includes(Number(subject.id)));
+    if (Number(course.value?.value) > 0) {
+        if (course.value?.triggerActionValue) {
+            await listCourseRequirements(level.value?.value?.toString() ?? '', course.value?.value?.toString() ?? '');
+            requirements.value = courseRequirements.value;
+            if (Number(requirements.value?.attributes?.departmentLeveId) !== Number(level.value?.value)) {
+                await listLevelRequirements(level.value?.value?.toString() ?? '');
+                requirements.value = levelRequirements.value;
+            }
+        } else {
+            if (Number(level.value?.value) > 0) await listLevelRequirements(level.value?.value?.toString() ?? '');
+            requirements.value = levelRequirements.value;
+        }
+    }
 });
 
 onMounted(async () => {
@@ -150,14 +164,13 @@ onMounted(async () => {
     populateMainSubjects();
     watchEffect(() => {
         if (!subjectsLoading.value && subjects.value?.length) {
-            populateOtherSubjects();
             populateMainSubjects();
         }
     });
 });
 const populateMainSubjects = () => {
     if (oLevelResults?.length) {
-        const subjects = levelRequirements?.value?.relationships?.subjects as Subject[] | undefined;
+        const subjects = requirements?.value?.relationships?.subjects as Subject[] | undefined;
         if (!subjects?.length) return;
         subjects.forEach((subject) => {
             const subjectId = subject.id?.toString();
@@ -195,69 +208,6 @@ const populateMainSubjects = () => {
         });
     }
 };
-
-const populateOtherSubjects = () => {
-    const subjects = otherSubjects.value as Subject[] | undefined;
-    if (!subjects?.length || !oLevelResults.length) return;
-
-    const count = Number(levelRequirements?.value?.attributes?.otherSubjectsCount) || 0;
-    if (!count) return;
-
-    // Filter subjects to only those that have matching O-Level results
-    const matchedSubjects = subjects
-        .map((subject) => {
-            const subjectId = subject.id?.toString();
-            if (!subjectId) return null;
-
-            const result = oLevelResults.find((r) => r.attributes?.subjectId?.toString().trim() === subjectId);
-            if (!result) return null;
-
-            return {
-                subjectId,
-                label: String(result.attributes.subject),
-                examYear: String(result.attributes.examYear),
-                examSitting: String(result.attributes.examSitting),
-                gradeId: String(result.attributes.gradeId),
-            };
-        })
-        .filter(Boolean) as { subjectId: string; label: string; examYear: string; examSitting: string; gradeId: string }[];
-
-    // Take only the first `count` unique subjects
-
-    matchedSubjects.slice(0, count).forEach((subj, index) => {
-        //============== SUBJECTS ===========================
-        if (!o_level_other_subject_ids) return;
-        if (!o_level_other_subject_ids.value) o_level_other_subject_ids.value = {};
-        o_level_other_subject_ids.value[String(index + 1)] = {
-            value: subj.subjectId,
-            label: subj.label,
-        };
-        // ============== YEARS ===========================
-        if (!o_level_other_years) {
-            return;
-        }
-        if (!o_level_other_years.value) {
-            o_level_other_years.value = {};
-        }
-        o_level_other_years.value[index + 1] = subj.examYear;
-        // ============== SITTING ===========================
-        if (!o_level_other_sittings) {
-            return;
-        }
-        if (!o_level_other_sittings.value) {
-            o_level_other_sittings.value = {};
-        }
-        const sittingLabel = EXAM_SITTINGS.find((sitting) => sitting.value === subj.examSitting)?.label ?? subj.examSitting;
-        o_level_other_sittings.value[index + 1] = {
-            value: subj.examSitting,
-            label: sittingLabel,
-        };
-        // ============== GRADES ===========================
-        if (!o_level_other_grade_ids) return;
-        if (!o_level_other_grade_ids.value) o_level_other_grade_ids.value = {};
-        o_level_other_grade_ids.value[index + 1] = subj.gradeId;
-    });
-};
 const save = async () => {
     updateProgramForm(form);
     try {
@@ -266,27 +216,27 @@ const save = async () => {
             errorAlert(sameDepartmentAndLevelErrorMessage);
             return;
         }
-        if (isItTrue(levelRequirements.value?.attributes?.isOLevelRequired)) {
-            const mainSubjectsCount = Number(String(levelRequirements?.value?.attributes?.mainSubjectsCount ?? '0'));
+        if (isItTrue(requirements.value?.attributes?.isOLevelRequired)) {
+            const mainSubjectsCount = Number(String(requirements?.value?.attributes?.mainSubjectsCount ?? '0'));
             const mainErrors = validateMainSubjects(mainSubjectsCount);
             if (mainErrors && mainErrors.length > 0) {
                 errorAlert(mainErrors.join('\n'));
                 return;
             }
-            const otherSubjectCount = Number(String(levelRequirements?.value?.attributes?.otherSubjectsCount ?? '0'));
+            const otherSubjectCount = Number(String(requirements?.value?.attributes?.otherSubjectsCount ?? '0'));
             const otherErrors = validateOtherSubjects(otherSubjectCount);
             if (otherErrors && otherErrors.length > 0) {
                 errorAlert(otherErrors.join('\n'));
                 return;
             }
         }
-        if (isItTrue(Number(String(levelRequirements.value?.attributes?.requiredLevelId)) > 0)) {
+        if (isItTrue(Number(String(requirements.value?.attributes?.requiredLevelId)) > 0)) {
             if (!isItTrue(required_level_completed?.value)) {
                 errorAlert(trans('trans.acknowledge_level_completed'));
                 return;
             }
         }
-        if (isItTrue(levelRequirements.value?.attributes?.onlyReadWriteRequired)) {
+        if (isItTrue(requirements.value?.attributes?.onlyReadWriteRequired)) {
             if (!isItTrue(read_write_acknowledged?.value)) {
                 errorAlert(trans('trans.acknowledge_read_write'));
                 return;
@@ -339,19 +289,19 @@ onBeforeUnmount(() => {
                         />
                     </div>
                     <div class="my-4 flex w-full flex-col">
-                        <template v-if="isLoading">
+                        <template v-if="levelRequirementsLoading || courseRequirementsLoading">
                             <SpinnerComponent class="flex w-full items-center justify-center" />
                         </template>
                         <template v-else>
-                            <template v-if="Number(String(levelRequirements?.id)) > 0 && !sameDepartmentAndLevelError">
-                                <template v-if="isItTrue(levelRequirements?.attributes?.isOLevelRequired)">
+                            <template v-if="Number(String(requirements?.id)) > 0 && !sameDepartmentAndLevelError">
+                                <template v-if="isItTrue(requirements?.attributes?.isOLevelRequired)">
                                     <OLevelRequirements />
                                 </template>
-                                <template v-if="Number(String(levelRequirements?.attributes?.requiredLevelId)) > 0">
-                                    <LevelRequirements :level-requirements="levelRequirements" />
+                                <template v-if="Number(String(requirements?.attributes?.requiredLevelId)) > 0">
+                                    <LevelRequirements :requirements="requirements" />
                                 </template>
-                                <template v-if="isItTrue(levelRequirements?.attributes?.onlyReadWriteRequired)">
-                                    <SDPRequirements :level-requirements="levelRequirements" />
+                                <template v-if="isItTrue(requirements?.attributes?.onlyReadWriteRequired)">
+                                    <SDPRequirements />
                                 </template>
                             </template>
                         </template>

@@ -6,14 +6,12 @@ import { IconName } from '@/enums/icons';
 import { icons } from '@/lib/icons';
 import { useCreateApplicationFormStore } from '@/store/portal/useCreateApplicationFormStore';
 import { useUpdateProgramFormStore } from '@/store/portal/useUpdateProgramFormStore';
-import { DepartmentLevelRequirement } from '@/types/department-meta-data';
 import { Enrolment } from '@/types/enrolments';
 import { storeToRefs } from 'pinia';
 import { ref } from 'vue';
 
 interface Props {
     isViewOnly?: boolean;
-    levelRequirements?: DepartmentLevelRequirement | null;
     application?: Enrolment | null;
 }
 
@@ -21,7 +19,6 @@ const props = withDefaults(defineProps<Props>(), {
     isViewOnly: false,
 });
 
-const {} = storeToRefs(useCreateApplicationFormStore());
 const { isItTrue } = useUtils();
 const { application } = props;
 

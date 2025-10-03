@@ -36,7 +36,6 @@ const {
 
 const disabilityOptions = DISABILITY_OPTIONS;
 const onRadioChange = (value: any) => {
-    console.log(value);
     disability_status.value = value;
 };
 
@@ -107,6 +106,7 @@ const { isNativeCitizen } = useUtils();
                 :label-uppercase="true"
                 orientation="horizontal"
                 @update:modelValue="onRadioChange"
+                :is-required="true"
             />
         </div>
     </BaseCard>

@@ -414,39 +414,47 @@ class PortalController extends Controller
 
         $level = AcademicLevel::where('name', AcademicLevelEnum::SECONDARY_SCHOOL->value)->first();
 
-        // 🔹 Delete all existing O-Level results for this student/level
-        $student->oLevelResults()->where('academic_level_id', $level->id)->delete();
-
-        // 🔹 Insert main subjects
+        // 🔹 Handle main subjects
         if (!empty($mainSubjects) && is_array($mainSubjects)) {
             foreach ($mainSubjects as $subjectId => $gradeId) {
-                $examSitting = $examSittings[$subjectId] ?? null;
+                $examSitting = $examSittings[$subjectId]['value'] ?? null;
                 $examYear = $examYears[$subjectId] ?? null;
 
-                $student->oLevelResults()->create([
-                    'academic_level_id' => $level->id,
-                    'subject_id' => $subjectId,
-                    'exam_year' => $examYear,
-                    'exam_sitting' => $examSitting['value'] ?? null,
-                    'grade_id' => $gradeId,
-                ]);
+                $student->oLevelResults()->updateOrCreate(
+                    [
+                        'academic_level_id' => $level->id,
+                        'subject_id' => $subjectId,
+                    ],
+                    [
+                        'exam_year' => $examYear,
+                        'exam_sitting' => $examSitting,
+                        'grade_id' => $gradeId,
+                    ]
+                );
             }
         }
 
-        // 🔹 Insert other subjects
+        // 🔹 Handle other subjects
         if (!empty($otherSubjects) && is_array($otherSubjects)) {
             foreach ($otherSubjects as $key => $subject) {
+                $subjectId = $subject['value'] ?? null;
                 $otherGrade = $otherGrades[$key] ?? null;
-                $otherSitting = $otherSittings[$key] ?? null;
+                $otherSitting = $otherSittings[$key]['value'] ?? null;
                 $otherExamYear = $otherExamYears[$key] ?? null;
 
-                $student->oLevelResults()->create([
-                    'academic_level_id' => $level->id,
-                    'subject_id' => $subject['value'] ?? null,
-                    'exam_year' => $otherExamYear,
-                    'exam_sitting' => $otherSitting['value'] ?? null,
-                    'grade_id' => $otherGrade,
-                ]);
+                if ($subjectId) {
+                    $student->oLevelResults()->updateOrCreate(
+                        [
+                            'academic_level_id' => $level->id,
+                            'subject_id' => $subjectId,
+                        ],
+                        [
+                            'exam_year' => $otherExamYear,
+                            'exam_sitting' => $otherSitting,
+                            'grade_id' => $otherGrade,
+                        ]
+                    );
+                }
             }
         }
     }

@@ -6,6 +6,7 @@ export type Course = {
         slug: string;
         position: string | number;
         description?: string;
+        hasEnrolmentRequirements: boolean;
         createdAt?: string;
         updatedAt?: string;
         deletedAt?: string;
@@ -14,6 +15,7 @@ export type Course = {
 export type CourseParams = {
     name: string;
     description?: string;
+    has_enrolment_requirements?: boolean;
 };
 
 export type Department = {

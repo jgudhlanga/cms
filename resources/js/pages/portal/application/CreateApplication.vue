@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // UI components
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 
 // Page sections
 import ContactDetails from '@/components/students/update/ContactDetails.vue';
@@ -10,7 +10,6 @@ import Programs from '@/components/students/update/Programs.vue';
 
 // Composable
 import { useUtils } from '@/composables/core/useUtils';
-import { useDepartmentLevels } from '@/composables/institution/useDepartmentLevels';
 import { useStudentPortal } from '@/composables/students/useStudentPortal';
 
 // Store & types
@@ -27,6 +26,7 @@ import { useIdTypes } from '@/composables/shared/useIdTypes';
 import { useApplicationFormHelper } from '@/composables/students/useApplicationFormHelper';
 import { ButtonSize } from '@/enums/buttons';
 import { errorAlert } from '@/lib/alerts';
+import { CourseRequirement, DepartmentLevelRequirement } from '@/types/department-meta-data';
 import { useForm } from '@inertiajs/vue3';
 import { trans } from 'laravel-vue-i18n';
 import { storeToRefs } from 'pinia';
@@ -39,16 +39,21 @@ interface Props {
 
 const props = defineProps<Props>();
 const { user } = props.auth;
-
+const requirements = ref<CourseRequirement | DepartmentLevelRequirement | null | undefined>(null);
 // Composable
 const { idTypes, listIdTypes } = useIdTypes();
 const { applicationFormSchema, saveApplication } = useStudentPortal();
-const { listLevelRequirements, levelRequirements } = useDepartmentLevels();
 const { isNativeCitizen, isItTrue } = useUtils();
 const { validateMainSubjects, validateOtherSubjects, updateCreateForm } = useApplicationFormHelper();
 
-// Store
 const storeRefs = storeToRefs(useCreateApplicationFormStore());
+const getRequirements = () => {
+    requirements.value =
+        storeRefs.courseRequirements?.value && Number(String(storeRefs.courseRequirements?.value?.id)) > 0
+            ? storeRefs.courseRequirements?.value
+            : storeRefs.levelRequirements?.value;
+};
+// Store
 
 // Form
 const form = useForm<CreateApplicationParams>({
@@ -105,13 +110,6 @@ const form = useForm<CreateApplicationParams>({
     o_level_other_sittings: null,
 });
 
-watch(
-    () => storeRefs.level.value?.value,
-    (levelId) => {
-        if (levelId) listLevelRequirements(levelId.toString());
-    },
-);
-
 const defaultIdType = computed(() => {
     return idTypes.value.find((type) => isItTrue(type.attributes?.isDefault)) ?? null;
 });
@@ -138,31 +136,36 @@ onMounted(async () => {
 const isValidating = ref(false);
 
 const save = async () => {
+    getRequirements();
     updateCreateForm(form);
     try {
         isValidating.value = true;
         await applicationFormSchema(isNativeCitizen(storeRefs.idType?.value?.label ?? '')).parseAsync(form);
-        if (isItTrue(levelRequirements.value?.attributes?.isOLevelRequired)) {
-            const mainSubjectsCount = Number(String(levelRequirements?.value?.attributes?.mainSubjectsCount ?? '0'));
+        if (storeRefs.disability_status?.value === null || storeRefs.disability_status?.value === undefined) {
+            errorAlert('Please choose your disability status');
+            return;
+        }
+        if (isItTrue(requirements.value?.attributes?.isOLevelRequired)) {
+            const mainSubjectsCount = Number(String(requirements.value?.attributes?.mainSubjectsCount ?? '0'));
             const mainErrors = validateMainSubjects(mainSubjectsCount);
             if (mainErrors && mainErrors.length > 0) {
                 errorAlert(mainErrors.join('\n'));
                 return;
             }
-            const otherSubjectCount = Number(String(levelRequirements?.value?.attributes?.otherSubjectsCount ?? '0'));
+            const otherSubjectCount = Number(String(requirements.value?.attributes?.otherSubjectsCount ?? '0'));
             const otherErrors = validateOtherSubjects(otherSubjectCount);
             if (otherErrors && otherErrors.length > 0) {
                 errorAlert(otherErrors.join('\n'));
                 return;
             }
         }
-        if (isItTrue(Number(String(levelRequirements.value?.attributes?.requiredLevelId)) > 0)) {
+        if (isItTrue(Number(String(requirements.value?.attributes?.requiredLevelId)) > 0)) {
             if (!isItTrue(storeRefs.required_level_completed?.value)) {
                 errorAlert(trans('trans.acknowledge_level_completed'));
                 return;
             }
         }
-        if (isItTrue(levelRequirements.value?.attributes?.onlyReadWriteRequired)) {
+        if (isItTrue(requirements.value?.attributes?.onlyReadWriteRequired)) {
             if (!isItTrue(storeRefs.read_write_acknowledged?.value)) {
                 errorAlert(trans('trans.acknowledge_read_write'));
                 return;

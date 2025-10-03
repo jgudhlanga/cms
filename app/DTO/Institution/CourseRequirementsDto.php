@@ -1,0 +1,37 @@
+<?php
+
+namespace App\DTO\Institution;
+
+use App\Http\Requests\Institution\CourseRequirementRequest;
+
+readonly class CourseRequirementsDto
+{
+    public function __construct(
+        public int    $department_level_id,
+        public bool    $is_o_level_required,
+        public ?int    $required_subjects_count,
+        public ?int    $main_subjects_count,
+        public array   $main_subject_ids,
+        public ?int    $other_subjects_count,
+        public bool    $only_read_write_required,
+        public ?string $required_level_id,
+
+    )
+    {
+    }
+
+
+    public static function fromCourseRequirementRequest(CourseRequirementRequest $request): CourseRequirementsDto
+    {
+        return new self(
+            department_level_id: $request->department_level_id,
+            is_o_level_required: $request->is_o_level_required,
+            required_subjects_count: $request->required_subjects_count,
+            main_subjects_count: $request->main_subjects_count,
+            main_subject_ids: $request->main_subject_ids,
+            other_subjects_count: $request->other_subjects_count,
+            only_read_write_required: $request->only_read_write_required,
+            required_level_id: $request->required_level_id,
+        );
+    }
+}

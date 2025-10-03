@@ -1,4 +1,4 @@
-import { DepartmentLevelRequirement } from '@/types/department-meta-data';
+import { CourseRequirement, DepartmentLevelRequirement } from '@/types/department-meta-data';
 import { SelectOption } from '@/types/utils';
 
 export type CreateApplicationUserParams = {
@@ -56,6 +56,7 @@ export type CreateApplicationParams = {
     course: SelectOption | null;
     course_id: string | number | null;
     levelRequirements?: DepartmentLevelRequirement | null;
+    courseRequirements?: CourseRequirement | null;
     o_level_subject_ids?: Record<string, string> | null;
     o_level_years?: Record<string, string> | null;
     o_level_sittings?: Record<string, SelectOption> | null;
@@ -79,6 +80,7 @@ export type ProgramParams = {
     course: SelectOption | null;
     course_id: string | number | null;
     levelRequirements?: DepartmentLevelRequirement | null;
+    courseRequirements?: CourseRequirement | null;
     o_level_subject_ids?: Record<string, string> | null;
     o_level_years?: Record<string, string> | null;
     o_level_sittings?: Record<string, SelectOption> | null;

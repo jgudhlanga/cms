@@ -12,10 +12,11 @@ class DepartmentLevelCourseResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'departmentCourseId' => $this->department_course_id,
-            'departmentLevelId' => $this->department_level_id,
-            'level' => $this->departmentLevel?->level?->name,
-            'course' => $this->departmentCourse?->course?->name,
+            'departmentCourseId' => $this?->department_course_id,
+            'departmentLevelId' => $this?->department_level_id,
+            'level' => $this?->departmentLevel?->level?->name,
+            'course' => $this?->departmentCourse?->course?->name,
+            'hasEnrolmentRequirements' => $this->departmentCourse?->course?->has_enrolment_requirements,
         ];
     }
 }

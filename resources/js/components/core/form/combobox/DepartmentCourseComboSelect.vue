@@ -33,6 +33,7 @@ const options = computed(() => {
             <SelectOption>{
                 value: Number(item.departmentCourseId.toString() ?? ''),
                 label: item?.course,
+                triggerActionValue: isItTrue(item?.hasEnrolmentRequirements),
             },
     );
 });

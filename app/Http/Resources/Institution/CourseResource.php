@@ -18,6 +18,7 @@ class CourseResource extends JsonResource
                 'slug' => $this->resource->slug,
                 'position' => $this->resource->position,
                 'description' => $this->resource->description,
+                'hasEnrolmentRequirements' => $this->resource->has_enrolment_requirements,
                 $this->mergeWhen($request->routeIs('courses.*'), [
                     'createdAt' => $this->resource->created_at,
                     'updatedAt' => $this->resource->updated_at,

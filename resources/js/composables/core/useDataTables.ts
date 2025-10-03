@@ -316,7 +316,7 @@ export function useDataTables() {
             title: params.title,
             variant: params?.variant ?? ColorVariant.danger_outline,
             classes: params?.classes ?? 'rounded-full capitalize font-normal uppercase',
-            size: params?.size ?? ButtonSize.sm,
+            size: params?.size ?? ButtonSize.xs,
             onClick: params?.onClick,
         });
     };

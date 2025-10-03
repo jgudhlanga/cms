@@ -13,16 +13,25 @@ import { trans, trans_choice } from 'laravel-vue-i18n';
 import { ref } from 'vue';
 
 export const useCourses = () => {
-    const { moreActionButton, onDelete, onForceDelete, onRestore } = useDataTables();
+    const { moreActionButton, onDelete, onForceDelete, onRestore, checkStatusIcon } = useDataTables();
     const isLoading = ref(false);
     const courses = ref<Course[]>([]);
     const createCourseColumns = () => {
         const { props } = usePage();
         const { can } = props?.auth as Auth;
         return [
-            { header: trans_choice('#', 1), accessorKey: 'attributes.position', meta: {align: 'left'} },
+            { header: trans_choice('#', 1), accessorKey: 'attributes.position', meta: { align: 'left' } },
             { header: trans_choice('trans.name', 1), accessorKey: 'attributes.name' },
             { header: trans_choice('trans.description', 1), accessorKey: 'attributes.description' },
+            {
+                header: 'Has Enrolment Requirements',
+                accessorKey: 'requirement',
+                meta: { align: 'center' },
+                enableSorting: false,
+                cell: ({ row }: { row: { original: Course } }) => {
+                    return checkStatusIcon(!!row.original.attributes?.hasEnrolmentRequirements);
+                },
+            },
             {
                 header: trans_choice('trans.action', 2),
                 accessorKey: 'actions',
