@@ -106,6 +106,7 @@ const { isNativeCitizen } = useUtils();
                 :label-uppercase="true"
                 orientation="horizontal"
                 @update:modelValue="onRadioChange"
+                :is-required="true"
             />
         </div>
     </BaseCard>

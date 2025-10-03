@@ -141,6 +141,10 @@ const save = async () => {
     try {
         isValidating.value = true;
         await applicationFormSchema(isNativeCitizen(storeRefs.idType?.value?.label ?? '')).parseAsync(form);
+        if (storeRefs.disability_status?.value === null || storeRefs.disability_status?.value === undefined) {
+            errorAlert('Please choose your disability status');
+            return;
+        }
         if (isItTrue(requirements.value?.attributes?.isOLevelRequired)) {
             const mainSubjectsCount = Number(String(requirements.value?.attributes?.mainSubjectsCount ?? '0'));
             const mainErrors = validateMainSubjects(mainSubjectsCount);

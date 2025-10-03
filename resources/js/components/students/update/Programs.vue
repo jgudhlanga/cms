@@ -41,7 +41,6 @@ const { department, level, course, modeOfStudy } = storeToRefs(store);
 const { listLevelRequirements, levelRequirements, isLoading: levelRequirementsLoading } = useDepartmentLevels(isEditing);
 const { listCourseRequirements, courseRequirements, isLoading: courseRequirementsLoading } = useDepartmentCourses(isEditing);
 
-const courseDisabled = ref(false);
 
 watch(department, async () => {
     if (skipFirstDepartmentWatch) {
@@ -49,7 +48,6 @@ watch(department, async () => {
         return;
     }
     level.value = null;
-    courseDisabled.value = true;
     levelRequirements.value = null;
     courseRequirements.value = null;
     clearFormErrors(form, 'level');
@@ -107,7 +105,6 @@ const requirements = computed(() => {
                 v-model="course"
                 :error="form.errors.course"
                 :is-required="true"
-                :disabled="courseDisabled"
             />
         </div>
         <div class="my-4 flex w-full flex-col">

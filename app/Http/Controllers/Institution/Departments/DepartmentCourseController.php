@@ -44,7 +44,8 @@ class DepartmentCourseController extends Controller
         $institutionDepartment = InstitutionDepartmentResource::make($departmentCourse->institutionDepartment);
         $levels = DepartmentLevelResource::collection($departmentCourse->departmentCourseLevels);
         $allowedLevelIds = Level::whereIn('name', [LevelEnum::NC->name()])->pluck('id')->toArray();
-        $allowedLevels = DepartmentLevel::whereIn('level_id', $allowedLevelIds)->pluck('id')->toArray();
+        $allowedLevels = DepartmentLevel::where('institution_department_id', $departmentCourse?->institutionDepartment?->id)
+            ->whereIn('level_id', $allowedLevelIds)->pluck('id')->toArray();
         return Inertia::render('institution/departments/courses/CourseRequirements',
             compact('departmentCourse', 'requirements', 'levels', 'institutionDepartment', 'allowedLevels'));
     }

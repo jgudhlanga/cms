@@ -98,7 +98,6 @@ const updateRequirements = () => {
     form.is_o_level_required = isOLevelRequired.value;
     form.only_read_write_required = onlyReadWriteRequired.value;
     const result = courserRequirementsFormSchema(isOLevelRequired.value).safeParse(form.data());
-    console.log(result);
     if (!result.success) {
         const fieldErrors = result.error.flatten().fieldErrors;
         const formattedErrors: Record<keyof CourseRequirementParams, any> = {
@@ -130,8 +129,6 @@ const updateRequirements = () => {
     }
     storeCourseRequirements(departmentCourse.id?.toString() ?? '', form, institutionDepartment?.attributes?.departmentId.toString() ?? '');
 };
-
-
 </script>
 
 <template>
