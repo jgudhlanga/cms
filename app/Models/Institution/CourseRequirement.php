@@ -22,7 +22,7 @@ class CourseRequirement extends Model
     use SoftDeletes, Filterable, BelongsToTenant, Paginatable, LogsActivity;
 
     protected $fillable = [
-        'department_course_id', 'is_o_level_required', 'required_subjects_count', 'main_subjects_count', 'main_subject_ids',
+        'department_level_id', 'department_course_id', 'is_o_level_required', 'required_subjects_count', 'main_subjects_count', 'main_subject_ids',
         'other_subjects_count', 'only_read_write_required', 'required_level_id',
     ];
 
@@ -40,6 +40,16 @@ class CourseRequirement extends Model
     public function requiredLevel(): BelongsTo
     {
         return $this->belongsTo(DepartmentLevel::class, 'required_level_id');
+    }
+
+    public function departmentCourse(): BelongsTo
+    {
+        return $this->belongsTo(DepartmentCourse::class, 'department_course_id');
+    }
+
+    public function departmentLevel(): BelongsTo
+    {
+        return $this->belongsTo(DepartmentLevel::class, 'department_level_id');
     }
 
     public function getActivitylogOptions(): LogOptions

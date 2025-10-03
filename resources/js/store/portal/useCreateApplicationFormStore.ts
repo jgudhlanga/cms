@@ -1,5 +1,6 @@
 import { CreateApplicationParams } from '@/types/portal';
 import { defineStore } from 'pinia';
+import { CourseRequirement } from '@/types/department-meta-data';
 
 export const useCreateApplicationFormStore = defineStore('portal-application-form', {
     state: (): CreateApplicationParams => {
@@ -46,6 +47,7 @@ export const useCreateApplicationFormStore = defineStore('portal-application-for
             level: null,
             level_id: null,
             levelRequirements: null,
+            courseRequirements: null,
             required_level_completed: null,
             required_level_upload: null,
             read_write_acknowledged: null,

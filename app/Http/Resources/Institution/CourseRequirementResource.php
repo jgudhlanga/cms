@@ -19,6 +19,7 @@ class CourseRequirementResource extends JsonResource
             'type' => 'level-course-requirement',
             'id' => $this->resource->id,
             "attributes" => [
+                "departmentLeveId" => $this->department_level_id,
                 "departmentCourseId" => $this->department_course_id,
                 "isOLevelRequired" => $this->is_o_level_required,
                 "requiredSubjectsCount" => $this->required_subjects_count,

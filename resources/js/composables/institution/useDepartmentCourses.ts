@@ -6,18 +6,23 @@ import { APP_MODULE_KEYS } from '@/lib/constants';
 import { toggleFormLoader } from '@/lib/forms';
 import { getIdParams } from '@/lib/utils';
 import HttpService from '@/services/http.service';
+import { useCreateApplicationFormStore } from '@/store/portal/useCreateApplicationFormStore';
+import { useUpdateProgramFormStore } from '@/store/portal/useUpdateProgramFormStore';
 import { Auth } from '@/types';
-import { DepartmentCourse, DepartmentCourseLevel, DepartmentCourseMetaData } from '@/types/department-meta-data';
+import { CourseRequirement, DepartmentCourse, DepartmentCourseLevel, DepartmentCourseMetaData } from '@/types/department-meta-data';
 import { AcademicOLevelResult, Enrolment } from '@/types/enrolments';
 import { InertiaForm, usePage } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
+import { storeToRefs } from 'pinia';
 import { ref } from 'vue';
+import { z } from 'zod';
 
-export const useDepartmentCourses = () => {
+export const useDepartmentCourses = (isEditingProgram?: boolean) => {
     const { moreActionButton, textLink, checkStatusIcon, onEdit, actionButton } = useDataTables();
     const { props } = usePage();
     const { can } = props?.auth as Auth;
     const { navigateTo, formatDate, isItTrue } = useUtils();
+    const store = isEditingProgram ? useUpdateProgramFormStore() : useCreateApplicationFormStore();
     const createDepartmentCourseColumns = () => {
         return [
             {
@@ -211,6 +216,83 @@ export const useDepartmentCourses = () => {
         }
     };
 
+    const courserRequirementsFormSchema = (isOLevelRequired: boolean) =>
+        z.object({
+            required_subjects_count: isOLevelRequired
+                ? z
+                      .string()
+                      .nonempty(trans('trans.enter_required_field', { field: trans('trans.required_subjects_count') }))
+                      .refine((val: string) => !isNaN(Number(val)), {
+                          message: trans('trans.field_must_be_number', { field: trans('trans.required_subjects_count') }),
+                      })
+                : z.string().optional(),
+            main_subjects_count: isOLevelRequired
+                ? z
+                      .string()
+                      .nonempty(trans('trans.enter_required_field', { field: trans('trans.main_subjects_count') }))
+                      .refine((val: string) => !isNaN(Number(val)), {
+                          message: trans('trans.field_must_be_number', { field: trans('trans.main_subjects_count') }),
+                      })
+                : z.string().optional(),
+            other_subjects_count: isOLevelRequired
+                ? z
+                      .string()
+                      .nonempty(trans('trans.enter_required_field', { field: trans('trans.other_subjects_count') }))
+                      .refine((val: string) => !isNaN(Number(val)), {
+                          message: trans('trans.field_must_be_number', { field: trans('trans.other_subjects_count') }),
+                      })
+                : z.string().optional(),
+        });
+
+    const storeCourseRequirements = (departmentCourseId: string, form: InertiaForm<any>, institutionDepartmentId: string) => {
+        try {
+            const success = trans('trans.item_saved', { item: trans_choice('trans.course', 2) });
+            const error = trans('trans.item_save_failure', { item: trans_choice('trans.course', 2) });
+            form.post(route('department-courses.store-requirements', departmentCourseId), {
+                onStart: () => toggleFormLoader(true),
+                onFinish: () => {
+                    form.reset();
+                    toggleFormLoader(false);
+                },
+                onSuccess: () => {
+                    successAlert(success);
+                    navigateTo(route('institution-departments.show', getIdParams(institutionDepartmentId)));
+                },
+                onError: () => {
+                    errorAlert(error);
+                },
+            });
+        } catch (error: any) {
+            form.setError(error.format());
+        }
+    };
+
+    const {
+        courseRequirements: requirements,
+        levelRequirements,
+        o_level_subject_ids,
+        required_level_completed,
+        read_write_acknowledged,
+    } = storeToRefs(store);
+
+    const courseRequirements = ref<CourseRequirement | null>(requirements?.value ?? null);
+
+    const listCourseRequirements = async (departmentLevelId: string, departmentCourseId: string) => {
+        if (Number(departmentLevelId) > 0 && Number(departmentCourseId) > 0) {
+            isLoading.value = true;
+            courseRequirements.value = await HttpService.get(`api/v1/institution-departments/${departmentLevelId}/courses/${departmentCourseId}/requirements`);
+            if (levelRequirements && Number(courseRequirements.value?.id) > 0) {
+                levelRequirements.value = null;
+            }
+
+            requirements!.value = courseRequirements.value;
+            o_level_subject_ids!.value = null;
+            required_level_completed!.value = null;
+            read_write_acknowledged!.value = null;
+            isLoading.value = false;
+        }
+    };
+
     return {
         createDepartmentCourseColumns,
         openDepartmentCoursesModal,
@@ -220,5 +302,9 @@ export const useDepartmentCourses = () => {
         departmentCoursesMetaData,
         loadDepartmentCoursesMetaData,
         createCourseLevelEnrolmentColumns,
+        courserRequirementsFormSchema,
+        storeCourseRequirements,
+        listCourseRequirements,
+        courseRequirements,
     };
 };

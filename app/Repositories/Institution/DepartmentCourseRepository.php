@@ -87,6 +87,7 @@ class DepartmentCourseRepository extends BaseRepository implements IDepartmentCo
     private function getFields(CourseRequirementsDto $dto): array
     {
         return [
+            'department_level_id' => $dto->department_level_id,
             'is_o_level_required' => $dto->is_o_level_required,
             'required_subjects_count' => $dto->required_subjects_count,
             'main_subjects_count' => $dto->main_subjects_count,

@@ -25,6 +25,7 @@ class CourseRequirementRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'department_level_id' => ['required', 'integer', 'exists:department_levels,id'],
             'main_subject_ids' => ['nullable', 'array'],
             'main_subject_ids.*' => ['integer', 'exists:subjects,id'],
         ];

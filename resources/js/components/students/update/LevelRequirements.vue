@@ -5,14 +5,14 @@ import { useUtils } from '@/composables/core/useUtils';
 import { IconName, icons } from '@/lib/icons';
 import { useCreateApplicationFormStore } from '@/store/portal/useCreateApplicationFormStore';
 import { useUpdateProgramFormStore } from '@/store/portal/useUpdateProgramFormStore';
-import { DepartmentLevelRequirement } from '@/types/department-meta-data';
+import { CourseRequirement, DepartmentLevelRequirement } from '@/types/department-meta-data';
 import { Enrolment } from '@/types/enrolments';
 import { storeToRefs } from 'pinia';
 import { onMounted, ref } from 'vue';
 
 interface Props {
     isViewOnly?: boolean;
-    levelRequirements?: DepartmentLevelRequirement | null;
+    requirements?: DepartmentLevelRequirement | CourseRequirement | null;
     application?: Enrolment | null;
 }
 
@@ -50,9 +50,9 @@ onMounted(() => {
 
 <template>
     <HeadingSmall
-        :title="$t('trans.level_required', { level: levelRequirements?.attributes?.requiredLevel ?? '' })"
+        :title="$t('trans.level_required', { level: requirements?.attributes?.requiredLevel ?? '' })"
         :description="
-            $t('trans.level_required_description', { level: levelRequirements?.attributes?.requiredLevel ?? '', current: level?.label ?? '' })
+            $t('trans.level_required_description', { level: requirements?.attributes?.requiredLevel ?? '', current: level?.label ?? '' })
         "
     />
     <div v-if="!isViewOnly" class="flex flex-col space-y-6">
@@ -60,7 +60,7 @@ onMounted(() => {
             input-id="required_level_completed"
             @click="acknowledgeLevelCompleted($event.target.checked)"
             v-model="requiredLevelCompleted"
-            :label="`${$t('trans.acknowledge_required_level_completed', { level: levelRequirements?.attributes?.requiredLevel ?? '' })}`"
+            :label="`${$t('trans.acknowledge_required_level_completed', { level: requirements?.attributes?.requiredLevel ?? '' })}`"
         />
         <!--<BaseInput
             input-id="required_level_upload"
@@ -73,6 +73,6 @@ onMounted(() => {
     </div>
     <div v-else class="mt-4 flex items-center space-x-2">
         <component :is="icons[IconName.check]" />
-        <span>{{ `${$t('trans.acknowledge_required_level_completed', { level: levelRequirements?.attributes?.requiredLevel ?? '' })}` }}</span>
+        <span>{{ `${$t('trans.acknowledge_required_level_completed', { level: requirements?.attributes?.requiredLevel ?? '' })}` }}</span>
     </div>
 </template>

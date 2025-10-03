@@ -13,6 +13,7 @@ export const useUpdateProgramFormStore = defineStore('update-program-form', {
             level: null,
             level_id: null,
             levelRequirements: null,
+            courseRequirements: null,
             required_level_completed: null,
             required_level_upload: null,
             read_write_acknowledged: null,

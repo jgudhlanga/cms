@@ -29,10 +29,20 @@ const { application } = props;
 const isEditing = Number(String(application?.id)) > 0;
 
 const store = isEditing ? useUpdateProgramFormStore() : useCreateApplicationFormStore();
-const { o_level_other_subject_ids, o_level_other_grade_ids, o_level_other_years, o_level_other_sittings, levelRequirements } = storeToRefs(store);
+const { o_level_other_subject_ids, o_level_other_grade_ids, o_level_other_years, o_level_other_sittings, levelRequirements, courseRequirements } =
+    storeToRefs(store);
 const { listSubjects, isLoading: subjectsLoading, subjects } = useSubjects();
 const { listGrades, isLoading: gradesLoading, grades } = useGrades();
 
+const requirements = computed(() => {
+    if (courseRequirements && courseRequirements.value && Number(String(courseRequirements.value?.id)) > 0) {
+        return courseRequirements.value;
+    }
+    if (levelRequirements && levelRequirements.value && Number(String(levelRequirements.value?.id)) > 0) {
+        return levelRequirements.value;
+    }
+    return null;
+});
 const { getMainSittingYear, getMainSitting } = useStudentPortal();
 function ensureObjectRef<T extends object>(refObj: Ref<T | undefined | null> | undefined, defaultValue: T): T {
     if (!refObj) throw new Error('Ref is undefined');
@@ -41,7 +51,7 @@ function ensureObjectRef<T extends object>(refObj: Ref<T | undefined | null> | u
     }
     return refObj.value;
 }
-const mainSubjectIds = levelRequirements?.value?.attributes?.mainSubjectIds ?? [];
+const mainSubjectIds = requirements?.value?.attributes?.mainSubjectIds ?? [];
 const options = computed(() => {
     return subjects.value
         .filter((subject: Subject) => !mainSubjectIds.includes(Number(subject.id)))
@@ -123,7 +133,7 @@ const onMainSittingChange = (value: SelectOption | null) => {
     if (!o_level_other_sittings.value) {
         o_level_other_sittings.value = {};
     }
-    const subjectCount = Number(levelRequirements?.value?.attributes.otherSubjectsCount);
+    const subjectCount = Number(requirements?.value?.attributes.otherSubjectsCount);
     if (subjectCount == 0) return; // nothing to update
     for (let i = 1; i <= subjectCount; i++) {
         if (value) {
@@ -143,7 +153,7 @@ const onMainYearChange = (value: string | null) => {
     if (!o_level_other_years.value) {
         o_level_other_years.value = {};
     }
-    const subjectCount = Number(levelRequirements?.value?.attributes.otherSubjectsCount);
+    const subjectCount = Number(requirements?.value?.attributes.otherSubjectsCount);
     if (subjectCount == 0) return; // nothing to update
     for (let i = 1; i <= subjectCount; i++) {
         if (value) {
@@ -178,7 +188,7 @@ const populateCurrentDataFromApplication = () => {
     const subjects = otherSubjects.value as Subject[] | undefined;
     if (!subjects?.length || !oLevelResults.length) return;
 
-    const count = Number(levelRequirements?.value?.attributes?.otherSubjectsCount) || 0;
+    const count = Number(requirements?.value?.attributes?.otherSubjectsCount) || 0;
     if (!count) return;
 
     // Filter subjects to only those that have matching O-Level results
@@ -240,10 +250,10 @@ const populateCurrentDataFromApplication = () => {
 
 <template>
     <HeadingSmall
-        :title="`${$t('trans.o_level_other_subjects')} (${levelRequirements?.attributes?.otherSubjectsCount})`"
+        :title="`${$t('trans.o_level_other_subjects')} (${requirements?.attributes?.otherSubjectsCount})`"
         :description="$t('trans.o_level_results_description')"
     />
-    <template v-if="levelRequirements?.attributes && Number(levelRequirements?.attributes?.otherSubjectsCount) > 0">
+    <template v-if="requirements?.attributes && Number(requirements?.attributes?.otherSubjectsCount) > 0">
         <div class="flex w-full flex-col overflow-auto">
             <table class="hava-table my-4">
                 <thead class="hava-thead">
@@ -269,7 +279,7 @@ const populateCurrentDataFromApplication = () => {
                         </td>
                         <td class="hava-td"></td>
                     </tr>
-                    <tr class="hava-tr" v-for="n in levelRequirements?.attributes?.otherSubjectsCount" :key="n">
+                    <tr class="hava-tr" v-for="n in requirements?.attributes?.otherSubjectsCount" :key="n">
                         <td class="hava-td text-left">
                             <SpinnerComponent class="flex items-center justify-center" v-if="subjectsLoading || gradesLoading" />
                             <SelectOtherSubject

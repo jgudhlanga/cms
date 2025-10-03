@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Institution\Departments;
 use App\DTO\Institution\DepartmentCourseDto;
 use App\DTO\Institution\DepartmentCourseUpdateDto;
 use App\DTO\Institution\CourseRequirementsDto;
+use App\Enums\Institution\LevelEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Institution\DepartmentCourseRequest;
 use App\Http\Requests\Institution\DepartmentCourseUpdateRequest;
@@ -17,6 +18,7 @@ use App\Http\Resources\Institution\InstitutionDepartmentResource;
 use App\Models\Institution\DepartmentCourse;
 use App\Models\Institution\DepartmentLevel;
 use App\Models\Institution\InstitutionDepartment;
+use App\Models\Institution\Level;
 use App\Repositories\Institution\interface\IDepartmentCourseRepository;
 use Illuminate\Auth\Access\AuthorizationException;
 use Inertia\Inertia;
@@ -41,8 +43,10 @@ class DepartmentCourseController extends Controller
         $departmentCourse = DepartmentCourseResource::make($departmentCourse);
         $institutionDepartment = InstitutionDepartmentResource::make($departmentCourse->institutionDepartment);
         $levels = DepartmentLevelResource::collection($departmentCourse->departmentCourseLevels);
+        $allowedLevelIds = Level::whereIn('name', [LevelEnum::NC->name()])->pluck('id')->toArray();
+        $allowedLevels = DepartmentLevel::whereIn('level_id', $allowedLevelIds)->pluck('id')->toArray();
         return Inertia::render('institution/departments/courses/CourseRequirements',
-            compact('departmentCourse', 'requirements', 'levels', 'institutionDepartment'));
+            compact('departmentCourse', 'requirements', 'levels', 'institutionDepartment', 'allowedLevels'));
     }
 
     /**

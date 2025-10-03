@@ -36,7 +36,6 @@ const {
 
 const disabilityOptions = DISABILITY_OPTIONS;
 const onRadioChange = (value: any) => {
-    console.log(value);
     disability_status.value = value;
 };
 

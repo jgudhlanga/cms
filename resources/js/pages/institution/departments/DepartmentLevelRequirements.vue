@@ -43,7 +43,7 @@ const breadcrumbs: Array<Link> = [
         href: route('institution-departments.show', getIdParams(institutionDepartment.id?.toString() ?? '')),
     },
     { title: departmentLevel.attributes.level },
-    { transKey: 'level_requirements' },
+    { transKey: 'enrolment_requirements' },
 ];
 
 const isOLevelRequired = ref(false);
@@ -89,14 +89,14 @@ const SelectOnlyReadWriteRequired = (value: any) => {
 
 const departmentLevels = computed(() => props.levels.filter((item: DepartmentLevel) => item.id !== departmentLevel.id));
 const onRadioChange = (value: any) => {
-    if(value == 'none') {
+    if (value == 'none') {
         form.required_level_id = null;
         return;
     }
     form.required_level_id = value;
 };
 const options = computed(() => {
-    const toReturn =  departmentLevels.value.map(
+    const toReturn = departmentLevels.value.map(
         (item: DepartmentLevel) =>
             <RadioGroupOption>{
                 value: item?.attributes?.levelId?.toString(),
@@ -108,7 +108,7 @@ const options = computed(() => {
         value: 'none',
         label: 'None',
         inputId: 'radio_none',
-    })
+    });
     return toReturn;
 });
 
@@ -136,10 +136,10 @@ const updateLevel = () => {
         form.setError(formattedErrors);
         return;
     }
-    if (!isItTrue(isOLevelRequired.value) && !onlyReadWriteRequired.value && !form.required_level_id) {
+   /* if (!isItTrue(isOLevelRequired.value) && !onlyReadWriteRequired.value && !form.required_level_id) {
         errorAlert(trans('trans.nothing_has_changed_to_save'));
         return;
-    }
+    }*/
     if (Number(form.main_subjects_count ?? '') > 0 && form.main_subject_ids?.length < Number(form.main_subjects_count)) {
         errorAlert(trans('trans.main_subject_not_valid', { count: form.main_subjects_count?.toString() ?? '' }));
         return;
@@ -164,7 +164,7 @@ const onInputOtherSubjectsCount = () => {
 </script>
 
 <template>
-    <Head :title="$t('trans.level_requirements')" />
+    <Head :title="$t('trans.enrolment_requirements')" />
     <PageContainer :breadcrumbs="breadcrumbs">
         <form @submit.prevent="() => updateLevel()" class="flex flex-col">
             <div class="flex flex-col">

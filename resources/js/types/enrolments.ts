@@ -17,6 +17,7 @@ export type Enrolment = {
         level: string;
         levelId: string | number;
         allowedApplicationsPerLevel: string | number;
+        hasEnrolmentRequirements: boolean;
         course: string;
         applicationTrackingNumber: string;
         requiredExamSittingCount: string | number;

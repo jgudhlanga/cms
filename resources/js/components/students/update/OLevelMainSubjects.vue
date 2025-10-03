@@ -16,7 +16,7 @@ import { Grade, Subject } from '@/types/institution';
 import { SelectOption } from '@/types/utils';
 import { trans } from 'laravel-vue-i18n';
 import { storeToRefs } from 'pinia';
-import { onMounted, ref, Ref, watchEffect } from 'vue';
+import { computed, onMounted, ref, Ref, watchEffect } from 'vue';
 
 interface Props {
     application?: Enrolment | null;
@@ -27,7 +27,7 @@ const { application } = props;
 
 const isEditing = Number(String(application?.id)) > 0;
 const store = isEditing ? useUpdateProgramFormStore() : useCreateApplicationFormStore();
-const { o_level_subject_ids, o_level_years, o_level_sittings, levelRequirements } = storeToRefs(store);
+const { o_level_subject_ids, o_level_years, o_level_sittings, levelRequirements, courseRequirements } = storeToRefs(store);
 const { listGrades, isLoading, grades } = useGrades();
 const { getMainSittingYear, getMainSitting } = useStudentPortal();
 
@@ -39,6 +39,15 @@ function ensureObjectRef<T extends object>(refObj: Ref<T | undefined | null> | u
     return refObj.value;
 }
 
+const requirements = computed(() => {
+    if (courseRequirements && courseRequirements.value && Number(String(courseRequirements.value?.id)) > 0) {
+        return courseRequirements.value;
+    }
+    if (levelRequirements && levelRequirements.value && Number(String(levelRequirements.value?.id)) > 0) {
+        return levelRequirements.value;
+    }
+    return null;
+});
 const onRadioChange = (value: string) => {
     const [subjectId, gradeId] = value.split('|');
     if (!subjectId || !gradeId) return;
@@ -111,8 +120,8 @@ const onMainSittingChange = (value: SelectOption | null) => {
     if (!o_level_sittings.value) {
         o_level_sittings.value = {};
     }
-    // Safely access levelRequirements.relationships
-    const subjects = levelRequirements?.value?.relationships?.subjects;
+    // Safely access requirements.relationships
+    const subjects = requirements?.value?.relationships?.subjects;
     if (!subjects) return; // nothing to update
     subjects.forEach((subject: Subject) => {
         const subjectId = subject.id?.toString() ?? '';
@@ -134,8 +143,8 @@ const onMainYearChange = (value: string | null) => {
     if (!o_level_years.value) {
         o_level_years.value = {};
     }
-    // Safely access levelRequirements.relationships
-    const subjects = levelRequirements?.value?.relationships?.subjects;
+    // Safely access requirements.relationships
+    const subjects = requirements?.value?.relationships?.subjects;
     if (!subjects) return; // nothing to update
     subjects.forEach((subject: Subject) => {
         const subjectId = subject.id?.toString() ?? '';
@@ -169,7 +178,7 @@ onMounted(async () => {
 
 const populateCurrentDataFromApplication = () => {
     if (application?.relationships?.oLevelResults?.length) {
-        const subjects = levelRequirements?.value?.relationships?.subjects as Subject[] | undefined;
+        const subjects = requirements?.value?.relationships?.subjects as Subject[] | undefined;
         if (!subjects?.length) return;
         subjects.forEach((subject) => {
             const subjectId = subject.id?.toString();
@@ -213,10 +222,10 @@ const populateCurrentDataFromApplication = () => {
 
 <template>
     <HeadingSmall
-        :title="`${$t('trans.o_level_main_subjects')} (${levelRequirements?.attributes?.mainSubjectsCount})`"
+        :title="`${$t('trans.o_level_main_subjects')} (${requirements?.attributes?.mainSubjectsCount})`"
         :description="$t('trans.o_level_results_description')"
     />
-    <template v-if="levelRequirements?.relationships?.subjects && levelRequirements.relationships.subjects.length > 0">
+    <template v-if="requirements?.relationships?.subjects && requirements.relationships.subjects.length > 0">
         <div class="flex w-full flex-col overflow-auto">
             <table class="hava-table my-4">
                 <thead class="hava-thead">
@@ -244,7 +253,7 @@ const populateCurrentDataFromApplication = () => {
                         </td>
                         <td class="hava-td"></td>
                     </tr>
-                    <tr class="hava-tr" v-for="subject in levelRequirements.relationships.subjects" :key="subject?.id ?? ''">
+                    <tr class="hava-tr" v-for="subject in requirements.relationships.subjects" :key="subject?.id ?? ''">
                         <td class="hava-td">{{ subject?.attributes?.name }}</td>
                         <td class="hava-td">
                             <div class="flex items-center justify-center">

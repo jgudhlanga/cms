@@ -145,6 +145,7 @@ export const useDepartmentLevels = (isEditingProgram?: boolean) => {
     const {
         levelRequirements: storeLevelRequirements,
         o_level_subject_ids,
+        courseRequirements,
         required_level_completed,
         read_write_acknowledged,
     } = storeToRefs(store);
@@ -155,6 +156,9 @@ export const useDepartmentLevels = (isEditingProgram?: boolean) => {
         if (Number(departmentLevelId) > 0) {
             isLoading.value = true;
             levelRequirements.value = await HttpService.get(`api/v1/institution-departments/levels/${departmentLevelId}/requirements`);
+            if(courseRequirements && Number(levelRequirements.value?.id) > 0) {
+                courseRequirements.value = null;
+            }
             storeLevelRequirements!.value = levelRequirements.value;
             o_level_subject_ids!.value = null;
             required_level_completed!.value = null;

@@ -32,6 +32,7 @@ class EnrolmentResource extends JsonResource
                 'allowedApplicationsPerLevel' => $this->departmentLevel?->level?->allowed_applications_per_level,
                 'departmentCourseId' => $this->department_course_id,
                 'course' => $this->departmentCourse?->course?->name,
+                'hasEnrolmentRequirements' => $this->departmentCourse?->course?->has_enrolment_requirements,
                 'applicationTrackingNumber' => $this->application_tracking_number,
                 'registrationFeePaid' => $this->hasPaid(FeeTypeEnum::APPLICATION_FEE),
                 'tuitionFeePaid' => $this->hasPaid(FeeTypeEnum::TUITION_FEE),

@@ -31,7 +31,6 @@ const options = computed(() => {
     return departmentLevels.value
         .filter((item: DepartmentLevel) => {
             if (!props.allowedLevels?.length) return true;
-
             // normalize both to numbers for safe comparison
             const levelId = Number(item.attributes.levelId);
             return props.allowedLevels.map(Number).includes(levelId);
@@ -44,7 +43,6 @@ const options = computed(() => {
                 },
         );
 });
-
 
 watch(
     () => props.institutionDepartmentId,

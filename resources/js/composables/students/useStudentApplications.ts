@@ -88,7 +88,6 @@ export const useStudentApplications = () => {
                                 preserveState: false,
                                 preserveScroll: false,
                                 replace: true,
-                                onFinish: () => window.location.reload(),
                             });
                         },
                     });

@@ -7,6 +7,7 @@ use App\Http\Requests\Institution\CourseRequirementRequest;
 readonly class CourseRequirementsDto
 {
     public function __construct(
+        public int    $department_level_id,
         public bool    $is_o_level_required,
         public ?int    $required_subjects_count,
         public ?int    $main_subjects_count,
@@ -23,6 +24,7 @@ readonly class CourseRequirementsDto
     public static function fromCourseRequirementRequest(CourseRequirementRequest $request): CourseRequirementsDto
     {
         return new self(
+            department_level_id: $request->department_level_id,
             is_o_level_required: $request->is_o_level_required,
             required_subjects_count: $request->required_subjects_count,
             main_subjects_count: $request->main_subjects_count,
