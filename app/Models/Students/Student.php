@@ -2,6 +2,7 @@
 
 namespace App\Models\Students;
 
+use App\Enums\Institution\LevelEnum;
 use App\Helpers\WorkflowHelper;
 use App\Http\Filters\Students\StudentFilter;
 use App\Models\Institution\DepartmentApplicationStep;
@@ -17,6 +18,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
@@ -98,6 +100,11 @@ class Student extends Model
         return $this->hasMany(StudentProgram::class, 'student_id')->withTrashed();
     }
 
+    public function currentLevel(): ?string
+    {
+        return $this->programs()->latest()->first()?->levelEnum()?->name();
+    }
+
     protected function hasProgram(): Attribute
     {
         return Attribute::get(function () {
@@ -138,7 +145,6 @@ class Student extends Model
             ->select('student_academic_results.*')
             ->distinct('subject_id');
     }
-
 
 
     public function nextOfKins(): MorphMany

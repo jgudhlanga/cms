@@ -53,6 +53,7 @@ interface Props {
     currentLevels: string[] | number[];
     currentDepartments: string[] | number[];
     currentCourses: string[] | number[];
+    message?: string;
 }
 
 const props = defineProps<Props>();
@@ -78,10 +79,6 @@ const {
     o_level_subject_ids,
     o_level_years,
     o_level_sittings,
-    o_level_other_subject_ids,
-    o_level_other_grade_ids,
-    o_level_other_years,
-    o_level_other_sittings,
 } = storeToRefs(store);
 
 // Form
@@ -110,15 +107,6 @@ const sameDepartmentAndLevelError = ref(false);
 const sameDepartmentAndLevelErrorMessage =
     'You already have an application for this department, level and course. Please choose a different department or level or course';
 const requirements = ref<CourseRequirement | DepartmentLevelRequirement | null>(null);
-/*const requirements = computed(() => {
-    if (courseRequirements && courseRequirements.value && Number(String(courseRequirements.value?.id)) > 0) {
-        return courseRequirements.value;
-    }
-    if (levelRequirements && levelRequirements.value && Number(String(levelRequirements.value?.id)) > 0) {
-        return levelRequirements.value;
-    }
-    return null;
-});*/
 
 watch(department, async () => {
     level.value = null;
@@ -264,6 +252,12 @@ onBeforeUnmount(() => {
                 <BaseAlert
                     :description="sameDepartmentAndLevelErrorMessage"
                     v-if="sameDepartmentAndLevelError"
+                    class="mb-5"
+                    :type="TypeVariant.danger"
+                />
+                <BaseAlert
+                    :description="message"
+                    v-if="message"
                     class="mb-5"
                     :type="TypeVariant.danger"
                 />

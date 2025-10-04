@@ -8,6 +8,7 @@ use App\DTO\Students\ProgramDto;
 use App\DTO\Students\StudentProgramDto;
 use App\DTO\Users\UserDto;
 use App\Enums\Acl\RoleEnum;
+use App\Enums\Institution\LevelEnum;
 use App\Helpers\Helper;
 use App\Helpers\PaymentHelper;
 use App\Http\Requests\Students\ProgramRequest;
@@ -22,6 +23,7 @@ use App\Models\Students\StudentProgram;
 use App\Repositories\Students\interface\IStudentProgramRepository;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Str;
 use Inertia\Response;
 use App\Enums\Shared\{AcademicLevelEnum, FeeTypeEnum, StatusEnum, TenantEnum};
 use App\Helpers\WorkflowHelper;
@@ -209,10 +211,15 @@ class PortalController extends Controller
         $this->authorize('manageStudentPersonalDetails');
 
         DB::beginTransaction();
+        [$mainSubjects, $examSittings, $examYears, $otherSubjects, $otherGrades, $otherExamYears, $otherSittings, $modeOfStudyId, $intakePeriodId] = $this->extractRequestFilters();
+        $intakePeriod = $this->resolveIntakePeriod($intakePeriodId);
+        $programMax = Str::lower($student->currentLevel()) === Str::lower(LevelEnum::NC->name()) ? 3 : 1;
+        $programCount = $student->programs()->where('intake_period_id', $intakePeriod->id)->count();
 
+        if ($programCount == $programMax) {
+            return redirect()->route('portal.applications.errors', __("You have reached the maximum number of applications allowed {$programMax}."));
+        }
         try {
-            [$mainSubjects, $examSittings, $examYears, $otherSubjects, $otherGrades, $otherExamYears, $otherSittings, $modeOfStudyId, $intakePeriodId] = $this->extractRequestFilters();
-            $intakePeriod = $this->resolveIntakePeriod($intakePeriodId);
             $programDto = new StudentProgramDto(
                 student_id: $student->id,
                 mode_of_study_id: $request->mode_of_study_id,
@@ -490,6 +497,11 @@ class PortalController extends Controller
         return $intakePeriodId
             ? IntakePeriod::find($intakePeriodId)
             : IntakePeriod::orderByDesc('end_date')->first();
+    }
+
+    public function errors(string $message): Response
+    {
+        return Inertia::render('portal/student/ApplicationError', compact('message'));
     }
 
 }

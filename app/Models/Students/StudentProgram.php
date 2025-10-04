@@ -2,6 +2,7 @@
 
 namespace App\Models\Students;
 
+use App\Enums\Institution\LevelEnum;
 use App\Enums\Shared\FeeTypeEnum;
 use App\Http\Filters\Students\StudentProgramFilter;
 use App\Models\Institution\DepartmentApplicationStep;
@@ -123,6 +124,19 @@ class StudentProgram extends Model implements HasMedia
     {
         return ($this->offer_letter_id > 0) ? $this->offerLetter->getFullUrl() : null;
     }
+
+    // In StudentProgram model
+    public function levelEnum(): ?LevelEnum
+    {
+        return $this->departmentLevel?->level?->name ? LevelEnum::from($this->departmentLevel->level->name) : null;
+    }
+
+// In Student model
+    public function currentLevel(): ?string
+    {
+        return $this->programs()->latest()->first()?->levelEnum()?->name();
+    }
+
 
     public function getActivitylogOptions(): LogOptions
     {
