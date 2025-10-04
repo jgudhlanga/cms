@@ -18,7 +18,7 @@ import { Enrolment } from '@/types/enrolments';
 import { CreateApplicationParams, ProgramParams } from '@/types/portal';
 import { InertiaForm } from '@inertiajs/vue3';
 import { storeToRefs } from 'pinia';
-import { computed, ref, watch } from 'vue';
+import { computed, watch } from 'vue';
 
 interface Props {
     form: InertiaForm<CreateApplicationParams | ProgramParams>;
@@ -40,7 +40,6 @@ const { department, level, course, modeOfStudy } = storeToRefs(store);
 
 const { listLevelRequirements, levelRequirements, isLoading: levelRequirementsLoading } = useDepartmentLevels(isEditing);
 const { listCourseRequirements, courseRequirements, isLoading: courseRequirementsLoading } = useDepartmentCourses(isEditing);
-
 
 watch(department, async () => {
     if (skipFirstDepartmentWatch) {

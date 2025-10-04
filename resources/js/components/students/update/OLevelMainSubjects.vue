@@ -3,6 +3,7 @@ import BaseRadioGroup from '@/components/core/form/radio-group/BaseRadioGroup.vu
 import SpinnerComponent from '@/components/core/loader/SpinnerComponent.vue';
 import Empty from '@/components/core/util/Empty.vue';
 import HeadingSmall from '@/components/core/util/HeadingSmall.vue';
+import ItemLabel from '@/components/students/update/mobile/ItemLabel.vue';
 import SelectSitting from '@/components/students/update/SelectSitting.vue';
 import SelectYear from '@/components/students/update/SelectYear.vue';
 import { useGrades } from '@/composables/institution/useGrades';
@@ -14,7 +15,6 @@ import { AcademicOLevelResult, Enrolment } from '@/types/enrolments';
 import { RadioGroupOption } from '@/types/forms';
 import { Grade, Subject } from '@/types/institution';
 import { SelectOption } from '@/types/utils';
-import { trans } from 'laravel-vue-i18n';
 import { storeToRefs } from 'pinia';
 import { computed, onMounted, ref, Ref, watchEffect } from 'vue';
 
@@ -96,7 +96,7 @@ const getOptionsForSubject = (subject: Subject): RadioGroupOption[] => {
         }));
     dataOptions.push({
         value: `${subject.id}|remove`,
-        label: trans('trans.remove').toUpperCase() as string,
+        label: `<span class="icon-trash" aria-label="Delete"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16"><path d="M5.5 5.5v6a.5.5 0 0 0 1 0v-6a.5.5 0 0 0-1 0zm2.5.5v6a.5.5 0 0 0 1 0v-6a.5.5 0 0 0-1 0zm-5-2A.5.5 0 0 1 3 4h10a.5.5 0 0 1 .5.5v.5h-11v-.5A.5.5 0 0 1 3 4zm1 1v9a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V5H4zm3-3a1 1 0 0 1 1 1v1H6V3a1 1 0 0 1 1-1z"/></svg></span>`,
         inputId: `radio_${subject.id}_remove`,
     });
     return dataOptions;
@@ -226,7 +226,7 @@ const populateCurrentDataFromApplication = () => {
         :description="$t('trans.o_level_results_description')"
     />
     <template v-if="requirements?.relationships?.subjects && requirements.relationships.subjects.length > 0">
-        <div class="flex w-full flex-col overflow-auto">
+        <div class="hidden w-full flex-col overflow-auto md:flex">
             <table class="hava-table my-4">
                 <thead class="hava-thead">
                     <tr>
@@ -279,7 +279,7 @@ const populateCurrentDataFromApplication = () => {
                                     :default-value="getDefaultOLevels(subject)"
                                     :label-uppercase="true"
                                     :is-required="true"
-                                    orientation="horizontal"
+                                    orientation="vertical"
                                     @update:modelValue="onRadioChange"
                                 />
                             </template>
@@ -287,6 +287,48 @@ const populateCurrentDataFromApplication = () => {
                     </tr>
                 </tbody>
             </table>
+        </div>
+        <div class="my-6 flex flex-col space-y-3 md:hidden">
+            <div class="subject-card" v-for="subject in requirements.relationships.subjects" :key="`mobile_${subject?.id ?? ''}`">
+                <div class="card-header">
+                    <h3 class="card-title subject-name">{{ subject?.attributes?.name }}</h3>
+                </div>
+                <div class="card-content space-y-3">
+                    <div class="flex items-center space-x-3">
+                        <ItemLabel :label="$tChoice('trans.year', 1)" />
+                        <SelectYear
+                            :input-id="`year_${subject.id}`"
+                            :model-value="o_level_years?.[subject?.id?.toString() ?? ''] || null"
+                            @update:model-value="(value) => onYearChange(value, subject?.id ?? '')"
+                        />
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <ItemLabel :label="$tChoice('trans.sitting', 1)" />
+                        <div class="flex w-full">
+                            <SelectSitting
+                                class="flex w-full"
+                                :model-value="mainSitting"
+                                @update:modelValue="(option: SelectOption) => onMainSittingChange(option)"
+                            />
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <ItemLabel :label="$tChoice('trans.grade', 1)" />
+                        <SpinnerComponent class="flex w-full items-center justify-center" v-if="isLoading" />
+                        <template v-else>
+                            <BaseRadioGroup
+                                class="flex items-center"
+                                :options="getOptionsForSubject(subject)"
+                                :default-value="getDefaultOLevels(subject)"
+                                :label-uppercase="true"
+                                :is-required="true"
+                                orientation="horizontal"
+                                @update:modelValue="onRadioChange"
+                            />
+                        </template>
+                    </div>
+                </div>
+            </div>
         </div>
     </template>
     <template v-else>
