@@ -3,6 +3,7 @@ import BaseRadioGroup from '@/components/core/form/radio-group/BaseRadioGroup.vu
 import SpinnerComponent from '@/components/core/loader/SpinnerComponent.vue';
 import Empty from '@/components/core/util/Empty.vue';
 import HeadingSmall from '@/components/core/util/HeadingSmall.vue';
+import ItemLabel from '@/components/students/update/mobile/ItemLabel.vue';
 import SelectOtherSubject from '@/components/students/update/SelectOtherSubject.vue';
 import SelectSitting from '@/components/students/update/SelectSitting.vue';
 import SelectYear from '@/components/students/update/SelectYear.vue';
@@ -254,7 +255,7 @@ const populateCurrentDataFromApplication = () => {
         :description="$t('trans.o_level_results_description')"
     />
     <template v-if="requirements?.attributes && Number(requirements?.attributes?.otherSubjectsCount) > 0">
-        <div class="flex w-full flex-col overflow-auto">
+        <div class="hidden w-full flex-col overflow-auto md:flex">
             <table class="hava-table my-4">
                 <thead class="hava-thead">
                     <tr>
@@ -322,6 +323,63 @@ const populateCurrentDataFromApplication = () => {
                     </tr>
                 </tbody>
             </table>
+        </div>
+        <div class="my-6 flex flex-col space-y-3 md:hidden">
+            <div class="subject-card" v-for="n in requirements?.attributes?.otherSubjectsCount" :key="`mobile_other${n}`">
+                <div class="card-header">
+                    <h3 class="card-title subject-name">{{ `${$tChoice('trans.subject', 1)} ${n}` }}</h3>
+                </div>
+                <div class="card-content space-y-3">
+                    <div class="flex items-center space-x-3">
+                        <ItemLabel :label="$tChoice('trans.subject', 1)" />
+                        <SpinnerComponent class="flex items-center justify-center" v-if="subjectsLoading || gradesLoading" />
+                        <div class="flex w-full" v-else>
+                            <SelectOtherSubject
+                                class="flex w-full"
+                                :options="options"
+                                :input-id="`other_subject_${n}`"
+                                :model-value="o_level_other_subject_ids?.[n?.toString() ?? ''] || null"
+                                @update:model-value="(option: SelectOption) => onSubjectChange(option, n.toString() ?? '')"
+                            />
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <ItemLabel :label="$tChoice('trans.year', 1)" />
+                        <div class="flex w-full">
+                            <SelectYear
+                                :input-id="`other_year_${n}`"
+                                :model-value="o_level_other_years?.[n?.toString() ?? ''] || null"
+                                @update:model-value="(value: string) => onYearChange(value, n.toString() ?? '')"
+                            />
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <ItemLabel :label="$tChoice('trans.sitting', 1)" />
+                        <div class="flex w-full">
+                            <SelectSitting
+                                class="flex w-full"
+                                :model-value="o_level_other_sittings?.[n.toString() ?? ''] || null"
+                                @update:modelValue="(option: SelectOption) => onSittingChange(option, n.toString() ?? '')"
+                            />
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <ItemLabel :label="$tChoice('trans.grade', 1)" />
+                        <SpinnerComponent class="flex w-full items-center justify-center" v-if="gradesLoading || subjectsLoading" />
+                        <template v-else>
+                            <BaseRadioGroup
+                                class="flex items-center justify-center"
+                                :options="getOptionsForSubject(n.toString() ?? '')"
+                                :default-value="getDefaultOLevels(n.toString() ?? '')"
+                                :label-uppercase="true"
+                                :is-required="true"
+                                orientation="horizontal"
+                                @update:modelValue="onGradeChange"
+                            />
+                        </template>
+                    </div>
+                </div>
+            </div>
         </div>
     </template>
     <template v-else>

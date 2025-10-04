@@ -100,7 +100,7 @@ const { isNativeCitizen } = useUtils();
         </div>
         <div class="mt-3 flex w-full flex-col items-start">
             <BaseRadioGroup
-                label="Do you have a disability?"
+                label="Disability?"
                 class="flex items-center justify-center"
                 :options="disabilityOptions"
                 :label-uppercase="true"

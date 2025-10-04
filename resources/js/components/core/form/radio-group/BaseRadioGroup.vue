@@ -28,7 +28,22 @@ withDefaults(defineProps<Props>(), {
         </Label>
         <div class="flex items-center space-x-2" v-for="option in options" :key="option.inputId">
             <RadioGroupItem :id="option.inputId" :value="option.value" class="p-3" />
-            <Label :for="option.inputId">{{ option.label }}</Label>
+            <template v-if="typeof option.label === 'string' && option.label.startsWith('<')">
+                <!-- HTML string with icon -->
+                <Label :for="option.inputId" >
+                    <span class="text-destructive" v-html="option.label" />
+                </Label>
+            </template>
+            <template v-else-if="typeof option.label === 'string'">
+                <!-- Plain text label -->
+                <Label :for="option.inputId">{{ option.label }}</Label>
+            </template>
+            <template v-else>
+                <!-- VNode / Component -->
+                <Label :for="option.inputId">
+                    <component :is="option.label" />
+                </Label>
+            </template>
         </div>
     </RadioGroup>
 </template>
