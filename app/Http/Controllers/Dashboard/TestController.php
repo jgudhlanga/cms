@@ -13,6 +13,12 @@ use Spatie\MediaLibrary\MediaCollections\Exceptions\FileIsTooBig;
 
 class TestController extends Controller
 {
+
+    public function debug(string $item)
+    {
+        //
+    }
+
     /**
      * @throws FileIsTooBig
      * @throws FileDoesNotExist

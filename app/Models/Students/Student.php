@@ -130,11 +130,16 @@ class Student extends Model
         return $this->hasMany(AcademicRecord::class, 'student_id');
     }
 
+
     public function oLevelResults(): HasMany
     {
         return $this->hasMany(StudentAcademicResult::class, 'student_id')
-            ->where('academic_level_id', AcademicLevelEnum::SECONDARY_SCHOOL->id());
+            ->where('academic_level_id', AcademicLevelEnum::SECONDARY_SCHOOL->id())
+            ->select('student_academic_results.*')
+            ->distinct('subject_id');
     }
+
+
 
     public function nextOfKins(): MorphMany
     {
