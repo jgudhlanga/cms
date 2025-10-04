@@ -43,7 +43,7 @@ const getMainSubjectGrade = (results: AcademicOLevelResult[], subjectId: string 
     return match?.attributes.grade || 'N/A';
 };
 
-const getOtherSubjectGrades = (results: AcademicOLevelResult[]): Record<number, string> => {
+/*const getOtherSubjectGrades = (results: AcademicOLevelResult[]): Record<number, string> => {
     const requiredSubjects = level?.relationships?.requirement?.relationships?.subjects || [];
     const otherSubjectsCountRaw = level?.relationships?.requirement?.attributes?.otherSubjectsCount ?? 0;
     const otherSubjectsCount = Number(otherSubjectsCountRaw) || 0;
@@ -57,6 +57,24 @@ const getOtherSubjectGrades = (results: AcademicOLevelResult[]): Record<number, 
         },
         {} as Record<number, string>,
     );
+};*/
+
+const getOtherSubjectGrades = (results: AcademicOLevelResult[]): Record<number, string> => {
+    const requiredSubjects = level?.relationships?.requirement?.relationships?.subjects || [];
+    const otherSubjectsCountRaw = level?.relationships?.requirement?.attributes?.otherSubjectsCount ?? 0;
+    const otherSubjectsCount = Number(otherSubjectsCountRaw) || 0;
+
+    const requiredIds = requiredSubjects.map((s: any) => String(s.id));
+    const otherSubjects = results.filter((r) => !requiredIds.includes(String(r.attributes.subjectId)));
+
+    const grades: Record<number, string> = {};
+
+    for (let i = 0; i < otherSubjectsCount; i++) {
+        const subject = otherSubjects[i];
+        grades[i + 1] = subject?.attributes?.grade?.trim() || '---';
+    }
+
+    return grades;
 };
 
 const buttonOptions = (enrolment: Enrolment) => {
@@ -100,11 +118,7 @@ const buttonOptions = (enrolment: Enrolment) => {
                     <td class="j-td">{{ $t('trans.action_all') }}</td>
                     <td class="j-td"></td>
                     <td class="j-td text-center">
-                        <UpdateAllPaymentsButton
-                            :department-id="departmentId"
-                            :enrolments="enrolments"
-                            :params="updatePaymentStatusParams"
-                        />
+                        <UpdateAllPaymentsButton :department-id="departmentId" :enrolments="enrolments" :params="updatePaymentStatusParams" />
                     </td>
                 </tr>
             </template>

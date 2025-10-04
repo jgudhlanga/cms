@@ -103,17 +103,14 @@ class StudentProgram extends Model implements HasMedia
         return $this->receipt($feeType) !== null;
     }
 
-    public function receipts(): HasMany
+    public function receipts()
     {
-        return $this->hasMany(Ledger::class, 'student_program_id')
-            ->where('type', 'receipt');
+        return $this->student->user->ledgers()->with('feeType')->where('type', 'receipt');
     }
 
     public function receipt(FeeTypeEnum $feeType): ?Ledger
     {
-        return $this->receipts()->whereRelation('feeType', 'slug', $feeType->slug())
-            ->latest()
-            ->first();
+        return $this->receipts()->whereRelation('feeType', 'slug', $feeType->slug())->latest()->first();
     }
 
 

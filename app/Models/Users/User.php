@@ -118,6 +118,12 @@ class User extends Authenticatable implements MustVerifyEmail, HasMedia
         return ($this->avatar_id > 0) ? ['thumb' => $this->image->getFullUrl('thumb'), 'card' => $this->image->getFullUrl('card')] : null;
     }
 
+    public function ledgers(): MorphMany
+    {
+        return $this->morphMany(Ledger::class, 'ledgerable');
+    }
+
+
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()

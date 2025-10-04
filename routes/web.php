@@ -10,6 +10,7 @@ Route::get('/', function () {
 
 Route::get('/dashboard', DashboardController::class)->middleware(['auth', 'verified', 'redirect.student'])->name('dashboard');
 Route::get('/pdf/{student_program}', [TestController::class, 'pdf'])->name('generate-pdf');
+Route::get('/debug/{item}', [TestController::class, 'debug'])->name('debug.item');
 
 require __DIR__ . '/web/integrations.php';
 require __DIR__ . '/web/auth.php';
