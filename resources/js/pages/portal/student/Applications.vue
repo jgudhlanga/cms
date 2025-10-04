@@ -64,6 +64,7 @@ const { createStudentApplicationColumns } = useStudentApplications();
         <div v-if="eligibleForMoreApplications()" class="text-destructive flex w-fit rounded-full bg-amber-200 px-5 py-1 leading-tight">
             {{ `You can apply for ${remainingSlots()} more courses` }}
         </div>
+
         <DataTable :data="applications" :show-archived-filter="false" :columns="createStudentApplicationColumns()">
             <template #head-right v-if="eligibleForMoreApplications()">
                 <GenericButton

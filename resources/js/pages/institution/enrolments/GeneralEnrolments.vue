@@ -48,7 +48,7 @@ const buttonOptions = (enrolment: Enrolment) => {
         <thead class="j-thead">
             <tr class="j-th">
                 <th class="j-th text-left">{{ $tChoice('trans.name', 1) }}</th>
-                <th class="j-th text-left">{{ $tChoice('trans.student_number', 1) }}</th>
+                <th class="j-th text-left">{{ $tChoice('trans.tracking_number', 1) }}</th>
                 <template v-if="registrationFeePaymentRequired(step)">
                     <th class="j-th text-center">{{ $t('trans.application_fee') }}</th>
                 </template>
@@ -73,7 +73,7 @@ const buttonOptions = (enrolment: Enrolment) => {
                 <td class="j-td">
                     <TextLink :href="''" :title="enrolment?.attributes?.studentName" />
                 </td>
-                <td class="j-td">{{ enrolment?.attributes?.studentNumber }}</td>
+                <td class="j-td">{{ enrolment?.attributes?.applicationTrackingNumber }}</td>
                 <template v-if="registrationFeePaymentRequired(step)">
                     <td class="j-td text-center">
                         <PaymentStatusButton :enrolment="enrolment" :step="step" type="registration" />

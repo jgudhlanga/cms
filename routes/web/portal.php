@@ -28,5 +28,7 @@ Route::prefix('portal')->group(function () {
         Route::post('contacts', [PortalController::class, 'storeContactDetails'])->name('portal.contacts.store');
         Route::post('addresses', [PortalController::class, 'storeAddressDetails'])->name('portal.address.store');
         Route::post('next-of-kins', [PortalController::class, 'storeNextOfKinDetails'])->name('portal.next-of-kins.store');
+        # =============================================== MISC =========================================================
+        Route::get('applications/errors/{message}', [PortalController::class, 'errors'])->name('portal.applications.errors');
     });
 });
