@@ -3,10 +3,14 @@
 namespace App\Http\Controllers\Students;
 
 use App\DTO\Students\UpdateStudentDto;
+use App\Enums\Shared\FeeTypeEnum;
+use App\Helpers\PaymentHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Filters\Students\StudentProgramFilter;
 use App\Http\Requests\Students\UpdateStudentRequest;
+use App\Http\Resources\Institution\FeeStructureResource;
 use App\Http\Resources\Students\StudentProgramResource;
+use App\Models\Institution\FeeStructure;
 use App\Models\Students\Student;
 use App\Models\Students\StudentProgram;
 use App\Repositories\Institution\interface\IDepartmentLevelRepository;
@@ -19,7 +23,7 @@ use Inertia\Response;
 class StudentProgramController extends Controller
 {
     public function __construct(
-        protected IStudentProgramRepository $repository,
+        protected IStudentProgramRepository  $repository,
         protected IDepartmentLevelRepository $departmentLevelRepository,
     )
     {
@@ -42,9 +46,24 @@ class StudentProgramController extends Controller
 
     public function create()
     {
-        //
+        return Inertia::render('students/enrolments/Create');
     }
 
+    public function paymentVerification()
+    {
+        $feeType = PaymentHelper::getFeeTypeBySlug(FeeTypeEnum::APPLICATION_FEE->slug());
+        $registrationFee = FeeStructure::where('fee_type_id', $feeType->id)->first();
+        $registrationFee = FeeStructureResource::make($registrationFee);
+        return Inertia::render('students/paymentVerification/PaymentVerification', compact('registrationFee'));
+    }
+
+    public function searchProfile()
+    {
+        [$search] = $this->extractRequestFilters();
+        // search users;
+        // search students;
+        // search ledgers;
+    }
 
     public function store(Request $request)
     {
@@ -72,5 +91,14 @@ class StudentProgramController extends Controller
     public function destroy(string $id)
     {
         //
+    }
+
+    private function extractRequestFilters(): array
+    {
+        $search = request()->has('search') ? request('search') : null;
+
+        return [
+            $search,
+        ];
     }
 }

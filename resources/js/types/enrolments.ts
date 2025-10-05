@@ -85,3 +85,11 @@ export type PaymentProofPreview = {
     enrolmentId: string | number;
     url: string;
 };
+
+export type EnrolmentSearchParams = {
+    institution_department_id: string;
+    department_level_id: string;
+    department_course_id: string;
+    intake_period_id: string;
+    mode_of_study_id: string;
+};
