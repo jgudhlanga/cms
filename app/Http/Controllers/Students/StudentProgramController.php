@@ -3,20 +3,25 @@
 namespace App\Http\Controllers\Students;
 
 use App\DTO\Students\UpdateStudentDto;
+use App\Enums\Institution\LevelEnum;
 use App\Enums\Shared\FeeTypeEnum;
 use App\Helpers\PaymentHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Filters\Students\StudentProgramFilter;
 use App\Http\Requests\Students\UpdateStudentRequest;
+use App\Http\Resources\Enrolments\EnrolmentResource;
 use App\Http\Resources\Institution\FeeStructureResource;
 use App\Http\Resources\Students\StudentProgramResource;
+use App\Models\Institution\DepartmentLevel;
 use App\Models\Institution\FeeStructure;
 use App\Models\Students\Student;
 use App\Models\Students\StudentProgram;
 use App\Repositories\Institution\interface\IDepartmentLevelRepository;
 use App\Repositories\Students\interface\IStudentProgramRepository;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -57,14 +62,6 @@ class StudentProgramController extends Controller
         return Inertia::render('students/paymentVerification/PaymentVerification', compact('registrationFee'));
     }
 
-    public function searchProfile()
-    {
-        [$search] = $this->extractRequestFilters();
-        // search users;
-        // search students;
-        // search ledgers;
-    }
-
     public function store(Request $request)
     {
         //
@@ -93,12 +90,65 @@ class StudentProgramController extends Controller
         //
     }
 
-    private function extractRequestFilters(): array
+    public function faultyApplications(): Response
     {
-        $search = request()->has('search') ? request('search') : null;
+        $this->authorize('viewAny', StudentProgram::class);
 
-        return [
-            $search,
-        ];
+        // 1️⃣ Get allowed department levels (NC + ABMA Level 3)
+        $allowedLevelIds = $this->getAllowedLevelIds();
+
+        // 2️⃣ Fetch IDs for problematic applications
+        $noOLevelResultsIds = $this->getNoOLevelResultsIds($allowedLevelIds);
+        $oLevelResultsFewerThanFiveIds = $this->getOLevelResultsFewerThanFiveIds($allowedLevelIds);
+
+        // 3️⃣ Query and paginate faulty applications
+        $noOLevelResults = StudentProgram::with('student')
+            ->whereIn('id', $noOLevelResultsIds)
+            ->latest()
+            ->paginate(1000);
+
+        $oLevelResultsFewerThanFive = StudentProgram::with('student')
+            ->whereIn('id', $oLevelResultsFewerThanFiveIds)
+            ->latest()
+            ->paginate(1000);
+
+        // 4️⃣ Transform for frontend
+        return Inertia::render('students/enrolments/FaultyApplications', [
+            'enrolmentWithoutOLevel' => EnrolmentResource::collection($noOLevelResults),
+            'enrolmentWithFewerThanFive' => EnrolmentResource::collection($oLevelResultsFewerThanFive),
+        ]);
+    }
+
+    private function getAllowedLevelIds()
+    {
+        return DepartmentLevel::whereHas('level', function ($query) {
+            $query->whereIn('name', [
+                LevelEnum::NC->name(),
+                LevelEnum::ABMA_LEVEL_3->name(),
+            ]);
+        })->pluck('id');
+    }
+
+    private function getNoOLevelResultsIds($allowedLevelIds)
+    {
+        return StudentProgram::select(DB::raw('MAX(id) as id'))
+            ->whereHas('student', function (Builder $query) {
+                $query->whereDoesntHave('oLevelResults');
+            })
+            ->whereIn('department_level_id', $allowedLevelIds)
+            ->groupBy('student_id')
+            ->pluck('id');
+    }
+
+    private function getOLevelResultsFewerThanFiveIds($allowedLevelIds)
+    {
+        return StudentProgram::select(DB::raw('MAX(id) as id'))
+            ->whereHas('student', function (Builder $query) {
+                $query->has('oLevelResults', '>=', 1)
+                    ->has('oLevelResults', '<', 5);
+            })
+            ->whereIn('department_level_id', $allowedLevelIds)
+            ->groupBy('student_id')
+            ->pluck('id');
     }
 }

@@ -24,7 +24,8 @@ Route::prefix('students')->middleware('auth')->group(function () {
 // ===================================== ENROLMENTS ====================================================================
 Route::prefix('enrolments')->middleware('auth')->group(function () {
     Route::get('payment-verification', [StudentProgramController::class, 'paymentVerification'])->name('enrolments.payment-verification');
-    Route::post('search-profile', [StudentProgramController::class, 'searchProfile'])->name('enrolments.search-profile');
+    Route::get('faulty-applications', [StudentProgramController::class, 'faultyApplications'])->name('enrolments.faulty-applications');
+    Route::post('search-profile', [StudentController::class, 'searchProfile'])->name('enrolments.search-profile');
 });
 Route::middleware('auth')->resource('enrolments', StudentProgramController::class)->names('enrolments');
 // ===================================== STUDENTS ======================================================================

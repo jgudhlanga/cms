@@ -8,7 +8,9 @@ use App\Http\Filters\Students\StudentFilter;
 use App\Http\Requests\Students\UpdateStudentRequest;
 use App\Http\Resources\Institution\CourseResource;
 use App\Http\Resources\Students\StudentResource;
+use App\Http\Resources\Users\UserResource;
 use App\Models\Students\Student;
+use App\Models\Users\User;
 use App\Repositories\Students\interface\IStudentRepository;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\Request;
@@ -30,7 +32,7 @@ class StudentController extends Controller
     {
         $this->authorize('viewAny', Student::class);
         $students = StudentResource::collection($this->repository->allFilter(['*'], $filters));
-        return Inertia::render('students/Index', [
+        return Inertia::render('students/StudentsIndex', [
             'students' => $students,
             'filters' => request()->only(['search', 'trashed']),
             'trashedCount' => $this->repository->allTrashed()->count(),
@@ -70,5 +72,48 @@ class StudentController extends Controller
     public function destroy(string $id)
     {
         //
+    }
+
+    public function searchProfile()
+    {
+        [$search] = $this->extractRequestFilters();
+
+        if (blank($search)) {
+            return response()->json([
+                'message' => 'Please provide a search value.',
+            ], 422);
+        }
+
+        // 1. Search by user email
+        $user = User::where('email', $search)->first();
+
+        // 2. Search students by national_id, student_number or passport_number
+        if (!$user) {
+            $student = Student::query()
+                ->where('national_id', $search)
+                ->orWhere('student_number', $search)
+                ->orWhere('passport_number', $search)
+                ->first();
+            $user = $student?->user;
+        }
+
+
+        if ($user) {
+            return UserResource::make($user);
+        }
+
+        return response()->json([
+            'message' => 'No matching record found.',
+        ], 404);
+    }
+
+
+    private function extractRequestFilters(): array
+    {
+        $search = request()->has('search') ? request('search') : null;
+
+        return [
+            $search,
+        ];
     }
 }
