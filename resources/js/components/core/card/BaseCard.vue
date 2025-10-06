@@ -11,7 +11,7 @@ defineProps<Props>()
 </script>
 
 <template>
-  <div class="flex flex-col w-full p-4 rounded-md shadow-lg space-y-3">
+  <div class="flex flex-col w-full p-4 rounded-md shadow-sm space-y-3">
 		<HeadingSmall v-if="title" :title="title" :description="description"/>
 		<slot/>
 	</div>

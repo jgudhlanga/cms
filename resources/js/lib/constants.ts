@@ -71,7 +71,7 @@ const EXAM_SITTINGS = [
 ];
 const DISABILITY_OPTIONS: RadioGroupOption[] = [
     { label: 'Yes', value: 'yes', inputId: 'disability_yes' },
-    { label: 'No', value: 'no', inputId: 'disability_nno' },
+    { label: 'No', value: 'no', inputId: 'disability_no' },
     { label: 'Skip', value: 'prefer_not_to_say', inputId: 'disability_prefer_not_to_say' },
 ];
 export {

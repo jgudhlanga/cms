@@ -103,7 +103,7 @@ onMounted(async () => {
             </div>
             <div class="flex flex-col">
                 <div class="text-muted-foreground flex items-center justify-center space-x-3 text-xs font-bold">
-                    <span>🔒</span><span>{{ $t('trans.secure_payment_processed_by', { payment_processor: 'Smile N Pay' }) }}</span>
+                    <span>🔒</span><span>{{ $t('trans.secure_payment_processed_by', { payment_processor: 'Smile & Pay' }) }}</span>
                 </div>
 
                 <div class="payment-methods">
@@ -165,16 +165,5 @@ onMounted(async () => {
     justify-content: center;
     gap: 15px;
     margin-top: 25px;
-}
-
-.payment-method {
-    width: 50px;
-    height: 30px;
-    background-color: #f8f9fa;
-    border-radius: 4px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 20px;
 }
 </style>

@@ -42,10 +42,10 @@ const { user } = props.auth;
 const requirements = ref<CourseRequirement | DepartmentLevelRequirement | null | undefined>(null);
 // Composable
 const { idTypes, listIdTypes } = useIdTypes();
-const { applicationFormSchema, saveApplication } = useStudentPortal();
+const { applicationFormSchema } = useStudentPortal();
 const { isNativeCitizen, isItTrue } = useUtils();
 const { validateMainSubjects, validateOtherSubjects, updateCreateForm } = useApplicationFormHelper();
-
+const { navigateTo } = useUtils();
 const storeRefs = storeToRefs(useCreateApplicationFormStore());
 const getRequirements = () => {
     requirements.value =
@@ -171,7 +171,7 @@ const save = async () => {
                 return;
             }
         }
-        saveApplication(form);
+        navigateTo(route('portal.application.confirm'));
     } catch (error: any) {
         if (error?.format) {
             form.setError(error.format());
@@ -200,7 +200,7 @@ const maintenanceMode = isItTrue(import.meta.env.VITE_MAINTENANCE_MODE);
                 <CustomSeparator classes="h-1 my-5" />
                 <div class="mb-10 flex items-center justify-center">
                     <BaseButton class="w-full md:w-[200px]" :size="ButtonSize.xl">
-                        {{ $t('trans.submit') }}
+                        {{ $t('trans.continue') }}
                     </BaseButton>
                 </div>
             </div>

@@ -22,9 +22,12 @@ import { computed, onMounted, ref, Ref, watchEffect } from 'vue';
 
 interface Props {
     application?: Enrolment | null;
+    isViewOnly?: boolean;
 }
 
-const props = defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+    isViewOnly: false,
+});
 const { application } = props;
 
 const isEditing = Number(String(application?.id)) > 0;
@@ -266,7 +269,7 @@ const populateCurrentDataFromApplication = () => {
                     </tr>
                 </thead>
                 <tbody class="hava-tbody">
-                    <tr class="hava-tr">
+                    <tr class="hava-tr" v-if="!isViewOnly">
                         <td class="hava-td">
                             <span class="text-primary font-bold">{{ $t('trans.select_for_all') }}</span>
                         </td>
@@ -285,6 +288,7 @@ const populateCurrentDataFromApplication = () => {
                             <SpinnerComponent class="flex items-center justify-center" v-if="subjectsLoading || gradesLoading" />
                             <SelectOtherSubject
                                 v-else
+                                :disabled="isViewOnly"
                                 :options="options"
                                 :input-id="`other_subject_${n}`"
                                 :model-value="o_level_other_subject_ids?.[n?.toString() ?? ''] || null"
@@ -294,6 +298,7 @@ const populateCurrentDataFromApplication = () => {
                         <td class="hava-td">
                             <div class="flex items-center justify-center">
                                 <SelectYear
+                                    :disabled="isViewOnly"
                                     :input-id="`other_year_${n}`"
                                     :model-value="o_level_other_years?.[n?.toString() ?? ''] || null"
                                     @update:model-value="(value: string) => onYearChange(value, n.toString() ?? '')"
@@ -302,6 +307,7 @@ const populateCurrentDataFromApplication = () => {
                         </td>
                         <td class="hava-td text-center">
                             <SelectSitting
+                                :disabled="isViewOnly"
                                 :model-value="o_level_other_sittings?.[n.toString() ?? ''] || null"
                                 @update:modelValue="(option: SelectOption) => onSittingChange(option, n.toString() ?? '')"
                             />
@@ -310,6 +316,7 @@ const populateCurrentDataFromApplication = () => {
                             <SpinnerComponent class="flex items-center justify-center" v-if="gradesLoading || subjectsLoading" />
                             <template v-else>
                                 <BaseRadioGroup
+                                    :disabled="isViewOnly"
                                     class="flex items-center justify-center"
                                     :options="getOptionsForSubject(n.toString() ?? '')"
                                     :default-value="getDefaultOLevels(n.toString() ?? '')"
@@ -335,6 +342,7 @@ const populateCurrentDataFromApplication = () => {
                         <SpinnerComponent class="flex items-center justify-center" v-if="subjectsLoading || gradesLoading" />
                         <div class="flex w-full" v-else>
                             <SelectOtherSubject
+                                :disabled="isViewOnly"
                                 class="flex w-full"
                                 :options="options"
                                 :input-id="`other_subject_${n}`"
@@ -347,6 +355,7 @@ const populateCurrentDataFromApplication = () => {
                         <ItemLabel :label="$tChoice('trans.year', 1)" />
                         <div class="flex w-full">
                             <SelectYear
+                                :disabled="isViewOnly"
                                 :input-id="`other_year_${n}`"
                                 :model-value="o_level_other_years?.[n?.toString() ?? ''] || null"
                                 @update:model-value="(value: string) => onYearChange(value, n.toString() ?? '')"
@@ -357,6 +366,7 @@ const populateCurrentDataFromApplication = () => {
                         <ItemLabel :label="$tChoice('trans.sitting', 1)" />
                         <div class="flex w-full">
                             <SelectSitting
+                                :disabled="isViewOnly"
                                 class="flex w-full"
                                 :model-value="o_level_other_sittings?.[n.toString() ?? ''] || null"
                                 @update:modelValue="(option: SelectOption) => onSittingChange(option, n.toString() ?? '')"
@@ -368,6 +378,7 @@ const populateCurrentDataFromApplication = () => {
                         <SpinnerComponent class="flex w-full items-center justify-center" v-if="gradesLoading || subjectsLoading" />
                         <template v-else>
                             <BaseRadioGroup
+                                :disabled="isViewOnly"
                                 class="flex items-center justify-center"
                                 :options="getOptionsForSubject(n.toString() ?? '')"
                                 :default-value="getDefaultOLevels(n.toString() ?? '')"

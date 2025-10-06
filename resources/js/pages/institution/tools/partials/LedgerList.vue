@@ -44,6 +44,7 @@ const checkStatus = async (orderReference: string) => {
 const disableWhenIsPaid = (status: string) => {
     return status.toLowerCase() === 'paid';
 };
+
 </script>
 
 <template>

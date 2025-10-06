@@ -244,4 +244,6 @@ class PaymentController extends Controller
         return [$amount, $clientFee, $createdDate, $currency, $merchantFee, $paymentOption,
             $orderReference, $paymentReference, $paymentStatus,];
     }
+
+
 }

@@ -124,6 +124,12 @@ class PortalController extends Controller
         return Inertia::render('portal/application/CreateApplication');
     }
 
+    public function confirmApplication(): Response
+    {
+        $this->authorize('manageStudentPersonalDetails');
+        return Inertia::render('portal/application/ConfirmApplication');
+    }
+
     /**
      * @throws Throwable
      */

@@ -83,6 +83,7 @@ export function useStudentPortal() {
     };
     const successMessage = () => trans('trans.item_saved', { item: getApplicationName() });
     const errorMessage = () => trans('trans.item_save_failure', { item: getApplicationName() });
+
     const saveApplication = (form: InertiaForm<any>) => {
         try {
             form.post(route('portal.store-application'), buildFormOptions(form, successMessage(), errorMessage()));

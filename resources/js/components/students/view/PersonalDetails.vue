@@ -6,6 +6,7 @@ import { useUtils } from '@/composables/core/useUtils';
 import { PersonalDetailView } from '@/types/students';
 import { ValueAndLabel } from '@/types/utils';
 import { computed } from 'vue';
+import { DISABILITY_OPTIONS } from '@/lib/constants';
 
 const { isNativeCitizen, formatDate, isItTrue } = useUtils();
 
@@ -21,6 +22,7 @@ const props = withDefaults(defineProps<Props>(), {
     showExtra: false,
 });
 const { personal, showExtra } = props;
+const disabilityOptions = DISABILITY_OPTIONS;
 
 const personalDetails = computed<ValueAndLabel[]>(() => {
     const details: ValueAndLabel[] = [
@@ -47,6 +49,7 @@ const personalDetails = computed<ValueAndLabel[]>(() => {
     }
 
     details.push({ transKey: 'trans.date_of_birth', value: formatDate(personal?.dateOfBirth ?? '') });
+    details.push({ transKey: 'trans.disability', value: DISABILITY_OPTIONS.find(option => option.value === personal?.disabilityStatus)?.label ?? '' });
 
     if (isItTrue(showExtra)) {
         details.push(
