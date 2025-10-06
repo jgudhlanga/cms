@@ -10,6 +10,8 @@ export type Enrolment = {
         studentNumber?: string;
         modeOfStudyId: string | number;
         modeOfStudy: string;
+        phoneNumber: string;
+        email: string;
         institutionDepartmentId: string | number;
         departmentLevelId: string | number;
         departmentCourseId: string | number;

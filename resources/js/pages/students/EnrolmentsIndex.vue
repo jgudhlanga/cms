@@ -88,6 +88,14 @@ const form = useForm<EnrolmentSearchParams>({
         >
             <template #head-right v-if="hasAbility('create:students')">
                 <GenericButton
+                    :icon="IconName.danger"
+                    class="rounded-full"
+                    :icon-variant="ColorVariant.white"
+                    :variant="ColorVariant.danger_outline"
+                    @click="() => navigateTo(route('enrolments.faulty-applications'))"
+                    title="Faulty Applications"
+                />
+                <GenericButton
                     :icon="IconName.add"
                     class="rounded-full"
                     :icon-variant="ColorVariant.white"

@@ -42,9 +42,9 @@ const searchProfile = async () => {
                 <BaseInput
                     classes="w-full p-6"
                     input-id="order_reference"
-                    label="Payment Reference / Email address / National ID# / Passport# / Student#"
+                    label="Email address / National ID# / Passport# / Student#"
                     v-model="search"
-                    placeholder="enter payment reference / email address / national id# / passport# / student#"
+                    placeholder="email address / national id# / passport# / student#"
                     :vertical-layout="true"
                     :label-uppercase="false"
                     :is-required="true"
