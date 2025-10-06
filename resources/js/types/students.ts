@@ -58,6 +58,7 @@ export type PersonalDetailView = {
     weight?: string;
     showAvatar?: boolean;
     avatarUrl?: string;
+    disabilityStatus?: string;
 };
 
 export type ContactDetailView = {

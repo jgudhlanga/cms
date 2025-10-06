@@ -5,12 +5,13 @@ import { Enrolment } from '@/types/enrolments';
 
 interface Props {
     application?: Enrolment | null;
+    isViewOnly?: boolean;
 }
 
 defineProps<Props>();
 </script>
 
 <template>
-    <OLevelMainSubjects :application="application" />
-    <OLevelOtherSubjects :application="application" />
+    <OLevelMainSubjects :application="application" :is-view-only="isViewOnly" />
+    <OLevelOtherSubjects :application="application" :is-view-only="isViewOnly" />
 </template>

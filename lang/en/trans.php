@@ -494,5 +494,6 @@ return [
     "bulk_payment_status_update_success" => "Payments status successfully updated",
     "bulk_payment_status_update_failure" => "Payments status failed to update",
     "allowed_applications_per_level" => "Allowed applications per level",
-    "enrolment_requirements" => "Enrolment requirements"
+    "enrolment_requirements" => "Enrolment requirements",
+    "disability" => "Disability?"
 ];

@@ -13,6 +13,7 @@ Route::prefix('portal')->group(function () {
     Route::middleware(['auth', 'verified', 'redirect.student'])->group(function () {
         Route::get('application/fee-payment', [PortalController::class, 'registrationFeePaymentOptions'])->name('portal.application.fee-payment');
         Route::get('application/create', [PortalController::class, 'createApplication'])->name('portal.application.create');
+        Route::get('application/confirm', [PortalController::class, 'confirmApplication'])->name('portal.application.confirm');
         Route::get('application/{student_program}/view', [PortalController::class, 'viewApplication'])->name('portal.application.view');
         Route::get('application/{student_program}/edit', [PortalController::class, 'editApplication'])->name('portal.application.edit');
         Route::put('application/{student_program}/update', [PortalController::class, 'updateApplication'])->name('portal.application.update');

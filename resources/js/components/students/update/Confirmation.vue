@@ -10,6 +10,8 @@ import SDPRequirements from '@/components/students/update/SDPRequirements.vue';
 import { useCreateApplicationFormStore } from '@/store/portal/useCreateApplicationFormStore';
 import { ContactDetailView, NextOfKinDetailView, PersonalDetailView, ProgramDetailView } from '@/types/students';
 import { storeToRefs } from 'pinia';
+import { ButtonSize } from '@/enums/buttons';
+import { BaseButton } from '@/components/core/button';
 
 const {
     email,
@@ -102,5 +104,9 @@ const programDetails: ProgramDetailView = {
             </template>
         </div>
     </ProgramDetails>
-    .
+    <div class="mb-10 flex items-center justify-center">
+        <BaseButton type="button" @click="() => {}" class="w-full md:w-[200px]" :size="ButtonSize.xl">
+            {{ $t('trans.submit') }}
+        </BaseButton>
+    </div>
 </template>
