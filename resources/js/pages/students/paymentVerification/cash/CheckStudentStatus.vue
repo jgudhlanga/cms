@@ -2,6 +2,7 @@
 import { BaseButton } from '@/components/core/button';
 import { BaseInput } from '@/components/core/form';
 import BaseIcon from '@/components/core/icon/BaseIcon.vue';
+import { useUtils } from '@/composables/core/useUtils';
 import { IconName } from '@/enums/icons';
 import { errorAlert } from '@/lib/alerts';
 import HttpService from '@/services/http.service';
@@ -9,6 +10,7 @@ import { ref } from 'vue';
 
 const isSearching = ref(false);
 const search = ref('');
+const { navigateTo } = useUtils();
 const searchProfile = async () => {
     if (search.value === '') {
         errorAlert('Please enter a search term');
@@ -19,7 +21,8 @@ const searchProfile = async () => {
         const response = await HttpService.post(route('enrolments.search-profile'), { search: search.value });
         const message = response?.message;
         if (message) {
-            errorAlert(`${message} (${search.value})`);
+            // create a new user account and student profile and the application finally
+            navigateTo(route('enrolments.create'));
         } else {
         }
     } catch (error: any) {

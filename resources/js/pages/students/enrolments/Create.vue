@@ -10,7 +10,11 @@ interface Props {
 }
 
 defineProps<Props>();
-const breadcrumbs: Array<Link> = [{ transKey: 'dashboard', href: route('dashboard') }, { transChoiceKey: 'enrolment' }, { title: 'Create new' }];
+const breadcrumbs: Array<Link> = [
+    { transKey: 'dashboard', href: route('dashboard') },
+    { transChoiceKey: 'enrolment', href: route('enrolments.index') },
+    { title: 'Create new' },
+];
 </script>
 
 <template>
