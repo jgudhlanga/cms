@@ -11,6 +11,7 @@ import { Link } from '@/types/ui';
 interface Props {
     enrolmentWithoutOLevel: DataListProps<Enrolment>;
     enrolmentWithFewerThanFive: DataListProps<Enrolment>;
+    noApplicationsFeePaid: DataListProps<Enrolment>;
     auth: AuthObject;
     errors: object;
 }
@@ -29,6 +30,8 @@ const breadcrumbs: Array<Link> = [
         <DataListTable :enrolments="enrolmentWithoutOLevel.data"  title="Entry Level Applications without OLevel results" />
         <CustomSeparator classes="h-1 my-5" />
         <DataListTable :enrolments="enrolmentWithFewerThanFive.data"  title="Entry Level Applications with OLevel results less than required 5" />
+        <CustomSeparator classes="h-1 my-5" />
+        <DataListTable :enrolments="noApplicationsFeePaid.data"  title="Applications without application fee paid" />
         <CustomSeparator classes="h-1 my-5" />
     </PageContainer>
 </template>

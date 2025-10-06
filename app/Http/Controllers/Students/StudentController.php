@@ -87,10 +87,10 @@ class StudentController extends Controller
         // 1. Search by user email
         $user = User::where('email', $search)->first();
 
-        // 2. Search students by national_id, student_number or passport_number
+        // 2. Search students by id_number, student_number or passport_number
         if (!$user) {
             $student = Student::query()
-                ->where('national_id', $search)
+                ->where('id_number', $search)
                 ->orWhere('student_number', $search)
                 ->orWhere('passport_number', $search)
                 ->first();
@@ -104,7 +104,7 @@ class StudentController extends Controller
 
         return response()->json([
             'message' => 'No matching record found.',
-        ], 404);
+        ], 200);
     }
 
 

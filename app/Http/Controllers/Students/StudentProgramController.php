@@ -16,6 +16,7 @@ use App\Models\Institution\DepartmentLevel;
 use App\Models\Institution\FeeStructure;
 use App\Models\Students\Student;
 use App\Models\Students\StudentProgram;
+use App\Models\Users\User;
 use App\Repositories\Institution\interface\IDepartmentLevelRepository;
 use App\Repositories\Students\interface\IStudentProgramRepository;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -51,7 +52,11 @@ class StudentProgramController extends Controller
 
     public function create()
     {
-        return Inertia::render('students/enrolments/Create');
+    }
+
+    public function createProfile(string $type)
+    {
+        return Inertia::render('students/enrolments/Create', compact('type'));
     }
 
     public function paymentVerification()
@@ -112,10 +117,17 @@ class StudentProgramController extends Controller
             ->latest()
             ->paginate(1000);
 
-        // 4️⃣ Transform for frontend
+        // Get the actual StudentProgram models
+        $noApplicationsFeePaid = StudentProgram::with(['student', 'departmentLevel', 'departmentCourse'])
+            ->whereIn('id', $this->getNoReceiptsIds())
+            ->latest()
+            ->paginate(1000);
+
+        // 5 Transform for frontend
         return Inertia::render('students/enrolments/FaultyApplications', [
             'enrolmentWithoutOLevel' => EnrolmentResource::collection($noOLevelResults),
             'enrolmentWithFewerThanFive' => EnrolmentResource::collection($oLevelResultsFewerThanFive),
+            'noApplicationsFeePaid' => EnrolmentResource::collection($noApplicationsFeePaid),
         ]);
     }
 
@@ -151,4 +163,22 @@ class StudentProgramController extends Controller
             ->groupBy('student_id')
             ->pluck('id');
     }
+
+    private function getNoReceiptsIds()
+    {
+        return StudentProgram::whereNotExists(function ($query) {
+            $query->selectRaw('1')
+                ->from('ledgers')
+                ->join('users', 'ledgers.ledgerable_id', '=', 'users.id')
+                ->where('ledgers.ledgerable_type', User::class) // Only ledgers for User
+                ->whereColumn('ledgers.ledgerable_id', 'users.id') // Match the User ID
+                ->join('students', 'students.user_id', '=', 'users.id')
+                ->whereColumn('students.id', 'student_programs.student_id')
+                ->where('ledgers.type', 'receipt');
+        })
+            ->selectRaw('MAX(id) as id')
+            ->groupBy('student_id')
+            ->pluck('id');
+    }
+
 }

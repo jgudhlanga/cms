@@ -67,6 +67,10 @@ export type CreateApplicationParams = {
     o_level_other_grade_ids?: Record<string, string> | null;
     o_level_other_years?: Record<string, string> | null;
     o_level_other_sittings?: Record<string, SelectOption> | null;
+    /** Proof of Payment */
+    proof_of_payment?: string | null;
+    payment_reference?: string | null;
+    payment_date?: string | null;
 };
 
 export type ProgramParams = {
