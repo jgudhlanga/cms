@@ -36,7 +36,9 @@ const acknowledgeLevelCompleted = (value: any) => {
         required_level_completed.value = isItTrue(value);
     }
 };
+
 onMounted(() => {
+    if (required_level_completed && isEditing) required_level_completed.value = isItTrue(application?.attributes?.requiredLevelCompleted);
     requiredLevelCompleted.value = isItTrue(required_level_completed?.value);
 });
 /*const handleUploadFileChange = (event: any) => {
@@ -51,9 +53,7 @@ onMounted(() => {
 <template>
     <HeadingSmall
         :title="$t('trans.level_required', { level: requirements?.attributes?.requiredLevel ?? '' })"
-        :description="
-            $t('trans.level_required_description', { level: requirements?.attributes?.requiredLevel ?? '', current: level?.label ?? '' })
-        "
+        :description="$t('trans.level_required_description', { level: requirements?.attributes?.requiredLevel ?? '', current: level?.label ?? '' })"
     />
     <div v-if="!isViewOnly" class="flex flex-col space-y-6">
         <BaseCheckbox

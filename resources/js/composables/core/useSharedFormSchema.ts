@@ -68,6 +68,20 @@ export const useSharedFormSchema = () => {
         z.object({
             employee_number: z.string().nonempty(trans('trans.enter_required_field', { field: trans('trans.employee_number') })),
         });
+
+    const paymentDateSchema = () =>
+        z.object({
+            payment_date: z
+                .union([z.string(), z.date()])
+                .transform((val) => (typeof val === 'string' ? val : val.toISOString().split('T')[0]))
+                .refine((val) => !isNaN(Date.parse(val)), {
+                    message: trans('trans.date_must_be_valid', { field: 'payment date' }),
+                })
+        });
+    const paymentReferenceSchema = () =>
+        z.object({
+            payment_reference: z.string().nonempty(trans('trans.enter_required_field', { field: 'payment reference' })),
+        });
     const emailAddressSchema = () =>
         z.object({
             email_address: z
@@ -255,5 +269,7 @@ export const useSharedFormSchema = () => {
         titleLabelSchema,
         modeOfStudySchema,
         orderReferenceSchema,
+        paymentReferenceSchema,
+        paymentDateSchema,
     };
 };

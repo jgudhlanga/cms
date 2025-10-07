@@ -8,6 +8,7 @@ use App\Enums\Shared\FeeTypeEnum;
 use App\Helpers\PaymentHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Filters\Students\StudentProgramFilter;
+use App\Http\Requests\Enrolments\CreateCashApplicationRequest;
 use App\Http\Requests\Students\UpdateStudentRequest;
 use App\Http\Resources\Enrolments\EnrolmentResource;
 use App\Http\Resources\Institution\FeeStructureResource;
@@ -56,6 +57,7 @@ class StudentProgramController extends Controller
 
     public function createProfile(string $type)
     {
+        $this->authorize('create', StudentProgram::class);
         return Inertia::render('students/enrolments/Create', compact('type'));
     }
 
@@ -67,7 +69,7 @@ class StudentProgramController extends Controller
         return Inertia::render('students/paymentVerification/PaymentVerification', compact('registrationFee'));
     }
 
-    public function store(Request $request)
+    public function store(CreateCashApplicationRequest $request)
     {
         //
     }

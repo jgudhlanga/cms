@@ -11,15 +11,20 @@ import Programs from '@/components/students/update/Programs.vue';
 import UploadProofOfPayment from '@/components/students/update/UploadProofOfPayment.vue';
 import { useUtils } from '@/composables/core/useUtils';
 import { useIdTypes } from '@/composables/shared/useIdTypes';
+import { useApplicationFormHelper } from '@/composables/students/useApplicationFormHelper';
+import { useEnrolments } from '@/composables/students/useEnrolments';
 import { ButtonSize } from '@/enums/buttons';
+import { errorAlert } from '@/lib/alerts';
 import { clearFormErrors } from '@/lib/forms';
 import { useCreateApplicationFormStore } from '@/store/portal/useCreateApplicationFormStore';
 import { AuthObject } from '@/types/data-pagination';
+import { CourseRequirement, DepartmentLevelRequirement } from '@/types/department-meta-data';
 import { CreateApplicationParams } from '@/types/portal';
 import { Link } from '@/types/ui';
 import { Head, useForm } from '@inertiajs/vue3';
+import { trans } from 'laravel-vue-i18n';
 import { storeToRefs } from 'pinia';
-import { computed, onMounted } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 
 interface Props {
     auth: AuthObject;
@@ -36,6 +41,19 @@ const breadcrumbs: Array<Link> = [
 
 const storeRefs = storeToRefs(useCreateApplicationFormStore());
 const { payment_reference, payment_date } = storeRefs;
+const requirements = ref<CourseRequirement | DepartmentLevelRequirement | null | undefined>(null);
+// Composable
+const { idTypes, listIdTypes } = useIdTypes();
+const { cashApplicationFormSchema } = useEnrolments();
+const { isNativeCitizen, isItTrue } = useUtils();
+const { validateMainSubjects, validateOtherSubjects, updateCreateForm } = useApplicationFormHelper();
+
+const getRequirements = () => {
+    requirements.value =
+        storeRefs.courseRequirements?.value && Number(String(storeRefs.courseRequirements?.value?.id)) > 0
+            ? storeRefs.courseRequirements?.value
+            : storeRefs.levelRequirements?.value;
+};
 const form = useForm<CreateApplicationParams>({
     email: '',
     first_name: '',
@@ -92,11 +110,65 @@ const form = useForm<CreateApplicationParams>({
     payment_reference: null,
     payment_date: null,
 });
-const { idTypes, listIdTypes } = useIdTypes();
-const { isNativeCitizen, isItTrue } = useUtils();
+
 const defaultIdType = computed(() => {
     return idTypes.value.find((type) => isItTrue(type.attributes?.isDefault)) ?? null;
 });
+
+const isValidating = ref(false);
+
+const submitForm = async () => {
+    getRequirements();
+    updateCreateForm(form);
+    try {
+        isValidating.value = true;
+        await cashApplicationFormSchema(isNativeCitizen(storeRefs.idType?.value?.label ?? '')).parseAsync(form);
+        if (storeRefs.disability_status?.value === null || storeRefs.disability_status?.value === undefined) {
+            errorAlert('Please choose your disability status');
+            return;
+        }
+        // validate file
+        if (!storeRefs.proof_of_payment?.value === null || storeRefs.proof_of_payment?.value === undefined) {
+            errorAlert('Please upload proof of payment');
+            return;
+        }
+        if (isItTrue(requirements.value?.attributes?.isOLevelRequired)) {
+            const mainSubjectsCount = Number(String(requirements.value?.attributes?.mainSubjectsCount ?? '0'));
+            const mainErrors = validateMainSubjects(mainSubjectsCount);
+            if (mainErrors && mainErrors.length > 0) {
+                errorAlert(mainErrors.join('\n'));
+                return;
+            }
+            const otherSubjectCount = Number(String(requirements.value?.attributes?.otherSubjectsCount ?? '0'));
+            const otherErrors = validateOtherSubjects(otherSubjectCount);
+            if (otherErrors && otherErrors.length > 0) {
+                errorAlert(otherErrors.join('\n'));
+                return;
+            }
+        }
+        if (isItTrue(Number(String(requirements.value?.attributes?.requiredLevelId)) > 0)) {
+            if (!isItTrue(storeRefs.required_level_completed?.value)) {
+                errorAlert(trans('trans.acknowledge_level_completed'));
+                return;
+            }
+        }
+        if (isItTrue(requirements.value?.attributes?.onlyReadWriteRequired)) {
+            if (!isItTrue(storeRefs.read_write_acknowledged?.value)) {
+                errorAlert(trans('trans.acknowledge_read_write'));
+                return;
+            }
+        }
+    } catch (error: any) {
+        if (error?.format) {
+            form.setError(error.format());
+        } else {
+            console.error(error);
+        }
+    } finally {
+        isValidating.value = false;
+    }
+};
+
 onMounted(async () => {
     await listIdTypes();
     if (!storeRefs.idType.value) {
@@ -119,13 +191,10 @@ const handleUploadFileChange = (event: any) => {
 <template>
     <Head :title="$tChoice('enrolment', 2)" />
     <PageContainer :breadcrumbs="breadcrumbs">
-        <form @submit.prevent="() => {}">
+        <form @submit.prevent="submitForm" class="flex flex-col space-y-5">
             <PersonalDetails :form="form" />
-            <CustomSeparator classes="h-1 my-5" />
             <ContactDetails :form="form" />
-            <CustomSeparator classes="h-1 my-5" />
             <NextOfKinDetails :form="form" />
-            <CustomSeparator classes="h-1 my-5" />
             <BaseCard
                 title="Proof of Payment details"
                 description="Please provide a scanned copy of your proof of payment or bank deposit slip. Make sure the document is clear and fully visible, including the date, amount, and reference number, to avoid any delays in processing"
@@ -152,7 +221,6 @@ const handleUploadFileChange = (event: any) => {
                     />
                 </div>
             </BaseCard>
-            <CustomSeparator classes="h-1 my-5" />
             <Programs :form="form" />
             <CustomSeparator classes="h-1 my-5" />
             <div class="mb-10 flex items-center justify-center">

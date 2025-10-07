@@ -248,7 +248,7 @@ onBeforeUnmount(() => {
     <StudentPageHeader />
     <form @submit.prevent="() => save()">
         <div class="mt-20 flex w-full flex-col bg-white px-10 md:p-0">
-            <div class="flex w-full flex-col md:mx-auto md:w-7/8">
+            <div class="flex w-full flex-col md:mx-auto md:w-7/8 space-y-6">
                 <BaseAlert
                     :description="sameDepartmentAndLevelErrorMessage"
                     v-if="sameDepartmentAndLevelError"
@@ -301,8 +301,6 @@ onBeforeUnmount(() => {
                         </template>
                     </div>
                 </BaseCard>
-
-                <CustomSeparator classes="h-1 my-5" />
                 <div class="mb-10 flex items-center justify-center space-x-3">
                     <BaseButton
                         @click="navigateTo(route('portal.applications'))"
