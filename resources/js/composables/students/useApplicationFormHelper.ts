@@ -85,6 +85,9 @@ export const useApplicationFormHelper = (isEditing?: boolean) => {
             o_level_other_grade_ids: storeRefs.o_level_other_grade_ids?.value ?? null,
             o_level_other_years: storeRefs.o_level_other_years?.value ?? null,
             o_level_other_sittings: storeRefs.o_level_other_sittings?.value ?? null,
+            proof_of_payment: storeRefs.proof_of_payment?.value ?? null,
+            payment_reference: storeRefs.payment_reference?.value ?? null,
+            payment_date: storeRefs.payment_date?.value ?? null,
         });
     };
     const validateMainSubjects = (mainSubjectCount: number): string[] => {

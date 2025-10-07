@@ -178,7 +178,7 @@ const save = async () => {
                     <OLevelRequirements :is-view-only="true" />
                 </template>
                 <template v-if="levelRequirements.attributes.requiredLevel">
-                    <LevelRequirements :level-requirements="levelRequirements" :is-view-only="true" />
+                    <LevelRequirements :requirements="levelRequirements" :is-view-only="true" />
                 </template>
                 <template v-if="isItTrue(levelRequirements.attributes.onlyReadWriteRequired)">
                     <SDPRequirements :is-view-only="true" />

@@ -12,19 +12,23 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 /**
  *
  * @mixin Builder
  * @method static filter(LedgerFilter $filters)
  */
-class Ledger extends Model
+class Ledger extends Model implements HasMedia
 {
-    use HasFactory, SoftDeletes, Filterable, BelongsToTenant, Paginatable, LogsActivity;
+    use HasFactory, SoftDeletes, Filterable, BelongsToTenant, Paginatable, LogsActivity, InteractsWithMedia;
 
     protected $fillable = [
         'tenant_id',
@@ -46,6 +50,9 @@ class Ledger extends Model
         'response_code',
         'student_program_id',
         'level_id',
+        'proof_of_payment_id',
+        'payment_mode',
+        'payment_gateway'
     ];
 
     public function ledgerable(): MorphTo
@@ -61,6 +68,21 @@ class Ledger extends Model
     public function level(): BelongsTo
     {
         return $this->belongsTo(Level::class);
+    }
+
+    public function offerLetter(): HasOne
+    {
+        return $this->hasOne(Media::class, 'id', 'offer_letter_id');
+    }
+
+    public function getOfferLetterUrlAttribute(): ?string
+    {
+        return ($this->offer_letter_id > 0) ? $this->offerLetter->getFullUrl() : null;
+    }
+
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('receipts')->singleFile();
     }
 
     public function getActivitylogOptions(): LogOptions

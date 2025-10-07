@@ -16,7 +16,6 @@ import { ProgramParams } from '@/types/portal';
 
 // Utilities
 import { BaseButton } from '@/components/core/button';
-import CustomSeparator from '@/components/core/util/CustomSeparator.vue';
 import StudentPageHeader from '@/components/shared/students/StudentPageHeader.vue';
 import { useDepartmentCourses } from '@/composables/institution/useDepartmentCourses';
 import { useApplicationFormHelper } from '@/composables/students/useApplicationFormHelper';
@@ -102,6 +101,7 @@ onMounted(async () => {
             if (Number(level.value?.value) > 0) await listLevelRequirements(level.value?.value?.toString() ?? '');
         }
     }
+
     if (required_level_completed) required_level_completed.value = isItTrue(application?.attributes?.requiredLevelCompleted);
     if (read_write_acknowledged) read_write_acknowledged.value = isItTrue(application?.attributes?.readWriteAcknowledged);
 });
@@ -154,9 +154,8 @@ onBeforeUnmount(() => {
     <StudentPageHeader />
     <form @submit.prevent="() => save()">
         <div class="mt-20 flex w-full flex-col bg-white px-10 md:p-0">
-            <div class="flex w-full flex-col md:mx-auto md:w-7/8">
+            <div class="flex w-full flex-col space-y-6 md:mx-auto md:w-7/8">
                 <Programs :form="form" :application="application" />
-                <CustomSeparator classes="h-1 my-5" />
                 <div class="mb-10 flex items-center justify-center space-x-3">
                     <BaseButton
                         @click="navigateTo(route('portal.applications'))"

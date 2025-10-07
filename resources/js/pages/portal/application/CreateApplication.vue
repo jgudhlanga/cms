@@ -20,7 +20,6 @@ import { CreateApplicationParams } from '@/types/portal';
 // Utilities
 import { BaseButton } from '@/components/core/button';
 import ComingSoonAnimated from '@/components/core/util/ComingSoonAnimated.vue';
-import CustomSeparator from '@/components/core/util/CustomSeparator.vue';
 import StudentPageHeader from '@/components/shared/students/StudentPageHeader.vue';
 import { useIdTypes } from '@/composables/shared/useIdTypes';
 import { useApplicationFormHelper } from '@/composables/students/useApplicationFormHelper';
@@ -46,7 +45,8 @@ const { applicationFormSchema } = useStudentPortal();
 const { isNativeCitizen, isItTrue } = useUtils();
 const { validateMainSubjects, validateOtherSubjects, updateCreateForm } = useApplicationFormHelper();
 const { navigateTo } = useUtils();
-const storeRefs = storeToRefs(useCreateApplicationFormStore());
+const store = useCreateApplicationFormStore();
+const storeRefs = storeToRefs(store);
 const getRequirements = () => {
     requirements.value =
         storeRefs.courseRequirements?.value && Number(String(storeRefs.courseRequirements?.value?.id)) > 0
@@ -189,16 +189,12 @@ const maintenanceMode = isItTrue(import.meta.env.VITE_MAINTENANCE_MODE);
     <form @submit.prevent="() => save()">
         <div class="mt-20 flex w-full flex-col bg-white px-10 md:p-0">
             <ComingSoonAnimated v-if="maintenanceMode" />
-            <div v-else class="flex w-full flex-col md:mx-auto md:w-7/8">
+            <div v-else class="flex w-full flex-col space-y-6 md:mx-auto md:w-7/8">
                 <PersonalDetails :form="form" />
-                <CustomSeparator classes="h-1 my-5" />
                 <ContactDetails :form="form" />
-                <CustomSeparator classes="h-1 my-5" />
                 <NextOfKinDetails :form="form" />
-                <CustomSeparator classes="h-1 my-5" />
                 <Programs :form="form" />
-                <CustomSeparator classes="h-1 my-5" />
-                <div class="mb-10 flex items-center justify-center">
+                <div class="mb-5 flex items-center justify-center">
                     <BaseButton class="w-full md:w-[200px]" :size="ButtonSize.xl">
                         {{ $t('trans.continue') }}
                     </BaseButton>

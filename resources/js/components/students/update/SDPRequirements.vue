@@ -8,7 +8,7 @@ import { useCreateApplicationFormStore } from '@/store/portal/useCreateApplicati
 import { useUpdateProgramFormStore } from '@/store/portal/useUpdateProgramFormStore';
 import { Enrolment } from '@/types/enrolments';
 import { storeToRefs } from 'pinia';
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 
 interface Props {
     isViewOnly?: boolean;
@@ -35,6 +35,11 @@ const acknowledgeReadWrite = (value: any) => {
         read_write_acknowledged.value = isItTrue(value);
     }
 };
+
+onMounted(() => {
+    if (read_write_acknowledged && isEditing) read_write_acknowledged.value = isItTrue(application?.attributes?.readWriteAcknowledged);
+    readWriteAcknowledged.value = isItTrue(read_write_acknowledged?.value);
+});
 </script>
 
 <template>
