@@ -1,5 +1,6 @@
 import { DepartmentApplicationStep } from '@/types/department-meta-data';
 import { Ledger } from '@/types/integrations';
+import { User } from '@/types/users';
 
 export type Enrolment = {
     type: string;
@@ -94,4 +95,14 @@ export type EnrolmentSearchParams = {
     department_course_id: string;
     intake_period_id: string;
     mode_of_study_id: string;
+};
+
+export type EnrolmentLookup = {
+    user?: User;
+    hasPaidApplicationFee: boolean;
+    eligibleForEnrolment: boolean;
+    currentLevel: string | null;
+    currentProgramCount: number | null;
+    statusCode: number | null;
+    message?: string | null;
 };

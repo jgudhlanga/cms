@@ -29,10 +29,10 @@ import { computed, onMounted, ref } from 'vue';
 interface Props {
     auth: AuthObject;
     errors: object;
-    type: 'cash-payment' | 'online-payment';
+    paymentMode: 'cash' | 'online';
 }
 
-defineProps<Props>();
+const props = defineProps<Props>();
 const breadcrumbs: Array<Link> = [
     { transKey: 'dashboard', href: route('dashboard') },
     { transChoiceKey: 'enrolment', href: route('enrolments.index') },
@@ -44,7 +44,7 @@ const { payment_reference, payment_date } = storeRefs;
 const requirements = ref<CourseRequirement | DepartmentLevelRequirement | null | undefined>(null);
 // Composable
 const { idTypes, listIdTypes } = useIdTypes();
-const { cashApplicationFormSchema } = useEnrolments();
+const { cashApplicationFormSchema, createEnrolment } = useEnrolments();
 const { isNativeCitizen, isItTrue } = useUtils();
 const { validateMainSubjects, validateOtherSubjects, updateCreateForm } = useApplicationFormHelper();
 
@@ -109,6 +109,7 @@ const form = useForm<CreateApplicationParams>({
     proof_of_payment: null,
     payment_reference: null,
     payment_date: null,
+    payment_mode: null,
 });
 
 const defaultIdType = computed(() => {
@@ -120,16 +121,12 @@ const isValidating = ref(false);
 const submitForm = async () => {
     getRequirements();
     updateCreateForm(form);
+    form.payment_mode = props.paymentMode;
     try {
         isValidating.value = true;
         await cashApplicationFormSchema(isNativeCitizen(storeRefs.idType?.value?.label ?? '')).parseAsync(form);
         if (storeRefs.disability_status?.value === null || storeRefs.disability_status?.value === undefined) {
             errorAlert('Please choose your disability status');
-            return;
-        }
-        // validate file
-        if (!storeRefs.proof_of_payment?.value === null || storeRefs.proof_of_payment?.value === undefined) {
-            errorAlert('Please upload proof of payment');
             return;
         }
         if (isItTrue(requirements.value?.attributes?.isOLevelRequired)) {
@@ -158,6 +155,7 @@ const submitForm = async () => {
                 return;
             }
         }
+        createEnrolment(form);
     } catch (error: any) {
         if (error?.format) {
             form.setError(error.format());
@@ -200,7 +198,7 @@ const handleUploadFileChange = (event: any) => {
                 description="Please provide a scanned copy of your proof of payment or bank deposit slip. Make sure the document is clear and fully visible, including the date, amount, and reference number, to avoid any delays in processing"
             >
                 <div class="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
-                    <UploadProofOfPayment label="Upload file" :handle-change="handleUploadFileChange" />
+                    <UploadProofOfPayment :form="form" label="Upload file" :handle-change="handleUploadFileChange" />
                     <BaseInput
                         input-id="payment_reference"
                         label="Payment reference"

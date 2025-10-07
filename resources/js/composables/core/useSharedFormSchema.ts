@@ -49,12 +49,13 @@ export const useSharedFormSchema = () => {
         });
     const passwordSchema = () =>
         z.object({
-            password: z.string()
-                .min(8, "Password must be at least 8 characters")
-                .regex(/[a-z]/, "Must contain at least one lowercase letter")
-                .regex(/[A-Z]/, "Must contain at least one uppercase letter")
-                .regex(/[0-9]/, "Must contain at least one number")
-                .regex(/[^a-zA-Z0-9]/, "Must contain at least one symbol"),
+            password: z
+                .string()
+                .min(8, 'Password must be at least 8 characters')
+                .regex(/[a-z]/, 'Must contain at least one lowercase letter')
+                .regex(/[A-Z]/, 'Must contain at least one uppercase letter')
+                .regex(/[0-9]/, 'Must contain at least one number')
+                .regex(/[^a-zA-Z0-9]/, 'Must contain at least one symbol'),
         });
     const passwordConfirmationSchema = () =>
         z.object({
@@ -76,7 +77,7 @@ export const useSharedFormSchema = () => {
                 .transform((val) => (typeof val === 'string' ? val : val.toISOString().split('T')[0]))
                 .refine((val) => !isNaN(Date.parse(val)), {
                     message: trans('trans.date_must_be_valid', { field: 'payment date' }),
-                })
+                }),
         });
     const paymentReferenceSchema = () =>
         z.object({
@@ -230,6 +231,13 @@ export const useSharedFormSchema = () => {
             }),
         });
 
+    const proofOfPaymentSchema = () =>
+        z.object({
+            proof_of_payment: z
+                .instanceof(File, { message: 'Please upload a valid file' })
+                .refine((file) => file.size > 0, { message: 'File cannot be empty' }),
+        });
+
     return {
         addressOneSchema,
         idTypeSchema,
@@ -271,5 +279,6 @@ export const useSharedFormSchema = () => {
         orderReferenceSchema,
         paymentReferenceSchema,
         paymentDateSchema,
+        proofOfPaymentSchema,
     };
 };

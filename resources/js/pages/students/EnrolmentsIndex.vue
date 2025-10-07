@@ -100,7 +100,7 @@ const form = useForm<EnrolmentSearchParams>({
                     class="rounded-full"
                     :icon-variant="ColorVariant.white"
                     :variant="ColorVariant.primary_outline"
-                    @click="() => navigateTo(route('enrolments.payment-verification'))"
+                    @click="() => navigateTo(route('enrolments.enrolment-lookup'))"
                     title="Create New Enrolment"
                 />
             </template>

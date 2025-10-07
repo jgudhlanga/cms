@@ -1,14 +1,14 @@
 <?php
 
-namespace App\DTO\Enrolments;
+namespace App\DTO\Students;
 
-use App\Http\Requests\Enrolments\CreateCashApplicationRequest;
-use App\Models\Institution\IntakePeriod;
+use App\Http\Requests\Students\CreateStudentApplicationRequest;
 
-readonly class CreateCashApplicationDto
+readonly class CreateStudentApplicationDto
 {
     public function __construct(
         /** Personal details */
+        public int     $user_id,
         public string  $id_type_id,
         public ?string $id_number,
         public ?string $passport_number,
@@ -58,10 +58,11 @@ readonly class CreateCashApplicationDto
     {
     }
 
-    public static function fromCreateCashApplicationRequest(CreateCashApplicationRequest $request, IntakePeriod $intakePeriod): CreateCashApplicationDto
+    public static function fromCreateStudentApplicationRequest(CreateStudentApplicationRequest $request, int $userId, int $intakePeriodId): CreateStudentApplicationDto
     {
         return new self(
         /** Personal details */
+            user_id: $userId,
             id_type_id: $request->id_type_id,
             id_number: $request->id_number,
             passport_number: $request->passport_number,
@@ -106,7 +107,7 @@ readonly class CreateCashApplicationDto
             o_level_other_grade_ids: $request->o_level_other_grade_ids,
             o_level_other_years: $request->o_level_other_years,
             o_level_other_sittings: $request->o_level_other_sittings,
-            intake_period_id: $intakePeriod->id,
+            intake_period_id: $intakePeriodId,
         );
     }
 }

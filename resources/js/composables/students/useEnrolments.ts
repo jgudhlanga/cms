@@ -1,8 +1,11 @@
 import { useDataTables } from '@/composables/core/useDataTables';
 import { useSharedFormSchema } from '@/composables/core/useSharedFormSchema';
+import { errorAlert, successAlert } from '@/lib/alerts';
 import { mergeValidationSchema } from '@/lib/forms';
 import { idNumberUniqueSchema, passportNumberUniqueSchema } from '@/lib/uniqueValidations';
+import { useCreateApplicationFormStore } from '@/store/portal/useCreateApplicationFormStore';
 import { Student, StudentProgram } from '@/types/students';
+import { InertiaForm } from '@inertiajs/vue3';
 import { trans_choice } from 'laravel-vue-i18n';
 import { ZodObject } from 'zod';
 
@@ -63,6 +66,7 @@ export const useEnrolments = () => {
             'modeOfStudySchema',
             'paymentReferenceSchema',
             'paymentDateSchema',
+            'proofOfPaymentSchema'
         ];
         let personalDetails = null;
         if (isNativeCitizen) {
@@ -80,8 +84,32 @@ export const useEnrolments = () => {
         return personalDetails;
     };
 
+    const createEnrolment = (form: InertiaForm<any>) => {
+        try {
+            form.post(route('students.store'), {
+                onSuccess: () => {
+                    const store = useCreateApplicationFormStore();
+                    store.$reset();
+                    store.$dispose();
+                    successAlert('Application successfully created');
+                },
+                onError: (errors: any) => {
+                    if (Object.keys(errors).length) {
+                        const allErrors = Object.values(errors).join('\n');
+                        errorAlert(allErrors);
+                    } else {
+                        errorAlert('An unexpected error happened, application could not be created');
+                    }
+                },
+            });
+        } catch (error: any) {
+            form.setError(error.format());
+        }
+    };
+
     return {
         enrolmentColumns,
         cashApplicationFormSchema,
+        createEnrolment,
     };
 };

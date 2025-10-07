@@ -4,17 +4,12 @@ namespace App\Http\Controllers\Students;
 
 use App\DTO\Students\UpdateStudentDto;
 use App\Enums\Institution\LevelEnum;
-use App\Enums\Shared\FeeTypeEnum;
-use App\Helpers\PaymentHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Filters\Students\StudentProgramFilter;
-use App\Http\Requests\Enrolments\CreateCashApplicationRequest;
 use App\Http\Requests\Students\UpdateStudentRequest;
 use App\Http\Resources\Enrolments\EnrolmentResource;
-use App\Http\Resources\Institution\FeeStructureResource;
 use App\Http\Resources\Students\StudentProgramResource;
 use App\Models\Institution\DepartmentLevel;
-use App\Models\Institution\FeeStructure;
 use App\Models\Students\Student;
 use App\Models\Students\StudentProgram;
 use App\Models\Users\User;
@@ -55,22 +50,9 @@ class StudentProgramController extends Controller
     {
     }
 
-    public function createProfile(string $type)
+    public function store(Request $request): Response
     {
         $this->authorize('create', StudentProgram::class);
-        return Inertia::render('students/enrolments/Create', compact('type'));
-    }
-
-    public function paymentVerification()
-    {
-        $feeType = PaymentHelper::getFeeTypeBySlug(FeeTypeEnum::APPLICATION_FEE->slug());
-        $registrationFee = FeeStructure::where('fee_type_id', $feeType->id)->first();
-        $registrationFee = FeeStructureResource::make($registrationFee);
-        return Inertia::render('students/paymentVerification/PaymentVerification', compact('registrationFee'));
-    }
-
-    public function store(CreateCashApplicationRequest $request)
-    {
         //
     }
 

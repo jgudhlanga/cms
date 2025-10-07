@@ -1,11 +1,13 @@
 <?php
 
-namespace App\Http\Requests\Enrolments;
+namespace App\Http\Requests\Students;
 
 use App\Enums\Shared\IdTypeEnum;
+use App\Enums\Shared\PaymentModeEnum;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rules\Enum;
 
-class CreateCashApplicationRequest extends FormRequest
+class CreateStudentApplicationRequest extends FormRequest
 {
 
     public function authorize(): bool
@@ -85,6 +87,8 @@ class CreateCashApplicationRequest extends FormRequest
             'proof_of_payment' => ['required', 'file', 'max:5009'],
             'payment_reference' => ['required', 'string', 'max:255'],
             'payment_date' => ['required', 'date'],
+            'payment_mode' => ['required', new Enum(PaymentModeEnum::class)],
         ];
     }
+
 }

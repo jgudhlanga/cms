@@ -5,13 +5,16 @@ import HeadingSmall from '../util/HeadingSmall.vue';
 interface Props {
 	title?: string;
 	description?: string;
+    colorVariant?: string;
 }
 
-defineProps<Props>()
+withDefaults(defineProps<Props>(), {
+    colorVariant: 'primary',
+})
 </script>
 
 <template>
-  <div class="flex flex-col w-full p-4 rounded-md shadow-sm space-y-3 border-l-3 border-primary">
+  <div :class="`flex flex-col w-full p-4 rounded-md shadow-sm space-y-3 border-l-3 border-${colorVariant}`">
 		<HeadingSmall v-if="title" :title="title" :description="description"/>
 		<slot/>
 	</div>

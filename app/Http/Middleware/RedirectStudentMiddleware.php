@@ -21,7 +21,7 @@ class RedirectStudentMiddleware
                     return to_route('portal.dashboard');
                 }
             } else {
-                if (PaymentHelper::hasPaidRegistrationFee()) {
+                if (PaymentHelper::hasPaidApplicationFee()) {
                     if (!$request->routeIs(['portal.application.create', 'portal.application.confirm'])) {
                         return to_route('portal.application.create');
                     }

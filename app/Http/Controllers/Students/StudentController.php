@@ -2,25 +2,47 @@
 
 namespace App\Http\Controllers\Students;
 
+use App\DTO\Students\CreateStudentApplicationDto;
 use App\DTO\Students\UpdateStudentDto;
+use App\DTO\Users\UserDto;
+use App\Enums\Acl\RoleEnum;
+use App\Enums\Shared\FeeTypeEnum;
+use App\Helpers\Helper;
+use App\Helpers\PaymentHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Filters\Students\StudentFilter;
+use App\Http\Requests\Students\CreateStudentApplicationRequest;
 use App\Http\Requests\Students\UpdateStudentRequest;
-use App\Http\Resources\Institution\CourseResource;
+use App\Http\Resources\Institution\FeeStructureResource;
 use App\Http\Resources\Students\StudentResource;
 use App\Http\Resources\Users\UserResource;
+use App\Models\Institution\FeeStructure;
+use App\Models\Institution\Level;
+use App\Models\Ledgers\Ledger;
 use App\Models\Students\Student;
 use App\Models\Users\User;
+use App\Repositories\Shared\interface\IAddressRepository;
+use App\Repositories\Shared\interface\IContactRepository;
+use App\Repositories\Shared\interface\INextOfKinRepository;
+use App\Repositories\Students\interface\IStudentProgramRepository;
 use App\Repositories\Students\interface\IStudentRepository;
+use App\Repositories\Users\interface\IUserRepository;
+use Exception;
 use Illuminate\Auth\Access\AuthorizationException;
-use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
+use Throwable;
 
 class StudentController extends Controller
 {
     public function __construct(
-        protected IStudentRepository $repository,
+        protected IStudentRepository        $repository,
+        protected IUserRepository           $userRepository,
+        protected IContactRepository        $contactRepository,
+        protected IAddressRepository        $addressRepository,
+        protected INextOfKinRepository      $nextOfKinRepository,
+        protected IStudentProgramRepository $studentProgramRepository,
     )
     {
     }
@@ -45,14 +67,59 @@ class StudentController extends Controller
         //
     }
 
-
-    public function store(Request $request)
+    public function createProfile(string $paymentMode)
     {
-        //
+        $this->authorize('create', Student::class);
+        return Inertia::render('students/enrolments/Create', compact('paymentMode'));
+    }
+
+    public function enrolmentLookup()
+    {
+        return Inertia::render('students/paymentVerification/EnrolmentLookup');
     }
 
 
-    public function show(string $id)
+    /**
+     * @throws Throwable
+     */
+    public function store(CreateStudentApplicationRequest $request)
+    {
+        $this->authorize('create', Student::class);
+
+        DB::beginTransaction();
+        try {
+            $tenant = Helper::getTenant();
+            $status = Helper::getActiveStatus();
+
+            $user = $this->createUser($request, $tenant->id, $status->id);
+            $student = $this->createStudentApplication($request, $user->id);
+            $program = $student->programs()->latest()->first();
+            Helper::initializeProgramWorkflow($program);
+            Helper::generateAndAssignStudentNumber($student, $program);
+            // invoice student
+            $this->invoiceStudent($user, $request, $program);
+
+            DB::commit();
+
+            return to_route('students.show', $student->id)
+                ->with('success', 'Student profile created successfully.');
+        } catch (Throwable $e) {
+            DB::rollBack();
+            report($e);
+            return back()->withErrors([
+                'error' => 'An error occurred while submitting your profile. Please try again.',
+            ]);
+        }
+    }
+
+
+    public function showProfile(Student $student)
+    {
+        $student = StudentResource::make($student);
+        return Inertia::render('students/enrolments/Show', compact('student'));
+    }
+
+    public function show(Student $student)
     {
         //
     }
@@ -79,32 +146,88 @@ class StudentController extends Controller
         [$search] = $this->extractRequestFilters();
 
         if (blank($search)) {
-            return response()->json([
-                'message' => 'Please provide a search value.',
-            ], 422);
+            return $this->returnSearchResponse(
+                message: 'Please provide a search value.',
+                status: 422
+            );
         }
 
-        // 1. Search by user email
-        $user = User::where('email', $search)->first();
+        $user = $this->findUserBySearch($search);
 
-        // 2. Search students by id_number, student_number or passport_number
         if (!$user) {
-            $student = Student::query()
-                ->where('id_number', $search)
-                ->orWhere('student_number', $search)
-                ->orWhere('passport_number', $search)
-                ->first();
-            $user = $student?->user;
+            return $this->returnSearchResponse(
+                user: null,
+                message: 'No matching record found.',
+                status: 404
+            );
         }
 
+        $student = $user->studentProfile;
+        $hasPaidApplicationFee = false;
+        $eligibleForEnrolment = true;
+        $currentLevel = null;
+        $currentProgramCount = null;
 
-        if ($user) {
-            return UserResource::make($user);
+        if ($student instanceof Student) {
+            $currentLevel = $student->currentLevel();
+            $currentProgramCount = $student->programs()?->count();
+
+            $latestProgram = $student->programs()->latest()->first();
+            $hasPaidApplicationFee = $latestProgram?->hasPaid(FeeTypeEnum::APPLICATION_FEE) ?? false;
+
+            $level = $latestProgram?->departmentLevel?->level;
+            $maxApplications = $level?->allowed_applications_per_level;
+
+            if ($level instanceof Level && $maxApplications > 0) {
+                $eligibleForEnrolment =
+                    $currentProgramCount < $maxApplications && $hasPaidApplicationFee;
+            }
         }
 
-        return response()->json([
-            'message' => 'No matching record found.',
-        ], 200);
+        return $this->returnSearchResponse(
+            user: UserResource::make($user),
+            hasPaidApplicationFee: $hasPaidApplicationFee,
+            eligibleForEnrolment: $eligibleForEnrolment,
+            currentLevel: $currentLevel,
+            currentProgramCount: $currentProgramCount,
+            message: 'User Account found.'
+        );
+    }
+
+    /**
+     * Attempt to find a user using various strategies.
+     */
+    private function findUserBySearch(string $search): ?User
+    {
+        // 1. Search by email
+        $user = User::where('email', $search)->first();
+        if ($user?->isStudent()) {
+            return $user;
+        }
+
+        // 2. Search by student identifiers
+        $student = Student::where('id_number', $search)
+            ->orWhere('student_number', $search)
+            ->orWhere('passport_number', $search)
+            ->first();
+
+        $user = $student?->user;
+        if ($user?->isStudent()) {
+            return $user;
+        }
+
+        // 3. Search by ledger references
+        $ledger = Ledger::withTrashed()
+            ->where('system_reference', $search)
+            ->orWhere('payment_reference', $search)
+            ->first();
+
+        $user = $ledger?->ledgerable()->first();
+        if ($user?->isStudent()) {
+            return $user;
+        }
+
+        return null;
     }
 
 
@@ -115,5 +238,80 @@ class StudentController extends Controller
         return [
             $search,
         ];
+    }
+
+    protected function createUser(CreateStudentApplicationRequest $request, int $tenantId, int $statusId): User
+    {
+        $password = $request->has('password')
+            ? $request->password
+            : Helper::generatePasswordFromName($request->first_name, $request->last_name);
+
+        $userDto = new UserDto(
+            tenant_id: $tenantId,
+            status_id: $statusId,
+            first_name: $request->first_name,
+            middle_name: $request?->middle_name,
+            last_name: $request->last_name,
+            email: $request->email,
+            phone_number: $request->phone_number,
+            password: $password,
+            role_ids: null,
+        );
+
+        $user = $this->userRepository->create($userDto);
+        $user->assignRole(RoleEnum::STUDENT);
+
+        return $user;
+    }
+
+    protected function createStudentApplication(CreateStudentApplicationRequest $request, int $userId): Student
+    {
+        $intakePeriod = Helper::resolveIntakePeriod();
+
+        $dto = CreateStudentApplicationDto::fromCreateStudentApplicationRequest(
+            $request,
+            $userId,
+            $intakePeriod->id
+        );
+
+        return $this->repository->create($dto);
+    }
+
+    /**
+     * @throws Exception
+     */
+    private function invoiceStudent($user, CreateStudentApplicationRequest $request, $program): void
+    {
+        $feeType = PaymentHelper::getFeeTypeBySlug(FeeTypeEnum::APPLICATION_FEE->slug());
+        $registrationFee = FeeStructure::where('fee_type_id', $feeType->id)->first();
+        if (!$feeType || !$registrationFee) {
+            throw new Exception('Required fee type or structure not found');
+        }
+        $systemReference = Helper::generateRandomCode('ORD');
+        PaymentHelper::invoiceCashStudent($user, $feeType, $registrationFee->local_fca_amount, $systemReference, $request->payment_reference, $program);
+    }
+
+    /**
+     * Helper to build a standardized search response.
+     */
+    private function returnSearchResponse(
+        $user = null,
+        bool $hasPaidApplicationFee = false,
+        bool $eligibleForEnrolment = true,
+        $currentLevel = null,
+        $currentProgramCount = null,
+        string $message = null,
+        int $status = 200
+    )
+    {
+        return response()->json([
+            'user' => $user,
+            'hasPaidApplicationFee' => $hasPaidApplicationFee,
+            'eligibleForEnrolment' => $eligibleForEnrolment,
+            'currentLevel' => $currentLevel,
+            'currentProgramCount' => $currentProgramCount,
+            'statusCode' => $status,
+            'message' => $message,
+        ]);
     }
 }
