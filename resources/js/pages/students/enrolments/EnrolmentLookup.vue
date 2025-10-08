@@ -4,17 +4,15 @@ import BaseCard from '@/components/core/card/BaseCard.vue';
 import { BaseInput } from '@/components/core/form';
 import BaseIcon from '@/components/core/icon/BaseIcon.vue';
 import PageContainer from '@/components/core/page/PageContainer.vue';
-import AnimatedCheckMark from '@/components/core/util/AnimatedCheckMark.vue';
-import { useUtils } from '@/composables/core/useUtils';
 import { IconName } from '@/enums/icons';
 import { errorAlert } from '@/lib/alerts';
+import EnrolmentStatus from '@/pages/students/enrolments/partials/EnrolmentStatus.vue';
 import HttpService from '@/services/http.service';
 import { AuthObject } from '@/types/data-pagination';
 import { EnrolmentLookup } from '@/types/enrolments';
 import { Link } from '@/types/ui';
 import { Head } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
-import AnimatedErrorIcon from '@/components/core/util/AnimatedErrorIcon.vue';
 
 interface Props {
     auth: AuthObject;
@@ -32,13 +30,14 @@ const breadcrumbs: Array<Link> = [
 const isSearching = ref(false);
 const search = ref('');
 const enrolmentLookup = ref<EnrolmentLookup | null>(null);
-const { navigateTo } = useUtils();
+
 const searchProfile = async () => {
     if (search.value === '') {
         errorAlert('Please enter a search term');
         return;
     }
     isSearching.value = true;
+    enrolmentLookup.value = null;
     try {
         enrolmentLookup.value = await HttpService.post(route('enrolments.search-profile'), { search: search.value });
     } catch (error: any) {
@@ -61,14 +60,9 @@ const colorVariant = computed(() => {
 
 const title = computed(() => {
     if (enrolmentLookup.value && String(enrolmentLookup.value?.statusCode) == '200') {
-        return 'Profile found';
+        return `Profile found (${enrolmentLookup.value?.user?.attributes?.name})`;
     }
     return 'Profile not found';
-});
-
-const profileFound = computed(() => {
-    return enrolmentLookup.value && String(enrolmentLookup.value?.statusCode) == '200';
-
 });
 </script>
 
@@ -103,11 +97,7 @@ const profileFound = computed(() => {
         </div>
         <div class="my-5 flex w-full flex-col" v-if="enrolmentLookup">
             <BaseCard :title="title" :description="enrolmentLookup?.message ?? ''" :color-variant="colorVariant">
-                <div class="flex justify-between transition-all duration-300">
-                    <div class="flex flex-col">Content</div>
-                    <AnimatedCheckMark v-if="profileFound" />
-                    <AnimatedErrorIcon v-else />
-                </div>
+                <EnrolmentStatus :enrolment-lookup="enrolmentLookup" />
             </BaseCard>
         </div>
     </PageContainer>

@@ -75,7 +75,7 @@ class StudentController extends Controller
 
     public function enrolmentLookup()
     {
-        return Inertia::render('students/paymentVerification/EnrolmentLookup');
+        return Inertia::render('students/enrolments/EnrolmentLookup');
     }
 
 
@@ -162,26 +162,16 @@ class StudentController extends Controller
             );
         }
 
+        $hasPaidApplicationFee = PaymentHelper::hasPaidApplicationFee($user);
         $student = $user->studentProfile;
-        $hasPaidApplicationFee = false;
-        $eligibleForEnrolment = true;
+
         $currentLevel = null;
         $currentProgramCount = null;
+        $eligibleForEnrolment = true;
 
         if ($student instanceof Student) {
-            $currentLevel = $student->currentLevel();
-            $currentProgramCount = $student->programs()?->count();
-
-            $latestProgram = $student->programs()->latest()->first();
-            $hasPaidApplicationFee = $latestProgram?->hasPaid(FeeTypeEnum::APPLICATION_FEE) ?? false;
-
-            $level = $latestProgram?->departmentLevel?->level;
-            $maxApplications = $level?->allowed_applications_per_level;
-
-            if ($level instanceof Level && $maxApplications > 0) {
-                $eligibleForEnrolment =
-                    $currentProgramCount < $maxApplications && $hasPaidApplicationFee;
-            }
+            [$currentLevel, $currentProgramCount, $eligibleForEnrolment] =
+                $this->evaluateStudentEligibility($student, $hasPaidApplicationFee);
         }
 
         return $this->returnSearchResponse(
@@ -289,6 +279,28 @@ class StudentController extends Controller
         }
         $systemReference = Helper::generateRandomCode('ORD');
         PaymentHelper::invoiceCashStudent($user, $feeType, $registrationFee->local_fca_amount, $systemReference, $request->payment_reference, $program);
+    }
+
+    /**
+     * Evaluate student's current level, program count, and enrolment eligibility.
+     */
+    private function evaluateStudentEligibility(Student $student, bool $hasPaidApplicationFee): array
+    {
+        $currentLevel = $student->currentLevel();
+        $currentProgramCount = $student->programs()?->count() ?? 0;
+
+        $latestProgram = $student->programs()->latest()->first();
+        $level = $latestProgram?->departmentLevel?->level;
+
+        $eligibleForEnrolment = true;
+
+        if ($level instanceof Level && $level->allowed_applications_per_level > 0) {
+            $eligibleForEnrolment =
+                $currentProgramCount < $level->allowed_applications_per_level
+                && $hasPaidApplicationFee;
+        }
+
+        return [$currentLevel, $currentProgramCount, $eligibleForEnrolment];
     }
 
     /**

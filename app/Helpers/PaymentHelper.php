@@ -171,7 +171,7 @@ class PaymentHelper
      | -----------------------------------------------------------------
      */
 
-    public static function hasPaidApplicationFee(?User $user = null, ?IntakePeriod $intakePeriod = null): bool
+    public static function hasPaidApplicationFeeAndNotApplied(?User $user = null, ?IntakePeriod $intakePeriod = null): bool
     {
         $user = self::resolveUser($user);
         $intakePeriod = self::resolveIntakePeriod($intakePeriod);
@@ -191,6 +191,21 @@ class PaymentHelper
             ->whereNull('student_program_id')
             ->whereNull('level_id')
             ->where('intake_period_id', $intakePeriod->id)
+            ->exists();
+    }
+
+    /**
+     * Determine if the user has paid the application fee for the current intake.
+     */
+    public static function hasPaidApplicationFee(User $user): bool
+    {
+        $feeType = PaymentHelper::getFeeTypeBySlug(FeeTypeEnum::APPLICATION_FEE->slug());
+
+        return $user->ledgerTransactions()
+            ->where('type', 'receipt')
+            ->where('fee_type_id', $feeType->id)
+            ->where('payment_status', 'paid')
+            ->where('intake_period_id', Helper::resolveIntakePeriod()->id)
             ->exists();
     }
 
