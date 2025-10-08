@@ -6,13 +6,13 @@ use App\DTO\Shared\AddressDto;
 use App\DTO\Shared\ContactDto;
 use App\DTO\Shared\NextOfKinDto;
 use App\DTO\Students\CreateApplicationDto;
+use App\DTO\Students\CreateStudentApplicationDto;
 use App\DTO\Students\StudentProgramDto;
 use App\DTO\Students\UpdateStudentDto;
 use App\Enums\Shared\AcademicLevelEnum;
 use App\Http\Filters\Students\StudentFilter;
 use App\Models\Shared\AcademicLevel;
 use App\Models\Students\Student;
-use App\Models\Students\StudentProgram;
 use App\Repositories\Base\BaseRepository;
 use App\Repositories\Shared\interface\IAddressRepository;
 use App\Repositories\Shared\interface\IContactRepository;
@@ -35,7 +35,7 @@ class StudentRepository extends BaseRepository implements IStudentRepository
         parent::__construct($this->student);
     }
 
-    public function create(CreateApplicationDto $dto): Model
+    public function create(CreateApplicationDto|CreateStudentApplicationDto $dto): Model
     {
         $student = $this->student->create($this->createFields($dto))->refresh();
         $this->saveProgram($student, $dto);
@@ -62,21 +62,21 @@ class StudentRepository extends BaseRepository implements IStudentRepository
             ->withQueryString();
     }
 
-    private function createFields(CreateApplicationDto $dto): array
+    private function createFields(CreateApplicationDto|CreateStudentApplicationDto $dto): array
     {
-        $cleanIdNumber = str_replace(' ', '', trim($dto->id_number));
+        $cleanIdNumber = str_replace(' ', '', trim($dto->id_number ?? ''));
         return [
             'user_id' => $dto->user_id,
             'title_id' => $dto->title_id,
             'gender_id' => $dto->gender_id,
             'marital_status_id' => $dto->marital_status_id,
-            'race_id' => $dto->race_id,
-            'id_type_id' => $dto->id_type_id,
+            'race_id' => $dto->race_id ?? null,
+            'id_type_id' => $dto->id_type_id ?? null,
             'id_number' => $cleanIdNumber,
-            'passport_number' => $dto->passport_number,
-            'country_id' => $dto->country_id,
-            'study_permit_number' => $dto->study_permit_number,
-            'required_exam_sitting_count' => $this->getRequiredExamSittingCount($dto->o_level_years, $dto->o_level_other_years),
+            'passport_number' => $dto->passport_number ?? null,
+            'country_id' => $dto->country_id ?? null,
+            'study_permit_number' => $dto->study_permit_number ?? null,
+            'required_exam_sitting_count' => $this->getRequiredExamSittingCount($dto->o_level_years ?? [], $dto->o_level_other_years ?? []),
             'date_of_birth' => Carbon::parse($dto->date_of_birth)->format('Y-m-d'),
             'disability_status' => $dto->disability_status,
         ];
@@ -102,7 +102,7 @@ class StudentRepository extends BaseRepository implements IStudentRepository
         ];
     }
 
-    private function saveProgram(Student $student, CreateApplicationDto $dto): void
+    private function saveProgram(Student $student, CreateApplicationDto|CreateStudentApplicationDto $dto): void
     {
         $programDto = new StudentProgramDto(
             student_id: $student->id,
@@ -117,7 +117,7 @@ class StudentRepository extends BaseRepository implements IStudentRepository
         $this->studentProgramRepository->create($programDto);
     }
 
-    private function saveContact(Student $student, CreateApplicationDto $dto): void
+    private function saveContact(Student $student, CreateApplicationDto|CreateStudentApplicationDto $dto): void
     {
         $nameParts = array_filter([
             $dto->first_name,
@@ -135,7 +135,7 @@ class StudentRepository extends BaseRepository implements IStudentRepository
         $this->contactRepository->create($student, $contactDto);
     }
 
-    private function saveAddress(Student $student, CreateApplicationDto $dto): void
+    private function saveAddress(Student $student, CreateApplicationDto|CreateStudentApplicationDto $dto): void
     {
         $addressDto = new AddressDto(
             address_1: $dto->address_1,
@@ -149,7 +149,7 @@ class StudentRepository extends BaseRepository implements IStudentRepository
         $this->addressRepository->create($student, $addressDto);
     }
 
-    private function saveNextOfKin(Student $student, CreateApplicationDto $dto): void
+    private function saveNextOfKin(Student $student, CreateApplicationDto|CreateStudentApplicationDto $dto): void
     {
         $nextOfKinDto = new NextOfKinDto(
             name: $dto->next_of_kin_name,
@@ -163,7 +163,7 @@ class StudentRepository extends BaseRepository implements IStudentRepository
         $this->nextOfKinRepository->create($student, $nextOfKinDto);
     }
 
-    private function saveAcademicResults(Student $student, CreateApplicationDto $dto): void
+    private function saveAcademicResults(Student $student, CreateApplicationDto|CreateStudentApplicationDto $dto): void
     {
         $mainSubjects = $dto->o_level_subject_ids;
         $examSittings = $dto->o_level_sittings;
@@ -204,6 +204,7 @@ class StudentRepository extends BaseRepository implements IStudentRepository
 
     private function getRequiredExamSittingCount($examYears, $otherExamYears): int
     {
+        if (empty($examYears) && $otherExamYears) return 0;
         $uniqueExamYears = array_values(
             array_unique(
                 array_merge(

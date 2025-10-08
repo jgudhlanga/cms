@@ -14,7 +14,7 @@ import { ColorVariant } from '@/enums/colors';
 import { IconName } from '@/enums/icons';
 import { hasAbility } from '@/lib/permissions';
 import { AuthObject, DataFilters, DataListProps } from '@/types/data-pagination';
-import { EnrolmentSearchParams } from '@/types/enrolments';
+import { Enrolment, EnrolmentSearchParams } from '@/types/enrolments';
 import { Link } from '@/types/ui';
 import { SelectOption } from '@/types/utils';
 import { ref } from 'vue';
@@ -23,7 +23,7 @@ import { useUtils } from '@/composables/core/useUtils';
 const { enrolmentColumns } = useEnrolments();
 
 interface Props {
-    enrolments: DataListProps;
+    enrolments: DataListProps<Enrolment>;
     trashedCount: any;
     filters: DataFilters;
     auth: AuthObject;
@@ -32,7 +32,7 @@ interface Props {
 
 defineProps<Props>();
 const breadcrumbs: Array<Link> = [{ transKey: 'dashboard', href: route('dashboard') }, { transChoiceKey: 'enrolment' }];
-const {navigateTo} = useUtils()
+const { navigateTo } = useUtils();
 const department = ref<SelectOption | null>(null);
 const level = ref<SelectOption | null>(null);
 const course = ref<SelectOption | null>(null);
@@ -52,7 +52,7 @@ const form = useForm<EnrolmentSearchParams>({
     <Head :title="$tChoice('enrolment', 2)" />
     <PageContainer :breadcrumbs="breadcrumbs">
         <form>
-            <div class="grid grid-cols-1 gap-3 md:grid-cols-5 mb-3">
+            <div class="mb-3 grid grid-cols-1 gap-3 md:grid-cols-5">
                 <IntakePeriodComboSelect v-model="intakePeriod" :is-required="true" class="w-full" />
                 <ModeOfStudyComboSelect :form="form" v-model="modeOfStudy" :error="form.errors.mode_of_study_id" :is-required="true" />
                 <InstitutionDepartmentComboSelect
@@ -100,7 +100,7 @@ const form = useForm<EnrolmentSearchParams>({
                     class="rounded-full"
                     :icon-variant="ColorVariant.white"
                     :variant="ColorVariant.primary_outline"
-                    @click="() => navigateTo(route('enrolments.payment-verification'))"
+                    @click="() => navigateTo(route('enrolments.enrolment-lookup'))"
                     title="Create New Enrolment"
                 />
             </template>

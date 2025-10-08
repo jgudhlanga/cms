@@ -8,4 +8,5 @@ Route::prefix('v1/portal')->middleware('auth:sanctum')->group(function () {
     Route::get('addresses', [PortalController::class, 'addresses'])->name('v1.portal.addresses');
     Route::get('sponsors', [PortalController::class, 'sponsors'])->name('v1.portal.sponsors');
     Route::get('next-of-kins', [PortalController::class, 'nextOfKin'])->name('v1.portal.next-of-kins');
+    Route::get('programs', [PortalController::class, 'programs'])->name('v1.portal.programs');
 });

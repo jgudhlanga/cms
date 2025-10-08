@@ -2,21 +2,27 @@
 
 namespace App\Helpers;
 
+use App\Enums\Shared\StatusEnum;
+use App\Enums\Shared\TenantEnum;
 use App\Models\Institution\InstitutionDepartment;
+use App\Models\Institution\IntakePeriod;
+use App\Models\Shared\Status;
 use App\Models\Students\Student;
+use App\Models\Tenants\Tenant;
 use Carbon\Carbon;
 use Illuminate\Contracts\Encryption\DecryptException;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Str;
 
 class Helper
 {
-	public static function generateModelUniqueNumber(Model $model, string $prefix, string $suffix): string
-	{
-		$id = (int)$model->id > 0 ? $model->id : $model::max('id') + 1;
-		return $prefix . $id . $suffix;
-	}
+    public static function generateModelUniqueNumber(Model $model, string $prefix, string $suffix): string
+    {
+        $id = (int)$model->id > 0 ? $model->id : $model::max('id') + 1;
+        return $prefix . $id . $suffix;
+    }
 
     public static function generateStudentNumber(Student $student, InstitutionDepartment $department): string
     {
@@ -35,28 +41,29 @@ class Helper
         return $year . $departmentCode . $studentIdPadded . $collegeCode;
     }
 
-	public static function formatDate($stringDate): string
-	{
-		return Carbon::parse($stringDate)->format('Y-m-d');
-	}
-	public static function encrypt(string $string): string
-	{
-		return Crypt::encryptString($string);
-	}
+    public static function formatDate($stringDate): string
+    {
+        return Carbon::parse($stringDate)->format('Y-m-d');
+    }
 
-	public static function decrypt(string $string): string
-	{
-		try {
-			return Crypt::decryptString($string);
-		} catch (DecryptException $e) {
-			throw new \RuntimeException('Decryption failed.', 0, $e);
-		}
-	}
+    public static function encrypt(string $string): string
+    {
+        return Crypt::encryptString($string);
+    }
 
-	public static function mask(string $string): string
-	{
-		return Str::of($string)->mask('*', 2, -2);
-	}
+    public static function decrypt(string $string): string
+    {
+        try {
+            return Crypt::decryptString($string);
+        } catch (DecryptException $e) {
+            throw new \RuntimeException('Decryption failed.', 0, $e);
+        }
+    }
+
+    public static function mask(string $string): string
+    {
+        return Str::of($string)->mask('*', 2, -2);
+    }
 
     public static function generatePasswordFromName(string $firstName, string $lastName): string
     {
@@ -77,4 +84,61 @@ class Helper
         // Shuffle for added security
         return str_shuffle($basePassword);
     }
+
+    public static function getTenant(): ?Model
+    {
+        return Tenant::where('name', TenantEnum::HARARE_POLY->value)->firstOrFail();
+    }
+
+    public static function getActiveStatus(): ?Model
+    {
+        return Status::where('title', StatusEnum::ACTIVE->value)->firstOrFail();
+    }
+
+    public static function resolveIntakePeriod(): Collection|Model
+    {
+        if (request()->filled('intake_period_id') && request()->intake_period_id > 0) {
+            return IntakePeriod::findOrFail(request()->intake_period_id);
+        }
+
+        return IntakePeriod::orderBy('end_date', 'DESC')->firstOrFail();
+    }
+
+    public static function initializeProgramWorkflow($program): void
+    {
+        $stepOne = WorkflowHelper::getDepartmentApplicationStepByPosition(
+            $program->institution_department_id,
+            1
+        );
+
+        $stepTwo = WorkflowHelper::getDepartmentApplicationStepByPosition(
+            $program->institution_department_id,
+            2
+        );
+
+        if ($stepOne) {
+            $program->update(['department_application_step_id' => $stepOne->id]);
+        }
+
+        if ($stepTwo) {
+            $program->update(['department_application_step_id' => $stepTwo->id]);
+        }
+    }
+
+    public static function generateAndAssignStudentNumber(Student $student, $program): void
+    {
+        $studentNumber = Helper::generateStudentNumber(
+            $student,
+            $program->institutionDepartment
+        );
+        $student->update(['student_number' => $studentNumber]);
+    }
+
+
+    public static function generateRandomCode(string $prefix): string
+    {
+        $randomSegment = strtoupper(substr(str_replace('-', '', Str::uuid()->toString()), 0, 8));
+        return "{$prefix}-{$randomSegment}";
+    }
+
 }

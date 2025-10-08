@@ -192,10 +192,7 @@ const save = async () => {
                 type="button"
                 :variant="ColorVariant.shade"
                 class="w-full md:w-[200px]"
-                :size="ButtonSize.xl"
-            >
-                {{ $t('trans.edit') }}
-            </BaseButton>
+                :size="ButtonSize.xl">{{ $t('trans.edit') }}</BaseButton>
             <BaseButton type="button" @click="save" class="w-full md:w-[200px]" :size="ButtonSize.xl">
                 {{ $t('trans.submit') }}
             </BaseButton>

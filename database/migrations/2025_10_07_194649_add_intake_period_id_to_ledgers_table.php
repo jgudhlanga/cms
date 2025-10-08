@@ -11,11 +11,9 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::table('ledgers', function (Blueprint $table) {
-            $table->unsignedBigInteger('proof_of_payment_id')
+            $table->unsignedBigInteger('intake_period_id')
                 ->nullable()
-                ->after('payment_mode');
-            $table->string('payment_gateway')->nullable()->after('payment_mode');
-
+                ->after('payment_gateway');
         });
     }
 
@@ -25,7 +23,7 @@ return new class extends Migration {
     public function down(): void
     {
         Schema::table('ledgers', function (Blueprint $table) {
-            $table->dropColumn(['proof_of_payment_id', 'payment_gateway']);
+            $table->dropColumn(['intake_period_id']);
         });
     }
 };

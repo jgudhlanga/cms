@@ -51,8 +51,8 @@ class Ledger extends Model implements HasMedia
         'student_program_id',
         'level_id',
         'proof_of_payment_id',
-        'payment_mode',
-        'payment_gateway'
+        'payment_gateway',
+        'intake_period_id'
     ];
 
     public function ledgerable(): MorphTo
@@ -70,14 +70,14 @@ class Ledger extends Model implements HasMedia
         return $this->belongsTo(Level::class);
     }
 
-    public function offerLetter(): HasOne
+    public function proofOfPayment(): HasOne
     {
-        return $this->hasOne(Media::class, 'id', 'offer_letter_id');
+        return $this->hasOne(Media::class, 'id', 'proof_of_payment_id');
     }
 
-    public function getOfferLetterUrlAttribute(): ?string
+    public function getProofOfPaymentUrlAttribute(): ?string
     {
-        return ($this->offer_letter_id > 0) ? $this->offerLetter->getFullUrl() : null;
+        return ($this->proof_of_payment_id > 0) ? $this->proofOfPayment->getFullUrl() : null;
     }
 
     public function registerMediaCollections(): void

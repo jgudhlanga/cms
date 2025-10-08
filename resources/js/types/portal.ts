@@ -71,6 +71,7 @@ export type CreateApplicationParams = {
     proof_of_payment?: string | null;
     payment_reference?: string | null;
     payment_date?: string | null;
+    payment_mode?: 'cash' | 'online' | null;
 };
 
 export type ProgramParams = {

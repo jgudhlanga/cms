@@ -105,18 +105,6 @@ class Student extends Model
         return $this->programs()->latest()->first()?->levelEnum()?->name();
     }
 
-    protected function hasProgram(): Attribute
-    {
-        return Attribute::get(function () {
-            $maxPosition = DepartmentApplicationStep::max('position');
-            if (is_null($maxPosition)) {
-                return false;
-            }
-            $step = WorkflowHelper::getDepartmentApplicationStepByPosition($maxPosition, 13);
-            return $step && $this->programs()->where('department_application_step_id', $step->id)->exists();
-        });
-    }
-
     public function contacts(): MorphMany
     {
         return $this->morphMany(Contact::class, 'contactable')->withTrashed();

@@ -23,11 +23,14 @@ Route::prefix('students')->middleware('auth')->group(function () {
 
 // ===================================== ENROLMENTS ====================================================================
 Route::prefix('enrolments')->middleware('auth')->group(function () {
-    Route::get('payment-verification', [StudentProgramController::class, 'paymentVerification'])->name('enrolments.payment-verification');
     Route::get('faulty-applications', [StudentProgramController::class, 'faultyApplications'])->name('enrolments.faulty-applications');
     Route::post('search-profile', [StudentController::class, 'searchProfile'])->name('enrolments.search-profile');
-    Route::get('create/{type}', [StudentProgramController::class, 'createProfile'])->name('enrolments.create-profile');
+    Route::get('lookup', [StudentController::class, 'enrolmentLookup'])->name('enrolments.enrolment-lookup');
+    Route::get('create/{payment_mode}', [StudentController::class, 'createProfile'])->name('enrolments.create-profile');
+    Route::get('show-enrolment/{student}', [StudentController::class, 'showProfile'])->name('enrolments.show-profile');
 });
 Route::middleware('auth')->resource('enrolments', StudentProgramController::class)->names('enrolments');
 // ===================================== STUDENTS ======================================================================
+Route::prefix('students')->middleware('auth')->group(function () {
+});
 Route::middleware('auth')->resource('students', StudentController::class)->names('students');

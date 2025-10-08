@@ -35,5 +35,20 @@ readonly class UpdateReceiptDto
             merchant_fee: $request->merchant_fee,
         );
     }
+
+    public function toArray(): array
+    {
+        return [
+            'payment_status'    => $this->payment_status,
+            'payment_option'    => $this->payment_option,
+            'payment_date'      => $this->payment_date,
+            'amount'            => $this->amount,
+            'system_reference'  => $this->system_reference,
+            'payment_reference' => $this->payment_reference,
+            'currency'          => $this->currency,
+            'client_fee'        => $this->client_fee,
+            'merchant_fee'      => $this->merchant_fee,
+        ];
+    }
 }
 

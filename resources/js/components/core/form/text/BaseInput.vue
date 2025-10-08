@@ -48,7 +48,7 @@ onMounted(() => setAutoFocus());
 </script>
 
 <template>
-    <div class="flex flex-col">
+    <div class="flex w-full flex-col">
         <div :class="cn('flex space-x-3', verticalLayout && 'flex-col space-y-2')">
             <Label
                 v-if="label"

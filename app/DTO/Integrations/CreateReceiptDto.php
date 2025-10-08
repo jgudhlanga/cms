@@ -31,5 +31,18 @@ readonly class CreateReceiptDto
             payment_reference: $request->payment_reference,
         );
     }
+
+    public function toArray(): array
+    {
+        return [
+            'tenant_id'         => $this->tenant_id,
+            'fee_type_id'       => $this->fee_type_id,
+            'type'              => $this->type,
+            'payment_status'    => $this->payment_status,
+            'amount'            => $this->amount,
+            'system_reference'  => $this->system_reference,
+            'payment_reference' => $this->payment_reference,
+        ];
+    }
 }
 

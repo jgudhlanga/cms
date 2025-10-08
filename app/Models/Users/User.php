@@ -2,6 +2,7 @@
 
 namespace App\Models\Users;
 
+use App\Enums\Acl\RoleEnum;
 use App\Http\Filters\Users\UserFilter;
 use App\Models\Institution\Staff;
 use App\Models\Ledgers\Ledger;
@@ -65,6 +66,11 @@ class User extends Authenticatable implements MustVerifyEmail, HasMedia
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class, 'tenant_id');
+    }
+
+    public function isStudent(): bool
+    {
+        return $this->hasRole(RoleEnum::STUDENT->name());
     }
 
     public function studentProfile(): HasOne|User

@@ -35,4 +35,19 @@ readonly class CreateInvoiceDto
             response_message: $request->response_message,
         );
     }
+
+    public function toArray(): array
+    {
+        return [
+            'tenant_id'         => $this->tenant_id,
+            'fee_type_id'       => $this->fee_type_id,
+            'type'              => $this->type,
+            'payment_status'    => $this->payment_status,
+            'amount'            => $this->amount,
+            'system_reference'  => $this->system_reference,
+            'payment_reference' => $this->payment_reference,
+            'response_code'     => $this->response_code,
+            'response_message'  => $this->response_message,
+        ];
+    }
 }

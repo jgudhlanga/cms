@@ -6,120 +6,127 @@ use App\DTO\Integrations\CreateInvoiceDto;
 use App\DTO\Integrations\CreateReceiptDto;
 use App\DTO\Integrations\UpdateReceiptDto;
 use App\Enums\Shared\FeeTypeEnum;
+use App\Models\Institution\IntakePeriod;
 use App\Models\Ledgers\Ledger;
 use App\Models\Shared\FeeType;
 use App\Models\Students\StudentProgram;
+use App\Models\Users\User;
+
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Str;
+use Spatie\MediaLibrary\MediaCollections\Exceptions\FileDoesNotExist;
+use Spatie\MediaLibrary\MediaCollections\Exceptions\FileIsTooBig;
 
 class PaymentHelper
 {
+    /* -----------------------------------------------------------------
+     |  Fee & Ledger Retrieval
+     | -----------------------------------------------------------------
+     */
+
     public static function getFeeTypeBySlug(string $slug): ?FeeType
     {
         return FeeType::where('slug', $slug)->first();
     }
 
-    public static function getLatestLedgerRecord(string $slug, ?string $recordType = null): ?Ledger
+    public static function getLatestLedgerRecord(
+        string        $slug,
+        ?string       $recordType = null,
+        ?User         $user = null,
+        ?IntakePeriod $intakePeriod = null
+    ): ?object
     {
         $feeType = self::getFeeTypeBySlug($slug);
-        $user = auth()->user();
-        return $user->ledgerTransactions()->where('fee_type_id', $feeType?->id)
-            ->when($recordType, fn($query, $recordType) => $query->where('type', $recordType))
-            ->orderByDesc('created_at')
+        if (!$feeType) return null;
+
+        $user = self::resolveUser($user);
+        $intakePeriod = self::resolveIntakePeriod($intakePeriod);
+
+        return $user->ledgerTransactions()
+            ->where('fee_type_id', $feeType->id)
+            ->when($recordType, fn($q, $type) => $q->where('type', $type))
+            ->where('intake_period_id', $intakePeriod->id)
+            ->latest()
             ->first();
     }
+
+    /* -----------------------------------------------------------------
+     |  Payment Gateway
+     | -----------------------------------------------------------------
+     */
 
     /**
      * @throws ConnectionException
      */
-    public static function checkTransactionStatus(string $orderReference)
+    public static function checkTransactionStatus(string $orderReference): array
     {
-        $response = Http::withHeaders([
+        return Http::withHeaders([
             'Accept' => 'application/json',
             'Content-Type' => 'application/json',
-        ])->get(config('custom.payments.payment-gateway.base_url') . '/payments/transaction/' . $orderReference . '/status/check');
-        return $response->json();
+        ])->get(
+            config('custom.payments.payment-gateway.base_url') .
+            "/payments/transaction/{$orderReference}/status/check"
+        )->json();
     }
 
-    public static function getUser()
+    /* -----------------------------------------------------------------
+     |  Ledger Entry Management
+     | -----------------------------------------------------------------
+     */
+
+    public static function createInvoiceEntry(
+        CreateInvoiceDto $dto,
+        ?User            $user = null,
+        ?IntakePeriod    $intakePeriod = null,
+        bool             $hasPaymentGateway = true
+    ): Ledger
     {
-        return request()->user();
+        return self::createLedgerEntry($dto->toArray(), $user, $intakePeriod, $hasPaymentGateway);
     }
 
-    public static function createInvoiceEntry(CreateInvoiceDto $dto): Ledger
+    public static function createReceiptEntry(
+        CreateReceiptDto $dto,
+        ?User            $user = null,
+        ?IntakePeriod    $intakePeriod = null,
+        bool             $hasPaymentGateway = true
+    ): Ledger
     {
-        $user = self::getUser();
-        return $user->ledgerTransactions()->create([
-            'tenant_id' => $dto->tenant_id,
-            'fee_type_id' => $dto->fee_type_id,
-            'type' => $dto->type,
-            'payment_status' => $dto->payment_status,
-            'amount' => $dto->amount,
-            'system_reference' => $dto->system_reference,
-            'payment_reference' => $dto->payment_reference,
-            'response_code' => $dto->response_code,
-            'response_message' => $dto->response_message,
-        ]);
-    }
-
-    public static function createReceiptEntry(CreateReceiptDto $dto): Ledger
-    {
-        $user = self::getUser();
-        return $user->ledgerTransactions()->create([
-            'tenant_id' => $dto->tenant_id,
-            'fee_type_id' => $dto->fee_type_id,
-            'type' => $dto->type,
-            'payment_status' => $dto->payment_status,
-            'amount' => $dto->amount,
-            'system_reference' => $dto->system_reference,
-            'payment_reference' => $dto->payment_reference,
-        ]);
+        return self::createLedgerEntry($dto->toArray(), $user, $intakePeriod, $hasPaymentGateway);
     }
 
     public static function updateReceiptEntry(Ledger $ledger, UpdateReceiptDto $dto): Ledger
     {
-        return tap($ledger)->update([
-            'payment_status' => $dto->payment_status ?? null,
-            'payment_option' => $dto->payment_option ?? null,
-            'amount' => $dto->amount,
-            'payment_date' => $dto->payment_date,
-            'system_reference' => $dto->system_reference ?? null,
-            'payment_reference' => $dto->payment_reference ?? null,
-            'currency' => $dto->currency ?? null,
-            'client_fee' => $dto->client_fee ?? null,
-            'merchant_fee' => $dto->merchant_fee ?? null,
-        ]);
+        return tap($ledger)->update($dto->toArray());
     }
 
-    public static function deleteNotPaidLedgerEntries(string $orderReference): void
+    public static function deleteNotPaidLedgerEntries(string $orderReference, ?IntakePeriod $intakePeriod = null): void
     {
-        // Find a ledger with the provided order reference
-        $ledger = Ledger::where('system_reference', $orderReference)->first();
+        $intakePeriod = self::resolveIntakePeriod($intakePeriod);
 
-        if (!$ledger) {
-            return; // No matching ledger found
-        }
+        $ledger = Ledger::where('system_reference', $orderReference)
+            ->where('intake_period_id', $intakePeriod->id)
+            ->first();
 
-        // Delete (soft delete) all related ledgers for the same ledgerable
-        // where payment_status is not 'paid'
+        if (!$ledger) return;
+
         Ledger::where('ledgerable_id', $ledger->ledgerable_id)
             ->where('ledgerable_type', $ledger->ledgerable_type)
+            ->where('intake_period_id', $intakePeriod->id)
             ->where('payment_status', '!=', 'paid')
             ->delete();
-
     }
 
-    /**
-     * @param Request $request
-     * @param mixed $data
-     * @return CreateInvoiceDto
+    /* -----------------------------------------------------------------
+     |  DTO Assemblers
+     | -----------------------------------------------------------------
      */
-    public static function assembleInvoiceData(Request $request, mixed $data): CreateInvoiceDto
+
+    public static function assembleInvoiceData(Request $request, array $data): CreateInvoiceDto
     {
         return new CreateInvoiceDto(
-            tenant_id: self::getUser()->tenant_id,
+            tenant_id: self::resolveUser()->tenant_id,
             fee_type_id: $request->feeTypeId,
             type: 'invoice',
             payment_status: 'pending',
@@ -131,10 +138,10 @@ class PaymentHelper
         );
     }
 
-    public static function assembleReceiptData(Request $request, mixed $data): CreateReceiptDto
+    public static function assembleReceiptData(Request $request, array $data): CreateReceiptDto
     {
         return new CreateReceiptDto(
-            tenant_id: self::getUser()?->tenant_id,
+            tenant_id: self::resolveUser()->tenant_id,
             fee_type_id: $request->feeTypeId,
             type: 'receipt',
             payment_status: 'pending',
@@ -144,7 +151,7 @@ class PaymentHelper
         );
     }
 
-    public static function assembleReceiptUpdateData(mixed $data): UpdateReceiptDto
+    public static function assembleReceiptUpdateData(array $data): UpdateReceiptDto
     {
         return new UpdateReceiptDto(
             payment_status: $data['status'],
@@ -159,18 +166,23 @@ class PaymentHelper
         );
     }
 
-    public static function hasPaidRegistrationFee(): bool
-    {
-        $user = auth()->user();
+    /* -----------------------------------------------------------------
+     |  Registration Fee Helpers
+     | -----------------------------------------------------------------
+     */
 
+    public static function hasPaidApplicationFeeAndNotApplied(?User $user = null, ?IntakePeriod $intakePeriod = null): bool
+    {
+        $user = self::resolveUser($user);
+        $intakePeriod = self::resolveIntakePeriod($intakePeriod);
+
+        // Whitelist specific email for dev/testing
         if ($user->email === 'jamesgudhlanga@gmail.com') {
             return true;
         }
-        $feeType = self::getFeeTypeBySlug(FeeTypeEnum::APPLICATION_FEE->slug());
 
-        if (!$feeType) {
-            return false;
-        }
+        $feeType = self::getFeeTypeBySlug(FeeTypeEnum::APPLICATION_FEE->slug());
+        if (!$feeType) return false;
 
         return $user->ledgerTransactions()
             ->where('fee_type_id', $feeType->id)
@@ -178,18 +190,150 @@ class PaymentHelper
             ->where('payment_status', 'paid')
             ->whereNull('student_program_id')
             ->whereNull('level_id')
-            ->latest()
+            ->where('intake_period_id', $intakePeriod->id)
             ->exists();
     }
 
-    public static function updateRegistrationFeeLedgerEntries(StudentProgram $studentProgram): void
+    /**
+     * Determine if the user has paid the application fee for the current intake.
+     */
+    public static function hasPaidApplicationFee(User $user): bool
     {
-        $invoice = PaymentHelper::getLatestLedgerRecord(FeeTypeEnum::APPLICATION_FEE->slug(), 'invoice');
-        $receipt = PaymentHelper::getLatestLedgerRecord(FeeTypeEnum::APPLICATION_FEE->slug(), 'receipt');
-        if(!$invoice || !$receipt) {
-            return;
+        $feeType = PaymentHelper::getFeeTypeBySlug(FeeTypeEnum::APPLICATION_FEE->slug());
+
+        return $user->ledgerTransactions()
+            ->where('type', 'receipt')
+            ->where('fee_type_id', $feeType->id)
+            ->where('payment_status', 'paid')
+            ->where('intake_period_id', Helper::resolveIntakePeriod()->id)
+            ->exists();
+    }
+
+    public static function updateRegistrationFeeLedgerEntries(
+        StudentProgram $studentProgram,
+        ?User          $user = null,
+        ?IntakePeriod  $intakePeriod = null
+    ): void
+    {
+        $invoice = self::getLatestLedgerRecord(FeeTypeEnum::APPLICATION_FEE->slug(), 'invoice', $user, $intakePeriod);
+        $receipt = self::getLatestLedgerRecord(FeeTypeEnum::APPLICATION_FEE->slug(), 'receipt', $user, $intakePeriod);
+
+        if (!$invoice || !$receipt) return;
+
+        $updateData = [
+            'student_program_id' => $studentProgram->id,
+            'level_id' => $studentProgram->departmentLevel->level_id,
+        ];
+
+        $invoice->update($updateData);
+        $receipt->update($updateData);
+    }
+
+    /* -----------------------------------------------------------------
+     |  Cash Invoice Helpers
+     | -----------------------------------------------------------------
+     */
+
+    /**
+     * @throws FileDoesNotExist
+     * @throws FileIsTooBig
+     */
+    public static function invoiceCashStudent(
+        User           $user,
+        FeeType        $feeType,
+        float          $amount,
+        string         $systemReference,
+        string         $paymentReference,
+        StudentProgram $studentProgram,
+        ?IntakePeriod  $intakePeriod = null
+    ): void
+    {
+        $invoiceDto = new CreateInvoiceDto(
+            tenant_id: $user->tenant_id,
+            fee_type_id: $feeType->id,
+            type: 'invoice',
+            payment_status: 'pending',
+            amount: $amount,
+            system_reference: $systemReference,
+            payment_reference: $paymentReference,
+            response_code: null,
+            response_message: null,
+        );
+
+        $receiptDto = new CreateReceiptDto(
+            tenant_id: $user->tenant_id,
+            fee_type_id: $feeType->id,
+            type: 'receipt',
+            payment_status: 'pending',
+            amount: 0.00,
+            system_reference: $systemReference,
+            payment_reference: $paymentReference,
+        );
+
+        $invoice = self::createInvoiceEntry($invoiceDto, $user, $intakePeriod, false);
+        $receipt = self::createReceiptEntry($receiptDto, $user, $intakePeriod, false);
+
+        self::updateRegistrationFeeLedgerEntries($studentProgram, $user, $intakePeriod);
+
+        if ($mediaId = self::handleProofOfPaymentUpload($invoice)) {
+            $invoice->update(['proof_of_payment_id' => $mediaId]);
+            $receipt->update(['proof_of_payment_id' => $mediaId, 'payment_option' => 'cash']);
         }
-        $invoice->update(['student_program_id' => $studentProgram->id, 'level_id' => $studentProgram->departmentLevel->level_id]);
-        $receipt->update(['student_program_id' => $studentProgram->id, 'level_id' => $studentProgram->departmentLevel->level_id]);
+    }
+
+    /* -----------------------------------------------------------------
+     |  File Upload Helpers
+     | -----------------------------------------------------------------
+     */
+
+    /**
+     * @throws FileDoesNotExist
+     * @throws FileIsTooBig
+     */
+    private static function handleProofOfPaymentUpload(Ledger $invoice): ?int
+    {
+        if (!request()->hasFile('proof_of_payment')) return null;
+
+        $file = request()->file('proof_of_payment');
+
+        if (!$file->isValid() || $file->getSize() <= 0) return null;
+
+        return $invoice->addMedia($file)
+            ->toMediaCollection('receipts')
+            ->id ?? null;
+    }
+
+    /* -----------------------------------------------------------------
+     |  Private Utilities
+     | -----------------------------------------------------------------
+     */
+
+    private static function resolveUser(?User $user = null): User
+    {
+        return $user ?? request()->user();
+    }
+
+    private static function resolveIntakePeriod(?IntakePeriod $intakePeriod = null): Model
+    {
+        return $intakePeriod ?? Helper::resolveIntakePeriod();
+    }
+
+    private static function createLedgerEntry(
+        array         $attributes,
+        ?User         $user = null,
+        ?IntakePeriod $intakePeriod = null,
+        bool          $hasPaymentGateway = true
+    ): Ledger
+    {
+        $user = self::resolveUser($user);
+        $intakePeriod = self::resolveIntakePeriod($intakePeriod);
+
+        $attributes['tenant_id'] ??= $user->tenant_id;
+        $attributes['intake_period_id'] = $intakePeriod->id;
+        $attributes['payment_gateway'] = $hasPaymentGateway
+            ? config('custom.payments.payment-gateway.name')
+            : null;
+
+        return $user->ledgerTransactions()->create($attributes);
     }
 }
