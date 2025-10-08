@@ -61,7 +61,7 @@ export const useContacts = () => {
     };
 
     const onOpenModal = (contact?: Contact) => {
-        const allowed = hasAbility(['create.contacts', 'update.contacts', 'manageOwnStudentContactDetails:students']);
+        const allowed = hasAbility(['create:contacts', 'update:contacts', 'manageOwnStudentContactDetails:students']);
         if (!allowed) return forbiddenAlert();
         openModal({ name: APP_MODULE_KEYS.contacts, edit: contact });
     };

@@ -78,12 +78,6 @@ export function useStudentPortal() {
         return mergeValidationSchema(schemaFields)(validations, schemaFields['levelSchema']());
     };
 
-    const getApplicationName = () => {
-        return trans_choice('trans.application', 1);
-    };
-    const successMessage = () => trans('trans.item_saved', { item: getApplicationName() });
-    const errorMessage = () => trans('trans.item_save_failure', { item: getApplicationName() });
-
     const saveApplication = (form: InertiaForm<any>) => {
         try {
             form.post(route('portal.store-application'), {

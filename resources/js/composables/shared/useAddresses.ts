@@ -61,7 +61,7 @@ export const useAddresses = () => {
     };
 
     const onOpenModal = (address?: Address) => {
-        const allowed = hasAbility(['create.addresses', 'update.addresses', 'manageOwnStudentContactDetails:students']);
+        const allowed = hasAbility(['create:addresses', 'update:addresses', 'manageOwnStudentContactDetails:students']);
         if (!allowed) return forbiddenAlert();
         openModal({ name: APP_MODULE_KEYS.addresses, edit: address });
     };

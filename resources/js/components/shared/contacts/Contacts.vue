@@ -13,7 +13,7 @@ interface Props {
 }
 
 defineProps<Props>();
-const ability = hasAbility(['create.contacts', 'update.contacts', 'manageOwnStudentContactDetails:students']);
+const ability = hasAbility(['create:contacts', 'update:contacts', 'manageOwnStudentContactDetails:students']);
 </script>
 
 <template>

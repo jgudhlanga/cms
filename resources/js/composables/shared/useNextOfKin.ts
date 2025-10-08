@@ -55,7 +55,7 @@ export const useNextOfKin = () => {
     };
 
     const onOpenModal = (nextOfKin?: NextOfKin) => {
-        const allowed = hasAbility(['create:next-of-kins', 'update:next-of-kins']);
+        const allowed = hasAbility(['create:next-of-kins', 'update:next-of-kins', 'manageStudentMetadata:admin']);
         if (!allowed) return forbiddenAlert();
         openModal({ name: APP_MODULE_KEYS.next_of_kin, edit: nextOfKin });
     };

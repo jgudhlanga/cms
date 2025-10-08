@@ -6,3 +6,4 @@ require __DIR__.'/api/acl.php';
 require __DIR__.'/api/validations.php';
 require __DIR__.'/api/users.php';
 require __DIR__.'/api/portal.php';
+require __DIR__.'/api/students.php';

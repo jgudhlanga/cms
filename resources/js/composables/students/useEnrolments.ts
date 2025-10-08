@@ -4,7 +4,7 @@ import { errorAlert, successAlert } from '@/lib/alerts';
 import { mergeValidationSchema } from '@/lib/forms';
 import { emailUniqueSchema, idNumberUniqueSchema, passportNumberUniqueSchema } from '@/lib/uniqueValidations';
 import { useCreateApplicationFormStore } from '@/store/portal/useCreateApplicationFormStore';
-import { Student, StudentProgram } from '@/types/students';
+import { Enrolment } from '@/types/enrolments';
 import { InertiaForm } from '@inertiajs/vue3';
 import { trans_choice } from 'laravel-vue-i18n';
 import { ZodObject } from 'zod';
@@ -17,9 +17,10 @@ export const useEnrolments = () => {
             {
                 header: trans_choice('trans.name', 1),
                 accessorKey: 'name',
-                cell: ({ row }: { row: { original: StudentProgram } }) => {
-                    const studentName = row.original?.relationships?.student?.relationships?.user?.attributes?.name;
-                    return textLink(route('portal.programs'), studentName ?? '');
+                cell: ({ row }: { row: { original: Enrolment } }) => {
+                    const studentName = row.original?.attributes?.studentName;
+                    const studentId = String(row.original?.attributes?.studentId);
+                    return textLink(route('enrolments.show-profile', {student: studentId}), studentName ?? '');
                 },
             },
             {
@@ -27,7 +28,7 @@ export const useEnrolments = () => {
                 accessorKey: 'actions',
                 enableSorting: false,
                 meta: { align: 'right' },
-                cell: ({ row }: { row: { original: Student } }) => {
+                cell: ({ row }: { row: { original: Enrolment } }) => {
                     return moreActionButton(false, [
                         {
                             key: 'view',

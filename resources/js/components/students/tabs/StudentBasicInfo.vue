@@ -12,12 +12,19 @@ import { Student } from '@/types/students';
 import { ValueAndLabel } from '@/types/utils';
 import { computed, onMounted, ref } from 'vue';
 
+interface Props {
+    url?: string;
+}
+const props = withDefaults(defineProps<Props>(), {
+    url: route('v1.portal.personal'),
+});
+
 const { isNativeCitizen, formatDate } = useUtils();
 const { isLoading, getStudentData, onOpenPersonalDetailsModal } = useStudentPortal();
 const student = ref<Student | null>(null);
 
 onMounted(async () => {
-    student.value = await getStudentData(route('v1.portal.personal'));
+    student.value = await getStudentData(props.url);
 });
 
 const personalDetails = computed<ValueAndLabel[]>(() => {

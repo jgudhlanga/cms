@@ -37,7 +37,7 @@ class StudentProgramController extends Controller
     public function index(StudentProgramFilter $filters): Response
     {
         $this->authorize('viewAny', StudentProgram::class);
-        $enrolments = StudentProgramResource::collection($this->repository->allFilter(['*'], $filters));
+        $enrolments = EnrolmentResource::collection($this->repository->allFilter(['*'], $filters));
         return Inertia::render('students/EnrolmentsIndex', [
             'enrolments' => $enrolments,
             'filters' => request()->only(['search', 'trashed']),
