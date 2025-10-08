@@ -17,6 +17,7 @@ const { student } = props;
 const breadcrumbs: Array<Link> = [
     { transKey: 'dashboard', href: route('dashboard') },
     { transChoiceKey: 'enrolment', href: route('enrolments.index') },
+    { title: 'Enrolment lookup', href: route('enrolments.enrolment-lookup') },
     { title: student.relationships?.user?.attributes?.name ?? 'Profile' },
 ];
 </script>

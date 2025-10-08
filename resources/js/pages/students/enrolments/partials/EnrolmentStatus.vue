@@ -1,12 +1,12 @@
 <script lang="ts" setup>
+import { BaseButton } from '@/components/core/button';
 import BaseIcon from '@/components/core/icon/BaseIcon.vue';
+import CustomSeparator from '@/components/core/util/CustomSeparator.vue';
+import { useUtils } from '@/composables/core/useUtils';
+import { ColorVariant } from '@/enums/colors';
 import { IconName } from '@/lib/icons';
 import type { EnrolmentLookup } from '@/types/enrolments';
 import { computed } from 'vue';
-import { useUtils } from '@/composables/core/useUtils';
-import { BaseButton } from '@/components/core/button';
-import { ColorVariant } from '@/enums/colors';
-import CustomSeparator from '@/components/core/util/CustomSeparator.vue';
 
 interface Props {
     enrolmentLookup: EnrolmentLookup;
@@ -27,6 +27,7 @@ const levelBadgeClass = computed(() => {
 });
 
 const profileFound = computed(() => String(enrolmentLookup?.statusCode) === '200');
+const eligibleToNavigate = computed(() => !enrolmentLookup.hasAdminRole);
 
 /**
  * ─── Helpers For Status Items ───────────────────────────────────────────
@@ -42,10 +43,10 @@ interface StatusItem {
 const statusItems = computed<StatusItem[]>(() => [
     {
         icon: IconName.check,
-        label: 'Eligible for Enrolment',
+        label: 'Eligible to apply',
         positiveText: 'Yes',
         negativeText: 'No',
-        isActive: enrolmentLookup.eligibleForEnrolment,
+        isActive: enrolmentLookup.eligibleForEnrolment && !enrolmentLookup.hasAdminRole,
     },
     {
         icon: IconName.user,
@@ -60,6 +61,13 @@ const statusItems = computed<StatusItem[]>(() => [
         positiveText: 'Paid',
         negativeText: 'None',
         isActive: enrolmentLookup.hasPaidApplicationFee,
+    },
+    {
+        icon: IconName.finger_print,
+        label: 'Has Admin Role',
+        positiveText: 'Yes',
+        negativeText: 'No',
+        isActive: enrolmentLookup.hasAdminRole,
     },
 ]);
 
@@ -104,7 +112,7 @@ const { navigateTo } = useUtils();
             </div>
 
             <!-- ─── Status Items Grid ────────────────────────────────────────── -->
-            <div class="grid grid-cols-1 gap-4 pt-2 md:grid-cols-3">
+            <div class="grid grid-cols-1 gap-4 pt-2 md:grid-cols-4">
                 <div v-for="(item, idx) in statusItems" :key="idx" class="flex items-center space-x-3 rounded-lg bg-gray-50 p-3">
                     <div class="flex-shrink-0">
                         <div class="flex h-10 w-10 items-center justify-center rounded-full" :class="item.isActive ? 'bg-green-100' : 'bg-red-100'">
@@ -120,12 +128,24 @@ const { navigateTo } = useUtils();
                 </div>
             </div>
         </div>
-        <div class="flex flex-col items-center justify-center">
+        <div class="flex flex-col items-center justify-center" v-if="eligibleToNavigate">
             <CustomSeparator classes="h-[1px] my-7" />
-            <BaseButton v-if="profileFound" :variant="ColorVariant.success_outline" title="View Full Profile" classes="rounded-full">
+            <BaseButton
+                @click="navigateTo(route('enrolments.show-profile', { student: enrolmentLookup?.studentId }))"
+                v-if="profileFound"
+                :variant="ColorVariant.success_outline"
+                title="View Full Profile"
+                classes="rounded-full"
+            >
                 <BaseIcon :name="IconName.user" />
             </BaseButton>
-            <BaseButton v-else :variant="ColorVariant.danger_outline" title="Create Enrolment" classes="rounded-full">
+            <BaseButton
+                @click="navigateTo(route('enrolments.create-profile', { payment_mode: 'cash' }))"
+                v-else
+                :variant="ColorVariant.danger_outline"
+                title="Create Enrolment"
+                classes="rounded-full"
+            >
                 <BaseIcon :name="IconName.user_add" />
             </BaseButton>
         </div>

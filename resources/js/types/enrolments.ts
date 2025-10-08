@@ -99,7 +99,9 @@ export type EnrolmentSearchParams = {
 
 export type EnrolmentLookup = {
     user?: User;
+    studentId?: string | number;
     hasPaidApplicationFee: boolean;
+    hasAdminRole: boolean;
     eligibleForEnrolment: boolean;
     currentLevel: string | null;
     currentProgramCount: number | null;

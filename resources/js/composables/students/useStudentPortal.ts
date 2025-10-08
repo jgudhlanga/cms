@@ -4,7 +4,7 @@ import StudentContacts from '@/components/students/tabs/StudentContacts.vue';
 import StudentNextOfKin from '@/components/students/tabs/StudentNextOfKin.vue';
 import StudentSponsors from '@/components/students/tabs/StudentSponsors.vue';
 import { useSharedFormSchema } from '@/composables/core/useSharedFormSchema';
-import { errorAlert, forbiddenAlert, openModal } from '@/lib/alerts';
+import { errorAlert, forbiddenAlert, openModal, successAlert } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
 import { buildFormOptions, mergeValidationSchema } from '@/lib/forms';
 import { IconName } from '@/lib/icons';
@@ -86,10 +86,22 @@ export function useStudentPortal() {
 
     const saveApplication = (form: InertiaForm<any>) => {
         try {
-            form.post(route('portal.store-application'), buildFormOptions(form, successMessage(), errorMessage()));
-            const store = useCreateApplicationFormStore();
-            store.$reset();
-            store.$dispose();
+            form.post(route('portal.store-application'), {
+                onSuccess: () => {
+                    const store = useCreateApplicationFormStore();
+                    store.$reset();
+                    store.$dispose();
+                    successAlert('Application successfully created');
+                },
+                onError: (errors: any) => {
+                    if (Object.keys(errors).length) {
+                        const allErrors = Object.values(errors).join('\n');
+                        errorAlert(allErrors);
+                    } else {
+                        errorAlert('An unexpected error happened, application could not be created');
+                    }
+                },
+            });
         } catch (error: any) {
             form.setError(error.format());
         }
@@ -97,10 +109,22 @@ export function useStudentPortal() {
 
     const updateApplication = (applicationId: string, form: InertiaForm<any>) => {
         try {
-            form.put(route('portal.application.update', applicationId), buildFormOptions(form, successMessage(), errorMessage()));
-            const store = useUpdateProgramFormStore();
-            store.$reset();
-            store.$dispose();
+            form.put(route('portal.application.update', applicationId), {
+                onSuccess: () => {
+                    const store = useUpdateProgramFormStore();
+                    store.$reset();
+                    store.$dispose();
+                    successAlert('Application successfully updated');
+                },
+                onError: (errors: any) => {
+                    if (Object.keys(errors).length) {
+                        const allErrors = Object.values(errors).join('\n');
+                        errorAlert(allErrors);
+                    } else {
+                        errorAlert('An unexpected error happened, application could not be updated');
+                    }
+                },
+            });
         } catch (error: any) {
             form.setError(error.format());
         }
@@ -108,10 +132,22 @@ export function useStudentPortal() {
 
     const addProgram = (studentId: string, form: InertiaForm<any>) => {
         try {
-            form.post(route('portal.program.store', studentId), buildFormOptions(form, successMessage(), errorMessage()));
-            const store = useCreateApplicationFormStore();
-            store.$reset();
-            store.$dispose();
+            form.post(route('portal.program.store', studentId), {
+                onSuccess: () => {
+                    const store = useCreateApplicationFormStore();
+                    store.$reset();
+                    store.$dispose();
+                    successAlert('Application successfully created');
+                },
+                onError: (errors: any) => {
+                    if (Object.keys(errors).length) {
+                        const allErrors = Object.values(errors).join('\n');
+                        errorAlert(allErrors);
+                    } else {
+                        errorAlert('An unexpected error happened, application could not be created');
+                    }
+                },
+            });
         } catch (error: any) {
             form.setError(error.format());
         }

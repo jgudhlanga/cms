@@ -2,7 +2,7 @@ import { useDataTables } from '@/composables/core/useDataTables';
 import { useSharedFormSchema } from '@/composables/core/useSharedFormSchema';
 import { errorAlert, successAlert } from '@/lib/alerts';
 import { mergeValidationSchema } from '@/lib/forms';
-import { idNumberUniqueSchema, passportNumberUniqueSchema } from '@/lib/uniqueValidations';
+import { emailUniqueSchema, idNumberUniqueSchema, passportNumberUniqueSchema } from '@/lib/uniqueValidations';
 import { useCreateApplicationFormStore } from '@/store/portal/useCreateApplicationFormStore';
 import { Student, StudentProgram } from '@/types/students';
 import { InertiaForm } from '@inertiajs/vue3';
@@ -28,7 +28,6 @@ export const useEnrolments = () => {
                 enableSorting: false,
                 meta: { align: 'right' },
                 cell: ({ row }: { row: { original: Student } }) => {
-                    console.log(row);
                     return moreActionButton(false, [
                         {
                             key: 'view',
@@ -66,19 +65,23 @@ export const useEnrolments = () => {
             'modeOfStudySchema',
             'paymentReferenceSchema',
             'paymentDateSchema',
-            'proofOfPaymentSchema'
+            'proofOfPaymentSchema',
         ];
         let personalDetails = null;
         if (isNativeCitizen) {
             personalDetails = mergeValidationSchema(schemaFields)(
                 personal,
-                schemaFields['titleSchema']().merge(idNumberUniqueSchema('api/v1/validations/check?key=student_national_id&value=')),
+                schemaFields['titleSchema']()
+                    .merge(idNumberUniqueSchema('api/v1/validations/check?key=student_national_id&value='))
+                    .merge(emailUniqueSchema('api/v1/validations/check?key=user_email&value=')),
             );
         } else {
             personal.push('countrySchema');
             personalDetails = mergeValidationSchema(schemaFields)(
                 personal,
-                schemaFields['titleSchema']().merge(passportNumberUniqueSchema('api/v1/validations/check?key=student_passport_number&value=')),
+                schemaFields['titleSchema']()
+                    .merge(passportNumberUniqueSchema('api/v1/validations/check?key=student_passport_number&value='))
+                    .merge(emailUniqueSchema('api/v1/validations/check?key=user_email&value=')),
             );
         }
         return personalDetails;

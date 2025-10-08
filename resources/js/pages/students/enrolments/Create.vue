@@ -2,6 +2,7 @@
 import { BaseButton } from '@/components/core/button';
 import BaseCard from '@/components/core/card/BaseCard.vue';
 import { BaseInput } from '@/components/core/form';
+import PaymentDate from '@/components/core/form/date/PaymentDate.vue';
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import CustomSeparator from '@/components/core/util/CustomSeparator.vue';
 import ContactDetails from '@/components/students/update/ContactDetails.vue';
@@ -33,9 +34,11 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+
 const breadcrumbs: Array<Link> = [
     { transKey: 'dashboard', href: route('dashboard') },
     { transChoiceKey: 'enrolment', href: route('enrolments.index') },
+    { title: 'Enrolment lookup', href: route('enrolments.enrolment-lookup') },
     { title: 'Create new' },
 ];
 
@@ -208,10 +211,7 @@ const handleUploadFileChange = (event: any) => {
                         @input="clearFormErrors(form, 'payment_reference')"
                         :error="form.errors.payment_reference"
                     />
-                    <BaseInput
-                        input-id="payment_date"
-                        label="Payment date"
-                        placeholder="enter lastname / surname"
+                    <PaymentDate
                         v-model="payment_date"
                         :is-required="true"
                         @input="clearFormErrors(form, 'payment_date')"

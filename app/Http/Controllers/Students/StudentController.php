@@ -13,7 +13,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Filters\Students\StudentFilter;
 use App\Http\Requests\Students\CreateStudentApplicationRequest;
 use App\Http\Requests\Students\UpdateStudentRequest;
-use App\Http\Resources\Institution\FeeStructureResource;
 use App\Http\Resources\Students\StudentResource;
 use App\Http\Resources\Users\UserResource;
 use App\Models\Institution\FeeStructure;
@@ -101,8 +100,8 @@ class StudentController extends Controller
 
             DB::commit();
 
-            return to_route('students.show', $student->id)
-                ->with('success', 'Student profile created successfully.');
+            return to_route('enrolments.show-profile', $student->id)
+                ->with('success', 'Enrolment profile created successfully.');
         } catch (Throwable $e) {
             DB::rollBack();
             report($e);
@@ -164,6 +163,7 @@ class StudentController extends Controller
 
         $hasPaidApplicationFee = PaymentHelper::hasPaidApplicationFee($user);
         $student = $user->studentProfile;
+        $hasAdminRole = !$user->isStudent();
 
         $currentLevel = null;
         $currentProgramCount = null;
@@ -180,7 +180,9 @@ class StudentController extends Controller
             eligibleForEnrolment: $eligibleForEnrolment,
             currentLevel: $currentLevel,
             currentProgramCount: $currentProgramCount,
-            message: 'User Account found.'
+            message: 'User Account found.',
+            hasAdminRole: $hasAdminRole,
+            studentId: $student?->id,
         );
     }
 
@@ -191,7 +193,7 @@ class StudentController extends Controller
     {
         // 1. Search by email
         $user = User::where('email', $search)->first();
-        if ($user?->isStudent()) {
+        if ($user) {
             return $user;
         }
 
@@ -202,7 +204,7 @@ class StudentController extends Controller
             ->first();
 
         $user = $student?->user;
-        if ($user?->isStudent()) {
+        if ($user) {
             return $user;
         }
 
@@ -213,7 +215,7 @@ class StudentController extends Controller
             ->first();
 
         $user = $ledger?->ledgerable()->first();
-        if ($user?->isStudent()) {
+        if ($user) {
             return $user;
         }
 
@@ -295,9 +297,7 @@ class StudentController extends Controller
         $eligibleForEnrolment = true;
 
         if ($level instanceof Level && $level->allowed_applications_per_level > 0) {
-            $eligibleForEnrolment =
-                $currentProgramCount < $level->allowed_applications_per_level
-                && $hasPaidApplicationFee;
+            $eligibleForEnrolment = $currentProgramCount < $level->allowed_applications_per_level;
         }
 
         return [$currentLevel, $currentProgramCount, $eligibleForEnrolment];
@@ -313,12 +313,16 @@ class StudentController extends Controller
         $currentLevel = null,
         $currentProgramCount = null,
         string $message = null,
-        int $status = 200
+        int $status = 200,
+        bool $hasAdminRole = false,
+        int $studentId = null,
     )
     {
         return response()->json([
             'user' => $user,
+            'studentId' => $studentId,
             'hasPaidApplicationFee' => $hasPaidApplicationFee,
+            'hasAdminRole' => $hasAdminRole,
             'eligibleForEnrolment' => $eligibleForEnrolment,
             'currentLevel' => $currentLevel,
             'currentProgramCount' => $currentProgramCount,

@@ -71,11 +71,11 @@ const title = computed(() => {
     <PageContainer :breadcrumbs="breadcrumbs">
         <div class="my-5 flex flex-col space-y-5">
             <BaseCard title="Search Applicant details" description="Search for existing user account / student profile">
-                <div class="mx-auto my-5 flex w-full flex-col">
-                    <div class="flex w-2/3 flex-col">
-                        <div class="flex w-full flex-col">
+                <div class="mx-auto my-3 flex w-full flex-col">
+                    <div class="flex w-full items-baseline-last justify-between space-x-5">
+                        <div class="flex flex-1">
                             <BaseInput
-                                classes="w-full p-6"
+                                classes="flex w-full p-6"
                                 input-id="order_reference"
                                 label="Email address / National ID# / Passport# / Student# / Order Reference / Payment Reference"
                                 v-model="search"
@@ -85,7 +85,7 @@ const title = computed(() => {
                                 :is-required="true"
                             />
                         </div>
-                        <div class="mt-6 flex w-full md:w-auto">
+                        <div class="flex">
                             <BaseButton @click="searchProfile" type="button" :processing="isSearching">
                                 <BaseIcon :name="IconName.search" />
                                 Search user account / Student Profile
