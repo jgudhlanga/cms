@@ -15,7 +15,7 @@ defineProps<Props>();
 </script>
 
 <template>
-    <BaseButton type="button" :variant="variant" class="size-8 rounded-full p-3">
+    <BaseButton type="button" :variant="variant" class="size-6 rounded-full p-1">
         <BaseIcon :name="icon" :color="ColorVariant.white" />
     </BaseButton>
 </template>

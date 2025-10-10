@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Students\PortalController;
+use App\Http\Controllers\Students\StudentOLevelResultsController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('portal')->group(function () {
@@ -25,6 +26,12 @@ Route::prefix('portal')->group(function () {
         Route::get('programs', [PortalController::class, 'programs'])->name('portal.programs');
         Route::get('financial-record', [PortalController::class, 'financialRecord'])->name('portal.financial-record');
         Route::get('academic-record', [PortalController::class, 'academicRecord'])->name('portal.academic-record');
+        Route::get('list-o-levels', [StudentOLevelResultsController::class, 'index'])->name('portal.list-o-levels');
+        Route::get('manage-o-level-results', [StudentOLevelResultsController::class, 'manage'])->name('portal.manage-o-level-results');
+        Route::post('store-o-level-results/{student}', [StudentOLevelResultsController::class, 'store'])->name('portal.store-o-level-results');
+        Route::get('get-o-level-results/{student}', [StudentOLevelResultsController::class, 'loadStudentOLevelResults'])->name('portal.get-o-level-results');
+        Route::put('update-o-level-results/{student_academic_result}', [StudentOLevelResultsController::class, 'update'])->name('portal.update-o-level-results');
+        Route::delete('delete-o-level-results/{student_academic_result}', [StudentOLevelResultsController::class, 'destroy'])->name('portal.delete-o-level-results');
         # =============================================== META =========================================================
         Route::post('contacts', [PortalController::class, 'storeContactDetails'])->name('portal.contacts.store');
         Route::post('addresses', [PortalController::class, 'storeAddressDetails'])->name('portal.address.store');
