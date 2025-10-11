@@ -17,14 +17,16 @@ import { ProgramParams } from '@/types/portal';
 // Utilities
 import { BaseButton } from '@/components/core/button';
 import StudentPageHeader from '@/components/shared/students/StudentPageHeader.vue';
+import CreateEdit from '@/components/students/oLevels/modals/CreateEdit.vue';
 import { useDepartmentCourses } from '@/composables/institution/useDepartmentCourses';
 import { useApplicationFormHelper } from '@/composables/students/useApplicationFormHelper';
+import { useOLevelResults } from '@/composables/students/useOLevelResults';
 import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
 import { errorAlert } from '@/lib/alerts';
 import { useUpdateProgramFormStore } from '@/store/portal/useUpdateProgramFormStore';
-import { Enrolment } from '@/types/enrolments';
-import { useForm } from '@inertiajs/vue3';
+import { Enrolment, OLevelSubjectResult } from '@/types/enrolments';
+import { router, useForm } from '@inertiajs/vue3';
 import { trans } from 'laravel-vue-i18n';
 import { storeToRefs } from 'pinia';
 
@@ -43,7 +45,8 @@ const { updateApplication, programFormSchema } = useStudentPortal();
 const { listLevelRequirements } = useDepartmentLevels();
 const { listCourseRequirements } = useDepartmentCourses();
 const { isItTrue, navigateTo } = useUtils();
-const { validateMainSubjects, validateOtherSubjects, updateProgramForm } = useApplicationFormHelper(true);
+const { updateProgramForm } = useApplicationFormHelper(true);
+const { loadStudentOLevelResults, isLoading } = useOLevelResults();
 
 // Store
 const store = useUpdateProgramFormStore();
@@ -106,21 +109,48 @@ onMounted(async () => {
     if (read_write_acknowledged) read_write_acknowledged.value = isItTrue(application?.attributes?.readWriteAcknowledged);
 });
 
+const validateSubjectRequirements = async () => {
+    // Load student O-Level results
+    const oLevelResults = await loadStudentOLevelResults(String(application?.attributes?.studentId));
+
+    // Normalize mainSubjectIds (convert to number array safely)
+    const rawMainSubjectIds = requirements?.value?.attributes?.mainSubjectIds ?? [];
+    const mainSubjectIds: number[] = Array.isArray(rawMainSubjectIds)
+        ? rawMainSubjectIds.filter((v): v is string | number => typeof v === 'string' || typeof v === 'number').map((v) => Number(v))
+        : [];
+
+    // Check if any required main subjects are missing in student's results
+    if (mainSubjectIds.length > 0) {
+        const missingMainSubjects = mainSubjectIds.filter((id) => !oLevelResults?.some((r: OLevelSubjectResult) => Number(r.id) === id));
+
+        if (missingMainSubjects.length > 0) {
+            return `Please check that you provided all ${mainSubjectIds.length} main subjects (year, sitting and grade)`;
+        }
+    }
+
+    // Handle other subject requirements if applicable
+    const otherSubjectsCount = Number(String(requirements?.value?.attributes?.otherSubjectsCount ?? '0'));
+    if (otherSubjectsCount > 0) {
+        const otherSubjectIds =
+            oLevelResults?.filter((r: OLevelSubjectResult) => !mainSubjectIds.includes(Number(r.id))).map((r: OLevelSubjectResult) => Number(r.id)) ??
+            [];
+
+        if (otherSubjectIds.length < otherSubjectsCount) {
+            return `Please provide at least ${otherSubjectsCount} other subject(s)`;
+        }
+    }
+
+    return null;
+};
+
 const save = async () => {
     updateProgramForm(form);
     try {
         programFormSchema().parse(form);
         if (isItTrue(requirements.value?.attributes?.isOLevelRequired)) {
-            const mainSubjectsCount = Number(String(requirements?.value?.attributes?.mainSubjectsCount ?? '0'));
-            const mainErrors = validateMainSubjects(mainSubjectsCount);
-            if (mainErrors && mainErrors.length > 0) {
-                errorAlert(mainErrors.join('\n'));
-                return;
-            }
-            const otherSubjectCount = Number(String(requirements?.value?.attributes?.otherSubjectsCount ?? '0'));
-            const otherErrors = validateOtherSubjects(otherSubjectCount);
-            if (otherErrors && otherErrors.length > 0) {
-                errorAlert(otherErrors.join('\n'));
+            const subjectErrors = await validateSubjectRequirements();
+            if (subjectErrors) {
+                errorAlert(subjectErrors);
                 return;
             }
         }
@@ -149,6 +179,12 @@ onBeforeUnmount(() => {
     store.$reset();
     store.$dispose();
 });
+const onUpdated = () => {
+    router.visit(window.location.pathname, {
+        replace: true,
+        preserveScroll: true,
+    });
+};
 </script>
 <template>
     <StudentPageHeader />
@@ -156,21 +192,22 @@ onBeforeUnmount(() => {
         <div class="mt-20 flex w-full flex-col bg-white px-10 md:p-0">
             <div class="flex w-full flex-col space-y-6 md:mx-auto md:w-7/8">
                 <Programs :form="form" :application="application" />
-                <div class="mb-10 flex items-center justify-center space-x-3">
+                <div class="mb-10 flex flex-col md:flex-row justify-center space-x-3 space-y-3">
+                    <BaseButton class="w-full md:w-[200px]" :size="ButtonSize.xl" :processing="isLoading">
+                        {{ $t('trans.submit') }}
+                    </BaseButton>
                     <BaseButton
                         @click="navigateTo(route('portal.applications'))"
                         type="button"
                         :variant="ColorVariant.shade"
-                        class="w-1/2 md:w-[200px]"
+                        class="w-full md:w-[200px]"
                         :size="ButtonSize.xl"
                     >
                         {{ $t('trans.cancel') }}
-                    </BaseButton>
-                    <BaseButton class="w-1/2 md:w-[200px]" :size="ButtonSize.xl">
-                        {{ $t('trans.submit') }}
                     </BaseButton>
                 </div>
             </div>
         </div>
     </form>
+    <CreateEdit @saved="onUpdated" />
 </template>

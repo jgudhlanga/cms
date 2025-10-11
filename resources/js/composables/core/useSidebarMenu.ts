@@ -115,10 +115,10 @@ export function useSidebarMenu() {
             show: hasAbility('manageOwnStudentFinancialDetails:students') && hasStudentProfile() && hasProgram(),
         },
         {
-            transKey: 'trans.academic_record',
+            title: 'O Levels',
             icon: icons[IconName.award],
-            url: route('portal.academic-record'),
-            show: hasAbility('manageOwnStudentAcademicDetails:students') && hasStudentProfile() && hasProgram(),
+            url: route('portal.list-o-levels'),
+            show: hasAbility('manageOwnStudentAcademicDetails:students'),
         },
         /** ================ PORTAL END ======================*/
     ];

@@ -16,7 +16,7 @@ export interface DialogInterface {
 	warning: (onConfirm: () => boolean, message: string, title?: string) => void;
 }
 
-const dialogCreate = (params: IDialogParams) => {
+export const dialogCreate = (params: IDialogParams) => {
 	const { open, destroy } = useModal({
 		defaultModelValue: false,
 		keepAlive: false,

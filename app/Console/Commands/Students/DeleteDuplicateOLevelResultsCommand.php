@@ -93,7 +93,7 @@ class DeleteDuplicateOLevelResultsCommand extends Command
                 ->whereNull('deleted_at');
 
             foreach ($duplicates as $dup) {
-                $dup->delete();
+                $dup->forceDelete();
                 $this->line("👤 Student {$student->id}: Deleted duplicate ID {$dup->id} for subject {$dup->subject_id}");
             }
         }

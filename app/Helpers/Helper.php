@@ -2,10 +2,12 @@
 
 namespace App\Helpers;
 
+use App\Enums\Institution\ModeOfStudyEnum;
 use App\Enums\Shared\StatusEnum;
 use App\Enums\Shared\TenantEnum;
 use App\Models\Institution\InstitutionDepartment;
 use App\Models\Institution\IntakePeriod;
+use App\Models\Institution\ModeOfStudy;
 use App\Models\Shared\Status;
 use App\Models\Students\Student;
 use App\Models\Tenants\Tenant;
@@ -104,6 +106,13 @@ class Helper
         return IntakePeriod::orderBy('end_date', 'DESC')->firstOrFail();
     }
 
+    private static function resolveModeOfStudy(?int $modeOfStudyId): Model|Collection|null
+    {
+        return $modeOfStudyId
+            ? ModeOfStudy::find($modeOfStudyId)
+            : ModeOfStudy::where('name', ModeOfStudyEnum::FULL_TIME->value)->first();
+    }
+
     public static function initializeProgramWorkflow($program): void
     {
         $stepOne = WorkflowHelper::getDepartmentApplicationStepByPosition(
@@ -133,7 +142,6 @@ class Helper
         );
         $student->update(['student_number' => $studentNumber]);
     }
-
 
     public static function generateRandomCode(string $prefix): string
     {

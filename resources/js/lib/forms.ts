@@ -52,7 +52,7 @@ function mergeValidationSchema(schemaFields: Record<string, () => ZodObject<any,
 }
 
 function validateSelectOption(val: SelectOption) {
-    return val !== null && val?.value !== '';
+    return val !== null && val?.value !== '' && val?.value !== null && val?.value != 'null' && val?.label != '---';
 }
 
 export { buildFormOptions, clearFormErrors, mergeValidationSchema, onFormError, onFormFinish, onFormSuccess, toggleFormLoader, validateSelectOption };

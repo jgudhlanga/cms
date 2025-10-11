@@ -25,7 +25,7 @@ const { form } = props;
 
 <template>
     <BaseCard :title="$t('trans.next_of_kin')" :description="$t('trans.next_of_kin_description')">
-        <div class="grid grid-cols-1 gap-3 md:grid-cols-3">
+        <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
             <BaseInput
                 input-id="next_of_kin_name"
                 :label="$tChoice('trans.name', 1)"
@@ -49,7 +49,7 @@ const { form } = props;
         <div class="flex flex-col">
             <HeadingSmall :title="$t('trans.residential_address')" :description="$t('trans.residential_address_description')" class="mt-5" />
         </div>
-        <div class="grid-col-1 grid gap-3 md:grid-cols-4">
+        <div class="grid-col-1 grid gap-6 md:grid-cols-4">
             <BaseInput
                 input-id="next_of_kin_address_1"
                 :label="$t('trans.address_1')"

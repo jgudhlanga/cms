@@ -60,6 +60,27 @@ export type AcademicOLevelResult = {
     };
 };
 
+export type OLevelSubjectResult = {
+    type: string;
+    id: string | number;
+    attributes: {
+        studentId: string | number;
+        resultId: string | number;
+        subject: string;
+        examYear: string | number;
+        examSitting: string | number;
+        gradeId: string | number;
+        grade: string;
+    };
+};
+
+export type OLevelSubjectResultParams = {
+    subject_id: string | number;
+    exam_year: string | number;
+    exam_sitting: string | number;
+    grade_id: string | number;
+};
+
 export type BulkApplicationApprovalParams = {
     intake_period_id: string | number;
     department_level_id: string | number;

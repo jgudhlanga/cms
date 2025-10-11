@@ -10,7 +10,7 @@ defineProps<Props>();
 <template>
 	<div class="flex flex-col">
 		<div class="flex mb-0.5 text-sm uppercase text-accent-foreground font-bold">{{ title }}</div>
-		<div v-if="description" class="flex text-xs text-muted-foreground">
+		<div v-if="description" class="hidden md:flex text-xs text-muted-foreground">
 			{{ description }}
 		</div>
 	</div>

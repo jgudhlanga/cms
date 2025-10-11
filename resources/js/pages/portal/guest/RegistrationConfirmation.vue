@@ -14,8 +14,8 @@ defineProps<Props>();
 <template>
     <Head :title="$t('trans.application_form')" />
     <ApplicationCover>
-        <div class="flex items-center justify-center p-8">
-            <div class="flex w-2/3">
+        <div class="flex items-center justify-center p-3 md:p-8">
+            <div class="flex w-full md:w-2/3">
                 <BaseAlert
                     :type="TypeVariant.primary"
                     :title="$t('trans.success')"

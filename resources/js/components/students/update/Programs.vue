@@ -117,7 +117,7 @@ const requirements = computed(() => {
             <template v-else>
                 <template v-if="Number(String(requirements?.id)) > 0">
                     <template v-if="isItTrue(requirements?.attributes?.isOLevelRequired)">
-                        <OLevelRequirements :application="application" />
+                        <OLevelRequirements :application="application" :requirements="requirements" />
                     </template>
                     <template v-if="Number(String(requirements?.attributes?.requiredLevelId)) > 0">
                         <LevelRequirements :requirements="requirements" :application="application" />

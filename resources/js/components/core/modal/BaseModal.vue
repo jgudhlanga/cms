@@ -55,7 +55,7 @@ const destroyModal = () => {
 
 <template>
     <Transition name="fade">
-        <div v-if="isOpen(name)" class="fixed inset-0 z-20 flex items-center justify-center">
+        <div v-if="isOpen(name)" class="fixed inset-0 z-20 flex items-center justify-center p-3">
             <!-- Backdrop -->
             <div class="absolute inset-0 z-0 bg-black opacity-50"></div>
             <!-- Modal Container -->
