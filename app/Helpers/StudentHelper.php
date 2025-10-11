@@ -38,6 +38,7 @@ class StudentHelper
                 'student_academic_results.grade_id',
                 'grades.name as grade',
                 'student_academic_results.id as result_id')
+            ->orderBy('grade', 'DESC')
             ->get();
     }
 
@@ -56,6 +57,7 @@ class StudentHelper
                 'student_academic_results.student_id',
                 'grades.name as grade',
                 'student_academic_results.id as result_id')
+            ->orderBy('grade', 'DESC')
             ->get();
     }
 }

@@ -45,7 +45,7 @@ const { isNativeCitizen } = useUtils();
 
 <template>
     <BaseCard :title="$t('trans.personal_details')" :description="$t('trans.personal_details_description')">
-        <div class="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
+        <div class="mt-4 grid grid-cols-1 gap-6 md:grid-cols-3">
             <TitleComboSelect :form="form" v-model="title" :error="form.errors.title" :is-required="true" />
             <BaseInput
                 input-id="first_name"

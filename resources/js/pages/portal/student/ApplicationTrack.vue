@@ -126,14 +126,14 @@ const getStepStatus = (step: DepartmentApplicationStep): string => {
         <template v-if="isLoading">
             <DataLoadingSpinner />
         </template>
-        <template v-else>
+        <div class="my-6 flex flex-col" v-else>
             <template v-if="steps?.length > 0">
                 <div class="flex flex-col gap-4">
                     <TimelineTwo :steps="completedActiveSteps" />
                 </div>
             </template>
             <BaseAlert v-else :title="$t('trans.no_data')" :description="$t('trans.no_workflows_configured_description')" />
-        </template>
+        </div>
         <UploadPop :application="application" :type="paymentProofType" />
     </PageContainer>
 </template>

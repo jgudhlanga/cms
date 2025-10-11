@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // UI components
-import { onBeforeUnmount, onMounted, ref, watch, watchEffect } from 'vue';
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
 // Composable
 import { useUtils } from '@/composables/core/useUtils';
@@ -20,26 +20,25 @@ import DepartmentLevelComboSelect from '@/components/core/form/combobox/Departme
 import InstitutionDepartmentComboSelect from '@/components/core/form/combobox/InstitutionDepartmentComboSelect.vue';
 import ModeOfStudyComboSelect from '@/components/core/form/combobox/ModeOfStudyComboSelect.vue';
 import SpinnerComponent from '@/components/core/loader/SpinnerComponent.vue';
-import CustomSeparator from '@/components/core/util/CustomSeparator.vue';
 import StudentPageHeader from '@/components/shared/students/StudentPageHeader.vue';
+import CreateEdit from '@/components/students/oLevels/modals/CreateEdit.vue';
 import LevelRequirements from '@/components/students/update/LevelRequirements.vue';
-import OLevelRequirements from '@/components/students/update/OLevelRequirements.vue';
+import EditOLevelSubjects from '@/components/students/update/partials/EditOLevelSubjects.vue';
 import SDPRequirements from '@/components/students/update/SDPRequirements.vue';
 import { useDepartmentCourses } from '@/composables/institution/useDepartmentCourses';
 import { useSubjects } from '@/composables/institution/useSubjects';
 import { useApplicationFormHelper } from '@/composables/students/useApplicationFormHelper';
+import { useOLevelResults } from '@/composables/students/useOLevelResults';
 import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
 import { TypeVariant } from '@/enums/type-variants';
 import { errorAlert } from '@/lib/alerts';
-import { EXAM_SITTINGS } from '@/lib/constants';
 import { clearFormErrors } from '@/lib/forms';
 import { useCreateApplicationFormStore } from '@/store/portal/useCreateApplicationFormStore';
 import { CourseRequirement, DepartmentLevelRequirement } from '@/types/department-meta-data';
-import { AcademicOLevelResult } from '@/types/enrolments';
-import { Subject } from '@/types/institution';
+import { AcademicOLevelResult, OLevelSubjectResult } from '@/types/enrolments';
 import { Student } from '@/types/students';
-import { useForm } from '@inertiajs/vue3';
+import { router, useForm } from '@inertiajs/vue3';
 import { trans } from 'laravel-vue-i18n';
 import { storeToRefs } from 'pinia';
 
@@ -57,29 +56,19 @@ interface Props {
 }
 
 const props = defineProps<Props>();
-const { student, oLevelResults } = props;
+const { student } = props;
 
 // Composable
 const { listLevelRequirements, levelRequirements, isLoading: levelRequirementsLoading } = useDepartmentLevels();
 const { listCourseRequirements, courseRequirements, isLoading: courseRequirementsLoading } = useDepartmentCourses();
 const { isItTrue, navigateTo } = useUtils();
-const { validateMainSubjects, validateOtherSubjects, updateProgramForm } = useApplicationFormHelper(false);
+const { updateProgramForm } = useApplicationFormHelper(false);
 const { programFormSchema, addProgram } = useStudentPortal();
-const { listSubjects, isLoading: subjectsLoading, subjects } = useSubjects();
-
+const { listSubjects } = useSubjects();
+const { loadStudentOLevelResults, isLoading } = useOLevelResults();
 // Store
 const store = useCreateApplicationFormStore();
-const {
-    modeOfStudy,
-    department,
-    course,
-    level,
-    required_level_completed,
-    read_write_acknowledged,
-    o_level_subject_ids,
-    o_level_years,
-    o_level_sittings,
-} = storeToRefs(store);
+const { modeOfStudy, department, course, level, required_level_completed, read_write_acknowledged } = storeToRefs(store);
 
 // Form
 const form = useForm<ProgramParams>({
@@ -149,52 +138,39 @@ watch(course, async () => {
 
 onMounted(async () => {
     await listSubjects();
-    populateMainSubjects();
-    watchEffect(() => {
-        if (!subjectsLoading.value && subjects.value?.length) {
-            populateMainSubjects();
-        }
-    });
 });
-const populateMainSubjects = () => {
-    if (oLevelResults?.length) {
-        const subjects = requirements?.value?.relationships?.subjects as Subject[] | undefined;
-        if (!subjects?.length) return;
-        subjects.forEach((subject) => {
-            const subjectId = subject.id?.toString();
-            if (!subjectId) return;
-            // find the matching O-Level result for this subject
-            const result = oLevelResults?.find((r: AcademicOLevelResult) => r.attributes.subjectId.toString() === subjectId);
-            //===================== YEARS =============================
-            if (!o_level_years) return;
-            if (!o_level_years.value) {
-                o_level_years.value = {};
-            }
-            if (result) {
-                o_level_years.value[subjectId] = String(result.attributes.examYear);
-            } else {
-                delete o_level_years.value[subjectId];
-            }
-            //===================== SITTINGS =============================
-            if (!o_level_sittings) return;
-            if (!o_level_sittings.value) {
-                o_level_sittings.value = {};
-            }
-            const sittingLabel =
-                EXAM_SITTINGS.find((sitting) => sitting.value === result?.attributes?.examSitting)?.label ?? result?.attributes?.examSitting;
-            if (result) {
-                o_level_sittings.value[subjectId] = { value: result?.attributes?.examSitting, label: String(sittingLabel ?? '') };
-            }
-            //===================== GRADES =============================
-            if (!o_level_subject_ids) return;
-            if (!o_level_subject_ids.value) {
-                o_level_subject_ids.value = {};
-            }
-            if (result) {
-                o_level_subject_ids.value[subjectId] = String(result?.attributes?.gradeId);
-            }
-        });
+const validateSubjectRequirements = async () => {
+    // Load student O-Level results
+    const oLevelResults = await loadStudentOLevelResults(String(student.id ?? ''));
+
+    // Normalize mainSubjectIds (convert to number array safely)
+    const rawMainSubjectIds = requirements?.value?.attributes?.mainSubjectIds ?? [];
+    const mainSubjectIds: number[] = Array.isArray(rawMainSubjectIds)
+        ? rawMainSubjectIds.filter((v): v is string | number => typeof v === 'string' || typeof v === 'number').map((v) => Number(v))
+        : [];
+
+    // Check if any required main subjects are missing in student's results
+    if (mainSubjectIds.length > 0) {
+        const missingMainSubjects = mainSubjectIds.filter((id) => !oLevelResults?.some((r: OLevelSubjectResult) => Number(r.id) === id));
+
+        if (missingMainSubjects.length > 0) {
+            return `Please check that you provided all ${mainSubjectIds.length} main subjects (year, sitting and grade)`;
+        }
     }
+
+    // Handle other subject requirements if applicable
+    const otherSubjectsCount = Number(String(requirements?.value?.attributes?.otherSubjectsCount ?? '0'));
+    if (otherSubjectsCount > 0) {
+        const otherSubjectIds =
+            oLevelResults?.filter((r: OLevelSubjectResult) => !mainSubjectIds.includes(Number(r.id))).map((r: OLevelSubjectResult) => Number(r.id)) ??
+            [];
+
+        if (otherSubjectIds.length < otherSubjectsCount) {
+            return `Please provide at least ${otherSubjectsCount} other subject(s)`;
+        }
+    }
+
+    return null;
 };
 const save = async () => {
     updateProgramForm(form);
@@ -205,16 +181,9 @@ const save = async () => {
             return;
         }
         if (isItTrue(requirements.value?.attributes?.isOLevelRequired)) {
-            const mainSubjectsCount = Number(String(requirements?.value?.attributes?.mainSubjectsCount ?? '0'));
-            const mainErrors = validateMainSubjects(mainSubjectsCount);
-            if (mainErrors && mainErrors.length > 0) {
-                errorAlert(mainErrors.join('\n'));
-                return;
-            }
-            const otherSubjectCount = Number(String(requirements?.value?.attributes?.otherSubjectsCount ?? '0'));
-            const otherErrors = validateOtherSubjects(otherSubjectCount);
-            if (otherErrors && otherErrors.length > 0) {
-                errorAlert(otherErrors.join('\n'));
+            const subjectErrors = await validateSubjectRequirements();
+            if (subjectErrors) {
+                errorAlert(subjectErrors);
                 return;
             }
         }
@@ -243,24 +212,26 @@ onBeforeUnmount(() => {
     store.$reset();
     store.$dispose();
 });
+
+const onUpdated = () => {
+    router.visit(window.location.pathname, {
+        replace: true,
+        preserveScroll: true,
+    });
+};
 </script>
 <template>
     <StudentPageHeader />
     <form @submit.prevent="() => save()">
         <div class="mt-20 flex w-full flex-col bg-white px-10 md:p-0">
-            <div class="flex w-full flex-col md:mx-auto md:w-7/8 space-y-6">
+            <div class="flex w-full flex-col space-y-6 md:mx-auto md:w-7/8">
                 <BaseAlert
                     :description="sameDepartmentAndLevelErrorMessage"
                     v-if="sameDepartmentAndLevelError"
                     class="mb-5"
                     :type="TypeVariant.danger"
                 />
-                <BaseAlert
-                    :description="message"
-                    v-if="message"
-                    class="mb-5"
-                    :type="TypeVariant.danger"
-                />
+                <BaseAlert :description="message" v-if="message" class="mb-5" :type="TypeVariant.danger" />
                 <BaseCard :title="$t('trans.programs')" :description="$t('trans.program_description')">
                     <div class="grid grid-cols-1 gap-3 md:grid-cols-4">
                         <ModeOfStudyComboSelect :form="form" v-model="modeOfStudy" :error="form.errors.modeOfStudy" :is-required="true" />
@@ -289,7 +260,11 @@ onBeforeUnmount(() => {
                         <template v-else>
                             <template v-if="Number(String(requirements?.id)) > 0 && !sameDepartmentAndLevelError">
                                 <template v-if="isItTrue(requirements?.attributes?.isOLevelRequired)">
-                                    <OLevelRequirements />
+                                    <EditOLevelSubjects
+                                        :results="oLevelResults ?? []"
+                                        :requirements="requirements"
+                                        :student-id="String(student.id)"
+                                    />
                                 </template>
                                 <template v-if="Number(String(requirements?.attributes?.requiredLevelId)) > 0">
                                     <LevelRequirements :requirements="requirements" />
@@ -301,21 +276,22 @@ onBeforeUnmount(() => {
                         </template>
                     </div>
                 </BaseCard>
-                <div class="mb-10 flex items-center justify-center space-x-3">
+                <div class="my-6 flex flex-col justify-center space-y-3 space-x-3 md:flex-row">
+                    <BaseButton class="w-full md:w-[200px]" :size="ButtonSize.xl" :processing="isLoading">
+                        {{ $t('trans.submit') }}
+                    </BaseButton>
                     <BaseButton
                         @click="navigateTo(route('portal.applications'))"
                         type="button"
                         :variant="ColorVariant.shade"
-                        class="w-1/2 md:w-[200px]"
+                        class="w-full md:w-[200px]"
                         :size="ButtonSize.xl"
                     >
                         {{ $t('trans.cancel') }}
                     </BaseButton>
-                    <BaseButton class="w-1/2 md:w-[200px]" :size="ButtonSize.xl">
-                        {{ $t('trans.submit') }}
-                    </BaseButton>
                 </div>
             </div>
         </div>
+        <CreateEdit @saved="onUpdated" />
     </form>
 </template>

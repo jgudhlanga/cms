@@ -11,7 +11,6 @@ import { CreateApplicationParams } from '@/types/portal';
 
 import BaseAlert from '@/components/core/alert/BaseAlert.vue';
 import { BaseButton } from '@/components/core/button';
-import CustomSeparator from '@/components/core/util/CustomSeparator.vue';
 import LevelRequirements from '@/components/students/update/LevelRequirements.vue';
 import OLevelRequirements from '@/components/students/update/OLevelRequirements.vue';
 import SDPRequirements from '@/components/students/update/SDPRequirements.vue';
@@ -164,38 +163,41 @@ const save = async () => {
 </script>
 <template>
     <StudentPageHeader />
-    <div class="mt-20 flex w-full flex-col space-y-4 bg-white px-10">
-        <BaseAlert
-            description="Before submitting, carefully review your application details to ensure everything is accurate and up to date. Check your personal information, contact details, and any required details. Once you confirm the information is correct, you can proceed to submit your application."
-            :type="TypeVariant.success"
-        />
-        <PersonalDetails :personal="personal" :title="$t('trans.personal_details')" />
-        <ContactDetails :contacts="contacts" :title="$t('trans.contact_details')" />
-        <NextOfKinDetails :next-of-kin="nextOfKin" :title="$t('trans.next_of_kin')" />
-        <ProgramDetails :program="programDetails" :title="$tChoice('trans.program', 1)">
-            <div class="mt-5 flex flex-col" v-if="levelRequirements">
-                <template v-if="isItTrue(levelRequirements.attributes.isOLevelRequired)">
-                    <OLevelRequirements :is-view-only="true" />
-                </template>
-                <template v-if="levelRequirements.attributes.requiredLevel">
-                    <LevelRequirements :requirements="levelRequirements" :is-view-only="true" />
-                </template>
-                <template v-if="isItTrue(levelRequirements.attributes.onlyReadWriteRequired)">
-                    <SDPRequirements :is-view-only="true" />
-                </template>
+    <div class="mt-20 flex w-full flex-col bg-white px-5 md:p-0">
+        <div class="flex w-full flex-col space-y-6 md:mx-auto md:w-7/8">
+            <BaseAlert
+                description="Before submitting, carefully review your application details to ensure everything is accurate and up to date. Check your personal information, contact details, and any required details. Once you confirm the information is correct, you can proceed to submit your application."
+                :type="TypeVariant.success"
+            />
+            <PersonalDetails :personal="personal" :title="$t('trans.personal_details')" />
+            <ContactDetails :contacts="contacts" :title="$t('trans.contact_details')" />
+            <NextOfKinDetails :next-of-kin="nextOfKin" :title="$t('trans.next_of_kin')" />
+            <ProgramDetails :program="programDetails" :title="$tChoice('trans.program', 1)">
+                <div class="mt-5 flex flex-col" v-if="levelRequirements">
+                    <template v-if="isItTrue(levelRequirements.attributes.isOLevelRequired)">
+                        <OLevelRequirements :is-view-only="true" />
+                    </template>
+                    <template v-if="levelRequirements.attributes.requiredLevel">
+                        <LevelRequirements :requirements="levelRequirements" :is-view-only="true" />
+                    </template>
+                    <template v-if="isItTrue(levelRequirements.attributes.onlyReadWriteRequired)">
+                        <SDPRequirements :is-view-only="true" />
+                    </template>
+                </div>
+            </ProgramDetails>
+            <div class="my-5 flex flex-col justify-center space-y-2 space-x-3 md:flex-row">
+                <BaseButton type="button" @click="save" class="w-full md:w-[200px]" :size="ButtonSize.xl">
+                    {{ $t('trans.submit') }}
+                </BaseButton>
+                <BaseButton
+                    @click="navigateTo(route('portal.application.create'))"
+                    type="button"
+                    :variant="ColorVariant.shade"
+                    class="w-full md:w-[200px]"
+                    :size="ButtonSize.xl"
+                    >{{ $t('trans.edit') }}</BaseButton
+                >
             </div>
-        </ProgramDetails>
-        <CustomSeparator classes="h-1 my-5" />
-        <div class="my-10 flex flex-col items-center justify-center space-y-2 space-x-3 md:flex-row">
-            <BaseButton
-                @click="navigateTo(route('portal.application.create'))"
-                type="button"
-                :variant="ColorVariant.shade"
-                class="w-full md:w-[200px]"
-                :size="ButtonSize.xl">{{ $t('trans.edit') }}</BaseButton>
-            <BaseButton type="button" @click="save" class="w-full md:w-[200px]" :size="ButtonSize.xl">
-                {{ $t('trans.submit') }}
-            </BaseButton>
         </div>
     </div>
 </template>

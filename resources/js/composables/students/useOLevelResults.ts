@@ -81,11 +81,14 @@ export function useOLevelResults(oLevelSubjectResults?: OLevelSubjectResult[]) {
     };
 
     const onDeleteResult = async (resultId: string, onReload?: () => Promise<void>) => {
+        if (Number(resultId) <= 0) {
+            return;
+        }
         warningDialog(() => {
             router.delete(route('portal.delete-o-level-results', resultId), {
                 preserveScroll: true,
                 onSuccess: async () => {
-                    successAlert(trans('trans.item_archived', { item: 'O level result' }));
+                    successAlert('O level result deleted successfully');
                     if (onReload) await onReload();
                 },
             });
@@ -96,7 +99,7 @@ export function useOLevelResults(oLevelSubjectResults?: OLevelSubjectResult[]) {
     const loadStudentOLevelResults = async (studentId: string) => {
         try {
             isLoading.value = true;
-            return  HttpService.get(route('portal.get-o-level-results', studentId));
+            return await HttpService.get(route('portal.get-o-level-results', studentId));
         } catch {
             errorAlert(trans('trans.load_data_failure', { data: 'O level results' }));
         } finally {

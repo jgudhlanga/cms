@@ -109,50 +109,7 @@ const getDefaultOLevels = (subject: Subject) => {
 };
 
 const mainSitting = ref<SelectOption | null>(null);
-const onMainSittingChange = (value: SelectOption | null) => {
-    mainSitting.value = value;
-    // Ensure o_level_sittings is defined
-    if (!o_level_sittings) return;
-    // Initialize value object if needed
-    if (!o_level_sittings.value) {
-        o_level_sittings.value = {};
-    }
-    // Safely access requirements.relationships
-    const subjects = requirements?.value?.relationships?.subjects;
-    if (!subjects) return; // nothing to update
-    subjects.forEach((subject: Subject) => {
-        const subjectId = subject.id?.toString() ?? '';
-        if (!subjectId) return; // skip invalid IDs
-        if (value) {
-            o_level_sittings.value![subjectId] = value;
-        } else {
-            delete o_level_sittings.value![subjectId];
-        }
-    });
-};
-
 const mainYear = ref<string | null>(null);
-const onMainYearChange = (value: string | null) => {
-    mainYear.value = value;
-    // Ensure o_level_years is defined
-    if (!o_level_years) return;
-    // Initialize value object if needed
-    if (!o_level_years.value) {
-        o_level_years.value = {};
-    }
-    // Safely access requirements.relationships
-    const subjects = requirements?.value?.relationships?.subjects;
-    if (!subjects) return; // nothing to update
-    subjects.forEach((subject: Subject) => {
-        const subjectId = subject.id?.toString() ?? '';
-        if (!subjectId) return; // skip invalid IDs
-        if (value) {
-            o_level_years.value![subjectId] = value;
-        } else {
-            delete o_level_years.value![subjectId];
-        }
-    });
-};
 onMounted(async () => {
     await listGrades();
 
@@ -223,112 +180,53 @@ const populateCurrentDataFromApplication = () => {
         :description="$t('trans.o_level_results_description')"
     />
     <template v-if="requirements?.relationships?.subjects && requirements.relationships.subjects.length > 0">
-        <div class="hidden w-full flex-col overflow-auto md:flex">
-            <table class="hava-table my-4">
-                <thead class="hava-thead">
-                    <tr>
-                        <th class="hava-th text-left">{{ $tChoice('trans.subject', 1) }}</th>
-                        <th class="hava-th text-center">
-                            {{ $tChoice('trans.year', 1) }}
-                        </th>
-                        <th class="hava-th text-center">{{ $tChoice('trans.sitting', 1) }}</th>
-                        <th class="hava-th text-center">{{ $tChoice('trans.grade', 1) }}</th>
-                    </tr>
-                </thead>
-                <tbody class="hava-tbody">
-                    <tr class="hava-tr" v-if="!isViewOnly">
-                        <td class="hava-td">
-                            <span class="text-primary font-bold">{{ $t('trans.select_for_all') }}</span>
-                        </td>
-                        <td class="hava-td">
-                            <div class="flex items-center justify-center">
-                                <SelectYear input-id="main_year" :model-value="mainYear" @update:model-value="(value) => onMainYearChange(value)" />
-                            </div>
-                        </td>
-                        <td class="hava-td">
-                            <SelectSitting :model-value="mainSitting" @update:modelValue="(option: SelectOption) => onMainSittingChange(option)" />
-                        </td>
-                        <td class="hava-td"></td>
-                    </tr>
-                    <tr class="hava-tr" v-for="subject in requirements.relationships.subjects" :key="subject?.id ?? ''">
-                        <td class="hava-td">{{ subject?.attributes?.name }}</td>
-                        <td class="hava-td">
-                            <div class="flex items-center justify-center">
-                                <SelectYear
+        <div class="my-6 flex flex-col space-y-3">
+            <div
+                class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow"
+                v-for="subject in requirements.relationships.subjects"
+                :key="`mobile_${subject?.id ?? ''}`"
+            >
+                <div class="bg-card border-b border-gray-100 px-4 py-2">
+                    <h3 class="text-accent-foreground text-xs font-semibold uppercase">{{ subject?.attributes?.name }}</h3>
+                </div>
+                <div class="space-y-3 p-4">
+                    <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
+                        <div class="flex flex-col space-y-1">
+                            <ItemLabel :label="$tChoice('trans.year', 1)" />
+                            <SelectYear
+                                :disabled="isViewOnly"
+                                :input-id="`year_${subject.id}`"
+                                :model-value="o_level_years?.[subject?.id?.toString() ?? ''] || null"
+                                @update:model-value="(value) => onYearChange(value, subject?.id ?? '')"
+                            />
+                        </div>
+                        <div class="flex flex-col space-y-1">
+                            <ItemLabel :label="$tChoice('trans.sitting', 1)" />
+                            <div class="flex w-full">
+                                <SelectSitting
                                     :disabled="isViewOnly"
-                                    :input-id="`year_${subject.id}`"
-                                    :model-value="o_level_years?.[subject?.id?.toString() ?? ''] || null"
-                                    @update:model-value="(value) => onYearChange(value, subject?.id ?? '')"
+                                    class="flex w-full"
+                                    :model-value="o_level_sittings?.[subject?.id?.toString() ?? ''] || null"
+                                    @update:modelValue="(option: SelectOption) => onSittingChange(option, subject?.id ?? '')"
                                 />
                             </div>
-                        </td>
-                        <td class="hava-td text-center">
-                            <SelectSitting
-                                :disabled="isViewOnly"
-                                :model-value="o_level_sittings?.[subject?.id?.toString() ?? ''] || null"
-                                @update:modelValue="(option: SelectOption) => onSittingChange(option, subject?.id ?? '')"
-                            />
-                        </td>
-                        <td class="hava-td text-center">
-                            <SpinnerComponent class="flex items-center justify-center" v-if="isLoading" />
+                        </div>
+                        <div class="flex flex-col space-y-1">
+                            <ItemLabel :label="$tChoice('trans.grade', 1)" />
+                            <SpinnerComponent class="flex w-full items-center justify-center" v-if="isLoading" />
                             <template v-else>
                                 <BaseRadioGroup
                                     :disabled="isViewOnly"
-                                    class="flex items-center justify-center"
+                                    class="flex items-center"
                                     :options="getOptionsForSubject(subject)"
                                     :default-value="getDefaultOLevels(subject)"
                                     :label-uppercase="true"
                                     :is-required="true"
-                                    orientation="vertical"
+                                    orientation="horizontal"
                                     @update:modelValue="onRadioChange"
                                 />
                             </template>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-        <div class="my-6 flex flex-col space-y-3 md:hidden">
-            <div class="subject-card" v-for="subject in requirements.relationships.subjects" :key="`mobile_${subject?.id ?? ''}`">
-                <div class="card-header">
-                    <h3 class="card-title subject-name">{{ subject?.attributes?.name }}</h3>
-                </div>
-                <div class="card-content space-y-3">
-                    <div class="flex items-center space-x-3">
-                        <ItemLabel :label="$tChoice('trans.year', 1)" />
-                        <SelectYear
-                            :disabled="isViewOnly"
-                            :input-id="`year_${subject.id}`"
-                            :model-value="o_level_years?.[subject?.id?.toString() ?? ''] || null"
-                            @update:model-value="(value) => onYearChange(value, subject?.id ?? '')"
-                        />
-                    </div>
-                    <div class="flex items-center space-x-3">
-                        <ItemLabel :label="$tChoice('trans.sitting', 1)" />
-                        <div class="flex w-full">
-                            <SelectSitting
-                                :disabled="isViewOnly"
-                                class="flex w-full"
-                                :model-value="mainSitting"
-                                @update:modelValue="(option: SelectOption) => onMainSittingChange(option)"
-                            />
                         </div>
-                    </div>
-                    <div class="flex items-center space-x-3">
-                        <ItemLabel :label="$tChoice('trans.grade', 1)" />
-                        <SpinnerComponent class="flex w-full items-center justify-center" v-if="isLoading" />
-                        <template v-else>
-                            <BaseRadioGroup
-                                :disabled="isViewOnly"
-                                class="flex items-center"
-                                :options="getOptionsForSubject(subject)"
-                                :default-value="getDefaultOLevels(subject)"
-                                :label-uppercase="true"
-                                :is-required="true"
-                                orientation="horizontal"
-                                @update:modelValue="onRadioChange"
-                            />
-                        </template>
                     </div>
                 </div>
             </div>

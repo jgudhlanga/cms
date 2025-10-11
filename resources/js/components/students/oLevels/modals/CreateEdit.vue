@@ -9,7 +9,7 @@ import SelectSitting from '@/components/students/update/SelectSitting.vue';
 import SelectYear from '@/components/students/update/SelectYear.vue';
 import { Label } from '@/components/ui/label';
 import { useOLevelResults } from '@/composables/students/useOLevelResults';
-import { errorAlert, getModalEdit, successAlert } from '@/lib/alerts';
+import { closeModal, errorAlert, getModalEdit, successAlert } from '@/lib/alerts';
 import { APP_MODULE_KEYS, EXAM_SITTINGS } from '@/lib/constants';
 import { validateSelectOption } from '@/lib/forms';
 import { useModalStore } from '@/store/core/useModalStore';
@@ -18,7 +18,7 @@ import { RadioGroupOption } from '@/types/forms';
 import { Grade } from '@/types/institution';
 import { SelectOption } from '@/types/utils';
 import { useForm } from '@inertiajs/vue3';
-import { ref, watch, defineEmits } from 'vue';
+import { defineEmits, ref, watch } from 'vue';
 import { z } from 'zod';
 
 const form = useForm<OLevelSubjectResultParams>({
@@ -85,7 +85,6 @@ const validateSubjectForm = (): SubjectErrors => {
         exam_sitting: String(sittingOption.value?.value),
         grade_id: form.grade_id,
     };
-
     const parsed = SubjectResultSchema.safeParse(formData);
     const errors: SubjectErrors = {};
 
@@ -127,7 +126,6 @@ const emit = defineEmits(['saved']);
 const saveSubjectResult = () => {
     // Reset errors
     subjectErrors.value = {};
-
     // Validate form data
     const validationErrors = validateSubjectForm();
 
@@ -163,6 +161,7 @@ const handleCreate = () => {
             subjectErrors.value = {};
             form.reset();
             emit('saved');
+            closeModal(APP_MODULE_KEYS.o_level_subjects);
         },
         onError: (errors: any) => {
             handleSubmissionErrors(errors);
@@ -178,6 +177,7 @@ const handleUpdate = (resultId: string) => {
             subjectErrors.value = {};
             form.reset();
             emit('saved');
+            closeModal(APP_MODULE_KEYS.o_level_subjects);
         },
         onError: (errors: any) => {
             handleSubmissionErrors(errors);
@@ -211,7 +211,7 @@ const handleSubmissionErrors = (errors: any): void => {
     >
         <template #body>
             <div class="flex flex-col">
-                <SubjectComboSelect :form="form" :is-required="true" :model-value="subjectOption" />
+                <SubjectComboSelect :form="form" :is-required="true" v-model="subjectOption" />
                 <InputError v-if="subjectErrors.subject_id" :message="subjectErrors.subject_id" class="mt-1 flex w-full lowercase" />
             </div>
             `

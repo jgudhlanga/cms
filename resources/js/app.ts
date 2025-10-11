@@ -17,7 +17,7 @@ import 'vue-final-modal/style.css';
 import Vue3Toastify from 'vue3-toastify';
 import { MotionPlugin } from '@vueuse/motion'
 import 'vue3-toastify/dist/index.css';
-import { ZiggyVue } from '../../vendor/tightenco/ziggy';
+import { ZiggyVue } from 'ziggy-js';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 

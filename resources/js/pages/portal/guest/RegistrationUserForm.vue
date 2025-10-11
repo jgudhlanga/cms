@@ -130,7 +130,7 @@ const maintenanceMode = isItTrue(import.meta.env.VITE_MAINTENANCE_MODE);
                         Password and Confirm Password do not match
                     </div>
                     <div class="mt-5 flex flex-col items-center justify-center space-y-3">
-                        <BaseButton type="submit" class="w-1/2" :processing="form.processing">
+                        <BaseButton type="submit" class="w-full md:w-1/2" :processing="form.processing">
                             {{ $t('trans.submit') }}
                         </BaseButton>
                         <BaseButton

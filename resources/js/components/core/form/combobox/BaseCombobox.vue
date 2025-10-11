@@ -49,7 +49,7 @@ const valueModel = defineModel<SelectOption>();
 const fieldPlaceHolder = computed(() => {
     const selected = valueModel.value;
 
-    if (selected?.value != null && selected?.value !== '' && selected?.label != '---' && selected?.label != '--') {
+    if (selected?.value != null && selected?.value !== '' && selected?.value !== '0' && selected?.label != '---' && selected?.label != '--') {
         return selected.label;
     }
 

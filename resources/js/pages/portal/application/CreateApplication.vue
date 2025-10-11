@@ -187,7 +187,7 @@ const maintenanceMode = isItTrue(import.meta.env.VITE_MAINTENANCE_MODE);
 <template>
     <StudentPageHeader />
     <form @submit.prevent="() => save()">
-        <div class="mt-20 flex w-full flex-col bg-white px-10 md:p-0">
+        <div class="mt-20 flex w-full flex-col bg-white px-5 md:p-0">
             <ComingSoonAnimated v-if="maintenanceMode" />
             <div v-else class="flex w-full flex-col space-y-6 md:mx-auto md:w-7/8">
                 <PersonalDetails :form="form" />
