@@ -45,7 +45,7 @@ const { loadStudentOLevelResults, isLoading } = useOLevelResults();
 // Breadcrumbs
 const breadcrumbs: BreadcrumbItemInterface[] = [
     { transChoiceKey: 'dashboard', href: route('portal.dashboard') },
-    { title: 'OLevel' }
+    { title: 'O-Levels' }
 ];
 
 // Helper: Find result by subject ID
@@ -80,7 +80,7 @@ const reloadResults = async () => {
             <HeadingSmall title="O-Level Results" description="List of O-Level subjects and grades attained by a student" />
             <BaseButton classes="rounded-full" :variant="ColorVariant.primary_outline" @click="navigateTo(route('portal.manage-o-level-results'))">
                 <BaseIcon :name="IconName.cogs" />
-                <span>Manage Subjects</span>
+                <span>Add New</span>
             </BaseButton>
         </div>
         <template v-if="isLoading">

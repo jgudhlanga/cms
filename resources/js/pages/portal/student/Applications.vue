@@ -73,7 +73,7 @@ const breadcrumbs: BreadcrumbItemInterface[] = [{ transChoiceKey: 'dashboard', h
                 />
             </div>
         </div>
-        <div v-if="applications && applications.length > 0" class="my-6">
+        <div v-if="applications && applications.length > 0" class="my-6 space-y-4">
             <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow" v-for="application in applications" :key="application.id">
                 <!-- Card Header -->
                 <div class="bg-card border-b border-gray-100 px-4 py-2">

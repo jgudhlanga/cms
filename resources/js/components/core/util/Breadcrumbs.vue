@@ -12,23 +12,36 @@ defineProps<{
 <template>
     <Breadcrumb>
         <BreadcrumbList>
-            <template v-for="(item, index) in breadcrumbs" :key="index">
+            <!-- Mobile: show only current breadcrumb -->
+            <div class="block md:hidden">
                 <BreadcrumbItem>
-                    <template v-if="index === breadcrumbs.length - 1">
-                        <BreadcrumbPage class="font-extrabold uppercase">
-                            <CrumbTitle :breadcrumb="item" />
-                        </BreadcrumbPage>
-                    </template>
-                    <template v-else>
-                        <BreadcrumbLink class="font-extrabold uppercase" as-child>
-                            <Link :href="item.href ?? '#'">
-                                <CrumbTitle :breadcrumb="item" />
-                            </Link>
-                        </BreadcrumbLink>
-                    </template>
+                    <BreadcrumbPage class="font-extrabold uppercase">
+                        <CrumbTitle :breadcrumb="breadcrumbs[breadcrumbs.length - 1]" />
+                    </BreadcrumbPage>
                 </BreadcrumbItem>
-                <BreadcrumbSeparator v-if="index !== breadcrumbs.length - 1" />
-            </template>
+            </div>
+
+            <!-- Desktop: show full breadcrumb trail -->
+            <div class="hidden md:flex items-center">
+                <template v-for="(item, index) in breadcrumbs" :key="index">
+                    <BreadcrumbItem>
+                        <template v-if="index === breadcrumbs.length - 1">
+                            <BreadcrumbPage class="font-extrabold uppercase">
+                                <CrumbTitle :breadcrumb="item" />
+                            </BreadcrumbPage>
+                        </template>
+                        <template v-else>
+                            <BreadcrumbLink class="font-extrabold uppercase" as-child>
+                                <Link :href="item.href ?? '#'">
+                                    <CrumbTitle :breadcrumb="item" />
+                                </Link>
+                            </BreadcrumbLink>
+                        </template>
+                    </BreadcrumbItem>
+                    <BreadcrumbSeparator v-if="index !== breadcrumbs.length - 1" />
+                </template>
+            </div>
         </BreadcrumbList>
     </Breadcrumb>
 </template>
+

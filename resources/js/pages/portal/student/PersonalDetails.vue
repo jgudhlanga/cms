@@ -32,22 +32,25 @@ const { activeTab } = storeToRefs(useStudentTabsStore());
     <Head :title="`${$t('trans.personal_details')} ${$t('trans.details')}`" />
     <PageContainer :breadcrumbs="breadcrumbs">
         <PageHeaderAvatar :line-one="user.attributes?.name" :line-two="user.attributes?.email" />
-        <Tabs :default-value="activeTab" v-model="activeTab">
-            <TabsList class="w-full">
-                <TabsTrigger
-                    v-for="tab in studentTabs()"
-                    :key="'tab_' + tab.value"
-                    :value="tab.value"
-                    class="flex items-center text-xs font-light uppercase"
-                >
-                    <component :is="icons[tab?.icon!]" />
-                    <span>{{ tab?.transLabel!() }}</span>
-                </TabsTrigger>
-            </TabsList>
-            <TabsContent v-for="tab in studentTabs()" :value="tab.value" :key="'content_' + tab.value" class="py-4">
-                <component :is="tab.component" />
-            </TabsContent>
-        </Tabs>
+        <div class="flex flex-col w-svw">
+            <Tabs :default-value="activeTab" v-model="activeTab">
+                <TabsList class="">
+                    <TabsTrigger
+                        v-for="tab in studentTabs()"
+                        :key="'tab_' + tab.value"
+                        :value="tab.value"
+                        class="flex items-center text-xs font-light uppercase"
+                    >
+                        <component :is="icons[tab?.icon!]" />
+                        <span>{{ tab?.transLabel!() }}</span>
+                    </TabsTrigger>
+                </TabsList>
+                <TabsContent v-for="tab in studentTabs()" :value="tab.value" :key="'content_' + tab.value" class="py-4">
+                    <component :is="tab.component" />
+                </TabsContent>
+            </Tabs>
+        </div>
+
         <ContactsForm :post-url="route('portal.contacts.store')" />
         <AddressesForm :post-url="route('portal.address.store')" />
         <NextOfKinForm :post-url="route('portal.next-of-kins.store')" />
