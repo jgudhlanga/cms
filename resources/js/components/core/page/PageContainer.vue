@@ -42,9 +42,9 @@ const handleLogout = () => {
         <div class="flex items-center justify-center space-x-4">
             <BaseTooltip :content="`${$t('trans.user_account')}`">
                 <TextLink :href="route('users.show', user.id.toString())" method="get" as="button" classes="flex items-center">
-                    <Avatar class="size-9 rounded-full">
+                    <Avatar class="size-7 rounded-full">
                         <AvatarImage :src="user.attributes.avatar ?? defaultAvatarImage" :alt="user.attributes.name" />
-                        <AvatarFallback class="size-9 rounded-full">
+                        <AvatarFallback class="size-7 rounded-full">
                             {{ getInitials(user.attributes.name) }}
                         </AvatarFallback>
                     </Avatar>

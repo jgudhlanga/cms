@@ -97,7 +97,7 @@ class Student extends Model
 
     public function programs(): HasMany
     {
-        return $this->hasMany(StudentProgram::class, 'student_id')->withTrashed();
+        return $this->hasMany(StudentProgram::class, 'student_id');
     }
 
     public function currentLevel(): ?string
@@ -107,12 +107,12 @@ class Student extends Model
 
     public function contacts(): MorphMany
     {
-        return $this->morphMany(Contact::class, 'contactable')->withTrashed();
+        return $this->morphMany(Contact::class, 'contactable');
     }
 
     public function addresses(): MorphMany
     {
-        return $this->morphMany(Address::class, 'addressable')->withTrashed();
+        return $this->morphMany(Address::class, 'addressable');
     }
 
     public function sponsors(): HasMany
@@ -137,7 +137,7 @@ class Student extends Model
 
     public function nextOfKins(): MorphMany
     {
-        return $this->morphMany(NextOfKin::class, 'kinnable')->withTrashed();
+        return $this->morphMany(NextOfKin::class, 'kinnable');
     }
 
     public function getActivitylogOptions(): LogOptions

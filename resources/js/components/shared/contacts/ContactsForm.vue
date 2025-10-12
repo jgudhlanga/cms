@@ -67,7 +67,7 @@ const save = () => {
 		:form="form"
 	>
 		<template #body>
-			<div class="grid grid-cols-1 gap-3">
+			<div class="grid grid-cols-1 gap-6">
 				<Name
 					v-model="form.name"
 					@input="clearFormErrors(form, 'name')"

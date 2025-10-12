@@ -12,10 +12,17 @@ defineProps<Props>();
 </script>
 
 <template>
-    <div class="bg-endless h-[150px]"></div>
-    <div class="z-10 my-1 -mt-[80px] flex flex-col items-center justify-center">
+    <div class="bg-endless h-[150px] hidden md:block"></div>
+    <div class="z-10 my-1 -mt-[80px] flex-col items-center justify-center hidden md:flex">
         <BaseImage :src="''" :is-person="true" classes="w-[130px] h-[130px] rounded-full border-2 border-primary shadow-lg" />
         <h2 class="text-md mt-2 font-bold" v-if="lineOne">{{ lineOne }}</h2>
         <BaseTag v-if="lineTwo" :title="lineTwo" />
     </div>
+
+<!--    <div class="z-10 my-1 flex flex-col items-center justify-center md:hidden">
+        <BaseImage :src="''" :is-person="true" classes="w-[100px] h-[100px] rounded-full border-2 border-primary shadow-lg" />
+        <h2 class="text-md mt-2 font-bold" v-if="lineOne">{{ lineOne }}</h2>
+        <BaseTag v-if="lineTwo" :title="lineTwo"  />
+    </div>-->
+
 </template>

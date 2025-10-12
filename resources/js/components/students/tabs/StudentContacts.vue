@@ -1,9 +1,9 @@
 <script setup lang="ts">
+import DataLoadingSpinner from '@/components/core/loader/DataLoadingSpinner.vue';
 import Contacts from '@/components/shared/contacts/Contacts.vue';
 import { useStudentPortal } from '@/composables/students/useStudentPortal';
 import { Contact } from '@/types/shared';
 import { onMounted, ref } from 'vue';
-import DataLoadingSpinner from '@/components/core/loader/DataLoadingSpinner.vue';
 
 interface Props {
     url?: string;
@@ -21,5 +21,10 @@ onMounted(async () => {
 
 <template>
     <DataLoadingSpinner v-if="isLoading" />
-    <Contacts v-else :contacts="contacts" :title="`${$t('trans.my')} ${$tChoice('trans.contact', 2)}`" />
+    <Contacts
+        v-else
+        :contacts="contacts"
+        :title="`${$t('trans.my')}
+        ${$tChoice('trans.contact', 2)}`"
+    />
 </template>

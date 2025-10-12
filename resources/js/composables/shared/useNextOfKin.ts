@@ -1,19 +1,21 @@
+import { useCustomConfirmDialog } from '@/composables/core/useCustomConfirmDialog';
 import { useDataTables } from '@/composables/core/useDataTables';
 import { useSharedFormSchema } from '@/composables/core/useSharedFormSchema';
-import { forbiddenAlert, openModal } from '@/lib/alerts';
+import { forbiddenAlert, openModal, successAlert } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
 import { buildFormOptions, mergeValidationSchema } from '@/lib/forms';
 import { hasAbility } from '@/lib/permissions';
 import { getIdParams } from '@/lib/utils';
 import { NextOfKin } from '@/types/next-of-kin';
-import { InertiaForm } from '@inertiajs/vue3';
+import { InertiaForm, router } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 import { ZodObject } from 'zod';
 
 export const useNextOfKin = () => {
-    const { moreActionButton, onDelete, onForceDelete, onRestore } = useDataTables();
+    const { moreActionButton, onForceDelete, onRestore } = useDataTables();
     const getName = () => trans('trans.next_of_kin');
     const successMessage = () => trans('trans.item_saved', { item: getName() });
+    const deletedMessage = () => trans('trans.item_deleted', { item: getName() });
     const errorMessage = () => trans('trans.item_save_failure', { item: getName() });
     const createNextOfKinColumns = () => {
         return [
@@ -31,14 +33,14 @@ export const useNextOfKin = () => {
                 meta: { align: 'right' },
                 cell: ({ row }: { row: { original: NextOfKin } }) => {
                     const id = getIdParams(row.original.id?.toString() ?? '');
-                    const deleteAbility = hasAbility('delete:next-of-kins');
+
                     const restoreAbility = hasAbility('restore:next-of-kins');
                     const purgeAbility = hasAbility('forceDelete:next-of-kins');
                     return moreActionButton(!!row.original?.attributes?.deletedAt, [
                         { key: 'edit', action: () => onOpenModal(row.original) },
                         {
                             key: 'archive',
-                            action: () => onDelete(deleteAbility, route('next-of-kins.destroy', id), getName()),
+                            action: () => deleteNextOfKin(String(String(id))),
                         },
                         {
                             key: 'restore',
@@ -58,6 +60,25 @@ export const useNextOfKin = () => {
         const allowed = hasAbility(['create:next-of-kins', 'update:next-of-kins', 'manageStudentMetadata:admin']);
         if (!allowed) return forbiddenAlert();
         openModal({ name: APP_MODULE_KEYS.next_of_kin, edit: nextOfKin });
+    };
+
+    const deleteNextOfKin = async (id: string) => {
+        const deleteAbility = hasAbility(['delete:next-of-kins', 'manageOwnStudentContactDetails:students']);
+        if (!deleteAbility) return forbiddenAlert();
+        const confirmed = await useCustomConfirmDialog().open({
+            title: 'Delete Next of kin',
+            message: 'Are you sure you want to delete this record?',
+            confirmText: 'Delete',
+        });
+        if (confirmed) {
+            router.delete(route('next-of-kins.destroy', id), {
+                preserveScroll: true,
+                onSuccess: () => {
+                    successAlert(deletedMessage());
+                    router.visit(window.location.href, { replace: true, preserveScroll: true });
+                },
+            });
+        }
     };
 
     const schemaFields = useSharedFormSchema() as Record<string, () => ZodObject<any, any>>;
@@ -93,5 +114,6 @@ export const useNextOfKin = () => {
         onOpenModal,
         createNextOfKin,
         updateNextOfKin,
+        deleteNextOfKin,
     };
 };

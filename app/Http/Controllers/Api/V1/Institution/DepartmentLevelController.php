@@ -9,16 +9,11 @@ use App\Http\Resources\Enrolments\EnrolmentResource;
 use App\Http\Resources\Institution\DepartmentApplicationStepResource;
 use App\Http\Resources\Institution\DepartmentLevelRequirementResource;
 use App\Http\Resources\Institution\DepartmentLevelResource;
-use App\Http\Resources\Institution\InstitutionDepartmentResource;
-use App\Http\Resources\Institution\IntakePeriodResource;
-use App\Http\Resources\Institution\ModeOfStudyResource;
 use App\Models\Institution\DepartmentLevel;
 use App\Models\Institution\InstitutionDepartment;
 use App\Models\Institution\IntakePeriod;
 use App\Models\Institution\ModeOfStudy;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
-use Inertia\Response;
 
 class DepartmentLevelController extends Controller
 {

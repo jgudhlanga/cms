@@ -16,8 +16,8 @@ class DepartmentApplicationStepResource extends JsonResource
             "attributes" => [
                 "institutionDepartmentId" => $this->institution_department_id,
                 "workflowStepId" => $this->workflow_step_id,
-                "workflowStep" => $this->workflowStep->name,
-                "slug" => $this->workflowStep->slug,
+                "workflowStep" => $this->workflowStep?->name,
+                "slug" => $this->workflowStep?->slug,
                 "workflowStepDescription" => $this->workflowStep?->description,
                 'position' => $this->position,
                 'createdAt' => $this->resource->created_at,
@@ -25,7 +25,7 @@ class DepartmentApplicationStepResource extends JsonResource
                 'deletedAt' => $this->resource->deleted_at,
             ],
             "relationships" => [
-                'metadata' => DepartmentWorkflowStepMetadataResource::make($this->metadata->first()),
+                'metadata' => DepartmentWorkflowStepMetadataResource::make($this?->workflowStep?->metadata?->first()),
             ],
         ];
     }

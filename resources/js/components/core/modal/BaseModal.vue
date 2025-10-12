@@ -30,7 +30,7 @@ const props = withDefaults(defineProps<Props>(), {
     actionBtnText: 'trans.save',
 });
 
-const baseClasses = 'bg-background rounded-2xl shadow-lg overflow-y-auto overflow-x-hidden outline-hidden';
+const baseClasses = 'max-h-[90vh] bg-background rounded-2xl shadow-lg overflow-y-auto overflow-x-hidden outline-hidden p-3';
 const modalVariants: Record<SizeVariant, string> = {
     [SizeVariant.xs]: 'w-96',
     [SizeVariant.sm]: 'w-[640px]',
@@ -70,7 +70,7 @@ const destroyModal = () => {
                 <div class="my-2 h-1 w-full border-b-[1px]"></div>
                 <form :name="name" v-if="hasForm" @submit.prevent="() => (onFormAction ? onFormAction!() : null)" class="flex flex-col">
                     <!-- Modal Body -->
-                    <div class="flex-auto space-y-6 overflow-visible px-6 py-4">
+                    <div class="flex-1 overflow-y-auto space-y-6 px-6 py-4">
                         <slot name="body" />
                     </div>
                     <!-- Modal Footer -->
@@ -85,7 +85,7 @@ const destroyModal = () => {
                     </div>
                 </form>
                 <div v-else class="flex flex-col">
-                    <div class="relative flex-auto space-y-6 overflow-visible px-6 py-4">
+                    <div class="relative flex-1 overflow-y-auto space-y-6 px-6 py-4">
                         <slot />
                     </div>
                     <div class="mt-6 flex w-full justify-center space-x-3 border-t-[1px] px-6 py-5">
