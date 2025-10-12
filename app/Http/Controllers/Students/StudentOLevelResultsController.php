@@ -28,7 +28,7 @@ class StudentOLevelResultsController extends Controller
         $studentModel = $this->getStudent(request());
         $student = StudentResource::make($studentModel);
 
-        return Inertia::render('portal/student/OLevels', compact( 'student'));
+        return Inertia::render('portal/student/OLevels', compact('student'));
     }
 
     public function manage(): Response
@@ -43,7 +43,7 @@ class StudentOLevelResultsController extends Controller
 
     public function loadStudentOLevelResults(Student $student)
     {
-        $oLevelResults = OLevelSubjectResultResource::collection(StudentHelper::getStudentOLevelResultsJoinedToSubjects($student));
+        $oLevelResults = StudentHelper::getStudentOLevelResultsJoinedToSubjects($student);
         return OLevelSubjectResultResource::collection($oLevelResults);
     }
 

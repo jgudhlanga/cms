@@ -150,8 +150,8 @@ export function useStudentPortal() {
     const studentTabs = (): CustomTab[] => {
         return [
             {
-                transLabel: () => trans('trans.basic_info'),
-                value: 'basic_info',
+                transLabel: () => 'Personal',
+                value: 'personal',
                 component: h(StudentBasicInfo),
                 icon: IconName.user,
             },

@@ -11,6 +11,7 @@ use App\Enums\Acl\RoleEnum;
 use App\Enums\Institution\LevelEnum;
 use App\Helpers\Helper;
 use App\Helpers\PaymentHelper;
+use App\Helpers\StudentHelper;
 use App\Http\Requests\Students\ProgramRequest;
 use App\Http\Resources\AuditTrail\AuditTrailResource;
 use App\Http\Resources\Enrolments\EnrolmentResource;
@@ -33,6 +34,7 @@ use App\Http\Requests\Students\CreateApplicationRequest;
 use App\Http\Requests\Users\UserRequest;
 use App\Http\Resources\Students\{AcademicLevelResource,
     AcademicRecordResource,
+    OLevelSubjectResultResource,
     StudentProgramResource,
     StudentResource
 };
@@ -70,9 +72,17 @@ class PortalController extends Controller
     public function dashboard(): Response
     {
         $this->authorize('viewStudentDashboard');
+        $student = $this->getStudent(request());
+        $results = StudentHelper::getStudentOLevelResultsJoinedToSubjects($student);
+        $oLevelResults = OLevelSubjectResultResource::collection($results);
+        $currentLevel = $student->currentLevel();
+        $multipleApplicationsLevels = Level::where('allowed_applications_per_level', '>', '1')->pluck('id')->toArray();
         return Inertia::render('portal/student/Index', [
-            'filters' => request()->only(['search', 'trashed']),
-            'trashedCount' => 0,
+            'student' => StudentResource::make($student),
+            'applications' => EnrolmentResource::collection($student->programs),
+            'multipleApplicationsLevelIds' => $multipleApplicationsLevels,
+            'oLevelResults' => $oLevelResults,
+            'currentLevel' => $currentLevel,
         ]);
     }
 
@@ -357,10 +367,7 @@ class PortalController extends Controller
     public function storeContactDetails(ContactRequest $request): void
     {
         $this->authorize('manageStudentContacts');
-        $this->contactRepository->create(
-            $this->getStudent(request()),
-            ContactDto::fromContactRequest($request)
-        );
+        $this->contactRepository->create($this->getStudent(request()), ContactDto::fromContactRequest($request));
     }
 
     /**
@@ -369,10 +376,7 @@ class PortalController extends Controller
     public function storeAddressDetails(AddressRequest $request): void
     {
         $this->authorize('manageStudentContacts');
-        $this->addressRepository->create(
-            $this->getStudent(request()),
-            AddressDto::fromAddressRequest($request)
-        );
+        $this->addressRepository->create($this->getStudent(request()), AddressDto::fromAddressRequest($request));
     }
 
     /**
@@ -381,10 +385,7 @@ class PortalController extends Controller
     public function storeNextOfKinDetails(NextOfKinRequest $request): void
     {
         $this->authorize('manageStudentContacts');
-        $this->nextOfKinRepository->create(
-            $this->getStudent(request()),
-            NextOfKinDto::fromNextOfKinRequest($request)
-        );
+        $this->nextOfKinRepository->create($this->getStudent(request()), NextOfKinDto::fromNextOfKinRequest($request));
     }
 
     // ========= Helpers =========

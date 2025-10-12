@@ -65,7 +65,7 @@ const personalDetails = computed<ValueAndLabel[]>(() => {
             <div class="flex justify-end">
                 <BaseTooltip :content="`${$t('trans.edit')} ${$t('trans.personal_details')}`">
                     <IconButton
-                        :variant="ColorVariant.primary_outline"
+                        :variant="ColorVariant.success_outline"
                         :icon="IconName.edit"
                         @click="() => onOpenPersonalDetailsModal(student ?? undefined)"
                     />

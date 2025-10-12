@@ -23,7 +23,7 @@ const onFormSuccess = (message: string, modalToClose?: string, onSuccessAction?:
     }
 
     successAlert(message);
-    router.visit(window.location.href, { replace: true });
+    router.visit(window.location.href, { replace: true, preserveScroll: true });
 };
 const onFormError = (message: string) => {
     /*if (modalToClose) {

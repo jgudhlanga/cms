@@ -7,7 +7,7 @@ export type IStudentTabsStore = {
 export const useStudentTabsStore = defineStore('student-tabs', {
     state: (): IStudentTabsStore => {
         return {
-            activeTab: 'basic_info',
+            activeTab: 'personal',
         };
     },
     persist: true,

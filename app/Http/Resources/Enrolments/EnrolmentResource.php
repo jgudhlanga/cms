@@ -50,7 +50,8 @@ class EnrolmentResource extends JsonResource
                 'registrationReceipt' => $this->hasPaid(FeeTypeEnum::APPLICATION_FEE) ? LedgerResource::make($this->receipt(FeeTypeEnum::APPLICATION_FEE)) : null,
                 'tuitionReceipt' => $this->hasPaid(FeeTypeEnum::TUITION_FEE) ? LedgerResource::make($this->receipt(FeeTypeEnum::TUITION_FEE)) : null,
                 'oLevelResults' => AcademicLevelResource::collection($this->student?->oLevelResults),
-                'departmentWorkflowStep' => DepartmentApplicationStepResource::make($this->departmentWorkflowStep)
+                'departmentWorkflowStep' => DepartmentApplicationStepResource::make($this->departmentWorkflowStep),
+                'requirements' => $this->departmentLevel?->requirement ? DepartmentApplicationStepResource::make($this->departmentLevel->requirement) : null,
             ]
         ];
     }

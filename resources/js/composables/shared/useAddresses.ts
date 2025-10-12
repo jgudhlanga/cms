@@ -1,19 +1,21 @@
+import { useCustomConfirmDialog } from '@/composables/core/useCustomConfirmDialog';
 import { useDataTables } from '@/composables/core/useDataTables';
 import { useSharedFormSchema } from '@/composables/core/useSharedFormSchema';
-import { forbiddenAlert, openModal } from '@/lib/alerts';
+import { forbiddenAlert, openModal, successAlert } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
 import { buildFormOptions, mergeValidationSchema } from '@/lib/forms';
 import { hasAbility } from '@/lib/permissions';
 import { getIdParams } from '@/lib/utils';
 import { Address } from '@/types/shared';
-import { InertiaForm } from '@inertiajs/vue3';
+import { InertiaForm, router } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 import { ZodObject } from 'zod';
 
 export const useAddresses = () => {
-    const { moreActionButton, onDelete, onForceDelete, onRestore, checkStatusIcon } = useDataTables();
+    const { moreActionButton, onForceDelete, onRestore, checkStatusIcon } = useDataTables();
     const getName = () => trans_choice('trans.address', 1);
     const successMessage = () => trans('trans.item_saved', { item: getName() });
+    const deletedMessage = () => trans('trans.item_deleted', { item: getName() });
     const errorMessage = () => trans('trans.item_save_failure', { item: getName() });
     const createAddressColumns = () => {
         return [
@@ -37,14 +39,13 @@ export const useAddresses = () => {
                 cell: ({ row }: { row: { original: Address } }) => {
                     const id = getIdParams(row.original.id?.toString() ?? '');
                     const studentAbility = 'manageOwnStudentContactDetails:students';
-                    const deleteAbility = hasAbility(['delete:addresses', studentAbility]);
                     const restoreAbility = hasAbility(['restore:addresses', studentAbility]);
                     const purgeAbility = hasAbility(['forceDelete:addresses', studentAbility]);
                     return moreActionButton(!!row.original?.attributes?.deletedAt, [
                         { key: 'edit', action: () => onOpenModal(row.original) },
                         {
                             key: 'archive',
-                            action: () => onDelete(deleteAbility, route('addresses.destroy', id), getName()),
+                            action: () => deleteAddress(String(id)),
                         },
                         {
                             key: 'restore',
@@ -64,6 +65,25 @@ export const useAddresses = () => {
         const allowed = hasAbility(['create:addresses', 'update:addresses', 'manageOwnStudentContactDetails:students']);
         if (!allowed) return forbiddenAlert();
         openModal({ name: APP_MODULE_KEYS.addresses, edit: address });
+    };
+
+    const deleteAddress = async (id: string) => {
+        const deleteAbility = hasAbility(['delete:addresses', 'manageOwnStudentContactDetails:students']);
+        if (!deleteAbility) return forbiddenAlert();
+        const confirmed = await useCustomConfirmDialog().open({
+            title: 'Delete Address',
+            message: 'Are you sure you want to delete this address?',
+            confirmText: 'Delete',
+        });
+        if (confirmed) {
+            router.delete(route('addresses.destroy', id), {
+                preserveScroll: true,
+                onSuccess: () => {
+                    successAlert(deletedMessage());
+                    router.visit(window.location.href, { replace: true, preserveScroll: true });
+                },
+            });
+        }
     };
 
     const schemaFields = useSharedFormSchema() as Record<string, () => ZodObject<any, any>>;
@@ -96,5 +116,6 @@ export const useAddresses = () => {
         onOpenModal,
         createAddress,
         updateAddress,
+        deleteAddress,
     };
 };
