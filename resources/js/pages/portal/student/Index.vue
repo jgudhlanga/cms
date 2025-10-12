@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import PageContainer from '@/components/core/page/PageContainer.vue';
-import ComponentHeader from '@/pages/dashboard/partials/ComponentHeader.vue';
+import CurrentApplications from '@/pages/portal/student/partials/CurrentApplications.vue';
+import OLevelResults from '@/pages/portal/student/partials/OLevelResults.vue';
 import { AuthObject } from '@/types/data-pagination';
 import { Enrolment, OLevelSubjectResult } from '@/types/enrolments';
 import { Student } from '@/types/students';
@@ -25,13 +26,9 @@ const breadcrumbs: BreadcrumbItemInterface[] = [{ transChoiceKey: 'dashboard' },
 <template>
     <Head :title="$tChoice('trans.dashboard', 1)" />
     <PageContainer :breadcrumbs="breadcrumbs">
-        <div class="flex w-full flex-col space-y-6">
-            <div class="flex w-full flex-col">
-                <ComponentHeader header-title="Current applications" description="Overview of your applications" />
-            </div>
-            <div class="flex w-full flex-col">
-                <ComponentHeader header-title="O Levels" description="Your O-Level grades you provided" />
-            </div>
+        <div class="mt-6 flex w-full flex-col space-y-6">
+            <CurrentApplications :applications="applications" />
+            <OLevelResults :o-level-results="oLevelResults" />
         </div>
     </PageContainer>
 </template>
