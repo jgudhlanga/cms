@@ -2,66 +2,33 @@
 
 namespace App\Services;
 
-use App\Enums\Shared\GenderEnum;
-use App\Models\Shared\Gender;
-use App\Models\Students\StudentProgram;
-use App\Models\Users\User;
-use Carbon\Carbon;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 class ApplicationMetricsService
 {
-    protected Carbon $startDate;
-    protected Carbon $endDate;
 
-    public function __construct(string $startDate, ?string $endDate = null)
+    public function __construct()
     {
-        $this->startDate = Carbon::parse($startDate)->startOfDay();
-        $this->endDate = $endDate
-            ? Carbon::parse($endDate)->endOfDay()
-            : $this->startDate->copy()->endOfDay();
+
     }
 
-    /**
-     * Count total applications (with optional gender filter).
-     */
-    public function applications(?GenderEnum $gender = null): int
+    public function applicationsByDepartment(): Collection
     {
-        $query = StudentProgram::query()
-            ->whereBetween('student_programs.created_at', [$this->startDate, $this->endDate]);
-
-        if ($gender) {
-            $genderId = Gender::where('title', $gender->label())->value('id');
-
-            $query->whereHas('student', fn($q) => $q->where('gender_id', $genderId)
-            );
-        }
-
-        return $query->count();
-    }
-
-    /**
-     * Count total users (students only).
-     */
-    public function users(): int
-    {
-        return User::query()
-            ->role('student')
-            ->whereBetween('users.created_at', [$this->startDate, $this->endDate])
-            ->count();
-    }
-
-    public function total(): int
-    {
-        return $this->applications();
-    }
-
-    public function male(): int
-    {
-        return $this->applications(GenderEnum::MALE);
-    }
-
-    public function female(): int
-    {
-        return $this->applications(GenderEnum::FEMALE);
+        return DB::table('departments')
+            ->select(
+                'departments.id as departmentId',
+                'departments.name as departmentName',
+                DB::raw('COUNT(student_programs.id) as applicationCount'),
+                DB::raw("SUM(CASE WHEN students.gender_id = (SELECT id FROM genders WHERE title = 'Male' LIMIT 1) THEN 1 ELSE 0 END) as maleCount"),
+                DB::raw("SUM(CASE WHEN students.gender_id = (SELECT id FROM genders WHERE title = 'Female' LIMIT 1) THEN 1 ELSE 0 END) as femaleCount"),
+                DB::raw("SUM(CASE WHEN students.disability_status = 'yes' THEN 1 ELSE 0 END) as disabledCount")
+            )
+            ->leftJoin('institution_departments', 'institution_departments.department_id', '=', 'departments.id')
+            ->leftJoin('student_programs', 'student_programs.institution_department_id', '=', 'institution_departments.id')
+            ->leftJoin('students', 'student_programs.student_id', '=', 'students.id')
+            ->where('departments.is_academic', true)
+            ->groupBy('departments.id', 'departments.name')
+            ->get();
     }
 }

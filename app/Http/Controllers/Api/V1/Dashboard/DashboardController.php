@@ -16,13 +16,10 @@ class DashboardController extends Controller
 
     public function index()
     {
-        [$startDate, $endDate] = $this->extractFilters();
-        $metrics = new ApplicationMetricsService($startDate, $endDate);
+        $metrics = new ApplicationMetricsService();
+        $departmentDistribution = $metrics->applicationsByDepartment();
         return response()->json([
-            'users' => $metrics->users(),
-            'totalApplications' => $metrics->total(),
-            'maleApplications' => $metrics->male(),
-            'femaleApplications' => $metrics->female(),
+            'departmentDistribution' => $departmentDistribution,
         ]);
     }
 
