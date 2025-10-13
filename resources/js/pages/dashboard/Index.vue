@@ -114,18 +114,17 @@ onMounted(async () => {
                         <StatsCount title="Females" :value="Number(totalFemale)" />
                         <StatsCount title="Disabled" :value="Number(disabledCount)" />
                     </div>
-                </div>
-            </template>
-
-            <div class="grid grid-cols-1 gap-6 px-4 sm:px-0 md:grid-cols-2">
-                <DetailedViewTable :department-table-data="departmentTableData" />
-                <div class="rounded-lg bg-white px-4 py-2 shadow">
-                    <h3 class="mb-4 text-lg font-medium">Department Distribution</h3>
-                    <div class="h-auto">
-                        <canvas id="departmentChart" ref="departmentChart"></canvas>
+                    <div class="grid grid-cols-1 gap-6 px-4 sm:px-0 md:grid-cols-2">
+                        <DetailedViewTable :department-table-data="departmentTableData" />
+                        <div class="rounded-lg bg-white px-4 py-2 shadow">
+                            <h3 class="mb-4 text-lg font-medium">Department Distribution</h3>
+                            <div class="h-auto">
+                                <canvas id="departmentChart" ref="departmentChart"></canvas>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
+            </template>
         </div>
     </PageContainer>
 </template>
