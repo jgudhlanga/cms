@@ -14,9 +14,9 @@ const props = defineProps<Props>();
 const { applications } = props;
 const message = computed(() => {
     if (applications.length === 1) {
-        return `Great news! This is a confirmation that your application for the ${applications[0].attributes?.course} has been successfully submitted`;
+        return `Great news! This is a confirmation that your application for ${applications[0].attributes?.level} - ${applications[0].attributes?.course} has been successfully submitted and awaiting processing`;
     }
-    return 'Great news! This is a confirmation that your applications have been successfully submitted';
+    return 'Great news! This is a confirmation that your applications have been successfully submitted and now awaiting processing';
 });
 </script>
 
