@@ -81,13 +81,14 @@ onMounted(async () => {
             data: { ...departmentChartData.value },
             options: {
                 responsive: true,
-                maintainAspectRatio: false,
+                maintainAspectRatio: true,
                 plugins: {
                     legend: {
-                        position: 'right',
+                        position: 'bottom',
+                        align: 'start'
                     },
                 },
-                cutout: '60%',
+                cutout: '50%',
             },
         });
     }
@@ -107,13 +108,13 @@ onMounted(async () => {
                     <StatsCount title="Disabled" :value="Number(disabledCount)" />
                 </div>
                 <div class="grid grid-cols-1 gap-6 px-4 sm:px-0 md:grid-cols-2">
-                    <DetailedViewTable :department-table-data="departmentTableData" />
-                    <div class="rounded-lg bg-white px-4 py-2 shadow">
-                        <h3 class="mb-4 text-lg font-medium">Department Distribution</h3>
-                        <div class="h-auto">
+                    <div class="rounded-lg bg-white px-4 py-2 shadow gap-6">
+                        <h3 class="mb-2 text-lg font-medium">1. Chart</h3>
+                        <div class="h-auto  flex w-full items-start">
                             <canvas id="departmentChart" ref="departmentChart"></canvas>
                         </div>
                     </div>
+                    <DetailedViewTable :department-table-data="departmentTableData" />
                 </div>
             </div>
         </div>
