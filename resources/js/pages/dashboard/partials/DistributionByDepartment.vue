@@ -89,7 +89,7 @@ const departmentTotals = computed(() => {
                     <th class="j-th text-center">Block</th>
                     <th class="j-th text-center">Ojet</th>
                     <th class="j-th text-center">Total</th>
-                    <th class="j-th text-center">%age</th>
+                    <th class="j-th text-center">Percentage</th>
                 </tr>
                 </thead>
                 <tbody class="j-tbody">
