@@ -67,7 +67,6 @@ class DepartmentLevelCourseEnrolmentService
                 sp.department_course_id,
 
                 ws.name AS workflow_step_name,
-                dws.position AS workflow_step_position,
 
                 s.id AS student_id,
                 s.disability_status,
@@ -75,7 +74,6 @@ class DepartmentLevelCourseEnrolmentService
                 u.first_name,
                 u.last_name,
                 u.email,
-                u.gender,
 
                 dc.id AS department_course_id,
                 c.name AS course_name,
@@ -98,7 +96,7 @@ class DepartmentLevelCourseEnrolmentService
             INNER JOIN department_courses dc ON dc.id = sp.department_course_id
             INNER JOIN courses c ON c.id = dc.course_id
 
-            LEFT JOIN o_level_results olr ON olr.student_id = s.id
+            LEFT JOIN student_academic_results sar ON sar.student_id = s.id
 
             WHERE " . implode(' AND ', $whereClauses) . "
             ORDER BY sp.created_at ASC

@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import PageContainer from '@/components/core/page/PageContainer.vue';
-import ComponentHeader from '@/pages/dashboard/partials/ComponentHeader.vue';
-import DetailedViewTable from '@/pages/dashboard/partials/DetailedViewTable.vue';
-import StatsCount from '@/pages/dashboard/partials/StatsCount.vue';
-import { DepartmentDistribution } from '@/types/dasboard';
+import HeadingSmall from '@/components/core/util/HeadingSmall.vue';
+import { useUtils } from '@/composables/core/useUtils';
+import DistributionByDepartment from '@/pages/dashboard/partials/DistributionByDepartment.vue';
+import { DepartmentDistribution, LevelDistribution } from '@/types/dasboard';
 import { AuthObject } from '@/types/data-pagination';
 import { BreadcrumbItemInterface } from '@/types/ui';
 import { Head } from '@inertiajs/vue3';
@@ -17,33 +17,33 @@ interface Props {
     auth: AuthObject;
     errors: object;
     departmentDistribution: DepartmentDistribution[];
+    levelDistribution: LevelDistribution[];
 }
 const props = defineProps<Props>();
-const { departmentDistribution } = props;
+const { levelDistribution } = props;
 
-const departmentChart = ref<HTMLCanvasElement | null>(null);
+const levelChart = ref<HTMLCanvasElement | null>(null);
 
-const departmentCount = computed(() => departmentDistribution?.length ?? 0);
-const totalApplications = computed(() => departmentDistribution?.reduce((sum, d) => sum + d.applicationCount, 0) ?? 0);
-const totalMale = computed(() => departmentDistribution?.reduce((sum, d) => sum + Number(d.maleCount ?? 0), 0) ?? 0);
-const totalFemale = computed(() => departmentDistribution?.reduce((sum, d) => sum + Number(d.femaleCount ?? 0), 0) ?? 0);
-const disabledCount = computed(() => departmentDistribution?.reduce((sum, d) => sum + Number(d.disabledCount ?? 0), 0) ?? 0);
+const { generateRandomCode } = useUtils();
 
-const colorFromName = (name: string, alpha = 0.7): string => {
+const normalizeColor = (value: number) => Math.min(255, Math.max(80, value)); // keeps it bright
+
+const colorFromLevel = (name: string, alpha = 0.7): string => {
+    const randomName = generateRandomCode(name);
     let hash = 0;
-    for (let i = 0; i < name.length; i++) {
-        hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    for (let i = 0; i < randomName.length; i++) {
+        hash = randomName.charCodeAt(i) + ((hash << 5) - hash);
     }
-    const r = (hash >> 16) & 255;
-    const g = (hash >> 8) & 255;
-    const b = hash & 255;
+    const r = normalizeColor((hash >> 16) & 255);
+    const g = normalizeColor((hash >> 8) & 255);
+    const b = normalizeColor(hash & 255);
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 };
 
-const departmentChartData = computed(() => {
-    const labels = departmentDistribution?.map((d) => d.departmentName) ?? [];
-    const data = departmentDistribution?.map((d) => d.applicationCount) ?? [];
-    const backgroundColors = labels.map((name) => colorFromName(name, 0.7));
+const levelChartData = computed(() => {
+    const labels = levelDistribution?.map((d) => d.levelName) ?? [];
+    const data = levelDistribution?.map((d) => d.levelCount) ?? [];
+    const backgroundColors = labels.map((name) => colorFromLevel(name, 0.7));
     const borderColors = backgroundColors.map((c) => c.replace('0.7', '1'));
     return {
         labels,
@@ -58,37 +58,21 @@ const departmentChartData = computed(() => {
     };
 });
 
-const departmentTableData = computed(() => {
-    const total = totalApplications.value || 0;
-
-    return (
-        departmentDistribution?.map((d) => {
-            const color = colorFromName(d.departmentName, 0.7);
-            const percentage = total > 0 ? ((d.applicationCount / total) * 100).toFixed(1) : '0.0';
-            return {
-                ...d,
-                color,
-                percentage,
-            };
-        }) ?? []
-    );
-});
-
 onMounted(async () => {
-    if (departmentChart.value) {
-        new Chart(departmentChart.value, {
+    if (levelChart.value) {
+        new Chart(levelChart.value, {
             type: 'doughnut',
-            data: { ...departmentChartData.value },
+            data: { ...levelChartData.value },
             options: {
                 responsive: true,
-                maintainAspectRatio: true,
+                maintainAspectRatio: false,
                 plugins: {
                     legend: {
-                        position: 'bottom',
-                        align: 'start'
+                        position: 'left',
+                        align: 'center',
                     },
                 },
-                cutout: '50%',
+                cutout: '60%',
             },
         });
     }
@@ -99,22 +83,16 @@ onMounted(async () => {
     <PageContainer :breadcrumbs="breadcrumbs">
         <div class="flex w-full flex-col">
             <div class="flex flex-col">
-                <ComponentHeader header-title="Department distribution" description="Stats by department" />
-                <div class="my-6 grid grid-cols-1 gap-5 sm:px-0 md:grid-cols-5">
-                    <StatsCount title="Departments Count" :value="Number(departmentCount)" />
-                    <StatsCount title="Applications Count" :value="Number(totalApplications)" />
-                    <StatsCount title="Males" :value="Number(totalMale)" />
-                    <StatsCount title="Females" :value="Number(totalFemale)" />
-                    <StatsCount title="Disabled" :value="Number(disabledCount)" />
-                </div>
-                <div class="grid grid-cols-1 gap-6 px-4 sm:px-0 md:grid-cols-2">
-                    <div class="rounded-lg bg-white px-4 py-2 shadow gap-6">
-                        <h3 class="mb-2 text-lg font-medium">Chart</h3>
-                        <div class="h-auto  flex w-full items-start">
-                            <canvas id="departmentChart" ref="departmentChart"></canvas>
+                <div class="grid grid-cols-1 gap-6 px-4 sm:px-0 md:grid-cols-1">
+                    <DistributionByDepartment :department-distribution="departmentDistribution" />
+                    <div class="gap-6 rounded-lg bg-white px-4 py-2 shadow">
+                        <div class="mb-2 text-lg font-medium">
+                            <HeadingSmall title="Distribution by Level" />
+                        </div>
+                        <div class="h-[300px]">
+                            <canvas id="levelChart" ref="levelChart"></canvas>
                         </div>
                     </div>
-                    <DetailedViewTable :department-table-data="departmentTableData" />
                 </div>
             </div>
         </div>
