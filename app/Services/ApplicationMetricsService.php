@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Helpers\Helper;
+use Carbon\CarbonPeriod;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -15,6 +17,7 @@ class ApplicationMetricsService
 
     public function applicationsByDepartment(): Collection
     {
+        $intakePeriod = Helper::resolveIntakePeriod();
         return DB::table('departments')
             ->select(
                 'departments.id as department_id',
@@ -32,12 +35,14 @@ class ApplicationMetricsService
             ->leftJoin('student_programs', 'student_programs.institution_department_id', '=', 'institution_departments.id')
             ->leftJoin('students', 'student_programs.student_id', '=', 'students.id')
             ->where('departments.is_academic', true)
+            ->where('student_programs.intake_period_id', $intakePeriod?->id)
             ->groupBy('departments.id', 'departments.name')
             ->get();
     }
 
     public function applicationsByLevel(): Collection
     {
+        $intakePeriod = Helper::resolveIntakePeriod();
         return DB::table('levels')
             ->select(
                 'levels.id as level_id',
@@ -46,7 +51,41 @@ class ApplicationMetricsService
             )
             ->leftJoin('department_levels', 'department_levels.level_id', '=', 'levels.id')
             ->leftJoin('student_programs', 'student_programs.department_level_id', '=', 'department_levels.id')
+            ->where('student_programs.intake_period_id', $intakePeriod?->id)
             ->groupBy('levels.id', 'levels.name')
             ->get();
     }
+
+    public function getDailyCountStats(): Collection
+    {
+        $intakePeriod = Helper::resolveIntakePeriod();
+
+        if (! $intakePeriod) {
+            return collect();
+        }
+
+        $rawCounts = DB::table('student_programs')
+            ->selectRaw('DATE(created_at) as count_date, COUNT(id) as daily_count')
+            ->whereBetween('created_at', [
+                $intakePeriod->start_date,
+                now()->endOfDay()->toDateTimeString(),
+            ])
+            ->groupByRaw('DATE(created_at)')
+            ->orderBy('count_date')
+            ->pluck('daily_count', 'count_date');
+
+        // Fill in missing dates
+        $period = CarbonPeriod::create(
+            $intakePeriod->start_date,
+            now()->toDateString()
+        );
+
+        return collect($period)->map(function ($date) use ($rawCounts) {
+            return [
+                'date' => $date->toDateString(),
+                'count' => $rawCounts[$date->toDateString()] ?? 0,
+            ];
+        });
+    }
+
 }
