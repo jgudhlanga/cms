@@ -84,7 +84,12 @@ class DepartmentLevelController extends Controller
             : ModeOfStudy::where('name', ModeOfStudyEnum::FULL_TIME->value)->first();
     }
 
-    private function fetchEnrolments(InstitutionDepartment $institutionDepartment, DepartmentLevel $departmentLevel, ?int $intakePeriodId, ?int $modeOfStudyId, $maxStep, $courseId)
+    private function fetchEnrolments(
+        InstitutionDepartment $institutionDepartment,
+        DepartmentLevel       $departmentLevel,
+        ?int                  $intakePeriodId,
+        ?int                  $modeOfStudyId,
+                              $maxStep, $courseId)
     {
         $query = $institutionDepartment->enrolments()
             ->where('department_level_id', $departmentLevel->id)
@@ -112,6 +117,7 @@ class DepartmentLevelController extends Controller
     {
 
     }
+
     private function fetchEnrolmentsByGender()
     {
 

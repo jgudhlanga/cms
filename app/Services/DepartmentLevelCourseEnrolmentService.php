@@ -5,7 +5,7 @@ namespace App\Services;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
-class ApplicationMetricsService
+class DepartmentLevelCourseEnrolmentService
 {
 
     public function __construct()
@@ -17,12 +17,12 @@ class ApplicationMetricsService
     {
         return DB::table('departments')
             ->select(
-                'departments.id as department_id',
-                'departments.name as department_name',
-                DB::raw('COUNT(student_programs.id) as application_count'),
-                DB::raw("SUM(CASE WHEN students.gender_id = (SELECT id FROM genders WHERE title = 'Male' LIMIT 1) THEN 1 ELSE 0 END) as male_count"),
-                DB::raw("SUM(CASE WHEN students.gender_id = (SELECT id FROM genders WHERE title = 'Female' LIMIT 1) THEN 1 ELSE 0 END) as female_count"),
-                DB::raw("SUM(CASE WHEN students.disability_status = 'yes' THEN 1 ELSE 0 END) as disabled_count")
+                'departments.id as departmentId',
+                'departments.name as departmentName',
+                DB::raw('COUNT(student_programs.id) as applicationCount'),
+                DB::raw("SUM(CASE WHEN students.gender_id = (SELECT id FROM genders WHERE title = 'Male' LIMIT 1) THEN 1 ELSE 0 END) as maleCount"),
+                DB::raw("SUM(CASE WHEN students.gender_id = (SELECT id FROM genders WHERE title = 'Female' LIMIT 1) THEN 1 ELSE 0 END) as femaleCount"),
+                DB::raw("SUM(CASE WHEN students.disability_status = 'yes' THEN 1 ELSE 0 END) as disabledCount")
             )
             ->leftJoin('institution_departments', 'institution_departments.department_id', '=', 'departments.id')
             ->leftJoin('student_programs', 'student_programs.institution_department_id', '=', 'institution_departments.id')
