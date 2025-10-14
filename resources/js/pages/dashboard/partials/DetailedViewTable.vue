@@ -14,7 +14,7 @@ defineProps<Props>();
                 <thead class="j-thead">
                     <tr class="j-th">
                         <th class="j-th text-left">{{ $tChoice('trans.department', 1) }}</th>
-                        <th class="j-th text-center">{{ $tChoice('trans.application', 1) }}</th>
+                        <th class="j-th text-center">{{ $tChoice('trans.application', 2) }}</th>
                         <th class="j-th text-center">Percentage</th>
                     </tr>
                 </thead>
