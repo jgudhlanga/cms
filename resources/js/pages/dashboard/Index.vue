@@ -109,7 +109,7 @@ onMounted(async () => {
                 </div>
                 <div class="grid grid-cols-1 gap-6 px-4 sm:px-0 md:grid-cols-2">
                     <div class="rounded-lg bg-white px-4 py-2 shadow gap-6">
-                        <h3 class="mb-2 text-lg font-medium">1. Chart</h3>
+                        <h3 class="mb-2 text-lg font-medium">Chart</h3>
                         <div class="h-auto  flex w-full items-start">
                             <canvas id="departmentChart" ref="departmentChart"></canvas>
                         </div>
