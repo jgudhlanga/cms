@@ -1,17 +1,13 @@
 <script setup lang="ts">
 import BaseAlert from '@/components/core/alert/BaseAlert.vue';
 import EclipseButton from '@/components/core/button/EclipseButton.vue';
-import IntakePeriodComboSelect from '@/components/core/form/combobox/IntakePeriodComboSelect.vue';
-import ModeOfStudyComboSelect from '@/components/core/form/combobox/ModeOfStudyComboSelect.vue';
 import PageContainer from '@/components/core/page/PageContainer.vue';
-import CustomSeparator from '@/components/core/util/CustomSeparator.vue';
 import { useUtils } from '@/composables/core/useUtils';
-import { useIntakePeriods } from '@/composables/institution/useIntakePeriods';
-import { useModeOfStudy } from '@/composables/institution/useModeOfStudy';
 import { useStudentApplications } from '@/composables/students/useStudentApplications';
 import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
 import GeneralEnrolments from '@/pages/institution/enrolments/GeneralEnrolments.vue';
+import EnrolmentFilters from '@/pages/institution/enrolments/partials/EnrolmentFilters.vue';
 import PaymentProofPreviewModal from '@/pages/institution/enrolments/partials/PaymentProofPreviewModal.vue';
 import { AuthObject } from '@/types/data-pagination';
 import { DepartmentApplicationStep, DepartmentLevel } from '@/types/department-meta-data';
@@ -33,6 +29,8 @@ interface Props {
     modeOfStudy: ModeOfStudy;
     auth: AuthObject;
     errors: object;
+    intakePeriods: IntakePeriod[];
+    modesOfStudy: ModeOfStudy[];
 }
 
 const props = defineProps<Props>();
@@ -41,14 +39,10 @@ const { department, level, enrolments, intakePeriod, modeOfStudy } = props;
 const { isItTrue } = useUtils();
 
 const { bulkApproveApplication, canApproveWorkflowStepApplications } = useStudentApplications();
-const { isLoading: intakePeriodsLoading, listIntakePeriods, intakePeriods } = useIntakePeriods();
-const { isLoading: modesOfStudyLoading, listModesOfStudy, modesOfStudy } = useModeOfStudy();
 const intakePeriodModel = ref<SelectOption | null>(null);
 const modeOfStudyModel = ref<SelectOption | null>(null);
 
 onMounted(async () => {
-    await listIntakePeriods(`api/v1/intake-periods?page_size=all`);
-    await listModesOfStudy();
     intakePeriodModel.value = intakePeriod ? { value: Number(intakePeriod.id), label: intakePeriod.attributes.name } : null;
     modeOfStudyModel.value = modeOfStudy ? { value: Number(modeOfStudy.id), label: modeOfStudy.attributes.name } : null;
 });
@@ -153,29 +147,13 @@ const handleFilterChange = () => {
 <template>
     <Head :title="$tChoice('trans.department', 2)" />
     <PageContainer :breadcrumbs="breadcrumbs">
-        <div class="mt-4 flex w-full items-center justify-between space-x-4">
-            <IntakePeriodComboSelect
-                :loading="intakePeriodsLoading"
-                :data="intakePeriods?.data ?? []"
-                :label-uppercase="true"
-                v-model="intakePeriodModel"
-                :vertical-layout="false"
-                :is-required="true"
-                @update:modelValue="handleFilterChange"
-                class="w-full"
-            />
-            <ModeOfStudyComboSelect
-                :loading="modesOfStudyLoading"
-                :data="modesOfStudy ?? []"
-                v-model="modeOfStudyModel!"
-                @update:modelValue="handleFilterChange"
-                :vertical-layout="false"
-                :label-uppercase="true"
-                :is-required="true"
-                class="w-full"
-            />
-        </div>
-        <CustomSeparator classes="h-[1px] my-3" />
+        <EnrolmentFilters
+            v-model:intakePeriodModel="intakePeriodModel"
+            v-model:modeOfStudyModel="modeOfStudyModel"
+            :intake-periods="intakePeriods"
+            :modes-of-study="modesOfStudy"
+            :handle-filter-change="handleFilterChange"
+        />
         <template v-if="!(Object.entries(sortedEnrolmentsByStep).length === 0)">
             <div v-for="(enrolmentsInStep, step) in sortedEnrolmentsByStep" :key="step" class="flex flex-col space-y-3">
                 <div class="mt-7 flex items-center justify-between">

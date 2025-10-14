@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Institution\Departments;
 
 use App\Enums\Institution\ModeOfStudyEnum;
+use App\Enums\Shared\GenderEnum;
 use App\Models\Institution\ModeOfStudy;
+use Closure;
 use App\DTO\Institution\{DepartmentLevelDto, DepartmentLevelRequirementsDto};
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Institution\{DepartmentLevelRequest, DepartmentLevelRequirementRequest};
@@ -102,21 +104,19 @@ class DepartmentLevelController extends Controller
         $intakePeriod = $this->resolveIntakePeriod($intakePeriodId);
         $modeOfStudy = $this->resolveModeOfStudy($modeOfStudyId);
 
-        $workflowSteps = DepartmentApplicationStepResource::collection(
-            WorkflowHelper::getAllSteps($institutionDepartment->id)
-        );
-
+        $workflowSteps = DepartmentApplicationStepResource::collection(WorkflowHelper::getAllSteps($institutionDepartment->id));
         $maxStep = WorkflowHelper::getMaxStep($institutionDepartment->id);
-
-        $enrolments = $this->fetchEnrolments($institutionDepartment, $departmentLevel, $intakePeriodId, $modeOfStudyId, $maxStep, $courseId);
-
+        $classSize = $courseId ? $this->getClassSize($institutionDepartment, $departmentLevel->id, $courseId, $intakePeriod->id, $modeOfStudy->id) : 0;
+        $disabledEnrolments = $this->getEnrolmentsForDisabled($institutionDepartment, $departmentLevel, $intakePeriodId, $modeOfStudyId, $maxStep, $courseId);
         return Inertia::render('institution/enrolments/CourseLevelEnrolments', [
             'department' => InstitutionDepartmentResource::make($institutionDepartment),
             'level' => DepartmentLevelResource::make($departmentLevel),
             'intakePeriod' => IntakePeriodResource::make($intakePeriod),
             'modeOfStudy' => ModeOfStudyResource::make($modeOfStudy),
             'workflowSteps' => $workflowSteps,
-            'enrolments' => $enrolments,
+            'classSize' => $classSize,
+            //'enrolments' => $enrolments,
+            'disabledEnrolments' => $disabledEnrolments,
         ]);
     }
 
@@ -143,7 +143,7 @@ class DepartmentLevelController extends Controller
             : ModeOfStudy::where('name', ModeOfStudyEnum::FULL_TIME->value)->first();
     }
 
-    private function fetchEnrolments(InstitutionDepartment $institutionDepartment, DepartmentLevel $departmentLevel, ?int $intakePeriodId, ?int $modeOfStudyId, $maxStep, $courseId)
+    /*private function fetchEnrolments(InstitutionDepartment $institutionDepartment, DepartmentLevel $departmentLevel, ?int $intakePeriodId, ?int $modeOfStudyId, $maxStep, $courseId)
     {
         $query = $institutionDepartment->enrolments()
             ->where('department_level_id', $departmentLevel->id)
@@ -165,6 +165,121 @@ class DepartmentLevelController extends Controller
             ->groupBy(fn($enrolment) => $enrolment->departmentWorkflowStep->workflowStep->name)
             ->sortByDesc(fn($group) => $group->first()->departmentWorkflowStep->position ?? 0)
             ->map(fn($group) => EnrolmentResource::collection($group));
+    }*/
+
+    // Base reusable function
+    private function fetchEnrolments(
+        InstitutionDepartment $institutionDepartment,
+        DepartmentLevel       $departmentLevel,
+        ?int                  $intakePeriodId,
+        ?int                  $modeOfStudyId,
+                              $maxStep,
+                              $courseId,
+        ?Closure              $additionalFilter = null
+    )
+    {
+        $query = $institutionDepartment->enrolments()
+            ->where('department_level_id', $departmentLevel->id)
+            ->whereHas('departmentWorkflowStep', fn($q) => $q->where('position', '<', $maxStep->position)
+            )
+            ->when($intakePeriodId, fn($q) => $q->where('intake_period_id', $intakePeriodId)
+            )
+            ->when($modeOfStudyId, fn($q) => $q->where('mode_of_study_id', $modeOfStudyId)
+            )
+            ->when($courseId, fn($q) => $q->where('department_course_id', $courseId)
+            )
+            ->with([
+                'departmentWorkflowStep',
+                'student.user',
+                'institutionDepartment.department',
+                'departmentLevel.level',
+                'departmentCourse.course',
+                'student.oLevelResults',
+            ])
+            ->orderBy('student_programs.created_at');
+
+        // Apply additional filter if provided
+        if ($additionalFilter) {
+            $additionalFilter($query);
+        }
+
+        return $query->get()
+            ->groupBy(fn($enrolment) => $enrolment->departmentWorkflowStep->workflowStep->name)
+            ->sortByDesc(fn($group) => $group->first()->departmentWorkflowStep->position ?? 0)
+            ->map(fn($group) => EnrolmentResource::collection($group));
     }
 
+    public function getEnrolmentsForDisabled(
+        InstitutionDepartment $institutionDepartment,
+        DepartmentLevel       $departmentLevel,
+        ?int                  $intakePeriodId,
+        ?int                  $modeOfStudyId,
+                              $maxStep,
+                              $courseId
+    )
+    {
+        return $this->fetchEnrolments(
+            $institutionDepartment,
+            $departmentLevel,
+            $intakePeriodId,
+            $modeOfStudyId,
+            $maxStep,
+            $courseId,
+            fn($q) => $q->whereHas('student', fn($q2) =>
+            $q2->where('disability_status', 'yes')
+            )
+        );
+    }
+
+
+
+    public function getMaleEnrolments(
+        InstitutionDepartment $institutionDepartment,
+        DepartmentLevel       $departmentLevel,
+        ?int                  $intakePeriodId,
+        ?int                  $modeOfStudyId,
+                              $maxStep,
+                              $courseId
+    )
+    {
+        return $this->fetchEnrolments(
+            $institutionDepartment,
+            $departmentLevel,
+            $intakePeriodId,
+            $modeOfStudyId,
+            $maxStep,
+            $courseId,
+            fn($q) => $q->whereHas('student.gender', fn($q2) => $q2->where('gender.name', GenderEnum::MALE->value))
+        );
+    }
+
+    public function getFemaleEnrolments(
+        InstitutionDepartment $institutionDepartment,
+        DepartmentLevel       $departmentLevel,
+        ?int                  $intakePeriodId,
+        ?int                  $modeOfStudyId,
+                              $maxStep,
+                              $courseId
+    )
+    {
+        return $this->fetchEnrolments(
+            $institutionDepartment,
+            $departmentLevel,
+            $intakePeriodId,
+            $modeOfStudyId,
+            $maxStep,
+            $courseId,
+            fn($q) => $q->whereHas('student.gender', fn($q2) => $q2->where('gender.name', GenderEnum::FEMALE->value))
+        );
+    }
+
+
+    private function getClassSize(InstitutionDepartment $institutionDepartment, $departmentLevelId, $departmentCourseId, $intakePeriodId, $modeOfStudyId): int
+    {
+        return $institutionDepartment->intakeClassSizes()
+            ->where('department_level_id', $departmentLevelId)
+            ->where('department_course_id', $departmentCourseId)
+            ->where('intake_period_id', $intakePeriodId)
+            ->where('intake_period_id', $modeOfStudyId)->pluck('class_size')->first() ?? 0;
+    }
 }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Dashboard;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Enrolments\DepartmentDistributionResource;
+use App\Http\Resources\Enrolments\LevelDistributionResource;
 use App\Services\ApplicationMetricsService;
 use Inertia\Inertia;
 
@@ -18,7 +19,8 @@ class DashboardController extends Controller
     {
         $this->authorize('viewDashboard');
         $departmentDistribution = DepartmentDistributionResource::collection($this->metricsService->applicationsByDepartment());
-        return Inertia::render('dashboard/Index', compact('departmentDistribution'));
+        $levelDistribution = LevelDistributionResource::collection($this->metricsService->applicationsByLevel());
+        return Inertia::render('dashboard/Index', compact('departmentDistribution', 'levelDistribution'));
     }
 
 }
