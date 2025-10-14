@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Helpers\Helper;
+use Carbon\CarbonPeriod;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -49,4 +51,37 @@ class ApplicationMetricsService
             ->groupBy('levels.id', 'levels.name')
             ->get();
     }
+
+    public function getDailyCountStats(): Collection
+    {
+        $intakePeriod = Helper::resolveIntakePeriod();
+
+        if (! $intakePeriod) {
+            return collect();
+        }
+
+        $rawCounts = DB::table('student_programs')
+            ->selectRaw('DATE(created_at) as count_date, COUNT(id) as daily_count')
+            ->whereBetween('created_at', [
+                $intakePeriod->start_date,
+                now()->endOfDay()->toDateTimeString(),
+            ])
+            ->groupByRaw('DATE(created_at)')
+            ->orderBy('count_date')
+            ->pluck('daily_count', 'count_date');
+
+        // Fill in missing dates
+        $period = CarbonPeriod::create(
+            $intakePeriod->start_date,
+            now()->toDateString()
+        );
+
+        return collect($period)->map(function ($date) use ($rawCounts) {
+            return [
+                'date' => $date->toDateString(),
+                'count' => $rawCounts[$date->toDateString()] ?? 0,
+            ];
+        });
+    }
+
 }

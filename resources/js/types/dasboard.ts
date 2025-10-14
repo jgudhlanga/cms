@@ -17,4 +17,8 @@ export type LevelDistribution = {
     levelId: number;
     levelName: string;
     levelCount: number;
-}
+};
+export type DailyDistribution = {
+    date: string;
+    count: number;
+};

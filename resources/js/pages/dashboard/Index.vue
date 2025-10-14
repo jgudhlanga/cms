@@ -3,7 +3,7 @@ import PageContainer from '@/components/core/page/PageContainer.vue';
 import HeadingSmall from '@/components/core/util/HeadingSmall.vue';
 import { useUtils } from '@/composables/core/useUtils';
 import DistributionByDepartment from '@/pages/dashboard/partials/DistributionByDepartment.vue';
-import { DepartmentDistribution, LevelDistribution } from '@/types/dasboard';
+import { DepartmentDistribution, LevelDistribution, DailyDistribution } from '@/types/dasboard';
 import { AuthObject } from '@/types/data-pagination';
 import { BreadcrumbItemInterface } from '@/types/ui';
 import { Head } from '@inertiajs/vue3';
@@ -18,11 +18,13 @@ interface Props {
     errors: object;
     departmentDistribution: DepartmentDistribution[];
     levelDistribution: LevelDistribution[];
+    dailyDistribution: DailyDistribution[];
 }
 const props = defineProps<Props>();
-const { levelDistribution } = props;
+const { levelDistribution, dailyDistribution } = props;
 
 const levelChart = ref<HTMLCanvasElement | null>(null);
+const enrollmentChart = ref<HTMLCanvasElement | null>(null);
 
 const { generateRandomCode } = useUtils();
 
@@ -58,6 +60,25 @@ const levelChartData = computed(() => {
     };
 });
 
+const enrollmentData = computed(() => {
+    const labels = dailyDistribution?.map((d) => d.date) ?? [];
+    const data = dailyDistribution?.map((d) => d.count) ?? [];
+    return {
+        labels,
+        datasets: [
+            {
+                label: 'Applications',
+                data,
+                backgroundColor: 'rgba(79, 70, 229, 0.2)',
+                borderColor: 'rgba(79, 70, 229, 1)',
+                borderWidth: 2,
+                tension: 0.4,
+                fill: true,
+            },
+        ],
+    };
+});
+
 onMounted(async () => {
     if (levelChart.value) {
         new Chart(levelChart.value, {
@@ -76,6 +97,37 @@ onMounted(async () => {
             },
         });
     }
+
+    new Chart(enrollmentChart.value!, {
+        type: 'line',
+        data: {...enrollmentData.value},
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false,
+                },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                },
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        drawBorder: false,
+                    },
+                },
+                x: {
+                    grid: {
+                        display: false,
+                    },
+                },
+            },
+        },
+    });
 });
 </script>
 <template>
@@ -86,11 +138,17 @@ onMounted(async () => {
                 <div class="grid grid-cols-1 gap-6 px-4 sm:px-0 md:grid-cols-1">
                     <DistributionByDepartment :department-distribution="departmentDistribution" />
                     <div class="gap-6 rounded-lg bg-white px-4 py-2 shadow">
-                        <div class="mb-2 text-lg font-medium">
-                            <HeadingSmall title="Distribution by Level" />
-                        </div>
+                        <HeadingSmall class="mb-2" title="Distribution by Level" />
                         <div class="h-[300px]">
                             <canvas id="levelChart" ref="levelChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 gap-6 px-4 sm:px-0">
+                        <div class="rounded-lg bg-white px-4 py-2 shadow">
+                            <HeadingSmall class="mb-2" title="Enrolment Trends" />
+                            <div class="h-80">
+                                <canvas id="enrollmentChart" ref="enrollmentChart"></canvas>
+                            </div>
                         </div>
                     </div>
                 </div>
