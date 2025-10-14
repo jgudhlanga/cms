@@ -17,6 +17,7 @@ class ApplicationMetricsService
 
     public function applicationsByDepartment(): Collection
     {
+        $intakePeriod = Helper::resolveIntakePeriod();
         return DB::table('departments')
             ->select(
                 'departments.id as department_id',
@@ -34,12 +35,14 @@ class ApplicationMetricsService
             ->leftJoin('student_programs', 'student_programs.institution_department_id', '=', 'institution_departments.id')
             ->leftJoin('students', 'student_programs.student_id', '=', 'students.id')
             ->where('departments.is_academic', true)
+            ->where('student_programs.intake_period_id', $intakePeriod?->id)
             ->groupBy('departments.id', 'departments.name')
             ->get();
     }
 
     public function applicationsByLevel(): Collection
     {
+        $intakePeriod = Helper::resolveIntakePeriod();
         return DB::table('levels')
             ->select(
                 'levels.id as level_id',
@@ -48,6 +51,7 @@ class ApplicationMetricsService
             )
             ->leftJoin('department_levels', 'department_levels.level_id', '=', 'levels.id')
             ->leftJoin('student_programs', 'student_programs.department_level_id', '=', 'department_levels.id')
+            ->where('student_programs.intake_period_id', $intakePeriod?->id)
             ->groupBy('levels.id', 'levels.name')
             ->get();
     }

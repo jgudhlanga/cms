@@ -145,7 +145,7 @@ onMounted(async () => {
                     </div>
                     <div class="grid grid-cols-1 gap-6 px-4 sm:px-0">
                         <div class="rounded-lg bg-white px-4 py-2 shadow">
-                            <HeadingSmall class="mb-2" title="Enrolment Trends" />
+                            <HeadingSmall class="mb-2" title="Daily Distribution" />
                             <div class="h-80">
                                 <canvas id="enrollmentChart" ref="enrollmentChart"></canvas>
                             </div>
