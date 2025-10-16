@@ -86,7 +86,7 @@ const form = useForm<EnrolmentSearchParams>({
             :pagination="{ ...enrolments.links, ...enrolments.meta }"
             :columns="enrolmentColumns()"
         >
-            <template #head-right v-if="hasAbility('create:students')">
+            <template #head-right>
                 <GenericButton
                     :icon="IconName.danger"
                     class="rounded-full"
@@ -96,6 +96,7 @@ const form = useForm<EnrolmentSearchParams>({
                     title="Faulty Applications"
                 />
                 <GenericButton
+                    v-if="hasAbility('create:students')"
                     :icon="IconName.add"
                     class="rounded-full"
                     :icon-variant="ColorVariant.white"

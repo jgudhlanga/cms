@@ -8,19 +8,14 @@ import { hasAbility } from '@/lib/permissions';
 import { getIdParams } from '@/lib/utils';
 import HttpService from '@/services/http.service';
 import { useCreateApplicationFormStore } from '@/store/portal/useCreateApplicationFormStore';
+import { useUpdateProgramFormStore } from '@/store/portal/useUpdateProgramFormStore';
 import { Auth } from '@/types';
-import {
-    DepartmentLevel,
-    DepartmentLevelCourse,
-    DepartmentLevelMetaData,
-    DepartmentLevelRequirement
-} from '@/types/department-meta-data';
-import { InertiaForm,  usePage } from '@inertiajs/vue3';
+import { DepartmentLevel, DepartmentLevelCourse, DepartmentLevelMetaData, DepartmentLevelRequirement } from '@/types/department-meta-data';
+import { InertiaForm, usePage } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 import { storeToRefs } from 'pinia';
 import { ref } from 'vue';
 import { z } from 'zod';
-import { useUpdateProgramFormStore } from '@/store/portal/useUpdateProgramFormStore';
 
 export const useDepartmentLevels = (isEditingProgram?: boolean) => {
     const { moreActionButton, textLink, actionButton, checkStatusIcon, onEdit } = useDataTables();
@@ -35,7 +30,9 @@ export const useDepartmentLevels = (isEditingProgram?: boolean) => {
                 accessorKey: 'level',
                 cell: ({ row }: { row: { original: DepartmentLevel } }) => {
                     const id = getIdParams(row.original.id?.toString() ?? '');
-                    return textLink(route('department-levels.requirements', id), row.original.attributes?.level);
+                    return hasAbility('update:department-metadata')
+                        ? textLink(route('department-levels.requirements', id), row.original.attributes?.level)
+                        : row.original.attributes?.level;
                 },
             },
             {
@@ -54,11 +51,11 @@ export const useDepartmentLevels = (isEditingProgram?: boolean) => {
                 meta: { align: 'center' },
                 cell: ({ row }: { row: { original: DepartmentLevel } }) => {
                     const id = getIdParams(row.original.id?.toString() ?? '');
-                    return actionButton({
+                    return hasAbility('update:department-metadata') ? actionButton({
                         title: trans_choice('trans.requirement', 2),
                         variant: ColorVariant.primary_outline,
                         onClick: () => navigateTo(route('department-levels.requirements', id)),
-                    });
+                    }) : trans_choice('trans.requirement', 2);
                 },
             },
             {
@@ -156,7 +153,7 @@ export const useDepartmentLevels = (isEditingProgram?: boolean) => {
         if (Number(departmentLevelId) > 0) {
             isLoading.value = true;
             levelRequirements.value = await HttpService.get(`api/v1/institution-departments/levels/${departmentLevelId}/requirements`);
-            if(courseRequirements && Number(levelRequirements.value?.id) > 0) {
+            if (courseRequirements && Number(levelRequirements.value?.id) > 0) {
                 courseRequirements.value = null;
             }
             storeLevelRequirements!.value = levelRequirements.value;

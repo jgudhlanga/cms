@@ -2,8 +2,10 @@
 
 namespace App\Http\Requests\Students;
 
+use App\Enums\Shared\DisabilityStatusEnum;
 use App\Enums\Shared\IdTypeEnum;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rules\Enum;
 
 /**
  * @property mixed $o_level_subject_ids
@@ -90,6 +92,7 @@ class CreateApplicationRequest extends FormRequest
             'department_id' => ['required', 'integer'],
             'level_id' => ['required', 'integer',],
             'course_id' => ['required', 'integer',],
+            'disability_status' =>  ['required', new Enum(DisabilityStatusEnum::class)],
         ];
     }
 

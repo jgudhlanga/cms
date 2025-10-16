@@ -21,6 +21,8 @@ use App\Repositories\Students\interface\IStudentProgramRepository;
 use App\Repositories\Students\interface\IStudentRepository;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
+use Throwable;
 
 class StudentRepository extends BaseRepository implements IStudentRepository
 {
@@ -46,9 +48,26 @@ class StudentRepository extends BaseRepository implements IStudentRepository
         return $student->refresh();
     }
 
+    /**
+     * @throws Throwable
+     */
     public function update(Student $student, UpdateStudentDto $dto)
     {
-        return tap($student)->update($this->updateFields($dto));
+        return DB::transaction(function () use ($student, $dto) {
+            $user = $student->user;
+
+            $user->update([
+                'email' => $dto->email ?? $user->email,
+                'phone_number' => $dto->phone_number ?? $user->phone_number,
+                'first_name' => $dto->first_name ?? $user->first_name,
+                'middle_name' => $dto->middle_name ?? $user->middle_name,
+                'last_name' => $dto->last_name ?? $user->last_name,
+            ]);
+
+            $student->update($this->updateFields($dto));
+
+            return $student;
+        });
     }
 
     public function allFilter($columns = ['*'], ?StudentFilter $filters = null)

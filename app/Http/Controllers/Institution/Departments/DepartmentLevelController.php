@@ -98,7 +98,7 @@ class DepartmentLevelController extends Controller
      */
     public function enrolments(InstitutionDepartment $institutionDepartment, DepartmentLevel $departmentLevel): Response
     {
-        $this->authorize('viewAnyDepartmentMetaData');
+        $this->authorize('viewDepartmentMetaData');
         [$intakePeriodId, $modeOfStudyId, $courseId] = $this->extractFilters();
 
         $intakePeriod = $this->resolveIntakePeriod($intakePeriodId);
@@ -107,7 +107,8 @@ class DepartmentLevelController extends Controller
         $workflowSteps = DepartmentApplicationStepResource::collection(WorkflowHelper::getAllSteps($institutionDepartment->id));
         $maxStep = WorkflowHelper::getMaxStep($institutionDepartment->id);
         $classSize = $courseId ? $this->getClassSize($institutionDepartment, $departmentLevel->id, $courseId, $intakePeriod->id, $modeOfStudy->id) : 0;
-        $disabledEnrolments = $this->getEnrolmentsForDisabled($institutionDepartment, $departmentLevel, $intakePeriodId, $modeOfStudyId, $maxStep, $courseId);
+        $enrolments = $this->fetchEnrolments($institutionDepartment, $departmentLevel, $intakePeriodId, $modeOfStudyId, $maxStep, $courseId);
+        //$disabledEnrolments = $this->getEnrolmentsForDisabled($institutionDepartment, $departmentLevel, $intakePeriodId, $modeOfStudyId, $maxStep, $courseId);
         return Inertia::render('institution/enrolments/CourseLevelEnrolments', [
             'department' => InstitutionDepartmentResource::make($institutionDepartment),
             'level' => DepartmentLevelResource::make($departmentLevel),
@@ -115,8 +116,8 @@ class DepartmentLevelController extends Controller
             'modeOfStudy' => ModeOfStudyResource::make($modeOfStudy),
             'workflowSteps' => $workflowSteps,
             'classSize' => $classSize,
-            //'enrolments' => $enrolments,
-            'disabledEnrolments' => $disabledEnrolments,
+            'enrolments' => $enrolments,
+            //'disabledEnrolments' => $disabledEnrolments,
         ]);
     }
 

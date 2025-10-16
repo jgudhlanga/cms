@@ -2,21 +2,31 @@
 
 namespace App\Http\Controllers\Users;
 
+use App\DTO\Institution\CreateStaffDto;
+use App\DTO\Students\UpdateStudentDto;
 use App\DTO\Users\UpdateUserDto;
 use App\DTO\Users\UserDto;
 use App\Enums\Shared\StatusEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Filters\Users\UserFilter;
+use App\Http\Requests\Institution\StaffRequest;
+use App\Http\Requests\Students\UpdateStudentUserRequest;
 use App\Http\Requests\Users\UserRequest;
 use App\Http\Requests\Users\UpdateUserRequest;
 use App\Http\Resources\Users\UserResource;
 use App\Models\Users\User;
+use App\Repositories\Institution\interface\IStaffRepository;
+use App\Repositories\Students\interface\IStudentRepository;
 use App\Repositories\Users\interface\IUserRepository;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class UserController extends Controller
 {
-    public function __construct(protected IUserRepository $repository)
+    public function __construct(
+        protected IUserRepository    $repository,
+        protected IStaffRepository   $staffRepository,
+        protected IStudentRepository $studentRepository)
     {
     }
 
@@ -48,16 +58,18 @@ class UserController extends Controller
     public function show(User $user)
     {
         $this->authorize('view', $user);
-        $user = new UserResource($user);
+        $user = UserResource::make($user);
         return Inertia::render('users/Show', compact('user'));
     }
 
     public function edit(User $user)
     {
         $this->authorize('update', $user);
-        $user = new UserResource($user);
+        //$user->load('staffProfile');
+        $user = UserResource::make($user);
         return Inertia::render('users/Edit', compact('user'));
     }
+
 
     public function update(UpdateUserRequest $request, User $user)
     {
@@ -82,5 +94,31 @@ class UserController extends Controller
     {
         $this->authorize('forceDelete', $user);
         $this->repository->delete($user, true);
+    }
+
+    public function storeStaffUser(StaffRequest $request)
+    {
+        $staff = $this->staffRepository->create(CreateStaffDto::fromStaffRequest($request));
+        return to_route('users.show', ['user' => $staff->user_id]);
+    }
+
+    public function updateStaffUser(StaffRequest $request, User $user)
+    {
+        $staff = $user->staffProfile;
+        $this->staffRepository->update(
+            $staff,
+            CreateStaffDto::fromStaffRequest($request)
+        );
+        return to_route('users.show', ['user' => $user->id]);
+    }
+
+    public function updateStudentUser(UpdateStudentUserRequest $request, User $user)
+    {
+        $student = $user->studentProfile;
+        $this->studentRepository->update(
+            $student,
+            UpdateStudentDto::fromUpdateStudentUserRequest($request),
+        );
+        return to_route('users.show', ['user' => $user->id]);
     }
 }

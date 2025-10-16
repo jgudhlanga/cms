@@ -11,6 +11,7 @@ import { IconName } from '@/enums/icons';
 import { Student } from '@/types/students';
 import { ValueAndLabel } from '@/types/utils';
 import { computed, onMounted, ref } from 'vue';
+import { DISABILITY_OPTIONS } from '@/lib/constants';
 
 interface Props {
     url?: string;
@@ -46,6 +47,7 @@ const personalDetails = computed<ValueAndLabel[]>(() => {
         );
     }
     details.push({ transKey: 'trans.date_of_birth', value: formatDate(student.value?.attributes?.dateOfBirth ?? '') });
+    details.push({ transKey: 'trans.disability', value: DISABILITY_OPTIONS.find(option => option.value === student.value?.attributes?.disabilityStatus)?.label ?? '' });
     details.push(
         { transChoiceKey: 'trans.race', value: student.value?.attributes?.race ?? '' },
         { transChoiceKey: 'trans.religion', value: student.value?.attributes?.religion ?? '' },

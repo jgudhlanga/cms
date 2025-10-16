@@ -1,9 +1,15 @@
 import { useDataTables } from '@/composables/core/useDataTables';
 import { useSharedFormSchema } from '@/composables/core/useSharedFormSchema';
 import { useUtils } from '@/composables/core/useUtils';
-import { errorAlert } from '@/lib/alerts';
+import { errorAlert, successAlert } from '@/lib/alerts';
 import { buildFormOptions, mergeValidationSchema } from '@/lib/forms';
-import { emailUniqueSchema, phoneNumberUniqueSchema } from '@/lib/uniqueValidations';
+import {
+    emailUniqueSchema,
+    employeeNumberUniqueSchema,
+    idNumberUniqueSchema,
+    passportNumberUniqueSchema,
+    phoneNumberUniqueSchema,
+} from '@/lib/uniqueValidations';
 import { getIdParams } from '@/lib/utils';
 import HttpService from '@/services/http.service';
 import { Auth } from '@/types';
@@ -35,6 +41,7 @@ export const useUsers = () => {
                     });
                 },
             },
+            { header: trans('trans.id_number'), accessorKey: 'attributes.idNumber' },
             { header: trans('trans.email_address'), accessorKey: 'attributes.email' },
             { header: trans('trans.phone_number'), accessorKey: 'attributes.phoneNumber' },
             { header: trans_choice('trans.status', 1), accessorKey: 'attributes.status' },
@@ -85,15 +92,50 @@ export const useUsers = () => {
     const breadcrumbs: Array<Link> = [{ transChoiceKey: 'user' }];
 
     const schemaFields = useSharedFormSchema() as Record<string, () => ZodObject<any, any>>;
-    const validateFormSchema = (userId?: string) => {
-        const personal = ['firstNameSchema', 'lastNameSchema'];
+    const validateFormSchema = (userId?: string, staffId?: string) => {
+        const personal = [
+            'firstNameSchema',
+            'lastNameSchema',
+            'genderSchema',
+            'maritalStatusSchema',
+            'dobSchema',
+            'employmentTypeSchema',
+            'departmentSchema',
+            'phoneNumberSchema',
+        ];
         return mergeValidationSchema(schemaFields)(
             personal,
             schemaFields['titleSchema']()
                 .merge(emailUniqueSchema(`api/v1/validations/check?current_id=${userId}&key=user_email&value=`))
-                .merge(phoneNumberUniqueSchema(`api/v1/validations/check?current_id=${userId}&key=user_phone_number&value=`)),
+                .merge(phoneNumberUniqueSchema(`api/v1/validations/check?current_id=${userId}&key=user_phone_number&value=`))
+                .merge(employeeNumberUniqueSchema(`api/v1/validations/check?current_id=${staffId}&key=staff_employee_number&value=`)),
         );
     };
+
+    const updateStudentUserSchema = (isNativeCitizen: boolean, userId: string, studentId: string) => {
+        const personal = ['genderSchema', 'maritalStatusSchema', 'dobSchema', 'idTypeSchema', 'phoneNumberSchema'];
+        let updateSchema = null;
+        if (isNativeCitizen) {
+            updateSchema = mergeValidationSchema(schemaFields)(
+                personal,
+                schemaFields['titleSchema']()
+                    .merge(idNumberUniqueSchema(`api/v1/validations/check?current_id=${studentId}&key=student_national_id&value=`))
+                    .merge(emailUniqueSchema(`api/v1/validations/check?current_id=${userId}&key=user_email&value=`))
+                    .merge(phoneNumberUniqueSchema(`api/v1/validations/check?current_id=${userId}&key=user_phone_number&value=`)),
+            );
+        } else {
+            personal.push('countrySchema');
+            updateSchema = mergeValidationSchema(schemaFields)(
+                personal,
+                schemaFields['titleSchema']().merge(passportNumberUniqueSchema(`api/v1/validations/check?current_id=${studentId}&key=student_passport_number&value='`))
+                .merge(emailUniqueSchema(`api/v1/validations/check?current_id=${userId}&key=user_email&value=`))
+                .merge(phoneNumberUniqueSchema(`api/v1/validations/check?current_id=${userId}&key=user_phone_number&value=`)),
+            );
+        }
+        return updateSchema;
+    };
+
+
     const saveUser = (form: InertiaForm<any>, userId?: string) => {
         try {
             const success = trans('trans.item_saved', { item: trans_choice('trans.user', 1) });
@@ -106,6 +148,66 @@ export const useUsers = () => {
         } catch (error: any) {
             form.setError(error.format());
         }
+    };
+
+    const saveStaffUser = (form: InertiaForm<any>, userId?: string) => {
+        try {
+            if (Number(userId) > 0) {
+                updateStaffUser(form, String(userId));
+            } else {
+                createStaffUser(form);
+            }
+        } catch (error: any) {
+            form.setError(error.format());
+        }
+    };
+
+    const createStaffUser = (form: InertiaForm<any>) => {
+        form.post(route('users.store-staff-user'), {
+            onSuccess: () => {
+                successAlert('User successfully created');
+            },
+            onError: (errors: any) => {
+                if (Object.keys(errors).length) {
+                    const allErrors = Object.values(errors).join('\n');
+                    errorAlert(allErrors);
+                } else {
+                    errorAlert('An unexpected error happened, user could not be created');
+                }
+            },
+        });
+    };
+
+    const updateStaffUser = (form: InertiaForm<any>, userId: string) => {
+        form.put(route('users.update-staff-user', userId), {
+            onSuccess: () => {
+                successAlert('User successfully updated');
+            },
+            onError: (errors: any) => {
+                if (Object.keys(errors).length) {
+                    const allErrors = Object.values(errors).join('\n');
+                    errorAlert(allErrors);
+                } else {
+                    errorAlert('An unexpected error happened, user could not be updated');
+                }
+            },
+        });
+    };
+
+    const updateStudentUser = (form: InertiaForm<any>, userId: string) => {
+        form.put(route('users.update-student-user', userId), {
+            onSuccess: () => {
+                successAlert('User successfully updated');
+            },
+            onError: (errors: any) => {
+                if (Object.keys(errors).length) {
+                    const allErrors = Object.values(errors).join('\n');
+                    errorAlert(allErrors);
+                } else {
+                    errorAlert('An unexpected error happened, user could not be updated');
+                }
+            },
+        });
     };
 
     const isLoading = ref(false);
@@ -129,5 +231,8 @@ export const useUsers = () => {
         users,
         isLoading,
         validateFormSchema,
+        saveStaffUser,
+        updateStudentUser,
+        updateStudentUserSchema,
     };
 };

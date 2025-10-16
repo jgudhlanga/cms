@@ -15,6 +15,7 @@ import { InstitutionDepartment } from '@/types/institution';
 import { TimelineStep } from '@/types/utils';
 import { trans_choice } from 'laravel-vue-i18n';
 import { computed, onMounted, ref, watch } from 'vue';
+import { hasAbility } from '@/lib/permissions';
 
 interface Props {
     department: InstitutionDepartment;
@@ -92,6 +93,7 @@ const stepIds = computed(() => {
     <div class="flex flex-col space-y-6">
         <div class="flex justify-end">
             <GenericButton
+                v-if="hasAbility('department-setup:workflows')"
                 :icon="IconName.add"
                 class="cursor-pointer rounded-full"
                 :icon-variant="ColorVariant.white"

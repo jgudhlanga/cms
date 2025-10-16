@@ -34,12 +34,12 @@ export function useSidebarMenu() {
             url: route('enrolments.index'),
             show: hasAbility('view:student-programs'),
         },
-        /*{
+        {
             transChoiceKey: 'trans.student',
             icon: icons[IconName.user_check],
             url: route('dashboard'),
-            show: hasAbility('view:students'),
-        },*/
+            show: false, //hasAbility('view:students'),
+        },
         {
             transChoiceKey: 'trans.examination',
             icon: icons[IconName.book_check],
@@ -82,6 +82,14 @@ export function useSidebarMenu() {
             url: route('users.index'),
             icon: icons[IconName.users],
             show: hasAbility('view:users'),
+        },
+        /** ============ DEPARTMENT STAFF ======================*/
+        {
+            title: 'My Departments',
+            transChoiceKeyIndex: 1,
+            url: route('institution.index'),
+            icon: icons[IconName.school],
+            show: hasAbility('viewOnlyOwnDepartment:departments'),
         },
         /** ================ PORTAL START ======================*/
         {

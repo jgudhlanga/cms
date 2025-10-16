@@ -10,13 +10,17 @@ class DepartmentMetaDataPolicy
 
     public function viewAnyDepartmentMetaData(User $user): bool
     {
-        return $user->can(PermissionEnum::ROOT_MANAGE) || $user->can(PermissionEnum::VIEW_ANY_DEPARTMENT_METADATA);
+        return
+            $user->can(PermissionEnum::ROOT_MANAGE) ||
+            $user->can(PermissionEnum::VIEW_ANY_DEPARTMENT_METADATA);
 
     }
 
     public function viewDepartmentMetaData(User $user): bool
     {
-        return $user->can(PermissionEnum::ROOT_MANAGE) || $user->can(PermissionEnum::VIEW_DEPARTMENT_METADATA);
+        return $user->can(PermissionEnum::ROOT_MANAGE) ||
+            $user->can(PermissionEnum::VIEW_DEPARTMENT_METADATA) ||
+            $user->can(PermissionEnum::VIEW_ONLY_OWN_DEPARTMENT);
 
     }
 

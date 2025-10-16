@@ -9,7 +9,7 @@ use App\Models\Users\User;
 readonly class CreateStaffDto
 {
     public function __construct(
-        public int  $institution_department_id,
+        public ?int  $institution_department_id,
         public string  $date_of_birth,
         public ?int    $marital_status_id,
         public ?int    $race_id,
@@ -21,6 +21,7 @@ readonly class CreateStaffDto
         public int     $title_id,
         public int     $gender_id,
         public ?array  $role_ids,
+        public ?array  $department_ids,
         public ?int $employment_type_id,
         public string $employee_number,
     )
@@ -43,6 +44,7 @@ readonly class CreateStaffDto
             title_id: $request->title_id,
             gender_id: $request->gender_id,
             role_ids: $request->role_ids,
+            department_ids: $request->department_ids,
             employment_type_id: $request->employment_type_id,
             employee_number: $request->employee_number,
         );

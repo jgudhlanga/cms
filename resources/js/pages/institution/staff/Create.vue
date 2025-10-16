@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import PageContainer from '@/components/core/page/PageContainer.vue';
-import Form from '@/pages/institution/staff/partials/Form.vue';
+import StaffForm from '@/pages/institution/staff/partials/StaffForm.vue';
 import { AuthObject } from '@/types/data-pagination';
 import { InstitutionDepartment } from '@/types/institution';
 import type { Link } from '@/types/ui';
@@ -26,6 +26,6 @@ const breadcrumbs: Array<Link> = [
 <template>
     <Head :title="$t('trans.create_staff')" />
     <PageContainer :breadcrumbs="breadcrumbs">
-        <Form :department="department" />
+        <StaffForm :department="department" />
     </PageContainer>
 </template>

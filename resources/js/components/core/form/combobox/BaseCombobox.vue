@@ -63,7 +63,7 @@ const fieldPlaceHolder = computed(() => {
 
 <template>
     <div class="flex flex-col">
-        <div :class="cn('flex space-x-3', verticalLayout && 'flex-col space-y-3')">
+        <div :class="cn('flex space-x-3', verticalLayout && 'flex-col space-y-2')">
             <Label :class="cn(error && 'text-destructive', labelUppercase && 'uppercase', !verticalLayout && 'flex w-1/4 items-center')" v-if="label">
                 {{ label }}<RequiredIndicator v-if="isRequired" />
             </Label>

@@ -31,6 +31,7 @@ export type Student = {
         denomination?: string;
         height?: string;
         weight?: string;
+        disabilityStatus?: 'yes' | 'no' | 'prefer_not_to_say' | null;
     };
     relationships?: {
         user: User;
@@ -205,4 +206,5 @@ export type StudentPersonalDetailParams = {
     denomination?: string | null;
     height?: string | null;
     weight?: string | null;
+    disability_status: 'yes' | 'no' | 'prefer_not_to_say' | null;
 };

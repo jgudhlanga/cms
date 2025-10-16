@@ -13,6 +13,7 @@ use App\Models\Acl\Role;
 use App\Repositories\Acl\Interface\IPermissionRepository;
 use App\Repositories\Acl\Interface\IRoleRepository;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Http\Filters\Acl\RoleFilter;
 use Inertia\Response;
@@ -112,5 +113,10 @@ class RoleController extends Controller
     {
         $this->authorize('forceDelete', $role);
         $this->repository->delete($role, true);
+    }
+
+    public function syncPermissions(Role $role, Request $request)
+    {
+        $role->syncPermissions(array_values($request->permissions));
     }
 }

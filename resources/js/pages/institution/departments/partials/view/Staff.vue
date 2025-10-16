@@ -1,8 +1,11 @@
 <script setup lang="ts">
+import { GenericButton } from '@/components/core/button';
 import TableLoading from '@/components/core/loader/TableLoading.vue';
 import DataTable from '@/components/core/table/DataTable.vue';
 import { useUtils } from '@/composables/core/useUtils';
 import { useStaff } from '@/composables/institution/useStaff';
+import { ColorVariant } from '@/enums/colors';
+import { IconName } from '@/enums/icons';
 import { hasAbility } from '@/lib/permissions';
 import { InstitutionDepartment } from '@/types/institution';
 import { computed, onMounted } from 'vue';
@@ -21,7 +24,6 @@ const institutionDepartmentId = props.department.id?.toString() ?? '';
 onMounted(() => {
     loadDepartmentStaff(route('v1.department-metadata.staff', institutionDepartmentId));
 });
-const allowed = hasAbility('create:department-metadata');
 </script>
 
 <template>
@@ -36,7 +38,16 @@ const allowed = hasAbility('create:department-metadata');
         :search-url="route('v1.department-metadata.staff', institutionDepartmentId)"
         :pagination="{ ...departmentStaff?.links!, ...departmentStaff?.meta! }"
         :columns="createStaffColumns(institutionDepartmentId)"
-        :on-create="() => navigateTo(route('staff.create', institutionDepartmentId))"
-        :disable-create="!allowed"
-    />
+    >
+        <template #head-right v-if="hasAbility('create:department-metadata')">
+            <GenericButton
+                :icon="IconName.add"
+                class="rounded-full"
+                :icon-variant="ColorVariant.white"
+                :variant="ColorVariant.primary_outline"
+                @click="() => navigateTo(route('staff.create', institutionDepartmentId))"
+                :title="$t('trans.add_new')"
+            />
+        </template>
+    </DataTable>
 </template>

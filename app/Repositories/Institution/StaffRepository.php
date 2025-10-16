@@ -43,6 +43,10 @@ class StaffRepository extends BaseRepository implements IStaffRepository
             $staff->institutionDepartments()->syncWithoutDetaching([$dto->institution_department_id]);
         }
 
+        if (!empty($dto->department_ids) && is_array($dto->department_ids) && count($dto->department_ids) > 0) {
+            $staff->institutionDepartments()->syncWithoutDetaching($dto->department_ids);
+        }
+
         return $staff;
     }
 
@@ -50,7 +54,15 @@ class StaffRepository extends BaseRepository implements IStaffRepository
     {
         // Step 1: Update the associated user
         $this->updateUser($staff->user, $dto);
-        return tap($staff)->update($this->getFields($dto))->refresh();
+        $staff = tap($staff)->update($this->getFields($dto))->refresh();
+        if (!empty($dto->institution_department_id)) {
+            $staff->institutionDepartments()->syncWithoutDetaching([$dto->institution_department_id]);
+        }
+
+        if (!empty($dto->department_ids) && is_array($dto->department_ids) && count($dto->department_ids) > 0) {
+            $staff->institutionDepartments()->syncWithoutDetaching($dto->department_ids);
+        }
+        return $staff;
     }
 
     public function allFilter($columns = ['*'], StaffFilter $filters = null)
@@ -88,8 +100,12 @@ class StaffRepository extends BaseRepository implements IStaffRepository
             email: $dto->email,
             phone_number: $dto->phone_number,
             password: Helper::generatePasswordFromName($dto->first_name, $dto->last_name),
+            role_ids: $dto->role_ids,
         );
-        return $this->userRepository->create($userDto);
+        $user = $this->userRepository->create($userDto);
+        $user->email_verified_at = now();
+        $user->save();
+        return $user->fresh();
     }
 
     private function updateUser(User $user, CreateStaffDto $dto): void
@@ -100,6 +116,7 @@ class StaffRepository extends BaseRepository implements IStaffRepository
             last_name: $dto->last_name,
             email: $dto->email,
             phone_number: $dto->phone_number,
+            role_ids: $dto->role_ids,
         );
         $this->userRepository->update($user, $userDto);
     }
