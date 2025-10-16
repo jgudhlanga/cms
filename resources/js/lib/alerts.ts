@@ -52,7 +52,7 @@ const dangerDialog = (onConfirm: () => boolean, message?: string, title?: string
 	DialogService.danger(onConfirm, message ?? trans('trans.delete_action_description'), title ?? trans('trans.are_you_sure'));
 };
 
-const warningDialog = (onConfirm: () => boolean, message?: string, title?: string) => {
+const warningDialog = (onConfirm: () => any, message?: string, title?: string) => {
 	DialogService.warning(onConfirm, message ?? trans('trans.please_confirm_action'), title ?? trans('trans.are_you_sure'));
 };
 

@@ -19,7 +19,6 @@ import { Head, router } from '@inertiajs/vue3';
 import { computed, onMounted, ref } from 'vue';
 import BaseButton from '../../../components/core/button/BaseButton.vue';
 import OLevelBased from './OLevelBased.vue';
-import ComingSoonAnimated from '@/components/core/util/ComingSoonAnimated.vue';
 
 interface Props {
     department: InstitutionDepartment;
@@ -32,6 +31,8 @@ interface Props {
     errors: object;
     intakePeriods: IntakePeriod[];
     modesOfStudy: ModeOfStudy[];
+    disabledEnrolments: Record<string, Enrolment[]>;
+    myEnrolments: []
 }
 
 const props = defineProps<Props>();
@@ -148,8 +149,7 @@ const handleFilterChange = () => {
 <template>
     <Head :title="$tChoice('trans.department', 2)" />
     <PageContainer :breadcrumbs="breadcrumbs">
-        <ComingSoonAnimated/>
-<!--        <EnrolmentFilters
+        <EnrolmentFilters
             v-model:intakePeriodModel="intakePeriodModel"
             v-model:modeOfStudyModel="modeOfStudyModel"
             :intake-periods="intakePeriods"
@@ -236,6 +236,6 @@ const handleFilterChange = () => {
                 })
             "
         />
-        <PaymentProofPreviewModal />-->
+        <PaymentProofPreviewModal />
     </PageContainer>
 </template>

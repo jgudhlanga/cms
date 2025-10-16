@@ -28,6 +28,7 @@ export type Enrolment = {
         tuitionFeeConfirmed: boolean;
         requiredLevelCompleted: boolean;
         readWriteAcknowledged: boolean;
+        disabilityStatus?: 'yes' | 'no' | 'prefer_not_to_say' | null;
         createdAt: string;
         deletedAt: string;
         updatedAt: string;
