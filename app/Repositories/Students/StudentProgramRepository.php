@@ -37,11 +37,11 @@ class StudentProgramRepository extends BaseRepository implements interface\IStud
         if ($isDepartmentUser && empty($userDepartments)) {
             return collect();
         }
-        return $this->studentProgram
-            ->select($columns)
-            ->filter($filters)
-            ->whereIn('institution_department_id', $userDepartments)
-            ->orderBy('created_at')
+        $query = $this->studentProgram->select($columns)->filter($filters);
+        if (!empty($userDepartments)) {
+            $query->whereIn('institution_department_id', $userDepartments);
+        }
+        return $query->orderBy('created_at')
             ->orderBy('deleted_at')
             ->paginate()
             ->withQueryString();
