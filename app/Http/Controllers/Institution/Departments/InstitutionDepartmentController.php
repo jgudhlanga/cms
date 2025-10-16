@@ -24,7 +24,7 @@ class InstitutionDepartmentController extends Controller
      */
     public function index(InstitutionDepartmentFilter $filters): Response
     {
-        $this->authorize('viewAnyDepartmentMetaData');
+        $this->authorize('viewDepartmentMetaData');
         $departments = InstitutionDepartmentResource::collection($this->repository->allFilter(['*'], $filters));
         $institutionDepartmentIds = InstitutionDepartment::all()->pluck('id');
         return Inertia::render('institution/departments/Index', [

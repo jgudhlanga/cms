@@ -48,6 +48,8 @@ class User extends Authenticatable implements MustVerifyEmail, HasMedia
 
     const SUPER_ADMINISTRATOR = 1;
 
+    protected $appends = ['has_student_profile', 'has_staff_profile', 'avatar_url'];
+
     protected function casts(): array
     {
         return ['email_verified_at' => 'datetime', 'password' => 'hashed'];
@@ -73,29 +75,29 @@ class User extends Authenticatable implements MustVerifyEmail, HasMedia
         return $this->hasRole(RoleEnum::STUDENT->name());
     }
 
-    public function studentProfile(): HasOne|User
+    public function studentProfile(): HasOne
     {
-        return $this->hasOne(Student::class);
+        return $this->hasOne(Student::class, 'user_id');
     }
 
-    public function hasStudentProfile(): Attribute
+    public function staffProfile(): HasOne
     {
-        return Attribute::get(fn() => $this->studentProfile()->exists());
+        return $this->hasOne(Staff::class, 'user_id');
     }
 
-    public function staffProfile(): HasOne|User
+    public function getHasStaffProfileAttribute(): bool
     {
-        return $this->hasOne(Staff::class);
+        return !is_null($this->staffProfile);
+    }
+
+    public function getHasStudentProfileAttribute(): bool
+    {
+        return !is_null($this->studentProfile);
     }
 
     public function ledgerTransactions(): MorphMany
     {
         return $this->morphMany(Ledger::class, 'ledgerable')->withTrashed();
-    }
-
-    public function hasStaffProfile(): Attribute
-    {
-        return Attribute::get(fn() => $this->staffProfile()->exists());
     }
 
     public function getFullNameAttribute(): string

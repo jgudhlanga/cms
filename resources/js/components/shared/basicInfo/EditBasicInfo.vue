@@ -14,13 +14,14 @@ import BaseModal from '@/components/core/modal/BaseModal.vue';
 import { useUtils } from '@/composables/core/useUtils';
 import { useStudentPortal } from '@/composables/students/useStudentPortal';
 import { SizeVariant } from '@/enums/sizes';
-import { getModalEdit } from '@/lib/alerts';
-import { APP_MODULE_KEYS } from '@/lib/constants';
+import { errorAlert, getModalEdit } from '@/lib/alerts';
+import { APP_MODULE_KEYS, DISABILITY_OPTIONS } from '@/lib/constants';
 import { clearFormErrors } from '@/lib/forms';
 import { useModalStore } from '@/store/core/useModalStore';
 import { Student, StudentPersonalDetailParams } from '@/types/students';
 import { useForm } from '@inertiajs/vue3';
 import { ref, watch } from 'vue';
+import BaseRadioGroup from '@/components/core/form/radio-group/BaseRadioGroup.vue';
 
 const { isNativeCitizen } = useUtils();
 const student = ref<Student | null>(null);
@@ -48,6 +49,7 @@ const form = useForm<StudentPersonalDetailParams>({
     title: null,
     title_id: null,
     weight: '',
+    disability_status: null,
 });
 
 const { modals } = useModalStore();
@@ -70,7 +72,12 @@ watch(modals!, () => {
     form.denomination = student.value?.attributes?.denomination ?? '';
     form.height = student.value?.attributes?.height ?? '';
     form.weight = student.value?.attributes?.weight ?? '';
+    form.disability_status = student.value?.attributes?.disabilityStatus ?? null;
 });
+const disabilityOptions = DISABILITY_OPTIONS;
+const onRadioChange = (value: any) => {
+    form.disability_status = value;
+};
 
 const updateForm = () => {
     const isNative = isNativeCitizen(form.idType?.label ?? '');
@@ -88,6 +95,10 @@ const save = async () => {
     updateForm();
     const studentId = student.value?.id?.toString() ?? '';
     const isNative = isNativeCitizen(form.idType?.label ?? '');
+    if (form.disability_status === null || form.disability_status === undefined) {
+        errorAlert('Please choose your disability status');
+        return;
+    }
     try {
         await updateStudentSchema(isNative, studentId).parseAsync(form);
         await updateStudent(studentId, form);
@@ -173,6 +184,16 @@ const save = async () => {
                     placeholder="enter weight"
                     :label-uppercase="true"
                     :error="form.errors.weight"
+                />
+                <BaseRadioGroup
+                    label="Disability?"
+                    class="flex items-center justify-center"
+                    :options="disabilityOptions"
+                    v-model="form.disability_status"
+                    :label-uppercase="true"
+                    orientation="horizontal"
+                    @update:modelValue="onRadioChange"
+                    :is-required="true"
                 />
             </div>
         </template>

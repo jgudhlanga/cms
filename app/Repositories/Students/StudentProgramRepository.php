@@ -4,6 +4,7 @@ namespace App\Repositories\Students;
 
 use App\DTO\Students\StudentProgramDto;
 use App\DTO\Students\ProgramDto;
+use App\Helpers\Helper;
 use App\Http\Filters\Students\StudentProgramFilter;
 use App\Models\Students\StudentProgram;
 use App\Repositories\Base\BaseRepository;
@@ -31,9 +32,15 @@ class StudentProgramRepository extends BaseRepository implements interface\IStud
 
     public function allFilter($columns = ['*'], ?StudentProgramFilter $filters = null)
     {
+        $isDepartmentUser = Helper::isDepartmentUser();
+        $userDepartments = Helper::resolveUserDepartments();
+        if ($isDepartmentUser && empty($userDepartments)) {
+            return collect();
+        }
         return $this->studentProgram
             ->select($columns)
             ->filter($filters)
+            ->whereIn('institution_department_id', $userDepartments)
             ->orderBy('created_at')
             ->orderBy('deleted_at')
             ->paginate()

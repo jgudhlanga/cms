@@ -1,11 +1,14 @@
 <script lang="ts" setup>
+import BaseAlert from '@/components/core/alert/BaseAlert.vue';
 import { BaseButton } from '@/components/core/button';
 import BaseCard from '@/components/core/card/BaseCard.vue';
 import { BaseInput } from '@/components/core/form';
 import BaseIcon from '@/components/core/icon/BaseIcon.vue';
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import { IconName } from '@/enums/icons';
+import { TypeVariant } from '@/enums/type-variants';
 import { errorAlert } from '@/lib/alerts';
+import { hasAbility } from '@/lib/permissions';
 import EnrolmentStatus from '@/pages/students/enrolments/partials/EnrolmentStatus.vue';
 import HttpService from '@/services/http.service';
 import { AuthObject } from '@/types/data-pagination';
@@ -69,36 +72,41 @@ const title = computed(() => {
 <template>
     <Head :title="$tChoice('enrolment', 2)" />
     <PageContainer :breadcrumbs="breadcrumbs">
-        <div class="my-5 flex flex-col space-y-5">
-            <BaseCard title="Search Applicant details" description="Search for existing user account / student profile">
-                <div class="mx-auto my-3 flex w-full flex-col">
-                    <div class="flex w-full items-baseline-last justify-between space-x-5">
-                        <div class="flex flex-1">
-                            <BaseInput
-                                classes="flex w-full p-6"
-                                input-id="order_reference"
-                                label="Email address / National ID# / Passport# / Student# / Order Reference / Payment Reference"
-                                v-model="search"
-                                placeholder="email address / national id# / passport# / student# / order reference / payment reference"
-                                :vertical-layout="true"
-                                :label-uppercase="false"
-                                :is-required="true"
-                            />
-                        </div>
-                        <div class="flex">
-                            <BaseButton @click="searchProfile" type="button" :processing="isSearching">
-                                <BaseIcon :name="IconName.search" />
-                                Search user account / Student Profile
-                            </BaseButton>
+        <template v-if="hasAbility(['create:students', 'create:student-programs'])">
+            <div class="my-5 flex flex-col space-y-5">
+                <BaseCard title="Search Applicant details" description="Search for existing user account / student profile">
+                    <div class="mx-auto my-3 flex w-full flex-col">
+                        <div class="flex w-full items-baseline-last justify-between space-x-5">
+                            <div class="flex flex-1">
+                                <BaseInput
+                                    classes="flex w-full p-6"
+                                    input-id="order_reference"
+                                    label="Email address / National ID# / Passport# / Student# / Order Reference / Payment Reference"
+                                    v-model="search"
+                                    placeholder="email address / national id# / passport# / student# / order reference / payment reference"
+                                    :vertical-layout="true"
+                                    :label-uppercase="false"
+                                    :is-required="true"
+                                />
+                            </div>
+                            <div class="flex">
+                                <BaseButton @click="searchProfile" type="button" :processing="isSearching">
+                                    <BaseIcon :name="IconName.search" />
+                                    Search user account / Student Profile
+                                </BaseButton>
+                            </div>
                         </div>
                     </div>
-                </div>
-            </BaseCard>
-        </div>
-        <div class="my-5 flex w-full flex-col" v-if="enrolmentLookup">
-            <BaseCard :title="title" :description="enrolmentLookup?.message ?? ''" :color-variant="colorVariant">
-                <EnrolmentStatus :enrolment-lookup="enrolmentLookup" />
-            </BaseCard>
-        </div>
+                </BaseCard>
+            </div>
+            <div class="my-5 flex w-full flex-col" v-if="enrolmentLookup">
+                <BaseCard :title="title" :description="enrolmentLookup?.message ?? ''" :color-variant="colorVariant">
+                    <EnrolmentStatus :enrolment-lookup="enrolmentLookup" />
+                </BaseCard>
+            </div>
+        </template>
+        <template v-else>
+            <BaseAlert description="You do not have permission to access this page." :type="TypeVariant.danger" />
+        </template>
     </PageContainer>
 </template>

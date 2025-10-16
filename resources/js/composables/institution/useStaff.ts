@@ -9,7 +9,7 @@ import ProfessionalInfo from '@/components/staff/ProfessionalInfo.vue';
 import { useSharedFormSchema } from '@/composables/core/useSharedFormSchema';
 import { useUtils } from '@/composables/core/useUtils';
 import { ColorVariant } from '@/enums/colors';
-import { errorAlert } from '@/lib/alerts';
+import { errorAlert, forbiddenAlert } from '@/lib/alerts';
 import { buildFormOptions, mergeValidationSchema } from '@/lib/forms';
 import { IconName } from '@/lib/icons';
 import { hasAbility } from '@/lib/permissions';
@@ -36,12 +36,14 @@ export const useStaff = () => {
                 cell: ({ row }: { row: { original: Staff } }) => {
                     const id = getIdParams(row.original.id?.toString() ?? '');
                     const title = row.original.attributes?.title ?? '';
-                    return avatar({
-                        href: route('staff.show', { department: institutionDepartmentId, staff: id }),
-                        title: `${title} ${row.original.relationships?.user?.attributes?.name ?? ''}`,
-                        src: row.original.relationships?.user?.attributes?.avatarUrl ?? '',
-                        classes: 'size-8 rounded-full',
-                    });
+                    return hasAbility('view:department-metadata')
+                        ? avatar({
+                              href: route('staff.show', { department: institutionDepartmentId, staff: id }),
+                              title: `${title} ${row.original.relationships?.user?.attributes?.name ?? ''}`,
+                              src: row.original.relationships?.user?.attributes?.avatarUrl ?? '',
+                              classes: 'size-8 rounded-full',
+                          })
+                        : `${title} ${row.original.relationships?.user?.attributes?.name ?? ''}`;
                 },
             },
             {
@@ -94,7 +96,7 @@ export const useStaff = () => {
                 enableSorting: false,
                 meta: { align: 'right' },
                 cell: ({ row }: { row: { original: Staff } }) => {
-                    const allowed = hasAbility('update:department-metadata');
+                    const allowed = hasAbility('view:department-metadata');
                     const id = getIdParams(row.original.id?.toString() ?? '');
                     return moreActionButton(!!row.original?.attributes?.deletedAt, [
                         {
@@ -110,7 +112,10 @@ export const useStaff = () => {
                         },
                         {
                             key: 'edit',
-                            action: () => navigateTo(route('staff.edit', { department: institutionDepartmentId, staff: id })),
+                            action: () =>
+                                hasAbility('update:department-metadata')
+                                    ? navigateTo(route('staff.edit', { department: institutionDepartmentId, staff: id }))
+                                    : forbiddenAlert(),
                         },
                     ]);
                 },
@@ -165,6 +170,7 @@ export const useStaff = () => {
             form.setError(error.format());
         }
     };
+
     const staff = ref<ApiFilterResponse | null>(null);
     const loadStaff = async (url: string) => {
         try {

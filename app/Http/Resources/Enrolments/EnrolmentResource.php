@@ -42,6 +42,7 @@ class EnrolmentResource extends JsonResource
                 'tuitionFeeConfirmed' => $this->tuition_fee_confirmed,
                 'requiredLevelCompleted' => $this->required_level_completed,
                 'readWriteAcknowledged' => $this->read_write_acknowledged,
+                'disabilityStatus' => $this->student?->disability_status,
                 'createdAt' => $this->created_at,
                 'updatedAt' => $this->updated_at,
                 'deletedAt' => $this->deleted_at,

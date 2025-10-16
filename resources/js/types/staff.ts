@@ -47,6 +47,7 @@ export type CreateStaffParams = {
     maritalStatus?: SelectOption | null;
     marital_status_id: string | number | null;
     employmentType?: SelectOption | null;
+    department?: SelectOption | null;
     employment_type_id: string | number | null;
     email: string;
     phone_number?: string;

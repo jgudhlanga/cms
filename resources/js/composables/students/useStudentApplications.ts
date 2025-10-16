@@ -166,11 +166,11 @@ export const useStudentApplications = () => {
         const successMessage = () => trans('trans.bulk_application_approval_success');
         const errorMessage = () => trans('trans.bulk_application_approval_failure');
         try {
-            warningDialog(async () => {
-                await HttpService.post(route('students.bulk-approve-applications', institutionDepartmentId), params);
+           /* warningDialog(() => {
+                 HttpService.post(route('students.bulk-approve-applications', institutionDepartmentId), params);
                 successAlert(successMessage());
                 router.visit(window.location.href, { replace: true });
-            });
+            });*/
         } catch {
             errorAlert(errorMessage());
         }

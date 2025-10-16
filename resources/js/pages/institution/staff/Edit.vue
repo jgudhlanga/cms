@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import PageContainer from '@/components/core/page/PageContainer.vue';
+import StaffForm from '@/pages/institution/staff/partials/StaffForm.vue';
+import { useStaffCreateFormStore } from '@/store/institution/useStaffStore';
 import { AuthObject } from '@/types/data-pagination';
 import { InstitutionDepartment } from '@/types/institution';
-import Form from '@/pages/institution/staff/partials/Form.vue';
 import { Staff } from '@/types/staff';
 import type { Link } from '@/types/ui';
 import { Head } from '@inertiajs/vue3';
 import { onBeforeUnmount } from 'vue';
-import { useStaffCreateFormStore } from '@/store/institution/useStaffStore';
 
 interface Props {
     department: InstitutionDepartment;
@@ -31,12 +31,12 @@ onBeforeUnmount(() => {
     const store = useStaffCreateFormStore();
     store.$reset();
     store.$dispose();
-})
+});
 </script>
 
 <template>
     <Head :title="$t('trans.edit_staff')" />
     <PageContainer :breadcrumbs="breadcrumbs">
-        <Form :department="department" :staff="staff" />
+        <StaffForm :department="department" :staff="staff" />
     </PageContainer>
 </template>

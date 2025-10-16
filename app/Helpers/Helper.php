@@ -2,12 +2,14 @@
 
 namespace App\Helpers;
 
+use App\Enums\Acl\PermissionEnum;
 use App\Enums\Institution\ModeOfStudyEnum;
 use App\Enums\Shared\StatusEnum;
 use App\Enums\Shared\TenantEnum;
 use App\Models\Institution\InstitutionDepartment;
 use App\Models\Institution\IntakePeriod;
 use App\Models\Institution\ModeOfStudy;
+use App\Models\Institution\Staff;
 use App\Models\Shared\Status;
 use App\Models\Students\Student;
 use App\Models\Tenants\Tenant;
@@ -16,6 +18,7 @@ use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class Helper
@@ -106,12 +109,49 @@ class Helper
         return IntakePeriod::orderBy('end_date', 'DESC')->firstOrFail();
     }
 
-    private static function resolveModeOfStudy(?int $modeOfStudyId): Model|Collection|null
+    public static function resolveUserDepartments(): array|null
+    {
+        $departments = [];
+        if (self::isDepartmentUser()) {
+            $user = auth()->user();
+            $staffProfile = $user->staffProfile;
+            if ($staffProfile && $staffProfile instanceof Staff) {
+                $departments = $staffProfile
+                    ->institutionDepartments()
+                    ->pluck('institution_departments.id')
+                    ->toArray();
+            }
+        }
+
+        return $departments;
+    }
+
+    public static function isDepartmentUser(): bool
+    {
+        $user = auth()->user();
+        return $user && $user->can(PermissionEnum::VIEW_ONLY_OWN_DEPARTMENT);
+    }
+
+    public static function hasAccessToNonAcademicDepartments(): bool
+    {
+        $departments = self::resolveUserDepartments();
+        if (empty($departments)) {
+            return false;
+        }
+        $nonAcademicCount = InstitutionDepartment::whereIn('id', $departments)
+            ->whereHas('department', function ($query) {
+                $query->where('is_academic', false);
+            })->count();
+        return $nonAcademicCount > 0;
+    }
+
+    public static function resolveModeOfStudy(?int $modeOfStudyId): Model|Collection|null
     {
         return $modeOfStudyId
             ? ModeOfStudy::find($modeOfStudyId)
             : ModeOfStudy::where('name', ModeOfStudyEnum::FULL_TIME->value)->first();
     }
+
 
     public static function initializeProgramWorkflow($program): void
     {

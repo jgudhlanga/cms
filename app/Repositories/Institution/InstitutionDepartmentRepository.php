@@ -3,6 +3,7 @@
 namespace App\Repositories\Institution;
 
 use App\DTO\Institution\InstitutionDepartmentDto;
+use App\Helpers\Helper;
 use App\Http\Filters\Institution\InstitutionDepartmentFilter;
 use App\Models\Institution\InstitutionDepartment;
 use App\Repositories\Base\BaseRepository;
@@ -18,10 +19,16 @@ class InstitutionDepartmentRepository extends BaseRepository implements IInstitu
 
     public function allFilter($columns = ['*'], InstitutionDepartmentFilter $filters = null)
     {
-        return $this->institutionDepartment
-            ->select($columns)
-            ->filter($filters)
-            ->orderBy('created_at')
+        $isDepartmentUser = Helper::isDepartmentUser();
+        $userDepartments = Helper::resolveUserDepartments();
+        if ($isDepartmentUser && empty($userDepartments)) {
+            return collect();
+        }
+        $query = $this->institutionDepartment->select($columns)->filter($filters);
+        if (!empty($userDepartments)) {
+            $query->whereIn('id', $userDepartments);
+        }
+        return $query->orderBy('created_at')
             ->orderBy('deleted_at')
             ->paginate()
             ->withQueryString();

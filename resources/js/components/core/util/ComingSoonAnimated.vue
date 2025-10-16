@@ -6,7 +6,7 @@ import { IconName } from '@/lib/icons';
 import lottie from 'lottie-web';
 import { onMounted, onUnmounted, ref } from 'vue';
 
-const targetDate = new Date('2025-09-31T23:59:59');
+const targetDate = new Date('2025-10-28T23:59:59');
 
 const days = ref(0);
 const hours = ref(0);
@@ -44,7 +44,7 @@ onMounted(() => {
     });
 });
 
-const showCountdown = false;
+const showCountdown = true;
 
 onUnmounted(() => {
     clearInterval(timerInterval);

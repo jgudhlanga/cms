@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Students;
 
 use App\DTO\Students\UpdateStudentDto;
 use App\Enums\Institution\LevelEnum;
+use App\Helpers\Helper;
 use App\Http\Controllers\Controller;
 use App\Http\Filters\Students\StudentProgramFilter;
 use App\Http\Requests\Students\UpdateStudentRequest;
@@ -32,6 +33,7 @@ class StudentProgramController extends Controller
     }
 
     /**
+     *
      * @throws AuthorizationException
      */
     public function index(StudentProgramFilter $filters): Response
@@ -50,7 +52,7 @@ class StudentProgramController extends Controller
     {
     }
 
-    public function store(Request $request): Response
+    public function store(Request $request)
     {
         $this->authorize('create', StudentProgram::class);
         //
@@ -71,7 +73,7 @@ class StudentProgramController extends Controller
 
     public function update(UpdateStudentRequest $request, Student $student): void
     {
-        $this->repository->update($student, UpdateStudentDto::fromUpdateStudentRequest($request));
+        // $this->repository->update($student, UpdateStudentDto::fromUpdateStudentRequest($request));
     }
 
     public function destroy(string $id)
@@ -83,36 +85,58 @@ class StudentProgramController extends Controller
     {
         $this->authorize('viewAny', StudentProgram::class);
 
-        // 1️⃣ Get allowed department levels (NC + ABMA Level 3)
+        $isDepartmentUser = Helper::isDepartmentUser();
+        $userDepartments = Helper::resolveUserDepartments();
         $allowedLevelIds = $this->getAllowedLevelIds();
 
-        // 2️⃣ Fetch IDs for problematic applications
-        $noOLevelResultsIds = $this->getNoOLevelResultsIds($allowedLevelIds);
-        $oLevelResultsFewerThanFiveIds = $this->getOLevelResultsFewerThanFiveIds($allowedLevelIds);
+        // Collect all the faulty cases
+        $faultyCases = [
+            'enrolmentWithoutOLevel' => $this->buildFaultyQuery(
+                $this->getNoOLevelResultsIds($allowedLevelIds),
+                $isDepartmentUser,
+                $userDepartments
+            ),
+            'enrolmentWithFewerThanFive' => $this->buildFaultyQuery(
+                $this->getOLevelResultsFewerThanFiveIds($allowedLevelIds),
+                $isDepartmentUser,
+                $userDepartments
+            ),
+            'noApplicationsFeePaid' => $this->buildFaultyQuery(
+                $this->getNoReceiptsIds(),
+                $isDepartmentUser,
+                $userDepartments,
+                ['student', 'departmentLevel', 'departmentCourse']
+            ),
+        ];
 
-        // 3️⃣ Query and paginate faulty applications
-        $noOLevelResults = StudentProgram::with('student')
-            ->whereIn('id', $noOLevelResultsIds)
-            ->latest()
-            ->paginate(1000);
-
-        $oLevelResultsFewerThanFive = StudentProgram::with('student')
-            ->whereIn('id', $oLevelResultsFewerThanFiveIds)
-            ->latest()
-            ->paginate(1000);
-
-        // Get the actual StudentProgram models
-        $noApplicationsFeePaid = StudentProgram::with(['student', 'departmentLevel', 'departmentCourse'])
-            ->whereIn('id', $this->getNoReceiptsIds())
-            ->latest()
-            ->paginate(1000);
-
-        // 5 Transform for frontend
+        // Transform and return
         return Inertia::render('students/enrolments/FaultyApplications', [
-            'enrolmentWithoutOLevel' => EnrolmentResource::collection($noOLevelResults),
-            'enrolmentWithFewerThanFive' => EnrolmentResource::collection($oLevelResultsFewerThanFive),
-            'noApplicationsFeePaid' => EnrolmentResource::collection($noApplicationsFeePaid),
+            'enrolmentWithoutOLevel' => EnrolmentResource::collection($faultyCases['enrolmentWithoutOLevel']),
+            'enrolmentWithFewerThanFive' => EnrolmentResource::collection($faultyCases['enrolmentWithFewerThanFive']),
+            'noApplicationsFeePaid' => EnrolmentResource::collection($faultyCases['noApplicationsFeePaid']),
         ]);
+    }
+
+    private function buildFaultyQuery(
+        array  $ids,
+        bool   $isDepartmentUser,
+        ?array $userDepartments,
+        array  $relations = ['student'],
+        int    $perPage = 1000
+    )
+    {
+        $query = StudentProgram::with($relations)
+            ->whereIn('id', $ids);
+
+        if ($isDepartmentUser) {
+            if (empty($userDepartments)) {
+                $query->whereRaw('1 = 0'); // prevents any results
+            } else {
+                $query->whereIn('institution_department_id', $userDepartments);
+            }
+        }
+
+        return $query->latest()->paginate($perPage);
     }
 
     private function getAllowedLevelIds()
@@ -133,7 +157,7 @@ class StudentProgramController extends Controller
             })
             ->whereIn('department_level_id', $allowedLevelIds)
             ->groupBy('student_id')
-            ->pluck('id');
+            ->pluck('id')->toArray();
     }
 
     private function getOLevelResultsFewerThanFiveIds($allowedLevelIds)
@@ -145,7 +169,7 @@ class StudentProgramController extends Controller
             })
             ->whereIn('department_level_id', $allowedLevelIds)
             ->groupBy('student_id')
-            ->pluck('id');
+            ->pluck('id')->toArray();
     }
 
     private function getNoReceiptsIds()
@@ -162,7 +186,7 @@ class StudentProgramController extends Controller
         })
             ->selectRaw('MAX(id) as id')
             ->groupBy('student_id')
-            ->pluck('id');
+            ->pluck('id')->toArray();
     }
 
 }

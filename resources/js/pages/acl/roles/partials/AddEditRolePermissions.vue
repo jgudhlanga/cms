@@ -63,7 +63,7 @@ const groupedPermissions = allPermissions ? groupPermissionsByModule(allPermissi
 					<div class="mb-1 mt-3">
 						<div class="text-xs font-semibold uppercase">{{ index.toString() }}</div>
 					</div>
-					<div class="grid grid-cols-6 gap-x-3">
+					<div class="grid grid-cols-1 md:grid-cols-4 gap-x-3">
 						<template v-for="(permission, index) in group" :key="permission['id']">
 							<BaseCheckbox
 								:input-id="`${permission['id']}_${index}`"

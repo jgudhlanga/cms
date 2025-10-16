@@ -1,5 +1,6 @@
 
 import { trans, trans_choice } from 'laravel-vue-i18n';
+import { User } from '@/types/users';
 export interface Auth {
     user: User;
     can: any;

@@ -4,6 +4,7 @@ import { ColorVariant } from '@/enums/colors';
 import { closeModal, errorAlert, forbiddenAlert, openModal, successAlert } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
 import { toggleFormLoader } from '@/lib/forms';
+import { hasAbility } from '@/lib/permissions';
 import { getIdParams } from '@/lib/utils';
 import HttpService from '@/services/http.service';
 import { useCreateApplicationFormStore } from '@/store/portal/useCreateApplicationFormStore';
@@ -30,7 +31,9 @@ export const useDepartmentCourses = (isEditingProgram?: boolean) => {
                 accessorKey: 'course',
                 cell: ({ row }: { row: { original: DepartmentCourse } }) => {
                     const id = getIdParams(row.original.id?.toString() ?? '');
-                    return textLink(route('department-courses.show', id), row.original.attributes?.course);
+                    return hasAbility('create:department-metadata')
+                        ? textLink(route('department-courses.show', id), row.original.attributes?.course)
+                        : row.original.attributes?.course;
                 },
             },
             {
@@ -280,7 +283,9 @@ export const useDepartmentCourses = (isEditingProgram?: boolean) => {
     const listCourseRequirements = async (departmentLevelId: string, departmentCourseId: string) => {
         if (Number(departmentLevelId) > 0 && Number(departmentCourseId) > 0) {
             isLoading.value = true;
-            courseRequirements.value = await HttpService.get(`api/v1/institution-departments/${departmentLevelId}/courses/${departmentCourseId}/requirements`);
+            courseRequirements.value = await HttpService.get(
+                `api/v1/institution-departments/${departmentLevelId}/courses/${departmentCourseId}/requirements`,
+            );
             if (levelRequirements && Number(courseRequirements.value?.id) > 0) {
                 levelRequirements.value = null;
             }

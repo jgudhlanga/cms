@@ -39,6 +39,7 @@ class StudentResource extends JsonResource
                 'height' => $this?->height ?? null,
                 'weight' => $this?->weight ?? null,
                 'requiredExamSittingCount' => $this?->required_exam_sitting_count ?? null,
+                'disabilityStatus' => $this?->disability_status,
                 'createdAt' => $this->created_at,
                 'updatedAt' => $this->updated_at,
                 'deletedAt' => $this->deleted_at,

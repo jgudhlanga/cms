@@ -81,7 +81,7 @@ const handleSelectionChange = async () => {
                 />
             </div>
         </div>
-        <DataLoadingSpinner v-if="isLoading || intakePeriodsLoading" />
+        <DataLoadingSpinner v-if="isLoading || intakePeriodsLoading || modesOfStudyLoading" />
         <div class="flex flex-col" v-else>
             <template v-if="enrolments && enrolments.length > 0">
                 <div v-for="enrolment in enrolments" :key="enrolment.departmentCourseId" class="flex flex-col space-y-4">
