@@ -11,9 +11,10 @@ class EnrolmentApplicationResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'application_Id' => $this->application_id,
+            'applicationId' => $this->application_id,
             'applicationTrackingNumber' => $this->application_tracking_number,
             'applicationDate' => $this->application_date,
+            'studentId' => $this->student_id,
             'studentName' => $this->student_name,
             'studentNumber' => $this->student_number,
             'email' => $this->email,

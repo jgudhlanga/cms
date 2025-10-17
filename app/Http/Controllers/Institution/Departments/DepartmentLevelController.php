@@ -2,36 +2,33 @@
 
 namespace App\Http\Controllers\Institution\Departments;
 
-use App\Enums\Institution\ModeOfStudyEnum;
 use App\Enums\Shared\AcademicLevelEnum;
 use App\Enums\Shared\FeeTypeEnum;
-use App\Enums\Shared\GenderEnum;
 use App\Helpers\Helper;
-use App\Http\Resources\Enrolments\EnrolmentApplicationResource;
+use App\Http\Resources\Enrolments\EnrolmentGroupResource;
+use App\Models\Institution\Course;
+use App\Models\Institution\DepartmentCourse;
 use App\Models\Institution\ModeOfStudy;
 use App\Models\Ledgers\Ledger;
 use App\Models\Shared\AcademicLevel;
 use App\Models\Shared\FeeType;
-use App\Models\Students\StudentAcademicResult;
 use App\Models\Users\User;
-use Closure;
+use Carbon\Carbon;
 use App\DTO\Institution\{DepartmentLevelDto, DepartmentLevelRequirementsDto};
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Institution\{DepartmentLevelRequest, DepartmentLevelRequirementRequest};
-use App\Http\Resources\Enrolments\EnrolmentResource;
-use App\Http\Resources\Institution\{DepartmentLevelResource,
+use App\Http\Resources\Institution\{CourseResource,
+    DepartmentLevelResource,
     InstitutionDepartmentResource,
     DepartmentApplicationStepResource,
     DepartmentLevelRequirementResource,
     IntakePeriodResource,
-    ModeOfStudyResource
-};
+    ModeOfStudyResource};
 use App\Models\Institution\DepartmentLevel;
 use App\Models\Students\StudentProgram;
 use App\Models\Institution\InstitutionDepartment;
 use App\Repositories\Institution\interface\IDepartmentLevelRepository;
 use Illuminate\Auth\Access\AuthorizationException;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -116,13 +113,13 @@ class DepartmentLevelController extends Controller
         $modeOfStudy = Helper::resolveModeOfStudy();
         $modesOfStudy = ModeOfStudyResource::collection(ModeOfStudy::all());
         $intakePeriods = IntakePeriodResource::collection(IntakePeriod::orderByDesc('end_date')->get());
-
+        $departmentCourse = $courseId ? DepartmentCourse::find($courseId) : null;
         $workflowSteps = DepartmentApplicationStepResource::collection(WorkflowHelper::getAllSteps($institutionDepartment->id));
-        $maxStep = WorkflowHelper::getMaxStep($institutionDepartment->id);
         $classSize = $courseId ? $this->getClassSize($institutionDepartment, $departmentLevel->id, $courseId, $intakePeriod->id, $modeOfStudy->id) : 0;
-        $enrolments = $this->fetchEnrolments($institutionDepartment, $departmentLevel, $intakePeriodId, $modeOfStudyId, $maxStep, $courseId);
-        $myEnrolments = $this->queryEnrolments($institutionDepartment->id, $departmentLevel->id, $intakePeriod->id, $modeOfStudy->id, $courseId);
-        dd($myEnrolments['groups']['disabled']);
+       // $enrolments = $this->fetchEnrolments($institutionDepartment, $departmentLevel, $intakePeriodId, $modeOfStudyId, $maxStep, $courseId);
+        $results = $this->queryEnrolments($institutionDepartment->id, $departmentLevel->id, $intakePeriod->id, $modeOfStudy->id, $courseId);
+        $enrolments = EnrolmentGroupResource::make($results);
+        $course = CourseResource::make($departmentCourse->course);
         return Inertia::render('institution/enrolments/CourseLevelEnrolments', [
             'department' => InstitutionDepartmentResource::make($institutionDepartment),
             'level' => DepartmentLevelResource::make($departmentLevel),
@@ -133,8 +130,7 @@ class DepartmentLevelController extends Controller
             'enrolments' => $enrolments,
             'modesOfStudy' => $modesOfStudy,
             'intakePeriods' => $intakePeriods,
-            // 'disabledEnrolments' => $disabledEnrolments,
-            'myEnrolments' => $myEnrolments,
+            'course' => $course,
         ]);
     }
 
@@ -145,62 +141,6 @@ class DepartmentLevelController extends Controller
         $courseId = request('department_course_id') > 0 ? (int)request('department_course_id') : null;
 
         return [$intakePeriodId, $modeOfStudyId, $courseId];
-    }
-
-    private function resolveIntakePeriod(?int $intakePeriodId)
-    {
-        return $intakePeriodId
-            ? IntakePeriod::find($intakePeriodId)
-            : IntakePeriod::orderByDesc('end_date')->first();
-    }
-
-    private function resolveModeOfStudy(?int $modeOfStudyId)
-    {
-        return $modeOfStudyId
-            ? ModeOfStudy::find($modeOfStudyId)
-            : ModeOfStudy::where('name', ModeOfStudyEnum::FULL_TIME->value)->first();
-    }
-
-    // Base reusable function
-    private function fetchEnrolments(
-        InstitutionDepartment $institutionDepartment,
-        DepartmentLevel       $departmentLevel,
-        ?int                  $intakePeriodId,
-        ?int                  $modeOfStudyId,
-                              $maxStep,
-                              $courseId,
-        ?Closure              $additionalFilter = null
-    )
-    {
-        $query = $institutionDepartment->enrolments()
-            ->where('department_level_id', $departmentLevel->id)
-            ->whereHas('departmentWorkflowStep', fn($q) => $q->where('position', '<', $maxStep->position)
-            )
-            ->when($intakePeriodId, fn($q) => $q->where('intake_period_id', $intakePeriodId)
-            )
-            ->when($modeOfStudyId, fn($q) => $q->where('mode_of_study_id', $modeOfStudyId)
-            )
-            ->when($courseId, fn($q) => $q->where('department_course_id', $courseId)
-            )
-            ->with([
-                'departmentWorkflowStep',
-                'student.user',
-                'institutionDepartment.department',
-                'departmentLevel.level',
-                'departmentCourse.course',
-                'student.oLevelResults',
-            ])
-            ->orderBy('student_programs.created_at');
-
-        // Apply additional filter if provided
-        if ($additionalFilter) {
-            $additionalFilter($query);
-        }
-
-        return $query->get()
-            ->groupBy(fn($enrolment) => $enrolment->departmentWorkflowStep->workflowStep->name)
-            ->sortByDesc(fn($group) => $group->first()->departmentWorkflowStep->position ?? 0)
-            ->map(fn($group) => EnrolmentResource::collection($group));
     }
 
     private function getClassSize(InstitutionDepartment $institutionDepartment, $departmentLevelId, $departmentCourseId, $intakePeriodId, $modeOfStudyId): int
@@ -271,6 +211,7 @@ class DepartmentLevelController extends Controller
             )
             ->whereIn('student_id', $studentIds)
             ->where('academic_level_id', $oLevelId)
+            ->whereNull('deleted_at')
             ->groupBy('student_id')
             ->get()
             ->keyBy('student_id');
@@ -283,6 +224,7 @@ class DepartmentLevelController extends Controller
         $receipts = Ledger::query()
             ->whereIn('ledgerable_id', $userIds)
             ->where('ledgerable_type', User::class)
+            ->whereNull('deleted_at')
             ->where([
                 'fee_type_id' => $applicationFeeId,
                 'intake_period_id' => $intakePeriodId,
@@ -301,6 +243,7 @@ class DepartmentLevelController extends Controller
             ->join('grades as g', 'sar.grade_id', '=', 'g.id')
             ->whereIn('sar.student_id', $studentIds)
             ->where('sar.academic_level_id', $oLevelId)
+            ->whereNull('sar.deleted_at')
             ->select(
                 'sar.id as result_id',
                 'sar.student_id',
@@ -326,10 +269,12 @@ class DepartmentLevelController extends Controller
             $sp->student_name = "{$user->first_name} {$user->last_name}";
             $sp->email = $user->email;
             $sp->phone_number = $student->contacts->first()?->phone_number;
+            $sp->student_id = $student->id;
             $sp->student_number = $student->student_number;
             $sp->disability_status = $student->disability_status;
             $sp->gender = $student->gender->title ?? null;
             $sp->workflow_step = $sp->departmentWorkflowStep?->workflowStep?->name;
+            $sp->application_date = Carbon::parse($sp->application_date)->format('Y-m-d');
 
             // Attach academic stats
             $stats = $academicStats->get($student->id);
@@ -390,10 +335,10 @@ class DepartmentLevelController extends Controller
                 'links' => $paginator->linkCollection(),
             ],
             'groups' => [
-                'disabled' => EnrolmentApplicationResource::collection($grouped['disabled']),
-                'female' => EnrolmentApplicationResource::collection($grouped['female']),
-                'male' => EnrolmentApplicationResource::collection($grouped['male']),
-                'others' => EnrolmentApplicationResource::collection($grouped['others']),
+                'disabled' => $grouped['disabled'],
+                'female' => $grouped['female'],
+                'male' => $grouped['male'],
+                'others' => $grouped['others'],
             ],
         ];
     }

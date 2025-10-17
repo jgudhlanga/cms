@@ -14,6 +14,7 @@ class EnrolmentResource extends JsonResource
 
     public function toArray(Request $request): array
     {
+        $contact = $this->student?->contacts?->first();
         return [
             'type' => 'enrolments',
             'id' => $this->id,
@@ -21,7 +22,7 @@ class EnrolmentResource extends JsonResource
                 'studentId' => $this?->student?->id,
                 'studentName' => $this->student?->user?->full_name,
                 'studentNumber' => $this->student?->student_number,
-                'phoneNumber' => $this->student?->user?->phone_number,
+                'phoneNumber' => $contact?->phone_number,
                 'email' => $this->student->user->email,
                 'requiredExamSittingCount' => $this->student?->required_exam_sitting_count ?? null,
                 'modeOfStudyId' => $this->mode_of_study_id,
