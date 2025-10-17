@@ -145,11 +145,12 @@ class Helper
         return $nonAcademicCount > 0;
     }
 
-    public static function resolveModeOfStudy(?int $modeOfStudyId): Model|Collection|null
+    public static function resolveModeOfStudy(): Model|Collection|null
     {
-        return $modeOfStudyId
-            ? ModeOfStudy::find($modeOfStudyId)
-            : ModeOfStudy::where('name', ModeOfStudyEnum::FULL_TIME->value)->first();
+        if (request()->filled('mode_of_study_id') && request()->mode_of_study_id > 0) {
+            return ModeOfStudy::findOrFail(request()->mode_of_study_id);
+        }
+        return ModeOfStudy::where('name', ModeOfStudyEnum::FULL_TIME->value)->first();
     }
 
 

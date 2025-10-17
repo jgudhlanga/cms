@@ -11,8 +11,8 @@ import EnrolmentFilters from '@/pages/institution/enrolments/partials/EnrolmentF
 import PaymentProofPreviewModal from '@/pages/institution/enrolments/partials/PaymentProofPreviewModal.vue';
 import { AuthObject } from '@/types/data-pagination';
 import { DepartmentApplicationStep, DepartmentLevel } from '@/types/department-meta-data';
-import { Enrolment } from '@/types/enrolments';
-import { InstitutionDepartment, IntakePeriod, ModeOfStudy } from '@/types/institution';
+import { Enrolment, EnrolmentGroupResponse } from '@/types/enrolments';
+import { Course, InstitutionDepartment, IntakePeriod, ModeOfStudy } from '@/types/institution';
 import { Link } from '@/types/ui';
 import { SelectOption } from '@/types/utils';
 import { Head, router } from '@inertiajs/vue3';
@@ -24,7 +24,8 @@ import ComingSoonAnimated from '@/components/core/util/ComingSoonAnimated.vue';
 interface Props {
     department: InstitutionDepartment;
     level: DepartmentLevel;
-    enrolments: Record<string, Enrolment[]>;
+    course: Course;
+    //enrolments: Record<string, Enrolment[]>;
     workflowSteps: DepartmentApplicationStep[];
     intakePeriod: IntakePeriod;
     modeOfStudy: ModeOfStudy;
@@ -32,11 +33,12 @@ interface Props {
     errors: object;
     intakePeriods: IntakePeriod[];
     modesOfStudy: ModeOfStudy[];
+    enrolments: EnrolmentGroupResponse;
 }
 
 const props = defineProps<Props>();
 
-const { department, level, enrolments, intakePeriod, modeOfStudy } = props;
+const { department, level, enrolments, intakePeriod, modeOfStudy, course } = props;
 const { isItTrue } = useUtils();
 
 const { bulkApproveApplication, canApproveWorkflowStepApplications } = useStudentApplications();
@@ -47,19 +49,19 @@ onMounted(async () => {
     intakePeriodModel.value = intakePeriod ? { value: Number(intakePeriod.id), label: intakePeriod.attributes.name } : null;
     modeOfStudyModel.value = modeOfStudy ? { value: Number(modeOfStudy.id), label: modeOfStudy.attributes.name } : null;
 });
-const firstStepKey = Object.keys(enrolments)[0] ?? '';
+/*const firstStepKey = Object.keys(enrolments)[0] ?? '';
 const firstEnrolment = firstStepKey ? enrolments[firstStepKey]?.[0] : null;
-const firstCourseName = firstEnrolment?.attributes?.course ?? '';
+const firstCourseName = firstEnrolment?.attributes?.course ?? '';*/
 
 const breadcrumbs: Array<Link> = [
     { transChoiceKey: 'institution', transChoiceKeyIndex: 1, href: route('institution.index') },
     { transChoiceKey: 'department', href: route('institution-departments.index', { is_academic: department.attributes?.isAcademic }) },
     { title: department.attributes.department, href: route('institution-departments.show', department?.id?.toString()) },
     { title: level.attributes.level },
-    { title: firstCourseName },
+    { title: course?.attributes?.name },
     { transChoiceKey: 'enrolment' },
 ];
-
+/*
 const sortedEnrolmentsByStep = computed(() => {
     const sorted: Record<string, Enrolment[]> = {};
 
@@ -75,7 +77,7 @@ const sortedEnrolmentsByStep = computed(() => {
     }
 
     return sorted;
-});
+});*/
 
 const getNextSteps = (currentStepName: string) => {
     const currentStepObj = getCurrentStep(currentStepName);
@@ -148,15 +150,15 @@ const handleFilterChange = () => {
 <template>
     <Head :title="$tChoice('trans.department', 2)" />
     <PageContainer :breadcrumbs="breadcrumbs">
-        <ComingSoonAnimated/>
-<!--        <EnrolmentFilters
+        <EnrolmentFilters
             v-model:intakePeriodModel="intakePeriodModel"
             v-model:modeOfStudyModel="modeOfStudyModel"
             :intake-periods="intakePeriods"
             :modes-of-study="modesOfStudy"
             :handle-filter-change="handleFilterChange"
         />
-        <template v-if="!(Object.entries(sortedEnrolmentsByStep).length === 0)">
+        <ComingSoonAnimated/>
+        <!--        <template v-if="!(Object.entries(sortedEnrolmentsByStep).length === 0)">
             <div v-for="(enrolmentsInStep, step) in sortedEnrolmentsByStep" :key="step" class="flex flex-col space-y-3">
                 <div class="mt-7 flex items-center justify-between">
                     <div class="text-accent-foreground mb-0.5 flex text-sm font-bold uppercase">{{ step }}</div>
@@ -235,7 +237,7 @@ const handleFilterChange = () => {
                     data: `${$tChoice('trans.enrolment', 2)} for ${intakePeriodModel?.label} - ${modeOfStudyModel?.label}`,
                 })
             "
-        />
-        <PaymentProofPreviewModal />-->
+        />-->
+        <PaymentProofPreviewModal />
     </PageContainer>
 </template>

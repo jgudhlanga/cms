@@ -28,6 +28,7 @@ export type Enrolment = {
         tuitionFeeConfirmed: boolean;
         requiredLevelCompleted: boolean;
         readWriteAcknowledged: boolean;
+        disabilityStatus?: 'yes' | 'no' | 'prefer_not_to_say' | null;
         createdAt: string;
         deletedAt: string;
         updatedAt: string;
@@ -129,3 +130,58 @@ export type EnrolmentLookup = {
     statusCode: number | null;
     message?: string | null;
 };
+
+export interface OLeveResult {
+    resultId: number
+    subjectId: number
+    examYear: string
+    examSitting: string
+    gradeId: number
+    subject: string
+    grade: string
+}
+
+export interface EnrolmentApplication {
+    applicationId: number
+    applicationTrackingNumber: string
+    applicationDate: string
+
+    studentId: string
+    studentName: string
+    studentNumber: string
+    email: string | null
+    phoneNumber: string | null
+
+    gender: string | null
+    disabilityStatus: string | null
+    workflow_step: string | null
+
+    receiptId: number | null
+    receiptAmount: number | null
+
+    examSittingsCount: number
+    firstExamYear: string | null
+
+    academicResults: OLeveResult[]
+}
+
+export interface EnrolmentApplicationGroup {
+    disabled: EnrolmentApplication[]
+    female: EnrolmentApplication[]
+    male: EnrolmentApplication[]
+    others: EnrolmentApplication[]
+}
+
+export interface Pagination {
+    currentPage: number
+    lastPage: number
+    perPage: number
+    total: number
+    links: any[]
+}
+
+export interface EnrolmentGroupResponse {
+    pagination: Pagination
+    groups: EnrolmentApplicationGroup
+}
+
