@@ -7,10 +7,11 @@ import { useStudentApplications } from '@/composables/students/useStudentApplica
 import ByAcademicLevelResults from '@/pages/institution/enrolments/partials/ByAcademicLevelResults.vue';
 import EnrolmentFilters from '@/pages/institution/enrolments/partials/EnrolmentFilters.vue';
 import PaymentProofPreviewModal from '@/pages/institution/enrolments/partials/PaymentProofPreviewModal.vue';
+import ScoringFormula from '@/pages/institution/enrolments/partials/ScoringFormula.vue';
 import { AuthObject } from '@/types/data-pagination';
-import { DepartmentApplicationStep, DepartmentLevel } from '@/types/department-meta-data';
+import { DepartmentApplicationStep, DepartmentCourse, DepartmentLevel } from '@/types/department-meta-data';
 import { Enrolment, EnrolmentGroupResponse } from '@/types/enrolments';
-import { Course, InstitutionDepartment, IntakePeriod, ModeOfStudy } from '@/types/institution';
+import { InstitutionDepartment, IntakePeriod, ModeOfStudy } from '@/types/institution';
 import { Link } from '@/types/ui';
 import { SelectOption } from '@/types/utils';
 import { Head, router } from '@inertiajs/vue3';
@@ -19,7 +20,7 @@ import { computed, onMounted, ref } from 'vue';
 interface Props {
     department: InstitutionDepartment;
     level: DepartmentLevel;
-    course: Course;
+    course: DepartmentCourse;
     workflowSteps: DepartmentApplicationStep[];
     intakePeriod: IntakePeriod;
     modeOfStudy: ModeOfStudy;
@@ -44,35 +45,16 @@ onMounted(async () => {
     intakePeriodModel.value = intakePeriod ? { value: Number(intakePeriod.id), label: intakePeriod.attributes.name } : null;
     modeOfStudyModel.value = modeOfStudy ? { value: Number(modeOfStudy.id), label: modeOfStudy.attributes.name } : null;
 });
-/*const firstStepKey = Object.keys(enrolments)[0] ?? '';
-const firstEnrolment = firstStepKey ? enrolments[firstStepKey]?.[0] : null;
-const firstCourseName = firstEnrolment?.attributes?.course ?? '';*/
 
 const breadcrumbs: Array<Link> = [
     { transChoiceKey: 'institution', transChoiceKeyIndex: 1, href: route('institution.index') },
     { transChoiceKey: 'department', href: route('institution-departments.index', { is_academic: department.attributes?.isAcademic }) },
     { title: department.attributes.department, href: route('institution-departments.show', department?.id?.toString()) },
     { title: level.attributes.level },
-    { title: course?.attributes?.name },
+    { title: course?.attributes?.course },
     { transChoiceKey: 'enrolment' },
 ];
-/*
-const sortedEnrolmentsByStep = computed(() => {
-    const sorted: Record<string, Enrolment[]> = {};
 
-    // Loop over each workflow step
-    for (const [step, enrolmentArray] of Object.entries(enrolments)) {
-        sorted[step] = [...enrolmentArray].sort((a, b) => {
-            const totalA = a.relationships?.oLevelResults?.reduce((sum, result) => sum + Number(result.attributes.gradePosition || 0), 0) ?? 0;
-
-            const totalB = b.relationships?.oLevelResults?.reduce((sum, result) => sum + Number(result.attributes.gradePosition || 0), 0) ?? 0;
-
-            return totalA - totalB; // lowest total first
-        });
-    }
-
-    return sorted;
-});*/
 
 const getNextSteps = (currentStepName: string) => {
     const currentStepObj = getCurrentStep(currentStepName);
@@ -128,16 +110,12 @@ const handleFilterChange = () => {
     const modeOfStudyId = modeOfStudyModel.value?.value ?? null;
     router.get(
         route('department-levels.enrolments', {
-            institution_department: department.id?.toString(),
-            department_level: level.id?.toString(),
+            institution_department: String(department.id),
+            department_level: String(level.id),
             intake_period_id: intakePeriodId,
             mode_of_study_id: modeOfStudyId,
+            department_course_id: String(course?.id),
         }),
-        {
-            preserveScroll: true,
-            preserveState: false, // full reload
-            replace: true, // don’t pollute browser history
-        },
     );
 };
 </script>
@@ -164,15 +142,7 @@ const handleFilterChange = () => {
                 "
             />
             <!-- ============ SHOW APPLICATIONS BY GROUPS -->
-            <div class="flex justify-between">
-                <div class="flex">
-                    ---
-                </div>
-                <div class="flex space-x-3 rounded-full px-3 py-1 bg-green-200 text-green-800 text-sm font-medium">
-                    <div>Class size:</div>
-                    <div class="font-bold">{{ classSize }}</div>
-                </div>
-            </div>
+            <ScoringFormula :class-size="classSize" v-if="isItTrue(levelRequirements?.attributes?.isOLevelRequired)" />
             <div v-for="(enrolmentsInGroup, group) in enrolments.groups" :key="group" class="my-5 flex flex-col">
                 <div class="flex flex-col space-y-3">
                     <HeadingSmall :title="group" />
