@@ -10,6 +10,7 @@ use Illuminate\Support\Collection;
 use Inertia\Middleware;
 use Spatie\Permission\Models\Permission;
 use Tighten\Ziggy\Ziggy;
+use Lab404\Impersonate\Services\ImpersonateManager;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -43,19 +44,22 @@ class HandleInertiaRequests extends Middleware
     {
         //[$message, $author] = str(Inspiring::quotes()->random())->explode('-');
         $user = $request->user();
+        $impersonate = app(ImpersonateManager::class);
+        $isImpersonating = $impersonate->isImpersonating();
         return [
             ...parent::share($request),
             'name' => config('app.name'),
-           // 'quote' => ['message' => trim($message), 'author' => trim($author)],
+            // 'quote' => ['message' => trim($message), 'author' => trim($author)],
             'auth' => [
                 'user' => $user ? new UserResource($user) : null,
-                'can'  => $user ? $this->permissions($user) : null,
+                'can' => $user ? $this->permissions($user) : null,
+                'impersonating' => $isImpersonating,
             ],
-           /* 'ziggy' => [
-                ...(new Ziggy)->toArray(),
-                'location' => $request->url(),
-            ],*/
-           'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
+            /* 'ziggy' => [
+                 ...(new Ziggy)->toArray(),
+                 'location' => $request->url(),
+             ],*/
+            'sidebarOpen' => !$request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
     }
 

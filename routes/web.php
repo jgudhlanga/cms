@@ -8,6 +8,10 @@ Route::get('/', function () {
     return to_route('dashboard');
 })->middleware(['auth', 'verified'])->name('home');
 
+Route::middleware(['auth', 'ensure.can.impersonate'])->group(function () {
+    Route::impersonate();
+});
+
 Route::get('/dashboard', DashboardController::class)->middleware(['auth', 'verified', 'redirect.student'])->name('dashboard');
 Route::get('/pdf/{student_program}', [TestController::class, 'pdf'])->name('generate-pdf');
 Route::get('/debug/{item}', [TestController::class, 'debug'])->name('debug.item');

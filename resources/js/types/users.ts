@@ -24,6 +24,8 @@ export type User = {
         hasStaffProfile?: boolean;
         idNumber?: string;
         staffId?: string | number;
+        canImpersonate: boolean;
+        canBeImpersonated: boolean;
         hasAccessToNonAcademicDepartments: boolean;
         createdAt: string;
         updatedAt: string;
@@ -52,7 +54,7 @@ export type Profile = {
     idTypeId: string | number | null;
     country: string | null;
     countryId: string | number | null;
-    departments?: Array<{ id?: string | number; name?: string }|undefined> | null;
+    departments?: Array<{ id?: string | number; name?: string } | undefined> | null;
 };
 
 export type StudentUserEditParams = {

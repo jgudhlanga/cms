@@ -381,7 +381,7 @@ return [
     "my_applications" => "My Applications",
     "application_date" => "Application date",
     "update_date" => "Update date",
-    "tracking_number" => "Tracking number",
+    "tracking_number" => "TRN #",
     "config" => "Config",
     "intake_config_description" => "Configure the intake period, class sizes for the department levels and courses",
     "courses_and_levels_not_found" => "Courses and levels not found for this department",
@@ -407,7 +407,7 @@ return [
     "bulk_application_approval_success" => "Applications successfully approved",
     "bulk_application_approval_failure" => "Applications approval failure",
     "verify_all_payments_with_accounts" => "Verify all payments with accounts",
-    "application_fee" => "Registration fee",
+    "application_fee" => "Application fee",
     "tuition_fee" => "Tuition fee",
     "generate_application_fee_verification_report" => "Generate application fee verification report",
     "generate_tuition_fee_verification_report" => "Generate tuition fee verification report",
@@ -495,5 +495,6 @@ return [
     "bulk_payment_status_update_failure" => "Payments status failed to update",
     "allowed_applications_per_level" => "Allowed applications per level",
     "enrolment_requirements" => "Enrolment requirements",
-    "disability" => "Disability?"
+    "disability" => "Disability?",
+    "phone" => "Phone|Phones",
 ];

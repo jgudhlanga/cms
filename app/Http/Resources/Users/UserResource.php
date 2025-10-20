@@ -35,6 +35,8 @@ class UserResource extends JsonResource
                 "idNumber" => $this->studentProfile?->id_number,
                 "hasStaffProfile" => $this->has_staff_profile,
                 "staffId" => $this->staffProfile?->id,
+                'canImpersonate' => $this->can_impersonate,
+                'canBeImpersonated' => $this->can_be_impersonated,
                 "hasAccessToNonAcademicDepartments" => $hasAccessToNonAcademicDepartments,
                 $this->mergeWhen($request->routeIs('users.*'), [
                     'createdAt' => $this->created_at,

@@ -132,56 +132,58 @@ export type EnrolmentLookup = {
 };
 
 export interface OLeveResult {
-    resultId: number
-    subjectId: number
-    examYear: string
-    examSitting: string
-    gradeId: number
-    subject: string
-    grade: string
+    resultId: number;
+    subjectId: number;
+    examYear: string;
+    examSitting: string;
+    gradeId: number;
+    subject: string;
+    grade: string;
 }
 
 export interface EnrolmentApplication {
-    applicationId: number
-    applicationTrackingNumber: string
-    applicationDate: string
+    applicationId: number;
+    applicationTrackingNumber: string;
+    applicationDate: string;
 
-    studentId: string
-    studentName: string
-    studentNumber: string
-    email: string | null
-    phoneNumber: string | null
+    studentId: string;
+    studentName: string;
+    studentNumber: string;
+    email: string | null;
+    phoneNumber: string | null;
 
-    gender: string | null
-    disabilityStatus: string | null
-    workflow_step: string | null
+    gender: string | null;
+    disabilityStatus: string | null;
+    workflowStep: string | null;
 
-    receiptId: number | null
-    receiptAmount: number | null
+    receiptId: number | null;
+    receiptAmount: number | null;
 
-    examSittingsCount: number
-    firstExamYear: string | null
+    examSittingsCount: number;
+    firstExamYear: string | null;
 
-    academicResults: OLeveResult[]
+    academicResults: OLeveResult[];
+    totalScore: number;
+    hasNoPayment: boolean;
+    hasInvalidGrade: boolean;
 }
 
 export interface EnrolmentApplicationGroup {
-    disabled: EnrolmentApplication[]
-    female: EnrolmentApplication[]
-    male: EnrolmentApplication[]
-    others: EnrolmentApplication[]
+    disabled: EnrolmentApplication[];
+    females: EnrolmentApplication[];
+    males: EnrolmentApplication[];
+    others: EnrolmentApplication[];
 }
 
 export interface Pagination {
-    currentPage: number
-    lastPage: number
-    perPage: number
-    total: number
-    links: any[]
+    currentPage: number;
+    lastPage: number;
+    perPage: number;
+    total: number;
+    links: any[];
 }
 
 export interface EnrolmentGroupResponse {
-    pagination: Pagination
-    groups: EnrolmentApplicationGroup
+    pagination: Pagination;
+    groups: EnrolmentApplicationGroup;
 }
-

@@ -16,8 +16,7 @@ import { icons } from '@/lib/icons';
 import { PageProps } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
 
-const { props } = usePage<PageProps>();
-const { user } = props?.auth;
+const page = usePage<PageProps>();
 const { isMobile, state } = useSidebar();
 const { getInitials } = useInitials();
 const { defaultAvatarImage } = useDefaults();
@@ -29,14 +28,17 @@ const { defaultAvatarImage } = useDefaults();
                 <DropdownMenuTrigger as-child>
                     <SidebarMenuButton size="lg" class="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
                         <Avatar class="rounded-lg" :class="state === 'collapsed' ? 'size-6' : 'size-8'">
-                            <AvatarImage :src="user.attributes.avatar ?? defaultAvatarImage" :alt="user.attributes.name" />
+                            <AvatarImage
+                                :src="page.props.auth?.user.attributes.avatarUrl ?? defaultAvatarImage"
+                                :alt="page.props.auth?.user.attributes.name"
+                            />
                             <AvatarFallback class="rounded-lg" :class="state === 'collapsed' ? 'size-6' : 'size-8'">
-                                {{ getInitials(user.attributes.name) }}
+                                {{ getInitials(page.props.auth.user.attributes.name) }}
                             </AvatarFallback>
                         </Avatar>
                         <div class="grid flex-1 text-left text-sm leading-tight">
-                            <span class="truncate font-semibold">{{ user.attributes.name }}</span>
-                            <span class="truncate text-xs">{{ user.attributes.email }}</span>
+                            <span class="truncate font-semibold">{{ page.props.auth.user.attributes.name }}</span>
+                            <span class="truncate text-xs">{{ page.props.auth.user.attributes.email }}</span>
                         </div>
                         <component :is="icons[IconName.chevrons_up_down]" class="ml-auto size-4" />
                     </SidebarMenuButton>
@@ -50,12 +52,15 @@ const { defaultAvatarImage } = useDefaults();
                     <DropdownMenuLabel class="p-0 font-normal">
                         <div class="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                             <Avatar class="h-8 w-8 rounded-lg">
-                                <AvatarImage :src="user.attributes.avatar ?? defaultAvatarImage" :alt="user.attributes.name" />
-                                <AvatarFallback class="rounded-lg"> {{ getInitials(user.attributes.name) }} </AvatarFallback>
+                                <AvatarImage
+                                    :src="page.props.auth.user.attributes.avatarUrl ?? defaultAvatarImage"
+                                    :alt="page.props.auth.user.attributes.name"
+                                />
+                                <AvatarFallback class="rounded-lg"> {{ getInitials(page.props.auth.user.attributes.name) }} </AvatarFallback>
                             </Avatar>
                             <div class="grid flex-1 text-left text-sm leading-tight">
-                                <span class="truncate font-semibold">{{ user.attributes.name }}</span>
-                                <span class="truncate text-xs">{{ user.attributes.email }}</span>
+                                <span class="truncate font-semibold">{{ page.props.auth.user.attributes.name }}</span>
+                                <span class="truncate text-xs">{{ page.props.auth.user.attributes.email }}</span>
                             </div>
                         </div>
                     </DropdownMenuLabel>

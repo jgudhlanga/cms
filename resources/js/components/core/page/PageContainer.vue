@@ -1,34 +1,26 @@
 <script setup lang="ts">
-import { IconButton } from '@/components/core/button';
+import LogoutButton from '@/components/auth/LogoutButton.vue';
 import BaseTooltip from '@/components/core/util/BaseTooltip.vue';
 import Breadcrumbs from '@/components/core/util/Breadcrumbs.vue';
 import TextLink from '@/components/core/util/TextLink.vue';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { SidebarTrigger } from '@/components/ui/sidebar';
-import { useAuth } from '@/composables/auth/useAuth';
 import { useDefaults } from '@/composables/core/useDefaults';
 import { useInitials } from '@/composables/core/useInitials';
-import { ColorVariant } from '@/enums/colors';
-import { IconName } from '@/lib/icons';
 import { PageProps } from '@/types';
 import { BreadcrumbItemInterface } from '@/types/ui';
-import { router, usePage } from '@inertiajs/vue3';
+import { usePage } from '@inertiajs/vue3';
+import RemoveImpersonationButton from '@/components/auth/RemoveImpersonationButton.vue';
+import { useUtils } from '@/composables/core/useUtils';
 
 defineProps<{
     breadcrumbs?: BreadcrumbItemInterface[];
 }>();
-const { props } = usePage<PageProps>();
-const { user } = props?.auth;
-const { getInitials } = useInitials();
+const page = usePage<PageProps>();
+const { getInitials, } = useInitials();
 const { defaultAvatarImage } = useDefaults();
-
-const { logout } = useAuth();
-
-const handleLogout = () => {
-    logout();
-    router.post(route('logout'));
-};
+const {isItTrue} = useUtils()
 </script>
 <template>
     <header
@@ -40,21 +32,21 @@ const handleLogout = () => {
             <Breadcrumbs :breadcrumbs="breadcrumbs ?? []" />
         </div>
         <div class="flex items-center justify-center space-x-4">
+            <RemoveImpersonationButton v-if="isItTrue(page.props.auth.impersonating)"/>
             <BaseTooltip :content="`${$t('trans.user_account')}`">
-                <TextLink :href="route('users.show', user.id.toString())" method="get" as="button" classes="flex items-center">
+                <TextLink :href="route('users.show', page.props.auth.user.id.toString())" method="get" as="button" classes="flex items-center">
                     <Avatar class="size-7 rounded-full">
-                        <AvatarImage :src="user.attributes.avatar ?? defaultAvatarImage" :alt="user.attributes.name" />
+                        <AvatarImage
+                            :src="page.props.auth.user.attributes.avatarUrl ?? defaultAvatarImage"
+                            :alt="page.props.auth.user.attributes.name"
+                        />
                         <AvatarFallback class="size-7 rounded-full">
-                            {{ getInitials(user.attributes.name) }}
+                            {{ getInitials(page.props.auth.user.attributes.name) }}
                         </AvatarFallback>
                     </Avatar>
                 </TextLink>
             </BaseTooltip>
-            <BaseTooltip :content="`${$t('trans.logout')}`">
-                <TextLink @click.prevent="handleLogout" href="" method="post" as="button" classes="text-destructive flex items-center">
-                    <IconButton :icon="IconName.logout" :variant="ColorVariant.danger_outline" />
-                </TextLink>
-            </BaseTooltip>
+            <LogoutButton />
         </div>
     </header>
     <div class="flex h-full w-full flex-col pb-10">

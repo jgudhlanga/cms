@@ -23,9 +23,9 @@ class EnrolmentGroupResource extends JsonResource
 
             'groups' => [
                 'disabled' => EnrolmentApplicationResource::collection($groups['disabled'] ?? collect()),
-                'female'   => EnrolmentApplicationResource::collection($groups['female'] ?? collect()),
-                'male'     => EnrolmentApplicationResource::collection($groups['male'] ?? collect()),
-                'others'   => EnrolmentApplicationResource::collection($groups['others'] ?? collect()),
+                'females' => EnrolmentApplicationResource::collection($groups['females'] ?? collect()),
+                'males' => EnrolmentApplicationResource::collection($groups['males'] ?? collect()),
+                'others' => EnrolmentApplicationResource::collection($groups['others'] ?? collect()),
             ],
         ];
     }
