@@ -6,7 +6,6 @@ use App\Enums\Shared\AcademicLevelEnum;
 use App\Enums\Shared\FeeTypeEnum;
 use App\Helpers\Helper;
 use App\Http\Resources\Enrolments\EnrolmentGroupResource;
-use App\Models\Institution\Course;
 use App\Models\Institution\DepartmentCourse;
 use App\Models\Institution\ModeOfStudy;
 use App\Models\Ledgers\Ledger;
@@ -17,12 +16,10 @@ use Carbon\Carbon;
 use App\DTO\Institution\{DepartmentLevelDto, DepartmentLevelRequirementsDto};
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Institution\{DepartmentLevelRequest, DepartmentLevelRequirementRequest};
-use App\Http\Resources\Institution\{CourseResource,
-    DepartmentLevelResource,
+use App\Http\Resources\Institution\{DepartmentLevelResource,
     InstitutionDepartmentResource,
     DepartmentApplicationStepResource,
     DepartmentLevelRequirementResource,
-    IntakePeriodClassSizeResource,
     IntakePeriodResource,
     ModeOfStudyResource
 };
@@ -120,7 +117,6 @@ class DepartmentLevelController extends Controller
         $classSize = $courseId ? $this->getClassSize($institutionDepartment, $departmentLevel->id, $courseId, $intakePeriod->id, $modeOfStudy->id) : 0;
         $results = $this->queryEnrolments($institutionDepartment->id, $departmentLevel->id, $intakePeriod->id, $modeOfStudy->id, $courseId);
         $enrolments = EnrolmentGroupResource::make($results);
-        $course = CourseResource::make($departmentCourse->course);
         return Inertia::render('institution/enrolments/CourseLevelEnrolments', [
             'department' => InstitutionDepartmentResource::make($institutionDepartment),
             'level' => DepartmentLevelResource::make($departmentLevel),
@@ -131,7 +127,7 @@ class DepartmentLevelController extends Controller
             'enrolments' => $enrolments,
             'modesOfStudy' => $modesOfStudy,
             'intakePeriods' => $intakePeriods,
-            'course' => $course,
+            'course' => $departmentCourse,
         ]);
     }
 
@@ -150,7 +146,7 @@ class DepartmentLevelController extends Controller
             ->where('department_level_id', $departmentLevelId)
             ->where('department_course_id', $departmentCourseId)
             ->where('intake_period_id', $intakePeriodId)
-            ->where('intake_period_id', $modeOfStudyId)->pluck('class_size')->first() ?? 0;
+            ->where('mode_of_study_id', $modeOfStudyId)->pluck('class_size')->first() ?? 0;
     }
 
     public function queryEnrolments(
@@ -184,7 +180,6 @@ class DepartmentLevelController extends Controller
                 'department_course_id' => $courseId,
             ])
             ->groupBy('student_id');
-
         $paginator = StudentProgram::query()
             ->with([
                 'student.user:id,first_name,last_name,email',
