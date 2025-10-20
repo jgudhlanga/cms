@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import LogoutButton from '@/components/auth/LogoutButton.vue';
+import RemoveImpersonationButton from '@/components/auth/RemoveImpersonationButton.vue';
 import BaseTooltip from '@/components/core/util/BaseTooltip.vue';
 import Breadcrumbs from '@/components/core/util/Breadcrumbs.vue';
 import TextLink from '@/components/core/util/TextLink.vue';
@@ -8,19 +9,18 @@ import { Separator } from '@/components/ui/separator';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { useDefaults } from '@/composables/core/useDefaults';
 import { useInitials } from '@/composables/core/useInitials';
+import { useUtils } from '@/composables/core/useUtils';
 import { PageProps } from '@/types';
 import { BreadcrumbItemInterface } from '@/types/ui';
 import { usePage } from '@inertiajs/vue3';
-import RemoveImpersonationButton from '@/components/auth/RemoveImpersonationButton.vue';
-import { useUtils } from '@/composables/core/useUtils';
 
 defineProps<{
     breadcrumbs?: BreadcrumbItemInterface[];
 }>();
 const page = usePage<PageProps>();
-const { getInitials, } = useInitials();
+const { getInitials } = useInitials();
 const { defaultAvatarImage } = useDefaults();
-const {isItTrue} = useUtils()
+const { isItTrue } = useUtils();
 </script>
 <template>
     <header
@@ -32,7 +32,7 @@ const {isItTrue} = useUtils()
             <Breadcrumbs :breadcrumbs="breadcrumbs ?? []" />
         </div>
         <div class="flex items-center justify-center space-x-4">
-            <RemoveImpersonationButton v-if="isItTrue(page.props.auth.impersonating)"/>
+            <RemoveImpersonationButton v-if="isItTrue(page.props.auth.impersonating)" />
             <BaseTooltip :content="`${$t('trans.user_account')}`">
                 <TextLink :href="route('users.show', page.props.auth.user.id.toString())" method="get" as="button" classes="flex items-center">
                     <Avatar class="size-7 rounded-full">
