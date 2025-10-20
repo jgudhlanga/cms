@@ -228,7 +228,7 @@ const sortedApplications = computed(() => {
                 <td class="j-td text-center">{{ application.firstExamYear }}</td>
                 <td class="j-td text-center" v-for="subject in requirementSubjects" :key="`td_${subject.id}`">
                     {{ getMainSubjectGrade(application?.academicResults, String(subject?.id))?.grade }}
-                    <span class="text-[8px]">({{ getMainSubjectGrade(application?.academicResults, String(subject?.id))?.examYear ?? '---' }})</span>
+                    <span class="text-[8px]">{{ getMainSubjectGrade(application?.academicResults, String(subject?.id))?.examYear ?? '---' }}</span>
                 </td>
                 <td
                     class="j-td text-center"
@@ -236,7 +236,7 @@ const sortedApplications = computed(() => {
                     :key="`${result.gradeId}_other_sub`"
                 >
                     {{ result.grade }}
-                    <span class="text-[8px]">({{ result.examYear }})</span>
+                    <span class="text-[8px]">{{ result.examYear }}</span>
                 </td>
                 <td class="j-td text-center">{{ application.totalScore }}</td>
                 <td class="j-td"></td>
@@ -263,8 +263,10 @@ const sortedApplications = computed(() => {
                         {{ result.grade }}
                         <span class="text-[8px]">({{ result.examYear }})</span>
                     </td>
-                    <td class="j-td text-center">{{ application.totalScore }}</td>
-                    <td class="j-td"></td>
+                    <td class="j-td text-center">{{ application.totalScore ?? '---' }}</td>
+                    <td class="j-td">
+                        <span class="text-red-600">faulty</span>
+                    </td>
                 </tr>
             </template>
         </tbody>
