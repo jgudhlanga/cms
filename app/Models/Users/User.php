@@ -2,6 +2,7 @@
 
 namespace App\Models\Users;
 
+use App\Enums\Acl\PermissionEnum;
 use App\Enums\Acl\RoleEnum;
 use App\Http\Filters\Users\UserFilter;
 use App\Models\Institution\Staff;
@@ -21,6 +22,7 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Lab404\Impersonate\Models\Impersonate;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
@@ -37,18 +39,20 @@ use Spatie\Permission\Traits\HasRoles;
 class User extends Authenticatable implements MustVerifyEmail, HasMedia
 {
     use HasApiTokens, HasFactory, Notifiable, SoftDeletes,
-        Filterable, Paginatable, LogsActivity, HasRoles, InteractsWithMedia;
+        Filterable, Paginatable, LogsActivity, HasRoles, InteractsWithMedia, Impersonate;
 
     protected $fillable = [
         'first_name', 'middle_name', 'last_name', 'email', 'password', 'tenant_id',
         'email_verified_at', 'last_login_at', 'login_count', 'avatar_id', 'status_id', 'phone_number',
     ];
 
+    protected $appends = ['can_impersonate', 'can_be_impersonated', 'has_student_profile', 'has_staff_profile', 'avatar_url'];
+
+
     protected $hidden = ['password', 'remember_token'];
 
     const SUPER_ADMINISTRATOR = 1;
 
-    protected $appends = ['has_student_profile', 'has_staff_profile', 'avatar_url'];
 
     protected function casts(): array
     {
@@ -131,6 +135,20 @@ class User extends Authenticatable implements MustVerifyEmail, HasMedia
         return $this->morphMany(Ledger::class, 'ledgerable');
     }
 
+    public function canImpersonate(): bool
+    {
+        return $this->can(PermissionEnum::ROOT_MANAGE->value);
+    }
+
+    public function getCanImpersonateAttribute(): bool
+    {
+        return $this->canImpersonate();
+    }
+
+    public function getCanBeImpersonatedAttribute(): bool
+    {
+        return !$this->canImpersonate();
+    }
 
     public function getActivitylogOptions(): LogOptions
     {

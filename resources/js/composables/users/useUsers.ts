@@ -12,7 +12,7 @@ import {
 } from '@/lib/uniqueValidations';
 import { getIdParams } from '@/lib/utils';
 import HttpService from '@/services/http.service';
-import { Auth } from '@/types';
+import { Auth, PageProps } from '@/types';
 import { ApiFilterResponse } from '@/types/data-pagination';
 import type { Link } from '@/types/ui';
 import { User } from '@/types/users';
@@ -22,7 +22,7 @@ import { ref } from 'vue';
 import { ZodObject } from 'zod';
 
 export const useUsers = () => {
-    const { moreActionButton, onDelete, onForceDelete, onRestore, avatar, onView } = useDataTables();
+    const { moreActionButton, onDelete, onForceDelete, onRestore, avatar, onView, actionButton } = useDataTables();
     const createUserColumns = () => {
         const { props } = usePage();
         const { formatDate, navigateTo } = useUtils();
@@ -52,6 +52,23 @@ export const useUsers = () => {
                 cell: ({ row }: { row: { original: User } }) => {
                     const loginDate = row.original?.attributes?.lastLoginAt ?? '';
                     return loginDate ? formatDate(loginDate, 'LL') : '---';
+                },
+            },
+            {
+                header: 'Impersonate',
+                accessorKey: 'canImpersonate',
+                enableSorting: false,
+                meta: { align: 'center' },
+                cell: ({ row }: { row: { original: User } }) => {
+                   const page = usePage<PageProps>();
+                   const canImpersonate = page.props.auth.user.attributes.canImpersonate;
+                    const canBeImpersonated = row.original?.attributes?.canBeImpersonated ?? false;
+                    return canImpersonate && canBeImpersonated
+                        ? actionButton({
+                              title: 'Impersonate',
+                              onClick: () => navigateTo(route('impersonate', { id: row.original.id })),
+                          })
+                        : null;
                 },
             },
             {
@@ -127,14 +144,14 @@ export const useUsers = () => {
             personal.push('countrySchema');
             updateSchema = mergeValidationSchema(schemaFields)(
                 personal,
-                schemaFields['titleSchema']().merge(passportNumberUniqueSchema(`api/v1/validations/check?current_id=${studentId}&key=student_passport_number&value='`))
-                .merge(emailUniqueSchema(`api/v1/validations/check?current_id=${userId}&key=user_email&value=`))
-                .merge(phoneNumberUniqueSchema(`api/v1/validations/check?current_id=${userId}&key=user_phone_number&value=`)),
+                schemaFields['titleSchema']()
+                    .merge(passportNumberUniqueSchema(`api/v1/validations/check?current_id=${studentId}&key=student_passport_number&value='`))
+                    .merge(emailUniqueSchema(`api/v1/validations/check?current_id=${userId}&key=user_email&value=`))
+                    .merge(phoneNumberUniqueSchema(`api/v1/validations/check?current_id=${userId}&key=user_phone_number&value=`)),
             );
         }
         return updateSchema;
     };
-
 
     const saveUser = (form: InertiaForm<any>, userId?: string) => {
         try {

@@ -1,23 +1,14 @@
 <script setup lang="ts">
-import { IconButton } from '@/components/core/button';
+import LogoutButton from '@/components/auth/LogoutButton.vue';
+import RemoveImpersonationButton from '@/components/auth/RemoveImpersonationButton.vue';
 import AppLogo from '@/components/core/image/AppLogo.vue';
-import BaseTooltip from '@/components/core/util/BaseTooltip.vue';
 import Heading from '@/components/core/util/Heading.vue';
-import TextLink from '@/components/core/util/TextLink.vue';
-import { useAuth } from '@/composables/auth/useAuth';
-import { ColorVariant } from '@/enums/colors';
-import { IconName } from '@/enums/icons';
+import { useUtils } from '@/composables/core/useUtils';
 import { PageProps } from '@/types';
-import { router, usePage } from '@inertiajs/vue3';
+import { usePage } from '@inertiajs/vue3';
 
 const page = usePage<PageProps>();
-const { user } = page.props.auth;
-const { logout } = useAuth();
-
-const handleLogout = () => {
-    logout();
-    router.post(route('logout'));
-};
+const { isItTrue } = useUtils();
 </script>
 
 <template>
@@ -26,13 +17,10 @@ const handleLogout = () => {
             <div class="flex size-8 items-center justify-start rounded-full border">
                 <AppLogo class="shrink-0 rounded-full" />
             </div>
-            <Heading :title="user.attributes?.name" />
-            <div class="flex">
-                <BaseTooltip :content="`${$t('trans.logout')}`">
-                    <TextLink @click.prevent="handleLogout" href="" method="post" as="button" classes="text-destructive flex items-center">
-                        <IconButton :icon="IconName.logout" :variant="ColorVariant.danger_outline" />
-                    </TextLink>
-                </BaseTooltip>
+            <Heading :title="page.props.auth.user.attributes?.name" />
+            <div class="flex space-x-4">
+                <RemoveImpersonationButton v-if="isItTrue(page.props.auth.impersonating)" />
+                <LogoutButton />
             </div>
         </div>
     </nav>

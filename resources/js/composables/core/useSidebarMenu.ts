@@ -5,7 +5,7 @@ import { hasAbility, hasProgram, hasStudentProfile } from '@/lib/permissions';
 import { TenantInterface } from '@/types/tenants';
 import { MenuItemInterface } from '@/types/ui';
 import { trans, trans_choice } from 'laravel-vue-i18n';
-import { markRaw } from 'vue';
+import { computed, markRaw } from 'vue';
 
 export function useSidebarMenu() {
     const tenants: Array<TenantInterface> = [
@@ -21,7 +21,7 @@ export function useSidebarMenu() {
         },
     ];
 
-    const menuOptions: Array<MenuItemInterface> = [
+    const menuOptions = computed<MenuItemInterface[]>(() => [
         {
             transChoiceKey: 'trans.dashboard',
             icon: icons[IconName.dashboard],
@@ -129,7 +129,7 @@ export function useSidebarMenu() {
             show: hasAbility('manageOwnStudentAcademicDetails:students'),
         },
         /** ================ PORTAL END ======================*/
-    ];
+    ]);
 
     const getTranslation = (item: any) => {
         if (item?.transChoiceKey) {

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EnsureCanImpersonate;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\RedirectStudentMiddleware;
@@ -29,6 +30,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
         $middleware->alias([
             'redirect.student' => RedirectStudentMiddleware::class,
+            'ensure.can.impersonate' => EnsureCanImpersonate::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

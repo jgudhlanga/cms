@@ -22,8 +22,10 @@ use App\Http\Resources\Institution\{CourseResource,
     InstitutionDepartmentResource,
     DepartmentApplicationStepResource,
     DepartmentLevelRequirementResource,
+    IntakePeriodClassSizeResource,
     IntakePeriodResource,
-    ModeOfStudyResource};
+    ModeOfStudyResource
+};
 use App\Models\Institution\DepartmentLevel;
 use App\Models\Students\StudentProgram;
 use App\Models\Institution\InstitutionDepartment;
@@ -116,7 +118,6 @@ class DepartmentLevelController extends Controller
         $departmentCourse = $courseId ? DepartmentCourse::find($courseId) : null;
         $workflowSteps = DepartmentApplicationStepResource::collection(WorkflowHelper::getAllSteps($institutionDepartment->id));
         $classSize = $courseId ? $this->getClassSize($institutionDepartment, $departmentLevel->id, $courseId, $intakePeriod->id, $modeOfStudy->id) : 0;
-       // $enrolments = $this->fetchEnrolments($institutionDepartment, $departmentLevel, $intakePeriodId, $modeOfStudyId, $maxStep, $courseId);
         $results = $this->queryEnrolments($institutionDepartment->id, $departmentLevel->id, $intakePeriod->id, $modeOfStudy->id, $courseId);
         $enrolments = EnrolmentGroupResource::make($results);
         $course = CourseResource::make($departmentCourse->course);
@@ -173,13 +174,8 @@ class DepartmentLevelController extends Controller
         // ------------------------------------------------------------
         // 2. Fetch paginated programs with eager loaded relations
         // ------------------------------------------------------------
-        $paginator = StudentProgram::query()
-            ->with([
-                'student.user:id,first_name,last_name,email',
-                'student.gender:id,title',
-                'student.contacts' => fn($q) => $q->orderBy('created_at')->limit(1),
-                'departmentWorkflowStep.workflowStep:id,name',
-            ])
+        $subQuery = StudentProgram::query()
+            ->selectRaw('MAX(id) as id') // or MIN(id) for the oldest
             ->where([
                 'institution_department_id' => $institutionDepartmentId,
                 'department_level_id' => $departmentLevelId,
@@ -187,6 +183,16 @@ class DepartmentLevelController extends Controller
                 'mode_of_study_id' => $modeOfStudyId,
                 'department_course_id' => $courseId,
             ])
+            ->groupBy('student_id');
+
+        $paginator = StudentProgram::query()
+            ->with([
+                'student.user:id,first_name,last_name,email',
+                'student.gender:id,title',
+                'student.contacts' => fn($q) => $q->orderBy('created_at')->limit(1),
+                'departmentWorkflowStep.workflowStep:id,name',
+            ])
+            ->whereIn('id', $subQuery)
             ->select([
                 'id as application_id',
                 'student_id',
@@ -255,7 +261,7 @@ class DepartmentLevelController extends Controller
                 'g.name as grade'
             )
             ->orderBy('sar.exam_year')
-            ->orderBy('s.name')
+            ->orderBy('g.name')
             ->get()
             ->groupBy('student_id');
 
@@ -301,14 +307,14 @@ class DepartmentLevelController extends Controller
                 ->sortBy('student_name')
                 ->values(),
 
-            'female' => $studentPrograms
+            'females' => $studentPrograms
                 ->filter(fn($sp) => strtolower($sp->disability_status) !== 'yes' &&
                     strtolower($sp->gender) === 'female'
                 )
                 ->sortBy('student_name')
                 ->values(),
 
-            'male' => $studentPrograms
+            'males' => $studentPrograms
                 ->filter(fn($sp) => strtolower($sp->disability_status) !== 'yes' &&
                     strtolower($sp->gender) === 'male'
                 )
@@ -336,8 +342,8 @@ class DepartmentLevelController extends Controller
             ],
             'groups' => [
                 'disabled' => $grouped['disabled'],
-                'female' => $grouped['female'],
-                'male' => $grouped['male'],
+                'females' => $grouped['females'],
+                'males' => $grouped['males'],
                 'others' => $grouped['others'],
             ],
         ];
