@@ -4,7 +4,7 @@ import { errorAlert, successAlert } from '@/lib/alerts';
 import { mergeValidationSchema } from '@/lib/forms';
 import { emailUniqueSchema, idNumberUniqueSchema, passportNumberUniqueSchema } from '@/lib/uniqueValidations';
 import { useCreateApplicationFormStore } from '@/store/portal/useCreateApplicationFormStore';
-import { Enrolment } from '@/types/enrolments';
+import { ClassSizeSlot, Enrolment } from '@/types/enrolments';
 import { InertiaForm } from '@inertiajs/vue3';
 import { trans_choice } from 'laravel-vue-i18n';
 import { ZodObject } from 'zod';
@@ -111,9 +111,60 @@ export const useEnrolments = () => {
         }
     };
 
+    const  allocateClassSlots = (classSize: number, disabledCount: number, femaleCount: number, maleCount: number): ClassSizeSlot =>  {
+        // Step 1: Assign disabled share
+        const remainingSlots = Math.max(classSize - disabledCount, 0);
+
+        // Step 2: Split equally
+        let femaleSlots = Math.floor(remainingSlots / 2);
+        let maleSlots = Math.floor(remainingSlots / 2);
+        const remainder = remainingSlots % 2;
+
+        // Step 3: Handle odd remainder
+        if (remainder === 1) {
+            if (femaleCount > maleCount) {
+                femaleSlots += 1;
+            } else {
+                maleSlots += 1;
+            }
+        }
+
+        // Step 4: Adjust for population limits
+        if (femaleCount < femaleSlots) {
+            const transfer = femaleSlots - femaleCount;
+            femaleSlots = femaleCount;
+            maleSlots += transfer;
+        }
+
+        if (maleCount < maleSlots) {
+            const transfer = maleSlots - maleCount;
+            maleSlots = maleCount;
+            femaleSlots += transfer;
+        }
+
+        // Ensure total doesn’t exceed class size
+        const total = disabledCount + femaleSlots + maleSlots;
+        if (total > classSize) {
+            const excess = total - classSize;
+            if (femaleSlots > maleSlots) {
+                femaleSlots -= excess;
+            } else {
+                maleSlots -= excess;
+            }
+        }
+
+        return {
+            disabled: disabledCount,
+            females: femaleSlots,
+            males: maleSlots,
+        };
+    }
+
+
     return {
         enrolmentColumns,
         cashApplicationFormSchema,
         createEnrolment,
+        allocateClassSlots,
     };
 };
