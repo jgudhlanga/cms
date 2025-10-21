@@ -2,19 +2,117 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Offer Letter</title>
-    @vite(['resources/css/app.css'])
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Harare Polytechnic</title>
     <style>
-        body {
-            font-family: "Times New Roman", Times, serif;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
+
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background-color: #ffffff;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Header styles */
+        .header {
+            width: 100%;
+        }
+
+        .header-top {
+            width: 100%;
+        }
+
+        .header-top table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+
+        .header-top td {
+            vertical-align: middle;
+            text-align: center;
+            padding: 0 10px;
+        }
+
+        .header-logo {
+            height: 64px;
+            width: auto;
+            max-width: 100%;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .header-center {
+            text-align: center;
+            width: 70%; /* Center column takes more space */
+        }
+
+        .header-center h4 {
+            font-size: 8px;
+            font-weight: bold;
+            text-transform: uppercase;
+            line-height: 1.2;
+        }
+
+        .header-center h3 {
+            font-size: 16px;
+            font-weight: 800;
+            text-transform: uppercase;
+            margin: 4px 0;
+            line-height: 1.2;
+        }
+
+        .header-center p {
+            font-size: 12px;
+            line-height: 1.2;
+        }
+
+        .header-center .text-small {
+            font-size: 10px;
+            line-height: 1.2;
+        }
+
+        .header-center .contact-line {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .header-center .contact-line span:first-child {
+            font-weight: bold;
+        }
+
+        .divider {
+            width: 100%;
+            height: 1px;
+            background-color: #000;
+            margin: 12px 0;
+        }
+
+        /* Content area */
+        .content {
+            padding: 30px 20px;
+        }
+
     </style>
 </head>
-<body class="p-10">
-@include('partials.poly-header')
-<main class="py-4 px-2 mt-3">
-    {{--{!!  str_replace(['{title}', '{initials}', '{surname}', '{member_number}'], [$member->title->name_en, $member->initials, $member->last_name, $member->member_number], $template->letter_body) !!}--}}
-    {!!  $documentTemplate->body !!}
-</main>
+<body>
+<div class="container">
+    @include('partials.poly-header')
+    <div class="content">
+        {!!  $documentTemplate->body !!}
+    </div>
+</div>
 </body>
 </html>
