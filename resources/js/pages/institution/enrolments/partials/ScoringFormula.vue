@@ -25,12 +25,12 @@ defineProps<{ classSize: string | number }>();
                     </div>
                 </div>
                 <div class="mt-3 flex flex-wrap gap-2">
-                    <div class="flex gap-2 items-center">
-                        <div class="h-5 w-20 rounded-md bg-green-100"></div>
+                    <div class="flex items-center gap-2 rounded-full border border-green-100 bg-white p-1">
+                        <div class="h-5 w-20 rounded-full bg-green-100"></div>
                         <div class="text-[11px] font-bold text-green-600">Eligible for class list</div>
                     </div>
-                    <div class="flex gap-2 items-center">
-                        <div class="h-5 w-20 rounded-md bg-red-100"></div>
+                    <div class="flex items-center gap-2 rounded-full border border-red-100 bg-white p-1">
+                        <div class="h-5 w-20 rounded-full bg-red-100"></div>
                         <div class="text-[11px] font-bold text-red-600">Faulty applications (missing o level subjects, no payment)</div>
                     </div>
                 </div>
