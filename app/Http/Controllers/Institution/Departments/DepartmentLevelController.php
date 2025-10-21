@@ -16,7 +16,8 @@ use Carbon\Carbon;
 use App\DTO\Institution\{DepartmentLevelDto, DepartmentLevelRequirementsDto};
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Institution\{DepartmentLevelRequest, DepartmentLevelRequirementRequest};
-use App\Http\Resources\Institution\{DepartmentLevelResource,
+use App\Http\Resources\Institution\{DepartmentCourseResource,
+    DepartmentLevelResource,
     InstitutionDepartmentResource,
     DepartmentApplicationStepResource,
     DepartmentLevelRequirementResource,
@@ -113,6 +114,7 @@ class DepartmentLevelController extends Controller
         $modesOfStudy = ModeOfStudyResource::collection(ModeOfStudy::all());
         $intakePeriods = IntakePeriodResource::collection(IntakePeriod::orderByDesc('end_date')->get());
         $departmentCourse = $courseId ? DepartmentCourse::find($courseId) : null;
+        $departmentCourse = DepartmentCourseResource::make($departmentCourse);
         $workflowSteps = DepartmentApplicationStepResource::collection(WorkflowHelper::getAllSteps($institutionDepartment->id));
         $classSize = $courseId ? $this->getClassSize($institutionDepartment, $departmentLevel->id, $courseId, $intakePeriod->id, $modeOfStudy->id) : 0;
         $results = $this->queryEnrolments($institutionDepartment->id, $departmentLevel->id, $intakePeriod->id, $modeOfStudy->id, $courseId);
