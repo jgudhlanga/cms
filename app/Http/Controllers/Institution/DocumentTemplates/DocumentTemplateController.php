@@ -16,7 +16,8 @@ use Inertia\Response;
 use Spatie\MediaLibrary\MediaCollections\Exceptions\FileDoesNotExist;
 use Spatie\MediaLibrary\MediaCollections\Exceptions\FileIsTooBig;
 use Throwable;
-use function Spatie\LaravelPdf\Support\pdf;
+use Barryvdh\DomPDF\Facade\Pdf;
+
 
 class DocumentTemplateController extends Controller
 {
@@ -123,7 +124,9 @@ class DocumentTemplateController extends Controller
     {
         $this->authorize('view', $documentTemplate);
         $fileName = 'offer-letter-' . time() . '.pdf';
-        return pdf()->view('students.offer-letter', compact('documentTemplate'))->name($fileName);
+
+        $pdf = Pdf::loadView('students.offer-letter', compact('documentTemplate'));
+        return $pdf->stream($fileName);
     }
 
     /**
