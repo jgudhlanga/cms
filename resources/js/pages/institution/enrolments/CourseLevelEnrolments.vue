@@ -3,20 +3,20 @@ import BaseAlert from '@/components/core/alert/BaseAlert.vue';
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import HeadingSmall from '@/components/core/util/HeadingSmall.vue';
 import { useUtils } from '@/composables/core/useUtils';
-import { useStudentApplications } from '@/composables/students/useStudentApplications';
+import { useEnrolments } from '@/composables/students/useEnrolments';
 import ByAcademicLevelResults from '@/pages/institution/enrolments/partials/ByAcademicLevelResults.vue';
 import EnrolmentFilters from '@/pages/institution/enrolments/partials/EnrolmentFilters.vue';
-import PaymentProofPreviewModal from '@/pages/institution/enrolments/partials/PaymentProofPreviewModal.vue';
 import ScoringFormula from '@/pages/institution/enrolments/partials/ScoringFormula.vue';
 import { AuthObject } from '@/types/data-pagination';
 import { DepartmentApplicationStep, DepartmentCourse, DepartmentLevel } from '@/types/department-meta-data';
-import { Enrolment, EnrolmentGroupResponse } from '@/types/enrolments';
+import { EnrolmentGroupResponse } from '@/types/enrolments';
 import { InstitutionDepartment, IntakePeriod, ModeOfStudy } from '@/types/institution';
 import { Link } from '@/types/ui';
 import { SelectOption } from '@/types/utils';
 import { Head, router } from '@inertiajs/vue3';
 import { computed, onMounted, ref } from 'vue';
 
+type GroupType = 'disabled' | 'females' | 'males';
 interface Props {
     department: InstitutionDepartment;
     level: DepartmentLevel;
@@ -34,10 +34,10 @@ interface Props {
 
 const props = defineProps<Props>();
 
-const { department, level, enrolments, intakePeriod, modeOfStudy, course } = props;
+const { department, level, enrolments, intakePeriod, modeOfStudy, course, classSize } = props;
 const { isItTrue } = useUtils();
+const { allocateClassSlots } = useEnrolments();
 
-const { bulkApproveApplication, canApproveWorkflowStepApplications } = useStudentApplications();
 const intakePeriodModel = ref<SelectOption | null>(null);
 const modeOfStudyModel = ref<SelectOption | null>(null);
 
@@ -55,55 +55,9 @@ const breadcrumbs: Array<Link> = [
     { transChoiceKey: 'enrolment' },
 ];
 
-
-const getNextSteps = (currentStepName: string) => {
-    const currentStepObj = getCurrentStep(currentStepName);
-
-    if (!currentStepObj) {
-        return []; // No matching step found
-    }
-
-    return props.workflowSteps.filter((step: DepartmentApplicationStep) => {
-        return step;
-        // const roles = step.relationships?.metadata?.roles ?? [];
-        // const hasStudent = roles.some((role) => role?.toLowerCase() === 'student');
-        //return step.attributes.position > currentStepObj.attributes.position && !hasStudent;
-    });
-};
-
-const getCurrentStep = (currentStepName: string) => {
-    return props.workflowSteps.find((step: DepartmentApplicationStep) => step.attributes.workflowStep === currentStepName);
-};
-
 const levelRequirements = computed(() => {
     return level?.relationships?.requirement;
 });
-
-const buttonOptions = (currentStepName: string, enrolments: Enrolment[]) => {
-    const options = getNextSteps(currentStepName);
-    const choices = [];
-    for (const option of options) {
-        choices.push({
-            key: option.id,
-            id: option.id,
-            title: option?.attributes?.workflowStep,
-            action: () =>
-                bulkApproveApplication(
-                    department.id?.toString() ?? '',
-                    {
-                        intake_period_id: intakePeriod?.id?.toString() ?? '',
-                        department_level_id: level.id?.toString() ?? '',
-                        mode_of_study_id: modeOfStudy?.id?.toString() ?? '',
-                        current_step_id: getCurrentStep(currentStepName)?.id?.toString() ?? '',
-                        new_step_id: option.id?.toString() ?? '',
-                    },
-                    enrolments,
-                    getCurrentStep(currentStepName)!,
-                ),
-        });
-    }
-    return choices;
-};
 
 const handleFilterChange = () => {
     const intakePeriodId = intakePeriodModel.value?.value ?? null;
@@ -117,6 +71,15 @@ const handleFilterChange = () => {
             department_course_id: String(course?.id),
         }),
     );
+};
+
+const getGroupSlot = (group: GroupType): number => {
+    const groups = enrolments?.groups ?? { disabled: [], females: [], males: [] };
+
+    const { disabled, females, males } = allocateClassSlots(Number(classSize), groups.disabled.length, groups.females.length, groups.males.length);
+
+    const slots = { disabled, females, males };
+    return slots[group] ?? 0;
 };
 </script>
 
@@ -145,13 +108,14 @@ const handleFilterChange = () => {
             <ScoringFormula :class-size="classSize" v-if="isItTrue(levelRequirements?.attributes?.isOLevelRequired)" />
             <div v-for="(enrolmentsInGroup, group) in enrolments.groups" :key="group" class="my-5 flex flex-col">
                 <div class="flex flex-col space-y-3">
-                    <HeadingSmall :title="group" />
+                    <HeadingSmall :title="`${group} (${getGroupSlot(group.toLowerCase() as GroupType)})`" />
                     <template v-if="isItTrue(levelRequirements?.attributes?.isOLevelRequired)">
                         <ByAcademicLevelResults
                             :level="level"
                             :department-id="String(department?.id)"
                             :applications="enrolmentsInGroup"
-                            :class-size="classSize"
+                            :class-size="Number(classSize)"
+                            :slot-size="getGroupSlot(group.toLowerCase() as GroupType)"
                         />
                     </template>
                 </div>
@@ -228,6 +192,5 @@ const handleFilterChange = () => {
             </div>
         </template>-->
         </div>
-        <PaymentProofPreviewModal />
     </PageContainer>
 </template>

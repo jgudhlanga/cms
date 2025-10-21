@@ -242,3 +242,13 @@ SET FOREIGN_KEY_CHECKS = 1;
                     }
 
                     3. add totalScore field to each student object.
+                    WHEN
+                        1. given a classSize of 100
+                        2. disabled count of 3
+                        3. females count 0f 100
+                        4. males count of 130
+                    THEN
+                        1. assign disabled share from classSize
+                        2. share equally slot for females and males
+                        3. if remaining slot is odd number then give largest shared to the gender with a high volume that the other
+                        4. If females are less than the remaining half of classSize, then assign other slots to males and vise versa if males are lesser than

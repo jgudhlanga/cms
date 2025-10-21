@@ -7,7 +7,8 @@ interface Props {
     level: DepartmentLevel;
     departmentId: string;
     applications: EnrolmentApplication[];
-    classSize: string | number;
+    classSize: number;
+    slotSize: number;
 }
 
 const props = defineProps<Props>();
@@ -219,8 +220,8 @@ const sortedApplications = computed(() => {
             </tr>
         </thead>
         <tbody class="j-tbody">
-            <tr class="j-tr" v-for="application in sortedApplications" :key="application.applicationId">
-                <td class="j-td">{{ application.studentId }}</td>
+            <tr :class="`${index + 1 <= slotSize ? 'bg-green-100' : 'j-tr'}`" v-for="(application, index) in sortedApplications" :key="application.applicationId">
+                <td class="j-td">{{ index + 1 }}</td>
                 <td class="j-td">{{ application.studentName }}</td>
                 <td class="j-td">{{ application.phoneNumber }}</td>
                 <td class="j-td text-center">{{ application.receiptAmount }}</td>
@@ -265,7 +266,7 @@ const sortedApplications = computed(() => {
                     </td>
                     <td class="j-td text-center">{{ application.totalScore ?? '---' }}</td>
                     <td class="j-td">
-                        <span class="text-red-600">faulty</span>
+                        <span class="text-red-800">faulty</span>
                     </td>
                 </tr>
             </template>

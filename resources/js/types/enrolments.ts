@@ -187,3 +187,8 @@ export interface EnrolmentGroupResponse {
     pagination: Pagination;
     groups: EnrolmentApplicationGroup;
 }
+ export type ClassSizeSlot = {
+    disabled: number;
+    females: number;
+    males: number;
+ }
