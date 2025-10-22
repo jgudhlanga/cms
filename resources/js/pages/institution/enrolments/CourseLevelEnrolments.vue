@@ -15,12 +15,13 @@ import { Link } from '@/types/ui';
 import { SelectOption } from '@/types/utils';
 import { Head, router } from '@inertiajs/vue3';
 import { computed, onMounted, ref } from 'vue';
+import { getIdParams } from '@/lib/utils';
 
 type GroupType = 'disabled' | 'females' | 'males';
 interface Props {
     department: InstitutionDepartment;
     level: DepartmentLevel;
-    course: DepartmentCourse;
+    course: string;
     workflowSteps: DepartmentApplicationStep[];
     intakePeriod: IntakePeriod;
     modeOfStudy: ModeOfStudy;
@@ -49,9 +50,9 @@ onMounted(async () => {
 const breadcrumbs: Array<Link> = [
     { transChoiceKey: 'institution', transChoiceKeyIndex: 1, href: route('institution.index') },
     { transChoiceKey: 'department', href: route('institution-departments.index', { is_academic: department.attributes?.isAcademic }) },
-    { title: department.attributes.department, href: route('institution-departments.show', department?.id?.toString()) },
+    { title: department.attributes.department, href: route('institution-departments.show', getIdParams(String(department?.id))) },
     { title: level.attributes.level },
-    { title: course?.attributes?.course },
+    { title: course },
     { transChoiceKey: 'enrolment' },
 ];
 

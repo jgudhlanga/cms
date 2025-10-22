@@ -46,7 +46,7 @@ class UserResource extends JsonResource
             ],
             'relationships' => [
                 'profile' => $this->getProfile(),
-                'roles' => RoleResource::collection($this->roles),
+                'roles' => collect($this->roles->map(fn ($role) => ['id' => $role->id, 'name' => $role->name])),
             ]
         ];
     }
@@ -76,7 +76,9 @@ class UserResource extends JsonResource
 
     private function getTitle(): array
     {
-        $title = $this->has_student_profile ? $this->studentProfile?->title : $this->staffProfile?->title;
+        $title = $this->has_student_profile
+            ? $this->whenLoaded('studentProfile', fn() => $this->studentProfile?->title)
+            : $this->whenLoaded('staffProfile', fn() => $this->staffProfile?->title);
         return [
             'title' => $title?->name ?? null,
             'titleId' => $title?->id ?? null,

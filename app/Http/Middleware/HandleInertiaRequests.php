@@ -8,7 +8,6 @@ use App\Models\Users\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Inertia\Middleware;
-use Spatie\Permission\Models\Permission;
 use Tighten\Ziggy\Ziggy;
 use Lab404\Impersonate\Services\ImpersonateManager;
 
@@ -71,9 +70,6 @@ class HandleInertiaRequests extends Middleware
      */
     private function permissions(User $user): Collection
     {
-        return collect($user?->getAllPermissions() ?? [])
-            ->mapWithKeys(fn(Permission $permission) => [
-                $permission->name => $user->can($permission->name),
-            ]);
+        return $user?->getAllPermissions()->pluck('name')->flip()->map(fn() => true);
     }
 }

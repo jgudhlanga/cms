@@ -16,7 +16,7 @@ use Carbon\Carbon;
 use App\DTO\Institution\{DepartmentLevelDto, DepartmentLevelRequirementsDto};
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Institution\{DepartmentLevelRequest, DepartmentLevelRequirementRequest};
-use App\Http\Resources\Institution\{DepartmentCourseResource,
+use App\Http\Resources\Institution\{
     DepartmentLevelResource,
     InstitutionDepartmentResource,
     DepartmentApplicationStepResource,
@@ -107,29 +107,54 @@ class DepartmentLevelController extends Controller
     public function enrolments(InstitutionDepartment $institutionDepartment, DepartmentLevel $departmentLevel): Response
     {
         $this->authorize('viewDepartmentMetaData');
+
         [$intakePeriodId, $modeOfStudyId, $courseId] = $this->extractFilters();
 
-        $intakePeriod = Helper::resolveIntakePeriod();
-        $modeOfStudy = Helper::resolveModeOfStudy();
-        $modesOfStudy = ModeOfStudyResource::collection(ModeOfStudy::all());
-        $intakePeriods = IntakePeriodResource::collection(IntakePeriod::orderByDesc('end_date')->get());
-        $departmentCourse = $courseId ? DepartmentCourse::find($courseId) : null;
-        $departmentCourse = DepartmentCourseResource::make($departmentCourse);
-        $workflowSteps = DepartmentApplicationStepResource::collection(WorkflowHelper::getAllSteps($institutionDepartment->id));
-        $classSize = $courseId ? $this->getClassSize($institutionDepartment, $departmentLevel->id, $courseId, $intakePeriod->id, $modeOfStudy->id) : 0;
-        $results = $this->queryEnrolments($institutionDepartment->id, $departmentLevel->id, $intakePeriod->id, $modeOfStudy->id, $courseId);
-        $enrolments = EnrolmentGroupResource::make($results);
+        // ------------------------------------------------------------
+        // 1. Resolve static/cached data
+        // ------------------------------------------------------------
+        $intakePeriods = cache()->rememberForever('all_intake_periods', fn() => IntakePeriod::orderByDesc('end_date')->get());
+        $modesOfStudy = cache()->rememberForever('all_modes_of_study', fn() => ModeOfStudy::all());
+
+        $intakePeriod = $intakePeriodId
+            ? $intakePeriods->firstWhere('id', $intakePeriodId)
+            : Helper::resolveIntakePeriod();
+
+        $modeOfStudy = $modeOfStudyId
+            ? $modesOfStudy->firstWhere('id', $modeOfStudyId)
+            : Helper::resolveModeOfStudy();
+
+        $departmentCourse = $courseId
+            ? DepartmentCourse::with(['course'])->find($courseId)
+            : null;
+
+        // ------------------------------------------------------------
+        // 2. Query enrolments efficiently
+        // ------------------------------------------------------------
+        $results = $this->queryEnrolments(
+            $institutionDepartment->id,
+            $departmentLevel->id,
+            $intakePeriod->id,
+            $modeOfStudy->id,
+            $courseId
+        );
+
+        // ------------------------------------------------------------
+        // 3. Prepare data for Inertia
+        // ------------------------------------------------------------
         return Inertia::render('institution/enrolments/CourseLevelEnrolments', [
             'department' => InstitutionDepartmentResource::make($institutionDepartment),
             'level' => DepartmentLevelResource::make($departmentLevel),
             'intakePeriod' => IntakePeriodResource::make($intakePeriod),
             'modeOfStudy' => ModeOfStudyResource::make($modeOfStudy),
-            'workflowSteps' => $workflowSteps,
-            'classSize' => $classSize,
-            'enrolments' => $enrolments,
-            'modesOfStudy' => $modesOfStudy,
-            'intakePeriods' => $intakePeriods,
-            'course' => $departmentCourse,
+            'workflowSteps' => DepartmentApplicationStepResource::collection(WorkflowHelper::getAllSteps($institutionDepartment->id)),
+            'classSize' => $courseId
+                ? $this->getClassSize($institutionDepartment, $departmentLevel->id, $courseId, $intakePeriod->id, $modeOfStudy->id)
+                : 0,
+            'enrolments' => EnrolmentGroupResource::make($results),
+            'modesOfStudy' => ModeOfStudyResource::collection($modesOfStudy),
+            'intakePeriods' => IntakePeriodResource::collection($intakePeriods),
+            'course' => $departmentCourse ? $departmentCourse?->course?->name : null,
         ]);
     }
 
@@ -161,19 +186,16 @@ class DepartmentLevelController extends Controller
     ): array
     {
         // ------------------------------------------------------------
-        // 1. Cached constants
+        // 1. Cached IDs
         // ------------------------------------------------------------
-        $oLevelId = cache()->rememberForever('o_level_id', fn() => AcademicLevel::where('name', AcademicLevelEnum::SECONDARY_SCHOOL->value)->value('id')
-        );
-
-        $applicationFeeId = cache()->rememberForever('application_fee_id', fn() => FeeType::where('slug', FeeTypeEnum::APPLICATION_FEE->slug())->value('id')
-        );
+        $oLevelId = cache()->rememberForever('o_level_id', fn() => AcademicLevel::where('name', AcademicLevelEnum::SECONDARY_SCHOOL->value)->value('id'));
+        $applicationFeeId = cache()->rememberForever('application_fee_id', fn() => FeeType::where('slug', FeeTypeEnum::APPLICATION_FEE->slug())->value('id'));
 
         // ------------------------------------------------------------
-        // 2. Fetch paginated programs with eager loaded relations
+        // 2. Subquery for latest student program per student
         // ------------------------------------------------------------
         $subQuery = StudentProgram::query()
-            ->selectRaw('MAX(id) as id') // or MIN(id) for the oldest
+            ->selectRaw('MAX(id) as id')
             ->where([
                 'institution_department_id' => $institutionDepartmentId,
                 'department_level_id' => $departmentLevelId,
@@ -182,6 +204,10 @@ class DepartmentLevelController extends Controller
                 'department_course_id' => $courseId,
             ])
             ->groupBy('student_id');
+
+        // ------------------------------------------------------------
+        // 3. Eager load all necessary relations
+        // ------------------------------------------------------------
         $paginator = StudentProgram::query()
             ->with([
                 'student.user:id,first_name,last_name,email',
@@ -201,17 +227,14 @@ class DepartmentLevelController extends Controller
 
         $studentPrograms = $paginator->getCollection();
 
-        // ------------------------------------------------------------
-        // 3. Bulk load academic result summaries (count + first year)
-        // ------------------------------------------------------------
         $studentIds = $studentPrograms->pluck('student_id')->unique();
+        $userIds = $studentPrograms->pluck('student.user_id')->unique();
 
+        // ------------------------------------------------------------
+        // 4. Preload academic stats & results in bulk
+        // ------------------------------------------------------------
         $academicStats = DB::table('student_academic_results')
-            ->select(
-                'student_id',
-                DB::raw('COUNT(DISTINCT exam_year) as exam_sittings_count'),
-                DB::raw('MIN(exam_year) as first_exam_year')
-            )
+            ->select('student_id', DB::raw('COUNT(DISTINCT exam_year) as exam_sittings_count'), DB::raw('MIN(exam_year) as first_exam_year'))
             ->whereIn('student_id', $studentIds)
             ->where('academic_level_id', $oLevelId)
             ->whereNull('deleted_at')
@@ -219,28 +242,6 @@ class DepartmentLevelController extends Controller
             ->get()
             ->keyBy('student_id');
 
-        // ------------------------------------------------------------
-        // 4. Bulk load receipts
-        // ------------------------------------------------------------
-        $userIds = $studentPrograms->pluck('student.user_id')->unique();
-
-        $receipts = Ledger::query()
-            ->whereIn('ledgerable_id', $userIds)
-            ->where('ledgerable_type', User::class)
-            ->whereNull('deleted_at')
-            ->where([
-                'fee_type_id' => $applicationFeeId,
-                'intake_period_id' => $intakePeriodId,
-                'payment_status' => 'paid',
-                'type' => 'receipt',
-            ])
-            ->select('ledgerable_id as user_id', 'id as receipt_id', 'amount as receipt_amount')
-            ->get()
-            ->keyBy('user_id');
-
-        // ------------------------------------------------------------
-        // 5. Bulk load academic results for all students
-        // ------------------------------------------------------------
         $academicResults = DB::table('student_academic_results as sar')
             ->join('subjects as s', 'sar.subject_id', '=', 's.id')
             ->join('grades as g', 'sar.grade_id', '=', 'g.id')
@@ -263,16 +264,32 @@ class DepartmentLevelController extends Controller
             ->groupBy('student_id');
 
         // ------------------------------------------------------------
-        // 6. Combine all data efficiently
+        // 5. Preload receipts in bulk
         // ------------------------------------------------------------
-        $studentPrograms->transform(function ($sp) use ($academicResults, $academicStats, $receipts) {
+        $receipts = Ledger::query()
+            ->whereIn('ledgerable_id', $userIds)
+            ->where('ledgerable_type', User::class)
+            ->whereNull('deleted_at')
+            ->where([
+                'fee_type_id' => $applicationFeeId,
+                'intake_period_id' => $intakePeriodId,
+                'payment_status' => 'paid',
+                'type' => 'receipt',
+            ])
+            ->select('ledgerable_id as user_id', 'id as receipt_id', 'amount as receipt_amount')
+            ->get()
+            ->keyBy('user_id');
+
+        // ------------------------------------------------------------
+        // 6. Transform students
+        // ------------------------------------------------------------
+        $studentPrograms->transform(function ($sp) use ($academicStats, $academicResults, $receipts) {
             $student = $sp->student;
             $user = $student->user;
 
             $sp->student_name = "{$user->first_name} {$user->last_name}";
             $sp->email = $user->email;
             $sp->phone_number = $student->contacts->first()?->phone_number;
-            $sp->student_id = $student->id;
             $sp->student_number = $student->student_number;
             $sp->disability_status = $student->disability_status;
             $sp->gender = $student->gender->title ?? null;
@@ -296,7 +313,7 @@ class DepartmentLevelController extends Controller
         });
 
         // ------------------------------------------------------------
-        // 7. Group by priority (Disabled > Female > Male > Others)
+        // 7. Group students by priority
         // ------------------------------------------------------------
         $grouped = [
             'disabled' => $studentPrograms
@@ -306,28 +323,25 @@ class DepartmentLevelController extends Controller
 
             'females' => $studentPrograms
                 ->filter(fn($sp) => strtolower($sp->disability_status) !== 'yes' &&
-                    strtolower($sp->gender) === 'female'
-                )
+                    strtolower($sp->gender) === 'female')
                 ->sortBy('student_name')
                 ->values(),
 
             'males' => $studentPrograms
                 ->filter(fn($sp) => strtolower($sp->disability_status) !== 'yes' &&
-                    strtolower($sp->gender) === 'male'
-                )
+                    strtolower($sp->gender) === 'male')
                 ->sortBy('student_name')
                 ->values(),
 
             'others' => $studentPrograms
                 ->filter(fn($sp) => strtolower($sp->disability_status) !== 'yes' &&
-                    !in_array(strtolower($sp->gender), ['male', 'female'])
-                )
+                    !in_array(strtolower($sp->gender), ['male', 'female']))
                 ->sortBy('student_name')
                 ->values(),
         ];
 
         // ------------------------------------------------------------
-        // 8. Return structured response
+        // 8. Return
         // ------------------------------------------------------------
         return [
             'pagination' => [
@@ -337,12 +351,7 @@ class DepartmentLevelController extends Controller
                 'total' => $paginator->total(),
                 'links' => $paginator->linkCollection(),
             ],
-            'groups' => [
-                'disabled' => $grouped['disabled'],
-                'females' => $grouped['females'],
-                'males' => $grouped['males'],
-                'others' => $grouped['others'],
-            ],
+            'groups' => $grouped,
         ];
     }
 

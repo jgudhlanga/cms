@@ -102,12 +102,19 @@ class Helper
 
     public static function resolveIntakePeriod(): Collection|Model
     {
-        if (request()->filled('intake_period_id') && request()->intake_period_id > 0) {
-            return IntakePeriod::findOrFail(request()->intake_period_id);
+        static $cachedIntakePeriod;
+
+        if ($cachedIntakePeriod) {
+            return $cachedIntakePeriod;
         }
 
-        return IntakePeriod::orderBy('end_date', 'DESC')->firstOrFail();
+        $cachedIntakePeriod = request()->filled('intake_period_id') && request()->intake_period_id > 0
+            ? IntakePeriod::findOrFail(request()->intake_period_id)
+            : IntakePeriod::orderByDesc('end_date')->firstOrFail();
+
+        return $cachedIntakePeriod;
     }
+
 
     public static function resolveUserDepartments(): array|null
     {
