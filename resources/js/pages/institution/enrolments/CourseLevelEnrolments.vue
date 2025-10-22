@@ -8,7 +8,7 @@ import ByAcademicLevelResults from '@/pages/institution/enrolments/partials/ByAc
 import EnrolmentFilters from '@/pages/institution/enrolments/partials/EnrolmentFilters.vue';
 import ScoringFormula from '@/pages/institution/enrolments/partials/ScoringFormula.vue';
 import { AuthObject } from '@/types/data-pagination';
-import { DepartmentApplicationStep, DepartmentCourse, DepartmentLevel } from '@/types/department-meta-data';
+import { DepartmentApplicationStep, DepartmentLevel } from '@/types/department-meta-data';
 import { EnrolmentGroupResponse } from '@/types/enrolments';
 import { InstitutionDepartment, IntakePeriod, ModeOfStudy } from '@/types/institution';
 import { Link } from '@/types/ui';
