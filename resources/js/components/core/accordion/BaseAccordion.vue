@@ -1,9 +1,6 @@
 <script setup lang="ts">
-import CustomSeparator from '@/components/core/util/CustomSeparator.vue';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { AccordionItemProps } from '@/types/utils';
 import { ref } from 'vue';
-import HeadingSmall from '@/components/core/util/HeadingSmall.vue';
 
 interface Props {
     defaultValue: string;

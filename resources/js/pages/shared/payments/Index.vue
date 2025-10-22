@@ -7,7 +7,7 @@ import { AuthObject } from '@/types/data-pagination';
 import { Link } from '@/types/ui';
 import { Head } from '@inertiajs/vue3';
 
-const props = defineProps<{ auth: AuthObject, errors: Object }>();
+const props = defineProps<{ auth: AuthObject, errors: object }>();
 const can = props?.auth?.can;
 const { tabs } = usePaymentSettings();
 const breadcrumbs: Array<Link> = [

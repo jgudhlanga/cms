@@ -4,9 +4,15 @@ import i18n from 'laravel-vue-i18n/vite';
 import { resolve } from 'node:path';
 import path from 'path';
 import { defineConfig } from 'vite';
+import Components from "unplugin-vue-components/vite"
 
 export default defineConfig({
     plugins: [
+        Components({
+            dirs: ['resources/js/components', 'resources/js/layouts'],
+            deep: true,
+            dts: 'resources/js/types/components.d.ts',
+        }),
         laravel({
             input: ['resources/css/app.css', 'resources/js/app.ts'],
             ssr: 'resources/js/ssr.ts',

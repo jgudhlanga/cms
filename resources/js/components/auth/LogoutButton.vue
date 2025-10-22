@@ -1,9 +1,6 @@
 <script setup lang="ts">
 import { IconName } from '@/enums/icons';
 import { ColorVariant } from '@/enums/colors';
-import BaseTooltip from '@/components/core/util/BaseTooltip.vue';
-import TextLink from '@/components/core/util/TextLink.vue';
-import { IconButton } from '@/components/core/button';
 import { useAuth } from '@/composables/auth/useAuth';
 import { router } from '@inertiajs/vue3';
 

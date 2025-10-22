@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import BaseButton from '@/components/core/button/BaseButton.vue';
-import BaseIcon from '@/components/core/icon/BaseIcon.vue';
 import { IconName } from '@/enums/icons';
 import { ColorVariant } from '@/enums/colors';
 
