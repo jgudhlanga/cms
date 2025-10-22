@@ -17,13 +17,3 @@ declare module 'vite/client' {
     }
 }
 
-declare module 'vite-plugin-eslint' {
-    import type { Plugin } from 'vite';
-    interface EslintPluginOptions {
-        fix?: boolean;
-        failOnError?: boolean;
-        include?: string | string[];
-        exclude?: string | string[];
-    }
-    export default function eslintPlugin(options?: EslintPluginOptions): Plugin;
-}

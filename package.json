@@ -26,7 +26,6 @@
         "tw-animate-css": "^1.2.5",
         "typescript-eslint": "^8.23.0",
         "unplugin-vue-components": "^30.0.0",
-        "vite-plugin-eslint": "^1.8.1",
         "vue-tsc": "^2.2.4"
     },
     "dependencies": {

@@ -118,7 +118,7 @@ const faultyApplications = computed(() => {
 /**
  * 🧮 Compute each applicant's score and sort list
  */
-const sortedApplications = computed(() => {
+/*const sortedApplications = computed(() => {
     const requiredSubjects = level?.relationships?.requirement?.relationships?.subjects || [];
     const otherSubjectsCountRaw = level?.relationships?.requirement?.attributes?.otherSubjectsCount ?? 0;
     const otherSubjectsCount = Number(otherSubjectsCountRaw) || 0;
@@ -198,6 +198,91 @@ const sortedApplications = computed(() => {
 
     // Sort valid applications by totalScore ascending
     return scored.sort((a, b) => a.totalScore - b.totalScore);
+});*/
+const sortedApplications = computed(() => {
+    const requiredSubjects = level?.relationships?.requirement?.relationships?.subjects || [];
+    const otherSubjectsCountRaw = level?.relationships?.requirement?.attributes?.otherSubjectsCount ?? 0;
+    const otherSubjectsCount = Number(otherSubjectsCountRaw) || 0;
+
+    const requiredIds = requiredSubjects.map((s: any) => String(s.id));
+
+    const getGradeScore = (grade: string, examYear: string, firstExamYear: string, uniqueYears: string[]) => {
+        const trimmed = grade?.trim() || 'N/A';
+        if (trimmed === 'N/A' || trimmed === '---') return 9;
+
+        let sittingIndex = 0;
+        if (examYear === firstExamYear) sittingIndex = 0;
+        else sittingIndex = uniqueYears.findIndex((y) => y === examYear);
+
+        switch (trimmed) {
+            case 'A':
+                return 1 + sittingIndex;
+            case 'B':
+                return 2 + sittingIndex;
+            case 'C':
+                return 3 + sittingIndex;
+            default:
+                return 9;
+        }
+    };
+
+    const scored: typeof props.applications = [];
+
+    props.applications.forEach((app) => {
+        const results: OLeveResult[] = app.academicResults || [];
+        const hasNoPayment = !app.receiptAmount || app.receiptAmount <= 0;
+
+        // Unique exam years ascending
+        const uniqueYears = Array.from(new Set(results.map((r) => r.examYear))).sort((a, b) => a - b);
+        const firstExamYear = uniqueYears[0] ?? 0;
+
+        // Required subjects
+        const mainScores = requiredIds.map((sid) => {
+            const r = results.find((res) => String(res.subjectId) === sid);
+            if (!r) return 9;
+            return getGradeScore(r.grade || 'N/A', r.examYear, firstExamYear, uniqueYears);
+        });
+
+        // Other subjects
+        const otherSubjects = results.filter((r) => !requiredIds.includes(String(r.subjectId)));
+        const sortedOthers = otherSubjects
+            .sort(
+                (a, b) =>
+                    getGradeScore(a.grade || 'N/A', a.examYear, firstExamYear, uniqueYears) -
+                    getGradeScore(b.grade || 'N/A', b.examYear, firstExamYear, uniqueYears),
+            )
+            .slice(0, otherSubjectsCount);
+
+        while (sortedOthers.length < otherSubjectsCount) {
+            sortedOthers.push({ grade: 'N/A', examYear: firstExamYear } as OLeveResult);
+        }
+
+        const otherScores = sortedOthers.map((r) => getGradeScore(r.grade || 'N/A', r.examYear, firstExamYear, uniqueYears));
+
+        const totalScore = [...mainScores, ...otherScores].reduce((sum, s) => sum + s, 0);
+
+        // Check if application is faulty
+        const hasInvalidGrade = [...mainScores, ...otherScores].some((score) => score >= 9);
+        if (hasInvalidGrade || hasNoPayment) {
+            return; // skip adding to sortedApplications
+        }
+
+        scored.push({
+            ...app,
+            totalScore,
+            examSittingsCount: uniqueYears.length, // track sittings count
+            hasNoPayment,
+            hasInvalidGrade,
+        });
+    });
+
+    // ✅ Sort by totalScore first, then by examSittingsCount (both ascending)
+    return scored.sort((a, b) => {
+        if (a.totalScore !== b.totalScore) {
+            return a.totalScore - b.totalScore;
+        }
+        return a.examSittingsCount - b.examSittingsCount;
+    });
 });
 </script>
 
@@ -228,12 +313,12 @@ const sortedApplications = computed(() => {
                 <td class="j-td text-center">{{ application.examSittingsCount }}</td>
                 <td class="j-td text-center">{{ application.firstExamYear }}</td>
                 <td class="j-td text-center" v-for="subject in requirementSubjects" :key="`td_${subject.id}`">
-                    {{ getMainSubjectGrade(application?.academicResults, String(subject?.id))?.grade }}
-                    <span class="text-[8px]">{{ getMainSubjectGrade(application?.academicResults, String(subject?.id))?.examYear ?? '---' }}</span>
+                    {{ getMainSubjectGrade(application?.academicResults ?? [], String(subject?.id))?.grade }}
+                    <span class="text-[8px]">{{ getMainSubjectGrade(application?.academicResults ?? [], String(subject?.id))?.examYear ?? '---' }}</span>
                 </td>
                 <td
                     class="j-td text-center"
-                    v-for="result in getOtherSubjectGrades(application?.academicResults)"
+                    v-for="result in getOtherSubjectGrades(application?.academicResults ?? [])"
                     :key="`${result.gradeId}_other_sub`"
                 >
                     {{ result.grade }}
@@ -251,14 +336,14 @@ const sortedApplications = computed(() => {
                     <td class="j-td text-center">{{ application.examSittingsCount }}</td>
                     <td class="j-td text-center">{{ application.firstExamYear }}</td>
                     <td class="j-td text-center" v-for="subject in requirementSubjects" :key="`td_${subject.id}`">
-                        {{ getMainSubjectGrade(application?.academicResults, String(subject?.id))?.grade }}
+                        {{ getMainSubjectGrade(application?.academicResults ?? [], String(subject?.id))?.grade }}
                         <span class="text-[8px]"
-                            >({{ getMainSubjectGrade(application?.academicResults, String(subject?.id))?.examYear ?? '---' }})</span
+                            >({{ getMainSubjectGrade(application?.academicResults ?? [], String(subject?.id))?.examYear ?? '---' }})</span
                         >
                     </td>
                     <td
                         class="j-td text-center"
-                        v-for="result in getOtherSubjectGrades(application?.academicResults)"
+                        v-for="result in getOtherSubjectGrades(application?.academicResults ?? [])"
                         :key="`${result.gradeId}_other_sub`"
                     >
                         {{ result.grade }}

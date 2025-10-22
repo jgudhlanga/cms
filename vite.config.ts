@@ -4,17 +4,12 @@ import i18n from 'laravel-vue-i18n/vite';
 import { resolve } from 'node:path';
 import path from 'path';
 import { defineConfig } from 'vite';
-import eslintPlugin from 'vite-plugin-eslint';
 import Components from "unplugin-vue-components/vite"
 
 export default defineConfig({
     plugins: [
-        eslintPlugin({
-            fix: true,
-            failOnError: false,
-        }),
         Components({
-            dirs: ['resources/js/components'],
+            dirs: ['resources/js/components', 'resources/js/layouts'],
             deep: true,
             dts: 'resources/js/types/components.d.ts',
         }),

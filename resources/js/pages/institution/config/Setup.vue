@@ -47,7 +47,7 @@ function closeModal() {
             <AvatarTitleList :tabs="tabs" />
         </template>
         <BaseAlert v-if="!allowed" :title="$t('trans.forbidden')" :description="$t('trans.forbidden_message')" />
-        <BaseButton title="Show Modal" @click="() => (openModel = true)" classes="w-[200px] my-3" />
+<!--        <BaseButton title="Show Modal" @click="() => (openModel = true)" classes="w-[200px] my-3" />
         <CustomModal :show="openModel" title="Hello World" @close="closeModal" size="full" >
             <div>
                 Lorem ipsum dolor sit amet, consectetur adipisicing elit. Aliquid dolores dolorum, eius enim eum eveniet explicabo hic inventore iure,
@@ -65,6 +65,6 @@ function closeModal() {
                 />
                 <BaseButton classes="rounded-full w-full md:w-[200px]" title="Save" @click="closeModal" />
             </div>
-        </CustomModal>
+        </CustomModal>-->
     </PageContainer>
 </template>
