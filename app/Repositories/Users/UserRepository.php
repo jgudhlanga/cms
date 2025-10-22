@@ -36,6 +36,27 @@ class UserRepository extends BaseRepository implements IUserRepository
     public function allFilter($columns = ['*'], UserFilter $filters = null)
     {
         return $this->user
+            ->with(
+                'tenant',
+                'status',
+                'roles',
+                'roles.permissions',
+                'permissions',
+                'studentProfile',
+                'studentProfile.gender',
+                'studentProfile.title',
+                'studentProfile.country',
+                'studentProfile.maritalStatus',
+                'studentProfile.idType',
+                'staffProfile',
+                'staffProfile.gender',
+                'staffProfile.title',
+                'staffProfile.maritalStatus',
+                'staffProfile.idType',
+                'staffProfile.country',
+                'staffProfile.employmentType',
+                'staffProfile.institutionDepartments.department',
+            )
             ->select($columns)
             ->filter($filters)
             ->orderBy('first_name')

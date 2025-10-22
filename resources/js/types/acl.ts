@@ -43,6 +43,11 @@ export type Role = {
         permissions?: Array<Permission>;
     };
 };
+
+export type RoleMinimal = {
+    id: string;
+    name: string;
+}
 export type Permission = {
     type?: string;
     id?: string;

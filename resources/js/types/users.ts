@@ -1,4 +1,4 @@
-import { Role } from '@/types/acl';
+import { RoleMinimal } from '@/types/acl';
 import { SelectOption } from '@/types/utils';
 
 export type User = {
@@ -33,7 +33,7 @@ export type User = {
     };
     relationships: {
         profile: Profile | null;
-        roles: Role[];
+        roles: RoleMinimal[];
     };
 };
 
