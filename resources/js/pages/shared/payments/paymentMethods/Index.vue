@@ -13,7 +13,7 @@ const props = defineProps<{
 	trashedCount: any,
 	filters: DataFilters,
 	auth: AuthObject,
-	errors: Object
+	errors: object
 }>();
 const can = props?.auth?.can;
 </script>

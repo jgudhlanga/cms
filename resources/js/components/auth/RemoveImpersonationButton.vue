@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { BaseButton } from '@/components/core/button';
+import { useUtils } from '@/composables/core/useUtils';
 import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
-import { useUtils } from '@/composables/core/useUtils';
 
-const {navigateTo} = useUtils()
+const { navigateTo } = useUtils();
 </script>
 
 <template>

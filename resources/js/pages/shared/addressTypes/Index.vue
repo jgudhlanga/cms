@@ -15,7 +15,7 @@ interface Props {
 	trashedCount: any,
 	filters: DataFilters,
 	auth: AuthObject,
-	errors: Object
+	errors: object
 }
 const props = defineProps<Props>();
 

@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { Button } from '@/components/ui/button';
 import { buttonVariants, ButtonVariants } from '@/components/ui/button';
 import { icons, IconName } from '@/lib/icons';
 import { cn } from '@/lib/utils';
