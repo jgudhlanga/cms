@@ -154,7 +154,7 @@ class DepartmentLevelController extends Controller
             'enrolments' => EnrolmentGroupResource::make($results),
             'modesOfStudy' => ModeOfStudyResource::collection($modesOfStudy),
             'intakePeriods' => IntakePeriodResource::collection($intakePeriods),
-            'course' => $departmentCourse ? $departmentCourse?->course?->name : null,
+            'course' => $departmentCourse ? ['name' => $departmentCourse?->course?->name, 'department_course_id' => $courseId] : null,
         ]);
     }
 
@@ -354,5 +354,4 @@ class DepartmentLevelController extends Controller
             'groups' => $grouped,
         ];
     }
-
 }

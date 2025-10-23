@@ -21,7 +21,7 @@ type GroupType = 'disabled' | 'females' | 'males';
 interface Props {
     department: InstitutionDepartment;
     level: DepartmentLevel;
-    course: string;
+    course: object;
     workflowSteps: DepartmentApplicationStep[];
     intakePeriod: IntakePeriod;
     modeOfStudy: ModeOfStudy;
@@ -52,7 +52,7 @@ const breadcrumbs: Array<Link> = [
     { transChoiceKey: 'department', href: route('institution-departments.index', { is_academic: department.attributes?.isAcademic }) },
     { title: department.attributes.department, href: route('institution-departments.show', getIdParams(String(department?.id))) },
     { title: level.attributes.level },
-    { title: course },
+    { title: course?.name },
     { transChoiceKey: 'enrolment' },
 ];
 
@@ -69,7 +69,7 @@ const handleFilterChange = () => {
             department_level: String(level.id),
             intake_period_id: intakePeriodId,
             mode_of_study_id: modeOfStudyId,
-            department_course_id: String(course?.id),
+            department_course_id: String(course?.department_course_id),
         }),
     );
 };

@@ -19,17 +19,17 @@ defineProps<{ classSize: string | number }>();
                         <span>• Multiple Sittings →</span>
                         <span> <b>Year₁:</b> A=1, B=2, C=3; <b>Year₂:</b> A=2, B=3, C=4; <b>Year₃:</b> A=3, B=4, C=5 </span>(e.t.c)
                     </div>
-                    <div class="bg-persian-200 text-persian-600 flex space-x-3 rounded-full px-3 py-1 text-sm font-medium">
+                    <div class="bg-persian-100 text-primary flex space-x-3 rounded-full px-3 py-1 text-sm font-medium">
                         <div>Class size:</div>
                         <div class="font-bold">{{ classSize }}</div>
                     </div>
                 </div>
                 <div class="mt-3 flex flex-wrap gap-2">
-                    <div class="flex items-center gap-2 rounded-full border border-green-100 bg-white p-1">
+                    <div class="flex items-center gap-2 rounded-full border border-green-100 bg-white p-2">
                         <div class="h-5 w-20 rounded-full bg-green-100"></div>
                         <div class="text-[11px] font-bold text-green-600">Eligible for class list</div>
                     </div>
-                    <div class="flex items-center gap-2 rounded-full border border-red-100 bg-white p-1">
+                    <div class="flex items-center gap-2 rounded-full border border-red-100 bg-white p-2">
                         <div class="h-5 w-20 rounded-full bg-red-100"></div>
                         <div class="text-[11px] font-bold text-red-600">Faulty applications (missing o level subjects, no payment)</div>
                     </div>
