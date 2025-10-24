@@ -32,7 +32,7 @@ class FixOLevelResultsCommand extends Command
         $forceDelete = $this->option('force');
 
         // Preload subjects to reduce DB calls
-        $subjectNames = ['science', 'physics', 'chemistry', 'biology', 'combined science', 'physical science', 'computer science'];
+        $subjectNames = ['any science subject', 'physics', 'chemistry', 'biology', 'combined science', 'physical science', 'computer science'];
 
         $subjectMap = Subject::all()
             ->filter(fn($s) => in_array(strtolower(trim($s->name)), $subjectNames))
@@ -135,7 +135,7 @@ class FixOLevelResultsCommand extends Command
 
     protected function scienceSubjectFix(Student $student, Collection $subjectMap): bool
     {
-        $scienceSubject = $subjectMap->get('science');
+        $scienceSubject = $subjectMap->get('any science subject');
         if (!$scienceSubject) {
             $this->warn("⚠️ 'Science' subject not found in database!");
             return false;
@@ -160,9 +160,9 @@ class FixOLevelResultsCommand extends Command
         }
 
         // Other science-type subjects
-        $subjectNames = ['science', 'physics', 'chemistry', 'biology', 'combined science', 'physical science', 'computer science'];
+        $subjectNames = ['any science subject', 'physics', 'chemistry', 'biology', 'combined science', 'physical science', 'computer science'];
         $otherScienceIds = collect($subjectNames)
-            ->filter(fn($n) => $n !== 'science')
+            ->filter(fn($n) => $n !== 'any science subject')
             ->map(fn($n) => $subjectMap[$n]->id ?? null)
             ->filter()
             ->values()

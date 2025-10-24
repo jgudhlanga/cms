@@ -49,15 +49,6 @@ const form = useForm<Login>({
             />
             <div class="flex items-center justify-between" :tabindex="3">
                 <BaseCheckbox input-id="remember" v-model="form.remember_me" :tabindex="4" :label="$t('trans.remember_me')" />
-                <!--                <TextLink
-                    classes="dark:text-primary"
-                    v-if="canResetPassword"
-                    :href="route('password.request')"
-                    class="dark:text-primary text-sm"
-                    :tabindex="5"
-                >
-                    {{ $t('trans.forgot_password') }}
-                </TextLink>-->
                 <BaseButton
                     type="button"
                     :variant="ColorVariant.danger_outline"

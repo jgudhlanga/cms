@@ -25,5 +25,6 @@ require __DIR__ . '/web/shared.php';
 require __DIR__ . '/web/payments.php';
 require __DIR__ . '/web/institution.php';
 require __DIR__ . '/web/portal.php';
+require __DIR__ . '/web/enrolments.php';
 require __DIR__ . '/web/students.php';
 require __DIR__ . '/web/workflows.php';
