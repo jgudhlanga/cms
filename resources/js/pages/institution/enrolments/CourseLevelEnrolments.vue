@@ -2,19 +2,19 @@
 import { useUtils } from '@/composables/core/useUtils';
 import { useEnrolments } from '@/composables/students/useEnrolments';
 import { ColorVariant } from '@/enums/colors';
+import { errorAlert, successAlert } from '@/lib/alerts';
 import { getIdParams } from '@/lib/utils';
 import ByAcademicLevelResults from '@/pages/institution/enrolments/partials/ByAcademicLevelResults.vue';
 import EnrolmentFilters from '@/pages/institution/enrolments/partials/EnrolmentFilters.vue';
 import ScoringFormula from '@/pages/institution/enrolments/partials/ScoringFormula.vue';
-import { useClassListStore } from '@/store/enrolments/useClassListStore';
 import { AuthObject } from '@/types/data-pagination';
 import { DepartmentApplicationStep, DepartmentLevel } from '@/types/department-meta-data';
-import { EnrolmentGroupResponse } from '@/types/enrolments';
+import { ClassListParams, EnrolmentGroupResponse } from '@/types/enrolments';
 import { InstitutionDepartment, IntakePeriod, ModeOfStudy } from '@/types/institution';
 import { Link } from '@/types/ui';
 import { SelectOption } from '@/types/utils';
-import { Head, router } from '@inertiajs/vue3';
-import { computed, onBeforeMount, onMounted, ref } from 'vue';
+import { Head, router, useForm } from '@inertiajs/vue3';
+import { computed, onMounted, ref } from 'vue';
 
 type GroupType = 'disabled' | 'females' | 'males';
 interface Props {
@@ -36,11 +36,11 @@ const props = defineProps<Props>();
 
 const { department, level, enrolments, intakePeriod, modeOfStudy, course, classSize } = props;
 const { isItTrue } = useUtils();
-const { allocateClassSlots } = useEnrolments();
+const { allocateClassSlots, applyPolicyAlgorithmToApplications } = useEnrolments();
 
 const intakePeriodModel = ref<SelectOption | null>(null);
 const modeOfStudyModel = ref<SelectOption | null>(null);
-const classListStore = useClassListStore();
+const isLoading = ref<boolean>(false);
 
 onMounted(async () => {
     intakePeriodModel.value = intakePeriod ? { value: Number(intakePeriod.id), label: intakePeriod.attributes.name } : null;
@@ -83,14 +83,52 @@ const getGroupSlot = (group: GroupType): number => {
     return slots[group] ?? 0;
 };
 
-function createProvisionalClass() {
-    console.log(classListStore.classList);
-}
-
-onBeforeMount(() => {
-    classListStore.$reset();
-    classListStore.$dispose();
+const form = useForm<ClassListParams>({
+    class_list: null,
+    waiting_list: null,
+    type: 'provisional',
 });
+
+function createProvisionalClass() {
+    isLoading.value = true;
+    const groups = ['disabled', 'females', 'males'] as const;
+
+    const classList: string[] = [];
+    const waitingList: string[] = [];
+
+    groups.forEach((group) => {
+        const enrolmentsGroup = enrolments.groups?.[group] ?? [];
+        const processedEnrolments = applyPolicyAlgorithmToApplications(enrolmentsGroup, level);
+        const slot = getGroupSlot(group);
+
+        // Add to class list
+        const toClass = processedEnrolments.slice(0, slot).map((e) => String(e.applicationId));
+        classList.push(...toClass);
+
+        // Add to waiting list (next 'slot' after class list)
+        const toWaiting = processedEnrolments.slice(slot, slot * 2).map((e) => String(e.applicationId));
+        waitingList.push(...toWaiting);
+    });
+
+    // Assign to form
+    form.class_list = classList;
+    form.waiting_list = waitingList;
+
+    // Submit form
+    try {
+        form.post(route('enrolments.store-class-list'), {
+            onSuccess: () => successAlert('Provisional class and waiting list created successfully'),
+            onError: (errors: Record<string, any>) => {
+                const message = Object.keys(errors).length ? Object.values(errors).join('\n') : 'Provisional class and waiting list creation failed';
+                errorAlert(message);
+            },
+        });
+    } catch {
+        errorAlert('An unexpected error occurred while creating provisional class and waiting list');
+    } finally {
+        isLoading.value = false;
+    }
+}
 </script>
 
 <template>
@@ -119,8 +157,9 @@ onBeforeMount(() => {
             <div class="mt-6 flex items-center justify-end">
                 <BaseButton
                     type="button"
-                    :variant="ColorVariant.danger"
-                    title="Create Provisional Class"
+                    :processing="isLoading"
+                    :variant="ColorVariant.primary"
+                    title="Create provisional class and waiting list"
                     classes="rounded-full normalize"
                     @click="createProvisionalClass"
                 />

@@ -188,6 +188,7 @@ enum PermissionEnum: string
     case EXPORT_STUDENT_PROGRAMS = 'export:student-programs';
     case CRUD_STUDENT_PROGRAMS_SETTINGS = 'crud-settings:student-programs';
     case VIEW_STUDENT_PROGRAMS_AUDIT_TRAIL = 'viewAuditTrail:student-programs';
+    case VERIFY_STUDENT_PROGRAMS = 'verify:student-programs';
     /** STUDENTS */
     case VIEW_ANY_STUDENTS = 'viewAny:students';
     case VIEW_STUDENTS = 'view:students';
@@ -435,6 +436,7 @@ enum PermissionEnum: string
             self::EXPORT_STUDENT_PROGRAMS => 'export:student-programs',
             self::CRUD_STUDENT_PROGRAMS_SETTINGS => 'crud-settings:student-programs',
             self::VIEW_STUDENT_PROGRAMS_AUDIT_TRAIL => 'viewAuditTrail:student-programs',
+            self::VERIFY_STUDENT_PROGRAMS => 'verify:student-programs',
             /** STUDENTS */
             self::VIEW_ANY_STUDENTS => 'viewAny:students',
             self::VIEW_STUDENTS => 'view:students',

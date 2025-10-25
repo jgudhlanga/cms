@@ -7,6 +7,6 @@ enum ClassListTypeEnum: string
     case PROVISIONAL = 'provisional';
     case VERIFIED = 'verified';
     case WAITING = 'waiting';
-    case SUCCESSFUL = 'successful';
+    case FINAL = 'final';
     case FAILED = 'failed';
 }

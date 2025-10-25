@@ -240,6 +240,7 @@ class PermissionsTableSeeder extends Seeder
                 [PermissionEnum::EXPORT_STUDENT_PROGRAMS->value],
                 [PermissionEnum::CRUD_STUDENT_PROGRAMS_SETTINGS->value],
                 [PermissionEnum::VIEW_STUDENT_PROGRAMS_AUDIT_TRAIL->value],
+                [PermissionEnum::VERIFY_STUDENT_PROGRAMS->value],
             ],
             'examinations' => [
                 [PermissionEnum::VIEW_ANY_EXAMINATION->value],

@@ -7,7 +7,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rules\Enum;
 
 /**
- * @property mixed class_lists
+ * @property mixed class_list
  */
 class ClassListRequest extends FormRequest
 {
@@ -19,9 +19,9 @@ class ClassListRequest extends FormRequest
 
     public function prepareForValidation(): void
     {
-        if (is_string($this->class_lists)) {
+        if (is_string($this->class_list)) {
             $this->merge([
-                'class_lists' => json_decode($this->class_lists, true),
+                'class_list' => json_decode($this->class_list, true),
             ]);
         }
     }
@@ -29,7 +29,7 @@ class ClassListRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'class_lists' => ['required', 'array'],
+            'class_list' => ['required', 'array'],
             'type' => ['required', new Enum(ClassListTypeEnum::class)],
         ];
     }

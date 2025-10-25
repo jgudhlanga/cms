@@ -14,7 +14,7 @@ return new class extends Migration {
             $table->id();
             $table->foreignId('tenant_id')->constrained();
             $table->foreignId('student_program_id')->unique()->constrained();
-            $table->enum('type', ['provisional', 'verified', 'waiting', 'successful', 'failed']);
+            $table->enum('type', ['provisional', 'verified', 'waiting', 'final', 'failed']);
             $table->json('attributes')->nullable();
             $table->timestamps();
             $table->softDeletes();

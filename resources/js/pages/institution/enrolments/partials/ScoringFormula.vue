@@ -25,13 +25,17 @@ defineProps<{ classSize: string | number }>();
                     </div>
                 </div>
                 <div class="mt-3 flex flex-wrap gap-2">
-                    <div class="flex items-center gap-2 rounded-full border border-green-100 bg-white p-2">
+                    <div class="flex items-center gap-2 rounded-full border border-green-100 bg-white py-2 px-4">
                         <div class="h-5 w-20 rounded-full bg-green-100"></div>
-                        <div class="text-[11px] font-bold text-green-600">Eligible for class list</div>
+                        <div class="text-[11px] uppercase text-green-600">Provisional class list</div>
                     </div>
-                    <div class="flex items-center gap-2 rounded-full border border-red-100 bg-white p-2">
+                    <div class="flex items-center gap-2 rounded-full border border-purple-100 bg-white py-2 px-4">
+                        <div class="h-5 w-20 rounded-full bg-purple-100"></div>
+                        <div class="text-[11px] uppercase text-purple-600">Waiting list</div>
+                    </div>
+                    <div class="flex items-center gap-2 rounded-full border border-red-100 bg-white py-2 px-4">
                         <div class="h-5 w-20 rounded-full bg-red-100"></div>
-                        <div class="text-[11px] font-bold text-red-600">Faulty applications (missing o level subjects, no payment)</div>
+                        <div class="text-[11px] uppercase text-red-600">Faulty applications (missing o level subjects, no payment)</div>
                     </div>
                 </div>
             </div>

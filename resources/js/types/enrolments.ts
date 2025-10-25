@@ -161,6 +161,8 @@ export interface EnrolmentApplication {
 
     examSittingsCount: number;
     firstExamYear: string | null;
+    inClassList: boolean;
+    classListType: string | null;
 
     academicResults: OLeveResult[];
     totalScore: number;
@@ -187,8 +189,14 @@ export interface EnrolmentGroupResponse {
     pagination: Pagination;
     groups: EnrolmentApplicationGroup;
 }
- export type ClassSizeSlot = {
+export type ClassSizeSlot = {
     disabled: number;
     females: number;
     males: number;
- }
+};
+
+export type ClassListParams = {
+    class_list: string[]|null;
+    waiting_list: string[]|null;
+    type: 'provisional' | 'verified' | 'waitlisted' | 'final' | 'failed';
+};

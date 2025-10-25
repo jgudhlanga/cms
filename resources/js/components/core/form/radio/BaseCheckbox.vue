@@ -17,7 +17,7 @@ defineProps<Props>();
 <template>
 	<div class="inline-flex items-center">
 		<label
-			:class="cn('relative flex cursor-pointer items-center rounded-full p-3')"
+			:class="cn('relative flex cursor-pointer items-center rounded-full p-1')"
 			:for="inputId"
 			data-ripple-dark="true"
 		>

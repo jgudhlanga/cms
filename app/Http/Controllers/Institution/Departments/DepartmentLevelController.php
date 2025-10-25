@@ -188,6 +188,206 @@ class DepartmentLevelController extends Controller
         // ------------------------------------------------------------
         // 1. Cached IDs
         // ------------------------------------------------------------
+        $oLevelId = cache()->rememberForever('o_level_id', fn() =>
+        AcademicLevel::where('name', AcademicLevelEnum::SECONDARY_SCHOOL->value)->value('id')
+        );
+
+        $applicationFeeId = cache()->rememberForever('application_fee_id', fn() =>
+        FeeType::where('slug', FeeTypeEnum::APPLICATION_FEE->slug())->value('id')
+        );
+
+        // ------------------------------------------------------------
+        // 2. Subquery for latest student program per student
+        // ------------------------------------------------------------
+        $subQuery = StudentProgram::query()
+            ->selectRaw('MAX(id) as id')
+            ->where([
+                'institution_department_id' => $institutionDepartmentId,
+                'department_level_id' => $departmentLevelId,
+                'intake_period_id' => $intakePeriodId,
+                'mode_of_study_id' => $modeOfStudyId,
+                'department_course_id' => $courseId,
+            ])
+            ->groupBy('student_id');
+
+        // ------------------------------------------------------------
+        // 3. Eager load all necessary relations
+        // ------------------------------------------------------------
+        $paginator = StudentProgram::query()
+            ->with([
+                'student.user:id,first_name,last_name,email',
+                'student.gender:id,title',
+                'student.contacts' => fn($q) => $q->orderBy('created_at')->limit(1),
+                'departmentWorkflowStep.workflowStep:id,name',
+            ])
+            ->whereIn('id', $subQuery)
+            ->select([
+                'id as application_id',
+                'student_id',
+                'department_application_step_id',
+                'application_tracking_number',
+                'created_at as application_date',
+            ])
+            ->paginate($perPage);
+
+        $studentPrograms = $paginator->getCollection();
+
+        $studentIds = $studentPrograms->pluck('student_id')->unique();
+        $userIds = $studentPrograms->pluck('student.user_id')->unique();
+        $studentProgramIds = $studentPrograms->pluck('application_id')->unique();
+
+        // ------------------------------------------------------------
+        // 4. Preload academic stats & results in bulk
+        // ------------------------------------------------------------
+        $academicStats = DB::table('student_academic_results')
+            ->select('student_id', DB::raw('COUNT(DISTINCT exam_year) as exam_sittings_count'), DB::raw('MIN(exam_year) as first_exam_year'))
+            ->whereIn('student_id', $studentIds)
+            ->where('academic_level_id', $oLevelId)
+            ->whereNull('deleted_at')
+            ->groupBy('student_id')
+            ->get()
+            ->keyBy('student_id');
+
+        $academicResults = DB::table('student_academic_results as sar')
+            ->join('subjects as s', 'sar.subject_id', '=', 's.id')
+            ->join('grades as g', 'sar.grade_id', '=', 'g.id')
+            ->whereIn('sar.student_id', $studentIds)
+            ->where('sar.academic_level_id', $oLevelId)
+            ->whereNull('sar.deleted_at')
+            ->select(
+                'sar.id as result_id',
+                'sar.student_id',
+                'sar.subject_id',
+                'sar.exam_year',
+                'sar.exam_sitting',
+                'sar.grade_id',
+                's.name as subject',
+                'g.name as grade'
+            )
+            ->orderBy('sar.exam_year')
+            ->orderBy('g.name')
+            ->get()
+            ->groupBy('student_id');
+
+        // ------------------------------------------------------------
+        // 5. Preload receipts in bulk
+        // ------------------------------------------------------------
+        $receipts = Ledger::query()
+            ->whereIn('ledgerable_id', $userIds)
+            ->where('ledgerable_type', User::class)
+            ->whereNull('deleted_at')
+            ->where([
+                'fee_type_id' => $applicationFeeId,
+                'intake_period_id' => $intakePeriodId,
+                'payment_status' => 'paid',
+                'type' => 'receipt',
+            ])
+            ->select('ledgerable_id as user_id', 'id as receipt_id', 'amount as receipt_amount')
+            ->get()
+            ->keyBy('user_id');
+
+        // ------------------------------------------------------------
+        // 5.1 Preload class list membership
+        // ------------------------------------------------------------
+        $classLists = DB::table('class_lists')
+            ->whereIn('student_program_id', $studentProgramIds)
+            ->whereNull('deleted_at')
+            ->select('student_program_id', 'type')
+            ->get()
+            ->keyBy('student_program_id');
+
+        // ------------------------------------------------------------
+        // 6. Transform students
+        // ------------------------------------------------------------
+        $studentPrograms->transform(function ($sp) use ($academicStats, $academicResults, $receipts, $classLists) {
+            $student = $sp->student;
+            $user = $student->user;
+
+            $sp->student_name = "{$user->first_name} {$user->last_name}";
+            $sp->email = $user->email;
+            $sp->phone_number = $student->contacts->first()?->phone_number;
+            $sp->student_number = $student->student_number;
+            $sp->disability_status = $student->disability_status;
+            $sp->gender = $student->gender->title ?? null;
+            $sp->workflow_step = $sp->departmentWorkflowStep?->workflowStep?->name;
+            $sp->application_date = Carbon::parse($sp->application_date)->format('Y-m-d');
+
+            // Academic stats
+            $stats = $academicStats->get($student->id);
+            $sp->exam_sittings_count = $stats->exam_sittings_count ?? 0;
+            $sp->first_exam_year = $stats->first_exam_year ?? null;
+
+            // Receipt info
+            $receipt = $receipts->get($student->user_id);
+            $sp->receipt_id = $receipt->receipt_id ?? null;
+            $sp->receipt_amount = $receipt->receipt_amount ?? null;
+
+            // Academic results
+            $sp->academic_results = $academicResults->get($student->id, collect());
+
+            // ✅ Class list check
+            $classList = $classLists->get($sp->application_id);
+            $sp->in_class_list = $classList ? true : false;
+            $sp->class_list_type = $classList->type ?? null;
+
+            return $sp;
+        });
+
+        // ------------------------------------------------------------
+        // 7. Group students by priority
+        // ------------------------------------------------------------
+        $grouped = [
+            'disabled' => $studentPrograms
+                ->filter(fn($sp) => strtolower($sp->disability_status) === 'yes')
+                ->sortBy('student_name')
+                ->values(),
+
+            'females' => $studentPrograms
+                ->filter(fn($sp) => strtolower($sp->disability_status) !== 'yes' &&
+                    strtolower($sp->gender) === 'female')
+                ->sortBy('student_name')
+                ->values(),
+
+            'males' => $studentPrograms
+                ->filter(fn($sp) => strtolower($sp->disability_status) !== 'yes' &&
+                    strtolower($sp->gender) === 'male')
+                ->sortBy('student_name')
+                ->values(),
+
+            'others' => $studentPrograms
+                ->filter(fn($sp) => strtolower($sp->disability_status) !== 'yes' &&
+                    !in_array(strtolower($sp->gender), ['male', 'female']))
+                ->sortBy('student_name')
+                ->values(),
+        ];
+
+        // ------------------------------------------------------------
+        // 8. Return
+        // ------------------------------------------------------------
+        return [
+            'pagination' => [
+                'current_page' => $paginator->currentPage(),
+                'last_page' => $paginator->lastPage(),
+                'per_page' => $paginator->perPage(),
+                'total' => $paginator->total(),
+                'links' => $paginator->linkCollection(),
+            ],
+            'groups' => $grouped,
+        ];
+    }
+
+    /*public function queryEnrolments(
+        int $institutionDepartmentId,
+        int $departmentLevelId,
+        int $intakePeriodId,
+        int $modeOfStudyId,
+        int $courseId,
+        int $perPage = 1000
+    ): array
+    {
+        // ------------------------------------------------------------
+        // 1. Cached IDs
+        // ------------------------------------------------------------
         $oLevelId = cache()->rememberForever('o_level_id', fn() => AcademicLevel::where('name', AcademicLevelEnum::SECONDARY_SCHOOL->value)->value('id'));
         $applicationFeeId = cache()->rememberForever('application_fee_id', fn() => FeeType::where('slug', FeeTypeEnum::APPLICATION_FEE->slug())->value('id'));
 
@@ -353,5 +553,5 @@ class DepartmentLevelController extends Controller
             ],
             'groups' => $grouped,
         ];
-    }
+    }*/
 }
