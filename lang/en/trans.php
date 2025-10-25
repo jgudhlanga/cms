@@ -86,7 +86,7 @@ return [
     'save_and_create_new' => 'Save and create new',
     'close' => 'Close',
     'forbidden' => 'Forbidden',
-    'forbidden_message' => 'You do not have enough rights to access this page or resource',
+    'forbidden_message' => 'You do not have access rights to this resource / action',
     'trash' => 'Trash|Trashes|Trashed',
     'without_archived' => 'Active',
     'with_archived' => 'All',

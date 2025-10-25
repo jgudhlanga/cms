@@ -31,7 +31,7 @@ const computedClass = computed(() =>
 
 <template>
     <div :class="computedClass">
-        <div class="flex items-center space-x-3 ">
+        <div class="flex items-center space-x-3 w-full">
             <component :is="icons[iconVariants[type] as IconName]" class="size-6 shrink-0" />
             <div class="text-sm">{{ description }}</div>
         </div>

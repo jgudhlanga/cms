@@ -40,7 +40,7 @@ const breadcrumbs: Array<Link> = [
     <Head :title="$tChoice('trans.department', 2)" />
     <PageContainer :breadcrumbs="breadcrumbs">
         <DataTable
-            :data="departments.data"
+            :data="departments?.data ?? []"
             :trashed-count="trashedCount"
             :filters="filters"
             :show-archived-filter="false"

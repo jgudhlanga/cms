@@ -18,11 +18,11 @@ const { isVisible, options, confirm, close } = useCustomConfirmDialog();
                 <div v-if="isVisible" class="w-full max-w-md rounded-lg bg-white shadow-xl transition-all">
                     <div class="p-6">
                         <!-- Header -->
-                        <div class="mb-4 flex items-center space-x-2">
+                        <div class="mb-6 flex items-center space-x-2">
                             <div class="text-amber-500">
                                 <BaseIcon :name="IconName.warning" />
                             </div>
-                            <div class="text-lg font-semibold uppercase">
+                            <div class="text-sm font-semibold uppercase">
                                 {{ options.title }}
                             </div>
                         </div>
@@ -36,17 +36,17 @@ const { isVisible, options, confirm, close } = useCustomConfirmDialog();
                         </div>
 
                         <!-- Actions -->
-                        <div class="flex justify-center space-x-3">
+                        <div class="flex justify-center space-x-3 mt-6">
                             <BaseButton
                                 @click="close"
                                 :title="options.cancelText"
                                 :variant="ColorVariant.shade"
-                                :size="ButtonSize.sm"
+                                :size="ButtonSize.lg"
                                 classes="rounded-full"
                             ></BaseButton>
                             <BaseButton
                                 :variant="ColorVariant.warning"
-                                @click="confirm" :title="options.confirmText" :size="ButtonSize.sm" classes="rounded-full"></BaseButton>
+                                @click="confirm" :title="options.confirmText" :size="ButtonSize.lg" classes="rounded-full"></BaseButton>
                         </div>
                     </div>
                 </div>

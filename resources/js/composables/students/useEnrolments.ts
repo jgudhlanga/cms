@@ -5,7 +5,7 @@ import { mergeValidationSchema } from '@/lib/forms';
 import { emailUniqueSchema, idNumberUniqueSchema, passportNumberUniqueSchema } from '@/lib/uniqueValidations';
 import { useCreateApplicationFormStore } from '@/store/portal/useCreateApplicationFormStore';
 import type { DepartmentLevel } from '@/types/department-meta-data';
-import { ClassSizeSlot, Enrolment, EnrolmentApplication, OLeveResult } from '@/types/enrolments';
+import { ClassSizeSlot, Enrolment, EnrolmentApplication, EnrolmentGroup, EnrolmentGroupResponse, OLeveResult } from '@/types/enrolments';
 import { InertiaForm } from '@inertiajs/vue3';
 import { trans_choice } from 'laravel-vue-i18n';
 import { ZodObject } from 'zod';
@@ -326,6 +326,11 @@ export const useEnrolments = () => {
         return grades;
     };
 
+    const classListIsCreated = (enrolments: EnrolmentGroupResponse) => {
+        const groups = enrolments?.groups ?? { disabled: [], females: [], males: [] };
+        return ['disabled', 'females', 'males'].some((group) => groups[group as EnrolmentGroup].some((enrolment) => enrolment.inClassList));
+    };
+
     return {
         enrolmentColumns,
         cashApplicationFormSchema,
@@ -336,5 +341,6 @@ export const useEnrolments = () => {
         getFaultyApplications,
         getMainSubjectGrade,
         getOtherSubjectGrades,
+        classListIsCreated,
     };
 };

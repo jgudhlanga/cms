@@ -200,3 +200,4 @@ export type ClassListParams = {
     waiting_list: string[]|null;
     type: 'provisional' | 'verified' | 'waitlisted' | 'final' | 'failed';
 };
+export type EnrolmentGroup = 'disabled' | 'females' | 'males';
