@@ -191,14 +191,14 @@ async function createProvisionalClass() {
                     <BaseAlert
                         v-if="classListIsCreated(enrolments)"
                         :type="TypeVariant.success"
-                        description="Class list and waiting list created"
+                        description="Class list created"
                     />
                 </div>
                 <BaseButton
                     v-if="!noData"
                     type="button"
                     :variant="ColorVariant.primary"
-                    title="Create provisional class and waiting list"
+                    title="Create provisional class"
                     classes="rounded-full normalize"
                     @click="createProvisionalClass"
                     :disabled="classListIsCreated(enrolments)"
