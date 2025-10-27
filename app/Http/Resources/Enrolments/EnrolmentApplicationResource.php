@@ -28,6 +28,9 @@ class EnrolmentApplicationResource extends JsonResource
             'firstExamYear' => $this->first_exam_year,
             'inClassList' => $this->in_class_list,
             'classListType' => $this->class_list_type,
+            'requiredLevelCompleted' => $this->required_level_completed,
+            'readWriteAcknowledged' => $this->read_write_acknowledged,
+            'offerAccepted' => $this->offer_accepted,
             'academicResults' => OLevelResultResource::collection($this->academic_results ?? collect()),
         ];
     }

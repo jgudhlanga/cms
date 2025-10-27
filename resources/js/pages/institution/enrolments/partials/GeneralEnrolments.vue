@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useEnrolments } from '@/composables/students/useEnrolments';
+import { useUtils } from '@/composables/core/useUtils';
 import { IconName } from '@/enums/icons';
 import { DepartmentLevel } from '@/types/department-meta-data';
 import { EnrolmentApplication } from '@/types/enrolments';
@@ -15,12 +15,9 @@ interface Props {
 
 const props = defineProps<Props>();
 const { level, applications } = props;
+const { isItTrue } = useUtils();
 const levelRequirements = computed(() => level?.relationships?.requirement);
-const requirementSubjects = computed(() => level?.relationships?.requirement?.relationships?.subjects);
 
-const { applyPolicyAlgorithmToApplications, getFaultyApplications, getMainSubjectGrade, getOtherSubjectGrades } = useEnrolments();
-const sortedApplications = applyPolicyAlgorithmToApplications(applications, level);
-const faultyApplications = getFaultyApplications(applications, level);
 const getRowClass = (rowIndex: number) => {
     if (rowIndex + 1 <= props.slotSize) {
         return 'bg-green-100';
@@ -46,79 +43,49 @@ const getIconClass = (rowIndex: number) => {
     <div class="my-2">
         <table class="j-table">
             <thead class="j-thead">
-            <tr class="j-th">
-                <th class="j-th text-left">#</th>
-                <th class="j-th text-left">{{ $tChoice('trans.name', 1) }}</th>
-                <th class="j-th text-left">{{ $tChoice('trans.phone', 1) }}</th>
-                <th class="j-th text-center">{{ $tChoice('trans.amount', 1) }}</th>
-                <th class="j-th text-center">Sitting Count</th>
-                <th class="j-th text-center">First Sitting</th>
-                <th class="j-th text-center" v-for="subject in requirementSubjects" :key="`tr_${subject.id}`">{{ subject?.attributes?.name }}</th>
-                <th class="j-th text-center" v-for="sub in levelRequirements?.attributes.otherSubjectsCount" :key="`${sub}th_other_sub`">
-                    {{ `${$t('trans.other')} ${Number(sub)}` }}
-                </th>
-                <th class="j-th text-center">{{ $tChoice('trans.score', 1) }}</th>
-                <th class="j-th text-center">{{ $tChoice('trans.status', 1) }}</th>
-            </tr>
+                <tr class="j-th">
+                    <th class="j-th text-left">#</th>
+                    <th class="j-th text-left">{{ $tChoice('trans.name', 1) }}</th>
+                    <th class="j-th text-left">{{ $tChoice('trans.phone', 1) }}</th>
+                    <th class="j-th text-center">{{ $tChoice('trans.amount', 1) }}</th>
+                    <template v-if="Number(levelRequirements?.attributes?.requiredLevelId) > 0">
+                        <th class="j-th text-center">{{ `${levelRequirements?.attributes?.requiredLevel} completed` }}</th>
+                    </template>
+                    <template v-if="isItTrue(levelRequirements?.attributes?.onlyReadWriteRequired)">
+                        <th class="j-th text-center">Read / Write Acknowledged</th>
+                    </template>
+                    <th class="j-th text-center">{{ $tChoice('trans.status', 1) }}</th>
+                </tr>
             </thead>
             <tbody class="j-tbody">
-            <tr :class="getRowClass(index)" v-for="(application, index) in sortedApplications" :key="application.applicationId">
-                <td class="j-td">{{ index + 1 }}</td>
-                <td class="j-td">{{ application.studentName }}</td>
-                <td class="j-td">{{ application.phoneNumber }}</td>
-                <td class="j-td text-center">{{ application.receiptAmount }}</td>
-                <td class="j-td text-center">{{ application.examSittingsCount }}</td>
-                <td class="j-td text-center">{{ application.firstExamYear }}</td>
-                <td class="j-td text-center" v-for="subject in requirementSubjects" :key="`td_${subject.id}`">
-                    {{ getMainSubjectGrade(application?.academicResults ?? [], String(subject?.id))?.grade }}
-                    <span class="text-[8px]">{{
-                            getMainSubjectGrade(application?.academicResults ?? [], String(subject?.id))?.examYear ?? '---'
-                        }}</span>
-                </td>
-                <td
-                    class="j-td text-center"
-                    v-for="result in getOtherSubjectGrades(application?.academicResults ?? [], level)"
-                    :key="`${result.gradeId}_other_sub`"
-                >
-                    {{ result.grade }}
-                    <span class="text-[8px]">{{ result.examYear }}</span>
-                </td>
-                <td class="j-td text-center">{{ application.totalScore }}</td>
-                <td class="j-td text-center">
-                    <template v-if="application.inClassList">
-                        <BaseIcon v-if="index + 1 <= slotSize * 2" :name="IconName.check_done" :class="`h-4 w-full ${getIconClass(index)}`" />
-                    </template>
-                    <BaseIcon v-else :name="IconName.close" class="h-4 w-full" />
-                </td>
-            </tr>
-            <template v-if="faultyApplications.length > 0">
-                <tr class="bg-red-100" v-for="application in faultyApplications" :key="application.applicationId">
-                    <td class="j-td">{{ application.studentId }}</td>
+                <tr :class="getRowClass(index)" v-for="(application, index) in applications" :key="application.applicationId">
+                    <td class="j-td">{{ index + 1 }}</td>
                     <td class="j-td">{{ application.studentName }}</td>
                     <td class="j-td">{{ application.phoneNumber }}</td>
                     <td class="j-td text-center">{{ application.receiptAmount }}</td>
-                    <td class="j-td text-center">{{ application.examSittingsCount }}</td>
-                    <td class="j-td text-center">{{ application.firstExamYear }}</td>
-                    <td class="j-td text-center" v-for="subject in requirementSubjects" :key="`td_${subject.id}`">
-                        {{ getMainSubjectGrade(application?.academicResults ?? [], String(subject?.id))?.grade }}
-                        <span class="text-[8px]"
-                        >({{ getMainSubjectGrade(application?.academicResults ?? [], String(subject?.id))?.examYear ?? '---' }})</span
-                        >
-                    </td>
-                    <td
-                        class="j-td text-center"
-                        v-for="result in getOtherSubjectGrades(application?.academicResults ?? [], level)"
-                        :key="`${result.gradeId}_other_sub`"
-                    >
-                        {{ result.grade }}
-                        <span class="text-[8px]">({{ result.examYear }})</span>
-                    </td>
-                    <td class="j-td text-center">{{ application.totalScore ?? '---' }}</td>
+                    <template v-if="Number(levelRequirements?.attributes?.requiredLevelId) > 0">
+                        <th class="j-th text-center">
+                            <BaseIcon
+                                :name="isItTrue(application?.requiredLevelCompleted) ? IconName.check_done : IconName.close"
+                                :class="`h-4 w-full ${isItTrue(application?.requiredLevelCompleted) ? 'text-green-600' : 'text-red-600'}`"
+                            />
+                        </th>
+                    </template>
+                    <template v-if="isItTrue(levelRequirements?.attributes?.onlyReadWriteRequired)">
+                        <th class="j-th text-center">
+                            <BaseIcon
+                                :name="isItTrue(application?.readWriteAcknowledged) ? IconName.check_done : IconName.close"
+                                :class="`h-4 w-full ${isItTrue(application?.readWriteAcknowledged) ? 'text-green-600' : 'text-red-600'}`"
+                            />
+                        </th>
+                    </template>
                     <td class="j-td text-center">
-                        <span class="text-red-800">error</span>
+                        <template v-if="application.inClassList">
+                            <BaseIcon v-if="index + 1 <= slotSize * 2" :name="IconName.check_done" :class="`h-4 w-full ${getIconClass(index)}`" />
+                        </template>
+                        <BaseIcon v-else :name="IconName.close" class="h-4 w-full" />
                     </td>
                 </tr>
-            </template>
             </tbody>
         </table>
     </div>

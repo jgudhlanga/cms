@@ -5,6 +5,7 @@ import { useEnrolments } from '@/composables/students/useEnrolments';
 import { ColorVariant } from '@/enums/colors';
 import { TypeVariant } from '@/enums/type-variants';
 import { errorAlert, forbiddenAlert, successAlert } from '@/lib/alerts';
+import { hasAbility } from '@/lib/permissions';
 import { getIdParams } from '@/lib/utils';
 import ByAcademicLevelResults from '@/pages/institution/enrolments/partials/ByAcademicLevelResults.vue';
 import EnrolmentFilters from '@/pages/institution/enrolments/partials/EnrolmentFilters.vue';
@@ -17,7 +18,8 @@ import { Link } from '@/types/ui';
 import { SelectOption } from '@/types/utils';
 import { Head, router, useForm } from '@inertiajs/vue3';
 import { computed, onMounted, ref } from 'vue';
-import { hasAbility } from '@/lib/permissions';
+import GeneralEnrolments from '@/pages/institution/enrolments/partials/GeneralEnrolments.vue';
+import ClassSize from '@/pages/institution/enrolments/partials/ClassSize.vue';
 
 interface Props {
     department: InstitutionDepartment;
@@ -77,13 +79,24 @@ const handleFilterChange = () => {
 const noData = computed(
     () => enrolments.groups.disabled.length === 0 && enrolments.groups.females.length === 0 && enrolments.groups.males.length === 0,
 );
+
+const totalApplications = computed(() => {
+    return (
+        enrolments.groups.disabled.length +
+        enrolments.groups.females.length +
+        enrolments.groups.males.length
+    );
+});
 const getGroupSlot = (group: EnrolmentGroup): number => {
     const groups = enrolments?.groups ?? { disabled: [], females: [], males: [] };
-
-    const { disabled, females, males } = allocateClassSlots(Number(classSize), groups.disabled.length, groups.females.length, groups.males.length);
-
-    const slots = { disabled, females, males };
-    return slots[group] ?? 0;
+    if (totalApplications.value > Number(classSize)) {
+        const { disabled, females, males } = allocateClassSlots(Number(classSize), groups.disabled.length, groups.females.length, groups.males.length);
+        const slots = { disabled, females, males };
+        return slots[group] ?? 0;
+    } else {
+        // If total applications are less than or equal to class size, allocate all to class list
+        return groups[group]?.length ?? 0;
+    }
 };
 
 const form = useForm<ClassListParams>({
@@ -93,13 +106,13 @@ const form = useForm<ClassListParams>({
 });
 
 async function createProvisionalClass() {
-    if(!hasAbility(['create:class-list'])) {
+    if (!hasAbility('create:class-lists')) {
         forbiddenAlert();
         return;
     }
     const confirmed = await useCustomConfirmDialog().open({
         title: 'Create Class',
-        message: 'Are you sure you want to create class list and its waiting list?.',
+        message: 'Are you sure you want to create class list and its waiting list?',
         confirmText: 'Please continue',
     });
     if (confirmed) {
@@ -131,7 +144,7 @@ async function createProvisionalClass() {
             form.post(route('enrolments.store-class-list'), {
                 onSuccess: () => {
                     successAlert('Provisional class and waiting list created successfully');
-                    router.reload();
+                    router.visit(window.location.href, { replace: true, preserveScroll: true });
                 },
                 onError: (errors: Record<string, any>) => {
                     const message = Object.keys(errors).length
@@ -170,12 +183,15 @@ async function createProvisionalClass() {
             />
             <!-- ============ SHOW APPLICATIONS BY GROUPS -->
             <ScoringFormula :class-size="classSize" v-if="isItTrue(levelRequirements?.attributes?.isOLevelRequired)" />
+            <div class="flex justify-end" v-else>
+                <ClassSize :class-size="classSize" />
+            </div>
             <div class="mt-6 flex items-center justify-between space-x-2">
                 <div class="flex w-full">
                     <BaseAlert
                         v-if="classListIsCreated(enrolments)"
                         :type="TypeVariant.success"
-                        description="Class list and waiting list created successfully"
+                        description="Class list and waiting list created"
                     />
                 </div>
                 <BaseButton
@@ -189,17 +205,24 @@ async function createProvisionalClass() {
                 />
             </div>
             <div v-for="(enrolmentsInGroup, group) in enrolments.groups" :key="group" class="flex flex-col">
-                <div class="flex flex-col">
+                <div class="flex flex-col" v-if="Number(getGroupSlot(group.toLowerCase() as EnrolmentGroup)) > 0">
                     <HeadingSmall :title="`${group} (${getGroupSlot(group.toLowerCase() as EnrolmentGroup)})`" class="mt-6" />
-                    <template v-if="isItTrue(levelRequirements?.attributes?.isOLevelRequired)">
                         <ByAcademicLevelResults
+                            v-if="isItTrue(levelRequirements?.attributes?.isOLevelRequired)"
                             :level="level"
                             :department-id="String(department?.id)"
                             :applications="enrolmentsInGroup"
                             :class-size="Number(classSize)"
                             :slot-size="getGroupSlot(group.toLowerCase() as EnrolmentGroup)"
                         />
-                    </template>
+                    <GeneralEnrolments
+                        v-else
+                        :level="level"
+                        :department-id="String(department?.id)"
+                        :applications="enrolmentsInGroup"
+                        :class-size="Number(classSize)"
+                        :slot-size="getGroupSlot(group.toLowerCase() as EnrolmentGroup)"
+                    />
                 </div>
             </div>
         </div>

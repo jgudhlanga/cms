@@ -227,6 +227,9 @@ class DepartmentLevelController extends Controller
                 'department_application_step_id',
                 'application_tracking_number',
                 'created_at as application_date',
+                'required_level_completed',
+                'read_write_acknowledged',
+                'offer_accepted',
             ])
             ->paginate($perPage);
 
@@ -311,6 +314,9 @@ class DepartmentLevelController extends Controller
             $sp->gender = $student->gender->title ?? null;
             $sp->workflow_step = $sp->departmentWorkflowStep?->workflowStep?->name;
             $sp->application_date = Carbon::parse($sp->application_date)->format('Y-m-d');
+            $sp->required_level_completed = $sp->required_level_completed ?? false;
+            $sp->read_write_acknowledged = $sp->read_write_acknowledged ?? false;
+            $sp->offer_accepted = $sp->offer_accepted ?? false;
 
             // Academic stats
             $stats = $academicStats->get($student->id);
