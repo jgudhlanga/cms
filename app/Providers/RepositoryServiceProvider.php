@@ -10,6 +10,7 @@ use App\Repositories\Acl\ModuleRepository;
 use App\Repositories\Acl\PermissionRepository;
 use App\Repositories\Acl\RoleGroupRepository;
 use App\Repositories\Acl\RoleRepository;
+use App\Repositories\Institution\ClassListRepository;
 use App\Repositories\Institution\CourseRepository;
 use App\Repositories\Institution\DepartmentApplicationStepRepository;
 use App\Repositories\Institution\DepartmentCourseRepository;
@@ -21,6 +22,7 @@ use App\Repositories\Institution\FeeStructureRepository;
 use App\Repositories\Institution\GradeRepository;
 use App\Repositories\Institution\InstitutionDepartmentRepository;
 use App\Repositories\Institution\IntakePeriodRepository;
+use App\Repositories\Institution\interface\IClassListRepository;
 use App\Repositories\Institution\interface\ICourseRepository;
 use App\Repositories\Institution\interface\IDepartmentApplicationStepRepository;
 use App\Repositories\Institution\interface\IDepartmentCourseRepository;
@@ -193,6 +195,7 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(IStaffRepository::class, StaffRepository::class);
         $this->app->bind(IDocumentTemplateRepository::class, DocumentTemplateRepository::class);
         $this->app->bind(IFeeStructureRepository::class, FeeStructureRepository::class);
+        $this->app->bind(IClassListRepository::class, ClassListRepository::class);
     }
 
     public function userRepositories(): void

@@ -145,23 +145,23 @@ export interface EnrolmentApplication {
     applicationId: number;
     applicationTrackingNumber: string;
     applicationDate: string;
-
     studentId: string;
     studentName: string;
     studentNumber: string;
     email: string | null;
     phoneNumber: string | null;
-
     gender: string | null;
     disabilityStatus: string | null;
     workflowStep: string | null;
-
     receiptId: number | null;
     receiptAmount: number | null;
-
     examSittingsCount: number;
     firstExamYear: string | null;
-
+    inClassList: boolean;
+    classListType: string | null;
+    requiredLevelCompleted: boolean;
+    readWriteAcknowledged: boolean;
+    offerAccepted: boolean;
     academicResults: OLeveResult[];
     totalScore: number;
     hasNoPayment: boolean;
@@ -187,8 +187,15 @@ export interface EnrolmentGroupResponse {
     pagination: Pagination;
     groups: EnrolmentApplicationGroup;
 }
- export type ClassSizeSlot = {
+export type ClassSizeSlot = {
     disabled: number;
     females: number;
     males: number;
- }
+};
+
+export type ClassListParams = {
+    class_list: string[] | null;
+    waiting_list: string[] | null;
+    type: 'provisional' | 'verified' | 'waitlisted' | 'final' | 'failed';
+};
+export type EnrolmentGroup = 'disabled' | 'females' | 'males';

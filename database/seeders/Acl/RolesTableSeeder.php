@@ -45,7 +45,7 @@ class RolesTableSeeder extends Seeder
     {
         $excludedPermissions = collect(array_merge(
             $this->portalPermissions(),
-            [PermissionEnum::MANAGE_OWN_TENANT_DATA->value]
+            [PermissionEnum::MANAGE_OWN_TENANT_DATA->value, PermissionEnum::VIEW_ONLY_OWN_DEPARTMENT->value]
         ));
         $permissions = collect(PermissionEnum::cases())
             ->reject(fn($case) => $excludedPermissions->contains($case->value))

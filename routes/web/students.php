@@ -3,7 +3,6 @@
 use App\Http\Controllers\Students\AcademicRecordController;
 use App\Http\Controllers\Students\SponsorController;
 use App\Http\Controllers\Students\StudentController;
-use App\Http\Controllers\Students\StudentProgramController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('students')->middleware('auth')->group(function () {
@@ -21,15 +20,6 @@ Route::prefix('students')->middleware('auth')->group(function () {
     Route::delete('academic-records/{academic_record}/force-delete', [AcademicRecordController::class, 'forceDelete'])->name('academic-records.force-delete');
 });
 
-// ===================================== ENROLMENTS ====================================================================
-Route::prefix('enrolments')->middleware('auth')->group(function () {
-    Route::get('faulty-applications', [StudentProgramController::class, 'faultyApplications'])->name('enrolments.faulty-applications');
-    Route::post('search-profile', [StudentController::class, 'searchProfile'])->name('enrolments.search-profile');
-    Route::get('lookup', [StudentController::class, 'enrolmentLookup'])->name('enrolments.enrolment-lookup');
-    Route::get('create/{payment_mode}', [StudentController::class, 'createProfile'])->name('enrolments.create-profile');
-    Route::get('show-enrolment/{student}', [StudentController::class, 'showProfile'])->name('enrolments.show-profile');
-});
-Route::middleware('auth')->resource('enrolments', StudentProgramController::class)->names('enrolments');
 // ===================================== STUDENTS ======================================================================
 Route::prefix('students')->middleware('auth')->group(function () {
 });

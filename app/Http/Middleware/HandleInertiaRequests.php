@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Enums\Acl\PermissionEnum;
+use App\Enums\Acl\RoleEnum;
 use App\Http\Resources\Users\UserResource;
 use App\Models\Users\User;
 use Illuminate\Http\Request;
@@ -62,14 +63,39 @@ class HandleInertiaRequests extends Middleware
         ];
     }
 
-    /**
-     * Maps the user's permissions to their names as keys and a boolean for whether the user can perform the permission.
-     *
-     * @param User $user
-     * @return Collection<PermissionEnum, bool>
-     */
     private function permissions(User $user): Collection
     {
-        return $user?->getAllPermissions()->pluck('name')->flip()->map(fn() => true);
+        // If user is super admin, return all permissions as true
+        if ($user->hasRole(RoleEnum::SUPER_USER->name())) {
+            return collect(PermissionEnum::cases())
+                ->reject(fn($permission) => in_array($permission->value, $this->excludePermissions(), true))
+                ->mapWithKeys(fn($permission) => [$permission->value => true]);
+        }
+
+        // Otherwise, return only the user's assigned permissions
+        return $user?->getAllPermissions()
+            ->pluck('name')
+            ->flip()
+            ->map(fn() => true);
+    }
+
+    private function excludePermissions(): array
+    {
+        return [
+            PermissionEnum::VIEW_OWN_STUDENT_DASHBOARD->value,
+            PermissionEnum::MANAGE_OWN_STUDENT_PERSONAL_DETAILS->value,
+            PermissionEnum::MANAGE_OWN_STUDENT_PROGRAM_DETAILS->value,
+            PermissionEnum::MANAGE_OWN_STUDENT_SPONSOR_DETAILS->value,
+            PermissionEnum::MANAGE_OWN_STUDENT_CONTACT_DETAILS->value,
+            PermissionEnum::MANAGE_OWN_STUDENT_FINANCIAL_DETAILS->value,
+            PermissionEnum::MANAGE_OWN_STUDENT_ACADEMIC_DETAILS->value,
+            PermissionEnum::VIEW_NEXT_OF_KINS->value,
+            PermissionEnum::CREATE_NEXT_OF_KINS->value,
+            PermissionEnum::UPDATE_NEXT_OF_KINS->value,
+            PermissionEnum::DELETE_NEXT_OF_KINS->value,
+            PermissionEnum::FORCE_DELETE_NEXT_OF_KINS->value,
+            PermissionEnum::VIEW_ONLY_OWN_DEPARTMENT->value,
+            PermissionEnum::MANAGE_OWN_TENANT_DATA->value
+        ];
     }
 }

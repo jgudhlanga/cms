@@ -1,3 +1,4 @@
+
 <script setup lang="ts">
 // UI components
 import { computed, onBeforeUnmount, onMounted } from 'vue';

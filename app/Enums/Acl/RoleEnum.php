@@ -47,6 +47,7 @@ enum RoleEnum: string
 
     // Student
     case STUDENT = 'student';
+    case REGISTRY_OFFICER = 'registry-officer';
 
     public function name(): string
     {
@@ -65,6 +66,7 @@ enum RoleEnum: string
             self::DEAN => 'Dean',
             self::BURSAR => 'Bursar',
             self::LIBRARIAN => 'Librarian',
+            self::REGISTRY_OFFICER => 'Registry Officer',
 
             // Academic Staff
             self::LECTURER => 'Lecturer',
@@ -103,7 +105,7 @@ enum RoleEnum: string
             self::SUPER_USER => 'Power user with elevated privileges for system oversight.',
             self::SUPER_ADMINISTRATOR => 'Has unrestricted access to all system functions.',
 
-            // Tesc
+            // Test
             self::TESC => 'Tertiary Education Service Council (TESC) group responsible for overseeing tertiary education policies and standards.',
 
             // Executive
@@ -113,6 +115,7 @@ enum RoleEnum: string
             self::DEAN => 'Leads a faculty or academic division.',
             self::BURSAR => 'Oversees and Manages finances of the institution.',
             self::LIBRARIAN => 'Manages library resources and services.',
+            self::REGISTRY_OFFICER => 'Verifies and manages enrolments.',
 
             // Academic Staff
             self::HEAD_OF_DIVISION => 'Leads a division and oversees departments within it.',
@@ -149,7 +152,7 @@ enum RoleEnum: string
         return match ($this) {
             self::SUPER_ADMINISTRATOR, self::SUPER_USER => 'super-user',
             self::TESC => 'tesc',
-            self::PRINCIPAL, self::VICE_PRINCIPAL, self::BURSAR, self::REGISTRAR, self::LIBRARIAN, self::DEAN => 'executive',
+            self::PRINCIPAL, self::VICE_PRINCIPAL, self::BURSAR, self::REGISTRAR, self::LIBRARIAN, self::DEAN, self::REGISTRY_OFFICER => 'executive',
             self::HEAD_OF_DEPARTMENT, self::HEAD_OF_DIVISION, self::SELECTION_OFFICER, self::LECTURER, self::LECTURER_IN_CHARGE, self::SENIOR_LECTURER => 'academic',
             self::HR_OFFICER, self::ACCOUNTANT, self::ADMINISTRATIVE_OFFICER, self::IT_MANAGER => 'managerial',
             self::HR_OFFICER_ASSISTANT, self::ACCOUNTANT_ASSISTANT, self::IT_SYSTEM_ADMINISTRATOR, self::ADMINISTRATIVE_ASSISTANT => 'administrative',

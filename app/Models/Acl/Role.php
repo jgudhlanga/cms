@@ -32,6 +32,8 @@ class Role extends SpatieRole
         return $this->belongsTo(RoleGroup::class);
     }
 
+
+
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
