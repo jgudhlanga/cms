@@ -7,7 +7,7 @@ const PAYMENT_METHODS: string = '/assets/images/payment_methods.png';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const API_VERSION = 'v1';
 
-const PAGINATION_ITEMS_PER_PAGE = 10;
+const PAGINATION_ITEMS_PER_PAGE = 15;
 const PAGINATION_MAX_LIMIT = 1000;
 const APP_MODULE_KEYS = {
     modules: 'modules',

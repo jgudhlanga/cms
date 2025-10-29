@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import BaseAlert from '@/components/core/alert/BaseAlert.vue';
-import { BaseButton, GenericButton, IconButton } from '@/components/core/button';
+import { BaseButton, GenericButton } from '@/components/core/button';
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import Empty from '@/components/core/util/Empty.vue';
 import GridLabelValue from '@/components/core/util/GridLabelValue.vue';

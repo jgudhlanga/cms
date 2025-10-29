@@ -1,4 +1,4 @@
-import { DepartmentApplicationStep } from '@/types/department-meta-data';
+import { CourseRequirement, DepartmentApplicationStep, DepartmentLevelRequirement } from '@/types/department-meta-data';
 import { Ledger } from '@/types/integrations';
 import { User } from '@/types/users';
 
@@ -11,6 +11,12 @@ export type Enrolment = {
         studentNumber?: string;
         modeOfStudyId: string | number;
         modeOfStudy: string;
+        idNumber?: string;
+        passportNumber?: string;
+        idType?: string;
+        idTypeId?: string | number;
+        country?: string;
+        countryId?: string | number;
         phoneNumber: string;
         email: string;
         institutionDepartmentId: string | number;
@@ -19,6 +25,8 @@ export type Enrolment = {
         department: string;
         level: string;
         levelId: string | number;
+        intakePeriod: string;
+        intakePeriodId: string | number;
         allowedApplicationsPerLevel: string | number;
         hasEnrolmentRequirements: boolean;
         course: string;
@@ -34,10 +42,13 @@ export type Enrolment = {
         updatedAt: string;
     };
     relationships?: {
+        classList?: ClassList;
         registrationReceipt?: Ledger;
         tuitionReceipt?: Ledger;
         oLevelResults: AcademicOLevelResult[];
         departmentWorkflowStep: DepartmentApplicationStep;
+        requirements: DepartmentLevelRequirement;
+        courseRequirements: CourseRequirement;
     };
 };
 
@@ -199,3 +210,18 @@ export type ClassListParams = {
     type: 'provisional' | 'verified' | 'waitlisted' | 'final' | 'failed';
 };
 export type EnrolmentGroup = 'disabled' | 'females' | 'males';
+
+export type ClassList = {
+    studentProgramId: string | number;
+    type: string;
+    attributes: ClassListAttribute;
+};
+export type ClassListAttribute = {
+    identityConfirmed: boolean;
+    disabilityConfirmed: boolean;
+    namesConfirmed: boolean;
+    oLevelConfirmed: boolean;
+    previousLevelConfirmed: boolean;
+    applicationFeeConfirmed: boolean;
+    tuitionFeeConfirmed: boolean;
+};

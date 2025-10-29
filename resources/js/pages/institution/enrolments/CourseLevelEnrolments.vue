@@ -161,7 +161,7 @@ async function createProvisionalClass() {
 </script>
 
 <template>
-    <Head :title="$tChoice('trans.department', 2)" />
+    <Head :title="$tChoice('trans.enrolment', 2)" />
     <PageContainer :breadcrumbs="breadcrumbs">
         <EnrolmentFilters
             v-model:intakePeriodModel="intakePeriodModel"
@@ -182,8 +182,8 @@ async function createProvisionalClass() {
                 "
             />
             <!-- ============ SHOW APPLICATIONS BY GROUPS -->
-            <ScoringFormula :class-size="classSize" v-if="isItTrue(levelRequirements?.attributes?.isOLevelRequired)" />
-            <div class="flex justify-end" v-else>
+            <ScoringFormula :class-size="classSize" v-if="isItTrue(levelRequirements?.attributes?.isOLevelRequired) && !noData" />
+            <div class="flex justify-end" v-else-if="!noData && !isItTrue(levelRequirements?.attributes?.isOLevelRequired)">
                 <ClassSize :class-size="classSize" />
             </div>
             <div class="mt-6 flex items-center justify-between space-x-2">

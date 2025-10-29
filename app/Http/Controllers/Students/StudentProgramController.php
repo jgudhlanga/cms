@@ -2,20 +2,23 @@
 
 namespace App\Http\Controllers\Students;
 
-use App\DTO\Students\UpdateStudentDto;
 use App\Enums\Institution\LevelEnum;
 use App\Helpers\Helper;
 use App\Http\Controllers\Controller;
-use App\Http\Filters\Students\StudentProgramFilter;
 use App\Http\Requests\Students\UpdateStudentRequest;
+use App\Http\Resources\Enrolments\DepartmentDistributionResource;
 use App\Http\Resources\Enrolments\EnrolmentResource;
-use App\Http\Resources\Students\StudentProgramResource;
+use App\Http\Resources\Institution\InstitutionDepartmentResource;
+use App\Http\Resources\Institution\IntakePeriodResource;
 use App\Models\Institution\DepartmentLevel;
+use App\Models\Institution\InstitutionDepartment;
+use App\Models\Institution\IntakePeriod;
 use App\Models\Students\Student;
 use App\Models\Students\StudentProgram;
 use App\Models\Users\User;
 use App\Repositories\Institution\interface\IDepartmentLevelRepository;
 use App\Repositories\Students\interface\IStudentProgramRepository;
+use App\Services\ApplicationMetricsService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -28,6 +31,7 @@ class StudentProgramController extends Controller
     public function __construct(
         protected IStudentProgramRepository  $repository,
         protected IDepartmentLevelRepository $departmentLevelRepository,
+        protected ApplicationMetricsService  $metricsService
     )
     {
     }
@@ -36,14 +40,16 @@ class StudentProgramController extends Controller
      *
      * @throws AuthorizationException
      */
-    public function index(StudentProgramFilter $filters): Response
+    public function index(): Response
     {
         $this->authorize('viewAny', StudentProgram::class);
-        $enrolments = EnrolmentResource::collection($this->repository->allFilter(['*'], $filters));
-        return Inertia::render('students/EnrolmentsIndex', [
-            'enrolments' => $enrolments,
-            'filters' => request()->only(['search', 'trashed']),
-            'trashedCount' => $this->repository->allTrashed()->count(),
+        $intakePeriods = cache()->rememberForever('all_intake_periods', fn() => IntakePeriod::orderByDesc('end_date')->get());
+        $intakePeriod = Helper::resolveIntakePeriod();
+        $departmentDistribution = DepartmentDistributionResource::collection($this->metricsService->applicationsByDepartment());
+        return Inertia::render('enrolments/Index', [
+            'departmentDistribution' => $departmentDistribution,
+            'intakePeriods' => IntakePeriodResource::collection($intakePeriods),
+            'intakePeriod' => IntakePeriodResource::make($intakePeriod),
         ]);
     }
 
@@ -110,7 +116,7 @@ class StudentProgramController extends Controller
         ];
 
         // Transform and return
-        return Inertia::render('students/enrolments/FaultyApplications', [
+        return Inertia::render('enrolments/FaultyApplications', [
             'enrolmentWithoutOLevel' => EnrolmentResource::collection($faultyCases['enrolmentWithoutOLevel']),
             'enrolmentWithFewerThanFive' => EnrolmentResource::collection($faultyCases['enrolmentWithFewerThanFive']),
             'noApplicationsFeePaid' => EnrolmentResource::collection($faultyCases['noApplicationsFeePaid']),
@@ -189,4 +195,12 @@ class StudentProgramController extends Controller
             ->pluck('id')->toArray();
     }
 
+    public function departmentEnrolments(InstitutionDepartment $institutionDepartment)
+    {
+        $this->authorize('viewAny', StudentProgram::class);
+        $department = InstitutionDepartmentResource::make($institutionDepartment);
+        return Inertia::render('enrolments/DepartmentEnrolments', [
+            'department' => $department,
+        ]);
+    }
 }

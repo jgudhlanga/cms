@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1\Institution;
 
+use App\Enums\Shared\ClassListTypeEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Filters\Institution\StaffFilter;
 use App\Http\Resources\Institution\DepartmentCourseResource;
@@ -69,6 +70,46 @@ class DepartmentMetaDataController extends Controller
             ->with(['departmentCourse', 'departmentLevel.level'])
             ->when($intakePeriodId, fn($q) => $q->where('intake_period_id', $intakePeriodId))
             ->when($modeOfStudyId, fn($q) => $q->where('mode_of_study_id', $modeOfStudyId))
+            ->get();
+
+        // Group by department_course_id
+        $grouped = $enrolments->groupBy('department_course_id')->map(function ($courseGroup) use ($institutionDepartment) {
+            $course = $courseGroup->first()->departmentCourse;
+
+            // Group within each course by department_level_id
+            $levels = $courseGroup->groupBy('department_level_id')->map(function ($levelGroup) {
+                $level = $levelGroup->first()->departmentLevel;
+
+                return [
+                    'departmentLevelId' => $level->id,
+                    'levelName' => $level->level->name ?? null,
+                    'enrolmentsCount' => $levelGroup->count(),
+                ];
+            })->values(); // reset numeric keys
+
+            return [
+                'institutionDepartmentId' => $institutionDepartment->id,
+                'departmentCourseId' => $course->id,
+                'courseName' => $course?->course?->name,
+                'levels' => $levels,
+            ];
+        })->values(); // reset numeric keys
+
+        return response()->json($grouped);
+    }
+
+    public function departmentClassLists(InstitutionDepartment $institutionDepartment): JsonResponse
+    {
+        $intakePeriodId = request('intake_period_id');
+        $modeOfStudyId = request('mode_of_study_id');
+
+        // Eager-load relationships to avoid N+1
+        $enrolments = $institutionDepartment->enrolments()
+            ->join('class_lists', 'student_programs.id', '=', 'class_lists.student_program_id')
+            ->with(['departmentCourse', 'departmentLevel.level'])
+            ->when($intakePeriodId, fn($q) => $q->where('intake_period_id', $intakePeriodId))
+            ->when($modeOfStudyId, fn($q) => $q->where('mode_of_study_id', $modeOfStudyId))
+            ->whereIn('class_lists.type', [ClassListTypeEnum::PROVISIONAL->value, ClassListTypeEnum::FINAL->value])
             ->get();
 
         // Group by department_course_id

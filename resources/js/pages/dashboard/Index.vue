@@ -1,9 +1,6 @@
 <script setup lang="ts">
-import PageContainer from '@/components/core/page/PageContainer.vue';
-import HeadingSmall from '@/components/core/util/HeadingSmall.vue';
 import { useUtils } from '@/composables/core/useUtils';
-import DistributionByDepartment from '@/pages/dashboard/partials/DistributionByDepartment.vue';
-import { DepartmentDistribution, LevelDistribution, DailyDistribution } from '@/types/dasboard';
+import { DailyDistribution, DepartmentDistribution, LevelDistribution } from '@/types/dasboard';
 import { AuthObject } from '@/types/data-pagination';
 import { BreadcrumbItemInterface } from '@/types/ui';
 import { Head } from '@inertiajs/vue3';
@@ -100,7 +97,7 @@ onMounted(async () => {
 
     new Chart(enrollmentChart.value!, {
         type: 'line',
-        data: {...enrollmentData.value},
+        data: { ...enrollmentData.value },
         options: {
             responsive: true,
             maintainAspectRatio: false,

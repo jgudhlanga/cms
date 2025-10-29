@@ -1,13 +1,4 @@
 <script setup lang="ts">
-import BaseCard from '@/components/core/card/BaseCard.vue';
-import DepartmentCourseComboSelect from '@/components/core/form/combobox/DepartmentCourseComboSelect.vue';
-import DepartmentLevelComboSelect from '@/components/core/form/combobox/DepartmentLevelComboSelect.vue';
-import InstitutionDepartmentComboSelect from '@/components/core/form/combobox/InstitutionDepartmentComboSelect.vue';
-import ModeOfStudyComboSelect from '@/components/core/form/combobox/ModeOfStudyComboSelect.vue';
-import SpinnerComponent from '@/components/core/loader/SpinnerComponent.vue';
-import LevelRequirements from '@/components/students/update/LevelRequirements.vue';
-import OLevelRequirements from '@/components/students/update/OLevelRequirements.vue';
-import SDPRequirements from '@/components/students/update/SDPRequirements.vue';
 import { useUtils } from '@/composables/core/useUtils';
 import { useDepartmentCourses } from '@/composables/institution/useDepartmentCourses';
 import { useDepartmentLevels } from '@/composables/institution/useDepartmentLevels';
