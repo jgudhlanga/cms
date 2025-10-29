@@ -24,7 +24,10 @@ const { navigateTo } = useUtils();
                 <tr class="j-th">
                     <th class="j-th text-left">#</th>
                     <th class="j-th text-left">{{ $tChoice('trans.name', 1) }}</th>
+                    <th class="j-th text-left">{{ $t('trans.tracking_number') }}</th>
+                    <th class="j-th text-left">{{ $t('trans.application_date') }}</th>
                     <th class="j-th text-left">{{ $tChoice('trans.phone', 1) }}</th>
+                    <th class="j-th text-left">{{ $tChoice('trans.type', 1) }}</th>
                     <th class="j-th text-right">{{ $tChoice('trans.action', 1) }}</th>
                 </tr>
             </thead>
@@ -37,7 +40,10 @@ const { navigateTo } = useUtils();
                             :href="route('enrolments.verify', {student_program: application.applicationId})"
                         />
                       </td>
+                    <td class="j-td">{{ application.applicationTrackingNumber }}</td>
+                    <td class="j-td">{{ application.applicationDate }}</td>
                     <td class="j-td">{{ application.phoneNumber }}</td>
+                    <td class="j-td">{{ application.classListType }}</td>
                     <td class="j-td text-right">
                         <BaseButton
                             v-if="hasAbility('view:student-programs')"

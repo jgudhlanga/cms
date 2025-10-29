@@ -1,10 +1,11 @@
 <script setup lang="ts">
-defineProps({
-    label: { type: String, required: false },
-    value: { type: String, required: false },
-    labelClasses: { type: String, required: false },
-    valueClasses: { type: String, required: false }
-});
+interface Props {
+    label?: string;
+    value?: string;
+    labelClasses?: string;
+    valueClasses?: string;
+}
+defineProps<Props>();
 </script>
 <template>
     <div class="flex items-center text-sm space-x-3 text-accent-foreground">

@@ -47,6 +47,7 @@ const breadcrumbs: Array<Link> = [
         href: route('enrolments.department-applications', { institution_department: String(department?.id) }),
     },
     { title: level.attributes.level, href: route('enrolments.department-applications', { institution_department: String(department?.id) }) },
+    { title: course?.name, href: route('enrolments.department-applications', { institution_department: String(department?.id) }) },
     { title: 'class list' },
 ];
 
@@ -109,7 +110,7 @@ const getGroupSlot = (group: EnrolmentGroup): number => {
                     })
                 "
             />
-            <div class="flex justify-end">
+            <div class="flex justify-end" v-if="!noData">
                 <ClassSize :class-size="classSize" />
             </div>
             <div v-for="(enrolmentsInGroup, group) in enrolments.groups" :key="group" class="flex flex-col">

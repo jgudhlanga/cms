@@ -91,6 +91,22 @@ class ClassListController extends Controller
 
     public function verify(StudentProgram $studentProgram)
     {
+        $studentProgram->load([
+            'departmentWorkflowStep',
+            'institutionDepartment',
+            'departmentLevel.level',
+            'departmentLevel.requirement',
+            'departmentCourse.course',
+            'classList',
+            'intakePeriod',
+            'modeOfStudy',
+            'student.user',
+            'student.contacts',
+            'student.oLevelResults.subject',
+            'student.oLevelResults.grade',
+            'student.oLevelResults.academicLevel',
+            'student.user.ledgers.feeType',
+        ]);
         return Inertia::render('enrolments/ApplicationVerification', [
             'application' => EnrolmentResource::make($studentProgram),
         ]);
