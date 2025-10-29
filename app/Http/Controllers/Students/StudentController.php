@@ -53,7 +53,7 @@ class StudentController extends Controller
     {
         $this->authorize('viewAny', Student::class);
         $students = StudentResource::collection($this->repository->allFilter(['*'], $filters));
-        return Inertia::render('students/StudentsIndex', [
+        return Inertia::render('students/Index', [
             'students' => $students,
             'filters' => request()->only(['search', 'trashed']),
             'trashedCount' => $this->repository->allTrashed()->count(),
@@ -69,12 +69,12 @@ class StudentController extends Controller
     public function createProfile(string $paymentMode)
     {
         $this->authorize('create', Student::class);
-        return Inertia::render('students/enrolments/Create', compact('paymentMode'));
+        return Inertia::render('enrolments/Create', compact('paymentMode'));
     }
 
     public function enrolmentLookup()
     {
-        return Inertia::render('students/enrolments/EnrolmentLookup');
+        return Inertia::render('enrolments/EnrolmentLookup');
     }
 
 
@@ -115,7 +115,7 @@ class StudentController extends Controller
     public function showProfile(Student $student)
     {
         $student = StudentResource::make($student);
-        return Inertia::render('students/enrolments/Show', compact('student'));
+        return Inertia::render('enrolments/Show', compact('student'));
     }
 
     public function show(Student $student)

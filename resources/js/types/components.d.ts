@@ -155,6 +155,7 @@ declare module 'vue' {
     DialogTitle: typeof import('./../components/ui/dialog/DialogTitle.vue')['default']
     DialogTrigger: typeof import('./../components/ui/dialog/DialogTrigger.vue')['default']
     DiscordIcon: typeof import('./../components/core/icon/DiscordIcon.vue')['default']
+    DistributionByDepartment: typeof import('./../components/enrolments/DistributionByDepartment.vue')['default']
     DistrictComboSelect: typeof import('./../components/core/form/combobox/DistrictComboSelect.vue')['default']
     Documents: typeof import('./../components/staff/Documents.vue')['default']
     DocumentTypeComboSelect: typeof import('./../components/core/form/combobox/DocumentTypeComboSelect.vue')['default']

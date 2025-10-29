@@ -1,15 +1,8 @@
 <script setup lang="ts">
-import BaseAlert from '@/components/core/alert/BaseAlert.vue';
-import IntakePeriodComboSelect from '@/components/core/form/combobox/IntakePeriodComboSelect.vue';
-import ModeOfStudyComboSelect from '@/components/core/form/combobox/ModeOfStudyComboSelect.vue';
-import DataLoadingSpinner from '@/components/core/loader/DataLoadingSpinner.vue';
-import Avatar from '@/components/core/util/Avatar.vue';
-import CustomSeparator from '@/components/core/util/CustomSeparator.vue';
-import HeadingSmall from '@/components/core/util/HeadingSmall.vue';
-import ItemTitle from '@/components/core/util/ItemTitle.vue';
 import { useIntakePeriods } from '@/composables/institution/useIntakePeriods';
 import { useModeOfStudy } from '@/composables/institution/useModeOfStudy';
 import { useServerSide } from '@/composables/shared/useServerSide';
+import EnrolmentFilters from '@/pages/institution/enrolments/partials/EnrolmentFilters.vue';
 import { DepartmentEnrolmentCount } from '@/types/department-meta-data';
 import { InstitutionDepartment, ModeOfStudy } from '@/types/institution';
 import { SelectOption } from '@/types/utils';
@@ -23,7 +16,7 @@ interface Props {
 
 const props = defineProps<Props>();
 const { department } = props;
-const institutionDepartmentId = department?.id?.toString() ?? '';
+const institutionDepartmentId = String(department?.id) ?? '';
 const { getData, isLoading } = useServerSide();
 const enrolments = ref<DepartmentEnrolmentCount[] | []>([]);
 const intakePeriod = ref<SelectOption | null>(null);
@@ -56,30 +49,13 @@ const handleSelectionChange = async () => {
 <template>
     <div class="my-8 flex flex-col space-y-4">
         <div class="mb-8 flex w-full justify-between space-x-4">
-            <div class="flex w-1/2">
-                <IntakePeriodComboSelect
-                    :loading="intakePeriodsLoading"
-                    :data="intakePeriods?.data ?? []"
-                    :label-uppercase="true"
-                    v-model="intakePeriod"
-                    :vertical-layout="false"
-                    :is-required="true"
-                    @update:modelValue="handleSelectionChange"
-                    class="w-full"
-                />
-            </div>
-            <div class="flex w-1/2">
-                <ModeOfStudyComboSelect
-                    :loading="modesOfStudyLoading"
-                    :data="modesOfStudy ?? []"
-                    v-model="modeOfStudy!"
-                    @update:modelValue="handleSelectionChange"
-                    :vertical-layout="false"
-                    :label-uppercase="true"
-                    :is-required="true"
-                    class="w-full"
-                />
-            </div>
+            <EnrolmentFilters
+                v-model:intakePeriodModel="intakePeriod"
+                v-model:modeOfStudyModel="modeOfStudy"
+                :intake-periods="intakePeriods?.data ?? []"
+                :modes-of-study="modesOfStudy ?? []"
+                :handle-filter-change="handleSelectionChange"
+            />
         </div>
         <DataLoadingSpinner v-if="isLoading || intakePeriodsLoading || modesOfStudyLoading" />
         <div class="flex flex-col" v-else>

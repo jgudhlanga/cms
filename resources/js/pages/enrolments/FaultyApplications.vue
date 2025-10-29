@@ -3,7 +3,7 @@ import { Head } from '@inertiajs/vue3';
 
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import CustomSeparator from '@/components/core/util/CustomSeparator.vue';
-import DataListTable from '@/pages/students/enrolments/partials/DataListTable.vue';
+import DataListTable from '@/pages/enrolments/partials/DataListTable.vue';
 import { AuthObject, DataListProps } from '@/types/data-pagination';
 import { Enrolment } from '@/types/enrolments';
 import { Link } from '@/types/ui';

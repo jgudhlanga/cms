@@ -9,7 +9,7 @@ import { IconName } from '@/enums/icons';
 import { TypeVariant } from '@/enums/type-variants';
 import { errorAlert } from '@/lib/alerts';
 import { hasAbility } from '@/lib/permissions';
-import EnrolmentStatus from '@/pages/students/enrolments/partials/EnrolmentStatus.vue';
+import EnrolmentStatus from '@/pages/enrolments/partials/EnrolmentStatus.vue';
 import HttpService from '@/services/http.service';
 import { AuthObject } from '@/types/data-pagination';
 import { EnrolmentLookup } from '@/types/enrolments';

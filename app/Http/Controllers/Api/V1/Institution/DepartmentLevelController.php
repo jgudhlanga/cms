@@ -58,7 +58,6 @@ class DepartmentLevelController extends Controller
 
         $maxStep = WorkflowHelper::getMaxStep($institutionDepartment->id);
         $enrolments = $this->fetchEnrolments($institutionDepartment, $departmentLevel, $intakePeriodId, $modeOfStudyId, $maxStep, $courseId);
-
     }
 
     private function extractFilters(): array
@@ -111,15 +110,5 @@ class DepartmentLevelController extends Controller
             ->groupBy(fn($enrolment) => $enrolment->departmentWorkflowStep->workflowStep->name)
             ->sortByDesc(fn($group) => $group->first()->departmentWorkflowStep->position ?? 0)
             ->map(fn($group) => EnrolmentResource::collection($group));
-    }
-
-    private function fetchEnrolmentsDisability()
-    {
-
-    }
-
-    private function fetchEnrolmentsByGender()
-    {
-
     }
 }
