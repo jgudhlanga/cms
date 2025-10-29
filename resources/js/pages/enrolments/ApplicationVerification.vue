@@ -25,14 +25,21 @@ const breadcrumbs: Array<Link> = [
         title: application.attributes.level,
         href: route('enrolments.department-applications', { institution_department: String(application?.attributes.institutionDepartmentId) }),
     },
-    { title: 'class list' },
+    {
+        title: 'class lists',
+        href: route('enrolments.class-lists', {
+            institution_department: String(application?.attributes.institutionDepartmentId),
+            department_level: String(application?.attributes.departmentLevelId),
+            intake_period_id: String(application?.attributes.intakePeriodId),
+            mode_of_study_id: String(application?.attributes.modeOfStudyId),
+            department_course_id: String(application?.attributes.departmentCourseId),
+        }),
+    },
     { title: application?.attributes?.studentName },
 ];
 </script>
 
 <template>
     <Head :title="$tChoice('trans.enrolment', 2)" />
-    <PageContainer :breadcrumbs="breadcrumbs">
-        {{ application }}
-    </PageContainer>
+    <PageContainer :breadcrumbs="breadcrumbs"> </PageContainer>
 </template>

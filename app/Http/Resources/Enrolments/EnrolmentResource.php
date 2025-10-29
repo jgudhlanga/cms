@@ -32,6 +32,8 @@ class EnrolmentResource extends JsonResource
                 'departmentLevelId' => $this->department_level_id,
                 'level' => $this->departmentLevel?->level?->name,
                 'levelId' => $this->departmentLevel?->level?->id,
+                'intakePeriod' => $this->intakePeriod?->name,
+                'intakePeriodId' => $this->intakePeriod?->id,
                 'allowedApplicationsPerLevel' => $this->departmentLevel?->level?->allowed_applications_per_level,
                 'departmentCourseId' => $this->department_course_id,
                 'course' => $this->departmentCourse?->course?->name,
