@@ -205,7 +205,7 @@ async function createProvisionalClass() {
                 />
             </div>
             <div v-for="(enrolmentsInGroup, group) in enrolments.groups" :key="group" class="flex flex-col">
-                <div class="flex flex-col" v-if="Number(getGroupSlot(group.toLowerCase() as EnrolmentGroup)) > 0">
+                <div class="flex flex-col" >
                     <HeadingSmall :title="`${group} (${getGroupSlot(group.toLowerCase() as EnrolmentGroup)})`" class="mt-6" />
                         <ByAcademicLevelResults
                             v-if="isItTrue(levelRequirements?.attributes?.isOLevelRequired)"
