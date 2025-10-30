@@ -225,3 +225,28 @@ export type ClassListAttribute = {
     applicationFeeConfirmed: boolean;
     tuitionFeeConfirmed: boolean;
 };
+
+export type ClassListAttributeParams = {
+    identity_confirmed: boolean;
+    disability_confirmed: boolean;
+    names_confirmed: boolean;
+    o_level_confirmed: boolean;
+    previous_level_confirmed: boolean;
+    read_write_confirmed: boolean;
+    application_fee_confirmed: boolean;
+    tuition_fee_confirmed: boolean;
+};
+
+export type ClassListTopNext = {
+    applicationId: string | number;
+    name: string;
+};
+
+export type OtherApplication = {
+    applicationId: string | number;
+    department: string;
+    level: string;
+    course: string;
+    modeOfStudy: string;
+    inClassList: boolean;
+}
