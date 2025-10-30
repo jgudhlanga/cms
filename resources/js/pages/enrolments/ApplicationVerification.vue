@@ -48,28 +48,35 @@ const oLevelRequired = computed(() => {
     if(application?.relationships?.requirements) {
         return isItTrue(application?.relationships?.requirements?.attributes?.isOLevelRequired);
     }
-
     if(application?.relationships?.courseRequirements) {
         return isItTrue(application?.relationships?.courseRequirements?.attributes?.isOLevelRequired)
     }
     return false;
 })
+
 const previousLevelRequired = computed(() => {
     if(application?.relationships?.requirements) {
         return Number(application?.relationships?.requirements?.attributes?.requiredLevelId) > 0;
     }
-
     if(application?.relationships?.courseRequirements) {
         return Number(application?.relationships?.courseRequirements?.attributes?.requiredLevelId) > 0;
     }
     return false;
 })
+const readWriteRequired = computed(() => {
+    if(application?.relationships?.requirements) {
+        return isItTrue(application?.relationships?.requirements?.attributes?.onlyReadWriteRequired);
+    }
 
+    if(application?.relationships?.courseRequirements) {
+        return isItTrue(application?.relationships?.courseRequirements?.attributes?.onlyReadWriteRequired)
+    }
+    return false;
+})
 const requiredLevel = computed(() => {
     if(application?.relationships?.requirements) {
         return application?.relationships?.requirements?.attributes?.requiredLevel ?? '---';
     }
-
     if(application?.relationships?.courseRequirements) {
         return application?.relationships?.courseRequirements?.attributes?.requiredLevel ?? '---';
     }
@@ -120,6 +127,17 @@ const requiredLevel = computed(() => {
                     <LabelValue
                         :value-classes="badgeClass"
                         :label="`Completed ${requiredLevel ?? ''}`"
+                        :value="yesOrNo(isItTrue(application?.attributes?.requiredLevelCompleted))"
+                    />
+                </BaseCard>
+                <BaseCard
+                    v-if="readWriteRequired"
+                    title="Read & Write Requirement"
+                    description="Applicant should be able to read and write"
+                >
+                    <LabelValue
+                        :value-classes="badgeClass"
+                        label="Read & Write Confirmed"
                         :value="yesOrNo(isItTrue(application?.attributes?.requiredLevelCompleted))"
                     />
                 </BaseCard>
