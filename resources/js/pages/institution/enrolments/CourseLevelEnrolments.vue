@@ -195,7 +195,7 @@ async function createProvisionalClass() {
                     />
                 </div>
                 <BaseButton
-                    v-if="!noData"
+                    v-if="!noData && Number(classSize) > 0"
                     type="button"
                     :variant="ColorVariant.primary"
                     title="Create provisional class"
