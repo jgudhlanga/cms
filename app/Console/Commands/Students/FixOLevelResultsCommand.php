@@ -166,7 +166,7 @@ class FixOLevelResultsCommand extends Command
                 $existingScience->update([
                     'exam_year' => $bestScienceResult->exam_year,
                     'exam_sitting' => $bestScienceResult->exam_sitting,
-                    'grade_id' => $bestScienceResult->grade_id
+                    //'grade_id' => $bestScienceResult->grade_id
                 ]);
                 $this->line("👤 Student {$student->id}: already has Science subject. and updated to earlier exam year {$bestScienceResult->exam_year}.");
             } else {
