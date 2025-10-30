@@ -7,8 +7,10 @@ use App\Helpers\Helper;
 use App\Helpers\WorkflowHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Enrolments\ClassListRequest;
+use App\Http\Resources\Enrolments\ClassListNextTopResource;
 use App\Http\Resources\Enrolments\EnrolmentGroupResource;
 use App\Http\Resources\Enrolments\EnrolmentResource;
+use App\Http\Resources\Enrolments\OtherApplicationResource;
 use App\Http\Resources\Institution\DepartmentApplicationStepResource;
 use App\Http\Resources\Institution\DepartmentLevelResource;
 use App\Http\Resources\Institution\InstitutionDepartmentResource;
@@ -69,6 +71,7 @@ class ClassListController extends Controller
             'names_confirmed' => false,
             'o_level_confirmed' => false,
             'previous_level_confirmed' => false,
+            'read_write_confirmed' => false,
             'application_fee_confirmed' => false,
             'tuition_fee_confirmed' => false,
         ];
@@ -107,8 +110,30 @@ class ClassListController extends Controller
             'student.oLevelResults.academicLevel',
             'student.user.ledgers.feeType',
         ]);
+
+        $nextTop = DB::table('student_programs as sp')
+            ->join('class_lists as cl', 'cl.student_program_id', '=', 'sp.id')
+            ->join('students as st', 'st.id', '=', 'sp.student_id')
+            ->join('users as us', 'us.id', '=', 'st.user_id')
+            ->select('sp.id as application_id', 'us.first_name', 'us.middle_name', 'us.last_name')
+            ->whereNotIn('sp.id', [$studentProgram->id])
+            ->where('sp.institution_department_id', $studentProgram->institution_department_id)
+            ->where('sp.department_level_id', $studentProgram->department_level_id)
+            ->where('sp.department_course_id', $studentProgram->department_course_id)
+            ->where('sp.intake_period_id', $studentProgram->intake_period_id)
+            ->where('cl.type', $studentProgram->classList->type)
+            ->take(10)
+            ->get();
+        $student = $studentProgram->student;
+        $otherApplications = $student->programs()
+            ->where('id', '!=', $studentProgram->id)
+            ->with(['institutionDepartment', 'departmentLevel.level', 'departmentCourse.course', 'intakePeriod', 'modeOfStudy', 'classList'])
+            ->get();
+
         return Inertia::render('enrolments/ApplicationVerification', [
             'application' => EnrolmentResource::make($studentProgram),
+            'nextTop' => ClassListNextTopResource::collection($nextTop),
+            'otherApplications' => OtherApplicationResource::collection($otherApplications),
         ]);
     }
 

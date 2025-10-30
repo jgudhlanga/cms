@@ -144,7 +144,7 @@ class DepartmentEnrolmentService
             $student = $sp->student;
             $user = $student->user;
 
-            $sp->student_name = "{$user->first_name} {$user->last_name}";
+            $sp->student_name = "{$user->full_name}";
             $sp->email = $user->email;
             $sp->phone_number = $student->contacts->first()?->phone_number;
             $sp->student_number = $student->student_number;
@@ -283,7 +283,7 @@ class DepartmentEnrolmentService
             $student = $sp->student;
             $user = $student->user;
 
-            $sp->student_name = "{$user->first_name} {$user->last_name}";
+            $sp->student_name = "{$user->full_name}";
             $sp->email = $user->email;
             $sp->phone_number = $student->contacts->first()?->phone_number;
             $sp->student_number = $student->student_number;
