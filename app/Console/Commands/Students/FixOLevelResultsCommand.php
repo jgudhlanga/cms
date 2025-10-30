@@ -140,25 +140,40 @@ class FixOLevelResultsCommand extends Command
             $this->warn("⚠️ 'Science' subject not found in database!");
             return false;
         }
-
         $results = StudentAcademicResult::withTrashed()
             ->where('student_id', $student->id)
             ->where('academic_level_id', AcademicLevelEnum::SECONDARY_SCHOOL->id())
             ->orderByDesc('id')
             ->get();
-
         if ($results->isEmpty()) {
             $this->line("👤 Student {$student->id}: No O-Level results found.");
             return false;
         }
-
         // If “Science” result exists, restore if soft-deleted
         $existingScience = $results->firstWhere('subject_id', $scienceSubject->id);
         if ($existingScience) {
-            $this->line("👤 Student {$student->id}: already has Science subject.");
+            // check if there are any science subjects with exam year less than the existing science subject
+            $subjectNames = ['any science subject', 'physics', 'chemistry', 'biology', 'combined science', 'physical science', 'computer science'];
+            $otherScienceIds = collect($subjectNames)
+                ->filter(fn($n) => $n !== 'any science subject')
+                ->map(fn($n) => $subjectMap[$n]->id ?? null)
+                ->filter()
+                ->values()
+                ->toArray();
+            $scienceResults = $results->whereIn('subject_id', $otherScienceIds)->where('exam_year', '<', $existingScience->exam_year);
+            $bestScienceResult = $scienceResults->sortBy([['grade_id', 'asc'], ['exam_year', 'asc']])->first();
+            if ($bestScienceResult) {
+                $existingScience->update([
+                    'exam_year' => $bestScienceResult->exam_year,
+                    'exam_sitting' => $bestScienceResult->exam_sitting,
+                    'grade_id' => $bestScienceResult->grade_id
+                ]);
+                $this->line("👤 Student {$student->id}: already has Science subject. and updated to earlier exam year {$bestScienceResult->exam_year}.");
+            } else {
+                $this->line("👤 Student {$student->id}: already has Science subject.");
+            }
             return false;
         }
-
         // Other science-type subjects
         $subjectNames = ['any science subject', 'physics', 'chemistry', 'biology', 'combined science', 'physical science', 'computer science'];
         $otherScienceIds = collect($subjectNames)
@@ -167,18 +182,14 @@ class FixOLevelResultsCommand extends Command
             ->filter()
             ->values()
             ->toArray();
-
         $scienceResults = $results->whereIn('subject_id', $otherScienceIds);
-
         if ($scienceResults->isEmpty()) {
             $this->line("👤 Student {$student->id}: No matching science subject results found.");
             return false;
         }
-
-        $bestScienceResult = $scienceResults->sortBy('grade_id')->first();
+        $bestScienceResult = $scienceResults->sortBy([['grade_id', 'asc'], ['exam_year', 'asc']])->first();
         $bestScienceResult->subject_id = $scienceSubject->id;
         $bestScienceResult->save();
-
         $this->line("🧪 Updated Science result (ID {$bestScienceResult->id}) from best science-type subject.");
         return true;
     }
