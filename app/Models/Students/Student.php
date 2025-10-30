@@ -140,6 +140,11 @@ class Student extends Model
         return $this->morphMany(NextOfKin::class, 'kinnable');
     }
 
+    public function setIdNumberAttribute($value)
+    {
+        $this->attributes['id_number'] = $value ?: null;
+    }
+
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()

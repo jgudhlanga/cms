@@ -141,6 +141,12 @@ const requiredLevel = computed(() => {
                         :value="yesOrNo(isItTrue(application?.attributes?.requiredLevelCompleted))"
                     />
                 </BaseCard>
+                <BaseCard
+                    title="Verification"
+                    description="Verification of applicant details"
+                >
+
+                </BaseCard>
             </div>
             <div class="flex w-1/4 flex-col">Other Applications</div>
         </div>
