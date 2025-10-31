@@ -12,6 +12,7 @@ interface Props {
     applications: EnrolmentApplication[];
     classSize: number;
     slotSize: number;
+    waitingSlotSize: number;
 }
 
 const props = defineProps<Props>();
@@ -46,6 +47,7 @@ const getIconClass = (rowIndex: number) => {
 
 <template>
     <div class="my-2">
+        {{ 'Class Size: ' + props.classSize + ', Slot Size: ' + props.slotSize + ', Waiting Slot Size: ' + props.waitingSlotSize }}
         <table class="j-table">
             <thead class="j-thead">
                 <tr class="j-th">

@@ -182,63 +182,6 @@ export const useEnrolments = () => {
                 return 9;
         }
     };
-    /*function applyPolicyAlgorithmToApplications(
-        applications: EnrolmentApplication[],
-        level: DepartmentLevel | null | undefined,
-    ): EnrolmentApplication[] {
-        const requiredSubjects = level?.relationships?.requirement?.relationships?.subjects || [];
-        const otherSubjectsCountRaw = level?.relationships?.requirement?.attributes?.otherSubjectsCount ?? 0;
-        const otherSubjectsCount = Number(otherSubjectsCountRaw) || 0;
-        const requiredIds = requiredSubjects.map((s: any) => String(s.id));
-
-        const scored: EnrolmentApplication[] = [];
-
-        applications.forEach((app) => {
-            const results: OLeveResult[] = app.academicResults || [];
-            const hasNoPayment = !app.receiptAmount || app.receiptAmount <= 0;
-
-            const uniqueYears = Array.from(new Set(results.map((r) => r.examYear))).sort((a, b) => Number(a) - Number(b));
-            const firstExamYear = uniqueYears[0] ?? 0;
-
-            const mainScores = requiredIds.map((sid) => {
-                const r = results.find((res) => String(res.subjectId) === sid);
-                if (!r) return 9;
-                return getGradeScore(r.grade || 'N/A', r.examYear, firstExamYear, uniqueYears);
-            });
-
-            const otherSubjects = results.filter((r) => !requiredIds.includes(String(r.subjectId)));
-            const sortedOthers = otherSubjects
-                .sort(
-                    (a, b) =>
-                        getGradeScore(a.grade || 'N/A', a.examYear, firstExamYear, uniqueYears) -
-                        getGradeScore(b.grade || 'N/A', b.examYear, firstExamYear, uniqueYears),
-                )
-                .slice(0, otherSubjectsCount);
-
-            while (sortedOthers.length < otherSubjectsCount) {
-                sortedOthers.push({ grade: 'N/A', examYear: firstExamYear } as OLeveResult);
-            }
-
-            const otherScores = sortedOthers.map((r) => getGradeScore(r.grade || 'N/A', r.examYear, firstExamYear, uniqueYears));
-
-            const totalScore = [...mainScores, ...otherScores].reduce((sum, s) => sum + s, 0);
-            const hasInvalidGrade = [...mainScores, ...otherScores].some((score) => score >= 9);
-
-            if (hasInvalidGrade || hasNoPayment) return;
-
-            scored.push({
-                ...app,
-                totalScore,
-                examSittingsCount: uniqueYears.length,
-                firstExamYear,
-            });
-        });
-
-        return scored.sort((a, b) => {
-            if (a.totalScore !== b.totalScore) return a.totalScore - b.totalScore;
-            return a.examSittingsCount - b.examSittingsCount;
-        });
-    }*/
 
     function applyPolicyAlgorithmToApplications(
         applications: EnrolmentApplication[],

@@ -36,3 +36,4 @@ SET FOREIGN_KEY_CHECKS = 1;
 [unplugin-vue-components] component "PersonalDetails"(/Users/jgudhlanga/Projects/HararePoly/hrepoly/resources/js/components/students/view/PersonalDetails.vue) has naming conflicts with other components, ignored.
 [unplugin-vue-components] component "Avatar"(/Users/jgudhlanga/Projects/HararePoly/hrepoly/resources/js/components/ui/avatar/Avatar.vue) has naming conflicts with other components, ignored.
 
+

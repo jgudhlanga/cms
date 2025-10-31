@@ -8,7 +8,9 @@ import { errorAlert, forbiddenAlert, successAlert } from '@/lib/alerts';
 import { hasAbility } from '@/lib/permissions';
 import { getIdParams } from '@/lib/utils';
 import ByAcademicLevelResults from '@/pages/institution/enrolments/partials/ByAcademicLevelResults.vue';
+import ClassSize from '@/pages/institution/enrolments/partials/ClassSize.vue';
 import EnrolmentFilters from '@/pages/institution/enrolments/partials/EnrolmentFilters.vue';
+import GeneralEnrolments from '@/pages/institution/enrolments/partials/GeneralEnrolments.vue';
 import ScoringFormula from '@/pages/institution/enrolments/partials/ScoringFormula.vue';
 import { AuthObject } from '@/types/data-pagination';
 import { DepartmentApplicationStep, DepartmentLevel } from '@/types/department-meta-data';
@@ -18,8 +20,6 @@ import { Link } from '@/types/ui';
 import { SelectOption } from '@/types/utils';
 import { Head, router, useForm } from '@inertiajs/vue3';
 import { computed, onMounted, ref } from 'vue';
-import GeneralEnrolments from '@/pages/institution/enrolments/partials/GeneralEnrolments.vue';
-import ClassSize from '@/pages/institution/enrolments/partials/ClassSize.vue';
 
 interface Props {
     department: InstitutionDepartment;
@@ -76,21 +76,23 @@ const handleFilterChange = () => {
         }),
     );
 };
+
 const noData = computed(
     () => enrolments.groups.disabled.length === 0 && enrolments.groups.females.length === 0 && enrolments.groups.males.length === 0,
 );
 
 const totalApplications = computed(() => {
-    return (
-        enrolments.groups.disabled.length +
-        enrolments.groups.females.length +
-        enrolments.groups.males.length
-    );
+    return enrolments.groups.disabled.length + enrolments.groups.females.length + enrolments.groups.males.length;
 });
 const getGroupSlot = (group: EnrolmentGroup): number => {
     const groups = enrolments?.groups ?? { disabled: [], females: [], males: [] };
     if (totalApplications.value > Number(classSize)) {
-        const { disabled, females, males } = allocateClassSlots(Number(classSize), groups.disabled.length, groups.females.length, groups.males.length);
+        const { disabled, females, males } = allocateClassSlots(
+            Number(classSize),
+            groups.disabled.length,
+            groups.females.length,
+            groups.males.length,
+        );
         const slots = { disabled, females, males };
         return slots[group] ?? 0;
     } else {
@@ -188,11 +190,7 @@ async function createProvisionalClass() {
             </div>
             <div class="mt-6 flex items-center justify-between space-x-2">
                 <div class="flex w-full">
-                    <BaseAlert
-                        v-if="classListIsCreated(enrolments)"
-                        :type="TypeVariant.success"
-                        description="Class list created"
-                    />
+                    <BaseAlert v-if="classListIsCreated(enrolments)" :type="TypeVariant.success" description="Class list created" />
                 </div>
                 <BaseButton
                     v-if="!noData && Number(classSize) > 0"
@@ -205,16 +203,17 @@ async function createProvisionalClass() {
                 />
             </div>
             <div v-for="(enrolmentsInGroup, group) in enrolments.groups" :key="group" class="flex flex-col">
-                <div class="flex flex-col" >
+                <div class="flex flex-col">
                     <HeadingSmall :title="`${group} (${getGroupSlot(group.toLowerCase() as EnrolmentGroup)})`" class="mt-6" />
-                        <ByAcademicLevelResults
-                            v-if="isItTrue(levelRequirements?.attributes?.isOLevelRequired)"
-                            :level="level"
-                            :department-id="String(department?.id)"
-                            :applications="enrolmentsInGroup"
-                            :class-size="Number(classSize)"
-                            :slot-size="getGroupSlot(group.toLowerCase() as EnrolmentGroup)"
-                        />
+                    <ByAcademicLevelResults
+                        v-if="isItTrue(levelRequirements?.attributes?.isOLevelRequired)"
+                        :level="level"
+                        :department-id="String(department?.id)"
+                        :applications="enrolmentsInGroup"
+                        :class-size="Number(classSize)"
+                        :slot-size="getGroupSlot(group.toLowerCase() as EnrolmentGroup)"
+                        :waiting-slot-size="allocateWaitingSlots(group.toLowerCase() as EnrolmentGroup)"
+                    />
                     <GeneralEnrolments
                         v-else
                         :level="level"
@@ -222,6 +221,7 @@ async function createProvisionalClass() {
                         :applications="enrolmentsInGroup"
                         :class-size="Number(classSize)"
                         :slot-size="getGroupSlot(group.toLowerCase() as EnrolmentGroup)"
+                        :waiting-slot-size="allocateWaitingSlots(group.toLowerCase() as EnrolmentGroup)"
                     />
                 </div>
             </div>
