@@ -41,6 +41,7 @@ import { Student } from '@/types/students';
 import { router, useForm } from '@inertiajs/vue3';
 import { trans } from 'laravel-vue-i18n';
 import { storeToRefs } from 'pinia';
+import ToastService from '@/services/toast.service';
 
 // Props
 interface Props {
@@ -137,6 +138,8 @@ watch(course, async () => {
 });
 
 onMounted(async () => {
+    ToastService.warning('Sorry, The registration has ended for now. Contact the administration for more info.');
+    navigateTo(route('login'));
     await listSubjects();
 });
 const validateSubjectRequirements = async () => {

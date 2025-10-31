@@ -8,6 +8,7 @@ import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
 import { TypeVariant } from '@/enums/type-variants';
 import { clearFormErrors } from '@/lib/forms';
+import ToastService from '@/services/toast.service';
 import { Login } from '@/types/auth';
 import { Head, useForm } from '@inertiajs/vue3';
 
@@ -23,6 +24,12 @@ const form = useForm<Login>({
     password: '',
     remember_me: false,
 });
+
+const loginNavigateTo = () => {
+    ToastService.warning('Sorry, The registration has ended for now. Contact the administration for more info.');
+    return;
+    //navigateTo(route('portal.create'));
+};
 </script>
 
 <template>
@@ -63,7 +70,7 @@ const form = useForm<Login>({
                 {{ $t('trans.login') }}
             </BaseButton>
             <BaseButton
-                @click="() => navigateTo(route('portal.create'))"
+                @click="() => loginNavigateTo()"
                 class="mt-1"
                 :variant="ColorVariant.primary_outline"
                 type="button"

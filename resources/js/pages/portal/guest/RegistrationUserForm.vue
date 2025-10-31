@@ -15,6 +15,7 @@ import { Head, useForm } from '@inertiajs/vue3';
 import { storeToRefs } from 'pinia';
 import { onMounted, ref } from 'vue';
 import BaseInput from '../../../components/core/form/text/BaseInput.vue';
+import ToastService from '@/services/toast.service';
 
 const { createPortalUser } = useGuestPortal();
 const { navigateTo } = useUtils();
@@ -50,6 +51,8 @@ const { logout } = useAuth();
 
 onMounted(async () => {
     logout();
+    ToastService.warning('Sorry, The registration has ended for now. Contact the administration for more info.');
+    navigateTo(route('login'));
 });
 const { isItTrue } = useUtils();
 const maintenanceMode = isItTrue(import.meta.env.VITE_MAINTENANCE_MODE);

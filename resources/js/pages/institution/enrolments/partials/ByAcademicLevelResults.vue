@@ -1,10 +1,10 @@
 <script setup lang="ts">
+import { useUtils } from '@/composables/core/useUtils';
 import { useEnrolments } from '@/composables/students/useEnrolments';
 import { IconName } from '@/enums/icons';
 import { DepartmentLevel } from '@/types/department-meta-data';
 import { EnrolmentApplication } from '@/types/enrolments';
 import { computed } from 'vue';
-import { useUtils } from '@/composables/core/useUtils';
 
 interface Props {
     level: DepartmentLevel;
@@ -12,6 +12,7 @@ interface Props {
     applications: EnrolmentApplication[];
     classSize: number;
     slotSize: number;
+    otherGenderHasWaitingList: boolean;
 }
 
 const props = defineProps<Props>();
@@ -20,7 +21,7 @@ const levelRequirements = computed(() => level?.relationships?.requirement);
 const requirementSubjects = computed(() => level?.relationships?.requirement?.relationships?.subjects);
 
 const { applyPolicyAlgorithmToApplications, getFaultyApplications, getMainSubjectGrade, getOtherSubjectGrades } = useEnrolments();
-const {formatDate} = useUtils();
+const { formatDate } = useUtils();
 const sortedApplications = applyPolicyAlgorithmToApplications(applications, level);
 const faultyApplications = getFaultyApplications(applications, level);
 const getRowClass = (rowIndex: number) => {
@@ -42,6 +43,8 @@ const getIconClass = (rowIndex: number) => {
     }
     return '';
 };
+
+
 </script>
 
 <template>
