@@ -49,7 +49,6 @@ const getIconClass = (rowIndex: number) => {
 
 <template>
     <div class="my-2">
-        {{ 'Class Size: ' + props.classSize + ', Slot Size: ' + props.slotSize + ', Other gender waitingList: ' + props.otherGenderHasWaitingList }}
         <table class="j-table">
             <thead class="j-thead">
                 <tr class="j-th">
