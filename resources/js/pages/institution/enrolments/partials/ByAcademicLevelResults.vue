@@ -4,6 +4,7 @@ import { IconName } from '@/enums/icons';
 import { DepartmentLevel } from '@/types/department-meta-data';
 import { EnrolmentApplication } from '@/types/enrolments';
 import { computed } from 'vue';
+import { useUtils } from '@/composables/core/useUtils';
 
 interface Props {
     level: DepartmentLevel;
@@ -19,6 +20,7 @@ const levelRequirements = computed(() => level?.relationships?.requirement);
 const requirementSubjects = computed(() => level?.relationships?.requirement?.relationships?.subjects);
 
 const { applyPolicyAlgorithmToApplications, getFaultyApplications, getMainSubjectGrade, getOtherSubjectGrades } = useEnrolments();
+const {formatDate} = useUtils();
 const sortedApplications = applyPolicyAlgorithmToApplications(applications, level);
 const faultyApplications = getFaultyApplications(applications, level);
 const getRowClass = (rowIndex: number) => {
@@ -50,7 +52,7 @@ const getIconClass = (rowIndex: number) => {
                     <th class="j-th text-left">#</th>
                     <th class="j-th text-left">{{ $tChoice('trans.name', 1) }}</th>
                     <th class="j-th text-left">{{ $tChoice('trans.phone', 1) }}</th>
-                    <th class="j-th text-center">{{ $tChoice('trans.amount', 1) }}</th>
+                    <th class="j-th text-center">{{ $tChoice('trans.date', 1) }}</th>
                     <th class="j-th text-center">Sitting Count</th>
                     <th class="j-th text-center">First Sitting</th>
                     <th class="j-th text-center" v-for="subject in requirementSubjects" :key="`tr_${subject.id}`">{{ subject?.attributes?.name }}</th>
@@ -66,7 +68,7 @@ const getIconClass = (rowIndex: number) => {
                     <td class="j-td">{{ index + 1 }}</td>
                     <td class="j-td">{{ application.studentName }}</td>
                     <td class="j-td">{{ application.phoneNumber }}</td>
-                    <td class="j-td text-center">{{ application.receiptAmount }}</td>
+                    <td class="j-td text-center">{{ formatDate(application.applicationDate, 'DD MMM YY, HH:mm:ss') }}</td>
                     <td class="j-td text-center">{{ application.examSittingsCount }}</td>
                     <td class="j-td text-center">{{ application.firstExamYear }}</td>
                     <td class="j-td text-center" v-for="subject in requirementSubjects" :key="`td_${subject.id}`">

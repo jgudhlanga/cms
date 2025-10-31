@@ -22,7 +22,7 @@ class DepartmentEnrolmentService
         int $intakePeriodId,
         int $modeOfStudyId,
         int $courseId,
-        int $perPage = 1000
+        int $perPage = 1500
     ): array
     {
         // ------------------------------------------------------------
@@ -151,7 +151,7 @@ class DepartmentEnrolmentService
             $sp->disability_status = $student->disability_status;
             $sp->gender = $student->gender->title ?? null;
             $sp->workflow_step = $sp->departmentWorkflowStep?->workflowStep?->name;
-            $sp->application_date = Carbon::parse($sp->application_date)->format('Y-m-d');
+            $sp->application_date = $sp->application_date;
             $sp->required_level_completed = $sp->required_level_completed ?? false;
             $sp->read_write_acknowledged = $sp->read_write_acknowledged ?? false;
             $sp->offer_accepted = $sp->offer_accepted ?? false;
@@ -226,7 +226,7 @@ class DepartmentEnrolmentService
         int $intakePeriodId,
         int $modeOfStudyId,
         int $courseId,
-        int $perPage = 1000
+        int $perPage = 1500
     ): array
     {
 
@@ -289,7 +289,7 @@ class DepartmentEnrolmentService
             $sp->student_number = $student->student_number;
             $sp->disability_status = $student->disability_status;
             $sp->gender = $student->gender->title ?? null;
-            $sp->application_date = Carbon::parse($sp->application_date)->format('Y-m-d');
+            $sp->application_date = $sp->application_date;
             $sp->class_list_type = $sp->class_list_type ?? null;
 
             return $sp;

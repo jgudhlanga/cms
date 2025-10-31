@@ -47,7 +47,7 @@ const getIconClass = (rowIndex: number) => {
                     <th class="j-th text-left">#</th>
                     <th class="j-th text-left">{{ $tChoice('trans.name', 1) }}</th>
                     <th class="j-th text-left">{{ $tChoice('trans.phone', 1) }}</th>
-                    <th class="j-th text-center">{{ $tChoice('trans.amount', 1) }}</th>
+                    <th class="j-th text-center">{{ $tChoice('trans.date', 1) }}</th>
                     <template v-if="Number(levelRequirements?.attributes?.requiredLevelId) > 0">
                         <th class="j-th text-center">{{ `${levelRequirements?.attributes?.requiredLevel} completed` }}</th>
                     </template>
@@ -62,7 +62,7 @@ const getIconClass = (rowIndex: number) => {
                     <td class="j-td">{{ index + 1 }}</td>
                     <td class="j-td">{{ application.studentName }}</td>
                     <td class="j-td">{{ application.phoneNumber }}</td>
-                    <td class="j-td text-center">{{ application.receiptAmount }}</td>
+                    <td class="j-td text-center">{{ application.applicationDate }}</td>
                     <template v-if="Number(levelRequirements?.attributes?.requiredLevelId) > 0">
                         <th class="j-th text-center">
                             <BaseIcon
