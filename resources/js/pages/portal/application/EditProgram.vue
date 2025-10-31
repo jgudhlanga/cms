@@ -1,4 +1,3 @@
-
 <script setup lang="ts">
 // UI components
 import { computed, onBeforeUnmount, onMounted } from 'vue';
@@ -25,6 +24,7 @@ import { useOLevelResults } from '@/composables/students/useOLevelResults';
 import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
 import { errorAlert } from '@/lib/alerts';
+import ToastService from '@/services/toast.service';
 import { useUpdateProgramFormStore } from '@/store/portal/useUpdateProgramFormStore';
 import { Enrolment, OLevelSubjectResult } from '@/types/enrolments';
 import { router, useForm } from '@inertiajs/vue3';
@@ -87,6 +87,8 @@ const form = useForm<ProgramParams>({
 });
 
 onMounted(async () => {
+    ToastService.warning('Sorry, The registration has ended for now. Contact the administration for more info.');
+    navigateTo(route('login'));
     modeOfStudy.value = { value: Number(application?.attributes?.modeOfStudyId), label: application?.attributes?.modeOfStudy ?? '' };
     department.value = { value: Number(application?.attributes?.institutionDepartmentId), label: application?.attributes?.department ?? '' };
     level.value = { value: Number(application?.attributes?.departmentLevelId), label: application?.attributes?.level ?? '' };
@@ -193,7 +195,7 @@ const onUpdated = () => {
         <div class="mt-20 flex w-full flex-col bg-white px-10 md:p-0">
             <div class="flex w-full flex-col space-y-6 md:mx-auto md:w-7/8">
                 <Programs :form="form" :application="application" />
-                <div class="mb-10 flex flex-col md:flex-row justify-center space-x-3 space-y-3">
+                <div class="mb-10 flex flex-col justify-center space-y-3 space-x-3 md:flex-row">
                     <BaseButton class="w-full md:w-[200px]" :size="ButtonSize.xl" :processing="isLoading">
                         {{ $t('trans.submit') }}
                     </BaseButton>

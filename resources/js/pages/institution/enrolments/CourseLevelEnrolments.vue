@@ -107,6 +107,22 @@ const form = useForm<ClassListParams>({
     type: 'provisional',
 });
 
+const otherGenderHasWaitingList = (group: EnrolmentGroup) => {
+    const groups = enrolments?.groups ?? { disabled: [], females: [], males: [] };
+    const { females, males } = allocateClassSlots(
+        Number(classSize),
+        groups.disabled.length,
+        groups.females.length,
+        groups.males.length,
+    );
+    if (group === 'males') {
+       return enrolments.groups.females.length > females;
+    } else  if (group === 'females') {
+        return enrolments.groups.males.length > males;
+    } else {
+        return false;
+    }
+}
 async function createProvisionalClass() {
     if (!hasAbility('create:class-lists')) {
         forbiddenAlert();
@@ -212,7 +228,7 @@ async function createProvisionalClass() {
                         :applications="enrolmentsInGroup"
                         :class-size="Number(classSize)"
                         :slot-size="getGroupSlot(group.toLowerCase() as EnrolmentGroup)"
-                        :waiting-slot-size="allocateWaitingSlots(group.toLowerCase() as EnrolmentGroup)"
+                        :other-gender-has-waiting-list="otherGenderHasWaitingList(group.toLowerCase() as EnrolmentGroup)"
                     />
                     <GeneralEnrolments
                         v-else
@@ -221,7 +237,7 @@ async function createProvisionalClass() {
                         :applications="enrolmentsInGroup"
                         :class-size="Number(classSize)"
                         :slot-size="getGroupSlot(group.toLowerCase() as EnrolmentGroup)"
-                        :waiting-slot-size="allocateWaitingSlots(group.toLowerCase() as EnrolmentGroup)"
+
                     />
                 </div>
             </div>

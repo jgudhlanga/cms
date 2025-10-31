@@ -11,7 +11,6 @@ interface Props {
     applications: EnrolmentApplication[];
     classSize: number;
     slotSize: number;
-    waitingSlotSize: number;
 }
 
 const props = defineProps<Props>();
