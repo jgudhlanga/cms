@@ -43,9 +43,7 @@ class SendEnrolmentProgressJob implements ShouldQueue
         $mailable = $this->resolveMailable(
             name: "{$details->first_name} {$details->last_name}"
         );
-        //$email = $details->email;
-        $email = 'jimmyneds@gmail.com';
-
+        $email = $details->email;
         if ($mailable) {
             Mail::to($email)->send($mailable);
         }
