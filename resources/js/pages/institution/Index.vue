@@ -19,7 +19,7 @@ const gotToDepartments = (is_academic: number) => {
 };
 
 const canViewNonAcademicDepartments = computed(() => {
-    return hasAbility('root:manage') || hasAbility('view:department-metadata') || isItTrue(user.attributes?.hasAccessToNonAcademicDepartments);
+    return hasAbility('root:manage') || isItTrue(user.attributes?.hasAccessToNonAcademicDepartments);
 });
 
 const canViewAcademicDepartments = computed(() => {
