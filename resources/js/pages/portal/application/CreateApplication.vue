@@ -29,7 +29,6 @@ import { CourseRequirement, DepartmentLevelRequirement } from '@/types/departmen
 import { useForm } from '@inertiajs/vue3';
 import { trans } from 'laravel-vue-i18n';
 import { storeToRefs } from 'pinia';
-import ToastService from '@/services/toast.service';
 
 // Props
 interface Props {
@@ -130,8 +129,6 @@ const populateInitialForm = () => {
 };
 
 onMounted(async () => {
-    //ToastService.warning('Sorry, The registration has ended for now. Contact the administration for more info.');
-   // navigateTo(route('login'));
     await listIdTypes();
     populateInitialForm();
 });
