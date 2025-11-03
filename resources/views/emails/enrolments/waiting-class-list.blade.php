@@ -1,17 +1,24 @@
 @component('mail::message')
     # Dear {{ $name }}
 
-    Thank you for your interest in studying at Harare Polytechnic and for taking the time to submit your application for the 2026 academic year.
+    Congratulations! We are pleased to inform you that your application to study at Harare Polytechnic for the 2026 academic year has been successful.
+    However, due to the high number of qualified applicants this year, your name has been placed on the waiting list. This means that your admission is currently pending final placement confirmation.
 
-    After careful consideration of your application, we regret to inform you that you were **not successful** in gaining admission to Harare Polytechnic for the year 2026. The selection process was highly competitive, and unfortunately, we were unable to offer places to all deserving applicants.
+    You will be notified after 6 December 2025 regarding when to bring your original documents for verification. Once notified, please present the following documents at the Old Administration Block Boardroom, located in the Civil and Mechanical Engineering Section, during working hours:
 
-    We truly appreciate your desire to pursue your studies with us and encourage you not to be discouraged. You are welcome to reapply in future intakes should you wish to do so.
+    - Academic certificates and transcripts
+    - National ID
+    - Birth certificate
 
-    On behalf of the Harare Polytechnic, we wish you every success in your future academic and professional endeavours.
 
-    Yours sincerely,
+    Please note that only original documents will be accepted — photocopies or counterfeit certificates will not be considered.
+
+    We appreciate your patience during this process and will contact you as soon as a place becomes available. We look forward to the possibility of welcoming you to Harare Polytechnic.
+
+    Kind regards,
 
     Admissions Team
     Harare Polytechnic
+
 
 @endcomponent
