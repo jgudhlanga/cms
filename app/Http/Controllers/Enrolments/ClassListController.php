@@ -16,6 +16,7 @@ use App\Http\Resources\Institution\DepartmentLevelResource;
 use App\Http\Resources\Institution\InstitutionDepartmentResource;
 use App\Http\Resources\Institution\IntakePeriodResource;
 use App\Http\Resources\Institution\ModeOfStudyResource;
+use App\Jobs\Enrolments\SendEnrolmentProgressJob;
 use App\Models\Enrolments\ClassList;
 use App\Models\Institution\DepartmentCourse;
 use App\Models\Institution\DepartmentLevel;
@@ -42,13 +43,12 @@ class ClassListController extends Controller
     public function store(ClassListRequest $request)
     {
         try {
-            $classList = $this->buildClassListDto($request->input('class_list', []), 'provisional');
-            $waitingList = $this->buildClassListDto($request->input('waiting_list', []), 'waiting');
+            $classLists = array_merge(
+                $this->buildClassListDto($request->input('class_list', []), 'provisional'),
+                $this->buildClassListDto($request->input('waiting_list', []), 'waiting')
+            );
 
-            DB::transaction(function () use ($classList, $waitingList) {
-                collect([...$classList, ...$waitingList])
-                    ->each(fn($dto) => $this->repository->create($dto));
-            });
+            $this->createClassLists($classLists);
 
             return back()->with('success', 'Class lists created successfully.');
         } catch (Throwable $e) {
@@ -56,9 +56,11 @@ class ClassListController extends Controller
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
+
             return back()->with('error', 'An error occurred while creating class lists. All changes have been rolled back.');
         }
     }
+
 
     /**
      * Build an array of ClassListDto objects.
@@ -84,6 +86,19 @@ class ClassListController extends Controller
             ),
             $ids
         );
+    }
+
+    /**
+     * @throws Throwable
+     */
+    protected function createClassLists(array $classLists): void
+    {
+        DB::transaction(function () use ($classLists) {
+            collect($classLists)->each(function ($dto) {
+                $classEntry = $this->repository->create($dto);
+                SendEnrolmentProgressJob::dispatch($classEntry->id, $dto->type)->withoutDelay();
+            });
+        });
     }
 
 
