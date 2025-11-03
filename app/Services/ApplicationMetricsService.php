@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\Acl\PermissionEnum;
 use App\Helpers\Helper;
 use App\Models\Institution\Staff;
+use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -109,7 +110,7 @@ class ApplicationMetricsService
             ->selectRaw('DATE(student_programs.created_at) as count_date, COUNT(student_programs.id) as daily_count')
             ->whereBetween('student_programs.created_at', [
                 $intakePeriod->start_date,
-                now()->endOfDay()->toDateTimeString(),
+                Carbon::parse($intakePeriod->end_date)->addDay()->endOfDay()->toDateTimeString(),
             ]);
 
         if ($this->isDepartmentUser) {
@@ -123,7 +124,7 @@ class ApplicationMetricsService
 
         $period = CarbonPeriod::create(
             $intakePeriod->start_date,
-            now()->toDateString()
+            Carbon::parse($intakePeriod->end_date)->addDay()->endOfDay()->toDateString()
         );
 
         return collect($period)->map(function ($date) use ($rawCounts) {
