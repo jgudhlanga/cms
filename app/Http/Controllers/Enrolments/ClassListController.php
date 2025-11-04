@@ -96,11 +96,43 @@ class ClassListController extends Controller
         DB::transaction(function () use ($classLists) {
             collect($classLists)->each(function ($dto) {
                 $classEntry = $this->repository->create($dto);
-                SendEnrolmentProgressJob::dispatch($classEntry->id, $dto->type)->withoutDelay();
+                $details = $this->getClassEntryDetails($classEntry->id);
+                SendEnrolmentProgressJob::dispatch(
+                    $classEntry->id,
+                    $dto->type,
+                    $details->institution_department_id,
+                    $details->department,
+                    $details->level,
+                    $details->course)->withoutDelay();
             });
         });
     }
 
+
+    protected function getClassEntryDetails(int $classListId)
+    {
+        return DB::table('class_lists as cl')
+            ->join('student_programs as sp', 'sp.id', '=', 'cl.student_program_id')
+            ->join('students as st', 'st.id', '=', 'sp.student_id')
+            ->join('institution_departments as idp', 'idp.id', '=', 'sp.institution_department_id')
+            ->join('departments as dp', 'dp.id', '=', 'idp.department_id')
+            ->join('department_levels as dl', 'dl.id', '=', 'sp.department_level_id')
+            ->join('levels as lv', 'lv.id', '=', 'dl.level_id')
+            ->join('department_courses as dc', 'dc.id', '=', 'sp.department_course_id')
+            ->join('courses as cs', 'cs.id', '=', 'dc.course_id')
+            ->join('users as us', 'us.id', '=', 'st.user_id')
+            ->where('cl.id', $classListId)
+            ->select([
+                'cl.id',
+                'us.first_name',
+                'us.last_name',
+                'us.email',
+                'sp.institution_department_id',
+                'dp.name as department',
+                'lv.name as level',
+                'cs.name as course',
+            ])->first();
+    }
 
     public function update(Request $request, ClassList $classList)
     {

@@ -55,6 +55,25 @@ const remainingSlots = () => {
     }, 0);
 };
 
+const statusMessage = (application: Enrolment) => {
+    const step = application?.relationships?.departmentWorkflowStep?.attributes?.workflowStep ?? '';
+    switch (step) {
+        case 'Review':
+            return 'Your application has been submitted and is awaiting review.';
+        case 'Requirements':
+            return 'Your application is currently under review by the admissions team. Please present the required documents (Academic certificates and transcripts, National ID, Birth certificate) at the Old Administration Block Boardroom, located in the Civil and Mechanical Engineering Section, during working hours';
+        case 'Accepted':
+            return 'Congratulations! Your application has been accepted.';
+        case 'Rejected':
+            return 'We regret to inform you that your application has been rejected.';
+        case 'Waitlisted':
+            return 'Due to the high number of qualified applicants this year, your name has been placed on the waiting list. This means that your admission is currently pending final placement confirmation.';
+        case 'Enrolled':
+            return 'We regret to inform you that your application has been rejected.';
+        default:
+            return 'Status information is currently unavailable.';
+    }
+};
 const breadcrumbs: BreadcrumbItemInterface[] = [{ transChoiceKey: 'dashboard', href: route('portal.dashboard') }, { transChoiceKey: 'application' }];
 </script>
 <template>
@@ -103,6 +122,9 @@ const breadcrumbs: BreadcrumbItemInterface[] = [{ transChoiceKey: 'dashboard', h
                             :label="`${$tChoice('trans.application', 1)} ${$tChoice('trans.status', 1)}`"
                             :value="application?.relationships?.departmentWorkflowStep?.attributes?.workflowStep ?? ''"
                         />
+                    </div>
+                    <div class="flex flex-col pt-4">
+                        <div class="text-xs text-primary">{{ statusMessage(application) }}</div>
                     </div>
                 </div>
                 <!-- Card Footer -->

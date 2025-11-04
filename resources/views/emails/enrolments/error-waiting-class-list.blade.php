@@ -8,4 +8,6 @@
 
     Admissions Team
     Harare Polytechnic
+
+    NB: This is a system-generated email. Please do not reply directly to this message.
 @endcomponent
