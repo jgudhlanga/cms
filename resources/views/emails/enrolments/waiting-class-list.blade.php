@@ -19,6 +19,4 @@
 
     Admissions Team
     Harare Polytechnic
-
-
 @endcomponent
