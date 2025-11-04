@@ -3,6 +3,7 @@
 namespace App\Jobs\Enrolments;
 
 use App\Enums\Shared\ClassListTypeEnum;
+use App\Mail\Enrolments\FixErrorEmailToWaitingList;
 use App\Mail\Enrolments\ProvisionalClassListMail;
 use App\Mail\Enrolments\RejectedApplicationMail;
 use App\Mail\Enrolments\WaitingClassListMail;
@@ -44,6 +45,7 @@ class SendEnrolmentProgressJob implements ShouldQueue
             name: "{$details->first_name} {$details->last_name}"
         );
         $email = $details->email;
+        //$email = 'jimmyneds@gmail.com';
         if ($mailable) {
             Mail::to($email)->send($mailable);
         }
@@ -75,7 +77,7 @@ class SendEnrolmentProgressJob implements ShouldQueue
     {
         return match ($this->type) {
             ClassListTypeEnum::PROVISIONAL->value => new ProvisionalClassListMail($name),
-            ClassListTypeEnum::WAITING->value => new WaitingClassListMail($name),
+            ClassListTypeEnum::WAITING->value => new FixErrorEmailToWaitingList($name),
             ClassListTypeEnum::FAILED->value => new RejectedApplicationMail($name),
             default => null,
         };

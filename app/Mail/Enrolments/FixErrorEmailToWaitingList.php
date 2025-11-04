@@ -3,22 +3,23 @@
 namespace App\Mail\Enrolments;
 
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class WaitingClassListMail extends Mailable
+class FixErrorEmailToWaitingList extends Mailable
 {
     use Queueable, SerializesModels;
-
 
     /**
      * Create a new message instance.
      */
     public function __construct(protected string $name)
     {
+        //
     }
 
     /**
@@ -27,7 +28,7 @@ class WaitingClassListMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Update on Your 2026 Application – Waiting List and Documents Verification',
+            subject: 'Subject: Correction to Previous Email',
         );
     }
 
@@ -37,7 +38,7 @@ class WaitingClassListMail extends Mailable
     public function content(): Content
     {
         return new Content(
-            markdown: 'emails.enrolments.waiting-class-list',
+            markdown: 'emails.enrolments.error-waiting-class-list',
             with: [
                 'name' => $this->name,
             ]
@@ -54,4 +55,3 @@ class WaitingClassListMail extends Mailable
         return [];
     }
 }
-
