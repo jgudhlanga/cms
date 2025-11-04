@@ -3,10 +3,12 @@
 namespace App\Jobs\Enrolments;
 
 use App\Enums\Shared\ClassListTypeEnum;
-use App\Mail\Enrolments\FixErrorEmailToWaitingList;
+use App\Enums\Shared\WorkflowStepEnum;
 use App\Mail\Enrolments\ProvisionalClassListMail;
 use App\Mail\Enrolments\RejectedApplicationMail;
 use App\Mail\Enrolments\WaitingClassListMail;
+use App\Models\Institution\DepartmentApplicationStep;
+use App\Models\Shared\WorkflowStep;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
@@ -22,8 +24,12 @@ class SendEnrolmentProgressJob implements ShouldQueue
      * Create a new job instance.
      */
     public function __construct(
-        protected int    $classId,
-        protected string $type,
+        protected int     $classId,
+        protected string  $type,
+        protected string  $institutionDepartmentId,
+        protected ?string $department = null,
+        protected ?string $level = null,
+        protected ?string $course = null,
     )
     {
     }
@@ -42,11 +48,22 @@ class SendEnrolmentProgressJob implements ShouldQueue
         }
 
         $mailable = $this->resolveMailable(
-            name: "{$details->first_name} {$details->last_name}"
+            name: "{$details->first_name} {$details->last_name}",
+            department: $this->department,
+            level: $this->level, course: $this->course
         );
         $email = $details->email;
         //$email = 'jimmyneds@gmail.com';
         if ($mailable) {
+            $type = match ($this->type) {
+                ClassListTypeEnum::PROVISIONAL->value => WorkflowStepEnum::REQUIREMENTS->slug(),
+                ClassListTypeEnum::WAITING->value => WorkflowStepEnum::WAITLISTED->slug(),
+                ClassListTypeEnum::FAILED->value => WorkflowStepEnum::REJECTED->slug(),
+                default => null,
+            };
+            $step = WorkflowStep::where('slug', $type)->first();
+            $departmentStep = DepartmentApplicationStep::where('institution_department_id', $this->institutionDepartmentId)->where('workflow_step_id', $step->id)->first();
+            DB::table('student_programs')->where('id', $details->application_id)->update(['department_application_step_id' => $departmentStep->id]);
             Mail::to($email)->send($mailable);
         }
     }
@@ -73,11 +90,11 @@ class SendEnrolmentProgressJob implements ShouldQueue
     /**
      * Resolve which mailable to send based on the class list type.
      */
-    protected function resolveMailable(string $name): ?Mailable
+    protected function resolveMailable(string $name, ?string $department = null, ?string $level = null, ?string $course = null): ?Mailable
     {
         return match ($this->type) {
-            ClassListTypeEnum::PROVISIONAL->value => new ProvisionalClassListMail($name),
-            ClassListTypeEnum::WAITING->value => new FixErrorEmailToWaitingList($name),
+            ClassListTypeEnum::PROVISIONAL->value => new ProvisionalClassListMail($name, $department, $level, $course),
+            ClassListTypeEnum::WAITING->value => new WaitingClassListMail($name, $department, $level, $course),
             ClassListTypeEnum::FAILED->value => new RejectedApplicationMail($name),
             default => null,
         };

@@ -17,7 +17,7 @@ class WaitingClassListMail extends Mailable
     /**
      * Create a new message instance.
      */
-    public function __construct(protected string $name)
+    public function __construct(protected string $name, protected string $department, protected string $level, protected string $course)
     {
     }
 
@@ -40,6 +40,9 @@ class WaitingClassListMail extends Mailable
             markdown: 'emails.enrolments.waiting-class-list',
             with: [
                 'name' => $this->name,
+                'department' => $this->department,
+                'level' => $this->level,
+                'course' => $this->course,
             ]
         );
     }
