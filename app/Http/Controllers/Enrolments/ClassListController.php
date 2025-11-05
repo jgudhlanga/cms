@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Enrolments;
 
 use App\DTO\Enrolments\ClassListDto;
+use App\Enums\Shared\ClassListTypeEnum;
+use App\Enums\Shared\WorkflowStepEnum;
 use App\Helpers\Helper;
 use App\Helpers\WorkflowHelper;
 use App\Http\Controllers\Controller;
@@ -19,11 +21,13 @@ use App\Http\Resources\Institution\IntakePeriodResource;
 use App\Http\Resources\Institution\ModeOfStudyResource;
 use App\Jobs\Enrolments\SendEnrolmentProgressJob;
 use App\Models\Enrolments\ClassList;
+use App\Models\Institution\DepartmentApplicationStep;
 use App\Models\Institution\DepartmentCourse;
 use App\Models\Institution\DepartmentLevel;
 use App\Models\Institution\InstitutionDepartment;
 use App\Models\Institution\IntakePeriod;
 use App\Models\Institution\ModeOfStudy;
+use App\Models\Shared\WorkflowStep;
 use App\Models\Students\StudentProgram;
 use App\Repositories\Institution\interface\IClassListRepository;
 use App\Services\DepartmentEnrolmentService;
@@ -138,8 +142,37 @@ class ClassListController extends Controller
     public function update(UpdateClassEntryRequest $request, StudentProgram $studentProgram)
     {
         try {
-            dump($studentProgram);
-            dd($request->all());
+            # get class list
+            $entry = ClassList::where('student_program_id', $studentProgram->id)->first();
+            if (!$entry) {
+                return back()->with('error', 'Class list entry not found for the specified student program.');
+            }
+            # update class list entry only if identity_confirmed  disability_confirmed names_confirmed are true
+            $entry->attributes = array_merge($entry->attributes ?? [], [
+                'identity_confirmed' => $request->boolean('identity_confirmed'),
+                'disability_confirmed' => $request->boolean('disability_confirmed'),
+                'names_confirmed' => $request->boolean('names_confirmed'),
+                'o_level_confirmed' => $request->boolean('o_level_confirmed'),
+                'previous_level_confirmed' => $request->boolean('previous_level_confirmed'),
+                'read_write_confirmed' => $request->boolean('read_write_confirmed'),
+                'application_fee_confirmed' => $request->boolean('application_fee_confirmed'),
+                'tuition_fee_confirmed' => $request->boolean('tuition_fee_confirmed'),
+            ]);
+            # Now check actual stored values, not request only
+            if (
+                $entry->attributes['identity_confirmed'] &&
+                $entry->attributes['disability_confirmed'] &&
+                $entry->attributes['names_confirmed']
+            ) {
+                $entry->type = ClassListTypeEnum::VERIFIED->value;
+                $entry->save();
+                # generate student number
+                # change student application status to accepted
+                $step = WorkflowStep::where('slug', WorkflowStepEnum::ACCEPTED->slug())->first();
+                $departmentStep = DepartmentApplicationStep::where('institution_department_id', $studentProgram->institution_department_id)->where('workflow_step_id', $step->id)->first();
+                $studentProgram->update(['department_application_step_id' => $departmentStep->id]);
+                // send email with offer letter
+            }
             return back()->with('success', 'Class list entry updated successfully.');
         } catch (Throwable $e) {
             Log::error('Failed to update class list entry', [
@@ -147,6 +180,30 @@ class ClassListController extends Controller
                 'trace' => $e->getTraceAsString(),
             ]);
 
+            return back()->with('error', 'An error occurred while updating class list entry. All changes have been rolled back.');
+        }
+    }
+
+    public function rejectApplication(StudentProgram $studentProgram)
+    {
+        try {
+            # get class list
+            $entry = ClassList::where('student_program_id', $studentProgram->id)->first();
+            if (!$entry) {
+                return back()->with('error', 'Class list entry not found for the specified student program.');
+            }
+            $entry->type = ClassListTypeEnum::FAILED->value;
+            $entry->save();
+            # change student application status to rejected
+            $step = WorkflowStep::where('slug', WorkflowStepEnum::REJECTED->slug())->first();
+            $departmentStep = DepartmentApplicationStep::where('institution_department_id', $studentProgram->institution_department_id)->where('workflow_step_id', $step->id)->first();
+            $studentProgram->update(['department_application_step_id' => $departmentStep->id]);
+            return back()->with('success', 'Class list entry updated successfully.');
+        } catch (Throwable $e) {
+            Log::error('Failed to update class list entry', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
             return back()->with('error', 'An error occurred while updating class list entry. All changes have been rolled back.');
         }
     }
