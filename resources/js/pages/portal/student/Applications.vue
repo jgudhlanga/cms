@@ -79,7 +79,7 @@ const breadcrumbs: BreadcrumbItemInterface[] = [{ transChoiceKey: 'dashboard', h
 <template>
     <Head :title="$tChoice('trans.application', 2)" />
     <PageContainer :breadcrumbs="breadcrumbs">
-        <div class="my-6 grid grid-cols-1 gap-4 md:grid-cols-2" v-if="eligibleForMoreApplications()">
+<!--        <div class="my-6 grid grid-cols-1 gap-4 md:grid-cols-2" v-if="eligibleForMoreApplications()">
             <BaseAlert :description="`You can apply for ${remainingSlots()} more courses`" :type="TypeVariant.info" />
             <div class="flex w-full items-center justify-end">
                 <GenericButton
@@ -91,7 +91,7 @@ const breadcrumbs: BreadcrumbItemInterface[] = [{ transChoiceKey: 'dashboard', h
                     title="New Application"
                 />
             </div>
-        </div>
+        </div>-->
         <div v-if="applications && applications.length > 0" class="my-6 space-y-4">
             <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow" v-for="application in applications" :key="application.id">
                 <!-- Card Header -->

@@ -11,7 +11,7 @@ import { ClassListAttributeParams, ClassListTopNext, Enrolment, OtherApplication
 import { Link } from '@/types/ui';
 import { Head, useForm } from '@inertiajs/vue3';
 import { trans } from 'laravel-vue-i18n';
-import { computed } from 'vue';
+import { computed, onMounted } from 'vue';
 
 interface Props {
     auth: AuthObject;
@@ -23,7 +23,7 @@ interface Props {
 
 const props = defineProps<Props>();
 
-const { application } = props;
+const { application, nextTop } = props;
 
 const breadcrumbs: Array<Link> = [
     { transKey: 'dashboard', href: route('dashboard') },
@@ -49,7 +49,7 @@ const breadcrumbs: Array<Link> = [
     { title: application?.attributes?.studentName },
 ];
 
-const { isItTrue } = useUtils();
+const { isItTrue, navigateTo } = useUtils();
 
 const oLevelRequired = computed(() => {
     if (application?.relationships?.requirements) {
@@ -105,34 +105,48 @@ const saveVerification = async () => {
         forbiddenAlert();
         return;
     }
+    if (!form.identity_confirmed) {
+        errorAlert('Please confirm Identity is correct');
+        return;
+    }
+    if (!form.names_confirmed) {
+        errorAlert('Please confirm Name is correct');
+        return;
+    }
+    if (!form.disability_confirmed) {
+        errorAlert('Please confirm disability status is correct');
+        return;
+    }
+    if (oLevelRequired.value) {
+        if (!form.o_level_confirmed) {
+            errorAlert('Please confirm O Level results are correct');
+            return;
+        }
+    }
+    if (previousLevelRequired.value) {
+        if (!form.previous_level_confirmed) {
+            errorAlert(`Please confirm ${requiredLevel.value} level completed`);
+            return;
+        }
+    }
+    if (readWriteRequired.value) {
+        if (!form.read_write_confirmed) {
+            errorAlert(trans('trans.acknowledge_read_write'));
+            return;
+        }
+    }
     const confirmed = await useCustomConfirmDialog().open({
         title: 'Verify Applicant',
         message: 'Are you sure you are confirming the details of this applicant?',
         confirmText: 'Yes confirm',
     });
     if (confirmed) {
-        if (oLevelRequired.value) {
-            console.log(form.o_level_confirmed);
-            if (form.o_level_confirmed == null) {
-                errorAlert('Please confirm O Level results are correct');
-                return;
-            }
-        }
-        if (previousLevelRequired.value) {
-            if (form.previous_level_confirmed == null) {
-                errorAlert(`Please confirm ${requiredLevel.value} level completed`);
-                return;
-            }
-        }
-        if (readWriteRequired.value) {
-            if (form.read_write_confirmed == null) {
-                errorAlert(trans('trans.acknowledge_read_write'));
-                return;
-            }
-        }
         form.put(route('enrolments.update-class-list', { student_program: String(application.id) }), {
             onSuccess: () => {
                 successAlert('Class list entry successfully verified.');
+                if (nextTop.length > 0) {
+                    navigateTo(route('enrolments.verify', { student_program: String(nextTop[0].applicationId) }));
+                }
             },
             onError: (errors: any) => {
                 if (Object.keys(errors).length) {
@@ -151,10 +165,28 @@ const rejectApplication = async () => {
         return;
     }
     const confirmed = await useCustomConfirmDialog().open({
-        title: 'Verify Applicant',
-        message: 'Are you sure you are confirming the details of this applicant?',
+        title: 'Reject Applicant',
+        message: 'Are you sure you are rejecting this applicant from the class list?',
         confirmText: 'Yes confirm',
     });
+    if (confirmed) {
+        form.put(route('enrolments.reject-application', { student_program: String(application.id) }), {
+            onSuccess: () => {
+                successAlert('Application successfully rejected from class list.');
+                if (nextTop.length > 0) {
+                    navigateTo(route('enrolments.verify', { student_program: String(nextTop[0].applicationId) }));
+                }
+            },
+            onError: (errors: any) => {
+                if (Object.keys(errors).length) {
+                    const allErrors = Object.values(errors).join('\n');
+                    errorAlert(allErrors);
+                } else {
+                    errorAlert('An unexpected error happened, class list entry could not be rejected.');
+                }
+            },
+        });
+    }
 };
 
 const identityConfirmedOptions = computed(() => [
@@ -181,6 +213,16 @@ const readWriteOptions = computed(() => [
     { inputId: 'read_write_confirmed_yes', label: 'Yes', value: true },
     { inputId: 'read_write_confirmed_no', label: 'No', value: false },
 ]);
+
+onMounted(() => {
+    const entry = application.relationships?.classList;
+    form.identity_confirmed = isItTrue(entry?.attributes?.identityConfirmed);
+    form.names_confirmed = isItTrue(entry?.attributes?.namesConfirmed);
+    form.disability_confirmed = isItTrue(entry?.attributes?.disabilityConfirmed);
+    form.o_level_confirmed = isItTrue(entry?.attributes?.oLevelConfirmed);
+    form.previous_level_confirmed = isItTrue(entry?.attributes?.previousLevelConfirmed);
+    form.read_write_confirmed = isItTrue(entry?.attributes?.readWriteConfirmed);
+});
 </script>
 
 <template>
@@ -221,34 +263,6 @@ const readWriteOptions = computed(() => [
                             <Label class="font-bold">Confirm read and write ability</Label>
                             <BaseRadioGroup :options="readWriteOptions" v-model="form.read_write_confirmed" :vertical-layout="false" />
                         </div>
-                        <!-- <BaseCheckbox
-                            input-id="identity_confirmed"
-                            v-model="form.identity_confirmed"
-                            label="Confirm Identity is correct(id number / passport number)"
-
-                      <BaseCheckbox input-id="names_confirmed" v-model="form.names_confirmed" label="Confirm applicant's name is correct" />
-                      <BaseCheckbox
-                            input-id="disability_confirmed"
-                            v-model="form.disability_confirmed"
-                            label="Confirm applicant's disability status"
-                       <BaseCheckbox
-                            v-if="oLevelRequired"
-                            input-id="o_level_confirmed"
-                            v-model="form.o_level_confirmed"
-                           label="Confirm O Level results are correct"
-                        />
-                        <BaseCheckbox
-                            v-if="previousLevelRequired"
-                            input-id="previous_level_confirmed"
-                            v-model="form.previous_level_confirmed"
-                            :label="`Confirm ${requiredLevel} level completed`"
-                        />
-                        <BaseCheckbox
-                            v-if="readWriteRequired"
-                            input-id="read_write_confirmed"
-                            v-model="form.read_write_confirmed"
-                            label="Confirm read and write ability"
-                        />-->
                     </div>
                     <div class="mt-6 flex items-center justify-between">
                         <BaseButton title="Verify and give Offer to applicant" @click="saveVerification" classes="rounded-full" />

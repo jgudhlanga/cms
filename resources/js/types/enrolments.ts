@@ -222,6 +222,7 @@ export type ClassListAttribute = {
     namesConfirmed: boolean;
     oLevelConfirmed: boolean;
     previousLevelConfirmed: boolean;
+    readWriteConfirmed: boolean;
     applicationFeeConfirmed: boolean;
     tuitionFeeConfirmed: boolean;
 };
