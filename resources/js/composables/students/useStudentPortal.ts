@@ -88,7 +88,6 @@ export function useStudentPortal() {
                     successAlert('Application successfully created');
                 },
                 onError: (errors: any) => {
-                    console.log(errors);
                     if (Object.keys(errors).length) {
                         const allErrors = Object.values(errors).join('\n');
                         errorAlert(allErrors);

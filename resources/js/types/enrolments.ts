@@ -227,14 +227,14 @@ export type ClassListAttribute = {
 };
 
 export type ClassListAttributeParams = {
-    identity_confirmed: boolean;
-    disability_confirmed: boolean;
-    names_confirmed: boolean;
-    o_level_confirmed: boolean;
-    previous_level_confirmed: boolean;
-    read_write_confirmed: boolean;
-    application_fee_confirmed: boolean;
-    tuition_fee_confirmed: boolean;
+    identity_confirmed: boolean | null;
+    disability_confirmed: boolean | null;
+    names_confirmed: boolean | null;
+    o_level_confirmed: boolean | null;
+    previous_level_confirmed: boolean | null;
+    read_write_confirmed: boolean | null;
+    application_fee_confirmed: boolean | null;
+    tuition_fee_confirmed: boolean | null;
 };
 
 export type ClassListTopNext = {
@@ -249,4 +249,4 @@ export type OtherApplication = {
     course: string;
     modeOfStudy: string;
     inClassList: boolean;
-}
+};
