@@ -7,6 +7,7 @@ use App\Helpers\Helper;
 use App\Helpers\WorkflowHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Enrolments\ClassListRequest;
+use App\Http\Requests\Enrolments\UpdateClassEntryRequest;
 use App\Http\Resources\Enrolments\ClassListNextTopResource;
 use App\Http\Resources\Enrolments\EnrolmentGroupResource;
 use App\Http\Resources\Enrolments\EnrolmentResource;
@@ -134,13 +135,25 @@ class ClassListController extends Controller
             ])->first();
     }
 
-    public function update(Request $request, ClassList $classList)
+    public function update(UpdateClassEntryRequest $request, StudentProgram $studentProgram)
     {
+        try {
+            dump($studentProgram);
+            dd($request->all());
+            return back()->with('success', 'Class list entry updated successfully.');
+        } catch (Throwable $e) {
+            Log::error('Failed to update class list entry', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
 
+            return back()->with('error', 'An error occurred while updating class list entry. All changes have been rolled back.');
+        }
     }
 
     public function verify(StudentProgram $studentProgram)
     {
+        $this->authorize('verify:class-lists');
         $studentProgram->load([
             'departmentWorkflowStep',
             'institutionDepartment',
@@ -189,7 +202,7 @@ class ClassListController extends Controller
      */
     public function classLists(InstitutionDepartment $institutionDepartment, DepartmentLevel $departmentLevel): Response
     {
-        $this->authorize('viewDepartmentMetaData');
+        $this->authorize('view:class-lists');
 
         [$intakePeriodId, $modeOfStudyId, $courseId] = $this->departmentEnrolmentService->extractFilters();
 

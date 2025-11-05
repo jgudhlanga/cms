@@ -18,11 +18,12 @@ interface Props {
 
 withDefaults(defineProps<Props>(), {
     orientation: 'vertical',
+    verticalLayout: true,
 });
 </script>
 
 <template>
-    <RadioGroup v-bind="$attrs" :orientation="orientation" :disabled="disabled" >
+    <RadioGroup :class="verticalLayout ? 'flex flex-col' : 'flex'" v-bind="$attrs" :orientation="orientation" :disabled="disabled" >
         <Label :class="cn(error && 'text-destructive', labelUppercase && 'uppercase')" v-if="label"
             >{{ label }}
             <RequiredIndicator v-if="isRequired" />

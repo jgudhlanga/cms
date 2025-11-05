@@ -1,9 +1,8 @@
 <script setup lang="ts">
-import { BaseCheckbox } from '@/components/core/form';
 import { useCustomConfirmDialog } from '@/composables/core/useCustomConfirmDialog';
 import { useUtils } from '@/composables/core/useUtils';
 import { ColorVariant } from '@/enums/colors';
-import { forbiddenAlert } from '@/lib/alerts';
+import { errorAlert, forbiddenAlert, successAlert } from '@/lib/alerts';
 import { hasAbility } from '@/lib/permissions';
 import Details from '@/pages/enrolments/partials/verification/Details.vue';
 import Sidebar from '@/pages/enrolments/partials/verification/Sidebar.vue';
@@ -11,6 +10,7 @@ import { AuthObject } from '@/types/data-pagination';
 import { ClassListAttributeParams, ClassListTopNext, Enrolment, OtherApplication } from '@/types/enrolments';
 import { Link } from '@/types/ui';
 import { Head, useForm } from '@inertiajs/vue3';
+import { trans } from 'laravel-vue-i18n';
 import { computed } from 'vue';
 
 interface Props {
@@ -91,14 +91,14 @@ const requiredLevel = computed(() => {
 });
 
 const form = useForm<ClassListAttributeParams>({
-    identity_confirmed: false,
-    disability_confirmed: false,
-    names_confirmed: false,
-    o_level_confirmed: false,
-    previous_level_confirmed: false,
-    read_write_confirmed: false,
-    application_fee_confirmed: false,
-    tuition_fee_confirmed: false,
+    identity_confirmed: null,
+    disability_confirmed: null,
+    names_confirmed: null,
+    o_level_confirmed: null,
+    previous_level_confirmed: null,
+    read_write_confirmed: null,
+    application_fee_confirmed: null,
+    tuition_fee_confirmed: null,
 });
 const saveVerification = async () => {
     if (!hasAbility('verify:class-lists')) {
@@ -110,7 +110,77 @@ const saveVerification = async () => {
         message: 'Are you sure you are confirming the details of this applicant?',
         confirmText: 'Yes confirm',
     });
+    if (confirmed) {
+        if (oLevelRequired.value) {
+            console.log(form.o_level_confirmed);
+            if (form.o_level_confirmed == null) {
+                errorAlert('Please confirm O Level results are correct');
+                return;
+            }
+        }
+        if (previousLevelRequired.value) {
+            if (form.previous_level_confirmed == null) {
+                errorAlert(`Please confirm ${requiredLevel.value} level completed`);
+                return;
+            }
+        }
+        if (readWriteRequired.value) {
+            if (form.read_write_confirmed == null) {
+                errorAlert(trans('trans.acknowledge_read_write'));
+                return;
+            }
+        }
+        form.put(route('enrolments.update-class-list', { student_program: String(application.id) }), {
+            onSuccess: () => {
+                successAlert('Class list entry successfully verified.');
+            },
+            onError: (errors: any) => {
+                if (Object.keys(errors).length) {
+                    const allErrors = Object.values(errors).join('\n');
+                    errorAlert(allErrors);
+                } else {
+                    errorAlert('An unexpected error happened, class list entry could not be verified.');
+                }
+            },
+        });
+    }
 };
+const rejectApplication = async () => {
+    if (!hasAbility('verify:class-lists')) {
+        forbiddenAlert();
+        return;
+    }
+    const confirmed = await useCustomConfirmDialog().open({
+        title: 'Verify Applicant',
+        message: 'Are you sure you are confirming the details of this applicant?',
+        confirmText: 'Yes confirm',
+    });
+};
+
+const identityConfirmedOptions = computed(() => [
+    { inputId: 'identity_confirmed_yes', label: 'Yes', value: true },
+    { inputId: 'identity_confirmed_no', label: 'No', value: false },
+]);
+const namesConfirmedOptions = computed(() => [
+    { inputId: 'names_confirmed_yes', label: 'Yes', value: true },
+    { inputId: 'names_confirmed_no', label: 'No', value: false },
+]);
+const disabilityConfirmedOptions = computed(() => [
+    { inputId: 'disability_confirmed_yes', label: 'Yes', value: true },
+    { inputId: 'disability_confirmed_no', label: 'No', value: false },
+]);
+const oLevelConfirmedOptions = computed(() => [
+    { inputId: 'o_level_confirmed_yes', label: 'Yes', value: true },
+    { inputId: 'o_level_confirmed_no', label: 'No', value: false },
+]);
+const previousLevelOptions = computed(() => [
+    { inputId: 'previous_level_confirmed_yes', label: 'Yes', value: true },
+    { inputId: 'previous_level_confirmed_no', label: 'No', value: false },
+]);
+const readWriteOptions = computed(() => [
+    { inputId: 'read_write_confirmed_yes', label: 'Yes', value: true },
+    { inputId: 'read_write_confirmed_no', label: 'No', value: false },
+]);
 </script>
 
 <template>
@@ -127,22 +197,45 @@ const saveVerification = async () => {
                 />
                 <BaseCard title="Verification" description="Verification of applicant details">
                     <div class="grid grid-cols-1 gap-4">
-                        <BaseCheckbox
+                        <div class="flex items-center space-x-5">
+                            <Label class="font-bold">Confirm Identity is correct(id number / passport number):</Label>
+                            <BaseRadioGroup :options="identityConfirmedOptions" v-model="form.identity_confirmed" :vertical-layout="false" />
+                        </div>
+                        <div class="flex items-center space-x-5">
+                            <Label class="font-bold">Confirm applicant's name is correct:</Label>
+                            <BaseRadioGroup :options="namesConfirmedOptions" v-model="form.names_confirmed" :vertical-layout="false" />
+                        </div>
+                        <div class="flex items-center space-x-5">
+                            <Label class="font-bold">Confirm applicant's disability status:</Label>
+                            <BaseRadioGroup :options="disabilityConfirmedOptions" v-model="form.disability_confirmed" :vertical-layout="false" />
+                        </div>
+                        <div class="flex items-center space-x-5" v-if="oLevelRequired">
+                            <Label class="font-bold">Confirm O Level results are correct:</Label>
+                            <BaseRadioGroup :options="oLevelConfirmedOptions" v-model="form.o_level_confirmed" :vertical-layout="false" />
+                        </div>
+                        <div class="flex items-center space-x-5" v-if="previousLevelRequired">
+                            <Label class="font-bold">{{ `Confirm ${requiredLevel} level completed` }}</Label>
+                            <BaseRadioGroup :options="previousLevelOptions" v-model="form.previous_level_confirmed" :vertical-layout="false" />
+                        </div>
+                        <div class="flex items-center space-x-5" v-if="readWriteRequired">
+                            <Label class="font-bold">Confirm read and write ability</Label>
+                            <BaseRadioGroup :options="readWriteOptions" v-model="form.read_write_confirmed" :vertical-layout="false" />
+                        </div>
+                        <!-- <BaseCheckbox
                             input-id="identity_confirmed"
                             v-model="form.identity_confirmed"
                             label="Confirm Identity is correct(id number / passport number)"
-                        />
-                        <BaseCheckbox input-id="names_confirmed" v-model="form.names_confirmed" label="Confirm applicant's name is correct" />
-                        <BaseCheckbox
+
+                      <BaseCheckbox input-id="names_confirmed" v-model="form.names_confirmed" label="Confirm applicant's name is correct" />
+                      <BaseCheckbox
                             input-id="disability_confirmed"
                             v-model="form.disability_confirmed"
                             label="Confirm applicant's disability status"
-                        />
-                        <BaseCheckbox
+                       <BaseCheckbox
                             v-if="oLevelRequired"
                             input-id="o_level_confirmed"
                             v-model="form.o_level_confirmed"
-                            label="Confirm O Level results are correct"
+                           label="Confirm O Level results are correct"
                         />
                         <BaseCheckbox
                             v-if="previousLevelRequired"
@@ -155,11 +248,11 @@ const saveVerification = async () => {
                             input-id="read_write_confirmed"
                             v-model="form.read_write_confirmed"
                             label="Confirm read and write ability"
-                        />
+                        />-->
                     </div>
                     <div class="mt-6 flex items-center justify-between">
-                        <BaseButton title="Verify details and Give Offer To applicant" @click="saveVerification" classes="rounded-full" />
-                        <BaseButton :variant="ColorVariant.danger" title="Reject Application" @click="saveVerification" classes="rounded-full" />
+                        <BaseButton title="Verify and give Offer to applicant" @click="saveVerification" classes="rounded-full" />
+                        <BaseButton :variant="ColorVariant.danger" title="Reject Application" @click="rejectApplication" classes="rounded-full" />
                     </div>
                 </BaseCard>
             </div>
