@@ -3,11 +3,19 @@
 namespace App\Http\Controllers\Institution\DocumentTemplates;
 
 use App\DTO\DocumentTemplates\DocumentTemplateDto;
+use App\Enums\Shared\FeeTypeEnum;
+use App\Enums\Shared\IdTypeEnum;
+use App\Enums\Shared\WorkflowStepEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Filters\Shared\SharedNameFilter;
 use App\Http\Requests\DocumentTemplates\DocumentTemplateRequest;
 use App\Http\Resources\DocumentTemplates\DocumentTemplateResource;
+use App\Models\Institution\DepartmentApplicationStep;
 use App\Models\Institution\DocumentTemplate;
+use App\Models\Institution\FeeStructure;
+use App\Models\Shared\FeeType;
+use App\Models\Shared\WorkflowStep;
+use App\Models\Students\StudentProgram;
 use App\Repositories\Institution\interface\IDocumentTemplateRepository;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
@@ -123,9 +131,35 @@ class DocumentTemplateController extends Controller
     public function preview(DocumentTemplate $documentTemplate)
     {
         $this->authorize('view', $documentTemplate);
-        $fileName = 'offer-letter-' . time() . '.pdf';
 
-        $pdf = Pdf::loadView('students.offer-letter', compact('documentTemplate'));
+        $studentProgram = StudentProgram::join('class_lists', 'student_programs.id', '=', 'class_lists.student_program_id')
+            ->where('class_lists.type', 'verified')
+            ->select('student_programs.*')
+            ->first();
+        $student = $studentProgram->student;
+        $user = $student->user;
+
+        $studentName = $user->full_name;
+        $studentIdNumber = $student->id_number;
+        if ($student->id_type_id == IdTypeEnum::FOREIGN_PASSPORT_NUMBER->id()) {
+            $studentIdNumber = $student->passport_number;
+        }
+        $studentNumber = $student->student_number;
+        $intakePeriod = $studentProgram?->intakePeriod?->name;
+        $department = $studentProgram?->institutionDepartment?->department?->name;
+        $level = $studentProgram?->departmentLevel?->level?->name;
+        $course = $studentProgram?->departmentCourse?->course?->name;
+        $modeOfStudy = $studentProgram?->modeOfStudy?->name;
+
+        $tuitionFeeType = FeeType::where('name', FeeTypeEnum::TUITION_FEE->name())->first();
+        $feeStructure = FeeStructure::where('tenant_id', $studentProgram->tenant_id)->where('level_id', $studentProgram?->departmentLevel?->level?->id)
+            ->where('mode_of_study_id', $studentProgram?->modeOfStudy->id)->where('fee_type_id', $tuitionFeeType?->id)->first();
+        $tuition = $feeStructure?->local_fca_amount ?? 0;
+        $nameParts = array_filter([$user->first_name,$user->middle_name,$user->last_name]);
+        $fileName =  implode('_', $nameParts).'_offer_letter_' . time() . '.pdf';
+        $pdf = Pdf::loadView('students.offer-letter',
+            compact('documentTemplate', 'studentName', 'studentIdNumber', 'studentNumber',
+                'intakePeriod', 'department', 'level', 'course', 'modeOfStudy', 'tuition'));
         return $pdf->stream($fileName);
     }
 
