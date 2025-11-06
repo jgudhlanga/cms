@@ -11,6 +11,7 @@
     "require": {
         "php": "^8.2",
         "barryvdh/laravel-dompdf": "^3.1",
+        "guzzlehttp/guzzle": "^7.10",
         "illuminate/contracts": "*",
         "inertiajs/inertia-laravel": "^2.0",
         "lab404/laravel-impersonate": "^1.7",
@@ -19,10 +20,13 @@
         "laravel/tinker": "^2.10.1",
         "maatwebsite/excel": "^3.1",
         "opcodesio/log-viewer": "^3.21",
+        "php-http/guzzle7-adapter": "^1.1",
+        "railsware/mailtrap-php": "^3.9",
         "spatie/laravel-activitylog": "^4.10",
         "spatie/laravel-medialibrary": "^11.12",
         "spatie/laravel-permission": "^6.15",
         "spatie/laravel-query-builder": "^6.3",
+        "symfony/mailer": "^7.3",
         "tightenco/ziggy": "^2.4"
     },
     "require-dev": {
