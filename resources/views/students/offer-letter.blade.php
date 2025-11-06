@@ -111,7 +111,12 @@
 <div class="container">
     @include('partials.poly-header')
     <div class="content">
-        {!!  $documentTemplate->body !!}
+        {!!  str_replace(['{date}', '{studentName}', '{studentIdNumber}', '{studentNumber}','{intakePeriod}', '{department}', '{level}', '{course}', '{modeOfStudy}', '{tuition}'],
+        [\Carbon\Carbon::now()->format('d M Y'), strtoupper($studentName), $studentIdNumber, $studentNumber, $intakePeriod, $department, $level, $course, $modeOfStudy, $tuition],
+        $documentTemplate->body) !!}
+        <div style="margin-top: 5px;">
+            <img src="file://{{ public_path('assets/images/principal.jpeg') }}" alt="signature" >
+        </div>
     </div>
 </div>
 </body>
