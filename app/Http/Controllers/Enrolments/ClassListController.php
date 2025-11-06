@@ -179,7 +179,6 @@ class ClassListController extends Controller
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
-
             return back()->with('error', 'An error occurred while updating class list entry. All changes have been rolled back.');
         }
     }
