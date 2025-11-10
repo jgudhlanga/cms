@@ -166,8 +166,8 @@ class PortalController extends Controller
             // update payment status of registration fee to 'paid'
             PaymentHelper::updateRegistrationFeeLedgerEntries($application);
             // generate student number
-            $studentNumber = Helper::generateStudentNumber($student, $application->institutionDepartment);
-            $student->update(['student_number' => $studentNumber]);
+            // $studentNumber = Helper::generateStudentNumber($student, $application->institutionDepartment);
+            //$student->update(['student_number' => $studentNumber]);
             DB::commit();
             if ($stepTwo) {
                 $application->update([

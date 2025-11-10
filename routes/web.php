@@ -28,3 +28,4 @@ require __DIR__ . '/web/portal.php';
 require __DIR__ . '/web/enrolments.php';
 require __DIR__ . '/web/students.php';
 require __DIR__ . '/web/workflows.php';
+require __DIR__ . '/web/documents.php';
