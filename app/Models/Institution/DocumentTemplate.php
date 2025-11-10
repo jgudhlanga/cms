@@ -29,7 +29,7 @@ class DocumentTemplate extends Model implements HasMedia
    use HasFactory, SoftDeletes, Filterable, BelongsToTenant,Paginatable, LogsActivity, InteractsWithMedia;
 
 
-   protected $fillable = ['tenant_id','document_type_id', 'name', 'document_type_id', 'header_line_1', 'header_line_2', 'header_address_line_1',
+   protected $fillable = ['tenant_id','document_type_id', 'intake_period_id', 'name', 'document_type_id', 'header_line_1', 'header_line_2', 'header_address_line_1',
        'header_address_line_2', 'header_telephone', 'header_email', 'header_website', 'header_logo_1', 'header_logo_2',
        'body'
    ];

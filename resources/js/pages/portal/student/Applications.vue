@@ -1,14 +1,13 @@
 <script setup lang="ts">
-import BaseAlert from '@/components/core/alert/BaseAlert.vue';
-import { BaseButton, GenericButton } from '@/components/core/button';
+import { BaseButton } from '@/components/core/button';
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import Empty from '@/components/core/util/Empty.vue';
 import GridLabelValue from '@/components/core/util/GridLabelValue.vue';
 import { useUtils } from '@/composables/core/useUtils';
+import { useStudents } from '@/composables/students/useStudents';
 import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
-import { IconName } from '@/enums/icons';
-import { TypeVariant } from '@/enums/type-variants';
+import OfferLetterAnchor from '@/pages/portal/student/partials/OfferLetterAnchor.vue';
 import { AuthObject } from '@/types/data-pagination';
 import { Enrolment } from '@/types/enrolments';
 import { Student } from '@/types/students';
@@ -55,31 +54,13 @@ const remainingSlots = () => {
     }, 0);
 };
 
-const statusMessage = (application: Enrolment) => {
-    const step = application?.relationships?.departmentWorkflowStep?.attributes?.workflowStep ?? '';
-    switch (step) {
-        case 'Review':
-            return 'Your application has been submitted and is awaiting review.';
-        case 'Requirements':
-            return 'Your application is currently under review by the admissions team. Please present the required documents (Academic certificates and transcripts, National ID, Birth certificate) at the Old Administration Block Boardroom, located in the Civil and Mechanical Engineering Section, during working hours';
-        case 'Accepted':
-            return 'Congratulations! Your application has been accepted.';
-        case 'Rejected':
-            return 'We regret to inform you that your application has been rejected.';
-        case 'Waitlisted':
-            return 'Due to the high number of qualified applicants this year, your name has been placed on the waiting list. This means that your admission is currently pending final placement confirmation.';
-        case 'Enrolled':
-            return 'We regret to inform you that your application has been rejected.';
-        default:
-            return 'Status information is currently unavailable.';
-    }
-};
+const { getApplicationStatus, hasOfferLetter, statusMessage } = useStudents();
 const breadcrumbs: BreadcrumbItemInterface[] = [{ transChoiceKey: 'dashboard', href: route('portal.dashboard') }, { transChoiceKey: 'application' }];
 </script>
 <template>
     <Head :title="$tChoice('trans.application', 2)" />
     <PageContainer :breadcrumbs="breadcrumbs">
-<!--        <div class="my-6 grid grid-cols-1 gap-4 md:grid-cols-2" v-if="eligibleForMoreApplications()">
+        <!--        <div class="my-6 grid grid-cols-1 gap-4 md:grid-cols-2" v-if="eligibleForMoreApplications()">
             <BaseAlert :description="`You can apply for ${remainingSlots()} more courses`" :type="TypeVariant.info" />
             <div class="flex w-full items-center justify-end">
                 <GenericButton
@@ -120,15 +101,15 @@ const breadcrumbs: BreadcrumbItemInterface[] = [{ transChoiceKey: 'dashboard', h
                         <GridLabelValue :label="$tChoice('trans.update_date', 1)" :value="formatDate(application.attributes.updatedAt, 'L')" />
                         <GridLabelValue
                             :label="`${$tChoice('trans.application', 1)} ${$tChoice('trans.status', 1)}`"
-                            :value="application?.relationships?.departmentWorkflowStep?.attributes?.workflowStep ?? ''"
+                            :value="getApplicationStatus(application) ?? ''"
                         />
                     </div>
                     <div class="flex flex-col pt-4">
-                        <div class="text-xs text-primary">{{ statusMessage(application) }}</div>
+                        <div class="text-primary text-xs">{{ statusMessage(application) }}</div>
                     </div>
                 </div>
                 <!-- Card Footer -->
-                <div class="flex space-x-2 p-4">
+                <div class="flex justify-between space-x-2 p-4">
                     <BaseButton
                         type="button"
                         title="View Application"
@@ -137,6 +118,7 @@ const breadcrumbs: BreadcrumbItemInterface[] = [{ transChoiceKey: 'dashboard', h
                         :size="ButtonSize.xs"
                         @click="navigateTo(route('portal.application.view', String(application.id ?? '')))"
                     />
+                    <OfferLetterAnchor v-if="hasOfferLetter(application)" :student-program-id="String(application.id)" />
                 </div>
             </div>
         </div>

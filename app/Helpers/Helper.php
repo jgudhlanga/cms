@@ -46,6 +46,47 @@ class Helper
         return $year . $departmentCode . $studentIdPadded . $collegeCode;
     }
 
+    public static function lookupLegacyStudentNumber(string $studentIdentity): ?string
+    {
+        $filePath = storage_path('data/legacy-students.csv');
+        if (!file_exists($filePath)) {
+            return 'CSV file not found';
+        }
+
+        // sanitize input identity (remove dashes)
+        $studentIdentity = strtoupper(str_replace('-', '', trim($studentIdentity)));
+        $file = fopen($filePath, 'r');
+        $header = fgetcsv($file);
+
+        // Remove empty values at end of header
+        $header = array_filter($header);
+
+        $searchField = 'id_number';
+        $valueField = 'student_number';
+
+        while (($row = fgetcsv($file)) !== false) {
+            // Remove trailing empty values to match header count
+            $row = array_slice($row, 0, count($header));
+            $student = @array_combine($header, $row);
+
+            if (!$student) {
+                continue; // skip malformed rows
+            }
+
+            // sanitize CSV id_number
+            $csvId = strtoupper(str_replace('-', '', trim($student[$searchField] ?? '')));
+
+            if ($csvId === $studentIdentity) {
+                fclose($file);
+                return $student[$valueField] ?? null;
+            }
+        }
+
+        fclose($file);
+        return null;
+    }
+
+
     public static function formatDate($stringDate): string
     {
         return Carbon::parse($stringDate)->format('Y-m-d');

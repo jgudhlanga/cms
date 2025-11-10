@@ -3,6 +3,7 @@
 namespace App\Models\Students;
 
 use App\Enums\Institution\LevelEnum;
+use App\Enums\Shared\IdTypeEnum;
 use App\Helpers\WorkflowHelper;
 use App\Http\Filters\Students\StudentFilter;
 use App\Models\Institution\DepartmentApplicationStep;
@@ -46,6 +47,7 @@ class Student extends Model
         'country_id',
         'study_permit_number',
         'student_number',
+        'student_number_generated',
         'date_of_birth',
         'religion_id',
         'denomination',
@@ -143,6 +145,11 @@ class Student extends Model
     public function setIdNumberAttribute($value)
     {
         $this->attributes['id_number'] = $value ?: null;
+    }
+
+    public function isZimbabwean(): bool
+    {
+        return $this->id_type_id = IdTypeEnum::ZIMBABWEAN_ID_NUMBER->id();
     }
 
     public function getActivitylogOptions(): LogOptions

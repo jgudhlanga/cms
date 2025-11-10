@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Enrolments;
 use App\DTO\Enrolments\ClassListDto;
 use App\Enums\Shared\ClassListTypeEnum;
 use App\Enums\Shared\WorkflowStepEnum;
+use App\Helpers\EnrolmentHelper;
 use App\Helpers\Helper;
 use App\Helpers\WorkflowHelper;
 use App\Http\Controllers\Controller;
@@ -20,6 +21,7 @@ use App\Http\Resources\Institution\InstitutionDepartmentResource;
 use App\Http\Resources\Institution\IntakePeriodResource;
 use App\Http\Resources\Institution\ModeOfStudyResource;
 use App\Jobs\Enrolments\SendEnrolmentProgressJob;
+use App\Jobs\Enrolments\SendOfferLetterJob;
 use App\Models\Enrolments\ClassList;
 use App\Models\Institution\DepartmentApplicationStep;
 use App\Models\Institution\DepartmentCourse;
@@ -167,11 +169,24 @@ class ClassListController extends Controller
                 $entry->type = ClassListTypeEnum::VERIFIED->value;
                 $entry->save();
                 # generate student number
+                $studentNumber = EnrolmentHelper::resolveStudentNumber($studentProgram);
+                $student = $studentProgram->student;
+                $student->fresh()->update([
+                    'student_number' => $studentNumber,
+                    'student_number_generated' => true,
+                ]);
                 # change student application status to accepted
                 $step = WorkflowStep::where('slug', WorkflowStepEnum::ACCEPTED->slug())->first();
-                $departmentStep = DepartmentApplicationStep::where('institution_department_id', $studentProgram->institution_department_id)->where('workflow_step_id', $step->id)->first();
+                $departmentStep = DepartmentApplicationStep::where('institution_department_id', $studentProgram->institution_department_id)
+                    ->where('workflow_step_id', $step->id)
+                    ->first();
                 $studentProgram->update(['department_application_step_id' => $departmentStep->id]);
                 // send email with offer letter
+                $user = $student->user;
+                SendOfferLetterJob::dispatch($user->full_name, $user->email, $studentProgram->id)->withoutDelay();
+                if (EnrolmentHelper::isEntryLevel($studentProgram)) {
+                    EnrolmentHelper::rejectOtherApplications($studentProgram->student, $studentProgram);
+                }
             }
             return back()->with('success', 'Class list entry updated successfully.');
         } catch (Throwable $e) {
