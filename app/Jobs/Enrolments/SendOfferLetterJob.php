@@ -21,7 +21,7 @@ class SendOfferLetterJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $email = 'jimmyneds@gmail.com'; //$this->email;
+        $email = $this->email;
         $name = $this->name;
         $applicationId = $this->applicationId;
         Mail::to($email)->send(
