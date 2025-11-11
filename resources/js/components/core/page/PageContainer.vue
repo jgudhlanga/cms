@@ -34,7 +34,7 @@ const { isItTrue } = useUtils();
         <div class="flex items-center justify-center space-x-4">
             <RemoveImpersonationButton v-if="isItTrue(page.props.auth.impersonating)" />
             <BaseTooltip :content="`${$t('trans.user_account')}`">
-                <TextLink :href="route('users.show', page.props.auth.user.id.toString())" method="get" as="button" classes="flex items-center">
+                <TextLink :href="route('users.edit', page.props.auth.user.id.toString())" method="get" as="button" classes="flex items-center">
                     <Avatar class="size-7 rounded-full">
                         <AvatarImage
                             :src="page.props.auth.user.attributes.avatarUrl ?? defaultAvatarImage"

@@ -192,7 +192,7 @@ onMounted(() => {
             </BaseCard>
         </div>
         <div class="mt-6 flex flex-col justify-center">
-            <BaseCard title="Login Profile" description="Use will create / change password through the forgot password link">
+            <BaseCard title="Login Profile" description="User will create / change password through the forgot password link">
                 <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
                     <EmailAddress
                         v-model="form.email"
