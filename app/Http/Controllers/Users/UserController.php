@@ -64,7 +64,7 @@ class UserController extends Controller
 
     public function edit(User $user)
     {
-        $this->authorize('update', $user);
+        // $this->authorize('update', $user);
         //$user->load('staffProfile');
         $user = UserResource::make($user);
         return Inertia::render('users/Edit', compact('user'));
@@ -119,6 +119,6 @@ class UserController extends Controller
             $student,
             UpdateStudentDto::fromUpdateStudentUserRequest($request),
         );
-        return to_route('users.show', ['user' => $user->id]);
+        // return to_route('users.show', ['user' => $user->id]);
     }
 }

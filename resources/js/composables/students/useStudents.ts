@@ -48,7 +48,7 @@ export const useStudents = () => {
             case 'Accepted':
                 return 'Congratulations! Your application has been accepted.';
             case 'Rejected':
-                return 'We regret to inform you that your application has been rejected.';
+                return  `Thank you for your application to study at Harare Polytechnic. After careful consideration by our admissions team, we are sorry to inform you that your application has been unsuccessful for the upcoming intake. This decision was made due to the highly competitive nature of the admissions process and the limited number of places we have available. We appreciate your interest in our institution and encourage you to explore other opportunities with us in the future. We wish you the very best as you pursue your educational goals.`;
             case 'Waitlisted':
                 return 'Due to the high number of qualified applicants this year, your name has been placed on the waiting list. This means that your admission is currently pending final placement confirmation.';
             case 'Enrolled':
