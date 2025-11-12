@@ -48,7 +48,6 @@ class FixErrorEmailToWaitingCommand extends Command
                 'lv.name as level',
                 'cs.name as course',
             ])
-            ->take(3)
             ->get();
         foreach ($classes as $class) {
             SendEnrolmentProgressJob::dispatch(

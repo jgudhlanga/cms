@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useUtils } from '@/composables/core/useUtils';
+import { useEnrolments } from '@/composables/students/useEnrolments';
 import { IconName } from '@/enums/icons';
 import { DepartmentLevel } from '@/types/department-meta-data';
 import { EnrolmentApplication } from '@/types/enrolments';
@@ -16,6 +17,7 @@ interface Props {
 const props = defineProps<Props>();
 const { level, applications } = props;
 const { isItTrue } = useUtils();
+const { addToClassList } = useEnrolments();
 const levelRequirements = computed(() => level?.relationships?.requirement);
 
 const getRowClass = (rowIndex: number) => {
@@ -36,6 +38,19 @@ const getIconClass = (rowIndex: number) => {
         return 'text-purple-600';
     }
     return '';
+};
+
+const getClassType = (rowIndex: number) => {
+    if (rowIndex + 1 <= props.slotSize) {
+        return 'provisional';
+    }
+    if (rowIndex + 1 > props.slotSize && rowIndex + 1 <= props.slotSize * 2) {
+        return 'waiting';
+    }
+    return '';
+};
+const showAddToClassListBtn = (rowIndex: number) => {
+    return rowIndex + 1 <= props.slotSize * 2;
 };
 </script>
 
@@ -72,18 +87,25 @@ const getIconClass = (rowIndex: number) => {
                         </th>
                     </template>
                     <template v-if="isItTrue(levelRequirements?.attributes?.onlyReadWriteRequired)">
-                        <th class="j-th text-center">
+                        <td class="j-th text-center">
                             <BaseIcon
                                 :name="isItTrue(application?.readWriteAcknowledged) ? IconName.check_done : IconName.close"
                                 :class="`h-4 w-full ${isItTrue(application?.readWriteAcknowledged) ? 'text-green-600' : 'text-red-600'}`"
                             />
-                        </th>
+                        </td>
                     </template>
                     <td class="j-td text-center">
                         <template v-if="application.inClassList">
                             <BaseIcon v-if="index + 1 <= slotSize * 2" :name="IconName.check_done" :class="`h-4 w-full ${getIconClass(index)}`" />
                         </template>
-                        <BaseIcon v-else :name="IconName.close" class="h-4 w-full" />
+                        <template v-else>
+                            <IconButton
+                                v-if="showAddToClassListBtn(index)"
+                                :icon="IconName.add"
+                                @click="addToClassList(String(application.applicationId), getClassType(index))"
+                            />
+                            <BaseIcon v-else :name="IconName.close" class="h-4 w-full" />
+                        </template>
                     </td>
                 </tr>
             </tbody>

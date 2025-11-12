@@ -2,8 +2,11 @@
 
 namespace App\Jobs\Enrolments;
 
+use App\Helpers\EnrolmentHelper;
+use App\Models\Students\StudentProgram;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\Facades\DB;
 
 class UpdateRejectedApplicationJob implements ShouldQueue
 {
@@ -12,7 +15,7 @@ class UpdateRejectedApplicationJob implements ShouldQueue
     /**
      * Create a new job instance.
      */
-    public function __construct()
+    public function __construct(  protected ?array $studentPrograms = null)
     {
         //
     }
@@ -22,6 +25,35 @@ class UpdateRejectedApplicationJob implements ShouldQueue
      */
     public function handle(): void
     {
-        //
+        StudentProgram::query()
+            ->with([
+                'student',
+                'institutionDepartment',
+                'departmentLevel.level',
+                'classList',
+            ])
+            ->whereHas('student')
+            ->whereDoesntHave('classList')
+            ->when($this->studentPrograms, fn($q) => $q->whereIn('id', $this->studentPrograms))
+            ->chunkById(100, fn($programs) => $programs->each(fn($program) => $this->processProgram($program))
+            );
+    }
+
+    private function processProgram(StudentProgram $program): void
+    {
+        $student = $program->student;
+        if ($student->student_number_generated) {
+            return; // skip race-condition duplicates
+        }
+        $studentNumber = EnrolmentHelper::resolveStudentNumber($program);
+        DB::transaction(function () use ($student, $program, $studentNumber) {
+            $student->fresh()->update([
+                'student_number' => $studentNumber,
+                'student_number_generated' => true,
+            ]);
+            // send email with offer letter
+            $user = $student->user;
+            //SendOfferLetterJob::dispatch($user->full_name, $user->email, $program->id)->withoutDelay();
+        });
     }
 }

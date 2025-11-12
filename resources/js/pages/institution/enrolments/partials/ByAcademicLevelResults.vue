@@ -1,9 +1,12 @@
 <script setup lang="ts">
+import { useCustomConfirmDialog } from '@/composables/core/useCustomConfirmDialog';
 import { useUtils } from '@/composables/core/useUtils';
 import { useEnrolments } from '@/composables/students/useEnrolments';
 import { IconName } from '@/enums/icons';
+import { errorAlert, successAlert } from '@/lib/alerts';
 import { DepartmentLevel } from '@/types/department-meta-data';
 import { EnrolmentApplication } from '@/types/enrolments';
+import { router, useForm } from '@inertiajs/vue3';
 import { computed } from 'vue';
 
 interface Props {
@@ -20,7 +23,7 @@ const { level, applications } = props;
 const levelRequirements = computed(() => level?.relationships?.requirement);
 const requirementSubjects = computed(() => level?.relationships?.requirement?.relationships?.subjects);
 
-const { applyPolicyAlgorithmToApplications, getFaultyApplications, getMainSubjectGrade, getOtherSubjectGrades } = useEnrolments();
+const { applyPolicyAlgorithmToApplications, getFaultyApplications, getMainSubjectGrade, getOtherSubjectGrades, addToClassList } = useEnrolments();
 const { formatDate } = useUtils();
 const sortedApplications = applyPolicyAlgorithmToApplications(applications, level);
 const faultyApplications = getFaultyApplications(applications, level);
@@ -44,6 +47,18 @@ const getIconClass = (rowIndex: number) => {
     return '';
 };
 
+const getClassType = (rowIndex: number) => {
+    if (rowIndex + 1 <= props.slotSize) {
+        return 'provisional';
+    }
+    if (rowIndex + 1 > props.slotSize && rowIndex + 1 <= props.slotSize * 2) {
+        return 'waiting';
+    }
+    return '';
+};
+const showAddToClassListBtn = (rowIndex: number) => {
+    return rowIndex + 1 <= props.slotSize * 2;
+};
 
 </script>
 
@@ -93,7 +108,14 @@ const getIconClass = (rowIndex: number) => {
                         <template v-if="application.inClassList">
                             <BaseIcon v-if="index + 1 <= slotSize * 2" :name="IconName.check_done" :class="`h-4 w-full ${getIconClass(index)}`" />
                         </template>
-                        <BaseIcon v-else :name="IconName.close" class="h-4 w-full" />
+                        <template v-else>
+                            <IconButton
+                                v-if="showAddToClassListBtn(index)"
+                                :icon="IconName.add"
+                                @click="addToClassList(String(application.applicationId), getClassType(index))"
+                            />
+                            <BaseIcon v-else :name="IconName.close" class="h-4 w-full" />
+                        </template>
                     </td>
                 </tr>
                 <template v-if="faultyApplications.length > 0">

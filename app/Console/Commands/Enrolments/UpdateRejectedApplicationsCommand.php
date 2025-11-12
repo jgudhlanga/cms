@@ -26,7 +26,6 @@ class UpdateRejectedApplicationsCommand extends Command
      */
     public function handle(): void
     {
-        // select all students
-        DB::table('student');
+
     }
 }
