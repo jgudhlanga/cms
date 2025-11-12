@@ -9,6 +9,7 @@ use App\Helpers\EnrolmentHelper;
 use App\Helpers\Helper;
 use App\Helpers\WorkflowHelper;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Enrolments\AddToClassListRequest;
 use App\Http\Requests\Enrolments\ClassListRequest;
 use App\Http\Requests\Enrolments\UpdateClassEntryRequest;
 use App\Http\Resources\Enrolments\ClassListNextTopResource;
@@ -64,6 +65,43 @@ class ClassListController extends Controller
                 'trace' => $e->getTraceAsString(),
             ]);
 
+            return back()->with('error', 'An error occurred while creating class lists. All changes have been rolled back.');
+        }
+    }
+
+    public function addToClassList(StudentProgram $studentProgram, AddToClassListRequest $request)
+    {
+        try {
+            $defaultAttributes = [
+                'identity_confirmed' => false,
+                'disability_confirmed' => false,
+                'names_confirmed' => false,
+                'o_level_confirmed' => false,
+                'previous_level_confirmed' => false,
+                'read_write_confirmed' => false,
+                'application_fee_confirmed' => false,
+                'tuition_fee_confirmed' => false,
+            ];
+            $dto = new ClassListDto(
+                student_program_id: $studentProgram->id,
+                type: $request->input('type'),
+                attributes: $defaultAttributes
+            );
+            $classEntry = $this->repository->create($dto);
+            $details = $this->getClassEntryDetails($classEntry->id);
+            SendEnrolmentProgressJob::dispatch(
+                $classEntry->id,
+                $dto->type,
+                $details->institution_department_id,
+                $details->department,
+                $details->level,
+                $details->course)->withoutDelay();
+            return back()->with('success', 'Class lists created successfully.');
+        } catch (Throwable $e) {
+            Log::error('Failed to create class lists', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
             return back()->with('error', 'An error occurred while creating class lists. All changes have been rolled back.');
         }
     }

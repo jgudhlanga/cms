@@ -6,9 +6,10 @@ import { emailUniqueSchema, idNumberUniqueSchema, passportNumberUniqueSchema } f
 import { useCreateApplicationFormStore } from '@/store/portal/useCreateApplicationFormStore';
 import type { DepartmentLevel } from '@/types/department-meta-data';
 import { ClassSizeSlot, Enrolment, EnrolmentApplication, EnrolmentGroup, EnrolmentGroupResponse, OLeveResult } from '@/types/enrolments';
-import { InertiaForm } from '@inertiajs/vue3';
+import { InertiaForm, router, useForm } from '@inertiajs/vue3';
 import { trans_choice } from 'laravel-vue-i18n';
 import { ZodObject } from 'zod';
+import { useCustomConfirmDialog } from '@/composables/core/useCustomConfirmDialog';
 
 export const useEnrolments = () => {
     const { moreActionButton, textLink } = useDataTables();
@@ -339,6 +340,33 @@ export const useEnrolments = () => {
         return ['disabled', 'females', 'males'].some((group) => groups[group as EnrolmentGroup].some((enrolment) => enrolment.inClassList));
     };
 
+    const addToClassList = async (studentProgramId: string, type: string) => {
+        const confirmed = await useCustomConfirmDialog().open({
+            title: 'Create Class',
+            message: `Are you sure you want to add application to ${type} list? `,
+            confirmText: 'Please continue',
+        });
+        if (confirmed) {
+            const form = useForm<{ type: string }>({
+                type: type,
+            });
+            try {
+                form.post(route('enrolments.add-to-class-list', {student_program: studentProgramId}), {
+                    onSuccess: () => {
+                        successAlert('Application added to class list successfully');
+                        router.visit(window.location.href, { replace: true, preserveScroll: true });
+                    },
+                    onError: (errors: Record<string, any>) => {
+                        const message = Object.keys(errors).length ? Object.values(errors).join('\n') : 'Application could not added to class list';
+                        errorAlert(message);
+                    },
+                });
+            } catch {
+                errorAlert('An unexpected error occurred while adding to class list');
+            }
+        }
+    };
+
     return {
         enrolmentColumns,
         cashApplicationFormSchema,
@@ -350,5 +378,6 @@ export const useEnrolments = () => {
         getMainSubjectGrade,
         getOtherSubjectGrades,
         classListIsCreated,
+        addToClassList,
     };
 };

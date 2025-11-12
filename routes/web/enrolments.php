@@ -16,6 +16,7 @@ Route::prefix('enrolments')->middleware('auth')->group(function () {
     Route::post('store-class-list', [ClassListController::class, 'store'])->name('enrolments.store-class-list');
     Route::put('update-class-list/{student_program}', [ClassListController::class, 'update'])->name('enrolments.update-class-list');
     Route::put('reject-application/{student_program}', [ClassListController::class, 'rejectApplication'])->name('enrolments.reject-application');
+    Route::post('add-to-class-list/{student_program}', [ClassListController::class, 'addToClassList'])->name('enrolments.add-to-class-list');
     Route::get('{institution_department}/class-lists/{department_level}', [ClassListController::class, 'classLists'])->name('enrolments.class-lists');
     Route::get('/verify/{student_program}', [ClassListController::class, 'verify'])->name('enrolments.verify');
 });
