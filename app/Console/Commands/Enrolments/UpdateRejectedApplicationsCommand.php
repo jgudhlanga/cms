@@ -3,7 +3,6 @@
 namespace App\Console\Commands\Enrolments;
 
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\DB;
 
 class UpdateRejectedApplicationsCommand extends Command
 {

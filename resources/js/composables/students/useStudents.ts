@@ -33,13 +33,15 @@ export const useStudents = () => {
     };
 
     const getApplicationStatus = (application: Enrolment) => {
-        return application?.relationships?.departmentWorkflowStep?.attributes?.workflowStep;
+        const step = application?.relationships?.departmentWorkflowStep?.attributes?.workflowStep;
+        return step?.toLowerCase() === 'review' ? 'Unsuccessful' : step;
     };
 
     const hasOfferLetter = (application: Enrolment) => getApplicationStatus(application)?.toLowerCase() === 'accepted';
 
     const statusMessage = (application: Enrolment) => {
-        const step = application?.relationships?.departmentWorkflowStep?.attributes?.workflowStep ?? '';
+        const workflowStep = application?.relationships?.departmentWorkflowStep?.attributes?.workflowStep ?? '';
+       const step =  workflowStep?.toLowerCase() === 'review' ? 'Unsuccessful' : workflowStep;
         switch (step) {
             case 'Review':
                 return 'Your application has been submitted and is awaiting review.';
@@ -48,11 +50,13 @@ export const useStudents = () => {
             case 'Accepted':
                 return 'Congratulations! Your application has been accepted.';
             case 'Rejected':
-                return 'We regret to inform you that your application has been rejected.';
+                return 'We regret to inform you that your application has been unsuccessful.';
             case 'Waitlisted':
                 return 'Due to the high number of qualified applicants this year, your name has been placed on the waiting list. This means that your admission is currently pending final placement confirmation.';
             case 'Enrolled':
-                return 'We regret to inform you that your application has been rejected.';
+                return 'Congratulations! Your are enrolled.';
+            case 'Unsuccessful':
+                return 'We regret to inform you that your application has been unsuccessful.';
             default:
                 return 'Status information is currently unavailable.';
         }
