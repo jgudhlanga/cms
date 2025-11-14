@@ -33,16 +33,17 @@ export const useStudents = () => {
     };
 
     const getApplicationStatus = (application: Enrolment) => {
-        const step = application?.relationships?.departmentWorkflowStep?.attributes?.workflowStep;
-        return step?.toLowerCase() === 'review' ? 'Unsuccessful' : step;
+        return application?.relationships?.departmentWorkflowStep?.attributes?.workflowStep;
+        //const step = application?.relationships?.departmentWorkflowStep?.attributes?.workflowStep;
+        //return step?.toLowerCase() === 'review' ? 'Unsuccessful' : step;
     };
 
     const hasOfferLetter = (application: Enrolment) => getApplicationStatus(application)?.toLowerCase() === 'accepted';
 
     const statusMessage = (application: Enrolment) => {
         const workflowStep = application?.relationships?.departmentWorkflowStep?.attributes?.workflowStep ?? '';
-       const step =  workflowStep?.toLowerCase() === 'review' ? 'Unsuccessful' : workflowStep;
-        switch (step) {
+       //const step =  workflowStep?.toLowerCase() === 'review' ? 'Unsuccessful' : workflowStep;
+        switch (workflowStep) {
             case 'Review':
                 return 'Your application has been submitted and is awaiting review.';
             case 'Requirements':
