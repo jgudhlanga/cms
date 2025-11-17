@@ -106,7 +106,7 @@ const stepIds = computed(() => {
             <DataLoadingSpinner />
         </template>
         <template v-else>
-            <TimelineTwo v-if="steps?.length > 0" :steps="steps" />
+            <TimelineTwo v-if="steps?.length > 0" :steps="steps ?? []" />
             <BaseAlert v-else :title="$t('trans.no_data')" :description="$t('trans.no_workflows_configured_description')" />
         </template>
     </div>
