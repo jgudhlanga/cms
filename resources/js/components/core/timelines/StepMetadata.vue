@@ -1,11 +1,11 @@
 <script lang="ts" setup>
-import { IconButton } from '@/components/core/button/index.js';
 import BaseText from '@/components/core/util/BaseText.vue';
 import BaseTooltip from '@/components/core/util/BaseTooltip.vue';
 import { ColorVariant } from '@/enums/colors';
 import { IconName, icons } from '@/lib/icons';
 import { hasAbility } from '@/lib/permissions';
 import { DepartmentApplicationStep } from '@/types/department-meta-data';
+import { ButtonSize } from '@/enums/buttons';
 
 interface Props {
     step: DepartmentApplicationStep;
@@ -39,7 +39,15 @@ const styles = 'font-extralight';
         </div>
         <div class="flex justify-end" v-if="hasAbility('department-setup:workflows')">
             <BaseTooltip :content="$t('trans.edit_step')">
-                <IconButton :variant="ColorVariant.primary_outline" :icon="IconName.edit" @click="() => (action ? action() : null)" />
+                <BaseButton
+                    :variant="ColorVariant.primary_outline"
+                    @click="() => (action ? action() : null)"
+                    class="flex items-center rounded-full"
+                    :size="ButtonSize.sm"
+                >
+                    <span class="font-bold">{{ step.id }}</span>
+                    <component :is="icons[IconName.edit]" class="size-3" />
+                </BaseButton>
             </BaseTooltip>
         </div>
     </div>

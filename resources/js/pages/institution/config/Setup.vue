@@ -26,6 +26,10 @@ const tabs: Array<Link> = [
         transChoiceKey: 'fee_levy_structure',
         url: route('fee-structures.index'),
     },
+    {
+        transChoiceKey: 'hostel',
+        url: route('fee-structures.index'),
+    },
 ];
 const allowed = hasAbility('view:institution-settings');
 const edit = ref<any>(null);
