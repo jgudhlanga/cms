@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "e85bb061151ba96ce817e1848ba5c59c",
+    "content-hash": "8140b27e1cbdded3a08b3eebf3043876",
     "packages": [
         {
             "name": "barryvdh/laravel-dompdf",
@@ -1566,6 +1566,55 @@
                 }
             ],
             "time": "2025-08-22T14:27:06+00:00"
+        },
+        {
+            "name": "houdaslassi/vantage",
+            "version": "v0.1.11",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/houdaslassi/vantage.git",
+                "reference": "3917e0677476120bb9b02d9ba91dcd827d88c9aa"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/houdaslassi/vantage/zipball/3917e0677476120bb9b02d9ba91dcd827d88c9aa",
+                "reference": "3917e0677476120bb9b02d9ba91dcd827d88c9aa",
+                "shasum": ""
+            },
+            "require": {
+                "illuminate/events": "^10.0|^11.0|^12.0",
+                "illuminate/notifications": "^10.0|^11.0|^12.0",
+                "illuminate/queue": "^10.0|^11.0|^12.0",
+                "illuminate/support": "^10.0|^11.0|^12.0",
+                "php": "^8.2|^8.3"
+            },
+            "require-dev": {
+                "orchestra/testbench": "^10.0",
+                "pestphp/pest": "^3.8"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "HoudaSlassi\\Vantage\\VantageServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "HoudaSlassi\\Vantage\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "Vantage: Strategic queue monitoring and observability for Laravel applications.",
+            "support": {
+                "issues": "https://github.com/houdaslassi/vantage/issues",
+                "source": "https://github.com/houdaslassi/vantage/tree/v0.1.11"
+            },
+            "time": "2025-11-10T16:58:10+00:00"
         },
         {
             "name": "inertiajs/inertia-laravel",
