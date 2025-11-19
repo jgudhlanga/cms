@@ -39,7 +39,7 @@ const oLevelResults = ref<OLevelSubjectResult[] | null>(null);
 const examSittings = ref(EXAM_SITTINGS);
 
 // Composable
-const { navigateTo } = useUtils();
+const { navigateTo, isItTrue } = useUtils();
 const { loadStudentOLevelResults, isLoading } = useOLevelResults();
 
 // Breadcrumbs
@@ -72,13 +72,14 @@ const hasResults = computed(() => Array.isArray(oLevelResults.value) && oLevelRe
 const reloadResults = async () => {
     oLevelResults.value = await loadStudentOLevelResults(String(props.student.id));
 };
+const verificationMode = isItTrue(import.meta.env.VITE_VERIFICATION_MODE);
 </script>
 <template>
     <Head title="O-Level" />
     <PageContainer :breadcrumbs="breadcrumbs">
         <div class="my-6 flex items-center justify-between">
             <HeadingSmall title="O-Level Results" description="List of O-Level subjects and grades attained by a student" />
-            <BaseButton classes="rounded-full" :variant="ColorVariant.primary_outline" @click="navigateTo(route('portal.manage-o-level-results'))">
+            <BaseButton v-if="!verificationMode" classes="rounded-full" :variant="ColorVariant.primary_outline" @click="navigateTo(route('portal.manage-o-level-results'))">
                 <BaseIcon :name="IconName.cogs" />
                 <span>Add New</span>
             </BaseButton>

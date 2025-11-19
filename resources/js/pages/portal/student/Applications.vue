@@ -24,7 +24,7 @@ interface Props {
 
 const props = defineProps<Props>();
 const { applications, multipleApplicationsLevelIds } = props;
-const { navigateTo, formatDate } = useUtils();
+const { navigateTo, formatDate, isItTrue } = useUtils();
 const eligibleForMoreApplications = () => {
     return multipleApplicationsLevelIds.some((levelId) => {
         const sameLevelApplications = applications.filter((app: Enrolment) => {
@@ -56,6 +56,7 @@ const remainingSlots = () => {
 
 const { getApplicationStatus, hasOfferLetter, statusMessage } = useStudents();
 const breadcrumbs: BreadcrumbItemInterface[] = [{ transChoiceKey: 'dashboard', href: route('portal.dashboard') }, { transChoiceKey: 'application' }];
+const verificationMode = isItTrue(import.meta.env.VITE_VERIFICATION_MODE);
 </script>
 <template>
     <Head :title="$tChoice('trans.application', 2)" />
@@ -81,7 +82,7 @@ const breadcrumbs: BreadcrumbItemInterface[] = [{ transChoiceKey: 'dashboard', h
                         <h3 class="text-accent-foreground text-xs font-semibold uppercase">
                             {{ application.attributes.course }}
                         </h3>
-                        <div class="flex space-x-2">
+                        <div class="flex space-x-2" v-if="!verificationMode">
                             <BaseButton
                                 title="Edit"
                                 :variant="ColorVariant.success_outline"
