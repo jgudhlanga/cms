@@ -60,7 +60,7 @@ class StudentRepository extends BaseRepository implements IStudentRepository
                 'email' => $dto->email ?? $user->email,
                 'phone_number' => $dto->phone_number ?? $user->phone_number,
                 'first_name' => $dto->first_name ?? $user->first_name,
-                'middle_name' => $dto->middle_name ?? $user->middle_name,
+                'middle_name' => $dto->middle_name ?? null,
                 'last_name' => $dto->last_name ?? $user->last_name,
             ]);
 

@@ -12,6 +12,7 @@
         "php": "^8.2",
         "barryvdh/laravel-dompdf": "^3.1",
         "guzzlehttp/guzzle": "^7.10",
+        "houdaslassi/vantage": "^0.1.11",
         "illuminate/contracts": "*",
         "inertiajs/inertia-laravel": "^2.0",
         "lab404/laravel-impersonate": "^1.7",
