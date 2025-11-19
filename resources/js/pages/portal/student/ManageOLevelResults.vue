@@ -31,7 +31,7 @@ interface Props {
 
 const props = defineProps<Props>();
 const { oLevelSubjectResults, student } = props;
-const { navigateTo } = useUtils();
+const { navigateTo, isItTrue } = useUtils();
 
 const breadcrumbs: BreadcrumbItemInterface[] = [
     { transChoiceKey: 'dashboard', href: route('portal.dashboard') },
@@ -78,6 +78,7 @@ const saveSubjectResult = (subjectId: string) => {
         },
     });
 };
+const verificationMode = isItTrue(import.meta.env.VITE_VERIFICATION_MODE);
 </script>
 <template>
     <Head title="Manage O-Level" />
@@ -168,7 +169,7 @@ const saveSubjectResult = (subjectId: string) => {
                                     />
                                 </div>
                             </div>
-                            <div class="justify-self-end-safe">
+                            <div class="justify-self-end-safe" v-if="!verificationMode">
                                 <BaseButton :size="ButtonSize.sm" :variant="ColorVariant.primary" class="w-full rounded-full md:w-fit" title="Save" />
                             </div>
                         </div>

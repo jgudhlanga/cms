@@ -6,6 +6,7 @@ import { ColorVariant } from '@/enums/colors';
 import { IconName } from '@/enums/icons';
 import { OLevelSubjectResult } from '@/types/enrolments';
 import { computed, defineEmits } from 'vue';
+import { useUtils } from '@/composables/core/useUtils';
 
 interface Props {
     result: OLevelSubjectResult;
@@ -32,6 +33,8 @@ const handleDelete = async () => {
     } finally {
     }
 };
+const { isItTrue } = useUtils();
+const verificationMode = isItTrue(import.meta.env.VITE_VERIFICATION_MODE);
 </script>
 
 <template>
@@ -41,7 +44,7 @@ const handleDelete = async () => {
                 <h3 class="text-accent-foreground text-xs font-semibold uppercase">
                     {{ result?.attributes?.subject }}
                 </h3>
-                <div class="flex space-x-2">
+                <div class="flex space-x-2" v-if="!verificationMode">
                     <IconButton :icon="IconName.edit" :variant="ColorVariant.success_outline" @click="onCreateOrEdit(result)" />
                     <IconButton :icon="IconName.trash" :variant="ColorVariant.danger_outline" @click="handleDelete" />
                 </div>

@@ -11,7 +11,8 @@ interface Props {
     oLevelResults: OLevelSubjectResult[];
 }
 defineProps<Props>();
-const { navigateTo } = useUtils();
+const { navigateTo, isItTrue } = useUtils();
+const verificationMode = isItTrue(import.meta.env.VITE_VERIFICATION_MODE);
 </script>
 
 <template>
@@ -20,7 +21,7 @@ const { navigateTo } = useUtils();
         <div class="space-y-3">
             <StatsCard title="Provided O-Level Results" :value="oLevelResults.length" icon="checkDone" icon-bg-color="green" />
         </div>
-        <div class="flex w-full flex-col space-y-1 border-persian-500 text-persian-600 mt-3 space-x-3 rounded-md border-l-4 bg-gray-50 p-3 shadow-sm">
+        <div v-if="!verificationMode" class="flex w-full flex-col space-y-1 border-persian-500 text-persian-600 mt-3 space-x-3 rounded-md border-l-4 bg-gray-50 p-3 shadow-sm">
             <div>You can update your O-Level results by clicking the button below:</div>
             <div class="flex flex-wrap">
                 <BaseButton
