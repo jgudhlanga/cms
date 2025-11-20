@@ -367,6 +367,39 @@ export const useEnrolments = () => {
         }
     };
 
+    const getRowClassList = (rowIndex: number, slotSize: number) => {
+        if (rowIndex + 1 <= slotSize) {
+            return 'bg-green-100';
+        }
+        if (rowIndex + 1 > slotSize && rowIndex + 1 <= slotSize * 2) {
+            return 'bg-purple-100';
+        }
+        return 'j-tr';
+    };
+
+    const getClassListIconClass = (rowIndex: number, slotSize: number) => {
+        if (rowIndex + 1 <= slotSize) {
+            return 'text-green-600';
+        }
+        if (rowIndex + 1 > slotSize && rowIndex + 1 <= slotSize * 2) {
+            return 'text-purple-600';
+        }
+        return '';
+    };
+
+    const getClassListType = (rowIndex: number, slotSize: number) => {
+        if (rowIndex + 1 <= slotSize) {
+            return 'provisional';
+        }
+        if (rowIndex + 1 > slotSize && rowIndex + 1 <= slotSize * 2) {
+            return 'waiting';
+        }
+        return '';
+    };
+    const showAddToClassListBtn = (rowIndex: number, slotSize: number) => {
+        return rowIndex + 1 <= slotSize * 2;
+    };
+
     return {
         enrolmentColumns,
         cashApplicationFormSchema,
@@ -379,5 +412,9 @@ export const useEnrolments = () => {
         getOtherSubjectGrades,
         classListIsCreated,
         addToClassList,
+        getRowClassList,
+        getClassListIconClass,
+        getClassListType,
+        showAddToClassListBtn,
     };
 };

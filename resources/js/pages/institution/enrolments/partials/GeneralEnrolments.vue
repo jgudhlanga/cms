@@ -12,46 +12,14 @@ interface Props {
     applications: EnrolmentApplication[];
     classSize: number;
     slotSize: number;
+    classSizeIsCreated: boolean;
 }
 
 const props = defineProps<Props>();
 const { level, applications } = props;
 const { isItTrue } = useUtils();
-const { addToClassList } = useEnrolments();
+const { addToClassList, getRowClassList, getClassListIconClass, getClassListType, showAddToClassListBtn } = useEnrolments();
 const levelRequirements = computed(() => level?.relationships?.requirement);
-
-const getRowClass = (rowIndex: number) => {
-    if (rowIndex + 1 <= props.slotSize) {
-        return 'bg-green-100';
-    }
-    if (rowIndex + 1 > props.slotSize && rowIndex + 1 <= props.slotSize * 2) {
-        return 'bg-purple-100';
-    }
-    return 'j-tr';
-};
-
-const getIconClass = (rowIndex: number) => {
-    if (rowIndex + 1 <= props.slotSize) {
-        return 'text-green-600';
-    }
-    if (rowIndex + 1 > props.slotSize && rowIndex + 1 <= props.slotSize * 2) {
-        return 'text-purple-600';
-    }
-    return '';
-};
-
-const getClassType = (rowIndex: number) => {
-    if (rowIndex + 1 <= props.slotSize) {
-        return 'provisional';
-    }
-    if (rowIndex + 1 > props.slotSize && rowIndex + 1 <= props.slotSize * 2) {
-        return 'waiting';
-    }
-    return '';
-};
-const showAddToClassListBtn = (rowIndex: number) => {
-    return rowIndex + 1 <= props.slotSize * 2;
-};
 </script>
 
 <template>
@@ -73,7 +41,7 @@ const showAddToClassListBtn = (rowIndex: number) => {
                 </tr>
             </thead>
             <tbody class="j-tbody">
-                <tr :class="getRowClass(index)" v-for="(application, index) in applications" :key="application.applicationId">
+                <tr :class="getRowClassList(index, classSize)" v-for="(application, index) in applications" :key="application.applicationId">
                     <td class="j-td">{{ index + 1 }}</td>
                     <td class="j-td">{{ application.studentName }}</td>
                     <td class="j-td">{{ application.phoneNumber }}</td>
@@ -96,13 +64,17 @@ const showAddToClassListBtn = (rowIndex: number) => {
                     </template>
                     <td class="j-td text-center">
                         <template v-if="application.inClassList">
-                            <BaseIcon v-if="index + 1 <= slotSize * 2" :name="IconName.check_done" :class="`h-4 w-full ${getIconClass(index)}`" />
+                            <BaseIcon
+                                v-if="index + 1 <= slotSize * 2"
+                                :name="IconName.check_done"
+                                :class="`h-4 w-full ${getClassListIconClass(index, classSize)}`"
+                            />
                         </template>
                         <template v-else>
                             <IconButton
-                                v-if="showAddToClassListBtn(index)"
+                                v-if="showAddToClassListBtn(index, classSize)"
                                 :icon="IconName.add"
-                                @click="addToClassList(String(application.applicationId), getClassType(index))"
+                                @click="addToClassList(String(application.applicationId), getClassListType(index, classSize))"
                             />
                             <BaseIcon v-else :name="IconName.close" class="h-4 w-full" />
                         </template>
