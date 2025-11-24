@@ -20,6 +20,7 @@ const { level, applications } = props;
 const { isItTrue } = useUtils();
 const { addToClassList, getRowClassList, getClassListIconClass, getClassListType, showAddToClassListBtn } = useEnrolments();
 const levelRequirements = computed(() => level?.relationships?.requirement);
+
 </script>
 
 <template>

@@ -3,14 +3,15 @@ import { useCustomConfirmDialog } from '@/composables/core/useCustomConfirmDialo
 import { useUtils } from '@/composables/core/useUtils';
 import { useEnrolments } from '@/composables/students/useEnrolments';
 import { ColorVariant } from '@/enums/colors';
-import { TypeVariant } from '@/enums/type-variants';
 import { errorAlert, forbiddenAlert, successAlert } from '@/lib/alerts';
 import { hasAbility } from '@/lib/permissions';
 import { getIdParams } from '@/lib/utils';
 import ByAcademicLevelResults from '@/pages/institution/enrolments/partials/ByAcademicLevelResults.vue';
 import ClassSize from '@/pages/institution/enrolments/partials/ClassSize.vue';
 import EnrolmentFilters from '@/pages/institution/enrolments/partials/EnrolmentFilters.vue';
+import GeneralEnrolmentClassList from '@/pages/institution/enrolments/partials/GeneralEnrolmentClassList.vue';
 import GeneralEnrolments from '@/pages/institution/enrolments/partials/GeneralEnrolments.vue';
+import OLevelClassList from '@/pages/institution/enrolments/partials/OLevelClassList.vue';
 import ScoringFormula from '@/pages/institution/enrolments/partials/ScoringFormula.vue';
 import { AuthObject } from '@/types/data-pagination';
 import { DepartmentApplicationStep, DepartmentLevel } from '@/types/department-meta-data';
@@ -20,6 +21,7 @@ import { Link } from '@/types/ui';
 import { SelectOption } from '@/types/utils';
 import { Head, router, useForm } from '@inertiajs/vue3';
 import { computed, onMounted, ref } from 'vue';
+import DeficitInClassSize from '@/pages/institution/enrolments/partials/DeficitInClassSize.vue';
 
 interface Props {
     department: InstitutionDepartment;
@@ -195,16 +197,28 @@ async function createProvisionalClass() {
                 "
             />
             <!-- ============ SHOW APPLICATIONS BY GROUPS -->
-            <ScoringFormula :class-size="classSize" v-if="isItTrue(levelRequirements?.attributes?.isOLevelRequired) && !noData" />
-            <div class="flex justify-end" v-else-if="!noData && !isItTrue(levelRequirements?.attributes?.isOLevelRequired)">
-                <ClassSize :class-size="classSize" />
-            </div>
-            <div class="mt-6 flex items-center justify-between space-x-2">
-                <div class="flex w-full">
-                    <BaseAlert v-if="classListIsCreated(enrolments)" :type="TypeVariant.success" description="Class list created" />
+            <template v-if="isItTrue(levelRequirements?.attributes?.isOLevelRequired) && !noData">
+                <ScoringFormula :class-size="classSize" v-if="!classListIsCreated(enrolments)" />
+                <div class="flex justify-between" v-else>
+                    <div class="flex items-center space-x-2"></div>
+                   <div class="flex items-center space-x-2">
+                       <ClassSize :class-size="classSize" />
+                       <DeficitInClassSize :deficit="classSize" />
+                   </div>
                 </div>
+            </template>
+            <template v-else-if="!noData && !isItTrue(levelRequirements?.attributes?.isOLevelRequired)">
+                <div class="flex justify-between">
+                    <div class="flex items-center space-x-2"></div>
+                    <div class="flex items-center space-x-2">
+                        <ClassSize :class-size="classSize" />
+                        <DeficitInClassSize :deficit="classSize" />
+                    </div>
+                </div>
+            </template>
+            <div class="mt-6 flex items-center justify-end space-x-2">
                 <BaseButton
-                    v-if="!noData && Number(classSize) > 0"
+                    v-if="!noData && Number(classSize) > 0 && !classListIsCreated(enrolments)"
                     type="button"
                     :variant="ColorVariant.primary"
                     title="Create provisional class"
@@ -216,25 +230,46 @@ async function createProvisionalClass() {
             <div v-for="(enrolmentsInGroup, group) in enrolments.groups" :key="group" class="flex flex-col">
                 <div class="flex flex-col">
                     <HeadingSmall :title="`${group} (${getGroupSlot(group.toLowerCase() as EnrolmentGroup)})`" class="mt-6" />
-                    <ByAcademicLevelResults
-                        v-if="isItTrue(levelRequirements?.attributes?.isOLevelRequired)"
-                        :level="level"
-                        :department-id="String(department?.id)"
-                        :applications="enrolmentsInGroup"
-                        :class-size="Number(classSize)"
-                        :slot-size="getGroupSlot(group.toLowerCase() as EnrolmentGroup)"
-                        :other-gender-has-waiting-list="otherGenderHasWaitingList(group.toLowerCase() as EnrolmentGroup)"
-                        :class-size-is-created="classListIsCreated(enrolments)"
-                    />
-                    <GeneralEnrolments
-                        v-else
-                        :level="level"
-                        :department-id="String(department?.id)"
-                        :applications="enrolmentsInGroup"
-                        :class-size="Number(classSize)"
-                        :slot-size="getGroupSlot(group.toLowerCase() as EnrolmentGroup)"
-                        :class-size-is-created="classListIsCreated(enrolments)"
-                    />
+                    <template v-if="isItTrue(levelRequirements?.attributes?.isOLevelRequired)">
+                        <OLevelClassList
+                            v-if="classListIsCreated(enrolments)"
+                            :level="level"
+                            :department-id="String(department?.id)"
+                            :applications="enrolmentsInGroup"
+                            :class-size="Number(classSize)"
+                            :slot-size="getGroupSlot(group.toLowerCase() as EnrolmentGroup)"
+                            :other-gender-has-waiting-list="otherGenderHasWaitingList(group.toLowerCase() as EnrolmentGroup)"
+                        />
+                        <ByAcademicLevelResults
+                            v-else
+                            :level="level"
+                            :department-id="String(department?.id)"
+                            :applications="enrolmentsInGroup"
+                            :class-size="Number(classSize)"
+                            :slot-size="getGroupSlot(group.toLowerCase() as EnrolmentGroup)"
+                            :other-gender-has-waiting-list="otherGenderHasWaitingList(group.toLowerCase() as EnrolmentGroup)"
+                        />
+                    </template>
+                    <template v-else>
+                        <GeneralEnrolmentClassList
+                            v-if="classListIsCreated(enrolments)"
+                            :level="level"
+                            :department-id="String(department?.id)"
+                            :applications="enrolmentsInGroup"
+                            :class-size="Number(classSize)"
+                            :slot-size="getGroupSlot(group.toLowerCase() as EnrolmentGroup)"
+                            :class-size-is-created="classListIsCreated(enrolments)"
+                        />
+                        <GeneralEnrolments
+                            v-else
+                            :level="level"
+                            :department-id="String(department?.id)"
+                            :applications="enrolmentsInGroup"
+                            :class-size="Number(classSize)"
+                            :slot-size="getGroupSlot(group.toLowerCase() as EnrolmentGroup)"
+                            :class-size-is-created="classListIsCreated(enrolments)"
+                        />
+                    </template>
                 </div>
             </div>
         </div>
