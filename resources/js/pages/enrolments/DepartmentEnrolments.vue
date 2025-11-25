@@ -9,6 +9,7 @@ import { SelectOption } from '@/types/utils';
 import { Head, Link } from '@inertiajs/vue3';
 import { trans_choice } from 'laravel-vue-i18n';
 import { onMounted, ref } from 'vue';
+import { useUtils } from '@/composables/core/useUtils';
 
 interface Props {
     department: InstitutionDepartment;
@@ -18,6 +19,7 @@ const props = defineProps<Props>();
 const { department } = props;
 const institutionDepartmentId = String(department?.id) ?? '';
 const { getData, isLoading } = useServerSide();
+const {getQueryParams} = useUtils();
 const classLists = ref<DepartmentEnrolmentCount[] | []>([]);
 const intakePeriod = ref<SelectOption | null>(null);
 const modeOfStudy = ref<SelectOption | null>(null);
@@ -36,8 +38,10 @@ onMounted(async () => {
 });
 
 const loadClassLists = async () => {
+    const params = getQueryParams();
+    const intakePeriodId = params['intake_period_id'] ?? intakePeriod.value?.value.toString();
     classLists.value = await getData(
-        `api/v1/departments/${institutionDepartmentId}/class-lists?intake_period_id=${intakePeriod.value?.value.toString()}&mode_of_study_id=${modeOfStudy.value?.value.toString()}`,
+        `api/v1/departments/${institutionDepartmentId}/class-lists?intake_period_id=${intakePeriodId}&mode_of_study_id=${modeOfStudy.value?.value.toString()}`,
         () => trans_choice('trans.enrolment', 2),
     );
 };
@@ -45,12 +49,12 @@ const handleSelectionChange = async () => {
     await loadClassLists();
 };
 
-const breadcrumbs: Array<Link> = [
+const breadcrumbs = [
     { transKey: 'dashboard', href: route('dashboard') },
     { transChoiceKey: 'enrolment', href: route('enrolments.index') },
     { title: department.attributes.department, href: route('enrolments.index') },
     { title: 'class lists' },
-];
+] as Array<Link>;
 </script>
 
 <template>

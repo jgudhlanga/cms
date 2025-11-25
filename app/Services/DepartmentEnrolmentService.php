@@ -271,7 +271,7 @@ class DepartmentEnrolmentService
                 'student_programs.offer_accepted',
                 'class_lists.type as class_list_type',
             ])
-            ->orderBy('student_programs.class_list_type')
+            ->orderBy('class_list_type')
             ->paginate($perPage);
 
 

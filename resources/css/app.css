@@ -285,6 +285,13 @@
     .j-td {
         @apply whitespace-nowrap px-3 py-2 text-[12px] text-sidebar-accent-foreground;
     }
+    .j-td-l-border {
+        @apply border-l-1 border-persian-200;
+    }
+
+    .j-td-r-border {
+        @apply border-r-1 border-persian-200;
+    }
 
     .fade-enter-active,
     .fade-leave-active {

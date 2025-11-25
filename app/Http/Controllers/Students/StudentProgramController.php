@@ -45,6 +45,7 @@ class StudentProgramController extends Controller
         $this->authorize('viewAny', StudentProgram::class);
         $intakePeriods = cache()->rememberForever('all_intake_periods', fn() => IntakePeriod::orderByDesc('end_date')->get());
         $intakePeriod = Helper::resolveIntakePeriod();
+
         $departmentDistribution = DepartmentDistributionResource::collection($this->metricsService->applicationsByDepartment());
         return Inertia::render('enrolments/Index', [
             'departmentDistribution' => $departmentDistribution,

@@ -25,7 +25,6 @@ class ApplicationMetricsService
     {
         $intakePeriod = Helper::resolveIntakePeriod();
 
-        // 🔒 If restricted user and no departments, return empty
         if ($this->isDepartmentUser && empty($this->userDepartments)) {
             return collect();
         }
@@ -34,18 +33,39 @@ class ApplicationMetricsService
             ->select(
                 'departments.id as department_id',
                 'departments.name as department_name',
+
                 DB::raw('COUNT(student_programs.id) as application_count'),
-                DB::raw("SUM(CASE WHEN students.gender_id = (SELECT id FROM genders WHERE title = 'Male' LIMIT 1) THEN 1 ELSE 0 END) as male_count"),
-                DB::raw("SUM(CASE WHEN students.gender_id = (SELECT id FROM genders WHERE title = 'Female' LIMIT 1) THEN 1 ELSE 0 END) as female_count"),
+
+                // gender counts
+                DB::raw("SUM(CASE WHEN genders.title = 'Male' THEN 1 ELSE 0 END) as male_count"),
+                DB::raw("SUM(CASE WHEN genders.title = 'Female' THEN 1 ELSE 0 END) as female_count"),
+
+                // disability counts
                 DB::raw("SUM(CASE WHEN students.disability_status = 'yes' THEN 1 ELSE 0 END) as disabled_count"),
-                DB::raw("SUM(CASE WHEN student_programs.mode_of_study_id = (SELECT id FROM mode_of_studies WHERE name = 'Full Time' LIMIT 1) THEN 1 ELSE 0 END) as full_time_count"),
-                DB::raw("SUM(CASE WHEN student_programs.mode_of_study_id = (SELECT id FROM mode_of_studies WHERE name = 'Part Time' LIMIT 1) THEN 1 ELSE 0 END) as part_time_count"),
-                DB::raw("SUM(CASE WHEN student_programs.mode_of_study_id = (SELECT id FROM mode_of_studies WHERE name = 'Block Release' LIMIT 1) THEN 1 ELSE 0 END) as block_release_count"),
-                DB::raw("SUM(CASE WHEN student_programs.mode_of_study_id = (SELECT id FROM mode_of_studies WHERE name = 'Ojet' LIMIT 1) THEN 1 ELSE 0 END) as ojet_count"),
+
+                // mode of study counts
+                DB::raw("SUM(CASE WHEN mode_of_studies.name = 'Full Time' THEN 1 ELSE 0 END) as full_time_count"),
+                DB::raw("SUM(CASE WHEN mode_of_studies.name = 'Part Time' THEN 1 ELSE 0 END) as part_time_count"),
+                DB::raw("SUM(CASE WHEN mode_of_studies.name = 'Block Release' THEN 1 ELSE 0 END) as block_release_count"),
+                DB::raw("SUM(CASE WHEN mode_of_studies.name = 'Ojet' THEN 1 ELSE 0 END) as ojet_count"),
+
+                // class_list counts
+                DB::raw("SUM(CASE WHEN class_lists.type = 'provisional' THEN 1 ELSE 0 END) as provisional_count"),
+                DB::raw("SUM(CASE WHEN class_lists.type = 'verified' THEN 1 ELSE 0 END) as verified_count"),
+                DB::raw("SUM(CASE WHEN class_lists.type = 'waiting' THEN 1 ELSE 0 END) as waiting_count"),
+                DB::raw("SUM(CASE WHEN class_lists.type = 'final' THEN 1 ELSE 0 END) as final_count"),
+                DB::raw("SUM(CASE WHEN class_lists.type = 'failed' THEN 1 ELSE 0 END) as failed_count")
             )
+
+            // JOINS
             ->leftJoin('institution_departments', 'institution_departments.department_id', '=', 'departments.id')
             ->leftJoin('student_programs', 'student_programs.institution_department_id', '=', 'institution_departments.id')
             ->leftJoin('students', 'student_programs.student_id', '=', 'students.id')
+            ->leftJoin('genders', 'students.gender_id', '=', 'genders.id')
+            ->leftJoin('mode_of_studies', 'student_programs.mode_of_study_id', '=', 'mode_of_studies.id')
+            ->leftJoin('class_lists', 'class_lists.student_program_id', '=', 'student_programs.id')
+
+            // FILTERS
             ->where('departments.is_academic', true)
             ->where('student_programs.intake_period_id', $intakePeriod?->id);
 
@@ -57,6 +77,7 @@ class ApplicationMetricsService
             ->groupBy('departments.id', 'departments.name')
             ->get();
     }
+
 
     public function applicationsByLevel(): Collection
     {

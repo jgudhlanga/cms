@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import HeadingSmall from '@/components/core/util/HeadingSmall.vue';
-import { useUtils } from '@/composables/core/useUtils';
-import { ButtonSize } from '@/enums/buttons';
+import DepartmentClassListActionLink from '@/components/enrolments/DepartmentClassListActionLink.vue';
 import { ColorVariant } from '@/enums/colors';
 import { hasAbility } from '@/lib/permissions';
 import { DepartmentDistribution } from '@/types/dasboard';
@@ -11,17 +10,16 @@ import { computed } from 'vue';
 
 interface Props {
     departmentDistribution: DepartmentDistribution[];
-    showView?: boolean;
+    showActionsColumn?: boolean;
     showFilters?: boolean;
     intakePeriods?: IntakePeriod[];
 }
 
 const props = withDefaults(defineProps<Props>(), {
-    showView: false,
+    showActionsColumn: false,
     showFilters: false,
 });
 const { departmentDistribution } = props;
-const { navigateTo } = useUtils();
 
 // Generate consistent RGBA color from department name
 const colorFromDepartment = (name: string, alpha = 0.7): string => {
@@ -80,7 +78,6 @@ const departmentTotals = computed(() => {
     );
 });
 const intakePeriodModel = defineModel<SelectOption | null>('intakePeriodModel');
-
 </script>
 
 <template>
@@ -100,6 +97,15 @@ const intakePeriodModel = defineModel<SelectOption | null>('intakePeriodModel');
         <div class="h-auto">
             <table class="j-table">
                 <thead class="j-thead">
+                    <tr class="j-tr">
+                        <th colspan="10"></th>
+                        <th
+                            colspan="4"
+                            class="bg-persian-200 text-accent-foreground text-uppercase j-td-l-border j-td-r-border px-3 py-2 text-center text-xs font-bold"
+                        >
+                            Class Lists
+                        </th>
+                    </tr>
                     <tr class="j-th">
                         <th class="j-th text-left">{{ $tChoice('trans.department', 1) }}</th>
                         <th class="j-th text-center">Males</th>
@@ -111,7 +117,10 @@ const intakePeriodModel = defineModel<SelectOption | null>('intakePeriodModel');
                         <th class="j-th text-center">Ojet</th>
                         <th class="j-th text-center">Total</th>
                         <th class="j-th text-center">Percentage</th>
-                        <th v-if="showView" class="j-th text-center">Action</th>
+                        <th class="j-th j-td-l-border text-center">Provisional</th>
+                        <th class="j-th j-td-l-border text-center">Waitlist</th>
+                        <th class="j-th j-td-l-border text-center">Verified</th>
+                        <th class="j-th j-td-l-border j-td-r-border text-center">Final</th>
                     </tr>
                 </thead>
                 <tbody class="j-tbody">
@@ -120,8 +129,8 @@ const intakePeriodModel = defineModel<SelectOption | null>('intakePeriodModel');
                             <span class="inline-block h-3 w-3 rounded-full" :style="{ backgroundColor: data.color }"></span>
                             <TextLink
                                 :title="data.departmentName"
-                                :href="route('enrolments.department-applications', {institution_department: data.departmentId})"
-                                v-if="showView && hasAbility('view:student-programs')"
+                                :href="route('enrolments.department-applications', { institution_department: data.departmentId })"
+                                v-if="showActionsColumn && hasAbility('view:student-programs')"
                             />
                             <span v-else>{{ data.departmentName }}</span>
                         </td>
@@ -134,18 +143,59 @@ const intakePeriodModel = defineModel<SelectOption | null>('intakePeriodModel');
                         <td class="j-td text-center">{{ data.ojetCount }}</td>
                         <td class="j-td text-center font-medium">{{ data.applicationCount }}</td>
                         <td class="j-td text-center">{{ data.percentage }}</td>
-                        <td v-if="showView" class="j-td text-center">
-                            <BaseButton
-                                v-if="hasAbility('view:student-programs')"
-                                title="View"
-                                :size="ButtonSize.xs"
-                                classes="rounded-full"
+                        <td class="j-td j-td-l-border text-center">
+                            <DepartmentClassListActionLink
+                                :actionable="hasAbility('view:student-programs') && showActionsColumn"
+                                :title="String(data.provisionalCount)"
+                                :route-name="
+                                    route('enrolments.department-applications', {
+                                        institution_department: data.departmentId,
+                                        intake_period_id: intakePeriodModel?.value.toString(),
+                                    })
+                                "
+                                :variant="ColorVariant.warning_outline"
+                            />
+                        </td>
+                        <td class="j-td j-td-l-border text-center">
+                            <DepartmentClassListActionLink
+                                :actionable="hasAbility('view:student-programs') && showActionsColumn"
+                                :title="String(data.waitingCount)"
+                                :route-name="
+                                    route('enrolments.department-applications', {
+                                        institution_department: data.departmentId,
+                                        intake_period_id: intakePeriodModel?.value.toString(),
+                                    })
+                                "
+                                :variant="ColorVariant.fuchsia_outline"
+                            />
+                        </td>
+                        <td class="j-td j-td-l-border text-center">
+                            <DepartmentClassListActionLink
+                                :actionable="hasAbility('view:student-programs') && showActionsColumn"
+                                :title="String(data.verifiedCount)"
+                                :route-name="
+                                    route('enrolments.department-applications', {
+                                        institution_department: data.departmentId,
+                                        intake_period_id: intakePeriodModel?.value.toString(),
+                                    })
+                                "
                                 :variant="ColorVariant.primary_outline"
-                                @click="navigateTo(route('enrolments.department-applications', {institution_department: data.departmentId}))"
+                            />
+                        </td>
+                        <td class="j-td j-td-l-border j-td-r-border text-center">
+                            <DepartmentClassListActionLink
+                                :actionable="hasAbility('view:student-programs') && showActionsColumn"
+                                :title="String(data.finalCount)"
+                                :route-name="
+                                    route('enrolments.department-applications', {
+                                        institution_department: data.departmentId,
+                                        intake_period_id: intakePeriodModel?.value.toString(),
+                                    })
+                                "
+                                :variant="ColorVariant.success_outline"
                             />
                         </td>
                     </tr>
-
                     <!-- Totals Row -->
                     <tr class="j-tr bg-gray-50 font-semibold">
                         <td class="j-td text-left">Total</td>
@@ -158,7 +208,10 @@ const intakePeriodModel = defineModel<SelectOption | null>('intakePeriodModel');
                         <td class="j-td text-center">{{ departmentTotals?.ojet }}</td>
                         <td class="j-td text-center">{{ departmentTotals?.total }}</td>
                         <td class="j-td text-center">100%</td>
-                        <td v-if="showView" class="j-td text-center"></td>
+                        <td
+                            colspan="4"
+                            class="bg-persian-200 text-accent-foreground text-uppercase j-td-l-border j-td-r-border px-3 py-2 text-center text-xs font-bold"
+                        ></td>
                     </tr>
                 </tbody>
             </table>

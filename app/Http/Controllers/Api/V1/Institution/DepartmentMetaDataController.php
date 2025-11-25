@@ -79,7 +79,7 @@ class DepartmentMetaDataController extends Controller
             // Group within each course by department_level_id
             $levels = $courseGroup->groupBy('department_level_id')->map(function ($levelGroup) {
                 $level = $levelGroup->first()->departmentLevel;
-
+               if(!$level) return null;
                 return [
                     'departmentLevelId' => $level->id,
                     'levelName' => $level->level->name ?? null,
@@ -93,8 +93,7 @@ class DepartmentMetaDataController extends Controller
                 'courseName' => $course?->course?->name,
                 'levels' => $levels,
             ];
-        })->values(); // reset numeric keys
-
+        })->values(); // reset numeric key
         return response()->json($grouped);
     }
 
@@ -119,7 +118,7 @@ class DepartmentMetaDataController extends Controller
             // Group within each course by department_level_id
             $levels = $courseGroup->groupBy('department_level_id')->map(function ($levelGroup) {
                 $level = $levelGroup->first()->departmentLevel;
-
+                if(!$level) return null;
                 return [
                     'departmentLevelId' => $level->id,
                     'levelName' => $level->level->name ?? null,
