@@ -14,6 +14,7 @@ export type DepartmentDistribution = {
     verifiedCount: number;
     finalCount: number;
     failedCount: number;
+    departmentIntakeClassSizeTotal: number;
     color?: string;
     percentage?: string;
 };

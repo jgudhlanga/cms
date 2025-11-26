@@ -87,7 +87,7 @@ export const useStaff = () => {
                 accessorKey: 'lastLoginAt',
                 cell: ({ row }: { row: { original: Staff } }) => {
                     const loginDate = row.original?.relationships?.user?.attributes?.lastLoginAt ?? '';
-                    return loginDate ? formatDate(loginDate, 'LLLL') : '---';
+                    return loginDate ? formatDate(loginDate, 'LL') : '---';
                 },
             },
             {

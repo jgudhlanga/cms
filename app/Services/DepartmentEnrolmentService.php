@@ -247,6 +247,7 @@ class DepartmentEnrolmentService
         // ------------------------------------------------------------
         // 2. Eager load all necessary relations
         // ------------------------------------------------------------
+        $type = request('type', ClassListTypeEnum::PROVISIONAL->value);
         $paginator = StudentProgram::query()
             ->join('class_lists', 'class_lists.student_program_id', '=', 'student_programs.id')
             ->with([
@@ -256,10 +257,7 @@ class DepartmentEnrolmentService
                 'departmentWorkflowStep.workflowStep:id,name',
             ])
             ->whereIn('student_programs.id', $subQuery)
-            ->whereIn('class_lists.type', [
-                ClassListTypeEnum::PROVISIONAL->value,
-                ClassListTypeEnum::FINAL->value,
-            ])
+            ->whereIn('class_lists.type', [$type])
             ->select([
                 'student_programs.id as application_id',
                 'student_programs.student_id',

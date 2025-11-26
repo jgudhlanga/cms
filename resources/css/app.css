@@ -292,6 +292,9 @@
     .j-td-r-border {
         @apply border-r-1 border-persian-200;
     }
+    .j-td-b-border {
+        @apply border-b-1 border-persian-200;
+    }
 
     .fade-enter-active,
     .fade-leave-active {

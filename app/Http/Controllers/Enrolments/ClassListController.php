@@ -37,6 +37,7 @@ use App\Services\DepartmentEnrolmentService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
 use Log;
@@ -311,7 +312,7 @@ class ClassListController extends Controller
      */
     public function classLists(InstitutionDepartment $institutionDepartment, DepartmentLevel $departmentLevel): Response
     {
-        $this->authorize('view:class-lists');
+        Gate::any(['view:class-lists', 'manage-final:class-lists']) || abort(403);
 
         [$intakePeriodId, $modeOfStudyId, $courseId] = $this->departmentEnrolmentService->extractFilters();
 

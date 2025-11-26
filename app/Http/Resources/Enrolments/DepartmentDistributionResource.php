@@ -25,7 +25,8 @@ class DepartmentDistributionResource extends JsonResource
             'waitingCount' => $this->waiting_count,
             'verifiedCount' => $this->verified_count,
             'finalCount' => $this->final_count,
-            'failedCount' => $this->failed_count
+            'failedCount' => $this->failed_count,
+            'departmentIntakeClassSizeTotal' => $this->total_class_size,
         ];
     }
 }

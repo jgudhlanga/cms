@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import HeadingSmall from '@/components/core/util/HeadingSmall.vue';
 import DepartmentClassListActionLink from '@/components/enrolments/DepartmentClassListActionLink.vue';
-import { ColorVariant } from '@/enums/colors';
 import { hasAbility } from '@/lib/permissions';
 import { DepartmentDistribution } from '@/types/dasboard';
 import { IntakePeriod } from '@/types/institution';
@@ -63,6 +62,7 @@ const departmentTotals = computed(() => {
             acc.block += Number(d.blockReleaseCount) || 0;
             acc.ojet += Number(d.ojetCount) || 0;
             acc.total += Number(d.applicationCount) || 0;
+            acc.intakeClassSizeTotal += Number(d.departmentIntakeClassSizeTotal) || 0;
             return acc;
         },
         {
@@ -73,7 +73,27 @@ const departmentTotals = computed(() => {
             partTime: 0,
             block: 0,
             ojet: 0,
+            intakeClassSizeTotal: 0,
             total: 0,
+        },
+    );
+});
+const classListTotals = computed(() => {
+    return departmentDistribution?.reduce(
+        (acc, d) => {
+            acc.provisional += Number(d.provisionalCount) || 0;
+            acc.waiting += Number(d.waitingCount) || 0;
+            acc.verified += Number(d.verifiedCount) || 0;
+            acc.final += Number(d.finalCount) || 0;
+            acc.failed += Number(d.failedCount) || 0;
+            return acc;
+        },
+        {
+            provisional: 0,
+            waiting: 0,
+            verified: 0,
+            final: 0,
+            failed: 0,
         },
     );
 });
@@ -98,9 +118,9 @@ const intakePeriodModel = defineModel<SelectOption | null>('intakePeriodModel');
             <table class="j-table">
                 <thead class="j-thead">
                     <tr class="j-tr">
-                        <th colspan="10"></th>
+                        <th colspan="11"></th>
                         <th
-                            colspan="4"
+                            colspan="5"
                             class="bg-persian-200 text-accent-foreground text-uppercase j-td-l-border j-td-r-border px-3 py-2 text-center text-xs font-bold"
                         >
                             Class Lists
@@ -116,9 +136,11 @@ const intakePeriodModel = defineModel<SelectOption | null>('intakePeriodModel');
                         <th class="j-th text-center">Block</th>
                         <th class="j-th text-center">Ojet</th>
                         <th class="j-th text-center">Total</th>
+                        <th class="j-th text-center">Class Sizes</th>
                         <th class="j-th text-center">Percentage</th>
                         <th class="j-th j-td-l-border text-center">Provisional</th>
                         <th class="j-th j-td-l-border text-center">Waitlist</th>
+                        <th class="j-th j-td-l-border text-center">Rejected</th>
                         <th class="j-th j-td-l-border text-center">Verified</th>
                         <th class="j-th j-td-l-border j-td-r-border text-center">Final</th>
                     </tr>
@@ -142,57 +164,51 @@ const intakePeriodModel = defineModel<SelectOption | null>('intakePeriodModel');
                         <td class="j-td text-center">{{ data.blockReleaseCount }}</td>
                         <td class="j-td text-center">{{ data.ojetCount }}</td>
                         <td class="j-td text-center font-medium">{{ data.applicationCount }}</td>
+                        <td class="j-td text-center font-medium">{{ data.departmentIntakeClassSizeTotal }}</td>
                         <td class="j-td text-center">{{ data.percentage }}</td>
                         <td class="j-td j-td-l-border text-center">
                             <DepartmentClassListActionLink
-                                :actionable="hasAbility('view:student-programs') && showActionsColumn"
+                                :actionable="hasAbility('verify:class-lists') && showActionsColumn"
                                 :title="String(data.provisionalCount)"
                                 :route-name="
                                     route('enrolments.department-applications', {
                                         institution_department: data.departmentId,
                                         intake_period_id: intakePeriodModel?.value.toString(),
+                                        type: 'provisional',
                                     })
                                 "
-                                :variant="ColorVariant.warning_outline"
                             />
                         </td>
                         <td class="j-td j-td-l-border text-center">
-                            <DepartmentClassListActionLink
-                                :actionable="hasAbility('view:student-programs') && showActionsColumn"
-                                :title="String(data.waitingCount)"
-                                :route-name="
-                                    route('enrolments.department-applications', {
-                                        institution_department: data.departmentId,
-                                        intake_period_id: intakePeriodModel?.value.toString(),
-                                    })
-                                "
-                                :variant="ColorVariant.fuchsia_outline"
-                            />
+                            <DepartmentClassListActionLink :actionable="false" :title="String(data.waitingCount)" />
+                        </td>
+                        <td class="j-td j-td-l-border text-center">
+                            <DepartmentClassListActionLink :actionable="false" :title="String(data.failedCount)" />
                         </td>
                         <td class="j-td j-td-l-border text-center">
                             <DepartmentClassListActionLink
-                                :actionable="hasAbility('view:student-programs') && showActionsColumn"
+                                :actionable="hasAbility('manage-final:class-lists') && showActionsColumn"
                                 :title="String(data.verifiedCount)"
                                 :route-name="
                                     route('enrolments.department-applications', {
                                         institution_department: data.departmentId,
                                         intake_period_id: intakePeriodModel?.value.toString(),
+                                        type: 'verified',
                                     })
                                 "
-                                :variant="ColorVariant.primary_outline"
                             />
                         </td>
                         <td class="j-td j-td-l-border j-td-r-border text-center">
                             <DepartmentClassListActionLink
-                                :actionable="hasAbility('view:student-programs') && showActionsColumn"
+                                :actionable="hasAbility('manage-final:class-lists') && showActionsColumn"
                                 :title="String(data.finalCount)"
                                 :route-name="
                                     route('enrolments.department-applications', {
                                         institution_department: data.departmentId,
                                         intake_period_id: intakePeriodModel?.value.toString(),
+                                        type: 'final',
                                     })
                                 "
-                                :variant="ColorVariant.success_outline"
                             />
                         </td>
                     </tr>
@@ -207,11 +223,13 @@ const intakePeriodModel = defineModel<SelectOption | null>('intakePeriodModel');
                         <td class="j-td text-center">{{ departmentTotals?.block }}</td>
                         <td class="j-td text-center">{{ departmentTotals?.ojet }}</td>
                         <td class="j-td text-center">{{ departmentTotals?.total }}</td>
+                        <td class="j-td text-center">{{ departmentTotals?.intakeClassSizeTotal }}</td>
                         <td class="j-td text-center">100%</td>
-                        <td
-                            colspan="4"
-                            class="bg-persian-200 text-accent-foreground text-uppercase j-td-l-border j-td-r-border px-3 py-2 text-center text-xs font-bold"
-                        ></td>
+                        <td class="j-td j-td-l-border j-td-b-border text-center">{{ classListTotals?.provisional }}</td>
+                        <td class="j-td j-td-l-border j-td-b-border text-center">{{ classListTotals?.waiting }}</td>
+                        <td class="j-td j-td-l-border j-td-b-border text-center">{{ classListTotals?.failed }}</td>
+                        <td class="j-td j-td-l-border j-td-b-border text-center">{{ classListTotals?.verified }}</td>
+                        <td class="j-td j-td-l-border j-td-r-border j-td-b-border text-center">{{ classListTotals?.final }}</td>
                     </tr>
                 </tbody>
             </table>
