@@ -13,6 +13,7 @@ import { Link } from '@/types/ui';
 import { SelectOption } from '@/types/utils';
 import { Head, router } from '@inertiajs/vue3';
 import { computed, onMounted, PropType, ref } from 'vue';
+import { hasAbility } from '@/lib/permissions';
 
 interface Props {
     department: InstitutionDepartment;
@@ -121,7 +122,7 @@ const getGroupSlot = (group: EnrolmentGroup): number => {
             />
             <div class="flex justify-end space-x-2" v-if="!noData">
                 <ClassSize :class-size="classSize" />
-                <BaseButton title="Configure Classes" classes="rounded-full">
+                <BaseButton title="Configure Classes" classes="rounded-full" v-if="hasAbility('manage-final:class-lists')">
                     <BaseIcon :name="IconName.cogs" />
                 </BaseButton>
             </div>
