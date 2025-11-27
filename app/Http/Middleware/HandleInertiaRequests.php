@@ -55,10 +55,10 @@ class HandleInertiaRequests extends Middleware
                 'can' => $user ? $this->permissions($user) : null,
                 'impersonating' => $isImpersonating,
             ],
-            /* 'ziggy' => [
+            'ziggy' => [
                  ...(new Ziggy)->toArray(),
                  'location' => $request->url(),
-             ],*/
+             ],
             'sidebarOpen' => !$request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
     }

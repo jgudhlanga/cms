@@ -1,16 +1,18 @@
 <script setup lang="ts">
+import { useUtils } from '@/composables/core/useUtils';
 import { useEnrolments } from '@/composables/students/useEnrolments';
+import { IconName } from '@/lib/icons';
 import ClassListTable from '@/pages/enrolments/partials/ClassListTable.vue';
 import ClassSize from '@/pages/institution/enrolments/partials/ClassSize.vue';
 import EnrolmentFilters from '@/pages/institution/enrolments/partials/EnrolmentFilters.vue';
 import { AuthObject } from '@/types/data-pagination';
 import { DepartmentLevel } from '@/types/department-meta-data';
-import { EnrolmentGroup, EnrolmentGroupResponse } from '@/types/enrolments';
+import { ClassListType, EnrolmentGroup, EnrolmentGroupResponse } from '@/types/enrolments';
 import { InstitutionDepartment, IntakePeriod, ModeOfStudy } from '@/types/institution';
 import { Link } from '@/types/ui';
 import { SelectOption } from '@/types/utils';
 import { Head, router } from '@inertiajs/vue3';
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, PropType, ref } from 'vue';
 
 interface Props {
     department: InstitutionDepartment;
@@ -30,10 +32,11 @@ const props = defineProps<Props>();
 
 const { department, level, enrolments, intakePeriod, modeOfStudy, course, classSize } = props;
 const { allocateClassSlots } = useEnrolments();
+const { getQueryParams } = useUtils();
 
 const intakePeriodModel = ref<SelectOption | null>(null);
 const modeOfStudyModel = ref<SelectOption | null>(null);
-
+const queryParams = getQueryParams();
 onMounted(async () => {
     intakePeriodModel.value = intakePeriod ? { value: Number(intakePeriod.id), label: intakePeriod.attributes.name } : null;
     modeOfStudyModel.value = modeOfStudy ? { value: Number(modeOfStudy.id), label: modeOfStudy.attributes.name } : null;
@@ -46,9 +49,15 @@ const breadcrumbs: Array<Link> = [
         title: department.attributes.department,
         href: route('enrolments.department-applications', { institution_department: String(department?.id) }),
     },
-    { title: level.attributes.level, href: route('enrolments.department-applications', { institution_department: String(department?.id) }) },
-    { title: course?.name, href: route('enrolments.department-applications', { institution_department: String(department?.id) }) },
-    { title: 'class list' },
+    {
+        title: level.attributes.level,
+        href: route('enrolments.department-applications', { institution_department: String(department?.id), type: queryParams['type'] }),
+    },
+    {
+        title: course?.name,
+        href: route('enrolments.department-applications', { institution_department: String(department?.id), type: queryParams['type'] }),
+    },
+    { title: `${queryParams['type']} class list` },
 ];
 
 const handleFilterChange = () => {
@@ -110,17 +119,20 @@ const getGroupSlot = (group: EnrolmentGroup): number => {
                     })
                 "
             />
-            <div class="flex justify-end" v-if="!noData">
+            <div class="flex justify-end space-x-2" v-if="!noData">
                 <ClassSize :class-size="classSize" />
+                <BaseButton title="Configure Classes" classes="rounded-full">
+                    <BaseIcon :name="IconName.cogs" />
+                </BaseButton>
             </div>
             <div v-for="(enrolmentsInGroup, group) in enrolments.groups" :key="group" class="flex flex-col">
                 <div class="flex flex-col" v-if="Number(getGroupSlot(group.toLowerCase() as EnrolmentGroup)) > 0">
                     <HeadingSmall :title="`${group} (${getGroupSlot(group.toLowerCase() as EnrolmentGroup)})`" class="mt-6" />
                     <ClassListTable
+                        :class-list-type="queryParams['type'] as PropType<ClassListType>"
                         :department-id="String(department?.id)"
                         :applications="enrolmentsInGroup"
                         :class-size="Number(classSize)"
-                        :slot-size="getGroupSlot(group.toLowerCase() as EnrolmentGroup)"
                     />
                 </div>
             </div>

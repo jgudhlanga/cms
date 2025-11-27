@@ -21,6 +21,12 @@ class DepartmentDistributionResource extends JsonResource
             'maleCount' => $this->male_count,
             'femaleCount' => $this->female_count,
             'disabledCount' => $this->disabled_count,
+            'provisionalCount' => $this->provisional_count,
+            'waitingCount' => $this->waiting_count,
+            'verifiedCount' => $this->verified_count,
+            'finalCount' => $this->final_count,
+            'failedCount' => $this->failed_count,
+            'departmentIntakeClassSizeTotal' => $this->total_class_size,
         ];
     }
 }

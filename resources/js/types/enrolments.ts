@@ -251,3 +251,10 @@ export type OtherApplication = {
     modeOfStudy: string;
     inClassList: boolean;
 };
+export enum ClassListType {
+    PROVISIONAL = "provisional",
+    FINAL = "final",
+    WAITING = "waiting",
+    FAILED = "failed",
+    VERIFIED = "verified",
+}

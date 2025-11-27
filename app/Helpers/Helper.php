@@ -145,16 +145,20 @@ class Helper
     {
         static $cachedIntakePeriod;
 
+        // If request explicitly provides intake_period_id, always use it (no caching)
+        if (request()->filled('intake_period_id') && request()->intake_period_id > 0) {
+            return IntakePeriod::findOrFail(request()->intake_period_id);
+        }
+
+        // Otherwise fallback to cached period
         if ($cachedIntakePeriod) {
             return $cachedIntakePeriod;
         }
 
-        $cachedIntakePeriod = request()->filled('intake_period_id') && request()->intake_period_id > 0
-            ? IntakePeriod::findOrFail(request()->intake_period_id)
-            : IntakePeriod::orderByDesc('end_date')->firstOrFail();
-
-        return $cachedIntakePeriod;
+        // Cache the fallback only once
+        return $cachedIntakePeriod = IntakePeriod::orderByDesc('end_date')->firstOrFail();
     }
+
 
 
     public static function resolveUserDepartments(): array|null

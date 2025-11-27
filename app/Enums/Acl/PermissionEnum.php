@@ -193,6 +193,7 @@ enum PermissionEnum: string
     case UPDATE_CLASS_LIST = 'update:class-lists';
     case DELETE_CLASS_LIST = 'delete:class-lists';
     case VIEW_CLASS_LIST = 'view:class-lists';
+    case MANAGE_FINAL_CLASS_LIST = 'manage-final:class-lists';
     /** STUDENTS */
     case VIEW_ANY_STUDENTS = 'viewAny:students';
     case VIEW_STUDENTS = 'view:students';
@@ -445,6 +446,7 @@ enum PermissionEnum: string
             self::UPDATE_CLASS_LIST => 'update:class-lists',
             self::DELETE_CLASS_LIST => 'delete:class-lists',
             self::VIEW_CLASS_LIST => 'view:class-lists',
+            self::MANAGE_FINAL_CLASS_LIST => 'manage-final:class-lists',
             /** STUDENTS */
             self::VIEW_ANY_STUDENTS => 'viewAny:students',
             self::VIEW_STUDENTS => 'view:students',

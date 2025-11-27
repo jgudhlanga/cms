@@ -56,7 +56,7 @@ onMounted(async () => {
         </div>
         <DistributionByDepartment
             :department-distribution="departmentDistribution"
-            :show-view="true"
+            :show-actions-column="true"
             :show-filters="true"
             v-model:intakePeriodModel="intakePeriodModel"
             :intake-periods="intakePeriods"

@@ -1,20 +1,31 @@
 <script setup lang="ts">
-import { EnrolmentApplication } from '@/types/enrolments';
-import { hasAbility } from '@/lib/permissions';
+import { useUtils } from '@/composables/core/useUtils';
 import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
-import { useUtils } from '@/composables/core/useUtils';
+import { hasAbility } from '@/lib/permissions';
+import { ClassListType, EnrolmentApplication } from '@/types/enrolments';
+import { PropType } from 'vue';
 
 interface Props {
     departmentId: string;
     applications: EnrolmentApplication[];
-    classSize: number;
-    slotSize: number;
+    classListType: PropType<ClassListType>;
 }
 
 const props = defineProps<Props>();
 const { applications } = props;
 const { navigateTo } = useUtils();
+
+const getButtonTitle = (type: ClassListType) => {
+    switch (type) {
+        case 'provisional':
+            return 'Verify';
+        case 'verified':
+            return 'Confirm';
+        default:
+            return 'View';
+    }
+};
 </script>
 
 <template>
@@ -37,9 +48,9 @@ const { navigateTo } = useUtils();
                     <td class="j-td">
                         <TextLink
                             :title="application.studentName"
-                            :href="route('enrolments.verify', {student_program: application.applicationId})"
+                            :href="route('enrolments.verify', { student_program: application.applicationId })"
                         />
-                      </td>
+                    </td>
                     <td class="j-td">{{ application.applicationTrackingNumber }}</td>
                     <td class="j-td">{{ application.applicationDate }}</td>
                     <td class="j-td">{{ application.phoneNumber }}</td>
@@ -47,11 +58,11 @@ const { navigateTo } = useUtils();
                     <td class="j-td text-right">
                         <BaseButton
                             v-if="hasAbility('view:student-programs')"
-                            title="Verify"
+                            :title="getButtonTitle(classListType as ClassListType)"
                             :size="ButtonSize.xs"
                             classes="rounded-full"
                             :variant="ColorVariant.primary_outline"
-                            @click="navigateTo(route('enrolments.verify', {student_program: application.applicationId}))"
+                            @click="navigateTo(route('enrolments.verify', { student_program: application.applicationId }))"
                         />
                     </td>
                 </tr>

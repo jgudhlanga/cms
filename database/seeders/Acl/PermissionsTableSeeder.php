@@ -245,6 +245,7 @@ class PermissionsTableSeeder extends Seeder
                 [PermissionEnum::UPDATE_CLASS_LIST->value],
                 [PermissionEnum::DELETE_CLASS_LIST->value],
                 [PermissionEnum::VIEW_CLASS_LIST->value],
+                [PermissionEnum::MANAGE_FINAL_CLASS_LIST->value],
             ],
             'examinations' => [
                 [PermissionEnum::VIEW_ANY_EXAMINATION->value],

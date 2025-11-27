@@ -1,11 +1,11 @@
 import BaseIcon from '@/components/core/icon/BaseIcon.vue';
 import { ColorVariant } from '@/enums/colors';
 import { IconName } from '@/enums/icons';
-import { router } from '@inertiajs/vue3';
+import { router, usePage } from '@inertiajs/vue3';
 import { trans } from 'laravel-vue-i18n';
 import moment from 'moment';
+import { v4 as uuidv4 } from 'uuid';
 import { h } from 'vue';
-import { v4 as uuidv4 } from "uuid";
 
 export function useUtils() {
     const renderIcon = (icon: IconName, size: string = '15', color?: ColorVariant) => {
@@ -146,9 +146,14 @@ export function useUtils() {
         return idType.toLowerCase() == 'zimbabwean national id';
     };
 
-    const generateRandomCode = (prefix: string): string =>  {
-        return `${prefix}-${uuidv4().replace(/-/g, "").substring(0, 8).toUpperCase()}`;
-    }
+    const generateRandomCode = (prefix: string): string => {
+        return `${prefix}-${uuidv4().replace(/-/g, '').substring(0, 8).toUpperCase()}`;
+    };
+
+    const getQueryParams = () => {
+        const url = new URL(usePage().url, window.location.origin);
+        return Object.fromEntries(url.searchParams.entries());
+    };
 
     return {
         extractInitials,
@@ -172,6 +177,7 @@ export function useUtils() {
         navigateTo,
         formatZimIdNumber,
         isNativeCitizen,
-        generateRandomCode
+        generateRandomCode,
+        getQueryParams,
     };
 }

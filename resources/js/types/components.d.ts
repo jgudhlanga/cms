@@ -142,6 +142,8 @@ declare module 'vue' {
     DateOfBirth: typeof import('./../components/core/form/date/DateOfBirth.vue')['default']
     DateRangePicker: typeof import('./../components/core/form/date/DateRangePicker.vue')['default']
     DeleteButton: typeof import('./../components/core/button/DeleteButton.vue')['default']
+    DepartmentClassListActionBtn: typeof import('./../components/enrolments/DepartmentClassListActionBtn.vue')['default']
+    DepartmentClassListActionLink: typeof import('./../components/enrolments/DepartmentClassListActionLink.vue')['default']
     DepartmentCourseComboSelect: typeof import('./../components/core/form/combobox/DepartmentCourseComboSelect.vue')['default']
     DepartmentLevelComboSelect: typeof import('./../components/core/form/combobox/DepartmentLevelComboSelect.vue')['default']
     Description: typeof import('./../components/core/form/text/Description.vue')['default']

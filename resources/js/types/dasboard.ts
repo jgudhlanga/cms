@@ -9,6 +9,12 @@ export type DepartmentDistribution = {
     maleCount: number;
     femaleCount: number;
     disabledCount: number;
+    provisionalCount: number;
+    waitingCount: number;
+    verifiedCount: number;
+    finalCount: number;
+    failedCount: number;
+    departmentIntakeClassSizeTotal: number;
     color?: string;
     percentage?: string;
 };
