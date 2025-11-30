@@ -26,6 +26,16 @@ const getButtonTitle = (type: ClassListType) => {
             return 'View';
     }
 };
+const getRouteName = (type: ClassListType, applicationId: string) => {
+    switch (type) {
+        case 'provisional':
+            return route('enrolments.verify', { student_program: applicationId, type: 'provisional' });
+        case 'verified':
+            return route('enrolments.confirm', { student_program: applicationId, type: 'verified' });
+        default:
+            return '';
+    }
+};
 </script>
 
 <template>
@@ -45,12 +55,7 @@ const getButtonTitle = (type: ClassListType) => {
             <tbody class="j-tbody">
                 <tr class="j-tr" v-for="(application, index) in applications" :key="application.applicationId">
                     <td class="j-td">{{ index + 1 }}</td>
-                    <td class="j-td">
-                        <TextLink
-                            :title="application.studentName"
-                            :href="route('enrolments.verify', { student_program: application.applicationId })"
-                        />
-                    </td>
+                    <td class="j-td">{{ application.studentName }}</td>
                     <td class="j-td">{{ application.applicationTrackingNumber }}</td>
                     <td class="j-td">{{ application.applicationDate }}</td>
                     <td class="j-td">{{ application.phoneNumber }}</td>
@@ -62,7 +67,7 @@ const getButtonTitle = (type: ClassListType) => {
                             :size="ButtonSize.xs"
                             classes="rounded-full"
                             :variant="ColorVariant.primary_outline"
-                            @click="navigateTo(route('enrolments.verify', { student_program: application.applicationId }))"
+                            @click="navigateTo(getRouteName(classListType as ClassListType, String(application.applicationId)))"
                         />
                     </td>
                 </tr>

@@ -1,29 +1,29 @@
 <script setup lang="ts">
-import IntakePeriodComboSelect from '@/components/core/form/combobox/IntakePeriodComboSelect.vue';
+import AcademicYearComboSelect from '@/components/core/form/combobox/AcademicYearComboSelect.vue';
 import ModeOfStudyComboSelect from '@/components/core/form/combobox/ModeOfStudyComboSelect.vue';
-import { IntakePeriod, ModeOfStudy } from '@/types/institution';
+import { AcademicYear, ModeOfStudy } from '@/types/institution';
 import { SelectOption } from '@/types/utils';
 
 interface Props {
-    intakePeriods: IntakePeriod[];
+    academicYears: AcademicYear[];
     modesOfStudy: ModeOfStudy[];
     handleFilterChange: () => void;
 }
 defineProps<Props>();
 
-const intakePeriodModel = defineModel<SelectOption | null>('intakePeriodModel');
 const modeOfStudyModel = defineModel<SelectOption | null>('modeOfStudyModel');
+const academicYearModel = defineModel<SelectOption | null>('academicYearModel');
 </script>
 
 <template>
     <div class="mt-4 flex w-full items-center justify-between space-x-4">
-        <IntakePeriodComboSelect
-            :data="intakePeriods ?? []"
-            :label-uppercase="true"
-            v-model="intakePeriodModel"
-            :vertical-layout="false"
-            :is-required="true"
+        <AcademicYearComboSelect
+            :data="academicYears ?? []"
+            v-model="academicYearModel!"
             @update:modelValue="handleFilterChange"
+            :vertical-layout="false"
+            :label-uppercase="true"
+            :is-required="true"
             class="w-full"
         />
         <ModeOfStudyComboSelect

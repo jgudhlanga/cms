@@ -13,7 +13,7 @@ class RolesTableSeeder extends Seeder
     public function run(): void
     {
         foreach (RoleEnum::cases() as $row) {
-            $exist = Role::where('name', $row->name())->first();
+            $exist = Role::where('name', $row->name())->withTrashed()->first();
             if (!$exist instanceof Role) {
                 $role = Role::create(
                     [

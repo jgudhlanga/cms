@@ -1,17 +1,17 @@
 <?php
 
-namespace App\Repositories\Acl\Interface;
+namespace App\Repositories\AcademicCalendars\Interface;
 
-use App\DTO\Acl\ModuleDto;
-use App\Http\Filters\Acl\ModuleFilter;
-use App\Models\Acl\Module;
+use App\DTO\AcademicYears\AcademicCalendarDto;
+use App\Http\Filters\AcademicCalendars\AcademicCalendarFilter;
+use App\Models\AcademicCalendars\AcademicCalendar;
 use App\Repositories\Base\Interface\IBaseRepository;
 
-interface IModuleRepository extends IBaseRepository
+interface IAcademicCalendarRepository extends IBaseRepository
 {
-    public function create(ModuleDto $dto);
+    public function create(AcademicCalendarDto $dto);
 
-    public function update(Module $module, ModuleDto $dto);
+    public function update(AcademicCalendar $academicCalendar, AcademicCalendarDto $dto);
 
-    public function allFilter($columns = ['*'], ModuleFilter $filters = null);
+    public function allFilter($columns = ['*'], AcademicCalendarFilter $filters = null);
 }

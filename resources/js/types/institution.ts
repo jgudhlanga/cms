@@ -88,7 +88,7 @@ export type Level = {
 export type LevelParams = {
     name: string;
     description?: string;
-    allowed_applications_per_level?: string|number;
+    allowed_applications_per_level?: string | number;
 };
 
 export type ModeOfStudy = {
@@ -107,6 +107,10 @@ export type ModeOfStudyParams = {
     description?: string;
 };
 
+export type AcademicYear = {
+    id: string;
+    name: string;
+};
 export type Subject = {
     type?: string;
     id?: string;

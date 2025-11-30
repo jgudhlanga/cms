@@ -4,10 +4,10 @@ import { useUtils } from '@/composables/core/useUtils';
 import { ColorVariant } from '@/enums/colors';
 import { errorAlert, forbiddenAlert, successAlert } from '@/lib/alerts';
 import { hasAbility } from '@/lib/permissions';
-import Details from '@/pages/enrolments/partials/verification/Details.vue';
-import Sidebar from '@/pages/enrolments/partials/verification/Sidebar.vue';
+import Details from '@/pages/enrolments/partials/shared/Details.vue';
+import Sidebar from '@/pages/enrolments/partials/shared/Sidebar.vue';
 import { AuthObject } from '@/types/data-pagination';
-import { ClassListAttributeParams, ClassListTopNext, Enrolment, OtherApplication } from '@/types/enrolments';
+import { ClassListAttributeParams, ClassListTopNext, ClassListType, Enrolment, OtherApplication } from '@/types/enrolments';
 import { Link } from '@/types/ui';
 import { Head, useForm } from '@inertiajs/vue3';
 import { trans } from 'laravel-vue-i18n';
@@ -24,6 +24,8 @@ interface Props {
 const props = defineProps<Props>();
 
 const { application, nextTop } = props;
+const { isItTrue, navigateTo, getQueryParams } = useUtils();
+const queryParams = getQueryParams();
 
 const breadcrumbs: Array<Link> = [
     { transKey: 'dashboard', href: route('dashboard') },
@@ -34,7 +36,10 @@ const breadcrumbs: Array<Link> = [
     },
     {
         title: application.attributes.level,
-        href: route('enrolments.department-applications', { institution_department: String(application?.attributes.institutionDepartmentId) }),
+        href: route('enrolments.department-applications', {
+            institution_department: String(application?.attributes.institutionDepartmentId),
+            type: queryParams['type'],
+        }),
     },
     {
         title: application.attributes.course,
@@ -44,12 +49,11 @@ const breadcrumbs: Array<Link> = [
             intake_period_id: String(application?.attributes.intakePeriodId),
             mode_of_study_id: String(application?.attributes.modeOfStudyId),
             department_course_id: String(application?.attributes.departmentCourseId),
+            type: queryParams['type'],
         }),
     },
     { title: application?.attributes?.studentName },
 ];
-
-const { isItTrue, navigateTo } = useUtils();
 
 const oLevelRequired = computed(() => {
     if (application?.relationships?.requirements) {
@@ -99,6 +103,7 @@ const form = useForm<ClassListAttributeParams>({
     read_write_confirmed: null,
     application_fee_confirmed: null,
     tuition_fee_confirmed: null,
+    type: (queryParams['type'] as ClassListType) ?? 'provisional',
 });
 const saveVerification = async () => {
     if (!hasAbility('verify:class-lists')) {
@@ -271,7 +276,7 @@ onMounted(() => {
                 </BaseCard>
             </div>
             <div class="flex w-1/4 flex-col space-y-15">
-                <Sidebar :other-applications="otherApplications" :next-top="nextTop" />
+                <Sidebar :other-applications="otherApplications" :next-top="nextTop" type="provisional" />
             </div>
         </div>
     </PageContainer>

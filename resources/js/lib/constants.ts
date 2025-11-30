@@ -75,6 +75,7 @@ const DISABILITY_OPTIONS: RadioGroupOption[] = [
     { label: 'No', value: 'no', inputId: 'disability_no' },
     { label: 'Skip', value: 'prefer_not_to_say', inputId: 'disability_prefer_not_to_say' },
 ];
+const ACADEMIC_YEAR_START = 2026;
 export {
     API_BASE_URL,
     API_VERSION,
@@ -87,4 +88,6 @@ export {
     PAGINATION_ITEMS_PER_PAGE,
     PAGINATION_MAX_LIMIT,
     PAYMENT_METHODS,
+    ACADEMIC_YEAR_START,
 };
+

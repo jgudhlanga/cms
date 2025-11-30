@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Enums\AcademicYears;
+namespace App\Enums\AcademicCalendars;
 
-enum AcademicYearTypeEnum: string
+enum AcademicCalendarTypeEnum: string
 {
     case SEMESTER = 'semester';
     case TRIMESTER = 'trimester';

@@ -1,44 +1,54 @@
 <?php
 
-namespace App\Repositories\Acl;
+namespace App\Repositories\AcademicCalendars;
 
-use App\DTO\Acl\ModuleDto;
-use App\Http\Filters\Acl\ModuleFilter;
-use App\Models\Acl\Module;
+use App\DTO\AcademicYears\AcademicCalendarDto;
+use App\Http\Filters\AcademicCalendars\AcademicCalendarFilter;
+use App\Models\AcademicCalendars\AcademicCalendar;
+use App\Repositories\AcademicCalendars\Interface\IAcademicCalendarRepository;
 use App\Repositories\Base\BaseRepository;
-use App\Repositories\Acl\Interface\IModuleRepository;
 
-class ModuleRepository extends BaseRepository implements IModuleRepository
+class AcademicCalendarRepository extends BaseRepository implements IAcademicCalendarRepository
 {
-    public function __construct(protected Module $module)
+    public function __construct(protected AcademicCalendar $academicCalendar)
     {
-        parent::__construct($this->module);
+        parent::__construct($this->academicCalendar);
     }
 
-    public function create(ModuleDto $dto): Module
+    public function create(AcademicCalendarDto $dto): AcademicCalendar
     {
-        return $this->module->create([
-            'title' => $dto->title,
+        return $this->academicCalendar->create($this->extractFields($dto))->refresh();
+    }
+
+    public function update(AcademicCalendar $academicCalendar, AcademicCalendarDto $dto): AcademicCalendar
+    {
+        return tap($academicCalendar)->update($this->extractFields($dto));
+    }
+
+    public function allFilter($columns = ['*'], ?AcademicCalendarFilter $filters = null)
+    {
+        return $this->academicCalendar
+            ->select($columns)
+            ->filter($filters)
+            ->orderBy('name')
+            ->orderBy('deleted_at')
+            ->paginate()
+            ->withQueryString();
+    }
+
+    /**
+     * @param AcademicCalendarDto $dto
+     * @return array
+     */
+    private function extractFields(AcademicCalendarDto $dto): array
+    {
+        return [
+            'name' => $dto->name,
+            'year' => $dto->year,
+            'type' => $dto->type,
+            'opening_date' => $dto->opening_date,
+            'closing_date' => $dto->closing_date,
             'description' => $dto->description,
-        ])->refresh();
-    }
-
-    public function update(Module $module, ModuleDto $dto): Module
-    {
-        return tap($module)->update([
-            'title' => $dto->title,
-            'description' => $dto->description,
-        ]);
-    }
-
-    public function allFilter($columns = ['*'], ?ModuleFilter $filters = null)
-    {
-        return $this->module
-			->select($columns)
-			->filter($filters)
-			->orderBy('title')
-			->orderBy('deleted_at')
-			->paginate()
-			->withQueryString();
+        ];
     }
 }

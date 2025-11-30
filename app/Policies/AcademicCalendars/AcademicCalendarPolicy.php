@@ -1,45 +1,45 @@
 <?php
 
-namespace App\Policies\Acl;
+namespace App\Policies\AcademicCalendars;
 
 use App\Enums\Acl\PermissionEnum;
-use App\Models\Acl\Module;
+use App\Models\AcademicCalendars\AcademicCalendar;
 use App\Models\Users\User;
 
-class ModulePolicy
+class AcademicCalendarPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->can(PermissionEnum::VIEW_ANY_MODULES);
+        return $user->can(PermissionEnum::VIEW_ANY_ACADEMIC_CALENDARS);
     }
 
-    public function view(User $user, Module $module): bool
+    public function view(User $user, AcademicCalendar $academicCalendar): bool
     {
-        return $user->can(PermissionEnum::VIEW_ANY_MODULES) || $user->can(PermissionEnum::VIEW_MODULE);
+        return $user->can(PermissionEnum::VIEW_ANY_ACADEMIC_CALENDARS) || $user->can(PermissionEnum::VIEW_ACADEMIC_CALENDARS);
     }
 
     public function create(User $user): bool
     {
-        return $user->can(PermissionEnum::CREATE_MODULE);
+        return $user->can(PermissionEnum::CREATE_ACADEMIC_CALENDARS);
     }
 
-    public function update(User $user, Module $module): bool
+    public function update(User $user, AcademicCalendar $academicCalendar): bool
     {
-        return $user->can(PermissionEnum::UPDATE_MODULE, $module);
+        return $user->can(PermissionEnum::UPDATE_ACADEMIC_CALENDARS, $academicCalendar);
     }
 
-    public function delete(User $user, Module $module): bool
+    public function delete(User $user, AcademicCalendar $academicCalendar): bool
     {
-        return $user->can(PermissionEnum::DELETE_MODULE, $module);
+        return $user->can(PermissionEnum::DELETE_ACADEMIC_CALENDARS, $academicCalendar);
     }
 
-    public function restore(User $user, Module $module): bool
+    public function restore(User $user, AcademicCalendar $academicCalendar): bool
     {
-        return $user->can(PermissionEnum::RESTORE_MODULE, $module);
+        return $user->can(PermissionEnum::RESTORE_ACADEMIC_CALENDARS, $academicCalendar);
     }
 
-    public function forceDelete(User $user, Module $module): bool
+    public function forceDelete(User $user, AcademicCalendar $academicCalendar): bool
     {
-		return $user->can(PermissionEnum::FORCE_DELETE_MODULE, $module);
+        return $user->can(PermissionEnum::FORCE_DELETE_ACADEMIC_CALENDARS, $academicCalendar);
     }
 }

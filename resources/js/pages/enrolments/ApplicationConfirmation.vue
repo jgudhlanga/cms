@@ -1,16 +1,14 @@
 <script setup lang="ts">
 import { useCustomConfirmDialog } from '@/composables/core/useCustomConfirmDialog';
 import { useUtils } from '@/composables/core/useUtils';
-import { ColorVariant } from '@/enums/colors';
 import { errorAlert, forbiddenAlert, successAlert } from '@/lib/alerts';
 import { hasAbility } from '@/lib/permissions';
-import Details from '@/pages/enrolments/partials/verification/Details.vue';
-import Sidebar from '@/pages/enrolments/partials/verification/Sidebar.vue';
+import Details from '@/pages/enrolments/partials/shared/Details.vue';
+import Sidebar from '@/pages/enrolments/partials/shared/Sidebar.vue';
 import { AuthObject } from '@/types/data-pagination';
-import { ClassListAttributeParams, ClassListTopNext, Enrolment, OtherApplication } from '@/types/enrolments';
+import { ClassListAttributeParams, ClassListTopNext, ClassListType, Enrolment, OtherApplication } from '@/types/enrolments';
 import { Link } from '@/types/ui';
 import { Head, useForm } from '@inertiajs/vue3';
-import { trans } from 'laravel-vue-i18n';
 import { computed, onMounted } from 'vue';
 
 interface Props {
@@ -22,6 +20,8 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+const { isItTrue, navigateTo, getQueryParams } = useUtils();
+const queryParams = getQueryParams();
 
 const { application, nextTop } = props;
 
@@ -30,11 +30,17 @@ const breadcrumbs: Array<Link> = [
     { transChoiceKey: 'enrolment', href: route('enrolments.index') },
     {
         title: application.attributes.department,
-        href: route('enrolments.department-applications', { institution_department: String(application?.attributes.institutionDepartmentId) }),
+        href: route('enrolments.department-applications', {
+            institution_department: String(application?.attributes.institutionDepartmentId),
+            type: queryParams['type'],
+        }),
     },
     {
         title: application.attributes.level,
-        href: route('enrolments.department-applications', { institution_department: String(application?.attributes.institutionDepartmentId) }),
+        href: route('enrolments.department-applications', {
+            institution_department: String(application?.attributes.institutionDepartmentId),
+            type: queryParams['type'],
+        }),
     },
     {
         title: application.attributes.course,
@@ -44,12 +50,11 @@ const breadcrumbs: Array<Link> = [
             intake_period_id: String(application?.attributes.intakePeriodId),
             mode_of_study_id: String(application?.attributes.modeOfStudyId),
             department_course_id: String(application?.attributes.departmentCourseId),
+            type: queryParams['type'],
         }),
     },
     { title: application?.attributes?.studentName },
 ];
-
-const { isItTrue, navigateTo } = useUtils();
 
 const oLevelRequired = computed(() => {
     if (application?.relationships?.requirements) {
@@ -99,53 +104,33 @@ const form = useForm<ClassListAttributeParams>({
     read_write_confirmed: null,
     application_fee_confirmed: null,
     tuition_fee_confirmed: null,
+    type: (queryParams['type'] as ClassListType) ?? 'verified',
 });
-const saveVerification = async () => {
-    if (!hasAbility('verify:class-lists')) {
+
+const tuitionPaidOptions = computed(() => [
+    { inputId: 'tuition_paid_yes', label: 'Yes', value: true },
+    { inputId: 'tuition_paid_no', label: 'No', value: false },
+]);
+const saveConfirmation = async () => {
+    if (!hasAbility('manage-final:class-lists')) {
         forbiddenAlert();
         return;
     }
-    if (!form.identity_confirmed) {
-        errorAlert('Please confirm Identity is correct');
+    if (!form.tuition_fee_confirmed) {
+        errorAlert('Please confirm tuition fees is paid');
         return;
-    }
-    if (!form.names_confirmed) {
-        errorAlert('Please confirm Name is correct');
-        return;
-    }
-    if (!form.disability_confirmed) {
-        errorAlert('Please confirm disability status is correct');
-        return;
-    }
-    if (oLevelRequired.value) {
-        if (!form.o_level_confirmed) {
-            errorAlert('Please confirm O Level results are correct');
-            return;
-        }
-    }
-    if (previousLevelRequired.value) {
-        if (!form.previous_level_confirmed) {
-            errorAlert(`Please confirm ${requiredLevel.value} level completed`);
-            return;
-        }
-    }
-    if (readWriteRequired.value) {
-        if (!form.read_write_confirmed) {
-            errorAlert(trans('trans.acknowledge_read_write'));
-            return;
-        }
     }
     const confirmed = await useCustomConfirmDialog().open({
-        title: 'Verify Applicant',
-        message: 'Are you sure you are confirming the details of this applicant?',
+        title: 'Confirm Student',
+        message: 'Are you sure you are confirming the payment of tuition fees for this applicant and elevating them to final class list?',
         confirmText: 'Yes confirm',
     });
     if (confirmed) {
         form.put(route('enrolments.update-class-list', { student_program: String(application.id) }), {
             onSuccess: () => {
-                successAlert('Class list entry successfully verified.');
+                successAlert('Student successfully confirm.');
                 if (nextTop.length > 0) {
-                    navigateTo(route('enrolments.verify', { student_program: String(nextTop[0].applicationId) }));
+                    navigateTo(route('enrolments.confirm', { student_program: String(nextTop[0].applicationId), type: queryParams['type'] }));
                 }
             },
             onError: (errors: any) => {
@@ -153,66 +138,12 @@ const saveVerification = async () => {
                     const allErrors = Object.values(errors).join('\n');
                     errorAlert(allErrors);
                 } else {
-                    errorAlert('An unexpected error happened, class list entry could not be verified.');
+                    errorAlert('An unexpected error happened, student could not be confirm.');
                 }
             },
         });
     }
 };
-const rejectApplication = async () => {
-    if (!hasAbility('verify:class-lists')) {
-        forbiddenAlert();
-        return;
-    }
-    const confirmed = await useCustomConfirmDialog().open({
-        title: 'Reject Applicant',
-        message: 'Are you sure you are rejecting this applicant from the class list?',
-        confirmText: 'Yes confirm',
-    });
-    if (confirmed) {
-        form.put(route('enrolments.reject-application', { student_program: String(application.id) }), {
-            onSuccess: () => {
-                successAlert('Application successfully rejected from class list.');
-                if (nextTop.length > 0) {
-                    navigateTo(route('enrolments.verify', { student_program: String(nextTop[0].applicationId) }));
-                }
-            },
-            onError: (errors: any) => {
-                if (Object.keys(errors).length) {
-                    const allErrors = Object.values(errors).join('\n');
-                    errorAlert(allErrors);
-                } else {
-                    errorAlert('An unexpected error happened, class list entry could not be rejected.');
-                }
-            },
-        });
-    }
-};
-
-const identityConfirmedOptions = computed(() => [
-    { inputId: 'identity_confirmed_yes', label: 'Yes', value: true },
-    { inputId: 'identity_confirmed_no', label: 'No', value: false },
-]);
-const namesConfirmedOptions = computed(() => [
-    { inputId: 'names_confirmed_yes', label: 'Yes', value: true },
-    { inputId: 'names_confirmed_no', label: 'No', value: false },
-]);
-const disabilityConfirmedOptions = computed(() => [
-    { inputId: 'disability_confirmed_yes', label: 'Yes', value: true },
-    { inputId: 'disability_confirmed_no', label: 'No', value: false },
-]);
-const oLevelConfirmedOptions = computed(() => [
-    { inputId: 'o_level_confirmed_yes', label: 'Yes', value: true },
-    { inputId: 'o_level_confirmed_no', label: 'No', value: false },
-]);
-const previousLevelOptions = computed(() => [
-    { inputId: 'previous_level_confirmed_yes', label: 'Yes', value: true },
-    { inputId: 'previous_level_confirmed_no', label: 'No', value: false },
-]);
-const readWriteOptions = computed(() => [
-    { inputId: 'read_write_confirmed_yes', label: 'Yes', value: true },
-    { inputId: 'read_write_confirmed_no', label: 'No', value: false },
-]);
 
 onMounted(() => {
     const entry = application.relationships?.classList;
@@ -222,6 +153,7 @@ onMounted(() => {
     form.o_level_confirmed = isItTrue(entry?.attributes?.oLevelConfirmed);
     form.previous_level_confirmed = isItTrue(entry?.attributes?.previousLevelConfirmed);
     form.read_write_confirmed = isItTrue(entry?.attributes?.readWriteConfirmed);
+    form.tuition_fee_confirmed = isItTrue(entry?.attributes?.tuitionFeeConfirmed);
 });
 </script>
 
@@ -240,38 +172,17 @@ onMounted(() => {
                 <BaseCard title="Verification" description="Verification of applicant details">
                     <div class="grid grid-cols-1 gap-4">
                         <div class="flex items-center space-x-5">
-                            <Label class="font-bold">Confirm Identity is correct(id number / passport number):</Label>
-                            <BaseRadioGroup :options="identityConfirmedOptions" v-model="form.identity_confirmed" :vertical-layout="false" />
-                        </div>
-                        <div class="flex items-center space-x-5">
-                            <Label class="font-bold">Confirm applicant's name is correct:</Label>
-                            <BaseRadioGroup :options="namesConfirmedOptions" v-model="form.names_confirmed" :vertical-layout="false" />
-                        </div>
-                        <div class="flex items-center space-x-5">
-                            <Label class="font-bold">Confirm applicant's disability status:</Label>
-                            <BaseRadioGroup :options="disabilityConfirmedOptions" v-model="form.disability_confirmed" :vertical-layout="false" />
-                        </div>
-                        <div class="flex items-center space-x-5" v-if="oLevelRequired">
-                            <Label class="font-bold">Confirm O Level results are correct:</Label>
-                            <BaseRadioGroup :options="oLevelConfirmedOptions" v-model="form.o_level_confirmed" :vertical-layout="false" />
-                        </div>
-                        <div class="flex items-center space-x-5" v-if="previousLevelRequired">
-                            <Label class="font-bold">{{ `Confirm ${requiredLevel} level completed` }}</Label>
-                            <BaseRadioGroup :options="previousLevelOptions" v-model="form.previous_level_confirmed" :vertical-layout="false" />
-                        </div>
-                        <div class="flex items-center space-x-5" v-if="readWriteRequired">
-                            <Label class="font-bold">Confirm read and write ability</Label>
-                            <BaseRadioGroup :options="readWriteOptions" v-model="form.read_write_confirmed" :vertical-layout="false" />
+                            <Label class="font-bold">Confirm tuition fees is paid:</Label>
+                            <BaseRadioGroup :options="tuitionPaidOptions" v-model="form.tuition_fee_confirmed" :vertical-layout="false" />
                         </div>
                     </div>
                     <div class="mt-6 flex items-center justify-between">
-                        <BaseButton title="Verify and give Offer to applicant" @click="saveVerification" classes="rounded-full" />
-                        <BaseButton :variant="ColorVariant.danger" title="Reject Application" @click="rejectApplication" classes="rounded-full" />
+                        <BaseButton title="Elevate student to final class list" @click="saveConfirmation" classes="rounded-full" />
                     </div>
                 </BaseCard>
             </div>
             <div class="flex w-1/4 flex-col space-y-15">
-                <Sidebar :other-applications="otherApplications" :next-top="nextTop" />
+                <Sidebar :other-applications="otherApplications" :next-top="nextTop" type="verified" />
             </div>
         </div>
     </PageContainer>

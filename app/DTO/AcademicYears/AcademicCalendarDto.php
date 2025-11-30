@@ -2,30 +2,30 @@
 
 namespace App\DTO\AcademicYears;
 
-use App\Http\Requests\AcademicYears\AcademicYearRequest;
+use App\Http\Requests\AcademicCalendars\AcademicCalendarRequest;
 
-readonly class AcademicYearDto
+readonly class AcademicCalendarDto
 {
     public function __construct(
         public string  $name,
         public string  $type,
         public string  $year,
-        public string  $start_date,
-        public string  $end_date,
+        public string  $opening_date,
+        public string  $closing_date,
         public ?string $description
     )
     {
     }
 
 
-    public static function fromAcademicYearRequest(AcademicYearRequest $request): AcademicYearDto
+    public static function fromAcademicCalendarRequest(AcademicCalendarRequest $request): AcademicCalendarDto
     {
         return new self(
             name: $request->input('name'),
             type: $request->input('type'),
             year: $request->input('year'),
-            start_date: $request->input('start_date'),
-            end_date: $request->input('end_date'),
+            opening_date: $request->input('opening_date'),
+            closing_date: $request->input('closing_date'),
             description: $request->input('description'),
         );
     }

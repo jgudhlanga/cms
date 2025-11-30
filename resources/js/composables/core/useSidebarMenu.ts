@@ -47,12 +47,6 @@ export function useSidebarMenu() {
             show: false /*hasAbility('view:examinations'),*/,
         },
         {
-            transChoiceKey: 'trans.accommodation',
-            icon: icons[IconName.bed],
-            url: route('dashboard'),
-            show: false /*hasAbility('view:accommodations')*/,
-        },
-        {
             transChoiceKey: 'trans.communication',
             url: '#',
             icon: icons[IconName.person_chat],
@@ -70,6 +64,12 @@ export function useSidebarMenu() {
             url: route('institution.index'),
             icon: icons[IconName.school],
             show: hasAbility('view:institution-settings'),
+        },
+        {
+            transChoiceKey: 'trans.accommodation',
+            icon: icons[IconName.bed],
+            url: route('dashboard'),
+            show: hasAbility('view:accommodations'),
         },
         {
             transKey: 'trans.settings',
