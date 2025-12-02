@@ -168,6 +168,17 @@ class PermissionsTableSeeder extends Seeder
                 [PermissionEnum::EXPORT_FEE_STRUCTURES->value],
                 [PermissionEnum::CRUD_FEE_STRUCTURES->value],
                 [PermissionEnum::VIEW_FEE_STRUCTURES_AUDIT_TRAIL->value],
+                /*** Academic Calendars */
+                [PermissionEnum::VIEW_ANY_ACADEMIC_CALENDARS->value],
+                [PermissionEnum::VIEW_ACADEMIC_CALENDARS->value],
+                [PermissionEnum::CREATE_ACADEMIC_CALENDARS->value],
+                [PermissionEnum::UPDATE_ACADEMIC_CALENDARS->value],
+                [PermissionEnum::DELETE_ACADEMIC_CALENDARS->value],
+                [PermissionEnum::RESTORE_ACADEMIC_CALENDARS->value],
+                [PermissionEnum::FORCE_DELETE_ACADEMIC_CALENDARS->value],
+                [PermissionEnum::IMPORT_ACADEMIC_CALENDARS->value],
+                [PermissionEnum::EXPORT_ACADEMIC_CALENDARS->value],
+                [PermissionEnum::VIEW_ACADEMIC_CALENDARS_AUDIT_TRAIL->value],
             ],
             'shared' => [
                 [PermissionEnum::VIEW_ANY_BANK_DETAILS->value],
@@ -275,9 +286,9 @@ class PermissionsTableSeeder extends Seeder
             ],
         ];
         foreach ($permissions as $key => $rows) {
-            $module = Module::where('title', $key)->first();
+            $module = Module::where('title', $key)->withTrashed()->first();
             foreach ($rows as $row) {
-                $exist = Permission::where('name', $row[0])->first();
+                $exist = Permission::where('name', $row[0])->withTrashed()->first();
                 if (!$exist instanceof Permission) {
                     Permission::create(['name' => $row[0], 'module_id' => $module?->id]);
                 }

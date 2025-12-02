@@ -498,4 +498,6 @@ return [
     "disability" => "Disability?",
     "phone" => "Phone|Phones",
     "hostel" => "Hostel|Hostels",
+    "academic_year" => "Academic year|Academic years",
+    "academic_calendar" => "Academic calendar|Academic calendars",
 ];

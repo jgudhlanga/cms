@@ -13,6 +13,7 @@ declare module 'vue' {
   export interface GlobalComponents {
     AcademicLevelComboSelect: typeof import('./../components/core/form/combobox/AcademicLevelComboSelect.vue')['default']
     AcademicRecordForm: typeof import('./../components/students/academicRecords/AcademicRecordForm.vue')['default']
+    AcademicYearComboSelect: typeof import('./../components/core/form/combobox/AcademicYearComboSelect.vue')['default']
     Accordion: typeof import('./../components/ui/accordion/Accordion.vue')['default']
     AccordionContent: typeof import('./../components/ui/accordion/AccordionContent.vue')['default']
     AccordionItem: typeof import('./../components/ui/accordion/AccordionItem.vue')['default']

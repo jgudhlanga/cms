@@ -236,6 +236,7 @@ export type ClassListAttributeParams = {
     read_write_confirmed: boolean | null;
     application_fee_confirmed: boolean | null;
     tuition_fee_confirmed: boolean | null;
+    type: ClassListType | null;
 };
 
 export type ClassListTopNext = {
