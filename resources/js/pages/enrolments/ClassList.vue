@@ -71,6 +71,7 @@ const handleFilterChange = () => {
             intake_period_id: intakePeriodId,
             mode_of_study_id: modeOfStudyId,
             department_course_id: String(course?.department_course_id),
+            type: queryParams['type'],
         }),
     );
 };
