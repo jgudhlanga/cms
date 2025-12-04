@@ -16,7 +16,6 @@ class AcademicCalendarResource extends JsonResource
             "attributes" => [
                 'name' => $this->resource->name,
                 'type' => $this->resource->type,
-                'year' => $this->resource->year,
                 'openingDate' => $this->resource->opening_date,
                 'closingDate' => $this->resource->closing_date,
                 'description' => $this->resource->description,

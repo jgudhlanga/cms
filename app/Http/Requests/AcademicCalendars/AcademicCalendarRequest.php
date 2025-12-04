@@ -20,7 +20,6 @@ class AcademicCalendarRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255'],
             'type' => ['required', new Enum(AcademicCalendarTypeEnum::class)],
-            'year' => ['required', 'string', 'max:4'],
             'opening_date' => ['required', 'date'],
             'closing_date' => ['required', 'date', 'after_or_equal:opening_date'],
             'description' => ['nullable', 'string'],

@@ -68,7 +68,7 @@ export function useSidebarMenu() {
         {
             transChoiceKey: 'trans.accommodation',
             icon: icons[IconName.bed],
-            url: route('dashboard'),
+            url: route('accommodations.index'),
             show: hasAbility('view:accommodations'),
         },
         {

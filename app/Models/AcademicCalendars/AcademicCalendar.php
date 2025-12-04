@@ -25,7 +25,6 @@ class AcademicCalendar extends Model
         'tenant_id',
         'name',
         'type',
-        'year',
         'opening_date',
         'closing_date',
         'description',
