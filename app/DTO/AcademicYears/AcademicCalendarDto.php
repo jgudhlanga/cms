@@ -9,7 +9,6 @@ readonly class AcademicCalendarDto
     public function __construct(
         public string  $name,
         public string  $type,
-        public string  $year,
         public string  $opening_date,
         public string  $closing_date,
         public ?string $description
@@ -23,7 +22,6 @@ readonly class AcademicCalendarDto
         return new self(
             name: $request->input('name'),
             type: $request->input('type'),
-            year: $request->input('year'),
             opening_date: $request->input('opening_date'),
             closing_date: $request->input('closing_date'),
             description: $request->input('description'),

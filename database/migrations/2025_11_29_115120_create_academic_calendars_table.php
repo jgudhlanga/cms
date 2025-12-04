@@ -15,7 +15,6 @@ return new class extends Migration {
             $table->foreignId('tenant_id')->constrained();
             $table->string('name');
             $table->enum('type', ['semester', 'trimester', 'quadmester', 'quarter', 'block', 'modular', 'minimester', 'other'])->default('semester');
-            $table->date('year');
             $table->date('opening_date');
             $table->date('closing_date');
             $table->text('description')->nullable();

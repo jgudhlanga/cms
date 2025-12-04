@@ -7,6 +7,7 @@ use App\Http\Filters\AcademicCalendars\AcademicCalendarFilter;
 use App\Models\AcademicCalendars\AcademicCalendar;
 use App\Repositories\AcademicCalendars\Interface\IAcademicCalendarRepository;
 use App\Repositories\Base\BaseRepository;
+use Carbon\Carbon;
 
 class AcademicCalendarRepository extends BaseRepository implements IAcademicCalendarRepository
 {
@@ -44,10 +45,9 @@ class AcademicCalendarRepository extends BaseRepository implements IAcademicCale
     {
         return [
             'name' => $dto->name,
-            'year' => $dto->year,
             'type' => $dto->type,
-            'opening_date' => $dto->opening_date,
-            'closing_date' => $dto->closing_date,
+            'opening_date' => Carbon::parse($dto->opening_date)->format('Y-m-d'),
+            'closing_date' => Carbon::parse($dto->closing_date)->format('Y-m-d'),
             'description' => $dto->description,
         ];
     }

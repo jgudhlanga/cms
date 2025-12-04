@@ -376,6 +376,7 @@ declare module 'vue' {
     TabsList: typeof import('./../components/ui/tabs/TabsList.vue')['default']
     TabsTrigger: typeof import('./../components/ui/tabs/TabsTrigger.vue')['default']
     TenantSwitcher: typeof import('./../components/core/sidebar/TenantSwitcher.vue')['default']
+    TermTypeComboSelect: typeof import('./../components/core/form/combobox/TermTypeComboSelect.vue')['default']
     Text: typeof import('./../components/core/typography/Text.vue')['default']
     Textarea: typeof import('./../components/ui/textarea/Textarea.vue')['default']
     TextEditLink: typeof import('./../components/core/util/TextEditLink.vue')['default']

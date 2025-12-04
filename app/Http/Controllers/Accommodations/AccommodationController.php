@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\AcademicCalendars;
+namespace App\Http\Controllers\Accommodations;
 
 use App\DTO\AcademicYears\AcademicCalendarDto;
 use App\Http\Controllers\Controller;
@@ -9,9 +9,10 @@ use App\Http\Requests\AcademicCalendars\AcademicCalendarRequest;
 use App\Http\Resources\AcademicCalendars\AcademicCalendarResource;
 use App\Models\AcademicCalendars\AcademicCalendar;
 use App\Repositories\AcademicCalendars\Interface\IAcademicCalendarRepository;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 
-class AcademicCalendarController extends Controller
+class AccommodationController extends Controller
 {
     public function __construct(protected IAcademicCalendarRepository $repository)
     {
@@ -19,13 +20,8 @@ class AcademicCalendarController extends Controller
 
     public function index(AcademicCalendarFilter $filters)
     {
-       $this->authorize('viewAny', AcademicCalendar::class);
-        $academicCalendars = AcademicCalendarResource::collection($this->repository->allFilter(['*'], $filters));
-        return Inertia::render('academicCalendars/Index', [
-            'academicCalendars' => $academicCalendars,
-            'filters' => request()->only(['search', 'trashed']),
-            'trashedCount' => $this->repository->allTrashed()->count(),
-        ]);
+       // $this->authorize('viewAny', AcademicCalendar::class);
+        return Inertia::render('accommodations/Index');
     }
 
     public function create()
