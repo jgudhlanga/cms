@@ -1,12 +1,12 @@
 <script lang="ts" setup>
 import BaseCombobox from '@/components/core/form/combobox/BaseCombobox.vue';
-import { AcademicYear } from '@/types/institution';
 import { SelectOption } from '@/types/utils';
 import { InertiaForm } from '@inertiajs/vue3';
 import { computed, onMounted } from 'vue';
+import { AcademicCalendar } from '@/types/academic-calendar';
 
 interface Props {
-    data: AcademicYear[];
+    data: AcademicCalendar[];
     form?: InertiaForm<any>;
 }
 
@@ -15,10 +15,10 @@ const props = defineProps<Props>();
 onMounted(async () => {});
 
 const options = computed(() => {
-    return props.data.length > 0 ? props.data.map((mode: AcademicYear) => <SelectOption>{ value: String(mode.id), label: mode?.name }) : [];
+    return props.data.length > 0 ? props.data.map((academicCalendar: AcademicCalendar) => <SelectOption>{ value: String(academicCalendar.id), label: academicCalendar?.attributes?.name }) : [];
 });
 </script>
 
 <template>
-    <BaseCombobox :label="$tChoice('trans.academic_year', 1)" :options="options" v-bind="$attrs" />
+    <BaseCombobox :label="$tChoice('trans.academic_calendar', 1)" :options="options" v-bind="$attrs" />
 </template>

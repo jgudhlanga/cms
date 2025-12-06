@@ -7,6 +7,8 @@ import { AcademicCalendar } from '@/types/academic-calendar';
 import type { Link } from '@/types/ui';
 import { InertiaForm, usePage } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
+import { ref } from 'vue';
+import { useDropdowns } from '@/composables/core/useDropdowns';
 
 export const useAcademicCalendars = () => {
     const { moreActionButton, onDelete, onForceDelete, onRestore } = useDataTables();
@@ -106,10 +108,24 @@ export const useAcademicCalendars = () => {
         }
     };
 
+    const isLoading = ref(false);
+    const academicCalendars = ref<AcademicCalendar[]>([]);
+
+    const listAcademicCalendars = async (search?: string) => {
+        const { data, fetchData } = useDropdowns();
+        isLoading.value = true;
+        await fetchData({ url: route('v1.academic-calendars.index'), search, transChoiceKey: 'trans.academic_calendar' });
+        isLoading.value = false;
+        academicCalendars.value = data.value;
+    };
+
     return {
         createTableColumns,
         breadcrumbs,
         onOpenModal,
         saveAcademicCalendar,
+        isLoading,
+        academicCalendars,
+        listAcademicCalendars,
     };
 };

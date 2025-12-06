@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\V1\Dashboard\DashboardController;
+use App\Http\Controllers\Api\V1\Institution\AcademicCalendarController;
 use App\Http\Controllers\Api\V1\Institution\DepartmentLevelController;
 use App\Http\Controllers\Api\V1\Institution\DepartmentLevelCourseController;
 use App\Http\Controllers\Api\V1\Institution\DepartmentMetaDataController;

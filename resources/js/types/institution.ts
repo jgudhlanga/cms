@@ -107,10 +107,6 @@ export type ModeOfStudyParams = {
     description?: string;
 };
 
-export type AcademicYear = {
-    id: string;
-    name: string;
-};
 export type Subject = {
     type?: string;
     id?: string;

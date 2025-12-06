@@ -21,63 +21,6 @@ class ApplicationMetricsService
         $this->userDepartments = Helper::resolveUserDepartments();
     }
 
-    /*public function applicationsByDepartment(): Collection
-    {
-        $intakePeriod = Helper::resolveIntakePeriod();
-
-        if ($this->isDepartmentUser && empty($this->userDepartments)) {
-            return collect();
-        }
-
-        $query = DB::table('departments')
-            ->select(
-                'departments.id as department_id',
-                'departments.name as department_name',
-
-                DB::raw('COUNT(student_programs.id) as application_count'),
-
-                // gender counts
-                DB::raw("SUM(CASE WHEN genders.title = 'Male' THEN 1 ELSE 0 END) as male_count"),
-                DB::raw("SUM(CASE WHEN genders.title = 'Female' THEN 1 ELSE 0 END) as female_count"),
-
-                // disability counts
-                DB::raw("SUM(CASE WHEN students.disability_status = 'yes' THEN 1 ELSE 0 END) as disabled_count"),
-
-                // mode of study counts
-                DB::raw("SUM(CASE WHEN mode_of_studies.name = 'Full Time' THEN 1 ELSE 0 END) as full_time_count"),
-                DB::raw("SUM(CASE WHEN mode_of_studies.name = 'Part Time' THEN 1 ELSE 0 END) as part_time_count"),
-                DB::raw("SUM(CASE WHEN mode_of_studies.name = 'Block Release' THEN 1 ELSE 0 END) as block_release_count"),
-                DB::raw("SUM(CASE WHEN mode_of_studies.name = 'Ojet' THEN 1 ELSE 0 END) as ojet_count"),
-
-                // class_list counts
-                DB::raw("SUM(CASE WHEN class_lists.type = 'provisional' THEN 1 ELSE 0 END) as provisional_count"),
-                DB::raw("SUM(CASE WHEN class_lists.type = 'verified' THEN 1 ELSE 0 END) as verified_count"),
-                DB::raw("SUM(CASE WHEN class_lists.type = 'waiting' THEN 1 ELSE 0 END) as waiting_count"),
-                DB::raw("SUM(CASE WHEN class_lists.type = 'final' THEN 1 ELSE 0 END) as final_count"),
-                DB::raw("SUM(CASE WHEN class_lists.type = 'failed' THEN 1 ELSE 0 END) as failed_count")
-            )
-
-            // JOINS
-            ->leftJoin('institution_departments', 'institution_departments.department_id', '=', 'departments.id')
-            ->leftJoin('student_programs', 'student_programs.institution_department_id', '=', 'institution_departments.id')
-            ->leftJoin('students', 'student_programs.student_id', '=', 'students.id')
-            ->leftJoin('genders', 'students.gender_id', '=', 'genders.id')
-            ->leftJoin('mode_of_studies', 'student_programs.mode_of_study_id', '=', 'mode_of_studies.id')
-            ->leftJoin('class_lists', 'class_lists.student_program_id', '=', 'student_programs.id')
-
-            // FILTERS
-            ->where('departments.is_academic', true)
-            ->where('student_programs.intake_period_id', $intakePeriod?->id);
-
-        if ($this->isDepartmentUser) {
-            $query->whereIn('institution_departments.id', $this->userDepartments);
-        }
-
-        return $query
-            ->groupBy('departments.id', 'departments.name')
-            ->get();
-    }*/
-
     public function applicationsByDepartment(): Collection
     {
         $intakePeriod = Helper::resolveIntakePeriod();
@@ -104,8 +47,6 @@ class ApplicationMetricsService
                 DB::raw('COUNT(DISTINCT student_programs.id) as application_count'),
 
                 // gender counts (use SUM of DISTINCT student_program id conditions would be complicated;
-                // keeping SUM(CASE WHEN ...) is fine if duplicates are removed by DISTINCT count above,
-                // but if you still see issues switch to SUM(DISTINCT ...) patterns per need)
                 DB::raw("SUM(CASE WHEN genders.title = 'Male' THEN 1 ELSE 0 END) as male_count"),
                 DB::raw("SUM(CASE WHEN genders.title = 'Female' THEN 1 ELSE 0 END) as female_count"),
 

@@ -149,11 +149,6 @@ const intakePeriodModel = defineModel<SelectOption | null>('intakePeriodModel');
                     <tr class="j-tr" v-for="data in departmentTableData" :key="data.departmentId">
                         <td class="j-td flex items-center gap-2">
                             <span class="inline-block h-3 w-3 rounded-full" :style="{ backgroundColor: data.color }"></span>
-<!--                            <TextLink
-                                :title="data.departmentName"
-                                :href="route('enrolments.department-applications', { institution_department: data.departmentId })"
-                                v-if="showActionsColumn && hasAbility('view:student-programs')"
-                            />-->
                             <span>{{ data.departmentName }}</span>
                         </td>
                         <td class="j-td text-center">{{ data.maleCount }}</td>

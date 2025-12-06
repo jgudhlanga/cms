@@ -24,7 +24,7 @@ interface Props {
 const props = defineProps<Props>();
 const { department } = props;
 
-const institutionDepartmentId = department.id?.toString() ?? '';
+const institutionDepartmentId = String(department.id);
 
 const breadcrumbs: Array<Link> = [
     { transChoiceKey: 'institution', transChoiceKeyIndex: 1, href: route('institution.index') },
