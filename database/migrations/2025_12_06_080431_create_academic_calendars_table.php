@@ -16,11 +16,16 @@ return new class extends Migration {
             $table->foreignId('tenant_id')->constrained();
             $table->string('name')->unique();
             $table->string('calendar_year');
-            $table->enum('calendar_type', [AcademicCalendarTypeEnum::BLOCK->value,
-                AcademicCalendarTypeEnum::MINIMESTER->value,
-                AcademicCalendarTypeEnum::MODULAR->value, AcademicCalendarTypeEnum::OTHER->value,
-                AcademicCalendarTypeEnum::QUADMESTER->value, AcademicCalendarTypeEnum::QUARTER->value,
-                AcademicCalendarTypeEnum::SEMESTER->value, AcademicCalendarTypeEnum::TRIMESTER->value]);
+            $table->enum('calendar_type', [
+                AcademicCalendarTypeEnum::BLOCK,
+                AcademicCalendarTypeEnum::MINIMESTER,
+                AcademicCalendarTypeEnum::MODULAR,
+                AcademicCalendarTypeEnum::OTHER,
+                AcademicCalendarTypeEnum::QUADMESTER,
+                AcademicCalendarTypeEnum::QUARTER,
+                AcademicCalendarTypeEnum::SEMESTER,
+                AcademicCalendarTypeEnum::TRIMESTER])
+                ->default(AcademicCalendarTypeEnum::SEMESTER);
             $table->date('opening_date');
             $table->date('closing_date');
             $table->string('description')->nullable();
