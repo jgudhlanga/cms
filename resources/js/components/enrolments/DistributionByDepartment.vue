@@ -175,7 +175,17 @@ const intakePeriodModel = defineModel<SelectOption | null>('intakePeriodModel');
                             />
                         </td>
                         <td class="j-td j-td-l-border text-center">
-                            <DepartmentClassListActionLink :actionable="false" :title="String(data.waitingCount)" />
+                            <DepartmentClassListActionLink
+                                :actionable="hasAbility('verify:class-lists') && showActionsColumn"
+                                :title="String(data.waitingCount)"
+                                :route-name="
+                                    route('enrolments.department-applications', {
+                                        institution_department: data.departmentId,
+                                        intake_period_id: intakePeriodModel?.value.toString(),
+                                        type: 'waiting',
+                                    })
+                                "
+                            />
                         </td>
                         <td class="j-td j-td-l-border text-center">
                             <DepartmentClassListActionLink :actionable="false" :title="String(data.failedCount)" />
