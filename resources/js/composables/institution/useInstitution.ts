@@ -10,7 +10,6 @@ import { InstitutionDepartment } from '@/types/institution';
 import { CustomTab } from '@/types/utils';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 import { h } from 'vue';
-import DepartmentClassIndex from '@/pages/institution/departments/partials/classes/DepartmentClassIndex.vue';
 
 export const useInstitution = () => {
     const { isItTrue } = useUtils();
@@ -33,7 +32,7 @@ export const useInstitution = () => {
             {
                 transLabel: () => trans_choice('trans.class', 2),
                 value: 'classes',
-                component: h(DepartmentClassIndex, { department }),
+                component: h(Enrolments, { department }),
                 show: isItTrue(department?.attributes?.isAcademic),
                 icon: IconName.user_check,
             },

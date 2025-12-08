@@ -20,6 +20,8 @@ const getButtonTitle = (type: ClassListType) => {
     switch (type) {
         case 'provisional':
             return 'Verify';
+        case 'waiting':
+            return 'Verify';
         case 'verified':
             return 'Confirm';
         default:
@@ -30,6 +32,8 @@ const getRouteName = (type: ClassListType, applicationId: string) => {
     switch (type) {
         case 'provisional':
             return route('enrolments.verify', { student_program: applicationId, type: 'provisional' });
+        case 'waiting':
+            return route('enrolments.verify', { student_program: applicationId, type: 'waiting' });
         case 'verified':
             return route('enrolments.confirm', { student_program: applicationId, type: 'verified' });
         default:

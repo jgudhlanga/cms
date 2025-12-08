@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Controllers\Dashboard\DashboardController;
-use App\Http\Controllers\Dashboard\TestController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -13,8 +12,6 @@ Route::middleware(['auth', 'ensure.can.impersonate'])->group(function () {
 });
 
 Route::get('/dashboard', DashboardController::class)->middleware(['auth', 'verified', 'redirect.student'])->name('dashboard');
-Route::get('/pdf/{student_program}', [TestController::class, 'pdf'])->name('generate-pdf');
-Route::get('/debug/{item}', [TestController::class, 'debug'])->name('debug.item');
 
 require __DIR__ . '/web/integrations.php';
 require __DIR__ . '/web/auth.php';
@@ -29,5 +26,4 @@ require __DIR__ . '/web/enrolments.php';
 require __DIR__ . '/web/students.php';
 require __DIR__ . '/web/workflows.php';
 require __DIR__ . '/web/documents.php';
-require __DIR__ . '/web/academic-calendars.php';
 require __DIR__ . '/web/accommodations.php';

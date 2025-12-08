@@ -123,9 +123,9 @@ const getGroupSlot = (group: EnrolmentGroup): number => {
             />
             <div class="flex justify-end space-x-2" v-if="!noData">
                 <ClassSize :class-size="classSize" />
-                <BaseButton title="Configure Classes" classes="rounded-full" v-if="hasAbility('manage-final:class-lists')">
+<!--                <BaseButton title="Configure Classes" classes="rounded-full" v-if="hasAbility('manage-final:class-lists')">
                     <BaseIcon :name="IconName.cogs" />
-                </BaseButton>
+                </BaseButton>-->
             </div>
             <div v-for="(enrolmentsInGroup, group) in enrolments.groups" :key="group" class="flex flex-col">
                 <div class="flex flex-col" v-if="Number(getGroupSlot(group.toLowerCase() as EnrolmentGroup)) > 0">

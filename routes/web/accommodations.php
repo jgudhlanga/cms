@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Controllers\AcademicCalendars\AcademicCalendarController;
 use App\Http\Controllers\Accommodations\AccommodationController;
 use Illuminate\Support\Facades\Route;
 

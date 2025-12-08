@@ -11,6 +11,7 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    AcademicCalendarComboSelect: typeof import('./../components/core/form/combobox/AcademicCalendarComboSelect.vue')['default']
     AcademicLevelComboSelect: typeof import('./../components/core/form/combobox/AcademicLevelComboSelect.vue')['default']
     AcademicRecordForm: typeof import('./../components/students/academicRecords/AcademicRecordForm.vue')['default']
     AcademicYearComboSelect: typeof import('./../components/core/form/combobox/AcademicYearComboSelect.vue')['default']
