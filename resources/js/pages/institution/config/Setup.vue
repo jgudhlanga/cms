@@ -26,7 +26,7 @@ const tabs: Array<Link> = [
     },
     {
         transChoiceKey: 'academic_calendar',
-        url: route('academic-calendars.index'),
+        url: route('dashboard'),
     },
 ];
 const allowed = hasAbility('view:institution-settings');
