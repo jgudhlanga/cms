@@ -207,7 +207,7 @@ class ClassListController extends Controller
                 $entry->attributes['disability_confirmed'] &&
                 $entry->attributes['names_confirmed']
             ) {
-                $entry->type = ($type === 'provisional') ? ClassListTypeEnum::VERIFIED->value : ClassListTypeEnum::FINAL->value;
+                $entry->type = ($type === 'provisional' || $type === 'waiting') ? ClassListTypeEnum::VERIFIED->value : ClassListTypeEnum::FINAL->value;
                 $entry->save();
                 # generate student number
                 $studentNumber = EnrolmentHelper::resolveStudentNumber($studentProgram);
@@ -224,7 +224,7 @@ class ClassListController extends Controller
                 $studentProgram->update(['department_application_step_id' => $departmentStep->id]);
                 // send email with offer letter
                 $user = $student->user;
-                if ($type === 'provisional') {
+                if ($type === 'provisional' || $type === 'waiting') {
                     SendOfferLetterJob::dispatch($user->full_name, $user->email, $studentProgram->id)->withoutDelay();
                     if (EnrolmentHelper::isEntryLevel($studentProgram)) {
                         EnrolmentHelper::rejectOtherApplications($studentProgram->student, $studentProgram);
