@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { useUtils } from '@/composables/core/useUtils';
 import { useEnrolments } from '@/composables/students/useEnrolments';
-import { IconName } from '@/lib/icons';
 import ClassListTable from '@/pages/enrolments/partials/ClassListTable.vue';
 import ClassSize from '@/pages/institution/enrolments/partials/ClassSize.vue';
 import EnrolmentFilters from '@/pages/institution/enrolments/partials/EnrolmentFilters.vue';
@@ -12,8 +11,7 @@ import { InstitutionDepartment, IntakePeriod, ModeOfStudy } from '@/types/instit
 import { Link } from '@/types/ui';
 import { SelectOption } from '@/types/utils';
 import { Head, router } from '@inertiajs/vue3';
-import { computed, onMounted, PropType, ref } from 'vue';
-import { hasAbility } from '@/lib/permissions';
+import { computed, onMounted, ref } from 'vue';
 
 interface Props {
     department: InstitutionDepartment;
@@ -32,8 +30,8 @@ interface Props {
 const props = defineProps<Props>();
 
 const { department, level, enrolments, intakePeriod, modeOfStudy, course, classSize } = props;
-const { allocateClassSlots } = useEnrolments();
-const { getQueryParams } = useUtils();
+const { allocateClassSlots, applyPolicyAlgorithmToApplications } = useEnrolments();
+const { getQueryParams, isItTrue } = useUtils();
 
 const intakePeriodModel = ref<SelectOption | null>(null);
 const modeOfStudyModel = ref<SelectOption | null>(null);
@@ -48,7 +46,7 @@ const breadcrumbs: Array<Link> = [
     { transChoiceKey: 'enrolment', href: route('enrolments.index') },
     {
         title: department.attributes.department,
-        href: route('enrolments.department-applications', { institution_department: String(department?.id) }),
+        href: route('enrolments.department-applications', { institution_department: String(department?.id), type: queryParams['type'] }),
     },
     {
         title: level.attributes.level,
@@ -123,15 +121,20 @@ const getGroupSlot = (group: EnrolmentGroup): number => {
             />
             <div class="flex justify-end space-x-2" v-if="!noData">
                 <ClassSize :class-size="classSize" />
-<!--                <BaseButton title="Configure Classes" classes="rounded-full" v-if="hasAbility('manage-final:class-lists')">
-                    <BaseIcon :name="IconName.cogs" />
-                </BaseButton>-->
             </div>
             <div v-for="(enrolmentsInGroup, group) in enrolments.groups" :key="group" class="flex flex-col">
                 <div class="flex flex-col" v-if="Number(getGroupSlot(group.toLowerCase() as EnrolmentGroup)) > 0">
                     <HeadingSmall :title="`${group} (${getGroupSlot(group.toLowerCase() as EnrolmentGroup)})`" class="mt-6" />
                     <ClassListTable
-                        :class-list-type="queryParams['type'] as PropType<ClassListType>"
+                        v-if="isItTrue(level?.relationships?.requirement?.attributes?.isOLevelRequired)"
+                        :class-list-type="queryParams['type'] as ClassListType"
+                        :department-id="String(department?.id)"
+                        :applications="applyPolicyAlgorithmToApplications(enrolmentsInGroup, level)"
+                        :class-size="Number(classSize)"
+                    />
+                    <ClassListTable
+                        v-else
+                        :class-list-type="queryParams['type'] as ClassListType"
                         :department-id="String(department?.id)"
                         :applications="enrolmentsInGroup"
                         :class-size="Number(classSize)"

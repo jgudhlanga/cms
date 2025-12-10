@@ -29,7 +29,6 @@ const {
     getClassListTypeDescription,
 } = useEnrolments();
 const { formatDate } = useUtils();
-applyPolicyAlgorithmToApplications(applications, level);
 const faultyApplications = getFaultyApplications(applications, level);
 const groupedApplications = groupByClassListType(applications);
 </script>
@@ -58,7 +57,7 @@ const groupedApplications = groupByClassListType(applications);
                     <tr class="j-tr">
                         <td colspan="100%">
                             <div
-                                :class="`flex w-full items-center space-x-2 border-b-1 px-3 py-2 text-sm uppercase ${getClassListTypeClasses(classListType)}`"
+                                :class="`flex w-full items-center space-x-2 border-b px-3 py-2 text-sm uppercase ${getClassListTypeClasses(classListType)}`"
                             >
                                 <span>{{ classListType }}</span>
                                 <span class="text-xs lowercase">{{ `(${getClassListTypeDescription(classListType)})` }}</span>
