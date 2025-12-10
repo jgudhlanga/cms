@@ -270,6 +270,7 @@ class DepartmentEnrolmentService
                 'class_lists.type as class_list_type',
             ])
             ->orderBy('class_list_type')
+            ->orderBy('class_lists.created_at')
             ->paginate($perPage);
 
 
@@ -278,7 +279,55 @@ class DepartmentEnrolmentService
         // ------------------------------------------------------------
         // 3. Transform students
         // ------------------------------------------------------------
-        $studentPrograms->transform(function ($sp) {
+        $oLevelId = cache()->rememberForever('o_level_id', fn() => AcademicLevel::where('name', AcademicLevelEnum::SECONDARY_SCHOOL->value)->value('id')
+        );
+        $studentIds = $studentPrograms->pluck('student_id')->unique();
+
+        $academicResults = DB::table('student_academic_results as sar')
+            ->join('subjects as s', 'sar.subject_id', '=', 's.id')
+            ->join('grades as g', 'sar.grade_id', '=', 'g.id')
+            ->whereIn('sar.student_id', $studentIds)
+            ->where('sar.academic_level_id', $oLevelId)
+            ->whereNull('sar.deleted_at')
+            ->select(
+                'sar.id as result_id',
+                'sar.student_id',
+                'sar.subject_id',
+                'sar.exam_year',
+                'sar.exam_sitting',
+                'sar.grade_id',
+                's.name as subject',
+                'g.name as grade'
+            )
+            ->orderBy('sar.exam_year')
+            ->orderBy('g.name')
+            ->get()
+            ->groupBy('student_id');
+
+        // ------------------------------------------------------------
+        // 4. Preload receipts in bulk
+        // ------------------------------------------------------------
+        $userIds = $studentPrograms->pluck('student.user_id')->unique();
+        $applicationFeeId = cache()->rememberForever('application_fee_id', fn() => FeeType::where('slug', FeeTypeEnum::APPLICATION_FEE->slug())->value('id')
+        );
+        $receipts = Ledger::query()
+            ->whereIn('ledgerable_id', $userIds)
+            ->where('ledgerable_type', User::class)
+            ->whereNull('deleted_at')
+            ->where([
+                'fee_type_id' => $applicationFeeId,
+                'intake_period_id' => $intakePeriodId,
+                'payment_status' => 'paid',
+                'type' => 'receipt',
+            ])
+            ->select('ledgerable_id as user_id', 'id as receipt_id', 'amount as receipt_amount')
+            ->get()
+            ->keyBy('user_id');
+
+        // ------------------------------------------------------------
+        // 5. Transform students
+        // ------------------------------------------------------------
+        $studentPrograms->transform(function ($sp) use ($academicResults, $receipts) {
             $student = $sp->student;
             $user = $student->user;
 
@@ -290,12 +339,19 @@ class DepartmentEnrolmentService
             $sp->gender = $student->gender->title ?? null;
             $sp->application_date = $sp->application_date;
             $sp->class_list_type = $sp->class_list_type ?? null;
+            // Academic results
+            $sp->academic_results = $academicResults->get($student->id, collect());
+
+            // Receipt info
+            $receipt = $receipts->get($student->user_id);
+            $sp->receipt_id = $receipt->receipt_id ?? null;
+            $sp->receipt_amount = $receipt->receipt_amount ?? null;
 
             return $sp;
         });
 
         // ------------------------------------------------------------
-        // 4. Group students by priority
+        // 6. Group students by priority
         // ------------------------------------------------------------
         $grouped = [
             'disabled' => $studentPrograms
@@ -322,7 +378,7 @@ class DepartmentEnrolmentService
                 ->values(),
         ];
         // ------------------------------------------------------------
-        // 5. Return
+        // 7. Return
         // ------------------------------------------------------------
         return [
             'pagination' => [

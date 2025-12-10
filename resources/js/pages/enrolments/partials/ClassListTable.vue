@@ -4,12 +4,11 @@ import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
 import { hasAbility } from '@/lib/permissions';
 import { ClassListType, EnrolmentApplication } from '@/types/enrolments';
-import { PropType } from 'vue';
 
 interface Props {
     departmentId: string;
     applications: EnrolmentApplication[];
-    classListType: PropType<ClassListType>;
+    classListType: ClassListType;
 }
 
 const props = defineProps<Props>();
