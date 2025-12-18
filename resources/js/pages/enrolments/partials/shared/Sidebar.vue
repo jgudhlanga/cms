@@ -1,11 +1,10 @@
 <script setup lang="ts">
 import { ClassListTopNext, ClassListType, OtherApplication } from '@/types/enrolments';
-import { PropType } from 'vue';
 
 interface Props {
     nextTop: ClassListTopNext[];
     otherApplications: OtherApplication[];
-    type: PropType<ClassListType>;
+    type: ClassListType;
 }
 
 defineProps<Props>();

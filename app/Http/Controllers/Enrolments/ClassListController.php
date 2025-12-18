@@ -82,7 +82,11 @@ class ClassListController extends Controller
                 'previous_level_confirmed' => false,
                 'read_write_confirmed' => false,
                 'application_fee_confirmed' => false,
-                'tuition_fee_confirmed' => false,
+                'proof_of_payment_confirmed' => false,
+                'passport_photos_confirmed' => false,
+                'original_birth_certificate_confirmed' => false,
+                'original_national_identity_confirmed' => false,
+                'original_education_certificates_confirmed' => false,
             ];
             $dto = new ClassListDto(
                 student_program_id: $studentProgram->id,
@@ -122,7 +126,11 @@ class ClassListController extends Controller
             'previous_level_confirmed' => false,
             'read_write_confirmed' => false,
             'application_fee_confirmed' => false,
-            'tuition_fee_confirmed' => false,
+            'proof_of_payment_confirmed' => false,
+            'passport_photos_confirmed' => false,
+            'original_birth_certificate_confirmed' => false,
+            'original_national_identity_confirmed' => false,
+            'original_education_certificates_confirmed' => false,
         ];
 
         return array_map(
@@ -199,7 +207,11 @@ class ClassListController extends Controller
                 'previous_level_confirmed' => $request->boolean('previous_level_confirmed'),
                 'read_write_confirmed' => $request->boolean('read_write_confirmed'),
                 'application_fee_confirmed' => $request->boolean('application_fee_confirmed'),
-                'tuition_fee_confirmed' => $request->boolean('tuition_fee_confirmed'),
+                'proof_of_payment_confirmed' => $request->boolean('proof_of_payment_confirmed'),
+                'passport_photos_confirmed' => $request->boolean('passport_photos_confirmed'),
+                'original_birth_certificate_confirmed' => $request->boolean('original_birth_certificate_confirmed'),
+                'original_national_identity_confirmed' => $request->boolean('original_national_identity_confirmed'),
+                'original_education_certificates_confirmed' => $request->boolean('original_education_certificates_confirmed'),
             ]);
             # Now check actual stored values, not request only
             if (
@@ -365,7 +377,7 @@ class ClassListController extends Controller
             'student.user.ledgers.feeType',
         ]);
 
-        $nextTop = DB::table('student_programs as sp')
+        return DB::table('student_programs as sp')
             ->join('class_lists as cl', 'cl.student_program_id', '=', 'sp.id')
             ->join('students as st', 'st.id', '=', 'sp.student_id')
             ->join('users as us', 'us.id', '=', 'st.user_id')
@@ -378,6 +390,5 @@ class ClassListController extends Controller
             ->where('cl.type', $studentProgram->classList->type)
             ->take(10)
             ->get();
-        return $nextTop;
     }
 }

@@ -102,7 +102,11 @@ const form = useForm<ClassListAttributeParams>({
     previous_level_confirmed: null,
     read_write_confirmed: null,
     application_fee_confirmed: null,
-    tuition_fee_confirmed: null,
+    proof_of_payment_confirmed: null,
+    passport_photos_confirmed: null,
+    original_birth_certificate_confirmed: null,
+    original_national_identity_confirmed: null,
+    original_education_certificates_confirmed: null,
     type: (queryParams['type'] as ClassListType) ?? 'provisional',
 });
 const saveVerification = async () => {
@@ -276,7 +280,7 @@ onMounted(() => {
                 </BaseCard>
             </div>
             <div class="flex w-1/4 flex-col space-y-15">
-                <Sidebar :other-applications="otherApplications" :next-top="nextTop" type="provisional" />
+                <Sidebar :other-applications="otherApplications" :next-top="nextTop" :type="'provisional' as ClassListType" />
             </div>
         </div>
     </PageContainer>

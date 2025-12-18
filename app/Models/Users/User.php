@@ -38,8 +38,7 @@ use Spatie\Permission\Traits\HasRoles;
  */
 class User extends Authenticatable implements MustVerifyEmail, HasMedia
 {
-    use HasApiTokens, HasFactory, Notifiable, SoftDeletes,
-        Filterable, Paginatable, LogsActivity, HasRoles, InteractsWithMedia, Impersonate;
+    use HasApiTokens, HasFactory, Notifiable, SoftDeletes, Filterable, Paginatable, LogsActivity, HasRoles, InteractsWithMedia, Impersonate;
 
     protected $fillable = [
         'first_name', 'middle_name', 'last_name', 'email', 'password', 'tenant_id',

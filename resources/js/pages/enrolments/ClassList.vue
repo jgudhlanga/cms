@@ -56,7 +56,7 @@ const breadcrumbs: Array<Link> = [
         title: course?.name,
         href: route('enrolments.department-applications', { institution_department: String(department?.id), type: queryParams['type'] }),
     },
-    { title: `${queryParams['type']} class list` },
+    { title: `${queryParams['type']} applicationts` },
 ];
 
 const handleFilterChange = () => {

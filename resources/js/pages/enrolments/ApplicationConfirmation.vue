@@ -103,7 +103,11 @@ const form = useForm<ClassListAttributeParams>({
     previous_level_confirmed: null,
     read_write_confirmed: null,
     application_fee_confirmed: null,
-    tuition_fee_confirmed: null,
+    proof_of_payment_confirmed: null,
+    passport_photos_confirmed: null,
+    original_birth_certificate_confirmed: null,
+    original_national_identity_confirmed: null,
+    original_education_certificates_confirmed: null,
     type: (queryParams['type'] as ClassListType) ?? 'verified',
 });
 
@@ -116,8 +120,8 @@ const saveConfirmation = async () => {
         forbiddenAlert();
         return;
     }
-    if (!form.tuition_fee_confirmed) {
-        errorAlert('Please confirm tuition fees is paid');
+    if (!form.proof_of_payment_confirmed) {
+        errorAlert('Please confirm proof of payment of tuition fees to proceed.');
         return;
     }
     const confirmed = await useCustomConfirmDialog().open({
@@ -153,7 +157,7 @@ onMounted(() => {
     form.o_level_confirmed = isItTrue(entry?.attributes?.oLevelConfirmed);
     form.previous_level_confirmed = isItTrue(entry?.attributes?.previousLevelConfirmed);
     form.read_write_confirmed = isItTrue(entry?.attributes?.readWriteConfirmed);
-    form.tuition_fee_confirmed = isItTrue(entry?.attributes?.tuitionFeeConfirmed);
+    form.proof_of_payment_confirmed = isItTrue(entry?.attributes?.proofOfPaymentConfirmed);
 });
 </script>
 
@@ -173,7 +177,7 @@ onMounted(() => {
                     <div class="grid grid-cols-1 gap-4">
                         <div class="flex items-center space-x-5">
                             <Label class="font-bold">Confirm tuition fees is paid:</Label>
-                            <BaseRadioGroup :options="tuitionPaidOptions" v-model="form.tuition_fee_confirmed" :vertical-layout="false" />
+                            <BaseRadioGroup :options="tuitionPaidOptions" v-model="form.proof_of_payment_confirmed" :vertical-layout="false" />
                         </div>
                     </div>
                     <div class="mt-6 flex items-center justify-between">
@@ -182,7 +186,7 @@ onMounted(() => {
                 </BaseCard>
             </div>
             <div class="flex w-1/4 flex-col space-y-15">
-                <Sidebar :other-applications="otherApplications" :next-top="nextTop" type="verified" />
+                <Sidebar :other-applications="otherApplications" :next-top="nextTop" :type="'verified' as ClassListType" />
             </div>
         </div>
     </PageContainer>

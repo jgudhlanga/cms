@@ -1,4 +1,5 @@
-<p align="center"><a href="https://hrepoly.ac.zw" target="_blank"><img src="https://portal.hrepoly.ac.zw/app-assets/images/logo/logo-dark.png" width="400"></a></p>
+
+<p align="center"><img alt="logo.png" src="/public/assets/images/logo.png"/></p>
 
 # College Management System
 College Management System – Project Description
