@@ -12,6 +12,6 @@ class AcademicCalendarFilter extends QueryFilter
         'name',
         'updatedAt' => 'updated_at',
     ];
-    protected array $searchable = ['name', 'description'];
+    protected array $searchable = ['name', 'description', 'calendar_year'];
 }
 

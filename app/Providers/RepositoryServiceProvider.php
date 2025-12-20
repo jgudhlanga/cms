@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Repositories\AcademicCalendars\AcademicCalendarRepository;
+use App\Repositories\AcademicCalendars\Interface\IAcademicCalendarRepository;
 use App\Repositories\Acl\Interface\IModuleRepository;
 use App\Repositories\Acl\Interface\IPermissionRepository;
 use App\Repositories\Acl\Interface\IRoleGroupRepository;
@@ -124,6 +126,7 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->institutionRepositories();
         $this->userRepositories();
         $this->studentRepositories();
+        $this->academicCalendarRepositories();
     }
 
     public function boot(): void
@@ -209,6 +212,11 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(IStudentProgramRepository::class, StudentProgramRepository::class);
         $this->app->bind(ISponsorRepository::class, SponsorRepository::class);
         $this->app->bind(IAcademicRecordRepository::class, AcademicRecordRepository::class);
+    }
+
+    public function academicCalendarRepositories(): void
+    {
+        $this->app->bind(IAcademicCalendarRepository::class, AcademicCalendarRepository::class);
     }
 
 }

@@ -229,6 +229,7 @@ export type ClassListAttribute = {
     originalBirthCertificateConfirmed: boolean;
     originalNationalIdentityConfirmed: boolean;
     originalEducationCertificatesConfirmed: boolean;
+    remarks?: string | null;
 };
 
 export type ClassListAttributeParams = {
@@ -245,6 +246,7 @@ export type ClassListAttributeParams = {
     original_national_identity_confirmed: boolean | null;
     original_education_certificates_confirmed: boolean | null;
     type: ClassListType | null;
+    remarks?: string | null;
 };
 
 export type ClassListTopNext = {
@@ -261,9 +263,9 @@ export type OtherApplication = {
     inClassList: boolean;
 };
 export enum ClassListType {
-    PROVISIONAL = "provisional",
-    FINAL = "final",
-    WAITING = "waiting",
-    FAILED = "failed",
-    VERIFIED = "verified",
+    PROVISIONAL = 'provisional',
+    FINAL = 'final',
+    WAITING = 'waiting',
+    FAILED = 'failed',
+    VERIFIED = 'verified',
 }

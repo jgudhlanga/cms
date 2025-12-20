@@ -19,6 +19,22 @@ enum ModeOfStudyEnum: string
         };
     }
 
+    public static function tryFromLabel(string $label): ?self
+    {
+        foreach (self::cases() as $case) {
+            if (strcasecmp($case->label(), $label) === 0) {
+                return $case;
+            }
+        }
+
+        return null;
+    }
+
+    public function requiresPartTimeLevy(): bool
+    {
+        return $this === self::PART_TIME;
+    }
+
     public static function all(): array
     {
         return array_combine(

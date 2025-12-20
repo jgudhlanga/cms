@@ -3,7 +3,7 @@ import { ClassListTopNext, ClassListType, OtherApplication } from '@/types/enrol
 
 interface Props {
     nextTop: ClassListTopNext[];
-    otherApplications: OtherApplication[];
+    otherApplications?: OtherApplication[];
     type: ClassListType;
 }
 

@@ -2,6 +2,7 @@
 
 namespace App\Models\AcademicCalendars;
 
+use App\Http\Filters\AcademicCalendars\AcademicCalendarFilter;
 use App\Traits\BelongsToTenant;
 use App\Traits\Filterable;
 use App\Traits\Paginatable;
@@ -12,18 +13,23 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
+/**
+ *
+ * @mixin Builder
+ * @method static filter(AcademicCalendarFilter $filters)
+ */
 class AcademicCalendar extends Model
 {
-   use HasFactory, SoftDeletes, Filterable, BelongsToTenant,Paginatable, LogsActivity;
+    use HasFactory, SoftDeletes, Filterable, BelongsToTenant, Paginatable, LogsActivity;
 
-   protected $fillable = ['tenant_id', 'name', 'calendar_year','calendar_type', 'opening_date', 'closing_date', 'description'];
+    protected $fillable = ['tenant_id', 'name', 'calendar_year', 'calendar_type', 'opening_date', 'closing_date', 'description'];
 
-   	public function getActivitylogOptions(): LogOptions
-   	{
-   		return LogOptions::defaults()
-   			->logFillable()
-   			->useLogName('AcademicCalendar')
-   			->logOnlyDirty()
-   			->dontSubmitEmptyLogs();
-   	}
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logFillable()
+            ->useLogName('AcademicCalendar')
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs();
+    }
 }

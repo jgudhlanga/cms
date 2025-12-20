@@ -163,7 +163,6 @@ return [
     "enrolment" => "Enrolment|Enrolments",
     "student" => "Student|Students",
     "examination" => "Examination|Examinations",
-    "accommodation" => "Accommodation|Accommodations",
     "institution_setup" => "Institution setup",
     "department" => "Department|Departments",
     "level" => "Level|Levels",
@@ -497,9 +496,4 @@ return [
     "enrolment_requirements" => "Enrolment requirements",
     "disability" => "Disability?",
     "phone" => "Phone|Phones",
-    "hostel" => "Hostel|Hostels",
-    "academic_year" => "Academic year|Academic years",
-    "academic_calendar" => "Academic calendar|Academic calendars",
-    "opening_date" => "Opening date|Opening dates",
-    "closing_date" => "Closing date|Closing dates",
 ];

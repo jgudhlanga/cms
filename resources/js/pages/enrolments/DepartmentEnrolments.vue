@@ -54,8 +54,8 @@ const breadcrumbs = [
     { transKey: 'dashboard', href: route('dashboard') },
     { transChoiceKey: 'enrolment', href: route('enrolments.index') },
     { title: department.attributes.department, href: route('enrolments.index') },
-    { title: `${queryParams['type'] } class lists` },
-] as Array<Link>;
+    { title: `${queryParams['type'] } applications` },
+] as Array<any>;
 </script>
 
 <template>

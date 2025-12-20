@@ -7,6 +7,7 @@ import { trans } from 'laravel-vue-i18n';
 import moment from 'moment';
 import { v4 as uuidv4 } from 'uuid';
 import { h } from 'vue';
+import { BreadcrumbItemInterface } from '@/types/ui';
 
 export function useUtils() {
     const renderIcon = (icon: IconName, size: string = '15', color?: ColorVariant) => {
@@ -166,6 +167,16 @@ export function useUtils() {
         };
     });
 
+    const getTransFile = (breadcrumbItem: Pick<BreadcrumbItemInterface, 'transKey' | 'transChoiceKey'>): string => {
+        const key = breadcrumbItem.transKey ?? breadcrumbItem.transChoiceKey;
+
+        if (!key) return '';
+
+        const [file, group] = key.split('.');
+
+        return group ? `${file}.${group}` : `trans.${file}`;
+    };
+
     return {
         extractInitials,
         formatCurrency,
@@ -191,5 +202,6 @@ export function useUtils() {
         generateRandomCode,
         getQueryParams,
         academicYears,
+        getTransFile,
     };
 }

@@ -123,7 +123,7 @@ const intakePeriodModel = defineModel<SelectOption | null>('intakePeriodModel');
                             colspan="5"
                             class="bg-persian-200 text-accent-foreground text-uppercase j-td-l-border j-td-r-border px-3 py-2 text-center text-xs font-bold"
                         >
-                            Class Lists
+                            Application Statuses
                         </th>
                     </tr>
                     <tr class="j-th">

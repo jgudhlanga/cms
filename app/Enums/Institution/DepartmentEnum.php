@@ -88,6 +88,29 @@ enum DepartmentEnum: string
         };
     }
 
+    public static function tryFromLabel(string $label): ?self
+    {
+        foreach (self::cases() as $case) {
+            if (strcasecmp($case->label(), $label) === 0) {
+                return $case;
+            }
+        }
+
+        return null;
+    }
+
+    public function requiresAutoCardFee(): bool
+    {
+        return in_array($this, [
+            self::AUTOMOTIVE_ENGINEERING,
+            self::CIVIL_ENGINEERING,
+            self::CONSTRUCTION_ENGINEERING,
+            self::ELECTRICAL_ENGINEERING,
+            self::MECHANICAL_AND_PRODUCTION_ENGINEERING,
+        ], true);
+    }
+
+
     public static function all(): array
     {
         return collect(self::cases())

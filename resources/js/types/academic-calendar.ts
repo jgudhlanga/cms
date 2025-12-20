@@ -1,11 +1,12 @@
 export type AcademicCalendar = {
-    type?: string;
-    id?: string;
+    type: string;
+    id: string;
     attributes: {
         name: string;
+        calendarYear: string;
         openingDate: string;
         closingDate: string;
-        type: AcademicCalendarType;
+        calendarType: AcademicCalendarType;
         description?: string;
         createdAt?: string;
         updatedAt?: string;
@@ -15,7 +16,8 @@ export type AcademicCalendar = {
 
 export type AcademicCalendarParams = {
     name: string;
-    type: AcademicCalendarType;
+    calendar_year: AcademicCalendarType;
+    calendar_type: AcademicCalendarType;
     opening_date: string;
     closing_date: string;
     description?: string;
