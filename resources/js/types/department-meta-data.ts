@@ -227,3 +227,4 @@ export type DepartmentEnrolmentCount = {
         },
     ];
 };
+

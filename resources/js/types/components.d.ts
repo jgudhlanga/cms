@@ -11,6 +11,7 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    AcademicCalendarClassFilters: typeof import('./../components/academicCalendars/AcademicCalendarClassFilters.vue')['default']
     AcademicCalendarComboSelect: typeof import('./../components/core/form/combobox/AcademicCalendarComboSelect.vue')['default']
     AcademicLevelComboSelect: typeof import('./../components/core/form/combobox/AcademicLevelComboSelect.vue')['default']
     AcademicRecordForm: typeof import('./../components/students/academicRecords/AcademicRecordForm.vue')['default']
@@ -105,6 +106,7 @@ declare module 'vue' {
     CardTitle: typeof import('./../components/ui/card/CardTitle.vue')['default']
     Checkbox: typeof import('./../components/ui/checkbox/Checkbox.vue')['default']
     CitizenSwitch: typeof import('./../components/core/form/radio/CitizenSwitch.vue')['default']
+    ClosingDate: typeof import('./../components/academicCalendars/ClosingDate.vue')['default']
     Code: typeof import('./../components/core/form/text/Code.vue')['default']
     Collapsible: typeof import('./../components/ui/collapsible/Collapsible.vue')['default']
     CollapsibleContent: typeof import('./../components/ui/collapsible/CollapsibleContent.vue')['default']
@@ -257,6 +259,7 @@ declare module 'vue' {
     OLevelOtherSubjects: typeof import('./../components/students/update/OLevelOtherSubjects.vue')['default']
     OLevelRequirements: typeof import('./../components/students/update/OLevelRequirements.vue')['default']
     OLevelResultCard: typeof import('./../components/students/oLevels/OLevelResultCard.vue')['default']
+    OpeningDate: typeof import('./../components/academicCalendars/OpeningDate.vue')['default']
     OrderComponent: typeof import('./../components/core/table/OrderComponent.vue')['default']
     PageContainer: typeof import('./../components/core/page/PageContainer.vue')['default']
     PageHeaderAvatar: typeof import('./../components/users/PageHeaderAvatar.vue')['default']
@@ -293,6 +296,8 @@ declare module 'vue' {
     Search: typeof import('./../components/core/table/Search.vue')['default']
     SectionHeader: typeof import('./../components/core/page/SectionHeader.vue')['default']
     Select: typeof import('./../components/ui/select/Select.vue')['default']
+    SelectCalendarType: typeof import('./../components/academicCalendars/SelectCalendarType.vue')['default']
+    SelectCalendarYear: typeof import('./../components/academicCalendars/SelectCalendarYear.vue')['default']
     SelectContent: typeof import('./../components/ui/select/SelectContent.vue')['default']
     SelectGroup: typeof import('./../components/ui/select/SelectGroup.vue')['default']
     SelectItem: typeof import('./../components/ui/select/SelectItem.vue')['default']

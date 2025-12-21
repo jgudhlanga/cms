@@ -63,26 +63,25 @@ const handleSelectionChange = async () => {
                 <div v-for="enrolment in enrolments" :key="enrolment.departmentCourseId" class="flex flex-col space-y-4">
                     <HeadingSmall :title="enrolment.courseName" />
                     <div class="grid grid-cols-1 gap-4 md:grid-cols-5">
-                        <template  v-for="level in enrolment.levels" >
+                        <div v-for="level in enrolment.levels" :key="level?.levelName">
                             <Link
                                 v-if="level"
-                                :key="level"
                                 :href="
-                                route('department-levels.enrolments', {
-                                    institution_department: institutionDepartmentId,
-                                    department_level: level.departmentLevelId,
-                                    intake_period_id: intakePeriod?.value.toString(),
-                                    mode_of_study_id: modeOfStudy?.value.toString(),
-                                    department_course_id: enrolment?.departmentCourseId ?? '',
-                                })
-                            "
+                                    route('department-levels.enrolments', {
+                                        institution_department: institutionDepartmentId,
+                                        department_level: level.departmentLevelId,
+                                        intake_period_id: intakePeriod?.value.toString(),
+                                        mode_of_study_id: modeOfStudy?.value.toString(),
+                                        department_course_id: enrolment?.departmentCourseId ?? '',
+                                    })
+                                "
                             >
                                 <div class="flex items-center space-x-2">
                                     <ItemTitle :title="level.levelName" class="text-primary font-bold" />
                                     <Avatar src="" :name="level.enrolmentsCount" :is-number="true" class="bg-primary text-white" />
                                 </div>
                             </Link>
-                        </template>
+                        </div>
                     </div>
                     <CustomSeparator classes="h-[1px] my-3" />
                 </div>

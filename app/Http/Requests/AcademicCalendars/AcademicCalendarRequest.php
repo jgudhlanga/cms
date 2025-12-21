@@ -30,9 +30,9 @@ class AcademicCalendarRequest extends FormRequest
                     ->ignore($this->academic_calendar),
             ],
             'calendar_type' => ['required', new Enum(AcademicCalendarTypeEnum::class)],
-            'calendar_year' => ['required', 'date_format:Y'],
-            'opening_date' => ['required', 'date_format:Y-m-d'],
-            'closing_date' => ['required', 'date_format:Y-m-d', 'after:opening_date'],
+            'calendar_year' => ['required', 'string'],
+            'opening_date' => ['required', 'date'],
+            'closing_date' => ['required', 'date', 'after:opening_date'],
         ];
     }
 }

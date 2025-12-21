@@ -15,10 +15,18 @@ const props = defineProps<Props>();
 onMounted(async () => {});
 
 const options = computed(() => {
-    return props.data.length > 0 ? props.data.map((academicCalendar: AcademicCalendar) => <SelectOption>{ value: String(academicCalendar.id), label: academicCalendar?.attributes?.name }) : [];
+    return props.data.length > 0
+        ? props.data.map(
+              (academicCalendar: AcademicCalendar) =>
+                  <SelectOption>{
+                      value: String(academicCalendar.id),
+                      label: `${academicCalendar?.attributes?.name} ${academicCalendar?.attributes?.calendarYear}`,
+                  },
+          )
+        : [];
 });
 </script>
 
 <template>
-    <BaseCombobox :label="$tChoice('trans.academic_calendar', 1)" :options="options" v-bind="$attrs" />
+    <BaseCombobox :label="$tChoice('academic_calendar.academic_calendar', 1)" :options="options" v-bind="$attrs" />
 </template>

@@ -1,13 +1,12 @@
 import BaseIcon from '@/components/core/icon/BaseIcon.vue';
 import { ColorVariant } from '@/enums/colors';
 import { IconName } from '@/enums/icons';
-import { ACADEMIC_YEAR_START } from '@/lib/constants';
+import { BreadcrumbItemInterface } from '@/types/ui';
 import { router, usePage } from '@inertiajs/vue3';
 import { trans } from 'laravel-vue-i18n';
 import moment from 'moment';
 import { v4 as uuidv4 } from 'uuid';
 import { h } from 'vue';
-import { BreadcrumbItemInterface } from '@/types/ui';
 
 export function useUtils() {
     const renderIcon = (icon: IconName, size: string = '15', color?: ColorVariant) => {
@@ -157,16 +156,6 @@ export function useUtils() {
         return Object.fromEntries(url.searchParams.entries());
     };
 
-    const nextYear = new Date(ACADEMIC_YEAR_START, 0, 1).getFullYear() + 1;
-    const numberOfYears = nextYear - ACADEMIC_YEAR_START;
-    const academicYears = Array.from({ length: numberOfYears }, (_, i) => {
-        const year = ACADEMIC_YEAR_START + i;
-        return {
-            id: `${year + 1}`,
-            name: `${year + 1}`,
-        };
-    });
-
     const getTransFile = (breadcrumbItem: Pick<BreadcrumbItemInterface, 'transKey' | 'transChoiceKey'>): string => {
         const key = breadcrumbItem.transKey ?? breadcrumbItem.transChoiceKey;
 
@@ -201,7 +190,6 @@ export function useUtils() {
         isNativeCitizen,
         generateRandomCode,
         getQueryParams,
-        academicYears,
         getTransFile,
     };
 }
