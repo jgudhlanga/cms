@@ -7,7 +7,9 @@ use App\Http\Controllers\Controller;
 use App\Http\Filters\AcademicCalendars\AcademicCalendarFilter;
 use App\Http\Requests\AcademicCalendars\AcademicCalendarRequest;
 use App\Http\Resources\AcademicCalendars\AcademicCalendarResource;
+use App\Http\Resources\Institution\InstitutionDepartmentResource;
 use App\Models\AcademicCalendars\AcademicCalendar;
+use App\Models\Institution\InstitutionDepartment;
 use App\Repositories\AcademicCalendars\Interface\IAcademicCalendarRepository;
 use Illuminate\Auth\Access\AuthorizationException;
 use Inertia\Inertia;
@@ -64,7 +66,19 @@ class AcademicCalendarController extends Controller
 
     public function edit(AcademicCalendar $academicCalendar)
     {
-        //
+
+    }
+
+    /**
+     * @throws AuthorizationException
+     */
+    public function configDepartmentCourseClasses(InstitutionDepartment $institutionDepartment, AcademicCalendar $academicCalendar)
+    {
+        $this->authorize('update', $academicCalendar);
+        return Inertia::render('institution/academicCalendars/AcademicCalendarClassesConfig', [
+            'department' => new InstitutionDepartmentResource($institutionDepartment),
+            'academicCalendar' => new AcademicCalendarResource($academicCalendar),
+        ]);
     }
 
     /**

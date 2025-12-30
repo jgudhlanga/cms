@@ -9,4 +9,6 @@ return [
     "action" => "Action|Actions",
     "academic_calendar_class_not_found" => "No classes has been found for this academic calendar, make sure all is configured and try again.",
     "class_unit_size" => "Class unit size|Class unit sizes",
+    "setup" => "Setup",
+    "config" => "Config",
 ];

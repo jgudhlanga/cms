@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import { useAcademicCalendars } from '@/composables/academicCalendars/useAcademicCalendars';
+import { useUtils } from '@/composables/core/useUtils';
 import { useModeOfStudy } from '@/composables/institution/useModeOfStudy';
 import { useServerSide } from '@/composables/shared/useServerSide';
+import { ButtonSize } from '@/enums/buttons';
+import { ColorVariant } from '@/enums/colors';
 import { DepartmentCourseClassCount } from '@/types/academic-calendar';
 import { InstitutionDepartment, ModeOfStudy } from '@/types/institution';
 import { SelectOption } from '@/types/utils';
@@ -20,6 +23,7 @@ const academicCalendar = ref<SelectOption | null>(null);
 const modeOfStudy = ref<SelectOption | null>(null);
 const { isLoading: academicCalendarLoading, listAcademicCalendars, academicCalendars } = useAcademicCalendars();
 const { isLoading: modesOfStudyLoading, listModesOfStudy, modesOfStudy } = useModeOfStudy();
+const { navigateTo } = useUtils();
 
 onMounted(async () => {
     await listAcademicCalendars();
@@ -99,7 +103,7 @@ const handleSelectionChange = async () => {
                             <th class="j-th text-left">{{ $tChoice('trans.level', 1) }}</th>
                             <th class="j-th text-center">{{ $tChoice('academic_calendar.class_unit_size', 1) }}</th>
                             <th class="j-th text-center">{{ $tChoice('trans.class', 2) }}</th>
-                            <th class="j-th text-right">{{ $tChoice('trans.action', 1) }}</th>
+                            <th class="j-th w-8 text-center">{{ $tChoice('academic_calendar.setup', 2) }}</th>
                         </tr>
                     </thead>
                     <tbody class="j-tbody">
@@ -113,7 +117,23 @@ const handleSelectionChange = async () => {
                                 <td class="j-td text-left">{{ level.levelName }}</td>
                                 <td class="j-td text-center">{{ level.classSize }}</td>
                                 <td class="j-td text-center">{{ level.totalEnrolledStudents / level.classSize }}</td>
-                                <td class="j-td text-right"></td>
+                                <td class="j-td text-center">
+                                    <BaseButton
+                                        :size="ButtonSize.xs"
+                                        :variant="ColorVariant.primary_outline"
+                                        classes="rounded-full"
+                                        :title="$t('academic_calendar.config')"
+                                        @click="
+                                            () =>
+                                                navigateTo(
+                                                    route('academic-calendar-class-config.manage', {
+                                                        institution_department: institutionDepartmentId,
+                                                        academic_calendar: String(academicCalendar?.value) ?? '',
+                                                    }),
+                                                )
+                                        "
+                                    />
+                                </td>
                             </tr>
                         </template>
                     </tbody>
