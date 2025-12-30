@@ -64,6 +64,7 @@ const APP_MODULE_KEYS = {
     fee_structures: 'fee_structures',
     show_payment_status: 'show_payment_status',
     o_level_subjects: 'o_level_subjects',
+    academic_calendars: 'academic_calendars',
 };
 const EXAM_SITTINGS = [
     { value: 'june', label: 'June' },
@@ -75,6 +76,8 @@ const DISABILITY_OPTIONS: RadioGroupOption[] = [
     { label: 'No', value: 'no', inputId: 'disability_no' },
     { label: 'Skip', value: 'prefer_not_to_say', inputId: 'disability_prefer_not_to_say' },
 ];
+const ACADEMIC_YEAR_START = 2026;
+
 export {
     API_BASE_URL,
     API_VERSION,
@@ -87,4 +90,6 @@ export {
     PAGINATION_ITEMS_PER_PAGE,
     PAGINATION_MAX_LIMIT,
     PAYMENT_METHODS,
+    ACADEMIC_YEAR_START,
 };
+

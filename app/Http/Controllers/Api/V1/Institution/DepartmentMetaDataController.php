@@ -79,7 +79,7 @@ class DepartmentMetaDataController extends Controller
             // Group within each course by department_level_id
             $levels = $courseGroup->groupBy('department_level_id')->map(function ($levelGroup) {
                 $level = $levelGroup->first()->departmentLevel;
-
+                if (!$level) return null;
                 return [
                     'departmentLevelId' => $level->id,
                     'levelName' => $level->level->name ?? null,
@@ -93,8 +93,7 @@ class DepartmentMetaDataController extends Controller
                 'courseName' => $course?->course?->name,
                 'levels' => $levels,
             ];
-        })->values(); // reset numeric keys
-
+        })->values(); // reset numeric key
         return response()->json($grouped);
     }
 
@@ -102,6 +101,7 @@ class DepartmentMetaDataController extends Controller
     {
         $intakePeriodId = request('intake_period_id');
         $modeOfStudyId = request('mode_of_study_id');
+        $type = request('type', ClassListTypeEnum::PROVISIONAL->value);
 
         // Eager-load relationships to avoid N+1
         $enrolments = $institutionDepartment->enrolments()
@@ -109,7 +109,7 @@ class DepartmentMetaDataController extends Controller
             ->with(['departmentCourse', 'departmentLevel.level'])
             ->when($intakePeriodId, fn($q) => $q->where('intake_period_id', $intakePeriodId))
             ->when($modeOfStudyId, fn($q) => $q->where('mode_of_study_id', $modeOfStudyId))
-            ->whereIn('class_lists.type', [ClassListTypeEnum::PROVISIONAL->value, ClassListTypeEnum::FINAL->value])
+            ->whereIn('class_lists.type', [$type])
             ->get();
 
         // Group by department_course_id
@@ -119,7 +119,7 @@ class DepartmentMetaDataController extends Controller
             // Group within each course by department_level_id
             $levels = $courseGroup->groupBy('department_level_id')->map(function ($levelGroup) {
                 $level = $levelGroup->first()->departmentLevel;
-
+                if (!$level) return null;
                 return [
                     'departmentLevelId' => $level->id,
                     'levelName' => $level->level->name ?? null,

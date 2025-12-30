@@ -1,3 +1,4 @@
+import { useCustomConfirmDialog } from '@/composables/core/useCustomConfirmDialog';
 import { useDataTables } from '@/composables/core/useDataTables';
 import { useSharedFormSchema } from '@/composables/core/useSharedFormSchema';
 import { errorAlert, successAlert } from '@/lib/alerts';
@@ -9,7 +10,6 @@ import { ClassSizeSlot, Enrolment, EnrolmentApplication, EnrolmentGroup, Enrolme
 import { InertiaForm, router, useForm } from '@inertiajs/vue3';
 import { trans_choice } from 'laravel-vue-i18n';
 import { ZodObject } from 'zod';
-import { useCustomConfirmDialog } from '@/composables/core/useCustomConfirmDialog';
 
 export const useEnrolments = () => {
     const { moreActionButton, textLink } = useDataTables();
@@ -248,7 +248,6 @@ export const useEnrolments = () => {
         });
     }
 
-
     /**
      * Identify applications that are faulty:
      * - No payment
@@ -351,7 +350,7 @@ export const useEnrolments = () => {
                 type: type,
             });
             try {
-                form.post(route('enrolments.add-to-class-list', {student_program: studentProgramId}), {
+                form.post(route('enrolments.add-to-class-list', { student_program: studentProgramId }), {
                     onSuccess: () => {
                         successAlert('Application added to class list successfully');
                         router.visit(window.location.href, { replace: true, preserveScroll: true });
@@ -367,6 +366,98 @@ export const useEnrolments = () => {
         }
     };
 
+    const getRowClassList = (rowIndex: number, slotSize: number) => {
+        if (rowIndex + 1 <= slotSize) {
+            return 'bg-green-100';
+        }
+        if (rowIndex + 1 > slotSize && rowIndex + 1 <= slotSize * 2) {
+            return 'bg-purple-100';
+        }
+        return 'j-tr';
+    };
+
+    const getClassListIconClass = (rowIndex: number, slotSize: number) => {
+        if (rowIndex + 1 <= slotSize) {
+            return 'text-green-600';
+        }
+        if (rowIndex + 1 > slotSize && rowIndex + 1 <= slotSize * 2) {
+            return 'text-purple-600';
+        }
+        return '';
+    };
+
+    const getClassListType = (rowIndex: number, slotSize: number) => {
+        if (rowIndex + 1 <= slotSize) {
+            return 'provisional';
+        }
+        if (rowIndex + 1 > slotSize && rowIndex + 1 <= slotSize * 2) {
+            return 'waiting';
+        }
+        return '';
+    };
+    const showAddToClassListBtn = (rowIndex: number, slotSize: number) => {
+        return rowIndex + 1 <= slotSize * 2;
+    };
+
+    function groupByClassListType(applicants: EnrolmentApplication[]) {
+        const order = ['final', 'verified', 'provisional', 'waiting', 'failed', 'others'];
+
+        const groups = applicants.reduce((groups: Record<string, EnrolmentApplication[]>, applicant) => {
+            const key = applicant.classListType && order.includes(applicant.classListType) ? applicant.classListType : 'others';
+
+            if (!groups[key]) {
+                groups[key] = [];
+            }
+
+            groups[key].push(applicant);
+            return groups;
+        }, {});
+
+        // Return sorted object
+        const sortedGroups: Record<string, EnrolmentApplication[]> = {};
+
+        for (const key of order) {
+            if (groups[key]) {
+                sortedGroups[key] = groups[key];
+            }
+        }
+
+        return sortedGroups;
+    }
+    const getClassListTypeClasses = (classListType: string) => {
+        switch (classListType.toLowerCase()) {
+            case 'final':
+                return 'bg-green-100 text-green-800 border-green-800';
+            case 'verified':
+                return 'bg-blue-100 text-blue-800 border-blue-800';
+            case 'provisional':
+                return 'bg-yellow-100 text-yellow-800 border-yellow-800';
+            case 'waiting':
+                return 'bg-purple-100 text-purple-800 border-purple-800';
+            case 'failed':
+                return 'bg-red-100 text-red-800 border-red-800';
+            default:
+                return 'bg-teal-100 text-teal-800 border-teal-800';
+        }
+    };
+
+    const getClassListTypeDescription = (classListType: string) => {
+        switch (classListType.toLowerCase()) {
+            case 'final':
+                return 'Applications have been enrolled';
+            case 'verified':
+                return 'Applications came for verification and details are verified';
+            case 'provisional':
+                return 'Applications have been added to the provisional class list and have not come for verification';
+            case 'waiting':
+                return 'Applications are in waiting list';
+            case 'failed':
+                return 'Applications are rejected probably the applicant opted for another course';
+            default:
+                return 'Applications did not qualify for class list provisional or waiting';
+        }
+    };
+
     return {
         enrolmentColumns,
         cashApplicationFormSchema,
@@ -379,5 +470,12 @@ export const useEnrolments = () => {
         getOtherSubjectGrades,
         classListIsCreated,
         addToClassList,
+        getRowClassList,
+        getClassListIconClass,
+        getClassListType,
+        showAddToClassListBtn,
+        groupByClassListType,
+        getClassListTypeClasses,
+        getClassListTypeDescription,
     };
 };

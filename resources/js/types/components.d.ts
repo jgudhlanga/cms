@@ -11,8 +11,10 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    AcademicCalendarComboSelect: typeof import('./../components/core/form/combobox/AcademicCalendarComboSelect.vue')['default']
     AcademicLevelComboSelect: typeof import('./../components/core/form/combobox/AcademicLevelComboSelect.vue')['default']
     AcademicRecordForm: typeof import('./../components/students/academicRecords/AcademicRecordForm.vue')['default']
+    AcademicYearComboSelect: typeof import('./../components/core/form/combobox/AcademicYearComboSelect.vue')['default']
     Accordion: typeof import('./../components/ui/accordion/Accordion.vue')['default']
     AccordionContent: typeof import('./../components/ui/accordion/AccordionContent.vue')['default']
     AccordionItem: typeof import('./../components/ui/accordion/AccordionItem.vue')['default']
@@ -142,6 +144,8 @@ declare module 'vue' {
     DateOfBirth: typeof import('./../components/core/form/date/DateOfBirth.vue')['default']
     DateRangePicker: typeof import('./../components/core/form/date/DateRangePicker.vue')['default']
     DeleteButton: typeof import('./../components/core/button/DeleteButton.vue')['default']
+    DepartmentClassListActionBtn: typeof import('./../components/enrolments/DepartmentClassListActionBtn.vue')['default']
+    DepartmentClassListActionLink: typeof import('./../components/enrolments/DepartmentClassListActionLink.vue')['default']
     DepartmentCourseComboSelect: typeof import('./../components/core/form/combobox/DepartmentCourseComboSelect.vue')['default']
     DepartmentLevelComboSelect: typeof import('./../components/core/form/combobox/DepartmentLevelComboSelect.vue')['default']
     Description: typeof import('./../components/core/form/text/Description.vue')['default']
@@ -373,6 +377,7 @@ declare module 'vue' {
     TabsList: typeof import('./../components/ui/tabs/TabsList.vue')['default']
     TabsTrigger: typeof import('./../components/ui/tabs/TabsTrigger.vue')['default']
     TenantSwitcher: typeof import('./../components/core/sidebar/TenantSwitcher.vue')['default']
+    TermTypeComboSelect: typeof import('./../components/core/form/combobox/TermTypeComboSelect.vue')['default']
     Text: typeof import('./../components/core/typography/Text.vue')['default']
     Textarea: typeof import('./../components/ui/textarea/Textarea.vue')['default']
     TextEditLink: typeof import('./../components/core/util/TextEditLink.vue')['default']

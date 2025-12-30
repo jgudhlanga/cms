@@ -26,8 +26,15 @@ export const useInstitution = () => {
                 transLabel: () => trans_choice('trans.enrolment', 2),
                 value: 'enrolments',
                 component: h(Enrolments, { department }),
-                show: true,//isItTrue(department?.attributes?.isAcademic),
+                show: isItTrue(department?.attributes?.isAcademic),
                 icon: IconName.user_add,
+            },
+            {
+                transLabel: () => trans_choice('trans.class', 2),
+                value: 'classes',
+                component: h(Enrolments, { department }),
+                show: isItTrue(department?.attributes?.isAcademic),
+                icon: IconName.user_check,
             },
             {
                 transLabel: () => trans('trans.staff'),

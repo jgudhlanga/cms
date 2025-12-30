@@ -193,6 +193,7 @@ enum PermissionEnum: string
     case UPDATE_CLASS_LIST = 'update:class-lists';
     case DELETE_CLASS_LIST = 'delete:class-lists';
     case VIEW_CLASS_LIST = 'view:class-lists';
+    case MANAGE_FINAL_CLASS_LIST = 'manage-final:class-lists';
     /** STUDENTS */
     case VIEW_ANY_STUDENTS = 'viewAny:students';
     case VIEW_STUDENTS = 'view:students';
@@ -253,6 +254,18 @@ enum PermissionEnum: string
     case EXPORT_FEE_STRUCTURES = 'export:fee-structures';
     case CRUD_FEE_STRUCTURES = 'crud-settings:fee-structures';
     case VIEW_FEE_STRUCTURES_AUDIT_TRAIL = 'viewAuditTrail:fee-structures';
+
+    /** Academic Calendars*/
+    case VIEW_ANY_ACADEMIC_CALENDARS = 'viewAny:academic-calendars';
+    case VIEW_ACADEMIC_CALENDARS = 'view:academic-calendars';
+    case CREATE_ACADEMIC_CALENDARS = 'create:academic-calendars';
+    case UPDATE_ACADEMIC_CALENDARS = 'update:academic-calendars';
+    case DELETE_ACADEMIC_CALENDARS = 'delete:academic-calendars';
+    case RESTORE_ACADEMIC_CALENDARS = 'restore:academic-calendars';
+    case FORCE_DELETE_ACADEMIC_CALENDARS = 'forceDelete:academic-calendars';
+    case IMPORT_ACADEMIC_CALENDARS = 'import:academic-calendars';
+    case EXPORT_ACADEMIC_CALENDARS = 'export:academic-calendars';
+    case VIEW_ACADEMIC_CALENDARS_AUDIT_TRAIL = 'viewAuditTrail:academic-calendars';
 
     public function label(): string
     {
@@ -445,6 +458,7 @@ enum PermissionEnum: string
             self::UPDATE_CLASS_LIST => 'update:class-lists',
             self::DELETE_CLASS_LIST => 'delete:class-lists',
             self::VIEW_CLASS_LIST => 'view:class-lists',
+            self::MANAGE_FINAL_CLASS_LIST => 'manage-final:class-lists',
             /** STUDENTS */
             self::VIEW_ANY_STUDENTS => 'viewAny:students',
             self::VIEW_STUDENTS => 'view:students',
@@ -505,6 +519,17 @@ enum PermissionEnum: string
             self::EXPORT_FEE_STRUCTURES => 'export:fee-structures',
             self::CRUD_FEE_STRUCTURES => 'crud-settings:fee-structures',
             self::VIEW_FEE_STRUCTURES_AUDIT_TRAIL => 'viewAuditTrail:fee-structures',
+            /** Academic Calendars*/
+            self::VIEW_ANY_ACADEMIC_CALENDARS => 'viewAny:academic-calendars',
+            self::VIEW_ACADEMIC_CALENDARS => 'view:academic-calendars',
+            self::CREATE_ACADEMIC_CALENDARS => 'create:academic-calendars',
+            self::UPDATE_ACADEMIC_CALENDARS => 'update:academic-calendars',
+            self::DELETE_ACADEMIC_CALENDARS => 'delete:academic-calendars',
+            self::RESTORE_ACADEMIC_CALENDARS => 'restore:academic-calendars',
+            self::FORCE_DELETE_ACADEMIC_CALENDARS => 'forceDelete:academic-calendars',
+            self::IMPORT_ACADEMIC_CALENDARS => 'import:academic-calendars',
+            self::EXPORT_ACADEMIC_CALENDARS => 'export:academic-calendars',
+            self::VIEW_ACADEMIC_CALENDARS_AUDIT_TRAIL => 'viewAuditTrail:academic-calendars',
         };
     }
 

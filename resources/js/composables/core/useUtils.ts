@@ -1,11 +1,12 @@
 import BaseIcon from '@/components/core/icon/BaseIcon.vue';
 import { ColorVariant } from '@/enums/colors';
 import { IconName } from '@/enums/icons';
-import { router } from '@inertiajs/vue3';
+import { ACADEMIC_YEAR_START } from '@/lib/constants';
+import { router, usePage } from '@inertiajs/vue3';
 import { trans } from 'laravel-vue-i18n';
 import moment from 'moment';
+import { v4 as uuidv4 } from 'uuid';
 import { h } from 'vue';
-import { v4 as uuidv4 } from "uuid";
 
 export function useUtils() {
     const renderIcon = (icon: IconName, size: string = '15', color?: ColorVariant) => {
@@ -109,7 +110,7 @@ export function useUtils() {
         return value ? trans('trans.yes') : trans('trans.no');
     };
     const isItTrue = (value: any): boolean => {
-        return value?.toString() === '1' || value?.toString() === 'true';
+        return value?.toString() === '1' || value?.toString() === 'true' || value?.toString() === 'yes';
     };
 
     const extractInitials = (word: string, isNumber?: boolean) => {
@@ -146,9 +147,24 @@ export function useUtils() {
         return idType.toLowerCase() == 'zimbabwean national id';
     };
 
-    const generateRandomCode = (prefix: string): string =>  {
-        return `${prefix}-${uuidv4().replace(/-/g, "").substring(0, 8).toUpperCase()}`;
-    }
+    const generateRandomCode = (prefix: string): string => {
+        return `${prefix}-${uuidv4().replace(/-/g, '').substring(0, 8).toUpperCase()}`;
+    };
+
+    const getQueryParams = () => {
+        const url = new URL(usePage().url, window.location.origin);
+        return Object.fromEntries(url.searchParams.entries());
+    };
+
+    const nextYear = new Date(ACADEMIC_YEAR_START, 0, 1).getFullYear() + 1;
+    const numberOfYears = nextYear - ACADEMIC_YEAR_START;
+    const academicYears = Array.from({ length: numberOfYears }, (_, i) => {
+        const year = ACADEMIC_YEAR_START + i;
+        return {
+            id: `${year + 1}`,
+            name: `${year + 1}`,
+        };
+    });
 
     return {
         extractInitials,
@@ -172,6 +188,8 @@ export function useUtils() {
         navigateTo,
         formatZimIdNumber,
         isNativeCitizen,
-        generateRandomCode
+        generateRandomCode,
+        getQueryParams,
+        academicYears,
     };
 }

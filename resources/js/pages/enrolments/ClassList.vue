@@ -1,11 +1,12 @@
 <script setup lang="ts">
+import { useUtils } from '@/composables/core/useUtils';
 import { useEnrolments } from '@/composables/students/useEnrolments';
 import ClassListTable from '@/pages/enrolments/partials/ClassListTable.vue';
 import ClassSize from '@/pages/institution/enrolments/partials/ClassSize.vue';
 import EnrolmentFilters from '@/pages/institution/enrolments/partials/EnrolmentFilters.vue';
 import { AuthObject } from '@/types/data-pagination';
 import { DepartmentLevel } from '@/types/department-meta-data';
-import { EnrolmentGroup, EnrolmentGroupResponse } from '@/types/enrolments';
+import { ClassListType, EnrolmentGroup, EnrolmentGroupResponse } from '@/types/enrolments';
 import { InstitutionDepartment, IntakePeriod, ModeOfStudy } from '@/types/institution';
 import { Link } from '@/types/ui';
 import { SelectOption } from '@/types/utils';
@@ -29,11 +30,12 @@ interface Props {
 const props = defineProps<Props>();
 
 const { department, level, enrolments, intakePeriod, modeOfStudy, course, classSize } = props;
-const { allocateClassSlots } = useEnrolments();
+const { allocateClassSlots, applyPolicyAlgorithmToApplications } = useEnrolments();
+const { getQueryParams, isItTrue } = useUtils();
 
 const intakePeriodModel = ref<SelectOption | null>(null);
 const modeOfStudyModel = ref<SelectOption | null>(null);
-
+const queryParams = getQueryParams();
 onMounted(async () => {
     intakePeriodModel.value = intakePeriod ? { value: Number(intakePeriod.id), label: intakePeriod.attributes.name } : null;
     modeOfStudyModel.value = modeOfStudy ? { value: Number(modeOfStudy.id), label: modeOfStudy.attributes.name } : null;
@@ -44,11 +46,17 @@ const breadcrumbs: Array<Link> = [
     { transChoiceKey: 'enrolment', href: route('enrolments.index') },
     {
         title: department.attributes.department,
-        href: route('enrolments.department-applications', { institution_department: String(department?.id) }),
+        href: route('enrolments.department-applications', { institution_department: String(department?.id), type: queryParams['type'] }),
     },
-    { title: level.attributes.level, href: route('enrolments.department-applications', { institution_department: String(department?.id) }) },
-    { title: course?.name, href: route('enrolments.department-applications', { institution_department: String(department?.id) }) },
-    { title: 'class list' },
+    {
+        title: level.attributes.level,
+        href: route('enrolments.department-applications', { institution_department: String(department?.id), type: queryParams['type'] }),
+    },
+    {
+        title: course?.name,
+        href: route('enrolments.department-applications', { institution_department: String(department?.id), type: queryParams['type'] }),
+    },
+    { title: `${queryParams['type']} class list` },
 ];
 
 const handleFilterChange = () => {
@@ -61,6 +69,7 @@ const handleFilterChange = () => {
             intake_period_id: intakePeriodId,
             mode_of_study_id: modeOfStudyId,
             department_course_id: String(course?.department_course_id),
+            type: queryParams['type'],
         }),
     );
 };
@@ -110,17 +119,25 @@ const getGroupSlot = (group: EnrolmentGroup): number => {
                     })
                 "
             />
-            <div class="flex justify-end" v-if="!noData">
+            <div class="flex justify-end space-x-2" v-if="!noData">
                 <ClassSize :class-size="classSize" />
             </div>
             <div v-for="(enrolmentsInGroup, group) in enrolments.groups" :key="group" class="flex flex-col">
                 <div class="flex flex-col" v-if="Number(getGroupSlot(group.toLowerCase() as EnrolmentGroup)) > 0">
                     <HeadingSmall :title="`${group} (${getGroupSlot(group.toLowerCase() as EnrolmentGroup)})`" class="mt-6" />
                     <ClassListTable
+                        v-if="isItTrue(level?.relationships?.requirement?.attributes?.isOLevelRequired)"
+                        :class-list-type="queryParams['type'] as ClassListType"
+                        :department-id="String(department?.id)"
+                        :applications="applyPolicyAlgorithmToApplications(enrolmentsInGroup, level)"
+                        :class-size="Number(classSize)"
+                    />
+                    <ClassListTable
+                        v-else
+                        :class-list-type="queryParams['type'] as ClassListType"
                         :department-id="String(department?.id)"
                         :applications="enrolmentsInGroup"
                         :class-size="Number(classSize)"
-                        :slot-size="getGroupSlot(group.toLowerCase() as EnrolmentGroup)"
                     />
                 </div>
             </div>
