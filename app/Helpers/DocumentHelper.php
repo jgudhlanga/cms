@@ -3,6 +3,7 @@
 namespace App\Helpers;
 
 use App\Enums\Acl\PermissionEnum;
+use App\Enums\Institution\LevelEnum;
 use App\Enums\Institution\ModeOfStudyEnum;
 use App\Enums\Shared\DocumentTypeEnum;
 use App\Enums\Shared\FeeTypeEnum;
@@ -72,12 +73,37 @@ class DocumentHelper
 
         $tuition = $feeStructure->local_fca_amount ?? 0;
 
-        // Document template
-        $documentType = DocumentType::where('name', DocumentTypeEnum::OFFER_LETTER->name())->first();
-        $documentTemplate = DocumentTemplate::query()
+        // Document type
+        $documentType = DocumentType::whereName(DocumentTypeEnum::OFFER_LETTER->name())->firstOrFail();
+
+        // USD-only rules
+        $usdOnlyLevels = [
+            LevelEnum::ABMA_LEVEL_3,
+            LevelEnum::ABMA_LEVEL_4,
+            LevelEnum::ABMA_LEVEL_5,
+            LevelEnum::ABMA_LEVEL_6,
+            LevelEnum::SDP,
+        ];
+
+        $usdOnlyModes = [
+            ModeOfStudyEnum::BLOCK_RELEASE,
+        ];
+
+        $isUsdOnly =
+            in_array($level, array_map(fn($l) => $l->name(), $usdOnlyLevels), true)
+            || in_array($modeOfStudy, array_map(fn($m) => $m->label(), $usdOnlyModes), true);
+
+        // Base query
+        $query = DocumentTemplate::query()
             ->where('intake_period_id', $studentProgram->intakePeriod->id ?? null)
-            ->where('document_type_id', $documentType->id)
+            ->where('document_type_id', $documentType->id);
+
+        // Apply USD-only constraint if needed
+        $documentTemplate = $query
+            ->when($isUsdOnly, fn($q) => $q->whereRaw('LOWER(name) LIKE ?', ['%usd only%'])
+            )
             ->firstOrFail();
+
         return [
             $documentTemplate,
             $studentName,
