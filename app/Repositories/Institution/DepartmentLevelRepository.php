@@ -2,12 +2,14 @@
 
 namespace App\Repositories\Institution;
 
+use Illuminate\Support\Facades\DB;
 use App\DTO\Institution\DepartmentLevelDto;
 use App\DTO\Institution\DepartmentLevelRequirementsDto;
 use App\Models\Institution\DepartmentLevel;
 use App\Models\Institution\InstitutionDepartment;
 use App\Repositories\Base\BaseRepository;
 use App\Repositories\Institution\interface\IDepartmentLevelRepository;
+use Throwable;
 
 class DepartmentLevelRepository extends BaseRepository implements IDepartmentLevelRepository
 {
@@ -16,31 +18,56 @@ class DepartmentLevelRepository extends BaseRepository implements IDepartmentLev
         parent::__construct($this->departmentLevel);
     }
 
-
-    public function syncDepartmentLevels(InstitutionDepartment $institutionDepartment, DepartmentLevelDto $dto): void
+    /**
+     * @throws Throwable
+     */
+    public function syncDepartmentLevels(
+        InstitutionDepartment $institutionDepartment,
+        DepartmentLevelDto    $dto
+    ): void
     {
-        // Get existing level_ids linked to this department
-        $existing = $this->departmentLevel
-            ->where('institution_department_id', $institutionDepartment->id)
-            ->pluck('level_id')
-            ->toArray();
+        DB::transaction(function () use ($institutionDepartment, $dto) {
 
-        $newIds = $dto->level_ids;
+            $newIds = $dto->level_ids;
+            $showOnCurrent = $dto->show_on_current_application_period ?? [];
+            // Existing level IDs for this department
+            $existing = $this->departmentLevel
+                ->where('institution_department_id', $institutionDepartment->id)
+                ->pluck('level_id')
+                ->toArray();
 
-        // Determine which IDs to add and which to remove
-        $toAdd = array_diff($newIds, $existing);
-        $toRemove = array_diff($existing, $newIds);
-
-        // Delete removed levels
-        if (!empty($toRemove)) {
-            $this->departmentLevel->whereIn('level_id', $toRemove)->delete();
-        }
-
-        // Add new levels
-        foreach ($toAdd as $levelId) {
-            $this->departmentLevel->create(['institution_department_id' => $institutionDepartment->id, 'level_id' => $levelId]);
-        }
+            $toAdd = array_diff($newIds, $existing);
+            $toRemove = array_diff($existing, $newIds);
+            $toUpdate = array_intersect($existing, $newIds);
+            // Remove unlinked levels (scoped!)
+            if (!empty($toRemove)) {
+                $this->departmentLevel
+                    ->where('institution_department_id', $institutionDepartment->id)
+                    ->whereIn('level_id', $toRemove)
+                    ->delete();
+            }
+            // Add new levels
+            foreach ($toAdd as $levelId) {
+                $this->departmentLevel->create([
+                    'institution_department_id' => $institutionDepartment->id,
+                    'level_id' => $levelId,
+                    'show_on_current_application_period' =>
+                        in_array($levelId, $showOnCurrent, true),
+                ]);
+            }
+            // Update existing levels
+            foreach ($toUpdate as $levelId) {
+                $this->departmentLevel
+                    ->where('institution_department_id', $institutionDepartment->id)
+                    ->where('level_id', $levelId)
+                    ->update([
+                        'show_on_current_application_period' =>
+                            in_array($levelId, $showOnCurrent, true),
+                    ]);
+            }
+        });
     }
+
 
     public function updateDepartmentLevelRequirements(DepartmentLevel $departmentLevel, DepartmentLevelRequirementsDto $dto): void
     {

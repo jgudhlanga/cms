@@ -25,7 +25,7 @@ class DepartmentLevel extends Model
 {
     use HasFactory, SoftDeletes, Filterable, BelongsToTenant, Paginatable, LogsActivity;
 
-    protected $fillable = ['tenant_id', 'institution_department_id', 'level_id', 'description'];
+    protected $fillable = ['tenant_id', 'institution_department_id', 'level_id', 'description', 'show_on_current_application_period'];
 
     public function level(): BelongsTo
     {

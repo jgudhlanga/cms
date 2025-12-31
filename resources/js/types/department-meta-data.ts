@@ -10,6 +10,7 @@ export type DepartmentLevel = {
         level: string;
         levelPosition: number;
         description?: string;
+        showOnCurrentApplicationPeriod?: boolean;
         createdAt?: string;
         updatedAt?: string;
         deletedAt?: string;
@@ -21,6 +22,7 @@ export type DepartmentLevel = {
 
 export type DepartmentLevelParams = {
     level_ids: Array<string | undefined | null> | null;
+    show_on_current_application_period: Array<string | undefined | null> | null;
 };
 
 export type DepartmentCourse = {
@@ -30,7 +32,7 @@ export type DepartmentCourse = {
         institutionDepartmentId: string | number;
         courseId: string | number;
         course: string;
-        showOnCurrentApplicationPeriod?: boolean;
+        showOnCurrentApplicationPeriod: boolean;
         hasEnrolmentRequirements: boolean;
         description?: string;
         createdAt?: string;
@@ -74,6 +76,7 @@ export interface DepartmentCourseMetaData {
 export interface DepartmentLevelMetaData {
     levels: DepartmentCourse[];
     departmentLevelsIds: Array<string | undefined | null> | null;
+    showOnCurrentApplicationPeriodIds: Array<string | undefined | null> | null;
 }
 
 export type DepartmentLevelRequirement = {
