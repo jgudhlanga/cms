@@ -107,6 +107,7 @@ const { isNativeCitizen } = useUtils();
                 orientation="horizontal"
                 @update:modelValue="onRadioChange"
                 :is-required="true"
+                :vertical-layout="false"
             />
         </div>
     </BaseCard>

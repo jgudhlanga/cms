@@ -195,7 +195,7 @@ const maintenanceMode = isItTrue(import.meta.env.VITE_MAINTENANCE_MODE);
                 <NextOfKinDetails :form="form" />
                 <Programs :form="form" />
                 <div class="mb-5 flex items-center justify-center">
-                    <BaseButton class="w-full md:w-[200px]" :size="ButtonSize.xl">
+                    <BaseButton class="w-full md:w-50" :size="ButtonSize.xl">
                         {{ $t('trans.continue') }}
                     </BaseButton>
                 </div>

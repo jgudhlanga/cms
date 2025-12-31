@@ -2,7 +2,7 @@
 import { BaseButton } from '@/components/core/button';
 import AppLogo from '@/components/core/image/AppLogo.vue';
 import ComingSoonAnimated from '@/components/core/util/ComingSoonAnimated.vue';
-import { useAuth } from '@/composables/auth/useAuth';
+//import { useAuth } from '@/composables/auth/useAuth';
 import { useUtils } from '@/composables/core/useUtils';
 import { useGuestPortal } from '@/composables/students/useGuestPortal';
 import { ColorVariant } from '@/enums/colors';
@@ -15,7 +15,7 @@ import { Head, useForm } from '@inertiajs/vue3';
 import { storeToRefs } from 'pinia';
 import { onMounted, ref } from 'vue';
 import BaseInput from '../../../components/core/form/text/BaseInput.vue';
-import ToastService from '@/services/toast.service';
+//import ToastService from '@/services/toast.service';
 
 const { createPortalUser } = useGuestPortal();
 const { navigateTo } = useUtils();
@@ -47,12 +47,12 @@ const submitForm = () => {
     }
     createPortalUser(form);
 };
-const { logout } = useAuth();
+// const { logout } = useAuth();
 
 onMounted(async () => {
-    logout();
-    ToastService.warning('Sorry, The registration has ended for now. Contact the administration for more info.');
-    navigateTo(route('login'));
+    //logout();
+    //ToastService.warning('Sorry, The registration has ended for now. Contact the administration for more info.');
+    //navigateTo(route('login'));
 });
 const { isItTrue } = useUtils();
 const maintenanceMode = isItTrue(import.meta.env.VITE_MAINTENANCE_MODE);
@@ -70,7 +70,10 @@ const maintenanceMode = isItTrue(import.meta.env.VITE_MAINTENANCE_MODE);
                     </div>
                 </div>
                 <div class="text-primary mt-13 mb-7 flex items-center justify-center text-lg font-bold uppercase">Harare Polytechnic</div>
-                <div class="uppercase px-1 mb-4">Attention <code class="text-red-600 font-bold">EcoCash</code> users: To avoid network failures, please use separate devices when making your payments. Thank you for your cooperation.</div>
+                <div class="mb-4 px-1 uppercase">
+                    Attention <code class="font-bold text-red-600">EcoCash</code> users: To avoid network failures, please use separate devices when
+                    making your payments. Thank you for your cooperation.
+                </div>
                 <div class="flex w-full flex-col space-y-3">
                     <BaseInput
                         input-id="first_name"

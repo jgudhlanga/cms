@@ -20,6 +20,7 @@ class InstitutionDepartmentController extends ApiDropdownController
 
     public function index(InstitutionDepartmentFilter $filters)
     {
+        // select only departments which are in
         return InstitutionDepartmentResource::collection($this->repository->allFilter(['*'], $filters));
     }
 
