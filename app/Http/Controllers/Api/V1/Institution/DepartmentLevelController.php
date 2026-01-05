@@ -19,8 +19,15 @@ class DepartmentLevelController extends Controller
 {
     public function index(InstitutionDepartment $institutionDepartment)
     {
-
-        return DepartmentLevelResource::collection($institutionDepartment->departmentLevels);
+        $levels = DepartmentLevel::where('institution_department_id', $institutionDepartment->id)
+            ->where('show_on_current_application_period', true)
+            ->select('*')
+            ->orderBy('level_id', 'asc')
+            ->orderBy('created_at')
+            ->orderBy('deleted_at')
+            ->get();
+        //return DepartmentLevelResource::collection($institutionDepartment->departmentLevels);
+        return DepartmentLevelResource::collection($levels);
     }
 
     public function levelRequirements(DepartmentLevel $departmentLevel)
