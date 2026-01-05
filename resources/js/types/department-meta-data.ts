@@ -10,6 +10,7 @@ export type DepartmentLevel = {
         level: string;
         levelPosition: number;
         description?: string;
+        showOnCurrentApplicationPeriod?: boolean;
         createdAt?: string;
         updatedAt?: string;
         deletedAt?: string;
@@ -21,6 +22,7 @@ export type DepartmentLevel = {
 
 export type DepartmentLevelParams = {
     level_ids: Array<string | undefined | null> | null;
+    show_on_current_application_period: Array<string | undefined | null> | null;
 };
 
 export type DepartmentCourse = {
@@ -30,7 +32,7 @@ export type DepartmentCourse = {
         institutionDepartmentId: string | number;
         courseId: string | number;
         course: string;
-        showOnCurrentApplicationPeriod?: boolean;
+        showOnCurrentApplicationPeriod: boolean;
         hasEnrolmentRequirements: boolean;
         description?: string;
         createdAt?: string;
@@ -39,6 +41,7 @@ export type DepartmentCourse = {
     };
     relationships?: {
         departmentCourseLevels?: DepartmentCourseLevel[];
+        courseModes?: CourseMode[];
     };
 };
 
@@ -56,6 +59,7 @@ export type DepartmentCourseParams = {
 export type DepartmentCourseUpdateParams = {
     department_level_ids?: Array<any> | null;
     show_on_current_application_period?: boolean;
+    course_mode_ids?: Array<any> | null;
 };
 
 export interface DepartmentMetaData {
@@ -74,6 +78,7 @@ export interface DepartmentCourseMetaData {
 export interface DepartmentLevelMetaData {
     levels: DepartmentCourse[];
     departmentLevelsIds: Array<string | undefined | null> | null;
+    showOnCurrentApplicationPeriodIds: Array<string | undefined | null> | null;
 }
 
 export type DepartmentLevelRequirement = {
@@ -126,7 +131,7 @@ export type CourseRequirement = {
 };
 
 export type CourseRequirementParams = {
-    department_level_id: string|number,
+    department_level_id: string | number;
     is_o_level_required?: boolean;
     required_subjects_count?: string | number;
     main_subjects_count?: string | number;
@@ -228,3 +233,14 @@ export type DepartmentEnrolmentCount = {
     ];
 };
 
+export type CourseMode = {
+    type?: string;
+    id?: string | number;
+    attributes: {
+        departmentCourseId: string | number;
+        modeOfStudyId: string | number;
+        modeOfStudy: string;
+        createdAt?: string;
+        updatedAt?: string;
+    };
+};

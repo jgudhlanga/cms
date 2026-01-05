@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { BaseCheckbox } from '@/components/core/form';
-import BaseModal from '@/components/core/modal/BaseModal.vue';
 import SpinnerComponent from '@/components/core/loader/SpinnerComponent.vue';
+import BaseModal from '@/components/core/modal/BaseModal.vue';
 import { useDepartmentLevels } from '@/composables/institution/useDepartmentLevels';
 import { useLevels } from '@/composables/institution/useLevels';
+import { SizeVariant } from '@/enums/sizes';
 import { getModalEdit } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
 import { useModalStore } from '@/store/core/useModalStore';
@@ -21,6 +22,7 @@ defineProps<Props>();
 const allSelected = ref(false);
 const form = useForm<DepartmentLevelParams>({
     level_ids: [],
+    show_on_current_application_period: [],
 });
 
 const { isLoading, levels, listLevels } = useLevels();
@@ -40,11 +42,12 @@ const updateModel = () => {
 const { modals } = useModalStore();
 
 watch(modals!, async () => {
-    form.level_ids = getModalEdit(APP_MODULE_KEYS.department_levels);
+    const data = getModalEdit(APP_MODULE_KEYS.department_levels);
+    form.level_ids = data && data[0] ? data[0] : [];
+    form.show_on_current_application_period = data && data[1] ? data[1] : [];
     await listLevels();
     form.defaults();
 });
-
 </script>
 
 <template>
@@ -53,6 +56,7 @@ watch(modals!, async () => {
         :title="$t('trans.link_levels')"
         :on-form-action="() => syncDepartmentLevels(institutionDepartmentId, form)"
         :form="form"
+        :size="SizeVariant.lg"
     >
         <template #body>
             <div class="flex flex-col space-y-3">
@@ -69,15 +73,24 @@ watch(modals!, async () => {
                                 @click="selectAll()"
                             />
                         </div>
-                        <div class="grid grid-cols-1 gap-x-3 md:grid-cols-2">
+                        <div class="grid grid-cols-1 gap-x-6 md:grid-cols-2">
                             <template v-for="level in levels" :key="`level_key_${level['id']}`">
-                                <BaseCheckbox
-                                    :input-id="`level_id_${level['id']}`"
-                                    :value="level['id']"
-                                    v-model="form.level_ids"
-                                    :label="level['attributes']['name']"
-                                    @change="updateModel()"
-                                />
+                                <div class="flex justify-between">
+                                    <BaseCheckbox
+                                        :input-id="`level_id_${level['id']}`"
+                                        :value="level['id']"
+                                        v-model="form.level_ids"
+                                        :label="level['attributes']['name']"
+                                        @change="updateModel()"
+                                    />
+                                    <BaseCheckbox
+                                        :input-id="`show_on_current_application_period_${level['id']}`"
+                                        :value="level['id']"
+                                        v-model="form.show_on_current_application_period"
+                                        :label="$t('trans.show_on_current_application_period')"
+                                        @change="updateModel()"
+                                    />
+                                </div>
                             </template>
                         </div>
                     </div>

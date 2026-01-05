@@ -5,37 +5,25 @@ import { clearFormErrors } from '@/lib/forms';
 import { ModeOfStudy } from '@/types/institution';
 import { SelectOption } from '@/types/utils';
 import { InertiaForm } from '@inertiajs/vue3';
-import { debounce } from 'lodash';
-import { computed, onMounted } from 'vue';
+import { trans, trans_choice } from 'laravel-vue-i18n';
+import { computed, onMounted, watch } from 'vue';
 
 interface Props {
-    data?: ModeOfStudy[];
     form?: InertiaForm<any>;
+    departmentCourseId: string;
 }
 
-const { isLoading, listModesOfStudy, modesOfStudy } = useModeOfStudy();
+const { isLoading, listCourseModesOfStudy, courseModesOfStudy } = useModeOfStudy();
 const props = defineProps<Props>();
 
 onMounted(async () => {
-    if (props.data) {
-        return;
-    } else {
-        await listModesOfStudy();
+    if (Number(props.departmentCourseId ?? '') > 0) {
+        await listCourseModesOfStudy(props.departmentCourseId);
     }
 });
 
 const options = computed(() => {
-    if (props.data && props.data.length) {
-        return props.data.map(
-            (mode: ModeOfStudy) =>
-                <SelectOption>{
-                    value: Number(mode.id),
-                    label: mode?.attributes?.name,
-                },
-        );
-    } else {
-    }
-    return modesOfStudy.value.map(
+    return courseModesOfStudy.value?.map(
         (mode: ModeOfStudy) =>
             <SelectOption>{
                 value: Number(mode.id),
@@ -43,23 +31,23 @@ const options = computed(() => {
             },
     );
 });
+const placeholder = computed(() => {
+    if (courseModesOfStudy.value && courseModesOfStudy.value.length > 0) {
+        return trans('trans.select_one');
+    } else {
+        return trans('trans.select_dependency_description', { field: trans_choice('trans.course', 1).toLowerCase() });
+    }
+});
 
-const whenSearch = debounce(async (search: string) => {
-    if (props.form) {
+watch(
+    () => props.departmentCourseId,
+    async (newValue) => {
         clearFormErrors(props.form, 'modeOfStudy');
-    }
-    if (!props.data?.length) {
-        await listModesOfStudy(search);
-    }
-}, 600);
+        await listCourseModesOfStudy(newValue?.toString() ?? '');
+    },
+);
 </script>
 
 <template>
-    <BaseCombobox
-        :label="$tChoice('trans.mode_of_study', 1)"
-        :options="options"
-        :on-search="async (search: string) => await whenSearch(search)"
-        :is-loading="isLoading"
-        v-bind="$attrs"
-    />
+    <BaseCombobox :label="$tChoice('trans.mode_of_study', 1)" :options="options" :is-loading="isLoading" v-bind="$attrs" :placeholder="placeholder" />
 </template>

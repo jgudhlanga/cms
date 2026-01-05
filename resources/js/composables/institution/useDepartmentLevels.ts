@@ -16,6 +16,7 @@ import { trans, trans_choice } from 'laravel-vue-i18n';
 import { storeToRefs } from 'pinia';
 import { ref } from 'vue';
 import { z } from 'zod';
+import { ApiFilterResponse } from '@/types/data-pagination';
 
 export const useDepartmentLevels = (isEditingProgram?: boolean) => {
     const { moreActionButton, textLink, actionButton, checkStatusIcon, onEdit } = useDataTables();
@@ -45,17 +46,27 @@ export const useDepartmentLevels = (isEditingProgram?: boolean) => {
                 },
             },
             {
+                header: trans('trans.show_on_current_application_period'),
+                accessorKey: 'showOnCurrentApplicationPeriod',
+                meta: { align: 'center' },
+                cell: ({ row }: { row: { original: DepartmentLevel } }) => {
+                    return checkStatusIcon(row.original.attributes?.showOnCurrentApplicationPeriod);
+                },
+            },
+            {
                 header: trans_choice('trans.requirement', 2),
                 accessorKey: 'requirements',
                 enableSorting: false,
                 meta: { align: 'center' },
                 cell: ({ row }: { row: { original: DepartmentLevel } }) => {
                     const id = getIdParams(row.original.id?.toString() ?? '');
-                    return hasAbility('update:department-metadata') ? actionButton({
-                        title: trans_choice('trans.requirement', 2),
-                        variant: ColorVariant.primary_outline,
-                        onClick: () => navigateTo(route('department-levels.requirements', id)),
-                    }) : trans_choice('trans.requirement', 2);
+                    return hasAbility('update:department-metadata')
+                        ? actionButton({
+                              title: trans_choice('trans.requirement', 2),
+                              variant: ColorVariant.primary_outline,
+                              onClick: () => navigateTo(route('department-levels.requirements', id)),
+                          })
+                        : trans_choice('trans.requirement', 2);
                 },
             },
             {
@@ -117,9 +128,12 @@ export const useDepartmentLevels = (isEditingProgram?: boolean) => {
         }
     };
 
-    const openDepartmentLevelsModal = (departmentLevels: Array<string | undefined | null> | null) => {
+    const openDepartmentLevelsModal = (
+        departmentLevels: Array<string | undefined | null> | null,
+        showOnCurrentApplicationPeriod: Array<string | undefined | null> | null,
+    ) => {
         if (!can['department-setup:levels']) return forbiddenAlert();
-        openModal({ name: APP_MODULE_KEYS.department_levels, edit: departmentLevels });
+        openModal({ name: APP_MODULE_KEYS.department_levels, edit: [departmentLevels, showOnCurrentApplicationPeriod] });
     };
 
     const departmentLevels = ref<DepartmentLevel[]>([]);

@@ -10,15 +10,18 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Institution\DepartmentCourseRequest;
 use App\Http\Requests\Institution\DepartmentCourseUpdateRequest;
 use App\Http\Requests\Institution\CourseRequirementRequest;
+use App\Http\Resources\Institution\CourseModeResource;
 use App\Http\Resources\Institution\CourseRequirementResource;
 use App\Http\Resources\Institution\DepartmentCourseResource;
 use App\Http\Resources\Institution\DepartmentLevelRequirementResource;
 use App\Http\Resources\Institution\DepartmentLevelResource;
 use App\Http\Resources\Institution\InstitutionDepartmentResource;
+use App\Http\Resources\Institution\ModeOfStudyResource;
 use App\Models\Institution\DepartmentCourse;
 use App\Models\Institution\DepartmentLevel;
 use App\Models\Institution\InstitutionDepartment;
 use App\Models\Institution\Level;
+use App\Models\Institution\ModeOfStudy;
 use App\Repositories\Institution\interface\IDepartmentCourseRepository;
 use Illuminate\Auth\Access\AuthorizationException;
 use Inertia\Inertia;
@@ -64,9 +67,12 @@ class DepartmentCourseController extends Controller
         $this->authorize('viewDepartmentMetaData');
         $departmentCourse = DepartmentCourseResource::make($departmentCourse);
         $institutionDepartment = InstitutionDepartmentResource::make($departmentCourse->institutionDepartment);
-        $departmentLevels = DepartmentLevelResource::collection($departmentCourse->institutionDepartment->departmentLevels);;
+        $departmentLevels = DepartmentLevelResource::collection($departmentCourse->institutionDepartment->departmentLevels);
+        $courseModes = CourseModeResource::collection($departmentCourse->courseModes);
+        $modes = ModeOfStudy::whereNull('deleted_at')->get();
+        $modesOfStudy = ModeOfStudyResource::collection($modes);
         return Inertia::render('institution/departments/courses/Edit',
-            compact('institutionDepartment', 'departmentCourse', 'departmentLevels'),
+            compact('institutionDepartment', 'departmentCourse', 'departmentLevels', 'departmentLevels', 'courseModes', 'modesOfStudy'),
         );
     }
 

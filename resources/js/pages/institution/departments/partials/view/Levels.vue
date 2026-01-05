@@ -17,35 +17,37 @@ interface Props {
 
 const props = defineProps<Props>();
 
-const { createDepartmentLevelColumns, openDepartmentLevelsModal, isLoading, departmentLevelsMetadata, loadDepartmentLevelsMetadata } = useDepartmentLevels();
+const { createDepartmentLevelColumns, openDepartmentLevelsModal, isLoading, departmentLevelsMetadata, loadDepartmentLevelsMetadata } =
+    useDepartmentLevels();
 const allowed = hasAbility('create:department-metadata');
 const departmentLevelsIds = computed(() => departmentLevelsMetadata.value?.departmentLevelsIds ?? []);
+const showOnCurrentApplicationPeriodIds = computed(() => departmentLevelsMetadata.value?.showOnCurrentApplicationPeriodIds ?? []);
 const departmentLevels = computed(() => departmentLevelsMetadata.value?.levels ?? []);
 const departmentId = props.department?.id?.toString() ?? '';
 
 onMounted(() => {
     loadDepartmentLevelsMetadata(departmentId);
-})
+});
 
 const { modals } = useModalStore();
 
 const levelModalOpen = ref(false);
 
 watch(
-  () => modals![APP_MODULE_KEYS.department_levels],
-  (isOpen) => {
-    if (isOpen) {
-      levelModalOpen.value = true;
-    } else if (levelModalOpen.value) {
-      loadDepartmentLevelsMetadata(departmentId);
-      levelModalOpen.value = false;
-    }
-  }
+    () => modals![APP_MODULE_KEYS.department_levels],
+    (isOpen) => {
+        if (isOpen) {
+            levelModalOpen.value = true;
+        } else if (levelModalOpen.value) {
+            loadDepartmentLevelsMetadata(departmentId);
+            levelModalOpen.value = false;
+        }
+    },
 );
 </script>
 
 <template>
-    <TableLoading v-if="isLoading"/>
+    <TableLoading v-if="isLoading" />
     <DataTable v-else :data="departmentLevels" :columns="createDepartmentLevelColumns()" :show-archived-filter="false">
         <template #head-right v-if="allowed">
             <GenericButton
@@ -53,7 +55,7 @@ watch(
                 class="rounded-full"
                 :icon-variant="ColorVariant.white"
                 :variant="ColorVariant.primary_outline"
-                @click="() => openDepartmentLevelsModal(departmentLevelsIds)"
+                @click="() => openDepartmentLevelsModal(departmentLevelsIds, showOnCurrentApplicationPeriodIds)"
                 :title="$t('trans.link_levels')"
             />
         </template>

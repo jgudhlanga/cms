@@ -18,17 +18,21 @@ defineProps<{
 }>();
 
 const { login } = useAuth();
-const { navigateTo } = useUtils();
+const { navigateTo, isItTrue } = useUtils();
 const form = useForm<Login>({
     email: '',
     password: '',
     remember_me: false,
 });
 
+const maintenanceMode = isItTrue(import.meta.env.VITE_MAINTENANCE_MODE);
+
 const loginNavigateTo = () => {
-    ToastService.warning('Sorry, The registration has ended for now. Contact the administration for more info.');
-    return;
-    //navigateTo(route('portal.create'));
+    if (maintenanceMode) {
+        ToastService.warning('Sorry, system updates underway, we will be back soon');
+        return;
+    }
+    navigateTo(route('portal.create'));
 };
 </script>
 
