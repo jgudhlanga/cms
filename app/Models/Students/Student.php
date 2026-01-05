@@ -152,6 +152,11 @@ class Student extends Model
         return $this->id_type_id = IdTypeEnum::ZIMBABWEAN_ID_NUMBER->id();
     }
 
+    public function notes(): MorphMany
+    {
+        return $this->morphMany(StudentNote::class, 'noteable');
+    }
+
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()

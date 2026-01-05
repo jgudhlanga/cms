@@ -223,6 +223,7 @@ const populateCurrentDataFromApplication = () => {
                                     :label-uppercase="true"
                                     :is-required="true"
                                     orientation="horizontal"
+                                    :vertical-layout="false"
                                     @update:modelValue="onRadioChange"
                                 />
                             </template>

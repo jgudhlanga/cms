@@ -45,30 +45,30 @@ class DepartmentCourseRepository extends BaseRepository implements IDepartmentCo
 
     public function update(DepartmentCourse $departmentCourse, DepartmentCourseUpdateDto $dto)
     {
-        $departmentCourse = tap($departmentCourse)->update([
-            'show_on_current_application_period' => $dto->show_on_current_application_period,
-        ]);
+        $departmentCourse = tap($departmentCourse)->update(['show_on_current_application_period' => $dto->show_on_current_application_period]);
         # Get existing department_ linked to this department
-        $existing = $departmentCourse
-            ->departmentCourseLevels()
-            ->where('department_course_id', $departmentCourse->id)
-            ->pluck('department_level_id')
-            ->toArray();
-
-        $newIds = $dto->department_level_ids;
-
+        $existingCourseLevels = $departmentCourse->departmentCourseLevels()->where('department_course_id', $departmentCourse->id)->pluck('department_level_id')->toArray();
+        $existingCourseModes = $departmentCourse->courseModes()->where('department_course_id', $departmentCourse->id)->pluck('mode_of_study_id')->toArray();
+        $newCourseLevelIds = $dto->department_level_ids;
+        $newCourseModeIds = $dto->course_mode_ids;
         // Determine which IDs to add and which to remove
-        $toAdd = array_diff($newIds, $existing);
-        $toRemove = array_diff($existing, $newIds);
-
+        $toAddCourseLevels = array_diff($newCourseLevelIds, $existingCourseLevels);
+        $toRemoveCourseLevels = array_diff($existingCourseLevels, $newCourseLevelIds);
+        $toAddCourseModes = array_diff($newCourseModeIds, $existingCourseModes);
+        $toRemoveCourseModes = array_diff($existingCourseModes, $newCourseModeIds);
         // Delete removed courses
-        if (!empty($toRemove)) {
-            $departmentCourse->departmentCourseLevels()->whereIn('department_level_id', $toRemove)->delete();
+        if (!empty($toRemoveCourseLevels)) {
+            $departmentCourse->departmentCourseLevels()->whereIn('department_level_id', $toRemoveCourseLevels)->delete();
         }
-
+        if (!empty($toRemoveCourseModes)) {
+            $departmentCourse->courseModes()->whereIn('mode_of_study_id', $toRemoveCourseModes)->delete();
+        }
         // Add new courses
-        foreach ($toAdd as $departmentLevelId) {
+        foreach ($toAddCourseLevels as $departmentLevelId) {
             $departmentCourse->departmentCourseLevels()->create(['department_course_id' => $departmentCourse->id, 'department_level_id' => $departmentLevelId]);
+        }
+        foreach ($toAddCourseModes as $modeOfStudyId) {
+            $departmentCourse->courseModes()->create(['department_course_id' => $departmentCourse->id, 'mode_of_study_id' => $modeOfStudyId]);
         }
         return $departmentCourse;
     }

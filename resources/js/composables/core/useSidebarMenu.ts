@@ -66,7 +66,7 @@ export function useSidebarMenu() {
             show: hasAbility('view:institution-settings'),
         },
         {
-            transChoiceKey: 'trans.accommodation',
+            transChoiceKey: 'hostel.accommodation',
             icon: icons[IconName.bed],
             url: route('accommodations.index'),
             show: hasAbility('view:accommodations'),

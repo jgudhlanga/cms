@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AcademicCalendars\AcademicCalendarController;
 use App\Http\Controllers\Institution\Config\FeeStructureController;
 use App\Http\Controllers\Institution\Departments\DepartmentApplicationStepController;
 use App\Http\Controllers\Institution\Departments\DepartmentClassSizeController;
@@ -54,8 +55,9 @@ Route::prefix('institution')->middleware('auth')->group(function () {
     Route::put('staff/{staff}/restore', [StaffController::class, 'restore'])->name('staff.restore');
     Route::delete('staff/{staff}/force-delete', [StaffController::class, 'forceDelete'])->name('staff.force-delete');
     Route::resource('departments.staff', StaffController::class)->names('staff');
-    #====================================== DEPARTMENT CLASS SIZES =====================================================
+    #====================================== DEPARTMENT COURSE & CLASS CONFIG =====================================================
     Route::post('{institution_department}/class-sizes', [DepartmentClassSizeController::class, 'store'])->name('class-sizes.store');
+    Route::get('{institution_department}/academic-calendar-class-config/academic_calendar', [AcademicCalendarController::class, 'configDepartmentCourseClasses'])->name('academic-calendar-class-config.manage');
     # ============================================= INSTITUTION SETUP =======================================================
     Route::prefix('config')->group(function () {
         Route::get('/', [InstitutionConfigController::class, 'index'])->name('institution.setup');

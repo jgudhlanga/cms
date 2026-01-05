@@ -8,8 +8,8 @@ import { useDepartmentCourses } from '@/composables/institution/useDepartmentCou
 import { ColorVariant } from '@/enums/colors';
 import { getIdParams } from '@/lib/utils';
 import { AuthObject } from '@/types/data-pagination';
-import { DepartmentCourse, DepartmentCourseLevel, DepartmentCourseUpdateParams, DepartmentLevel } from '@/types/department-meta-data';
-import { InstitutionDepartment } from '@/types/institution';
+import { CourseMode, DepartmentCourse, DepartmentCourseLevel, DepartmentCourseUpdateParams, DepartmentLevel } from '@/types/department-meta-data';
+import { InstitutionDepartment, ModeOfStudy } from '@/types/institution';
 import type { Link } from '@/types/ui';
 import { Head, useForm } from '@inertiajs/vue3';
 import { ref } from 'vue';
@@ -19,12 +19,14 @@ interface Props {
     institutionDepartment: InstitutionDepartment;
     departmentCourse: DepartmentCourse;
     departmentLevels: DepartmentLevel[];
+    courseModes: CourseMode[];
+    modesOfStudy: ModeOfStudy[];
     auth: AuthObject;
     errors: object;
 }
 
 const props = defineProps<Props>();
-const { institutionDepartment, departmentCourse, departmentLevels } = props;
+const { institutionDepartment, departmentCourse, departmentLevels, courseModes } = props;
 const breadcrumbs: Array<Link> = [
     { transChoiceKey: 'institution', transChoiceKeyIndex: 1, href: route('institution.index') },
     { transChoiceKey: 'department', transChoiceKeyIndex: 2, href: route('institution-departments.index') },
@@ -42,6 +44,7 @@ const allSelected = ref(false);
 const form = useForm<DepartmentCourseUpdateParams>({
     department_level_ids: departmentCourse?.relationships?.departmentCourseLevels?.map((item: DepartmentCourseLevel) => item?.departmentLevelId),
     show_on_current_application_period: isItTrue(departmentCourse?.attributes?.showOnCurrentApplicationPeriod),
+    course_mode_ids: courseModes?.map((mode: CourseMode) => mode?.attributes?.modeOfStudyId),
 });
 const selectAll = () => {
     if (allSelected.value) {
@@ -66,7 +69,7 @@ const updateCourse = () => {
     <Head :title="`${$tChoice('trans.department', 1)} ${$tChoice('trans.course', 1)}`" />
     <PageContainer :breadcrumbs="breadcrumbs">
         <form @submit.prevent="() => updateCourse()" class="flex flex-col">
-            <div class="flex space-x-3">
+            <div class="grid grid-cols-2 gap-3">
                 <BaseCard :title="`${$tChoice('trans.course', 1)} ${$tChoice('trans.level', 2)}`">
                     <template v-if="departmentLevels && departmentLevels.length > 0">
                         <div class="flex flex-col space-y-2">
@@ -103,6 +106,19 @@ const updateCourse = () => {
                             :label="`${$t('trans.show_on_current_application_period')}`"
                         />
                     </div>
+                </BaseCard>
+                <BaseCard :title="`${$tChoice('trans.course', 1)} ${$tChoice('trans.mode_of_study', 2)}`">
+                    <div class="grid grid-cols-1 gap-x-3 md:grid-cols-4" v-if="modesOfStudy && modesOfStudy.length > 0">
+                        <BaseCheckbox
+                            v-for="mode in modesOfStudy"
+                            :key="`course_mode_${mode['id']}`"
+                            :input-id="`course_mode_id_${mode['id']}`"
+                            :value="mode['id']"
+                            v-model="form.course_mode_ids"
+                            :label="mode['attributes']['name']"
+                        />
+                    </div>
+                    <Empty v-else :message="$t('messages.no_course_mode')" />
                 </BaseCard>
             </div>
             <div class="flex items-center justify-center space-x-3 p-6">

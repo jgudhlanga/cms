@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { useCustomConfirmDialog } from '@/composables/core/useCustomConfirmDialog';
 import { useUtils } from '@/composables/core/useUtils';
+import { TextFieldType } from '@/enums/inputs';
 import { errorAlert, forbiddenAlert, successAlert } from '@/lib/alerts';
 import { hasAbility } from '@/lib/permissions';
 import Details from '@/pages/enrolments/partials/shared/Details.vue';
+import FeeStructure from '@/pages/enrolments/partials/shared/FeeStructure.vue';
 import Sidebar from '@/pages/enrolments/partials/shared/Sidebar.vue';
 import { AuthObject } from '@/types/data-pagination';
-import { ClassListAttributeParams, ClassListTopNext, ClassListType, Enrolment, OtherApplication } from '@/types/enrolments';
+import { ClassListAttributeParams, ClassListTopNext, ClassListType, Enrolment } from '@/types/enrolments';
 import { Link } from '@/types/ui';
 import { Head, useForm } from '@inertiajs/vue3';
 import { computed, onMounted } from 'vue';
@@ -16,7 +18,9 @@ interface Props {
     errors: object;
     application: Enrolment;
     nextTop: ClassListTopNext[];
-    otherApplications: OtherApplication[];
+    tuition?: string | number;
+    autoCardFee?: string | number;
+    partTimeLevy?: string | number;
 }
 
 const props = defineProps<Props>();
@@ -103,26 +107,68 @@ const form = useForm<ClassListAttributeParams>({
     previous_level_confirmed: null,
     read_write_confirmed: null,
     application_fee_confirmed: null,
-    tuition_fee_confirmed: null,
+    proof_of_payment_confirmed: null,
+    passport_photos_confirmed: null,
+    original_birth_certificate_confirmed: null,
+    original_national_identity_confirmed: null,
+    original_education_certificates_confirmed: null,
     type: (queryParams['type'] as ClassListType) ?? 'verified',
+    remarks: null,
 });
 
-const tuitionPaidOptions = computed(() => [
-    { inputId: 'tuition_paid_yes', label: 'Yes', value: true },
-    { inputId: 'tuition_paid_no', label: 'No', value: false },
+const proofOfPaymentOptions = computed(() => [
+    { inputId: 'confirm_proof_of_payment_yes', label: 'Yes', value: true },
+    { inputId: 'confirm_proof_of_payment_no', label: 'No', value: false },
 ]);
+
+const passportPhotoOptions = computed(() => [
+    { inputId: 'passport_photos_confirmed_yes', label: 'Yes', value: true },
+    { inputId: 'passport_photos_confirmed_no', label: 'No', value: false },
+]);
+
+const birthCertificateOptions = computed(() => [
+    { inputId: 'original_birth_certificate_confirmed_yes', label: 'Yes', value: true },
+    { inputId: 'original_birth_certificate_confirmed_no', label: 'No', value: false },
+]);
+
+const identityOptions = computed(() => [
+    { inputId: 'original_national_identity_confirmed_yes', label: 'Yes', value: true },
+    { inputId: 'original_national_identity_confirmed_no', label: 'No', value: false },
+]);
+const educationCertificatesOptions = computed(() => [
+    { inputId: 'original_education_certificates_confirmed_yes', label: 'Yes', value: true },
+    { inputId: 'original_education_certificates_confirmed_no', label: 'No', value: false },
+]);
+
 const saveConfirmation = async () => {
     if (!hasAbility('manage-final:class-lists')) {
         forbiddenAlert();
         return;
     }
-    if (!form.tuition_fee_confirmed) {
-        errorAlert('Please confirm tuition fees is paid');
+    if (!form.proof_of_payment_confirmed) {
+        errorAlert('Please confirm proof of payment of tuition to proceed.');
         return;
     }
+    if (!form.passport_photos_confirmed) {
+        errorAlert('Please confirm 2 passport photos are available');
+        return;
+    }
+    if (!form.original_birth_certificate_confirmed) {
+        errorAlert('Please confirm original birth certificate is available');
+        return;
+    }
+    if (!form.original_national_identity_confirmed) {
+        errorAlert('Please confirm original national ID/Passport is available');
+        return;
+    }
+    if (!form.original_education_certificates_confirmed) {
+        errorAlert('Please confirm original educational certificates are available');
+        return;
+    }
+
     const confirmed = await useCustomConfirmDialog().open({
         title: 'Confirm Student',
-        message: 'Are you sure you are confirming the payment of tuition fees for this applicant and elevating them to final class list?',
+        message: 'Are you sure you are confirming that student details are in order?',
         confirmText: 'Yes confirm',
     });
     if (confirmed) {
@@ -153,7 +199,7 @@ onMounted(() => {
     form.o_level_confirmed = isItTrue(entry?.attributes?.oLevelConfirmed);
     form.previous_level_confirmed = isItTrue(entry?.attributes?.previousLevelConfirmed);
     form.read_write_confirmed = isItTrue(entry?.attributes?.readWriteConfirmed);
-    form.tuition_fee_confirmed = isItTrue(entry?.attributes?.tuitionFeeConfirmed);
+    form.proof_of_payment_confirmed = isItTrue(entry?.attributes?.proofOfPaymentConfirmed);
 });
 </script>
 
@@ -169,20 +215,71 @@ onMounted(() => {
                     :required-level="requiredLevel"
                     :read-write-required="readWriteRequired"
                 />
-                <BaseCard title="Verification" description="Verification of applicant details">
-                    <div class="grid grid-cols-1 gap-4">
+                <BaseCard title="Confirmation" description="Confirmation of applicant provided details">
+                    <div class="grid grid-cols-2 gap-4">
                         <div class="flex items-center space-x-5">
-                            <Label class="font-bold">Confirm tuition fees is paid:</Label>
-                            <BaseRadioGroup :options="tuitionPaidOptions" v-model="form.tuition_fee_confirmed" :vertical-layout="false" />
+                            <Label class="font-bold">Confirm proof of payment:</Label>
+                            <BaseRadioGroup
+                                :options="proofOfPaymentOptions as any"
+                                v-model="form.proof_of_payment_confirmed"
+                                :vertical-layout="false"
+                            />
+                        </div>
+                        <div class="flex items-center space-x-5">
+                            <Label class="font-bold">Confirm passport photos(2):</Label>
+                            <BaseRadioGroup
+                                :options="passportPhotoOptions as any"
+                                v-model="form.passport_photos_confirmed"
+                                :vertical-layout="false"
+                            />
+                        </div>
+                        <div class="flex items-center space-x-5">
+                            <Label class="font-bold">Confirm original birth certificate:</Label>
+                            <BaseRadioGroup
+                                :options="birthCertificateOptions as any"
+                                v-model="form.original_birth_certificate_confirmed"
+                                :vertical-layout="false"
+                            />
+                        </div>
+                        <div class="flex items-center space-x-5">
+                            <Label class="font-bold">Confirm original national ID:</Label>
+                            <BaseRadioGroup
+                                :options="identityOptions as any"
+                                v-model="form.original_national_identity_confirmed"
+                                :vertical-layout="false"
+                            />
+                        </div>
+                        <div class="flex items-center space-x-5">
+                            <Label class="font-bold">Confirm original education certificates:</Label>
+                            <BaseRadioGroup
+                                :options="educationCertificatesOptions as any"
+                                v-model="form.original_education_certificates_confirmed"
+                                :vertical-layout="false"
+                            />
                         </div>
                     </div>
-                    <div class="mt-6 flex items-center justify-between">
-                        <BaseButton title="Elevate student to final class list" @click="saveConfirmation" classes="rounded-full" />
+                    <div class="flex w-full">
+                        <BaseInput
+                            input-id="remarks"
+                            :label="`${$t('general.remarks')}:`"
+                            placeholder="Leave remarks or a note..."
+                            :type="TextFieldType.text"
+                            v-model="form.remarks"
+                        />
+                    </div>
+                    <div class="mt-4 flex items-center justify-between">
+                        <BaseButton title="Elevate student to final class list" @click="saveConfirmation" />
                     </div>
                 </BaseCard>
             </div>
-            <div class="flex w-1/4 flex-col space-y-15">
-                <Sidebar :other-applications="otherApplications" :next-top="nextTop" type="verified" />
+            <div class="flex w-1/4 flex-col space-y-10">
+                <Sidebar :next-top="nextTop" :type="'verified' as ClassListType" />
+                <FeeStructure
+                    v-if="tuition || autoCardFee || partTimeLevy"
+                    :tuition="tuition"
+                    :auto-card-fee="autoCardFee"
+                    :part-time-levy="partTimeLevy"
+                />
             </div>
         </div>
     </PageContainer>

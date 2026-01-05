@@ -12,7 +12,7 @@ defineProps<Props>();
     <BaseDatePicker
         :input-id="inputId"
         type="year"
-        class="w-[200px]"
+        class="w-50"
         year-picker
         label=""
         v-bind="$attrs"

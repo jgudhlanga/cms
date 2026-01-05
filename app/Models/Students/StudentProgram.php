@@ -25,6 +25,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
@@ -139,6 +140,11 @@ class StudentProgram extends Model implements HasMedia
     public function classList(): BelongsTo
     {
         return $this->belongsTo(ClassList::class, 'id', 'student_program_id');
+    }
+
+    public function notes(): MorphMany
+    {
+        return $this->morphMany(StudentNote::class, 'noteable');
     }
 
     public function getActivitylogOptions(): LogOptions

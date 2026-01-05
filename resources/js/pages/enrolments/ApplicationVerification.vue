@@ -102,7 +102,11 @@ const form = useForm<ClassListAttributeParams>({
     previous_level_confirmed: null,
     read_write_confirmed: null,
     application_fee_confirmed: null,
-    tuition_fee_confirmed: null,
+    proof_of_payment_confirmed: null,
+    passport_photos_confirmed: null,
+    original_birth_certificate_confirmed: null,
+    original_national_identity_confirmed: null,
+    original_education_certificates_confirmed: null,
     type: (queryParams['type'] as ClassListType) ?? 'provisional',
 });
 const saveVerification = async () => {
@@ -246,37 +250,41 @@ onMounted(() => {
                     <div class="grid grid-cols-1 gap-4">
                         <div class="flex items-center space-x-5">
                             <Label class="font-bold">Confirm Identity is correct(id number / passport number):</Label>
-                            <BaseRadioGroup :options="identityConfirmedOptions" v-model="form.identity_confirmed" :vertical-layout="false" />
+                            <BaseRadioGroup :options="identityConfirmedOptions as any" v-model="form.identity_confirmed" :vertical-layout="false" />
                         </div>
                         <div class="flex items-center space-x-5">
                             <Label class="font-bold">Confirm applicant's name is correct:</Label>
-                            <BaseRadioGroup :options="namesConfirmedOptions" v-model="form.names_confirmed" :vertical-layout="false" />
+                            <BaseRadioGroup :options="namesConfirmedOptions as any" v-model="form.names_confirmed" :vertical-layout="false" />
                         </div>
                         <div class="flex items-center space-x-5">
                             <Label class="font-bold">Confirm applicant's disability status:</Label>
-                            <BaseRadioGroup :options="disabilityConfirmedOptions" v-model="form.disability_confirmed" :vertical-layout="false" />
+                            <BaseRadioGroup
+                                :options="disabilityConfirmedOptions as any"
+                                v-model="form.disability_confirmed"
+                                :vertical-layout="false"
+                            />
                         </div>
                         <div class="flex items-center space-x-5" v-if="oLevelRequired">
                             <Label class="font-bold">Confirm O Level results are correct:</Label>
-                            <BaseRadioGroup :options="oLevelConfirmedOptions" v-model="form.o_level_confirmed" :vertical-layout="false" />
+                            <BaseRadioGroup :options="oLevelConfirmedOptions as any" v-model="form.o_level_confirmed" :vertical-layout="false" />
                         </div>
                         <div class="flex items-center space-x-5" v-if="previousLevelRequired">
                             <Label class="font-bold">{{ `Confirm ${requiredLevel} level completed` }}</Label>
-                            <BaseRadioGroup :options="previousLevelOptions" v-model="form.previous_level_confirmed" :vertical-layout="false" />
+                            <BaseRadioGroup :options="previousLevelOptions as any" v-model="form.previous_level_confirmed" :vertical-layout="false" />
                         </div>
                         <div class="flex items-center space-x-5" v-if="readWriteRequired">
                             <Label class="font-bold">Confirm read and write ability</Label>
-                            <BaseRadioGroup :options="readWriteOptions" v-model="form.read_write_confirmed" :vertical-layout="false" />
+                            <BaseRadioGroup :options="readWriteOptions as any" v-model="form.read_write_confirmed" :vertical-layout="false" />
                         </div>
                     </div>
                     <div class="mt-6 flex items-center justify-between">
-                        <BaseButton title="Verify and give Offer to applicant" @click="saveVerification" classes="rounded-full" />
-                        <BaseButton :variant="ColorVariant.danger" title="Reject Application" @click="rejectApplication" classes="rounded-full" />
+                        <BaseButton title="Verify and give Offer to applicant" @click="saveVerification" />
+                        <BaseButton :variant="ColorVariant.danger" title="Reject Application" @click="rejectApplication" />
                     </div>
                 </BaseCard>
             </div>
             <div class="flex w-1/4 flex-col space-y-15">
-                <Sidebar :other-applications="otherApplications" :next-top="nextTop" type="provisional" />
+                <Sidebar :other-applications="otherApplications" :next-top="nextTop" :type="'provisional' as ClassListType" />
             </div>
         </div>
     </PageContainer>

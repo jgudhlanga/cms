@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Enrolments;
 
 use App\DTO\Enrolments\ClassListDto;
 use App\Enums\Shared\ClassListTypeEnum;
+use App\Enums\Shared\FeeTypeEnum;
 use App\Enums\Shared\WorkflowStepEnum;
+use App\Helpers\DepartmentHelper;
 use App\Helpers\EnrolmentHelper;
 use App\Helpers\Helper;
 use App\Helpers\WorkflowHelper;
@@ -27,9 +29,11 @@ use App\Models\Enrolments\ClassList;
 use App\Models\Institution\DepartmentApplicationStep;
 use App\Models\Institution\DepartmentCourse;
 use App\Models\Institution\DepartmentLevel;
+use App\Models\Institution\FeeStructure;
 use App\Models\Institution\InstitutionDepartment;
 use App\Models\Institution\IntakePeriod;
 use App\Models\Institution\ModeOfStudy;
+use App\Models\Shared\FeeType;
 use App\Models\Shared\WorkflowStep;
 use App\Models\Students\StudentProgram;
 use App\Repositories\Institution\interface\IClassListRepository;
@@ -82,7 +86,11 @@ class ClassListController extends Controller
                 'previous_level_confirmed' => false,
                 'read_write_confirmed' => false,
                 'application_fee_confirmed' => false,
-                'tuition_fee_confirmed' => false,
+                'proof_of_payment_confirmed' => false,
+                'passport_photos_confirmed' => false,
+                'original_birth_certificate_confirmed' => false,
+                'original_national_identity_confirmed' => false,
+                'original_education_certificates_confirmed' => false,
             ];
             $dto = new ClassListDto(
                 student_program_id: $studentProgram->id,
@@ -122,7 +130,11 @@ class ClassListController extends Controller
             'previous_level_confirmed' => false,
             'read_write_confirmed' => false,
             'application_fee_confirmed' => false,
-            'tuition_fee_confirmed' => false,
+            'proof_of_payment_confirmed' => false,
+            'passport_photos_confirmed' => false,
+            'original_birth_certificate_confirmed' => false,
+            'original_national_identity_confirmed' => false,
+            'original_education_certificates_confirmed' => false,
         ];
 
         return array_map(
@@ -185,12 +197,13 @@ class ClassListController extends Controller
     {
         try {
             $type = $request->input('type', 'provisional');
-            # get class list
+            # Get class list
             $entry = ClassList::where('student_program_id', $studentProgram->id)->first();
             if (!$entry) {
                 return back()->with('error', 'Class list entry not found for the specified student program.');
             }
-            # update class list entry only if identity_confirmed  disability_confirmed names_confirmed are true
+
+            # Update class list entry only if identity_confirmed  disability_confirmed names_confirmed are true
             $entry->attributes = array_merge($entry->attributes ?? [], [
                 'identity_confirmed' => $request->boolean('identity_confirmed'),
                 'disability_confirmed' => $request->boolean('disability_confirmed'),
@@ -199,7 +212,11 @@ class ClassListController extends Controller
                 'previous_level_confirmed' => $request->boolean('previous_level_confirmed'),
                 'read_write_confirmed' => $request->boolean('read_write_confirmed'),
                 'application_fee_confirmed' => $request->boolean('application_fee_confirmed'),
-                'tuition_fee_confirmed' => $request->boolean('tuition_fee_confirmed'),
+                'proof_of_payment_confirmed' => $request->boolean('proof_of_payment_confirmed'),
+                'passport_photos_confirmed' => $request->boolean('passport_photos_confirmed'),
+                'original_birth_certificate_confirmed' => $request->boolean('original_birth_certificate_confirmed'),
+                'original_national_identity_confirmed' => $request->boolean('original_national_identity_confirmed'),
+                'original_education_certificates_confirmed' => $request->boolean('original_education_certificates_confirmed'),
             ]);
             # Now check actual stored values, not request only
             if (
@@ -209,26 +226,32 @@ class ClassListController extends Controller
             ) {
                 $entry->type = ($type === 'provisional' || $type === 'waiting') ? ClassListTypeEnum::VERIFIED->value : ClassListTypeEnum::FINAL->value;
                 $entry->save();
-                # generate student number
+                # Generate student number
                 $studentNumber = EnrolmentHelper::resolveStudentNumber($studentProgram);
                 $student = $studentProgram->student;
                 $student->fresh()->update([
                     'student_number' => $studentNumber,
                     'student_number_generated' => true,
                 ]);
-                # change student application status to accepted
+                # Change student application status to accepted
                 $step = WorkflowStep::where('slug', WorkflowStepEnum::ACCEPTED->slug())->first();
-                $departmentStep = DepartmentApplicationStep::where('institution_department_id', $studentProgram->institution_department_id)
-                    ->where('workflow_step_id', $step->id)
-                    ->first();
-                $studentProgram->update(['department_application_step_id' => $departmentStep->id]);
-                // send email with offer letter
+                // Send email with offer letter
                 $user = $student->user;
                 if ($type === 'provisional' || $type === 'waiting') {
                     SendOfferLetterJob::dispatch($user->full_name, $user->email, $studentProgram->id)->withoutDelay();
                     if (EnrolmentHelper::isEntryLevel($studentProgram)) {
                         EnrolmentHelper::rejectOtherApplications($studentProgram->student, $studentProgram);
                     }
+                }
+                if ($type === 'verified') {
+                    $step = WorkflowStep::where('slug', WorkflowStepEnum::ENROLLED->slug())->first();
+                }
+                // Update step
+                $departmentStep = DepartmentApplicationStep::where('institution_department_id', $studentProgram->institution_department_id)->where('workflow_step_id', $step->id)->first();
+                $studentProgram->update(['department_application_step_id' => $departmentStep->id]);
+                // Create notes / remarks
+                if($request->has('remarks') && !empty($request->remarks)) {
+                    $studentProgram->notes()->create(['title' => 'Application confirmation', 'body' => $request->remarks]);
                 }
             }
             return back()->with('success', 'Class list entry updated successfully.');
@@ -274,7 +297,6 @@ class ClassListController extends Controller
             ->where('id', '!=', $studentProgram->id)
             ->with(['institutionDepartment', 'departmentLevel.level', 'departmentCourse.course', 'intakePeriod', 'modeOfStudy', 'classList'])
             ->get();
-
         return Inertia::render('enrolments/ApplicationVerification', [
             'application' => EnrolmentResource::make($studentProgram),
             'nextTop' => ClassListNextTopResource::collection($nextTop),
@@ -286,9 +308,26 @@ class ClassListController extends Controller
     {
         $this->authorize('manage-final:class-lists');
         $nextTop = $this->getStudent($studentProgram);
+        $department = $studentProgram->institutionDepartment->department->name ?? '';
+        $modeOfStudy = $studentProgram->modeOfStudy->name ?? '';
+
+        // Tuition Lookup
+        $tuitionFeeType = FeeType::where('name', FeeTypeEnum::TUITION_FEE->name())->first();
+        $feeStructure = FeeStructure::query()
+            ->where('tenant_id', $studentProgram->tenant_id)
+            ->where('level_id', $studentProgram->departmentLevel->level->id ?? null)
+            ->where('mode_of_study_id', $studentProgram->modeOfStudy->id ?? null)
+            ->where('fee_type_id', $tuitionFeeType->id)->first();
+
+        $tuition = $feeStructure->local_fca_amount ?? 0;
+        $autoCardFee = DepartmentHelper::requiredAutoCardFee($department);
+        $partTimeLevy = DepartmentHelper::partTimeLevy($modeOfStudy);
         return Inertia::render('enrolments/ApplicationConfirmation', [
             'application' => EnrolmentResource::make($studentProgram),
             'nextTop' => ClassListNextTopResource::collection($nextTop),
+            'tuition' => $tuition,
+            'autoCardFee' => $autoCardFee,
+            'partTimeLevy' => $partTimeLevy,
         ]);
     }
 
@@ -365,7 +404,7 @@ class ClassListController extends Controller
             'student.user.ledgers.feeType',
         ]);
 
-        $nextTop = DB::table('student_programs as sp')
+        return DB::table('student_programs as sp')
             ->join('class_lists as cl', 'cl.student_program_id', '=', 'sp.id')
             ->join('students as st', 'st.id', '=', 'sp.student_id')
             ->join('users as us', 'us.id', '=', 'st.user_id')
@@ -378,6 +417,5 @@ class ClassListController extends Controller
             ->where('cl.type', $studentProgram->classList->type)
             ->take(10)
             ->get();
-        return $nextTop;
     }
 }

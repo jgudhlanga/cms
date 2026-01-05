@@ -1,6 +1,7 @@
 import { useUtils } from '@/composables/core/useUtils';
 import { IconName } from '@/lib/icons';
 import About from '@/pages/institution/departments/partials/view/About.vue';
+import AcademicCalendarClasses from '@/pages/institution/departments/partials/view/AcademicCalendarClasses.vue';
 import Announcements from '@/pages/institution/departments/partials/view/Announcements.vue';
 import Calendar from '@/pages/institution/departments/partials/view/Calendar.vue';
 import DepartmentSetup from '@/pages/institution/departments/partials/view/DepartmentSetup.vue';
@@ -32,7 +33,7 @@ export const useInstitution = () => {
             {
                 transLabel: () => trans_choice('trans.class', 2),
                 value: 'classes',
-                component: h(Enrolments, { department }),
+                component: h(AcademicCalendarClasses, { department }),
                 show: isItTrue(department?.attributes?.isAcademic),
                 icon: IconName.user_check,
             },

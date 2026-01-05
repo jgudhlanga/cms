@@ -5,6 +5,7 @@ import { forbiddenAlert, openModal } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
 import { buildFormOptions } from '@/lib/forms';
 import { getIdParams } from '@/lib/utils';
+import HttpService from '@/services/http.service';
 import { Auth } from '@/types';
 import { ModeOfStudy } from '@/types/institution';
 import type { Link } from '@/types/ui';
@@ -78,7 +79,8 @@ export const useModeOfStudy = () => {
     };
 
     const isLoading = ref(false);
-    const modesOfStudy = ref<ModeOfStudy[]>([]);
+    const modesOfStudy = ref<ModeOfStudy[] | null>(null);
+    const courseModesOfStudy = ref<ModeOfStudy[] | null>(null);
 
     const listModesOfStudy = async (search?: string) => {
         const { data, fetchData } = useDropdowns();
@@ -87,6 +89,11 @@ export const useModeOfStudy = () => {
         isLoading.value = false;
         modesOfStudy.value = data.value;
     };
+    const listCourseModesOfStudy = async (departmentCourseId: string) => {
+        isLoading.value = true;
+        courseModesOfStudy.value = await HttpService.get(route('v1.modes-of-study.course-modes', departmentCourseId));
+        isLoading.value = false;
+    };
 
     return {
         createModeOfStudyColumns,
@@ -94,7 +101,9 @@ export const useModeOfStudy = () => {
         onOpenModal,
         saveModeOfStudy,
         listModesOfStudy,
+        listCourseModesOfStudy,
         modesOfStudy,
         isLoading,
+        courseModesOfStudy,
     };
 };

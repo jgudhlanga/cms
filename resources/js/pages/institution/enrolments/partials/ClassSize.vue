@@ -4,7 +4,7 @@ defineProps<{ classSize: string | number }>();
 
 <template>
     <div class="flex items-center uppercase  bg-green-100 text-green-600 space-x-3 rounded-full px-3 py-1 text-sm font-medium">
-        <div>Class size:</div>
+        <div>Course size:</div>
         <div class="font-bold">{{ classSize }}</div>
     </div>
 </template>

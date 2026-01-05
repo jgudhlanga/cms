@@ -9,4 +9,6 @@ return [
 	'application-tracking-number-suffix' => Carbon::now()->format('hi').env('APPLICATION_TRACKING_NUMBER_SUFFIX', ''),
 	'student-number-prefix' => env('STUDENT_NUMBER_PREFIX', 'H').Carbon::now()->format('ymd'),
 	'student-number-suffix' => Carbon::now()->format('his').env('STUDENT_NUMBER_SUFFIX', ''),
+    'autoCardFee' => env('AUTO_CARD_FEE', 45.00),
+    'partTimeLevy' => env('PART_TIME_LEVY', 35.00),
 ];

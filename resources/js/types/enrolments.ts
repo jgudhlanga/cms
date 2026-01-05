@@ -224,7 +224,12 @@ export type ClassListAttribute = {
     previousLevelConfirmed: boolean;
     readWriteConfirmed: boolean;
     applicationFeeConfirmed: boolean;
-    tuitionFeeConfirmed: boolean;
+    proofOfPaymentConfirmed: boolean;
+    passportPhotosConfirmed: boolean;
+    originalBirthCertificateConfirmed: boolean;
+    originalNationalIdentityConfirmed: boolean;
+    originalEducationCertificatesConfirmed: boolean;
+    remarks?: string | null;
 };
 
 export type ClassListAttributeParams = {
@@ -235,8 +240,13 @@ export type ClassListAttributeParams = {
     previous_level_confirmed: boolean | null;
     read_write_confirmed: boolean | null;
     application_fee_confirmed: boolean | null;
-    tuition_fee_confirmed: boolean | null;
+    proof_of_payment_confirmed: boolean | null;
+    passport_photos_confirmed: boolean | null;
+    original_birth_certificate_confirmed: boolean | null;
+    original_national_identity_confirmed: boolean | null;
+    original_education_certificates_confirmed: boolean | null;
     type: ClassListType | null;
+    remarks?: string | null;
 };
 
 export type ClassListTopNext = {
@@ -253,9 +263,9 @@ export type OtherApplication = {
     inClassList: boolean;
 };
 export enum ClassListType {
-    PROVISIONAL = "provisional",
-    FINAL = "final",
-    WAITING = "waiting",
-    FAILED = "failed",
-    VERIFIED = "verified",
+    PROVISIONAL = 'provisional',
+    FINAL = 'final',
+    WAITING = 'waiting',
+    FAILED = 'failed',
+    VERIFIED = 'verified',
 }

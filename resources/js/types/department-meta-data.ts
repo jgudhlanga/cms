@@ -41,6 +41,7 @@ export type DepartmentCourse = {
     };
     relationships?: {
         departmentCourseLevels?: DepartmentCourseLevel[];
+        courseModes?: CourseMode[];
     };
 };
 
@@ -58,6 +59,7 @@ export type DepartmentCourseParams = {
 export type DepartmentCourseUpdateParams = {
     department_level_ids?: Array<any> | null;
     show_on_current_application_period?: boolean;
+    course_mode_ids?: Array<any> | null;
 };
 
 export interface DepartmentMetaData {
@@ -129,7 +131,7 @@ export type CourseRequirement = {
 };
 
 export type CourseRequirementParams = {
-    department_level_id: string|number,
+    department_level_id: string | number;
     is_o_level_required?: boolean;
     required_subjects_count?: string | number;
     main_subjects_count?: string | number;
@@ -229,4 +231,16 @@ export type DepartmentEnrolmentCount = {
             enrolmentsCount: string | number | null;
         },
     ];
+};
+
+export type CourseMode = {
+    type?: string;
+    id?: string | number;
+    attributes: {
+        departmentCourseId: string | number;
+        modeOfStudyId: string | number;
+        modeOfStudy: string;
+        createdAt?: string;
+        updatedAt?: string;
+    };
 };

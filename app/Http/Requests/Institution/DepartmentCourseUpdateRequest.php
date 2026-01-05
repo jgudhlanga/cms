@@ -6,6 +6,7 @@ use Illuminate\Foundation\Http\FormRequest;
 
 /**
  * @property mixed|string $department_level_ids
+ * @property mixed $course_mode_ids
  */
 class DepartmentCourseUpdateRequest extends FormRequest
 {
@@ -23,6 +24,11 @@ class DepartmentCourseUpdateRequest extends FormRequest
                 'department_level_ids' => json_decode($this->department_level_ids, true),
             ]);
         }
+        if (is_string($this->course_mode_ids)) {
+            $this->merge([
+                'course_mode_ids' => json_decode($this->course_mode_ids, true),
+            ]);
+        }
     }
 
 
@@ -30,6 +36,7 @@ class DepartmentCourseUpdateRequest extends FormRequest
     {
         return [
             'department_level_ids' => ['nullable', 'array'],
+            'course_mode_ids' => ['nullable', 'array'],
         ];
     }
 }
