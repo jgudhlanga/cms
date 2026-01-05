@@ -47,6 +47,11 @@ class DepartmentCourse extends Model
         return $this->hasMany(DepartmentLevelCourse::class, 'department_course_id');
     }
 
+    public function courseModes(): HasMany
+    {
+        return $this->hasMany(CourseMode::class, 'department_course_id');
+    }
+
     public function requirement(): HasOne
     {
         return $this->hasOne(CourseRequirement::class, 'department_course_id');

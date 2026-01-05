@@ -5,6 +5,9 @@ namespace App\Http\Resources\Institution;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/**
+ * @property mixed $courseModes
+ */
 class DepartmentCourseResource extends JsonResource
 {
 
@@ -28,6 +31,7 @@ class DepartmentCourseResource extends JsonResource
             ],
             'relationships' => [
                 'departmentCourseLevels' => $this->departmentCourseLevels ? DepartmentLevelCourseResource::collection($this->departmentCourseLevels) : null,
+                'courseModes' => $this->courseModes ? CourseModeResource::collection($this->courseModes) : null,
             ]
         ];
     }

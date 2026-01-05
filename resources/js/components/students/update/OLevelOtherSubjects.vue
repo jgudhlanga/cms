@@ -281,6 +281,7 @@ const populateCurrentDataFromApplication = () => {
                                     :is-required="true"
                                     orientation="horizontal"
                                     @update:modelValue="onGradeChange"
+                                    :vertical-layout="false"
                                 />
                             </template>
                         </div>

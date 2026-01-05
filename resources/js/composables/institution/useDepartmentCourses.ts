@@ -10,7 +10,7 @@ import HttpService from '@/services/http.service';
 import { useCreateApplicationFormStore } from '@/store/portal/useCreateApplicationFormStore';
 import { useUpdateProgramFormStore } from '@/store/portal/useUpdateProgramFormStore';
 import { Auth } from '@/types';
-import { CourseRequirement, DepartmentCourse, DepartmentCourseLevel, DepartmentCourseMetaData } from '@/types/department-meta-data';
+import { CourseMode, CourseRequirement, DepartmentCourse, DepartmentCourseLevel, DepartmentCourseMetaData } from '@/types/department-meta-data';
 import { AcademicOLevelResult, Enrolment } from '@/types/enrolments';
 import { InertiaForm, usePage } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
@@ -40,7 +40,20 @@ export const useDepartmentCourses = (isEditingProgram?: boolean) => {
                 header: trans_choice('trans.level', 2),
                 accessorKey: 'levels',
                 cell: ({ row }: { row: { original: DepartmentCourse } }) => {
-                    return row.original.relationships?.departmentCourseLevels?.map((item: DepartmentCourseLevel) => item?.level)?.join(', ');
+                    return row.original.relationships?.departmentCourseLevels
+                        ?.map((item: DepartmentCourseLevel) => item.level)
+                        .filter(Boolean)
+                        .join(', ');
+                },
+            },
+            {
+                header: trans_choice('trans.mode_of_study', 2),
+                accessorKey: 'courseModes',
+                cell: ({ row }: { row: { original: DepartmentCourse } }) => {
+                    return row.original.relationships?.courseModes
+                        ?.map((item: CourseMode) => item?.attributes?.modeOfStudy)
+                        .filter(Boolean)
+                        .join(', ');
                 },
             },
             {

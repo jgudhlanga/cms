@@ -11,7 +11,7 @@ class ModeOfStudyResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'type' => 'mode-f-study',
+            'type' => 'mode-of-study',
             'id' => $this->resource->id,
             "attributes" => [
                 'name' => $this->resource->name,

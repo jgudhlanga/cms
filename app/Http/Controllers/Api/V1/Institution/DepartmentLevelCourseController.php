@@ -14,17 +14,11 @@ class DepartmentLevelCourseController extends Controller
 {
     public function index(DepartmentLevel $departmentLevel)
     {
-        dd($departmentLevel->courses);
-        $courses = $departmentLevel->courses()->join('department_level_courses', 'department_level_courses.course_id', '=', 'courses.id');
-        /*$courses = DepartmentLevelCourse::where('department_level_id', $departmentLevel->id)
-            ->where('show_on_current_application_period', true)
-            ->select('*')
-            ->orderBy('level_id', 'asc')
-            ->orderBy('created_at')
-            ->orderBy('deleted_at')
-            ->get();*/
+        $courses = $departmentLevel->courses()
+            ->join('department_courses', 'department_courses.id', '=', 'department_level_courses.department_course_id')
+            ->where('department_courses.show_on_current_application_period', true)->get();
         //return DepartmentLevelCourseResource::collection($departmentLevel->courses);
-        return DepartmentLevelCourseResource::collection($departmentLevel->courses);
+        return DepartmentLevelCourseResource::collection($courses);
     }
 
     public function store(Request $request)
