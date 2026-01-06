@@ -232,10 +232,7 @@ class Helper
 
     public static function generateAndAssignStudentNumber(Student $student, $program): void
     {
-        $studentNumber = Helper::generateStudentNumber(
-            $student,
-            $program->institutionDepartment
-        );
+        $studentNumber = Helper::generateStudentNumber($program);
         $student->update(['student_number' => $studentNumber]);
     }
 
