@@ -27,7 +27,7 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const baseClasses = `
-  px-3 py-4
+  p-3
   border border-input
   bg-background text-foreground
   placeholder:text-muted-foreground
@@ -53,7 +53,7 @@ onMounted(() => setAutoFocus());
             <Label
                 v-if="label"
                 :for="inputId"
-                :class="cn('text-[16px] font-medium',error && 'text-destructive', labelUppercase && 'uppercase', !verticalLayout && 'flex w-1/4 items-center')"
+                :class="cn(' font-medium',error && 'text-destructive', labelUppercase && 'uppercase', !verticalLayout && 'flex w-1/4 items-center')"
             >
                 {{ label }}<RequiredIndicator v-if="isRequired" />
             </Label>
