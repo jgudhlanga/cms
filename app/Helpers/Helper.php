@@ -12,6 +12,7 @@ use App\Models\Institution\ModeOfStudy;
 use App\Models\Institution\Staff;
 use App\Models\Shared\Status;
 use App\Models\Students\Student;
+use App\Models\Students\StudentProgram;
 use App\Models\Tenants\Tenant;
 use Carbon\Carbon;
 use Illuminate\Contracts\Encryption\DecryptException;
@@ -29,10 +30,13 @@ class Helper
         return $prefix . $id . $suffix;
     }
 
-    public static function generateStudentNumber(Student $student, InstitutionDepartment $department): string
+    public static function generateStudentNumber(StudentProgram $program): string
     {
+        $student = $program->student;
+        $department = $program->institutionDepartment;
         // next year in 2-digit format
-        $year = Carbon::now()->addYear()->format('y');
+        $intakePeriod = $program->intakePeriod;
+        $year = $intakePeriod instanceof IntakePeriod ? $intakePeriod->calendar_year : Carbon::now()->addYear()->format('y');
 
         // department code (uppercased)
         $departmentCode = strtoupper($department->department_code);
@@ -158,7 +162,6 @@ class Helper
         // Cache the fallback only once
         return $cachedIntakePeriod = IntakePeriod::orderByDesc('end_date')->firstOrFail();
     }
-
 
 
     public static function resolveUserDepartments(): array|null
