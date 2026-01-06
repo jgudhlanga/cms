@@ -13,7 +13,7 @@ interface Props {
     showActionsColumn?: boolean;
     showFilters?: boolean;
     intakePeriods?: IntakePeriod[];
-    handleFilterChange: () => void;
+    handleFilterChange?: () => void;
 }
 
 const props = withDefaults(defineProps<Props>(), {
