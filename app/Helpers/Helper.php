@@ -36,7 +36,7 @@ class Helper
         $department = $program->institutionDepartment;
         // next year in 2-digit format
         $intakePeriod = $program->intakePeriod;
-        $year = $intakePeriod instanceof IntakePeriod ? $intakePeriod->calendar_year : Carbon::now()->addYear()->format('y');
+        $year = $intakePeriod ? Carbon::parse($intakePeriod->calendar_year)->format('y') : Carbon::now()->addYear()->format('y');
 
         // department code (uppercased)
         $departmentCode = strtoupper($department->department_code);
