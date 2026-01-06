@@ -24,7 +24,7 @@ class EnrolmentHelper
             return $studentNumber;
         }
         // Otherwise generate a new student number
-        return Helper::generateStudentNumber($student, $program->institutionDepartment);
+        return Helper::generateStudentNumber($program);
     }
 
 
