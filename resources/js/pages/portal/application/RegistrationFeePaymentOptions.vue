@@ -85,7 +85,10 @@ onMounted(async () => {
     <div class="flex h-screen flex-1 items-center bg-gray-50 py-16">
         <DataLoadingSpinner v-if="isCheckingPayment" message="checking if you already pay" />
         <div v-else class="flex h-full w-full flex-col justify-around space-y-6 p-6">
-            <div class="mx-auto flex items-center justify-center">
+            <div class="mx-auto flex flex-col items-center justify-center">
+                <div class="mx-auto flex items-center justify-center text-destructive uppercase font-bold">
+                    Please check for the available Courses in the advert before making a payment
+                </div>
                 <BaseAlert
                     :description="$t('trans.registration_fee_payment_description', { amount: `USD${formatCurrency(registrationFeeAmount)}` })"
                     :type="TypeVariant.info"

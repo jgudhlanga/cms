@@ -13,6 +13,7 @@ import { Enrolment } from '@/types/enrolments';
 import { Student } from '@/types/students';
 import { BreadcrumbItemInterface } from '@/types/ui';
 import { Head } from '@inertiajs/vue3';
+import { IconName } from '@/lib/icons';
 
 interface Props {
     auth: AuthObject;
@@ -73,6 +74,16 @@ const verificationMode = isItTrue(import.meta.env.VITE_VERIFICATION_MODE);
                     title="New Application"
                 />
             </div>
+        </div>-->
+<!--        <div class="flex w-full items-center justify-end">
+            <GenericButton
+                :icon="IconName.add"
+                class="w-full rounded-full md:w-50"
+                :icon-variant="ColorVariant.white"
+                :variant="ColorVariant.primary_outline"
+                @click="() => navigateTo(route('portal.add-program', { student: props.student.id }))"
+                title="New Application"
+            />
         </div>-->
         <div v-if="applications && applications.length > 0" class="my-6 space-y-4">
             <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow" v-for="application in applications" :key="application.id">
