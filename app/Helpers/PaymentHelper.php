@@ -175,7 +175,7 @@ class PaymentHelper
     {
         $user = self::resolveUser($user);
         $intakePeriod = self::resolveIntakePeriod($intakePeriod);
-        $debugEmails = ['jamesgudhlanga@gmail.com', 'ethanmuku2020@gmail.com'];
+        $debugEmails = ['jamesgudhlanga1@gmail.com', 'ethanmuku2020@gmail.com'];
         // Whitelist specific email for dev/testing
         if (in_array($user->email, $debugEmails)) {
             return true;
