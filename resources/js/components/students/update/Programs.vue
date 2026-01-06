@@ -41,6 +41,7 @@ watch(department, async () => {
     course.value = null;
     levelRequirements.value = null;
     courseRequirements.value = null;
+    modeOfStudy.value = null;
     clearFormErrors(form, 'level');
     clearFormErrors(form, 'course');
 });
@@ -53,6 +54,7 @@ watch(level, async () => {
     course.value = null;
     levelRequirements.value = null;
     courseRequirements.value = null;
+    modeOfStudy.value = null;
     clearFormErrors(form, 'level');
     clearFormErrors(form, 'course');
 });

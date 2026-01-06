@@ -55,7 +55,7 @@ watch(
     () => props.departmentCourseId,
     async (newValue) => {
         clearFormErrors(props.form, 'modeOfStudy');
-        await listCourseModesOfStudy(newValue?.toString() ?? '');
+        if (Number(newValue) > 0) await listCourseModesOfStudy(newValue?.toString() ?? '');
     },
 );
 </script>

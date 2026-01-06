@@ -154,6 +154,7 @@ const verificationMode = isItTrue(import.meta.env.VITE_VERIFICATION_MODE);
                                             :label-uppercase="true"
                                             :is-required="true"
                                             orientation="horizontal"
+                                            :vertical-layout="false"
                                             @update:modelValue="
                                                 (value) => {
                                                     const parts = value.split('|');

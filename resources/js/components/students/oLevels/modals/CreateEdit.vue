@@ -237,6 +237,7 @@ const handleSubmissionErrors = (errors: any): void => {
                     :label-uppercase="true"
                     :is-required="true"
                     orientation="horizontal"
+                    :vertical-layout="false"
                 />
                 <InputError v-if="subjectErrors.grade_id" :message="subjectErrors.grade_id" class="mt-1 flex w-full lowercase" />
             </div>
