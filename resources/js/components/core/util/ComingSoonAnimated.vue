@@ -6,7 +6,7 @@ import { IconName } from '@/lib/icons';
 import lottie from 'lottie-web';
 import { onMounted, onUnmounted, ref } from 'vue';
 
-const targetDate = new Date('2026-01-06T08:59:59');
+const targetDate = new Date('2026-01-06T12:59:59');
 
 const days = ref(0);
 const hours = ref(0);
