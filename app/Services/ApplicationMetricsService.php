@@ -29,7 +29,7 @@ class ApplicationMetricsService
             return collect();
         }
 
-        // pre-aggregate class sizes so join doesn't multiply rows
+        // pre-aggregate class sizes so join doesn't multiply row
         $classSizesSub = DB::table('department_intake_class_sizes')
             ->select(
                 'institution_department_id',

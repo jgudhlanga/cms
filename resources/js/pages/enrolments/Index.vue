@@ -8,7 +8,7 @@ import { AuthObject } from '@/types/data-pagination';
 import { IntakePeriod } from '@/types/institution';
 import { Link } from '@/types/ui';
 import { SelectOption } from '@/types/utils';
-import { Head } from '@inertiajs/vue3';
+import { Head, router } from '@inertiajs/vue3';
 import { onMounted, ref } from 'vue';
 
 interface Props {
@@ -29,6 +29,18 @@ onMounted(async () => {
         intakePeriodModel.value = { value: Number(props.intakePeriod.id), label: props.intakePeriod.attributes.name };
     }
 });
+
+const handleFilterChange = (option: SelectOption) => {
+    router.get(
+        window.location.pathname,
+        {
+            intake_period_id: String(option.value),
+        },
+        {
+            // options here
+        },
+    );
+};
 </script>
 
 <template>
@@ -60,6 +72,7 @@ onMounted(async () => {
             :show-filters="true"
             v-model:intakePeriodModel="intakePeriodModel"
             :intake-periods="intakePeriods"
+            :handle-filter-change="handleFilterChange"
         />
     </PageContainer>
 </template>

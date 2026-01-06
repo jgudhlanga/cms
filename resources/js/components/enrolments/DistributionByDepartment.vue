@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import IntakePeriodComboSelect from '@/components/core/form/combobox/IntakePeriodComboSelect.vue';
 import HeadingSmall from '@/components/core/util/HeadingSmall.vue';
 import DepartmentClassListActionLink from '@/components/enrolments/DepartmentClassListActionLink.vue';
 import { hasAbility } from '@/lib/permissions';
@@ -12,6 +13,7 @@ interface Props {
     showActionsColumn?: boolean;
     showFilters?: boolean;
     intakePeriods?: IntakePeriod[];
+    handleFilterChange: () => void;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -112,6 +114,7 @@ const intakePeriodModel = defineModel<SelectOption | null>('intakePeriodModel');
                 :label-uppercase="true"
                 :vertical-layout="false"
                 :data="intakePeriods ?? []"
+                @update:modelValue="handleFilterChange"
             />
         </div>
         <div class="h-auto">
