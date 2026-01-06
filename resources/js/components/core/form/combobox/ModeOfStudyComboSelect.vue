@@ -10,26 +10,38 @@ import { computed, onMounted, watch } from 'vue';
 
 interface Props {
     form?: InertiaForm<any>;
-    departmentCourseId: string;
+    departmentCourseId?: string;
 }
 
-const { isLoading, listCourseModesOfStudy, courseModesOfStudy } = useModeOfStudy();
+const { isLoading, listCourseModesOfStudy, courseModesOfStudy, listModesOfStudy, modesOfStudy } = useModeOfStudy();
 const props = defineProps<Props>();
 
 onMounted(async () => {
     if (Number(props.departmentCourseId ?? '') > 0) {
-        await listCourseModesOfStudy(props.departmentCourseId);
+        await listCourseModesOfStudy(props.departmentCourseId ?? '');
+    } else {
+        await listModesOfStudy();
     }
 });
 
 const options = computed(() => {
-    return courseModesOfStudy.value?.map(
-        (mode: ModeOfStudy) =>
-            <SelectOption>{
-                value: Number(mode.id),
-                label: mode?.attributes?.name,
-            },
-    );
+    if (Number(props.departmentCourseId ?? '') > 0) {
+        return courseModesOfStudy.value?.map(
+            (mode: ModeOfStudy) =>
+                <SelectOption>{
+                    value: Number(mode.id),
+                    label: mode?.attributes?.name,
+                },
+        );
+    } else {
+        return modesOfStudy.value?.map(
+            (mode: ModeOfStudy) =>
+                <SelectOption>{
+                    value: Number(mode.id),
+                    label: mode?.attributes?.name,
+                },
+        );
+    }
 });
 const placeholder = computed(() => {
     if (courseModesOfStudy.value && courseModesOfStudy.value.length > 0) {
