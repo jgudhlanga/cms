@@ -95,7 +95,7 @@ class DocumentHelper
 
         // Base query
         $query = DocumentTemplate::query()
-            ->where('intake_period_id', $studentProgram->intakePeriod->id ?? null)
+            //->where('intake_period_id', $studentProgram->intakePeriod->id ?? null)
             ->where('document_type_id', $documentType->id);
 
         // Apply USD-only constraint if needed

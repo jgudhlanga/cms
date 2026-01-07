@@ -7,13 +7,13 @@ import { useUtils } from '@/composables/core/useUtils';
 import { useStudents } from '@/composables/students/useStudents';
 import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
+import { IconName } from '@/lib/icons';
 import OfferLetterAnchor from '@/pages/portal/student/partials/OfferLetterAnchor.vue';
 import { AuthObject } from '@/types/data-pagination';
 import { Enrolment } from '@/types/enrolments';
 import { Student } from '@/types/students';
 import { BreadcrumbItemInterface } from '@/types/ui';
 import { Head } from '@inertiajs/vue3';
-import { IconName } from '@/lib/icons';
 
 interface Props {
     auth: AuthObject;
