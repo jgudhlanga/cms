@@ -7,8 +7,10 @@ interface Props {
     student: Student;
 }
 
-const props = defineProps<Props>();
+defineProps<Props>();
 const { navigateTo } = useUtils();
+const paymentUrl = route('portal.application.fee-payment');
+//const addProgramUrl = route('portal.add-program', { student: props.student.id });
 </script>
 
 <template>
@@ -17,8 +19,7 @@ const { navigateTo } = useUtils();
         class="w-full rounded-full md:w-50"
         :icon-variant="ColorVariant.white"
         :variant="ColorVariant.primary_outline"
-        @click="() => navigateTo(route('portal.add-program', { student: props.student.id }))"
+        @click="() => navigateTo(paymentUrl)"
         title="Add New Program"
     />
 </template>
-

@@ -20,6 +20,10 @@ class RedirectStudentMiddleware
                 if ($request->routeIs(...$restrictedRoutes)) {
                     return to_route('portal.dashboard');
                 }
+                # if has account and they want to add a
+                if (request()->route()->getName() === 'portal.add-program') {
+                    # continue to add program
+                }
             } else {
                 if (PaymentHelper::hasPaidApplicationFeeAndNotApplied()) {
                     if (!$request->routeIs(['portal.application.create', 'portal.application.confirm'])) {
