@@ -212,7 +212,7 @@ class PortalController extends Controller
     {
         $this->authorize('manageStudentPersonalDetails');
         $oLevelResults = AcademicLevelResource::collection($student?->oLevelResults);
-        $allowedLevels = Level::where('allowed_applications_per_level', '>', '1')->pluck('id')->toArray();
+        $allowedLevels =  []; //Level::where('allowed_applications_per_level', '>', '1')->pluck('id')->toArray();
         $currentLevels = $student->programs()->get()->map(fn($program) => $program?->department_level_id)->filter()->toArray();
         $currentCourses = $student->programs()->get()->map(fn($program) => $program?->department_course_id)->filter()->toArray();
         $currentDepartments = $student->programs()->get()->map(fn($program) => $program?->institution_department_id)->filter()->toArray();
