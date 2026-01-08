@@ -1,7 +1,8 @@
 import { useDataTables } from '@/composables/core/useDataTables';
+import { Enrolment } from '@/types/enrolments';
 import { Student } from '@/types/students';
 import { trans_choice } from 'laravel-vue-i18n';
-import { Enrolment } from '@/types/enrolments';
+import { useUtils } from '@/composables/core/useUtils';
 
 export const useStudents = () => {
     const { moreActionButton, textLink } = useDataTables();
@@ -42,7 +43,7 @@ export const useStudents = () => {
 
     const statusMessage = (application: Enrolment) => {
         const workflowStep = application?.relationships?.departmentWorkflowStep?.attributes?.workflowStep ?? '';
-       //const step =  workflowStep?.toLowerCase() === 'review' ? 'Unsuccessful' : workflowStep;
+        //const step =  workflowStep?.toLowerCase() === 'review' ? 'Unsuccessful' : workflowStep;
         switch (workflowStep) {
             case 'Review':
                 return 'Your application has been submitted and is awaiting review.';
@@ -62,7 +63,29 @@ export const useStudents = () => {
                 return 'Status information is currently unavailable.';
         }
     };
+    const showCreateNewProgramButton = (applications: Enrolment[], currentIntakePeriod: string): boolean => {
+        return !applications.some((application) => {
+            const workflowStep = application?.relationships?.departmentWorkflowStep?.attributes?.workflowStep;
+
+            const intakePeriodId = application?.attributes?.intakePeriodId;
+
+            return workflowStep === 'Accepted' || String(intakePeriodId) === String(currentIntakePeriod);
+        });
+    };
+
+    const showEditProgramButton = (application: Enrolment, currentIntakePeriod: string): boolean => {
+        const { isItTrue } = useUtils();
+        const workflowStep = application?.relationships?.departmentWorkflowStep?.attributes?.workflowStep;
+        const verificationMode = isItTrue(import.meta.env.VITE_VERIFICATION_MODE);
+        return workflowStep !== 'Accepted' && String(application?.attributes?.intakePeriodId) === String(currentIntakePeriod) && !verificationMode;
+    };
+
     return {
-        createStudentColumns, getApplicationStatus, hasOfferLetter, statusMessage
+        createStudentColumns,
+        getApplicationStatus,
+        hasOfferLetter,
+        statusMessage,
+        showCreateNewProgramButton,
+        showEditProgramButton,
     };
 };
