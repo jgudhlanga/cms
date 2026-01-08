@@ -80,6 +80,7 @@ onMounted(async () => {
     if (String(checkData?.value?.status)?.toLowerCase() === 'paid' || userEmail === 'jamesgudhlanga@gmail.com') {
         if (Number(studentId) > 0) {
             window.location.href = route('portal.add-program', { student: studentId });
+            return;
         }
         window.location.href = route('portal.application.create');
     }
