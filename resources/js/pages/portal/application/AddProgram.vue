@@ -138,8 +138,8 @@ watch(course, async () => {
 });
 
 onMounted(async () => {
-    ToastService.warning('Sorry, The registration has ended for now. Contact the administration for more info.');
-    navigateTo(route('login'));
+    //ToastService.warning('Sorry, The registration has ended for now. Contact the administration for more info.');
+    //navigateTo(route('login'));
     await listSubjects();
 });
 const validateSubjectRequirements = async () => {
@@ -237,7 +237,6 @@ const onUpdated = () => {
                 <BaseAlert :description="message" v-if="message" class="mb-5" :type="TypeVariant.danger" />
                 <BaseCard :title="$t('trans.programs')" :description="$t('trans.program_description')">
                     <div class="grid grid-cols-1 gap-3 md:grid-cols-4">
-                        <ModeOfStudyComboSelect :form="form" v-model="modeOfStudy" :error="form.errors.modeOfStudy" :is-required="true" />
                         <InstitutionDepartmentComboSelect :form="form" v-model="department" :error="form.errors.department" :is-required="true" />
                         <DepartmentLevelComboSelect
                             :form="form"
@@ -254,6 +253,13 @@ const onUpdated = () => {
                             :error="form.errors.course"
                             :is-required="true"
                             :disabled="courseDisabled"
+                        />
+                        <ModeOfStudyComboSelect
+                            :form="form"
+                            v-model="modeOfStudy"
+                            :error="form.errors.modeOfStudy"
+                            :is-required="true"
+                            :department-course-id="course?.value?.toString() ?? ''"
                         />
                     </div>
                     <div class="my-4 flex w-full flex-col">
@@ -280,14 +286,14 @@ const onUpdated = () => {
                     </div>
                 </BaseCard>
                 <div class="my-6 flex flex-col justify-center space-y-3 space-x-3 md:flex-row">
-                    <BaseButton class="w-full md:w-[200px]" :size="ButtonSize.xl" :processing="isLoading">
+                    <BaseButton class="w-full md:w-50" :size="ButtonSize.xl" :processing="isLoading">
                         {{ $t('trans.submit') }}
                     </BaseButton>
                     <BaseButton
                         @click="navigateTo(route('portal.applications'))"
                         type="button"
                         :variant="ColorVariant.shade"
-                        class="w-full md:w-[200px]"
+                        class="w-full md:w-50"
                         :size="ButtonSize.xl"
                     >
                         {{ $t('trans.cancel') }}

@@ -87,8 +87,8 @@ const form = useForm<ProgramParams>({
 });
 
 onMounted(async () => {
-    ToastService.warning('Sorry, The registration has ended for now. Contact the administration for more info.');
-    navigateTo(route('login'));
+    //ToastService.warning('Sorry, The registration has ended for now. Contact the administration for more info.');
+    //navigateTo(route('login'));
     modeOfStudy.value = { value: Number(application?.attributes?.modeOfStudyId), label: application?.attributes?.modeOfStudy ?? '' };
     department.value = { value: Number(application?.attributes?.institutionDepartmentId), label: application?.attributes?.department ?? '' };
     level.value = { value: Number(application?.attributes?.departmentLevelId), label: application?.attributes?.level ?? '' };
@@ -196,14 +196,14 @@ const onUpdated = () => {
             <div class="flex w-full flex-col space-y-6 md:mx-auto md:w-7/8">
                 <Programs :form="form" :application="application" />
                 <div class="mb-10 flex flex-col justify-center space-y-3 space-x-3 md:flex-row">
-                    <BaseButton class="w-full md:w-[200px]" :size="ButtonSize.xl" :processing="isLoading">
+                    <BaseButton class="w-full md:w-50" :size="ButtonSize.xl" :processing="isLoading">
                         {{ $t('trans.submit') }}
                     </BaseButton>
                     <BaseButton
                         @click="navigateTo(route('portal.applications'))"
                         type="button"
                         :variant="ColorVariant.shade"
-                        class="w-full md:w-[200px]"
+                        class="w-full md:w-50"
                         :size="ButtonSize.xl"
                     >
                         {{ $t('trans.cancel') }}

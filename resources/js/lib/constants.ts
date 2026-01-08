@@ -77,6 +77,7 @@ const DISABILITY_OPTIONS: RadioGroupOption[] = [
     { label: 'Skip', value: 'prefer_not_to_say', inputId: 'disability_prefer_not_to_say' },
 ];
 
+const CURRENT_INTAKE_PERIOD_ID = '2';
 export {
     API_BASE_URL,
     API_VERSION,
@@ -89,5 +90,6 @@ export {
     PAGINATION_ITEMS_PER_PAGE,
     PAGINATION_MAX_LIMIT,
     PAYMENT_METHODS,
+    CURRENT_INTAKE_PERIOD_ID,
 };
 

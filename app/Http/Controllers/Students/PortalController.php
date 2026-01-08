@@ -220,6 +220,7 @@ class PortalController extends Controller
             compact('student', 'oLevelResults', 'allowedLevels', 'currentLevels', 'currentDepartments', 'currentCourses'));
     }
 
+
     /**
      * @throws Throwable
      */
