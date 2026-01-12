@@ -57,7 +57,7 @@ Route::prefix('institution')->middleware('auth')->group(function () {
     Route::resource('departments.staff', StaffController::class)->names('staff');
     #====================================== DEPARTMENT COURSE & CLASS CONFIG =====================================================
     Route::post('{institution_department}/class-sizes', [DepartmentClassSizeController::class, 'store'])->name('class-sizes.store');
-    Route::get('{institution_department}/academic-calendar-class-config/academic_calendar', [AcademicCalendarController::class, 'configDepartmentCourseClasses'])->name('academic-calendar-class-config.manage');
+    Route::get('{institution_department}/academic-calendar-class/{academic_calendar}/config', [AcademicCalendarController::class, 'configDepartmentCourseClasses'])->name('academic-calendar-class-config.manage');
     # ============================================= INSTITUTION SETUP =======================================================
     Route::prefix('config')->group(function () {
         Route::get('/', [InstitutionConfigController::class, 'index'])->name('institution.setup');

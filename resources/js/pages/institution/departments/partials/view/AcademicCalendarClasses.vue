@@ -128,6 +128,9 @@ const handleSelectionChange = async () => {
                                                 navigateTo(
                                                     route('academic-calendar-class-config.manage', {
                                                         institution_department: institutionDepartmentId,
+                                                        department_level: String(level.departmentLevelId),
+                                                        department_course: stats.departmentCourseId,
+                                                        mode_of_study: String(modeOfStudy?.value),
                                                         academic_calendar: String(academicCalendar?.value) ?? '',
                                                     }),
                                                 )

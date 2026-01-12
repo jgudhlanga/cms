@@ -103,7 +103,6 @@ class DepartmentMetaDataController extends Controller
         $intakePeriodId = request('intake_period_id');
         $modeOfStudyId = request('mode_of_study_id');
         $type = request('type', ClassListTypeEnum::PROVISIONAL->value);
-
         // Eager-load relationships to avoid N+1
         $enrolments = $institutionDepartment->enrolments()
             ->join('class_lists', 'student_programs.id', '=', 'class_lists.student_program_id')
@@ -112,11 +111,9 @@ class DepartmentMetaDataController extends Controller
             ->when($modeOfStudyId, fn($q) => $q->where('mode_of_study_id', $modeOfStudyId))
             ->whereIn('class_lists.type', [$type])
             ->get();
-
         // Group by department_course_id
         $grouped = $enrolments->groupBy('department_course_id')->map(function ($courseGroup) use ($institutionDepartment) {
             $course = $courseGroup->first()->departmentCourse;
-
             // Group within each course by department_level_id
             $levels = $courseGroup->groupBy('department_level_id')->map(function ($levelGroup) {
                 $level = $levelGroup->first()->departmentLevel;
@@ -127,7 +124,6 @@ class DepartmentMetaDataController extends Controller
                     'enrolmentsCount' => $levelGroup->count(),
                 ];
             })->values(); // reset numeric keys
-
             return [
                 'institutionDepartmentId' => $institutionDepartment->id,
                 'departmentCourseId' => $course->id,
@@ -135,7 +131,6 @@ class DepartmentMetaDataController extends Controller
                 'levels' => $levels,
             ];
         })->values(); // reset numeric keys
-
         return response()->json($grouped);
     }
 }

@@ -75,6 +75,9 @@ class AcademicCalendarController extends Controller
     public function configDepartmentCourseClasses(InstitutionDepartment $institutionDepartment, AcademicCalendar $academicCalendar)
     {
         $this->authorize('update', $academicCalendar);
+       # "department_course" => "1"
+        #"department_level" => "1"
+        #"mode_of_study" => "1"
         return Inertia::render('institution/academicCalendars/AcademicCalendarClassesConfig', [
             'department' => new InstitutionDepartmentResource($institutionDepartment),
             'academicCalendar' => new AcademicCalendarResource($academicCalendar),
