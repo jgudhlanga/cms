@@ -15,6 +15,7 @@ import { FeeStructure } from '@/types/institution';
 import axios from 'axios';
 import { trans } from 'laravel-vue-i18n';
 import { onMounted, ref } from 'vue';
+import ToastService from '@/services/toast.service';
 
 interface Props {
     registrationFee: FeeStructure;
@@ -28,7 +29,7 @@ const checkData = ref<{ status: string } | null>(null);
 const isCheckingPayment = ref(false);
 
 const { paymentMethods } = useDefaults();
-const { generateRandomCode, formatCurrency } = useUtils();
+const { generateRandomCode, formatCurrency, navigateTo } = useUtils();
 const registrationFeeAmount = props.registrationFee?.attributes?.localFcaAmount ?? '20.00';
 
 const isLoading = ref(false);
@@ -74,6 +75,8 @@ const submit = async () => {
 };
 
 onMounted(async () => {
+    ToastService.warning('Sorry, The registration has ended for now. Contact the administration for more info.');
+    navigateTo(route('login'));
     await checkPaymentStatus();
     if (String(checkData?.value?.status)?.toLowerCase() === 'paid') {
         window.location.href = route('portal.application.create');
@@ -86,7 +89,7 @@ onMounted(async () => {
         <DataLoadingSpinner v-if="isCheckingPayment" message="checking if you already pay" />
         <div v-else class="flex h-full w-full flex-col justify-around space-y-6 p-6">
             <div class="mx-auto flex flex-col items-center justify-center">
-                <div class="mx-auto flex items-center justify-center text-destructive uppercase font-bold">
+                <div class="text-destructive mx-auto flex items-center justify-center font-bold uppercase">
                     Please check for the available Courses in the advert before making a payment
                 </div>
                 <BaseAlert

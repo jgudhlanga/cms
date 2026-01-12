@@ -138,8 +138,8 @@ watch(course, async () => {
 });
 
 onMounted(async () => {
-    //ToastService.warning('Sorry, The registration has ended for now. Contact the administration for more info.');
-    //navigateTo(route('login'));
+    ToastService.warning('Sorry, The registration has ended for now. Contact the administration for more info.');
+    navigateTo(route('login'));
     await listSubjects();
 });
 const validateSubjectRequirements = async () => {

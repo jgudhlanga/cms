@@ -87,8 +87,8 @@ const form = useForm<ProgramParams>({
 });
 
 onMounted(async () => {
-    //ToastService.warning('Sorry, The registration has ended for now. Contact the administration for more info.');
-    //navigateTo(route('login'));
+    ToastService.warning('Sorry, The registration has ended for now. Contact the administration for more info.');
+    navigateTo(route('login'));
     modeOfStudy.value = { value: Number(application?.attributes?.modeOfStudyId), label: application?.attributes?.modeOfStudy ?? '' };
     department.value = { value: Number(application?.attributes?.institutionDepartmentId), label: application?.attributes?.department ?? '' };
     level.value = { value: Number(application?.attributes?.departmentLevelId), label: application?.attributes?.level ?? '' };

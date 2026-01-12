@@ -25,6 +25,7 @@ import { useIdTypes } from '@/composables/shared/useIdTypes';
 import { useApplicationFormHelper } from '@/composables/students/useApplicationFormHelper';
 import { ButtonSize } from '@/enums/buttons';
 import { errorAlert } from '@/lib/alerts';
+import ToastService from '@/services/toast.service';
 import { CourseRequirement, DepartmentLevelRequirement } from '@/types/department-meta-data';
 import { useForm } from '@inertiajs/vue3';
 import { trans } from 'laravel-vue-i18n';
@@ -129,6 +130,8 @@ const populateInitialForm = () => {
 };
 
 onMounted(async () => {
+    ToastService.warning('Sorry, The registration has ended for now. Contact the administration for more info.');
+    navigateTo(route('login'));
     await listIdTypes();
     populateInitialForm();
 });
