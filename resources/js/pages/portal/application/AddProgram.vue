@@ -217,6 +217,7 @@ onBeforeUnmount(() => {
 });
 
 const onUpdated = () => {
+    console.log('Here we goo')
     router.visit(window.location.pathname, {
         replace: true,
         preserveScroll: true,
