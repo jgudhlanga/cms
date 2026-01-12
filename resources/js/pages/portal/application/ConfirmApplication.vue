@@ -165,6 +165,7 @@ const save = async () => {
 onMounted(() => {
     ToastService.warning('Sorry, The registration has ended for now. Contact the administration for more info.');
     navigateTo(route('login'));
+    return;
 });
 </script>
 <template>

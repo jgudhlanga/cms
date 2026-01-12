@@ -89,7 +89,8 @@ const form = useForm<ProgramParams>({
 onMounted(async () => {
     ToastService.warning('Sorry, The registration has ended for now. Contact the administration for more info.');
     navigateTo(route('login'));
-    modeOfStudy.value = { value: Number(application?.attributes?.modeOfStudyId), label: application?.attributes?.modeOfStudy ?? '' };
+    return;
+    /*modeOfStudy.value = { value: Number(application?.attributes?.modeOfStudyId), label: application?.attributes?.modeOfStudy ?? '' };
     department.value = { value: Number(application?.attributes?.institutionDepartmentId), label: application?.attributes?.department ?? '' };
     level.value = { value: Number(application?.attributes?.departmentLevelId), label: application?.attributes?.level ?? '' };
     course.value = {
@@ -109,7 +110,7 @@ onMounted(async () => {
     }
 
     if (required_level_completed) required_level_completed.value = isItTrue(application?.attributes?.requiredLevelCompleted);
-    if (read_write_acknowledged) read_write_acknowledged.value = isItTrue(application?.attributes?.readWriteAcknowledged);
+    if (read_write_acknowledged) read_write_acknowledged.value = isItTrue(application?.attributes?.readWriteAcknowledged);*/
 });
 
 const validateSubjectRequirements = async () => {

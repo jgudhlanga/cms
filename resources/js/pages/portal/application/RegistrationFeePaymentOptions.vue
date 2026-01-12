@@ -77,7 +77,8 @@ const submit = async () => {
 onMounted(async () => {
     ToastService.warning('Sorry, The registration has ended for now. Contact the administration for more info.');
     navigateTo(route('login'));
-    await checkPaymentStatus();
+    return;
+    /*await checkPaymentStatus();
     const studentId = user.attributes?.studentId;
     const userEmail = user.attributes.email;
     if (String(checkData?.value?.status)?.toLowerCase() === 'paid' || userEmail === 'jamesgudhlanga@gmail.com') {
@@ -86,7 +87,7 @@ onMounted(async () => {
             return;
         }
         window.location.href = route('portal.application.create');
-    }
+    }*/
 });
 </script>
 <template>
