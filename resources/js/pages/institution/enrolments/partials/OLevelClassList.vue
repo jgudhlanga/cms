@@ -4,6 +4,7 @@ import { useEnrolments } from '@/composables/students/useEnrolments';
 import { DepartmentLevel } from '@/types/department-meta-data';
 import { EnrolmentApplication } from '@/types/enrolments';
 import { computed } from 'vue';
+import { IconName } from '@/enums/icons';
 
 interface Props {
     level: DepartmentLevel;
@@ -27,6 +28,8 @@ const {
     getOtherSubjectGrades,
     getClassListTypeClasses,
     getClassListTypeDescription,
+    addToClassList,
+    getClassListType,
 } = useEnrolments();
 const { formatDate } = useUtils();
 const faultyApplications = getFaultyApplications(applications, level);
@@ -93,6 +96,12 @@ const groupedApplications = groupByClassListType(applications);
                         <td class="j-td text-center">
                             <template v-if="application.inClassList">
                                 <span>{{ application.classListType }}</span>
+                            </template>
+                            <template v-else>
+                                <IconButton
+                                    :icon="IconName.add"
+                                    @click="addToClassList(String(application.applicationId), getClassListType(index, classSize))"
+                                />
                             </template>
                         </td>
                     </tr>
