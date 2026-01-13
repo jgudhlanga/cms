@@ -3,6 +3,7 @@
 namespace App\Helpers;
 
 use App\Enums\Acl\PermissionEnum;
+use App\Enums\Institution\DepartmentEnum;
 use App\Enums\Institution\LevelEnum;
 use App\Enums\Institution\ModeOfStudyEnum;
 use App\Enums\Shared\DocumentTypeEnum;
@@ -73,6 +74,7 @@ class DocumentHelper
 
         $tuition = $feeStructure->local_fca_amount ?? 0;
 
+
         // Document type
         $documentType = DocumentType::whereName(DocumentTypeEnum::OFFER_LETTER->name())->firstOrFail();
 
@@ -95,7 +97,9 @@ class DocumentHelper
             || in_array($modeOfStudy, array_map(fn($m) => $m->label(), $usdOnlyModes), true);
 
         $isSDP = in_array($level, array_map(fn($l) => $l->name(), $sdpLevels), true);
-
+        if ($isSDP && strtolower($department) === strtolower(DepartmentEnum::MECHANICAL_AND_PRODUCTION_ENGINEERING->label())) {
+            $tuition = '375.00';
+        }
         // Base query
         $query = DocumentTemplate::query()
             //->where('intake_period_id', $studentProgram->intakePeriod->id ?? null)
