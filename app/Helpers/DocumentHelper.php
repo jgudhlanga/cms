@@ -82,8 +82,9 @@ class DocumentHelper
             LevelEnum::ABMA_LEVEL_4,
             LevelEnum::ABMA_LEVEL_5,
             LevelEnum::ABMA_LEVEL_6,
-            LevelEnum::SDP,
         ];
+
+        $sdpLevels = [LevelEnum::SDP,];
 
         $usdOnlyModes = [
             ModeOfStudyEnum::BLOCK_RELEASE,
@@ -93,6 +94,8 @@ class DocumentHelper
             in_array($level, array_map(fn($l) => $l->name(), $usdOnlyLevels), true)
             || in_array($modeOfStudy, array_map(fn($m) => $m->label(), $usdOnlyModes), true);
 
+        $isSDP = in_array($level, array_map(fn($l) => $l->name(), $sdpLevels), true);
+
         // Base query
         $query = DocumentTemplate::query()
             //->where('intake_period_id', $studentProgram->intakePeriod->id ?? null)
@@ -100,8 +103,8 @@ class DocumentHelper
 
         // Apply USD-only constraint if needed
         $documentTemplate = $query
-            ->when($isUsdOnly, fn($q) => $q->whereRaw('LOWER(name) LIKE ?', ['%usd only%'])
-            )
+            ->when($isUsdOnly, fn($q) => $q->whereRaw('LOWER(name) LIKE ?', ['%usd only%']))
+            ->when($isSDP, fn($q) => $q->whereRaw('LOWER(name) LIKE ?', ['%sdp%']))
             ->firstOrFail();
 
         return [
