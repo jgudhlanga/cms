@@ -5,7 +5,10 @@ import { useUtils } from '@/composables/core/useUtils';
 import { IconName } from '@/lib/icons';
 import lottie from 'lottie-web';
 import { onMounted, onUnmounted, ref } from 'vue';
-
+interface Props {
+    title?: string;
+    message?: string;
+}
 const targetDate = new Date('2026-01-06T12:59:59');
 
 const days = ref(0);
@@ -13,6 +16,8 @@ const hours = ref(0);
 
 const minutes = ref(0);
 const seconds = ref(0);
+
+defineProps<Props>();
 
 const updateTimer = () => {
     const now = new Date();
@@ -59,8 +64,10 @@ const { goBack } = useUtils();
 
         <!-- Text content -->
         <div class="flex w-full flex-col space-y-4 text-center">
-            <h1 class="text-destructive text-5xl font-bold uppercase">Coming Soon</h1>
-            <div class="flex w-full items-center justify-center text-lg sm:text-lg">We're still configuring the system. Stay tuned!</div>
+            <h1 class="text-destructive text-5xl font-bold uppercase">{{ title ?? 'Coming Soon' }}</h1>
+            <div class="flex w-full items-center justify-center text-lg sm:text-lg">
+                {{ message ?? "We're still configuring the system. Stay tuned!" }}
+            </div>
 
             <!-- Countdown Timer -->
             <div v-if="showCountdown" class="mt-4 flex justify-center space-x-6 font-mono text-2xl">

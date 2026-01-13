@@ -18,9 +18,11 @@ import { useApplicationFormHelper } from '@/composables/students/useApplicationF
 import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
 import { TypeVariant } from '@/enums/type-variants';
+import ToastService from '@/services/toast.service';
 import { ContactDetailView, NextOfKinDetailView, PersonalDetailView, ProgramDetailView } from '@/types/students';
 import { useForm } from '@inertiajs/vue3';
 import { storeToRefs } from 'pinia';
+import { onMounted } from 'vue';
 
 // Composable
 const { saveApplication } = useStudentPortal();
@@ -160,6 +162,11 @@ const save = async () => {
     updateCreateForm(form);
     saveApplication(form);
 };
+onMounted(() => {
+    ToastService.warning('Sorry, The registration has ended for now. Contact the administration for more info.');
+    navigateTo(route('login'));
+    return;
+});
 </script>
 <template>
     <StudentPageHeader />
@@ -193,7 +200,7 @@ const save = async () => {
                     @click="navigateTo(route('portal.application.create'))"
                     type="button"
                     :variant="ColorVariant.shade"
-                    class="w-full md:w-[200px]"
+                    class="w-full md:w-50"
                     :size="ButtonSize.xl"
                     >{{ $t('trans.edit') }}</BaseButton
                 >

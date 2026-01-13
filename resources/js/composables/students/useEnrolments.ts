@@ -228,7 +228,8 @@ export const useEnrolments = () => {
             const mainSubjectsScore = mainScores.reduce((sum, s) => sum + s, 0);
             const hasInvalidGrade = [...mainScores, ...otherScores].some((score) => score >= 9);
 
-            if (hasInvalidGrade || hasNoPayment) return;
+            if (hasInvalidGrade ) return;
+            //if (hasInvalidGrade || hasNoPayment ) return;
 
             scored.push({
                 ...app,
@@ -296,7 +297,8 @@ export const useEnrolments = () => {
 
             // Faulty if any score is 9 (fail/missing) or no payment
             const hasInvalidGrade = [...mainScores, ...otherScores].some((score) => score >= 9);
-            return hasInvalidGrade || hasNoPayment;
+            return hasInvalidGrade;
+            //return hasInvalidGrade || hasNoPayment;
         });
     }
 

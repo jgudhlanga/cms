@@ -15,6 +15,7 @@ import { FeeStructure } from '@/types/institution';
 import axios from 'axios';
 import { trans } from 'laravel-vue-i18n';
 import { onMounted, ref } from 'vue';
+import ToastService from '@/services/toast.service';
 
 interface Props {
     registrationFee: FeeStructure;
@@ -28,7 +29,7 @@ const checkData = ref<{ status: string } | null>(null);
 const isCheckingPayment = ref(false);
 
 const { paymentMethods } = useDefaults();
-const { generateRandomCode, formatCurrency } = useUtils();
+const { generateRandomCode, formatCurrency, navigateTo } = useUtils();
 const registrationFeeAmount = props.registrationFee?.attributes?.localFcaAmount ?? '20.00';
 
 const isLoading = ref(false);
@@ -74,7 +75,10 @@ const submit = async () => {
 };
 
 onMounted(async () => {
-    await checkPaymentStatus();
+    ToastService.warning('Sorry, The registration has ended for now. Contact the administration for more info.');
+    navigateTo(route('login'));
+    return;
+    /*await checkPaymentStatus();
     const studentId = user.attributes?.studentId;
     const userEmail = user.attributes.email;
     if (String(checkData?.value?.status)?.toLowerCase() === 'paid' || userEmail === 'jamesgudhlanga@gmail.com') {
@@ -83,7 +87,7 @@ onMounted(async () => {
             return;
         }
         window.location.href = route('portal.application.create');
-    }
+    }*/
 });
 </script>
 <template>

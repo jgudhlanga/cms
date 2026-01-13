@@ -61,7 +61,7 @@ const maintenanceMode = isItTrue(import.meta.env.VITE_MAINTENANCE_MODE);
 <template>
     <Head :title="$t('trans.application_form')" />
     <div class="flex justify-between bg-white">
-        <ComingSoonAnimated v-if="maintenanceMode" />
+        <ComingSoonAnimated v-if="maintenanceMode" title="Sorry" message='Enrolment has been closed'/>
         <div v-else class="flex w-full flex-col p-3 md:w-1/2 md:p-16">
             <form @submit.prevent="submitForm()" class="flex flex-col rounded-2xl p-10 shadow-md">
                 <div class="flex w-full items-center justify-center">

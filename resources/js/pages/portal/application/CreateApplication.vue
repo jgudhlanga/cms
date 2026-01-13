@@ -25,8 +25,9 @@ import { useIdTypes } from '@/composables/shared/useIdTypes';
 import { useApplicationFormHelper } from '@/composables/students/useApplicationFormHelper';
 import { ButtonSize } from '@/enums/buttons';
 import { errorAlert } from '@/lib/alerts';
+import ToastService from '@/services/toast.service';
 import { CourseRequirement, DepartmentLevelRequirement } from '@/types/department-meta-data';
-import { useForm } from '@inertiajs/vue3';
+import { router, useForm } from '@inertiajs/vue3';
 import { trans } from 'laravel-vue-i18n';
 import { storeToRefs } from 'pinia';
 
@@ -129,8 +130,11 @@ const populateInitialForm = () => {
 };
 
 onMounted(async () => {
-    await listIdTypes();
-    populateInitialForm();
+    ToastService.warning('Sorry, The registration has ended for now. Contact the administration for more info.');
+    router.post(route('logout'));
+    return;
+    //await listIdTypes();
+    //populateInitialForm();
 });
 
 const isValidating = ref(false);
