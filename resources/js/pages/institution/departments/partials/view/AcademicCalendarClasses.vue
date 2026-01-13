@@ -9,6 +9,7 @@ import { DepartmentCourseClassCount } from '@/types/academic-calendar';
 import { InstitutionDepartment, ModeOfStudy } from '@/types/institution';
 import { SelectOption } from '@/types/utils';
 import { onMounted, ref } from 'vue';
+import { DepartmentEnrolmentCount } from '@/types/department-meta-data';
 
 interface Props {
     department: InstitutionDepartment;
@@ -24,6 +25,8 @@ const modeOfStudy = ref<SelectOption | null>(null);
 const { isLoading: academicCalendarLoading, listAcademicCalendars, academicCalendars } = useAcademicCalendars();
 const { isLoading: modesOfStudyLoading, listModesOfStudy, modesOfStudy } = useModeOfStudy();
 const { navigateTo } = useUtils();
+
+const academicClasses = ref<DepartmentEnrolmentCount[] | []>([]);
 
 onMounted(async () => {
     await listAcademicCalendars();
@@ -72,14 +75,14 @@ onMounted(async () => {
     ];
 });
 
-/*const loadEnrolments = async () => {
+const loadEnrolments = async () => {
     enrolments.value = await getData(
         `api/v1/departments/${institutionDepartmentId}/enrolments?intake_period_id=${intakePeriod.value?.value.toString()}&mode_of_study_id=${modeOfStudy.value?.value.toString()}`,
         () => trans_choice('trans.enrolment', 2),
     );
-};*/
+};
 const handleSelectionChange = async () => {
-    //await loadEnrolments();
+    await loadEnrolments();
 };
 </script>
 

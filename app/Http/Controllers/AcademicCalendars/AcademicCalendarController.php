@@ -7,9 +7,15 @@ use App\Http\Controllers\Controller;
 use App\Http\Filters\AcademicCalendars\AcademicCalendarFilter;
 use App\Http\Requests\AcademicCalendars\AcademicCalendarRequest;
 use App\Http\Resources\AcademicCalendars\AcademicCalendarResource;
+use App\Http\Resources\Institution\DepartmentCourseResource;
+use App\Http\Resources\Institution\DepartmentLevelResource;
 use App\Http\Resources\Institution\InstitutionDepartmentResource;
+use App\Http\Resources\Institution\ModeOfStudyResource;
 use App\Models\AcademicCalendars\AcademicCalendar;
+use App\Models\Institution\DepartmentCourse;
+use App\Models\Institution\DepartmentLevel;
 use App\Models\Institution\InstitutionDepartment;
+use App\Models\Institution\ModeOfStudy;
 use App\Repositories\AcademicCalendars\Interface\IAcademicCalendarRepository;
 use Illuminate\Auth\Access\AuthorizationException;
 use Inertia\Inertia;
@@ -75,11 +81,17 @@ class AcademicCalendarController extends Controller
     public function configDepartmentCourseClasses(InstitutionDepartment $institutionDepartment, AcademicCalendar $academicCalendar)
     {
         $this->authorize('update', $academicCalendar);
-       # "department_course" => "1"
+        # "department_course" => "1"
+        $departmentCourse = DepartmentCourse::where('id', request('department_course'))->firstOrFail();
         #"department_level" => "1"
+        $departmentLevel = DepartmentLevel::where('id', request('department_level'))->firstOrFail();
         #"mode_of_study" => "1"
+        $modeOdStudy = ModeOfStudy::where('id', request('mode_of_study'))->firstOrFail();
         return Inertia::render('institution/academicCalendars/AcademicCalendarClassesConfig', [
             'department' => new InstitutionDepartmentResource($institutionDepartment),
+            'course' => new DepartmentCourseResource($departmentCourse),
+            'level' => new DepartmentLevelResource($departmentLevel),
+            'mode' => new ModeOfStudyResource($modeOdStudy),
             'academicCalendar' => new AcademicCalendarResource($academicCalendar),
         ]);
     }
