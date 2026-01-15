@@ -175,11 +175,21 @@ class PaymentHelper
     {
         $user = self::resolveUser($user);
         $intakePeriod = self::resolveIntakePeriod($intakePeriod);
-        $debugEmails = ['jamesgudhlanga@gmail.com', 'ethanmuku2020@gmail.com'];
+        $name = strtolower(trim($intakePeriod->name ?? ''));
+        if (
+            in_array(
+                $name,
+                ['january intake (sdp & abma)', 'january intake (sdp & abma & ojet)']
+            )
+        ) {
+            return true;
+        }
+
+        /*$debugEmails = ['jamesgudhlanga@gmail.com', 'ethanmuku2020@gmail.com'];
         // Whitelist specific email for dev/testing
         if (in_array($user->email, $debugEmails)) {
             return true;
-        }
+        }*/
 
         $feeType = self::getFeeTypeBySlug(FeeTypeEnum::APPLICATION_FEE->slug());
         if (!$feeType) return false;

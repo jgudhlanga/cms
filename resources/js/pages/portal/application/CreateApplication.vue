@@ -130,11 +130,11 @@ const populateInitialForm = () => {
 };
 
 onMounted(async () => {
-    ToastService.warning('Sorry, The registration has ended for now. Contact the administration for more info.');
+    /**ToastService.warning('Sorry, The registration has ended for now. Contact the administration for more info.');
     router.post(route('logout'));
-    return;
-    //await listIdTypes();
-    //populateInitialForm();
+    return;*/
+    await listIdTypes();
+    populateInitialForm();
 });
 
 const isValidating = ref(false);

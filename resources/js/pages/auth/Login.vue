@@ -73,7 +73,7 @@ const loginNavigateTo = () => {
             <BaseButton class="mt-4" type="submit" :tabindex="6" :processing="form.processing">
                 {{ $t('trans.login') }}
             </BaseButton>
-            <!--<BaseButton
+            <BaseButton
                 @click="() => loginNavigateTo()"
                 class="mt-1"
                 :variant="ColorVariant.primary_outline"
@@ -82,7 +82,7 @@ const loginNavigateTo = () => {
                 :disabled="form.processing"
             >
                 {{ $t('trans.new_student_registration') }}
-            </BaseButton>-->
+            </BaseButton>
         </div>
     </form>
 </template>
