@@ -163,9 +163,9 @@ const save = async () => {
     saveApplication(form);
 };
 onMounted(() => {
-    ToastService.warning('Sorry, The registration has ended for now. Contact the administration for more info.');
+    /*ToastService.warning('Sorry, The registration has ended for now. Contact the administration for more info.');
     navigateTo(route('login'));
-    return;
+    return;*/
 });
 </script>
 <template>
@@ -193,7 +193,7 @@ onMounted(() => {
                 </div>
             </ProgramDetails>
             <div class="my-5 flex flex-col justify-center space-y-2 space-x-3 md:flex-row">
-                <BaseButton type="button" @click="save" class="w-full md:w-[200px]" :size="ButtonSize.xl">
+                <BaseButton type="button" @click="save" class="w-full md:w-50" :size="ButtonSize.xl">
                     {{ $t('trans.submit') }}
                 </BaseButton>
                 <BaseButton

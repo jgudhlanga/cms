@@ -76,7 +76,7 @@ const breadcrumbs: BreadcrumbItemInterface[] = [{ transChoiceKey: 'dashboard', h
             </div>
         </div>-->
         <div class="flex w-full items-center justify-end" v-if="showCreateNewProgramButton(applications, CURRENT_INTAKE_PERIOD_ID)">
-            <AddApplicationButton :student="student" />
+<!--            <AddApplicationButton :student="student" />-->
         </div>
         <div v-if="applications && applications.length > 0" class="my-6 space-y-4">
             <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow" v-for="application in applications" :key="application.id">
