@@ -32,6 +32,7 @@ class IntakePeriodRepository extends BaseRepository implements IIntakePeriodRepo
         return $this->intakePeriod
             ->select($columns)
             ->filter($filters)
+            ->where('is_active', 1)
             ->orderBy('end_date', 'desc')
             ->orderBy('name')
             ->orderBy('description')
