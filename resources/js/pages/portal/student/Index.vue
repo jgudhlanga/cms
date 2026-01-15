@@ -31,7 +31,7 @@ const breadcrumbs: BreadcrumbItemInterface[] = [{ transChoiceKey: 'dashboard' },
     <Head :title="$tChoice('trans.dashboard', 1)" />
     <PageContainer :breadcrumbs="breadcrumbs">
         <div class="flex w-full items-center justify-end" v-if="showCreateNewProgramButton(applications, CURRENT_INTAKE_PERIOD_ID)">
-            <AddApplicationButton :student="student" />
+<!--            <AddApplicationButton :student="student" />-->
         </div>
         <div class="mt-6 flex w-full flex-col space-y-6">
             <CurrentApplications :applications="applications" />
