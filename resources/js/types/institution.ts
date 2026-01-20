@@ -79,6 +79,8 @@ export type Level = {
         name: string;
         position: string | number;
         allowedApplicationsPerLevel: string | number;
+        showOnCurrentApplicationPeriod: boolean;
+        hasApplicationFeePayment: boolean;
         description?: string;
         createdAt?: string;
         updatedAt?: string;
@@ -89,6 +91,8 @@ export type LevelParams = {
     name: string;
     description?: string;
     allowed_applications_per_level?: string | number;
+    show_on_current_application_period: boolean;
+    has_application_fee_payment: boolean;
 };
 
 export type ModeOfStudy = {

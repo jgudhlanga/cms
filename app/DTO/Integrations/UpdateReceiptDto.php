@@ -2,7 +2,7 @@
 
 namespace App\DTO\Integrations;
 
-use App\Http\Requests\INtegrations\UpdateReceiptRequest;
+use App\Http\Requests\Integrations\UpdateReceiptRequest;
 
 readonly class UpdateReceiptDto
 {

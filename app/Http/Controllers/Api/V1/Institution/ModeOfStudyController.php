@@ -24,12 +24,13 @@ class ModeOfStudyController extends Controller
     }
     public function courseModes(DepartmentCourse $departmentCourse): AnonymousResourceCollection
     {
-        $modes = ModeOfStudy::join('course_modes', 'mode_of_studies.id', '=', 'course_modes.mode_of_study_id')
-            ->where('course_modes.department_course_id', $departmentCourse->id)
-            ->select('mode_of_studies.*')
-            ->get();
-        return ModeOfStudyResource::collection($modes);
+        $courseLevelModes = $departmentCourse->courseLevelModes; // Eager-loaded or lazy-loaded
+
+        $modeObjects = $courseLevelModes->flatMap(fn($clm) => $clm->mode_objects);
+
+        return ModeOfStudyResource::collection($modeObjects);
     }
+
 
     public function store(Request $request)
     {

@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Api\V1\Users;
 
 use App\DTO\Users\UpdateUserDto;
 use App\DTO\Users\UserDto;
+use App\Enums\Shared\StatusEnum;
+use App\Enums\Shared\TenantEnum;
 use App\Http\Controllers\Api\V1\Utils\ApiDropdownController;
 use App\Http\Filters\Users\UserFilter;
 use App\Http\Requests\Institution\StaffRequest;
@@ -61,7 +63,7 @@ class UserController extends ApiDropdownController
     {
         $this->authorize('create', User::class);
         $user = $this->repository->create(
-            UserDto::fromUserRequest($request)
+            UserDto::fromUserRequest($request, TenantEnum::HARARE_POLY->id(), StatusEnum::ACTIVE->id())
         );
         return to_route('users.show', $user->id);
     }

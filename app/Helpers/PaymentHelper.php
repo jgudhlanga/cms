@@ -175,7 +175,7 @@ class PaymentHelper
     {
         $user = self::resolveUser($user);
         $intakePeriod = self::resolveIntakePeriod($intakePeriod);
-        $name = strtolower(trim($intakePeriod->name ?? ''));
+        /**$name = strtolower(trim($intakePeriod->name ?? ''));
         if (
             in_array(
                 $name,
@@ -183,7 +183,7 @@ class PaymentHelper
             )
         ) {
             return true;
-        }
+        }*/
 
         /*$debugEmails = ['jamesgudhlanga@gmail.com', 'ethanmuku2020@gmail.com'];
         // Whitelist specific email for dev/testing

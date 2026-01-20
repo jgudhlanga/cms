@@ -33,6 +33,8 @@ Route::prefix('institution')->middleware('auth')->group(function () {
     Route::get('departments/{department_course}/course-requirements', [DepartmentCourseController::class, 'courseRequirements'])->name('department-courses.requirements');
     Route::post('departments/{department_course}/course-requirements', [DepartmentCourseController::class, 'updateCourseRequirements'])->name('department-courses.store-requirements');
     Route::post('departments/{department_course}/update', [DepartmentCourseController::class, 'update'])->name('department-courses.update');
+    Route::get('departments/course/{department_course}/modes', [DepartmentCourseController::class, 'courseLevelModes'])->name('department-courses.modes');
+    Route::post('departments/course/{department_course}/modes', [DepartmentCourseController::class, 'storeCourseLevelModes'])->name('department-courses.modes.store');
     # ==================================== DEPARTMENT APPLICATION STEPS ================================================
     Route::post('departments/{institution_department}/sync-application-steps', [DepartmentApplicationStepController::class, 'syncApplicationSteps'])->name('department-application-steps.sync');
     Route::get('departments/{department_application_step}/application-steps/show', [DepartmentApplicationStepController::class, 'show'])->name('department-application-steps.show');

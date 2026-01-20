@@ -9,7 +9,6 @@ use App\Enums\Shared\WorkflowStepEnum;
 use App\Helpers\DepartmentHelper;
 use App\Helpers\EnrolmentHelper;
 use App\Helpers\Helper;
-use App\Helpers\WorkflowHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Enrolments\AddToClassListRequest;
 use App\Http\Requests\Enrolments\ClassListRequest;
@@ -18,7 +17,6 @@ use App\Http\Resources\Enrolments\ClassListNextTopResource;
 use App\Http\Resources\Enrolments\EnrolmentGroupResource;
 use App\Http\Resources\Enrolments\EnrolmentResource;
 use App\Http\Resources\Enrolments\OtherApplicationResource;
-use App\Http\Resources\Institution\DepartmentApplicationStepResource;
 use App\Http\Resources\Institution\DepartmentLevelResource;
 use App\Http\Resources\Institution\InstitutionDepartmentResource;
 use App\Http\Resources\Institution\IntakePeriodResource;
@@ -39,13 +37,11 @@ use App\Models\Students\StudentProgram;
 use App\Repositories\Institution\interface\IClassListRepository;
 use App\Services\DepartmentEnrolmentService;
 use Illuminate\Auth\Access\AuthorizationException;
-use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
-use Log;
 use Throwable;
 
 class ClassListController extends Controller
@@ -66,11 +62,6 @@ class ClassListController extends Controller
 
             return back()->with('success', 'Class lists created successfully.');
         } catch (Throwable $e) {
-            Log::error('Failed to create class lists', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-
             return back()->with('error', 'An error occurred while creating class lists. All changes have been rolled back.');
         }
     }
@@ -108,10 +99,6 @@ class ClassListController extends Controller
                 $details->course)->withoutDelay();
             return back()->with('success', 'Class lists created successfully.');
         } catch (Throwable $e) {
-            Log::error('Failed to create class lists', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
             return back()->with('error', 'An error occurred while creating class lists. All changes have been rolled back.');
         }
     }
@@ -256,10 +243,6 @@ class ClassListController extends Controller
             }
             return back()->with('success', 'Class list entry updated successfully.');
         } catch (Throwable $e) {
-            Log::error('Failed to update class list entry', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
             return back()->with('error', 'An error occurred while updating class list entry. All changes have been rolled back.');
         }
     }
@@ -280,10 +263,6 @@ class ClassListController extends Controller
             $studentProgram->update(['department_application_step_id' => $departmentStep->id]);
             return back()->with('success', 'Class list entry updated successfully.');
         } catch (Throwable $e) {
-            Log::error('Failed to update class list entry', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
             return back()->with('error', 'An error occurred while updating class list entry. All changes have been rolled back.');
         }
     }

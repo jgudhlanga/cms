@@ -31,6 +31,8 @@ class LevelRepository extends BaseRepository implements ILevelRepository
             'name' => $dto->name,
             'description' => $dto->description,
             'allowed_applications_per_level' => $dto->allowed_applications_per_level,
+            'show_on_current_application_period' => $dto->show_on_current_application_period,
+            'has_application_fee_payment' => $dto->has_application_fee_payment,
         ];
     }
 

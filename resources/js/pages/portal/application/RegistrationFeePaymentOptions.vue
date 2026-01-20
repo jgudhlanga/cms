@@ -9,13 +9,13 @@ import { IconName } from '@/enums/icons';
 import { TypeVariant } from '@/enums/type-variants';
 import { errorAlert } from '@/lib/alerts';
 import { icons } from '@/lib/icons';
+import CancelButton from '@/pages/portal/application/partials/CancelButton.vue';
 import HttpService from '@/services/http.service';
 import { AuthObject } from '@/types/data-pagination';
 import { FeeStructure } from '@/types/institution';
 import axios from 'axios';
 import { trans } from 'laravel-vue-i18n';
 import { onMounted, ref } from 'vue';
-import ToastService from '@/services/toast.service';
 
 interface Props {
     registrationFee: FeeStructure;
@@ -81,7 +81,7 @@ onMounted(async () => {
     await checkPaymentStatus();
     const studentId = user.attributes?.studentId;
     const userEmail = user.attributes.email;
-    if (String(checkData?.value?.status)?.toLowerCase() === 'paid' || userEmail === 'jamesgudhlanga@gmail.com') {
+    if (String(checkData?.value?.status)?.toLowerCase() === 'paid' || userEmail === 'jamesgudhlanga0@gmail.com') {
         if (Number(studentId) > 0) {
             window.location.href = route('portal.add-program', { student: studentId });
             return;
@@ -108,11 +108,12 @@ onMounted(async () => {
                 <div class="amount-label">{{ $t('trans.amount_to_pay') }}:</div>
                 <div class="amount-value">{{ `USD${formatCurrency(registrationFeeAmount)}` }}</div>
             </div>
-            <div class="mx-auto flex w-1/3">
+            <div class="mx-auto flex w-1/3 flex-col space-y-3">
                 <button @click="submit" class="payment-button" :disabled="isLoading">
                     {{ $t('trans.proceed_to_payment') }}
                     <component :is="icons[IconName.loader]" v-if="isLoading" class="ml-2 h-6 w-5 animate-spin" />
                 </button>
+                <CancelButton />
             </div>
             <div class="flex flex-col">
                 <div class="text-muted-foreground flex items-center justify-center space-x-3 text-xs font-bold">
@@ -149,11 +150,11 @@ onMounted(async () => {
 .payment-button {
     display: inline-flex;
     width: 100%;
-    padding: 20px;
+    padding: 10px;
     background: linear-gradient(135deg, #2342f5 0%, #00d2ff 100%);
     color: white;
     border: none;
-    border-radius: 20px;
+    border-radius: 10px;
     font-size: 18px;
     font-weight: 600;
     justify-content: center;

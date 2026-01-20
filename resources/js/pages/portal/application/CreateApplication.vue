@@ -24,10 +24,10 @@ import StudentPageHeader from '@/components/shared/students/StudentPageHeader.vu
 import { useIdTypes } from '@/composables/shared/useIdTypes';
 import { useApplicationFormHelper } from '@/composables/students/useApplicationFormHelper';
 import { ButtonSize } from '@/enums/buttons';
+import { ColorVariant } from '@/enums/colors';
 import { errorAlert } from '@/lib/alerts';
-import ToastService from '@/services/toast.service';
 import { CourseRequirement, DepartmentLevelRequirement } from '@/types/department-meta-data';
-import { router, useForm } from '@inertiajs/vue3';
+import { useForm } from '@inertiajs/vue3';
 import { trans } from 'laravel-vue-i18n';
 import { storeToRefs } from 'pinia';
 
@@ -43,9 +43,8 @@ const requirements = ref<CourseRequirement | DepartmentLevelRequirement | null |
 // Composable
 const { idTypes, listIdTypes } = useIdTypes();
 const { applicationFormSchema } = useStudentPortal();
-const { isNativeCitizen, isItTrue } = useUtils();
+const { isNativeCitizen, isItTrue, navigateTo } = useUtils();
 const { validateMainSubjects, validateOtherSubjects, updateCreateForm } = useApplicationFormHelper();
-const { navigateTo } = useUtils();
 const store = useCreateApplicationFormStore();
 const storeRefs = storeToRefs(store);
 const getRequirements = () => {
@@ -198,9 +197,18 @@ const maintenanceMode = isItTrue(import.meta.env.VITE_MAINTENANCE_MODE);
                 <ContactDetails :form="form" />
                 <NextOfKinDetails :form="form" />
                 <Programs :form="form" />
-                <div class="mb-5 flex items-center justify-center">
+                <div class="mb-5 flex flex-col items-center justify-center space-y-3 md:flex-row md:space-y-0 md:space-x-3">
                     <BaseButton class="w-full md:w-50" :size="ButtonSize.xl">
                         {{ $t('trans.continue') }}
+                    </BaseButton>
+                    <BaseButton
+                        type="buttton"
+                        @click="() => navigateTo(route('portal.application.level-options'))"
+                        class="w-full md:w-50"
+                        :size="ButtonSize.xl"
+                        :variant="ColorVariant.danger"
+                    >
+                        {{ $t('trans.cancel') }}
                     </BaseButton>
                 </div>
             </div>

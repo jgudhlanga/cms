@@ -34,11 +34,11 @@ class AuthenticatedSessionController extends Controller
         $request->authenticate();
         $request->session()->regenerate();
         $user = request()->user();
-        if ($user->hasRole(RoleEnum::STUDENT)) {
+        if ($user->hasRole(RoleEnum::STUDENT->name())) {
             if ($user->has_student_profile) {
                 return to_route('portal.dashboard');
             } else {
-                return to_route('portal.application.create');
+                return to_route('portal.application.level-options');
             }
         }
         return redirect()->intended();

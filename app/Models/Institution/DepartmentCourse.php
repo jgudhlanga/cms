@@ -36,7 +36,6 @@ class DepartmentCourse extends Model
         return $this->belongsTo(Course::class);
     }
 
-
     public function institutionDepartment(): BelongsTo
     {
         return $this->belongsTo(InstitutionDepartment::class, 'institution_department_id');
@@ -47,9 +46,10 @@ class DepartmentCourse extends Model
         return $this->hasMany(DepartmentLevelCourse::class, 'department_course_id');
     }
 
-    public function courseModes(): HasMany
+
+    public function courseLevelModes(): HasMany
     {
-        return $this->hasMany(CourseMode::class, 'department_course_id');
+        return $this->hasMany(CourseLevelMode::class, 'department_course_id');
     }
 
     public function requirement(): HasOne
