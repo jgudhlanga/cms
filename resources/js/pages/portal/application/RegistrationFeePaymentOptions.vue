@@ -108,12 +108,12 @@ onMounted(async () => {
                 <div class="amount-label">{{ $t('trans.amount_to_pay') }}:</div>
                 <div class="amount-value">{{ `USD${formatCurrency(registrationFeeAmount)}` }}</div>
             </div>
-            <div class="mx-auto flex w-1/3 flex-col space-y-3">
-                <button @click="submit" class="payment-button" :disabled="isLoading">
+            <div class="mx-auto flex w-full md:w-1/3 flex-col items-center justify-center space-y-3 md:flex-row md:space-y-0 md:space-x-3">
+                <CancelButton />
+                <button @click="submit" class="inline-flex w-full p-2.5 bg-linear-to-br from-persian-600 to-[#00d2ff] text-white border-0 rounded-[10px] text-lg font-semibold justify-center items-center uppercase cursor-pointer transition-all duration-300 shadow-[0_4px_15px_rgba(0,0,0,0.1)]" :disabled="isLoading">
                     {{ $t('trans.proceed_to_payment') }}
                     <component :is="icons[IconName.loader]" v-if="isLoading" class="ml-2 h-6 w-5 animate-spin" />
                 </button>
-                <CancelButton />
             </div>
             <div class="flex flex-col">
                 <div class="text-muted-foreground flex items-center justify-center space-x-3 text-xs font-bold">
@@ -145,33 +145,6 @@ onMounted(async () => {
     font-size: 32px;
     font-weight: 700;
     color: #2342f5;
-}
-
-.payment-button {
-    display: inline-flex;
-    width: 100%;
-    padding: 10px;
-    background: linear-gradient(135deg, #2342f5 0%, #00d2ff 100%);
-    color: white;
-    border: none;
-    border-radius: 10px;
-    font-size: 18px;
-    font-weight: 600;
-    justify-content: center;
-    align-items: center;
-    text-transform: uppercase;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-}
-
-.payment-button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(58, 123, 213, 0.35);
-}
-
-.payment-button:active {
-    transform: translateY(0);
 }
 
 .payment-methods {

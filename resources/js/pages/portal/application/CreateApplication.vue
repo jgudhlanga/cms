@@ -198,17 +198,17 @@ const maintenanceMode = isItTrue(import.meta.env.VITE_MAINTENANCE_MODE);
                 <NextOfKinDetails :form="form" />
                 <Programs :form="form" />
                 <div class="mb-5 flex flex-col items-center justify-center space-y-3 md:flex-row md:space-y-0 md:space-x-3">
-                    <BaseButton class="w-full md:w-50" :size="ButtonSize.xl">
-                        {{ $t('trans.continue') }}
-                    </BaseButton>
                     <BaseButton
-                        type="buttton"
+                        type="button"
                         @click="() => navigateTo(route('portal.application.level-options'))"
                         class="w-full md:w-50"
                         :size="ButtonSize.xl"
                         :variant="ColorVariant.danger"
                     >
                         {{ $t('trans.cancel') }}
+                    </BaseButton>
+                    <BaseButton class="w-full md:w-50" :size="ButtonSize.xl">
+                        {{ $t('trans.continue') }}
                     </BaseButton>
                 </div>
             </div>

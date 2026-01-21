@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Filters\Shared\SharedNameFilter;
 use App\Http\Resources\Institution\ModeOfStudyResource;
 use App\Models\Institution\DepartmentCourse;
+use App\Models\Institution\DepartmentLevel;
 use App\Models\Institution\ModeOfStudy;
 use App\Repositories\Institution\interface\IModeOfStudyRepository;
 use Illuminate\Http\Request;
@@ -22,12 +23,11 @@ class ModeOfStudyController extends Controller
     {
         return ModeOfStudyResource::collection($this->repository->allFilter(['*'], $filters));
     }
-    public function courseModes(DepartmentCourse $departmentCourse): AnonymousResourceCollection
+
+    public function courseModes(DepartmentCourse $departmentCourse, DepartmentLevel $departmentLevel): AnonymousResourceCollection
     {
-        $courseLevelModes = $departmentCourse->courseLevelModes; // Eager-loaded or lazy-loaded
-
+        $courseLevelModes = $departmentCourse->courseLevelModes()->where('department_level_id', $departmentLevel->id)->get(); // Eager-loaded or lazy-loaded
         $modeObjects = $courseLevelModes->flatMap(fn($clm) => $clm->mode_objects);
-
         return ModeOfStudyResource::collection($modeObjects);
     }
 

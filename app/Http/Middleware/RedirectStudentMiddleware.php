@@ -68,7 +68,6 @@ class RedirectStudentMiddleware
                     )) {
                         return to_route('portal.application.create');
                     }
-
                     return $next($request);
                 }
 
@@ -81,7 +80,7 @@ class RedirectStudentMiddleware
             }
 
             // 3. No fee required → go straight to create
-            if (!$request->routeIs('portal.application.create')) {
+            if (!$request->routeIs('portal.application.create') && !$request->routeIs('portal.application.confirm')) {
                 return to_route('portal.application.create');
             }
 

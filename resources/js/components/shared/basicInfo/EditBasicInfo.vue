@@ -194,6 +194,7 @@ const save = async () => {
                     orientation="horizontal"
                     @update:modelValue="onRadioChange"
                     :is-required="true"
+                    :vertical-layout="false"
                 />
             </div>
         </template>

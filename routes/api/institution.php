@@ -29,6 +29,6 @@ Route::prefix('v1')->group(function () {
     Route::get('institution-departments/{department_level}/courses/{department_course}/requirements', [DepartmentCourseController::class, 'courseRequirements'])->name('v1.department-course-requirements');
     Route::apiResource('staff', StaffController::class)->names('v1.staff');
     Route::apiResource('intake-periods', IntakePeriodController::class)->names('v1.intake-periods');
-    Route::get('course-modes/{department_course}', [ModeOfStudyController::class, 'courseModes'])->name('v1.modes-of-study.course-modes');
+    Route::get('course-modes/{department_course}/course/{department_level}/level', [ModeOfStudyController::class, 'courseModes'])->name('v1.modes-of-study.course-modes');
     Route::apiResource('modes-of-study', ModeOfStudyController::class)->names('v1.modes-of-study');
 });

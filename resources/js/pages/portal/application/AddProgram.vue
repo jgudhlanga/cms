@@ -261,6 +261,7 @@ const onUpdated = () => {
                             :error="form.errors.modeOfStudy"
                             :is-required="true"
                             :department-course-id="course?.value?.toString() ?? ''"
+                            :department-level-id="level?.value?.toString() ?? ''"
                         />
                     </div>
                     <div class="my-4 flex w-full flex-col">

@@ -76,7 +76,7 @@ class DocumentHelper
 
 
         // Document type
-        $documentType = DocumentType::whereName(DocumentTypeEnum::OFFER_LETTER->name())->firstOrFail();
+        $documentType = DocumentType::where('name',DocumentTypeEnum::OFFER_LETTER->name())->firstOrFail();
 
         // USD-only rules
         $usdOnlyLevels = [

@@ -193,17 +193,17 @@ onMounted(() => {
                 </div>
             </ProgramDetails>
             <div class="my-5 flex flex-col justify-center space-y-2 space-x-3 md:flex-row">
-                <BaseButton type="button" @click="save" class="w-full md:w-50" :size="ButtonSize.xl">
-                    {{ $t('trans.submit') }}
-                </BaseButton>
                 <BaseButton
                     @click="navigateTo(route('portal.application.create'))"
                     type="button"
                     :variant="ColorVariant.shade"
                     class="w-full md:w-50"
                     :size="ButtonSize.xl"
-                    >{{ $t('trans.edit') }}</BaseButton
+                >{{ $t('trans.edit') }}</BaseButton
                 >
+                <BaseButton type="button" @click="save" class="w-full md:w-50" :size="ButtonSize.xl">
+                    {{ $t('trans.submit') }}
+                </BaseButton>
             </div>
         </div>
     </div>

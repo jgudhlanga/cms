@@ -1,31 +1,14 @@
 <script setup lang="ts">
 import { useUtils } from '@/composables/core/useUtils';
 
-const {navigateTo} = useUtils()
+const { navigateTo } = useUtils();
 </script>
 
 <template>
-    <button @click="() => navigateTo(route('portal.application.level-options'))" class="cancel-button">
+    <button
+        @click="() => navigateTo(route('portal.application.level-options'))"
+        class="inline-flex w-full cursor-pointer items-center justify-center rounded-[10px] border-0 bg-linear-to-br from-red-600 to-pink-400 p-2.5 text-lg font-semibold text-white uppercase shadow-[0_4px_15px_rgba(0,0,0,0.1)] transition-all duration-300"
+    >
         {{ $t('trans.cancel') }}
     </button>
 </template>
-
-<style scoped>
-.cancel-button {
-    display: inline-flex;
-    width: 100%;
-    padding: 10px;
-    background: linear-gradient(135deg, red 0%, palevioletred 100%);
-    color: white;
-    border: none;
-    border-radius: 10px;
-    font-size: 18px;
-    font-weight: 600;
-    justify-content: center;
-    align-items: center;
-    text-transform: uppercase;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-}
-</style>
