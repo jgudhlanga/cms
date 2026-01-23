@@ -145,11 +145,23 @@ export const useDepartmentLevels = (isEditingProgram?: boolean) => {
         isLoading.value = false;
     };
 
+    const listAdminDepartmentLevels = async (url: string) => {
+        isLoading.value = true;
+        departmentLevels.value = await HttpService.get(url);
+        isLoading.value = false;
+    };
+
     const levelCourses = ref<DepartmentLevelCourse[]>([]);
 
     const listLevelCourses = async (departmentLevelId: string) => {
         isLoading.value = true;
         levelCourses.value = await HttpService.get(`api/v1/institution-departments/levels/${departmentLevelId}/courses`);
+        isLoading.value = false;
+    };
+
+    const listAdminLevelCourses = async (url: string) => {
+        isLoading.value = true;
+        levelCourses.value = await HttpService.get(url);
         isLoading.value = false;
     };
 
@@ -234,5 +246,7 @@ export const useDepartmentLevels = (isEditingProgram?: boolean) => {
         levelRequirementsFormSchema,
         departmentLevelsMetadata,
         loadDepartmentLevelsMetadata,
+        listAdminDepartmentLevels,
+        listAdminLevelCourses,
     };
 };

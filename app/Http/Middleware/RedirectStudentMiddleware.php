@@ -19,6 +19,12 @@ class RedirectStudentMiddleware
             return $next($request);
         }
 
+
+        // ❗ If this user is impersonated, skip student redirects
+        if ($user->isImpersonated()) {
+            return $next($request);
+        }
+
         // ─────────────────────────────────────────────
         // ONLY FOR STUDENTS
         // ─────────────────────────────────────────────

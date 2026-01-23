@@ -3,6 +3,9 @@ import { Enrolment } from '@/types/enrolments';
 import { Student } from '@/types/students';
 import { trans_choice } from 'laravel-vue-i18n';
 import { useUtils } from '@/composables/core/useUtils';
+import { InertiaForm } from '@inertiajs/vue3';
+import { useUpdateProgramFormStore } from '@/store/portal/useUpdateProgramFormStore';
+import { errorAlert, successAlert } from '@/lib/alerts';
 
 export const useStudents = () => {
     const { moreActionButton, textLink } = useDataTables();
@@ -80,6 +83,26 @@ export const useStudents = () => {
         return workflowStep !== 'Accepted' && String(application?.attributes?.intakePeriodId) === String(currentIntakePeriod) && !verificationMode;
     };
 
+    const updateProgram = (applicationId: string, form: InertiaForm<any>) => {
+        try {
+            form.put(route('students.program-update', applicationId), {
+                onSuccess: () => {
+                    successAlert('Program successfully updated');
+                },
+                onError: (errors: any) => {
+                    if (Object.keys(errors).length) {
+                        const allErrors = Object.values(errors).join('\n');
+                        errorAlert(allErrors);
+                    } else {
+                        errorAlert('An unexpected error happened, program could not be updated');
+                    }
+                },
+            });
+        } catch (error: any) {
+            form.setError(error.format());
+        }
+    };
+
     return {
         createStudentColumns,
         getApplicationStatus,
@@ -87,5 +110,6 @@ export const useStudents = () => {
         statusMessage,
         showCreateNewProgramButton,
         showEditProgramButton,
+        updateProgram,
     };
 };

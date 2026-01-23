@@ -136,7 +136,15 @@ class User extends Authenticatable implements MustVerifyEmail, HasMedia
 
     public function canImpersonate(): bool
     {
-        return $this->can(PermissionEnum::ROOT_MANAGE->value);
+        return $this->hasPermissionTo(
+            PermissionEnum::ROOT_MANAGE->value,
+            'web'
+        );
+    }
+
+    public function canBeImpersonated(): bool
+    {
+        return true;
     }
 
     public function getCanImpersonateAttribute(): bool

@@ -38,7 +38,7 @@ class AppServiceProvider extends ServiceProvider
         $this->registerLoginEventListener();
 
         // Handle impersonation start and stop events
-        $this->registerImpersonationListeners();
+        //$this->registerImpersonationListeners();
 
         // Restrict Log Viewer access
         $this->registerLogViewerAuthorization();
@@ -81,7 +81,7 @@ class AppServiceProvider extends ServiceProvider
     /**
      * Handle impersonation events (start and stop).
      */
-    private function registerImpersonationListeners(): void
+   /* private function registerImpersonationListeners(): void
     {
         // When impersonation begins
         Event::listen(TakeImpersonation::class, function (TakeImpersonation $event) {
@@ -101,6 +101,18 @@ class AppServiceProvider extends ServiceProvider
 
             // Ensure proper restoration of the impersonator in Auth context
             Auth::setUser($event->impersonator);
+        });
+    }*/
+
+    private function registerImpersonationListeners(): void
+    {
+        Event::listen(TakeImpersonation::class, function (TakeImpersonation $event) {
+            // SAFE: metadata only
+            session()->put('impersonated_by', $event->impersonator->id);
+        });
+
+        Event::listen(LeaveImpersonation::class, function () {
+            session()->forget('impersonated_by');
         });
     }
 

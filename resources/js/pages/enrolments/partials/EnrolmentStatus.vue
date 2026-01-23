@@ -114,7 +114,7 @@ const { navigateTo } = useUtils();
             <!-- ─── Status Items Grid ────────────────────────────────────────── -->
             <div class="grid grid-cols-1 gap-4 pt-2 md:grid-cols-4">
                 <div v-for="(item, idx) in statusItems" :key="idx" class="flex items-center space-x-3 rounded-lg bg-gray-50 p-3">
-                    <div class="flex-shrink-0">
+                    <div class="shrink-0">
                         <div class="flex h-10 w-10 items-center justify-center rounded-full" :class="item.isActive ? 'bg-green-100' : 'bg-red-100'">
                             <BaseIcon :name="item.icon" :class="item.isActive ? 'text-green-600' : 'text-red-600'" />
                         </div>

@@ -4,4 +4,5 @@ return [
     'remarks' => 'Remarks',
     'apply_now' => 'Apply now',
     'mode' => 'Mode|Modes',
+    'intake' => 'Intake',
 ];

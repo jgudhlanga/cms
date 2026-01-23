@@ -7,7 +7,7 @@ Route::get('/', function () {
     return to_route('dashboard');
 })->middleware(['auth', 'verified'])->name('home');
 
-Route::middleware(['auth', 'ensure.can.impersonate'])->group(function () {
+Route::middleware(['web','auth'])->group(function () {
     Route::impersonate();
 });
 

@@ -132,6 +132,8 @@ class PortalController extends Controller
     public function createApplication(): Response
     {
         $this->authorize('manageStudentPersonalDetails');
+        $levelId = session('application.level_id', null);
+
         return Inertia::render('portal/application/CreateApplication');
     }
 

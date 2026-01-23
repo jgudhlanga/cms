@@ -208,3 +208,14 @@ export type StudentPersonalDetailParams = {
     weight?: string | null;
     disability_status: 'yes' | 'no' | 'prefer_not_to_say' | null;
 };
+
+export type StudentProgramEdit = {
+    institution_department_id: string | null;
+    department_level_id: string | null;
+    department_course_id: string | null;
+    mode_of_study_id: string | null;
+    department: SelectOption | null;
+    level: SelectOption | null;
+    course: SelectOption | null;
+    modeOfStudy: SelectOption | null;
+};

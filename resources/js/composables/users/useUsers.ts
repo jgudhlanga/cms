@@ -1,6 +1,7 @@
 import { useDataTables } from '@/composables/core/useDataTables';
 import { useSharedFormSchema } from '@/composables/core/useSharedFormSchema';
 import { useUtils } from '@/composables/core/useUtils';
+import { ColorVariant } from '@/enums/colors';
 import { errorAlert, successAlert } from '@/lib/alerts';
 import { buildFormOptions, mergeValidationSchema } from '@/lib/forms';
 import {
@@ -22,7 +23,7 @@ import { ref } from 'vue';
 import { ZodObject } from 'zod';
 
 export const useUsers = () => {
-    const { moreActionButton, onDelete, onForceDelete, onRestore, avatar, onView, actionButton } = useDataTables();
+    const { moreActionButton, onDelete, onForceDelete, onRestore, textLink, onView, actionButton } = useDataTables();
     const createUserColumns = () => {
         const { props } = usePage();
         const { formatDate, navigateTo } = useUtils();
@@ -33,18 +34,12 @@ export const useUsers = () => {
                 accessorKey: 'name',
                 cell: ({ row }: { row: { original: User } }) => {
                     const id = getIdParams(row.original.id?.toString() ?? '');
-                    return avatar({
-                        href: route('users.show', id),
-                        title: `${row.original.attributes?.name ?? ''}`,
-                        src: row.original.attributes?.avatarUrl ?? '',
-                        classes: 'size-8 rounded-full',
-                    });
+                    return textLink(route('users.show', id), row.original.attributes?.name);
                 },
             },
             { header: trans('trans.id_number'), accessorKey: 'attributes.idNumber' },
             { header: trans('trans.email_address'), accessorKey: 'attributes.email' },
             { header: trans('trans.phone_number'), accessorKey: 'attributes.phoneNumber' },
-            { header: trans_choice('trans.status', 1), accessorKey: 'attributes.status' },
             { header: trans('trans.login_count'), accessorKey: 'attributes.loginCount', meta: { align: 'center' } },
             {
                 header: trans('trans.last_login'),
@@ -60,13 +55,28 @@ export const useUsers = () => {
                 enableSorting: false,
                 meta: { align: 'center' },
                 cell: ({ row }: { row: { original: User } }) => {
-                   const page = usePage<PageProps>();
-                   const canImpersonate = page.props.auth.user.attributes.canImpersonate;
+                    const page = usePage<PageProps>();
+                    const canImpersonate = page.props.auth.user.attributes.canImpersonate;
                     const canBeImpersonated = row.original?.attributes?.canBeImpersonated ?? false;
                     return canImpersonate && canBeImpersonated
                         ? actionButton({
                               title: 'Impersonate',
                               onClick: () => navigateTo(route('impersonate', { id: row.original.id })),
+                          })
+                        : null;
+                },
+            },
+            {
+                header: trans_choice('trans.student', 1),
+                accessorKey: 'student',
+                enableSorting: false,
+                meta: { align: 'center' },
+                cell: ({ row }: { row: { original: User } }) => {
+                    return hasStudentRole(row.original)
+                        ? actionButton({
+                              title: trans_choice('trans.profile', 1),
+                              onClick: () => navigateTo(route('students.profile', { id: row.original.id })),
+                              variant: ColorVariant.primary_outline,
                           })
                         : null;
                 },
@@ -240,6 +250,10 @@ export const useUsers = () => {
         }
     };
 
+    function hasStudentRole(user: User): boolean {
+        return user.relationships.roles.some((role) => role.name === 'Student');
+    }
+
     return {
         breadcrumbs,
         createUserColumns,
@@ -251,5 +265,6 @@ export const useUsers = () => {
         saveStaffUser,
         updateStudentUser,
         updateStudentUserSchema,
+        hasStudentRole,
     };
 };

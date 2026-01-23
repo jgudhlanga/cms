@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\V1\Institution\DepartmentMetaDataController;
 use App\Http\Controllers\Api\V1\Institution\InstitutionDepartmentController;
 use App\Http\Controllers\Api\V1\Institution\IntakePeriodController;
 use App\Http\Controllers\Api\V1\Institution\ModeOfStudyController;
+use App\Http\Controllers\Api\V1\Institution\StudentProgramDropdownController;
 use App\Http\Controllers\Api\V1\Staff\StaffController;
 use App\Http\Controllers\Api\V1\Institution\DepartmentCourseController;
 use Illuminate\Support\Facades\Route;
@@ -31,4 +32,7 @@ Route::prefix('v1')->group(function () {
     Route::apiResource('intake-periods', IntakePeriodController::class)->names('v1.intake-periods');
     Route::get('course-modes/{department_course}/course/{department_level}/level', [ModeOfStudyController::class, 'courseModes'])->name('v1.modes-of-study.course-modes');
     Route::apiResource('modes-of-study', ModeOfStudyController::class)->names('v1.modes-of-study');
+    Route::get('dropdowns/institution-departments', [StudentProgramDropdownController::class, 'institutionDepartments'])->name('v1.dropdowns.institution-departments');
+    Route::get('dropdowns/institution-departments/{institution_department}/levels', [StudentProgramDropdownController::class, 'departmentLevels'])->name('v1.dropdowns.institution-departments.levels');
+    Route::get('dropdowns/department-levels/{department_level}/courses', [StudentProgramDropdownController::class, 'departmentCourses'])->name('v1.dropdowns.department-level.courses');
 });
