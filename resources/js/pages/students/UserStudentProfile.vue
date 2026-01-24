@@ -87,7 +87,13 @@ const personalDetails = computed<ValueAndLabel[]>(() => {
                 </div>
             </BaseCard>
             <div class="flex flex-col space-y-3" v-if="programs && programs.length > 0">
-                <HeadingSmall title="Student Programs" />
+                <div class="flex justify-between">
+                    <HeadingSmall title="Student Programs" />
+                    <div class="flex space-x-2">
+                        <span>{{ $tChoice('trans.student_number', 1) }}:</span>
+                        <BaseTag :variant="ColorVariant.fuchsia_outline" :title="student.attributes.studentNumber ?? '---'" />
+                    </div>
+                </div>
                 <table class="j-table">
                     <thead class="j-thead">
                         <tr class="j-th">
