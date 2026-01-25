@@ -17,6 +17,8 @@ import { Link } from '@/types/ui';
 import { User } from '@/types/users';
 import { ValueAndLabel } from '@/types/utils';
 import { computed } from 'vue';
+import OfferLetterAnchor from '@/pages/portal/student/partials/OfferLetterAnchor.vue';
+import { useStudents } from '@/composables/students/useStudents';
 
 interface Props {
     user: User;
@@ -36,6 +38,7 @@ const breadcrumbs: Array<Link> = [
 ];
 
 const { isNativeCitizen, formatDate, navigateTo } = useUtils();
+const { hasOfferLetter } = useStudents();
 
 const personalDetails = computed<ValueAndLabel[]>(() => {
     const details: ValueAndLabel[] = [
@@ -104,7 +107,6 @@ const personalDetails = computed<ValueAndLabel[]>(() => {
                             <th class="j-th text-left">{{ $tChoice('general.mode', 1) }}</th>
                             <th class="j-th text-left">{{ $t('general.intake') }}</th>
                             <th class="j-th text-left">{{ $t('trans.application_date') }}</th>
-                            <th class="j-th text-left">{{ $t('trans.phone_number') }}</th>
                             <th class="j-th text-left">{{ $tChoice('trans.status', 1) }}</th>
                             <th class="j-th text-right">{{ $tChoice('trans.action', 1) }}</th>
                         </tr>
@@ -118,17 +120,19 @@ const personalDetails = computed<ValueAndLabel[]>(() => {
                             <td class="j-td">{{ application.attributes.modeOfStudy }}</td>
                             <td class="j-td">{{ application.attributes.intakePeriod }}</td>
                             <td class="j-td">{{ formatDate(application.attributes.createdAt, 'LLL') }}</td>
-                            <td class="j-td">{{ application.attributes.phoneNumber }}</td>
                             <td class="j-td">{{ application.relationships?.departmentWorkflowStep?.attributes?.workflowStep }}</td>
                             <td class="j-td text-right">
-                                <BaseButton
-                                    v-if="hasAbility('update:student-programs')"
-                                    title="Edit"
-                                    :size="ButtonSize.xs"
-                                    classes="rounded-full"
-                                    :variant="ColorVariant.primary_outline"
-                                    @click="() => navigateTo(route('students.program-edit', String(application.id)))"
-                                />
+                                <div class="flex justify-between items-center">
+                                    <OfferLetterAnchor v-if="hasOfferLetter(application)" :student-program-id="String(application.id)" />
+                                    <BaseButton
+                                        v-if="hasAbility('update:student-programs')"
+                                        title="Edit"
+                                        :size="ButtonSize.xs"
+                                        classes="rounded-full"
+                                        :variant="ColorVariant.primary_outline"
+                                        @click="() => navigateTo(route('students.program-edit', String(application.id)))"
+                                    />
+                                </div>
                             </td>
                         </tr>
                     </tbody>
