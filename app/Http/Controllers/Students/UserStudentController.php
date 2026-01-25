@@ -7,6 +7,7 @@ use App\Helpers\Helper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Students\UpdateStudentProgramRequest;
 use App\Http\Resources\Enrolments\EnrolmentResource;
+use App\Http\Resources\Shared\ContactResource;
 use App\Http\Resources\Students\StudentResource;
 use App\Http\Resources\Users\UserResource;
 use App\Models\Institution\InstitutionDepartment;
@@ -32,6 +33,7 @@ class UserStudentController extends Controller
             'user' => UserResource::make($user),
             'student' => $user?->studentProfile ? StudentResource::make($user->studentProfile) : null,
             'programs' => $studentModel?->programs ? EnrolmentResource::collection($studentModel->programs) : [],
+            'contacts' => ContactResource::collection($studentModel?->contacts),
         ]);
     }
 

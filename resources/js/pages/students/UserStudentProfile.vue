@@ -19,11 +19,13 @@ import { ValueAndLabel } from '@/types/utils';
 import { computed } from 'vue';
 import OfferLetterAnchor from '@/pages/portal/student/partials/OfferLetterAnchor.vue';
 import { useStudents } from '@/composables/students/useStudents';
+import { Contact } from '@/types/shared';
 
 interface Props {
     user: User;
     student: Student | null;
     programs: Enrolment[];
+    contacts: Contact[];
     auth: AuthObject;
     errors: object;
 }
@@ -80,13 +82,19 @@ const personalDetails = computed<ValueAndLabel[]>(() => {
     <PageContainer :breadcrumbs="breadcrumbs">
         <div v-if="student" class="flex flex-col space-y-6">
             <BaseCard>
-                <div :class="`grid w-full grid-cols-1 gap-2 md:grid-cols-4`">
+                <div class="grid w-full grid-cols-1 gap-2 md:grid-cols-4">
                     <LabelValue
                         v-for="(detail, index) in personalDetails"
                         :key="index"
                         :label="`${detail?.transKey ? $t(detail.transKey) : $tChoice(detail.transChoiceKey ?? '', 1)}`"
                         :value="detail.value"
                     />
+                </div>
+            </BaseCard>
+            <BaseCard :title="$tChoice('trans.contact', 2)">
+                <div class="grid w-full grid-cols-1 gap-2 md:grid-cols-4">
+                    <LabelValue :label="$t('trans.phone_number')" :value="String(contacts[0].attributes?.phoneNumber)" />
+                    <LabelValue :label="$t('trans.email_address')" :value="String(contacts[0].attributes?.emailAddress)" />
                 </div>
             </BaseCard>
             <div class="flex flex-col space-y-3" v-if="programs && programs.length > 0">
@@ -122,7 +130,7 @@ const personalDetails = computed<ValueAndLabel[]>(() => {
                             <td class="j-td">{{ formatDate(application.attributes.createdAt, 'LLL') }}</td>
                             <td class="j-td">{{ application.relationships?.departmentWorkflowStep?.attributes?.workflowStep }}</td>
                             <td class="j-td text-right">
-                                <div class="flex justify-between items-center">
+                                <div class="flex items-center justify-between">
                                     <OfferLetterAnchor v-if="hasOfferLetter(application)" :student-program-id="String(application.id)" />
                                     <BaseButton
                                         v-if="hasAbility('update:student-programs')"
