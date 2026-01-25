@@ -102,7 +102,7 @@ const personalDetails = computed<ValueAndLabel[]>(() => {
                     <HeadingSmall title="Student Programs" />
                     <div class="flex space-x-2">
                         <span>{{ $tChoice('trans.student_number', 1) }}:</span>
-                        <BaseTag :variant="ColorVariant.fuchsia_outline" :title="student.attributes.studentNumber ?? '---'" />
+                        <BaseTag :variant="ColorVariant.success" :title="student.attributes.studentNumber ?? '---'" />
                     </div>
                 </div>
                 <table class="j-table">
