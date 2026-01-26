@@ -186,6 +186,8 @@ const save = async () => {
     }
 };
 const maintenanceMode = isItTrue(import.meta.env.VITE_MAINTENANCE_MODE);
+
+
 </script>
 <template>
     <StudentPageHeader />

@@ -5,6 +5,5 @@ use Illuminate\Support\Facades\Route;
 
 
 Route::prefix('v1/validations')->group(function () {
-    Route::get('check', [ValidationController::class, 'check'])
-        ->name('v1.check');
+    Route::get('check', [ValidationController::class, 'check'])->name('v1.check');
 });

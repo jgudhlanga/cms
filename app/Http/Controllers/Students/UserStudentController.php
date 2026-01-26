@@ -33,7 +33,7 @@ class UserStudentController extends Controller
             'user' => UserResource::make($user),
             'student' => $user?->studentProfile ? StudentResource::make($user->studentProfile) : null,
             'programs' => $studentModel?->programs ? EnrolmentResource::collection($studentModel->programs) : [],
-            'contacts' => ContactResource::collection($studentModel?->contacts),
+            'contacts' => $studentModel?->contacts ? ContactResource::collection($studentModel?->contacts) : [],
         ]);
     }
 

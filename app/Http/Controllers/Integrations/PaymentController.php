@@ -7,6 +7,8 @@ use App\Helpers\PaymentHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Integrations\UpdateLedgerRequest;
 use App\Http\Resources\Integrations\LedgerResource;
+use App\Models\Institution\IntakePeriod;
+use App\Models\Institution\Level;
 use App\Models\Ledgers\Ledger;
 use App\Models\Users\User;
 use Illuminate\Http\Client\ConnectionException;
@@ -17,7 +19,6 @@ use Illuminate\Support\Str;
 
 class PaymentController extends Controller
 {
-
     /**
      * @throws ConnectionException
      */
@@ -44,9 +45,7 @@ class PaymentController extends Controller
             'email' => $request->email,
             'paymentMethod' => $request->paymentMethod,
         ]);
-
         $data = $response->json();
-
         if (!empty($data['paymentUrl'])) {
             PaymentHelper::createInvoiceEntry(PaymentHelper::assembleInvoiceData($request, $data));
             PaymentHelper::createReceiptEntry(PaymentHelper::assembleReceiptData($request, $data));
@@ -136,7 +135,6 @@ class PaymentController extends Controller
             ->orWhere('payment_reference', $search)
             ->withTrashed()
             ->first();
-
         // If not found, try by user email
         if (!$reference) {
             $user = User::where('email', $search)->first();
@@ -148,13 +146,11 @@ class PaymentController extends Controller
                     ->first();
             }
         }
-
         if (!$reference) {
             return response()->json([
                 "message" => "No ledger entries found for the provided search {$search}"
             ], 404);
         }
-
         // Fetch all ledger entries for that ledgerable
         $entries = Ledger::where('ledgerable_id', $reference->ledgerable_id)
             ->where('ledgerable_type', $reference->ledgerable_type)
@@ -245,5 +241,15 @@ class PaymentController extends Controller
             $orderReference, $paymentReference, $paymentStatus,];
     }
 
+    public function checkUserIntakePeriodApplicationFeePaymentStatus(User $user, IntakePeriod $intakePeriod)
+    {
+        return PaymentHelper::getLatestLedgerRecord(FeeTypeEnum::APPLICATION_FEE->slug(), 'receipt', $user, $intakePeriod);
+    }
+
+
+    public function checkLevelRequiresApplicationFeePayment(Level $level)
+    {
+        return $level->has_application_fee_payment;
+    }
 
 }
