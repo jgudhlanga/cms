@@ -40,6 +40,7 @@ const options = computed(() => {
                 <SelectOption>{
                     value: Number(item.id?.toString() ?? ''),
                     label: item?.attributes?.level,
+                    relationshipOneValue: String(item.attributes.levelId),
                 },
         );
 });

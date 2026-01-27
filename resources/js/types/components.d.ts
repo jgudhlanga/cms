@@ -191,6 +191,7 @@ declare module 'vue' {
     EmailAddress: typeof import('./../components/core/form/text/EmailAddress.vue')['default']
     EmploymentTypeComboSelect: typeof import('./../components/core/form/combobox/EmploymentTypeComboSelect.vue')['default']
     Empty: typeof import('./../components/core/util/Empty.vue')['default']
+    ErrorDialog: typeof import('./../components/core/modal/ErrorDialog.vue')['default']
     ExportButton: typeof import('./../components/core/button/ExportButton.vue')['default']
     FeeTypeComboSelect: typeof import('./../components/core/form/combobox/FeeTypeComboSelect.vue')['default']
     ForceDeleteButton: typeof import('./../components/core/button/ForceDeleteButton.vue')['default']

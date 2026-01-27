@@ -7,15 +7,18 @@ use App\DTO\Integrations\CreateReceiptDto;
 use App\DTO\Integrations\UpdateReceiptDto;
 use App\Enums\Shared\FeeTypeEnum;
 use App\Models\Institution\IntakePeriod;
+use App\Models\Institution\Level;
 use App\Models\Ledgers\Ledger;
 use App\Models\Shared\FeeType;
 use App\Models\Students\StudentProgram;
 use App\Models\Users\User;
 
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use LaravelIdea\Helper\App\Models\Institution\_IH_Level_C;
 use Spatie\MediaLibrary\MediaCollections\Exceptions\FileDoesNotExist;
 use Spatie\MediaLibrary\MediaCollections\Exceptions\FileIsTooBig;
 
@@ -345,5 +348,10 @@ class PaymentHelper
             : null;
 
         return $user->ledgerTransactions()->create($attributes);
+    }
+
+    public static function levelsWithApplicationFee(): Collection|array
+    {
+        return Level::where('has_application_fee_payment', true)->get();
     }
 }

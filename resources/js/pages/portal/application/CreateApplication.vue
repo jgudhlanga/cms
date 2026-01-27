@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // UI components
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 
 // Page sections
 import ContactDetails from '@/components/students/update/ContactDetails.vue';
@@ -21,18 +21,22 @@ import { CreateApplicationParams } from '@/types/portal';
 import { BaseButton } from '@/components/core/button';
 import ComingSoonAnimated from '@/components/core/util/ComingSoonAnimated.vue';
 import StudentPageHeader from '@/components/shared/students/StudentPageHeader.vue';
+import { useErrorDialog } from '@/composables/core/useErrorDialog';
 import { useIdTypes } from '@/composables/shared/useIdTypes';
 import { useApplicationFormHelper } from '@/composables/students/useApplicationFormHelper';
 import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
 import { errorAlert } from '@/lib/alerts';
 import { CourseRequirement, DepartmentLevelRequirement } from '@/types/department-meta-data';
+import { Level } from '@/types/institution';
 import { useForm } from '@inertiajs/vue3';
 import { trans } from 'laravel-vue-i18n';
 import { storeToRefs } from 'pinia';
 
 // Props
 interface Props {
+    hasPaidApplicationFee: boolean | null;
+    levelsWithPayment: Level[];
     auth: AuthObject;
     errors: object;
 }
@@ -187,7 +191,21 @@ const save = async () => {
 };
 const maintenanceMode = isItTrue(import.meta.env.VITE_MAINTENANCE_MODE);
 
-
+watch(storeRefs.level, async (newVal) => {
+    const selectedLevel = props.levelsWithPayment?.filter((lv: Level) => Number(lv.id) === Number(newVal?.relationshipOneValue));
+    console.log(isItTrue(props.hasPaidApplicationFee));
+    if (selectedLevel[0] && isItTrue(selectedLevel[0].attributes.hasApplicationFeePayment) && !(isItTrue(props.hasPaidApplicationFee))) {
+        console.log('Here');
+        const confirmed = await useErrorDialog().open({
+            title: 'Selection Error',
+            message: 'The selected level requires an application fee to be paid before continuing.',
+            confirmText: 'Go to Payment',
+        });
+        if (confirmed) {
+            route('portal.application.fee-payment');
+        }
+    }
+});
 </script>
 <template>
     <StudentPageHeader />

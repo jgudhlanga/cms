@@ -145,7 +145,7 @@ class Helper
         return Status::where('title', StatusEnum::ACTIVE->value)->firstOrFail();
     }
 
-    public static function resolveIntakePeriod(): Collection|Model
+    public static function resolveIntakePeriod()
     {
         static $cachedIntakePeriod;
 

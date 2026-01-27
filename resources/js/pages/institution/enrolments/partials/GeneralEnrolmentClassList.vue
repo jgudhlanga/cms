@@ -18,11 +18,7 @@ interface Props {
 const props = defineProps<Props>();
 const { level, applications } = props;
 const { isItTrue } = useUtils();
-const {
-    getClassListTypeClasses,
-    getClassListTypeDescription,
-    groupByClassListType,
-} = useEnrolments();
+const { getClassListTypeClasses, addToClassList, getClassListTypeDescription, groupByClassListType, getClassListType } = useEnrolments();
 const levelRequirements = computed(() => level?.relationships?.requirement);
 
 const groupedApplications = groupByClassListType(applications);
@@ -83,6 +79,11 @@ const groupedApplications = groupByClassListType(applications);
                             <template v-if="application.inClassList">
                                 <span>{{ application.classListType }}</span>
                             </template>
+                            <IconButton
+                                v-else
+                                :icon="IconName.add"
+                                @click="addToClassList(String(application.applicationId), getClassListType(index, classSize))"
+                            />
                         </td>
                     </tr>
                 </template>

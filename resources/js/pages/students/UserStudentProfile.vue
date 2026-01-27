@@ -130,7 +130,7 @@ const personalDetails = computed<ValueAndLabel[]>(() => {
                             <td class="j-td">{{ formatDate(application.attributes.createdAt, 'LLL') }}</td>
                             <td class="j-td">{{ application.relationships?.departmentWorkflowStep?.attributes?.workflowStep }}</td>
                             <td class="j-td text-right">
-                                <div class="flex items-center justify-between">
+                                <div class="flex items-center justify-end space-x-3">
                                     <OfferLetterAnchor v-if="hasOfferLetter(application)" :student-program-id="String(application.id)" />
                                     <BaseButton
                                         v-if="hasAbility('update:student-programs')"

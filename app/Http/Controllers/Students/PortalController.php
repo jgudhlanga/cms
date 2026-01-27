@@ -133,8 +133,15 @@ class PortalController extends Controller
     {
         $this->authorize('manageStudentPersonalDetails');
         $levelId = session('application.level_id', null);
-
-        return Inertia::render('portal/application/CreateApplication');
+        // get levels which requires application fee payment
+        $levelsWithPayment = PaymentHelper::levelsWithApplicationFee();
+        // check if user / student has paid application fee
+        $intakePeriod = Helper::resolveIntakePeriod();
+        $hasPaidApplicationFee = PaymentHelper::getLatestLedgerRecord(FeeTypeEnum::APPLICATION_FEE->slug(), 'receipt', request()->user(), $intakePeriod);
+        return Inertia::render('portal/application/CreateApplication', [
+            'hasPaidApplicationFee' => $hasPaidApplicationFee,
+            'levelsWithPayment' => LevelResource::collection($levelsWithPayment),
+        ]);
     }
 
     /**
