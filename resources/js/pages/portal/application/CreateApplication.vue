@@ -46,7 +46,7 @@ const { user } = props.auth;
 const requirements = ref<CourseRequirement | DepartmentLevelRequirement | null | undefined>(null);
 // Composable
 const { idTypes, listIdTypes } = useIdTypes();
-const { applicationFormSchema } = useStudentPortal();
+const { applicationFormSchema, selectLevel } = useStudentPortal();
 const { isNativeCitizen, isItTrue, navigateTo } = useUtils();
 const { validateMainSubjects, validateOtherSubjects, updateCreateForm } = useApplicationFormHelper();
 const store = useCreateApplicationFormStore();
@@ -193,16 +193,17 @@ const maintenanceMode = isItTrue(import.meta.env.VITE_MAINTENANCE_MODE);
 
 watch(storeRefs.level, async (newVal) => {
     const selectedLevel = props.levelsWithPayment?.filter((lv: Level) => Number(lv.id) === Number(newVal?.relationshipOneValue));
-    console.log(isItTrue(props.hasPaidApplicationFee));
-    if (selectedLevel[0] && isItTrue(selectedLevel[0].attributes.hasApplicationFeePayment) && !(isItTrue(props.hasPaidApplicationFee))) {
-        console.log('Here');
+    if (selectedLevel[0] && isItTrue(selectedLevel[0].attributes.hasApplicationFeePayment) && !isItTrue(props.hasPaidApplicationFee)) {
         const confirmed = await useErrorDialog().open({
             title: 'Selection Error',
             message: 'The selected level requires an application fee to be paid before continuing.',
             confirmText: 'Go to Payment',
         });
         if (confirmed) {
-            route('portal.application.fee-payment');
+            console.log('Hello')
+            //selectLevel(String(newVal?.value));
+            navigateTo(route('portal.application.fee-payment'));
+            return;
         }
     }
 });

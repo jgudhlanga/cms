@@ -132,7 +132,7 @@ class PortalController extends Controller
     public function createApplication(): Response
     {
         $this->authorize('manageStudentPersonalDetails');
-        $levelId = session('application.level_id', null);
+        session()->forget('application');
         // get levels which requires application fee payment
         $levelsWithPayment = PaymentHelper::levelsWithApplicationFee();
         // check if user / student has paid application fee
@@ -163,20 +163,14 @@ class PortalController extends Controller
     public function selectLevel(Request $request): RedirectResponse
     {
         $this->authorize('manageStudentPersonalDetails');
-        $data = $request->validate([
-            'level_id' => ['required', 'exists:levels,id'],
-        ]);
-
+        $data = $request->validate(['level_id' => ['required', 'exists:levels,id']]);
         // Store in session
         session(['application.level_id' => $data['level_id']]);
-
         $level = Level::find($data['level_id']);
-
         // Decide where to go
         if ($level->has_application_fee_payment) {
             return to_route('portal.application.fee-payment');
         }
-
         return to_route('portal.application.create');
     }
 

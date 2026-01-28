@@ -1,8 +1,8 @@
 <script setup lang="ts">
 // UI components
+import { useStudentPortal } from '@/composables/students/useStudentPortal';
 import { AuthObject } from '@/types/data-pagination';
 import { Level } from '@/types/institution';
-import { router } from '@inertiajs/vue3';
 
 // Utilities
 
@@ -14,14 +14,7 @@ interface Props {
 }
 
 defineProps<Props>();
-
-const selectLevel = (level: Level) => {
-    router.post(
-        route('portal.application.select-level', {
-            level_id: level.id,
-        }),
-    );
-};
+const { selectLevel } = useStudentPortal();
 </script>
 <template>
     <StudentPageHeader />
@@ -56,7 +49,7 @@ const selectLevel = (level: Level) => {
                 <div class="border-t border-gray-100 bg-gray-50 px-6 py-4">
                     <div class="flex items-center justify-center">
                         <button
-                            @click="() => selectLevel(level)"
+                            @click="() => selectLevel(String(level.id))"
                             class="apply-button"
                             :disabled="!level.attributes.showOnCurrentApplicationPeriod"
                             :class="!level.attributes.showOnCurrentApplicationPeriod ? 'cursor-not-allowed opacity-50' : ''"

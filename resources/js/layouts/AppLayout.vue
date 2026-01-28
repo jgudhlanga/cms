@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import ConfirmDialog from '@/components/core/modal/ConfirmDialog.vue';
+import ErrorDialog from '@/components/core/modal/ErrorDialog.vue';
 import AppSidebar from '@/components/core/sidebar/AppSidebar.vue';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { BreadcrumbItemType } from '@/types/ui';
@@ -19,5 +20,6 @@ defineProps<{
         </SidebarInset>
     </SidebarProvider>
     <ConfirmDialog />
+    <ErrorDialog />
     <ModalsContainer />
 </template>
