@@ -151,7 +151,7 @@ class PortalController extends Controller
     {
         $this->authorize('manageStudentPersonalDetails');
         // the levels on the offer
-        $levels = Level::where('show_on_current_application_period', 1)->orderBy('name')->get();
+        $levels = Level::where('show_on_current_application_period', 1)->orderBy('position')->orderBy('name')->get();
         return Inertia::render('portal/application/SelectLevelOption', [
             'levels' => LevelResource::collection($levels),
         ]);
