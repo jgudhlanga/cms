@@ -30,7 +30,7 @@ const disabilityStatus = computed(() => {
 
 <template>
     <BaseCard :title="$t('trans.personal')" description="Personal details of the applicant">
-        <div class="grid grid-cols-3 gap-3">
+        <div class="grid grid-cols-2 gap-3">
             <LabelValue :value-classes="badgeClass" :label="$tChoice('trans.name', 1)" :value="application?.attributes?.studentName" />
             <LabelValue :label="$tChoice('trans.id_type', 1)" :value="application?.attributes?.idType ?? '---'" />
             <template v-if="isNativeCitizen(application?.attributes?.idType ?? '')">
@@ -50,7 +50,7 @@ const disabilityStatus = computed(() => {
         </div>
     </BaseCard>
     <BaseCard :title="$tChoice('trans.course', 1) + ' details'" description="Course specific details">
-        <div class="grid grid-cols-3 gap-3">
+        <div class="grid grid-cols-2 gap-3">
             <LabelValue :label="$tChoice('trans.department', 1)" :value="application?.attributes?.department ?? ''" />
             <LabelValue :label="$tChoice('trans.level', 1)" :value="application?.attributes?.level ?? ''" />
             <LabelValue :label="$tChoice('trans.course', 1)" :value="application?.attributes?.course ?? ''" />
@@ -60,7 +60,7 @@ const disabilityStatus = computed(() => {
         </div>
     </BaseCard>
     <BaseCard :title="$t('trans.o_level_subjects')" v-if="oLevelRequired" description="Provided o level results">
-        <div class="grid grid-cols-3 gap-3">
+        <div class="grid grid-cols-2 gap-3">
             <LabelValue
                 v-for="result in application?.relationships?.oLevelResults ?? []"
                 :label="result.attributes.subject"
