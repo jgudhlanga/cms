@@ -200,8 +200,6 @@ watch(storeRefs.level, async (newVal) => {
             confirmText: 'Go to Payment',
         });
         if (confirmed) {
-            console.log('Hello')
-            //selectLevel(String(newVal?.value));
             navigateTo(route('portal.application.fee-payment'));
             return;
         }
