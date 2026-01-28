@@ -47,6 +47,7 @@ class RedirectStudentMiddleware
                     'portal.application.level-options',
                     'portal.application.select-level',
                     'portal.application.confirm',
+                    'portal.application.create',
                     'portal.application.fee-payment' // 👈 allow this
                 )) {
                     return to_route('portal.application.level-options');
