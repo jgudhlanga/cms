@@ -195,7 +195,7 @@ watch(storeRefs.level, async (newVal) => {
     const selectedLevel = props.levelsWithPayment?.filter((lv: Level) => Number(lv.id) === Number(newVal?.relationshipOneValue));
     if (selectedLevel[0] && isItTrue(selectedLevel[0].attributes.hasApplicationFeePayment) && !isItTrue(props.hasPaidApplicationFee)) {
         const confirmed = await useErrorDialog().open({
-            title: 'Selection Error',
+            title: 'Application Fee Required',
             message: 'The selected level requires an application fee to be paid before continuing.',
             confirmText: 'Go to Payment',
         });
