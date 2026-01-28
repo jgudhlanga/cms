@@ -4,6 +4,7 @@ interface ConfirmOptions {
     title?: string;
     message?: string;
     note?: string;
+    showCancelBtn?: boolean;
     confirmText?: string;
     cancelText?: string;
 }
@@ -19,6 +20,7 @@ export function useErrorDialog() {
             message: 'An error has happened?',
             confirmText: 'Continue',
             cancelText: 'Cancel',
+            showCancelBtn: false,
             note: 'Please rectify the error, to proceed',
             ...newOptions,
         };

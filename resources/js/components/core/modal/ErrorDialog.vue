@@ -38,6 +38,7 @@ const { isVisible, options, confirm, close } = useErrorDialog();
                         <!-- Actions -->
                         <div class="mt-6 flex justify-center space-x-3">
                             <BaseButton
+                                v-if="options.showCancelBtn"
                                 @click="close"
                                 :title="options.cancelText"
                                 :variant="ColorVariant.shade"
