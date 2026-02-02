@@ -24,10 +24,10 @@ const tabs: Array<Link> = [
         transChoiceKey: 'fee_levy_structure',
         url: route('fee-structures.index'),
     },
-    {
+   /* {
         transChoiceKey: 'academic_calendar.academic_calendar',
         url: route('academic-calendars.index'),
-    },
+    },*/
 ];
 const allowed = hasAbility('view:institution-settings');
 </script>
