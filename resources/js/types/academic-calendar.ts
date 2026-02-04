@@ -1,37 +1,29 @@
+export type AcademicCalendarOption = {
+    type: string;
+    id: string;
+    attributes: {
+        name: string;
+        description: string;
+    };
+};
 export type AcademicCalendar = {
     type: string;
     id: string;
     attributes: {
         name: string;
+        academicCalendarOptionId: string;
         calendarYear: string;
         openingDate: string;
         closingDate: string;
-        calendarType: AcademicCalendarType;
-        description?: string;
-        createdAt?: string;
-        updatedAt?: string;
-        deletedAt?: string;
     };
 };
 
 export type AcademicCalendarParams = {
-    name: string;
+    academic_calendar_option_id: string | number | null;
     calendar_year: string | null;
-    calendar_type: AcademicCalendarType | null;
     opening_date: string | null;
     closing_date: string | null;
-    description?: string;
 };
-export enum AcademicCalendarType {
-    SEMESTER = 'semester',
-    TRIMESTER = 'trimester',
-    QUADMESTER = 'quadmester',
-    QUARTER = 'quarter',
-    BLOCK = 'block',
-    MODULAR = 'modular',
-    MINIMESTER = 'minimester',
-    OTHER = 'other',
-}
 
 export type DepartmentCourseClassCount = {
     institutionDepartmentId: string;

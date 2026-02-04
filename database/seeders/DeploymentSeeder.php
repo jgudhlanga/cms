@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use Database\Seeders\AcademicCalendars\AcademicCalendarOptionSeeder;
 use Database\Seeders\Acl\PermissionsTableSeeder;
 use Database\Seeders\Acl\RolesTableSeeder;
 use Illuminate\Database\Seeder;
@@ -16,6 +17,7 @@ class DeploymentSeeder extends Seeder
         $this->call([
             RolesTableSeeder::class,
             PermissionsTableSeeder::class,
+            AcademicCalendarOptionSeeder::class,
         ]);
     }
 }

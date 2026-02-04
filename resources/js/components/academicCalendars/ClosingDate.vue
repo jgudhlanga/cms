@@ -1,11 +1,18 @@
 <script setup lang="ts">
 import BaseDatePicker from '@/components/core/form/date/BaseDatePicker.vue';
+interface Props {
+    showLabel?: boolean;
+}
+
+withDefaults(defineProps<Props>(), {
+    showLabel: true,
+});
 </script>
 
 <template>
     <BaseDatePicker
         input-id="closing_date"
-        :label="$tChoice('academic_calendar.closing_date', 1)"
+        :label="showLabel ?  $tChoice('academic_calendar.closing_date', 1) : ''"
         v-bind="$attrs"
         :enable-time-picker="false"
         prevent-min-max-navigation

@@ -8,7 +8,6 @@ import { useAcademicCalendars } from '@/composables/academicCalendars/useAcademi
 import { hasAbility } from '@/lib/permissions';
 import { AcademicCalendar } from '@/types/academic-calendar';
 import { AuthObject, DataFilters, DataListProps } from '@/types/data-pagination';
-import CreateEdit from './partials/CreateEdit.vue';
 
 const { createTableColumns, breadcrumbs, onOpenModal } = useAcademicCalendars();
 
@@ -35,6 +34,5 @@ const allowed = hasAbility('create:academic-calendars');
             :on-create="() => onOpenModal(allowed)"
             :disable-create="!allowed"
         />
-        <CreateEdit />
     </PageContainer>
 </template>
