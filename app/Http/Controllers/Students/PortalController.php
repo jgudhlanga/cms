@@ -103,10 +103,11 @@ class PortalController extends Controller
         );
 
         $user->assignRole(RoleEnum::STUDENT);
-        SendVerificationEmailJob::dispatch($user)->withoutDelay();
-
+        //SendVerificationEmailJob::dispatch($user)->withoutDelay();
+        $user->email_verified_at = now();
+        $user->save();
         Auth::login($user);
-        return to_route('portal.confirmation', compact('user'));
+        return to_route('portal.dashboard');
     }
 
     public function registrationConfirmation(User $user): Response

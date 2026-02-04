@@ -46,7 +46,7 @@ const { user } = props.auth;
 const requirements = ref<CourseRequirement | DepartmentLevelRequirement | null | undefined>(null);
 // Composable
 const { idTypes, listIdTypes } = useIdTypes();
-const { applicationFormSchema, selectLevel } = useStudentPortal();
+const { applicationFormSchema } = useStudentPortal();
 const { isNativeCitizen, isItTrue, navigateTo } = useUtils();
 const { validateMainSubjects, validateOtherSubjects, updateCreateForm } = useApplicationFormHelper();
 const store = useCreateApplicationFormStore();
