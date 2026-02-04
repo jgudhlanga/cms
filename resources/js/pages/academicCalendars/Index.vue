@@ -4,13 +4,15 @@ import PageContainer from '@/components/core/page/PageContainer.vue';
 import { useAcademicCalendars } from '@/composables/academicCalendars/useAcademicCalendars';
 import { AcademicCalendar, AcademicCalendarOption, AcademicCalendarParams } from '@/types/academic-calendar';
 import { AuthObject } from '@/types/data-pagination';
+import { IntakePeriod } from '@/types/institution';
 import { SelectOption } from '@/types/utils';
 import { Head, useForm } from '@inertiajs/vue3';
 import { ref } from 'vue';
 
 interface Props {
     academicCalendarOptions: AcademicCalendarOption[];
-    academicCalendars: AcademicCalendar;
+    academicCalendars: AcademicCalendar[];
+    intakePeriods: IntakePeriod[];
     auth: AuthObject;
     errors: object;
 }
@@ -54,12 +56,14 @@ const submitForm = () => {};
                             <SelectCalendarYear v-model="calendarYearOption" :show-label="false" />
                         </td>
                         <td class="j-td">
-                            <OpeningDate v-model="form.opening_date" :show-label="false" />
+                            <OpeningDate v-model="form.opening_date" :show-label="false" class="w-50" />
                         </td>
                         <td class="j-td">
-                            <ClosingDate v-model="form.closing_date" :show-label="false" />
+                            <ClosingDate v-model="form.closing_date" :show-label="false" class="w-50" />
                         </td>
-                        <td class="j-td"></td>
+                        <td class="j-td">
+                            <SelectIntakePeriods :data="intakePeriods" />
+                        </td>
                         <td class="j-td text-center"></td>
                     </tr>
                 </tbody>

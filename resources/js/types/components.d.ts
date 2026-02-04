@@ -305,6 +305,7 @@ declare module 'vue' {
     SelectCalendarYear: typeof import('./../components/academicCalendars/SelectCalendarYear.vue')['default']
     SelectContent: typeof import('./../components/ui/select/SelectContent.vue')['default']
     SelectGroup: typeof import('./../components/ui/select/SelectGroup.vue')['default']
+    SelectIntakePeriods: typeof import('./../components/academicCalendars/SelectIntakePeriods.vue')['default']
     SelectItem: typeof import('./../components/ui/select/SelectItem.vue')['default']
     SelectItemText: typeof import('./../components/ui/select/SelectItemText.vue')['default']
     SelectLabel: typeof import('./../components/ui/select/SelectLabel.vue')['default']
