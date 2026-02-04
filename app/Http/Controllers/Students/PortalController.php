@@ -138,9 +138,9 @@ class PortalController extends Controller
         $levelsWithPayment = PaymentHelper::levelsWithApplicationFee();
         // check if user / student has paid application fee
         $intakePeriod = Helper::resolveIntakePeriod();
-        $hasPaidApplicationFee = PaymentHelper::getLatestLedgerRecord(FeeTypeEnum::APPLICATION_FEE->slug(), 'receipt', request()->user(), $intakePeriod);
+        $hasPaidApplicationFeeRecord =  PaymentHelper::getLatestLedgerRecord(FeeTypeEnum::APPLICATION_FEE->slug(), 'receipt', request()->user(), $intakePeriod);
         return Inertia::render('portal/application/CreateApplication', [
-            'hasPaidApplicationFee' => $hasPaidApplicationFee,
+            'hasPaidApplicationFee' => (bool) $hasPaidApplicationFeeRecord,
             'levelsWithPayment' => LevelResource::collection($levelsWithPayment),
         ]);
     }
