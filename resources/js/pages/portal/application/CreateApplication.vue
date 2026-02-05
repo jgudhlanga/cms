@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // UI components
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 
 // Page sections
 import ContactDetails from '@/components/students/update/ContactDetails.vue';
@@ -29,7 +29,7 @@ import { ColorVariant } from '@/enums/colors';
 import { errorAlert } from '@/lib/alerts';
 import { CourseRequirement, DepartmentLevelRequirement } from '@/types/department-meta-data';
 import { Level } from '@/types/institution';
-import { useForm } from '@inertiajs/vue3';
+import { useForm, usePage } from '@inertiajs/vue3';
 import { trans } from 'laravel-vue-i18n';
 import { storeToRefs } from 'pinia';
 
@@ -200,11 +200,14 @@ watch(storeRefs.level, async (newVal) => {
             confirmText: 'Go to Payment',
         });
         if (confirmed) {
+            // unset level
+            storeRefs.level.value  = null;
             navigateTo(route('portal.application.fee-payment'));
             return;
         }
     }
 });
+
 </script>
 <template>
     <StudentPageHeader />
