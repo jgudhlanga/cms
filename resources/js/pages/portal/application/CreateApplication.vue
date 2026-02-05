@@ -200,6 +200,8 @@ watch(storeRefs.level, async (newVal) => {
             confirmText: 'Go to Payment',
         });
         if (confirmed) {
+            // unset level
+            storeRefs.level.value = null;
             navigateTo(route('portal.application.fee-payment'));
             return;
         }
