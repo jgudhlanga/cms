@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Students\AcademicRecordController;
+use App\Http\Controllers\Students\ApprenticeManagementController;
 use App\Http\Controllers\Students\SponsorController;
 use App\Http\Controllers\Students\StudentController;
 use App\Http\Controllers\Students\UserStudentController;
@@ -27,5 +28,8 @@ Route::prefix('students')->middleware('auth')->group(function () {
     Route::get('{user}/profile', [UserStudentController::class, 'index'])->name('students.profile');
     Route::get('program/{student_program}/edit', [UserStudentController::class, 'edit'])->name('students.program-edit');
     Route::put('program/{student_program}/update', [UserStudentController::class, 'updateProgram'])->name('students.program-update');
+    Route::get('apprentices', [ApprenticeManagementController::class, 'index'])->name('students.apprentices.index');
+    Route::get('apprentices/import', [ApprenticeManagementController::class, 'showImport'])->name('students.apprentices.show-import');
+    Route::post('apprentices/import', [ApprenticeManagementController::class, 'processImport'])->name('students.apprentices.process-import');
 });
 Route::middleware('auth')->resource('students', StudentController::class)->names('students');

@@ -5,4 +5,5 @@ return [
     'apply_now' => 'Apply now',
     'mode' => 'Mode|Modes',
     'intake' => 'Intake',
+    'apprentice_management' => 'Apprentice Management',
 ];
