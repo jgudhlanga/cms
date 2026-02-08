@@ -54,7 +54,7 @@ const { form } = props;
                 input-id="next_of_kin_address_1"
                 :label="$t('trans.address_1')"
                 v-model="next_of_kin_address_1"
-                placeholder="enter address line 1 "
+                placeholder="eg. house number"
                 @input="clearFormErrors(form, 'next_of_kin_address_1')"
                 :error="form.errors.next_of_kin_address_1"
                 :is-required="true"
@@ -63,7 +63,7 @@ const { form } = props;
                 input-id="next_of_kin_address_2"
                 :label="$t('trans.address_2')"
                 v-model="next_of_kin_address_2"
-                placeholder="enter address line 2"
+                placeholder="eg. street"
                 @input="clearFormErrors(form, 'next_of_kin_address_2')"
                 :error="form.errors.next_of_kin_address_2"
                 :is-required="true"
@@ -72,7 +72,7 @@ const { form } = props;
                 input-id="next_of_kin_address_3"
                 :label="$t('trans.address_3')"
                 v-model="next_of_kin_address_3"
-                placeholder="enter address line 3"
+                placeholder="eg. suburb"
                 @input="clearFormErrors(form, 'next_of_kin_address_3')"
                 :error="form.errors.next_of_kin_address_3"
                 :is-required="true"
@@ -81,7 +81,7 @@ const { form } = props;
                 input-id="next_of_kin_address_4"
                 :label="$t('trans.address_4')"
                 v-model="next_of_kin_address_4"
-                placeholder="enter address line 4"
+                placeholder="eg. city / town"
             />
         </div>
     </BaseCard>

@@ -39,26 +39,26 @@ const { form } = props;
         <div class="grid-col-1 grid gap-6 md:grid-cols-4">
             <Address1
                 v-model="address_1"
-                placeholder="enter address line 1 "
+                placeholder="eg. house number"
                 @input="clearFormErrors(form, 'address_1')"
                 :error="form.errors.address_1"
                 :is-required="true"
             />
             <Address2
                 v-model="address_2"
-                placeholder="enter address line 2"
+                placeholder="eg. street name"
                 @input="clearFormErrors(form, 'address_2')"
                 :error="form.errors.address_2"
                 :is-required="true"
             />
             <Address3
                 v-model="address_3"
-                placeholder="enter address line 3"
+                placeholder="eg. suburb"
                 @input="clearFormErrors(form, 'address_3')"
                 :error="form.errors.address_3"
                 :is-required="true"
             />
-            <Address4 v-model="address_4" placeholder="enter address line 4" />
+            <Address4 v-model="address_4" placeholder="eg. city / town" />
         </div>
     </BaseCard>
 </template>
