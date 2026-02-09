@@ -7,7 +7,6 @@ use App\Services\ApplicationMetricsService;
 
 class DashboardController extends Controller
 {
-
     public function index()
     {
         $metrics = new ApplicationMetricsService();

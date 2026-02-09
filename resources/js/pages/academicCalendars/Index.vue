@@ -7,6 +7,8 @@ import { AuthObject } from '@/types/data-pagination';
 import { IntakePeriod } from '@/types/institution';
 import { SelectOption } from '@/types/utils';
 import { Head, useForm } from '@inertiajs/vue3';
+import { ButtonSize } from '@/enums/buttons';
+import { ColorVariant } from '@/enums/colors';
 import { ref } from 'vue';
 
 interface Props {
@@ -64,7 +66,9 @@ const submitForm = () => {};
                         <td class="j-td">
                             <SelectIntakePeriods :data="intakePeriods" />
                         </td>
-                        <td class="j-td text-center"></td>
+                        <td class="j-td text-center">
+                            <BaseButton class="rounded-full" :title="$t('trans.save')" :loading="form.processing" :disabled="form.processing" :variant="ColorVariant.primary" :size="ButtonSize.sm"/>
+                        </td>
                     </tr>
                 </tbody>
             </table>
