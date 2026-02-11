@@ -1,55 +1,12 @@
-import { useDataTables } from '@/composables/core/useDataTables';
+import { useDropdowns } from '@/composables/core/useDropdowns';
 import { closeModal, errorAlert, forbiddenAlert, openModal, successAlert } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
-import { getIdParams } from '@/lib/utils';
-import { Auth } from '@/types';
 import { AcademicCalendar } from '@/types/academic-calendar';
 import type { Link } from '@/types/ui';
-import { InertiaForm, usePage } from '@inertiajs/vue3';
-import { trans, trans_choice } from 'laravel-vue-i18n';
+import { InertiaForm } from '@inertiajs/vue3';
 import { ref } from 'vue';
-import { useDropdowns } from '@/composables/core/useDropdowns';
 
 export const useAcademicCalendars = () => {
-    const { moreActionButton, onDelete, onForceDelete, onRestore } = useDataTables();
-    const createTableColumns = () => {
-        const { props } = usePage();
-        const { can } = props?.auth as Auth;
-        return [
-            { header: trans_choice('trans.name', 1), accessorKey: 'attributes.name' },
-            { header: trans_choice('academic_calendar.calendar_year', 1), accessorKey: 'attributes.calendarYear' },
-            { header: trans_choice('academic_calendar.calendar_type', 1), accessorKey: 'attributes.calendarType' },
-            { header: trans_choice('academic_calendar.opening_date', 1), accessorKey: 'attributes.openingDate' },
-            { header: trans_choice('academic_calendar.closing_date', 1), accessorKey: 'attributes.closingDate' },
-            { header: trans('academic_calendar.description'), accessorKey: 'attributes.description' },
-            {
-                header: trans_choice('academic_calendar.action', 2),
-                accessorKey: 'actions',
-                enableSorting: false,
-                meta: { align: 'right' },
-                cell: ({ row }: { row: { original: AcademicCalendar } }) => {
-                    const id = getIdParams(row.original.id?.toString() ?? '');
-                    const name = trans_choice('academic_calendar.academic_calendar', 1);
-                    return moreActionButton(!!row.original?.attributes?.deletedAt, [
-                        { key: 'edit', action: () => onOpenModal(can['update:academic-calendars'], row.original) },
-                        {
-                            key: 'archive',
-                            action: () => onDelete(can['delete:academic-calendars'], route('academic-calendars.destroy', id), name),
-                        },
-                        {
-                            key: 'restore',
-                            action: () => onRestore(can['restore:academic-calendars'], route('academic-calendars.restore', id), name),
-                        },
-                        {
-                            key: 'delete',
-                            action: () => onForceDelete(can['forceDelete:academic-calendars'], route('academic-calendars.force-delete', id), name),
-                        },
-                    ]);
-                },
-            },
-        ];
-    };
-
     const breadcrumbs: Array<Link> = [
         {
             transChoiceKey: 'institution',
@@ -97,7 +54,8 @@ export const useAcademicCalendars = () => {
             },
         });
     };
-    const saveAcademicCalendar = (form: InertiaForm<any>, academicCalendar?: AcademicCalendar) => {
+
+    const saveAcademicCalendar = (form: InertiaForm<any>, academicCalendar?: AcademicCalendar|null) => {
         try {
             if (academicCalendar) {
                 updateAcademicCalendar(form, academicCalendar);
@@ -121,7 +79,6 @@ export const useAcademicCalendars = () => {
     };
 
     return {
-        createTableColumns,
         breadcrumbs,
         onOpenModal,
         saveAcademicCalendar,

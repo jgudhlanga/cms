@@ -1,3 +1,5 @@
+import { IntakePeriod } from '@/types/institution';
+
 export type AcademicCalendarOption = {
     type: string;
     id: string;
@@ -15,6 +17,10 @@ export type AcademicCalendar = {
         calendarYear: string;
         openingDate: string;
         closingDate: string;
+        intakePeriods: string;
+    };
+    relationships: {
+        intakePeriods: IntakePeriod[];
     };
 };
 
@@ -23,6 +29,7 @@ export type AcademicCalendarParams = {
     calendar_year: string | null;
     opening_date: string | null;
     closing_date: string | null;
+    intake_period_ids?: [];
 };
 
 export type DepartmentCourseClassCount = {
