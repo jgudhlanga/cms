@@ -8,8 +8,8 @@ import { ColorVariant } from '@/enums/colors';
 import { DepartmentCourseClassCount } from '@/types/academic-calendar';
 import { InstitutionDepartment, ModeOfStudy } from '@/types/institution';
 import { SelectOption } from '@/types/utils';
+import { trans_choice } from 'laravel-vue-i18n';
 import { onMounted, ref } from 'vue';
-import { DepartmentEnrolmentCount } from '@/types/department-meta-data';
 
 interface Props {
     department: InstitutionDepartment;
@@ -19,14 +19,13 @@ const props = defineProps<Props>();
 const { department } = props;
 const institutionDepartmentId = String(department?.id) ?? '';
 const { getData, isLoading } = useServerSide();
-const classStates = ref<DepartmentCourseClassCount[] | []>([]);
 const academicCalendar = ref<SelectOption | null>(null);
 const modeOfStudy = ref<SelectOption | null>(null);
 const { isLoading: academicCalendarLoading, listAcademicCalendars, academicCalendars } = useAcademicCalendars();
 const { isLoading: modesOfStudyLoading, listModesOfStudy, modesOfStudy } = useModeOfStudy();
 const { navigateTo } = useUtils();
 
-const academicClasses = ref<DepartmentEnrolmentCount[] | []>([]);
+const classStates = ref<DepartmentCourseClassCount[] | []>([]);
 
 onMounted(async () => {
     await listAcademicCalendars();
@@ -41,15 +40,16 @@ onMounted(async () => {
         : null;
     modeOfStudy.value = modeOption ? { value: Number(modeOption.id), label: modeOption.attributes.name } : null;
 
-    classStates.value = [
+    await loadClassConfigs();
+    /*classStates.value = [
         {
             institutionDepartmentId: institutionDepartmentId,
             departmentCourseId: '1',
             courseName: 'Information Technology',
             levels: [
-                { departmentLevelId: '1', levelName: 'NC', classSize: 20, totalEnrolledStudents: 100 },
-                { departmentLevelId: '2', levelName: 'ND', classSize: 20, totalEnrolledStudents: 100 },
-                { departmentLevelId: '3', levelName: 'HND', classSize: 20, totalEnrolledStudents: 100 },
+                { departmentLevelId: '1', levelName: 'NC', studentsPerClass: 20, totalFinalClass: 100 },
+                { departmentLevelId: '2', levelName: 'ND', studentsPerClass: 20, totalFinalClass: 100 },
+                { departmentLevelId: '3', levelName: 'HND', studentsPerClass: 20, totalFinalClass: 100 },
             ],
         },
         {
@@ -57,9 +57,9 @@ onMounted(async () => {
             departmentCourseId: '2',
             courseName: 'Professional Computing & Information Systems',
             levels: [
-                { departmentLevelId: '4', levelName: 'ABMA Level 3', classSize: 20, totalEnrolledStudents: 60 },
-                { departmentLevelId: '5', levelName: 'ABMA Level 4', classSize: 20, totalEnrolledStudents: 40 },
-                { departmentLevelId: '6', levelName: 'ABMA Level 5', classSize: 20, totalEnrolledStudents: 20 },
+                { departmentLevelId: '4', levelName: 'ABMA Level 3', studentsPerClass: 20, totalFinalClass: 60 },
+                { departmentLevelId: '5', levelName: 'ABMA Level 4', studentsPerClass: 20, totalFinalClass: 40 },
+                { departmentLevelId: '6', levelName: 'ABMA Level 5', studentsPerClass: 20, totalFinalClass: 20 },
             ],
         },
         {
@@ -67,22 +67,29 @@ onMounted(async () => {
             departmentCourseId: '2',
             courseName: 'Professional Computer Engineering',
             levels: [
-                { departmentLevelId: '4', levelName: 'ABMA Level 3', classSize: 20, totalEnrolledStudents: 60 },
-                { departmentLevelId: '5', levelName: 'ABMA Level 4', classSize: 20, totalEnrolledStudents: 40 },
-                { departmentLevelId: '6', levelName: 'ABMA Level 5', classSize: 20, totalEnrolledStudents: 20 },
+                { departmentLevelId: '4', levelName: 'ABMA Level 3', studentsPerClass: 20, totalFinalClass: 60 },
+                { departmentLevelId: '5', levelName: 'ABMA Level 4', studentsPerClass: 20, totalFinalClass: 40 },
+                { departmentLevelId: '6', levelName: 'ABMA Level 5', studentsPerClass: 20, totalFinalClass: 20 },
             ],
         },
-    ];
+    ];*/
 });
 
-const loadEnrolments = async () => {
-    enrolments.value = await getData(
-        `api/v1/departments/${institutionDepartmentId}/enrolments?intake_period_id=${intakePeriod.value?.value.toString()}&mode_of_study_id=${modeOfStudy.value?.value.toString()}`,
+const loadClassConfigs = async () => {
+    classStates.value = await getData(
+        `api/v1/departments/${institutionDepartmentId}/academic-calendars?academic_calendar=${String(academicCalendar.value?.value)}&mode_of_study_id=${String(modeOfStudy.value?.value)}`,
         () => trans_choice('trans.enrolment', 2),
     );
 };
 const handleSelectionChange = async () => {
-    await loadEnrolments();
+    await loadClassConfigs();
+};
+
+const calculateClasses = (totalFinalClass: number, studentsPerClass: number) => {
+    if (totalFinalClass === 0 || studentsPerClass === 0) {
+        return 0;
+    }
+    return totalFinalClass / studentsPerClass;
 };
 </script>
 
@@ -118,8 +125,10 @@ const handleSelectionChange = async () => {
                             </tr>
                             <tr class="j-tr" v-for="(level, index) in stats.levels" :key="index">
                                 <td class="j-td text-left">{{ level.levelName }}</td>
-                                <td class="j-td text-center">{{ level.classSize }}</td>
-                                <td class="j-td text-center">{{ level.totalEnrolledStudents / level.classSize }}</td>
+                                <td class="j-td text-center">{{ level.studentsPerClass }}</td>
+                                <td class="j-td text-center">
+                                    {{ calculateClasses(Number(level.totalFinalClass), Number(level.studentsPerClass)) }}
+                                </td>
                                 <td class="j-td text-center">
                                     <BaseButton
                                         :size="ButtonSize.xs"
@@ -129,12 +138,12 @@ const handleSelectionChange = async () => {
                                         @click="
                                             () =>
                                                 navigateTo(
-                                                    route('academic-calendar-class-config.manage', {
+                                                    route('academic-calendars.classes-config', {
                                                         institution_department: institutionDepartmentId,
+                                                        academic_calendar: String(academicCalendar?.value) ?? '',
                                                         department_level: String(level.departmentLevelId),
                                                         department_course: stats.departmentCourseId,
                                                         mode_of_study: String(modeOfStudy?.value),
-                                                        academic_calendar: String(academicCalendar?.value) ?? '',
                                                     }),
                                                 )
                                         "

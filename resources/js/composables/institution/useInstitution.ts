@@ -1,7 +1,7 @@
 import { useUtils } from '@/composables/core/useUtils';
 import { IconName } from '@/lib/icons';
 import About from '@/pages/institution/departments/partials/view/About.vue';
-import AcademicCalendarClasses from '@/pages/institution/departments/partials/view/AcademicCalendarClasses.vue';
+import AcademicCalendarClasses from '@/pages/institution/academicCalendars/partials/AcademicCalendarClasses.vue';
 import Announcements from '@/pages/institution/departments/partials/view/Announcements.vue';
 import Calendar from '@/pages/institution/departments/partials/view/Calendar.vue';
 import DepartmentSetup from '@/pages/institution/departments/partials/view/DepartmentSetup.vue';

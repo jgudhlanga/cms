@@ -325,6 +325,7 @@ return [
     "application_step" => "Application step|Application steps",
     "intake_period" => "Intake period|Intake periods",
     "setup" => "Setup",
+    "class_setup" => "Class setup",
     "date_must_be_valid" => ":field must be a valid date",
     "end_date_start_date_validation" => "End date must be after or equal to start date",
     "student_minimum_age_required" => "Student must be at least :age years old.",

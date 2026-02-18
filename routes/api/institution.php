@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\V1\Dashboard\DashboardController;
+use App\Http\Controllers\Api\V1\Institution\DepartmentAcademicCalendarController;
 use App\Http\Controllers\Api\V1\Institution\DepartmentLevelController;
 use App\Http\Controllers\Api\V1\Institution\DepartmentLevelCourseController;
 use App\Http\Controllers\Api\V1\Institution\DepartmentMetaDataController;
@@ -21,6 +22,8 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     Route::get('departments/{institution_department}/enrolments', [DepartmentMetaDataController::class, 'departmentEnrolments'])->name('v1.department-metadata.enrolments');
     Route::get('departments/{institution_department}/class-lists', [DepartmentMetaDataController::class, 'departmentClassLists'])->name('v1.department-metadata.class-lists');
     Route::post('institution/dashboard/metrics', [DashboardController::class, 'index'])->name('v1.institution.dashboard.metrics');
+    # ========================================= ACADEMIC CALENDARS =====================================================
+    Route::get('departments/{institution_department}/academic-calendars', [DepartmentAcademicCalendarController::class, 'departmentAcademicCalendar'])->name('v1.departments.academic-calendars');
 });
 Route::prefix('v1')->group(function () {
     Route::get('institution-departments', [InstitutionDepartmentController::class, 'index'])->name('v1.institution-departments.index');

@@ -41,7 +41,7 @@ export type DepartmentCourse = {
     };
     relationships?: {
         departmentCourseLevels?: DepartmentCourseLevel[];
-        courseModes?: CourseMode[];
+        courseModes?: [];
     };
 };
 

@@ -40,8 +40,8 @@ export type DepartmentCourseClassCount = {
 };
 
 export type ClassLevelSummary = {
-    departmentLevelId: string;
+    departmentLevelId: string | number;
     levelName: string;
-    classSize: number;
-    totalEnrolledStudents: number;
+    studentsPerClass: string | number | null;
+    totalFinalClass: string | number | null;
 };
