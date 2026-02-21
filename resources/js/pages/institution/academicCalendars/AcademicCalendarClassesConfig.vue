@@ -18,7 +18,7 @@ const props = defineProps<{
     level: DepartmentLevel;
     mode: ModeOfStudy;
     auth: AuthObject;
-    errors: object;n
+    errors: object;
 }>();
 
 const { department, level, course, mode } = props;

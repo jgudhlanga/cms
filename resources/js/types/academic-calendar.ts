@@ -45,3 +45,11 @@ export type ClassLevelSummary = {
     studentsPerClass: string | number | null;
     totalFinalClass: string | number | null;
 };
+
+export type AcademicClassConfigPayload = {
+    academic_calendar_id: string | number | null;
+    department_level_id: string | number | null;
+    department_course_id: string | number | null;
+    mode_of_study_id: string | number | null;
+    students_per_class: string | number | null;
+};

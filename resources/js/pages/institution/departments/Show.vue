@@ -14,6 +14,7 @@ import type { Link } from '@/types/ui';
 import { Head } from '@inertiajs/vue3';
 import { storeToRefs } from 'pinia';
 import { computed } from 'vue';
+import StudentsPerClass from '@/pages/institution/academicCalendars/partials/StudentsPerClass.vue';
 
 interface Props {
     department: InstitutionDepartment;
@@ -57,5 +58,6 @@ const visibleTabs = computed(() => {
         <LinkCoursesToDepartment :institution-department-id="institutionDepartmentId" />
         <LinkApplicationStepsToDepartment :institution-department-id="institutionDepartmentId" />
         <StepActions :institution-department-id="institutionDepartmentId" />
+        <StudentsPerClass :institution-department-id="institutionDepartmentId" />
     </PageContainer>
 </template>

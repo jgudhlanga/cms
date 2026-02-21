@@ -2,36 +2,31 @@
 
 namespace App\Console\Commands\Students;
 
-use App\Enums\Institution\ModeOfStudyEnum;
+use App\Enums\Institution\CourseEnum;
+use App\Enums\Institution\LevelEnum;
 use App\Enums\Shared\WorkflowStepEnum;
 use App\Helpers\EnrolmentHelper;
 use App\Jobs\Enrolments\SendOfferLetterJob;
 use App\Models\Enrolments\ClassList;
 use App\Models\Institution\DepartmentApplicationStep;
-use App\Models\Institution\ModeOfStudy;
 use App\Models\Shared\WorkflowStep;
 use App\Models\Students\StudentProgram;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 
-class ProcessOjetOfferLetterCommand extends Command
+class BulkProcessOfferLettersCommand extends Command
 {
-    protected $signature = 'app:process-ojet-offer-letters-command';
+    protected $signature = 'app:bulk-process-offer-letters-command';
 
-    protected $description = 'Generate OJET offer letters for students';
+    protected $description = 'Bulk generate offer letters for students';
 
     public function handle(): void
     {
-        $ojet = ModeOfStudy::where('name', ModeOfStudyEnum::OJET)->first();
-        if (!$ojet) {
-            return;
-        }
+        $successCount = 0;
+        $failedCount = 0;
 
-        $acceptedStep = WorkflowStep::where(
-            'slug',
-            WorkflowStepEnum::ACCEPTED->slug()
-        )->first();
+        $acceptedStep = WorkflowStep::where('slug', WorkflowStepEnum::ACCEPTED->slug())->first();
 
         if (!$acceptedStep) {
             $this->error('Accepted workflow step not found.');
@@ -39,7 +34,12 @@ class ProcessOjetOfferLetterCommand extends Command
         }
 
         StudentProgram::with(['departmentWorkflowStep.workflowStep', 'student.user'])
-            ->where('mode_of_study_id', $ojet->id)
+            ->whereHas('departmentLevel.level', function ($query) {
+                $query->whereIn('name', [LevelEnum::ND, LevelEnum::HND]);
+            })
+            ->whereHas('departmentCourse.course', function ($query) {
+                $query->whereNotIn('name', [CourseEnum::PHARMACEUTICAL_TECHNOLOGY]);
+            })
             ->whereHas('departmentWorkflowStep.workflowStep', function ($query) {
                 $query->whereNotIn('name', [
                     WorkflowStepEnum::ENROLLED,
@@ -47,15 +47,16 @@ class ProcessOjetOfferLetterCommand extends Command
                     WorkflowStepEnum::ACCEPTED,
                 ]);
             })
-            ->chunkById(100, function ($programs) use ($acceptedStep) {
-                foreach ($programs as $program) {
+            ->chunkById(100, function ($programs) use ($acceptedStep, &$successCount, &$failedCount) {
 
+                foreach ($programs as $program) {
                     try {
                         DB::transaction(function () use ($program, $acceptedStep) {
 
                             $classList = ClassList::firstOrNew([
-                                'student_program_id' => $program->id,
+                                'student_program_id' => $program->id
                             ]);
+
                             $classList->fill([
                                 'tenant_id' => $program->tenant_id,
                                 'type' => 'verified',
@@ -70,12 +71,16 @@ class ProcessOjetOfferLetterCommand extends Command
                                     ]
                                 ),
                             ]);
+
                             $classList->save();
+
                             $studentNumber = EnrolmentHelper::resolveStudentNumber($program);
+
                             $program->student->update([
                                 'student_number' => $studentNumber,
                                 'student_number_generated' => true,
                             ]);
+
                             $departmentStep = DepartmentApplicationStep::where(
                                 'institution_department_id',
                                 $program->institution_department_id
@@ -83,20 +88,37 @@ class ProcessOjetOfferLetterCommand extends Command
                                 'workflow_step_id',
                                 $acceptedStep->id
                             )->first();
+
                             if (!$departmentStep) {
                                 throw new \Exception('Department step not found.');
                             }
+
                             $program->update([
                                 'department_application_step_id' => $departmentStep->id
                             ]);
+
                             $user = $program->student->user;
-                            SendOfferLetterJob::dispatch($user->full_name, $user->email, $program->id)->withoutDelay();
-                            $this->info("Offer letter generated successfully. {$program->id}");
+
+                            SendOfferLetterJob::dispatch(
+                                $user->full_name,
+                                $user->email,
+                                $program->id
+                            )->withoutDelay();
                         });
+
+                        $successCount++;
+                        $this->info("Offer letter generated successfully. {$program->id}");
+
                     } catch (Throwable $e) {
+                        $failedCount++;
                         $this->error("Offer letter failed for {$program->id}: {$e->getMessage()}");
                     }
                 }
             });
+
+        $this->line('');
+        $this->info("Bulk processing completed.");
+        $this->info("Successful: {$successCount}");
+        $this->error("Failed: {$failedCount}");
     }
 }

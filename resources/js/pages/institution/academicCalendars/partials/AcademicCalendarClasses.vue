@@ -5,7 +5,9 @@ import { useModeOfStudy } from '@/composables/institution/useModeOfStudy';
 import { useServerSide } from '@/composables/shared/useServerSide';
 import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
-import { DepartmentCourseClassCount } from '@/types/academic-calendar';
+import { openModal } from '@/lib/alerts';
+import { APP_MODULE_KEYS } from '@/lib/constants';
+import { AcademicClassConfigPayload, DepartmentCourseClassCount } from '@/types/academic-calendar';
 import { InstitutionDepartment, ModeOfStudy } from '@/types/institution';
 import { SelectOption } from '@/types/utils';
 import { trans_choice } from 'laravel-vue-i18n';
@@ -23,7 +25,6 @@ const academicCalendar = ref<SelectOption | null>(null);
 const modeOfStudy = ref<SelectOption | null>(null);
 const { isLoading: academicCalendarLoading, listAcademicCalendars, academicCalendars } = useAcademicCalendars();
 const { isLoading: modesOfStudyLoading, listModesOfStudy, modesOfStudy } = useModeOfStudy();
-const { navigateTo } = useUtils();
 
 const classStates = ref<DepartmentCourseClassCount[] | []>([]);
 
@@ -41,38 +42,6 @@ onMounted(async () => {
     modeOfStudy.value = modeOption ? { value: Number(modeOption.id), label: modeOption.attributes.name } : null;
 
     await loadClassConfigs();
-    /*classStates.value = [
-        {
-            institutionDepartmentId: institutionDepartmentId,
-            departmentCourseId: '1',
-            courseName: 'Information Technology',
-            levels: [
-                { departmentLevelId: '1', levelName: 'NC', studentsPerClass: 20, totalFinalClass: 100 },
-                { departmentLevelId: '2', levelName: 'ND', studentsPerClass: 20, totalFinalClass: 100 },
-                { departmentLevelId: '3', levelName: 'HND', studentsPerClass: 20, totalFinalClass: 100 },
-            ],
-        },
-        {
-            institutionDepartmentId: institutionDepartmentId,
-            departmentCourseId: '2',
-            courseName: 'Professional Computing & Information Systems',
-            levels: [
-                { departmentLevelId: '4', levelName: 'ABMA Level 3', studentsPerClass: 20, totalFinalClass: 60 },
-                { departmentLevelId: '5', levelName: 'ABMA Level 4', studentsPerClass: 20, totalFinalClass: 40 },
-                { departmentLevelId: '6', levelName: 'ABMA Level 5', studentsPerClass: 20, totalFinalClass: 20 },
-            ],
-        },
-        {
-            institutionDepartmentId: institutionDepartmentId,
-            departmentCourseId: '2',
-            courseName: 'Professional Computer Engineering',
-            levels: [
-                { departmentLevelId: '4', levelName: 'ABMA Level 3', studentsPerClass: 20, totalFinalClass: 60 },
-                { departmentLevelId: '5', levelName: 'ABMA Level 4', studentsPerClass: 20, totalFinalClass: 40 },
-                { departmentLevelId: '6', levelName: 'ABMA Level 5', studentsPerClass: 20, totalFinalClass: 20 },
-            ],
-        },
-    ];*/
 });
 
 const loadClassConfigs = async () => {
@@ -90,6 +59,10 @@ const calculateClasses = (totalFinalClass: number, studentsPerClass: number) => 
         return 0;
     }
     return totalFinalClass / studentsPerClass;
+};
+
+const showConfigModal = (payload: AcademicClassConfigPayload) => {
+    openModal({ name: APP_MODULE_KEYS.student_per_class, edit: payload });
 };
 </script>
 
@@ -137,15 +110,13 @@ const calculateClasses = (totalFinalClass: number, studentsPerClass: number) => 
                                         :title="$t('academic_calendar.config')"
                                         @click="
                                             () =>
-                                                navigateTo(
-                                                    route('academic-calendars.classes-config', {
-                                                        institution_department: institutionDepartmentId,
-                                                        academic_calendar: String(academicCalendar?.value) ?? '',
-                                                        department_level: String(level.departmentLevelId),
-                                                        department_course: stats.departmentCourseId,
-                                                        mode_of_study: String(modeOfStudy?.value),
-                                                    }),
-                                                )
+                                                showConfigModal({
+                                                    academic_calendar_id: String(academicCalendar?.value) ?? '',
+                                                    department_level_id: String(level.departmentLevelId),
+                                                    department_course_id: stats.departmentCourseId,
+                                                    mode_of_study_id: String(modeOfStudy?.value),
+                                                    students_per_class: String(level.studentsPerClass),
+                                                })
                                         "
                                     />
                                 </td>

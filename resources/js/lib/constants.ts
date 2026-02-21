@@ -66,6 +66,7 @@ const APP_MODULE_KEYS = {
     o_level_subjects: 'o_level_subjects',
     academic_calendars: 'academic_calendars',
     student_programs: 'student_programs',
+    student_per_class: 'student_per_class',
 };
 const EXAM_SITTINGS = [
     { value: 'june', label: 'June' },
