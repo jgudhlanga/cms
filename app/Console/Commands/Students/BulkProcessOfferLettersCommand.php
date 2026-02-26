@@ -18,7 +18,7 @@ use Throwable;
 
 class BulkProcessOfferLettersCommand extends Command
 {
-    protected $signature = 'app:bulk-process-offer-letters-command {applicationDate}';
+    protected $signature = 'app:bulk-process-offer-letters-command {dateFrom}';
 
     protected $description = 'Bulk generate offer letters for students';
 
@@ -27,7 +27,7 @@ class BulkProcessOfferLettersCommand extends Command
         $successCount = 0;
         $failedCount = 0;
 
-        $applicationDate = $this->argument('applicationDate');
+        $dateFrom = $this->argument('dateFrom');
 
         $acceptedStep = WorkflowStep::where('slug', WorkflowStepEnum::ACCEPTED->slug())->first();
 
@@ -50,7 +50,7 @@ class BulkProcessOfferLettersCommand extends Command
                     WorkflowStepEnum::ACCEPTED,
                 ]);
             });
-        $parsedDate = Carbon::parse($applicationDate)->startOfDay();
+        $parsedDate = Carbon::parse($dateFrom)->startOfDay();
         $query->where('student_programs.created_at', '>=', $parsedDate);
         $query->chunkById(100, function ($programs) use ($acceptedStep, &$successCount, &$failedCount) {
 
