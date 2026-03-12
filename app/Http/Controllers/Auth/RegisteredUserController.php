@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Enums\Shared\StatusEnum;
+use App\Enums\Shared\TenantEnum;
 use App\Http\Controllers\Controller;
 use App\Models\Users\User;
 use Illuminate\Auth\Events\Registered;
@@ -36,8 +38,15 @@ class RegisteredUserController extends Controller
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
+        $nameParts = explode(' ', trim($request->name), 2);
+        $firstName = $nameParts[0] ?? '';
+        $lastName = $nameParts[1] ?? $firstName;
+
         $user = User::create([
-            'name' => $request->name,
+            'tenant_id' => TenantEnum::HARARE_POLY->id(),
+            'status_id' => StatusEnum::ACTIVE->id(),
+            'first_name' => $firstName,
+            'last_name' => $lastName,
             'email' => $request->email,
             'password' => $request->password,
         ]);

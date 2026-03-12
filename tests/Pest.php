@@ -11,8 +11,21 @@
 |
 */
 
+use Database\Seeders\Acl\ModulesTableSeeder;
+use Database\Seeders\Acl\PermissionsTableSeeder;
+use Database\Seeders\Statuses\StatusSeeder;
+use Database\Seeders\Tenants\TenantsTableSeeder;
+
 pest()->extend(Tests\TestCase::class)
     ->use(Illuminate\Foundation\Testing\RefreshDatabase::class)
+    ->beforeEach(function () {
+        if ($this->app && $this->app->runningUnitTests()) {
+            (new TenantsTableSeeder)->run();
+            (new StatusSeeder)->run();
+            (new ModulesTableSeeder)->run();
+            (new PermissionsTableSeeder)->run();
+        }
+    })
     ->in('Feature');
 
 /*

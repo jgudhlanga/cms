@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Institution\Dropdowns\CourseController;
+use App\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\Institution\Dropdowns\DepartmentController;
 use App\Http\Controllers\Institution\Dropdowns\DivisionController;
 use App\Http\Controllers\Institution\Dropdowns\GradeController;
@@ -33,6 +34,9 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('settings')->middleware('auth')->group(function () {
     Route::get('/', SettingsController::class)->name('settings.index');
+    Route::get('profile', [ProfileController::class, 'edit'])->name('settings.profile');
+    Route::patch('profile', [ProfileController::class, 'update'])->name('settings.profile.update');
+    Route::delete('profile', [ProfileController::class, 'destroy'])->name('settings.profile.destroy');
     # ==================================== COMMUNICATIONS ======================================================
     Route::put('communication-methods/{communication_method}/restore', [CommunicationMethodController::class, 'restore'])->name('communication-methods.restore');
     Route::delete('communication-methods/{communication_method}/force-delete', [CommunicationMethodController::class, 'forceDelete'])->name('communication-methods.force-delete');
