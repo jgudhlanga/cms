@@ -19,6 +19,13 @@ const feeType = ref<SelectOption | null>(null);
 const level = ref<SelectOption | null>(null);
 const modeOfStudy = ref<SelectOption | null>(null);
 
+    const form = useForm<FeeStructureParams>({
+    fee_type_id: null,
+    level_id: null,
+    mode_of_study_id: null,
+    amount: null,
+    local_fca_amount: null,
+});
 
 
 const { saveFeeStructure } = useFeeStructures();
