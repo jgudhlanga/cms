@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import StudentPageHeader from '@/components/shared/students/StudentPageHeader.vue';
-import ContactDetails from '@/components/students/view/ContactDetails.vue';
-import NextOfKinDetails from '@/components/students/view/NextOfKinDetails.vue';
-import PersonalDetails from '@/components/students/view/PersonalDetails.vue';
+import ViewContactDetails from '@/components/students/view/ViewContactDetails.vue';
+import ViewNextOfKinDetails from '@/components/students/view/ViewNextOfKinDetails.vue';
+import ViewPersonalDetails from '@/components/students/view/ViewPersonalDetails.vue';
 import ProgramDetails from '@/components/students/view/ProgramDetails.vue';
 import { useUtils } from '@/composables/core/useUtils';
 import { useStudentPortal } from '@/composables/students/useStudentPortal';
@@ -177,9 +177,9 @@ onMounted(() => {
                 description="Before submitting, carefully review your application details to ensure everything is accurate and up to date. Check your personal information, contact details, and any required details. Once you confirm the information is correct, you can proceed to submit your application."
                 :type="TypeVariant.success"
             />
-            <PersonalDetails :personal="personal" :title="$t('trans.personal_details')" />
-            <ContactDetails :contacts="contacts" :title="$t('trans.contact_details')" />
-            <NextOfKinDetails :next-of-kin="nextOfKin" :title="$t('trans.next_of_kin')" />
+            <ViewPersonalDetails :personal="personal" :title="$t('trans.personal_details')" />
+            <ViewContactDetails :contacts="contacts" :title="$t('trans.contact_details')" />
+            <ViewNextOfKinDetails :next-of-kin="nextOfKin" :title="$t('trans.next_of_kin')" />
             <ProgramDetails :program="programDetails" :title="$tChoice('trans.program', 1)">
                 <div class="mt-5 flex flex-col" v-if="levelRequirements">
                     <template v-if="isItTrue(levelRequirements.attributes.isOLevelRequired)">

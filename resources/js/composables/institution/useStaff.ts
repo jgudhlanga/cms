@@ -1,9 +1,9 @@
 import { useDataTables } from '@/composables/core/useDataTables';
 import { getIdParams } from '@/lib/utils';
 
-import Addresses from '@/components/staff/Addresses.vue';
 import BasicInfo from '@/components/staff/BasicInfo.vue';
-import Contacts from '@/components/staff/Contacts.vue';
+import StaffAddresses from '@/components/staff/StaffAddresses.vue';
+import StaffContacts from '@/components/staff/StaffContacts.vue';
 import Documents from '@/components/staff/Documents.vue';
 import ProfessionalInfo from '@/components/staff/ProfessionalInfo.vue';
 import { useSharedFormSchema } from '@/composables/core/useSharedFormSchema';
@@ -200,13 +200,13 @@ export const useStaff = () => {
             {
                 transLabel: () => trans_choice('trans.contact', 2),
                 value: 'contacts',
-                component: h(Contacts),
+                component: h(StaffContacts),
                 icon: IconName.contact,
             },
             {
                 transLabel: () => trans_choice('trans.address', 2),
                 value: 'addresses',
-                component: h(Addresses),
+                component: h(StaffAddresses),
                 icon: IconName.address,
             },
             {
