@@ -2,7 +2,7 @@
 
 namespace App\Http\Resources\Students;
 
-use App\Http\Resources\Users\UserResource;
+use App\Http\Resources\Users\UserSummaryResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -45,7 +45,7 @@ class StudentResource extends JsonResource
                 'deletedAt' => $this->deleted_at,
             ],
             'relationships' => [
-                'user' => UserResource::make($this->user),
+                'user' => UserSummaryResource::make($this->user),
             ]
 
         ];

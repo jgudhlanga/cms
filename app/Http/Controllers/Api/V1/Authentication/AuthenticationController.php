@@ -9,12 +9,12 @@ use App\Http\Requests\Api\Auth\LoginRequest;
 use App\Http\Requests\Api\Auth\RegisterRequest;
 use App\Http\Resources\Users\UserResource;
 use App\Models\Users\User;
-use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Validation\ValidationException;
+use App\Enums\Acl\RoleEnum;
 
 class AuthenticationController extends Controller
 {
@@ -59,7 +59,11 @@ class AuthenticationController extends Controller
             'password' => $request->password,
         ]);
 
-        event(new Registered($user));
+        $user->assignRole(RoleEnum::STUDENT);
+
+        $user->email_verified_at = now();
+        $user->save();
+
 
         $user->load(['tenant', 'status', 'roles', 'studentProfile']);
         Auth::login($user);
@@ -73,7 +77,7 @@ class AuthenticationController extends Controller
                 'invalidCredentials' => false,
                 'user' => new UserResource($user),
             ],
-        ]);
+        ], 201);
     }
 
     public function logout(Request $request): JsonResponse
