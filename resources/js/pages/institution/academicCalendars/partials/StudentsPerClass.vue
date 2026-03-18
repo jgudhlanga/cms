@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import BaseModal from '@/components/core/modal/BaseModal.vue';
-import { getModalEdit } from '@/lib/alerts';
+import { useAcademicCalendars } from '@/composables/academicCalendars/useAcademicCalendars';
+import { closeModal, getModalEdit } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
 import { clearFormErrors } from '@/lib/forms';
 import { useModalStore } from '@/store/core/useModalStore';
-import { Course } from '@/types/institution';
-import { useForm } from '@inertiajs/vue3';
+import { AcademicClassConfigPayload } from '@/types/academic-calendar';
+import { router, useForm } from '@inertiajs/vue3';
 import { ref, watch } from 'vue';
 
 interface Props {
@@ -14,9 +15,15 @@ interface Props {
 
 const props = defineProps<Props>();
 
-const config = ref<Course>();
-const form = useForm<any>({
+    const {storePerClassSizeConfig} = useAcademicCalendars();
+
+const config = ref<AcademicClassConfigPayload>();
+const form = useForm<AcademicClassConfigPayload>({
     students_per_class: null,
+    academic_calendar_id: null,
+    department_level_id: null,
+    department_course_id: null,
+    mode_of_study_id: null,
 });
 
 const { modals } = useModalStore();
@@ -24,9 +31,19 @@ const { modals } = useModalStore();
 watch(modals!, () => {
     config.value = getModalEdit(APP_MODULE_KEYS.student_per_class);
     form.defaults();
+    form.department_level_id = config.value?.department_level_id ?? null;
+    form.department_course_id = config.value?.department_course_id ?? null;
+    form.mode_of_study_id = config.value?.mode_of_study_id ?? null;
+    form.students_per_class = config.value?.students_per_class ?? null;
 });
 
-const submitForm = () => {};
+const submitForm = () => {
+    storePerClassSizeConfig(form, props.institutionDepartmentId, String(config.value?.academic_calendar_id ?? ''));
+    closeModal(APP_MODULE_KEYS.student_per_class);
+    // reload the page
+    router.visit(window.location.href, { replace: true, preserveScroll: true });
+};
+
 </script>
 
 <template>
@@ -36,7 +53,7 @@ const submitForm = () => {};
         :on-form-action="() => submitForm()"
         :form="form"
     >
-        <template #body>
+        <template #body> 
             <BaseInput
                 input-id="students_per_class"
                 :inputAutoFocus="true"

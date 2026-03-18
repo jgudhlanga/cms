@@ -78,6 +78,26 @@ export const useAcademicCalendars = () => {
         academicCalendars.value = data.value;
     };
 
+    const storePerClassSizeConfig = (form: InertiaForm<any>, institutionDepartmentId: string, academicCalendarId: string) => {
+        form.post(route('academic-calendars.classes-config.per-class-size.store', {
+            institution_department: institutionDepartmentId,
+            academic_calendar: academicCalendarId
+        }), {
+            onSuccess: () => {
+                successAlert('Academic calendar successfully config successfully saved');
+                closeModal(APP_MODULE_KEYS.academic_calendars);
+            },
+            onError: (errors: any) => {
+                if (Object.keys(errors).length) {
+                    const allErrors = Object.values(errors).join('\n');
+                    errorAlert(allErrors);
+                } else {
+                    errorAlert('An unexpected error happened, academic calendar could not be updated');
+                }
+            },
+        });
+    };
+
     return {
         breadcrumbs,
         onOpenModal,
@@ -85,5 +105,6 @@ export const useAcademicCalendars = () => {
         isLoading,
         academicCalendars,
         listAcademicCalendars,
+        storePerClassSizeConfig,
     };
 };

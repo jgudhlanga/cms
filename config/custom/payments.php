@@ -10,13 +10,12 @@ return [
         'failure_url' => env('PAYMENT_GATEWAY_FAILURE_URL'),
         'result_url' => env('PAYMENT_GATEWAY_RESULT_URL'),
     ],
-    'zwg-bank-payments' => [
-        'base_url' => env('BANK_PAYMENTS_BASE_URL'),
+    'bank_payments_base_url' => env('BANK_PAYMENTS_BASE_URL'),
+    'zwg' => [
         'institution_id' => env('BANK_PAYMENTS_ZWG_INSTITUTION_ID'),
         'password' => env('BANK_PAYMENTS_ZWG_PASSWORD'),
     ],
-    'usd-bank-payments' => [
-        'base_url' => env('BANK_PAYMENTS_BASE_URL'),
+    'usd' => [
         'institution_id' => env('BANK_PAYMENTS_USD_INSTITUTION_ID'),
         'password' => env('BANK_PAYMENTS_USD_PASSWORD'),
     ],

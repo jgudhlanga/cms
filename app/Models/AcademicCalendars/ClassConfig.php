@@ -5,6 +5,7 @@ namespace App\Models\AcademicCalendars;
 use App\Models\Institution\DepartmentCourse;
 use App\Models\Institution\DepartmentLevel;
 use App\Models\Institution\InstitutionDepartment;
+use App\Models\Institution\ModeOfStudy;
 use App\Traits\Paginatable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -21,7 +22,7 @@ class ClassConfig extends Model
 {
     use SoftDeletes, Paginatable, LogsActivity;
 
-    protected $fillable = ['academic_calendar_id', 'institution_department_id', 'department_course_id', 'department_level_id', 'students_per_class'];
+    protected $fillable = ['academic_calendar_id', 'institution_department_id', 'department_course_id', 'department_level_id', 'mode_of_study_id', 'students_per_class'];
 
 
     public function academicCalendar(): BelongsTo
@@ -42,6 +43,11 @@ class ClassConfig extends Model
     public function departmentLevel(): BelongsTo
     {
         return $this->belongsTo(DepartmentLevel::class);
+    }
+
+    public function modeOfStudy(): BelongsTo
+    {
+        return $this->belongsTo(ModeOfStudy::class);
     }
 
     public function getActivitylogOptions(): LogOptions

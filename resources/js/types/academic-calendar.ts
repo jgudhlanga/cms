@@ -43,6 +43,7 @@ export type ClassLevelSummary = {
     departmentLevelId: string | number;
     levelName: string;
     studentsPerClass: string | number | null;
+    classConfigId: string | number | null;
     totalFinalClass: string | number | null;
 };
 
@@ -52,4 +53,17 @@ export type AcademicClassConfigPayload = {
     department_course_id: string | number | null;
     mode_of_study_id: string | number | null;
     students_per_class: string | number | null;
+};
+
+export type ClassConfig = {
+    type: string;
+    id: string;
+    attributes: {
+        studentsPerClass: string | number | null;
+        academicCalendar: string | null;
+        institutionDepartment: string | null;
+        departmentCourse: string | null;
+        departmentLevel: string | null;
+        modeOfStudy: string | null;
+    };
 };

@@ -19,7 +19,11 @@ use App\Models\Institution\InstitutionDepartment;
 use App\Models\Institution\IntakePeriod;
 use App\Models\Institution\ModeOfStudy;
 use Carbon\Carbon;
+use Illuminate\Support\Arr;
 use Inertia\Inertia;
+use App\Models\AcademicCalendars\ClassConfig;
+use App\Http\Requests\AcademicCalendars\ClassConfigRequest;
+use App\Http\Resources\AcademicCalendars\ClassConfigResource;
 
 class AcademicCalendarController extends Controller
 {
@@ -58,26 +62,41 @@ class AcademicCalendarController extends Controller
         return $data;
     }
 
-    public function classConfig(InstitutionDepartment $institutionDepartment, AcademicCalendar $academicCalendar)
+    public function departmentAcademicCalendarClasses(InstitutionDepartment $institutionDepartment, AcademicCalendar $academicCalendar)
     {
-        $departmentLevelId = request()->query('department_level');
-        $departmentCourseId = request()->query('department_course');
-        $modeOfStudyId = request()->query('mode_of_study');
+        $departmentLevelId = request()->query('department_level_id');
+        $departmentCourseId = request()->query('department_course_id');
+        $modeOfStudyId = request()->query('mode_of_study_id');
         $course = DepartmentCourse::find($departmentCourseId);
         $level = DepartmentLevel::find($departmentLevelId);
         $mode = ModeOfStudy::find($modeOfStudyId);
+        $classConfigId = request()->query('class_config_id');
+        $classConfig = ClassConfig::find($classConfigId);
 
-        return Inertia::render('institution/academicCalendars/AcademicCalendarClassesConfig', [
+        return Inertia::render('institution/academicCalendars/DepartmentAcademicCalendarClasses', [
             'department' => InstitutionDepartmentResource::make($institutionDepartment),
             'academicCalendar' => AcademicCalendarResource::make($academicCalendar),
             'course' => DepartmentCourseResource::make($course),
             'level' => DepartmentLevelResource::make($level),
             'mode' => ModeOfStudyResource::make($mode),
+            'classConfig' => ClassConfigResource::make($classConfig) ?? null,
         ]);
     }
 
-    public function storeClassConfig(AcademicCalendar $academicCalendar)
+    public function storePerClassSizeConfig(InstitutionDepartment $institutionDepartment, AcademicCalendar $academicCalendar, ClassConfigRequest $request)
     {
+        $validated = $request->validated();
 
+        $lookup = [
+            'academic_calendar_id' => $academicCalendar->id,
+            'institution_department_id' => $institutionDepartment->id,
+            ...Arr::only($validated, ['department_level_id', 'department_course_id', 'mode_of_study_id']),
+        ];
+
+        ClassConfig::updateOrCreate($lookup, [
+            'students_per_class' => $validated['students_per_class'],
+        ]);
+
+        return back()->with('success', 'Class config successfully saved.');
     }
 }

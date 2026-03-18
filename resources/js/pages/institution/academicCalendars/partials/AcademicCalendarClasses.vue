@@ -46,7 +46,15 @@ onMounted(async () => {
 
 const loadClassConfigs = async () => {
     classStates.value = await getData(
-        `api/v1/departments/${institutionDepartmentId}/academic-calendars?academic_calendar=${String(academicCalendar.value?.value)}&mode_of_study_id=${String(modeOfStudy.value?.value)}`,
+        route(
+            'v1.departments.academic-calendars',
+            {
+                institution_department: institutionDepartmentId,
+                academic_calendar: String(academicCalendar.value?.value),
+                mode_of_study_id: String(modeOfStudy.value?.value),
+            },
+            false,
+        ),
         () => trans_choice('trans.enrolment', 2),
     );
 };
@@ -100,7 +108,20 @@ const showConfigModal = (payload: AcademicClassConfigPayload) => {
                                 <td class="j-td text-left">{{ level.levelName }}</td>
                                 <td class="j-td text-center">{{ level.studentsPerClass }}</td>
                                 <td class="j-td text-center">
-                                    {{ calculateClasses(Number(level.totalFinalClass), Number(level.studentsPerClass)) }}
+                                    <TextLink
+                                        v-if="level.classConfigId !== null"
+                                        :title="String(calculateClasses(Number(level.totalFinalClass), Number(level.studentsPerClass)))"
+                                        :href="route('academic-calendars.department-classes', {
+                                            institution_department: institutionDepartmentId,
+                                            academic_calendar: String(academicCalendar?.value),
+                                            mode_of_study_id: String(modeOfStudy?.value),
+                                            department_course_id: stats.departmentCourseId,
+                                            department_level_id: String(level.departmentLevelId),
+                                            class_config_id: String(level.classConfigId),
+                                        })"
+                                        classes="size-4 bg-persian-100 rounded-full px-2 py-1 hover:bg-persian-600 hover:text-persian-100"
+                                    />  
+                                    <span v-else>---</span>
                                 </td>
                                 <td class="j-td text-center">
                                     <BaseButton
