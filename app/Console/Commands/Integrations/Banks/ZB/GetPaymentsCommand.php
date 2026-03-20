@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Http;
 class GetPaymentsCommand extends Command
 {
 
-    protected $signature = 'app:get-payments-command {currency : usd|zwg} {type : all|pending}';
+    protected $signature = 'app:get-payments-command {currency : usd|zwg|income-gen} {type : all|pending}';
 
 
     protected $description = 'Get payments from the bank for a given currency and type';

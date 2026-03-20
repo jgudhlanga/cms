@@ -5,7 +5,8 @@ import { TextFieldType } from '@/enums/inputs';
 import { errorAlert, forbiddenAlert, successAlert } from '@/lib/alerts';
 import { hasAbility } from '@/lib/permissions';
 import Details from '@/pages/enrolments/partials/shared/Details.vue';
-import FeeStructure from '@/pages/enrolments/partials/shared/FeeStructure.vue';
+import FeeInvoice from '@/pages/enrolments/partials/shared/FeeInvoice.vue';
+import FeeReceipt from '@/pages/enrolments/partials/shared/FeeReceipt.vue';
 import Sidebar from '@/pages/enrolments/partials/shared/Sidebar.vue';
 import { AuthObject } from '@/types/data-pagination';
 import { ClassListAttributeParams, ClassListTopNext, ClassListType, Enrolment } from '@/types/enrolments';
@@ -274,7 +275,13 @@ onMounted(() => {
             </div>
             <div class="flex w-1/4 flex-col space-y-10">
                 <Sidebar :next-top="nextTop" :type="'verified' as ClassListType" />
-                <FeeStructure
+                <FeeInvoice
+                    v-if="tuition || autoCardFee || partTimeLevy"
+                    :tuition="tuition"
+                    :auto-card-fee="autoCardFee"
+                    :part-time-levy="partTimeLevy"
+                />
+                <FeeReceipt
                     v-if="tuition || autoCardFee || partTimeLevy"
                     :tuition="tuition"
                     :auto-card-fee="autoCardFee"

@@ -37,18 +37,11 @@ const breadcrumbs: Array<Link> = [
     <Head :title="$tChoice('academic_calendar.academic_calendar', 2)" />
     <PageContainer :breadcrumbs="breadcrumbs">
         <div class="flex flex-col space-y-6">
-            {{ department }}
-            <br>
-            {{ academicCalendar }}
-            <br>
-            {{ course }}
-                <br>
-            {{ level }}
-            <br>
-            {{ mode }}
-            <br>
-            {{ classConfig }}
-            <br>
+            <BaseCard :title="classConfig?.attributes?.academicCalendar">
+                <div class="grid grid-cols-2 gap-4">
+                    <LabelValue :label="$tChoice('academic_calendar.class_unit_size', 1)" :value="classConfig?.attributes?.studentsPerClass ?? '---'" />
+                </div>
+            </BaseCard>
         </div>
     </PageContainer>
 </template>

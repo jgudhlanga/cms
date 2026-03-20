@@ -55,7 +55,7 @@ const getRouteName = (type: ClassListType, applicationId: string) => {
         </div>
     </div>
     <div class="flex flex-col space-y-3" v-if="nextTop && nextTop.length > 0">
-        <HeadingSmall title="Next 10" :description="getDescription(type as ClassListType)" />
+        <HeadingSmall title="Next 5" :description="getDescription(type as ClassListType)" />
         <div class="flex flex-col space-y-2">
             <TextLink
                 classes="bg-gray-200 px-3 py-2 rounded-md text-xs uppercase text-accent-foreground border-r-2 border-black"

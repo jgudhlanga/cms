@@ -394,7 +394,7 @@ class ClassListController extends Controller
             ->where('sp.department_course_id', $studentProgram->department_course_id)
             ->where('sp.intake_period_id', $studentProgram->intake_period_id)
             ->where('cl.type', $studentProgram->classList->type)
-            ->take(10)
+            ->take(5)
             ->get();
     }
 }

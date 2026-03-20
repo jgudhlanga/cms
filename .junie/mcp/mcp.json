@@ -1,0 +1,20 @@
+{
+    "mcpServers": {
+        "laravel-boost": {
+            "command": "/Users/jgudhlanga/Library/Application Support/Herd/bin/php83",
+            "args": [
+                "/Users/jgudhlanga/Projects/HararePoly/hrepoly/artisan",
+                "boost:mcp"
+            ]
+        },
+        "herd": {
+            "command": "/Users/jgudhlanga/Library/Application Support/Herd/bin/php83",
+            "args": [
+                "/Applications/Herd.app/Contents/Resources/herd-mcp.phar"
+            ],
+            "env": {
+                "SITE_PATH": "/Users/jgudhlanga/Projects/HararePoly/hrepoly"
+            }
+        }
+    }
+}

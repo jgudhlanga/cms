@@ -19,4 +19,8 @@ return [
         'institution_id' => env('BANK_PAYMENTS_USD_INSTITUTION_ID'),
         'password' => env('BANK_PAYMENTS_USD_PASSWORD'),
     ],
+    'income-gen' => [
+        'institution_id' => env('BANK_PAYMENTS_INCOME_GEN_INSTITUTION_ID'),
+        'password' => env('BANK_PAYMENTS_INCOME_GEN_PASSWORD'),
+    ],
 ];
