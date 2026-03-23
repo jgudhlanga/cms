@@ -12,6 +12,10 @@ return [
         'result_url' => env('PAYMENT_GATEWAY_RESULT_URL'),
     ],
     'bank_payments_base_url' => env('BANK_PAYMENTS_BASE_URL'),
+    'bank_payments_connect_timeout' => (float) env('BANK_PAYMENTS_CONNECT_TIMEOUT', 10),
+    'bank_payments_timeout' => (float) env('BANK_PAYMENTS_TIMEOUT', 120),
+    'bank_payments_retry_times' => (int) env('BANK_PAYMENTS_RETRY_TIMES', 3),
+    'bank_payments_retry_sleep_ms' => (int) env('BANK_PAYMENTS_RETRY_SLEEP_MS', 250),
     'zwg' => [
         'institution_id' => env('BANK_PAYMENTS_ZWG_INSTITUTION_ID'),
         'password' => env('BANK_PAYMENTS_ZWG_PASSWORD'),

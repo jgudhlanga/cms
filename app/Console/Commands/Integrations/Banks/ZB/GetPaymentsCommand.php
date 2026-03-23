@@ -8,6 +8,7 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Http;
+use Throwable;
 
 class GetPaymentsCommand extends Command
 {
@@ -36,6 +37,10 @@ class GetPaymentsCommand extends Command
         }
 
         $endpoint = $this->endpointForTransactionType($transactionType);
+        $connectTimeout = max(1.0, (float) config('custom.payments.bank_payments_connect_timeout', 10));
+        $timeout = max($connectTimeout, (float) config('custom.payments.bank_payments_timeout', 120));
+        $retryTimes = max(1, (int) config('custom.payments.bank_payments_retry_times', 3));
+        $retrySleepMilliseconds = max(0, (int) config('custom.payments.bank_payments_retry_sleep_ms', 250));
         $processingCount = 0;
         $successfulCount = 0;
         $failedCount = 0;
@@ -43,6 +48,13 @@ class GetPaymentsCommand extends Command
         try {
             $response = Http::asJson()
                 ->acceptJson()
+                ->connectTimeout($connectTimeout)
+                ->timeout($timeout)
+                ->retry(
+                    $retryTimes,
+                    $retrySleepMilliseconds,
+                    fn (Throwable $exception): bool => $exception instanceof ConnectionException
+                )
                 ->post($baseUrl.$endpoint, [
                     'institutionId' => $credentials['institutionId'],
                     'password' => $credentials['password'],
@@ -80,7 +92,7 @@ class GetPaymentsCommand extends Command
                             $this->mapPaymentToAttributes($payment)
                         );
                         $successfulCount++;
-                    } catch (\Throwable $exception) {
+                    } catch (Throwable $exception) {
                         $failedCount++;
                         $this->error("Failed to persist payment {$transactionId}: {$exception->getMessage()}");
                     }
@@ -88,6 +100,7 @@ class GetPaymentsCommand extends Command
             });
         } catch (ConnectionException $e) {
             $this->error("Connection error calling bank payments API: {$e->getMessage()}");
+            $this->line("HTTP client settings: connect_timeout={$connectTimeout}s timeout={$timeout}s retries={$retryTimes} retry_sleep_ms={$retrySleepMilliseconds}.");
 
             return self::FAILURE;
         } catch (RequestException $e) {
