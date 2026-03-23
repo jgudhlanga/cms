@@ -46,7 +46,7 @@ onBeforeUnmount(() => {
 });
 </script>
 <template>
-    <div class="flex h-[70vh]  flex-col items-center justify-center bg-sidebar px-4 text-center">
+    <div class="flex h-[70vh] flex-col items-center justify-center bg-muted px-4 text-center">
         <div class="w-full max-w-xl">
             <h1 class="mb-4 text-5xl font-bold text-red-500">🚧 Coming Soon</h1>
             <p class="mb-6 text-lg text-gray-600">We're working on something great. This page will be live soon!</p>

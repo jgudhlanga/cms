@@ -23,10 +23,10 @@ const { toggleSidebar } = useSidebar();
             <component :is="activeTenant.attributes.logo" class="rounded-full border-2 border-white" />
         </div>
         <div class="grid flex-1 text-left text-sm leading-tight">
-            <span class="truncate font-semibold uppercase">
+            <span class="truncate font-semibold uppercase text-white">
                 {{ activeTenant.attributes.name }}
             </span>
-            <span class="truncate text-xs">{{ activeTenant.attributes.bio }}</span>
+            <span class="truncate text-xs text-sidebar-foreground">{{ activeTenant.attributes.bio }}</span>
         </div>
         <IconButton
             :icon="IconName.close"

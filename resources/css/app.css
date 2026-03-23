@@ -133,14 +133,14 @@
         --input: 0 0% 89.8%;
         --ring: 205 81% 59%;
         --radius: 0.5rem;
-        --sidebar-background: 0 0% 98%;
-        --sidebar-foreground: 240 5.3% 26.1%;
-        --sidebar-primary: 0 0% 10%;
-        --sidebar-primary-foreground: 0 0% 98%;
-        --sidebar-accent: 0 0% 94%;
-        --sidebar-accent-foreground: 0 0% 30%;
-        --sidebar-border: 0 0% 91%;
-        --sidebar-ring: 217.2 91.2% 59.8%;
+        --sidebar-background: 232 73% 15%;
+        --sidebar-foreground: 215 16% 65%;
+        --sidebar-primary: 173 56% 56%;
+        --sidebar-primary-foreground: 232 73% 12%;
+        --sidebar-accent: 235 61% 19%;
+        --sidebar-accent-foreground: 173 56% 56%;
+        --sidebar-border: 232 40% 22%;
+        --sidebar-ring: 173 56% 56%;
     }
 
     .dark {
@@ -163,14 +163,14 @@
         --border: 0 0% 14.9%;
         --input: 0 0% 14.9%;
         --ring: 0 0% 83.1%;
-        --sidebar-background: 0 0% 7%;
-        --sidebar-foreground: 0 0% 95.9%;
-        --sidebar-primary: 360, 100%, 100%;
-        --sidebar-primary-foreground: 0 0% 100%;
-        --sidebar-accent: 0 0% 15.9%;
-        --sidebar-accent-foreground: 240 4.8% 95.9%;
-        --sidebar-border: 0 0% 15.9%;
-        --sidebar-ring: 217.2 91.2% 59.8%;
+        --sidebar-background: 232 73% 15%;
+        --sidebar-foreground: 215 16% 65%;
+        --sidebar-primary: 173 56% 56%;
+        --sidebar-primary-foreground: 232 73% 12%;
+        --sidebar-accent: 235 61% 19%;
+        --sidebar-accent-foreground: 173 56% 56%;
+        --sidebar-border: 232 40% 22%;
+        --sidebar-ring: 173 56% 56%;
     }
 }
 
@@ -213,11 +213,11 @@
     }
 
     .hava-thead {
-        @apply text-xs uppercase bg-sidebar-accent;
+        @apply text-xs uppercase bg-muted;
     }
 
     .hava-th {
-        @apply p-3 text-xs text-sidebar-accent-foreground font-bold;
+        @apply p-3 text-xs text-foreground font-bold;
     }
 
     .hava-thead:first-child tr > th:first-child {
@@ -253,7 +253,7 @@
     }
 
     .hava-td {
-        @apply whitespace-nowrap px-3 py-2 text-sm text-sidebar-accent-foreground;
+        @apply whitespace-nowrap px-3 py-2 text-sm text-foreground;
     }
 
     .error {
@@ -267,11 +267,11 @@
     }
 
     .j-thead {
-        @apply text-[10px] uppercase bg-sidebar-accent;
+        @apply text-[10px] uppercase bg-muted;
     }
 
     .j-th {
-        @apply p-3 text-[10px] text-sidebar-accent-foreground font-bold;
+        @apply p-3 text-[10px] text-foreground font-bold;
     }
 
     .j-tbody {
@@ -283,7 +283,7 @@
     }
 
     .j-td {
-        @apply whitespace-nowrap px-3 py-2 text-[12px] text-sidebar-accent-foreground;
+        @apply whitespace-nowrap px-3 py-2 text-[12px] text-foreground;
     }
     .j-td-l-border {
         @apply border-l-1 border-persian-200;
