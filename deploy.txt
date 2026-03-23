@@ -26,3 +26,5 @@ SET FOREIGN_KEY_CHECKS = 0;
 DELETE FROM `levels` WHERE (`levels`.`id` = '12');
 SET FOREIGN_KEY_CHECKS = 1;
 
+## CREATE A PR IN COMMAND LINE
+gh pr create --base main --head development --fill
