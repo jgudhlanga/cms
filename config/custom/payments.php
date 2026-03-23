@@ -1,4 +1,5 @@
 <?php
+
 return [
     'payment-gateway' => [
         'name' => env('PAYMENT_GATEWAY_NAME', 'smile-n-pay'),

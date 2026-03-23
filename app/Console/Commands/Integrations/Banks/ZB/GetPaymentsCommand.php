@@ -11,70 +11,84 @@ use Illuminate\Support\Facades\Http;
 
 class GetPaymentsCommand extends Command
 {
+    protected $signature = 'app:get-payments-command {accountType : usd|zwg|income-gen} {transactionType : all|pending}';
 
-    protected $signature = 'app:get-payments-command {currency : usd|zwg|income-gen} {type : all|pending}';
-
-
-    protected $description = 'Get payments from the bank for a given currency and type';
-
+    protected $description = 'Get payments from the bank for a given account type and transaction type';
 
     public function handle(): int
     {
-        $currency = $this->normalizeCurrency((string) $this->argument('currency'));
-        $type = $this->normalizeType((string) $this->argument('type'));
+        $accountType = $this->normalizeAccountType((string) $this->argument('accountType'));
+        $transactionType = $this->normalizeTransactionType((string) $this->argument('transactionType'));
 
         $baseUrl = rtrim(trim((string) config('custom.payments.bank_payments_base_url')), '/');
         if ($baseUrl === '') {
             $this->error('Missing config: custom.payments.bank_payments_base_url (BANK_PAYMENTS_BASE_URL).');
+
             return self::FAILURE;
         }
 
-        $credentials = $this->credentialsForCurrency($currency);
+        $credentials = $this->credentialsForAccountType($accountType);
         if ($credentials['institutionId'] === '' || $credentials['password'] === '') {
-            $envCurrency = strtoupper($currency);
-            $this->error("Missing bank credentials for currency '{$currency}'. Check BANK_PAYMENTS_{$envCurrency}_INSTITUTION_ID and BANK_PAYMENTS_{$envCurrency}_PASSWORD.");
+            $envAccountType = strtoupper(str_replace('-', '_', $accountType));
+            $this->error("Missing bank credentials for accountType '{$accountType}'. Check BANK_PAYMENTS_{$envAccountType}_INSTITUTION_ID and BANK_PAYMENTS_{$envAccountType}_PASSWORD.");
+
             return self::FAILURE;
         }
 
-        $endpoint = $this->endpointForType($type);
+        $endpoint = $this->endpointForTransactionType($transactionType);
+        $processingCount = 0;
+        $successfulCount = 0;
+        $failedCount = 0;
 
         try {
             $response = Http::asJson()
                 ->acceptJson()
-                ->post($baseUrl . $endpoint, [
+                ->post($baseUrl.$endpoint, [
                     'institutionId' => $credentials['institutionId'],
                     'password' => $credentials['password'],
                 ]);
 
-            if (!$response->successful()) {
+            if (! $response->successful()) {
                 $this->error("Bank payments API returned HTTP {$response->status()}.");
                 $body = $response->body();
                 if ($body !== '') {
                     $this->line($body);
                 }
+
                 return self::FAILURE;
             }
 
             $data = $response->json();
             $payments = Arr::wrap(is_array($data) ? $data : ($data['payments'] ?? $data['data'] ?? []));
 
-            collect($payments)->chunk(100)->each(function ($chunk) {
+            collect($payments)->chunk(100)->each(function ($chunk) use (&$processingCount, &$successfulCount, &$failedCount): void {
                 foreach ($chunk as $payment) {
                     $payment = (array) $payment;
                     $transactionId = Arr::get($payment, 'transaction_id') ?? Arr::get($payment, 'transactionId') ?? Arr::get($payment, 'id', '');
                     if ((string) $transactionId === '') {
                         $this->warn('Skipping payment with no transaction_id/id.');
+                        $failedCount++;
+
                         continue;
                     }
-                    $this->info('Processing payment: ' . $transactionId);
-                    BankPayment::updateOrCreate(
-                        ['transaction_id' => (string) $transactionId],
-                        $this->mapPaymentToAttributes($payment)
-                    );
+                    $processingCount++;
+                    $this->info("{$processingCount}. Processing payment: {$transactionId}");
+
+                    try {
+                        BankPayment::updateOrCreate(
+                            ['transaction_id' => (string) $transactionId],
+                            $this->mapPaymentToAttributes($payment)
+                        );
+                        $successfulCount++;
+                    } catch (\Throwable $exception) {
+                        $failedCount++;
+                        $this->error("Failed to persist payment {$transactionId}: {$exception->getMessage()}");
+                    }
                 }
             });
         } catch (ConnectionException $e) {
             $this->error("Connection error calling bank payments API: {$e->getMessage()}");
+
             return self::FAILURE;
         } catch (RequestException $e) {
             $response = $e->response;
@@ -83,38 +97,43 @@ class GetPaymentsCommand extends Command
             if ($body !== '') {
                 $this->line($body);
             }
+
             return self::FAILURE;
         }
 
+        $this->info('Totals - Processed: '.($successfulCount + $failedCount).', Successful: '.$successfulCount.', Failed: '.$failedCount.'.');
         $this->info('Request completed successfully.');
+
         return self::SUCCESS;
     }
 
-    private function normalizeCurrency(string $raw): string
+    private function normalizeAccountType(string $raw): string
     {
-        $currency = strtolower(trim($raw));
-        if ($currency === 'usd' || $currency === 'zwg') {
-            return $currency;
+        $accountType = strtolower(trim($raw));
+        if (in_array($accountType, ['usd', 'zwg', 'income-gen'], true)) {
+            return $accountType;
         }
 
-        $this->warn("Invalid currency '{$raw}'. Defaulting to 'usd'. Allowed: usd, zwg.");
+        $this->warn("Invalid accountType '{$raw}'. Defaulting to 'usd'. Allowed: usd, zwg, income-gen.");
+
         return 'usd';
     }
 
-    private function normalizeType(string $raw): string
+    private function normalizeTransactionType(string $raw): string
     {
-        $type = strtolower(trim($raw));
-        if ($type === 'all' || $type === 'pending') {
-            return $type;
+        $transactionType = strtolower(trim($raw));
+        if ($transactionType === 'all' || $transactionType === 'pending') {
+            return $transactionType;
         }
 
-        $this->warn("Invalid type '{$raw}'. Defaulting to 'pending'. Allowed: all, pending.");
+        $this->warn("Invalid transactionType '{$raw}'. Defaulting to 'pending'. Allowed: all, pending.");
+
         return 'pending';
     }
 
-    private function endpointForType(string $type): string
+    private function endpointForTransactionType(string $transactionType): string
     {
-        return $type === 'all'
+        return $transactionType === 'all'
             ? '/alerts/payments/all-payments'
             : '/alerts/payments/pick-all-pending';
     }
@@ -122,11 +141,11 @@ class GetPaymentsCommand extends Command
     /**
      * @return array{institutionId:string,password:string}
      */
-    private function credentialsForCurrency(string $currency): array
+    private function credentialsForAccountType(string $accountType): array
     {
         return [
-            'institutionId' => (string) config("custom.payments.{$currency}.institution_id"),
-            'password' => (string) config("custom.payments.{$currency}.password"),
+            'institutionId' => (string) config("custom.payments.{$accountType}.institution_id"),
+            'password' => (string) config("custom.payments.{$accountType}.password"),
         ];
     }
 
