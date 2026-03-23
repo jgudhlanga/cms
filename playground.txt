@@ -1,0 +1,128 @@
+Given that students are paying fees, 
+- below is what we getting back from the bank 
+    'bank' => Arr::get($payment, 'bank', 'zb'),
+    'amount' => Arr::get($payment, 'amount'),
+    'transaction_created_date' => Arr::get($payment, 'transaction_created_datedate') ?? Arr::get($payment, 'date'),
+    'narrative' => Arr::get($payment, 'narrative'),
+    'nr1' => Arr::get($payment, 'nr1'),
+    'nr2' => Arr::get($payment, 'nr2'),
+    'nr3' => Arr::get($payment, 'nr3'),
+    'nr4' => Arr::get($payment, 'nr4'),
+    'picked' => Arr::get($payment, 'picked'),
+    'reference' => Arr::get($payment, 'reference'),
+    'source' => Arr::get($payment, 'source'),
+    'status' => Arr::get($payment, 'status'),
+    'tcd' => Arr::get($payment, 'tcd'),
+    'transaction_date' => Arr::get($payment, 'transaction_date') ?? Arr::get($payment, 'transactionDate'),
+
+- To properly track student payments using accounting principles (double-entry, audit trail, traceability) in Laravel, 
+    your payment_ledger should behave more like a general ledger with sub-ledger context (students) rather than a simple payments table.
+- Below is a clean, scalable design aligned with accounting standards.
+
+Instead of mixing everything loosely, structure your system like this:
+
+Invoices → what the student owes
+Receipts → payments made
+Journals (Debit/Credit) → adjustments, reversals, write-offs
+Ledger (payment_ledger) → the single source of truth
+Schema::create('payment_ledger', function (Blueprint $table) {
+    $table->id();
+
+    // Who
+    $table->foreignId('student_id')->nullable()->constrained()->nullOnDelete();
+
+    // Transaction classification
+    $table->string('transaction_type'); 
+    // invoice | receipt | debit_journal | credit_journal | refund | adjustment
+
+    $table->string('reference_type'); 
+    // invoice, receipt, journal, etc (polymorphic style)
+
+    $table->unsignedBigInteger('reference_id')->nullable(); 
+    // links to invoices, receipts, journals
+
+    // Accounting structure
+    $table->string('account_code'); 
+    // e.g. TUITION_FEES, CASH, BANK, AR
+
+    $table->decimal('debit', 12, 2)->default(0);
+    $table->decimal('credit', 12, 2)->default(0);
+
+    // Running balance (optional but useful for performance)
+    $table->decimal('balance', 12, 2)->default(0);
+
+    // Metadata
+    $table->date('transaction_date');
+    $table->text('description')->nullable();
+
+    $table->string('currency')->default('USD');
+
+    $table->timestamps();
+});
+
+Supporting Tables (Important)
+    1. invoices
+        Schema::create('invoices', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('student_id')->constrained();
+            $table->string('invoice_number')->unique();
+            $table->decimal('amount', 12, 2);
+            $table->date('due_date');
+            $table->string('status'); // unpaid, partial, paid
+            $table->timestamps();
+        });
+    2. receipts
+        Schema::create('receipts', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('student_id')->constrained();
+            $table->string('receipt_number')->unique();
+            $table->decimal('amount', 12, 2);
+            $table->string('payment_method'); // cash, bank, ecocash
+            $table->date('payment_date');
+            $table->timestamps();
+        });
+    3. journals
+        Schema::create('journals', function (Blueprint $table) {
+            $table->id();
+            $table->string('journal_type'); // debit | credit | adjustment
+            $table->text('description')->nullable();
+            $table->date('journal_date');
+            $table->timestamps();
+        });
+    Best Practices
+     1. Never Update Ledger Rows
+        Always insert new entries (immutability)
+        Use reversal entries instead of edits   
+    2. Use Chart of Accounts Table (Optional but Recommended)
+    accounts: id, code, name, type
+    Example:
+        AR (Asset)
+        CASH (Asset)
+        TUITION_FEES (Revenue)
+    ✅ 3. Add Indexes
+            $table->index(['student_id']);
+            $table->index(['transaction_date']);
+            $table->index(['reference_type', 'reference_id']);
+    ✅ 4. Multi-currency (Future-proofing)
+            $table->decimal('exchange_rate', 12, 6)->default(1);
+🧩 Bonus: Linking Payments to Invoices
+    Add pivot:
+    invoice_receipt_allocations
+        - id
+        - invoice_id
+        - receipt_id
+        - amount
+    This allows:
+        partial payments
+        multiple invoices per payment
+
+🧮 Summary Architecture
+Students
+   ↓
+Invoices → Ledger (DR AR / CR Revenue)
+   ↓
+Receipts → Ledger (DR Cash / CR AR)
+   ↓
+Journals → Ledger (Adjustments)
+
+Create a module called Finance where all models are store. Follow the current system standards. Pose best suggestions where possible
