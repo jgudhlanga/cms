@@ -13,7 +13,7 @@ return [
     ],
     'bank_payments_base_url' => env('BANK_PAYMENTS_BASE_URL'),
     'bank_payments_connect_timeout' => (float) env('BANK_PAYMENTS_CONNECT_TIMEOUT', 10),
-    'bank_payments_timeout' => (float) env('BANK_PAYMENTS_TIMEOUT', 120),
+    'bank_payments_timeout' => (float) env('BANK_PAYMENTS_TIMEOUT', 300),
     'bank_payments_retry_times' => (int) env('BANK_PAYMENTS_RETRY_TIMES', 3),
     'bank_payments_retry_sleep_ms' => (int) env('BANK_PAYMENTS_RETRY_SLEEP_MS', 250),
     'bank_payments_queue' => env('BANK_PAYMENTS_QUEUE', 'payments'),

@@ -6,6 +6,7 @@ use App\Models\Integrations\Banks\BankPayment;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
 use Throwable;
 
@@ -74,6 +75,9 @@ class FetchBankPaymentsService
             $payments = Arr::wrap(is_array($data) ? $data : ($data['payments'] ?? $data['data'] ?? []));
 
             collect($payments)->chunk(100)->each(function ($chunk) use (&$processingCount, &$successfulCount, &$failedCount, $info, $warn, $error): void {
+                $rowsToUpsert = [];
+                $timestamp = Carbon::now();
+
                 foreach ($chunk as $payment) {
                     $payment = (array) $payment;
                     $transactionId = Arr::get($payment, 'transaction_id') ?? Arr::get($payment, 'transactionId') ?? Arr::get($payment, 'id', '');
@@ -86,16 +90,46 @@ class FetchBankPaymentsService
                     $processingCount++;
                     $this->emit($info, "{$processingCount}. Processing payment: {$transactionId}");
 
-                    try {
-                        BankPayment::updateOrCreate(
-                            ['transaction_id' => (string) $transactionId],
-                            $this->mapPaymentToAttributes($payment)
+                    $rowsToUpsert[] = [
+                        'transaction_id' => (string) $transactionId,
+                        ...$this->mapPaymentToAttributes($payment),
+                        'updated_at' => $timestamp,
+                        'created_at' => $timestamp,
+                    ];
+                }
+
+                if ($rowsToUpsert === []) {
+                    return;
+                }
+
+                try {
+                    BankPayment::withoutEvents(function () use ($rowsToUpsert): void {
+                        BankPayment::query()->upsert(
+                            $rowsToUpsert,
+                            ['transaction_id'],
+                            [
+                                'bank',
+                                'amount',
+                                'transaction_created_date',
+                                'narrative',
+                                'nr1',
+                                'nr2',
+                                'nr3',
+                                'nr4',
+                                'picked',
+                                'reference',
+                                'source',
+                                'status',
+                                'tcd',
+                                'transaction_date',
+                                'updated_at',
+                            ]
                         );
-                        $successfulCount++;
-                    } catch (Throwable $exception) {
-                        $failedCount++;
-                        $this->emit($error, "Failed to persist payment {$transactionId}: {$exception->getMessage()}");
-                    }
+                    });
+                    $successfulCount += count($rowsToUpsert);
+                } catch (Throwable $exception) {
+                    $failedCount += count($rowsToUpsert);
+                    $this->emit($error, 'Failed to persist payments chunk: '.$exception->getMessage());
                 }
             });
         } catch (ConnectionException $exception) {
