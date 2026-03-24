@@ -1,0 +1,187 @@
+Core Idea
+
+Instead of running:
+
+php artisan app:get-payments-command usd all
+
+You:
+
+Dispatch jobs to a queue
+Let workers process them asynchronously
+Keep the scheduler lightweight (just a dispatcher)
+🔹 1. Create a Job
+php artisan make:job FetchPaymentsJob
+Example Job
+class FetchPaymentsJob implements ShouldQueue
+{
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
+    public string $source;
+    public string $type;
+
+    public function __construct(string $source, string $type)
+    {
+        $this->source = $source;
+        $this->type = $type;
+    }
+
+    public function handle(): void
+    {
+        // Your existing logic from app:get-payments-command
+        app(PaymentService::class)
+            ->fetch($this->source, $this->type);
+    }
+
+    public function tags(): array
+    {
+        return ['payments', $this->source, $this->type];
+    }
+}
+🔹 2. Replace Command Logic with Job Dispatching
+
+Instead of doing heavy work in the command, just dispatch jobs.
+
+New Command (Dispatcher)
+php artisan make:command DispatchPaymentFetchJobs
+class DispatchPaymentFetchJobs extends Command
+{
+    protected $signature = 'payments:dispatch';
+
+    public function handle(): void
+    {
+        $jobs = [
+            ['usd', 'all'],
+            ['usd', 'pending'],
+            ['zwg', 'all'],
+            ['zwg', 'pending'],
+            ['income-gen', 'all'],
+            ['income-gen', 'pending'],
+        ];
+
+        foreach ($jobs as [$source, $type]) {
+            FetchPaymentsJob::dispatch($source, $type)
+                ->onQueue('payments');
+        }
+    }
+}
+🔹 3. Simplify Scheduler
+
+Now your scheduler becomes very clean:
+
+Schedule::command('payments:dispatch')
+    ->everyTenMinutes()
+    ->withoutOverlapping();
+🔹 4. Enable Parallel Processing
+
+Run multiple workers:
+
+php artisan queue:work --queue=payments --tries=3
+
+Or with Supervisor (recommended):
+
+[program:payments-worker]
+process_name=%(program_name)s_%(process_num)02d
+command=php /path/artisan queue:work --queue=payments --sleep=3 --tries=3
+numprocs=5
+autostart=true
+autorestart=true
+
+👉 Now:
+
+5 jobs can run at the same time
+No more waiting for cron spacing
+🔹 5. Add Rate Limiting (Important for APIs)
+use Illuminate\Support\Facades\RateLimiter;
+
+public function handle(): void
+{
+    RateLimiter::attempt(
+        "payments:{$this->source}",
+        $perMinute = 10,
+        function () {
+            app(PaymentService::class)
+                ->fetch($this->source, $this->type);
+        }
+    );
+}
+🔹 6. Add Retry + Failure Handling
+public int $tries = 3;
+public int $timeout = 120;
+
+public function failed(Throwable $exception): void
+{
+    Log::error('Payment fetch failed', [
+        'source' => $this->source,
+        'type' => $this->type,
+        'error' => $exception->getMessage(),
+    ]);
+}
+🔹 7. Optional: Break It Down Further (Even More Scalable)
+
+Instead of fetching “all” at once:
+
+👉 Split into smaller jobs:
+
+FetchPaymentsBatchJob
+    → dispatches
+        → FetchSinglePaymentJob
+
+This gives:
+
+Better retry granularity
+Massive scalability
+🔹 8. Use Batching (Advanced)
+Bus::batch([
+    new FetchPaymentsJob('usd', 'all'),
+    new FetchPaymentsJob('usd', 'pending'),
+])->dispatch();
+
+You can track:
+
+Progress
+Failures
+Completion
+🔥 Architecture Comparison
+Feature	Your Current Setup	Queue-Based
+Execution	Sequential	Parallel
+Failure handling	Weak	Strong (retries)
+Scalability	Limited	High
+Monitoring	Minimal	Full (Horizon)
+Speed	Slower	Faster
+🔥 Bonus: Use Horizon (Highly Recommended)
+
+Install:
+
+composer require laravel/horizon
+php artisan horizon:install
+
+You get:
+
+Dashboard
+Job metrics
+Retry UI
+Queue balancing
+✅ Final Architecture
+Scheduler (every 10 min)
+        ↓
+DispatchPaymentFetchJobs
+        ↓
+Queue (Redis)
+        ↓
+Multiple Workers
+        ↓
+FetchPaymentsJob
+        ↓
+PaymentService → Ledger
+💡 Real-World Tip
+
+For your student payment system, this approach is ideal because:
+
+Payment providers can be slow/unreliable
+You need retries
+You may scale to thousands of transactions
+
+If you want next step, I can help you:
+👉 Plug this directly into your payment_ledger design
+👉 Add idempotency (avoid duplicate payments)
+👉 Or design a full reconciliation pipeline (bank ↔ system)

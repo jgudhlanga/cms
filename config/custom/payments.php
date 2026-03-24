@@ -16,6 +16,7 @@ return [
     'bank_payments_timeout' => (float) env('BANK_PAYMENTS_TIMEOUT', 120),
     'bank_payments_retry_times' => (int) env('BANK_PAYMENTS_RETRY_TIMES', 3),
     'bank_payments_retry_sleep_ms' => (int) env('BANK_PAYMENTS_RETRY_SLEEP_MS', 250),
+    'bank_payments_queue' => env('BANK_PAYMENTS_QUEUE', 'payments'),
     'zwg' => [
         'institution_id' => env('BANK_PAYMENTS_ZWG_INSTITUTION_ID'),
         'password' => env('BANK_PAYMENTS_ZWG_PASSWORD'),

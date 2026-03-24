@@ -12,7 +12,7 @@ it('processes payments with the renamed command arguments', function () {
         'https://bank.example/alerts/payments/all-payments' => Http::response([
             [
                 'transaction_id' => 'TXN-001',
-                'amount' => 24.50,
+                'amount' => 2450,
                 'date' => now()->toDateTimeString(),
                 'status' => 'pending',
             ],
@@ -27,7 +27,12 @@ it('processes payments with the renamed command arguments', function () {
         ->expectsOutput('Request completed successfully.')
         ->assertSuccessful();
 
-    expect(BankPayment::query()->where('transaction_id', 'TXN-001')->exists())->toBeTrue();
+    $bankPayment = BankPayment::query()
+        ->where('transaction_id', 'TXN-001')
+        ->first();
+
+    expect($bankPayment)->not->toBeNull()
+        ->and(number_format((float) $bankPayment->amount, 2, '.', ''))->toBe('24.50');
 });
 
 it('defaults invalid accountType to usd', function () {
@@ -164,4 +169,33 @@ it('shows timeout and retry settings when connection fails', function () {
     ])->expectsOutputToContain('Connection error calling bank payments API:')
         ->expectsOutput('HTTP client settings: connect_timeout=5s timeout=25s retries=2 retry_sleep_ms=100.')
         ->assertFailed();
+});
+
+it('stores minor-unit amounts as major units with two decimals', function () {
+    config()->set('custom.payments.bank_payments_base_url', 'https://bank.example');
+    config()->set('custom.payments.usd.institution_id', 'USD123');
+    config()->set('custom.payments.usd.password', 'secret');
+
+    Http::fake([
+        'https://bank.example/alerts/payments/all-payments' => Http::response([
+            [
+                'transaction_id' => 'TXN-004',
+                'amount' => 1,
+                'date' => now()->toDateTimeString(),
+                'status' => 'pending',
+            ],
+        ], 200),
+    ]);
+
+    $this->artisan('app:get-payments-command', [
+        'accountType' => 'usd',
+        'transactionType' => 'all',
+    ])->assertSuccessful();
+
+    $bankPayment = BankPayment::query()
+        ->where('transaction_id', 'TXN-004')
+        ->first();
+
+    expect($bankPayment)->not->toBeNull()
+        ->and(number_format((float) $bankPayment->amount, 2, '.', ''))->toBe('0.01');
 });
