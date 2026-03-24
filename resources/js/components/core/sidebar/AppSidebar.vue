@@ -20,7 +20,7 @@ const props = withDefaults(defineProps<SidebarProps>(), {
         <SidebarHeader>
             <TenantSwitcher />
         </SidebarHeader>
-        <SidebarContent>
+        <SidebarContent class="mt-5">
             <NavMain />
         </SidebarContent>
         <SidebarFooter>

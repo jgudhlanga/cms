@@ -64,8 +64,8 @@ watch(trashed, trashedWatcher);
 </script>
 
 <template>
-    <div class="bg-sidebar inline-block min-w-full overflow-auto rounded-xl px-6 pt-4 pb-6 align-middle">
-        <div class="text-sidebar-foreground mt-3 mb-6 flex w-full justify-between text-sm">
+    <div class="bg-card inline-block min-w-full overflow-auto rounded-xl px-6 pt-4 pb-6 align-middle">
+        <div class="text-muted-foreground mt-3 mb-6 flex w-full justify-between text-sm">
             <div class="flex w-full items-center space-x-3">
                 <Search v-model="filter" v-if="searchUrl || apiFetchAction" />
                 <Archived v-if="showArchivedFilter" :handle-archived="handleArchived" :trashed="+trashed" :trashed-count="trashedCount" />
