@@ -11,6 +11,7 @@ return [
         'failure_url' => env('PAYMENT_GATEWAY_FAILURE_URL'),
         'result_url' => env('PAYMENT_GATEWAY_RESULT_URL'),
     ],
+    
     'bank_payments_base_url' => env('BANK_PAYMENTS_BASE_URL'),
     'bank_payments_connect_timeout' => (float) env('BANK_PAYMENTS_CONNECT_TIMEOUT', 10),
     'bank_payments_timeout' => (float) env('BANK_PAYMENTS_TIMEOUT', 300),
