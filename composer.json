@@ -12,7 +12,6 @@
         "php": "^8.2",
         "barryvdh/laravel-dompdf": "^3.1",
         "guzzlehttp/guzzle": "^7.10",
-        "houdaslassi/vantage": "^0.1.11",
         "illuminate/contracts": "*",
         "inertiajs/inertia-laravel": "^2.0",
         "lab404/laravel-impersonate": "^1.7",
@@ -28,7 +27,8 @@
         "spatie/laravel-permission": "^6.15",
         "spatie/laravel-query-builder": "^6.3",
         "symfony/mailer": "^7.3",
-        "tightenco/ziggy": "^2.4"
+        "tightenco/ziggy": "^2.4",
+        "zappzerapp/laravel-ingest": "^0.5.2"
     },
     "require-dev": {
         "barryvdh/laravel-debugbar": "^3.16",
