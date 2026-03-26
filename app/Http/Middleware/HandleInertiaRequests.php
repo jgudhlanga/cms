@@ -69,7 +69,7 @@ class HandleInertiaRequests extends Middleware
         // If user is super admin, return all permissions as true
         if ($user->hasRole(RoleEnum::SUPER_USER->name())) {
             return collect(PermissionRegistry::allValues())
-                ->reject(fn ($permission) => in_array($permission, $this->excludePermissions(), true))
+                ->reject(fn (string $permission) => $this->isExcludedPermission($permission))
                 ->mapWithKeys(fn ($permission) => [$permission => true]);
         }
 
@@ -98,5 +98,14 @@ class HandleInertiaRequests extends Middleware
             'viewOnlyOwnDepartment:departments',
             'manageOwnData:tenants',
         ];
+    }
+
+    private function isExcludedPermission(string $permission): bool
+    {
+        if (in_array($permission, $this->excludePermissions(), true)) {
+            return true;
+        }
+
+        return str($permission)->endsWith([':finances', ':finance-settings']);
     }
 }
