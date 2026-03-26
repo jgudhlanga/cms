@@ -25,15 +25,18 @@ class PermissionFilter extends QueryFilter
      */
     public function role($value): Builder
     {
-        // Resolve the role model from the route or query value
         $role = $this->request->route('role');
 
         if ($role instanceof Role) {
-            // Role model was bound via route model binding
             $roleName = $role->name;
         } else {
-            // Role slug or name passed as query parameter (?role=admin)
             $roleName = is_string($value) ? $value : null;
+        }
+
+        $roleName = is_string($roleName) ? trim($roleName) : null;
+
+        if ($roleName === null || $roleName === '') {
+            return $this->builder;
         }
 
         return $this->builder->whereHas('roles', function (Builder $query) use ($roleName) {
@@ -43,5 +46,3 @@ class PermissionFilter extends QueryFilter
         });
     }
 }
-
-

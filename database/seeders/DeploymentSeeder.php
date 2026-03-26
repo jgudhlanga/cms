@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use Database\Seeders\AcademicCalendars\AcademicCalendarOptionSeeder;
+use Database\Seeders\Acl\ModulesTableSeeder;
 use Database\Seeders\Acl\PermissionsTableSeeder;
 use Database\Seeders\Acl\RolesTableSeeder;
 use Illuminate\Database\Seeder;
@@ -15,6 +16,7 @@ class DeploymentSeeder extends Seeder
     public function run(): void
     {
         $this->call([
+            ModulesTableSeeder::class,
             PermissionsTableSeeder::class,
             RolesTableSeeder::class,
             AcademicCalendarOptionSeeder::class,
