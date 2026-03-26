@@ -60,6 +60,6 @@ class ImpersonationController extends Controller
                 : route('portal.application.level-options');
         }
 
-        return route('settings.profile');
+        return route('dashboard');
     }
 }

@@ -77,31 +77,6 @@ class AppServiceProvider extends ServiceProvider
         });
     }
 
-    /**
-     * Handle impersonation events (start and stop).
-     */
-    /* private function registerImpersonationListeners(): void
-     {
-         // When impersonation begins
-         Event::listen(TakeImpersonation::class, function (TakeImpersonation $event) {
-             session()->put([
-                 'password_hash_sanctum' => $event->impersonated->getAuthPassword(),
-             ]);
-         });
-
-         // When impersonation ends
-         Event::listen(LeaveImpersonation::class, function (LeaveImpersonation $event) {
-             // Clean up and restore original user session
-             session()->forget('password_hash_web');
-
-             session()->put([
-                 'password_hash_sanctum' => $event->impersonator->getAuthPassword(),
-             ]);
-
-             // Ensure proper restoration of the impersonator in Auth context
-             Auth::setUser($event->impersonator);
-         });
-     }*/
 
     private function registerImpersonationListeners(): void
     {
