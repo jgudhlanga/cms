@@ -1,14 +1,17 @@
 <?php
 
+use App\Http\Controllers\Auth\ImpersonationController;
 use App\Http\Controllers\Dashboard\DashboardController;
 use Illuminate\Support\Facades\Route;
+use Lab404\Impersonate\Controllers\ImpersonateController as VendorImpersonateController;
 
 Route::get('/', function () {
     return to_route('dashboard');
 })->middleware(['auth', 'verified'])->name('home');
 
 Route::middleware(['web', 'auth'])->group(function () {
-    Route::impersonate();
+    Route::get('impersonate/take/{id}/{guardName?}', [ImpersonationController::class, 'take'])->name('impersonate');
+    Route::get('impersonate/leave', [VendorImpersonateController::class, 'leave'])->name('impersonate.leave');
 });
 
 Route::get('/dashboard', DashboardController::class)->middleware(['auth', 'verified', 'redirect.student'])->name('dashboard');

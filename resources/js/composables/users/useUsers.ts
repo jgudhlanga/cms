@@ -57,10 +57,11 @@ export const useUsers = () => {
                 cell: ({ row }: { row: { original: User } }) => {
                     const page = usePage<PageProps>();
                     const canImpersonate = page.props.auth.user.attributes.canImpersonate;
+                    const isImpersonating = page.props.auth.impersonating;
                     const canBeImpersonated = row.original?.attributes?.canBeImpersonated ?? false;
                     return canImpersonate && canBeImpersonated
                         ? actionButton({
-                              title: 'Impersonate',
+                              title: isImpersonating ? 'Switch Impersonation' : 'Impersonate',
                               onClick: () => navigateTo(route('impersonate', { id: row.original.id })),
                           })
                         : null;
