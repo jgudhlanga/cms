@@ -15,8 +15,8 @@ class DeploymentSeeder extends Seeder
     public function run(): void
     {
         $this->call([
-            RolesTableSeeder::class,
             PermissionsTableSeeder::class,
+            RolesTableSeeder::class,
             AcademicCalendarOptionSeeder::class,
         ]);
     }

@@ -2,7 +2,6 @@
 
 namespace App\Policies\Acl;
 
-use App\Enums\Acl\PermissionEnum;
 use App\Models\Acl\Role;
 use App\Models\Users\User;
 
@@ -10,36 +9,36 @@ class RolePolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->can(PermissionEnum::VIEW_ANY_ROLES);
+        return $user->can('viewAny:roles');
     }
 
     public function view(User $user, Role $role): bool
     {
-        return $user->can(PermissionEnum::VIEW_ANY_ROLES) || $user->can(PermissionEnum::VIEW_ROLE);
+        return $user->can('viewAny:roles') || $user->can('view:roles');
     }
 
     public function create(User $user): bool
     {
-        return $user->can(PermissionEnum::CREATE_ROLE);
+        return $user->can('create:roles');
     }
 
     public function update(User $user, Role $role): bool
     {
-        return $user->can(PermissionEnum::UPDATE_ROLE, $role);
+        return $user->can('update:roles', $role);
     }
 
     public function delete(User $user, Role $role): bool
     {
-        return $user->can(PermissionEnum::DELETE_ROLE, $role);
+        return $user->can('delete:roles', $role);
     }
 
     public function restore(User $user, Role $role): bool
     {
-        return $user->can(PermissionEnum::RESTORE_ROLE, $role);
+        return $user->can('restore:roles', $role);
     }
 
     public function forceDelete(User $user, Role $role): bool
     {
-		return $user->can(PermissionEnum::FORCE_DELETE_ROLE, $role);
+        return $user->can('forceDelete:roles', $role);
     }
 }

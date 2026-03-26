@@ -286,14 +286,14 @@
         @apply whitespace-nowrap px-3 py-2 text-[12px] text-foreground;
     }
     .j-td-l-border {
-        @apply border-l-1 border-persian-200;
+        @apply border-l border-persian-200;
     }
 
     .j-td-r-border {
-        @apply border-r-1 border-persian-200;
+        @apply border-r border-persian-200;
     }
     .j-td-b-border {
-        @apply border-b-1 border-persian-200;
+        @apply border-b border-persian-200;
     }
 
     .fade-enter-active,

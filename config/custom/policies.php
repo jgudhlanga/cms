@@ -1,9 +1,17 @@
 <?php
 
+use App\Policies\Dashboards\DashboardPolicy;
+use App\Policies\Finance\FinancePolicy;
+use App\Policies\Finance\FinanceSettingsPolicy;
+use App\Policies\Institution\DepartmentMetaDataPolicy;
+use App\Policies\Settings\InstitutionSetupPolicy;
+use App\Policies\Settings\SettingPolicy;
+use App\Policies\Students\PortalPolicy;
+use App\Policies\Students\StudentMetaDataPolicy;
 
 return [
 
-    App\Policies\Settings\SettingPolicy::class => [
+    SettingPolicy::class => [
         'viewSettings',
         'createSettings',
         'updateSettings',
@@ -14,7 +22,7 @@ return [
         'exportSettings',
     ],
 
-    App\Policies\Settings\InstitutionSetupPolicy::class => [
+    InstitutionSetupPolicy::class => [
         'viewInstitutionSettings',
         'createInstitutionSettings',
         'updateInstitutionSettings',
@@ -25,7 +33,7 @@ return [
         'exportInstitutionSettings',
     ],
 
-    App\Policies\Institution\DepartmentMetaDataPolicy::class => [
+    DepartmentMetaDataPolicy::class => [
         'viewAnyDepartmentMetaData',
         'viewDepartmentMetaData',
         'createDepartmentMetaData',
@@ -37,11 +45,11 @@ return [
         'exportDepartmentMetaData',
     ],
 
-    App\Policies\Dashboards\DashboardPolicy::class => [
+    DashboardPolicy::class => [
         'viewDashboard',
     ],
 
-    App\Policies\Students\PortalPolicy::class => [
+    PortalPolicy::class => [
         'viewStudentDashboard',
         'manageStudentPersonalDetails',
         'manageStudentProgramDetails',
@@ -51,8 +59,16 @@ return [
         'manageStudentAcademicRecords',
     ],
 
-    App\Policies\Students\StudentMetaDataPolicy::class => [
+    StudentMetaDataPolicy::class => [
         'manageStudentMetadata',
+    ],
+
+    FinancePolicy::class => [
+        'viewFinances',
+    ],
+
+    FinanceSettingsPolicy::class => [
+        'viewFinanceSettings',
     ],
 
 ];

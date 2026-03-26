@@ -2,7 +2,6 @@
 
 namespace App\Helpers;
 
-use App\Enums\Acl\PermissionEnum;
 use App\Enums\Institution\ModeOfStudyEnum;
 use App\Enums\Shared\StatusEnum;
 use App\Enums\Shared\TenantEnum;
@@ -19,15 +18,15 @@ use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Crypt;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class Helper
 {
     public static function generateModelUniqueNumber(Model $model, string $prefix, string $suffix): string
     {
-        $id = (int)$model->id > 0 ? $model->id : $model::max('id') + 1;
-        return $prefix . $id . $suffix;
+        $id = (int) $model->id > 0 ? $model->id : $model::max('id') + 1;
+
+        return $prefix.$id.$suffix;
     }
 
     public static function generateStudentNumber(StudentProgram $program): string
@@ -42,18 +41,18 @@ class Helper
         $departmentCode = strtoupper($department->department_code);
 
         // always prefix the student ID with a 0
-        $studentIdPadded = '0' . $student->id;
+        $studentIdPadded = '0'.$student->id;
 
         // college code
         $collegeCode = 'HP';
 
-        return $year . $departmentCode . $studentIdPadded . $collegeCode;
+        return $year.$departmentCode.$studentIdPadded.$collegeCode;
     }
 
     public static function lookupLegacyStudentNumber(string $studentIdentity): ?string
     {
         $filePath = storage_path('data/legacy-students.csv');
-        if (!file_exists($filePath)) {
+        if (! file_exists($filePath)) {
             return 'CSV file not found';
         }
 
@@ -73,7 +72,7 @@ class Helper
             $row = array_slice($row, 0, count($header));
             $student = @array_combine($header, $row);
 
-            if (!$student) {
+            if (! $student) {
                 continue; // skip malformed rows
             }
 
@@ -82,14 +81,15 @@ class Helper
 
             if ($csvId === $studentIdentity) {
                 fclose($file);
+
                 return $student[$valueField] ?? null;
             }
         }
 
         fclose($file);
+
         return null;
     }
-
 
     public static function formatDate($stringDate): string
     {
@@ -163,8 +163,7 @@ class Helper
         return $cachedIntakePeriod = IntakePeriod::orderByDesc('end_date')->firstOrFail();
     }
 
-
-    public static function resolveUserDepartments(): array|null
+    public static function resolveUserDepartments(): ?array
     {
         $departments = [];
         if (self::isDepartmentUser()) {
@@ -184,7 +183,8 @@ class Helper
     public static function isDepartmentUser(): bool
     {
         $user = auth()->user();
-        return $user && $user->can(PermissionEnum::VIEW_ONLY_OWN_DEPARTMENT);
+
+        return $user && $user->can('viewOnlyOwnDepartment:departments');
     }
 
     public static function hasAccessToNonAcademicDepartments(): bool
@@ -197,6 +197,7 @@ class Helper
             ->whereHas('department', function ($query) {
                 $query->where('is_academic', false);
             })->count();
+
         return $nonAcademicCount > 0;
     }
 
@@ -205,9 +206,9 @@ class Helper
         if (request()->filled('mode_of_study_id') && request()->mode_of_study_id > 0) {
             return ModeOfStudy::findOrFail(request()->mode_of_study_id);
         }
+
         return ModeOfStudy::where('name', ModeOfStudyEnum::FULL_TIME->value)->first();
     }
-
 
     public static function initializeProgramWorkflow($program): void
     {
@@ -239,7 +240,7 @@ class Helper
     public static function generateRandomCode(string $prefix): string
     {
         $randomSegment = strtoupper(substr(str_replace('-', '', Str::uuid()->toString()), 0, 8));
+
         return "{$prefix}-{$randomSegment}";
     }
-
 }

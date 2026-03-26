@@ -2,7 +2,6 @@
 
 namespace App\Policies\Shared;
 
-use App\Enums\Acl\PermissionEnum;
 use App\Models\Shared\Contact;
 use App\Models\Users\User;
 
@@ -10,37 +9,36 @@ class ContactPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->can(PermissionEnum::VIEW_ANY_CONTACTS);
+        return $user->can('viewAny:contacts');
     }
 
     public function view(User $user, Contact $contact): bool
     {
-        return $user->can(PermissionEnum::VIEW_ANY_CONTACTS)
-            || $user->can(PermissionEnum::VIEW_CONTACTS);
+        return $user->can('viewAny:contacts') || $user->can('view:contacts');
     }
 
     public function create(User $user): bool
     {
-        return $user->can(PermissionEnum::CREATE_CONTACTS);
+        return $user->can('create:contacts');
     }
 
     public function update(User $user, Contact $contact): bool
     {
-        return $user->can(PermissionEnum::UPDATE_CONTACTS, $contact) || $user->can(PermissionEnum::MANAGE_OWN_STUDENT_CONTACT_DETAILS);
+        return $user->can('update:contacts', $contact) || $user->can('manageOwnStudentContactDetails:students');
     }
 
     public function delete(User $user, Contact $contact): bool
     {
-        return $user->can(PermissionEnum::DELETE_CONTACTS, $contact) || $user->can(PermissionEnum::MANAGE_OWN_STUDENT_CONTACT_DETAILS);
+        return $user->can('delete:contacts', $contact) || $user->can('manageOwnStudentContactDetails:students');
     }
 
     public function restore(User $user, Contact $contact): bool
     {
-        return $user->can(PermissionEnum::RESTORE_CONTACTS, $contact) || $user->can(PermissionEnum::MANAGE_OWN_STUDENT_CONTACT_DETAILS);
+        return $user->can('restore:contacts', $contact) || $user->can('manageOwnStudentContactDetails:students');
     }
 
     public function forceDelete(User $user, Contact $contact): bool
     {
-        return $user->can(PermissionEnum::FORCE_DELETE_CONTACTS, $contact) || $user->can(PermissionEnum::MANAGE_OWN_STUDENT_CONTACT_DETAILS);
+        return $user->can('forceDelete:contacts', $contact) || $user->can('manageOwnStudentContactDetails:students');
     }
 }

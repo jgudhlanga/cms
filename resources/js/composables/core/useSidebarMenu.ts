@@ -59,6 +59,12 @@ export function useSidebarMenu() {
             show: hasAbility('view:report'),
         },
         {
+            transChoiceKey: 'finance.finance',
+            url: route('finance.index'),
+            icon: icons[IconName.dollar],
+            show: hasAbility('view:finances'),
+        },
+        {
             transChoiceKey: 'trans.institution',
             transChoiceKeyIndex: 1,
             url: route('institution.index'),

@@ -2,44 +2,43 @@
 
 namespace App\Policies\Students;
 
-use App\Enums\Acl\PermissionEnum;
 use App\Models\Users\User;
 
 class PortalPolicy
 {
     public function viewStudentDashboard(User $user): bool
     {
-        return $user->can(PermissionEnum::VIEW_OWN_STUDENT_DASHBOARD);
+        return $user->can('viewOwnDashboard:students');
     }
 
     public function manageStudentPersonalDetails(User $user): bool
     {
-        return $user->can(PermissionEnum::MANAGE_OWN_STUDENT_PERSONAL_DETAILS);
+        return $user->can('manageOwnStudentPersonalDetails:students');
     }
 
     public function manageStudentProgramDetails(User $user): bool
     {
-        return $user->can(PermissionEnum::MANAGE_OWN_STUDENT_PROGRAM_DETAILS);
+        return $user->can('manageOwnStudentProgramDetails:students');
     }
 
     public function manageStudentSponsors(User $user): bool
     {
 
-        return $user->can(PermissionEnum::MANAGE_OWN_STUDENT_SPONSOR_DETAILS);
+        return $user->can('manageOwnStudentSponsorDetails:students');
     }
 
     public function manageStudentContacts(User $user): bool
     {
-        return $user->can(PermissionEnum::MANAGE_OWN_STUDENT_CONTACT_DETAILS);
+        return $user->can('manageOwnStudentContactDetails:students');
     }
 
     public function manageStudentFinancialRecords(User $user): bool
     {
-        return $user->can(PermissionEnum::MANAGE_OWN_STUDENT_FINANCIAL_DETAILS);
+        return $user->can('manageOwnStudentFinancialDetails:students');
     }
 
     public function manageStudentAcademicRecords(User $user): bool
     {
-        return $user->can(PermissionEnum::MANAGE_OWN_STUDENT_ACADEMIC_DETAILS);
+        return $user->can('manageOwnStudentAcademicDetails:students');
     }
 }
