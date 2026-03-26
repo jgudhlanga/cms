@@ -10,6 +10,8 @@ use App\Repositories\Acl\ModuleRepository;
 use App\Repositories\Acl\PermissionRepository;
 use App\Repositories\Acl\RoleGroupRepository;
 use App\Repositories\Acl\RoleRepository;
+use App\Repositories\Finance\FinanceExchangeRateRepository;
+use App\Repositories\Finance\interface\IFinanceExchangeRateRepository;
 use App\Repositories\Institution\ClassListRepository;
 use App\Repositories\Institution\CourseRepository;
 use App\Repositories\Institution\DepartmentApplicationStepRepository;
@@ -120,6 +122,7 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->aclRepositories();
         $this->dropdownRepositories();
         $this->paymentsRepositories();
+        $this->financeRepositories();
         $this->sharedRepositories();
         $this->institutionRepositories();
         $this->userRepositories();
@@ -129,7 +132,7 @@ class RepositoryServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        #
+        //
     }
 
     private function aclRepositories(): void
@@ -172,6 +175,11 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(IPaymentMethodRepository::class, PaymentMethodRepository::class);
     }
 
+    private function financeRepositories(): void
+    {
+        $this->app->bind(IFinanceExchangeRateRepository::class, FinanceExchangeRateRepository::class);
+    }
+
     public function sharedRepositories(): void
     {
         $this->app->bind(IAddressRepository::class, AddressRepository::class);
@@ -212,8 +220,5 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(IAcademicRecordRepository::class, AcademicRecordRepository::class);
     }
 
-    public function academicCalendarRepositories(): void
-    {
-    }
-
+    public function academicCalendarRepositories(): void {}
 }

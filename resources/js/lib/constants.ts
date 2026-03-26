@@ -62,6 +62,7 @@ const APP_MODULE_KEYS = {
     document_types: 'document_types',
     fee_types: 'fee_types',
     fee_structures: 'fee_structures',
+    finance_exchange_rates: 'finance_exchange_rates',
     show_payment_status: 'show_payment_status',
     o_level_subjects: 'o_level_subjects',
     academic_calendars: 'academic_calendars',

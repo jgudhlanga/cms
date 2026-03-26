@@ -2,29 +2,38 @@
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import { AuthObject } from '@/types/data-pagination';
 import { Link } from '@/types/ui';
-import { Head, Link as InertiaLink } from '@inertiajs/vue3';
+import { Head } from '@inertiajs/vue3';
+import { useUtils } from '@/composables/core/useUtils';
+import { IconName, icons } from '@/lib/icons';
+import { ButtonSize } from '@/enums/buttons';
+import { ColorVariant } from '@/enums/colors';
 
 const props = defineProps<{
     auth: AuthObject;
     errors: object;
 }>();
 
-const breadcrumbs: Array<Link> = [{ transKey: 'finance.finance' }];
+const breadcrumbs: Array<Link> = [{ transChoiceKey: 'finance.finance', transChoiceKeyIndex: 1 }];
 const can = props?.auth?.can;
+
+const { navigateTo } = useUtils();
 </script>
 
 <template>
     <Head :title="$tChoice('finance.finance', 1)" />
     <PageContainer :breadcrumbs="breadcrumbs">
-        <div class="flex items-center justify-between">
-            <h2 class="text-lg font-bold">{{ $tChoice('finance.finance', 1) }}</h2>
-            <InertiaLink
+        <div class="flex w-full justify-between">
+            <HeadingSmall :title="$tChoice('finance.finance', 1)" />
+            <BaseButton
                 v-if="can['view:finance-settings']"
-                :href="route('finance.settings')"
-                class="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
+                @click="() => navigateTo(route('finance.settings'))"
+                :title="$tChoice('finance.setting', 2)"
+                :size="ButtonSize.sm"
+                :variant="ColorVariant.primary_outline"
+                classes="rounded-full"
             >
-                {{ $tChoice('finance.setting', 2) }}
-            </InertiaLink>
+                <component :is="icons[IconName.cogs]" />
+            </BaseButton>
         </div>
     </PageContainer>
 </template>

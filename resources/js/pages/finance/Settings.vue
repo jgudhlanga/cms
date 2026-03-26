@@ -16,8 +16,8 @@ const can = props?.auth?.can;
 const { tabs } = useFinanceSettings();
 
 const breadcrumbs: Array<Link> = [
-    { transKey: 'finance.finance', href: route('finance.index') },
-    { transKey: 'finance.setting' },
+    { transChoiceKey: 'finance.finance', transChoiceKeyIndex: 1, href: route('finance.index') },
+    { transChoiceKey: 'finance.setting' },
 ];
 </script>
 

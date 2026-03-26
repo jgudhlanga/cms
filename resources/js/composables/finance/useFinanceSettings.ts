@@ -3,12 +3,8 @@ import { Link } from '@/types/ui';
 export function useFinanceSettings() {
     const tabs: Array<Link> = [
         {
-            transChoiceKey: 'finance.finance',
-            url: route('finance.index'),
-        },
-        {
-            transChoiceKey: 'finance.setting',
-            url: route('finance.settings'),
+            transChoiceKey: 'finance.exchange_rate',
+            url: route('finance.exchange-rates.index'),
         },
     ];
 

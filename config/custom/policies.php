@@ -69,6 +69,11 @@ return [
 
     FinanceSettingsPolicy::class => [
         'viewFinanceSettings',
+        'createFinanceSettings',
+        'updateFinanceSettings',
+        'deleteFinanceSettings',
+        'restoreFinanceSettings',
+        'forceDeleteFinanceSettings',
     ],
 
 ];

@@ -1,5 +1,0 @@
-Given the resources/js/pages/finance/
-1. We need to create finance module
-    1. Create a finance Controller in Controllers/Finance/FinanceController with two methods index and settings
-        - In the Index.vue show a settings button which will redirect to finance settings pages
-        - On the settings page we need to show title buttons as in settings/Index.vue
