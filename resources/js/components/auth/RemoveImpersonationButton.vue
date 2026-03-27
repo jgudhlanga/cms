@@ -11,7 +11,7 @@ const { navigateTo } = useUtils();
         title="Remove Impersonation"
         :size="ButtonSize.xs"
         classes="rounded-full normal-case"
-        :variant="ColorVariant.fuchsia_outline"
+        :variant="ColorVariant.fuchsia"
         @click="navigateTo(route('impersonate.leave'))"
     />
 </template>

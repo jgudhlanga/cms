@@ -63,6 +63,7 @@ export const useUsers = () => {
                         ? actionButton({
                               title: isImpersonating ? 'Switch Impersonation' : 'Impersonate',
                               onClick: () => navigateTo(route('impersonate', { id: row.original.id })),
+                              variant: ColorVariant.success,
                           })
                         : null;
                 },
@@ -77,7 +78,7 @@ export const useUsers = () => {
                         ? actionButton({
                               title: trans_choice('trans.profile', 1),
                               onClick: () => navigateTo(route('students.profile', { id: row.original.id })),
-                              variant: ColorVariant.primary_outline,
+                              variant: ColorVariant.primary,
                           })
                         : null;
                 },
