@@ -8,6 +8,6 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-if (! app()->environment('production')) {
-    Schedule::command('payments:dispatch')->everyTenMinutes()->withoutOverlapping();
-}
+Schedule::command('statements:dispatch-fetch-jobs')->everyTenMinutes()->withoutOverlapping();
+
+Schedule::command('statements:plan-fetch-windows')->dailyAt('00:00')->withoutOverlapping();
