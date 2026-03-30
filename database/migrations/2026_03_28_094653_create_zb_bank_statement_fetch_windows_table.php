@@ -18,7 +18,6 @@ return new class extends Migration
             $table->date('window_end');
             $table->string('status');
             $table->unsignedSmallInteger('attempt_count')->default(0);
-            $table->timestamp('processing_started_at')->nullable();
             $table->timestamp('succeeded_at')->nullable();
             $table->timestamp('failed_at')->nullable();
             $table->text('last_error')->nullable();

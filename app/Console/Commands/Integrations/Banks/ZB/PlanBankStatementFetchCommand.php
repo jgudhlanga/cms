@@ -13,7 +13,7 @@ class PlanBankStatementFetchCommand extends Command
 {
     protected $signature = 'statements:plan-fetch-windows';
 
-    protected $description = 'Insert pending bank statement fetch windows from the plan anchor through today (chunk_days slices); extends the final short slice by one day; skips existing rows (insertOrIgnore)';
+    protected $description = 'Insert pending bank statement fetch windows from the plan anchor through today (chunk_days slices); skips existing rows (insertOrIgnore)';
 
     public function handle(StatementFetchWindowGenerator $generator): int
     {
@@ -95,7 +95,7 @@ class PlanBankStatementFetchCommand extends Command
         if ($inclusiveDays < $chunkDays) {
             $windows[$lastIndex] = [
                 'start' => $last['start'],
-                'end' => $end->addDay()->toDateString(),
+                'end' => $end->toDateString(),
             ];
         }
 

@@ -24,7 +24,6 @@ class ZBBankStatementFetchWindow extends Model
         'window_end',
         'status',
         'attempt_count',
-        'processing_started_at',
         'succeeded_at',
         'failed_at',
         'last_error',
@@ -39,25 +38,9 @@ class ZBBankStatementFetchWindow extends Model
             'status' => ZBBankStatementFetchWindowStatus::class,
             'window_start' => 'date',
             'window_end' => 'date',
-            'processing_started_at' => 'datetime',
             'succeeded_at' => 'datetime',
             'failed_at' => 'datetime',
         ];
-    }
-
-    public static function reclaimStaleProcessing(): int
-    {
-        $minutes = max(1, (int) config('custom.bank-statements.processing_stale_minutes', 45));
-        $threshold = now()->subMinutes($minutes);
-
-        return self::query()
-            ->where('status', ZBBankStatementFetchWindowStatus::Processing)
-            ->whereNotNull('processing_started_at')
-            ->where('processing_started_at', '<=', $threshold)
-            ->update([
-                'status' => ZBBankStatementFetchWindowStatus::Pending->value,
-                'processing_started_at' => null,
-            ]);
     }
 
     protected static function newFactory(): ZBBankStatementFetchWindowFactory

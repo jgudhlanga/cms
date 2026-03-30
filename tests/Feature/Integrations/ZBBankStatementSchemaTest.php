@@ -70,7 +70,6 @@ it('creates zb bank statement fetch windows table with expected columns', functi
         'window_end',
         'status',
         'attempt_count',
-        'processing_started_at',
         'succeeded_at',
         'failed_at',
         'last_error',
@@ -118,7 +117,7 @@ it('maps and upserts statement transactions into zb bank statements', function (
     config()->set('custom.bank-statements.usd.password', 'secret');
 
     Http::fake([
-        'https://bank.example/v1/statements' => Http::sequence()
+        'https://bank.example/v1/statement' => Http::sequence()
             ->push([
                 'transactions' => [
                     [

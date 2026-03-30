@@ -69,7 +69,7 @@ it('bulk inserts using plan_insert_chunk without failing', function () {
         ->toBe(ZBBankStatementFetchWindow::query()->count());
 });
 
-it('extends the final slice by one day when shorter than chunk_days', function () {
+it('does not extend the final slice by one day when shorter than chunk_days', function () {
     $this->travelTo('2026-01-10 12:00:00');
 
     config()->set('custom.bank-statements.chunk_days', 7);
@@ -82,7 +82,7 @@ it('extends the final slice by one day when shorter than chunk_days', function (
         ZBBankStatementFetchWindow::query()
             ->where('account_type', 'usd')
             ->whereDate('window_start', '2026-01-08')
-            ->whereDate('window_end', '2026-01-11')
+            ->whereDate('window_end', '2026-01-10')
             ->where('status', ZBBankStatementFetchWindowStatus::Pending)
             ->exists()
     )->toBeTrue();
