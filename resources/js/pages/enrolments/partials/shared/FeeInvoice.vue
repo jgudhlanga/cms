@@ -12,7 +12,7 @@ const { formatCurrency } = useUtils();
 </script>
 
 <template>
-    <BaseCard title="Invoice" description="What the student should pay" color-variant="red-500">
+    <BaseCard title="Invoice" description="What the student should pay" color-variant="purple-500">
         <div class="flex items-center space-x-3" v-if="tuition">
             <Label>Tuition:</Label>
             <div>{{ `USD${formatCurrency(String(tuition))}` }}</div>

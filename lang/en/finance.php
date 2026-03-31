@@ -10,4 +10,5 @@ return [
     'from' => 'From',
     'to' => 'To',
     'rate' => 'Rate|Rates',
+    "no_receipts_found" => 'No receipts found',
 ];

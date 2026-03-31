@@ -22,7 +22,8 @@ class FinanceReceiptController extends Controller
                 ->orWhere('pipe10_details', 'like', $studentNumberPattern)
                 ->orWhere('transaction_details', 'like', $studentNumberPattern);
         });
-        $receipts = $query->get();
+        
+        $receipts = $query->paginate();
 
         return StudentPaymentReceiptResource::collection($receipts);
     }

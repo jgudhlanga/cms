@@ -2,10 +2,6 @@
 
 namespace App\Console\Commands\Students;
 
-use App\Enums\Institution\GradeEnum;
-use App\Enums\Institution\SubjectEnum;
-use App\Enums\Shared\AcademicLevelEnum;
-use App\Models\Shared\AcademicLevel;
 use App\Models\Students\Student;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
