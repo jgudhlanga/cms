@@ -281,12 +281,7 @@ onMounted(() => {
                     :auto-card-fee="autoCardFee"
                     :part-time-levy="partTimeLevy"
                 />
-                <FeeReceipt
-                    v-if="tuition || autoCardFee || partTimeLevy"
-                    :tuition="tuition"
-                    :auto-card-fee="autoCardFee"
-                    :part-time-levy="partTimeLevy"
-                />
+                <FeeReceipt student-id="application.attriutes.studentId"/>
             </div>
         </div>
     </PageContainer>

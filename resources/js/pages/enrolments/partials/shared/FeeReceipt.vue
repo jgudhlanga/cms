@@ -1,29 +1,27 @@
 <script setup lang="ts">
 import { useUtils } from '@/composables/core/useUtils';
+import { useStudentsFinancials } from '@/composables/finance/useStudentsFinancials';
+import { onMounted } from 'vue';
 
 interface Props {
-    tuition?: string | number;
-    autoCardFee?: string | number;
-    partTimeLevy?: string | number;
+    studentId: string;
 }
-defineProps<Props>();
+const props = defineProps<Props>();
 
 const { formatCurrency } = useUtils();
+const { getStudentFinancialsByStudentNumber, isLoading, studentPaymentReceipts } = useStudentsFinancials();
+
+onMounted(async () => {
+    await getStudentFinancialsByStudentNumber(props.studentId);
+});
+
 </script>
 
 <template>
     <BaseCard title="Receipt" description="What the student has paid" color-variant="green-500">
-        <div class="flex items-center space-x-3" v-if="tuition">
-            <Label>Tuition:</Label>
-            <div>{{ `USD${formatCurrency(String(tuition))}` }}</div>
-        </div>
-        <div class="flex items-center space-x-3" v-if="autoCardFee">
-            <Label>AutoCard fee:</Label>
-            <div>{{ `USD${formatCurrency(String(autoCardFee))}` }}</div>
-        </div>
-        <div class="flex items-center space-x-3" v-if="partTimeLevy">
-            <Label>Part time levy:</Label>
-            <div>{{ `USD${formatCurrency(String(partTimeLevy))}` }}</div>
+        <div class="flex items-center space-x-3">
+            <DataLoadingSpinner v-if="isLoading" />
+            <div v-for="studentPaymentReceipt in studentPaymentReceipts" :key="studentPaymentReceipt.id"></div>
         </div>
     </BaseCard>
 </template>
