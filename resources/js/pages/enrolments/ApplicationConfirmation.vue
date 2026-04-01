@@ -281,7 +281,7 @@ onMounted(() => {
                     :auto-card-fee="autoCardFee"
                     :part-time-levy="partTimeLevy"
                 />
-                <FeeReceipt :student-id="String(application.attributes.studentId)" />
+                <FeeReceipt :student-id="String(application.attributes.studentId)" :enrolment="application" />
             </div>
         </div>
     </PageContainer>

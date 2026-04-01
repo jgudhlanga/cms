@@ -10,6 +10,17 @@ class StudentPaymentReceiptResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
+        $amountCreditInUsd = $this->amountCreditInUsd();
+        $amountDebitInUsd = $this->amountDebitInUsd();
+        $usdConversionRateMetadata = $this->usdConversionRateMetadata();
+        $hasUsdConversion = $usdConversionRateMetadata !== null;
+
+        $isoCurrencyCode = $this->iso_currency_code;
+
+        if ($this->hasZwgCurrencyCode() && ($amountCreditInUsd !== null || $amountDebitInUsd !== null)) {
+            $isoCurrencyCode = 'USD';
+        }
+
         return [
             'type' => 'student-payment-receipt',
             'id' => $this->id,
@@ -24,13 +35,19 @@ class StudentPaymentReceiptResource extends JsonResource
                 'code' => $this->code,
                 'description' => $this->description,
                 'debitCreditFlag' => $this->debit_credit_flag,
-                'amountCredit' => $this->amount_credit,
-                'amountDebit' => $this->amount_debit,
+                'amountCredit' => $amountCreditInUsd,
+                'amountDebit' => $amountDebitInUsd,
+                'usdConversionRate' => $usdConversionRateMetadata['rate'] ?? null,
+                'usdConversionRateLabel' => $usdConversionRateMetadata['label'] ?? null,
+                'usdConversionRateDate' => $usdConversionRateMetadata['date'] ?? null,
+                'originalAmountCredit' => $hasUsdConversion ? $this->amount_credit : null,
+                'originalAmountDebit' => $hasUsdConversion ? $this->amount_debit : null,
+                'originalIsoCurrencyCode' => $hasUsdConversion ? $this->iso_currency_code : null,
                 'clearedRunningBalance' => $this->cleared_running_balance,
                 'blockedBalance' => $this->blocked_balance,
                 'debitLimit' => $this->debit_limit,
                 'creditLimit' => $this->credit_limit,
-                'isoCurrencyCode' => $this->iso_currency_code,
+                'isoCurrencyCode' => $isoCurrencyCode,
                 'accountDescription' => $this->account_description,
                 'ubfullName' => $this->ubfull_name,
                 'pipeCount' => $this->pipe_count,
@@ -58,7 +75,7 @@ class StudentPaymentReceiptResource extends JsonResource
                 'createdAt' => DateHelper::formatDate($this->created_at),
                 'updatedAt' => DateHelper::formatDate($this->updated_at),
                 'deletedAt' => DateHelper::formatDate($this->deleted_at),
-            ]
+            ],
         ];
     }
 }

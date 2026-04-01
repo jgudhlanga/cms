@@ -1,12 +1,20 @@
 <?php
 
 use App\Http\Controllers\Api\V1\Finance\FinanceReceiptController;
+use App\Models\Finance\FinanceExchangeRate;
 use App\Models\Integrations\Banks\ZBBankStatement;
 use App\Models\Students\Student;
 use Illuminate\Http\Request;
 
 it('returns only credit receipts matching student number across supported fields', function () {
     $studentNumber = 'STU-12345';
+
+    FinanceExchangeRate::query()->create([
+        'date' => '2026-03-30',
+        'currency_from' => 'USD',
+        'currency_to' => 'ZWG',
+        'rate' => '26.380300',
+    ]);
 
     $createStatement = function (array $attributes): ZBBankStatement {
         static $sequence = 0;
@@ -31,6 +39,8 @@ it('returns only credit receipts matching student number across supported fields
     ]);
     $pipe5Match = $createStatement([
         'pipe5_details' => 'Ref '.$studentNumber.' hostels',
+        'amount_credit' => '26380.30',
+        'iso_currency_code' => 'ZWG',
     ]);
     $pipe10Match = $createStatement([
         'pipe10_details' => 'Invoice '.$studentNumber.' exam',
@@ -68,6 +78,10 @@ it('returns only credit receipts matching student number across supported fields
     $narrationReceipt = collect($data)->firstWhere('id', $narrationMatch->id);
 
     expect($narrationReceipt)->toMatchArray([
+        'id' => $narrationMatch->id,
+    ]);
+
+    expect($narrationReceipt['attributes'])->toMatchArray([
         'tranNumberAsc' => $narrationMatch->tran_number_asc,
         'tranNumberDesc' => $narrationMatch->tran_number_desc,
         'transactionId' => $narrationMatch->transaction_id,
@@ -75,12 +89,31 @@ it('returns only credit receipts matching student number across supported fields
         'debitCreditFlag' => $narrationMatch->debit_credit_flag,
         'amountCredit' => $narrationMatch->amount_credit,
         'isoCurrencyCode' => $narrationMatch->iso_currency_code,
+        'usdConversionRate' => null,
+        'usdConversionRateLabel' => null,
+        'usdConversionRateDate' => null,
+        'originalAmountCredit' => null,
+        'originalAmountDebit' => null,
+        'originalIsoCurrencyCode' => null,
         'pipe1Details' => $narrationMatch->pipe1_details,
     ]);
 
-    expect(array_key_exists('transactionDate', $narrationReceipt))->toBeTrue();
-    expect(array_key_exists('transactionDetails', $narrationReceipt))->toBeTrue();
-    expect(array_key_exists('createdAt', $narrationReceipt))->toBeTrue();
-    expect(array_key_exists('updatedAt', $narrationReceipt))->toBeTrue();
-    expect(array_key_exists('deletedAt', $narrationReceipt))->toBeTrue();
+    $pipe5Receipt = collect($data)->firstWhere('id', $pipe5Match->id);
+
+    expect($pipe5Receipt['attributes'])->toMatchArray([
+        'amountCredit' => '1000.00',
+        'isoCurrencyCode' => 'USD',
+        'usdConversionRate' => '26.380300',
+        'usdConversionRateLabel' => 'ZWG/USD @ 26.380300',
+        'usdConversionRateDate' => '2026-03-30',
+        'originalAmountCredit' => '26380.30',
+        'originalAmountDebit' => null,
+        'originalIsoCurrencyCode' => 'ZWG',
+    ]);
+
+    expect(array_key_exists('transactionDate', $narrationReceipt['attributes']))->toBeTrue();
+    expect(array_key_exists('transactionDetails', $narrationReceipt['attributes']))->toBeTrue();
+    expect(array_key_exists('createdAt', $narrationReceipt['attributes']))->toBeTrue();
+    expect(array_key_exists('updatedAt', $narrationReceipt['attributes']))->toBeTrue();
+    expect(array_key_exists('deletedAt', $narrationReceipt['attributes']))->toBeTrue();
 });

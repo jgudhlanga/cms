@@ -8,7 +8,7 @@ export const useStudentsFinancials = () => {
     const isLoading = ref(false);
     const studentPaymentReceipts = ref<StudentPaymentReceipt[]>([]);
 
-    const getStudentFinancialsByStudentNumber = async (studentId: string) => {
+    const getStudentFinancials = async (studentId: string) => {
         try {
             isLoading.value = true;
             const response = await HttpService.get(route('v1.financials.student.receipts', { student: studentId }));
@@ -20,7 +20,7 @@ export const useStudentsFinancials = () => {
         }
     };
     return {
-        getStudentFinancialsByStudentNumber,
+        getStudentFinancials,
         studentPaymentReceipts,
         isLoading,
     };
