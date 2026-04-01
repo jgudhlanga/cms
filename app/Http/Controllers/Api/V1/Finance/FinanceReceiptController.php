@@ -21,7 +21,7 @@ class FinanceReceiptController extends Controller
                 ->orWhere('pipe5_details', 'like', $studentNumberPattern)
                 ->orWhere('pipe10_details', 'like', $studentNumberPattern)
                 ->orWhere('transaction_details', 'like', $studentNumberPattern);
-        });
+        })->orderByDesc('transaction_date');
         
         $receipts = $query->paginate();
 

@@ -89,11 +89,12 @@ const deduplicateAdjacentPhraseBlocks = (value: string): string => {
 const sanitizeReceiptDescription = (receipt: (typeof parsedReceipts.value)[number]): string => {
     const rawDescription =
         receipt.attributes.narration || receipt.attributes.description || receipt.attributes.transactionDetails || '';
+    const normalizedRawDescription = String(rawDescription).trim();
     const studentName = String(props.enrolment?.attributes?.studentName || '').trim();
     const studentNumber = String(props.enrolment?.attributes?.studentNumber || '').trim();
     const referenceValue = String(receipt.attributes.reference || receipt.attributes.transactionId || '').trim();
 
-    if (!rawDescription) {
+    if (!normalizedRawDescription) {
         return '---';
     }
 
@@ -108,7 +109,7 @@ const sanitizeReceiptDescription = (receipt: (typeof parsedReceipts.value)[numbe
     const firstNamePattern = firstName ? new RegExp(`\\b${escapeRegex(firstName)}\\b`, 'gi') : null;
     const lastNamePattern = lastName ? new RegExp(`\\b${escapeRegex(lastName)}\\b`, 'gi') : null;
 
-    const redactedDescription = rawDescription
+    const redactedDescription = normalizedRawDescription
         .replace(referencePattern ?? /$^/, '')
         .replace(firstToLastSpanPattern ?? /$^/, '')
         .replace(firstNamePattern ?? /$^/, '')
@@ -130,7 +131,7 @@ const sanitizeReceiptDescription = (receipt: (typeof parsedReceipts.value)[numbe
         .replace(/\s{2,}/g, ' ')
         .trim();
 
-    return deduplicatedDescription || '---';
+    return deduplicatedDescription || normalizedRawDescription;
 };
 
 const formatReceiptDate = (value?: string | null): string => {

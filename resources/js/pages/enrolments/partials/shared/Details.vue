@@ -57,6 +57,11 @@ const disabilityStatus = computed(() => {
             <LabelValue :label="$tChoice('trans.intake_period', 1)" :value="application?.attributes?.intakePeriod ?? ''" />
             <LabelValue :label="$tChoice('trans.mode_of_study', 1)" :value="application?.attributes?.modeOfStudy ?? ''" />
             <LabelValue :label="$tChoice('trans.tracking_number', 1)" :value="application?.attributes?.applicationTrackingNumber ?? ''" />
+            <LabelValue
+                    :value-classes="badgeClass"
+                    :label="$tChoice('trans.student_number', 1)"
+                    :value="application?.attributes?.studentNumber ?? '---'"
+                />
         </div>
     </BaseCard>
     <BaseCard :title="$t('trans.o_level_subjects')" v-if="oLevelRequired" description="Provided o level results">
