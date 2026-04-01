@@ -17,14 +17,13 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class DepartmentMetaDataController extends Controller
 {
-    public function __construct(protected IStaffRepository $staffRepository)
-    {
-    }
+    public function __construct(protected IStaffRepository $staffRepository) {}
 
     public function courses(InstitutionDepartment $institutionDepartment): JsonResponse
     {
         $courses = DepartmentCourseResource::collection($institutionDepartment->departmentCourses);
         $departmentCoursesIds = $institutionDepartment->departmentCourses?->pluck('course_id');
+
         return response()->json(compact('courses', 'departmentCoursesIds'));
     }
 
@@ -33,6 +32,7 @@ class DepartmentMetaDataController extends Controller
         $levels = DepartmentLevelResource::collection($institutionDepartment->departmentLevels);
         $departmentLevelsIds = $institutionDepartment?->departmentLevels?->pluck('level_id');
         $showOnCurrentApplicationPeriodIds = $institutionDepartment?->departmentLevels->where('show_on_current_application_period', true)->pluck('level_id');
+
         return response()->json(compact('levels', 'departmentLevelsIds', 'showOnCurrentApplicationPeriodIds'));
     }
 
@@ -58,6 +58,7 @@ class DepartmentMetaDataController extends Controller
             ->when(request('mode_of_study'), function ($query, $modeOfStudyId) {
                 return $query->where('mode_of_study_id', $modeOfStudyId);
             });
+
         return IntakePeriodClassSizeResource::collection($filteredClassSizes);
     }
 
@@ -69,8 +70,8 @@ class DepartmentMetaDataController extends Controller
         // Eager-load relationships to avoid N+1
         $enrolments = $institutionDepartment->enrolments()
             ->with(['departmentCourse', 'departmentLevel.level'])
-            ->when($intakePeriodId, fn($q) => $q->where('intake_period_id', $intakePeriodId))
-            ->when($modeOfStudyId, fn($q) => $q->where('mode_of_study_id', $modeOfStudyId))
+            ->when($intakePeriodId, fn ($q) => $q->where('intake_period_id', $intakePeriodId))
+            ->when($modeOfStudyId, fn ($q) => $q->where('mode_of_study_id', $modeOfStudyId))
             ->get();
 
         // Group by department_course_id
@@ -80,7 +81,10 @@ class DepartmentMetaDataController extends Controller
             // Group within each course by department_level_id
             $levels = $courseGroup->groupBy('department_level_id')->map(function ($levelGroup) {
                 $level = $levelGroup->first()->departmentLevel;
-                if (!$level) return null;
+                if (! $level) {
+                    return null;
+                }
+
                 return [
                     'departmentLevelId' => $level->id,
                     'levelName' => $level->level->name ?? null,
@@ -95,6 +99,7 @@ class DepartmentMetaDataController extends Controller
                 'levels' => $levels,
             ];
         })->values(); // reset numeric key
+
         return response()->json($grouped);
     }
 
@@ -107,8 +112,8 @@ class DepartmentMetaDataController extends Controller
         $enrolments = $institutionDepartment->enrolments()
             ->join('class_lists', 'student_programs.id', '=', 'class_lists.student_program_id')
             ->with(['departmentCourse', 'departmentLevel.level'])
-            ->when($intakePeriodId, fn($q) => $q->where('intake_period_id', $intakePeriodId))
-            ->when($modeOfStudyId, fn($q) => $q->where('mode_of_study_id', $modeOfStudyId))
+            ->when($intakePeriodId, fn ($q) => $q->where('intake_period_id', $intakePeriodId))
+            ->when($modeOfStudyId, fn ($q) => $q->where('mode_of_study_id', $modeOfStudyId))
             ->whereIn('class_lists.type', [$type])
             ->get();
         // Group by department_course_id
@@ -117,13 +122,17 @@ class DepartmentMetaDataController extends Controller
             // Group within each course by department_level_id
             $levels = $courseGroup->groupBy('department_level_id')->map(function ($levelGroup) {
                 $level = $levelGroup->first()->departmentLevel;
-                if (!$level) return null;
+                if (! $level) {
+                    return null;
+                }
+
                 return [
                     'departmentLevelId' => $level->id,
                     'levelName' => $level->level->name ?? null,
                     'enrolmentsCount' => $levelGroup->count(),
                 ];
-            })->values(); // reset numeric keys
+            })->filter()->values(); // remove nulls, then reset numeric keys
+
             return [
                 'institutionDepartmentId' => $institutionDepartment->id,
                 'departmentCourseId' => $course->id,
@@ -131,6 +140,7 @@ class DepartmentMetaDataController extends Controller
                 'levels' => $levels,
             ];
         })->values(); // reset numeric keys
+
         return response()->json($grouped);
     }
 }

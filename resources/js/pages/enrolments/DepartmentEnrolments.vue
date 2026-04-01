@@ -42,7 +42,12 @@ const loadClassLists = async () => {
     const intakePeriodId = queryParams['intake_period_id'] ?? intakePeriod.value?.value.toString();
     const modeOfStudyId = queryParams['mode_of_study_id'] ?? modeOfStudy.value?.value.toString();
     classLists.value = await getData(
-        `api/v1/departments/${institutionDepartmentId}/class-lists?intake_period_id=${intakePeriodId}&mode_of_study_id=${modeOfStudyId}&type=${queryParams['type']}`,
+        route('v1.department-metadata.class-lists', {
+            institution_department: institutionDepartmentId,
+            intake_period_id: intakePeriodId,
+            mode_of_study_id: modeOfStudyId,
+            type: queryParams['type'],
+        }),
         () => trans_choice('trans.enrolment', 2),
     );
 };
