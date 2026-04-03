@@ -6,6 +6,7 @@ use App\Enums\Acl\RoleEnum;
 use App\Http\Resources\Users\UserResource;
 use App\Models\Users\User;
 use App\Support\Acl\PermissionRegistry;
+use App\Support\AppVersion;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Inertia\Middleware;
@@ -50,6 +51,7 @@ class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'name' => config('app.name'),
+            'appVersion' => app(AppVersion::class)->resolve(),
             // 'quote' => ['message' => trim($message), 'author' => trim($author)],
             'auth' => [
                 'user' => $user ? new UserResource($user) : null,

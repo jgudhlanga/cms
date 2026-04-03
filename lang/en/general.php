@@ -1,5 +1,7 @@
 <?php
+
 return [
+    'version_label' => 'Ver:',
     'note' => 'Note|Notes',
     'remarks' => 'Remarks',
     'apply_now' => 'Apply now',

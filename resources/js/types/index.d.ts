@@ -13,6 +13,7 @@ export type PageModule = {
 };
 
 export type PageProps<T extends Record<string, unknown> = Record<string, unknown>> = T & {
+    appVersion: string;
     auth: {
         user: User;
         can: any;
