@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use Database\Seeders\AcademicCalendars\AcademicCalendarOptionSeeder;
+use Database\Seeders\AcademicCalendars\ClassMetaDataTypeSeeder;
 use Database\Seeders\Acl\ModulesTableSeeder;
 use Database\Seeders\Acl\PermissionsTableSeeder;
 use Database\Seeders\Acl\RolesTableSeeder;
@@ -20,6 +21,7 @@ class DeploymentSeeder extends Seeder
             PermissionsTableSeeder::class,
             RolesTableSeeder::class,
             AcademicCalendarOptionSeeder::class,
+            ClassMetaDataTypeSeeder::class,
         ]);
     }
 }
