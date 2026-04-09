@@ -498,4 +498,5 @@ return [
     "enrolment_requirements" => "Enrolment requirements",
     "disability" => "Disability?",
     "phone" => "Phone|Phones",
+    "filter" => "Filter|Filters",
 ];

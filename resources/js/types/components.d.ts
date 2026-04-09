@@ -50,6 +50,7 @@ declare module 'vue' {
     AvatarRoot: typeof import('./../components/ui/avatar/AvatarRoot.vue')['default']
     AvatarTitleList: typeof import('./../components/core/util/AvatarTitleList.vue')['default']
     BackButton: typeof import('./../components/core/button/BackButton.vue')['default']
+    BackNavigationButton: typeof import('./../components/core/button/BackNavigationButton.vue')['default']
     Badge: typeof import('./../components/ui/badge/Badge.vue')['default']
     BaseAccordion: typeof import('./../components/core/accordion/BaseAccordion.vue')['default']
     BaseAlert: typeof import('./../components/core/alert/BaseAlert.vue')['default']

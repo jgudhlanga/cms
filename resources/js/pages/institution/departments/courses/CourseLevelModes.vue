@@ -74,7 +74,7 @@ const updateCourse = () => {
 
 <template>
     <Head :title="`${$tChoice('trans.department', 1)} ${$tChoice('trans.course', 1)}`" />
-    <PageContainer :breadcrumbs="breadcrumbs">
+    <PageContainer :breadcrumbs="breadcrumbs" :back-url="route('institution-departments.show', getIdParams(institutionDepartment?.attributes?.departmentId.toString() ?? ''))">
         <form @submit.prevent="() => updateCourse()" class="flex flex-col">
             <BaseCard :title="`${$t('trans.config')} ${$tChoice('trans.course', 1)} ${$tChoice('general.mode', 2)}`">
                 <template v-if="departmentLevels && departmentLevels.length > 0">

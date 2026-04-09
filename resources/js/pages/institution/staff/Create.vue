@@ -25,7 +25,7 @@ const breadcrumbs: Array<Link> = [
 
 <template>
     <Head :title="$t('trans.create_staff')" />
-    <PageContainer :breadcrumbs="breadcrumbs">
+    <PageContainer :breadcrumbs="breadcrumbs" :back-url="route('institution-departments.show', institutionDepartmentId)">
         <StaffForm :department="department" />
     </PageContainer>
 </template>

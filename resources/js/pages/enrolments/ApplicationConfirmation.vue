@@ -269,7 +269,7 @@ onMounted(() => {
                         />
                     </div>
                     <div class="mt-4 flex items-center justify-between">
-                        <BaseButton title="Elevate student to final class list" @click="saveConfirmation" />
+                        <BaseButton :title="$t('enrolment.add_student_to_class')" @click="saveConfirmation" />
                     </div>
                 </BaseCard>
             </div>

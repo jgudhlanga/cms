@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import BaseModal from '@/components/core/modal/BaseModal.vue';
 import { useAcademicCalendars } from '@/composables/academicCalendars/useAcademicCalendars';
-import { closeModal, getModalEdit } from '@/lib/alerts';
+import { getModalEdit } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
 import { clearFormErrors } from '@/lib/forms';
 import { useModalStore } from '@/store/core/useModalStore';
@@ -38,10 +38,17 @@ watch(modals!, () => {
 });
 
 const submitForm = () => {
-    storePerClassSizeConfig(form, props.institutionDepartmentId, String(config.value?.academic_calendar_id ?? ''));
-    closeModal(APP_MODULE_KEYS.student_per_class);
-    // reload the page
-    router.visit(window.location.href, { replace: true, preserveScroll: true });
+    storePerClassSizeConfig(
+        form,
+        props.institutionDepartmentId,
+        String(config.value?.academic_calendar_id ?? ''),
+        () => {
+            router.reload({
+                preserveState: true,
+                preserveScroll: true,
+            });
+        },
+    );
 };
 
 </script>

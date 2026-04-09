@@ -78,14 +78,20 @@ export const useAcademicCalendars = () => {
         academicCalendars.value = data.value;
     };
 
-    const storePerClassSizeConfig = (form: InertiaForm<any>, institutionDepartmentId: string, academicCalendarId: string) => {
+    const storePerClassSizeConfig = (
+        form: InertiaForm<any>,
+        institutionDepartmentId: string,
+        academicCalendarId: string,
+        onSuccess?: () => void,
+    ) => {
         form.post(route('academic-calendars.classes-config.per-class-size.store', {
             institution_department: institutionDepartmentId,
             academic_calendar: academicCalendarId
         }), {
             onSuccess: () => {
                 successAlert('Academic calendar successfully config successfully saved');
-                closeModal(APP_MODULE_KEYS.academic_calendars);
+                closeModal(APP_MODULE_KEYS.student_per_class);
+                onSuccess?.();
             },
             onError: (errors: any) => {
                 if (Object.keys(errors).length) {

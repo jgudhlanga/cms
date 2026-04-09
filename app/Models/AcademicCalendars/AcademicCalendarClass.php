@@ -8,6 +8,7 @@ use App\Traits\Paginatable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
@@ -15,15 +16,22 @@ use Spatie\Activitylog\Traits\LogsActivity;
 /**
  * @mixin Builder
  */
-class AcademicCalandarClass extends Model
+class AcademicCalendarClass extends Model
 {
     use BelongsToTenant, Filterable, LogsActivity,Paginatable, SoftDeletes;
 
-    protected $fillable = ['tenant_id', 'academic_calendar_class_config_id', 'name', 'description'];
+    protected $table = 'academic_calandar_classes';
 
-    public function academicCalendarClassConfig(): BelongsTo
+    protected $fillable = ['tenant_id', 'class_config_id', 'name', 'description'];
+
+    public function classConfig(): BelongsTo
     {
-        return $this->belongsTo(AcademicCalendarClassConfig::class);
+        return $this->belongsTo(ClassConfig::class, 'class_config_id');
+    }
+
+    public function studentPrograms(): HasMany
+    {
+        return $this->hasMany(AcademicCalendarStudentProgram::class, 'academic_calendar_class_id');
     }
 
     public function getActivitylogOptions(): LogOptions

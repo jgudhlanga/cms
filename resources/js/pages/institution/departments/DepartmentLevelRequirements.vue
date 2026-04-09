@@ -165,7 +165,7 @@ const onInputOtherSubjectsCount = () => {
 
 <template>
     <Head :title="$t('trans.enrolment_requirements')" />
-    <PageContainer :breadcrumbs="breadcrumbs">
+    <PageContainer :breadcrumbs="breadcrumbs" :back-url="route('institution-departments.show', getIdParams(institutionDepartment?.attributes?.departmentId.toString() ?? ''))">
         <form @submit.prevent="() => updateLevel()" class="flex flex-col">
             <div class="flex flex-col">
                 <div class="flex flex-col space-y-3">

@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { useAcademicCalendars } from '@/composables/academicCalendars/useAcademicCalendars';
-import { useUtils } from '@/composables/core/useUtils';
 import { useModeOfStudy } from '@/composables/institution/useModeOfStudy';
 import { useServerSide } from '@/composables/shared/useServerSide';
 import { ButtonSize } from '@/enums/buttons';
@@ -28,18 +27,60 @@ const { isLoading: modesOfStudyLoading, listModesOfStudy, modesOfStudy } = useMo
 
 const classStates = ref<DepartmentCourseClassCount[] | []>([]);
 
+const getSelectedAcademicCalendarFromUrl = (): SelectOption | null => {
+    const selectedAcademicCalendarId = Number(new URL(window.location.href).searchParams.get('academic_calendar'));
+    const selectedAcademicCalendar = academicCalendars.value?.find((row) => Number(row.id) === selectedAcademicCalendarId) ?? null;
+
+    if (!selectedAcademicCalendar) {
+        return null;
+    }
+
+    return {
+        value: Number(selectedAcademicCalendar.id),
+        label: `${selectedAcademicCalendar.attributes.name} ${selectedAcademicCalendar.attributes.calendarYear}`,
+    };
+};
+
+const getSelectedModeOfStudyFromUrl = (): SelectOption | null => {
+    const selectedModeOfStudyId = Number(new URL(window.location.href).searchParams.get('mode_of_study_id'));
+    const selectedModeOfStudy = modesOfStudy.value?.find((row) => Number(row.id) === selectedModeOfStudyId) ?? null;
+
+    if (!selectedModeOfStudy) {
+        return null;
+    }
+
+    return {
+        value: Number(selectedModeOfStudy.id),
+        label: selectedModeOfStudy.attributes.name,
+    };
+};
+
+const syncFiltersToUrl = (): void => {
+    const currentUrl = new URL(window.location.href);
+
+    currentUrl.searchParams.set('academic_calendar', String(academicCalendar.value?.value ?? ''));
+    currentUrl.searchParams.set('mode_of_study_id', String(modeOfStudy.value?.value ?? ''));
+
+    window.history.replaceState({}, '', currentUrl.toString());
+};
+
 onMounted(async () => {
     await listAcademicCalendars();
     await listModesOfStudy();
-    const academicCalendarOption = academicCalendars.value?.[0] ?? null;
-    const modeOption = modesOfStudy.value?.filter((row: ModeOfStudy) => row.attributes.name.toLowerCase() == 'full time')[0] ?? null;
-    academicCalendar.value = academicCalendarOption
+    const defaultAcademicCalendarOption = academicCalendars.value?.[0] ?? null;
+    const defaultModeOption = modesOfStudy.value?.filter((row: ModeOfStudy) => row.attributes.name.toLowerCase() === 'full time')[0] ?? null;
+
+    const defaultAcademicCalendar = defaultAcademicCalendarOption
         ? {
-              value: Number(academicCalendarOption.id),
-              label: `${academicCalendarOption.attributes.name} ${academicCalendarOption.attributes.calendarYear}`,
+              value: Number(defaultAcademicCalendarOption.id),
+              label: `${defaultAcademicCalendarOption.attributes.name} ${defaultAcademicCalendarOption.attributes.calendarYear}`,
           }
         : null;
-    modeOfStudy.value = modeOption ? { value: Number(modeOption.id), label: modeOption.attributes.name } : null;
+    const defaultModeOfStudy = defaultModeOption ? { value: Number(defaultModeOption.id), label: defaultModeOption.attributes.name } : null;
+
+    academicCalendar.value = getSelectedAcademicCalendarFromUrl() ?? defaultAcademicCalendar;
+    modeOfStudy.value = getSelectedModeOfStudyFromUrl() ?? defaultModeOfStudy;
+    syncFiltersToUrl();
 
     await loadClassConfigs();
 });
@@ -59,6 +100,7 @@ const loadClassConfigs = async () => {
     );
 };
 const handleSelectionChange = async () => {
+    syncFiltersToUrl();
     await loadClassConfigs();
 };
 

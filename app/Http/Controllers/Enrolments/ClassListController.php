@@ -46,9 +46,7 @@ use Throwable;
 
 class ClassListController extends Controller
 {
-    public function __construct(protected IClassListRepository $repository, protected DepartmentEnrolmentService $departmentEnrolmentService)
-    {
-    }
+    public function __construct(protected IClassListRepository $repository, protected DepartmentEnrolmentService $departmentEnrolmentService) {}
 
     public function store(ClassListRequest $request)
     {
@@ -97,12 +95,12 @@ class ClassListController extends Controller
                 $details->department,
                 $details->level,
                 $details->course)->withoutDelay();
+
             return back()->with('success', 'Class lists created successfully.');
         } catch (Throwable $e) {
             return back()->with('error', 'An error occurred while creating class lists. All changes have been rolled back.');
         }
     }
-
 
     /**
      * Build an array of ClassListDto objects.
@@ -125,7 +123,7 @@ class ClassListController extends Controller
         ];
 
         return array_map(
-            fn($id) => new ClassListDto(
+            fn ($id) => new ClassListDto(
                 student_program_id: $id,
                 type: $type,
                 attributes: $defaultAttributes
@@ -153,7 +151,6 @@ class ClassListController extends Controller
             });
         });
     }
-
 
     protected function getClassEntryDetails(int $classListId)
     {
@@ -184,13 +181,13 @@ class ClassListController extends Controller
     {
         try {
             $type = $request->input('type', 'provisional');
-            # Get class list
+            // Get class list
             $entry = ClassList::where('student_program_id', $studentProgram->id)->first();
-            if (!$entry) {
+            if (! $entry) {
                 return back()->with('error', 'Class list entry not found for the specified student program.');
             }
 
-            # Update class list entry only if identity_confirmed  disability_confirmed names_confirmed are true
+            // Update class list entry only if identity_confirmed  disability_confirmed names_confirmed are true
             $entry->attributes = array_merge($entry->attributes ?? [], [
                 'identity_confirmed' => $request->boolean('identity_confirmed'),
                 'disability_confirmed' => $request->boolean('disability_confirmed'),
@@ -205,7 +202,7 @@ class ClassListController extends Controller
                 'original_national_identity_confirmed' => $request->boolean('original_national_identity_confirmed'),
                 'original_education_certificates_confirmed' => $request->boolean('original_education_certificates_confirmed'),
             ]);
-            # Now check actual stored values, not request only
+            // Now check actual stored values, not request only
             if (
                 $entry->attributes['identity_confirmed'] &&
                 $entry->attributes['disability_confirmed'] &&
@@ -213,14 +210,14 @@ class ClassListController extends Controller
             ) {
                 $entry->type = ($type === 'provisional' || $type === 'waiting') ? ClassListTypeEnum::VERIFIED->value : ClassListTypeEnum::FINAL->value;
                 $entry->save();
-                # Generate student number
+                // Generate student number
                 $studentNumber = EnrolmentHelper::resolveStudentNumber($studentProgram);
                 $student = $studentProgram->student;
                 $student->fresh()->update([
                     'student_number' => $studentNumber,
                     'student_number_generated' => true,
                 ]);
-                # Change student application status to accepted
+                // Change student application status to accepted
                 $step = WorkflowStep::where('slug', WorkflowStepEnum::ACCEPTED->slug())->first();
                 // Send email with offer letter
                 $user = $student->user;
@@ -237,10 +234,11 @@ class ClassListController extends Controller
                 $departmentStep = DepartmentApplicationStep::where('institution_department_id', $studentProgram->institution_department_id)->where('workflow_step_id', $step->id)->first();
                 $studentProgram->update(['department_application_step_id' => $departmentStep->id]);
                 // Create notes / remarks
-                if($request->has('remarks') && !empty($request->remarks)) {
+                if ($request->has('remarks') && ! empty($request->remarks)) {
                     $studentProgram->notes()->create(['title' => 'Application confirmation', 'body' => $request->remarks]);
                 }
             }
+
             return back()->with('success', 'Class list entry updated successfully.');
         } catch (Throwable $e) {
             return back()->with('error', 'An error occurred while updating class list entry. All changes have been rolled back.');
@@ -250,17 +248,18 @@ class ClassListController extends Controller
     public function rejectApplication(StudentProgram $studentProgram)
     {
         try {
-            # get class list
+            // get class list
             $entry = ClassList::where('student_program_id', $studentProgram->id)->first();
-            if (!$entry) {
+            if (! $entry) {
                 return back()->with('error', 'Class list entry not found for the specified student program.');
             }
             $entry->type = ClassListTypeEnum::FAILED->value;
             $entry->save();
-            # change student application status to rejected
+            // change student application status to rejected
             $step = WorkflowStep::where('slug', WorkflowStepEnum::REJECTED->slug())->first();
             $departmentStep = DepartmentApplicationStep::where('institution_department_id', $studentProgram->institution_department_id)->where('workflow_step_id', $step->id)->first();
             $studentProgram->update(['department_application_step_id' => $departmentStep->id]);
+
             return back()->with('success', 'Class list entry updated successfully.');
         } catch (Throwable $e) {
             return back()->with('error', 'An error occurred while updating class list entry. All changes have been rolled back.');
@@ -276,6 +275,7 @@ class ClassListController extends Controller
             ->where('id', '!=', $studentProgram->id)
             ->with(['institutionDepartment', 'departmentLevel.level', 'departmentCourse.course', 'intakePeriod', 'modeOfStudy', 'classList'])
             ->get();
+
         return Inertia::render('enrolments/ApplicationVerification', [
             'application' => EnrolmentResource::make($studentProgram),
             'nextTop' => ClassListNextTopResource::collection($nextTop),
@@ -301,6 +301,7 @@ class ClassListController extends Controller
         $tuition = $feeStructure->local_fca_amount ?? 0;
         $autoCardFee = DepartmentHelper::requiredAutoCardFee($department);
         $partTimeLevy = DepartmentHelper::partTimeLevy($modeOfStudy);
+
         return Inertia::render('enrolments/ApplicationConfirmation', [
             'application' => EnrolmentResource::make($studentProgram),
             'nextTop' => ClassListNextTopResource::collection($nextTop),
@@ -322,8 +323,8 @@ class ClassListController extends Controller
         // ------------------------------------------------------------
         // 1. Resolve static/cached data
         // ------------------------------------------------------------
-        $intakePeriods = cache()->rememberForever('all_intake_periods', fn() => IntakePeriod::orderByDesc('end_date')->get());
-        $modesOfStudy = cache()->rememberForever('all_modes_of_study', fn() => ModeOfStudy::all());
+        $intakePeriods = cache()->rememberForever('all_intake_periods', fn () => IntakePeriod::orderByDesc('end_date')->get());
+        $modesOfStudy = cache()->rememberForever('all_modes_of_study', fn () => ModeOfStudy::all());
 
         $intakePeriod = $intakePeriodId
             ? $intakePeriods->firstWhere('id', $intakePeriodId)
@@ -360,10 +361,6 @@ class ClassListController extends Controller
         ]);
     }
 
-    /**
-     * @param StudentProgram $studentProgram
-     * @return Collection
-     */
     public function getStudent(StudentProgram $studentProgram): Collection
     {
         $studentProgram->load([
@@ -393,6 +390,7 @@ class ClassListController extends Controller
             ->where('sp.department_level_id', $studentProgram->department_level_id)
             ->where('sp.department_course_id', $studentProgram->department_course_id)
             ->where('sp.intake_period_id', $studentProgram->intake_period_id)
+            ->where('sp.mode_of_study_id', $studentProgram->mode_of_study_id)
             ->where('cl.type', $studentProgram->classList->type)
             ->take(5)
             ->get();

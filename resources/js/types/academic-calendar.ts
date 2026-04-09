@@ -67,3 +67,43 @@ export type ClassConfig = {
         modeOfStudy: string | null;
     };
 };
+
+export type AcademicCalendarClassPreviewStudent = {
+    studentProgramId: number;
+    studentId: number;
+    applicationTrackingNumber: string | null;
+    name: string;
+};
+
+export type AcademicCalendarClassPreview = {
+    academicCalendarClassId: number | null;
+    name: string;
+    studentCount: number;
+    students: AcademicCalendarClassPreviewStudent[];
+};
+
+export type AcademicCalendarClassMetadata = {
+    key: string;
+    label: string;
+    value: string;
+};
+
+export type AcademicCalendarClassDetail = {
+    id: number;
+    name: string;
+    description: string | null;
+    studentCount: number;
+    students: AcademicCalendarClassPreviewStudent[];
+    metadata: AcademicCalendarClassMetadata[];
+};
+
+export type AcademicCalendarClassGenerationContext = {
+    institutionDepartmentId: number;
+    academicCalendarId: number;
+    departmentLevelId: number | null;
+    departmentCourseId: number | null;
+    modeOfStudyId: number | null;
+    classConfigId: number | null;
+    studentsPerClass: number | null;
+    finalStudentCount: number;
+};

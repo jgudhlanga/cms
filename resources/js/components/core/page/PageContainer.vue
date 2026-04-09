@@ -12,15 +12,24 @@ import { useInitials } from '@/composables/core/useInitials';
 import { useUtils } from '@/composables/core/useUtils';
 import { PageProps } from '@/types';
 import { BreadcrumbItemInterface } from '@/types/ui';
+import BackNavigationButton from '@/components/core/button/BackNavigationButton.vue';
 import { usePage } from '@inertiajs/vue3';
+import { computed } from 'vue';
 
-defineProps<{
+const props = defineProps<{
     breadcrumbs?: BreadcrumbItemInterface[];
+    backUrl?: string;
 }>();
 const page = usePage<PageProps>();
 const { getInitials } = useInitials();
 const { defaultAvatarImage } = useDefaults();
 const { isItTrue } = useUtils();
+const showBackNavigation = computed((): boolean => {
+    return Boolean(props.backUrl) && (props.breadcrumbs?.length ?? 0) > 1;
+});
+const backNavigationUrl = computed((): string => {
+    return props.backUrl ?? '#';
+});
 </script>
 <template>
     <header
@@ -50,6 +59,9 @@ const { isItTrue } = useUtils();
         </div>
     </header>
     <div class="flex h-full w-full flex-col pb-10">
+        <div class="flex justify-end" v-if="showBackNavigation">
+            <BackNavigationButton :url="backNavigationUrl" />
+        </div>
         <slot />
     </div>
 </template>
