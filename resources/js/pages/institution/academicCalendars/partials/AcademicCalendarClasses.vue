@@ -108,7 +108,7 @@ const calculateClasses = (totalFinalClass: number, studentsPerClass: number) => 
     if (totalFinalClass === 0 || studentsPerClass === 0) {
         return 0;
     }
-    return totalFinalClass / studentsPerClass;
+    return Math.ceil(totalFinalClass / studentsPerClass);
 };
 
 const showConfigModal = (payload: AcademicClassConfigPayload) => {

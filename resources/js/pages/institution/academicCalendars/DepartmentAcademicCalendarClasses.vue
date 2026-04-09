@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Head, Link as InertiaLink, useForm } from '@inertiajs/vue3';
+import { UserIcon, UserRoundIcon } from 'lucide-vue-next';
 
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import { AcademicCalendar, AcademicCalendarClassGenerationContext, AcademicCalendarClassPreview, ClassConfig } from '@/types/academic-calendar';
@@ -49,6 +50,11 @@ const saveClasses = () => {
             institution_department: String(department.id),
             academic_calendar: String(props.academicCalendar.id),
         }),
+        {
+            onSuccess: () => {
+                window.location.reload();
+            },
+        },
     );
 };
 </script>
@@ -86,7 +92,19 @@ const saveClasses = () => {
             <template v-else>
                 <BaseCard v-for="classPreview in previewClasses" :key="classPreview.name" :title="classPreview.name">
                     <div class="flex items-center justify-between gap-4">
-                        <LabelValue :label="$tChoice('trans.student', 2)" :value="String(classPreview.studentCount)" /> 
+                        <div class="flex flex-1 flex-wrap items-center gap-x-8 gap-y-2">
+                            <p class="text-sm text-gray-700">
+                                {{ $tChoice('trans.student', 2) }}: <span class="font-semibold">{{ classPreview.studentCount }}</span>
+                            </p>
+                            <p v-if="classPreview.academicCalendarClassId" class="flex items-center gap-1 text-sm text-gray-700">
+                                <UserIcon class="h-4 w-4 text-blue-600" />
+                                <span class="font-semibold">{{ classPreview.genderCounts?.male ?? 0 }}</span>
+                            </p>
+                            <p v-if="classPreview.academicCalendarClassId" class="flex items-center gap-1 text-sm text-gray-700">
+                                <UserRoundIcon class="h-4 w-4 text-pink-600" />
+                                <span class="font-semibold">{{ classPreview.genderCounts?.female ?? 0 }}</span>
+                            </p>
+                        </div>
                         <InertiaLink
                             v-if="classPreview.academicCalendarClassId"
                             :href="

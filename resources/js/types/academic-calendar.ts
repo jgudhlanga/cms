@@ -72,6 +72,8 @@ export type AcademicCalendarClassPreviewStudent = {
     studentProgramId: number;
     studentId: number;
     applicationTrackingNumber: string | null;
+    studentNumber?: string | null;
+    gender?: string | null;
     name: string;
 };
 
@@ -79,6 +81,11 @@ export type AcademicCalendarClassPreview = {
     academicCalendarClassId: number | null;
     name: string;
     studentCount: number;
+    genderCounts: {
+        male: number;
+        female: number;
+        unknown: number;
+    };
     students: AcademicCalendarClassPreviewStudent[];
 };
 

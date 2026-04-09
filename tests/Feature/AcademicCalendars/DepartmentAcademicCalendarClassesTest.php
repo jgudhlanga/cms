@@ -89,10 +89,10 @@ function buildDepartmentClassContext(): array
     );
 }
 
-function createFinalStudentProgram(array $context, string $email): StudentProgram
+function createFinalStudentProgram(array $context, string $email, string $genderTitle = 'Male'): StudentProgram
 {
     $title = Title::query()->create(['name' => 'Mr '.str($email)->before('@')]);
-    $gender = Gender::query()->create(['title' => 'Male '.str($email)->before('@')]);
+    $gender = Gender::query()->create(['title' => $genderTitle.' '.str($email)->before('@')]);
     $marital = MaritalStatus::query()->create(['title' => 'Single '.str($email)->before('@')]);
     $idType = IdType::query()->create(['name' => 'National ID '.str($email)->before('@')]);
     $studentUser = User::factory()->create([
@@ -154,6 +154,9 @@ test('department classes page returns generation context and preview classes', f
     expect(data_get($page, 'props.previewClasses'))->toHaveCount(2);
     expect(data_get($page, 'props.previewClasses.0.name'))->toBe('Level 1 1');
     expect(data_get($page, 'props.previewClasses.1.name'))->toBe('Level 1 2');
+    expect(data_get($page, 'props.previewClasses.0.genderCounts.male'))->toBeInt();
+    expect(data_get($page, 'props.previewClasses.0.genderCounts.female'))->toBeInt();
+    expect(data_get($page, 'props.previewClasses.0.genderCounts.unknown'))->toBeInt();
 });
 
 test('saving generated classes is idempotent for the same context', function () {
@@ -182,6 +185,106 @@ test('saving generated classes is idempotent for the same context', function () 
 
     expect(DB::table('academic_calandar_classes')->whereNull('deleted_at')->count())->toBe(2);
     expect(DB::table('academic_calendar_student_programs')->whereNull('deleted_at')->count())->toBe(3);
+});
+
+test('saving generated classes balances gender when both genders exist', function () {
+    $context = buildDepartmentClassContext();
+    $context['classConfig']->update(['students_per_class' => 5]);
+
+    foreach (range(1, 6) as $index) {
+        createFinalStudentProgram($context, "male-student-{$index}@example.com", 'Male');
+    }
+
+    foreach (range(1, 5) as $index) {
+        createFinalStudentProgram($context, "female-student-{$index}@example.com", 'Female');
+    }
+
+    $this->actingAs($context['user']);
+
+    $this->post(route('academic-calendars.department-classes.store', [
+        'institution_department' => $context['institutionDepartment']->id,
+        'academic_calendar' => $context['calendar']->id,
+    ]), [
+        'class_config_id' => $context['classConfig']->id,
+        'department_level_id' => $context['departmentLevel']->id,
+        'department_course_id' => $context['departmentCourse']->id,
+        'mode_of_study_id' => $context['modeOfStudy']->id,
+        'students_per_class' => 5,
+    ])->assertSessionHas('success');
+
+    $classes = AcademicCalendarClass::query()
+        ->where('class_config_id', $context['classConfig']->id)
+        ->orderBy('id')
+        ->get();
+
+    expect($classes)->toHaveCount(3);
+
+    foreach ($classes as $class) {
+        $genderCounts = DB::table('academic_calendar_student_programs')
+            ->join('student_programs', 'student_programs.id', '=', 'academic_calendar_student_programs.student_program_id')
+            ->join('students', 'students.id', '=', 'student_programs.student_id')
+            ->join('genders', 'genders.id', '=', 'students.gender_id')
+            ->where('academic_calendar_student_programs.academic_calendar_class_id', $class->id)
+            ->whereNull('academic_calendar_student_programs.deleted_at')
+            ->selectRaw("
+                SUM(CASE WHEN LOWER(genders.title) LIKE 'male%' THEN 1 ELSE 0 END) as male_count,
+                SUM(CASE WHEN LOWER(genders.title) LIKE 'female%' THEN 1 ELSE 0 END) as female_count
+            ")
+            ->first();
+
+        $maleCount = (int) ($genderCounts->male_count ?? 0);
+        $femaleCount = (int) ($genderCounts->female_count ?? 0);
+
+        if ($maleCount > 0 && $femaleCount > 0) {
+            expect(abs($maleCount - $femaleCount))->toBeLessThanOrEqual(1);
+        }
+    }
+
+    expect(DB::table('academic_calendar_student_programs')->whereNull('deleted_at')->count())->toBe(11);
+});
+
+test('saving generated classes works with one available gender', function () {
+    $context = buildDepartmentClassContext();
+
+    foreach (range(1, 5) as $index) {
+        createFinalStudentProgram($context, "single-gender-{$index}@example.com", 'Male');
+    }
+
+    $this->actingAs($context['user']);
+
+    $this->post(route('academic-calendars.department-classes.store', [
+        'institution_department' => $context['institutionDepartment']->id,
+        'academic_calendar' => $context['calendar']->id,
+    ]), [
+        'class_config_id' => $context['classConfig']->id,
+        'department_level_id' => $context['departmentLevel']->id,
+        'department_course_id' => $context['departmentCourse']->id,
+        'mode_of_study_id' => $context['modeOfStudy']->id,
+        'students_per_class' => 2,
+    ])->assertSessionHas('success');
+
+    $classes = AcademicCalendarClass::query()
+        ->where('class_config_id', $context['classConfig']->id)
+        ->orderBy('id')
+        ->get();
+
+    expect($classes)->toHaveCount(3);
+
+    foreach ($classes as $class) {
+        $genderCounts = DB::table('academic_calendar_student_programs')
+            ->join('student_programs', 'student_programs.id', '=', 'academic_calendar_student_programs.student_program_id')
+            ->join('students', 'students.id', '=', 'student_programs.student_id')
+            ->join('genders', 'genders.id', '=', 'students.gender_id')
+            ->where('academic_calendar_student_programs.academic_calendar_class_id', $class->id)
+            ->whereNull('academic_calendar_student_programs.deleted_at')
+            ->selectRaw("
+                SUM(CASE WHEN LOWER(genders.title) LIKE 'male%' THEN 1 ELSE 0 END) as male_count,
+                SUM(CASE WHEN LOWER(genders.title) LIKE 'female%' THEN 1 ELSE 0 END) as female_count
+            ")
+            ->first();
+
+        expect((int) ($genderCounts->female_count ?? 0))->toBe(0);
+    }
 });
 
 test('class detail page returns class metadata and students', function () {
@@ -216,5 +319,9 @@ test('class detail page returns class metadata and students', function () {
     expect(data_get($page, 'props.academicCalendarClass.name'))->toBe($academicCalendarClass->name)
         ->and(data_get($page, 'props.academicCalendarClass.studentCount'))->toBe(2)
         ->and(data_get($page, 'props.academicCalendarClass.students'))->toHaveCount(2)
-        ->and(data_get($page, 'props.academicCalendarClass.metadata'))->not->toBeEmpty();
+        ->and(data_get($page, 'props.academicCalendarClass.metadata'))->not->toBeEmpty()
+        ->and(data_get($page, 'props.course'))->not->toBeNull()
+        ->and(data_get($page, 'props.level'))->not->toBeNull()
+        ->and(data_get($page, 'props.mode'))->not->toBeNull()
+        ->and(data_get($page, 'props.classConfig'))->not->toBeNull();
 });

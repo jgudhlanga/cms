@@ -8,4 +8,6 @@ return [
     'classes_generated_successfully' => 'Academic classes generated successfully.',
     'add_student_to_class' => 'Add student to class',
     'view_class' => 'View class',
+    'male_students' => 'Male students',
+    'female_students' => 'Female students',
 ];
