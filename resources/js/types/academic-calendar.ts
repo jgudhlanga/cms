@@ -44,7 +44,8 @@ export type ClassLevelSummary = {
     levelName: string;
     studentsPerClass: string | number | null;
     classConfigId: string | number | null;
-    totalFinalClass: string | number | null;
+    totalnClass: string | number | null;
+    totalFinalList: string | number | null;
 };
 
 export type AcademicClassConfigPayload = {
@@ -113,4 +114,11 @@ export type AcademicCalendarClassGenerationContext = {
     classConfigId: number | null;
     studentsPerClass: number | null;
     finalStudentCount: number;
+    newFinalStudentCount: number;
+    newStudentGenderCounts: {
+        male: number;
+        female: number;
+        unknown: number;
+    };
+    hasExistingClasses: boolean;
 };

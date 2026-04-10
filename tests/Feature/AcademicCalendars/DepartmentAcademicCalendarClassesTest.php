@@ -10,6 +10,7 @@ use App\Models\Institution\Course;
 use App\Models\Institution\Department;
 use App\Models\Institution\DepartmentCourse;
 use App\Models\Institution\DepartmentLevel;
+use App\Models\Institution\DepartmentLevelCourse;
 use App\Models\Institution\InstitutionDepartment;
 use App\Models\Institution\IntakePeriod;
 use App\Models\Institution\Level;
@@ -48,6 +49,10 @@ function buildDepartmentClassContext(): array
         'tenant_id' => $tenant->id,
         'institution_department_id' => $institutionDepartment->id,
         'level_id' => $level->id,
+    ]);
+    DepartmentLevelCourse::query()->create([
+        'department_course_id' => $departmentCourse->id,
+        'department_level_id' => $departmentLevel->id,
     ]);
     $modeOfStudy = ModeOfStudy::query()->create(['name' => 'Full Time']);
     $intakePeriod = IntakePeriod::query()->create([
@@ -151,12 +156,52 @@ test('department classes page returns generation context and preview classes', f
 
     expect(data_get($page, 'props.generationContext.classConfigId'))->toBe($context['classConfig']->id);
     expect(data_get($page, 'props.generationContext.finalStudentCount'))->toBe(3);
+    expect(data_get($page, 'props.generationContext.newFinalStudentCount'))->toBe(3);
+    expect(data_get($page, 'props.generationContext.hasExistingClasses'))->toBeFalse();
+    expect(data_get($page, 'props.generationContext.newStudentGenderCounts.male'))->toBeInt();
+    expect(data_get($page, 'props.generationContext.newStudentGenderCounts.female'))->toBeInt();
+    expect(data_get($page, 'props.generationContext.newStudentGenderCounts.unknown'))->toBeInt();
     expect(data_get($page, 'props.previewClasses'))->toHaveCount(2);
-    expect(data_get($page, 'props.previewClasses.0.name'))->toBe('Level 1 1');
-    expect(data_get($page, 'props.previewClasses.1.name'))->toBe('Level 1 2');
+    expect(data_get($page, 'props.previewClasses.0.name'))->toBe('Level 1 - Full Time - 1');
+    expect(data_get($page, 'props.previewClasses.1.name'))->toBe('Level 1 - Full Time - 2');
     expect(data_get($page, 'props.previewClasses.0.genderCounts.male'))->toBeInt();
     expect(data_get($page, 'props.previewClasses.0.genderCounts.female'))->toBeInt();
     expect(data_get($page, 'props.previewClasses.0.genderCounts.unknown'))->toBeInt();
+});
+
+test('department academic calendar api returns assigned and ready class counts', function () {
+    $context = buildDepartmentClassContext();
+    createFinalStudentProgram($context, 'api-student-one@example.com');
+    createFinalStudentProgram($context, 'api-student-two@example.com');
+    createFinalStudentProgram($context, 'api-student-three@example.com');
+
+    $this->actingAs($context['user']);
+
+    $apiRoute = route('v1.departments.academic-calendars', [
+        'institution_department' => $context['institutionDepartment']->id,
+    ]);
+    $apiRoute .= '?academic_calendar='.$context['calendar']->id.'&mode_of_study_id='.$context['modeOfStudy']->id;
+
+    $this->getJson($apiRoute)
+        ->assertSuccessful()
+        ->assertJsonPath('0.levels.0.totalnClass', 0)
+        ->assertJsonPath('0.levels.0.totalFinalList', 3);
+
+    $this->post(route('academic-calendars.department-classes.store', [
+        'institution_department' => $context['institutionDepartment']->id,
+        'academic_calendar' => $context['calendar']->id,
+    ]), [
+        'class_config_id' => $context['classConfig']->id,
+        'department_level_id' => $context['departmentLevel']->id,
+        'department_course_id' => $context['departmentCourse']->id,
+        'mode_of_study_id' => $context['modeOfStudy']->id,
+        'students_per_class' => 2,
+    ])->assertSessionHas('success');
+
+    $this->getJson($apiRoute)
+        ->assertSuccessful()
+        ->assertJsonPath('0.levels.0.totalnClass', 3)
+        ->assertJsonPath('0.levels.0.totalFinalList', 3);
 });
 
 test('saving generated classes is idempotent for the same context', function () {
@@ -181,10 +226,123 @@ test('saving generated classes is idempotent for the same context', function () 
     ]);
 
     $this->post($url, $payload)->assertSessionHas('success');
+    $classIdsAfterFirstSave = DB::table('academic_calandar_classes')
+        ->whereNull('deleted_at')
+        ->orderBy('id')
+        ->pluck('id')
+        ->all();
+    $studentProgramToClassMapAfterFirstSave = DB::table('academic_calendar_student_programs')
+        ->whereNull('deleted_at')
+        ->pluck('academic_calendar_class_id', 'student_program_id')
+        ->all();
+
     $this->post($url, $payload)->assertSessionHas('success');
+    $classIdsAfterSecondSave = DB::table('academic_calandar_classes')
+        ->whereNull('deleted_at')
+        ->orderBy('id')
+        ->pluck('id')
+        ->all();
+    $studentProgramToClassMapAfterSecondSave = DB::table('academic_calendar_student_programs')
+        ->whereNull('deleted_at')
+        ->pluck('academic_calendar_class_id', 'student_program_id')
+        ->all();
 
     expect(DB::table('academic_calandar_classes')->whereNull('deleted_at')->count())->toBe(2);
     expect(DB::table('academic_calendar_student_programs')->whereNull('deleted_at')->count())->toBe(3);
+    expect($classIdsAfterSecondSave)->toBe($classIdsAfterFirstSave);
+    expect($studentProgramToClassMapAfterSecondSave)->toBe($studentProgramToClassMapAfterFirstSave);
+});
+
+test('saving generated classes adds only newly-finalized students', function () {
+    $context = buildDepartmentClassContext();
+    createFinalStudentProgram($context, 'student-aa1@example.com');
+    createFinalStudentProgram($context, 'student-bb1@example.com');
+    createFinalStudentProgram($context, 'student-cc1@example.com');
+
+    $this->actingAs($context['user']);
+
+    $payload = [
+        'class_config_id' => $context['classConfig']->id,
+        'department_level_id' => $context['departmentLevel']->id,
+        'department_course_id' => $context['departmentCourse']->id,
+        'mode_of_study_id' => $context['modeOfStudy']->id,
+        'students_per_class' => 2,
+    ];
+
+    $url = route('academic-calendars.department-classes.store', [
+        'institution_department' => $context['institutionDepartment']->id,
+        'academic_calendar' => $context['calendar']->id,
+    ]);
+
+    $this->post($url, $payload)->assertSessionHas('success');
+
+    $studentProgramToClassMapAfterFirstSave = DB::table('academic_calendar_student_programs')
+        ->whereNull('deleted_at')
+        ->pluck('academic_calendar_class_id', 'student_program_id')
+        ->all();
+    $classCountAfterFirstSave = DB::table('academic_calandar_classes')
+        ->whereNull('deleted_at')
+        ->count();
+
+    createFinalStudentProgram($context, 'student-dd1@example.com');
+    createFinalStudentProgram($context, 'student-ee1@example.com');
+
+    $this->post($url, $payload)->assertSessionHas('success');
+
+    $studentProgramToClassMapAfterSecondSave = DB::table('academic_calendar_student_programs')
+        ->whereNull('deleted_at')
+        ->pluck('academic_calendar_class_id', 'student_program_id')
+        ->all();
+
+    expect(DB::table('academic_calendar_student_programs')->whereNull('deleted_at')->count())->toBe(5);
+    expect(DB::table('academic_calandar_classes')->whereNull('deleted_at')->count())->toBeGreaterThanOrEqual($classCountAfterFirstSave);
+
+    foreach ($studentProgramToClassMapAfterFirstSave as $studentProgramId => $academicCalendarClassId) {
+        expect($studentProgramToClassMapAfterSecondSave[$studentProgramId] ?? null)->toBe($academicCalendarClassId);
+    }
+
+    $newlyAssignedClassIds = collect($studentProgramToClassMapAfterSecondSave)
+        ->except(array_keys($studentProgramToClassMapAfterFirstSave))
+        ->values();
+
+    expect($newlyAssignedClassIds)->not->toBeEmpty();
+});
+
+test('department classes page shows existing classes when all final students are already assigned', function () {
+    $context = buildDepartmentClassContext();
+    createFinalStudentProgram($context, 'assigned-one@example.com');
+    createFinalStudentProgram($context, 'assigned-two@example.com');
+    createFinalStudentProgram($context, 'assigned-three@example.com');
+
+    $this->actingAs($context['user']);
+
+    $this->post(route('academic-calendars.department-classes.store', [
+        'institution_department' => $context['institutionDepartment']->id,
+        'academic_calendar' => $context['calendar']->id,
+    ]), [
+        'class_config_id' => $context['classConfig']->id,
+        'department_level_id' => $context['departmentLevel']->id,
+        'department_course_id' => $context['departmentCourse']->id,
+        'mode_of_study_id' => $context['modeOfStudy']->id,
+        'students_per_class' => 2,
+    ])->assertSessionHas('success');
+
+    $response = $this->get(route('academic-calendars.department-classes', [
+        'institution_department' => $context['institutionDepartment']->id,
+        'academic_calendar' => $context['calendar']->id,
+        'department_level_id' => $context['departmentLevel']->id,
+        'department_course_id' => $context['departmentCourse']->id,
+        'mode_of_study_id' => $context['modeOfStudy']->id,
+        'class_config_id' => $context['classConfig']->id,
+    ]));
+
+    $response->assertSuccessful();
+    $page = $response->viewData('page');
+
+    expect(data_get($page, 'props.generationContext.newFinalStudentCount'))->toBe(0);
+    expect(data_get($page, 'props.previewClasses'))->toHaveCount(2);
+    expect(data_get($page, 'props.previewClasses.0.academicCalendarClassId'))->toBeInt();
+    expect(data_get($page, 'props.previewClasses.1.academicCalendarClassId'))->toBeInt();
 });
 
 test('saving generated classes balances gender when both genders exist', function () {

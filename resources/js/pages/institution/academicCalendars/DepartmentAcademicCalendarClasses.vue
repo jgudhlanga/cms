@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link as InertiaLink, useForm } from '@inertiajs/vue3';
-import { UserIcon, UserRoundIcon } from 'lucide-vue-next';
+import { UserIcon, UserRoundIcon, UsersIcon } from 'lucide-vue-next';
 
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import { AcademicCalendar, AcademicCalendarClassGenerationContext, AcademicCalendarClassPreview, ClassConfig } from '@/types/academic-calendar';
@@ -26,6 +26,10 @@ const props = defineProps<{
 }>();
 
 const { department, level, course, mode, previewClasses, generationContext } = props;
+const hasNewStudentsToAssign = generationContext.newFinalStudentCount > 0;
+const classActionTitle = hasNewStudentsToAssign && generationContext.hasExistingClasses
+    ? 'enrolment.add_student_to_class'
+    : 'enrolment.generate_classes';
 const breadcrumbs: Array<Link> = [
     { transChoiceKey: 'institution', transChoiceKeyIndex: 1, href: route('institution.index') },
     { transChoiceKey: 'department', href: route('institution-departments.index', { is_academic: department.attributes?.isAcademic }) },
@@ -75,12 +79,30 @@ const saveClasses = () => {
             <div class="flex items-center justify-between">
                 <HeadingSmall :title="`${$t('enrolment.final_enrolments')} (${generationContext.finalStudentCount})`" />
                 <BaseButton
-                    :title="$t('enrolment.generate_classes')"
-                    :disabled="previewClasses.length === 0 || form.processing"
+                    :title="$t(classActionTitle)"
+                    :disabled="!hasNewStudentsToAssign || form.processing"
                     :processing="form.processing"
                     @click="saveClasses"
                     classes="rounded-full"
                 />
+            </div>
+            <div class="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-gray-700">
+                <div class="flex items-center gap-1">
+                    {{ $t('students.not_in_class') }}:
+                    <span class="font-semibold">{{ generationContext.newFinalStudentCount }}</span>
+                </div>
+                <div class="flex items-center gap-1">
+                    <UserIcon class="h-4 w-4 text-blue-600" />
+                    <span class="font-semibold">{{ $tChoice('general.male', 2) }}: {{ generationContext.newStudentGenderCounts.male }}</span>
+                </div>
+                <div class="flex items-center gap-1">
+                    <UserRoundIcon class="h-4 w-4 text-pink-600" />
+                    <span class="font-semibold">{{ $tChoice('general.female', 2) }}: {{ generationContext.newStudentGenderCounts.female }}</span>
+                </div>
+                <div class="flex items-center gap-1 font-medium">
+                    {{ $t('trans.other') }}:
+                    <span class="font-semibold">{{ generationContext.newStudentGenderCounts.unknown }}</span>
+                </div>
             </div>
 
             <BaseAlert
@@ -93,16 +115,17 @@ const saveClasses = () => {
                 <BaseCard v-for="classPreview in previewClasses" :key="classPreview.name" :title="classPreview.name">
                     <div class="flex items-center justify-between gap-4">
                         <div class="flex flex-1 flex-wrap items-center gap-x-8 gap-y-2">
-                            <p class="text-sm text-gray-700">
-                                {{ $tChoice('trans.student', 2) }}: <span class="font-semibold">{{ classPreview.studentCount }}</span>
+                            <p class="flex items-center gap-1 text-sm text-gray-700">
+                                <UsersIcon class="h-4 w-4 text-gray-600" />
+                                <span class="font-semibold">{{ $t('students.class_total') }}: {{ classPreview.studentCount }}</span>
                             </p>
                             <p v-if="classPreview.academicCalendarClassId" class="flex items-center gap-1 text-sm text-gray-700">
                                 <UserIcon class="h-4 w-4 text-blue-600" />
-                                <span class="font-semibold">{{ classPreview.genderCounts?.male ?? 0 }}</span>
+                                <span class="font-semibold">{{ $tChoice('general.male', 2) }}: {{ classPreview.genderCounts?.male ?? 0 }}</span>
                             </p>
                             <p v-if="classPreview.academicCalendarClassId" class="flex items-center gap-1 text-sm text-gray-700">
                                 <UserRoundIcon class="h-4 w-4 text-pink-600" />
-                                <span class="font-semibold">{{ classPreview.genderCounts?.female ?? 0 }}</span>
+                                <span class="font-semibold">{{ $tChoice('general.female', 2) }}: {{ classPreview.genderCounts?.female ?? 0 }}</span>
                             </p>
                         </div>
                         <InertiaLink

@@ -115,13 +115,33 @@ class AcademicCalendarController extends Controller
             (int) $modeOfStudyId
         );
 
+        $assignedStudentProgramIds = $this->resolveAssignedStudentProgramIds($classConfig);
+        $unassignedFinalStudentPrograms = $this->filterUnassignedFinalStudentPrograms($finalStudentPrograms, $assignedStudentProgramIds);
+        $existingClasses = $this->resolveExistingClassesForAllocation($classConfig);
+        $classNumberOffset = $this->resolveClassNumberOffset($existingClasses->pluck('name'), $this->resolveClassNamePrefix($level), $mode);
         $previewClasses = $this->buildPreviewClasses(
-            $finalStudentPrograms,
+            $unassignedFinalStudentPrograms,
             (int) ($classConfig?->students_per_class ?? 0),
             $this->resolveClassNamePrefix($level),
-            $this->resolveExistingClassMap($classConfig)
+            [],
+            $mode,
+            $classNumberOffset
         );
-        $context = $this->buildGenerationContext($institutionDepartment, $academicCalendar, $course, $level, $mode, $classConfig, $finalStudentPrograms);
+        $previewClasses = [
+            ...$this->resolveExistingClassPreviews($classConfig),
+            ...$previewClasses,
+        ];
+        $context = $this->buildGenerationContext(
+            $institutionDepartment,
+            $academicCalendar,
+            $course,
+            $level,
+            $mode,
+            $classConfig,
+            $finalStudentPrograms,
+            $unassignedFinalStudentPrograms,
+            $existingClasses->count() > 0
+        );
 
         return Inertia::render('institution/academicCalendars/DepartmentAcademicCalendarClasses', [
             'department' => InstitutionDepartmentResource::make($institutionDepartment),
@@ -281,40 +301,64 @@ class AcademicCalendarController extends Controller
             (int) $validated['department_course_id'],
             (int) $validated['mode_of_study_id']
         );
-        $previewClasses = $this->buildPreviewClasses(
-            $finalStudentPrograms,
-            (int) $validated['students_per_class'],
-            $this->resolveClassNamePrefix(DepartmentLevel::find((int) $validated['department_level_id']))
-        );
+        $assignedStudentProgramIds = $this->resolveAssignedStudentProgramIds($classConfig);
+        $unassignedFinalStudentPrograms = $this->filterUnassignedFinalStudentPrograms($finalStudentPrograms, $assignedStudentProgramIds);
+        $level = DepartmentLevel::find((int) $validated['department_level_id']);
+        $mode = ModeOfStudy::query()->find((int) $validated['mode_of_study_id']);
+        $existingClasses = $this->resolveExistingClassesForAllocation($classConfig);
         $tenantId = function_exists('tenant') ? tenant('id') : null;
         $tenantId = $tenantId ?? auth()->user()?->tenant_id;
 
-        DB::transaction(function () use ($classConfig, $previewClasses, $tenantId): void {
-            $existingClassIds = AcademicCalendarClass::query()
-                ->where('class_config_id', $classConfig->id)
-                ->pluck('id');
+        DB::transaction(function () use ($classConfig, $unassignedFinalStudentPrograms, $existingClasses, $validated, $level, $mode, $tenantId): void {
+            $remainingStudents = $unassignedFinalStudentPrograms->values();
 
-            if ($existingClassIds->isNotEmpty()) {
-                AcademicCalendarStudentProgram::query()
-                    ->whereIn('academic_calendar_class_id', $existingClassIds)
-                    ->delete();
+            foreach ($existingClasses as $existingClass) {
+                $remainingSeats = (int) $validated['students_per_class'] - (int) $existingClass->student_count;
 
-                AcademicCalendarClassMetaData::query()
-                    ->where('metadatable_type', AcademicCalendarClass::class)
-                    ->whereIn('metadatable_id', $existingClassIds)
-                    ->delete();
+                if ($remainingSeats < 1 || $remainingStudents->isEmpty()) {
+                    continue;
+                }
 
-                AcademicCalendarClass::query()
-                    ->whereIn('id', $existingClassIds)
-                    ->delete();
+                $balancedChunk = $this->splitStudentsIntoBalancedChunks($remainingStudents, $remainingSeats)->first();
+
+                if (! $balancedChunk instanceof Collection || $balancedChunk->isEmpty()) {
+                    continue;
+                }
+
+                foreach ($balancedChunk as $student) {
+                    AcademicCalendarStudentProgram::query()->create([
+                        'tenant_id' => $tenantId,
+                        'student_program_id' => (int) $student->student_program_id,
+                        'academic_calendar_class_id' => (int) $existingClass->id,
+                    ]);
+                }
+
+                $remainingStudents = $this->filterUnassignedFinalStudentPrograms(
+                    $remainingStudents,
+                    $balancedChunk->pluck('student_program_id')->map(fn (mixed $id): int => (int) $id)
+                )->values();
             }
 
-            foreach ($previewClasses as $previewClass) {
+            if ($remainingStudents->isEmpty()) {
+                return;
+            }
+
+            $classNumberOffset = $this->resolveClassNumberOffset($existingClasses->pluck('name'), $this->resolveClassNamePrefix($level), $mode);
+            $newPreviewClasses = $this->buildPreviewClasses(
+                $remainingStudents,
+                (int) $validated['students_per_class'],
+                $this->resolveClassNamePrefix($level),
+                [],
+                $mode,
+                $classNumberOffset
+            );
+
+            foreach ($newPreviewClasses as $previewClass) {
                 $academicClass = AcademicCalendarClass::query()->create([
                     'tenant_id' => $tenantId,
                     'class_config_id' => $classConfig->id,
                     'name' => $previewClass['name'],
-                    'description' => "Auto generated from final class list ({$previewClass['studentCount']} students)",
+                    'description' => "Class - {$previewClass['name']} ({$previewClass['studentCount']} students)",
                 ]);
 
                 foreach ($previewClass['students'] as $student) {
@@ -361,6 +405,7 @@ class AcademicCalendarController extends Controller
                 'student_programs.application_tracking_number',
                 'genders.title as gender_title',
                 'users.first_name',
+                'users.middle_name',
                 'users.last_name',
             ])
             ->orderBy('users.first_name')
@@ -372,20 +417,28 @@ class AcademicCalendarController extends Controller
         Collection $finalStudentPrograms,
         int $studentsPerClass,
         string $classNamePrefix = 'Class',
-        array $existingClassMap = []
+        array $existingClassMap = [],
+        ?ModeOfStudy $mode = null,
+        int $classNumberOffset = 0
     ): array {
         if ($studentsPerClass < 1 || $finalStudentPrograms->isEmpty()) {
             return [];
         }
 
+        $modeName = $mode instanceof ModeOfStudy ? trim((string) ($mode->name ?? '')) : '';
+        $nameBase = $modeName !== ''
+            ? $classNamePrefix.' - '.$modeName
+            : $classNamePrefix;
+
         return $this->splitStudentsIntoBalancedChunks($finalStudentPrograms, $studentsPerClass)
             ->values()
-            ->map(function (Collection $chunk, int $index) use ($classNamePrefix, $existingClassMap): array {
+            ->map(function (Collection $chunk, int $index) use ($nameBase, $existingClassMap, $classNumberOffset): array {
                 $genderCounts = [
                     'male' => 0,
                     'female' => 0,
                     'unknown' => 0,
                 ];
+                $className = $nameBase.' - '.($index + 1 + $classNumberOffset);
 
                 foreach ($chunk as $student) {
                     $normalizedGender = $this->normalizeGenderValue($student->gender_title ?? null);
@@ -400,19 +453,20 @@ class AcademicCalendarController extends Controller
                 }
 
                 return [
-                    'academicCalendarClassId' => $existingClassMap[$classNamePrefix.' '.($index + 1)] ?? null,
-                    'name' => $classNamePrefix.' '.($index + 1),
+                    'academicCalendarClassId' => $existingClassMap[$className] ?? null,
+                    'name' => $className,
                     'studentCount' => $chunk->count(),
                     'genderCounts' => $genderCounts,
                     'students' => $chunk->map(function (mixed $student): array {
                         $firstName = (string) ($student->first_name ?? '');
+                        $middleName = (string) ($student->middle_name ?? '');
                         $lastName = (string) ($student->last_name ?? '');
 
                         return [
                             'studentProgramId' => (int) $student->student_program_id,
                             'studentId' => (int) $student->student_id,
                             'applicationTrackingNumber' => $student->application_tracking_number,
-                            'name' => trim($firstName.' '.$lastName),
+                            'name' => trim($firstName.' '.$middleName.' '.$lastName),
                         ];
                     })->values()->all(),
                 ];
@@ -533,6 +587,52 @@ class AcademicCalendarController extends Controller
             ->all();
     }
 
+    private function resolveExistingClassPreviews(?ClassConfig $classConfig): array
+    {
+        if (! $classConfig instanceof ClassConfig) {
+            return [];
+        }
+
+        return AcademicCalendarClass::query()
+            ->leftJoin('academic_calendar_student_programs', function ($join): void {
+                $join->on('academic_calendar_student_programs.academic_calendar_class_id', '=', 'academic_calandar_classes.id')
+                    ->whereNull('academic_calendar_student_programs.deleted_at');
+            })
+            ->leftJoin('student_programs', 'student_programs.id', '=', 'academic_calendar_student_programs.student_program_id')
+            ->leftJoin('students', 'students.id', '=', 'student_programs.student_id')
+            ->leftJoin('genders', 'genders.id', '=', 'students.gender_id')
+            ->where('academic_calandar_classes.class_config_id', $classConfig->id)
+            ->whereNull('academic_calandar_classes.deleted_at')
+            ->groupBy('academic_calandar_classes.id', 'academic_calandar_classes.name')
+            ->select([
+                'academic_calandar_classes.id',
+                'academic_calandar_classes.name',
+                DB::raw('COUNT(academic_calendar_student_programs.id) as student_count'),
+                DB::raw("SUM(CASE WHEN LOWER(genders.title) LIKE 'male%' THEN 1 ELSE 0 END) as male_count"),
+                DB::raw("SUM(CASE WHEN LOWER(genders.title) LIKE 'female%' THEN 1 ELSE 0 END) as female_count"),
+            ])
+            ->orderBy('academic_calandar_classes.id')
+            ->get()
+            ->map(function (mixed $class): array {
+                $maleCount = (int) ($class->male_count ?? 0);
+                $femaleCount = (int) ($class->female_count ?? 0);
+                $studentCount = (int) ($class->student_count ?? 0);
+
+                return [
+                    'academicCalendarClassId' => (int) $class->id,
+                    'name' => (string) $class->name,
+                    'studentCount' => $studentCount,
+                    'genderCounts' => [
+                        'male' => $maleCount,
+                        'female' => $femaleCount,
+                        'unknown' => max(0, $studentCount - ($maleCount + $femaleCount)),
+                    ],
+                    'students' => [],
+                ];
+            })
+            ->all();
+    }
+
     private function buildGenerationContext(
         InstitutionDepartment $institutionDepartment,
         AcademicCalendar $academicCalendar,
@@ -540,8 +640,28 @@ class AcademicCalendarController extends Controller
         ?DepartmentLevel $level,
         ?ModeOfStudy $mode,
         ?ClassConfig $classConfig,
-        Collection $finalStudentPrograms
+        Collection $finalStudentPrograms,
+        Collection $unassignedFinalStudentPrograms,
+        bool $hasExistingClasses
     ): array {
+        $newStudentGenderCounts = [
+            'male' => 0,
+            'female' => 0,
+            'unknown' => 0,
+        ];
+
+        foreach ($unassignedFinalStudentPrograms as $student) {
+            $normalizedGender = $this->normalizeGenderValue($student->gender_title ?? null);
+
+            if ($normalizedGender === GenderEnum::MALE->value) {
+                $newStudentGenderCounts['male']++;
+            } elseif ($normalizedGender === GenderEnum::FEMALE->value) {
+                $newStudentGenderCounts['female']++;
+            } else {
+                $newStudentGenderCounts['unknown']++;
+            }
+        }
+
         return [
             'institutionDepartmentId' => $institutionDepartment->id,
             'academicCalendarId' => $academicCalendar->id,
@@ -551,6 +671,87 @@ class AcademicCalendarController extends Controller
             'classConfigId' => $classConfig?->id,
             'studentsPerClass' => $classConfig?->students_per_class,
             'finalStudentCount' => $finalStudentPrograms->count(),
+            'newFinalStudentCount' => $unassignedFinalStudentPrograms->count(),
+            'newStudentGenderCounts' => $newStudentGenderCounts,
+            'hasExistingClasses' => $hasExistingClasses,
         ];
+    }
+
+    private function resolveAssignedStudentProgramIds(?ClassConfig $classConfig): Collection
+    {
+        if (! $classConfig instanceof ClassConfig) {
+            return collect();
+        }
+
+        return AcademicCalendarStudentProgram::query()
+            ->join('academic_calandar_classes', 'academic_calandar_classes.id', '=', 'academic_calendar_student_programs.academic_calendar_class_id')
+            ->where('academic_calandar_classes.class_config_id', $classConfig->id)
+            ->pluck('academic_calendar_student_programs.student_program_id')
+            ->map(fn (mixed $id): int => (int) $id)
+            ->values();
+    }
+
+    private function filterUnassignedFinalStudentPrograms(Collection $finalStudentPrograms, Collection $assignedStudentProgramIds): Collection
+    {
+        if ($assignedStudentProgramIds->isEmpty()) {
+            return $finalStudentPrograms->values();
+        }
+
+        $assignedLookup = $assignedStudentProgramIds
+            ->mapWithKeys(fn (int $id): array => [$id => true])
+            ->all();
+
+        return $finalStudentPrograms
+            ->reject(fn (mixed $student): bool => isset($assignedLookup[(int) $student->student_program_id]))
+            ->values();
+    }
+
+    private function resolveExistingClassesForAllocation(?ClassConfig $classConfig): Collection
+    {
+        if (! $classConfig instanceof ClassConfig) {
+            return collect();
+        }
+
+        return AcademicCalendarClass::query()
+            ->leftJoin('academic_calendar_student_programs', function ($join): void {
+                $join->on('academic_calendar_student_programs.academic_calendar_class_id', '=', 'academic_calandar_classes.id')
+                    ->whereNull('academic_calendar_student_programs.deleted_at');
+            })
+            ->where('academic_calandar_classes.class_config_id', $classConfig->id)
+            ->whereNull('academic_calandar_classes.deleted_at')
+            ->groupBy('academic_calandar_classes.id', 'academic_calandar_classes.name')
+            ->select([
+                'academic_calandar_classes.id',
+                'academic_calandar_classes.name',
+                DB::raw('COUNT(academic_calendar_student_programs.id) as student_count'),
+            ])
+            ->orderBy('academic_calandar_classes.id')
+            ->get();
+    }
+
+    private function resolveClassNumberOffset(Collection $existingClassNames, string $classNamePrefix = 'Class', ?ModeOfStudy $mode = null): int
+    {
+        if ($existingClassNames->isEmpty()) {
+            return 0;
+        }
+
+        $modeName = $mode instanceof ModeOfStudy ? trim((string) ($mode->name ?? '')) : '';
+        $nameBase = $modeName !== ''
+            ? $classNamePrefix.' - '.$modeName
+            : $classNamePrefix;
+        $pattern = '/^'.preg_quote($nameBase, '/').'\s-\s(\d+)$/';
+        $highestClassNumber = 0;
+
+        foreach ($existingClassNames as $existingClassName) {
+            $className = (string) $existingClassName;
+
+            if (! preg_match($pattern, $className, $matches)) {
+                continue;
+            }
+
+            $highestClassNumber = max($highestClassNumber, (int) ($matches[1] ?? 0));
+        }
+
+        return $highestClassNumber;
     }
 }

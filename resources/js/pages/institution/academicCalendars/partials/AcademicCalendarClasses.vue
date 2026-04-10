@@ -2,8 +2,6 @@
 import { useAcademicCalendars } from '@/composables/academicCalendars/useAcademicCalendars';
 import { useModeOfStudy } from '@/composables/institution/useModeOfStudy';
 import { useServerSide } from '@/composables/shared/useServerSide';
-import { ButtonSize } from '@/enums/buttons';
-import { ColorVariant } from '@/enums/colors';
 import { openModal } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
 import { AcademicClassConfigPayload, DepartmentCourseClassCount } from '@/types/academic-calendar';
@@ -104,11 +102,19 @@ const handleSelectionChange = async () => {
     await loadClassConfigs();
 };
 
-const calculateClasses = (totalFinalClass: number, studentsPerClass: number) => {
-    if (totalFinalClass === 0 || studentsPerClass === 0) {
+const calculateClasses = (totalnClass: number, studentsPerClass: number) => {
+    if (totalnClass === 0 || studentsPerClass === 0) {
         return 0;
     }
-    return Math.ceil(totalFinalClass / studentsPerClass);
+    return Math.ceil(totalnClass / studentsPerClass);
+};
+
+const getDisplayedTotalFinalList = (totalFinalList: string | number | null, totalnClass: string | number | null): number => {
+    return Number(totalFinalList ?? totalnClass ?? 0);
+};
+
+const getDisplayedStudentsPerClass = (studentsPerClass: string | number | null): number => {
+    return Number(studentsPerClass ?? 0);
 };
 
 const showConfigModal = (payload: AcademicClassConfigPayload) => {
@@ -134,9 +140,9 @@ const showConfigModal = (payload: AcademicClassConfigPayload) => {
                     <thead class="j-thead">
                         <tr class="j-th">
                             <th class="j-th text-left">{{ $tChoice('trans.level', 1) }}</th>
+                            <th class="j-th text-center">{{ $tChoice('academic_calendar.confirmed_student', 2) }}</th>
                             <th class="j-th text-center">{{ $tChoice('academic_calendar.class_unit_size', 1) }}</th>
                             <th class="j-th text-center">{{ $tChoice('trans.class', 2) }}</th>
-                            <th class="j-th w-8 text-center">{{ $tChoice('academic_calendar.setup', 2) }}</th>
                         </tr>
                     </thead>
                     <tbody class="j-tbody">
@@ -148,11 +154,29 @@ const showConfigModal = (payload: AcademicClassConfigPayload) => {
                             </tr>
                             <tr class="j-tr" v-for="(level, index) in stats.levels" :key="index">
                                 <td class="j-td text-left">{{ level.levelName }}</td>
-                                <td class="j-td text-center">{{ level.studentsPerClass }}</td>
+                                <td class="j-td text-center">{{ getDisplayedTotalFinalList(level.totalFinalList, level.totalnClass) }} </td>
+                                <td class="j-td text-center">
+                                    <button
+                                        type="button"
+                                        class="text-primary decoration-persian-200 cursor-pointer underline-offset-4 transition-colors duration-300 ease-out hover:text-accent-foreground"
+                                        @click="
+                                            () =>
+                                                showConfigModal({
+                                                    academic_calendar_id: String(academicCalendar?.value ?? ''),
+                                                    department_level_id: String(level.departmentLevelId ?? ''),
+                                                    department_course_id: String(stats.departmentCourseId ?? ''),
+                                                    mode_of_study_id: String(modeOfStudy?.value ?? ''),
+                                                    students_per_class: String(getDisplayedStudentsPerClass(level.studentsPerClass)),
+                                                })
+                                        "
+                                    >
+                                        {{ getDisplayedStudentsPerClass(level.studentsPerClass) }}
+                                    </button>
+                                </td>
                                 <td class="j-td text-center">
                                     <TextLink
                                         v-if="level.classConfigId !== null"
-                                        :title="String(calculateClasses(Number(level.totalFinalClass), Number(level.studentsPerClass)))"
+                                        :title="String(calculateClasses(Number(level.totalnClass), Number(level.studentsPerClass)))"
                                         :href="route('academic-calendars.department-classes', {
                                             institution_department: institutionDepartmentId,
                                             academic_calendar: String(academicCalendar?.value),
@@ -164,24 +188,6 @@ const showConfigModal = (payload: AcademicClassConfigPayload) => {
                                         classes="size-4 bg-persian-100 rounded-full px-2 py-1 hover:bg-persian-600 hover:text-persian-100"
                                     />  
                                     <span v-else>---</span>
-                                </td>
-                                <td class="j-td text-center">
-                                    <BaseButton
-                                        :size="ButtonSize.xs"
-                                        :variant="ColorVariant.primary_outline"
-                                        classes="rounded-full"
-                                        :title="$t('academic_calendar.config')"
-                                        @click="
-                                            () =>
-                                                showConfigModal({
-                                                    academic_calendar_id: String(academicCalendar?.value) ?? '',
-                                                    department_level_id: String(level.departmentLevelId),
-                                                    department_course_id: stats.departmentCourseId,
-                                                    mode_of_study_id: String(modeOfStudy?.value),
-                                                    students_per_class: String(level.studentsPerClass),
-                                                })
-                                        "
-                                    />
                                 </td>
                             </tr>
                         </template>
