@@ -201,6 +201,7 @@ test('department academic calendar returns totalnClass and totalFinalList counts
     $response->assertJsonFragment([
         'departmentLevelId' => (string) $departmentLevel->id,
         'classConfigId' => $classConfig->id,
+        'classesCount' => 2,
         'totalnClass' => 3,
         'totalFinalList' => 1,
     ]);
@@ -298,6 +299,7 @@ test('department academic calendar returns totalFinalList even when class config
     $response->assertJsonFragment([
         'departmentLevelId' => (string) $departmentLevel->id,
         'classConfigId' => null,
+        'classesCount' => 0,
         'totalnClass' => 0,
         'totalFinalList' => 1,
     ]);
@@ -361,6 +363,7 @@ test('department academic calendar returns zero totalFinalList when class config
     $response->assertJsonFragment([
         'departmentLevelId' => (string) $departmentLevel->id,
         'classConfigId' => null,
+        'classesCount' => 0,
         'totalnClass' => 0,
         'totalFinalList' => 0,
     ]);

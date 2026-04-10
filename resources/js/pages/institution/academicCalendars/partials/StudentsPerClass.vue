@@ -6,7 +6,7 @@ import { APP_MODULE_KEYS } from '@/lib/constants';
 import { clearFormErrors } from '@/lib/forms';
 import { useModalStore } from '@/store/core/useModalStore';
 import { AcademicClassConfigPayload } from '@/types/academic-calendar';
-import { router, useForm } from '@inertiajs/vue3';
+import { useForm } from '@inertiajs/vue3';
 import { ref, watch } from 'vue';
 
 interface Props {
@@ -43,10 +43,7 @@ const submitForm = () => {
         props.institutionDepartmentId,
         String(config.value?.academic_calendar_id ?? ''),
         () => {
-            router.reload({
-                preserveState: true,
-                preserveScroll: true,
-            });
+            window.location.reload();
         },
     );
 };

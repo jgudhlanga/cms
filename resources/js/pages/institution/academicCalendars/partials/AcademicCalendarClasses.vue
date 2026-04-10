@@ -102,13 +102,6 @@ const handleSelectionChange = async () => {
     await loadClassConfigs();
 };
 
-const calculateClasses = (totalnClass: number, studentsPerClass: number) => {
-    if (totalnClass === 0 || studentsPerClass === 0) {
-        return 0;
-    }
-    return Math.ceil(totalnClass / studentsPerClass);
-};
-
 const getDisplayedTotalFinalList = (totalFinalList: string | number | null, totalnClass: string | number | null): number => {
     return Number(totalFinalList ?? totalnClass ?? 0);
 };
@@ -176,7 +169,7 @@ const showConfigModal = (payload: AcademicClassConfigPayload) => {
                                 <td class="j-td text-center">
                                     <TextLink
                                         v-if="level.classConfigId !== null"
-                                        :title="String(calculateClasses(Number(level.totalnClass), Number(level.studentsPerClass)))"
+                                        :title="String(level.classesCount ?? 0)"
                                         :href="route('academic-calendars.department-classes', {
                                             institution_department: institutionDepartmentId,
                                             academic_calendar: String(academicCalendar?.value),

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1\Institution;
 
 use App\Enums\Shared\ClassListTypeEnum;
 use App\Http\Controllers\Controller;
+use App\Models\AcademicCalendars\AcademicCalendarClass;
 use App\Models\AcademicCalendars\ClassConfig;
 use App\Models\Institution\InstitutionDepartment;
 use App\Models\Students\StudentProgram;
@@ -29,6 +30,7 @@ class DepartmentAcademicCalendarController extends Controller
         $academicCalendarId = request()->query('academic_calendar');
         $modeOfStudyId = request()->query('mode_of_study_id');
         $classConfigLookup = [];
+        $classesCountLookup = [];
         $totalnClassLookup = [];
         $totalFinalListLookup = [];
         if ($academicCalendarId && $modeOfStudyId) {
@@ -42,6 +44,20 @@ class DepartmentAcademicCalendarController extends Controller
                     'students_per_class' => $config->students_per_class ?? 0,
                     'id' => $config->id,
                 ];
+            }
+
+            if ($configs->isNotEmpty()) {
+                $countsByConfigId = AcademicCalendarClass::query()
+                    ->whereIn('class_config_id', $configs->pluck('id'))
+                    ->whereNull('deleted_at')
+                    ->select('class_config_id', DB::raw('COUNT(*) as cnt'))
+                    ->groupBy('class_config_id')
+                    ->pluck('cnt', 'class_config_id');
+
+                foreach ($configs as $config) {
+                    $key = "{$config->department_course_id}_{$config->department_level_id}";
+                    $classesCountLookup[$key] = (int) ($countsByConfigId[$config->id] ?? 0);
+                }
             }
 
             $finalClassCounts = ClassConfig::query()
@@ -92,13 +108,13 @@ class DepartmentAcademicCalendarController extends Controller
             }
         }
 
-        $grouped = $institutionDepartment->departmentCourses->map(function ($course) use ($institutionDepartment, $classConfigLookup, $totalnClassLookup, $totalFinalListLookup) {
+        $grouped = $institutionDepartment->departmentCourses->map(function ($course) use ($institutionDepartment, $classConfigLookup, $classesCountLookup, $totalnClassLookup, $totalFinalListLookup) {
             return [
                 'institutionDepartmentId' => $institutionDepartment->id,
                 'departmentCourseId' => (string) $course->id,
                 'courseName' => $course->course->name,
                 'levels' => $course->departmentCourseLevels
-                    ->map(function ($levelCourse) use ($course, $classConfigLookup, $totalnClassLookup, $totalFinalListLookup) {
+                    ->map(function ($levelCourse) use ($course, $classConfigLookup, $classesCountLookup, $totalnClassLookup, $totalFinalListLookup) {
                         $departmentLevel = $levelCourse->departmentLevel;
                         if ($departmentLevel === null) {
                             return null;
@@ -117,6 +133,7 @@ class DepartmentAcademicCalendarController extends Controller
                             'levelName' => $level->name,
                             'studentsPerClass' => $configData['students_per_class'] ?? 0,
                             'classConfigId' => $configData['id'] ?? null,
+                            'classesCount' => $classesCountLookup[$key] ?? 0,
                             'totalnClass' => $totalnClassLookup[$key] ?? 0,
                             'totalFinalList' => $totalFinalListLookup[$key] ?? 0,
                         ];

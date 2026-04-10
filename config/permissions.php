@@ -161,6 +161,7 @@ return [
             'import:academic-calendars',
             'export:academic-calendars',
             'viewAuditTrail:academic-calendars',
+            'update:academic-calendar-student-programs',
         ],
         'shared' => [
             'viewAny:bank-details',

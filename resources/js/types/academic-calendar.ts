@@ -44,6 +44,7 @@ export type ClassLevelSummary = {
     levelName: string;
     studentsPerClass: string | number | null;
     classConfigId: string | number | null;
+    classesCount: number;
     totalnClass: string | number | null;
     totalFinalList: string | number | null;
 };
@@ -94,6 +95,11 @@ export type AcademicCalendarClassMetadata = {
     key: string;
     label: string;
     value: string;
+};
+
+export type AcademicCalendarClassMoveTarget = {
+    id: number;
+    name: string;
 };
 
 export type AcademicCalendarClassDetail = {

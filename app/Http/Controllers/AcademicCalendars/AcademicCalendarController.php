@@ -8,6 +8,7 @@ use App\Enums\Shared\GenderEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AcademicCalendars\AcademicCalendarRequest;
 use App\Http\Requests\AcademicCalendars\ClassConfigRequest;
+use App\Http\Requests\AcademicCalendars\MoveAcademicCalendarClassStudentsRequest;
 use App\Http\Requests\AcademicCalendars\StoreAcademicCalendarClassesRequest;
 use App\Http\Resources\AcademicCalendars\AcademicCalendarOptionResource;
 use App\Http\Resources\AcademicCalendars\AcademicCalendarResource;
@@ -31,10 +32,12 @@ use App\Models\Institution\IntakePeriod;
 use App\Models\Institution\ModeOfStudy;
 use App\Models\Students\StudentProgram;
 use Carbon\Carbon;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
+use Inertia\Response;
 
 class AcademicCalendarController extends Controller
 {
@@ -160,7 +163,7 @@ class AcademicCalendarController extends Controller
         InstitutionDepartment $institutionDepartment,
         AcademicCalendar $academicCalendar,
         AcademicCalendarClass $academicCalendarClass
-    ) {
+    ): Response {
         $this->authorize('viewAny', AcademicCalendar::class);
 
         $academicCalendarClass->loadMissing([
@@ -182,64 +185,20 @@ class AcademicCalendarController extends Controller
         $level = $classConfig->departmentLevel ?? DepartmentLevel::query()->find($classConfig->department_level_id);
         $mode = $classConfig->modeOfStudy ?? ModeOfStudy::query()->find($classConfig->mode_of_study_id);
 
-        $students = AcademicCalendarStudentProgram::query()
-            ->join('student_programs', 'student_programs.id', '=', 'academic_calendar_student_programs.student_program_id')
-            ->join('students', 'students.id', '=', 'student_programs.student_id')
-            ->join('users', 'users.id', '=', 'students.user_id')
-            ->leftJoin('genders', 'genders.id', '=', 'students.gender_id')
-            ->where('academic_calendar_student_programs.academic_calendar_class_id', $academicCalendarClass->id)
-            ->select([
-                'student_programs.id as student_program_id',
-                'student_programs.application_tracking_number',
-                'students.student_number',
-                'users.id as user_id',
-                'genders.title as gender_title',
-                'users.first_name',
-                'users.last_name',
-            ])
-            ->orderBy('users.first_name')
-            ->orderBy('users.last_name')
-            ->get()
-            ->map(function (mixed $student): array {
-                return [
-                    'studentProgramId' => (int) $student->student_program_id,
-                    'studentId' => (int) $student->user_id,
-                    'applicationTrackingNumber' => $student->application_tracking_number,
-                    'studentNumber' => $student->student_number ?: $student->application_tracking_number,
-                    'gender' => $student->gender_title,
-                    'name' => trim(sprintf('%s %s', (string) ($student->first_name ?? ''), (string) ($student->last_name ?? ''))),
-                ];
-            })
-            ->values()
-            ->all();
+        $students = $this->studentsPayloadForAcademicCalendarClass($academicCalendarClass);
+        $metadataTypes = $this->classMetadataTypesForClassView();
+        $metadata = $this->classMetadataPayloadForClass($academicCalendarClass, $metadataTypes);
 
-        $metadataTypes = ClassMetaDataType::query()
-            ->select(['name', 'description'])
+        $moveTargetClasses = AcademicCalendarClass::query()
+            ->where('class_config_id', $classConfig->id)
+            ->where('id', '!=', $academicCalendarClass->id)
+            ->whereNull('deleted_at')
             ->orderBy('name')
-            ->get();
-
-        $metadata = ($metadataTypes->isNotEmpty()
-            ? $metadataTypes
-            : collect(ClassMetaDataTypeEnum::cases())->map(
-                fn (ClassMetaDataTypeEnum $type): ClassMetaDataType => new ClassMetaDataType([
-                    'name' => $type->value,
-                    'description' => $type->label(),
-                ])
-            ))
-            ->map(function (ClassMetaDataType $type) use ($academicCalendarClass): array {
-                $typeId = (int) $type->id;
-                $exists = AcademicCalendarClassMetaData::query()
-                    ->when($typeId > 0, fn ($query) => $query->where('class_metadata_type_id', $typeId))
-                    ->where('metadatable_type', AcademicCalendarClass::class)
-                    ->where('metadatable_id', $academicCalendarClass->id)
-                    ->exists();
-
-                return [
-                    'key' => $type->name,
-                    'label' => $type->description ?: str($type->name)->headline()->toString(),
-                    'value' => $exists ? 'Assigned' : 'Not set',
-                ];
-            })
+            ->get(['id', 'name'])
+            ->map(fn (AcademicCalendarClass $class): array => [
+                'id' => $class->id,
+                'name' => $class->name,
+            ])
             ->values()
             ->all();
 
@@ -250,6 +209,8 @@ class AcademicCalendarController extends Controller
             'level' => DepartmentLevelResource::make($level),
             'mode' => ModeOfStudyResource::make($mode),
             'classConfig' => ClassConfigResource::make($classConfig) ?? null,
+            'canUpdateAcademicCalendarStudentPrograms' => auth()->user()?->can('update:academic-calendar-student-programs') ?? false,
+            'moveTargetClasses' => $moveTargetClasses,
             'academicCalendarClass' => [
                 'id' => $academicCalendarClass->id,
                 'name' => $academicCalendarClass->name,
@@ -259,6 +220,51 @@ class AcademicCalendarController extends Controller
                 'metadata' => $metadata,
             ],
         ]);
+    }
+
+    public function moveDepartmentAcademicCalendarClassStudents(
+        InstitutionDepartment $institutionDepartment,
+        AcademicCalendar $academicCalendar,
+        AcademicCalendarClass $academicCalendarClass,
+        MoveAcademicCalendarClassStudentsRequest $request
+    ): RedirectResponse {
+        $this->authorize('update:academic-calendar-student-programs');
+
+        $academicCalendarClass->loadMissing('classConfig');
+        $classConfig = $academicCalendarClass->classConfig;
+
+        abort_unless(
+            $classConfig instanceof ClassConfig
+            && (int) $classConfig->institution_department_id === (int) $institutionDepartment->id
+            && (int) $classConfig->academic_calendar_id === (int) $academicCalendar->id,
+            404
+        );
+
+        $validated = $request->validated();
+        /** @var array<int, int> $studentProgramIds */
+        $studentProgramIds = array_map('intval', $validated['student_program_ids']);
+        $targetClassId = (int) $validated['target_academic_calendar_class_id'];
+
+        /** @var \Illuminate\Database\Eloquent\Collection<int, AcademicCalendarStudentProgram> $enrollments */
+        $enrollments = AcademicCalendarStudentProgram::query()
+            ->where('academic_calendar_class_id', $academicCalendarClass->id)
+            ->whereIn('student_program_id', $studentProgramIds)
+            ->whereNull('deleted_at')
+            ->get();
+
+        abort_if($enrollments->isEmpty(), 422);
+
+        $this->authorize('update', $enrollments->first());
+
+        DB::transaction(function () use ($enrollments, $targetClassId): void {
+            foreach ($enrollments as $enrollment) {
+                $enrollment->update([
+                    'academic_calendar_class_id' => $targetClassId,
+                ]);
+            }
+        });
+
+        return back()->with('success', __('academic_calendar.move_students_success'));
     }
 
     public function storePerClassSizeConfig(InstitutionDepartment $institutionDepartment, AcademicCalendar $academicCalendar, ClassConfigRequest $request)
@@ -358,7 +364,7 @@ class AcademicCalendarController extends Controller
                     'tenant_id' => $tenantId,
                     'class_config_id' => $classConfig->id,
                     'name' => $previewClass['name'],
-                    'description' => "Class - {$previewClass['name']} ({$previewClass['studentCount']} students)",
+                    'description' => "Class - {$previewClass['name']}",
                 ]);
 
                 foreach ($previewClass['students'] as $student) {
@@ -372,6 +378,90 @@ class AcademicCalendarController extends Controller
         });
 
         return back()->with('success', __('enrolment.classes_generated_successfully'));
+    }
+
+    /**
+     * @return list<array{studentProgramId: int, studentId: int, applicationTrackingNumber: mixed, studentNumber: mixed, gender: mixed, name: string}>
+     */
+    private function studentsPayloadForAcademicCalendarClass(AcademicCalendarClass $academicCalendarClass): array
+    {
+        return AcademicCalendarStudentProgram::query()
+            ->join('student_programs', 'student_programs.id', '=', 'academic_calendar_student_programs.student_program_id')
+            ->join('students', 'students.id', '=', 'student_programs.student_id')
+            ->join('users', 'users.id', '=', 'students.user_id')
+            ->leftJoin('genders', 'genders.id', '=', 'students.gender_id')
+            ->where('academic_calendar_student_programs.academic_calendar_class_id', $academicCalendarClass->id)
+            ->select([
+                'student_programs.id as student_program_id',
+                'student_programs.application_tracking_number',
+                'students.student_number',
+                'users.id as user_id',
+                'genders.title as gender_title',
+                'users.first_name',
+                'users.last_name',
+            ])
+            ->orderBy('users.first_name')
+            ->orderBy('users.last_name')
+            ->get()
+            ->map(function (AcademicCalendarStudentProgram $row): array {
+                return [
+                    'studentProgramId' => (int) $row->student_program_id,
+                    'studentId' => (int) $row->user_id,
+                    'applicationTrackingNumber' => $row->application_tracking_number,
+                    'studentNumber' => $row->student_number ?: $row->application_tracking_number,
+                    'gender' => $row->gender_title,
+                    'name' => trim(sprintf('%s %s', (string) ($row->first_name ?? ''), (string) ($row->last_name ?? ''))),
+                ];
+            })
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @return Collection<int, ClassMetaDataType>
+     */
+    private function classMetadataTypesForClassView(): Collection
+    {
+        $metadataTypes = ClassMetaDataType::query()
+            ->select(['name', 'description'])
+            ->orderBy('name')
+            ->get();
+
+        if ($metadataTypes->isNotEmpty()) {
+            return $metadataTypes;
+        }
+
+        return collect(ClassMetaDataTypeEnum::cases())->map(
+            fn (ClassMetaDataTypeEnum $type): ClassMetaDataType => new ClassMetaDataType([
+                'name' => $type->value,
+                'description' => $type->label(),
+            ])
+        );
+    }
+
+    /**
+     * @param  Collection<int, ClassMetaDataType>  $metadataTypes
+     * @return list<array{key: string, label: string, value: string}>
+     */
+    private function classMetadataPayloadForClass(AcademicCalendarClass $academicCalendarClass, Collection $metadataTypes): array
+    {
+        return $metadataTypes
+            ->map(function (ClassMetaDataType $type) use ($academicCalendarClass): array {
+                $typeId = (int) $type->id;
+                $exists = AcademicCalendarClassMetaData::query()
+                    ->when($typeId > 0, fn ($query) => $query->where('class_metadata_type_id', $typeId))
+                    ->where('metadatable_type', AcademicCalendarClass::class)
+                    ->where('metadatable_id', $academicCalendarClass->id)
+                    ->exists();
+
+                return [
+                    'key' => $type->name,
+                    'label' => $type->description ?: str($type->name)->headline()->toString(),
+                    'value' => $exists ? 'Assigned' : 'Not set',
+                ];
+            })
+            ->values()
+            ->all();
     }
 
     private function resolveFinalStudentPrograms(
@@ -430,8 +520,12 @@ class AcademicCalendarController extends Controller
             ? $classNamePrefix.' - '.$modeName
             : $classNamePrefix;
 
-        return $this->splitStudentsIntoBalancedChunks($finalStudentPrograms, $studentsPerClass)
-            ->values()
+        $chunks = $this->mergeTrailingChunkIfBelowHalf(
+            $this->splitStudentsIntoBalancedChunks($finalStudentPrograms, $studentsPerClass)->values(),
+            $studentsPerClass
+        );
+
+        return $chunks
             ->map(function (Collection $chunk, int $index) use ($nameBase, $existingClassMap, $classNumberOffset): array {
                 $genderCounts = [
                     'male' => 0,
@@ -472,6 +566,36 @@ class AcademicCalendarController extends Controller
                 ];
             })
             ->all();
+    }
+
+    /**
+     * @param  Collection<int, Collection<int, mixed>>  $chunks
+     * @return Collection<int, Collection<int, mixed>>
+     */
+    private function mergeTrailingChunkIfBelowHalf(Collection $chunks, int $studentsPerClass): Collection
+    {
+        $chunks = $chunks->values();
+
+        if ($chunks->count() < 2) {
+            return $chunks;
+        }
+
+        $last = $chunks->last();
+
+        if (! $last instanceof Collection || $last->count() >= ($studentsPerClass / 2)) {
+            return $chunks;
+        }
+
+        $count = $chunks->count();
+        $penultimate = $chunks->get($count - 2);
+
+        if (! $penultimate instanceof Collection) {
+            return $chunks;
+        }
+
+        $merged = $penultimate->merge($last)->values();
+
+        return $chunks->take($count - 2)->push($merged)->values();
     }
 
     private function splitStudentsIntoBalancedChunks(Collection $students, int $studentsPerClass): Collection
