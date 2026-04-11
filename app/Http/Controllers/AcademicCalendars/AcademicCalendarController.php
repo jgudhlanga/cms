@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\AcademicCalendars;
 
-use App\Enums\AcademicCalendars\ClassMetaDataTypeEnum;
 use App\Enums\Shared\ClassListTypeEnum;
 use App\Enums\Shared\GenderEnum;
 use App\Http\Controllers\Controller;
@@ -20,11 +19,9 @@ use App\Http\Resources\Institution\IntakePeriodResource;
 use App\Http\Resources\Institution\ModeOfStudyResource;
 use App\Models\AcademicCalendars\AcademicCalendar;
 use App\Models\AcademicCalendars\AcademicCalendarClass;
-use App\Models\AcademicCalendars\AcademicCalendarClassMetaData;
 use App\Models\AcademicCalendars\AcademicCalendarOption;
 use App\Models\AcademicCalendars\AcademicCalendarStudentProgram;
 use App\Models\AcademicCalendars\ClassConfig;
-use App\Models\AcademicCalendars\ClassMetaDataType;
 use App\Models\Institution\DepartmentCourse;
 use App\Models\Institution\DepartmentLevel;
 use App\Models\Institution\InstitutionDepartment;
@@ -186,8 +183,6 @@ class AcademicCalendarController extends Controller
         $mode = $classConfig->modeOfStudy ?? ModeOfStudy::query()->find($classConfig->mode_of_study_id);
 
         $students = $this->studentsPayloadForAcademicCalendarClass($academicCalendarClass);
-        $metadataTypes = $this->classMetadataTypesForClassView();
-        $metadata = $this->classMetadataPayloadForClass($academicCalendarClass, $metadataTypes);
 
         $moveTargetClasses = AcademicCalendarClass::query()
             ->where('class_config_id', $classConfig->id)
@@ -210,6 +205,7 @@ class AcademicCalendarController extends Controller
             'mode' => ModeOfStudyResource::make($mode),
             'classConfig' => ClassConfigResource::make($classConfig) ?? null,
             'canUpdateAcademicCalendarStudentPrograms' => auth()->user()?->can('update:academic-calendar-student-programs') ?? false,
+            'canUpdateAcademicCalendarClass' => auth()->user()?->can('update', $academicCalendar) ?? false,
             'moveTargetClasses' => $moveTargetClasses,
             'academicCalendarClass' => [
                 'id' => $academicCalendarClass->id,
@@ -217,7 +213,6 @@ class AcademicCalendarController extends Controller
                 'description' => $academicCalendarClass->description,
                 'studentCount' => count($students),
                 'students' => $students,
-                'metadata' => $metadata,
             ],
         ]);
     }
@@ -411,53 +406,6 @@ class AcademicCalendarController extends Controller
                     'studentNumber' => $row->student_number ?: $row->application_tracking_number,
                     'gender' => $row->gender_title,
                     'name' => trim(sprintf('%s %s', (string) ($row->first_name ?? ''), (string) ($row->last_name ?? ''))),
-                ];
-            })
-            ->values()
-            ->all();
-    }
-
-    /**
-     * @return Collection<int, ClassMetaDataType>
-     */
-    private function classMetadataTypesForClassView(): Collection
-    {
-        $metadataTypes = ClassMetaDataType::query()
-            ->select(['name', 'description'])
-            ->orderBy('name')
-            ->get();
-
-        if ($metadataTypes->isNotEmpty()) {
-            return $metadataTypes;
-        }
-
-        return collect(ClassMetaDataTypeEnum::cases())->map(
-            fn (ClassMetaDataTypeEnum $type): ClassMetaDataType => new ClassMetaDataType([
-                'name' => $type->value,
-                'description' => $type->label(),
-            ])
-        );
-    }
-
-    /**
-     * @param  Collection<int, ClassMetaDataType>  $metadataTypes
-     * @return list<array{key: string, label: string, value: string}>
-     */
-    private function classMetadataPayloadForClass(AcademicCalendarClass $academicCalendarClass, Collection $metadataTypes): array
-    {
-        return $metadataTypes
-            ->map(function (ClassMetaDataType $type) use ($academicCalendarClass): array {
-                $typeId = (int) $type->id;
-                $exists = AcademicCalendarClassMetaData::query()
-                    ->when($typeId > 0, fn ($query) => $query->where('class_metadata_type_id', $typeId))
-                    ->where('metadatable_type', AcademicCalendarClass::class)
-                    ->where('metadatable_id', $academicCalendarClass->id)
-                    ->exists();
-
-                return [
-                    'key' => $type->name,
-                    'label' => $type->description ?: str($type->name)->headline()->toString(),
-                    'value' => $exists ? 'Assigned' : 'Not set',
                 ];
             })
             ->values()

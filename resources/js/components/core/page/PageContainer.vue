@@ -59,7 +59,7 @@ const backNavigationUrl = computed((): string => {
         </div>
     </header>
     <div class="flex h-full w-full flex-col pb-10">
-        <div class="flex justify-end" v-if="showBackNavigation">
+        <div class="flex justify-end mb-10" v-if="showBackNavigation">
             <BackNavigationButton :url="backNavigationUrl" />
         </div>
         <slot />

@@ -10,6 +10,10 @@ import { InstitutionDepartment, ModeOfStudy } from '@/types/institution';
 import type { Link } from '@/types/ui';
 import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
+import { errorAlert, successAlert } from '@/lib/alerts';
+import { firstInertiaErrorMessage } from '@/lib/inertia-errors';
+import { trans } from 'laravel-vue-i18n';
+import { computed, toRefs } from 'vue';
 
 const props = defineProps<{
     department: InstitutionDepartment;
@@ -25,38 +29,59 @@ const props = defineProps<{
     errors: object;
 }>();
 
-const { department, level, course, mode, previewClasses, generationContext } = props;
-const hasNewStudentsToAssign = generationContext.newFinalStudentCount > 0;
-const classActionTitle = hasNewStudentsToAssign && generationContext.hasExistingClasses
-    ? 'enrolment.add_student_to_class'
-    : 'enrolment.generate_classes';
-const breadcrumbs: Array<Link> = [
+const { department, academicCalendar, level, course, mode, classConfig, previewClasses, generationContext } = toRefs(props);
+
+const hasNewStudentsToAssign = computed(() => generationContext.value.newFinalStudentCount > 0);
+
+const classActionTitle = computed(() =>
+    hasNewStudentsToAssign.value && generationContext.value.hasExistingClasses
+        ? 'enrolment.add_student_to_class'
+        : 'enrolment.generate_classes',
+);
+
+const breadcrumbs = computed<Array<Link>>(() => [
     { transChoiceKey: 'institution', transChoiceKeyIndex: 1, href: route('institution.index') },
-    { transChoiceKey: 'department', href: route('institution-departments.index', { is_academic: department.attributes?.isAcademic }) },
-    { title: department.attributes.departmentCode, href: route('institution-departments.show', String(department.id)) },
-    { title: level.attributes.level, href: route('institution-departments.show', String(department.id)) },
-    { title: course.attributes.course, href: route('institution-departments.show', String(department.id)) },
-    { title: mode.attributes.name, href: route('institution-departments.show', String(department.id)) },
+    { transChoiceKey: 'department', href: route('institution-departments.index', { is_academic: department.value.attributes?.isAcademic }) },
+    { title: department.value.attributes.departmentCode, href: route('institution-departments.show', String(department.value.id)) },
+    { title: level.value.attributes.level, href: route('institution-departments.show', String(department.value.id)) },
+    { title: course.value.attributes.course, href: route('institution-departments.show', String(department.value.id)) },
+    { title: mode.value.attributes.name, href: route('institution-departments.show', String(department.value.id)) },
     { transChoiceKey: 'class' },
-];
+]);
 
 const form = useForm({
-    class_config_id: generationContext.classConfigId,
-    department_level_id: generationContext.departmentLevelId,
-    department_course_id: generationContext.departmentCourseId,
-    mode_of_study_id: generationContext.modeOfStudyId,
-    students_per_class: generationContext.studentsPerClass,
+    class_config_id: generationContext.value.classConfigId,
+    department_level_id: generationContext.value.departmentLevelId,
+    department_course_id: generationContext.value.departmentCourseId,
+    mode_of_study_id: generationContext.value.modeOfStudyId,
+    students_per_class: generationContext.value.studentsPerClass,
 });
+
+const syncFormDefaultsFromGenerationContext = (): void => {
+    const context = generationContext.value;
+    form.defaults({
+        class_config_id: context.classConfigId,
+        department_level_id: context.departmentLevelId,
+        department_course_id: context.departmentCourseId,
+        mode_of_study_id: context.modeOfStudyId,
+        students_per_class: context.studentsPerClass,
+    });
+    form.reset();
+};
 
 const saveClasses = () => {
     form.post(
         route('academic-calendars.department-classes.store', {
-            institution_department: String(department.id),
-            academic_calendar: String(props.academicCalendar.id),
+            institution_department: String(department.value.id),
+            academic_calendar: String(academicCalendar.value.id),
         }),
         {
             onSuccess: () => {
-                window.location.reload();
+                successAlert(trans('enrolment.classes_generated_successfully'));
+                syncFormDefaultsFromGenerationContext();
+            },
+            onError: (errors) => {
+                errorAlert(firstInertiaErrorMessage(errors, trans('enrolment.classes_generation_failed')));
             },
         },
     );
@@ -133,7 +158,7 @@ const saveClasses = () => {
                             :href="
                                 route('academic-calendars.department-classes.show', {
                                     institution_department: String(department.id),
-                                    academic_calendar: String(props.academicCalendar.id),
+                                    academic_calendar: String(academicCalendar.id),
                                     academic_calendar_class: String(classPreview.academicCalendarClassId),
                                 })
                             "

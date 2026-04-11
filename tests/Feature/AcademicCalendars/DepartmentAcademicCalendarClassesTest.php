@@ -511,7 +511,7 @@ test('saving generated classes works with one available gender', function () {
     }
 });
 
-test('class detail page returns class metadata and students', function () {
+test('class detail page returns students', function () {
     $context = buildDepartmentClassContext();
     createFinalStudentProgram($context, 'student-aa@example.com');
     createFinalStudentProgram($context, 'student-bb@example.com');
@@ -543,7 +543,6 @@ test('class detail page returns class metadata and students', function () {
     expect(data_get($page, 'props.academicCalendarClass.name'))->toBe($academicCalendarClass->name)
         ->and(data_get($page, 'props.academicCalendarClass.studentCount'))->toBe(2)
         ->and(data_get($page, 'props.academicCalendarClass.students'))->toHaveCount(2)
-        ->and(data_get($page, 'props.academicCalendarClass.metadata'))->not->toBeEmpty()
         ->and(data_get($page, 'props.course'))->not->toBeNull()
         ->and(data_get($page, 'props.level'))->not->toBeNull()
         ->and(data_get($page, 'props.mode'))->not->toBeNull()
@@ -658,6 +657,34 @@ test('authorized user can move students to another class in the same config', fu
             ->whereNull('deleted_at')
             ->value('academic_calendar_class_id')
     )->toBe($classB->id);
+
+    $showClassA = $this->get(route('academic-calendars.department-classes.show', [
+        'institution_department' => $context['institutionDepartment']->id,
+        'academic_calendar' => $context['calendar']->id,
+        'academic_calendar_class' => $classA->id,
+    ]));
+
+    $showClassA->assertSuccessful();
+    $pageClassA = $showClassA->viewData('page');
+
+    expect(data_get($pageClassA, 'props.academicCalendarClass.studentCount'))->toBe(1)
+        ->and(data_get($pageClassA, 'props.academicCalendarClass.students'))->toHaveCount(1)
+        ->and(collect(data_get($pageClassA, 'props.academicCalendarClass.students'))->pluck('studentProgramId')->all())
+        ->not->toContain($studentProgramId);
+
+    $showClassB = $this->get(route('academic-calendars.department-classes.show', [
+        'institution_department' => $context['institutionDepartment']->id,
+        'academic_calendar' => $context['calendar']->id,
+        'academic_calendar_class' => $classB->id,
+    ]));
+
+    $showClassB->assertSuccessful();
+    $pageClassB = $showClassB->viewData('page');
+
+    expect(data_get($pageClassB, 'props.academicCalendarClass.studentCount'))->toBe(2)
+        ->and(data_get($pageClassB, 'props.academicCalendarClass.students'))->toHaveCount(2)
+        ->and(collect(data_get($pageClassB, 'props.academicCalendarClass.students'))->pluck('studentProgramId')->all())
+        ->toContain($studentProgramId);
 });
 
 test('user with student program permission but without viewAny academic calendars can move students', function () {
@@ -813,4 +840,167 @@ test('moving students validates target class and enrollment', function () {
         'student_program_ids' => [$studentProgramIdOnB],
         'target_academic_calendar_class_id' => $classB->id,
     ])->assertSessionHasErrors('student_program_ids');
+});
+
+test('authorized user can update academic calendar class name and description', function () {
+    $context = buildDepartmentClassContext();
+    createFinalStudentProgram($context, 'patch-class-a@example.com');
+    createFinalStudentProgram($context, 'patch-class-b@example.com');
+
+    $this->actingAs($context['user']);
+
+    $this->post(route('academic-calendars.department-classes.store', [
+        'institution_department' => $context['institutionDepartment']->id,
+        'academic_calendar' => $context['calendar']->id,
+    ]), [
+        'class_config_id' => $context['classConfig']->id,
+        'department_level_id' => $context['departmentLevel']->id,
+        'department_course_id' => $context['departmentCourse']->id,
+        'mode_of_study_id' => $context['modeOfStudy']->id,
+        'students_per_class' => 2,
+    ])->assertSessionHas('success');
+
+    $academicCalendarClass = AcademicCalendarClass::query()->firstOrFail();
+
+    $updateUrl = route('academic-calendars.department-classes.update', [
+        'institution_department' => $context['institutionDepartment']->id,
+        'academic_calendar' => $context['calendar']->id,
+        'academic_calendar_class' => $academicCalendarClass->id,
+    ]);
+
+    $this->patch($updateUrl, [
+        'name' => 'Renamed class',
+        'description' => 'Updated description line',
+    ])
+        ->assertRedirect()
+        ->assertSessionHas('success');
+
+    $academicCalendarClass->refresh();
+
+    expect($academicCalendarClass->name)->toBe('Renamed class')
+        ->and($academicCalendarClass->description)->toBe('Updated description line');
+
+    $show = $this->get(route('academic-calendars.department-classes.show', [
+        'institution_department' => $context['institutionDepartment']->id,
+        'academic_calendar' => $context['calendar']->id,
+        'academic_calendar_class' => $academicCalendarClass->id,
+    ]));
+
+    $show->assertSuccessful();
+    $page = $show->viewData('page');
+
+    expect(data_get($page, 'props.academicCalendarClass.name'))->toBe('Renamed class')
+        ->and(data_get($page, 'props.academicCalendarClass.description'))->toBe('Updated description line')
+        ->and(data_get($page, 'props.canUpdateAcademicCalendarClass'))->toBeTrue();
+});
+
+test('user without update academic calendar permission cannot update class', function () {
+    $context = buildDepartmentClassContext();
+    createFinalStudentProgram($context, 'patch-forbidden-a@example.com');
+    createFinalStudentProgram($context, 'patch-forbidden-b@example.com');
+
+    $this->actingAs($context['user']);
+
+    $this->post(route('academic-calendars.department-classes.store', [
+        'institution_department' => $context['institutionDepartment']->id,
+        'academic_calendar' => $context['calendar']->id,
+    ]), [
+        'class_config_id' => $context['classConfig']->id,
+        'department_level_id' => $context['departmentLevel']->id,
+        'department_course_id' => $context['departmentCourse']->id,
+        'mode_of_study_id' => $context['modeOfStudy']->id,
+        'students_per_class' => 2,
+    ])->assertSessionHas('success');
+
+    $context['user']->revokePermissionTo('update:academic-calendars');
+
+    $academicCalendarClass = AcademicCalendarClass::query()->firstOrFail();
+
+    $updateUrl = route('academic-calendars.department-classes.update', [
+        'institution_department' => $context['institutionDepartment']->id,
+        'academic_calendar' => $context['calendar']->id,
+        'academic_calendar_class' => $academicCalendarClass->id,
+    ]);
+
+    $this->patch($updateUrl, [
+        'name' => 'Should not apply',
+        'description' => 'Nope',
+    ])->assertForbidden();
+});
+
+test('updating class returns not found when institution department does not match class config', function () {
+    $context = buildDepartmentClassContext();
+    createFinalStudentProgram($context, 'patch-404-a@example.com');
+    createFinalStudentProgram($context, 'patch-404-b@example.com');
+
+    $this->actingAs($context['user']);
+
+    $this->post(route('academic-calendars.department-classes.store', [
+        'institution_department' => $context['institutionDepartment']->id,
+        'academic_calendar' => $context['calendar']->id,
+    ]), [
+        'class_config_id' => $context['classConfig']->id,
+        'department_level_id' => $context['departmentLevel']->id,
+        'department_course_id' => $context['departmentCourse']->id,
+        'mode_of_study_id' => $context['modeOfStudy']->id,
+        'students_per_class' => 2,
+    ])->assertSessionHas('success');
+
+    $academicCalendarClass = AcademicCalendarClass::query()->firstOrFail();
+
+    $otherDepartment = Department::factory()->create();
+    $otherInstitutionDepartment = InstitutionDepartment::query()->create([
+        'tenant_id' => $context['tenant']->id,
+        'department_id' => $otherDepartment->id,
+        'department_code' => 'oth',
+        'description' => 'Other department',
+    ]);
+
+    $updateUrl = route('academic-calendars.department-classes.update', [
+        'institution_department' => $otherInstitutionDepartment->id,
+        'academic_calendar' => $context['calendar']->id,
+        'academic_calendar_class' => $academicCalendarClass->id,
+    ]);
+
+    $this->patch($updateUrl, [
+        'name' => 'Wrong scope',
+        'description' => null,
+    ])->assertNotFound();
+});
+
+test('updating class validates name is required', function () {
+    $context = buildDepartmentClassContext();
+    createFinalStudentProgram($context, 'patch-val-a@example.com');
+    createFinalStudentProgram($context, 'patch-val-b@example.com');
+
+    $this->actingAs($context['user']);
+
+    $this->post(route('academic-calendars.department-classes.store', [
+        'institution_department' => $context['institutionDepartment']->id,
+        'academic_calendar' => $context['calendar']->id,
+    ]), [
+        'class_config_id' => $context['classConfig']->id,
+        'department_level_id' => $context['departmentLevel']->id,
+        'department_course_id' => $context['departmentCourse']->id,
+        'mode_of_study_id' => $context['modeOfStudy']->id,
+        'students_per_class' => 2,
+    ])->assertSessionHas('success');
+
+    $academicCalendarClass = AcademicCalendarClass::query()->firstOrFail();
+    $originalName = $academicCalendarClass->name;
+
+    $updateUrl = route('academic-calendars.department-classes.update', [
+        'institution_department' => $context['institutionDepartment']->id,
+        'academic_calendar' => $context['calendar']->id,
+        'academic_calendar_class' => $academicCalendarClass->id,
+    ]);
+
+    $this->patch($updateUrl, [
+        'name' => '',
+        'description' => 'Only description',
+    ])->assertSessionHasErrors('name');
+
+    $academicCalendarClass->refresh();
+
+    expect($academicCalendarClass->name)->toBe($originalName);
 });

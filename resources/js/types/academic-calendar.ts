@@ -91,12 +91,6 @@ export type AcademicCalendarClassPreview = {
     students: AcademicCalendarClassPreviewStudent[];
 };
 
-export type AcademicCalendarClassMetadata = {
-    key: string;
-    label: string;
-    value: string;
-};
-
 export type AcademicCalendarClassMoveTarget = {
     id: number;
     name: string;
@@ -108,7 +102,6 @@ export type AcademicCalendarClassDetail = {
     description: string | null;
     studentCount: number;
     students: AcademicCalendarClassPreviewStudent[];
-    metadata: AcademicCalendarClassMetadata[];
 };
 
 export type AcademicCalendarClassGenerationContext = {

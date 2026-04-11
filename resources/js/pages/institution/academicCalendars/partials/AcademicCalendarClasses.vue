@@ -7,8 +7,10 @@ import { APP_MODULE_KEYS } from '@/lib/constants';
 import { AcademicClassConfigPayload, DepartmentCourseClassCount } from '@/types/academic-calendar';
 import { InstitutionDepartment, ModeOfStudy } from '@/types/institution';
 import { SelectOption } from '@/types/utils';
+import { useDepartmentMetaStore } from '@/store/institution/useDepartmentMetaStore';
 import { trans_choice } from 'laravel-vue-i18n';
-import { onMounted, ref } from 'vue';
+import { storeToRefs } from 'pinia';
+import { onMounted, ref, watch } from 'vue';
 
 interface Props {
     department: InstitutionDepartment;
@@ -97,6 +99,20 @@ const loadClassConfigs = async () => {
         () => trans_choice('trans.enrolment', 2),
     );
 };
+
+const departmentMetaStore = useDepartmentMetaStore();
+const { academicClassConfigsRefreshNonce } = storeToRefs(departmentMetaStore);
+
+watch(academicClassConfigsRefreshNonce, (next, prev) => {
+    if (prev === undefined) {
+        return;
+    }
+
+    if (next > prev) {
+        void loadClassConfigs();
+    }
+});
+
 const handleSelectionChange = async () => {
     syncFiltersToUrl();
     await loadClassConfigs();

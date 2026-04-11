@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AcademicCalendars\AcademicCalendarClassController;
 use App\Http\Controllers\AcademicCalendars\AcademicCalendarController;
 use Illuminate\Support\Facades\Route;
 
@@ -10,6 +11,7 @@ Route::prefix('institution')->middleware('auth')->group(function () {
     Route::put('academic-calendars/{academic_calendar}', [AcademicCalendarController::class, 'update'])->name('academic-calendars.update');
     Route::get('academic-calendars/department/{institution_department}/classes/{academic_calendar}', [AcademicCalendarController::class, 'departmentAcademicCalendarClasses'])->name('academic-calendars.department-classes');
     Route::get('academic-calendars/department/{institution_department}/classes/{academic_calendar}/show/{academic_calendar_class}', [AcademicCalendarController::class, 'showDepartmentAcademicCalendarClass'])->name('academic-calendars.department-classes.show');
+    Route::patch('academic-calendars/department/{institution_department}/classes/{academic_calendar}/show/{academic_calendar_class}', [AcademicCalendarClassController::class, 'update'])->name('academic-calendars.department-classes.update');
     Route::post('academic-calendars/department/{institution_department}/classes/{academic_calendar}/show/{academic_calendar_class}/move-students', [AcademicCalendarController::class, 'moveDepartmentAcademicCalendarClassStudents'])->name('academic-calendars.department-classes.move-students');
     Route::post('academic-calendars/department/{institution_department}/classes/{academic_calendar}', [AcademicCalendarController::class, 'storeDepartmentAcademicCalendarClasses'])->name('academic-calendars.department-classes.store');
     Route::post('academic-calendars/{institution_department}/classes-config', [AcademicCalendarController::class, 'update'])->name('academic-calendars.classes-config.store');

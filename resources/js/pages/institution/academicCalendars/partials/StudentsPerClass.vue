@@ -15,7 +15,7 @@ interface Props {
 
 const props = defineProps<Props>();
 
-    const {storePerClassSizeConfig} = useAcademicCalendars();
+const { storePerClassSizeConfig } = useAcademicCalendars();
 
 const config = ref<AcademicClassConfigPayload>();
 const form = useForm<AcademicClassConfigPayload>({
@@ -38,14 +38,7 @@ watch(modals!, () => {
 });
 
 const submitForm = () => {
-    storePerClassSizeConfig(
-        form,
-        props.institutionDepartmentId,
-        String(config.value?.academic_calendar_id ?? ''),
-        () => {
-            window.location.reload();
-        },
-    );
+    storePerClassSizeConfig(form, props.institutionDepartmentId, String(config.value?.academic_calendar_id ?? ''));
 };
 
 </script>
