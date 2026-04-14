@@ -67,13 +67,13 @@ const syncFiltersToUrl = (): void => {
 onMounted(async () => {
     await listAcademicCalendars();
     await listModesOfStudy();
-    const defaultAcademicCalendarOption = academicCalendars.value?.[0] ?? null;
+    const defaultAcademicCalendarEntry = academicCalendars.value?.[0] ?? null;
     const defaultModeOption = modesOfStudy.value?.filter((row: ModeOfStudy) => row.attributes.name.toLowerCase() === 'full time')[0] ?? null;
 
-    const defaultAcademicCalendar = defaultAcademicCalendarOption
+    const defaultAcademicCalendar = defaultAcademicCalendarEntry
         ? {
-              value: Number(defaultAcademicCalendarOption.id),
-              label: `${defaultAcademicCalendarOption.attributes.name} ${defaultAcademicCalendarOption.attributes.calendarYear}`,
+              value: Number(defaultAcademicCalendarEntry.id),
+              label: `${defaultAcademicCalendarEntry.attributes.name} ${defaultAcademicCalendarEntry.attributes.calendarYear}`,
           }
         : null;
     const defaultModeOfStudy = defaultModeOption ? { value: Number(defaultModeOption.id), label: defaultModeOption.attributes.name } : null;

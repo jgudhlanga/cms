@@ -2,137 +2,48 @@
 
 use App\Enums\Acl\RoleEnum;
 use App\Enums\Shared\ClassListTypeEnum;
-use App\Enums\Shared\WorkflowStepEnum;
 use App\Mail\Enrolments\BulkFinaliseEnrolmentsReportMail;
+use App\Models\AcademicCalendars\AcademicCalendar;
+use App\Models\AcademicCalendars\AcademicYearOption;
 use App\Models\Acl\Role;
 use App\Models\Enrolments\ClassList;
-use App\Models\Institution\Course;
-use App\Models\Institution\Department;
-use App\Models\Institution\DepartmentApplicationStep;
-use App\Models\Institution\DepartmentCourse;
-use App\Models\Institution\DepartmentLevel;
-use App\Models\Institution\InstitutionDepartment;
-use App\Models\Institution\IntakePeriod;
-use App\Models\Institution\Level;
-use App\Models\Institution\ModeOfStudy;
-use App\Models\Integrations\Banks\ZBBankStatement;
-use App\Models\Shared\Gender;
-use App\Models\Shared\IdType;
-use App\Models\Shared\MaritalStatus;
-use App\Models\Shared\Title;
-use App\Models\Shared\WorkflowStep;
-use App\Models\Students\Student;
-use App\Models\Students\StudentProgram;
-use App\Models\Tenants\Tenant;
+use App\Models\Students\StudentEnrolment;
+use App\Models\Students\StudentEnrolmentStatus;
 use App\Models\Users\User;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
-function createVerifiedStudentProgram(string $studentNumber): StudentProgram
-{
-    $tenant = Tenant::query()->firstOrFail();
-    $department = Department::factory()->create();
-    $institutionDepartment = InstitutionDepartment::query()->create([
-        'tenant_id' => $tenant->id,
-        'department_id' => $department->id,
-        'department_code' => 'ict',
-        'description' => 'Department for bulk finalise command tests',
-    ]);
-    $course = Course::factory()->create();
-    $departmentCourse = DepartmentCourse::query()->create([
-        'tenant_id' => $tenant->id,
-        'institution_department_id' => $institutionDepartment->id,
-        'course_id' => $course->id,
-    ]);
-    $level = Level::factory()->create(['name' => 'Level 1']);
-    $departmentLevel = DepartmentLevel::query()->create([
-        'tenant_id' => $tenant->id,
-        'institution_department_id' => $institutionDepartment->id,
-        'level_id' => $level->id,
-    ]);
-    $modeOfStudy = ModeOfStudy::query()->create(['name' => 'Full Time']);
-    $intakePeriod = IntakePeriod::query()->create([
-        'tenant_id' => $tenant->id,
-        'name' => 'Semester 1 2026',
-        'start_date' => now()->startOfMonth()->toDateString(),
-        'end_date' => now()->endOfMonth()->toDateString(),
-    ]);
-    $title = Title::query()->create(['name' => 'Mr']);
-    $gender = Gender::query()->create(['title' => 'Male']);
-    $maritalStatus = MaritalStatus::query()->create(['title' => 'Single']);
-    $idType = IdType::query()->create(['name' => 'National ID']);
-    $studentUser = User::factory()->create([
-        'tenant_id' => $tenant->id,
-        'first_name' => 'Test',
-        'middle_name' => 'Bulk',
-        'last_name' => 'Student',
-    ]);
-    $student = Student::query()->create([
-        'tenant_id' => $tenant->id,
-        'user_id' => $studentUser->id,
-        'title_id' => $title->id,
-        'gender_id' => $gender->id,
-        'marital_status_id' => $maritalStatus->id,
-        'id_type_id' => $idType->id,
-        'id_number' => '63-000000A00',
-        'student_number' => $studentNumber,
-        'date_of_birth' => '2001-01-01',
-    ]);
+beforeEach(function (): void {
+    Carbon::setTestNow(Carbon::parse('2026-01-15 12:00:00', config('app.timezone')));
 
-    $studentProgram = StudentProgram::query()->create([
-        'tenant_id' => $tenant->id,
-        'student_id' => $student->id,
-        'institution_department_id' => $institutionDepartment->id,
-        'department_level_id' => $departmentLevel->id,
-        'department_course_id' => $departmentCourse->id,
-        'intake_period_id' => $intakePeriod->id,
-        'mode_of_study_id' => $modeOfStudy->id,
-        'application_tracking_number' => 'APP-'.strtoupper(str()->random(8)),
-        'program_status_id' => ClassListTypeEnum::VERIFIED->value,
-    ]);
-
-    ClassList::query()->create([
-        'tenant_id' => $tenant->id,
-        'student_program_id' => $studentProgram->id,
-        'type' => ClassListTypeEnum::VERIFIED->value,
-        'attributes' => [],
-    ]);
-
-    return $studentProgram;
-}
-
-function createBankCreditReceipt(string $studentNumber, string $transactionDate, string $transactionId): void
-{
-    ZBBankStatement::query()->create([
-        'tran_number_asc' => 'T-ASC-'.$transactionId,
-        'tran_number_desc' => 'T-DESC-'.$transactionId,
-        'transaction_id' => $transactionId,
-        'transaction_sr_id' => 'TSR-'.$transactionId,
-        'transaction_date' => $transactionDate,
-        'debit_credit_flag' => 'C',
-        'narration' => "Fees payment {$studentNumber}",
-    ]);
-}
-
-function createEnrolledDepartmentStep(StudentProgram $studentProgram): DepartmentApplicationStep
-{
-    $step = WorkflowStep::query()->firstOrCreate(
-        ['slug' => WorkflowStepEnum::ENROLLED->slug()],
+    AcademicCalendar::query()->firstOrCreate(
+        ['calendar_year' => '2025/2026'],
         [
-            'name' => WorkflowStepEnum::ENROLLED->name(),
-            'description' => WorkflowStepEnum::ENROLLED->description(),
-            'position' => WorkflowStepEnum::ENROLLED->position(),
-        ]
+            'opening_date' => '2026-01-01',
+            'closing_date' => '2026-12-31',
+        ],
     );
 
-    return DepartmentApplicationStep::query()->create([
-        'tenant_id' => $studentProgram->tenant_id,
-        'institution_department_id' => $studentProgram->institution_department_id,
-        'workflow_step_id' => $step->id,
-        'position' => $step->position,
-    ]);
-}
+    foreach (['Semester 1', 'Semester 2'] as $name) {
+        AcademicYearOption::query()->firstOrCreate(
+            ['slug' => Str::slug($name)],
+            ['name' => $name, 'description' => null],
+        );
+    }
+
+    foreach (['Active', 'Completed'] as $name) {
+        StudentEnrolmentStatus::query()->firstOrCreate(
+            ['name' => $name],
+            ['description' => 'Test'],
+        );
+    }
+});
+
+afterEach(function (): void {
+    Carbon::setTestNow(null);
+});
 
 it('finalises verified students with matching payments in the date window', function () {
     config()->set('custom.bank-statements.plan_anchor_start', '2026-01-01');
@@ -146,10 +57,51 @@ it('finalises verified students with matching payments in the date window', func
     $classList = ClassList::query()->where('student_program_id', $studentProgram->id)->first();
     $freshStudentProgram = $studentProgram->fresh();
 
-    expect($freshStudentProgram->program_status_id)->toBe(ClassListTypeEnum::FINAL->value)
+    $enrolment = StudentEnrolment::query()->where('student_id', $studentProgram->student_id)->first();
+    $activeStatusId = StudentEnrolmentStatus::query()->where('slug', 'active')->value('id');
+    $semesterOneId = AcademicYearOption::query()->where('slug', 'semester-1')->value('id');
+    $calendarId = AcademicCalendar::query()->where('calendar_year', '2025/2026')->value('id');
+
+    expect($freshStudentProgram->program_status_id)->toBe(ClassListTypeEnum::VERIFIED->value)
         ->and($freshStudentProgram->department_application_step_id)->toBe($departmentStep->id)
         ->and($classList)->not->toBeNull()
-        ->and($classList->type)->toBe(ClassListTypeEnum::FINAL);
+        ->and($classList->type)->toBe(ClassListTypeEnum::FINAL)
+        ->and($enrolment)->not->toBeNull()
+        ->and($enrolment->student_enrolment_status_id)->toBe($activeStatusId)
+        ->and($enrolment->academic_year_option_id)->toBe($semesterOneId)
+        ->and($enrolment->academic_calendar_id)->toBe($calendarId);
+});
+
+it('is idempotent when the bulk finalise command runs more than once for the same paid student', function () {
+    config()->set('custom.bank-statements.plan_anchor_start', '2026-01-01');
+
+    $studentProgram = createVerifiedStudentProgram('STU001B');
+    createEnrolledDepartmentStep($studentProgram);
+    createBankCreditReceipt('STU001B', '2026-01-10 09:00:00', 'TXN-BULK-001B');
+
+    $this->artisan('enrolments:bulk-finalise-enrolments-command')->assertSuccessful();
+
+    ClassList::query()->where('student_program_id', $studentProgram->id)->update([
+        'type' => ClassListTypeEnum::VERIFIED->value,
+    ]);
+
+    $this->artisan('enrolments:bulk-finalise-enrolments-command')->assertSuccessful();
+
+    expect(StudentEnrolment::query()->where('student_id', $studentProgram->student_id)->count())->toBe(1);
+});
+
+it('fails the command when no academic calendar can be resolved for a paid student', function () {
+    config()->set('custom.bank-statements.plan_anchor_start', '2026-01-01');
+
+    AcademicCalendar::query()->delete();
+
+    $studentProgram = createVerifiedStudentProgram('STU001C');
+    createEnrolledDepartmentStep($studentProgram);
+    createBankCreditReceipt('STU001C', '2026-01-10 09:00:00', 'TXN-BULK-001C');
+
+    $this->artisan('enrolments:bulk-finalise-enrolments-command')->assertFailed();
+
+    expect(StudentEnrolment::query()->where('student_id', $studentProgram->student_id)->exists())->toBeFalse();
 });
 
 it('keeps verified students unchanged when no matching payment exists', function () {

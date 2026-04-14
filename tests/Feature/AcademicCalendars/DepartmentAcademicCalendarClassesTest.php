@@ -3,7 +3,6 @@
 use App\Enums\Shared\ClassListTypeEnum;
 use App\Models\AcademicCalendars\AcademicCalendar;
 use App\Models\AcademicCalendars\AcademicCalendarClass;
-use App\Models\AcademicCalendars\AcademicCalendarOption;
 use App\Models\AcademicCalendars\AcademicCalendarStudentProgram;
 use App\Models\AcademicCalendars\ClassConfig;
 use App\Models\Enrolments\ClassList;
@@ -62,16 +61,10 @@ function buildDepartmentClassContext(): array
         'start_date' => now()->startOfMonth()->toDateString(),
         'end_date' => now()->endOfMonth()->toDateString(),
     ]);
-    $option = AcademicCalendarOption::query()->create([
-        'name' => 'Semester 1',
-        'description' => 'Semester 1 option',
-    ]);
     $calendar = AcademicCalendar::query()->create([
-        'academic_calendar_option_id' => $option->id,
         'calendar_year' => '2026',
         'opening_date' => now()->startOfMonth()->toDateString(),
         'closing_date' => now()->endOfMonth()->toDateString(),
-        'intake_period_ids' => [$intakePeriod->id],
     ]);
     $classConfig = ClassConfig::query()->create([
         'academic_calendar_id' => $calendar->id,
@@ -262,6 +255,56 @@ test('department academic calendar api returns assigned and ready class counts',
         ->assertSuccessful()
         ->assertJsonPath('0.levels.0.classesCount', $expectedClassesCount)
         ->assertJsonPath('0.levels.0.totalnClass', 3)
+        ->assertJsonPath('0.levels.0.totalFinalList', 3);
+});
+
+test('department academic calendar api total final list is no longer scoped by intake periods', function () {
+    $context = buildDepartmentClassContext();
+
+    $intakeB = IntakePeriod::query()->create([
+        'tenant_id' => $context['tenant']->id,
+        'name' => 'Semester 2 2026',
+        'start_date' => now()->addMonth()->startOfMonth()->toDateString(),
+        'end_date' => now()->addMonth()->endOfMonth()->toDateString(),
+    ]);
+
+    $calendarB = AcademicCalendar::query()->create([
+        'calendar_year' => '2026',
+        'opening_date' => now()->addMonth()->startOfMonth()->toDateString(),
+        'closing_date' => now()->addMonth()->endOfMonth()->toDateString(),
+    ]);
+
+    ClassConfig::query()->create([
+        'academic_calendar_id' => $calendarB->id,
+        'institution_department_id' => $context['institutionDepartment']->id,
+        'department_course_id' => $context['departmentCourse']->id,
+        'department_level_id' => $context['departmentLevel']->id,
+        'mode_of_study_id' => $context['modeOfStudy']->id,
+        'students_per_class' => 2,
+    ]);
+
+    createFinalStudentProgram($context, 'intake-a-one@example.com');
+    createFinalStudentProgram($context, 'intake-a-two@example.com');
+
+    $contextForIntakeB = array_merge($context, ['intakePeriod' => $intakeB]);
+    createFinalStudentProgram($contextForIntakeB, 'intake-b-one@example.com');
+
+    $this->actingAs($context['user']);
+
+    $routeA = route('v1.departments.academic-calendars', [
+        'institution_department' => $context['institutionDepartment']->id,
+    ]).'?academic_calendar='.$context['calendar']->id.'&mode_of_study_id='.$context['modeOfStudy']->id;
+
+    $routeB = route('v1.departments.academic-calendars', [
+        'institution_department' => $context['institutionDepartment']->id,
+    ]).'?academic_calendar='.$calendarB->id.'&mode_of_study_id='.$context['modeOfStudy']->id;
+
+    $this->getJson($routeA)
+        ->assertSuccessful()
+        ->assertJsonPath('0.levels.0.totalFinalList', 3);
+
+    $this->getJson($routeB)
+        ->assertSuccessful()
         ->assertJsonPath('0.levels.0.totalFinalList', 3);
 });
 
@@ -548,7 +591,9 @@ test('class detail page returns students', function () {
         ->and(data_get($page, 'props.mode'))->not->toBeNull()
         ->and(data_get($page, 'props.classConfig'))->not->toBeNull()
         ->and(data_get($page, 'props.canUpdateAcademicCalendarStudentPrograms'))->toBeFalse()
-        ->and(data_get($page, 'props.moveTargetClasses'))->toBe([]);
+        ->and(data_get($page, 'props.moveTargetClasses'))->toBe([])
+        ->and(data_get($page, 'props.siblingAcademicCalendarClasses'))->toHaveCount(1)
+        ->and(data_get($page, 'props.siblingAcademicCalendarClasses.0.id'))->toBe($academicCalendarClass->id);
 });
 
 test('class detail page exposes move targets and update flag when user has permission and multiple classes exist', function () {
@@ -589,7 +634,11 @@ test('class detail page exposes move targets and update flag when user has permi
     $response->assertSuccessful();
     $page = $response->viewData('page');
 
+    $siblingIds = collect(data_get($page, 'props.siblingAcademicCalendarClasses', []))->pluck('id')->all();
+
     expect(data_get($page, 'props.moveTargetClasses'))->toHaveCount(1)
+        ->and(data_get($page, 'props.siblingAcademicCalendarClasses'))->toHaveCount(2)
+        ->and($siblingIds)->toContain($classA->id)
         ->and(data_get($page, 'props.canUpdateAcademicCalendarStudentPrograms'))->toBeFalse();
 
     $context['user']->givePermissionTo('update:academic-calendar-student-programs');

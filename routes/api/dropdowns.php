@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\V1\AcademicCalendars\AcademicYearOptionController;
 use App\Http\Controllers\Api\V1\Institution\CourseController;
 use App\Http\Controllers\Api\V1\Institution\DepartmentController;
 use App\Http\Controllers\Api\V1\Institution\LevelController;
@@ -23,53 +24,57 @@ use App\Http\Controllers\Api\V1\Shared\SubjectController;
 use App\Http\Controllers\Api\V1\Shared\TitleController;
 use App\Http\Controllers\Api\V1\Shared\WorkflowStepActionController;
 use App\Http\Controllers\Api\V1\Shared\WorkflowStepController;
+use App\Http\Controllers\Api\V1\Students\StudentEnrolmentStatusController;
 use Illuminate\Support\Facades\Route;
 
-
 Route::prefix('v1')->group(function () {
-    # ==================================== ADDRESS TYPES =================================================
+    // ==================================== ADDRESS TYPES =================================================
     Route::apiResource('address-types', AddressTypeController::class)->names('v1.address-types');
-    # ==================================== PROVINCES ======================================================
+    // ==================================== PROVINCES ======================================================
     Route::apiResource('provinces', ProvinceController::class)->names('v1.provinces');
-    # ==================================== DEPARTMENTS ======================================================
+    // ==================================== DEPARTMENTS ======================================================
     Route::apiResource('departments', DepartmentController::class)->names('v1.departments');
-    # ==================================== LEVELS ======================================================
+    // ==================================== LEVELS ======================================================
     Route::apiResource('levels', LevelController::class)->names('v1.levels');
-    # ==================================== COURSES ======================================================
+    // ==================================== COURSES ======================================================
     Route::apiResource('courses', CourseController::class)->names('v1.courses');
-    # ==================================== GENDERS ======================================================
+    // ==================================== GENDERS ======================================================
     Route::apiResource('genders', GenderController::class)->names('v1.genders');
-    # ==================================== TITLES ======================================================
+    // ==================================== TITLES ======================================================
     Route::apiResource('titles', TitleController::class)->names('v1.titles');
-    # ==================================== COUNTRIES ======================================================
+    // ==================================== COUNTRIES ======================================================
     Route::apiResource('countries', CountryController::class)->names('v1.countries');
-    # ==================================== DISTRICTS ======================================================
+    // ==================================== DISTRICTS ======================================================
     Route::apiResource('districts', DistrictController::class)->names('v1.districts');
-    # ==================================== SUBJECTS ======================================================
+    // ==================================== SUBJECTS ======================================================
     Route::apiResource('subjects', SubjectController::class)->names('v1.subjects');
-    # ==================================== SUBJECTS ======================================================
+    // ==================================== SUBJECTS ======================================================
     Route::apiResource('grades', GradeController::class)->names('v1.grades');
-    # ==================================== MARITAL STATUSES ======================================================
+    // ==================================== MARITAL STATUSES ======================================================
     Route::apiResource('marital-statuses', MaritalStatusController::class)->names('v1.marital-statuses');
-    # ==================================== RACES ======================================================
+    // ==================================== RACES ======================================================
     Route::apiResource('races', RaceController::class)->names('v1.races');
-    # ==================================== RELATIONSHIPS ======================================================
+    // ==================================== RELATIONSHIPS ======================================================
     Route::apiResource('relationships', RelationshipController::class)->names('v1.relationships');
-    # ==================================== RELIGIONS ======================================================
+    // ==================================== RELIGIONS ======================================================
     Route::apiResource('religions', ReligionController::class)->names('v1.religions');
-    # ==================================== ACADEMIC LEVELS ======================================================
+    // ==================================== ACADEMIC LEVELS ======================================================
     Route::apiResource('academic-levels', AcademicLevelController::class)->names('v1.academic-levels');
-    # ==================================== SPONSOR TYPE ======================================================
+    // ==================================== SPONSOR TYPE ======================================================
     Route::apiResource('sponsor-types', SponsorTypeController::class)->names('v1.sponsor-types');
-    # ==================================== EMPLOYMENT TYPE ======================================================
+    // ==================================== EMPLOYMENT TYPE ======================================================
     Route::apiResource('employment-types', EmploymentTypeController::class)->names('v1.employment-types');
-    # ==================================== ID TYPE ======================================================
+    // ==================================== ID TYPE ======================================================
     Route::apiResource('id-types', IdTypeController::class)->names('v1.id-types');
-    # ==================================== WORKFLOW STEPS ======================================================
+    // ==================================== WORKFLOW STEPS ======================================================
     Route::apiResource('workflow-steps', WorkflowStepController::class)->names('v1.workflow-steps');
     Route::apiResource('workflow-step-actions', WorkflowStepActionController::class)->names('v1.workflow-step-actions');
-    # ==================================== DOCUMENT TYPE ======================================================
+    // ==================================== DOCUMENT TYPE ======================================================
     Route::apiResource('document-types', DocumentTypeController::class)->names('v1.document-types');
-    # ==================================== FEE TYPE ======================================================
+    // ==================================== FEE TYPE ======================================================
     Route::apiResource('fee-types', FeeTypeController::class)->names('v1.fee-types');
+    // ==================================== STUDENT ENROLMENT STATUS ======================================================
+    Route::apiResource('student-enrolment-statuses', StudentEnrolmentStatusController::class)->names('v1.student-enrolment-statuses');
+    // ==================================== ACADEMIC YEAR OPTIONS ======================================================
+    Route::apiResource('academic-year-options', AcademicYearOptionController::class)->names('v1.academic-year-options');
 });

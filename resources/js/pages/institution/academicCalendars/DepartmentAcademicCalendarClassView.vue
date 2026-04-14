@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AcademicCalendarClassNavComboSelect from '@/components/academicCalendars/AcademicCalendarClassNavComboSelect.vue';
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import { EDIT_CLASS_MODAL, useAcademicCalendarClassEdit } from '@/composables/academicCalendars/useAcademicCalendarClassEdit';
 import { MOVE_STUDENTS_MODAL, useAcademicCalendarClassMoveStudents } from '@/composables/academicCalendars/useAcademicCalendarClassMoveStudents';
@@ -31,15 +32,17 @@ const props = withDefaults(
         classConfig: ClassConfig | null;
         academicCalendarClass: AcademicCalendarClassDetail;
         moveTargetClasses: AcademicCalendarClassMoveTarget[];
+        siblingAcademicCalendarClasses: AcademicCalendarClassMoveTarget[];
         canUpdateAcademicCalendarClass?: boolean;
     }>(),
     {
         moveTargetClasses: () => [],
+        siblingAcademicCalendarClasses: () => [],
         canUpdateAcademicCalendarClass: false,
     },
 );
 
-const { department, academicCalendar, academicCalendarClass, course, level, mode, classConfig, moveTargetClasses } =
+const { department, academicCalendar, academicCalendarClass, course, level, mode, classConfig, moveTargetClasses, siblingAcademicCalendarClasses } =
     toRefs(props);
 
 const { departmentClassesUrl, moveStudentsUrl, updateClassUrl, breadcrumbs } = useDepartmentAcademicCalendarClassNavigation(
@@ -74,6 +77,14 @@ const canMoveStudents = computed(() => hasAbility(['update:academic-calendar-stu
 <template>
     <Head :title="academicCalendarClass.name" />
     <PageContainer :breadcrumbs="breadcrumbs" :back-url="departmentClassesUrl">
+        <template #backNavigationLeading>
+            <AcademicCalendarClassNavComboSelect
+                :classes="siblingAcademicCalendarClasses"
+                :current-class-id="academicCalendarClass.id"
+                :institution-department-id="Number(department.id)"
+                :academic-calendar-id="Number(academicCalendar.id)"
+            />
+        </template>
         <div class="flex flex-col space-y-6">
             <AcademicCalendarClassHeaderCard
                 :title="academicCalendarClass.name"

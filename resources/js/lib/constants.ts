@@ -68,6 +68,8 @@ const APP_MODULE_KEYS = {
     academic_calendars: 'academic_calendars',
     student_programs: 'student_programs',
     student_per_class: 'student_per_class',
+    student_enrolment_statuses: 'student_enrolment_statuses',
+    academic_year_options: 'academic_year_options',
 };
 const EXAM_SITTINGS = [
     { value: 'june', label: 'June' },

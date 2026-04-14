@@ -39,10 +39,10 @@ use Database\Seeders\Shared\WorkflowStepActionSeeder;
 use Database\Seeders\Shared\WorkflowStepsSeeder;
 use Database\Seeders\Statuses\MaritalStatusSeeder;
 use Database\Seeders\Statuses\StatusSeeder;
+use Database\Seeders\Students\StudentEnrolmentStatusSeeder;
 use Database\Seeders\Tenants\TenantsTableSeeder;
 use Database\Seeders\Users\UsersTableSeeder;
 use Illuminate\Database\Seeder;
-
 
 class DatabaseSeeder extends Seeder
 {
@@ -88,6 +88,7 @@ class DatabaseSeeder extends Seeder
             FeeTypeSeeder::class,
             DocumentTypeSeeder::class,
             FeeStructureSeeder::class,
+            StudentEnrolmentStatusSeeder::class,
         ]);
     }
 }

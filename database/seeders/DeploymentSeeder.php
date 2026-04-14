@@ -2,11 +2,12 @@
 
 namespace Database\Seeders;
 
-use Database\Seeders\AcademicCalendars\AcademicCalendarOptionSeeder;
+use Database\Seeders\AcademicCalendars\AcademicYearOptionSeeder;
 use Database\Seeders\AcademicCalendars\ClassMetaDataTypeSeeder;
 use Database\Seeders\Acl\ModulesTableSeeder;
 use Database\Seeders\Acl\PermissionsTableSeeder;
 use Database\Seeders\Acl\RolesTableSeeder;
+use Database\Seeders\Students\StudentEnrolmentStatusSeeder;
 use Illuminate\Database\Seeder;
 
 class DeploymentSeeder extends Seeder
@@ -20,8 +21,9 @@ class DeploymentSeeder extends Seeder
             ModulesTableSeeder::class,
             PermissionsTableSeeder::class,
             RolesTableSeeder::class,
-            AcademicCalendarOptionSeeder::class,
+            AcademicYearOptionSeeder::class,
             ClassMetaDataTypeSeeder::class,
+            StudentEnrolmentStatusSeeder::class,
         ]);
     }
 }

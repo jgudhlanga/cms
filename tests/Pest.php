@@ -15,9 +15,13 @@ use Database\Seeders\Acl\ModulesTableSeeder;
 use Database\Seeders\Acl\PermissionsTableSeeder;
 use Database\Seeders\Statuses\StatusSeeder;
 use Database\Seeders\Tenants\TenantsTableSeeder;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
-pest()->extend(Tests\TestCase::class)
-    ->use(Illuminate\Foundation\Testing\RefreshDatabase::class)
+require_once __DIR__.'/Support/BulkFinaliseTestHelpers.php';
+
+pest()->extend(TestCase::class)
+    ->use(RefreshDatabase::class)
     ->beforeEach(function () {
         if ($this->app && $this->app->runningUnitTests()) {
             (new TenantsTableSeeder)->run();

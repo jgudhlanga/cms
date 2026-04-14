@@ -30,6 +30,14 @@ export function useInstitutionSetup() {
             transChoiceKey: 'subject',
             url: route('subjects.index'),
         },
+        {
+            transChoiceKey: 'students.enrolment_status',
+            url: route('student-enrolment-statuses.index'),
+        },
+        {
+            transChoiceKey: 'academic_years.calendar_year_option',
+            url: route('academic-year-options.index'),
+        },
     ];
     return { tabs };
 }

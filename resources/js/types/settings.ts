@@ -298,3 +298,35 @@ export type FeeTypeParams = {
     name: string;
     description?: string;
 };
+export type StudentEnrolmentStatus = {
+    type?: string;
+    id?: string;
+    attributes: {
+        name: string;
+        description?: string;
+        color?: string;
+        createdAt?: string;
+        updatedAt?: string;
+        deletedAt?: string;
+    };
+};
+export type StudentEnrolmentStatusParams = {
+    name: string;
+    description?: string;
+    color?: string;
+};
+export type AcademicYearOption = {
+    type?: string;
+    id?: string;
+    attributes: {
+        name: string;
+        description?: string;
+        createdAt?: string;
+        updatedAt?: string;
+        deletedAt?: string;
+    };
+};
+export type AcademicYearOptionParams = {
+    name: string;
+    description?: string;
+};

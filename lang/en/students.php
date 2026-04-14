@@ -5,4 +5,5 @@ return [
     'student_number' => 'Student Number|Student Numbers',
     'not_in_class' => 'Not in class',
     'class_total' => 'Class total',
+    'enrolment_status' => 'Enrolment status|Enrolment statuses',
 ];

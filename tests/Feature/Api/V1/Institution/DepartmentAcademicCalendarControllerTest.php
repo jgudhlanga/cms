@@ -3,7 +3,6 @@
 use App\Enums\Shared\ClassListTypeEnum;
 use App\Models\AcademicCalendars\AcademicCalendar;
 use App\Models\AcademicCalendars\AcademicCalendarClass;
-use App\Models\AcademicCalendars\AcademicCalendarOption;
 use App\Models\AcademicCalendars\AcademicCalendarStudentProgram;
 use App\Models\AcademicCalendars\ClassConfig;
 use App\Models\Enrolments\ClassList;
@@ -108,16 +107,10 @@ test('department academic calendar returns totalnClass and totalFinalList counts
         'start_date' => now()->startOfMonth()->toDateString(),
         'end_date' => now()->endOfMonth()->toDateString(),
     ]);
-    $calendarOption = AcademicCalendarOption::query()->create([
-        'name' => 'Semester 1',
-        'description' => 'Semester 1 option',
-    ]);
     $calendar = AcademicCalendar::query()->create([
-        'academic_calendar_option_id' => $calendarOption->id,
         'calendar_year' => '2026',
         'opening_date' => now()->startOfMonth()->toDateString(),
         'closing_date' => now()->endOfMonth()->toDateString(),
-        'intake_period_ids' => [$intakePeriod->id],
     ]);
 
     $classConfig = ClassConfig::query()->create([
@@ -245,16 +238,10 @@ test('department academic calendar returns totalFinalList even when class config
         'start_date' => now()->startOfMonth()->toDateString(),
         'end_date' => now()->endOfMonth()->toDateString(),
     ]);
-    $calendarOption = AcademicCalendarOption::query()->create([
-        'name' => 'Semester 2',
-        'description' => 'Semester 2 option',
-    ]);
     $calendar = AcademicCalendar::query()->create([
-        'academic_calendar_option_id' => $calendarOption->id,
         'calendar_year' => '2026',
         'opening_date' => now()->startOfMonth()->toDateString(),
         'closing_date' => now()->endOfMonth()->toDateString(),
-        'intake_period_ids' => [$intakePeriod->id],
     ]);
 
     $title = Title::query()->create(['name' => 'Mrs Test']);
@@ -343,16 +330,10 @@ test('department academic calendar returns zero totalFinalList when class config
         'start_date' => now()->startOfMonth()->toDateString(),
         'end_date' => now()->endOfMonth()->toDateString(),
     ]);
-    $calendarOption = AcademicCalendarOption::query()->create([
-        'name' => 'Semester 3',
-        'description' => 'Semester 3 option',
-    ]);
     $calendar = AcademicCalendar::query()->create([
-        'academic_calendar_option_id' => $calendarOption->id,
         'calendar_year' => '2026',
         'opening_date' => now()->startOfMonth()->toDateString(),
         'closing_date' => now()->endOfMonth()->toDateString(),
-        'intake_period_ids' => [$intakePeriod->id],
     ]);
 
     Sanctum::actingAs($user);

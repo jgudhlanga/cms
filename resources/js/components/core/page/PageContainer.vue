@@ -14,7 +14,7 @@ import { PageProps } from '@/types';
 import { BreadcrumbItemInterface } from '@/types/ui';
 import BackNavigationButton from '@/components/core/button/BackNavigationButton.vue';
 import { usePage } from '@inertiajs/vue3';
-import { computed } from 'vue';
+import { computed, useSlots } from 'vue';
 
 const props = defineProps<{
     breadcrumbs?: BreadcrumbItemInterface[];
@@ -29,6 +29,28 @@ const showBackNavigation = computed((): boolean => {
 });
 const backNavigationUrl = computed((): string => {
     return props.backUrl ?? '#';
+});
+
+const slots = useSlots();
+
+const hasBackNavigationLeading = computed((): boolean => {
+    return Boolean(slots.backNavigationLeading);
+});
+
+const showBackNavigationRow = computed((): boolean => {
+    return showBackNavigation.value || hasBackNavigationLeading.value;
+});
+
+const backNavigationRowJustifyClass = computed((): string => {
+    if (hasBackNavigationLeading.value && showBackNavigation.value) {
+        return 'justify-between';
+    }
+
+    if (showBackNavigation.value) {
+        return 'justify-end';
+    }
+
+    return 'justify-start';
 });
 </script>
 <template>
@@ -59,8 +81,17 @@ const backNavigationUrl = computed((): string => {
         </div>
     </header>
     <div class="flex h-full w-full flex-col pb-10">
-        <div class="flex justify-end mb-10" v-if="showBackNavigation">
-            <BackNavigationButton :url="backNavigationUrl" />
+        <div
+            v-if="showBackNavigationRow"
+            class="mb-10 flex items-center gap-4"
+            :class="backNavigationRowJustifyClass"
+        >
+            <div v-if="hasBackNavigationLeading" class="min-w-0 flex-1">
+                <slot name="backNavigationLeading" />
+            </div>
+            <div v-if="showBackNavigation" class="shrink-0">
+                <BackNavigationButton :url="backNavigationUrl" />
+            </div>
         </div>
         <slot />
     </div>

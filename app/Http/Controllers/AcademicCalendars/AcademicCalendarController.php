@@ -9,23 +9,19 @@ use App\Http\Requests\AcademicCalendars\AcademicCalendarRequest;
 use App\Http\Requests\AcademicCalendars\ClassConfigRequest;
 use App\Http\Requests\AcademicCalendars\MoveAcademicCalendarClassStudentsRequest;
 use App\Http\Requests\AcademicCalendars\StoreAcademicCalendarClassesRequest;
-use App\Http\Resources\AcademicCalendars\AcademicCalendarOptionResource;
 use App\Http\Resources\AcademicCalendars\AcademicCalendarResource;
 use App\Http\Resources\AcademicCalendars\ClassConfigResource;
 use App\Http\Resources\Institution\DepartmentCourseResource;
 use App\Http\Resources\Institution\DepartmentLevelResource;
 use App\Http\Resources\Institution\InstitutionDepartmentResource;
-use App\Http\Resources\Institution\IntakePeriodResource;
 use App\Http\Resources\Institution\ModeOfStudyResource;
 use App\Models\AcademicCalendars\AcademicCalendar;
 use App\Models\AcademicCalendars\AcademicCalendarClass;
-use App\Models\AcademicCalendars\AcademicCalendarOption;
 use App\Models\AcademicCalendars\AcademicCalendarStudentProgram;
 use App\Models\AcademicCalendars\ClassConfig;
 use App\Models\Institution\DepartmentCourse;
 use App\Models\Institution\DepartmentLevel;
 use App\Models\Institution\InstitutionDepartment;
-use App\Models\Institution\IntakePeriod;
 use App\Models\Institution\ModeOfStudy;
 use App\Models\Students\StudentProgram;
 use Carbon\Carbon;
@@ -41,14 +37,10 @@ class AcademicCalendarController extends Controller
     public function index()
     {
         $this->authorize('viewAny', AcademicCalendar::class);
-        $options = AcademicCalendarOption::all();
         $calendars = AcademicCalendar::all();
-        $intakePeriods = IntakePeriod::orderBy('end_date', 'desc')->get();
 
         return Inertia::render('academicCalendars/Index', [
-            'academicCalendarOptions' => AcademicCalendarOptionResource::collection($options),
             'academicCalendars' => AcademicCalendarResource::collection($calendars),
-            'intakePeriods' => IntakePeriodResource::collection($intakePeriods),
         ]);
     }
 
@@ -71,7 +63,6 @@ class AcademicCalendarController extends Controller
         $data = $request->validated();
         $data['opening_date'] = Carbon::parse($data['opening_date'])->format('Y-m-d');
         $data['closing_date'] = Carbon::parse($data['closing_date'])->format('Y-m-d');
-        $data['intake_period_ids'] = array_values($data['intake_period_ids'] ?? []);
 
         return $data;
     }
@@ -109,7 +100,6 @@ class AcademicCalendarController extends Controller
             ->first();
         $finalStudentPrograms = $this->resolveFinalStudentPrograms(
             $institutionDepartment,
-            $academicCalendar,
             (int) $departmentLevelId,
             (int) $departmentCourseId,
             (int) $modeOfStudyId
@@ -184,16 +174,25 @@ class AcademicCalendarController extends Controller
 
         $students = $this->studentsPayloadForAcademicCalendarClass($academicCalendarClass);
 
-        $moveTargetClasses = AcademicCalendarClass::query()
+        $siblingClassesCollection = AcademicCalendarClass::query()
             ->where('class_config_id', $classConfig->id)
-            ->where('id', '!=', $academicCalendarClass->id)
             ->whereNull('deleted_at')
             ->orderBy('name')
-            ->get(['id', 'name'])
-            ->map(fn (AcademicCalendarClass $class): array => [
-                'id' => $class->id,
-                'name' => $class->name,
-            ])
+            ->get(['id', 'name']);
+
+        $toIdNameArray = fn (AcademicCalendarClass $class): array => [
+            'id' => $class->id,
+            'name' => $class->name,
+        ];
+
+        $siblingAcademicCalendarClasses = $siblingClassesCollection
+            ->map($toIdNameArray)
+            ->values()
+            ->all();
+
+        $moveTargetClasses = $siblingClassesCollection
+            ->reject(fn (AcademicCalendarClass $class): bool => (int) $class->id === (int) $academicCalendarClass->id)
+            ->map($toIdNameArray)
             ->values()
             ->all();
 
@@ -207,6 +206,7 @@ class AcademicCalendarController extends Controller
             'canUpdateAcademicCalendarStudentPrograms' => auth()->user()?->can('update:academic-calendar-student-programs') ?? false,
             'canUpdateAcademicCalendarClass' => auth()->user()?->can('update', $academicCalendar) ?? false,
             'moveTargetClasses' => $moveTargetClasses,
+            'siblingAcademicCalendarClasses' => $siblingAcademicCalendarClasses,
             'academicCalendarClass' => [
                 'id' => $academicCalendarClass->id,
                 'name' => $academicCalendarClass->name,
@@ -297,7 +297,6 @@ class AcademicCalendarController extends Controller
 
         $finalStudentPrograms = $this->resolveFinalStudentPrograms(
             $institutionDepartment,
-            $academicCalendar,
             (int) $validated['department_level_id'],
             (int) $validated['department_course_id'],
             (int) $validated['mode_of_study_id']
@@ -414,17 +413,10 @@ class AcademicCalendarController extends Controller
 
     private function resolveFinalStudentPrograms(
         InstitutionDepartment $institutionDepartment,
-        AcademicCalendar $academicCalendar,
         int $departmentLevelId,
         int $departmentCourseId,
         int $modeOfStudyId
     ): Collection {
-        $intakePeriodIds = collect($academicCalendar->intake_period_ids ?? [])
-            ->map(fn (mixed $id): int => (int) $id)
-            ->filter(fn (int $id): bool => $id > 0)
-            ->values()
-            ->all();
-
         return StudentProgram::query()
             ->join('class_lists', 'class_lists.student_program_id', '=', 'student_programs.id')
             ->join('students', 'students.id', '=', 'student_programs.student_id')
@@ -434,7 +426,6 @@ class AcademicCalendarController extends Controller
             ->where('student_programs.department_level_id', $departmentLevelId)
             ->where('student_programs.department_course_id', $departmentCourseId)
             ->where('student_programs.mode_of_study_id', $modeOfStudyId)
-            ->whereIn('student_programs.intake_period_id', $intakePeriodIds)
             ->where('class_lists.type', ClassListTypeEnum::FINAL->value)
             ->whereNull('class_lists.deleted_at')
             ->select([

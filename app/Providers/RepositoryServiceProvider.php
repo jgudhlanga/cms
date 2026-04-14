@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Repositories\AcademicCalendars\AcademicYearOptionRepository;
+use App\Repositories\AcademicCalendars\interface\IAcademicYearOptionRepository;
 use App\Repositories\Acl\Interface\IModuleRepository;
 use App\Repositories\Acl\Interface\IPermissionRepository;
 use App\Repositories\Acl\Interface\IRoleGroupRepository;
@@ -101,9 +103,11 @@ use App\Repositories\Shared\WorkflowStepRepository;
 use App\Repositories\Students\AcademicRecordRepository;
 use App\Repositories\Students\interface\IAcademicRecordRepository;
 use App\Repositories\Students\interface\ISponsorRepository;
+use App\Repositories\Students\interface\IStudentEnrolmentStatusRepository;
 use App\Repositories\Students\interface\IStudentProgramRepository;
 use App\Repositories\Students\interface\IStudentRepository;
 use App\Repositories\Students\SponsorRepository;
+use App\Repositories\Students\StudentEnrolmentStatusRepository;
 use App\Repositories\Students\StudentProgramRepository;
 use App\Repositories\Students\StudentRepository;
 use App\Repositories\Users\interface\IUserRepository;
@@ -218,7 +222,11 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(IStudentProgramRepository::class, StudentProgramRepository::class);
         $this->app->bind(ISponsorRepository::class, SponsorRepository::class);
         $this->app->bind(IAcademicRecordRepository::class, AcademicRecordRepository::class);
+        $this->app->bind(IStudentEnrolmentStatusRepository::class, StudentEnrolmentStatusRepository::class);
     }
 
-    public function academicCalendarRepositories(): void {}
+    public function academicCalendarRepositories(): void
+    {
+        $this->app->bind(IAcademicYearOptionRepository::class, AcademicYearOptionRepository::class);
+    }
 }

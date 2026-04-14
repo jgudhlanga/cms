@@ -12,8 +12,8 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     AcademicCalendarClassFilters: typeof import('./../components/academicCalendars/AcademicCalendarClassFilters.vue')['default']
+    AcademicCalendarClassNavComboSelect: typeof import('./../components/academicCalendars/AcademicCalendarClassNavComboSelect.vue')['default']
     AcademicCalendarComboSelect: typeof import('./../components/core/form/combobox/AcademicCalendarComboSelect.vue')['default']
-    AcademicCalendarOptionComboSelect: typeof import('./../components/core/form/combobox/AcademicCalendarOptionComboSelect.vue')['default']
     AcademicLevelComboSelect: typeof import('./../components/core/form/combobox/AcademicLevelComboSelect.vue')['default']
     AcademicRecordForm: typeof import('./../components/students/academicRecords/AcademicRecordForm.vue')['default']
     Accordion: typeof import('./../components/ui/accordion/Accordion.vue')['default']
@@ -373,6 +373,7 @@ declare module 'vue' {
     StudentAddresses: typeof import('./../components/students/tabs/StudentAddresses.vue')['default']
     StudentBasicInfo: typeof import('./../components/students/tabs/StudentBasicInfo.vue')['default']
     StudentContacts: typeof import('./../components/students/tabs/StudentContacts.vue')['default']
+    StudentEnrolmentStatusComboSelect: typeof import('./../components/core/form/combobox/StudentEnrolmentStatusComboSelect.vue')['default']
     StudentNextOfKin: typeof import('./../components/students/tabs/StudentNextOfKin.vue')['default']
     StudentPageHeader: typeof import('./../components/shared/students/StudentPageHeader.vue')['default']
     StudentPrograms: typeof import('./../components/students/tabs/StudentPrograms.vue')['default']
