@@ -33,3 +33,10 @@ yarn-error.log
 /.tmp_laravel_skills_commands.txt
 /.tmp_laravel_skills_install_report.json
 /.tmp_laravel_skills_summary.json
+/changes.sql
+/AGENTS.md
+/CLAUDE.md
+/mcp.json
+/.mcp.json
+/boost.json
+/.DS_Store
