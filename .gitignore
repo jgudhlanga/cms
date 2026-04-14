@@ -23,3 +23,10 @@ yarn-error.log
 /.nova
 /.vscode
 /.zed
+/.ai
+/.claude
+/.cursor
+/.github
+/.junie
+/playground.txt
+/deploy.txt
