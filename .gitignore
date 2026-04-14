@@ -30,3 +30,6 @@ yarn-error.log
 /.junie
 /playground.txt
 /deploy.txt
+/.tmp_laravel_skills_commands.txt
+/.tmp_laravel_skills_install_report.json
+/.tmp_laravel_skills_summary.json
