@@ -24,6 +24,7 @@ class StudentEnrolment extends Model
 
     protected $fillable = [
         'student_id',
+        'student_program_id',
         'institution_department_id',
         'department_level_id',
         'department_course_id',

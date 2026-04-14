@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('student_enrolments', function (Blueprint $table) {
             $table->id();
             $table->foreignId('student_id')->constrained();
+            $table->foreignId('student_program_id')->constrained();
             $table->foreignId('institution_department_id')->constrained();
             $table->foreignId('department_level_id')->constrained();
             $table->foreignId('department_course_id')->constrained();

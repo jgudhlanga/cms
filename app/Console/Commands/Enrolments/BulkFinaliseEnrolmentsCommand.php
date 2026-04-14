@@ -241,6 +241,7 @@ class BulkFinaliseEnrolmentsCommand extends Command
         StudentEnrolment::query()->updateOrCreate(
             [
                 'student_id' => $studentProgram->student_id,
+                'student_program_id' => $studentProgram->id,
                 'institution_department_id' => $studentProgram->institution_department_id,
                 'department_level_id' => $studentProgram->department_level_id,
                 'department_course_id' => $studentProgram->department_course_id,
@@ -248,6 +249,7 @@ class BulkFinaliseEnrolmentsCommand extends Command
                 'academic_calendar_id' => $enrolmentAttributes['academic_calendar_id'],
             ],
             [
+                'student_program_id' => $studentProgram->id,
                 'student_enrolment_status_id' => $enrolmentAttributes['student_enrolment_status_id'],
             ],
         );
