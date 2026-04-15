@@ -6,11 +6,13 @@ type UserPreferencePayload = {
     id?: number | string;
     attributes?: {
         sideBarState?: boolean;
+        locale?: string | null;
     };
     data?: {
         id?: number | string;
         attributes?: {
             sideBarState?: boolean;
+            locale?: string | null;
         };
     };
 };
@@ -18,13 +20,14 @@ type UserPreferencePayload = {
 export function useUserPreference() {
     const preferencesStore = usePreferencesStore();
 
-    const parsePreferenceResponse = (response: UserPreferencePayload): { id: number | null; sideBarState: boolean | null } => {
+    const parsePreferenceResponse = (response: UserPreferencePayload): { id: number | null; sideBarState: boolean | null; locale: string | null } => {
         const preferenceData = response?.data ?? response;
         const sideBarState = preferenceData?.attributes?.sideBarState;
 
         return {
             id: preferenceData?.id ? Number(preferenceData.id) : null,
             sideBarState: typeof sideBarState === 'boolean' ? sideBarState : null,
+            locale: preferenceData?.attributes?.locale ?? null,
         };
     };
 
@@ -43,7 +46,7 @@ export function useUserPreference() {
                 return;
             }
 
-            preferencesStore.hydrateSidebarPreference(parsedResponse.sideBarState, parsedResponse.id);
+            preferencesStore.hydrateSidebarPreference(parsedResponse.sideBarState, parsedResponse.id, parsedResponse.locale ?? 'en');
         } catch {
             preferencesStore.markHydrated();
         }
@@ -65,8 +68,27 @@ export function useUserPreference() {
         }
     };
 
+    const persistLocale = async (locale: string): Promise<void> => {
+        preferencesStore.setLocale(locale);
+
+        try {
+            if (preferencesStore.preferenceId) {
+                await HttpService.put(`api/v1/preferences/${preferencesStore.preferenceId}`, { locale });
+
+                return;
+            }
+
+            const response = await HttpService.post('api/v1/preferences', { locale });
+            const parsedResponse = parsePreferenceResponse(response);
+            preferencesStore.preferenceId = parsedResponse.id;
+        } catch {
+            ToastService.error('Failed to save language preference.');
+        }
+    };
+
     return {
         hydratePreferenceOnce,
         persistSidebarState,
+        persistLocale,
     };
 }

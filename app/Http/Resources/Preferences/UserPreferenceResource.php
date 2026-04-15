@@ -15,6 +15,7 @@ class UserPreferenceResource extends JsonResource
             'attributes' => [
                 'userId' => $this->user_id,
                 'sideBarState' => (bool) $this->side_bar_state,
+                'locale' => $this->locale,
             ],
         ];
     }

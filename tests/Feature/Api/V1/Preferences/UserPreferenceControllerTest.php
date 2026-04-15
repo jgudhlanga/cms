@@ -15,7 +15,8 @@ test('authenticated user can fetch sidebar preference and gets default when miss
 
     $this->getJson(route('v1.preferences.index'))
         ->assertSuccessful()
-        ->assertJsonPath('attributes.sideBarState', false);
+        ->assertJsonPath('attributes.sideBarState', false)
+        ->assertJsonPath('attributes.locale', 'en');
 
     expect(UserPreference::query()->where('user_id', $user->id)->exists())->toBeTrue();
 });
@@ -30,19 +31,40 @@ test('authenticated user can store and update own sidebar preference', function 
 
     $createResponse = $this->postJson(route('v1.preferences.store'), [
         'side_bar_state' => true,
+        'locale' => 'en',
     ]);
 
     $createResponse
         ->assertSuccessful()
-        ->assertJsonPath('attributes.sideBarState', true);
+        ->assertJsonPath('attributes.sideBarState', true)
+        ->assertJsonPath('attributes.locale', 'en');
 
     $preferenceId = $createResponse->json('id');
 
     $this->putJson(route('v1.preferences.update', ['preference' => $preferenceId]), [
         'side_bar_state' => false,
+        'locale' => 'en',
     ])
         ->assertSuccessful()
-        ->assertJsonPath('attributes.sideBarState', false);
+        ->assertJsonPath('attributes.sideBarState', false)
+        ->assertJsonPath('attributes.locale', 'en');
+});
+
+test('authenticated user can update locale preference', function () {
+    $tenant = Tenant::query()->firstOrFail();
+    $user = User::factory()->create([
+        'tenant_id' => $tenant->id,
+    ]);
+
+    Sanctum::actingAs($user);
+
+    $response = $this->postJson(route('v1.preferences.store'), [
+        'locale' => 'en',
+    ]);
+
+    $response
+        ->assertSuccessful()
+        ->assertJsonPath('attributes.locale', 'en');
 });
 
 test('user cannot update another users preference', function () {
@@ -75,5 +97,5 @@ test('sidebar preference endpoints validate required boolean payload', function 
 
     $this->postJson(route('v1.preferences.store'), [])
         ->assertUnprocessable()
-        ->assertJsonValidationErrors(['side_bar_state']);
+        ->assertJsonValidationErrors(['side_bar_state', 'locale']);
 });

@@ -16,6 +16,7 @@ class UserPreferenceFactory extends Factory
         return [
             'user_id' => User::factory(),
             'side_bar_state' => $this->faker->boolean(),
+            'locale' => 'en',
         ];
     }
 }

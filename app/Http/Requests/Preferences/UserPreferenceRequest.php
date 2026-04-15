@@ -14,7 +14,8 @@ class UserPreferenceRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'side_bar_state' => ['required', 'boolean'],
+            'side_bar_state' => ['nullable', 'boolean', 'required_without:locale'],
+            'locale' => ['nullable', 'string', 'max:10', 'required_without:side_bar_state'],
         ];
     }
 }

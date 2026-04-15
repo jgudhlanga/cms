@@ -16,6 +16,7 @@ class UserPreference extends Model
     protected $fillable = [
         'user_id',
         'side_bar_state',
+        'locale',
     ];
 
     protected function casts(): array

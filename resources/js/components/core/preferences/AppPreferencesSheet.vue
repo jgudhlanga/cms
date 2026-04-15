@@ -1,15 +1,24 @@
 <script setup lang="ts">
+import BaseSelect from '@/components/core/form/select/BaseSelect.vue';
 import Button from '@/components/ui/button/Button.vue';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import Switch from '@/components/ui/switch/Switch.vue';
 import { useUserPreference } from '@/composables/core/useUserPreference';
 import { usePreferencesStore } from '@/store/core/preferences.store';
 import { SlidersHorizontal } from 'lucide-vue-next';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 
 const preferencesStore = usePreferencesStore();
-const { persistSidebarState } = useUserPreference();
+const { persistSidebarState, persistLocale } = useUserPreference();
 const isPreferencesDrawerOpen = ref(false);
+const localeOptions = [{ value: 'en', label: 'English' }];
+const selectedLocale = computed({
+    get: () => preferencesStore.locale ?? 'en',
+    set: (value: string) => {
+        preferencesStore.setLocale(value);
+        void persistLocale(value);
+    },
+});
 
 const updateSidebarState = (open: boolean): void => {
     preferencesStore.setSideBarState(open);
@@ -44,6 +53,23 @@ const updateSidebarState = (open: boolean): void => {
                             class="mt-0.5"
                             :model-value="preferencesStore.sideBarState"
                             @update:model-value="updateSidebarState"
+                        />
+                    </div>
+                </div>
+                <div class="rounded-xl border border-primary/25 bg-card p-4 shadow-xs">
+                    <div class="space-y-3">
+                        <div class="space-y-1">
+                            <p class="font-medium leading-none">Language</p>
+                            <p class="text-sm text-muted-foreground">English is currently the only available language.</p>
+                        </div>
+                        <BaseSelect
+                            v-model="selectedLocale"
+                            class="w-full"
+                            label=""
+                            :options="localeOptions"
+                            :is-searchable="false"
+                            :is-clearable="false"
+                            :is-disabled="true"
                         />
                     </div>
                 </div>

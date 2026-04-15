@@ -12,7 +12,7 @@ export  type IPreferenceStore = {
 export const usePreferencesStore = defineStore('preferences', {
 	state: (): IPreferenceStore => {
 		return {
-			locale: null,
+			locale: 'en',
 			sidebarCollapsed: false,
 			sideBarState: false,
 			hydratedFromServer: false,
@@ -25,8 +25,12 @@ export const usePreferencesStore = defineStore('preferences', {
 			this.sideBarState = value;
 			this.sidebarCollapsed = !value;
 		},
-		hydrateSidebarPreference(value: boolean, preferenceId: number | null): void {
+		setLocale(value: string | null): void {
+			this.locale = value;
+		},
+		hydrateSidebarPreference(value: boolean, preferenceId: number | null, locale: string | null): void {
 			this.setSideBarState(value);
+			this.setLocale(locale);
 			this.preferenceId = preferenceId;
 			this.hydratedFromServer = true;
 		},
