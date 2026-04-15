@@ -6,6 +6,7 @@ use App\Enums\Acl\RoleEnum;
 use App\Http\Filters\Users\UserFilter;
 use App\Models\Institution\Staff;
 use App\Models\Ledgers\Ledger;
+use App\Models\Preferences\UserPreference;
 use App\Models\Shared\Status;
 use App\Models\Students\Student;
 use App\Models\Tenants\Tenant;
@@ -82,6 +83,11 @@ class User extends Authenticatable implements HasMedia, MustVerifyEmail
     public function staffProfile(): HasOne
     {
         return $this->hasOne(Staff::class, 'user_id');
+    }
+
+    public function preference(): HasOne
+    {
+        return $this->hasOne(UserPreference::class, 'user_id');
     }
 
     public function getHasStaffProfileAttribute(): bool
