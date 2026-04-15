@@ -78,6 +78,7 @@ export type Level = {
     attributes: {
         name: string;
         position: string | number;
+        calendarType: 'semester' | 'term' | 'abma';
         allowedApplicationsPerLevel: string | number;
         showOnCurrentApplicationPeriod: boolean;
         hasApplicationFeePayment: boolean;
@@ -89,6 +90,7 @@ export type Level = {
 };
 export type LevelParams = {
     name: string;
+    calendar_type: 'semester' | 'term' | 'abma';
     description?: string;
     allowed_applications_per_level?: string | number;
     show_on_current_application_period: boolean;

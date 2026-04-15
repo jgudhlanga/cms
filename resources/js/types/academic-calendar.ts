@@ -3,6 +3,7 @@ export type AcademicCalendar = {
     id: string;
     attributes: {
         calendarYear: string;
+        type: 'term' | 'semester' | 'abma';
         openingDate: string;
         closingDate: string;
     };
@@ -10,6 +11,7 @@ export type AcademicCalendar = {
 
 export type AcademicCalendarParams = {
     calendar_year: string | null;
+    type: 'term' | 'semester' | 'abma' | null;
     opening_date: string | null;
     closing_date: string | null;
 };

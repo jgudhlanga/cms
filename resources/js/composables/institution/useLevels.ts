@@ -22,6 +22,15 @@ export const useLevels = () => {
         return [
             { header: trans_choice('#', 1), accessorKey: 'attributes.position', meta: { align: 'left' } },
             { header: trans_choice('trans.name', 1), accessorKey: 'attributes.name' },
+            {
+                header: trans_choice('academic_calendar.calendar_type', 1),
+                accessorKey: 'attributes.calendarType',
+                cell: ({ row }: { row: { original: Level } }) => {
+                    const type = row.original.attributes?.calendarType ?? 'semester';
+
+                    return trans_choice(`academic_calendar.${type}`, 1);
+                },
+            },
             { header: trans_choice('trans.description', 1), accessorKey: 'attributes.description' },
             {
                 header: trans('trans.show_on_current_application_period'),

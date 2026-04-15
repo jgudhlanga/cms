@@ -22,7 +22,9 @@ class LevelRepository extends BaseRepository implements ILevelRepository
 
     public function update(Level $level, LevelDto $dto): Level
     {
-        return tap($level)->update($this->getFields($dto));
+        $level->update($this->getFields($dto));
+
+        return $level->refresh();
     }
 
     private function getFields(LevelDto $dto): array
@@ -33,10 +35,11 @@ class LevelRepository extends BaseRepository implements ILevelRepository
             'allowed_applications_per_level' => $dto->allowed_applications_per_level,
             'show_on_current_application_period' => $dto->show_on_current_application_period,
             'has_application_fee_payment' => $dto->has_application_fee_payment,
+            'calendar_type' => $dto->calendar_type,
         ];
     }
 
-    public function allFilter($columns = ['*'], SharedNameFilter $filters = null)
+    public function allFilter($columns = ['*'], ?SharedNameFilter $filters = null)
     {
         return $this->level
             ->select($columns)

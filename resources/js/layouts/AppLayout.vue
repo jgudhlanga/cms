@@ -11,7 +11,7 @@ defineProps<{
 }>();
 </script>
 <template>
-    <SidebarProvider>
+    <SidebarProvider :default-open="false">
         <AppSidebar />
         <SidebarInset>
             <div class="flex h-full flex-1 flex-col gap-4 rounded-xl px-8">

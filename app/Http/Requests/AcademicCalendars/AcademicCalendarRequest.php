@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests\AcademicCalendars;
 
+use App\Enums\AcademicCalendars\AcademicCalendarTypeEnum;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rules\Enum;
 
 class AcademicCalendarRequest extends FormRequest
 {
@@ -15,6 +17,7 @@ class AcademicCalendarRequest extends FormRequest
     {
         return [
             'calendar_year' => ['required'],
+            'type' => ['required', new Enum(AcademicCalendarTypeEnum::class)],
             'opening_date' => ['required', 'before:closing_date'],
             'closing_date' => ['required', 'after:opening_date'],
         ];
