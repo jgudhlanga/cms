@@ -6,6 +6,7 @@ use App\Enums\Acl\RoleEnum;
 use App\Enums\Shared\ClassListTypeEnum;
 use App\Enums\Shared\WorkflowStepEnum;
 use App\Exceptions\Students\StudentEnrolmentResolutionException;
+use App\Exports\Enrolments\BulkFinaliseFailuresExport;
 use App\Mail\Enrolments\BulkFinaliseEnrolmentsReportMail;
 use App\Models\Enrolments\ClassList;
 use App\Models\Institution\DepartmentApplicationStep;
@@ -21,6 +22,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
+use Maatwebsite\Excel\Facades\Excel;
 
 class BulkFinaliseEnrolmentsCommand extends Command
 {
@@ -53,7 +55,7 @@ class BulkFinaliseEnrolmentsCommand extends Command
 
         $this->output->progressStart($studentPrograms->count());
 
-        /** @var array<int, array{student_program_id:int, student_id:int|null, student_number:string|null, student_id_number:string|null, user_full_name:string|null, class_list_id:int, reason:string, start_date:string, end_date:string}> $failures */
+        /** @var array<int, array{student_program_id:int, student_id:int|null, student_number:string|null, student_id_number:string|null, user_full_name:string|null, class_list_id:int|null, reason:string, start_date:string, end_date:string, department:string|null, course:string|null, level:string|null}> $failures */
         $failures = [];
 
         foreach ($studentPrograms as $studentProgram) {
@@ -66,6 +68,24 @@ class BulkFinaliseEnrolmentsCommand extends Command
                     $resolveStudentEnrolmentAttributes,
                 );
             } catch (StudentEnrolmentResolutionException $exception) {
+                if ($this->shouldContinueAfterResolutionException($exception)) {
+                    $failedFinalisations++;
+                    $failures[] = $this->buildFailureRow(
+                        $studentProgram,
+                        $startDate,
+                        $endDate,
+                        'missing_calendar_type',
+                    );
+
+                    $this->output->progressAdvance();
+
+                    continue;
+                }
+
+                logger()->error('Bulk finalise enrolments failed for student program.', [
+                    'student_program_id' => (int) $studentProgram->id,
+                    'message' => $exception->getMessage(),
+                ]);
                 $this->output->progressFinish();
                 $this->error($exception->getMessage());
 
@@ -89,7 +109,7 @@ class BulkFinaliseEnrolmentsCommand extends Command
         $this->info("Successfully finalised: {$successfulFinalised}");
         $this->warn("Failed finalisations: {$failedFinalisations}");
 
-        $reportPath = $this->writeFailureReportCsv($failures);
+        $reportPath = $this->writeFailureReportXlsx($failures);
         if ($reportPath !== null) {
             $this->info("Failure report saved: {$reportPath}");
             logger()->info('Bulk finalise enrolments failure report saved.', [
@@ -134,8 +154,16 @@ class BulkFinaliseEnrolmentsCommand extends Command
         return StudentProgram::query()
             ->join('class_lists', 'class_lists.student_program_id', '=', 'student_programs.id')
             ->select('student_programs.*', 'class_lists.id as classListId')
-            ->with(['student.user'])
+            ->with([
+                'student.user',
+                'institutionDepartment.department',
+                'departmentCourse.course',
+                'departmentLevel.level',
+            ])
             ->where('class_lists.type', ClassListTypeEnum::VERIFIED->value)
+            ->whereHas('departmentWorkflowStep.workflowStep', function ($query): void {
+                $query->where('name', WorkflowStepEnum::ACCEPTED->name());
+            })
             ->get();
     }
 
@@ -147,7 +175,7 @@ class BulkFinaliseEnrolmentsCommand extends Command
     }
 
     /**
-     * @return array{successful: bool, failure: array{student_program_id:int, student_id:int|null, student_number:string|null, student_id_number:string|null, user_full_name:string|null, class_list_id:int, reason:string, start_date:string, end_date:string}|null}
+     * @return array{successful: bool, failure: array{student_program_id:int, student_id:int|null, student_number:string|null, student_id_number:string|null, user_full_name:string|null, class_list_id:int|null, reason:string, start_date:string, end_date:string, department:string|null, course:string|null, level:string|null}|null}
      *
      * @throws StudentEnrolmentResolutionException
      */
@@ -256,7 +284,7 @@ class BulkFinaliseEnrolmentsCommand extends Command
     }
 
     /**
-     * @return array{student_program_id:int, student_id:int|null, student_number:string|null, student_id_number:string|null, user_full_name:string|null, class_list_id:int, reason:string, start_date:string, end_date:string}
+     * @return array{student_program_id:int, student_id:int|null, student_number:string|null, student_id_number:string|null, user_full_name:string|null, class_list_id:int|null, reason:string, start_date:string, end_date:string, department:string|null, course:string|null, level:string|null}
      */
     private function buildFailureRow(
         StudentProgram $studentProgram,
@@ -272,11 +300,22 @@ class BulkFinaliseEnrolmentsCommand extends Command
             'student_number' => $student?->student_number,
             'student_id_number' => $student?->id_number,
             'user_full_name' => $student?->user?->full_name,
-            'class_list_id' => (int) $studentProgram->classListId,
+            'class_list_id' => isset($studentProgram->classListId) ? (int) $studentProgram->classListId : null,
             'reason' => $reason,
             'start_date' => $startDate->toDateTimeString(),
             'end_date' => $endDate->toDateTimeString(),
+            'department' => $studentProgram->institutionDepartment?->department?->name,
+            'course' => $studentProgram->departmentCourse?->course?->name,
+            'level' => $studentProgram->departmentLevel?->level?->name,
         ];
+    }
+
+    private function shouldContinueAfterResolutionException(StudentEnrolmentResolutionException $exception): bool
+    {
+        return str_contains(
+            strtolower($exception->getMessage()),
+            'calendar type is missing',
+        );
     }
 
     private function dispatchSummaryEmails(
@@ -319,57 +358,26 @@ class BulkFinaliseEnrolmentsCommand extends Command
     }
 
     /**
-     * @param  array<int, array{student_program_id:int, student_id:int|null, student_number:string|null, student_id_number:string|null, user_full_name:string|null, class_list_id:int, reason:string, start_date:string, end_date:string}>  $failures
+     * @param  array<int, array{student_program_id:int, student_id:int|null, student_number:string|null, student_id_number:string|null, user_full_name:string|null, class_list_id:int|null, reason:string, start_date:string, end_date:string, department:string|null, course:string|null, level:string|null}>  $failures
      */
-    private function writeFailureReportCsv(array $failures): ?string
+    private function writeFailureReportXlsx(array $failures): ?string
     {
         $timestamp = now()->format('Ymd-His');
-        $relativePath = "reports/enrolments/bulk-finalise-failures-{$timestamp}.csv";
+        $relativePath = "reports/enrolments/bulk-finalise-failures-{$timestamp}.xlsx";
+        $absolutePath = Storage::disk('local')->path($relativePath);
+        $directoryPath = dirname($absolutePath);
 
-        $handle = fopen('php://temp', 'w+');
-        if ($handle === false) {
-            logger()->error('Bulk finalise enrolments: unable to open temp stream for CSV.');
+        if (! is_dir($directoryPath)) {
+            if (! mkdir($directoryPath, 0755, true) && ! is_dir($directoryPath)) {
+                logger()->error('Bulk finalise enrolments: unable to create XLSX report directory.', [
+                    'directory' => $directoryPath,
+                ]);
 
-            return null;
+                return null;
+            }
         }
 
-        fputcsv($handle, [
-            'student_program_id',
-            'student_id',
-            'user_full_name',
-            'student_id_number',
-            'student_number',
-            'class_list_id',
-            'reason',
-            'start_date',
-            'end_date',
-        ]);
-
-        foreach ($failures as $row) {
-            fputcsv($handle, [
-                $row['student_program_id'],
-                $row['student_id'],
-                $row['user_full_name'],
-                $row['student_id_number'],
-                $row['student_number'],
-                $row['class_list_id'],
-                $row['reason'],
-                $row['start_date'],
-                $row['end_date'],
-            ]);
-        }
-
-        rewind($handle);
-        $csv = stream_get_contents($handle);
-        fclose($handle);
-
-        if (! is_string($csv)) {
-            logger()->error('Bulk finalise enrolments: unable to read CSV contents.');
-
-            return null;
-        }
-
-        Storage::disk('local')->put($relativePath, $csv);
+        Excel::store(new BulkFinaliseFailuresExport($failures), $relativePath, 'local');
 
         return $relativePath;
     }

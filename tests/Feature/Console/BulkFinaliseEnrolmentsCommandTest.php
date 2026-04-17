@@ -2,6 +2,7 @@
 
 use App\Enums\Acl\RoleEnum;
 use App\Enums\Shared\ClassListTypeEnum;
+use App\Enums\Shared\WorkflowStepEnum;
 use App\Mail\Enrolments\BulkFinaliseEnrolmentsReportMail;
 use App\Models\AcademicCalendars\AcademicCalendar;
 use App\Models\AcademicCalendars\AcademicYearOption;
@@ -14,12 +15,16 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 
 beforeEach(function (): void {
     Carbon::setTestNow(Carbon::parse('2026-01-15 12:00:00', config('app.timezone')));
 
     AcademicCalendar::query()->firstOrCreate(
-        ['calendar_year' => '2025/2026'],
+        [
+            'calendar_year' => '2025/2026',
+            'type' => 'semester',
+        ],
         [
             'opening_date' => '2026-01-01',
             'closing_date' => '2026-12-31',
@@ -104,6 +109,56 @@ it('fails the command when no academic calendar can be resolved for a paid stude
     expect(StudentEnrolment::query()->where('student_id', $studentProgram->student_id)->exists())->toBeFalse();
 });
 
+it('continues and records a failure when calendar type is missing for a paid student', function () {
+    Storage::fake('local');
+    config()->set('custom.bank-statements.plan_anchor_start', '2026-01-01');
+
+    $missingCalendarTypeProgram = createVerifiedStudentProgram('STU001D');
+    createEnrolledDepartmentStep($missingCalendarTypeProgram);
+    createBankCreditReceipt('STU001D', '2026-01-10 09:00:00', 'TXN-BULK-001D');
+    $missingCalendarTypeProgram->departmentLevel->level()->delete();
+
+    $validProgram = createVerifiedStudentProgram('STU001E');
+    createEnrolledDepartmentStep($validProgram);
+    createBankCreditReceipt('STU001E', '2026-01-10 10:00:00', 'TXN-BULK-001E');
+    $validProgram->departmentLevel->level->update([
+        'calendar_type' => 'semester',
+    ]);
+
+    $this->artisan('enrolments:bulk-finalise-enrolments-command')->assertSuccessful();
+
+    $validProgramClassList = ClassList::query()->where('student_program_id', $validProgram->id)->first();
+
+    expect(StudentEnrolment::query()->where('student_id', $missingCalendarTypeProgram->student_id)->exists())->toBeFalse()
+        ->and(StudentEnrolment::query()->where('student_id', $validProgram->student_id)->exists())->toBeTrue()
+        ->and($validProgramClassList)->not->toBeNull()
+        ->and($validProgramClassList->type)->toBe(ClassListTypeEnum::FINAL);
+
+    $files = Storage::disk('local')->allFiles('reports/enrolments');
+    $reportPath = collect($files)->first(function (string $path): bool {
+        return Str::startsWith($path, 'reports/enrolments/bulk-finalise-failures-') && Str::endsWith($path, '.xlsx');
+    });
+
+    expect($reportPath)->not->toBeNull();
+
+    $spreadsheet = IOFactory::load(Storage::disk('local')->path($reportPath));
+    $rows = $spreadsheet->getActiveSheet()->toArray();
+
+    expect($rows[0])->toBe([
+        'name',
+        'department',
+        'level',
+        'course',
+        'idNumber',
+        'studentNumber',
+        'reason',
+        'classListId',
+        'studentProgramId',
+    ])
+        ->and(collect($rows)->flatten()->contains('missing_calendar_type'))->toBeTrue()
+        ->and(collect($rows)->flatten()->contains('STU001D'))->toBeTrue();
+});
+
 it('keeps verified students unchanged when no matching payment exists', function () {
     config()->set('custom.bank-statements.plan_anchor_start', '2026-01-01');
 
@@ -128,7 +183,29 @@ it('applies explicit start-date and end-date options when filtering payments', f
     expect($studentProgram->fresh()->program_status_id)->toBe(ClassListTypeEnum::VERIFIED->value);
 });
 
-it('writes a CSV failure report to local storage', function () {
+it('skips verified students that are not on the accepted workflow step', function () {
+    config()->set('custom.bank-statements.plan_anchor_start', '2026-01-01');
+
+    $studentProgram = createVerifiedStudentProgram('STU003B');
+    $rejectedDepartmentStep = createRejectedDepartmentStep($studentProgram);
+    $studentProgram->update([
+        'department_application_step_id' => $rejectedDepartmentStep->id,
+    ]);
+    createEnrolledDepartmentStep($studentProgram);
+    createBankCreditReceipt('STU003B', '2026-01-10 09:00:00', 'TXN-BULK-003B');
+
+    $this->artisan('enrolments:bulk-finalise-enrolments-command')->assertSuccessful();
+
+    $classList = ClassList::query()->where('student_program_id', $studentProgram->id)->first();
+
+    expect($studentProgram->fresh()->department_application_step_id)->toBe($rejectedDepartmentStep->id)
+        ->and($classList)->not->toBeNull()
+        ->and($classList->type)->toBe(ClassListTypeEnum::VERIFIED)
+        ->and(StudentEnrolment::query()->where('student_id', $studentProgram->student_id)->exists())->toBeFalse()
+        ->and($rejectedDepartmentStep->workflowStep->name)->toBe(WorkflowStepEnum::REJECTED->name());
+});
+
+it('writes an XLSX failure report to local storage', function () {
     Storage::fake('local');
     Mail::fake();
     config()->set('custom.bank-statements.plan_anchor_start', '2026-01-01');
@@ -141,15 +218,36 @@ it('writes a CSV failure report to local storage', function () {
     expect($files)->not->toBeEmpty();
 
     $reportPath = collect($files)->first(function (string $path): bool {
-        return Str::startsWith($path, 'reports/enrolments/bulk-finalise-failures-') && Str::endsWith($path, '.csv');
+        return Str::startsWith($path, 'reports/enrolments/bulk-finalise-failures-') && Str::endsWith($path, '.xlsx');
     });
 
     expect($reportPath)->not->toBeNull();
 
-    $csv = Storage::disk('local')->get($reportPath);
-    expect($csv)->toContain('Test Bulk Student')
-        ->and($csv)->toContain('63-000000A00')
-        ->and($csv)->toContain('STU004');
+    $spreadsheet = IOFactory::load(Storage::disk('local')->path($reportPath));
+    $rows = $spreadsheet->getActiveSheet()->toArray();
+    $flattenedRows = collect($rows)->flatten();
+    $groupRows = collect($rows)
+        ->map(fn (array $row): string => (string) ($row[0] ?? ''))
+        ->filter(fn (string $value): bool => Str::startsWith($value, 'Group: '))
+        ->values();
+    $sortedGroupRows = $groupRows->sort()->values();
+
+    expect($rows[0])->toBe([
+        'name',
+        'department',
+        'level',
+        'course',
+        'idNumber',
+        'studentNumber',
+        'reason',
+        'classListId',
+        'studentProgramId',
+    ])
+        ->and($flattenedRows->contains('Test Bulk Student'))->toBeTrue()
+        ->and($flattenedRows->contains('STU004'))->toBeTrue()
+        ->and($flattenedRows->contains('no_matching_payment'))->toBeTrue()
+        ->and($groupRows->isNotEmpty())->toBeTrue()
+        ->and($groupRows->all())->toBe($sortedGroupRows->all());
 
     Mail::assertNothingSent();
 });

@@ -28,7 +28,7 @@ const { isLoading: modesOfStudyLoading, listModesOfStudy, modesOfStudy } = useMo
 const classStates = ref<DepartmentCourseClassCount[] | []>([]);
 
 const getSelectedAcademicCalendarFromUrl = (): SelectOption | null => {
-    const selectedAcademicCalendarId = Number(new URL(window.location.href).searchParams.get('academic_calendar'));
+    const selectedAcademicCalendarId = Number(new URL(window.location.href).searchParams.get(''));
     const selectedAcademicCalendar = academicCalendars.value?.find((row) => Number(row.id) === selectedAcademicCalendarId) ?? null;
 
     if (!selectedAcademicCalendar) {
@@ -37,7 +37,7 @@ const getSelectedAcademicCalendarFromUrl = (): SelectOption | null => {
 
     return {
         value: Number(selectedAcademicCalendar.id),
-        label: `${selectedAcademicCalendar.attributes.name} ${selectedAcademicCalendar.attributes.calendarYear}`,
+        label: `${selectedAcademicCalendar.attributes.name}`,
     };
 };
 
@@ -73,7 +73,7 @@ onMounted(async () => {
     const defaultAcademicCalendar = defaultAcademicCalendarEntry
         ? {
               value: Number(defaultAcademicCalendarEntry.id),
-              label: `${defaultAcademicCalendarEntry.attributes.name} ${defaultAcademicCalendarEntry.attributes.calendarYear}`,
+              label: `${defaultAcademicCalendarEntry.attributes.name}`,
           }
         : null;
     const defaultModeOfStudy = defaultModeOption ? { value: Number(defaultModeOption.id), label: defaultModeOption.attributes.name } : null;

@@ -22,6 +22,7 @@ use App\Models\Students\Student;
 use App\Models\Students\StudentProgram;
 use App\Models\Tenants\Tenant;
 use App\Models\Users\User;
+use Illuminate\Support\Str;
 
 if (! function_exists('createVerifiedStudentProgram')) {
     function createVerifiedStudentProgram(string $studentNumber): StudentProgram
@@ -31,7 +32,7 @@ if (! function_exists('createVerifiedStudentProgram')) {
         $institutionDepartment = InstitutionDepartment::query()->create([
             'tenant_id' => $tenant->id,
             'department_id' => $department->id,
-            'department_code' => 'ict',
+            'department_code' => 'ict-'.Str::lower(Str::random(6)),
             'description' => 'Department for bulk finalise command tests',
         ]);
         $course = Course::factory()->create();
@@ -40,23 +41,29 @@ if (! function_exists('createVerifiedStudentProgram')) {
             'institution_department_id' => $institutionDepartment->id,
             'course_id' => $course->id,
         ]);
-        $level = Level::factory()->create(['name' => 'Level 1']);
+        $level = Level::factory()->create([
+            'name' => 'Level '.Str::upper(Str::random(5)),
+            'calendar_type' => 'semester',
+        ]);
         $departmentLevel = DepartmentLevel::query()->create([
             'tenant_id' => $tenant->id,
             'institution_department_id' => $institutionDepartment->id,
             'level_id' => $level->id,
         ]);
-        $modeOfStudy = ModeOfStudy::query()->create(['name' => 'Full Time']);
+        $modeOfStudy = ModeOfStudy::query()->firstOrCreate(['name' => 'Full Time']);
         $intakePeriod = IntakePeriod::query()->create([
             'tenant_id' => $tenant->id,
             'name' => 'Semester 1 2026',
             'start_date' => now()->startOfMonth()->toDateString(),
             'end_date' => now()->endOfMonth()->toDateString(),
         ]);
-        $title = Title::query()->create(['name' => 'Mr']);
-        $gender = Gender::query()->create(['title' => 'Male']);
-        $maritalStatus = MaritalStatus::query()->create(['title' => 'Single']);
-        $idType = IdType::query()->create(['name' => 'National ID']);
+        IntakePeriod::query()->whereKey($intakePeriod->id)->update([
+            'calendar_year' => '2025/2026',
+        ]);
+        $title = Title::query()->firstOrCreate(['name' => 'Mr']);
+        $gender = Gender::query()->firstOrCreate(['title' => 'Male']);
+        $maritalStatus = MaritalStatus::query()->firstOrCreate(['title' => 'Single']);
+        $idType = IdType::query()->firstOrCreate(['name' => 'National ID']);
         $studentUser = User::factory()->create([
             'tenant_id' => $tenant->id,
             'first_name' => 'Test',
@@ -70,7 +77,7 @@ if (! function_exists('createVerifiedStudentProgram')) {
             'gender_id' => $gender->id,
             'marital_status_id' => $maritalStatus->id,
             'id_type_id' => $idType->id,
-            'id_number' => '63-000000A00',
+            'id_number' => '63-'.str_pad((string) random_int(0, 9999999), 7, '0', STR_PAD_LEFT).'A00',
             'student_number' => $studentNumber,
             'date_of_birth' => '2001-01-01',
         ]);
@@ -92,6 +99,12 @@ if (! function_exists('createVerifiedStudentProgram')) {
             'student_program_id' => $studentProgram->id,
             'type' => ClassListTypeEnum::VERIFIED->value,
             'attributes' => [],
+        ]);
+
+        $acceptedDepartmentStep = resolveDepartmentApplicationStep($studentProgram, WorkflowStepEnum::ACCEPTED);
+
+        $studentProgram->update([
+            'department_application_step_id' => $acceptedDepartmentStep->id,
         ]);
 
         return $studentProgram;
@@ -116,20 +129,38 @@ if (! function_exists('createBankCreditReceipt')) {
 if (! function_exists('createEnrolledDepartmentStep')) {
     function createEnrolledDepartmentStep(StudentProgram $studentProgram): DepartmentApplicationStep
     {
+        return resolveDepartmentApplicationStep($studentProgram, WorkflowStepEnum::ENROLLED);
+    }
+}
+
+if (! function_exists('createRejectedDepartmentStep')) {
+    function createRejectedDepartmentStep(StudentProgram $studentProgram): DepartmentApplicationStep
+    {
+        return resolveDepartmentApplicationStep($studentProgram, WorkflowStepEnum::REJECTED);
+    }
+}
+
+if (! function_exists('resolveDepartmentApplicationStep')) {
+    function resolveDepartmentApplicationStep(StudentProgram $studentProgram, WorkflowStepEnum $workflowStep): DepartmentApplicationStep
+    {
         $step = WorkflowStep::query()->firstOrCreate(
-            ['slug' => WorkflowStepEnum::ENROLLED->slug()],
+            ['slug' => $workflowStep->slug()],
             [
-                'name' => WorkflowStepEnum::ENROLLED->name(),
-                'description' => WorkflowStepEnum::ENROLLED->description(),
-                'position' => WorkflowStepEnum::ENROLLED->position(),
+                'name' => $workflowStep->name(),
+                'description' => $workflowStep->description(),
+                'position' => $workflowStep->position(),
             ]
         );
 
-        return DepartmentApplicationStep::query()->create([
-            'tenant_id' => $studentProgram->tenant_id,
-            'institution_department_id' => $studentProgram->institution_department_id,
-            'workflow_step_id' => $step->id,
-            'position' => $step->position,
-        ]);
+        return DepartmentApplicationStep::query()->firstOrCreate(
+            [
+                'tenant_id' => $studentProgram->tenant_id,
+                'institution_department_id' => $studentProgram->institution_department_id,
+                'workflow_step_id' => $step->id,
+            ],
+            [
+                'position' => $step->position,
+            ]
+        );
     }
 }
