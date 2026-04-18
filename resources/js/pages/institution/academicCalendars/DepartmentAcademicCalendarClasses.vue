@@ -23,7 +23,7 @@ const props = defineProps<{
     level: DepartmentLevel;
     mode: ModeOfStudy;
     auth: AuthObject;
-    classConfig: ClassConfig;
+    classConfig: ClassConfig | null;
     previewClasses: AcademicCalendarClassPreview[];
     generationContext: AcademicCalendarClassGenerationContext;
     errors: object;
@@ -32,6 +32,37 @@ const props = defineProps<{
 const { department, academicCalendar, level, course, mode, classConfig, previewClasses, generationContext } = toRefs(props);
 
 const hasNewStudentsToAssign = computed(() => generationContext.value.newFinalStudentCount > 0);
+
+type PreviewEmptyAlert = {
+    titleKey: string;
+    descriptionKey: string;
+};
+
+const previewEmptyAlert = computed((): PreviewEmptyAlert | null => {
+    if (previewClasses.value.length > 0) {
+        return null;
+    }
+
+    const context = generationContext.value;
+    if (context.finalStudentCount === 0) {
+        return { titleKey: 'trans.no_data', descriptionKey: 'enrolment.preview_empty_no_final_enrolments' };
+    }
+
+    if (context.classConfigId == null) {
+        return { titleKey: 'trans.no_data', descriptionKey: 'enrolment.preview_empty_no_class_config' };
+    }
+
+    const studentsPerClass = Number(context.studentsPerClass ?? 0);
+    if (studentsPerClass < 1) {
+        return { titleKey: 'trans.no_data', descriptionKey: 'enrolment.preview_empty_no_class_size' };
+    }
+
+    if (context.newFinalStudentCount === 0) {
+        return { titleKey: 'trans.no_data', descriptionKey: 'enrolment.preview_empty_all_assigned' };
+    }
+
+    return { titleKey: 'trans.no_data', descriptionKey: 'enrolment.no_preview_classes_generated' };
+});
 
 const classActionTitle = computed(() =>
     hasNewStudentsToAssign.value && generationContext.value.hasExistingClasses
@@ -73,7 +104,7 @@ const saveClasses = () => {
     form.post(
         route('academic-calendars.department-classes.store', {
             institution_department: String(department.value.id),
-            academic_calendar: String(academicCalendar.value.id),
+            calendar_year: String(academicCalendar.value.attributes.calendarYear),
         }),
         {
             onSuccess: () => {
@@ -92,7 +123,7 @@ const saveClasses = () => {
     <Head :title="$tChoice('academic_calendar.academic_calendar', 2)" />
     <PageContainer :breadcrumbs="breadcrumbs" :back-url="route('institution-departments.show', String(department.id))">
         <div class="flex flex-col space-y-6">
-            <BaseCard :title="String(classConfig?.attributes?.academicCalendar ?? '---')">
+            <BaseCard :title="String(classConfig?.attributes?.calendarYear ?? '---')">
                 <div class="grid grid-cols-2 gap-4 md:grid-cols-4">
                     <LabelValue :label="$tChoice('trans.course', 1)" :value="classConfig?.attributes?.departmentCourse ?? '---'" />
                     <LabelValue :label="$tChoice('trans.level', 1)" :value="classConfig?.attributes?.departmentLevel ?? '---'" />
@@ -131,9 +162,9 @@ const saveClasses = () => {
             </div>
 
             <BaseAlert
-                v-if="previewClasses.length === 0"
-                :title="$t('trans.no_data')"
-                :description="$t('enrolment.no_preview_classes_generated')"
+                v-if="previewEmptyAlert"
+                :title="$t(previewEmptyAlert.titleKey)"
+                :description="$t(previewEmptyAlert.descriptionKey)"
             />
 
             <template v-else>
@@ -158,7 +189,7 @@ const saveClasses = () => {
                             :href="
                                 route('academic-calendars.department-classes.show', {
                                     institution_department: String(department.id),
-                                    academic_calendar: String(academicCalendar.id),
+                                    calendar_year: String(academicCalendar.attributes.calendarYear),
                                     academic_calendar_class: String(classPreview.academicCalendarClassId),
                                 })
                             "

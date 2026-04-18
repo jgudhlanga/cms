@@ -40,13 +40,19 @@ class AcademicCalendarResource extends JsonResource
         if ($calendarType === 'semester') {
             $semesterNumber = $this->resolveSemesterNumber($openingDate, $closingDate);
 
-            return "Semester {$semesterNumber}";
+            return 'Semester';
         }
 
         if ($calendarType === 'term') {
             $termNumber = $this->resolveTermNumber($openingDate, $closingDate);
 
-            return "Term {$termNumber}";
+            return 'Term';
+        }
+
+        if ($calendarType === 'abma') {
+            $termNumber = $this->resolveAbmaTermNumber($openingDate, $closingDate);
+
+            return 'ABMA';
         }
 
         return ucfirst($calendarType);
@@ -67,6 +73,18 @@ class AcademicCalendarResource extends JsonResource
             $averageMonth <= 4 => 1,
             $averageMonth <= 8 => 2,
             default => 3,
+        };
+    }
+
+    private function resolveAbmaTermNumber(Carbon $openingDate, Carbon $closingDate): int
+    {
+        $averageMonth = (int) round(($openingDate->month + $closingDate->month) / 2);
+
+        return match (true) {
+            $averageMonth <= 3 => 1,
+            $averageMonth <= 6 => 2,
+            $averageMonth <= 9 => 3,
+            default => 4,
         };
     }
 }

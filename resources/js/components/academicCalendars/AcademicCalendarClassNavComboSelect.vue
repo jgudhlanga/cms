@@ -10,7 +10,7 @@ const props = withDefaults(
         classes: AcademicCalendarClassMoveTarget[];
         currentClassId: number;
         institutionDepartmentId: number;
-        academicCalendarId: number;
+        calendarYear: string;
         widthClass?: string;
     }>(),
     {
@@ -49,7 +49,7 @@ watch(selectedClass, (next) => {
     router.get(
         route('academic-calendars.department-classes.show', {
             institution_department: String(props.institutionDepartmentId),
-            academic_calendar: String(props.academicCalendarId),
+            calendar_year: props.calendarYear,
             academic_calendar_class: String(selectedId),
         }),
     );

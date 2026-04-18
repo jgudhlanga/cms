@@ -82,7 +82,7 @@ const canMoveStudents = computed(() => hasAbility(['update:academic-calendar-stu
                 :classes="siblingAcademicCalendarClasses"
                 :current-class-id="academicCalendarClass.id"
                 :institution-department-id="Number(department.id)"
-                :academic-calendar-id="Number(academicCalendar.id)"
+                :calendar-year="academicCalendar.attributes.calendarYear"
             />
         </template>
         <div class="flex flex-col space-y-6">

@@ -4,11 +4,11 @@ import { useModeOfStudy } from '@/composables/institution/useModeOfStudy';
 import { useServerSide } from '@/composables/shared/useServerSide';
 import { openModal } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
-import { AcademicClassConfigPayload, DepartmentCourseClassCount } from '@/types/academic-calendar';
+import { AcademicClassConfigPayload, ClassLevelSummary, DepartmentCourseClassCount } from '@/types/academic-calendar';
 import { InstitutionDepartment, ModeOfStudy } from '@/types/institution';
 import { SelectOption } from '@/types/utils';
 import { useDepartmentMetaStore } from '@/store/institution/useDepartmentMetaStore';
-import { trans_choice } from 'laravel-vue-i18n';
+import { trans, trans_choice } from 'laravel-vue-i18n';
 import { storeToRefs } from 'pinia';
 import { onMounted, ref, watch } from 'vue';
 
@@ -20,25 +20,26 @@ const props = defineProps<Props>();
 const { department } = props;
 const institutionDepartmentId = String(department?.id) ?? '';
 const { getData, isLoading } = useServerSide();
-const academicCalendar = ref<SelectOption | null>(null);
+const academicYear = ref<SelectOption | null>(null);
+const resolvedAcademicCalendarId = ref<number | null>(null);
 const modeOfStudy = ref<SelectOption | null>(null);
-const { isLoading: academicCalendarLoading, listAcademicCalendars, academicCalendars } = useAcademicCalendars();
+const { listAcademicYearOptions } = useAcademicCalendars();
 const { isLoading: modesOfStudyLoading, listModesOfStudy, modesOfStudy } = useModeOfStudy();
 
+const isYearOptionsLoading = ref(false);
+const academicYearOptions = ref<SelectOption[]>([]);
 const classStates = ref<DepartmentCourseClassCount[] | []>([]);
 
-const getSelectedAcademicCalendarFromUrl = (): SelectOption | null => {
-    const selectedAcademicCalendarId = Number(new URL(window.location.href).searchParams.get(''));
-    const selectedAcademicCalendar = academicCalendars.value?.find((row) => Number(row.id) === selectedAcademicCalendarId) ?? null;
-
-    if (!selectedAcademicCalendar) {
+const getSelectedAcademicYearFromUrl = (): SelectOption | null => {
+    const raw = new URL(window.location.href).searchParams.get('academic_year');
+    if (!raw) {
         return null;
     }
-
-    return {
-        value: Number(selectedAcademicCalendar.id),
-        label: `${selectedAcademicCalendar.attributes.name}`,
-    };
+    const match = academicYearOptions.value.find((o) => String(o.value) === raw) ?? null;
+    if (!match) {
+        return { value: raw, label: raw };
+    }
+    return match;
 };
 
 const getSelectedModeOfStudyFromUrl = (): SelectOption | null => {
@@ -58,46 +59,55 @@ const getSelectedModeOfStudyFromUrl = (): SelectOption | null => {
 const syncFiltersToUrl = (): void => {
     const currentUrl = new URL(window.location.href);
 
-    currentUrl.searchParams.set('academic_calendar', String(academicCalendar.value?.value ?? ''));
+    currentUrl.searchParams.set('academic_year', String(academicYear.value?.value ?? ''));
     currentUrl.searchParams.set('mode_of_study_id', String(modeOfStudy.value?.value ?? ''));
 
     window.history.replaceState({}, '', currentUrl.toString());
 };
 
 onMounted(async () => {
-    await listAcademicCalendars();
+    isYearOptionsLoading.value = true;
+    try {
+        academicYearOptions.value = await listAcademicYearOptions();
+    } finally {
+        isYearOptionsLoading.value = false;
+    }
     await listModesOfStudy();
-    const defaultAcademicCalendarEntry = academicCalendars.value?.[0] ?? null;
+
+    const currentCalendarYear = String(new Date().getFullYear());
+    const defaultYearOption =
+        academicYearOptions.value.find((o) => String(o.value) === currentCalendarYear) ?? academicYearOptions.value[0] ?? null;
+
     const defaultModeOption = modesOfStudy.value?.filter((row: ModeOfStudy) => row.attributes.name.toLowerCase() === 'full time')[0] ?? null;
 
-    const defaultAcademicCalendar = defaultAcademicCalendarEntry
-        ? {
-              value: Number(defaultAcademicCalendarEntry.id),
-              label: `${defaultAcademicCalendarEntry.attributes.name}`,
-          }
-        : null;
-    const defaultModeOfStudy = defaultModeOption ? { value: Number(defaultModeOption.id), label: defaultModeOption.attributes.name } : null;
-
-    academicCalendar.value = getSelectedAcademicCalendarFromUrl() ?? defaultAcademicCalendar;
-    modeOfStudy.value = getSelectedModeOfStudyFromUrl() ?? defaultModeOfStudy;
+    academicYear.value = getSelectedAcademicYearFromUrl() ?? defaultYearOption;
+    modeOfStudy.value = getSelectedModeOfStudyFromUrl() ?? (defaultModeOption ? { value: Number(defaultModeOption.id), label: defaultModeOption.attributes.name } : null);
     syncFiltersToUrl();
 
     await loadClassConfigs();
 });
 
 const loadClassConfigs = async () => {
-    classStates.value = await getData(
+    const payload = await getData(
         route(
             'v1.departments.academic-calendars',
             {
                 institution_department: institutionDepartmentId,
-                academic_calendar: String(academicCalendar.value?.value),
+                academic_year: String(academicYear.value?.value ?? ''),
                 mode_of_study_id: String(modeOfStudy.value?.value),
             },
             false,
         ),
         () => trans_choice('trans.enrolment', 2),
     );
+    if (payload && typeof payload === 'object' && 'data' in payload) {
+        classStates.value = (payload as { data: DepartmentCourseClassCount[] }).data ?? [];
+        const meta = (payload as { meta?: { resolvedAcademicCalendarId?: number } }).meta;
+        resolvedAcademicCalendarId.value = meta?.resolvedAcademicCalendarId ?? null;
+    } else {
+        classStates.value = [];
+        resolvedAcademicCalendarId.value = null;
+    }
 };
 
 const departmentMetaStore = useDepartmentMetaStore();
@@ -126,6 +136,32 @@ const getDisplayedStudentsPerClass = (studentsPerClass: string | number | null):
     return Number(studentsPerClass ?? 0);
 };
 
+const getSuggestedClassCount = (level: ClassLevelSummary): number | null => {
+    const perClass = getDisplayedStudentsPerClass(level.studentsPerClass);
+    if (perClass < 1) {
+        return null;
+    }
+    const total = getDisplayedTotalFinalList(level.totalFinalList, level.totalnClass);
+    if (total < 1) {
+        return null;
+    }
+    return Math.ceil(total / perClass);
+};
+
+const getClassesLinkLabel = (level: ClassLevelSummary): string => {
+    const created = Number(level.classesCount ?? 0);
+    const suggested = getSuggestedClassCount(level);
+    if (suggested !== null && suggested > created) {
+        return String(
+            trans('academic_calendar.classes_count_with_suggested', {
+                created,
+                suggested,
+            }),
+        );
+    }
+    return String(created);
+};
+
 const showConfigModal = (payload: AcademicClassConfigPayload) => {
     openModal({ name: APP_MODULE_KEYS.student_per_class, edit: payload });
 };
@@ -135,14 +171,14 @@ const showConfigModal = (payload: AcademicClassConfigPayload) => {
     <div class="my-8 flex flex-col space-y-4">
         <div class="mb-10 flex w-full justify-between space-x-4">
             <AcademicCalendarClassFilters
-                v-model:academic-calendar-model="academicCalendar"
+                v-model:academic-year-model="academicYear"
                 v-model:modeOfStudyModel="modeOfStudy"
-                :academic-calendars="academicCalendars ?? []"
+                :academic-year-options="academicYearOptions"
                 :modes-of-study="modesOfStudy ?? []"
                 :handle-filter-change="handleSelectionChange"
             />
         </div>
-        <DataLoadingSpinner v-if="isLoading || academicCalendarLoading || modesOfStudyLoading" />
+        <DataLoadingSpinner v-if="isLoading || isYearOptionsLoading || modesOfStudyLoading" />
         <div class="flex flex-col space-y-10" v-else>
             <template v-if="classStates && classStates.length > 0">
                 <table class="j-table">
@@ -171,7 +207,7 @@ const showConfigModal = (payload: AcademicClassConfigPayload) => {
                                         @click="
                                             () =>
                                                 showConfigModal({
-                                                    academic_calendar_id: String(academicCalendar?.value ?? ''),
+                                                    academic_calendar_id: String(resolvedAcademicCalendarId ?? ''),
                                                     department_level_id: String(level.departmentLevelId ?? ''),
                                                     department_course_id: String(stats.departmentCourseId ?? ''),
                                                     mode_of_study_id: String(modeOfStudy?.value ?? ''),
@@ -188,7 +224,7 @@ const showConfigModal = (payload: AcademicClassConfigPayload) => {
                                         :title="String(level.classesCount ?? 0)"
                                         :href="route('academic-calendars.department-classes', {
                                             institution_department: institutionDepartmentId,
-                                            academic_calendar: String(academicCalendar?.value),
+                                            calendar_year: String(academicYear?.value ?? ''),
                                             mode_of_study_id: String(modeOfStudy?.value),
                                             department_course_id: stats.departmentCourseId,
                                             department_level_id: String(level.departmentLevelId),

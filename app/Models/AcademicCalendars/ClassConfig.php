@@ -15,20 +15,13 @@ use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
 /**
- *
  * @mixin Builder
  */
 class ClassConfig extends Model
 {
-    use SoftDeletes, Paginatable, LogsActivity;
+    use LogsActivity, Paginatable, SoftDeletes;
 
-    protected $fillable = ['academic_calendar_id', 'institution_department_id', 'department_course_id', 'department_level_id', 'mode_of_study_id', 'students_per_class'];
-
-
-    public function academicCalendar(): BelongsTo
-    {
-        return $this->belongsTo(AcademicCalendar::class);
-    }
+    protected $fillable = ['calendar_year', 'institution_department_id', 'department_course_id', 'department_level_id', 'mode_of_study_id', 'students_per_class'];
 
     public function institutionDepartment(): BelongsTo
     {

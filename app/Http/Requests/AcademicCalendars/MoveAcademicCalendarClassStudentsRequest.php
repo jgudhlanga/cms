@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests\AcademicCalendars;
 
-use App\Models\AcademicCalendars\AcademicCalendar;
 use App\Models\AcademicCalendars\AcademicCalendarClass;
 use App\Models\AcademicCalendars\AcademicCalendarStudentEnrolment;
 use App\Models\AcademicCalendars\ClassConfig;
@@ -34,11 +33,11 @@ class MoveAcademicCalendarClassStudentsRequest extends FormRequest
             }
 
             $institutionDepartment = $this->route('institution_department');
-            $academicCalendar = $this->route('academic_calendar');
+            $calendarYear = $this->route('calendar_year');
             $sourceClass = $this->route('academic_calendar_class');
 
             if (! $institutionDepartment instanceof InstitutionDepartment
-                || ! $academicCalendar instanceof AcademicCalendar
+                || ! is_string($calendarYear) || $calendarYear === ''
                 || ! $sourceClass instanceof AcademicCalendarClass) {
                 return;
             }
@@ -53,7 +52,7 @@ class MoveAcademicCalendarClassStudentsRequest extends FormRequest
             }
 
             if ((int) $sourceConfig->institution_department_id !== (int) $institutionDepartment->id
-                || (int) $sourceConfig->academic_calendar_id !== (int) $academicCalendar->id) {
+                || (string) $sourceConfig->calendar_year !== $calendarYear) {
                 $validator->errors()->add('target_academic_calendar_class_id', __('academic_calendar.move_students_invalid_source_class'));
 
                 return;

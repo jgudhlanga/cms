@@ -61,16 +61,17 @@ function buildDepartmentClassContext(): array
     $intakePeriod = IntakePeriod::query()->create([
         'tenant_id' => $tenant->id,
         'name' => 'Semester 1 2026',
+        'calendar_year' => '2026',
         'start_date' => now()->startOfMonth()->toDateString(),
         'end_date' => now()->endOfMonth()->toDateString(),
     ]);
     $calendar = AcademicCalendar::query()->create([
         'calendar_year' => '2026',
-        'opening_date' => now()->startOfMonth()->toDateString(),
-        'closing_date' => now()->endOfMonth()->toDateString(),
+        'opening_date' => now()->subDays(30)->toDateString(),
+        'closing_date' => now()->addMonths(6)->toDateString(),
     ]);
     $classConfig = ClassConfig::query()->create([
-        'academic_calendar_id' => $calendar->id,
+        'calendar_year' => $calendar->calendar_year,
         'institution_department_id' => $institutionDepartment->id,
         'department_course_id' => $departmentCourse->id,
         'department_level_id' => $departmentLevel->id,
@@ -162,7 +163,7 @@ test('department classes page returns generation context and preview classes', f
     $this->actingAs($context['user']);
     $response = $this->get(route('academic-calendars.department-classes', [
         'institution_department' => $context['institutionDepartment']->id,
-        'academic_calendar' => $context['calendar']->id,
+        'calendar_year' => $context['calendar']->calendar_year,
         'department_level_id' => $context['departmentLevel']->id,
         'department_course_id' => $context['departmentCourse']->id,
         'mode_of_study_id' => $context['modeOfStudy']->id,
@@ -187,6 +188,34 @@ test('department classes page returns generation context and preview classes', f
     expect(data_get($page, 'props.previewClasses.0.genderCounts.unknown'))->toBeInt();
 });
 
+test('department classes page includes final enrolments from any started academic calendar in the year', function () {
+    $context = buildDepartmentClassContext();
+
+    AcademicCalendar::query()->create([
+        'calendar_year' => $context['calendar']->calendar_year,
+        'opening_date' => now()->subDays(5)->toDateString(),
+        'closing_date' => now()->addMonths(6)->toDateString(),
+    ]);
+
+    createFinalStudentProgram($context, 'student-on-older-calendar@example.com');
+
+    $this->actingAs($context['user']);
+    $response = $this->get(route('academic-calendars.department-classes', [
+        'institution_department' => $context['institutionDepartment']->id,
+        'calendar_year' => $context['calendar']->calendar_year,
+        'department_level_id' => $context['departmentLevel']->id,
+        'department_course_id' => $context['departmentCourse']->id,
+        'mode_of_study_id' => $context['modeOfStudy']->id,
+        'class_config_id' => $context['classConfig']->id,
+    ]));
+
+    $response->assertSuccessful();
+    $page = $response->viewData('page');
+
+    expect(data_get($page, 'props.generationContext.finalStudentCount'))->toBe(1)
+        ->and(data_get($page, 'props.generationContext.newFinalStudentCount'))->toBe(1);
+});
+
 test('preview merges trailing class when remainder is below half of students per class', function () {
     $context = buildDepartmentClassContext();
     $context['classConfig']->update(['students_per_class' => 10]);
@@ -198,7 +227,7 @@ test('preview merges trailing class when remainder is below half of students per
     $this->actingAs($context['user']);
     $response = $this->get(route('academic-calendars.department-classes', [
         'institution_department' => $context['institutionDepartment']->id,
-        'academic_calendar' => $context['calendar']->id,
+        'calendar_year' => $context['calendar']->calendar_year,
         'department_level_id' => $context['departmentLevel']->id,
         'department_course_id' => $context['departmentCourse']->id,
         'mode_of_study_id' => $context['modeOfStudy']->id,
@@ -224,7 +253,7 @@ test('preview keeps separate trailing class when remainder is at least half of s
     $this->actingAs($context['user']);
     $response = $this->get(route('academic-calendars.department-classes', [
         'institution_department' => $context['institutionDepartment']->id,
-        'academic_calendar' => $context['calendar']->id,
+        'calendar_year' => $context['calendar']->calendar_year,
         'department_level_id' => $context['departmentLevel']->id,
         'department_course_id' => $context['departmentCourse']->id,
         'mode_of_study_id' => $context['modeOfStudy']->id,
@@ -251,17 +280,17 @@ test('department academic calendar api returns assigned and ready class counts',
     $apiRoute = route('v1.departments.academic-calendars', [
         'institution_department' => $context['institutionDepartment']->id,
     ]);
-    $apiRoute .= '?academic_calendar='.$context['calendar']->id.'&mode_of_study_id='.$context['modeOfStudy']->id;
+    $apiRoute .= '?academic_year='.$context['calendar']->calendar_year.'&mode_of_study_id='.$context['modeOfStudy']->id;
 
     $this->getJson($apiRoute)
         ->assertSuccessful()
-        ->assertJsonPath('0.levels.0.classesCount', 0)
-        ->assertJsonPath('0.levels.0.totalnClass', 3)
-        ->assertJsonPath('0.levels.0.totalFinalList', 3);
+        ->assertJsonPath('data.0.levels.0.classesCount', 0)
+        ->assertJsonPath('data.0.levels.0.totalnClass', 3)
+        ->assertJsonPath('data.0.levels.0.totalFinalList', 3);
 
     $this->post(route('academic-calendars.department-classes.store', [
         'institution_department' => $context['institutionDepartment']->id,
-        'academic_calendar' => $context['calendar']->id,
+        'calendar_year' => $context['calendar']->calendar_year,
     ]), [
         'class_config_id' => $context['classConfig']->id,
         'department_level_id' => $context['departmentLevel']->id,
@@ -277,29 +306,30 @@ test('department academic calendar api returns assigned and ready class counts',
 
     $this->getJson($apiRoute)
         ->assertSuccessful()
-        ->assertJsonPath('0.levels.0.classesCount', $expectedClassesCount)
-        ->assertJsonPath('0.levels.0.totalnClass', 3)
-        ->assertJsonPath('0.levels.0.totalFinalList', 3);
+        ->assertJsonPath('data.0.levels.0.classesCount', $expectedClassesCount)
+        ->assertJsonPath('data.0.levels.0.totalnClass', 3)
+        ->assertJsonPath('data.0.levels.0.totalFinalList', 3);
 });
 
-test('department academic calendar api total final list is no longer scoped by intake periods', function () {
+test('department academic calendar api total final list is scoped by intake calendar year', function () {
     $context = buildDepartmentClassContext();
 
     $intakeB = IntakePeriod::query()->create([
         'tenant_id' => $context['tenant']->id,
-        'name' => 'Semester 2 2026',
+        'name' => 'Semester 2 2027',
+        'calendar_year' => '2027',
         'start_date' => now()->addMonth()->startOfMonth()->toDateString(),
         'end_date' => now()->addMonth()->endOfMonth()->toDateString(),
     ]);
 
-    $calendarB = AcademicCalendar::query()->create([
-        'calendar_year' => '2026',
-        'opening_date' => now()->addMonth()->startOfMonth()->toDateString(),
-        'closing_date' => now()->addMonth()->endOfMonth()->toDateString(),
+    $calendar2027 = AcademicCalendar::query()->create([
+        'calendar_year' => '2027',
+        'opening_date' => now()->subDays(5)->toDateString(),
+        'closing_date' => now()->addMonths(6)->toDateString(),
     ]);
 
     ClassConfig::query()->create([
-        'academic_calendar_id' => $calendarB->id,
+        'calendar_year' => $calendar2027->calendar_year,
         'institution_department_id' => $context['institutionDepartment']->id,
         'department_course_id' => $context['departmentCourse']->id,
         'department_level_id' => $context['departmentLevel']->id,
@@ -315,21 +345,21 @@ test('department academic calendar api total final list is no longer scoped by i
 
     $this->actingAs($context['user']);
 
-    $routeA = route('v1.departments.academic-calendars', [
+    $route2026 = route('v1.departments.academic-calendars', [
         'institution_department' => $context['institutionDepartment']->id,
-    ]).'?academic_calendar='.$context['calendar']->id.'&mode_of_study_id='.$context['modeOfStudy']->id;
+    ]).'?academic_year='.$context['calendar']->calendar_year.'&mode_of_study_id='.$context['modeOfStudy']->id;
 
-    $routeB = route('v1.departments.academic-calendars', [
+    $route2027 = route('v1.departments.academic-calendars', [
         'institution_department' => $context['institutionDepartment']->id,
-    ]).'?academic_calendar='.$calendarB->id.'&mode_of_study_id='.$context['modeOfStudy']->id;
+    ]).'?academic_year='.$calendar2027->calendar_year.'&mode_of_study_id='.$context['modeOfStudy']->id;
 
-    $this->getJson($routeA)
+    $this->getJson($route2026)
         ->assertSuccessful()
-        ->assertJsonPath('0.levels.0.totalFinalList', 3);
+        ->assertJsonPath('data.0.levels.0.totalFinalList', 2);
 
-    $this->getJson($routeB)
+    $this->getJson($route2027)
         ->assertSuccessful()
-        ->assertJsonPath('0.levels.0.totalFinalList', 3);
+        ->assertJsonPath('data.0.levels.0.totalFinalList', 1);
 });
 
 test('saving generated classes is idempotent for the same context', function () {
@@ -350,7 +380,7 @@ test('saving generated classes is idempotent for the same context', function () 
 
     $url = route('academic-calendars.department-classes.store', [
         'institution_department' => $context['institutionDepartment']->id,
-        'academic_calendar' => $context['calendar']->id,
+        'calendar_year' => $context['calendar']->calendar_year,
     ]);
 
     $this->post($url, $payload)->assertSessionHas('success');
@@ -399,7 +429,7 @@ test('saving generated classes adds only newly-finalized students', function () 
 
     $url = route('academic-calendars.department-classes.store', [
         'institution_department' => $context['institutionDepartment']->id,
-        'academic_calendar' => $context['calendar']->id,
+        'calendar_year' => $context['calendar']->calendar_year,
     ]);
 
     $this->post($url, $payload)->assertSessionHas('success');
@@ -446,7 +476,7 @@ test('department classes page shows existing classes when all final students are
 
     $this->post(route('academic-calendars.department-classes.store', [
         'institution_department' => $context['institutionDepartment']->id,
-        'academic_calendar' => $context['calendar']->id,
+        'calendar_year' => $context['calendar']->calendar_year,
     ]), [
         'class_config_id' => $context['classConfig']->id,
         'department_level_id' => $context['departmentLevel']->id,
@@ -457,7 +487,7 @@ test('department classes page shows existing classes when all final students are
 
     $response = $this->get(route('academic-calendars.department-classes', [
         'institution_department' => $context['institutionDepartment']->id,
-        'academic_calendar' => $context['calendar']->id,
+        'calendar_year' => $context['calendar']->calendar_year,
         'department_level_id' => $context['departmentLevel']->id,
         'department_course_id' => $context['departmentCourse']->id,
         'mode_of_study_id' => $context['modeOfStudy']->id,
@@ -489,7 +519,7 @@ test('saving generated classes balances gender when both genders exist', functio
 
     $this->post(route('academic-calendars.department-classes.store', [
         'institution_department' => $context['institutionDepartment']->id,
-        'academic_calendar' => $context['calendar']->id,
+        'calendar_year' => $context['calendar']->calendar_year,
     ]), [
         'class_config_id' => $context['classConfig']->id,
         'department_level_id' => $context['departmentLevel']->id,
@@ -546,7 +576,7 @@ test('saving generated classes works with one available gender', function () {
 
     $this->post(route('academic-calendars.department-classes.store', [
         'institution_department' => $context['institutionDepartment']->id,
-        'academic_calendar' => $context['calendar']->id,
+        'calendar_year' => $context['calendar']->calendar_year,
     ]), [
         'class_config_id' => $context['classConfig']->id,
         'department_level_id' => $context['departmentLevel']->id,
@@ -589,7 +619,7 @@ test('class detail page returns students', function () {
 
     $this->post(route('academic-calendars.department-classes.store', [
         'institution_department' => $context['institutionDepartment']->id,
-        'academic_calendar' => $context['calendar']->id,
+        'calendar_year' => $context['calendar']->calendar_year,
     ]), [
         'class_config_id' => $context['classConfig']->id,
         'department_level_id' => $context['departmentLevel']->id,
@@ -602,7 +632,7 @@ test('class detail page returns students', function () {
 
     $response = $this->get(route('academic-calendars.department-classes.show', [
         'institution_department' => $context['institutionDepartment']->id,
-        'academic_calendar' => $context['calendar']->id,
+        'calendar_year' => $context['calendar']->calendar_year,
         'academic_calendar_class' => $academicCalendarClass->id,
     ]));
 
@@ -632,7 +662,7 @@ test('class detail page exposes move targets and update flag when user has permi
 
     $this->post(route('academic-calendars.department-classes.store', [
         'institution_department' => $context['institutionDepartment']->id,
-        'academic_calendar' => $context['calendar']->id,
+        'calendar_year' => $context['calendar']->calendar_year,
     ]), [
         'class_config_id' => $context['classConfig']->id,
         'department_level_id' => $context['departmentLevel']->id,
@@ -653,7 +683,7 @@ test('class detail page exposes move targets and update flag when user has permi
 
     $response = $this->get(route('academic-calendars.department-classes.show', [
         'institution_department' => $context['institutionDepartment']->id,
-        'academic_calendar' => $context['calendar']->id,
+        'calendar_year' => $context['calendar']->calendar_year,
         'academic_calendar_class' => $classA->id,
     ]));
 
@@ -671,7 +701,7 @@ test('class detail page exposes move targets and update flag when user has permi
 
     $responseAuthorized = $this->get(route('academic-calendars.department-classes.show', [
         'institution_department' => $context['institutionDepartment']->id,
-        'academic_calendar' => $context['calendar']->id,
+        'calendar_year' => $context['calendar']->calendar_year,
         'academic_calendar_class' => $classA->id,
     ]));
 
@@ -690,7 +720,7 @@ test('authorized user can move students to another class in the same config', fu
 
     $this->post(route('academic-calendars.department-classes.store', [
         'institution_department' => $context['institutionDepartment']->id,
-        'academic_calendar' => $context['calendar']->id,
+        'calendar_year' => $context['calendar']->calendar_year,
     ]), [
         'class_config_id' => $context['classConfig']->id,
         'department_level_id' => $context['departmentLevel']->id,
@@ -717,7 +747,7 @@ test('authorized user can move students to another class in the same config', fu
 
     $moveUrl = route('academic-calendars.department-classes.move-students', [
         'institution_department' => $context['institutionDepartment']->id,
-        'academic_calendar' => $context['calendar']->id,
+        'calendar_year' => $context['calendar']->calendar_year,
         'academic_calendar_class' => $classA->id,
     ]);
 
@@ -735,7 +765,7 @@ test('authorized user can move students to another class in the same config', fu
 
     $showClassA = $this->get(route('academic-calendars.department-classes.show', [
         'institution_department' => $context['institutionDepartment']->id,
-        'academic_calendar' => $context['calendar']->id,
+        'calendar_year' => $context['calendar']->calendar_year,
         'academic_calendar_class' => $classA->id,
     ]));
 
@@ -749,7 +779,7 @@ test('authorized user can move students to another class in the same config', fu
 
     $showClassB = $this->get(route('academic-calendars.department-classes.show', [
         'institution_department' => $context['institutionDepartment']->id,
-        'academic_calendar' => $context['calendar']->id,
+        'calendar_year' => $context['calendar']->calendar_year,
         'academic_calendar_class' => $classB->id,
     ]));
 
@@ -775,7 +805,7 @@ test('user with student program permission but without viewAny academic calendar
 
     $this->post(route('academic-calendars.department-classes.store', [
         'institution_department' => $context['institutionDepartment']->id,
-        'academic_calendar' => $context['calendar']->id,
+        'calendar_year' => $context['calendar']->calendar_year,
     ]), [
         'class_config_id' => $context['classConfig']->id,
         'department_level_id' => $context['departmentLevel']->id,
@@ -802,7 +832,7 @@ test('user with student program permission but without viewAny academic calendar
 
     $this->post(route('academic-calendars.department-classes.move-students', [
         'institution_department' => $context['institutionDepartment']->id,
-        'academic_calendar' => $context['calendar']->id,
+        'calendar_year' => $context['calendar']->calendar_year,
         'academic_calendar_class' => $classA->id,
     ]), [
         'student_enrolment_ids' => [$studentEnrolmentId],
@@ -827,7 +857,7 @@ test('moving students without permission is forbidden', function () {
 
     $this->post(route('academic-calendars.department-classes.store', [
         'institution_department' => $context['institutionDepartment']->id,
-        'academic_calendar' => $context['calendar']->id,
+        'calendar_year' => $context['calendar']->calendar_year,
     ]), [
         'class_config_id' => $context['classConfig']->id,
         'department_level_id' => $context['departmentLevel']->id,
@@ -852,7 +882,7 @@ test('moving students without permission is forbidden', function () {
 
     $this->post(route('academic-calendars.department-classes.move-students', [
         'institution_department' => $context['institutionDepartment']->id,
-        'academic_calendar' => $context['calendar']->id,
+        'calendar_year' => $context['calendar']->calendar_year,
         'academic_calendar_class' => $classA->id,
     ]), [
         'student_enrolment_ids' => [$studentEnrolmentId],
@@ -872,7 +902,7 @@ test('moving students validates target class and enrollment', function () {
 
     $this->post(route('academic-calendars.department-classes.store', [
         'institution_department' => $context['institutionDepartment']->id,
-        'academic_calendar' => $context['calendar']->id,
+        'calendar_year' => $context['calendar']->calendar_year,
     ]), [
         'class_config_id' => $context['classConfig']->id,
         'department_level_id' => $context['departmentLevel']->id,
@@ -902,7 +932,7 @@ test('moving students validates target class and enrollment', function () {
 
     $moveUrl = route('academic-calendars.department-classes.move-students', [
         'institution_department' => $context['institutionDepartment']->id,
-        'academic_calendar' => $context['calendar']->id,
+        'calendar_year' => $context['calendar']->calendar_year,
         'academic_calendar_class' => $classA->id,
     ]);
 
@@ -926,7 +956,7 @@ test('authorized user can update academic calendar class name and description', 
 
     $this->post(route('academic-calendars.department-classes.store', [
         'institution_department' => $context['institutionDepartment']->id,
-        'academic_calendar' => $context['calendar']->id,
+        'calendar_year' => $context['calendar']->calendar_year,
     ]), [
         'class_config_id' => $context['classConfig']->id,
         'department_level_id' => $context['departmentLevel']->id,
@@ -939,7 +969,7 @@ test('authorized user can update academic calendar class name and description', 
 
     $updateUrl = route('academic-calendars.department-classes.update', [
         'institution_department' => $context['institutionDepartment']->id,
-        'academic_calendar' => $context['calendar']->id,
+        'calendar_year' => $context['calendar']->calendar_year,
         'academic_calendar_class' => $academicCalendarClass->id,
     ]);
 
@@ -957,7 +987,7 @@ test('authorized user can update academic calendar class name and description', 
 
     $show = $this->get(route('academic-calendars.department-classes.show', [
         'institution_department' => $context['institutionDepartment']->id,
-        'academic_calendar' => $context['calendar']->id,
+        'calendar_year' => $context['calendar']->calendar_year,
         'academic_calendar_class' => $academicCalendarClass->id,
     ]));
 
@@ -978,7 +1008,7 @@ test('user without update academic calendar permission cannot update class', fun
 
     $this->post(route('academic-calendars.department-classes.store', [
         'institution_department' => $context['institutionDepartment']->id,
-        'academic_calendar' => $context['calendar']->id,
+        'calendar_year' => $context['calendar']->calendar_year,
     ]), [
         'class_config_id' => $context['classConfig']->id,
         'department_level_id' => $context['departmentLevel']->id,
@@ -993,7 +1023,7 @@ test('user without update academic calendar permission cannot update class', fun
 
     $updateUrl = route('academic-calendars.department-classes.update', [
         'institution_department' => $context['institutionDepartment']->id,
-        'academic_calendar' => $context['calendar']->id,
+        'calendar_year' => $context['calendar']->calendar_year,
         'academic_calendar_class' => $academicCalendarClass->id,
     ]);
 
@@ -1012,7 +1042,7 @@ test('updating class returns not found when institution department does not matc
 
     $this->post(route('academic-calendars.department-classes.store', [
         'institution_department' => $context['institutionDepartment']->id,
-        'academic_calendar' => $context['calendar']->id,
+        'calendar_year' => $context['calendar']->calendar_year,
     ]), [
         'class_config_id' => $context['classConfig']->id,
         'department_level_id' => $context['departmentLevel']->id,
@@ -1033,7 +1063,7 @@ test('updating class returns not found when institution department does not matc
 
     $updateUrl = route('academic-calendars.department-classes.update', [
         'institution_department' => $otherInstitutionDepartment->id,
-        'academic_calendar' => $context['calendar']->id,
+        'calendar_year' => $context['calendar']->calendar_year,
         'academic_calendar_class' => $academicCalendarClass->id,
     ]);
 
@@ -1052,7 +1082,7 @@ test('updating class validates name is required', function () {
 
     $this->post(route('academic-calendars.department-classes.store', [
         'institution_department' => $context['institutionDepartment']->id,
-        'academic_calendar' => $context['calendar']->id,
+        'calendar_year' => $context['calendar']->calendar_year,
     ]), [
         'class_config_id' => $context['classConfig']->id,
         'department_level_id' => $context['departmentLevel']->id,
@@ -1066,7 +1096,7 @@ test('updating class validates name is required', function () {
 
     $updateUrl = route('academic-calendars.department-classes.update', [
         'institution_department' => $context['institutionDepartment']->id,
-        'academic_calendar' => $context['calendar']->id,
+        'calendar_year' => $context['calendar']->calendar_year,
         'academic_calendar_class' => $academicCalendarClass->id,
     ]);
 

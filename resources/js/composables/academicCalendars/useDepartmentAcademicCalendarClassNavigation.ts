@@ -17,7 +17,7 @@ export function useDepartmentAcademicCalendarClassNavigation(
     const departmentClassesUrl = computed(() =>
         route('academic-calendars.department-classes', {
             institution_department: String(department.value.id),
-            academic_calendar: String(academicCalendar.value.id),
+            calendar_year: String(academicCalendar.value.attributes.calendarYear),
             department_level_id: String(level.value.id),
             department_course_id: String(course.value.id),
             mode_of_study_id: String(mode.value.id),
@@ -28,7 +28,7 @@ export function useDepartmentAcademicCalendarClassNavigation(
     const moveStudentsUrl = computed(() =>
         route('academic-calendars.department-classes.move-students', {
             institution_department: String(department.value.id),
-            academic_calendar: String(academicCalendar.value.id),
+            calendar_year: String(academicCalendar.value.attributes.calendarYear),
             academic_calendar_class: String(academicCalendarClass.value.id),
         }),
     );
@@ -36,7 +36,7 @@ export function useDepartmentAcademicCalendarClassNavigation(
     const updateClassUrl = computed(() =>
         route('academic-calendars.department-classes.update', {
             institution_department: String(department.value.id),
-            academic_calendar: String(academicCalendar.value.id),
+            calendar_year: String(academicCalendar.value.attributes.calendarYear),
             academic_calendar_class: String(academicCalendarClass.value.id),
         }),
     );

@@ -31,6 +31,7 @@ const { modals } = useModalStore();
 watch(modals!, () => {
     config.value = getModalEdit(APP_MODULE_KEYS.student_per_class);
     form.defaults();
+    form.academic_calendar_id = config.value?.academic_calendar_id ?? null;
     form.department_level_id = config.value?.department_level_id ?? null;
     form.department_course_id = config.value?.department_course_id ?? null;
     form.mode_of_study_id = config.value?.mode_of_study_id ?? null;

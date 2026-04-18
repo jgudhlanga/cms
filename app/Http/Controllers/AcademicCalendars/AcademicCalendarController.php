@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers\AcademicCalendars;
 
-use App\Enums\Shared\ClassListTypeEnum;
 use App\Enums\Shared\GenderEnum;
+use App\Http\Controllers\Concerns\ResolvesAcademicCalendarFromCalendarYear;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AcademicCalendars\AcademicCalendarRequest;
 use App\Http\Requests\AcademicCalendars\ClassConfigRequest;
@@ -23,7 +23,7 @@ use App\Models\Institution\DepartmentCourse;
 use App\Models\Institution\DepartmentLevel;
 use App\Models\Institution\InstitutionDepartment;
 use App\Models\Institution\ModeOfStudy;
-use App\Models\Students\StudentProgram;
+use App\Queries\Enrolments\ConfirmedStudentsQuery;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Arr;
@@ -34,6 +34,8 @@ use Inertia\Response;
 
 class AcademicCalendarController extends Controller
 {
+    use ResolvesAcademicCalendarFromCalendarYear;
+
     public function index()
     {
         $this->authorize('viewAny', AcademicCalendar::class);
@@ -67,9 +69,11 @@ class AcademicCalendarController extends Controller
         return $data;
     }
 
-    public function departmentAcademicCalendarClasses(InstitutionDepartment $institutionDepartment, AcademicCalendar $academicCalendar)
+    public function departmentAcademicCalendarClasses(InstitutionDepartment $institutionDepartment, string $calendar_year)
     {
         $this->authorize('viewAny', AcademicCalendar::class);
+
+        $academicCalendar = $this->academicCalendarFromCalendarYear($calendar_year);
 
         $academicCalendars = AcademicCalendar::query()
             ->orderByDesc('calendar_year')
@@ -91,16 +95,17 @@ class AcademicCalendarController extends Controller
                 $modeOfStudyId
             ) {
                 $query
-                    ->where('academic_calendar_id', $academicCalendar->id)
+                    ->where('calendar_year', $academicCalendar->calendar_year)
                     ->where('institution_department_id', $institutionDepartment->id)
                     ->where('department_level_id', (int) $departmentLevelId)
                     ->where('department_course_id', (int) $departmentCourseId)
                     ->where('mode_of_study_id', (int) $modeOfStudyId);
             })
             ->first();
+        $calendarIdsForYear = AcademicCalendar::idsForStartedCalendarYear((string) $academicCalendar->calendar_year);
         $finalStudentPrograms = $this->resolveFinalStudentPrograms(
             $institutionDepartment,
-            (int) $academicCalendar->id,
+            $calendarIdsForYear,
             (int) $departmentLevelId,
             (int) $departmentCourseId,
             (int) $modeOfStudyId
@@ -149,10 +154,12 @@ class AcademicCalendarController extends Controller
 
     public function showDepartmentAcademicCalendarClass(
         InstitutionDepartment $institutionDepartment,
-        AcademicCalendar $academicCalendar,
+        string $calendar_year,
         AcademicCalendarClass $academicCalendarClass
     ): Response {
         $this->authorize('viewAny', AcademicCalendar::class);
+
+        $academicCalendar = $this->academicCalendarFromCalendarYear($calendar_year);
 
         $academicCalendarClass->loadMissing([
             'classConfig.departmentCourse',
@@ -165,7 +172,7 @@ class AcademicCalendarController extends Controller
         abort_unless(
             $classConfig instanceof ClassConfig
             && (int) $classConfig->institution_department_id === (int) $institutionDepartment->id
-            && (int) $classConfig->academic_calendar_id === (int) $academicCalendar->id,
+            && (string) $classConfig->calendar_year === (string) $academicCalendar->calendar_year,
             404
         );
 
@@ -220,11 +227,13 @@ class AcademicCalendarController extends Controller
 
     public function moveDepartmentAcademicCalendarClassStudents(
         InstitutionDepartment $institutionDepartment,
-        AcademicCalendar $academicCalendar,
+        string $calendar_year,
         AcademicCalendarClass $academicCalendarClass,
         MoveAcademicCalendarClassStudentsRequest $request
     ): RedirectResponse {
         $this->authorize('update:academic-calendar-student-enrolments');
+
+        $academicCalendar = $this->academicCalendarFromCalendarYear($calendar_year);
 
         $academicCalendarClass->loadMissing('classConfig');
         $classConfig = $academicCalendarClass->classConfig;
@@ -232,7 +241,7 @@ class AcademicCalendarController extends Controller
         abort_unless(
             $classConfig instanceof ClassConfig
             && (int) $classConfig->institution_department_id === (int) $institutionDepartment->id
-            && (int) $classConfig->academic_calendar_id === (int) $academicCalendar->id,
+            && (string) $classConfig->calendar_year === (string) $academicCalendar->calendar_year,
             404
         );
 
@@ -268,7 +277,7 @@ class AcademicCalendarController extends Controller
         $validated = $request->validated();
 
         $lookup = [
-            'academic_calendar_id' => $academicCalendar->id,
+            'calendar_year' => $academicCalendar->calendar_year,
             'institution_department_id' => $institutionDepartment->id,
             ...Arr::only($validated, ['department_level_id', 'department_course_id', 'mode_of_study_id']),
         ];
@@ -282,23 +291,26 @@ class AcademicCalendarController extends Controller
 
     public function storeDepartmentAcademicCalendarClasses(
         InstitutionDepartment $institutionDepartment,
-        AcademicCalendar $academicCalendar,
+        string $calendar_year,
         StoreAcademicCalendarClassesRequest $request
     ) {
+        $academicCalendar = $this->academicCalendarFromCalendarYear($calendar_year);
+
         $this->authorize('update', $academicCalendar);
         $validated = $request->validated();
         $classConfig = ClassConfig::query()
             ->where('id', $validated['class_config_id'])
-            ->where('academic_calendar_id', $academicCalendar->id)
+            ->where('calendar_year', $academicCalendar->calendar_year)
             ->where('institution_department_id', $institutionDepartment->id)
             ->where('department_level_id', $validated['department_level_id'])
             ->where('department_course_id', $validated['department_course_id'])
             ->where('mode_of_study_id', $validated['mode_of_study_id'])
             ->firstOrFail();
 
+        $calendarIdsForYear = AcademicCalendar::idsForStartedCalendarYear((string) $academicCalendar->calendar_year);
         $finalStudentPrograms = $this->resolveFinalStudentPrograms(
             $institutionDepartment,
-            (int) $academicCalendar->id,
+            $calendarIdsForYear,
             (int) $validated['department_level_id'],
             (int) $validated['department_course_id'],
             (int) $validated['mode_of_study_id']
@@ -415,43 +427,23 @@ class AcademicCalendarController extends Controller
             ->all();
     }
 
+    /**
+     * @param  list<int>  $academicCalendarIds
+     */
     private function resolveFinalStudentPrograms(
         InstitutionDepartment $institutionDepartment,
-        int $academicCalendarId,
+        array $academicCalendarIds,
         int $departmentLevelId,
         int $departmentCourseId,
         int $modeOfStudyId
     ): Collection {
-        return StudentProgram::query()
-            ->join('class_lists', 'class_lists.student_program_id', '=', 'student_programs.id')
-            ->join('students', 'students.id', '=', 'student_programs.student_id')
-            ->join('student_enrolments', function ($join) use ($academicCalendarId): void {
-                $join->on('student_enrolments.student_program_id', '=', 'student_programs.id')
-                    ->where('student_enrolments.academic_calendar_id', '=', $academicCalendarId)
-                    ->whereColumn('student_enrolments.mode_of_study_id', 'student_programs.mode_of_study_id')
-                    ->whereNull('student_enrolments.deleted_at');
-            })
-            ->leftJoin('genders', 'genders.id', '=', 'students.gender_id')
-            ->join('users', 'users.id', '=', 'students.user_id')
-            ->where('student_programs.institution_department_id', $institutionDepartment->id)
-            ->where('student_programs.department_level_id', $departmentLevelId)
-            ->where('student_programs.department_course_id', $departmentCourseId)
-            ->where('student_programs.mode_of_study_id', $modeOfStudyId)
-            ->where('class_lists.type', ClassListTypeEnum::FINAL->value)
-            ->whereNull('class_lists.deleted_at')
-            ->select([
-                'student_programs.id as student_program_id',
-                'student_enrolments.id as student_enrolment_id',
-                'student_programs.student_id',
-                'student_programs.application_tracking_number',
-                'genders.title as gender_title',
-                'users.first_name',
-                'users.middle_name',
-                'users.last_name',
-            ])
-            ->orderBy('users.first_name')
-            ->orderBy('users.last_name')
-            ->get();
+        return app(ConfirmedStudentsQuery::class)->listForClassAllocation(
+            (int) $institutionDepartment->id,
+            $departmentLevelId,
+            $departmentCourseId,
+            $modeOfStudyId,
+            $academicCalendarIds,
+        );
     }
 
     private function buildPreviewClasses(

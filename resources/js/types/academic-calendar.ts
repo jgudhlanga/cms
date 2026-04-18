@@ -46,7 +46,7 @@ export type ClassConfig = {
     id: string;
     attributes: {
         studentsPerClass: string | number | null;
-        academicCalendar: string | null;
+        calendarYear: string | null;
         institutionDepartment: string | null;
         departmentCourse: string | null;
         departmentLevel: string | null;

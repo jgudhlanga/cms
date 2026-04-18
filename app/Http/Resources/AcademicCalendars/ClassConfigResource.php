@@ -14,7 +14,7 @@ class ClassConfigResource extends JsonResource
             'id' => $this->id,
             'attributes' => [
                 'studentsPerClass' => $this->students_per_class,
-                'academicCalendar' => $this->academicCalendar?->calendar_year,
+                'calendarYear' => $this->calendar_year,
                 'institutionDepartment' => $this->institutionDepartment?->department?->name,
                 'departmentCourse' => $this->departmentCourse?->course?->name,
                 'departmentLevel' => $this->departmentLevel?->level?->name,

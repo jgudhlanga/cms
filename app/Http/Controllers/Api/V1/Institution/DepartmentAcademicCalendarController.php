@@ -2,15 +2,15 @@
 
 namespace App\Http\Controllers\Api\V1\Institution;
 
-use App\Enums\Shared\ClassListTypeEnum;
 use App\Http\Controllers\Controller;
+use App\Models\AcademicCalendars\AcademicCalendar;
 use App\Models\AcademicCalendars\AcademicCalendarClass;
 use App\Models\AcademicCalendars\ClassConfig;
 use App\Models\Institution\DepartmentCourse;
 use App\Models\Institution\DepartmentLevelCourse;
 use App\Models\Institution\InstitutionDepartment;
 use App\Models\Students\StudentEnrolment;
-use App\Models\Students\StudentProgram;
+use App\Queries\Enrolments\ConfirmedStudentsQuery;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -28,7 +28,15 @@ class DepartmentAcademicCalendarController extends Controller
             ? $this->emptyLookups()
             : $this->buildLookups($department, $context);
 
-        return response()->json($this->formatDepartment($department, $lookups));
+        $meta = $context === null ? null : [
+            'academicYear' => $context['calendarYear'],
+            'resolvedAcademicCalendarId' => $context['academicCalendarId'],
+        ];
+
+        return response()->json([
+            'data' => $this->formatDepartment($department, $lookups),
+            'meta' => $meta,
+        ]);
     }
 
     private function loadDepartmentWithCourses(InstitutionDepartment $institutionDepartment): InstitutionDepartment
@@ -45,20 +53,30 @@ class DepartmentAcademicCalendarController extends Controller
     }
 
     /**
-     * @return array{academicCalendarId: int, modeOfStudyId: int}|null
+     * @return array{calendarYear: string, academicCalendarId: int, modeOfStudyId: int, calendarIdsForYear: list<int>}|null
      */
     private function resolveContext(): ?array
     {
-        $academicCalendarId = request()->query('academic_calendar');
+        $academicYear = request()->query('academic_year');
         $modeOfStudyId = request()->query('mode_of_study_id');
 
-        if (! $academicCalendarId || ! $modeOfStudyId) {
+        if (! is_string($academicYear) || $academicYear === '' || ! $modeOfStudyId) {
             return null;
         }
 
+        $resolvedId = AcademicCalendar::resolveCanonicalIdForCalendarYear($academicYear);
+
+        if ($resolvedId === null) {
+            return null;
+        }
+
+        $calendarIdsForYear = AcademicCalendar::idsForStartedCalendarYear($academicYear);
+
         return [
-            'academicCalendarId' => (int) $academicCalendarId,
+            'calendarYear' => $academicYear,
+            'academicCalendarId' => $resolvedId,
             'modeOfStudyId' => (int) $modeOfStudyId,
+            'calendarIdsForYear' => $calendarIdsForYear,
         ];
     }
 
@@ -76,13 +94,26 @@ class DepartmentAcademicCalendarController extends Controller
     }
 
     /**
-     * @param  array{academicCalendarId: int, modeOfStudyId: int}  $context
+     * @param  array{calendarYear: string, academicCalendarId: int, modeOfStudyId: int, calendarIdsForYear: list<int>}  $context
      * @return array{classConfig: array<string, array{id: int, students_per_class: int}>, classesCount: array<string, int>, totalnClass: array<string, int>, totalFinalList: array<string, int>}
      */
     private function buildLookups(InstitutionDepartment $department, array $context): array
     {
+        $confirmedCounts = app(ConfirmedStudentsQuery::class)->countsByCourseLevel(
+            (int) $department->id,
+            $context['modeOfStudyId'],
+            $context['calendarYear'],
+        );
+
+        $this->seedMissingClassConfigs(
+            $department,
+            $context['calendarYear'],
+            $context['modeOfStudyId'],
+            $confirmedCounts,
+        );
+
         $configs = ClassConfig::query()
-            ->where('academic_calendar_id', $context['academicCalendarId'])
+            ->where('calendar_year', $context['calendarYear'])
             ->where('institution_department_id', $department->id)
             ->where('mode_of_study_id', $context['modeOfStudyId'])
             ->get();
@@ -91,12 +122,63 @@ class DepartmentAcademicCalendarController extends Controller
             'classConfig' => $this->classConfigLookup($configs),
             'classesCount' => $this->classesCountLookup($configs),
             'totalnClass' => $this->totalnClassLookup(
-                $context['academicCalendarId'],
+                $context['calendarIdsForYear'],
                 (int) $department->id,
                 $context['modeOfStudyId'],
             ),
-            'totalFinalList' => $this->totalFinalListLookup((int) $department->id, $context['modeOfStudyId']),
+            'totalFinalList' => $confirmedCounts,
         ];
+    }
+
+    /**
+     * @param  array<string, int>  $confirmedCounts
+     */
+    private function seedMissingClassConfigs(
+        InstitutionDepartment $department,
+        string $calendarYear,
+        int $modeOfStudyId,
+        array $confirmedCounts,
+    ): void {
+        $existingKeySet = array_flip(
+            ClassConfig::query()
+                ->where('calendar_year', $calendarYear)
+                ->where('institution_department_id', $department->id)
+                ->where('mode_of_study_id', $modeOfStudyId)
+                ->get()
+                ->map(fn (ClassConfig $c) => "{$c->department_course_id}_{$c->department_level_id}")
+                ->all(),
+        );
+
+        $validPairs = DB::table('department_level_courses as dlc')
+            ->join('department_courses as dc', 'dc.id', '=', 'dlc.department_course_id')
+            ->where('dc.institution_department_id', $department->id)
+            ->whereNull('dc.deleted_at')
+            ->select(['dlc.department_course_id', 'dlc.department_level_id'])
+            ->get();
+
+        DB::transaction(function () use ($validPairs, $existingKeySet, $confirmedCounts, $calendarYear, $department, $modeOfStudyId): void {
+            foreach ($validPairs as $pair) {
+                $key = "{$pair->department_course_id}_{$pair->department_level_id}";
+                $count = $confirmedCounts[$key] ?? 0;
+
+                if ($count <= 0 || isset($existingKeySet[$key])) {
+                    continue;
+                }
+
+                ClassConfig::firstOrCreate(
+                    [
+                        'calendar_year' => $calendarYear,
+                        'institution_department_id' => $department->id,
+                        'department_course_id' => $pair->department_course_id,
+                        'department_level_id' => $pair->department_level_id,
+                        'mode_of_study_id' => $modeOfStudyId,
+                    ],
+                    ['students_per_class' => $count],
+                );
+
+                $existingKeySet[$key] = true;
+            }
+        });
     }
 
     /**
@@ -146,12 +228,17 @@ class DepartmentAcademicCalendarController extends Controller
     }
 
     /**
+     * @param  list<int>  $academicCalendarIds
      * @return array<string, int>
      */
-    private function totalnClassLookup(int $academicCalendarId, int $departmentId, int $modeOfStudyId): array
+    private function totalnClassLookup(array $academicCalendarIds, int $departmentId, int $modeOfStudyId): array
     {
+        if ($academicCalendarIds === []) {
+            return [];
+        }
+
         $rows = StudentEnrolment::query()
-            ->where('academic_calendar_id', $academicCalendarId)
+            ->whereIn('academic_calendar_id', $academicCalendarIds)
             ->where('institution_department_id', $departmentId)
             ->where('mode_of_study_id', $modeOfStudyId)
             ->whereNull('deleted_at')
@@ -164,38 +251,6 @@ class DepartmentAcademicCalendarController extends Controller
         foreach ($rows as $row) {
             $key = "{$row->department_course_id}_{$row->department_level_id}";
             $lookup[$key] = (int) $row->total;
-        }
-
-        return $lookup;
-    }
-
-    /**
-     * @return array<string, int>
-     */
-    private function totalFinalListLookup(int $departmentId, int $modeOfStudyId): array
-    {
-        $rows = StudentProgram::query()
-            ->leftJoin('class_lists', function ($join) {
-                $join->on('class_lists.student_program_id', '=', 'student_programs.id')
-                    ->where('class_lists.type', ClassListTypeEnum::FINAL->value)
-                    ->whereNull('class_lists.deleted_at');
-            })
-            ->where('student_programs.institution_department_id', $departmentId)
-            ->where('student_programs.mode_of_study_id', $modeOfStudyId)
-            ->whereNull('student_programs.deleted_at')
-            ->select([
-                'student_programs.department_course_id',
-                'student_programs.department_level_id',
-                DB::raw('COUNT(class_lists.id) as total_final_list'),
-            ])
-            ->groupBy('student_programs.department_course_id', 'student_programs.department_level_id')
-            ->get();
-
-        $lookup = [];
-
-        foreach ($rows as $row) {
-            $key = "{$row->department_course_id}_{$row->department_level_id}";
-            $lookup[$key] = (int) $row->total_final_list;
         }
 
         return $lookup;

@@ -2,8 +2,10 @@ import { useDropdowns } from '@/composables/core/useDropdowns';
 import { closeModal, errorAlert, forbiddenAlert, openModal, successAlert } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
 import { useDepartmentMetaStore } from '@/store/institution/useDepartmentMetaStore';
+import HttpService from '@/services/http.service';
 import { AcademicCalendar } from '@/types/academic-calendar';
 import type { Link } from '@/types/ui';
+import type { SelectOption } from '@/types/utils';
 import { InertiaForm } from '@inertiajs/vue3';
 import { ref } from 'vue';
 
@@ -79,6 +81,15 @@ export const useAcademicCalendars = () => {
         academicCalendars.value = data.value;
     };
 
+    const listAcademicYearOptions = async (): Promise<SelectOption[]> => {
+        const body = await HttpService.get(route('v1.academic-calendars.options'));
+        const rows = (body?.data ?? []) as Array<{ academicYear: string }>;
+        return rows.map((row) => ({
+            value: row.academicYear,
+            label: row.academicYear,
+        }));
+    };
+
     const storePerClassSizeConfig = (
         form: InertiaForm<any>,
         institutionDepartmentId: string,
@@ -113,6 +124,7 @@ export const useAcademicCalendars = () => {
         isLoading,
         academicCalendars,
         listAcademicCalendars,
+        listAcademicYearOptions,
         storePerClassSizeConfig,
     };
 };
