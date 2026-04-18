@@ -20,7 +20,7 @@ const emit = defineEmits<{
     openMoveStudents: [];
 }>();
 
-const selectedStudentProgramIds = defineModel<number[]>('selectedStudentProgramIds', { required: true });
+const selectedStudentEnrolmentIds = defineModel<number[]>('selectedStudentEnrolmentIds', { required: true });
 const selectAllChangeClassModel = defineModel<boolean>('selectAllChangeClassModel', { required: true });
 </script>
 
@@ -58,7 +58,7 @@ const selectAllChangeClassModel = defineModel<boolean>('selectAllChangeClassMode
                 </td>
                 <td class="j-td text-right" @click.stop>
                     <BaseButton
-                        v-if="selectedStudentProgramIds.length > 0 && moveTargetClasses.length > 0"
+                        v-if="selectedStudentEnrolmentIds.length > 0 && moveTargetClasses.length > 0"
                         :size="ButtonSize.xs"
                         :variant="ColorVariant.danger"
                         type="button"
@@ -69,7 +69,7 @@ const selectAllChangeClassModel = defineModel<boolean>('selectAllChangeClassMode
                     </BaseButton>
                 </td>
             </tr>
-            <tr v-for="(student, index) in sortedStudents" :key="student.studentProgramId" class="j-tr">
+            <tr v-for="(student, index) in sortedStudents" :key="student.studentEnrolmentId" class="j-tr">
                 <td class="j-td">{{ index + 1 }}</td>
                 <td class="j-td">{{ student.name }}</td>
                 <td class="j-td">{{ student.studentNumber ?? '---' }}</td>
@@ -82,9 +82,9 @@ const selectAllChangeClassModel = defineModel<boolean>('selectAllChangeClassMode
                 </td>
                 <td v-if="canMoveStudents" class="j-td text-center">
                     <BaseCheckbox
-                        :input-id="`change_class_${student.studentProgramId}`"
-                        v-model="selectedStudentProgramIds"
-                        :value="student.studentProgramId"
+                        :input-id="`change_class_${student.studentEnrolmentId}`"
+                        v-model="selectedStudentEnrolmentIds"
+                        :value="student.studentEnrolmentId"
                     />
                 </td>
                 <td class="j-td text-right">

@@ -4,6 +4,7 @@ namespace App\Models\Students;
 
 use App\Models\AcademicCalendars\AcademicCalendar;
 use App\Models\AcademicCalendars\AcademicYearOption;
+use App\Models\Institution\ModeOfStudy;
 use App\Traits\Filterable;
 use App\Traits\Paginatable;
 use Illuminate\Database\Eloquent\Builder;
@@ -30,6 +31,7 @@ class StudentEnrolment extends Model
         'department_course_id',
         'academic_year_option_id',
         'academic_calendar_id',
+        'mode_of_study_id',
         'student_enrolment_status_id',
     ];
 
@@ -46,6 +48,11 @@ class StudentEnrolment extends Model
     public function academicCalendar(): BelongsTo
     {
         return $this->belongsTo(AcademicCalendar::class, 'academic_calendar_id');
+    }
+
+    public function modeOfStudy(): BelongsTo
+    {
+        return $this->belongsTo(ModeOfStudy::class, 'mode_of_study_id');
     }
 
     public function studentEnrolmentStatus(): BelongsTo

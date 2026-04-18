@@ -74,7 +74,8 @@ it('finalises verified students with matching payments in the date window', func
         ->and($enrolment)->not->toBeNull()
         ->and($enrolment->student_enrolment_status_id)->toBe($activeStatusId)
         ->and($enrolment->academic_year_option_id)->toBe($semesterOneId)
-        ->and($enrolment->academic_calendar_id)->toBe($calendarId);
+        ->and($enrolment->academic_calendar_id)->toBe($calendarId)
+        ->and($enrolment->mode_of_study_id)->toBe($freshStudentProgram->mode_of_study_id);
 });
 
 it('is idempotent when the bulk finalise command runs more than once for the same paid student', function () {

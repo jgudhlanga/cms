@@ -13,7 +13,7 @@ defineProps<{
 
 const form = defineModel<
     InertiaForm<{
-        student_program_ids: number[];
+        student_enrolment_ids: number[];
         target_academic_calendar_class_id: number | null;
     }>
 >('form', { required: true });
@@ -46,7 +46,7 @@ const form = defineModel<
                 <p v-if="form.errors.target_academic_calendar_class_id" class="text-sm text-red-600">
                     {{ form.errors.target_academic_calendar_class_id }}
                 </p>
-                <p v-if="form.errors.student_program_ids" class="text-sm text-red-600">{{ form.errors.student_program_ids }}</p>
+                <p v-if="form.errors.student_enrolment_ids" class="text-sm text-red-600">{{ form.errors.student_enrolment_ids }}</p>
             </div>
         </template>
     </BaseModal>

@@ -3,7 +3,7 @@
 use App\Enums\Shared\ClassListTypeEnum;
 use App\Models\AcademicCalendars\AcademicCalendar;
 use App\Models\AcademicCalendars\AcademicCalendarClass;
-use App\Models\AcademicCalendars\AcademicCalendarStudentProgram;
+use App\Models\AcademicCalendars\AcademicYearOption;
 use App\Models\AcademicCalendars\ClassConfig;
 use App\Models\Enrolments\ClassList;
 use App\Models\Institution\Course;
@@ -20,6 +20,8 @@ use App\Models\Shared\IdType;
 use App\Models\Shared\MaritalStatus;
 use App\Models\Shared\Title;
 use App\Models\Students\Student;
+use App\Models\Students\StudentEnrolment;
+use App\Models\Students\StudentEnrolmentStatus;
 use App\Models\Students\StudentProgram;
 use App\Models\Tenants\Tenant;
 use App\Models\Users\User;
@@ -122,14 +124,14 @@ test('department academic calendar returns totalnClass and totalFinalList counts
         'students_per_class' => 2,
     ]);
 
-    $academicCalendarClassOne = AcademicCalendarClass::query()->create([
+    AcademicCalendarClass::query()->create([
         'tenant_id' => $tenant->id,
         'class_config_id' => $classConfig->id,
         'name' => 'Year Two 1',
         'description' => 'Test class one',
     ]);
 
-    $academicCalendarClassTwo = AcademicCalendarClass::query()->create([
+    AcademicCalendarClass::query()->create([
         'tenant_id' => $tenant->id,
         'class_config_id' => $classConfig->id,
         'name' => 'Year Two 2',
@@ -170,21 +172,30 @@ test('department academic calendar returns totalnClass and totalFinalList counts
         'attributes' => [],
     ]);
 
-    AcademicCalendarStudentProgram::query()->create([
-        'tenant_id' => $tenant->id,
-        'student_program_id' => $studentProgram->id,
-        'academic_calendar_class_id' => $academicCalendarClassOne->id,
-    ]);
-    AcademicCalendarStudentProgram::query()->create([
-        'tenant_id' => $tenant->id,
-        'student_program_id' => $studentProgram->id,
-        'academic_calendar_class_id' => $academicCalendarClassOne->id,
-    ]);
-    AcademicCalendarStudentProgram::query()->create([
-        'tenant_id' => $tenant->id,
-        'student_program_id' => $studentProgram->id,
-        'academic_calendar_class_id' => $academicCalendarClassTwo->id,
-    ]);
+    $academicYearOption = AcademicYearOption::query()->firstOrCreate(
+        ['slug' => 'dept-cal-api-count-option'],
+        ['name' => 'Dept Cal API Count', 'description' => null],
+    );
+    $activeEnrolmentStatus = StudentEnrolmentStatus::query()->firstOrCreate(
+        ['name' => 'Active'],
+        ['description' => 'Test'],
+    );
+    $activeEnrolmentStatusId = (int) $activeEnrolmentStatus->id;
+    $academicYearOptionId = (int) $academicYearOption->id;
+
+    foreach ([1, 2, 3] as $_) {
+        StudentEnrolment::query()->create([
+            'student_id' => $student->id,
+            'student_program_id' => $studentProgram->id,
+            'institution_department_id' => $institutionDepartment->id,
+            'department_level_id' => $departmentLevel->id,
+            'department_course_id' => $departmentCourse->id,
+            'academic_year_option_id' => $academicYearOptionId,
+            'academic_calendar_id' => $calendar->id,
+            'mode_of_study_id' => $modeOfStudy->id,
+            'student_enrolment_status_id' => $activeEnrolmentStatusId,
+        ]);
+    }
 
     Sanctum::actingAs($user);
 

@@ -4,7 +4,7 @@ namespace App\Http\Requests\AcademicCalendars;
 
 use App\Models\AcademicCalendars\AcademicCalendar;
 use App\Models\AcademicCalendars\AcademicCalendarClass;
-use App\Models\AcademicCalendars\AcademicCalendarStudentProgram;
+use App\Models\AcademicCalendars\AcademicCalendarStudentEnrolment;
 use App\Models\AcademicCalendars\ClassConfig;
 use App\Models\Institution\InstitutionDepartment;
 use Illuminate\Foundation\Http\FormRequest;
@@ -20,8 +20,8 @@ class MoveAcademicCalendarClassStudentsRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'student_program_ids' => ['required', 'array', 'min:1'],
-            'student_program_ids.*' => ['integer', 'distinct', 'exists:student_programs,id'],
+            'student_enrolment_ids' => ['required', 'array', 'min:1'],
+            'student_enrolment_ids.*' => ['integer', 'distinct', 'exists:student_enrolments,id'],
             'target_academic_calendar_class_id' => ['required', 'integer', 'exists:academic_calandar_classes,id'],
         ];
     }
@@ -78,29 +78,29 @@ class MoveAcademicCalendarClassStudentsRequest extends FormRequest
                 return;
             }
 
-            /** @var array<int, int> $studentProgramIds */
-            $studentProgramIds = array_map('intval', $this->input('student_program_ids', []));
+            /** @var array<int, int> $studentEnrolmentIds */
+            $studentEnrolmentIds = array_map('intval', $this->input('student_enrolment_ids', []));
 
-            $countOnSource = AcademicCalendarStudentProgram::query()
+            $countOnSource = AcademicCalendarStudentEnrolment::query()
                 ->where('academic_calendar_class_id', $sourceClass->id)
-                ->whereIn('student_program_id', $studentProgramIds)
+                ->whereIn('student_enrolment_id', $studentEnrolmentIds)
                 ->whereNull('deleted_at')
                 ->count();
 
-            if ($countOnSource !== count($studentProgramIds)) {
-                $validator->errors()->add('student_program_ids', __('academic_calendar.move_students_not_all_on_source_class'));
+            if ($countOnSource !== count($studentEnrolmentIds)) {
+                $validator->errors()->add('student_enrolment_ids', __('academic_calendar.move_students_not_all_on_source_class'));
 
                 return;
             }
 
-            $hasConflict = AcademicCalendarStudentProgram::query()
+            $hasConflict = AcademicCalendarStudentEnrolment::query()
                 ->where('academic_calendar_class_id', $targetId)
-                ->whereIn('student_program_id', $studentProgramIds)
+                ->whereIn('student_enrolment_id', $studentEnrolmentIds)
                 ->whereNull('deleted_at')
                 ->exists();
 
             if ($hasConflict) {
-                $validator->errors()->add('student_program_ids', __('academic_calendar.move_students_already_in_target'));
+                $validator->errors()->add('student_enrolment_ids', __('academic_calendar.move_students_already_in_target'));
             }
         });
     }

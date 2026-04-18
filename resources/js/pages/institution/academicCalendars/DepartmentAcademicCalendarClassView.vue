@@ -57,13 +57,13 @@ const { departmentClassesUrl, moveStudentsUrl, updateClassUrl, breadcrumbs } = u
 
 const { sortedStudents } = useAcademicCalendarClassStudents(academicCalendarClass);
 
-const { selectedStudentProgramIds, selectAllChangeClassModel, toggleSelectAllChangeClassFromRow, onSelectAllRowKeydown } =
+const { selectedStudentEnrolmentIds, selectAllChangeClassModel, toggleSelectAllChangeClassFromRow, onSelectAllRowKeydown } =
     useAcademicCalendarClassStudentSelection(sortedStudents);
 
 const { moveForm, openMoveStudentsModal, submitMoveStudents, resetMoveFormOnModalClose } = useAcademicCalendarClassMoveStudents(
     moveStudentsUrl,
     moveTargetClasses,
-    selectedStudentProgramIds,
+    selectedStudentEnrolmentIds,
 );
 
 const { editClassForm, openEditClassModal, submitEditClass, resetEditClassFormOnModalClose } = useAcademicCalendarClassEdit(
@@ -71,7 +71,7 @@ const { editClassForm, openEditClassModal, submitEditClass, resetEditClassFormOn
     academicCalendarClass,
 );
 
-const canMoveStudents = computed(() => hasAbility(['update:academic-calendar-student-programs']));
+const canMoveStudents = computed(() => hasAbility(['update:academic-calendar-student-enrolments']));
 </script>
 
 <template>
@@ -94,7 +94,7 @@ const canMoveStudents = computed(() => hasAbility(['update:academic-calendar-stu
                 @edit="openEditClassModal"
             />
             <AcademicCalendarClassStudentsTable
-                v-model:selected-student-program-ids="selectedStudentProgramIds"
+                v-model:selected-student-enrolment-ids="selectedStudentEnrolmentIds"
                 v-model:select-all-change-class-model="selectAllChangeClassModel"
                 :sorted-students="sortedStudents"
                 :can-move-students="canMoveStudents"

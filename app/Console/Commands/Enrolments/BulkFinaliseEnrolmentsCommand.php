@@ -275,10 +275,12 @@ class BulkFinaliseEnrolmentsCommand extends Command
                 'department_course_id' => $studentProgram->department_course_id,
                 'academic_year_option_id' => $enrolmentAttributes['academic_year_option_id'],
                 'academic_calendar_id' => $enrolmentAttributes['academic_calendar_id'],
+                'mode_of_study_id' => $studentProgram->mode_of_study_id,
             ],
             [
                 'student_program_id' => $studentProgram->id,
                 'student_enrolment_status_id' => $enrolmentAttributes['student_enrolment_status_id'],
+                'mode_of_study_id' => $studentProgram->mode_of_study_id,
             ],
         );
     }

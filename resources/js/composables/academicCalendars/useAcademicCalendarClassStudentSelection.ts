@@ -5,12 +5,12 @@ import { computed, ref } from 'vue';
 export function useAcademicCalendarClassStudentSelection(
     sortedStudents: ComputedRef<AcademicCalendarClassPreviewStudent[]>,
 ): {
-    selectedStudentProgramIds: Ref<number[]>;
+    selectedStudentEnrolmentIds: Ref<number[]>;
     selectAllChangeClassModel: ComputedRef<boolean>;
     toggleSelectAllChangeClassFromRow: () => void;
     onSelectAllRowKeydown: (event: KeyboardEvent) => void;
 } {
-    const selectedStudentProgramIds = ref<number[]>([]);
+    const selectedStudentEnrolmentIds = ref<number[]>([]);
 
     const selectAllChangeClassModel = computed({
         get() {
@@ -19,13 +19,13 @@ export function useAcademicCalendarClassStudentSelection(
                 return false;
             }
 
-            return selectedStudentProgramIds.value.length === list.length;
+            return selectedStudentEnrolmentIds.value.length === list.length;
         },
         set(checked: boolean) {
             if (checked) {
-                selectedStudentProgramIds.value = sortedStudents.value.map((s) => s.studentProgramId);
+                selectedStudentEnrolmentIds.value = sortedStudents.value.map((s) => s.studentEnrolmentId);
             } else {
-                selectedStudentProgramIds.value = [];
+                selectedStudentEnrolmentIds.value = [];
             }
         },
     });
@@ -35,10 +35,10 @@ export function useAcademicCalendarClassStudentSelection(
         if (list.length === 0) {
             return;
         }
-        if (selectedStudentProgramIds.value.length === list.length) {
-            selectedStudentProgramIds.value = [];
+        if (selectedStudentEnrolmentIds.value.length === list.length) {
+            selectedStudentEnrolmentIds.value = [];
         } else {
-            selectedStudentProgramIds.value = list.map((s) => s.studentProgramId);
+            selectedStudentEnrolmentIds.value = list.map((s) => s.studentEnrolmentId);
         }
     };
 
@@ -50,7 +50,7 @@ export function useAcademicCalendarClassStudentSelection(
     };
 
     return {
-        selectedStudentProgramIds,
+        selectedStudentEnrolmentIds,
         selectAllChangeClassModel,
         toggleSelectAllChangeClassFromRow,
         onSelectAllRowKeydown,

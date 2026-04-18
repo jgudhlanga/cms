@@ -11,12 +11,12 @@ export const MOVE_STUDENTS_MODAL = 'academic_calendar_move_students';
 export function useAcademicCalendarClassMoveStudents(
     moveStudentsUrl: ComputedRef<string>,
     moveTargetClasses: Ref<AcademicCalendarClassMoveTarget[]>,
-    selectedStudentProgramIds: Ref<number[]>,
+    selectedStudentEnrolmentIds: Ref<number[]>,
 ) {
     const { openModal, closeModal } = useModalStore();
 
     const moveForm = useForm({
-        student_program_ids: [] as number[],
+        student_enrolment_ids: [] as number[],
         target_academic_calendar_class_id: null as number | null,
     });
 
@@ -24,7 +24,7 @@ export function useAcademicCalendarClassMoveStudents(
         if (moveTargetClasses.value.length === 0) {
             return;
         }
-        moveForm.student_program_ids = [...selectedStudentProgramIds.value];
+        moveForm.student_enrolment_ids = [...selectedStudentEnrolmentIds.value];
         moveForm.target_academic_calendar_class_id = moveTargetClasses.value[0]?.id ?? null;
         moveForm.clearErrors();
         openModal(MOVE_STUDENTS_MODAL);
@@ -36,7 +36,7 @@ export function useAcademicCalendarClassMoveStudents(
             onSuccess: () => {
                 successAlert(trans('academic_calendar.move_students_success'));
                 closeModal(MOVE_STUDENTS_MODAL);
-                selectedStudentProgramIds.value = [];
+                selectedStudentEnrolmentIds.value = [];
             },
             onError: (errors) => {
                 errorAlert(firstInertiaErrorMessage(errors, trans('academic_calendar.move_students_failed')));

@@ -3,7 +3,8 @@
 use App\Enums\Shared\ClassListTypeEnum;
 use App\Models\AcademicCalendars\AcademicCalendar;
 use App\Models\AcademicCalendars\AcademicCalendarClass;
-use App\Models\AcademicCalendars\AcademicCalendarStudentProgram;
+use App\Models\AcademicCalendars\AcademicCalendarStudentEnrolment;
+use App\Models\AcademicCalendars\AcademicYearOption;
 use App\Models\AcademicCalendars\ClassConfig;
 use App\Models\Enrolments\ClassList;
 use App\Models\Institution\Course;
@@ -20,6 +21,8 @@ use App\Models\Shared\IdType;
 use App\Models\Shared\MaritalStatus;
 use App\Models\Shared\Title;
 use App\Models\Students\Student;
+use App\Models\Students\StudentEnrolment;
+use App\Models\Students\StudentEnrolmentStatus;
 use App\Models\Students\StudentProgram;
 use App\Models\Tenants\Tenant;
 use App\Models\Users\User;
@@ -124,6 +127,27 @@ function createFinalStudentProgram(array $context, string $email, string $gender
         'student_program_id' => $studentProgram->id,
         'type' => ClassListTypeEnum::FINAL->value,
         'attributes' => [],
+    ]);
+
+    $academicYearOption = AcademicYearOption::query()->create([
+        'name' => 'Test year option '.$studentProgram->id,
+        'description' => null,
+    ]);
+    $enrolmentStatus = StudentEnrolmentStatus::query()->create([
+        'name' => 'Active enrolment '.$studentProgram->id,
+        'description' => 'Test',
+    ]);
+
+    StudentEnrolment::query()->create([
+        'student_id' => $student->id,
+        'student_program_id' => $studentProgram->id,
+        'institution_department_id' => $context['institutionDepartment']->id,
+        'department_level_id' => $context['departmentLevel']->id,
+        'department_course_id' => $context['departmentCourse']->id,
+        'academic_year_option_id' => $academicYearOption->id,
+        'academic_calendar_id' => $context['calendar']->id,
+        'mode_of_study_id' => $context['modeOfStudy']->id,
+        'student_enrolment_status_id' => $enrolmentStatus->id,
     ]);
 
     return $studentProgram;
@@ -232,7 +256,7 @@ test('department academic calendar api returns assigned and ready class counts',
     $this->getJson($apiRoute)
         ->assertSuccessful()
         ->assertJsonPath('0.levels.0.classesCount', 0)
-        ->assertJsonPath('0.levels.0.totalnClass', 0)
+        ->assertJsonPath('0.levels.0.totalnClass', 3)
         ->assertJsonPath('0.levels.0.totalFinalList', 3);
 
     $this->post(route('academic-calendars.department-classes.store', [
@@ -335,9 +359,9 @@ test('saving generated classes is idempotent for the same context', function () 
         ->orderBy('id')
         ->pluck('id')
         ->all();
-    $studentProgramToClassMapAfterFirstSave = DB::table('academic_calendar_student_programs')
+    $studentProgramToClassMapAfterFirstSave = DB::table('academic_calendar_student_enrolments')
         ->whereNull('deleted_at')
-        ->pluck('academic_calendar_class_id', 'student_program_id')
+        ->pluck('academic_calendar_class_id', 'student_enrolment_id')
         ->all();
 
     $this->post($url, $payload)->assertSessionHas('success');
@@ -346,13 +370,13 @@ test('saving generated classes is idempotent for the same context', function () 
         ->orderBy('id')
         ->pluck('id')
         ->all();
-    $studentProgramToClassMapAfterSecondSave = DB::table('academic_calendar_student_programs')
+    $studentProgramToClassMapAfterSecondSave = DB::table('academic_calendar_student_enrolments')
         ->whereNull('deleted_at')
-        ->pluck('academic_calendar_class_id', 'student_program_id')
+        ->pluck('academic_calendar_class_id', 'student_enrolment_id')
         ->all();
 
     expect(DB::table('academic_calandar_classes')->whereNull('deleted_at')->count())->toBe(2);
-    expect(DB::table('academic_calendar_student_programs')->whereNull('deleted_at')->count())->toBe(3);
+    expect(DB::table('academic_calendar_student_enrolments')->whereNull('deleted_at')->count())->toBe(3);
     expect($classIdsAfterSecondSave)->toBe($classIdsAfterFirstSave);
     expect($studentProgramToClassMapAfterSecondSave)->toBe($studentProgramToClassMapAfterFirstSave);
 });
@@ -380,9 +404,9 @@ test('saving generated classes adds only newly-finalized students', function () 
 
     $this->post($url, $payload)->assertSessionHas('success');
 
-    $studentProgramToClassMapAfterFirstSave = DB::table('academic_calendar_student_programs')
+    $studentProgramToClassMapAfterFirstSave = DB::table('academic_calendar_student_enrolments')
         ->whereNull('deleted_at')
-        ->pluck('academic_calendar_class_id', 'student_program_id')
+        ->pluck('academic_calendar_class_id', 'student_enrolment_id')
         ->all();
     $classCountAfterFirstSave = DB::table('academic_calandar_classes')
         ->whereNull('deleted_at')
@@ -393,16 +417,16 @@ test('saving generated classes adds only newly-finalized students', function () 
 
     $this->post($url, $payload)->assertSessionHas('success');
 
-    $studentProgramToClassMapAfterSecondSave = DB::table('academic_calendar_student_programs')
+    $studentProgramToClassMapAfterSecondSave = DB::table('academic_calendar_student_enrolments')
         ->whereNull('deleted_at')
-        ->pluck('academic_calendar_class_id', 'student_program_id')
+        ->pluck('academic_calendar_class_id', 'student_enrolment_id')
         ->all();
 
-    expect(DB::table('academic_calendar_student_programs')->whereNull('deleted_at')->count())->toBe(5);
+    expect(DB::table('academic_calendar_student_enrolments')->whereNull('deleted_at')->count())->toBe(5);
     expect(DB::table('academic_calandar_classes')->whereNull('deleted_at')->count())->toBeGreaterThanOrEqual($classCountAfterFirstSave);
 
-    foreach ($studentProgramToClassMapAfterFirstSave as $studentProgramId => $academicCalendarClassId) {
-        expect($studentProgramToClassMapAfterSecondSave[$studentProgramId] ?? null)->toBe($academicCalendarClassId);
+    foreach ($studentProgramToClassMapAfterFirstSave as $studentEnrolmentId => $academicCalendarClassId) {
+        expect($studentProgramToClassMapAfterSecondSave[$studentEnrolmentId] ?? null)->toBe($academicCalendarClassId);
     }
 
     $newlyAssignedClassIds = collect($studentProgramToClassMapAfterSecondSave)
@@ -482,17 +506,18 @@ test('saving generated classes balances gender when both genders exist', functio
     expect($classes)->toHaveCount(2);
 
     foreach ($classes as $class) {
-        $enrollmentCount = AcademicCalendarStudentProgram::query()
+        $enrollmentCount = AcademicCalendarStudentEnrolment::query()
             ->where('academic_calendar_class_id', $class->id)
             ->whereNull('deleted_at')
             ->count();
 
-        $genderCounts = DB::table('academic_calendar_student_programs')
-            ->join('student_programs', 'student_programs.id', '=', 'academic_calendar_student_programs.student_program_id')
+        $genderCounts = DB::table('academic_calendar_student_enrolments')
+            ->join('student_enrolments', 'student_enrolments.id', '=', 'academic_calendar_student_enrolments.student_enrolment_id')
+            ->join('student_programs', 'student_programs.id', '=', 'student_enrolments.student_program_id')
             ->join('students', 'students.id', '=', 'student_programs.student_id')
             ->join('genders', 'genders.id', '=', 'students.gender_id')
-            ->where('academic_calendar_student_programs.academic_calendar_class_id', $class->id)
-            ->whereNull('academic_calendar_student_programs.deleted_at')
+            ->where('academic_calendar_student_enrolments.academic_calendar_class_id', $class->id)
+            ->whereNull('academic_calendar_student_enrolments.deleted_at')
             ->selectRaw("
                 SUM(CASE WHEN LOWER(genders.title) LIKE 'male%' THEN 1 ELSE 0 END) as male_count,
                 SUM(CASE WHEN LOWER(genders.title) LIKE 'female%' THEN 1 ELSE 0 END) as female_count
@@ -507,7 +532,7 @@ test('saving generated classes balances gender when both genders exist', functio
         }
     }
 
-    expect(DB::table('academic_calendar_student_programs')->whereNull('deleted_at')->count())->toBe(11);
+    expect(DB::table('academic_calendar_student_enrolments')->whereNull('deleted_at')->count())->toBe(11);
 });
 
 test('saving generated classes works with one available gender', function () {
@@ -538,12 +563,13 @@ test('saving generated classes works with one available gender', function () {
     expect($classes)->toHaveCount(3);
 
     foreach ($classes as $class) {
-        $genderCounts = DB::table('academic_calendar_student_programs')
-            ->join('student_programs', 'student_programs.id', '=', 'academic_calendar_student_programs.student_program_id')
+        $genderCounts = DB::table('academic_calendar_student_enrolments')
+            ->join('student_enrolments', 'student_enrolments.id', '=', 'academic_calendar_student_enrolments.student_enrolment_id')
+            ->join('student_programs', 'student_programs.id', '=', 'student_enrolments.student_program_id')
             ->join('students', 'students.id', '=', 'student_programs.student_id')
             ->join('genders', 'genders.id', '=', 'students.gender_id')
-            ->where('academic_calendar_student_programs.academic_calendar_class_id', $class->id)
-            ->whereNull('academic_calendar_student_programs.deleted_at')
+            ->where('academic_calendar_student_enrolments.academic_calendar_class_id', $class->id)
+            ->whereNull('academic_calendar_student_enrolments.deleted_at')
             ->selectRaw("
                 SUM(CASE WHEN LOWER(genders.title) LIKE 'male%' THEN 1 ELSE 0 END) as male_count,
                 SUM(CASE WHEN LOWER(genders.title) LIKE 'female%' THEN 1 ELSE 0 END) as female_count
@@ -590,7 +616,7 @@ test('class detail page returns students', function () {
         ->and(data_get($page, 'props.level'))->not->toBeNull()
         ->and(data_get($page, 'props.mode'))->not->toBeNull()
         ->and(data_get($page, 'props.classConfig'))->not->toBeNull()
-        ->and(data_get($page, 'props.canUpdateAcademicCalendarStudentPrograms'))->toBeFalse()
+        ->and(data_get($page, 'props.canUpdateAcademicCalendarStudentEnrolments'))->toBeFalse()
         ->and(data_get($page, 'props.moveTargetClasses'))->toBe([])
         ->and(data_get($page, 'props.siblingAcademicCalendarClasses'))->toHaveCount(1)
         ->and(data_get($page, 'props.siblingAcademicCalendarClasses.0.id'))->toBe($academicCalendarClass->id);
@@ -639,9 +665,9 @@ test('class detail page exposes move targets and update flag when user has permi
     expect(data_get($page, 'props.moveTargetClasses'))->toHaveCount(1)
         ->and(data_get($page, 'props.siblingAcademicCalendarClasses'))->toHaveCount(2)
         ->and($siblingIds)->toContain($classA->id)
-        ->and(data_get($page, 'props.canUpdateAcademicCalendarStudentPrograms'))->toBeFalse();
+        ->and(data_get($page, 'props.canUpdateAcademicCalendarStudentEnrolments'))->toBeFalse();
 
-    $context['user']->givePermissionTo('update:academic-calendar-student-programs');
+    $context['user']->givePermissionTo('update:academic-calendar-student-enrolments');
 
     $responseAuthorized = $this->get(route('academic-calendars.department-classes.show', [
         'institution_department' => $context['institutionDepartment']->id,
@@ -649,7 +675,7 @@ test('class detail page exposes move targets and update flag when user has permi
         'academic_calendar_class' => $classA->id,
     ]));
 
-    expect(data_get($responseAuthorized->viewData('page'), 'props.canUpdateAcademicCalendarStudentPrograms'))->toBeTrue();
+    expect(data_get($responseAuthorized->viewData('page'), 'props.canUpdateAcademicCalendarStudentEnrolments'))->toBeTrue();
 });
 
 test('authorized user can move students to another class in the same config', function () {
@@ -658,7 +684,7 @@ test('authorized user can move students to another class in the same config', fu
     createFinalStudentProgram($context, 'auth-move-b@example.com');
     createFinalStudentProgram($context, 'auth-move-c@example.com');
 
-    $context['user']->givePermissionTo('update:academic-calendar-student-programs');
+    $context['user']->givePermissionTo('update:academic-calendar-student-enrolments');
 
     $this->actingAs($context['user']);
 
@@ -682,12 +708,12 @@ test('authorized user can move students to another class in the same config', fu
     $classA = $classes->first();
     $classB = $classes->last();
 
-    $studentProgramId = (int) DB::table('academic_calendar_student_programs')
+    $studentEnrolmentId = (int) DB::table('academic_calendar_student_enrolments')
         ->where('academic_calendar_class_id', $classA->id)
         ->whereNull('deleted_at')
-        ->value('student_program_id');
+        ->value('student_enrolment_id');
 
-    expect($studentProgramId)->toBeGreaterThan(0);
+    expect($studentEnrolmentId)->toBeGreaterThan(0);
 
     $moveUrl = route('academic-calendars.department-classes.move-students', [
         'institution_department' => $context['institutionDepartment']->id,
@@ -696,13 +722,13 @@ test('authorized user can move students to another class in the same config', fu
     ]);
 
     $this->post($moveUrl, [
-        'student_program_ids' => [$studentProgramId],
+        'student_enrolment_ids' => [$studentEnrolmentId],
         'target_academic_calendar_class_id' => $classB->id,
     ])->assertSessionHas('success');
 
     expect(
-        (int) DB::table('academic_calendar_student_programs')
-            ->where('student_program_id', $studentProgramId)
+        (int) DB::table('academic_calendar_student_enrolments')
+            ->where('student_enrolment_id', $studentEnrolmentId)
             ->whereNull('deleted_at')
             ->value('academic_calendar_class_id')
     )->toBe($classB->id);
@@ -718,8 +744,8 @@ test('authorized user can move students to another class in the same config', fu
 
     expect(data_get($pageClassA, 'props.academicCalendarClass.studentCount'))->toBe(1)
         ->and(data_get($pageClassA, 'props.academicCalendarClass.students'))->toHaveCount(1)
-        ->and(collect(data_get($pageClassA, 'props.academicCalendarClass.students'))->pluck('studentProgramId')->all())
-        ->not->toContain($studentProgramId);
+        ->and(collect(data_get($pageClassA, 'props.academicCalendarClass.students'))->pluck('studentEnrolmentId')->all())
+        ->not->toContain($studentEnrolmentId);
 
     $showClassB = $this->get(route('academic-calendars.department-classes.show', [
         'institution_department' => $context['institutionDepartment']->id,
@@ -732,8 +758,8 @@ test('authorized user can move students to another class in the same config', fu
 
     expect(data_get($pageClassB, 'props.academicCalendarClass.studentCount'))->toBe(2)
         ->and(data_get($pageClassB, 'props.academicCalendarClass.students'))->toHaveCount(2)
-        ->and(collect(data_get($pageClassB, 'props.academicCalendarClass.students'))->pluck('studentProgramId')->all())
-        ->toContain($studentProgramId);
+        ->and(collect(data_get($pageClassB, 'props.academicCalendarClass.students'))->pluck('studentEnrolmentId')->all())
+        ->toContain($studentEnrolmentId);
 });
 
 test('user with student program permission but without viewAny academic calendars can move students', function () {
@@ -742,7 +768,7 @@ test('user with student program permission but without viewAny academic calendar
     createFinalStudentProgram($context, 'no-viewany-move-b@example.com');
     createFinalStudentProgram($context, 'no-viewany-move-c@example.com');
 
-    $context['user']->givePermissionTo('update:academic-calendar-student-programs');
+    $context['user']->givePermissionTo('update:academic-calendar-student-enrolments');
     $context['user']->revokePermissionTo('viewAny:academic-calendars');
 
     $this->actingAs($context['user']);
@@ -767,25 +793,25 @@ test('user with student program permission but without viewAny academic calendar
     $classA = $classes->first();
     $classB = $classes->last();
 
-    $studentProgramId = (int) DB::table('academic_calendar_student_programs')
+    $studentEnrolmentId = (int) DB::table('academic_calendar_student_enrolments')
         ->where('academic_calendar_class_id', $classA->id)
         ->whereNull('deleted_at')
-        ->value('student_program_id');
+        ->value('student_enrolment_id');
 
-    expect($studentProgramId)->toBeGreaterThan(0);
+    expect($studentEnrolmentId)->toBeGreaterThan(0);
 
     $this->post(route('academic-calendars.department-classes.move-students', [
         'institution_department' => $context['institutionDepartment']->id,
         'academic_calendar' => $context['calendar']->id,
         'academic_calendar_class' => $classA->id,
     ]), [
-        'student_program_ids' => [$studentProgramId],
+        'student_enrolment_ids' => [$studentEnrolmentId],
         'target_academic_calendar_class_id' => $classB->id,
     ])->assertSessionHas('success');
 
     expect(
-        (int) DB::table('academic_calendar_student_programs')
-            ->where('student_program_id', $studentProgramId)
+        (int) DB::table('academic_calendar_student_enrolments')
+            ->where('student_enrolment_id', $studentEnrolmentId)
             ->whereNull('deleted_at')
             ->value('academic_calendar_class_id')
     )->toBe($classB->id);
@@ -819,17 +845,17 @@ test('moving students without permission is forbidden', function () {
     $classA = $classes->first();
     $classB = $classes->last();
 
-    $studentProgramId = (int) DB::table('academic_calendar_student_programs')
+    $studentEnrolmentId = (int) DB::table('academic_calendar_student_enrolments')
         ->where('academic_calendar_class_id', $classA->id)
         ->whereNull('deleted_at')
-        ->value('student_program_id');
+        ->value('student_enrolment_id');
 
     $this->post(route('academic-calendars.department-classes.move-students', [
         'institution_department' => $context['institutionDepartment']->id,
         'academic_calendar' => $context['calendar']->id,
         'academic_calendar_class' => $classA->id,
     ]), [
-        'student_program_ids' => [$studentProgramId],
+        'student_enrolment_ids' => [$studentEnrolmentId],
         'target_academic_calendar_class_id' => $classB->id,
     ])->assertForbidden();
 });
@@ -840,7 +866,7 @@ test('moving students validates target class and enrollment', function () {
     createFinalStudentProgram($context, 'val-b@example.com');
     createFinalStudentProgram($context, 'val-c@example.com');
 
-    $context['user']->givePermissionTo('update:academic-calendar-student-programs');
+    $context['user']->givePermissionTo('update:academic-calendar-student-enrolments');
 
     $this->actingAs($context['user']);
 
@@ -864,15 +890,15 @@ test('moving students validates target class and enrollment', function () {
     $classA = $classes->first();
     $classB = $classes->last();
 
-    $studentProgramIdOnA = (int) DB::table('academic_calendar_student_programs')
+    $studentEnrolmentIdOnA = (int) DB::table('academic_calendar_student_enrolments')
         ->where('academic_calendar_class_id', $classA->id)
         ->whereNull('deleted_at')
-        ->value('student_program_id');
+        ->value('student_enrolment_id');
 
-    $studentProgramIdOnB = (int) DB::table('academic_calendar_student_programs')
+    $studentEnrolmentIdOnB = (int) DB::table('academic_calendar_student_enrolments')
         ->where('academic_calendar_class_id', $classB->id)
         ->whereNull('deleted_at')
-        ->value('student_program_id');
+        ->value('student_enrolment_id');
 
     $moveUrl = route('academic-calendars.department-classes.move-students', [
         'institution_department' => $context['institutionDepartment']->id,
@@ -881,14 +907,14 @@ test('moving students validates target class and enrollment', function () {
     ]);
 
     $this->post($moveUrl, [
-        'student_program_ids' => [$studentProgramIdOnA],
+        'student_enrolment_ids' => [$studentEnrolmentIdOnA],
         'target_academic_calendar_class_id' => $classA->id,
     ])->assertSessionHasErrors('target_academic_calendar_class_id');
 
     $this->post($moveUrl, [
-        'student_program_ids' => [$studentProgramIdOnB],
+        'student_enrolment_ids' => [$studentEnrolmentIdOnB],
         'target_academic_calendar_class_id' => $classB->id,
-    ])->assertSessionHasErrors('student_program_ids');
+    ])->assertSessionHasErrors('student_enrolment_ids');
 });
 
 test('authorized user can update academic calendar class name and description', function () {

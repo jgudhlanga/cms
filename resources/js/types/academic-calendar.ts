@@ -55,7 +55,7 @@ export type ClassConfig = {
 };
 
 export type AcademicCalendarClassPreviewStudent = {
-    studentProgramId: number;
+    studentEnrolmentId: number;
     studentId: number;
     applicationTrackingNumber: string | null;
     studentNumber?: string | null;
