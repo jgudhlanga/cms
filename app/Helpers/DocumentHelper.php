@@ -10,10 +10,8 @@ use App\Enums\Shared\FeeTypeEnum;
 use App\Enums\Shared\IdTypeEnum;
 use App\Models\Institution\DocumentTemplate;
 use App\Models\Institution\FeeStructure;
-use App\Models\Institution\IntakePeriod;
 use App\Models\Shared\DocumentType;
 use App\Models\Shared\FeeType;
-use App\Models\Students\Student;
 use App\Models\Students\StudentProgram;
 
 class DocumentHelper
@@ -83,6 +81,9 @@ class DocumentHelper
         $isSDP = in_array($level, array_map(fn ($l) => $l->name(), $sdpLevels), true);
         if ($isSDP && strtolower($department) === strtolower(DepartmentEnum::MECHANICAL_AND_PRODUCTION_ENGINEERING->label())) {
             $tuition = '375.00';
+            if(strtolower($modeOfStudy) === strtolower(ModeOfStudyEnum::OJET->label())) {
+                $tuition = '237.00';
+            }
         }
         // Base query
         $query = DocumentTemplate::query()
