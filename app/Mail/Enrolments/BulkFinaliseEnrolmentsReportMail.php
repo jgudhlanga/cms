@@ -20,12 +20,15 @@ class BulkFinaliseEnrolmentsReportMail extends Mailable
         protected string $startDate,
         protected string $endDate,
         protected ?string $reportPath,
+        protected bool $isDryRun = false,
     ) {}
 
     public function envelope(): Envelope
     {
+        $prefix = $this->isDryRun ? '[DRY RUN] ' : '';
+
         return new Envelope(
-            subject: "Bulk enrolment finalisation report (failed finalisations: {$this->failedFinalisations})",
+            subject: "{$prefix}Bulk enrolment finalisation report (failed finalisations: {$this->failedFinalisations})",
         );
     }
 
@@ -39,6 +42,7 @@ class BulkFinaliseEnrolmentsReportMail extends Mailable
                 'startDate' => $this->startDate,
                 'endDate' => $this->endDate,
                 'reportPath' => $this->reportPath,
+                'isDryRun' => $this->isDryRun,
             ],
         );
     }
@@ -48,7 +52,7 @@ class BulkFinaliseEnrolmentsReportMail extends Mailable
      */
     public function attachments(): array
     {
-        if (! app()->environment('production')) {
+        if (! $this->isDryRun && ! app()->environment('production')) {
             return [];
         }
 

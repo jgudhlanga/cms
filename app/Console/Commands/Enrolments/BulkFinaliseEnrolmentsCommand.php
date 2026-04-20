@@ -6,6 +6,7 @@ use App\Enums\Acl\RoleEnum;
 use App\Enums\Shared\ClassListTypeEnum;
 use App\Enums\Shared\WorkflowStepEnum;
 use App\Exceptions\Students\StudentEnrolmentResolutionException;
+use App\Exports\Enrolments\BulkFinaliseDryRunExport;
 use App\Exports\Enrolments\BulkFinaliseFailuresExport;
 use App\Mail\Enrolments\BulkFinaliseEnrolmentsReportMail;
 use App\Models\Enrolments\ClassList;
@@ -33,7 +34,8 @@ class BulkFinaliseEnrolmentsCommand extends Command
      */
     protected $signature = 'enrolments:bulk-finalise-enrolments-command
                             {--start-date= : Inclusive payment start date (Y-m-d). Defaults to custom.bank-statements.plan_anchor_start}
-                            {--end-date= : Inclusive payment end date (Y-m-d). Defaults to now()}';
+                            {--end-date= : Inclusive payment end date (Y-m-d). Defaults to now()}
+                            {--dry-run : Preview results without writing changes; still generates a report and emails it}';
 
     /**
      * The console command description.
@@ -47,6 +49,7 @@ class BulkFinaliseEnrolmentsCommand extends Command
      */
     public function handle(ResolveStudentEnrolmentAttributesService $resolveStudentEnrolmentAttributes): int
     {
+        $dryRun = (bool) $this->option('dry-run');
         ['start_date' => $startDate, 'end_date' => $endDate] = $this->resolveDateRange();
         $studentPrograms = $this->loadVerifiedStudentPrograms();
         $step = $this->resolveEnrolledWorkflowStep();
@@ -57,6 +60,8 @@ class BulkFinaliseEnrolmentsCommand extends Command
 
         /** @var array<int, array{student_program_id:int, student_id:int|null, student_number:string|null, student_id_number:string|null, user_full_name:string|null, class_list_id:int|null, reason:string, start_date:string, end_date:string, department:string|null, course:string|null, level:string|null}> $failures */
         $failures = [];
+        /** @var array<int, array{student_program_id:int, student_id:int|null, student_number:string|null, student_id_number:string|null, user_full_name:string|null, class_list_id:int|null, reason:string, start_date:string, end_date:string, department:string|null, course:string|null, level:string|null}> $successes */
+        $successes = [];
 
         foreach ($studentPrograms as $studentProgram) {
             try {
@@ -66,6 +71,7 @@ class BulkFinaliseEnrolmentsCommand extends Command
                     $endDate,
                     $step,
                     $resolveStudentEnrolmentAttributes,
+                    $dryRun,
                 );
             } catch (StudentEnrolmentResolutionException $exception) {
                 if ($this->shouldContinueAfterResolutionException($exception)) {
@@ -94,6 +100,9 @@ class BulkFinaliseEnrolmentsCommand extends Command
 
             if ($result['successful']) {
                 $successfulFinalised++;
+                if ($result['success'] !== null) {
+                    $successes[] = $result['success'];
+                }
             } else {
                 $failedFinalisations++;
                 if ($result['failure'] !== null) {
@@ -109,11 +118,14 @@ class BulkFinaliseEnrolmentsCommand extends Command
         $this->info("Successfully finalised: {$successfulFinalised}");
         $this->warn("Failed finalisations: {$failedFinalisations}");
 
-        $reportPath = $this->writeFailureReportXlsx($failures);
+        $reportPath = $dryRun
+            ? $this->writeDryRunReportXlsx($successes, $failures)
+            : $this->writeFailureReportXlsx($failures);
         if ($reportPath !== null) {
-            $this->info("Failure report saved: {$reportPath}");
-            logger()->info('Bulk finalise enrolments failure report saved.', [
+            $this->info("Report saved: {$reportPath}");
+            logger()->info('Bulk finalise enrolments report saved.', [
                 'path' => $reportPath,
+                'dry_run' => $dryRun,
                 'successful_finalised' => $successfulFinalised,
                 'failed_finalisations' => $failedFinalisations,
             ]);
@@ -125,6 +137,7 @@ class BulkFinaliseEnrolmentsCommand extends Command
             startDate: $startDate,
             endDate: $endDate,
             reportPath: $reportPath,
+            isDryRun: $dryRun,
         );
 
         return self::SUCCESS;
@@ -175,7 +188,7 @@ class BulkFinaliseEnrolmentsCommand extends Command
     }
 
     /**
-     * @return array{successful: bool, failure: array{student_program_id:int, student_id:int|null, student_number:string|null, student_id_number:string|null, user_full_name:string|null, class_list_id:int|null, reason:string, start_date:string, end_date:string, department:string|null, course:string|null, level:string|null}|null}
+     * @return array{successful: bool, success: array{student_program_id:int, student_id:int|null, student_number:string|null, student_id_number:string|null, user_full_name:string|null, class_list_id:int|null, reason:string, start_date:string, end_date:string, department:string|null, course:string|null, level:string|null}|null, failure: array{student_program_id:int, student_id:int|null, student_number:string|null, student_id_number:string|null, user_full_name:string|null, class_list_id:int|null, reason:string, start_date:string, end_date:string, department:string|null, course:string|null, level:string|null}|null}
      *
      * @throws StudentEnrolmentResolutionException
      */
@@ -185,6 +198,7 @@ class BulkFinaliseEnrolmentsCommand extends Command
         CarbonImmutable $endDate,
         ?WorkflowStep $step,
         ResolveStudentEnrolmentAttributesService $resolveStudentEnrolmentAttributes,
+        bool $dryRun,
     ): array {
         $student = $studentProgram->student;
         $studentNumber = $student?->student_number;
@@ -192,6 +206,7 @@ class BulkFinaliseEnrolmentsCommand extends Command
         if ($studentNumber === null || $studentNumber === '') {
             return [
                 'successful' => false,
+                'success' => null,
                 'failure' => $this->buildFailureRow($studentProgram, $startDate, $endDate, 'missing_student_number'),
             ];
         }
@@ -199,6 +214,7 @@ class BulkFinaliseEnrolmentsCommand extends Command
         if (! $this->studentHasPaymentInRange($studentNumber, $startDate, $endDate)) {
             return [
                 'successful' => false,
+                'success' => null,
                 'failure' => $this->buildFailureRow($studentProgram, $startDate, $endDate, 'no_matching_payment'),
             ];
         }
@@ -208,12 +224,15 @@ class BulkFinaliseEnrolmentsCommand extends Command
             (int) $studentProgram->id,
         );
 
-        $this->finaliseClassList($studentProgram);
-        $this->updateDepartmentApplicationStep($studentProgram, $step);
-        $this->upsertStudentEnrolment($studentProgram, $enrolmentAttributes);
+        if (! $dryRun) {
+            $this->finaliseClassList($studentProgram);
+            $this->updateDepartmentApplicationStep($studentProgram, $step);
+            $this->upsertStudentEnrolment($studentProgram, $enrolmentAttributes);
+        }
 
         return [
             'successful' => true,
+            'success' => $this->buildSummaryRow($studentProgram, $startDate, $endDate, 'would_finalise'),
             'failure' => null,
         ];
     }
@@ -294,6 +313,18 @@ class BulkFinaliseEnrolmentsCommand extends Command
         CarbonImmutable $endDate,
         string $reason,
     ): array {
+        return $this->buildSummaryRow($studentProgram, $startDate, $endDate, $reason);
+    }
+
+    /**
+     * @return array{student_program_id:int, student_id:int|null, student_number:string|null, student_id_number:string|null, user_full_name:string|null, class_list_id:int|null, reason:string, start_date:string, end_date:string, department:string|null, course:string|null, level:string|null}
+     */
+    private function buildSummaryRow(
+        StudentProgram $studentProgram,
+        CarbonImmutable $startDate,
+        CarbonImmutable $endDate,
+        string $reason,
+    ): array {
         $student = $studentProgram->student;
 
         return [
@@ -326,8 +357,9 @@ class BulkFinaliseEnrolmentsCommand extends Command
         CarbonImmutable $startDate,
         CarbonImmutable $endDate,
         ?string $reportPath,
+        bool $isDryRun = false,
     ): void {
-        if (! app()->environment('production')) {
+        if (! $isDryRun && ! app()->environment('production')) {
             logger()->info('Bulk finalise enrolments: email skipped (non-production environment).');
 
             return;
@@ -355,8 +387,35 @@ class BulkFinaliseEnrolmentsCommand extends Command
                 startDate: $startDate->toDateTimeString(),
                 endDate: $endDate->toDateTimeString(),
                 reportPath: $reportPath,
+                isDryRun: $isDryRun,
             ));
         }
+    }
+
+    /**
+     * @param  array<int, array{student_program_id:int, student_id:int|null, student_number:string|null, student_id_number:string|null, user_full_name:string|null, class_list_id:int|null, reason:string, start_date:string, end_date:string, department:string|null, course:string|null, level:string|null}>  $successes
+     * @param  array<int, array{student_program_id:int, student_id:int|null, student_number:string|null, student_id_number:string|null, user_full_name:string|null, class_list_id:int|null, reason:string, start_date:string, end_date:string, department:string|null, course:string|null, level:string|null}>  $failures
+     */
+    private function writeDryRunReportXlsx(array $successes, array $failures): ?string
+    {
+        $timestamp = now()->format('Ymd-His');
+        $relativePath = "reports/enrolments/bulk-finalise-dry-run-{$timestamp}.xlsx";
+        $absolutePath = Storage::disk('local')->path($relativePath);
+        $directoryPath = dirname($absolutePath);
+
+        if (! is_dir($directoryPath)) {
+            if (! mkdir($directoryPath, 0755, true) && ! is_dir($directoryPath)) {
+                logger()->error('Bulk finalise enrolments: unable to create XLSX report directory.', [
+                    'directory' => $directoryPath,
+                ]);
+
+                return null;
+            }
+        }
+
+        Excel::store(new BulkFinaliseDryRunExport($successes, $failures), $relativePath, 'local');
+
+        return $relativePath;
     }
 
     /**
