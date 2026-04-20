@@ -7,11 +7,13 @@ import { hasAbility } from '@/lib/permissions';
 import Details from '@/pages/enrolments/partials/shared/Details.vue';
 import FeeInvoice from '@/pages/enrolments/partials/shared/FeeInvoice.vue';
 import FeeReceipt from '@/pages/enrolments/partials/shared/FeeReceipt.vue';
+import RejectApplicationButton from '@/pages/enrolments/partials/shared/RejectApplicationButton.vue';
 import Sidebar from '@/pages/enrolments/partials/shared/Sidebar.vue';
 import { AuthObject } from '@/types/data-pagination';
 import { ClassListAttributeParams, ClassListTopNext, ClassListType, Enrolment } from '@/types/enrolments';
 import { Link } from '@/types/ui';
 import { Head, useForm } from '@inertiajs/vue3';
+import { trans } from 'laravel-vue-i18n';
 import { computed, onMounted } from 'vue';
 
 interface Props {
@@ -92,13 +94,19 @@ const readWriteRequired = computed(() => {
 });
 const requiredLevel = computed(() => {
     if (application?.relationships?.requirements) {
-        return application?.relationships?.requirements?.attributes?.requiredLevel ?? '---';
+        return application?.relationships?.requirements?.attributes?.requiredLevel ?? trans('enrolments.not_applicable_level');
     }
     if (application?.relationships?.courseRequirements) {
-        return application?.relationships?.courseRequirements?.attributes?.requiredLevel ?? '---';
+        return application?.relationships?.courseRequirements?.attributes?.requiredLevel ?? trans('enrolments.not_applicable_level');
     }
-    return '---';
+    return trans('enrolments.not_applicable_level');
 });
+
+const nextConfirmHref = computed(() =>
+    nextTop.length > 0
+        ? route('enrolments.confirm', { student_program: String(nextTop[0].applicationId), type: queryParams['type'] })
+        : null,
+);
 
 const form = useForm<ClassListAttributeParams>({
     identity_confirmed: null,
@@ -108,7 +116,7 @@ const form = useForm<ClassListAttributeParams>({
     previous_level_confirmed: null,
     read_write_confirmed: null,
     application_fee_confirmed: null,
-    proof_of_payment_confirmed: null,
+    proof_of_payment_confirmed: false,
     passport_photos_confirmed: null,
     original_birth_certificate_confirmed: null,
     original_national_identity_confirmed: null,
@@ -117,75 +125,88 @@ const form = useForm<ClassListAttributeParams>({
     remarks: null,
 });
 
-const proofOfPaymentOptions = computed(() => [
-    { inputId: 'confirm_proof_of_payment_yes', label: 'Yes', value: true },
-    { inputId: 'confirm_proof_of_payment_no', label: 'No', value: false },
-]);
+const yesNo = () => ({ yes: trans('trans.yes'), no: trans('trans.no') });
 
-const passportPhotoOptions = computed(() => [
-    { inputId: 'passport_photos_confirmed_yes', label: 'Yes', value: true },
-    { inputId: 'passport_photos_confirmed_no', label: 'No', value: false },
-]);
+const proofOfPaymentOptions = computed(() => {
+    const { yes, no } = yesNo();
+    return [
+        { inputId: 'confirm_proof_of_payment_yes', label: yes, value: true },
+        { inputId: 'confirm_proof_of_payment_no', label: no, value: false },
+    ];
+});
 
-const birthCertificateOptions = computed(() => [
-    { inputId: 'original_birth_certificate_confirmed_yes', label: 'Yes', value: true },
-    { inputId: 'original_birth_certificate_confirmed_no', label: 'No', value: false },
-]);
+const passportPhotoOptions = computed(() => {
+    const { yes, no } = yesNo();
+    return [
+        { inputId: 'passport_photos_confirmed_yes', label: yes, value: true },
+        { inputId: 'passport_photos_confirmed_no', label: no, value: false },
+    ];
+});
 
-const identityOptions = computed(() => [
-    { inputId: 'original_national_identity_confirmed_yes', label: 'Yes', value: true },
-    { inputId: 'original_national_identity_confirmed_no', label: 'No', value: false },
-]);
-const educationCertificatesOptions = computed(() => [
-    { inputId: 'original_education_certificates_confirmed_yes', label: 'Yes', value: true },
-    { inputId: 'original_education_certificates_confirmed_no', label: 'No', value: false },
-]);
+const birthCertificateOptions = computed(() => {
+    const { yes, no } = yesNo();
+    return [
+        { inputId: 'original_birth_certificate_confirmed_yes', label: yes, value: true },
+        { inputId: 'original_birth_certificate_confirmed_no', label: no, value: false },
+    ];
+});
+
+const identityOptions = computed(() => {
+    const { yes, no } = yesNo();
+    return [
+        { inputId: 'original_national_identity_confirmed_yes', label: yes, value: true },
+        { inputId: 'original_national_identity_confirmed_no', label: no, value: false },
+    ];
+});
+const educationCertificatesOptions = computed(() => {
+    const { yes, no } = yesNo();
+    return [
+        { inputId: 'original_education_certificates_confirmed_yes', label: yes, value: true },
+        { inputId: 'original_education_certificates_confirmed_no', label: no, value: false },
+    ];
+});
 
 const saveConfirmation = async () => {
     if (!hasAbility('manage-final:class-lists')) {
         forbiddenAlert();
         return;
     }
-    if (!form.proof_of_payment_confirmed) {
-        errorAlert('Please confirm proof of payment of tuition to proceed.');
-        return;
-    }
     if (!form.passport_photos_confirmed) {
-        errorAlert('Please confirm 2 passport photos are available');
+        errorAlert(trans('enrolments.error_passport_photos'));
         return;
     }
     if (!form.original_birth_certificate_confirmed) {
-        errorAlert('Please confirm original birth certificate is available');
+        errorAlert(trans('enrolments.error_birth_certificate'));
         return;
     }
     if (!form.original_national_identity_confirmed) {
-        errorAlert('Please confirm original national ID/Passport is available');
+        errorAlert(trans('enrolments.error_national_identity'));
         return;
     }
     if (!form.original_education_certificates_confirmed) {
-        errorAlert('Please confirm original educational certificates are available');
+        errorAlert(trans('enrolments.error_education_certificates'));
         return;
     }
 
     const confirmed = await useCustomConfirmDialog().open({
-        title: 'Confirm Student',
-        message: 'Are you sure you are confirming that student details are in order?',
-        confirmText: 'Yes confirm',
+        title: trans('enrolments.confirm_student_dialog_title'),
+        message: trans('enrolments.confirm_student_dialog_message'),
+        confirmText: trans('enrolments.confirm_action'),
     });
     if (confirmed) {
         form.put(route('enrolments.update-class-list', { student_program: String(application.id) }), {
             onSuccess: () => {
-                successAlert('Student successfully confirm.');
-                if (nextTop.length > 0) {
-                    navigateTo(route('enrolments.confirm', { student_program: String(nextTop[0].applicationId), type: queryParams['type'] }));
+                successAlert(trans('enrolments.success_student_confirmed'));
+                if (nextConfirmHref.value) {
+                    navigateTo(nextConfirmHref.value);
                 }
             },
-            onError: (errors: any) => {
+            onError: (errors: Record<string, string | string[]>) => {
                 if (Object.keys(errors).length) {
                     const allErrors = Object.values(errors).join('\n');
                     errorAlert(allErrors);
                 } else {
-                    errorAlert('An unexpected error happened, student could not be confirm.');
+                    errorAlert(trans('enrolments.error_confirm_unexpected'));
                 }
             },
         });
@@ -216,10 +237,10 @@ onMounted(() => {
                     :required-level="requiredLevel"
                     :read-write-required="readWriteRequired"
                 />
-                <BaseCard title="Confirmation" description="Confirmation of applicant provided details">
+                <BaseCard :title="$t('enrolments.confirmation_card_title')" :description="$t('enrolments.confirmation_card_description')">
                     <div class="grid grid-cols-2 gap-4">
                         <div class="flex items-center space-x-5">
-                            <Label class="font-bold">Confirm proof of payment:</Label>
+                            <Label class="font-bold">{{ $t('enrolments.label_proof_of_payment') }}</Label>
                             <BaseRadioGroup
                                 :options="proofOfPaymentOptions as any"
                                 v-model="form.proof_of_payment_confirmed"
@@ -227,7 +248,7 @@ onMounted(() => {
                             />
                         </div>
                         <div class="flex items-center space-x-5">
-                            <Label class="font-bold">Confirm passport photos(2):</Label>
+                            <Label class="font-bold">{{ $t('enrolments.label_passport_photos') }}</Label>
                             <BaseRadioGroup
                                 :options="passportPhotoOptions as any"
                                 v-model="form.passport_photos_confirmed"
@@ -235,7 +256,7 @@ onMounted(() => {
                             />
                         </div>
                         <div class="flex items-center space-x-5">
-                            <Label class="font-bold">Confirm original birth certificate:</Label>
+                            <Label class="font-bold">{{ $t('enrolments.label_birth_certificate') }}</Label>
                             <BaseRadioGroup
                                 :options="birthCertificateOptions as any"
                                 v-model="form.original_birth_certificate_confirmed"
@@ -243,7 +264,7 @@ onMounted(() => {
                             />
                         </div>
                         <div class="flex items-center space-x-5">
-                            <Label class="font-bold">Confirm original national ID:</Label>
+                            <Label class="font-bold">{{ $t('enrolments.label_national_identity') }}</Label>
                             <BaseRadioGroup
                                 :options="identityOptions as any"
                                 v-model="form.original_national_identity_confirmed"
@@ -251,7 +272,7 @@ onMounted(() => {
                             />
                         </div>
                         <div class="flex items-center space-x-5">
-                            <Label class="font-bold">Confirm original education certificates:</Label>
+                            <Label class="font-bold">{{ $t('enrolments.label_education_certificates') }}</Label>
                             <BaseRadioGroup
                                 :options="educationCertificatesOptions as any"
                                 v-model="form.original_education_certificates_confirmed"
@@ -263,13 +284,19 @@ onMounted(() => {
                         <BaseInput
                             input-id="remarks"
                             :label="`${$t('general.remarks')}:`"
-                            placeholder="Leave remarks or a note..."
+                            :placeholder="$t('enrolments.remarks_placeholder')"
                             :type="TextFieldType.text"
                             v-model="form.remarks"
                         />
                     </div>
                     <div class="mt-4 flex items-center justify-between">
                         <BaseButton :title="$t('enrolment.add_student_to_class')" @click="saveConfirmation" />
+                        <RejectApplicationButton
+                            :student-program-id="String(application.id)"
+                            :form="form"
+                            required-ability="manage-final:class-lists"
+                            :next-href="nextConfirmHref"
+                        />
                     </div>
                 </BaseCard>
             </div>

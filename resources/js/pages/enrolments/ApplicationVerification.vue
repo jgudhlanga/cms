@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { useCustomConfirmDialog } from '@/composables/core/useCustomConfirmDialog';
 import { useUtils } from '@/composables/core/useUtils';
-import { ColorVariant } from '@/enums/colors';
 import { errorAlert, forbiddenAlert, successAlert } from '@/lib/alerts';
 import { hasAbility } from '@/lib/permissions';
 import Details from '@/pages/enrolments/partials/shared/Details.vue';
+import RejectApplicationButton from '@/pages/enrolments/partials/shared/RejectApplicationButton.vue';
 import Sidebar from '@/pages/enrolments/partials/shared/Sidebar.vue';
 import { AuthObject } from '@/types/data-pagination';
 import { ClassListAttributeParams, ClassListTopNext, ClassListType, Enrolment, OtherApplication } from '@/types/enrolments';
@@ -86,13 +86,19 @@ const readWriteRequired = computed(() => {
 });
 const requiredLevel = computed(() => {
     if (application?.relationships?.requirements) {
-        return application?.relationships?.requirements?.attributes?.requiredLevel ?? '---';
+        return application?.relationships?.requirements?.attributes?.requiredLevel ?? trans('enrolments.not_applicable_level');
     }
     if (application?.relationships?.courseRequirements) {
-        return application?.relationships?.courseRequirements?.attributes?.requiredLevel ?? '---';
+        return application?.relationships?.courseRequirements?.attributes?.requiredLevel ?? trans('enrolments.not_applicable_level');
     }
-    return '---';
+    return trans('enrolments.not_applicable_level');
 });
+
+const previousLevelLabel = computed(() => trans('enrolments.label_confirm_previous_level', { level: requiredLevel.value }));
+
+const nextVerifyHref = computed(() =>
+    nextTop.length > 0 ? route('enrolments.verify', { student_program: String(nextTop[0].applicationId) }) : null,
+);
 
 const form = useForm<ClassListAttributeParams>({
     identity_confirmed: null,
@@ -115,26 +121,26 @@ const saveVerification = async () => {
         return;
     }
     if (!form.identity_confirmed) {
-        errorAlert('Please confirm Identity is correct');
+        errorAlert(trans('enrolments.error_identity'));
         return;
     }
     if (!form.names_confirmed) {
-        errorAlert('Please confirm Name is correct');
+        errorAlert(trans('enrolments.error_names'));
         return;
     }
     if (!form.disability_confirmed) {
-        errorAlert('Please confirm disability status is correct');
+        errorAlert(trans('enrolments.error_disability'));
         return;
     }
     if (oLevelRequired.value) {
         if (!form.o_level_confirmed) {
-            errorAlert('Please confirm O Level results are correct');
+            errorAlert(trans('enrolments.error_o_level'));
             return;
         }
     }
     if (previousLevelRequired.value) {
         if (!form.previous_level_confirmed) {
-            errorAlert(`Please confirm ${requiredLevel.value} level completed`);
+            errorAlert(trans('enrolments.error_previous_level', { level: requiredLevel.value }));
             return;
         }
     }
@@ -145,83 +151,74 @@ const saveVerification = async () => {
         }
     }
     const confirmed = await useCustomConfirmDialog().open({
-        title: 'Verify Applicant',
-        message: 'Are you sure you are confirming the details of this applicant?',
-        confirmText: 'Yes confirm',
+        title: trans('enrolments.verify_dialog_title'),
+        message: trans('enrolments.verify_dialog_message'),
+        confirmText: trans('enrolments.confirm_action'),
     });
     if (confirmed) {
         form.put(route('enrolments.update-class-list', { student_program: String(application.id) }), {
             onSuccess: () => {
-                successAlert('Class list entry successfully verified.');
-                if (nextTop.length > 0) {
-                    navigateTo(route('enrolments.verify', { student_program: String(nextTop[0].applicationId) }));
+                successAlert(trans('enrolments.success_verified'));
+                if (nextVerifyHref.value) {
+                    navigateTo(nextVerifyHref.value);
                 }
             },
-            onError: (errors: any) => {
+            onError: (errors: Record<string, string | string[]>) => {
                 if (Object.keys(errors).length) {
                     const allErrors = Object.values(errors).join('\n');
                     errorAlert(allErrors);
                 } else {
-                    errorAlert('An unexpected error happened, class list entry could not be verified.');
-                }
-            },
-        });
-    }
-};
-const rejectApplication = async () => {
-    if (!hasAbility('verify:class-lists')) {
-        forbiddenAlert();
-        return;
-    }
-    const confirmed = await useCustomConfirmDialog().open({
-        title: 'Reject Applicant',
-        message: 'Are you sure you are rejecting this applicant from the class list?',
-        confirmText: 'Yes confirm',
-    });
-    if (confirmed) {
-        form.put(route('enrolments.reject-application', { student_program: String(application.id) }), {
-            onSuccess: () => {
-                successAlert('Application successfully rejected from class list.');
-                if (nextTop.length > 0) {
-                    navigateTo(route('enrolments.verify', { student_program: String(nextTop[0].applicationId) }));
-                }
-            },
-            onError: (errors: any) => {
-                if (Object.keys(errors).length) {
-                    const allErrors = Object.values(errors).join('\n');
-                    errorAlert(allErrors);
-                } else {
-                    errorAlert('An unexpected error happened, class list entry could not be rejected.');
+                    errorAlert(trans('enrolments.error_verify_unexpected'));
                 }
             },
         });
     }
 };
 
-const identityConfirmedOptions = computed(() => [
-    { inputId: 'identity_confirmed_yes', label: 'Yes', value: true },
-    { inputId: 'identity_confirmed_no', label: 'No', value: false },
-]);
-const namesConfirmedOptions = computed(() => [
-    { inputId: 'names_confirmed_yes', label: 'Yes', value: true },
-    { inputId: 'names_confirmed_no', label: 'No', value: false },
-]);
-const disabilityConfirmedOptions = computed(() => [
-    { inputId: 'disability_confirmed_yes', label: 'Yes', value: true },
-    { inputId: 'disability_confirmed_no', label: 'No', value: false },
-]);
-const oLevelConfirmedOptions = computed(() => [
-    { inputId: 'o_level_confirmed_yes', label: 'Yes', value: true },
-    { inputId: 'o_level_confirmed_no', label: 'No', value: false },
-]);
-const previousLevelOptions = computed(() => [
-    { inputId: 'previous_level_confirmed_yes', label: 'Yes', value: true },
-    { inputId: 'previous_level_confirmed_no', label: 'No', value: false },
-]);
-const readWriteOptions = computed(() => [
-    { inputId: 'read_write_confirmed_yes', label: 'Yes', value: true },
-    { inputId: 'read_write_confirmed_no', label: 'No', value: false },
-]);
+const yesNo = () => ({ yes: trans('trans.yes'), no: trans('trans.no') });
+
+const identityConfirmedOptions = computed(() => {
+    const { yes, no } = yesNo();
+    return [
+        { inputId: 'identity_confirmed_yes', label: yes, value: true },
+        { inputId: 'identity_confirmed_no', label: no, value: false },
+    ];
+});
+const namesConfirmedOptions = computed(() => {
+    const { yes, no } = yesNo();
+    return [
+        { inputId: 'names_confirmed_yes', label: yes, value: true },
+        { inputId: 'names_confirmed_no', label: no, value: false },
+    ];
+});
+const disabilityConfirmedOptions = computed(() => {
+    const { yes, no } = yesNo();
+    return [
+        { inputId: 'disability_confirmed_yes', label: yes, value: true },
+        { inputId: 'disability_confirmed_no', label: no, value: false },
+    ];
+});
+const oLevelConfirmedOptions = computed(() => {
+    const { yes, no } = yesNo();
+    return [
+        { inputId: 'o_level_confirmed_yes', label: yes, value: true },
+        { inputId: 'o_level_confirmed_no', label: no, value: false },
+    ];
+});
+const previousLevelOptions = computed(() => {
+    const { yes, no } = yesNo();
+    return [
+        { inputId: 'previous_level_confirmed_yes', label: yes, value: true },
+        { inputId: 'previous_level_confirmed_no', label: no, value: false },
+    ];
+});
+const readWriteOptions = computed(() => {
+    const { yes, no } = yesNo();
+    return [
+        { inputId: 'read_write_confirmed_yes', label: yes, value: true },
+        { inputId: 'read_write_confirmed_no', label: no, value: false },
+    ];
+});
 
 onMounted(() => {
     const entry = application.relationships?.classList;
@@ -246,18 +243,18 @@ onMounted(() => {
                     :required-level="requiredLevel"
                     :read-write-required="readWriteRequired"
                 />
-                <BaseCard title="Verification" description="Verification of applicant details">
+                <BaseCard :title="$t('enrolments.verification_card_title')" :description="$t('enrolments.verification_card_description')">
                     <div class="grid grid-cols-1 gap-4">
                         <div class="flex items-center space-x-5">
-                            <Label class="font-bold">Confirm Identity is correct(id number / passport number):</Label>
+                            <Label class="font-bold">{{ $t('enrolments.label_confirm_identity') }}</Label>
                             <BaseRadioGroup :options="identityConfirmedOptions as any" v-model="form.identity_confirmed" :vertical-layout="false" />
                         </div>
                         <div class="flex items-center space-x-5">
-                            <Label class="font-bold">Confirm applicant's name is correct:</Label>
+                            <Label class="font-bold">{{ $t('enrolments.label_confirm_names') }}</Label>
                             <BaseRadioGroup :options="namesConfirmedOptions as any" v-model="form.names_confirmed" :vertical-layout="false" />
                         </div>
                         <div class="flex items-center space-x-5">
-                            <Label class="font-bold">Confirm applicant's disability status:</Label>
+                            <Label class="font-bold">{{ $t('enrolments.label_confirm_disability') }}</Label>
                             <BaseRadioGroup
                                 :options="disabilityConfirmedOptions as any"
                                 v-model="form.disability_confirmed"
@@ -265,21 +262,26 @@ onMounted(() => {
                             />
                         </div>
                         <div class="flex items-center space-x-5" v-if="oLevelRequired">
-                            <Label class="font-bold">Confirm O Level results are correct:</Label>
+                            <Label class="font-bold">{{ $t('enrolments.label_confirm_o_level') }}</Label>
                             <BaseRadioGroup :options="oLevelConfirmedOptions as any" v-model="form.o_level_confirmed" :vertical-layout="false" />
                         </div>
                         <div class="flex items-center space-x-5" v-if="previousLevelRequired">
-                            <Label class="font-bold">{{ `Confirm ${requiredLevel} level completed` }}</Label>
+                            <Label class="font-bold">{{ previousLevelLabel }}</Label>
                             <BaseRadioGroup :options="previousLevelOptions as any" v-model="form.previous_level_confirmed" :vertical-layout="false" />
                         </div>
                         <div class="flex items-center space-x-5" v-if="readWriteRequired">
-                            <Label class="font-bold">Confirm read and write ability</Label>
+                            <Label class="font-bold">{{ $t('enrolments.label_confirm_read_write') }}</Label>
                             <BaseRadioGroup :options="readWriteOptions as any" v-model="form.read_write_confirmed" :vertical-layout="false" />
                         </div>
                     </div>
                     <div class="mt-6 flex items-center justify-between">
-                        <BaseButton title="Verify and give Offer to applicant" @click="saveVerification" />
-                        <BaseButton :variant="ColorVariant.danger" title="Reject Application" @click="rejectApplication" />
+                        <BaseButton :title="$t('enrolments.button_verify_and_offer')" @click="saveVerification" />
+                        <RejectApplicationButton
+                            :student-program-id="String(application.id)"
+                            :form="form"
+                            required-ability="verify:class-lists"
+                            :next-href="nextVerifyHref"
+                        />
                     </div>
                 </BaseCard>
             </div>

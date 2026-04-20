@@ -6,6 +6,7 @@ use App\DTO\Enrolments\ClassListDto;
 use App\Enums\Shared\ClassListTypeEnum;
 use App\Enums\Shared\FeeTypeEnum;
 use App\Enums\Shared\WorkflowStepEnum;
+use App\Exceptions\Students\StudentEnrolmentResolutionException;
 use App\Helpers\DepartmentHelper;
 use App\Helpers\EnrolmentHelper;
 use App\Helpers\Helper;
@@ -33,9 +34,11 @@ use App\Models\Institution\IntakePeriod;
 use App\Models\Institution\ModeOfStudy;
 use App\Models\Shared\FeeType;
 use App\Models\Shared\WorkflowStep;
+use App\Models\Students\StudentEnrolment;
 use App\Models\Students\StudentProgram;
 use App\Repositories\Institution\interface\IClassListRepository;
 use App\Services\DepartmentEnrolmentService;
+use App\Services\Students\ResolveStudentEnrolmentAttributesService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -46,7 +49,11 @@ use Throwable;
 
 class ClassListController extends Controller
 {
-    public function __construct(protected IClassListRepository $repository, protected DepartmentEnrolmentService $departmentEnrolmentService) {}
+    public function __construct(
+        protected IClassListRepository $repository,
+        protected DepartmentEnrolmentService $departmentEnrolmentService,
+        protected ResolveStudentEnrolmentAttributesService $resolveStudentEnrolmentAttributes,
+    ) {}
 
     public function store(ClassListRequest $request)
     {
@@ -229,6 +236,7 @@ class ClassListController extends Controller
                 }
                 if ($type === 'verified') {
                     $step = WorkflowStep::where('slug', WorkflowStepEnum::ENROLLED->slug())->first();
+                    $this->createStudentEnrolment($studentProgram);
                 }
                 // Update step
                 $departmentStep = DepartmentApplicationStep::where('institution_department_id', $studentProgram->institution_department_id)->where('workflow_step_id', $step->id)->first();
@@ -242,6 +250,39 @@ class ClassListController extends Controller
             return back()->with('success', 'Class list entry updated successfully.');
         } catch (Throwable $e) {
             return back()->with('error', 'An error occurred while updating class list entry. All changes have been rolled back.');
+        }
+    }
+
+    private function createStudentEnrolment(StudentProgram $studentProgram): void
+    {
+        try {
+            $enrolmentAttributes = $this->resolveStudentEnrolmentAttributes->resolve(
+                (int) $studentProgram->student_id,
+                (int) $studentProgram->id,
+            );
+
+            StudentEnrolment::query()->updateOrCreate(
+                [
+                    'student_id' => $studentProgram->student_id,
+                    'student_program_id' => $studentProgram->id,
+                    'institution_department_id' => $studentProgram->institution_department_id,
+                    'department_level_id' => $studentProgram->department_level_id,
+                    'department_course_id' => $studentProgram->department_course_id,
+                    'academic_year_option_id' => $enrolmentAttributes['academic_year_option_id'],
+                    'academic_calendar_id' => $enrolmentAttributes['academic_calendar_id'],
+                    'mode_of_study_id' => $studentProgram->mode_of_study_id,
+                ],
+                [
+                    'student_program_id' => $studentProgram->id,
+                    'student_enrolment_status_id' => $enrolmentAttributes['student_enrolment_status_id'],
+                    'mode_of_study_id' => $studentProgram->mode_of_study_id,
+                ],
+            );
+        } catch (StudentEnrolmentResolutionException $exception) {
+            logger()->warning('Class list update: student enrolment not created.', [
+                'student_program_id' => (int) $studentProgram->id,
+                'message' => $exception->getMessage(),
+            ]);
         }
     }
 
