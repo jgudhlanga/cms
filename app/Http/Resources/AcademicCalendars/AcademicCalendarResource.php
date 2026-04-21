@@ -38,21 +38,15 @@ class AcademicCalendarResource extends JsonResource
         }
 
         if ($calendarType === 'semester') {
-            $semesterNumber = $this->resolveSemesterNumber($openingDate, $closingDate);
-
-            return 'Semester';
+            return 'Semester '.$this->resolveSemesterNumber($openingDate, $closingDate);
         }
 
         if ($calendarType === 'term') {
-            $termNumber = $this->resolveTermNumber($openingDate, $closingDate);
-
-            return 'Term';
+            return 'Term '.$this->resolveTermNumber($openingDate, $closingDate);
         }
 
         if ($calendarType === 'abma') {
-            $termNumber = $this->resolveAbmaTermNumber($openingDate, $closingDate);
-
-            return 'ABMA';
+            return 'Term '.$this->resolveAbmaTermNumber($openingDate, $closingDate);
         }
 
         return ucfirst($calendarType);

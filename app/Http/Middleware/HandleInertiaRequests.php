@@ -108,7 +108,6 @@ class HandleInertiaRequests extends Middleware
             return true;
         }
 
-        // return str($permission)->endsWith([':finances', ':finance-settings']);
-        return false;
+        return str($permission)->endsWith([':finances', ':finance-settings']);
     }
 }

@@ -12,7 +12,7 @@ test('authorized user can impersonate another user', function () {
         ->actingAs($impersonator)
         ->get(route('impersonate', ['id' => $targetUser->id]));
 
-    $response->assertRedirect(route('settings.profile'));
+    $response->assertRedirect(route('dashboard'));
     $this->assertAuthenticatedAs($targetUser);
     expect(session()->has('impersonated_by'))->toBeTrue();
 });
@@ -27,13 +27,13 @@ test('authorized user can switch impersonation without 403', function () {
     $this
         ->actingAs($impersonator)
         ->get(route('impersonate', ['id' => $firstTarget->id]))
-        ->assertRedirect(route('settings.profile'));
+        ->assertRedirect(route('dashboard'));
 
     $this->assertAuthenticatedAs($firstTarget);
 
     $response = $this->get(route('impersonate', ['id' => $secondTarget->id]));
 
-    $response->assertRedirect(route('settings.profile'));
+    $response->assertRedirect(route('dashboard'));
     $this->assertAuthenticatedAs($secondTarget);
 });
 

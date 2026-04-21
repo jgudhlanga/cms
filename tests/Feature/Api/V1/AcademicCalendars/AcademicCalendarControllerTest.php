@@ -40,15 +40,15 @@ test('academic calendars index includes computed period name attribute', functio
     $this->getJson(route('v1.academic-calendars.index'))
         ->assertSuccessful()
         ->assertJsonFragment([
-            'name' => 'Semester - (15 January - 30 April 2026)',
+            'name' => 'Semester 1 - (15 January - 30 April 2026)',
             'type' => AcademicCalendarTypeEnum::SEMESTER->value,
         ])
         ->assertJsonFragment([
-            'name' => 'Semester - (1 August - 30 November 2026)',
+            'name' => 'Semester 2 - (1 August - 30 November 2026)',
             'type' => AcademicCalendarTypeEnum::SEMESTER->value,
         ])
         ->assertJsonFragment([
-            'name' => 'Term - (10 May - 15 August 2026)',
+            'name' => 'Term 2 - (10 May - 15 August 2026)',
             'type' => AcademicCalendarTypeEnum::TERM->value,
         ]);
 });

@@ -1,8 +1,11 @@
 <?php
 
+use App\Enums\Acl\RoleEnum;
+use App\Models\Acl\Role;
 use App\Models\Users\User;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Str;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
@@ -63,6 +66,14 @@ test('api login returns invalid credentials on failure', function () use ($passw
 
 test('api register returns token and user on success', function () use ($password) {
     /** @var TestCase $this */
+    Role::query()->firstOrCreate(
+        ['name' => RoleEnum::STUDENT->value],
+        [
+            'slug' => Str::slug(RoleEnum::STUDENT->value),
+            'guard_name' => 'web',
+        ]
+    );
+
     $response = $this->postJson('/api/v1/auth/register', [
         'first_name' => 'Test',
         'last_name' => 'User',
@@ -71,7 +82,7 @@ test('api register returns token and user on success', function () use ($passwor
         'password_confirmation' => $password,
     ]);
 
-    $response->assertOk()
+    $response->assertCreated()
         ->assertJson([
             'success' => true,
             'data' => [
