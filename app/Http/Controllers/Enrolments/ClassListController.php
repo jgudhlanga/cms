@@ -8,6 +8,7 @@ use App\Enums\Shared\FeeTypeEnum;
 use App\Enums\Shared\WorkflowStepEnum;
 use App\Exceptions\Students\StudentEnrolmentResolutionException;
 use App\Helpers\DepartmentHelper;
+use App\Helpers\DropdownHelper;
 use App\Helpers\EnrolmentHelper;
 use App\Helpers\Helper;
 use App\Http\Controllers\Controller;
@@ -30,8 +31,6 @@ use App\Models\Institution\DepartmentCourse;
 use App\Models\Institution\DepartmentLevel;
 use App\Models\Institution\FeeStructure;
 use App\Models\Institution\InstitutionDepartment;
-use App\Models\Institution\IntakePeriod;
-use App\Models\Institution\ModeOfStudy;
 use App\Models\Shared\FeeType;
 use App\Models\Shared\WorkflowStep;
 use App\Models\Students\StudentEnrolment;
@@ -364,8 +363,8 @@ class ClassListController extends Controller
         // ------------------------------------------------------------
         // 1. Resolve static/cached data
         // ------------------------------------------------------------
-        $intakePeriods = cache()->rememberForever('all_intake_periods', fn () => IntakePeriod::orderByDesc('end_date')->get());
-        $modesOfStudy = cache()->rememberForever('all_modes_of_study', fn () => ModeOfStudy::all());
+        $intakePeriods = DropdownHelper::getIntakePeriods();
+        $modesOfStudy = DropdownHelper::getModesOfStudy();
 
         $intakePeriod = $intakePeriodId
             ? $intakePeriods->firstWhere('id', $intakePeriodId)
