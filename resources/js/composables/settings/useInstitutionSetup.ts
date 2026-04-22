@@ -27,6 +27,10 @@ export function useInstitutionSetup() {
             url: route('mode-of-studies.index'),
         },
         {
+            transChoiceKey: 'assessment_type',
+            url: route('assessment-types.index'),
+        },
+        {
             transChoiceKey: 'subject',
             url: route('subjects.index'),
         },

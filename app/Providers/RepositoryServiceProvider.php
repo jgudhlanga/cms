@@ -14,6 +14,7 @@ use App\Repositories\Acl\RoleGroupRepository;
 use App\Repositories\Acl\RoleRepository;
 use App\Repositories\Finance\FinanceExchangeRateRepository;
 use App\Repositories\Finance\interface\IFinanceExchangeRateRepository;
+use App\Repositories\Institution\AssessmentTypeRepository;
 use App\Repositories\Institution\ClassListRepository;
 use App\Repositories\Institution\CourseRepository;
 use App\Repositories\Institution\DepartmentApplicationStepRepository;
@@ -26,6 +27,7 @@ use App\Repositories\Institution\FeeStructureRepository;
 use App\Repositories\Institution\GradeRepository;
 use App\Repositories\Institution\InstitutionDepartmentRepository;
 use App\Repositories\Institution\IntakePeriodRepository;
+use App\Repositories\Institution\interface\IAssessmentTypeRepository;
 use App\Repositories\Institution\interface\IClassListRepository;
 use App\Repositories\Institution\interface\ICourseRepository;
 use App\Repositories\Institution\interface\IDepartmentApplicationStepRepository;
@@ -193,6 +195,7 @@ class RepositoryServiceProvider extends ServiceProvider
 
     public function institutionRepositories(): void
     {
+        $this->app->bind(IAssessmentTypeRepository::class, AssessmentTypeRepository::class);
         $this->app->bind(ICourseRepository::class, CourseRepository::class);
         $this->app->bind(IDepartmentRepository::class, DepartmentRepository::class);
         $this->app->bind(IDivisionRepository::class, DivisionRepository::class);

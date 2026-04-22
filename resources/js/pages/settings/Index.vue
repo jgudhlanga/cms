@@ -20,7 +20,7 @@ const breadcrumbs: BreadcrumbItemInterface[] = [{ transChoiceKey: 'settings' }];
 const can = props?.auth?.can;
 </script>
 
-<template>
+<template> 
     <Head :title="$t('trans.settings')" />
     <PageContainer :breadcrumbs="breadcrumbs">
         <HeadingSmall :title="$t('trans.access_control_list')" :description="$t('trans.acl_settings_description')" />

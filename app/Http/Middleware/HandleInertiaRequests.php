@@ -107,7 +107,7 @@ class HandleInertiaRequests extends Middleware
         if (in_array($permission, $this->excludePermissions(), true)) {
             return true;
         }
-        //return str($permission)->endsWith([':finances', ':finance-settings']);
+
         return false;
     }
 }

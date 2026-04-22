@@ -11,7 +11,7 @@ return new class extends Migration {
             $table->id();
             $table->foreignId('department_course_id');
             $table->foreignId('department_level_id');
-            $table->timestamps();
+            $table->timestamps(); 
         });
     }
 

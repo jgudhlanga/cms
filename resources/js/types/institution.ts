@@ -113,6 +113,26 @@ export type ModeOfStudyParams = {
     description?: string;
 };
 
+export type AssessmentType = {
+    type?: string;
+    id?: string;
+    attributes: {
+        name: string;
+        modesOfStudy: string;
+        modesOfStudyIds: number[];
+        description?: string;
+        createdAt?: string;
+        updatedAt?: string;
+        deletedAt?: string;
+    };
+};
+
+export type AssessmentTypeParams = {
+    name: string;
+    modes_of_study: number[];
+    description?: string;
+};
+
 export type Subject = {
     type?: string;
     id?: string;
