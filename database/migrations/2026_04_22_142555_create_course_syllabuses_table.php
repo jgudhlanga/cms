@@ -11,10 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        if (Schema::hasTable('course_syllabuses')) {
-            return;
-        }
-
+    
         Schema::create('course_syllabuses', function (Blueprint $table) {
             $table->id();
             $table->foreignId('tenant_id')->constrained();
@@ -24,6 +21,7 @@ return new class extends Migration
             $table->string('code')->unique();
             $table->string('implementation_year');
             $table->unsignedBigInteger('syllabus_document_id')->nullable();
+            $table->enum('status', ['active', 'terminated'])->default('active');
             $table->timestamps();
             $table->softDeletes();
         });
