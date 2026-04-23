@@ -23,6 +23,12 @@ class CourseSyllabusResource extends JsonResource
                 'status' => $this->resource->status?->value,
                 'syllabusDocumentId' => $this->resource->syllabus_document_id,
                 'syllabusDocumentUrl' => $this->resource->syllabus_document_url,
+                'syllabusDocumentDownloadUrl' => $this->resource->syllabus_document_id
+                    ? route('department-course-syllabuses.syllabus', [
+                        'institution_department' => $this->resource->institution_department_id,
+                        'course_syllabus' => $this->resource->id,
+                    ])
+                    : null,
                 $this->mergeWhen(true, [
                     'createdAt' => $this->resource->created_at,
                     'updatedAt' => $this->resource->updated_at,

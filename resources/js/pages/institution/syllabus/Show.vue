@@ -5,7 +5,8 @@ import { getIdParams } from '@/lib/utils';
 import { CourseSyllabus, InstitutionDepartment } from '@/types/institution';
 import type { Link } from '@/types/ui';
 import { Head, router } from '@inertiajs/vue3';
-
+import { IconName } from '@/enums/icons';
+import { ColorVariant } from '@/enums/colors';
 interface Props {
     institutionDepartment: InstitutionDepartment;
     courseSyllabus: CourseSyllabus;
@@ -34,50 +35,35 @@ const breadcrumbs: Array<Link> = [
         :breadcrumbs="breadcrumbs"
         :back-url="route('institution-departments.show', getIdParams(institutionDepartment?.id?.toString() ?? ''))"
     >
-        <div class="space-y-4 rounded-lg border p-4">
-            <h3 class="text-sm font-semibold uppercase">Course Syllabus</h3>
-            <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
-                <div>
-                    <label class="mb-1 block text-xs uppercase">{{ $tChoice('trans.title', 1) }}</label>
-                    <p class="hava-input min-h-[42px]">{{ courseSyllabus?.attributes?.title }}</p>
-                </div>
-                <div>
-                    <label class="mb-1 block text-xs uppercase">{{ $tChoice('trans.code', 1) }}</label>
-                    <p class="hava-input min-h-[42px]">{{ courseSyllabus?.attributes?.code }}</p>
-                </div>
-                <div>
-                    <label class="mb-1 block text-xs uppercase">{{ $tChoice('trans.year', 1) }}</label>
-                    <p class="hava-input min-h-[42px]">{{ courseSyllabus?.attributes?.implementationYear }}</p>
-                </div>
-                <div>
-                    <label class="mb-1 block text-xs uppercase">{{ $t('syllabus.status') }}</label>
-                    <p class="hava-input min-h-[42px] capitalize">{{ courseSyllabus?.attributes?.status ?? '---' }}</p>
-                </div>
-                <div v-if="courseSyllabus?.attributes?.syllabusDocumentUrl" class="md:col-span-2">
-                    <label class="mb-1 block text-xs uppercase">{{ $t('syllabus.syllabus_document') }}</label>
-                    <p class="hava-input min-h-[42px]">
+        <BaseCard :title="$tChoice('syllabus.course_syllabus', 1)">
+            <div class="grid grid-cols-1 gap-3 md:grid-cols-3">
+                <LabelValue :label="$tChoice('trans.title', 1)" :value="courseSyllabus?.attributes?.title" />
+                <LabelValue :label="$tChoice('trans.code', 1)" :value="courseSyllabus?.attributes?.code" />
+                <LabelValue
+                    :label="$tChoice('syllabus.implementation_year', 1)"
+                    :value="String(courseSyllabus?.attributes?.implementationYear ?? '')"
+                />
+                <LabelValue :label="$t('syllabus.status')" :value="courseSyllabus?.attributes?.status ?? '---'" value-classes="capitalize" />
+                <div class="flex w-full items-start gap-3 text-sm text-accent-foreground" v-if="courseSyllabus?.attributes?.syllabusDocumentUrl">
+                    <div :class="`shrink-0 font-medium whitespace-normal wrap-break-word`">{{ $tChoice('syllabus.syllabus', 1) }}:</div>
+                    <div :class="`min-w-0 flex-1 font-extralight whitespace-normal wrap-anywhere`">
                         <a
                             :href="courseSyllabus.attributes.syllabusDocumentUrl"
-                            class="font-medium text-primary underline"
+                            class="border-persian-600 text-persian-600 hover:bg-persian-200 hover:border-persian-200 flex h-6 items-center rounded-full bg-transparent px-2 py-1 text-xs"
                             target="_blank"
-                            rel="noopener noreferrer"
                         >
-                            {{ $t('trans.view') }}
+                            <BaseIcon :name="IconName.paperclip" class="size-4" />
+                            <span class="ml-2 font-extrabold uppercase">{{ $tChoice('trans.download', 1) }}</span>
                         </a>
-                    </p>
+                    </div>
                 </div>
-                <div>
-                    <label class="mb-1 block text-xs uppercase">{{ $tChoice('trans.level', 1) }}</label>
-                    <p class="hava-input min-h-[42px]">{{ courseSyllabus?.attributes?.level }}</p>
-                </div>
+                <LabelValue :label="$tChoice('trans.level', 1)" :value="courseSyllabus?.attributes?.level" />
                 <div class="md:col-span-2">
-                    <label class="mb-1 block text-xs uppercase">{{ $tChoice('trans.course', 1) }}</label>
-                    <p class="hava-input min-h-[42px]">{{ courseSyllabus?.attributes?.course ?? '---' }}</p>
+                    <LabelValue :label="$tChoice('trans.course', 1)" :value="courseSyllabus?.attributes?.course ?? '---'" />
                 </div>
-            </div>
-
-            <div class="mt-4 flex gap-2">
-                <BaseButton
+                <IconButton
+                    :icon="IconName.edit"
+                    :variant="ColorVariant.primary_outline"
                     @click="
                         () =>
                             router.get(
@@ -87,10 +73,8 @@ const breadcrumbs: Array<Link> = [
                                 }),
                             )
                     "
-                >
-                    {{ $t('trans.edit') }}
-                </BaseButton>
+                />
             </div>
-        </div>
+        </BaseCard>
     </PageContainer>
 </template>

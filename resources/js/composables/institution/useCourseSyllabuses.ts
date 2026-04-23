@@ -6,8 +6,10 @@ import { CourseSyllabus } from '@/types/institution';
 import { ApiFilterResponse } from '@/types/data-pagination';
 import { InertiaForm, router } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
-import { ref } from 'vue';
+import { h, ref } from 'vue';
 import { z } from 'zod';
+import { ColorVariant } from '@/enums/colors';
+import { IconName } from '@/enums/icons';
 
 export const useCourseSyllabuses = () => {
     const { actionButton, onView } = useDataTables();
@@ -42,7 +44,7 @@ export const useCourseSyllabuses = () => {
         if (courseSyllabusId) {
             if (hasFile) {
                 form
-                    .transform((data) => ({ ...data, _method: 'put' }))
+                    .transform((data: any) => ({ ...data, _method: 'put' }))
                     .post(route('department-course-syllabuses.update', courseSyllabusId), { ...opts, forceFormData: true });
             } else {
                 form.put(route('department-course-syllabuses.update', courseSyllabusId), opts);
@@ -53,30 +55,78 @@ export const useCourseSyllabuses = () => {
         form.post(route('department-course-syllabuses.store'), hasFile ? { ...opts, forceFormData: true } : opts);
     };
 
+    const hasDuplicateActiveSyllabus = (params: {
+        courseSyllabuses: CourseSyllabus[];
+        institutionDepartmentId: number | null;
+        departmentLevelCourseId: number | null;
+        currentCourseSyllabusId?: string | null;
+    }): boolean => {
+        if (!params.institutionDepartmentId || !params.departmentLevelCourseId) {
+            return false;
+        }
+
+        return params.courseSyllabuses.some((item) => {
+            if (item.attributes.status !== 'active') {
+                return false;
+            }
+
+            if (params.currentCourseSyllabusId && item.id === params.currentCourseSyllabusId) {
+                return false;
+            }
+
+            const sameInstitutionDepartment = Number(item.attributes.institutionDepartmentId) === params.institutionDepartmentId;
+            const sameDepartmentLevelCourse = Number(item.attributes.departmentLevelCourseId) === params.departmentLevelCourseId;
+
+            return sameInstitutionDepartment && sameDepartmentLevelCourse;
+        });
+    };
+
     const createCourseSyllabusColumns = (institutionDepartmentId: string | number) => {
         return [
             { header: trans_choice('trans.level', 1), accessorKey: 'attributes.level' },
             { header: trans_choice('trans.title', 1), accessorKey: 'attributes.title' },
             { header: trans_choice('trans.code', 1), accessorKey: 'attributes.code' },
-            { header: trans('syllabus.implementation_year'), accessorKey: 'attributes.implementationYear' },
-            { header: trans('syllabus.status'), accessorKey: 'attributes.status' },
+            { header: trans('syllabus.implementation_year'), accessorKey: 'attributes.implementationYear', meta: { align: 'center' } },
+            { header: trans('syllabus.status'), accessorKey: 'attributes.status', meta: { align: 'center' } },
             {
                 header: trans_choice('trans.action', 2),
                 accessorKey: 'actions',
                 enableSorting: false,
                 meta: { align: 'right' },
                 cell: ({ row }: { row: { original: CourseSyllabus } }) => {
-                    return actionButton({
-                        title: trans('trans.view'),
-                        onClick: () =>
-                            onView(
-                                hasAbility('viewAny:department-metadata'),
-                                route('department-course-syllabuses.show', {
-                                    institution_department: institutionDepartmentId,
-                                    course_syllabus: row.original.id,
-                                }),
-                            ),
-                    });
+                    const syllabusDocumentDownloadUrl = row.original.attributes[
+                        'syllabusDocumentDownloadUrl' as keyof CourseSyllabus['attributes']
+                    ] as string | null | undefined;
+                    const buttons = [];
+
+                    if (syllabusDocumentDownloadUrl) {
+                        buttons.push(
+                            actionButton({
+                                title: trans_choice('trans.download', 1),
+                                variant: ColorVariant.primary_outline,
+                                onClick: () => {
+                                    window.open(syllabusDocumentDownloadUrl, '_blank');
+                                },
+                            }),
+                        );
+                    }
+
+                    buttons.push(
+                        actionButton({
+                            title: trans('trans.view'),
+                            variant: ColorVariant.primary,
+                            onClick: () =>
+                                onView(
+                                    hasAbility('viewAny:course-syllabuses'),
+                                    route('department-course-syllabuses.show', {
+                                        institution_department: institutionDepartmentId,
+                                        course_syllabus: row.original.id,
+                                    }),
+                                ),
+                        }),
+                    );
+
+                    return h('div', { class: 'flex items-center justify-end gap-2' }, buttons);
                 },
             },
         ];
@@ -98,6 +148,7 @@ export const useCourseSyllabuses = () => {
         formSchema,
         listCourseSyllabuses,
         saveCourseSyllabus,
+        hasDuplicateActiveSyllabus,
         createCourseSyllabusColumns,
         onCreateCourseSyllabus,
         onEditCourseSyllabus,

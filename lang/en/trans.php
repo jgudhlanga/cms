@@ -30,6 +30,7 @@ return [
     'communication_mode' => 'Communication mode|Communication modes',
     'billing' => 'Billing|Billings',
     'finance' => 'Finance|Finances',
+    'download' => 'Download|Downloads',
     'scheme' => 'My Scheme|My Schemes',
     'claim' => 'Claim|Claims',
     'type' => 'Type|Types',

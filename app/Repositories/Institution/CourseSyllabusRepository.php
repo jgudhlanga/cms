@@ -6,8 +6,8 @@ use App\DTO\Institution\CourseSyllabusDto;
 use App\Models\Institution\CourseSyllabus;
 use App\Repositories\Base\BaseRepository;
 use App\Repositories\Institution\interface\ICourseSyllabusRepository;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Collection;
 
 class CourseSyllabusRepository extends BaseRepository implements ICourseSyllabusRepository
 {
@@ -37,14 +37,15 @@ class CourseSyllabusRepository extends BaseRepository implements ICourseSyllabus
         return parent::delete($model, $force);
     }
 
-    public function allByInstitutionDepartment(int $institutionDepartmentId): Collection
+    public function allByInstitutionDepartment(int $institutionDepartmentId): LengthAwarePaginator
     {
         return $this->courseSyllabus
             ->query()
             ->with(['departmentLevelCourse.departmentLevel.level', 'syllabusDocument'])
             ->where('institution_department_id', $institutionDepartmentId)
             ->orderBy('title')
-            ->get();
+            ->paginate()
+            ->withQueryString();
     }
 
     private function getFields(CourseSyllabusDto $dto): array

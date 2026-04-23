@@ -12,8 +12,10 @@ use App\Models\Institution\InstitutionDepartment;
 use App\Repositories\Institution\interface\ICourseSyllabusRepository;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 
 class CourseSyllabusController extends Controller
 {
@@ -101,6 +103,39 @@ class CourseSyllabusController extends Controller
             'institutionDepartment' => new InstitutionDepartmentResource($institutionDepartment),
             'courseSyllabus' => new CourseSyllabusResource($courseSyllabus),
         ]);
+    }
+
+    public function syllabusDocument(InstitutionDepartment $institutionDepartment, CourseSyllabus $courseSyllabus): SymfonyResponse
+    {
+        $this->authorize('view', $courseSyllabus);
+
+        $media = $courseSyllabus->syllabusDocument
+            ?? $courseSyllabus->getFirstMedia(CourseSyllabus::MEDIA_COLLECTION_SYLLABUS_DOCUMENT);
+
+        if ($media === null) {
+            abort(404);
+        }
+
+        $headers = [
+            'Content-Type' => $media->mime_type ?? 'application/octet-stream',
+        ];
+
+        $isPdfDocument = Str::endsWith(Str::lower($media->file_name), '.pdf')
+            || Str::contains(Str::lower((string) $media->mime_type), 'pdf');
+
+        if ($isPdfDocument) {
+            $headers['Content-Disposition'] = sprintf('inline; filename="%s"', $media->file_name);
+
+            return response()->stream(
+                static function () use ($media): void {
+                    readfile($media->getPath());
+                },
+                200,
+                $headers
+            );
+        }
+
+        return response()->download($media->getPath(), $media->file_name, $headers);
     }
 
     private function attachSyllabusDocumentIfPresent(CourseSyllabusRequest $request, CourseSyllabus $courseSyllabus): void

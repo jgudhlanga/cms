@@ -40,6 +40,10 @@ Route::prefix('institution')->middleware('auth')->group(function () {
     Route::get('departments/{institution_department}/course-syllabuses/create', [CourseSyllabusController::class, 'create'])->name('department-course-syllabuses.create');
     Route::get('departments/{institution_department}/course-syllabuses/{course_syllabus}/show', [CourseSyllabusController::class, 'show'])->name('department-course-syllabuses.show');
     Route::get('departments/{institution_department}/course-syllabuses/{course_syllabus}/edit', [CourseSyllabusController::class, 'edit'])->name('department-course-syllabuses.edit');
+    Route::get(
+        'departments/{institution_department}/course-syllabuses/{course_syllabus}/syllabus-document',
+        [CourseSyllabusController::class, 'syllabusDocument']
+    )->name('department-course-syllabuses.syllabus');
     Route::post('departments/course-syllabuses', [CourseSyllabusController::class, 'store'])->name('department-course-syllabuses.store');
     Route::put('departments/course-syllabuses/{course_syllabus}', [CourseSyllabusController::class, 'update'])->name('department-course-syllabuses.update');
     Route::delete('departments/course-syllabuses/{course_syllabus}', [CourseSyllabusController::class, 'destroy'])->name('department-course-syllabuses.destroy');

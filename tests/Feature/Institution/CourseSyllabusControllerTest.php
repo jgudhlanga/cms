@@ -24,6 +24,7 @@ function makeCourseSyllabusContext(): array
         'update:course-syllabuses',
         'delete:course-syllabuses',
         'viewAny:course-syllabuses',
+        'view:course-syllabuses',
     ]);
 
     $department = Department::factory()->create();
@@ -102,6 +103,31 @@ it('stores course syllabus with document and sets syllabus_document_id to media 
         ->and($media->collection_name)->toBe(CourseSyllabus::MEDIA_COLLECTION_SYLLABUS_DOCUMENT);
 });
 
+it('fails to create active syllabus when same institution department and level course already has an active syllabus', function () {
+    $ctx = makeCourseSyllabusContext();
+
+    CourseSyllabus::query()->create([
+        'tenant_id' => $ctx['tenant']->id,
+        'institution_department_id' => $ctx['institutionDepartment']->id,
+        'department_level_course_id' => $ctx['departmentLevelCourse']->id,
+        'title' => 'Existing Active '.uniqid(),
+        'code' => 'EXA-'.uniqid(),
+        'implementation_year' => '2026',
+        'status' => 'active',
+    ]);
+
+    $response = $this->actingAs($ctx['user'])->post(route('department-course-syllabuses.store'), [
+        'institution_department_id' => $ctx['institutionDepartment']->id,
+        'department_level_course_id' => $ctx['departmentLevelCourse']->id,
+        'title' => 'Duplicate Active '.uniqid(),
+        'code' => 'DUP-'.uniqid(),
+        'implementation_year' => '2027',
+        'status' => 'active',
+    ]);
+
+    $response->assertSessionHasErrors(['department_level_course_id']);
+});
+
 it('updates course syllabus document replacing media id', function () {
     $ctx = makeCourseSyllabusContext();
 
@@ -131,4 +157,112 @@ it('updates course syllabus document replacing media id', function () {
 
     $media = Media::query()->findOrFail($courseSyllabus->syllabus_document_id);
     expect($media->file_name)->toContain('revised');
+});
+
+it('allows creating terminated syllabus when same institution department and level course already has an active syllabus', function () {
+    $ctx = makeCourseSyllabusContext();
+
+    CourseSyllabus::query()->create([
+        'tenant_id' => $ctx['tenant']->id,
+        'institution_department_id' => $ctx['institutionDepartment']->id,
+        'department_level_course_id' => $ctx['departmentLevelCourse']->id,
+        'title' => 'Active Existing '.uniqid(),
+        'code' => 'ACT-'.uniqid(),
+        'implementation_year' => '2026',
+        'status' => 'active',
+    ]);
+
+    $terminatedCode = 'TER-'.uniqid();
+
+    $response = $this->actingAs($ctx['user'])->post(route('department-course-syllabuses.store'), [
+        'institution_department_id' => $ctx['institutionDepartment']->id,
+        'department_level_course_id' => $ctx['departmentLevelCourse']->id,
+        'title' => 'Terminated Allowed '.uniqid(),
+        'code' => $terminatedCode,
+        'implementation_year' => '2028',
+        'status' => 'terminated',
+    ]);
+
+    $response->assertSuccessful();
+
+    $created = CourseSyllabus::query()->where('code', $terminatedCode)->first();
+    expect($created)->not->toBeNull()
+        ->and($created?->status->value)->toBe('terminated');
+});
+
+it('serves syllabus document inline when media is pdf', function () {
+    $ctx = makeCourseSyllabusContext();
+
+    $courseSyllabus = CourseSyllabus::query()->create([
+        'tenant_id' => $ctx['tenant']->id,
+        'institution_department_id' => $ctx['institutionDepartment']->id,
+        'department_level_course_id' => $ctx['departmentLevelCourse']->id,
+        'title' => 'Inline '.uniqid(),
+        'code' => 'PDF-'.uniqid(),
+        'implementation_year' => '2026',
+        'status' => 'active',
+    ]);
+
+    $media = $courseSyllabus
+        ->addMedia(UploadedFile::fake()->create('outline.pdf', 100, 'application/pdf'))
+        ->toMediaCollection(CourseSyllabus::MEDIA_COLLECTION_SYLLABUS_DOCUMENT);
+
+    $courseSyllabus->update(['syllabus_document_id' => $media->id]);
+
+    $response = $this->actingAs($ctx['user'])->get(route('department-course-syllabuses.syllabus', [
+        'institution_department' => $ctx['institutionDepartment']->id,
+        'course_syllabus' => $courseSyllabus->id,
+    ]));
+
+    $response->assertOk();
+    expect((string) $response->headers->get('content-disposition'))->toContain('inline');
+});
+
+it('serves syllabus document as attachment when media is not pdf', function () {
+    $ctx = makeCourseSyllabusContext();
+
+    $courseSyllabus = CourseSyllabus::query()->create([
+        'tenant_id' => $ctx['tenant']->id,
+        'institution_department_id' => $ctx['institutionDepartment']->id,
+        'department_level_course_id' => $ctx['departmentLevelCourse']->id,
+        'title' => 'Download '.uniqid(),
+        'code' => 'DOC-'.uniqid(),
+        'implementation_year' => '2026',
+        'status' => 'active',
+    ]);
+
+    $media = $courseSyllabus
+        ->addMedia(UploadedFile::fake()->create('outline.docx', 100, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'))
+        ->toMediaCollection(CourseSyllabus::MEDIA_COLLECTION_SYLLABUS_DOCUMENT);
+
+    $courseSyllabus->update(['syllabus_document_id' => $media->id]);
+
+    $response = $this->actingAs($ctx['user'])->get(route('department-course-syllabuses.syllabus', [
+        'institution_department' => $ctx['institutionDepartment']->id,
+        'course_syllabus' => $courseSyllabus->id,
+    ]));
+
+    $response->assertOk();
+    expect((string) $response->headers->get('content-disposition'))->toContain('attachment');
+});
+
+it('returns not found when syllabus document is missing', function () {
+    $ctx = makeCourseSyllabusContext();
+
+    $courseSyllabus = CourseSyllabus::query()->create([
+        'tenant_id' => $ctx['tenant']->id,
+        'institution_department_id' => $ctx['institutionDepartment']->id,
+        'department_level_course_id' => $ctx['departmentLevelCourse']->id,
+        'title' => 'Missing '.uniqid(),
+        'code' => 'MIS-'.uniqid(),
+        'implementation_year' => '2026',
+        'status' => 'active',
+    ]);
+
+    $response = $this->actingAs($ctx['user'])->get(route('department-course-syllabuses.syllabus', [
+        'institution_department' => $ctx['institutionDepartment']->id,
+        'course_syllabus' => $courseSyllabus->id,
+    ]));
+
+    $response->assertNotFound();
 });

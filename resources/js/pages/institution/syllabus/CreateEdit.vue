@@ -16,6 +16,8 @@ import { SelectOption } from '@/types/utils';
 import { Head, useForm } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import { trans, trans_choice } from 'laravel-vue-i18n';
+import HttpService from '@/services/http.service';
+import { ApiFilterResponse } from '@/types/data-pagination';
 
 interface Props {
     institutionDepartment: InstitutionDepartment;
@@ -48,7 +50,9 @@ const form = useForm<CourseSyllabusParams>({
     syllabus_document: null,
 });
 
-const { formSchema, saveCourseSyllabus } = useCourseSyllabuses();
+const { formSchema, saveCourseSyllabus, hasDuplicateActiveSyllabus } = useCourseSyllabuses();
+const duplicateActiveMessage =
+    'An active syllabus already exists for this department, level and course. Please update the existing syllabus instead.';
 
 const isEditMode = computed(() => !!props.courseSyllabus?.id);
 const pageTitle = computed(() =>
@@ -81,7 +85,7 @@ const onSyllabusDocumentChange = (event: Event) => {
     clearFormErrors(form, 'syllabus_document');
 };
 
-const save = () => {
+const save = async () => {
     form.institution_department_id = Number(selectedInstitutionDepartment.value?.value ?? 0) || null;
     form.department_level_course_id = Number(selectedDepartmentLevelCourse.value?.value ?? 0) || null;
 
@@ -94,6 +98,26 @@ const save = () => {
             }
         });
         return;
+    }
+
+    if (!isEditMode.value && form.status === 'active') {
+        const response = (await HttpService.get(
+            route('department-course-syllabuses.index', String(form.institution_department_id)),
+        )) as ApiFilterResponse;
+
+        const existingCourseSyllabuses = (response?.data ?? []) as CourseSyllabus[];
+
+        const hasDuplicate = hasDuplicateActiveSyllabus({
+            courseSyllabuses: existingCourseSyllabuses,
+            institutionDepartmentId: form.institution_department_id,
+            departmentLevelCourseId: form.department_level_course_id,
+            currentCourseSyllabusId: props.courseSyllabus?.id ?? null,
+        });
+
+        if (hasDuplicate) {
+            form.setError('department_level_course_id', duplicateActiveMessage);
+            return;
+        }
     }
 
     saveCourseSyllabus(form, props.courseSyllabus?.id);

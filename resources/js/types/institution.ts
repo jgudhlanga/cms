@@ -205,6 +205,7 @@ export type CourseSyllabus = {
         status?: 'active' | 'terminated';
         syllabusDocumentId?: string | number | null;
         syllabusDocumentUrl?: string | null;
+        syllabusDocumentDownloadUrl?: string | null;
         createdAt?: string;
         updatedAt?: string;
         deletedAt?: string;
