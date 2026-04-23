@@ -67,15 +67,16 @@ const visibleTabs = computed(() => {
     <Head :title="$tChoice('trans.department', 2)" />
     <PageContainer :breadcrumbs="breadcrumbs" :back-url="route('institution.index')">
         <template #backNavigationLeading v-if="canViewAnyDepartmentMetaData">
-            <div class="flex">
+            <div class="flex w-full grow min-w-0">
                 <InstitutionDepartmentComboSelect
-                :form="switchDepartmentForm"
-                v-model="selectedDepartment"
-                label="Change Department"
-                :vertical-layout="false"
-                :label-uppercase="true"
-                width-class="max-w-md"
-            />
+                    class="flex-1 min-w-0"
+                    :form="switchDepartmentForm"
+                    v-model="selectedDepartment"
+                    label="Change Department"
+                    :vertical-layout="false"
+                    :label-uppercase="true"
+                    width-class="w-full"
+                />
             </div>
         </template>
         <Tabs :default-value="activeTab" v-model="activeTab">

@@ -4,6 +4,7 @@ use App\Http\Controllers\Institution\Config\AssessmentTypeController;
 use App\Http\Controllers\Institution\Config\FeeStructureController;
 use App\Http\Controllers\Institution\Config\InstitutionConfigController;
 use App\Http\Controllers\Institution\Config\IntakePeriodController;
+use App\Http\Controllers\Institution\Departments\CourseSyllabusController;
 use App\Http\Controllers\Institution\Departments\DepartmentApplicationStepController;
 use App\Http\Controllers\Institution\Departments\DepartmentClassSizeController;
 use App\Http\Controllers\Institution\Departments\DepartmentCourseController;
@@ -34,6 +35,14 @@ Route::prefix('institution')->middleware('auth')->group(function () {
     Route::post('departments/{department_course}/update', [DepartmentCourseController::class, 'update'])->name('department-courses.update');
     Route::get('departments/course/{department_course}/modes', [DepartmentCourseController::class, 'courseLevelModes'])->name('department-courses.modes');
     Route::post('departments/course/{department_course}/modes', [DepartmentCourseController::class, 'storeCourseLevelModes'])->name('department-courses.modes.store');
+    // ==================================== COURSE SYLLABUSES ==========================================================
+    Route::get('departments/{institution_department}/course-syllabuses', [CourseSyllabusController::class, 'index'])->name('department-course-syllabuses.index');
+    Route::get('departments/{institution_department}/course-syllabuses/create', [CourseSyllabusController::class, 'create'])->name('department-course-syllabuses.create');
+    Route::get('departments/{institution_department}/course-syllabuses/{course_syllabus}/show', [CourseSyllabusController::class, 'show'])->name('department-course-syllabuses.show');
+    Route::get('departments/{institution_department}/course-syllabuses/{course_syllabus}/edit', [CourseSyllabusController::class, 'edit'])->name('department-course-syllabuses.edit');
+    Route::post('departments/course-syllabuses', [CourseSyllabusController::class, 'store'])->name('department-course-syllabuses.store');
+    Route::put('departments/course-syllabuses/{course_syllabus}', [CourseSyllabusController::class, 'update'])->name('department-course-syllabuses.update');
+    Route::delete('departments/course-syllabuses/{course_syllabus}', [CourseSyllabusController::class, 'destroy'])->name('department-course-syllabuses.destroy');
     // ==================================== DEPARTMENT APPLICATION STEPS ================================================
     Route::post('departments/{institution_department}/sync-application-steps', [DepartmentApplicationStepController::class, 'syncApplicationSteps'])->name('department-application-steps.sync');
     Route::get('departments/{department_application_step}/application-steps/show', [DepartmentApplicationStepController::class, 'show'])->name('department-application-steps.show');

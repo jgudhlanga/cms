@@ -145,9 +145,9 @@ onBeforeUnmount(() => {
 }
 
 .editor-content {
-    height: 70vh;
+    height: 420px;
     padding: 20px;
-    min-height: 300px;
+    min-height: 420px;
     overflow-y: auto;
     font-family: "Inter", sans-serif;
     font-size: 16px;
@@ -161,5 +161,10 @@ onBeforeUnmount(() => {
 .editor-content:focus-within {
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
     outline: none;
+}
+
+.editor-content :deep(.w-e-text-container),
+.editor-content :deep(.w-e-scroll) {
+    min-height: 320px !important;
 }
 </style>

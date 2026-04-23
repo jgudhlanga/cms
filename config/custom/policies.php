@@ -3,6 +3,7 @@
 use App\Policies\Dashboards\DashboardPolicy;
 use App\Policies\Finance\FinancePolicy;
 use App\Policies\Finance\FinanceSettingsPolicy;
+use App\Policies\Institution\CourseSyllabusPolicy;
 use App\Policies\Institution\DepartmentMetaDataPolicy;
 use App\Policies\Settings\InstitutionSetupPolicy;
 use App\Policies\Settings\SettingPolicy;
@@ -43,6 +44,19 @@ return [
         'forceDeleteDepartmentMetaData',
         'importDepartmentMetaData',
         'exportDepartmentMetaData',
+    ],
+
+    CourseSyllabusPolicy::class => [
+        'viewAny',
+        'view',
+        'create',
+        'update',
+        'delete',
+        'restore',
+        'forceDelete',
+        'import',
+        'export',
+        'viewAuditTrail',
     ],
 
     DashboardPolicy::class => [

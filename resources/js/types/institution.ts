@@ -190,6 +190,36 @@ export type IntakePeriodParams = {
     end_date: string;
     description?: string;
 };
+
+export type CourseSyllabus = {
+    type?: string;
+    id?: string;
+    attributes: {
+        institutionDepartmentId: string | number;
+        departmentLevelCourseId: string | number;
+        level: string;
+        course?: string;
+        title: string;
+        code: string;
+        implementationYear: string;
+        status?: 'active' | 'terminated';
+        syllabusDocumentId?: string | number | null;
+        syllabusDocumentUrl?: string | null;
+        createdAt?: string;
+        updatedAt?: string;
+        deletedAt?: string;
+    };
+};
+
+export type CourseSyllabusParams = {
+    institution_department_id: number | null;
+    department_level_course_id: number | null;
+    title: string;
+    code: string;
+    implementation_year: string;
+    status: 'active' | 'terminated';
+    syllabus_document?: File | null;
+};
 export type DocumentTemplate = {
     type: string;
     id: string;

@@ -28,7 +28,7 @@ class DocumentHelper
                 'modeOfStudy',
             ])
             ->where('id', $studentProgram->id)
-            ->whereHas('classList', fn ($q) => $q->where('type', 'verified'))->firstOrFail();
+            ->whereHas('classList', fn ($q) => $q->whereIn('type', ['verified', 'final']))->firstOrFail();
         $student = $studentProgram->student;
         $user = $student->user;
 

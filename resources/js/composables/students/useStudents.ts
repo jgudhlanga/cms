@@ -42,7 +42,7 @@ export const useStudents = () => {
         //return step?.toLowerCase() === 'review' ? 'Unsuccessful' : step;
     };
 
-    const hasOfferLetter = (application: Enrolment) => getApplicationStatus(application)?.toLowerCase() === 'accepted';
+    const hasOfferLetter = (application: Enrolment) => getApplicationStatus(application)?.toLowerCase() === 'accepted' || getApplicationStatus(application)?.toLowerCase() === 'enrolled';
 
     const statusMessage = (application: Enrolment) => {
         const workflowStep = application?.relationships?.departmentWorkflowStep?.attributes?.workflowStep ?? '';

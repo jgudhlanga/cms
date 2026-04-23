@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\V1\Dashboard\DashboardController;
 use App\Http\Controllers\Api\V1\Institution\DepartmentAcademicCalendarController;
+use App\Http\Controllers\Api\V1\Institution\DepartmentCourseController;
 use App\Http\Controllers\Api\V1\Institution\DepartmentLevelController;
 use App\Http\Controllers\Api\V1\Institution\DepartmentLevelCourseController;
 use App\Http\Controllers\Api\V1\Institution\DepartmentMetaDataController;
@@ -10,7 +11,6 @@ use App\Http\Controllers\Api\V1\Institution\IntakePeriodController;
 use App\Http\Controllers\Api\V1\Institution\ModeOfStudyController;
 use App\Http\Controllers\Api\V1\Institution\StudentProgramDropdownController;
 use App\Http\Controllers\Api\V1\Staff\StaffController;
-use App\Http\Controllers\Api\V1\Institution\DepartmentCourseController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
@@ -22,13 +22,17 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     Route::get('departments/{institution_department}/enrolments', [DepartmentMetaDataController::class, 'departmentEnrolments'])->name('v1.department-metadata.enrolments');
     Route::get('departments/{institution_department}/class-lists', [DepartmentMetaDataController::class, 'departmentClassLists'])->name('v1.department-metadata.class-lists');
     Route::post('institution/dashboard/metrics', [DashboardController::class, 'index'])->name('v1.institution.dashboard.metrics');
-    # ========================================= ACADEMIC CALENDARS =====================================================
+    // ========================================= ACADEMIC CALENDARS =====================================================
     Route::get('departments/{institution_department}/academic-calendars', [DepartmentAcademicCalendarController::class, 'departmentAcademicCalendar'])->name('v1.departments.academic-calendars');
 });
 Route::prefix('v1')->group(function () {
     Route::get('institution-departments', [InstitutionDepartmentController::class, 'index'])->name('v1.institution-departments.index');
     Route::get('institution-departments/{institution_department}/levels', [DepartmentLevelController::class, 'index'])->name('v1.department-levels.index');
     Route::get('institution-departments/levels/{department_level}/courses', [DepartmentLevelCourseController::class, 'index'])->name('v1.department-level-courses.index');
+    Route::get(
+        'institution-departments/{institution_department}/level-courses',
+        [DepartmentLevelCourseController::class, 'institutionDepartmentLevelCourses']
+    )->name('v1.department-level-courses.by-institution-department');
     Route::get('institution-departments/levels/{department_level}/requirements', [DepartmentLevelController::class, 'levelRequirements'])->name('v1.department-level-requirements');
     Route::get('institution-departments/{department_level}/courses/{department_course}/requirements', [DepartmentCourseController::class, 'courseRequirements'])->name('v1.department-course-requirements');
     Route::apiResource('staff', StaffController::class)->names('v1.staff');

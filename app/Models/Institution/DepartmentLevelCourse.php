@@ -5,16 +5,16 @@ namespace App\Models\Institution;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
 /**
- *
  * @mixin Builder
  */
 class DepartmentLevelCourse extends Model
 {
-    use  LogsActivity;
+    use LogsActivity;
 
     protected $fillable = ['department_course_id', 'department_level_id'];
 
@@ -26,6 +26,11 @@ class DepartmentLevelCourse extends Model
     public function departmentCourse(): BelongsTo
     {
         return $this->belongsTo(DepartmentCourse::class, 'department_course_id');
+    }
+
+    public function courseSyllabuses(): HasMany
+    {
+        return $this->hasMany(CourseSyllabus::class, 'department_level_course_id');
     }
 
     public function getActivitylogOptions(): LogOptions

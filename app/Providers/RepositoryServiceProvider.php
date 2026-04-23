@@ -17,6 +17,7 @@ use App\Repositories\Finance\interface\IFinanceExchangeRateRepository;
 use App\Repositories\Institution\AssessmentTypeRepository;
 use App\Repositories\Institution\ClassListRepository;
 use App\Repositories\Institution\CourseRepository;
+use App\Repositories\Institution\CourseSyllabusRepository;
 use App\Repositories\Institution\DepartmentApplicationStepRepository;
 use App\Repositories\Institution\DepartmentCourseRepository;
 use App\Repositories\Institution\DepartmentLevelRepository;
@@ -30,6 +31,7 @@ use App\Repositories\Institution\IntakePeriodRepository;
 use App\Repositories\Institution\interface\IAssessmentTypeRepository;
 use App\Repositories\Institution\interface\IClassListRepository;
 use App\Repositories\Institution\interface\ICourseRepository;
+use App\Repositories\Institution\interface\ICourseSyllabusRepository;
 use App\Repositories\Institution\interface\IDepartmentApplicationStepRepository;
 use App\Repositories\Institution\interface\IDepartmentCourseRepository;
 use App\Repositories\Institution\interface\IDepartmentLevelRepository;
@@ -212,6 +214,7 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(IDocumentTemplateRepository::class, DocumentTemplateRepository::class);
         $this->app->bind(IFeeStructureRepository::class, FeeStructureRepository::class);
         $this->app->bind(IClassListRepository::class, ClassListRepository::class);
+        $this->app->bind(ICourseSyllabusRepository::class, CourseSyllabusRepository::class);
     }
 
     public function userRepositories(): void

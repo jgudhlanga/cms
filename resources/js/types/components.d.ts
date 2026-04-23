@@ -155,6 +155,7 @@ declare module 'vue' {
     DepartmentClassListActionLink: typeof import('./../components/enrolments/DepartmentClassListActionLink.vue')['default']
     DepartmentCourseComboSelect: typeof import('./../components/core/form/combobox/DepartmentCourseComboSelect.vue')['default']
     DepartmentLevelComboSelect: typeof import('./../components/core/form/combobox/DepartmentLevelComboSelect.vue')['default']
+    DepartmentLevelCourseComboSelect: typeof import('./../components/core/form/combobox/DepartmentLevelCourseComboSelect.vue')['default']
     Description: typeof import('./../components/core/form/text/Description.vue')['default']
     Dialog: typeof import('./../components/ui/dialog/Dialog.vue')['default']
     DialogClose: typeof import('./../components/ui/dialog/DialogClose.vue')['default']
