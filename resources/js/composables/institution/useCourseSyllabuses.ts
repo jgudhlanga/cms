@@ -2,8 +2,8 @@ import { useDataTables } from '@/composables/core/useDataTables';
 import { buildFormOptions } from '@/lib/forms';
 import { hasAbility } from '@/lib/permissions';
 import HttpService from '@/services/http.service';
-import { CourseSyllabus } from '@/types/institution';
 import { ApiFilterResponse } from '@/types/data-pagination';
+import { CourseSyllabus } from '@/types/institution';
 import { InertiaForm, router } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 import { h, ref } from 'vue';
@@ -55,35 +55,10 @@ export const useCourseSyllabuses = () => {
         form.post(route('department-course-syllabuses.store'), hasFile ? { ...opts, forceFormData: true } : opts);
     };
 
-    const hasDuplicateActiveSyllabus = (params: {
-        courseSyllabuses: CourseSyllabus[];
-        institutionDepartmentId: number | null;
-        departmentLevelCourseId: number | null;
-        currentCourseSyllabusId?: string | null;
-    }): boolean => {
-        if (!params.institutionDepartmentId || !params.departmentLevelCourseId) {
-            return false;
-        }
-
-        return params.courseSyllabuses.some((item) => {
-            if (item.attributes.status !== 'active') {
-                return false;
-            }
-
-            if (params.currentCourseSyllabusId && item.id === params.currentCourseSyllabusId) {
-                return false;
-            }
-
-            const sameInstitutionDepartment = Number(item.attributes.institutionDepartmentId) === params.institutionDepartmentId;
-            const sameDepartmentLevelCourse = Number(item.attributes.departmentLevelCourseId) === params.departmentLevelCourseId;
-
-            return sameInstitutionDepartment && sameDepartmentLevelCourse;
-        });
-    };
-
     const createCourseSyllabusColumns = (institutionDepartmentId: string | number) => {
         return [
             { header: trans_choice('trans.level', 1), accessorKey: 'attributes.level' },
+            { header: trans_choice('trans.course', 1), accessorKey: 'attributes.course' },
             { header: trans_choice('trans.title', 1), accessorKey: 'attributes.title' },
             { header: trans_choice('trans.code', 1), accessorKey: 'attributes.code' },
             { header: trans('syllabus.implementation_year'), accessorKey: 'attributes.implementationYear', meta: { align: 'center' } },
@@ -148,7 +123,6 @@ export const useCourseSyllabuses = () => {
         formSchema,
         listCourseSyllabuses,
         saveCourseSyllabus,
-        hasDuplicateActiveSyllabus,
         createCourseSyllabusColumns,
         onCreateCourseSyllabus,
         onEditCourseSyllabus,

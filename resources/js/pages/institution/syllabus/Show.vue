@@ -76,13 +76,15 @@ watch([institutionDepartmentId, courseSyllabusId], () => loadSyllabusModules(), 
     <div class="flex flex-col space-y-5">
         <BaseCard :title="$tChoice('syllabus.course_syllabus', 1)">
             <div class="grid grid-cols-1 gap-3 md:grid-cols-3">
+                <LabelValue :label="$tChoice('trans.level', 1)" :value="courseSyllabus?.attributes?.level" />
+                <LabelValue :label="$tChoice('trans.course', 1)" :value="courseSyllabus?.attributes?.course" />
                 <LabelValue :label="$tChoice('trans.title', 1)" :value="courseSyllabus?.attributes?.title" />
                 <LabelValue :label="$tChoice('trans.code', 1)" :value="courseSyllabus?.attributes?.code" />
                 <LabelValue
                     :label="$tChoice('syllabus.implementation_year', 1)"
                     :value="String(courseSyllabus?.attributes?.implementationYear ?? '')"
                 />
-                <LabelValue :label="$t('syllabus.status')" :value="courseSyllabus?.attributes?.status ?? '---'" value-classes="capitalize" />
+                <LabelValue :label="$t('syllabus.status')" :value="courseSyllabus?.attributes?.status" value-classes="capitalize" />
                 <div class="flex w-full items-start gap-3 text-sm text-accent-foreground" v-if="courseSyllabus?.attributes?.syllabusDocumentUrl">
                     <div :class="`shrink-0 font-medium whitespace-normal wrap-break-word`">{{ $tChoice('syllabus.syllabus', 1) }}:</div>
                     <div :class="`min-w-0 flex-1 font-extralight whitespace-normal wrap-anywhere`">
@@ -96,11 +98,8 @@ watch([institutionDepartmentId, courseSyllabusId], () => loadSyllabusModules(), 
                         </a>
                     </div>
                 </div>
-                <LabelValue :label="$tChoice('trans.level', 1)" :value="courseSyllabus?.attributes?.level" />
-                <div class="md:col-span-2">
-                    <LabelValue :label="$tChoice('trans.course', 1)" :value="courseSyllabus?.attributes?.course ?? '---'" />
-                </div>
-                <IconButton
+                <div class="flex justify-end md:col-span-3">
+                    <IconButton
                     :icon="IconName.edit"
                     :variant="ColorVariant.primary_outline"
                     @click="
@@ -113,6 +112,7 @@ watch([institutionDepartmentId, courseSyllabusId], () => loadSyllabusModules(), 
                             )
                     "
                 />
+                </div>
             </div>
         </BaseCard>
         <BaseCard :title="$tChoice('syllabus.module', 2)">

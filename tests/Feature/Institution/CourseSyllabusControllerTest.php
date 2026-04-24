@@ -103,7 +103,7 @@ it('stores course syllabus with document and sets syllabus_document_id to media 
         ->and($media->collection_name)->toBe(CourseSyllabus::MEDIA_COLLECTION_SYLLABUS_DOCUMENT);
 });
 
-it('fails to create active syllabus when same institution department and level course already has an active syllabus', function () {
+it('allows creating active syllabus when same institution department and level course already has an active syllabus', function () {
     $ctx = makeCourseSyllabusContext();
 
     CourseSyllabus::query()->create([
@@ -120,12 +120,71 @@ it('fails to create active syllabus when same institution department and level c
         'institution_department_id' => $ctx['institutionDepartment']->id,
         'department_level_course_id' => $ctx['departmentLevelCourse']->id,
         'title' => 'Duplicate Active '.uniqid(),
-        'code' => 'DUP-'.uniqid(),
+        'code' => $newCode = 'DUP-'.uniqid(),
         'implementation_year' => '2027',
         'status' => 'active',
     ]);
 
-    $response->assertSessionHasErrors(['department_level_course_id']);
+    $response->assertSuccessful();
+
+    $created = CourseSyllabus::query()->where('code', $newCode)->first();
+    expect($created)->not->toBeNull()
+        ->and($created?->status->value)->toBe('active');
+});
+
+it('allows creating course syllabus with duplicate title when code is unique', function () {
+    $ctx = makeCourseSyllabusContext();
+
+    $title = 'Shared Title '.uniqid();
+
+    CourseSyllabus::query()->create([
+        'tenant_id' => $ctx['tenant']->id,
+        'institution_department_id' => $ctx['institutionDepartment']->id,
+        'department_level_course_id' => $ctx['departmentLevelCourse']->id,
+        'title' => $title,
+        'code' => 'TTL-EX-'.uniqid(),
+        'implementation_year' => '2026',
+        'status' => 'active',
+    ]);
+
+    $response = $this->actingAs($ctx['user'])->post(route('department-course-syllabuses.store'), [
+        'institution_department_id' => $ctx['institutionDepartment']->id,
+        'department_level_course_id' => $ctx['departmentLevelCourse']->id,
+        'title' => $title,
+        'code' => $newCode = 'TTL-NEW-'.uniqid(),
+        'implementation_year' => '2027',
+        'status' => 'active',
+    ]);
+
+    $response->assertSuccessful();
+    expect(CourseSyllabus::query()->where('code', $newCode)->exists())->toBeTrue();
+});
+
+it('fails to create course syllabus when code already exists', function () {
+    $ctx = makeCourseSyllabusContext();
+
+    $duplicateCode = 'CODE-'.uniqid();
+
+    CourseSyllabus::query()->create([
+        'tenant_id' => $ctx['tenant']->id,
+        'institution_department_id' => $ctx['institutionDepartment']->id,
+        'department_level_course_id' => $ctx['departmentLevelCourse']->id,
+        'title' => 'Code Existing '.uniqid(),
+        'code' => $duplicateCode,
+        'implementation_year' => '2026',
+        'status' => 'active',
+    ]);
+
+    $response = $this->actingAs($ctx['user'])->post(route('department-course-syllabuses.store'), [
+        'institution_department_id' => $ctx['institutionDepartment']->id,
+        'department_level_course_id' => $ctx['departmentLevelCourse']->id,
+        'title' => 'Code Duplicate Attempt '.uniqid(),
+        'code' => $duplicateCode,
+        'implementation_year' => '2027',
+        'status' => 'active',
+    ]);
+
+    $response->assertSessionHasErrors(['code']);
 });
 
 it('updates course syllabus document replacing media id', function () {
