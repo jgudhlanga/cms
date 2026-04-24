@@ -4,6 +4,7 @@ namespace App\Models\Institution;
 
 use App\Enums\Institution\CourseSyllabusStatusEnum;
 use App\Http\Filters\Shared\SharedNameFilter;
+use App\Models\Institution\Syllabus\SyllabusCourseModule;
 use App\Traits\BelongsToTenant;
 use App\Traits\Filterable;
 use App\Traits\Paginatable;
@@ -11,6 +12,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
@@ -63,6 +65,11 @@ class CourseSyllabus extends Model implements HasMedia
     public function syllabusDocument(): HasOne
     {
         return $this->hasOne(Media::class, 'id', 'syllabus_document_id');
+    }
+
+    public function syllabusCourseModules(): HasMany
+    {
+        return $this->hasMany(SyllabusCourseModule::class, 'course_syllabus_id');
     }
 
     public function registerMediaCollections(): void

@@ -10,6 +10,7 @@ use App\Http\Controllers\Institution\Departments\DepartmentClassSizeController;
 use App\Http\Controllers\Institution\Departments\DepartmentCourseController;
 use App\Http\Controllers\Institution\Departments\DepartmentLevelController;
 use App\Http\Controllers\Institution\Departments\InstitutionDepartmentController;
+use App\Http\Controllers\Institution\Departments\SyllabusCourseModuleController;
 use App\Http\Controllers\Institution\DocumentTemplates\DocumentTemplateController;
 use App\Http\Controllers\Institution\InstitutionController;
 use App\Http\Controllers\Institution\Staff\StaffController;
@@ -47,6 +48,15 @@ Route::prefix('institution')->middleware('auth')->group(function () {
     Route::post('departments/course-syllabuses', [CourseSyllabusController::class, 'store'])->name('department-course-syllabuses.store');
     Route::put('departments/course-syllabuses/{course_syllabus}', [CourseSyllabusController::class, 'update'])->name('department-course-syllabuses.update');
     Route::delete('departments/course-syllabuses/{course_syllabus}', [CourseSyllabusController::class, 'destroy'])->name('department-course-syllabuses.destroy');
+    Route::get(
+        'departments/{institution_department}/course-syllabuses/{course_syllabus}/modules',
+        [SyllabusCourseModuleController::class, 'index']
+    )->name('syllabus-course-modules.index');
+    Route::post('departments/course-syllabus-modules', [SyllabusCourseModuleController::class, 'store'])->name('syllabus-course-modules.store');
+    Route::put(
+        'departments/course-syllabus-modules/{syllabus_course_module}',
+        [SyllabusCourseModuleController::class, 'update']
+    )->name('syllabus-course-modules.update');
     // ==================================== DEPARTMENT APPLICATION STEPS ================================================
     Route::post('departments/{institution_department}/sync-application-steps', [DepartmentApplicationStepController::class, 'syncApplicationSteps'])->name('department-application-steps.sync');
     Route::get('departments/{department_application_step}/application-steps/show', [DepartmentApplicationStepController::class, 'show'])->name('department-application-steps.show');

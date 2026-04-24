@@ -1,12 +1,19 @@
 <script setup lang="ts">
 import { BaseButton } from '@/components/core/button';
+import DataLoadingSpinner from '@/components/core/loader/DataLoadingSpinner.vue';
+import DataTable from '@/components/core/table/DataTable.vue';
 import PageContainer from '@/components/core/page/PageContainer.vue';
+import { useSyllabusCourseModules } from '@/composables/institution/useSyllabusCourseModules';
+import { hasAbility } from '@/lib/permissions';
 import { getIdParams } from '@/lib/utils';
-import { CourseSyllabus, InstitutionDepartment } from '@/types/institution';
+import { CourseSyllabus, InstitutionDepartment, SyllabusCourseModule } from '@/types/institution';
 import type { Link } from '@/types/ui';
 import { Head, router } from '@inertiajs/vue3';
 import { IconName } from '@/enums/icons';
 import { ColorVariant } from '@/enums/colors';
+import BaseCard from '@/components/core/card/BaseCard.vue';
+import { computed, ref, watch } from 'vue';
+import CreateEditModule from '@/pages/institution/syllabus/partials/CreateEditModule.vue';
 interface Props {
     institutionDepartment: InstitutionDepartment;
     courseSyllabus: CourseSyllabus;
@@ -14,6 +21,25 @@ interface Props {
 
 const props = defineProps<Props>();
 const { institutionDepartment, courseSyllabus } = props;
+const canViewModules = hasAbility(['viewAny:course-syllabus-modules', 'view:course-syllabus-modules']);
+const canCreateModule = hasAbility('create:course-syllabus-modules');
+const canUpdateModule = hasAbility('update:course-syllabus-modules');
+const modulesList = ref<SyllabusCourseModule[]>([]);
+const {
+    isLoading,
+    syllabusCourseModules,
+    listSyllabusCourseModules,
+    createSyllabusCourseModuleColumns,
+    onOpenModal,
+} = useSyllabusCourseModules();
+const institutionDepartmentId = computed(() => String(institutionDepartment?.id ?? ''));
+const courseSyllabusId = computed(() => String(courseSyllabus?.id ?? ''));
+const listUrl = computed(() =>
+    route('syllabus-course-modules.index', {
+        institution_department: institutionDepartmentId.value,
+        course_syllabus: courseSyllabusId.value,
+    }),
+);
 
 const breadcrumbs: Array<Link> = [
     { transChoiceKey: 'institution', transChoiceKeyIndex: 1, href: route('institution.index') },
@@ -27,6 +53,18 @@ const breadcrumbs: Array<Link> = [
     },
     { title: courseSyllabus?.attributes?.title },
 ];
+
+const loadSyllabusModules = async (url?: string) => {
+    if (!canViewModules || !institutionDepartmentId.value || !courseSyllabusId.value) {
+        modulesList.value = [];
+        return;
+    }
+
+    await listSyllabusCourseModules(institutionDepartmentId.value, courseSyllabusId.value, url);
+    modulesList.value = (syllabusCourseModules.value?.data ?? []) as SyllabusCourseModule[];
+};
+
+watch([institutionDepartmentId, courseSyllabusId], () => loadSyllabusModules(), { immediate: true });
 </script>
 
 <template>
@@ -35,6 +73,7 @@ const breadcrumbs: Array<Link> = [
         :breadcrumbs="breadcrumbs"
         :back-url="route('institution-departments.show', getIdParams(institutionDepartment?.id?.toString() ?? ''))"
     >
+    <div class="flex flex-col space-y-5">
         <BaseCard :title="$tChoice('syllabus.course_syllabus', 1)">
             <div class="grid grid-cols-1 gap-3 md:grid-cols-3">
                 <LabelValue :label="$tChoice('trans.title', 1)" :value="courseSyllabus?.attributes?.title" />
@@ -76,5 +115,25 @@ const breadcrumbs: Array<Link> = [
                 />
             </div>
         </BaseCard>
+        <BaseCard :title="$tChoice('syllabus.module', 2)">
+            <DataLoadingSpinner v-if="isLoading" />
+            <DataTable
+                v-else
+                :data="modulesList"
+                :columns="createSyllabusCourseModuleColumns((module) => onOpenModal(canUpdateModule, { courseSyllabusId: courseSyllabus.id ?? '' }, module), canUpdateModule)"
+                :show-archived-filter="false"
+                :on-create="() => onOpenModal(canCreateModule, { courseSyllabusId: courseSyllabus.id ?? '' })"
+                :disable-create="!canCreateModule"
+                :pagination="{ ...(syllabusCourseModules?.links ?? {}), ...(syllabusCourseModules?.meta ?? {}) }"
+                :search-url="listUrl"
+                :use-api="true"
+                :api-fetch-action="loadSyllabusModules"
+            />
+        </BaseCard>
+    </div>
+        <CreateEditModule
+            :course-syllabus-id="Number(courseSyllabus?.id ?? 0)"
+            :course-syllabus-title="courseSyllabus?.attributes?.title ?? ''"
+        />
     </PageContainer>
 </template>

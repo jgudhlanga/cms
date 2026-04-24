@@ -221,6 +221,33 @@ export type CourseSyllabusParams = {
     status: 'active' | 'terminated';
     syllabus_document?: File | null;
 };
+
+export type SyllabusCourseModule = {
+    type?: string;
+    id?: string;
+    attributes: {
+        courseSyllabusId: string | number;
+        title: string;
+        code: string;
+        durationInHours?: number | null;
+        nqlLevel?: number | null;
+        prerequisiteModuleIds: number[];
+        shared: boolean;
+        createdAt?: string;
+        updatedAt?: string;
+        deletedAt?: string;
+    };
+};
+
+export type SyllabusCourseModuleParams = {
+    course_syllabus_id: number | null;
+    title: string;
+    code: string;
+    duration_in_hours: number | null;
+    nql_level: number | null;
+    prerequisite_module_ids: number[];
+    shared: boolean;
+};
 export type DocumentTemplate = {
     type: string;
     id: string;

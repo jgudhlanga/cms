@@ -5,6 +5,7 @@ use App\Policies\Finance\FinancePolicy;
 use App\Policies\Finance\FinanceSettingsPolicy;
 use App\Policies\Institution\CourseSyllabusPolicy;
 use App\Policies\Institution\DepartmentMetaDataPolicy;
+use App\Policies\Institution\SyllabusCourseModulePolicy;
 use App\Policies\Settings\InstitutionSetupPolicy;
 use App\Policies\Settings\SettingPolicy;
 use App\Policies\Students\PortalPolicy;
@@ -47,6 +48,19 @@ return [
     ],
 
     CourseSyllabusPolicy::class => [
+        'viewAny',
+        'view',
+        'create',
+        'update',
+        'delete',
+        'restore',
+        'forceDelete',
+        'import',
+        'export',
+        'viewAuditTrail',
+    ],
+
+    SyllabusCourseModulePolicy::class => [
         'viewAny',
         'view',
         'create',
