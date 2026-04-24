@@ -12,18 +12,19 @@ interface Props {
 
 const props = defineProps<Props>();
 const institutionDepartmentId = computed(() => String(props.department?.id ?? ''));
+const listUrl = computed(() => route('department-course-syllabuses.index', institutionDepartmentId.value));
 const canCreate = hasAbility('departmentSetup');
 
 const courseSyllabusList = ref<CourseSyllabus[]>([]);
 const { createCourseSyllabusColumns, isLoading, listCourseSyllabuses, onCreateCourseSyllabus, courseSyllabuses } = useCourseSyllabuses();
 
-const loadCourseSyllabuses = async () => {
+const loadCourseSyllabuses = async (url?: string) => {
     if (!institutionDepartmentId.value) {
         courseSyllabusList.value = [];
         return;
     }
 
-    await listCourseSyllabuses(institutionDepartmentId.value);
+    await listCourseSyllabuses(institutionDepartmentId.value, url);
     courseSyllabusList.value = (courseSyllabuses.value?.data ?? []) as CourseSyllabus[];
 };
 
@@ -40,6 +41,10 @@ watch(institutionDepartmentId, loadCourseSyllabuses, { immediate: true });
             :show-archived-filter="false"
             :on-create="() => onCreateCourseSyllabus(institutionDepartmentId)"
             :disable-create="!canCreate"
+            :pagination="{ ...(courseSyllabuses?.links ?? {}), ...(courseSyllabuses?.meta ?? {}) }"
+            :search-url="listUrl"
+            :use-api="true"
+            :api-fetch-action="loadCourseSyllabuses"
         />
     </div>
 </template>
