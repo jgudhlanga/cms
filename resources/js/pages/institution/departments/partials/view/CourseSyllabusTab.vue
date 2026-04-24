@@ -18,13 +18,13 @@ const canCreate = hasAbility('departmentSetup');
 const courseSyllabusList = ref<CourseSyllabus[]>([]);
 const { createCourseSyllabusColumns, isLoading, listCourseSyllabuses, onCreateCourseSyllabus, courseSyllabuses } = useCourseSyllabuses();
 
-const loadCourseSyllabuses = async (url?: string) => {
+const loadCourseSyllabuses = async () => {
     if (!institutionDepartmentId.value) {
         courseSyllabusList.value = [];
         return;
     }
 
-    await listCourseSyllabuses(institutionDepartmentId.value, url);
+    await listCourseSyllabuses(institutionDepartmentId.value);
     courseSyllabusList.value = (courseSyllabuses.value?.data ?? []) as CourseSyllabus[];
 };
 

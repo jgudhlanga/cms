@@ -27,8 +27,8 @@ export const useSyllabusCourseModules = () => {
             shared: z.boolean(),
         });
 
-    const listSyllabusCourseModules = async (institutionDepartmentId: string, courseSyllabusId: string, url?: string) => {
-        const endpoint = url ?? route('syllabus-course-modules.index', { institution_department: institutionDepartmentId, course_syllabus: courseSyllabusId });
+    const listSyllabusCourseModules = async (institutionDepartmentId: string, courseSyllabusId: string) => {
+        const endpoint =route('syllabus-course-modules.index', { institution_department: institutionDepartmentId, course_syllabus: courseSyllabusId });
 
         try {
             isLoading.value = true;

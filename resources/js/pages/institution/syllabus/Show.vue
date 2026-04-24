@@ -54,13 +54,13 @@ const breadcrumbs: Array<Link> = [
     { title: courseSyllabus?.attributes?.title },
 ];
 
-const loadSyllabusModules = async (url?: string) => {
+const loadSyllabusModules = async () => {
     if (!canViewModules || !institutionDepartmentId.value || !courseSyllabusId.value) {
         modulesList.value = [];
         return;
     }
 
-    await listSyllabusCourseModules(institutionDepartmentId.value, courseSyllabusId.value, url);
+    await listSyllabusCourseModules(institutionDepartmentId.value, courseSyllabusId.value);
     modulesList.value = (syllabusCourseModules.value?.data ?? []) as SyllabusCourseModule[];
 };
 

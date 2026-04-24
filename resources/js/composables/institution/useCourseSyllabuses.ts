@@ -26,10 +26,11 @@ export const useCourseSyllabuses = () => {
             status: z.enum(['active', 'terminated']),
         });
 
-    const listCourseSyllabuses = async (institutionDepartmentId: string, url?: string) => {
+    const listCourseSyllabuses = async (institutionDepartmentId: string) => {
         try {
             isLoading.value = true;
-            courseSyllabuses.value = await HttpService.get(url ?? route('department-course-syllabuses.index', institutionDepartmentId));
+            courseSyllabuses.value = await HttpService.get(route('department-course-syllabuses.index', institutionDepartmentId));
+            console.log(courseSyllabuses.value);
         } finally {
             isLoading.value = false;
         }
