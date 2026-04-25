@@ -4,6 +4,8 @@ namespace App\Providers;
 
 use App\Enums\Acl\RoleEnum;
 use App\Importers\Finance\FinanceExchangeRateImporter;
+use App\Importers\Institution\CourseSyllabusImporter;
+use App\Importers\Institution\CourseSyllabusModuleImporter;
 use App\Models\Institution\Syllabus\CourseSyllabus;
 use App\Policies\Institution\CourseSyllabusPolicy;
 use Illuminate\Auth\Events\Login;
@@ -21,7 +23,11 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        $this->app->tag([FinanceExchangeRateImporter::class], IngestServiceProvider::INGEST_DEFINITION_TAG);
+        $this->app->tag([
+            FinanceExchangeRateImporter::class,
+            CourseSyllabusImporter::class,
+            CourseSyllabusModuleImporter::class,
+        ], IngestServiceProvider::INGEST_DEFINITION_TAG);
     }
 
     /**
