@@ -2,9 +2,9 @@
 
 namespace App\DTO\Institution;
 
-use App\Http\Requests\Institution\SyllabusCourseModuleRequest;
+use App\Http\Requests\Institution\CourseSyllabusModuleRequest;
 
-readonly class SyllabusCourseModuleDto
+readonly class CourseSyllabusModuleDto
 {
     public function __construct(
         public int $course_syllabus_id,
@@ -17,7 +17,7 @@ readonly class SyllabusCourseModuleDto
         public bool $shared,
     ) {}
 
-    public static function fromRequest(SyllabusCourseModuleRequest $request): self
+    public static function fromRequest(CourseSyllabusModuleRequest $request): self
     {
         return new self(
             course_syllabus_id: (int) $request->integer('course_syllabus_id'),

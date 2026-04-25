@@ -3,9 +3,9 @@
 use App\Policies\Dashboards\DashboardPolicy;
 use App\Policies\Finance\FinancePolicy;
 use App\Policies\Finance\FinanceSettingsPolicy;
+use App\Policies\Institution\CourseSyllabusModulePolicy;
 use App\Policies\Institution\CourseSyllabusPolicy;
 use App\Policies\Institution\DepartmentMetaDataPolicy;
-use App\Policies\Institution\SyllabusCourseModulePolicy;
 use App\Policies\Settings\InstitutionSetupPolicy;
 use App\Policies\Settings\SettingPolicy;
 use App\Policies\Students\PortalPolicy;
@@ -60,7 +60,7 @@ return [
         'viewAuditTrail',
     ],
 
-    SyllabusCourseModulePolicy::class => [
+    CourseSyllabusModulePolicy::class => [
         'viewAny',
         'view',
         'create',

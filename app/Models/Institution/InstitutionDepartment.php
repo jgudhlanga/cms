@@ -3,6 +3,7 @@
 namespace App\Models\Institution;
 
 use App\Http\Filters\Institution\InstitutionDepartmentFilter;
+use App\Models\Institution\Syllabus\CourseSyllabus;
 use App\Models\Students\StudentProgram;
 use App\Traits\BelongsToTenant;
 use App\Traits\Filterable;

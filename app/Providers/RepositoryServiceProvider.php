@@ -17,6 +17,7 @@ use App\Repositories\Finance\interface\IFinanceExchangeRateRepository;
 use App\Repositories\Institution\AssessmentTypeRepository;
 use App\Repositories\Institution\ClassListRepository;
 use App\Repositories\Institution\CourseRepository;
+use App\Repositories\Institution\CourseSyllabusModuleRepository;
 use App\Repositories\Institution\CourseSyllabusRepository;
 use App\Repositories\Institution\DepartmentApplicationStepRepository;
 use App\Repositories\Institution\DepartmentCourseRepository;
@@ -31,6 +32,7 @@ use App\Repositories\Institution\IntakePeriodRepository;
 use App\Repositories\Institution\interface\IAssessmentTypeRepository;
 use App\Repositories\Institution\interface\IClassListRepository;
 use App\Repositories\Institution\interface\ICourseRepository;
+use App\Repositories\Institution\interface\ICourseSyllabusModuleRepository;
 use App\Repositories\Institution\interface\ICourseSyllabusRepository;
 use App\Repositories\Institution\interface\IDepartmentApplicationStepRepository;
 use App\Repositories\Institution\interface\IDepartmentCourseRepository;
@@ -46,12 +48,10 @@ use App\Repositories\Institution\interface\ILevelRepository;
 use App\Repositories\Institution\interface\IModeOfStudyRepository;
 use App\Repositories\Institution\interface\IStaffRepository;
 use App\Repositories\Institution\interface\ISubjectRepository;
-use App\Repositories\Institution\interface\ISyllabusCourseModuleRepository;
 use App\Repositories\Institution\LevelRepository;
 use App\Repositories\Institution\ModeOfStudyRepository;
 use App\Repositories\Institution\StaffRepository;
 use App\Repositories\Institution\SubjectRepository;
-use App\Repositories\Institution\SyllabusCourseModuleRepository;
 use App\Repositories\Shared\AcademicLevelRepository;
 use App\Repositories\Shared\AddressRepository;
 use App\Repositories\Shared\AddressTypeRepository;
@@ -217,7 +217,7 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(IFeeStructureRepository::class, FeeStructureRepository::class);
         $this->app->bind(IClassListRepository::class, ClassListRepository::class);
         $this->app->bind(ICourseSyllabusRepository::class, CourseSyllabusRepository::class);
-        $this->app->bind(ISyllabusCourseModuleRepository::class, SyllabusCourseModuleRepository::class);
+        $this->app->bind(ICourseSyllabusModuleRepository::class, CourseSyllabusModuleRepository::class);
     }
 
     public function userRepositories(): void

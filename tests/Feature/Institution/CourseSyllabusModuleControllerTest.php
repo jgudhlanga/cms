@@ -1,15 +1,15 @@
 <?php
 
-use App\Http\Requests\Institution\SyllabusCourseModuleRequest;
+use App\Http\Requests\Institution\CourseSyllabusModuleRequest;
 use App\Models\Institution\Course;
-use App\Models\Institution\CourseSyllabus;
 use App\Models\Institution\Department;
 use App\Models\Institution\DepartmentCourse;
 use App\Models\Institution\DepartmentLevel;
 use App\Models\Institution\DepartmentLevelCourse;
 use App\Models\Institution\InstitutionDepartment;
 use App\Models\Institution\Level;
-use App\Models\Institution\Syllabus\SyllabusCourseModule;
+use App\Models\Institution\Syllabus\CourseSyllabus;
+use App\Models\Institution\Syllabus\CourseSyllabusModule;
 use App\Models\Tenants\Tenant;
 use App\Models\Users\User;
 use Illuminate\Support\Facades\Validator;
@@ -69,7 +69,7 @@ function makeSyllabusModuleContext(): array
 }
 
 it('validates required syllabus course module fields', function () {
-    $request = new SyllabusCourseModuleRequest;
+    $request = new CourseSyllabusModuleRequest;
     $validator = Validator::make([], $request->rules());
 
     expect($validator->fails())->toBeTrue();
@@ -91,7 +91,7 @@ it('lists only modules for the selected course syllabus', function () {
         'status' => 'terminated',
     ]);
 
-    $visible = SyllabusCourseModule::query()->create([
+    $visible = CourseSyllabusModule::query()->create([
         'tenant_id' => $ctx['tenant']->id,
         'course_syllabus_id' => $ctx['courseSyllabus']->id,
         'title' => 'Visible Module',
@@ -99,7 +99,7 @@ it('lists only modules for the selected course syllabus', function () {
         'shared' => false,
     ]);
 
-    SyllabusCourseModule::query()->create([
+    CourseSyllabusModule::query()->create([
         'tenant_id' => $ctx['tenant']->id,
         'course_syllabus_id' => $otherSyllabus->id,
         'title' => 'Hidden Module',
@@ -107,7 +107,7 @@ it('lists only modules for the selected course syllabus', function () {
         'shared' => false,
     ]);
 
-    $response = $this->actingAs($ctx['user'])->get(route('syllabus-course-modules.index', [
+    $response = $this->actingAs($ctx['user'])->get(route('course-syllabus-modules.index', [
         'institution_department' => $ctx['institutionDepartment']->id,
         'course_syllabus' => $ctx['courseSyllabus']->id,
     ]));
@@ -120,7 +120,7 @@ it('lists only modules for the selected course syllabus', function () {
 it('stores a syllabus course module', function () {
     $ctx = makeSyllabusModuleContext();
 
-    $response = $this->actingAs($ctx['user'])->post(route('syllabus-course-modules.store'), [
+    $response = $this->actingAs($ctx['user'])->post(route('course-syllabus-modules.store'), [
         'course_syllabus_id' => $ctx['courseSyllabus']->id,
         'title' => 'Intro Module',
         'code' => 'IM-'.uniqid(),
@@ -132,7 +132,7 @@ it('stores a syllabus course module', function () {
 
     $response->assertSuccessful();
 
-    $module = SyllabusCourseModule::query()->where('title', 'Intro Module')->first();
+    $module = CourseSyllabusModule::query()->where('title', 'Intro Module')->first();
     expect($module)->not->toBeNull()
         ->and((bool) $module?->shared)->toBeTrue();
 });
@@ -140,7 +140,7 @@ it('stores a syllabus course module', function () {
 it('updates a syllabus course module', function () {
     $ctx = makeSyllabusModuleContext();
 
-    $module = SyllabusCourseModule::query()->create([
+    $module = CourseSyllabusModule::query()->create([
         'tenant_id' => $ctx['tenant']->id,
         'course_syllabus_id' => $ctx['courseSyllabus']->id,
         'title' => 'Old Module',
@@ -148,7 +148,7 @@ it('updates a syllabus course module', function () {
         'shared' => false,
     ]);
 
-    $response = $this->actingAs($ctx['user'])->put(route('syllabus-course-modules.update', $module), [
+    $response = $this->actingAs($ctx['user'])->put(route('course-syllabus-modules.update', $module), [
         'course_syllabus_id' => $ctx['courseSyllabus']->id,
         'title' => 'Updated Module',
         'code' => $module->code,
@@ -173,7 +173,7 @@ it('forbids listing modules without module permissions', function () {
         'view:course-syllabus-modules',
     ]);
 
-    $response = $this->actingAs($ctx['user'])->get(route('syllabus-course-modules.index', [
+    $response = $this->actingAs($ctx['user'])->get(route('course-syllabus-modules.index', [
         'institution_department' => $ctx['institutionDepartment']->id,
         'course_syllabus' => $ctx['courseSyllabus']->id,
     ]));
@@ -185,7 +185,7 @@ it('forbids creating modules without module create permission', function () {
     $ctx = makeSyllabusModuleContext();
     $ctx['user']->revokePermissionTo('create:course-syllabus-modules');
 
-    $response = $this->actingAs($ctx['user'])->post(route('syllabus-course-modules.store'), [
+    $response = $this->actingAs($ctx['user'])->post(route('course-syllabus-modules.store'), [
         'course_syllabus_id' => $ctx['courseSyllabus']->id,
         'title' => 'Unauthorized Module',
         'code' => 'UN-'.uniqid(),

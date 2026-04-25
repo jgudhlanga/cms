@@ -4,6 +4,8 @@ namespace App\Providers;
 
 use App\Enums\Acl\RoleEnum;
 use App\Importers\Finance\FinanceExchangeRateImporter;
+use App\Models\Institution\Syllabus\CourseSyllabus;
+use App\Policies\Institution\CourseSyllabusPolicy;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Auth;
@@ -32,6 +34,7 @@ class AppServiceProvider extends ServiceProvider
 
         // Dynamically register all Gate policies from config/custom.php
         $this->registerPoliciesFromConfig();
+        Gate::policy(CourseSyllabus::class, CourseSyllabusPolicy::class);
 
         // Track user login statistics
         $this->registerLoginEventListener();
@@ -76,7 +79,6 @@ class AppServiceProvider extends ServiceProvider
             ]);
         });
     }
-
 
     private function registerImpersonationListeners(): void
     {

@@ -2,7 +2,7 @@
 
 namespace App\Policies\Institution;
 
-use App\Models\Institution\CourseSyllabus;
+use App\Models\Institution\Syllabus\CourseSyllabus;
 use App\Models\Users\User;
 
 class CourseSyllabusPolicy

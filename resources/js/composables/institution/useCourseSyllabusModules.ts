@@ -1,20 +1,20 @@
 import { useDataTables } from '@/composables/core/useDataTables';
+import { ColorVariant } from '@/enums/colors';
 import { forbiddenAlert, openModal } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
 import { buildFormOptions } from '@/lib/forms';
 import HttpService from '@/services/http.service';
 import { ApiFilterResponse } from '@/types/data-pagination';
-import { SyllabusCourseModule } from '@/types/institution';
+import { CourseSyllabusModule } from '@/types/institution';
 import { InertiaForm } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 import { h, ref } from 'vue';
 import { z } from 'zod';
-import { ColorVariant } from '@/enums/colors';
 
-export const useSyllabusCourseModules = () => {
+export const useCourseSyllabusModules = () => {
     const { actionButton } = useDataTables();
     const isLoading = ref(false);
-    const syllabusCourseModules = ref<ApiFilterResponse | null>(null);
+    const courseSyllabusModules = ref<ApiFilterResponse | null>(null);
 
     const formSchema = () =>
         z.object({
@@ -27,31 +27,34 @@ export const useSyllabusCourseModules = () => {
             shared: z.boolean(),
         });
 
-    const listSyllabusCourseModules = async (institutionDepartmentId: string, courseSyllabusId: string) => {
-        const endpoint =route('syllabus-course-modules.index', { institution_department: institutionDepartmentId, course_syllabus: courseSyllabusId });
+    const listCourseSyllabusModules = async (institutionDepartmentId: string, courseSyllabusId: string) => {
+        const endpoint = route('course-syllabus-modules.index', {
+            institution_department: institutionDepartmentId,
+            course_syllabus: courseSyllabusId,
+        });
 
         try {
             isLoading.value = true;
-            syllabusCourseModules.value = await HttpService.get(endpoint);
+            courseSyllabusModules.value = await HttpService.get(endpoint);
         } finally {
             isLoading.value = false;
         }
     };
 
-    const saveSyllabusCourseModule = (form: InertiaForm<any>, moduleId?: string) => {
+    const saveCourseSyllabusModule = (form: InertiaForm<any>, moduleId?: string) => {
         const success = trans('trans.item_saved', { item: trans_choice('syllabus.module', 1) });
         const error = trans('trans.item_save_failure', { item: trans_choice('syllabus.module', 1) });
-        const opts = buildFormOptions(form, success, error, APP_MODULE_KEYS.syllabus_course_modules);
+        const opts = buildFormOptions(form, success, error, APP_MODULE_KEYS.course_syllabus_modules);
 
         if (moduleId) {
-            form.put(route('syllabus-course-modules.update', moduleId), opts);
+            form.put(route('course-syllabus-modules.update', moduleId), opts);
             return;
         }
 
-        form.post(route('syllabus-course-modules.store'), opts);
+        form.post(route('course-syllabus-modules.store'), opts);
     };
 
-    const createSyllabusCourseModuleColumns = (onEdit: (module: SyllabusCourseModule) => void, canUpdate: boolean) => [
+    const createCourseSyllabusModuleColumns = (onEdit: (module: CourseSyllabusModule) => void, canUpdate: boolean) => [
         { header: trans_choice('trans.title', 1), accessorKey: 'attributes.title' },
         { header: trans_choice('trans.code', 1), accessorKey: 'attributes.code' },
         { header: trans('syllabus.duration_in_hours'), accessorKey: 'attributes.durationInHours', meta: { align: 'center' } },
@@ -60,14 +63,14 @@ export const useSyllabusCourseModules = () => {
             header: trans('syllabus.shared'),
             accessorKey: 'attributes.shared',
             meta: { align: 'center' },
-            cell: ({ row }: { row: { original: SyllabusCourseModule } }) => (row.original.attributes.shared ? trans('trans.yes') : trans('trans.no')),
+            cell: ({ row }: { row: { original: CourseSyllabusModule } }) => (row.original.attributes.shared ? trans('trans.yes') : trans('trans.no')),
         },
         {
             header: trans_choice('trans.action', 2),
             accessorKey: 'actions',
             enableSorting: false,
             meta: { align: 'right' },
-            cell: ({ row }: { row: { original: SyllabusCourseModule } }) =>
+            cell: ({ row }: { row: { original: CourseSyllabusModule } }) =>
                 h('div', { class: 'flex items-center justify-end gap-2' }, [
                     actionButton({
                         title: trans('trans.edit'),
@@ -78,21 +81,21 @@ export const useSyllabusCourseModules = () => {
         },
     ];
 
-    const onOpenModal = (can: boolean, parent: { courseSyllabusId: string | number }, module?: SyllabusCourseModule) => {
+    const onOpenModal = (can: boolean, parent: { courseSyllabusId: string | number }, module?: CourseSyllabusModule) => {
         if (!can) {
             return forbiddenAlert();
         }
 
-        openModal({ name: APP_MODULE_KEYS.syllabus_course_modules, edit: module, parent });
+        openModal({ name: APP_MODULE_KEYS.course_syllabus_modules, edit: module, parent });
     };
 
     return {
         isLoading,
-        syllabusCourseModules,
+        courseSyllabusModules,
         formSchema,
-        listSyllabusCourseModules,
-        saveSyllabusCourseModule,
-        createSyllabusCourseModuleColumns,
+        listCourseSyllabusModules,
+        saveCourseSyllabusModule,
+        createCourseSyllabusModuleColumns,
         onOpenModal,
     };
 };

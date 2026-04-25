@@ -1,10 +1,11 @@
 <?php
 
-namespace App\Models\Institution;
+namespace App\Models\Institution\Syllabus;
 
 use App\Enums\Institution\CourseSyllabusStatusEnum;
 use App\Http\Filters\Shared\SharedNameFilter;
-use App\Models\Institution\Syllabus\SyllabusCourseModule;
+use App\Models\Institution\DepartmentLevelCourse;
+use App\Models\Institution\InstitutionDepartment;
 use App\Traits\BelongsToTenant;
 use App\Traits\Filterable;
 use App\Traits\Paginatable;
@@ -69,7 +70,7 @@ class CourseSyllabus extends Model implements HasMedia
 
     public function syllabusCourseModules(): HasMany
     {
-        return $this->hasMany(SyllabusCourseModule::class, 'course_syllabus_id');
+        return $this->hasMany(CourseSyllabusModule::class, 'course_syllabus_id');
     }
 
     public function registerMediaCollections(): void

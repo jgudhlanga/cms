@@ -222,7 +222,7 @@ export type CourseSyllabusParams = {
     syllabus_document?: File | null;
 };
 
-export type SyllabusCourseModule = {
+export type CourseSyllabusModule = {
     type?: string;
     id?: string;
     attributes: {
@@ -239,7 +239,7 @@ export type SyllabusCourseModule = {
     };
 };
 
-export type SyllabusCourseModuleParams = {
+export type CourseSyllabusModuleParams = {
     course_syllabus_id: number | null;
     title: string;
     code: string;

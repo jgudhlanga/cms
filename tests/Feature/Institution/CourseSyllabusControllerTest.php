@@ -2,13 +2,13 @@
 
 use App\Http\Requests\Institution\CourseSyllabusRequest;
 use App\Models\Institution\Course;
-use App\Models\Institution\CourseSyllabus;
 use App\Models\Institution\Department;
 use App\Models\Institution\DepartmentCourse;
 use App\Models\Institution\DepartmentLevel;
 use App\Models\Institution\DepartmentLevelCourse;
 use App\Models\Institution\InstitutionDepartment;
 use App\Models\Institution\Level;
+use App\Models\Institution\Syllabus\CourseSyllabus;
 use App\Models\Tenants\Tenant;
 use App\Models\Users\User;
 use Illuminate\Http\UploadedFile;

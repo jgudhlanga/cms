@@ -2,8 +2,6 @@
 
 namespace App\Models\Institution\Syllabus;
 
-use App\Http\Filters\Shared\SharedNameFilter;
-use App\Models\Institution\CourseSyllabus;
 use App\Traits\BelongsToTenant;
 use App\Traits\Filterable;
 use App\Traits\Paginatable;
@@ -18,11 +16,13 @@ use Spatie\Activitylog\Traits\LogsActivity;
 /**
  * @mixin Builder
  *
- * @method static filter(SharedNameFilter $filters)
+ * @method static filter(SharedTitleFilter $filters)
  */
-class SyllabusCourseModule extends Model
+class CourseSyllabusModule extends Model
 {
     use BelongsToTenant, Filterable, HasFactory, LogsActivity, Paginatable, SoftDeletes;
+
+    protected $table = 'course_syllabus_modules';
 
     protected $fillable = [
         'tenant_id',
@@ -52,7 +52,7 @@ class SyllabusCourseModule extends Model
     {
         return LogOptions::defaults()
             ->logFillable()
-            ->useLogName('SyllabusCourseModule')
+            ->useLogName('CourseSyllabusModule')
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
     }

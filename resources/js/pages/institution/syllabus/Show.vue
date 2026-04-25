@@ -3,10 +3,10 @@ import { BaseButton } from '@/components/core/button';
 import DataLoadingSpinner from '@/components/core/loader/DataLoadingSpinner.vue';
 import DataTable from '@/components/core/table/DataTable.vue';
 import PageContainer from '@/components/core/page/PageContainer.vue';
-import { useSyllabusCourseModules } from '@/composables/institution/useSyllabusCourseModules';
+import { useCourseSyllabusModules } from '@/composables/institution/useCourseSyllabusModules';
 import { hasAbility } from '@/lib/permissions';
 import { getIdParams } from '@/lib/utils';
-import { CourseSyllabus, InstitutionDepartment, SyllabusCourseModule } from '@/types/institution';
+import { CourseSyllabus, CourseSyllabusModule, InstitutionDepartment } from '@/types/institution';
 import type { Link } from '@/types/ui';
 import { Head, router } from '@inertiajs/vue3';
 import { IconName } from '@/enums/icons';
@@ -24,18 +24,18 @@ const { institutionDepartment, courseSyllabus } = props;
 const canViewModules = hasAbility(['viewAny:course-syllabus-modules', 'view:course-syllabus-modules']);
 const canCreateModule = hasAbility('create:course-syllabus-modules');
 const canUpdateModule = hasAbility('update:course-syllabus-modules');
-const modulesList = ref<SyllabusCourseModule[]>([]);
+const modulesList = ref<CourseSyllabusModule[]>([]);
 const {
     isLoading,
-    syllabusCourseModules,
-    listSyllabusCourseModules,
-    createSyllabusCourseModuleColumns,
+    courseSyllabusModules,
+    listCourseSyllabusModules,
+    createCourseSyllabusModuleColumns,
     onOpenModal,
-} = useSyllabusCourseModules();
+} = useCourseSyllabusModules();
 const institutionDepartmentId = computed(() => String(institutionDepartment?.id ?? ''));
 const courseSyllabusId = computed(() => String(courseSyllabus?.id ?? ''));
 const listUrl = computed(() =>
-    route('syllabus-course-modules.index', {
+    route('course-syllabus-modules.index', {
         institution_department: institutionDepartmentId.value,
         course_syllabus: courseSyllabusId.value,
     }),
@@ -51,6 +51,11 @@ const breadcrumbs: Array<Link> = [
         title: institutionDepartment?.attributes?.department,
         href: route('institution-departments.show', getIdParams(institutionDepartment?.id?.toString() ?? '')),
     },
+    {
+        transChoiceKey: 'syllabus',
+        transChoiceKeyIndex: 1,
+        href: route('institution-departments.show', getIdParams(institutionDepartment?.id?.toString() ?? '')),
+    },
     { title: courseSyllabus?.attributes?.title },
 ];
 
@@ -60,8 +65,8 @@ const loadSyllabusModules = async () => {
         return;
     }
 
-    await listSyllabusCourseModules(institutionDepartmentId.value, courseSyllabusId.value);
-    modulesList.value = (syllabusCourseModules.value?.data ?? []) as SyllabusCourseModule[];
+    await listCourseSyllabusModules(institutionDepartmentId.value, courseSyllabusId.value);
+    modulesList.value = (courseSyllabusModules.value?.data ?? []) as CourseSyllabusModule[];
 };
 
 watch([institutionDepartmentId, courseSyllabusId], () => loadSyllabusModules(), { immediate: true });
@@ -120,11 +125,11 @@ watch([institutionDepartmentId, courseSyllabusId], () => loadSyllabusModules(), 
             <DataTable
                 v-else
                 :data="modulesList"
-                :columns="createSyllabusCourseModuleColumns((module) => onOpenModal(canUpdateModule, { courseSyllabusId: courseSyllabus.id ?? '' }, module), canUpdateModule)"
+                :columns="createCourseSyllabusModuleColumns((module) => onOpenModal(canUpdateModule, { courseSyllabusId: courseSyllabus.id ?? '' }, module), canUpdateModule)"
                 :show-archived-filter="false"
                 :on-create="() => onOpenModal(canCreateModule, { courseSyllabusId: courseSyllabus.id ?? '' })"
                 :disable-create="!canCreateModule"
-                :pagination="{ ...(syllabusCourseModules?.links ?? {}), ...(syllabusCourseModules?.meta ?? {}) }"
+                :pagination="{ ...(courseSyllabusModules?.links ?? {}), ...(courseSyllabusModules?.meta ?? {}) }"
                 :search-url="listUrl"
                 :use-api="true"
                 :api-fetch-action="loadSyllabusModules"

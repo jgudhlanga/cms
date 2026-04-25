@@ -68,10 +68,16 @@ const breadcrumbs = computed<Array<Link>>(() => [
         href: route('institution-departments.show', getIdParams(props.institutionDepartment?.id?.toString() ?? '')),
     },
     {
-        title: isEditMode.value
-            ? props.courseSyllabus?.attributes?.title
-            : `${trans('trans.create')} ${trans_choice('syllabus.course_syllabus', 1)}`,
+        transChoiceKey: 'syllabus',
+        transChoiceKeyIndex: 1,
+        href: route('institution-departments.show', getIdParams(props.institutionDepartment?.id?.toString() ?? '')),
     },
+    ...(isEditMode.value
+        ? [
+              { title: props.courseSyllabus?.attributes?.title },
+              { title: `${trans('trans.update')} ${trans_choice('syllabus.course_syllabus', 1)}` },
+          ]
+        : [{ title: `${trans('trans.create')} ${trans_choice('syllabus.course_syllabus', 1)}` }]),
 ]);
 
 const onSyllabusDocumentChange = (event: Event) => {

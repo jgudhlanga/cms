@@ -3,7 +3,7 @@
 namespace App\Repositories\Institution\interface;
 
 use App\DTO\Institution\CourseSyllabusDto;
-use App\Models\Institution\CourseSyllabus;
+use App\Models\Institution\Syllabus\CourseSyllabus;
 use App\Repositories\Base\Interface\IBaseRepository;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 

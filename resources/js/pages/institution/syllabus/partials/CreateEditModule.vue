@@ -2,12 +2,12 @@
 import BaseModal from '@/components/core/modal/BaseModal.vue';
 import BaseInput from '@/components/core/form/text/BaseInput.vue';
 import Code from '@/components/core/form/text/Code.vue';
-import { useSyllabusCourseModules } from '@/composables/institution/useSyllabusCourseModules';
+import { useCourseSyllabusModules } from '@/composables/institution/useCourseSyllabusModules';
 import { APP_MODULE_KEYS } from '@/lib/constants';
 import { clearFormErrors } from '@/lib/forms';
 import { getModalEdit, getModalParent } from '@/lib/alerts';
 import { useModalStore } from '@/store/core/useModalStore';
-import { SyllabusCourseModule, SyllabusCourseModuleParams } from '@/types/institution';
+import { CourseSyllabusModule, CourseSyllabusModuleParams } from '@/types/institution';
 import { useForm } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
 
@@ -17,8 +17,8 @@ interface Props {
 }
 
 const props = defineProps<Props>();
-const moduleRecord = ref<SyllabusCourseModule>();
-const form = useForm<SyllabusCourseModuleParams>({
+const moduleRecord = ref<CourseSyllabusModule>();
+const form = useForm<CourseSyllabusModuleParams>({
     course_syllabus_id: props.courseSyllabusId || null,
     title: '',
     code: '',
@@ -29,10 +29,10 @@ const form = useForm<SyllabusCourseModuleParams>({
 });
 
 const { modals } = useModalStore();
-const { formSchema, saveSyllabusCourseModule } = useSyllabusCourseModules();
+const { formSchema, saveCourseSyllabusModule } = useCourseSyllabusModules();
 
 const selectedSyllabusTitle = computed(() => {
-    const modalParent = getModalParent(APP_MODULE_KEYS.syllabus_course_modules);
+    const modalParent = getModalParent(APP_MODULE_KEYS.course_syllabus_modules);
     const parentCourseSyllabusId = Number(modalParent?.courseSyllabusId ?? props.courseSyllabusId);
 
     if (parentCourseSyllabusId !== props.courseSyllabusId) {
@@ -43,8 +43,8 @@ const selectedSyllabusTitle = computed(() => {
 });
 
 watch(modals!, () => {
-    moduleRecord.value = getModalEdit(APP_MODULE_KEYS.syllabus_course_modules);
-    const modalParent = getModalParent(APP_MODULE_KEYS.syllabus_course_modules);
+    moduleRecord.value = getModalEdit(APP_MODULE_KEYS.course_syllabus_modules);
+    const modalParent = getModalParent(APP_MODULE_KEYS.course_syllabus_modules);
     const parentCourseSyllabusId = Number(modalParent?.courseSyllabusId ?? props.courseSyllabusId);
 
     form.course_syllabus_id = parentCourseSyllabusId || null;
@@ -63,19 +63,19 @@ const save = () => {
         const fieldErrors = parsed.error.flatten().fieldErrors;
         Object.entries(fieldErrors).forEach(([field, errors]) => {
             if (errors?.length) {
-                form.setError(field as keyof SyllabusCourseModuleParams, errors[0]);
+                form.setError(field as keyof CourseSyllabusModuleParams, errors[0]);
             }
         });
         return;
     }
 
-    saveSyllabusCourseModule(form, moduleRecord.value?.id);
+    saveCourseSyllabusModule(form, moduleRecord.value?.id);
 };
 </script>
 
 <template>
     <BaseModal
-        :name="APP_MODULE_KEYS.syllabus_course_modules"
+        :name="APP_MODULE_KEYS.course_syllabus_modules"
         :title="`${moduleRecord ? $t('trans.update') : $t('trans.create')} ${$tChoice('syllabus.module', 1)}`"
         :on-form-action="save"
         :form="form"
