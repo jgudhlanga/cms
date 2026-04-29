@@ -27,11 +27,14 @@ const breadcrumbs: Array<Link> = [
 <template>
     <Head :title="$tChoice('enrolment', 2)" />
     <PageContainer :breadcrumbs="breadcrumbs">
-        <DataListTable :enrolments="enrolmentWithoutOLevel.data"  title="Entry Level Applications without OLevel results" />
+        <DataListTable :enrolments="enrolmentWithoutOLevel.data" :title="$t('trans.ui_entry_level_applications_without_olevel_results')" />
         <CustomSeparator classes="h-1 my-5" />
-        <DataListTable :enrolments="enrolmentWithFewerThanFive.data"  title="Entry Level Applications with OLevel results less than required 5" />
+        <DataListTable
+            :enrolments="enrolmentWithFewerThanFive.data"
+            :title="$t('trans.ui_entry_level_applications_with_olevel_results_less_than_requi')"
+        />
         <CustomSeparator classes="h-1 my-5" />
-        <DataListTable :enrolments="noApplicationsFeePaid.data"  title="Applications without application fee paid" />
+        <DataListTable :enrolments="noApplicationsFeePaid.data" :title="$t('trans.ui_applications_without_application_fee_paid')" />
         <CustomSeparator classes="h-1 my-5" />
     </PageContainer>
 </template>

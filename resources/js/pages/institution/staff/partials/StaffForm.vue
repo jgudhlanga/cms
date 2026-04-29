@@ -122,7 +122,7 @@ const onlyRoles = 'head-of-department,head-of-division,lecturer,lecturer-in-char
                     input-id="first_name"
                     :label="$t('trans.first_name')"
                     v-model="first_name"
-                    placeholder="enter firstname"
+                    :placeholder="$t('trans.ui_enter_firstname')"
                     :label-uppercase="true"
                     :is-required="true"
                     @input="clearFormErrors(form, 'first_name')"
@@ -131,14 +131,14 @@ const onlyRoles = 'head-of-department,head-of-division,lecturer,lecturer-in-char
                 <BaseInput
                     input-id="middle_name"
                     :label="$t('trans.middle_name')"
-                    placeholder="enter middlename"
+                    :placeholder="$t('trans.ui_enter_middlename')"
                     v-model="middle_name"
                     :label-uppercase="true"
                 />
                 <BaseInput
                     input-id="last_name"
                     :label="$t('trans.last_name')"
-                    placeholder="enter lastname / surname"
+                    :placeholder="$t('trans.ui_enter_lastname_surname')"
                     v-model="last_name"
                     :label-uppercase="true"
                     :is-required="true"
@@ -163,7 +163,7 @@ const onlyRoles = 'head-of-department,head-of-division,lecturer,lecturer-in-char
                 <BaseInput
                     input-id="employee_number"
                     :label="$t('trans.employee_number')"
-                    placeholder="enter EC Number"
+                    :placeholder="$t('trans.ui_enter_ec_number')"
                     v-model="employee_number"
                     :label-uppercase="true"
                     :is-required="true"
@@ -187,7 +187,7 @@ const onlyRoles = 'head-of-department,head-of-division,lecturer,lecturer-in-char
                 />
                 <PhoneNumber
                     v-model="phone_number"
-                    placeholder="enter phone number"
+                    :placeholder="$t('trans.ui_enter_phone_number')"
                     :label-uppercase="true"
                     :is-required="true"
                     @input="clearFormErrors(form, 'phone_number')"

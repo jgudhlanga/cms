@@ -197,15 +197,15 @@ const handleUploadFileChange = (event: any) => {
             <ContactDetails :form="form" />
             <NextOfKinDetails :form="form" />
             <BaseCard
-                title="Proof of Payment details"
-                description="Please provide a scanned copy of your proof of payment or bank deposit slip. Make sure the document is clear and fully visible, including the date, amount, and reference number, to avoid any delays in processing"
+                :title="$t('trans.ui_proof_of_payment_details')"
+                :description="$t('trans.ui_please_provide_a_scanned_copy_of_your_proof_of_payment_or_ba')"
             >
                 <div class="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
-                    <UploadProofOfPayment :form="form" label="Upload file" :handle-change="handleUploadFileChange" />
+                    <UploadProofOfPayment :form="form" :label="$t('trans.ui_upload_file')" :handle-change="handleUploadFileChange" />
                     <BaseInput
                         input-id="payment_reference"
-                        label="Payment reference"
-                        placeholder="enter payment reference"
+                        :label="$t('trans.ui_payment_reference_2')"
+                        :placeholder="$t('trans.ui_enter_payment_reference')"
                         v-model="payment_reference"
                         :is-required="true"
                         @input="clearFormErrors(form, 'payment_reference')"

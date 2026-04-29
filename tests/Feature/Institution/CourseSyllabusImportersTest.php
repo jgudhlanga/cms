@@ -86,10 +86,9 @@ it('imports course syllabuses and modules from syllabus xlsx', function () {
             'DEPARTMENT' => 'Engineering',
             'LEVEL' => 'Level 1',
             'COURSE_TITLE' => 'Civil Technology',
-            'COURSE_CODE' => 'CT-101',
-            'IMPLEMENTATION_YEAR' => '2026',
-            'MODULE_TITLE' => 'Module Intro',
-            'MODULE_CODE' => 'MOD-CT-101',
+            'COURSE_CODE' => 'CT/26/101',
+            'MODULE_TITLE' => '  Module Intro  ',
+            'MODULE_CODE' => '  MOD-CT-101  ',
         ],
     ];
 
@@ -102,7 +101,7 @@ it('imports course syllabuses and modules from syllabus xlsx', function () {
         ->and($moduleImport['results']['failed'])->toBe(0)
         ->and($moduleImport['results']['successful'])->toBe(1);
 
-    $courseSyllabus = CourseSyllabus::query()->where('code', 'CT-101')->first();
+    $courseSyllabus = CourseSyllabus::query()->where('code', 'CT/26/101')->first();
     expect($courseSyllabus)->not->toBeNull()
         ->and($courseSyllabus?->tenant_id)->toBe(1)
         ->and($courseSyllabus?->implementation_year)->toBe('2026');
@@ -110,6 +109,8 @@ it('imports course syllabuses and modules from syllabus xlsx', function () {
     $module = CourseSyllabusModule::query()->where('code', 'MOD-CT-101')->first();
     expect($module)->not->toBeNull()
         ->and($module?->tenant_id)->toBe(1)
+        ->and($module?->title)->toBe('Module Intro')
+        ->and($module?->code)->toBe('MOD-CT-101')
         ->and($module?->course_syllabus_id)->toBe($courseSyllabus?->id);
 });
 
@@ -121,7 +122,7 @@ it('skips existing syllabus and module records with matching codes', function ()
         'institution_department_id' => $context['institutionDepartment']->id,
         'department_level_course_id' => $context['departmentLevelCourse']->id,
         'title' => 'Existing Syllabus',
-        'code' => 'CT-102',
+        'code' => 'CT/25/102',
         'implementation_year' => '2025',
         'status' => 'active',
     ]);
@@ -130,7 +131,7 @@ it('skips existing syllabus and module records with matching codes', function ()
         'tenant_id' => 1,
         'course_syllabus_id' => $existingSyllabus->id,
         'title' => 'Existing Module',
-        'code' => 'MOD-CT-102',
+        'code' => 'MOD-CT-25-102',
         'shared' => false,
     ]);
 
@@ -139,10 +140,9 @@ it('skips existing syllabus and module records with matching codes', function ()
             'DEPARTMENT' => 'Engineering',
             'LEVEL' => 'Level 1',
             'COURSE_TITLE' => 'Civil Technology',
-            'COURSE_CODE' => 'CT-102',
-            'IMPLEMENTATION_YEAR' => '2026',
+            'COURSE_CODE' => 'CT/25/102',
             'MODULE_TITLE' => 'Updated Module Title',
-            'MODULE_CODE' => 'MOD-CT-102',
+            'MODULE_CODE' => 'MOD-CT-25-102',
         ],
     ];
 
@@ -168,8 +168,7 @@ it('fails syllabus row when relationship lookup cannot be resolved', function ()
             'DEPARTMENT' => 'Unknown Department',
             'LEVEL' => 'Level 1',
             'COURSE_TITLE' => 'Civil Technology',
-            'COURSE_CODE' => 'CT-404',
-            'IMPLEMENTATION_YEAR' => '2026',
+            'COURSE_CODE' => 'CT/26/404',
             'MODULE_TITLE' => 'Unknown Module',
             'MODULE_CODE' => 'MOD-CT-404',
         ],
@@ -178,5 +177,5 @@ it('fails syllabus row when relationship lookup cannot be resolved', function ()
     expect($import['results']['failed'])->toBe(1)
         ->and($import['results']['successful'])->toBe(0);
 
-    expect(CourseSyllabus::query()->where('code', 'CT-404')->exists())->toBeFalse();
+    expect(CourseSyllabus::query()->where('code', 'CT/26/404')->exists())->toBeFalse();
 });

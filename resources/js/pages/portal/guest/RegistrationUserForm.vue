@@ -61,7 +61,7 @@ const maintenanceMode = isItTrue(import.meta.env.VITE_MAINTENANCE_MODE);
 <template>
     <Head :title="$t('trans.application_form')" />
     <div class="flex justify-between bg-white">
-        <ComingSoonAnimated v-if="maintenanceMode" title="Sorry" message='Enrolment has been closed'/>
+        <ComingSoonAnimated v-if="maintenanceMode" :title="$t('trans.ui_sorry')" message='Enrolment has been closed'/>
         <div v-else class="flex w-full flex-col p-3 md:w-1/2 md:p-16">
             <form @submit.prevent="submitForm()" class="flex flex-col rounded-2xl p-10 shadow-md">
                 <div class="flex w-full items-center justify-center">
@@ -69,9 +69,9 @@ const maintenanceMode = isItTrue(import.meta.env.VITE_MAINTENANCE_MODE);
                         <AppLogo classes="flex justify-center border-2 border-white" />
                     </div>
                 </div>
-                <div class="text-primary mt-13 mb-7 flex items-center justify-center text-lg font-bold uppercase">Harare Polytechnic</div>
+                <div class="text-primary mt-13 mb-7 flex items-center justify-center text-lg font-bold uppercase">{{ $t('trans.ui_harare_polytechnic') }}</div>
                 <div class="mb-4 px-1 uppercase">
-                    Attention <code class="font-bold text-red-600">EcoCash</code> users: To avoid network failures, please use separate devices when
+                    {{ $t('trans.ui_attention') }} <code class="font-bold text-red-600">{{ $t('trans.ui_ecocash') }}</code> users: To avoid network failures, please use separate devices when
                     making your payments. Thank you for your cooperation.
                 </div>
                 <div class="flex w-full flex-col space-y-3">
@@ -79,7 +79,7 @@ const maintenanceMode = isItTrue(import.meta.env.VITE_MAINTENANCE_MODE);
                         input-id="first_name"
                         label=""
                         v-model="first_name"
-                        placeholder="ENTER FIRST NAME"
+                        :placeholder="$t('trans.ui_enter_first_name')"
                         :vertical-layout="false"
                         :label-uppercase="true"
                         :is-required="true"
@@ -89,7 +89,7 @@ const maintenanceMode = isItTrue(import.meta.env.VITE_MAINTENANCE_MODE);
                     <BaseInput
                         input-id="last_name"
                         label=""
-                        placeholder="ENTER SURNAME"
+                        :placeholder="$t('trans.ui_enter_surname')"
                         v-model="last_name"
                         :label-uppercase="true"
                         :is-required="true"
@@ -104,7 +104,7 @@ const maintenanceMode = isItTrue(import.meta.env.VITE_MAINTENANCE_MODE);
                         :label-uppercase="true"
                         :is-required="true"
                         :vertical-layout="false"
-                        placeholder="ENTER EMAIL"
+                        :placeholder="$t('trans.ui_enter_email')"
                         @input="clearFormErrors(form, 'email')"
                         :error="form.errors.email"
                     />
@@ -112,7 +112,7 @@ const maintenanceMode = isItTrue(import.meta.env.VITE_MAINTENANCE_MODE);
                         input-id="password"
                         label=""
                         :label-uppercase="true"
-                        placeholder="ENTER PASSWORD"
+                        :placeholder="$t('trans.ui_enter_password')"
                         v-model="password"
                         :type="TextFieldType.password"
                         :vertical-layout="false"
@@ -124,7 +124,7 @@ const maintenanceMode = isItTrue(import.meta.env.VITE_MAINTENANCE_MODE);
                         input-id="password_confirmation"
                         label=""
                         :label-uppercase="true"
-                        placeholder="CONFIRM PASSWORD"
+                        :placeholder="$t('trans.ui_confirm_password')"
                         v-model="password_confirmation"
                         :type="TextFieldType.password"
                         :is-required="true"
@@ -133,7 +133,7 @@ const maintenanceMode = isItTrue(import.meta.env.VITE_MAINTENANCE_MODE);
                         :error="form.errors.password_confirmation"
                     />
                     <div class="flex justify-end text-sm font-extralight text-red-600 lowercase dark:text-red-500" v-if="!passwordMatches">
-                        Password and Confirm Password do not match
+                        {{ $t('trans.ui_password_and_confirm_password_do_not_match') }}
                     </div>
                     <div class="mt-5 flex flex-col items-center justify-center space-y-3">
                         <BaseButton type="submit" class="w-full md:w-1/2" :processing="form.processing">

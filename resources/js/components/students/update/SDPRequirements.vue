@@ -44,7 +44,7 @@ onMounted(() => {
 
 <template>
     <HeadingSmall :title="$t('trans.read_write_required')" :description="$t('trans.read_write_required_description')" />
-    <div class="my-2 text-red-500 text-xs font-bold uppercase">This course is only for students with no 5 O levels</div>
+    <div class="my-2 text-xs font-bold text-red-500 uppercase">{{ $t('trans.ui_this_course_is_only_for_students_with_no_5_o_levels') }}</div>
     <BaseCheckbox
         v-if="!isViewOnly"
         input-id="read_write_acknowledged"

@@ -1,11 +1,7 @@
-<script setup lang="ts">
-
-</script>
+<script setup lang="ts"></script>
 
 <template>
-  List Apprentices
+    {{ $t('trans.ui_list_apprentices') }}
 </template>
 
-<style scoped>
-
-</style>
+<style scoped></style>

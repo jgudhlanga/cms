@@ -1,3 +1,3 @@
 <script setup lang="ts"></script>
 
-<template>User Preferences</template>
+<template>{{ $t('trans.ui_user_preferences') }}</template>

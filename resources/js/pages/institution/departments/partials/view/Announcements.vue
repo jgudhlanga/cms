@@ -1,7 +1,6 @@
 <script lang="ts" setup>
-import { computed, ref } from 'vue';
-import HeadingSmall from '@/components/core/util/HeadingSmall.vue';
 import Heading from '@/components/core/util/Heading.vue';
+import { computed, ref } from 'vue';
 
 const searchQuery = ref('');
 const selectedCategory = ref('');
@@ -45,18 +44,18 @@ const filteredNotices = computed(() => {
 </script>
 <template>
     <div class="flex flex-col py-6">
-        <Heading title="Department Notice Board" description="Stay updated with the latest college announcements" />
+        <Heading :title="$t('trans.ui_department_notice_board')" :description="$t('trans.ui_stay_updated_with_the_latest_college_announcements')" />
         <!-- Search and Filter -->
         <section class="flex flex-col py-6">
             <div class="mb-6 flex flex-col items-center justify-between gap-4 md:flex-row">
                 <input
                     v-model="searchQuery"
                     type="text"
-                    placeholder="Search notices..."
+                    :placeholder="$t('trans.ui_search_notices')"
                     class="w-full rounded-xl border border-gray-300 px-4 py-2 shadow-sm md:w-1/2"
                 />
                 <select v-model="selectedCategory" class="w-full rounded-xl border border-gray-300 px-4 py-2 shadow-sm md:w-1/4">
-                    <option value="">All Categories</option>
+                    <option value="">{{ $t('trans.ui_all_categories') }}</option>
                     <option v-for="cat in categories" :key="cat" :value="cat">
                         {{ cat }}
                     </option>

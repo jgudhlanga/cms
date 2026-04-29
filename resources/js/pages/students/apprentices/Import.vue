@@ -1,7 +1,7 @@
 <script setup lang="ts"></script>
 
 <template>
-    Import Apprentices
+    {{ $t('trans.ui_import_apprentices') }}
 </template>
 
 <style scoped></style>

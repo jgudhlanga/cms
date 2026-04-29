@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useInstitution } from '@/composables/institution/useInstitution';
 import { icons } from '@/lib/icons';
 import { hasAbility } from '@/lib/permissions';
+import StudentsPerClass from '@/pages/institution/academicCalendars/partials/StudentsPerClass.vue';
 import LinkApplicationStepsToDepartment from '@/pages/institution/departments/partials/LinkApplicationStepsToDepartment.vue';
 import LinkCoursesToDepartment from '@/pages/institution/departments/partials/LinkCoursesToDepartment.vue';
 import LinkLevelsToDepartment from '@/pages/institution/departments/partials/LinkLevelsToDepartment.vue';
@@ -17,7 +18,6 @@ import { SelectOption } from '@/types/utils';
 import { Head, router, useForm } from '@inertiajs/vue3';
 import { storeToRefs } from 'pinia';
 import { computed, ref, watch } from 'vue';
-import StudentsPerClass from '@/pages/institution/academicCalendars/partials/StudentsPerClass.vue';
 
 interface Props {
     department: InstitutionDepartment;
@@ -67,12 +67,12 @@ const visibleTabs = computed(() => {
     <Head :title="$tChoice('trans.department', 2)" />
     <PageContainer :breadcrumbs="breadcrumbs" :back-url="route('institution.index')">
         <template #backNavigationLeading v-if="canViewAnyDepartmentMetaData">
-            <div class="flex w-full grow min-w-0">
+            <div class="flex w-full min-w-0 grow">
                 <InstitutionDepartmentComboSelect
-                    class="flex-1 min-w-0"
+                    class="min-w-0 flex-1"
                     :form="switchDepartmentForm"
                     v-model="selectedDepartment"
-                    label="Change Department"
+                    :label="$t('trans.ui_change_department')"
                     :vertical-layout="false"
                     :label-uppercase="true"
                     width-class="w-full"

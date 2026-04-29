@@ -97,7 +97,7 @@ onMounted(async () => {
         <div v-else class="flex h-full w-full flex-col justify-around space-y-6 p-6">
             <div class="mx-auto flex flex-col items-center justify-center">
                 <div class="text-destructive mx-auto flex items-center justify-center font-bold uppercase">
-                    Please check for the available Courses in the advert before making a payment
+                    {{ $t('trans.ui_please_check_for_the_available_courses_in_the_advert_before') }}
                 </div>
                 <BaseAlert
                     :description="$t('trans.registration_fee_payment_description', { amount: `USD${formatCurrency(registrationFeeAmount)}` })"

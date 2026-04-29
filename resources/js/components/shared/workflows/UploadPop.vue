@@ -65,7 +65,7 @@ const handleFileChange = (event: any) => {
                     @change="handleFileChange"
                 />
                 <!-- IMAGE PREVIEW -->
-                <img v-if="uploadPreview && fileType?.startsWith('image/')" class="w-30" :src="uploadPreview" alt="Image preview" />
+                <img v-if="uploadPreview && fileType?.startsWith('image/')" class="w-30" :src="uploadPreview" :alt="$t('trans.ui_image_preview')" />
                 <!-- PDF PREVIEW -->
                 <iframe v-else-if="uploadPreview && fileType === 'application/pdf'" :src="uploadPreview" class="h-64 w-full border"></iframe>
                 <!-- GENERIC FILE PREVIEW -->

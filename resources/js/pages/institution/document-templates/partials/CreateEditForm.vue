@@ -154,7 +154,7 @@ const saveForm = () => {
                     v-if="logon1Preview && logo1FileType?.startsWith('image/')"
                     class="h-30 w-30 rounded-full"
                     :src="logon1Preview"
-                    alt="Image preview"
+                    :alt="$t('trans.ui_image_preview')"
                 />
             </div>
             <div class="flex w-full flex-col space-y-2">
@@ -170,7 +170,7 @@ const saveForm = () => {
                     v-if="logon2Preview && logo2FileType?.startsWith('image/')"
                     class="h-30 w-30 rounded-full"
                     :src="logon2Preview"
-                    alt="Image preview"
+                    :alt="$t('trans.ui_image_preview')"
                 />
             </div>
         </div>

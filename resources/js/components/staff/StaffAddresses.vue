@@ -1,3 +1,3 @@
 <script setup lang="ts"></script>
 
-<template>Addresses</template>
+<template>{{ $tChoice('trans.address', 2) }}</template>

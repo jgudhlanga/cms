@@ -8,6 +8,7 @@ import { hasAbility } from '@/lib/permissions';
 import { getIdParams } from '@/lib/utils';
 import ByAcademicLevelResults from '@/pages/institution/enrolments/partials/ByAcademicLevelResults.vue';
 import ClassSize from '@/pages/institution/enrolments/partials/ClassSize.vue';
+import DeficitInClassSize from '@/pages/institution/enrolments/partials/DeficitInClassSize.vue';
 import EnrolmentFilters from '@/pages/institution/enrolments/partials/EnrolmentFilters.vue';
 import GeneralEnrolmentClassList from '@/pages/institution/enrolments/partials/GeneralEnrolmentClassList.vue';
 import GeneralEnrolments from '@/pages/institution/enrolments/partials/GeneralEnrolments.vue';
@@ -21,7 +22,6 @@ import { Link } from '@/types/ui';
 import { SelectOption } from '@/types/utils';
 import { Head, router, useForm } from '@inertiajs/vue3';
 import { computed, onMounted, ref } from 'vue';
-import DeficitInClassSize from '@/pages/institution/enrolments/partials/DeficitInClassSize.vue';
 
 interface Props {
     department: InstitutionDepartment;
@@ -201,10 +201,10 @@ async function createProvisionalClass() {
                 <ScoringFormula :class-size="classSize" v-if="!classListIsCreated(enrolments)" />
                 <div class="flex justify-between" v-else>
                     <div class="flex items-center space-x-2"></div>
-                   <div class="flex items-center space-x-2">
-                       <ClassSize :class-size="classSize" />
-                       <DeficitInClassSize :deficit="classSize" />
-                   </div>
+                    <div class="flex items-center space-x-2">
+                        <ClassSize :class-size="classSize" />
+                        <DeficitInClassSize :deficit="classSize" />
+                    </div>
                 </div>
             </template>
             <template v-else-if="!noData && !isItTrue(levelRequirements?.attributes?.isOLevelRequired)">
@@ -221,7 +221,7 @@ async function createProvisionalClass() {
                     v-if="!noData && Number(classSize) > 0 && !classListIsCreated(enrolments)"
                     type="button"
                     :variant="ColorVariant.primary"
-                    title="Create provisional class"
+                    :title="$t('trans.ui_create_provisional_class')"
                     classes="rounded-full normalize"
                     @click="createProvisionalClass"
                     :disabled="classListIsCreated(enrolments)"

@@ -5,21 +5,21 @@ import BaseAlert from '@/components/core/alert/BaseAlert.vue';
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import LabelValue from '@/components/core/util/LabelValue.vue';
 import { useUtils } from '@/composables/core/useUtils';
+import { useStudents } from '@/composables/students/useStudents';
 import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
 import { TypeVariant } from '@/enums/type-variants';
 import { DISABILITY_OPTIONS } from '@/lib/constants';
 import { hasAbility } from '@/lib/permissions';
+import OfferLetterAnchor from '@/pages/portal/student/partials/OfferLetterAnchor.vue';
 import { AuthObject } from '@/types/data-pagination';
 import { Enrolment } from '@/types/enrolments';
+import { Contact } from '@/types/shared';
 import { Student } from '@/types/students';
 import { Link } from '@/types/ui';
 import { User } from '@/types/users';
 import { ValueAndLabel } from '@/types/utils';
 import { computed } from 'vue';
-import OfferLetterAnchor from '@/pages/portal/student/partials/OfferLetterAnchor.vue';
-import { useStudents } from '@/composables/students/useStudents';
-import { Contact } from '@/types/shared';
 
 interface Props {
     user: User;
@@ -99,7 +99,7 @@ const personalDetails = computed<ValueAndLabel[]>(() => {
             </BaseCard>
             <div class="flex flex-col space-y-3" v-if="programs && programs.length > 0">
                 <div class="flex justify-between">
-                    <HeadingSmall title="Student Programs" />
+                    <HeadingSmall :title="$t('trans.ui_student_programs')" />
                     <div class="flex space-x-2">
                         <span>{{ $tChoice('trans.student_number', 1) }}:</span>
                         <BaseTag :variant="ColorVariant.success" :title="student.attributes.studentNumber ?? '---'" />
@@ -134,7 +134,7 @@ const personalDetails = computed<ValueAndLabel[]>(() => {
                                     <OfferLetterAnchor v-if="hasOfferLetter(application)" :student-program-id="String(application.id)" />
                                     <BaseButton
                                         v-if="hasAbility('update:student-programs')"
-                                        title="Edit"
+                                        :title="$t('trans.edit')"
                                         :size="ButtonSize.xs"
                                         classes="rounded-full"
                                         :variant="ColorVariant.primary_outline"

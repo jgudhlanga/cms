@@ -9,7 +9,7 @@ sixteenYearsAgo.setFullYear(currentDate.getFullYear() - 15);
 <template>
     <BaseDatePicker
         input-id="payment_date"
-        label="Payment Date"
+        :label="$t('trans.ui_payment_date')"
         v-bind="$attrs"
         :enable-time-picker="false"
         prevent-min-max-navigation

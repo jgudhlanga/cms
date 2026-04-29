@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import StudentPageHeader from '@/components/shared/students/StudentPageHeader.vue';
+import ProgramDetails from '@/components/students/view/ProgramDetails.vue';
 import ViewContactDetails from '@/components/students/view/ViewContactDetails.vue';
 import ViewNextOfKinDetails from '@/components/students/view/ViewNextOfKinDetails.vue';
 import ViewPersonalDetails from '@/components/students/view/ViewPersonalDetails.vue';
-import ProgramDetails from '@/components/students/view/ProgramDetails.vue';
 import { useUtils } from '@/composables/core/useUtils';
 import { useStudentPortal } from '@/composables/students/useStudentPortal';
 import { useCreateApplicationFormStore } from '@/store/portal/useCreateApplicationFormStore';
@@ -158,12 +158,12 @@ const form = useForm<CreateApplicationParams>({
 });
 
 const save = async () => {
-   // selectLevel(String(form.level_id));
+    // selectLevel(String(form.level_id));
     updateCreateForm(form);
     saveApplication(form);
 };
 onMounted(() => {
-   // selectLevel(String(form.level_id));
+    // selectLevel(String(form.level_id));
     /*ToastService.warning('Sorry, The registration has ended for now. Contact the administration for more info.');
     navigateTo(route('login'));
     return;*/
@@ -173,10 +173,7 @@ onMounted(() => {
     <StudentPageHeader />
     <div class="mt-20 flex w-full flex-col bg-white px-5 md:p-0">
         <div class="flex w-full flex-col space-y-6 md:mx-auto md:w-7/8">
-            <BaseAlert
-                description="Before submitting, carefully review your application details to ensure everything is accurate and up to date. Check your personal information, contact details, and any required details. Once you confirm the information is correct, you can proceed to submit your application."
-                :type="TypeVariant.success"
-            />
+            <BaseAlert :description="$t('trans.ui_before_submitting_carefully_review_your_application_details')" :type="TypeVariant.success" />
             <ViewPersonalDetails :personal="personal" :title="$t('trans.personal_details')" />
             <ViewContactDetails :contacts="contacts" :title="$t('trans.contact_details')" />
             <ViewNextOfKinDetails :next-of-kin="nextOfKin" :title="$t('trans.next_of_kin')" />

@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { useUtils } from '@/composables/core/useUtils';
 import { useEnrolments } from '@/composables/students/useEnrolments';
+import { IconName } from '@/enums/icons';
 import { DepartmentLevel } from '@/types/department-meta-data';
 import { EnrolmentApplication } from '@/types/enrolments';
 import { computed } from 'vue';
-import { IconName } from '@/enums/icons';
 
 interface Props {
     level: DepartmentLevel;
@@ -45,8 +45,8 @@ const groupedApplications = groupByClassListType(applications);
                     <th class="j-th text-left">{{ $tChoice('trans.name', 1) }}</th>
                     <th class="j-th text-left">{{ $tChoice('trans.phone', 1) }}</th>
                     <th class="j-th text-center">{{ $tChoice('trans.date', 1) }}</th>
-                    <th class="j-th text-center">Sitting Count</th>
-                    <th class="j-th text-center">First Sitting</th>
+                    <th class="j-th text-center">{{ $t('trans.ui_sitting_count') }}</th>
+                    <th class="j-th text-center">{{ $t('trans.ui_first_sitting') }}</th>
                     <th class="j-th text-center" v-for="subject in requirementSubjects" :key="`tr_${subject.id}`">{{ subject?.attributes?.name }}</th>
                     <th class="j-th text-center" v-for="sub in levelRequirements?.attributes.otherSubjectsCount" :key="`${sub}th_other_sub`">
                         {{ `${$t('trans.other')} ${Number(sub)}` }}
@@ -130,7 +130,7 @@ const groupedApplications = groupByClassListType(applications);
                         </td>
                         <td class="j-td text-center">{{ application.totalScore ?? '-&#45;&#45;' }}</td>
                         <td class="j-td text-center">
-                            <span class="text-red-800">error</span>
+                            <span class="text-red-800">{{ $t('trans.ui_error') }}</span>
                         </td>
                     </tr>
                 </template>

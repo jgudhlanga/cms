@@ -81,7 +81,7 @@ const { navigateTo } = useUtils();
             <div class="flex items-center justify-between border-b border-gray-100 py-3">
                 <div class="flex items-center space-x-3">
                     <BaseIcon :name="IconName.graduation_cape" class="text-primary" />
-                    <span class="text-accent-foreground font-medium">Current Level</span>
+                    <span class="text-accent-foreground font-medium">{{ $t('trans.ui_current_level') }}</span>
                 </div>
                 <span class="status-badge" :class="levelBadgeClass">
                     {{ enrolmentLookup.currentLevel || 'None' }}
@@ -92,7 +92,7 @@ const { navigateTo } = useUtils();
             <div class="flex items-center justify-between border-b border-gray-100 py-3">
                 <div class="flex items-center space-x-3">
                     <BaseIcon :name="IconName.file" class="text-purple-600" />
-                    <span class="text-accent-foreground font-medium">Current Applications</span>
+                    <span class="text-accent-foreground font-medium">{{ $t('trans.ui_current_applications') }}</span>
                 </div>
                 <div class="flex items-center space-x-2">
                     <div class="flex -space-x-2">
@@ -134,7 +134,7 @@ const { navigateTo } = useUtils();
                 @click="navigateTo(route('enrolments.show-profile', { student: enrolmentLookup?.studentId }))"
                 v-if="profileFound"
                 :variant="ColorVariant.success_outline"
-                title="View Full Profile"
+                :title="$t('trans.ui_view_full_profile')"
                 classes="rounded-full"
             >
                 <BaseIcon :name="IconName.user" />
@@ -143,7 +143,7 @@ const { navigateTo } = useUtils();
                 @click="navigateTo(route('enrolments.create-profile', { payment_mode: 'cash' }))"
                 v-else
                 :variant="ColorVariant.danger_outline"
-                title="Create Enrolment"
+                :title="$t('trans.ui_create_enrolment')"
                 classes="rounded-full"
             >
                 <BaseIcon :name="IconName.user_add" />

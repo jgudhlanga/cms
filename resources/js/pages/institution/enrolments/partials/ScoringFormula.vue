@@ -8,32 +8,38 @@ defineProps<{ classSize: string | number }>();
 
 <template>
     <div class="flex flex-col">
-        <BaseAlert
-            :type="TypeVariant.info"
-            description="Each student's score is derived from their exam results using a weighted formula where lower scores indicate better performance."
-        >
+        <BaseAlert :type="TypeVariant.info" :description="$t('trans.ui_each_student_s_score_is_derived_from_their_exam_results_usin')">
             <div class="mt-3 flex flex-col">
                 <div class="text-accent-foreground flex flex-wrap items-center justify-between gap-2 text-xs">
                     <div class="flex">
-                        <span class="font-semibold">Scoring Formula:</span>
-                        <span>• Single Sitting → <b>A=1</b>, <b>B=2</b>, <b>C=3</b></span>
-                        <span>• Multiple Sittings →</span>
-                        <span> <b>Year₁:</b> A=1, B=2, C=3; <b>Year₂:</b> A=2, B=3, C=4; <b>Year₃:</b> A=3, B=4, C=5 </span>(e.t.c)
+                        <span class="font-semibold">{{ $t('trans.ui_scoring_formula') }}</span>
+                        <span
+                            >{{ $t('trans.ui_single_sitting') }}<b>{{ $t('trans.ui_a_1') }}</b
+                            >, <b>{{ $t('trans.ui_b_2') }}</b
+                            >, <b>{{ $t('trans.ui_c_3') }}</b></span
+                        >
+                        <span>{{ $t('trans.ui_multiple_sittings') }}</span>
+                        <span>
+                            <b>{{ $t('trans.ui_year') }}</b> {{ $t('trans.ui_a_1_b_2_c_3') }}<b>{{ $t('trans.ui_year_2') }}</b>
+                            {{ $t('trans.ui_a_2_b_3_c_4') }}<b>{{ $t('trans.ui_year_3') }}</b> {{ $t('trans.ui_a_3_b_4_c_5') }}</span
+                        >{{ $t('trans.ui_e_t_c') }}
                     </div>
                     <ClassSize :class-size="classSize" />
                 </div>
                 <div class="mt-3 flex flex-wrap gap-2">
-                    <div class="flex items-center gap-2 rounded-full border border-green-100 bg-white py-2 px-4">
+                    <div class="flex items-center gap-2 rounded-full border border-green-100 bg-white px-4 py-2">
                         <div class="h-5 w-20 rounded-full bg-green-100"></div>
-                        <div class="text-[11px] uppercase text-green-600">Provisional class list</div>
+                        <div class="text-[11px] text-green-600 uppercase">{{ $t('trans.ui_provisional_class_list') }}</div>
                     </div>
-                    <div class="flex items-center gap-2 rounded-full border border-purple-100 bg-white py-2 px-4">
+                    <div class="flex items-center gap-2 rounded-full border border-purple-100 bg-white px-4 py-2">
                         <div class="h-5 w-20 rounded-full bg-purple-100"></div>
-                        <div class="text-[11px] uppercase text-purple-600">Waiting list</div>
+                        <div class="text-[11px] text-purple-600 uppercase">{{ $t('trans.ui_waiting_list') }}</div>
                     </div>
-                    <div class="flex items-center gap-2 rounded-full border border-red-100 bg-white py-2 px-4">
+                    <div class="flex items-center gap-2 rounded-full border border-red-100 bg-white px-4 py-2">
                         <div class="h-5 w-20 rounded-full bg-red-100"></div>
-                        <div class="text-[11px] uppercase text-red-600">Faulty applications (missing o level subjects, no payment)</div>
+                        <div class="text-[11px] text-red-600 uppercase">
+                            {{ $t('trans.ui_faulty_applications_missing_o_level_subjects_no_payment') }}
+                        </div>
                     </div>
                 </div>
             </div>

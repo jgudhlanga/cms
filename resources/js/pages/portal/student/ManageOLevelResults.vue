@@ -81,13 +81,16 @@ const saveSubjectResult = (subjectId: string) => {
 const verificationMode = isItTrue(import.meta.env.VITE_VERIFICATION_MODE);
 </script>
 <template>
-    <Head title="Manage O-Level" />
+    <Head :title="$t('trans.ui_manage_o_level')" />
     <PageContainer :breadcrumbs="breadcrumbs">
         <div class="my-6 flex items-center justify-between">
-            <HeadingSmall title="O-Level Results" description="List of O-Level subjects and grades attained by a student" />
+            <HeadingSmall
+                :title="$t('trans.ui_o_level_results')"
+                :description="$t('trans.ui_list_of_o_level_subjects_and_grades_attained_by_a_student')"
+            />
             <BaseButton classes="rounded-full" :variant="ColorVariant.primary_outline" @click="navigateTo(route('portal.list-o-levels'))">
                 <BaseIcon :name="IconName.back" />
-                <span>Back</span>
+                <span>{{ $t('trans.back') }}</span>
             </BaseButton>
         </div>
         <div class="flex flex-col space-y-4" v-if="oLevelSubjectResults && oLevelSubjectResults?.length > 0">
@@ -107,7 +110,7 @@ const verificationMode = isItTrue(import.meta.env.VITE_VERIFICATION_MODE);
                     <div class="p-4">
                         <div class="grid grid-cols-1 items-center gap-4 md:grid-cols-4">
                             <div>
-                                <p class="text-xs font-medium tracking-wide text-gray-500 uppercase">Year</p>
+                                <p class="text-xs font-medium tracking-wide text-gray-500 uppercase">{{ $tChoice('trans.year', 1) }}</p>
                                 <div class="mt-1">
                                     <SelectYear
                                         :input-id="`year_${row.id}`"
@@ -124,7 +127,7 @@ const verificationMode = isItTrue(import.meta.env.VITE_VERIFICATION_MODE);
                                 </div>
                             </div>
                             <div>
-                                <p class="text-xs font-medium tracking-wide text-gray-500 uppercase">Sitting</p>
+                                <p class="text-xs font-medium tracking-wide text-gray-500 uppercase">{{ $tChoice('trans.sitting', 1) }}</p>
                                 <div class="mt-1 flex w-full flex-col">
                                     <SelectSitting
                                         class="flex w-full"
@@ -139,7 +142,7 @@ const verificationMode = isItTrue(import.meta.env.VITE_VERIFICATION_MODE);
                                 </div>
                             </div>
                             <div>
-                                <p class="text-xs font-medium tracking-wide text-gray-500 uppercase">Grade</p>
+                                <p class="text-xs font-medium tracking-wide text-gray-500 uppercase">{{ $tChoice('trans.grade', 1) }}</p>
                                 <div class="mt-1">
                                     <SpinnerComponent class="flex w-full items-center justify-center" v-if="isLoading" />
                                     <template v-else>
@@ -171,7 +174,12 @@ const verificationMode = isItTrue(import.meta.env.VITE_VERIFICATION_MODE);
                                 </div>
                             </div>
                             <div class="justify-self-end-safe" v-if="!verificationMode">
-                                <BaseButton :size="ButtonSize.sm" :variant="ColorVariant.primary" class="w-full rounded-full md:w-fit" title="Save" />
+                                <BaseButton
+                                    :size="ButtonSize.sm"
+                                    :variant="ColorVariant.primary"
+                                    class="w-full rounded-full md:w-fit"
+                                    :title="$t('trans.save')"
+                                />
                             </div>
                         </div>
                     </div>

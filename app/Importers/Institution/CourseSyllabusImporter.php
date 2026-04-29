@@ -30,10 +30,16 @@ class CourseSyllabusImporter implements IngestDefinition
             ->beforeRow(function (array &$row): void {
                 $row['__TENANT_ID'] = self::TENANT_ID;
                 self::logValidationIssues($row);
+
+                $courseCode = trim((string) ($row['COURSE_CODE'] ?? ''));
+
+                if ($courseCode !== '') {
+                    $row['__IMPLEMENTATION_YEAR'] = self::implementationYearFromCourseCode($courseCode);
+                }
             })
             ->map('COURSE_TITLE', 'title')
             ->map('COURSE_CODE', 'code')
-            ->map('IMPLEMENTATION_YEAR', 'implementation_year')
+            ->map('__IMPLEMENTATION_YEAR', 'implementation_year')
             ->map('__TENANT_ID', 'tenant_id')
             ->mapAndTransform(
                 'DEPARTMENT',
@@ -54,7 +60,6 @@ class CourseSyllabusImporter implements IngestDefinition
                 'LEVEL' => ['required', 'string'],
                 'COURSE_TITLE' => ['required', 'string'],
                 'COURSE_CODE' => ['required', 'string'],
-                'IMPLEMENTATION_YEAR' => ['required'],
             ]);
     }
 
@@ -141,9 +146,28 @@ class CourseSyllabusImporter implements IngestDefinition
         return mb_strtolower(trim($value));
     }
 
+    private static function implementationYearFromCourseCode(string $courseCode): string
+    {
+        $parts = array_map(static fn (string $value): string => trim($value), explode('/', $courseCode));
+        $yearSegment = $parts[1] ?? null;
+
+        if ($yearSegment === null || ! preg_match('/^\d{2}$/', $yearSegment)) {
+            Log::warning('Syllabus import lookup failed: unable to derive implementation year from course code.', [
+                'tenant_id' => self::TENANT_ID,
+                'course_code' => $courseCode,
+            ]);
+
+            throw new RuntimeException(
+                "Invalid COURSE_CODE '{$courseCode}'. Expected second slash-separated segment to be a two-digit year."
+            );
+        }
+
+        return "20{$yearSegment}";
+    }
+
     private static function logValidationIssues(array $row): void
     {
-        $requiredFields = ['DEPARTMENT', 'LEVEL', 'COURSE_TITLE', 'COURSE_CODE', 'IMPLEMENTATION_YEAR'];
+        $requiredFields = ['DEPARTMENT', 'LEVEL', 'COURSE_TITLE', 'COURSE_CODE'];
         $missingFields = [];
 
         foreach ($requiredFields as $field) {

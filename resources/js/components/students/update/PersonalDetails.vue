@@ -51,16 +51,16 @@ const { isNativeCitizen } = useUtils();
                 input-id="first_name"
                 :label="$t('trans.first_name')"
                 v-model="first_name"
-                placeholder="enter firstname"
+                :placeholder="$t('trans.ui_enter_firstname')"
                 :is-required="true"
                 @input="clearFormErrors(form, 'first_name')"
                 :error="form.errors.first_name"
             />
-            <BaseInput input-id="middle_name" :label="$t('trans.middle_name')" placeholder="enter middlename" v-model="middle_name" />
+            <BaseInput input-id="middle_name" :label="$t('trans.middle_name')" :placeholder="$t('trans.ui_enter_middlename')" v-model="middle_name" />
             <BaseInput
                 input-id="last_name"
                 :label="$t('trans.last_name')"
-                placeholder="enter lastname / surname"
+                :placeholder="$t('trans.ui_enter_lastname_surname')"
                 v-model="last_name"
                 :is-required="true"
                 @input="clearFormErrors(form, 'last_name')"
@@ -100,7 +100,7 @@ const { isNativeCitizen } = useUtils();
         </div>
         <div class="mt-3 flex w-full flex-col items-start">
             <BaseRadioGroup
-                label="Disability?"
+                :label="$t('trans.disability')"
                 class="flex items-center justify-center"
                 :options="disabilityOptions"
                 :label-uppercase="true"

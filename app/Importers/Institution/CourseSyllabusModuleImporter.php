@@ -28,8 +28,16 @@ class CourseSyllabusModuleImporter implements IngestDefinition
                 $row['__TENANT_ID'] = self::TENANT_ID;
                 self::logValidationIssues($row);
             })
-            ->map('MODULE_TITLE', 'title')
-            ->map('MODULE_CODE', 'code')
+            ->mapAndTransform(
+                'MODULE_TITLE',
+                'title',
+                static fn (string $moduleTitle): string => trim($moduleTitle)
+            )
+            ->mapAndTransform(
+                'MODULE_CODE',
+                'code',
+                static fn (string $moduleCode): string => trim($moduleCode)
+            )
             ->map('__TENANT_ID', 'tenant_id')
             ->mapAndTransform(
                 'COURSE_CODE',

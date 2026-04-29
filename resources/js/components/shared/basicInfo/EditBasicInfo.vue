@@ -8,6 +8,7 @@ import RaceComboSelect from '@/components/core/form/combobox/RaceComboSelect.vue
 import ReligionComboSelect from '@/components/core/form/combobox/ReligionComboSelect.vue';
 import TitleComboSelect from '@/components/core/form/combobox/TitleComboSelect.vue';
 import DateOfBirth from '@/components/core/form/date/DateOfBirth.vue';
+import BaseRadioGroup from '@/components/core/form/radio-group/BaseRadioGroup.vue';
 import IdNumber from '@/components/core/form/text/IdNumber.vue';
 import PassportNumber from '@/components/core/form/text/PassportNumber.vue';
 import BaseModal from '@/components/core/modal/BaseModal.vue';
@@ -21,7 +22,6 @@ import { useModalStore } from '@/store/core/useModalStore';
 import { Student, StudentPersonalDetailParams } from '@/types/students';
 import { useForm } from '@inertiajs/vue3';
 import { ref, watch } from 'vue';
-import BaseRadioGroup from '@/components/core/form/radio-group/BaseRadioGroup.vue';
 
 const { isNativeCitizen } = useUtils();
 const student = ref<Student | null>(null);
@@ -165,7 +165,7 @@ const save = async () => {
                     input-id="denomination"
                     :label="$tChoice('trans.denomination', 1)"
                     v-model="form.denomination"
-                    placeholder="enter denomination"
+                    :placeholder="$t('trans.ui_enter_denomination')"
                     :label-uppercase="true"
                     :error="form.errors.denomination"
                 />
@@ -173,7 +173,7 @@ const save = async () => {
                     input-id="height"
                     :label="$t('trans.height')"
                     v-model="form.height"
-                    placeholder="enter height"
+                    :placeholder="$t('trans.ui_enter_height')"
                     :label-uppercase="true"
                     :error="form.errors.height"
                 />
@@ -181,12 +181,12 @@ const save = async () => {
                     input-id="weight"
                     :label="$t('trans.weight')"
                     v-model="form.weight"
-                    placeholder="enter weight"
+                    :placeholder="$t('trans.ui_enter_weight')"
                     :label-uppercase="true"
                     :error="form.errors.weight"
                 />
                 <BaseRadioGroup
-                    label="Disability?"
+                    :label="$t('trans.disability')"
                     class="flex items-center justify-center"
                     :options="disabilityOptions"
                     v-model="form.disability_status"

@@ -1,3 +1,3 @@
 <script setup lang="ts"></script>
 
-<template>Contacts</template>
+<template>{{ $tChoice('trans.contact', 2) }}</template>

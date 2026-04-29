@@ -8,6 +8,6 @@ defineProps<{
 </script>
 
 <template>
-    <Head title="Profile" />
-    <div>Profile</div>
+    <Head :title="$tChoice('trans.profile', 1)" />
+    <div>{{ $tChoice('trans.profile', 1) }}</div>
 </template>

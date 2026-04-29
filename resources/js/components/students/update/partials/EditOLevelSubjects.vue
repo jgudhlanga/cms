@@ -189,7 +189,7 @@ const deleteCallback = async (resultId: string) => {
     <div v-if="additionalOtherSubjectsAllowed" class="mt-4 flex justify-center space-y-4">
         <BaseButton
             type="button"
-            title=" Add Other Subjects"
+            :title="$t('trans.ui_add_other_subjects')"
             classes="rounded-full"
             :variant="ColorVariant.primary_outline"
             @click="() => onCreateOrEdit(emptyEdit())"

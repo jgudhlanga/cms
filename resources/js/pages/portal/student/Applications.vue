@@ -7,14 +7,13 @@ import { useUtils } from '@/composables/core/useUtils';
 import { useStudents } from '@/composables/students/useStudents';
 import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
-import AddApplicationButton from '@/pages/portal/application/partials/AddApplicationButton.vue';
+import { CURRENT_INTAKE_PERIOD_ID } from '@/lib/constants';
 import OfferLetterAnchor from '@/pages/portal/student/partials/OfferLetterAnchor.vue';
 import { AuthObject } from '@/types/data-pagination';
 import { Enrolment } from '@/types/enrolments';
 import { Student } from '@/types/students';
 import { BreadcrumbItemInterface } from '@/types/ui';
 import { Head } from '@inertiajs/vue3';
-import { CURRENT_INTAKE_PERIOD_ID } from '@/lib/constants';
 
 interface Props {
     auth: AuthObject;
@@ -71,12 +70,12 @@ const breadcrumbs: BreadcrumbItemInterface[] = [{ transChoiceKey: 'dashboard', h
                     :icon-variant="ColorVariant.white"
                     :variant="ColorVariant.primary_outline"
                     @click="() => navigateTo(route('portal.add-program', { student: props.student.id }))"
-                    title="New Application"
+                    :title="$t('trans.ui_new_application')"
                 />
             </div>
         </div>-->
         <div class="flex w-full items-center justify-end" v-if="showCreateNewProgramButton(applications, CURRENT_INTAKE_PERIOD_ID)">
-<!--            <AddApplicationButton :student="student" />-->
+            <!--            <AddApplicationButton :student="student" />-->
         </div>
         <div v-if="applications && applications.length > 0" class="my-6 space-y-4">
             <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow" v-for="application in applications" :key="application.id">
@@ -88,7 +87,7 @@ const breadcrumbs: BreadcrumbItemInterface[] = [{ transChoiceKey: 'dashboard', h
                         </h3>
                         <div class="flex space-x-2" v-if="showEditProgramButton(application, CURRENT_INTAKE_PERIOD_ID)">
                             <BaseButton
-                                title="Edit"
+                                :title="$t('trans.edit')"
                                 :variant="ColorVariant.success_outline"
                                 :size="ButtonSize.xs"
                                 class="rounded-full"
@@ -117,7 +116,7 @@ const breadcrumbs: BreadcrumbItemInterface[] = [{ transChoiceKey: 'dashboard', h
                 <div class="flex justify-between space-x-2 p-4">
                     <BaseButton
                         type="button"
-                        title="View Application"
+                        :title="$t('trans.ui_view_application')"
                         :variant="ColorVariant.primary_outline"
                         classes="rounded-full"
                         :size="ButtonSize.xs"

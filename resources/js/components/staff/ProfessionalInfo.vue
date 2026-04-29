@@ -1,3 +1,3 @@
 <script setup lang="ts"></script>
 
-<template>Professional Info</template>
+<template>{{ $t('trans.ui_professional_info') }}</template>

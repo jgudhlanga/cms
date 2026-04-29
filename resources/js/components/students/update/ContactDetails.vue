@@ -25,12 +25,12 @@ const { form } = props;
         <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
             <PhoneNumber
                 v-model="phone_number"
-                placeholder="enter phone number"
+                :placeholder="$t('trans.ui_enter_phone_number')"
                 :is-required="true"
                 @input="clearFormErrors(form, 'phone_number')"
                 :error="form.errors.phone_number"
             />
-            <AltPhoneNumber v-model="alt_phone_number" placeholder="enter alt phone number" />
+            <AltPhoneNumber v-model="alt_phone_number" :placeholder="$t('trans.ui_enter_alt_phone_number')" />
             <EmailAddress v-model="email" :is-required="true" @input="clearFormErrors(form, 'email')" :error="form.errors.email" />
         </div>
         <div class="flex flex-col">
@@ -39,26 +39,26 @@ const { form } = props;
         <div class="grid-col-1 grid gap-6 md:grid-cols-4">
             <Address1
                 v-model="address_1"
-                placeholder="eg. house number"
+                :placeholder="$t('trans.ui_eg_house_number')"
                 @input="clearFormErrors(form, 'address_1')"
                 :error="form.errors.address_1"
                 :is-required="true"
             />
             <Address2
                 v-model="address_2"
-                placeholder="eg. street name"
+                :placeholder="$t('trans.ui_eg_street_name')"
                 @input="clearFormErrors(form, 'address_2')"
                 :error="form.errors.address_2"
                 :is-required="true"
             />
             <Address3
                 v-model="address_3"
-                placeholder="eg. suburb"
+                :placeholder="$t('trans.ui_eg_suburb')"
                 @input="clearFormErrors(form, 'address_3')"
                 :error="form.errors.address_3"
                 :is-required="true"
             />
-            <Address4 v-model="address_4" placeholder="eg. city / town" />
+            <Address4 v-model="address_4" :placeholder="$t('trans.ui_eg_city_town')" />
         </div>
     </BaseCard>
 </template>

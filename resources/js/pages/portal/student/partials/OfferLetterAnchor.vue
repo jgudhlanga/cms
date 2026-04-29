@@ -15,6 +15,6 @@ defineProps<Props>();
         target="_blank"
     >
         <BaseIcon :name="IconName.paperclip" class="size-4" />
-        <span class="ml-2 font-extrabold uppercase">Offer Letter</span>
+        <span class="ml-2 font-extrabold uppercase">{{ $t('trans.ui_offer_letter') }}</span>
     </a>
 </template>

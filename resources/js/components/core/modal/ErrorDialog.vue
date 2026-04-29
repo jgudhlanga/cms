@@ -1,10 +1,10 @@
 <script lang="ts" setup>
 import { BaseButton } from '@/components/core/button';
+import BaseIcon from '@/components/core/icon/BaseIcon.vue';
+import { useErrorDialog } from '@/composables/core/useErrorDialog';
 import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
-import BaseIcon from '@/components/core/icon/BaseIcon.vue';
 import { IconName } from '@/lib/icons';
-import { useErrorDialog } from '@/composables/core/useErrorDialog';
 
 const { isVisible, options, confirm, close } = useErrorDialog();
 </script>
@@ -32,7 +32,9 @@ const { isVisible, options, confirm, close } = useErrorDialog();
 
                         <!-- Optional Note -->
                         <div v-if="options.note" class="mb-4 rounded-md border border-red-200 bg-red-50 p-3">
-                            <p class="text-sm text-red-800"><strong>Note:</strong> {{ options.note }}</p>
+                            <p class="text-sm text-red-800">
+                                <strong>{{ $t('trans.ui_note') }}</strong> {{ options.note }}
+                            </p>
                         </div>
 
                         <!-- Actions -->

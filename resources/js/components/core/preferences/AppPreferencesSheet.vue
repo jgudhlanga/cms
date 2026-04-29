@@ -28,7 +28,7 @@ const updateSidebarState = (open: boolean): void => {
 
 <template>
     <Button
-        class="fixed right-4 top-1/2 z-40 size-10 -translate-y-1/2 rounded-full border border-fuchsia-700 bg-fuchsia-600 text-white shadow-md hover:bg-fuchsia-700 hover:text-white"
+        class="fixed top-1/2 right-4 z-40 size-10 -translate-y-1/2 rounded-full border border-fuchsia-700 bg-fuchsia-600 text-white shadow-md hover:bg-fuchsia-700 hover:text-white"
         size="icon"
         variant="outline"
         @click="isPreferencesDrawerOpen = true"
@@ -38,29 +38,25 @@ const updateSidebarState = (open: boolean): void => {
     </Button>
     <Sheet v-model:open="isPreferencesDrawerOpen">
         <SheetContent side="right" class="w-[420px] p-0 sm:max-w-[420px]">
-            <SheetHeader class="border-b bg-muted/30 px-6 py-5">
+            <SheetHeader class="bg-muted/30 border-b px-6 py-5">
                 <SheetTitle>{{ $t('trans.user_preferences') }}</SheetTitle>
                 <SheetDescription class="mt-1 text-sm">{{ $t('trans.preferences_panel_description') }}</SheetDescription>
             </SheetHeader>
             <div class="space-y-4 px-6 py-6">
-                <div class="rounded-xl border border-primary/25 bg-card p-4 shadow-xs">
+                <div class="border-primary/25 bg-card rounded-xl border p-4 shadow-xs">
                     <div class="flex items-start justify-between gap-4">
                         <div class="space-y-1">
-                            <p class="font-medium leading-none">{{ $t('trans.sidebar_expanded') }}</p>
-                            <p class="text-sm text-muted-foreground">{{ $t('trans.sidebar_expanded_description') }}</p>
+                            <p class="leading-none font-medium">{{ $t('trans.sidebar_expanded') }}</p>
+                            <p class="text-muted-foreground text-sm">{{ $t('trans.sidebar_expanded_description') }}</p>
                         </div>
-                        <Switch
-                            class="mt-0.5"
-                            :model-value="preferencesStore.sideBarState"
-                            @update:model-value="updateSidebarState"
-                        />
+                        <Switch class="mt-0.5" :model-value="preferencesStore.sideBarState" @update:model-value="updateSidebarState" />
                     </div>
                 </div>
-                <div class="rounded-xl border border-primary/25 bg-card p-4 shadow-xs">
+                <div class="border-primary/25 bg-card rounded-xl border p-4 shadow-xs">
                     <div class="space-y-3">
                         <div class="space-y-1">
-                            <p class="font-medium leading-none">Language</p>
-                            <p class="text-sm text-muted-foreground">English is currently the only available language.</p>
+                            <p class="leading-none font-medium">{{ $tChoice('trans.language', 1) }}</p>
+                            <p class="text-muted-foreground text-sm">{{ $t('trans.ui_english_is_currently_the_only_available_language') }}</p>
                         </div>
                         <BaseSelect
                             v-model="selectedLocale"

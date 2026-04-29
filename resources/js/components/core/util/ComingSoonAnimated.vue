@@ -73,25 +73,25 @@ const { goBack } = useUtils();
             <div v-if="showCountdown" class="mt-4 flex justify-center space-x-6 font-mono text-2xl">
                 <div>
                     <span class="block text-5xl font-bold">{{ days }}</span>
-                    <span class="text-sm uppercase">Days</span>
+                    <span class="text-sm uppercase">{{ $t('trans.ui_days') }}</span>
                 </div>
                 <div>
                     <span class="block text-5xl font-bold">{{ hours }}</span>
-                    <span class="text-sm uppercase">Hours</span>
+                    <span class="text-sm uppercase">{{ $t('trans.ui_hours') }}</span>
                 </div>
                 <div>
                     <span class="block text-5xl font-bold">{{ minutes }}</span>
-                    <span class="text-sm uppercase">Minutes</span>
+                    <span class="text-sm uppercase">{{ $t('trans.ui_minutes') }}</span>
                 </div>
                 <div>
                     <span class="block text-5xl font-bold">{{ seconds }}</span>
-                    <span class="text-sm uppercase">Seconds</span>
+                    <span class="text-sm uppercase">{{ $t('trans.ui_seconds') }}</span>
                 </div>
             </div>
             <div class="mt-4 flex justify-center space-x-6 font-mono text-2xl">
                 <BaseButton @click="goBack()">
                     <BaseIcon :name="IconName.chevron_double_left" class="mr-2 size-5" />
-                    <span>Go Back</span>
+                    <span>{{ $t('trans.ui_go_back') }}</span>
                 </BaseButton>
             </div>
         </div>

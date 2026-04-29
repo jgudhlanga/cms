@@ -26,7 +26,7 @@ yarn-error.log
 /.ai
 /.claude
 /.cursor
-/.github
+.github
 /.junie
 /playground.txt
 /deploy.txt

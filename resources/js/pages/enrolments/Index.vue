@@ -54,7 +54,7 @@ const handleFilterChange = (option: SelectOption) => {
                 :icon-variant="ColorVariant.white"
                 :variant="ColorVariant.danger_outline"
                 @click="() => navigateTo(route('enrolments.faulty-applications'))"
-                title="Faulty Applications"
+                :title="$t('trans.ui_faulty_applications')"
             />
             <GenericButton
                 v-if="hasAbility('create:student-programs')"
@@ -63,7 +63,7 @@ const handleFilterChange = (option: SelectOption) => {
                 :icon-variant="ColorVariant.white"
                 :variant="ColorVariant.primary_outline"
                 @click="() => navigateTo(route('enrolments.enrolment-lookup'))"
-                title="Create New Enrolment"
+                :title="$t('trans.ui_create_new_enrolment')"
             />
         </div>
         <DistributionByDepartment

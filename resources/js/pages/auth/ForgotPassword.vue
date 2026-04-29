@@ -28,24 +28,32 @@ const submit = () => {
 </script>
 
 <template>
-    <Head title="Forgot password" />
+    <Head :title="$t('trans.ui_forgot_password')" />
     <div class="space-y-6">
         <BaseAlert v-if="status" :type="TypeVariant.success" :description="status" />
         <form @submit.prevent="submit">
             <div class="grid gap-2">
-                <Label for="email">Email address</Label>
-                <Input id="email" type="email" name="email" autocomplete="off" v-model="form.email" autofocus placeholder="email@example.com" />
+                <Label for="email">{{ $t('trans.email_address') }}</Label>
+                <Input
+                    id="email"
+                    type="email"
+                    name="email"
+                    autocomplete="off"
+                    v-model="form.email"
+                    autofocus
+                    :placeholder="$t('trans.ui_email_example_com')"
+                />
                 <InputError :message="form.errors.email" />
             </div>
             <div class="my-6 flex items-center justify-start">
                 <Button class="w-full" :disabled="form.processing">
                     <LoaderCircle v-if="form.processing" class="h-4 w-4 animate-spin" />
-                    Email password reset link
+                    {{ $t('trans.ui_email_password_reset_link') }}
                 </Button>
             </div>
         </form>
         <div class="text-muted-foreground space-x-1 text-center text-sm">
-            <span>Or, return to</span>
+            <span>{{ $t('trans.ui_or_return_to') }}</span>
             <BaseButton
                 type="button"
                 :variant="ColorVariant.danger_outline"
@@ -55,7 +63,7 @@ const submit = () => {
             >
                 {{ $t('trans.login') }}
             </BaseButton>
-            <!--            <TextLink :href="route('login')">log in</TextLink>-->
+            <!--            <TextLink :href="route('login')">{{ $t('trans.ui_log_in_2') }}</TextLink>-->
         </div>
     </div>
 </template>

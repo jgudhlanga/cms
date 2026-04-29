@@ -1,7 +1,9 @@
 <script setup lang="ts">
+import { BaseCheckbox } from '@/components/core/form';
 import Description from '@/components/core/form/text/Description.vue';
 import Name from '@/components/core/form/text/Name.vue';
 import BaseModal from '@/components/core/modal/BaseModal.vue';
+import { useUtils } from '@/composables/core/useUtils';
 import { useCourses } from '@/composables/institution/useCourses';
 import { getModalEdit } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
@@ -10,8 +12,6 @@ import { useModalStore } from '@/store/core/useModalStore';
 import { Course, CourseParams } from '@/types/institution';
 import { useForm } from '@inertiajs/vue3';
 import { ref, watch } from 'vue';
-import { useUtils } from '@/composables/core/useUtils';
-import { BaseCheckbox } from '@/components/core/form';
 
 const course = ref<Course>();
 const form = useForm<CourseParams>({
@@ -21,7 +21,7 @@ const form = useForm<CourseParams>({
 });
 
 const { saveCourse } = useCourses();
-const {isItTrue} = useUtils()
+const { isItTrue } = useUtils();
 
 const { modals } = useModalStore();
 
@@ -47,7 +47,7 @@ watch(modals!, () => {
             <BaseCheckbox
                 input-id="has_enrolment_requirements"
                 v-model="form.has_enrolment_requirements"
-                label="Has enrolment requirements"
+                :label="$t('trans.ui_has_enrolment_requirements')"
             />
         </template>
     </BaseModal>

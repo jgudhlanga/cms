@@ -8,5 +8,5 @@ const options = Object.values(AcademicCalendarType).map((value) => ({
 </script>
 
 <template>
-    <BaseCombobox label="Type" :options="options" v-bind="$attrs" />
+    <BaseCombobox :label="$tChoice('trans.type', 1)" :options="options" v-bind="$attrs" />
 </template>

@@ -37,7 +37,7 @@ const groupedApplications = groupByClassListType(applications);
                         <th class="j-th text-center">{{ `${levelRequirements?.attributes?.requiredLevel} completed` }}</th>
                     </template>
                     <template v-if="isItTrue(levelRequirements?.attributes?.onlyReadWriteRequired)">
-                        <th class="j-th text-center">Read / Write Acknowledged</th>
+                        <th class="j-th text-center">{{ $t('trans.ui_read_write_acknowledged') }}</th>
                     </template>
                     <th class="j-th text-center">{{ $tChoice('trans.status', 1) }}</th>
                 </tr>
