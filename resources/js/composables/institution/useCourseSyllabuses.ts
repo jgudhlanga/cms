@@ -30,7 +30,6 @@ export const useCourseSyllabuses = () => {
         try {
             isLoading.value = true;
             courseSyllabuses.value = await HttpService.get(route('department-course-syllabuses.index', institutionDepartmentId));
-            console.log(courseSyllabuses.value);
         } finally {
             isLoading.value = false;
         }
@@ -39,7 +38,16 @@ export const useCourseSyllabuses = () => {
     const saveCourseSyllabus = (form: InertiaForm<any>, courseSyllabusId?: string) => {
         const success = trans('trans.item_saved', { item: 'course syllabus' });
         const error = trans('trans.item_save_failure', { item: 'course syllabus' });
-        const opts = buildFormOptions(form, success, error);
+        const onSuccessAction = courseSyllabusId
+            ? () =>
+                  router.get(
+                      route('department-course-syllabuses.show', {
+                          institution_department: String(form.institution_department_id ?? ''),
+                          course_syllabus: courseSyllabusId,
+                      }),
+                  )
+            : undefined;
+        const opts = buildFormOptions(form, success, error, undefined, onSuccessAction);
         const hasFile = form.syllabus_document instanceof File;
 
         if (courseSyllabusId) {

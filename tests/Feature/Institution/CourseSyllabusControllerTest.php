@@ -92,9 +92,12 @@ it('stores course syllabus with document and sets syllabus_document_id to media 
         'syllabus_document' => UploadedFile::fake()->create('outline.pdf', 120, 'application/pdf'),
     ]);
 
-    $response->assertSuccessful();
-
     $courseSyllabus = CourseSyllabus::query()->where('code', $code)->firstOrFail();
+    $response->assertRedirect(route('department-course-syllabuses.show', [
+        'institution_department' => $ctx['institutionDepartment']->id,
+        'course_syllabus' => $courseSyllabus->id,
+    ]));
+
     expect($courseSyllabus->status->value)->toBe('active')
         ->and($courseSyllabus->syllabus_document_id)->not->toBeNull();
 
@@ -125,9 +128,13 @@ it('allows creating active syllabus when same institution department and level c
         'status' => 'active',
     ]);
 
-    $response->assertSuccessful();
-
     $created = CourseSyllabus::query()->where('code', $newCode)->first();
+    expect($created)->not->toBeNull();
+    $response->assertRedirect(route('department-course-syllabuses.show', [
+        'institution_department' => $ctx['institutionDepartment']->id,
+        'course_syllabus' => $created->id,
+    ]));
+
     expect($created)->not->toBeNull()
         ->and($created?->status->value)->toBe('active');
 });
@@ -156,8 +163,12 @@ it('allows creating course syllabus with duplicate title when code is unique', f
         'status' => 'active',
     ]);
 
-    $response->assertSuccessful();
-    expect(CourseSyllabus::query()->where('code', $newCode)->exists())->toBeTrue();
+    $created = CourseSyllabus::query()->where('code', $newCode)->firstOrFail();
+    $response->assertRedirect(route('department-course-syllabuses.show', [
+        'institution_department' => $ctx['institutionDepartment']->id,
+        'course_syllabus' => $created->id,
+    ]));
+    expect($created->exists)->toBeTrue();
 });
 
 it('fails to create course syllabus when code already exists', function () {
@@ -200,7 +211,7 @@ it('updates course syllabus document replacing media id', function () {
         'status' => 'active',
     ]);
 
-    $this->actingAs($ctx['user'])->put(route('department-course-syllabuses.update', $courseSyllabus), [
+    $response = $this->actingAs($ctx['user'])->put(route('department-course-syllabuses.update', $courseSyllabus), [
         'institution_department_id' => $ctx['institutionDepartment']->id,
         'department_level_course_id' => $ctx['departmentLevelCourse']->id,
         'title' => $courseSyllabus->title,
@@ -208,7 +219,12 @@ it('updates course syllabus document replacing media id', function () {
         'implementation_year' => '2026',
         'status' => 'terminated',
         'syllabus_document' => UploadedFile::fake()->create('revised.pdf', 100, 'application/pdf'),
-    ])->assertSuccessful();
+    ]);
+
+    $response->assertRedirect(route('department-course-syllabuses.show', [
+        'institution_department' => $ctx['institutionDepartment']->id,
+        'course_syllabus' => $courseSyllabus->id,
+    ]));
 
     $courseSyllabus->refresh();
     expect($courseSyllabus->status->value)->toBe('terminated')
@@ -242,9 +258,13 @@ it('allows creating terminated syllabus when same institution department and lev
         'status' => 'terminated',
     ]);
 
-    $response->assertSuccessful();
-
     $created = CourseSyllabus::query()->where('code', $terminatedCode)->first();
+    expect($created)->not->toBeNull();
+    $response->assertRedirect(route('department-course-syllabuses.show', [
+        'institution_department' => $ctx['institutionDepartment']->id,
+        'course_syllabus' => $created->id,
+    ]));
+
     expect($created)->not->toBeNull()
         ->and($created?->status->value)->toBe('terminated');
 });

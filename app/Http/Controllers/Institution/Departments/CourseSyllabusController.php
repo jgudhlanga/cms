@@ -10,6 +10,7 @@ use App\Http\Resources\Institution\InstitutionDepartmentResource;
 use App\Models\Institution\InstitutionDepartment;
 use App\Models\Institution\Syllabus\CourseSyllabus;
 use App\Repositories\Institution\interface\ICourseSyllabusRepository;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -42,15 +43,22 @@ class CourseSyllabusController extends Controller
         ]);
     }
 
-    public function store(CourseSyllabusRequest $request): void
+    public function store(CourseSyllabusRequest $request): RedirectResponse
     {
         $this->authorize('create', CourseSyllabus::class);
         $dto = CourseSyllabusDto::fromRequest($request);
 
-        DB::transaction(function () use ($request, $dto): void {
+        $courseSyllabus = DB::transaction(function () use ($request, $dto): CourseSyllabus {
             $courseSyllabus = $this->repository->create($dto);
             $this->attachSyllabusDocumentIfPresent($request, $courseSyllabus);
+
+            return $courseSyllabus;
         });
+
+        return to_route('department-course-syllabuses.show', [
+            'institution_department' => $dto->institution_department_id,
+            'course_syllabus' => $courseSyllabus->id,
+        ]);
     }
 
     public function edit(InstitutionDepartment $institutionDepartment, CourseSyllabus $courseSyllabus): Response
@@ -70,7 +78,7 @@ class CourseSyllabusController extends Controller
         ]);
     }
 
-    public function update(CourseSyllabusRequest $request, CourseSyllabus $courseSyllabus): void
+    public function update(CourseSyllabusRequest $request, CourseSyllabus $courseSyllabus): RedirectResponse
     {
         $this->authorize('update', $courseSyllabus);
         $dto = CourseSyllabusDto::fromRequest($request);
@@ -80,6 +88,11 @@ class CourseSyllabusController extends Controller
             $courseSyllabus->refresh();
             $this->attachSyllabusDocumentIfPresent($request, $courseSyllabus);
         });
+
+        return to_route('department-course-syllabuses.show', [
+            'institution_department' => $courseSyllabus->institution_department_id,
+            'course_syllabus' => $courseSyllabus->id,
+        ]);
     }
 
     public function destroy(CourseSyllabus $courseSyllabus): void
