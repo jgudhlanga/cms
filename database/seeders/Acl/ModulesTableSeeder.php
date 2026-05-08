@@ -13,6 +13,11 @@ class ModulesTableSeeder extends Seeder
      */
     public function run(): void
     {
+        $accommodationsModule = Module::where('title', 'Accommodations')->first();
+        if ($accommodationsModule) {
+            $accommodationsModule->forceDelete();
+        }
+
         foreach (ModuleEnum::cases() as $row) {
             $exist = Module::where('title', $row->value)->first();
             if (! $exist instanceof Module) {

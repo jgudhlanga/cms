@@ -14,6 +14,22 @@ class PermissionsTableSeeder extends Seeder
      */
     public function run(): void
     {
+        $accommodationsPermissions = [
+            'viewAny:accommodations',
+            'view:accommodations',
+            'create:accommodations',
+            'update:accommodations',
+            'delete:accommodations',
+            'restore:accommodations',
+            'forceDelete:accommodations',
+            'import:accommodations',
+            'export:accommodations',
+            'crud-settings:accommodations',
+            'viewAuditTrail:accommodations',
+        ];
+
+        Permission::whereIn('name', $accommodationsPermissions)->forceDelete();
+
         foreach (PermissionRegistry::grouped() as $moduleKey => $permissionRows) {
             $module = Module::where('title', $moduleKey)->withTrashed()->first();
 
