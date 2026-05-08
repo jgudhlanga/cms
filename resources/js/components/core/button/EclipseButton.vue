@@ -23,7 +23,7 @@ defineProps<Props>();
 <template>
     <DropdownMenu>
         <DropdownMenuTrigger as-child>
-            <MoreButton  :disabled="disabled" :icon="icon" v-if="showOnlyIcon" />
+            <MoreButton :disabled="disabled" :icon="icon" v-if="showOnlyIcon" />
             <BaseButton
                 v-else
                 :disabled="disabled"

@@ -3,9 +3,5 @@ import BaseDatePicker from './BaseDatePicker.vue';
 </script>
 
 <template>
-    <base-date-picker
-        path="start_date"
-        :label="$t('commencementDate')"
-        v-bind="$attrs"
-    />
+    <base-date-picker path="start_date" :label="$t('commencementDate')" v-bind="$attrs" />
 </template>

@@ -51,7 +51,7 @@ const svgIcons = {
             <div
                 :class="
                     cn(
-                        'group-[.is-active]:bg-none flex h-10 w-10 shrink-0 items-center justify-center rounded-full ' +
+                        'flex h-10 w-10 shrink-0 items-center justify-center rounded-full group-[.is-active]:bg-none ' +
                             ' border border-white bg-gray-500 text-gray-500 shadow group-[.is-active]:text-emerald-50 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2',
                         step.status ? statusClasses[step.status!] : '',
                     )

@@ -3,15 +3,15 @@ import { Head, Link as InertiaLink, useForm } from '@inertiajs/vue3';
 import { UserIcon, UserRoundIcon, UsersIcon } from 'lucide-vue-next';
 
 import PageContainer from '@/components/core/page/PageContainer.vue';
+import { ButtonSize } from '@/enums/buttons';
+import { ColorVariant } from '@/enums/colors';
+import { errorAlert, successAlert } from '@/lib/alerts';
+import { firstInertiaErrorMessage } from '@/lib/inertia-errors';
 import { AcademicCalendar, AcademicCalendarClassGenerationContext, AcademicCalendarClassPreview, ClassConfig } from '@/types/academic-calendar';
 import { AuthObject } from '@/types/data-pagination';
 import { DepartmentCourse, DepartmentLevel } from '@/types/department-meta-data';
 import { InstitutionDepartment, ModeOfStudy } from '@/types/institution';
 import type { Link } from '@/types/ui';
-import { ButtonSize } from '@/enums/buttons';
-import { ColorVariant } from '@/enums/colors';
-import { errorAlert, successAlert } from '@/lib/alerts';
-import { firstInertiaErrorMessage } from '@/lib/inertia-errors';
 import { trans } from 'laravel-vue-i18n';
 import { computed, toRefs } from 'vue';
 
@@ -65,9 +65,7 @@ const previewEmptyAlert = computed((): PreviewEmptyAlert | null => {
 });
 
 const classActionTitle = computed(() =>
-    hasNewStudentsToAssign.value && generationContext.value.hasExistingClasses
-        ? 'enrolment.add_student_to_class'
-        : 'enrolment.generate_classes',
+    hasNewStudentsToAssign.value && generationContext.value.hasExistingClasses ? 'enrolment.add_student_to_class' : 'enrolment.generate_classes',
 );
 
 const breadcrumbs = computed<Array<Link>>(() => [
@@ -128,7 +126,10 @@ const saveClasses = () => {
                     <LabelValue :label="$tChoice('trans.course', 1)" :value="classConfig?.attributes?.departmentCourse ?? '---'" />
                     <LabelValue :label="$tChoice('trans.level', 1)" :value="classConfig?.attributes?.departmentLevel ?? '---'" />
                     <LabelValue :label="$tChoice('general.mode', 1)" :value="classConfig?.attributes?.modeOfStudy ?? '---'" />
-                    <LabelValue :label="$tChoice('academic_calendar.class_unit_size', 1)" :value="String(classConfig?.attributes?.studentsPerClass ?? '---')" />
+                    <LabelValue
+                        :label="$tChoice('academic_calendar.class_unit_size', 1)"
+                        :value="String(classConfig?.attributes?.studentsPerClass ?? '---')"
+                    />
                 </div>
             </BaseCard>
 
@@ -161,11 +162,7 @@ const saveClasses = () => {
                 </div>
             </div>
 
-            <BaseAlert
-                v-if="previewEmptyAlert"
-                :title="$t(previewEmptyAlert.titleKey)"
-                :description="$t(previewEmptyAlert.descriptionKey)"
-            />
+            <BaseAlert v-if="previewEmptyAlert" :title="$t(previewEmptyAlert.titleKey)" :description="$t(previewEmptyAlert.descriptionKey)" />
 
             <template v-else>
                 <BaseCard v-for="classPreview in previewClasses" :key="classPreview.name" :title="classPreview.name">
@@ -194,9 +191,21 @@ const saveClasses = () => {
                                 })
                             "
                         >
-                        <BaseButton :title="$t('enrolment.view_class')" classes="rounded-full" :size="ButtonSize.sm" :variant="ColorVariant.success" />
+                            <BaseButton
+                                :title="$t('enrolment.view_class')"
+                                classes="rounded-full"
+                                :size="ButtonSize.sm"
+                                :variant="ColorVariant.success"
+                            />
                         </InertiaLink>
-                        <BaseButton v-else :title="$t('enrolment.view_class')" :disabled="true" classes="rounded-full" :size="ButtonSize.sm" :variant="ColorVariant.success"/>
+                        <BaseButton
+                            v-else
+                            :title="$t('enrolment.view_class')"
+                            :disabled="true"
+                            classes="rounded-full"
+                            :size="ButtonSize.sm"
+                            :variant="ColorVariant.success"
+                        />
                     </div>
                 </BaseCard>
             </template>

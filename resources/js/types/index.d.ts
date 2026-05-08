@@ -1,6 +1,5 @@
-
-import { trans, trans_choice } from 'laravel-vue-i18n';
 import { User } from '@/types/users';
+import { trans, trans_choice } from 'laravel-vue-i18n';
 export interface Auth {
     user: User;
     can: any;
@@ -29,7 +28,6 @@ declare module '@tanstack/table-core' {
     }
 }
 
-
 declare module '@vue/runtime-core' {
     interface ComponentCustomProperties {
         route: (name: string, params?: RouteParamsWithQueryOverload | undefined, absolute?: boolean | undefined) => string;
@@ -40,9 +38,9 @@ declare module '@vue/runtime-core' {
 
 // shims-wangeditor.d.ts (in your src/ or types/ folder)
 declare module '@wangeditor/editor-for-vue' {
-    import Editor from '@wangeditor/editor-for-vue/dist/src/index'
-    export * from '@wangeditor/editor-for-vue/dist/src/index'
-    export default Editor
+    import Editor from '@wangeditor/editor-for-vue/dist/src/index';
+    export * from '@wangeditor/editor-for-vue/dist/src/index';
+    export default Editor;
 }
 
 // shims-wangeditor.d.ts

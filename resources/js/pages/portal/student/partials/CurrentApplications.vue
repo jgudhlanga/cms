@@ -2,7 +2,7 @@
 import CustomCard from '@/components/core/card/CustomCard.vue';
 import GridLabelValue from '@/components/core/util/GridLabelValue.vue';
 import { useStudents } from '@/composables/students/useStudents';
-import ComponentHeader from '@/pages/dashboard/partials/ComponentHeader.vue';
+import ComponentHeader from '@/pages/dashboard/components/ComponentHeader.vue';
 import OfferLetterAnchor from '@/pages/portal/student/partials/OfferLetterAnchor.vue';
 import { Enrolment } from '@/types/enrolments';
 import { computed } from 'vue';

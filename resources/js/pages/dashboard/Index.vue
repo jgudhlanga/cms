@@ -1,17 +1,25 @@
 <script setup lang="ts">
-import { useUtils } from '@/composables/core/useUtils';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DailyDistribution, DepartmentDistribution, LevelDistribution } from '@/types/dasboard';
 import { AuthObject } from '@/types/data-pagination';
 import { IntakePeriod } from '@/types/institution';
 import { BreadcrumbItemInterface } from '@/types/ui';
 import { SelectOption } from '@/types/utils';
 import { Head, router } from '@inertiajs/vue3';
-import { Chart, registerables } from 'chart.js';
-import { computed, onMounted, ref } from 'vue';
+import { School } from 'lucide-vue-next';
+import { onMounted, ref } from 'vue';
 
-Chart.register(...registerables);
+// Tab Components
+import AcademicTab from './tabs/AcademicTab.vue';
+import AttendanceTab from './tabs/AttendanceTab.vue';
+import EnrolmentsTab from './tabs/EnrolmentsTab.vue';
+import FinanceTab from './tabs/FinanceTab.vue';
+import HostelTab from './tabs/HostelTab.vue';
+import OverviewTab from './tabs/OverviewTab.vue';
+import StaffTab from './tabs/StaffTab.vue';
 
 const breadcrumbs: BreadcrumbItemInterface[] = [{ transChoiceKey: 'dashboard' }];
+
 interface Props {
     auth: AuthObject;
     errors: object;
@@ -21,68 +29,12 @@ interface Props {
     intakePeriods: IntakePeriod[];
     intakePeriod: IntakePeriod;
 }
+
 const props = defineProps<Props>();
-const { levelDistribution, dailyDistribution } = props;
-
-const levelChart = ref<HTMLCanvasElement | null>(null);
-const enrollmentChart = ref<HTMLCanvasElement | null>(null);
-
-const { generateRandomCode } = useUtils();
-
-const normalizeColor = (value: number) => Math.min(255, Math.max(80, value)); // keeps it bright
-
-const colorFromLevel = (name: string, alpha = 0.7): string => {
-    const randomName = generateRandomCode(name);
-    let hash = 0;
-    for (let i = 0; i < randomName.length; i++) {
-        hash = randomName.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    const r = normalizeColor((hash >> 16) & 255);
-    const g = normalizeColor((hash >> 8) & 255);
-    const b = normalizeColor(hash & 255);
-    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-};
-
-const levelChartData = computed(() => {
-    const labels = levelDistribution?.map((d) => d.levelName) ?? [];
-    const data = levelDistribution?.map((d) => d.levelCount) ?? [];
-    const backgroundColors = labels.map((name) => colorFromLevel(name, 0.7));
-    const borderColors = backgroundColors.map((c) => c.replace('0.7', '1'));
-    return {
-        labels,
-        datasets: [
-            {
-                data,
-                backgroundColor: backgroundColors,
-                borderColor: borderColors,
-                borderWidth: 1,
-            },
-        ],
-    };
-});
-
-const enrollmentData = computed(() => {
-    const labels = dailyDistribution?.map((d) => d.date) ?? [];
-    const data = dailyDistribution?.map((d) => d.count) ?? [];
-    return {
-        labels,
-        datasets: [
-            {
-                label: 'Applications',
-                data,
-                backgroundColor: 'rgba(79, 70, 229, 0.2)',
-                borderColor: 'rgba(79, 70, 229, 1)',
-                borderWidth: 2,
-                tension: 0.4,
-                fill: true,
-            },
-        ],
-    };
-});
 
 const intakePeriodModel = ref<SelectOption | null>(null);
 
-onMounted(async () => {
+onMounted(() => {
     if (props.intakePeriod) {
         intakePeriodModel.value = { value: Number(props.intakePeriod.id), label: props.intakePeriod.attributes.name };
     }
@@ -95,91 +47,105 @@ const handleFilterChange = (option: SelectOption) => {
             intake_period_id: String(option.value),
         },
         {
-            // options here
+            preserveState: true,
+            preserveScroll: true,
         },
     );
 };
-onMounted(async () => {
-    if (levelChart.value) {
-        new Chart(levelChart.value, {
-            type: 'doughnut',
-            data: { ...levelChartData.value },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'left',
-                        align: 'center',
-                    },
-                },
-                cutout: '60%',
-            },
-        });
-    }
-
-    new Chart(enrollmentChart.value!, {
-        type: 'line',
-        data: { ...enrollmentData.value },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: false,
-                },
-                tooltip: {
-                    mode: 'index',
-                    intersect: false,
-                },
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    grid: {
-                        drawBorder: false,
-                    },
-                },
-                x: {
-                    grid: {
-                        display: false,
-                    },
-                },
-            },
-        },
-    });
-});
 </script>
+
 <template>
     <Head :title="$tChoice('trans.dashboard', 2)" />
     <PageContainer :breadcrumbs="breadcrumbs">
         <div class="flex w-full flex-col">
-            <div class="flex flex-col">
-                <div class="grid grid-cols-1 gap-6 px-4 sm:px-0 md:grid-cols-1">
-                    <DistributionByDepartment
-                        :department-distribution="departmentDistribution"
-                        :show-actions-column="true"
-                        :show-filters="true"
-                        v-model:intakePeriodModel="intakePeriodModel"
-                        :intake-periods="intakePeriods"
-                        :handle-filter-change="handleFilterChange"
-                    />
-                    <div class="gap-6 rounded-lg bg-white px-4 py-2 shadow">
-                        <HeadingSmall class="mb-2" :title="$t('trans.ui_distribution_by_level')" />
-                        <div class="h-75">
-                            <canvas id="levelChart" ref="levelChart"></canvas>
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-1 gap-6 px-4 sm:px-0">
-                        <div class="rounded-lg bg-white px-4 py-2 shadow">
-                            <HeadingSmall class="mb-2" :title="$t('trans.ui_daily_distribution')" />
-                            <div class="h-80">
-                                <canvas id="enrollmentChart" ref="enrollmentChart"></canvas>
-                            </div>
-                        </div>
-                    </div>
+            <!-- Topbar -->
+            <div class="mb-4 flex items-center justify-between border-b border-gray-200 pb-4">
+                <div>
+                    <h1 class="flex items-center gap-2 text-base font-medium text-gray-900">
+                        <School class="h-5 w-5 text-gray-500" />
+                        {{ $t('dashboard.principals_dashboard') }}
+                    </h1>
+                    <p class="mt-0.5 text-[11px] text-gray-500">
+                        {{ $t('dashboard.ministry_subtitle') }}
+                    </p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="flex items-center gap-1.5 rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] text-emerald-800">
+                        <span class="h-1.5 w-1.5 rounded-full bg-emerald-600"></span> {{ $t('dashboard.live') }}
+                    </span>
+                    <select
+                        class="rounded border border-gray-300 px-2 py-1 text-xs focus:border-emerald-500 focus:ring-emerald-500"
+                        aria-label="Select semester"
+                    >
+                        <option>{{ $t('dashboard.sem_2_2025') }}</option>
+                        <option>{{ $t('dashboard.sem_1_2025') }}</option>
+                        <option>{{ $t('dashboard.sem_2_2024') }}</option>
+                    </select>
                 </div>
             </div>
+
+            <!-- Tabs Layout -->
+            <Tabs defaultValue="overview" class="w-full">
+                <TabsList class="flex h-auto w-fit flex-wrap justify-start rounded-md bg-gray-100/80 p-1">
+                    <TabsTrigger value="overview" class="px-3 py-1.5 text-xs data-[state=active]:bg-white data-[state=active]:shadow-sm"
+                        >{{ $t('dashboard.overview') }}</TabsTrigger
+                    >
+                    <TabsTrigger value="academic" class="px-3 py-1.5 text-xs data-[state=active]:bg-white data-[state=active]:shadow-sm"
+                        >{{ $t('trans.academic') }}</TabsTrigger
+                    >
+                    <TabsTrigger value="enrolments" class="px-3 py-1.5 text-xs data-[state=active]:bg-white data-[state=active]:shadow-sm"
+                        >{{ $tChoice('trans.enrolment', 2) }}</TabsTrigger
+                    >
+                    <TabsTrigger value="attendance" class="px-3 py-1.5 text-xs data-[state=active]:bg-white data-[state=active]:shadow-sm"
+                        >{{ $t('dashboard.attendance') }}</TabsTrigger
+                    >
+                    <TabsTrigger value="staff" class="px-3 py-1.5 text-xs data-[state=active]:bg-white data-[state=active]:shadow-sm"
+                        >{{ $t('trans.staff') }}</TabsTrigger
+                    >
+                    <TabsTrigger value="finance" class="px-3 py-1.5 text-xs data-[state=active]:bg-white data-[state=active]:shadow-sm"
+                        >{{ $tChoice('trans.finance', 2) }}</TabsTrigger
+                    >
+                    <TabsTrigger value="hostel" class="px-3 py-1.5 text-xs data-[state=active]:bg-white data-[state=active]:shadow-sm"
+                        >{{ $t('dashboard.hostel') }}</TabsTrigger
+                    >
+                </TabsList>
+
+                <!-- Tab Contents -->
+                <TabsContent value="overview" class="mt-0">
+                    <OverviewTab />
+                </TabsContent>
+
+                <TabsContent value="academic" class="mt-0">
+                    <AcademicTab />
+                </TabsContent>
+
+                <TabsContent value="enrolments" class="mt-0">
+                    <EnrolmentsTab
+                        :department-distribution="departmentDistribution"
+                        :level-distribution="levelDistribution"
+                        :daily-distribution="dailyDistribution"
+                        :intake-periods="intakePeriods"
+                        v-model:intakePeriodModel="intakePeriodModel"
+                        :handle-filter-change="handleFilterChange"
+                    />
+                </TabsContent>
+
+                <TabsContent value="attendance" class="mt-0">
+                    <AttendanceTab />
+                </TabsContent>
+
+                <TabsContent value="staff" class="mt-0">
+                    <StaffTab />
+                </TabsContent>
+
+                <TabsContent value="finance" class="mt-0">
+                    <FinanceTab />
+                </TabsContent>
+
+                <TabsContent value="hostel" class="mt-0">
+                    <HostelTab />
+                </TabsContent>
+            </Tabs>
         </div>
     </PageContainer>
 </template>

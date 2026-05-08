@@ -53,7 +53,7 @@ onMounted(() => setAutoFocus());
             <Label
                 v-if="label"
                 :for="inputId"
-                :class="cn(' font-medium',error && 'text-destructive', labelUppercase && 'uppercase', !verticalLayout && 'flex w-1/4 items-center')"
+                :class="cn('font-medium', error && 'text-destructive', labelUppercase && 'uppercase', !verticalLayout && 'flex w-1/4 items-center')"
             >
                 {{ label }}<RequiredIndicator v-if="isRequired" />
             </Label>

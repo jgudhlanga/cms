@@ -26,10 +26,6 @@ const breadcrumbs: Array<Link> = [
     <PageContainer :breadcrumbs="breadcrumbs">
         <HeadingSmall :title="$tChoice('finance.setting', 2)" :description="$t('trans.general_settings_description')" />
         <AvatarTitleList v-if="can['view:finance-settings']" :tabs="tabs" />
-        <BaseAlert
-            v-else
-            :title="$t('trans.forbidden')"
-            :description="$t('trans.forbidden_message')"
-        />
+        <BaseAlert v-else :title="$t('trans.forbidden')" :description="$t('trans.forbidden_message')" />
     </PageContainer>
 </template>

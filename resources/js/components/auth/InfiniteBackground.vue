@@ -1,6 +1,4 @@
-<script setup lang="ts">
-
-</script>
+<script setup lang="ts"></script>
 
 <template>
     <div class="area">
@@ -19,7 +17,7 @@
     </div>
 </template>
 <style scoped>
-    /*Start Animations*/
+/*Start Animations*/
 @-webkit-keyframes animatetop {
     from {
         top: -300px;

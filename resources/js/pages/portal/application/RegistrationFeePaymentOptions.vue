@@ -108,9 +108,13 @@ onMounted(async () => {
                 <div class="amount-label">{{ $t('trans.amount_to_pay') }}:</div>
                 <div class="amount-value">{{ `USD${formatCurrency(registrationFeeAmount)}` }}</div>
             </div>
-            <div class="mx-auto flex w-full md:w-1/3 flex-col items-center justify-center space-y-3 md:flex-row md:space-y-0 md:space-x-3">
+            <div class="mx-auto flex w-full flex-col items-center justify-center space-y-3 md:w-1/3 md:flex-row md:space-y-0 md:space-x-3">
                 <CancelButton />
-                <button @click="submit" class="inline-flex w-full p-2.5 bg-linear-to-br from-persian-600 to-[#00d2ff] text-white border-0 rounded-[10px] text-lg font-semibold justify-center items-center uppercase cursor-pointer transition-all duration-300 shadow-[0_4px_15px_rgba(0,0,0,0.1)]" :disabled="isLoading">
+                <button
+                    @click="submit"
+                    class="from-persian-600 inline-flex w-full cursor-pointer items-center justify-center rounded-[10px] border-0 bg-linear-to-br to-[#00d2ff] p-2.5 text-lg font-semibold text-white uppercase shadow-[0_4px_15px_rgba(0,0,0,0.1)] transition-all duration-300"
+                    :disabled="isLoading"
+                >
                     {{ $t('trans.proceed_to_payment') }}
                     <component :is="icons[IconName.loader]" v-if="isLoading" class="ml-2 h-6 w-5 animate-spin" />
                 </button>

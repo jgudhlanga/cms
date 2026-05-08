@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import PageContainer from '@/components/core/page/PageContainer.vue';
+import { useUtils } from '@/composables/core/useUtils';
+import { ButtonSize } from '@/enums/buttons';
+import { ColorVariant } from '@/enums/colors';
+import { IconName, icons } from '@/lib/icons';
 import { AuthObject } from '@/types/data-pagination';
 import { Link } from '@/types/ui';
 import { Head } from '@inertiajs/vue3';
-import { useUtils } from '@/composables/core/useUtils';
-import { IconName, icons } from '@/lib/icons';
-import { ButtonSize } from '@/enums/buttons';
-import { ColorVariant } from '@/enums/colors';
 
 const props = defineProps<{
     auth: AuthObject;

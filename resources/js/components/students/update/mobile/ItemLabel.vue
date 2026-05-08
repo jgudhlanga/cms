@@ -7,6 +7,5 @@ defineProps<Props>();
 </script>
 
 <template>
-    <Label class="text-xs uppercase font-bold mb-2">{{ label }}</Label>
+    <Label class="mb-2 text-xs font-bold uppercase">{{ label }}</Label>
 </template>
-

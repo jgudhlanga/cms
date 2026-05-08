@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import DataTable from '@/components/core/table/DataTable.vue';
 import DataLoadingSpinner from '@/components/core/loader/DataLoadingSpinner.vue';
+import DataTable from '@/components/core/table/DataTable.vue';
 import { useCourseSyllabuses } from '@/composables/institution/useCourseSyllabuses';
 import { hasAbility } from '@/lib/permissions';
 import { CourseSyllabus, InstitutionDepartment } from '@/types/institution';

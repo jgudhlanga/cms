@@ -1,11 +1,11 @@
 <script lang="ts" setup>
+import RequiredIndicator from '@/components/core/form/RequiredIndicator.vue';
 import { Label } from '@/components/ui/label';
+import { cn } from '@/lib/utils';
 import { SelectOption } from '@/types/utils';
 import VueSelect from 'vue3-select-component';
 import Empty from '../../util/Empty.vue';
 import InputError from '../InputError.vue';
-import { cn } from '@/lib/utils';
-import RequiredIndicator from '@/components/core/form/RequiredIndicator.vue';
 
 interface Props {
     label?: string;

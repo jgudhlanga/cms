@@ -1,3 +1,4 @@
+import { useCustomConfirmDialog } from '@/composables/core/useCustomConfirmDialog';
 import { useDataTables } from '@/composables/core/useDataTables';
 import { useSharedFormSchema } from '@/composables/core/useSharedFormSchema';
 import { forbiddenAlert, openModal, successAlert } from '@/lib/alerts';
@@ -9,7 +10,6 @@ import { Sponsor } from '@/types/students';
 import { InertiaForm, router } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 import { ZodObject } from 'zod';
-import { useCustomConfirmDialog } from '@/composables/core/useCustomConfirmDialog';
 
 export const useSponsors = () => {
     const { moreActionButton, onForceDelete, onRestore } = useDataTables();

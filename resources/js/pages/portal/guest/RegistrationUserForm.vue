@@ -61,7 +61,7 @@ const maintenanceMode = isItTrue(import.meta.env.VITE_MAINTENANCE_MODE);
 <template>
     <Head :title="$t('trans.application_form')" />
     <div class="flex justify-between bg-white">
-        <ComingSoonAnimated v-if="maintenanceMode" :title="$t('trans.ui_sorry')" message='Enrolment has been closed'/>
+        <ComingSoonAnimated v-if="maintenanceMode" :title="$t('trans.ui_sorry')" message="Enrolment has been closed" />
         <div v-else class="flex w-full flex-col p-3 md:w-1/2 md:p-16">
             <form @submit.prevent="submitForm()" class="flex flex-col rounded-2xl p-10 shadow-md">
                 <div class="flex w-full items-center justify-center">
@@ -69,10 +69,12 @@ const maintenanceMode = isItTrue(import.meta.env.VITE_MAINTENANCE_MODE);
                         <AppLogo classes="flex justify-center border-2 border-white" />
                     </div>
                 </div>
-                <div class="text-primary mt-13 mb-7 flex items-center justify-center text-lg font-bold uppercase">{{ $t('trans.ui_harare_polytechnic') }}</div>
+                <div class="text-primary mt-13 mb-7 flex items-center justify-center text-lg font-bold uppercase">
+                    {{ $t('trans.ui_harare_polytechnic') }}
+                </div>
                 <div class="mb-4 px-1 uppercase">
-                    {{ $t('trans.ui_attention') }} <code class="font-bold text-red-600">{{ $t('trans.ui_ecocash') }}</code> users: To avoid network failures, please use separate devices when
-                    making your payments. Thank you for your cooperation.
+                    {{ $t('trans.ui_attention') }} <code class="font-bold text-red-600">{{ $t('trans.ui_ecocash') }}</code> users: To avoid network
+                    failures, please use separate devices when making your payments. Thank you for your cooperation.
                 </div>
                 <div class="flex w-full flex-col space-y-3">
                     <BaseInput

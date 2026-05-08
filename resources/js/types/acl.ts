@@ -47,7 +47,7 @@ export type Role = {
 export type RoleMinimal = {
     id: string;
     name: string;
-}
+};
 export type Permission = {
     type?: string;
     id?: string;

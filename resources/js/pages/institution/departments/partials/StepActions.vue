@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import BaseCard from '@/components/core/card/BaseCard.vue';
 import { BaseCheckbox } from '@/components/core/form';
-import StaffSelect from '@/components/core/form/select/StaffSelect.vue';
-import BaseModal from '@/components/core/modal/BaseModal.vue';
 import SpinnerComponent from '@/components/core/loader/SpinnerComponent.vue';
+import BaseModal from '@/components/core/modal/BaseModal.vue';
 import { useRoles } from '@/composables/acl/useRoles';
 import { useDepartmentWorkflows } from '@/composables/institution/useDepartmentWorkflows';
 import { useWorkflowStepActions } from '@/composables/shared/useWorkflowStepActions';
@@ -76,7 +75,7 @@ const { syncWorkflowStepActionMetadata } = useDepartmentWorkflows();
                         </div>
                     </template>
                 </BaseCard>
-<!--                <BaseCard :title="$tChoice('trans.staff', 2)" :description="$t('trans.step_user_description')">
+                <!--                <BaseCard :title="$tChoice('trans.staff', 2)" :description="$t('trans.step_user_description')">
                     <template v-if="rolesLoading">
                         <SpinnerComponent class="flex w-full" />
                     </template>

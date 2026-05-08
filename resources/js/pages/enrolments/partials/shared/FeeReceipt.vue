@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { useUtils } from '@/composables/core/useUtils';
 import { useStudentsFinancials } from '@/composables/finance/useStudentsFinancials';
-import { computed, onMounted } from 'vue';
-import moment from 'moment';
 import { Enrolment } from '@/types/enrolments';
+import moment from 'moment';
+import { computed, onMounted } from 'vue';
 
 interface Props {
     studentId: string;
@@ -87,8 +87,7 @@ const deduplicateAdjacentPhraseBlocks = (value: string): string => {
 };
 
 const sanitizeReceiptDescription = (receipt: (typeof parsedReceipts.value)[number]): string => {
-    const rawDescription =
-        receipt.attributes.narration || receipt.attributes.description || receipt.attributes.transactionDetails || '';
+    const rawDescription = receipt.attributes.narration || receipt.attributes.description || receipt.attributes.transactionDetails || '';
     const normalizedRawDescription = String(rawDescription).trim();
     const studentName = String(props.enrolment?.attributes?.studentName || '').trim();
     const studentNumber = String(props.enrolment?.attributes?.studentNumber || '').trim();
@@ -104,8 +103,7 @@ const sanitizeReceiptDescription = (receipt: (typeof parsedReceipts.value)[numbe
     const nameParts = studentName.split(/\s+/).filter(Boolean);
     const firstName = nameParts[0] ?? '';
     const lastName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : '';
-    const firstToLastSpanPattern =
-        firstName && lastName ? new RegExp(`${escapeRegex(firstName)}[\\s\\S]*?${escapeRegex(lastName)}`, 'gi') : null;
+    const firstToLastSpanPattern = firstName && lastName ? new RegExp(`${escapeRegex(firstName)}[\\s\\S]*?${escapeRegex(lastName)}`, 'gi') : null;
     const firstNamePattern = firstName ? new RegExp(`\\b${escapeRegex(firstName)}\\b`, 'gi') : null;
     const lastNamePattern = lastName ? new RegExp(`\\b${escapeRegex(lastName)}\\b`, 'gi') : null;
 
@@ -153,7 +151,6 @@ const parsedReceipts = computed(() =>
 onMounted(async () => {
     await getStudentFinancials(props.studentId);
 });
-
 </script>
 
 <template>
@@ -169,25 +166,17 @@ onMounted(async () => {
                             class="rounded-md border border-gray-200 bg-white px-3 py-2 text-xs shadow-sm"
                         >
                             <div class="flex items-center justify-between gap-3">
-                                <div class="font-medium text-accent-foreground">
+                                <div class="text-accent-foreground font-medium">
                                     {{ formatReceiptDate(studentPaymentReceipt.attributes.transactionDate) }}
                                 </div>
                                 <span
-                                    :class="
-                                        studentPaymentReceipt.credit > 0
-                                            ? 'bg-emerald-100 text-emerald-700'
-                                            : 'bg-rose-100 text-rose-700'
-                                    "
+                                    :class="studentPaymentReceipt.credit > 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'"
                                     class="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase"
                                 >
-                                    {{
-                                        studentPaymentReceipt.credit > 0
-                                            ? $t('finance.credit')
-                                            : $t('finance.debit')
-                                    }}
+                                    {{ studentPaymentReceipt.credit > 0 ? $t('finance.credit') : $t('finance.debit') }}
                                 </span>
                             </div>
-                            <div class="mt-1 whitespace-normal wrap-break-word text-[10px] leading-tight text-gray-600">
+                            <div class="mt-1 text-[10px] leading-tight wrap-break-word whitespace-normal text-gray-600">
                                 {{ sanitizeReceiptDescription(studentPaymentReceipt) }}
                             </div>
                             <div class="mt-2 text-[11px]">
@@ -207,17 +196,13 @@ onMounted(async () => {
                                 <div class="mt-1 flex justify-end">
                                     <span
                                         :class="
-                                            isUsdAmount(studentPaymentReceipt)
-                                                ? 'bg-emerald-100 text-emerald-700'
-                                                : 'bg-slate-100 text-slate-700'
+                                            isUsdAmount(studentPaymentReceipt) ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-700'
                                         "
                                         class="rounded-full px-2 py-0.5 text-[10px] font-semibold"
                                     >
                                         {{
                                             formatMoney(
-                                                studentPaymentReceipt.credit > 0
-                                                    ? studentPaymentReceipt.credit
-                                                    : studentPaymentReceipt.debit,
+                                                studentPaymentReceipt.credit > 0 ? studentPaymentReceipt.credit : studentPaymentReceipt.debit,
                                                 studentPaymentReceipt.attributes.isoCurrencyCode,
                                             )
                                         }}

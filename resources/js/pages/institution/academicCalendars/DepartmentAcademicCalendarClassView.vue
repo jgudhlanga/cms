@@ -7,12 +7,7 @@ import { useAcademicCalendarClassStudentSelection } from '@/composables/academic
 import { useAcademicCalendarClassStudents } from '@/composables/academicCalendars/useAcademicCalendarClassStudents';
 import { useDepartmentAcademicCalendarClassNavigation } from '@/composables/academicCalendars/useDepartmentAcademicCalendarClassNavigation';
 import { hasAbility } from '@/lib/permissions';
-import {
-    AcademicCalendar,
-    AcademicCalendarClassDetail,
-    AcademicCalendarClassMoveTarget,
-    ClassConfig,
-} from '@/types/academic-calendar';
+import { AcademicCalendar, AcademicCalendarClassDetail, AcademicCalendarClassMoveTarget, ClassConfig } from '@/types/academic-calendar';
 import { DepartmentCourse, DepartmentLevel } from '@/types/department-meta-data';
 import { InstitutionDepartment, ModeOfStudy } from '@/types/institution';
 import { Head } from '@inertiajs/vue3';

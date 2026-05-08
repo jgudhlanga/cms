@@ -41,7 +41,6 @@ watch(modals!, () => {
 const submitForm = () => {
     storePerClassSizeConfig(form, props.institutionDepartmentId, String(config.value?.academic_calendar_id ?? ''));
 };
-
 </script>
 
 <template>
@@ -51,7 +50,7 @@ const submitForm = () => {
         :on-form-action="() => submitForm()"
         :form="form"
     >
-        <template #body> 
+        <template #body>
             <BaseInput
                 input-id="students_per_class"
                 :inputAutoFocus="true"

@@ -2,10 +2,10 @@ import { useDataTables } from '@/composables/core/useDataTables';
 import { getIdParams } from '@/lib/utils';
 
 import BasicInfo from '@/components/staff/BasicInfo.vue';
-import StaffAddresses from '@/components/staff/StaffAddresses.vue';
-import StaffContacts from '@/components/staff/StaffContacts.vue';
 import Documents from '@/components/staff/Documents.vue';
 import ProfessionalInfo from '@/components/staff/ProfessionalInfo.vue';
+import StaffAddresses from '@/components/staff/StaffAddresses.vue';
+import StaffContacts from '@/components/staff/StaffContacts.vue';
 import { useSharedFormSchema } from '@/composables/core/useSharedFormSchema';
 import { useUtils } from '@/composables/core/useUtils';
 import { ColorVariant } from '@/enums/colors';

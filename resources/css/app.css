@@ -8,8 +8,7 @@
 @variant dark (&:is(.dark *));
 
 @theme {
-    --font-sans: Instrument Sans, ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
-    'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-sans: Instrument Sans, ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 
     --radius-lg: var(--radius);
     --radius-md: calc(var(--radius) - 2px);
@@ -106,7 +105,8 @@
 @layer utilities {
     body,
     html {
-        --font-sans: Instrument Sans, ui-sans-serif, system-ui, sans-serif, Inter, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+        --font-sans:
+            Instrument Sans, ui-sans-serif, system-ui, sans-serif, Inter, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
         --font-hand: Caveat, cursive;
     }
 }
@@ -176,7 +176,12 @@
 
 @layer utilities {
     .font-inter {
-        font-family: Inter, Instrument Sans, ui-sans-serif, system-ui, sans-serif;
+        font-family:
+            Inter,
+            Instrument Sans,
+            ui-sans-serif,
+            system-ui,
+            sans-serif;
     }
 
     .font-caveat {
@@ -193,7 +198,7 @@
 
     .bg-endless {
         position: relative;
-        background-image: url("/assets/images/profile-bg.svg");
+        background-image: url('/assets/images/profile-bg.svg');
         background-position: center;
         background-repeat: no-repeat;
         background-size: cover;
@@ -213,11 +218,11 @@
     }
 
     .hava-thead {
-        @apply text-xs uppercase bg-muted;
+        @apply bg-muted text-xs uppercase;
     }
 
     .hava-th {
-        @apply p-3 text-xs text-foreground font-bold;
+        @apply text-foreground p-3 text-xs font-bold;
     }
 
     .hava-thead:first-child tr > th:first-child {
@@ -233,7 +238,7 @@
     }
 
     .hava-tr {
-        @apply odd:bg-white even:bg-muted;
+        @apply even:bg-muted odd:bg-white;
     }
 
     .hava-tr:last-child td:first-child {
@@ -253,7 +258,7 @@
     }
 
     .hava-td {
-        @apply whitespace-nowrap px-3 py-2 text-sm text-foreground;
+        @apply text-foreground px-3 py-2 text-sm whitespace-nowrap;
     }
 
     .error {
@@ -267,11 +272,11 @@
     }
 
     .j-thead {
-        @apply text-[10px] uppercase bg-muted;
+        @apply bg-muted text-[10px] uppercase;
     }
 
     .j-th {
-        @apply p-3 text-[10px] text-foreground font-bold;
+        @apply text-foreground p-3 text-[10px] font-bold;
     }
 
     .j-tbody {
@@ -279,21 +284,21 @@
     }
 
     .j-tr {
-        @apply odd:bg-white even:bg-muted;
+        @apply even:bg-muted odd:bg-white;
     }
 
     .j-td {
-        @apply whitespace-nowrap px-3 py-2 text-[12px] text-foreground;
+        @apply text-foreground px-3 py-2 text-[12px] whitespace-nowrap;
     }
     .j-td-l-border {
-        @apply border-l border-persian-200;
+        @apply border-persian-200 border-l;
     }
 
     .j-td-r-border {
-        @apply border-r border-persian-200;
+        @apply border-persian-200 border-r;
     }
     .j-td-b-border {
-        @apply border-b border-persian-200;
+        @apply border-persian-200 border-b;
     }
 
     .fade-enter-active,
@@ -360,7 +365,6 @@
     .card-content {
         padding: 16px;
     }
-
 
     .subject-name {
         font-weight: 600;

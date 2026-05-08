@@ -2,19 +2,19 @@
 import { Head } from '@inertiajs/vue3';
 
 import BaseAlert from '@/components/core/alert/BaseAlert.vue';
+import { BaseButton } from '@/components/core/button';
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import HeadingSmall from '@/components/core/util/HeadingSmall.vue';
 import { useFeeStructures } from '@/composables/institution/useFeeStructures';
-import FeeStructureTable from '@/pages/institution/feeStructures/partials/FeeStructureTable.vue';
+import { ButtonSize } from '@/enums/buttons';
+import { ColorVariant } from '@/enums/colors';
+import { IconName, icons } from '@/lib/icons';
 import CreateEdit from '@/pages/institution/feeStructures/partials/CreateEdit.vue';
+import FeeStructureTable from '@/pages/institution/feeStructures/partials/FeeStructureTable.vue';
 import { AuthObject } from '@/types/data-pagination';
 import { FeeStructure } from '@/types/institution';
 import { FeeType } from '@/types/settings';
 import type { Link } from '@/types/ui';
-import { BaseButton } from '@/components/core/button';
-import { ButtonSize } from '@/enums/buttons';
-import { IconName, icons } from '@/lib/icons';
-import { ColorVariant } from '@/enums/colors';
 
 const { onOpenModal } = useFeeStructures();
 
@@ -54,7 +54,7 @@ const getTypeFeeStructures = (name: string): FeeStructure[] => {
                     </BaseButton>
                 </div>
                 <div class="mb-5">
-                  <FeeStructureTable :fee-structures="getTypeFeeStructures(fee.attributes.name)" :fee-type="fee" />
+                    <FeeStructureTable :fee-structures="getTypeFeeStructures(fee.attributes.name)" :fee-type="fee" />
                 </div>
             </div>
         </template>
@@ -67,6 +67,6 @@ const getTypeFeeStructures = (name: string): FeeStructure[] => {
                 })
             "
         />
-      <CreateEdit/>
+        <CreateEdit />
     </PageContainer>
 </template>

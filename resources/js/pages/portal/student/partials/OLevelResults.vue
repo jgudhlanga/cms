@@ -3,8 +3,8 @@ import { BaseButton } from '@/components/core/button';
 import { useUtils } from '@/composables/core/useUtils';
 import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
-import ComponentHeader from '@/pages/dashboard/partials/ComponentHeader.vue';
-import StatsCard from '@/pages/dashboard/partials/StatsCard.vue';
+import ComponentHeader from '@/pages/dashboard/components/ComponentHeader.vue';
+import StatsCard from '@/pages/dashboard/components/StatsCard.vue';
 import { OLevelSubjectResult } from '@/types/enrolments';
 
 interface Props {

@@ -13,4 +13,4 @@ export type Audit = {
         createdAt: string;
         updatedAt: string;
     };
-}
+};

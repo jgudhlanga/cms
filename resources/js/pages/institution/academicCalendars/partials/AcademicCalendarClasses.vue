@@ -4,10 +4,10 @@ import { useModeOfStudy } from '@/composables/institution/useModeOfStudy';
 import { useServerSide } from '@/composables/shared/useServerSide';
 import { openModal } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
+import { useDepartmentMetaStore } from '@/store/institution/useDepartmentMetaStore';
 import { AcademicClassConfigPayload, ClassLevelSummary, DepartmentCourseClassCount } from '@/types/academic-calendar';
 import { InstitutionDepartment, ModeOfStudy } from '@/types/institution';
 import { SelectOption } from '@/types/utils';
-import { useDepartmentMetaStore } from '@/store/institution/useDepartmentMetaStore';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 import { storeToRefs } from 'pinia';
 import { onMounted, ref, watch } from 'vue';
@@ -75,13 +75,14 @@ onMounted(async () => {
     await listModesOfStudy();
 
     const currentCalendarYear = String(new Date().getFullYear());
-    const defaultYearOption =
-        academicYearOptions.value.find((o) => String(o.value) === currentCalendarYear) ?? academicYearOptions.value[0] ?? null;
+    const defaultYearOption = academicYearOptions.value.find((o) => String(o.value) === currentCalendarYear) ?? academicYearOptions.value[0] ?? null;
 
     const defaultModeOption = modesOfStudy.value?.filter((row: ModeOfStudy) => row.attributes.name.toLowerCase() === 'full time')[0] ?? null;
 
     academicYear.value = getSelectedAcademicYearFromUrl() ?? defaultYearOption;
-    modeOfStudy.value = getSelectedModeOfStudyFromUrl() ?? (defaultModeOption ? { value: Number(defaultModeOption.id), label: defaultModeOption.attributes.name } : null);
+    modeOfStudy.value =
+        getSelectedModeOfStudyFromUrl() ??
+        (defaultModeOption ? { value: Number(defaultModeOption.id), label: defaultModeOption.attributes.name } : null);
     syncFiltersToUrl();
 
     await loadClassConfigs();
@@ -199,11 +200,11 @@ const showConfigModal = (payload: AcademicClassConfigPayload) => {
                             </tr>
                             <tr class="j-tr" v-for="(level, index) in stats.levels" :key="index">
                                 <td class="j-td text-left">{{ level.levelName }}</td>
-                                <td class="j-td text-center">{{ getDisplayedTotalFinalList(level.totalFinalList, level.totalnClass) }} </td>
+                                <td class="j-td text-center">{{ getDisplayedTotalFinalList(level.totalFinalList, level.totalnClass) }}</td>
                                 <td class="j-td text-center">
                                     <button
                                         type="button"
-                                        class="text-primary decoration-persian-200 cursor-pointer underline-offset-4 transition-colors duration-300 ease-out hover:text-accent-foreground"
+                                        class="text-primary decoration-persian-200 hover:text-accent-foreground cursor-pointer underline-offset-4 transition-colors duration-300 ease-out"
                                         @click="
                                             () =>
                                                 showConfigModal({
@@ -222,16 +223,18 @@ const showConfigModal = (payload: AcademicClassConfigPayload) => {
                                     <TextLink
                                         v-if="level.classConfigId !== null"
                                         :title="String(level.classesCount ?? 0)"
-                                        :href="route('academic-calendars.department-classes', {
-                                            institution_department: institutionDepartmentId,
-                                            calendar_year: String(academicYear?.value ?? ''),
-                                            mode_of_study_id: String(modeOfStudy?.value),
-                                            department_course_id: stats.departmentCourseId,
-                                            department_level_id: String(level.departmentLevelId),
-                                            class_config_id: String(level.classConfigId),
-                                        })"
+                                        :href="
+                                            route('academic-calendars.department-classes', {
+                                                institution_department: institutionDepartmentId,
+                                                calendar_year: String(academicYear?.value ?? ''),
+                                                mode_of_study_id: String(modeOfStudy?.value),
+                                                department_course_id: stats.departmentCourseId,
+                                                department_level_id: String(level.departmentLevelId),
+                                                class_config_id: String(level.classConfigId),
+                                            })
+                                        "
                                         classes="size-4 bg-persian-100 rounded-full px-2 py-1 hover:bg-persian-600 hover:text-persian-100"
-                                    />  
+                                    />
                                     <span v-else>---</span>
                                 </td>
                             </tr>

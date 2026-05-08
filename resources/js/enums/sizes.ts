@@ -1,8 +1,8 @@
 export enum SizeVariant {
-	xs = 'xs',
-	sm = 'sm',
-	md = 'md',
-	lg = 'lg',
-	xl = 'xl',
-	full = 'full'
+    xs = 'xs',
+    sm = 'sm',
+    md = 'md',
+    lg = 'lg',
+    xl = 'xl',
+    full = 'full',
 }

@@ -1,6 +1,6 @@
-import { usePreferencesStore } from '@/store/core/preferences.store';
 import HttpService from '@/services/http.service';
 import ToastService from '@/services/toast.service';
+import { usePreferencesStore } from '@/store/core/preferences.store';
 
 type UserPreferencePayload = {
     id?: number | string;

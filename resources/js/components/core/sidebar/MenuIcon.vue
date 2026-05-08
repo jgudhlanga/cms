@@ -2,9 +2,9 @@
 import { type Component } from 'vue';
 
 defineProps<{
-	icon?: Component
+    icon?: Component;
 }>();
 </script>
 <template>
-	<component :is="icon" v-if="icon" />
+    <component :is="icon" v-if="icon" />
 </template>

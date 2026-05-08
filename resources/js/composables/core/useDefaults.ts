@@ -7,9 +7,10 @@ const appLogo = ref(LOGO);
 const paymentMethods = ref(PAYMENT_METHODS);
 
 export function useDefaults() {
-	return {
-		defaultAvatarImage,
-		defaultObjectImage,
-		appLogo, paymentMethods,
-	};
+    return {
+        defaultAvatarImage,
+        defaultObjectImage,
+        appLogo,
+        paymentMethods,
+    };
 }

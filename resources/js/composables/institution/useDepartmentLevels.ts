@@ -16,7 +16,6 @@ import { trans, trans_choice } from 'laravel-vue-i18n';
 import { storeToRefs } from 'pinia';
 import { ref } from 'vue';
 import { z } from 'zod';
-import { ApiFilterResponse } from '@/types/data-pagination';
 
 export const useDepartmentLevels = (isEditingProgram?: boolean) => {
     const { moreActionButton, textLink, actionButton, checkStatusIcon, onEdit } = useDataTables();

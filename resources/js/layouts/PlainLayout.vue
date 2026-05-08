@@ -2,7 +2,7 @@
 
 <template>
     <div>
-        <slot/>
-        <ErrorDialog/>
+        <slot />
+        <ErrorDialog />
     </div>
 </template>

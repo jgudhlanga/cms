@@ -1,11 +1,10 @@
 import { useDataTables } from '@/composables/core/useDataTables';
+import { useUtils } from '@/composables/core/useUtils';
+import { errorAlert, successAlert } from '@/lib/alerts';
 import { Enrolment } from '@/types/enrolments';
 import { Student } from '@/types/students';
-import { trans_choice } from 'laravel-vue-i18n';
-import { useUtils } from '@/composables/core/useUtils';
 import { InertiaForm } from '@inertiajs/vue3';
-import { useUpdateProgramFormStore } from '@/store/portal/useUpdateProgramFormStore';
-import { errorAlert, successAlert } from '@/lib/alerts';
+import { trans_choice } from 'laravel-vue-i18n';
 
 export const useStudents = () => {
     const { moreActionButton, textLink } = useDataTables();
@@ -42,7 +41,8 @@ export const useStudents = () => {
         //return step?.toLowerCase() === 'review' ? 'Unsuccessful' : step;
     };
 
-    const hasOfferLetter = (application: Enrolment) => getApplicationStatus(application)?.toLowerCase() === 'accepted' || getApplicationStatus(application)?.toLowerCase() === 'enrolled';
+    const hasOfferLetter = (application: Enrolment) =>
+        getApplicationStatus(application)?.toLowerCase() === 'accepted' || getApplicationStatus(application)?.toLowerCase() === 'enrolled';
 
     const statusMessage = (application: Enrolment) => {
         const workflowStep = application?.relationships?.departmentWorkflowStep?.attributes?.workflowStep ?? '';

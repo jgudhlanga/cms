@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import BaseModal from '@/components/core/modal/BaseModal.vue';
 import BaseInput from '@/components/core/form/text/BaseInput.vue';
 import Code from '@/components/core/form/text/Code.vue';
+import BaseModal from '@/components/core/modal/BaseModal.vue';
 import { useCourseSyllabusModules } from '@/composables/institution/useCourseSyllabusModules';
+import { getModalEdit, getModalParent } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
 import { clearFormErrors } from '@/lib/forms';
-import { getModalEdit, getModalParent } from '@/lib/alerts';
 import { useModalStore } from '@/store/core/useModalStore';
 import { CourseSyllabusModule, CourseSyllabusModuleParams } from '@/types/institution';
 import { useForm } from '@inertiajs/vue3';
@@ -82,7 +82,12 @@ const save = () => {
     >
         <template #body>
             <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
-                <BaseInput input-id="course_syllabus" :label="$tChoice('syllabus.course_syllabus', 1)" :model-value="selectedSyllabusTitle" :disabled="true" />
+                <BaseInput
+                    input-id="course_syllabus"
+                    :label="$tChoice('syllabus.course_syllabus', 1)"
+                    :model-value="selectedSyllabusTitle"
+                    :disabled="true"
+                />
                 <BaseInput
                     input-id="title"
                     :label="$tChoice('trans.title', 1)"

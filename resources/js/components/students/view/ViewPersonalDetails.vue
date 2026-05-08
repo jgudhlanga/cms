@@ -3,10 +3,10 @@ import BaseCard from '@/components/core/card/BaseCard.vue';
 import BaseImage from '@/components/core/image/BaseImage.vue';
 import LabelValue from '@/components/core/util/LabelValue.vue';
 import { useUtils } from '@/composables/core/useUtils';
+import { DISABILITY_OPTIONS } from '@/lib/constants';
 import { PersonalDetailView } from '@/types/students';
 import { ValueAndLabel } from '@/types/utils';
 import { computed } from 'vue';
-import { DISABILITY_OPTIONS } from '@/lib/constants';
 
 const { isNativeCitizen, formatDate, isItTrue } = useUtils();
 
@@ -49,7 +49,10 @@ const personalDetails = computed<ValueAndLabel[]>(() => {
     }
 
     details.push({ transKey: 'trans.date_of_birth', value: formatDate(personal?.dateOfBirth ?? '') });
-    details.push({ transKey: 'trans.disability', value: DISABILITY_OPTIONS.find(option => option.value === personal?.disabilityStatus)?.label ?? '' });
+    details.push({
+        transKey: 'trans.disability',
+        value: DISABILITY_OPTIONS.find((option) => option.value === personal?.disabilityStatus)?.label ?? '',
+    });
 
     if (isItTrue(showExtra)) {
         details.push(

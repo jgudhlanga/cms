@@ -40,7 +40,7 @@ const { activeTab } = storeToRefs(useUserTabsStore());
                     v-for="tab in userProfileTabs(user)"
                     :key="'tab_' + tab.value"
                     :value="tab.value"
-                    class="text-xs font-light uppercase flex items-center"
+                    class="flex items-center text-xs font-light uppercase"
                 >
                     <component :is="icons[tab?.icon!]" />
                     <span>{{ tab?.transLabel!() }}</span>

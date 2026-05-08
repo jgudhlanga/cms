@@ -1,23 +1,18 @@
 <script setup lang="ts">
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
-defineProps<{content: any}>();
+defineProps<{ content: any }>();
 </script>
 
 <template>
-  <TooltipProvider>
-    <Tooltip>
-      <TooltipTrigger as-child>
-        <slot />
-      </TooltipTrigger>
-      <TooltipContent>
-        {{ content }}
-      </TooltipContent>
-    </Tooltip>
-  </TooltipProvider>
+    <TooltipProvider>
+        <Tooltip>
+            <TooltipTrigger as-child>
+                <slot />
+            </TooltipTrigger>
+            <TooltipContent>
+                {{ content }}
+            </TooltipContent>
+        </Tooltip>
+    </TooltipProvider>
 </template>

@@ -51,9 +51,7 @@ watch(modals!, () => {
 });
 
 watch(selectedModes, () => {
-    form.modes_of_study = selectedModes.value
-        .map((option) => getOptionValue(option))
-        .filter((value) => Number.isInteger(value) && value > 0);
+    form.modes_of_study = selectedModes.value.map((option) => getOptionValue(option)).filter((value) => Number.isInteger(value) && value > 0);
     clearFormErrors(form, 'modes_of_study');
 });
 </script>

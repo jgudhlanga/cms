@@ -64,11 +64,5 @@ const placeholder = computed(() => {
 </script>
 
 <template>
-    <BaseCombobox
-        :label="$tChoice('trans.course', 1)"
-        :options="options"
-        :is-loading="isLoading"
-        :placeholder="placeholder"
-        v-bind="$attrs"
-    />
+    <BaseCombobox :label="$tChoice('trans.course', 1)" :options="options" :is-loading="isLoading" :placeholder="placeholder" v-bind="$attrs" />
 </template>

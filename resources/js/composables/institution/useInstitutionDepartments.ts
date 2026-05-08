@@ -28,7 +28,9 @@ export const useInstitutionDepartments = () => {
                 accessorKey: 'departmentCode',
                 cell: ({ row }: { row: { original: InstitutionDepartment } }) => {
                     const id = getIdParams(row.original.id?.toString() ?? '');
-                    return textEditLink(row.original?.attributes?.departmentCode ?? '', () => {console.log('Edit department code')});
+                    return textEditLink(row.original?.attributes?.departmentCode ?? '', () => {
+                        console.log('Edit department code');
+                    });
                 },
             },
             {

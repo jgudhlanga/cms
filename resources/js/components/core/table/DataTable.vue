@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { CreateButton, ExportButton, ImportButton } from '@/components/core/button';
 import { useDataTables } from '@/composables/core/useDataTables';
+import { ColorVariant } from '@/enums/colors';
 import { PAGINATION_ITEMS_PER_PAGE } from '@/lib/constants';
 import { DataFilters, PaginationMeta, PaginationRootLink } from '@/types/data-pagination';
 import { onMounted, ref, watch } from 'vue';
 import { Archived, ColumnFilter, GotoPage, Paginator, PerPageSize, Search, TableBody, TableHead } from './';
-import { ColorVariant } from '@/enums/colors';
 
 interface Props {
     data: Array<any>;
@@ -73,9 +73,27 @@ watch(trashed, trashedWatcher);
             </div>
             <div class="flex w-1/2 items-center justify-end space-x-3">
                 <ColumnFilter :variant="ColorVariant.primary_outline" :table="table" :toggleColumnVisibility="toggleColumnVisibility" />
-                <ExportButton :variant="ColorVariant.primary_outline" class="rounded-full" v-if="onExport" @click="() => (onExport ? onExport() : null)" :disable="disableExport" />
-                <ImportButton :variant="ColorVariant.primary_outline" class="rounded-full" v-if="onImport" @click="() => (onImport ? onImport() : null)" :disable="disableImport" />
-                <CreateButton :variant="ColorVariant.primary_outline" class="rounded-full" v-if="onCreate" @click="() => (onCreate ? onCreate() : null)" :disable="disableCreate" />
+                <ExportButton
+                    :variant="ColorVariant.primary_outline"
+                    class="rounded-full"
+                    v-if="onExport"
+                    @click="() => (onExport ? onExport() : null)"
+                    :disable="disableExport"
+                />
+                <ImportButton
+                    :variant="ColorVariant.primary_outline"
+                    class="rounded-full"
+                    v-if="onImport"
+                    @click="() => (onImport ? onImport() : null)"
+                    :disable="disableImport"
+                />
+                <CreateButton
+                    :variant="ColorVariant.primary_outline"
+                    class="rounded-full"
+                    v-if="onCreate"
+                    @click="() => (onCreate ? onCreate() : null)"
+                    :disable="disableCreate"
+                />
                 <slot name="head-right" />
             </div>
         </div>

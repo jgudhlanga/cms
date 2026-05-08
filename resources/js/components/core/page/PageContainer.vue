@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import LogoutButton from '@/components/auth/LogoutButton.vue';
 import RemoveImpersonationButton from '@/components/auth/RemoveImpersonationButton.vue';
+import BackNavigationButton from '@/components/core/button/BackNavigationButton.vue';
 import BaseTooltip from '@/components/core/util/BaseTooltip.vue';
 import Breadcrumbs from '@/components/core/util/Breadcrumbs.vue';
 import TextLink from '@/components/core/util/TextLink.vue';
@@ -12,7 +13,6 @@ import { useInitials } from '@/composables/core/useInitials';
 import { useUtils } from '@/composables/core/useUtils';
 import { PageProps } from '@/types';
 import { BreadcrumbItemInterface } from '@/types/ui';
-import BackNavigationButton from '@/components/core/button/BackNavigationButton.vue';
 import { usePage } from '@inertiajs/vue3';
 import { computed, useSlots } from 'vue';
 
@@ -81,11 +81,7 @@ const backNavigationRowJustifyClass = computed((): string => {
         </div>
     </header>
     <div class="flex h-full w-full flex-col pb-10">
-        <div
-            v-if="showBackNavigationRow"
-            class="mb-10 flex items-center gap-4"
-            :class="backNavigationRowJustifyClass"
-        >
+        <div v-if="showBackNavigationRow" class="mb-10 flex items-center gap-4" :class="backNavigationRowJustifyClass">
             <div v-if="hasBackNavigationLeading" class="min-w-0 flex-1">
                 <slot name="backNavigationLeading" />
             </div>

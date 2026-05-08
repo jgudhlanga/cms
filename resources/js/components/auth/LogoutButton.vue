@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { IconName } from '@/enums/icons';
-import { ColorVariant } from '@/enums/colors';
 import { useAuth } from '@/composables/auth/useAuth';
+import { ColorVariant } from '@/enums/colors';
+import { IconName } from '@/enums/icons';
 import { router } from '@inertiajs/vue3';
 
 const { logout } = useAuth();

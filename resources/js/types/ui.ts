@@ -2,50 +2,50 @@ import { LucideIcon } from 'lucide-vue-next';
 import { Component } from 'vue';
 
 export interface BreadcrumbItemInterface {
-	title?: any;
-	href?: any;
-	transChoiceKey?: any;
-	transChoiceKeyIndex?: number;
-	transKey?: any;
+    title?: any;
+    href?: any;
+    transChoiceKey?: any;
+    transChoiceKeyIndex?: number;
+    transKey?: any;
 }
 
 export interface MenuItemInterface {
-	groupLabel?: string;
-	title?: string;
-	transChoiceKey?: string;
-	transChoiceKeyIndex?: number;
-	transKey?: string;
-	url?: string;
-	icon?: Component;
-	isActive?: boolean;
-	show?: boolean;
-	items?: Array<MenuItemInterface>;
+    groupLabel?: string;
+    title?: string;
+    transChoiceKey?: string;
+    transChoiceKeyIndex?: number;
+    transKey?: string;
+    url?: string;
+    icon?: Component;
+    isActive?: boolean;
+    show?: boolean;
+    items?: Array<MenuItemInterface>;
 }
 
 export interface BreadcrumbItem {
-	title: string;
-	href: string;
+    title: string;
+    href: string;
 }
 
 export interface NavItem {
-	title: string;
-	href: string;
-	icon?: LucideIcon;
-	isActive?: boolean;
+    title: string;
+    href: string;
+    icon?: LucideIcon;
+    isActive?: boolean;
 }
 
 export type BreadcrumbItemType = BreadcrumbItem;
 
 export type Link = {
-	transChoiceKey?: string;
+    transChoiceKey?: string;
     transChoiceKeyIndex?: number;
-	transKey?: string;
-	url?: string;
-	href?: string;
-	title?: string;
-	name?: any;
-	params?: any;
-	icon?: string;
-	group?: string;
-	children?: Array<Link>;
+    transKey?: string;
+    url?: string;
+    href?: string;
+    title?: string;
+    name?: any;
+    params?: any;
+    icon?: string;
+    group?: string;
+    children?: Array<Link>;
 };

@@ -3,12 +3,12 @@ import BaseCombobox from '@/components/core/form/combobox/BaseCombobox.vue';
 import { computed } from 'vue';
 
 interface Props {
-    showLabel?: boolean
+    showLabel?: boolean;
 }
 
 withDefaults(defineProps<Props>(), {
     showLabel: true,
-})
+});
 
 const currentYear = new Date().getFullYear();
 const options = computed(() =>

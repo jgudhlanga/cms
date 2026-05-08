@@ -1,15 +1,15 @@
 <script setup lang="ts">
 import { GenericButton } from '@/components/core/button';
+import TableLoading from '@/components/core/loader/TableLoading.vue';
 import DataTable from '@/components/core/table/DataTable.vue';
 import { useDepartmentLevels } from '@/composables/institution/useDepartmentLevels';
 import { ColorVariant } from '@/enums/colors';
+import { APP_MODULE_KEYS } from '@/lib/constants';
 import { IconName } from '@/lib/icons';
 import { hasAbility } from '@/lib/permissions';
-import { computed, onMounted, ref, watch } from 'vue';
-import TableLoading from '@/components/core/loader/TableLoading.vue';
-import { InstitutionDepartment } from '@/types/institution';
 import { useModalStore } from '@/store/core/useModalStore';
-import { APP_MODULE_KEYS } from '@/lib/constants';
+import { InstitutionDepartment } from '@/types/institution';
+import { computed, onMounted, ref, watch } from 'vue';
 
 interface Props {
     department: InstitutionDepartment;

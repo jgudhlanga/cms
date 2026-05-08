@@ -1,6 +1,4 @@
-<script setup lang="ts">
-
-</script>
+<script setup lang="ts"></script>
 
 <template>
     <InfiniteBackground />
@@ -8,6 +6,6 @@
         <div class="my-5 flex size-20 flex-col items-center justify-center">
             <AppLogo classes="border-2 border-white" />
         </div>
-        <slot/>
+        <slot />
     </div>
 </template>

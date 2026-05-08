@@ -15,7 +15,7 @@ defineProps<Props>();
 </template>
 <style scoped>
 .stat-number {
-    font-size: 1.0rem;
+    font-size: 1rem;
     font-weight: 700;
     color: #2575fc;
     margin: 0;

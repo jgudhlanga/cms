@@ -1,6 +1,6 @@
 import { useStores } from '@/composables/core/useStores';
 import HttpService from '@/services/http.service';
-import { InertiaForm, router } from '@inertiajs/vue3';
+import { InertiaForm } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 import { z } from 'zod';
 

@@ -4,14 +4,14 @@ import { useUtils } from '@/composables/core/useUtils';
 import { forbiddenAlert, openModal } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
 import { buildFormOptions } from '@/lib/forms';
+import { hasAbility } from '@/lib/permissions';
 import { getIdParams } from '@/lib/utils';
 import { Auth } from '@/types';
 import { FeeStructure } from '@/types/institution';
+import { FeeType } from '@/types/settings';
 import { InertiaForm, usePage } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 import { ref } from 'vue';
-import {FeeType} from "@/types/settings";
-import {hasAbility} from "@/lib/permissions";
 
 export const useFeeStructures = () => {
     const { moreActionButton, onDelete, onForceDelete, onRestore } = useDataTables();

@@ -2,6 +2,11 @@
 import { Head } from '@inertiajs/vue3';
 
 import PageContainer from '@/components/core/page/PageContainer.vue';
+import AddressesForm from '@/components/shared/address/AddressesForm.vue';
+import EditBasicInfo from '@/components/shared/basicInfo/EditBasicInfo.vue';
+import ContactsForm from '@/components/shared/contacts/ContactsForm.vue';
+import NextOfKinForm from '@/components/shared/nextOfKin/NextOfKinForm.vue';
+import SponsorForm from '@/components/students/sponsors/SponsorForm.vue';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import PageHeaderAvatar from '@/components/users/PageHeaderAvatar.vue';
 import { useShowEnrolment } from '@/composables/students/useShowEnrolment';
@@ -11,11 +16,6 @@ import { AuthObject } from '@/types/data-pagination';
 import { Student } from '@/types/students';
 import { Link } from '@/types/ui';
 import { storeToRefs } from 'pinia';
-import SponsorForm from '@/components/students/sponsors/SponsorForm.vue';
-import ContactsForm from '@/components/shared/contacts/ContactsForm.vue';
-import NextOfKinForm from '@/components/shared/nextOfKin/NextOfKinForm.vue';
-import EditBasicInfo from '@/components/shared/basicInfo/EditBasicInfo.vue';
-import AddressesForm from '@/components/shared/address/AddressesForm.vue';
 
 interface Props {
     student: Student;

@@ -13,13 +13,7 @@ defineProps<Props>();
 </script>
 
 <template>
-    <BaseButton
-        @click="() => action()"
-        :title="$t('trans.delete')"
-        :size="ButtonSize.sm"
-        :variant="ColorVariant.danger"
-        classes="rounded-full"
-    >
+    <BaseButton @click="() => action()" :title="$t('trans.delete')" :size="ButtonSize.sm" :variant="ColorVariant.danger" classes="rounded-full">
         <component :is="icons[IconName.trash]" />
     </BaseButton>
 </template>

@@ -41,7 +41,7 @@ const setActiveTab = (tab: string) => {
     <Head :title="`${$t('trans.personal_details')} ${$t('trans.details')}`" />
     <PageContainer :breadcrumbs="breadcrumbs">
         <PageHeaderAvatar :line-one="user.attributes?.name" :line-two="user.attributes?.email" />
-        <Tabs :default-value="activeTab" v-model="activeTab" class="hidden md:flex mt-2">
+        <Tabs :default-value="activeTab" v-model="activeTab" class="mt-2 hidden md:flex">
             <TabsList class="w-full">
                 <TabsTrigger
                     v-for="tab in studentTabs()"

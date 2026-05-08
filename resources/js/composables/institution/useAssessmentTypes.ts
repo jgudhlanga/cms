@@ -49,10 +49,7 @@ export const useAssessmentTypes = () => {
         ];
     };
 
-    const breadcrumbs: Array<Link> = [
-        { transChoiceKey: 'settings', href: route('settings.index') },
-        { transChoiceKey: 'assessment_type' },
-    ];
+    const breadcrumbs: Array<Link> = [{ transChoiceKey: 'settings', href: route('settings.index') }, { transChoiceKey: 'assessment_type' }];
 
     const saveAssessmentType = (form: InertiaForm<any>, assessmentType?: AssessmentType) => {
         const success = trans('trans.item_saved', { item: trans_choice('trans.assessment_type', 1) });

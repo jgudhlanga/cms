@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import { computed } from 'vue';
-import { InertiaForm } from '@inertiajs/vue3';
 import BaseButton from '@/components/core/button/BaseButton.vue';
+import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
 import { SizeVariant } from '@/enums/sizes';
 import { IconName, icons } from '@/lib/icons';
 import { cn } from '@/lib/utils';
 import { useModalStore } from '@/store/core/useModalStore';
-import { ButtonSize } from '@/enums/buttons';
+import { InertiaForm } from '@inertiajs/vue3';
+import { computed } from 'vue';
 
 interface Props {
     title: string;
@@ -70,7 +70,7 @@ const destroyModal = () => {
                 <div class="my-2 h-1 w-full border-b-[1px]"></div>
                 <form :name="name" v-if="hasForm" @submit.prevent="() => (onFormAction ? onFormAction!() : null)" class="flex flex-col">
                     <!-- Modal Body -->
-                    <div class="flex-1 overflow-y-auto space-y-6 px-6 py-4">
+                    <div class="flex-1 space-y-6 overflow-y-auto px-6 py-4">
                         <slot name="body" />
                     </div>
                     <!-- Modal Footer -->
@@ -85,7 +85,7 @@ const destroyModal = () => {
                     </div>
                 </form>
                 <div v-else class="flex flex-col">
-                    <div class="relative flex-1 overflow-y-auto space-y-6 px-6 py-4">
+                    <div class="relative flex-1 space-y-6 overflow-y-auto px-6 py-4">
                         <slot />
                     </div>
                     <div class="mt-6 flex w-full justify-center space-x-3 border-t-[1px] px-6 py-5">

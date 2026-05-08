@@ -1,31 +1,30 @@
-import { ref } from 'vue';
-import HttpService from '@/services/http.service';
 import { errorAlert } from '@/lib/alerts';
+import HttpService from '@/services/http.service';
 import { trans, trans_choice } from 'laravel-vue-i18n';
+import { ref } from 'vue';
 
 interface DropdownFetchData {
-	url: string;
-	search?: string;
-	transKey?: string;
-	transChoiceKey?: string;
+    url: string;
+    search?: string;
+    transKey?: string;
+    transChoiceKey?: string;
 }
 export const useDropdowns = () => {
+    const data = ref<any>(null);
 
-	const data = ref<any>(null);
-
-	const fetchData = async ({ url, search, transKey, transChoiceKey }: DropdownFetchData) => {
-		try {
+    const fetchData = async ({ url, search, transKey, transChoiceKey }: DropdownFetchData) => {
+        try {
             const appendSearchUrl = url.includes('?') ? (search ? `&search=${search}` : '') : search ? `?search=${search}` : '';
             const response = await HttpService.get(`${url}${appendSearchUrl}`);
-			data.value = response.data;
-		} catch {
-			const transValue = transKey ? trans(transKey) : transChoiceKey ? trans_choice(transChoiceKey, 2) : '';
-			errorAlert(trans('trans.load_data_failure', { data: transValue }));
-		}
-	};
+            data.value = response.data;
+        } catch {
+            const transValue = transKey ? trans(transKey) : transChoiceKey ? trans_choice(transChoiceKey, 2) : '';
+            errorAlert(trans('trans.load_data_failure', { data: transValue }));
+        }
+    };
 
-	return {
-		fetchData,
-		data,
-	};
+    return {
+        fetchData,
+        data,
+    };
 };

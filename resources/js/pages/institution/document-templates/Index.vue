@@ -3,12 +3,12 @@ import { Head } from '@inertiajs/vue3';
 
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import DataTable from '@/components/core/table/DataTable.vue';
+import { useUtils } from '@/composables/core/useUtils';
 import { useDocumentTemplates } from '@/composables/institution/useDocumentTemplates';
 import { hasAbility } from '@/lib/permissions';
 import { AuthObject, DataFilters, DataListProps } from '@/types/data-pagination';
 import { DocumentTemplate } from '@/types/institution';
 import type { Link } from '@/types/ui';
-import { useUtils } from '@/composables/core/useUtils';
 
 defineProps<{
     documentTemplates: DataListProps<DocumentTemplate>;
@@ -24,7 +24,7 @@ const breadcrumbs: Array<Link> = [
 ];
 
 const { createDocumentTemplateColumns } = useDocumentTemplates();
-const {navigateTo} = useUtils();
+const { navigateTo } = useUtils();
 </script>
 
 <template>

@@ -22,7 +22,7 @@ defineProps<{
             </div>
 
             <!-- Desktop: show full breadcrumb trail -->
-            <div class="hidden md:flex items-center">
+            <div class="hidden items-center md:flex">
                 <template v-for="(item, index) in breadcrumbs" :key="index">
                     <BreadcrumbItem>
                         <template v-if="index === breadcrumbs.length - 1">
@@ -44,4 +44,3 @@ defineProps<{
         </BreadcrumbList>
     </Breadcrumb>
 </template>
-

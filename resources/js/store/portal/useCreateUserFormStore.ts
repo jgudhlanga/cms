@@ -8,8 +8,8 @@ export const useCreateUserFormStore = defineStore('portal-application-user-form'
             first_name: '',
             last_name: '',
             password: '',
-            password_confirmation: ''
+            password_confirmation: '',
         };
     },
-    persist: true
+    persist: true,
 });

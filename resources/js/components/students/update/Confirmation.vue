@@ -1,17 +1,17 @@
 <script setup lang="ts">
-import ViewContactDetails from '@/components/students/view/ViewContactDetails.vue';
-import ViewNextOfKinDetails from '@/components/students/view/ViewNextOfKinDetails.vue';
-import ViewPersonalDetails from '@/components/students/view/ViewPersonalDetails.vue';
-import ProgramDetails from '@/components/students/view/ProgramDetails.vue';
-import { useUtils } from '@/composables/core/useUtils';
+import { BaseButton } from '@/components/core/button';
 import LevelRequirements from '@/components/students/update/LevelRequirements.vue';
 import OLevelRequirements from '@/components/students/update/OLevelRequirements.vue';
 import SDPRequirements from '@/components/students/update/SDPRequirements.vue';
+import ProgramDetails from '@/components/students/view/ProgramDetails.vue';
+import ViewContactDetails from '@/components/students/view/ViewContactDetails.vue';
+import ViewNextOfKinDetails from '@/components/students/view/ViewNextOfKinDetails.vue';
+import ViewPersonalDetails from '@/components/students/view/ViewPersonalDetails.vue';
+import { useUtils } from '@/composables/core/useUtils';
+import { ButtonSize } from '@/enums/buttons';
 import { useCreateApplicationFormStore } from '@/store/portal/useCreateApplicationFormStore';
 import { ContactDetailView, NextOfKinDetailView, PersonalDetailView, ProgramDetailView } from '@/types/students';
 import { storeToRefs } from 'pinia';
-import { ButtonSize } from '@/enums/buttons';
-import { BaseButton } from '@/components/core/button';
 
 const {
     email,

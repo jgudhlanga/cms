@@ -20,7 +20,6 @@ import { InertiaForm, router } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 import { h, ref } from 'vue';
 import { ZodObject } from 'zod';
-import { Level } from '@/types/institution';
 
 export function useStudentPortal() {
     const steps: Step[] = [

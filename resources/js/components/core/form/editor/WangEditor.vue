@@ -1,18 +1,12 @@
 <script setup lang="ts">
-import { onBeforeUnmount, shallowRef, reactive, toRefs } from "vue";
-import { Editor, Toolbar } from "@wangeditor/editor-for-vue";
-import {
-    IDomEditor,
-    IEditorConfig,
-    IToolbarConfig,
-    i18nChangeLanguage,
-} from "@wangeditor/editor";
-
+import { IDomEditor, IEditorConfig, IToolbarConfig, i18nChangeLanguage } from '@wangeditor/editor';
+import { Editor, Toolbar } from '@wangeditor/editor-for-vue';
+import { onBeforeUnmount, reactive, shallowRef, toRefs } from 'vue';
 
 const props = defineProps<{ modelValue: string }>();
-const emit = defineEmits<{ (e: "update:modelValue", value: string): void }>();
+const emit = defineEmits<{ (e: 'update:modelValue', value: string): void }>();
 
-i18nChangeLanguage("en");
+i18nChangeLanguage('en');
 
 const editorRef = shallowRef<IDomEditor>();
 
@@ -28,7 +22,7 @@ const state = reactive({
             {
                 key: 'group-more-style',
                 title: 'More style',
-                menuKeys: ['through', 'code', 'sup', 'sub', 'clearStyle']
+                menuKeys: ['through', 'code', 'sup', 'sub', 'clearStyle'],
             },
             'color',
             'bgColor',
@@ -43,12 +37,12 @@ const state = reactive({
             {
                 key: 'group-justify',
                 title: 'Justify',
-                menuKeys: ['justifyLeft', 'justifyRight', 'justifyCenter', 'justifyJustify']
+                menuKeys: ['justifyLeft', 'justifyRight', 'justifyCenter', 'justifyJustify'],
             },
             {
                 key: 'group-indent',
                 title: 'Indent',
-                menuKeys: ['indent', 'delIndent']
+                menuKeys: ['indent', 'delIndent'],
             },
             '|',
             'emotion',
@@ -56,33 +50,33 @@ const state = reactive({
             {
                 key: 'group-image',
                 title: 'Image',
-                menuKeys: ['insertImage', 'uploadImage']
+                menuKeys: ['insertImage', 'uploadImage'],
             },
             {
                 key: 'group-video',
                 title: 'Video',
-                menuKeys: ['insertVideo', 'uploadVideo']
+                menuKeys: ['insertVideo', 'uploadVideo'],
             },
             'insertTable',
             'codeBlock',
             'divider',
             '|',
             'undo',
-            'redo'
+            'redo',
             // 'fullscreen' is intentionally omitted
-        ]
+        ],
     } as IToolbarConfig,
     editorConfig: {
-        placeholder: "Write something amazing...",
+        placeholder: 'Write something amazing...',
         customAlert: () => {},
         scroll: true,
         readOnly: false,
         autoFocus: true,
         hoverbarKeys: {},
-        lang: "en",
+        lang: 'en',
     } as IEditorConfig,
     defaultHtml: props.modelValue,
-    mode: "default",
+    mode: 'default',
 });
 
 const { toolbarConfig, editorConfig, defaultHtml, mode } = toRefs(state);
@@ -93,7 +87,7 @@ const handleCreated = (editor: IDomEditor) => {
 };
 
 function handleChange(editor: IDomEditor) {
-    emit("update:modelValue", editor.getHtml());
+    emit('update:modelValue', editor.getHtml());
 }
 
 onBeforeUnmount(() => {
@@ -101,17 +95,11 @@ onBeforeUnmount(() => {
     if (!editor) return;
     editor.destroy();
 });
-
 </script>
 
 <template>
     <div class="editor-container">
-        <Toolbar
-            :editor="editorRef"
-            :defaultConfig="toolbarConfig"
-            class="editor-toolbar"
-            :mode="mode"
-        />
+        <Toolbar :editor="editorRef" :defaultConfig="toolbarConfig" class="editor-toolbar" :mode="mode" />
         <Editor
             :defaultConfig="editorConfig"
             v-model="defaultHtml"
@@ -149,7 +137,7 @@ onBeforeUnmount(() => {
     padding: 20px;
     min-height: 420px;
     overflow-y: auto;
-    font-family: "Inter", sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 16px;
     color: #1f2937;
     line-height: 1.6;

@@ -24,17 +24,15 @@ const iconVariants: Record<TypeVariant, string> = {
     [TypeVariant.primary]: IconName.check_box,
 };
 
-const computedClass = computed(() =>
-    cn('flex flex-col w-full rounded-md border-l-4 p-3 shadow-sm bg-gray-50', variants[props.type]),
-);
+const computedClass = computed(() => cn('flex w-full flex-col rounded-md border-l-4 bg-gray-50 p-3 shadow-sm', variants[props.type]));
 </script>
 
 <template>
     <div :class="computedClass">
-        <div class="flex items-center space-x-3 w-full">
+        <div class="flex w-full items-center space-x-3">
             <component :is="icons[iconVariants[type] as IconName]" class="size-6 shrink-0" />
             <div class="text-sm">{{ description }}</div>
         </div>
-        <slot/>
+        <slot />
     </div>
 </template>

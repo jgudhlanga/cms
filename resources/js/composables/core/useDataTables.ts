@@ -3,7 +3,9 @@ import CountButton from '@/components/core/button/CountButton.vue';
 import DropdownButton from '@/components/core/button/DropdownButton.vue';
 import BaseIcon from '@/components/core/icon/BaseIcon.vue';
 import OrderComponent from '@/components/core/table/OrderComponent.vue';
+import BaseAnchor from '@/components/core/util/BaseAnchor.vue';
 import BaseTag from '@/components/core/util/BaseTag.vue';
+import TextEditLink from '@/components/core/util/TextEditLink.vue';
 import TextLink from '@/components/core/util/TextLink.vue';
 import UserAvatar from '@/components/core/util/UserAvatar.vue';
 import { useUtils } from '@/composables/core/useUtils';
@@ -25,8 +27,6 @@ import {
 import { trans } from 'laravel-vue-i18n';
 import { debounce } from 'lodash';
 import { h, Ref, ref } from 'vue';
-import TextEditLink from '@/components/core/util/TextEditLink.vue';
-import BaseAnchor from '@/components/core/util/BaseAnchor.vue';
 
 /**
  * Provides a set of utilities for managing data tables. This includes
@@ -455,7 +455,6 @@ export function useDataTables() {
             title: params.title,
             href: params.href,
             classes: params?.classes ?? 'rounded-full capitalize font-normal uppercase',
-
         });
     };
 

@@ -7,23 +7,16 @@ import { AuthObject } from '@/types/data-pagination';
 import { Link } from '@/types/ui';
 import { Head } from '@inertiajs/vue3';
 
-const props = defineProps<{ auth: AuthObject, errors: object }>();
+const props = defineProps<{ auth: AuthObject; errors: object }>();
 const can = props?.auth?.can;
 const { tabs } = usePaymentSettings();
-const breadcrumbs: Array<Link> = [
-	{ transChoiceKey: 'settings', href: route('settings.index') },
-	{ transChoiceKey: 'payment' }
-];
+const breadcrumbs: Array<Link> = [{ transChoiceKey: 'settings', href: route('settings.index') }, { transChoiceKey: 'payment' }];
 </script>
 
 <template>
-	<Head :title="$tChoice('trans.payment', 2)" />
-	<PageContainer :breadcrumbs="breadcrumbs">
-		<AvatarTitleList v-if="can['view:settings']" :tabs="tabs" />
-		<BaseAlert
-			v-else
-			:description="$t('trans.forbidden_message')"
-			:title="$t('trans.forbidden')"
-		/>
-	</PageContainer>
+    <Head :title="$tChoice('trans.payment', 2)" />
+    <PageContainer :breadcrumbs="breadcrumbs">
+        <AvatarTitleList v-if="can['view:settings']" :tabs="tabs" />
+        <BaseAlert v-else :description="$t('trans.forbidden_message')" :title="$t('trans.forbidden')" />
+    </PageContainer>
 </template>

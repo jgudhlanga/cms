@@ -22,12 +22,7 @@ const emit = defineEmits<{
     <BaseCard>
         <div class="flex items-start justify-between gap-2">
             <HeadingSmall :title="title" />
-            <IconButton
-                v-if="canUpdate"
-                :icon="IconName.edit"
-                :variant="ColorVariant.success_outline"
-                @click="emit('edit')"
-            />
+            <IconButton v-if="canUpdate" :icon="IconName.edit" :variant="ColorVariant.success_outline" @click="emit('edit')" />
         </div>
         <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
             <LabelValue :label="$tChoice('trans.student', 2)" :value="String(studentCount)" />

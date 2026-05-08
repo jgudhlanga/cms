@@ -114,11 +114,7 @@ const edit = (academicCalendar: AcademicCalendar) => {
                             <SelectCalendarYear v-model="calendarYearOption" :show-label="false" />
                         </td>
                         <td class="j-td">
-                            <BaseCombobox
-                                v-model="calendarTypeOption"
-                                :label="''"
-                                :options="calendarTypeOptions"
-                            />
+                            <BaseCombobox v-model="calendarTypeOption" :label="''" :options="calendarTypeOptions" />
                         </td>
                         <td class="j-td">
                             <OpeningDate v-model="form.opening_date" :show-label="false" class="w-50" />
