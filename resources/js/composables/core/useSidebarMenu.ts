@@ -74,8 +74,8 @@ export function useSidebarMenu() {
         {
             transChoiceKey: 'hms.title',
             icon: icons[IconName.bed],
-            url: route('accommodations.index'),
-            show: hasAbility('view:accommodations'),
+            url: route('hostels.index'),
+            show: hasAbility('view:hostels'),
         },
         {
             transKey: 'trans.settings',

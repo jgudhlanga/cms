@@ -31,11 +31,20 @@ class HostelController extends Controller
             ])
             ->values();
 
-        return Inertia::render('hms/Index', [
+        return Inertia::render('hms/hostels/Index', [
             'hostels' => $hostels,
             'filters' => request()->only(['search', 'with_trashed']),
             'trashedCount' => $this->repository->allTrashed()->count(),
             'wardens' => $wardens,
+        ]);
+    }
+
+    public function show(Hostel $hostel)
+    {
+        $hostel->load(['warden.user:id,first_name,middle_name,last_name']);
+
+        return Inertia::render('hms/hostels/Show', [
+            'hostel' => $hostel,
         ]);
     }
 

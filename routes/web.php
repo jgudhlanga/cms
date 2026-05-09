@@ -30,5 +30,5 @@ require __DIR__.'/web/enrolments.php';
 require __DIR__.'/web/students.php';
 require __DIR__.'/web/workflows.php';
 require __DIR__.'/web/documents.php';
-require __DIR__.'/web/accommodations.php';
+require __DIR__.'/web/hms.php';
 require __DIR__.'/web/academic-calendars.php';

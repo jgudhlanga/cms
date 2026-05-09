@@ -19,6 +19,7 @@ type Hostel = {
     id: number | string;
     name: string;
     warden_id?: number | string | null;
+    warden?: { id: number | string } | null;
     location?: string | null;
     floor_count: number;
     rooms_count: number;
@@ -51,9 +52,9 @@ const form = useForm({
 
 const { modals } = useModalStore();
 
-const wardenOption = ref<SelectOption | null>(null);
-const statusOption = ref<SelectOption | null>(null);
-const typeOption = ref<SelectOption | null>(null);
+const wardenOption = ref<string | null>(null);
+const statusOption = ref<'active' | 'inactive'>('active');
+const typeOption = ref<'male' | 'female' | 'mixed' | null>(null);
 
 const wardenOptions = computed<SelectOption[]>(() =>
     (props.wardens ?? [])
@@ -76,7 +77,7 @@ watch(modals!, () => {
     hostel.value = getModalEdit(APP_MODULE_KEYS.hostels) as Hostel | null;
 
     form.name = hostel.value?.name ?? '';
-    form.warden_id = hostel.value?.warden_id ?? null;
+    form.warden_id = hostel.value?.warden_id ?? hostel.value?.warden?.id ?? null;
     form.location = hostel.value?.location ?? '';
     form.floor_count = Number(hostel.value?.floor_count ?? 0);
     form.rooms_count = Number(hostel.value?.rooms_count ?? 0);
@@ -85,23 +86,17 @@ watch(modals!, () => {
     form.type = (hostel.value?.type ?? null) as any;
     form.description = hostel.value?.description ?? '';
 
-    wardenOption.value =
-        hostel.value?.warden_id != null
-            ? {
-                  label: props.wardens.find((w) => String(w.id) === String(hostel.value?.warden_id))?.name ?? '---',
-                  value: String(hostel.value?.warden_id),
-              }
-            : null;
-    statusOption.value = statusOptions.find((s) => s.value === form.status) ?? statusOptions[0];
-    typeOption.value = form.type ? typeOptions.find((t) => t.value === form.type) ?? null : null;
+    wardenOption.value = form.warden_id != null ? String(form.warden_id) : null;
+    statusOption.value = form.status;
+    typeOption.value = form.type ?? null;
 
     form.defaults();
 });
 
 const save = () => {
-    form.warden_id = wardenOption.value?.value ? String(wardenOption.value.value) : null;
-    form.status = (statusOption.value?.value as any) ?? 'active';
-    form.type = (typeOption.value?.value as any) ?? null;
+    form.warden_id = wardenOption.value != null && String(wardenOption.value).trim() !== '' ? String(wardenOption.value) : null;
+    form.status = statusOption.value ?? 'active';
+    form.type = typeOption.value ?? null;
 
     const onSuccessAction = () => emit('saved');
     const options = buildFormOptions(form, 'Hostel saved', 'Failed to save hostel', APP_MODULE_KEYS.hostels, onSuccessAction);

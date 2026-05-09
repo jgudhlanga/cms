@@ -1,26 +1,24 @@
 <script setup lang="ts">
+import {
+    Bed,
+    Castle,
+    CheckCircle,
+    Circle,
+    DoorClosed,
+    Layers,
+    Mars,
+    Mountain,
+    ShieldUser,
+    TreePine,
+    Users,
+    Venus,
+} from '@lucide/vue';
 import { IconButton } from '@/components/core/button';
-import BaseIcon from '@/components/core/icon/BaseIcon.vue';
 import { ColorVariant } from '@/enums/colors';
 import { IconName } from '@/enums/icons';
+import { router } from '@inertiajs/vue3';
 import { computed } from 'vue';
-
-type HostelWarden = {
-    id: number | string;
-    user?: { full_name?: string | null } | null;
-};
-
-type Hostel = {
-    id: number | string;
-    name: string;
-    location?: string | null;
-    floor_count: number;
-    rooms_count: number;
-    capacity: number;
-    status: 'active' | 'inactive';
-    type?: 'male' | 'female' | 'mixed' | null;
-    warden?: HostelWarden | null;
-};
+import type { Hostel } from '@/types/hms';
 
 interface Props {
     hostel: Hostel;
@@ -32,78 +30,182 @@ const emit = defineEmits<{
     (e: 'delete', hostel: Hostel): void;
 }>();
 
-const statusVariant = computed(() => (props.hostel.status === 'active' ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground'));
-const typeLabel = computed(() => {
-    if (!props.hostel.type) return null;
-    const map: Record<string, string> = { male: 'Boys', female: 'Girls', mixed: 'Mixed' };
-    return map[props.hostel.type] ?? props.hostel.type;
+// ── Warden display name ──────────────────────────────────────────────────────
+const wardenName = computed<string>(() => {
+    const user = props.hostel.warden?.user;
+    if (!user) return '—';
+    if (user.full_name) return user.full_name;
+    const joined = [user.first_name, user.middle_name, user.last_name]
+        .filter((p) => Boolean(p && String(p).trim()))
+        .join(' ');
+    return joined || '—';
 });
+
+// ── Type helpers ─────────────────────────────────────────────────────────────
+const isFemale = computed(() => props.hostel.type === 'female');
+const isMale   = computed(() => props.hostel.type === 'male');
+
+// ── Occupancy ────────────────────────────────────────────────────────────────
+const occupied         = computed(() => props.hostel.occupied_count ?? 0);
+const availableBeds    = computed(() => props.hostel.capacity - occupied.value);
+const occupancyPercent = computed(() =>
+    props.hostel.capacity > 0 ? (occupied.value / props.hostel.capacity) * 100 : 0,
+);
+const occupancyBarClass = computed(() => {
+    const pct = occupancyPercent.value;
+    if (pct <= 70) return 'bg-emerald-500';
+    if (pct <= 90) return 'bg-amber-500';
+    return 'bg-rose-500';
+});
+
+// ── Location abbreviation ────────────────────────────────────────────────────
+const locationAbbr = computed(() => {
+    const loc = props.hostel.location ?? '';
+    if (loc.toLowerCase().includes('north')) return 'NW';
+    if (loc.toLowerCase().includes('south')) return 'SW';
+    return loc.slice(0, 2).toUpperCase() || '—';
+});
+const locationIcon = computed(() =>
+    (props.hostel.location ?? '').toLowerCase().includes('north') ? Mountain : TreePine,
+);
 </script>
 
 <template>
-    <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow">
-        <div class="border-b border-gray-100 px-4 py-3">
-            <div class="flex items-start justify-between gap-3">
-                <div class="flex items-center gap-3">
-                    <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                        <BaseIcon :name="IconName.company" />
-                    </div>
-                    <div class="flex flex-col">
-                        <div class="flex items-center gap-2">
-                            <h3 class="text-sm font-semibold text-foreground">
-                                {{ hostel.name }}
-                            </h3>
-                            <span v-if="typeLabel" class="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-                                {{ typeLabel }}
-                            </span>
-                        </div>
-                        <div class="mt-1 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-                            <span v-if="hostel.location" class="flex items-center gap-1">
-                                <BaseIcon :name="IconName.location" class="h-3 w-3" />
-                                {{ hostel.location }}
-                            </span>
-                            <span class="flex items-center gap-1">
-                                <BaseIcon :name="IconName.users" class="h-3 w-3" />
-                                {{ 0 }}/{{ hostel.capacity }}
-                            </span>
-                        </div>
-                    </div>
+    <div
+        class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-md transition-all duration-200 hover:-translate-y-1 hover:shadow-xl"
+    >
+        <!-- Gender / type accent strip -->
+        <div
+            class="h-1.5"
+            :class="
+                isFemale
+                    ? 'bg-gradient-to-r from-rose-300 to-pink-500'
+                    : isMale
+                      ? 'bg-gradient-to-r from-sky-400 to-blue-600'
+                      : 'bg-gradient-to-r from-violet-400 to-indigo-500'
+            "
+        />
+
+        <div class="p-5 sm:p-6">
+            <!-- ── Header ─────────────────────────────────────────────────── -->
+            <div class="mb-3 flex flex-wrap items-start justify-between gap-2">
+                <div class="flex items-center gap-2">
+                    <h2 class="text-xl font-bold tracking-tight text-slate-800">{{ hostel.name }}</h2>
+
+                    <!-- Status badge -->
+                    <span
+                        class="inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-medium"
+                        :class="
+                            hostel.status === 'active'
+                                ? 'border-green-200 bg-green-50 text-green-700'
+                                : 'border-slate-200 bg-slate-100 text-slate-500'
+                        "
+                    >
+                        <Circle
+                            class="h-1.5 w-1.5 fill-current"
+                            :class="hostel.status === 'active' ? 'text-green-500' : 'text-slate-400'"
+                        />
+                        {{ hostel.status === 'active' ? $t('hms.status_active') : $t('hms.status_inactive') }}
+                    </span>
                 </div>
 
-                <span class="inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold" :class="statusVariant">
-                    {{ hostel.status === 'active' ? 'Active' : 'Inactive' }}
-                </span>
+                <!-- Type + location tags -->
+                <div v-if="hostel.type" class="flex items-center gap-1.5">
+                    <span
+                        class="rounded-full border px-2 py-1 text-xs font-medium"
+                        :class="
+                            isFemale
+                                ? 'border-pink-200 bg-pink-100 text-pink-700'
+                                : isMale
+                                  ? 'border-blue-200 bg-blue-100 text-blue-700'
+                                  : 'border-violet-200 bg-violet-100 text-violet-700'
+                        "
+                    >
+                        <component :is="isFemale ? Venus : Mars" class="mr-1 inline h-2.5 w-2.5" />
+                        {{ $t(`hms.type_${hostel.type}`) }}
+                    </span>
+
+                    <span v-if="hostel.location" class="flex items-center gap-1 rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-600">
+                        <component :is="locationIcon" class="h-2.5 w-2.5" />
+                        {{ locationAbbr }}
+                    </span>
+                </div>
             </div>
-        </div>
 
-        <div class="px-4 py-3">
-            <div class="grid grid-cols-3 gap-3 text-sm">
-                <div class="rounded-md bg-muted/40 p-3">
-                    <div class="text-xs text-muted-foreground">Floors</div>
-                    <div class="mt-1 font-semibold">{{ hostel.floor_count }}</div>
+            <!-- ── Stats grid ─────────────────────────────────────────────── -->
+            <div class="mb-4 grid grid-cols-3 gap-2 rounded-xl bg-slate-50/80 p-2.5 text-center">
+                <div class="flex flex-col items-center">
+                    <Layers class="h-4 w-4 text-slate-400" />
+                    <span class="mt-1 text-xs text-slate-500">{{ $t('hms.floors') }}</span>
+                    <span class="font-semibold text-slate-700">{{ hostel.floor_count }}</span>
                 </div>
-                <div class="rounded-md bg-muted/40 p-3">
-                    <div class="text-xs text-muted-foreground">Rooms</div>
-                    <div class="mt-1 font-semibold">{{ hostel.rooms_count }}</div>
+                <div class="flex flex-col items-center">
+                    <DoorClosed class="h-4 w-4 text-slate-400" />
+                    <span class="mt-1 text-xs text-slate-500">{{ $t('hms.rooms') }}</span>
+                    <span class="font-semibold text-slate-700">{{ hostel.rooms_count }}</span>
                 </div>
-                <div class="rounded-md bg-muted/40 p-3">
-                    <div class="text-xs text-muted-foreground">Capacity</div>
-                    <div class="mt-1 font-semibold">{{ hostel.capacity }}</div>
+                <div class="flex flex-col items-center">
+                    <Users class="h-4 w-4 text-slate-400" />
+                    <span class="mt-1 text-xs text-slate-500">{{ $tChoice('hms.capacity', 1) }}</span>
+                    <span class="font-semibold text-slate-700">{{ hostel.capacity }}</span>
                 </div>
             </div>
 
-            <div class="mt-3 flex items-center justify-between gap-3 text-sm">
-                <div class="text-muted-foreground">
-                    <span class="font-medium text-foreground">Warden:</span>
-                    <span class="ml-1">{{ hostel.warden?.user?.full_name ?? 'Unassigned' }}</span>
+            <!-- ── Occupancy bar ──────────────────────────────────────────── -->
+            <div class="mb-4">
+                <div class="mb-1.5 flex items-center justify-between text-xs">
+                    <span class="font-medium text-slate-600">
+                        <Bed class="mr-1 inline h-3 w-3 text-indigo-400" />{{ $t('hms.bed_occupancy') }}
+                    </span>
+                    <span class="text-slate-500">{{ occupied }} / {{ hostel.capacity }} {{ $t('hms.filled') }}</span>
+                </div>
+                <div class="h-2 w-full overflow-hidden rounded-full bg-slate-100">
+                    <div
+                        class="h-full rounded-full transition-all duration-300"
+                        :class="occupancyBarClass"
+                        :style="{ width: `${occupancyPercent}%` }"
+                    />
+                </div>
+                <div class="mt-1.5 flex justify-between text-xs">
+                    <span class="text-emerald-600">
+                        <CheckCircle class="mr-1 inline h-2.5 w-2.5" />{{ $t('hms.available') }}: {{ availableBeds }} {{ $t('hms.beds') }}
+                    </span>
+                    <span class="text-slate-400">{{ $t('hms.occupied_pct', { pct: Math.round(occupancyPercent) }) }}</span>
+                </div>
+            </div>
+
+            <!-- ── Warden & actions ───────────────────────────────────────── -->
+            <div class="mt-1 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-3">
+                <div class="flex items-center gap-2 text-sm">
+                    <ShieldUser class="h-4 w-4 text-indigo-400" />
+                    <span class="font-medium text-slate-700">{{ $tChoice('hms.warden', 1) }}:</span>
+                    <span class="text-slate-600">{{ wardenName }}</span>
                 </div>
 
                 <div class="flex items-center gap-2">
-                    <IconButton :icon="IconName.edit" :variant="ColorVariant.success_outline" @click="emit('edit', hostel)" />
-                    <IconButton :icon="IconName.trash" :variant="ColorVariant.danger_outline" @click="emit('delete', hostel)" />
+                    <!-- View -->
+                    <IconButton
+                        :id="`hostel-view-${hostel.id}`"
+                        :icon="IconName.eye"
+                        :variant="ColorVariant.primary_outline"
+                        @click="router.get(route('hostels.show', String(hostel.id)))"
+                    />
+
+                    <!-- Edit -->
+                    <IconButton
+                        :id="`hostel-edit-${hostel.id}`"
+                        :icon="IconName.edit"
+                        :variant="ColorVariant.success_outline"
+                        @click="emit('edit', hostel)"
+                    />
                 </div>
+            </div>
+
+            <!-- Ref footer -->
+            <div class="mt-3 flex items-center justify-end gap-1 text-right text-[11px] text-slate-400">
+                <Castle class="h-3 w-3" />
+                <span>{{ hostel.rooms_count }} {{ $t('hms.rooms') }} • {{ hostel.floor_count }} {{ $t('hms.floors') }}</span>
             </div>
         </div>
     </div>
 </template>
-
