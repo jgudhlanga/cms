@@ -72,6 +72,7 @@ const APP_MODULE_KEYS = {
     student_enrolment_statuses: 'student_enrolment_statuses',
     academic_year_options: 'academic_year_options',
     course_syllabus_modules: 'course_syllabus_modules',
+    hostels: 'hostels',
 };
 const EXAM_SITTINGS = [
     { value: 'june', label: 'June' },

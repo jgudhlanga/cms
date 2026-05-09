@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('tenant_id')->constrained();
 			$table->string('name');
-			$table->foreignId('warden_id')->nullable()->constrained('hostel_wardens');
+			$table->foreignId('warden_id')->nullable()->constrained('staff');
 			$table->string('location')->nullable(); // North, East,West,South Campus
 			$table->integer('floor_count');
 			$table->integer('rooms_count');
