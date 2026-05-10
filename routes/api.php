@@ -11,3 +11,4 @@ require __DIR__.'/api/students.php';
 require __DIR__.'/api/academic-calendars.php';
 require __DIR__.'/api/finance.php';
 require __DIR__.'/api/preferences.php';
+require __DIR__.'/api/hms.php';

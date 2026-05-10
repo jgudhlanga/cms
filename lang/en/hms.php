@@ -7,6 +7,10 @@ return [
     "management_title"    => "Hostel Management",
     "hostels_registered"  => ":count hostels registered",
     "add_hostel"          => "Add Hostel",
+    "create_hostel"       => "Create Hostel",
+    "edit_hostel"         => "Edit Hostel",
+    "hostel_saved"        => "Hostel saved",
+    "hostel_save_failed"  => "Failed to save hostel",
     "search_placeholder"  => "Search by name, location or warden…",
     "no_hostels_found"    => "No hostels found",
     "hostel_deleted"      => "Hostel deleted",
@@ -23,6 +27,11 @@ return [
     "name"                => "Name",
     "floors"              => "Floors",
     "rooms"               => "Rooms",
+
+    // ── Placeholders ──────────────────────────────────────────────────────
+    "select_warden_optional" => "Select warden (optional)",
+    "select_type"            => "Select type",
+    "type_required"          => "Hostel type is required",
 
     // ── Status labels ─────────────────────────────────────────────────────
     "status_active"       => "Active",
@@ -53,10 +62,11 @@ return [
     "stat_occupied_beds"  => "Occupied beds",
 
     // ── Filters ───────────────────────────────────────────────────────────
-    "filter_all_types"      => "All types",
-    "filter_girls_only"     => "Girls only",
-    "filter_boys_only"      => "Boys only",
+    "filter_all_types"      => "All genders",
+    "filter_girls_only"     => "Female",
+    "filter_boys_only"      => "Male",
     "filter_mixed"          => "Mixed",
     "filter_all_locations"  => "All locations",
     "filter_reset"          => "Reset",
+    "filter_warden"         => "Filter by warden",
 ];

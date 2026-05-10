@@ -27,6 +27,19 @@ class HostelRepository extends BaseRepository implements IHostelRepository
             });
         }
 
+        if (array_key_exists('type', $filters) && is_string($filters['type']) && $filters['type'] !== '') {
+            $query->where('type', $filters['type']);
+        }
+
+        if (array_key_exists('warden', $filters) && is_string($filters['warden']) && $filters['warden'] !== '') {
+            $warden = trim($filters['warden']);
+            $query->whereHas('warden.user', function ($q) use ($warden): void {
+                $q->where('first_name', 'like', "%{$warden}%")
+                  ->orWhere('middle_name', 'like', "%{$warden}%")
+                  ->orWhere('last_name', 'like', "%{$warden}%");
+            });
+        }
+
         if (array_key_exists('with_trashed', $filters) && $filters['with_trashed']) {
             $query->withTrashed();
         }

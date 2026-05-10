@@ -8,26 +8,16 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { TextFieldType } from '@/enums/inputs';
 import { getModalEdit } from '@/lib/alerts';
+import { trans } from 'laravel-vue-i18n';
 import { APP_MODULE_KEYS } from '@/lib/constants';
 import { buildFormOptions, clearFormErrors } from '@/lib/forms';
 import { useModalStore } from '@/store/core/useModalStore';
 import type { SelectOption } from '@/types/utils';
 import { useForm } from '@inertiajs/vue3';
 import { computed, defineEmits, ref, watch } from 'vue';
+import { Hostel } from '@/types/hms';
+import { useHmsStore } from '@/store/hms/useHmsStore';
 
-type Hostel = {
-    id: number | string;
-    name: string;
-    warden_id?: number | string | null;
-    warden?: { id: number | string } | null;
-    location?: string | null;
-    floor_count: number;
-    rooms_count: number;
-    capacity: number;
-    status: 'active' | 'inactive';
-    type?: 'male' | 'female' | 'mixed' | null;
-    description?: string | null;
-};
 
 interface Props {
     wardens: Array<{ id: number | string; name: string | null }>;
@@ -51,6 +41,7 @@ const form = useForm({
 });
 
 const { modals } = useModalStore();
+const hmsStore = useHmsStore();
 
 const wardenOption = ref<string | null>(null);
 const statusOption = ref<'active' | 'inactive'>('active');
@@ -62,29 +53,29 @@ const wardenOptions = computed<SelectOption[]>(() =>
         .map((w) => ({ label: w.name ?? '---', value: String(w.id) }))
 );
 
-const statusOptions: SelectOption[] = [
-    { label: 'Active', value: 'active' },
-    { label: 'Inactive', value: 'inactive' },
-];
+const statusOptions = computed<SelectOption[]>(() => [
+    { label: trans('hms.status_active'), value: 'active' },
+    { label: trans('hms.status_inactive'), value: 'inactive' },
+]);
 
-const typeOptions: SelectOption[] = [
-    { label: 'Boys', value: 'male' },
-    { label: 'Girls', value: 'female' },
-    { label: 'Mixed', value: 'mixed' },
-];
+const typeOptions = computed<SelectOption[]>(() => [
+    { label: trans('hms.type_male'), value: 'male' },
+    { label: trans('hms.type_female'), value: 'female' },
+    { label: trans('hms.type_mixed'), value: 'mixed' },
+]);
 
 watch(modals!, () => {
     hostel.value = getModalEdit(APP_MODULE_KEYS.hostels) as Hostel | null;
 
-    form.name = hostel.value?.name ?? '';
-    form.warden_id = hostel.value?.warden_id ?? hostel.value?.warden?.id ?? null;
-    form.location = hostel.value?.location ?? '';
-    form.floor_count = Number(hostel.value?.floor_count ?? 0);
-    form.rooms_count = Number(hostel.value?.rooms_count ?? 0);
-    form.capacity = Number(hostel.value?.capacity ?? 0);
-    form.status = (hostel.value?.status ?? 'active') as 'active' | 'inactive';
-    form.type = (hostel.value?.type ?? null) as any;
-    form.description = hostel.value?.description ?? '';
+    form.name = hostel.value?.attributes.name ?? '';
+    form.warden_id = hostel.value?.attributes.wardenId ? String(hostel.value.attributes.wardenId) : null;
+    form.location = hostel.value?.attributes.location ?? '';
+    form.floor_count = Number(hostel.value?.attributes.floorCount ?? 0);
+    form.rooms_count = Number(hostel.value?.attributes.roomsCount ?? 0);
+    form.capacity = Number(hostel.value?.attributes.capacity ?? 0);
+    form.status = (hostel.value?.attributes.status ?? 'active') as 'active' | 'inactive';
+    form.type = (hostel.value?.attributes.type ?? null) as any;
+    form.description = hostel.value?.attributes.description ?? '';
 
     wardenOption.value = form.warden_id != null ? String(form.warden_id) : null;
     statusOption.value = form.status;
@@ -98,8 +89,16 @@ const save = () => {
     form.status = statusOption.value ?? 'active';
     form.type = typeOption.value ?? null;
 
-    const onSuccessAction = () => emit('saved');
-    const options = buildFormOptions(form, 'Hostel saved', 'Failed to save hostel', APP_MODULE_KEYS.hostels, onSuccessAction);
+    if (!form.type) {
+        form.setError('type', trans('hms.type_required'));
+        return;
+    }
+
+    const onSuccessAction = () => {
+        emit('saved');
+        hmsStore.refreshHostels();
+    };
+    const options = buildFormOptions(form, trans('hms.hostel_saved'), trans('hms.hostel_save_failed'), APP_MODULE_KEYS.hostels, onSuccessAction);
 
     if (hostel.value?.id) {
         form.put(route('hostels.update', String(hostel.value.id)), { preserveScroll: true, ...options });
@@ -111,12 +110,12 @@ const save = () => {
 </script>
 
 <template>
-    <BaseModal :name="APP_MODULE_KEYS.hostels" :title="`${hostel ? 'Edit' : 'Create'} Hostel`" :on-form-action="() => save()" :form="form">
+    <BaseModal :name="APP_MODULE_KEYS.hostels" :title="hostel ? $t('hms.edit_hostel') : $t('hms.create_hostel')" :on-form-action="() => save()" :form="form">
         <template #body>
             <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <BaseInput
                     input-id="name"
-                    label="Name"
+                    :label="$t('hms.name')"
                     v-model="form.name"
                     :is-required="true"
                     :error="form.errors.name"
@@ -124,8 +123,8 @@ const save = () => {
                 />
 
                 <BaseSelect
-                    label="Warden"
-                    placeholder="Select warden (optional)"
+                    :label="$tChoice('hms.warden', 1)"
+                    :placeholder="$t('hms.select_warden_optional')"
                     v-model="wardenOption"
                     :options="wardenOptions"
                     :error="form.errors.warden_id"
@@ -134,14 +133,14 @@ const save = () => {
 
                 <BaseInput
                     input-id="location"
-                    label="Location"
+                    :label="$tChoice('hms.location', 1)"
                     v-model="form.location"
                     :error="form.errors.location"
                     @input="clearFormErrors(form, 'location')"
                 />
 
                 <BaseSelect
-                    label="Status"
+                    :label="$tChoice('hms.status', 1)"
                     v-model="statusOption"
                     :options="statusOptions"
                     :is-clearable="false"
@@ -151,17 +150,18 @@ const save = () => {
                 />
 
                 <BaseSelect
-                    label="Type"
-                    placeholder="Select type (optional)"
+                    :label="$tChoice('hms.type', 1)"
+                    :placeholder="$t('hms.select_type')"
                     v-model="typeOption"
                     :options="typeOptions"
+                    :is-required="true"
                     :error="form.errors.type"
                     @update:modelValue="clearFormErrors(form, 'type')"
                 />
 
                 <BaseInput
                     input-id="floor_count"
-                    label="Floors"
+                    :label="$t('hms.floors')"
                     :type="TextFieldType.number"
                     v-model="form.floor_count"
                     :is-required="true"
@@ -171,7 +171,7 @@ const save = () => {
 
                 <BaseInput
                     input-id="rooms_count"
-                    label="Rooms"
+                    :label="$t('hms.rooms')"
                     :type="TextFieldType.number"
                     v-model="form.rooms_count"
                     :is-required="true"
@@ -181,7 +181,7 @@ const save = () => {
 
                 <BaseInput
                     input-id="capacity"
-                    label="Capacity"
+                    :label="$tChoice('hms.capacity', 1)"
                     :type="TextFieldType.number"
                     v-model="form.capacity"
                     :is-required="true"
@@ -191,7 +191,7 @@ const save = () => {
             </div>
 
             <div class="mt-2">
-                <Label :class="form.errors.description ? 'text-destructive' : ''">Description</Label>
+                <Label :class="form.errors.description ? 'text-destructive' : ''">{{ $t('hms.description') }}</Label>
                 <RequiredIndicator class="hidden" />
                 <Textarea v-model="form.description" class="mt-2" @input="clearFormErrors(form, 'description')" />
                 <InputError class="mt-1 flex w-full lowercase" :message="form.errors.description" />

@@ -85,7 +85,7 @@ import {
     MonitorCheck,
     X as Close,
     ReceiptText, CircleX,
-    PaperclipIcon
+    PaperclipIcon, Hotel
 } from 'lucide-vue-next';
 import type { Component } from 'vue';
 
@@ -178,6 +178,7 @@ const icons: Record<IconName, Component> = {
     [IconName.receipt]: ReceiptText,
     [IconName.circle_x]: CircleX,
     [IconName.paperclip]: PaperclipIcon,
+    [IconName.hostel]: Hotel,
 };
 
 export { IconName, icons };

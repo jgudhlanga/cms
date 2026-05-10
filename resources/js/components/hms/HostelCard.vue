@@ -32,24 +32,23 @@ const emit = defineEmits<{
 
 // ── Warden display name ──────────────────────────────────────────────────────
 const wardenName = computed<string>(() => {
-    const user = props.hostel.warden?.user;
-    if (!user) return '—';
-    if (user.full_name) return user.full_name;
-    const joined = [user.first_name, user.middle_name, user.last_name]
-        .filter((p) => Boolean(p && String(p).trim()))
-        .join(' ');
-    return joined || '—';
+    const staff = props.hostel.attributes.warden;
+    if (staff?.relationships?.user) {
+        const u = staff.relationships.user.attributes;
+        return u.name || '—';
+    }
+    return '—';
 });
 
 // ── Type helpers ─────────────────────────────────────────────────────────────
-const isFemale = computed(() => props.hostel.type === 'female');
-const isMale   = computed(() => props.hostel.type === 'male');
+const isFemale = computed(() => props.hostel.attributes.type === 'female');
+const isMale   = computed(() => props.hostel.attributes.type === 'male');
 
 // ── Occupancy ────────────────────────────────────────────────────────────────
-const occupied         = computed(() => props.hostel.occupied_count ?? 0);
-const availableBeds    = computed(() => props.hostel.capacity - occupied.value);
+const occupied         = computed(() => props.hostel.attributes.occupiedCount ?? 0);
+const availableBeds    = computed(() => props.hostel.attributes.capacity - occupied.value);
 const occupancyPercent = computed(() =>
-    props.hostel.capacity > 0 ? (occupied.value / props.hostel.capacity) * 100 : 0,
+    props.hostel.attributes.capacity > 0 ? (occupied.value / props.hostel.attributes.capacity) * 100 : 0,
 );
 const occupancyBarClass = computed(() => {
     const pct = occupancyPercent.value;
@@ -60,13 +59,13 @@ const occupancyBarClass = computed(() => {
 
 // ── Location abbreviation ────────────────────────────────────────────────────
 const locationAbbr = computed(() => {
-    const loc = props.hostel.location ?? '';
+    const loc = props.hostel.attributes.location ?? '';
     if (loc.toLowerCase().includes('north')) return 'NW';
     if (loc.toLowerCase().includes('south')) return 'SW';
     return loc.slice(0, 2).toUpperCase() || '—';
 });
 const locationIcon = computed(() =>
-    (props.hostel.location ?? '').toLowerCase().includes('north') ? Mountain : TreePine,
+    (props.hostel.attributes.location ?? '').toLowerCase().includes('north') ? Mountain : TreePine,
 );
 </script>
 
@@ -88,29 +87,29 @@ const locationIcon = computed(() =>
 
         <div class="p-5 sm:p-6">
             <!-- ── Header ─────────────────────────────────────────────────── -->
-            <div class="mb-3 flex flex-wrap items-start justify-between gap-2">
-                <div class="flex items-center gap-2">
-                    <h2 class="text-xl font-bold tracking-tight text-slate-800">{{ hostel.name }}</h2>
+            <div class="mb-2 flex flex-wrap items-center justify-between gap-2">
+                <div class="flex items-center gap-1.5">
+                    <h2 class="text-sm font-semibold tracking-tight text-slate-800">{{ hostel.attributes.name }}</h2>
 
                     <!-- Status badge -->
                     <span
                         class="inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-medium"
                         :class="
-                            hostel.status === 'active'
+                            hostel.attributes.status === 'active'
                                 ? 'border-green-200 bg-green-50 text-green-700'
                                 : 'border-slate-200 bg-slate-100 text-slate-500'
                         "
                     >
                         <Circle
                             class="h-1.5 w-1.5 fill-current"
-                            :class="hostel.status === 'active' ? 'text-green-500' : 'text-slate-400'"
+                            :class="hostel.attributes.status === 'active' ? 'text-green-500' : 'text-slate-400'"
                         />
-                        {{ hostel.status === 'active' ? $t('hms.status_active') : $t('hms.status_inactive') }}
+                        {{ hostel.attributes.status === 'active' ? $t('hms.status_active') : $t('hms.status_inactive') }}
                     </span>
                 </div>
 
                 <!-- Type + location tags -->
-                <div v-if="hostel.type" class="flex items-center gap-1.5">
+                <div v-if="hostel.attributes.type" class="flex items-center gap-1.5">
                     <span
                         class="rounded-full border px-2 py-1 text-xs font-medium"
                         :class="
@@ -122,10 +121,10 @@ const locationIcon = computed(() =>
                         "
                     >
                         <component :is="isFemale ? Venus : Mars" class="mr-1 inline h-2.5 w-2.5" />
-                        {{ $t(`hms.type_${hostel.type}`) }}
+                        {{ $t(`hms.type_${hostel.attributes.type}`) }}
                     </span>
 
-                    <span v-if="hostel.location" class="flex items-center gap-1 rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-600">
+                    <span v-if="hostel.attributes.location" class="flex items-center gap-1 rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-600">
                         <component :is="locationIcon" class="h-2.5 w-2.5" />
                         {{ locationAbbr }}
                     </span>
@@ -137,17 +136,17 @@ const locationIcon = computed(() =>
                 <div class="flex flex-col items-center">
                     <Layers class="h-4 w-4 text-slate-400" />
                     <span class="mt-1 text-xs text-slate-500">{{ $t('hms.floors') }}</span>
-                    <span class="font-semibold text-slate-700">{{ hostel.floor_count }}</span>
+                    <span class="font-semibold text-slate-700">{{ hostel.attributes.floorCount }}</span>
                 </div>
                 <div class="flex flex-col items-center">
                     <DoorClosed class="h-4 w-4 text-slate-400" />
                     <span class="mt-1 text-xs text-slate-500">{{ $t('hms.rooms') }}</span>
-                    <span class="font-semibold text-slate-700">{{ hostel.rooms_count }}</span>
+                    <span class="font-semibold text-slate-700">{{ hostel.attributes.roomsCount }}</span>
                 </div>
                 <div class="flex flex-col items-center">
                     <Users class="h-4 w-4 text-slate-400" />
                     <span class="mt-1 text-xs text-slate-500">{{ $tChoice('hms.capacity', 1) }}</span>
-                    <span class="font-semibold text-slate-700">{{ hostel.capacity }}</span>
+                    <span class="font-semibold text-slate-700">{{ hostel.attributes.capacity }}</span>
                 </div>
             </div>
 
@@ -157,7 +156,7 @@ const locationIcon = computed(() =>
                     <span class="font-medium text-slate-600">
                         <Bed class="mr-1 inline h-3 w-3 text-indigo-400" />{{ $t('hms.bed_occupancy') }}
                     </span>
-                    <span class="text-slate-500">{{ occupied }} / {{ hostel.capacity }} {{ $t('hms.filled') }}</span>
+                    <span class="text-slate-500">{{ occupied }} / {{ hostel.attributes.capacity }} {{ $t('hms.filled') }}</span>
                 </div>
                 <div class="h-2 w-full overflow-hidden rounded-full bg-slate-100">
                     <div
@@ -170,7 +169,7 @@ const locationIcon = computed(() =>
                     <span class="text-emerald-600">
                         <CheckCircle class="mr-1 inline h-2.5 w-2.5" />{{ $t('hms.available') }}: {{ availableBeds }} {{ $t('hms.beds') }}
                     </span>
-                    <span class="text-slate-400">{{ $t('hms.occupied_pct', { pct: Math.round(occupancyPercent) }) }}</span>
+                    <span class="text-slate-400">{{ $t('hms.occupied_pct', { pct: String(Math.round(occupancyPercent)) }) }}</span>
                 </div>
             </div>
 
@@ -204,7 +203,7 @@ const locationIcon = computed(() =>
             <!-- Ref footer -->
             <div class="mt-3 flex items-center justify-end gap-1 text-right text-[11px] text-slate-400">
                 <Castle class="h-3 w-3" />
-                <span>{{ hostel.rooms_count }} {{ $t('hms.rooms') }} • {{ hostel.floor_count }} {{ $t('hms.floors') }}</span>
+                <span>{{ hostel.attributes.roomsCount }} {{ $t('hms.rooms') }} • {{ hostel.attributes.floorCount }} {{ $t('hms.floors') }}</span>
             </div>
         </div>
     </div>

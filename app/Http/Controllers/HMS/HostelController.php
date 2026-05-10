@@ -16,10 +16,6 @@ class HostelController extends Controller
 
     public function index()
     {
-        $hostels = $this->repository->paginateForIndex(request()->only(['search', 'with_trashed']));
-
-        $hostels->getCollection()->load(['warden.user']);
-
         $wardens = Staff::query()
             ->select(['id', 'user_id'])
             ->with(['user:id,first_name,middle_name,last_name'])
@@ -32,9 +28,6 @@ class HostelController extends Controller
             ->values();
 
         return Inertia::render('hms/hostels/Index', [
-            'hostels' => $hostels,
-            'filters' => request()->only(['search', 'with_trashed']),
-            'trashedCount' => $this->repository->allTrashed()->count(),
             'wardens' => $wardens,
         ]);
     }

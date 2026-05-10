@@ -1,39 +1,38 @@
 <script setup lang="ts">
-import { MapPin, RotateCw, Search, VenusAndMars } from '@lucide/vue';
-import { router } from '@inertiajs/vue3';
+import { MapPin, RotateCw, Search, ShieldUser, VenusAndMars } from '@lucide/vue';
 import { ref, watch } from 'vue';
 import { useDebounceFn } from '@vueuse/core';
 import type { HostelFiltersState } from '@/types/hms';
 
 interface Props {
     filters: HostelFiltersState;
-    routeName?: string;
 }
 
-const props = withDefaults(defineProps<Props>(), {
-    routeName: 'hostels.index',
-});
+const props = defineProps<Props>();
+
+const emit = defineEmits<{
+    (e: 'change', filters: HostelFiltersState): void;
+}>();
 
 const search = ref(props.filters.search ?? '');
 const typeFilter = ref<string>('all');
+const wardenFilter = ref(props.filters.warden ?? '');
 const locationFilter = ref<string>('all');
 
 const applyFilters = useDebounceFn(() => {
-    router.get(
-        route(props.routeName),
-        {
-            search: search.value || undefined,
-            type: typeFilter.value !== 'all' ? typeFilter.value : undefined,
-        },
-        { preserveState: true, preserveScroll: true, replace: true },
-    );
+    emit('change', {
+        search: search.value || undefined,
+        type: typeFilter.value !== 'all' ? typeFilter.value : undefined,
+        warden: wardenFilter.value || undefined,
+    } as HostelFiltersState);
 }, 400);
 
-watch([search, typeFilter, locationFilter], applyFilters);
+watch([search, typeFilter, wardenFilter, locationFilter], applyFilters);
 
 const resetFilters = () => {
     search.value = '';
     typeFilter.value = 'all';
+    wardenFilter.value = '';
     locationFilter.value = 'all';
 };
 </script>
@@ -53,6 +52,17 @@ const resetFilters = () => {
                 />
             </div>
 
+            <!-- Warden filter -->
+            <div class="relative">
+                <ShieldUser class="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+                <input
+                    id="hostel-warden-filter"
+                    v-model="wardenFilter"
+                    type="text"
+                    :placeholder="$t('hms.filter_warden')"
+                    class="rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-4 text-sm outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-300"
+                />
+            </div>
             <div class="flex flex-wrap gap-3">
                 <!-- Type filter -->
                 <div class="relative">
@@ -68,19 +78,6 @@ const resetFilters = () => {
                         <option value="mixed">{{ $t('hms.filter_mixed') }}</option>
                     </select>
                 </div>
-
-                <!-- Location filter (client-side) -->
-                <div class="relative">
-                    <MapPin class="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
-                    <select
-                        id="hostel-location-filter"
-                        v-model="locationFilter"
-                        class="cursor-pointer appearance-none rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-8 text-sm focus:ring-2 focus:ring-indigo-300"
-                    >
-                        <option value="all">{{ $t('hms.filter_all_locations') }}</option>
-                    </select>
-                </div>
-
                 <!-- Reset -->
                 <button
                     id="hostel-reset-filters"
