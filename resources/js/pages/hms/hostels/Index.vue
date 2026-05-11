@@ -2,7 +2,8 @@
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import { useHms } from '@/composables/hms/useHms';
 import { icons } from '@/lib/icons';
-import CreateEditHostel from '@/pages/hms/hostels/components/CreateEditHostel.vue';
+import CreateEditHostel from '@/pages/hms/components/forms/CreateEditHostel.vue';
+import CreateEditRoom from '@/pages/hms/components/forms/CreateEditRoom.vue';
 import { useHmsStore } from '@/store/hms/useHmsStore';
 import { BreadcrumbItemInterface } from '@/types/ui';
 import { Head } from '@inertiajs/vue3';
@@ -42,6 +43,7 @@ const visibleTabs = computed(() => {
             </TabsContent>
         </Tabs>
         <!-- ── Create / Edit modal ───────────────────────────────────────── -->
-        <CreateEditHostel :wardens="wardens" @saved="() => {}" />
+        <CreateEditHostel :wardens="wardens" />
+        <CreateEditRoom />
     </PageContainer>
 </template>

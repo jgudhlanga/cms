@@ -43,3 +43,29 @@ export type HostelFiltersState = {
     warden?: string | null;
     with_trashed?: boolean | null;
 };
+
+export type HostelRoom = {
+    type: string;
+    id: number | string;
+    attributes: {
+        hostelId: number | string;
+        hostelName?: string | null;
+        name: string;
+        roomType: 'single' | 'double' | 'triple' | 'suite';
+        capacity: number;
+        occupancy: string;
+        status: 'vacant' | 'occupied' | 'maintenance';
+        maxOccupancy: number;
+        floorNumber?: number | null;
+        description?: string | null;
+        createdAt?: string;
+        updatedAt?: string;
+        deletedAt?: string;
+    };
+};
+
+export type HostelRoomFiltersState = {
+    search?: string | null;
+    hostel?: string | number | null;
+    with_trashed?: boolean | null;
+};

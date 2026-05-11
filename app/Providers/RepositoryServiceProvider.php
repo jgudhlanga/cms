@@ -15,7 +15,9 @@ use App\Repositories\Acl\RoleRepository;
 use App\Repositories\Finance\FinanceExchangeRateRepository;
 use App\Repositories\Finance\interface\IFinanceExchangeRateRepository;
 use App\Repositories\HMS\HostelRepository;
+use App\Repositories\HMS\HostelRoomRepository;
 use App\Repositories\HMS\interface\IHostelRepository;
+use App\Repositories\HMS\interface\IHostelRoomRepository;
 use App\Repositories\Institution\AssessmentTypeRepository;
 use App\Repositories\Institution\ClassListRepository;
 use App\Repositories\Institution\CourseRepository;
@@ -196,6 +198,7 @@ class RepositoryServiceProvider extends ServiceProvider
     private function hmsRepositories(): void
     {
         $this->app->bind(IHostelRepository::class, HostelRepository::class);
+        $this->app->bind(IHostelRoomRepository::class, HostelRoomRepository::class);
     }
 
     public function sharedRepositories(): void

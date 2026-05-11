@@ -88,4 +88,7 @@ export enum IconName {
     circle_x = 'circle_x',
     paperclip = 'paperclip',
     hostel = 'hostel',
+    room = 'room',
+    warehouse = 'warehouse',
+    reset = 'reset',
 }

@@ -14,6 +14,7 @@ return [
     "search_placeholder"  => "Search by name, location or warden…",
     "no_hostels_found"    => "No hostels found",
     "hostel_deleted"      => "Hostel deleted",
+    "hostel_placeholder"    => "Select hostel",
 
     // ── Fields ────────────────────────────────────────────────────────────
     "status"              => "Status|Statuses",
@@ -69,4 +70,49 @@ return [
     "filter_all_locations"  => "All locations",
     "filter_reset"          => "Reset",
     "filter_warden"         => "Filter by warden",
+
+    // ── Rooms ─────────────────────────────────────────────────────────────
+    "room"                    => "Room|Rooms",
+    "room_number"             => "Room Number",
+    "room_name"               => "Room Name",
+    "room_type"               => "Room Type|Room Types",
+    "occupancy"               => "Occupancy",
+    "max_occupancy"           => "Max Occupancy",
+    "floor"                   => "Floor|Floors",
+    "floor_number"            => "Floor Number",
+    "add_room"                => "Add Room",
+    "create_room"             => "Create Room",
+    "edit_room"               => "Edit Room",
+    "room_saved"              => "Room saved",
+    "room_save_failed"        => "Failed to save room",
+    "room_deleted"            => "Room deleted",
+    "no_rooms_found"          => "No rooms found",
+    "rooms_registered"        => ":count rooms registered",
+    "select_hostel"           => "Select hostel",
+    "hostel_required"         => "Hostel is required",
+    "room_number_required"    => "Room number is required",
+    "room_name_required"      => "Room name is required",
+    "room_type_required"      => "Room type is required",
+    "max_occupancy_required"  => "Max occupancy is required",
+    "floor_number_required"   => "Floor number is required",
+    "select_room_type"        => "Select room type",
+    "select_room_status"      => "Select status",
+    "search_room_placeholder" => "Search by room number, hostel or floor…",
+    "search_hostel_placeholder" => "Search by hostel name",
+
+    // ── Room type labels ──────────────────────────────────────────────────
+    "room_type_single"    => "Single",
+    "room_type_double"    => "Double",
+    "room_type_triple"    => "Triple",
+    "room_type_suite"     => "Suite",
+
+    // ── Room status labels ────────────────────────────────────────────────
+    "room_status_vacant"      => "Vacant",
+    "room_status_occupied"    => "Occupied",
+    "room_status_maintenance" => "Maintenance",
+
+    // ── Room filters ──────────────────────────────────────────────────────
+    "filter_all_room_types"   => "All types",
+    "filter_all_statuses"     => "All statuses",
+    "room_search_placeholder" => "Search by room number…",
 ];

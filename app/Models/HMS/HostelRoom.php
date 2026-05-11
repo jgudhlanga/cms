@@ -2,7 +2,6 @@
 
 namespace App\Models\HMS;
 
-use App\Models\Institution\Staff;
 use App\Traits\BelongsToTenant;
 use App\Traits\Filterable;
 use App\Traits\Paginatable;
@@ -17,34 +16,33 @@ use Spatie\Activitylog\Traits\LogsActivity;
  *
  * @mixin Builder
  */
-class Hostel extends Model
+class HostelRoom extends Model
 {
    use SoftDeletes, Filterable, BelongsToTenant,Paginatable, LogsActivity;
 
    protected $fillable = [
-		'name',
-		'tenant_id',
-		'warden_id', 
-		'location', 
-		'floor_count', 
-		'rooms_count', 
-		'capacity', 
-		'status',
-		'type', 
-		'description',
-];
+	'name',
+	'hostel_id',
+	'room_type',
+	'capacity',
+	'status',
+	'tenant_id',
+	'max_occupancy',
+	'floor_number',
+	'description'
+   ];
+
+   public function hostel(): BelongsTo
+   {
+	   return $this->belongsTo(Hostel::class);
+   }
 
    	public function getActivitylogOptions(): LogOptions
    	{
    		return LogOptions::defaults()
    			->logFillable()
-   			->useLogName('Hostel')
+   			->useLogName('HostelRoom')
    			->logOnlyDirty()
    			->dontSubmitEmptyLogs();
    	}
-
-    public function warden(): BelongsTo
-    {
-        return $this->belongsTo(Staff::class, 'warden_id');
-    }
 }

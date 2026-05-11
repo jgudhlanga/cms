@@ -66,12 +66,12 @@ watch(trashed, trashedWatcher);
 <template>
     <div class="bg-card inline-block min-w-full overflow-auto rounded-xl px-6 pt-4 pb-6 align-middle">
         <div class="text-muted-foreground mt-3 mb-6 flex w-full justify-between text-sm">
-            <div class="flex w-full items-center space-x-3">
+            <div class="flex  w-full items-center space-x-3">
                 <Search v-model="filter" v-if="searchUrl || apiFetchAction" />
                 <Archived v-if="showArchivedFilter" :handle-archived="handleArchived" :trashed="+trashed" :trashed-count="trashedCount" />
                 <slot name="head-left" />
             </div>
-            <div class="flex w-1/2 items-center justify-end space-x-3">
+            <div class="flex w-full items-center justify-end space-x-3">
                 <ColumnFilter :variant="ColorVariant.primary_outline" :table="table" :toggleColumnVisibility="toggleColumnVisibility" />
                 <ExportButton :variant="ColorVariant.primary_outline" class="rounded-full" v-if="onExport" @click="() => (onExport ? onExport() : null)" :disable="disableExport" />
                 <ImportButton :variant="ColorVariant.primary_outline" class="rounded-full" v-if="onImport" @click="() => (onImport ? onImport() : null)" :disable="disableImport" />

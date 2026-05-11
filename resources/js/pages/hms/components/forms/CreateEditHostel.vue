@@ -14,7 +14,7 @@ import { buildFormOptions, clearFormErrors } from '@/lib/forms';
 import { useModalStore } from '@/store/core/useModalStore';
 import type { SelectOption } from '@/types/utils';
 import { useForm } from '@inertiajs/vue3';
-import { computed, defineEmits, ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { Hostel } from '@/types/hms';
 import { useHmsStore } from '@/store/hms/useHmsStore';
 
@@ -24,7 +24,6 @@ interface Props {
 }
 
 const props = defineProps<Props>();
-const emit = defineEmits<{ (e: 'saved'): void }>();
 
 const hostel = ref<Hostel | null>(null);
 
@@ -95,7 +94,6 @@ const save = () => {
     }
 
     const onSuccessAction = () => {
-        emit('saved');
         hmsStore.refreshHostels();
     };
     const options = buildFormOptions(form, trans('hms.hostel_saved'), trans('hms.hostel_save_failed'), APP_MODULE_KEYS.hostels, onSuccessAction);

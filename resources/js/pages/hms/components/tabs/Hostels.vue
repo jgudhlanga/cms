@@ -63,18 +63,7 @@ const totalOccupied = computed(() =>
 <template>
         <!-- ── Page header ───────────────────────────────────────────────── -->
         <div class="my-6 flex items-center justify-between">
-            <HeadingSmall
-                :title="$t('hms.management_title')"
-                :description="$t('hms.hostels_registered', { count: String(hostelsList.length) })"
-            />
-
-            <BaseButton id="hostel-create-btn" classes="rounded-full" :variant="ColorVariant.primary" @click="openCreate">
-                <BaseIcon :name="IconName.add" />
-                <span>{{ $t('hms.add_hostel') }}</span>
-            </BaseButton>
-        </div>
-
-        <!-- ── Summary stat badges ──────────────────────────────────────── -->
+            <!-- ── Summary stat badges ──────────────────────────────────────── -->
         <div class="mb-3 flex flex-wrap gap-3">
             <HostelStatsBadge
                 :label="$t('hms.stat_blocks')"
@@ -104,6 +93,12 @@ const totalOccupied = computed(() =>
                 icon-class="text-rose-500"
                 value-class="text-rose-600"
             />
+        </div>
+
+            <BaseButton id="hostel-create-btn" classes="rounded-full" :variant="ColorVariant.primary" @click="openCreate">
+                <BaseIcon :name="IconName.add" />
+                <span>{{ $t('hms.add_hostel') }}</span>
+            </BaseButton>
         </div>
 
         <!-- ── Filters ───────────────────────────────────────────────────── -->
