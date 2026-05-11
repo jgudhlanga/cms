@@ -120,7 +120,10 @@ class StudentController extends Controller
 
     public function show(Student $student)
     {
-        //
+        $this->authorize('view', $student);
+        $user = UserResource::make($student->user);
+        $student = StudentResource::make($student);
+        return Inertia::render('students/Show', compact('user', 'student'));
     }
 
 

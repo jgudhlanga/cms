@@ -16,7 +16,30 @@ export const useStudents = () => {
                 header: trans_choice('trans.name', 1),
                 accessorKey: 'name',
                 cell: ({ row }: { row: { original: Student } }) => {
-                    return textLink(route('portal.programs'), row.original?.relationships?.user?.attributes?.name ?? '');
+                    return textLink(route('students.show', String(row.original?.id)), row.original?.relationships?.user?.attributes?.name ?? '');
+                },
+            },
+            {header: trans_choice('trans.id_number',1), accessorKey: 'attributes.idNumber',},
+            {header: trans_choice('trans.student_number',1), accessorKey: 'attributes.studentNumber',},
+            {
+                header: trans_choice('trans.department', 1),
+                accessorKey: 'department',
+                cell: ({ row }: { row: { original: Student } }) => {
+                    return '--';
+                },
+            },
+            {
+                header: trans_choice('trans.level', 1),
+                accessorKey: 'level',
+                cell: ({ row }: { row: { original: Student } }) => {
+                    return '--';
+                },
+            },
+            {
+                header: trans_choice('trans.course', 1),
+                accessorKey: 'course',
+                cell: ({ row }: { row: { original: Student } }) => {
+                    return '--';
                 },
             },
             {

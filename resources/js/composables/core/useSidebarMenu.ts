@@ -37,8 +37,8 @@ export function useSidebarMenu() {
         {
             transChoiceKey: 'trans.student',
             icon: icons[IconName.user_check],
-            url: route('dashboard'),
-            show: false, //hasAbility('view:students'),
+            url: route('students.index'),
+            show: hasAbility('view:students'),
         },
         {
             transChoiceKey: 'trans.examination',
