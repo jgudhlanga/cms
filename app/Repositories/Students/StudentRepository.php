@@ -19,6 +19,7 @@ use App\Repositories\Shared\interface\IContactRepository;
 use App\Repositories\Shared\interface\INextOfKinRepository;
 use App\Repositories\Students\interface\IStudentProgramRepository;
 use App\Repositories\Students\interface\IStudentRepository;
+use App\Models\Students\StudentEnrollment;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
@@ -40,34 +41,75 @@ class StudentRepository extends BaseRepository implements IStudentRepository
 
     public function paginateForIndex(array $filters = []): LengthAwarePaginator
     {
-        $query =  $this->student->query();
+        $query = Student::query()
+            ->with([
+                'user',
+                'enrolments.institutionDepartment.department',
+                'enrolments.departmentLevel.level',
+                'enrolments.departmentCourse.course',
+            ])
+            ->join('student_enrolments', 'student_enrolments.student_id', '=', 'students.id')
+            ->select('students.*')
+            ->distinct();
 
-        if (array_key_exists('search', $filters) && is_string($filters['search']) && $filters['search'] !== '') {
+        // Search filter
+        if (!empty($filters['search'])) {
             $search = trim($filters['search']);
 
-            $query->where(function ($q) use ($search): void {
+            $query->where(function ($q) use ($search) {
                 $q->where('student_number', 'like', "%{$search}%")
                     ->orWhere('id_number', 'like', "%{$search}%")
                     ->orWhere('passport_number', 'like', "%{$search}%");
             });
         }
 
-
-        if (array_key_exists('name', $filters) && is_string($filters['name']) && $filters['name'] !== '') {
+        // Name filter
+        if (!empty($filters['name'])) {
             $name = trim($filters['name']);
-            $query->whereHas('user', function ($q) use ($name): void {
+
+            $query->whereHas('user', function ($q) use ($name) {
                 $q->where('first_name', 'like', "%{$name}%")
-                  ->orWhere('middle_name', 'like', "%{$name}%")
-                  ->orWhere('last_name', 'like', "%{$name}%");
+                    ->orWhere('middle_name', 'like', "%{$name}%")
+                    ->orWhere('last_name', 'like', "%{$name}%");
             });
         }
 
+        // Department filter
+        if (!empty($filters['department'])) {
+            $department = trim($filters['department']);
 
-        if (array_key_exists('with_trashed', $filters) && $filters['with_trashed']) {
+            $query->whereHas('enrolments.institutionDepartment.department', function ($q) use ($department) {
+                $q->where('name', 'like', "%{$department}%");
+            });
+        }
+
+        // Level filter
+        if (!empty($filters['level'])) {
+            $level = trim($filters['level']);
+
+            $query->whereHas('enrolments.departmentLevel.level', function ($q) use ($level) {
+                $q->where('name', 'like', "%{$level}%");
+            });
+        }
+
+        // Course filter
+        if (!empty($filters['course'])) {
+            $course = trim($filters['course']);
+
+            $query->whereHas('enrolments.departmentCourse.course', function ($q) use ($course) {
+                $q->where('name', 'like', "%{$course}%");
+            });
+        }
+
+        // Trashed records
+        if (!empty($filters['with_trashed'])) {
             $query->withTrashed();
         }
 
-        return $query->paginate()->withQueryString();
+        return $query
+            ->latest('students.created_at')
+            ->paginate()
+            ->withQueryString();
     }
 
     public function create(CreateApplicationDto|CreateStudentApplicationDto $dto): Model

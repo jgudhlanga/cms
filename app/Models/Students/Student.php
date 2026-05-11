@@ -146,10 +146,10 @@ class Student extends Model
         $this->attributes['id_number'] = $value ?: null;
     }
 
-    public function isZimbabwean(): bool
-    {
-        return $this->id_type_id = IdTypeEnum::ZIMBABWEAN_ID_NUMBER->id();
-    }
+   public function isZimbabwean(): bool
+{
+    return $this->id_type_id === IdTypeEnum::ZIMBABWEAN_ID_NUMBER->id();
+}
 
     public function notes(): MorphMany
     {
