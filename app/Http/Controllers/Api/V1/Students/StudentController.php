@@ -20,6 +20,15 @@ class StudentController
     {
     }
 
+    public function index()
+    {
+        $students = $this->repository->paginateForIndex(
+            request()->only(['search', 'name', 'department', 'level', 'course', 'with_trashed'])
+        );
+        return StudentResource::collection($students);
+    }
+
+    # ====== STUDENT ===========
     public function personal(Student $student)
     {
         return StudentResource::make($student);

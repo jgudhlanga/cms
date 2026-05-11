@@ -11,4 +11,5 @@ return [
     'search_by_department_placeholder' => 'by department...',
     'search_by_level_placeholder' => 'by level...',
     'search_by_course_placeholder' => 'by course...',
+    'reset' => 'Reset',
 ];

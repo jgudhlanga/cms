@@ -1,14 +1,17 @@
 import { useDataTables } from '@/composables/core/useDataTables';
 import { Enrolment } from '@/types/enrolments';
-import { Student } from '@/types/students';
-import { trans_choice } from 'laravel-vue-i18n';
+import { Student, StudentFiltersState } from '@/types/students';
+import { trans, trans_choice } from 'laravel-vue-i18n';
 import { useUtils } from '@/composables/core/useUtils';
 import { InertiaForm } from '@inertiajs/vue3';
-import { useUpdateProgramFormStore } from '@/store/portal/useUpdateProgramFormStore';
 import { errorAlert, successAlert } from '@/lib/alerts';
+import { ref } from 'vue';
+import HttpService from '@/services/http.service';
 
 export const useStudents = () => {
     const { moreActionButton, textLink } = useDataTables();
+
+    const isLoading = ref(false);
 
     const createStudentColumns = () => {
         return [
@@ -126,6 +129,18 @@ export const useStudents = () => {
         }
     };
 
+
+    const fetchStudents = async (filters: StudentFiltersState = {}) => {
+        try {
+            isLoading.value = true;
+            return await HttpService.get(route('v1.students.index'), { params: filters });
+        } catch {
+            errorAlert(trans('trans.load_data_failure', { data: trans('trans.data') }));
+        } finally {
+            isLoading.value = false;
+        }
+    };
+    
     return {
         createStudentColumns,
         getApplicationStatus,
@@ -134,5 +149,7 @@ export const useStudents = () => {
         showCreateNewProgramButton,
         showEditProgramButton,
         updateProgram,
+        fetchStudents, 
+        isLoading,
     };
 };

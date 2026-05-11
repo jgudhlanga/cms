@@ -2,11 +2,7 @@
 
 namespace App\Models\Students;
 
-use App\Enums\Institution\LevelEnum;
 use App\Enums\Shared\IdTypeEnum;
-use App\Helpers\WorkflowHelper;
-use App\Http\Filters\Students\StudentFilter;
-use App\Models\Institution\DepartmentApplicationStep;
 use App\Enums\Shared\AcademicLevelEnum;
 use App\Models\Shared\{Address, Contact, Country, Gender, IdType, MaritalStatus, NextOfKin, Race, Religion, Title};
 use App\Models\Users\User;
@@ -14,12 +10,10 @@ use App\Traits\BelongsToTenant;
 use App\Traits\Filterable;
 use App\Traits\Paginatable;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
@@ -100,6 +94,11 @@ class Student extends Model
     public function programs(): HasMany
     {
         return $this->hasMany(StudentProgram::class, 'student_id');
+    }
+
+    public function enrolments(): HasMany
+    {
+        return $this->hasMany(StudentEnrolment::class, 'student_id');
     }
 
     public function currentLevel(): ?string

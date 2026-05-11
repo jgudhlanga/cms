@@ -23,6 +23,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Throwable;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class StudentRepository extends BaseRepository implements IStudentRepository
 {
@@ -35,6 +36,38 @@ class StudentRepository extends BaseRepository implements IStudentRepository
     )
     {
         parent::__construct($this->student);
+    }
+
+    public function paginateForIndex(array $filters = []): LengthAwarePaginator
+    {
+        $query =  $this->student->query();
+
+        if (array_key_exists('search', $filters) && is_string($filters['search']) && $filters['search'] !== '') {
+            $search = trim($filters['search']);
+
+            $query->where(function ($q) use ($search): void {
+                $q->where('student_number', 'like', "%{$search}%")
+                    ->orWhere('id_number', 'like', "%{$search}%")
+                    ->orWhere('passport_number', 'like', "%{$search}%");
+            });
+        }
+
+
+        if (array_key_exists('name', $filters) && is_string($filters['name']) && $filters['name'] !== '') {
+            $name = trim($filters['name']);
+            $query->whereHas('user', function ($q) use ($name): void {
+                $q->where('first_name', 'like', "%{$name}%")
+                  ->orWhere('middle_name', 'like', "%{$name}%")
+                  ->orWhere('last_name', 'like', "%{$name}%");
+            });
+        }
+
+
+        if (array_key_exists('with_trashed', $filters) && $filters['with_trashed']) {
+            $query->withTrashed();
+        }
+
+        return $query->paginate()->withQueryString();
     }
 
     public function create(CreateApplicationDto|CreateStudentApplicationDto $dto): Model

@@ -294,6 +294,7 @@ declare module 'vue' {
     ReligionComboSelect: typeof import('./../components/core/form/combobox/ReligionComboSelect.vue')['default']
     RemoveImpersonationButton: typeof import('./../components/auth/RemoveImpersonationButton.vue')['default']
     RequiredIndicator: typeof import('./../components/core/form/RequiredIndicator.vue')['default']
+    ResetButton: typeof import('./../components/core/button/ResetButton.vue')['default']
     RestoreButton: typeof import('./../components/core/button/RestoreButton.vue')['default']
     RoleComboSelect: typeof import('./../components/core/form/combobox/RoleComboSelect.vue')['default']
     RoleSelect: typeof import('./../components/core/form/select/RoleSelect.vue')['default']

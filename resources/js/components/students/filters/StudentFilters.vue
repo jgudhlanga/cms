@@ -3,6 +3,7 @@ import { ref, watch } from 'vue';
 import { useDebounceFn } from '@vueuse/core';
 import type { StudentFiltersState } from '@/types/students';
 import { IconName } from '@/enums/icons';
+import ResetButton from '@/components/core/button/ResetButton.vue';
 
 interface Props {
     filters: StudentFiltersState;
