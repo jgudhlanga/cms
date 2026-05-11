@@ -19,6 +19,8 @@ interface Props {
 
 defineProps<Props>();
 const breadcrumbs: Array<Link> = [{ transKey: 'dashboard', href: route('dashboard') }, { transChoiceKey: 'student' }];
+
+const loadStudents = () => {};
 </script>
 
 <template>
@@ -26,12 +28,14 @@ const breadcrumbs: Array<Link> = [{ transKey: 'dashboard', href: route('dashboar
     <PageContainer :breadcrumbs="breadcrumbs">
         <DataTable
             :data="students.data"
-            :trashed-count="trashedCount"
             :filters="filters"
             :show-archived-filter="false"
-            :search-url="route('students.index')"
             :pagination="{ ...students.links, ...students.meta }"
             :columns="createStudentColumns()"
-        />
+        >
+            <template #head-left>
+                <StudentFilters :filters="filters" @change="loadStudents" />
+            </template>
+        </DataTable>
     </PageContainer>
 </template>

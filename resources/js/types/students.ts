@@ -219,3 +219,13 @@ export type StudentProgramEdit = {
     course: SelectOption | null;
     modeOfStudy: SelectOption | null;
 };
+
+
+export type StudentFiltersState = {
+    search?: string | null;
+    name?: string | null;
+    department?: string | null;
+    level?: string | null;
+    course?: string | null;
+    with_trashed?: boolean | null;
+};

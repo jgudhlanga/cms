@@ -376,6 +376,7 @@ declare module 'vue' {
     StudentBasicInfo: typeof import('./../components/students/tabs/StudentBasicInfo.vue')['default']
     StudentContacts: typeof import('./../components/students/tabs/StudentContacts.vue')['default']
     StudentEnrolmentStatusComboSelect: typeof import('./../components/core/form/combobox/StudentEnrolmentStatusComboSelect.vue')['default']
+    StudentFilters: typeof import('./../components/students/filters/StudentFilters.vue')['default']
     StudentNextOfKin: typeof import('./../components/students/tabs/StudentNextOfKin.vue')['default']
     StudentPageHeader: typeof import('./../components/shared/students/StudentPageHeader.vue')['default']
     StudentPrograms: typeof import('./../components/students/tabs/StudentPrograms.vue')['default']
