@@ -19,7 +19,7 @@ import { storeToRefs } from 'pinia';
 import HostelRoomFilters from '@/components/hms/HostelRoomFilters.vue';
 import { DataListProps } from '@/types/data-pagination';
 
-const { fetchRooms, hostelRoomColumns } = useHms();
+const { fetchRooms, hostelRoomColumns, isLoading } = useHms();
 const { roomRefreshKey } = storeToRefs(useHmsStore());
 const rooms  = ref<DataListProps<HostelRoom>>({data: [], links: {
     first: null,
@@ -115,7 +115,9 @@ const statusLabel = (s: string) => {
             value-class="text-sky-700"
         />
     </div>
+    <TableLoading v-if="isLoading" />
     <DataTable
+        v-else
         :data="rooms.data"
         :pagination="{ ...rooms.links, ...rooms.meta }"
         :columns="hostelRoomColumns()"
@@ -124,8 +126,7 @@ const statusLabel = (s: string) => {
         :show-archived-filter="false"
     >
         <template #head-left>
-             <!-- ── Filters ───────────────────────────────────────────────────── -->
-        <HostelRoomFilters :filters="filters" @change="loadRooms" />
+            <HostelRoomFilters :filters="filters" @change="loadRooms" />
         </template>
     </DataTable>
 </template>

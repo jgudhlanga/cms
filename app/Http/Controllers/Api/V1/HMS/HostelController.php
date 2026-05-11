@@ -12,6 +12,6 @@ class HostelController extends Controller
     public function index()
     {
         $hostels = $this->repository->paginateForIndex(request()->only(['search', 'type', 'warden', 'with_trashed']));
-        return HostelResource::collection($hostels);//
+        return HostelResource::collection($hostels);
     }
 }

@@ -102,7 +102,9 @@ const totalOccupied = computed(() =>
         </div>
 
         <!-- ── Filters ───────────────────────────────────────────────────── -->
-        <HostelFilters :filters="filters" @change="loadHostels" />
+        <div class="mb-6 flex flex-col ">
+            <HostelFilters :filters="filters" @change="loadHostels" />
+        </div>
 
         <!-- ── Hostel cards grid ─────────────────────────────────────────── -->
         <div v-if="hostelsList.length" class="grid grid-cols-1 gap-3 md:grid-cols-3 ">

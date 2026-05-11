@@ -111,5 +111,6 @@ export const useHms = () => {
         fetchHostels,
         fetchRooms,
         hostelRoomColumns,
+        isLoading,
     };
 };

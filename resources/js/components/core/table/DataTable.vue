@@ -40,8 +40,8 @@ const props = withDefaults(defineProps<Props>(), {
 
 const filter = ref(props?.filters?.search ?? '');
 const trashed = ref(props?.filters?.trashed ?? '0');
-const pageSize = ref(props?.pagination?.per_page ?? props.pageSize);
-const currentPage = ref(props?.pagination?.current_page ?? '1');
+const pageSize = ref(props?.pagination?.per_page || props.pageSize);
+const currentPage = ref(props?.pagination?.current_page || 1);
 const { initialize, toggleColumnVisibility, tableSearch, setPageSize, goToPage, loadTrashed } = useDataTables();
 const table = initialize(props);
 
@@ -49,6 +49,17 @@ const searchWatcher = tableSearch(pageSize, currentPage, trashed, props.searchUr
 const pageSizeWatcher = setPageSize(filter, table, currentPage, trashed, props.searchUrl, props.useApi, props.apiFetchAction);
 const goToPageWatcher = goToPage(filter, pageSize, trashed, props.searchUrl, props.useApi, props.apiFetchAction);
 const trashedWatcher = loadTrashed(filter, pageSize, currentPage, props.searchUrl, props.useApi, props.apiFetchAction);
+
+// Sync pageSize / currentPage when the pagination prop delivers real data
+// after an async API load (per_page starts as 0 before data arrives).
+watch(
+    () => props.pagination?.per_page,
+    (val) => { if (val && val !== pageSize.value) pageSize.value = val; },
+);
+watch(
+    () => props.pagination?.current_page,
+    (val) => { if (val && val !== currentPage.value) currentPage.value = val; },
+);
 
 onMounted(() => {
     table.setPageSize(+pageSize.value);
