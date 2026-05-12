@@ -43,6 +43,9 @@ class StudentResource extends JsonResource
                 'createdAt' => $this->created_at,
                 'updatedAt' => $this->updated_at,
                 'deletedAt' => $this->deleted_at,
+                'department' => $this->currentEnrolment?->institutionDepartment?->department?->name,
+                'level' => $this->currentEnrolment?->departmentLevel?->level?->name,
+                'course' => $this->currentEnrolment?->departmentCourse?->course?->name,
             ],
             'relationships' => [
                 'user' => UserSummaryResource::make($this->user),

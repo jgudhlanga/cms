@@ -5,6 +5,7 @@ import { trans, trans_choice } from 'laravel-vue-i18n';
 import { useUtils } from '@/composables/core/useUtils';
 import { InertiaForm } from '@inertiajs/vue3';
 import { errorAlert, successAlert } from '@/lib/alerts';
+import { mergeQueryParamsIntoRequestPath } from '@/lib/merge-query-into-url';
 import { ref } from 'vue';
 import HttpService from '@/services/http.service';
 
@@ -28,21 +29,21 @@ export const useStudents = () => {
                 header: trans_choice('trans.department', 1),
                 accessorKey: 'department',
                 cell: ({ row }: { row: { original: Student } }) => {
-                    return '--';
+                    return row.original.attributes?.department ?? '--';
                 },
             },
             {
                 header: trans_choice('trans.level', 1),
                 accessorKey: 'level',
                 cell: ({ row }: { row: { original: Student } }) => {
-                    return '--';
+                    return row.original.attributes?.level ?? '--';
                 },
             },
             {
                 header: trans_choice('trans.course', 1),
                 accessorKey: 'course',
                 cell: ({ row }: { row: { original: Student } }) => {
-                    return '--';
+                    return row.original.attributes?.course ?? '--';
                 },
             },
             {
@@ -130,17 +131,21 @@ export const useStudents = () => {
     };
 
 
-    const fetchStudents = async (filters: StudentFiltersState = {}) => {
+    const studentListMergeOptions = { booleanParamKeys: ['with_trashed'] };
+
+    const fetchStudents = async (filters: StudentFiltersState = {}, paginatorUrl?: string) => {
         try {
             isLoading.value = true;
-            return await HttpService.get(route('v1.students.index'), { params: filters });
+            const baseUrl = paginatorUrl ?? route('v1.students.index');
+            const path = mergeQueryParamsIntoRequestPath(baseUrl, filters as Record<string, unknown>, studentListMergeOptions);
+            return await HttpService.get(path);
         } catch {
             errorAlert(trans('trans.load_data_failure', { data: trans('trans.data') }));
         } finally {
             isLoading.value = false;
         }
     };
-    
+
     return {
         createStudentColumns,
         getApplicationStatus,
@@ -149,7 +154,7 @@ export const useStudents = () => {
         showCreateNewProgramButton,
         showEditProgramButton,
         updateProgram,
-        fetchStudents, 
+        fetchStudents,
         isLoading,
     };
 };

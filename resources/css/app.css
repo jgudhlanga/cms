@@ -209,7 +209,7 @@
     }
 
     .hava-table {
-        @apply min-w-full text-sm font-extralight;
+        @apply min-w-full text-xs font-extralight;
     }
 
     .hava-thead {
@@ -253,7 +253,7 @@
     }
 
     .hava-td {
-        @apply whitespace-nowrap px-3 py-2 text-sm text-foreground;
+        @apply whitespace-nowrap px-3 py-1 text-xs text-foreground;
     }
 
     .error {

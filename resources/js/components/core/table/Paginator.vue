@@ -3,7 +3,14 @@ import type { PaginationRootLink, PaginationMeta } from '@/types/data-pagination
 import { IconName } from '@/enums/icons';
 import NavigationLink from '@/components/core/table/NavigationLink.vue';
 
-defineProps<{ meta: PaginationRootLink & PaginationMeta }>();
+withDefaults(
+	defineProps<{
+		meta: PaginationRootLink & PaginationMeta;
+		useApi?: boolean;
+		apiFetchAction?: (url: string) => void | Promise<void>;
+	}>(),
+	{ useApi: false },
+);
 
 </script>
 
@@ -12,19 +19,27 @@ defineProps<{ meta: PaginationRootLink & PaginationMeta }>();
 		<NavigationLink
 			:href="meta.first ?? ''"
 			:icon-name="IconName.chevron_double_left"
-			:disabled="meta.current_page === 1" />
+			:disabled="meta.current_page === 1"
+			:use-api="useApi"
+			:api-fetch-action="apiFetchAction" />
 		<NavigationLink
 			:href="meta.prev ?? ''"
 			:icon-name="IconName.chevron_left"
-			:disabled="!meta.prev" />
+			:disabled="!meta.prev"
+			:use-api="useApi"
+			:api-fetch-action="apiFetchAction" />
 		<NavigationLink
 			:href="meta.next ?? ''"
 			:icon-name="IconName.chevron_right"
-			:disabled="!meta.next" />
+			:disabled="!meta.next"
+			:use-api="useApi"
+			:api-fetch-action="apiFetchAction" />
 		<NavigationLink
 			:href="meta.last ?? ''"
 			:icon-name="IconName.chevron_double_right"
-			:disabled="meta.current_page === meta.last_page" />
+			:disabled="meta.current_page === meta.last_page"
+			:use-api="useApi"
+			:api-fetch-action="apiFetchAction" />
 		<div class="flex items-center gap-1 text-sm text-accent-foreground">
 			<div>{{ $tChoice('trans.page', 1) }}</div>
 			<strong>{{ meta.current_page }}</strong>

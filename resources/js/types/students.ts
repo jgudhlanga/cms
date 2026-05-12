@@ -32,11 +32,18 @@ export type Student = {
         height?: string;
         weight?: string;
         disabilityStatus?: 'yes' | 'no' | 'prefer_not_to_say' | null;
+        department?: string;
+        level?: string;
+        course?: string;
+        createdAt?: string;
+        updatedAt?: string;
+        deletedAt?: string;
     };
     relationships?: {
         user: User;
     };
 };
+
 
 export type PersonalDetailView = {
     title: string;

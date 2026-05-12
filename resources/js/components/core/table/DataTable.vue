@@ -4,6 +4,7 @@ import { useDataTables } from '@/composables/core/useDataTables';
 import { PAGINATION_ITEMS_PER_PAGE } from '@/lib/constants';
 import { DataFilters, PaginationMeta, PaginationRootLink } from '@/types/data-pagination';
 import { onMounted, ref, watch } from 'vue';
+import DataLoadingSpinner from '@/components/core/loader/DataLoadingSpinner.vue';
 import { Archived, ColumnFilter, GotoPage, Paginator, PerPageSize, Search, TableBody, TableHead } from './';
 import { ColorVariant } from '@/enums/colors';
 
@@ -26,6 +27,8 @@ interface Props {
     useApi?: boolean;
     apiFetchAction?: (url: string) => void | Promise<void>;
     pageSize?: number;
+    hideBuiltInSearch?: boolean;
+    loading?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -36,6 +39,8 @@ const props = withDefaults(defineProps<Props>(), {
     dragItems: false,
     useApi: false,
     pageSize: PAGINATION_ITEMS_PER_PAGE,
+    hideBuiltInSearch: false,
+    loading: false,
 });
 
 const filter = ref(props?.filters?.search ?? '');
@@ -75,10 +80,17 @@ watch(trashed, trashedWatcher);
 </script>
 
 <template>
-    <div class="bg-card inline-block min-w-full overflow-auto rounded-xl px-6 pt-4 pb-6 align-middle">
+    <div class="bg-card relative inline-block min-w-full overflow-auto rounded-xl px-6 pt-4 pb-6 align-middle">
+        <div
+            v-if="loading"
+            class="absolute inset-0 z-10 flex items-center justify-center overflow-auto rounded-xl bg-background/70 px-6 backdrop-blur-[1px]"
+            role="status"
+            aria-live="polite">
+            <DataLoadingSpinner class="w-full" />
+        </div>
         <div class="text-muted-foreground mt-3 mb-6 flex w-full justify-between text-sm">
             <div class="flex  flex-1 items-center space-x-3">
-                <Search v-model="filter" v-if="searchUrl || apiFetchAction" />
+                <Search v-model="filter" v-if="(searchUrl || apiFetchAction) && !hideBuiltInSearch" />
                 <Archived v-if="showArchivedFilter" :handle-archived="handleArchived" :trashed="+trashed" :trashed-count="trashedCount" />
                 <slot name="head-left" />
             </div>
@@ -101,6 +113,6 @@ watch(trashed, trashedWatcher);
     <div class="my-3 flex w-full items-center justify-between px-6" v-if="pagination">
         <PerPageSize v-model="pageSize" />
         <GotoPage v-model="currentPage" :meta="pagination ?? null" />
-        <Paginator :meta="pagination" />
+        <Paginator :meta="pagination" :use-api="useApi" :api-fetch-action="apiFetchAction" />
     </div>
 </template>

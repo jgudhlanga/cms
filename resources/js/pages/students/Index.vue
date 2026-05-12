@@ -9,9 +9,8 @@ import { Link } from '@/types/ui';
 import { onMounted, ref, watch } from 'vue';
 import StudentFilters from '@/components/students/filters/StudentFilters.vue';
 import { storeToRefs } from 'pinia';
-import { User } from '@/types/users';
 import { useStudentsStore } from '@/store/students/useStudentsStore';
-import { StudentFiltersState } from '@/types/students';
+import { Student, StudentFiltersState } from '@/types/students';
 
 const { createStudentColumns, fetchStudents, isLoading } = useStudents();
 
@@ -24,7 +23,7 @@ defineProps<Props>();
 const breadcrumbs: Array<Link> = [{ transKey: 'dashboard', href: route('dashboard') }, { transChoiceKey: 'student' }];
 
 const { studentRefreshKey } = storeToRefs(useStudentsStore());
-const students  = ref<DataListProps<User>>({data: [], links: {
+const students  = ref<DataListProps<Student>>({data: [], links: {
     first: null,
     last: null,
     prev: null,
@@ -41,6 +40,16 @@ const loadStudents = async (f: StudentFiltersState = {}) => {
     if (res) students.value = res;
 };
 
+const loadStudentsFromUrl = async (url: string) => {
+    const res = await fetchStudents(filters.value, url);
+    if (res) students.value = res;
+};
+
+const onStudentFiltersChange = async (f: StudentFiltersState) => {
+    filters.value = f;
+    await loadStudents(f);
+};
+
 onMounted(() => loadStudents());
 watch(studentRefreshKey, () => loadStudents(filters.value));
 
@@ -55,9 +64,14 @@ watch(studentRefreshKey, () => loadStudents(filters.value));
             :show-archived-filter="false"
             :pagination="{ ...students.links, ...students.meta }"
             :columns="createStudentColumns()"
+            :use-api="true"
+            :search-url="route('v1.students.index')"
+            :api-fetch-action="loadStudentsFromUrl"
+            :hide-built-in-search="true"
+            :loading="isLoading"
         >
             <template #head-left>
-                <StudentFilters :filters="filters" @change="loadStudents" />
+                <StudentFilters :filters="filters" @change="onStudentFiltersChange" />
             </template>
         </DataTable>
     </PageContainer>

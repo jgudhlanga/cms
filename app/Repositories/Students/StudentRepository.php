@@ -108,7 +108,7 @@ class StudentRepository extends BaseRepository implements IStudentRepository
 
         return $query
             ->latest('students.created_at')
-            ->paginate()
+            ->paginate($this->student->getPerPage())
             ->withQueryString();
     }
 

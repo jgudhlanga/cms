@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
@@ -99,6 +100,11 @@ class Student extends Model
     public function enrolments(): HasMany
     {
         return $this->hasMany(StudentEnrolment::class, 'student_id');
+    }
+
+    public function currentEnrolment(): HasOne
+    {
+        return $this->hasOne(StudentEnrolment::class)->latestOfMany();
     }
 
     public function currentLevel(): ?string
