@@ -215,6 +215,15 @@ watch(
     { deep: true },
 );
 
+const resetFilters = () => {
+    name.value = '';
+    search.value = '';
+    departmentSelection.value = null;
+    levelSelection.value = null;
+    courseSelection.value = [];
+    modeOfStudySelection.value = [];
+};
+
 onMounted(async () => {
     await Promise.all([
         listDepartments(route('v1.institution-departments.index', { is_academic: 1, page_size: 'all' })),
@@ -260,7 +269,7 @@ onMounted(async () => {
         </div>
 
         <!-- Row 2: three equal columns on md+ -->
-        <div class="border-border grid min-w-0 grid-cols-1 gap-3 border-t pt-4 md:grid-cols-3 md:gap-4">
+        <div class="grid min-w-0 grid-cols-1 gap-3 md:grid-cols-3 md:gap-4">
             <div class="min-w-0">
                 <BaseCombobox
                     v-model="departmentSelection"
@@ -292,6 +301,9 @@ onMounted(async () => {
                     class="rounded-full"
                 />
             </div>
+        </div>
+        <div class="flex justify-end">
+            <ResetButton @click="resetFilters" />
         </div>
     </div>
 </template>
