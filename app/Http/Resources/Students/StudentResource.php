@@ -46,6 +46,7 @@ class StudentResource extends JsonResource
                 'department' => $this->currentEnrolment?->institutionDepartment?->department?->name,
                 'level' => $this->currentEnrolment?->departmentLevel?->level?->name,
                 'course' => $this->currentEnrolment?->departmentCourse?->course?->name,
+                'modeOfStudy' => $this->currentEnrolment?->modeOfStudy?->name,
             ],
             'relationships' => [
                 'user' => UserSummaryResource::make($this->user),

@@ -35,6 +35,7 @@ export type Student = {
         department?: string;
         level?: string;
         course?: string;
+        modeOfStudy?: string;
         createdAt?: string;
         updatedAt?: string;
         deletedAt?: string;

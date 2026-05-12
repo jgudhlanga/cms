@@ -45,7 +45,14 @@ export const useStudents = () => {
                 cell: ({ row }: { row: { original: Student } }) => {
                     return row.original.attributes?.course ?? '--';
                 },
-            },
+            }, 
+            {
+                header: trans_choice('trans.mode_of_study', 1),
+                accessorKey: 'modeOfStudy',
+                cell: ({ row }: { row: { original: Student } }) => {
+                    return row.original.attributes?.modeOfStudy ?? '--';
+                },
+            }, 
             {
                 header: trans_choice('trans.action', 2),
                 accessorKey: 'actions',
