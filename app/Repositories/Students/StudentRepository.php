@@ -9,6 +9,7 @@ use App\DTO\Students\CreateApplicationDto;
 use App\DTO\Students\CreateStudentApplicationDto;
 use App\DTO\Students\StudentProgramDto;
 use App\DTO\Students\UpdateStudentDto;
+use App\Enums\AcademicCalendars\AcademicCalendarTypeEnum;
 use App\Enums\Shared\AcademicLevelEnum;
 use App\Http\Filters\Students\StudentFilter;
 use App\Models\Shared\AcademicLevel;
@@ -21,20 +22,98 @@ use App\Repositories\Students\interface\IStudentProgramRepository;
 use App\Repositories\Students\interface\IStudentRepository;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 
 class StudentRepository extends BaseRepository implements IStudentRepository
 {
     public function __construct(
-        protected Student                   $student,
-        protected IAddressRepository        $addressRepository,
-        protected IContactRepository        $contactRepository,
-        protected INextOfKinRepository      $nextOfKinRepository,
+        protected Student $student,
+        protected IAddressRepository $addressRepository,
+        protected IContactRepository $contactRepository,
+        protected INextOfKinRepository $nextOfKinRepository,
         protected IStudentProgramRepository $studentProgramRepository,
-    )
-    {
+    ) {
         parent::__construct($this->student);
+    }
+
+    public function paginateForIndex(array $filters = []): LengthAwarePaginator
+    {
+        $query = Student::query()
+            ->with([
+                'user',
+                'enrolments.institutionDepartment.department',
+                'enrolments.departmentLevel.level',
+                'enrolments.departmentCourse.course',
+            ])
+            ->join('student_enrolments', 'student_enrolments.student_id', '=', 'students.id')
+            ->select('students.*')
+            ->distinct();
+
+        // Search filter
+        if (! empty($filters['search'])) {
+            $search = trim($filters['search']);
+
+            $query->where(function ($q) use ($search) {
+                $q->where('student_number', 'like', "%{$search}%")
+                    ->orWhere('id_number', 'like', "%{$search}%")
+                    ->orWhere('passport_number', 'like', "%{$search}%");
+            });
+        }
+
+        // Name filter
+        if (! empty($filters['name'])) {
+            $name = trim($filters['name']);
+
+            $query->whereHas('user', function ($q) use ($name) {
+                $q->where('first_name', 'like', "%{$name}%")
+                    ->orWhere('middle_name', 'like', "%{$name}%")
+                    ->orWhere('last_name', 'like', "%{$name}%");
+            });
+        }
+
+        // Department filter (institution department ids)
+        $departmentIds = $this->intListFromFilter($filters['department'] ?? null);
+        if ($departmentIds !== []) {
+            $query->whereHas('enrolments', function ($q) use ($departmentIds): void {
+                $q->whereIn('institution_department_id', $departmentIds);
+            });
+        }
+
+        // Level filter (canonical level ids on department_levels)
+        $levelIds = $this->intListFromFilter($filters['level'] ?? null);
+        if ($levelIds !== []) {
+            $query->whereHas('enrolments.departmentLevel', function ($q) use ($levelIds): void {
+                $q->whereIn('level_id', $levelIds);
+            });
+        }
+
+        // Course filter (department_course ids)
+        $courseIds = $this->intListFromFilter($filters['course'] ?? null);
+        if ($courseIds !== []) {
+            $query->whereHas('enrolments', function ($q) use ($courseIds): void {
+                $q->whereIn('department_course_id', $courseIds);
+            });
+        }
+
+        // Mode of study
+        $modeIds = $this->intListFromFilter($filters['mode_of_study'] ?? null);
+        if ($modeIds !== []) {
+            $query->whereHas('enrolments', function ($q) use ($modeIds): void {
+                $q->whereIn('mode_of_study_id', $modeIds);
+            });
+        }
+
+        // Trashed records
+        if (! empty($filters['with_trashed'])) {
+            $query->withTrashed();
+        }
+
+        return $query
+            ->latest('students.created_at')
+            ->paginate($this->student->getPerPage())
+            ->withQueryString();
     }
 
     public function create(CreateApplicationDto|CreateStudentApplicationDto $dto): Model
@@ -45,6 +124,7 @@ class StudentRepository extends BaseRepository implements IStudentRepository
         $this->saveAddress($student, $dto);
         $this->saveNextOfKin($student, $dto);
         $this->saveAcademicResults($student, $dto);
+
         return $student->refresh();
     }
 
@@ -84,6 +164,7 @@ class StudentRepository extends BaseRepository implements IStudentRepository
     private function createFields(CreateApplicationDto|CreateStudentApplicationDto $dto): array
     {
         $cleanIdNumber = str_replace(' ', '', trim($dto->id_number ?? ''));
+
         return [
             'user_id' => $dto->user_id,
             'title_id' => $dto->title_id,
@@ -192,7 +273,7 @@ class StudentRepository extends BaseRepository implements IStudentRepository
         $otherExamYears = $dto->o_level_other_years;
         $otherSittings = $dto->o_level_other_sittings;
         $level = AcademicLevel::where('name', AcademicLevelEnum::SECONDARY_SCHOOL->value)->first();
-        if (!empty($mainSubjects) && is_array($mainSubjects)) {
+        if (! empty($mainSubjects) && is_array($mainSubjects)) {
             foreach ($mainSubjects as $subjectId => $gradeId) {
                 $examSitting = $examSittings[$subjectId] ?? null;
                 $examYear = $examYears[$subjectId] ?? null;
@@ -205,7 +286,7 @@ class StudentRepository extends BaseRepository implements IStudentRepository
                 ]);
             }
         }
-        if (!empty($otherSubjects) && is_array($otherSubjects)) {
+        if (! empty($otherSubjects) && is_array($otherSubjects)) {
             foreach ($otherSubjects as $key => $subject) {
                 $otherGrade = $otherGrades[$key] ?? null;
                 $otherSitting = $otherSittings[$key] ?? null;
@@ -223,7 +304,9 @@ class StudentRepository extends BaseRepository implements IStudentRepository
 
     private function getRequiredExamSittingCount($examYears, $otherExamYears): int
     {
-        if (empty($examYears) && $otherExamYears) return 0;
+        if (empty($examYears) && $otherExamYears) {
+            return 0;
+        }
         $uniqueExamYears = array_values(
             array_unique(
                 array_merge(
@@ -232,6 +315,48 @@ class StudentRepository extends BaseRepository implements IStudentRepository
                 )
             )
         );
+
         return count($uniqueExamYears);
+    }
+
+    /**
+     * @return list<int>
+     */
+    private function intListFromFilter(mixed $value): array
+    {
+        if ($value === null || $value === '' || $value === []) {
+            return [];
+        }
+        $values = is_array($value) ? $value : [$value];
+        $ids = [];
+        foreach ($values as $v) {
+            $i = (int) $v;
+            if ($i > 0) {
+                $ids[] = $i;
+            }
+        }
+
+        return array_values(array_unique($ids));
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function calendarTypeListFromFilter(mixed $value): array
+    {
+        if ($value === null || $value === '' || $value === []) {
+            return [];
+        }
+        $values = is_array($value) ? $value : [$value];
+        $allowed = array_map(static fn (AcademicCalendarTypeEnum $e): string => $e->value, AcademicCalendarTypeEnum::cases());
+        $out = [];
+        foreach ($values as $v) {
+            $s = is_string($v) ? trim($v) : (string) $v;
+            if ($s !== '' && in_array($s, $allowed, true)) {
+                $out[] = $s;
+            }
+        }
+
+        return array_values(array_unique($out));
     }
 }

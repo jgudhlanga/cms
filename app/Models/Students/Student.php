@@ -2,11 +2,7 @@
 
 namespace App\Models\Students;
 
-use App\Enums\Institution\LevelEnum;
 use App\Enums\Shared\IdTypeEnum;
-use App\Helpers\WorkflowHelper;
-use App\Http\Filters\Students\StudentFilter;
-use App\Models\Institution\DepartmentApplicationStep;
 use App\Enums\Shared\AcademicLevelEnum;
 use App\Models\Shared\{Address, Contact, Country, Gender, IdType, MaritalStatus, NextOfKin, Race, Religion, Title};
 use App\Models\Users\User;
@@ -14,7 +10,6 @@ use App\Traits\BelongsToTenant;
 use App\Traits\Filterable;
 use App\Traits\Paginatable;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -102,6 +97,16 @@ class Student extends Model
         return $this->hasMany(StudentProgram::class, 'student_id');
     }
 
+    public function enrolments(): HasMany
+    {
+        return $this->hasMany(StudentEnrolment::class, 'student_id');
+    }
+
+    public function currentEnrolment(): HasOne
+    {
+        return $this->hasOne(StudentEnrolment::class)->latestOfMany();
+    }
+
     public function currentLevel(): ?string
     {
         return $this->programs()->latest()->first()?->levelEnum()?->name();
@@ -147,10 +152,10 @@ class Student extends Model
         $this->attributes['id_number'] = $value ?: null;
     }
 
-    public function isZimbabwean(): bool
-    {
-        return $this->id_type_id = IdTypeEnum::ZIMBABWEAN_ID_NUMBER->id();
-    }
+   public function isZimbabwean(): bool
+{
+    return $this->id_type_id === IdTypeEnum::ZIMBABWEAN_ID_NUMBER->id();
+}
 
     public function notes(): MorphMany
     {

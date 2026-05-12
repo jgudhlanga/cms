@@ -2,12 +2,17 @@ import { useDataTables } from '@/composables/core/useDataTables';
 import { useUtils } from '@/composables/core/useUtils';
 import { errorAlert, successAlert } from '@/lib/alerts';
 import { Enrolment } from '@/types/enrolments';
-import { Student } from '@/types/students';
+import { Student, StudentFiltersState } from '@/types/students';
+import { trans, trans_choice } from 'laravel-vue-i18n';
 import { InertiaForm } from '@inertiajs/vue3';
-import { trans_choice } from 'laravel-vue-i18n';
+import { mergeQueryParamsIntoRequestPath } from '@/lib/merge-query-into-url';
+import { ref } from 'vue';
+import HttpService from '@/services/http.service';
 
 export const useStudents = () => {
     const { moreActionButton, textLink } = useDataTables();
+
+    const isLoading = ref(false);
 
     const createStudentColumns = () => {
         return [
@@ -15,7 +20,30 @@ export const useStudents = () => {
                 header: trans_choice('trans.name', 1),
                 accessorKey: 'name',
                 cell: ({ row }: { row: { original: Student } }) => {
-                    return textLink(route('portal.programs'), row.original?.relationships?.user?.attributes?.name ?? '');
+                    return textLink(route('students.show', String(row.original?.id)), row.original?.relationships?.user?.attributes?.name ?? '');
+                },
+            },
+            {header: trans_choice('trans.id_number',1), accessorKey: 'attributes.idNumber',},
+            {header: trans_choice('trans.student_number',1), accessorKey: 'attributes.studentNumber',},
+            {
+                header: trans_choice('trans.department', 1),
+                accessorKey: 'department',
+                cell: ({ row }: { row: { original: Student } }) => {
+                    return row.original.attributes?.department ?? '--';
+                },
+            },
+            {
+                header: trans_choice('trans.level', 1),
+                accessorKey: 'level',
+                cell: ({ row }: { row: { original: Student } }) => {
+                    return row.original.attributes?.level ?? '--';
+                },
+            },
+            {
+                header: trans_choice('trans.course', 1),
+                accessorKey: 'course',
+                cell: ({ row }: { row: { original: Student } }) => {
+                    return row.original.attributes?.course ?? '--';
                 },
             },
             {
@@ -103,6 +131,22 @@ export const useStudents = () => {
         }
     };
 
+
+    const studentListMergeOptions = { booleanParamKeys: ['with_trashed'] };
+
+    const fetchStudents = async (filters: StudentFiltersState = {}, paginatorUrl?: string) => {
+        try {
+            isLoading.value = true;
+            const baseUrl = paginatorUrl ?? route('v1.students.index');
+            const path = mergeQueryParamsIntoRequestPath(baseUrl, filters as Record<string, unknown>, studentListMergeOptions);
+            return await HttpService.get(path);
+        } catch {
+            errorAlert(trans('trans.load_data_failure', { data: trans('trans.data') }));
+        } finally {
+            isLoading.value = false;
+        }
+    };
+
     return {
         createStudentColumns,
         getApplicationStatus,
@@ -111,5 +155,7 @@ export const useStudents = () => {
         showCreateNewProgramButton,
         showEditProgramButton,
         updateProgram,
+        fetchStudents,
+        isLoading,
     };
 };

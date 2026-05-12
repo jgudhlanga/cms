@@ -16,10 +16,28 @@ class StudentController
 {
     use HttpUtil;
 
-    public function __construct(protected IStudentRepository $repository)
+    public function __construct(protected IStudentRepository $repository) {}
+
+    public function index()
     {
+        $students = $this->repository->paginateForIndex(
+            request()->only([
+                'search',
+                'name',
+                'department',
+                'level',
+                'course',
+                'mode_of_study',
+                'academic_year',
+                'calendar_type',
+                'with_trashed',
+            ])
+        );
+
+        return StudentResource::collection($students);
     }
 
+    // ====== STUDENT ===========
     public function personal(Student $student)
     {
         return StudentResource::make($student);
@@ -30,29 +48,21 @@ class StudentController
         return EnrolmentResource::collection($student->programs);
     }
 
-    /**
-     */
     public function addresses(Student $student)
     {
         return AddressResource::collection($student->addresses);
     }
 
-    /**
-     */
     public function contacts(Student $student)
     {
         return ContactResource::collection($student->contacts);
     }
 
-    /**
-     */
     public function sponsors(Student $student)
     {
         return SponsorResource::collection($student->sponsors);
     }
 
-    /**
-     */
     public function nextOfKin(Student $student)
     {
         return NextOfKinResource::collection($student->nextOfKins);

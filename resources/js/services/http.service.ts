@@ -1,5 +1,6 @@
 import { API_BASE_URL } from '@/lib/constants';
 import customAxios from '@/services/http-init';
+import { AxiosRequestConfig } from 'axios';
 
 export interface IHttpService {
     get: (url: string) => Promise<any>;
@@ -22,9 +23,9 @@ class HttpService implements IHttpService {
         }
     }
 
-    async get(url: string): Promise<any> {
+    async get(url: string, config?: AxiosRequestConfig): Promise<any> {
         try {
-            const response = await customAxios(this.baseUrl()).get(url);
+            const response = await customAxios(this.baseUrl()).get(url, config);
             return response.data;
         } catch (error) {
             throw error;
