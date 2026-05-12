@@ -11,17 +11,27 @@ interface Props {
 	classes?: string,
 	error?: string | object,
 	inputAutoFocus?: boolean,
+	/** When true, the wrapper fills the parent (no max-width cap). */
+	fullWidth?: boolean,
 }
 
 const props = withDefaults(defineProps<Props>(), {
-	type: TextFieldType.text
+	type: TextFieldType.text,
+	fullWidth: false,
 });
 
 const baseClasses = 'px-2 py-1 focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-0';
 
 </script>
 <template>
-	<div class="relative w-full max-w-sm items-center">
+	<div
+		:class="
+			cn(
+				'relative w-full items-center',
+				props.fullWidth ? 'min-w-0 max-w-none' : 'max-w-sm',
+			)
+		"
+	>
 		<Input
 			v-bind="$attrs"
 			:class="cn(baseClasses, classes)"

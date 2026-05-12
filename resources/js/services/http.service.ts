@@ -1,6 +1,10 @@
 import { API_BASE_URL } from '@/lib/constants';
 import customAxios from '@/services/http-init';
+<<<<<<< HEAD
 import type { AxiosRequestConfig } from 'axios';
+=======
+import { AxiosRequestConfig } from 'axios';
+>>>>>>> development
 
 export interface IHttpService {
     get: (url: string, config?: AxiosRequestConfig) => Promise<any>;

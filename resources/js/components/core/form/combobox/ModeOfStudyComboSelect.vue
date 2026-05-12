@@ -55,7 +55,9 @@ const placeholder = computed(() => {
 watch(
     () => props.departmentCourseId,
     async (newValue) => {
-        clearFormErrors(props.form, 'modeOfStudy');
+        if (props.form) {
+            clearFormErrors(props.form, 'modeOfStudy');
+        }
         if (Number(newValue) > 0) await listCourseModesOfStudy(String(newValue), String(props.departmentLevelId));
     },
 );

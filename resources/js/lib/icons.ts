@@ -85,14 +85,20 @@ import {
     MonitorCheck,
     X as Close,
     ReceiptText, CircleX,
+<<<<<<< HEAD
     PaperclipIcon, Hotel,
     DoorOpen, Warehouse, RotateCw
+=======
+    PaperclipIcon, 
+    RotateCcw,
+>>>>>>> development
 } from 'lucide-vue-next';
 import type { Component } from 'vue';
 
 const icons: Record<IconName, Component> = {
     [IconName.add]: Plus,
     [IconName.angle_right]: ChevronRight,
+    [IconName.reset]: RotateCcw,
     [IconName.back]: CornerDownLeft,
     [IconName.back_straight]: ArrowLeft,
     [IconName.card]: Card,

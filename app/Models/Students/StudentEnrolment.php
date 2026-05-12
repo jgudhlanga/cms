@@ -13,6 +13,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
+use App\Models\Institution\InstitutionDepartment;
+use App\Models\Institution\DepartmentLevel;
+use App\Models\Institution\DepartmentCourse;
+use App\Models\Students\StudentEnrolmentStatus;
+
 
 /**
  * @mixin Builder
@@ -38,6 +43,26 @@ class StudentEnrolment extends Model
     public function student(): BelongsTo
     {
         return $this->belongsTo(Student::class, 'student_id');
+    }
+
+    public function studentProgram(): BelongsTo
+    {
+        return $this->belongsTo(StudentProgram::class, 'student_program_id');
+    }
+
+    public function institutionDepartment(): BelongsTo
+    {
+        return $this->belongsTo(InstitutionDepartment::class, 'institution_department_id');
+    }
+
+    public function departmentLevel(): BelongsTo
+    {
+        return $this->belongsTo(DepartmentLevel::class, 'department_level_id');
+    }
+
+    public function departmentCourse(): BelongsTo
+    {
+        return $this->belongsTo(DepartmentCourse::class, 'department_course_id');
     }
 
     public function academicYearOption(): BelongsTo

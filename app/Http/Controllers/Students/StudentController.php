@@ -49,15 +49,10 @@ class StudentController extends Controller
     /**
      * @throws AuthorizationException
      */
-    public function index(StudentFilter $filters): Response
+    public function index(): Response
     {
         $this->authorize('viewAny', Student::class);
-        $students = StudentResource::collection($this->repository->allFilter(['*'], $filters));
-        return Inertia::render('students/Index', [
-            'students' => $students,
-            'filters' => request()->only(['search', 'trashed']),
-            'trashedCount' => $this->repository->allTrashed()->count(),
-        ]);
+        return Inertia::render('students/Index');
     }
 
 
@@ -120,7 +115,10 @@ class StudentController extends Controller
 
     public function show(Student $student)
     {
-        //
+        $this->authorize('view', $student);
+        $user = UserResource::make($student->user);
+        $student = StudentResource::make($student);
+        return Inertia::render('students/Show', compact('user', 'student'));
     }
 
 
