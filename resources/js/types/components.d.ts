@@ -139,11 +139,7 @@ declare module 'vue' {
     ContactName: typeof import('./../components/core/form/text/ContactName.vue')['default']
     Contacts: typeof import('./../components/shared/contacts/Contacts.vue')['default']
     ContactsForm: typeof import('./../components/shared/contacts/ContactsForm.vue')['default']
-<<<<<<< HEAD
-    copy: typeof import('./../components/hms/HostelFilters copy.vue')['default']
-=======
     copy: typeof import('./../components/core/form/select/IntakePeriodSelect copy.vue')['default']
->>>>>>> development
     CountButton: typeof import('./../components/core/button/CountButton.vue')['default']
     CountryComboSelect: typeof import('./../components/core/form/combobox/CountryComboSelect.vue')['default']
     CreateButton: typeof import('./../components/core/button/CreateButton.vue')['default']
@@ -305,11 +301,7 @@ declare module 'vue' {
     ReligionComboSelect: typeof import('./../components/core/form/combobox/ReligionComboSelect.vue')['default']
     RemoveImpersonationButton: typeof import('./../components/auth/RemoveImpersonationButton.vue')['default']
     RequiredIndicator: typeof import('./../components/core/form/RequiredIndicator.vue')['default']
-<<<<<<< HEAD
-    ResetButton: typeof import('./../components/hms/ResetButton.vue')['default']
-=======
     ResetButton: typeof import('./../components/core/button/ResetButton.vue')['default']
->>>>>>> development
     RestoreButton: typeof import('./../components/core/button/RestoreButton.vue')['default']
     RoleComboSelect: typeof import('./../components/core/form/combobox/RoleComboSelect.vue')['default']
     RoleSelect: typeof import('./../components/core/form/select/RoleSelect.vue')['default']
