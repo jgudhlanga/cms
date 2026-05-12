@@ -220,13 +220,13 @@
         @apply p-3 text-xs text-foreground font-bold;
     }
 
-    .hava-thead:first-child tr > th:first-child {
+    /*  .hava-thead:first-child tr > th:first-child {
         @apply rounded-tl-xl;
     }
 
-    .hava-thead:first-child tr > th:last-child {
+   .hava-thead:first-child tr > th:last-child {
         @apply rounded-tr-xl;
-    }
+    } */
 
     .hava-tbody {
         @apply flex-col;

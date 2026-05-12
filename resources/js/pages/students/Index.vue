@@ -58,6 +58,9 @@ watch(studentRefreshKey, () => loadStudents(filters.value));
 <template>
     <Head :title="$tChoice('student', 2)" />
     <PageContainer :breadcrumbs="breadcrumbs">
+        <div class="bg-card relative inline-block min-w-full overflow-auto rounded-xl px-6 pt-4 align-middle">
+            <StudentFilters :filters="filters" @change="onStudentFiltersChange" />
+        </div>
         <DataTable
             :data="students.data"
             :filters="filters"
@@ -69,10 +72,7 @@ watch(studentRefreshKey, () => loadStudents(filters.value));
             :api-fetch-action="loadStudentsFromUrl"
             :hide-built-in-search="true"
             :loading="isLoading"
-        >
-            <template #head-left>
-                <StudentFilters :filters="filters" @change="onStudentFiltersChange" />
-            </template>
-        </DataTable>
+            :show-column-filters="false"
+        />
     </PageContainer>
 </template>

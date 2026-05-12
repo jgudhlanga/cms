@@ -3,7 +3,7 @@ import { CreateButton, ExportButton, ImportButton } from '@/components/core/butt
 import { useDataTables } from '@/composables/core/useDataTables';
 import { PAGINATION_ITEMS_PER_PAGE } from '@/lib/constants';
 import { DataFilters, PaginationMeta, PaginationRootLink } from '@/types/data-pagination';
-import { onMounted, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import DataLoadingSpinner from '@/components/core/loader/DataLoadingSpinner.vue';
 import { Archived, ColumnFilter, GotoPage, Paginator, PerPageSize, Search, TableBody, TableHead } from './';
 import { ColorVariant } from '@/enums/colors';
@@ -29,6 +29,7 @@ interface Props {
     pageSize?: number;
     hideBuiltInSearch?: boolean;
     loading?: boolean;
+    showColumnFilters?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -41,6 +42,7 @@ const props = withDefaults(defineProps<Props>(), {
     pageSize: PAGINATION_ITEMS_PER_PAGE,
     hideBuiltInSearch: false,
     loading: false,
+    showColumnFilters: true,
 });
 
 const filter = ref(props?.filters?.search ?? '');
@@ -77,10 +79,14 @@ watch(filter, searchWatcher);
 watch(pageSize, pageSizeWatcher);
 watch(currentPage, goToPageWatcher);
 watch(trashed, trashedWatcher);
+
+const showToolBar = computed(() => {
+    return props.hideBuiltInSearch || props.showArchivedFilter || props.showColumnFilters || props.onExport || props.onImport || props.onCreate;
+});
 </script>
 
 <template>
-    <div class="bg-card relative inline-block min-w-full overflow-auto rounded-xl px-6 pt-4 pb-6 align-middle">
+    <div class="bg-card relative inline-block min-w-full overflow-auto rounded-xl px-6 pb-6 align-middle">
         <div
             v-if="loading"
             class="absolute inset-0 z-10 flex items-center justify-center overflow-auto rounded-xl bg-background/70 px-6 backdrop-blur-[1px]"
@@ -94,8 +100,8 @@ watch(trashed, trashedWatcher);
                 <Archived v-if="showArchivedFilter" :handle-archived="handleArchived" :trashed="+trashed" :trashed-count="trashedCount" />
                 <slot name="head-left" />
             </div>
-            <div class="flex items-center justify-end space-x-3">
-                <ColumnFilter :variant="ColorVariant.primary_outline" :table="table" :toggleColumnVisibility="toggleColumnVisibility" />
+            <div v-if="showToolBar" class="flex items-center justify-end space-x-3">
+                <ColumnFilter v-if="showColumnFilters" :variant="ColorVariant.primary_outline" :table="table" :toggleColumnVisibility="toggleColumnVisibility" />
                 <ExportButton :variant="ColorVariant.primary_outline" class="rounded-full" v-if="onExport" @click="() => (onExport ? onExport() : null)" :disable="disableExport" />
                 <ImportButton :variant="ColorVariant.primary_outline" class="rounded-full" v-if="onImport" @click="() => (onImport ? onImport() : null)" :disable="disableImport" />
                 <CreateButton :variant="ColorVariant.primary_outline" class="rounded-full" v-if="onCreate" @click="() => (onCreate ? onCreate() : null)" :disable="disableCreate" />

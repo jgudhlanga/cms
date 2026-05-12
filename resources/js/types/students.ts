@@ -231,8 +231,11 @@ export type StudentProgramEdit = {
 export type StudentFiltersState = {
     search?: string | null;
     name?: string | null;
-    department?: string | null;
-    level?: string | null;
-    course?: string | null;
+    department?: number[] | null;
+    level?: number[] | null;
+    course?: number[] | null;
+    mode_of_study?: number[] | null;
+    academic_year?: number[] | null;
+    calendar_type?: string[] | null;
     with_trashed?: boolean | null;
 };

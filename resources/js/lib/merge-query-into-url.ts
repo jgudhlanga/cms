@@ -26,6 +26,19 @@ export function mergeQueryParamsIntoRequestPath(
             }
             continue;
         }
+        if (Array.isArray(val)) {
+            if (val.length === 0) {
+                continue;
+            }
+            const bracketKey = `${key}[]`;
+            for (const item of val) {
+                if (item === undefined || item === null || item === '') {
+                    continue;
+                }
+                parsed.searchParams.append(bracketKey, String(item));
+            }
+            continue;
+        }
         parsed.searchParams.set(key, String(val));
     }
 
