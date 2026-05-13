@@ -99,7 +99,8 @@ class AcademicCalendarController extends Controller
                     ->where('institution_department_id', $institutionDepartment->id)
                     ->where('department_level_id', (int) $departmentLevelId)
                     ->where('department_course_id', (int) $departmentCourseId)
-                    ->where('mode_of_study_id', (int) $modeOfStudyId);
+                    ->where('mode_of_study_id', (int) $modeOfStudyId)
+                    ->whereNull('academic_year_option_id');
             })
             ->first();
         $calendarIdsForYear = AcademicCalendar::idsForStartedCalendarYear((string) $academicCalendar->calendar_year);
@@ -279,6 +280,7 @@ class AcademicCalendarController extends Controller
         $lookup = [
             'calendar_year' => $academicCalendar->calendar_year,
             'institution_department_id' => $institutionDepartment->id,
+            'academic_year_option_id' => null,
             ...Arr::only($validated, ['department_level_id', 'department_course_id', 'mode_of_study_id']),
         ];
 

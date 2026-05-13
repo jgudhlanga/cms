@@ -16,4 +16,11 @@ return [
     'search_by_calendar_type_placeholder' => 'semesters...',
     'filters_n_selected' => ':count selected',
     'reset' => 'Reset',
+    'personal_information' => 'Personal Information',
+    'program' => 'Program|Programs',
+    'financial' => 'Financial|Financials',
+    'accommodation' => 'Accommodation|Accommodations',
+    'authentication' => 'Authentication|Authentications',
+    'application' => 'Application|Applications',
+    'document' => 'Document|Documents',
 ];

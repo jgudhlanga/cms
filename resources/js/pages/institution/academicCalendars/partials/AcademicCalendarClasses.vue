@@ -61,6 +61,8 @@ const syncFiltersToUrl = (): void => {
 
     currentUrl.searchParams.set('academic_year', String(academicYear.value?.value ?? ''));
     currentUrl.searchParams.set('mode_of_study_id', String(modeOfStudy.value?.value ?? ''));
+    currentUrl.searchParams.delete('academic_calendar_type');
+    currentUrl.searchParams.delete('academic_year_option_id');
 
     window.history.replaceState({}, '', currentUrl.toString());
 };
@@ -171,7 +173,7 @@ const showConfigModal = (payload: AcademicClassConfigPayload) => {
     <div class="my-8 flex flex-col space-y-4">
         <div class="mb-10 flex w-full justify-between space-x-4">
             <AcademicCalendarClassFilters
-                v-model:academic-year-model="academicYear"
+                v-model:academicYearModel="academicYear"
                 v-model:modeOfStudyModel="modeOfStudy"
                 :academic-year-options="academicYearOptions"
                 :modes-of-study="modesOfStudy ?? []"
@@ -222,16 +224,18 @@ const showConfigModal = (payload: AcademicClassConfigPayload) => {
                                     <TextLink
                                         v-if="level.classConfigId !== null"
                                         :title="String(level.classesCount ?? 0)"
-                                        :href="route('academic-calendars.department-classes', {
-                                            institution_department: institutionDepartmentId,
-                                            calendar_year: String(academicYear?.value ?? ''),
-                                            mode_of_study_id: String(modeOfStudy?.value),
-                                            department_course_id: stats.departmentCourseId,
-                                            department_level_id: String(level.departmentLevelId),
-                                            class_config_id: String(level.classConfigId),
-                                        })"
+                                        :href="
+                                            route('academic-calendars.department-classes', {
+                                                institution_department: institutionDepartmentId,
+                                                calendar_year: String(academicYear?.value ?? ''),
+                                                mode_of_study_id: String(modeOfStudy?.value),
+                                                department_course_id: stats.departmentCourseId,
+                                                department_level_id: String(level.departmentLevelId),
+                                                class_config_id: String(level.classConfigId),
+                                            })
+                                        "
                                         classes="size-4 bg-persian-100 rounded-full px-2 py-1 hover:bg-persian-600 hover:text-persian-100"
-                                    />  
+                                    />
                                     <span v-else>---</span>
                                 </td>
                             </tr>

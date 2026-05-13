@@ -46,6 +46,7 @@ class StudentRepository extends BaseRepository implements IStudentRepository
                 'enrolments.institutionDepartment.department',
                 'enrolments.departmentLevel.level',
                 'enrolments.departmentCourse.course',
+                'enrolments.departmentLevelCourse.courseSyllabuses',
                 'enrolments.modeOfStudy',
             ])
             ->join('student_enrolments', 'student_enrolments.student_id', '=', 'students.id')

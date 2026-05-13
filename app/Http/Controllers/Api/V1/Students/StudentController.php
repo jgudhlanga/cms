@@ -40,6 +40,10 @@ class StudentController
     // ====== STUDENT ===========
     public function personal(Student $student)
     {
+        $student->loadMissing([
+            'currentEnrolment.departmentLevelCourse.courseSyllabuses',
+        ]);
+
         return StudentResource::make($student);
     }
 

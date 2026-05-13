@@ -8,7 +8,6 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 class StudentResource extends JsonResource
 {
-
     public function toArray(Request $request): array
     {
         return [
@@ -47,10 +46,11 @@ class StudentResource extends JsonResource
                 'level' => $this->currentEnrolment?->departmentLevel?->level?->name,
                 'course' => $this->currentEnrolment?->departmentCourse?->course?->name,
                 'modeOfStudy' => $this->currentEnrolment?->modeOfStudy?->name,
+                'enrolmentStatus' => $this->currentEnrolment?->status?->name,
             ],
             'relationships' => [
                 'user' => UserSummaryResource::make($this->user),
-            ]
+            ],
 
         ];
     }

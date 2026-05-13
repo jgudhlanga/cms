@@ -86,7 +86,9 @@ import {
     X as Close,
     ReceiptText, CircleX,
     PaperclipIcon, 
-    RotateCcw,
+    RotateCcw,NotebookPen,FileStack,
+    House,Mail,Phone,
+    
 } from 'lucide-vue-next';
 import type { Component } from 'vue';
 
@@ -180,6 +182,11 @@ const icons: Record<IconName, Component> = {
     [IconName.receipt]: ReceiptText,
     [IconName.circle_x]: CircleX,
     [IconName.paperclip]: PaperclipIcon,
+    [IconName.application]: NotebookPen,
+    [IconName.files]: FileStack,
+    [IconName.house]: House,
+    [IconName.mail]: Mail,
+    [IconName.phone]: Phone,
 };
 
 export { IconName, icons };

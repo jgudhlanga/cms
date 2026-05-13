@@ -74,7 +74,7 @@ class DepartmentAcademicCalendarController extends Controller
 
         return [
             'calendarYear' => $academicYear,
-            'academicCalendarId' => $resolvedId,
+            'academicCalendarId' => (int) $resolvedId,
             'modeOfStudyId' => (int) $modeOfStudyId,
             'calendarIdsForYear' => $calendarIdsForYear,
         ];
@@ -116,6 +116,7 @@ class DepartmentAcademicCalendarController extends Controller
             ->where('calendar_year', $context['calendarYear'])
             ->where('institution_department_id', $department->id)
             ->where('mode_of_study_id', $context['modeOfStudyId'])
+            ->whereNull('academic_year_option_id')
             ->get();
 
         return [
@@ -144,6 +145,7 @@ class DepartmentAcademicCalendarController extends Controller
                 ->where('calendar_year', $calendarYear)
                 ->where('institution_department_id', $department->id)
                 ->where('mode_of_study_id', $modeOfStudyId)
+                ->whereNull('academic_year_option_id')
                 ->get()
                 ->map(fn (ClassConfig $c) => "{$c->department_course_id}_{$c->department_level_id}")
                 ->all(),
@@ -168,6 +170,7 @@ class DepartmentAcademicCalendarController extends Controller
                 ClassConfig::firstOrCreate(
                     [
                         'calendar_year' => $calendarYear,
+                        'academic_year_option_id' => null,
                         'institution_department_id' => $department->id,
                         'department_course_id' => $pair->department_course_id,
                         'department_level_id' => $pair->department_level_id,

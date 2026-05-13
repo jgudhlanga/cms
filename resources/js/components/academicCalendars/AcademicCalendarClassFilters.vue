@@ -2,7 +2,6 @@
 import ModeOfStudyComboSelect from '@/components/core/form/combobox/ModeOfStudyComboSelect.vue';
 import { ModeOfStudy } from '@/types/institution';
 import { SelectOption } from '@/types/utils';
-import { trans } from 'laravel-vue-i18n';
 
 interface Props {
     academicYearOptions: SelectOption[];
