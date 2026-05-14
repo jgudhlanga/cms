@@ -26,11 +26,15 @@ export type DepartmentCourseClassCount = {
 export type ClassLevelSummary = {
     departmentLevelId: string | number;
     levelName: string;
+    /** From `Level.calendar_type` — drives which academic year options apply (semester / term / abma). */
+    calendarType?: 'term' | 'semester' | 'abma' | null;
     studentsPerClass: string | number | null;
     classConfigId: string | number | null;
     classesCount: number;
     totalnClass: string | number | null;
     totalFinalList: string | number | null;
+    academicYearOption: string | null;
+    academicYearOptionId: string | number | null;
 };
 
 export type AcademicClassConfigPayload = {
@@ -39,6 +43,8 @@ export type AcademicClassConfigPayload = {
     department_course_id: string | number | null;
     mode_of_study_id: string | number | null;
     students_per_class: string | number | null;
+    calendarType?: 'term' | 'semester' | 'abma' | null;
+    academic_year_option_id?: string | number | null;
 };
 
 export type ClassConfig = {
@@ -104,4 +110,6 @@ export type AcademicCalendarClassGenerationContext = {
         unknown: number;
     };
     hasExistingClasses: boolean;
+    /** Timetable classes that already have at least one student assignment (matches department API classesCount). */
+    populatedExistingClassCount: number;
 };

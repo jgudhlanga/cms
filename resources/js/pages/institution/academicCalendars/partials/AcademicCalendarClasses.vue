@@ -11,6 +11,7 @@ import { useDepartmentMetaStore } from '@/store/institution/useDepartmentMetaSto
 import { trans, trans_choice } from 'laravel-vue-i18n';
 import { storeToRefs } from 'pinia';
 import { onMounted, ref, watch } from 'vue';
+import { ColorVariant } from '@/enums/colors';
 
 interface Props {
     department: InstitutionDepartment;
@@ -102,6 +103,7 @@ const loadClassConfigs = async () => {
         ),
         () => trans_choice('trans.enrolment', 2),
     );
+    console.log('payload', payload);
     if (payload && typeof payload === 'object' && 'data' in payload) {
         classStates.value = (payload as { data: DepartmentCourseClassCount[] }).data ?? [];
         const meta = (payload as { meta?: { resolvedAcademicCalendarId?: number } }).meta;
@@ -188,7 +190,7 @@ const showConfigModal = (payload: AcademicClassConfigPayload) => {
                         <tr class="j-th">
                             <th class="j-th text-left">{{ $tChoice('trans.level', 1) }}</th>
                             <th class="j-th text-center">{{ $tChoice('academic_calendar.confirmed_student', 2) }}</th>
-                            <th class="j-th text-center">{{ $tChoice('academic_calendar.class_unit_size', 1) }}</th>
+                            <th class="j-th text-center">{{ $tChoice('trans.config', 1) }}</th>
                             <th class="j-th text-center">{{ $tChoice('trans.class', 2) }}</th>
                         </tr>
                     </thead>
@@ -213,11 +215,14 @@ const showConfigModal = (payload: AcademicClassConfigPayload) => {
                                                     department_level_id: String(level.departmentLevelId ?? ''),
                                                     department_course_id: String(stats.departmentCourseId ?? ''),
                                                     mode_of_study_id: String(modeOfStudy?.value ?? ''),
-                                                    students_per_class: String(getDisplayedStudentsPerClass(level.studentsPerClass)),
+                                                    students_per_class: String(level.studentsPerClass ?? ''),
+                                                    calendarType: level.calendarType ?? 'semester',
+                                                    academic_year_option_id: level.academicYearOptionId ?? null,
                                                 })
                                         "
                                     >
-                                        {{ getDisplayedStudentsPerClass(level.studentsPerClass) }}
+                                    <BaseTag :title="`${$tChoice('academic_calendar.class_unit_size', 1)}: ${getDisplayedStudentsPerClass(level.studentsPerClass)}`" :variant="ColorVariant.info" /> - 
+                                    <BaseTag :title="level.academicYearOption ?? ''" :variant="ColorVariant.info" /> 
                                     </button>
                                 </td>
                                 <td class="j-td text-center">
@@ -234,7 +239,7 @@ const showConfigModal = (payload: AcademicClassConfigPayload) => {
                                                 class_config_id: String(level.classConfigId),
                                             })
                                         "
-                                        classes="size-4 bg-persian-100 rounded-full px-2 py-1 hover:bg-persian-600 hover:text-persian-100"
+                                        classes="size-4 bg-green-100 rounded-full px-2 py-1 hover:bg-green-600 text-green-600 hover:text-green-100"
                                     />
                                     <span v-else>---</span>
                                 </td>

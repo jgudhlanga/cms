@@ -3,6 +3,7 @@
 namespace App\Repositories\AcademicCalendars;
 
 use App\DTO\AcademicCalendars\AcademicYearOptionDto;
+use App\Http\Filters\AcademicCalendars\AcademicYearOptionFilter;
 use App\Http\Filters\Shared\SharedNameFilter;
 use App\Models\AcademicCalendars\AcademicYearOption;
 use App\Repositories\AcademicCalendars\interface\IAcademicYearOptionRepository;
@@ -26,7 +27,7 @@ class AcademicYearOptionRepository extends BaseRepository implements IAcademicYe
         return tap($academicYearOption)->update($this->getFields($dto));
     }
 
-    public function allFilter($columns = ['*'], ?SharedNameFilter $filters = null)
+    public function allFilter($columns = ['*'], SharedNameFilter|AcademicYearOptionFilter|null $filters = null)
     {
         return $this->academicYearOption
             ->select($columns)

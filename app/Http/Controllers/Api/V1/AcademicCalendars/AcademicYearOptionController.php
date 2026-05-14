@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api\V1\AcademicCalendars;
 
 use App\Http\Controllers\Api\V1\Utils\ApiDropdownController;
-use App\Http\Filters\Shared\SharedNameFilter;
+use App\Http\Filters\AcademicCalendars\AcademicYearOptionFilter;
 use App\Http\Resources\AcademicCalendars\AcademicYearOptionResource;
 use App\Repositories\AcademicCalendars\interface\IAcademicYearOptionRepository;
 use App\Traits\HttpUtil;
@@ -16,7 +16,7 @@ class AcademicYearOptionController extends ApiDropdownController
 
     public function __construct(protected IAcademicYearOptionRepository $repository) {}
 
-    public function index(SharedNameFilter $filters): AnonymousResourceCollection
+    public function index(AcademicYearOptionFilter $filters): AnonymousResourceCollection
     {
         return AcademicYearOptionResource::collection($this->repository->allFilter(['*'], $filters));
     }

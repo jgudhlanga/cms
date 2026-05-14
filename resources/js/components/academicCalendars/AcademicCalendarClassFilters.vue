@@ -36,4 +36,4 @@ const modeOfStudyModel = defineModel<SelectOption | null>('modeOfStudyModel');
             class="w-full"
         />
     </div>
-</template>
+</template> 

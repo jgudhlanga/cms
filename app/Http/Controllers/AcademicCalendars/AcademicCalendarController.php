@@ -26,7 +26,6 @@ use App\Models\Institution\ModeOfStudy;
 use App\Queries\Enrolments\ConfirmedStudentsQuery;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -128,6 +127,10 @@ class AcademicCalendarController extends Controller
             ...$this->resolveExistingClassPreviews($classConfig),
             ...$previewClasses,
         ];
+        $populatedExistingClassCount = $existingClasses->filter(
+            fn ($row): bool => (int) ($row->student_count ?? 0) > 0
+        )->count();
+
         $context = $this->buildGenerationContext(
             $institutionDepartment,
             $academicCalendar,
@@ -137,7 +140,8 @@ class AcademicCalendarController extends Controller
             $classConfig,
             $finalStudentPrograms,
             $unassignedFinalStudentPrograms,
-            $existingClasses->count() > 0
+            $populatedExistingClassCount > 0,
+            $populatedExistingClassCount
         );
 
         return Inertia::render('institution/academicCalendars/DepartmentAcademicCalendarClasses', [
@@ -277,16 +281,19 @@ class AcademicCalendarController extends Controller
     {
         $validated = $request->validated();
 
-        $lookup = [
-            'calendar_year' => $academicCalendar->calendar_year,
-            'institution_department_id' => $institutionDepartment->id,
-            'academic_year_option_id' => null,
-            ...Arr::only($validated, ['department_level_id', 'department_course_id', 'mode_of_study_id']),
-        ];
-
-        ClassConfig::updateOrCreate($lookup, [
-            'students_per_class' => $validated['students_per_class'],
-        ]);
+        ClassConfig::query()->updateOrCreate(
+            [
+                'calendar_year' => (string) $academicCalendar->calendar_year,
+                'institution_department_id' => $institutionDepartment->id,
+                'department_course_id' => (int) $validated['department_course_id'],
+                'department_level_id' => (int) $validated['department_level_id'],
+                'mode_of_study_id' => (int) $validated['mode_of_study_id'],
+                'academic_year_option_id' => (int) $validated['academic_year_option_id'],
+            ],
+            [
+                'students_per_class' => (int) $validated['students_per_class'],
+            ],
+        );
 
         return back()->with('success', 'Class config successfully saved.');
     }
@@ -682,6 +689,7 @@ class AcademicCalendarController extends Controller
             ])
             ->orderBy('academic_calandar_classes.id')
             ->get()
+            ->filter(fn ($class): bool => (int) ($class->student_count ?? 0) > 0)
             ->map(function (mixed $class): array {
                 $maleCount = (int) ($class->male_count ?? 0);
                 $femaleCount = (int) ($class->female_count ?? 0);
@@ -711,7 +719,8 @@ class AcademicCalendarController extends Controller
         ?ClassConfig $classConfig,
         Collection $finalStudentPrograms,
         Collection $unassignedFinalStudentPrograms,
-        bool $hasExistingClasses
+        bool $hasExistingClasses,
+        int $populatedExistingClassCount,
     ): array {
         $newStudentGenderCounts = [
             'male' => 0,
@@ -743,6 +752,7 @@ class AcademicCalendarController extends Controller
             'newFinalStudentCount' => $unassignedFinalStudentPrograms->count(),
             'newStudentGenderCounts' => $newStudentGenderCounts,
             'hasExistingClasses' => $hasExistingClasses,
+            'populatedExistingClassCount' => $populatedExistingClassCount,
         ];
     }
 

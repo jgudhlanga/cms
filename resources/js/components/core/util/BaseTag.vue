@@ -35,7 +35,7 @@ const computedClass = computed(() => cn(extendedVariants[props.variant as ColorV
 </script>
 
 <template>
-    <span :class="cn('w-auto cursor-pointer rounded-full px-2', computedClass, classes)">
+    <span :class="cn('w-auto cursor-pointer rounded-full px-2 py-0.5', computedClass, classes)">
         {{ title }}
     </span>
 </template>

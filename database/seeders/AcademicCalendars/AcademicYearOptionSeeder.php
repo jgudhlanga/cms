@@ -17,6 +17,10 @@ class AcademicYearOptionSeeder extends Seeder
             'Term 2',
             'Term 3',
             'Term 4',
+            'ABMA 1',
+            'ABMA 2',
+            'ABMA 3',
+            'ABMA 4',
         ];
 
         foreach ($rows as $name) {
