@@ -4,6 +4,9 @@ namespace App\Models\Students;
 
 use App\Models\AcademicCalendars\AcademicCalendar;
 use App\Models\AcademicCalendars\AcademicYearOption;
+use App\Models\Institution\DepartmentCourse;
+use App\Models\Institution\DepartmentLevel;
+use App\Models\Institution\InstitutionDepartment;
 use App\Models\Institution\ModeOfStudy;
 use App\Traits\Filterable;
 use App\Traits\Paginatable;
@@ -13,11 +16,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
-use App\Models\Institution\InstitutionDepartment;
-use App\Models\Institution\DepartmentLevel;
-use App\Models\Institution\DepartmentCourse;
-use App\Models\Students\StudentEnrolmentStatus;
-
+use App\Models\AcademicCalendars\AcademicCalendarStudentEnrolment;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
  * @mixin Builder
@@ -50,7 +50,7 @@ class StudentEnrolment extends Model
         return $this->belongsTo(StudentProgram::class, 'student_program_id');
     }
 
-    public function institutionDepartment(): BelongsTo
+    public function institutionDepartment(): BelongsTo 
     {
         return $this->belongsTo(InstitutionDepartment::class, 'institution_department_id');
     }
@@ -83,6 +83,14 @@ class StudentEnrolment extends Model
     public function studentEnrolmentStatus(): BelongsTo
     {
         return $this->belongsTo(StudentEnrolmentStatus::class, 'student_enrolment_status_id');
+    }
+
+    public function academicCalendarStudentEnrolment(): HasOne
+    {
+        return $this->hasOne(
+            AcademicCalendarStudentEnrolment::class,
+            'student_enrolment_id'
+        );
     }
 
     public function getActivitylogOptions(): LogOptions

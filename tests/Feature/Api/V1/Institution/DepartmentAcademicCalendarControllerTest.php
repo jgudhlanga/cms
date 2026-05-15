@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\AcademicCalendars\AcademicCalendarTypeEnum;
+use App\Enums\Institution\CourseSyllabusStatusEnum;
 use App\Enums\Shared\ClassListTypeEnum;
 use App\Models\AcademicCalendars\AcademicCalendar;
 use App\Models\AcademicCalendars\AcademicCalendarClass;
@@ -17,6 +18,7 @@ use App\Models\Institution\InstitutionDepartment;
 use App\Models\Institution\IntakePeriod;
 use App\Models\Institution\Level;
 use App\Models\Institution\ModeOfStudy;
+use App\Models\Institution\Syllabus\CourseSyllabus;
 use App\Models\Shared\Gender;
 use App\Models\Shared\IdType;
 use App\Models\Shared\MaritalStatus;
@@ -136,6 +138,25 @@ test('department academic calendar returns totalnClass and totalFinalList counts
         'students_per_class' => 2,
     ]);
 
+    $departmentLevelCourse = DepartmentLevelCourse::query()
+        ->where('department_course_id', $departmentCourse->id)
+        ->where('department_level_id', $departmentLevel->id)
+        ->firstOrFail();
+
+    $courseSyllabus = CourseSyllabus::query()->create([
+        'tenant_id' => $tenant->id,
+        'institution_department_id' => $institutionDepartment->id,
+        'department_level_course_id' => $departmentLevelCourse->id,
+        'title' => 'Dept cal API syllabus '.$departmentCourse->id,
+        'code' => 'DC-API-SYL-'.$departmentCourse->id,
+        'implementation_year' => '2026',
+        'status' => CourseSyllabusStatusEnum::Active,
+    ]);
+
+    $classConfig->update([
+        'course_syllabus_ids' => [$courseSyllabus->id],
+    ]);
+
     $calendarClassOne = AcademicCalendarClass::query()->create([
         'tenant_id' => $tenant->id,
         'class_config_id' => $classConfig->id,
@@ -236,6 +257,8 @@ test('department academic calendar returns totalnClass and totalFinalList counts
         'totalFinalList' => 1,
         'academicYearOptionId' => $semesterOneId,
         'academicYearOption' => 'Semester 1',
+        'courseSyllabusIds' => [$courseSyllabus->id],
+        'courseSyllabusCodes' => [$courseSyllabus->code],
     ]);
 });
 

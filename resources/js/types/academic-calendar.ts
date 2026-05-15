@@ -35,6 +35,8 @@ export type ClassLevelSummary = {
     totalFinalList: string | number | null;
     academicYearOption: string | null;
     academicYearOptionId: string | number | null;
+    courseSyllabusIds?: (string | number)[];
+    courseSyllabusCodes?: string[];
 };
 
 export type AcademicClassConfigPayload = {
@@ -45,6 +47,8 @@ export type AcademicClassConfigPayload = {
     students_per_class: string | number | null;
     calendarType?: 'term' | 'semester' | 'abma' | null;
     academic_year_option_id?: string | number | null;
+    course_syllabus_ids?: (string | number)[];
+    courseSyllabusCodes?: string[];
 };
 
 export type ClassConfig = {
@@ -57,6 +61,8 @@ export type ClassConfig = {
         departmentCourse: string | null;
         departmentLevel: string | null;
         modeOfStudy: string | null;
+        courseSyllabusIds?: number[];
+        courseSyllabusCodes?: string[];
     };
 };
 

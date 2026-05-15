@@ -111,7 +111,7 @@ class Student extends Model
         return $this->hasMany(StudentEnrolment::class, 'student_id');
     }
 
-    public function currentEnrolment(): HasOne
+    public function latestEnrolment(): HasOne
     {
         return $this->hasOne(StudentEnrolment::class)->latestOfMany();
     }
@@ -149,7 +149,7 @@ class Student extends Model
             ->distinct('subject_id');
     }
 
-    public function nextOfKins(): MorphMany
+    public function nextOfKins(): MorphMany 
     {
         return $this->morphMany(NextOfKin::class, 'kinnable');
     }

@@ -1,20 +1,54 @@
 <script setup lang="ts">
 import { Separator } from '@/components/ui/separator'
+import { useUtils } from '@/composables/core/useUtils';
+import { useStudents } from '@/composables/students/useStudents';
 import { IconName } from '@/enums/icons';
+import { DISABILITY_OPTIONS } from '@/lib/constants';
+import { Student } from '@/types/students';
+import { ValueAndLabel } from '@/types/utils';
+import { computed } from 'vue';
 
+interface Props {
+    student: Student;
+}
 
+const props = defineProps<Props>();
+const { student } = props;
 
+const { isNativeCitizen, formatDate } = useUtils();
+const { hasOfferLetter } = useStudents();
 
-const fields = [
-  { label: 'Student ID',           value: 'B20/ICT/001234/22'  },
-  { label: 'National ID',          value: '63-2198744-F-34'    },
-  { label: 'Date of Birth',        value: '14 March 2002'      },
-  { label: 'Gender',               value: 'Female'             },
-  { label: 'Enrolled',             value: 'Feb 2022'           },
-  { label: 'Expected Graduation',  value: 'Dec 2024'           },
-  { label: 'Sponsorship',          value: 'ZIMDEF'             },
-  { label: 'Accommodation',        value: 'Off-campus'         },
-]
+const personalDetails = computed<ValueAndLabel[]>(() => {
+    const details: ValueAndLabel[] = [
+        { transChoiceKey: 'trans.student_number', value: student?.attributes?.studentNumber ?? '' },
+        { transChoiceKey: 'trans.title', value: student?.attributes?.title ?? '' },
+        { transChoiceKey: 'trans.gender', value: student?.attributes?.gender ?? '' },
+        { transChoiceKey: 'trans.marital_status', value: student?.attributes?.maritalStatus ?? '' },
+        { transChoiceKey: 'trans.id_type', value: student?.attributes?.idType ?? '' },
+    ];
+    if (isNativeCitizen(student?.attributes?.idType ?? '')) {
+        details.push({
+            transKey: 'trans.id_number',
+            value: student?.attributes?.idNumber ?? '',
+        });
+    } else {
+        details.push(
+            { transKey: 'trans.passport_number', value: student?.attributes?.passportNumber ?? '' },
+            { transChoiceKey: 'trans.country', value: student?.attributes?.country ?? '' },
+        );
+    }
+    details.push({ transKey: 'trans.date_of_birth', value: formatDate(student?.attributes?.dateOfBirth ?? '') });
+    details.push({ transKey: 'trans.disability', value: DISABILITY_OPTIONS.find(option => option.value === student?.attributes?.disabilityStatus)?.label ?? '' });
+    details.push(
+        { transChoiceKey: 'trans.race', value: student?.attributes?.race ?? '' },
+        { transChoiceKey: 'trans.religion', value: student?.attributes?.religion ?? '' },
+        { transChoiceKey: 'trans.denomination', value: student?.attributes?.denomination ?? '' },
+        { transKey: 'trans.weight', value: student?.attributes?.weight ?? '' },
+        { transKey: 'trans.height', value: student?.attributes?.height ?? '' },
+    );
+
+    return details;
+});
 
 const data = [
   { label: 'Phone',               value: '+263 77 345 6789',       icon: IconName.phone },
@@ -29,7 +63,7 @@ const data = [
 
 <template>
     <div class="grid grid-cols-3 gap-x-6 gap-y-3">
-        <LabelValue v-for="(field, idx) in fields" :key="idx" :label="field.label" :value="field.value" />
+        <LabelValue v-for="(field, idx) in personalDetails" :key="idx" :label="field.transKey ? $t(field.transKey) : $tChoice(field.transChoiceKey ?? '', 1)" :value="field.value" />
     </div>
     <Separator class="my-6" />
     <div class="grid grid-cols-3 gap-x-6 gap-y-3">

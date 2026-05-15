@@ -9,14 +9,15 @@ import Applications from '@/pages/students/components/profile/Applications.vue';
 import Authentication from '@/pages/students/components/profile/Authentication.vue';
 import Documents from '@/pages/students/components/profile/Documents.vue';
 import { h } from 'vue';
+import { Student } from '@/types/students';
 
 export const useStudentProfile = () => {
-    const profileTabs = (): Array<CustomTab> => {
+    const profileTabs = (student: Student): Array<CustomTab> => {
         return [
             {
                 transLabel: () => trans('students.personal_information'),
                 value: 'basic_info',
-                component: h(Info),
+                component: h(Info, { student }),
                 icon: IconName.user,
             },
             {

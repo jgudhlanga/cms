@@ -124,11 +124,19 @@ const saveClasses = () => {
     <PageContainer :breadcrumbs="breadcrumbs" :back-url="route('institution-departments.show', String(department.id))">
         <div class="flex flex-col space-y-6">
             <BaseCard :title="String(classConfig?.attributes?.calendarYear ?? '---')">
-                <div class="grid grid-cols-2 gap-4 md:grid-cols-5">
+                <div class="grid grid-cols-2 gap-4 md:grid-cols-6">
                     <LabelValue :label="$tChoice('trans.course', 1)" :value="classConfig?.attributes?.departmentCourse ?? '---'" />
                     <LabelValue :label="$tChoice('trans.level', 1)" :value="classConfig?.attributes?.departmentLevel ?? '---'" />
                     <LabelValue :label="$tChoice('general.mode', 1)" :value="classConfig?.attributes?.modeOfStudy ?? '---'" />
                     <LabelValue :label="$tChoice('academic_calendar.class_unit_size', 1)" :value="String(classConfig?.attributes?.studentsPerClass ?? '---')" />
+                    <LabelValue
+                        :label="$tChoice('syllabus.course_syllabus', 2)"
+                        :value="
+                            (classConfig?.attributes?.courseSyllabusCodes ?? []).length > 0
+                                ? (classConfig?.attributes?.courseSyllabusCodes ?? []).join(', ')
+                                : '---'
+                        "
+                    />
                     <LabelValue
                         :label="$tChoice('trans.class', 2)"
                         :value="String(generationContext.populatedExistingClassCount ?? 0)"

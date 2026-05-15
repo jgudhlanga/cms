@@ -5,12 +5,16 @@ namespace App\Http\Controllers\Api\V1\Institution;
 use App\Enums\Shared\ClassListTypeEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Filters\Institution\StaffFilter;
+use App\Http\Resources\Institution\CourseSyllabusResource;
 use App\Http\Resources\Institution\DepartmentCourseResource;
 use App\Http\Resources\Institution\DepartmentLevelResource;
 use App\Http\Resources\Institution\InstitutionDepartmentWithWorkflowStepsResource;
 use App\Http\Resources\Institution\IntakePeriodClassSizeResource;
 use App\Http\Resources\Institution\StaffResource;
+use App\Models\Institution\DepartmentCourse;
+use App\Models\Institution\DepartmentLevelCourse;
 use App\Models\Institution\InstitutionDepartment;
+use App\Models\Institution\Syllabus\CourseSyllabus;
 use App\Repositories\Institution\interface\IStaffRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -142,5 +146,39 @@ class DepartmentMetaDataController extends Controller
         })->values(); // reset numeric keys
 
         return response()->json($grouped);
+    }
+
+    public function classConfigCourseSyllabuses(InstitutionDepartment $institutionDepartment): AnonymousResourceCollection
+    {
+        $validated = validator(request()->query(), [
+            'department_course_id' => ['required', 'integer'],
+            'department_level_id' => ['required', 'integer'],
+        ])->validate();
+
+        $departmentCourse = DepartmentCourse::query()
+            ->whereKey((int) $validated['department_course_id'])
+            ->where('institution_department_id', $institutionDepartment->id)
+            ->firstOrFail();
+
+        $departmentLevelCourse = DepartmentLevelCourse::query()
+            ->where('department_course_id', $departmentCourse->id)
+            ->where('department_level_id', (int) $validated['department_level_id'])
+            ->first();
+
+        if ($departmentLevelCourse === null) {
+            return CourseSyllabusResource::collection(collect());
+        }
+
+        $syllabi = CourseSyllabus::query()
+            ->where('institution_department_id', $institutionDepartment->id)
+            ->where('department_level_course_id', $departmentLevelCourse->id)
+            ->with([
+                'departmentLevelCourse.departmentCourse.course',
+                'departmentLevelCourse.departmentLevel.level',
+            ])
+            ->orderBy('code')
+            ->get();
+
+        return CourseSyllabusResource::collection($syllabi);
     }
 }

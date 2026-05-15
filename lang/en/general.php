@@ -10,4 +10,7 @@ return [
     'apprentice_management' => 'Apprentice Management',
     'male' => 'Male|Males',
     'female' => 'Female|Females',
+    'in' => 'in',
+    'download_profile_data' => 'Download profile data',
+    'export' => 'Export',
 ];

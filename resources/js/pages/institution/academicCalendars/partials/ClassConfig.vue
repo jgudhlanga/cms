@@ -30,6 +30,7 @@ const form = useForm<AcademicClassConfigPayload>({
     department_course_id: null,
     mode_of_study_id: null,
     academic_year_option_id: null,
+    course_syllabus_ids: [],
 });
 
 const modalStore = useModalStore();
@@ -37,10 +38,21 @@ const modalStore = useModalStore();
 const yearOptions = ref<SelectOption[]>([]);
 const yearOptionsLoading = ref(false);
 
+const syllabusOptions = ref<SelectOption[]>([]);
+const syllabusOptionsLoading = ref(false);
+
 type AcademicYearOptionApiRow = {
     id: number;
     attributes: {
         name: string;
+    };
+};
+
+type CourseSyllabusApiRow = {
+    id: number | string;
+    attributes: {
+        code: string;
+        title: string;
     };
 };
 
@@ -66,6 +78,42 @@ const loadYearOptions = async (calendarType: string | null | undefined): Promise
     }
 };
 
+const loadSyllabusOptions = async (
+    departmentCourseId: string | number | null | undefined,
+    departmentLevelId: string | number | null | undefined,
+): Promise<void> => {
+    syllabusOptionsLoading.value = true;
+    syllabusOptions.value = [];
+    const dc = String(departmentCourseId ?? '').trim();
+    const dl = String(departmentLevelId ?? '').trim();
+    if (!dc || !dl) {
+        syllabusOptionsLoading.value = false;
+        return;
+    }
+    try {
+        /** Same base URL pattern as `useDepartmentCourses` / `useDepartmentLevels`. */
+        const base = route('v1.department-metadata.class-config-course-syllabuses', props.institutionDepartmentId);
+        const sep = base.includes('?') ? '&' : '?';
+        const url = `${base}${sep}department_course_id=${encodeURIComponent(dc)}&department_level_id=${encodeURIComponent(dl)}`;
+        const body = await HttpService.get(url);
+        /** `JsonResource::withoutWrapping()` — collection is a top-level array, not `{ data: [...] }`. */
+        const rows = (Array.isArray(body) ? body : (Array.isArray(body?.data) ? body.data : [])) as CourseSyllabusApiRow[];
+        syllabusOptions.value = rows.map((row) => {
+            const code = row.attributes?.code ?? '';
+            const title = row.attributes?.title ?? '';
+            const label = [code, title].filter(Boolean).join(' — ');
+            return {
+                value: String(row.id),
+                label: label || String(row.id),
+            };
+        });
+    } catch {
+        syllabusOptions.value = [];
+    } finally {
+        syllabusOptionsLoading.value = false;
+    }
+};
+
 watch(
     () => modalStore.modals?.[APP_MODULE_KEYS.student_per_class]?.opened,
     async (opened) => {
@@ -84,6 +132,7 @@ watch(
         form.mode_of_study_id = edit.mode_of_study_id ?? null;
         form.students_per_class = edit.students_per_class ?? null;
         form.academic_year_option_id = null;
+        form.course_syllabus_ids = [];
 
         await loadYearOptions(edit.calendarType ?? 'semester');
 
@@ -97,6 +146,10 @@ watch(
         } else {
             form.academic_year_option_id = null;
         }
+
+        await loadSyllabusOptions(edit.department_course_id, edit.department_level_id);
+        const prefSyllabus = (edit.course_syllabus_ids ?? []).map((id) => String(id));
+        form.course_syllabus_ids = prefSyllabus.filter((id) => syllabusOptions.value.some((o) => o.value === id));
     },
 );
 
@@ -127,7 +180,7 @@ const submitForm = (): void => {
 <template>
     <BaseModal
         :name="APP_MODULE_KEYS.student_per_class"
-        :title="$tChoice('academic_calendar.class_unit_size', 1)"
+        :title="$t('academic_calendar.class_config')"
         :on-form-action="() => submitForm()"
         :form="form"
     >
@@ -143,8 +196,21 @@ const submitForm = (): void => {
                 @update:modelValue="clearFormErrors(form, 'academic_year_option_id')"
                 :error="form.errors.academic_year_option_id"
             />
+            <BaseSelect
+                class="mb-4 w-full"
+                :label="$tChoice('syllabus.course_syllabus', 2)"
+                placeholder=""
+                :options="syllabusOptions"
+                :loading="syllabusOptionsLoading"
+                v-model="form.course_syllabus_ids"
+                :is-multi="true"
+                :is-searchable="true"
+                @update:modelValue="clearFormErrors(form, 'course_syllabus_ids')"
+                :error="form.errors.course_syllabus_ids"
+            />
             <BaseInput
                 input-id="students_per_class"
+                :label="$tChoice('academic_calendar.class_unit_size', 1)"
                 :inputAutoFocus="true"
                 v-model="form.students_per_class"
                 @input="clearFormErrors(form, 'students_per_class')"

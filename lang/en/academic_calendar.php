@@ -13,6 +13,7 @@ return [
     'action' => 'Action|Actions',
     'academic_calendar_class_not_found' => 'No classes has been found for this academic calendar, make sure all is configured and try again.',
     'class_unit_size' => 'Per class|Per classes',
+    'class_config' => 'Class Config',
     'confirmed_student' => 'Confirmed students|Confirmed students',
     'setup' => 'Setup',
     'config' => 'Config',

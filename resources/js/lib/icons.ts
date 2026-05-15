@@ -87,7 +87,7 @@ import {
     ReceiptText, CircleX,
     PaperclipIcon, 
     RotateCcw,NotebookPen,FileStack,
-    House,Mail,Phone,
+    House,Mail,Phone,ArrowDownToLine,
     
 } from 'lucide-vue-next';
 import type { Component } from 'vue';
@@ -187,6 +187,7 @@ const icons: Record<IconName, Component> = {
     [IconName.house]: House,
     [IconName.mail]: Mail,
     [IconName.phone]: Phone,
+    [IconName.download]: ArrowDownToLine,
 };
 
 export { IconName, icons };

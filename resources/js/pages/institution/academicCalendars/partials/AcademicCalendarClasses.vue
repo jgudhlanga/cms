@@ -103,7 +103,6 @@ const loadClassConfigs = async () => {
         ),
         () => trans_choice('trans.enrolment', 2),
     );
-    console.log('payload', payload);
     if (payload && typeof payload === 'object' && 'data' in payload) {
         classStates.value = (payload as { data: DepartmentCourseClassCount[] }).data ?? [];
         const meta = (payload as { meta?: { resolvedAcademicCalendarId?: number } }).meta;
@@ -166,6 +165,19 @@ const getClassesLinkLabel = (level: ClassLevelSummary): string => {
     return String(created);
 };
 
+const getClassConfigTagTitle = (level: ClassLevelSummary): string => {
+    const base = `${trans_choice('academic_calendar.class_unit_size', 1)}: ${getDisplayedStudentsPerClass(level.studentsPerClass)} - ${level.academicYearOption ?? 'semester'}`;
+    return `${base}`;
+};
+
+const codesLabel = (level: ClassLevelSummary): string => {
+    const codes = (level.courseSyllabusCodes ?? []).filter((c) => String(c).trim() !== '');
+    if (codes.length === 0) {
+        return '---';
+    }
+    return codes.map((c) => `${c}`).join(', ');
+};
+
 const showConfigModal = (payload: AcademicClassConfigPayload) => {
     openModal({ name: APP_MODULE_KEYS.student_per_class, edit: payload });
 };
@@ -191,13 +203,14 @@ const showConfigModal = (payload: AcademicClassConfigPayload) => {
                             <th class="j-th text-left">{{ $tChoice('trans.level', 1) }}</th>
                             <th class="j-th text-center">{{ $tChoice('academic_calendar.confirmed_student', 2) }}</th>
                             <th class="j-th text-center">{{ $tChoice('trans.config', 1) }}</th>
+                            <th class="j-th text-center">{{ $tChoice('syllabus.course_syllabus', 2) }}</th>
                             <th class="j-th text-center">{{ $tChoice('trans.class', 2) }}</th>
                         </tr>
                     </thead>
                     <tbody class="j-tbody">
                         <template v-for="stats in classStates" :key="stats.departmentCourseId">
                             <tr class="j-tr">
-                                <td class="j-td text-left" colspan="4">
+                                <td class="j-td text-left" colspan="5">
                                     <HeadingSmall :title="stats.courseName" />
                                 </td>
                             </tr>
@@ -218,13 +231,15 @@ const showConfigModal = (payload: AcademicClassConfigPayload) => {
                                                     students_per_class: String(level.studentsPerClass ?? ''),
                                                     calendarType: level.calendarType ?? 'semester',
                                                     academic_year_option_id: level.academicYearOptionId ?? null,
+                                                    course_syllabus_ids: (level.courseSyllabusIds ?? []).map((id) => String(id)),
+                                                    courseSyllabusCodes: level.courseSyllabusCodes,
                                                 })
                                         "
                                     >
-                                    <BaseTag :title="`${$tChoice('academic_calendar.class_unit_size', 1)}: ${getDisplayedStudentsPerClass(level.studentsPerClass)}`" :variant="ColorVariant.info" /> - 
-                                    <BaseTag :title="level.academicYearOption ?? ''" :variant="ColorVariant.info" /> 
+                                    <BaseTag :title="getClassConfigTagTitle(level)" :variant="ColorVariant.info" />
                                     </button>
                                 </td>
+                                <td class="j-td text-center">{{ codesLabel(level) }}</td>
                                 <td class="j-td text-center">
                                     <TextLink
                                         v-if="level.classConfigId !== null"

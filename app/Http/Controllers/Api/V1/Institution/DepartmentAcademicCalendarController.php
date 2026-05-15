@@ -11,6 +11,7 @@ use App\Models\AcademicCalendars\ClassConfig;
 use App\Models\Institution\DepartmentCourse;
 use App\Models\Institution\DepartmentLevelCourse;
 use App\Models\Institution\InstitutionDepartment;
+use App\Models\Institution\Syllabus\CourseSyllabus;
 use App\Models\Students\StudentEnrolment;
 use App\Queries\Enrolments\ConfirmedStudentsQuery;
 use App\Services\AcademicCalendars\ResolveAcademicYearOptionFromCalendarYear;
@@ -91,7 +92,7 @@ class DepartmentAcademicCalendarController extends Controller
     }
 
     /**
-     * @return array{calendarYear: null, classConfig: array<string, array{id: int, students_per_class: int, academicYearOptionId: int|null, academicYearOption: string|null}>, classesCount: array<string, int>, totalnClass: array<string, int>, totalFinalList: array<string, int>}
+     * @return array{calendarYear: null, classConfig: array<string, array{id: int, students_per_class: int, academicYearOptionId: int|null, academicYearOption: string|null, courseSyllabusIds: list<int>, courseSyllabusCodes: list<string>}>, classesCount: array<string, int>, totalnClass: array<string, int>, totalFinalList: array<string, int>}
      */
     private function emptyLookups(): array
     {
@@ -106,7 +107,7 @@ class DepartmentAcademicCalendarController extends Controller
 
     /**
      * @param  array{calendarYear: string, academicCalendarId: int, modeOfStudyId: int, calendarIdsForYear: list<int>, academicYearOptionId: int|null}  $context
-     * @return array{calendarYear: string, classConfig: array<string, array{id: int, students_per_class: int, academicYearOptionId: int|null, academicYearOption: string|null}>, classesCount: array<string, int>, totalnClass: array<string, int>, totalFinalList: array<string, int>}
+     * @return array{calendarYear: string, classConfig: array<string, array{id: int, students_per_class: int, academicYearOptionId: int|null, academicYearOption: string|null, courseSyllabusIds: list<int>, courseSyllabusCodes: list<string>}>, classesCount: array<string, int>, totalnClass: array<string, int>, totalFinalList: array<string, int>}
      */
     private function buildLookups(InstitutionDepartment $department, array $context): array
     {
@@ -229,10 +230,24 @@ class DepartmentAcademicCalendarController extends Controller
 
     /**
      * @param  Collection<int, ClassConfig>  $configs
-     * @return array<string, array{id: int, students_per_class: int, academicYearOptionId: int|null, academicYearOption: string|null}>
+     * @return array<string, array{id: int, students_per_class: int, academicYearOptionId: int|null, academicYearOption: string|null, courseSyllabusIds: list<int>, courseSyllabusCodes: list<string>}>
      */
     private function classConfigLookup(Collection $configs): array
     {
+        $allSyllabusIds = [];
+        foreach ($configs as $config) {
+            foreach ($config->course_syllabus_ids ?? [] as $sid) {
+                $intId = (int) $sid;
+                if ($intId > 0) {
+                    $allSyllabusIds[] = $intId;
+                }
+            }
+        }
+        $allSyllabusIds = array_values(array_unique($allSyllabusIds));
+        $codeById = $allSyllabusIds === []
+            ? []
+            : CourseSyllabus::query()->whereIn('id', $allSyllabusIds)->pluck('code', 'id')->all();
+
         $lookup = [];
 
         foreach ($configs as $config) {
@@ -242,11 +257,23 @@ class DepartmentAcademicCalendarController extends Controller
                 $config->academic_year_option_id !== null ? (int) $config->academic_year_option_id : null,
             );
             $optionId = $config->academic_year_option_id !== null ? (int) $config->academic_year_option_id : null;
+            $syllabusIds = array_values(array_unique(array_filter(
+                array_map(static fn ($id): int => (int) $id, $config->course_syllabus_ids ?? []),
+                static fn (int $id): bool => $id > 0,
+            )));
+            $codesOrdered = [];
+            foreach ($syllabusIds as $sid) {
+                if (isset($codeById[$sid])) {
+                    $codesOrdered[] = $codeById[$sid];
+                }
+            }
             $lookup[$key] = [
                 'students_per_class' => $config->students_per_class ?? 0,
                 'id' => $config->id,
                 'academicYearOptionId' => $optionId,
                 'academicYearOption' => $config->academicYearOption?->name,
+                'courseSyllabusIds' => $syllabusIds,
+                'courseSyllabusCodes' => $codesOrdered,
             ];
         }
 
@@ -317,7 +344,7 @@ class DepartmentAcademicCalendarController extends Controller
     }
 
     /**
-     * @param  array{calendarYear: string|null, classConfig: array<string, array{id: int, students_per_class: int, academicYearOptionId: int|null, academicYearOption: string|null}>, classesCount: array<string, int>, totalnClass: array<string, int>, totalFinalList: array<string, int>}  $lookups
+     * @param  array{calendarYear: string|null, classConfig: array<string, array{id: int, students_per_class: int, academicYearOptionId: int|null, academicYearOption: string|null, courseSyllabusIds: list<int>, courseSyllabusCodes: list<string>}>, classesCount: array<string, int>, totalnClass: array<string, int>, totalFinalList: array<string, int>}  $lookups
      */
     private function formatDepartment(InstitutionDepartment $department, array $lookups): Collection
     {
@@ -335,7 +362,7 @@ class DepartmentAcademicCalendarController extends Controller
     }
 
     /**
-     * @param  array{calendarYear: string|null, classConfig: array<string, array{id: int, students_per_class: int, academicYearOptionId: int|null, academicYearOption: string|null}>, classesCount: array<string, int>, totalnClass: array<string, int>, totalFinalList: array<string, int>}  $lookups
+     * @param  array{calendarYear: string|null, classConfig: array<string, array{id: int, students_per_class: int, academicYearOptionId: int|null, academicYearOption: string|null, courseSyllabusIds: list<int>, courseSyllabusCodes: list<string>}>, classesCount: array<string, int>, totalnClass: array<string, int>, totalFinalList: array<string, int>}  $lookups
      * @return array<string, mixed>|null
      */
     private function formatLevel(DepartmentCourse $course, DepartmentLevelCourse $levelCourse, array $lookups): ?array
@@ -408,6 +435,8 @@ class DepartmentAcademicCalendarController extends Controller
             'totalFinalList' => (int) ($lookups['totalFinalList'][$pairKey] ?? 0),
             'academicYearOption' => $academicYearOption,
             'academicYearOptionId' => $academicYearOptionId,
+            'courseSyllabusIds' => $configData !== null ? ($configData['courseSyllabusIds'] ?? []) : [],
+            'courseSyllabusCodes' => $configData !== null ? ($configData['courseSyllabusCodes'] ?? []) : [],
         ];
     }
 

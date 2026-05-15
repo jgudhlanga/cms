@@ -292,6 +292,7 @@ class AcademicCalendarController extends Controller
             ],
             [
                 'students_per_class' => (int) $validated['students_per_class'],
+                'course_syllabus_ids' => $validated['course_syllabus_ids'] ?? [],
             ],
         );
 

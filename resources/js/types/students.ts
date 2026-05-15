@@ -1,5 +1,5 @@
 import { DepartmentApplicationStep, DepartmentCourse, DepartmentLevel } from '@/types/department-meta-data';
-import { InstitutionDepartment } from '@/types/institution';
+import { CourseSyllabus, InstitutionDepartment } from '@/types/institution';
 import { User } from '@/types/users';
 import { SelectOption } from '@/types/utils';
 
@@ -36,14 +36,30 @@ export type Student = {
         level?: string;
         course?: string;
         modeOfStudy?: string;
+        enrolmentStatus?: string;
         createdAt?: string;
         updatedAt?: string;
         deletedAt?: string;
     };
     relationships?: {
         user: User;
+        latestEnrolment: StudentEnrolment | null;
     };
 };
+
+export type StudentHeader = {
+    studentId: string | number;
+    studentName: string;
+    avatarUrl?: any;
+    studentNumber: string;
+    level: string;
+    course: string;
+    modeOfStudy: string;
+    enrolmentStatus: string;
+    department: string;
+    academicCalendar: string;
+    academicYearOption: string;
+}
 
 
 export type PersonalDetailView = {
@@ -240,3 +256,30 @@ export type StudentFiltersState = {
     calendar_type?: string[] | null;
     with_trashed?: boolean | null;
 };
+
+export type StudentEnrolment = {
+    type: string;
+    id: string | number;
+    attributes: {
+        instituionDepartmentId: string | number;
+        studentId: string | number;
+        studentProgramId: string | number;
+        departmentLevelId: string | number;
+        departmentCourseId: string | number;
+        modeOfStudyId: string | number;
+        academicYearOptionId: string | number;
+        academicCalendarId: string | number;
+        studentEnrolmentStatusId: string | number;
+        status: string;
+        academicYearOption: string;
+        academicCalendar: string;
+    };
+    relationships?: {
+        details: {
+            academicCalendarStudentEnrolmentId: string | number;
+            academicCalendarClassId: string | number;
+            classConfigId: string | number;
+            syllabi: Array<CourseSyllabus>;
+        };
+    };
+}

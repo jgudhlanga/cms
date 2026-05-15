@@ -29,7 +29,7 @@ class CourseSyllabusResource extends JsonResource
                         'course_syllabus' => $this->resource->id,
                     ])
                     : null,
-                $this->mergeWhen(true, [
+                $this->mergeWhen($request->routeIs('course-syllabuses.*'), [
                     'createdAt' => $this->resource->created_at,
                     'updatedAt' => $this->resource->updated_at,
                     'deletedAt' => $this->resource->deleted_at,
