@@ -2,6 +2,8 @@ import { DepartmentApplicationStep, DepartmentCourse, DepartmentLevel } from '@/
 import { CourseSyllabus, InstitutionDepartment } from '@/types/institution';
 import { User } from '@/types/users';
 import { SelectOption } from '@/types/utils';
+import type { Address, Contact } from '@/types/shared';
+import type { NextOfKin } from '@/types/next-of-kin';
 
 export type Student = {
     type: string;
@@ -44,6 +46,9 @@ export type Student = {
     relationships?: {
         user: User;
         latestEnrolment: StudentEnrolment | null;
+        mainContact: Contact,
+        mainAddress: Address,
+        nextOfKin: NextOfKin,
     };
 };
 

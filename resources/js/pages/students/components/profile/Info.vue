@@ -59,6 +59,55 @@ const data = [
   { label: 'Entry Qualification', value: '5 O-Levels incl. Maths', icon: IconName.award  },
 ]
 
+const mainAddress = computed(() => {
+	const address = student?.relationships?.mainAddress?.attributes;
+
+	if (!address) return '';
+
+	const parts = [
+		address.address1,
+		address.address2,
+		address.address3,
+		address.address4,
+		address.address5,
+		address.address6,
+	]
+		.filter(part => part && part.trim() !== '')
+		.map(part => part?.trim());
+
+	// Remove duplicate values
+	const uniqueParts = [...new Set(parts)];
+
+	return uniqueParts.join(', ');
+});
+const otherDetails = computed<ValueAndLabel[]>(() => [
+  {
+    transKey: 'students.phone',
+    value: student?.relationships?.mainContact?.attributes?.phoneNumber ?? '---',
+    icon: IconName.phone,
+  },
+  {
+    transKey: 'students.email',
+    value: student?.relationships?.user?.attributes?.email ?? '---',
+    icon: IconName.mail,
+  },
+  {
+    transKey: 'students.home_address',
+    value: mainAddress.value,
+    icon: IconName.house,
+  },
+  {
+    transKey: 'students.guardian',
+    value: student?.relationships?.nextOfKin?.attributes?.name ?? '---',
+    icon: IconName.user,
+  },
+  {
+    transKey: 'students.guardian_contact',
+    value: student?.relationships?.nextOfKin?.attributes?.phoneNumber ?? '---',
+    icon: IconName.phone,
+  },
+]);
+
 </script>
 
 <template>
@@ -67,6 +116,6 @@ const data = [
     </div>
     <Separator class="my-6" />
     <div class="grid grid-cols-3 gap-x-6 gap-y-3">
-        <InfoCard v-for="(field, idx) in data" :key="idx" :label="field.label" :value="field.value" :icon="field.icon" />
+        <InfoCard v-for="(field, idx) in otherDetails" :key="idx" :label="field.transKey ? $t(field.transKey) : $tChoice(field.transChoiceKey ?? '', 1)" :value="field.value" :icon="field.icon" />
     </div>
 </template>

@@ -23,4 +23,10 @@ return [
     'authentication' => 'Authentication|Authentications',
     'application' => 'Application|Applications',
     'document' => 'Document|Documents',
+    'phone' => 'Phone',
+    'email' => 'Email',
+    'home_address' => 'Home Address',
+    'guardian' => 'Guardian',
+    'guardian_contact' => 'Guardian Contact',
+    'entry_qualification' => 'Entry Qualification',
 ];

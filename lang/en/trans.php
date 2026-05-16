@@ -39,6 +39,7 @@ return [
     'all_users' => 'All users',
     'login' => 'Login',
     'password' => 'Password',
+    'confirm_password' => 'Confrim password',
     'remember_me' => 'Remember me',
     'forgot_password' => 'Forgot password?',
     'register' => 'Sign up',
@@ -729,8 +730,10 @@ return [
     'ui_user_roles_and_permissions' => 'User Roles & Permissions',
     'ui_user_security' => 'User Security',
     'ui_user_will_create_change_password_through_the_forgot_password' => 'User will create / change password through the forgot password link',
+    'change_login_credentials_warning' => 'Further verification might be required to fully change the credentials',
     'ui_x' => 'X',
     'ui_o_level_result' => 'O Level Result',
     'ui_secure_lock' => '🔒',
     'ui_ecocash_users_payment_device_warning' => 'Attention EcoCash users: To avoid network failures, please use separate devices when making your payments. Thank you for your cooperation.',
+    'authorization' => 'Authorization',
 ];

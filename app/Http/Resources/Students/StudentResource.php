@@ -5,6 +5,9 @@ namespace App\Http\Resources\Students;
 use App\Http\Resources\Users\UserSummaryResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use App\Http\Resources\Shared\AddressResource;
+use App\Http\Resources\Shared\ContactResource;
+use App\Http\Resources\Shared\NextOfKinResource;
 
 class StudentResource extends JsonResource
 {
@@ -51,8 +54,10 @@ class StudentResource extends JsonResource
             'relationships' => [
                 'user' => UserSummaryResource::make($this->user),
                 'latestEnrolment' =>  $this->latestEnrolment ? StudentEnrolmentResource::make($this->latestEnrolment) : null,
+                'mainContact' => ContactResource::make($this->contacts->firstWhere('contact_is_main', 1)),
+                'mainAddress' => AddressResource::make($this->addresses->firstWhere('address_is_main', 1)),
+                'nextOfKin' => NextOfKinResource::make($this->nextOfKins->first()),
             ],
-
         ];
     }
 }

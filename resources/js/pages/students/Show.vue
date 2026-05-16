@@ -22,7 +22,7 @@ const { student } = props;
 const breadcrumbs: Array<Link> = [
     { transKey: 'dashboard', href: route('dashboard') },
     { transChoiceKey: 'student', href: route('students.index') },
-    { title: student?.relationships?.user?.attributes.name ?? '' },
+    { transChoiceKey: 'students.profile', transChoiceKeyIndex: 1 },
 ];
 
 const { profileTabs } = useStudentProfile();
@@ -55,6 +55,7 @@ const headerData = computed<StudentHeader>(() => {
                     v-for="tab in profileTabs(student)"
                     :key="'tab_' + tab.value"
                     :value="tab.value"
+                    :disabled="tab.disabled"
                     class="text-xs font-light uppercase flex items-center"
                 >
                     <component :is="icons[tab?.icon!]" />

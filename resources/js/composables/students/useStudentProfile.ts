@@ -37,23 +37,26 @@ export const useStudentProfile = () => {
                 value: 'financials',
                 component: h(Financials),
                 icon: IconName.money,
+                disabled: true,
             },
             {
                 transLabel: () => trans_choice('students.accommodation', 2),
                 value: 'accommodations',
                 component: h(Hostels),
                 icon: IconName.bed,
+                disabled: true,
             },
             {
                 transLabel: () => trans_choice('students.document', 2),
                 value: 'documents',
                 component: h(Documents),
                 icon: IconName.files,
+                disabled: true,
             },
             {
                 transLabel: () => trans_choice('students.authentication', 1),
                 value: 'authentication',
-                component: h(Authentication),
+                component: h(Authentication, {user: student?.relationships?.user}),
                 icon: IconName.shield,
             },
         ];

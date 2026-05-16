@@ -85,6 +85,7 @@ export type ValueAndLabel = {
     transKey?: string;
     transChoiceKey?: string;
     isBoolean?: boolean;
+    icon?: IconName;
 };
 export type CustomTab = {
     label?: string;
@@ -93,6 +94,7 @@ export type CustomTab = {
     component: Component;
     show?: boolean;
     icon?: IconName,
+    disabled?: boolean;
 };
 export type TimelineStep = {
     title: string;
