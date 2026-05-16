@@ -45,6 +45,7 @@ declare module 'vue' {
     AppSidebar: typeof import('./../components/core/sidebar/AppSidebar.vue')['default']
     Archived: typeof import('./../components/core/table/Archived.vue')['default']
     ArchivesButton: typeof import('./../components/core/button/ArchivesButton.vue')['default']
+    Authentication: typeof import('./../components/users/Authentication.vue')['default']
     Avatar: typeof import('./../components/core/util/Avatar.vue')['default']
     AvatarFallback: typeof import('./../components/ui/avatar/AvatarFallback.vue')['default']
     AvatarImage: typeof import('./../components/ui/avatar/AvatarImage.vue')['default']

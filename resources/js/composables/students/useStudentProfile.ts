@@ -6,7 +6,7 @@ import Programs from '@/pages/students/components/profile/Programs.vue';
 import Financials from '@/pages/students/components/profile/Financials.vue';
 import Hostels from '@/pages/students/components/profile/Hostels.vue';
 import Applications from '@/pages/students/components/profile/Applications.vue';
-import Authentication from '@/pages/students/components/profile/Authentication.vue';
+import Authentication from '@/components/users/Authentication.vue';
 import Documents from '@/pages/students/components/profile/Documents.vue';
 import { h } from 'vue';
 import { Student } from '@/types/students';
