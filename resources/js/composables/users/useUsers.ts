@@ -277,6 +277,18 @@ export const useUsers = () => {
         }
     };
 
+    const userPermissions = ref<ApiFilterResponse | null>(null);
+    const loadUserPermissions = async (url: string) => {
+        try {
+            isLoading.value = true;
+            userPermissions.value = await HttpService.get(url);
+        } catch {
+            errorAlert(trans('trans.load_data_failure', { data: trans_choice('trans.permission', 2) }));
+        } finally {
+            isLoading.value = false;
+        }
+    };
+
     function hasStudentRole(user: User): boolean {
         return user.relationships.roles.some((role) => role.name === 'Student');
     }
@@ -294,5 +306,8 @@ export const useUsers = () => {
         updateStudentUserSchema,
         hasStudentRole,
         updateUserCredentials,
+        isValidating,
+        loadUserPermissions,
+        userPermissions,
     };
 };

@@ -3,6 +3,7 @@ import { BaseButton } from '@/components/core/button';
 import BaseCard from '@/components/core/card/BaseCard.vue';
 import { BaseInput } from '@/components/core/form';
 import EmailAddress from '@/components/core/form/text/EmailAddress.vue';
+import { useRolePermissions } from '@/composables/acl/useRolePermissions';
 import { useUsers } from '@/composables/users/useUsers';
 import { ColorVariant } from '@/enums/colors';
 import { TextFieldType } from '@/enums/inputs';
@@ -24,10 +25,8 @@ const form = useForm<AuthCredentialsUpdate>({
     password_confirmation: '',
 });
 
-const { updateUserCredentials } = useUsers();
-
-
-const isValidating = ref(false);
+const { updateUserCredentials, isValidating, loadUserPermissions, userPermissions, isLoading } = useUsers();
+const { groupPermissionsByModule } = useRolePermissions();
 const passwordMatches = ref(true);
 
 const submitForm = () => {
@@ -40,11 +39,13 @@ const submitForm = () => {
     updateUserCredentials(form, String(user?.id));
 };
 
-onMounted(() => {
+onMounted(async () => {
     if (user) {
         form.email = user.attributes.email ?? '';
+        await loadUserPermissions(route('v1.users.permissions', { id: user.id }));
     }
 });
+
 </script>
 
 <template>
@@ -97,8 +98,13 @@ onMounted(() => {
             <BaseCard
                 :title="$t('trans.authorization')"
                 :description="$t('trans.roles_and_permissions')"
-                color-variant="amber-500"
-            ></BaseCard>
+                color-variant="black"
+            >
+                <DataLoadingSpinner v-if="isLoading"/>
+                    <div v-else class="grid grid-cols-1 md:grid-cols-4 gap-x-3" >
+                        <div v-for="(permission, index) in userPermissions" :key="index">{{ permission?.attributes?.name }}</div>
+                    </div>
+            </BaseCard>
         </div>
     </form>
 </template>

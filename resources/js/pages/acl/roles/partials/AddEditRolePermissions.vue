@@ -16,7 +16,7 @@ const allPermissions = props?.permissions ?? null;
 const form = useForm<RoleParams>({
 	name: roleValue?.attributes?.name ?? '',
 	description: roleValue?.attributes?.description ?? '',
-	permissions: roleValue?.relationships?.permissions?.map((perm: any) => perm.id) ?? null
+	permissions: roleValue?.relationships?.permissions?.map((perm: any) => perm.id) ?? null,
 });
 
 const allSelected = ref(roleValue?.relationships?.permissions?.length === allPermissions?.length);
