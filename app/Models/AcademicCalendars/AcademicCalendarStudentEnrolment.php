@@ -30,14 +30,14 @@ class AcademicCalendarStudentEnrolment extends Model
         return $this->belongsTo(AcademicCalendarClass::class, 'academic_calendar_class_id');
     }
 
-    public function studentEnrolment(): BelongsTo
+    public function studentEnrolment(): BelongsTo 
     {
         return $this->belongsTo(StudentEnrolment::class, 'student_enrolment_id');
     }
 
     public function getActivitylogOptions(): LogOptions
     {
-        return LogOptions::defaults()
+        return LogOptions::defaults() 
             ->logFillable()
             ->useLogName('AcademicCalendarStudentEnrolment')
             ->logOnlyDirty()

@@ -236,7 +236,32 @@ export const useUsers = () => {
                     errorAlert('An unexpected error happened, user could not be updated');
                 }
             },
-        });
+        }); 
+    };
+
+    const isValidating = ref(false);
+     const updateUserCredentials = async (form: InertiaForm<any>, userId: string) => {
+         const formSchema = () => {
+            const personal = ['passwordSchema'];
+            return mergeValidationSchema(schemaFields)(
+                personal,
+                schemaFields['passwordConfirmationSchema']().merge(emailUniqueSchema(`api/v1/validations/check?current_id=${userId}&key=user_email&value=`)),
+            );
+        };
+        try {
+            isValidating.value = true;
+            await formSchema().parseAsync(form);
+            form.put(
+                route('users.update-user-credentials', {user: userId}),
+                buildFormOptions(form, 'Authentication credentials successfully updated', 'An unexpected error happened, user credentals could not be updated', undefined, () => {
+                    
+                }),
+            );
+        }  catch (error: any) {
+            form.setError(error.format());
+        } finally {
+            isValidating.value =false;
+        }
     };
 
     const isLoading = ref(false);
@@ -247,6 +272,18 @@ export const useUsers = () => {
             users.value = await HttpService.get(url);
         } catch {
             errorAlert(trans('trans.load_data_failure', { data: trans_choice('trans.user', 2) }));
+        } finally {
+            isLoading.value = false;
+        }
+    };
+
+    const userPermissions = ref<ApiFilterResponse | null>(null);
+    const loadUserPermissions = async (url: string) => {
+        try {
+            isLoading.value = true;
+            userPermissions.value = await HttpService.get(url);
+        } catch {
+            errorAlert(trans('trans.load_data_failure', { data: trans_choice('trans.permission', 2) }));
         } finally {
             isLoading.value = false;
         }
@@ -268,5 +305,9 @@ export const useUsers = () => {
         updateStudentUser,
         updateStudentUserSchema,
         hasStudentRole,
+        updateUserCredentials,
+        isValidating,
+        loadUserPermissions,
+        userPermissions,
     };
 };

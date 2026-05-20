@@ -2,9 +2,18 @@
 
 namespace App\Models\Students;
 
-use App\Enums\Shared\IdTypeEnum;
 use App\Enums\Shared\AcademicLevelEnum;
-use App\Models\Shared\{Address, Contact, Country, Gender, IdType, MaritalStatus, NextOfKin, Race, Religion, Title};
+use App\Enums\Shared\IdTypeEnum;
+use App\Models\Shared\Address;
+use App\Models\Shared\Contact;
+use App\Models\Shared\Country;
+use App\Models\Shared\Gender;
+use App\Models\Shared\IdType;
+use App\Models\Shared\MaritalStatus;
+use App\Models\Shared\NextOfKin;
+use App\Models\Shared\Race;
+use App\Models\Shared\Religion;
+use App\Models\Shared\Title;
 use App\Models\Users\User;
 use App\Traits\BelongsToTenant;
 use App\Traits\Filterable;
@@ -21,13 +30,13 @@ use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
 /**
- *
  * @mixin Builder
+ *
  * @method static filter(StudentFilter $filters)
  */
 class Student extends Model
 {
-    use HasFactory, SoftDeletes, Filterable, BelongsToTenant, Paginatable, LogsActivity;
+    use BelongsToTenant, Filterable, HasFactory, LogsActivity, Paginatable, SoftDeletes;
 
     protected $fillable = [
         'tenant_id',
@@ -102,7 +111,7 @@ class Student extends Model
         return $this->hasMany(StudentEnrolment::class, 'student_id');
     }
 
-    public function currentEnrolment(): HasOne
+    public function latestEnrolment(): HasOne
     {
         return $this->hasOne(StudentEnrolment::class)->latestOfMany();
     }
@@ -132,7 +141,6 @@ class Student extends Model
         return $this->hasMany(AcademicRecord::class, 'student_id');
     }
 
-
     public function oLevelResults(): HasMany
     {
         return $this->hasMany(StudentAcademicResult::class, 'student_id')
@@ -141,8 +149,7 @@ class Student extends Model
             ->distinct('subject_id');
     }
 
-
-    public function nextOfKins(): MorphMany
+    public function nextOfKins(): MorphMany 
     {
         return $this->morphMany(NextOfKin::class, 'kinnable');
     }
@@ -152,10 +159,10 @@ class Student extends Model
         $this->attributes['id_number'] = $value ?: null;
     }
 
-   public function isZimbabwean(): bool
-{
-    return $this->id_type_id === IdTypeEnum::ZIMBABWEAN_ID_NUMBER->id();
-}
+    public function isZimbabwean(): bool
+    {
+        return $this->id_type_id === IdTypeEnum::ZIMBABWEAN_ID_NUMBER->id();
+    }
 
     public function notes(): MorphMany
     {

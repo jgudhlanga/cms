@@ -99,3 +99,9 @@ export type UserStaffParams = {
     department_ids: Array<string | undefined | null> | null;
 }
 
+export type AuthCredentialsUpdate = {
+    email: string;
+    password: string;
+    password_confirmation: string;
+}
+

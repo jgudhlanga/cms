@@ -14,6 +14,8 @@ class CourseSyllabusModuleResource extends JsonResource
             'id' => $this->resource->id,
             'attributes' => [
                 'courseSyllabusId' => $this->resource->course_syllabus_id,
+                'academicYearOptionId' => $this->resource->academic_year_option_id,
+                'academicYearOptionName' => $this->resource->academicYearOption?->name,
                 'title' => $this->resource->title,
                 'code' => $this->resource->code,
                 'durationInHours' => $this->resource->duration_in_hours,

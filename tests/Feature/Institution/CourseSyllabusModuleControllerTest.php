@@ -1,6 +1,8 @@
 <?php
 
+use App\Enums\AcademicCalendars\AcademicCalendarTypeEnum;
 use App\Http\Requests\Institution\CourseSyllabusModuleRequest;
+use App\Models\AcademicCalendars\AcademicYearOption;
 use App\Models\Institution\Course;
 use App\Models\Institution\Department;
 use App\Models\Institution\DepartmentCourse;
@@ -14,7 +16,7 @@ use App\Models\Tenants\Tenant;
 use App\Models\Users\User;
 use Illuminate\Support\Facades\Validator;
 
-function makeSyllabusModuleContext(): array
+function makeSyllabusModuleContext(?AcademicCalendarTypeEnum $calendarType = null): array
 {
     $tenant = Tenant::query()->firstOrFail();
     $user = User::factory()->create(['tenant_id' => $tenant->id]);
@@ -43,7 +45,11 @@ function makeSyllabusModuleContext(): array
         'course_id' => $course->id,
     ]);
 
-    $level = Level::factory()->create(['name' => 'Level 1']);
+    $resolvedCalendarType = $calendarType ?? AcademicCalendarTypeEnum::SEMESTER;
+    $level = Level::factory()->create([
+        'name' => 'Level 1',
+        'calendar_type' => $resolvedCalendarType,
+    ]);
     $departmentLevel = DepartmentLevel::query()->create([
         'tenant_id' => $tenant->id,
         'institution_department_id' => $institutionDepartment->id,
@@ -65,7 +71,28 @@ function makeSyllabusModuleContext(): array
         'status' => 'active',
     ]);
 
-    return compact('tenant', 'user', 'institutionDepartment', 'courseSyllabus');
+    $semesterOne = AcademicYearOption::query()->firstOrCreate(
+        ['slug' => 'semester-1'],
+        ['name' => 'Semester 1', 'description' => null],
+    );
+    $semesterTwo = AcademicYearOption::query()->firstOrCreate(
+        ['slug' => 'semester-2'],
+        ['name' => 'Semester 2', 'description' => null],
+    );
+    $termOne = AcademicYearOption::query()->firstOrCreate(
+        ['slug' => 'term-1'],
+        ['name' => 'Term 1', 'description' => null],
+    );
+
+    return compact(
+        'tenant',
+        'user',
+        'institutionDepartment',
+        'courseSyllabus',
+        'semesterOne',
+        'semesterTwo',
+        'termOne',
+    );
 }
 
 it('validates required syllabus course module fields', function () {
@@ -74,6 +101,7 @@ it('validates required syllabus course module fields', function () {
 
     expect($validator->fails())->toBeTrue();
     expect($validator->errors()->has('course_syllabus_id'))->toBeTrue();
+    expect($validator->errors()->has('academic_year_option_id'))->toBeTrue();
     expect($validator->errors()->has('title'))->toBeTrue();
     expect($validator->errors()->has('code'))->toBeTrue();
 });
@@ -94,6 +122,7 @@ it('lists only modules for the selected course syllabus', function () {
     $visible = CourseSyllabusModule::query()->create([
         'tenant_id' => $ctx['tenant']->id,
         'course_syllabus_id' => $ctx['courseSyllabus']->id,
+        'academic_year_option_id' => $ctx['semesterOne']->id,
         'title' => 'Visible Module',
         'code' => 'VM-'.uniqid(),
         'shared' => false,
@@ -102,6 +131,7 @@ it('lists only modules for the selected course syllabus', function () {
     CourseSyllabusModule::query()->create([
         'tenant_id' => $ctx['tenant']->id,
         'course_syllabus_id' => $otherSyllabus->id,
+        'academic_year_option_id' => $ctx['semesterOne']->id,
         'title' => 'Hidden Module',
         'code' => 'HM-'.uniqid(),
         'shared' => false,
@@ -122,6 +152,7 @@ it('stores a syllabus course module', function () {
 
     $response = $this->actingAs($ctx['user'])->post(route('course-syllabus-modules.store'), [
         'course_syllabus_id' => $ctx['courseSyllabus']->id,
+        'academic_year_option_id' => $ctx['semesterOne']->id,
         'title' => 'Intro Module',
         'code' => 'IM-'.uniqid(),
         'duration_in_hours' => 16,
@@ -134,7 +165,23 @@ it('stores a syllabus course module', function () {
 
     $module = CourseSyllabusModule::query()->where('title', 'Intro Module')->first();
     expect($module)->not->toBeNull()
+        ->and((int) $module?->academic_year_option_id)->toBe($ctx['semesterOne']->id)
         ->and((bool) $module?->shared)->toBeTrue();
+});
+
+it('rejects academic year option that does not match level calendar type', function () {
+    $ctx = makeSyllabusModuleContext();
+
+    $response = $this->actingAs($ctx['user'])->post(route('course-syllabus-modules.store'), [
+        'course_syllabus_id' => $ctx['courseSyllabus']->id,
+        'academic_year_option_id' => $ctx['termOne']->id,
+        'title' => 'Wrong Period Module',
+        'code' => 'WP-'.uniqid(),
+        'prerequisite_module_ids' => [],
+        'shared' => false,
+    ]);
+
+    $response->assertSessionHasErrors('academic_year_option_id');
 });
 
 it('updates a syllabus course module', function () {
@@ -143,6 +190,7 @@ it('updates a syllabus course module', function () {
     $module = CourseSyllabusModule::query()->create([
         'tenant_id' => $ctx['tenant']->id,
         'course_syllabus_id' => $ctx['courseSyllabus']->id,
+        'academic_year_option_id' => $ctx['semesterOne']->id,
         'title' => 'Old Module',
         'code' => 'OLD-'.uniqid(),
         'shared' => false,
@@ -150,6 +198,7 @@ it('updates a syllabus course module', function () {
 
     $response = $this->actingAs($ctx['user'])->put(route('course-syllabus-modules.update', $module), [
         'course_syllabus_id' => $ctx['courseSyllabus']->id,
+        'academic_year_option_id' => $ctx['semesterTwo']->id,
         'title' => 'Updated Module',
         'code' => $module->code,
         'duration_in_hours' => 24,
@@ -163,7 +212,42 @@ it('updates a syllabus course module', function () {
 
     expect($module->title)->toBe('Updated Module')
         ->and($module->duration_in_hours)->toBe(24)
+        ->and((int) $module->academic_year_option_id)->toBe($ctx['semesterTwo']->id)
         ->and((bool) $module->shared)->toBeTrue();
+});
+
+it('moves modules to another academic year option', function () {
+    $ctx = makeSyllabusModuleContext();
+
+    $moduleA = CourseSyllabusModule::query()->create([
+        'tenant_id' => $ctx['tenant']->id,
+        'course_syllabus_id' => $ctx['courseSyllabus']->id,
+        'academic_year_option_id' => $ctx['semesterOne']->id,
+        'title' => 'Module A',
+        'code' => 'MA-'.uniqid(),
+        'shared' => false,
+    ]);
+
+    $moduleB = CourseSyllabusModule::query()->create([
+        'tenant_id' => $ctx['tenant']->id,
+        'course_syllabus_id' => $ctx['courseSyllabus']->id,
+        'academic_year_option_id' => $ctx['semesterOne']->id,
+        'title' => 'Module B',
+        'code' => 'MB-'.uniqid(),
+        'shared' => false,
+    ]);
+
+    $response = $this->actingAs($ctx['user'])->post(route('course-syllabus-modules.move', [
+        'institution_department' => $ctx['institutionDepartment']->id,
+        'course_syllabus' => $ctx['courseSyllabus']->id,
+    ]), [
+        'course_syllabus_module_ids' => [$moduleA->id, $moduleB->id],
+        'target_academic_year_option_id' => $ctx['semesterTwo']->id,
+    ]);
+
+    $response->assertRedirect();
+    expect((int) $moduleA->refresh()->academic_year_option_id)->toBe($ctx['semesterTwo']->id)
+        ->and((int) $moduleB->refresh()->academic_year_option_id)->toBe($ctx['semesterTwo']->id);
 });
 
 it('forbids listing modules without module permissions', function () {
@@ -187,6 +271,7 @@ it('forbids creating modules without module create permission', function () {
 
     $response = $this->actingAs($ctx['user'])->post(route('course-syllabus-modules.store'), [
         'course_syllabus_id' => $ctx['courseSyllabus']->id,
+        'academic_year_option_id' => $ctx['semesterOne']->id,
         'title' => 'Unauthorized Module',
         'code' => 'UN-'.uniqid(),
         'shared' => false,

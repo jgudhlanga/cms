@@ -1,7 +1,9 @@
 import { DepartmentApplicationStep, DepartmentCourse, DepartmentLevel } from '@/types/department-meta-data';
-import { InstitutionDepartment } from '@/types/institution';
+import { CourseSyllabus, InstitutionDepartment } from '@/types/institution';
 import { User } from '@/types/users';
 import { SelectOption } from '@/types/utils';
+import type { Address, Contact } from '@/types/shared';
+import type { NextOfKin } from '@/types/next-of-kin';
 
 export type Student = {
     type: string;
@@ -35,13 +37,67 @@ export type Student = {
         department?: string;
         level?: string;
         course?: string;
+        modeOfStudy?: string;
+        enrolmentStatus?: string;
         createdAt?: string;
         updatedAt?: string;
         deletedAt?: string;
     };
     relationships?: {
         user: User;
+        latestEnrolment: StudentEnrolment | null;
+        mainContact: Contact,
+        mainAddress: Address,
+        nextOfKin: NextOfKin,
     };
+};
+
+export type StudentHeader = {
+    studentId: string | number;
+    studentName: string;
+    avatarUrl?: any;
+    studentNumber: string;
+    level: string;
+    course: string;
+    modeOfStudy: string;
+    enrolmentStatus: string;
+    department: string;
+    academicCalendar: string;
+    academicYearOption: string;
+};
+
+export type StudentProgrammeModule = {
+    code: string | null;
+    name: string | null;
+    durationInHours: number | null;
+    grade: string | null;
+    score: number | null;
+    lecturer: string | null;
+    type: string | null;
+    assessment: string | null;
+};
+
+export type StudentProgrammeSemester = {
+    id: string;
+    label: string | null;
+    year: string | null;
+    status: string | null;
+    module: StudentProgrammeModule[];
+};
+
+export type StudentProgramme = {
+    id: string;
+    level: string | null;
+    course: string | null;
+    courseCode: string | null;
+    calendarYear: string | null;
+    semesters: StudentProgrammeSemester[];
+};
+
+export type StudentProgrammesApiResponse = {
+    success: boolean;
+    message: string;
+    result: StudentProgramme[];
 };
 
 
@@ -239,3 +295,30 @@ export type StudentFiltersState = {
     calendar_type?: string[] | null;
     with_trashed?: boolean | null;
 };
+
+export type StudentEnrolment = {
+    type: string;
+    id: string | number;
+    attributes: {
+        instituionDepartmentId: string | number;
+        studentId: string | number;
+        studentProgramId: string | number;
+        departmentLevelId: string | number;
+        departmentCourseId: string | number;
+        modeOfStudyId: string | number;
+        academicYearOptionId: string | number;
+        academicCalendarId: string | number;
+        studentEnrolmentStatusId: string | number;
+        status: string;
+        academicYearOption: string;
+        academicCalendar: string;
+    };
+    relationships?: {
+        details: {
+            academicCalendarStudentEnrolmentId: string | number;
+            academicCalendarClassId: string | number;
+            classConfigId: string | number;
+            syllabi: Array<CourseSyllabus>;
+        };
+    };
+}

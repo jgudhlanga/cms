@@ -88,7 +88,9 @@ import {
     Hotel,
     DoorOpen, Warehouse,
     PaperclipIcon, 
-    RotateCcw
+    RotateCcw,NotebookPen,FileStack,
+    House,Mail,Phone,ArrowDownToLine,
+    
 } from 'lucide-vue-next';
 import type { Component } from 'vue';
 
@@ -182,9 +184,12 @@ const icons: Record<IconName, Component> = {
     [IconName.receipt]: ReceiptText,
     [IconName.circle_x]: CircleX,
     [IconName.paperclip]: PaperclipIcon,
-    [IconName.hostel]: Hotel,
-    [IconName.room]: DoorOpen,
-    [IconName.reset]: RotateCcw,
+    [IconName.application]: NotebookPen,
+    [IconName.files]: FileStack,
+    [IconName.house]: House,
+    [IconName.mail]: Mail,
+    [IconName.phone]: Phone,
+    [IconName.download]: ArrowDownToLine,
 };
 
 export { IconName, icons };

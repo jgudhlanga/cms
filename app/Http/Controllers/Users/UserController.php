@@ -13,6 +13,7 @@ use App\Http\Requests\Institution\StaffRequest;
 use App\Http\Requests\Students\UpdateStudentUserRequest;
 use App\Http\Requests\Users\UserRequest;
 use App\Http\Requests\Users\UpdateUserRequest;
+use App\Http\Requests\Users\UpdateUserCredentialsRequest;
 use App\Http\Resources\Users\UserResource;
 use App\Models\Users\User;
 use App\Repositories\Institution\interface\IStaffRepository;
@@ -119,6 +120,14 @@ class UserController extends Controller
             $student,
             UpdateStudentDto::fromUpdateStudentUserRequest($request),
         );
-        // return to_route('users.show', ['user' => $user->id]);
+    }
+    public function updateUserCredentials(UpdateUserCredentialsRequest $request, User $user)
+    {
+        $this->authorize('update', $user);
+        $validated = $request->validated();
+        $user->update([
+            'email' => $validated['email'],
+            'password' => $validated['password'],
+        ]);
     }
 }

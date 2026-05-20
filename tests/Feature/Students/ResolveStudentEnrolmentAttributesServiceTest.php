@@ -138,6 +138,7 @@ it('resolves semester two when the student has a completed enrolment', function 
         'department_course_id' => $sp1->department_course_id,
         'academic_year_option_id' => $semesterOneId,
         'academic_calendar_id' => $calendar->id,
+        'mode_of_study_id' => $sp1->mode_of_study_id,
         'student_enrolment_status_id' => $completedId,
     ]);
 
@@ -174,6 +175,7 @@ it('caps term progression at the last available term option', function (): void 
             'department_course_id' => $sp->department_course_id,
             'academic_year_option_id' => $termOneId,
             'academic_calendar_id' => $calendar->id,
+            'mode_of_study_id' => $sp->mode_of_study_id,
             'student_enrolment_status_id' => $completedId,
         ]);
     }

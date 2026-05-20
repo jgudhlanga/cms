@@ -13,6 +13,7 @@ return [
     'action' => 'Action|Actions',
     'academic_calendar_class_not_found' => 'No classes has been found for this academic calendar, make sure all is configured and try again.',
     'class_unit_size' => 'Per class|Per classes',
+    'class_config' => 'Class Config',
     'confirmed_student' => 'Confirmed students|Confirmed students',
     'setup' => 'Setup',
     'config' => 'Config',
@@ -34,4 +35,6 @@ return [
     'update_class_submit' => 'Save',
     'update_class_success' => 'Class was updated successfully.',
     'update_class_failed' => 'Unable to update the class. Please try again.',
+    'course_work' => 'Course work|Course work',
+    'course_work_placeholder' => 'Course work for this class will appear here.',
 ];

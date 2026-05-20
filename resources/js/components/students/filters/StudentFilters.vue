@@ -5,12 +5,11 @@ import { debounce } from 'lodash';
 
 import BaseCombobox from '@/components/core/form/combobox/BaseCombobox.vue';
 import { useInstitutionDepartments } from '@/composables/institution/useInstitutionDepartments';
-import { useLevels } from '@/composables/institution/useLevels';
 import { useModeOfStudy } from '@/composables/institution/useModeOfStudy';
 import { IconName } from '@/enums/icons';
 import HttpService from '@/services/http.service';
 import type { DepartmentLevel, DepartmentLevelCourse } from '@/types/department-meta-data';
-import type { InstitutionDepartment } from '@/types/institution';
+import type { InstitutionDepartment, Level } from '@/types/institution';
 import type { StudentFiltersState } from '@/types/students';
 import type { SelectOption } from '@/types/utils';
 
@@ -61,11 +60,16 @@ const courseSelection = ref<SelectOption[]>([]);
 const modeOfStudySelection = ref<SelectOption[]>([]);
 
 const { isLoading: departmentsLoading, departments, listDepartments } = useInstitutionDepartments();
-const { isLoading: levelsLoading, levels, listLevels } = useLevels();
 const { isLoading: modesLoading, modesOfStudy, listModesOfStudy } = useModeOfStudy();
 
 const courseOptions = ref<SelectOption[]>([]);
 const coursesLoading = ref(false);
+
+const departmentLevelsForFilter = ref<DepartmentLevel[]>([]);
+const departmentLevelsLoading = ref(false);
+
+const globalLevelOptions = ref<SelectOption[]>([]);
+const allLevelsLoading = ref(false);
 
 const departmentOptions = computed<SelectOption[]>(() => {
     const rows = departments.value?.data as InstitutionDepartment[] | undefined;
@@ -78,12 +82,80 @@ const departmentOptions = computed<SelectOption[]>(() => {
     }));
 });
 
-const levelOptions = computed<SelectOption[]>(() =>
-    levels.value.map((level) => ({
-        value: Number(level.id?.toString() ?? ''),
-        label: level?.attributes?.name ?? '',
-    })),
-);
+const levelOptions = computed<SelectOption[]>(() => {
+    const deptId = Number(departmentSelection.value?.value ?? 0);
+    if (deptId > 0) {
+        const rows = departmentLevelsForFilter.value;
+        if (!rows.length) {
+            return [];
+        }
+        const byLevelId = new Map<number, { label: string; position: number }>();
+        for (const dl of rows) {
+            const levelId = Number(dl.attributes?.levelId ?? 0);
+            if (levelId <= 0) {
+                continue;
+            }
+            const position = Number(dl.attributes?.levelPosition ?? 0);
+            const label = dl.attributes?.level ?? '';
+            const existing = byLevelId.get(levelId);
+            if (!existing || position < existing.position) {
+                byLevelId.set(levelId, { label: label || existing?.label || '', position });
+            }
+        }
+        return [...byLevelId.entries()]
+            .sort(([, a], [, b]) => a.position - b.position)
+            .map(([value, { label }]) => ({ value, label }));
+    }
+    return globalLevelOptions.value;
+});
+
+const levelsLoading = computed(() => {
+    const deptId = Number(departmentSelection.value?.value ?? 0);
+    return deptId > 0 ? departmentLevelsLoading.value : allLevelsLoading.value;
+});
+
+async function loadAllLevelsForFilter(search = ''): Promise<void> {
+    allLevelsLoading.value = true;
+    try {
+        const res = await HttpService.get(
+            route('v1.levels.index', {
+                ...(search.trim() ? { search: search.trim() } : {}),
+                per_page: 100,
+            }),
+        );
+        const rows = unwrapList<Level>(res);
+        const sorted = [...rows].sort((a, b) => {
+            const pa = Number(a.attributes?.position ?? 0);
+            const pb = Number(b.attributes?.position ?? 0);
+            if (pa !== pb) {
+                return pa - pb;
+            }
+            return String(a.attributes?.name ?? '').localeCompare(String(b.attributes?.name ?? ''));
+        });
+        globalLevelOptions.value = sorted
+            .map((item) => ({
+                value: Number(item.id ?? 0),
+                label: item.attributes?.name ?? '',
+            }))
+            .filter((o) => o.value > 0 && o.label);
+    } finally {
+        allLevelsLoading.value = false;
+    }
+}
+
+async function loadDepartmentLevelsForFilter(deptId: number): Promise<void> {
+    if (!deptId || deptId <= 0) {
+        departmentLevelsForFilter.value = [];
+        return;
+    }
+    departmentLevelsLoading.value = true;
+    try {
+        const metaRes = await HttpService.get(route('v1.department-metadata.levels', { institution_department: deptId }));
+        departmentLevelsForFilter.value = unwrapMetadataDepartmentLevels(metaRes);
+    } finally {
+        departmentLevelsLoading.value = false;
+    }
+}
 
 const modeOfStudyOptions = computed<SelectOption[]>(() => {
     const rows = modesOfStudy.value ?? [];
@@ -163,22 +235,28 @@ const debouncedLoadCourses = debounce(() => {
 
 watch([selectedDepartmentIds, selectedLevelIds], debouncedLoadCourses);
 
-watch(departmentSelection, () => {
+watch(departmentSelection, async () => {
     levelSelection.value = null;
     courseSelection.value = [];
     courseOptions.value = [];
+    const deptId = Number(departmentSelection.value?.value ?? 0);
+    await loadDepartmentLevelsForFilter(deptId);
 });
 
 const whenDepartmentSearch = debounce(async (q: string) => {
     await listDepartments(route('v1.institution-departments.index', { is_academic: 1, page_size: 'all', search: q }));
 }, 600);
 
-const whenLevelSearch = debounce(async (q: string) => {
-    await listLevels(q);
-}, 600);
-
 const whenModeSearch = debounce(async (q: string) => {
     await listModesOfStudy(q);
+}, 600);
+
+const whenLevelSearch = debounce(async (q: string) => {
+    const deptId = Number(departmentSelection.value?.value ?? 0);
+    if (deptId > 0) {
+        return;
+    }
+    await loadAllLevelsForFilter(q);
 }, 600);
 
 const toIdArray = (rows: SelectOption[]): number[] | undefined => {
@@ -215,11 +293,21 @@ watch(
     { deep: true },
 );
 
+const resetFilters = () => {
+    name.value = '';
+    search.value = '';
+    departmentSelection.value = null;
+    levelSelection.value = null;
+    courseSelection.value = [];
+    modeOfStudySelection.value = [];
+    departmentLevelsForFilter.value = [];
+};
+
 onMounted(async () => {
     await Promise.all([
         listDepartments(route('v1.institution-departments.index', { is_academic: 1, page_size: 'all' })),
-        listLevels(),
         listModesOfStudy(),
+        loadAllLevelsForFilter(),
     ]);
 });
 </script>
@@ -260,7 +348,7 @@ onMounted(async () => {
         </div>
 
         <!-- Row 2: three equal columns on md+ -->
-        <div class="border-border grid min-w-0 grid-cols-1 gap-3 border-t pt-4 md:grid-cols-3 md:gap-4">
+        <div class="grid min-w-0 grid-cols-1 gap-3 md:grid-cols-3 md:gap-4">
             <div class="min-w-0">
                 <BaseCombobox
                     v-model="departmentSelection"
@@ -292,6 +380,9 @@ onMounted(async () => {
                     class="rounded-full"
                 />
             </div>
+        </div>
+        <div class="flex justify-end">
+            <ResetButton @click="resetFilters" />
         </div>
     </div>
 </template>

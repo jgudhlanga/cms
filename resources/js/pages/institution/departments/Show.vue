@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useInstitution } from '@/composables/institution/useInstitution';
 import { icons } from '@/lib/icons';
 import { hasAbility } from '@/lib/permissions';
-import StudentsPerClass from '@/pages/institution/academicCalendars/partials/StudentsPerClass.vue';
+import ClassConfig from '@/pages/institution/academicCalendars/partials/ClassConfig.vue';
 import LinkApplicationStepsToDepartment from '@/pages/institution/departments/partials/LinkApplicationStepsToDepartment.vue';
 import LinkCoursesToDepartment from '@/pages/institution/departments/partials/LinkCoursesToDepartment.vue';
 import LinkLevelsToDepartment from '@/pages/institution/departments/partials/LinkLevelsToDepartment.vue';
@@ -94,6 +94,6 @@ const visibleTabs = computed(() => {
         <LinkCoursesToDepartment :institution-department-id="institutionDepartmentId" />
         <LinkApplicationStepsToDepartment :institution-department-id="institutionDepartmentId" />
         <StepActions :institution-department-id="institutionDepartmentId" />
-        <StudentsPerClass :institution-department-id="institutionDepartmentId" />
+        <ClassConfig :institution-department-id="institutionDepartmentId" />
     </PageContainer>
 </template>

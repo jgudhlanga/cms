@@ -39,7 +39,7 @@ export const useRolePermissions = (role?: Role) => {
             },
             {
                 header: trans('trans.assigned'),
-                accessorKey: 'assigned',
+                accessorKey: 'assigned', 
                 meta: { align: 'right' },
                 cell: ({ row }: { row: { original: Permission } }) => {
                     const allocated = isAllocated(row.original);

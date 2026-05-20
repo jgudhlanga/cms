@@ -9,6 +9,7 @@ Route::middleware('auth')->group(function () {
     Route::post('users/store-staff-user', [UserController::class, 'storeStaffUser'])->name('users.store-staff-user');
     Route::put('users/{user}/update-staff-user', [UserController::class, 'updateStaffUser'])->name('users.update-staff-user');
     Route::put('users/{user}/update-student-user', [UserController::class, 'updateStudentUser'])->name('users.update-student-user');
+    Route::put('users/{user}/update-user-credentials', [UserController::class, 'updateUserCredentials'])->name('users.update-user-credentials');
     Route::resource('users', UserController::class)->names('users');
 });
 

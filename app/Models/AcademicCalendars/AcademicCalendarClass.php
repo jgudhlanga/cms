@@ -29,6 +29,7 @@ class AcademicCalendarClass extends Model
         return $this->belongsTo(ClassConfig::class, 'class_config_id');
     }
 
+
     public function studentEnrolments(): HasMany
     {
         return $this->hasMany(AcademicCalendarStudentEnrolment::class, 'academic_calendar_class_id');

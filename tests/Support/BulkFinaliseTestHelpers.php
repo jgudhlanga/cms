@@ -8,6 +8,7 @@ use App\Models\Institution\Department;
 use App\Models\Institution\DepartmentApplicationStep;
 use App\Models\Institution\DepartmentCourse;
 use App\Models\Institution\DepartmentLevel;
+use App\Models\Institution\DepartmentLevelCourse;
 use App\Models\Institution\InstitutionDepartment;
 use App\Models\Institution\IntakePeriod;
 use App\Models\Institution\Level;
@@ -49,6 +50,10 @@ if (! function_exists('createVerifiedStudentProgram')) {
             'tenant_id' => $tenant->id,
             'institution_department_id' => $institutionDepartment->id,
             'level_id' => $level->id,
+        ]);
+        DepartmentLevelCourse::query()->create([
+            'department_course_id' => $departmentCourse->id,
+            'department_level_id' => $departmentLevel->id,
         ]);
         $modeOfStudy = ModeOfStudy::query()->firstOrCreate(['name' => 'Full Time']);
         $intakePeriod = IntakePeriod::query()->create([
