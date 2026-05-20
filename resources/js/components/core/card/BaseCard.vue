@@ -9,7 +9,7 @@ interface Props {
 }
 
 withDefaults(defineProps<Props>(), {
-    colorVariant: 'primary',
+    colorVariant: 'black',
 })
 </script>
 

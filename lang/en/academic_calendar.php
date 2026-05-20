@@ -35,4 +35,6 @@ return [
     'update_class_submit' => 'Save',
     'update_class_success' => 'Class was updated successfully.',
     'update_class_failed' => 'Unable to update the class. Please try again.',
+    'course_work' => 'Course work|Course work',
+    'course_work_placeholder' => 'Course work for this class will appear here.',
 ];

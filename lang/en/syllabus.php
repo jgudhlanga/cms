@@ -18,4 +18,13 @@ return [
     'nql_level' => 'NQL level',
     'prerequisite_modules' => 'Prerequisite modules',
     'shared' => 'Shared',
+    'calendar_year_option' => 'Period|Periods',
+    'move_modules' => 'Move',
+    'move_modules_modal_title' => 'Move modules to another period',
+    'move_modules_select_target' => 'Select target period',
+    'move_modules_submit' => 'Move',
+    'move_modules_success' => 'Modules were moved successfully.',
+    'move_modules_failed' => 'Unable to move modules. Please try again.',
+    'move_modules_not_all_on_syllabus' => 'One or more modules do not belong to this syllabus.',
+    'move_modules_same_period' => 'Choose a different period than the current one.',
 ];

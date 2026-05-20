@@ -182,8 +182,8 @@ test('department classes page returns generation context and preview classes', f
     expect(data_get($page, 'props.generationContext.newStudentGenderCounts.female'))->toBeInt();
     expect(data_get($page, 'props.generationContext.newStudentGenderCounts.unknown'))->toBeInt();
     expect(data_get($page, 'props.previewClasses'))->toHaveCount(2);
-    expect(data_get($page, 'props.previewClasses.0.name'))->toBe('Level 1 - Full Time - 1');
-    expect(data_get($page, 'props.previewClasses.1.name'))->toBe('Level 1 - Full Time - 2');
+    expect(data_get($page, 'props.previewClasses.0.name'))->toBe('Level 1 - Full Time - 1 - '.$context['classConfig']->id);
+    expect(data_get($page, 'props.previewClasses.1.name'))->toBe('Level 1 - Full Time - 2 - '.$context['classConfig']->id);
     expect(data_get($page, 'props.previewClasses.0.genderCounts.male'))->toBeInt();
     expect(data_get($page, 'props.previewClasses.0.genderCounts.female'))->toBeInt();
     expect(data_get($page, 'props.previewClasses.0.genderCounts.unknown'))->toBeInt();

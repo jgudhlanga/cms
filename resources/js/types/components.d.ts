@@ -55,6 +55,7 @@ declare module 'vue' {
     BackNavigationButton: typeof import('./../components/core/button/BackNavigationButton.vue')['default']
     Badge: typeof import('./../components/ui/badge/Badge.vue')['default']
     BaseAccordion: typeof import('./../components/core/accordion/BaseAccordion.vue')['default']
+    BaseAccordionItem: typeof import('./../components/core/accordion/BaseAccordionItem.vue')['default']
     BaseAlert: typeof import('./../components/core/alert/BaseAlert.vue')['default']
     BaseAnchor: typeof import('./../components/core/util/BaseAnchor.vue')['default']
     BaseButton: typeof import('./../components/core/button/BaseButton.vue')['default']

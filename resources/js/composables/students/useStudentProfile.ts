@@ -23,7 +23,7 @@ export const useStudentProfile = () => {
             {
                 transLabel: () => trans_choice('students.program', 2),
                 value: 'programs',
-                component: h(Programs),
+                component: h(Programs, { student }),
                 icon: IconName.graduation_cape,
             },
             {

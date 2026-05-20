@@ -3,6 +3,7 @@ import BaseInput from '@/components/core/form/text/BaseInput.vue';
 import BaseSelect from '@/components/core/form/select/BaseSelect.vue';
 import BaseModal from '@/components/core/modal/BaseModal.vue';
 import { useAcademicCalendars } from '@/composables/academicCalendars/useAcademicCalendars';
+import { useAcademicYearOptionsByCalendarType } from '@/composables/academicCalendars/useAcademicYearOptionsByCalendarType';
 import { errorAlert, getModalEdit } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
 import { clearFormErrors } from '@/lib/forms';
@@ -35,18 +36,10 @@ const form = useForm<AcademicClassConfigPayload>({
 
 const modalStore = useModalStore();
 
-const yearOptions = ref<SelectOption[]>([]);
-const yearOptionsLoading = ref(false);
+const { yearOptions, yearOptionsLoading, loadYearOptions } = useAcademicYearOptionsByCalendarType();
 
 const syllabusOptions = ref<SelectOption[]>([]);
 const syllabusOptionsLoading = ref(false);
-
-type AcademicYearOptionApiRow = {
-    id: number;
-    attributes: {
-        name: string;
-    };
-};
 
 type CourseSyllabusApiRow = {
     id: number | string;
@@ -54,28 +47,6 @@ type CourseSyllabusApiRow = {
         code: string;
         title: string;
     };
-};
-
-/** When level has no calendar type, semester options are loaded (matches backend default). */
-const loadYearOptions = async (calendarType: string | null | undefined): Promise<void> => {
-    yearOptionsLoading.value = true;
-    yearOptions.value = [];
-    const ct = (calendarType ?? 'semester').trim() || 'semester';
-    try {
-        const base = route('v1.academic-year-options.index');
-        const sep = base.includes('?') ? '&' : '?';
-        const url = `${base}${sep}calendar_type=${encodeURIComponent(ct)}&page_size=all`;
-        const body = await HttpService.get(url);
-        const rows = (body?.data ?? []) as AcademicYearOptionApiRow[];
-        yearOptions.value = rows.map((row) => ({
-            value: String(row.id),
-            label: row.attributes?.name ?? '',
-        }));
-    } catch {
-        yearOptions.value = [];
-    } finally {
-        yearOptionsLoading.value = false;
-    }
 };
 
 const loadSyllabusOptions = async (

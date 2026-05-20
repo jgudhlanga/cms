@@ -57,6 +57,10 @@ Route::prefix('institution')->middleware('auth')->group(function () {
         'departments/course-syllabus-modules/{course_syllabus_module}',
         [CourseSyllabusModuleController::class, 'update']
     )->name('course-syllabus-modules.update');
+    Route::post(
+        'departments/{institution_department}/course-syllabuses/{course_syllabus}/modules/move',
+        [CourseSyllabusModuleController::class, 'moveModules']
+    )->name('course-syllabus-modules.move');
     // ==================================== DEPARTMENT APPLICATION STEPS ================================================
     Route::post('departments/{institution_department}/sync-application-steps', [DepartmentApplicationStepController::class, 'syncApplicationSteps'])->name('department-application-steps.sync');
     Route::get('departments/{department_application_step}/application-steps/show', [DepartmentApplicationStepController::class, 'show'])->name('department-application-steps.show');

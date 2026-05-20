@@ -2,6 +2,7 @@
 
 namespace App\Models\Institution\Syllabus;
 
+use App\Models\AcademicCalendars\AcademicYearOption;
 use App\Traits\BelongsToTenant;
 use App\Traits\Filterable;
 use App\Traits\Paginatable;
@@ -27,6 +28,7 @@ class CourseSyllabusModule extends Model
     protected $fillable = [
         'tenant_id',
         'course_syllabus_id',
+        'academic_year_option_id',
         'title',
         'code',
         'duration_in_hours',
@@ -46,6 +48,11 @@ class CourseSyllabusModule extends Model
     public function courseSyllabus(): BelongsTo
     {
         return $this->belongsTo(CourseSyllabus::class, 'course_syllabus_id');
+    }
+
+    public function academicYearOption(): BelongsTo
+    {
+        return $this->belongsTo(AcademicYearOption::class, 'academic_year_option_id');
     }
 
     public function getActivitylogOptions(): LogOptions

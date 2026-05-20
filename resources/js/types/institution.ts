@@ -198,6 +198,7 @@ export type CourseSyllabus = {
         institutionDepartmentId: string | number;
         departmentLevelCourseId: string | number;
         level: string;
+        calendarType?: 'term' | 'semester' | 'abma' | null;
         course?: string;
         title: string;
         code: string;
@@ -227,6 +228,8 @@ export type CourseSyllabusModule = {
     id?: string;
     attributes: {
         courseSyllabusId: string | number;
+        academicYearOptionId?: string | number | null;
+        academicYearOptionName?: string | null;
         title: string;
         code: string;
         durationInHours?: number | null;
@@ -241,6 +244,7 @@ export type CourseSyllabusModule = {
 
 export type CourseSyllabusModuleParams = {
     course_syllabus_id: number | null;
+    academic_year_option_id: string | number | null;
     title: string;
     code: string;
     duration_in_hours: number | null;

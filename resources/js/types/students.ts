@@ -64,7 +64,41 @@ export type StudentHeader = {
     department: string;
     academicCalendar: string;
     academicYearOption: string;
-}
+};
+
+export type StudentProgrammeModule = {
+    code: string | null;
+    name: string | null;
+    durationInHours: number | null;
+    grade: string | null;
+    score: number | null;
+    lecturer: string | null;
+    type: string | null;
+    assessment: string | null;
+};
+
+export type StudentProgrammeSemester = {
+    id: string;
+    label: string | null;
+    year: string | null;
+    status: string | null;
+    module: StudentProgrammeModule[];
+};
+
+export type StudentProgramme = {
+    id: string;
+    level: string | null;
+    course: string | null;
+    courseCode: string | null;
+    calendarYear: string | null;
+    semesters: StudentProgrammeSemester[];
+};
+
+export type StudentProgrammesApiResponse = {
+    success: boolean;
+    message: string;
+    result: StudentProgramme[];
+};
 
 
 export type PersonalDetailView = {

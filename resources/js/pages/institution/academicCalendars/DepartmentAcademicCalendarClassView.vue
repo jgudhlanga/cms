@@ -3,6 +3,7 @@ import AcademicCalendarClassNavComboSelect from '@/components/academicCalendars/
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import { EDIT_CLASS_MODAL, useAcademicCalendarClassEdit } from '@/composables/academicCalendars/useAcademicCalendarClassEdit';
 import { MOVE_STUDENTS_MODAL, useAcademicCalendarClassMoveStudents } from '@/composables/academicCalendars/useAcademicCalendarClassMoveStudents';
+import { useAcademicCalendarClassStudentFilters } from '@/composables/academicCalendars/useAcademicCalendarClassStudentFilters';
 import { useAcademicCalendarClassStudentSelection } from '@/composables/academicCalendars/useAcademicCalendarClassStudentSelection';
 import { useAcademicCalendarClassStudents } from '@/composables/academicCalendars/useAcademicCalendarClassStudents';
 import { useDepartmentAcademicCalendarClassNavigation } from '@/composables/academicCalendars/useDepartmentAcademicCalendarClassNavigation';
@@ -16,7 +17,9 @@ import {
 import { DepartmentCourse, DepartmentLevel } from '@/types/department-meta-data';
 import { InstitutionDepartment, ModeOfStudy } from '@/types/institution';
 import { Head } from '@inertiajs/vue3';
-import { computed, toRefs } from 'vue';
+import { computed, toRefs, watch } from 'vue';
+import AcademicCalendarClassCourseWorkPlaceholder from './partials/AcademicCalendarClassCourseWorkPlaceholder.vue';
+import AcademicCalendarClassStudentFilters from './partials/AcademicCalendarClassStudentFilters.vue';
 import AcademicCalendarClassHeaderCard from './partials/AcademicCalendarClassHeaderCard.vue';
 import AcademicCalendarClassStudentsTable from './partials/AcademicCalendarClassStudentsTable.vue';
 import EditAcademicCalendarClassModal from './partials/EditAcademicCalendarClassModal.vue';
@@ -57,8 +60,15 @@ const { departmentClassesUrl, moveStudentsUrl, updateClassUrl, breadcrumbs } = u
 
 const { sortedStudents } = useAcademicCalendarClassStudents(academicCalendarClass);
 
+const { filters, filteredStudents, onFiltersChange } = useAcademicCalendarClassStudentFilters(sortedStudents);
+
 const { selectedStudentEnrolmentIds, selectAllChangeClassModel, toggleSelectAllChangeClassFromRow, onSelectAllRowKeydown } =
-    useAcademicCalendarClassStudentSelection(sortedStudents);
+    useAcademicCalendarClassStudentSelection(filteredStudents);
+
+watch(filteredStudents, (students) => {
+    const visibleIds = new Set(students.map((student) => student.studentEnrolmentId));
+    selectedStudentEnrolmentIds.value = selectedStudentEnrolmentIds.value.filter((id) => visibleIds.has(id));
+});
 
 const { moveForm, openMoveStudentsModal, submitMoveStudents, resetMoveFormOnModalClose } = useAcademicCalendarClassMoveStudents(
     moveStudentsUrl,
@@ -93,16 +103,29 @@ const canMoveStudents = computed(() => hasAbility(['update:academic-calendar-stu
                 :can-update="canUpdateAcademicCalendarClass"
                 @edit="openEditClassModal"
             />
-            <AcademicCalendarClassStudentsTable
-                v-model:selected-student-enrolment-ids="selectedStudentEnrolmentIds"
-                v-model:select-all-change-class-model="selectAllChangeClassModel"
-                :sorted-students="sortedStudents"
-                :can-move-students="canMoveStudents"
-                :move-target-classes="moveTargetClasses"
-                @toggle-select-all="toggleSelectAllChangeClassFromRow"
-                @select-all-keydown="onSelectAllRowKeydown"
-                @open-move-students="openMoveStudentsModal"
-            />
+            <BaseAccordion :default-value="['course-work']">
+                <BaseAccordionItem value="students" :title="$tChoice('trans.student', 2)">
+                    <AcademicCalendarClassStudentFilters :filters="filters" @change="onFiltersChange" />
+                    <Empty
+                        v-if="filteredStudents.length === 0 && sortedStudents.length > 0"
+                        :message="$t('trans.no_data')"
+                    />
+                    <AcademicCalendarClassStudentsTable
+                        v-else
+                        v-model:selected-student-enrolment-ids="selectedStudentEnrolmentIds"
+                        v-model:select-all-change-class-model="selectAllChangeClassModel"
+                        :sorted-students="filteredStudents"
+                        :can-move-students="canMoveStudents"
+                        :move-target-classes="moveTargetClasses"
+                        @toggle-select-all="toggleSelectAllChangeClassFromRow"
+                        @select-all-keydown="onSelectAllRowKeydown"
+                        @open-move-students="openMoveStudentsModal"
+                    />
+                </BaseAccordionItem>
+                <BaseAccordionItem value="course-work" :title="$tChoice('academic_calendar.course_work', 1)">
+                    <AcademicCalendarClassCourseWorkPlaceholder />
+                </BaseAccordionItem>
+            </BaseAccordion>
             <EditAcademicCalendarClassModal
                 v-if="canUpdateAcademicCalendarClass"
                 v-model:form="editClassForm"

@@ -14,7 +14,7 @@ const props = withDefaults(
         widthClass?: string;
     }>(),
     {
-        widthClass: 'max-w-md',
+        widthClass: 'w-full min-w-0 flex-1',
     },
 );
 
@@ -57,7 +57,7 @@ watch(selectedClass, (next) => {
 </script>
 
 <template>
-    <div v-if="classes.length > 1" class="flex">
+    <div v-if="classes.length > 1" class="w-full min-w-0">
         <BaseCombobox
             v-model="selectedClass"
             :label="$t('academic_calendar.change_class')"

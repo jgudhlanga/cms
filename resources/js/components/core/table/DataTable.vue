@@ -96,9 +96,9 @@ const showToolBar = computed(() => {
         </div>
         <div class="text-muted-foreground mt-3 mb-6 flex w-full justify-between text-sm">
             <div class="flex  flex-1 items-center space-x-3">
+                <slot name="head-left" />
                 <Search v-model="filter" v-if="(searchUrl || apiFetchAction) && !hideBuiltInSearch" />
                 <Archived v-if="showArchivedFilter" :handle-archived="handleArchived" :trashed="+trashed" :trashed-count="trashedCount" />
-                <slot name="head-left" />
             </div>
             <div v-if="showToolBar" class="flex items-center justify-end space-x-3">
                 <ColumnFilter v-if="showColumnFilters" :variant="ColorVariant.primary_outline" :table="table" :toggleColumnVisibility="toggleColumnVisibility" />

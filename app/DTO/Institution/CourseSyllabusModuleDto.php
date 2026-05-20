@@ -8,6 +8,7 @@ readonly class CourseSyllabusModuleDto
 {
     public function __construct(
         public int $course_syllabus_id,
+        public int $academic_year_option_id,
         public string $title,
         public string $code,
         public ?int $duration_in_hours,
@@ -21,6 +22,7 @@ readonly class CourseSyllabusModuleDto
     {
         return new self(
             course_syllabus_id: (int) $request->integer('course_syllabus_id'),
+            academic_year_option_id: (int) $request->integer('academic_year_option_id'),
             title: $request->string('title')->toString(),
             code: $request->string('code')->toString(),
             duration_in_hours: $request->filled('duration_in_hours') ? $request->integer('duration_in_hours') : null,

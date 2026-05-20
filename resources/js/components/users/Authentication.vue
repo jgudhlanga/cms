@@ -3,7 +3,6 @@ import { BaseButton } from '@/components/core/button';
 import BaseCard from '@/components/core/card/BaseCard.vue';
 import { BaseInput } from '@/components/core/form';
 import EmailAddress from '@/components/core/form/text/EmailAddress.vue';
-import { useRolePermissions } from '@/composables/acl/useRolePermissions';
 import { useUsers } from '@/composables/users/useUsers';
 import { ColorVariant } from '@/enums/colors';
 import { TextFieldType } from '@/enums/inputs';
@@ -26,7 +25,6 @@ const form = useForm<AuthCredentialsUpdate>({
 });
 
 const { updateUserCredentials, isValidating, loadUserPermissions, userPermissions, isLoading } = useUsers();
-const { groupPermissionsByModule } = useRolePermissions();
 const passwordMatches = ref(true);
 
 const submitForm = () => {

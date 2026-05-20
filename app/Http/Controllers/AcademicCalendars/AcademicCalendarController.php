@@ -114,14 +114,16 @@ class AcademicCalendarController extends Controller
         $assignedStudentEnrolmentIds = $this->resolveAssignedStudentEnrolmentIds($classConfig);
         $unassignedFinalStudentPrograms = $this->filterUnassignedFinalStudentPrograms($finalStudentPrograms, $assignedStudentEnrolmentIds);
         $existingClasses = $this->resolveExistingClassesForAllocation($classConfig);
-        $classNumberOffset = $this->resolveClassNumberOffset($existingClasses->pluck('name'), $this->resolveClassNamePrefix($level), $mode);
+        $classNamePrefix = $this->resolveClassNamePrefix($level);
+        $classNumberOffset = $this->resolveClassNumberOffset($existingClasses->pluck('name'), $classNamePrefix, $mode, $classConfig);
         $previewClasses = $this->buildPreviewClasses(
             $unassignedFinalStudentPrograms,
             (int) ($classConfig?->students_per_class ?? 0),
-            $this->resolveClassNamePrefix($level),
+            $classNamePrefix,
             [],
             $mode,
-            $classNumberOffset
+            $classNumberOffset,
+            $classConfig
         );
         $previewClasses = [
             ...$this->resolveExistingClassPreviews($classConfig),
@@ -367,14 +369,16 @@ class AcademicCalendarController extends Controller
                 return;
             }
 
-            $classNumberOffset = $this->resolveClassNumberOffset($existingClasses->pluck('name'), $this->resolveClassNamePrefix($level), $mode);
+            $classNamePrefix = $this->resolveClassNamePrefix($level);
+            $classNumberOffset = $this->resolveClassNumberOffset($existingClasses->pluck('name'), $classNamePrefix, $mode, $classConfig);
             $newPreviewClasses = $this->buildPreviewClasses(
                 $remainingStudents,
                 (int) $validated['students_per_class'],
-                $this->resolveClassNamePrefix($level),
+                $classNamePrefix,
                 [],
                 $mode,
-                $classNumberOffset
+                $classNumberOffset,
+                $classConfig
             );
 
             foreach ($newPreviewClasses as $previewClass) {
@@ -462,7 +466,8 @@ class AcademicCalendarController extends Controller
         string $classNamePrefix = 'Class',
         array $existingClassMap = [],
         ?ModeOfStudy $mode = null,
-        int $classNumberOffset = 0
+        int $classNumberOffset = 0,
+        ?ClassConfig $classConfig = null,
     ): array {
         if ($studentsPerClass < 1 || $finalStudentPrograms->isEmpty()) {
             return [];
@@ -479,13 +484,17 @@ class AcademicCalendarController extends Controller
         );
 
         return $chunks
-            ->map(function (Collection $chunk, int $index) use ($nameBase, $existingClassMap, $classNumberOffset): array {
+            ->map(function (Collection $chunk, int $index) use ($nameBase, $existingClassMap, $classNumberOffset, $classConfig): array {
                 $genderCounts = [
                     'male' => 0,
                     'female' => 0,
                     'unknown' => 0,
                 ];
                 $className = $nameBase.' - '.($index + 1 + $classNumberOffset);
+
+                if ($classConfig instanceof ClassConfig) {
+                    $className .= ' - '.$classConfig->id;
+                }
 
                 foreach ($chunk as $student) {
                     $normalizedGender = $this->normalizeGenderValue($student->gender_title ?? null);
@@ -554,73 +563,114 @@ class AcademicCalendarController extends Controller
     private function splitStudentsIntoBalancedChunks(Collection $students, int $studentsPerClass): Collection
     {
         $maleStudents = $students
-            ->filter(fn (mixed $student): bool => $this->normalizeGenderValue($student->gender_title ?? null) === GenderEnum::MALE->value)
+            ->filter(fn ($student) =>
+                $this->normalizeGenderValue($student->gender_title ?? null) === GenderEnum::MALE->value
+            )
             ->values();
+    
         $femaleStudents = $students
-            ->filter(fn (mixed $student): bool => $this->normalizeGenderValue($student->gender_title ?? null) === GenderEnum::FEMALE->value)
+            ->filter(fn ($student) =>
+                $this->normalizeGenderValue($student->gender_title ?? null) === GenderEnum::FEMALE->value
+            )
             ->values();
+    
         $unknownGenderStudents = $students
-            ->filter(fn (mixed $student): bool => $this->normalizeGenderValue($student->gender_title ?? null) === null)
+            ->filter(fn ($student) =>
+                $this->normalizeGenderValue($student->gender_title ?? null) === null
+            )
             ->values();
+    
+        $totalStudents = $students->count();
+        $totalClasses = (int) ceil($totalStudents / $studentsPerClass);
+    
         $classChunks = collect();
-
-        while ($maleStudents->isNotEmpty() || $femaleStudents->isNotEmpty() || $unknownGenderStudents->isNotEmpty()) {
-            $remainingStudents = $maleStudents->count() + $femaleStudents->count() + $unknownGenderStudents->count();
+    
+        for ($classIndex = 0; $classIndex < $totalClasses; $classIndex++) {
+    
+            $remainingClasses = $totalClasses - $classIndex;
+    
+            $remainingMale = $maleStudents->count();
+            $remainingFemale = $femaleStudents->count();
+            $remainingUnknown = $unknownGenderStudents->count();
+    
+            $remainingStudents = $remainingMale + $remainingFemale + $remainingUnknown;
+    
             $capacity = min($studentsPerClass, $remainingStudents);
-            $classStudents = collect();
-            $hasBothGenders = $maleStudents->isNotEmpty() && $femaleStudents->isNotEmpty();
-
-            if ($hasBothGenders) {
-                $maleTarget = (int) floor($capacity / 2);
-                $femaleTarget = $capacity - $maleTarget;
-
-                $maleCount = min($maleTarget, $maleStudents->count());
-                $femaleCount = min($femaleTarget, $femaleStudents->count());
-                $remainingCapacity = $capacity - ($maleCount + $femaleCount);
-
-                if ($remainingCapacity > 0 && $maleStudents->count() > $maleCount) {
-                    $extraMaleCount = min($remainingCapacity, $maleStudents->count() - $maleCount);
-                    $maleCount += $extraMaleCount;
-                    $remainingCapacity -= $extraMaleCount;
-                }
-
-                if ($remainingCapacity > 0 && $femaleStudents->count() > $femaleCount) {
-                    $extraFemaleCount = min($remainingCapacity, $femaleStudents->count() - $femaleCount);
-                    $femaleCount += $extraFemaleCount;
-                    $remainingCapacity -= $extraFemaleCount;
-                }
-
-                $classStudents = $classStudents
-                    ->merge($maleStudents->splice(0, $maleCount))
-                    ->merge($femaleStudents->splice(0, $femaleCount));
-            }
-
-            if ($classStudents->count() < $capacity) {
-                $missingSeats = $capacity - $classStudents->count();
-
-                if ($maleStudents->isNotEmpty()) {
-                    $maleFillCount = min($missingSeats, $maleStudents->count());
-                    $classStudents = $classStudents->merge($maleStudents->splice(0, $maleFillCount));
-                    $missingSeats -= $maleFillCount;
-                }
-
-                if ($missingSeats > 0 && $femaleStudents->isNotEmpty()) {
-                    $femaleFillCount = min($missingSeats, $femaleStudents->count());
-                    $classStudents = $classStudents->merge($femaleStudents->splice(0, $femaleFillCount));
-                    $missingSeats -= $femaleFillCount;
-                }
-
-                if ($missingSeats > 0 && $unknownGenderStudents->isNotEmpty()) {
-                    $classStudents = $classStudents->merge($unknownGenderStudents->splice(0, $missingSeats));
+    
+            /*
+            |--------------------------------------------------------------------------
+            | Calculate fair proportional distribution
+            |--------------------------------------------------------------------------
+            */
+    
+            $maleTarget = (int) round($remainingMale / $remainingClasses);
+            $femaleTarget = (int) round($remainingFemale / $remainingClasses);
+    
+            /*
+            |--------------------------------------------------------------------------
+            | Ensure we do not exceed class capacity
+            |--------------------------------------------------------------------------
+            */
+    
+            $allocated = $maleTarget + $femaleTarget;
+    
+            if ($allocated > $capacity) {
+    
+                $overflow = $allocated - $capacity;
+    
+                if ($maleTarget >= $femaleTarget) {
+                    $maleTarget -= $overflow;
+                } else {
+                    $femaleTarget -= $overflow;
                 }
             }
-
+    
+            $classStudents = collect()
+                ->merge($maleStudents->splice(0, min($maleTarget, $remainingMale)))
+                ->merge($femaleStudents->splice(0, min($femaleTarget, $remainingFemale)));
+    
+            /*
+            |--------------------------------------------------------------------------
+            | Fill remaining seats fairly
+            |--------------------------------------------------------------------------
+            */
+    
+            $missingSeats = $capacity - $classStudents->count();
+    
+            if ($missingSeats > 0 && $maleStudents->isNotEmpty()) {
+    
+                $take = min($missingSeats, $maleStudents->count());
+    
+                $classStudents = $classStudents->merge(
+                    $maleStudents->splice(0, $take)
+                );
+    
+                $missingSeats -= $take;
+            }
+    
+            if ($missingSeats > 0 && $femaleStudents->isNotEmpty()) {
+    
+                $take = min($missingSeats, $femaleStudents->count());
+    
+                $classStudents = $classStudents->merge(
+                    $femaleStudents->splice(0, $take)
+                );
+    
+                $missingSeats -= $take;
+            }
+    
+            if ($missingSeats > 0 && $unknownGenderStudents->isNotEmpty()) {
+    
+                $classStudents = $classStudents->merge(
+                    $unknownGenderStudents->splice(0, $missingSeats)
+                );
+            }
+    
             $classChunks->push($classStudents->values());
         }
-
+    
         return $classChunks;
     }
-
     private function normalizeGenderValue(mixed $rawGender): ?string
     {
         $gender = str((string) $rawGender)->lower()->trim()->toString();
@@ -809,8 +859,12 @@ class AcademicCalendarController extends Controller
             ->get();
     }
 
-    private function resolveClassNumberOffset(Collection $existingClassNames, string $classNamePrefix = 'Class', ?ModeOfStudy $mode = null): int
-    {
+    private function resolveClassNumberOffset(
+        Collection $existingClassNames,
+        string $classNamePrefix = 'Class',
+        ?ModeOfStudy $mode = null,
+        ?ClassConfig $classConfig = null,
+    ): int {
         if ($existingClassNames->isEmpty()) {
             return 0;
         }
@@ -819,17 +873,27 @@ class AcademicCalendarController extends Controller
         $nameBase = $modeName !== ''
             ? $classNamePrefix.' - '.$modeName
             : $classNamePrefix;
-        $pattern = '/^'.preg_quote($nameBase, '/').'\s-\s(\d+)$/';
+        $configSuffix = $classConfig instanceof ClassConfig
+            ? '\s-\s'.preg_quote((string) $classConfig->id, '/')
+            : '';
+        $pattern = '/^'.preg_quote($nameBase, '/').'\s-\s(\d+)'.$configSuffix.'$/';
+        $legacyPattern = $classConfig instanceof ClassConfig
+            ? '/^'.preg_quote($nameBase, '/').'\s-\s(\d+)$/'
+            : null;
         $highestClassNumber = 0;
 
         foreach ($existingClassNames as $existingClassName) {
             $className = (string) $existingClassName;
 
-            if (! preg_match($pattern, $className, $matches)) {
+            if (preg_match($pattern, $className, $matches)) {
+                $highestClassNumber = max($highestClassNumber, (int) ($matches[1] ?? 0));
+
                 continue;
             }
 
-            $highestClassNumber = max($highestClassNumber, (int) ($matches[1] ?? 0));
+            if ($legacyPattern !== null && preg_match($legacyPattern, $className, $matches)) {
+                $highestClassNumber = max($highestClassNumber, (int) ($matches[1] ?? 0));
+            }
         }
 
         return $highestClassNumber;

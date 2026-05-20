@@ -178,9 +178,8 @@ const saveClasses = () => {
                 :title="$t(previewEmptyAlert.titleKey)"
                 :description="$t(previewEmptyAlert.descriptionKey)"
             />
-
             <template v-else>
-                <BaseCard v-for="classPreview in previewClasses" :key="classPreview.name" :title="classPreview.name">
+                <BaseCard v-for="classPreview in previewClasses" :key="classPreview.name" :title="classPreview.name" color-variant="black" >
                     <div class="flex items-center justify-between gap-4">
                         <div class="flex flex-1 flex-wrap items-center gap-x-8 gap-y-2">
                             <p class="flex items-center gap-1 text-sm text-gray-700">

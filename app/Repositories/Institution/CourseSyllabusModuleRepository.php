@@ -31,6 +31,7 @@ class CourseSyllabusModuleRepository extends BaseRepository implements ICourseSy
     {
         return $this->courseSyllabusModule
             ->query()
+            ->with('academicYearOption')
             ->where('course_syllabus_id', $courseSyllabusId)
             ->orderBy('title')
             ->paginate()
@@ -41,6 +42,7 @@ class CourseSyllabusModuleRepository extends BaseRepository implements ICourseSy
     {
         return [
             'course_syllabus_id' => $dto->course_syllabus_id,
+            'academic_year_option_id' => $dto->academic_year_option_id,
             'title' => $dto->title,
             'code' => $dto->code,
             'duration_in_hours' => $dto->duration_in_hours,
