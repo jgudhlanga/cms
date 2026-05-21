@@ -38,11 +38,28 @@ class HostelRoomRepository extends BaseRepository implements IHostelRoomReposito
             });
         }
 
-         if (array_key_exists('with_trashed', $filters) && $filters['with_trashed']) {
+        if (array_key_exists('with_trashed', $filters) && $filters['with_trashed']) {
             $query->withTrashed();
         }
 
-        return $query->paginate()->withQueryString();
+        return $query->paginate($this->room->getPerPage())->withQueryString();
+    }
+
+    public function statsForIndex(): array
+    {
+        $stats = $this->room->query()
+            ->selectRaw('count(*) as total_rooms')
+            ->selectRaw('coalesce(sum(capacity), 0) as total_capacity')
+            ->selectRaw('coalesce(sum(max_occupancy), 0) as total_max_occupancy')
+            ->selectRaw("coalesce(sum(case when status = 'vacant' then 1 else 0 end), 0) as vacant_count")
+            ->first();
+
+        return [
+            'total_rooms' => (int) $stats->total_rooms,
+            'total_capacity' => (int) $stats->total_capacity,
+            'total_max_occupancy' => (int) $stats->total_max_occupancy,
+            'vacant_count' => (int) $stats->vacant_count,
+        ];
     }
 
     public function create(array $data): HostelRoom

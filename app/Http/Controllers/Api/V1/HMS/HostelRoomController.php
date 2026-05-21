@@ -13,9 +13,14 @@ class HostelRoomController extends Controller
     public function index()
     {
         $rooms = $this->repository->paginateForIndex(
-            request()->only(['search', 'hostel','with_trashed'])
+            request()->only(['search', 'hostel', 'with_trashed'])
         );
 
         return HostelRoomResource::collection($rooms);
+    }
+
+    public function stats()
+    {
+        return response()->json($this->repository->statsForIndex());
     }
 }

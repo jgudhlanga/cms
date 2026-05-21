@@ -190,6 +190,9 @@ const icons: Record<IconName, Component> = {
     [IconName.mail]: Mail,
     [IconName.phone]: Phone,
     [IconName.download]: ArrowDownToLine,
+    [IconName.hostel]: Hotel,
+    [IconName.room]: DoorOpen,
+    [IconName.reset]: RotateCcw,
 };
 
 export { IconName, icons };

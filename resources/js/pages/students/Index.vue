@@ -70,7 +70,7 @@ watch(studentRefreshKey, () => loadStudents(filters.value));
             :use-api="true"
             :search-url="route('v1.students.index')"
             :api-fetch-action="loadStudentsFromUrl"
-            :hide-built-in-search="true"
+            :hide-built-in-search="true" 
             :loading="isLoading"
             :show-column-filters="false"
         />

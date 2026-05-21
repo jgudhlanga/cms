@@ -11,22 +11,22 @@ class HostelRoomResource extends JsonResource
     {
         return [
             'type' => 'hostel_room',
-            'id'   => $this->resource->id,
+            'id' => $this->resource->id,
             'attributes' => [
-                'hostelId'    => $this->resource->hostel_id,
-                'hostelName'  => $this->resource->hostel?->name,
-                'name'  => $this->resource->name,
-                'roomType'    => $this->resource->room_type,
-                'capacity'    => $this->resource->capacity,
-                'status'      => $this->resource->status,
-                'maxOccupancy'=> $this->resource->max_occupancy,
-                "occupancy" => '0/0',
+                'hostelId' => $this->resource->hostel_id,
+                'hostelName' => $this->resource->hostel?->name,
+                'name' => $this->resource->name,
+                'roomType' => $this->resource->room_type,
+                'capacity' => $this->resource->capacity,
+                'status' => $this->resource->status,
+                'maxOccupancy' => $this->resource->max_occupancy,
+                'occupancy' => $this->resource->occupancyLabel(),
                 'floorNumber' => $this->resource->floor_number,
                 'description' => $this->resource->description,
-                'createdAt'   => $this->resource->created_at,
-                'updatedAt'   => $this->resource->updated_at,
-                'deletedAt'   => $this->resource->deleted_at,
+                'createdAt' => $this->resource->created_at,
+                'updatedAt' => $this->resource->updated_at,
+                'deletedAt' => $this->resource->deleted_at,
             ],
-        ]; 
+        ];
     }
 }

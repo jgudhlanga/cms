@@ -33,27 +33,26 @@ const resetFilters = () => {
 </script>
 
 <template>
-    <div class="flex w-full gap-3">
-        <!-- Search -->
-        <div class="flex flex-1">
+    <div class="flex flex-nowrap items-center gap-3">
+        <div class="w-72 shrink-0">
             <BaseInputWithIcon
                 :icon="IconName.search"
                 :placeholder="$t('hms.search_room_placeholder')"
                 v-model="search"
-                class="w-full rounded-full"
+                full-width
+                class="rounded-full"
             />
         </div>
-
-        <!-- Hostel filter -->
-        <div class="flex flex-1">
+        <div class="w-72 shrink-0">
             <BaseInputWithIcon
                 :icon="IconName.warehouse"
                 :placeholder="$t('hms.search_hostel_placeholder')"
                 v-model="hostelFilter"
+                full-width
                 class="rounded-full"
             />
         </div>
-        <div class="flex flex-wrap">
+        <div class="shrink-0">
             <ResetButton @click="resetFilters" />
         </div>
     </div>

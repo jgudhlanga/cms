@@ -69,3 +69,50 @@ export type HostelRoomFiltersState = {
     hostel?: string | number | null;
     with_trashed?: boolean | null;
 };
+
+export type HostelRoomStats = {
+    totalRooms: number;
+    totalCapacity: number;
+    totalMaxOccupancy: number;
+    vacantCount: number;
+};
+
+export type HostelAllocationType = 'direct' | 'apprentice' | 'guest' | 'other';
+
+export type HostelAllocationStatus = 'active' | 'closed' | 'pending';
+
+export type HostelAllocation = {
+    type: string;
+    id: number | string;
+    attributes: {
+        allocationType: HostelAllocationType;
+        allocationTypeLabel?: string | null;
+        status: HostelAllocationStatus;
+        statusLabel?: string | null;
+        checkIn?: string | null;
+        checkOut?: string | null;
+        studentId?: number | string | null;
+        studentNumber?: string | null;
+        studentName?: string | null;
+        gender?: string | null;
+        course?: string | null;
+        level?: string | null;
+        hostelId?: number | string | null;
+        hostelName?: string | null;
+        roomId?: number | string | null;
+        roomName?: string | null;
+        createdAt?: string;
+        updatedAt?: string;
+        deletedAt?: string;
+    };
+};
+
+export type HostelStudentFiltersState = {
+    search?: string | null;
+    gender?: number[] | null;
+    hostel?: string | number | null;
+    room?: string | null;
+    type?: HostelAllocationType | null;
+    status?: HostelAllocationStatus | null;
+    with_trashed?: boolean | null;
+};

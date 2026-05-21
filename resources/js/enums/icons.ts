@@ -94,4 +94,7 @@ export enum IconName {
     phone = "phone",
     house = "house",
     download = "download",
+    warehouse = "warehouse",
+    room = "room",
+    hostel = "hostel",
 }
