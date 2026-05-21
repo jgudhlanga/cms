@@ -45,7 +45,7 @@ const resetFilters = () => {
         </div>
         <div class="w-72 shrink-0">
             <BaseInputWithIcon
-                :icon="IconName.warehouse"
+                :icon="IconName.hostel"
                 :placeholder="$t('hms.search_hostel_placeholder')"
                 v-model="hostelFilter"
                 full-width
