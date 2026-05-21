@@ -22,7 +22,7 @@ class HostelsTableSeeder extends Seeder
         ];
 
         foreach ($hostels as $hostel) {
-            $roomsCount = 16 + ($hostel['floor_count'] - 1) * 23;
+            $roomsCount = 18 + ($hostel['floor_count'] - 1) * 23;
 
             Hostel::query()->updateOrCreate(
                 ['name' => $hostel['name']],

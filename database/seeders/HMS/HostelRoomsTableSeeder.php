@@ -10,7 +10,7 @@ use Illuminate\Support\Carbon;
 
 class HostelRoomsTableSeeder extends Seeder
 {
-    private const int GROUND_FLOOR_ROOMS = 16;
+    private const int GROUND_FLOOR_ROOMS = 18;
 
     private const int UPPER_FLOOR_ROOMS = 23;
 
@@ -28,7 +28,6 @@ class HostelRoomsTableSeeder extends Seeder
         ];
 
         $now = Carbon::now();
-        $rows = [];
 
         foreach ($hostelConfig as $hostelName => $code) {
             $hostel = Hostel::query()
@@ -40,14 +39,19 @@ class HostelRoomsTableSeeder extends Seeder
                 continue;
             }
 
-            for ($floor = 0; $floor < $hostel->floor_count; $floor++) {
-                $roomCount = $floor === 0 ? self::GROUND_FLOOR_ROOMS : self::UPPER_FLOOR_ROOMS;
+            $rows = [];
 
-                for ($roomNumber = 1; $roomNumber <= $roomCount; $roomNumber++) {
+            for ($floor = 0; $floor < $hostel->floor_count; $floor++) {
+                $roomStart = $floor === 0 ? 2 : 1;
+                $roomEnd = $floor === 0
+                    ? $roomStart + self::GROUND_FLOOR_ROOMS - 1
+                    : self::UPPER_FLOOR_ROOMS;
+
+                for ($roomNumber = $roomStart; $roomNumber <= $roomEnd; $roomNumber++) {
                     $rows[] = [
                         'tenant_id' => $tenantId,
                         'hostel_id' => $hostel->id,
-                        'name' => sprintf('%s-%d-%02d', $code, $floor, $roomNumber),
+                        'name' => $this->buildRoomName($code, $floor, $roomNumber),
                         'room_type' => 'double',
                         'capacity' => 2,
                         'max_occupancy' => 2,
@@ -60,14 +64,30 @@ class HostelRoomsTableSeeder extends Seeder
                     ];
                 }
             }
-        }
 
-        foreach (array_chunk($rows, 100) as $chunk) {
-            HostelRoom::query()->upsert(
-                $chunk,
-                ['hostel_id', 'name'],
-                ['room_type', 'capacity', 'max_occupancy', 'current_occupancy', 'status', 'floor_number', 'description', 'updated_at'],
-            );
+            if ($rows === []) {
+                continue;
+            }
+
+            $existingNames = HostelRoom::query()
+                ->where('hostel_id', $hostel->id)
+                ->whereIn('name', array_column($rows, 'name'))
+                ->pluck('name')
+                ->flip();
+
+            $newRows = array_values(array_filter(
+                $rows,
+                static fn (array $row): bool => ! $existingNames->has($row['name']),
+            ));
+
+            foreach (array_chunk($newRows, 100) as $chunk) {
+                HostelRoom::query()->insert($chunk);
+            }
         }
+    }
+
+    private function buildRoomName(string $code, int $floor, int $roomNumber): string
+    {
+        return sprintf('%s%d%02d', $code, $floor, $roomNumber);
     }
 }
