@@ -32,6 +32,9 @@ const emit = defineEmits<{
 
 // ── Warden display name ──────────────────────────────────────────────────────
 const wardenName = computed<string>(() => {
+    if (props.hostel.attributes.wardenName) {
+        return props.hostel.attributes.wardenName;
+    }
     const staff = props.hostel.attributes.warden;
     if (staff?.relationships?.user) {
         const u = staff.relationships.user.attributes;

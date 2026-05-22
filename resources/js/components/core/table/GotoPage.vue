@@ -1,24 +1,34 @@
 <script setup lang="ts">
 import ItemTitle from '@/components/core/util/ItemTitle.vue';
+import { buildPaginationPageLinks } from '@/lib/json-api';
 import { PaginationLink, PaginationMeta } from '@/types/data-pagination';
 import { computed } from 'vue';
 import BaseSelect from '../form/select/BaseSelect.vue';
 
 const props = defineProps<{ meta: PaginationMeta | null }>();
 
+const pageLinks = computed((): PaginationLink[] => {
+    if (props.meta?.links?.length) {
+        return props.meta.links;
+    }
+
+    const lastPage = props.meta?.last_page ?? 0;
+    const currentPage = props.meta?.current_page ?? 1;
+
+    return buildPaginationPageLinks(currentPage, lastPage);
+});
+
 const linksOptions = computed(() =>
-    props?.meta?.links
-        ? props?.meta?.links
-              .filter((row: PaginationLink) => Number(row.label) > 0)
-              .map(
-                  (row: PaginationLink) =>
-                      <any>{
-                          value: row.label ? +row.label : null,
-                          label: row.label,
-                          active: row.active,
-                      },
-              )
-        : [],
+    pageLinks.value
+        .filter((row: PaginationLink) => Number(row.label) > 0)
+        .map(
+            (row: PaginationLink) =>
+                <any>{
+                    value: row.label ? +row.label : null,
+                    label: row.label,
+                    active: row.active,
+                },
+        ),
 );
 </script>
 

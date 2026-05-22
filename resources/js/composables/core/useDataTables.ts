@@ -27,6 +27,7 @@ import { debounce } from 'lodash';
 import { h, Ref, ref } from 'vue';
 import TextEditLink from '@/components/core/util/TextEditLink.vue';
 import BaseAnchor from '@/components/core/util/BaseAnchor.vue';
+import { appendJsonApiTableQueryToUrl } from '@/lib/json-api';
 
 /**
  * Provides a set of utilities for managing data tables. This includes
@@ -108,6 +109,40 @@ export function useDataTables() {
 
     const requestOptions = { preserveState: true, replace: true };
 
+    const buildApiFetchUrl = (
+        url: string,
+        useJsonApi: boolean | undefined,
+        options: {
+            search?: string;
+            trashed?: string | number;
+            pageNumber?: number;
+            pageSize?: number;
+        },
+    ): string => {
+        if (useJsonApi) {
+            return appendJsonApiTableQueryToUrl(url, options);
+        }
+
+        const data: Record<string, string> = {};
+
+        if (options.search) {
+            data.search = options.search;
+        }
+        if (options.trashed !== undefined && String(options.trashed) !== '0') {
+            data.trashed = String(options.trashed);
+        }
+        if (options.pageNumber !== undefined) {
+            data.page = String(options.pageNumber);
+        }
+        if (options.pageSize !== undefined) {
+            data.page_size = String(options.pageSize);
+        }
+
+        const query = new URLSearchParams(data).toString();
+
+        return query ? `${url}?${query}` : url;
+    };
+
     /**
      * Returns a debounced function that performs a search on a data table based on given filters.
      *
@@ -117,6 +152,7 @@ export function useDataTables() {
      * @param url - An optional URL to make the request to.
      * @param useApi
      * @param apiFetchAction
+     * @param useJsonApi - When true, emit page[number]/page[size] and filter[...] query params.
      * @returns A debounced function that performs a search on a data table.
      */
     const tableSearch = (
@@ -126,6 +162,7 @@ export function useDataTables() {
         url?: string,
         useApi?: boolean,
         apiFetchAction?: (url: string) => void,
+        useJsonApi?: boolean,
     ) => {
         return debounce(async function (value) {
             let data = { search: value };
@@ -137,9 +174,15 @@ export function useDataTables() {
             }
             if (url) {
                 if (useApi) {
-                    const query = new URLSearchParams(data).toString();
                     if (apiFetchAction) {
-                        apiFetchAction(`${url}?${query}`);
+                        apiFetchAction(
+                            buildApiFetchUrl(url, useJsonApi, {
+                                search: value,
+                                trashed: onlyTrashed.value,
+                                pageNumber: 1,
+                                pageSize: pageSize.value ? Number(pageSize.value) : undefined,
+                            }),
+                        );
                     }
                 } else {
                     router.get(url, data, requestOptions);
@@ -159,6 +202,7 @@ export function useDataTables() {
      * @param url - An optional URL to make the request to.
      * @param useApi
      * @param apiFetchAction
+     * @param useJsonApi - When true, emit page[number]/page[size] and filter[...] query params.
      * @returns A debounced function that sets the page size for a data table.
      */
     const setPageSize = (
@@ -169,6 +213,7 @@ export function useDataTables() {
         url?: string,
         useApi?: boolean,
         apiFetchAction?: (url: string) => void,
+        useJsonApi?: boolean,
     ) => {
         return debounce(async function (value) {
             let data = { page_size: value };
@@ -180,9 +225,15 @@ export function useDataTables() {
             }
             if (url) {
                 if (useApi) {
-                    const query = new URLSearchParams(data).toString();
                     if (apiFetchAction) {
-                        apiFetchAction(`${url}?${query}`);
+                        apiFetchAction(
+                            buildApiFetchUrl(url, useJsonApi, {
+                                search: filter.value,
+                                trashed: onlyTrashed.value,
+                                pageNumber: 1,
+                                pageSize: Number(value),
+                            }),
+                        );
                     }
                 } else {
                     router.get(url, data, requestOptions);
@@ -202,9 +253,18 @@ export function useDataTables() {
      * @param url - An optional URL to make the request to.
      * @param useApi
      * @param apiFetchAction
+     * @param useJsonApi - When true, emit page[number]/page[size] and filter[...] query params.
      * @returns A function that sets the page number for a data table.
      */
-    const goToPage = (filter: Ref, pageSize: Ref, onlyTrashed: Ref, url?: string, useApi?: boolean, apiFetchAction?: (url: string) => void) => {
+    const goToPage = (
+        filter: Ref,
+        pageSize: Ref,
+        onlyTrashed: Ref,
+        url?: string,
+        useApi?: boolean,
+        apiFetchAction?: (url: string) => void,
+        useJsonApi?: boolean,
+    ) => {
         return async function (value: any) {
             let data = { page: value };
             if (filter.value) {
@@ -218,9 +278,15 @@ export function useDataTables() {
             }
             if (url) {
                 if (useApi) {
-                    const query = new URLSearchParams(data).toString();
                     if (apiFetchAction) {
-                        apiFetchAction(`${url}?${query}`);
+                        apiFetchAction(
+                            buildApiFetchUrl(url, useJsonApi, {
+                                search: filter.value,
+                                trashed: onlyTrashed.value,
+                                pageNumber: Number(value),
+                                pageSize: pageSize.value ? Number(pageSize.value) : undefined,
+                            }),
+                        );
                     }
                 } else {
                     router.get(url, data, requestOptions);
@@ -238,9 +304,18 @@ export function useDataTables() {
      * @param url - An optional URL to make the request to.
      * @param useApi
      * @param apiFetchAction
+     * @param useJsonApi - When true, emit page[number]/page[size] and filter[...] query params.
      * @returns A function that sets the trashed filter for a data table.
      */
-    const loadTrashed = (filter: Ref, pageSize: Ref, currentPage: Ref, url?: string, useApi?: boolean, apiFetchAction?: (url: string) => void) => {
+    const loadTrashed = (
+        filter: Ref,
+        pageSize: Ref,
+        currentPage: Ref,
+        url?: string,
+        useApi?: boolean,
+        apiFetchAction?: (url: string) => void,
+        useJsonApi?: boolean,
+    ) => {
         return async function (value: any) {
             let data = { trashed: value };
 
@@ -252,9 +327,15 @@ export function useDataTables() {
             }
             if (url) {
                 if (useApi) {
-                    const query = new URLSearchParams(data).toString();
                     if (apiFetchAction) {
-                        apiFetchAction(`${url}?${query}`);
+                        apiFetchAction(
+                            buildApiFetchUrl(url, useJsonApi, {
+                                search: filter.value,
+                                trashed: value,
+                                pageNumber: 1,
+                                pageSize: pageSize.value ? Number(pageSize.value) : undefined,
+                            }),
+                        );
                     }
                 } else {
                     router.get(url, data, requestOptions);

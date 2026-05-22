@@ -30,6 +30,7 @@ export type Hostel = {
         vacantCount: number;
         maintenanceCount: number;
         description?: string;
+        wardenName?: string | null;
         warden?: Staff | null;
         createdAt?: string;
         updatedAt?: string;

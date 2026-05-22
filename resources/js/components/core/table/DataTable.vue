@@ -25,6 +25,7 @@ interface Props {
     draggableUpdateUrl?: string;
     dragItems?: boolean;
     useApi?: boolean;
+    useJsonApi?: boolean;
     apiFetchAction?: (url: string) => void | Promise<void>;
     pageSize?: number;
     hideBuiltInSearch?: boolean;
@@ -52,10 +53,10 @@ const currentPage = ref(props?.pagination?.current_page || 1);
 const { initialize, toggleColumnVisibility, tableSearch, setPageSize, goToPage, loadTrashed } = useDataTables();
 const table = initialize(props);
 
-const searchWatcher = tableSearch(pageSize, currentPage, trashed, props.searchUrl, props.useApi, props.apiFetchAction);
-const pageSizeWatcher = setPageSize(filter, table, currentPage, trashed, props.searchUrl, props.useApi, props.apiFetchAction);
-const goToPageWatcher = goToPage(filter, pageSize, trashed, props.searchUrl, props.useApi, props.apiFetchAction);
-const trashedWatcher = loadTrashed(filter, pageSize, currentPage, props.searchUrl, props.useApi, props.apiFetchAction);
+const searchWatcher = tableSearch(pageSize, currentPage, trashed, props.searchUrl, props.useApi, props.apiFetchAction, props.useJsonApi);
+const pageSizeWatcher = setPageSize(filter, table, currentPage, trashed, props.searchUrl, props.useApi, props.apiFetchAction, props.useJsonApi);
+const goToPageWatcher = goToPage(filter, pageSize, trashed, props.searchUrl, props.useApi, props.apiFetchAction, props.useJsonApi);
+const trashedWatcher = loadTrashed(filter, pageSize, currentPage, props.searchUrl, props.useApi, props.apiFetchAction, props.useJsonApi);
 
 // Sync pageSize / currentPage when the pagination prop delivers real data
 // after an async API load (per_page starts as 0 before data arrives).

@@ -2,12 +2,13 @@
 import { Bed, DoorOpen, Users, Warehouse } from '@lucide/vue';
 import BaseButton from '@/components/core/button/BaseButton.vue';
 import BaseIcon from '@/components/core/icon/BaseIcon.vue';
+import { Paginator } from '@/components/core/table';
 import Empty from '@/components/core/util/Empty.vue';
-import HeadingSmall from '@/components/core/util/HeadingSmall.vue';
 import HostelCard from '@/components/hms/HostelCard.vue';
 import HostelStatsBadge from '@/components/hms/HostelStatsBadge.vue';
 import HostelFilters from '@/components/hms/HostelFilters.vue';
 import type { Hostel, HostelFiltersState } from '@/types/hms';
+import type { DataListProps } from '@/types/data-pagination';
 import { ColorVariant } from '@/enums/colors';
 import { IconName } from '@/enums/icons';
 import { dangerDialog, openModal, successAlert } from '@/lib/alerts';
@@ -19,20 +20,41 @@ import { useHms } from '@/composables/hms/useHms';
 import { useHmsStore } from '@/store/hms/useHmsStore';
 import { storeToRefs } from 'pinia';
 
-
 const { fetchHostels } = useHms();
 const { hostelRefreshKey } = storeToRefs(useHmsStore());
-const hostels = ref<Hostel[]>([]);
+const hostelsList = ref<DataListProps<Hostel>>({
+    data: [],
+    links: { first: null, last: null, prev: null, next: null },
+    meta: {
+        total: 0,
+        per_page: 0,
+        current_page: 0,
+        last_page: 0,
+        from: 0,
+        to: 0,
+        path: null,
+        links: null,
+    },
+});
 const filters = ref<HostelFiltersState>({});
 
 const loadHostels = async (f: HostelFiltersState = {}) => {
     const res = await fetchHostels(f);
-    if (res?.data) hostels.value = res.data;
+    if (res) {
+        hostelsList.value = res;
+    }
+};
+
+const loadHostelsFromUrl = async (url: string) => {
+    const res = await fetchHostels(filters.value, url);
+    if (res) {
+        hostelsList.value = res;
+    }
 };
 
 onMounted(() => loadHostels());
 watch(hostelRefreshKey, () => loadHostels(filters.value));
-// ── Modal helpers ────────────────────────────────────────────────────────────
+
 const openCreate = () => openModal({ name: APP_MODULE_KEYS.hostels });
 const openEdit = (hostel: Hostel) => openModal({ name: APP_MODULE_KEYS.hostels, edit: hostel });
 
@@ -46,28 +68,23 @@ const onDelete = (hostel: Hostel) => {
     });
 };
 
-// ── Summary stats (computed from live data) ──────────────────────────────────
-const hostelsList = computed<Hostel[]>(() => hostels.value);
-
 const totalCapacity = computed(() =>
-    hostelsList.value.reduce((sum, h) => sum + (h.attributes.capacity ?? 0), 0),
+    hostelsList.value.data.reduce((sum, h) => sum + (h.attributes.capacity ?? 0), 0),
 );
 const totalRooms = computed(() =>
-    hostelsList.value.reduce((sum, h) => sum + (h.attributes.roomsCount ?? 0), 0),
+    hostelsList.value.data.reduce((sum, h) => sum + (h.attributes.roomsCount ?? 0), 0),
 );
 const totalOccupied = computed(() =>
-    hostelsList.value.reduce((sum, h) => sum + (h.attributes.occupiedCount ?? 0), 0),
+    hostelsList.value.data.reduce((sum, h) => sum + (h.attributes.occupiedCount ?? 0), 0),
 );
 </script>
 
 <template>
-        <!-- ── Page header ───────────────────────────────────────────────── -->
-        <div class="my-6 flex items-center justify-between">
-            <!-- ── Summary stat badges ──────────────────────────────────────── -->
+    <div class="my-6 flex items-center justify-between">
         <div class="mb-3 flex flex-wrap gap-3">
             <HostelStatsBadge
                 :label="$t('hms.stat_blocks')"
-                :value="String(hostelsList.length)"
+                :value="String(hostelsList.data.length)"
                 :icon="Warehouse"
                 icon-class="text-indigo-500"
                 value-class="text-indigo-700"
@@ -95,28 +112,33 @@ const totalOccupied = computed(() =>
             />
         </div>
 
-            <BaseButton id="hostel-create-btn" classes="rounded-full" :variant="ColorVariant.primary" @click="openCreate">
-                <BaseIcon :name="IconName.add" />
-                <span>{{ $t('hms.add_hostel') }}</span>
-            </BaseButton>
-        </div>
+        <BaseButton id="hostel-create-btn" classes="rounded-full" :variant="ColorVariant.primary" @click="openCreate">
+            <BaseIcon :name="IconName.add" />
+            <span>{{ $t('hms.add_hostel') }}</span>
+        </BaseButton>
+    </div>
 
-        <!-- ── Filters ───────────────────────────────────────────────────── -->
-        <div class="mb-6 flex flex-col ">
-            <HostelFilters :filters="filters" @change="loadHostels" />
-        </div>
+    <div class="mb-6 flex flex-col">
+        <HostelFilters :filters="filters" @change="loadHostels" />
+    </div>
 
-        <!-- ── Hostel cards grid ─────────────────────────────────────────── -->
-        <div v-if="hostelsList.length" class="grid grid-cols-1 gap-3 md:grid-cols-3 ">
-            <HostelCard
-                v-for="hostel in hostelsList"
-                :key="hostel.id"
-                :hostel="hostel"
-                @edit="openEdit"
-                @delete="onDelete"
-            />
-        </div>
+    <div v-if="hostelsList.data.length" class="grid grid-cols-1 gap-3 md:grid-cols-3">
+        <HostelCard
+            v-for="hostel in hostelsList.data"
+            :key="hostel.id"
+            :hostel="hostel"
+            @edit="openEdit"
+            @delete="onDelete"
+        />
+    </div>
 
-        <!-- ── Empty state ───────────────────────────────────────────────── -->
-        <Empty v-else :message="$t('hms.no_hostels_found')" />
+    <Empty v-else :message="$t('hms.no_hostels_found')" />
+
+    <Paginator
+        v-if="(hostelsList.meta.last_page ?? 1) > 1"
+        class="mt-6"
+        :meta="hostelsList.meta"
+        :use-api="true"
+        :api-fetch-action="loadHostelsFromUrl"
+    />
 </template>

@@ -1,1 +1,4 @@
-Given the image above,
+Given https://laraveljsonapi.io/5.x/
+- lets install this package and implement it on this project. 
+- check resources and filters for columns to effect
+- suggest best way to implement thsi on the current repo.

@@ -4,12 +4,9 @@ namespace App\Repositories\HMS\interface;
 
 use App\Models\HMS\HostelRoom;
 use App\Repositories\Base\Interface\IBaseRepository;
-use Illuminate\Pagination\LengthAwarePaginator;
 
 interface IHostelRoomRepository extends IBaseRepository
 {
-    public function paginateForIndex(array $filters = []): LengthAwarePaginator;
-
     /**
      * @return array{total_rooms: int, total_capacity: int, total_max_occupancy: int, vacant_count: int}
      */

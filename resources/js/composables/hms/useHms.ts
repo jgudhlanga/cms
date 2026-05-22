@@ -1,6 +1,16 @@
 import { useUtils } from '@/composables/core/useUtils';
-import { errorAlert, forbiddenAlert } from '@/lib/alerts';
-import { mergeQueryParamsIntoRequestPath } from '@/lib/merge-query-into-url';
+import { errorAlert } from '@/lib/alerts';
+import {
+    buildJsonApiIndexParams,
+    jsonApiRequestConfig,
+    mergeJsonApiFiltersIntoRequestPath,
+    parseJsonApiHostelAllocations,
+    parseJsonApiHostelRooms,
+    parseJsonApiHostels,
+    toHostelAllocationJsonApiFilters,
+    toHostelJsonApiFilters,
+    toHostelRoomJsonApiFilters,
+} from '@/lib/json-api';
 import { IconName } from '@/lib/icons';
 import HttpService from '@/services/http.service';
 import { hasAbility } from '@/lib/permissions';
@@ -8,7 +18,9 @@ import Hostels from '@/pages/hms/components/tabs/Hostels.vue';
 import Rooms from '@/pages/hms/components/tabs/Rooms.vue';
 import Students from '@/pages/hms/components/tabs/Students.vue';
 import { CustomTab } from '@/types/utils';
+import type { DataListProps } from '@/types/data-pagination';
 import type {
+    Hostel,
     HostelAllocation,
     HostelFiltersState,
     HostelRoom,
@@ -26,6 +38,7 @@ export const useHms = () => {
     const isLoading = ref(false);
     const isStatsLoading = ref(false);
     const { moreActionButton, onView, tag, textLink } = useDataTables();
+
     const hmsTabs = (): Array<CustomTab> => {
         return [
             {
@@ -52,10 +65,27 @@ export const useHms = () => {
         ];
     };
 
-    const fetchHostels = async (filters: HostelFiltersState = {}) => {
-         try {
+    const fetchHostels = async (
+        filters: HostelFiltersState = {},
+        paginatorUrl?: string,
+    ): Promise<DataListProps<Hostel> | undefined> => {
+        try {
             isLoading.value = true;
-            return await HttpService.get(route('v1.hms.hostels'), { params: filters });
+            const jsonFilters = toHostelJsonApiFilters(filters);
+            const path = paginatorUrl
+                ? mergeJsonApiFiltersIntoRequestPath(paginatorUrl, jsonFilters)
+                : route('v1.json.hostels.index');
+
+            const params = paginatorUrl
+                ? undefined
+                : buildJsonApiIndexParams(jsonFilters);
+
+            const document = await HttpService.get(path, {
+                ...jsonApiRequestConfig(),
+                ...(params ? { params } : {}),
+            });
+
+            return parseJsonApiHostels(document);
         } catch {
             errorAlert(trans('trans.load_data_failure', { data: trans('trans.data') }));
         } finally {
@@ -63,15 +93,27 @@ export const useHms = () => {
         }
     };
 
-    const roomListMergeOptions = { booleanParamKeys: ['with_trashed'] };
-    const studentListMergeOptions = { booleanParamKeys: ['with_trashed'] };
-
-    const fetchRooms = async (filters: HostelRoomFiltersState = {}, paginatorUrl?: string) => {
+    const fetchRooms = async (
+        filters: HostelRoomFiltersState = {},
+        paginatorUrl?: string,
+    ): Promise<DataListProps<HostelRoom> | undefined> => {
         try {
             isLoading.value = true;
-            const baseUrl = paginatorUrl ?? route('v1.hms.hostels.rooms');
-            const path = mergeQueryParamsIntoRequestPath(baseUrl, filters as Record<string, unknown>, roomListMergeOptions);
-            return await HttpService.get(path);
+            const jsonFilters = toHostelRoomJsonApiFilters(filters);
+            const path = paginatorUrl
+                ? mergeJsonApiFiltersIntoRequestPath(paginatorUrl, jsonFilters)
+                : route('v1.json.hostel-rooms.index');
+
+            const params = paginatorUrl
+                ? undefined
+                : buildJsonApiIndexParams(jsonFilters);
+
+            const document = await HttpService.get(path, {
+                ...jsonApiRequestConfig(),
+                ...(params ? { params } : {}),
+            });
+
+            return parseJsonApiHostelRooms(document);
         } catch {
             errorAlert(trans('trans.load_data_failure', { data: trans('trans.data') }));
         } finally {
@@ -79,16 +121,27 @@ export const useHms = () => {
         }
     };
 
-    const fetchHostelAllocations = async (filters: HostelStudentFiltersState = {}, paginatorUrl?: string) => {
+    const fetchHostelAllocations = async (
+        filters: HostelStudentFiltersState = {},
+        paginatorUrl?: string,
+    ): Promise<DataListProps<HostelAllocation> | undefined> => {
         try {
             isLoading.value = true;
-            const baseUrl = paginatorUrl ?? route('v1.hms.hostel-allocations');
-            const path = mergeQueryParamsIntoRequestPath(
-                baseUrl,
-                filters as Record<string, unknown>,
-                studentListMergeOptions,
-            );
-            return await HttpService.get(path);
+            const jsonFilters = toHostelAllocationJsonApiFilters(filters);
+            const path = paginatorUrl
+                ? mergeJsonApiFiltersIntoRequestPath(paginatorUrl, jsonFilters)
+                : route('v1.json.hostel-room-allocations.index');
+
+            const params = paginatorUrl
+                ? undefined
+                : buildJsonApiIndexParams(jsonFilters);
+
+            const document = await HttpService.get(path, {
+                ...jsonApiRequestConfig(),
+                ...(params ? { params } : {}),
+            });
+
+            return parseJsonApiHostelAllocations(document);
         } catch {
             errorAlert(trans('trans.load_data_failure', { data: trans('trans.data') }));
         } finally {
@@ -204,13 +257,16 @@ export const useHms = () => {
         return [
             { header: trans_choice('hms.room', 1), accessorKey: 'attributes.name' },
             { header: trans_choice('hms.hostel', 1), accessorKey: 'attributes.hostelName' },
-            { header: trans_choice('hms.floor', 1), accessorKey: 'attributes.floorNumber', meta: { align: 'center' }, },
-            { header: trans_choice('hms.type', 1), accessorKey: 'attributes.roomType',  meta: { align: 'center' },
-            cell: ({ row }: { row: { original: HostelRoom } }) => {
-                return tag(row.original.attributes.roomType, '', ColorVariant.success);
+            { header: trans_choice('hms.floor', 1), accessorKey: 'attributes.floorNumber', meta: { align: 'center' } },
+            {
+                header: trans_choice('hms.type', 1),
+                accessorKey: 'attributes.roomType',
+                meta: { align: 'center' },
+                cell: ({ row }: { row: { original: HostelRoom } }) => {
+                    return tag(row.original.attributes.roomType, '', ColorVariant.success);
+                },
             },
-         },
-            { header: trans('hms.occupancy'), accessorKey: 'attributes.occupancy',  meta: { align: 'center' }, },
+            { header: trans('hms.occupancy'), accessorKey: 'attributes.occupancy', meta: { align: 'center' } },
             {
                 header: trans_choice('hms.status', 1),
                 accessorKey: 'status',
@@ -219,31 +275,6 @@ export const useHms = () => {
                     return tag(row.original.attributes.status, '', ColorVariant.primary);
                 },
             },
-            /* {
-                header: trans_choice('trans.action', 2),
-                accessorKey: 'actions',
-                enableSorting: false,
-                meta: { align: 'right' },
-                cell: ({ row }: { row: { original: Role } }) => {
-                    const id = getIdParams(row.original.id?.toString() ?? '');
-                    return moreActionButton(!!row.original?.attributes?.deletedAt, [
-                        { key: 'edit', action: () => onOpenModal(hasAbility('update:roles'), row.original) },
-                        { key: 'view', action: () => onView(hasAbility('view:roles'), route('roles.show', id)) },
-                        {
-                            key: 'archive',
-                            action: () => onDelete(hasAbility('delete:roles'), route('roles.destroy', id), getName()),
-                        },
-                        {
-                            key: 'restore',
-                            action: () => onRestore(hasAbility('restore:roles'), route('roles.restore', id), getName()),
-                        },
-                        {
-                            key: 'delete',
-                            action: () => onForceDelete(hasAbility('forceDelete:roles'), route('roles.force-delete', id), getName()),
-                        },
-                    ]);
-                },
-            }, */
         ];
     };
 
