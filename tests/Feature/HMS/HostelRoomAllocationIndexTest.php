@@ -98,7 +98,7 @@ test('hostel allocations index returns paginated allocation rows', function () {
         ->assertJsonPath('data.0.attributes.status', 'active');
 });
 
-test('hostel allocations index filters by status', function () {
+test('hostel allocations index excludes pending by default', function () {
     $tenant = Tenant::query()->firstOrFail();
     $user = User::factory()->create(['tenant_id' => $tenant->id]);
     Sanctum::actingAs($user);
@@ -121,11 +121,94 @@ test('hostel allocations index filters by status', function () {
         'status' => HostelAllocationStatusEnum::PENDING,
     ]);
 
-    $response = $this->getJson(route('v1.hms.hostel-allocations', ['status' => 'pending']));
+    $response = $this->getJson(route('v1.hms.hostel-allocations'));
 
     $response->assertSuccessful()
         ->assertJsonCount(1, 'data')
-        ->assertJsonPath('data.0.attributes.status', 'pending');
+        ->assertJsonPath('data.0.attributes.status', 'active');
+});
+
+test('hostel allocations index orders active before checked-out', function () {
+    $tenant = Tenant::query()->firstOrFail();
+    $user = User::factory()->create(['tenant_id' => $tenant->id]);
+    Sanctum::actingAs($user);
+
+    $room = createHostelRoomForAllocationIndexTest();
+    $checkedOutStudent = createStudentForAllocationIndexTest();
+    $activeStudent = createStudentForAllocationIndexTest();
+
+    HostelRoomAllocation::query()->create([
+        'tenant_id' => TenantEnum::HARARE_POLY->id(),
+        'hostel_room_id' => $room->id,
+        'student_id' => $checkedOutStudent->id,
+        'status' => HostelAllocationStatusEnum::CHECKED_OUT,
+    ]);
+
+    HostelRoomAllocation::query()->create([
+        'tenant_id' => TenantEnum::HARARE_POLY->id(),
+        'hostel_room_id' => $room->id,
+        'student_id' => $activeStudent->id,
+        'status' => HostelAllocationStatusEnum::ACTIVE,
+    ]);
+
+    $response = $this->getJson(route('v1.hms.hostel-allocations'));
+
+    $response->assertSuccessful()
+        ->assertJsonCount(2, 'data')
+        ->assertJsonPath('data.0.attributes.status', 'active')
+        ->assertJsonPath('data.1.attributes.status', 'checked-out');
+});
+
+test('hostel allocations index includes legacy closed rows without status filter', function () {
+    $tenant = Tenant::query()->firstOrFail();
+    $user = User::factory()->create(['tenant_id' => $tenant->id]);
+    Sanctum::actingAs($user);
+
+    $room = createHostelRoomForAllocationIndexTest();
+    $closedStudent = createStudentForAllocationIndexTest();
+
+    HostelRoomAllocation::query()->create([
+        'tenant_id' => TenantEnum::HARARE_POLY->id(),
+        'hostel_room_id' => $room->id,
+        'student_id' => $closedStudent->id,
+        'status' => HostelAllocationStatusEnum::CLOSED,
+    ]);
+
+    $response = $this->getJson(route('v1.hms.hostel-allocations'));
+
+    $response->assertSuccessful()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.attributes.status', 'closed');
+});
+
+test('hostel allocations index filters by status', function () {
+    $tenant = Tenant::query()->firstOrFail();
+    $user = User::factory()->create(['tenant_id' => $tenant->id]);
+    Sanctum::actingAs($user);
+
+    $room = createHostelRoomForAllocationIndexTest();
+    $activeStudent = createStudentForAllocationIndexTest();
+    $checkedOutStudent = createStudentForAllocationIndexTest();
+
+    HostelRoomAllocation::query()->create([
+        'tenant_id' => TenantEnum::HARARE_POLY->id(),
+        'hostel_room_id' => $room->id,
+        'student_id' => $activeStudent->id,
+        'status' => HostelAllocationStatusEnum::ACTIVE,
+    ]);
+
+    HostelRoomAllocation::query()->create([
+        'tenant_id' => TenantEnum::HARARE_POLY->id(),
+        'hostel_room_id' => $room->id,
+        'student_id' => $checkedOutStudent->id,
+        'status' => HostelAllocationStatusEnum::CHECKED_OUT,
+    ]);
+
+    $response = $this->getJson(route('v1.hms.hostel-allocations', ['status' => 'checked-out']));
+
+    $response->assertSuccessful()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.attributes.status', 'checked-out');
 });
 
 test('hostel allocations index filters by student search', function () {

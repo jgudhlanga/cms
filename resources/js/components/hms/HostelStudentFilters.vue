@@ -58,8 +58,7 @@ const typeOptions = computed<SelectOption[]>(() => [
 
 const statusOptions = computed<SelectOption[]>(() => [
     { value: 'active', label: trans('hms.allocation_status_active') },
-    { value: 'closed', label: trans('hms.allocation_status_closed') },
-    { value: 'pending', label: trans('hms.allocation_status_pending') },
+    { value: 'checked-out', label: trans('hms.allocation_status_checked_out') },
 ]);
 
 async function loadHostelsForFilter(q = ''): Promise<void> {

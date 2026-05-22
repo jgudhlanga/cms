@@ -162,10 +162,12 @@ test('checkout date makes allocation inactive and lowers occupancy', function ()
 
     $allocation->update(['check_out' => now()->toDateString()]);
 
+    $allocation->refresh();
     $room->refresh();
 
     expect($room->current_occupancy)->toBe(0)
-        ->and($room->status)->toBe('vacant');
+        ->and($room->status)->toBe('vacant')
+        ->and($allocation->status)->toBe(HostelAllocationStatusEnum::CHECKED_OUT);
 });
 
 test('rejects allocation when room is at capacity', function () {

@@ -26,8 +26,7 @@ class HostelRoomAllocationRepository extends BaseRepository implements IHostelRo
                 'student.latestEnrolment.departmentLevel.level',
                 'student.latestEnrolment.departmentCourse.course',
                 'room.hostel',
-            ])
-            ->latest('hostel_room_allocations.created_at');
+            ]);
 
         if (! empty($filters['search'])) {
             $search = trim((string) $filters['search']);
@@ -90,6 +89,8 @@ class HostelRoomAllocationRepository extends BaseRepository implements IHostelRo
             if ($status !== null) {
                 $query->where('status', $status->value);
             }
+        } else {
+            $query->whereIn('status', HostelAllocationStatusEnum::indexStatuses());
         }
 
         if (! empty($filters['with_trashed'])) {
@@ -97,6 +98,15 @@ class HostelRoomAllocationRepository extends BaseRepository implements IHostelRo
         }
 
         return $query
+            ->orderByRaw(
+                'CASE hostel_room_allocations.status WHEN ? THEN 0 WHEN ? THEN 1 WHEN ? THEN 2 ELSE 3 END',
+                [
+                    HostelAllocationStatusEnum::ACTIVE->value,
+                    HostelAllocationStatusEnum::CHECKED_OUT->value,
+                    HostelAllocationStatusEnum::CLOSED->value,
+                ]
+            )
+            ->latest('hostel_room_allocations.created_at')
             ->paginate($this->allocation->getPerPage())
             ->withQueryString();
     }

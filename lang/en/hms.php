@@ -131,6 +131,9 @@ return [
     'allocation_type_guest' => 'Guest',
     'allocation_type_other' => 'Other',
     'allocation_status_active' => 'Active',
+    'allocation_status_checked_out' => 'Checked out',
     'allocation_status_closed' => 'Closed',
     'allocation_status_pending' => 'Pending',
+    'check_in' => 'Check-in',
+    'check_out' => 'Check-out',
 ];

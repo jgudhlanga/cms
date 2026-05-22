@@ -1,18 +1,1 @@
 Given the image above,
-We need to add another tab on resources/js/pages/hms/hostels/Index.vue called students,
-    - we need to extend the app/Models/HMS/HostelRoomAllocation.php and add extra column if possible so that it works,
-     for example 
-        - we need type which enum with options (direct|apprentice|accomodation|other)
-        - status enum option (active|closed|pending)
-    - search filters should be 
-        - search text which search by name, id_number, student_number,
-        - gender
-        - course,
-        - level
-        - hostel
-        - room,
-        - type,
-        - status
-    - no need to show add student button for now.
-    - copy from resources/js/pages/students/Index.vue for filters and table usage
-    - note that the student

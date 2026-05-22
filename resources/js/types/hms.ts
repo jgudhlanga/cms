@@ -79,7 +79,7 @@ export type HostelRoomStats = {
 
 export type HostelAllocationType = 'direct' | 'apprentice' | 'guest' | 'other';
 
-export type HostelAllocationStatus = 'active' | 'closed' | 'pending';
+export type HostelAllocationStatus = 'active' | 'checked-out' | 'closed' | 'pending';
 
 export type HostelAllocation = {
     type: string;

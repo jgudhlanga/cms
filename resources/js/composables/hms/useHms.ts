@@ -22,10 +22,10 @@ import { useDataTables } from '../core/useDataTables';
 import { ColorVariant } from '@/enums/colors';
 
 export const useHms = () => {
-    const { isItTrue } = useUtils();
+    const { formatDate } = useUtils();
     const isLoading = ref(false);
     const isStatsLoading = ref(false);
-    const { moreActionButton, countActionButton, onDelete, onRestore, onForceDelete, onView, tag } = useDataTables();
+    const { moreActionButton, onView, tag, textLink } = useDataTables();
     const hmsTabs = (): Array<CustomTab> => {
         return [
             {
@@ -43,7 +43,7 @@ export const useHms = () => {
                 icon: IconName.room,
             },
             {
-                transLabel: () => trans_choice('student', 2),
+                transLabel: () => trans_choice('trans.student', 2),
                 value: 'students',
                 component: h(Students),
                 show: true,
@@ -117,11 +117,6 @@ export const useHms = () => {
     const hostelStudentColumns = () => {
         return [
             {
-                header: trans_choice('trans.student_number', 1),
-                accessorKey: 'attributes.studentNumber',
-                cell: ({ row }: { row: { original: HostelAllocation } }) => row.original.attributes.studentNumber ?? '--',
-            },
-            {
                 header: trans_choice('trans.name', 1),
                 accessorKey: 'attributes.studentName',
                 cell: ({ row }: { row: { original: HostelAllocation } }) => {
@@ -134,6 +129,11 @@ export const useHms = () => {
                         row.original.attributes.studentName ?? '--',
                     );
                 },
+            },
+            {
+                header: trans_choice('trans.student_number', 1),
+                accessorKey: 'attributes.studentNumber',
+                cell: ({ row }: { row: { original: HostelAllocation } }) => row.original.attributes.studentNumber ?? '--',
             },
             { header: trans_choice('trans.gender', 1), accessorKey: 'attributes.gender' },
             {
@@ -164,6 +164,22 @@ export const useHms = () => {
                 meta: { align: 'center' },
                 cell: ({ row }: { row: { original: HostelAllocation } }) =>
                     tag(row.original.attributes.statusLabel ?? row.original.attributes.status, '', ColorVariant.primary),
+            },
+            {
+                header: trans('hms.check_in'),
+                accessorKey: 'attributes.checkIn',
+                cell: ({ row }: { row: { original: HostelAllocation } }) => {
+                    const checkIn = row.original.attributes.checkIn;
+                    return checkIn ? formatDate(checkIn, 'L') : '---';
+                },
+            },
+            {
+                header: trans('hms.check_out'),
+                accessorKey: 'attributes.checkOut',
+                cell: ({ row }: { row: { original: HostelAllocation } }) => {
+                    const checkOut = row.original.attributes.checkOut;
+                    return checkOut ? formatDate(checkOut, 'L') : '---';
+                },
             },
             {
                 header: trans_choice('trans.action', 2),
