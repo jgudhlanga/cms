@@ -2,6 +2,8 @@
 
 namespace App\JsonApi\V1\HMS;
 
+use App\Models\HMS\HmsSetting;
+use App\Models\HMS\HostelApplication;
 use Illuminate\Http\Request;
 use LaravelJsonApi\Contracts\Auth\Authorizer;
 
@@ -14,7 +16,17 @@ class HmsAuthorizer implements Authorizer
 
     public function store(Request $request, string $modelClass): bool
     {
-        return false;
+        $user = $request->user();
+
+        if ($user === null) {
+            return false;
+        }
+
+        return match ($modelClass) {
+            HostelApplication::class => $user->can('create', HostelApplication::class),
+            HmsSetting::class => $user->can('create', HmsSetting::class),
+            default => false,
+        };
     }
 
     public function show(Request $request, object $model): bool
@@ -24,12 +36,32 @@ class HmsAuthorizer implements Authorizer
 
     public function update(Request $request, object $model): bool
     {
-        return false;
+        $user = $request->user();
+
+        if ($user === null) {
+            return false;
+        }
+
+        return match (true) {
+            $model instanceof HostelApplication => $user->can('update', $model),
+            $model instanceof HmsSetting => $user->can('update', $model),
+            default => false,
+        };
     }
 
     public function destroy(Request $request, object $model): bool
     {
-        return false;
+        $user = $request->user();
+
+        if ($user === null) {
+            return false;
+        }
+
+        return match (true) {
+            $model instanceof HostelApplication => $user->can('delete', $model),
+            $model instanceof HmsSetting => $user->can('delete', $model),
+            default => false,
+        };
     }
 
     public function showRelated(Request $request, object $model, string $fieldName): bool

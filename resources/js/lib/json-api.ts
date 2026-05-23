@@ -1,11 +1,15 @@
 import type { DataListProps, PaginationLink } from '@/types/data-pagination';
 import type {
     HostelAllocation,
+    HostelApplication,
+    HostelApplicationFiltersState,
+    HostelApplicationStudentLookupResponse,
     HostelFiltersState,
     HostelRoom,
     HostelRoomFiltersState,
     HostelRoomStats,
     HostelStudentFiltersState,
+    HmsSettings,
 } from '@/types/hms';
 
 export const JSON_API_ACCEPT = 'application/vnd.api+json';
@@ -49,6 +53,15 @@ type JsonApiMetaDocument = {
 
 export function jsonApiRequestConfig(): { headers: { Accept: string } } {
     return { headers: { Accept: JSON_API_ACCEPT } };
+}
+
+export function jsonApiWriteConfig(): { headers: { Accept: string; 'Content-Type': string } } {
+    return {
+        headers: {
+            Accept: JSON_API_ACCEPT,
+            'Content-Type': JSON_API_ACCEPT,
+        },
+    };
 }
 
 export function toHostelJsonApiFilters(filters: HostelFiltersState): Record<string, string> {
@@ -269,6 +282,81 @@ export function parseJsonApiHostelRoomStats(document: JsonApiMetaDocument): Host
     };
 }
 
+export function toHostelApplicationJsonApiFilters(filters: HostelApplicationFiltersState): Record<string, string> {
+    const out: Record<string, string> = {};
+
+    if (filters.search) {
+        out.search = String(filters.search);
+    }
+    if (filters.type) {
+        out.type = String(filters.type);
+    }
+    if (filters.status) {
+        out.status = String(filters.status);
+    }
+    if (filters.with_trashed) {
+        out.trashed = '1';
+    }
+
+    return out;
+}
+
+export function parseJsonApiHostelApplications(document: JsonApiCollectionDocument): DataListProps<HostelApplication> {
+    const rows: HostelApplication[] = (document.data ?? []).map((resource) => ({
+        type: resource.type,
+        id: resource.id,
+        attributes: resource.attributes as HostelApplication['attributes'],
+    }));
+
+    return {
+        data: rows,
+        meta: mapJsonApiPageMeta(document.meta?.page),
+        links: mapJsonApiLinks(document.links),
+    };
+}
+
+export function parseJsonApiHostelApplication(document: {
+    data?: JsonApiResource | JsonApiResource[];
+}): HostelApplication | undefined {
+    const raw = document.data;
+    const resource = Array.isArray(raw) ? raw[0] : raw;
+
+    if (!resource) {
+        return undefined;
+    }
+
+    return {
+        type: resource.type,
+        id: resource.id,
+        attributes: resource.attributes as HostelApplication['attributes'],
+    };
+}
+
+export function parseJsonApiHmsSettings(document: JsonApiCollectionDocument): HmsSettings | undefined {
+    const resource = document.data?.[0];
+    if (!resource) {
+        return undefined;
+    }
+
+    return {
+        type: resource.type,
+        id: resource.id,
+        attributes: resource.attributes as HmsSettings['attributes'],
+    };
+}
+
+export function parseJsonApiHmsSetting(document: { data?: JsonApiResource }): HmsSettings | undefined {
+    const resource = document.data;
+    if (!resource) {
+        return undefined;
+    }
+
+    return {
+        type: resource.type,
+        id: resource.id,
+        attributes: resource.attributes as HmsSettings['attributes'],
+    };
+}
 export function parseJsonApiHostelAllocations(document: JsonApiCollectionDocument): DataListProps<HostelAllocation> {
     const rows: HostelAllocation[] = (document.data ?? []).map((resource) => ({
         type: resource.type,

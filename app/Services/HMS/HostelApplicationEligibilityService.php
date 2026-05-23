@@ -1,0 +1,110 @@
+<?php
+
+namespace App\Services\HMS;
+
+use App\Enums\Shared\FeeTypeEnum;
+use App\Models\HMS\HmsSetting;
+use App\Models\Shared\Address;
+use App\Models\Students\Student;
+use App\Models\Students\StudentEnrolment;
+
+class HostelApplicationEligibilityService
+{
+    /**
+     * @return list<array{key: string, passed: bool, message: string}>
+     */
+    public function evaluate(Student $student, ?StudentEnrolment $enrolment = null, ?HmsSetting $settings = null): array
+    {
+        $settings ??= HmsSetting::resolveForTenant($student->tenant_id);
+        $enrolment ??= $student->latestEnrolment;
+
+        $rules = [];
+
+        if ($settings->require_full_time_study) {
+            $modeName = strtolower(trim((string) $enrolment?->modeOfStudy?->name));
+            $expected = strtolower(trim($settings->full_time_mode_name));
+            $passed = $modeName !== '' && $modeName === $expected;
+
+            $rules[] = [
+                'key' => 'full_time_study',
+                'passed' => $passed,
+                'message' => $passed
+                    ? __('hms.eligibility_full_time_passed')
+                    : __('hms.eligibility_full_time_failed'),
+            ];
+        }
+
+        if ($settings->require_tuition_paid) {
+            $passed = (bool) $enrolment?->studentProgram?->hasPaid(FeeTypeEnum::TUITION_FEE);
+
+            $rules[] = [
+                'key' => 'tuition_paid',
+                'passed' => $passed,
+                'message' => $passed
+                    ? __('hms.eligibility_tuition_paid_passed')
+                    : __('hms.eligibility_tuition_paid_failed'),
+            ];
+        }
+
+        if ($settings->require_address_outside_campus) {
+            $passed = $this->addressIsOutsideCampus($student, $settings->campus_city);
+
+            $rules[] = [
+                'key' => 'address_outside_campus',
+                'passed' => $passed,
+                'message' => $passed
+                    ? __('hms.eligibility_address_passed', ['city' => $settings->campus_city])
+                    : __('hms.eligibility_address_failed', ['city' => $settings->campus_city]),
+            ];
+        }
+
+        return $rules;
+    }
+
+    /**
+     * @param  list<array{key: string, passed: bool, message: string}>  $rules
+     */
+    public function allPassed(array $rules): bool
+    {
+        foreach ($rules as $rule) {
+            if (! ($rule['passed'] ?? false)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private function addressIsOutsideCampus(Student $student, string $campusCity): bool
+    {
+        $address = $student->addresses()
+            ->where('address_is_main', true)
+            ->first()
+            ?? $student->addresses()->first();
+
+        if (! $address instanceof Address) {
+            return false;
+        }
+
+        $cityFields = array_filter([
+            $address->address_4,
+            $address->address_5,
+            is_array($address->meta) ? ($address->meta['city'] ?? null) : null,
+            is_array($address->meta) ? ($address->meta['town'] ?? null) : null,
+        ]);
+
+        if ($cityFields === []) {
+            return false;
+        }
+
+        $campus = strtolower(trim($campusCity));
+
+        foreach ($cityFields as $field) {
+            if (str_contains(strtolower(trim((string) $field)), $campus)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+}

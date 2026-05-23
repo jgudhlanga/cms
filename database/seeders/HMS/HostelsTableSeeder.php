@@ -13,12 +13,12 @@ class HostelsTableSeeder extends Seeder
         $tenantId = TenantEnum::HARARE_POLY->id();
 
         $hostels = [
-            ['name' => 'Hostel A', 'floor_count' => 3],
-            ['name' => 'Hostel B', 'floor_count' => 3],
-            ['name' => 'Hostel C', 'floor_count' => 4],
-            ['name' => 'Hostel D', 'floor_count' => 4],
-            ['name' => 'Hostel E', 'floor_count' => 4],
-            ['name' => 'Hostel F', 'floor_count' => 4],
+            ['name' => 'Hostel A', 'floor_count' => 3, 'type' => 'female'],
+            ['name' => 'Hostel B', 'floor_count' => 3, 'type' => 'female'],
+            ['name' => 'Hostel C', 'floor_count' => 4, 'type' => 'female'],
+            ['name' => 'Hostel D', 'floor_count' => 4, 'type' => 'male'],
+            ['name' => 'Hostel E', 'floor_count' => 4, 'type' => 'male'],
+            ['name' => 'Hostel F', 'floor_count' => 4, 'type' => 'male'],
         ];
 
         foreach ($hostels as $hostel) {
@@ -34,7 +34,7 @@ class HostelsTableSeeder extends Seeder
                     'status' => 'active',
                     'warden_id' => null,
                     'location' => null,
-                    'type' => null,
+                    'type' => $hostel['type'],
                     'description' => null,
                 ],
             );

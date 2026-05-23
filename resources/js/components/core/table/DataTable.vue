@@ -31,7 +31,10 @@ interface Props {
     hideBuiltInSearch?: boolean;
     loading?: boolean;
     showColumnFilters?: boolean;
+    createLabel?: string;
 }
+
+defineOptions({ inheritAttrs: false });
 
 const props = withDefaults(defineProps<Props>(), {
     disableCreate: false,
@@ -87,6 +90,7 @@ const showToolBar = computed(() => {
 </script>
 
 <template>
+    <div class="data-table w-full">
     <div class="bg-card relative inline-block min-w-full overflow-auto rounded-xl px-6 pb-6 align-middle">
         <div
             v-if="loading"
@@ -105,7 +109,14 @@ const showToolBar = computed(() => {
                 <ColumnFilter v-if="showColumnFilters" :variant="ColorVariant.primary_outline" :table="table" :toggleColumnVisibility="toggleColumnVisibility" />
                 <ExportButton :variant="ColorVariant.primary_outline" class="rounded-full" v-if="onExport" @click="() => (onExport ? onExport() : null)" :disable="disableExport" />
                 <ImportButton :variant="ColorVariant.primary_outline" class="rounded-full" v-if="onImport" @click="() => (onImport ? onImport() : null)" :disable="disableImport" />
-                <CreateButton :variant="ColorVariant.primary_outline" class="rounded-full" v-if="onCreate" @click="() => (onCreate ? onCreate() : null)" :disable="disableCreate" />
+                <CreateButton
+                    :variant="ColorVariant.primary_outline"
+                    class="rounded-full"
+                    v-if="onCreate"
+                    :label="createLabel"
+                    :disable="disableCreate"
+                    @click="() => (onCreate ? onCreate() : null)"
+                />
                 <slot name="head-right" />
             </div>
         </div>
@@ -121,5 +132,6 @@ const showToolBar = computed(() => {
         <PerPageSize v-model="pageSize" />
         <GotoPage v-model="currentPage" :meta="pagination ?? null" />
         <Paginator :meta="pagination" :use-api="useApi" :api-fetch-action="apiFetchAction" />
+    </div>
     </div>
 </template>

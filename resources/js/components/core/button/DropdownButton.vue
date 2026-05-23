@@ -57,6 +57,12 @@ const getOptions = () => {
 		if (option.key == 'view') {
 			options.push({ key: 'view', icon: IconName.eye, action: option.action, transKey: 'trans.view' });
 		}
+		if (option.key == 'approve') {
+			options.push({ key: 'approve', icon: IconName.check_box, action: option.action, transKey: 'hms.approve_application' });
+		}
+		if (option.key == 'decline') {
+			options.push({ key: 'decline', icon: IconName.danger, action: option.action, transKey: 'hms.decline_application' });
+		}
 	});
 	return options;
 };

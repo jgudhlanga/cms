@@ -2,6 +2,8 @@
 
 namespace App\JsonApi\V1;
 
+use App\JsonApi\V1\HMS\HmsSettings\HmsSettingSchema;
+use App\JsonApi\V1\HMS\HostelApplications\HostelApplicationSchema;
 use App\JsonApi\V1\HMS\HostelRoomAllocations\HostelRoomAllocationSchema;
 use App\JsonApi\V1\HMS\HostelRooms\HostelRoomSchema;
 use App\JsonApi\V1\HMS\Hostels\HostelSchema;
@@ -22,6 +24,8 @@ class Server extends BaseServer
             HostelSchema::class,
             HostelRoomSchema::class,
             HostelRoomAllocationSchema::class,
+            HostelApplicationSchema::class,
+            HmsSettingSchema::class,
         ];
     }
 }

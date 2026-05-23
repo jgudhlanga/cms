@@ -4,6 +4,7 @@ import { useHms } from '@/composables/hms/useHms';
 import { icons } from '@/lib/icons';
 import CreateEditHostel from '@/pages/hms/components/forms/CreateEditHostel.vue';
 import CreateEditRoom from '@/pages/hms/components/forms/CreateEditRoom.vue';
+import CreateEditApplication from '@/pages/hms/components/forms/CreateEditApplication.vue';
 import { useHmsStore } from '@/store/hms/useHmsStore';
 import { BreadcrumbItemInterface } from '@/types/ui';
 import { Head } from '@inertiajs/vue3';
@@ -45,5 +46,6 @@ const visibleTabs = computed(() => {
         <!-- ── Create / Edit modal ───────────────────────────────────────── -->
         <CreateEditHostel :wardens="wardens" />
         <CreateEditRoom />
+        <CreateEditApplication />
     </PageContainer>
 </template>

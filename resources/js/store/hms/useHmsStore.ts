@@ -5,6 +5,7 @@ export type IHmsTabsStore = {
     hostelRefreshKey: number;
     roomRefreshKey: number;
     studentRefreshKey: number;
+    applicationRefreshKey: number;
 };
 
 export const useHmsStore = defineStore('hms-store', {
@@ -14,6 +15,7 @@ export const useHmsStore = defineStore('hms-store', {
             hostelRefreshKey: 0,
             roomRefreshKey: 0,
             studentRefreshKey: 0,
+            applicationRefreshKey: 0,
         };
     },
     actions: {
@@ -25,6 +27,9 @@ export const useHmsStore = defineStore('hms-store', {
         },
         refreshStudents() {
             this.studentRefreshKey++;
+        },
+        refreshApplications() {
+            this.applicationRefreshKey++;
         },
     },
     persist: {

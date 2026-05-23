@@ -4,6 +4,7 @@ namespace App\Models\Students;
 
 use App\Enums\Shared\AcademicLevelEnum;
 use App\Enums\Shared\IdTypeEnum;
+use App\Models\HMS\HostelApplication;
 use App\Models\Shared\Address;
 use App\Models\Shared\Contact;
 use App\Models\Shared\Country;
@@ -149,7 +150,7 @@ class Student extends Model
             ->distinct('subject_id');
     }
 
-    public function nextOfKins(): MorphMany 
+    public function nextOfKins(): MorphMany
     {
         return $this->morphMany(NextOfKin::class, 'kinnable');
     }
@@ -167,6 +168,11 @@ class Student extends Model
     public function notes(): MorphMany
     {
         return $this->morphMany(StudentNote::class, 'noteable');
+    }
+
+    public function hostelApplications(): HasMany
+    {
+        return $this->hasMany(HostelApplication::class, 'student_id');
     }
 
     public function getActivitylogOptions(): LogOptions

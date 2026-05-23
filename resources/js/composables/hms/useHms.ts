@@ -1,14 +1,19 @@
 import { useUtils } from '@/composables/core/useUtils';
-import { errorAlert } from '@/lib/alerts';
+import { errorAlert, successAlert } from '@/lib/alerts';
 import {
     buildJsonApiIndexParams,
     jsonApiRequestConfig,
+    jsonApiWriteConfig,
     mergeJsonApiFiltersIntoRequestPath,
     parseJsonApiHostelAllocations,
+    parseJsonApiHostelApplication,
+    parseJsonApiHostelApplications,
     parseJsonApiHostelRooms,
     parseJsonApiHostelRoomStats,
     parseJsonApiHostels,
+    parseJsonApiHmsSettings,
     toHostelAllocationJsonApiFilters,
+    toHostelApplicationJsonApiFilters,
     toHostelJsonApiFilters,
     toHostelRoomJsonApiFilters,
 } from '@/lib/json-api';
@@ -18,16 +23,23 @@ import { hasAbility } from '@/lib/permissions';
 import Hostels from '@/pages/hms/components/tabs/Hostels.vue';
 import Rooms from '@/pages/hms/components/tabs/Rooms.vue';
 import Students from '@/pages/hms/components/tabs/Students.vue';
+import Applications from '@/pages/hms/components/tabs/Applications.vue';
+import Settings from '@/pages/hms/components/tabs/Settings.vue';
 import { CustomTab } from '@/types/utils';
 import type { DataListProps } from '@/types/data-pagination';
 import type {
     Hostel,
     HostelAllocation,
+    HostelApplication,
+    HostelApplicationFiltersState,
+    HostelApplicationApprovalOptionsResponse,
+    HostelApplicationStudentLookupResponse,
     HostelFiltersState,
     HostelRoom,
     HostelRoomFiltersState,
     HostelRoomStats,
     HostelStudentFiltersState,
+    HmsSettings,
 } from '@/types/hms';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 import { h, ref } from 'vue';
@@ -35,10 +47,10 @@ import { useDataTables } from '../core/useDataTables';
 import { ColorVariant } from '@/enums/colors';
 
 export const useHms = () => {
-    const { formatDate } = useUtils();
+    const { formatDate, navigateTo } = useUtils();
     const isLoading = ref(false);
     const isStatsLoading = ref(false);
-    const { moreActionButton, onView, tag, textLink } = useDataTables();
+    const { moreActionButton, onView, tag, textLink, actionButton } = useDataTables();
 
     const hmsTabs = (): Array<CustomTab> => {
         return [
@@ -62,6 +74,20 @@ export const useHms = () => {
                 component: h(Students),
                 show: true,
                 icon: IconName.users,
+            },
+            {
+                transLabel: () => trans_choice('hms.application', 2),
+                value: 'applications',
+                component: h(Applications),
+                show: hasAbility('viewAny:hostel-applications'),
+                icon: IconName.file,
+            },
+            {
+                transLabel: () => trans_choice('hms.settings', 2),
+                value: 'settings',
+                component: h(Settings),
+                show: hasAbility(['view:hms-settings', 'update:hms-settings', 'crud-settings:hms-settings']),
+                icon: IconName.settings,
             },
         ];
     };
@@ -161,6 +187,246 @@ export const useHms = () => {
         } finally {
             isStatsLoading.value = false;
         }
+    };
+
+    const fetchApplications = async (
+        filters: HostelApplicationFiltersState = {},
+        paginatorUrl?: string,
+    ): Promise<DataListProps<HostelApplication> | undefined> => {
+        try {
+            isLoading.value = true;
+            const jsonFilters = toHostelApplicationJsonApiFilters(filters);
+            const path = paginatorUrl
+                ? mergeJsonApiFiltersIntoRequestPath(paginatorUrl, jsonFilters)
+                : route('v1.json.hms.hostel-applications.index');
+
+            const params = paginatorUrl ? undefined : buildJsonApiIndexParams(jsonFilters);
+
+            const document = await HttpService.get(path, {
+                ...jsonApiRequestConfig(),
+                ...(params ? { params } : {}),
+            });
+
+            return parseJsonApiHostelApplications(document);
+        } catch {
+            errorAlert(trans('trans.load_data_failure', { data: trans('trans.data') }));
+        } finally {
+            isLoading.value = false;
+        }
+    };
+
+    const fetchApplication = async (id: string | number): Promise<HostelApplication | undefined> => {
+        try {
+            isLoading.value = true;
+            const document = await HttpService.get(route('v1.json.hms.hostel-applications.show', id), jsonApiRequestConfig());
+
+            return parseJsonApiHostelApplication(document);
+        } catch {
+            errorAlert(trans('trans.load_data_failure', { data: trans('trans.data') }));
+        } finally {
+            isLoading.value = false;
+        }
+    };
+
+    const fetchApplicationStudentLookup = async (search: string): Promise<HostelApplicationStudentLookupResponse | undefined> => {
+        try {
+            const document = await HttpService.get(route('v1.json.hostel-applications.studentLookup'), {
+                ...jsonApiRequestConfig(),
+                params: { filter: { search } },
+            });
+
+            return document.meta as HostelApplicationStudentLookupResponse;
+        } catch {
+            errorAlert(trans('trans.load_data_failure', { data: trans('trans.data') }));
+        }
+    };
+
+    const saveApplication = async (attributes: Record<string, unknown>, id?: string | number): Promise<boolean> => {
+        try {
+            const payload = {
+                data: {
+                    type: 'hostel-applications',
+                    ...(id ? { id: String(id) } : {}),
+                    attributes,
+                },
+            };
+
+            if (id) {
+                await HttpService.patch(route('v1.json.hms.hostel-applications.update', id), payload, jsonApiWriteConfig());
+            } else {
+                await HttpService.post(route('v1.json.hms.hostel-applications.store'), payload, jsonApiWriteConfig());
+            }
+
+            successAlert(trans('hms.application_saved'));
+            return true;
+        } catch {
+            errorAlert(trans('hms.application_save_failed'));
+            return false;
+        }
+    };
+
+    const updateApplicationStatus = async (
+        application: HostelApplication,
+        status: 'approved' | 'awaiting-payment' | 'declined',
+        declineReason?: string,
+    ): Promise<boolean> => {
+        return saveApplication(
+            {
+                status,
+                ...(declineReason ? { declineReason } : {}),
+            },
+            application.id,
+        );
+    };
+
+    const fetchApplicationApprovalOptions = async (
+        application: HostelApplication,
+        hostelId?: number | null,
+    ): Promise<HostelApplicationApprovalOptionsResponse | undefined> => {
+        try {
+            const document = await HttpService.get(
+                route('v1.json.hostel-applications.approvalOptions', application.id),
+                {
+                    ...jsonApiRequestConfig(),
+                    ...(hostelId ? { params: { hostelId } } : {}),
+                },
+            );
+
+            return document.meta as HostelApplicationApprovalOptionsResponse;
+        } catch {
+            errorAlert(trans('trans.load_data_failure', { data: trans('trans.data') }));
+        }
+    };
+
+    const approveApplication = async (
+        application: HostelApplication,
+        hostelRoomId: number,
+    ): Promise<boolean> => {
+        return saveApplication(
+            {
+                status: 'approved',
+                hostelRoomId,
+            },
+            application.id,
+        );
+    };
+
+    const fetchHmsSettings = async (): Promise<HmsSettings | undefined> => {
+        try {
+            const document = await HttpService.get(route('v1.json.hms.hms-settings.index'), jsonApiRequestConfig());
+            return parseJsonApiHmsSettings(document);
+        } catch {
+            errorAlert(trans('trans.load_data_failure', { data: trans('trans.data') }));
+        }
+    };
+
+    const saveHmsSettings = async (settings: HmsSettings, attributes: Partial<HmsSettings['attributes']>): Promise<boolean> => {
+        try {
+            await HttpService.patch(
+                route('v1.json.hms.hms-settings.update', settings.id),
+                {
+                    data: {
+                        type: 'hms-settings',
+                        id: String(settings.id),
+                        attributes,
+                    },
+                },
+                jsonApiWriteConfig(),
+            );
+
+            successAlert(trans('hms.settings_saved'));
+            return true;
+        } catch {
+            errorAlert(trans('hms.settings_save_failed'));
+            return false;
+        }
+    };
+
+    const hostelApplicationColumns = () => {
+        return [
+            {
+                header: trans_choice('trans.name', 1),
+                accessorKey: 'attributes.displayName',
+                cell: ({ row }: { row: { original: HostelApplication } }) => {
+                    const application = row.original;
+                    const label = application.attributes.displayName ?? '--';
+
+                    if (!hasAbility('view:hostel-applications')) {
+                        return label;
+                    }
+
+                    return textLink(route('hostels.applications.show', application.id), label);
+                },
+            },
+            {
+                header: trans_choice('trans.student_number', 1),
+                accessorKey: 'attributes.studentNumber',
+                cell: ({ row }: { row: { original: HostelApplication } }) => row.original.attributes.studentNumber ?? '--',
+            },
+            {
+                header: trans_choice('trans.gender', 1),
+                accessorKey: 'attributes.gender',
+                cell: ({ row }: { row: { original: HostelApplication } }) => row.original.attributes.gender ?? '--',
+            },
+            {
+                header: trans_choice('trans.course', 1),
+                accessorKey: 'attributes.course',
+                cell: ({ row }: { row: { original: HostelApplication } }) => row.original.attributes.course ?? '--',
+            },
+            {
+                header: trans_choice('hms.type', 1),
+                accessorKey: 'attributes.applicationType',
+                meta: { align: 'center' },
+                cell: ({ row }: { row: { original: HostelApplication } }) =>
+                    tag(row.original.attributes.applicationTypeLabel ?? row.original.attributes.applicationType, '', ColorVariant.success),
+            },
+            {
+                header: trans('hms.check_in'),
+                accessorKey: 'attributes.checkIn',
+                cell: ({ row }: { row: { original: HostelApplication } }) => {
+                    const checkIn = row.original.attributes.checkIn;
+                    return checkIn ? formatDate(checkIn, 'L') : '---';
+                },
+            },
+            {
+                header: trans('hms.check_out'),
+                accessorKey: 'attributes.checkOut',
+                cell: ({ row }: { row: { original: HostelApplication } }) => {
+                    const checkOut = row.original.attributes.checkOut;
+                    return checkOut ? formatDate(checkOut, 'L') : '---';
+                },
+            },
+            {
+                header: trans_choice('hms.status', 1),
+                accessorKey: 'attributes.status',
+                meta: { align: 'center' },
+                cell: ({ row }: { row: { original: HostelApplication } }) =>
+                    tag(row.original.attributes.statusLabel ?? row.original.attributes.status, '', ColorVariant.primary),
+            },
+            {
+                header: trans_choice('trans.action', 2),
+                accessorKey: 'actions',
+                enableSorting: false,
+                meta: { align: 'right' },
+                cell: ({ row }: { row: { original: HostelApplication } }) => {
+                    const application = row.original;
+                    const actions = [];
+
+                    if (hasAbility('view:hostel-applications')) {
+                        actions.push({
+                            key: 'view',
+                            action: () => onView(true, route('hostels.applications.show', application.id)),
+                        });
+                    }
+
+                    return actionButton({
+                        title: trans('trans.view'),
+                        variant: ColorVariant.success,
+                        onClick: () => navigateTo(route('hostels.applications.show', application.id)),
+                    });
+                },
+            },
+        ];
     };
 
     const hostelStudentColumns = () => {
@@ -280,8 +546,18 @@ export const useHms = () => {
         fetchRooms,
         fetchHostelAllocations,
         fetchRoomStats,
+        fetchApplications,
+        fetchApplication,
+        fetchApplicationStudentLookup,
+        fetchApplicationApprovalOptions,
+        saveApplication,
+        updateApplicationStatus,
+        approveApplication,
+        fetchHmsSettings,
+        saveHmsSettings,
         hostelRoomColumns,
         hostelStudentColumns,
+        hostelApplicationColumns,
         isLoading,
         isStatsLoading,
     };

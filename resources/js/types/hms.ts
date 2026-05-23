@@ -117,3 +117,133 @@ export type HostelStudentFiltersState = {
     status?: HostelAllocationStatus | null;
     with_trashed?: boolean | null;
 };
+
+export type HostelApplicationType = 'student' | 'guest';
+
+export type HostelApplicationStatus = 'pending' | 'awaiting-payment' | 'approved' | 'declined';
+
+export type HostelApplicationEligibilityRule = {
+    key: string;
+    passed: boolean;
+    message: string;
+};
+
+export type HostelApplicationStudentLookup = {
+    id: number;
+    studentNumber?: string | null;
+    name?: string | null;
+    genderId?: number | null;
+    gender?: string | null;
+    phoneNumber?: string | null;
+    physicalAddress?: string | null;
+    emailAddress?: string | null;
+    course?: string | null;
+    level?: string | null;
+    studentEnrolmentId?: number | null;
+    nextOfKinName?: string | null;
+    nextOfKinContact?: string | null;
+};
+
+export type HostelApplicationLookupSemester = {
+    checkIn: string;
+    checkOut: string;
+    label: string;
+};
+
+export type HostelApplicationLookupRoomAvailability = {
+    availableBeds: number;
+    hostels: string[];
+    roomCount: number;
+};
+
+export type HostelApplicationApprovalHostelOption = {
+    id: number;
+    name: string;
+    availableBeds: number;
+    isFull: boolean;
+};
+
+export type HostelApplicationApprovalRoomOption = {
+    id: number;
+    name: string;
+    maxOccupancy: number;
+    currentOccupancy: number;
+    availableBeds: number;
+    occupancyLabel: string;
+};
+
+export type HostelApplicationApprovalOptionsResponse = {
+    canApprove: boolean;
+    blockers: string[];
+    hostels: HostelApplicationApprovalHostelOption[];
+    rooms: HostelApplicationApprovalRoomOption[];
+};
+
+export type HostelApplicationStudentLookupResponse = {
+    found: boolean;
+    canSubmit?: boolean;
+    message?: string;
+    blockers?: string[];
+    student?: HostelApplicationStudentLookup | null;
+    semester?: HostelApplicationLookupSemester | null;
+    roomAvailability?: HostelApplicationLookupRoomAvailability;
+    eligibility?: HostelApplicationEligibilityRule[];
+    eligibilityPassed?: boolean;
+};
+
+export type HostelApplication = {
+    type: string;
+    id: number | string;
+    attributes: {
+        applicationType: HostelApplicationType;
+        applicationTypeLabel?: string | null;
+        status: HostelApplicationStatus;
+        statusLabel?: string | null;
+        studentId?: number | string | null;
+        studentEnrolmentId?: number | string | null;
+        name?: string | null;
+        genderId?: number | string | null;
+        displayName?: string | null;
+        studentName?: string | null;
+        studentNumber?: string | null;
+        gender?: string | null;
+        course?: string | null;
+        level?: string | null;
+        departmentName?: string | null;
+        calendarYear?: string | null;
+        physicalAddress?: string | null;
+        phoneNumber?: string | null;
+        emailAddress?: string | null;
+        nextOfKinName?: string | null;
+        nextOfKinContact?: string | null;
+        checkIn?: string | null;
+        checkOut?: string | null;
+        eligibilityResults?: HostelApplicationEligibilityRule[] | null;
+        declineReason?: string | null;
+        createdAt?: string;
+        updatedAt?: string;
+        deletedAt?: string;
+    };
+};
+
+export type HostelApplicationFiltersState = {
+    search?: string | null;
+    type?: HostelApplicationType | null;
+    status?: HostelApplicationStatus | null;
+    with_trashed?: boolean | null;
+};
+
+export type HmsSettings = {
+    type: string;
+    id: number | string;
+    attributes: {
+        requireFullTimeStudy: boolean;
+        fullTimeModeName: string;
+        requireTuitionPaid: boolean;
+        requireAddressOutsideCampus: boolean;
+        campusCity: string;
+        allowGuests: boolean;
+        createdAt?: string;
+        updatedAt?: string;
+    };
+};
