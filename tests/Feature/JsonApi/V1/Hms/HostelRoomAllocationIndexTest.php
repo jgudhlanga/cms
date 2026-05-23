@@ -28,7 +28,7 @@ test('json api hostel allocations index returns paginated allocation rows', func
 
     $response = $this
         ->jsonApi('hostel-room-allocations')
-        ->get(route('v1.json.hostel-room-allocations.index'));
+        ->get(route('v1.json.hms.hostel-room-allocations.index'));
 
     $response->assertSuccessful()
         ->assertJsonCount(1, 'data')
@@ -64,7 +64,7 @@ test('json api hostel allocations index excludes pending by default', function (
 
     $response = $this
         ->jsonApi('hostel-room-allocations')
-        ->get(route('v1.json.hostel-room-allocations.index'));
+        ->get(route('v1.json.hms.hostel-room-allocations.index'));
 
     $response->assertSuccessful()
         ->assertJsonCount(1, 'data')
@@ -97,7 +97,7 @@ test('json api hostel allocations index filters by status', function () {
     $response = $this
         ->jsonApi('hostel-room-allocations')
         ->filter(['status' => 'checked-out'])
-        ->get(route('v1.json.hostel-room-allocations.index'));
+        ->get(route('v1.json.hms.hostel-room-allocations.index'));
 
     $response->assertSuccessful()
         ->assertJsonCount(1, 'data')
@@ -124,7 +124,7 @@ test('json api hostel allocations index filters by student search', function () 
     $response = $this
         ->jsonApi('hostel-room-allocations')
         ->filter(['search' => 'UNIQUE-HMS-42'])
-        ->get(route('v1.json.hostel-room-allocations.index'));
+        ->get(route('v1.json.hms.hostel-room-allocations.index'));
 
     $response->assertSuccessful()
         ->assertJsonCount(1, 'data')
@@ -134,6 +134,6 @@ test('json api hostel allocations index filters by student search', function () 
 test('json api hostel allocations index requires authentication', function () {
     $this
         ->jsonApi('hostel-room-allocations')
-        ->get(route('v1.json.hostel-room-allocations.index'))
+        ->get(route('v1.json.hms.hostel-room-allocations.index'))
         ->assertUnauthorized();
 });

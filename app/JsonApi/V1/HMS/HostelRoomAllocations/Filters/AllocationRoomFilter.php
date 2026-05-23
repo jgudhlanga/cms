@@ -1,18 +1,18 @@
 <?php
 
-namespace App\JsonApi\V1\Filters;
+namespace App\JsonApi\V1\HMS\HostelRoomAllocations\Filters;
 
 use Illuminate\Database\Eloquent\Builder;
 use LaravelJsonApi\Eloquent\Contracts\Filter;
 use LaravelJsonApi\Eloquent\Filters\Concerns\IsSingular;
 
-class HostelSearchFilter implements Filter
+class AllocationRoomFilter implements Filter
 {
     use IsSingular;
 
     public function key(): string
     {
-        return 'search';
+        return 'room';
     }
 
     public function isSingular(): bool
@@ -22,15 +22,12 @@ class HostelSearchFilter implements Filter
 
     public function apply($query, $value): Builder
     {
-        $search = trim((string) $value);
+        $roomName = trim((string) $value);
 
-        if ($search === '') {
+        if ($roomName === '') {
             return $query;
         }
 
-        return $query->where(function (Builder $q) use ($search): void {
-            $q->where('name', 'like', "%{$search}%")
-                ->orWhere('location', 'like', "%{$search}%");
-        });
+        return $query->whereHas('room', fn (Builder $q) => $q->where('name', 'like', "%{$roomName}%"));
     }
 }

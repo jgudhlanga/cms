@@ -1,19 +1,18 @@
 <?php
 
-namespace App\JsonApi\V1\HostelRoomAllocations\Filters;
+namespace App\JsonApi\V1\HMS\Hostels\Filters;
 
-use App\Enums\HMS\HostelAllocationTypeEnum;
 use Illuminate\Database\Eloquent\Builder;
 use LaravelJsonApi\Eloquent\Contracts\Filter;
 use LaravelJsonApi\Eloquent\Filters\Concerns\IsSingular;
 
-class AllocationTypeFilter implements Filter
+class HostelSearchFilter implements Filter
 {
     use IsSingular;
 
     public function key(): string
     {
-        return 'type';
+        return 'search';
     }
 
     public function isSingular(): bool
@@ -23,12 +22,15 @@ class AllocationTypeFilter implements Filter
 
     public function apply($query, $value): Builder
     {
-        $type = HostelAllocationTypeEnum::tryFrom((string) $value);
+        $search = trim((string) $value);
 
-        if ($type === null) {
+        if ($search === '') {
             return $query;
         }
 
-        return $query->where('type', $type->value);
+        return $query->where(function (Builder $q) use ($search): void {
+            $q->where('name', 'like', "%{$search}%")
+                ->orWhere('location', 'like', "%{$search}%");
+        });
     }
 }

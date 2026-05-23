@@ -1,6 +1,6 @@
 <?php
 
-namespace App\JsonApi\V1\HostelRoomAllocations\Filters;
+namespace App\JsonApi\V1\HMS\HostelRoomAllocations\Filters;
 
 use App\Enums\HMS\HostelAllocationStatusEnum;
 use Illuminate\Database\Eloquent\Builder;

@@ -6,6 +6,7 @@ import {
     mergeJsonApiFiltersIntoRequestPath,
     parseJsonApiHostelAllocations,
     parseJsonApiHostelRooms,
+    parseJsonApiHostelRoomStats,
     parseJsonApiHostels,
     toHostelAllocationJsonApiFilters,
     toHostelJsonApiFilters,
@@ -74,7 +75,7 @@ export const useHms = () => {
             const jsonFilters = toHostelJsonApiFilters(filters);
             const path = paginatorUrl
                 ? mergeJsonApiFiltersIntoRequestPath(paginatorUrl, jsonFilters)
-                : route('v1.json.hostels.index');
+                : route('v1.json.hms.hostels.index');
 
             const params = paginatorUrl
                 ? undefined
@@ -102,7 +103,7 @@ export const useHms = () => {
             const jsonFilters = toHostelRoomJsonApiFilters(filters);
             const path = paginatorUrl
                 ? mergeJsonApiFiltersIntoRequestPath(paginatorUrl, jsonFilters)
-                : route('v1.json.hostel-rooms.index');
+                : route('v1.json.hms.hostel-rooms.index');
 
             const params = paginatorUrl
                 ? undefined
@@ -130,7 +131,7 @@ export const useHms = () => {
             const jsonFilters = toHostelAllocationJsonApiFilters(filters);
             const path = paginatorUrl
                 ? mergeJsonApiFiltersIntoRequestPath(paginatorUrl, jsonFilters)
-                : route('v1.json.hostel-room-allocations.index');
+                : route('v1.json.hms.hostel-room-allocations.index');
 
             const params = paginatorUrl
                 ? undefined
@@ -152,14 +153,9 @@ export const useHms = () => {
     const fetchRoomStats = async (): Promise<HostelRoomStats | undefined> => {
         try {
             isStatsLoading.value = true;
-            const data = await HttpService.get(route('v1.hms.hostels.rooms.stats'));
+            const document = await HttpService.get(route('v1.json.hostel-rooms.stats'), jsonApiRequestConfig());
 
-            return {
-                totalRooms: data.total_rooms ?? 0,
-                totalCapacity: data.total_capacity ?? 0,
-                totalMaxOccupancy: data.total_max_occupancy ?? 0,
-                vacantCount: data.vacant_count ?? 0,
-            };
+            return parseJsonApiHostelRoomStats(document);
         } catch {
             errorAlert(trans('trans.load_data_failure', { data: trans('trans.data') }));
         } finally {

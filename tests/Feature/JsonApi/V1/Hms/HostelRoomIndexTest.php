@@ -51,7 +51,7 @@ test('json api hostel rooms index applies default name sort', function () {
 
     $response = $this
         ->jsonApi('hostel-rooms')
-        ->get(route('v1.json.hostel-rooms.index'));
+        ->get(route('v1.json.hms.hostel-rooms.index'));
 
     $response->assertSuccessful()
         ->assertJsonPath('data.0.attributes.name', 'A-01')
@@ -66,7 +66,7 @@ test('json api hostel rooms index accepts explicit sort parameter', function () 
     $response = $this
         ->jsonApi('hostel-rooms')
         ->sort('-name')
-        ->get(route('v1.json.hostel-rooms.index'));
+        ->get(route('v1.json.hms.hostel-rooms.index'));
 
     $response->assertSuccessful();
 });
@@ -78,7 +78,7 @@ test('json api hostel rooms index rejects legacy flat page query', function () {
 
     $this
         ->jsonApi('hostel-rooms')
-        ->get(route('v1.json.hostel-rooms.index', ['page' => 2]))
+        ->get(route('v1.json.hms.hostel-rooms.index', ['page' => 2]))
         ->assertStatus(400);
 });
 
@@ -90,6 +90,6 @@ test('json api hostel rooms index accepts page number and size array params', fu
     $this
         ->jsonApi('hostel-rooms')
         ->page(['number' => 1, 'size' => 10])
-        ->get(route('v1.json.hostel-rooms.index'))
+        ->get(route('v1.json.hms.hostel-rooms.index'))
         ->assertSuccessful();
 });

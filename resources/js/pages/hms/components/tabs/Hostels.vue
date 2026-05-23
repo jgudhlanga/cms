@@ -38,11 +38,16 @@ const hostelsList = ref<DataListProps<Hostel>>({
 });
 const filters = ref<HostelFiltersState>({});
 
-const loadHostels = async (f: HostelFiltersState = {}) => {
+const loadHostels = async (f: HostelFiltersState = filters.value) => {
+    filters.value = f;
     const res = await fetchHostels(f);
     if (res) {
         hostelsList.value = res;
     }
+};
+
+const onFiltersChange = (f: HostelFiltersState) => {
+    loadHostels(f);
 };
 
 const loadHostelsFromUrl = async (url: string) => {
@@ -119,7 +124,7 @@ const totalOccupied = computed(() =>
     </div>
 
     <div class="mb-6 flex flex-col">
-        <HostelFilters :filters="filters" @change="loadHostels" />
+        <HostelFilters :filters="filters" @change="onFiltersChange" />
     </div>
 
     <div v-if="hostelsList.data.length" class="grid grid-cols-1 gap-3 md:grid-cols-3">

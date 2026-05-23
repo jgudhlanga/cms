@@ -1,12 +1,12 @@
 <?php
 
-namespace App\JsonApi\V1\Filters;
+namespace App\JsonApi\V1\HMS\HostelRoomAllocations\Filters;
 
 use Illuminate\Database\Eloquent\Builder;
 use LaravelJsonApi\Eloquent\Contracts\Filter;
 use LaravelJsonApi\Eloquent\Filters\Concerns\IsSingular;
 
-class HostelRoomHostelFilter implements Filter
+class AllocationHostelFilter implements Filter
 {
     use IsSingular;
 
@@ -23,7 +23,7 @@ class HostelRoomHostelFilter implements Filter
     public function apply($query, $value): Builder
     {
         if (is_numeric($value)) {
-            return $query->where('hostel_id', (int) $value);
+            return $query->whereHas('room', fn (Builder $q) => $q->where('hostel_id', (int) $value));
         }
 
         $hostelName = trim((string) $value);
@@ -32,8 +32,6 @@ class HostelRoomHostelFilter implements Filter
             return $query;
         }
 
-        return $query->whereHas('hostel', function (Builder $q) use ($hostelName): void {
-            $q->where('name', 'like', "%{$hostelName}%");
-        });
+        return $query->whereHas('room.hostel', fn (Builder $q) => $q->where('name', 'like', "%{$hostelName}%"));
     }
 }

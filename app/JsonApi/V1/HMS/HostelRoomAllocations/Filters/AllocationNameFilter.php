@@ -1,6 +1,6 @@
 <?php
 
-namespace App\JsonApi\V1\HostelRoomAllocations\Filters;
+namespace App\JsonApi\V1\HMS\HostelRoomAllocations\Filters;
 
 use Illuminate\Database\Eloquent\Builder;
 use LaravelJsonApi\Eloquent\Contracts\Filter;

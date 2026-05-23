@@ -1,10 +1,10 @@
 <?php
 
-namespace App\JsonApi\V1\HostelRooms;
+namespace App\JsonApi\V1\HMS\HostelRooms;
 
-use App\JsonApi\V1\Filters\HostelRoomHostelFilter;
-use App\JsonApi\V1\Filters\HostelRoomSearchFilter;
-use App\JsonApi\V1\Filters\TrashedFilter;
+use App\JsonApi\V1\HMS\Filters\TrashedFilter;
+use App\JsonApi\V1\HMS\HostelRooms\Filters\HostelRoomHostelFilter;
+use App\JsonApi\V1\HMS\HostelRooms\Filters\HostelRoomSearchFilter;
 use App\Models\HMS\HostelRoom;
 use LaravelJsonApi\Eloquent\Contracts\Paginator;
 use LaravelJsonApi\Eloquent\Fields\DateTime;
@@ -19,6 +19,8 @@ use LaravelJsonApi\Eloquent\Schema;
 class HostelRoomSchema extends Schema
 {
     public static string $model = HostelRoom::class;
+
+    protected ?string $uriType = 'hms/hostel-rooms';
 
     protected array $with = ['hostel:id,name'];
 

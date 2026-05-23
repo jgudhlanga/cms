@@ -1,17 +1,17 @@
 <?php
 
-namespace App\JsonApi\V1\Hostels;
+namespace App\JsonApi\V1\HMS\Hostels;
 
-use App\JsonApi\V1\Filters\HostelSearchFilter;
-use App\JsonApi\V1\Filters\HostelWardenFilter;
-use App\JsonApi\V1\Filters\TrashedFilter;
+use App\JsonApi\V1\HMS\Filters\TrashedFilter;
+use App\JsonApi\V1\HMS\Hostels\Filters\HostelSearchFilter;
+use App\JsonApi\V1\HMS\Hostels\Filters\HostelTypeFilter;
+use App\JsonApi\V1\HMS\Hostels\Filters\HostelWardenFilter;
 use App\Models\HMS\Hostel;
 use LaravelJsonApi\Eloquent\Contracts\Paginator;
 use LaravelJsonApi\Eloquent\Fields\DateTime;
 use LaravelJsonApi\Eloquent\Fields\ID;
 use LaravelJsonApi\Eloquent\Fields\Number;
 use LaravelJsonApi\Eloquent\Fields\Str;
-use LaravelJsonApi\Eloquent\Filters\Where;
 use LaravelJsonApi\Eloquent\Filters\WhereIdIn;
 use LaravelJsonApi\Eloquent\Pagination\PagePagination;
 use LaravelJsonApi\Eloquent\Schema;
@@ -19,6 +19,8 @@ use LaravelJsonApi\Eloquent\Schema;
 class HostelSchema extends Schema
 {
     public static string $model = Hostel::class;
+
+    protected ?string $uriType = 'hms/hostels';
 
     protected array $with = ['warden.user'];
 
@@ -56,7 +58,7 @@ class HostelSchema extends Schema
         return [
             WhereIdIn::make($this),
             new HostelSearchFilter,
-            Where::make('type'),
+            new HostelTypeFilter,
             new HostelWardenFilter,
             TrashedFilter::make(),
         ];

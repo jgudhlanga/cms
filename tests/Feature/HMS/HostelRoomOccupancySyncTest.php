@@ -2,7 +2,6 @@
 
 use App\Enums\HMS\HostelAllocationStatusEnum;
 use App\Enums\Shared\TenantEnum;
-use App\Http\Resources\HMS\HostelRoomResource;
 use App\Models\HMS\Hostel;
 use App\Models\HMS\HostelRoom;
 use App\Models\HMS\HostelRoomAllocation;
@@ -83,9 +82,6 @@ test('assigning one student sets occupancy to 1/2 and occupied status', function
     expect($room->current_occupancy)->toBe(1)
         ->and($room->status)->toBe('occupied')
         ->and($room->occupancyLabel())->toBe('1/2');
-
-    $resource = (new HostelRoomResource($room))->resolve();
-    expect($resource['attributes']['occupancy'])->toBe('1/2');
 });
 
 test('assigning up to max occupancy sets full room', function () {

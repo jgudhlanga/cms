@@ -1,6 +1,6 @@
 <?php
 
-namespace App\JsonApi\Authorizers;
+namespace App\JsonApi\V1\HMS;
 
 use Illuminate\Http\Request;
 use LaravelJsonApi\Contracts\Auth\Authorizer;

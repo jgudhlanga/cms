@@ -2,9 +2,9 @@
 
 namespace App\JsonApi\V1;
 
-use App\JsonApi\V1\HostelRoomAllocations\HostelRoomAllocationSchema;
-use App\JsonApi\V1\HostelRooms\HostelRoomSchema;
-use App\JsonApi\V1\Hostels\HostelSchema;
+use App\JsonApi\V1\HMS\HostelRoomAllocations\HostelRoomAllocationSchema;
+use App\JsonApi\V1\HMS\HostelRooms\HostelRoomSchema;
+use App\JsonApi\V1\HMS\Hostels\HostelSchema;
 use LaravelJsonApi\Core\Server\Server as BaseServer;
 
 class Server extends BaseServer

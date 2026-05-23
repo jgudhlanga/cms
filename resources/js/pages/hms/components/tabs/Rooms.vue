@@ -60,7 +60,7 @@ const openCreate = () => openModal({ name: APP_MODULE_KEYS.hostel_rooms });
         :show-archived-filter="false"
         :use-api="true"
         :use-json-api="true"
-        :search-url="route('v1.json.hostel-rooms.index')"
+        :search-url="route('v1.json.hms.hostel-rooms.index')"
         :api-fetch-action="loadRoomsFromUrl"
         :hide-built-in-search="true"
         :loading="isLoading"

@@ -4,6 +4,7 @@ import type {
     HostelFiltersState,
     HostelRoom,
     HostelRoomFiltersState,
+    HostelRoomStats,
     HostelStudentFiltersState,
 } from '@/types/hms';
 
@@ -35,6 +36,17 @@ type JsonApiCollectionDocument = {
     };
 };
 
+type JsonApiHostelRoomStatsMeta = {
+    totalRooms?: number;
+    totalCapacity?: number;
+    totalMaxOccupancy?: number;
+    vacantCount?: number;
+};
+
+type JsonApiMetaDocument = {
+    meta?: JsonApiHostelRoomStatsMeta;
+};
+
 export function jsonApiRequestConfig(): { headers: { Accept: string } } {
     return { headers: { Accept: JSON_API_ACCEPT } };
 }
@@ -46,7 +58,10 @@ export function toHostelJsonApiFilters(filters: HostelFiltersState): Record<stri
         out.search = String(filters.search);
     }
     if (filters.type) {
-        out.type = String(filters.type);
+        const type = String(filters.type).toLowerCase();
+        if (type === 'male' || type === 'female' || type === 'mixed') {
+            out.type = type;
+        }
     }
     if (filters.warden) {
         out.warden = String(filters.warden);
@@ -240,6 +255,17 @@ export function parseJsonApiHostelRooms(document: JsonApiCollectionDocument): Da
         data: rows,
         meta: mapJsonApiPageMeta(document.meta?.page),
         links: mapJsonApiLinks(document.links),
+    };
+}
+
+export function parseJsonApiHostelRoomStats(document: JsonApiMetaDocument): HostelRoomStats {
+    const meta = document.meta ?? {};
+
+    return {
+        totalRooms: meta.totalRooms ?? 0,
+        totalCapacity: meta.totalCapacity ?? 0,
+        totalMaxOccupancy: meta.totalMaxOccupancy ?? 0,
+        vacantCount: meta.vacantCount ?? 0,
     };
 }
 

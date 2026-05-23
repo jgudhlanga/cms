@@ -1,16 +1,16 @@
 <?php
 
-namespace App\JsonApi\V1\HostelRoomAllocations;
+namespace App\JsonApi\V1\HMS\HostelRoomAllocations;
 
 use App\Enums\HMS\HostelAllocationStatusEnum;
-use App\JsonApi\V1\Filters\TrashedFilter;
-use App\JsonApi\V1\HostelRoomAllocations\Filters\AllocationGenderFilter;
-use App\JsonApi\V1\HostelRoomAllocations\Filters\AllocationHostelFilter;
-use App\JsonApi\V1\HostelRoomAllocations\Filters\AllocationNameFilter;
-use App\JsonApi\V1\HostelRoomAllocations\Filters\AllocationRoomFilter;
-use App\JsonApi\V1\HostelRoomAllocations\Filters\AllocationSearchFilter;
-use App\JsonApi\V1\HostelRoomAllocations\Filters\AllocationStatusFilter;
-use App\JsonApi\V1\HostelRoomAllocations\Filters\AllocationTypeFilter;
+use App\JsonApi\V1\HMS\Filters\TrashedFilter;
+use App\JsonApi\V1\HMS\HostelRoomAllocations\Filters\AllocationGenderFilter;
+use App\JsonApi\V1\HMS\HostelRoomAllocations\Filters\AllocationHostelFilter;
+use App\JsonApi\V1\HMS\HostelRoomAllocations\Filters\AllocationNameFilter;
+use App\JsonApi\V1\HMS\HostelRoomAllocations\Filters\AllocationRoomFilter;
+use App\JsonApi\V1\HMS\HostelRoomAllocations\Filters\AllocationSearchFilter;
+use App\JsonApi\V1\HMS\HostelRoomAllocations\Filters\AllocationStatusFilter;
+use App\JsonApi\V1\HMS\HostelRoomAllocations\Filters\AllocationTypeFilter;
 use App\Models\HMS\HostelRoomAllocation;
 use LaravelJsonApi\Eloquent\Contracts\Paginator;
 use LaravelJsonApi\Eloquent\Fields\DateTime;
@@ -26,6 +26,8 @@ use LaravelJsonApi\Eloquent\Schema;
 class HostelRoomAllocationSchema extends Schema
 {
     public static string $model = HostelRoomAllocation::class;
+
+    protected ?string $uriType = 'hms/hostel-room-allocations';
 
     protected array $with = [
         'student.user',

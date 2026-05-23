@@ -6,7 +6,7 @@ use App\Enums\Acl\RoleEnum;
 use App\Importers\Finance\FinanceExchangeRateImporter;
 use App\Importers\Institution\CourseSyllabusImporter;
 use App\Importers\Institution\CourseSyllabusModuleImporter;
-use App\JsonApi\Authorizers\HmsAuthorizer;
+use App\JsonApi\V1\HMS\HmsAuthorizer;
 use App\Models\Institution\Syllabus\CourseSyllabus;
 use App\Policies\Institution\CourseSyllabusPolicy;
 use Illuminate\Auth\Events\Login;
