@@ -25,6 +25,7 @@ class HmsSettingSchema extends Schema
             Boolean::make('requireFullTimeStudy', 'require_full_time_study'),
             Str::make('fullTimeModeName', 'full_time_mode_name'),
             Boolean::make('requireTuitionPaid', 'require_tuition_paid'),
+            Boolean::make('requireAccommodationPaid', 'require_accommodation_paid'),
             Boolean::make('requireAddressOutsideCampus', 'require_address_outside_campus'),
             Str::make('campusCity', 'campus_city'),
             Boolean::make('allowGuests', 'allow_guests'),

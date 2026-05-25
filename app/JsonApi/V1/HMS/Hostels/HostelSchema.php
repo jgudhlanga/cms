@@ -14,6 +14,7 @@ use LaravelJsonApi\Eloquent\Fields\Number;
 use LaravelJsonApi\Eloquent\Fields\Str;
 use LaravelJsonApi\Eloquent\Filters\WhereIdIn;
 use LaravelJsonApi\Eloquent\Pagination\PagePagination;
+use LaravelJsonApi\Eloquent\QueryBuilder\JsonApiBuilder;
 use LaravelJsonApi\Eloquent\Schema;
 
 class HostelSchema extends Schema
@@ -40,9 +41,15 @@ class HostelSchema extends Schema
             Str::make('status')->sortable(),
             Str::make('location')->sortable(),
             Str::make('description'),
-            Number::make('occupiedCount')->extractUsing(fn () => 0)->readOnly(),
-            Number::make('vacantCount')->extractUsing(fn () => 0)->readOnly(),
-            Number::make('maintenanceCount')->extractUsing(fn () => 0)->readOnly(),
+            Number::make('occupiedCount')->extractUsing(
+                fn (Hostel $hostel) => (int) ($hostel->occupied_beds_sum ?? 0),
+            )->readOnly(),
+            Number::make('vacantCount')->extractUsing(
+                fn (Hostel $hostel) => (int) ($hostel->vacant_rooms_count ?? 0),
+            )->readOnly(),
+            Number::make('maintenanceCount')->extractUsing(
+                fn (Hostel $hostel) => (int) ($hostel->maintenance_rooms_count ?? 0),
+            )->readOnly(),
             Number::make('wardenId', 'warden_id'),
             Str::make('wardenName')->extractUsing(
                 fn (Hostel $hostel) => $hostel->warden?->user?->full_name
@@ -68,5 +75,19 @@ class HostelSchema extends Schema
     {
         return PagePagination::make()
             ->withDefaultPerPage((int) config('custom.system.pagination_items_per_page', 15));
+    }
+
+    public function newQuery($query = null): JsonApiBuilder
+    {
+        $query ??= Hostel::query();
+
+        $query
+            ->withSum('rooms as occupied_beds_sum', 'current_occupancy')
+            ->withCount([
+                'rooms as vacant_rooms_count' => fn ($builder) => $builder->where('status', 'vacant'),
+                'rooms as maintenance_rooms_count' => fn ($builder) => $builder->where('status', 'maintenance'),
+            ]);
+
+        return parent::newQuery($query);
     }
 }

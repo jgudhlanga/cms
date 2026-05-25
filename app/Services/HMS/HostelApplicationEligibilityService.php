@@ -46,6 +46,18 @@ class HostelApplicationEligibilityService
             ];
         }
 
+        if ($settings->require_accommodation_paid) {
+            $passed = (bool) $enrolment?->studentProgram?->hasPaid(FeeTypeEnum::STUDENT_ACCOMMODATION_FEE);
+
+            $rules[] = [
+                'key' => 'accommodation_paid',
+                'passed' => $passed,
+                'message' => $passed
+                    ? __('hms.eligibility_accommodation_paid_passed')
+                    : __('hms.eligibility_accommodation_paid_failed'),
+            ];
+        }
+
         if ($settings->require_address_outside_campus) {
             $passed = $this->addressIsOutsideCampus($student, $settings->campus_city);
 

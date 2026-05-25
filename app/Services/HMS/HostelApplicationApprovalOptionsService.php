@@ -4,9 +4,11 @@ namespace App\Services\HMS;
 
 use App\Enums\HMS\HostelApplicationStatusEnum;
 use App\Enums\HMS\HostelApplicationTypeEnum;
+use App\Models\HMS\HmsSetting;
 use App\Models\HMS\Hostel;
 use App\Models\HMS\HostelApplication;
 use App\Models\HMS\HostelRoom;
+use App\Support\HMS\HostelApplicationPaymentVerification;
 
 class HostelApplicationApprovalOptionsService
 {
@@ -31,11 +33,16 @@ class HostelApplicationApprovalOptionsService
      *     blockers: list<string>,
      *     hostels: list<array{id: int, name: string, availableBeds: int, isFull: bool}>,
      *     rooms: list<array{id: int, name: string, maxOccupancy: int, currentOccupancy: int, availableBeds: int, occupancyLabel: string}>,
+     *     requiredPaymentVerification: list<string>,
+     *     allowsDirectAllocation: bool,
      * }
      */
     public function forApplication(HostelApplication $application, ?int $hostelId = null): array
     {
-        $blockers = $this->blockersForApplication($application);
+        $settings = HmsSetting::resolveForTenant($application->tenant_id);
+        $requiredPaymentVerification = HostelApplicationPaymentVerification::requiredApiKeys($settings);
+        $allowsDirectAllocation = HostelApplicationPaymentVerification::allowsDirectRoomAllocation($settings);
+        $blockers = $this->blockersForApplication($application, $settings);
 
         if ($blockers !== []) {
             return [
@@ -43,6 +50,8 @@ class HostelApplicationApprovalOptionsService
                 'blockers' => $blockers,
                 'hostels' => [],
                 'rooms' => [],
+                'requiredPaymentVerification' => $requiredPaymentVerification,
+                'allowsDirectAllocation' => $allowsDirectAllocation,
             ];
         }
 
@@ -63,18 +72,29 @@ class HostelApplicationApprovalOptionsService
             'blockers' => array_values(array_unique($blockers)),
             'hostels' => $hostels,
             'rooms' => $rooms,
+            'requiredPaymentVerification' => $requiredPaymentVerification,
+            'allowsDirectAllocation' => $allowsDirectAllocation,
         ];
     }
 
     /**
      * @return list<string>
      */
-    public function blockersForApplication(HostelApplication $application): array
-    {
+    public function blockersForApplication(
+        HostelApplication $application,
+        ?HmsSetting $settings = null,
+    ): array {
         $blockers = [];
+        $status = $this->effectiveStatusForReview($application);
 
-        if ($application->status !== HostelApplicationStatusEnum::AWAITING_PAYMENT) {
-            $blockers[] = self::BLOCKER_NOT_AWAITING_PAYMENT;
+        if ($status !== HostelApplicationStatusEnum::AWAITING_PAYMENT) {
+            $settings ??= HmsSetting::resolveForTenant($application->tenant_id);
+            $canAllocateFromPending = $status === HostelApplicationStatusEnum::PENDING
+                && HostelApplicationPaymentVerification::allowsDirectRoomAllocation($settings);
+
+            if (! $canAllocateFromPending) {
+                $blockers[] = self::BLOCKER_NOT_AWAITING_PAYMENT;
+            }
         }
 
         if ($application->type === HostelApplicationTypeEnum::GUEST) {
@@ -97,6 +117,21 @@ class HostelApplicationApprovalOptionsService
         }
 
         return $blockers;
+    }
+
+    private function effectiveStatusForReview(HostelApplication $application): HostelApplicationStatusEnum
+    {
+        if (! $application->isDirty('status')) {
+            return $application->status;
+        }
+
+        $original = $application->getOriginal('status');
+
+        if ($original instanceof HostelApplicationStatusEnum) {
+            return $original;
+        }
+
+        return HostelApplicationStatusEnum::tryFrom((string) $original) ?? $application->status;
     }
 
     /**

@@ -4,6 +4,7 @@ use App\Enums\AcademicCalendars\AcademicCalendarTypeEnum;
 use App\Enums\Shared\TenantEnum;
 use App\Models\AcademicCalendars\AcademicCalendar;
 use App\Models\AcademicCalendars\AcademicYearOption;
+use App\Models\HMS\HmsSetting;
 use App\Models\HMS\Hostel;
 use App\Models\HMS\HostelRoom;
 use App\Models\Students\StudentEnrolment;
@@ -92,6 +93,20 @@ function attachHostelApplicationEnrolment(
         'mode_of_study_id' => $studentProgram->mode_of_study_id,
         'student_enrolment_status_id' => $activeStatusId,
     ]);
+}
+
+function disableAllHmsApprovalRequirements(int $tenantId): HmsSetting
+{
+    $settings = HmsSetting::resolveForTenant($tenantId);
+
+    $settings->update([
+        'require_full_time_study' => false,
+        'require_tuition_paid' => false,
+        'require_accommodation_paid' => false,
+        'require_address_outside_campus' => false,
+    ]);
+
+    return $settings->fresh();
 }
 
 function createStudentReadyForHostelApplication(

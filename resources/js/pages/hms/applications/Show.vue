@@ -16,7 +16,7 @@ import ApplicationSidebar from '@/pages/hms/applications/partials/ApplicationSid
 import PaymentVerificationCard from '@/pages/hms/applications/partials/PaymentVerificationCard.vue';
 import DeclineApplication from '@/pages/hms/components/forms/DeclineApplication.vue';
 import { useHmsStore } from '@/store/hms/useHmsStore';
-import type { HostelApplication, HostelApplicationEligibilityRule } from '@/types/hms';
+import type { HostelApplication, HostelApplicationEligibilityRule, HmsSettings } from '@/types/hms';
 import type { BreadcrumbItemInterface } from '@/types/ui';
 import { Head, router } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
@@ -30,16 +30,18 @@ interface Props {
 const props = defineProps<Props>();
 
 const { formatDate } = useUtils();
-const { fetchApplication, updateApplicationStatus, isLoading } = useHms();
+const { fetchApplication, fetchHmsSettings, updateApplicationStatus, isLoading } = useHms();
 const hmsStore = useHmsStore();
 const { open: openConfirm } = useCustomConfirmDialog();
 
 const application = ref<HostelApplication | null>(null);
+const hmsSettings = ref<HmsSettings | null>(null);
 
 const attrs = computed(() => application.value?.attributes);
 
 const breadcrumbs = computed<BreadcrumbItemInterface[]>(() => [
     { transChoiceKey: 'hms.title', href: route('hostels.index') },
+    { transChoiceKey: 'trans.application', href: route('hostels.index') },
     { title: attrs.value?.displayName ?? trans('hms.view_application') },
 ]);
 
@@ -49,8 +51,39 @@ const canReviewPending = computed(
     () => attrs.value?.status === 'pending' && hasAbility('update:hostel-applications'),
 );
 
+const allowsDirectAllocation = computed(() => {
+    const settings = hmsSettings.value?.attributes;
+
+    if (!settings) {
+        return false;
+    }
+
+    return (
+        !settings.requireFullTimeStudy &&
+        !settings.requireTuitionPaid &&
+        !settings.requireAccommodationPaid &&
+        !settings.requireAddressOutsideCampus
+    );
+});
+
 const canReviewAwaitingPayment = computed(
     () => attrs.value?.status === 'awaiting-payment' && hasAbility('update:hostel-applications'),
+);
+
+const canAllocateRoom = computed(() => {
+    if (!hasAbility('update:hostel-applications') || !isStudentApplication.value) {
+        return false;
+    }
+
+    if (attrs.value?.status === 'awaiting-payment') {
+        return true;
+    }
+
+    return attrs.value?.status === 'pending' && allowsDirectAllocation.value;
+});
+
+const showPaymentStepOnPending = computed(
+    () => canReviewPending.value && allowsDirectAllocation.value,
 );
 
 const loadApplication = async () => {
@@ -59,6 +92,7 @@ const loadApplication = async () => {
 
 onMounted(async () => {
     hmsStore.activeTab = 'applications';
+    hmsSettings.value = (await fetchHmsSettings()) ?? null;
     await loadApplication();
 });
 
@@ -139,7 +173,12 @@ const eligibilityRules = computed((): HostelApplicationEligibilityRule[] => attr
         <div v-else-if="application && attrs" class="flex justify-between space-x-3">
             <div class="flex w-3/4 flex-col space-y-3">
                 <BaseAlert
-                    v-if="attrs.status === 'pending' && isStudentApplication && canReviewPending"
+                    v-if="attrs.status === 'pending' && isStudentApplication && canReviewPending && showPaymentStepOnPending"
+                    :type="TypeVariant.info"
+                    :description="$t('hms.approve_direct_allocation_helper')"
+                />
+                <BaseAlert
+                    v-else-if="attrs.status === 'pending' && isStudentApplication && canReviewPending"
                     :type="TypeVariant.info"
                     :description="$t('hms.approve_payment_helper')"
                 />
@@ -263,13 +302,13 @@ const eligibilityRules = computed((): HostelApplicationEligibilityRule[] => attr
                 </div>
 
                 <PaymentVerificationCard
-                    v-if="canReviewAwaitingPayment"
+                    v-if="canAllocateRoom"
                     :application="application"
                     @approved="onApprovedAndAllocated"
                     @decline="openDecline"
                 />
 
-                <div v-if="canReviewPending" class="flex flex-wrap gap-2">
+                <div v-if="canReviewPending && !showPaymentStepOnPending" class="flex flex-wrap gap-2">
                     <BaseButton
                         type="button"
                         :variant="ColorVariant.danger"

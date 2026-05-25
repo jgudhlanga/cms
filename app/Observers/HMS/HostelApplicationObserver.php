@@ -71,9 +71,11 @@ class HostelApplicationObserver
             && $application->status === HostelApplicationStatusEnum::APPROVED
             && $application->getOriginal('status') !== HostelApplicationStatusEnum::APPROVED->value) {
             $paymentVerificationInput = data_get(request()->input('data'), 'attributes.paymentVerification');
+            $settings = HmsSetting::resolveForTenant($application->tenant_id);
 
             if (! HostelApplicationPaymentVerification::isCompleteFromApi(
                 is_array($paymentVerificationInput) ? $paymentVerificationInput : null,
+                $settings,
             )) {
                 throw ValidationException::withMessages([
                     'paymentVerification' => [__('hms.payment_verification_incomplete')],

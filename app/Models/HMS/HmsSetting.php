@@ -21,6 +21,7 @@ class HmsSetting extends Model
         'require_full_time_study',
         'full_time_mode_name',
         'require_tuition_paid',
+        'require_accommodation_paid',
         'require_address_outside_campus',
         'campus_city',
         'allow_guests',
@@ -31,6 +32,7 @@ class HmsSetting extends Model
         return [
             'require_full_time_study' => 'boolean',
             'require_tuition_paid' => 'boolean',
+            'require_accommodation_paid' => 'boolean',
             'require_address_outside_campus' => 'boolean',
             'allow_guests' => 'boolean',
         ];
@@ -46,6 +48,7 @@ class HmsSetting extends Model
                 'require_full_time_study' => true,
                 'full_time_mode_name' => 'Full Time',
                 'require_tuition_paid' => true,
+                'require_accommodation_paid' => true,
                 'require_address_outside_campus' => true,
                 'campus_city' => 'Harare',
                 'allow_guests' => false,

@@ -20,6 +20,7 @@ import type {
     HostelApplicationApprovalOptionsResponse,
     HostelApplicationApprovalRoomOption,
     HostelApplicationPaymentVerification,
+    HostelApplicationPaymentVerificationKey,
 } from '@/types/hms';
 import type { SelectOption } from '@/types/utils';
 import { useForm } from '@inertiajs/vue3';
@@ -72,12 +73,28 @@ const form = useForm({
     hostelRoomId: null as number | null,
 });
 
-const verificationFields = [
-    { key: 'addressOutsideCityCampusConfirmed' as const, labelKey: 'hms.label_confirm_address_outside_city' },
-    { key: 'fullTimeStudentConfirmed' as const, labelKey: 'hms.label_confirm_full_time_student' },
-    { key: 'tuitionFeesPaidConfirmed' as const, labelKey: 'hms.label_confirm_tuition_fees_paid' },
-    { key: 'accommodationFeesPaidConfirmed' as const, labelKey: 'hms.label_confirm_accommodation_fees_paid' },
+const verificationFields: {
+    key: HostelApplicationPaymentVerificationKey;
+    labelKey: string;
+    prefix: string;
+}[] = [
+    { key: 'addressOutsideCityCampusConfirmed', labelKey: 'hms.label_confirm_address_outside_city', prefix: 'address' },
+    { key: 'fullTimeStudentConfirmed', labelKey: 'hms.label_confirm_full_time_student', prefix: 'full_time' },
+    { key: 'tuitionFeesPaidConfirmed', labelKey: 'hms.label_confirm_tuition_fees_paid', prefix: 'tuition' },
+    { key: 'accommodationFeesPaidConfirmed', labelKey: 'hms.label_confirm_accommodation_fees_paid', prefix: 'accommodation' },
 ];
+
+const activeVerificationFields = computed(() => {
+    const required = options.value?.requiredPaymentVerification ?? [];
+
+    return verificationFields.filter((field) => required.includes(field.key));
+});
+
+const radioOptionsForPrefix = (prefix: string) =>
+    yesNoOptions.value.map((option) => ({
+        ...option,
+        inputId: `${prefix}_${option.inputId}`,
+    }));
 
 const isAnswered = (value: string | boolean | null | undefined): boolean =>
     value !== null && value !== undefined && value !== '';
@@ -106,31 +123,6 @@ const yesNoOptions = computed(() => {
         { inputId: 'confirmed_no', label: no, value: CONFIRMED_NO },
     ];
 });
-
-const addressOptions = computed(() =>
-    yesNoOptions.value.map((option) => ({
-        ...option,
-        inputId: `address_${option.inputId}`,
-    })),
-);
-const fullTimeOptions = computed(() =>
-    yesNoOptions.value.map((option) => ({
-        ...option,
-        inputId: `full_time_${option.inputId}`,
-    })),
-);
-const tuitionOptions = computed(() =>
-    yesNoOptions.value.map((option) => ({
-        ...option,
-        inputId: `tuition_${option.inputId}`,
-    })),
-);
-const accommodationOptions = computed(() =>
-    yesNoOptions.value.map((option) => ({
-        ...option,
-        inputId: `accommodation_${option.inputId}`,
-    })),
-);
 
 const blockerMessage = (key: string): string => {
     const messages: Record<string, string> = {
@@ -165,12 +157,22 @@ const showRoomSelection = computed(
     () => (options.value?.canApprove ?? false) && hostelSelectOptions.value.some((option) => !option.disabled),
 );
 
-const allVerificationsAnswered = computed(() =>
-    verificationFields.every((field) => isAnswered(form[field.key])),
-);
+const allVerificationsAnswered = computed(() => {
+    const fields = activeVerificationFields.value;
+
+    if (fields.length === 0) {
+        return true;
+    }
+
+    return fields.every((field) => isAnswered(form[field.key]));
+});
 
 const canApproveAndAllocate = computed(
     () => showRoomSelection.value && allVerificationsAnswered.value && form.hostelRoomId !== null,
+);
+
+const isDirectAllocationOnly = computed(
+    () => (options.value?.allowsDirectAllocation ?? false) && activeVerificationFields.value.length === 0,
 );
 
 const hydrateFromApplication = (verification?: HostelApplicationPaymentVerification | null): void => {
@@ -260,12 +262,15 @@ watch(selectedRoom, (room) => {
     clearFormErrors(form, 'hostelRoomId');
 });
 
-const paymentVerificationPayload = (): HostelApplicationPaymentVerification => ({
-    addressOutsideCityCampusConfirmed: isConfirmedYes(form.addressOutsideCityCampusConfirmed),
-    fullTimeStudentConfirmed: isConfirmedYes(form.fullTimeStudentConfirmed),
-    tuitionFeesPaidConfirmed: isConfirmedYes(form.tuitionFeesPaidConfirmed),
-    accommodationFeesPaidConfirmed: isConfirmedYes(form.accommodationFeesPaidConfirmed),
-});
+const paymentVerificationPayload = (): HostelApplicationPaymentVerification => {
+    const payload: HostelApplicationPaymentVerification = {};
+
+    for (const field of activeVerificationFields.value) {
+        payload[field.key] = isConfirmedYes(form[field.key]);
+    }
+
+    return payload;
+};
 
 const validateConfirmations = (): boolean => {
     if (!allVerificationsAnswered.value) {
@@ -314,43 +319,23 @@ const approveAndAllocate = async (): Promise<void> => {
 
 <template>
     <BaseCard
-        :title="$t('hms.payment_verification_card_title')"
-        :description="$t('hms.payment_verification_card_description')"
+        :title="isDirectAllocationOnly ? $t('hms.room_allocation_card_title') : $t('hms.payment_verification_card_title')"
+        :description="isDirectAllocationOnly ? $t('hms.room_allocation_card_description') : $t('hms.payment_verification_card_description')"
     >
-        <p class="text-sm text-muted-foreground">
+        <p v-if="activeVerificationFields.length" class="text-sm text-muted-foreground">
             {{ $t('hms.payment_verification_yes_helper') }}
         </p>
 
-        <div class="grid grid-cols-2 gap-4">
-            <div class="flex items-center space-x-5">
-                <Label class="font-bold">{{ $t('hms.label_confirm_address_outside_city') }}</Label>
+        <div v-if="activeVerificationFields.length" class="grid grid-cols-2 gap-4">
+            <div
+                v-for="field in activeVerificationFields"
+                :key="field.key"
+                class="flex items-center space-x-5"
+            >
+                <Label class="font-bold">{{ $t(field.labelKey) }}</Label>
                 <BaseRadioGroup
-                    :options="addressOptions as any"
-                    v-model="form.addressOutsideCityCampusConfirmed"
-                    :vertical-layout="false"
-                />
-            </div>
-            <div class="flex items-center space-x-5">
-                <Label class="font-bold">{{ $t('hms.label_confirm_full_time_student') }}</Label>
-                <BaseRadioGroup
-                    :options="fullTimeOptions as any"
-                    v-model="form.fullTimeStudentConfirmed"
-                    :vertical-layout="false"
-                />
-            </div>
-            <div class="flex items-center space-x-5">
-                <Label class="font-bold">{{ $t('hms.label_confirm_tuition_fees_paid') }}</Label>
-                <BaseRadioGroup
-                    :options="tuitionOptions as any"
-                    v-model="form.tuitionFeesPaidConfirmed"
-                    :vertical-layout="false"
-                />
-            </div>
-            <div class="flex items-center space-x-5">
-                <Label class="font-bold">{{ $t('hms.label_confirm_accommodation_fees_paid') }}</Label>
-                <BaseRadioGroup
-                    :options="accommodationOptions as any"
-                    v-model="form.accommodationFeesPaidConfirmed"
+                    :options="radioOptionsForPrefix(field.prefix) as any"
+                    v-model="form[field.key]"
                     :vertical-layout="false"
                 />
             </div>

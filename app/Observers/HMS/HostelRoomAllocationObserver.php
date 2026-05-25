@@ -26,7 +26,8 @@ class HostelRoomAllocationObserver
     public function updating(HostelRoomAllocation $allocation): void
     {
         if ($allocation->check_out !== null
-            && $allocation->getOriginal('check_out') === null) {
+            && $allocation->getOriginal('check_out') === null
+            && $allocation->status === HostelAllocationStatusEnum::ACTIVE) {
             $allocation->status = HostelAllocationStatusEnum::CHECKED_OUT;
         }
 

@@ -46,13 +46,11 @@ class HostelRoomAllocation extends Model
     }
 
     /**
-     * Active allocations: not checked out and status is active.
+     * Active allocations: currently occupying a bed (check_out holds planned semester end).
      */
     public function scopeActive(Builder $query): Builder
     {
-        return $query
-            ->whereNull('check_out')
-            ->where('status', HostelAllocationStatusEnum::ACTIVE->value);
+        return $query->where('status', HostelAllocationStatusEnum::ACTIVE->value);
     }
 
     /**
@@ -75,8 +73,7 @@ class HostelRoomAllocation extends Model
 
     public function isActive(): bool
     {
-        return $this->check_out === null
-            && $this->status === HostelAllocationStatusEnum::ACTIVE;
+        return $this->status === HostelAllocationStatusEnum::ACTIVE;
     }
 
     public function getActivitylogOptions(): LogOptions

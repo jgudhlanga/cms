@@ -5,9 +5,11 @@ namespace App\Services\HMS;
 use App\Enums\HMS\HostelAllocationStatusEnum;
 use App\Enums\HMS\HostelAllocationTypeEnum;
 use App\Enums\HMS\HostelApplicationStatusEnum;
+use App\Models\HMS\HmsSetting;
 use App\Models\HMS\HostelApplication;
 use App\Models\HMS\HostelRoom;
 use App\Models\HMS\HostelRoomAllocation;
+use App\Support\HMS\HostelApplicationPaymentVerification;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -28,16 +30,20 @@ class HostelApplicationApprovalService
                 ? $previousStatus->value
                 : (string) $previousStatus;
 
-            if ($previousValue !== HostelApplicationStatusEnum::AWAITING_PAYMENT->value) {
+            $settings = HmsSetting::resolveForTenant($application->tenant_id);
+            $allowedPreviousStatuses = [HostelApplicationStatusEnum::AWAITING_PAYMENT->value];
+
+            if (HostelApplicationPaymentVerification::allowsDirectRoomAllocation($settings)) {
+                $allowedPreviousStatuses[] = HostelApplicationStatusEnum::PENDING->value;
+            }
+
+            if (! in_array($previousValue, $allowedPreviousStatuses, true)) {
                 throw ValidationException::withMessages([
                     'status' => [__('hms.application_cannot_be_approved')],
                 ]);
             }
 
-            $blockers = array_values(array_filter(
-                $this->approvalOptionsService->blockersForApplication($application),
-                fn (string $blocker) => $blocker !== HostelApplicationApprovalOptionsService::BLOCKER_NOT_AWAITING_PAYMENT,
-            ));
+            $blockers = $this->approvalOptionsService->blockersForApplication($application, $settings);
 
             if ($blockers !== []) {
                 throw ValidationException::withMessages([
@@ -61,7 +67,7 @@ class HostelApplicationApprovalService
                 'type' => HostelAllocationTypeEnum::DIRECT,
                 'status' => HostelAllocationStatusEnum::ACTIVE,
                 'check_in' => $application->check_in,
-                'check_out' => null,
+                'check_out' => $application->check_out,
             ]);
         });
     }

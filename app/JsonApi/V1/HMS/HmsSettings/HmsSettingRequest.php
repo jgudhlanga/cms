@@ -12,6 +12,7 @@ class HmsSettingRequest extends ResourceRequest
             'requireFullTimeStudy' => ['sometimes', 'boolean'],
             'fullTimeModeName' => ['sometimes', 'string', 'max:255'],
             'requireTuitionPaid' => ['sometimes', 'boolean'],
+            'requireAccommodationPaid' => ['sometimes', 'boolean'],
             'requireAddressOutsideCampus' => ['sometimes', 'boolean'],
             'campusCity' => ['sometimes', 'string', 'max:255'],
             'allowGuests' => ['sometimes', 'boolean'],

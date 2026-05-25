@@ -16,6 +16,7 @@ const form = ref({
     requireFullTimeStudy: true,
     fullTimeModeName: '',
     requireTuitionPaid: true,
+    requireAccommodationPaid: true,
     requireAddressOutsideCampus: true,
     campusCity: '',
     allowGuests: false,
@@ -29,6 +30,7 @@ const loadSettings = async () => {
         requireFullTimeStudy: res.attributes.requireFullTimeStudy,
         fullTimeModeName: res.attributes.fullTimeModeName,
         requireTuitionPaid: res.attributes.requireTuitionPaid,
+        requireAccommodationPaid: res.attributes.requireAccommodationPaid,
         requireAddressOutsideCampus: res.attributes.requireAddressOutsideCampus,
         campusCity: res.attributes.campusCity,
         allowGuests: res.attributes.allowGuests ?? false,
@@ -71,6 +73,11 @@ onMounted(() => loadSettings());
                 input-id="require_tuition"
                 v-model="form.requireTuitionPaid"
                 :label="$t('hms.require_tuition_paid')"
+            />
+            <BaseCheckbox
+                input-id="require_accommodation"
+                v-model="form.requireAccommodationPaid"
+                :label="$t('hms.require_accommodation_paid')"
             />
             <BaseCheckbox
                 input-id="require_address"

@@ -195,11 +195,19 @@ export type HostelApplicationApprovalRoomsResponse = {
     rooms: HostelApplicationApprovalRoomOption[];
 };
 
+export type HostelApplicationPaymentVerificationKey =
+    | 'addressOutsideCityCampusConfirmed'
+    | 'fullTimeStudentConfirmed'
+    | 'tuitionFeesPaidConfirmed'
+    | 'accommodationFeesPaidConfirmed';
+
 export type HostelApplicationApprovalOptionsResponse = {
     canApprove: boolean;
     blockers: string[];
     hostels: HostelApplicationApprovalHostelOption[];
     rooms: HostelApplicationApprovalRoomOption[];
+    requiredPaymentVerification?: HostelApplicationPaymentVerificationKey[];
+    allowsDirectAllocation?: boolean;
 };
 
 export type HostelApplicationStudentLookupResponse = {
@@ -264,6 +272,7 @@ export type HmsSettings = {
         requireFullTimeStudy: boolean;
         fullTimeModeName: string;
         requireTuitionPaid: boolean;
+        requireAccommodationPaid: boolean;
         requireAddressOutsideCampus: boolean;
         campusCity: string;
         allowGuests: boolean;

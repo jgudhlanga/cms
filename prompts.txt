@@ -1,9 +1,7 @@
-given resources/js/pages/hms/applications/Show.vue, we need to copy the design of deviding our page in to two with a sidebar 
-as on resources/js/pages/enrolments/ApplicationVerification.vue. 
-The side bar should list the next top 5 applications with pending. Also when the application is awaiting-payment, show radio option to verify that,
-    - address is outside city campus, Yes or No
-    - student is full time, Yes or No,
-    - Tuition fees is fully paid.
-    - Accomodation fees paid, Yes or  No.
-Show a button Approve and allocate the room. and decline button to decline the application.
-Save options above on hostel_applications table as a json column. check how its done here resources/js/pages/enrolments/ApplicationVerification.vue
+Given resources/js/pages/hms/applications/Show.vue, All approving should be configurable and saved in hms_settings
+  1. require_accomodation_fee
+  2. require_tution_fee
+  3. address_should_not_be_in_campus_city
+  4. require_onlY_full_time
+  - all as boolean
+  - eligibility rules should be derived from these settings.
