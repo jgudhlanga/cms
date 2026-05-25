@@ -59,6 +59,11 @@ class HostelApplicationRequest extends ResourceRequest
                 'integer',
                 'exists:hostel_rooms,id',
             ],
+            'paymentVerification' => ['sometimes', 'nullable', 'array'],
+            'paymentVerification.addressOutsideCityCampusConfirmed' => ['sometimes', 'boolean'],
+            'paymentVerification.fullTimeStudentConfirmed' => ['sometimes', 'boolean'],
+            'paymentVerification.tuitionFeesPaidConfirmed' => ['sometimes', 'boolean'],
+            'paymentVerification.accommodationFeesPaidConfirmed' => ['sometimes', 'boolean'],
         ];
     }
 }

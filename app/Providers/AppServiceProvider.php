@@ -14,6 +14,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\ServiceProvider;
 use Lab404\Impersonate\Events\LeaveImpersonation;
 use Lab404\Impersonate\Events\TakeImpersonation;
@@ -54,6 +55,15 @@ class AppServiceProvider extends ServiceProvider
 
         // Restrict Log Viewer access
         $this->registerLogViewerAuthorization();
+
+        $this->registerLocalMailRedirect();
+    }
+
+    private function registerLocalMailRedirect(): void
+    {
+        if ($this->app->environment('local') && ($devEmail = config('mail.dev_redirect'))) {
+            Mail::alwaysTo($devEmail);
+        }
     }
 
     /**

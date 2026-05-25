@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1\HMS;
 
+use App\Enums\HMS\HostelApplicationStatusEnum;
 use App\Models\HMS\HostelApplication;
 use App\Models\Students\Student;
 use App\Services\HMS\HostelApplicationApprovalOptionsService;
@@ -9,6 +10,7 @@ use App\Services\HMS\HostelApplicationEligibilityService;
 use App\Services\HMS\HostelApplicationPendingService;
 use App\Services\HMS\HostelApplicationSemesterService;
 use App\Services\HMS\HostelRoomAvailabilityService;
+use App\Services\HMS\HostelStudentAllocationService;
 use App\Services\HMS\StudentPhysicalAddressFormatter;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -22,6 +24,7 @@ class HostelApplicationController extends JsonApiController
         protected HostelApplicationSemesterService $semesterService,
         protected HostelRoomAvailabilityService $roomAvailabilityService,
         protected HostelApplicationPendingService $pendingService,
+        protected HostelStudentAllocationService $allocationService,
         protected HostelApplicationApprovalOptionsService $approvalOptionsService,
     ) {}
 
@@ -85,15 +88,21 @@ class HostelApplicationController extends JsonApiController
             ? HostelApplicationPendingService::BLOCKER_PENDING_APPLICATION
             : null;
 
+        $allocationBlocker = $this->allocationService->studentHasOpenAllocation((int) $student->id)
+            ? HostelStudentAllocationService::BLOCKER_STUDENT_ALREADY_ALLOCATED
+            : null;
+
         $blockers = array_values(array_filter([
             $semesterDates['blocker'],
             $roomAvailability['blocker'],
             $pendingBlocker,
+            $allocationBlocker,
         ]));
 
         $canSubmit = $semesterDates['success']
             && $roomAvailability['blocker'] === null
-            && $pendingBlocker === null;
+            && $pendingBlocker === null
+            && $allocationBlocker === null;
 
         return MetaResponse::make([
             'found' => true,
@@ -142,5 +151,59 @@ class HostelApplicationController extends JsonApiController
         return MetaResponse::make(
             $this->approvalOptionsService->forApplication($hostelApplication, $parsedHostelId)
         );
+    }
+
+    public function approvalRooms(HostelApplication $hostelApplication, Request $request): MetaResponse
+    {
+        abort_unless($request->user() !== null, 403);
+
+        $hostelApplication->load(['student.gender', 'gender']);
+
+        $hostelId = $request->query('hostelId');
+        if (! is_numeric($hostelId) || (int) $hostelId < 1) {
+            return MetaResponse::make([
+                'rooms' => [],
+            ]);
+        }
+
+        return MetaResponse::make([
+            'rooms' => $this->approvalOptionsService->roomsForApplication(
+                $hostelApplication,
+                (int) $hostelId,
+            ),
+        ]);
+    }
+
+    public function pendingQueue(Request $request): MetaResponse
+    {
+        abort_unless($request->user() !== null, 403);
+
+        $excludeId = $request->query('exclude');
+        $parsedExcludeId = is_numeric($excludeId) ? (int) $excludeId : null;
+
+        $applications = HostelApplication::query()
+            ->with(['student.user', 'gender'])
+            ->whereIn('status', [
+                HostelApplicationStatusEnum::PENDING,
+                HostelApplicationStatusEnum::AWAITING_PAYMENT,
+            ])
+            ->when($parsedExcludeId !== null, fn ($query) => $query->where('id', '!=', $parsedExcludeId))
+            ->orderByDesc('created_at')
+            ->limit(5)
+            ->get()
+            ->map(fn (HostelApplication $application): array => [
+                'id' => (int) $application->id,
+                'displayName' => $application->type?->value === 'guest'
+                    ? (string) $application->name
+                    : (string) ($application->student?->user?->full_name ?? $application->name ?? $application->student?->student_number),
+                'studentNumber' => $application->student?->student_number,
+                'status' => $application->status?->value,
+            ])
+            ->values()
+            ->all();
+
+        return MetaResponse::make([
+            'applications' => $applications,
+        ]);
     }
 }

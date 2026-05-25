@@ -95,6 +95,9 @@ export function toHostelRoomJsonApiFilters(filters: HostelRoomFiltersState): Rec
     if (filters.hostel !== undefined && filters.hostel !== null && filters.hostel !== '') {
         out.hostel = String(filters.hostel);
     }
+    if (filters.availableForApplication !== undefined && filters.availableForApplication !== null && filters.availableForApplication !== '') {
+        out.availableForApplication = String(filters.availableForApplication);
+    }
     if (filters.with_trashed) {
         out.trashed = '1';
     }

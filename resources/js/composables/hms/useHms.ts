@@ -33,6 +33,9 @@ import type {
     HostelApplication,
     HostelApplicationFiltersState,
     HostelApplicationApprovalOptionsResponse,
+    HostelApplicationApprovalRoomOption,
+    HostelApplicationApprovalRoomsResponse,
+    HostelApplicationPendingQueueResponse,
     HostelApplicationStudentLookupResponse,
     HostelFiltersState,
     HostelRoom,
@@ -45,6 +48,10 @@ import { trans, trans_choice } from 'laravel-vue-i18n';
 import { h, ref } from 'vue';
 import { useDataTables } from '../core/useDataTables';
 import { ColorVariant } from '@/enums/colors';
+import {
+    hostelApplicationStatusTagVariant,
+    hostelApplicationTypeTagVariant,
+} from '@/lib/hms/applicationTagVariants';
 
 export const useHms = () => {
     const { formatDate, navigateTo } = useUtils();
@@ -192,15 +199,19 @@ export const useHms = () => {
     const fetchApplications = async (
         filters: HostelApplicationFiltersState = {},
         paginatorUrl?: string,
+        page?: { number?: number; size?: number },
+        silent = false,
     ): Promise<DataListProps<HostelApplication> | undefined> => {
         try {
-            isLoading.value = true;
+            if (!silent) {
+                isLoading.value = true;
+            }
             const jsonFilters = toHostelApplicationJsonApiFilters(filters);
             const path = paginatorUrl
                 ? mergeJsonApiFiltersIntoRequestPath(paginatorUrl, jsonFilters)
                 : route('v1.json.hms.hostel-applications.index');
 
-            const params = paginatorUrl ? undefined : buildJsonApiIndexParams(jsonFilters);
+            const params = paginatorUrl ? undefined : buildJsonApiIndexParams(jsonFilters, page);
 
             const document = await HttpService.get(path, {
                 ...jsonApiRequestConfig(),
@@ -209,9 +220,13 @@ export const useHms = () => {
 
             return parseJsonApiHostelApplications(document);
         } catch {
-            errorAlert(trans('trans.load_data_failure', { data: trans('trans.data') }));
+            if (!silent) {
+                errorAlert(trans('trans.load_data_failure', { data: trans('trans.data') }));
+            }
         } finally {
-            isLoading.value = false;
+            if (!silent) {
+                isLoading.value = false;
+            }
         }
     };
 
@@ -279,22 +294,95 @@ export const useHms = () => {
         );
     };
 
+    const hostelApplicationRouteParam = (applicationId: string | number) => ({
+        hostel_application: String(applicationId),
+    });
+
     const fetchApplicationApprovalOptions = async (
         application: HostelApplication,
-        hostelId?: number | null,
     ): Promise<HostelApplicationApprovalOptionsResponse | undefined> => {
         try {
             const document = await HttpService.get(
-                route('v1.json.hostel-applications.approvalOptions', application.id),
-                {
-                    ...jsonApiRequestConfig(),
-                    ...(hostelId ? { params: { hostelId } } : {}),
-                },
+                route('v1.json.hostel-applications.approvalOptions', hostelApplicationRouteParam(application.id)),
+                jsonApiRequestConfig(),
             );
 
             return document.meta as HostelApplicationApprovalOptionsResponse;
         } catch {
             errorAlert(trans('trans.load_data_failure', { data: trans('trans.data') }));
+        }
+    };
+
+    const fetchApplicationApprovalRooms = async (
+        application: HostelApplication,
+        hostelId: number,
+    ): Promise<HostelApplicationApprovalRoomOption[]> => {
+        try {
+            const document = await HttpService.get(
+                route('v1.json.hostel-applications.approvalRooms', hostelApplicationRouteParam(application.id)),
+                {
+                    ...jsonApiRequestConfig(),
+                    params: { hostelId },
+                },
+            );
+
+            const meta = document.meta as HostelApplicationApprovalRoomsResponse;
+
+            return meta?.rooms ?? [];
+        } catch {
+            errorAlert(trans('trans.load_data_failure', { data: trans('trans.data') }));
+            return [];
+        }
+    };
+
+    const fetchHostelRoomsForApplication = async (
+        applicationId: string | number,
+        hostelId: number,
+    ): Promise<HostelApplicationApprovalRoomOption[]> => {
+        try {
+            const document = await HttpService.get(route('v1.json.hms.hostel-rooms.index'), {
+                ...jsonApiRequestConfig(),
+                params: buildJsonApiIndexParams(
+                    toHostelRoomJsonApiFilters({
+                        hostel: hostelId,
+                        availableForApplication: applicationId,
+                    }),
+                    { size: 100 },
+                ),
+            });
+
+            const parsed = parseJsonApiHostelRooms(document);
+
+            return (parsed?.data ?? []).map((room) => ({
+                id: Number(room.id),
+                name: room.attributes.name,
+                maxOccupancy: room.attributes.maxOccupancy,
+                currentOccupancy: 0,
+                availableBeds: 0,
+                occupancyLabel: room.attributes.occupancy ?? '',
+            }));
+        } catch {
+            errorAlert(trans('trans.load_data_failure', { data: trans('trans.data') }));
+            return [];
+        }
+    };
+
+    const fetchPendingApplicationQueue = async (
+        excludeApplicationId?: string | number | null,
+    ): Promise<HostelApplicationPendingQueueResponse['applications']> => {
+        try {
+            const document = await HttpService.get(route('v1.json.hostel-applications.pendingQueue'), {
+                ...jsonApiRequestConfig(),
+                ...(excludeApplicationId
+                    ? { params: { exclude: String(excludeApplicationId) } }
+                    : {}),
+            });
+
+            const meta = document.meta as HostelApplicationPendingQueueResponse;
+
+            return meta?.applications ?? [];
+        } catch {
+            return [];
         }
     };
 
@@ -377,8 +465,15 @@ export const useHms = () => {
                 header: trans_choice('hms.type', 1),
                 accessorKey: 'attributes.applicationType',
                 meta: { align: 'center' },
-                cell: ({ row }: { row: { original: HostelApplication } }) =>
-                    tag(row.original.attributes.applicationTypeLabel ?? row.original.attributes.applicationType, '', ColorVariant.success),
+                cell: ({ row }: { row: { original: HostelApplication } }) => {
+                    const { applicationType, applicationTypeLabel } = row.original.attributes;
+
+                    return tag(
+                        applicationTypeLabel ?? applicationType,
+                        '',
+                        hostelApplicationTypeTagVariant(applicationType),
+                    );
+                },
             },
             {
                 header: trans('hms.check_in'),
@@ -400,8 +495,15 @@ export const useHms = () => {
                 header: trans_choice('hms.status', 1),
                 accessorKey: 'attributes.status',
                 meta: { align: 'center' },
-                cell: ({ row }: { row: { original: HostelApplication } }) =>
-                    tag(row.original.attributes.statusLabel ?? row.original.attributes.status, '', ColorVariant.primary),
+                cell: ({ row }: { row: { original: HostelApplication } }) => {
+                    const { status, statusLabel } = row.original.attributes;
+
+                    return tag(
+                        statusLabel ?? status,
+                        '',
+                        hostelApplicationStatusTagVariant(status),
+                    );
+                },
             },
             {
                 header: trans_choice('trans.action', 2),
@@ -550,6 +652,9 @@ export const useHms = () => {
         fetchApplication,
         fetchApplicationStudentLookup,
         fetchApplicationApprovalOptions,
+        fetchApplicationApprovalRooms,
+        fetchHostelRoomsForApplication,
+        fetchPendingApplicationQueue,
         saveApplication,
         updateApplicationStatus,
         approveApplication,

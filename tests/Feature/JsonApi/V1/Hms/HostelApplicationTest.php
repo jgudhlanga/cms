@@ -329,7 +329,7 @@ test('json api hms settings update changes eligibility settings', function () {
         ->assertJsonPath('data.attributes.allowGuests', true);
 });
 
-test('json api hostel applications update can approve pending application', function () {
+test('json api hostel applications update can approve awaiting payment application', function () {
     $tenant = Tenant::query()->firstOrFail();
     $user = User::factory()->create(['tenant_id' => $tenant->id]);
     $user->givePermissionTo('update:hostel-applications');
@@ -344,7 +344,7 @@ test('json api hostel applications update can approve pending application', func
         'student_id' => $student->id,
         'gender_id' => $student->gender_id,
         'type' => HostelApplicationTypeEnum::STUDENT,
-        'status' => HostelApplicationStatusEnum::PENDING,
+        'status' => HostelApplicationStatusEnum::AWAITING_PAYMENT,
         'next_of_kin_name' => 'Kin Name',
         'next_of_kin_contact' => '0771234567',
         'check_in' => now()->toDateString(),
@@ -359,12 +359,19 @@ test('json api hostel applications update can approve pending application', func
             'attributes' => [
                 'status' => 'approved',
                 'hostelRoomId' => $room->id,
+                'paymentVerification' => [
+                    'addressOutsideCityCampusConfirmed' => true,
+                    'fullTimeStudentConfirmed' => true,
+                    'tuitionFeesPaidConfirmed' => true,
+                    'accommodationFeesPaidConfirmed' => true,
+                ],
             ],
         ])
         ->patch(route('v1.json.hms.hostel-applications.update', $application));
 
     $response->assertSuccessful()
         ->assertJsonPath('data.attributes.status', 'approved')
+        ->assertJsonPath('data.attributes.paymentVerification.addressOutsideCityCampusConfirmed', true)
         ->assertJsonMissingPath('data.relationships.student');
 
     expect($application->fresh()->status)->toBe(HostelApplicationStatusEnum::APPROVED)
@@ -375,13 +382,111 @@ test('json api hostel applications update can approve pending application', func
             ->exists())->toBeTrue();
 });
 
-test('json api hostel applications approve requires hostel room id', function () {
+test('json api hostel applications approve requires payment verification and hostel room', function () {
     $tenant = Tenant::query()->firstOrFail();
     $user = User::factory()->create(['tenant_id' => $tenant->id]);
     $user->givePermissionTo('update:hostel-applications');
     Sanctum::actingAs($user);
 
     $student = createStudentForAllocationIndexTest();
+    $application = HostelApplication::withoutEvents(fn () => HostelApplication::query()->create([
+        'tenant_id' => TenantEnum::HARARE_POLY->id(),
+        'student_id' => $student->id,
+        'gender_id' => $student->gender_id,
+        'type' => HostelApplicationTypeEnum::STUDENT,
+        'status' => HostelApplicationStatusEnum::AWAITING_PAYMENT,
+        'next_of_kin_name' => 'Kin Name',
+        'next_of_kin_contact' => '0771234567',
+        'check_in' => now()->toDateString(),
+        'check_out' => now()->addMonths(4)->toDateString(),
+    ]));
+
+    $this
+        ->jsonApi('hostel-applications')
+        ->withData([
+            'type' => 'hostel-applications',
+            'id' => (string) $application->id,
+            'attributes' => [
+                'status' => 'approved',
+            ],
+        ])
+        ->patch(route('v1.json.hms.hostel-applications.update', $application))
+        ->assertStatus(422);
+
+    $room = ensureHostelRoomWithCapacity('Hostel D', 'APPROVE-02');
+    $room->hostel->update(['type' => 'male']);
+
+    $this
+        ->jsonApi('hostel-applications')
+        ->withData([
+            'type' => 'hostel-applications',
+            'id' => (string) $application->id,
+            'attributes' => [
+                'status' => 'approved',
+                'hostelRoomId' => $room->id,
+                'paymentVerification' => [
+                    'addressOutsideCityCampusConfirmed' => false,
+                    'fullTimeStudentConfirmed' => false,
+                    'tuitionFeesPaidConfirmed' => true,
+                    'accommodationFeesPaidConfirmed' => false,
+                ],
+            ],
+        ])
+        ->patch(route('v1.json.hms.hostel-applications.update', $application))
+        ->assertSuccessful()
+        ->assertJsonPath('data.attributes.status', 'approved')
+        ->assertJsonPath('data.attributes.paymentVerification.fullTimeStudentConfirmed', false);
+});
+
+test('json api hostel applications update can persist payment verification', function () {
+    $tenant = Tenant::query()->firstOrFail();
+    $user = User::factory()->create(['tenant_id' => $tenant->id]);
+    $user->givePermissionTo('update:hostel-applications');
+    Sanctum::actingAs($user);
+
+    $student = createStudentForAllocationIndexTest();
+    $application = HostelApplication::withoutEvents(fn () => HostelApplication::query()->create([
+        'tenant_id' => TenantEnum::HARARE_POLY->id(),
+        'student_id' => $student->id,
+        'gender_id' => $student->gender_id,
+        'type' => HostelApplicationTypeEnum::STUDENT,
+        'status' => HostelApplicationStatusEnum::AWAITING_PAYMENT,
+        'next_of_kin_name' => 'Kin Name',
+        'next_of_kin_contact' => '0771234567',
+        'check_in' => now()->toDateString(),
+        'check_out' => now()->addMonths(4)->toDateString(),
+    ]));
+
+    $this
+        ->jsonApi('hostel-applications')
+        ->withData([
+            'type' => 'hostel-applications',
+            'id' => (string) $application->id,
+            'attributes' => [
+                'paymentVerification' => [
+                    'addressOutsideCityCampusConfirmed' => true,
+                    'fullTimeStudentConfirmed' => false,
+                ],
+            ],
+        ])
+        ->patch(route('v1.json.hms.hostel-applications.update', $application))
+        ->assertSuccessful()
+        ->assertJsonPath('data.attributes.paymentVerification.addressOutsideCityCampusConfirmed', true)
+        ->assertJsonPath('data.attributes.paymentVerification.fullTimeStudentConfirmed', false);
+
+    expect($application->fresh()->status)->toBe(HostelApplicationStatusEnum::AWAITING_PAYMENT);
+});
+
+test('json api hostel applications cannot approve from pending status', function () {
+    $tenant = Tenant::query()->firstOrFail();
+    $user = User::factory()->create(['tenant_id' => $tenant->id]);
+    $user->givePermissionTo('update:hostel-applications');
+    Sanctum::actingAs($user);
+
+    $student = createStudentForAllocationIndexTest();
+    $room = ensureHostelRoomWithCapacity('Hostel D', 'APPROVE-PENDING');
+    $room->hostel->update(['type' => 'male']);
+
     $application = HostelApplication::withoutEvents(fn () => HostelApplication::query()->create([
         'tenant_id' => TenantEnum::HARARE_POLY->id(),
         'student_id' => $student->id,
@@ -401,6 +506,13 @@ test('json api hostel applications approve requires hostel room id', function ()
             'id' => (string) $application->id,
             'attributes' => [
                 'status' => 'approved',
+                'hostelRoomId' => $room->id,
+                'paymentVerification' => [
+                    'addressOutsideCityCampusConfirmed' => true,
+                    'fullTimeStudentConfirmed' => true,
+                    'tuitionFeesPaidConfirmed' => true,
+                    'accommodationFeesPaidConfirmed' => true,
+                ],
             ],
         ])
         ->patch(route('v1.json.hms.hostel-applications.update', $application))
@@ -459,7 +571,7 @@ test('json api hostel applications approval options returns gender hostels and p
         'student_id' => $student->id,
         'gender_id' => $student->gender_id,
         'type' => HostelApplicationTypeEnum::STUDENT,
-        'status' => HostelApplicationStatusEnum::PENDING,
+        'status' => HostelApplicationStatusEnum::AWAITING_PAYMENT,
         'next_of_kin_name' => 'Kin Name',
         'next_of_kin_contact' => '0771234567',
         'check_in' => now()->toDateString(),
@@ -481,6 +593,165 @@ test('json api hostel applications approval options returns gender hostels and p
 
     $roomsResponse->assertSuccessful()
         ->assertJsonPath('meta.rooms.0.occupancyLabel', '1/2');
+});
+
+test('json api hostel applications approval rooms returns assignable rooms for hostel', function () {
+    $tenant = Tenant::query()->firstOrFail();
+    $user = User::factory()->create(['tenant_id' => $tenant->id]);
+    Sanctum::actingAs($user);
+
+    $student = createStudentForAllocationIndexTest();
+    $room = ensureHostelRoomWithCapacity('Hostel D', 'APPROVE-ROOMS-01');
+    $room->hostel->update(['type' => 'male']);
+
+    $application = HostelApplication::withoutEvents(fn () => HostelApplication::query()->create([
+        'tenant_id' => TenantEnum::HARARE_POLY->id(),
+        'student_id' => $student->id,
+        'gender_id' => $student->gender_id,
+        'type' => HostelApplicationTypeEnum::STUDENT,
+        'status' => HostelApplicationStatusEnum::AWAITING_PAYMENT,
+        'next_of_kin_name' => 'Kin Name',
+        'next_of_kin_contact' => '0771234567',
+        'check_in' => now()->toDateString(),
+        'check_out' => now()->addMonths(4)->toDateString(),
+    ]));
+
+    $this->getJson(route('v1.json.hostel-applications.approvalRooms', [
+        'hostel_application' => $application->id,
+        'hostelId' => $room->hostel_id,
+    ]))
+        ->assertSuccessful()
+        ->assertJsonPath('meta.rooms.0.id', $room->id);
+});
+
+test('json api hostel applications pending queue returns pending and awaiting payment applications', function () {
+    $tenant = Tenant::query()->firstOrFail();
+    $user = User::factory()->create(['tenant_id' => $tenant->id]);
+    Sanctum::actingAs($user);
+
+    $student = createStudentForAllocationIndexTest();
+
+    $current = HostelApplication::withoutEvents(fn () => HostelApplication::query()->create([
+        'tenant_id' => TenantEnum::HARARE_POLY->id(),
+        'student_id' => $student->id,
+        'gender_id' => $student->gender_id,
+        'type' => HostelApplicationTypeEnum::STUDENT,
+        'status' => HostelApplicationStatusEnum::AWAITING_PAYMENT,
+        'next_of_kin_name' => 'Kin Name',
+        'next_of_kin_contact' => '0771234567',
+        'check_in' => now()->toDateString(),
+        'check_out' => now()->addMonths(4)->toDateString(),
+    ]));
+
+    $pendingStudent = createStudentForAllocationIndexTest();
+    $pending = HostelApplication::withoutEvents(fn () => HostelApplication::query()->create([
+        'tenant_id' => TenantEnum::HARARE_POLY->id(),
+        'student_id' => $pendingStudent->id,
+        'gender_id' => $pendingStudent->gender_id,
+        'type' => HostelApplicationTypeEnum::STUDENT,
+        'status' => HostelApplicationStatusEnum::PENDING,
+        'next_of_kin_name' => 'Kin Name',
+        'next_of_kin_contact' => '0771234567',
+        'check_in' => now()->toDateString(),
+        'check_out' => now()->addMonths(4)->toDateString(),
+    ]));
+
+    $awaitingStudent = createStudentForAllocationIndexTest();
+    $awaiting = HostelApplication::withoutEvents(fn () => HostelApplication::query()->create([
+        'tenant_id' => TenantEnum::HARARE_POLY->id(),
+        'student_id' => $awaitingStudent->id,
+        'gender_id' => $awaitingStudent->gender_id,
+        'type' => HostelApplicationTypeEnum::STUDENT,
+        'status' => HostelApplicationStatusEnum::AWAITING_PAYMENT,
+        'next_of_kin_name' => 'Kin Name',
+        'next_of_kin_contact' => '0771234567',
+        'check_in' => now()->toDateString(),
+        'check_out' => now()->addMonths(4)->toDateString(),
+    ]));
+
+    $approvedStudent = createStudentForAllocationIndexTest();
+    HostelApplication::withoutEvents(fn () => HostelApplication::query()->create([
+        'tenant_id' => TenantEnum::HARARE_POLY->id(),
+        'student_id' => $approvedStudent->id,
+        'gender_id' => $approvedStudent->gender_id,
+        'type' => HostelApplicationTypeEnum::STUDENT,
+        'status' => HostelApplicationStatusEnum::APPROVED,
+        'next_of_kin_name' => 'Kin Name',
+        'next_of_kin_contact' => '0771234567',
+        'check_in' => now()->toDateString(),
+        'check_out' => now()->addMonths(4)->toDateString(),
+    ]));
+
+    $response = $this->getJson(route('v1.json.hostel-applications.pendingQueue', [
+        'exclude' => $current->id,
+    ]))
+        ->assertSuccessful();
+
+    $ids = collect($response->json('meta.applications'))->pluck('id')->all();
+
+    expect($ids)->toContain($pending->id, $awaiting->id)
+        ->and($ids)->not->toContain($current->id);
+});
+
+test('json api hostel rooms index filters by hostel and available for application', function () {
+    $tenant = Tenant::query()->firstOrFail();
+    $user = User::factory()->create(['tenant_id' => $tenant->id]);
+    Sanctum::actingAs($user);
+
+    $student = createStudentForAllocationIndexTest();
+    $room = ensureHostelRoomWithCapacity('Hostel D', 'JSONAPI-ROOM-01');
+    $room->hostel->update(['type' => 'male']);
+
+    $application = HostelApplication::withoutEvents(fn () => HostelApplication::query()->create([
+        'tenant_id' => TenantEnum::HARARE_POLY->id(),
+        'student_id' => $student->id,
+        'gender_id' => $student->gender_id,
+        'type' => HostelApplicationTypeEnum::STUDENT,
+        'status' => HostelApplicationStatusEnum::AWAITING_PAYMENT,
+        'next_of_kin_name' => 'Kin Name',
+        'next_of_kin_contact' => '0771234567',
+        'check_in' => now()->toDateString(),
+        'check_out' => now()->addMonths(4)->toDateString(),
+    ]));
+
+    $this
+        ->jsonApi('hostel-rooms')
+        ->get(route('v1.json.hms.hostel-rooms.index', [
+            'filter' => [
+                'hostel' => (string) $room->hostel_id,
+                'availableForApplication' => (string) $application->id,
+            ],
+        ]))
+        ->assertSuccessful()
+        ->assertJsonPath('data.0.id', (string) $room->id);
+});
+
+test('json api hostel applications approval options blocked for pending status', function () {
+    $tenant = Tenant::query()->firstOrFail();
+    $user = User::factory()->create(['tenant_id' => $tenant->id]);
+    Sanctum::actingAs($user);
+
+    $student = createStudentForAllocationIndexTest();
+    ensureHostelRoomWithCapacity('Hostel D', 'OPTS-PENDING');
+
+    $application = HostelApplication::withoutEvents(fn () => HostelApplication::query()->create([
+        'tenant_id' => TenantEnum::HARARE_POLY->id(),
+        'student_id' => $student->id,
+        'gender_id' => $student->gender_id,
+        'type' => HostelApplicationTypeEnum::STUDENT,
+        'status' => HostelApplicationStatusEnum::PENDING,
+        'next_of_kin_name' => 'Kin Name',
+        'next_of_kin_contact' => '0771234567',
+        'check_in' => now()->toDateString(),
+        'check_out' => now()->addMonths(4)->toDateString(),
+    ]));
+
+    $this->getJson(route('v1.json.hostel-applications.approvalOptions', [
+        'hostel_application' => $application->id,
+    ]))
+        ->assertSuccessful()
+        ->assertJsonPath('meta.canApprove', false)
+        ->assertJsonPath('meta.blockers.0', 'not_awaiting_payment');
 });
 
 test('json api hostel applications index sorts pending applications first', function () {
@@ -674,6 +945,165 @@ test('json api hostel applications student lookup blocks when student has awaiti
         ->assertJsonPath('meta.canSubmit', false);
 
     expect($response->json('meta.blockers'))->toContain('pending_application_exists');
+});
+
+test('json api hostel applications student lookup blocks when student has active room allocation', function () {
+    $tenant = Tenant::query()->firstOrFail();
+    $user = User::factory()->create(['tenant_id' => $tenant->id]);
+    Sanctum::actingAs($user);
+
+    $studentProgram = createStudentReadyForHostelApplication('LOOKUP-ALLOC-ACTIVE');
+    createRunningSemesterCalendar('2025/2026');
+    $room = ensureHostelRoomWithCapacity('Hostel D', 'D-LOOKUP-ALLOC-ACTIVE');
+
+    HostelRoomAllocation::query()->create([
+        'tenant_id' => TenantEnum::HARARE_POLY->id(),
+        'hostel_room_id' => $room->id,
+        'student_id' => $studentProgram->student_id,
+        'type' => HostelAllocationTypeEnum::DIRECT,
+        'status' => HostelAllocationStatusEnum::ACTIVE,
+        'check_in' => now()->toDateString(),
+        'check_out' => null,
+    ]);
+
+    $response = $this
+        ->jsonApi()
+        ->get(route('v1.json.hostel-applications.studentLookup', ['filter' => ['search' => 'LOOKUP-ALLOC-ACTIVE']]));
+
+    $response->assertSuccessful()
+        ->assertJsonPath('meta.canSubmit', false);
+
+    expect($response->json('meta.blockers'))->toContain('student_already_allocated');
+});
+
+test('json api hostel applications student lookup blocks when student has pending room allocation', function () {
+    $tenant = Tenant::query()->firstOrFail();
+    $user = User::factory()->create(['tenant_id' => $tenant->id]);
+    Sanctum::actingAs($user);
+
+    $studentProgram = createStudentReadyForHostelApplication('LOOKUP-ALLOC-PENDING');
+    createRunningSemesterCalendar('2025/2026');
+    $room = ensureHostelRoomWithCapacity('Hostel D', 'D-LOOKUP-ALLOC-PENDING');
+
+    HostelRoomAllocation::query()->create([
+        'tenant_id' => TenantEnum::HARARE_POLY->id(),
+        'hostel_room_id' => $room->id,
+        'student_id' => $studentProgram->student_id,
+        'type' => HostelAllocationTypeEnum::DIRECT,
+        'status' => HostelAllocationStatusEnum::PENDING,
+        'check_in' => now()->toDateString(),
+        'check_out' => null,
+    ]);
+
+    $response = $this
+        ->jsonApi()
+        ->get(route('v1.json.hostel-applications.studentLookup', ['filter' => ['search' => 'LOOKUP-ALLOC-PENDING']]));
+
+    $response->assertSuccessful()
+        ->assertJsonPath('meta.canSubmit', false);
+
+    expect($response->json('meta.blockers'))->toContain('student_already_allocated');
+});
+
+test('json api hostel applications student lookup allows when student only has checked out allocation', function () {
+    $tenant = Tenant::query()->firstOrFail();
+    $user = User::factory()->create(['tenant_id' => $tenant->id]);
+    Sanctum::actingAs($user);
+
+    $studentProgram = createStudentReadyForHostelApplication('LOOKUP-ALLOC-CHECKED');
+    createRunningSemesterCalendar('2025/2026');
+    $room = ensureHostelRoomWithCapacity('Hostel D', 'D-LOOKUP-ALLOC-CHECKED');
+
+    HostelRoomAllocation::query()->create([
+        'tenant_id' => TenantEnum::HARARE_POLY->id(),
+        'hostel_room_id' => $room->id,
+        'student_id' => $studentProgram->student_id,
+        'type' => HostelAllocationTypeEnum::DIRECT,
+        'status' => HostelAllocationStatusEnum::CHECKED_OUT,
+        'check_in' => now()->subMonths(4)->toDateString(),
+        'check_out' => now()->subMonth()->toDateString(),
+    ]);
+
+    $response = $this
+        ->jsonApi()
+        ->get(route('v1.json.hostel-applications.studentLookup', ['filter' => ['search' => 'LOOKUP-ALLOC-CHECKED']]));
+
+    $response->assertSuccessful()
+        ->assertJsonPath('meta.canSubmit', true);
+
+    expect($response->json('meta.blockers'))->not->toContain('student_already_allocated');
+});
+
+test('json api hostel applications student lookup allows when student only has declined application', function () {
+    $tenant = Tenant::query()->firstOrFail();
+    $user = User::factory()->create(['tenant_id' => $tenant->id]);
+    Sanctum::actingAs($user);
+
+    $studentProgram = createStudentReadyForHostelApplication('LOOKUP-DECLINED');
+    createRunningSemesterCalendar('2025/2026');
+    ensureHostelRoomWithCapacity('Hostel D', 'D-LOOKUP-DECLINED');
+
+    HostelApplication::withoutEvents(fn () => HostelApplication::query()->create([
+        'tenant_id' => TenantEnum::HARARE_POLY->id(),
+        'student_id' => $studentProgram->student_id,
+        'gender_id' => $studentProgram->student->gender_id,
+        'type' => HostelApplicationTypeEnum::STUDENT,
+        'status' => HostelApplicationStatusEnum::DECLINED,
+        'decline_reason' => 'Not eligible',
+        'next_of_kin_name' => 'Kin Name',
+        'next_of_kin_contact' => '0771234567',
+        'check_in' => now()->toDateString(),
+        'check_out' => now()->addMonths(4)->toDateString(),
+    ]));
+
+    $response = $this
+        ->jsonApi()
+        ->get(route('v1.json.hostel-applications.studentLookup', ['filter' => ['search' => 'LOOKUP-DECLINED']]));
+
+    $response->assertSuccessful()
+        ->assertJsonPath('meta.canSubmit', true);
+
+    expect($response->json('meta.blockers'))->not->toContain('pending_application_exists');
+});
+
+test('json api hostel applications store blocks student with open room allocation', function () {
+    $tenant = Tenant::query()->firstOrFail();
+    $user = User::factory()->create(['tenant_id' => $tenant->id]);
+    $user->givePermissionTo('create:hostel-applications');
+    Sanctum::actingAs($user);
+
+    $studentProgram = createStudentReadyForHostelApplication('STORE-ALLOC');
+    createRunningSemesterCalendar('2025/2026');
+    $room = ensureHostelRoomWithCapacity('Hostel D', 'D-STORE-ALLOC');
+    $enrolmentId = $studentProgram->student->fresh(['latestEnrolment'])->latestEnrolment?->id;
+
+    HostelRoomAllocation::query()->create([
+        'tenant_id' => TenantEnum::HARARE_POLY->id(),
+        'hostel_room_id' => $room->id,
+        'student_id' => $studentProgram->student_id,
+        'type' => HostelAllocationTypeEnum::DIRECT,
+        'status' => HostelAllocationStatusEnum::ACTIVE,
+        'check_in' => now()->toDateString(),
+        'check_out' => null,
+    ]);
+
+    $response = $this
+        ->jsonApi('hostel-applications')
+        ->withData([
+            'type' => 'hostel-applications',
+            'attributes' => [
+                'applicationType' => 'student',
+                'studentId' => $studentProgram->student_id,
+                'studentEnrolmentId' => $enrolmentId,
+                'nextOfKinName' => 'Kin Name',
+                'nextOfKinContact' => '0771234567',
+                'checkIn' => now()->toDateString(),
+                'checkOut' => now()->addMonths(4)->toDateString(),
+            ],
+        ])
+        ->post(route('v1.json.hms.hostel-applications.store'));
+
+    $response->assertUnprocessable();
 });
 
 test('hostels applications show page is accessible for authorized users', function () {

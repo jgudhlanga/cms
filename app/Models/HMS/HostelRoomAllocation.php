@@ -55,6 +55,14 @@ class HostelRoomAllocation extends Model
             ->where('status', HostelAllocationStatusEnum::ACTIVE->value);
     }
 
+    /**
+     * Allocations that have not been checked out (any status except checked-out).
+     */
+    public function scopeNotCheckedOut(Builder $query): Builder
+    {
+        return $query->where('status', '!=', HostelAllocationStatusEnum::CHECKED_OUT->value);
+    }
+
     public function room(): BelongsTo
     {
         return $this->belongsTo(HostelRoom::class, 'hostel_room_id');

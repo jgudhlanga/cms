@@ -23,7 +23,12 @@ class HostelApplicationApprovalService
         DB::transaction(function () use ($application, $hostelRoomId): void {
             $application->loadMissing(['student']);
 
-            if ($application->getOriginal('status') !== HostelApplicationStatusEnum::PENDING) {
+            $previousStatus = $application->getOriginal('status');
+            $previousValue = $previousStatus instanceof HostelApplicationStatusEnum
+                ? $previousStatus->value
+                : (string) $previousStatus;
+
+            if ($previousValue !== HostelApplicationStatusEnum::AWAITING_PAYMENT->value) {
                 throw ValidationException::withMessages([
                     'status' => [__('hms.application_cannot_be_approved')],
                 ]);
@@ -31,7 +36,7 @@ class HostelApplicationApprovalService
 
             $blockers = array_values(array_filter(
                 $this->approvalOptionsService->blockersForApplication($application),
-                fn (string $blocker) => $blocker !== HostelApplicationApprovalOptionsService::BLOCKER_NOT_PENDING,
+                fn (string $blocker) => $blocker !== HostelApplicationApprovalOptionsService::BLOCKER_NOT_AWAITING_PAYMENT,
             ));
 
             if ($blockers !== []) {

@@ -7,6 +7,7 @@ export function hostelApplicationBlockerMessage(key: string): string {
         unknown_gender_for_hostel: trans('hms.unknown_gender_for_hostel'),
         calendar_year_missing: trans('hms.calendar_year_missing'),
         pending_application_exists: trans('hms.student_pending_application_exists'),
+        student_already_allocated: trans('hms.student_already_allocated'),
     };
 
     return messages[key] ?? key;

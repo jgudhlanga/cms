@@ -3,6 +3,7 @@
 namespace App\JsonApi\V1\HMS\HostelRooms;
 
 use App\JsonApi\V1\HMS\Filters\TrashedFilter;
+use App\JsonApi\V1\HMS\HostelRooms\Filters\HostelRoomAvailableForApplicationFilter;
 use App\JsonApi\V1\HMS\HostelRooms\Filters\HostelRoomHostelFilter;
 use App\JsonApi\V1\HMS\HostelRooms\Filters\HostelRoomSearchFilter;
 use App\Models\HMS\HostelRoom;
@@ -59,6 +60,7 @@ class HostelRoomSchema extends Schema
             WhereIdIn::make($this),
             new HostelRoomSearchFilter,
             new HostelRoomHostelFilter,
+            app(HostelRoomAvailableForApplicationFilter::class),
             TrashedFilter::make(),
         ];
     }

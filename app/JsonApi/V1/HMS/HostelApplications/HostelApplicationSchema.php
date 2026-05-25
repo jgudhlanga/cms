@@ -9,7 +9,9 @@ use App\JsonApi\V1\HMS\HostelApplications\Filters\ApplicationStatusFilter;
 use App\JsonApi\V1\HMS\HostelApplications\Filters\ApplicationTypeFilter;
 use App\Models\HMS\HostelApplication;
 use App\Services\HMS\StudentPhysicalAddressFormatter;
+use App\Support\HMS\HostelApplicationPaymentVerification;
 use LaravelJsonApi\Eloquent\Contracts\Paginator;
+use LaravelJsonApi\Eloquent\Fields\ArrayHash;
 use LaravelJsonApi\Eloquent\Fields\ArrayList;
 use LaravelJsonApi\Eloquent\Fields\DateTime;
 use LaravelJsonApi\Eloquent\Fields\ID;
@@ -70,6 +72,19 @@ class HostelApplicationSchema extends Schema
             DateTime::make('checkIn', 'check_in'),
             DateTime::make('checkOut', 'check_out'),
             ArrayList::make('eligibilityResults', 'eligibility_results')->readOnly(),
+            ArrayHash::make('paymentVerification', 'payment_verification')
+                ->camelizeFields()
+                ->snakeKeys()
+                ->fillUsing(function (HostelApplication $application, string $column, $value): void {
+                    if (! is_array($value)) {
+                        return;
+                    }
+
+                    $application->payment_verification = array_merge(
+                        HostelApplicationPaymentVerification::normalize($application->payment_verification),
+                        $value,
+                    );
+                }),
             Str::make('declineReason', 'decline_reason'),
             Number::make('hostelRoomId')->deserializeUsing(static fn () => null),
             Str::make('studentNumber')->extractUsing(

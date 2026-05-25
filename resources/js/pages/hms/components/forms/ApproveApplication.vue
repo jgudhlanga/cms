@@ -24,15 +24,30 @@ import { useForm } from '@inertiajs/vue3';
 import { trans } from 'laravel-vue-i18n';
 import { computed, ref, watch } from 'vue';
 
-const { fetchApplicationApprovalOptions, approveApplication } = useHms();
+const { fetchApplicationApprovalOptions, fetchApplicationApprovalRooms, fetchHostelRoomsForApplication, approveApplication } = useHms();
 const { modals } = useModalStore();
 const hmsStore = useHmsStore();
 
 const application = ref<HostelApplication | null>(null);
 const options = ref<HostelApplicationApprovalOptionsResponse | null>(null);
-const isLoadingOptions = ref(false);
-const selectedHostel = ref<SelectOption | null>(null);
-const selectedRoom = ref<SelectOption | null>(null);
+const isLoadingHostels = ref(false);
+const isLoadingRooms = ref(false);
+const roomsLoaded = ref(false);
+const selectedHostel = ref<SelectOption | string | number | null>(null);
+const selectedRoom = ref<SelectOption | string | number | null>(null);
+
+const resolveSelectId = (value: SelectOption | string | number | null | undefined): number | null => {
+    if (value === null || value === undefined || value === '') {
+        return null;
+    }
+
+    const raw = typeof value === 'object' && value !== null && 'value' in value ? value.value : value;
+    const id = Number(raw);
+
+    return Number.isFinite(id) && id > 0 ? id : null;
+};
+
+const hasSelectedHostel = computed(() => resolveSelectId(selectedHostel.value) !== null);
 
 const form = useForm({
     hostelRoomId: null as number | null,
@@ -49,7 +64,8 @@ const applicantLabel = computed(() => {
 
 const blockerMessage = (key: string): string => {
     const messages: Record<string, string> = {
-        not_pending: trans('hms.application_cannot_be_approved'),
+        not_awaiting_payment: trans('hms.application_not_awaiting_payment'),
+        not_pending: trans('hms.application_not_awaiting_payment'),
         guest_not_allocatable: trans('hms.guest_approval_not_supported'),
         unknown_gender_for_hostel: trans('hms.unknown_gender_for_hostel'),
         no_hostel_capacity: trans('hms.no_hostel_capacity'),
@@ -80,32 +96,67 @@ const showActionButton = computed(
     () => (options.value?.canApprove ?? false) && hostelSelectOptions.value.some((option) => !option.disabled),
 );
 
-const loadOptions = async (hostelId?: number | null): Promise<void> => {
+const loadHostels = async (): Promise<void> => {
     if (!application.value) {
         return;
     }
 
-    isLoadingOptions.value = true;
+    isLoadingHostels.value = true;
     try {
-        const response = await fetchApplicationApprovalOptions(application.value, hostelId);
+        const response = await fetchApplicationApprovalOptions(application.value);
         if (!response) {
             return;
         }
 
-        if (hostelId) {
-            options.value = {
-                ...(options.value ?? response),
-                rooms: response.rooms,
-            };
-        } else {
-            options.value = response;
-            selectedHostel.value = null;
-            selectedRoom.value = null;
-            form.hostelRoomId = null;
+        options.value = { ...response, rooms: [] };
+        selectedHostel.value = null;
+        selectedRoom.value = null;
+        form.hostelRoomId = null;
+        roomsLoaded.value = false;
+    } finally {
+        isLoadingHostels.value = false;
+    }
+};
+
+const loadRooms = async (hostelId: number): Promise<void> => {
+    if (!application.value) {
+        return;
+    }
+
+    isLoadingRooms.value = true;
+    roomsLoaded.value = false;
+    try {
+        let rooms = await fetchApplicationApprovalRooms(application.value, hostelId);
+
+        if (rooms.length === 0) {
+            rooms = await fetchHostelRoomsForApplication(application.value.id, hostelId);
+        }
+
+        if (options.value) {
+            options.value = { ...options.value, rooms };
         }
     } finally {
-        isLoadingOptions.value = false;
+        isLoadingRooms.value = false;
+        roomsLoaded.value = true;
     }
+};
+
+const onHostelChange = async (value: SelectOption | string | number | null): Promise<void> => {
+    selectedRoom.value = null;
+    form.hostelRoomId = null;
+    form.clearErrors('hostelRoomId');
+
+    const hostelId = resolveSelectId(value);
+
+    if (hostelId === null) {
+        if (options.value) {
+            options.value = { ...options.value, rooms: [] };
+        }
+        roomsLoaded.value = false;
+        return;
+    }
+
+    await loadRooms(hostelId);
 };
 
 watch(modals!, () => {
@@ -115,29 +166,15 @@ watch(modals!, () => {
     selectedRoom.value = null;
     form.reset();
     form.clearErrors();
+    roomsLoaded.value = false;
 
     if (application.value) {
-        void loadOptions();
+        void loadHostels();
     }
-});
-
-watch(selectedHostel, async (hostel) => {
-    selectedRoom.value = null;
-    form.hostelRoomId = null;
-    form.clearErrors('hostelRoomId');
-
-    if (!hostel?.value) {
-        if (options.value) {
-            options.value = { ...options.value, rooms: [] };
-        }
-        return;
-    }
-
-    await loadOptions(Number(hostel.value));
 });
 
 watch(selectedRoom, (room) => {
-    form.hostelRoomId = room?.value ? Number(room.value) : null;
+    form.hostelRoomId = resolveSelectId(room);
     clearFormErrors(form, 'hostelRoomId');
 });
 
@@ -148,6 +185,7 @@ const onClose = (): void => {
     selectedRoom.value = null;
     form.reset();
     form.clearErrors();
+    roomsLoaded.value = false;
 };
 
 const save = async (): Promise<void> => {
@@ -196,7 +234,7 @@ const save = async (): Promise<void> => {
                     :type="TypeVariant.danger"
                 />
 
-                <template v-if="!isLoadingOptions && (options?.hostels?.length ?? 0) > 0">
+                <template v-if="(options?.hostels?.length ?? 0) > 0">
                     <div class="space-y-2">
                         <Label>
                             {{ $t('hms.select_hostel') }}
@@ -208,10 +246,12 @@ const save = async (): Promise<void> => {
                             :placeholder="$t('hms.select_hostel')"
                             :is-required="true"
                             :is-clearable="false"
+                            :loading="isLoadingHostels"
+                            @update:model-value="onHostelChange"
                         />
                     </div>
 
-                    <div v-if="selectedHostel" class="space-y-2">
+                    <div v-if="hasSelectedHostel" class="space-y-2">
                         <Label>
                             {{ $t('hms.select_room') }}
                             <RequiredIndicator />
@@ -222,16 +262,20 @@ const save = async (): Promise<void> => {
                             :placeholder="$t('hms.select_room')"
                             :is-required="true"
                             :is-clearable="false"
-                            :disabled="roomSelectOptions.length === 0"
+                            :loading="isLoadingRooms"
+                            :disabled="isLoadingRooms || roomSelectOptions.length === 0"
                         />
-                        <p v-if="roomSelectOptions.length === 0" class="text-sm text-muted-foreground">
-                            {{ $t('hms.hostel_full') }}
+                        <p v-if="isLoadingRooms" class="text-sm text-muted-foreground">
+                            {{ $t('trans.loading') }}…
+                        </p>
+                        <p v-else-if="roomsLoaded && roomSelectOptions.length === 0" class="text-sm text-muted-foreground">
+                            {{ $t('hms.no_rooms_found') }}
                         </p>
                         <InputError :message="form.errors.hostelRoomId" />
                     </div>
                 </template>
 
-                <p v-else-if="isLoadingOptions" class="text-sm text-muted-foreground">
+                <p v-else-if="isLoadingHostels" class="text-sm text-muted-foreground">
                     {{ $t('trans.loading') }}…
                 </p>
             </div>

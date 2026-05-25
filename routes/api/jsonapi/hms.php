@@ -35,7 +35,9 @@ $server->resource('hostel-applications', HostelApplicationController::class)
     ])
     ->actions('-actions', function (ActionRegistrar $actions) {
         $actions->get('student-lookup', 'studentLookup');
+        $actions->get('pending-queue', 'pendingQueue');
         $actions->withId()->get('approval-options', 'approvalOptions');
+        $actions->withId()->get('approval-rooms', 'approvalRooms');
     });
 
 $server->resource('hms-settings', JsonApiController::class)

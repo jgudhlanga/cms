@@ -24,6 +24,7 @@ return new class extends Migration
             $table->date('check_in');
             $table->date('check_out');
             $table->json('eligibility_results')->nullable();
+            $table->json('payment_verification')->nullable();
             $table->text('decline_reason')->nullable();
             $table->timestamps();
             $table->softDeletes();

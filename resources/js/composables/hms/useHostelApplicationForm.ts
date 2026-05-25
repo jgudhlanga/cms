@@ -159,6 +159,10 @@ export function useHostelApplicationForm() {
                 form.setError('studentId', trans('hms.student_pending_application_exists'));
             }
 
+            if (lookupBlockers.value.includes('student_already_allocated')) {
+                form.setError('studentId', trans('hms.student_already_allocated'));
+            }
+
             if (!form.checkIn) {
                 form.setError('checkIn', trans('hms.no_running_semester'));
             }

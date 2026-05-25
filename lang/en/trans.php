@@ -736,4 +736,5 @@ return [
     'ui_secure_lock' => '🔒',
     'ui_ecocash_users_payment_device_warning' => 'Attention EcoCash users: To avoid network failures, please use separate devices when making your payments. Thank you for your cooperation.',
     'authorization' => 'Authorization',
+    'thanks' => 'Thank you',
 ];

@@ -95,7 +95,7 @@ return [
             ],
         ],
         'mailtrap-sdk' => [
-            'transport' => 'mailtrap-sdk'
+            'transport' => 'mailtrap-sdk',
         ],
     ],
 
@@ -114,5 +114,16 @@ return [
         'address' => env('MAIL_FROM_ADDRESS', 'hello@example.com'),
         'name' => env('MAIL_FROM_NAME', 'Example'),
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Local Development Redirect
+    |--------------------------------------------------------------------------
+    |
+    | When APP_ENV is local, all outgoing mail is redirected to this address.
+    |
+    */
+
+    'dev_redirect' => env('MAIL_DEV_REDIRECT', 'jimmyneds@gmail.com'),
 
 ];

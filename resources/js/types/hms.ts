@@ -68,6 +68,7 @@ export type HostelRoom = {
 export type HostelRoomFiltersState = {
     search?: string | null;
     hostel?: string | number | null;
+    availableForApplication?: string | number | null;
     with_trashed?: boolean | null;
 };
 
@@ -172,6 +173,28 @@ export type HostelApplicationApprovalRoomOption = {
     occupancyLabel: string;
 };
 
+export type HostelApplicationPaymentVerification = {
+    addressOutsideCityCampusConfirmed?: boolean | null;
+    fullTimeStudentConfirmed?: boolean | null;
+    tuitionFeesPaidConfirmed?: boolean | null;
+    accommodationFeesPaidConfirmed?: boolean | null;
+};
+
+export type HostelApplicationSidebarItem = {
+    id: string | number;
+    displayName: string;
+    studentNumber?: string | null;
+    status?: HostelApplicationStatus | null;
+};
+
+export type HostelApplicationPendingQueueResponse = {
+    applications: HostelApplicationSidebarItem[];
+};
+
+export type HostelApplicationApprovalRoomsResponse = {
+    rooms: HostelApplicationApprovalRoomOption[];
+};
+
 export type HostelApplicationApprovalOptionsResponse = {
     canApprove: boolean;
     blockers: string[];
@@ -219,6 +242,7 @@ export type HostelApplication = {
         checkIn?: string | null;
         checkOut?: string | null;
         eligibilityResults?: HostelApplicationEligibilityRule[] | null;
+        paymentVerification?: HostelApplicationPaymentVerification | null;
         declineReason?: string | null;
         createdAt?: string;
         updatedAt?: string;

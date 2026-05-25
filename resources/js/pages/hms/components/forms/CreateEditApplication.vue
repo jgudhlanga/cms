@@ -39,7 +39,7 @@ const {
     <BaseModal
         :name="APP_MODULE_KEYS.hostel_applications"
         :title="$t('hms.create_application')"
-        :size="SizeVariant.xl"
+        :size="SizeVariant.full"
         :action-btn-text="'trans.save'"
         :show-action-button="showSaveButton"
         :on-form-action="() => save()"

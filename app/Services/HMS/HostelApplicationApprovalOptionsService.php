@@ -7,11 +7,10 @@ use App\Enums\HMS\HostelApplicationTypeEnum;
 use App\Models\HMS\Hostel;
 use App\Models\HMS\HostelApplication;
 use App\Models\HMS\HostelRoom;
-use App\Models\HMS\HostelRoomAllocation;
 
 class HostelApplicationApprovalOptionsService
 {
-    public const BLOCKER_NOT_PENDING = 'not_pending';
+    public const BLOCKER_NOT_AWAITING_PAYMENT = 'not_awaiting_payment';
 
     public const BLOCKER_GUEST_NOT_ALLOCATABLE = 'guest_not_allocatable';
 
@@ -19,10 +18,11 @@ class HostelApplicationApprovalOptionsService
 
     public const BLOCKER_NO_HOSTEL_CAPACITY = 'no_hostel_capacity';
 
-    public const BLOCKER_STUDENT_ALREADY_ALLOCATED = 'student_already_allocated';
+    public const BLOCKER_STUDENT_ALREADY_ALLOCATED = HostelStudentAllocationService::BLOCKER_STUDENT_ALREADY_ALLOCATED;
 
     public function __construct(
         protected HostelRoomAvailabilityService $roomAvailabilityService,
+        protected HostelStudentAllocationService $allocationService,
     ) {}
 
     /**
@@ -73,8 +73,8 @@ class HostelApplicationApprovalOptionsService
     {
         $blockers = [];
 
-        if ($application->status !== HostelApplicationStatusEnum::PENDING) {
-            $blockers[] = self::BLOCKER_NOT_PENDING;
+        if ($application->status !== HostelApplicationStatusEnum::AWAITING_PAYMENT) {
+            $blockers[] = self::BLOCKER_NOT_AWAITING_PAYMENT;
         }
 
         if ($application->type === HostelApplicationTypeEnum::GUEST) {
@@ -92,10 +92,7 @@ class HostelApplicationApprovalOptionsService
         }
 
         if ($application->student_id !== null
-            && HostelRoomAllocation::query()
-                ->active()
-                ->where('student_id', $application->student_id)
-                ->exists()) {
+            && $this->allocationService->studentHasOpenAllocation((int) $application->student_id)) {
             $blockers[] = self::BLOCKER_STUDENT_ALREADY_ALLOCATED;
         }
 
@@ -138,6 +135,16 @@ class HostelApplicationApprovalOptionsService
         return $this->roomAvailabilityService
             ->availableRoomsForHostel($hostelId)
             ->sum(fn (HostelRoom $room) => $this->roomAvailabilityService->availableBedsForRoom($room));
+    }
+
+    /**
+     * @return list<array{id: int, name: string, maxOccupancy: int, currentOccupancy: int, availableBeds: int, occupancyLabel: string}>
+     */
+    public function roomsForApplication(HostelApplication $application, int $hostelId): array
+    {
+        $genderId = (int) ($application->gender_id ?? $application->student?->gender_id);
+
+        return $this->roomsForHostel($hostelId, $genderId);
     }
 
     /**

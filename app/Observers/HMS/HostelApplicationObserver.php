@@ -13,6 +13,8 @@ use App\Services\HMS\HostelApplicationPendingService;
 use App\Services\HMS\HostelApplicationReviewService;
 use App\Services\HMS\HostelApplicationSemesterService;
 use App\Services\HMS\HostelRoomAvailabilityService;
+use App\Services\HMS\HostelStudentAllocationService;
+use App\Support\HMS\HostelApplicationPaymentVerification;
 use Carbon\Carbon;
 use Illuminate\Validation\ValidationException;
 
@@ -23,6 +25,7 @@ class HostelApplicationObserver
         protected HostelApplicationSemesterService $semesterService,
         protected HostelRoomAvailabilityService $roomAvailabilityService,
         protected HostelApplicationPendingService $pendingService,
+        protected HostelStudentAllocationService $allocationService,
         protected HostelApplicationApprovalService $approvalService,
         protected HostelApplicationReviewService $reviewService,
     ) {}
@@ -42,6 +45,7 @@ class HostelApplicationObserver
 
         $this->validateApplication($application);
         $this->guardDuplicatePending($application);
+        $this->guardOpenAllocation($application);
     }
 
     public function updating(HostelApplication $application): void
@@ -66,6 +70,18 @@ class HostelApplicationObserver
         if ($application->isDirty('status')
             && $application->status === HostelApplicationStatusEnum::APPROVED
             && $application->getOriginal('status') !== HostelApplicationStatusEnum::APPROVED->value) {
+            $paymentVerificationInput = data_get(request()->input('data'), 'attributes.paymentVerification');
+
+            if (! HostelApplicationPaymentVerification::isCompleteFromApi(
+                is_array($paymentVerificationInput) ? $paymentVerificationInput : null,
+            )) {
+                throw ValidationException::withMessages([
+                    'paymentVerification' => [__('hms.payment_verification_incomplete')],
+                ]);
+            }
+
+            $this->mergePaymentVerificationFromRequest($application);
+
             $hostelRoomId = (int) data_get(request()->input('data'), 'attributes.hostelRoomId', 0);
 
             if ($hostelRoomId < 1) {
@@ -95,7 +111,10 @@ class HostelApplicationObserver
         }
 
         if ($application->status === HostelApplicationStatusEnum::DECLINED
-            && $previousValue === HostelApplicationStatusEnum::PENDING->value) {
+            && in_array($previousValue, [
+                HostelApplicationStatusEnum::PENDING->value,
+                HostelApplicationStatusEnum::AWAITING_PAYMENT->value,
+            ], true)) {
             $this->reviewService->dispatchDeclinedEmail($application);
         }
     }
@@ -237,6 +256,33 @@ class HostelApplicationObserver
         )) {
             throw ValidationException::withMessages([
                 'student_id' => [__('hms.student_pending_application_exists')],
+            ]);
+        }
+    }
+
+    private function mergePaymentVerificationFromRequest(HostelApplication $application): void
+    {
+        $input = data_get(request()->input('data'), 'attributes.paymentVerification');
+
+        if (! is_array($input)) {
+            return;
+        }
+
+        $application->payment_verification = array_merge(
+            HostelApplicationPaymentVerification::normalize($application->payment_verification),
+            HostelApplicationPaymentVerification::fromApi($input),
+        );
+    }
+
+    private function guardOpenAllocation(HostelApplication $application): void
+    {
+        if ($application->type !== HostelApplicationTypeEnum::STUDENT || blank($application->student_id)) {
+            return;
+        }
+
+        if ($this->allocationService->studentHasOpenAllocation((int) $application->student_id)) {
+            throw ValidationException::withMessages([
+                'student_id' => [__('hms.student_already_allocated')],
             ]);
         }
     }
