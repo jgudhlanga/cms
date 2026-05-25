@@ -3,5 +3,6 @@
 <template>
     <div>
         <slot/>
+        <ErrorDialog/>
     </div>
 </template>

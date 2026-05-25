@@ -20,7 +20,7 @@ const options = computed(() => {
               (academicCalendar: AcademicCalendar) =>
                   <SelectOption>{
                       value: String(academicCalendar.id),
-                      label: `${academicCalendar?.attributes?.name} ${academicCalendar?.attributes?.calendarYear}`,
+                      label: `${academicCalendar?.attributes?.name}`,
                   },
           )
         : [];

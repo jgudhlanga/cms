@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // UI components
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 
 // Page sections
 import ContactDetails from '@/components/students/update/ContactDetails.vue';
@@ -21,18 +21,22 @@ import { CreateApplicationParams } from '@/types/portal';
 import { BaseButton } from '@/components/core/button';
 import ComingSoonAnimated from '@/components/core/util/ComingSoonAnimated.vue';
 import StudentPageHeader from '@/components/shared/students/StudentPageHeader.vue';
+import { useErrorDialog } from '@/composables/core/useErrorDialog';
 import { useIdTypes } from '@/composables/shared/useIdTypes';
 import { useApplicationFormHelper } from '@/composables/students/useApplicationFormHelper';
 import { ButtonSize } from '@/enums/buttons';
+import { ColorVariant } from '@/enums/colors';
 import { errorAlert } from '@/lib/alerts';
-import ToastService from '@/services/toast.service';
 import { CourseRequirement, DepartmentLevelRequirement } from '@/types/department-meta-data';
-import { router, useForm } from '@inertiajs/vue3';
+import { Level } from '@/types/institution';
+import { useForm } from '@inertiajs/vue3';
 import { trans } from 'laravel-vue-i18n';
 import { storeToRefs } from 'pinia';
 
 // Props
 interface Props {
+    hasPaidApplicationFee: boolean | null;
+    levelsWithPayment: Level[];
     auth: AuthObject;
     errors: object;
 }
@@ -43,9 +47,8 @@ const requirements = ref<CourseRequirement | DepartmentLevelRequirement | null |
 // Composable
 const { idTypes, listIdTypes } = useIdTypes();
 const { applicationFormSchema } = useStudentPortal();
-const { isNativeCitizen, isItTrue } = useUtils();
+const { isNativeCitizen, isItTrue, navigateTo } = useUtils();
 const { validateMainSubjects, validateOtherSubjects, updateCreateForm } = useApplicationFormHelper();
-const { navigateTo } = useUtils();
 const store = useCreateApplicationFormStore();
 const storeRefs = storeToRefs(store);
 const getRequirements = () => {
@@ -130,11 +133,11 @@ const populateInitialForm = () => {
 };
 
 onMounted(async () => {
-    ToastService.warning('Sorry, The registration has ended for now. Contact the administration for more info.');
+    /**ToastService.warning('Sorry, The registration has ended for now. Contact the administration for more info.');
     router.post(route('logout'));
-    return;
-    //await listIdTypes();
-    //populateInitialForm();
+    return;*/
+    await listIdTypes();
+    populateInitialForm();
 });
 
 const isValidating = ref(false);
@@ -187,6 +190,23 @@ const save = async () => {
     }
 };
 const maintenanceMode = isItTrue(import.meta.env.VITE_MAINTENANCE_MODE);
+
+watch(storeRefs.level, async (newVal) => {
+    const selectedLevel = props.levelsWithPayment?.filter((lv: Level) => Number(lv.id) === Number(newVal?.relationshipOneValue));
+    if (selectedLevel[0] && isItTrue(selectedLevel[0].attributes.hasApplicationFeePayment) && !isItTrue(props.hasPaidApplicationFee)) {
+        const confirmed = await useErrorDialog().open({
+            title: 'Application Fee Required',
+            message: 'The selected level requires an application fee to be paid before continuing.',
+            confirmText: 'Go to Payment',
+        });
+        if (confirmed) {
+            // unset level
+            storeRefs.level.value = null;
+            navigateTo(route('portal.application.fee-payment'));
+            return;
+        }
+    }
+});
 </script>
 <template>
     <StudentPageHeader />
@@ -198,7 +218,16 @@ const maintenanceMode = isItTrue(import.meta.env.VITE_MAINTENANCE_MODE);
                 <ContactDetails :form="form" />
                 <NextOfKinDetails :form="form" />
                 <Programs :form="form" />
-                <div class="mb-5 flex items-center justify-center">
+                <div class="mb-5 flex flex-col items-center justify-center space-y-3 md:flex-row md:space-y-0 md:space-x-3">
+                    <BaseButton
+                        type="button"
+                        @click="() => navigateTo(route('portal.application.level-options'))"
+                        class="w-full md:w-50"
+                        :size="ButtonSize.xl"
+                        :variant="ColorVariant.danger"
+                    >
+                        {{ $t('trans.cancel') }}
+                    </BaseButton>
                     <BaseButton class="w-full md:w-50" :size="ButtonSize.xl">
                         {{ $t('trans.continue') }}
                     </BaseButton>

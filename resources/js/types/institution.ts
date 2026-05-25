@@ -78,7 +78,10 @@ export type Level = {
     attributes: {
         name: string;
         position: string | number;
+        calendarType: 'semester' | 'term' | 'abma';
         allowedApplicationsPerLevel: string | number;
+        showOnCurrentApplicationPeriod: boolean;
+        hasApplicationFeePayment: boolean;
         description?: string;
         createdAt?: string;
         updatedAt?: string;
@@ -87,8 +90,11 @@ export type Level = {
 };
 export type LevelParams = {
     name: string;
+    calendar_type: 'semester' | 'term' | 'abma';
     description?: string;
     allowed_applications_per_level?: string | number;
+    show_on_current_application_period: boolean;
+    has_application_fee_payment: boolean;
 };
 
 export type ModeOfStudy = {
@@ -104,6 +110,26 @@ export type ModeOfStudy = {
 };
 export type ModeOfStudyParams = {
     name: string;
+    description?: string;
+};
+
+export type AssessmentType = {
+    type?: string;
+    id?: string;
+    attributes: {
+        name: string;
+        modesOfStudy: string;
+        modesOfStudyIds: number[];
+        description?: string;
+        createdAt?: string;
+        updatedAt?: string;
+        deletedAt?: string;
+    };
+};
+
+export type AssessmentTypeParams = {
+    name: string;
+    modes_of_study: number[];
     description?: string;
 };
 
@@ -163,6 +189,68 @@ export type IntakePeriodParams = {
     start_date: string;
     end_date: string;
     description?: string;
+};
+
+export type CourseSyllabus = {
+    type?: string;
+    id?: string;
+    attributes: {
+        institutionDepartmentId: string | number;
+        departmentLevelCourseId: string | number;
+        level: string;
+        calendarType?: 'term' | 'semester' | 'abma' | null;
+        course?: string;
+        title: string;
+        code: string;
+        implementationYear: string;
+        status?: 'active' | 'terminated';
+        syllabusDocumentId?: string | number | null;
+        syllabusDocumentUrl?: string | null;
+        syllabusDocumentDownloadUrl?: string | null;
+        createdAt?: string;
+        updatedAt?: string;
+        deletedAt?: string;
+    };
+};
+
+export type CourseSyllabusParams = {
+    institution_department_id: number | null;
+    department_level_course_id: number | null;
+    title: string;
+    code: string;
+    implementation_year: string;
+    status: 'active' | 'terminated';
+    syllabus_document?: File | null;
+};
+
+export type CourseSyllabusModule = {
+    type?: string;
+    id?: string;
+    attributes: {
+        courseSyllabusId: string | number;
+        academicYearOptionId?: string | number | null;
+        academicYearOptionName?: string | null;
+        title: string;
+        code: string;
+        durationInHours?: number | null;
+        nqlLevel?: number | null;
+        prerequisiteModuleIds: number[];
+        shared: boolean;
+        createdAt?: string;
+        updatedAt?: string;
+        deletedAt?: string;
+    };
+};
+
+export type CourseSyllabusModuleParams = {
+    course_syllabus_id: number | null;
+    academic_year_option_id: string | number | null;
+    title: string;
+    code: string;
+    duration_in_hours: number | null;
+    nql_level: number | null;
+    prerequisite_module_ids: number[];
+    shared: boolean;
 };
 export type DocumentTemplate = {
     type: string;

@@ -18,11 +18,7 @@ interface Props {
 const props = defineProps<Props>();
 const { level, applications } = props;
 const { isItTrue } = useUtils();
-const {
-    getClassListTypeClasses,
-    getClassListTypeDescription,
-    groupByClassListType,
-} = useEnrolments();
+const { getClassListTypeClasses, addToClassList, getClassListTypeDescription, groupByClassListType, getClassListType } = useEnrolments();
 const levelRequirements = computed(() => level?.relationships?.requirement);
 
 const groupedApplications = groupByClassListType(applications);
@@ -41,7 +37,7 @@ const groupedApplications = groupByClassListType(applications);
                         <th class="j-th text-center">{{ `${levelRequirements?.attributes?.requiredLevel} completed` }}</th>
                     </template>
                     <template v-if="isItTrue(levelRequirements?.attributes?.onlyReadWriteRequired)">
-                        <th class="j-th text-center">Read / Write Acknowledged</th>
+                        <th class="j-th text-center">{{ $t('trans.ui_read_write_acknowledged') }}</th>
                     </template>
                     <th class="j-th text-center">{{ $tChoice('trans.status', 1) }}</th>
                 </tr>
@@ -83,6 +79,11 @@ const groupedApplications = groupByClassListType(applications);
                             <template v-if="application.inClassList">
                                 <span>{{ application.classListType }}</span>
                             </template>
+                            <IconButton
+                                v-else
+                                :icon="IconName.add"
+                                @click="addToClassList(String(application.applicationId), getClassListType(index, classSize))"
+                            />
                         </td>
                     </tr>
                 </template>

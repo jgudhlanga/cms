@@ -16,6 +16,7 @@ use App\Http\Requests\Students\ProgramRequest;
 use App\Http\Resources\AuditTrail\AuditTrailResource;
 use App\Http\Resources\Enrolments\EnrolmentResource;
 use App\Http\Resources\Institution\FeeStructureResource;
+use App\Http\Resources\Institution\LevelResource;
 use App\Models\Institution\FeeStructure;
 use App\Models\Institution\IntakePeriod;
 use App\Models\Institution\Level;
@@ -102,10 +103,11 @@ class PortalController extends Controller
         );
 
         $user->assignRole(RoleEnum::STUDENT);
-        SendVerificationEmailJob::dispatch($user)->withoutDelay();
-
+        //SendVerificationEmailJob::dispatch($user)->withoutDelay();
+        $user->email_verified_at = now();
+        $user->save();
         Auth::login($user);
-        return to_route('portal.confirmation', compact('user'));
+        return to_route('portal.dashboard');
     }
 
     public function registrationConfirmation(User $user): Response
@@ -131,7 +133,46 @@ class PortalController extends Controller
     public function createApplication(): Response
     {
         $this->authorize('manageStudentPersonalDetails');
-        return Inertia::render('portal/application/CreateApplication');
+        session()->forget('application');
+        // get levels which requires application fee payment
+        $levelsWithPayment = PaymentHelper::levelsWithApplicationFee();
+        // check if user / student has paid application fee
+        $intakePeriod = Helper::resolveIntakePeriod();
+        $hasPaidApplicationFeeRecord =  PaymentHelper::getLatestLedgerRecord(FeeTypeEnum::APPLICATION_FEE->slug(), 'receipt', request()->user(), $intakePeriod);
+        return Inertia::render('portal/application/CreateApplication', [
+            'hasPaidApplicationFee' => (bool) $hasPaidApplicationFeeRecord,
+            'levelsWithPayment' => LevelResource::collection($levelsWithPayment),
+        ]);
+    }
+
+    /**
+     * @throws AuthorizationException
+     */
+    public function levelOptions(): Response
+    {
+        $this->authorize('manageStudentPersonalDetails');
+        // the levels on the offer
+        $levels = Level::where('show_on_current_application_period', 1)->orderBy('position')->orderBy('name')->get();
+        return Inertia::render('portal/application/SelectLevelOption', [
+            'levels' => LevelResource::collection($levels),
+        ]);
+    }
+
+    /**
+     * @throws AuthorizationException
+     */
+    public function selectLevel(Request $request): RedirectResponse
+    {
+        $this->authorize('manageStudentPersonalDetails');
+        $data = $request->validate(['level_id' => ['required', 'exists:levels,id']]);
+        // Store in session
+        session(['application.level_id' => $data['level_id']]);
+        $level = Level::find($data['level_id']);
+        // Decide where to go
+        if ($level->has_application_fee_payment) {
+            return to_route('portal.application.fee-payment');
+        }
+        return to_route('portal.application.create');
     }
 
     public function confirmApplication(): Response
@@ -212,7 +253,7 @@ class PortalController extends Controller
     {
         $this->authorize('manageStudentPersonalDetails');
         $oLevelResults = AcademicLevelResource::collection($student?->oLevelResults);
-        $allowedLevels =  []; //Level::where('allowed_applications_per_level', '>', '1')->pluck('id')->toArray();
+        $allowedLevels = []; //Level::where('allowed_applications_per_level', '>', '1')->pluck('id')->toArray();
         $currentLevels = $student->programs()->get()->map(fn($program) => $program?->department_level_id)->filter()->toArray();
         $currentCourses = $student->programs()->get()->map(fn($program) => $program?->department_course_id)->filter()->toArray();
         $currentDepartments = $student->programs()->get()->map(fn($program) => $program?->institution_department_id)->filter()->toArray();

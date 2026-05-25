@@ -2,21 +2,20 @@
 
 namespace App\Http\Resources\Acl;
 
-use App\Enums\Acl\PermissionEnum;
 use App\Models\Acl\Permission;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class RoleResource extends JsonResource
 {
-
     public function toArray(Request $request): array
     {
         $permissions = $this->getVisiblePermissions();
+
         return [
-            "type" => "role",
-            "id" => $this->resource->id,
-            "attributes" => [
+            'type' => 'role',
+            'id' => $this->resource->id,
+            'attributes' => [
                 'name' => $this->resource->name,
                 'slug' => $this->resource->slug,
                 'guardName' => $this->resource->guard_name,
@@ -29,11 +28,11 @@ class RoleResource extends JsonResource
                     'createdAt' => $this->resource->created_at,
                     'updatedAt' => $this->resource->updated_at,
                     'deletedAt' => $this->resource->deleted_at,
-                ])
+                ]),
             ],
             'relationships' => [
                 $this->mergeWhen($request->routeIs('roles.show'), [
-                    'permissions' => PermissionResource::collection($permissions)
+                    'permissions' => PermissionResource::collection($permissions),
                 ]),
 
             ],
@@ -42,8 +41,8 @@ class RoleResource extends JsonResource
 
     private function getVisiblePermissions()
     {
-        if ($this->resource->permissions->contains('name', PermissionEnum::ROOT_MANAGE)) {
-            return Permission::whereNotIn('name', [PermissionEnum::MANAGE_OWN_TENANT_DATA])->get();
+        if ($this->resource->permissions->contains('name', 'root:manage')) {
+            return Permission::whereNotIn('name', ['manageOwnData:tenants'])->get();
         }
 
         return $this->resource->permissions;

@@ -2,11 +2,11 @@
 
 namespace App\Models\Users;
 
-use App\Enums\Acl\PermissionEnum;
 use App\Enums\Acl\RoleEnum;
 use App\Http\Filters\Users\UserFilter;
 use App\Models\Institution\Staff;
 use App\Models\Ledgers\Ledger;
+use App\Models\Preferences\UserPreference;
 use App\Models\Shared\Status;
 use App\Models\Students\Student;
 use App\Models\Tenants\Tenant;
@@ -14,7 +14,6 @@ use App\Traits\Filterable;
 use App\Traits\Paginatable;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -32,13 +31,13 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Spatie\Permission\Traits\HasRoles;
 
 /**
- *
  * @mixin Builder
+ *
  * @method static filter(UserFilter $filters)
  */
-class User extends Authenticatable implements MustVerifyEmail, HasMedia
+class User extends Authenticatable implements HasMedia, MustVerifyEmail
 {
-    use HasApiTokens, HasFactory, Notifiable, SoftDeletes, Filterable, Paginatable, LogsActivity, HasRoles, InteractsWithMedia, Impersonate;
+    use Filterable, HasApiTokens, HasFactory, HasRoles, Impersonate, InteractsWithMedia, LogsActivity, Notifiable, Paginatable, SoftDeletes;
 
     protected $fillable = [
         'first_name', 'middle_name', 'last_name', 'email', 'password', 'tenant_id',
@@ -47,11 +46,9 @@ class User extends Authenticatable implements MustVerifyEmail, HasMedia
 
     protected $appends = ['can_impersonate', 'can_be_impersonated', 'has_student_profile', 'has_staff_profile', 'avatar_url'];
 
-
     protected $hidden = ['password', 'remember_token'];
 
     const SUPER_ADMINISTRATOR = 1;
-
 
     protected function casts(): array
     {
@@ -88,14 +85,19 @@ class User extends Authenticatable implements MustVerifyEmail, HasMedia
         return $this->hasOne(Staff::class, 'user_id');
     }
 
+    public function preference(): HasOne
+    {
+        return $this->hasOne(UserPreference::class, 'user_id');
+    }
+
     public function getHasStaffProfileAttribute(): bool
     {
-        return !is_null($this->staffProfile);
+        return ! is_null($this->staffProfile);
     }
 
     public function getHasStudentProfileAttribute(): bool
     {
-        return !is_null($this->studentProfile);
+        return ! is_null($this->studentProfile);
     }
 
     public function ledgerTransactions(): MorphMany
@@ -136,7 +138,15 @@ class User extends Authenticatable implements MustVerifyEmail, HasMedia
 
     public function canImpersonate(): bool
     {
-        return $this->can(PermissionEnum::ROOT_MANAGE->value);
+        return $this->hasPermissionTo(
+            'root:manage',
+            'web'
+        );
+    }
+
+    public function canBeImpersonated(): bool
+    {
+        return true;
     }
 
     public function getCanImpersonateAttribute(): bool
@@ -146,7 +156,7 @@ class User extends Authenticatable implements MustVerifyEmail, HasMedia
 
     public function getCanBeImpersonatedAttribute(): bool
     {
-        return !$this->canImpersonate();
+        return ! $this->canImpersonate();
     }
 
     public function getActivitylogOptions(): LogOptions

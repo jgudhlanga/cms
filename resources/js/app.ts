@@ -1,6 +1,7 @@
 import '../css/app.css';
 
 import ConfirmDialog from '@/components/core/modal/ConfirmDialog.vue';
+import ErrorDialog from '@/components/core/modal/ErrorDialog.vue';
 import { initializeTheme } from '@/composables/core/useAppearance';
 import AppLayout from '@/layouts/AppLayout.vue';
 import GuestLayout from '@/layouts/GuestLayout.vue';
@@ -70,6 +71,7 @@ createInertiaApp({
             .use(Vue3Toastify);
         // ✅ Register ConfirmDialog globally
         app.component('ConfirmDialog', ConfirmDialog);
+        app.component('errorDialog', ErrorDialog);
         app.mount(el);
     },
     progress: {

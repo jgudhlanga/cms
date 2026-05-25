@@ -2,9 +2,7 @@
 
 namespace App\Services;
 
-use App\Enums\Acl\PermissionEnum;
 use App\Helpers\Helper;
-use App\Models\Institution\Staff;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Illuminate\Support\Collection;
@@ -13,6 +11,7 @@ use Illuminate\Support\Facades\DB;
 class ApplicationMetricsService
 {
     protected bool $isDepartmentUser = false;
+
     protected array $userDepartments = [];
 
     public function __construct()
@@ -67,7 +66,7 @@ class ApplicationMetricsService
                 DB::raw("SUM(CASE WHEN class_lists.type = 'failed' THEN 1 ELSE 0 END) as failed_count"),
 
                 // from the pre-aggregated subquery; coalesce to 0 when null
-                DB::raw("COALESCE(class_sizes.total_class_size, 0) as total_class_size")
+                DB::raw('COALESCE(class_sizes.total_class_size, 0) as total_class_size')
             )
 
             // JOINS
@@ -130,12 +129,11 @@ class ApplicationMetricsService
             ->get();
     }
 
-
     public function getDailyCountStats(): Collection
     {
         $intakePeriod = Helper::resolveIntakePeriod();
 
-        if (!$intakePeriod) {
+        if (! $intakePeriod) {
             return collect();
         }
 

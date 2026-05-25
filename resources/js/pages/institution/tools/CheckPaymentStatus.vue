@@ -69,7 +69,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-    <Head title="Payment Debug" />
+    <Head :title="$t('trans.ui_payment_debug')" />
     <PageContainer :breadcrumbs="breadcrumbs">
         <div class="mx-auto my-5 flex w-full flex-col">
             <div class="mx-auto flex w-2/3 flex-col rounded-2xl px-10 py-3 shadow-md">
@@ -77,9 +77,9 @@ onBeforeUnmount(() => {
                     <BaseInput
                         classes="w-full p-6"
                         input-id="order_reference"
-                        label="Order Reference / Payment Reference / User Email"
+                        :label="$t('trans.ui_order_reference_payment_reference_user_email')"
                         v-model="search"
-                        placeholder="enter order reference / payment reference / user email"
+                        :placeholder="$t('trans.ui_enter_order_reference_payment_reference_user_email')"
                         :vertical-layout="true"
                         :label-uppercase="true"
                         :is-required="true"
@@ -88,13 +88,13 @@ onBeforeUnmount(() => {
                 <div class="mt-6 flex w-full justify-center md:w-auto">
                     <BaseButton @click="searchLedger" type="button" :processing="isSearching">
                         <BaseIcon :name="IconName.search" />
-                        Search
+                        {{ $t('trans.ui_search') }}
                     </BaseButton>
                 </div>
             </div>
             <div v-if="ledgers && ledgers.length > 0 && !isSearching" class="mt-6 flex w-full flex-col">
                 <div class="mx-auto mb-3 flex w-2/3 justify-center">
-                    <HeadingSmall title="Found Invoices / Payments" />
+                    <HeadingSmall :title="$t('trans.ui_found_invoices_payments')" />
                 </div>
                 <LedgerList :ledgers="ledgers" />
             </div>

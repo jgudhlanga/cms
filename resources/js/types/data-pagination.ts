@@ -12,8 +12,8 @@ export interface AuthObject {
 }
 
 export interface DataFilters {
-	search: string | null;
-	trashed: any;
+	search?: string | null;
+	trashed?: any;
 }
 
 export type PaginationMeta = {

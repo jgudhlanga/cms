@@ -48,7 +48,7 @@ const stepIndex = ref(1);
 const maxStep = 6;
 
 // Breadcrumbs
-const breadcrumbs: BreadcrumbItemInterface[] = [{ title: user.attributes?.name }, {transKey: 'complete_application'}];
+const breadcrumbs: BreadcrumbItemInterface[] = [{ title: user.attributes?.name }, { transKey: 'complete_application' }];
 
 // Store
 const storeRefs = storeToRefs(useCreateApplicationFormStore());
@@ -205,7 +205,7 @@ onMounted(async () => {
                         <Programs :form="form" />
                     </template>
                     <template v-if="stepIndex === 5">
-                        <p>Upload documents</p>
+                        <p>{{ $t('trans.ui_upload_documents') }}</p>
                     </template>
                     <template v-if="stepIndex === maxStep">
                         <Confirmation />

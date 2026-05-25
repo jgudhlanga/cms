@@ -20,6 +20,6 @@ const paymentUrl = route('portal.application.fee-payment');
         :icon-variant="ColorVariant.white"
         :variant="ColorVariant.primary_outline"
         @click="() => navigateTo(paymentUrl)"
-        title="Add New Program"
+        :title="$t('trans.ui_add_new_program')"
     />
 </template>

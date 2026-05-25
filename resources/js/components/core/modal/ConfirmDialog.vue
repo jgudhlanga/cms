@@ -1,9 +1,9 @@
 <script lang="ts" setup>
 import { BaseButton } from '@/components/core/button';
+import BaseIcon from '@/components/core/icon/BaseIcon.vue';
 import { useCustomConfirmDialog } from '@/composables/core/useCustomConfirmDialog';
 import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
-import BaseIcon from '@/components/core/icon/BaseIcon.vue';
 import { IconName } from '@/lib/icons';
 
 const { isVisible, options, confirm, close } = useCustomConfirmDialog();
@@ -32,11 +32,13 @@ const { isVisible, options, confirm, close } = useCustomConfirmDialog();
 
                         <!-- Optional Note -->
                         <div v-if="options.note" class="mb-4 rounded-md border border-yellow-200 bg-yellow-50 p-3">
-                            <p class="text-sm text-yellow-800"><strong>Note:</strong> {{ options.note }}</p>
+                            <p class="text-sm text-yellow-800">
+                                <strong>{{ $t('trans.ui_note') }}</strong> {{ options.note }}
+                            </p>
                         </div>
 
                         <!-- Actions -->
-                        <div class="flex justify-center space-x-3 mt-6">
+                        <div class="mt-6 flex justify-center space-x-3">
                             <BaseButton
                                 @click="close"
                                 :title="options.cancelText"
@@ -46,7 +48,11 @@ const { isVisible, options, confirm, close } = useCustomConfirmDialog();
                             ></BaseButton>
                             <BaseButton
                                 :variant="ColorVariant.warning"
-                                @click="confirm" :title="options.confirmText" :size="ButtonSize.lg" classes="rounded-full"></BaseButton>
+                                @click="confirm"
+                                :title="options.confirmText"
+                                :size="ButtonSize.lg"
+                                classes="rounded-full"
+                            ></BaseButton>
                         </div>
                     </div>
                 </div>

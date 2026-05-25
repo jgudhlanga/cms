@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers\Institution\Departments;
 
+use App\Helpers\DropdownHelper;
 use App\Helpers\Helper;
 use App\Http\Resources\Enrolments\EnrolmentGroupResource;
 use App\Models\Institution\DepartmentCourse;
-use App\Models\Institution\ModeOfStudy;
 use App\Services\DepartmentEnrolmentService;
 use App\DTO\Institution\{DepartmentLevelDto, DepartmentLevelRequirementsDto};
 use App\Http\Controllers\Controller;
@@ -25,7 +25,6 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Inertia\Inertia;
 use Inertia\Response;
 use App\Helpers\WorkflowHelper;
-use App\Models\Institution\IntakePeriod;
 
 class DepartmentLevelController extends Controller
 {
@@ -105,8 +104,8 @@ class DepartmentLevelController extends Controller
         // ------------------------------------------------------------
         // 1. Resolve static/cached data
         // ------------------------------------------------------------
-        $intakePeriods = cache()->rememberForever('all_intake_periods', fn() => IntakePeriod::orderByDesc('end_date')->get());
-        $modesOfStudy = cache()->rememberForever('all_modes_of_study', fn() => ModeOfStudy::all());
+        $intakePeriods = DropdownHelper::getIntakePeriods();
+        $modesOfStudy = DropdownHelper::getModesOfStudy();
 
         $intakePeriod = $intakePeriodId
             ? $intakePeriods->firstWhere('id', $intakePeriodId)

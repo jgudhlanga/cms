@@ -8,8 +8,9 @@ interface Props {
 defineProps<Props>();
 </script>
 <template>
-    <div class="flex items-center text-sm space-x-3 text-accent-foreground overflow-scroll text-nowrap">
-        <div :class="`${labelClasses} flex w-3/7 font-medium`">{{ label }}:</div>
-        <div :class="`${valueClasses} flex w-4/7 font-extralight`">{{ !value ? '---' : value }}</div>
-    </div>
+    <div class="flex flex-col gap-0.5">
+    <span class="text-[0.65rem] font-semibold tracking-[0.1em] uppercase text-slate-400">{{ label }}</span>
+    <span class="text-[0.85rem] font-bold text-slate-800 tracking-[-0.01em]">{{ !value ? '---' : value }}</span>
+  </div>
 </template>
+ 

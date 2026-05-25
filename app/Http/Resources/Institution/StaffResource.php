@@ -3,7 +3,7 @@
 namespace App\Http\Resources\Institution;
 
 use App\Http\Resources\Acl\RoleResource;
-use App\Http\Resources\Users\UserResource;
+use App\Http\Resources\Users\UserSummaryResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -46,7 +46,7 @@ class StaffResource extends JsonResource
                 'deletedAt' => $this->deleted_at,
             ],
             'relationships' => [
-                'user' => UserResource::make($this->user),
+                'user' => UserSummaryResource::make($this->user),
                 'roles' => RoleResource::collection($this->user->roles),
             ]
         ];

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Dashboard;
 
+use App\Helpers\DropdownHelper;
 use App\Helpers\Helper;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Enrolments\DailyDistributionResource;
@@ -22,7 +23,7 @@ class DashboardController extends Controller
     public function __invoke()
     {
         $this->authorize('viewDashboard');
-        $intakePeriodList = cache()->rememberForever('all_intake_periods', fn() => IntakePeriod::orderByDesc('end_date')->get());
+        $intakePeriodList = DropdownHelper::getIntakePeriods();
         $intakePeriods = IntakePeriodResource::collection($intakePeriodList);
         $intakePeriod = IntakePeriodResource::make(Helper::resolveIntakePeriod());
         $departmentDistribution = DepartmentDistributionResource::collection($this->metricsService->applicationsByDepartment());

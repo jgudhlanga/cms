@@ -17,16 +17,19 @@ const verificationMode = isItTrue(import.meta.env.VITE_VERIFICATION_MODE);
 
 <template>
     <div class="flex w-full flex-col">
-        <ComponentHeader header-title="O Levels" description="Your O-Level grades you provided" class="mb-3" />
+        <ComponentHeader header-title="O Levels" :description="$t('trans.ui_your_o_level_grades_you_provided')" class="mb-3" />
         <div class="space-y-3">
-            <StatsCard title="Provided O-Level Results" :value="oLevelResults.length" icon="checkDone" icon-bg-color="green" />
+            <StatsCard :title="$t('trans.ui_provided_o_level_results')" :value="oLevelResults.length" icon="checkDone" icon-bg-color="green" />
         </div>
-        <div v-if="!verificationMode" class="flex w-full flex-col space-y-1 border-persian-500 text-persian-600 mt-3 space-x-3 rounded-md border-l-4 bg-gray-50 p-3 shadow-sm">
-            <div>You can update your O-Level results by clicking the button below:</div>
+        <div
+            v-if="!verificationMode"
+            class="border-persian-500 text-persian-600 mt-3 flex w-full flex-col space-y-1 space-x-3 rounded-md border-l-4 bg-gray-50 p-3 shadow-sm"
+        >
+            <div>{{ $t('trans.ui_you_can_update_your_o_level_results_by_clicking_the_button_b') }}</div>
             <div class="flex flex-wrap">
                 <BaseButton
                     @click="navigateTo(route('portal.manage-o-level-results'))"
-                    title="Results"
+                    :title="$tChoice('trans.result', 2)"
                     :variant="ColorVariant.primary_outline"
                     :size="ButtonSize.xs"
                     class="rounded-full"

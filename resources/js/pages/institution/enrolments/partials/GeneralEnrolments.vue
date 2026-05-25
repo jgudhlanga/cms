@@ -20,7 +20,6 @@ const { level, applications } = props;
 const { isItTrue } = useUtils();
 const { addToClassList, getRowClassList, getClassListIconClass, getClassListType, showAddToClassListBtn } = useEnrolments();
 const levelRequirements = computed(() => level?.relationships?.requirement);
-
 </script>
 
 <template>
@@ -36,7 +35,7 @@ const levelRequirements = computed(() => level?.relationships?.requirement);
                         <th class="j-th text-center">{{ `${levelRequirements?.attributes?.requiredLevel} completed` }}</th>
                     </template>
                     <template v-if="isItTrue(levelRequirements?.attributes?.onlyReadWriteRequired)">
-                        <th class="j-th text-center">Read / Write Acknowledged</th>
+                        <th class="j-th text-center">{{ $t('trans.ui_read_write_acknowledged') }}</th>
                     </template>
                     <th class="j-th text-center">{{ $tChoice('trans.status', 1) }}</th>
                 </tr>

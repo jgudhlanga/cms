@@ -3,6 +3,7 @@
 namespace App\Models\Institution;
 
 use App\Http\Filters\Institution\InstitutionDepartmentFilter;
+use App\Models\Institution\Syllabus\CourseSyllabus;
 use App\Models\Students\StudentProgram;
 use App\Traits\BelongsToTenant;
 use App\Traits\Filterable;
@@ -18,13 +19,13 @@ use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
 /**
- *
  * @mixin Builder
+ *
  * @method static filter(InstitutionDepartmentFilter $filters)
  */
 class InstitutionDepartment extends Model
 {
-    use HasFactory, SoftDeletes, Filterable, BelongsToTenant, Paginatable, LogsActivity;
+    use BelongsToTenant, Filterable, HasFactory, LogsActivity, Paginatable, SoftDeletes;
 
     protected $fillable = ['tenant_id', 'department_id', 'description', 'department_code'];
 
@@ -56,6 +57,11 @@ class InstitutionDepartment extends Model
     public function intakeClassSizes(): HasMany
     {
         return $this->hasMany(DepartmentIntakeClassSize::class, 'institution_department_id');
+    }
+
+    public function courseSyllabuses(): HasMany
+    {
+        return $this->hasMany(CourseSyllabus::class, 'institution_department_id');
     }
 
     public function enrolments(): HasMany

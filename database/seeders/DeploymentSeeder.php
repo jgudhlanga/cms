@@ -2,8 +2,15 @@
 
 namespace Database\Seeders;
 
+use Database\Seeders\AcademicCalendars\AcademicYearOptionSeeder;
+use Database\Seeders\AcademicCalendars\ClassMetaDataTypeSeeder;
+use Database\Seeders\Acl\ModulesTableSeeder;
 use Database\Seeders\Acl\PermissionsTableSeeder;
 use Database\Seeders\Acl\RolesTableSeeder;
+use Database\Seeders\HMS\HostelRoomsTableSeeder;
+use Database\Seeders\HMS\HostelsTableSeeder;
+use Database\Seeders\Institution\AssessmentTypesTableSeeder;
+use Database\Seeders\Students\StudentEnrolmentStatusSeeder;
 use Illuminate\Database\Seeder;
 
 class DeploymentSeeder extends Seeder
@@ -14,8 +21,15 @@ class DeploymentSeeder extends Seeder
     public function run(): void
     {
         $this->call([
-            RolesTableSeeder::class,
+            ModulesTableSeeder::class,
             PermissionsTableSeeder::class,
+            RolesTableSeeder::class,
+            AcademicYearOptionSeeder::class,
+            ClassMetaDataTypeSeeder::class,
+            StudentEnrolmentStatusSeeder::class,
+            AssessmentTypesTableSeeder::class,
+            HostelsTableSeeder::class,
+            HostelRoomsTableSeeder::class,
         ]);
     }
 }

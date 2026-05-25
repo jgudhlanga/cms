@@ -1,3 +1,3 @@
 <script setup lang="ts"></script>
 
-<template>User Roles & Permissions</template>
+<template>{{ $t('trans.ui_user_roles_and_permissions') }}</template>

@@ -1,4 +1,4 @@
-import { Subject } from '@/types/institution';
+import { ModeOfStudy, Subject } from '@/types/institution';
 import { SelectOption } from '@/types/utils';
 
 export type DepartmentLevel = {
@@ -41,7 +41,7 @@ export type DepartmentCourse = {
     };
     relationships?: {
         departmentCourseLevels?: DepartmentCourseLevel[];
-        courseModes?: CourseMode[];
+        courseModes?: [];
     };
 };
 
@@ -59,7 +59,6 @@ export type DepartmentCourseParams = {
 export type DepartmentCourseUpdateParams = {
     department_level_ids?: Array<any> | null;
     show_on_current_application_period?: boolean;
-    course_mode_ids?: Array<any> | null;
 };
 
 export interface DepartmentMetaData {
@@ -233,14 +232,21 @@ export type DepartmentEnrolmentCount = {
     ];
 };
 
-export type CourseMode = {
-    type?: string;
-    id?: string | number;
+export type CourseLevelMode = {
+    type: string;
+    id: string | number;
     attributes: {
         departmentCourseId: string | number;
-        modeOfStudyId: string | number;
-        modeOfStudy: string;
-        createdAt?: string;
-        updatedAt?: string;
+        departmentLevelId: string | number;
+        course: string;
+        level: string;
     };
+    relationships: {
+        modes: ModeOfStudy[];
+    };
+};
+
+export type DepartmentCourseModeParams = {
+    department_course_id: string | number;
+    mode_ids: Record<string, (string | number)[]>;
 };

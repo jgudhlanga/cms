@@ -13,7 +13,7 @@ import { trans, trans_choice } from 'laravel-vue-i18n';
 import { ref } from 'vue';
 
 export const useLevels = () => {
-    const { moreActionButton, onDelete, onForceDelete, onRestore } = useDataTables();
+    const { moreActionButton, onDelete, onForceDelete, onRestore, checkStatusIcon } = useDataTables();
     const isLoading = ref(false);
     const levels = ref<Level[]>([]);
     const createLevelColumns = () => {
@@ -22,8 +22,39 @@ export const useLevels = () => {
         return [
             { header: trans_choice('#', 1), accessorKey: 'attributes.position', meta: { align: 'left' } },
             { header: trans_choice('trans.name', 1), accessorKey: 'attributes.name' },
+            {
+                header: trans_choice('academic_calendar.calendar_type', 1),
+                accessorKey: 'attributes.calendarType',
+                cell: ({ row }: { row: { original: Level } }) => {
+                    const type = row.original.attributes?.calendarType ?? 'semester';
+
+                    return trans_choice(`academic_calendar.${type}`, 1);
+                },
+            },
             { header: trans_choice('trans.description', 1), accessorKey: 'attributes.description' },
-            { header: trans('trans.allowed_applications_per_level'), accessorKey: 'attributes.allowedApplicationsPerLevel', meta: { align: 'center' } },
+            {
+                header: trans('trans.show_on_current_application_period'),
+                accessorKey: 'attributes.showOnCurrentApplicationPeriod',
+                meta: { align: 'center' },
+                enableSorting: false,
+                cell: ({ row }: { row: { original: Level } }) => {
+                    return checkStatusIcon(row.original.attributes?.showOnCurrentApplicationPeriod);
+                },
+            },
+            {
+                header: trans('trans.has_application_fee_payment'),
+                accessorKey: 'attributes.hasApplicationFeePayment',
+                meta: { align: 'center' },
+                enableSorting: false,
+                cell: ({ row }: { row: { original: Level } }) => {
+                    return checkStatusIcon(row.original.attributes?.hasApplicationFeePayment);
+                },
+            },
+            {
+                header: trans('trans.allowed_applications_per_level'),
+                accessorKey: 'attributes.allowedApplicationsPerLevel',
+                meta: { align: 'center' },
+            },
             {
                 header: trans_choice('trans.action', 2),
                 accessorKey: 'actions',

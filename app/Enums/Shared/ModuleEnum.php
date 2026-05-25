@@ -4,8 +4,6 @@ namespace App\Enums\Shared;
 
 enum ModuleEnum: string
 {
-
-    case ACCOMMODATIONS = 'Accommodations';
     case ACL = 'Acl';
     case COMMUNICATIONS = 'Communications';
     case DASHBOARDS = 'Dashboards';
@@ -20,11 +18,12 @@ enum ModuleEnum: string
     case STUDENTS = 'Students';
     case TENANTS = 'Tenants';
     case USERS = 'Users';
+    case FINANCE = 'Finance';
+    case HMS = 'HMS';
 
     public function label(): string
     {
         return match ($this) {
-            self::ACCOMMODATIONS => 'Accommodations',
             self::ACL => 'Acl',
             self::COMMUNICATIONS => 'Communications',
             self::DASHBOARDS => 'Dashboards',
@@ -39,6 +38,8 @@ enum ModuleEnum: string
             self::STUDENTS => 'Students',
             self::TENANTS => 'Tenants',
             self::USERS => 'Users',
+            self::FINANCE => 'Finance',
+            self::HMS => 'HMS',
         };
     }
 
@@ -46,8 +47,7 @@ enum ModuleEnum: string
     {
         return array_combine(
             array_column(self::cases(), 'value'),
-            array_map(fn($case) => $case->label(), self::cases())
+            array_map(fn ($case) => $case->label(), self::cases())
         );
     }
 }
-

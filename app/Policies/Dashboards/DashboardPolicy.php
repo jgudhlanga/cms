@@ -2,14 +2,12 @@
 
 namespace App\Policies\Dashboards;
 
-use App\Enums\Acl\PermissionEnum;
 use App\Models\Users\User;
 
 class DashboardPolicy
 {
     public function viewDashboard(User $user): bool
     {
-        return $user->can(PermissionEnum::VIEW_ANY_DASHBOARD)
-            || $user->can(PermissionEnum::VIEW_DASHBOARD);
+        return $user->can('viewAny:dashboards') || $user->can('view:dashboards');
     }
 }

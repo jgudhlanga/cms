@@ -9,13 +9,17 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
 use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
+use LaravelJsonApi\Core\Exceptions\JsonApiException;
+use LaravelJsonApi\Exceptions\ExceptionParser;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
-        web: __DIR__ . '/../routes/web.php',
-        api: __DIR__ . '/../routes/api.php',
-        commands: __DIR__ . '/../routes/console.php',
+        web: __DIR__.'/../routes/web.php',
+        api: __DIR__.'/../routes/api.php',
+        commands: __DIR__.'/../routes/console.php',
         health: '/up',
+        apiPrefix: 'api',
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
@@ -34,5 +38,17 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        $exceptions->dontReport(JsonApiException::class);
+
+        $exceptions->render(ExceptionParser::renderer());
+
+        $exceptions->renderable(function (HttpException $e) {
+            $request = request();
+            if ($request && ($request->is('api*') || $request->expectsJson())) {
+                return response()->json([
+                    'message' => $e->getMessage() ?: 'Not Found',
+                    'exception' => class_basename($e),
+                ], $e->getStatusCode());
+            }
+        });
     })->create();

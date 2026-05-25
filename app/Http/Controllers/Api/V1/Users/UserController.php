@@ -4,17 +4,18 @@ namespace App\Http\Controllers\Api\V1\Users;
 
 use App\DTO\Users\UpdateUserDto;
 use App\DTO\Users\UserDto;
+use App\Enums\Shared\StatusEnum;
+use App\Enums\Shared\TenantEnum;
 use App\Http\Controllers\Api\V1\Utils\ApiDropdownController;
 use App\Http\Filters\Users\UserFilter;
-use App\Http\Requests\Institution\StaffRequest;
 use App\Http\Requests\Users\UpdateUserRequest;
 use App\Http\Requests\Users\UserRequest;
 use App\Http\Resources\Users\UserResource;
 use App\Repositories\Users\interface\IUserRepository;
 use App\Traits\HttpUtil;
-use Illuminate\Database\Eloquent\Attributes\UseResource;
 use Inertia\Inertia;
 use App\Models\Users\User;
+use App\Http\Resources\Acl\PermissionResource;
 
 class UserController extends ApiDropdownController
 {
@@ -61,7 +62,7 @@ class UserController extends ApiDropdownController
     {
         $this->authorize('create', User::class);
         $user = $this->repository->create(
-            UserDto::fromUserRequest($request)
+            UserDto::fromUserRequest($request, TenantEnum::HARARE_POLY->id(), StatusEnum::ACTIVE->id())
         );
         return to_route('users.show', $user->id);
     }
@@ -105,5 +106,11 @@ class UserController extends ApiDropdownController
     {
         $this->authorize('force', $user);
         $this->repository->delete($user, true);
+    }
+
+    public function getUserPermissions(User $user)
+    {
+        $permissions = $user->getAllPermissions();
+        return PermissionResource::collection($permissions);
     }
 }

@@ -2,15 +2,16 @@
 
 namespace App\Http\Middleware;
 
-use App\Enums\Acl\PermissionEnum;
 use App\Enums\Acl\RoleEnum;
 use App\Http\Resources\Users\UserResource;
 use App\Models\Users\User;
+use App\Support\Acl\PermissionRegistry;
+use App\Support\AppVersion;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Inertia\Middleware;
-use Tighten\Ziggy\Ziggy;
 use Lab404\Impersonate\Services\ImpersonateManager;
+use Tighten\Ziggy\Ziggy;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -42,13 +43,15 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
-        //[$message, $author] = str(Inspiring::quotes()->random())->explode('-');
+        // [$message, $author] = str(Inspiring::quotes()->random())->explode('-');
         $user = $request->user();
         $impersonate = app(ImpersonateManager::class);
         $isImpersonating = $impersonate->isImpersonating();
+
         return [
             ...parent::share($request),
             'name' => config('app.name'),
+            'appVersion' => app(AppVersion::class)->resolve(),
             // 'quote' => ['message' => trim($message), 'author' => trim($author)],
             'auth' => [
                 'user' => $user ? new UserResource($user) : null,
@@ -56,10 +59,10 @@ class HandleInertiaRequests extends Middleware
                 'impersonating' => $isImpersonating,
             ],
             'ziggy' => [
-                 ...(new Ziggy)->toArray(),
-                 'location' => $request->url(),
-             ],
-            'sidebarOpen' => !$request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
+                ...(new Ziggy)->toArray(),
+                'location' => $request->url(),
+            ],
+            'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
     }
 
@@ -67,35 +70,44 @@ class HandleInertiaRequests extends Middleware
     {
         // If user is super admin, return all permissions as true
         if ($user->hasRole(RoleEnum::SUPER_USER->name())) {
-            return collect(PermissionEnum::cases())
-                ->reject(fn($permission) => in_array($permission->value, $this->excludePermissions(), true))
-                ->mapWithKeys(fn($permission) => [$permission->value => true]);
+            return collect(PermissionRegistry::allValues())
+                ->reject(fn (string $permission) => $this->isExcludedPermission($permission))
+                ->mapWithKeys(fn ($permission) => [$permission => true]);
         }
 
         // Otherwise, return only the user's assigned permissions
         return $user?->getAllPermissions()
             ->pluck('name')
             ->flip()
-            ->map(fn() => true);
+            ->map(fn () => true);
     }
 
     private function excludePermissions(): array
     {
         return [
-            PermissionEnum::VIEW_OWN_STUDENT_DASHBOARD->value,
-            PermissionEnum::MANAGE_OWN_STUDENT_PERSONAL_DETAILS->value,
-            PermissionEnum::MANAGE_OWN_STUDENT_PROGRAM_DETAILS->value,
-            PermissionEnum::MANAGE_OWN_STUDENT_SPONSOR_DETAILS->value,
-            PermissionEnum::MANAGE_OWN_STUDENT_CONTACT_DETAILS->value,
-            PermissionEnum::MANAGE_OWN_STUDENT_FINANCIAL_DETAILS->value,
-            PermissionEnum::MANAGE_OWN_STUDENT_ACADEMIC_DETAILS->value,
-            PermissionEnum::VIEW_NEXT_OF_KINS->value,
-            PermissionEnum::CREATE_NEXT_OF_KINS->value,
-            PermissionEnum::UPDATE_NEXT_OF_KINS->value,
-            PermissionEnum::DELETE_NEXT_OF_KINS->value,
-            PermissionEnum::FORCE_DELETE_NEXT_OF_KINS->value,
-            PermissionEnum::VIEW_ONLY_OWN_DEPARTMENT->value,
-            PermissionEnum::MANAGE_OWN_TENANT_DATA->value
+            'viewOwnDashboard:students',
+            'manageOwnStudentPersonalDetails:students',
+            'manageOwnStudentProgramDetails:students',
+            'manageOwnStudentSponsorDetails:students',
+            'manageOwnStudentContactDetails:students',
+            'manageOwnStudentFinancialDetails:students',
+            'manageOwnStudentAcademicDetails:students',
+            'view:next-of-kins',
+            'create:next-of-kins',
+            'update:next-of-kins',
+            'delete:next-of-kins',
+            'forceDelete:next-of-kins',
+            'viewOnlyOwnDepartment:departments',
+            'manageOwnData:tenants',
         ];
+    }
+
+    private function isExcludedPermission(string $permission): bool
+    {
+        if (in_array($permission, $this->excludePermissions(), true)) {
+            return true;
+        }
+
+        return false;
     }
 }

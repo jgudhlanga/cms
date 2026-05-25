@@ -2,7 +2,6 @@
 
 namespace App\Policies\Shared;
 
-use App\Enums\Acl\PermissionEnum;
 use App\Models\Shared\Address;
 use App\Models\Users\User;
 
@@ -10,37 +9,36 @@ class AddressPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->can(PermissionEnum::VIEW_ANY_ADDRESSES);
+        return $user->can('viewAny:addresses');
     }
 
     public function view(User $user, Address $address): bool
     {
-        return $user->can(PermissionEnum::VIEW_ANY_ADDRESSES)
-            || $user->can(PermissionEnum::VIEW_ADDRESSES);
+        return $user->can('viewAny:addresses') || $user->can('view:addresses');
     }
 
     public function create(User $user): bool
     {
-        return $user->can(PermissionEnum::CREATE_ADDRESSES);
+        return $user->can('create:addresses');
     }
 
     public function update(User $user, Address $address): bool
     {
-        return $user->can(PermissionEnum::UPDATE_ADDRESSES, $address) || $user->can(PermissionEnum::MANAGE_OWN_STUDENT_CONTACT_DETAILS);
+        return $user->can('update:addresses', $address) || $user->can('manageOwnStudentContactDetails:students');
     }
 
     public function delete(User $user, Address $address): bool
     {
-        return $user->can(PermissionEnum::DELETE_ADDRESSES, $address) || $user->can(PermissionEnum::MANAGE_OWN_STUDENT_CONTACT_DETAILS);
+        return $user->can('delete:addresses', $address) || $user->can('manageOwnStudentContactDetails:students');
     }
 
     public function restore(User $user, Address $address): bool
     {
-        return $user->can(PermissionEnum::RESTORE_ADDRESSES, $address) || $user->can(PermissionEnum::MANAGE_OWN_STUDENT_CONTACT_DETAILS);
+        return $user->can('restore:addresses', $address) || $user->can('manageOwnStudentContactDetails:students');
     }
 
     public function forceDelete(User $user, Address $address): bool
     {
-        return $user->can(PermissionEnum::FORCE_DELETE_ADDRESSES, $address) || $user->can(PermissionEnum::MANAGE_OWN_STUDENT_CONTACT_DETAILS);
+        return $user->can('forceDelete:addresses', $address) || $user->can('manageOwnStudentContactDetails:students');
     }
 }

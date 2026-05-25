@@ -11,10 +11,10 @@ use App\Models\Institution\DepartmentApplicationStep;
 use App\Models\Shared\WorkflowStep;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Mail\Mailable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Mail\Mailable;
 
 class SendEnrolmentProgressJob implements ShouldQueue
 {
@@ -24,15 +24,13 @@ class SendEnrolmentProgressJob implements ShouldQueue
      * Create a new job instance.
      */
     public function __construct(
-        protected int     $classId,
-        protected string  $type,
-        protected string  $institutionDepartmentId,
+        protected int $classId,
+        protected string $type,
+        protected string $institutionDepartmentId,
         protected ?string $department = null,
         protected ?string $level = null,
         protected ?string $course = null,
-    )
-    {
-    }
+    ) {}
 
     /**
      * Execute the job.
@@ -41,9 +39,10 @@ class SendEnrolmentProgressJob implements ShouldQueue
     {
         $details = $this->fetchApplicationDetails();
 
-        if (!$details) {
+        if (! $details) {
             // Optionally, you could log missing record:
             Log::warning("ClassList not found for ID {$this->classId}");
+
             return;
         }
 
@@ -53,7 +52,6 @@ class SendEnrolmentProgressJob implements ShouldQueue
             level: $this->level, course: $this->course
         );
         $email = $details->email;
-        //$email = 'jimmyneds@gmail.com';
         if ($mailable) {
             $type = match ($this->type) {
                 ClassListTypeEnum::PROVISIONAL->value => WorkflowStepEnum::REQUIREMENTS->slug(),

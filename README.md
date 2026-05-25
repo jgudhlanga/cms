@@ -63,9 +63,23 @@ php artisan storage:link
 ## Queue Process Jobs
 
 ``` bash
-php artisan queue:work --daemon database --env=production --queue=default --delay=300 --tries=10 --timeout=120
+php artisan queue:work --daemon database --env=production --queue=default,bank-statements --delay=300 --tries=10 --timeout=120
+php artisan queue:health --queues=default,bank-statements
 OR
 php artisan horizon
+```
+
+### Production recovery sequence (Supervisor + database queue)
+
+```bash
+php artisan optimize:clear
+php artisan queue:health --queues=default,bank-statements
+sudo supervisorctl reread
+sudo supervisorctl update
+sudo supervisorctl restart <program-name>:*
+php artisan queue:work --once --queue=default,bank-statements -v
+php artisan queue:health --queues=default,bank-statements
+php artisan queue:failed
 ```
 
 ### Important

@@ -8,10 +8,10 @@ const { navigateTo } = useUtils();
 
 <template>
     <BaseButton
-        title="Remove Impersonation"
+        :title="$t('trans.ui_remove_impersonation')"
         :size="ButtonSize.xs"
         classes="rounded-full normal-case"
-        :variant="ColorVariant.fuchsia_outline"
+        :variant="ColorVariant.fuchsia"
         @click="navigateTo(route('impersonate.leave'))"
     />
 </template>

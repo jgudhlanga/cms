@@ -2,8 +2,8 @@
 
 namespace App\Providers;
 
-use App\Repositories\AcademicCalendars\AcademicCalendarRepository;
-use App\Repositories\AcademicCalendars\Interface\IAcademicCalendarRepository;
+use App\Repositories\AcademicCalendars\AcademicYearOptionRepository;
+use App\Repositories\AcademicCalendars\interface\IAcademicYearOptionRepository;
 use App\Repositories\Acl\Interface\IModuleRepository;
 use App\Repositories\Acl\Interface\IPermissionRepository;
 use App\Repositories\Acl\Interface\IRoleGroupRepository;
@@ -12,8 +12,17 @@ use App\Repositories\Acl\ModuleRepository;
 use App\Repositories\Acl\PermissionRepository;
 use App\Repositories\Acl\RoleGroupRepository;
 use App\Repositories\Acl\RoleRepository;
+use App\Repositories\Finance\FinanceExchangeRateRepository;
+use App\Repositories\Finance\interface\IFinanceExchangeRateRepository;
+use App\Repositories\HMS\HostelRepository;
+use App\Repositories\HMS\HostelRoomRepository;
+use App\Repositories\HMS\interface\IHostelRepository;
+use App\Repositories\HMS\interface\IHostelRoomRepository;
+use App\Repositories\Institution\AssessmentTypeRepository;
 use App\Repositories\Institution\ClassListRepository;
 use App\Repositories\Institution\CourseRepository;
+use App\Repositories\Institution\CourseSyllabusModuleRepository;
+use App\Repositories\Institution\CourseSyllabusRepository;
 use App\Repositories\Institution\DepartmentApplicationStepRepository;
 use App\Repositories\Institution\DepartmentCourseRepository;
 use App\Repositories\Institution\DepartmentLevelRepository;
@@ -24,8 +33,11 @@ use App\Repositories\Institution\FeeStructureRepository;
 use App\Repositories\Institution\GradeRepository;
 use App\Repositories\Institution\InstitutionDepartmentRepository;
 use App\Repositories\Institution\IntakePeriodRepository;
+use App\Repositories\Institution\interface\IAssessmentTypeRepository;
 use App\Repositories\Institution\interface\IClassListRepository;
 use App\Repositories\Institution\interface\ICourseRepository;
+use App\Repositories\Institution\interface\ICourseSyllabusModuleRepository;
+use App\Repositories\Institution\interface\ICourseSyllabusRepository;
 use App\Repositories\Institution\interface\IDepartmentApplicationStepRepository;
 use App\Repositories\Institution\interface\IDepartmentCourseRepository;
 use App\Repositories\Institution\interface\IDepartmentLevelRepository;
@@ -101,9 +113,11 @@ use App\Repositories\Shared\WorkflowStepRepository;
 use App\Repositories\Students\AcademicRecordRepository;
 use App\Repositories\Students\interface\IAcademicRecordRepository;
 use App\Repositories\Students\interface\ISponsorRepository;
+use App\Repositories\Students\interface\IStudentEnrolmentStatusRepository;
 use App\Repositories\Students\interface\IStudentProgramRepository;
 use App\Repositories\Students\interface\IStudentRepository;
 use App\Repositories\Students\SponsorRepository;
+use App\Repositories\Students\StudentEnrolmentStatusRepository;
 use App\Repositories\Students\StudentProgramRepository;
 use App\Repositories\Students\StudentRepository;
 use App\Repositories\Users\interface\IUserRepository;
@@ -122,6 +136,8 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->aclRepositories();
         $this->dropdownRepositories();
         $this->paymentsRepositories();
+        $this->financeRepositories();
+        $this->hmsRepositories();
         $this->sharedRepositories();
         $this->institutionRepositories();
         $this->userRepositories();
@@ -131,7 +147,7 @@ class RepositoryServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        #
+        //
     }
 
     private function aclRepositories(): void
@@ -174,6 +190,17 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(IPaymentMethodRepository::class, PaymentMethodRepository::class);
     }
 
+    private function financeRepositories(): void
+    {
+        $this->app->bind(IFinanceExchangeRateRepository::class, FinanceExchangeRateRepository::class);
+    }
+
+    private function hmsRepositories(): void
+    {
+        $this->app->bind(IHostelRepository::class, HostelRepository::class);
+        $this->app->bind(IHostelRoomRepository::class, HostelRoomRepository::class);
+    }
+
     public function sharedRepositories(): void
     {
         $this->app->bind(IAddressRepository::class, AddressRepository::class);
@@ -183,6 +210,7 @@ class RepositoryServiceProvider extends ServiceProvider
 
     public function institutionRepositories(): void
     {
+        $this->app->bind(IAssessmentTypeRepository::class, AssessmentTypeRepository::class);
         $this->app->bind(ICourseRepository::class, CourseRepository::class);
         $this->app->bind(IDepartmentRepository::class, DepartmentRepository::class);
         $this->app->bind(IDivisionRepository::class, DivisionRepository::class);
@@ -199,6 +227,8 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(IDocumentTemplateRepository::class, DocumentTemplateRepository::class);
         $this->app->bind(IFeeStructureRepository::class, FeeStructureRepository::class);
         $this->app->bind(IClassListRepository::class, ClassListRepository::class);
+        $this->app->bind(ICourseSyllabusRepository::class, CourseSyllabusRepository::class);
+        $this->app->bind(ICourseSyllabusModuleRepository::class, CourseSyllabusModuleRepository::class);
     }
 
     public function userRepositories(): void
@@ -212,11 +242,11 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(IStudentProgramRepository::class, StudentProgramRepository::class);
         $this->app->bind(ISponsorRepository::class, SponsorRepository::class);
         $this->app->bind(IAcademicRecordRepository::class, AcademicRecordRepository::class);
+        $this->app->bind(IStudentEnrolmentStatusRepository::class, StudentEnrolmentStatusRepository::class);
     }
 
     public function academicCalendarRepositories(): void
     {
-        $this->app->bind(IAcademicCalendarRepository::class, AcademicCalendarRepository::class);
+        $this->app->bind(IAcademicYearOptionRepository::class, AcademicYearOptionRepository::class);
     }
-
 }

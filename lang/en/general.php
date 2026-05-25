@@ -1,5 +1,16 @@
 <?php
+
 return [
+    'version_label' => 'Ver:',
     'note' => 'Note|Notes',
     'remarks' => 'Remarks',
+    'apply_now' => 'Apply now',
+    'mode' => 'Mode|Modes',
+    'intake' => 'Intake',
+    'apprentice_management' => 'Apprentice Management',
+    'male' => 'Male|Males',
+    'female' => 'Female|Females',
+    'in' => 'in',
+    'download_profile_data' => 'Download profile data',
+    'export' => 'Export',
 ];

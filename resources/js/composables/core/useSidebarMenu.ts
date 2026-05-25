@@ -37,8 +37,8 @@ export function useSidebarMenu() {
         {
             transChoiceKey: 'trans.student',
             icon: icons[IconName.user_check],
-            url: route('dashboard'),
-            show: false, //hasAbility('view:students'),
+            url: route('students.index'),
+            show: hasAbility('view:students'),
         },
         {
             transChoiceKey: 'trans.examination',
@@ -59,6 +59,12 @@ export function useSidebarMenu() {
             show: hasAbility('view:report'),
         },
         {
+            transChoiceKey: 'finance.financial',
+            url: route('finance.index'),
+            icon: icons[IconName.dollar],
+            show: hasAbility('view:finances'),
+        }, 
+        {
             transChoiceKey: 'trans.institution',
             transChoiceKeyIndex: 1,
             url: route('institution.index'),
@@ -66,10 +72,10 @@ export function useSidebarMenu() {
             show: hasAbility('view:institution-settings'),
         },
         {
-            transChoiceKey: 'hostel.accommodation',
+            transChoiceKey: 'hms.title',
             icon: icons[IconName.bed],
-            url: route('accommodations.index'),
-            show: hasAbility('view:accommodations'),
+            url: route('hostels.index'),
+            show: hasAbility('view:hostels'),
         },
         {
             transKey: 'trans.settings',

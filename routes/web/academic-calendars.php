@@ -1,11 +1,19 @@
 <?php
 
+use App\Http\Controllers\AcademicCalendars\AcademicCalendarClassController;
 use App\Http\Controllers\AcademicCalendars\AcademicCalendarController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('institution')->middleware('auth')->group(function () {
-    #===================================== ACADEMIC CALENDARS ==========================================================
-    Route::put('academic-calendars/{academic_calendar}/restore', [AcademicCalendarController::class, 'restore'])->name('academic-calendars.restore');
-    Route::delete('academic-calendars/{academic_calendar}/force-delete', [AcademicCalendarController::class, 'forceDelete'])->name('academic-calendars.force-delete');
-    Route::resource('academic-calendars', AcademicCalendarController::class)->names('academic-calendars');
+    // ===================================== ACADEMIC CALENDARS ==========================================================
+    Route::get('academic-calendars', [AcademicCalendarController::class, 'index'])->name('academic-calendars.index');
+    Route::post('academic-calendars', [AcademicCalendarController::class, 'store'])->name('academic-calendars.store');
+    Route::put('academic-calendars/{academic_calendar}', [AcademicCalendarController::class, 'update'])->name('academic-calendars.update');
+    Route::get('academic-calendars/department/{institution_department}/classes/{calendar_year}', [AcademicCalendarController::class, 'departmentAcademicCalendarClasses'])->where('calendar_year', '[0-9]{4}')->name('academic-calendars.department-classes');
+    Route::get('academic-calendars/department/{institution_department}/classes/{calendar_year}/show/{academic_calendar_class}', [AcademicCalendarController::class, 'showDepartmentAcademicCalendarClass'])->where('calendar_year', '[0-9]{4}')->name('academic-calendars.department-classes.show');
+    Route::patch('academic-calendars/department/{institution_department}/classes/{calendar_year}/show/{academic_calendar_class}', [AcademicCalendarClassController::class, 'update'])->where('calendar_year', '[0-9]{4}')->name('academic-calendars.department-classes.update');
+    Route::post('academic-calendars/department/{institution_department}/classes/{calendar_year}/show/{academic_calendar_class}/move-students', [AcademicCalendarController::class, 'moveDepartmentAcademicCalendarClassStudents'])->where('calendar_year', '[0-9]{4}')->name('academic-calendars.department-classes.move-students');
+    Route::post('academic-calendars/department/{institution_department}/classes/{calendar_year}', [AcademicCalendarController::class, 'storeDepartmentAcademicCalendarClasses'])->where('calendar_year', '[0-9]{4}')->name('academic-calendars.department-classes.store');
+    Route::post('academic-calendars/{institution_department}/classes-config', [AcademicCalendarController::class, 'update'])->name('academic-calendars.classes-config.store');
+    Route::post('academic-calendars/{institution_department}/classes-config/{academic_calendar}', [AcademicCalendarController::class, 'storePerClassSizeConfig'])->name('academic-calendars.classes-config.per-class-size.store');
 });

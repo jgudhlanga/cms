@@ -141,11 +141,58 @@ class DepartmentEnrolmentService
         // 6. Transform students
         // ------------------------------------------------------------
         $studentPrograms->transform(function ($sp) use ($academicStats, $academicResults, $receipts, $classLists) {
-            $student = $sp->student;
-            $user = $student->user;
 
-            $sp->student_name = "{$user->full_name}";
-            $sp->email = $user->email;
+            $student = $sp->student;
+            $user = $student?->user;
+
+            // Identity
+            $sp->student_name = $user?->full_name ?? '---';
+            $sp->email = $user?->email ?? '---';
+
+            // Student info (safe)
+            $sp->phone_number = $student?->contacts?->first()?->phone_number;
+            $sp->student_number = $student?->student_number;
+            $sp->disability_status = $student?->disability_status;
+            $sp->gender = $student?->gender?->title;
+
+            // Workflow
+            $sp->workflow_step = $sp->departmentWorkflowStep?->workflowStep?->name;
+
+            // Flags
+            $sp->required_level_completed = (bool) $sp->required_level_completed;
+            $sp->read_write_acknowledged = (bool) $sp->read_write_acknowledged;
+            $sp->offer_accepted = (bool) $sp->offer_accepted;
+
+            // Academic stats (only if student exists)
+            $stats = $student ? $academicStats->get($student->id) : null;
+            $sp->exam_sittings_count = $stats->exam_sittings_count ?? 0;
+            $sp->first_exam_year = $stats->first_exam_year ?? null;
+
+            // Receipt (only if user exists)
+            $receipt = $user ? $receipts->get($user->id) : null;
+            $sp->receipt_id = $receipt->receipt_id ?? null;
+            $sp->receipt_amount = $receipt->receipt_amount ?? null;
+
+            // Academic results
+            $sp->academic_results = $student
+                ? $academicResults->get($student->id, collect())
+                : collect();
+
+            // Class list
+            $classList = $classLists->get($sp->application_id);
+            $sp->in_class_list = (bool) $classList;
+            $sp->class_list_type = $classList->type ?? null;
+
+            return $sp;
+        });
+
+        /*$studentPrograms->transform(function ($sp) use ($academicStats, $academicResults, $receipts, $classLists) {
+
+            $student = $sp->student;
+            $user = $student?->user;
+
+            $sp->student_name = $user ? "{$user?->full_name}" : "---";
+            $sp->email = $user ? $user->email : "---";
             $sp->phone_number = $student->contacts->first()?->phone_number;
             $sp->student_number = $student->student_number;
             $sp->disability_status = $student->disability_status;
@@ -175,7 +222,7 @@ class DepartmentEnrolmentService
             $sp->class_list_type = $classList->type ?? null;
 
             return $sp;
-        });
+        });*/
 
         // ------------------------------------------------------------
         // 7. Group students by priority

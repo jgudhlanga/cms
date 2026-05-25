@@ -14,15 +14,15 @@ use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
 /**
- *
  * @mixin Builder
+ *
  * @method static filter(SharedNameFilter $filters)
  */
 class IntakePeriod extends Model
 {
-    use HasFactory, SoftDeletes, Filterable, BelongsToTenant, Paginatable, LogsActivity;
+    use BelongsToTenant, Filterable, HasFactory, LogsActivity, Paginatable, SoftDeletes;
 
-    protected $fillable = ['tenant_id', 'name', 'description', 'start_date', 'end_date', 'is_active'];
+    protected $fillable = ['tenant_id', 'name', 'calendar_year', 'description', 'start_date', 'end_date', 'is_active'];
 
     public function getActivitylogOptions(): LogOptions
     {

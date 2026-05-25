@@ -23,7 +23,7 @@ const { getApplicationStatus, hasOfferLetter, statusMessage } = useStudents();
 
 <template>
     <div class="flex w-full flex-col" v-if="applications && applications.length > 0">
-        <ComponentHeader header-title="Current applications" description="Overview of your applications" class="mb-3" />
+        <ComponentHeader header-title="Current applications" :description="$t('trans.ui_overview_of_your_applications')" class="mb-3" />
         <div class="space-y-3">
             <!--            <BaseAlert :type="TypeVariant.success" :description="message" />-->
             <CustomCard v-for="(application, index) in applications" :key="application.id">
@@ -35,7 +35,7 @@ const { getApplicationStatus, hasOfferLetter, statusMessage } = useStudents();
                     <div class="grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
                         <GridLabelValue :label="$tChoice('trans.department', 1)" :value="application.attributes?.department ?? ''" />
                         <GridLabelValue :label="$tChoice('trans.course', 1)" :value="application.attributes?.course ?? ''" />
-                        <GridLabelValue label="Application status" :value="getApplicationStatus(application) ?? ''" />
+                        <GridLabelValue :label="$t('trans.ui_application_status')" :value="getApplicationStatus(application) ?? ''" />
                     </div>
                     <div class="flex flex-col pt-4">
                         <div class="text-primary text-xs">{{ statusMessage(application) }}</div>

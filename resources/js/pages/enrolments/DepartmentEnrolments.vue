@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useUtils } from '@/composables/core/useUtils';
 import { useIntakePeriods } from '@/composables/institution/useIntakePeriods';
 import { useModeOfStudy } from '@/composables/institution/useModeOfStudy';
 import { useServerSide } from '@/composables/shared/useServerSide';
@@ -9,7 +10,6 @@ import { SelectOption } from '@/types/utils';
 import { Head, Link } from '@inertiajs/vue3';
 import { trans_choice } from 'laravel-vue-i18n';
 import { onMounted, ref } from 'vue';
-import { useUtils } from '@/composables/core/useUtils';
 
 interface Props {
     department: InstitutionDepartment;
@@ -19,7 +19,7 @@ const props = defineProps<Props>();
 const { department } = props;
 const institutionDepartmentId = String(department?.id) ?? '';
 const { getData, isLoading } = useServerSide();
-const {getQueryParams} = useUtils();
+const { getQueryParams } = useUtils();
 const classLists = ref<DepartmentEnrolmentCount[] | []>([]);
 const intakePeriod = ref<SelectOption | null>(null);
 const modeOfStudy = ref<SelectOption | null>(null);
@@ -42,7 +42,12 @@ const loadClassLists = async () => {
     const intakePeriodId = queryParams['intake_period_id'] ?? intakePeriod.value?.value.toString();
     const modeOfStudyId = queryParams['mode_of_study_id'] ?? modeOfStudy.value?.value.toString();
     classLists.value = await getData(
-        `api/v1/departments/${institutionDepartmentId}/class-lists?intake_period_id=${intakePeriodId}&mode_of_study_id=${modeOfStudyId}&type=${queryParams['type']}`,
+        route('v1.department-metadata.class-lists', {
+            institution_department: institutionDepartmentId,
+            intake_period_id: intakePeriodId,
+            mode_of_study_id: modeOfStudyId,
+            type: queryParams['type'],
+        }),
         () => trans_choice('trans.enrolment', 2),
     );
 };
@@ -54,7 +59,7 @@ const breadcrumbs = [
     { transKey: 'dashboard', href: route('dashboard') },
     { transChoiceKey: 'enrolment', href: route('enrolments.index') },
     { title: department.attributes.department, href: route('enrolments.index') },
-    { title: `${queryParams['type'] } applications` },
+    { title: `${queryParams['type']} applications` },
 ] as Array<any>;
 </script>
 
@@ -87,7 +92,7 @@ const breadcrumbs = [
                                         intake_period_id: intakePeriod?.value.toString(),
                                         mode_of_study_id: modeOfStudy?.value.toString(),
                                         department_course_id: enrolment?.departmentCourseId ?? '',
-                                        type: queryParams['type']
+                                        type: queryParams['type'],
                                     })
                                 "
                             >
@@ -100,7 +105,7 @@ const breadcrumbs = [
                         <CustomSeparator classes="h-[1px] my-3" />
                     </div>
                 </template>
-                <BaseAlert v-else :title="$t('trans.no_data')" description="No class lists found for the selected filters." />
+                <BaseAlert v-else :title="$t('trans.no_data')" :description="$t('trans.ui_no_class_lists_found_for_the_selected_filters')" />
             </div>
         </div>
     </PageContainer>

@@ -27,7 +27,6 @@ class DepartmentLevelRepository extends BaseRepository implements IDepartmentLev
     ): void
     {
         DB::transaction(function () use ($institutionDepartment, $dto) {
-
             $newIds = $dto->level_ids;
             $showOnCurrent = $dto->show_on_current_application_period ?? [];
             // Existing level IDs for this department

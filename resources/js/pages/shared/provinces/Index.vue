@@ -34,4 +34,4 @@ const can = props?.auth?.can;
 		/>
 		<CreateEdit/>
 	</PageContainer>
-</template>
+</template> 

@@ -17,6 +17,7 @@ export default defineConfig({
             input: ['resources/css/app.css', 'resources/js/app.ts'],
             ssr: 'resources/js/ssr.ts',
             refresh: true,
+            detectTls: false,
         }),
         vue({
             template: {

@@ -2,7 +2,6 @@
 
 namespace App\Policies\Acl;
 
-use App\Enums\Acl\PermissionEnum;
 use App\Models\Acl\Permission;
 use App\Models\Users\User;
 
@@ -10,36 +9,36 @@ class PermissionPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->can(PermissionEnum::VIEW_ANY_PERMISSIONS);
+        return $user->can('viewAny:permissions');
     }
 
     public function view(User $user, Permission $permission): bool
     {
-        return $user->can(PermissionEnum::VIEW_ANY_PERMISSIONS) || $user->can(PermissionEnum::VIEW_PERMISSION);
+        return $user->can('viewAny:permissions') || $user->can('view:permissions');
     }
 
     public function create(User $user): bool
     {
-        return $user->can(PermissionEnum::CREATE_PERMISSION);
+        return $user->can('create:permissions');
     }
 
     public function update(User $user, Permission $permission): bool
     {
-        return $user->can(PermissionEnum::UPDATE_PERMISSION, $permission);
+        return $user->can('update:permissions', $permission);
     }
 
     public function delete(User $user, Permission $permission): bool
     {
-        return $user->can(PermissionEnum::DELETE_PERMISSION, $permission);
+        return $user->can('delete:permissions', $permission);
     }
 
     public function restore(User $user, Permission $permission): bool
     {
-        return $user->can(PermissionEnum::RESTORE_PERMISSION, $permission);
+        return $user->can('restore:permissions', $permission);
     }
 
     public function forceDelete(User $user, Permission $permission): bool
     {
-		return $user->can(PermissionEnum::FORCE_DELETE_PERMISSION, $permission);
+        return $user->can('forceDelete:permissions', $permission);
     }
 }

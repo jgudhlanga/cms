@@ -4,12 +4,7 @@ namespace App\Enums\AcademicCalendars;
 
 enum AcademicCalendarTypeEnum: string
 {
+    case TERM = 'term';
     case SEMESTER = 'semester';
-    case TRIMESTER = 'trimester';
-    case QUADMESTER = 'quadmester';
-    case QUARTER = 'quarter';
-    case BLOCK = 'block';
-    case MODULAR = 'modular';
-    case MINIMESTER = 'minimester';
-    case OTHER = 'other';
+    case ABMA = 'abma';
 }

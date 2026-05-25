@@ -97,4 +97,11 @@ export type UserStaffParams = {
     gender_id: string | number | null;
     role_ids: Array<string | undefined | null> | null;
     department_ids: Array<string | undefined | null> | null;
-};
+}
+
+export type AuthCredentialsUpdate = {
+    email: string;
+    password: string;
+    password_confirmation: string;
+}
+

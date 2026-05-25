@@ -216,17 +216,17 @@ const handleSubmissionErrors = (errors: any): void => {
             </div>
             `
             <div class="">
-                <Label>Year<RequiredIndicator /></Label>
+                <Label>{{ $tChoice('trans.year', 1) }}<RequiredIndicator /></Label>
                 <SelectYear input-id="exam_year" v-model="form.exam_year" />
                 <InputError v-if="subjectErrors.exam_year" :message="subjectErrors.exam_year" class="mt-1 flex w-full lowercase" />
             </div>
             <div class="flex flex-col space-y-3">
-                <Label>Sitting<RequiredIndicator /></Label>
+                <Label>{{ $tChoice('trans.sitting', 1) }}<RequiredIndicator /></Label>
                 <SelectSitting class="flex w-full" v-model="sittingOption" />
                 <InputError v-if="subjectErrors.exam_sitting" :message="subjectErrors.exam_sitting" class="mt-1 flex w-full lowercase" />
             </div>
             <div class="flex flex-col space-y-3">
-                <Label>Grade<RequiredIndicator /></Label>
+                <Label>{{ $tChoice('trans.grade', 1) }}<RequiredIndicator /></Label>
                 <SpinnerComponent class="flex w-full items-center justify-center" v-if="isLoading" />
                 <BaseRadioGroup
                     v-else

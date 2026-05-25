@@ -7,15 +7,18 @@ use App\DTO\Integrations\CreateReceiptDto;
 use App\DTO\Integrations\UpdateReceiptDto;
 use App\Enums\Shared\FeeTypeEnum;
 use App\Models\Institution\IntakePeriod;
+use App\Models\Institution\Level;
 use App\Models\Ledgers\Ledger;
 use App\Models\Shared\FeeType;
 use App\Models\Students\StudentProgram;
 use App\Models\Users\User;
 
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use LaravelIdea\Helper\App\Models\Institution\_IH_Level_C;
 use Spatie\MediaLibrary\MediaCollections\Exceptions\FileDoesNotExist;
 use Spatie\MediaLibrary\MediaCollections\Exceptions\FileIsTooBig;
 
@@ -175,11 +178,21 @@ class PaymentHelper
     {
         $user = self::resolveUser($user);
         $intakePeriod = self::resolveIntakePeriod($intakePeriod);
-        $debugEmails = ['jamesgudhlanga@gmail.com', 'ethanmuku2020@gmail.com'];
+        /**$name = strtolower(trim($intakePeriod->name ?? ''));
+        if (
+            in_array(
+                $name,
+                ['january intake (sdp & abma)', 'january intake (sdp & abma & ojet)']
+            )
+        ) {
+            return true;
+        }*/
+
+        /*$debugEmails = ['jamesgudhlanga@gmail.com', 'ethanmuku2020@gmail.com'];
         // Whitelist specific email for dev/testing
         if (in_array($user->email, $debugEmails)) {
             return true;
-        }
+        }*/
 
         $feeType = self::getFeeTypeBySlug(FeeTypeEnum::APPLICATION_FEE->slug());
         if (!$feeType) return false;
@@ -335,5 +348,10 @@ class PaymentHelper
             : null;
 
         return $user->ledgerTransactions()->create($attributes);
+    }
+
+    public static function levelsWithApplicationFee(): Collection|array
+    {
+        return Level::where('has_application_fee_payment', true)->get();
     }
 }

@@ -9,12 +9,12 @@ interface Props {
 }
 
 withDefaults(defineProps<Props>(), {
-    colorVariant: 'primary',
+    colorVariant: 'black',
 })
 </script>
 
 <template>
-  <div :class="`flex flex-col w-full p-4 rounded-md shadow-sm space-y-3 border-l-2 border-${colorVariant}`">
+  <div :class="`flex flex-col w-full p-4 rounded-md shadow-sm space-y-3 border-l border-${colorVariant}`">
 		<HeadingSmall v-if="title" :title="title" :description="description"/>
 		<slot/>
 	</div>

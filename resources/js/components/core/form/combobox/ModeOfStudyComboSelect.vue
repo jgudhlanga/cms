@@ -11,6 +11,7 @@ import { computed, onMounted, watch } from 'vue';
 interface Props {
     form?: InertiaForm<any>;
     departmentCourseId?: string;
+    departmentLevelId?: string;
 }
 
 const { isLoading, listCourseModesOfStudy, courseModesOfStudy, listModesOfStudy, modesOfStudy } = useModeOfStudy();
@@ -18,7 +19,7 @@ const props = defineProps<Props>();
 
 onMounted(async () => {
     if (Number(props.departmentCourseId ?? '') > 0) {
-        await listCourseModesOfStudy(props.departmentCourseId ?? '');
+        await listCourseModesOfStudy(String(props.departmentCourseId), String(props.departmentLevelId));
     } else {
         await listModesOfStudy();
     }
@@ -54,8 +55,10 @@ const placeholder = computed(() => {
 watch(
     () => props.departmentCourseId,
     async (newValue) => {
-        clearFormErrors(props.form, 'modeOfStudy');
-        if (Number(newValue) > 0) await listCourseModesOfStudy(newValue?.toString() ?? '');
+        if (props.form) {
+            clearFormErrors(props.form, 'modeOfStudy');
+        }
+        if (Number(newValue) > 0) await listCourseModesOfStudy(String(newValue), String(props.departmentLevelId));
     },
 );
 </script>

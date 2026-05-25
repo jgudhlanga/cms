@@ -2,7 +2,6 @@
 
 namespace App\Policies\Acl;
 
-use App\Enums\Acl\PermissionEnum;
 use App\Models\Acl\Module;
 use App\Models\Users\User;
 
@@ -10,36 +9,36 @@ class ModulePolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->can(PermissionEnum::VIEW_ANY_MODULES);
+        return $user->can('viewAny:modules');
     }
 
     public function view(User $user, Module $module): bool
     {
-        return $user->can(PermissionEnum::VIEW_ANY_MODULES) || $user->can(PermissionEnum::VIEW_MODULE);
+        return $user->can('viewAny:modules') || $user->can('view:modules');
     }
 
     public function create(User $user): bool
     {
-        return $user->can(PermissionEnum::CREATE_MODULE);
+        return $user->can('create:modules');
     }
 
     public function update(User $user, Module $module): bool
     {
-        return $user->can(PermissionEnum::UPDATE_MODULE, $module);
+        return $user->can('update:modules', $module);
     }
 
     public function delete(User $user, Module $module): bool
     {
-        return $user->can(PermissionEnum::DELETE_MODULE, $module);
-    }
+        return $user->can('delete:modules', $module);
+    } 
 
     public function restore(User $user, Module $module): bool
     {
-        return $user->can(PermissionEnum::RESTORE_MODULE, $module);
+        return $user->can('restore:modules', $module);
     }
 
     public function forceDelete(User $user, Module $module): bool
     {
-		return $user->can(PermissionEnum::FORCE_DELETE_MODULE, $module);
+        return $user->can('forceDelete:modules', $module);
     }
 }

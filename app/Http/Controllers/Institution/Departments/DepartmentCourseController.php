@@ -7,13 +7,13 @@ use App\DTO\Institution\DepartmentCourseUpdateDto;
 use App\DTO\Institution\CourseRequirementsDto;
 use App\Enums\Institution\LevelEnum;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Institution\CourseLevelModeRequest;
 use App\Http\Requests\Institution\DepartmentCourseRequest;
 use App\Http\Requests\Institution\DepartmentCourseUpdateRequest;
 use App\Http\Requests\Institution\CourseRequirementRequest;
-use App\Http\Resources\Institution\CourseModeResource;
+use App\Http\Resources\Institution\CourseLevelModeResource;
 use App\Http\Resources\Institution\CourseRequirementResource;
 use App\Http\Resources\Institution\DepartmentCourseResource;
-use App\Http\Resources\Institution\DepartmentLevelRequirementResource;
 use App\Http\Resources\Institution\DepartmentLevelResource;
 use App\Http\Resources\Institution\InstitutionDepartmentResource;
 use App\Http\Resources\Institution\ModeOfStudyResource;
@@ -68,12 +68,42 @@ class DepartmentCourseController extends Controller
         $departmentCourse = DepartmentCourseResource::make($departmentCourse);
         $institutionDepartment = InstitutionDepartmentResource::make($departmentCourse->institutionDepartment);
         $departmentLevels = DepartmentLevelResource::collection($departmentCourse->institutionDepartment->departmentLevels);
-        $courseModes = CourseModeResource::collection($departmentCourse->courseModes);
         $modes = ModeOfStudy::whereNull('deleted_at')->get();
         $modesOfStudy = ModeOfStudyResource::collection($modes);
         return Inertia::render('institution/departments/courses/Edit',
-            compact('institutionDepartment', 'departmentCourse', 'departmentLevels', 'departmentLevels', 'courseModes', 'modesOfStudy'),
+            compact('institutionDepartment', 'departmentCourse', 'departmentLevels', 'modesOfStudy'),
         );
+    }
+
+    public function courseLevelModes(DepartmentCourse $departmentCourse): Response
+    {
+        $this->authorize('viewDepartmentMetaData');
+        $departmentCourse = DepartmentCourseResource::make($departmentCourse);
+        $institutionDepartment = InstitutionDepartmentResource::make($departmentCourse->institutionDepartment);
+        $departmentLevels = DepartmentLevelResource::collection($departmentCourse->institutionDepartment->departmentLevels);
+        $courseLevelModes = CourseLevelModeResource::collection($departmentCourse->courseLevelModes);
+        $modes = ModeOfStudy::whereNull('deleted_at')->get();
+        $modesOfStudy = ModeOfStudyResource::collection($modes);
+        return Inertia::render('institution/departments/courses/CourseLevelModes',
+            compact('institutionDepartment', 'departmentCourse', 'departmentLevels', 'courseLevelModes', 'modesOfStudy'),
+        );
+    }
+
+    public function storeCourseLevelModes(DepartmentCourse $departmentCourse, CourseLevelModeRequest $request): void
+    {
+        $this->authorize('updateDepartmentMetaData');
+        foreach ($request->mode_ids as $levelId => $modes) {
+            if (empty($modes)) {
+                $departmentCourse->courseLevelModes()
+                    ->where('department_level_id', $levelId)
+                    ->delete();
+                continue;
+            }
+            $departmentCourse->courseLevelModes()->updateOrCreate(
+                ['department_level_id' => $levelId],
+                ['modes' => array_values($modes)]
+            );
+        }
     }
 
     public function update(DepartmentCourse $departmentCourse, DepartmentCourseUpdateRequest $request): void

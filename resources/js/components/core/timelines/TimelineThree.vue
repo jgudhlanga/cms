@@ -23,14 +23,16 @@ defineProps<Props>();
                         </svg>
                     </div>
                     <!-- Date -->
-                    <time class="font-caveat text-xl font-medium text-indigo-500 md:w-28">Apr 7, 2024</time>
+                    <time class="font-caveat text-xl font-medium text-indigo-500 md:w-28">{{ $t('trans.ui_apr_7_2024') }}</time>
                 </div>
                 <!-- Title -->
-                <div class="ml-14 text-slate-500"><span class="font-bold text-slate-900">Mark Mikrol</span> opened the request</div>
+                <div class="ml-14 text-slate-500">
+                    <span class="font-bold text-slate-900">{{ $t('trans.ui_mark_mikrol') }}</span> {{ $t('trans.ui_opened_the_request') }}
+                </div>
             </div>
             <!-- Card -->
             <div class="ml-14 rounded border border-slate-200 bg-white p-4 text-slate-500 shadow md:ml-44">
-                Various versions have evolved over the years, sometimes by accident, sometimes on purpose injected humour and the like.
+                {{ $t('trans.ui_various_versions_have_evolved_over_the_years_sometimes_by_ac') }}
             </div>
         </div>
     </div>

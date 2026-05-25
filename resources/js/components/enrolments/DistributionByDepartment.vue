@@ -105,7 +105,7 @@ const intakePeriodModel = defineModel<SelectOption | null>('intakePeriodModel');
 <template>
     <div class="rounded-lg bg-white px-4 py-2 shadow">
         <div class="mb-4 flex items-center justify-between text-lg font-medium">
-            <HeadingSmall title="Distribution by Department" />
+            <HeadingSmall :title="$t('trans.ui_distribution_by_department')" />
             <IntakePeriodComboSelect
                 v-if="showFilters"
                 v-model="intakePeriodModel"
@@ -126,26 +126,26 @@ const intakePeriodModel = defineModel<SelectOption | null>('intakePeriodModel');
                             colspan="5"
                             class="bg-persian-200 text-accent-foreground text-uppercase j-td-l-border j-td-r-border px-3 py-2 text-center text-xs font-bold"
                         >
-                            Application Statuses
+                            {{ $t('trans.ui_application_statuses') }}
                         </th>
                     </tr>
                     <tr class="j-th">
                         <th class="j-th text-left">{{ $tChoice('trans.department', 1) }}</th>
-                        <th class="j-th text-center">Males</th>
-                        <th class="j-th text-center">Females</th>
-                        <th class="j-th text-center">Disabled</th>
-                        <th class="j-th text-center">Full Time</th>
-                        <th class="j-th text-center">Part Time</th>
-                        <th class="j-th text-center">Block</th>
-                        <th class="j-th text-center">Ojet</th>
-                        <th class="j-th text-center">Total</th>
-                        <th class="j-th text-center">Class Sizes</th>
-                        <th class="j-th text-center">Percentage</th>
-                        <th class="j-th j-td-l-border text-center">Provisional</th>
-                        <th class="j-th j-td-l-border text-center">Waitlist</th>
-                        <th class="j-th j-td-l-border text-center">Rejected</th>
-                        <th class="j-th j-td-l-border text-center">Verified</th>
-                        <th class="j-th j-td-l-border j-td-r-border text-center">Final</th>
+                        <th class="j-th text-center">{{ $tChoice('general.male', 2) }}</th>
+                        <th class="j-th text-center">{{ $tChoice('general.female', 2) }}</th>
+                        <th class="j-th text-center">{{ $t('trans.ui_disabled') }}</th>
+                        <th class="j-th text-center">{{ $t('trans.ui_full_time') }}</th>
+                        <th class="j-th text-center">{{ $t('trans.ui_part_time') }}</th>
+                        <th class="j-th text-center">{{ $t('trans.ui_block') }}</th>
+                        <th class="j-th text-center">{{ $t('trans.ui_ojet') }}</th>
+                        <th class="j-th text-center">{{ $t('trans.ui_total') }}</th>
+                        <th class="j-th text-center">{{ $t('trans.ui_class_sizes') }}</th>
+                        <th class="j-th text-center">{{ $t('trans.ui_percentage') }}</th>
+                        <th class="j-th j-td-l-border text-center">{{ $t('trans.provisional') }}</th>
+                        <th class="j-th j-td-l-border text-center">{{ $t('trans.ui_waitlist') }}</th>
+                        <th class="j-th j-td-l-border text-center">{{ $t('trans.ui_rejected') }}</th>
+                        <th class="j-th j-td-l-border text-center">{{ $t('trans.ui_verified') }}</th>
+                        <th class="j-th j-td-l-border j-td-r-border text-center">{{ $t('trans.ui_final') }}</th>
                     </tr>
                 </thead>
                 <tbody class="j-tbody">
@@ -222,7 +222,7 @@ const intakePeriodModel = defineModel<SelectOption | null>('intakePeriodModel');
                     </tr>
                     <!-- Totals Row -->
                     <tr class="j-tr bg-gray-50 font-semibold">
-                        <td class="j-td text-left">Total</td>
+                        <td class="j-td text-left">{{ $t('trans.ui_total') }}</td>
                         <td class="j-td text-center">{{ departmentTotals?.male }}</td>
                         <td class="j-td text-center">{{ departmentTotals?.female }}</td>
                         <td class="j-td text-center">{{ departmentTotals?.disabled }}</td>
@@ -232,7 +232,7 @@ const intakePeriodModel = defineModel<SelectOption | null>('intakePeriodModel');
                         <td class="j-td text-center">{{ departmentTotals?.ojet }}</td>
                         <td class="j-td text-center">{{ departmentTotals?.total }}</td>
                         <td class="j-td text-center">{{ departmentTotals?.intakeClassSizeTotal }}</td>
-                        <td class="j-td text-center">100%</td>
+                        <td class="j-td text-center">{{ $t('trans.ui_100') }}</td>
                         <td class="j-td j-td-l-border j-td-b-border text-center">{{ classListTotals?.provisional }}</td>
                         <td class="j-td j-td-l-border j-td-b-border text-center">{{ classListTotals?.waiting }}</td>
                         <td class="j-td j-td-l-border j-td-b-border text-center">{{ classListTotals?.failed }}</td>

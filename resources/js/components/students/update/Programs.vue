@@ -103,6 +103,7 @@ const requirements = computed(() => {
             />
             <ModeOfStudyComboSelect
                 :department-course-id="course?.value?.toString() ?? ''"
+                :department-level-id="level?.value?.toString() ?? ''"
                 :form="form"
                 v-model="modeOfStudy"
                 :error="form.errors.modeOfStudy"

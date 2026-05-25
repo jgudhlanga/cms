@@ -11,8 +11,27 @@
 |
 */
 
-pest()->extend(Tests\TestCase::class)
-    ->use(Illuminate\Foundation\Testing\RefreshDatabase::class)
+use Database\Seeders\Acl\ModulesTableSeeder;
+use Database\Seeders\Acl\PermissionsTableSeeder;
+use Database\Seeders\Statuses\StatusSeeder;
+use Database\Seeders\Tenants\TenantsTableSeeder;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
+
+require_once __DIR__.'/Support/BulkFinaliseTestHelpers.php';
+require_once __DIR__.'/Support/HmsIndexTestHelpers.php';
+require_once __DIR__.'/Support/HmsApplicationTestHelpers.php';
+
+pest()->extend(TestCase::class)
+    ->use(RefreshDatabase::class)
+    ->beforeEach(function () {
+        if ($this->app && $this->app->runningUnitTests()) {
+            (new TenantsTableSeeder)->run();
+            (new StatusSeeder)->run();
+            (new ModulesTableSeeder)->run();
+            (new PermissionsTableSeeder)->run();
+        }
+    })
     ->in('Feature');
 
 /*

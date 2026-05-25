@@ -38,7 +38,7 @@ const breadcrumbs: Array<Link> = [
 
 <template>
     <Head :title="$tChoice('trans.department', 2)" />
-    <PageContainer :breadcrumbs="breadcrumbs">
+    <PageContainer :breadcrumbs="breadcrumbs" :back-url="route('institution.index')">
         <DataTable
             :data="departments?.data ?? []"
             :trashed-count="trashedCount"

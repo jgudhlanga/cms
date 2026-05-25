@@ -138,10 +138,10 @@ watch(course, async () => {
 });
 
 onMounted(async () => {
-    ToastService.warning('Sorry, The registration has ended for now. Contact the administration for more info.');
+    /**ToastService.warning('Sorry, The registration has ended for now. Contact the administration for more info.');
     navigateTo(route('login'));
-    return;
-    //await listSubjects();
+    return;*/
+    await listSubjects();
 });
 const validateSubjectRequirements = async () => {
     // Load student O-Level results
@@ -218,7 +218,6 @@ onBeforeUnmount(() => {
 });
 
 const onUpdated = () => {
-    console.log('Here we goo')
     router.visit(window.location.pathname, {
         replace: true,
         preserveScroll: true,
@@ -262,6 +261,7 @@ const onUpdated = () => {
                             :error="form.errors.modeOfStudy"
                             :is-required="true"
                             :department-course-id="course?.value?.toString() ?? ''"
+                            :department-level-id="level?.value?.toString() ?? ''"
                         />
                     </div>
                     <div class="my-4 flex w-full flex-col">

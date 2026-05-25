@@ -46,6 +46,14 @@ return [
             'throw' => false,
             'report' => false,
         ],
+        // Used by LaravelIngest's filesystem handler so `ingest:run --file=storage/...`
+        // can resolve paths relative to the project root.
+        'ingest' => [
+            'driver' => 'local',
+            'root' => storage_path('data'),
+            'throw' => false,
+            'report' => false,
+        ],
         'students' => [
             'driver' => 'local',
             'root' => storage_path('app/students'),

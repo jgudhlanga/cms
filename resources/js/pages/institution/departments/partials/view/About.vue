@@ -30,7 +30,7 @@ const csDepartmentData = {
                 :enter="{ opacity: 1, y: 0, transition: { duration: 0.5 } }"
             >
                 <HeadingSmall :title="`Welcome to the Department of ${department.attributes?.department}`" />
-                <blockquote class="flex flex-col w-full mt-2 border-x-4 border-primary pl-6 italic">
+                <blockquote class="border-primary mt-2 flex w-full flex-col border-x-4 pl-6 italic">
                     {{ `" ${csDepartmentData.welcomeMessage}"` }}
                 </blockquote>
                 <Separator class="mt-2" />
@@ -38,8 +38,8 @@ const csDepartmentData = {
             </div>
             <!-- About Us -->
             <div v-motion :initial="{ opacity: 0, y: 40 }" :enter="{ opacity: 1, y: 0, transition: { delay: 0.1 } }">
-                <HeadingSmall title="About Us" />
-                <div class="flex flex-col w-full mt-3">
+                <HeadingSmall :title="$t('trans.ui_about_us')" />
+                <div class="mt-3 flex w-full flex-col">
                     {{
                         `The Department of ${department.attributes?.department} at ${csDepartmentData.collegeName} is committed to academic excellence,
                     research innovation, and empowering students with real-world skills in the field of ${csDepartmentData.fieldOfStudy}`
@@ -48,26 +48,26 @@ const csDepartmentData = {
             </div>
             <!-- What We Offer -->
             <div v-motion :initial="{ opacity: 0, y: 40 }" :enter="{ opacity: 1, y: 0, transition: { delay: 0.2 } }">
-                <HeadingSmall title="What we offer" />
-                <ul class="list-inside list-disc mt-3">
-                    <li>Undergraduate & Postgraduate Programs</li>
-                    <li>World-Class Faculty & Mentorship</li>
-                    <li>Hands-On Learning & Industry Projects</li>
-                    <li>Career Support & Alumni Network</li>
+                <HeadingSmall :title="$t('trans.ui_what_we_offer')" />
+                <ul class="mt-3 list-inside list-disc">
+                    <li>{{ $t('trans.ui_undergraduate_and_postgraduate_programs') }}</li>
+                    <li>{{ $t('trans.ui_world_class_faculty_and_mentorship') }}</li>
+                    <li>{{ $t('trans.ui_hands_on_learning_and_industry_projects') }}</li>
+                    <li>{{ $t('trans.ui_career_support_and_alumni_network') }}</li>
                 </ul>
             </div>
             <!-- Facilities -->
             <div v-motion :initial="{ opacity: 0, y: 40 }" :enter="{ opacity: 1, y: 0, transition: { delay: 0.3 } }">
-                <HeadingSmall title="Facilities & Resources" />
-                <ul class="list-inside list-disc mt-3">
-                    <li>Modern lecture halls and labs</li>
-                    <li>Department library and digital resources</li>
-                    <li>Innovation hubs and collaborative spaces</li>
+                <HeadingSmall :title="$t('trans.ui_facilities_and_resources')" />
+                <ul class="mt-3 list-inside list-disc">
+                    <li>{{ $t('trans.ui_modern_lecture_halls_and_labs') }}</li>
+                    <li>{{ $t('trans.ui_department_library_and_digital_resources') }}</li>
+                    <li>{{ $t('trans.ui_innovation_hubs_and_collaborative_spaces') }}</li>
                 </ul>
             </div>
             <!-- Contact -->
             <div v-motion :initial="{ opacity: 0, y: 40 }" :enter="{ opacity: 1, y: 0, transition: { delay: 0.5 } }">
-                <HeadingSmall title="Contact us" />
+                <HeadingSmall :title="$t('trans.ui_contact_us')" />
                 <div class="mt-3 flex w-full flex-col md:w-1/3">
                     <LabelValue :label="'Location'" :value="csDepartmentData.location" />
                     <LabelValue :label="'Email'" :value="csDepartmentData.email" />

@@ -2,7 +2,7 @@
 
 namespace App\DTO\Integrations;
 
-use App\Http\Requests\INtegrations\CreateInvoiceRequest;
+use App\Http\Requests\Integrations\CreateInvoiceRequest;
 
 readonly class CreateInvoiceDto
 {

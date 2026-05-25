@@ -2,12 +2,12 @@
 import { useUtils } from '@/composables/core/useUtils';
 import { DailyDistribution, DepartmentDistribution, LevelDistribution } from '@/types/dasboard';
 import { AuthObject } from '@/types/data-pagination';
+import { IntakePeriod } from '@/types/institution';
 import { BreadcrumbItemInterface } from '@/types/ui';
+import { SelectOption } from '@/types/utils';
 import { Head, router } from '@inertiajs/vue3';
 import { Chart, registerables } from 'chart.js';
 import { computed, onMounted, ref } from 'vue';
-import { SelectOption } from '@/types/utils';
-import { IntakePeriod } from '@/types/institution';
 
 Chart.register(...registerables);
 
@@ -165,14 +165,14 @@ onMounted(async () => {
                         :handle-filter-change="handleFilterChange"
                     />
                     <div class="gap-6 rounded-lg bg-white px-4 py-2 shadow">
-                        <HeadingSmall class="mb-2" title="Distribution by Level" />
+                        <HeadingSmall class="mb-2" :title="$t('trans.ui_distribution_by_level')" />
                         <div class="h-75">
                             <canvas id="levelChart" ref="levelChart"></canvas>
                         </div>
                     </div>
                     <div class="grid grid-cols-1 gap-6 px-4 sm:px-0">
                         <div class="rounded-lg bg-white px-4 py-2 shadow">
-                            <HeadingSmall class="mb-2" title="Daily Distribution" />
+                            <HeadingSmall class="mb-2" :title="$t('trans.ui_daily_distribution')" />
                             <div class="h-80">
                                 <canvas id="enrollmentChart" ref="enrollmentChart"></canvas>
                             </div>

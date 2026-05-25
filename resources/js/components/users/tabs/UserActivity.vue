@@ -1,3 +1,3 @@
 <script setup lang="ts"></script>
 
-<template>User Activity</template>
+<template>{{ $t('trans.ui_user_activity') }}</template>

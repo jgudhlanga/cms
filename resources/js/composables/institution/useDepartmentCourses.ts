@@ -10,7 +10,7 @@ import HttpService from '@/services/http.service';
 import { useCreateApplicationFormStore } from '@/store/portal/useCreateApplicationFormStore';
 import { useUpdateProgramFormStore } from '@/store/portal/useUpdateProgramFormStore';
 import { Auth } from '@/types';
-import { CourseMode, CourseRequirement, DepartmentCourse, DepartmentCourseLevel, DepartmentCourseMetaData } from '@/types/department-meta-data';
+import { CourseRequirement, DepartmentCourse, DepartmentCourseLevel, DepartmentCourseMetaData } from '@/types/department-meta-data';
 import { AcademicOLevelResult, Enrolment } from '@/types/enrolments';
 import { InertiaForm, usePage } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
@@ -49,11 +49,14 @@ export const useDepartmentCourses = (isEditingProgram?: boolean) => {
             {
                 header: trans_choice('trans.mode_of_study', 2),
                 accessorKey: 'courseModes',
+                enableSorting: false,
+                meta: { align: 'center' },
                 cell: ({ row }: { row: { original: DepartmentCourse } }) => {
-                    return row.original.relationships?.courseModes
-                        ?.map((item: CourseMode) => item?.attributes?.modeOfStudy)
-                        .filter(Boolean)
-                        .join(', ');
+                    return actionButton({
+                        title: trans_choice('general.mode', 2),
+                        variant: ColorVariant.primary_outline,
+                        onClick: () => navigateTo(route('department-courses.modes', { department_course: String(row.original.id) })),
+                    });
                 },
             },
             {
@@ -311,6 +314,30 @@ export const useDepartmentCourses = (isEditingProgram?: boolean) => {
         }
     };
 
+    const saveCourseLevelModes = (departmentCourseId: string, form: InertiaForm<any>, institutionDepartmentId: string) => {
+        try {
+            const name = trans_choice('general.mode', 2);
+            const success = trans('trans.item_saved', { item: name });
+            const error = trans('trans.item_save_failure', { item: name });
+            form.post(route('department-courses.modes.store', departmentCourseId), {
+                onStart: () => toggleFormLoader(true),
+                onFinish: () => {
+                    form.reset();
+                    toggleFormLoader(false);
+                },
+                onSuccess: () => {
+                    successAlert(success);
+                    navigateTo(route('institution-departments.show', getIdParams(institutionDepartmentId)));
+                },
+                onError: () => {
+                    errorAlert(error);
+                },
+            });
+        } catch (error: any) {
+            form.setError(error.format());
+        }
+    };
+
     return {
         createDepartmentCourseColumns,
         openDepartmentCoursesModal,
@@ -324,5 +351,6 @@ export const useDepartmentCourses = (isEditingProgram?: boolean) => {
         storeCourseRequirements,
         listCourseRequirements,
         courseRequirements,
+        saveCourseLevelModes,
     };
 };

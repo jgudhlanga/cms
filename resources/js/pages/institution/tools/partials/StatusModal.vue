@@ -12,7 +12,6 @@ import { PaymentCheckResponse } from '@/types/tools';
 import { useUtils } from '@/composables/core/useUtils';
 import HttpService from '@/services/http.service';
 import { usePaymentIntegrationStore } from '@/store/institution/usePaymentIntegrationStore';
-import { router } from '@inertiajs/vue3';
 import { storeToRefs } from 'pinia';
 import { computed, ref, watch } from 'vue';
 
@@ -77,7 +76,7 @@ const updateLedgers = async () => {
                         <div :class="`flex flex-col items-center bg-gradient-to-br from-green-400 to-green-600 px-6 py-8`">
                             <AnimatedCheckMark />
                             <h1 class="text-2xl font-bold text-green-100">{{ composeDetails?.attributes?.paymentStatus }}!</h1>
-                            <p :class="`mt-2 text-center text-green-100`">Transaction found</p>
+                            <p :class="`mt-2 text-center text-green-100`">{{ $t('trans.ui_transaction_found') }}</p>
                         </div>
                         <!-- Content -->
                         <div class="px-6 py-6">
@@ -120,13 +119,13 @@ const updateLedgers = async () => {
                                             classes="rounded-full"
                                             :variant="ColorVariant.warning_outline"
                                             @click="() => destroyModal()"
-                                            title="Close"
+                                            :title="$t('trans.close')"
                                         />
                                         <BaseButton
                                             type="button"
                                             :processing="processingUpdate"
                                             classes="rounded-full"
-                                            title="Update Student Payment Status"
+                                            :title="$t('trans.ui_update_student_payment_status')"
                                             @click="updateLedgers"
                                             :variant="ColorVariant.success"
                                         />

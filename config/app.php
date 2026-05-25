@@ -17,6 +17,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Application Version (release string)
+    |--------------------------------------------------------------------------
+    |
+    | Shown in the UI (e.g. sidebar). Set APP_VERSION in production from your
+    | deploy pipeline (e.g. GitHub Actions: short SHA or git describe).
+    | If empty, the app may fall back to a VERSION file at the project root.
+    |
+    */
+
+    'version' => env('APP_VERSION'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Environment
     |--------------------------------------------------------------------------
     |

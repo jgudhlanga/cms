@@ -27,7 +27,7 @@
         },
 
         /* Type roots */
-        "types": ["vite/client", "vue/tsx", "./resources/js/types"]
+        "types": ["vite/client", "./resources/js/types"]
     },
     "include": [
         "resources/js/**/*.ts",

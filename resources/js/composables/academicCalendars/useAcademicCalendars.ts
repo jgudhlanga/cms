@@ -1,55 +1,15 @@
-import { useDataTables } from '@/composables/core/useDataTables';
+import { useDropdowns } from '@/composables/core/useDropdowns';
 import { closeModal, errorAlert, forbiddenAlert, openModal, successAlert } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
-import { getIdParams } from '@/lib/utils';
-import { Auth } from '@/types';
+import { useDepartmentMetaStore } from '@/store/institution/useDepartmentMetaStore';
+import HttpService from '@/services/http.service';
 import { AcademicCalendar } from '@/types/academic-calendar';
 import type { Link } from '@/types/ui';
-import { InertiaForm, usePage } from '@inertiajs/vue3';
-import { trans, trans_choice } from 'laravel-vue-i18n';
+import type { SelectOption } from '@/types/utils';
+import { InertiaForm } from '@inertiajs/vue3';
 import { ref } from 'vue';
-import { useDropdowns } from '@/composables/core/useDropdowns';
 
 export const useAcademicCalendars = () => {
-    const { moreActionButton, onDelete, onForceDelete, onRestore } = useDataTables();
-    const createTableColumns = () => {
-        const { props } = usePage();
-        const { can } = props?.auth as Auth;
-        return [
-            { header: trans_choice('trans.name', 1), accessorKey: 'attributes.name' },
-            { header: trans_choice('academic_calendar.calendar_year', 1), accessorKey: 'attributes.calendarYear' },
-            { header: trans_choice('academic_calendar.calendar_type', 1), accessorKey: 'attributes.calendarType' },
-            { header: trans_choice('academic_calendar.opening_date', 1), accessorKey: 'attributes.openingDate' },
-            { header: trans_choice('academic_calendar.closing_date', 1), accessorKey: 'attributes.closingDate' },
-            { header: trans('academic_calendar.description'), accessorKey: 'attributes.description' },
-            {
-                header: trans_choice('academic_calendar.action', 2),
-                accessorKey: 'actions',
-                enableSorting: false,
-                meta: { align: 'right' },
-                cell: ({ row }: { row: { original: AcademicCalendar } }) => {
-                    const id = getIdParams(row.original.id?.toString() ?? '');
-                    const name = trans_choice('academic_calendar.academic_calendar', 1);
-                    return moreActionButton(!!row.original?.attributes?.deletedAt, [
-                        { key: 'edit', action: () => onOpenModal(can['update:academic-calendars'], row.original) },
-                        {
-                            key: 'archive',
-                            action: () => onDelete(can['delete:academic-calendars'], route('academic-calendars.destroy', id), name),
-                        },
-                        {
-                            key: 'restore',
-                            action: () => onRestore(can['restore:academic-calendars'], route('academic-calendars.restore', id), name),
-                        },
-                        {
-                            key: 'delete',
-                            action: () => onForceDelete(can['forceDelete:academic-calendars'], route('academic-calendars.force-delete', id), name),
-                        },
-                    ]);
-                },
-            },
-        ];
-    };
-
     const breadcrumbs: Array<Link> = [
         {
             transChoiceKey: 'institution',
@@ -97,7 +57,8 @@ export const useAcademicCalendars = () => {
             },
         });
     };
-    const saveAcademicCalendar = (form: InertiaForm<any>, academicCalendar?: AcademicCalendar) => {
+
+    const saveAcademicCalendar = (form: InertiaForm<any>, academicCalendar?: AcademicCalendar|null) => {
         try {
             if (academicCalendar) {
                 updateAcademicCalendar(form, academicCalendar);
@@ -120,13 +81,50 @@ export const useAcademicCalendars = () => {
         academicCalendars.value = data.value;
     };
 
+    const listAcademicYearOptions = async (): Promise<SelectOption[]> => {
+        const body = await HttpService.get(route('v1.academic-calendars.options'));
+        const rows = (body?.data ?? []) as Array<{ academicYear: string }>;
+        return rows.map((row) => ({
+            value: row.academicYear,
+            label: row.academicYear,
+        }));
+    };
+
+    const storePerClassSizeConfig = (
+        form: InertiaForm<any>,
+        institutionDepartmentId: string,
+        academicCalendarId: string,
+        onSuccess?: () => void,
+    ) => {
+        form.post(route('academic-calendars.classes-config.per-class-size.store', {
+            institution_department: institutionDepartmentId,
+            academic_calendar: academicCalendarId
+        }), {
+            onSuccess: () => {
+                successAlert('Academic calendar successfully config successfully saved');
+                closeModal(APP_MODULE_KEYS.student_per_class);
+                useDepartmentMetaStore().bumpAcademicClassConfigsRefresh();
+                onSuccess?.();
+            },
+            onError: (errors: any) => {
+                if (Object.keys(errors).length) {
+                    const allErrors = Object.values(errors).join('\n');
+                    errorAlert(allErrors);
+                } else {
+                    errorAlert('An unexpected error happened, academic calendar could not be updated');
+                }
+            },
+        });
+    };
+
     return {
-        createTableColumns,
         breadcrumbs,
         onOpenModal,
         saveAcademicCalendar,
         isLoading,
         academicCalendars,
         listAcademicCalendars,
+        listAcademicYearOptions,
+        storePerClassSizeConfig,
     };
 };

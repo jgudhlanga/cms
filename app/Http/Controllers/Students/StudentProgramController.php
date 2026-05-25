@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Students;
 
 use App\Enums\Institution\LevelEnum;
+use App\Helpers\DropdownHelper;
 use App\Helpers\Helper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Students\UpdateStudentRequest;
@@ -12,7 +13,6 @@ use App\Http\Resources\Institution\InstitutionDepartmentResource;
 use App\Http\Resources\Institution\IntakePeriodResource;
 use App\Models\Institution\DepartmentLevel;
 use App\Models\Institution\InstitutionDepartment;
-use App\Models\Institution\IntakePeriod;
 use App\Models\Students\Student;
 use App\Models\Students\StudentProgram;
 use App\Models\Users\User;
@@ -29,24 +29,22 @@ use Inertia\Response;
 class StudentProgramController extends Controller
 {
     public function __construct(
-        protected IStudentProgramRepository  $repository,
+        protected IStudentProgramRepository $repository,
         protected IDepartmentLevelRepository $departmentLevelRepository,
-        protected ApplicationMetricsService  $metricsService
-    )
-    {
-    }
+        protected ApplicationMetricsService $metricsService
+    ) {}
 
     /**
-     *
      * @throws AuthorizationException
      */
     public function index(): Response
     {
         $this->authorize('viewAny', StudentProgram::class);
-        $intakePeriods = cache()->rememberForever('all_intake_periods', fn() => IntakePeriod::orderByDesc('end_date')->get());
+        $intakePeriods = DropdownHelper::getIntakePeriods();
         $intakePeriod = Helper::resolveIntakePeriod();
 
         $departmentDistribution = DepartmentDistributionResource::collection($this->metricsService->applicationsByDepartment());
+
         return Inertia::render('enrolments/Index', [
             'departmentDistribution' => $departmentDistribution,
             'intakePeriods' => IntakePeriodResource::collection($intakePeriods),
@@ -54,10 +52,7 @@ class StudentProgramController extends Controller
         ]);
     }
 
-
-    public function create()
-    {
-    }
+    public function create() {}
 
     public function store(Request $request)
     {
@@ -65,18 +60,15 @@ class StudentProgramController extends Controller
         //
     }
 
-
     public function show(string $id)
     {
         //
     }
 
-
     public function edit(string $id)
     {
         //
     }
-
 
     public function update(UpdateStudentRequest $request, Student $student): void
     {
@@ -125,13 +117,12 @@ class StudentProgramController extends Controller
     }
 
     private function buildFaultyQuery(
-        array  $ids,
-        bool   $isDepartmentUser,
+        array $ids,
+        bool $isDepartmentUser,
         ?array $userDepartments,
-        array  $relations = ['student'],
-        int    $perPage = 1000
-    )
-    {
+        array $relations = ['student'],
+        int $perPage = 1000
+    ) {
         $query = StudentProgram::with($relations)
             ->whereIn('id', $ids);
 
@@ -200,6 +191,7 @@ class StudentProgramController extends Controller
     {
         $this->authorize('viewAny', StudentProgram::class);
         $department = InstitutionDepartmentResource::make($institutionDepartment);
+
         return Inertia::render('enrolments/DepartmentEnrolments', [
             'department' => $department,
         ]);

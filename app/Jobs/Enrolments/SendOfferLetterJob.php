@@ -21,11 +21,6 @@ class SendOfferLetterJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $email = $this->email;
-        $name = $this->name;
-        $applicationId = $this->applicationId;
-        Mail::to($email)->send(
-            new VerifiedStudentsOfferLetterMail($name, $applicationId)
-        );
+        Mail::to($this->email)->send(new VerifiedStudentsOfferLetterMail($this->name, $this->applicationId));
     }
 }

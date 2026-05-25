@@ -50,8 +50,8 @@ const canViewAcademicDepartments = computed(() => {
             <SettingsButton class="mt-2" @click="navigateTo(route('institution.setup'))" :title="$t('trans.setup')" />
         </template>
         <template v-if="hasAbility('root:manage')">
-            <HeadingSmall title="Payments Debug" description="Debug and check payment statuses" class="mt-6" />
-            <SettingsButton class="mt-2" @click="navigateTo(route('integrations.payments.check-status-create'))" title="Debug" />
+            <HeadingSmall :title="$t('trans.ui_payments_debug')" :description="$t('trans.ui_debug_and_check_payment_statuses')" class="mt-6" />
+            <SettingsButton class="mt-2" @click="navigateTo(route('integrations.payments.check-status-create'))" :title="$t('trans.ui_debug')" />
         </template>
     </PageContainer>
 </template>

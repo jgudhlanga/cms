@@ -2,19 +2,24 @@
 
 namespace App\Models\Students;
 
-use App\Enums\Institution\LevelEnum;
-use App\Enums\Shared\IdTypeEnum;
-use App\Helpers\WorkflowHelper;
-use App\Http\Filters\Students\StudentFilter;
-use App\Models\Institution\DepartmentApplicationStep;
 use App\Enums\Shared\AcademicLevelEnum;
-use App\Models\Shared\{Address, Contact, Country, Gender, IdType, MaritalStatus, NextOfKin, Race, Religion, Title};
+use App\Enums\Shared\IdTypeEnum;
+use App\Models\HMS\HostelApplication;
+use App\Models\Shared\Address;
+use App\Models\Shared\Contact;
+use App\Models\Shared\Country;
+use App\Models\Shared\Gender;
+use App\Models\Shared\IdType;
+use App\Models\Shared\MaritalStatus;
+use App\Models\Shared\NextOfKin;
+use App\Models\Shared\Race;
+use App\Models\Shared\Religion;
+use App\Models\Shared\Title;
 use App\Models\Users\User;
 use App\Traits\BelongsToTenant;
 use App\Traits\Filterable;
 use App\Traits\Paginatable;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -26,13 +31,13 @@ use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
 /**
- *
  * @mixin Builder
+ *
  * @method static filter(StudentFilter $filters)
  */
 class Student extends Model
 {
-    use HasFactory, SoftDeletes, Filterable, BelongsToTenant, Paginatable, LogsActivity;
+    use BelongsToTenant, Filterable, HasFactory, LogsActivity, Paginatable, SoftDeletes;
 
     protected $fillable = [
         'tenant_id',
@@ -102,6 +107,16 @@ class Student extends Model
         return $this->hasMany(StudentProgram::class, 'student_id');
     }
 
+    public function enrolments(): HasMany
+    {
+        return $this->hasMany(StudentEnrolment::class, 'student_id');
+    }
+
+    public function latestEnrolment(): HasOne
+    {
+        return $this->hasOne(StudentEnrolment::class)->latestOfMany();
+    }
+
     public function currentLevel(): ?string
     {
         return $this->programs()->latest()->first()?->levelEnum()?->name();
@@ -127,7 +142,6 @@ class Student extends Model
         return $this->hasMany(AcademicRecord::class, 'student_id');
     }
 
-
     public function oLevelResults(): HasMany
     {
         return $this->hasMany(StudentAcademicResult::class, 'student_id')
@@ -135,7 +149,6 @@ class Student extends Model
             ->select('student_academic_results.*')
             ->distinct('subject_id');
     }
-
 
     public function nextOfKins(): MorphMany
     {
@@ -149,12 +162,17 @@ class Student extends Model
 
     public function isZimbabwean(): bool
     {
-        return $this->id_type_id = IdTypeEnum::ZIMBABWEAN_ID_NUMBER->id();
+        return $this->id_type_id === IdTypeEnum::ZIMBABWEAN_ID_NUMBER->id();
     }
 
     public function notes(): MorphMany
     {
         return $this->morphMany(StudentNote::class, 'noteable');
+    }
+
+    public function hostelApplications(): HasMany
+    {
+        return $this->hasMany(HostelApplication::class, 'student_id');
     }
 
     public function getActivitylogOptions(): LogOptions

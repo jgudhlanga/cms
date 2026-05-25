@@ -316,7 +316,6 @@ declare module 'vue' {
     Search: typeof import('./../components/core/table/Search.vue')['default']
     SectionHeader: typeof import('./../components/core/page/SectionHeader.vue')['default']
     Select: typeof import('./../components/ui/select/Select.vue')['default']
-    SelectCalendarType: typeof import('./../components/academicCalendars/SelectCalendarType.vue')['default']
     SelectCalendarYear: typeof import('./../components/academicCalendars/SelectCalendarYear.vue')['default']
     SelectContent: typeof import('./../components/ui/select/SelectContent.vue')['default']
     SelectGroup: typeof import('./../components/ui/select/SelectGroup.vue')['default']

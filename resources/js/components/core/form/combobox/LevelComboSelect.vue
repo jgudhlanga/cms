@@ -9,7 +9,7 @@ import { debounce } from 'lodash';
 import { computed, onMounted } from 'vue';
 
 interface Props {
-    form: InertiaForm<any>;
+    form?: InertiaForm<any>;
     labelUppercase?: boolean;
     isRequired?: boolean;
 }
@@ -29,7 +29,9 @@ const options = computed(() => {
 });
 
 const whenSearch = debounce(async (search: string) => {
-    clearFormErrors(props.form, 'level');
+    if (props.form) {
+        clearFormErrors(props.form, 'level');
+    }
     await listLevels(search);
 }, 600);
 </script>

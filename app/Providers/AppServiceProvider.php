@@ -3,24 +3,34 @@
 namespace App\Providers;
 
 use App\Enums\Acl\RoleEnum;
+use App\Importers\Finance\FinanceExchangeRateImporter;
+use App\Importers\Institution\CourseSyllabusImporter;
+use App\Importers\Institution\CourseSyllabusModuleImporter;
+use App\JsonApi\V1\HMS\HmsAuthorizer;
+use App\Models\Institution\Syllabus\CourseSyllabus;
+use App\Policies\Institution\CourseSyllabusPolicy;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\ServiceProvider;
 use Lab404\Impersonate\Events\LeaveImpersonation;
 use Lab404\Impersonate\Events\TakeImpersonation;
+use LaravelIngest\IngestServiceProvider;
+use LaravelJsonApi\Laravel\LaravelJsonApi;
 use Opcodes\LogViewer\Facades\LogViewer;
 
 class AppServiceProvider extends ServiceProvider
 {
-    /**
-     * Register any application services.
-     */
     public function register(): void
     {
-        // Add container bindings or singletons here if needed
+        $this->app->tag([
+            FinanceExchangeRateImporter::class,
+            CourseSyllabusImporter::class,
+            CourseSyllabusModuleImporter::class,
+        ], IngestServiceProvider::INGEST_DEFINITION_TAG);
     }
 
     /**
@@ -28,11 +38,14 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        LaravelJsonApi::defaultAuthorizer(HmsAuthorizer::class);
+
         // Disable JSON resource wrapping (no "data" key)
         JsonResource::withoutWrapping();
 
         // Dynamically register all Gate policies from config/custom.php
         $this->registerPoliciesFromConfig();
+        Gate::policy(CourseSyllabus::class, CourseSyllabusPolicy::class);
 
         // Track user login statistics
         $this->registerLoginEventListener();
@@ -42,6 +55,15 @@ class AppServiceProvider extends ServiceProvider
 
         // Restrict Log Viewer access
         $this->registerLogViewerAuthorization();
+
+        $this->registerLocalMailRedirect();
+    }
+
+    private function registerLocalMailRedirect(): void
+    {
+        if ($this->app->environment('local') && ($devEmail = config('mail.dev_redirect'))) {
+            Mail::alwaysTo($devEmail);
+        }
     }
 
     /**
@@ -78,29 +100,15 @@ class AppServiceProvider extends ServiceProvider
         });
     }
 
-    /**
-     * Handle impersonation events (start and stop).
-     */
     private function registerImpersonationListeners(): void
     {
-        // When impersonation begins
         Event::listen(TakeImpersonation::class, function (TakeImpersonation $event) {
-            session()->put([
-                'password_hash_sanctum' => $event->impersonated->getAuthPassword(),
-            ]);
+            // SAFE: metadata only
+            session()->put('impersonated_by', $event->impersonator->getAuthIdentifier());
         });
 
-        // When impersonation ends
-        Event::listen(LeaveImpersonation::class, function (LeaveImpersonation $event) {
-            // Clean up and restore original user session
-            session()->forget('password_hash_web');
-
-            session()->put([
-                'password_hash_sanctum' => $event->impersonator->getAuthPassword(),
-            ]);
-
-            // Ensure proper restoration of the impersonator in Auth context
-            Auth::setUser($event->impersonator);
+        Event::listen(LeaveImpersonation::class, function () {
+            session()->forget('impersonated_by');
         });
     }
 

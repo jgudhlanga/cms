@@ -113,7 +113,7 @@ onMounted(() => {
                     input-id="first_name"
                     :label="$t('trans.first_name')"
                     v-model="form.first_name"
-                    placeholder="enter firstname"
+                    :placeholder="$t('trans.ui_enter_firstname')"
                     :label-uppercase="true"
                     :is-required="true"
                     @input="clearFormErrors(form, 'first_name')"
@@ -122,14 +122,14 @@ onMounted(() => {
                 <BaseInput
                     input-id="middle_name"
                     :label="$t('trans.middle_name')"
-                    placeholder="enter middlename"
+                    :placeholder="$t('trans.ui_enter_middlename')"
                     v-model="form.middle_name"
                     :label-uppercase="true"
                 />
                 <BaseInput
                     input-id="last_name"
                     :label="$t('trans.last_name')"
-                    placeholder="enter lastname / surname"
+                    :placeholder="$t('trans.ui_enter_lastname_surname')"
                     v-model="form.last_name"
                     :label-uppercase="true"
                     :is-required="true"
@@ -138,7 +138,7 @@ onMounted(() => {
                 />
                 <PhoneNumber
                     v-model="form.phone_number"
-                    placeholder="enter phone number"
+                    :placeholder="$t('trans.ui_enter_phone_number')"
                     :label-uppercase="true"
                     :is-required="true"
                     @input="clearFormErrors(form, 'phone_number')"
@@ -147,7 +147,7 @@ onMounted(() => {
             </div>
         </BaseCard>
         <div class="mt-6 flex flex-col justify-center">
-            <BaseCard title="Staff Profile" description="Staff profile details">
+            <BaseCard :title="$t('trans.ui_staff_profile')" :description="$t('trans.ui_staff_profile_details')">
                 <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
                     <TitleComboSelect :form="form" v-model="form.title" :error="form.errors.title" :label-uppercase="true" :is-required="true" />
                     <GenderComboSelect :form="form" v-model="form.gender" :error="form.errors.gender" :label-uppercase="true" :is-required="true" />
@@ -168,7 +168,7 @@ onMounted(() => {
                     <BaseInput
                         input-id="employee_number"
                         :label="$t('trans.employee_number')"
-                        placeholder="enter EC Number"
+                        :placeholder="$t('trans.ui_enter_ec_number')"
                         v-model="form.employee_number"
                         :label-uppercase="true"
                         :is-required="true"
@@ -195,7 +195,7 @@ onMounted(() => {
             </BaseCard>
         </div>
         <div class="mt-6 flex flex-col justify-center">
-            <BaseCard title="Login Profile" description="Use will create / change password through the forgot password link">
+            <BaseCard :title="$t('trans.ui_login_profile')" :description="$t('trans.ui_use_will_create_change_password_through_the_forgot_password')">
                 <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
                     <EmailAddress
                         v-model="form.email"

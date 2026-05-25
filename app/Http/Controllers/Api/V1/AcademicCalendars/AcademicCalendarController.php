@@ -2,44 +2,35 @@
 
 namespace App\Http\Controllers\Api\V1\AcademicCalendars;
 
-use App\Http\Controllers\Api\V1\Utils\ApiDropdownController;
-use App\Http\Filters\AcademicCalendars\AcademicCalendarFilter;
+use App\Http\Controllers\Controller;
 use App\Http\Resources\AcademicCalendars\AcademicCalendarResource;
-use App\Http\Resources\Acl\RoleResource;
-use App\Repositories\AcademicCalendars\Interface\IAcademicCalendarRepository;
-use App\Traits\HttpUtil;
-use Illuminate\Http\Request;
+use App\Models\AcademicCalendars\AcademicCalendar;
 
-class AcademicCalendarController extends ApiDropdownController
+class AcademicCalendarController extends Controller
 {
-    use HttpUtil;
-
-    public function __construct(protected IAcademicCalendarRepository $repository)
+    public function index()
     {
+        $calendars = AcademicCalendar::query()
+            ->whereDate('opening_date', '<', today())
+            ->orderByDesc('calendar_year')
+            ->paginate();
 
+        return AcademicCalendarResource::collection($calendars);
     }
 
-    public function index(AcademicCalendarFilter $filters)
+    public function getAcademicYears()
     {
-        return AcademicCalendarResource::collection($this->repository->allFilter(['*'], $filters))->additional([
-            'filters' => request()->only(['search', 'trashed']),
-            'trashedCount' => $this->repository->allTrashed()->count(),
-        ]);
-    }
+        $years = AcademicCalendar::query()
+            ->whereDate('opening_date', '<', today())
+            ->select('calendar_year')
+            ->distinct()
+            ->orderByDesc('calendar_year')
+            ->pluck('calendar_year')
+            ->filter(fn (?string $y): bool => $y !== null && $y !== '')
+            ->values()
+            ->map(fn (string $y): array => ['academicYear' => $y])
+            ->all();
 
-    public function store(Request $request)
-    {
-    }
-
-    public function show(string $id)
-    {
-    }
-
-    public function update(Request $request, string $id)
-    {
-    }
-
-    public function destroy(string $id)
-    {
+        return response()->json(['data' => $years]);
     }
 }

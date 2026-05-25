@@ -23,7 +23,7 @@ const can = props?.auth?.can;
 		<DataTable
 			:data="permissions.data"
 			:trashed-count="trashedCount"
-			:filters="filters"
+			:filters="filters" 
 			:search-url="route('permissions.index')"
 			:pagination="{ ...permissions.links, ...permissions.meta }"
 			:columns="createPermissionColumns()"

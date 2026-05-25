@@ -74,16 +74,19 @@ const title = computed(() => {
     <PageContainer :breadcrumbs="breadcrumbs">
         <template v-if="hasAbility(['create:students', 'create:student-programs'])">
             <div class="my-5 flex flex-col space-y-5">
-                <BaseCard title="Search Applicant details" description="Search for existing user account / student profile">
+                <BaseCard
+                    :title="$t('trans.ui_search_applicant_details')"
+                    :description="$t('trans.ui_search_for_existing_user_account_student_profile')"
+                >
                     <div class="mx-auto my-3 flex w-full flex-col">
                         <div class="flex w-full items-baseline-last justify-between space-x-5">
                             <div class="flex flex-1">
                                 <BaseInput
                                     classes="flex w-full p-6"
                                     input-id="order_reference"
-                                    label="Email address / National ID# / Passport# / Student# / Order Reference / Payment Reference"
+                                    :label="$t('trans.ui_email_address_national_id_passport_student_order_reference_p')"
                                     v-model="search"
-                                    placeholder="email address / national id# / passport# / student# / order reference / payment reference"
+                                    :placeholder="$t('trans.ui_email_address_national_id_passport_student_order_reference_p_2')"
                                     :vertical-layout="true"
                                     :label-uppercase="false"
                                     :is-required="true"
@@ -92,7 +95,7 @@ const title = computed(() => {
                             <div class="flex">
                                 <BaseButton @click="searchProfile" type="button" :processing="isSearching">
                                     <BaseIcon :name="IconName.search" />
-                                    Search user account / Student Profile
+                                    {{ $t('trans.ui_search_user_account_student_profile') }}
                                 </BaseButton>
                             </div>
                         </div>
@@ -106,7 +109,7 @@ const title = computed(() => {
             </div>
         </template>
         <template v-else>
-            <BaseAlert description="You do not have permission to access this page." :type="TypeVariant.danger" />
+            <BaseAlert :description="$t('trans.ui_you_do_not_have_permission_to_access_this_page')" :type="TypeVariant.danger" />
         </template>
     </PageContainer>
 </template>

@@ -1,3 +1,3 @@
 <script setup lang="ts"></script>
 
-<template>Documents</template>
+<template>{{ $tChoice('trans.document', 2) }}</template>

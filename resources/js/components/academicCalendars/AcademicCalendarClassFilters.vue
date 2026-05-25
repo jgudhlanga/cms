@@ -1,26 +1,26 @@
 <script setup lang="ts">
 import ModeOfStudyComboSelect from '@/components/core/form/combobox/ModeOfStudyComboSelect.vue';
-import { AcademicCalendar } from '@/types/academic-calendar';
 import { ModeOfStudy } from '@/types/institution';
 import { SelectOption } from '@/types/utils';
 
 interface Props {
-    academicCalendars: AcademicCalendar[];
+    academicYearOptions: SelectOption[];
     modesOfStudy: ModeOfStudy[];
     handleFilterChange: () => void;
 }
 defineProps<Props>();
 
-const academicCalendarModel = defineModel<SelectOption | null>('academicCalendarModel');
+const academicYearModel = defineModel<SelectOption | null>('academicYearModel');
 const modeOfStudyModel = defineModel<SelectOption | null>('modeOfStudyModel');
 </script>
 
 <template>
     <div class="mt-4 flex w-full items-center justify-between space-x-4">
-        <AcademicCalendarComboSelect
-            :data="academicCalendars ?? []"
+        <BaseCombobox
+            :label="$tChoice('academic_calendar.calendar_year', 1)"
+            :options="academicYearOptions ?? []"
+            v-model="academicYearModel"
             :label-uppercase="true"
-            v-model="academicCalendarModel"
             :vertical-layout="false"
             :is-required="true"
             @update:modelValue="handleFilterChange"
@@ -36,4 +36,4 @@ const modeOfStudyModel = defineModel<SelectOption | null>('modeOfStudyModel');
             class="w-full"
         />
     </div>
-</template>
+</template> 

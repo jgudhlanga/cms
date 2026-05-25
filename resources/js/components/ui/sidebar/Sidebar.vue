@@ -29,10 +29,25 @@ const { isMobile, state, openMobile, setOpenMobile } = useSidebar();
 <template>
 	<div
 		v-if="collapsible === 'none'"
-		:class="cn('flex h-full w-(--sidebar-width) flex-col bg-sidebar text-sidebar-foreground', props.class)"
+		:class="cn('relative isolate flex h-full w-(--sidebar-width) flex-col overflow-hidden bg-sidebar text-sidebar-foreground', props.class)"
 		v-bind="$attrs"
 	>
-		<slot />
+		<div
+			v-if="side === 'left'"
+			aria-hidden="true"
+			class="pointer-events-none absolute inset-0 z-0 opacity-[0.18]"
+		>
+			<div
+				class="absolute inset-0"
+				:style="{
+					backgroundImage:
+						'repeating-radial-gradient(circle at 50% 40%, rgba(255,255,255,0.28) 0px, rgba(255,255,255,0.28) 1px, transparent 1px, transparent 20px)'
+				}"
+			/>
+		</div>
+		<div class="relative z-10 flex h-full flex-col">
+			<slot />
+		</div>
 	</div>
 
 	<Sheet v-else-if="isMobile" :open="openMobile" v-bind="$attrs" @update:open="setOpenMobile">
@@ -40,12 +55,25 @@ const { isMobile, state, openMobile, setOpenMobile } = useSidebar();
 			data-sidebar="sidebar"
 			data-mobile="true"
 			:side="side"
-			class="w-(--sidebar-width) bg-sidebar p-0 text-sidebar-foreground [&>button]:hidden"
+			class="relative isolate w-(--sidebar-width) overflow-hidden bg-sidebar p-0 text-sidebar-foreground [&>button]:hidden"
 			:style="{
                 '--sidebar-width': SIDEBAR_WIDTH_MOBILE,
             }"
 		>
-			<div class="flex h-full w-full flex-col">
+			<div
+				v-if="side === 'left'"
+				aria-hidden="true"
+				class="pointer-events-none absolute inset-0 z-0 opacity-[0.18]"
+			>
+				<div
+					class="absolute inset-0"
+					:style="{
+						backgroundImage:
+							'repeating-radial-gradient(circle at 50% 40%, rgba(255,255,255,0.28) 0px, rgba(255,255,255,0.28) 1px, transparent 1px, transparent 20px)'
+					}"
+				/>
+			</div>
+			<div class="relative z-10 flex h-full w-full flex-col">
 				<slot />
 			</div>
 		</SheetContent>
@@ -90,9 +118,24 @@ const { isMobile, state, openMobile, setOpenMobile } = useSidebar();
 		>
 			<div
 				data-sidebar="sidebar"
-				class="flex h-full w-full flex-col bg-sidebar group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:shadow-sm"
+				class="relative isolate flex h-full w-full flex-col overflow-hidden bg-sidebar group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:shadow-sm"
 			>
-				<slot />
+				<div
+					v-if="side === 'left'"
+					aria-hidden="true"
+					class="pointer-events-none absolute inset-0 z-0 opacity-[0.18]"
+				>
+					<div
+						class="absolute inset-0"
+						:style="{
+							backgroundImage:
+								'repeating-radial-gradient(circle at 50% 40%, rgba(255,255,255,0.28) 0px, rgba(255,255,255,0.28) 1px, transparent 1px, transparent 20px)'
+						}"
+					/>
+				</div>
+				<div class="relative z-10 flex h-full flex-col">
+					<slot />
+				</div>
 			</div>
 		</div>
 	</div>

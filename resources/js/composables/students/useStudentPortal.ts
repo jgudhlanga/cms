@@ -16,10 +16,11 @@ import { useUpdateProgramFormStore } from '@/store/portal/useUpdateProgramFormSt
 import { Step } from '@/types/forms';
 import { Student } from '@/types/students';
 import { CustomTab, SelectOption } from '@/types/utils';
-import { InertiaForm } from '@inertiajs/vue3';
+import { InertiaForm, router } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 import { h, ref } from 'vue';
 import { ZodObject } from 'zod';
+import { Level } from '@/types/institution';
 
 export function useStudentPortal() {
     const steps: Step[] = [
@@ -265,6 +266,13 @@ export function useStudentPortal() {
         return null;
     };
 
+    const selectLevel = (levelId: string) => {
+        router.post(
+            route('portal.application.select-level', {
+                level_id: levelId,
+            }),
+        );
+    };
     return {
         steps,
         applicationFormSchema,
@@ -280,5 +288,6 @@ export function useStudentPortal() {
         updateApplication,
         programFormSchema,
         addProgram,
+        selectLevel,
     };
 }

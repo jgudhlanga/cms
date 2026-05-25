@@ -2,50 +2,49 @@
 
 namespace App\Policies\Settings;
 
-use App\Enums\Acl\PermissionEnum;
 use App\Models\Users\User;
 
 class InstitutionSetupPolicy
 {
     public function viewInstitutionSettings(User $user): bool
     {
-        return $user->can(PermissionEnum::ROOT_MANAGE) || $user->can(PermissionEnum::VIEW_INSTITUTION_SETTINGS);
+        return $user->can('root:manage') || $user->can('view:institution-settings');
 
     }
 
     public function createInstitutionSettings(User $user): bool
     {
-        return $user->can(PermissionEnum::ROOT_MANAGE) || $user->can(PermissionEnum::CREATE_INSTITUTION_SETTINGS);
+        return $user->can('root:manage') || $user->can('create:institution-settings');
     }
 
     public function updateInstitutionSettings(User $user): bool
     {
-        return $user->can(PermissionEnum::ROOT_MANAGE) || $user->can(PermissionEnum::UPDATE_INSTITUTION_SETTINGS);
+        return $user->can('root:manage') || $user->can('update:institution-settings');
     }
 
     public function deleteInstitutionSettings(User $user): bool
     {
 
-        return $user->can(PermissionEnum::ROOT_MANAGE) || $user->can(PermissionEnum::DELETE_INSTITUTION_SETTINGS);
+        return $user->can('root:manage') || $user->can('delete:institution-settings');
     }
 
     public function restoreInstitutionSettings(User $user): bool
     {
-        return $user->can(PermissionEnum::ROOT_MANAGE) || $user->can(PermissionEnum::RESTORE_INSTITUTION_SETTINGS);
+        return $user->can('root:manage') || $user->can('restore:institution-settings');
     }
 
     public function forceDeleteInstitutionSettings(User $user): bool
     {
-        return $user->can(PermissionEnum::ROOT_MANAGE) || $user->can(PermissionEnum::FORCE_DELETE_INSTITUTION_SETTINGS);
+        return $user->can('root:manage') || $user->can('forceDelete:institution-settings');
     }
 
     public function importInstitutionSettings(User $user): bool
     {
-        return $user->can(PermissionEnum::ROOT_MANAGE) || $user->can(PermissionEnum::IMPORT_INSTITUTION_SETTINGS);
+        return $user->can('root:manage') || $user->can('import:institution-settings');
     }
 
     public function exportInstitutionSettings(User $user): bool
     {
-        return $user->can(PermissionEnum::ROOT_MANAGE) || $user->can(PermissionEnum::EXPORT_INSTITUTION_SETTINGS);
+        return $user->can('root:manage') || $user->can('export:institution-settings');
     }
 }

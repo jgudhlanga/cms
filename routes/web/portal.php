@@ -10,6 +10,8 @@ Route::prefix('portal')->group(function () {
     Route::get('{user}/confirmation', [PortalController::class, 'registrationConfirmation'])->name('portal.confirmation');
     Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('application', [PortalController::class, 'storeApplication'])->name('portal.store-application');
+        Route::get('application/level', [PortalController::class, 'levelOptions'])->name('portal.application.level-options');
+        Route::post('application/select-level', [PortalController::class, 'selectLevel'])->name('portal.application.select-level');
     });
     Route::middleware(['auth', 'verified', 'redirect.student'])->group(function () {
         Route::get('application/fee-payment', [PortalController::class, 'registrationFeePaymentOptions'])->name('portal.application.fee-payment');

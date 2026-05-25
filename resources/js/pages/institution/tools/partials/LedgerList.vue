@@ -4,11 +4,11 @@ import { useUtils } from '@/composables/core/useUtils';
 import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
 import { errorAlert, openModal } from '@/lib/alerts';
-import HttpService from '@/services/http.service';
-import { PaymentCheckResponse } from '@/types/tools';
-import { Ledger } from '@/types/integrations';
-import { ref } from 'vue';
 import { APP_MODULE_KEYS } from '@/lib/constants';
+import HttpService from '@/services/http.service';
+import { Ledger } from '@/types/integrations';
+import { PaymentCheckResponse } from '@/types/tools';
+import { ref } from 'vue';
 
 interface Props {
     ledgers: Ledger[];
@@ -44,7 +44,6 @@ const checkStatus = async (orderReference: string) => {
 const disableWhenIsPaid = (status: string) => {
     return status.toLowerCase() === 'paid';
 };
-
 </script>
 
 <template>
@@ -52,10 +51,10 @@ const disableWhenIsPaid = (status: string) => {
         <thead class="j-thead">
             <tr class="j-th">
                 <th class="j-th text-left">#</th>
-                <th class="j-th text-left">Date Created</th>
-                <th class="j-th text-left">Order Reference</th>
-                <th class="j-th text-left">Payment Reference</th>
-                <th class="j-th text-left">Payment Status</th>
+                <th class="j-th text-left">{{ $t('trans.ui_date_created') }}</th>
+                <th class="j-th text-left">{{ $t('trans.ui_order_reference') }}</th>
+                <th class="j-th text-left">{{ $t('trans.ui_payment_reference') }}</th>
+                <th class="j-th text-left">{{ $t('trans.ui_payment_status') }}</th>
                 <th class="j-th text-center">{{ $tChoice('trans.action', 2) }}</th>
             </tr>
         </thead>
@@ -84,7 +83,7 @@ const disableWhenIsPaid = (status: string) => {
                         classes="rounded-full"
                         :variant="ColorVariant.success"
                         @click="checkStatus(String(ledger.attributes.systemReference))"
-                        title="Check Status"
+                        :title="$t('trans.ui_check_status')"
                     />
                 </td>
             </tr>

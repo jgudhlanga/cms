@@ -2,34 +2,17 @@
 
 namespace App\Helpers;
 
-use App\Enums\Acl\PermissionEnum;
 use App\Enums\Institution\DepartmentEnum;
 use App\Enums\Institution\LevelEnum;
 use App\Enums\Institution\ModeOfStudyEnum;
 use App\Enums\Shared\DocumentTypeEnum;
 use App\Enums\Shared\FeeTypeEnum;
 use App\Enums\Shared\IdTypeEnum;
-use App\Enums\Shared\StatusEnum;
-use App\Enums\Shared\TenantEnum;
 use App\Models\Institution\DocumentTemplate;
 use App\Models\Institution\FeeStructure;
-use App\Models\Institution\InstitutionDepartment;
-use App\Models\Institution\IntakePeriod;
-use App\Models\Institution\ModeOfStudy;
-use App\Models\Institution\Staff;
 use App\Models\Shared\DocumentType;
 use App\Models\Shared\FeeType;
-use App\Models\Shared\Status;
-use App\Models\Students\Student;
 use App\Models\Students\StudentProgram;
-use App\Models\Tenants\Tenant;
-use Carbon\Carbon;
-use Illuminate\Contracts\Encryption\DecryptException;
-use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Crypt;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 
 class DocumentHelper
 {
@@ -45,7 +28,7 @@ class DocumentHelper
                 'modeOfStudy',
             ])
             ->where('id', $studentProgram->id)
-            ->whereHas('classList', fn($q) => $q->where('type', 'verified'))->firstOrFail();
+            ->whereHas('classList', fn ($q) => $q->whereIn('type', ['verified', 'final']))->firstOrFail();
         $student = $studentProgram->student;
         $user = $student->user;
 
@@ -74,9 +57,8 @@ class DocumentHelper
 
         $tuition = $feeStructure->local_fca_amount ?? 0;
 
-
         // Document type
-        $documentType = DocumentType::whereName(DocumentTypeEnum::OFFER_LETTER->name())->firstOrFail();
+        $documentType = DocumentType::where('name', DocumentTypeEnum::OFFER_LETTER->name())->firstOrFail();
 
         // USD-only rules
         $usdOnlyLevels = [
@@ -86,29 +68,32 @@ class DocumentHelper
             LevelEnum::ABMA_LEVEL_6,
         ];
 
-        $sdpLevels = [LevelEnum::SDP,];
+        $sdpLevels = [LevelEnum::SDP];
 
         $usdOnlyModes = [
             ModeOfStudyEnum::BLOCK_RELEASE,
         ];
 
         $isUsdOnly =
-            in_array($level, array_map(fn($l) => $l->name(), $usdOnlyLevels), true)
-            || in_array($modeOfStudy, array_map(fn($m) => $m->label(), $usdOnlyModes), true);
+            in_array($level, array_map(fn ($l) => $l->name(), $usdOnlyLevels), true)
+            || in_array($modeOfStudy, array_map(fn ($m) => $m->label(), $usdOnlyModes), true);
 
-        $isSDP = in_array($level, array_map(fn($l) => $l->name(), $sdpLevels), true);
+        $isSDP = in_array($level, array_map(fn ($l) => $l->name(), $sdpLevels), true);
         if ($isSDP && strtolower($department) === strtolower(DepartmentEnum::MECHANICAL_AND_PRODUCTION_ENGINEERING->label())) {
             $tuition = '375.00';
+            if(strtolower($modeOfStudy) === strtolower(ModeOfStudyEnum::OJET->label())) {
+                $tuition = '237.00';
+            }
         }
         // Base query
         $query = DocumentTemplate::query()
-            //->where('intake_period_id', $studentProgram->intakePeriod->id ?? null)
+            // ->where('intake_period_id', $studentProgram->intakePeriod->id ?? null)
             ->where('document_type_id', $documentType->id);
 
         // Apply USD-only constraint if needed
         $documentTemplate = $query
-            ->when($isUsdOnly, fn($q) => $q->whereRaw('LOWER(name) LIKE ?', ['%usd only%']))
-            ->when($isSDP, fn($q) => $q->whereRaw('LOWER(name) LIKE ?', ['%sdp%']))
+            ->when($isUsdOnly, fn ($q) => $q->whereRaw('LOWER(name) LIKE ?', ['%usd only%']))
+            ->when($isSDP, fn ($q) => $q->whereRaw('LOWER(name) LIKE ?', ['%sdp%']))
             ->firstOrFail();
 
         return [
@@ -121,7 +106,7 @@ class DocumentHelper
             $level,
             $course,
             $modeOfStudy,
-            $tuition
+            $tuition,
         ];
     }
 }

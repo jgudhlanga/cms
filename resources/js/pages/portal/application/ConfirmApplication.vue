@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import StudentPageHeader from '@/components/shared/students/StudentPageHeader.vue';
-import ContactDetails from '@/components/students/view/ContactDetails.vue';
-import NextOfKinDetails from '@/components/students/view/NextOfKinDetails.vue';
-import PersonalDetails from '@/components/students/view/PersonalDetails.vue';
 import ProgramDetails from '@/components/students/view/ProgramDetails.vue';
+import ViewContactDetails from '@/components/students/view/ViewContactDetails.vue';
+import ViewNextOfKinDetails from '@/components/students/view/ViewNextOfKinDetails.vue';
+import ViewPersonalDetails from '@/components/students/view/ViewPersonalDetails.vue';
 import { useUtils } from '@/composables/core/useUtils';
 import { useStudentPortal } from '@/composables/students/useStudentPortal';
 import { useCreateApplicationFormStore } from '@/store/portal/useCreateApplicationFormStore';
@@ -18,14 +18,13 @@ import { useApplicationFormHelper } from '@/composables/students/useApplicationF
 import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
 import { TypeVariant } from '@/enums/type-variants';
-import ToastService from '@/services/toast.service';
 import { ContactDetailView, NextOfKinDetailView, PersonalDetailView, ProgramDetailView } from '@/types/students';
 import { useForm } from '@inertiajs/vue3';
 import { storeToRefs } from 'pinia';
 import { onMounted } from 'vue';
 
 // Composable
-const { saveApplication } = useStudentPortal();
+const { saveApplication, selectLevel } = useStudentPortal();
 const { isItTrue, navigateTo } = useUtils();
 const { updateCreateForm } = useApplicationFormHelper();
 
@@ -159,26 +158,25 @@ const form = useForm<CreateApplicationParams>({
 });
 
 const save = async () => {
+    // selectLevel(String(form.level_id));
     updateCreateForm(form);
     saveApplication(form);
 };
 onMounted(() => {
-    ToastService.warning('Sorry, The registration has ended for now. Contact the administration for more info.');
+    // selectLevel(String(form.level_id));
+    /*ToastService.warning('Sorry, The registration has ended for now. Contact the administration for more info.');
     navigateTo(route('login'));
-    return;
+    return;*/
 });
 </script>
 <template>
     <StudentPageHeader />
     <div class="mt-20 flex w-full flex-col bg-white px-5 md:p-0">
         <div class="flex w-full flex-col space-y-6 md:mx-auto md:w-7/8">
-            <BaseAlert
-                description="Before submitting, carefully review your application details to ensure everything is accurate and up to date. Check your personal information, contact details, and any required details. Once you confirm the information is correct, you can proceed to submit your application."
-                :type="TypeVariant.success"
-            />
-            <PersonalDetails :personal="personal" :title="$t('trans.personal_details')" />
-            <ContactDetails :contacts="contacts" :title="$t('trans.contact_details')" />
-            <NextOfKinDetails :next-of-kin="nextOfKin" :title="$t('trans.next_of_kin')" />
+            <BaseAlert :description="$t('trans.ui_before_submitting_carefully_review_your_application_details')" :type="TypeVariant.success" />
+            <ViewPersonalDetails :personal="personal" :title="$t('trans.personal_details')" />
+            <ViewContactDetails :contacts="contacts" :title="$t('trans.contact_details')" />
+            <ViewNextOfKinDetails :next-of-kin="nextOfKin" :title="$t('trans.next_of_kin')" />
             <ProgramDetails :program="programDetails" :title="$tChoice('trans.program', 1)">
                 <div class="mt-5 flex flex-col" v-if="levelRequirements">
                     <template v-if="isItTrue(levelRequirements.attributes.isOLevelRequired)">
@@ -193,9 +191,6 @@ onMounted(() => {
                 </div>
             </ProgramDetails>
             <div class="my-5 flex flex-col justify-center space-y-2 space-x-3 md:flex-row">
-                <BaseButton type="button" @click="save" class="w-full md:w-[200px]" :size="ButtonSize.xl">
-                    {{ $t('trans.submit') }}
-                </BaseButton>
                 <BaseButton
                     @click="navigateTo(route('portal.application.create'))"
                     type="button"
@@ -204,6 +199,9 @@ onMounted(() => {
                     :size="ButtonSize.xl"
                     >{{ $t('trans.edit') }}</BaseButton
                 >
+                <BaseButton type="button" @click="save" class="w-full md:w-50" :size="ButtonSize.xl">
+                    {{ $t('trans.submit') }}
+                </BaseButton>
             </div>
         </div>
     </div>

@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import ContactDetails from '@/components/students/view/ContactDetails.vue';
-import NextOfKinDetails from '@/components/students/view/NextOfKinDetails.vue';
-import PersonalDetails from '@/components/students/view/PersonalDetails.vue';
+import ViewContactDetails from '@/components/students/view/ViewContactDetails.vue';
+import ViewNextOfKinDetails from '@/components/students/view/ViewNextOfKinDetails.vue';
+import ViewPersonalDetails from '@/components/students/view/ViewPersonalDetails.vue';
 import ProgramDetails from '@/components/students/view/ProgramDetails.vue';
 import { useUtils } from '@/composables/core/useUtils';
 import LevelRequirements from '@/components/students/update/LevelRequirements.vue';
@@ -88,9 +88,9 @@ const programDetails: ProgramDetailView = {
 </script>
 
 <template>
-    <PersonalDetails :personal="personal" :title="$t('trans.personal_details')" />
-    <ContactDetails :contacts="contacts" :title="$t('trans.contact_details')" />
-    <NextOfKinDetails :next-of-kin="nextOfKin" :title="$t('trans.next_of_kin')" />
+    <ViewPersonalDetails :personal="personal" :title="$t('trans.personal_details')" />
+    <ViewContactDetails :contacts="contacts" :title="$t('trans.contact_details')" />
+    <ViewNextOfKinDetails :next-of-kin="nextOfKin" :title="$t('trans.next_of_kin')" />
     <ProgramDetails :program="programDetails" :title="$tChoice('trans.program', 1)">
         <div class="mt-5 flex flex-col" v-if="levelRequirements">
             <template v-if="isItTrue(levelRequirements.attributes.isOLevelRequired)">

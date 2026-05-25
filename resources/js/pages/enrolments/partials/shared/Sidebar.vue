@@ -33,7 +33,7 @@ const getRouteName = (type: ClassListType, applicationId: string) => {
 
 <template>
     <div class="flex flex-col space-y-3" v-if="otherApplications && otherApplications.length > 0">
-        <HeadingSmall title="Other applications" description="Applications in other departments" />
+        <HeadingSmall :title="$t('trans.ui_other_applications')" :description="$t('trans.ui_applications_in_other_departments')" />
         <div class="flex flex-col space-y-2">
             <div
                 v-for="application in otherApplications"
@@ -55,7 +55,7 @@ const getRouteName = (type: ClassListType, applicationId: string) => {
         </div>
     </div>
     <div class="flex flex-col space-y-3" v-if="nextTop && nextTop.length > 0">
-        <HeadingSmall title="Next 10" :description="getDescription(type as ClassListType)" />
+        <HeadingSmall :title="$t('trans.ui_next_5')" :description="getDescription(type as ClassListType)" />
         <div class="flex flex-col space-y-2">
             <TextLink
                 classes="bg-gray-200 px-3 py-2 rounded-md text-xs uppercase text-accent-foreground border-r-2 border-black"

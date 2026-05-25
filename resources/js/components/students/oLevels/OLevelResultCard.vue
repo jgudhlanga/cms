@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { IconButton } from '@/components/core/button';
 import GridLabelValue from '@/components/core/util/GridLabelValue.vue';
+import { useUtils } from '@/composables/core/useUtils';
 import { useOLevelResults } from '@/composables/students/useOLevelResults';
 import { ColorVariant } from '@/enums/colors';
 import { IconName } from '@/enums/icons';
 import { OLevelSubjectResult } from '@/types/enrolments';
 import { computed, defineEmits } from 'vue';
-import { useUtils } from '@/composables/core/useUtils';
 
 interface Props {
     result: OLevelSubjectResult;
@@ -52,9 +52,9 @@ const verificationMode = isItTrue(import.meta.env.VITE_VERIFICATION_MODE);
         </div>
         <div class="p-4">
             <div class="grid grid-cols-3 gap-4 text-sm">
-                <GridLabelValue label="Year" :value="result?.attributes?.examYear" />
-                <GridLabelValue label="Sitting" :value="sittingLabel" />
-                <GridLabelValue label="Grade" :value="result.attributes?.grade" />
+                <GridLabelValue :label="$tChoice('trans.year', 1)" :value="result?.attributes?.examYear" />
+                <GridLabelValue :label="$tChoice('trans.sitting', 1)" :value="sittingLabel" />
+                <GridLabelValue :label="$tChoice('trans.grade', 1)" :value="result.attributes?.grade" />
             </div>
         </div>
     </div>

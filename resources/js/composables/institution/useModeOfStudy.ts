@@ -89,9 +89,14 @@ export const useModeOfStudy = () => {
         isLoading.value = false;
         modesOfStudy.value = data.value;
     };
-    const listCourseModesOfStudy = async (departmentCourseId: string) => {
+    const listCourseModesOfStudy = async (departmentCourseId: string, departmentLevelId: string) => {
         isLoading.value = true;
-        courseModesOfStudy.value = await HttpService.get(route('v1.modes-of-study.course-modes', departmentCourseId));
+        courseModesOfStudy.value = await HttpService.get(
+            route('v1.modes-of-study.course-modes', {
+                department_course: departmentCourseId,
+                department_level: departmentLevelId,
+            }),
+        );
         isLoading.value = false;
     };
 

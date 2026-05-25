@@ -9,4 +9,8 @@ Route::prefix('v1/students')->middleware('auth:sanctum')->group(function () {
     Route::get('sponsors/{student}', [StudentController::class, 'sponsors'])->name('v1.students.sponsors');
     Route::get('next-of-kins/{student}', [StudentController::class, 'nextOfKin'])->name('v1.students.next-of-kins');
     Route::get('programs/{student}', [StudentController::class, 'programs'])->name('v1.students.programs');
+    Route::get('{student}/student-enrolements', [StudentController::class, 'studentEnrolements'])->name('v1.students.student-enrolements');
+});
+Route::middleware('auth:sanctum')->group(function () {
+    Route::apiResource('students', StudentController::class)->names('v1.students');
 });
