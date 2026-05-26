@@ -243,11 +243,9 @@ class Helper
 
         return "{$prefix}-{$randomSegment}";
     }
-
-    <?php
+}
 
 if (! function_exists('isValidZimbabweanId')) {
-
     function isValidZimbabweanId(?string $idNumber): bool
     {
         if (! $idNumber) {
@@ -261,5 +259,4 @@ if (! function_exists('isValidZimbabweanId')) {
             $idNumber
         ) === 1;
     }
-}
 }

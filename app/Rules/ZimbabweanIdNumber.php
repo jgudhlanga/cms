@@ -28,7 +28,7 @@ class ZimbabweanIdNumber implements ValidationRule
         );
 
         if (! $isValid) {
-            $fail('The :attribute format is invalid. Example: 44-088821F44');
+            $fail('The :attribute format is invalid. Example: 63-1234567N63');
         }
     }
 }

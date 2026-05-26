@@ -1,4 +1,4 @@
-import { CreateApplicationUserParams } from '@/types/portal';
+import { CreateApplicationUserParams, RegistrationPath } from '@/types/portal';
 import { defineStore } from 'pinia';
 
 export const useCreateUserFormStore = defineStore('portal-application-user-form', {
@@ -8,8 +8,13 @@ export const useCreateUserFormStore = defineStore('portal-application-user-form'
             first_name: '',
             last_name: '',
             password: '',
-            password_confirmation: ''
+            password_confirmation: '',
+            id_number: '',
+            passport_number: '',
+            registration_path: 'zimbabwean',
         };
     },
-    persist: true
+    persist: true,
 });
+
+export type { RegistrationPath };

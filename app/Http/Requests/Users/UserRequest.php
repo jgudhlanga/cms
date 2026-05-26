@@ -2,15 +2,13 @@
 
 namespace App\Http\Requests\Users;
 
-
+use App\Rules\ZimbabweanIdNumber;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
-use Illuminate\Contracts\Validation\Validator;
 
 class UserRequest extends FormRequest
 {
-
     public function authorize(): bool
     {
         return true;
@@ -23,23 +21,46 @@ class UserRequest extends FormRequest
                 'role_ids' => json_decode($this->role_ids, true),
             ]);
         }
+
+        if ($this->filled('id_number')) {
+            $this->merge([
+                'id_number' => strtoupper(trim((string) $this->id_number)),
+            ]);
+        }
+
+        if ($this->filled('passport_number')) {
+            $this->merge([
+                'passport_number' => strtoupper(trim((string) $this->passport_number)),
+            ]);
+        }
     }
 
     public function rules(): array
     {
+        $path = $this->string('registration_path')->toString();
+
         return [
+            'registration_path' => ['required', 'string', Rule::in(['zimbabwean', 'international'])],
             'first_name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
+            'password' => ['required', 'confirmed', Password::defaults()],
+            'id_number' => [
+                Rule::requiredIf($path === 'zimbabwean'),
+                'nullable',
+                'string',
+                'max:20',
+                new ZimbabweanIdNumber,
+                Rule::unique('students', 'id_number'),
+            ],
+            'passport_number' => [
+                Rule::requiredIf($path === 'international'),
+                'nullable',
+                'string',
+                'min:5',
+                'max:50',
+                Rule::unique('students', 'passport_number'),
+            ],
         ];
-    }
-
-    public function failedValidation(Validator $validator)
-    {
-        throw new HttpResponseException(response()->json([
-            'message' => 'Validation failed',
-            'errors' => $validator->errors(),
-            'input' => $this->all(),
-        ], 422));
     }
 }

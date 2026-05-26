@@ -18,6 +18,7 @@ class ValidationController extends Controller
         'staff_employee_number' => [Staff::class, 'employee_number'],
         'student_national_id' => [Student::class, 'id_number'],
         'student_passport_number' => [Student::class, 'passport_number'],
+        'student_number' => [Student::class, 'student_number'],
     ];
 
     public function check(Request $request)
@@ -26,9 +27,9 @@ class ValidationController extends Controller
         $value = $request->query('value');
         $currentId = $request->query('current_id');
 
-        if (!isset($this->validationMap[$key]) || empty($value)) {
+        if (! isset($this->validationMap[$key]) || empty($value)) {
             return response()->json([
-                'error' => 'Invalid key or value missing.'
+                'error' => 'Invalid key or value missing.',
             ], 422);
         }
 
@@ -36,13 +37,13 @@ class ValidationController extends Controller
 
         $query = $model::where($column, $value);
 
-        if (!empty($currentId)) {
+        if (! empty($currentId)) {
             $keyName = (new $model)->getKeyName(); // usually 'id'
             $query->where($keyName, '!=', $currentId);
         }
 
         $exists = $query->exists();
 
-        return response()->json(['available' => !$exists]);
+        return response()->json(['available' => ! $exists]);
     }
 }

@@ -11,6 +11,7 @@ import { clearFormErrors } from '@/lib/forms';
 import ToastService from '@/services/toast.service';
 import { Login } from '@/types/auth';
 import { Head, useForm } from '@inertiajs/vue3';
+import { onMounted } from 'vue';
 
 defineProps<{
     status?: string;
@@ -18,7 +19,7 @@ defineProps<{
 }>();
 
 const { login } = useAuth();
-const { navigateTo, isItTrue } = useUtils();
+const { navigateTo, isItTrue, getQueryParams } = useUtils();
 const form = useForm<Login>({
     email: '',
     password: '',
@@ -26,6 +27,13 @@ const form = useForm<Login>({
 });
 
 const maintenanceMode = isItTrue(import.meta.env.VITE_MAINTENANCE_MODE);
+
+onMounted(() => {
+    const params = getQueryParams();
+    if (params.email) {
+        form.email = params.email;
+    }
+});
 
 const loginNavigateTo = () => {
     if (maintenanceMode) {
