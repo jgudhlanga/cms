@@ -5,6 +5,7 @@ import { TextFieldType } from '@/enums/inputs';
 
 defineProps<{
     firstName: string;
+    middleName: string;
     lastName: string;
     email: string;
     password: string;
@@ -16,6 +17,7 @@ defineProps<{
 
 const emit = defineEmits<{
     (e: 'update:firstName', value: string): void;
+    (e: 'update:middleName', value: string): void;
     (e: 'update:lastName', value: string): void;
     (e: 'update:email', value: string): void;
     (e: 'update:password', value: string): void;
@@ -29,7 +31,7 @@ const emit = defineEmits<{
 <template>
     <form class="flex flex-col space-y-3" @submit.prevent="emit('submit')">
         <div class="mb-2 flex items-center justify-between">
-            <h2 class="text-sm font-semibold uppercase text-gray-700">
+            <h2 class="text-sm font-semibold uppercase text-foreground">
                 {{ $t('trans.enrollment_step_account') }}
             </h2>
             <button type="button" class="text-primary text-xs font-medium underline" @click="emit('back')">
@@ -47,6 +49,17 @@ const emit = defineEmits<{
             :error="errors.first_name"
             @update:model-value="emit('update:firstName', $event)"
             @input="emit('clear-error', 'first_name')"
+        />
+        <BaseInput
+            input-id="middle_name"
+            :model-value="middleName"
+            :label="$t('trans.middle_name')"
+            :placeholder="$t('trans.ui_enter_middlename')"
+            :vertical-layout="false"
+            :label-uppercase="true"
+            :error="errors.middle_name"
+            @update:model-value="emit('update:middleName', $event)"
+            @input="emit('clear-error', 'middle_name')"
         />
         <BaseInput
             input-id="last_name"
@@ -94,7 +107,7 @@ const emit = defineEmits<{
             @update:model-value="emit('update:passwordConfirmation', $event)"
             @input="emit('clear-error', 'password_confirmation')"
         />
-        <p v-if="!passwordMatches" class="text-sm text-red-600 lowercase">
+        <p v-if="!passwordMatches" class="text-sm text-red-600 lowercase dark:text-red-400">
             {{ $t('trans.ui_password_and_confirm_password_do_not_match') }}
         </p>
 

@@ -27,7 +27,8 @@ const { navigateTo, isItTrue, formatZimIdNumber, isZimbabweanNationalId } = useU
 const { checkNationalId, checkPassport, lookupReturning } = useEnrollmentRegistration();
 
 const store = useCreateUserFormStore();
-const { email, first_name, last_name, password, password_confirmation, id_number, passport_number, registration_path } = storeToRefs(store);
+const { email, first_name, middle_name, last_name, password, password_confirmation, id_number, passport_number, registration_path } =
+    storeToRefs(store);
 
 const activePath = ref<EnrollmentPath>('zimbabwean');
 const step = ref<Step>('identity');
@@ -42,6 +43,7 @@ const form = useForm<CreateApplicationUserParams & { registration_path: Registra
     password_confirmation: '',
     email: '',
     first_name: '',
+    middle_name: '',
     last_name: '',
     password: '',
     id_number: '',
@@ -162,6 +164,7 @@ const updateForm = () => {
     form.password_confirmation = password_confirmation.value;
     form.email = email.value;
     form.first_name = first_name.value;
+    form.middle_name = middle_name.value ?? '';
     form.last_name = last_name.value ?? '';
     form.password = password.value;
     form.id_number = id_number.value ?? '';
@@ -192,7 +195,7 @@ const clearFormError = (field: string) => {
 
 <template>
     <Head :title="$t('trans.application_form')" />
-    <div class="min-h-svh bg-gray-50">
+    <div class="min-h-svh bg-background">
         <ComingSoonAnimated v-if="maintenanceMode" :title="$t('trans.ui_sorry')" message="Enrolment has been closed" />
         <div v-else class="flex min-h-svh flex-col lg:flex-row">
             <div class="flex w-full flex-1 flex-col p-4 sm:p-6 lg:w-[62%] lg:min-w-0 lg:p-10 xl:w-[65%] xl:p-12 2xl:w-[68%]">
@@ -202,7 +205,7 @@ const clearFormError = (field: string) => {
 
                     <RegistrationPathSelector :active-path="activePath" :path-options="pathOptions" @switch-path="switchPath" />
 
-                    <div class="rounded-2xl bg-white p-5 shadow-md sm:p-8 lg:p-10">
+                    <div class="rounded-2xl border border-border bg-card p-5 text-card-foreground shadow-md dark:shadow-sm sm:p-8 lg:p-10">
                         <RegistrationIdentityStep
                             v-if="showIdentityStep"
                             :active-path="activePath"
@@ -228,6 +231,7 @@ const clearFormError = (field: string) => {
                         <RegistrationAccountForm
                             v-else
                             :first-name="first_name ?? ''"
+                            :middle-name="middle_name ?? ''"
                             :last-name="last_name ?? ''"
                             :email="email"
                             :password="password"
@@ -236,6 +240,7 @@ const clearFormError = (field: string) => {
                             :errors="form.errors"
                             :password-matches="passwordMatches"
                             @update:first-name="first_name = $event"
+                            @update:middle-name="middle_name = $event"
                             @update:last-name="last_name = $event"
                             @update:email="email = $event"
                             @update:password="password = $event"
@@ -245,7 +250,7 @@ const clearFormError = (field: string) => {
                             @submit="submitForm"
                         />
 
-                        <div class="mt-4 border-t border-gray-100 pt-4">
+                        <div class="mt-4 border-t border-border pt-4">
                             <BaseButton
                                 class="w-full"
                                 :variant="ColorVariant.primary_outline"

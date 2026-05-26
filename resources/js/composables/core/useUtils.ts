@@ -6,6 +6,7 @@ import { router, usePage } from '@inertiajs/vue3';
 import { trans } from 'laravel-vue-i18n';
 import moment from 'moment';
 import { v4 as uuidv4 } from 'uuid';
+import { isValidZimbabweanIdNumber } from '@/lib/zimbabweanId';
 import { h } from 'vue';
 
 export function useUtils() {
@@ -147,10 +148,7 @@ export function useUtils() {
         return idType.toLowerCase() == 'zimbabwean national id';
     };
 
-    const isZimbabweanNationalId = (idNumber: string): boolean => {
-        const zimIdRegex = /^\d{2}-\d{5,7}[A-Za-z]\d{2}$/;
-        return zimIdRegex.test(idNumber);
-    };
+    const isZimbabweanNationalId = (idNumber: string): boolean => isValidZimbabweanIdNumber(idNumber);
 
     const generateRandomCode = (prefix: string): string => {
         return `${prefix}-${uuidv4().replace(/-/g, '').substring(0, 8).toUpperCase()}`;

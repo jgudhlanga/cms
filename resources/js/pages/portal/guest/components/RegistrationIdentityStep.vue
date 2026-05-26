@@ -37,7 +37,7 @@ const emit = defineEmits<{
 
 <template>
     <div class="flex flex-col space-y-4">
-        <h2 class="text-sm font-semibold uppercase text-gray-700">
+        <h2 class="text-sm font-semibold uppercase text-foreground">
             {{ $t('trans.enrollment_step_identity') }}
         </h2>
 
@@ -49,7 +49,7 @@ const emit = defineEmits<{
                     :class="
                         returningLookupType === 'id_number'
                             ? 'border-primary bg-primary/5 text-primary'
-                            : 'border-gray-200 text-gray-600'
+                            : 'border-border text-muted-foreground'
                     "
                     @click="returningLookupType = 'id_number'"
                 >
@@ -61,7 +61,7 @@ const emit = defineEmits<{
                     :class="
                         returningLookupType === 'student_number'
                             ? 'border-primary bg-primary/5 text-primary'
-                            : 'border-gray-200 text-gray-600'
+                            : 'border-border text-muted-foreground'
                     "
                     @click="returningLookupType = 'student_number'"
                 >
@@ -125,7 +125,7 @@ const emit = defineEmits<{
         />
         <div
             v-if="existingRecordBlocked && duplicateResult?.maskedName"
-            class="rounded-lg border border-red-100 bg-red-50 p-3 text-sm text-red-800"
+            class="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-900 dark:border-red-900/50 dark:bg-red-950/50 dark:text-red-100"
         >
             <p>
                 <span class="font-medium">{{ $t('trans.enrollment_masked_name') }}:</span>
@@ -141,7 +141,7 @@ const emit = defineEmits<{
         />
         <div
             v-if="returningRecordFound"
-            class="space-y-2 rounded-lg border border-green-100 bg-green-50 p-3 text-sm text-green-900"
+            class="space-y-2 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-950 dark:border-green-900/50 dark:bg-green-950/45 dark:text-green-100"
         >
             <p v-if="duplicateResult?.maskedName">
                 <span class="font-medium">{{ $t('trans.enrollment_masked_name') }}:</span>
@@ -160,7 +160,7 @@ const emit = defineEmits<{
             :description="$t('trans.enrollment_record_not_found_message')"
         />
 
-        <p v-if="lookupError" class="text-sm text-red-600">{{ lookupError }}</p>
+        <p v-if="lookupError" class="text-sm text-red-600 dark:text-red-400">{{ lookupError }}</p>
 
         <div class="flex flex-col gap-2 pt-2">
             <BaseButton v-if="!returningRecordFound" type="button" class="w-full" :processing="isChecking" @click="emit('continue')">

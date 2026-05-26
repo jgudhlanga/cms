@@ -6,6 +6,7 @@ export type RegistrationPath = 'zimbabwean' | 'international';
 export type CreateApplicationUserParams = {
     email: string;
     first_name: string | null;
+    middle_name?: string | null;
     last_name: string | null;
     password: string;
     password_confirmation: string;

@@ -6,7 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\Institution\Staff;
 use App\Models\Students\Student;
 use App\Models\Users\User;
+use App\Rules\ZimbabweanIdNumber;
+use App\Services\Enrollment\EnrollmentLookupService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 
 class ValidationController extends Controller
 {
@@ -31,6 +34,23 @@ class ValidationController extends Controller
             return response()->json([
                 'error' => 'Invalid key or value missing.',
             ], 422);
+        }
+
+        if ($key === 'student_national_id') {
+            $normalized = EnrollmentLookupService::normalizeNationalId((string) $value);
+            $formatValidator = Validator::make(
+                ['id_number' => $normalized],
+                ['id_number' => [new ZimbabweanIdNumber]],
+            );
+
+            if ($formatValidator->fails()) {
+                return response()->json([
+                    'available' => false,
+                    'error' => $formatValidator->errors()->first('id_number'),
+                ], 422);
+            }
+
+            $value = $normalized;
         }
 
         [$model, $column] = $this->validationMap[$key];

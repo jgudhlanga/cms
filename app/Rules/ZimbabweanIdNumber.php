@@ -4,19 +4,20 @@ namespace App\Rules;
 
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
+use Illuminate\Translation\PotentiallyTranslatedString;
 
 class ZimbabweanIdNumber implements ValidationRule
 {
-    
     /**
      * Run the validation rule.
      *
-     * @param  \Closure(string, ?string=): \Illuminate\Translation\PotentiallyTranslatedString  $fail
+     * @param  Closure(string, ?string=): PotentiallyTranslatedString  $fail
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
         if (! is_string($value)) {
             $fail('The :attribute must be a valid Zimbabwean ID number.');
+
             return;
         }
 
@@ -28,7 +29,7 @@ class ZimbabweanIdNumber implements ValidationRule
         );
 
         if (! $isValid) {
-            $fail('The :attribute format is invalid. Example: 63-1234567N63');
+            $fail(__('trans.enrollment_invalid_national_id'));
         }
     }
 }

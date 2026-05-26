@@ -92,7 +92,7 @@ onMounted(async () => {
 </script>
 <template>
     <StudentPageHeader />
-    <div class="flex h-screen flex-1 items-center bg-gray-50 py-16">
+    <div class="flex h-screen flex-1 items-center bg-background py-16 text-foreground">
         <DataLoadingSpinner v-if="isCheckingPayment" message="checking if you already pay" />
         <div v-else class="flex h-full w-full flex-col justify-around space-y-6 p-6">
             <div class="mx-auto flex flex-col items-center justify-center">

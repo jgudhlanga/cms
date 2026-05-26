@@ -1,3 +1,4 @@
+import { isValidZimbabweanIdNumber } from '@/lib/zimbabweanId';
 import HttpService from '@/services/http.service';
 import { trans } from 'laravel-vue-i18n';
 import { z } from 'zod';
@@ -63,6 +64,17 @@ export const idNumberUniqueSchema = (url: string) =>
         id_number: z
             .string()
             .nonempty(trans('trans.enter_required_field', { field: trans('trans.id_number') }))
+            .refine(
+                (id_number) => {
+                    if (!id_number || id_number.trim() === '') {
+                        return true;
+                    }
+                    return isValidZimbabweanIdNumber(id_number);
+                },
+                {
+                    message: trans('trans.enrollment_invalid_national_id'),
+                },
+            )
             .refine(
                 async (id_number) => {
                     if (!id_number || id_number.trim() === '') {

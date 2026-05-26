@@ -99,7 +99,7 @@
     ::before,
     ::backdrop,
     ::file-selector-button {
-        border-color: var(--color-gray-200, currentcolor);
+        border-color: hsl(var(--border));
     }
 }
 
@@ -144,25 +144,26 @@
     }
 
     .dark {
-        --background: 0 0% 3.9%;
-        --foreground: 0 0% 98%;
-        --card: 0 0% 3.9%;
-        --card-foreground: 0 0% 98%;
-        --popover: 0 0% 3.9%;
-        --popover-foreground: 0 0% 98%;
-        --primary: 0 0% 98%;
-        --primary-foreground: 0 0% 9%;
-        --secondary: 0 0% 14.9%;
-        --secondary-foreground: 0 0% 98%;
-        --muted: 0 0% 6.9%;
-        --muted-foreground: 0 0% 63.9%;
-        --accent: 0 0% 14.9%;
-        --accent-foreground: 0 0% 98%;
+        /* Dark surfaces should feel grey-ish, not near-black. */
+        --background: 220 16% 14%;
+        --foreground: 210 20% 98%;
+        --card: 220 18% 17%;
+        --card-foreground: 210 20% 98%;
+        --popover: 220 16% 16%;
+        --popover-foreground: 210 20% 98%;
+        --primary: 231 91.3% 54.9%;
+        --primary-foreground: 0 0% 98%;
+        --secondary: 220 16% 20%;
+        --secondary-foreground: 210 20% 98%;
+        --muted: 220 16% 18%;
+        --muted-foreground: 215 14% 72%;
+        --accent: 220 16% 20%;
+        --accent-foreground: 210 20% 98%;
         --destructive: 0 84% 60%;
         --destructive-foreground: 0 0% 98%;
-        --border: 0 0% 14.9%;
-        --input: 0 0% 14.9%;
-        --ring: 0 0% 83.1%;
+        --border: 220 13% 30%;
+        --input: 220 13% 26%;
+        --ring: 231 91.3% 54.9%;
         --sidebar-background: 232 73% 15%;
         --sidebar-foreground: 215 16% 65%;
         --sidebar-primary: 173 56% 56%;
@@ -206,6 +207,19 @@
 
     .bg-infinite {
         @apply bg-[url('/assets/images/body-bg.svg')] bg-cover bg-no-repeat;
+    }
+
+    /** Auth confirmation animated background — theme-aware */
+    .auth-infinite-area {
+        background: linear-gradient(to left, #6b7ee5, #2342f5);
+    }
+
+    .dark .auth-infinite-area {
+        background: linear-gradient(to left, #161e50, #2438af);
+    }
+
+    .auth-infinite-dot {
+        background: hsl(var(--primary) / 35%);
     }
 
     .hava-table {
@@ -375,5 +389,6 @@
     }
 
     body {
+        @apply bg-background text-foreground;
     }
 }

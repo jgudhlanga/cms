@@ -1,25 +1,29 @@
 <template>
-    <div class="hidden min-h-svh items-center bg-gray-800 py-10 lg:flex lg:flex-1">
+    <div class="hidden min-h-svh items-center bg-sidebar py-10 text-sidebar-foreground lg:flex lg:flex-1">
         <div class="mx-auto max-w-md space-y-6 p-6 xl:max-w-lg">
             <header class="text-center">
-                <h1 class="text-2xl font-semibold text-white">{{ $t('trans.ui_application_steps') }}</h1>
-                <p class="mt-2 text-gray-300">{{ $t('trans.ui_follow_these_steps_to_complete_your_application') }}</p>
+                <h1 class="text-2xl font-semibold text-sidebar-accent-foreground">
+                    {{ $t('trans.ui_application_steps') }}
+                </h1>
+                <p class="mt-2 text-sidebar-foreground">
+                    {{ $t('trans.ui_follow_these_steps_to_complete_your_application') }}
+                </p>
             </header>
 
             <div class="space-y-4">
                 <div
                     v-for="step in visibleSteps"
                     :key="step.id"
-                    class="rounded-2xl bg-white/5 p-5 shadow"
-                    :class="step.id === highlightedStep ? 'ring-2 ring-primary/60' : ''"
+                    class="rounded-2xl bg-sidebar-accent/20 p-5 shadow backdrop-blur-sm"
+                    :class="step.id === highlightedStep ? 'ring-2 ring-primary' : ''"
                 >
                     <div class="flex items-start gap-4">
-                        <div class="text-primary flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-indigo-100">
+                        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/20 text-primary">
                             <component :is="step.icon" class="h-5 w-5" />
                         </div>
                         <div>
-                            <h2 class="text-base font-medium text-white">{{ step.title }}</h2>
-                            <p class="mt-1 text-sm text-gray-300">{{ step.subtitle }}</p>
+                            <h2 class="text-base font-medium text-sidebar-accent-foreground">{{ step.title }}</h2>
+                            <p class="mt-1 text-sm text-sidebar-foreground">{{ step.subtitle }}</p>
                         </div>
                     </div>
                 </div>

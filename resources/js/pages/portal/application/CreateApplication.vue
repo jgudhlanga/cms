@@ -55,7 +55,7 @@ const requirements = ref<CourseRequirement | DepartmentLevelRequirement | null |
 // Composable
 const { idTypes, listIdTypes } = useIdTypes();
 const { applicationFormSchema } = useStudentPortal();
-const { isNativeCitizen, isItTrue, navigateTo } = useUtils();
+const { isNativeCitizen, isItTrue, navigateTo, formatZimIdNumber } = useUtils();
 const { validateMainSubjects, validateOtherSubjects, updateCreateForm } = useApplicationFormHelper();
 const store = useCreateApplicationFormStore();
 const storeRefs = storeToRefs(store);
@@ -144,7 +144,8 @@ const populateInitialForm = () => {
     }
 
     if (props.registrationPrefill?.id_number && !storeRefs.id_number?.value) {
-        storeRefs.id_number.value = props.registrationPrefill.id_number;
+        const raw = props.registrationPrefill.id_number;
+        storeRefs.id_number.value = formatZimIdNumber(raw) ?? raw;
     }
 
     if (props.registrationPrefill?.passport_number && !storeRefs.passport_number?.value) {
@@ -231,7 +232,7 @@ watch(storeRefs.level, async (newVal) => {
 <template>
     <StudentPageHeader />
     <form @submit.prevent="() => save()">
-        <div class="mt-20 flex w-full flex-col bg-white px-5 md:p-0">
+        <div class="mt-20 flex w-full flex-col bg-background px-5 text-foreground md:p-0">
             <ComingSoonAnimated v-if="maintenanceMode" />
             <div v-else class="flex w-full flex-col space-y-6 md:mx-auto md:w-7/8">
                 <PersonalDetails :form="form" />

@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Users;
 
 use App\Rules\ZimbabweanIdNumber;
+use App\Services\Enrollment\EnrollmentLookupService;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
@@ -24,7 +25,7 @@ class UserRequest extends FormRequest
 
         if ($this->filled('id_number')) {
             $this->merge([
-                'id_number' => strtoupper(trim((string) $this->id_number)),
+                'id_number' => EnrollmentLookupService::normalizeNationalId((string) $this->id_number),
             ]);
         }
 
@@ -42,6 +43,7 @@ class UserRequest extends FormRequest
         return [
             'registration_path' => ['required', 'string', Rule::in(['zimbabwean', 'international'])],
             'first_name' => ['required', 'string', 'max:255'],
+            'middle_name' => ['nullable', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'confirmed', Password::defaults()],

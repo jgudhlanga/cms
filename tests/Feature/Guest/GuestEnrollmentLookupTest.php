@@ -94,6 +94,20 @@ test('guest returning lookup validates national id format', function () {
     $response->assertUnprocessable();
 });
 
+test('portal store rejects invalid national id format', function () {
+    $response = $this->post(route('portal.store'), [
+        'registration_path' => 'zimbabwean',
+        'first_name' => 'New',
+        'last_name' => 'Applicant',
+        'email' => 'invalid.format.'.uniqid().'@example.com',
+        'password' => 'Password1!',
+        'password_confirmation' => 'Password1!',
+        'id_number' => 'not-a-valid-id',
+    ]);
+
+    $response->assertSessionHasErrors('id_number');
+});
+
 test('portal store rejects duplicate national id registration', function () {
     createGuestEnrollmentStudent('44-0111222A44');
 
@@ -116,6 +130,7 @@ test('portal store creates account and redirects to level selection for new zimb
     $response = $this->post(route('portal.store'), [
         'registration_path' => 'zimbabwean',
         'first_name' => 'Fresh',
+        'middle_name' => 'Middle',
         'last_name' => 'Student',
         'email' => $email,
         'password' => 'Password1!',
@@ -126,4 +141,5 @@ test('portal store creates account and redirects to level selection for new zimb
     $response->assertRedirect(route('portal.application.level-options'));
     $this->assertAuthenticated();
     expect(session('registration.id_number'))->toBe('44-0999888B44');
+    expect(auth()->user()?->middle_name)->toBe('Middle');
 });

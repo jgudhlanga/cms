@@ -48,7 +48,9 @@ const loginNavigateTo = () => {
     <Head :title="$t('trans.login')" />
     <BaseAlert v-if="status" :type="TypeVariant.success" :description="status" />
     <form @submit.prevent="login(form)" class="flex w-full flex-col">
-        <div class="flex flex-col space-y-4 rounded-lg p-5 shadow-md">
+        <div
+            class="flex w-full flex-col space-y-4 rounded-lg border border-border bg-card p-5 text-card-foreground shadow-md dark:shadow-sm"
+        >
             <Email
                 v-model="form.email"
                 :inputAutoFocus="true"

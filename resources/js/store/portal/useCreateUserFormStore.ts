@@ -6,6 +6,7 @@ export const useCreateUserFormStore = defineStore('portal-application-user-form'
         return {
             email: '',
             first_name: '',
+            middle_name: '',
             last_name: '',
             password: '',
             password_confirmation: '',

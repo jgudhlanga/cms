@@ -20,8 +20,8 @@ const emit = defineEmits<{
             class="rounded-xl border px-3 py-2.5 text-xs font-semibold uppercase transition sm:text-sm"
             :class="
                 activePath === option.id
-                    ? 'border-primary bg-primary text-white'
-                    : 'border-gray-200 bg-white text-gray-700 hover:border-primary/40'
+                    ? 'border-primary bg-primary text-primary-foreground shadow-sm'
+                    : 'border-border bg-card text-muted-foreground hover:border-primary/40 dark:shadow-none'
             "
             @click="emit('switch-path', option.id)"
         >

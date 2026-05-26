@@ -2,6 +2,12 @@ import { onMounted, ref } from 'vue';
 
 type Appearance = 'light' | 'dark' | 'system';
 
+export const APPEARANCE_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
+
+function persistAppearanceCookie(value: Appearance): void {
+	document.cookie = `appearance=${encodeURIComponent(value)}; path=/; max-age=${APPEARANCE_COOKIE_MAX_AGE}; SameSite=Lax`;
+}
+
 export function updateTheme(value: Appearance) {
 	if (value === 'system') {
 		const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
@@ -18,23 +24,25 @@ const handleSystemThemeChange = () => {
 	updateTheme(currentAppearance || 'system');
 };
 
-export function initializeTheme() {
-	// Initialize theme from saved preference or default to a system...
-	const savedAppearance = localStorage.getItem('appearance') as Appearance | null;
-	updateTheme(savedAppearance || 'system');
+let appearanceListenerAttached = false;
 
-	// Set up system theme change listener...
-	mediaQuery.addEventListener('change', handleSystemThemeChange);
+export function initializeTheme() {
+	const savedAppearance = localStorage.getItem('appearance') as Appearance | null;
+	const value: Appearance = savedAppearance || 'system';
+	updateTheme(value);
+	persistAppearanceCookie(value);
+
+	if (!appearanceListenerAttached) {
+		appearanceListenerAttached = true;
+		mediaQuery.addEventListener('change', handleSystemThemeChange);
+	}
 }
 
 export function useAppearance() {
 	const appearance = ref<Appearance>('system');
 
 	onMounted(() => {
-		initializeTheme();
-
 		const savedAppearance = localStorage.getItem('appearance') as Appearance | null;
-
 		if (savedAppearance) {
 			appearance.value = savedAppearance;
 		}
@@ -43,6 +51,7 @@ export function useAppearance() {
 	function updateAppearance(value: Appearance) {
 		appearance.value = value;
 		localStorage.setItem('appearance', value);
+		persistAppearanceCookie(value);
 		updateTheme(value);
 	}
 

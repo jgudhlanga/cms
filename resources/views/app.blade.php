@@ -1,8 +1,28 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}"  @class(['dark' => ($appearance ?? 'system') == 'dark'])>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" @class(['dark' => $htmlIsDark ?? false])>
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        <script>
+            (function () {
+                try {
+                    var stored = localStorage.getItem('appearance');
+                    var appearance = stored;
+                    if (appearance !== 'dark' && appearance !== 'light' && appearance !== 'system') {
+                        var match = document.cookie.match(/(?:^|;\s*)appearance=([^;]*)/);
+                        appearance = match ? decodeURIComponent(match[1]) : 'system';
+                    }
+                    stored = appearance;
+                    var isDark =
+                        stored === 'dark'
+                            ? true
+                            : stored === 'light'
+                              ? false
+                              : window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    document.documentElement.classList.toggle('dark', isDark);
+                } catch (_) {}
+            })();
+        </script>
         <link rel="icon" href="{{ asset('favicon.png') }}" sizes="32x32">
         <link rel="apple-touch-icon" href="{{ asset('favicon.png') }}" type="image/x-icon">
 

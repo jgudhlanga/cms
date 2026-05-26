@@ -4,17 +4,18 @@ namespace App\Http\Requests\Students;
 
 use App\Enums\Shared\IdTypeEnum;
 use App\Enums\Shared\PaymentModeEnum;
+use App\Rules\ZimbabweanIdNumber;
+use App\Services\Enrollment\EnrollmentLookupService;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
 
 class CreateStudentApplicationRequest extends FormRequest
 {
-
     public function authorize(): bool
     {
         return true;
     }
-
 
     public function prepareForValidation(): void
     {
@@ -53,12 +54,19 @@ class CreateStudentApplicationRequest extends FormRequest
                 'o_level_other_sittings' => json_decode($this->o_level_other_sittings, true),
             ]);
         }
+
+        if ($this->filled('id_number')) {
+            $this->merge([
+                'id_number' => EnrollmentLookupService::normalizeNationalId((string) $this->id_number),
+            ]);
+        }
     }
 
     public function rules(): array
     {
         $idType = IdTypeEnum::ZIMBABWEAN_ID_NUMBER->id();
         $passportType = IdTypeEnum::FOREIGN_PASSPORT_NUMBER->id();
+
         return [
             'first_name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
@@ -67,9 +75,23 @@ class CreateStudentApplicationRequest extends FormRequest
             'title_id' => ['required', 'integer', 'exists:titles,id'],
             'mode_of_study_id' => ['required', 'integer', 'exists:mode_of_studies,id'],
             'id_type_id' => ['required', 'integer', 'exists:id_types,id'],
-            'id_number' => ['required_if:id_type_id,' . $idType], // assuming 1 = Zimbabwean
-            'passport_number' => ['required_if:id_type_id,' . $passportType], // assuming 2 = Foreign passport
-            'country_id' => ['required_if:id_type_id,' . $passportType, 'nullable', 'exists:countries,id'],
+            'id_number' => [
+                'required_if:id_type_id,'.$idType,
+                'nullable',
+                'string',
+                'max:20',
+                new ZimbabweanIdNumber,
+                Rule::unique('students', 'id_number'),
+            ],
+            'passport_number' => [
+                'required_if:id_type_id,'.$passportType,
+                'nullable',
+                'string',
+                'min:5',
+                'max:50',
+                Rule::unique('students', 'passport_number'),
+            ],
+            'country_id' => ['required_if:id_type_id,'.$passportType, 'nullable', 'exists:countries,id'],
             'address_1' => ['required', 'string', 'max:255'],
             'address_2' => ['required', 'string', 'max:255'],
             'address_3' => ['required', 'string', 'max:255'],
@@ -82,13 +104,12 @@ class CreateStudentApplicationRequest extends FormRequest
             'relationship_id' => ['required', 'integer', 'exists:relationships,id'],
             'next_of_kin_phone_number' => ['required', 'string', 'max:30'],
             'department_id' => ['required', 'integer'],
-            'level_id' => ['required', 'integer',],
-            'course_id' => ['required', 'integer',],
+            'level_id' => ['required', 'integer'],
+            'course_id' => ['required', 'integer'],
             'proof_of_payment' => ['required', 'file', 'max:5009'],
             'payment_reference' => ['required', 'string', 'max:255'],
             'payment_date' => ['required', 'date'],
             'payment_mode' => ['required', new Enum(PaymentModeEnum::class)],
         ];
     }
-
 }

@@ -736,6 +736,7 @@ return [
     'ui_secure_lock' => '🔒',
     'ui_ecocash_users_payment_device_warning' => 'Attention EcoCash users: To avoid network failures, please use separate devices when making your payments. Thank you for your cooperation.',
     'ui_college_advert_warning' => 'CHECK THE COLLEGE ADVERT BEFORE APPLYING ONLINE.',
+    'enrollment_important_notices' => 'Important notices',
     'enrollment_path_new' => 'New student',
     'enrollment_path_returning' => 'Returning student',
     'enrollment_path_international' => 'International student',

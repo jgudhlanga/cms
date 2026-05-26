@@ -299,6 +299,7 @@ declare module 'vue' {
     ProgramDetails: typeof import('./../components/students/view/ProgramDetails.vue')['default']
     Programs: typeof import('./../components/students/update/Programs.vue')['default']
     ProvinceComboSelect: typeof import('./../components/core/form/combobox/ProvinceComboSelect.vue')['default']
+    PublicShell: typeof import('./../layouts/PublicShell.vue')['default']
     RaceComboSelect: typeof import('./../components/core/form/combobox/RaceComboSelect.vue')['default']
     RadioGroup: typeof import('./../components/ui/radio-group/RadioGroup.vue')['default']
     RadioGroupItem: typeof import('./../components/ui/radio-group/RadioGroupItem.vue')['default']

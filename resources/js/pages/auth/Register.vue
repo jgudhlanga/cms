@@ -23,7 +23,10 @@ const submit = () => {
 
 <template>
     <Head :title="$t('trans.ui_register')" />
-    <form @submit.prevent="submit" class="flex flex-col gap-6">
+    <form
+        @submit.prevent="submit"
+        class="flex flex-col gap-6 rounded-lg border border-border bg-card p-6 text-card-foreground shadow-md dark:shadow-sm"
+    >
         <div class="grid gap-6">
             <div class="grid gap-2">
                 <Label for="name">{{ $tChoice('trans.name', 1) }}</Label>
