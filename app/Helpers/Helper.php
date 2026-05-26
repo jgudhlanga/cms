@@ -243,4 +243,23 @@ class Helper
 
         return "{$prefix}-{$randomSegment}";
     }
+
+    <?php
+
+if (! function_exists('isValidZimbabweanId')) {
+
+    function isValidZimbabweanId(?string $idNumber): bool
+    {
+        if (! $idNumber) {
+            return false;
+        }
+
+        $idNumber = strtoupper(trim($idNumber));
+
+        return preg_match(
+            '/^\d{2}-\d{5,7}[A-Z]\d{2}$/',
+            $idNumber
+        ) === 1;
+    }
+}
 }

@@ -147,6 +147,11 @@ export function useUtils() {
         return idType.toLowerCase() == 'zimbabwean national id';
     };
 
+    const isZimbabweanNationalId = (idNumber: string): boolean => {
+        const zimIdRegex = /^\d{2}-\d{5,7}[A-Za-z]\d{2}$/;
+        return zimIdRegex.test(idNumber);
+    };
+
     const generateRandomCode = (prefix: string): string => {
         return `${prefix}-${uuidv4().replace(/-/g, '').substring(0, 8).toUpperCase()}`;
     };
@@ -187,6 +192,7 @@ export function useUtils() {
         goBack,
         navigateTo,
         formatZimIdNumber,
+        isZimbabweanNationalId,
         isNativeCitizen,
         generateRandomCode,
         getQueryParams,
