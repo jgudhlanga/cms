@@ -7,6 +7,8 @@ use App\Enums\HMS\HostelApplicationTypeEnum;
 use App\Enums\Shared\TenantEnum;
 use App\Jobs\HMS\SendHostelApplicationAwaitingPaymentEmail;
 use App\Jobs\HMS\SendHostelApplicationDeclinedEmail;
+use App\Jobs\HMS\SendHostelRoomAllocationEmail;
+use App\Mail\HMS\HostelRoomAllocationConfirmedMail;
 use App\Models\HMS\HmsSetting;
 use App\Models\HMS\HostelApplication;
 use App\Models\HMS\HostelRoom;
@@ -16,6 +18,7 @@ use App\Models\Students\Student;
 use App\Models\Tenants\Tenant;
 use App\Models\Users\User;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Queue;
 use Laravel\Sanctum\Sanctum;
 
@@ -509,6 +512,8 @@ test('json api hostel applications approve requires only enabled payment verific
 });
 
 test('json api hostel applications update can approve awaiting payment application', function () {
+    Queue::fake();
+
     $tenant = Tenant::query()->firstOrFail();
     $user = User::factory()->create(['tenant_id' => $tenant->id]);
     $user->givePermissionTo('update:hostel-applications');
@@ -572,6 +577,118 @@ test('json api hostel applications update can approve awaiting payment applicati
         ->and($allocation)->not->toBeNull()
         ->and($allocation->check_in?->toDateString())->toBe($application->check_in?->toDateString())
         ->and($allocation->check_out?->toDateString())->toBe($application->check_out?->toDateString());
+
+    Queue::assertPushed(SendHostelRoomAllocationEmail::class);
+});
+
+test('json api hostel applications approve queues room allocation email with room details', function () {
+    Mail::fake();
+    Queue::fake();
+
+    $tenant = Tenant::query()->firstOrFail();
+    $user = User::factory()->create(['tenant_id' => $tenant->id]);
+    $user->givePermissionTo('update:hostel-applications');
+    Sanctum::actingAs($user);
+
+    HmsSetting::resolveForTenant($tenant->id)->update([
+        'require_full_time_study' => false,
+        'require_tuition_paid' => false,
+        'require_accommodation_paid' => false,
+        'require_address_outside_campus' => false,
+    ]);
+
+    $student = createStudentForAllocationIndexTest();
+    $student->load('user');
+    $room = ensureHostelRoomWithCapacity('Hostel D', 'ALLOC-MAIL-01');
+    $room->hostel->update(['type' => 'male', 'name' => 'Block D Test Hostel']);
+    $room->update(['name' => 'Room 101', 'floor_number' => '2', 'room_type' => 'double']);
+
+    $application = HostelApplication::withoutEvents(fn () => HostelApplication::query()->create([
+        'tenant_id' => TenantEnum::HARARE_POLY->id(),
+        'student_id' => $student->id,
+        'gender_id' => $student->gender_id,
+        'type' => HostelApplicationTypeEnum::STUDENT,
+        'status' => HostelApplicationStatusEnum::AWAITING_PAYMENT,
+        'next_of_kin_name' => 'Kin Name',
+        'next_of_kin_contact' => '0771234567',
+        'check_in' => now()->toDateString(),
+        'check_out' => now()->addMonths(4)->toDateString(),
+    ]));
+
+    $this
+        ->jsonApi('hostel-applications')
+        ->withData([
+            'type' => 'hostel-applications',
+            'id' => (string) $application->id,
+            'attributes' => [
+                'status' => 'approved',
+                'hostelRoomId' => $room->id,
+                'paymentVerification' => [],
+            ],
+        ])
+        ->patch(route('v1.json.hms.hostel-applications.update', $application))
+        ->assertSuccessful();
+
+    (new SendHostelRoomAllocationEmail($application->id))->handle();
+
+    Mail::assertSent(HostelRoomAllocationConfirmedMail::class, function (HostelRoomAllocationConfirmedMail $mail) use ($student): bool {
+        $html = $mail->render();
+
+        return $mail->hasTo($student->user->email)
+            && str_contains($html, 'Block D Test Hostel')
+            && str_contains($html, 'Room 101')
+            && str_contains($html, '2');
+    });
+});
+
+test('json api hostel applications approve does not queue room allocation email without recipient email', function () {
+    Queue::fake();
+
+    $tenant = Tenant::query()->firstOrFail();
+    $user = User::factory()->create(['tenant_id' => $tenant->id]);
+    $user->givePermissionTo('update:hostel-applications');
+    Sanctum::actingAs($user);
+
+    HmsSetting::resolveForTenant($tenant->id)->update([
+        'require_full_time_study' => false,
+        'require_tuition_paid' => false,
+        'require_accommodation_paid' => false,
+        'require_address_outside_campus' => false,
+    ]);
+
+    $student = createStudentForAllocationIndexTest();
+    $student->user->update(['email' => '']);
+    $room = ensureHostelRoomWithCapacity('Hostel D', 'ALLOC-NO-EMAIL');
+    $room->hostel->update(['type' => 'male']);
+
+    $application = HostelApplication::withoutEvents(fn () => HostelApplication::query()->create([
+        'tenant_id' => TenantEnum::HARARE_POLY->id(),
+        'student_id' => $student->id,
+        'gender_id' => $student->gender_id,
+        'type' => HostelApplicationTypeEnum::STUDENT,
+        'status' => HostelApplicationStatusEnum::AWAITING_PAYMENT,
+        'next_of_kin_name' => 'Kin Name',
+        'next_of_kin_contact' => '0771234567',
+        'email_address' => null,
+        'check_in' => now()->toDateString(),
+        'check_out' => now()->addMonths(4)->toDateString(),
+    ]));
+
+    $this
+        ->jsonApi('hostel-applications')
+        ->withData([
+            'type' => 'hostel-applications',
+            'id' => (string) $application->id,
+            'attributes' => [
+                'status' => 'approved',
+                'hostelRoomId' => $room->id,
+                'paymentVerification' => [],
+            ],
+        ])
+        ->patch(route('v1.json.hms.hostel-applications.update', $application))
+        ->assertSuccessful();
+
+    Queue::assertNotPushed(SendHostelRoomAllocationEmail::class);
 });
 
 test('json api hostel applications approve requires payment verification and hostel room', function () {

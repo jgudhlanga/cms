@@ -119,6 +119,11 @@ class HostelApplicationObserver
             ], true)) {
             $this->reviewService->dispatchDeclinedEmail($application);
         }
+
+        if ($application->status === HostelApplicationStatusEnum::APPROVED
+            && $previousValue !== HostelApplicationStatusEnum::APPROVED->value) {
+            $this->reviewService->dispatchRoomAllocationEmail($application);
+        }
     }
 
     private function applyTypeDefaults(HostelApplication $application): void

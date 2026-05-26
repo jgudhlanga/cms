@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { HOSTEL_SHOW_ALL_FLOORS, type HostelShowStatusFilter } from '@/composables/hms/useHostelShow';
 import { formatFloorLabel } from '@/lib/hms/hostelRoomDisplay';
-import { Search } from '@lucide/vue';
 import { trans } from 'laravel-vue-i18n';
+import { IconName } from '@/enums/icons';
 
 interface Props {
     totalRooms: number;
@@ -101,19 +101,16 @@ const emit = defineEmits<{
             >
                 {{ $t('hms.show_filter_full') }}
             </button>
-
-            <label
-                class="ml-auto flex min-w-[200px] items-center gap-2 rounded-[10px] border-[1.5px] border-slate-200 bg-white px-3 py-2 text-sm text-slate-400"
-            >
-                <Search class="h-4 w-4 shrink-0" />
-                <input
-                    :value="searchQuery"
-                    type="search"
-                    class="w-full min-w-0 border-0 bg-transparent text-slate-800 outline-none placeholder:text-slate-400"
+            <div class="ml-auto min-w-[200px] shrink-0">
+                <BaseInputWithIcon
+                    :icon="IconName.search"
                     :placeholder="$t('hms.show_search_room_placeholder')"
-                    @input="emit('update:searchQuery', ($event.target as HTMLInputElement).value)"
+                    :model-value="searchQuery"
+                    full-width
+                    class="rounded-full"
+                    @update:model-value="emit('update:searchQuery', $event)"
                 />
-            </label>
+            </div>
         </div>
     </div>
 </template>

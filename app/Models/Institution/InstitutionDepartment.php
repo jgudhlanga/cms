@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
@@ -47,6 +48,11 @@ class InstitutionDepartment extends Model
     public function staff(): BelongsToMany
     {
         return $this->belongsToMany(Staff::class, 'institution_department_staff');
+    }
+
+    public function metadata(): HasOne
+    {
+        return $this->hasOne(InstitutionDepartmentMetadata::class, 'institution_department_id');
     }
 
     public function applicationSteps(): HasMany

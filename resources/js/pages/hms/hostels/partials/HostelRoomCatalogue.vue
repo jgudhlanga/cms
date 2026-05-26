@@ -3,6 +3,8 @@ import type { HostelRoomViewModel, HostelShowStatusFilter } from '@/composables/
 import HostelRoomCard from '@/pages/hms/hostels/partials/HostelRoomCard.vue';
 import HostelRoomFilters from '@/pages/hms/hostels/partials/HostelRoomFilters.vue';
 import { Plus } from '@lucide/vue';
+import {ButtonSize} from '@/enums/buttons';
+import {ColorVariant} from '@/enums/colors';
 
 interface Props {
     rooms: HostelRoomViewModel[];
@@ -38,15 +40,17 @@ const emit = defineEmits<{
                     {{ $t('hms.show_rooms_shown', { count: filteredRooms.length }) }}
                 </p>
             </div>
-            <button
+            <BaseButton
                 v-if="canAddRoom"
                 type="button"
-                class="inline-flex items-center gap-2 rounded-[10px] bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
+                classes="rounded-full"
+                :size="ButtonSize.md"
+                :variant="ColorVariant.primary_outline"
                 @click="emit('addRoom')"
             >
                 <Plus class="h-4 w-4" />
                 {{ $t('hms.add_room') }}
-            </button>
+            </BaseButton>
         </div>
 
         <HostelRoomFilters

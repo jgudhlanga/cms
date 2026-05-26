@@ -14,6 +14,23 @@ export type HostelWarden = {
     user?: HostelWardenUser | null;
 };
 
+export type HostelWardenDepartmentContact = {
+    id: number | string;
+    name: string | null;
+    code?: string | null;
+    email?: string | null;
+    phone?: string | null;
+    location?: string | null;
+};
+
+export type HostelWardenProfile = {
+    name: string | null;
+    email?: string | null;
+    phone?: string | null;
+    employeeNumber?: string | null;
+    departments: HostelWardenDepartmentContact[];
+};
+
 export type Hostel = {
     type: string;
     id: number | string;

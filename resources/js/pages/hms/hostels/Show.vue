@@ -12,7 +12,7 @@ import HostelRoomCatalogue from '@/pages/hms/hostels/partials/HostelRoomCatalogu
 import HostelRoomDetailModal from '@/pages/hms/hostels/partials/HostelRoomDetailModal.vue';
 import HostelWardenCard from '@/pages/hms/hostels/partials/HostelWardenCard.vue';
 import { useHmsStore } from '@/store/hms/useHmsStore';
-import type { Hostel } from '@/types/hms';
+import type { Hostel, HostelWardenProfile } from '@/types/hms';
 import type { BreadcrumbItemInterface } from '@/types/ui';
 import { Head, router } from '@inertiajs/vue3';
 import { trans } from 'laravel-vue-i18n';
@@ -49,6 +49,7 @@ type InertiaHostel = {
 interface Props {
     hostel: InertiaHostel;
     wardens: Array<{ id: number | string; name: string | null }>;
+    wardenProfile?: HostelWardenProfile | null;
 }
 
 const props = defineProps<Props>();
@@ -91,7 +92,7 @@ watch(roomRefreshKey, () => {
 });
 
 watch(hostelRefreshKey, () => {
-    router.reload({ only: ['hostel'] });
+    router.reload({ only: ['hostel', 'wardenProfile'] });
 });
 
 const breadcrumbs = computed<BreadcrumbItemInterface[]>(() => [
@@ -100,6 +101,10 @@ const breadcrumbs = computed<BreadcrumbItemInterface[]>(() => [
 ]);
 
 const wardenName = computed(() => {
+    if (props.wardenProfile?.name?.trim()) {
+        return props.wardenProfile.name.trim();
+    }
+
     const user = props.hostel.warden?.user;
 
     if (!user) {
@@ -152,7 +157,11 @@ const openAddRoom = () => {
 <template>
     <Head :title="hostel.name" />
 
-    <PageContainer :breadcrumbs="breadcrumbs" :back-url="route('hostels.index')">
+    <PageContainer :breadcrumbs="breadcrumbs" :back-url="route('hostels.index')" 
+    :hasBackNavigationLeading="true">
+        <template #backNavigationLeading>
+            <HeadingSmall :title="$t('hms.hostel_full_view')" />
+        </template>
         <div class="space-y-6">
             <HostelHero
                 :hostel="hostelSnapshot"
@@ -165,7 +174,11 @@ const openAddRoom = () => {
 
             <div class="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_340px]">
                 <HostelFloorOccupancyChart :chart-data="chartData" :is-loading="isLoading" />
-                <HostelWardenCard :warden-name="wardenName" :hostel-name="hostel.name" />
+                <HostelWardenCard
+                    :warden-name="wardenName"
+                    :hostel-name="hostel.name"
+                    :warden-profile="wardenProfile"
+                />
             </div>
 
             <HostelRoomCatalogue
