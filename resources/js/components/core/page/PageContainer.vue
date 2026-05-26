@@ -1,4 +1,6 @@
 <script setup lang="ts">
+defineOptions({ inheritAttrs: false });
+
 import LogoutButton from '@/components/auth/LogoutButton.vue';
 import RemoveImpersonationButton from '@/components/auth/RemoveImpersonationButton.vue';
 import BaseTooltip from '@/components/core/util/BaseTooltip.vue';

@@ -78,13 +78,13 @@ const locationIcon = computed(() =>
     >
         <!-- Gender / type accent strip -->
         <div
-            class="h-1.5"
+            class="h-0.5"
             :class="
                 isFemale
-                    ? 'bg-gradient-to-r from-rose-300 to-pink-500'
+                    ? 'bg-linear-to-r from-rose-300 to-pink-500'
                     : isMale
-                      ? 'bg-gradient-to-r from-sky-400 to-blue-600'
-                      : 'bg-gradient-to-r from-violet-400 to-indigo-500'
+                      ? 'bg-linear-to-r from-sky-400 to-blue-600'
+                      : 'bg-linear-to-r from-violet-400 to-indigo-500'
             "
         />
 

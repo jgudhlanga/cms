@@ -19,6 +19,12 @@ import type { HostelRoom } from '@/types/hms';
 import { useHmsStore } from '@/store/hms/useHmsStore';
 import HostelSelect from '@/components/core/form/select/HostelSelect.vue';
 
+interface Props {
+    defaultHostelId?: number | string | null;
+}
+
+const props = defineProps<Props>();
+
 const room = ref<HostelRoom | null>(null);
 
 const form = useForm({
@@ -56,7 +62,13 @@ const statusOptions = computed<SelectOption[]>(() => [
 watch(modals!, () => {
     room.value = getModalEdit(APP_MODULE_KEYS.hostel_rooms) as HostelRoom | null;
 
-    form.hostel_id    = room.value?.attributes.hostelId ? String(room.value.attributes.hostelId) : null;
+    const defaultHostelId =
+        room.value?.attributes.hostelId ??
+        (props.defaultHostelId != null && String(props.defaultHostelId).trim() !== ''
+            ? props.defaultHostelId
+            : null);
+
+    form.hostel_id    = defaultHostelId != null ? String(defaultHostelId) : null;
     form.name         = room.value?.attributes.name ?? '';
     form.room_type    = (room.value?.attributes.roomType ?? 'single') as typeof form.room_type;
     form.capacity     = Number(room.value?.attributes.capacity ?? 1);

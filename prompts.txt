@@ -1,7 +1,0 @@
-Given resources/js/pages/hms/applications/Show.vue, All approving should be configurable and saved in hms_settings
-  1. require_accomodation_fee
-  2. require_tution_fee
-  3. address_should_not_be_in_campus_city
-  4. require_onlY_full_time
-  - all as boolean
-  - eligibility rules should be derived from these settings.

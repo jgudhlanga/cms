@@ -1,25 +1,37 @@
 <script setup lang="ts">
 import PageContainer from '@/components/core/page/PageContainer.vue';
-import HeadingSmall from '@/components/core/util/HeadingSmall.vue';
-import { ColorVariant } from '@/enums/colors';
-import { IconName } from '@/enums/icons';
-import { BreadcrumbItemInterface } from '@/types/ui';
-import { Head } from '@inertiajs/vue3';
-import { computed } from 'vue';
+import { useHostelShow, type HostelShowSnapshot } from '@/composables/hms/useHostelShow';
+import { openModal } from '@/lib/alerts';
+import { APP_MODULE_KEYS } from '@/lib/constants';
+import { hasAbility } from '@/lib/permissions';
+import CreateEditHostel from '@/pages/hms/components/forms/CreateEditHostel.vue';
+import CreateEditRoom from '@/pages/hms/components/forms/CreateEditRoom.vue';
+import HostelFloorOccupancyChart from '@/pages/hms/hostels/partials/HostelFloorOccupancyChart.vue';
+import HostelHero from '@/pages/hms/hostels/partials/HostelHero.vue';
+import HostelRoomCatalogue from '@/pages/hms/hostels/partials/HostelRoomCatalogue.vue';
+import HostelRoomDetailModal from '@/pages/hms/hostels/partials/HostelRoomDetailModal.vue';
+import HostelWardenCard from '@/pages/hms/hostels/partials/HostelWardenCard.vue';
+import { useHmsStore } from '@/store/hms/useHmsStore';
+import type { Hostel } from '@/types/hms';
+import type { BreadcrumbItemInterface } from '@/types/ui';
+import { Head, router } from '@inertiajs/vue3';
+import { trans } from 'laravel-vue-i18n';
+import { storeToRefs } from 'pinia';
+import { computed, toRef, watch } from 'vue';
 
-type User = {
+type HostelWardenUser = {
     first_name?: string | null;
     middle_name?: string | null;
     last_name?: string | null;
     full_name?: string | null;
 };
 
-type Staff = {
+type HostelWarden = {
     id: number | string;
-    user?: User | null;
+    user?: HostelWardenUser | null;
 };
 
-type Hostel = {
+type InertiaHostel = {
     id: number | string;
     name: string;
     location?: string | null;
@@ -29,54 +41,157 @@ type Hostel = {
     status: 'active' | 'inactive';
     type?: 'male' | 'female' | 'mixed' | null;
     description?: string | null;
-    warden?: Staff | null;
+    warden_id?: number | string | null;
+    warden?: HostelWarden | null;
+    occupied_beds_sum?: number | null;
 };
 
 interface Props {
-    hostel: Hostel;
+    hostel: InertiaHostel;
+    wardens: Array<{ id: number | string; name: string | null }>;
 }
 
 const props = defineProps<Props>();
 
-const breadcrumbs: BreadcrumbItemInterface[] = [
+const { roomRefreshKey, hostelRefreshKey } = storeToRefs(useHmsStore());
+
+const hostelSnapshot = computed<HostelShowSnapshot>(() => ({
+    id: props.hostel.id,
+    name: props.hostel.name,
+    location: props.hostel.location,
+    floor_count: props.hostel.floor_count,
+    rooms_count: props.hostel.rooms_count,
+    capacity: props.hostel.capacity,
+    status: props.hostel.status,
+    type: props.hostel.type,
+    description: props.hostel.description,
+    occupied_beds_sum: props.hostel.occupied_beds_sum,
+}));
+
+const hostelId = toRef(() => props.hostel.id);
+
+const {
+    isLoading,
+    rooms,
+    statusFilter,
+    activeFloor,
+    searchQuery,
+    selectedRoom,
+    occupiedBeds,
+    availableBeds,
+    stats,
+    floorTabs,
+    filteredRooms,
+    chartData,
+    loadData,
+} = useHostelShow(hostelId, hostelSnapshot);
+
+watch(roomRefreshKey, () => {
+    void loadData();
+});
+
+watch(hostelRefreshKey, () => {
+    router.reload({ only: ['hostel'] });
+});
+
+const breadcrumbs = computed<BreadcrumbItemInterface[]>(() => [
     { transChoiceKey: 'hms.title', href: route('hostels.index') },
     { title: props.hostel.name },
-];
+]);
 
 const wardenName = computed(() => {
     const user = props.hostel.warden?.user;
-    if (!user) return 'Unassigned';
 
-    if (user.full_name) return user.full_name;
+    if (!user) {
+        return trans('hms.unassigned');
+    }
 
-    return [user.first_name, user.middle_name, user.last_name]
+    if (user.full_name) {
+        return user.full_name;
+    }
+
+    const parts = [user.first_name, user.middle_name, user.last_name]
         .filter((part) => Boolean(part && String(part).trim()))
-        .join(' ') || 'Unassigned';
+        .join(' ');
+
+    return parts || trans('hms.unassigned');
 });
+
+const hostelAsJsonApi = computed((): Hostel => ({
+    type: 'hostels',
+    id: props.hostel.id,
+    attributes: {
+        name: props.hostel.name,
+        type: props.hostel.type ?? 'mixed',
+        capacity: props.hostel.capacity,
+        wardenId: props.hostel.warden_id ?? props.hostel.warden?.id ?? null,
+        roomsCount: props.hostel.rooms_count,
+        floorCount: props.hostel.floor_count,
+        status: props.hostel.status,
+        location: props.hostel.location ?? '',
+        occupiedCount: occupiedBeds.value,
+        vacantCount: availableBeds.value,
+        maintenanceCount: 0,
+        description: props.hostel.description ?? '',
+        wardenName: wardenName.value,
+    },
+}));
+
+const canEditHostel = computed(() => hasAbility('update:hostels'));
+const canAddRoom = computed(() => hasAbility('create:hostel-rooms'));
+
+const openEditHostel = () => {
+    openModal({ name: APP_MODULE_KEYS.hostels, edit: hostelAsJsonApi.value });
+};
+
+const openAddRoom = () => {
+    openModal({ name: APP_MODULE_KEYS.hostel_rooms });
+};
 </script>
 
 <template>
     <Head :title="hostel.name" />
 
     <PageContainer :breadcrumbs="breadcrumbs" :back-url="route('hostels.index')">
-        <BaseCard>
-            <div class="flex items-start justify-between gap-2">
-                <HeadingSmall :title="hostel.name" :description="hostel.location ?? ''" />
-                <IconButton
-                    :icon="IconName.edit"
-                    :variant="ColorVariant.success_outline"
-                    @click="$emit('edit')"
-                />
+        <div class="space-y-6">
+            <HostelHero
+                :hostel="hostelSnapshot"
+                :stats="stats"
+                :occupied-beds="occupiedBeds"
+                :available-beds="availableBeds"
+                :can-edit="canEditHostel"
+                @edit="openEditHostel"
+            />
+
+            <div class="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_340px]">
+                <HostelFloorOccupancyChart :chart-data="chartData" :is-loading="isLoading" />
+                <HostelWardenCard :warden-name="wardenName" :hostel-name="hostel.name" />
             </div>
-            <div class="grid grid-cols-1 gap-2 md:grid-cols-4">
-                <LabelValue :label="$tChoice('hms.status', 1)" :value="String(hostel.status)" />
-                <LabelValue :label="$tChoice('hms.type', 1)" :value="String(hostel.type ?? '---')" />
-                <LabelValue :label="$tChoice('hms.warden', 1)" :value="String(wardenName)" />
-                <LabelValue :label="$tChoice('hms.capacity', 1)" :value="String(hostel.capacity)" />
-                <LabelValue :label="$tChoice('hms.floor_count', 1)" :value="String(hostel.floor_count)" />
-                <LabelValue :label="$tChoice('hms.rooms_count', 1)" :value="String(hostel.rooms_count)" />
-                <LabelValue :label="$t('hms.description')" :value="hostel.description ?? '---'" />
-            </div>
-        </BaseCard>
+
+            <HostelRoomCatalogue
+                :rooms="rooms"
+                :filtered-rooms="filteredRooms"
+                :floor-tabs="floorTabs"
+                :active-floor="activeFloor"
+                :status-filter="statusFilter"
+                :search-query="searchQuery"
+                :is-loading="isLoading"
+                :can-add-room="canAddRoom"
+                @update:active-floor="activeFloor = $event"
+                @update:status-filter="statusFilter = $event"
+                @update:search-query="searchQuery = $event"
+                @select-room="selectedRoom = $event"
+                @add-room="openAddRoom"
+            />
+        </div>
+
+        <HostelRoomDetailModal
+            :room="selectedRoom"
+            :hostel-name="hostel.name"
+            @close="selectedRoom = null"
+        />
+
+        <CreateEditHostel :wardens="wardens" />
+        <CreateEditRoom :default-hostel-id="hostel.id" />
     </PageContainer>
 </template>

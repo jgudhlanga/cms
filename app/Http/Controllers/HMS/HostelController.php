@@ -35,9 +35,22 @@ class HostelController extends Controller
     public function show(Hostel $hostel)
     {
         $hostel->load(['warden.user:id,first_name,middle_name,last_name']);
+        $hostel->loadSum('rooms as occupied_beds_sum', 'current_occupancy');
+
+        $wardens = Staff::query()
+            ->select(['id', 'user_id'])
+            ->with(['user:id,first_name,middle_name,last_name'])
+            ->orderByDesc('id')
+            ->get()
+            ->map(fn (Staff $staff) => [
+                'id' => $staff->id,
+                'name' => $staff->user?->full_name,
+            ])
+            ->values();
 
         return Inertia::render('hms/hostels/Show', [
             'hostel' => $hostel,
+            'wardens' => $wardens,
         ]);
     }
 
