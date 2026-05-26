@@ -155,19 +155,20 @@ class DepartmentAcademicCalendarController extends Controller
     ): void {
         $resolver = app(ResolveAcademicYearOptionFromCalendarYear::class);
 
-        $existingKeySet = array_flip(
+        $existingKeySet = [];
+        foreach (
             ClassConfig::query()
                 ->where('calendar_year', $calendarYear)
                 ->where('institution_department_id', $department->id)
                 ->where('mode_of_study_id', $modeOfStudyId)
-                ->get()
-                ->map(fn (ClassConfig $c): string => $this->courseLevelOptionLookupKey(
-                    (int) $c->department_course_id,
-                    (int) $c->department_level_id,
-                    $c->academic_year_option_id !== null ? (int) $c->academic_year_option_id : null,
-                ))
-                ->all(),
-        );
+                ->get() as $config
+        ) {
+            $existingKeySet[$this->courseLevelOptionLookupKey(
+                (int) $config->department_course_id,
+                (int) $config->department_level_id,
+                $config->academic_year_option_id !== null ? (int) $config->academic_year_option_id : null,
+            )] = true;
+        }
 
         $validPairs = DB::table('department_level_courses as dlc')
             ->join('department_courses as dc', 'dc.id', '=', 'dlc.department_course_id')
@@ -199,7 +200,6 @@ class DepartmentAcademicCalendarController extends Controller
                     (int) $pair->department_level_id,
                     $resolvedOptionId,
                 );
-
                 if ($count <= 0 || isset($existingKeySet[$lookupKey])) {
                     continue;
                 }
@@ -226,6 +226,11 @@ class DepartmentAcademicCalendarController extends Controller
         $suffix = $academicYearOptionId === null ? 'none' : (string) $academicYearOptionId;
 
         return "{$departmentCourseId}_{$departmentLevelId}_{$suffix}";
+    }
+
+    private function courseLevelPairLookupKey(int $departmentCourseId, int $departmentLevelId): string
+    {
+        return "{$departmentCourseId}_{$departmentLevelId}";
     }
 
     /**
@@ -267,7 +272,7 @@ class DepartmentAcademicCalendarController extends Controller
                     $codesOrdered[] = $codeById[$sid];
                 }
             }
-            $lookup[$key] = [
+            $entry = [
                 'students_per_class' => $config->students_per_class ?? 0,
                 'id' => $config->id,
                 'academicYearOptionId' => $optionId,
@@ -275,6 +280,12 @@ class DepartmentAcademicCalendarController extends Controller
                 'courseSyllabusIds' => $syllabusIds,
                 'courseSyllabusCodes' => $codesOrdered,
             ];
+            $lookup[$key] = $entry;
+            $pairKey = $this->courseLevelPairLookupKey(
+                (int) $config->department_course_id,
+                (int) $config->department_level_id,
+            );
+            $lookup[$pairKey] ??= $entry;
         }
 
         return $lookup;
@@ -308,7 +319,13 @@ class DepartmentAcademicCalendarController extends Controller
                 (int) $config->department_level_id,
                 $config->academic_year_option_id !== null ? (int) $config->academic_year_option_id : null,
             );
-            $lookup[$key] = (int) ($countsByConfigId[$config->id] ?? 0);
+            $count = (int) ($countsByConfigId[$config->id] ?? 0);
+            $lookup[$key] = $count;
+            $pairKey = $this->courseLevelPairLookupKey(
+                (int) $config->department_course_id,
+                (int) $config->department_level_id,
+            );
+            $lookup[$pairKey] ??= $count;
         }
 
         return $lookup;
@@ -411,6 +428,17 @@ class DepartmentAcademicCalendarController extends Controller
                 $configKey = $tryKey;
                 $configData = $lookups['classConfig'][$tryKey];
                 break;
+            }
+        }
+
+        if ($configData === null) {
+            $pairKey = $this->courseLevelPairLookupKey(
+                (int) $course->id,
+                (int) $levelCourse->department_level_id,
+            );
+            if (isset($lookups['classConfig'][$pairKey])) {
+                $configKey = $pairKey;
+                $configData = $lookups['classConfig'][$pairKey];
             }
         }
 

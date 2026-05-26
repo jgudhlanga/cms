@@ -147,11 +147,7 @@ const eligibilityRules = computed((): HostelApplicationEligibilityRule[] => attr
 <template>
     <Head :title="attrs?.displayName ?? $t('hms.view_application')" />
 
-    <PageContainer
-        :breadcrumbs="breadcrumbs"
-        :back-url="route('hostels.index')"
-        has-back-navigation-leading="true"
-    >
+    <PageContainer :breadcrumbs="breadcrumbs" :back-url="route('hostels.index')">
         <template #backNavigationLeading>
             <BaseButton
                 v-if="studentProfileUrl"

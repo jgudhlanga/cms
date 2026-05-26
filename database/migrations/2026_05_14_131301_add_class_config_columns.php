@@ -20,7 +20,15 @@ return new class extends Migration
             $table->enum('status', ['open', 'closed'])
                 ->default('open')
                 ->after('students_per_class');
-            // Add new unique index
+        });
+
+        if (Schema::hasIndex('class_configs', 'class_configs_dept_course_level_mode_year_unique')) {
+            Schema::table('class_configs', function (Blueprint $table): void {
+                $table->dropUnique('class_configs_dept_course_level_mode_year_unique');
+            });
+        }
+
+        Schema::table('class_configs', function (Blueprint $table): void {
             $table->unique(
                 [
                     'institution_department_id',
@@ -40,18 +48,27 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('class_configs', function (Blueprint $table) {
-
-            // Drop new unique index
-            $table->dropUnique(
-                'class_configs_dept_course_level_mode_year_option_unique'
-            );
+        Schema::table('class_configs', function (Blueprint $table): void {
+            $table->dropUnique('class_configs_dept_course_level_mode_year_option_unique');
 
             $table->dropColumn([
                 'academic_year_option_id',
                 'status',
                 'course_syllabus_ids',
             ]);
+        });
+
+        Schema::table('class_configs', function (Blueprint $table): void {
+            $table->unique(
+                [
+                    'institution_department_id',
+                    'department_course_id',
+                    'department_level_id',
+                    'mode_of_study_id',
+                    'calendar_year',
+                ],
+                'class_configs_dept_course_level_mode_year_unique',
+            );
         });
     }
 };

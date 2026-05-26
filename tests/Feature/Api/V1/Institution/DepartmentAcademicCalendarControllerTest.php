@@ -611,6 +611,133 @@ test('department academic calendar does not replace existing class config when s
     expect(ClassConfig::query()->where('institution_department_id', $institutionDepartment->id)->count())->toBe(1);
 });
 
+test('department academic calendar does not violate class config unique index when academic year option differs from resolved option', function () {
+    $this->travelTo('2026-05-15');
+
+    $tenant = Tenant::query()->firstOrFail();
+    $user = User::factory()->create(['tenant_id' => $tenant->id]);
+
+    $semesterOneId = (int) AcademicYearOption::query()->firstOrCreate(
+        ['slug' => 'semester-1'],
+        ['name' => 'Semester 1', 'description' => null],
+    )->id;
+    $semesterTwoId = (int) AcademicYearOption::query()->firstOrCreate(
+        ['slug' => 'semester-2'],
+        ['name' => 'Semester 2', 'description' => null],
+    )->id;
+
+    $department = Department::factory()->create();
+    $institutionDepartment = InstitutionDepartment::query()->create([
+        'tenant_id' => $tenant->id,
+        'department_id' => $department->id,
+        'department_code' => 'cal-api-option-mismatch',
+        'description' => 'Existing config with different academic year option must not duplicate',
+    ]);
+
+    $course = Course::factory()->create();
+    $departmentCourse = DepartmentCourse::query()->create([
+        'tenant_id' => $tenant->id,
+        'institution_department_id' => $institutionDepartment->id,
+        'course_id' => $course->id,
+    ]);
+
+    $level = Level::factory()->create(['name' => 'Year Seven']);
+    $departmentLevel = DepartmentLevel::query()->create([
+        'tenant_id' => $tenant->id,
+        'institution_department_id' => $institutionDepartment->id,
+        'level_id' => $level->id,
+    ]);
+
+    DepartmentLevelCourse::query()->create([
+        'department_course_id' => $departmentCourse->id,
+        'department_level_id' => $departmentLevel->id,
+    ]);
+
+    $modeOfStudy = ModeOfStudy::query()->create(['name' => 'Evening']);
+    $intakePeriod = IntakePeriod::query()->create([
+        'tenant_id' => $tenant->id,
+        'name' => 'Semester 6 2026',
+        'calendar_year' => '2026',
+        'start_date' => now()->startOfMonth()->toDateString(),
+        'end_date' => now()->endOfMonth()->toDateString(),
+    ]);
+    $calendar = AcademicCalendar::query()->create([
+        'calendar_year' => '2026',
+        'type' => AcademicCalendarTypeEnum::SEMESTER,
+        'opening_date' => '2026-01-15',
+        'closing_date' => '2026-06-30',
+    ]);
+
+    $existingConfig = ClassConfig::query()->create([
+        'calendar_year' => $calendar->calendar_year,
+        'academic_year_option_id' => $semesterTwoId,
+        'institution_department_id' => $institutionDepartment->id,
+        'department_course_id' => $departmentCourse->id,
+        'department_level_id' => $departmentLevel->id,
+        'mode_of_study_id' => $modeOfStudy->id,
+        'students_per_class' => 25,
+    ]);
+
+    $title = Title::query()->create(['name' => 'Prof Test']);
+    $gender = Gender::query()->create(['title' => 'X']);
+    $maritalStatus = MaritalStatus::query()->create(['title' => 'S6']);
+    $idType = IdType::query()->create(['name' => 'ID6']);
+    $studentUser = User::factory()->create([
+        'tenant_id' => $tenant->id,
+        'email' => 'calendar-option-mismatch-student@example.com',
+    ]);
+    $student = Student::query()->create([
+        'tenant_id' => $tenant->id,
+        'user_id' => $studentUser->id,
+        'title_id' => $title->id,
+        'gender_id' => $gender->id,
+        'marital_status_id' => $maritalStatus->id,
+        'id_type_id' => $idType->id,
+        'date_of_birth' => '2001-01-01',
+    ]);
+    $studentProgram = StudentProgram::query()->create([
+        'tenant_id' => $tenant->id,
+        'student_id' => $student->id,
+        'institution_department_id' => $institutionDepartment->id,
+        'department_level_id' => $departmentLevel->id,
+        'department_course_id' => $departmentCourse->id,
+        'intake_period_id' => $intakePeriod->id,
+        'mode_of_study_id' => $modeOfStudy->id,
+        'application_tracking_number' => 'APP-CAL-OPTION-MISMATCH',
+    ]);
+    ClassList::query()->create([
+        'tenant_id' => $tenant->id,
+        'student_program_id' => $studentProgram->id,
+        'type' => ClassListTypeEnum::FINAL->value,
+        'attributes' => [],
+    ]);
+
+    Sanctum::actingAs($user);
+
+    $response = $this->getJson("/api/v1/departments/{$institutionDepartment->id}/academic-calendars?academic_year={$calendar->calendar_year}&mode_of_study_id={$modeOfStudy->id}");
+
+    $response->assertOk();
+    $response->assertJsonFragment([
+        'departmentLevelId' => (string) $departmentLevel->id,
+        'totalFinalList' => 1,
+        'academicYearOptionId' => $semesterOneId,
+        'academicYearOption' => 'Semester 1',
+    ]);
+
+    expect($existingConfig->fresh())
+        ->students_per_class->toBe(25)
+        ->academic_year_option_id->toBe($semesterTwoId);
+
+    expect(ClassConfig::query()
+        ->where('institution_department_id', $institutionDepartment->id)
+        ->where('department_course_id', $departmentCourse->id)
+        ->where('department_level_id', $departmentLevel->id)
+        ->where('mode_of_study_id', $modeOfStudy->id)
+        ->where('calendar_year', $calendar->calendar_year)
+        ->where('academic_year_option_id', $semesterOneId)
+        ->exists())->toBeTrue();
+});
+
 test('department academic calendar returns zero totalFinalList when class config and final list are missing', function () {
     $this->travelTo('2026-08-15');
 

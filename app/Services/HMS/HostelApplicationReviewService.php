@@ -6,6 +6,7 @@ use App\Enums\HMS\HostelApplicationStatusEnum;
 use App\Enums\HMS\HostelApplicationTypeEnum;
 use App\Jobs\HMS\SendHostelApplicationAwaitingPaymentEmail;
 use App\Jobs\HMS\SendHostelApplicationDeclinedEmail;
+use App\Jobs\HMS\SendHostelRoomAllocationEmail;
 use App\Models\HMS\HostelApplication;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
@@ -64,5 +65,22 @@ class HostelApplicationReviewService
         }
 
         SendHostelApplicationDeclinedEmail::dispatch($application->id);
+    }
+
+    public function dispatchRoomAllocationEmail(HostelApplication $application): void
+    {
+        $application->loadMissing('student.user');
+
+        $email = $application->student?->user?->email ?? $application->email_address;
+
+        if (blank($email)) {
+            Log::warning('Hostel room allocation email skipped: missing recipient email', [
+                'hostel_application_id' => $application->id,
+            ]);
+
+            return;
+        }
+
+        SendHostelRoomAllocationEmail::dispatch($application->id);
     }
 }
