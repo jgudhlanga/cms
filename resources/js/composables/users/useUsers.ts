@@ -20,7 +20,7 @@ import { User } from '@/types/users';
 import { InertiaForm, usePage } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 import { ref } from 'vue';
-import { ZodObject } from 'zod';
+import { z, ZodObject } from 'zod';
 
 export const useUsers = () => {
     const { moreActionButton, onDelete, onForceDelete, onRestore, textLink, onView, actionButton } = useDataTables();
@@ -240,13 +240,21 @@ export const useUsers = () => {
     };
 
     const isValidating = ref(false);
-     const updateUserCredentials = async (form: InertiaForm<any>, userId: string) => {
-         const formSchema = () => {
-            const personal = ['passwordSchema'];
-            return mergeValidationSchema(schemaFields)(
-                personal,
-                schemaFields['passwordConfirmationSchema']().merge(emailUniqueSchema(`api/v1/validations/check?current_id=${userId}&key=user_email&value=`)),
-            );
+    const updateUserCredentials = async (
+        form: InertiaForm<any>,
+        userId: string,
+        options: { validateEmail?: boolean; validatePassword?: boolean } = {},
+    ) => {
+        const { validateEmail = true, validatePassword = true } = options;
+        const formSchema = () => {
+            const baseSchema = mergeValidationSchema(schemaFields)([], z.object({}));
+            const passwordSchema = validatePassword
+                ? mergeValidationSchema(schemaFields)(['passwordSchema'], schemaFields['passwordConfirmationSchema']())
+                : baseSchema;
+
+            return validateEmail
+                ? passwordSchema.merge(emailUniqueSchema(`api/v1/validations/check?current_id=${userId}&key=user_email&value=`))
+                : passwordSchema;
         };
         try {
             isValidating.value = true;

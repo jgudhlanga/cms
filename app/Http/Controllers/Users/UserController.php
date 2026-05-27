@@ -125,9 +125,18 @@ class UserController extends Controller
     {
         $this->authorize('update', $user);
         $validated = $request->validated();
-        $user->update([
-            'email' => $validated['email'],
-            'password' => $validated['password'],
-        ]);
+        $updates = [];
+
+        if ($request->boolean('change_email') && !empty($validated['email'])) {
+            $updates['email'] = $validated['email'];
+        }
+
+        if ($request->boolean('change_password') && !empty($validated['password'])) {
+            $updates['password'] = $validated['password'];
+        }
+
+        if (!empty($updates)) {
+            $user->update($updates);
+        }
     }
 }
