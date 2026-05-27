@@ -9,7 +9,7 @@
       <tbody class="hava-tbody">
           <tr v-for="r in 5" :key="r">
             <td v-for="k in 3" :key="k" class="p-3 border">
-              <div class="hava-td w-24 h-4 bg-gray-300 rounded animate-pulse"></div>
+              <div class="hava-td w-24 h-4 bg-muted/40 rounded animate-pulse"></div>
             </td>
           </tr>
       </tbody>

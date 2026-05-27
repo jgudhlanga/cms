@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import AppLogo from '@/components/core/image/AppLogo.vue';
+import AppLogoMark from '@/components/core/image/AppLogoMark.vue';
 import PublicShell from '@/layouts/PublicShell.vue';
 </script>
 <template>
@@ -7,9 +7,7 @@ import PublicShell from '@/layouts/PublicShell.vue';
 		<div class="relative isolate flex min-h-svh flex-col items-center justify-center gap-6 overflow-hidden bg-transparent p-6 md:p-10">
 			<div class="relative z-10 flex w-full max-w-sm flex-col gap-6">
 				<a href="#" class="flex items-center gap-2 self-center text-xl font-bold uppercase">
-					<div class="mb-5 flex size-25 items-center justify-center overflow-hidden rounded-3xl">
-						<AppLogo classes="block h-full w-full max-h-full max-w-full" />
-					</div>
+					<AppLogoMark size="xl" class="mb-5" />
 				</a>
 				<slot />
 				<div

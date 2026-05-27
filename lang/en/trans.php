@@ -382,6 +382,8 @@ return [
     'open_preferences' => 'Open preferences',
     'user_preferences' => 'User preferences',
     'preferences_panel_description' => 'Manage your personal application settings.',
+    'appearance' => 'Appearance',
+    'appearance_description' => 'Choose light, dark, or match your system setting.',
     'sidebar_expanded' => 'Sidebar expanded',
     'sidebar_expanded_description' => 'Enable to keep the sidebar open by default.',
     'activity_log' => 'Activity log',

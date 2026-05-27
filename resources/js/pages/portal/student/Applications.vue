@@ -78,11 +78,11 @@ const breadcrumbs: BreadcrumbItemInterface[] = [{ transChoiceKey: 'dashboard', h
             <!--            <AddApplicationButton :student="student" />-->
         </div>
         <div v-if="applications && applications.length > 0" class="my-6 space-y-4">
-            <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow" v-for="application in applications" :key="application.id">
+            <div class="overflow-hidden rounded-lg border border-border bg-card text-card-foreground shadow" v-for="application in applications" :key="application.id">
                 <!-- Card Header -->
-                <div class="bg-card border-b border-gray-100 px-4 py-2">
+                <div class="border-b border-border bg-muted/30 px-4 py-2">
                     <div class="flex items-center justify-between">
-                        <h3 class="text-accent-foreground text-xs font-semibold uppercase">
+                        <h3 class="text-xs font-semibold text-foreground uppercase">
                             {{ application.attributes.course }}
                         </h3>
                         <div class="flex space-x-2" v-if="showEditProgramButton(application, CURRENT_INTAKE_PERIOD_ID)">
@@ -98,7 +98,7 @@ const breadcrumbs: BreadcrumbItemInterface[] = [{ transChoiceKey: 'dashboard', h
                 </div>
                 <!-- Card Body -->
                 <div class="p-4">
-                    <div class="text-accent-foreground grid grid-cols-1 gap-4 text-sm md:grid-cols-5">
+                    <div class="grid grid-cols-1 gap-4 text-sm md:grid-cols-5">
                         <GridLabelValue :label="$tChoice('trans.department', 1)" :value="application.attributes.department" />
                         <GridLabelValue :label="$tChoice('trans.level', 1)" :value="application.attributes.level" />
                         <GridLabelValue :label="$tChoice('trans.application_date', 1)" :value="formatDate(application.attributes.createdAt, 'L')" />

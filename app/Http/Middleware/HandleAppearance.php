@@ -18,18 +18,17 @@ class HandleAppearance
     {
         $appearance = $request->cookie('appearance') ?? 'system';
 
-        // Client hints may be absent until configured; avoids wrong class only when cookie is explicit.
         $systemPrefersDark = strcasecmp((string) $request->header('Sec-CH-Prefers-Color-Scheme', ''), 'dark') === 0;
 
-        $htmlIsDark = match ($appearance) {
-            'dark' => true,
-            'light' => false,
-            default => $systemPrefersDark,
-        };
-
         View::share('appearance', $appearance);
-        View::share('htmlIsDark', $htmlIsDark);
+        View::share('systemPrefersDark', $systemPrefersDark);
 
-        return $next($request);
+        $response = $next($request);
+
+        $response->headers->set('Accept-CH', 'Sec-CH-Prefers-Color-Scheme');
+        $response->headers->set('Critical-CH', 'Sec-CH-Prefers-Color-Scheme');
+        $response->headers->set('Vary', 'Sec-CH-Prefers-Color-Scheme');
+
+        return $response;
     }
 }

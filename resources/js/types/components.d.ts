@@ -41,6 +41,7 @@ declare module 'vue' {
     AppLayout: typeof import('./../layouts/AppLayout.vue')['default']
     ApplicationCover: typeof import('./../components/auth/ApplicationCover.vue')['default']
     AppLogo: typeof import('./../components/core/image/AppLogo.vue')['default']
+    AppLogoMark: typeof import('./../components/core/image/AppLogoMark.vue')['default']
     AppPreferencesSheet: typeof import('./../components/core/preferences/AppPreferencesSheet.vue')['default']
     AppSidebar: typeof import('./../components/core/sidebar/AppSidebar.vue')['default']
     Archived: typeof import('./../components/core/table/Archived.vue')['default']

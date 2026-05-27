@@ -5,5 +5,5 @@ withDefaults(defineProps<{ title: string, uppercase?: boolean }>(), {
 </script>
 
 <template>
-	<div :class="`text-accent-foreground text-xs md:text-sm  ${uppercase && 'uppercase'}`">{{ title }}</div>
+	<div :class="`text-muted-foreground text-xs md:text-sm ${uppercase && 'uppercase'}`">{{ title }}</div>
 </template>

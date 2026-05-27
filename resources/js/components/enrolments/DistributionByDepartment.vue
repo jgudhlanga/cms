@@ -103,8 +103,8 @@ const intakePeriodModel = defineModel<SelectOption | null>('intakePeriodModel');
 </script>
 
 <template>
-    <div class="rounded-lg bg-white px-4 py-2 shadow">
-        <div class="mb-4 flex items-center justify-between text-lg font-medium">
+    <div class="rounded-lg border border-border bg-card px-4 py-2 text-card-foreground shadow">
+        <div class="mb-4 flex items-center justify-between text-lg font-medium text-foreground">
             <HeadingSmall :title="$t('trans.ui_distribution_by_department')" />
             <IntakePeriodComboSelect
                 v-if="showFilters"
@@ -124,7 +124,7 @@ const intakePeriodModel = defineModel<SelectOption | null>('intakePeriodModel');
                         <th colspan="11"></th>
                         <th
                             colspan="5"
-                            class="bg-persian-200 text-accent-foreground text-uppercase j-td-l-border j-td-r-border px-3 py-2 text-center text-xs font-bold"
+                            class="bg-primary/20 text-foreground text-uppercase j-td-l-border j-td-r-border px-3 py-2 text-center text-xs font-bold"
                         >
                             {{ $t('trans.ui_application_statuses') }}
                         </th>
@@ -221,7 +221,7 @@ const intakePeriodModel = defineModel<SelectOption | null>('intakePeriodModel');
                         </td>
                     </tr>
                     <!-- Totals Row -->
-                    <tr class="j-tr bg-gray-50 font-semibold">
+                    <tr class="j-tr bg-muted/40 font-semibold">
                         <td class="j-td text-left">{{ $t('trans.ui_total') }}</td>
                         <td class="j-td text-center">{{ departmentTotals?.male }}</td>
                         <td class="j-td text-center">{{ departmentTotals?.female }}</td>

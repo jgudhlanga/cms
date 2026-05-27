@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import ConfirmDialog from '@/components/core/modal/ConfirmDialog.vue';
-import AppPreferencesSheet from '@/components/core/preferences/AppPreferencesSheet.vue';
 import ErrorDialog from '@/components/core/modal/ErrorDialog.vue';
 import AppSidebar from '@/components/core/sidebar/AppSidebar.vue';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
@@ -43,7 +42,6 @@ onMounted(async () => {
             </div>
         </SidebarInset>
     </SidebarProvider>
-    <AppPreferencesSheet />
     <ConfirmDialog />
     <ErrorDialog />
     <ModalsContainer />

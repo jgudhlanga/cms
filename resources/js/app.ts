@@ -23,6 +23,8 @@ import { ZiggyVue } from 'ziggy-js';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
+initializeTheme();
+
 const pinia = createPinia();
 pinia.use(piniaPluginPersistedstate);
 const vfm = createVfm(); // MODAL PLUGIN
@@ -79,6 +81,3 @@ createInertiaApp({
         showSpinner: true,
     },
 });
-
-// This will set light / dark mode on a page load...
-initializeTheme();

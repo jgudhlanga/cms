@@ -120,7 +120,7 @@ const showToolBar = computed(() => {
                 <slot name="head-right" />
             </div>
         </div>
-        <div v-if="dragItems" class="text-primary my-2 flex w-1/4 rounded-full bg-slate-200 px-3 py-1 text-xs font-bold">
+        <div v-if="dragItems" class="text-primary my-2 flex w-1/4 rounded-full bg-muted px-3 py-1 text-xs font-bold">
             {{ $t('trans.draggable_description') }}
         </div>
         <table class="hava-table">
@@ -128,7 +128,7 @@ const showToolBar = computed(() => {
             <TableBody :table="table" :drag-items="dragItems" :draggable-update-url="draggableUpdateUrl" />
         </table>
     </div>
-    <div class="my-3 flex w-full items-center justify-between px-6" v-if="pagination">
+    <div class="my-3 flex w-full items-center justify-between px-6 text-muted-foreground" v-if="pagination">
         <PerPageSize v-model="pageSize" />
         <GotoPage v-model="currentPage" :meta="pagination ?? null" />
         <Paginator :meta="pagination" :use-api="useApi" :api-fetch-action="apiFetchAction" />

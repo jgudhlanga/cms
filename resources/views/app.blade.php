@@ -1,25 +1,69 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" @class(['dark' => $htmlIsDark ?? false])>
+<html
+    lang="{{ str_replace('_', '-', app()->getLocale()) }}"
+    @class([
+        'dark' => ($appearance ?? 'system') === 'dark' || (($appearance ?? 'system') === 'system' && ($systemPrefersDark ?? false)),
+        'light' => ($appearance ?? 'system') === 'light',
+    ])
+    data-appearance="{{ $appearance ?? 'system' }}"
+>
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="color-scheme" content="light dark">
+        <script>
+            window.__serverPrefersDark = @json($systemPrefersDark ?? false);
+        </script>
         <script>
             (function () {
+                function clientPrefersDark() {
+                    return (
+                        window.matchMedia('(prefers-color-scheme: dark)').matches ||
+                        window.matchMedia('(-webkit-prefers-color-scheme: dark)').matches
+                    );
+                }
+
+                function prefersDark() {
+                    return clientPrefersDark() || window.__serverPrefersDark === true;
+                }
+
+                var appearance = 'system';
+
                 try {
                     var stored = localStorage.getItem('appearance');
-                    var appearance = stored;
-                    if (appearance !== 'dark' && appearance !== 'light' && appearance !== 'system') {
+                    if (stored === 'dark' || stored === 'light' || stored === 'system') {
+                        appearance = stored;
+                    } else {
                         var match = document.cookie.match(/(?:^|;\s*)appearance=([^;]*)/);
-                        appearance = match ? decodeURIComponent(match[1]) : 'system';
+                        if (match) {
+                            var decoded = decodeURIComponent(match[1]);
+                            if (decoded === 'dark' || decoded === 'light' || decoded === 'system') {
+                                appearance = decoded;
+                            }
+                        }
                     }
-                    stored = appearance;
-                    var isDark =
-                        stored === 'dark'
-                            ? true
-                            : stored === 'light'
-                              ? false
-                              : window.matchMedia('(prefers-color-scheme: dark)').matches;
-                    document.documentElement.classList.toggle('dark', isDark);
+                } catch (_) {}
+
+                var isDark =
+                    appearance === 'dark' || (appearance === 'system' && prefersDark());
+                var root = document.documentElement;
+
+                root.classList.remove('light', 'dark');
+                root.dataset.appearance = appearance;
+                root.dataset.resolvedTheme = isDark ? 'dark' : 'light';
+
+                if (appearance === 'light') {
+                    root.classList.add('light');
+                    root.style.colorScheme = 'light';
+                } else {
+                    if (isDark) {
+                        root.classList.add('dark');
+                    }
+                    root.style.colorScheme = isDark ? 'dark' : 'light';
+                }
+
+                try {
+                    localStorage.setItem('appearance', appearance);
                 } catch (_) {}
             })();
         </script>

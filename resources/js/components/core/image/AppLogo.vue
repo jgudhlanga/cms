@@ -12,5 +12,5 @@ const { appLogo } = useDefaults();
 </script>
 
 <template>
-	<BaseImage :src="appLogo" :classes="twMerge('rounded-3xl overflow-hidden object-contain', classes)" />
+	<BaseImage :src="appLogo" :classes="twMerge('', classes)" />
 </template>

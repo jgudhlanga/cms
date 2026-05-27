@@ -35,6 +35,15 @@ const linksOptions = computed(() =>
 <template>
     <div class="flex w-full items-center space-x-2">
         <ItemTitle :title="`${$t('trans.go_to_page')}:`" :uppercase="false" />
-        <BaseSelect class="w-25" label="" v-bind="$attrs" placeholder="" :options="linksOptions" :is-searchable="false" :is-clearable="false" />
+        <BaseSelect
+            class="w-25"
+            label=""
+            v-bind="$attrs"
+            placeholder=""
+            :options="linksOptions"
+            :is-searchable="false"
+            :is-clearable="false"
+            :vertical-layout="false"
+        />
     </div>
 </template>
