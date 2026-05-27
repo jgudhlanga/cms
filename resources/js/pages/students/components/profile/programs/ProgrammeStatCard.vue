@@ -8,11 +8,11 @@ defineProps<Props>();
 </script>
 
 <template>
-    <div class="rounded-xl border border-stone-100 bg-stone-50 px-4 py-3">
-        <p class="mb-1 text-[0.65rem] font-medium text-slate-400">
+    <div class="rounded-xl border border-border bg-muted/40 px-4 py-3">
+        <p class="mb-1 text-[0.65rem] font-medium text-muted-foreground">
             {{ $t(labelKey) }}
         </p>
-        <p class="text-[0.95rem] font-bold tracking-tight text-slate-800">
+        <p class="text-[0.95rem] font-bold tracking-tight text-foreground">
             {{ value }}
         </p>
     </div>

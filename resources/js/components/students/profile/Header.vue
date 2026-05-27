@@ -29,62 +29,57 @@ import { IconName, icons } from '@/lib/icons';
    };
 
 </script>
-<template> 
-  <div class="w-full mx-auto">
-          <div class="bg-white">
-            <div class="py-3">
-              <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-5">
-                <div class="flex gap-4 flex-wrap">
-                  <div class="flex-shrink-0">
-                    <Avatar class="rounded-full size-20">
+<template>
+  <section class="px-2 py-1">
+              <div class="flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
+                <div class="flex flex-wrap gap-4">
+                  <div class="shrink-0">
+                    <Avatar class="size-20 rounded-full">
                           <AvatarImage
                               :src="avatarImage()"
                               :alt="data?.studentName"
                           />
-                          <AvatarFallback class="rounded-full size-8">
+                          <AvatarFallback class="size-8 rounded-full">
                               {{ getInitials(data?.studentName) }}
                           </AvatarFallback>
                       </Avatar>
                   </div>
                   <div class="space-y-2">
-                    <div class="flex items-center gap-2 flex-wrap">
-                      <h1 class="text-2xl  font-extrabold tracking-tight text-slate-800 uppercase">{{ data?.studentName }}</h1>
-                      <span class="inline-flex  items-center rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-800 border border-emerald-200">
+                    <div class="flex flex-wrap items-center gap-2">
+                      <h1 class="text-2xl font-extrabold uppercase tracking-tight text-foreground">{{ data?.studentName }}</h1>
+                      <span class="inline-flex items-center rounded-full border border-emerald-500/30 bg-emerald-500/15 px-2.5 py-0.5 text-xs font-semibold text-emerald-400">
                         {{ data?.enrolmentStatus }}  
                       </span>
                     </div>
-                    <div class="flex flex-wrap items-center gap-1.5 text-gray-600 text-sm sm:text-base">
-                      <span class="font-mono tracking-wide bg-gray-100 shadow-sm px-1.5 py-0.5 rounded-full">{{ data?.studentNumber }}</span>
-                      <span class="font-medium text-gray-700 uppercase">{{ levelCourseDisplay }}</span>
+                    <div class="flex flex-wrap items-center gap-1.5 text-sm text-muted-foreground sm:text-base">
+                      <span class="rounded-full bg-muted px-1.5 py-0.5 font-mono tracking-wide text-foreground shadow-sm">{{ data?.studentNumber }}</span>
+                      <span class="font-medium uppercase text-foreground">{{ levelCourseDisplay }}</span>
                     </div>
                     <div class="flex flex-wrap items-center gap-2 pt-1">
-                      <span class="inline-flex items-center rounded-full bg-indigo-50 px-3 py-1.5 text-xs font-medium text-indigo-800 border border-indigo-100 shadow-sm">
+                      <span class="inline-flex items-center rounded-full border border-primary/30 bg-primary/15 px-3 py-1.5 text-xs font-medium text-primary shadow-sm">
                         📅 {{ yearSemesterDisplay }}
                       </span>
-                      <span class="inline-flex items-center rounded-full bg-sky-50 px-3 py-1.5 text-xs font-medium text-sky-800 border border-sky-100 shadow-sm">
+                      <span class="inline-flex items-center rounded-full border border-sky-500/30 bg-sky-500/15 px-3 py-1.5 text-xs font-medium text-sky-400 shadow-sm">
                         ⏱️ {{ data?.modeOfStudy }}
                       </span>
-                      <!-- Department badge -->
-                      <span class="inline-flex items-center rounded-full bg-purple-50 px-3 py-1.5 text-xs font-medium text-purple-800 border border-purple-100 shadow-sm">
+                      <span class="inline-flex items-center rounded-full border border-purple-500/30 bg-purple-500/15 px-3 py-1.5 text-xs font-medium text-purple-400 shadow-sm">
                         🏛️ {{ data?.department }}
                       </span>
                     </div>
                   </div>
                 </div>
-                <div class="flex-shrink-0 w-full md:w-auto">
+                <div class="w-full shrink-0 md:w-auto">
                   <button 
-                    class="group relative w-full md:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition-all duration-200 ease-out focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 transform active:scale-95"
+                    class="group relative inline-flex w-full transform items-center justify-center gap-2 rounded-xl bg-primary px-5 py-2.5 font-semibold text-primary-foreground shadow-md transition-all duration-200 ease-out hover:bg-primary/90 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background active:scale-95 md:w-auto"
                   >
-                    <component :is="icons[IconName.download]" class="w-4 h-4 transition-transform group-hover:translate-y-[-1px]" />
+                    <component :is="icons[IconName.download]" class="h-4 w-4 transition-transform group-hover:translate-y-[-1px]" />
                     <span>{{ $t('general.export') }}</span>
-                    <span class="absolute inset-0 rounded-xl bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></span>
+                    <span class="pointer-events-none absolute inset-0 rounded-xl bg-primary-foreground/10 opacity-0 transition-opacity duration-300 group-hover:opacity-100"></span>
                   </button>
-                  <p class="text-[11px] text-gray-400 text-center md:text-right mt-1.5">{{ $t('general.download_profile_data') }}</p>
+                  <p class="mt-1.5 text-center text-[11px] text-muted-foreground md:text-right">{{ $t('general.download_profile_data') }}</p>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
+  </section>
 </template>
 <style scoped>
     button:active {

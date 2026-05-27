@@ -95,10 +95,10 @@ const verificationMode = isItTrue(import.meta.env.VITE_VERIFICATION_MODE);
         </div>
         <div class="flex flex-col space-y-4" v-if="oLevelSubjectResults && oLevelSubjectResults?.length > 0">
             <form v-for="(row, index) in oLevelSubjectResults" :key="`mobile_${row?.id ?? ''}`" @submit.prevent="saveSubjectResult(String(row.id))">
-                <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow">
+                <div class="overflow-hidden rounded-lg border border-border bg-card text-card-foreground shadow">
                     <!-- Card Header -->
-                    <div class="bg-card border-b border-gray-100 px-4 py-2">
-                        <div class="text-accent-foreground flex items-center space-x-1 text-xs font-semibold uppercase">
+                    <div class="border-b border-border bg-muted/30 px-4 py-2">
+                        <div class="flex items-center space-x-1 text-xs font-semibold text-foreground uppercase">
                             <span>{{ `${index + 1}.` }}</span>
                             <h3>
                                 {{ row?.attributes?.subject }}
@@ -110,7 +110,7 @@ const verificationMode = isItTrue(import.meta.env.VITE_VERIFICATION_MODE);
                     <div class="p-4">
                         <div class="grid grid-cols-1 items-center gap-4 md:grid-cols-4">
                             <div>
-                                <p class="text-xs font-medium tracking-wide text-gray-500 uppercase">{{ $tChoice('trans.year', 1) }}</p>
+                                <p class="text-xs font-medium tracking-wide text-muted-foreground uppercase">{{ $tChoice('trans.year', 1) }}</p>
                                 <div class="mt-1">
                                     <SelectYear
                                         :input-id="`year_${row.id}`"
@@ -127,7 +127,7 @@ const verificationMode = isItTrue(import.meta.env.VITE_VERIFICATION_MODE);
                                 </div>
                             </div>
                             <div>
-                                <p class="text-xs font-medium tracking-wide text-gray-500 uppercase">{{ $tChoice('trans.sitting', 1) }}</p>
+                                <p class="text-xs font-medium tracking-wide text-muted-foreground uppercase">{{ $tChoice('trans.sitting', 1) }}</p>
                                 <div class="mt-1 flex w-full flex-col">
                                     <SelectSitting
                                         class="flex w-full"
@@ -142,7 +142,7 @@ const verificationMode = isItTrue(import.meta.env.VITE_VERIFICATION_MODE);
                                 </div>
                             </div>
                             <div>
-                                <p class="text-xs font-medium tracking-wide text-gray-500 uppercase">{{ $tChoice('trans.grade', 1) }}</p>
+                                <p class="text-xs font-medium tracking-wide text-muted-foreground uppercase">{{ $tChoice('trans.grade', 1) }}</p>
                                 <div class="mt-1">
                                     <SpinnerComponent class="flex w-full items-center justify-center" v-if="isLoading" />
                                     <template v-else>

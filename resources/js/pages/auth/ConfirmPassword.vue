@@ -21,7 +21,10 @@ const submit = () => {
 
 <template>
     <Head :title="$t('trans.ui_confirm_password_2')" />
-    <form @submit.prevent="submit">
+    <form
+        @submit.prevent="submit"
+        class="rounded-lg border border-border bg-card p-6 text-card-foreground shadow-md dark:shadow-sm"
+    >
         <div class="space-y-6">
             <div class="grid gap-2">
                 <Label htmlFor="password">{{ $t('trans.password') }}</Label>

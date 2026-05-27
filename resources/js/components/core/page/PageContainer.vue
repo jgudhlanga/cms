@@ -15,6 +15,7 @@ import { useUtils } from '@/composables/core/useUtils';
 import { PageProps } from '@/types';
 import { BreadcrumbItemInterface } from '@/types/ui';
 import BackNavigationButton from '@/components/core/button/BackNavigationButton.vue';
+import AppPreferencesSheet from '@/components/core/preferences/AppPreferencesSheet.vue';
 import { usePage } from '@inertiajs/vue3';
 import { computed, useSlots } from 'vue';
 
@@ -80,6 +81,7 @@ const backNavigationRowJustifyClass = computed((): string => {
                 </TextLink>
             </BaseTooltip>
             <LogoutButton />
+            <AppPreferencesSheet />
         </div>
     </header>
     <div class="flex h-full w-full flex-col pb-10">

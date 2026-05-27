@@ -20,6 +20,7 @@ use App\Repositories\Shared\interface\IContactRepository;
 use App\Repositories\Shared\interface\INextOfKinRepository;
 use App\Repositories\Students\interface\IStudentProgramRepository;
 use App\Repositories\Students\interface\IStudentRepository;
+use App\Services\Enrollment\EnrollmentLookupService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -47,7 +48,7 @@ class StudentRepository extends BaseRepository implements IStudentRepository
                 'enrolments.departmentLevel.level',
                 'enrolments.departmentCourse.course',
                 'enrolments.modeOfStudy',
-                'enrolments.academicCalendarStudentEnrolment'
+                'enrolments.academicCalendarStudentEnrolment',
             ])
             ->join('student_enrolments', 'student_enrolments.student_id', '=', 'students.id')
             ->select('students.*')
@@ -165,7 +166,9 @@ class StudentRepository extends BaseRepository implements IStudentRepository
 
     private function createFields(CreateApplicationDto|CreateStudentApplicationDto $dto): array
     {
-        $cleanIdNumber = str_replace(' ', '', trim($dto->id_number ?? ''));
+        $cleanIdNumber = $dto->id_number
+            ? EnrollmentLookupService::normalizeNationalId($dto->id_number)
+            : null;
 
         return [
             'user_id' => $dto->user_id,

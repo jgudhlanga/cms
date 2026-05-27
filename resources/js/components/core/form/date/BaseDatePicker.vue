@@ -1,10 +1,13 @@
 <script lang="ts" setup>
 import InputError from '@/components/core/form/InputError.vue';
 import RequiredIndicator from '@/components/core/form/RequiredIndicator.vue';
+import { useResolvedTheme } from '@/composables/core/useResolvedTheme';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import VueDatePicker from '@vuepic/vue-datepicker';
 import '@vuepic/vue-datepicker/dist/main.css';
+
+const { isDark } = useResolvedTheme();
 
 interface Props {
     inputId: string;
@@ -37,6 +40,8 @@ withDefaults(defineProps<Props>(), {
                 :id="inputId"
                 v-bind="$attrs"
                 :always-clearable="false"
+                :dark="isDark"
+                class="app-date-picker w-full"
             />
         </div>
         <InputError :class="cn('flex w-full lowercase', !verticalLayout && 'justify-end')" :message="error" />

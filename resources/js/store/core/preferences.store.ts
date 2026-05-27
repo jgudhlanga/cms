@@ -6,7 +6,6 @@ export  type IPreferenceStore = {
 	sideBarState: boolean,
 	hydratedFromServer: boolean,
 	preferenceId: number | null,
-	theme: string | null
 }
 
 export const usePreferencesStore = defineStore('preferences', {
@@ -17,7 +16,6 @@ export const usePreferencesStore = defineStore('preferences', {
 			sideBarState: false,
 			hydratedFromServer: false,
 			preferenceId: null,
-			theme: localStorage.theme || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
 		};
 	},
 	actions: {

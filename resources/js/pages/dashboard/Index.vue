@@ -82,11 +82,16 @@ const enrollmentData = computed(() => {
 
 const intakePeriodModel = ref<SelectOption | null>(null);
 
-onMounted(async () => {
-    if (props.intakePeriod) {
-        intakePeriodModel.value = { value: Number(props.intakePeriod.id), label: props.intakePeriod.attributes.name };
-    }
-});
+const chartThemeColors = () => {
+    const style = getComputedStyle(document.documentElement);
+    const hsl = (token: string) => `hsl(${style.getPropertyValue(token).trim()})`;
+
+    return {
+        foreground: hsl('--foreground'),
+        muted: hsl('--muted-foreground'),
+        border: hsl('--border'),
+    };
+};
 
 const handleFilterChange = (option: SelectOption) => {
     router.get(
@@ -99,7 +104,14 @@ const handleFilterChange = (option: SelectOption) => {
         },
     );
 };
+
 onMounted(async () => {
+    if (props.intakePeriod) {
+        intakePeriodModel.value = { value: Number(props.intakePeriod.id), label: props.intakePeriod.attributes.name };
+    }
+
+    const { foreground, muted, border } = chartThemeColors();
+
     if (levelChart.value) {
         new Chart(levelChart.value, {
             type: 'doughnut',
@@ -111,6 +123,9 @@ onMounted(async () => {
                     legend: {
                         position: 'left',
                         align: 'center',
+                        labels: {
+                            color: foreground,
+                        },
                     },
                 },
                 cutout: '60%',
@@ -136,11 +151,18 @@ onMounted(async () => {
             scales: {
                 y: {
                     beginAtZero: true,
+                    ticks: {
+                        color: muted,
+                    },
                     grid: {
                         drawBorder: false,
+                        color: border,
                     },
                 },
                 x: {
+                    ticks: {
+                        color: muted,
+                    },
                     grid: {
                         display: false,
                     },
@@ -164,14 +186,14 @@ onMounted(async () => {
                         :intake-periods="intakePeriods"
                         :handle-filter-change="handleFilterChange"
                     />
-                    <div class="gap-6 rounded-lg bg-white px-4 py-2 shadow">
+                    <div class="gap-6 rounded-lg border border-border bg-card px-4 py-2 text-card-foreground shadow">
                         <HeadingSmall class="mb-2" :title="$t('trans.ui_distribution_by_level')" />
                         <div class="h-75">
                             <canvas id="levelChart" ref="levelChart"></canvas>
                         </div>
                     </div>
                     <div class="grid grid-cols-1 gap-6 px-4 sm:px-0">
-                        <div class="rounded-lg bg-white px-4 py-2 shadow">
+                        <div class="rounded-lg border border-border bg-card px-4 py-2 text-card-foreground shadow">
                             <HeadingSmall class="mb-2" :title="$t('trans.ui_daily_distribution')" />
                             <div class="h-80">
                                 <canvas id="enrollmentChart" ref="enrollmentChart"></canvas>

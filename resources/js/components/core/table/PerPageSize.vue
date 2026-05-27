@@ -28,6 +28,7 @@ const pageSizeOptions = ref([
 			:options="pageSizeOptions"
 			:is-searchable="false"
 			:is-clearable="false"
+			:vertical-layout="false"
 		/>
 	</div>
 </template>

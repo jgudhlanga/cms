@@ -48,10 +48,17 @@ class HandleInertiaRequests extends Middleware
         $impersonate = app(ImpersonateManager::class);
         $isImpersonating = $impersonate->isImpersonating();
 
+        $appearance = $request->cookie('appearance') ?? 'system';
+        $systemPrefersDark = strcasecmp((string) $request->header('Sec-CH-Prefers-Color-Scheme', ''), 'dark') === 0;
+
         return [
             ...parent::share($request),
             'name' => config('app.name'),
             'appVersion' => app(AppVersion::class)->resolve(),
+            'appearance' => [
+                'preference' => $appearance,
+                'systemPrefersDark' => $systemPrefersDark,
+            ],
             // 'quote' => ['message' => trim($message), 'author' => trim($author)],
             'auth' => [
                 'user' => $user ? new UserResource($user) : null,

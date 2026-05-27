@@ -92,65 +92,62 @@ onMounted(async () => {
 </script>
 <template>
     <StudentPageHeader />
-    <div class="flex h-screen flex-1 items-center bg-gray-50 py-16">
-        <DataLoadingSpinner v-if="isCheckingPayment" message="checking if you already pay" />
-        <div v-else class="flex h-full w-full flex-col justify-around space-y-6 p-6">
-            <div class="mx-auto flex flex-col items-center justify-center">
-                <div class="text-destructive mx-auto flex items-center justify-center font-bold uppercase">
-                    {{ $t('trans.ui_please_check_for_the_available_courses_in_the_advert_before') }}
-                </div>
-                <BaseAlert
-                    :description="$t('trans.registration_fee_payment_description', { amount: `USD${formatCurrency(registrationFeeAmount)}` })"
-                    :type="TypeVariant.info"
-                />
-            </div>
-            <div class="amount">
-                <div class="amount-label">{{ $t('trans.amount_to_pay') }}:</div>
-                <div class="amount-value">{{ `USD${formatCurrency(registrationFeeAmount)}` }}</div>
-            </div>
-            <div class="mx-auto flex w-full md:w-1/3 flex-col items-center justify-center space-y-3 md:flex-row md:space-y-0 md:space-x-3">
-                <CancelButton />
-                <button @click="submit" class="inline-flex w-full p-2.5 bg-linear-to-br from-persian-600 to-[#00d2ff] text-white border-0 rounded-[10px] text-lg font-semibold justify-center items-center uppercase cursor-pointer transition-all duration-300 shadow-[0_4px_15px_rgba(0,0,0,0.1)]" :disabled="isLoading">
-                    {{ $t('trans.proceed_to_payment') }}
-                    <component :is="icons[IconName.loader]" v-if="isLoading" class="ml-2 h-6 w-5 animate-spin" />
-                </button>
-            </div>
-            <div class="flex flex-col">
-                <div class="text-muted-foreground flex items-center justify-center space-x-3 text-xs font-bold">
-                    <span>🔒</span><span>{{ $t('trans.secure_payment_processed_by', { payment_processor: 'Smile & Pay' }) }}</span>
+    <div class="min-h-svh bg-background px-4 pb-12 pt-28 text-foreground sm:px-6">
+        <DataLoadingSpinner v-if="isCheckingPayment" :message="$t('trans.ui_checking_payment_status')" />
+
+        <div v-else class="mx-auto w-full max-w-2xl">
+            <div class="rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-8">
+                <div class="space-y-4">
+                    <div class="text-destructive text-center text-sm font-bold tracking-wide uppercase">
+                        {{ $t('trans.ui_please_check_for_the_available_courses_in_the_advert_before') }}
+                    </div>
+
+                    <BaseAlert
+                        :description="$t('trans.registration_fee_payment_description', { amount: `USD${formatCurrency(registrationFeeAmount)}` })"
+                        :type="TypeVariant.info"
+                    />
+
+                    <div class="rounded-xl border border-border bg-muted/30 px-5 py-4">
+                        <div class="flex items-center justify-between gap-4">
+                            <div class="space-y-0.5">
+                                <div class="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                                    {{ $t('trans.amount_to_pay') }}
+                                </div>
+                                <div class="text-2xl font-semibold text-foreground sm:text-3xl">
+                                    {{ `USD${formatCurrency(registrationFeeAmount)}` }}
+                                </div>
+                            </div>
+                            <div class="text-muted-foreground hidden text-right text-xs font-medium sm:block">
+                                {{ $t('trans.ui_secure_redirect_to_payment_gateway') }}
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="payment-methods">
-                    <BaseImage :src="paymentMethods" classes="rounded-sm h-10" />
+                <div class="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <CancelButton />
+                    <button
+                        type="button"
+                        @click="submit"
+                        class="inline-flex w-full cursor-pointer items-center justify-center rounded-[10px] border-0 bg-linear-to-br from-persian-600 to-[#00d2ff] px-4 py-2.5 text-base font-semibold text-white shadow-[0_4px_15px_rgba(0,0,0,0.1)] transition-all duration-300 enabled:hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-70"
+                        :disabled="isLoading"
+                    >
+                        <span>{{ $t('trans.proceed_to_payment') }}</span>
+                        <component :is="icons[IconName.loader]" v-if="isLoading" class="ml-2 h-5 w-5 animate-spin" />
+                    </button>
+                </div>
+
+                <div class="mt-8 space-y-4">
+                    <div class="text-muted-foreground flex items-center justify-center gap-2 text-xs font-semibold">
+                        <component :is="icons[IconName.shield]" class="h-4 w-4" />
+                        <span>{{ $t('trans.secure_payment_processed_by', { payment_processor: 'Smile & Pay' }) }}</span>
+                    </div>
+
+                    <div class="flex items-center justify-center">
+                        <BaseImage :src="paymentMethods" classes="h-10 rounded-sm opacity-90" />
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </template>
-<style scoped>
-.amount {
-    text-align: center;
-    margin-bottom: 30px;
-}
-
-.amount-label {
-    font-size: 16px;
-    color: #6c757d;
-    margin-bottom: 8px;
-    font-weight: 600;
-    text-transform: uppercase;
-}
-
-.amount-value {
-    font-size: 32px;
-    font-weight: 700;
-    color: #2342f5;
-}
-
-.payment-methods {
-    display: flex;
-    justify-content: center;
-    gap: 15px;
-    margin-top: 25px;
-}
-</style>

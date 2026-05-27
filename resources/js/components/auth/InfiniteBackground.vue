@@ -3,18 +3,18 @@
 </script>
 
 <template>
-    <div class="area">
+    <div class="area auth-infinite-area">
         <ul class="circles">
-            <li></li>
-            <li></li>
-            <li></li>
-            <li></li>
-            <li></li>
-            <li></li>
-            <li></li>
-            <li></li>
-            <li></li>
-            <li></li>
+            <li class="auth-infinite-dot"></li>
+            <li class="auth-infinite-dot"></li>
+            <li class="auth-infinite-dot"></li>
+            <li class="auth-infinite-dot"></li>
+            <li class="auth-infinite-dot"></li>
+            <li class="auth-infinite-dot"></li>
+            <li class="auth-infinite-dot"></li>
+            <li class="auth-infinite-dot"></li>
+            <li class="auth-infinite-dot"></li>
+            <li class="auth-infinite-dot"></li>
         </ul>
     </div>
 </template>
@@ -69,8 +69,6 @@
 -- Start BackGround Animation
 */
 .area {
-    background: white;
-    background: -webkit-linear-gradient(to left, #6b7ee5, #2342f5);
     width: 100%;
     height: 100vh;
     position: absolute;
@@ -92,7 +90,6 @@
     list-style: none;
     width: 10px;
     height: 10px;
-    background: gray;
     animation: animate 25s linear infinite;
     bottom: -150px;
 }

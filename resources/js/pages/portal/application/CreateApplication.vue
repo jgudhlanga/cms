@@ -34,11 +34,19 @@ import { trans } from 'laravel-vue-i18n';
 import { storeToRefs } from 'pinia';
 
 // Props
+interface RegistrationPrefill {
+    id_number?: string | null;
+    passport_number?: string | null;
+    id_type_id?: number | null;
+    path?: string | null;
+}
+
 interface Props {
     hasPaidApplicationFee: boolean | null;
     levelsWithPayment: Level[];
     auth: AuthObject;
     errors: object;
+    registrationPrefill?: RegistrationPrefill | null;
 }
 
 const props = defineProps<Props>();
@@ -47,7 +55,7 @@ const requirements = ref<CourseRequirement | DepartmentLevelRequirement | null |
 // Composable
 const { idTypes, listIdTypes } = useIdTypes();
 const { applicationFormSchema } = useStudentPortal();
-const { isNativeCitizen, isItTrue, navigateTo } = useUtils();
+const { isNativeCitizen, isItTrue, navigateTo, formatZimIdNumber } = useUtils();
 const { validateMainSubjects, validateOtherSubjects, updateCreateForm } = useApplicationFormHelper();
 const store = useCreateApplicationFormStore();
 const storeRefs = storeToRefs(store);
@@ -125,10 +133,23 @@ const populateInitialForm = () => {
     storeRefs.last_name.value = attrs?.lastname;
     storeRefs.email.value = attrs?.email ?? '';
     if (!storeRefs.idType.value) {
+        const prefillIdTypeId = props.registrationPrefill?.id_type_id;
+        const matchedIdType = prefillIdTypeId
+            ? idTypes.value.find((type) => Number(type.id) === Number(prefillIdTypeId))
+            : defaultIdType.value;
         storeRefs.idType.value = {
-            label: defaultIdType.value?.attributes?.name ?? '',
-            value: Number(defaultIdType.value?.id) || '',
+            label: matchedIdType?.attributes?.name ?? defaultIdType.value?.attributes?.name ?? '',
+            value: Number(matchedIdType?.id ?? defaultIdType.value?.id) || '',
         };
+    }
+
+    if (props.registrationPrefill?.id_number && !storeRefs.id_number?.value) {
+        const raw = props.registrationPrefill.id_number;
+        storeRefs.id_number.value = formatZimIdNumber(raw) ?? raw;
+    }
+
+    if (props.registrationPrefill?.passport_number && !storeRefs.passport_number?.value) {
+        storeRefs.passport_number.value = props.registrationPrefill.passport_number;
     }
 };
 
@@ -211,7 +232,7 @@ watch(storeRefs.level, async (newVal) => {
 <template>
     <StudentPageHeader />
     <form @submit.prevent="() => save()">
-        <div class="mt-20 flex w-full flex-col bg-white px-5 md:p-0">
+        <div class="mt-20 flex w-full flex-col bg-background px-5 text-foreground md:p-0">
             <ComingSoonAnimated v-if="maintenanceMode" />
             <div v-else class="flex w-full flex-col space-y-6 md:mx-auto md:w-7/8">
                 <PersonalDetails :form="form" />

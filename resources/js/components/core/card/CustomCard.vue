@@ -5,8 +5,8 @@ interface Props {
 defineProps<Props>();
 </script>
 <template>
-    <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow">
-        <div class="bg-card border-b border-gray-100 px-4 py-2">
+    <div class="overflow-hidden rounded-lg border border-border bg-card text-card-foreground shadow">
+        <div class="bg-card border-b border-border px-4 py-2">
             <div class="flex items-center justify-between">
                 <h3 v-if="title" class="text-accent-foreground text-xs font-semibold uppercase">
                     {{ title }}

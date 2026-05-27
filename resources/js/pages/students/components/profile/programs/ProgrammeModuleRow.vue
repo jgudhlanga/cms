@@ -25,17 +25,17 @@ const emit = defineEmits<{
     <div>
         <button
             type="button"
-            class="group flex w-full items-center gap-4 px-5 py-4 text-left transition-colors duration-150 hover:bg-slate-50/80 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-blue-500"
-            :class="{ 'ring-2 ring-inset ring-slate-800/10 bg-slate-50/50': open }"
+            class="group flex w-full items-center gap-4 px-5 py-4 text-left transition-colors duration-150 hover:bg-muted/50 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
+            :class="{ 'bg-muted/40 ring-2 ring-inset ring-border': open }"
             @click="emit('toggle')"
         >
-            <span class="w-16 shrink-0 font-mono text-[0.72rem] font-semibold tracking-wide text-slate-400">
+            <span class="w-16 shrink-0 font-mono text-[0.72rem] font-semibold tracking-wide text-muted-foreground">
                 {{ displayValue(module.code) }}
             </span>
-            <span class="flex-1 text-[0.93rem] font-bold tracking-tight text-slate-800">
+            <span class="flex-1 text-[0.93rem] font-bold tracking-tight text-foreground">
                 {{ displayValue(module.name) }}
             </span>
-            <span class="shrink-0 text-[0.8rem] font-medium text-slate-400">
+            <span class="shrink-0 text-[0.8rem] font-medium text-muted-foreground">
                 {{ formatDurationHours(module.durationInHours) }}
             </span>
             <span
@@ -45,7 +45,7 @@ const emit = defineEmits<{
                 {{ moduleGradeDisplay(module) }}
             </span>
             <ChevronDown
-                class="h-4 w-4 shrink-0 text-slate-400 transition-transform duration-200"
+                class="h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200"
                 :class="{ 'rotate-180': open }"
             />
         </button>

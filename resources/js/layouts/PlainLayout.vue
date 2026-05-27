@@ -1,8 +1,10 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import PublicShell from '@/layouts/PublicShell.vue';
+</script>
 
 <template>
-    <div>
-        <slot/>
-        <ErrorDialog/>
-    </div>
+	<PublicShell>
+		<slot />
+		<ErrorDialog />
+	</PublicShell>
 </template>

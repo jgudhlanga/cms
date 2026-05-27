@@ -15,7 +15,7 @@ defineProps<Props>();
 </script>
 
 <template>
-    <div class="overflow-hidden border-t border-slate-100 bg-slate-50/70">
+    <div class="overflow-hidden border-t border-border bg-muted/40">
         <div class="grid grid-cols-2 gap-4 px-5 pb-4 pt-3 sm:grid-cols-4">
             <ProgrammeDetailField
                 label-key="students.lecturer"
@@ -44,14 +44,14 @@ defineProps<Props>();
             v-if="module.score !== null"
             class="px-5 pb-4"
         >
-            <div class="h-1.5 overflow-hidden rounded-full bg-slate-200">
+            <div class="h-1.5 overflow-hidden rounded-full bg-muted">
                 <div
                     class="h-full rounded-full transition-all duration-500"
                     :class="scoreBarColor(module.score)"
                     :style="{ width: `${module.score}%` }"
                 />
             </div>
-            <p class="mt-1 text-[0.65rem] text-slate-400">
+            <p class="mt-1 text-[0.65rem] text-muted-foreground">
                 {{ scoreLabel(module.score) }}
             </p>
         </div>

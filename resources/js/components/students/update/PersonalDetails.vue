@@ -17,6 +17,7 @@ import { useCreateApplicationFormStore } from '@/store/portal/useCreateApplicati
 import { CreateApplicationParams } from '@/types/portal';
 import { InertiaForm } from '@inertiajs/vue3';
 import { storeToRefs } from 'pinia';
+import { watch } from 'vue';
 
 const {
     idType,
@@ -40,7 +41,17 @@ const onRadioChange = (value: any) => {
 };
 
 defineProps<{ form: InertiaForm<CreateApplicationParams> }>();
-const { isNativeCitizen } = useUtils();
+const { isNativeCitizen, formatZimIdNumber } = useUtils();
+
+watch(id_number, (value) => {
+    if (!value || !isNativeCitizen(idType.value?.label ?? '')) {
+        return;
+    }
+    const formatted = formatZimIdNumber(value);
+    if (formatted && formatted !== value) {
+        id_number.value = formatted;
+    }
+});
 </script>
 
 <template>
@@ -72,7 +83,13 @@ const { isNativeCitizen } = useUtils();
         <div class="grid-col-1 mt-4 grid gap-3 md:grid-cols-3">
             <IdTypeComboSelect :form="form" v-model="idType" :error="form.errors.idType" :is-required="true" />
             <template v-if="isNativeCitizen(idType?.label ?? '')">
-                <IdNumber v-model="id_number" :is-required="true" @input="clearFormErrors(form, 'id_number')" :error="form.errors.id_number" />
+                <IdNumber
+                    v-model="id_number"
+                    :is-required="true"
+                    :show-format-hint="true"
+                    @input="clearFormErrors(form, 'id_number')"
+                    :error="form.errors.id_number"
+                />
             </template>
             <template v-else>
                 <PassportNumber

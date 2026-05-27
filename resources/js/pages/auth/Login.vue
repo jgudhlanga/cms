@@ -11,6 +11,7 @@ import { clearFormErrors } from '@/lib/forms';
 import ToastService from '@/services/toast.service';
 import { Login } from '@/types/auth';
 import { Head, useForm } from '@inertiajs/vue3';
+import { onMounted } from 'vue';
 
 defineProps<{
     status?: string;
@@ -18,7 +19,7 @@ defineProps<{
 }>();
 
 const { login } = useAuth();
-const { navigateTo, isItTrue } = useUtils();
+const { navigateTo, isItTrue, getQueryParams } = useUtils();
 const form = useForm<Login>({
     email: '',
     password: '',
@@ -26,6 +27,13 @@ const form = useForm<Login>({
 });
 
 const maintenanceMode = isItTrue(import.meta.env.VITE_MAINTENANCE_MODE);
+
+onMounted(() => {
+    const params = getQueryParams();
+    if (params.email) {
+        form.email = params.email;
+    }
+});
 
 const loginNavigateTo = () => {
     if (maintenanceMode) {
@@ -40,7 +48,9 @@ const loginNavigateTo = () => {
     <Head :title="$t('trans.login')" />
     <BaseAlert v-if="status" :type="TypeVariant.success" :description="status" />
     <form @submit.prevent="login(form)" class="flex w-full flex-col">
-        <div class="flex flex-col space-y-4 rounded-lg p-5 shadow-md">
+        <div
+            class="flex w-full flex-col space-y-4 rounded-lg border border-border bg-card p-5 text-card-foreground shadow-md dark:shadow-sm"
+        >
             <Email
                 v-model="form.email"
                 :inputAutoFocus="true"
