@@ -29,8 +29,8 @@ const emit = defineEmits<{
                 class="rounded-lg border-[1.5px] px-4 py-2 text-sm font-semibold transition"
                 :class="
                     activeFloor === HOSTEL_SHOW_ALL_FLOORS
-                        ? 'border-slate-900 bg-slate-900 text-white'
-                        : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
+                        ? 'border-primary bg-primary text-primary-foreground'
+                        : 'border-border bg-card text-muted-foreground hover:border-primary/40'
                 "
                 @click="emit('update:activeFloor', HOSTEL_SHOW_ALL_FLOORS)"
             >
@@ -43,8 +43,8 @@ const emit = defineEmits<{
                 class="rounded-lg border-[1.5px] px-4 py-2 text-sm font-semibold transition"
                 :class="
                     activeFloor === floor
-                        ? 'border-slate-900 bg-slate-900 text-white'
-                        : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
+                        ? 'border-primary bg-primary text-primary-foreground'
+                        : 'border-border bg-card text-muted-foreground hover:border-primary/40'
                 "
                 @click="emit('update:activeFloor', floor)"
             >
@@ -59,7 +59,7 @@ const emit = defineEmits<{
                 :class="
                     statusFilter === 'all'
                         ? 'border-indigo-500 bg-indigo-50 text-indigo-600'
-                        : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
+                        : 'border-border bg-card text-muted-foreground hover:border-primary/40'
                 "
                 @click="emit('update:statusFilter', 'all')"
             >
@@ -71,7 +71,7 @@ const emit = defineEmits<{
                 :class="
                     statusFilter === 'available'
                         ? 'border-indigo-500 bg-indigo-50 text-indigo-600'
-                        : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
+                        : 'border-border bg-card text-muted-foreground hover:border-primary/40'
                 "
                 @click="emit('update:statusFilter', 'available')"
             >
@@ -83,7 +83,7 @@ const emit = defineEmits<{
                 :class="
                     statusFilter === 'partial'
                         ? 'border-indigo-500 bg-indigo-50 text-indigo-600'
-                        : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
+                        : 'border-border bg-card text-muted-foreground hover:border-primary/40'
                 "
                 @click="emit('update:statusFilter', 'partial')"
             >
@@ -95,7 +95,7 @@ const emit = defineEmits<{
                 :class="
                     statusFilter === 'full'
                         ? 'border-indigo-500 bg-indigo-50 text-indigo-600'
-                        : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
+                        : 'border-border bg-card text-muted-foreground hover:border-primary/40'
                 "
                 @click="emit('update:statusFilter', 'full')"
             >

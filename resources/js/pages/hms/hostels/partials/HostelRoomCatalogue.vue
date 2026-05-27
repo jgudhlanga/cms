@@ -35,8 +35,8 @@ const emit = defineEmits<{
     <section class="space-y-4">
         <div class="flex flex-wrap items-center justify-between gap-3">
             <div>
-                <h2 class="text-lg font-bold text-slate-900">{{ $t('hms.show_room_catalogue') }}</h2>
-                <p class="text-sm text-slate-400">
+                <h2 class="text-foreground text-lg font-bold">{{ $t('hms.show_room_catalogue') }}</h2>
+                <p class="text-muted-foreground text-sm">
                     {{ $t('hms.show_rooms_shown', { count: filteredRooms.length }) }}
                 </p>
             </div>
@@ -64,10 +64,10 @@ const emit = defineEmits<{
             @update:search-query="emit('update:searchQuery', $event)"
         />
 
-        <div v-if="isLoading" class="py-12 text-center text-sm text-slate-400">
+        <div v-if="isLoading" class="text-muted-foreground py-12 text-center text-sm">
             {{ $t('trans.loading') }}…
         </div>
-        <div v-else-if="filteredRooms.length === 0" class="py-12 text-center text-sm text-slate-400">
+        <div v-else-if="filteredRooms.length === 0" class="text-muted-foreground py-12 text-center text-sm">
             {{ $t('hms.no_rooms_found') }}
         </div>
         <div v-else class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">

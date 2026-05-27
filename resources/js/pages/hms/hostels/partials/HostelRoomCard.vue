@@ -54,7 +54,7 @@ const cardBorderClass = computed(() => {
         return 'border-pink-200';
     }
 
-    return 'border-slate-200';
+    return 'border-border';
 });
 
 const roomTypeLabel = computed(() => `hms.room_type_${props.room.roomType}`);
@@ -63,14 +63,14 @@ const roomTypeLabel = computed(() => `hms.room_type_${props.room.roomType}`);
 <template>
     <button
         type="button"
-        class="w-full overflow-hidden rounded-2xl border-[1.5px] bg-white text-left transition hover:-translate-y-0.5 hover:shadow-lg"
+        class="w-full overflow-hidden rounded-2xl border-[1.5px] bg-card text-left transition hover:-translate-y-0.5 hover:shadow-lg"
         :class="cardBorderClass"
         @click="emit('select', room)"
     >
-        <div class="flex items-start justify-between border-b border-slate-200 px-4 py-3">
+        <div class="flex items-start justify-between border-b border-border px-4 py-3">
             <div>
-                <div class="font-serif text-xl font-black text-slate-900">{{ room.name }}</div>
-                <div class="mt-0.5 text-xs text-slate-400">
+                <div class="text-foreground font-serif text-xl font-black">{{ room.name }}</div>
+                <div class="text-muted-foreground mt-0.5 text-xs">
                     {{ formatFloorLabel(room.floorNumber, trans) }}
                     ·
                     {{ $t(roomTypeLabel) }}
@@ -91,20 +91,20 @@ const roomTypeLabel = computed(() => `hms.room_type_${props.room.roomType}`);
                         :class="
                             slot <= room.current
                                 ? 'border-pink-300 bg-pink-100 text-pink-600'
-                                : 'border-slate-200 bg-slate-50 text-transparent'
+                                : 'border-border bg-muted text-transparent'
                         "
                     >
                         <Bed v-if="slot <= room.current" class="h-3 w-3" />
                     </div>
                 </div>
-                <span class="text-xs text-slate-400">{{ room.current }}/{{ room.max }} {{ $t('hms.beds') }}</span>
+                <span class="text-muted-foreground text-xs">{{ room.current }}/{{ room.max }} {{ $t('hms.beds') }}</span>
             </div>
 
             <div v-if="room.students.length" class="flex flex-col gap-1.5">
                 <div
                     v-for="student in room.students"
                     :key="student.id"
-                    class="flex items-center gap-2 rounded-lg bg-slate-50 px-2 py-1.5"
+                    class="bg-muted/50 flex items-center gap-2 rounded-lg px-2 py-1.5"
                 >
                     <div
                         class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white"
@@ -113,14 +113,14 @@ const roomTypeLabel = computed(() => `hms.room_type_${props.room.roomType}`);
                         {{ student.initials }}
                     </div>
                     <div class="min-w-0 flex-1">
-                        <div class="truncate text-xs font-semibold text-slate-800">{{ student.name }}</div>
-                        <div v-if="student.level" class="truncate text-[10px] text-slate-400">
+                        <div class="text-foreground truncate text-xs font-semibold">{{ student.name }}</div>
+                        <div v-if="student.level" class="text-muted-foreground truncate text-[10px]">
                             {{ student.level }}
                         </div>
                     </div>
                 </div>
             </div>
-            <p v-else class="px-1 text-xs italic text-slate-400">
+            <p v-else class="text-muted-foreground px-1 text-xs italic">
                 {{ $t('hms.show_room_no_students') }}
             </p>
         </div>

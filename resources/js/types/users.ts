@@ -103,5 +103,7 @@ export type AuthCredentialsUpdate = {
     email: string;
     password: string;
     password_confirmation: string;
+    change_email?: boolean;
+    change_password?: boolean;
 }
 

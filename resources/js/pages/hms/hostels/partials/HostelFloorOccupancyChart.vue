@@ -19,6 +19,14 @@ const props = withDefaults(defineProps<Props>(), {
 const canvasRef = ref<HTMLCanvasElement | null>(null);
 let chartInstance: ChartInstance | null = null;
 
+const getThemeColor = (token: string, fallback: string): string => {
+    if (typeof window === 'undefined') {
+        return fallback;
+    }
+    const value = getComputedStyle(document.documentElement).getPropertyValue(token).trim();
+    return value ? `hsl(${value})` : fallback;
+};
+
 const destroyChart = (): void => {
     chartInstance?.destroy();
     chartInstance = null;
@@ -40,14 +48,14 @@ const renderChart = (): void => {
                 {
                     label: trans('hms.show_chart_occupied'),
                     data: props.chartData.occupied,
-                    backgroundColor: '#F472B6',
+                    backgroundColor: '#EC4899',
                     borderRadius: 6,
                     borderSkipped: false,
                 },
                 {
                     label: trans('hms.show_chart_available'),
                     data: props.chartData.available,
-                    backgroundColor: '#E0E7FF',
+                    backgroundColor: '#60A5FA',
                     borderRadius: 6,
                     borderSkipped: false,
                 },
@@ -62,18 +70,21 @@ const renderChart = (): void => {
                     labels: {
                         boxWidth: 12,
                         font: { size: 12 },
+                        color: getThemeColor('--muted-foreground', '#64748B'),
                     },
                 },
             },
             scales: {
                 x: {
                     stacked: true,
+                    ticks: { color: getThemeColor('--muted-foreground', '#64748B') },
                     grid: { display: false },
                 },
                 y: {
                     stacked: true,
                     beginAtZero: true,
-                    grid: { color: '#F1F5F9' },
+                    ticks: { color: getThemeColor('--muted-foreground', '#64748B') },
+                    grid: { color: getThemeColor('--border', '#F1F5F9') },
                 },
             },
         },
@@ -104,15 +115,15 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-    <div class="rounded-2xl border border-slate-200 bg-white p-5">
-        <div class="mb-4 flex items-center gap-2 text-sm font-bold text-slate-800">
+    <div class="rounded-2xl border border-border bg-card p-5">
+        <div class="text-foreground mb-4 flex items-center gap-2 text-sm font-bold">
             <BarChart3 class="h-4 w-4 text-indigo-500" />
             {{ $t('hms.show_floor_occupancy_chart') }}
         </div>
-        <div v-if="isLoading" class="flex h-48 items-center justify-center text-sm text-slate-400">
+        <div v-if="isLoading" class="text-muted-foreground flex h-48 items-center justify-center text-sm">
             {{ $t('trans.loading') }}…
         </div>
-        <div v-else-if="chartData.labels.length === 0" class="flex h-48 items-center justify-center text-sm text-slate-400">
+        <div v-else-if="chartData.labels.length === 0" class="text-muted-foreground flex h-48 items-center justify-center text-sm">
             {{ $t('hms.show_no_floor_data') }}
         </div>
         <div v-else class="relative h-52 w-full">

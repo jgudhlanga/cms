@@ -48,22 +48,22 @@ const genderChipClass = computed(() => {
 });
 
 const metricItems = computed(() => [
-    { labelKey: 'hms.floors', value: props.hostel.floor_count, valueClass: 'text-slate-800' },
+    { labelKey: 'hms.floors', value: props.hostel.floor_count, valueClass: 'text-foreground' },
     { labelKey: 'hms.show_stat_total_rooms', value: props.stats.totalRooms, valueClass: 'text-indigo-600' },
     { labelKey: 'hms.show_stat_occupied_rooms', value: props.stats.occupiedRooms, valueClass: 'text-pink-600' },
     { labelKey: 'hms.show_stat_available_rooms', value: props.stats.availableRooms, valueClass: 'text-emerald-600' },
     { labelKey: 'hms.show_stat_occupancy_rate', value: `${props.stats.occupancyRate}%`, valueClass: 'text-amber-600' },
-    { labelKey: 'hms.capacity', value: props.hostel.capacity, valueClass: 'text-slate-800', choice: 1 },
+    { labelKey: 'hms.capacity', value: props.hostel.capacity, valueClass: 'text-foreground', choice: 1 },
     { labelKey: 'hms.show_occupied_beds', value: props.occupiedBeds, valueClass: 'text-emerald-600' },
     { labelKey: 'hms.show_available_beds', value: props.availableBeds, valueClass: 'text-orange-500' },
 ]);
 </script>
 
 <template>
-    <div class="rounded-2xl border border-slate-200 bg-white px-4 py-3 sm:px-5">
+    <div class="rounded-2xl border border-border bg-card px-4 py-3 sm:px-5">
         <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
             <div class="flex min-w-0 flex-1 items-center gap-2.5">
-                <h1 class="truncate font-serif text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
+                <h1 class="text-foreground truncate font-serif text-xl font-bold tracking-tight sm:text-2xl">
                     {{ hostel.name }}
                 </h1>
                 <span
@@ -71,12 +71,12 @@ const metricItems = computed(() => [
                     :class="
                         isActive
                             ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                            : 'border-slate-200 bg-slate-100 text-slate-600'
+                            : 'border-border bg-muted text-muted-foreground'
                     "
                 >
                     <span
                         class="h-1.5 w-1.5 rounded-full"
-                        :class="isActive ? 'bg-emerald-500' : 'bg-slate-400'"
+                        :class="isActive ? 'bg-emerald-500' : 'bg-muted-foreground'"
                     />
                     {{ isActive ? $t('hms.status_active') : $t('hms.status_inactive') }}
                 </span>
@@ -107,20 +107,20 @@ const metricItems = computed(() => [
             </div>
         </div>
 
-        <p v-if="hostel.location" class="mt-1.5 flex items-center gap-1 text-xs text-slate-500">
+        <p v-if="hostel.location" class="text-muted-foreground mt-1.5 flex items-center gap-1 text-xs">
             <MapPin class="h-3.5 w-3.5 shrink-0" />
             {{ hostel.location }}
         </p>
 
         <div
-            class="mt-2.5 flex flex-wrap items-center divide-x divide-slate-200 border-t border-slate-100 pt-2.5"
+            class="mt-2.5 flex flex-wrap items-center divide-x divide-border border-t border-border pt-2.5"
         >
             <div
                 v-for="item in metricItems"
                 :key="item.labelKey"
                 class="flex items-baseline gap-1 px-3 py-0.5 first:pl-0"
             >
-                <span class="text-[10px] font-medium uppercase tracking-wide text-slate-400">
+                <span class="text-muted-foreground text-[10px] font-medium uppercase tracking-wide">
                     <template v-if="item.choice !== undefined">{{ $tChoice(item.labelKey, item.choice) }}</template>
                     <template v-else>{{ $t(item.labelKey) }}</template>
                 </span>

@@ -38,11 +38,11 @@ const getRouteName = (type: ClassListType, applicationId: string) => {
             <div
                 v-for="application in otherApplications"
                 :key="application.applicationId"
-                class="text-accent-foreground flex flex-col rounded-md border-r-2 border-black bg-gray-200 px-3 py-2 text-[8px] uppercase"
+                class="text-foreground flex flex-col rounded-md border border-border bg-card px-3 py-2 text-[8px] uppercase"
             >
                 <div class="flex justify-between">
                     <div>{{ application.department }}</div>
-                    <div class="bg-primary text-persian-200 rounded-full px-2 py-0.5">{{ application.level }}</div>
+                    <div class="bg-primary text-primary-foreground rounded-full px-2 py-0.5">{{ application.level }}</div>
                 </div>
                 <div class="my-1 flex justify-between">
                     <div>{{ application.course }}</div>
@@ -58,7 +58,7 @@ const getRouteName = (type: ClassListType, applicationId: string) => {
         <HeadingSmall :title="$t('trans.ui_next_5')" :description="getDescription(type as ClassListType)" />
         <div class="flex flex-col space-y-2">
             <TextLink
-                classes="bg-gray-200 px-3 py-2 rounded-md text-xs uppercase text-accent-foreground border-r-2 border-black"
+                classes="bg-card px-3 py-2 rounded-md text-xs uppercase text-foreground border border-border hover:bg-muted"
                 v-for="application in nextTop"
                 :key="application.applicationId"
                 :title="application.name"
