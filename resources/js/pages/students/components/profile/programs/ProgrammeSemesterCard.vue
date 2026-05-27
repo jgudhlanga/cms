@@ -28,14 +28,14 @@ const isModuleOpen = (index: number) => !!openMap.value[index];
 </script>
 
 <template>
-    <div class="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
-        <div class="flex items-center justify-between gap-3 border-b border-slate-100 px-5 pb-4 pt-5">
+    <div class="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+        <div class="flex items-center justify-between gap-3 border-b border-border px-5 pb-4 pt-5">
             <div class="flex min-w-0 items-center gap-3">
                 <CalendarDays
-                    class="h-4 w-4 shrink-0 text-slate-400"
+                    class="h-4 w-4 shrink-0 text-muted-foreground"
                     stroke-width="1.75"
                 />
-                <h2 class="truncate text-base font-bold tracking-tight text-slate-800">
+                <h2 class="truncate text-base font-bold tracking-tight text-foreground">
                     {{ semesterTitle(semester.label, semester.year) }}
                 </h2>
             </div>
@@ -61,17 +61,17 @@ const isModuleOpen = (index: number) => !!openMap.value[index];
 
         <div
             v-if="semester.module.length === 0"
-            class="border-t border-slate-100 px-5 py-8"
+            class="border-t border-border px-5 py-8"
         >
             <Empty :message="$t('students.no_modules')" />
-            <p class="mt-2 text-center text-sm text-slate-400">
+            <p class="mt-2 text-center text-sm text-muted-foreground">
                 {{ $t('students.no_modules_hint') }}
             </p>
         </div>
 
         <div
             v-else
-            class="divide-y divide-slate-100 border-t border-slate-100"
+            class="divide-y divide-border border-t border-border"
         >
             <ProgrammeModuleRow
                 v-for="(module, moduleIndex) in semester.module"

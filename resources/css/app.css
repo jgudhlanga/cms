@@ -130,6 +130,18 @@
         color-scheme: dark;
     }
 
+    input[type='date'],
+    input[type='datetime-local'],
+    input[type='time'] {
+        color-scheme: light;
+    }
+
+    html.dark input[type='date'],
+    html.dark input[type='datetime-local'],
+    html.dark input[type='time'] {
+        color-scheme: dark;
+    }
+
     @media (prefers-color-scheme: dark) {
         :root:not(.light):not(.dark) {
             color-scheme: dark;
@@ -361,6 +373,43 @@
 
     .error {
         @apply text-red-300;
+    }
+
+    /** @vuepic/vue-datepicker — theme-aware (all BaseDatePicker instances) */
+    .app-date-picker.dp__theme_light,
+    .app-date-picker.dp__theme_dark {
+        --dp-font-size: 0.875rem;
+        --dp-border-radius: calc(var(--radius) - 2px);
+        --dp-font-family: var(--font-sans);
+        --dp-background-color: hsl(var(--background));
+        --dp-text-color: hsl(var(--foreground));
+        --dp-border-color: hsl(var(--border));
+        --dp-border-color-hover: hsl(var(--ring));
+        --dp-border-color-focus: hsl(var(--ring));
+        --dp-menu-border-color: hsl(var(--border));
+        --dp-icon-color: hsl(var(--muted-foreground));
+        --dp-hover-color: hsl(var(--accent));
+        --dp-hover-text-color: hsl(var(--accent-foreground));
+        --dp-hover-icon-color: hsl(var(--foreground));
+        --dp-primary-color: hsl(var(--primary));
+        --dp-primary-text-color: hsl(var(--primary-foreground));
+        --dp-primary-disabled-color: hsl(var(--primary) / 0.5);
+        --dp-secondary-color: hsl(var(--muted-foreground));
+        --dp-disabled-color: hsl(var(--muted));
+        --dp-disabled-color-text: hsl(var(--muted-foreground));
+        --dp-scroll-bar-background: hsl(var(--muted));
+        --dp-scroll-bar-color: hsl(var(--muted-foreground));
+        --dp-highlight-color: hsl(var(--primary) / 0.2);
+        --dp-range-between-dates-background-color: hsl(var(--accent));
+        --dp-range-between-dates-text-color: hsl(var(--accent-foreground));
+        --dp-range-between-border-color: hsl(var(--border));
+        --dp-tooltip-color: hsl(var(--popover));
+        --dp-loader: 5px solid hsl(var(--primary));
+    }
+
+    .app-date-picker .dp__menu_disabled,
+    .app-date-picker .dp-menu-loading {
+        background: hsl(var(--background) / 0.6);
     }
 
     /** vue3-select-component — theme-aware (datatable pagination, forms, etc.) */

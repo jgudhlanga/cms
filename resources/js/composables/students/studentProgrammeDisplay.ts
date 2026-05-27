@@ -51,40 +51,40 @@ export const statusBadgeClass = (status: string | null | undefined): string => {
     const normalized = (status ?? '').toLowerCase();
 
     if (normalized.includes('complete')) {
-        return 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200';
+        return 'bg-emerald-500/15 text-emerald-400 ring-1 ring-emerald-500/30';
     }
 
     if (normalized.includes('active') || normalized.includes('progress')) {
-        return 'bg-blue-50 text-blue-600 ring-1 ring-blue-200';
+        return 'bg-primary/15 text-primary ring-1 ring-primary/30';
     }
 
-    return 'bg-slate-100 text-slate-500 ring-1 ring-slate-200';
+    return 'bg-muted text-muted-foreground ring-1 ring-border';
 };
 
 export const gradeBadgeClass = (grade: string | null | undefined): string => {
     const g = grade ?? '';
 
     if (!g) {
-        return 'bg-slate-100 text-slate-400';
+        return 'bg-muted text-muted-foreground';
     }
 
     if (g === 'IP') {
-        return 'bg-slate-100 text-slate-500';
+        return 'bg-muted text-muted-foreground';
     }
 
     if (g.startsWith('A')) {
-        return 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200';
+        return 'bg-emerald-500/15 text-emerald-400 ring-1 ring-emerald-500/30';
     }
 
     if (g.startsWith('B')) {
-        return 'bg-blue-50 text-blue-600 ring-1 ring-blue-200';
+        return 'bg-primary/15 text-primary ring-1 ring-primary/30';
     }
 
     if (g.startsWith('C')) {
-        return 'bg-amber-50 text-amber-700 ring-1 ring-amber-200';
+        return 'bg-amber-500/15 text-amber-400 ring-1 ring-amber-500/30';
     }
 
-    return 'bg-red-50 text-red-600 ring-1 ring-red-200';
+    return 'bg-red-500/15 text-red-400 ring-1 ring-red-500/30';
 };
 
 export const scoreBarColor = (score: number): string => {

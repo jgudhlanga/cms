@@ -48,23 +48,32 @@ const headerData = computed<StudentHeader>(() => {
 <template>
     <Head :title="$tChoice('student', 2)" />
     <PageContainer :breadcrumbs="breadcrumbs">
-         <Header :data="headerData" />
-        <Tabs :default-value="activeTab" v-model="activeTab">
-            <TabsList class="w-full">
-                <TabsTrigger
-                    v-for="tab in profileTabs(student)"
-                    :key="'tab_' + tab.value"
-                    :value="tab.value"
-                    :disabled="tab.disabled"
-                    class="text-xs font-light uppercase flex items-center"
+        <div class="overflow-hidden rounded-xl bg-card text-card-foreground">
+            <Header :data="headerData" />
+            <Tabs :default-value="activeTab" v-model="activeTab">
+                <TabsList
+                    class="h-auto min-h-11 w-full flex-wrap justify-start gap-1 rounded-none border-t border-border bg-muted/30 px-2 py-1"
                 >
-                    <component :is="icons[tab?.icon!]" />
-                    <span>{{ tab?.transLabel!() }}</span>
-                </TabsTrigger>  
-            </TabsList>
-            <TabsContent v-for="tab in profileTabs(student)" :value="tab.value" :key="'content_' + tab.value" class="py-4">
-                <component :is="tab.component" />
-            </TabsContent>
-        </Tabs>
+                    <TabsTrigger
+                        v-for="tab in profileTabs(student)"
+                        :key="'tab_' + tab.value"
+                        :value="tab.value"
+                        :disabled="tab.disabled"
+                        class="flex items-center text-xs font-light uppercase"
+                    >
+                        <component :is="icons[tab?.icon!]" />
+                        <span>{{ tab?.transLabel!() }}</span>
+                    </TabsTrigger>
+                </TabsList>
+                <TabsContent
+                    v-for="tab in profileTabs(student)"
+                    :value="tab.value"
+                    :key="'content_' + tab.value"
+                    class="px-2 py-1"
+                >
+                    <component :is="tab.component" />
+                </TabsContent>
+            </Tabs>
+        </div>
     </PageContainer>
 </template>

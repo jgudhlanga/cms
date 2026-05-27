@@ -25,19 +25,19 @@ onMounted(async () => {
 </script>
 
 <template>
-    <div class="flex flex-col rounded-2xl bg-slate-50/80 p-4 font-sans sm:p-6">
+    <div class="flex flex-col rounded-2xl bg-muted/30 p-4 font-sans sm:p-6">
         <DataLoadingSpinner v-if="isLoading" />
 
         <div
             v-else-if="loadError || programmes.length === 0"
-            class="rounded-2xl border border-dashed border-slate-200 bg-white py-12"
+            class="rounded-2xl border border-dashed border-border bg-card py-12"
         >
             <Empty
                 :message="loadError ? $t('students.programmes_load_failure') : $t('students.no_programmes')"
             />
             <p
                 v-if="!loadError"
-                class="mt-2 text-center text-sm text-slate-400"
+                class="mt-2 text-center text-sm text-muted-foreground"
             >
                 {{ $t('students.no_programmes_description') }}
             </p>
