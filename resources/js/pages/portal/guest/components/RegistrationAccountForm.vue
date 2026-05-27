@@ -53,13 +53,13 @@ const emit = defineEmits<{
         <BaseInput
             input-id="middle_name"
             :model-value="middleName"
-            :label="$t('trans.middle_name')"
             :placeholder="$t('trans.ui_enter_middlename')"
             :vertical-layout="false"
             :label-uppercase="true"
             :error="errors.middle_name"
             @update:model-value="emit('update:middleName', $event)"
             @input="emit('clear-error', 'middle_name')"
+            class="uppercase"
         />
         <BaseInput
             input-id="last_name"

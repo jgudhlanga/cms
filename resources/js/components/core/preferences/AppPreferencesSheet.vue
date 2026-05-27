@@ -40,7 +40,7 @@ const updateSidebarState = (open: boolean): void => {
             <IconButton :icon="IconName.settings" :variant="ColorVariant.primary_outline" />
         </button>
     </BaseTooltip>
-    <Sheet v-model:open="isPreferencesDrawerOpen">
+    <Sheet v-if="isPreferencesDrawerOpen" v-model:open="isPreferencesDrawerOpen">
         <SheetContent side="right" class="w-[420px] p-0 sm:max-w-[420px]">
             <SheetHeader class="bg-muted/30 border-b px-6 py-5">
                 <SheetTitle>{{ $t('trans.user_preferences') }}</SheetTitle>
