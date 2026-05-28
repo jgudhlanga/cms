@@ -44,6 +44,7 @@ class StudentPaymentReceiptResource extends JsonResource
                 'originalAmountDebit' => $hasUsdConversion ? $this->amount_debit : null,
                 'originalIsoCurrencyCode' => $hasUsdConversion ? $this->iso_currency_code : null,
                 'clearedRunningBalance' => $this->cleared_running_balance,
+                'runningBalance' => $this->computed_running_balance ?? $this->cleared_running_balance,
                 'blockedBalance' => $this->blocked_balance,
                 'debitLimit' => $this->debit_limit,
                 'creditLimit' => $this->credit_limit,

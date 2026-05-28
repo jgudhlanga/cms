@@ -42,7 +42,7 @@ const invoiceItems = computed(() =>
                     <div
                         v-for="invoiceItem in invoiceItems"
                         :key="invoiceItem.key"
-                        class="rounded-md border border-gray-200 bg-white px-3 py-2 text-xs shadow-sm"
+                        class="rounded-md border border-border bg-card px-3 py-2 text-xs shadow-sm"
                     >
                         <div class="flex items-center justify-between gap-3">
                             <div class="font-medium text-accent-foreground">

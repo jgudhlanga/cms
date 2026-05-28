@@ -35,9 +35,8 @@ export const useStudentProfile = () => {
             {
                 transLabel: () => trans_choice('students.financial', 2),
                 value: 'financials',
-                component: h(Financials),
+                component: h(Financials, { student }),
                 icon: IconName.money,
-                disabled: true,
             },
             {
                 transLabel: () => trans_choice('students.accommodation', 2),

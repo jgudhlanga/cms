@@ -16,10 +16,10 @@ class FinanceController extends Controller
         return Inertia::render('finance/Index', []);
     }
 
-    public function settings(Request $request): Response
+    public function reconciliation(Request $request): Response
     {
-        $this->authorize('viewFinanceSettings');
+        $this->authorize('viewFinances');
 
-        return Inertia::render('finance/Settings', []);
+        return Inertia::render('finance/Reconciliation', []);
     }
 }

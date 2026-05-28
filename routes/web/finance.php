@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('finance')->middleware('auth')->group(function () {
     Route::get('/', [FinanceController::class, 'index'])->name('finance.index');
-    Route::get('settings', [FinanceController::class, 'settings'])->name('finance.settings');
+    Route::get('reconciliation', [FinanceController::class, 'reconciliation'])->name('finance.reconciliation');
 
     Route::put('exchange-rates/{exchange_rate}/restore', [FinanceExchangeController::class, 'restore'])
         ->name('finance.exchange-rates.restore');

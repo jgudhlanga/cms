@@ -7,6 +7,7 @@ export type IDialogParams = {
 	message: string;
 	onConfirm: () => boolean;
 	title?: string;
+	confirmBtnText?: string;
 };
 
 export interface DialogInterface {
@@ -31,7 +32,8 @@ export const dialogCreate = (params: IDialogParams) => {
 						destroy();
 					}
 				}
-			}
+			},
+			confirmBtnText: params.confirmBtnText,
 		},
 		slots: {
 			default: params.message
@@ -68,12 +70,13 @@ class DialogService implements DialogInterface {
 		});
 	}
 
-	warning(onConfirm: () => boolean, message: string, title?: string): void {
+	warning(onConfirm: () => boolean, message: string, title?: string, confirmBtnText?: string): void {
 		dialogCreate({
 			type: TypeVariant.warning,
 			message,
 			title,
-			onConfirm
+			onConfirm,
+			confirmBtnText,
 		});
 	}
 }

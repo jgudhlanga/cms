@@ -45,7 +45,7 @@ const headerData = computed<StudentHeader>(() => {
 });
 </script> 
 
-<template>
+<template> 
     <Head :title="$tChoice('student', 2)" />
     <PageContainer :breadcrumbs="breadcrumbs">
         <div class="overflow-hidden rounded-xl bg-card text-card-foreground">

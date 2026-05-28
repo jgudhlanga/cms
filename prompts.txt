@@ -1,0 +1,20 @@
+On the financials search criteria implemented earlier. Let strictly search through the student number.
+- add reference to the Transactions Statememnt.
+ - Give a flow whereby maybe a student can't find their transactions such that they can
+ - Label the section Queries with description, I can't find my transactions on the statement.
+  - list current queries and their status on the reconcilliantion flow.
+ - upload proof of payment with payment_refrence.
+ - save the upload on student documents using the spatie media library. the documents / upload  should be classfied 
+ under financils documents.
+ - Given the https://hrepoly.test/finance finance module, we need to add (refer to settings module for tabs https://hrepoly.test/settings)
+    - settings tab, remove the current settings button on finance index page,
+    - a reconcilliation tab where it takes user to a reconcilliation Page where we see list of the uploaded queries.
+        - student name, paymentment_reference, proof_of_payment
+        - search transactions based on the reference.
+        - if found show two button buttons, reconcile | decline
+        - reconcile -> update naration on the zb_bank_statements with actual student_number. notify the student of such updates (email)
+        - decline -> update the status of the query to declined. notify the student of such updates (email)
+        - reconcile by checking transactions against the payment refence and proof of paymment
+* Suggest best way to search and reconcile ttransactions details.
+* Use LaravelJsonApi where possible
+* use recomended standards for our Development Stack

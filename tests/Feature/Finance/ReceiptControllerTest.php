@@ -117,3 +117,80 @@ it('returns only credit receipts matching student number across supported fields
     expect(array_key_exists('updatedAt', $narrationReceipt['attributes']))->toBeTrue();
     expect(array_key_exists('deletedAt', $narrationReceipt['attributes']))->toBeTrue();
 });
+
+it('strictly matches receipts by exact student number', function () {
+    $studentNumber = '26ICT0703086HP';
+
+    $createStatement = function (array $attributes): ZBBankStatement {
+        static $sequence = 0;
+        $sequence++;
+
+        return ZBBankStatement::query()->create(array_merge([
+            'tran_number_asc' => 'TTA-'.$sequence,
+            'tran_number_desc' => 'TTD-'.$sequence,
+            'transaction_id' => 'TTXN-'.$sequence,
+            'transaction_sr_id' => 'TSR-'.$sequence,
+            'transaction_date' => '2026-04-09T12:00:00',
+            'debit_credit_flag' => 'C',
+            'iso_currency_code' => 'USD',
+        ], $attributes));
+    };
+
+    $fullMatch = $createStatement([
+        'narration' => 'Payment '.$studentNumber.' tuition',
+        'amount_credit' => '100.00',
+    ]);
+
+    $createStatement([
+        'narration' => 'Payment 26ICT0703999HP tuition',
+        'amount_credit' => '80.00',
+    ]);
+
+    $student = new Student(['student_number' => $studentNumber]);
+    $controller = new FinanceReceiptController;
+    $data = $controller->getStudentReceipts($student)->toArray(Request::create('/', 'GET'));
+    $receiptIds = collect($data)->pluck('id')->all();
+
+    expect($receiptIds)->toEqualCanonicalizing([$fullMatch->id]);
+});
+
+it('does not leak receipts from other students sharing a numeric prefix stem', function () {
+    $studentNumber = '26ICT07022184HP';
+
+    $createStatement = function (array $attributes): ZBBankStatement {
+        static $sequence = 0;
+        $sequence++;
+
+        return ZBBankStatement::query()->create(array_merge([
+            'tran_number_asc' => 'COLA-'.$sequence,
+            'tran_number_desc' => 'COLD-'.$sequence,
+            'transaction_id' => 'COLTXN-'.$sequence,
+            'transaction_sr_id' => 'COLSR-'.$sequence,
+            'transaction_date' => '2026-04-10T12:00:00',
+            'debit_credit_flag' => 'C',
+            'iso_currency_code' => 'USD',
+        ], $attributes));
+    };
+
+    $fullMatch = $createStatement([
+        'narration' => 'Payment '.$studentNumber.' tuition',
+        'amount_credit' => '120.00',
+    ]);
+
+    $createStatement([
+        'narration' => 'Payment 26ICT07022189HP tuition',
+        'amount_credit' => '70.00',
+    ]);
+
+    $createStatement([
+        'narration' => 'Payment 26ICT07022180HP tuition',
+        'amount_credit' => '80.00',
+    ]);
+
+    $student = new Student(['student_number' => $studentNumber]);
+    $controller = new FinanceReceiptController;
+    $data = $controller->getStudentReceipts($student)->toArray(Request::create('/', 'GET'));
+    $receiptIds = collect($data)->pluck('id')->all();
+
+    expect($receiptIds)->toEqualCanonicalizing([$fullMatch->id]);
+});
