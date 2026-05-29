@@ -29,7 +29,7 @@ const breadcrumbs: Array<Link> = [
 ];
 
 const can = props?.auth?.can;
-const { actionButton, tag, anchorTag } = useDataTables();
+const { actionButton, tag } = useDataTables();
 
 const queries = ref<DataListProps<FinanceTransactionQuery>>({
     data: [],
@@ -216,22 +216,6 @@ const closeReconcilePreview = () => {
 const createReconciliationColumns = () => [
     { header: trans_choice('trans.student', 1), accessorKey: 'attributes.studentName' },
     { header: trans('finance.payment_reference'), accessorKey: 'attributes.paymentReference' },
-    {
-        header: trans('finance.proof_of_payment'),
-        accessorKey: 'proof',
-        cell: ({ row }: { row: { original: FinanceTransactionQuery } }) => {
-            const proofUrl = row.original.attributes.proofOfPaymentUrl;
-            const proofName = row.original.attributes.proofOfPaymentName;
-
-            return proofUrl
-                ? anchorTag({
-                      href: proofUrl,
-                      title: proofName || trans('finance.view_proof'),
-                      classes: 'text-xs underline text-primary',
-                  })
-                : '-';
-        },
-    },
     {
         header: trans_choice('trans.status', 1),
         accessorKey: 'status',

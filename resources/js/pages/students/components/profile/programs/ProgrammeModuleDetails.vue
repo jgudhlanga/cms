@@ -16,7 +16,7 @@ defineProps<Props>();
 
 <template>
     <div class="overflow-hidden border-t border-border bg-muted/40">
-        <div class="grid grid-cols-2 gap-4 px-5 pb-4 pt-3 sm:grid-cols-4">
+        <div class="grid grid-cols-1 gap-3 px-5 pb-4 pt-3 sm:grid-cols-2 lg:grid-cols-4">
             <ProgrammeDetailField
                 label-key="students.lecturer"
                 :value="displayValue(module.lecturer)"

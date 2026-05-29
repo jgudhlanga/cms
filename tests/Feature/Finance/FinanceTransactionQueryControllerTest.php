@@ -3,7 +3,6 @@
 use App\Models\Finance\FinanceTransactionQuery;
 use App\Models\Integrations\Banks\ZBBankStatement;
 use App\Models\Users\User;
-use Illuminate\Http\UploadedFile;
 use Laravel\Sanctum\Sanctum;
 
 it('allows student to create missing transaction query without proof and view own queries', function () {
@@ -54,9 +53,6 @@ it('reconciles a query, updates narration and notifies student', function () {
         'payment_reference' => 'PAY-002',
         'status' => 'submitted',
     ]);
-
-    $query->addMedia(UploadedFile::fake()->create('proof.pdf', 100, 'application/pdf'))
-        ->toMediaCollection('financial-documents');
 
     Sanctum::actingAs($admin);
     $response = $this->patchJson(

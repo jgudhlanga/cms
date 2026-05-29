@@ -12,7 +12,7 @@ const variants: Record<TypeVariant, string> = {
     [TypeVariant.warning]: 'text-amber-600 ',
     [TypeVariant.danger]: 'text-red-600 dark:border-red-600/50 [&>svg]:text-red-600',
     [TypeVariant.success]: 'text-green-600 dark:border-green-600/50 [&>svg]:text-green-600',
-    [TypeVariant.primary]: 'text-persian-600 dark:border-persian-600/50 [&>svg]:text-persian-600',
+    [TypeVariant.primary]: 'border-primary/50 text-primary [&>svg]:text-primary',
 };
 
 const computedClass = computed(() => cn('p-6', variants[props.type]));

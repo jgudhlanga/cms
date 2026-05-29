@@ -141,7 +141,7 @@ watch([institutionDepartmentId, courseSyllabusId], () => loadSyllabusModules(), 
                         <div :class="`min-w-0 flex-1 font-extralight whitespace-normal wrap-anywhere`">
                             <a
                                 :href="courseSyllabus.attributes.syllabusDocumentUrl"
-                                class="border-persian-600 text-persian-600 hover:bg-persian-200 hover:border-persian-200 flex h-6 items-center rounded-full bg-transparent px-2 py-1 text-xs"
+                                class="flex h-6 items-center rounded-full border border-primary bg-transparent px-2 py-1 text-xs font-semibold text-primary hover:border-primary hover:bg-primary/20"
                                 target="_blank"
                             >
                                 <BaseIcon :name="IconName.paperclip" class="size-4" />

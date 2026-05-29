@@ -58,4 +58,8 @@ return [
     'programme_heading_separator' => '·',
     'semester_title_separator' => '—',
     'hours_short' => ':count h',
+    'accommodations_coming_soon_title' => 'Accommodation details',
+    'accommodations_coming_soon_description' => 'Hostel applications, room allocation, and accommodation history will appear here soon.',
+    'documents_coming_soon_title' => 'Student documents',
+    'documents_coming_soon_description' => 'Offer letters, certificates, and other downloadable documents will be available here soon.',
 ];

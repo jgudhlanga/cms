@@ -54,6 +54,7 @@ const pageTitle = computed(() => tabDefinition.value?.transLabel() ?? '');
             <Authentication
                 v-else-if="activeTab === 'authentication'"
                 :user="student?.relationships?.user"
+                hide-authorization
             />
         </StudentProfileShell>
     </PageContainer>

@@ -73,7 +73,6 @@ export const studentProfileTabDefinitions = (): StudentProfileTabDefinition[] =>
     {
         value: 'accommodations',
         icon: IconName.bed,
-        adminDisabled: true,
         routeName: portalRouteNames.accommodations,
         transLabel: () => trans_choice('students.accommodation', 2),
         portalShow: () => hasAbility('manageOwnStudentPersonalDetails:students') && hasStudentProfile(),
@@ -81,7 +80,6 @@ export const studentProfileTabDefinitions = (): StudentProfileTabDefinition[] =>
     {
         value: 'documents',
         icon: IconName.files,
-        adminDisabled: true,
         routeName: portalRouteNames.documents,
         transLabel: () => trans_choice('students.document', 2),
         portalShow: () => hasAbility('manageOwnStudentPersonalDetails:students') && hasStudentProfile(),

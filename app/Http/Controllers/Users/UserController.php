@@ -123,7 +123,7 @@ class UserController extends Controller
     }
     public function updateUserCredentials(UpdateUserCredentialsRequest $request, User $user)
     {
-        $this->authorize('update', $user);
+        $this->authorize('updateCredentials', $user);
         $validated = $request->validated();
         $updates = [];
 

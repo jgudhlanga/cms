@@ -17,7 +17,7 @@ const extendedVariants: Record<ColorVariant | any, string> = {
     [ColorVariant.danger]: 'text-red-500 hover:text-red-600',
     [ColorVariant.fuchsia]: 'tex-purple-500 hover:text-purple-600',
     [ColorVariant.info]: 'text-blue-500 hover:text-blue-600',
-    [ColorVariant.primary]: 'text-persian-600 hover:text-persian-700',
+    [ColorVariant.primary]: 'text-primary hover:text-primary/85',
     [ColorVariant.shade]: 'text-accent-foreground hover:text-accent-foreground',
     [ColorVariant.success]: 'text-green-500 hover:text-green-600',
     [ColorVariant.warning]: 'text-amber-500 hover:text-amber-600',

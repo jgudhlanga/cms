@@ -1,48 +1,27 @@
 <?php
 
+use App\Enums\Shared\IdTypeEnum;
 use App\Models\Acl\Permission;
 use App\Models\Finance\FinanceExchangeRate;
 use App\Models\Integrations\Banks\ZBBankStatement;
 use App\Models\Users\User;
 use App\Services\Finance\StudentFinancialStatementPdfService;
-use Illuminate\Support\Facades\DB;
 
-it('includes home address and guardian contact in pdf payload', function () {
+it('includes student number and national id in pdf payload', function () {
     $user = User::factory()->create();
-    $student = createStudentForFinanceQuery($user, 'STU-PDF-ADDR');
+    $student = createStudentForFinanceQuery($user, 'STU-PDF-IDENT');
 
-    $student->addresses()->create([
-        'tenant_id' => $student->tenant_id,
-        'address_1' => '1696',
-        'address_2' => 'Harare Drive',
-        'address_3' => 'Marlborough',
-        'address_4' => 'Harare',
-        'address_is_main' => 1,
-    ]);
-
-    $relationshipId = DB::table('relationships')->insertGetId([
-        'name' => 'Parent',
-        'created_at' => now(),
-        'updated_at' => now(),
-    ]);
-
-    $nextOfKin = $student->nextOfKins()->make([
-        'name' => 'Charity Mudzedze',
-        'relationship_id' => $relationshipId,
-    ]);
-    $nextOfKin->tenant_id = $student->tenant_id;
-    $nextOfKin->save();
-
-    $nextOfKin->contacts()->create([
-        'tenant_id' => $student->tenant_id,
-        'phone_number' => '0772878418',
+    $student->update([
+        'id_type_id' => IdTypeEnum::ZIMBABWEAN_ID_NUMBER->id(),
+        'id_number' => '63-1234567N63',
     ]);
 
     $payload = app(StudentFinancialStatementPdfService::class)->assemble($student);
-    $contactRows = collect($payload['contactInformation'])->keyBy('label');
 
-    expect($contactRows['Home Address']['value'])->toBe('1696, Harare Drive, Marlborough, Harare')
-        ->and($contactRows['Guardian Contact']['value'])->toBe('0772878418');
+    expect($payload)->not->toHaveKeys(['personalInformation', 'contactInformation'])
+        ->and($payload['studentNumber'])->toBe('STU-PDF-IDENT')
+        ->and($payload['identityLabelKey'])->toBe('trans.id_number')
+        ->and($payload['identityValue'])->toBe('63-1234567N63');
 });
 
 it('redirects guests from transaction statement export', function () {

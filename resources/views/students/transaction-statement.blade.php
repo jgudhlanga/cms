@@ -109,12 +109,6 @@
             margin-bottom: 4px;
         }
 
-        .student-summary .student-number {
-            font-size: 10px;
-            color: #4b5563;
-            margin-bottom: 8px;
-        }
-
         .profile-lines {
             font-size: 10px;
             line-height: 1.5;
@@ -127,24 +121,6 @@
             margin: 16px 0 8px;
             border-bottom: 1px solid #d1d5db;
             padding-bottom: 4px;
-        }
-
-        .info-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 8px;
-        }
-
-        .info-table td {
-            padding: 4px 6px;
-            vertical-align: top;
-            border-bottom: 1px solid #f3f4f6;
-        }
-
-        .info-table td.label {
-            width: 35%;
-            font-weight: 600;
-            color: #374151;
         }
 
         .summary-grid {
@@ -213,33 +189,14 @@
 
     <div class="student-summary">
         <h2>{{ strtoupper($studentName) }}</h2>
-        <div class="student-number">{{ $studentNumber }}</div>
         <div class="profile-lines">
-            @foreach ($profileSummary as $key => $value)
+            <div><strong>{{ trans_choice('students.student_number', 1) }}:</strong> {{ $studentNumber }}</div>
+            <div><strong>{{ __($identityLabelKey) }}:</strong> {{ $identityValue }}</div>
+            @foreach ($profileSummary as $key => $value) 
                 <div><strong>{{ ucfirst(preg_replace('/([A-Z])/', ' $1', $key)) }}:</strong> {{ $value }}</div>
             @endforeach
         </div>
     </div>
-
-    <div class="section-title">Personal Information</div>
-    <table class="info-table">
-        @foreach ($personalInformation as $row)
-            <tr>
-                <td class="label">{{ $row['label'] }}</td>
-                <td>{{ $row['value'] }}</td>
-            </tr>
-        @endforeach
-    </table>
-
-    <div class="section-title">Contact Information</div>
-    <table class="info-table">
-        @foreach ($contactInformation as $row)
-            <tr>
-                <td class="label">{{ $row['label'] }}</td>
-                <td>{{ $row['value'] }}</td>
-            </tr>
-        @endforeach
-    </table>
 
     <div class="section-title">Financial Summary</div>
     <table class="summary-grid">

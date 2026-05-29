@@ -9,8 +9,6 @@ class FinanceTransactionQueryResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
-        $proofOfPayment = $this->resource->getFirstMedia('financial-documents');
-
         return [
             'type' => 'financeTransactionQuery',
             'id' => $this->resource->id,
@@ -23,8 +21,6 @@ class FinanceTransactionQueryResource extends JsonResource
                 'status' => $this->resource->status?->value,
                 'statusLabel' => $this->resource->status?->label(),
                 'declineReason' => $this->resource->decline_reason,
-                'proofOfPaymentUrl' => $proofOfPayment?->getFullUrl(),
-                'proofOfPaymentName' => $proofOfPayment?->file_name,
                 'bankStatementId' => $this->resource->bank_statement_id,
                 'reconciledByName' => $this->resource->reconciler?->full_name,
                 'declinedByName' => $this->resource->decliner?->full_name,

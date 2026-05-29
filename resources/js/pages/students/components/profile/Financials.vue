@@ -12,7 +12,6 @@ import {
 import { useStudentsFinancials } from '@/composables/finance/useStudentsFinancials';
 import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
-import { TextFieldType } from '@/enums/inputs';
 import { closeModal, openModal } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
 import { clearFormErrors } from '@/lib/forms';
@@ -43,11 +42,9 @@ const {
 const form = useForm<{
     payment_reference: string;
     description: string;
-    proof_of_payment: File | null;
 }>({
     payment_reference: '',
     description: '',
-    proof_of_payment: null,
 });
 
 const receiptContext = computed(() => ({
@@ -80,12 +77,6 @@ onMounted(async () => {
     }
 });
 
-const onProofFileChange = (event: Event): void => {
-    const target = event.target as HTMLInputElement;
-    form.proof_of_payment = target.files?.[0] ?? null;
-    clearFormErrors(form, 'proof_of_payment');
-};
-
 const submitQuery = async (): Promise<void> => {
     if (!props.student?.id || !form.payment_reference.trim()) {
         return;
@@ -94,13 +85,11 @@ const submitQuery = async (): Promise<void> => {
     const success = await submitStudentTransactionQuery(String(props.student.id), {
         paymentReference: form.payment_reference.trim(),
         description: form.description.trim(),
-        proofOfPayment: form.proof_of_payment,
     });
 
     if (success) {
         form.payment_reference = '';
         form.description = '';
-        form.proof_of_payment = null;
         form.clearErrors();
         closeModal(APP_MODULE_KEYS.finance_transaction_queries);
     }
@@ -230,7 +219,7 @@ const exportTransactionStatementPdf = (): void => {
             :show-action-button="false"
         >
             <template #body>
-                <div class="grid gap-3 md:grid-cols-2">
+                <div class="grid gap-3">
                     <BaseInput
                         input-id="payment_reference"
                         :label="$t('finance.payment_reference')"
@@ -241,16 +230,7 @@ const exportTransactionStatementPdf = (): void => {
                         :inputAutoFocus="true"
                     />
                     <BaseInput
-                        input-id="proof_of_payment"
-                        :label="$t('finance.proof_of_payment')"
-                        :type="TextFieldType.file"
-                        :error="form.errors.proof_of_payment"
-                        accept=".pdf,.jpg,.jpeg,.png"
-                        @change="onProofFileChange"
-                    />
-                    <BaseInput
                         input-id="query_description"
-                        class="md:col-span-2"
                         :label="$t('trans.description')"
                         v-model="form.description"
                         @input="clearFormErrors(form, 'description')"

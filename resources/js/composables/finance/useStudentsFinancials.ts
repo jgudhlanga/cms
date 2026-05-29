@@ -137,21 +137,14 @@ export const useStudentsFinancials = () => {
 
     const submitStudentTransactionQuery = async (
         studentId: string,
-        payload: { paymentReference: string; description?: string; proofOfPayment?: File | null }
+        payload: { paymentReference: string; description?: string }
     ): Promise<boolean> => {
         try {
             isTransactionQuerySaving.value = true;
-            const formData = new FormData();
-            formData.append('payment_reference', payload.paymentReference);
-            if (payload.proofOfPayment) {
-                formData.append('proof_of_payment', payload.proofOfPayment);
-            }
-            if (payload.description) {
-                formData.append('description', payload.description);
-            }
 
-            await HttpService.post(route('v1.financials.student.transaction-queries.store', { student: studentId }), formData, {
-                headers: { 'Content-Type': 'multipart/form-data' },
+            await HttpService.post(route('v1.financials.student.transaction-queries.store', { student: studentId }), {
+                payment_reference: payload.paymentReference,
+                ...(payload.description ? { description: payload.description } : {}),
             });
             await fetchStudentTransactionQueries(studentId);
 

@@ -3,14 +3,9 @@ defineOptions({ inheritAttrs: false });
 
 import LogoutButton from '@/components/auth/LogoutButton.vue';
 import RemoveImpersonationButton from '@/components/auth/RemoveImpersonationButton.vue';
-import BaseTooltip from '@/components/core/util/BaseTooltip.vue';
 import Breadcrumbs from '@/components/core/util/Breadcrumbs.vue';
-import TextLink from '@/components/core/util/TextLink.vue';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { SidebarTrigger } from '@/components/ui/sidebar';
-import { useDefaults } from '@/composables/core/useDefaults';
-import { useInitials } from '@/composables/core/useInitials';
 import { useUtils } from '@/composables/core/useUtils';
 import { PageProps } from '@/types';
 import { BreadcrumbItemInterface } from '@/types/ui';
@@ -24,8 +19,6 @@ const props = defineProps<{
     backUrl?: string;
 }>();
 const page = usePage<PageProps>();
-const { getInitials } = useInitials();
-const { defaultAvatarImage } = useDefaults();
 const { isItTrue } = useUtils();
 const showBackNavigation = computed((): boolean => {
     return Boolean(props.backUrl) && (props.breadcrumbs?.length ?? 0) > 1;
@@ -67,19 +60,6 @@ const backNavigationRowJustifyClass = computed((): string => {
         </div>
         <div class="flex items-center justify-center space-x-4">
             <RemoveImpersonationButton v-if="isItTrue(page.props.auth.impersonating)" />
-            <BaseTooltip :content="`${$t('trans.user_account')}`">
-                <TextLink :href="route('users.edit', page.props.auth.user.id.toString())" method="get" as="button" classes="flex items-center">
-                    <Avatar class="size-7 rounded-full">
-                        <AvatarImage
-                            :src="page.props.auth.user.attributes.avatarUrl ?? defaultAvatarImage"
-                            :alt="page.props.auth.user.attributes.name"
-                        />
-                        <AvatarFallback class="size-7 rounded-full">
-                            {{ getInitials(page.props.auth.user.attributes.name) }}
-                        </AvatarFallback>
-                    </Avatar>
-                </TextLink>
-            </BaseTooltip>
             <LogoutButton />
             <AppPreferencesSheet />
         </div>

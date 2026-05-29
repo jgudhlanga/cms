@@ -50,7 +50,7 @@ return [
     'query' => 'Query|Queries',
     'queries_description' => 'Track your submitted transaction queries and reconciliation status.',
     'query_missing_transactions' => 'I can\'t find my transactions on the statement',
-    'query_missing_transactions_description' => 'Submit your payment reference and proof of payment for reconciliation.',
+    'query_missing_transactions_description' => 'Submit your payment reference for reconciliation.',
     'query_description_optional' => 'Additional details (optional)',
     'submit_query' => 'Submit query',
     'payment_reference' => 'Payment reference',

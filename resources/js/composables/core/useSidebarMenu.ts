@@ -115,12 +115,6 @@ export function useSidebarMenu() {
                 show: tab.portalShow?.() ?? false,
             })),
         {
-            transKey: 'trans.academic_record',
-            icon: icons[IconName.book_check],
-            url: route('portal.academic-record'),
-            show: hasAbility('manageOwnStudentAcademicDetails:students') && hasStudentProfile(),
-        },
-        {
             title: 'O Levels',
             icon: icons[IconName.award],
             url: route('portal.list-o-levels'),

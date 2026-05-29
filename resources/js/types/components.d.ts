@@ -300,6 +300,7 @@ declare module 'vue' {
     PopoverContent: typeof import('./../components/ui/popover/PopoverContent.vue')['default']
     PopoverTrigger: typeof import('./../components/ui/popover/PopoverTrigger.vue')['default']
     ProfessionalInfo: typeof import('./../components/staff/ProfessionalInfo.vue')['default']
+    ProfileTabComingSoon: typeof import('./../components/core/util/ProfileTabComingSoon.vue')['default']
     ProgramDetails: typeof import('./../components/students/view/ProgramDetails.vue')['default']
     Programs: typeof import('./../components/students/update/Programs.vue')['default']
     ProvinceComboSelect: typeof import('./../components/core/form/combobox/ProvinceComboSelect.vue')['default']

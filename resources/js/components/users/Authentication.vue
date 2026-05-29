@@ -13,9 +13,12 @@ import { computed, onMounted, ref, watch } from 'vue';
 
 interface Props {
     user?: User;
+    hideAuthorization?: boolean;
 }
 
-const props = defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+    hideAuthorization: false,
+});
 const { user } = props;
 
 const form = useForm<AuthCredentialsUpdate>({
@@ -91,7 +94,9 @@ onMounted(async () => {
     if (user) {
         form.email = user.attributes.email ?? '';
         initialEmail.value = user.attributes.email ?? '';
-        await loadUserPermissions(route('v1.users.permissions', { id: user.id }));
+        if (!props.hideAuthorization) {
+            await loadUserPermissions(route('v1.users.permissions', { id: user.id }));
+        }
     }
 });
 
@@ -103,7 +108,7 @@ onMounted(async () => {
             <BaseCard
                 :title="$t('trans.ui_login_profile')"
                 :description="$t('trans.change_login_credentials_warning')"
-                color-variant="amber-500"
+                color-variant="black"
             >
                 <div class="mb-4 flex flex-wrap items-center gap-4">
                     <BaseCheckbox input-id="change_email" v-model="changeEmail" label="Change Email" />
@@ -152,6 +157,7 @@ onMounted(async () => {
                 </div>
             </BaseCard>
             <BaseCard
+                v-if="!hideAuthorization"
                 :title="$t('trans.authorization')"
                 :description="$t('trans.roles_and_permissions')"
                 color-variant="black"

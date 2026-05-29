@@ -47,12 +47,6 @@ class FinanceTransactionQueryController extends Controller
             'status' => FinanceTransactionQueryStatusEnum::SUBMITTED,
         ]);
 
-        if ($request->hasFile('proof_of_payment')) {
-            $transactionQuery
-                ->addMediaFromRequest('proof_of_payment')
-                ->toMediaCollection('financial-documents');
-        }
-
         return FinanceTransactionQueryResource::make(
             $transactionQuery->load('student.user')
         );

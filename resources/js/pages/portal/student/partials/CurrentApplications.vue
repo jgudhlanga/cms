@@ -39,8 +39,8 @@ const { getApplicationStatus, hasOfferLetter, statusMessage } = useStudents();
                     <div
                         :class="
                             compact
-                                ? 'grid grid-cols-2 gap-2 text-xs md:grid-cols-4'
-                                : 'grid grid-cols-2 gap-4 text-sm md:grid-cols-4'
+                                ? 'grid grid-cols-1 gap-3 text-xs sm:grid-cols-2 lg:grid-cols-4'
+                                : 'grid grid-cols-1 gap-3 text-sm sm:grid-cols-2 lg:grid-cols-4'
                         "
                     >
                         <GridLabelValue :label="$tChoice('trans.department', 1)" :value="application.attributes?.department ?? ''" />

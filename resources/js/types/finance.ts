@@ -106,8 +106,6 @@ export type FinanceTransactionQuery = {
         status: string;
         statusLabel: string;
         declineReason: string | null;
-        proofOfPaymentUrl: string | null;
-        proofOfPaymentName: string | null;
         bankStatementId: string | number | null;
         reconciledByName: string | null;
         declinedByName: string | null;
