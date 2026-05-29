@@ -55,26 +55,28 @@ const { isMobile, state, openMobile, setOpenMobile } = useSidebar();
 			data-sidebar="sidebar"
 			data-mobile="true"
 			:side="side"
-			class="relative isolate w-(--sidebar-width) overflow-hidden bg-sidebar p-0 text-sidebar-foreground [&>button]:hidden"
+			class="w-(--sidebar-width) overflow-hidden bg-sidebar p-0 text-sidebar-foreground [&>button]:hidden"
 			:style="{
                 '--sidebar-width': SIDEBAR_WIDTH_MOBILE,
             }"
 		>
-			<div
-				v-if="side === 'left'"
-				aria-hidden="true"
-				class="pointer-events-none absolute inset-0 z-0 opacity-[0.18]"
-			>
+			<div class="relative isolate flex h-full w-full flex-col overflow-hidden">
 				<div
-					class="absolute inset-0"
-					:style="{
-						backgroundImage:
-							'repeating-radial-gradient(circle at 50% 40%, rgba(255,255,255,0.28) 0px, rgba(255,255,255,0.28) 1px, transparent 1px, transparent 20px)'
-					}"
-				/>
-			</div>
-			<div class="relative z-10 flex h-full w-full flex-col">
-				<slot />
+					v-if="side === 'left'"
+					aria-hidden="true"
+					class="pointer-events-none absolute inset-0 z-0 opacity-[0.18]"
+				>
+					<div
+						class="absolute inset-0"
+						:style="{
+							backgroundImage:
+								'repeating-radial-gradient(circle at 50% 40%, rgba(255,255,255,0.28) 0px, rgba(255,255,255,0.28) 1px, transparent 1px, transparent 20px)'
+						}"
+					/>
+				</div>
+				<div class="relative z-10 flex h-full w-full flex-col">
+					<slot />
+				</div>
 			</div>
 		</SheetContent>
 	</Sheet>

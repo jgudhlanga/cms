@@ -10,6 +10,7 @@ import {
 	SidebarMenuSubButton,
 	SidebarMenuSubItem
 } from '@/components/ui/sidebar';
+import { useCloseMobileSidebar } from '@/composables/core/useCloseMobileSidebar';
 import { useSidebarMenu } from '@/composables/core/useSidebarMenu';
 import { useSidebarNavActive } from '@/composables/core/useSidebarNavActive';
 import { icons } from '@/lib/icons';
@@ -19,6 +20,7 @@ import MenuIcon from './MenuIcon.vue';
 
 const { menuOptions, getTranslation } = useSidebarMenu();
 const { isActive, isAnyActive } = useSidebarNavActive();
+const closeMobileSidebar = useCloseMobileSidebar();
 </script>
 <template>
 	<SidebarGroup>
@@ -41,7 +43,7 @@ const { isActive, isAnyActive } = useSidebarNavActive();
 							<SidebarMenuSub>
 								<SidebarMenuSubItem v-for="subItem in item.items" :key="subItem.title">
 									<SidebarMenuSubButton as-child :is-active="isActive(subItem.url)">
-										<Link :href="subItem.url ?? ''">
+										<Link :href="subItem.url ?? ''" @click="closeMobileSidebar">
 											<TransText :item="subItem" />
 										</Link>
 									</SidebarMenuSubButton>
@@ -52,7 +54,7 @@ const { isActive, isAnyActive } = useSidebarNavActive();
 				</Collapsible>
 				<SidebarMenuItem v-if="item.show && !item.items" class="group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center">
 					<SidebarMenuButton as-child :is-active="isActive(item.url)" :tooltip="getTranslation(item)">
-						<Link :href="item.url ?? ''">
+						<Link :href="item.url ?? ''" @click="closeMobileSidebar">
 							<MenuIcon :icon="item.icon" />
 							<TransText :item="item" />
 						</Link>

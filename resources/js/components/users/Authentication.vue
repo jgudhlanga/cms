@@ -163,7 +163,7 @@ onMounted(async () => {
                 color-variant="black"
             >
                 <DataLoadingSpinner v-if="isLoading"/>
-                    <div v-else class="grid grid-cols-1 md:grid-cols-4 gap-x-3" >
+                    <div v-else class="grid grid-cols-1 gap-x-3 gap-y-1 text-xs md:grid-cols-4">
                         <div v-for="(permission, index) in userPermissions" :key="index">{{ permission?.attributes?.name }}</div>
                     </div>
             </BaseCard>
