@@ -1,13 +1,15 @@
 import AppLogo from '@/components/core/image/AppLogo.vue';
+import { useStudentProfile } from '@/composables/students/useStudentProfile';
 import { IconName } from '@/enums/icons';
 import { icons } from '@/lib/icons';
-import { hasAbility, hasProgram, hasStudentProfile } from '@/lib/permissions';
+import { hasAbility, hasStudentProfile } from '@/lib/permissions';
 import { TenantInterface } from '@/types/tenants';
 import { MenuItemInterface } from '@/types/ui';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 import { computed, markRaw } from 'vue';
 
 export function useSidebarMenu() {
+    const { portalSidebarProfileTabs } = useStudentProfile();
     const tenants: Array<TenantInterface> = [
         {
             id: '1',
@@ -104,29 +106,19 @@ export function useSidebarMenu() {
             url: route('portal.dashboard'),
             show: hasAbility('viewOwnDashboard:students') && hasStudentProfile(),
         },
+        ...portalSidebarProfileTabs()
+            .filter((tab) => tab.value !== 'authentication')
+            .map((tab) => ({
+                title: tab.transLabel(),
+                icon: icons[tab.icon],
+                url: route(tab.routeName!),
+                show: tab.portalShow?.() ?? false,
+            })),
         {
-            transKey: 'trans.personal_details',
-            icon: icons[IconName.user],
-            url: route('portal.personal-details'),
-            show: hasAbility('manageOwnStudentPersonalDetails:students') && hasStudentProfile(),
-        },
-        {
-            transChoiceKey: 'trans.program',
-            icon: icons[IconName.graduation_cape],
-            url: route('portal.programs'),
-            show: hasAbility('manageOwnStudentProgramDetails:students') && hasStudentProfile() && hasProgram(),
-        },
-        {
-            transKey: 'trans.my_applications',
-            icon: icons[IconName.monitor_check],
-            url: route('portal.applications'),
-            show: hasAbility('manageOwnStudentPersonalDetails:students') && hasStudentProfile(),
-        },
-        {
-            transKey: 'trans.financial_record',
-            icon: icons[IconName.dollar],
-            url: route('portal.financial-record'),
-            show: hasAbility('manageOwnStudentFinancialDetails:students') && hasStudentProfile() && hasProgram(),
+            transKey: 'trans.academic_record',
+            icon: icons[IconName.book_check],
+            url: route('portal.academic-record'),
+            show: hasAbility('manageOwnStudentAcademicDetails:students') && hasStudentProfile(),
         },
         {
             title: 'O Levels',
@@ -134,6 +126,14 @@ export function useSidebarMenu() {
             url: route('portal.list-o-levels'),
             show: hasAbility('manageOwnStudentAcademicDetails:students'),
         },
+        ...portalSidebarProfileTabs()
+            .filter((tab) => tab.value === 'authentication')
+            .map((tab) => ({
+                title: tab.transLabel(),
+                icon: icons[tab.icon],
+                url: route(tab.routeName!),
+                show: tab.portalShow?.() ?? false,
+            })),
         /** ================ PORTAL END ======================*/
     ]);
 

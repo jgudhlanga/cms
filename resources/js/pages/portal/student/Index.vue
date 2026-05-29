@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import AddApplicationButton from '@/pages/portal/application/partials/AddApplicationButton.vue';
-import CurrentApplications from '@/pages/portal/student/partials/CurrentApplications.vue';
+import ApplicationsByIntakePeriod from '@/components/students/applications/ApplicationsByIntakePeriod.vue';
 import OLevelResults from '@/pages/portal/student/partials/OLevelResults.vue';
 import { AuthObject } from '@/types/data-pagination';
 import { Enrolment, OLevelSubjectResult } from '@/types/enrolments';
@@ -34,7 +34,7 @@ const breadcrumbs: BreadcrumbItemInterface[] = [{ transChoiceKey: 'dashboard' },
 <!--            <AddApplicationButton :student="student" />-->
         </div>
         <div class="mt-6 flex w-full flex-col space-y-6">
-            <CurrentApplications :applications="applications" />
+            <ApplicationsByIntakePeriod :applications="applications" />
             <OLevelResults :o-level-results="oLevelResults" />
         </div>
     </PageContainer>

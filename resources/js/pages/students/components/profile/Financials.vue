@@ -10,7 +10,6 @@ import {
     useStudentPaymentReceiptPresentation,
 } from '@/composables/finance/useStudentPaymentReceiptPresentation';
 import { useStudentsFinancials } from '@/composables/finance/useStudentsFinancials';
-import { useUtils } from '@/composables/core/useUtils';
 import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
 import { TextFieldType } from '@/enums/inputs';
@@ -30,7 +29,6 @@ interface Props {
 
 const props = defineProps<Props>();
 
-const { formatCurrency } = useUtils();
 const {
     fetchStudentLedger,
     ledgerEntries,
@@ -60,6 +58,7 @@ const receiptContext = computed(() => ({
 const {
     formatLedgerDate,
     formatLedgerUsdAmount,
+    formatUsdAmount,
     sanitizeReceiptDescription,
     isChargeEntry,
     formatRunningBalance,
@@ -70,16 +69,7 @@ const parsedLedgerEntries = useParsedStudentPaymentReceipts(
     receiptContext,
 );
 
-const formatSummaryUsd = (value: string | number): string => {
-    const amount = Number(value);
-    const formatted = formatCurrency(String(Number.isFinite(amount) ? amount : 0));
-
-    if (formatted.includes('$')) {
-        return formatted;
-    }
-
-    return formatted.startsWith('-') ? `-$${formatted.slice(1)}` : `$${formatted}`;
-};
+const formatSummaryUsd = formatUsdAmount;
 
 onMounted(async () => {
     if (props.student?.id) {

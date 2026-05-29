@@ -1,4 +1,5 @@
 import type { DataListProps, PaginationLink } from '@/types/data-pagination';
+import type { Enrolment } from '@/types/enrolments';
 import type {
     HostelAllocation,
     HostelApplication,
@@ -360,6 +361,82 @@ export function parseJsonApiHmsSetting(document: { data?: JsonApiResource }): Hm
         attributes: resource.attributes as HmsSettings['attributes'],
     };
 }
+export type JsonApiStudentProgramAttributes = {
+    studentId?: number;
+    department?: string;
+    level?: string;
+    course?: string;
+    intakePeriodId?: number;
+    intakePeriod?: string;
+    intakePeriodCalendarYear?: string;
+    intakePeriodStartDate?: string;
+    applicationTrackingNumber?: string;
+    workflowStep?: string;
+    createdAt?: string;
+    updatedAt?: string;
+};
+
+export function mapJsonApiStudentProgramToEnrolment(resource: JsonApiResource): Enrolment {
+    const attributes = resource.attributes as JsonApiStudentProgramAttributes;
+
+    return {
+        type: 'enrolments',
+        id: resource.id,
+        attributes: {
+            studentId: attributes.studentId ?? '',
+            studentName: '',
+            modeOfStudyId: '',
+            modeOfStudy: '',
+            phoneNumber: '',
+            email: '',
+            institutionDepartmentId: '',
+            departmentLevelId: '',
+            departmentCourseId: '',
+            department: attributes.department ?? '',
+            level: attributes.level ?? '',
+            levelId: '',
+            intakePeriod: attributes.intakePeriod ?? '',
+            intakePeriodId: attributes.intakePeriodId ?? '',
+            intakePeriodCalendarYear: attributes.intakePeriodCalendarYear,
+            intakePeriodStartDate: attributes.intakePeriodStartDate,
+            allowedApplicationsPerLevel: 0,
+            hasEnrolmentRequirements: false,
+            course: attributes.course ?? '',
+            applicationTrackingNumber: attributes.applicationTrackingNumber ?? '',
+            requiredExamSittingCount: 0,
+            registrationFeeConfirmed: false,
+            tuitionFeeConfirmed: false,
+            requiredLevelCompleted: false,
+            readWriteAcknowledged: false,
+            createdAt: attributes.createdAt ?? '',
+            updatedAt: attributes.updatedAt ?? '',
+            deletedAt: '',
+        },
+        relationships: {
+            oLevelResults: [],
+            departmentWorkflowStep: {
+                type: 'department-application-step',
+                id: '',
+                attributes: {
+                    institutionDepartmentId: '',
+                    workflowStepId: '',
+                    workflowStep: attributes.workflowStep ?? '',
+                    slug: '',
+                    workflowStepDescription: '',
+                    position: 0,
+                    createdAt: '',
+                    updatedAt: '',
+                    deletedAt: '',
+                },
+            },
+        },
+    };
+}
+
+export function parseJsonApiStudentPrograms(document: JsonApiCollectionDocument): Enrolment[] {
+    return (document.data ?? []).map(mapJsonApiStudentProgramToEnrolment);
+}
+
 export function parseJsonApiHostelAllocations(document: JsonApiCollectionDocument): DataListProps<HostelAllocation> {
     const rows: HostelAllocation[] = (document.data ?? []).map((resource) => ({
         type: resource.type,

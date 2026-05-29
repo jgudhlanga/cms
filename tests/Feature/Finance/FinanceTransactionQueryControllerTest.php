@@ -2,13 +2,13 @@
 
 use App\Models\Finance\FinanceTransactionQuery;
 use App\Models\Integrations\Banks\ZBBankStatement;
-use App\Models\Students\Student;
 use App\Models\Users\User;
 use Illuminate\Http\UploadedFile;
 use Laravel\Sanctum\Sanctum;
 
 it('allows student to create missing transaction query without proof and view own queries', function () {
     $user = User::factory()->create();
+    $user->givePermissionTo('manageOwnStudentFinancialDetails:students');
     $student = createStudentForFinanceQuery($user, 'STU-Q-001');
     Sanctum::actingAs($user);
 

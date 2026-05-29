@@ -75,7 +75,7 @@ class StudentFinancialStatementPdfService
                     'religion',
                     'contacts',
                     'addresses',
-                    'nextOfKins',
+                    'nextOfKins.contacts',
                     'latestEnrolment.institutionDepartment.department',
                     'latestEnrolment.departmentLevel.level',
                     'latestEnrolment.departmentCourse.course',
@@ -98,7 +98,7 @@ class StudentFinancialStatementPdfService
             'religion',
             'contacts',
             'addresses',
-            'nextOfKins',
+            'nextOfKins.contacts',
             'latestEnrolment.institutionDepartment.department',
             'latestEnrolment.departmentLevel.level',
             'latestEnrolment.departmentCourse.course',
@@ -156,12 +156,12 @@ class StudentFinancialStatementPdfService
             ['label' => 'Email', 'value' => $this->displayValue($student->user?->email)],
             ['label' => 'Home Address', 'value' => $this->formatAddress($mainAddress)],
             ['label' => 'Guardian', 'value' => $this->displayValue($nextOfKin?->name)],
-            ['label' => 'Guardian Contact', 'value' => $this->displayValue($nextOfKin?->phone_number)],
+            ['label' => 'Guardian Contact', 'value' => $this->displayValue($this->guardianPhone($nextOfKin))],
         ];
     }
 
     /**
-     * @param Collection<int, ZBBankStatement> $entries
+     * @param  Collection<int, ZBBankStatement>  $entries
      * @return list<array{transactionDate: string, description: string, debit: string, credit: string, runningBalance: string}>
      */
     private function ledgerRows(Collection $entries): array
@@ -180,6 +180,17 @@ class StudentFinancialStatementPdfService
         })->all();
     }
 
+    private function guardianPhone(?NextOfKin $nextOfKin): ?string
+    {
+        if ($nextOfKin === null) {
+            return null;
+        }
+
+        $contact = $nextOfKin->contacts->first();
+
+        return $contact?->phone_number ?: $contact?->alt_phone_number;
+    }
+
     private function formatAddress(?Address $address): string
     {
         if ($address === null) {
@@ -187,12 +198,12 @@ class StudentFinancialStatementPdfService
         }
 
         $parts = array_values(array_unique(array_filter([
-            $address->address1,
-            $address->address2,
-            $address->address3,
-            $address->address4,
-            $address->address5,
-            $address->address6,
+            $address->address_1,
+            $address->address_2,
+            $address->address_3,
+            $address->address_4,
+            $address->address_5,
+            $address->address_6,
         ], fn (?string $part) => filled(trim((string) $part)))));
 
         return $parts === [] ? '---' : implode(', ', $parts);
@@ -233,6 +244,6 @@ class StudentFinancialStatementPdfService
 
         $formatted = number_format($numericAmount, 2, '.', '');
 
-        return str_starts_with($formatted, '-') ? '-$'.ltrim($formatted, '-') : '$'.$formatted;
+        return str_starts_with($formatted, '-') ? '-USD$'.ltrim($formatted, '-') : 'USD$'.$formatted;
     }
 }

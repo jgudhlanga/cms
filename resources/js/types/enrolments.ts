@@ -27,6 +27,8 @@ export type Enrolment = {
         levelId: string | number;
         intakePeriod: string;
         intakePeriodId: string | number;
+        intakePeriodCalendarYear?: string;
+        intakePeriodStartDate?: string;
         allowedApplicationsPerLevel: string | number;
         hasEnrolmentRequirements: boolean;
         course: string;

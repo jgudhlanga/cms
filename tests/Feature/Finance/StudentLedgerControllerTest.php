@@ -4,7 +4,19 @@ use App\Http\Controllers\Api\V1\Finance\FinanceReceiptController;
 use App\Models\Finance\FinanceExchangeRate;
 use App\Models\Integrations\Banks\ZBBankStatement;
 use App\Models\Students\Student;
+use App\Models\Users\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+
+function actingAsFinanceStaffForLedgerTests(): User
+{
+    $user = User::factory()->create();
+    $user->givePermissionTo('root:manage');
+    test()->actingAs($user);
+    Auth::setUser($user);
+
+    return $user;
+}
 
 it('returns ledger entries with summary totals and running balances', function () {
     $studentNumber = '26ICT0703086HP';
@@ -50,6 +62,7 @@ it('returns ledger entries with summary totals and running balances', function (
         'student_number' => $studentNumber,
     ]);
 
+    actingAsFinanceStaffForLedgerTests();
     $controller = app(FinanceReceiptController::class);
     $response = $controller->getStudentLedger($student)->response()->getData(true);
 
@@ -97,6 +110,7 @@ it('still returns only credit receipts on receipts endpoint', function () {
     ]);
 
     $student = new Student(['student_number' => $studentNumber]);
+    actingAsFinanceStaffForLedgerTests();
     $controller = app(FinanceReceiptController::class);
     $data = $controller->getStudentReceipts($student)->toArray(Request::create('/', 'GET'));
 
@@ -147,6 +161,7 @@ it('does not leak ledger entries from other students sharing a numeric prefix st
     ]);
 
     $student = new Student(['student_number' => $studentNumber]);
+    actingAsFinanceStaffForLedgerTests();
     $controller = app(FinanceReceiptController::class);
     $response = $controller->getStudentLedger($student)->response()->getData(true);
     $entryIds = collect($response['data'])->pluck('id')->all();

@@ -45,6 +45,8 @@ class StudentController
 
     public function studentEnrolements(Student $student)
     {
+        abort_unless(request()->user()?->can('view', $student) ?? false, 403);
+
         $student->load([
             'enrolments.studentProgram',
             'enrolments.departmentLevel.level',

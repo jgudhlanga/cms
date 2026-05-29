@@ -177,13 +177,28 @@ export function useStudentPaymentReceiptPresentation(context: MaybeRefOrGetter<S
         return parsedDate.isValid() ? parsedDate.format('YYYY-MM-DD') : notAvailable();
     };
 
+    const formatUsdDisplay = (formatted: string): string => {
+        if (formatted.startsWith('-$')) {
+            return `-USD$${formatted.slice(2)}`;
+        }
+
+        if (formatted.startsWith('$')) {
+            return `USD$${formatted.slice(1)}`;
+        }
+
+        return formatted.startsWith('-') ? `-USD$${formatted.slice(1)}` : `USD$${formatted}`;
+    };
+
+    const formatUsdAmount = (amount: string | number): string => {
+        return formatUsdDisplay(formatCurrency(String(toAmount(amount))));
+    };
+
     const formatLedgerUsdAmount = (amount: number): string => {
         if (amount <= 0) {
             return emptyAmount();
         }
 
-        const formatted = formatCurrency(String(amount));
-        return formatted.startsWith('$') ? formatted : `$${formatted}`;
+        return formatUsdAmount(amount);
     };
 
     const isChargeEntry = (receipt: ParsedStudentPaymentReceipt): boolean => {
@@ -217,6 +232,7 @@ export function useStudentPaymentReceiptPresentation(context: MaybeRefOrGetter<S
         formatMoney,
         formatReceiptDate,
         formatLedgerDate,
+        formatUsdAmount,
         formatLedgerUsdAmount,
         sanitizeReceiptDescription,
         originalAmountNearReference,

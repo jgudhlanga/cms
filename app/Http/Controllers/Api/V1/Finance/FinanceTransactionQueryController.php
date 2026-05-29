@@ -12,16 +12,14 @@ use App\Models\Finance\FinanceTransactionQuery;
 use App\Models\Students\Student;
 use App\Models\Users\User;
 use App\Services\Finance\FinanceTransactionQueryReconciliationService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
-use Illuminate\Http\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 
 class FinanceTransactionQueryController extends Controller
 {
-    public function __construct(private readonly FinanceTransactionQueryReconciliationService $reconciliationService)
-    {
-    }
+    public function __construct(private readonly FinanceTransactionQueryReconciliationService $reconciliationService) {}
 
     public function indexForStudent(Request $request, Student $student): AnonymousResourceCollection
     {
@@ -187,9 +185,11 @@ class FinanceTransactionQueryController extends Controller
 
     private function authorizeStudentContext(User $user, Student $student): void
     {
-        $isOwnStudentRecord = $user->studentProfile?->id === $student->id || $user->id === $student->user_id;
+        $isOwnStudentRecord = $student->exists
+            && ($user->studentProfile?->id === $student->id || $user->id === $student->user_id);
 
         if ($isOwnStudentRecord) {
+            abort_unless($user->can('manageOwnStudentFinancialDetails:students'), Response::HTTP_FORBIDDEN);
 
             return;
         }

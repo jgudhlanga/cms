@@ -3,13 +3,13 @@ import { Head } from '@inertiajs/vue3';
 
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import { AuthObject } from '@/types/data-pagination';
-import { Student, StudentHeader } from '@/types/students';
+import { Student } from '@/types/students';
 import { Link } from '@/types/ui';
 import { useStudentProfile } from '@/composables/students/useStudentProfile';
+import { useStudentProfileHeader } from '@/composables/students/useStudentProfileHeader';
 import { useStudentsStore } from '@/store/students/useStudentsStore';
 import { storeToRefs } from 'pinia';
 import { icons } from '@/lib/icons';
-import { computed } from 'vue';
 
 interface Props {
     student: Student;
@@ -28,21 +28,7 @@ const breadcrumbs: Array<Link> = [
 const { profileTabs } = useStudentProfile();
 
 const { activeTab } = storeToRefs(useStudentsStore());
-const headerData = computed<StudentHeader>(() => {
-    return {
-        studentId: student?.id ?? '',
-        studentName: student?.relationships?.user?.attributes.name ?? '',
-        avatarUrl: student?.relationships?.user?.attributes.avatarUrl ?? '',
-        studentNumber: student?.attributes.studentNumber ?? '',
-        level: student?.attributes.level ?? '',
-        course: student?.attributes.course ?? '',
-        academicCalendar: student?.relationships?.latestEnrolment?.attributes.academicCalendar ?? '',
-        academicYearOption: student?.relationships?.latestEnrolment?.attributes.academicYearOption ?? '',
-        enrolmentStatus: student?.relationships?.latestEnrolment?.attributes.status ?? '',
-        modeOfStudy: student?.attributes.modeOfStudy ?? '',
-        department: student?.attributes.department ?? '',
-    };
-});
+const { headerData } = useStudentProfileHeader(() => student);
 </script> 
 
 <template> 

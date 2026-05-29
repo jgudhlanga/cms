@@ -404,17 +404,9 @@ class PortalController extends Controller
     /**
      * @throws AuthorizationException
      */
-    public function applications(): Response
+    public function applications(): RedirectResponse
     {
-        $this->authorize('manageStudentPersonalDetails');
-        $student = $this->getStudent(request());
-        $multipleApplicationsLevels = Level::where('allowed_applications_per_level', '>', '1')->pluck('id')->toArray();
-
-        return Inertia::render('portal/student/Applications', [
-            'student' => StudentResource::make($student),
-            'applications' => EnrolmentResource::collection($student->programs),
-            'multipleApplicationsLevelIds' => $multipleApplicationsLevels,
-        ]);
+        return redirect()->route('portal.profile.applications');
     }
 
     // ========= Student Profile =========
@@ -422,26 +414,73 @@ class PortalController extends Controller
     /**
      * @throws AuthorizationException
      */
-    public function personal(): Response
+    public function profilePersonalInformation(): Response
     {
-        $this->authorize('manageStudentPersonalDetails');
-
-        return Inertia::render('portal/student/PersonalDetails', [
-            'student' => StudentResource::make($this->getStudent(request())),
-        ]);
+        return $this->renderProfileSection('basic_info', 'manageStudentPersonalDetails');
     }
 
     /**
      * @throws AuthorizationException
      */
-    public function programs(): Response
+    public function profilePrograms(): Response
     {
-        $this->authorize('manageStudentProgramDetails');
-        $student = $this->getStudent(request());
+        return $this->renderProfileSection('programs', 'manageStudentProgramDetails');
+    }
 
-        return Inertia::render('portal/student/Programs', [
-            'programs' => StudentProgramResource::collection($student->programs),
-        ]);
+    /**
+     * @throws AuthorizationException
+     */
+    public function profileApplications(): Response
+    {
+        return $this->renderProfileSection('applications', 'manageStudentPersonalDetails');
+    }
+
+    /**
+     * @throws AuthorizationException
+     */
+    public function profileFinancials(): Response
+    {
+        return $this->renderProfileSection('financials', 'manageStudentFinancialRecords');
+    }
+
+    /**
+     * @throws AuthorizationException
+     */
+    public function profileAccommodations(): Response
+    {
+        return $this->renderProfileSection('accommodations', 'manageStudentPersonalDetails');
+    }
+
+    /**
+     * @throws AuthorizationException
+     */
+    public function profileDocuments(): Response
+    {
+        return $this->renderProfileSection('documents', 'manageStudentPersonalDetails');
+    }
+
+    /**
+     * @throws AuthorizationException
+     */
+    public function profileAuthentication(): Response
+    {
+        return $this->renderProfileSection('authentication', 'manageStudentPersonalDetails');
+    }
+
+    /**
+     * @throws AuthorizationException
+     */
+    public function personal(): RedirectResponse
+    {
+        return redirect()->route('portal.profile.personal-information');
+    }
+
+    /**
+     * @throws AuthorizationException
+     */
+    public function programs(): RedirectResponse
+    {
+        return redirect()->route('portal.profile.programs');
     }
 
     /**
@@ -460,11 +499,9 @@ class PortalController extends Controller
     /**
      * @throws AuthorizationException
      */
-    public function financialRecord(): Response
+    public function financialRecord(): RedirectResponse
     {
-        $this->authorize('manageStudentFinancialRecords');
-
-        return Inertia::render('portal/student/FinancialRecord');
+        return redirect()->route('portal.profile.financials');
     }
 
     // ========= Contact Details =========
@@ -497,6 +534,46 @@ class PortalController extends Controller
     }
 
     // ========= Helpers =========
+
+    /**
+     * @throws AuthorizationException
+     */
+    private function renderProfileSection(string $activeTab, string $ability): Response
+    {
+        $this->authorize($ability);
+
+        return Inertia::render('portal/student/profile/Section', [
+            'student' => StudentResource::make($this->profileStudent()),
+            'activeTab' => $activeTab,
+        ]);
+    }
+
+    private function profileStudent(): Student
+    {
+        $student = $this->getStudent(request());
+        $student->load([
+            'user',
+            'title',
+            'gender',
+            'maritalStatus',
+            'race',
+            'idType',
+            'country',
+            'religion',
+            'latestEnrolment.institutionDepartment.department',
+            'latestEnrolment.departmentLevel.level',
+            'latestEnrolment.departmentCourse.course',
+            'latestEnrolment.modeOfStudy',
+            'latestEnrolment.academicCalendar',
+            'latestEnrolment.academicYearOption',
+            'latestEnrolment.studentEnrolmentStatus',
+            'contacts',
+            'addresses',
+            'nextOfKins',
+        ]);
+
+        return $student;
+    }
 
     private function getStudent(Request $request)
     {
