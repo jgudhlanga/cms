@@ -238,13 +238,6 @@ onMounted(() => {
 
 <template>
     <section class="space-y-6">
-        <div>
-            <h2 class="text-lg font-semibold">{{ $t('academic_calendar.course_work_import_title') }}</h2>
-            <p class="mt-1 text-sm text-muted-foreground">
-                {{ $t('academic_calendar.course_work_import_description') }}
-            </p>
-        </div>
-
         <p v-if="loading" class="text-sm text-muted-foreground">{{ $t('academic_calendar.course_work_loading') }}</p>
         <p v-else-if="error" class="text-sm text-destructive">{{ $t(error) }}</p>
 
