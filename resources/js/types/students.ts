@@ -67,6 +67,7 @@ export type StudentHeader = {
 };
 
 export type StudentProgrammeModule = {
+    id?: number;
     code: string | null;
     name: string | null;
     durationInHours: number | null;
@@ -75,6 +76,29 @@ export type StudentProgrammeModule = {
     lecturer: string | null;
     type: string | null;
     assessment: string | null;
+    courseWork?: StudentProgrammeModuleCourseWork | null;
+};
+
+export type StudentProgrammeModuleCourseWork = {
+    assessments: Array<{
+        assessmentTypeId: number;
+        assessmentTypeName: string;
+        markId: number | null;
+        mark: number | null;
+        remark: string | null;
+    }>;
+    aggregation: {
+        components: Array<{
+            assessmentTypeId: number;
+            assessmentTypeName: string;
+            rawMark: number | null;
+            weightPercent: number;
+            weightedMark: number | null;
+        }>;
+        courseWorkTotal60: number | null;
+        isComplete: boolean;
+        remark: string | null;
+    };
 };
 
 export type StudentProgrammeSemester = {
@@ -82,6 +106,7 @@ export type StudentProgrammeSemester = {
     label: string | null;
     year: string | null;
     status: string | null;
+    studentEnrolmentId?: number;
     module: StudentProgrammeModule[];
 };
 
@@ -91,6 +116,7 @@ export type StudentProgramme = {
     course: string | null;
     courseCode: string | null;
     calendarYear: string | null;
+    isActive?: boolean;
     semesters: StudentProgrammeSemester[];
 };
 

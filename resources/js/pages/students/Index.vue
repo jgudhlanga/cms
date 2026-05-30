@@ -58,7 +58,7 @@ watch(studentRefreshKey, () => loadStudents(filters.value));
 <template>
     <Head :title="$tChoice('student', 2)" />
     <PageContainer :breadcrumbs="breadcrumbs">
-        <div class="bg-card relative inline-block min-w-full overflow-auto rounded-xl px-6 pt-4 align-middle">
+        <div class="bg-card relative inline-block min-w-full overflow-auto rounded-xl px-6 py-2 my-2 align-middle">
             <StudentFilters :filters="filters" @change="onStudentFiltersChange" />
         </div>
         <DataTable

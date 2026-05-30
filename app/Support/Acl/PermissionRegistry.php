@@ -2,8 +2,22 @@
 
 namespace App\Support\Acl;
 
+use App\Enums\Shared\ModuleEnum;
+use Illuminate\Support\Str;
+
 class PermissionRegistry
 {
+    public static function moduleTitleForGroupKey(string $groupKey): string
+    {
+        foreach (ModuleEnum::cases() as $case) {
+            if (Str::slug($case->value) === $groupKey) {
+                return $case->value;
+            }
+        }
+
+        return Str::headline($groupKey);
+    }
+
     /**
      * @return array<string, array<int, string>>
      */

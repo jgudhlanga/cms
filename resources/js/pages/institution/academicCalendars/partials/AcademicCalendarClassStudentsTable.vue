@@ -11,7 +11,9 @@ import { UserIcon, UserRoundIcon } from 'lucide-vue-next';
 defineProps<{
     sortedStudents: AcademicCalendarClassPreviewStudent[];
     canMoveStudents: boolean;
+    canViewCourseWork: boolean;
     moveTargetClasses: AcademicCalendarClassMoveTarget[];
+    studentCourseWorkUrl: (student: AcademicCalendarClassPreviewStudent) => string;
 }>();
 
 const emit = defineEmits<{
@@ -35,6 +37,9 @@ const selectAllChangeClassModel = defineModel<boolean>('selectAllChangeClassMode
                 <th v-if="canMoveStudents" class="j-th text-center">
                     <span class="text-xs font-semibold uppercase">{{ $t('academic_calendar.move_to_another_class') }}</span>
                 </th>
+                <th v-if="canViewCourseWork" class="j-th text-center">
+                    <span class="text-xs font-semibold uppercase">{{ $tChoice('academic_calendar.course_work', 1) }}</span>
+                </th>
                 <th class="j-th text-right">{{ $tChoice('trans.action', 2) }}</th>
             </tr>
         </thead>
@@ -56,6 +61,7 @@ const selectAllChangeClassModel = defineModel<boolean>('selectAllChangeClassMode
                         <BaseCheckbox v-model="selectAllChangeClassModel" input-id="select_all_change_class" :label="''" />
                     </div>
                 </td>
+                <td v-if="canViewCourseWork" class="j-td" />
                 <td class="j-td text-right" @click.stop>
                     <BaseButton
                         v-if="selectedStudentEnrolmentIds.length > 0 && moveTargetClasses.length > 0"
@@ -86,6 +92,18 @@ const selectAllChangeClassModel = defineModel<boolean>('selectAllChangeClassMode
                         v-model="selectedStudentEnrolmentIds"
                         :value="student.studentEnrolmentId"
                     />
+                </td>
+                <td v-if="canViewCourseWork" class="j-td text-center">
+                    <InertiaLink :href="studentCourseWorkUrl(student)">
+                        <BaseButton
+                            :size="ButtonSize.xs"
+                            :variant="ColorVariant.primary"
+                            type="button"
+                            classes="rounded-full"
+                        >
+                            {{ $t('academic_calendar.course_work_open') }}
+                        </BaseButton>
+                    </InertiaLink>
                 </td>
                 <td class="j-td text-right">
                     <InertiaLink :href="route('students.profile', String(student.studentId))">

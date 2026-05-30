@@ -1,5 +1,6 @@
 import type { DataListProps, PaginationLink } from '@/types/data-pagination';
 import type { Enrolment } from '@/types/enrolments';
+import type { CourseWorkStudentTree, CourseWorkTree } from '@/types/course-work';
 import type {
     HostelAllocation,
     HostelApplication,
@@ -435,6 +436,74 @@ export function mapJsonApiStudentProgramToEnrolment(resource: JsonApiResource): 
 
 export function parseJsonApiStudentPrograms(document: JsonApiCollectionDocument): Enrolment[] {
     return (document.data ?? []).map(mapJsonApiStudentProgramToEnrolment);
+}
+
+export const COURSE_WORK_MARK_RESOURCE_TYPE = 'course-work-marks';
+
+export function parseJsonApiCourseWorkTree(document: { meta?: Record<string, unknown> }): CourseWorkTree | null {
+    const meta = document.meta;
+    if (!meta) {
+        return null;
+    }
+
+    const hasClassScope = typeof meta.academicCalendarClassId === 'number';
+    const hasClassConfigScope = typeof meta.classConfigId === 'number';
+
+    if (!hasClassScope && !hasClassConfigScope) {
+        return null;
+    }
+
+    return meta as unknown as CourseWorkTree;
+}
+
+export function parseJsonApiCourseWorkStudentTree(document: { meta?: Record<string, unknown> }): CourseWorkStudentTree | null {
+    const meta = document.meta;
+    if (!meta || typeof meta.academicCalendarClassId !== 'number' || typeof meta.studentEnrolmentId !== 'number') {
+        return null;
+    }
+
+    return meta as unknown as CourseWorkStudentTree;
+}
+
+export function courseWorkStudentFilterParams(
+    academicCalendarClassId: number,
+    studentEnrolmentId: number,
+): { filter: { academicCalendarClass: string; studentEnrolment: string } } {
+    return {
+        filter: {
+            academicCalendarClass: String(academicCalendarClassId),
+            studentEnrolment: String(studentEnrolmentId),
+        },
+    };
+}
+
+export function buildCourseWorkMarkPayload(
+    attributes: Record<string, unknown>,
+    id?: string | number,
+): { data: { type: string; id?: string; attributes: Record<string, unknown> } } {
+    return {
+        data: {
+            type: COURSE_WORK_MARK_RESOURCE_TYPE,
+            ...(id !== undefined ? { id: String(id) } : {}),
+            attributes,
+        },
+    };
+}
+
+export function courseWorkClassFilterParams(academicCalendarClassId: number): { filter: { academicCalendarClass: string } } {
+    return {
+        filter: {
+            academicCalendarClass: String(academicCalendarClassId),
+        },
+    };
+}
+
+export function courseWorkClassConfigFilterParams(classConfigId: number): { filter: { classConfig: string } } {
+    return {
+        filter: {
+            classConfig: String(classConfigId),
+        },
+    };
 }
 
 export function parseJsonApiHostelAllocations(document: JsonApiCollectionDocument): DataListProps<HostelAllocation> {

@@ -62,4 +62,10 @@ return [
     'accommodations_coming_soon_description' => 'Hostel applications, room allocation, and accommodation history will appear here soon.',
     'documents_coming_soon_title' => 'Student documents',
     'documents_coming_soon_description' => 'Offer letters, certificates, and other downloadable documents will be available here soon.',
+    'active_programme' => 'Active',
+    'course_work_marks' => 'Course work marks',
+    'course_work_no_marks' => 'No course work marks captured yet.',
+    'course_work_in_progress' => 'IP',
+    'final_grade' => 'Final grade',
+    'final_grade_pending_exam' => 'Pending exam results. Final grade will be calculated once the exam mark is recorded.',
 ];

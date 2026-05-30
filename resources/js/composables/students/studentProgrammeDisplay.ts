@@ -119,5 +119,36 @@ export const scoreLabel = (score: number): string => {
     return trans('students.score_below_pass');
 };
 
-export const moduleGradeDisplay = (module: StudentProgrammeModule): string =>
-    module.grade ? module.grade : trans('students.not_available');
+export const moduleGradeDisplay = (module: StudentProgrammeModule): string => {
+    const total = module.courseWork?.aggregation.courseWorkTotal60;
+
+    if (total !== null && total !== undefined) {
+        return String(Math.round(total));
+    }
+
+    const hasPartialMarks = module.courseWork?.assessments.some((assessment) => assessment.mark !== null);
+
+    if (hasPartialMarks) {
+        return trans('students.course_work_in_progress');
+    }
+
+    return module.grade ? module.grade : trans('students.not_available');
+};
+
+export const moduleGradeBadgeClass = (module: StudentProgrammeModule): string => {
+    const total = module.courseWork?.aggregation.courseWorkTotal60;
+
+    if (total !== null && total !== undefined) {
+        const percent = (total / 60) * 100;
+
+        return gradeBadgeClass(percent >= 50 ? 'B' : percent >= 40 ? 'C' : 'F');
+    }
+
+    const hasPartialMarks = module.courseWork?.assessments.some((assessment) => assessment.mark !== null);
+
+    if (hasPartialMarks) {
+        return 'bg-amber-500/15 text-amber-400 ring-1 ring-amber-500/30';
+    }
+
+    return gradeBadgeClass(module.grade);
+};

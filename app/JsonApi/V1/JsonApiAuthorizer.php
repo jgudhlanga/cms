@@ -2,8 +2,10 @@
 
 namespace App\JsonApi\V1;
 
+use App\JsonApi\V1\AcademicCalendars\CourseWorkAuthorizer;
 use App\JsonApi\V1\HMS\HmsAuthorizer;
 use App\JsonApi\V1\Students\StudentsAuthorizer;
+use App\Models\AcademicCalendars\CourseWorkMark;
 use App\Models\Students\StudentProgram;
 use Illuminate\Http\Request;
 use LaravelJsonApi\Contracts\Auth\Authorizer;
@@ -13,13 +15,16 @@ class JsonApiAuthorizer implements Authorizer
     public function __construct(
         private readonly HmsAuthorizer $hmsAuthorizer = new HmsAuthorizer,
         private readonly StudentsAuthorizer $studentsAuthorizer = new StudentsAuthorizer,
+        private readonly CourseWorkAuthorizer $courseWorkAuthorizer = new CourseWorkAuthorizer,
     ) {}
 
     private function delegate(string $modelClass): Authorizer
     {
-        return $modelClass === StudentProgram::class
-            ? $this->studentsAuthorizer
-            : $this->hmsAuthorizer;
+        return match ($modelClass) {
+            StudentProgram::class => $this->studentsAuthorizer,
+            CourseWorkMark::class => $this->courseWorkAuthorizer,
+            default => $this->hmsAuthorizer,
+        };
     }
 
     public function index(Request $request, string $modelClass): bool

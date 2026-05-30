@@ -17,6 +17,18 @@ const { programmes, isLoading, loadError, fetchProgrammes } = useStudentProgramm
 
 const studentId = computed(() => props.student?.id ?? '');
 
+const defaultOpenProgrammes = computed((): string[] => {
+    const activeProgramme = programmes.value.find((programme) => programme.isActive);
+
+    if (activeProgramme) {
+        return [String(activeProgramme.id)];
+    }
+
+    const firstProgramme = programmes.value[0];
+
+    return firstProgramme ? [String(firstProgramme.id)] : [];
+});
+
 onMounted(async () => {
     if (studentId.value) {
         await fetchProgrammes(studentId.value);
@@ -43,7 +55,11 @@ onMounted(async () => {
             </p>
         </div>
 
-        <BaseAccordion v-else class="w-full">
+        <BaseAccordion
+            v-else
+            class="w-full"
+            :default-value="defaultOpenProgrammes"
+        >
             <BaseAccordionItem
                 v-for="programme in programmes"
                 :key="programme.id"
@@ -51,11 +67,21 @@ onMounted(async () => {
                 :title="programmeHeading(programme.level, programme.course, programme.courseCode)"
                 :description="programme.calendarYear ?? undefined"
             >
+                <template
+                    v-if="programme.isActive"
+                    #trigger-extra
+                >
+                    <span class="shrink-0 rounded-full bg-primary/15 px-2.5 py-1 text-[0.72rem] font-bold uppercase tracking-wide text-primary ring-1 ring-primary/30">
+                        {{ $t('students.active_programme') }}
+                    </span>
+                </template>
+
                 <div class="flex flex-col gap-4">
                     <ProgrammeSemesterCard
                         v-for="semester in programme.semesters"
                         :key="semester.id"
                         :semester="semester"
+                        :expand-modules-with-marks="programme.isActive === true"
                     />
                 </div>
             </BaseAccordionItem>

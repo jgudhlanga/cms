@@ -16,14 +16,17 @@ class AssessmentTypesTableSeeder extends Seeder
             [
                 'name' => 'Innovation Based',
                 'modes_of_study' => ['Full Time', 'Part time', 'Block Release'],
+                'weight_percent' => 20,
             ],
             [
                 'name' => 'Research Based',
                 'modes_of_study' => ['Full Time', 'Part time', 'Block Release'],
+                'weight_percent' => 20,
             ],
             [
                 'name' => 'Test',
                 'modes_of_study' => ['Full Time', 'Part time', 'Block Release'],
+                'weight_percent' => 20,
             ],
             [
                 'name' => 'First Visit',
@@ -56,6 +59,7 @@ class AssessmentTypesTableSeeder extends Seeder
                     'tenant_id' => TenantEnum::HARARE_POLY->id(),
                     'modes_of_study' => $modeIds,
                     'description' => null,
+                    'weight_percent' => $row['weight_percent'] ?? null,
                 ],
             );
         }

@@ -7,7 +7,9 @@ use App\Importers\Finance\FinanceExchangeRateImporter;
 use App\Importers\Institution\CourseSyllabusImporter;
 use App\Importers\Institution\CourseSyllabusModuleImporter;
 use App\JsonApi\V1\JsonApiAuthorizer;
+use App\Models\AcademicCalendars\CourseWorkMark;
 use App\Models\Institution\Syllabus\CourseSyllabus;
+use App\Policies\AcademicCalendars\CourseWorkPolicy;
 use App\Policies\Institution\CourseSyllabusPolicy;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -46,6 +48,7 @@ class AppServiceProvider extends ServiceProvider
         // Dynamically register all Gate policies from config/custom.php
         $this->registerPoliciesFromConfig();
         Gate::policy(CourseSyllabus::class, CourseSyllabusPolicy::class);
+        Gate::policy(CourseWorkMark::class, CourseWorkPolicy::class);
 
         // Track user login statistics
         $this->registerLoginEventListener();

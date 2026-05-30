@@ -10,13 +10,16 @@ import ProgrammeModuleRow from '@/pages/students/components/profile/programs/Pro
 import ProgrammeStatCard from '@/pages/students/components/profile/programs/ProgrammeStatCard.vue';
 import type { StudentProgrammeSemester } from '@/types/students';
 import { CalendarDays } from 'lucide-vue-next';
-import { ref } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 
 interface Props {
     semester: StudentProgrammeSemester;
+    expandModulesWithMarks?: boolean;
 }
 
-defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+    expandModulesWithMarks: false,
+});
 
 const openMap = ref<Record<number, boolean>>({});
 
@@ -25,6 +28,35 @@ const toggleModule = (index: number) => {
 };
 
 const isModuleOpen = (index: number) => !!openMap.value[index];
+
+const moduleHasMarks = (index: number): boolean => {
+    const module = props.semester.module[index];
+
+    return module?.courseWork?.assessments.some((assessment) => assessment.mark !== null) ?? false;
+};
+
+const initializeOpenModules = (): void => {
+    if (!props.expandModulesWithMarks) {
+        return;
+    }
+
+    props.semester.module.forEach((_, index) => {
+        if (moduleHasMarks(index)) {
+            openMap.value[index] = true;
+        }
+    });
+};
+
+onMounted(initializeOpenModules);
+
+watch(
+    () => props.semester,
+    () => {
+        openMap.value = {};
+        initializeOpenModules();
+    },
+    { deep: true },
+);
 </script>
 
 <template>

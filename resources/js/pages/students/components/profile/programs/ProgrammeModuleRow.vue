@@ -2,7 +2,7 @@
 import {
     displayValue,
     formatDurationHours,
-    gradeBadgeClass,
+    moduleGradeBadgeClass,
     moduleGradeDisplay,
 } from '@/composables/students/studentProgrammeDisplay';
 import ProgrammeModuleDetails from '@/pages/students/components/profile/programs/ProgrammeModuleDetails.vue';
@@ -39,8 +39,9 @@ const emit = defineEmits<{
                 {{ formatDurationHours(module.durationInHours) }}
             </span>
             <span
-                :class="gradeBadgeClass(module.grade)"
-                class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[0.8rem] font-bold"
+                :class="moduleGradeBadgeClass(module)"
+                class="flex h-9 min-w-9 shrink-0 items-center justify-center rounded-full px-1.5 text-[0.72rem] font-bold"
+                :title="module.courseWork?.aggregation.courseWorkTotal60 != null ? $t('academic_calendar.course_work_total_60') : undefined"
             >
                 {{ moduleGradeDisplay(module) }}
             </span>
@@ -53,9 +54,9 @@ const emit = defineEmits<{
         <Transition
             enter-active-class="transition-all duration-200 ease-out"
             enter-from-class="max-h-0 opacity-0"
-            enter-to-class="max-h-96 opacity-100"
+            enter-to-class="max-h-[2000px] opacity-100"
             leave-active-class="transition-all duration-150 ease-in"
-            leave-from-class="max-h-96 opacity-100"
+            leave-from-class="max-h-[2000px] opacity-100"
             leave-to-class="max-h-0 opacity-0"
         >
             <ProgrammeModuleDetails

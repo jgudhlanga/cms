@@ -13,23 +13,56 @@ import { ColorVariant } from '@/enums/colors';
 import { errorAlert, successAlert } from '@/lib/alerts';
 import { firstInertiaErrorMessage } from '@/lib/inertia-errors';
 import { trans } from 'laravel-vue-i18n';
-import { computed, toRefs } from 'vue';
+import { computed, toRefs, withDefaults } from 'vue';
 
-const props = defineProps<{
-    department: InstitutionDepartment;
-    academicCalendar: AcademicCalendar;
-    academicCalendars: AcademicCalendar[];
-    course: DepartmentCourse;
-    level: DepartmentLevel;
-    mode: ModeOfStudy;
-    auth: AuthObject;
-    classConfig: ClassConfig | null;
-    previewClasses: AcademicCalendarClassPreview[];
-    generationContext: AcademicCalendarClassGenerationContext;
-    errors: object;
-}>();
+const props = withDefaults(
+    defineProps<{
+        department: InstitutionDepartment;
+        academicCalendar: AcademicCalendar;
+        academicCalendars: AcademicCalendar[];
+        course: DepartmentCourse;
+        level: DepartmentLevel;
+        mode: ModeOfStudy;
+        auth: AuthObject;
+        classConfig: ClassConfig | null;
+        previewClasses: AcademicCalendarClassPreview[];
+        generationContext: AcademicCalendarClassGenerationContext;
+        errors: object;
+        canViewCourseWork?: boolean;
+    }>(),
+    {
+        canViewCourseWork: false,
+    },
+);
 
 const { department, academicCalendar, level, course, mode, classConfig, previewClasses, generationContext } = toRefs(props);
+
+const canOpenCourseWorkMarksheet = computed(
+    () =>
+        props.canViewCourseWork
+        && classConfig.value != null
+        && (generationContext.value.populatedExistingClassCount > 0
+            || previewClasses.value.some((preview) => preview.academicCalendarClassId != null)),
+);
+
+const classConfigQuery = computed((): Record<string, string> => {
+    const context = generationContext.value;
+
+    return {
+        class_config_id: String(context.classConfigId ?? classConfig.value?.id ?? ''),
+        department_course_id: String(context.departmentCourseId ?? ''),
+        department_level_id: String(context.departmentLevelId ?? ''),
+        mode_of_study_id: String(context.modeOfStudyId ?? ''),
+    };
+});
+
+const courseWorkMarksheetUrl = computed(() =>
+    route('academic-calendars.department-classes.course-work-marksheet', {
+        institution_department: String(department.value.id),
+        calendar_year: String(academicCalendar.value.attributes.calendarYear),
+        ...classConfigQuery.value,
+    }),
+);
 
 const hasNewStudentsToAssign = computed(() => generationContext.value.newFinalStudentCount > 0);
 
@@ -144,15 +177,26 @@ const saveClasses = () => {
                 </div>
             </BaseCard>
 
-            <div class="flex items-center justify-between">
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <HeadingSmall :title="`${$t('enrolment.final_enrolments')} (${generationContext.finalStudentCount})`" />
-                <BaseButton
-                    :title="$t(classActionTitle)"
-                    :disabled="!hasNewStudentsToAssign || form.processing"
-                    :processing="form.processing"
-                    @click="saveClasses"
-                    classes="rounded-full"
-                />
+                <div class="flex flex-wrap items-center gap-2">
+                    <BaseButton
+                        :title="$t(classActionTitle)"
+                        :disabled="!hasNewStudentsToAssign || form.processing"
+                        :processing="form.processing"
+                        @click="saveClasses"
+                        classes="rounded-full"
+                    />
+                    <InertiaLink v-if="canOpenCourseWorkMarksheet" :href="courseWorkMarksheetUrl">
+                        <BaseButton
+                            type="button"
+                            :title="$t('academic_calendar.course_work_open_marksheet')"
+                            classes="rounded-full"
+                            :variant="ColorVariant.primary_outline"
+                            :size="ButtonSize.lg"
+                        />
+                    </InertiaLink>
+                </div>
             </div>
             <div class="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-gray-700">
                 <div class="flex items-center gap-1">
