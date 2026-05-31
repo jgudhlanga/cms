@@ -1,8 +1,5 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useInitials } from '@/composables/core/useInitials';
-import { useDefaults } from '@/composables/core/useDefaults';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { StudentHeader } from '@/types/students';
 import { trans } from 'laravel-vue-i18n';
 
@@ -18,49 +15,54 @@ import { trans } from 'laravel-vue-i18n';
     const levelCourseDisplay = computed(() => {
       return `${props.data?.level} ${trans('general.in')} ${props.data?.course}`;
     });
-    const { getInitials } = useInitials();
-    const { defaultAvatarImage } = useDefaults();
-
-   const avatarImage = () => {
-    return props.data?.avatarUrl?.trim()
-      ? props.data.avatarUrl
-      : defaultAvatarImage;
-   };
 
 </script>
 <template>
-  <section class="px-2 py-1">
-    <div class="grid grid-cols-[1fr_5rem] gap-x-4 gap-y-2">
-      <div class="flex flex-wrap items-center gap-2">
-        <h1 class="text-xl font-extrabold uppercase tracking-tight text-foreground sm:text-2xl">{{ data?.studentName }}</h1>
-        <span class="inline-flex items-center rounded-full border border-emerald-500/30 bg-emerald-500/15 px-2.5 py-0.5 text-xs font-semibold text-emerald-400">
-          {{ data?.enrolmentStatus }}
+  <section class="w-full min-w-0 px-2 py-1.5 sm:px-3">
+    <div class="flex w-full min-w-0 flex-col gap-1.5">
+      <div class="flex w-full min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5">
+        <h1 class="min-w-0 text-sm font-extrabold uppercase leading-tight tracking-tight wrap-break-word text-foreground sm:text-base">
+          {{ data?.studentName }}
+        </h1>
+        <span
+          v-if="data?.enrolmentStatus"
+          class="inline-flex shrink-0 items-center rounded-full border border-emerald-500/30 bg-emerald-500/15 px-1.5 py-px text-[10px] font-semibold leading-none text-emerald-600 dark:text-emerald-400"
+        >
+          {{ data.enrolmentStatus }}
+        </span>
+        <span
+          v-if="data?.studentNumber"
+          class="shrink-0 rounded-full bg-muted px-1.5 py-px font-mono text-[10px] leading-none tracking-wide text-foreground"
+        >
+          {{ data.studentNumber }}
         </span>
       </div>
-      <div class="row-span-2 self-stretch">
-        <Avatar class="h-full w-full rounded-full">
-          <AvatarImage
-            :src="avatarImage()"
-            :alt="data?.studentName"
-          />
-          <AvatarFallback class="h-full w-full rounded-full">
-            {{ getInitials(data?.studentName) }}
-          </AvatarFallback>
-        </Avatar>
-      </div>
-      <div class="flex flex-wrap items-center gap-1.5 text-sm text-muted-foreground sm:text-base">
-        <span class="rounded-full bg-muted px-1.5 py-0.5 font-mono tracking-wide text-foreground shadow-sm">{{ data?.studentNumber }}</span>
-        <span class="font-medium uppercase text-foreground">{{ levelCourseDisplay }}</span>
-      </div>
-      <div class="flex flex-wrap items-center justify-start gap-2">
-        <span class="inline-flex items-center rounded-full border border-primary/30 bg-primary/15 px-3 py-1.5 text-xs font-medium text-primary shadow-sm">
-          📅 {{ yearSemesterDisplay }}
+
+      <p
+        v-if="levelCourseDisplay"
+        class="w-full min-w-0 text-[11px] font-medium leading-tight wrap-break-word uppercase text-foreground sm:text-xs"
+      >
+        {{ levelCourseDisplay }}
+      </p>
+
+      <div class="flex w-full min-w-0 flex-wrap items-start gap-1">
+        <span
+          v-if="yearSemesterDisplay"
+          class="inline-flex max-w-full items-center rounded-full border border-primary/30 bg-primary/15 px-1.5 py-0.5 text-[10px] font-medium leading-snug text-primary"
+        >
+          <span class="min-w-0 wrap-break-word">📅 {{ yearSemesterDisplay }}</span>
         </span>
-        <span class="inline-flex items-center rounded-full border border-sky-500/30 bg-sky-500/15 px-3 py-1.5 text-xs font-medium text-sky-400 shadow-sm">
-          ⏱️ {{ data?.modeOfStudy }}
+        <span
+          v-if="data?.modeOfStudy"
+          class="inline-flex max-w-full items-center rounded-full border border-sky-500/30 bg-sky-500/15 px-1.5 py-0.5 text-[10px] font-medium leading-snug text-sky-600 dark:text-sky-400"
+        >
+          <span class="min-w-0 wrap-break-word">⏱️ {{ data.modeOfStudy }}</span>
         </span>
-        <span class="inline-flex items-center rounded-full border border-purple-500/30 bg-purple-500/15 px-3 py-1.5 text-xs font-medium text-purple-400 shadow-sm">
-          🏛️ {{ data?.department }}
+        <span
+          v-if="data?.department"
+          class="inline-flex max-w-full items-center rounded-full border border-purple-500/30 bg-purple-500/15 px-1.5 py-0.5 text-[10px] font-medium leading-snug text-purple-600 dark:text-purple-400"
+        >
+          <span class="min-w-0 wrap-break-word">🏛️ {{ data.department }}</span>
         </span>
       </div>
     </div>

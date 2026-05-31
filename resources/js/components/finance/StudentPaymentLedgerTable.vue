@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import StudentPaymentEntryBadge from '@/components/finance/StudentPaymentEntryBadge.vue';
+import StudentPaymentLedgerMobileList from '@/components/finance/StudentPaymentLedgerMobileList.vue';
 import Empty from '@/components/core/util/Empty.vue';
 import DataLoadingSpinner from '@/components/core/loader/DataLoadingSpinner.vue';
 import type { ParsedStudentPaymentReceipt } from '@/types/finance';
@@ -23,7 +24,7 @@ withDefaults(defineProps<Props>(), {
 <template>
     <div class="rounded-xl border border-border bg-card shadow-sm">
         <div
-            class="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-3"
+            class="flex flex-wrap items-center justify-between gap-2 border-b border-border px-3 py-3 sm:px-4"
         >
             <div class="flex items-center gap-2">
                 <ClipboardList class="h-4 w-4 text-muted-foreground" />
@@ -42,7 +43,17 @@ withDefaults(defineProps<Props>(), {
             <DataLoadingSpinner v-if="isLoading" />
             <template v-else>
                 <template v-if="receipts.length > 0">
-                    <div class="overflow-x-auto">
+                    <div class="md:hidden">
+                        <StudentPaymentLedgerMobileList
+                            :receipts="receipts"
+                            :format-ledger-date="formatLedgerDate"
+                            :sanitize-receipt-description="sanitizeReceiptDescription"
+                            :format-ledger-usd-amount="formatLedgerUsdAmount"
+                            :format-running-balance="formatRunningBalance"
+                            :is-charge-entry="isChargeEntry"
+                        />
+                    </div>
+                    <div class="hidden overflow-x-auto md:block">
                         <table class="j-table">
                             <thead class="j-thead">
                                 <tr>

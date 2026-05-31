@@ -113,10 +113,10 @@ const exportTransactionStatementPdf = (): void => {
 </script>
 
 <template>
-    <div class="flex flex-col gap-4">
-        <div class="rounded-lg border p-4">
-            <div class="flex items-start justify-between gap-3">
-                <div>
+    <div class="flex flex-col gap-4 py-4">
+        <div class="rounded-lg border p-3 sm:p-4">
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div class="min-w-0">
                     <h4 class="text-sm font-semibold">{{ $t('finance.transaction_statement') }}</h4>
                     <p class="mt-1 text-xs text-muted-foreground">
                         {{ $t('finance.transaction_statement_help') }}
@@ -126,6 +126,7 @@ const exportTransactionStatementPdf = (): void => {
                     type="button"
                     :size="ButtonSize.sm"
                     :variant="ColorVariant.primary_outline"
+                    class="w-full shrink-0 sm:w-auto"
                     @click="exportTransactionStatementPdf"
                 >
                     {{ $t('finance.export_statement_pdf') }}
@@ -144,11 +145,11 @@ const exportTransactionStatementPdf = (): void => {
             :is-charge-entry="isChargeEntry"
         />
 
-        <div class="rounded-lg border p-4">
+        <div class="rounded-lg border p-3 sm:p-4">
             <Collapsible v-slot="{ open }" :default-open="false">
-                <div class="flex items-center justify-between gap-3">
+                <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <CollapsibleTrigger
-                        class="flex min-w-0 flex-1 items-center gap-2 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-sm"
+                        class="flex min-w-0 flex-1 items-center gap-2 rounded-sm text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                     >
                         <ChevronDown
                             :class="
@@ -172,6 +173,7 @@ const exportTransactionStatementPdf = (): void => {
                     <BaseButton
                         :size="ButtonSize.sm"
                         :variant="ColorVariant.primary"
+                        class="w-full shrink-0 sm:w-auto"
                         @click.stop="onOpenCreateQueryModal"
                     >
                         {{ $t('trans.create') }}

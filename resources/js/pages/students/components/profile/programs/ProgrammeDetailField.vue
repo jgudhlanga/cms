@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { missingDisplayTextClass } from '@/composables/students/studentProgrammeDisplay';
+
 interface Props {
     labelKey: string;
     value: string;
@@ -8,12 +10,13 @@ defineProps<Props>();
 </script>
 
 <template>
-    <div>
-        <p class="mb-0.5 text-[0.62rem] font-semibold uppercase tracking-widest text-muted-foreground">
-            {{ $t(labelKey) }}
-        </p>
-        <p class="text-[0.85rem] font-semibold text-foreground">
+    <span class="inline text-xs">
+        <span class="text-muted-foreground">{{ $t(labelKey) }}:</span>
+        <span
+            class="ml-1 font-medium"
+            :class="missingDisplayTextClass(value)"
+        >
             <slot>{{ value }}</slot>
-        </p>
-    </div>
+        </span>
+    </span>
 </template>

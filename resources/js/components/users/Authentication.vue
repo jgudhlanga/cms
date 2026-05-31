@@ -104,7 +104,7 @@ onMounted(async () => {
 
 <template>
     <form @submit.prevent="() => submitForm()">
-        <div class="flex flex-col justify-center space-y-6">
+        <div class="flex flex-col py-4 justify-center space-y-6">
             <BaseCard
                 :title="$t('trans.ui_login_profile')"
                 :description="$t('trans.change_login_credentials_warning')"

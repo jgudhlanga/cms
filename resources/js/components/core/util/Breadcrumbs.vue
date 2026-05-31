@@ -13,9 +13,9 @@ defineProps<{
     <Breadcrumb>
         <BreadcrumbList>
             <!-- Mobile: show only current breadcrumb -->
-            <div class="block md:hidden">
-                <BreadcrumbItem>
-                    <BreadcrumbPage class="font-extrabold uppercase">
+            <div class="block min-w-0 md:hidden">
+                <BreadcrumbItem class="min-w-0">
+                    <BreadcrumbPage class="truncate font-extrabold uppercase">
                         <CrumbTitle :breadcrumb="breadcrumbs[breadcrumbs.length - 1]" />
                     </BreadcrumbPage>
                 </BreadcrumbItem>

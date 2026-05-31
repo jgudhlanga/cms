@@ -18,7 +18,6 @@ use App\Enums\Shared\StatusEnum;
 use App\Enums\Shared\TenantEnum;
 use App\Helpers\Helper;
 use App\Helpers\PaymentHelper;
-use App\Helpers\StudentHelper;
 use App\Helpers\WorkflowHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Shared\AddressRequest;
@@ -33,7 +32,6 @@ use App\Http\Resources\Institution\FeeStructureResource;
 use App\Http\Resources\Institution\LevelResource;
 use App\Http\Resources\Students\AcademicLevelResource;
 use App\Http\Resources\Students\AcademicRecordResource;
-use App\Http\Resources\Students\OLevelSubjectResultResource;
 use App\Http\Resources\Students\StudentProgramResource;
 use App\Http\Resources\Students\StudentResource;
 use App\Models\Institution\FeeStructure;
@@ -82,17 +80,19 @@ class PortalController extends Controller
     {
         $this->authorize('viewStudentDashboard');
         $student = $this->getStudent(request());
-        $results = StudentHelper::getStudentOLevelResultsJoinedToSubjects($student);
-        $oLevelResults = OLevelSubjectResultResource::collection($results);
-        $currentLevel = $student->currentLevel();
-        $multipleApplicationsLevels = Level::where('allowed_applications_per_level', '>', '1')->pluck('id')->toArray();
+        $student->load([
+            'user',
+            'latestEnrolment.institutionDepartment.department',
+            'latestEnrolment.departmentLevel.level',
+            'latestEnrolment.departmentCourse.course',
+            'latestEnrolment.modeOfStudy',
+            'latestEnrolment.academicCalendar',
+            'latestEnrolment.academicYearOption',
+            'latestEnrolment.studentEnrolmentStatus',
+        ]);
 
         return Inertia::render('portal/student/Index', [
             'student' => StudentResource::make($student),
-            'applications' => EnrolmentResource::collection($student->programs),
-            'multipleApplicationsLevelIds' => $multipleApplicationsLevels,
-            'oLevelResults' => $oLevelResults,
-            'currentLevel' => $currentLevel,
         ]);
     }
 

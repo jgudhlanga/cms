@@ -1,41 +1,74 @@
 <script setup lang="ts">
 import PageContainer from '@/components/core/page/PageContainer.vue';
-import AddApplicationButton from '@/pages/portal/application/partials/AddApplicationButton.vue';
-import ApplicationsByIntakePeriod from '@/components/students/applications/ApplicationsByIntakePeriod.vue';
-import OLevelResults from '@/pages/portal/student/partials/OLevelResults.vue';
+import DataLoadingSpinner from '@/components/core/loader/DataLoadingSpinner.vue';
+import StudentDashboardActivity from '@/components/portal/dashboard/StudentDashboardActivity.vue';
+import StudentDashboardHeader from '@/components/portal/dashboard/StudentDashboardHeader.vue';
+import StudentDashboardModuleProgress from '@/components/portal/dashboard/StudentDashboardModuleProgress.vue';
+import StudentDashboardNoticeboard from '@/components/portal/dashboard/StudentDashboardNoticeboard.vue';
+import StudentDashboardQuickActions from '@/components/portal/dashboard/StudentDashboardQuickActions.vue';
+import StudentDashboardTermDetails from '@/components/portal/dashboard/StudentDashboardTermDetails.vue';
+import { useStudentPortalDashboard } from '@/composables/students/useStudentPortalDashboard';
 import { AuthObject } from '@/types/data-pagination';
-import { Enrolment, OLevelSubjectResult } from '@/types/enrolments';
 import { Student } from '@/types/students';
 import { BreadcrumbItemInterface } from '@/types/ui';
 import { Head } from '@inertiajs/vue3';
-import { useStudents } from '@/composables/students/useStudents';
-import { CURRENT_INTAKE_PERIOD_ID } from '@/lib/constants';
+import { onMounted } from 'vue';
 
 interface Props {
     auth: AuthObject;
     errors: object;
     student: Student;
-    applications: Enrolment[];
-    multipleApplicationsLevelIds: string[] | number[];
-    oLevelResults: OLevelSubjectResult[];
-    currentLevel: string;
 }
 
 const props = defineProps<Props>();
 const { user } = props.auth;
 
-const { showCreateNewProgramButton } = useStudents();
+const { stats, isLoading, loadError, fetchDashboardStats } = useStudentPortalDashboard();
+
 const breadcrumbs: BreadcrumbItemInterface[] = [{ transChoiceKey: 'dashboard' }, { title: user.attributes?.name }];
+
+onMounted(() => {
+    void fetchDashboardStats();
+});
 </script>
+
 <template>
     <Head :title="$tChoice('trans.dashboard', 1)" />
     <PageContainer :breadcrumbs="breadcrumbs">
-        <div class="flex w-full items-center justify-end" v-if="showCreateNewProgramButton(applications, CURRENT_INTAKE_PERIOD_ID)">
-<!--            <AddApplicationButton :student="student" />-->
-        </div>
-        <div class="mt-6 flex w-full flex-col space-y-6">
-            <ApplicationsByIntakePeriod :applications="applications" />
-            <OLevelResults :o-level-results="oLevelResults" />
+        <div class="mt-2 flex w-full min-w-0 max-w-full flex-col gap-3 overflow-x-clip">
+            <StudentDashboardHeader :student="student" />
+
+            <div
+                v-if="loadError"
+                class="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-400"
+            >
+                <p>{{ $t('students.dashboard_load_failure') }}</p>
+                <button
+                    type="button"
+                    class="mt-2 text-xs font-semibold uppercase tracking-wide underline"
+                    @click="fetchDashboardStats()"
+                >
+                    {{ $t('students.reset') }}
+                </button>
+            </div>
+
+            <DataLoadingSpinner v-if="isLoading && !loadError" />
+
+            <template v-else-if="!loadError">
+                <StudentDashboardTermDetails
+                    :current-term="stats.currentTerm"
+                    :next-term="stats.nextTerm"
+                />
+
+                <StudentDashboardQuickActions />
+
+                <StudentDashboardModuleProgress :modules="stats.modules" />
+
+                <div class="grid gap-2 lg:grid-cols-2">
+                    <StudentDashboardNoticeboard :notices="stats.notices" />
+                    <StudentDashboardActivity :activities="stats.activities" />
+                </div>
+            </template>
         </div>
     </PageContainer>
 </template>

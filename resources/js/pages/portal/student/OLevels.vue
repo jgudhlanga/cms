@@ -74,14 +74,14 @@ const verificationMode = isItTrue(import.meta.env.VITE_VERIFICATION_MODE);
 <template>
     <Head :title="$t('trans.ui_o_level')" />
     <PageContainer :breadcrumbs="breadcrumbs">
-        <div class="my-6 flex items-center justify-between">
+        <div class="my-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <HeadingSmall
                 :title="$t('trans.ui_o_level_results')"
                 :description="$t('trans.ui_list_of_o_level_subjects_and_grades_attained_by_a_student')"
             />
             <BaseButton
                 v-if="!verificationMode"
-                classes="rounded-full"
+                classes="w-full rounded-full sm:w-auto"
                 :variant="ColorVariant.primary_outline"
                 @click="navigateTo(route('portal.manage-o-level-results'))"
             >

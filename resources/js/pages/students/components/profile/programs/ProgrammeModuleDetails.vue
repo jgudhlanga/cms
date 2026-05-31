@@ -36,10 +36,10 @@ const showScoreBar = computed(() => props.module.score !== null);
 </script>
 
 <template>
-    <div class="overflow-hidden border-t border-border bg-muted/40">
+    <div class="bg-muted/20 px-3 py-2">
         <div
             v-if="!hasCourseWork"
-            class="grid grid-cols-1 gap-3 px-5 pb-4 pt-3 sm:grid-cols-2 lg:grid-cols-4"
+            class="flex flex-wrap items-center gap-x-3 gap-y-1"
         >
             <ProgrammeDetailField
                 label-key="students.lecturer"
@@ -61,16 +61,16 @@ const showScoreBar = computed(() => props.module.score !== null);
 
         <div
             v-if="!hasCourseWork && showScoreBar"
-            class="px-5 pb-4"
+            class="mt-2"
         >
-            <div class="h-1.5 overflow-hidden rounded-full bg-muted">
+            <div class="h-[2px] overflow-hidden rounded-full bg-muted">
                 <div
                     class="h-full rounded-full transition-all duration-500"
                     :class="scoreBarColor(module.score!)"
                     :style="{ width: `${module.score}%` }"
                 />
             </div>
-            <p class="mt-1 text-[0.65rem] text-muted-foreground">
+            <p class="mt-0.5 text-[0.65rem] text-muted-foreground">
                 {{ scoreLabel(module.score!) }}
             </p>
         </div>

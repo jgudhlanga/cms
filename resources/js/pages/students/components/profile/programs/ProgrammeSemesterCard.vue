@@ -1,16 +1,13 @@
 <script setup lang="ts">
 import Empty from '@/components/core/util/Empty.vue';
 import {
-    formatDurationHours,
-    semesterDurationHours,
-    semesterTitle,
+    semesterHeaderMeta,
     statusBadgeClass,
 } from '@/composables/students/studentProgrammeDisplay';
 import ProgrammeModuleRow from '@/pages/students/components/profile/programs/ProgrammeModuleRow.vue';
-import ProgrammeStatCard from '@/pages/students/components/profile/programs/ProgrammeStatCard.vue';
 import type { StudentProgrammeSemester } from '@/types/students';
 import { CalendarDays } from 'lucide-vue-next';
-import { onMounted, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 
 interface Props {
     semester: StudentProgrammeSemester;
@@ -20,6 +17,8 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
     expandModulesWithMarks: false,
 });
+
+const header = computed(() => semesterHeaderMeta(props.semester));
 
 const openMap = ref<Record<number, boolean>>({});
 
@@ -60,50 +59,59 @@ watch(
 </script>
 
 <template>
-    <div class="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-        <div class="flex items-center justify-between gap-3 border-b border-border px-5 pb-4 pt-5">
-            <div class="flex min-w-0 items-center gap-3">
+    <div class="overflow-hidden rounded border border-border bg-card">
+        <div class="flex min-w-0 items-start justify-between gap-2 border-b border-border px-2 py-1.5 sm:items-center sm:px-3">
+            <div class="flex min-w-0 flex-1 items-start gap-1.5 sm:items-center sm:gap-2">
                 <CalendarDays
-                    class="h-4 w-4 shrink-0 text-muted-foreground"
+                    class="mt-0.5 h-3 w-3 shrink-0 text-muted-foreground sm:mt-0"
                     stroke-width="1.75"
                 />
-                <h2 class="truncate text-base font-bold tracking-tight text-foreground">
-                    {{ semesterTitle(semester.label, semester.year) }}
-                </h2>
+                <p class="min-w-0 wrap-break-word text-xs leading-snug text-foreground sm:truncate sm:leading-tight">
+                    <span
+                        class="font-semibold"
+                        :class="{ 'text-amber-500': header.labelMissing }"
+                    >
+                        {{ header.label }}
+                    </span>
+                    <span class="text-muted-foreground"> {{ $t('students.semester_title_separator') }} </span>
+                    <span :class="{ 'text-amber-500': header.yearMissing }">
+                        {{ header.year }}
+                    </span>
+                    <span class="text-muted-foreground">
+                        (
+                        <span :class="{ 'text-amber-500': header.moduleCount === 0 }">
+                            {{ header.moduleCount }} {{ $t('students.modules_count') }}
+                        </span>
+                        <template v-if="!header.durationMissing">
+                            <span> · </span>
+                            <span>{{ header.duration }}</span>
+                        </template>
+                        )
+                    </span>
+                </p>
             </div>
             <span
                 v-if="semester.status"
                 :class="statusBadgeClass(semester.status)"
-                class="shrink-0 rounded-full px-2.5 py-1 text-[0.8rem] font-bold tracking-wide"
+                class="shrink-0 text-[0.65rem] uppercase tracking-wide"
             >
                 {{ semester.status }}
             </span>
         </div>
 
-        <div class="grid grid-cols-1 gap-3 px-5 py-4 sm:grid-cols-2">
-            <ProgrammeStatCard
-                label-key="students.duration_this_semester"
-                :value="formatDurationHours(semesterDurationHours(semester))"
-            />
-            <ProgrammeStatCard
-                label-key="students.modules_count"
-                :value="semester.module.length"
-            />
-        </div>
-
         <div
             v-if="semester.module.length === 0"
-            class="border-t border-border px-5 py-8"
+            class="px-3 py-4"
         >
             <Empty :message="$t('students.no_modules')" />
-            <p class="mt-2 text-center text-sm text-muted-foreground">
+            <p class="mt-1 text-center text-xs text-muted-foreground">
                 {{ $t('students.no_modules_hint') }}
             </p>
         </div>
 
         <div
             v-else
-            class="divide-y divide-border border-t border-border"
+            class="divide-y divide-border"
         >
             <ProgrammeModuleRow
                 v-for="(module, moduleIndex) in semester.module"

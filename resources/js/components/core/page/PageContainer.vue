@@ -51,20 +51,20 @@ const backNavigationRowJustifyClass = computed((): string => {
 </script>
 <template>
     <header
-        class="flex h-16 shrink-0 items-center justify-between gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12"
+        class="flex h-16 shrink-0 items-center justify-between gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 sm:gap-4"
     >
-        <div class="flex items-center gap-2 px-4">
-            <SidebarTrigger class="text-primary -ml-4 font-bold" />
-            <Separator orientation="vertical" class="mr-2 h-4" />
+        <div class="flex min-w-0 flex-1 items-center gap-2 px-2 sm:px-4">
+            <SidebarTrigger class="text-primary -ml-2 shrink-0 font-bold sm:-ml-4" />
+            <Separator orientation="vertical" class="mr-1 hidden h-4 sm:mr-2 sm:block" />
             <Breadcrumbs :breadcrumbs="breadcrumbs ?? []" />
         </div>
-        <div class="flex items-center justify-center space-x-4">
+        <div class="flex shrink-0 items-center justify-center space-x-2 sm:space-x-4">
             <RemoveImpersonationButton v-if="isItTrue(page.props.auth.impersonating)" />
             <LogoutButton />
             <AppPreferencesSheet />
         </div>
     </header>
-    <div class="flex h-full w-full flex-col pb-10">
+    <div class="flex h-full min-w-0 w-full max-w-full flex-col overflow-x-clip pb-10">
         <div
             v-if="showBackNavigationRow"
             class="mb-10 flex items-center gap-4"

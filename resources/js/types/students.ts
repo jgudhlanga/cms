@@ -347,4 +347,55 @@ export type StudentEnrolment = {
             syllabi: Array<CourseSyllabus>;
         };
     };
-}
+};
+
+export type StudentPortalDashboardModule = {
+    id: number;
+    code: string | null;
+    name: string | null;
+    score: number | null;
+    gradeDisplay: string;
+    progressPercent: number;
+};
+
+export type StudentPortalDashboardActivity = {
+    type: 'application' | 'financial' | 'course_work';
+    message: string;
+    severity: 'info' | 'warning' | 'success';
+};
+
+export type StudentPortalDashboardFinancial = {
+    paidPercent: number;
+    outstandingBalance: string;
+    totalInvoiced: string;
+    totalPayments: string;
+};
+
+export type StudentPortalDashboardTerm = {
+    label: string;
+    calendarYear: string;
+    openingDate: string;
+    closingDate: string | null;
+};
+
+export type StudentPortalDashboardNotice = {
+    id: string | number;
+    title: string;
+    message: string;
+    publishedAt: string | null;
+};
+
+export type StudentPortalDashboardStats = {
+    activeModuleCount: number;
+    totalModuleHours: number;
+    averageCourseWorkScore: number | null;
+    oLevelSubjectCount: number;
+    applicationCount: number;
+    pendingApplicationCount: number;
+    modules: StudentPortalDashboardModule[];
+    activities: StudentPortalDashboardActivity[];
+    notices: StudentPortalDashboardNotice[];
+    currentTerm: StudentPortalDashboardTerm | null;
+    nextTerm: StudentPortalDashboardTerm | null;
+    financial?: StudentPortalDashboardFinancial;
+};

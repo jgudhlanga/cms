@@ -9,7 +9,7 @@ import customAxios from '@/services/http-init';
 import type { CourseWorkImportPreview } from '@/types/course-work';
 import { useForm } from '@inertiajs/vue3';
 import { trans } from 'laravel-vue-i18n';
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 
 export interface CourseWorkImportResult {
     ingestRunId: number;
@@ -21,6 +21,7 @@ export interface CourseWorkImportResult {
 }
 
 const ACCEPTED_EXTENSIONS = ['.xlsx', '.xls', '.csv'];
+const IMPORT_RESULT_AUTO_DISMISS_MS = 10_000;
 
 const props = defineProps<{
     classConfigId: number;
@@ -48,6 +49,8 @@ const fileError = ref<string | null>(null);
 const previewLoading = ref(false);
 const preview = ref<CourseWorkImportPreview | null>(null);
 const previewError = ref<string | null>(null);
+const importResultDismissed = ref(false);
+let importResultDismissTimer: ReturnType<typeof setTimeout> | null = null;
 
 const confirmForm = useForm<{
     module: number | null;
@@ -62,11 +65,46 @@ watch(selectedModuleId, (value) => {
     resetPreview();
 });
 
+const clearImportResultDismissTimer = (): void => {
+    if (importResultDismissTimer !== null) {
+        clearTimeout(importResultDismissTimer);
+        importResultDismissTimer = null;
+    }
+};
+
+const scheduleImportResultAutoDismiss = (): void => {
+    clearImportResultDismissTimer();
+    importResultDismissTimer = setTimeout(() => {
+        importResultDismissed.value = true;
+        importResultDismissTimer = null;
+    }, IMPORT_RESULT_AUTO_DISMISS_MS);
+};
+
+watch(
+    () => props.courseWorkImportResult,
+    (result) => {
+        if (result != null) {
+            importResultDismissed.value = false;
+            scheduleImportResultAutoDismiss();
+        } else {
+            clearImportResultDismissTimer();
+        }
+    },
+    { immediate: true },
+);
+
 const templateUrl = computed((): string | null =>
     selectedModuleId.value ? props.courseWorkImportTemplateUrl(selectedModuleId.value) : null,
 );
 
-const hasImportResult = computed((): boolean => props.courseWorkImportResult != null);
+const hasImportResult = computed(
+    (): boolean => props.courseWorkImportResult != null && !importResultDismissed.value,
+);
+
+const dismissImportResult = (): void => {
+    clearImportResultDismissTimer();
+    importResultDismissed.value = true;
+};
 
 const canConfirmImport = computed((): boolean => {
     if (!preview.value) {
@@ -234,6 +272,10 @@ const formatPreviewErrors = (errors: Record<string, string[]> | null | undefined
 onMounted(() => {
     void loadTree();
 });
+
+onUnmounted(() => {
+    clearImportResultDismissTimer();
+});
 </script>
 
 <template>
@@ -396,7 +438,17 @@ onMounted(() => {
                 v-if="hasImportResult && courseWorkImportResult"
                 class="rounded-lg border border-border bg-muted/30 p-4 text-sm"
             >
-                <h3 class="font-semibold">{{ $t('academic_calendar.course_work_import_result_title') }}</h3>
+                <div class="flex items-start justify-between gap-3">
+                    <h3 class="font-semibold">{{ $t('academic_calendar.course_work_import_result_title') }}</h3>
+                    <BaseButton
+                        type="button"
+                        :variant="ColorVariant.warning_outline"
+                        :size="ButtonSize.sm"
+                        @click="dismissImportResult"
+                    >
+                        {{ $t('trans.close') }}
+                    </BaseButton>
+                </div>
                 <ul class="mt-2 space-y-1 text-muted-foreground">
                     <li>
                         {{ $t('academic_calendar.course_work_import_result_total', { count: String(courseWorkImportResult.rowsTotal) }) }}

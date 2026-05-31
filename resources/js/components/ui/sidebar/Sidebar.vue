@@ -35,7 +35,7 @@ const { isMobile, state, openMobile, setOpenMobile } = useSidebar();
 		<div
 			v-if="side === 'left'"
 			aria-hidden="true"
-			class="pointer-events-none absolute inset-0 z-0 opacity-[0.18]"
+			class="pointer-events-none absolute inset-0 z-0 opacity-[0.18] dark:hidden"
 		>
 			<div
 				class="absolute inset-0"
@@ -64,7 +64,7 @@ const { isMobile, state, openMobile, setOpenMobile } = useSidebar();
 				<div
 					v-if="side === 'left'"
 					aria-hidden="true"
-					class="pointer-events-none absolute inset-0 z-0 opacity-[0.18]"
+					class="pointer-events-none absolute inset-0 z-0 opacity-[0.18] dark:hidden"
 				>
 					<div
 						class="absolute inset-0"
@@ -125,7 +125,7 @@ const { isMobile, state, openMobile, setOpenMobile } = useSidebar();
 				<div
 					v-if="side === 'left'"
 					aria-hidden="true"
-					class="pointer-events-none absolute inset-0 z-0 opacity-[0.18]"
+					class="pointer-events-none absolute inset-0 z-0 opacity-[0.18] dark:hidden"
 				>
 					<div
 						class="absolute inset-0"

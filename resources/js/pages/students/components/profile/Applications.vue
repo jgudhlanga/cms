@@ -24,7 +24,7 @@ onMounted(async () => {
 </script>
 
 <template>
-    <div class="flex flex-col rounded-2xl bg-muted/30 p-4 font-sans sm:p-6">
+    <div class="flex flex-col font-sans py-4">
         <DataLoadingSpinner v-if="isLoading" />
 
         <div

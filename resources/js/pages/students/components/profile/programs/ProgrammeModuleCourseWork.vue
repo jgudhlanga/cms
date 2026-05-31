@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { scoreBarColor } from '@/composables/students/studentProgrammeDisplay';
 import type { StudentProgrammeModuleCourseWork } from '@/types/students';
-import { ClipboardList } from 'lucide-vue-next';
 import { computed } from 'vue';
 
 interface Props {
@@ -12,6 +11,9 @@ const props = defineProps<Props>();
 
 const formatMark = (value: number | null | undefined): string =>
     value !== null && value !== undefined ? String(value) : '—';
+
+const isMissingMark = (value: number | null | undefined): boolean =>
+    value === null || value === undefined;
 
 const formatWeighted = (value: number | null | undefined): string =>
     value !== null && value !== undefined ? value.toFixed(1) : '—';
@@ -33,91 +35,96 @@ const hasCapturedMarks = computed(() =>
 </script>
 
 <template>
-    <div class="border-t border-border bg-background/60 px-5 py-4">
-        <div class="mb-3 flex items-center gap-2">
-            <ClipboardList class="h-4 w-4 text-primary" stroke-width="1.75" />
-            <h4 class="text-sm font-bold tracking-tight text-foreground">
-                {{ $t('students.course_work_marks') }}
-            </h4>
-        </div>
+    <div class="mt-1">
+        <p class="mb-1.5 text-[0.65rem] font-semibold uppercase tracking-wide text-muted-foreground">
+            {{ $t('students.course_work_marks') }}
+        </p>
 
-        <div
+        <p
             v-if="!hasCapturedMarks"
-            class="rounded-lg border border-dashed border-border px-4 py-6 text-center text-sm text-muted-foreground"
+            class="text-xs text-amber-500"
         >
             {{ $t('students.course_work_no_marks') }}
-        </div>
+        </p>
 
         <template v-else>
-            <div class="overflow-hidden rounded-xl border border-border">
-                <table class="w-full text-sm">
+            <div class="overflow-x-auto">
+                <table class="w-full text-xs">
                     <thead>
-                        <tr class="border-b border-border bg-muted/50 text-left text-[0.7rem] font-semibold uppercase tracking-wide text-muted-foreground">
-                            <th class="px-4 py-2.5">{{ $t('students.assessment') }}</th>
-                            <th class="px-4 py-2.5 text-right">{{ $t('academic_calendar.course_work_mark') }}</th>
-                            <th class="hidden px-4 py-2.5 text-right sm:table-cell">
+                        <tr class="border-b border-border text-left text-[0.62rem] font-semibold uppercase tracking-wide text-muted-foreground">
+                            <th class="py-1 pr-2">{{ $t('students.assessment') }}</th>
+                            <th class="px-2 py-1 text-right">{{ $t('academic_calendar.course_work_mark') }}</th>
+                            <th class="hidden px-2 py-1 text-right sm:table-cell">
                                 {{ $t('academic_calendar.course_work_weighted_mark') }}
                             </th>
-                            <th class="hidden px-4 py-2.5 md:table-cell">{{ $t('academic_calendar.course_work_remark') }}</th>
+                            <th class="hidden py-1 pl-2 md:table-cell">{{ $t('academic_calendar.course_work_remark') }}</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-border">
+                    <tbody class="divide-y divide-border/60">
                         <tr
                             v-for="component in courseWork.aggregation.components"
                             :key="component.assessmentTypeId"
-                            class="transition-colors hover:bg-muted/30"
                         >
-                            <td class="px-4 py-3 font-medium text-foreground">
+                            <td class="py-1 pr-2 font-medium text-foreground">
                                 {{ component.assessmentTypeName }}
                             </td>
-                            <td class="px-4 py-3 text-right font-mono tabular-nums">
+                            <td
+                                class="px-2 py-1 text-right font-mono tabular-nums"
+                                :class="{ 'text-amber-500': isMissingMark(component.rawMark) }"
+                            >
                                 {{ formatMark(component.rawMark) }}
                             </td>
-                            <td class="hidden px-4 py-3 text-right font-mono tabular-nums text-muted-foreground sm:table-cell">
+                            <td
+                                class="hidden px-2 py-1 text-right font-mono tabular-nums sm:table-cell"
+                                :class="isMissingMark(component.weightedMark) ? 'text-amber-500' : 'text-muted-foreground'"
+                            >
                                 {{ formatWeighted(component.weightedMark) }}
                             </td>
-                            <td class="hidden px-4 py-3 text-muted-foreground md:table-cell">
-                                {{
-                                    courseWork.assessments.find(
-                                        (item) => item.assessmentTypeId === component.assessmentTypeId,
-                                    )?.remark ?? '—'
-                                }}
+                            <td class="hidden py-1 pl-2 md:table-cell">
+                                <span
+                                    :class="{
+                                        'text-amber-500': !(courseWork.assessments.find(
+                                            (item) => item.assessmentTypeId === component.assessmentTypeId,
+                                        )?.remark),
+                                    }"
+                                >
+                                    {{
+                                        courseWork.assessments.find(
+                                            (item) => item.assessmentTypeId === component.assessmentTypeId,
+                                        )?.remark ?? '—'
+                                    }}
+                                </span>
                             </td>
                         </tr>
                     </tbody>
                 </table>
             </div>
 
-            <div class="mt-4 grid gap-3 sm:grid-cols-2">
-                <div class="rounded-xl border border-primary/20 bg-primary/5 px-4 py-3">
-                    <p class="text-[0.7rem] font-semibold uppercase tracking-wide text-muted-foreground">
-                        {{ $t('academic_calendar.course_work_total_60') }}
-                    </p>
-                    <p class="mt-1 text-2xl font-bold tabular-nums tracking-tight text-foreground">
-                        {{ formatMark(courseWorkTotal) }}
-                        <span class="text-base font-medium text-muted-foreground">/ 60</span>
-                    </p>
-                    <div
-                        v-if="courseWorkPercent !== null"
-                        class="mt-2"
+            <div class="mt-2 flex flex-wrap items-baseline gap-x-4 gap-y-1 text-xs">
+                <span>
+                    <span class="text-muted-foreground">{{ $t('academic_calendar.course_work_total_60') }}:</span>
+                    <span
+                        class="ml-1 font-semibold tabular-nums"
+                        :class="{ 'text-amber-500': isMissingMark(courseWorkTotal) }"
                     >
-                        <div class="h-1.5 overflow-hidden rounded-full bg-muted">
-                            <div
-                                class="h-full rounded-full transition-all duration-500"
-                                :class="scoreBarColor(courseWorkPercent)"
-                                :style="{ width: `${courseWorkPercent}%` }"
-                            />
-                        </div>
-                    </div>
-                </div>
+                        {{ formatMark(courseWorkTotal) }}/60
+                    </span>
+                </span>
+                <span class="text-muted-foreground">
+                    {{ $t('students.final_grade_pending_exam') }}
+                </span>
+            </div>
 
-                <div class="rounded-xl border border-dashed border-border bg-muted/20 px-4 py-3">
-                    <p class="text-[0.7rem] font-semibold uppercase tracking-wide text-muted-foreground">
-                        {{ $t('students.final_grade') }}
-                    </p>
-                    <p class="mt-1 text-sm font-medium text-muted-foreground">
-                        {{ $t('students.final_grade_pending_exam') }}
-                    </p>
+            <div
+                v-if="courseWorkPercent !== null"
+                class="mt-1.5"
+            >
+                <div class="h-[2px] overflow-hidden rounded-full bg-muted">
+                    <div
+                        class="h-full rounded-full transition-all duration-500"
+                        :class="scoreBarColor(courseWorkPercent)"
+                        :style="{ width: `${courseWorkPercent}%` }"
+                    />
                 </div>
             </div>
         </template>

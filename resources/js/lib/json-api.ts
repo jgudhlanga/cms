@@ -1,6 +1,7 @@
 import type { DataListProps, PaginationLink } from '@/types/data-pagination';
 import type { Enrolment } from '@/types/enrolments';
 import type { CourseWorkStudentTree, CourseWorkTree } from '@/types/course-work';
+import type { StudentPortalDashboardStats } from '@/types/students';
 import type {
     HostelAllocation,
     HostelApplication,
@@ -50,7 +51,7 @@ type JsonApiHostelRoomStatsMeta = {
 };
 
 type JsonApiMetaDocument = {
-    meta?: JsonApiHostelRoomStatsMeta;
+    meta?: JsonApiHostelRoomStatsMeta & Partial<StudentPortalDashboardStats>;
 };
 
 export function jsonApiRequestConfig(): { headers: { Accept: string } } {
@@ -284,6 +285,25 @@ export function parseJsonApiHostelRoomStats(document: JsonApiMetaDocument): Host
         totalCapacity: meta.totalCapacity ?? 0,
         totalMaxOccupancy: meta.totalMaxOccupancy ?? 0,
         vacantCount: meta.vacantCount ?? 0,
+    };
+}
+
+export function parseJsonApiStudentPortalDashboardStats(document: JsonApiMetaDocument): StudentPortalDashboardStats {
+    const meta = document.meta ?? {};
+
+    return {
+        activeModuleCount: meta.activeModuleCount ?? 0,
+        totalModuleHours: meta.totalModuleHours ?? 0,
+        averageCourseWorkScore: meta.averageCourseWorkScore ?? null,
+        oLevelSubjectCount: meta.oLevelSubjectCount ?? 0,
+        applicationCount: meta.applicationCount ?? 0,
+        pendingApplicationCount: meta.pendingApplicationCount ?? 0,
+        modules: meta.modules ?? [],
+        activities: meta.activities ?? [],
+        notices: meta.notices ?? [],
+        currentTerm: meta.currentTerm ?? null,
+        nextTerm: meta.nextTerm ?? null,
+        financial: meta.financial,
     };
 }
 

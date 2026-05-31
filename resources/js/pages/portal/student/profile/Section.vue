@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import PageContainer from '@/components/core/page/PageContainer.vue';
+import PortalProfileMobileNav from '@/components/students/profile/PortalProfileMobileNav.vue';
 import StudentProfileShell from '@/components/students/profile/StudentProfileShell.vue';
 import Info from '@/pages/students/components/profile/Info.vue';
 import Programs from '@/pages/students/components/profile/Programs.vue';
@@ -44,18 +45,21 @@ const pageTitle = computed(() => tabDefinition.value?.transLabel() ?? '');
 <template>
     <Head :title="pageTitle" />
     <PageContainer :breadcrumbs="breadcrumbs">
-        <StudentProfileShell :student="student" :active-tab="activeTab">
-            <Info v-if="activeTab === 'basic_info'" :student="student" />
-            <Programs v-else-if="activeTab === 'programs'" :student="student" />
-            <Applications v-else-if="activeTab === 'applications'" :student="student" />
-            <Financials v-else-if="activeTab === 'financials'" :student="student" />
-            <Hostels v-else-if="activeTab === 'accommodations'" />
-            <Documents v-else-if="activeTab === 'documents'" />
-            <Authentication
-                v-else-if="activeTab === 'authentication'"
-                :user="student?.relationships?.user"
-                hide-authorization
-            />
-        </StudentProfileShell>
+        <div class="w-full min-w-0 pb-24 md:pb-0">
+            <StudentProfileShell :student="student" :active-tab="activeTab">
+                <Info v-if="activeTab === 'basic_info'" :student="student" />
+                <Programs v-else-if="activeTab === 'programs'" :student="student" />
+                <Applications v-else-if="activeTab === 'applications'" :student="student" />
+                <Financials v-else-if="activeTab === 'financials'" :student="student" />
+                <Hostels v-else-if="activeTab === 'accommodations'" />
+                <Documents v-else-if="activeTab === 'documents'" />
+                <Authentication
+                    v-else-if="activeTab === 'authentication'"
+                    :user="student?.relationships?.user"
+                    hide-authorization
+                />
+            </StudentProfileShell>
+        </div>
+        <PortalProfileMobileNav :active-tab="activeTab" />
     </PageContainer>
 </template>

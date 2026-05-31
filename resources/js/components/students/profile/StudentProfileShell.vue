@@ -14,9 +14,9 @@ const { headerData } = useStudentProfileHeader(() => props.student);
 </script>
 
 <template>
-    <div class="overflow-hidden rounded-xl bg-card text-card-foreground">
+    <div class="w-full min-w-0 max-w-full overflow-x-clip rounded-xl bg-card text-card-foreground">
         <Header :data="headerData" />
-        <div class="px-2 py-1">
+        <div class="w-full min-w-0 px-2 py-0.5 pb-3 sm:px-3 md:pb-1">
             <slot />
         </div>
     </div>

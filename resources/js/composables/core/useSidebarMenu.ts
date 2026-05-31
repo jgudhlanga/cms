@@ -95,7 +95,7 @@ export function useSidebarMenu() {
         {
             title: 'My Departments',
             transChoiceKeyIndex: 1,
-            url: route('institution.index'),
+            url: route('institution-departments.index', { is_academic: 1 }),
             icon: icons[IconName.school],
             show: hasAbility('viewOnlyOwnDepartment:departments'),
         },
@@ -112,13 +112,13 @@ export function useSidebarMenu() {
                 title: tab.transLabel(),
                 icon: icons[tab.icon],
                 url: route(tab.routeName!),
-                show: tab.portalShow?.() ?? false,
+                show: hasStudentProfile() && (tab.show ?? false),
             })),
         {
             title: 'O Levels',
             icon: icons[IconName.award],
             url: route('portal.list-o-levels'),
-            show: hasAbility('manageOwnStudentAcademicDetails:students'),
+            show: hasStudentProfile() && hasAbility('manageOwnStudentAcademicDetails:students'),
         },
         ...portalSidebarProfileTabs()
             .filter((tab) => tab.value === 'authentication')
@@ -126,7 +126,7 @@ export function useSidebarMenu() {
                 title: tab.transLabel(),
                 icon: icons[tab.icon],
                 url: route(tab.routeName!),
-                show: tab.portalShow?.() ?? false,
+                show: hasStudentProfile() && (tab.show ?? false),
             })),
         /** ================ PORTAL END ======================*/
     ]);

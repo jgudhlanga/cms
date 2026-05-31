@@ -111,7 +111,7 @@ const otherDetails = computed<ValueAndLabel[]>(() => [
 </script>
 
 <template>
-    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-x-4 lg:grid-cols-3 lg:gap-x-6">
+    <div class="grid grid-cols-1 py-4 gap-3 sm:grid-cols-2 sm:gap-x-4 lg:grid-cols-3 lg:gap-x-6">
         <LabelValue v-for="(field, idx) in personalDetails" :key="idx" :label="field.transKey ? $t(field.transKey) : $tChoice(field.transChoiceKey ?? '', 1)" :value="field.value" />
     </div>
     <Separator class="my-6" />

@@ -37,7 +37,7 @@ onMounted(async () => {
 </script>
 
 <template>
-    <div class="flex flex-col rounded-2xl bg-muted/30 p-4 font-sans sm:p-6">
+    <div class="flex w-full min-w-0 flex-col py-4 font-sans">
         <DataLoadingSpinner v-if="isLoading" />
 
         <div
@@ -71,12 +71,12 @@ onMounted(async () => {
                     v-if="programme.isActive"
                     #trigger-extra
                 >
-                    <span class="shrink-0 rounded-full bg-primary/15 px-2.5 py-1 text-[0.72rem] font-bold uppercase tracking-wide text-primary ring-1 ring-primary/30">
+                    <span class="shrink-0 px-2.5 py-1 text-[0.72rem] uppercase tracking-wide text-primary mr-1.5">
                         {{ $t('students.active_programme') }}
                     </span>
                 </template>
 
-                <div class="flex flex-col gap-4">
+                <div class="flex flex-col gap-2">
                     <ProgrammeSemesterCard
                         v-for="semester in programme.semesters"
                         :key="semester.id"
