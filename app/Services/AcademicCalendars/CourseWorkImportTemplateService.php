@@ -3,6 +3,7 @@
 namespace App\Services\AcademicCalendars;
 
 use App\Models\Institution\Syllabus\CourseSyllabusModule;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class CourseWorkImportTemplateService
@@ -13,7 +14,28 @@ class CourseWorkImportTemplateService
     ) {}
 
     /**
-     * @return array{header: array<string, mixed>, rows: list<array<string, mixed>>}
+     * @param  array{fileName: array{moduleTitle: string, moduleCode: string, level: string, mode: string}}  $data
+     */
+    public function downloadFileName(array $data): string
+    {
+        $segments = $data['fileName'];
+
+        return strtoupper(sprintf(
+            '%s-%s-%s-%s-course-work-%s.xlsx',
+            $segments['moduleTitle'],
+            $segments['moduleCode'],
+            $segments['level'],
+            $segments['mode'],
+            time(),
+        ));
+    }
+
+    /**
+     * @return array{
+     *     header: array<string, mixed>,
+     *     fileName: array{moduleTitle: string, moduleCode: string, level: string, mode: string},
+     *     rows: list<array<string, mixed>>
+     * }
      */
     public function assembleForClassConfig(int $classConfigId, int $courseSyllabusModuleId): array
     {
@@ -75,6 +97,12 @@ class CourseWorkImportTemplateService
                 'modeOfStudy' => $classConfig->modeOfStudy?->name,
                 'calendarYear' => $classConfig->calendar_year,
                 'generatedAt' => now()->format('d M Y'),
+            ],
+            'fileName' => [
+                'moduleTitle' => Str::slug((string) $module->title) ?: 'module',
+                'moduleCode' => Str::slug((string) $module->code) ?: 'module',
+                'level' => Str::slug((string) $classConfig->departmentLevel?->level?->name) ?: 'level',
+                'mode' => Str::slug((string) $classConfig->modeOfStudy?->name) ?: 'mode',
             ],
             'rows' => $rows,
         ];

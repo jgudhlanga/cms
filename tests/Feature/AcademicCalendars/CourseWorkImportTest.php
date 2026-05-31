@@ -6,6 +6,7 @@ use App\Models\AcademicCalendars\CourseWorkImportLog;
 use App\Models\AcademicCalendars\CourseWorkMark;
 use App\Services\AcademicCalendars\CourseWorkImportTemplateService;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Str;
 use Maatwebsite\Excel\Facades\Excel;
 use Spatie\Permission\Models\Permission;
 
@@ -114,6 +115,7 @@ test('authorized user can download course work import template', function () {
     $context['user']->givePermissionTo('import:course-work');
 
     $classConfig = $context['academicCalendarClass']->classConfig;
+    $classConfig->loadMissing('departmentLevel.level');
 
     $response = $this->actingAs($context['user'])->get(route('academic-calendars.department-classes.course-work-import.template', [
         'institution_department' => $classConfig->institution_department_id,
@@ -125,8 +127,16 @@ test('authorized user can download course work import template', function () {
         'module' => $context['module']->id,
     ]));
 
+    $moduleTitle = Str::slug($context['module']->title);
+    $moduleCode = Str::slug($context['module']->code);
+    $level = Str::slug((string) $classConfig->departmentLevel?->level?->name);
+    $mode = Str::slug($context['modeOfStudy']->name);
+
     $response->assertSuccessful();
     expect($response->headers->get('content-type'))->toContain('spreadsheet');
+    expect($response->headers->get('content-disposition'))->toMatch(
+        '/filename=.*'.preg_quote(strtoupper($moduleTitle), '/').'-'.preg_quote(strtoupper($moduleCode), '/').'-'.preg_quote(strtoupper($level), '/').'-'.preg_quote(strtoupper($mode), '/').'-COURSE-WORK-\d+\.XLSX/i'
+    );
 });
 
 test('course work import template service builds one row per student assessment', function () {
@@ -145,7 +155,9 @@ test('course work import template service builds one row per student assessment'
         ->and($data['rows'][0]['moduleId'])->toBe($context['module']->id)
         ->and($data['rows'][0]['assessmentTypeId'])->toBe($context['assessmentType']->id)
         ->and($data['rows'][0]['mark'])->toBeNull()
-        ->and($data['rows'][0]['remark'])->toBeNull();
+        ->and($data['rows'][0]['remark'])->toBeNull()
+        ->and($data['fileName']['moduleTitle'])->toBe(Str::slug($context['module']->title))
+        ->and($data['fileName']['moduleCode'])->toBe(Str::slug($context['module']->code));
 });
 
 test('course work import creates marks and batch audit log', function () {

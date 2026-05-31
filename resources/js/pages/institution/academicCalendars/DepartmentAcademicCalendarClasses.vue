@@ -150,26 +150,35 @@ const saveClasses = () => {
         },
     );
 };
+
+const computedTitle = computed(() => {
+    let title = '';
+    if (classConfig?.value?.attributes?.departmentCourse) {
+        title += `${String(classConfig?.value?.attributes?.departmentCourse )} - `;
+    }
+    if (classConfig?.value?.attributes?.departmentLevel) {
+        title += `${String(classConfig?.value?.attributes?.departmentLevel)} - `;
+    }
+    if (classConfig?.value?.attributes?.modeOfStudy) {
+        title += `${String(classConfig?.value?.attributes?.modeOfStudy)} `;
+    }
+    if (classConfig?.value?.attributes?.calendarYear && String(classConfig?.value?.attributes?.calendarYear).trim() !== '') {
+        title += `( ${String(classConfig?.value?.attributes?.calendarYear )} )`;
+    }
+    return title;
+});
 </script>
 
 <template>
     <Head :title="$tChoice('academic_calendar.academic_calendar', 2)" />
     <PageContainer :breadcrumbs="breadcrumbs" :back-url="route('institution-departments.show', String(department.id))">
         <div class="flex flex-col space-y-6">
-            <BaseCard :title="String(classConfig?.attributes?.calendarYear ?? '---')">
-                <div class="grid grid-cols-2 gap-4 md:grid-cols-6">
-                    <LabelValue :label="$tChoice('trans.course', 1)" :value="classConfig?.attributes?.departmentCourse ?? '---'" />
+            <BaseCard :title="computedTitle">
+                <div class="grid grid-cols-2 gap-4 md:grid-cols-5">
+                    <LabelValue :label="$tChoice('syllabus.course_code', 2)" :value="classConfig?.attributes?.courseSyllabusCodes?.join(', ') ?? '---'" />
                     <LabelValue :label="$tChoice('trans.level', 1)" :value="classConfig?.attributes?.departmentLevel ?? '---'" />
                     <LabelValue :label="$tChoice('general.mode', 1)" :value="classConfig?.attributes?.modeOfStudy ?? '---'" />
                     <LabelValue :label="$tChoice('academic_calendar.class_unit_size', 1)" :value="String(classConfig?.attributes?.studentsPerClass ?? '---')" />
-                    <LabelValue
-                        :label="$tChoice('syllabus.course_syllabus', 2)"
-                        :value="
-                            (classConfig?.attributes?.courseSyllabusCodes ?? []).length > 0
-                                ? (classConfig?.attributes?.courseSyllabusCodes ?? []).join(', ')
-                                : '---'
-                        "
-                    />
                     <LabelValue
                         :label="$tChoice('trans.class', 2)"
                         :value="String(generationContext.populatedExistingClassCount ?? 0)"

@@ -247,8 +247,7 @@ class AcademicCalendarController extends Controller
         abort_if($moduleId < 1, 422, __('academic_calendar.course_work_module_required'));
 
         $data = $templateService->assembleForClassConfig((int) $classConfig->id, $moduleId);
-        $moduleCode = Str::slug((string) ($data['header']['moduleCode'] ?? 'module'));
-        $fileName = sprintf('%s-course-work-import-template-%s.xlsx', $moduleCode, time());
+        $fileName = $templateService->downloadFileName($data);
 
         return Excel::download(new CourseWorkImportTemplateExport($data), $fileName);
     }

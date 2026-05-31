@@ -83,7 +83,12 @@ const breadcrumbs = computed<Array<Link>>(() => {
     <Head :title="$t('academic_calendar.course_work_import_title')" />
     <PageContainer :breadcrumbs="breadcrumbs" :back-url="courseWorkMarksheetUrl">
         <template #backNavigationLeading>
-        ß
+            <div>
+                <h2 class="text-lg font-semibold uppercase">{{ $tChoice('academic_calendar.course_work_import_title', 1) }}</h2>
+                <p class="mt-1 text-sm text-muted-foreground">
+                    {{ $t('academic_calendar.course_work_import_description') }}
+                </p>
+            </div>
         </template>
         <CourseWorkImportPanel
             :class-config-id="Number(classConfig.id)"
