@@ -1,11 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useInitials } from '@/composables/core/useInitials';
-import { useDefaults } from '@/composables/core/useDefaults';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { StudentHeader } from '@/types/students';
 import { trans } from 'laravel-vue-i18n';
-import { IconName, icons } from '@/lib/icons';
 
 
   interface Props {
@@ -19,66 +15,57 @@ import { IconName, icons } from '@/lib/icons';
     const levelCourseDisplay = computed(() => {
       return `${props.data?.level} ${trans('general.in')} ${props.data?.course}`;
     });
-    const { getInitials } = useInitials();
-    const { defaultAvatarImage } = useDefaults();
-
-   const avatarImage = () => {
-    return props.data?.avatarUrl?.trim()
-      ? props.data.avatarUrl
-      : defaultAvatarImage;
-   };
 
 </script>
 <template>
-  <section class="px-2 py-1">
-              <div class="flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
-                <div class="flex flex-wrap gap-4">
-                  <div class="shrink-0">
-                    <Avatar class="size-20 rounded-full">
-                          <AvatarImage
-                              :src="avatarImage()"
-                              :alt="data?.studentName"
-                          />
-                          <AvatarFallback class="size-8 rounded-full">
-                              {{ getInitials(data?.studentName) }}
-                          </AvatarFallback>
-                      </Avatar>
-                  </div>
-                  <div class="space-y-2">
-                    <div class="flex flex-wrap items-center gap-2">
-                      <h1 class="text-2xl font-extrabold uppercase tracking-tight text-foreground">{{ data?.studentName }}</h1>
-                      <span class="inline-flex items-center rounded-full border border-emerald-500/30 bg-emerald-500/15 px-2.5 py-0.5 text-xs font-semibold text-emerald-400">
-                        {{ data?.enrolmentStatus }}  
-                      </span>
-                    </div>
-                    <div class="flex flex-wrap items-center gap-1.5 text-sm text-muted-foreground sm:text-base">
-                      <span class="rounded-full bg-muted px-1.5 py-0.5 font-mono tracking-wide text-foreground shadow-sm">{{ data?.studentNumber }}</span>
-                      <span class="font-medium uppercase text-foreground">{{ levelCourseDisplay }}</span>
-                    </div>
-                    <div class="flex flex-wrap items-center gap-2 pt-1">
-                      <span class="inline-flex items-center rounded-full border border-primary/30 bg-primary/15 px-3 py-1.5 text-xs font-medium text-primary shadow-sm">
-                        📅 {{ yearSemesterDisplay }}
-                      </span>
-                      <span class="inline-flex items-center rounded-full border border-sky-500/30 bg-sky-500/15 px-3 py-1.5 text-xs font-medium text-sky-400 shadow-sm">
-                        ⏱️ {{ data?.modeOfStudy }}
-                      </span>
-                      <span class="inline-flex items-center rounded-full border border-purple-500/30 bg-purple-500/15 px-3 py-1.5 text-xs font-medium text-purple-400 shadow-sm">
-                        🏛️ {{ data?.department }}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                <div class="w-full shrink-0 md:w-auto">
-                  <button 
-                    class="group relative inline-flex w-full transform items-center justify-center gap-2 rounded-xl bg-primary px-5 py-2.5 font-semibold text-primary-foreground shadow-md transition-all duration-200 ease-out hover:bg-primary/90 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background active:scale-95 md:w-auto"
-                  >
-                    <component :is="icons[IconName.download]" class="h-4 w-4 transition-transform group-hover:translate-y-[-1px]" />
-                    <span>{{ $t('general.export') }}</span>
-                    <span class="pointer-events-none absolute inset-0 rounded-xl bg-primary-foreground/10 opacity-0 transition-opacity duration-300 group-hover:opacity-100"></span>
-                  </button>
-                  <p class="mt-1.5 text-center text-[11px] text-muted-foreground md:text-right">{{ $t('general.download_profile_data') }}</p>
-                </div>
-              </div>
+  <section class="w-full min-w-0 px-2 py-1.5 sm:px-3">
+    <div class="flex w-full min-w-0 flex-col gap-1.5">
+      <div class="flex w-full min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5">
+        <h1 class="min-w-0 text-sm font-extrabold uppercase leading-tight tracking-tight wrap-break-word text-foreground sm:text-base">
+          {{ data?.studentName }}
+        </h1>
+        <span
+          v-if="data?.enrolmentStatus"
+          class="inline-flex shrink-0 items-center rounded-full border border-emerald-500/30 bg-emerald-500/15 px-1.5 py-px text-[10px] font-semibold leading-none text-emerald-600 dark:text-emerald-400"
+        >
+          {{ data.enrolmentStatus }}
+        </span>
+        <span
+          v-if="data?.studentNumber"
+          class="shrink-0 rounded-full bg-muted px-1.5 py-px font-mono text-[10px] leading-none tracking-wide text-foreground"
+        >
+          {{ data.studentNumber }}
+        </span>
+      </div>
+
+      <p
+        v-if="levelCourseDisplay"
+        class="w-full min-w-0 text-[11px] font-medium leading-tight wrap-break-word uppercase text-foreground sm:text-xs"
+      >
+        {{ levelCourseDisplay }}
+      </p>
+
+      <div class="flex w-full min-w-0 flex-wrap items-start gap-1">
+        <span
+          v-if="yearSemesterDisplay"
+          class="inline-flex max-w-full items-center rounded-full border border-primary/30 bg-primary/15 px-1.5 py-0.5 text-[10px] font-medium leading-snug text-primary"
+        >
+          <span class="min-w-0 wrap-break-word">📅 {{ yearSemesterDisplay }}</span>
+        </span>
+        <span
+          v-if="data?.modeOfStudy"
+          class="inline-flex max-w-full items-center rounded-full border border-sky-500/30 bg-sky-500/15 px-1.5 py-0.5 text-[10px] font-medium leading-snug text-sky-600 dark:text-sky-400"
+        >
+          <span class="min-w-0 wrap-break-word">⏱️ {{ data.modeOfStudy }}</span>
+        </span>
+        <span
+          v-if="data?.department"
+          class="inline-flex max-w-full items-center rounded-full border border-purple-500/30 bg-purple-500/15 px-1.5 py-0.5 text-[10px] font-medium leading-snug text-purple-600 dark:text-purple-400"
+        >
+          <span class="min-w-0 wrap-break-word">🏛️ {{ data.department }}</span>
+        </span>
+      </div>
+    </div>
   </section>
 </template>
 <style scoped>

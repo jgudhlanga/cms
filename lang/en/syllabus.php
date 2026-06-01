@@ -27,4 +27,5 @@ return [
     'move_modules_failed' => 'Unable to move modules. Please try again.',
     'move_modules_not_all_on_syllabus' => 'One or more modules do not belong to this syllabus.',
     'move_modules_same_period' => 'Choose a different period than the current one.',
+    'course_code' => 'Course code',
 ];

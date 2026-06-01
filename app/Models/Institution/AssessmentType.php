@@ -22,7 +22,7 @@ class AssessmentType extends Model
 {
     use BelongsToTenant, Filterable, HasFactory, LogsActivity, Paginatable, SoftDeletes;
 
-    protected $fillable = ['tenant_id', 'name', 'modes_of_study', 'description'];
+    protected $fillable = ['tenant_id', 'name', 'modes_of_study', 'description', 'weight_percent'];
 
     protected function casts(): array
     {

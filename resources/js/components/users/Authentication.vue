@@ -13,9 +13,12 @@ import { computed, onMounted, ref, watch } from 'vue';
 
 interface Props {
     user?: User;
+    hideAuthorization?: boolean;
 }
 
-const props = defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+    hideAuthorization: false,
+});
 const { user } = props;
 
 const form = useForm<AuthCredentialsUpdate>({
@@ -91,7 +94,9 @@ onMounted(async () => {
     if (user) {
         form.email = user.attributes.email ?? '';
         initialEmail.value = user.attributes.email ?? '';
-        await loadUserPermissions(route('v1.users.permissions', { id: user.id }));
+        if (!props.hideAuthorization) {
+            await loadUserPermissions(route('v1.users.permissions', { id: user.id }));
+        }
     }
 });
 
@@ -99,11 +104,11 @@ onMounted(async () => {
 
 <template>
     <form @submit.prevent="() => submitForm()">
-        <div class="flex flex-col justify-center space-y-6">
+        <div class="flex flex-col py-4 justify-center space-y-6">
             <BaseCard
                 :title="$t('trans.ui_login_profile')"
                 :description="$t('trans.change_login_credentials_warning')"
-                color-variant="amber-500"
+                color-variant="black"
             >
                 <div class="mb-4 flex flex-wrap items-center gap-4">
                     <BaseCheckbox input-id="change_email" v-model="changeEmail" label="Change Email" />
@@ -152,12 +157,13 @@ onMounted(async () => {
                 </div>
             </BaseCard>
             <BaseCard
+                v-if="!hideAuthorization"
                 :title="$t('trans.authorization')"
                 :description="$t('trans.roles_and_permissions')"
                 color-variant="black"
             >
                 <DataLoadingSpinner v-if="isLoading"/>
-                    <div v-else class="grid grid-cols-1 md:grid-cols-4 gap-x-3" >
+                    <div v-else class="grid grid-cols-1 gap-x-3 gap-y-1 text-xs md:grid-cols-4">
                         <div v-for="(permission, index) in userPermissions" :key="index">{{ permission?.attributes?.name }}</div>
                     </div>
             </BaseCard>

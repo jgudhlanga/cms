@@ -9,6 +9,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from '@/components/ui/sidebar';
+import { useCloseMobileSidebar } from '@/composables/core/useCloseMobileSidebar';
 import { useDefaults } from '@/composables/core/useDefaults';
 import { useInitials } from '@/composables/core/useInitials';
 import { IconName } from '@/enums/icons';
@@ -20,6 +21,7 @@ const page = usePage<PageProps>();
 const { isMobile, state } = useSidebar();
 const { getInitials } = useInitials();
 const { defaultAvatarImage } = useDefaults();
+const closeMobileSidebar = useCloseMobileSidebar();
 </script>
 <template>
     <SidebarMenu>
@@ -71,7 +73,7 @@ const { defaultAvatarImage } = useDefaults();
                     </DropdownMenuItem>
                     <DropdownMenuItem>
                         <component :is="icons[IconName.logout]" />
-                        <Link class="" method="post" :href="route('logout')" as="button">{{ $t('trans.logout') }}</Link>
+                        <Link class="" method="post" :href="route('logout')" as="button" @click="closeMobileSidebar">{{ $t('trans.logout') }}</Link>
                     </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>

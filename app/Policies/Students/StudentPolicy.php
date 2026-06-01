@@ -14,7 +14,17 @@ class StudentPolicy
 
     public function view(User $user, Student $student): bool
     {
-        return $user->can('viewAny:students') || $user->can('view:students');
+        if ($user->can('viewAny:students') || $user->can('view:students')) {
+            return true;
+        }
+
+        if ($user->studentProfile?->id !== $student->id) {
+            return false;
+        }
+
+        return $user->can('manageOwnStudentProgramDetails:students')
+            || $user->can('manageOwnStudentPersonalDetails:students')
+            || $user->can('manageOwnStudentFinancialDetails:students');
     }
 
     public function create(User $user): bool

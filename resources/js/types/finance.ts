@@ -35,7 +35,14 @@ export type StudentPaymentReceipt = {
         debitCreditFlag: string;
         amountCredit: string;
         amountDebit: string;
+        usdConversionRate?: string | null;
+        usdConversionRateLabel?: string | null;
+        usdConversionRateDate?: string | null;
+        originalAmountCredit?: string | number | null;
+        originalAmountDebit?: string | number | null;
+        originalIsoCurrencyCode?: string | null;
         clearedRunningBalance: string;
+        runningBalance?: string | null;
         blockedBalance: string;
         debitLimit: string;
         creditLimit: string;
@@ -67,5 +74,64 @@ export type StudentPaymentReceipt = {
         createdAt: string;
         updatedAt: string;
         deletedAt: string | null;
+    };
+};
+
+export type ParsedStudentPaymentReceipt = StudentPaymentReceipt & {
+    credit: number;
+    debit: number;
+};
+
+export type StudentLedgerSummary = {
+    totalInvoiced: string;
+    totalPayments: string;
+    outstandingBalance: string;
+    paidPercent: number;
+};
+
+export type StudentLedgerResponse = {
+    data: StudentPaymentReceipt[];
+    summary: StudentLedgerSummary;
+};
+
+export type FinanceTransactionQuery = {
+    type: string;
+    id: string | number;
+    attributes: {
+        studentId: string | number;
+        studentName: string | null;
+        studentNumber: string | null;
+        paymentReference: string;
+        description: string | null;
+        status: string;
+        statusLabel: string;
+        declineReason: string | null;
+        bankStatementId: string | number | null;
+        reconciledByName: string | null;
+        declinedByName: string | null;
+        reconciledAt: string | null;
+        declinedAt: string | null;
+        createdAt: string | null;
+        updatedAt: string | null;
+    };
+};
+
+export type StudentPaymentReceiptCollection = {
+    data: StudentPaymentReceipt[];
+    links: {
+        first: string | null;
+        last: string | null;
+        prev: string | null;
+        next: string | null;
+    };
+    meta: {
+        current_page: number;
+        last_page: number;
+        per_page: number;
+        total: number;
+        from: number | null;
+        to: number | null;
+        path?: string | null;
+        links?: Array<{ url: string | null; label: string | number; active: boolean }>;
     };
 };

@@ -17,7 +17,7 @@ defineProps<Props>();
     </div>
     <div class="flex min-w-0 flex-col gap-0.5">
         <span class="text-[0.63rem] font-semibold uppercase tracking-[0.1em] text-muted-foreground">{{ label }}</span>
-        <span class="truncate text-[0.85rem] font-bold tracking-[-0.01em] text-foreground">{{ value }}</span>
+        <span class="break-words text-[0.85rem] font-bold tracking-[-0.01em] text-foreground">{{ value }}</span>
     </div>
   </div>
 </template>

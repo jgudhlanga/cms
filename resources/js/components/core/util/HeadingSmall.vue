@@ -8,8 +8,8 @@ defineProps<Props>();
 </script>
 
 <template>
-	<div class="flex flex-col">
-		<div class="flex mb-0.5 text-xs uppercase text-accent-foreground font-bold">{{ title }}</div>
+	<div class="flex min-w-0 flex-col">
+		<div class="mb-0.5 wrap-break-word text-xs font-bold uppercase text-accent-foreground">{{ title }}</div>
 		<div v-if="description" class="hidden md:flex text-xs text-muted-foreground">
 			{{ description }}
 		</div>

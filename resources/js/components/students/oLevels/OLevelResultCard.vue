@@ -51,7 +51,7 @@ const verificationMode = isItTrue(import.meta.env.VITE_VERIFICATION_MODE);
             </div>
         </div>
         <div class="p-4">
-            <div class="grid grid-cols-3 gap-4 text-sm">
+            <div class="grid grid-cols-1 gap-3 text-sm sm:grid-cols-3 sm:gap-4">
                 <GridLabelValue :label="$tChoice('trans.year', 1)" :value="result?.attributes?.examYear" />
                 <GridLabelValue :label="$tChoice('trans.sitting', 1)" :value="sittingLabel" />
                 <GridLabelValue :label="$tChoice('trans.grade', 1)" :value="result.attributes?.grade" />

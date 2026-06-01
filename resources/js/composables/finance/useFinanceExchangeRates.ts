@@ -52,7 +52,6 @@ export const useFinanceExchangeRates = () => {
 
     const breadcrumbs: Array<Link> = [
         { transChoiceKey: 'finance.finance', transChoiceKeyIndex: 1, href: route('finance.index') },
-        { transChoiceKey: 'finance.setting', href: route('finance.settings') },
         { transChoiceKey: 'finance.exchange_rate' },
     ];
 

@@ -5,6 +5,7 @@ namespace App\Models\Students;
 use App\Enums\Shared\AcademicLevelEnum;
 use App\Enums\Shared\IdTypeEnum;
 use App\Models\HMS\HostelApplication;
+use App\Models\Finance\FinanceTransactionQuery;
 use App\Models\Shared\Address;
 use App\Models\Shared\Contact;
 use App\Models\Shared\Country;
@@ -173,6 +174,11 @@ class Student extends Model
     public function hostelApplications(): HasMany
     {
         return $this->hasMany(HostelApplication::class, 'student_id');
+    }
+
+    public function financeTransactionQueries(): HasMany
+    {
+        return $this->hasMany(FinanceTransactionQuery::class, 'student_id');
     }
 
     public function getActivitylogOptions(): LogOptions

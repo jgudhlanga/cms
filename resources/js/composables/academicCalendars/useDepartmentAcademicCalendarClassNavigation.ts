@@ -1,4 +1,4 @@
-import type { AcademicCalendar, AcademicCalendarClassDetail, ClassConfig } from '@/types/academic-calendar';
+import type { AcademicCalendar, AcademicCalendarClassDetail, AcademicCalendarClassPreviewStudent, ClassConfig } from '@/types/academic-calendar';
 import type { DepartmentCourse, DepartmentLevel } from '@/types/department-meta-data';
 import type { InstitutionDepartment, ModeOfStudy } from '@/types/institution';
 import type { Link } from '@/types/ui';
@@ -59,10 +59,28 @@ export function useDepartmentAcademicCalendarClassNavigation(
         ];
     });
 
+    const classShowUrl = computed(() =>
+        route('academic-calendars.department-classes.show', {
+            institution_department: String(department.value.id),
+            calendar_year: String(academicCalendar.value.attributes.calendarYear),
+            academic_calendar_class: String(academicCalendarClass.value.id),
+        }),
+    );
+
+    const studentCourseWorkUrl = (student: AcademicCalendarClassPreviewStudent): string =>
+        route('academic-calendars.department-classes.student-course-work', {
+            institution_department: String(department.value.id),
+            calendar_year: String(academicCalendar.value.attributes.calendarYear),
+            academic_calendar_class: String(academicCalendarClass.value.id),
+            student_enrolment: String(student.studentEnrolmentId),
+        });
+
     return {
         departmentClassesUrl,
         moveStudentsUrl,
         updateClassUrl,
+        classShowUrl,
+        studentCourseWorkUrl,
         breadcrumbs,
     };
 }

@@ -3,14 +3,9 @@ defineOptions({ inheritAttrs: false });
 
 import LogoutButton from '@/components/auth/LogoutButton.vue';
 import RemoveImpersonationButton from '@/components/auth/RemoveImpersonationButton.vue';
-import BaseTooltip from '@/components/core/util/BaseTooltip.vue';
 import Breadcrumbs from '@/components/core/util/Breadcrumbs.vue';
-import TextLink from '@/components/core/util/TextLink.vue';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { SidebarTrigger } from '@/components/ui/sidebar';
-import { useDefaults } from '@/composables/core/useDefaults';
-import { useInitials } from '@/composables/core/useInitials';
 import { useUtils } from '@/composables/core/useUtils';
 import { PageProps } from '@/types';
 import { BreadcrumbItemInterface } from '@/types/ui';
@@ -24,8 +19,6 @@ const props = defineProps<{
     backUrl?: string;
 }>();
 const page = usePage<PageProps>();
-const { getInitials } = useInitials();
-const { defaultAvatarImage } = useDefaults();
 const { isItTrue } = useUtils();
 const showBackNavigation = computed((): boolean => {
     return Boolean(props.backUrl) && (props.breadcrumbs?.length ?? 0) > 1;
@@ -58,33 +51,20 @@ const backNavigationRowJustifyClass = computed((): string => {
 </script>
 <template>
     <header
-        class="flex h-16 shrink-0 items-center justify-between gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12"
+        class="flex h-16 shrink-0 items-center justify-between gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 sm:gap-4"
     >
-        <div class="flex items-center gap-2 px-4">
-            <SidebarTrigger class="text-primary -ml-4 font-bold" />
-            <Separator orientation="vertical" class="mr-2 h-4" />
+        <div class="flex min-w-0 flex-1 items-center gap-2 px-2 sm:px-4">
+            <SidebarTrigger class="text-primary -ml-2 shrink-0 font-bold sm:-ml-4" />
+            <Separator orientation="vertical" class="mr-1 hidden h-4 sm:mr-2 sm:block" />
             <Breadcrumbs :breadcrumbs="breadcrumbs ?? []" />
         </div>
-        <div class="flex items-center justify-center space-x-4">
+        <div class="flex shrink-0 items-center justify-center space-x-2 sm:space-x-4">
             <RemoveImpersonationButton v-if="isItTrue(page.props.auth.impersonating)" />
-            <BaseTooltip :content="`${$t('trans.user_account')}`">
-                <TextLink :href="route('users.edit', page.props.auth.user.id.toString())" method="get" as="button" classes="flex items-center">
-                    <Avatar class="size-7 rounded-full">
-                        <AvatarImage
-                            :src="page.props.auth.user.attributes.avatarUrl ?? defaultAvatarImage"
-                            :alt="page.props.auth.user.attributes.name"
-                        />
-                        <AvatarFallback class="size-7 rounded-full">
-                            {{ getInitials(page.props.auth.user.attributes.name) }}
-                        </AvatarFallback>
-                    </Avatar>
-                </TextLink>
-            </BaseTooltip>
             <LogoutButton />
             <AppPreferencesSheet />
         </div>
     </header>
-    <div class="flex h-full w-full flex-col pb-10">
+    <div class="flex h-full min-w-0 w-full max-w-full flex-col overflow-x-clip pb-10">
         <div
             v-if="showBackNavigationRow"
             class="mb-10 flex items-center gap-4"

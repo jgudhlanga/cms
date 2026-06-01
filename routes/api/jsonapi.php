@@ -12,5 +12,7 @@ Route::middleware('auth:sanctum')->group(function () {
         ->withoutMiddleware(SubstituteBindings::class)
         ->resources(function (ResourceRegistrar $server) {
             require __DIR__.'/jsonapi/hms.php';
+            require __DIR__.'/jsonapi/students.php';
+            require __DIR__.'/jsonapi/academic-calendars.php';
         });
 });

@@ -26,6 +26,16 @@ class UserPolicy
         return $user->can('update:users', $model);
     }
 
+    public function updateCredentials(User $user, User $model): bool
+    {
+        if ($user->can('update:users', $model)) {
+            return true;
+        }
+
+        return $user->id === $model->id
+            && $user->can('manageOwnStudentPersonalDetails:students');
+    }
+
     public function delete(User $user, User $model): bool
     {
         return $user->can('delete:users', $model);

@@ -67,6 +67,7 @@ export type StudentHeader = {
 };
 
 export type StudentProgrammeModule = {
+    id?: number;
     code: string | null;
     name: string | null;
     durationInHours: number | null;
@@ -75,6 +76,29 @@ export type StudentProgrammeModule = {
     lecturer: string | null;
     type: string | null;
     assessment: string | null;
+    courseWork?: StudentProgrammeModuleCourseWork | null;
+};
+
+export type StudentProgrammeModuleCourseWork = {
+    assessments: Array<{
+        assessmentTypeId: number;
+        assessmentTypeName: string;
+        markId: number | null;
+        mark: number | null;
+        remark: string | null;
+    }>;
+    aggregation: {
+        components: Array<{
+            assessmentTypeId: number;
+            assessmentTypeName: string;
+            rawMark: number | null;
+            weightPercent: number;
+            weightedMark: number | null;
+        }>;
+        courseWorkTotal60: number | null;
+        isComplete: boolean;
+        remark: string | null;
+    };
 };
 
 export type StudentProgrammeSemester = {
@@ -82,6 +106,7 @@ export type StudentProgrammeSemester = {
     label: string | null;
     year: string | null;
     status: string | null;
+    studentEnrolmentId?: number;
     module: StudentProgrammeModule[];
 };
 
@@ -91,6 +116,7 @@ export type StudentProgramme = {
     course: string | null;
     courseCode: string | null;
     calendarYear: string | null;
+    isActive?: boolean;
     semesters: StudentProgrammeSemester[];
 };
 
@@ -321,4 +347,58 @@ export type StudentEnrolment = {
             syllabi: Array<CourseSyllabus>;
         };
     };
-}
+};
+
+export type StudentPortalDashboardModule = {
+    id: number;
+    code: string | null;
+    name: string | null;
+    score: number | null;
+    gradeDisplay: string;
+    progressPercent: number;
+};
+
+export type StudentPortalDashboardActivity = {
+    type: 'application' | 'financial' | 'course_work';
+    message: string;
+    severity: 'info' | 'warning' | 'success';
+};
+
+export type StudentPortalDashboardFinancial = {
+    paidPercent: number;
+    outstandingBalance: string;
+    totalInvoiced: string;
+    totalPayments: string;
+};
+
+export type StudentPortalDashboardTerm = {
+    label: string;
+    calendarYear: string;
+    openingDate: string;
+    closingDate: string | null;
+};
+
+export type StudentPortalDashboardNotice = {
+    id: string | number;
+    title: string;
+    message: string;
+    publishedAt: string | null;
+};
+
+export type StudentPortalCalendarType = 'term' | 'semester' | 'abma';
+
+export type StudentPortalDashboardStats = {
+    activeModuleCount: number;
+    totalModuleHours: number;
+    averageCourseWorkScore: number | null;
+    oLevelSubjectCount: number;
+    applicationCount: number;
+    pendingApplicationCount: number;
+    modules: StudentPortalDashboardModule[];
+    activities: StudentPortalDashboardActivity[];
+    notices: StudentPortalDashboardNotice[];
+    calendarType: StudentPortalCalendarType;
+    currentTerm: StudentPortalDashboardTerm | null;
+    nextTerm: StudentPortalDashboardTerm | null;
+    financial?: StudentPortalDashboardFinancial;
+};

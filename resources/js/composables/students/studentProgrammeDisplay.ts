@@ -23,9 +23,6 @@ export const programmeHeading = (
     return title ? `${title} (${courseCode})` : `(${courseCode})`;
 };
 
-export const semesterTitle = (label: string | null, year: string | null): string =>
-    [label, year].filter(Boolean).join(` ${trans('students.semester_title_separator')} `);
-
 export const semesterDurationHours = (semester: StudentProgrammeSemester): number =>
     semester.module.reduce((total, module) => total + (Number(module.durationInHours) || 0), 0);
 
@@ -47,44 +44,81 @@ export const displayValue = (value: string | number | null | undefined): string 
     return String(value);
 };
 
+export const isMissingValue = (value: string | number | null | undefined): boolean =>
+    value === null || value === undefined || value === '';
+
+export const missingValueTextClass = (value: string | number | null | undefined): string =>
+    isMissingValue(value) ? 'text-amber-500' : '';
+
+export const isMissingDisplay = (display: string): boolean =>
+    display === trans('students.not_available') || display === trans('students.pending');
+
+export const missingDisplayTextClass = (display: string): string =>
+    isMissingDisplay(display) ? 'text-amber-500' : '';
+
+export interface SemesterHeaderMeta {
+    label: string;
+    labelMissing: boolean;
+    year: string;
+    yearMissing: boolean;
+    duration: string;
+    durationMissing: boolean;
+    moduleCount: number;
+}
+
+export const semesterHeaderMeta = (semester: StudentProgrammeSemester): SemesterHeaderMeta => {
+    const durationHours = semesterDurationHours(semester);
+    const duration = formatDurationHours(durationHours);
+
+    return {
+        label: displayValue(semester.label),
+        labelMissing: isMissingValue(semester.label),
+        year: displayValue(semester.year),
+        yearMissing: isMissingValue(semester.year),
+        duration,
+        durationMissing: durationHours <= 0,
+        moduleCount: semester.module.length,
+    };
+};
+
 export const statusBadgeClass = (status: string | null | undefined): string => {
     const normalized = (status ?? '').toLowerCase();
 
     if (normalized.includes('complete')) {
-        return 'bg-emerald-500/15 text-emerald-400 ring-1 ring-emerald-500/30';
+        return 'text-emerald-400';
     }
 
     if (normalized.includes('active') || normalized.includes('progress')) {
-        return 'bg-primary/15 text-primary ring-1 ring-primary/30';
+        return 'text-primary';
     }
 
-    return 'bg-muted text-muted-foreground ring-1 ring-border';
+    return 'text-muted-foreground';
 };
 
 export const gradeBadgeClass = (grade: string | null | undefined): string => {
     const g = grade ?? '';
 
     if (!g) {
-        return 'bg-muted text-muted-foreground';
+        return 'text-amber-500';
     }
 
     if (g === 'IP') {
-        return 'bg-muted text-muted-foreground';
+        return 'text-amber-500';
     }
 
     if (g.startsWith('A')) {
-        return 'bg-emerald-500/15 text-emerald-400 ring-1 ring-emerald-500/30';
+        return 'text-emerald-400';
     }
 
     if (g.startsWith('B')) {
-        return 'bg-primary/15 text-primary ring-1 ring-primary/30';
+        return 'text-primary';
     }
 
     if (g.startsWith('C')) {
-        return 'bg-amber-500/15 text-amber-400 ring-1 ring-amber-500/30';
+        return 'text-amber-400';
     }
 
-    return 'bg-red-500/15 text-red-400 ring-1 ring-red-500/30';
+    return 'text-red-400';
 };
 
 export const scoreBarColor = (score: number): string => {
@@ -119,5 +153,36 @@ export const scoreLabel = (score: number): string => {
     return trans('students.score_below_pass');
 };
 
-export const moduleGradeDisplay = (module: StudentProgrammeModule): string =>
-    module.grade ? module.grade : trans('students.not_available');
+export const moduleGradeDisplay = (module: StudentProgrammeModule): string => {
+    const total = module.courseWork?.aggregation.courseWorkTotal60;
+
+    if (total !== null && total !== undefined) {
+        return String(Math.round(total));
+    }
+
+    const hasPartialMarks = module.courseWork?.assessments.some((assessment) => assessment.mark !== null);
+
+    if (hasPartialMarks) {
+        return trans('students.course_work_in_progress');
+    }
+
+    return module.grade ? module.grade : trans('students.not_available');
+};
+
+export const moduleGradeBadgeClass = (module: StudentProgrammeModule): string => {
+    const total = module.courseWork?.aggregation.courseWorkTotal60;
+
+    if (total !== null && total !== undefined) {
+        const percent = (total / 60) * 100;
+
+        return gradeBadgeClass(percent >= 50 ? 'B' : percent >= 40 ? 'C' : 'F');
+    }
+
+    const hasPartialMarks = module.courseWork?.assessments.some((assessment) => assessment.mark !== null);
+
+    if (hasPartialMarks) {
+        return 'text-amber-500';
+    }
+
+    return gradeBadgeClass(module.grade);
+};

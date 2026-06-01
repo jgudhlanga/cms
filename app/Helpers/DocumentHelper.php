@@ -109,4 +109,41 @@ class DocumentHelper
             $tuition,
         ];
     }
+
+    public static function resolvePdfHeaderTemplate(?int $tenantId = null): DocumentTemplate
+    {
+        $documentType = DocumentType::query()
+            ->where('name', DocumentTypeEnum::OFFER_LETTER->name())
+            ->first();
+
+        $query = DocumentTemplate::query()->whereNotNull('header_line_1');
+
+        if ($tenantId !== null) {
+            $query->where('tenant_id', $tenantId);
+        }
+
+        if ($documentType !== null) {
+            $offerLetterTemplate = (clone $query)->where('document_type_id', $documentType->id)->first();
+
+            if ($offerLetterTemplate !== null) {
+                return $offerLetterTemplate;
+            }
+        }
+
+        $template = $query->first();
+
+        if ($template !== null) {
+            return $template;
+        }
+
+        return new DocumentTemplate([
+            'header_line_1' => 'Republic of Zimbabwe',
+            'header_line_2' => 'Harare Polytechnic',
+            'header_address_line_1' => 'Harare',
+            'header_address_line_2' => '',
+            'header_telephone' => '',
+            'header_email' => '',
+            'header_website' => '',
+        ]);
+    }
 }

@@ -31,7 +31,7 @@ class PermissionsTableSeeder extends Seeder
         Permission::whereIn('name', $accommodationsPermissions)->forceDelete();
 
         foreach (PermissionRegistry::grouped() as $moduleKey => $permissionRows) {
-            $module = Module::where('title', $moduleKey)->withTrashed()->first();
+            $module = Module::where('title', PermissionRegistry::moduleTitleForGroupKey($moduleKey))->withTrashed()->first();
 
             foreach ($permissionRows as $permission) {
                 $exist = Permission::where('name', $permission)->withTrashed()->first();
