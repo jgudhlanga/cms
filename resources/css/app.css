@@ -169,14 +169,6 @@
         --input: 0 0% 89.8%;
         --ring: 205 81% 59%;
         --radius: 0.5rem;
-        --sidebar-background: 232 73% 15%;
-        --sidebar-foreground: 215 16% 65%;
-        --sidebar-primary: 173 56% 56%;
-        --sidebar-primary-foreground: 232 73% 12%;
-        --sidebar-accent: 231 91.3% 46%;
-        --sidebar-accent-foreground: 0 0% 98%;
-        --sidebar-border: 232 40% 22%;
-        --sidebar-ring: 231 91.3% 54.9%;
     }
 
     :root {
@@ -200,14 +192,6 @@
         --input: 0 0% 89.8%;
         --ring: 205 81% 59%;
         --radius: 0.5rem;
-        --sidebar-background: 232 73% 15%;
-        --sidebar-foreground: 215 16% 65%;
-        --sidebar-primary: 173 56% 56%;
-        --sidebar-primary-foreground: 232 73% 12%;
-        --sidebar-accent: 231 91.3% 46%;
-        --sidebar-accent-foreground: 0 0% 98%;
-        --sidebar-border: 232 40% 22%;
-        --sidebar-ring: 231 91.3% 54.9%;
     }
 
     html.dark,
@@ -237,14 +221,6 @@
         --border: 220 13% 30%;
         --input: 220 13% 26%;
         --ring: 199 96% 82%;
-        --sidebar-background: var(--background);
-        --sidebar-foreground: 215 16% 65%;
-        --sidebar-primary: 173 56% 56%;
-        --sidebar-primary-foreground: 232 73% 12%;
-        --sidebar-accent: 199 89% 55%;
-        --sidebar-accent-foreground: 0 0% 98%;
-        --sidebar-border: var(--border);
-        --sidebar-ring: 199 96% 82%;
     }
 
     @media (prefers-color-scheme: dark) {
@@ -273,15 +249,22 @@
             --border: 220 13% 30%;
             --input: 220 13% 26%;
             --ring: 199 96% 82%;
-            --sidebar-background: var(--background);
-            --sidebar-foreground: 215 16% 65%;
-            --sidebar-primary: 173 56% 56%;
-            --sidebar-primary-foreground: 232 73% 12%;
-            --sidebar-accent: 199 89% 55%;
-            --sidebar-accent-foreground: 0 0% 98%;
-            --sidebar-border: var(--border);
-            --sidebar-ring: 199 96% 82%;
         }
+    }
+
+    /* Sidebar keeps dark-theme grey chrome when the app is in light mode. */
+    :root,
+    html.light,
+    html.dark,
+    .dark {
+        --sidebar-background: 220 16% 14%;
+        --sidebar-foreground: 215 16% 65%;
+        --sidebar-primary: 173 56% 56%;
+        --sidebar-primary-foreground: 232 73% 12%;
+        --sidebar-accent: 199 89% 55%;
+        --sidebar-accent-foreground: 0 0% 98%;
+        --sidebar-border: 220 13% 30%;
+        --sidebar-ring: 199 96% 82%;
     }
 }
 

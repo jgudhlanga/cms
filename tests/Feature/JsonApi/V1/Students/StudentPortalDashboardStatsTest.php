@@ -142,6 +142,7 @@ test('json api student portal dashboard stats returns meta for authenticated stu
                 'modules',
                 'activities',
                 'notices',
+                'calendarType',
                 'currentTerm',
                 'nextTerm',
             ],

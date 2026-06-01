@@ -385,6 +385,8 @@ export type StudentPortalDashboardNotice = {
     publishedAt: string | null;
 };
 
+export type StudentPortalCalendarType = 'term' | 'semester' | 'abma';
+
 export type StudentPortalDashboardStats = {
     activeModuleCount: number;
     totalModuleHours: number;
@@ -395,6 +397,7 @@ export type StudentPortalDashboardStats = {
     modules: StudentPortalDashboardModule[];
     activities: StudentPortalDashboardActivity[];
     notices: StudentPortalDashboardNotice[];
+    calendarType: StudentPortalCalendarType;
     currentTerm: StudentPortalDashboardTerm | null;
     nextTerm: StudentPortalDashboardTerm | null;
     financial?: StudentPortalDashboardFinancial;

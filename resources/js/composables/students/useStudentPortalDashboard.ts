@@ -16,6 +16,7 @@ const emptyStats = (): StudentPortalDashboardStats => ({
     modules: [],
     activities: [],
     notices: [],
+    calendarType: 'semester',
     currentTerm: null,
     nextTerm: null,
 });

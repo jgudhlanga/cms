@@ -301,6 +301,7 @@ export function parseJsonApiStudentPortalDashboardStats(document: JsonApiMetaDoc
         modules: meta.modules ?? [],
         activities: meta.activities ?? [],
         notices: meta.notices ?? [],
+        calendarType: meta.calendarType ?? 'semester',
         currentTerm: meta.currentTerm ?? null,
         nextTerm: meta.nextTerm ?? null,
         financial: meta.financial,

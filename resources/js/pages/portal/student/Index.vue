@@ -56,6 +56,7 @@ onMounted(() => {
 
             <template v-else-if="!loadError">
                 <StudentDashboardTermDetails
+                    :calendar-type="stats.calendarType"
                     :current-term="stats.currentTerm"
                     :next-term="stats.nextTerm"
                 />

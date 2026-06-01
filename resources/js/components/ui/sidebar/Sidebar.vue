@@ -32,19 +32,6 @@ const { isMobile, state, openMobile, setOpenMobile } = useSidebar();
 		:class="cn('relative isolate flex h-full w-(--sidebar-width) flex-col overflow-hidden bg-sidebar text-sidebar-foreground', props.class)"
 		v-bind="$attrs"
 	>
-		<div
-			v-if="side === 'left'"
-			aria-hidden="true"
-			class="pointer-events-none absolute inset-0 z-0 opacity-[0.18] dark:hidden"
-		>
-			<div
-				class="absolute inset-0"
-				:style="{
-					backgroundImage:
-						'repeating-radial-gradient(circle at 50% 40%, rgba(255,255,255,0.28) 0px, rgba(255,255,255,0.28) 1px, transparent 1px, transparent 20px)'
-				}"
-			/>
-		</div>
 		<div class="relative z-10 flex h-full flex-col">
 			<slot />
 		</div>
@@ -61,19 +48,6 @@ const { isMobile, state, openMobile, setOpenMobile } = useSidebar();
             }"
 		>
 			<div class="relative isolate flex h-full w-full flex-col overflow-hidden">
-				<div
-					v-if="side === 'left'"
-					aria-hidden="true"
-					class="pointer-events-none absolute inset-0 z-0 opacity-[0.18] dark:hidden"
-				>
-					<div
-						class="absolute inset-0"
-						:style="{
-							backgroundImage:
-								'repeating-radial-gradient(circle at 50% 40%, rgba(255,255,255,0.28) 0px, rgba(255,255,255,0.28) 1px, transparent 1px, transparent 20px)'
-						}"
-					/>
-				</div>
 				<div class="relative z-10 flex h-full w-full flex-col">
 					<slot />
 				</div>
@@ -122,19 +96,6 @@ const { isMobile, state, openMobile, setOpenMobile } = useSidebar();
 				data-sidebar="sidebar"
 				class="relative isolate flex h-full w-full flex-col overflow-hidden bg-sidebar group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:shadow-sm"
 			>
-				<div
-					v-if="side === 'left'"
-					aria-hidden="true"
-					class="pointer-events-none absolute inset-0 z-0 opacity-[0.18] dark:hidden"
-				>
-					<div
-						class="absolute inset-0"
-						:style="{
-							backgroundImage:
-								'repeating-radial-gradient(circle at 50% 40%, rgba(255,255,255,0.28) 0px, rgba(255,255,255,0.28) 1px, transparent 1px, transparent 20px)'
-						}"
-					/>
-				</div>
 				<div class="relative z-10 flex h-full flex-col">
 					<slot />
 				</div>

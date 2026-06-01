@@ -62,6 +62,7 @@ class StudentPortalDashboardService
         $termDetails = $this->termDetailsService->build($student, $activeSemester);
 
         $payload = [
+            'calendarType' => $termDetails['calendarType'],
             'activeModuleCount' => count($modules),
             'totalModuleHours' => $totalModuleHours,
             'averageCourseWorkScore' => $averageCourseWorkScore,

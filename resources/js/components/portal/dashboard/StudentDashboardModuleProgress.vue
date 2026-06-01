@@ -104,7 +104,7 @@ const dotAccent = (index: number): string => {
                         </p>
                     </div>
                 </div>
-                <div class="h-1 overflow-hidden rounded-full bg-muted">
+                <div class="h-[2px] overflow-hidden rounded-full bg-muted">
                     <div
                         class="h-full rounded-full transition-all"
                         :class="module.score !== null ? scoreBarColor(module.score) : moduleAccent(index)"

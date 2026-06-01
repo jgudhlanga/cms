@@ -1,13 +1,39 @@
 <script setup lang="ts">
-import type { StudentPortalDashboardTerm } from '@/types/students';
+import type { StudentPortalCalendarType, StudentPortalDashboardTerm } from '@/types/students';
 import { CalendarDays } from 'lucide-vue-next';
+import { computed } from 'vue';
 
 interface Props {
+    calendarType?: StudentPortalCalendarType;
     currentTerm: StudentPortalDashboardTerm | null;
     nextTerm: StudentPortalDashboardTerm | null;
 }
 
-defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+    calendarType: 'semester',
+});
+
+const currentPeriodHeadingKey = computed(() => {
+    switch (props.calendarType) {
+        case 'term':
+            return 'students.dashboard_current_term_period';
+        case 'abma':
+            return 'students.dashboard_current_abma';
+        default:
+            return 'students.dashboard_current_semester';
+    }
+});
+
+const nextPeriodHeadingKey = computed(() => {
+    switch (props.calendarType) {
+        case 'term':
+            return 'students.dashboard_next_term_period';
+        case 'abma':
+            return 'students.dashboard_next_abma';
+        default:
+            return 'students.dashboard_next_semester';
+    }
+});
 
 const formatDate = (value: string | null | undefined): string => {
     if (!value) {
@@ -28,7 +54,7 @@ const formatDate = (value: string | null | undefined): string => {
             <div class="flex items-center gap-1">
                 <CalendarDays class="h-3 w-3 shrink-0 text-primary" />
                 <h3 class="text-[9px] font-semibold uppercase tracking-wide text-muted-foreground">
-                    {{ $t('students.dashboard_current_term') }}
+                    {{ $t(currentPeriodHeadingKey) }}
                 </h3>
             </div>
             <template v-if="currentTerm">
@@ -59,7 +85,7 @@ const formatDate = (value: string | null | undefined): string => {
             <div class="flex items-center gap-1">
                 <CalendarDays class="h-3 w-3 shrink-0 text-sky-500 dark:text-sky-400" />
                 <h3 class="text-[9px] font-semibold uppercase tracking-wide text-muted-foreground">
-                    {{ $t('students.dashboard_next_term') }}
+                    {{ $t(nextPeriodHeadingKey) }}
                 </h3>
             </div>
             <template v-if="nextTerm">
