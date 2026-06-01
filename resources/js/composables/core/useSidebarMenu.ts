@@ -1,5 +1,5 @@
 import AppLogo from '@/components/core/image/AppLogo.vue';
-import { useStudentProfile } from '@/composables/students/useStudentProfile';
+import { isStudentProfileTabVisible, useStudentProfile, type StudentProfileTabValue } from '@/composables/students/useStudentProfile';
 import { IconName } from '@/enums/icons';
 import { icons } from '@/lib/icons';
 import { hasAbility, hasStudentProfile } from '@/lib/permissions';
@@ -112,7 +112,9 @@ export function useSidebarMenu() {
                 title: tab.transLabel(),
                 icon: icons[tab.icon],
                 url: route(tab.routeName!),
-                show: hasStudentProfile() && (tab.show ?? false),
+                show:
+                    hasStudentProfile()
+                    && isStudentProfileTabVisible(tab.value as StudentProfileTabValue, 'portal'),
             })),
         {
             title: 'O Levels',
@@ -126,7 +128,9 @@ export function useSidebarMenu() {
                 title: tab.transLabel(),
                 icon: icons[tab.icon],
                 url: route(tab.routeName!),
-                show: hasStudentProfile() && (tab.show ?? false),
+                show:
+                    hasStudentProfile()
+                    && isStudentProfileTabVisible(tab.value as StudentProfileTabValue, 'portal'),
             })),
         /** ================ PORTAL END ======================*/
     ]);

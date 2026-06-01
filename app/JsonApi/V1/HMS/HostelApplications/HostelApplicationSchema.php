@@ -6,6 +6,7 @@ use App\Enums\HMS\HostelApplicationStatusEnum;
 use App\JsonApi\V1\HMS\Filters\TrashedFilter;
 use App\JsonApi\V1\HMS\HostelApplications\Filters\ApplicationSearchFilter;
 use App\JsonApi\V1\HMS\HostelApplications\Filters\ApplicationStatusFilter;
+use App\JsonApi\V1\HMS\HostelApplications\Filters\ApplicationStudentFilter;
 use App\JsonApi\V1\HMS\HostelApplications\Filters\ApplicationTypeFilter;
 use App\Models\HMS\HostelApplication;
 use App\Services\HMS\StudentPhysicalAddressFormatter;
@@ -136,6 +137,7 @@ class HostelApplicationSchema extends Schema
             new ApplicationSearchFilter,
             new ApplicationTypeFilter,
             new ApplicationStatusFilter,
+            new ApplicationStudentFilter,
             TrashedFilter::make(),
         ];
     }

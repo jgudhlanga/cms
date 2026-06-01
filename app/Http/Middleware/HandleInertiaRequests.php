@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Enums\Acl\RoleEnum;
+use App\Helpers\PermissionHelper;
 use App\Http\Resources\Users\UserResource;
 use App\Models\Users\User;
 use App\Support\Acl\PermissionRegistry;
@@ -82,11 +83,32 @@ class HandleInertiaRequests extends Middleware
                 ->mapWithKeys(fn ($permission) => [$permission => true]);
         }
 
-        // Otherwise, return only the user's assigned permissions
-        return $user?->getAllPermissions()
+        $permissions = $user->getAllPermissions()
             ->pluck('name')
             ->flip()
             ->map(fn () => true);
+
+        return $this->mergePortalStudentAbilities($user, $permissions);
+    }
+
+    private function mergePortalStudentAbilities(User $user, Collection $permissions): Collection
+    {
+        if ($user->studentProfile === null) {
+            return $permissions;
+        }
+
+        foreach (PermissionHelper::portalPermissions() as $portalPermission) {
+            if ($user->can($portalPermission)) {
+                $permissions->put($portalPermission, true);
+            }
+        }
+
+        // Portal students with profile access should always see accommodation self-service.
+        if ($user->can('manageOwnStudentPersonalDetails:students')) {
+            $permissions->put('manageOwnStudentAccommodationDetails:students', true);
+        }
+
+        return $permissions;
     }
 
     private function excludePermissions(): array
@@ -99,6 +121,7 @@ class HandleInertiaRequests extends Middleware
             'manageOwnStudentContactDetails:students',
             'manageOwnStudentFinancialDetails:students',
             'manageOwnStudentAcademicDetails:students',
+            'manageOwnStudentAccommodationDetails:students',
             'view:next-of-kins',
             'create:next-of-kins',
             'update:next-of-kins',

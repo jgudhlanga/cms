@@ -1,6 +1,6 @@
 import Authentication from '@/components/users/Authentication.vue';
 import { IconName } from '@/lib/icons';
-import { hasAbility } from '@/lib/permissions';
+import { hasAbility, hasStudentProfile } from '@/lib/permissions';
 import Applications from '@/pages/students/components/profile/Applications.vue';
 import Documents from '@/pages/students/components/profile/Documents.vue';
 import Financials from '@/pages/students/components/profile/Financials.vue';
@@ -66,7 +66,12 @@ const tabShowChecks: Record<
     },
     accommodations: {
         admin: () => hasAbility([...adminStudentAbilities]),
-        portal: () => hasAbility('manageOwnStudentPersonalDetails:students'),
+        portal: () =>
+            hasStudentProfile()
+            && (
+                hasAbility('manageOwnStudentAccommodationDetails:students')
+                || hasAbility('manageOwnStudentPersonalDetails:students')
+            ),
     },
     documents: {
         admin: () => hasAbility([...adminStudentAbilities]),
@@ -78,66 +83,72 @@ const tabShowChecks: Record<
     },
 };
 
-export const studentProfileTabDefinitions = (
-    context: StudentProfileTabContext = 'portal',
-): StudentProfileTabDefinition[] => [
+const studentProfileTabCatalog: Omit<StudentProfileTabDefinition, 'show'>[] = [
     {
         value: 'basic_info',
         icon: IconName.user,
         routeName: portalRouteNames.basic_info,
         transLabel: () => trans('students.personal_information'),
-        show: tabShowChecks.basic_info[context](),
     },
     {
         value: 'programs',
         icon: IconName.graduation_cape,
         routeName: portalRouteNames.programs,
         transLabel: () => trans_choice('students.program', 2),
-        show: tabShowChecks.programs[context](),
     },
     {
         value: 'applications',
         icon: IconName.application,
         routeName: portalRouteNames.applications,
         transLabel: () => trans_choice('students.application', 2),
-        show: tabShowChecks.applications[context](),
     },
     {
         value: 'financials',
         icon: IconName.money,
         routeName: portalRouteNames.financials,
         transLabel: () => trans_choice('students.financial', 2),
-        show: tabShowChecks.financials[context](),
     },
     {
         value: 'accommodations',
         icon: IconName.bed,
         routeName: portalRouteNames.accommodations,
         transLabel: () => trans_choice('students.accommodation', 2),
-        show: tabShowChecks.accommodations[context](),
     },
     {
         value: 'documents',
         icon: IconName.files,
         routeName: portalRouteNames.documents,
         transLabel: () => trans_choice('students.document', 2),
-        show: tabShowChecks.documents[context](),
     },
     {
         value: 'authentication',
         icon: IconName.shield,
         routeName: portalRouteNames.authentication,
         transLabel: () => trans_choice('students.authentication', 1),
-        show: tabShowChecks.authentication[context](),
     },
 ];
+
+export function isStudentProfileTabVisible(
+    value: StudentProfileTabValue,
+    context: StudentProfileTabContext,
+): boolean {
+    return tabShowChecks[value][context]();
+}
+
+export const studentProfileTabDefinitions = (
+    context: StudentProfileTabContext = 'portal',
+): StudentProfileTabDefinition[] =>
+    studentProfileTabCatalog.map((definition) => ({
+        ...definition,
+        show: isStudentProfileTabVisible(definition.value, context),
+    }));
 
 const tabComponents: Record<StudentProfileTabValue, (student: Student) => Component> = {
     basic_info: (student) => h(Info, { student }),
     programs: (student) => h(Programs, { student }),
     applications: (student) => h(Applications, { student }),
     financials: (student) => h(Financials, { student }),
-    accommodations: () => h(Hostels),
+    accommodations: (student) => h(Hostels, { student }),
     documents: () => h(Documents),
     authentication: (student) => h(Authentication, { user: student?.relationships?.user }),
 };
@@ -155,10 +166,20 @@ export const useStudentProfile = () => {
             }));
 
     const portalProfileTabs = (): StudentProfileTabDefinition[] =>
-        studentProfileTabDefinitions('portal').filter((tab) => tab.show ?? false);
+        studentProfileTabCatalog
+            .map((definition) => ({
+                ...definition,
+                show: isStudentProfileTabVisible(definition.value, 'portal'),
+            }))
+            .filter((tab) => tab.show ?? false);
 
     const portalSidebarProfileTabs = (): StudentProfileTabDefinition[] => {
-        const tabs = portalProfileTabs().filter((tab) => tab.routeName);
+        const tabs = studentProfileTabCatalog
+            .filter((tab) => tab.routeName)
+            .map((definition) => ({
+                ...definition,
+                show: isStudentProfileTabVisible(definition.value, 'portal'),
+            }));
         const authentication = tabs.find((tab) => tab.value === 'authentication');
         const beforeAuthentication = tabs.filter((tab) => tab.value !== 'authentication');
 

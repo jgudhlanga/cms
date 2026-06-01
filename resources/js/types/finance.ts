@@ -101,6 +101,7 @@ export type FinanceTransactionQuery = {
         studentId: string | number;
         studentName: string | null;
         studentNumber: string | null;
+        idNumber: string | null;
         paymentReference: string;
         description: string | null;
         status: string;

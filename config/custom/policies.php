@@ -85,6 +85,7 @@ return [
         'manageStudentContacts',
         'manageStudentFinancialRecords',
         'manageStudentAcademicRecords',
+        'manageStudentAccommodationDetails',
     ],
 
     StudentMetaDataPolicy::class => [

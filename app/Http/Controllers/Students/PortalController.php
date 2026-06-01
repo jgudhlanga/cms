@@ -448,7 +448,7 @@ class PortalController extends Controller
      */
     public function profileAccommodations(): Response
     {
-        return $this->renderProfileSection('accommodations', 'manageStudentPersonalDetails');
+        return $this->renderProfileSection('accommodations', 'manageStudentAccommodationDetails');
     }
 
     /**

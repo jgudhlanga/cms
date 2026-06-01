@@ -79,6 +79,8 @@ const APP_MODULE_KEYS = {
     hostel_applications: 'hostel_applications',
     hostel_application_decline: 'hostel_application_decline',
     hostel_application_approve: 'hostel_application_approve',
+    hostel_accommodation_query: 'hostel_accommodation_query',
+    hostel_accommodation_leave: 'hostel_accommodation_leave',
 };
 const EXAM_SITTINGS = [
     { value: 'june', label: 'June' },

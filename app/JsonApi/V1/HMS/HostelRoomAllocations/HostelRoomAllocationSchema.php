@@ -10,9 +10,11 @@ use App\JsonApi\V1\HMS\HostelRoomAllocations\Filters\AllocationNameFilter;
 use App\JsonApi\V1\HMS\HostelRoomAllocations\Filters\AllocationRoomFilter;
 use App\JsonApi\V1\HMS\HostelRoomAllocations\Filters\AllocationSearchFilter;
 use App\JsonApi\V1\HMS\HostelRoomAllocations\Filters\AllocationStatusFilter;
+use App\JsonApi\V1\HMS\HostelRoomAllocations\Filters\AllocationStudentFilter;
 use App\JsonApi\V1\HMS\HostelRoomAllocations\Filters\AllocationTypeFilter;
 use App\Models\HMS\HostelRoomAllocation;
 use LaravelJsonApi\Eloquent\Contracts\Paginator;
+use LaravelJsonApi\Eloquent\Fields\ArrayList;
 use LaravelJsonApi\Eloquent\Fields\DateTime;
 use LaravelJsonApi\Eloquent\Fields\ID;
 use LaravelJsonApi\Eloquent\Fields\Number;
@@ -36,6 +38,7 @@ class HostelRoomAllocationSchema extends Schema
         'student.latestEnrolment.departmentLevel.level',
         'student.latestEnrolment.departmentCourse.course',
         'room.hostel',
+        'room.amenities',
     ];
 
     protected ?array $defaultPagination = ['number' => 1, 'size' => 15];
@@ -84,6 +87,30 @@ class HostelRoomAllocationSchema extends Schema
             Str::make('roomName')->extractUsing(
                 fn (HostelRoomAllocation $allocation) => $allocation->room?->name
             )->readOnly(),
+            Number::make('floorNumber')->extractUsing(
+                fn (HostelRoomAllocation $allocation) => $allocation->room?->floor_number
+            )->readOnly(),
+            Str::make('roomType')->extractUsing(
+                fn (HostelRoomAllocation $allocation) => $allocation->room?->room_type
+            )->readOnly(),
+            Str::make('roomStatus')->extractUsing(
+                fn (HostelRoomAllocation $allocation) => $allocation->room?->status
+            )->readOnly(),
+            Number::make('maxOccupancy')->extractUsing(
+                fn (HostelRoomAllocation $allocation) => $allocation->room?->max_occupancy
+            )->readOnly(),
+            Number::make('currentOccupancy')->extractUsing(
+                fn (HostelRoomAllocation $allocation) => $allocation->room?->current_occupancy
+            )->readOnly(),
+            Str::make('occupancyLabel')->extractUsing(
+                fn (HostelRoomAllocation $allocation) => $allocation->room?->occupancyLabel()
+            )->readOnly(),
+            ArrayList::make('amenities')->extractUsing(
+                fn (HostelRoomAllocation $allocation) => $allocation->room?->amenities
+                    ?->pluck('name')
+                    ->values()
+                    ->all() ?? []
+            )->readOnly(),
             BelongsTo::make('student')->readOnly(),
             BelongsTo::make('room')->readOnly(),
             DateTime::make('createdAt', 'created_at')->sortable()->readOnly(),
@@ -103,6 +130,7 @@ class HostelRoomAllocationSchema extends Schema
             new AllocationRoomFilter,
             new AllocationTypeFilter,
             new AllocationStatusFilter,
+            new AllocationStudentFilter,
             TrashedFilter::make(),
         ];
     }

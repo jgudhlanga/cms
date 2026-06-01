@@ -9,6 +9,7 @@ use App\Traits\Paginatable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
@@ -73,6 +74,11 @@ class HostelRoom extends Model
     public function hostel(): BelongsTo
     {
         return $this->belongsTo(Hostel::class);
+    }
+
+    public function amenities(): BelongsToMany
+    {
+        return $this->belongsToMany(HostelAmenity::class, 'hostel_room_amenity');
     }
 
     public function getActivitylogOptions(): LogOptions

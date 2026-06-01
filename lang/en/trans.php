@@ -769,4 +769,8 @@ return [
     'registration_passport_mismatch' => 'The passport number does not match the one used during registration.',
     'authorization' => 'Authorization',
     'thanks' => 'Thank you',
+    "category" => "Category",
+    "priority" => "Priority",
+    'from' => "From",
+    'reason' => "Reason",
 ];

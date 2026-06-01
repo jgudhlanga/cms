@@ -11,6 +11,9 @@ import type {
     HostelRoom,
     HostelRoomFiltersState,
     HostelRoomStats,
+    HostelLeave,
+    HostelNotice,
+    HostelQuery,
     HostelStudentFiltersState,
     HmsSettings,
 } from '@/types/hms';
@@ -539,4 +542,32 @@ export function parseJsonApiHostelAllocations(document: JsonApiCollectionDocumen
         meta: mapJsonApiPageMeta(document.meta?.page),
         links: mapJsonApiLinks(document.links),
     };
+}
+
+function parseJsonApiCollection<T extends { type: string; id: number | string; attributes: unknown }>(
+    document: JsonApiCollectionDocument,
+): DataListProps<T> {
+    const rows = (document.data ?? []).map((resource) => ({
+        type: resource.type,
+        id: resource.id,
+        attributes: resource.attributes,
+    })) as T[];
+
+    return {
+        data: rows,
+        meta: mapJsonApiPageMeta(document.meta?.page),
+        links: mapJsonApiLinks(document.links),
+    };
+}
+
+export function parseJsonApiHostelQueries(document: JsonApiCollectionDocument): DataListProps<HostelQuery> {
+    return parseJsonApiCollection<HostelQuery>(document);
+}
+
+export function parseJsonApiHostelLeaves(document: JsonApiCollectionDocument): DataListProps<HostelLeave> {
+    return parseJsonApiCollection<HostelLeave>(document);
+}
+
+export function parseJsonApiHostelNotices(document: JsonApiCollectionDocument): DataListProps<HostelNotice> {
+    return parseJsonApiCollection<HostelNotice>(document);
 }

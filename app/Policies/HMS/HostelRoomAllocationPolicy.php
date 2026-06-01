@@ -4,17 +4,19 @@ namespace App\Policies\HMS;
 
 use App\Models\HMS\HostelRoomAllocation;
 use App\Models\Users\User;
+use App\Support\HMS\HmsStudentAccess;
 
 class HostelRoomAllocationPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->can('viewAny:hostel-room-allocations');
+        return $user->can('viewAny:hostel-room-allocations')
+            || HmsStudentAccess::canManageOwnAccommodation($user);
     }
 
     public function view(User $user, HostelRoomAllocation $hostelRoomAllocation): bool
     {
-        return $user->can('viewAny:hostel-room-allocations') || $user->can('view:hostel-room-allocations');
+        return HmsStudentAccess::canViewAllocation($user, $hostelRoomAllocation);
     }
 
     public function create(User $user): bool

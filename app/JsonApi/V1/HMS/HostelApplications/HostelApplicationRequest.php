@@ -45,8 +45,21 @@ class HostelApplicationRequest extends ResourceRequest
             'emailAddress' => ['nullable', 'email', 'max:255'],
             'nextOfKinName' => [$isCreating ? 'required' : 'sometimes', 'string', 'max:255'],
             'nextOfKinContact' => [$isCreating ? 'required' : 'sometimes', 'string', 'max:50'],
-            'checkIn' => [$isCreating ? 'required' : 'sometimes', 'date'],
-            'checkOut' => [$isCreating ? 'required' : 'sometimes', 'date', 'after:checkIn'],
+            'checkIn' => [
+                Rule::requiredIf(fn () => $isCreating
+                    && $this->input('applicationType') === HostelApplicationTypeEnum::GUEST->value),
+                'sometimes',
+                'nullable',
+                'date',
+            ],
+            'checkOut' => [
+                Rule::requiredIf(fn () => $isCreating
+                    && $this->input('applicationType') === HostelApplicationTypeEnum::GUEST->value),
+                'sometimes',
+                'nullable',
+                'date',
+                'after:checkIn',
+            ],
             'declineReason' => [
                 Rule::requiredIf(fn () => $this->input('status') === HostelApplicationStatusEnum::DECLINED->value),
                 'nullable',
