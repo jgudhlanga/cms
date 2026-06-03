@@ -3,8 +3,12 @@
 namespace App\Exports\AcademicCalendars;
 
 use Maatwebsite\Excel\Concerns\FromArray;
+use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 use Maatwebsite\Excel\Concerns\WithTitle;
+use Maatwebsite\Excel\Events\AfterSheet;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
+use PhpOffice\PhpSpreadsheet\Style\Protection;
 
 class CourseWorkImportTemplateExport implements WithMultipleSheets
 {
@@ -25,8 +29,16 @@ class CourseWorkImportTemplateExport implements WithMultipleSheets
     }
 }
 
-class CourseWorkImportTemplateMarksSheetExport implements FromArray, WithTitle
+class CourseWorkImportTemplateMarksSheetExport implements FromArray, WithEvents, WithTitle
 {
+    public const int FIXED_COLUMN_COUNT = 4;
+
+    public const int HEADER_ROW = 6;
+
+    public const int ASSESSMENT_ID_ROW = 7;
+
+    public const int DATA_START_ROW = 8;
+
     /**
      * @param  array<string, mixed>  $data
      */
@@ -39,8 +51,27 @@ class CourseWorkImportTemplateMarksSheetExport implements FromArray, WithTitle
     {
         /** @var array<string, mixed> $header */
         $header = $this->data['header'] ?? [];
+        /** @var list<array{id: int, name: string, weightPercent: int|null}> $assessmentTypes */
+        $assessmentTypes = $this->data['assessmentTypes'] ?? [];
         /** @var list<array<string, mixed>> $rows */
         $rows = $this->data['rows'] ?? [];
+
+        $columnHeaders = [
+            'STUDENT_ENROLMENT_ID',
+            'STUDENT_NUMBER',
+            'STUDENT_NAME',
+            'CLASS_NAME',
+        ];
+
+        foreach ($assessmentTypes as $type) {
+            $weight = $type['weightPercent'] ?? '';
+            $columnHeaders[] = sprintf('%s (%s%%)', $type['name'], $weight);
+        }
+
+        $assessmentIdRow = [null, null, null, null];
+        foreach ($assessmentTypes as $type) {
+            $assessmentIdRow[] = $type['id'];
+        }
 
         $output = [
             ['Course Work Import Template'],
@@ -48,40 +79,66 @@ class CourseWorkImportTemplateMarksSheetExport implements FromArray, WithTitle
             ['Course', $header['course'] ?? null, 'Level', $header['level'] ?? null],
             ['Mode', $header['modeOfStudy'] ?? null, 'Year', $header['calendarYear'] ?? null],
             ['Generated', $header['generatedAt'] ?? null],
-            [
-                'STUDENT_ENROLMENT_ID',
-                'STUDENT_NUMBER',
-                'STUDENT_NAME',
-                'CLASS_NAME',
-                'MODULE_ID',
-                'MODULE_CODE',
-                'MODULE_TITLE',
-                'ASSESSMENT_TYPE_ID',
-                'ASSESSMENT_NAME',
-                'WEIGHT_PERCENT',
-                'MARK',
-                'REMARK',
-            ],
+            $columnHeaders,
+            $assessmentIdRow,
         ];
 
         foreach ($rows as $row) {
-            $output[] = [
+            /** @var array<int, int|null> $marks */
+            $marks = $row['marks'] ?? [];
+            $line = [
                 $row['studentEnrolmentId'] ?? null,
                 $row['studentNumber'] ?? null,
                 $row['studentName'] ?? null,
                 $row['className'] ?? null,
-                $row['moduleId'] ?? null,
-                $row['moduleCode'] ?? null,
-                $row['moduleTitle'] ?? null,
-                $row['assessmentTypeId'] ?? null,
-                $row['assessmentName'] ?? null,
-                $row['weightPercent'] ?? null,
-                $row['mark'] ?? null,
-                $row['remark'] ?? null,
             ];
+
+            foreach ($assessmentTypes as $type) {
+                $line[] = $marks[(int) $type['id']] ?? null;
+            }
+
+            $output[] = $line;
         }
 
         return $output;
+    }
+
+    /**
+     * @return array<class-string, callable>
+     */
+    public function registerEvents(): array
+    {
+        return [
+            AfterSheet::class => function (AfterSheet $event): void {
+                $sheet = $event->sheet->getDelegate();
+                /** @var list<array{id: int, name: string, weightPercent: int|null}> $assessmentTypes */
+                $assessmentTypes = $this->data['assessmentTypes'] ?? [];
+                /** @var list<array<string, mixed>> $rows */
+                $rows = $this->data['rows'] ?? [];
+
+                $assessmentCount = count($assessmentTypes);
+                $lastColumnIndex = self::FIXED_COLUMN_COUNT + $assessmentCount;
+                $lastColumnLetter = Coordinate::stringFromColumnIndex($lastColumnIndex);
+                $lastDataRow = self::DATA_START_ROW + count($rows) - 1;
+
+                if ($lastDataRow < self::DATA_START_ROW) {
+                    $lastDataRow = self::DATA_START_ROW;
+                }
+
+                $sheet->getStyle('A1:'.$lastColumnLetter.$lastDataRow)
+                    ->getProtection()
+                    ->setLocked(Protection::PROTECTION_PROTECTED);
+
+                for ($columnIndex = self::FIXED_COLUMN_COUNT + 1; $columnIndex <= $lastColumnIndex; $columnIndex++) {
+                    $columnLetter = Coordinate::stringFromColumnIndex($columnIndex);
+                    $sheet->getStyle($columnLetter.self::DATA_START_ROW.':'.$columnLetter.$lastDataRow)
+                        ->getProtection()
+                        ->setLocked(Protection::PROTECTION_UNPROTECTED);
+                }
+
+                $sheet->getProtection()->setSheet(true);
+            },
+        ];
     }
 
     public function title(): string
@@ -102,7 +159,6 @@ class CourseWorkImportTemplateInstructionsSheetExport implements FromArray, With
             [__('academic_calendar.course_work_import_instruction_do_not_edit_ids')],
             [__('academic_calendar.course_work_import_instruction_marks')],
             [__('academic_calendar.course_work_import_instruction_skip')],
-            [__('academic_calendar.course_work_import_instruction_remarks')],
         ];
     }
 

@@ -46,6 +46,47 @@ test('portal profile personal information route renders for authorized student',
         ->where('student.id', $student->id));
 });
 
+test('portal profile accommodations route renders for authorized student', function () {
+    $tenant = Tenant::query()->firstOrFail();
+    $user = User::factory()->create(['tenant_id' => $tenant->id]);
+    $user->givePermissionTo('manageOwnStudentAccommodationDetails:students');
+
+    $student = Student::query()->create([
+        'tenant_id' => $tenant->id,
+        'user_id' => $user->id,
+        'title_id' => DB::table('titles')->insertGetId([
+            'name' => 'Mr Accommodations',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]),
+        'gender_id' => DB::table('genders')->insertGetId([
+            'title' => 'Male Accommodations',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]),
+        'marital_status_id' => DB::table('marital_statuses')->insertGetId([
+            'title' => 'Single Accommodations',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]),
+        'id_type_id' => DB::table('id_types')->insertGetId([
+            'name' => 'National ID Accommodations',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]),
+        'date_of_birth' => '2000-01-01',
+        'student_number' => 'PORTAL-ACCOMM-001',
+    ]);
+
+    $response = $this->actingAs($user)->get(route('portal.profile.accommodations'));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('portal/student/profile/Section')
+        ->where('activeTab', 'accommodations')
+        ->where('student.id', $student->id));
+});
+
 test('legacy portal personal details route redirects to profile personal information', function () {
     $tenant = Tenant::query()->firstOrFail();
     $user = User::factory()->create(['tenant_id' => $tenant->id]);

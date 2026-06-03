@@ -84,6 +84,8 @@ class HostelRoomsTableSeeder extends Seeder
                 HostelRoom::query()->insert($chunk);
             }
         }
+
+        $this->call(HostelAmenitySeeder::class);
     }
 
     private function buildRoomName(string $code, int $floor, int $roomNumber): string

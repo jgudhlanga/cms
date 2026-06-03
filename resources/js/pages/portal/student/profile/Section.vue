@@ -51,7 +51,11 @@ const pageTitle = computed(() => tabDefinition.value?.transLabel() ?? '');
                 <Programs v-else-if="activeTab === 'programs'" :student="student" />
                 <Applications v-else-if="activeTab === 'applications'" :student="student" />
                 <Financials v-else-if="activeTab === 'financials'" :student="student" />
-                <Hostels v-else-if="activeTab === 'accommodations'" />
+                <Hostels
+                    v-else-if="activeTab === 'accommodations'"
+                    :student="student"
+                    context="portal"
+                />
                 <Documents v-else-if="activeTab === 'documents'" />
                 <Authentication
                     v-else-if="activeTab === 'authentication'"

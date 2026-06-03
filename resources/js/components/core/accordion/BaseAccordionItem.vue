@@ -17,9 +17,9 @@ defineProps<Props>();
         class="overflow-hidden rounded-lg border border-border border-b-0 bg-card shadow-sm"
     >
         <AccordionTrigger
-            class="group cursor-pointer gap-2 px-3 py-3 hover:no-underline sm:px-4 [&[data-state=open]_.accordion-chevron]:rotate-180"
+            class="group cursor-pointer gap-2 px-3 py-3 hover:no-underline sm:px-4 [&[data-state=open]_.accordion-chevron]:rotate-180 [&>svg]:ml-auto"
         >
-            <div class="flex min-w-0 flex-1 flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+            <div class="flex min-w-0 flex-1 flex-col items-start gap-1 text-left">
                 <HeadingSmall :title="title" :description="description" />
                 <slot name="trigger-extra" />
             </div>

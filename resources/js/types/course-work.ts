@@ -131,21 +131,31 @@ export type CourseWorkAuditLogEntry = {
     createdAt: string | null;
 };
 
+export type CourseWorkImportPreviewMarkCell = {
+    mark: number | null;
+    action: 'create' | 'update' | 'skip_empty' | 'skip_duplicate' | 'fail';
+    errors?: Record<string, string[]> | null;
+};
+
+export type CourseWorkImportPreviewAssessmentColumn = {
+    id: number;
+    name: string;
+    weightPercent: number | null;
+};
+
 export type CourseWorkImportPreviewRow = {
     rowNumber: number;
-    status: string;
-    action: 'create' | 'update' | 'skip_empty' | 'skip_duplicate' | 'fail';
     studentName: string | null;
     studentNumber: string | null;
-    assessmentName?: string | null;
-    mark?: number | null;
-    remark?: string | null;
-    errors?: Record<string, string[]> | null;
+    className: string | null;
+    marks: Record<number, CourseWorkImportPreviewMarkCell>;
 };
 
 export type CourseWorkImportPreview = {
     previewToken: string;
     fileName: string;
+    layout: 'wide';
+    assessmentColumns: CourseWorkImportPreviewAssessmentColumn[];
     summary: {
         total: number;
         succeeded: number;

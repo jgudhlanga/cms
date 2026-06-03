@@ -120,6 +120,13 @@ export type HostelAllocation = {
         hostelName?: string | null;
         roomId?: number | string | null;
         roomName?: string | null;
+        floorNumber?: number | null;
+        roomType?: string | null;
+        roomStatus?: string | null;
+        maxOccupancy?: number | null;
+        currentOccupancy?: number | null;
+        occupancyLabel?: string | null;
+        amenities?: string[];
         createdAt?: string;
         updatedAt?: string;
         deletedAt?: string;
@@ -230,6 +237,8 @@ export type HostelApplicationApprovalOptionsResponse = {
 export type HostelApplicationStudentLookupResponse = {
     found: boolean;
     canSubmit?: boolean;
+    canApply?: boolean;
+    applyBlockers?: string[];
     message?: string;
     blockers?: string[];
     student?: HostelApplicationStudentLookup | null;
@@ -237,6 +246,35 @@ export type HostelApplicationStudentLookupResponse = {
     roomAvailability?: HostelApplicationLookupRoomAvailability;
     eligibility?: HostelApplicationEligibilityRule[];
     eligibilityPassed?: boolean;
+};
+
+export type HostelAllocationRoommate = {
+    id: number;
+    studentId: number;
+    name?: string | null;
+    studentNumber?: string | null;
+    course?: string | null;
+    level?: string | null;
+};
+
+export type HostelAllocationRoommatesResponse = {
+    roommates: HostelAllocationRoommate[];
+};
+
+export type StudentAccommodationFeePayment = {
+    date?: string | null;
+    amount: string;
+    description?: string | null;
+};
+
+export type StudentAccommodationFeesResponse = {
+    calendarYear?: string | null;
+    intakeLabel?: string | null;
+    total: string;
+    paid: string;
+    due: string;
+    isFullyPaid: boolean;
+    paymentHistory: StudentAccommodationFeePayment[];
 };
 
 export type HostelApplication = {
@@ -280,6 +318,87 @@ export type HostelApplicationFiltersState = {
     type?: HostelApplicationType | null;
     status?: HostelApplicationStatus | null;
     with_trashed?: boolean | null;
+};
+
+export type HostelQueryCategory =
+    | 'maintenance'
+    | 'plumbing'
+    | 'electrical'
+    | 'cleanliness'
+    | 'security'
+    | 'other';
+
+export type HostelQueryPriority = 'low' | 'medium' | 'high';
+
+export type HostelQueryStatus = 'open' | 'in-progress' | 'resolved' | 'closed';
+
+export type HostelQuery = {
+    type: string;
+    id: number | string;
+    attributes: {
+        studentId?: number | string;
+        category: HostelQueryCategory;
+        categoryLabel?: string;
+        subject: string;
+        description: string;
+        priority: HostelQueryPriority;
+        priorityLabel?: string;
+        status: HostelQueryStatus;
+        statusLabel?: string;
+        studentName?: string | null;
+        studentNumber?: string | null;
+        createdAt?: string;
+    };
+};
+
+export type HostelLeaveStatus = 'pending' | 'approved' | 'declined' | 'cancelled';
+
+export type HostelLeave = {
+    type: string;
+    id: number | string;
+    attributes: {
+        studentId?: number | string;
+        leaveType: string;
+        fromDate: string;
+        toDate: string;
+        reason?: string | null;
+        status: HostelLeaveStatus;
+        statusLabel?: string;
+        studentName?: string | null;
+        studentNumber?: string | null;
+        reviewedByName?: string | null;
+        createdAt?: string;
+    };
+};
+
+export type HostelNoticeType = 'general' | 'event' | 'urgent' | 'rule';
+
+export type HostelNoticeStatus = 'pending' | 'published' | 'cancelled' | 'expired';
+
+export type HostelNoticeAudienceFloor = {
+    hostelId: number;
+    floorNumber: number;
+};
+
+export type HostelNotice = {
+    type: string;
+    id: number | string;
+    attributes: {
+        title: string;
+        content: string;
+        noticeType: HostelNoticeType;
+        noticeTypeLabel?: string;
+        status: HostelNoticeStatus;
+        statusLabel?: string;
+        isUrgent?: boolean;
+        postedByName?: string | null;
+        publishedAt?: string | null;
+        expiresAt?: string | null;
+        audienceHostelIds?: number[];
+        audienceFloors?: HostelNoticeAudienceFloor[];
+        audienceStudentIds?: number[];
+        createdAt?: string;
+    };
 };
 
 export type HmsSettings = {

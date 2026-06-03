@@ -1,12 +1,17 @@
 <script setup lang="ts">
-import ProfileTabComingSoon from '@/components/core/util/ProfileTabComingSoon.vue';
-import { IconName } from '@/lib/icons';
+import StudentAccommodationPanel from '@/components/students/accommodation/StudentAccommodationPanel.vue';
+import type { Student } from '@/types/students';
+
+interface Props {
+    student: Student;
+    context?: 'admin' | 'portal';
+}
+
+withDefaults(defineProps<Props>(), {
+    context: 'admin',
+});
 </script>
 
 <template>
-    <ProfileTabComingSoon
-        :icon="IconName.bed"
-        :title="$t('students.accommodations_coming_soon_title')"
-        :description="$t('students.accommodations_coming_soon_description')"
-    />
+    <StudentAccommodationPanel :student="student" :context="context" />
 </template>

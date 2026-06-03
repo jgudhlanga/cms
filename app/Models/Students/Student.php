@@ -2,10 +2,14 @@
 
 namespace App\Models\Students;
 
+use App\Enums\HMS\HostelAllocationStatusEnum;
 use App\Enums\Shared\AcademicLevelEnum;
 use App\Enums\Shared\IdTypeEnum;
-use App\Models\HMS\HostelApplication;
 use App\Models\Finance\FinanceTransactionQuery;
+use App\Models\HMS\HostelApplication;
+use App\Models\HMS\HostelLeave;
+use App\Models\HMS\HostelQuery;
+use App\Models\HMS\HostelRoomAllocation;
 use App\Models\Shared\Address;
 use App\Models\Shared\Contact;
 use App\Models\Shared\Country;
@@ -174,6 +178,28 @@ class Student extends Model
     public function hostelApplications(): HasMany
     {
         return $this->hasMany(HostelApplication::class, 'student_id');
+    }
+
+    public function hostelRoomAllocations(): HasMany
+    {
+        return $this->hasMany(HostelRoomAllocation::class, 'student_id');
+    }
+
+    public function activeHostelAllocation(): HasOne
+    {
+        return $this->hasOne(HostelRoomAllocation::class, 'student_id')
+            ->where('status', HostelAllocationStatusEnum::ACTIVE->value)
+            ->latestOfMany();
+    }
+
+    public function hostelQueries(): HasMany
+    {
+        return $this->hasMany(HostelQuery::class, 'student_id');
+    }
+
+    public function hostelLeaves(): HasMany
+    {
+        return $this->hasMany(HostelLeave::class, 'student_id');
     }
 
     public function financeTransactionQueries(): HasMany

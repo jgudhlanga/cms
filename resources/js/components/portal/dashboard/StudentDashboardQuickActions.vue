@@ -1,12 +1,11 @@
 <script setup lang="ts">
-import { useStudentProfile } from '@/composables/students/useStudentProfile';
+import { portalSidebarProfileTabs } from '@/composables/students/useStudentProfileTabs';
 import { useUtils } from '@/composables/core/useUtils';
 import { hasAbility } from '@/lib/permissions';
 import { icons } from '@/lib/icons';
 import { IconName } from '@/enums/icons';
 import { computed } from 'vue';
 
-const { portalSidebarProfileTabs } = useStudentProfile();
 const { navigateTo } = useUtils();
 
 const quickActions = computed(() => {

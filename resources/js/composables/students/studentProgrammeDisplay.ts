@@ -160,7 +160,7 @@ export const moduleGradeDisplay = (module: StudentProgrammeModule): string => {
         return String(Math.round(total));
     }
 
-    const hasPartialMarks = module.courseWork?.assessments.some((assessment) => assessment.mark !== null);
+    const hasPartialMarks = module.courseWork?.assessments?.some((assessment) => assessment.mark !== null);
 
     if (hasPartialMarks) {
         return trans('students.course_work_in_progress');
@@ -178,7 +178,7 @@ export const moduleGradeBadgeClass = (module: StudentProgrammeModule): string =>
         return gradeBadgeClass(percent >= 50 ? 'B' : percent >= 40 ? 'C' : 'F');
     }
 
-    const hasPartialMarks = module.courseWork?.assessments.some((assessment) => assessment.mark !== null);
+    const hasPartialMarks = module.courseWork?.assessments?.some((assessment) => assessment.mark !== null);
 
     if (hasPartialMarks) {
         return 'text-amber-500';

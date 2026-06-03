@@ -30,7 +30,7 @@ const courseWorkPercent = computed(() => {
 });
 
 const hasCapturedMarks = computed(() =>
-    props.courseWork.assessments.some((assessment) => assessment.mark !== null),
+    (props.courseWork.assessments ?? []).some((assessment) => assessment.mark !== null),
 );
 </script>
 

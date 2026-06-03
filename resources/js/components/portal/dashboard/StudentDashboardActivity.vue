@@ -2,10 +2,12 @@
 import type { StudentPortalDashboardActivity } from '@/types/students';
 
 interface Props {
-    activities: StudentPortalDashboardActivity[];
+    activities?: StudentPortalDashboardActivity[];
 }
 
-defineProps<Props>();
+withDefaults(defineProps<Props>(), {
+    activities: () => [],
+});
 
 const dotClass = (severity: StudentPortalDashboardActivity['severity']): string => {
     if (severity === 'warning') {

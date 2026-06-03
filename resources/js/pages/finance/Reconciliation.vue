@@ -215,6 +215,17 @@ const closeReconcilePreview = () => {
 
 const createReconciliationColumns = () => [
     { header: trans_choice('trans.student', 1), accessorKey: 'attributes.studentName' },
+    {
+        header: trans_choice('trans.student_number', 1),
+        accessorKey: 'attributes.studentNumber',
+        cell: ({ row }: { row: { original: FinanceTransactionQuery } }) =>
+            row.original.attributes.studentNumber ?? '—',
+    },
+    {
+        header: trans('trans.id_number'),
+        accessorKey: 'attributes.idNumber',
+        cell: ({ row }: { row: { original: FinanceTransactionQuery } }) => row.original.attributes.idNumber ?? '—',
+    },
     { header: trans('finance.payment_reference'), accessorKey: 'attributes.paymentReference' },
     {
         header: trans_choice('trans.status', 1),

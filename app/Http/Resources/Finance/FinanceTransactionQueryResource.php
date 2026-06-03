@@ -15,7 +15,9 @@ class FinanceTransactionQueryResource extends JsonResource
             'attributes' => [
                 'studentId' => $this->resource->student_id,
                 'studentName' => $this->resource->student?->user?->full_name,
-                'studentNumber' => $this->resource->student?->student_number,
+                'studentNumber' => $this->resource->student?->student_number
+                    ?: $this->resource->student?->student_number_generated,
+                'idNumber' => $this->resource->student?->id_number,
                 'paymentReference' => $this->resource->payment_reference,
                 'description' => $this->resource->description,
                 'status' => $this->resource->status?->value,

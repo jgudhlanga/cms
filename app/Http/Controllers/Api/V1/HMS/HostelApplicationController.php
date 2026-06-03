@@ -11,7 +11,9 @@ use App\Services\HMS\HostelApplicationPendingService;
 use App\Services\HMS\HostelApplicationSemesterService;
 use App\Services\HMS\HostelRoomAvailabilityService;
 use App\Services\HMS\HostelStudentAllocationService;
+use App\Services\HMS\StudentAccommodationFeeService;
 use App\Services\HMS\StudentPhysicalAddressFormatter;
+use App\Support\HMS\HmsStudentAccess;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use LaravelJsonApi\Core\Responses\MetaResponse;
@@ -26,11 +28,37 @@ class HostelApplicationController extends JsonApiController
         protected HostelApplicationPendingService $pendingService,
         protected HostelStudentAllocationService $allocationService,
         protected HostelApplicationApprovalOptionsService $approvalOptionsService,
+        protected StudentAccommodationFeeService $accommodationFeeService,
     ) {}
 
     public function studentLookup(Request $request): MetaResponse
     {
         abort_unless($request->user() !== null, 403);
+
+        $studentId = data_get($request->input('filter'), 'student');
+
+        if (is_numeric($studentId) && (int) $studentId > 0) {
+            $student = Student::query()
+                ->with($this->studentLookupRelations())
+                ->find((int) $studentId);
+
+            if ($student === null) {
+                return MetaResponse::make([
+                    'found' => false,
+                    'message' => __('hms.student_not_found'),
+                ]);
+            }
+
+            abort_unless(HmsStudentAccess::canViewStudentHms($request->user(), $student), 403);
+
+            return MetaResponse::make($this->buildStudentLookupMeta($student));
+        }
+
+        abort_unless(
+            HmsStudentAccess::isStaffHmsUser($request->user())
+                || $request->user()->can('create:hostel-applications'),
+            403,
+        );
 
         $search = trim((string) data_get($request->input('filter'), 'search', ''));
 
@@ -42,18 +70,7 @@ class HostelApplicationController extends JsonApiController
         }
 
         $student = Student::query()
-            ->with([
-                'user',
-                'gender',
-                'addresses',
-                'contacts',
-                'nextOfKins.contacts',
-                'latestEnrolment.modeOfStudy',
-                'latestEnrolment.departmentCourse.course',
-                'latestEnrolment.departmentLevel.level',
-                'latestEnrolment.studentProgram.intakePeriod',
-                'latestEnrolment.academicCalendar',
-            ])
+            ->with($this->studentLookupRelations())
             ->where(function ($query) use ($search): void {
                 $query->where('student_number', 'like', "%{$search}%")
                     ->orWhere('id_number', 'like', "%{$search}%")
@@ -74,6 +91,57 @@ class HostelApplicationController extends JsonApiController
             ]);
         }
 
+        return MetaResponse::make($this->buildStudentLookupMeta($student));
+    }
+
+    public function selfLookup(Request $request): MetaResponse
+    {
+        abort_unless($request->user() !== null, 403);
+
+        $student = $request->user()->studentProfile;
+
+        if ($student === null) {
+            return MetaResponse::make([
+                'found' => false,
+                'message' => __('hms.student_not_found'),
+            ]);
+        }
+
+        abort_unless(HmsStudentAccess::canViewStudentHms($request->user(), $student), 403);
+
+        $student->load($this->studentLookupRelations());
+
+        return MetaResponse::make($this->buildStudentLookupMeta($student));
+    }
+
+    public function accommodationFees(Request $request): MetaResponse
+    {
+        abort_unless($request->user() !== null, 403);
+
+        $studentId = HmsStudentAccess::studentIdFromRequest();
+
+        if ($studentId === null) {
+            abort(422, __('hms.student_required'));
+        }
+
+        $student = Student::query()->find($studentId);
+
+        if ($student === null) {
+            abort(404);
+        }
+
+        abort_unless(HmsStudentAccess::canViewStudentHms($request->user(), $student), 403);
+
+        return MetaResponse::make(
+            $this->accommodationFeeService->summaryForStudent($student),
+        );
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function buildStudentLookupMeta(Student $student): array
+    {
         $enrolment = $student->latestEnrolment;
         $eligibility = $this->eligibilityService->evaluate($student, $enrolment);
         $nextOfKin = $student->nextOfKins->first();
@@ -99,14 +167,19 @@ class HostelApplicationController extends JsonApiController
             $allocationBlocker,
         ]));
 
+        $eligibilityPassed = $this->eligibilityService->allPassed($eligibility);
+
         $canSubmit = $semesterDates['success']
             && $roomAvailability['blocker'] === null
             && $pendingBlocker === null
-            && $allocationBlocker === null;
+            && $allocationBlocker === null
+            && $eligibilityPassed;
 
-        return MetaResponse::make([
+        return [
             'found' => true,
             'canSubmit' => $canSubmit,
+            'canApply' => $canSubmit,
+            'applyBlockers' => $blockers,
             'message' => __('hms.student_found'),
             'blockers' => $blockers,
             'student' => [
@@ -135,8 +208,27 @@ class HostelApplicationController extends JsonApiController
                 'roomCount' => $roomAvailability['roomCount'],
             ],
             'eligibility' => $eligibility,
-            'eligibilityPassed' => $this->eligibilityService->allPassed($eligibility),
-        ]);
+            'eligibilityPassed' => $eligibilityPassed,
+        ];
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function studentLookupRelations(): array
+    {
+        return [
+            'user',
+            'gender',
+            'addresses',
+            'contacts',
+            'nextOfKins.contacts',
+            'latestEnrolment.modeOfStudy',
+            'latestEnrolment.departmentCourse.course',
+            'latestEnrolment.departmentLevel.level',
+            'latestEnrolment.studentProgram.intakePeriod',
+            'latestEnrolment.academicCalendar',
+        ];
     }
 
     public function approvalOptions(HostelApplication $hostelApplication, Request $request): MetaResponse
