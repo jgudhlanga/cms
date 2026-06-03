@@ -1,16 +1,17 @@
 <script setup lang="ts">
-import { useStudentPortalDashboard } from '@/composables/students/useStudentPortalDashboard';
+import { scoreBarColor } from '@/composables/students/studentProgrammeDisplay';
 import { useUtils } from '@/composables/core/useUtils';
 import type { StudentPortalDashboardModule } from '@/types/students';
 import { ArrowRight } from 'lucide-vue-next';
 
 interface Props {
-    modules: StudentPortalDashboardModule[];
+    modules?: StudentPortalDashboardModule[];
 }
 
-defineProps<Props>();
+withDefaults(defineProps<Props>(), {
+    modules: () => [],
+});
 
-const { scoreBarColor } = useStudentPortalDashboard();
 const { navigateTo } = useUtils();
 
 const moduleAccent = (index: number): string => {

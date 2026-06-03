@@ -6,7 +6,11 @@ import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
 import { errorAlert } from '@/lib/alerts';
 import customAxios from '@/services/http-init';
-import type { CourseWorkImportPreview } from '@/types/course-work';
+import type {
+    CourseWorkImportPreview,
+    CourseWorkImportPreviewAssessmentColumn,
+    CourseWorkImportPreviewMarkCell,
+} from '@/types/course-work';
 import { useForm } from '@inertiajs/vue3';
 import { trans } from 'laravel-vue-i18n';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
@@ -269,6 +273,30 @@ const formatPreviewErrors = (errors: Record<string, string[]> | null | undefined
     return Object.values(errors).flat().join(' ');
 };
 
+const assessmentColumnLabel = (column: CourseWorkImportPreviewAssessmentColumn): string => {
+    if (column.weightPercent != null) {
+        return `${column.name} (${column.weightPercent}%)`;
+    }
+
+    return column.name;
+};
+
+const markCell = (row: CourseWorkImportPreview['rows'][number], columnId: number): CourseWorkImportPreviewMarkCell => {
+    return row.marks[columnId] ?? { mark: null, action: 'skip_empty' };
+};
+
+const markCellActionClass = (action: CourseWorkImportPreviewMarkCell['action']): string => {
+    if (action === 'create' || action === 'update') {
+        return 'text-green-700';
+    }
+
+    if (action === 'skip_empty' || action === 'skip_duplicate') {
+        return 'text-muted-foreground';
+    }
+
+    return 'text-destructive';
+};
+
 onMounted(() => {
     void loadTree();
 });
@@ -375,9 +403,14 @@ onUnmounted(() => {
                                 <th class="j-th text-left">#</th>
                                 <th class="j-th text-left">{{ $tChoice('trans.name', 1) }}</th>
                                 <th class="j-th text-left">{{ $tChoice('students.student_number', 1) }}</th>
-                                <th class="j-th text-left">{{ $t('academic_calendar.course_work_mark') }}</th>
-                                <th class="j-th text-left">{{ $t('academic_calendar.course_work_remark') }}</th>
-                                <th class="j-th text-left">{{ $t('trans.action') }}</th>
+                                <th class="j-th text-left">{{ $t('academic_calendar.course_work_class_column') }}</th>
+                                <th
+                                    v-for="column in preview.assessmentColumns"
+                                    :key="column.id"
+                                    class="j-th text-left"
+                                >
+                                    {{ assessmentColumnLabel(column) }}
+                                </th>
                             </tr>
                         </thead>
                         <tbody class="j-tbody">
@@ -385,26 +418,28 @@ onUnmounted(() => {
                                 <td class="j-td">{{ row.rowNumber }}</td>
                                 <td class="j-td">{{ row.studentName ?? '—' }}</td>
                                 <td class="j-td font-mono text-xs">{{ row.studentNumber ?? '—' }}</td>
-                                <td class="j-td">{{ row.mark ?? '—' }}</td>
-                                <td class="j-td text-sm text-muted-foreground">{{ row.remark ?? '—' }}</td>
-                                <td class="j-td">
-                                    <span
-                                        class="text-xs font-medium"
-                                        :class="{
-                                            'text-green-700': row.action === 'create' || row.action === 'update',
-                                            'text-muted-foreground':
-                                                row.action === 'skip_empty' || row.action === 'skip_duplicate',
-                                            'text-destructive': row.action === 'fail',
-                                        }"
-                                    >
-                                        {{ actionLabel(row.action) }}
-                                    </span>
-                                    <p
-                                        v-if="row.errors"
-                                        class="mt-1 text-xs text-destructive"
-                                    >
-                                        {{ formatPreviewErrors(row.errors) }}
-                                    </p>
+                                <td class="j-td text-sm text-muted-foreground">{{ row.className ?? '—' }}</td>
+                                <td
+                                    v-for="column in preview.assessmentColumns"
+                                    :key="`${row.rowNumber}-${column.id}`"
+                                    class="j-td align-top"
+                                >
+                                    <template v-if="markCell(row, column.id).action !== 'skip_empty'">
+                                        <span class="font-medium">{{ markCell(row, column.id).mark ?? '—' }}</span>
+                                        <span
+                                            class="mt-0.5 block text-xs font-medium"
+                                            :class="markCellActionClass(markCell(row, column.id).action)"
+                                        >
+                                            {{ actionLabel(markCell(row, column.id).action) }}
+                                        </span>
+                                        <p
+                                            v-if="markCell(row, column.id).errors"
+                                            class="mt-1 text-xs text-destructive"
+                                        >
+                                            {{ formatPreviewErrors(markCell(row, column.id).errors) }}
+                                        </p>
+                                    </template>
+                                    <span v-else class="text-muted-foreground">—</span>
                                 </td>
                             </tr>
                         </tbody>

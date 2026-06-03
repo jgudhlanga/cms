@@ -7,12 +7,12 @@ import StudentDashboardModuleProgress from '@/components/portal/dashboard/Studen
 import StudentDashboardNoticeboard from '@/components/portal/dashboard/StudentDashboardNoticeboard.vue';
 import StudentDashboardQuickActions from '@/components/portal/dashboard/StudentDashboardQuickActions.vue';
 import StudentDashboardTermDetails from '@/components/portal/dashboard/StudentDashboardTermDetails.vue';
-import { useStudentPortalDashboard } from '@/composables/students/useStudentPortalDashboard';
+import { useStudentPortalDashboard, studentPortalDashboardKey } from '@/composables/students/useStudentPortalDashboard';
 import { AuthObject } from '@/types/data-pagination';
 import { Student } from '@/types/students';
 import { BreadcrumbItemInterface } from '@/types/ui';
 import { Head } from '@inertiajs/vue3';
-import { onMounted } from 'vue';
+import { onMounted, provide } from 'vue';
 
 interface Props {
     auth: AuthObject;
@@ -23,7 +23,10 @@ interface Props {
 const props = defineProps<Props>();
 const { user } = props.auth;
 
-const { stats, isLoading, loadError, fetchDashboardStats } = useStudentPortalDashboard();
+const dashboard = useStudentPortalDashboard();
+const { stats, isLoading, loadError, fetchDashboardStats } = dashboard;
+
+provide(studentPortalDashboardKey, dashboard);
 
 const breadcrumbs: BreadcrumbItemInterface[] = [{ transChoiceKey: 'dashboard' }, { title: user.attributes?.name }];
 

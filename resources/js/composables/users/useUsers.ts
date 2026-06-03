@@ -298,7 +298,7 @@ export const useUsers = () => {
     };
 
     function hasStudentRole(user: User): boolean {
-        return user.relationships.roles.some((role) => role.name === 'Student');
+        return (user.relationships?.roles ?? []).some((role) => role.name === 'Student');
     }
 
     return {

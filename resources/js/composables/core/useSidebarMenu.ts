@@ -1,5 +1,9 @@
 import AppLogo from '@/components/core/image/AppLogo.vue';
-import { isStudentProfileTabVisible, useStudentProfile, type StudentProfileTabValue } from '@/composables/students/useStudentProfile';
+import {
+    isStudentProfileTabVisible,
+    portalSidebarProfileTabs,
+    type StudentProfileTabValue,
+} from '@/composables/students/useStudentProfileTabs';
 import { IconName } from '@/enums/icons';
 import { icons } from '@/lib/icons';
 import { hasAbility, hasStudentProfile } from '@/lib/permissions';
@@ -9,7 +13,6 @@ import { trans, trans_choice } from 'laravel-vue-i18n';
 import { computed, markRaw } from 'vue';
 
 export function useSidebarMenu() {
-    const { portalSidebarProfileTabs } = useStudentProfile();
     const tenants: Array<TenantInterface> = [
         {
             id: '1',

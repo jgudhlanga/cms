@@ -2,10 +2,12 @@
 import type { StudentPortalDashboardNotice } from '@/types/students';
 
 interface Props {
-    notices: StudentPortalDashboardNotice[];
+    notices?: StudentPortalDashboardNotice[];
 }
 
-defineProps<Props>();
+withDefaults(defineProps<Props>(), {
+    notices: () => [],
+});
 
 const formatDate = (value: string | null | undefined): string => {
     if (!value) {

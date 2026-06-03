@@ -4,6 +4,7 @@ use App\Exports\AcademicCalendars\CourseWorkImportTemplateExport;
 use App\Models\AcademicCalendars\CourseWorkAuditLog;
 use App\Models\AcademicCalendars\CourseWorkImportLog;
 use App\Models\AcademicCalendars\CourseWorkMark;
+use App\Models\Institution\AssessmentType;
 use App\Services\AcademicCalendars\CourseWorkImportTemplateService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Str;
@@ -51,6 +52,25 @@ function courseWorkImportPreviewAndProcess(UploadedFile $file, array $context, i
         'module' => $moduleId,
         'preview_token' => $previewToken,
     ])->assertRedirect();
+}
+
+/**
+ * @param  array<string, mixed>  $data
+ */
+function setCourseWorkWideImportMark(array &$data, int $assessmentTypeId, mixed $mark, int $studentRowIndex = 0): void
+{
+    $data['rows'][$studentRowIndex]['marks'][$assessmentTypeId] = $mark;
+}
+
+/**
+ * @param  array<string, mixed>  $data
+ */
+function storeCourseWorkImportFile(array $data): UploadedFile
+{
+    $relativePath = 'test-course-work-import-'.uniqid().'.xlsx';
+    Excel::store(new CourseWorkImportTemplateExport($data), $relativePath, 'local');
+
+    return new UploadedFile(storage_path('app/'.$relativePath), 'course-work-import.xlsx', null, null, true);
 }
 
 test('course work import page requires import permission', function () {
@@ -139,7 +159,7 @@ test('authorized user can download course work import template', function () {
     );
 });
 
-test('course work import template service builds one row per student assessment', function () {
+test('course work import template service builds one row per student with assessment marks map', function () {
     $context = createCourseWorkJsonApiContext();
     $context['assessmentType']->update(['weight_percent' => 20]);
 
@@ -152,12 +172,36 @@ test('course work import template service builds one row per student assessment'
 
     expect($data['rows'])->toHaveCount(1)
         ->and($data['rows'][0]['studentEnrolmentId'])->toBe($context['studentEnrolment']->id)
-        ->and($data['rows'][0]['moduleId'])->toBe($context['module']->id)
-        ->and($data['rows'][0]['assessmentTypeId'])->toBe($context['assessmentType']->id)
-        ->and($data['rows'][0]['mark'])->toBeNull()
-        ->and($data['rows'][0]['remark'])->toBeNull()
+        ->and($data['rows'][0]['marks'][$context['assessmentType']->id])->toBeNull()
+        ->and($data['assessmentTypes'])->toHaveCount(1)
+        ->and($data['assessmentTypes'][0]['id'])->toBe($context['assessmentType']->id)
         ->and($data['fileName']['moduleTitle'])->toBe(Str::slug($context['module']->title))
         ->and($data['fileName']['moduleCode'])->toBe(Str::slug($context['module']->code));
+});
+
+test('course work import template includes a column per assessment type', function () {
+    $context = createCourseWorkJsonApiContext();
+    $context['assessmentType']->update(['weight_percent' => 20, 'name' => 'Innovation Based']);
+
+    $secondType = AssessmentType::factory()->create([
+        'tenant_id' => $context['tenant']->id,
+        'name' => 'Research Based',
+        'weight_percent' => 30,
+        'modes_of_study' => [$context['modeOfStudy']->id],
+    ]);
+
+    /** @var CourseWorkImportTemplateService $service */
+    $service = app(CourseWorkImportTemplateService::class);
+    $data = $service->assembleForClassConfig(
+        (int) $context['academicCalendarClass']->class_config_id,
+        (int) $context['module']->id,
+    );
+
+    expect($data['assessmentTypes'])->toHaveCount(2)
+        ->and(array_keys($data['rows'][0]['marks']))->toEqual([
+            $context['assessmentType']->id,
+            $secondType->id,
+        ]);
 });
 
 test('course work import creates marks and batch audit log', function () {
@@ -175,14 +219,9 @@ test('course work import creates marks and batch audit log', function () {
         (int) $context['module']->id,
     );
 
-    $data['rows'][0]['mark'] = 82;
-    $data['rows'][0]['remark'] = 'Imported remark';
+    setCourseWorkWideImportMark($data, (int) $context['assessmentType']->id, 82);
 
-    $relativePath = 'test-course-work-import-'.uniqid().'.xlsx';
-    Excel::store(new CourseWorkImportTemplateExport($data), $relativePath, 'local');
-    $absolutePath = storage_path('app/'.$relativePath);
-
-    $file = new UploadedFile($absolutePath, 'course-work-import.xlsx', null, null, true);
+    $file = storeCourseWorkImportFile($data);
 
     $classConfig = $context['academicCalendarClass']->classConfig;
 
@@ -213,9 +252,7 @@ test('course work import preview rejects file with no marks', function () {
         (int) $context['module']->id,
     );
 
-    $relativePath = 'test-course-work-import-empty-'.uniqid().'.xlsx';
-    Excel::store(new CourseWorkImportTemplateExport($data), $relativePath, 'local');
-    $file = new UploadedFile(storage_path('app/'.$relativePath), 'course-work-import.xlsx', null, null, true);
+    $file = storeCourseWorkImportFile($data);
 
     $this->actingAs($context['user'])
         ->post(route('academic-calendars.department-classes.course-work-import.preview', courseWorkImportRouteParams($context)), [
@@ -242,55 +279,22 @@ test('course work import preview rejects invalid marks', function () {
         (int) $context['module']->id,
     );
 
-    $data['rows'][0]['mark'] = 85.5;
+    setCourseWorkWideImportMark($data, (int) $context['assessmentType']->id, 85.5);
 
-    $relativePath = 'test-course-work-import-invalid-mark-'.uniqid().'.xlsx';
-    Excel::store(new CourseWorkImportTemplateExport($data), $relativePath, 'local');
-    $file = new UploadedFile(storage_path('app/'.$relativePath), 'course-work-import.xlsx', null, null, true);
-
-    $this->actingAs($context['user'])
-        ->postJson(route('academic-calendars.department-classes.course-work-import.preview', courseWorkImportRouteParams($context)), [
-            'module' => $context['module']->id,
-            'file' => $file,
-        ])
-        ->assertSuccessful()
-        ->assertJsonPath('summary.failed', 1)
-        ->assertJsonPath('summary.succeeded', 0)
-        ->assertJsonPath('rows.0.action', 'fail');
-});
-
-test('course work import preview rejects rows with remark but no mark', function () {
-    $context = createCourseWorkJsonApiContext();
-    $context['assessmentType']->update(['weight_percent' => 20]);
-
-    Permission::findOrCreate('import:course-work', 'web');
-    Permission::findOrCreate('create:course-work', 'web');
-    $context['user']->givePermissionTo(['import:course-work', 'create:course-work']);
-
-    /** @var CourseWorkImportTemplateService $templateService */
-    $templateService = app(CourseWorkImportTemplateService::class);
-    $data = $templateService->assembleForClassConfig(
-        (int) $context['academicCalendarClass']->class_config_id,
-        (int) $context['module']->id,
-    );
-
-    $data['rows'][0]['mark'] = null;
-    $data['rows'][0]['remark'] = 'Remark only';
-
-    $relativePath = 'test-course-work-import-remark-only-'.uniqid().'.xlsx';
-    Excel::store(new CourseWorkImportTemplateExport($data), $relativePath, 'local');
-    $file = new UploadedFile(storage_path('app/'.$relativePath), 'course-work-import.xlsx', null, null, true);
+    $file = storeCourseWorkImportFile($data);
 
     $response = $this->actingAs($context['user'])
         ->postJson(route('academic-calendars.department-classes.course-work-import.preview', courseWorkImportRouteParams($context)), [
             'module' => $context['module']->id,
             'file' => $file,
-        ]);
-
-    $response->assertSuccessful()
+        ])
+        ->assertSuccessful()
+        ->assertJsonPath('layout', 'wide')
         ->assertJsonPath('summary.failed', 1)
-        ->assertJsonPath('summary.succeeded', 0)
-        ->assertJsonPath('rows.0.action', 'fail');
+        ->assertJsonPath('summary.succeeded', 0);
+
+    $marks = $response->json('rows.0.marks');
+    expect($marks[(string) $context['assessmentType']->id]['action'])->toBe('fail');
 });
 
 test('course work import updates existing mark instead of creating duplicate', function () {
@@ -318,11 +322,9 @@ test('course work import updates existing mark instead of creating duplicate', f
         (int) $context['module']->id,
     );
 
-    $data['rows'][0]['mark'] = 91;
+    setCourseWorkWideImportMark($data, (int) $context['assessmentType']->id, 91);
 
-    $relativePath = 'test-course-work-import-update-'.uniqid().'.xlsx';
-    Excel::store(new CourseWorkImportTemplateExport($data), $relativePath, 'local');
-    $file = new UploadedFile(storage_path('app/'.$relativePath), 'course-work-import.xlsx', null, null, true);
+    $file = storeCourseWorkImportFile($data);
 
     courseWorkImportPreviewAndProcess($file, $context, (int) $context['module']->id);
 
@@ -330,9 +332,16 @@ test('course work import updates existing mark instead of creating duplicate', f
         ->and(CourseWorkMark::query()->value('mark'))->toBe(91);
 });
 
-test('course work import skips duplicate rows within the same file', function () {
+test('course work import imports only filled assessment marks on partially filled row', function () {
     $context = createCourseWorkJsonApiContext();
-    $context['assessmentType']->update(['weight_percent' => 20]);
+    $context['assessmentType']->update(['weight_percent' => 20, 'name' => 'Innovation Based']);
+
+    $secondType = AssessmentType::factory()->create([
+        'tenant_id' => $context['tenant']->id,
+        'name' => 'Research Based',
+        'weight_percent' => 30,
+        'modes_of_study' => [$context['modeOfStudy']->id],
+    ]);
 
     Permission::findOrCreate('import:course-work', 'web');
     Permission::findOrCreate('create:course-work', 'web');
@@ -345,21 +354,19 @@ test('course work import skips duplicate rows within the same file', function ()
         (int) $context['module']->id,
     );
 
-    $data['rows'][0]['mark'] = 70;
-    $data['rows'][] = array_merge($data['rows'][0], ['mark' => 99]);
+    setCourseWorkWideImportMark($data, (int) $context['assessmentType']->id, 70);
 
-    $relativePath = 'test-course-work-import-dup-'.uniqid().'.xlsx';
-    Excel::store(new CourseWorkImportTemplateExport($data), $relativePath, 'local');
-    $file = new UploadedFile(storage_path('app/'.$relativePath), 'course-work-import.xlsx', null, null, true);
+    $file = storeCourseWorkImportFile($data);
 
     courseWorkImportPreviewAndProcess($file, $context, (int) $context['module']->id);
 
     expect(CourseWorkMark::query()->count())->toBe(1)
-        ->and(CourseWorkMark::query()->value('mark'))->toBe(70);
+        ->and(CourseWorkMark::query()->value('mark'))->toBe(70)
+        ->and(CourseWorkMark::query()->value('assessment_type_id'))->toBe($context['assessmentType']->id);
 
     $result = session('courseWorkImportResult');
     expect($result['rowsSucceeded'])->toBe(1)
-        ->and($result['rowsSkipped'])->toBe(1);
+        ->and($result['rowsSkipped'])->toBeGreaterThan(0);
 });
 
 test('course work import restores soft deleted mark instead of creating duplicate', function () {
@@ -388,11 +395,9 @@ test('course work import restores soft deleted mark instead of creating duplicat
         (int) $context['module']->id,
     );
 
-    $data['rows'][0]['mark'] = 88;
+    setCourseWorkWideImportMark($data, (int) $context['assessmentType']->id, 88);
 
-    $relativePath = 'test-course-work-import-restore-'.uniqid().'.xlsx';
-    Excel::store(new CourseWorkImportTemplateExport($data), $relativePath, 'local');
-    $file = new UploadedFile(storage_path('app/'.$relativePath), 'course-work-import.xlsx', null, null, true);
+    $file = storeCourseWorkImportFile($data);
 
     courseWorkImportPreviewAndProcess($file, $context, (int) $context['module']->id);
 
@@ -416,11 +421,9 @@ test('course work import preview returns row summary without persisting marks', 
         (int) $context['module']->id,
     );
 
-    $data['rows'][0]['mark'] = 77;
+    setCourseWorkWideImportMark($data, (int) $context['assessmentType']->id, 77);
 
-    $relativePath = 'test-course-work-import-preview-'.uniqid().'.xlsx';
-    Excel::store(new CourseWorkImportTemplateExport($data), $relativePath, 'local');
-    $file = new UploadedFile(storage_path('app/'.$relativePath), 'course-work-import.xlsx', null, null, true);
+    $file = storeCourseWorkImportFile($data);
 
     $response = $this->actingAs($context['user'])
         ->post(route('academic-calendars.department-classes.course-work-import.preview', courseWorkImportRouteParams($context)), [
@@ -429,9 +432,13 @@ test('course work import preview returns row summary without persisting marks', 
         ]);
 
     $response->assertSuccessful()
+        ->assertJsonPath('layout', 'wide')
         ->assertJsonPath('summary.creates', 1)
-        ->assertJsonPath('rows.0.action', 'create')
-        ->assertJsonPath('rows.0.mark', 77);
+        ->assertJsonPath('assessmentColumns.0.id', $context['assessmentType']->id);
+
+    $marks = $response->json('rows.0.marks');
+    expect($marks[(string) $context['assessmentType']->id]['action'])->toBe('create')
+        ->and($marks[(string) $context['assessmentType']->id]['mark'])->toBe(77);
 
     expect(CourseWorkMark::query()->count())->toBe(0);
 });

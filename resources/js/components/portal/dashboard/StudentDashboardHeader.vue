@@ -1,6 +1,6 @@
 <script setup lang="ts">
+import { useInjectedStudentPortalDashboard } from '@/composables/students/useStudentPortalDashboard';
 import { useStudentProfileHeader } from '@/composables/students/useStudentProfileHeader';
-import { useStudentPortalDashboard } from '@/composables/students/useStudentPortalDashboard';
 import type { Student } from '@/types/students';
 import { computed } from 'vue';
 
@@ -11,7 +11,7 @@ interface Props {
 const props = defineProps<Props>();
 
 const { headerData } = useStudentProfileHeader(() => props.student);
-const { greeting, userTimeZone } = useStudentPortalDashboard();
+const { greeting, userTimeZone } = useInjectedStudentPortalDashboard();
 
 const liveDateLabel = computed(() => {
     return new Intl.DateTimeFormat(undefined, {

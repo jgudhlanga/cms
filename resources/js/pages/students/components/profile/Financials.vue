@@ -222,18 +222,24 @@ const exportTransactionStatementPdf = (): void => {
         >
             <template #body>
                 <div class="grid gap-3">
-                    <BaseInput
-                        input-id="payment_reference"
-                        :label="$t('finance.payment_reference')"
-                        :is-required="true"
-                        v-model="form.payment_reference"
-                        @input="clearFormErrors(form, 'payment_reference')"
-                        :error="form.errors.payment_reference"
-                        :inputAutoFocus="true"
-                    />
+                    <div>
+                        <BaseInput
+                            input-id="payment_reference"
+                            :label="$t('finance.payment_reference')"
+                            :placeholder="$t('finance.payment_reference_placeholder')"
+                            :is-required="true"
+                            v-model="form.payment_reference"
+                            @input="clearFormErrors(form, 'payment_reference')"
+                            :error="form.errors.payment_reference"
+                            :inputAutoFocus="true"
+                        />
+                        <p class="text-muted-foreground mt-1.5 text-xs leading-relaxed">
+                            {{ $t('finance.payment_reference_hint') }}
+                        </p>
+                    </div>
                     <BaseInput
                         input-id="query_description"
-                        :label="$t('trans.description')"
+                        :label="$t('finance.query_description_optional')"
                         v-model="form.description"
                         @input="clearFormErrors(form, 'description')"
                         :error="form.errors.description"

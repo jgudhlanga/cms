@@ -31,7 +31,7 @@ const isModuleOpen = (index: number) => !!openMap.value[index];
 const moduleHasMarks = (index: number): boolean => {
     const module = props.semester.module[index];
 
-    return module?.courseWork?.assessments.some((assessment) => assessment.mark !== null) ?? false;
+    return module?.courseWork?.assessments?.some((assessment) => assessment.mark !== null) ?? false;
 };
 
 const initializeOpenModules = (): void => {

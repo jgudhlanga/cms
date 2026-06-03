@@ -16,6 +16,8 @@ class CourseWorkMarkImporter implements IngestDefinition
 {
     public const string IMPORTER_NAME = 'CourseWorkMarkImporter';
 
+    public const int FIXED_COLUMN_COUNT = 4;
+
     /** Zero-based row index of the column header row in the Marks sheet. */
     public const int TEMPLATE_HEADER_ROW = 5;
 
@@ -34,10 +36,8 @@ class CourseWorkMarkImporter implements IngestDefinition
             ->onDuplicate(DuplicateStrategy::UPDATE)
             ->validate([
                 'STUDENT_ENROLMENT_ID' => ['required', 'integer'],
-                'MODULE_ID' => ['required', 'integer'],
                 'ASSESSMENT_TYPE_ID' => ['required', 'integer'],
                 'MARK' => ['required', new ValidCourseWorkMark],
-                'REMARK' => ['nullable', 'string', 'max:2000'],
             ]);
     }
 
@@ -67,19 +67,103 @@ class CourseWorkMarkImporter implements IngestDefinition
     }
 
     /**
-     * @param  array<string, mixed>  $row
-     * @return array{studentEnrolmentId: int, courseSyllabusModuleId: int, assessmentTypeId: int, mark: int|null, remark: string|null}
+     * @param  array<int|string, mixed>  $headerRow
      */
-    public function extractPayload(array $row): array
+    public static function isWideFormatHeader(array $headerRow): bool
     {
-        $normalized = $this->normalizeRow($row);
+        $values = array_map(
+            static fn ($value): string => strtoupper(trim((string) $value)),
+            array_values($headerRow),
+        );
 
-        $validator = Validator::make($normalized, [
+        return in_array('STUDENT_ENROLMENT_ID', $values, true)
+            && ! in_array('ASSESSMENT_TYPE_ID', $values, true);
+    }
+
+    /**
+     * @param  array<int|string, mixed>  $idRow
+     * @return array<int, int>
+     */
+    public static function parseWideColumnMap(array $idRow): array
+    {
+        $values = array_values($idRow);
+        $map = [];
+
+        for ($index = self::FIXED_COLUMN_COUNT; $index < count($values); $index++) {
+            $value = $values[$index];
+
+            if ($value !== null && $value !== '' && is_numeric($value)) {
+                $map[$index] = (int) $value;
+            }
+        }
+
+        return $map;
+    }
+
+    /**
+     * @param  array<int|string, mixed>  $headerRow
+     * @param  array<int, int>  $columnMap
+     * @return list<array{id: int, name: string, weightPercent: int|null}>
+     */
+    public static function assessmentColumnsFromHeader(array $headerRow, array $columnMap): array
+    {
+        $values = array_values($headerRow);
+        $columns = [];
+
+        foreach ($columnMap as $columnIndex => $assessmentTypeId) {
+            $headerLabel = (string) ($values[$columnIndex] ?? '');
+            $name = $headerLabel;
+            $weightPercent = null;
+
+            if (preg_match('/^(.+?)\s+\((\d+)%\)$/', $headerLabel, $matches) === 1) {
+                $name = trim($matches[1]);
+                $weightPercent = (int) $matches[2];
+            }
+
+            $columns[] = [
+                'id' => $assessmentTypeId,
+                'name' => $name,
+                'weightPercent' => $weightPercent,
+            ];
+        }
+
+        return $columns;
+    }
+
+    /**
+     * @param  array<int|string, mixed>  $studentRow
+     * @param  array<int, int>  $columnMap
+     */
+    public function isEmptyWideRow(array $studentRow, array $columnMap): bool
+    {
+        $values = array_values($studentRow);
+
+        foreach ($columnMap as $columnIndex => $assessmentTypeId) {
+            $mark = $values[$columnIndex] ?? null;
+
+            if ($mark !== null && $mark !== '') {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * @param  array<int|string, mixed>  $studentRow
+     * @return array{studentEnrolmentId: int, courseSyllabusModuleId: int, assessmentTypeId: int, mark: int, remark: null}
+     */
+    public function extractWideMarkPayload(array $studentRow, int $assessmentTypeId, mixed $markValue): array
+    {
+        $values = array_values($studentRow);
+        $studentEnrolmentId = $values[0] ?? null;
+
+        $validator = Validator::make([
+            'STUDENT_ENROLMENT_ID' => $studentEnrolmentId,
+            'MARK' => $markValue,
+        ], [
             'STUDENT_ENROLMENT_ID' => ['required', 'integer'],
-            'MODULE_ID' => ['required', 'integer'],
-            'ASSESSMENT_TYPE_ID' => ['required', 'integer'],
             'MARK' => ['required', new ValidCourseWorkMark],
-            'REMARK' => ['nullable', 'string', 'max:2000'],
         ], [
             'MARK.required' => __('academic_calendar.course_work_import_mark_required'),
         ]);
@@ -89,13 +173,6 @@ class CourseWorkMarkImporter implements IngestDefinition
         }
 
         $validated = $validator->validated();
-
-        if ((int) $validated['MODULE_ID'] !== $this->moduleId) {
-            throw ValidationException::withMessages([
-                'MODULE_ID' => [__('academic_calendar.course_work_import_module_mismatch')],
-            ]);
-        }
-
         $mark = CourseWorkMarkValue::tryParse($validated['MARK']);
 
         if ($mark === null) {
@@ -104,33 +181,28 @@ class CourseWorkMarkImporter implements IngestDefinition
             ]);
         }
 
-        $remark = array_key_exists('REMARK', $validated) && $validated['REMARK'] !== null && trim((string) $validated['REMARK']) !== ''
-            ? trim((string) $validated['REMARK'])
-            : null;
-
         return [
             'studentEnrolmentId' => (int) $validated['STUDENT_ENROLMENT_ID'],
-            'courseSyllabusModuleId' => (int) $validated['MODULE_ID'],
-            'assessmentTypeId' => (int) $validated['ASSESSMENT_TYPE_ID'],
+            'courseSyllabusModuleId' => $this->moduleId,
+            'assessmentTypeId' => $assessmentTypeId,
             'mark' => $mark,
-            'remark' => $remark,
+            'remark' => null,
         ];
     }
 
     /**
-     * @param  array<string, mixed>  $row
+     * @param  array<int|string, mixed>  $studentRow
+     * @return array{studentName: string|null, studentNumber: string|null, className: string|null}
      */
-    public function isEmptyRow(array $row): bool
+    public static function displayFromWideRow(array $studentRow): array
     {
-        $normalized = $this->normalizeRow($row);
+        $values = array_values($studentRow);
 
-        $mark = $normalized['MARK'] ?? null;
-        $remark = $normalized['REMARK'] ?? null;
-
-        $markEmpty = $mark === null || $mark === '';
-        $remarkEmpty = $remark === null || trim((string) $remark) === '';
-
-        return $markEmpty && $remarkEmpty;
+        return [
+            'studentName' => isset($values[2]) && $values[2] !== '' ? (string) $values[2] : null,
+            'studentNumber' => isset($values[1]) && $values[1] !== '' ? (string) $values[1] : null,
+            'className' => isset($values[3]) && $values[3] !== '' ? (string) $values[3] : null,
+        ];
     }
 
     public static function markKey(int $studentEnrolmentId, int $moduleId, int $assessmentTypeId): string
@@ -153,21 +225,13 @@ class CourseWorkMarkImporter implements IngestDefinition
     /**
      * @return list<string>
      */
-    public static function headerColumns(): array
+    public static function fixedHeaderColumns(): array
     {
         return [
             'STUDENT_ENROLMENT_ID',
             'STUDENT_NUMBER',
             'STUDENT_NAME',
             'CLASS_NAME',
-            'MODULE_ID',
-            'MODULE_CODE',
-            'MODULE_TITLE',
-            'ASSESSMENT_TYPE_ID',
-            'ASSESSMENT_NAME',
-            'WEIGHT_PERCENT',
-            'MARK',
-            'REMARK',
         ];
     }
 }

@@ -34,6 +34,7 @@ class CourseWorkImportTemplateService
      * @return array{
      *     header: array<string, mixed>,
      *     fileName: array{moduleTitle: string, moduleCode: string, level: string, mode: string},
+     *     assessmentTypes: list<array{id: int, name: string, weightPercent: int|null}>,
      *     rows: list<array<string, mixed>>
      * }
      */
@@ -64,28 +65,24 @@ class CourseWorkImportTemplateService
             ]);
         }
 
-        $assessmentTypes = collect($tree['assessmentTypes'] ?? [])->keyBy('id');
+        /** @var list<array{id: int, name: string, weightPercent: int|null}> $assessmentTypes */
+        $assessmentTypes = array_values($tree['assessmentTypes'] ?? []);
         $rows = [];
 
         foreach ($modulePayload['students'] as $student) {
-            foreach ($student['assessments'] as $assessment) {
-                $type = $assessmentTypes->get((int) $assessment['assessmentTypeId']);
+            $marks = [];
 
-                $rows[] = [
-                    'studentEnrolmentId' => $student['studentEnrolmentId'],
-                    'studentNumber' => $student['studentNumber'],
-                    'studentName' => $student['name'],
-                    'className' => $student['className'] ?? null,
-                    'moduleId' => $module->id,
-                    'moduleCode' => $module->code,
-                    'moduleTitle' => $module->title,
-                    'assessmentTypeId' => $assessment['assessmentTypeId'],
-                    'assessmentName' => $assessment['assessmentTypeName'],
-                    'weightPercent' => $type['weightPercent'] ?? null,
-                    'mark' => null,
-                    'remark' => null,
-                ];
+            foreach ($assessmentTypes as $type) {
+                $marks[(int) $type['id']] = null;
             }
+
+            $rows[] = [
+                'studentEnrolmentId' => $student['studentEnrolmentId'],
+                'studentNumber' => $student['studentNumber'],
+                'studentName' => $student['name'],
+                'className' => $student['className'] ?? null,
+                'marks' => $marks,
+            ];
         }
 
         return [
@@ -104,6 +101,7 @@ class CourseWorkImportTemplateService
                 'level' => Str::slug((string) $classConfig->departmentLevel?->level?->name) ?: 'level',
                 'mode' => Str::slug((string) $classConfig->modeOfStudy?->name) ?: 'mode',
             ],
+            'assessmentTypes' => $assessmentTypes,
             'rows' => $rows,
         ];
     }
