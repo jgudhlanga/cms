@@ -3,6 +3,7 @@
 namespace App\Services\HMS;
 
 use App\Enums\Shared\FeeTypeEnum;
+use App\Models\Institution\FeeStructure;
 use App\Models\Ledgers\Ledger;
 use App\Models\Students\Student;
 use App\Models\Students\StudentProgram;
@@ -23,18 +24,29 @@ class StudentAccommodationFeeService
      */
     public function summaryForStudent(Student $student): array
     {
-        $student->loadMissing(['latestEnrolment.studentProgram.intakePeriod']);
+        $student->loadMissing([
+            'latestEnrolment.studentProgram.intakePeriod',
+            'latestEnrolment.studentProgram.departmentLevel.level',
+            'latestEnrolment.studentProgram.modeOfStudy',
+        ]);
 
         $studentProgram = $student->latestEnrolment?->studentProgram;
         $calendarYear = $student->latestEnrolment?->studentProgram?->intakePeriod?->calendar_year;
         $intakeLabel = $studentProgram?->intakePeriod?->name ?? $calendarYear;
 
         $ledgers = $this->accommodationLedgers($studentProgram);
-        $charges = $ledgers->where('type', 'charge');
+        $invoices = $ledgers->where('type', 'invoice');
         $receipts = $ledgers->where('type', 'receipt');
 
-        $total = (float) $charges->sum(fn (Ledger $ledger) => (float) $ledger->amount);
-        $paid = (float) $receipts->sum(fn (Ledger $ledger) => (float) $ledger->amount);
+        $total = (float) $invoices->sum(fn (Ledger $ledger) => (float) $ledger->amount);
+        $paid = (float) $receipts
+            ->where('payment_status', 'paid')
+            ->sum(fn (Ledger $ledger) => (float) $ledger->amount);
+
+        if ($total <= 0.0) {
+            $total = (float) ($this->feeStructureForStudentProgram($studentProgram)?->local_fca_amount ?? 0);
+        }
+
         $due = max(0, $total - $paid);
 
         $isFullyPaid = $studentProgram !== null
@@ -46,6 +58,7 @@ class StudentAccommodationFeeService
         }
 
         $paymentHistory = $receipts
+            ->where('payment_status', 'paid')
             ->sortByDesc(fn (Ledger $ledger) => $ledger->payment_date ?? $ledger->created_at)
             ->map(fn (Ledger $ledger): array => [
                 'date' => $ledger->payment_date?->toDateString() ?? $ledger->created_at?->toDateString(),
@@ -68,6 +81,39 @@ class StudentAccommodationFeeService
         ];
     }
 
+    public function feeStructureForStudent(Student $student): ?FeeStructure
+    {
+        $student->loadMissing([
+            'latestEnrolment.studentProgram.departmentLevel.level',
+            'latestEnrolment.studentProgram.modeOfStudy',
+        ]);
+
+        return $this->feeStructureForStudentProgram($student->latestEnrolment?->studentProgram);
+    }
+
+    public function feeStructureForStudentProgram(?StudentProgram $studentProgram): ?FeeStructure
+    {
+        if ($studentProgram === null) {
+            return null;
+        }
+
+        $studentProgram->loadMissing(['departmentLevel.level', 'modeOfStudy']);
+
+        $levelId = $studentProgram->departmentLevel?->level?->id;
+        $modeOfStudyId = $studentProgram->mode_of_study_id;
+
+        if ($levelId === null || $modeOfStudyId === null) {
+            return null;
+        }
+
+        return FeeStructure::query()
+            ->where('tenant_id', $studentProgram->tenant_id)
+            ->where('level_id', $levelId)
+            ->where('mode_of_study_id', $modeOfStudyId)
+            ->whereRelation('feeType', 'slug', FeeTypeEnum::STUDENT_ACCOMMODATION_FEE->slug())
+            ->first();
+    }
+
     /**
      * @return Collection<int, Ledger>
      */
@@ -81,7 +127,6 @@ class StudentAccommodationFeeService
             ->ledgers()
             ->with('feeType')
             ->whereRelation('feeType', 'slug', FeeTypeEnum::STUDENT_ACCOMMODATION_FEE->slug())
-            ->where('student_program_id', $studentProgram->id)
             ->orderByDesc('created_at')
             ->get();
     }

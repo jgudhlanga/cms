@@ -355,7 +355,7 @@ test('json api hms settings update can disable accommodation fee requirement', f
         ->assertJsonPath('data.attributes.requireAccommodationPaid', false);
 });
 
-test('json api hostel applications student lookup includes accommodation eligibility when required', function () {
+test('json api hostel applications student lookup excludes accommodation eligibility during application', function () {
     $tenant = Tenant::query()->firstOrFail();
     $user = User::factory()->create(['tenant_id' => $tenant->id]);
     Sanctum::actingAs($user);
@@ -372,7 +372,203 @@ test('json api hostel applications student lookup includes accommodation eligibi
 
     $keys = collect($response->json('meta.eligibility'))->pluck('key')->all();
 
+    expect($keys)->not->toContain('accommodation_paid');
+});
+
+test('json api hostel applications student lookup allows submit when eligibility rules fail', function () {
+    $tenant = Tenant::query()->firstOrFail();
+    $user = User::factory()->create(['tenant_id' => $tenant->id]);
+    $user->givePermissionTo('create:hostel-applications');
+    Sanctum::actingAs($user);
+
+    HmsSetting::resolveForTenant($tenant->id)->update([
+        'require_tuition_paid' => true,
+        'require_full_time_study' => false,
+        'require_address_outside_campus' => false,
+        'require_accommodation_paid' => false,
+    ]);
+
+    createStudentReadyForHostelApplication('LOOKUP-ELIG-FAIL');
+    createRunningSemesterCalendar('2025/2026');
+    ensureHostelRoomWithCapacity('Hostel D', 'D-LOOKUP-ELIG-FAIL');
+
+    $response = $this
+        ->jsonApi()
+        ->get(route('v1.json.hostel-applications.studentLookup', ['filter' => ['search' => 'LOOKUP-ELIG-FAIL']]));
+
+    $response->assertSuccessful()
+        ->assertJsonPath('meta.canSubmit', true)
+        ->assertJsonPath('meta.eligibilityPassed', false);
+
+    expect(collect($response->json('meta.eligibility'))->pluck('key')->all())->toContain('tuition_paid');
+});
+
+test('json api hostel applications store snapshots eligibility without accommodation rule', function () {
+    $tenant = Tenant::query()->firstOrFail();
+    $user = User::factory()->create(['tenant_id' => $tenant->id]);
+    $user->givePermissionTo('create:hostel-applications');
+    Sanctum::actingAs($user);
+
+    HmsSetting::resolveForTenant($tenant->id)->update([
+        'require_tuition_paid' => true,
+        'require_accommodation_paid' => true,
+        'require_full_time_study' => false,
+        'require_address_outside_campus' => false,
+    ]);
+
+    $studentProgram = createStudentReadyForHostelApplication('STORE-ELIG-SNAPSHOT');
+    createRunningSemesterCalendar('2025/2026');
+    ensureHostelRoomWithCapacity('Hostel D', 'D-STORE-ELIG-SNAPSHOT');
+    $enrolmentId = $studentProgram->student->fresh(['latestEnrolment'])->latestEnrolment?->id;
+
+    $response = $this
+        ->jsonApi('hostel-applications')
+        ->withData([
+            'type' => 'hostel-applications',
+            'attributes' => [
+                'applicationType' => 'student',
+                'studentId' => $studentProgram->student_id,
+                'studentEnrolmentId' => $enrolmentId,
+                'nextOfKinName' => 'Kin Name',
+                'nextOfKinContact' => '0771234567',
+                'checkIn' => now()->toDateString(),
+                'checkOut' => now()->addMonths(4)->toDateString(),
+            ],
+        ])
+        ->post(route('v1.json.hms.hostel-applications.store'));
+
+    $response->assertCreated();
+
+    $keys = collect($response->json('data.attributes.eligibilityResults'))->pluck('key')->all();
+
+    expect($keys)->toContain('tuition_paid')
+        ->and($keys)->not->toContain('accommodation_paid');
+});
+
+test('json api hostel applications update to awaiting payment refreshes accommodation eligibility', function () {
+    Queue::fake();
+
+    $tenant = Tenant::query()->firstOrFail();
+    $user = User::factory()->create(['tenant_id' => $tenant->id]);
+    $user->givePermissionTo('update:hostel-applications');
+    Sanctum::actingAs($user);
+
+    HmsSetting::resolveForTenant($tenant->id)->update(['require_accommodation_paid' => true]);
+
+    $studentProgram = createStudentReadyForHostelApplication('AWAIT-ELIG-REFRESH');
+    createRunningSemesterCalendar('2025/2026');
+    ensureHostelRoomWithCapacity('Hostel D', 'D-AWAIT-ELIG-REFRESH');
+    $student = $studentProgram->student;
+    $enrolmentId = $student->fresh(['latestEnrolment'])->latestEnrolment?->id;
+
+    $application = HostelApplication::query()->create([
+        'tenant_id' => TenantEnum::HARARE_POLY->id(),
+        'student_id' => $student->id,
+        'student_enrolment_id' => $enrolmentId,
+        'gender_id' => $student->gender_id,
+        'type' => HostelApplicationTypeEnum::STUDENT,
+        'status' => HostelApplicationStatusEnum::PENDING,
+        'next_of_kin_name' => 'Kin Name',
+        'next_of_kin_contact' => '0771234567',
+        'check_in' => now()->toDateString(),
+        'check_out' => now()->addMonths(4)->toDateString(),
+    ]);
+
+    $this
+        ->jsonApi('hostel-applications')
+        ->withData([
+            'type' => 'hostel-applications',
+            'id' => (string) $application->id,
+            'attributes' => [
+                'status' => 'awaiting-payment',
+            ],
+        ])
+        ->patch(route('v1.json.hms.hostel-applications.update', $application))
+        ->assertSuccessful();
+
+    $keys = collect($application->fresh()->eligibility_results)->pluck('key')->all();
+
     expect($keys)->toContain('accommodation_paid');
+});
+
+test('json api hostel applications index prioritizes address outside campus applications', function () {
+    $tenant = Tenant::query()->firstOrFail();
+    $user = User::factory()->create(['tenant_id' => $tenant->id]);
+    $user->givePermissionTo('viewAny:hostel-applications');
+    Sanctum::actingAs($user);
+
+    HmsSetting::resolveForTenant($tenant->id)->update([
+        'require_address_outside_campus' => true,
+        'campus_city' => 'Harare',
+        'require_full_time_study' => false,
+        'require_tuition_paid' => false,
+        'require_accommodation_paid' => false,
+    ]);
+
+    $priorityStudent = createStudentReadyForHostelApplication('PRIORITY-OUT');
+    $localStudent = createStudentReadyForHostelApplication('PRIORITY-IN');
+
+    Address::query()->create([
+        'tenant_id' => TenantEnum::HARARE_POLY->id(),
+        'addressable_type' => Student::class,
+        'addressable_id' => $priorityStudent->student_id,
+        'address_1' => '12 Rural Road',
+        'address_4' => 'Bulawayo',
+        'address_is_main' => true,
+    ]);
+
+    Address::query()->create([
+        'tenant_id' => TenantEnum::HARARE_POLY->id(),
+        'addressable_type' => Student::class,
+        'addressable_id' => $localStudent->student_id,
+        'address_1' => '1 City Road',
+        'address_4' => 'Harare',
+        'address_is_main' => true,
+    ]);
+
+    createRunningSemesterCalendar('2025/2026');
+    ensureHostelRoomWithCapacity('Hostel D', 'D-PRIORITY-OUT');
+    ensureHostelRoomWithCapacity('Hostel D', 'D-PRIORITY-IN');
+
+    $localApplication = HostelApplication::query()->create([
+        'tenant_id' => TenantEnum::HARARE_POLY->id(),
+        'student_id' => $localStudent->student_id,
+        'gender_id' => $localStudent->student->gender_id,
+        'type' => HostelApplicationTypeEnum::STUDENT,
+        'status' => HostelApplicationStatusEnum::PENDING,
+        'next_of_kin_name' => 'Kin Name',
+        'next_of_kin_contact' => '0771234567',
+        'check_in' => now()->toDateString(),
+        'check_out' => now()->addMonths(4)->toDateString(),
+        'created_at' => now(),
+    ]);
+
+    $priorityApplication = HostelApplication::query()->create([
+        'tenant_id' => TenantEnum::HARARE_POLY->id(),
+        'student_id' => $priorityStudent->student_id,
+        'gender_id' => $priorityStudent->student->gender_id,
+        'type' => HostelApplicationTypeEnum::STUDENT,
+        'status' => HostelApplicationStatusEnum::PENDING,
+        'next_of_kin_name' => 'Kin Name',
+        'next_of_kin_contact' => '0771234567',
+        'check_in' => now()->toDateString(),
+        'check_out' => now()->addMonths(4)->toDateString(),
+        'created_at' => now()->subMinute(),
+    ]);
+
+    $response = $this
+        ->jsonApi('hostel-applications')
+        ->get(route('v1.json.hms.hostel-applications.index'));
+
+    $response->assertSuccessful();
+
+    $ids = collect($response->json('data'))->pluck('id')->all();
+    $priorityIndex = array_search((string) $priorityApplication->id, $ids, true);
+    $localIndex = array_search((string) $localApplication->id, $ids, true);
+
+    expect($priorityIndex)->not->toBeFalse()
+        ->and($localIndex)->not->toBeFalse()
+        ->and($priorityIndex)->toBeLessThan($localIndex);
 });
 
 test('json api hostel applications approval options returns required payment verification from settings', function () {

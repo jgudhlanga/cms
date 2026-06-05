@@ -2,6 +2,7 @@
 
 namespace App\Services\HMS;
 
+use App\Enums\HMS\HostelEligibilityContextEnum;
 use App\Enums\Shared\FeeTypeEnum;
 use App\Models\HMS\HmsSetting;
 use App\Models\Shared\Address;
@@ -11,26 +12,33 @@ use App\Models\Students\StudentEnrolment;
 class HostelApplicationEligibilityService
 {
     /**
-     * @return list<array{key: string, passed: bool, message: string}>
+     * @return list<array{key: string, passed: bool, message: string, severity: string, modeOfStudy?: string|null}>
      */
-    public function evaluate(Student $student, ?StudentEnrolment $enrolment = null, ?HmsSetting $settings = null): array
-    {
+    public function evaluate(
+        Student $student,
+        ?StudentEnrolment $enrolment = null,
+        ?HmsSetting $settings = null,
+        HostelEligibilityContextEnum $context = HostelEligibilityContextEnum::APPLICATION,
+    ): array {
         $settings ??= HmsSetting::resolveForTenant($student->tenant_id);
         $enrolment ??= $student->latestEnrolment;
 
         $rules = [];
 
         if ($settings->require_full_time_study) {
-            $modeName = strtolower(trim((string) $enrolment?->modeOfStudy?->name));
+            $modeOfStudy = trim((string) $enrolment?->modeOfStudy?->name);
+            $modeName = strtolower($modeOfStudy);
             $expected = strtolower(trim($settings->full_time_mode_name));
             $passed = $modeName !== '' && $modeName === $expected;
 
             $rules[] = [
                 'key' => 'full_time_study',
                 'passed' => $passed,
+                'severity' => $passed ? 'info' : 'warning',
+                'modeOfStudy' => $modeOfStudy !== '' ? $modeOfStudy : null,
                 'message' => $passed
-                    ? __('hms.eligibility_full_time_passed')
-                    : __('hms.eligibility_full_time_failed'),
+                    ? __('hms.eligibility_full_time_passed', ['mode' => $modeOfStudy])
+                    : __('hms.eligibility_full_time_failed', ['mode' => $modeOfStudy !== '' ? $modeOfStudy : __('hms.eligibility_mode_unknown')]),
             ];
         }
 
@@ -40,18 +48,20 @@ class HostelApplicationEligibilityService
             $rules[] = [
                 'key' => 'tuition_paid',
                 'passed' => $passed,
+                'severity' => $passed ? 'success' : 'warning',
                 'message' => $passed
                     ? __('hms.eligibility_tuition_paid_passed')
                     : __('hms.eligibility_tuition_paid_failed'),
             ];
         }
 
-        if ($settings->require_accommodation_paid) {
+        if ($context === HostelEligibilityContextEnum::AWAITING_PAYMENT && $settings->require_accommodation_paid) {
             $passed = (bool) $enrolment?->studentProgram?->hasPaid(FeeTypeEnum::STUDENT_ACCOMMODATION_FEE);
 
             $rules[] = [
                 'key' => 'accommodation_paid',
                 'passed' => $passed,
+                'severity' => $passed ? 'success' : 'warning',
                 'message' => $passed
                     ? __('hms.eligibility_accommodation_paid_passed')
                     : __('hms.eligibility_accommodation_paid_failed'),
@@ -64,6 +74,7 @@ class HostelApplicationEligibilityService
             $rules[] = [
                 'key' => 'address_outside_campus',
                 'passed' => $passed,
+                'severity' => $passed ? 'info' : 'warning',
                 'message' => $passed
                     ? __('hms.eligibility_address_passed', ['city' => $settings->campus_city])
                     : __('hms.eligibility_address_failed', ['city' => $settings->campus_city]),
@@ -74,7 +85,7 @@ class HostelApplicationEligibilityService
     }
 
     /**
-     * @param  list<array{key: string, passed: bool, message: string}>  $rules
+     * @param  list<array{key: string, passed: bool, message: string, severity?: string}>  $rules
      */
     public function allPassed(array $rules): bool
     {
@@ -85,6 +96,20 @@ class HostelApplicationEligibilityService
         }
 
         return true;
+    }
+
+    /**
+     * @param  list<array{key: string, passed: bool, message: string}>  $rules
+     */
+    public function addressOutsideCampusPassed(array $rules): bool
+    {
+        foreach ($rules as $rule) {
+            if (($rule['key'] ?? '') === 'address_outside_campus') {
+                return (bool) ($rule['passed'] ?? false);
+            }
+        }
+
+        return false;
     }
 
     private function addressIsOutsideCampus(Student $student, string $campusCity): bool

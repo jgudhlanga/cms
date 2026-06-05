@@ -47,7 +47,17 @@ export function useStudentAccommodations(
             return false;
         }
 
-        return lookup.value?.canApply ?? lookup.value?.canSubmit ?? false;
+        const blockers = lookup.value?.applyBlockers ?? lookup.value?.blockers ?? [];
+
+        if (blockers.length > 0) {
+            return false;
+        }
+
+        if (lookup.value?.found === false) {
+            return false;
+        }
+
+        return lookup.value?.canApply ?? lookup.value?.canSubmit ?? lookup.value?.found === true;
     });
 
     const applyBlockers = computed(() =>

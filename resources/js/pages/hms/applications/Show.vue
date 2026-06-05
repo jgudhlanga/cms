@@ -12,6 +12,7 @@ import { openModal } from '@/lib/alerts';
 import { IconName } from '@/enums/icons';
 import { APP_MODULE_KEYS } from '@/lib/constants';
 import { hasAbility } from '@/lib/permissions';
+import HostelEligibilityStatus from '@/components/hms/HostelEligibilityStatus.vue';
 import ApplicationSidebar from '@/pages/hms/applications/partials/ApplicationSidebar.vue';
 import PaymentVerificationCard from '@/pages/hms/applications/partials/PaymentVerificationCard.vue';
 import DeclineApplication from '@/pages/hms/components/forms/DeclineApplication.vue';
@@ -142,6 +143,10 @@ const studentProfileUrl = computed(() => {
 });
 
 const eligibilityRules = computed((): HostelApplicationEligibilityRule[] => attrs.value?.eligibilityResults ?? []);
+
+const showAccommodationEligibility = computed(
+    () => attrs.value?.status === 'awaiting-payment',
+);
 </script>
 
 <template>
@@ -284,17 +289,16 @@ const eligibilityRules = computed((): HostelApplicationEligibilityRule[] => attr
                     />
                 </div>
 
-                <div v-if="isStudentApplication && eligibilityRules.length" class="space-y-3">
+                <div v-if="isStudentApplication && eligibilityRules.length" class="space-y-1.5">
                     <HeadingSmall :title="$t('hms.eligibility_rules_heading')" />
-                    <ul class="space-y-2 text-sm">
-                        <li
-                            v-for="rule in eligibilityRules"
-                            :key="rule.key"
-                            :class="rule.passed ? 'text-green-700' : 'text-destructive'"
-                        >
-                            {{ rule.message }}
-                        </li>
-                    </ul>
+                    <div class="grid grid-cols-1 gap-x-4 gap-y-1.5 md:grid-cols-3">
+                        <HostelEligibilityStatus
+                            :rules="eligibilityRules"
+                            :show-heading="false"
+                            :show-accommodation="showAccommodationEligibility"
+                            grid
+                        />
+                    </div>
                 </div>
 
                 <PaymentVerificationCard

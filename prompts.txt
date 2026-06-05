@@ -1,0 +1,9 @@
+When creating a student applictaion from the portal or as an admin user there are reles to be followed as on the picture above:
+ - Require full-time, this should show an indication of student mode and should not hinder applictaion
+ - Require tuition fees, should not hinder the applictaion. Use the function on students payments
+ - Require accomodation fees, should only be shown when the application is  at AWAITING_PAYMENT
+ - Require address out side campus city, should be a priority i.e people with address outside campus city should have first priority and should order applications by this.
+ - All rules should not hinder the application, however, the alerts should be saved in the eligibility_status column and shown when viewing the application for aprroval.
+ - All Eligibility rules shoudl be dense and not occupy lots of space. Avoid using BaseAlert component. Rather show colored texts ddepending on the severity.
+ - When the  application is at AWAITING_PAYMENT, on port it should have a button to make a payment. Check resources/js/pages/portal/application/RegistrationFeePaymentOptions.vue and try to reuse 
+ functions or components here.

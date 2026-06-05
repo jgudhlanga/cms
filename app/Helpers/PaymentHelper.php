@@ -6,6 +6,8 @@ use App\DTO\Integrations\CreateInvoiceDto;
 use App\DTO\Integrations\CreateReceiptDto;
 use App\DTO\Integrations\UpdateReceiptDto;
 use App\Enums\Shared\FeeTypeEnum;
+use App\Http\Resources\Institution\FeeStructureResource;
+use App\Models\Institution\FeeStructure;
 use App\Models\Institution\IntakePeriod;
 use App\Models\Institution\Level;
 use App\Models\Ledgers\Ledger;
@@ -32,6 +34,14 @@ class PaymentHelper
     public static function getFeeTypeBySlug(string $slug): ?FeeType
     {
         return FeeType::where('slug', $slug)->first();
+    }
+
+    public static function getFeeStructureResourceBySlug(string $slug): FeeStructureResource
+    {
+        $feeType = self::getFeeTypeBySlug($slug);
+        $feeStructure = FeeStructure::where('fee_type_id', $feeType->id)->first();
+
+        return FeeStructureResource::make($feeStructure);
     }
 
     public static function getLatestLedgerRecord(

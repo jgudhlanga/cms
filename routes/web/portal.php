@@ -30,6 +30,7 @@ Route::prefix('portal')->group(function () {
             Route::get('applications', [PortalController::class, 'profileApplications'])->name('applications');
             Route::get('financials', [PortalController::class, 'profileFinancials'])->name('financials');
             Route::get('accommodations', [PortalController::class, 'profileAccommodations'])->name('accommodations');
+            Route::get('accommodations/pay', [PortalController::class, 'accommodationFeePaymentOptions'])->name('accommodations.pay');
             Route::get('documents', [PortalController::class, 'profileDocuments'])->name('documents');
             Route::get('authentication', [PortalController::class, 'profileAuthentication'])->name('authentication');
         });

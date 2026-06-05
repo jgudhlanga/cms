@@ -1,5 +1,9 @@
 <script setup lang="ts">
+import BaseButton from '@/components/core/button/BaseButton.vue';
+import { ButtonSize } from '@/enums/buttons';
+import { ColorVariant } from '@/enums/colors';
 import type { HostelAllocation, HostelApplication, StudentAccommodationFeesResponse } from '@/types/hms';
+import { router } from '@inertiajs/vue3';
 import { Bed, Receipt, FileText } from 'lucide-vue-next';
 import { computed } from 'vue';
 
@@ -8,9 +12,12 @@ interface Props {
     openApplication: HostelApplication | null;
     fees: StudentAccommodationFeesResponse | null;
     openQueriesCount?: number;
+    context?: 'admin' | 'portal';
 }
 
-const props = defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+    context: 'admin',
+});
 
 const roomSummary = computed(() => {
     if (!props.activeAllocation) {
@@ -53,11 +60,33 @@ const applicationSummary = computed(() => {
         ?? props.openApplication.attributes.status
         ?? '';
 });
+
+const isAwaitingPayment = computed(
+    () => props.openApplication?.attributes.status === 'awaiting-payment',
+);
+
+const showPaymentCta = computed(
+    () =>
+        props.context === 'portal'
+        && isAwaitingPayment.value
+        && !props.fees?.isFullyPaid,
+);
+
+const showFeesPaidConfirmation = computed(
+    () =>
+        props.context === 'portal'
+        && isAwaitingPayment.value
+        && props.fees?.isFullyPaid,
+);
+
+const goToPayment = () => {
+    router.visit(route('portal.profile.accommodations.pay'));
+};
 </script>
 
 <template>
     <div class="flex flex-col gap-4">
-        <div class="grid gap-3 sm:grid-cols-2">
+        <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <div class="rounded-xl border border-border bg-card p-4 shadow-sm">
                 <div class="flex items-start gap-3">
                     <span class="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
@@ -97,6 +126,36 @@ const applicationSummary = computed(() => {
                     </div>
                 </div>
             </div>
+
+            <div
+                v-if="applicationSummary"
+                class="rounded-xl border border-border bg-card p-4 shadow-sm"
+            >
+                <div class="flex items-start gap-3">
+                    <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-500 text-white">
+                        <FileText class="h-5 w-5" />
+                    </span>
+                    <div class="min-w-0 flex-1">
+                        <p class="text-xs text-muted-foreground">{{ $t('students.accommodation_application_status') }}</p>
+                        <p class="font-semibold text-foreground">{{ applicationSummary }}</p>
+                        <p
+                            v-if="showFeesPaidConfirmation"
+                            class="mt-2 text-xs text-emerald-600 dark:text-emerald-400"
+                        >
+                            {{ $t('students.accommodation_fees_paid_confirmation') }}
+                        </p>
+                        <div v-else-if="showPaymentCta" class="mt-3">
+                            <BaseButton
+                                type="button"
+                                :color="ColorVariant.primary"
+                                :size="ButtonSize.sm"
+                                :title="$t('students.accommodation_proceed_to_payment')"
+                                @click="goToPayment"
+                            />
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div
@@ -112,15 +171,5 @@ const applicationSummary = computed(() => {
             </p>
         </div>
 
-        <div
-            v-if="applicationSummary"
-            class="rounded-xl border border-border bg-card p-4 shadow-sm"
-        >
-            <div class="flex items-center gap-2">
-                <FileText class="h-4 w-4 text-primary" /> 
-                <p class="text-sm font-medium text-foreground">{{ $t('students.accommodation_application_status') }}</p>
-            </div>
-            <p class="mt-1 text-sm text-muted-foreground">{{ applicationSummary }}</p>
-        </div>
     </div>
 </template>

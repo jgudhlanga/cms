@@ -1,9 +1,18 @@
 <script setup lang="ts">
 import AccommodationApplicationForm from '@/components/students/accommodation/AccommodationApplicationForm.vue';
 import BaseAlert from '@/components/core/alert/BaseAlert.vue';
+import BaseButton from '@/components/core/button/BaseButton.vue';
+import { ButtonSize } from '@/enums/buttons';
+import { ColorVariant } from '@/enums/colors';
 import { TypeVariant } from '@/enums/type-variants';
-import type { HostelAllocation, HostelApplication, HostelApplicationStudentLookupResponse } from '@/types/hms';
+import type {
+    HostelAllocation,
+    HostelApplication,
+    HostelApplicationStudentLookupResponse,
+    StudentAccommodationFeesResponse,
+} from '@/types/hms';
 import type { InertiaForm } from '@inertiajs/vue3';
+import { router } from '@inertiajs/vue3';
 import { computed } from 'vue';
 
 interface FormShape {
@@ -18,6 +27,7 @@ interface Props {
     activeAllocation: HostelAllocation | null;
     openApplication: HostelApplication | null;
     lookup: HostelApplicationStudentLookupResponse | null;
+    fees: StudentAccommodationFeesResponse | null;
     canApply: boolean;
     applyBlockers: string[];
     form: InertiaForm<FormShape>;
@@ -49,8 +59,30 @@ const showForm = computed(
 
 const showNotFoundMessage = computed(() => props.lookup?.found === false);
 
+const isAwaitingPayment = computed(
+    () => props.openApplication?.attributes.status === 'awaiting-payment',
+);
+
+const showPaymentCta = computed(
+    () =>
+        props.context === 'portal'
+        && isAwaitingPayment.value
+        && !props.fees?.isFullyPaid,
+);
+
+const showFeesPaidConfirmation = computed(
+    () =>
+        props.context === 'portal'
+        && isAwaitingPayment.value
+        && props.fees?.isFullyPaid,
+);
+
 const adminApplicationLink = (id: string | number) =>
     route('hostels.applications.show', { hostel_application: id });
+
+const goToPayment = () => {
+    router.visit(route('portal.profile.accommodations.pay'));
+};
 </script>
 
 <template>
@@ -61,13 +93,36 @@ const adminApplicationLink = (id: string | number) =>
             :type="TypeVariant.info"
         />
 
-        <BaseAlert
+        <div
             v-else-if="openApplication"
-            :description="$t('students.accommodation_open_application', {
-                status: openApplication.attributes.statusLabel ?? openApplication.attributes.status,
-            })"
-            :type="TypeVariant.info"
-        />
+            class="rounded-lg border border-border bg-muted/20 p-3"
+        >
+            <p class="text-sm text-foreground">
+                {{ $t('students.accommodation_open_application', {
+                    status: openApplication.attributes.statusLabel ?? openApplication.attributes.status,
+                }) }}
+            </p>
+            <p
+                v-if="showFeesPaidConfirmation"
+                class="mt-2 text-sm text-emerald-600 dark:text-emerald-400"
+            >
+                {{ $t('students.accommodation_fees_paid_confirmation') }}
+            </p>
+            <div v-else-if="showPaymentCta" class="mt-3 flex flex-col gap-2">
+                <p class="text-xs text-amber-600 dark:text-amber-400">
+                    {{ $t('students.accommodation_payment_required') }}
+                </p>
+                <div>
+                    <BaseButton
+                        type="button"
+                        :color="ColorVariant.primary"
+                        :size="ButtonSize.md"
+                        :title="$t('students.accommodation_proceed_to_payment')"
+                        @click="goToPayment"
+                    />
+                </div>
+            </div>
+        </div>
 
         <BaseAlert
             v-else-if="showNotFoundMessage"
@@ -83,12 +138,6 @@ const adminApplicationLink = (id: string | number) =>
                 :type="TypeVariant.warning"
             />
         </template>
-
-        <BaseAlert
-            v-else-if="showForm && lookup && lookup.eligibilityPassed === false"
-            :description="$t('students.accommodation_eligibility_not_met')"
-            :type="TypeVariant.warning"
-        />
 
         <AccommodationApplicationForm
             v-if="showForm"

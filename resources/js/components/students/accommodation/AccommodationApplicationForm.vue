@@ -1,11 +1,10 @@
 <script setup lang="ts">
-import BaseAlert from '@/components/core/alert/BaseAlert.vue';
 import BaseButton from '@/components/core/button/BaseButton.vue';
+import HostelEligibilityStatus from '@/components/hms/HostelEligibilityStatus.vue';
 import BaseInput from '@/components/core/form/text/BaseInput.vue';
 import InputError from '@/components/core/form/InputError.vue';
 import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
-import { TypeVariant } from '@/enums/type-variants';
 import type { HostelApplicationEligibilityRule } from '@/types/hms';
 import type { InertiaForm } from '@inertiajs/vue3';
 
@@ -36,29 +35,24 @@ const emit = defineEmits<{
 
 <template>
     <div class="flex flex-col gap-4">
-        <BaseAlert
-            v-if="semesterLabel"
-            :description="$t('students.accommodation_semester_notice', { label: semesterLabel })"
-            :type="TypeVariant.info"
-        />
-
         <div
-            v-if="eligibility?.length"
-            class="rounded-lg border border-border bg-muted/20 p-3"
+            v-if="semesterLabel || eligibility?.length"
+            class="grid grid-cols-1 gap-x-4 gap-y-1.5 md:grid-cols-3"
         >
-            <p class="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                {{ $t('students.accommodation_eligibility') }}
+            <p
+                v-if="semesterLabel"
+                class="text-sm leading-snug text-sky-600 dark:text-sky-400"
+            >
+                {{ $t('students.accommodation_semester_notice', { label: semesterLabel }) }}
             </p>
-            <ul class="flex flex-col gap-1.5">
-                <li
-                    v-for="rule in eligibility"
-                    :key="rule.key"
-                    class="text-sm"
-                    :class="rule.passed ? 'text-emerald-600 dark:text-emerald-400' : 'text-destructive'"
-                >
-                    {{ rule.message }}
-                </li>
-            </ul>
+
+            <HostelEligibilityStatus
+                v-if="eligibility?.length"
+                :rules="eligibility"
+                :show-heading="false"
+                show-advisory-notice
+                grid
+            />
         </div>
 
         <div class="grid gap-3 sm:grid-cols-2">
@@ -93,11 +87,12 @@ const emit = defineEmits<{
             />
         </div>
 
-        <BaseAlert
+        <p
             v-if="saveValidationError"
-            :description="saveValidationError"
-            :type="TypeVariant.danger"
-        />
+            class="text-sm text-destructive"
+        >
+            {{ saveValidationError }}
+        </p>
 
         <BaseButton
             :color="ColorVariant.primary"

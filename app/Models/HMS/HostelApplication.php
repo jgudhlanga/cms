@@ -38,6 +38,7 @@ class HostelApplication extends Model
         'check_in',
         'check_out',
         'eligibility_results',
+        'address_outside_campus_priority',
         'payment_verification',
         'decline_reason',
     ];
@@ -50,6 +51,7 @@ class HostelApplication extends Model
             'check_in' => 'date',
             'check_out' => 'date',
             'eligibility_results' => 'array',
+            'address_outside_campus_priority' => 'boolean',
             'payment_verification' => 'array',
         ];
     }
