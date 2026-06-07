@@ -97,4 +97,5 @@ export enum IconName {
     warehouse = "warehouse",
     room = "room",
     hostel = "hostel",
+    maintenance = "maintenance",
 }

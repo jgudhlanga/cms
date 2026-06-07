@@ -94,6 +94,12 @@ export function useSidebarMenu() {
             icon: icons[IconName.users],
             show: hasAbility('view:users'),
         },
+        {
+            transKey: 'trans.maintenance',
+            url: route('maintenance.index'),
+            icon: icons[IconName.maintenance],
+            show: hasAbility('root:manage'),
+        },
         /** ============ DEPARTMENT STAFF ======================*/
         {
             title: 'My Departments',
