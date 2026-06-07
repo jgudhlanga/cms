@@ -1,8 +1,0 @@
-Given the sidebar above, We need to add another link called Maintenance
-- should take you to module called maintenance/Index.vue
-- on maintenance/Index.vue
-- we need to show tabs
-    - users
-    - staff
-    - students
-      - on students should load a page where we the export students enrolments which kick start the command we did ealier.

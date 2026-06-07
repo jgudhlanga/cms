@@ -1,9 +1,18 @@
 <script setup lang="ts">
-withDefaults(defineProps<{
+import { computed } from 'vue';
+
+const props = withDefaults(defineProps<{
 	item: any;
+	variant?: 'default' | 'nav';
 }>(), {
+	variant: 'default',
 });
-const styles = 'uppercase text-xs font-normal';
+
+const styles = computed(() =>
+	props.variant === 'nav'
+		? 'text-sm font-medium'
+		: 'uppercase text-xs font-normal',
+);
 </script>
 
 <template>
