@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1\HMS;
 
 use App\Enums\HMS\HostelApplicationStatusEnum;
+use App\Enums\HMS\HostelEligibilityContextEnum;
 use App\Models\HMS\HostelApplication;
 use App\Models\Students\Student;
 use App\Services\HMS\HostelApplicationApprovalOptionsService;
@@ -143,7 +144,7 @@ class HostelApplicationController extends JsonApiController
     private function buildStudentLookupMeta(Student $student): array
     {
         $enrolment = $student->latestEnrolment;
-        $eligibility = $this->eligibilityService->evaluate($student, $enrolment);
+        $eligibility = $this->eligibilityService->evaluate($student, $enrolment, context: HostelEligibilityContextEnum::APPLICATION);
         $nextOfKin = $student->nextOfKins->first();
         $nextOfKinContact = $nextOfKin?->contacts->first();
         $studentContact = $student->contacts->first();
@@ -172,8 +173,7 @@ class HostelApplicationController extends JsonApiController
         $canSubmit = $semesterDates['success']
             && $roomAvailability['blocker'] === null
             && $pendingBlocker === null
-            && $allocationBlocker === null
-            && $eligibilityPassed;
+            && $allocationBlocker === null;
 
         return [
             'found' => true,
@@ -196,6 +196,7 @@ class HostelApplicationController extends JsonApiController
                 'studentEnrolmentId' => $enrolment?->id,
                 'nextOfKinName' => $nextOfKin?->name,
                 'nextOfKinContact' => $nextOfKinContact?->phone_number,
+                'modeOfStudy' => $enrolment?->modeOfStudy?->name,
             ],
             'semester' => $semesterDates['success'] ? [
                 'checkIn' => $semesterDates['checkIn'],
@@ -280,6 +281,7 @@ class HostelApplicationController extends JsonApiController
                 HostelApplicationStatusEnum::AWAITING_PAYMENT,
             ])
             ->when($parsedExcludeId !== null, fn ($query) => $query->where('id', '!=', $parsedExcludeId))
+            ->orderByDesc('address_outside_campus_priority')
             ->orderByDesc('created_at')
             ->limit(5)
             ->get()

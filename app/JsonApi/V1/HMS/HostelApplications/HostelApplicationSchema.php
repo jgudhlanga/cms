@@ -156,7 +156,9 @@ class HostelApplicationSchema extends Schema
                     HostelApplicationStatusEnum::APPROVED->value,
                     HostelApplicationStatusEnum::DECLINED->value,
                 ]
-            )->latest('hostel_applications.created_at');
+            )
+                ->orderByDesc('hostel_applications.address_outside_campus_priority')
+                ->latest('hostel_applications.created_at');
         }
 
         return $builder;

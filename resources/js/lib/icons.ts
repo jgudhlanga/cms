@@ -90,7 +90,7 @@ import {
     PaperclipIcon, 
     RotateCcw,NotebookPen,FileStack,
     House,Mail,Phone,ArrowDownToLine,
-    
+    Wrench,
 } from 'lucide-vue-next';
 import type { Component } from 'vue';
 
@@ -193,6 +193,7 @@ const icons: Record<IconName, Component> = {
     [IconName.hostel]: Hotel,
     [IconName.room]: DoorOpen,
     [IconName.reset]: RotateCcw,
+    [IconName.maintenance]: Wrench,
 };
 
 export { IconName, icons };

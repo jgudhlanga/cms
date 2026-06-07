@@ -233,6 +233,7 @@ declare module 'vue' {
     Heading: typeof import('./../components/core/util/Heading.vue')['default']
     HeadingSmall: typeof import('./../components/core/util/HeadingSmall.vue')['default']
     HostelCard: typeof import('./../components/hms/HostelCard.vue')['default']
+    HostelEligibilityStatus: typeof import('./../components/hms/HostelEligibilityStatus.vue')['default']
     HostelFilters: typeof import('./../components/hms/HostelFilters.vue')['default']
     HostelRoomFilters: typeof import('./../components/hms/HostelRoomFilters.vue')['default']
     HostelRoomStats: typeof import('./../components/hms/HostelRoomStats.vue')['default']

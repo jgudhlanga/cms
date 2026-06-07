@@ -4,10 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services\Students;
 
-use App\Models\AcademicCalendars\ClassConfig;
 use App\Models\AcademicCalendars\CourseWorkMark;
 use App\Models\Institution\AssessmentType;
-use App\Models\Institution\Syllabus\CourseSyllabus;
 use App\Models\Institution\Syllabus\CourseSyllabusModule;
 use App\Models\Students\Student;
 use App\Models\Students\StudentEnrolment;
@@ -19,6 +17,7 @@ class StudentProgrammeDataService
 {
     public function __construct(
         protected CourseWorkAggregationService $aggregationService,
+        protected CourseSyllabusCodeResolver $courseSyllabusCodeResolver,
     ) {}
 
     /**
@@ -41,7 +40,7 @@ class StudentProgrammeDataService
             ->values();
 
         $syllabusIds = $enrolments
-            ->flatMap(fn (StudentEnrolment $enrolment) => $this->resolveCourseSyllabusIds($enrolment))
+            ->flatMap(fn (StudentEnrolment $enrolment) => $this->courseSyllabusCodeResolver->resolveSyllabusIds($enrolment))
             ->unique()
             ->values()
             ->all();
@@ -90,7 +89,7 @@ class StudentProgrammeDataService
                     'id' => (string) ($studentProgram?->id ?? ''),
                     'level' => $level?->name,
                     'course' => $latestEnrolment?->departmentCourse?->course?->name,
-                    'courseCode' => $this->resolveCourseCode($latestEnrolment),
+                    'courseCode' => $this->courseSyllabusCodeResolver->resolve($latestEnrolment),
                     'calendarYear' => $latestEnrolment?->academicCalendar?->calendar_year,
                     'isActive' => false,
                     'semesters' => $sortedEnrolments
@@ -122,7 +121,7 @@ class StudentProgrammeDataService
         Collection $marksByKey,
         Collection $assessmentTypesByModeId,
     ): array {
-        $syllabusIds = $this->resolveCourseSyllabusIds($enrolment);
+        $syllabusIds = $this->courseSyllabusCodeResolver->resolveSyllabusIds($enrolment);
 
         $enrolmentOptionId = (int) $enrolment->academic_year_option_id;
         $studentEnrolmentId = (int) $enrolment->id;
@@ -281,73 +280,5 @@ class StudentProgrammeDataService
     private function courseWorkMarkKey(int $studentEnrolmentId, int $moduleId, int $assessmentTypeId): string
     {
         return sprintf('%d:%d:%d', $studentEnrolmentId, $moduleId, $assessmentTypeId);
-    }
-
-    /**
-     * @return list<int>
-     */
-    private function resolveCourseSyllabusIds(StudentEnrolment $enrolment): array
-    {
-        $fromAssignedClass = array_values(array_map(
-            'intval',
-            array_filter($enrolment->academicCalendarStudentEnrolment
-                ?->academicCalendarClass
-                ?->classConfig
-                ?->course_syllabus_ids ?? [])
-        ));
-
-        if ($fromAssignedClass !== []) {
-            return $fromAssignedClass;
-        }
-
-        $classConfig = ClassConfig::query()
-            ->where('department_level_id', $enrolment->department_level_id)
-            ->where('department_course_id', $enrolment->department_course_id)
-            ->where('academic_year_option_id', $enrolment->academic_year_option_id)
-            ->where('mode_of_study_id', $enrolment->mode_of_study_id)
-            ->when(
-                $enrolment->academicCalendar?->calendar_year,
-                fn ($query, string $calendarYear) => $query->where('calendar_year', $calendarYear),
-            )
-            ->first();
-
-        if ($classConfig !== null) {
-            $fromClassConfig = array_values(array_map(
-                'intval',
-                array_filter($classConfig->course_syllabus_ids ?? [])
-            ));
-
-            if ($fromClassConfig !== []) {
-                return $fromClassConfig;
-            }
-        }
-
-        return CourseSyllabus::query()
-            ->whereHas('departmentLevelCourse', function ($query) use ($enrolment): void {
-                $query
-                    ->where('department_level_id', $enrolment->department_level_id)
-                    ->where('department_course_id', $enrolment->department_course_id);
-            })
-            ->pluck('id')
-            ->map(fn (mixed $id): int => (int) $id)
-            ->all();
-    }
-
-    private function resolveCourseCode(?StudentEnrolment $enrolment): ?string
-    {
-        if ($enrolment === null) {
-            return null;
-        }
-
-        $syllabusIds = $this->resolveCourseSyllabusIds($enrolment);
-
-        if ($syllabusIds === []) {
-            return null;
-        }
-
-        return CourseSyllabus::query()
-            ->whereIn('id', $syllabusIds)
-            ->orderBy('implementation_year')
-            ->value('code');
     }
 }

@@ -107,6 +107,7 @@ const canCreateServices = computed(() => props.context === 'portal');
                     :open-application="openApplication"
                     :fees="fees"
                     :open-queries-count="openQueriesCount"
+                    :context="context"
                 />
             </BaseAccordionItem>
 
@@ -174,6 +175,7 @@ const canCreateServices = computed(() => props.context === 'portal');
                     :active-allocation="activeAllocation"
                     :open-application="openApplication"
                     :lookup="lookup"
+                    :fees="fees"
                     :can-apply="canApply"
                     :apply-blockers="applyBlockers"
                     :form="form"

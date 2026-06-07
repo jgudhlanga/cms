@@ -147,10 +147,14 @@ export type HostelApplicationType = 'student' | 'guest';
 
 export type HostelApplicationStatus = 'pending' | 'awaiting-payment' | 'approved' | 'declined';
 
+export type HostelApplicationEligibilitySeverity = 'success' | 'info' | 'warning';
+
 export type HostelApplicationEligibilityRule = {
     key: string;
     passed: boolean;
     message: string;
+    severity?: HostelApplicationEligibilitySeverity;
+    modeOfStudy?: string | null;
 };
 
 export type HostelApplicationStudentLookup = {
@@ -165,6 +169,7 @@ export type HostelApplicationStudentLookup = {
     course?: string | null;
     level?: string | null;
     studentEnrolmentId?: number | null;
+    modeOfStudy?: string | null;
     nextOfKinName?: string | null;
     nextOfKinContact?: string | null;
 };

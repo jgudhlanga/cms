@@ -31,10 +31,10 @@ class SendHostelApplicationAwaitingPaymentEmail implements ShouldQueue
         }
 
         $name = $application->student?->user?->full_name ?? $application->name ?? 'Student';
-
+ 
         Mail::to($email)->send(new HostelApplicationAwaitingPaymentMail(
             $name,
-            route('portal.dashboard', absolute: true),
+            route('portal.profile.accommodations.pay', absolute: true),
         ));
     }
 }

@@ -87,6 +87,82 @@ test('portal profile accommodations route renders for authorized student', funct
         ->where('student.id', $student->id));
 });
 
+test('portal profile accommodations pay route renders for authorized student', function () {
+    $tenant = Tenant::query()->firstOrFail();
+    $user = User::factory()->create(['tenant_id' => $tenant->id]);
+    $user->givePermissionTo('manageOwnStudentAccommodationDetails:students');
+
+    Student::query()->create([
+        'tenant_id' => $tenant->id,
+        'user_id' => $user->id,
+        'title_id' => DB::table('titles')->insertGetId([
+            'name' => 'Mr Accommodations Pay',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]),
+        'gender_id' => DB::table('genders')->insertGetId([
+            'title' => 'Male Accommodations Pay',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]),
+        'marital_status_id' => DB::table('marital_statuses')->insertGetId([
+            'title' => 'Single Accommodations Pay',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]),
+        'id_type_id' => DB::table('id_types')->insertGetId([
+            'name' => 'National ID Accommodations Pay',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]),
+        'date_of_birth' => '2000-01-01',
+        'student_number' => 'PORTAL-ACCOMM-PAY-001',
+    ]);
+
+    $response = $this->actingAs($user)->get(route('portal.profile.accommodations.pay'));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('portal/student/profile/AccommodationFeePaymentOptions')
+        ->has('fees')
+        ->where('fees.due', fn ($due) => is_string($due) || is_numeric($due)));
+});
+
+test('portal profile accommodations pay route exposes fee structure amount when no ledger exists', function () {
+    $tenant = Tenant::query()->firstOrFail();
+    $studentProgram = createStudentReadyForHostelApplication('PORTAL-ACCOMM-PAY-002');
+    $student = $studentProgram->student;
+    $user = User::query()->findOrFail($student->user_id);
+    $user->givePermissionTo('manageOwnStudentAccommodationDetails:students');
+
+    $feeType = \App\Models\Shared\FeeType::query()->firstOrCreate(
+        ['slug' => \App\Enums\Shared\FeeTypeEnum::STUDENT_ACCOMMODATION_FEE->slug()],
+        [
+            'name' => \App\Enums\Shared\FeeTypeEnum::STUDENT_ACCOMMODATION_FEE->name(),
+            'description' => \App\Enums\Shared\FeeTypeEnum::STUDENT_ACCOMMODATION_FEE->description(),
+            'position' => \App\Enums\Shared\FeeTypeEnum::STUDENT_ACCOMMODATION_FEE->position(),
+        ],
+    );
+
+    \App\Models\Institution\FeeStructure::query()->create([
+        'tenant_id' => $tenant->id,
+        'fee_type_id' => $feeType->id,
+        'level_id' => $studentProgram->departmentLevel->level_id,
+        'mode_of_study_id' => $studentProgram->mode_of_study_id,
+        'amount' => 150.00,
+        'local_fca_amount' => 250.00,
+    ]);
+
+    $response = $this->actingAs($user)->get(route('portal.profile.accommodations.pay'));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('portal/student/profile/AccommodationFeePaymentOptions')
+        ->where('fees.due', '250.00')
+        ->where('fees.total', '250.00')
+        ->where('accommodationFee.attributes.localFcaAmount', fn ($amount) => (float) $amount === 250.0));
+});
+
 test('legacy portal personal details route redirects to profile personal information', function () {
     $tenant = Tenant::query()->firstOrFail();
     $user = User::factory()->create(['tenant_id' => $tenant->id]);

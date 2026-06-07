@@ -4,6 +4,7 @@ namespace App\Observers\HMS;
 
 use App\Enums\HMS\HostelApplicationStatusEnum;
 use App\Enums\HMS\HostelApplicationTypeEnum;
+use App\Enums\HMS\HostelEligibilityContextEnum;
 use App\Models\HMS\HmsSetting;
 use App\Models\HMS\HostelApplication;
 use App\Models\Students\Student;
@@ -65,6 +66,15 @@ class HostelApplicationObserver
         if ($application->isDirty('status')
             && $application->status === HostelApplicationStatusEnum::AWAITING_PAYMENT) {
             $this->reviewService->guardRequestPayment($application);
+
+            $previousStatus = $application->getOriginal('status');
+            $previousValue = $previousStatus instanceof HostelApplicationStatusEnum
+                ? $previousStatus->value
+                : (string) $previousStatus;
+
+            if ($previousValue === HostelApplicationStatusEnum::PENDING->value) {
+                $this->refreshEligibilityForAwaitingPayment($application);
+            }
         }
 
         if ($application->isDirty('status')
@@ -147,11 +157,50 @@ class HostelApplicationObserver
                 ? $student->enrolments()->find($application->student_enrolment_id)
                 : $student->latestEnrolment;
 
-            $application->eligibility_results = $this->eligibilityService->evaluate(
+            $this->applyEligibilitySnapshot(
+                $application,
                 $student,
                 $enrolment,
+                HostelEligibilityContextEnum::APPLICATION,
             );
         }
+    }
+
+    private function refreshEligibilityForAwaitingPayment(HostelApplication $application): void
+    {
+        if ($application->type !== HostelApplicationTypeEnum::STUDENT || blank($application->student_id)) {
+            return;
+        }
+
+        $student = Student::query()
+            ->with(['latestEnrolment.modeOfStudy', 'latestEnrolment.studentProgram'])
+            ->find($application->student_id);
+
+        if ($student === null) {
+            return;
+        }
+
+        $enrolment = $application->student_enrolment_id
+            ? $student->enrolments()->with(['modeOfStudy', 'studentProgram'])->find($application->student_enrolment_id)
+            : $student->latestEnrolment;
+
+        $this->applyEligibilitySnapshot(
+            $application,
+            $student,
+            $enrolment,
+            HostelEligibilityContextEnum::AWAITING_PAYMENT,
+        );
+    }
+
+    private function applyEligibilitySnapshot(
+        HostelApplication $application,
+        Student $student,
+        ?\App\Models\Students\StudentEnrolment $enrolment,
+        HostelEligibilityContextEnum $context,
+    ): void {
+        $rules = $this->eligibilityService->evaluate($student, $enrolment, context: $context);
+        $application->eligibility_results = $rules;
+        $application->address_outside_campus_priority = $this->eligibilityService->addressOutsideCampusPassed($rules);
     }
 
     private function applyStudentSemesterDates(HostelApplication $application): void

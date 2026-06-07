@@ -28,13 +28,11 @@ use App\Http\Requests\Students\ProgramRequest;
 use App\Http\Requests\Users\UserRequest;
 use App\Http\Resources\AuditTrail\AuditTrailResource;
 use App\Http\Resources\Enrolments\EnrolmentResource;
-use App\Http\Resources\Institution\FeeStructureResource;
 use App\Http\Resources\Institution\LevelResource;
 use App\Http\Resources\Students\AcademicLevelResource;
 use App\Http\Resources\Students\AcademicRecordResource;
 use App\Http\Resources\Students\StudentProgramResource;
 use App\Http\Resources\Students\StudentResource;
-use App\Models\Institution\FeeStructure;
 use App\Models\Institution\IntakePeriod;
 use App\Models\Institution\Level;
 use App\Models\Shared\AcademicLevel;
@@ -50,6 +48,7 @@ use App\Repositories\Students\interface\IStudentProgramRepository;
 use App\Repositories\Students\interface\IStudentRepository;
 use App\Repositories\Users\interface\IUserRepository;
 use App\Services\Enrollment\EnrollmentLookupService;
+use App\Services\HMS\StudentAccommodationFeeService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -163,9 +162,7 @@ class PortalController extends Controller
 
     public function registrationFeePaymentOptions(): Response
     {
-        $feeType = PaymentHelper::getFeeTypeBySlug(FeeTypeEnum::APPLICATION_FEE->slug());
-        $registrationFee = FeeStructure::where('fee_type_id', $feeType->id)->first();
-        $registrationFee = FeeStructureResource::make($registrationFee);
+        $registrationFee = PaymentHelper::getFeeStructureResourceBySlug(FeeTypeEnum::APPLICATION_FEE->slug());
 
         return Inertia::render('portal/application/RegistrationFeePaymentOptions', compact('registrationFee'));
     }
@@ -449,6 +446,22 @@ class PortalController extends Controller
     public function profileAccommodations(): Response
     {
         return $this->renderProfileSection('accommodations', 'manageStudentAccommodationDetails');
+    }
+
+    /**
+     * @throws AuthorizationException
+     */
+    public function accommodationFeePaymentOptions(StudentAccommodationFeeService $feeService): Response
+    {
+        $this->authorize('manageStudentAccommodationDetails');
+
+        $student = $this->getStudent(request());
+        $fees = $feeService->summaryForStudent($student);
+        $accommodationFee = PaymentHelper::getFeeStructureResourceBySlug(FeeTypeEnum::STUDENT_ACCOMMODATION_FEE->slug());
+        return Inertia::render('portal/student/profile/AccommodationFeePaymentOptions', [
+            'fees' => $fees,
+            'accommodationFee' => $accommodationFee,
+        ]);
     }
 
     /**

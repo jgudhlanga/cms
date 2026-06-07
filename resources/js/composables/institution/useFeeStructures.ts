@@ -18,12 +18,12 @@ export const useFeeStructures = () => {
     const { formatCurrency } = useUtils();
     const isLoading = ref(false);
     const feeStructures = ref<FeeStructure[]>([]);
-    const createFeeStructureColumns = () => {
+    const createFeeStructureColumns = (feeType?: FeeType) => {
         const { props } = usePage();
         const { can } = props?.auth as Auth;
         return [
             { header: trans_choice('trans.level', 1), accessorKey: 'attributes.level' },
-            { header: trans_choice('trans.fee_type', 1), accessorKey: 'attributes.feeType' },
+            { header: trans_choice('trans.mode_of_study', 1), accessorKey: 'attributes.modeOfStudy' },
             {
                 header: trans('trans.amount_in_us'),
                 accessorKey: 'attributes.localFcaAmount',
@@ -47,7 +47,7 @@ export const useFeeStructures = () => {
                     const id = getIdParams(row.original.id?.toString() ?? '');
                     const name = trans_choice('trans.fee_structure', 1);
                     return moreActionButton(!!row.original?.attributes?.deletedAt, [
-                        { key: 'edit', action: () => onOpenModal(row.original, undefined) },
+                        { key: 'edit', action: () => onOpenModal(row.original, feeType) },
                         {
                             key: 'archive',
                             action: () => onDelete(can['delete:fee-structures'], route('fee-structures.destroy', id), name),
