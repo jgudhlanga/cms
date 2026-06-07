@@ -9,7 +9,23 @@ export interface BreadcrumbItemInterface {
 	transKey?: any;
 }
 
+export type MenuGroupKey =
+	| 'overview'
+	| 'students'
+	| 'operations'
+	| 'institution'
+	| 'system'
+	| 'department'
+	| 'portal';
+
+export interface MenuGroupInterface {
+	key: MenuGroupKey;
+	items: Array<MenuItemInterface>;
+	showSeparatorBefore?: boolean;
+}
+
 export interface MenuItemInterface {
+	groupKey?: MenuGroupKey;
 	groupLabel?: string;
 	title?: string;
 	transChoiceKey?: string;
