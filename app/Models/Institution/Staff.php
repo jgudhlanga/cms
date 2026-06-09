@@ -3,6 +3,8 @@
 namespace App\Models\Institution;
 
 use App\Http\Filters\Institution\StaffFilter;
+use App\Models\Shared\Address;
+use App\Models\Shared\Contact;
 use App\Models\Shared\Country;
 use App\Models\Shared\EmploymentType;
 use App\Models\Shared\Gender;
@@ -19,20 +21,22 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
 /**
- *
  * @mixin Builder
+ *
  * @method static filter(StaffFilter $filters)
  */
 class Staff extends Model
 {
-    use HasFactory, SoftDeletes, Filterable, BelongsToTenant, Paginatable, LogsActivity;
+    use BelongsToTenant, Filterable, HasFactory, LogsActivity, Paginatable, SoftDeletes;
 
     protected $table = 'staff';
+
     protected $fillable = [
         'tenant_id',
         'user_id',
@@ -100,6 +104,16 @@ class Staff extends Model
     public function institutionDepartments(): BelongsToMany
     {
         return $this->belongsToMany(InstitutionDepartment::class, 'institution_department_staff');
+    }
+
+    public function contacts(): MorphMany
+    {
+        return $this->morphMany(Contact::class, 'contactable');
+    }
+
+    public function addresses(): MorphMany
+    {
+        return $this->morphMany(Address::class, 'addressable');
     }
 
     public function getActivitylogOptions(): LogOptions
