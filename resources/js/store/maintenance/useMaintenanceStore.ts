@@ -8,4 +8,7 @@ export const useMaintenanceStore = defineStore('maintenance-store', {
     state: (): MaintenanceTabsStore => ({
         activeTab: 'users',
     }),
+    persist: {
+        pick: ['activeTab'],
+    },
 });

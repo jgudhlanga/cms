@@ -14,14 +14,17 @@ export interface MaintenancePurgeDialogUser {
 const props = withDefaults(
     defineProps<{
         users: MaintenancePurgeDialogUser[];
-        onConfirm?: () => void;
-        onClosed?: () => void;
         processing?: boolean;
     }>(),
     {
         processing: false,
     },
 );
+
+const emit = defineEmits<{
+    closed: [];
+    confirm: [];
+}>();
 
 const isBulk = computed(() => props.users.length > 1);
 
@@ -55,7 +58,7 @@ const purgeItems = [
                 <button
                     class="rounded-full p-2 hover:bg-red-200"
                     type="button"
-                    @click="() => (onClosed ? onClosed() : null)"
+                    @click="emit('closed')"
                 >
                     <component :is="icons[IconName.close]" :size="26" />
                 </button>
@@ -106,7 +109,7 @@ const purgeItems = [
                     classes="rounded-full"
                     :variant="ColorVariant.shade"
                     type="button"
-                    @click="() => (onClosed ? onClosed() : null)"
+                    @click="emit('closed')"
                 >
                     {{ $t('trans.close') }}
                 </BaseButton>
@@ -115,7 +118,7 @@ const purgeItems = [
                     :variant="ColorVariant.danger"
                     type="button"
                     :processing="processing"
-                    @click="() => (onConfirm ? onConfirm() : null)"
+                    @click="emit('confirm')"
                 >
                     {{ $t('trans.continue') }}
                 </BaseButton>

@@ -8,6 +8,20 @@ use Illuminate\Translation\PotentiallyTranslatedString;
 
 class ZimbabweanIdNumber implements ValidationRule
 {
+    public static function isValid(?string $idNumber): bool
+    {
+        if (! is_string($idNumber)) {
+            return false;
+        }
+
+        $value = strtoupper(trim($idNumber));
+
+        return preg_match(
+            '/^\d{2}-\d{5,7}[A-Z]\d{2}$/',
+            $value
+        ) === 1;
+    }
+
     /**
      * Run the validation rule.
      *
