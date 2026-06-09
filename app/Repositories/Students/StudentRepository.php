@@ -11,6 +11,7 @@ use App\DTO\Students\StudentProgramDto;
 use App\DTO\Students\UpdateStudentDto;
 use App\Enums\AcademicCalendars\AcademicCalendarTypeEnum;
 use App\Enums\Shared\AcademicLevelEnum;
+use App\Enums\Shared\GenderEnum;
 use App\Helpers\Helper;
 use App\Http\Filters\Students\StudentFilter;
 use App\Models\Shared\AcademicLevel;
@@ -45,6 +46,7 @@ class StudentRepository extends BaseRepository implements IStudentRepository
         $query = Student::query()
             ->with([
                 'user',
+                'gender',
                 'enrolments.institutionDepartment.department',
                 'enrolments.departmentLevel.level',
                 'enrolments.departmentCourse.course',
@@ -126,6 +128,13 @@ class StudentRepository extends BaseRepository implements IStudentRepository
             $query->whereHas('enrolments', function ($q) use ($modeIds): void {
                 $q->whereIn('mode_of_study_id', $modeIds);
             });
+        }
+
+        // Gender
+        $gender = strtolower(trim((string) ($filters['gender'] ?? '')));
+        if (in_array($gender, ['male', 'female'], true)) {
+            $title = $gender === 'male' ? GenderEnum::MALE->value : GenderEnum::FEMALE->value;
+            $query->whereHas('gender', fn ($q) => $q->where('title', $title));
         }
 
         // Trashed records

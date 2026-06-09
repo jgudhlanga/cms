@@ -317,6 +317,7 @@ export type StudentFiltersState = {
     level?: number[] | null;
     course?: number[] | null;
     mode_of_study?: number[] | null;
+    gender?: 'male' | 'female';
     academic_year?: number[] | null;
     calendar_type?: string[] | null;
     with_trashed?: boolean | null;

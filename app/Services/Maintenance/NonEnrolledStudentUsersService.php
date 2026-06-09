@@ -14,7 +14,7 @@ class NonEnrolledStudentUsersService
     ) {}
 
     /**
-     * @param  array{search?: string|null}  $filters
+     * @param  array{search?: string|null, application_status?: string|null}  $filters
      */
     public function paginate(int $tenantId, array $filters = []): LengthAwarePaginator
     {
@@ -23,6 +23,11 @@ class NonEnrolledStudentUsersService
         $search = $filters['search'] ?? null;
         if (is_string($search)) {
             $builder = $this->query->applySearch($builder, $search);
+        }
+
+        $applicationStatus = $filters['application_status'] ?? null;
+        if (is_string($applicationStatus)) {
+            $builder = $this->query->applyApplicationStatusFilter($builder, $applicationStatus);
         }
 
         return $builder->paginate()->withQueryString();

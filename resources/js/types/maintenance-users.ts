@@ -27,6 +27,15 @@ export interface NonEnrolledStudentUser {
     attributes: NonEnrolledStudentUserAttributes;
 }
 
+export type MaintenanceApplicationStatusFilter =
+    | 'no_profile'
+    | 'no_programmes'
+    | 'review'
+    | 'waitlisted'
+    | 'verified'
+    | 'unknown';
+
 export interface MaintenanceUsersFiltersState {
     search?: string;
+    applicationStatus?: MaintenanceApplicationStatusFilter;
 }
