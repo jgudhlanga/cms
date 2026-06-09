@@ -55,7 +55,7 @@ class MaintenanceController extends Controller
         return NonEnrolledStudentUserResource::collection(
             $service->paginate(
                 $this->resolveTenantId(),
-                request()->only(['search']),
+                request()->only(['search', 'application_status']),
             ),
         );
     }

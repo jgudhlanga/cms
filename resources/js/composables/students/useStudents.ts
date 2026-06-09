@@ -26,6 +26,13 @@ export const useStudents = () => {
             {header: trans_choice('trans.id_number',1), accessorKey: 'attributes.idNumber',},
             {header: trans_choice('trans.student_number',1), accessorKey: 'attributes.studentNumber',},
             {
+                header: trans_choice('trans.gender', 1),
+                accessorKey: 'gender',
+                cell: ({ row }: { row: { original: Student } }) => {
+                    return row.original.attributes?.gender ?? '--';
+                },
+            },
+            {
                 header: trans_choice('trans.department', 1),
                 accessorKey: 'department',
                 cell: ({ row }: { row: { original: Student } }) => {

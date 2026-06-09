@@ -225,6 +225,10 @@ export const useMaintenanceUsers = () => {
                 url.searchParams.set('search', filters.search);
             }
 
+            if (filters.applicationStatus) {
+                url.searchParams.set('application_status', filters.applicationStatus);
+            }
+
             return await HttpService.get(url.pathname + url.search);
         } catch {
             errorAlert(trans('trans.load_data_failure', { data: trans_choice('trans.user', 2) }));

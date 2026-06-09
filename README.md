@@ -57,13 +57,17 @@ The College Management System is an integrated software solution developed to ma
 ```bash
 git clone git@github.com:Penstej-Systems/hrepoly.git
 cd hrepoly
-chmod -R 777 storage bootstrap/cache
+mkdir -p storage/framework/cache/laravel-excel
+chown -R $WEB_USER:$WEB_USER storage bootstrap/cache   # e.g. www-data
+chmod -R ug+rwx storage bootstrap/cache
 cp .env.example .env
 composer install && npm install
 php artisan key:gen
 php artisan migrate --seed
 php artisan storage:link
 ```
+
+Excel export/import temporary files use `sys_get_temp_dir()` via `config/excel.php`, so they do not depend on `storage/framework/cache/laravel-excel` being writable. The directory above is still required for Laravel cache and other framework storage.
 
 ## Queue Process Jobs
 
@@ -73,6 +77,21 @@ php artisan queue:health --queues=default,bank-statements
 OR
 php artisan horizon
 ```
+
+### Production storage permissions
+
+If Excel downloads fail with `Permission denied` under `storage/framework/cache/laravel-excel`, fix storage ownership on the server (adjust `www-data` if your PHP-FPM user differs):
+
+```bash
+cd /var/www/hrepoly
+mkdir -p storage/framework/cache/laravel-excel
+sudo chown -R www-data:www-data storage bootstrap/cache
+sudo chmod -R ug+rwx storage bootstrap/cache
+sudo -u www-data touch storage/framework/cache/laravel-excel/.write-test && \
+sudo -u www-data rm storage/framework/cache/laravel-excel/.write-test
+```
+
+After deploying `config/excel.php`, Excel temp files use `sys_get_temp_dir()` and no longer require the `laravel-excel` cache directory to be writable.
 
 ### Production recovery sequence (Supervisor + database queue)
 

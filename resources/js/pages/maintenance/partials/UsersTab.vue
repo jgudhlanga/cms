@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { BaseButton } from '@/components/core/button';
 import BaseAlert from '@/components/core/alert/BaseAlert.vue';
+import BaseCombobox from '@/components/core/form/combobox/BaseCombobox.vue';
 import DataTable from '@/components/core/table/DataTable.vue';
 import { useMaintenanceUserSelection } from '@/composables/maintenance/useMaintenanceUserSelection';
 import { useMaintenanceUsers } from '@/composables/maintenance/useMaintenanceUsers';
@@ -8,7 +9,12 @@ import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
 import { TypeVariant } from '@/enums/type-variants';
 import type { DataListProps } from '@/types/data-pagination';
-import type { MaintenanceUsersFiltersState, NonEnrolledStudentUser } from '@/types/maintenance-users';
+import type {
+    MaintenanceApplicationStatusFilter,
+    MaintenanceUsersFiltersState,
+    NonEnrolledStudentUser,
+} from '@/types/maintenance-users';
+import type { SelectOption } from '@/types/utils';
 import { trans } from 'laravel-vue-i18n';
 import { computed, onMounted, ref, watch } from 'vue';
 
@@ -41,6 +47,21 @@ const users = ref<DataListProps<NonEnrolledStudentUser>>({
 });
 
 const filters = ref<MaintenanceUsersFiltersState>({});
+
+const applicationStatusOptions = computed<SelectOption[]>(() => [
+    { value: 'all', label: trans('trans.maintenance_users_filter_all_statuses') },
+    { value: 'no_profile', label: trans('trans.maintenance_users_status_no_profile') },
+    { value: 'no_programmes', label: trans('trans.maintenance_users_status_no_programmes') },
+    { value: 'review', label: trans('trans.maintenance_users_status_review') },
+    { value: 'waitlisted', label: trans('trans.maintenance_users_status_waitlisted') },
+    { value: 'verified', label: trans('trans.maintenance_users_status_verified') },
+    { value: 'unknown', label: trans('trans.maintenance_users_status_unknown') },
+]);
+
+const applicationStatusSelection = ref<SelectOption | null>({
+    value: 'all',
+    label: trans('trans.maintenance_users_filter_all_statuses'),
+});
 
 const visibleUsers = computed(() => users.value.data);
 
@@ -102,6 +123,20 @@ const onBulkPurge = () => {
     });
 };
 
+const onApplicationStatusChange = async (selection: SelectOption | null) => {
+    applicationStatusSelection.value = selection;
+
+    const status = selection?.value;
+
+    const nextFilters: MaintenanceUsersFiltersState = {
+        ...filters.value,
+        applicationStatus:
+            status && status !== 'all' ? (status as MaintenanceApplicationStatusFilter) : undefined,
+    };
+
+    await loadUsers(nextFilters);
+};
+
 onMounted(() => loadUsers());
 
 watch(visibleUsers, () => pruneSelectionToVisibleUsers());
@@ -129,6 +164,15 @@ watch(visibleUsers, () => pruneSelectionToVisibleUsers());
             :disable-export="true"
             :show-column-filters="false"
         >
+            <template #head-left>
+                <BaseCombobox
+                    :model-value="applicationStatusSelection"
+                    :options="applicationStatusOptions"
+                    :placeholder="trans('trans.maintenance_users_filter_all_statuses')"
+                    class="min-w-56 rounded-full"
+                    @update:model-value="onApplicationStatusChange"
+                />
+            </template>
             <template #head-right>
                 <div v-if="selectedCount > 0" class="flex items-center gap-3">
                     <span class="text-sm font-medium">

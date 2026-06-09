@@ -103,6 +103,38 @@ it('restricts students to the department user own departments', function (): voi
         ->and($ids)->not->toContain((int) $otherProgram->student_id);
 });
 
+it('filters students by gender', function (): void {
+    $maleProgram = createVerifiedStudentProgram('STU-MALE-'.strtoupper(Str::random(4)));
+    $femaleProgram = createVerifiedStudentProgram('STU-FEM-'.strtoupper(Str::random(4)));
+
+    $femaleGender = Gender::query()->firstOrCreate(['title' => 'Female']);
+    $femaleProgram->student->update(['gender_id' => $femaleGender->id]);
+
+    createStudentEnrolmentForProgram($maleProgram);
+    createStudentEnrolmentForProgram($femaleProgram);
+
+    $user = User::factory()->create(['tenant_id' => $maleProgram->tenant_id]);
+    Sanctum::actingAs($user);
+
+    $maleResponse = $this->getJson(route('v1.students.index').'?gender=male');
+    $maleResponse->assertOk();
+    $maleIds = collect($maleResponse->json('data'))->pluck('id')->map(static fn ($id) => (int) $id)->all();
+    expect($maleIds)->toContain((int) $maleProgram->student_id)
+        ->and($maleIds)->not->toContain((int) $femaleProgram->student_id);
+
+    $femaleResponse = $this->getJson(route('v1.students.index').'?gender=female');
+    $femaleResponse->assertOk();
+    $femaleIds = collect($femaleResponse->json('data'))->pluck('id')->map(static fn ($id) => (int) $id)->all();
+    expect($femaleIds)->toContain((int) $femaleProgram->student_id)
+        ->and($femaleIds)->not->toContain((int) $maleProgram->student_id);
+
+    $allResponse = $this->getJson(route('v1.students.index'));
+    $allResponse->assertOk();
+    $allIds = collect($allResponse->json('data'))->pluck('id')->map(static fn ($id) => (int) $id)->all();
+    expect($allIds)->toContain((int) $maleProgram->student_id)
+        ->and($allIds)->toContain((int) $femaleProgram->student_id);
+});
+
 it('returns no students when department user has no assigned departments', function (): void {
     $program = createVerifiedStudentProgram('STU-NODEPT-'.strtoupper(Str::random(4)));
     createStudentEnrolmentForProgram($program);

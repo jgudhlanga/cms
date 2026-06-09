@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Queries\Maintenance;
 
 use App\Enums\Acl\RoleEnum;
+use App\Enums\Maintenance\MaintenanceApplicationStatusFilterEnum;
 use App\Enums\Shared\ClassListTypeEnum;
-use App\Enums\Shared\FeeTypeEnum;
 use App\Enums\Shared\WorkflowStepEnum;
 use App\Models\Users\User;
 use Illuminate\Database\Eloquent\Builder;
@@ -47,19 +47,6 @@ class NonEnrolledStudentUsersQuery
                     fn (Builder $status) => $status->where('slug', 'active'),
                 ),
             )
-            ->whereDoesntHave(
-                'ledgerTransactions',
-                fn (Builder $ledger) => $ledger
-                    ->where('type', 'receipt')
-                    ->where('payment_status', 'paid')
-                    ->whereHas(
-                        'feeType',
-                        fn (Builder $feeType) => $feeType->whereIn('slug', [
-                            FeeTypeEnum::APPLICATION_FEE->slug(),
-                            FeeTypeEnum::TUITION_FEE->slug(),
-                        ]),
-                    ),
-            )
             ->with([
                 'status',
                 'roles',
@@ -90,5 +77,98 @@ class NonEnrolledStudentUsersQuery
                         ->orWhere('passport_number', 'like', $term);
                 });
         });
+    }
+
+    public function applyApplicationStatusFilter(Builder $query, ?string $status): Builder
+    {
+        $filter = MaintenanceApplicationStatusFilterEnum::tryFromFilter($status);
+
+        if ($filter === null) {
+            return $query;
+        }
+
+        return match ($filter) {
+            MaintenanceApplicationStatusFilterEnum::NO_PROFILE => $query->whereDoesntHave('studentProfile'),
+            MaintenanceApplicationStatusFilterEnum::NO_PROGRAMMES => $query->whereHas(
+                'studentProfile',
+                fn (Builder $profile) => $profile->whereDoesntHave('programs'),
+            ),
+            MaintenanceApplicationStatusFilterEnum::REVIEW => $query->whereHas(
+                'studentProfile.programs',
+                fn (Builder $program) => $this->applyReviewProgrammeConstraint($program),
+            ),
+            MaintenanceApplicationStatusFilterEnum::WAITLISTED => $query->whereHas(
+                'studentProfile.programs',
+                fn (Builder $program) => $this->applyWaitlistedProgrammeConstraint($program),
+            ),
+            MaintenanceApplicationStatusFilterEnum::VERIFIED => $query->whereHas(
+                'studentProfile.programs',
+                fn (Builder $program) => $this->applyVerifiedProgrammeConstraint($program),
+            ),
+            MaintenanceApplicationStatusFilterEnum::UNKNOWN => $query
+                ->whereHas(
+                    'studentProfile.programs',
+                    fn (Builder $program) => $program->whereNull('student_programs.deleted_at'),
+                )
+                ->whereDoesntHave(
+                    'studentProfile.programs',
+                    fn (Builder $program) => $program
+                        ->whereNull('student_programs.deleted_at')
+                        ->where(function (Builder $status): void {
+                            $status->whereHas(
+                                'departmentWorkflowStep.workflowStep',
+                                fn (Builder $workflowStep) => $workflowStep->whereIn('slug', [
+                                    WorkflowStepEnum::REVIEW->slug(),
+                                    WorkflowStepEnum::WAITLISTED->slug(),
+                                ]),
+                            )->orWhereHas(
+                                'classList',
+                                fn (Builder $classList) => $classList->where(
+                                    'type',
+                                    ClassListTypeEnum::VERIFIED->value,
+                                ),
+                            );
+                        }),
+                ),
+        };
+    }
+
+    private function applyReviewProgrammeConstraint(Builder $program): void
+    {
+        $program
+            ->whereNull('student_programs.deleted_at')
+            ->whereHas(
+                'departmentWorkflowStep.workflowStep',
+                fn (Builder $workflowStep) => $workflowStep->where(
+                    'slug',
+                    WorkflowStepEnum::REVIEW->slug(),
+                ),
+            );
+    }
+
+    private function applyWaitlistedProgrammeConstraint(Builder $program): void
+    {
+        $program
+            ->whereNull('student_programs.deleted_at')
+            ->whereHas(
+                'departmentWorkflowStep.workflowStep',
+                fn (Builder $workflowStep) => $workflowStep->where(
+                    'slug',
+                    WorkflowStepEnum::WAITLISTED->slug(),
+                ),
+            );
+    }
+
+    private function applyVerifiedProgrammeConstraint(Builder $program): void
+    {
+        $program
+            ->whereNull('student_programs.deleted_at')
+            ->whereHas(
+                'classList',
+                fn (Builder $classList) => $classList->where(
+                    'type',
+                    ClassListTypeEnum::VERIFIED->value,
+                ),
+            );
     }
 }

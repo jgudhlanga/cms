@@ -32,6 +32,7 @@ class StudentController
                 'level',
                 'course',
                 'mode_of_study',
+                'gender',
                 'academic_year',
                 'calendar_type',
                 'with_trashed',

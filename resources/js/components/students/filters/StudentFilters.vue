@@ -12,6 +12,7 @@ import type { DepartmentLevel, DepartmentLevelCourse } from '@/types/department-
 import type { InstitutionDepartment, Level } from '@/types/institution';
 import type { StudentFiltersState } from '@/types/students';
 import type { SelectOption } from '@/types/utils';
+import { trans, trans_choice } from 'laravel-vue-i18n';
 
 interface Props {
     filters: StudentFiltersState;
@@ -58,6 +59,10 @@ const departmentSelection = ref<SelectOption | null>(null);
 const levelSelection = ref<SelectOption | null>(null);
 const courseSelection = ref<SelectOption[]>([]);
 const modeOfStudySelection = ref<SelectOption[]>([]);
+const genderSelection = ref<SelectOption | null>({
+    value: 'all',
+    label: 'All genders',
+});
 
 const { isLoading: departmentsLoading, departments, listDepartments } = useInstitutionDepartments();
 const { isLoading: modesLoading, modesOfStudy, listModesOfStudy } = useModeOfStudy();
@@ -156,6 +161,12 @@ async function loadDepartmentLevelsForFilter(deptId: number): Promise<void> {
         departmentLevelsLoading.value = false;
     }
 }
+
+const genderOptions = computed<SelectOption[]>(() => [
+    { value: 'all', label: trans('students.filter_all_genders') },
+    { value: 'male', label: trans_choice('general.male', 1) },
+    { value: 'female', label: trans_choice('general.female', 1) },
+]);
 
 const modeOfStudyOptions = computed<SelectOption[]>(() => {
     const rows = modesOfStudy.value ?? [];
@@ -269,6 +280,12 @@ const toOptionalSingleIdArray = (opt: SelectOption | null): number[] | undefined
     return id > 0 ? [id] : undefined;
 };
 
+const resolveGenderFilter = (): StudentFiltersState['gender'] => {
+    const value = genderSelection.value?.value ? String(genderSelection.value.value) : '';
+
+    return value === 'male' || value === 'female' ? value : undefined;
+};
+
 const applyFilters = useDebounceFn(() => {
     emit('change', {
         search: search.value || undefined,
@@ -277,6 +294,7 @@ const applyFilters = useDebounceFn(() => {
         level: toOptionalSingleIdArray(levelSelection.value),
         course: toIdArray(courseSelection.value),
         mode_of_study: toIdArray(modeOfStudySelection.value),
+        gender: resolveGenderFilter(),
     });
 }, 400);
 
@@ -288,6 +306,7 @@ watch(
         levelSelection,
         courseSelection,
         modeOfStudySelection,
+        genderSelection,
     ],
     applyFilters,
     { deep: true },
@@ -300,6 +319,10 @@ const resetFilters = () => {
     levelSelection.value = null;
     courseSelection.value = [];
     modeOfStudySelection.value = [];
+    genderSelection.value = {
+        value: 'all',
+        label: trans('students.filter_all_genders'),
+    };
     departmentLevelsForFilter.value = [];
 };
 
@@ -381,8 +404,20 @@ onMounted(async () => {
                 />
             </div>
         </div>
-        <div class="flex justify-end">
-            <ResetButton @click="resetFilters" />
+
+        <!-- Row 3: gender (col 1) + reset (col 2), equal columns aligned with row 2 -->
+        <div class="grid min-w-0 grid-cols-1 items-end gap-3 md:grid-cols-3 md:gap-4">
+            <div class="min-w-0">
+                <BaseCombobox
+                    v-model="genderSelection"
+                    :options="genderOptions"
+                    :placeholder="$t('students.search_by_gender_placeholder')"
+                    class="w-full rounded-full"
+                />
+            </div>
+            <div class="min-w-0">
+                <ResetButton @click="resetFilters" />
+            </div>
         </div>
     </div>
 </template>

@@ -193,7 +193,7 @@ it('excludes student role users with an active enrolment', function (): void {
     expect(responseUserIds($response))->not->toContain((int) $studentUser->id);
 });
 
-it('excludes student role users with a paid application receipt', function (): void {
+it('includes student role users with a paid application receipt when otherwise eligible', function (): void {
     $rootUser = actingAsRootMaintenanceUser();
 
     $program = createReviewStudentProgram('NEU-FEE-'.strtoupper(Str::random(4)));
@@ -205,7 +205,85 @@ it('excludes student role users with a paid application receipt', function (): v
     $response = $this->getJson(route('maintenance.non-enrolled-student-users'));
     $response->assertOk();
 
-    expect(responseUserIds($response))->not->toContain((int) $studentUser->id);
+    expect(responseUserIds($response))->toContain((int) $studentUser->id);
+});
+
+it('filters non-enrolled student users by application status no profile', function (): void {
+    $rootUser = actingAsRootMaintenanceUser();
+
+    $noProfileUser = User::factory()->create([
+        'tenant_id' => $rootUser->tenant_id,
+        'first_name' => 'Filter',
+        'last_name' => 'NoProfile',
+    ]);
+    assignStudentRole($noProfileUser);
+
+    $program = createVerifiedStudentProgram('NEU-FIL-'.strtoupper(Str::random(4)));
+    $verifiedUser = $program->student->user;
+    $verifiedUser->update(['tenant_id' => $rootUser->tenant_id]);
+    assignStudentRole($verifiedUser);
+
+    $response = $this->getJson(route('maintenance.non-enrolled-student-users', [
+        'application_status' => 'no_profile',
+    ]));
+    $response->assertOk();
+
+    $ids = responseUserIds($response);
+
+    expect($ids)->toContain((int) $noProfileUser->id)
+        ->and($ids)->not->toContain((int) $verifiedUser->id);
+});
+
+it('filters non-enrolled student users by application status verified', function (): void {
+    $rootUser = actingAsRootMaintenanceUser();
+
+    $noProfileUser = User::factory()->create([
+        'tenant_id' => $rootUser->tenant_id,
+        'first_name' => 'Filter',
+        'last_name' => 'VerifiedExclude',
+    ]);
+    assignStudentRole($noProfileUser);
+
+    $program = createVerifiedStudentProgram('NEU-FVR-'.strtoupper(Str::random(4)));
+    $verifiedUser = $program->student->user;
+    $verifiedUser->update(['tenant_id' => $rootUser->tenant_id]);
+    assignStudentRole($verifiedUser);
+
+    $response = $this->getJson(route('maintenance.non-enrolled-student-users', [
+        'application_status' => 'verified',
+    ]));
+    $response->assertOk();
+
+    $ids = responseUserIds($response);
+
+    expect($ids)->toContain((int) $verifiedUser->id)
+        ->and($ids)->not->toContain((int) $noProfileUser->id);
+});
+
+it('filters non-enrolled student users by application status review', function (): void {
+    $rootUser = actingAsRootMaintenanceUser();
+
+    $noProfileUser = User::factory()->create([
+        'tenant_id' => $rootUser->tenant_id,
+        'first_name' => 'Filter',
+        'last_name' => 'ReviewExclude',
+    ]);
+    assignStudentRole($noProfileUser);
+
+    $program = createReviewStudentProgram('NEU-FRV-'.strtoupper(Str::random(4)));
+    $reviewUser = $program->student->user;
+    $reviewUser->update(['tenant_id' => $rootUser->tenant_id]);
+    assignStudentRole($reviewUser);
+
+    $response = $this->getJson(route('maintenance.non-enrolled-student-users', [
+        'application_status' => 'review',
+    ]));
+    $response->assertOk();
+
+    $ids = responseUserIds($response);
+
+    expect($ids)->toContain((int) $reviewUser->id)
+        ->and($ids)->not->toContain((int) $noProfileUser->id);
 });
 
 it('excludes non-student role users even when profile criteria match', function (): void {
