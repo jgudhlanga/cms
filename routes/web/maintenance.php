@@ -15,6 +15,16 @@ Route::prefix('maintenance')->middleware(['auth', 'can:root:manage'])->group(fun
         ->name('maintenance.exports.student-enrollment');
     Route::post('/exports/application', [MaintenanceController::class, 'exportApplication'])
         ->name('maintenance.exports.application');
+    Route::get('/faulty-student-ids', [MaintenanceController::class, 'faultyStudentIds'])
+        ->name('maintenance.faulty-student-ids');
+    Route::get('/faulty-student-ids/data', [MaintenanceController::class, 'faultyStudentIdNumbers'])
+        ->name('maintenance.faulty-student-ids.data');
+    Route::patch('/faulty-student-ids/{student}', [MaintenanceController::class, 'fixFaultyStudentIdNumber'])
+        ->name('maintenance.faulty-student-ids.fix');
+    Route::get('/faulty-student-ids/{student}/merge', [MaintenanceController::class, 'mergeFaultyStudentPreview'])
+        ->name('maintenance.faulty-student-ids.merge');
+    Route::post('/faulty-student-ids/merge', [MaintenanceController::class, 'mergeFaultyStudentAccounts'])
+        ->name('maintenance.faulty-student-ids.merge.execute');
     Route::get('/staff-import/template', [MaintenanceController::class, 'downloadStaffImportTemplate'])
         ->name('maintenance.staff-import.template');
     Route::post('/staff-import/preview', [MaintenanceController::class, 'previewStaffImport'])

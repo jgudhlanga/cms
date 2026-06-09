@@ -4,26 +4,36 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Maintenance;
 
+use App\Exceptions\Maintenance\StudentIdNumberConflictException;
 use App\Exports\Maintenance\StaffImportTemplateExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Maintenance\ExportApplicationRequest;
 use App\Http\Requests\Maintenance\ExportStudentEnrollmentRequest;
+use App\Http\Requests\Maintenance\FixStudentIdNumberRequest;
 use App\Http\Requests\Maintenance\MaintenanceUserBulkPurgeRequest;
 use App\Http\Requests\Maintenance\MaintenanceUserPurgeRequest;
+use App\Http\Requests\Maintenance\MergeStudentAccountsRequest;
 use App\Http\Requests\Maintenance\StaffImportPreviewRequest;
 use App\Http\Requests\Maintenance\StaffImportProcessRequest;
+use App\Http\Resources\Maintenance\FaultyStudentIdNumberResource;
 use App\Http\Resources\Maintenance\NonEnrolledStudentUserResource;
+use App\Http\Resources\Maintenance\StudentAccountMergePreviewResource;
 use App\Jobs\Applications\ExportApplicationJob;
 use App\Jobs\Enrolments\ExportStudentEnrollmentJob;
+use App\Models\Students\Student;
 use App\Models\Users\User;
+use App\Services\Maintenance\FaultyStudentIdNumbersService;
+use App\Services\Maintenance\FixStudentIdNumberService;
 use App\Services\Maintenance\MaintenanceUserPurgeService;
 use App\Services\Maintenance\NonEnrolledStudentUsersService;
 use App\Services\Maintenance\StaffImportService;
 use App\Services\Maintenance\StaffImportTemplateService;
+use App\Services\Maintenance\StudentAccountMergePreviewService;
+use App\Services\Maintenance\StudentAccountMergeService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Response as HttpResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\Response as HttpResponse;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -128,6 +138,71 @@ class MaintenanceController extends Controller
         $preview = $importService->preview($this->resolveTenantId(), $file);
 
         return response()->json($preview);
+    }
+
+    public function faultyStudentIds(): Response
+    {
+        return Inertia::render('maintenance/FaultyStudentIds');
+    }
+
+    public function faultyStudentIdNumbers(
+        FaultyStudentIdNumbersService $service,
+    ): AnonymousResourceCollection {
+        return FaultyStudentIdNumberResource::collection(
+            $service->paginate(request()->only(['search'])),
+        );
+    }
+
+    public function fixFaultyStudentIdNumber(
+        FixStudentIdNumberRequest $request,
+        Student $student,
+        FixStudentIdNumberService $fixService,
+    ): JsonResponse {
+        try {
+            $student = $fixService->fix($student, (string) $request->validated('id_number'));
+        } catch (StudentIdNumberConflictException $exception) {
+            return response()->json([
+                'message' => $exception->getMessage(),
+                'conflict' => [
+                    'conflictingStudentId' => $exception->conflictingStudentId,
+                    'idNumber' => $exception->idNumber,
+                ],
+            ], 409);
+        }
+
+        return response()->json([
+            'data' => FaultyStudentIdNumberResource::make($student),
+        ]);
+    }
+
+    public function mergeFaultyStudentPreview(
+        Student $student,
+        StudentAccountMergePreviewService $previewService,
+    ): Response {
+        $targetId = (int) request()->query('target', 0);
+        $idNumber = (string) request()->query('id_number', '');
+
+        $preview = $previewService->build($student, $targetId, $idNumber);
+
+        return Inertia::render('maintenance/FaultyStudentIdMerge', [
+            'preview' => StudentAccountMergePreviewResource::make($preview)->resolve(),
+        ]);
+    }
+
+    public function mergeFaultyStudentAccounts(
+        MergeStudentAccountsRequest $request,
+        StudentAccountMergeService $mergeService,
+    ): RedirectResponse {
+        $mergeService->merge(
+            (int) $request->validated('source_student_id'),
+            (int) $request->validated('target_student_id'),
+            (int) $request->validated('survivor_student_id'),
+            (string) $request->validated('id_number'),
+        );
+
+        return redirect()
+            ->route('maintenance.faulty-student-ids')
+            ->with('success', __('trans.maintenance_faulty_data_merge_success'));
     }
 
     public function processStaffImport(

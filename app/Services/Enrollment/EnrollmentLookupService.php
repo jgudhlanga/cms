@@ -100,6 +100,27 @@ class EnrollmentLookupService
             ->first();
     }
 
+    public function findStudentByNationalIdUnscoped(string $idNumber, ?int $excludingStudentId = null): ?Student
+    {
+        $normalized = self::normalizeNationalId($idNumber);
+        $compact = strtoupper(str_replace('-', '', $normalized));
+
+        $query = Student::query()
+            ->withTrashed()
+            ->whereNotNull('id_number')
+            ->where(function ($query) use ($normalized, $compact) {
+                $query->where('id_number', $normalized)
+                    ->orWhere('id_number', $compact)
+                    ->orWhereRaw('UPPER(TRIM(REPLACE(id_number, "-", ""))) = ?', [$compact]);
+            });
+
+        if ($excludingStudentId !== null) {
+            $query->where('id', '!=', $excludingStudentId);
+        }
+
+        return $query->with('user')->first();
+    }
+
     public function findStudentByPassport(string $passportNumber): ?Student
     {
         $normalized = self::normalizePassportNumber($passportNumber);
