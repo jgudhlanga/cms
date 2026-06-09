@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import BaseAlert from '@/components/core/alert/BaseAlert.vue';
-import { TypeVariant } from '@/enums/type-variants';
-import { trans } from 'laravel-vue-i18n';
+import StaffImportPanel from '@/pages/maintenance/partials/StaffImportPanel.vue';
+import type { StaffImportResult } from '@/types/staff-import';
+
+defineProps<{
+    staffImportResult?: StaffImportResult | null;
+}>();
 </script>
 
 <template>
-    <BaseAlert
-        :type="TypeVariant.info"
-        :description="trans('trans.maintenance_staff_placeholder')"
-    />
+    <StaffImportPanel :staff-import-result="staffImportResult" />
 </template>

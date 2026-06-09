@@ -3,7 +3,7 @@ import { CreateButton, ExportButton, ImportButton } from '@/components/core/butt
 import { useDataTables } from '@/composables/core/useDataTables';
 import { PAGINATION_ITEMS_PER_PAGE } from '@/lib/constants';
 import { DataFilters, PaginationMeta, PaginationRootLink } from '@/types/data-pagination';
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, ref, useSlots, watch } from 'vue';
 import DataLoadingSpinner from '@/components/core/loader/DataLoadingSpinner.vue';
 import { Archived, ColumnFilter, GotoPage, Paginator, PerPageSize, Search, TableBody, TableHead } from './';
 import { ColorVariant } from '@/enums/colors';
@@ -84,8 +84,18 @@ watch(pageSize, pageSizeWatcher);
 watch(currentPage, goToPageWatcher);
 watch(trashed, trashedWatcher);
 
+const slots = useSlots();
+
 const showToolBar = computed(() => {
-    return props.hideBuiltInSearch || props.showArchivedFilter || props.showColumnFilters || props.onExport || props.onImport || props.onCreate;
+    return (
+        props.hideBuiltInSearch ||
+        props.showArchivedFilter ||
+        props.showColumnFilters ||
+        props.onExport ||
+        props.onImport ||
+        props.onCreate ||
+        !!slots['head-right']
+    );
 });
 </script>
 
