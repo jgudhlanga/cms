@@ -2,13 +2,19 @@
 import { BaseButton } from '@/components/core/button';
 import BaseAlert from '@/components/core/alert/BaseAlert.vue';
 import BaseCombobox from '@/components/core/form/combobox/BaseCombobox.vue';
+import DataLoadingSpinner from '@/components/core/loader/DataLoadingSpinner.vue';
 import DataTable from '@/components/core/table/DataTable.vue';
 import { useMaintenanceUserSelection } from '@/composables/maintenance/useMaintenanceUserSelection';
-import { useMaintenanceUsers } from '@/composables/maintenance/useMaintenanceUsers';
+import {
+    parseNonEnrolledStudentUsersListUrl,
+    resolveNonEnrolledStudentUsersListPath,
+    useMaintenanceUsers,
+} from '@/composables/maintenance/useMaintenanceUsers';
+import { PAGINATION_ITEMS_PER_PAGE } from '@/lib/constants';
 import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
 import { TypeVariant } from '@/enums/type-variants';
-import type { DataListProps } from '@/types/data-pagination';
+import type { ApiFilterResponse, DataListProps } from '@/types/data-pagination';
 import type {
     MaintenanceApplicationStatusFilter,
     MaintenanceUsersFiltersState,
@@ -47,6 +53,7 @@ const users = ref<DataListProps<NonEnrolledStudentUser>>({
 });
 
 const filters = ref<MaintenanceUsersFiltersState>({});
+const lastListPath = ref<string | null>(null);
 
 const applicationStatusOptions = computed<SelectOption[]>(() => [
     { value: 'all', label: trans('trans.maintenance_users_filter_all_statuses') },
@@ -70,7 +77,98 @@ const isPurgeSelectable = (user: NonEnrolledStudentUser) => !user.attributes.has
 const { selectedUserIds, selectAllModel, selectedCount, clearSelection, pruneSelectionToVisibleUsers } =
     useMaintenanceUserSelection(visibleUsers, isPurgeSelectable);
 
+const syncApplicationStatusSelection = () => {
+    const status = filters.value.applicationStatus ?? 'all';
+    applicationStatusSelection.value =
+        applicationStatusOptions.value.find((option) => option.value === status) ??
+        applicationStatusOptions.value[0];
+};
+
+const applyUsersResponse = (response: ApiFilterResponse, listPath: string): void => {
+    users.value = {
+        data: (response.data ?? []) as NonEnrolledStudentUser[],
+        links: response.links ?? users.value.links,
+        meta: response.meta ?? users.value.meta,
+    };
+    lastListPath.value = listPath;
+    filters.value = parseNonEnrolledStudentUsersListUrl(listPath);
+    syncApplicationStatusSelection();
+    pruneSelectionToVisibleUsers();
+};
+
+const loadUsers = async (
+    nextFilters: MaintenanceUsersFiltersState = filters.value,
+    pagination?: { page?: number; pageSize?: number },
+) => {
+    filters.value = nextFilters;
+
+    const page = pagination?.page ?? (users.value.meta.current_page || 1);
+    const pageSize = pagination?.pageSize ?? (users.value.meta.per_page || PAGINATION_ITEMS_PER_PAGE);
+
+    const listPath = resolveNonEnrolledStudentUsersListPath(filters.value, undefined, {
+        page,
+        pageSize,
+    });
+
+    const response = await fetchNonEnrolledStudentUsers(filters.value, undefined, {
+        page,
+        pageSize,
+    });
+
+    if (!response) {
+        return;
+    }
+
+    applyUsersResponse(response, listPath);
+
+    const currentPage = response.meta?.current_page ?? 1;
+    const lastPage = response.meta?.last_page ?? 1;
+    const isEmptyPage = (response.data ?? []).length === 0;
+
+    if (isEmptyPage && currentPage > 1 && lastPage >= 1) {
+        const targetPage = Math.min(currentPage, lastPage);
+
+        if (targetPage < currentPage) {
+            await loadUsers(filters.value, {
+                page: targetPage,
+                pageSize: response.meta?.per_page ?? PAGINATION_ITEMS_PER_PAGE,
+            });
+        }
+    }
+};
+
+const loadUsersFromUrl = async (url: string) => {
+    const listPath = resolveNonEnrolledStudentUsersListPath(filters.value, url);
+    const response = await fetchNonEnrolledStudentUsers(filters.value, url);
+
+    if (!response) {
+        return;
+    }
+
+    applyUsersResponse(response, listPath);
+
+    const currentPage = response.meta?.current_page ?? 1;
+    const lastPage = response.meta?.last_page ?? 1;
+    const isEmptyPage = (response.data ?? []).length === 0;
+
+    if (isEmptyPage && currentPage > 1 && lastPage >= 1) {
+        const targetPage = Math.min(currentPage, lastPage);
+
+        if (targetPage < currentPage) {
+            await loadUsers(filters.value, {
+                page: targetPage,
+                pageSize: response.meta?.per_page ?? PAGINATION_ITEMS_PER_PAGE,
+            });
+        }
+    }
+};
+
 const reloadUsers = async () => {
+    if (lastListPath.value) {
+        await loadUsersFromUrl(lastListPath.value);
+        return;
+    }
+
     await loadUsers(filters.value);
 };
 
@@ -87,33 +185,6 @@ const columns = computed(() => {
         },
     });
 });
-
-const loadUsers = async (nextFilters: MaintenanceUsersFiltersState = {}) => {
-    filters.value = nextFilters;
-    const response = await fetchNonEnrolledStudentUsers(nextFilters);
-
-    if (response) {
-        users.value = {
-            data: (response.data ?? []) as NonEnrolledStudentUser[],
-            links: response.links ?? users.value.links,
-            meta: response.meta ?? users.value.meta,
-        };
-        pruneSelectionToVisibleUsers();
-    }
-};
-
-const loadUsersFromUrl = async (url: string) => {
-    const response = await fetchNonEnrolledStudentUsers(filters.value, url);
-
-    if (response) {
-        users.value = {
-            data: (response.data ?? []) as NonEnrolledStudentUser[],
-            links: response.links ?? users.value.links,
-            meta: response.meta ?? users.value.meta,
-        };
-        pruneSelectionToVisibleUsers();
-    }
-};
 
 const onBulkPurge = () => {
     const selectedUsers = visibleUsers.value.filter((user) => selectedUserIds.value.includes(user.id));
@@ -158,7 +229,7 @@ watch(visibleUsers, () => pruneSelectionToVisibleUsers());
             :use-api="true"
             :search-url="route('maintenance.non-enrolled-student-users')"
             :api-fetch-action="loadUsersFromUrl"
-            :loading="isLoading || isPurging"
+            :loading="isLoading"
             :disable-create="true"
             :disable-import="true"
             :disable-export="true"
@@ -202,5 +273,17 @@ watch(visibleUsers, () => pruneSelectionToVisibleUsers());
                 </div>
             </template>
         </DataTable>
+
+        <Teleport to="body">
+            <div
+                v-if="isPurging"
+                class="fixed inset-0 z-50 flex items-center justify-center bg-background/70 backdrop-blur-sm"
+                role="status"
+                aria-live="polite"
+                aria-busy="true"
+            >
+                <DataLoadingSpinner :message="trans('trans.maintenance_users_purging')" />
+            </div>
+        </Teleport>
     </div>
 </template>

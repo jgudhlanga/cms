@@ -813,6 +813,7 @@ return [
     'maintenance_users_purge_success' => 'User purged successfully.',
     'maintenance_users_bulk_purge_success' => ':count user(s) purged successfully.',
     'maintenance_users_purge_failure' => 'Could not purge user.',
+    'maintenance_users_purging' => 'Purging accounts...',
     'maintenance_users_purge_not_eligible' => 'This user cannot be purged.',
     'clear_selection' => 'Clear selection',
     'maintenance_staff_placeholder' => 'Staff maintenance tools coming soon.',
