@@ -6,6 +6,7 @@ import {
     toPurgeDialogUser,
 } from '@/composables/maintenance/useMaintenancePurgeDialog';
 import { ColorVariant } from '@/enums/colors';
+import { PAGINATION_ITEMS_PER_PAGE } from '@/lib/constants';
 import { errorAlert, successAlert } from '@/lib/alerts';
 import { getIdParams } from '@/lib/utils';
 import HttpService from '@/services/http.service';
@@ -24,6 +25,61 @@ interface CreateMaintenanceUserColumnsOptions {
     selectAllModel: ComputedRef<boolean>;
     onPurgeSuccess: () => void | Promise<void>;
 }
+
+export interface NonEnrolledStudentUsersPagination {
+    page?: number;
+    pageSize?: number;
+}
+
+export const parseNonEnrolledStudentUsersListUrl = (listUrl: string): MaintenanceUsersFiltersState => {
+    const url = new URL(listUrl, window.location.origin);
+    const applicationStatus = url.searchParams.get('application_status');
+
+    return {
+        search: url.searchParams.get('search') ?? undefined,
+        applicationStatus: applicationStatus
+            ? (applicationStatus as MaintenanceUsersFiltersState['applicationStatus'])
+            : undefined,
+    };
+};
+
+export const resolveNonEnrolledStudentUsersListPath = (
+    filters: MaintenanceUsersFiltersState = {},
+    paginatorUrl?: string,
+    pagination: NonEnrolledStudentUsersPagination = {},
+): string => {
+    const parsed = new URL(
+        paginatorUrl ?? route('maintenance.non-enrolled-student-users'),
+        window.location.origin,
+    );
+
+    if (filters.search) {
+        parsed.searchParams.set('search', filters.search);
+    } else {
+        parsed.searchParams.delete('search');
+    }
+
+    if (filters.applicationStatus) {
+        parsed.searchParams.set('application_status', filters.applicationStatus);
+    } else {
+        parsed.searchParams.delete('application_status');
+    }
+
+    if (!paginatorUrl) {
+        const page = pagination.page ?? 1;
+        const pageSize = pagination.pageSize ?? PAGINATION_ITEMS_PER_PAGE;
+
+        if (page > 1) {
+            parsed.searchParams.set('page', String(page));
+        } else {
+            parsed.searchParams.delete('page');
+        }
+
+        parsed.searchParams.set('page_size', String(pageSize));
+    }
+
+    return `${parsed.pathname}${parsed.search}`;
+};
 
 export const useMaintenanceUsers = () => {
     const { textLink, actionButton } = useDataTables();
@@ -215,21 +271,13 @@ export const useMaintenanceUsers = () => {
     const fetchNonEnrolledStudentUsers = async (
         filters: MaintenanceUsersFiltersState = {},
         paginatorUrl?: string,
+        pagination: NonEnrolledStudentUsersPagination = {},
     ): Promise<ApiFilterResponse | undefined> => {
         try {
             isLoading.value = true;
-            const baseUrl = paginatorUrl ?? route('maintenance.non-enrolled-student-users');
-            const url = new URL(baseUrl, window.location.origin);
+            const path = resolveNonEnrolledStudentUsersListPath(filters, paginatorUrl, pagination);
 
-            if (filters.search) {
-                url.searchParams.set('search', filters.search);
-            }
-
-            if (filters.applicationStatus) {
-                url.searchParams.set('application_status', filters.applicationStatus);
-            }
-
-            return await HttpService.get(url.pathname + url.search);
+            return await HttpService.get(path);
         } catch {
             errorAlert(trans('trans.load_data_failure', { data: trans_choice('trans.user', 2) }));
         } finally {
@@ -238,6 +286,7 @@ export const useMaintenanceUsers = () => {
     };
 
     return {
+        resolveNonEnrolledStudentUsersListPath,
         createMaintenanceUserColumns,
         fetchNonEnrolledStudentUsers,
         purgeEligibleUserIds,
