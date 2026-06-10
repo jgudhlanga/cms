@@ -21,12 +21,14 @@ Route::prefix('maintenance')->middleware(['auth', 'can:root:manage'])->group(fun
         ->name('maintenance.faulty-student-ids');
     Route::get('/faulty-student-ids/data', [MaintenanceController::class, 'faultyStudentIdNumbers'])
         ->name('maintenance.faulty-student-ids.data');
-    Route::patch('/faulty-student-ids/{student}', [MaintenanceController::class, 'fixFaultyStudentIdNumber'])
-        ->name('maintenance.faulty-student-ids.fix');
-    Route::get('/faulty-student-ids/{student}/merge', [MaintenanceController::class, 'mergeFaultyStudentPreview'])
-        ->name('maintenance.faulty-student-ids.merge');
+    Route::patch('/faulty-student-ids/merge/applications/{student_program}/reject', [MaintenanceController::class, 'rejectMergePreviewApplication'])
+        ->name('maintenance.faulty-student-ids.merge.reject-application');
     Route::post('/faulty-student-ids/merge', [MaintenanceController::class, 'mergeFaultyStudentAccounts'])
         ->name('maintenance.faulty-student-ids.merge.execute');
+    Route::get('/faulty-student-ids/{student}/merge', [MaintenanceController::class, 'mergeFaultyStudentPreview'])
+        ->name('maintenance.faulty-student-ids.merge');
+    Route::patch('/faulty-student-ids/{student}', [MaintenanceController::class, 'fixFaultyStudentIdNumber'])
+        ->name('maintenance.faulty-student-ids.fix');
     Route::get('/staff-import/template', [MaintenanceController::class, 'downloadStaffImportTemplate'])
         ->name('maintenance.staff-import.template');
     Route::post('/staff-import/preview', [MaintenanceController::class, 'previewStaffImport'])

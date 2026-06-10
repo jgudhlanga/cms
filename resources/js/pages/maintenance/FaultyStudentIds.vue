@@ -3,13 +3,22 @@ import BaseAlert from '@/components/core/alert/BaseAlert.vue';
 import DataTable from '@/components/core/table/DataTable.vue';
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import { useFaultyStudentIds } from '@/composables/maintenance/useFaultyStudentIds';
+import { openFaultyStudentMergeSuccessDialog } from '@/composables/maintenance/useFaultyStudentMergeSuccessDialog';
 import { TypeVariant } from '@/enums/type-variants';
 import type { DataListProps } from '@/types/data-pagination';
-import type { FaultyStudentIdNumber, FaultyStudentIdsFiltersState } from '@/types/faulty-student-ids';
+import type {
+    FaultyStudentIdNumber,
+    FaultyStudentIdsFiltersState,
+    FaultyStudentMergeResult,
+} from '@/types/faulty-student-ids';
 import type { BreadcrumbItemInterface } from '@/types/ui';
 import { Head } from '@inertiajs/vue3';
 import { trans } from 'laravel-vue-i18n';
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
+
+const props = defineProps<{
+    mergeResult?: FaultyStudentMergeResult | null;
+}>();
 
 const breadcrumbs: BreadcrumbItemInterface[] = [
     { transKey: 'trans.maintenance', href: route('maintenance.index') },
@@ -42,6 +51,16 @@ const students = ref<DataListProps<FaultyStudentIdNumber>>({
 const filters = ref<FaultyStudentIdsFiltersState>({});
 const draftIdNumbers = ref<Record<number, string>>({});
 const savingStudentIds = ref<Set<number>>(new Set());
+const mergeResultShown = ref(false);
+
+const showMergeSuccessDialog = (result: FaultyStudentMergeResult | null | undefined): void => {
+    if (result == null || mergeResultShown.value) {
+        return;
+    }
+
+    mergeResultShown.value = true;
+    openFaultyStudentMergeSuccessDialog(result);
+};
 
 const reloadStudents = async () => {
     await loadStudents(filters.value);
@@ -91,7 +110,17 @@ const loadStudentsFromUrl = async (url: string) => {
     }
 };
 
-onMounted(() => loadStudents());
+onMounted(() => {
+    loadStudents();
+    showMergeSuccessDialog(props.mergeResult);
+});
+
+watch(
+    () => props.mergeResult,
+    (result) => {
+        showMergeSuccessDialog(result);
+    },
+);
 </script>
 
 <template>

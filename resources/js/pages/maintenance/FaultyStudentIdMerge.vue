@@ -1,18 +1,25 @@
 <script setup lang="ts">
 import { BaseButton } from '@/components/core/button';
 import BaseAlert from '@/components/core/alert/BaseAlert.vue';
+import BaseCard from '@/components/core/card/BaseCard.vue';
 import BaseRadioGroup from '@/components/core/form/radio-group/BaseRadioGroup.vue';
 import PageContainer from '@/components/core/page/PageContainer.vue';
+import LabelValue from '@/components/core/util/LabelValue.vue';
+import { useCustomConfirmDialog } from '@/composables/core/useCustomConfirmDialog';
 import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
 import { TypeVariant } from '@/enums/type-variants';
-import { warningDialog } from '@/lib/alerts';
-import type { StudentAccountMergePreview } from '@/types/faulty-student-ids';
+import { errorAlert, successAlert, warningDialog } from '@/lib/alerts';
+import type {
+    StudentAccountMergeApplication,
+    StudentAccountMergePreview,
+    StudentAccountMergeSummary,
+} from '@/types/faulty-student-ids';
 import type { BreadcrumbItemInterface } from '@/types/ui';
 import type { RadioGroupOption } from '@/types/forms';
-import { Head, useForm } from '@inertiajs/vue3';
+import { Head, router, useForm } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 
 const props = defineProps<{
     preview: StudentAccountMergePreview;
@@ -31,6 +38,10 @@ const form = useForm({
     id_number: props.preview.proposedIdNumber,
 });
 
+const rejectingApplicationIds = ref<Set<number>>(new Set());
+
+const profiles = computed(() => [props.preview.source, props.preview.target]);
+
 const survivorOptions = computed<RadioGroupOption[]>(() => [
     {
         inputId: 'survivor_source',
@@ -44,11 +55,22 @@ const survivorOptions = computed<RadioGroupOption[]>(() => [
     },
 ]);
 
-const summaryFields = (summary: StudentAccountMergePreview['source']) => [
-    { label: trans('trans.email_address'), value: summary.email ?? '---' },
-    { label: trans('trans.phone_number'), value: summary.phoneNumber ?? '---' },
-    { label: trans_choice('trans.student_number', 1), value: summary.studentNumber ?? '---' },
-    { label: trans('trans.id_number'), value: summary.idNumber ?? '---' },
+const profileTitle = (profile: StudentAccountMergeSummary): string => {
+    const accountLabel = profile.isFaultySource
+        ? trans('trans.maintenance_faulty_data_merge_faulty_account')
+        : trans('trans.maintenance_faulty_data_merge_existing_account');
+
+    return `${profile.name ?? accountLabel} · ${accountLabel}`;
+};
+
+const profileCardVariant = (profile: StudentAccountMergeSummary): string =>
+    form.survivor_student_id === String(profile.studentId) ? 'green-600' : 'amber-500';
+
+const summaryFields = (summary: StudentAccountMergeSummary) => [
+    { label: trans('trans.email_address'), value: summary.email ?? undefined },
+    { label: trans('trans.phone_number'), value: summary.phoneNumber ?? undefined },
+    { label: trans_choice('trans.student_number', 1), value: summary.studentNumber ?? undefined },
+    { label: trans('trans.id_number'), value: summary.idNumber ?? undefined, valueClasses: 'font-mono' },
     { label: trans('trans.maintenance_faulty_data_merge_programmes'), value: String(summary.programmesCount) },
     { label: trans('trans.maintenance_faulty_data_merge_enrolments'), value: String(summary.enrolmentsCount) },
     { label: trans('trans.maintenance_faulty_data_merge_receipts'), value: String(summary.paidReceiptsCount) },
@@ -57,6 +79,54 @@ const summaryFields = (summary: StudentAccountMergePreview['source']) => [
     { label: trans('trans.maintenance_faulty_data_merge_academic_results'), value: String(summary.academicResultsCount) },
     { label: trans('trans.maintenance_faulty_data_merge_hostel_applications'), value: String(summary.hostelApplicationsCount) },
 ];
+
+const applicationStatusLabel = (application: StudentAccountMergeApplication): string => {
+    const status = application.applicationStatus ?? '---';
+
+    if (!application.classListType) {
+        return status;
+    }
+
+    return `${status} · ${application.classListType}`;
+};
+
+const isRejectingApplication = (applicationId: number): boolean => rejectingApplicationIds.value.has(applicationId);
+
+const rejectApplication = async (application: StudentAccountMergeApplication) => {
+    const confirmed = await useCustomConfirmDialog().open({
+        title: trans('trans.maintenance_faulty_data_merge_reject_application'),
+        message: trans('trans.maintenance_faulty_data_merge_reject_confirm'),
+        confirmText: trans('trans.maintenance_faulty_data_merge_reject_application'),
+    });
+
+    if (!confirmed) {
+        return;
+    }
+
+    rejectingApplicationIds.value.add(application.id);
+
+    router.patch(
+        route('maintenance.faulty-student-ids.merge.reject-application', application.id),
+        {
+            source_student_id: props.preview.source.studentId,
+            target_student_id: props.preview.target.studentId,
+        },
+        {
+            preserveScroll: true,
+            onSuccess: () => {
+                successAlert(trans('trans.maintenance_faulty_data_merge_reject_success'));
+            },
+            onError: (errors: Record<string, string | string[]>) => {
+                if (Object.keys(errors).length) {
+                    errorAlert(Object.values(errors).flat().join('\n'));
+                }
+            },
+            onFinish: () => {
+                rejectingApplicationIds.value.delete(application.id);
+            },
+        },
+    );
+};
 
 const executeMerge = () => {
     warningDialog(
@@ -77,52 +147,86 @@ const executeMerge = () => {
     <Head :title="trans('trans.maintenance_faulty_data_merge_title')" />
 
     <PageContainer :breadcrumbs="breadcrumbs">
-        <div class="space-y-6">
+        <div class="space-y-4">
             <BaseAlert
                 :type="TypeVariant.warning"
                 :description="trans('trans.maintenance_faulty_data_merge_description')"
             />
 
-            <div class="rounded-lg border border-border bg-muted/30 px-4 py-3">
-                <p class="text-sm text-muted-foreground">{{ trans('trans.maintenance_faulty_data_merge_proposed_id') }}</p>
-                <p class="font-mono text-lg font-semibold">{{ preview.proposedIdNumber }}</p>
+            <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1 rounded-md border border-border bg-muted/30 px-3 py-2 text-sm">
+                <span class="text-muted-foreground">{{ trans('trans.maintenance_faulty_data_merge_proposed_id') }}</span>
+                <span class="font-mono font-semibold">{{ preview.proposedIdNumber }}</span>
             </div>
 
-            <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                <div
-                    class="space-y-3 rounded-lg border p-4"
-                    :class="form.survivor_student_id === String(preview.source.studentId) ? 'border-primary ring-1 ring-primary' : 'border-border'"
+            <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                <BaseCard
+                    v-for="profile in profiles"
+                    :key="profile.studentId"
+                    :title="profileTitle(profile)"
+                    :color-variant="profileCardVariant(profile)"
+                    class="space-y-2! p-3!"
                 >
-                    <div class="flex items-center justify-between gap-2">
-                        <h3 class="font-semibold">{{ preview.source.name }}</h3>
-                        <span class="text-xs uppercase text-destructive">{{ trans('trans.maintenance_faulty_data_merge_faulty_account') }}</span>
+                    <div class="grid grid-cols-2 gap-3">
+                        <LabelValue
+                            v-for="field in summaryFields(profile)"
+                            :key="field.label"
+                            :label="field.label"
+                            :value="field.value"
+                            :value-classes="field.valueClasses"
+                        />
                     </div>
-                    <dl class="grid grid-cols-1 gap-2 text-sm">
-                        <div v-for="field in summaryFields(preview.source)" :key="field.label" class="flex justify-between gap-4">
-                            <dt class="text-muted-foreground">{{ field.label }}</dt>
-                            <dd class="text-right font-medium">{{ field.value }}</dd>
-                        </div>
-                    </dl>
-                </div>
 
-                <div
-                    class="space-y-3 rounded-lg border p-4"
-                    :class="form.survivor_student_id === String(preview.target.studentId) ? 'border-primary ring-1 ring-primary' : 'border-border'"
-                >
-                    <div class="flex items-center justify-between gap-2">
-                        <h3 class="font-semibold">{{ preview.target.name }}</h3>
-                        <span class="text-xs uppercase text-primary">{{ trans('trans.maintenance_faulty_data_merge_existing_account') }}</span>
-                    </div>
-                    <dl class="grid grid-cols-1 gap-2 text-sm">
-                        <div v-for="field in summaryFields(preview.target)" :key="field.label" class="flex justify-between gap-4">
-                            <dt class="text-muted-foreground">{{ field.label }}</dt>
-                            <dd class="text-right font-medium">{{ field.value }}</dd>
+                    <div class="space-y-1 border-t border-border pt-2">
+                        <p class="text-xs font-medium">{{ trans('trans.maintenance_faulty_data_merge_applications') }}</p>
+                        <p
+                            v-if="profile.applications.length === 0"
+                            class="text-xs text-muted-foreground"
+                        >
+                            {{ trans('trans.maintenance_faulty_data_merge_no_applications') }}
+                        </p>
+                        <div v-else class="overflow-x-auto">
+                            <table class="w-full text-xs">
+                                <thead>
+                                    <tr class="border-b border-border text-left text-muted-foreground">
+                                        <th class="pb-1 pr-2 font-medium">{{ trans_choice('trans.code', 1) }}</th>
+                                        <th class="pb-1 pr-2 font-medium">{{ trans_choice('trans.course', 1) }}</th>
+                                        <th class="pb-1 pr-2 font-medium">{{ trans_choice('trans.level', 1) }}</th>
+                                        <th class="pb-1 pr-2 font-medium">{{ trans_choice('trans.intake_period', 1) }}</th>
+                                        <th class="pb-1 pr-2 font-medium">{{ trans_choice('trans.application', 1) }} {{ trans_choice('trans.status', 1) }}</th>
+                                        <th class="pb-1 font-medium"></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr
+                                        v-for="application in profile.applications"
+                                        :key="application.id"
+                                        class="border-b border-border/60"
+                                    >
+                                        <td class="py-1 pr-2 font-mono">{{ application.departmentCode ?? '---' }}</td>
+                                        <td class="max-w-32 truncate py-1 pr-2" :title="application.course ?? undefined">{{ application.course ?? '---' }}</td>
+                                        <td class="py-1 pr-2">{{ application.level ?? '---' }}</td>
+                                        <td class="max-w-24 truncate py-1 pr-2" :title="application.intakePeriod ?? undefined">{{ application.intakePeriod ?? '---' }}</td>
+                                        <td class="py-1 pr-2">{{ applicationStatusLabel(application) }}</td>
+                                        <td class="py-1 text-right">
+                                            <BaseButton
+                                                v-if="application.canReject"
+                                                :title="trans('trans.maintenance_faulty_data_merge_reject_application')"
+                                                :variant="ColorVariant.danger"
+                                                :size="ButtonSize.xs"
+                                                type="button"
+                                                :disabled="isRejectingApplication(application.id)"
+                                                @click="rejectApplication(application)"
+                                            />
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
-                    </dl>
-                </div>
+                    </div>
+                </BaseCard>
             </div>
 
-            <div class="space-y-2">
+            <div class="space-y-1">
                 <p class="text-sm font-medium">{{ trans('trans.maintenance_faulty_data_keep_account') }}</p>
                 <BaseRadioGroup
                     v-model="form.survivor_student_id"

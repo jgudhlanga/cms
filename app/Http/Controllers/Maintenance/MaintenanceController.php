@@ -13,6 +13,7 @@ use App\Http\Requests\Maintenance\FixStudentIdNumberRequest;
 use App\Http\Requests\Maintenance\MaintenanceUserBulkPurgeRequest;
 use App\Http\Requests\Maintenance\MaintenanceUserPurgeRequest;
 use App\Http\Requests\Maintenance\MergeStudentAccountsRequest;
+use App\Http\Requests\Maintenance\RejectMergePreviewApplicationRequest;
 use App\Http\Requests\Maintenance\StaffImportPreviewRequest;
 use App\Http\Requests\Maintenance\StaffImportProcessRequest;
 use App\Http\Resources\Maintenance\FaultyStudentIdNumberResource;
@@ -21,6 +22,7 @@ use App\Http\Resources\Maintenance\StudentAccountMergePreviewResource;
 use App\Jobs\Applications\ExportApplicationJob;
 use App\Jobs\Enrolments\ExportStudentEnrollmentJob;
 use App\Models\Students\Student;
+use App\Models\Students\StudentProgram;
 use App\Models\Users\User;
 use App\Services\Maintenance\FaultyStudentIdNumbersService;
 use App\Services\Maintenance\MaintenanceExportCountsService;
@@ -29,6 +31,7 @@ use App\Services\Maintenance\MaintenanceUserPurgeService;
 use App\Services\Maintenance\NonEnrolledStudentUsersService;
 use App\Services\Maintenance\StaffImportService;
 use App\Services\Maintenance\StaffImportTemplateService;
+use App\Services\Maintenance\RejectStudentProgramApplicationService;
 use App\Services\Maintenance\StudentAccountMergePreviewService;
 use App\Services\Maintenance\StudentAccountMergeService;
 use Illuminate\Http\JsonResponse;
@@ -152,7 +155,9 @@ class MaintenanceController extends Controller
 
     public function faultyStudentIds(): Response
     {
-        return Inertia::render('maintenance/FaultyStudentIds');
+        return Inertia::render('maintenance/FaultyStudentIds', [
+            'mergeResult' => session('mergeResult'),
+        ]);
     }
 
     public function faultyStudentIdNumbers(
@@ -199,11 +204,23 @@ class MaintenanceController extends Controller
         ]);
     }
 
+    public function rejectMergePreviewApplication(
+        RejectMergePreviewApplicationRequest $request,
+        StudentProgram $studentProgram,
+        RejectStudentProgramApplicationService $rejectService,
+    ): RedirectResponse {
+        $rejectService->reject($studentProgram);
+
+        return redirect()
+            ->back()
+            ->with('success', __('trans.maintenance_faulty_data_merge_reject_success'));
+    }
+
     public function mergeFaultyStudentAccounts(
         MergeStudentAccountsRequest $request,
         StudentAccountMergeService $mergeService,
     ): RedirectResponse {
-        $mergeService->merge(
+        $survivor = $mergeService->merge(
             (int) $request->validated('source_student_id'),
             (int) $request->validated('target_student_id'),
             (int) $request->validated('survivor_student_id'),
@@ -212,7 +229,8 @@ class MaintenanceController extends Controller
 
         return redirect()
             ->route('maintenance.faulty-student-ids')
-            ->with('success', __('trans.maintenance_faulty_data_merge_success'));
+            ->with('success', __('trans.maintenance_faulty_data_merge_success'))
+            ->with('mergeResult', $this->mergeResultPayload($survivor));
     }
 
     public function processStaffImport(
@@ -233,6 +251,26 @@ class MaintenanceController extends Controller
                     'skipped' => $result['rowsSkipped'],
                 ]),
             );
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function mergeResultPayload(Student $survivor): array
+    {
+        $user = $survivor->user;
+
+        return [
+            'studentId' => $survivor->id,
+            'userId' => $survivor->user_id,
+            'name' => $user?->full_name,
+            'email' => $user?->email,
+            'phoneNumber' => $user?->phone_number,
+            'studentNumber' => $survivor->student_number,
+            'idNumber' => $survivor->id_number,
+            'programmesCount' => $survivor->programs()->count(),
+            'enrolmentsCount' => $survivor->enrolments()->count(),
+        ];
     }
 
     private function resolveTenantId(): int
