@@ -7,10 +7,17 @@ import { useUtils } from '@/composables/core/useUtils';
 import { ColorVariant } from '@/enums/colors';
 import { IconName } from '@/enums/icons';
 import { successAlert, warningDialog } from '@/lib/alerts';
+import HttpService from '@/services/http.service';
 import { AuthObject } from '@/types/data-pagination';
+import type { MaintenanceExportCounts } from '@/types/maintenance-exports';
+import { useDebounceFn } from '@vueuse/core';
 import { useForm, usePage } from '@inertiajs/vue3';
 import { trans } from 'laravel-vue-i18n';
-import { computed } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
+
+const props = defineProps<{
+    exportCounts?: MaintenanceExportCounts;
+}>();
 
 const page = usePage<{ auth: AuthObject }>();
 const { navigateTo } = useUtils();
@@ -19,6 +26,61 @@ const defaultRecipientEmail = page.props.auth?.user?.attributes?.email ?? '';
 const form = useForm({
     intake_year: '',
     recipient_emails: defaultRecipientEmail,
+});
+
+const counts = ref<MaintenanceExportCounts>({
+    studentEnrolments: props.exportCounts?.studentEnrolments ?? 0,
+    applications: props.exportCounts?.applications ?? 0,
+    faultyStudentIds: props.exportCounts?.faultyStudentIds ?? 0,
+});
+
+const isLoadingCounts = ref(false);
+
+const enrollmentExportLabel = computed(() =>
+    trans('trans.maintenance_export_student_enrolments_with_count', {
+        count: String(counts.value.studentEnrolments),
+    }),
+);
+
+const applicationExportLabel = computed(() =>
+    trans('trans.maintenance_export_applications_with_count', {
+        count: String(counts.value.applications),
+    }),
+);
+
+const faultyDataLabel = computed(() =>
+    trans('trans.maintenance_faulty_data_with_count', {
+        count: String(counts.value.faultyStudentIds),
+    }),
+);
+
+const loadExportCounts = async (intakeYear?: string) => {
+    isLoadingCounts.value = true;
+
+    try {
+        const params = intakeYear ? { intake_year: intakeYear } : undefined;
+        const response = (await HttpService.get(route('maintenance.exports.counts'), { params })) as MaintenanceExportCounts;
+        counts.value = response;
+    } finally {
+        isLoadingCounts.value = false;
+    }
+};
+
+const debouncedLoadExportCounts = useDebounceFn((intakeYear: string) => {
+    void loadExportCounts(intakeYear || undefined);
+}, 400);
+
+watch(
+    () => form.intake_year,
+    (intakeYear) => {
+        void debouncedLoadExportCounts(intakeYear);
+    },
+);
+
+onMounted(() => {
+    if (!props.exportCounts) {
+        void loadExportCounts();
+    }
 });
 
 const recipientEmailsError = computed(() => {
@@ -111,8 +173,8 @@ const goToFaultyData = () => navigateTo(route('maintenance.faulty-student-ids'))
                 <GenericButton
                     :icon="IconName.export"
                     :variant="ColorVariant.primary_outline"
-                    :title="trans('trans.maintenance_export_student_enrolments')"
-                    :disabled="form.processing"
+                    :title="enrollmentExportLabel"
+                    :disabled="form.processing || isLoadingCounts"
                     @click="confirmEnrollmentExport"
                 />
 
@@ -126,8 +188,8 @@ const goToFaultyData = () => navigateTo(route('maintenance.faulty-student-ids'))
                 <GenericButton
                     :icon="IconName.export"
                     :variant="ColorVariant.primary_outline"
-                    :title="trans('trans.maintenance_export_applications')"
-                    :disabled="form.processing"
+                    :title="applicationExportLabel"
+                    :disabled="form.processing || isLoadingCounts"
                     @click="confirmApplicationExport"
                 />
         </div>
@@ -141,7 +203,7 @@ const goToFaultyData = () => navigateTo(route('maintenance.faulty-student-ids'))
             <GenericButton
                 :icon="IconName.edit"
                 :variant="ColorVariant.primary_outline"
-                :title="trans('trans.maintenance_faulty_data')"
+                :title="faultyDataLabel"
                 @click="goToFaultyData"
             />
         </div>

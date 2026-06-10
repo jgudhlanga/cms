@@ -16,6 +16,7 @@ use App\Models\Shared\Contact;
 use App\Models\Shared\Country;
 use App\Models\Students\Student;
 use App\Models\Students\StudentProgram;
+use App\Queries\Applications\ApplicationExportQuery;
 use App\Services\Applications\ApplicationExportService;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
@@ -144,6 +145,40 @@ it('prefers enrolled programmes over accepted when deduplicating by student', fu
     expect($rows)->toHaveCount(1)
         ->and($rows[0][11])->toBe('ICT101')
         ->and($acceptedProgram->id)->not->toBe($enrolledProgram->id);
+});
+
+it('matches application export row count with the export query count', function (): void {
+    Storage::fake('local');
+
+    $enrolledProgram = createVerifiedStudentProgram('APP-COUNT');
+    $enrolledStep = createEnrolledDepartmentStep($enrolledProgram);
+    $enrolledProgram->update(['department_application_step_id' => $enrolledStep->id]);
+
+    createAdditionalStudentProgramForStudent(
+        $enrolledProgram->student()->firstOrFail(),
+        $enrolledProgram,
+        WorkflowStepEnum::ACCEPTED,
+        'ICT202',
+    );
+
+    createVerifiedStudentProgram('APP-COUNT-OTHER');
+
+    $exportCount = app(ApplicationExportQuery::class)->count();
+
+    $this->artisan('applications:export --sync --email=exports@example.test')
+        ->assertSuccessful();
+
+    $handle = fopen(Storage::disk('local')->path(ApplicationExportService::OUTPUT_PATH), 'r');
+    fgetcsv($handle);
+    $rowCount = 0;
+
+    while (fgetcsv($handle) !== false) {
+        $rowCount++;
+    }
+
+    fclose($handle);
+
+    expect($exportCount)->toBe($rowCount);
 });
 
 it('filters application export rows by intake year when the option is provided', function (): void {

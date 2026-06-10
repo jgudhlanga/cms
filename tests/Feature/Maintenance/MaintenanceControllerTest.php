@@ -34,7 +34,35 @@ it('renders maintenance index for root users', function (): void {
 
     $this->get(route('maintenance.index'))
         ->assertSuccessful()
-        ->assertInertia(fn ($page) => $page->component('maintenance/Index'));
+        ->assertInertia(fn ($page) => $page
+            ->component('maintenance/Index')
+            ->has('exportCounts.studentEnrolments')
+            ->has('exportCounts.applications')
+            ->has('exportCounts.faultyStudentIds'));
+});
+
+it('redirects guests from maintenance export counts endpoint', function (): void {
+    $this->get(route('maintenance.exports.counts'))
+        ->assertRedirect('/login');
+});
+
+it('forbids users without root manage from maintenance export counts endpoint', function (): void {
+    $user = User::factory()->create();
+    $this->actingAs($user)
+        ->get(route('maintenance.exports.counts'))
+        ->assertForbidden();
+});
+
+it('returns maintenance export counts for root users', function (): void {
+    actingAsRootMaintenanceUser();
+
+    $this->getJson(route('maintenance.exports.counts'))
+        ->assertSuccessful()
+        ->assertJsonStructure([
+            'studentEnrolments',
+            'applications',
+            'faultyStudentIds',
+        ]);
 });
 
 it('redirects guests from student enrollment export endpoint', function (): void {

@@ -45,4 +45,9 @@ class StudentEnrollmentExportQuery
             ])
             ->orderBy('student_enrolments.id');
     }
+
+    public function count(?string $intakeYear = null): int
+    {
+        return $this->baseQuery($intakeYear)->count();
+    }
 }
