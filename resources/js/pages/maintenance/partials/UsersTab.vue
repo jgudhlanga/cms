@@ -60,7 +60,7 @@ const applicationStatusOptions = computed<SelectOption[]>(() => [
 
 const applicationStatusSelection = ref<SelectOption | null>({
     value: 'all',
-    label: trans('trans.maintenance_users_filter_all_statuses'),
+    label: 'All application statuses',
 });
 
 const visibleUsers = computed(() => users.value.data);
@@ -174,10 +174,7 @@ watch(visibleUsers, () => pruneSelectionToVisibleUsers());
                 />
             </template>
             <template #head-right>
-                <div v-if="selectedCount > 0" class="flex items-center gap-3">
-                    <span class="text-sm font-medium">
-                        {{ trans('trans.maintenance_users_selected_count', { count: selectedCount }) }}
-                    </span>
+                <div v-if="selectedCount > 0" class="flex items-center ml-2 gap-3">
                     <BaseButton
                         v-if="selectedCount > 0"
                         :size="ButtonSize.xs"

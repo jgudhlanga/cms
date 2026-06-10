@@ -3,6 +3,7 @@ import PageContainer from '@/components/core/page/PageContainer.vue';
 import { useMaintenance } from '@/composables/maintenance/useMaintenance';
 import { icons } from '@/lib/icons';
 import { useMaintenanceStore } from '@/store/maintenance/useMaintenanceStore';
+import type { MaintenanceExportCounts } from '@/types/maintenance-exports';
 import type { StaffImportResult } from '@/types/staff-import';
 import { BreadcrumbItemInterface } from '@/types/ui';
 import { Head } from '@inertiajs/vue3';
@@ -11,7 +12,20 @@ import { computed } from 'vue';
 
 const props = defineProps<{
     staffImportResult?: StaffImportResult | null;
+    exportCounts?: MaintenanceExportCounts;
 }>();
+
+const tabProps = (tabValue: string) => {
+    if (tabValue === 'staff') {
+        return { staffImportResult: props.staffImportResult };
+    }
+
+    if (tabValue === 'students') {
+        return { exportCounts: props.exportCounts };
+    }
+
+    return {};
+};
 
 const breadcrumbs: BreadcrumbItemInterface[] = [{ transKey: 'trans.maintenance' }];
 
@@ -43,10 +57,7 @@ const visibleTabs = computed(() => maintenanceTabs().filter((tab) => tab.show));
                 :value="tab.value"
                 class="py-4"
             >
-                <component
-                    :is="tab.component"
-                    v-bind="tab.value === 'staff' ? { staffImportResult: props.staffImportResult } : {}"
-                />
+                <component :is="tab.component" v-bind="tabProps(tab.value)" />
             </TabsContent>
         </Tabs>
     </PageContainer>

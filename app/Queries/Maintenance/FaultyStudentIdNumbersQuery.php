@@ -19,6 +19,11 @@ class FaultyStudentIdNumbersQuery
         return $this->applyInvalidIdNumberConstraint($query)->orderBy('id');
     }
 
+    public function count(): int
+    {
+        return $this->baseQuery()->count();
+    }
+
     public function applySearch(Builder $query, ?string $search): Builder
     {
         if ($search === null || trim($search) === '') {

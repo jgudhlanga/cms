@@ -23,6 +23,7 @@ use App\Jobs\Enrolments\ExportStudentEnrollmentJob;
 use App\Models\Students\Student;
 use App\Models\Users\User;
 use App\Services\Maintenance\FaultyStudentIdNumbersService;
+use App\Services\Maintenance\MaintenanceExportCountsService;
 use App\Services\Maintenance\FixStudentIdNumberService;
 use App\Services\Maintenance\MaintenanceUserPurgeService;
 use App\Services\Maintenance\NonEnrolledStudentUsersService;
@@ -42,11 +43,20 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class MaintenanceController extends Controller
 {
-    public function index(): Response
+    public function index(MaintenanceExportCountsService $exportCountsService): Response
     {
         return Inertia::render('maintenance/Index', [
             'staffImportResult' => session('staffImportResult'),
+            'exportCounts' => $exportCountsService->resolve(),
         ]);
+    }
+
+    public function exportCounts(MaintenanceExportCountsService $exportCountsService): JsonResponse
+    {
+        $intakeYear = request()->query('intake_year');
+        $intakeYear = is_string($intakeYear) && $intakeYear !== '' ? $intakeYear : null;
+
+        return response()->json($exportCountsService->resolve($intakeYear));
     }
 
     public function nonEnrolledStudentUsers(

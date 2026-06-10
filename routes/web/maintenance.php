@@ -11,6 +11,8 @@ Route::prefix('maintenance')->middleware(['auth', 'can:root:manage'])->group(fun
         ->name('maintenance.non-enrolled-student-users.bulk-purge');
     Route::delete('/non-enrolled-student-users/{user}', [MaintenanceController::class, 'purgeNonEnrolledStudentUser'])
         ->name('maintenance.non-enrolled-student-users.purge');
+    Route::get('/exports/counts', [MaintenanceController::class, 'exportCounts'])
+        ->name('maintenance.exports.counts');
     Route::post('/exports/student-enrollment', [MaintenanceController::class, 'exportStudentEnrollment'])
         ->name('maintenance.exports.student-enrollment');
     Route::post('/exports/application', [MaintenanceController::class, 'exportApplication'])

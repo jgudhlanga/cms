@@ -52,18 +52,11 @@ class ApplicationExportService
             self::OUTPUT_PATH,
             self::HEADERS,
             function ($handle) use ($intakeYear): void {
-                $lastStudentId = null;
-
                 $this->query
                     ->baseQuery($intakeYear)
-                    ->chunkById(200, function (Collection $programs) use ($handle, &$lastStudentId): void {
+                    ->chunkById(200, function (Collection $programs) use ($handle): void {
                         foreach ($programs as $program) {
                             /** @var StudentProgram $program */
-                            if ($program->student_id === $lastStudentId) {
-                                continue;
-                            }
-
-                            $lastStudentId = $program->student_id;
                             fputcsv($handle, $this->mapRow($program));
                         }
                     }, 'student_programs.id', 'id');
