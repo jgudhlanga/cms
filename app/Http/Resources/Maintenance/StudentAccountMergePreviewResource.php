@@ -4,14 +4,18 @@ declare(strict_types=1);
 
 namespace App\Http\Resources\Maintenance;
 
+use App\Enums\Shared\ClassListTypeEnum;
+use App\Enums\Shared\WorkflowStepEnum;
 use App\Models\Students\Student;
+use App\Models\Students\StudentProgram;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Collection;
 
 /**
  * @property array{
- *     source: array{student: Student, counts: array<string, int>},
- *     target: array{student: Student, counts: array<string, int>},
+ *     source: array{student: Student, programs: Collection<int, StudentProgram>, counts: array<string, int>},
+ *     target: array{student: Student, programs: Collection<int, StudentProgram>, counts: array<string, int>},
  *     proposedIdNumber: string
  * } $resource
  */
@@ -24,19 +28,22 @@ class StudentAccountMergePreviewResource extends JsonResource
             'source' => $this->studentSummary(
                 $this->resource['source']['student'],
                 $this->resource['source']['counts'],
+                $this->resource['source']['programs'],
             ),
             'target' => $this->studentSummary(
                 $this->resource['target']['student'],
                 $this->resource['target']['counts'],
+                $this->resource['target']['programs'],
             ),
         ];
     }
 
     /**
      * @param  array<string, int>  $counts
+     * @param  Collection<int, StudentProgram>  $programs
      * @return array<string, mixed>
      */
-    private function studentSummary(Student $student, array $counts): array
+    private function studentSummary(Student $student, array $counts, Collection $programs): array
     {
         $user = $student->user;
 
@@ -56,6 +63,38 @@ class StudentAccountMergePreviewResource extends JsonResource
             'addressesCount' => $counts['addressesCount'] ?? 0,
             'academicResultsCount' => $counts['academicResultsCount'] ?? 0,
             'hostelApplicationsCount' => $counts['hostelApplicationsCount'] ?? 0,
+            'applications' => $programs
+                ->map(fn (StudentProgram $program): array => $this->applicationRow($program))
+                ->values()
+                ->all(),
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function applicationRow(StudentProgram $program): array
+    {
+        $classListType = $program->classList?->type;
+        $resolvedClassListType = $classListType instanceof ClassListTypeEnum
+            ? $classListType->value
+            : (is_string($classListType) ? $classListType : null);
+
+        $workflowSlug = $program->departmentWorkflowStep?->workflowStep?->slug;
+
+        return [
+            'id' => $program->id,
+            'departmentCode' => $program->institutionDepartment?->department_code,
+            'level' => $program->departmentLevel?->level?->name,
+            'course' => $program->departmentCourse?->course?->name,
+            'intakePeriod' => $program->intakePeriod?->name,
+            'modeOfStudy' => $program->modeOfStudy?->name,
+            'applicationStatus' => $program->departmentWorkflowStep?->workflowStep?->name,
+            'classListType' => $resolvedClassListType,
+            'canReject' => ! in_array($workflowSlug, [
+                WorkflowStepEnum::REJECTED->slug(),
+                WorkflowStepEnum::ENROLLED->slug(),
+            ], true),
         ];
     }
 }

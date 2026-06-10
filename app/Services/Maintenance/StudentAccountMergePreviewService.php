@@ -32,13 +32,25 @@ class StudentAccountMergePreviewService
             ]);
         }
 
+        $programRelations = [
+            'programs' => fn ($query) => $query->with([
+                'institutionDepartment.department',
+                'departmentLevel.level',
+                'departmentCourse.course',
+                'intakePeriod',
+                'modeOfStudy',
+                'departmentWorkflowStep.workflowStep',
+                'classList',
+            ]),
+        ];
+
         $source->loadCount([
             'programs',
             'enrolments',
             'contacts',
             'addresses',
             'hostelApplications',
-        ])->load('user');
+        ])->load(array_merge(['user'], $programRelations));
 
         $target->loadCount([
             'programs',
@@ -46,7 +58,7 @@ class StudentAccountMergePreviewService
             'contacts',
             'addresses',
             'hostelApplications',
-        ])->load('user');
+        ])->load(array_merge(['user'], $programRelations));
 
         return [
             'source' => $this->studentPreviewPayload($source, true),
@@ -86,12 +98,13 @@ class StudentAccountMergePreviewService
     }
 
     /**
-     * @return array{student: Student, counts: array<string, int>}
+     * @return array{student: Student, counts: array<string, int>, programs: \Illuminate\Database\Eloquent\Collection<int, \App\Models\Students\StudentProgram>}
      */
     private function studentPreviewPayload(Student $student, bool $isFaultySource): array
     {
         return [
             'student' => $student,
+            'programs' => $student->programs,
             'counts' => [
                 'programmesCount' => (int) ($student->programs_count ?? 0),
                 'enrolmentsCount' => (int) ($student->enrolments_count ?? 0),
