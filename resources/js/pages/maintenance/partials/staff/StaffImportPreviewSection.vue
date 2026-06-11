@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { BaseButton } from '@/components/core/button';
+import { Badge } from '@/components/ui/badge';
 import StaffImportPreviewTable from '@/pages/maintenance/partials/staff/StaffImportPreviewTable.vue';
 import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
@@ -13,11 +14,16 @@ import type {
     StaffImportRowCorrection,
 } from '@/types/staff-import';
 
+type StaffImportPreviewSummary = Pick<
+    StaffImportPreview['summary'],
+    'creates' | 'updates' | 'skipped' | 'failed'
+>;
+
 defineProps<{
     preview: StaffImportPreview;
+    summary: StaffImportPreviewSummary;
     lookups: StaffImportPreviewLookups;
     previewRows: StaffImportPreviewRow[];
-    previewSummaryLabel: string | null;
     confirmBlockedMessage: string;
     canConfirmImport: boolean;
     confirmProcessing: boolean;
@@ -44,45 +50,77 @@ const emit = defineEmits<{
 </script>
 
 <template>
-    <div class="space-y-4 rounded-lg border border-border p-4">
-        <div>
-            <h3 class="font-semibold">{{ $t('trans.maintenance_staff_import_preview_title') }}</h3>
-            <p class="mt-1 text-sm text-muted-foreground">{{ preview.fileName }}</p>
-            <p v-if="previewSummaryLabel" class="mt-2 text-sm">{{ previewSummaryLabel }}</p>
-            <p
-                class="mt-2 text-sm"
-                :class="canConfirmImport ? 'text-muted-foreground' : 'text-destructive'"
-            >
-                {{ confirmBlockedMessage }}
-            </p>
+    <div class="space-y-3">
+        <div class="flex min-w-0 flex-wrap items-center gap-2">
+                <span class="text-xs font-bold uppercase text-accent-foreground">
+                    {{ $t('trans.maintenance_staff_import_preview_title') }}
+                </span>
+
+                <Badge variant="outline" class="max-w-xs truncate font-normal" :title="preview.fileName">
+                    {{ preview.fileName }}
+                </Badge>
+
+                <Badge
+                    variant="outline"
+                    class="border-green-200 bg-green-50 font-normal text-green-800"
+                >
+                    {{ summary.creates }}
+                    {{ $t('trans.maintenance_staff_import_preview_action_create') }}
+                </Badge>
+
+                <Badge
+                    variant="outline"
+                    class="border-blue-200 bg-blue-50 font-normal text-blue-800"
+                >
+                    {{ summary.updates }}
+                    {{ $t('trans.maintenance_staff_import_preview_action_update') }}
+                </Badge>
+
+                <Badge variant="secondary" class="font-normal">
+                    {{ summary.skipped }}
+                    {{ $t('trans.maintenance_staff_import_preview_action_skip_empty') }}
+                </Badge>
+
+                <Badge
+                    :variant="summary.failed > 0 ? 'destructive' : 'outline'"
+                    class="font-normal"
+                >
+                    {{ summary.failed }}
+                    {{ $t('trans.maintenance_staff_import_preview_action_fail') }}
+                </Badge>
+
+                <span
+                    class="text-xs"
+                    :class="canConfirmImport ? 'text-muted-foreground' : 'text-destructive'"
+                >
+                    {{ confirmBlockedMessage }}
+                </span>
         </div>
 
-        <div class="max-h-[min(70vh,42rem)] overflow-auto rounded-md border border-border">
-            <StaffImportPreviewTable
-                :rows="previewRows"
-                :lookups="lookups"
-                :bulk-department-field="bulkDepartmentField"
-                :bulk-department-id="bulkDepartmentId"
-                :get-correction="getCorrection"
-                :get-effective-action="getEffectiveAction"
-                :get-action-label="getActionLabel"
-                :get-active-errors="getActiveErrors"
-                :get-created-fields="getCreatedFields"
-                :get-created-role-names="getCreatedRoleNames"
-                @update:bulk-department-id="emit('update:bulkDepartmentId', $event)"
-                @bulk-department-created="emit('bulk-department-created', $event)"
-                @bulk-department-apply="emit('bulk-department-apply')"
-                @update:correction="(rowNumber, correction) => emit('update:correction', rowNumber, correction)"
-                @lookup-created="(rowNumber, fieldKey, option) => emit('lookup-created', rowNumber, fieldKey, option)"
-                @remove-row="(rowNumber) => emit('remove-row', rowNumber)"
-            />
-        </div>
+        <StaffImportPreviewTable
+            :rows="previewRows"
+            :lookups="lookups"
+            :bulk-department-field="bulkDepartmentField"
+            :bulk-department-id="bulkDepartmentId"
+            :get-correction="getCorrection"
+            :get-effective-action="getEffectiveAction"
+            :get-action-label="getActionLabel"
+            :get-active-errors="getActiveErrors"
+            :get-created-fields="getCreatedFields"
+            :get-created-role-names="getCreatedRoleNames"
+            @update:bulk-department-id="emit('update:bulkDepartmentId', $event)"
+            @bulk-department-created="emit('bulk-department-created', $event)"
+            @bulk-department-apply="emit('bulk-department-apply')"
+            @update:correction="(rowNumber, correction) => emit('update:correction', rowNumber, correction)"
+            @lookup-created="(rowNumber, fieldKey, option) => emit('lookup-created', rowNumber, fieldKey, option)"
+            @remove-row="(rowNumber) => emit('remove-row', rowNumber)"
+        />
 
         <div class="flex flex-wrap gap-2">
             <BaseButton
                 type="button"
                 :variant="ColorVariant.warning"
-                :size="ButtonSize.sm"
+                :size="ButtonSize.lg"
                 :disabled="confirmProcessing"
                 @click="emit('cancel')"
             >
@@ -91,7 +129,7 @@ const emit = defineEmits<{
             <BaseButton
                 type="button"
                 :variant="ColorVariant.primary"
-                :size="ButtonSize.sm"
+                :size="ButtonSize.lg"
                 :processing="confirmProcessing"
                 :disabled="!canConfirmImport || confirmProcessing"
                 @click="emit('confirm')"
