@@ -89,7 +89,12 @@ class StaffImportService
      *     }>,
      * }
      */
-    public function processFromPreview(int $tenantId, string $previewToken, ?array $rowCorrections = null): array
+    public function processFromPreview(
+        int $tenantId,
+        string $previewToken,
+        ?array $rowCorrections = null,
+        ?array $excludedRowNumbers = null,
+    ): array
     {
         $preview = Cache::get(self::PREVIEW_CACHE_PREFIX.$previewToken);
 
@@ -129,6 +134,7 @@ class StaffImportService
                 $fullPath,
                 (string) ($preview['original_filename'] ?? 'import.xlsx'),
                 $rowCorrections,
+                $excludedRowNumbers,
             );
         } finally {
             Cache::forget(self::PREVIEW_CACHE_PREFIX.$previewToken);
@@ -159,6 +165,7 @@ class StaffImportService
         string $fullPath,
         string $originalFilename,
         ?array $rowCorrections = null,
+        ?array $excludedRowNumbers = null,
     ): array {
         $user = Auth::user();
         $userId = $user instanceof User ? $user->id : null;
@@ -172,7 +179,13 @@ class StaffImportService
         ]);
 
         try {
-            $analysis = $this->analyseFile($fullPath, $tenantId, dryRun: false, rowCorrections: $rowCorrections);
+            $analysis = $this->analyseFile(
+                $fullPath,
+                $tenantId,
+                dryRun: false,
+                rowCorrections: $rowCorrections,
+                excludedRowNumbers: $excludedRowNumbers,
+            );
 
             if ($analysis['summary']['creates'] + $analysis['summary']['updates'] === 0) {
                 throw ValidationException::withMessages([
@@ -304,7 +317,9 @@ class StaffImportService
         int $tenantId,
         bool $dryRun,
         ?array $rowCorrections = null,
+        ?array $excludedRowNumbers = null,
     ): array {
+        $excluded = $this->normalizeExcludedRowNumbers($excludedRowNumbers);
         $rawRows = $this->readRawRows($fullPath);
         $headerRowIndex = $this->detectHeaderRowIndex($rawRows);
 
@@ -337,6 +352,14 @@ class StaffImportService
             }
 
             $rowNumber++;
+
+            if (in_array($rowNumber, $excluded, true)) {
+                $summary['skipped']++;
+                $summary['total']++;
+
+                continue;
+            }
+
             $corrections = $this->correctionsForRow($rowCorrections, $rowNumber);
             $analysis = $importer->analyseRow($rawRow, $corrections);
             $action = $analysis['action'];
@@ -360,6 +383,8 @@ class StaffImportService
                 'employeeNumber' => $analysis['display']['employeeNumber'] ?? null,
                 'fullName' => $analysis['display']['fullName'] ?? null,
                 'email' => $analysis['display']['email'] ?? null,
+                'phoneNumber' => $analysis['display']['phoneNumber'] ?? null,
+                'dateOfBirth' => $analysis['display']['dateOfBirth'] ?? null,
                 'department' => $analysis['display']['department'] ?? null,
                 'action' => $action,
                 'errors' => $analysis['errors'],
@@ -385,6 +410,19 @@ class StaffImportService
             'operations' => $operations,
             'rows' => $rows,
         ];
+    }
+
+    /**
+     * @param  list<int>|null  $excludedRowNumbers
+     * @return list<int>
+     */
+    private function normalizeExcludedRowNumbers(?array $excludedRowNumbers): array
+    {
+        if ($excludedRowNumbers === null) {
+            return [];
+        }
+
+        return array_values(array_unique(array_map(intval(...), $excludedRowNumbers)));
     }
 
     /**

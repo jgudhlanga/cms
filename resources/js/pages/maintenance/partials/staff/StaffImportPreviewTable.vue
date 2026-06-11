@@ -29,6 +29,7 @@ const emit = defineEmits<{
     'bulk-department-apply': [];
     'update:correction': [rowNumber: number, correction: StaffImportRowCorrection];
     'lookup-created': [rowNumber: number, fieldKey: StaffImportFieldKey, option: StaffImportLookupOption];
+    'remove-row': [rowNumber: number];
 }>();
 </script>
 
@@ -41,6 +42,8 @@ const emit = defineEmits<{
                     <th class="j-th text-left">{{ $t('trans.employee_number') }}</th>
                     <th class="j-th text-left">{{ $tChoice('trans.name', 1) }}</th>
                     <th class="j-th text-left">{{ $t('trans.email') }}</th>
+                    <th class="j-th text-left">{{ $t('trans.phone_number') }}</th>
+                    <th class="j-th text-left">{{ $t('trans.date_of_birth') }}</th>
                     <th class="j-th text-left">{{ $tChoice('trans.department', 1) }}</th>
                     <th class="j-th text-left">{{ $tChoice('trans.title', 1) }}</th>
                     <th class="j-th text-left">{{ $tChoice('trans.gender', 1) }}</th>
@@ -72,6 +75,7 @@ const emit = defineEmits<{
                     :created-role-names="getCreatedRoleNames(row.rowNumber)"
                     @update:correction="emit('update:correction', row.rowNumber, $event)"
                     @lookup-created="(fieldKey, option) => emit('lookup-created', row.rowNumber, fieldKey, option)"
+                    @remove="emit('remove-row', row.rowNumber)"
                 />
             </tbody>
         </table>

@@ -628,3 +628,120 @@ it('fails preview row for duplicate email on create', function (): void {
 
     expect(Staff::query()->where('employee_number', 'EC-IMPORT-002')->exists())->toBeFalse();
 });
+
+it('resolves gender abbreviations M and F during preview', function (): void {
+    $context = makeStaffImportContext();
+    $femaleGender = Gender::factory()->create(['title' => 'Female']);
+
+    $maleFile = storeStaffImportFile([
+        staffImportRowValues(['GENDER' => 'M']),
+    ], $context['tenantId']);
+
+    $this->post(route('maintenance.staff-import.preview'), [
+        'file' => $maleFile,
+    ])
+        ->assertSuccessful()
+        ->assertJsonPath('summary.failed', 0)
+        ->assertJsonPath('rows.0.fields.gender.resolvedId', $context['gender']->id)
+        ->assertJsonPath('rows.0.fields.gender.raw', 'M');
+
+    $femaleFile = storeStaffImportFile([
+        staffImportRowValues([
+            'EMPLOYEE_NUMBER' => 'EC-IMPORT-F-001',
+            'EMAIL' => 'female.import@example.test',
+            'GENDER' => 'F',
+        ]),
+    ], $context['tenantId']);
+
+    $this->post(route('maintenance.staff-import.preview'), [
+        'file' => $femaleFile,
+    ])
+        ->assertSuccessful()
+        ->assertJsonPath('summary.failed', 0)
+        ->assertJsonPath('rows.0.fields.gender.resolvedId', $femaleGender->id)
+        ->assertJsonPath('rows.0.fields.gender.raw', 'F');
+});
+
+it('returns phone number and date of birth in preview rows', function (): void {
+    $context = makeStaffImportContext();
+    $file = storeStaffImportFile([staffImportRowValues()], $context['tenantId']);
+
+    $this->post(route('maintenance.staff-import.preview'), [
+        'file' => $file,
+    ])
+        ->assertSuccessful()
+        ->assertJsonPath('rows.0.phoneNumber', '263770000001')
+        ->assertJsonPath('rows.0.dateOfBirth', '1990-01-15');
+});
+
+it('processes import with corrected phone number and date of birth', function (): void {
+    $context = makeStaffImportContext();
+
+    $file = storeStaffImportFile([
+        staffImportRowValues([
+            'PHONE_NUMBER' => null,
+            'DATE_OF_BIRTH' => 'not-a-date',
+        ]),
+    ], $context['tenantId']);
+
+    $previewResponse = $this->post(route('maintenance.staff-import.preview'), [
+        'file' => $file,
+    ]);
+
+    $previewResponse->assertSuccessful()
+        ->assertJsonPath('summary.failed', 1);
+
+    $previewToken = $previewResponse->json('previewToken');
+
+    $this->post(route('maintenance.staff-import.process'), [
+        'preview_token' => $previewToken,
+        'row_corrections' => [
+            1 => [
+                'phoneNumber' => '+263770000099',
+                'dateOfBirth' => '1985-06-20',
+            ],
+        ],
+    ])->assertRedirect(route('maintenance.index'));
+
+    $staff = Staff::query()
+        ->where('employee_number', 'EC-IMPORT-001')
+        ->where('tenant_id', $context['tenantId'])
+        ->first();
+
+    expect($staff)->not->toBeNull()
+        ->and($staff->user->phone_number)->toBe('+263770000099')
+        ->and($staff->date_of_birth)->toBe('1985-06-20');
+});
+
+it('skips excluded rows during import process', function (): void {
+    $context = makeStaffImportContext();
+
+    $file = storeStaffImportFile([
+        staffImportRowValues([
+            'EMPLOYEE_NUMBER' => 'EC-IMPORT-FAIL',
+            'EMAIL' => 'not-an-email',
+        ]),
+        staffImportRowValues([
+            'EMPLOYEE_NUMBER' => 'EC-IMPORT-OK',
+            'EMAIL' => 'valid.import@example.test',
+        ]),
+    ], $context['tenantId']);
+
+    $previewResponse = $this->post(route('maintenance.staff-import.preview'), [
+        'file' => $file,
+    ]);
+
+    $previewResponse->assertSuccessful()
+        ->assertJsonPath('summary.failed', 1)
+        ->assertJsonPath('summary.creates', 1);
+
+    $previewToken = $previewResponse->json('previewToken');
+
+    $this->post(route('maintenance.staff-import.process'), [
+        'preview_token' => $previewToken,
+        'excluded_row_numbers' => [1],
+    ])->assertRedirect(route('maintenance.index'));
+
+    expect(Staff::query()->where('employee_number', 'EC-IMPORT-OK')->exists())->toBeTrue()
+        ->and(Staff::query()->where('employee_number', 'EC-IMPORT-FAIL')->exists())->toBeFalse();
+});

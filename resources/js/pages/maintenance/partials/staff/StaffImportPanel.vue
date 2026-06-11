@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { BaseButton } from '@/components/core/button';
-import HeadingSmall from '@/components/core/util/HeadingSmall.vue';
 import { useStaffImport } from '@/composables/maintenance/useStaffImport';
 import { useStaffImportResult } from '@/composables/maintenance/useStaffImportResult';
 import { ButtonSize } from '@/enums/buttons';
@@ -39,6 +38,7 @@ const {
     onFileChange,
     runPreview,
     updateRowCorrection,
+    removeRow,
     onLookupCreated,
     onBulkDepartmentCreated,
     applyBulkDepartment,
@@ -77,31 +77,28 @@ const handleConfirm = (): void => {
 </script>
 
 <template>
-    <div class="w-full min-w-0 space-y-6">
-        <div class="space-y-2">
-            <HeadingSmall
-                :title="$t('trans.maintenance_staff_import_title')"
-                :description="$t('trans.maintenance_staff_import_description')"
-            />
-        </div>
-
-        <div class="flex flex-wrap gap-2">
-            <a :href="templateUrl" class="inline-flex" target="_blank" rel="noopener noreferrer">
+    <div class="w-full min-w-0 space-y-4">
+        <div
+            class="flex flex-col gap-4 rounded-lg border border-border p-3 md:flex-row md:items-end md:justify-between"
+        >
+            <a :href="templateUrl" class="inline-flex shrink-0" target="_blank" rel="noopener noreferrer">
                 <BaseButton type="button" :variant="ColorVariant.primary_outline" :size="ButtonSize.sm">
                     {{ $t('trans.maintenance_staff_import_download_template') }}
                 </BaseButton>
             </a>
-        </div>
 
-        <StaffImportFileForm
-            :key="fileFormKey"
-            :file-error="fileError"
-            :preview-error="previewError"
-            :preview-loading="previewLoading"
-            :has-selected-file="selectedFile !== null"
-            @file-change="onFileChange"
-            @preview="handlePreview"
-        />
+            <StaffImportFileForm
+                :key="fileFormKey"
+                class="min-w-0 flex-1 md:max-w-xl"
+                :compact="true"
+                :file-error="fileError"
+                :preview-error="previewError"
+                :preview-loading="previewLoading"
+                :has-selected-file="selectedFile !== null"
+                @file-change="onFileChange"
+                @preview="handlePreview"
+            />
+        </div>
 
         <StaffImportPreviewSection
             v-if="preview && previewLookups"
@@ -127,6 +124,7 @@ const handleConfirm = (): void => {
             @bulk-department-apply="applyBulkDepartment"
             @update:correction="updateRowCorrection"
             @lookup-created="onLookupCreated"
+            @remove-row="removeRow"
         />
 
         <StaffImportResultSummary

@@ -90,6 +90,7 @@ export type ValueAndLabel = {
 export type CustomTab = {
     label?: string;
     transLabel?: () => string;
+    transDescription?: () => string;
     value: string;
     component: Component;
     show?: boolean;

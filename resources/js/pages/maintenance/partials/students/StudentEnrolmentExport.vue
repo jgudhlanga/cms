@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import GenericButton from '@/components/core/button/GenericButton.vue';
 import BaseInput from '@/components/core/form/text/BaseInput.vue';
-import HeadingSmall from '@/components/core/util/HeadingSmall.vue';
-import CustomSeparator from '@/components/core/util/CustomSeparator.vue';
+import { Separator } from '@/components/ui/separator';
 import { useUtils } from '@/composables/core/useUtils';
 import { ColorVariant } from '@/enums/colors';
 import { IconName } from '@/enums/icons';
@@ -12,6 +11,7 @@ import { AuthObject } from '@/types/data-pagination';
 import type { MaintenanceExportCounts } from '@/types/maintenance-exports';
 import { useDebounceFn } from '@vueuse/core';
 import { useForm, usePage } from '@inertiajs/vue3';
+import { ChevronRight } from 'lucide-vue-next';
 import { trans } from 'laravel-vue-i18n';
 import { computed, onMounted, ref, watch } from 'vue';
 
@@ -35,24 +35,6 @@ const counts = ref<MaintenanceExportCounts>({
 });
 
 const isLoadingCounts = ref(false);
-
-const enrollmentExportLabel = computed(() =>
-    trans('trans.maintenance_export_student_enrolments_with_count', {
-        count: String(counts.value.studentEnrolments),
-    }),
-);
-
-const applicationExportLabel = computed(() =>
-    trans('trans.maintenance_export_applications_with_count', {
-        count: String(counts.value.applications),
-    }),
-);
-
-const faultyDataLabel = computed(() =>
-    trans('trans.maintenance_faulty_data_with_count', {
-        count: String(counts.value.faultyStudentIds),
-    }),
-);
 
 const loadExportCounts = async (intakeYear?: string) => {
     isLoadingCounts.value = true;
@@ -142,70 +124,102 @@ const goToFaultyData = () => navigateTo(route('maintenance.faulty-student-ids'))
 </script>
 
 <template>
-    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <div class="space-y-6 rounded-lg border border-border bg-card p-6">
-                <div class="space-y-2">
-                    <BaseInput
-                        v-model="form.recipient_emails"
-                        name="recipient_emails"
-                        :label="trans('trans.maintenance_export_recipient_emails_label')"
-                        :placeholder="trans('trans.maintenance_export_recipient_emails_placeholder')"
-                        :error="recipientEmailsError"
-                    />
-                    <p class="text-sm text-muted-foreground">
-                        {{ trans('trans.maintenance_export_recipient_emails_help') }}
-                    </p>
-                </div>
-
+    <div class="space-y-4">
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div class="space-y-1">
                 <BaseInput
-                    v-model="form.intake_year"
-                    name="intake_year"
-                    :label="trans('trans.maintenance_intake_year_label')"
-                    :placeholder="trans('trans.maintenance_intake_year_placeholder')"
-                    :error="form.errors.intake_year"
+                    v-model="form.recipient_emails"
+                    name="recipient_emails"
+                    :label="trans('trans.maintenance_export_recipient_emails_label')"
+                    :placeholder="trans('trans.maintenance_export_recipient_emails_placeholder')"
+                    :error="recipientEmailsError"
                 />
+                <p class="text-xs text-muted-foreground">
+                    {{ trans('trans.maintenance_export_recipient_emails_help') }}
+                </p>
+            </div>
 
-                <HeadingSmall
-                    :title="trans('trans.maintenance_export_student_enrolments')"
-                    :description="trans('trans.maintenance_export_student_enrolments_description')"
-                />
-
-                <GenericButton
-                    :icon="IconName.export"
-                    :variant="ColorVariant.primary_outline"
-                    :title="enrollmentExportLabel"
-                    :disabled="form.processing || isLoadingCounts"
-                    @click="confirmEnrollmentExport"
-                />
-
-                <CustomSeparator classes="h-1 my-5" />
-
-                <HeadingSmall
-                    :title="trans('trans.maintenance_export_applications')"
-                    :description="trans('trans.maintenance_export_applications_description')"
-                />
-
-                <GenericButton
-                    :icon="IconName.export"
-                    :variant="ColorVariant.primary_outline"
-                    :title="applicationExportLabel"
-                    :disabled="form.processing || isLoadingCounts"
-                    @click="confirmApplicationExport"
-                />
+            <BaseInput
+                v-model="form.intake_year"
+                name="intake_year"
+                :label="trans('trans.maintenance_intake_year_label')"
+                :placeholder="trans('trans.maintenance_intake_year_placeholder')"
+                :error="form.errors.intake_year"
+            />
         </div>
 
-        <div class="space-y-6 rounded-lg border border-border bg-card p-6">
-            <HeadingSmall
-                :title="trans('trans.maintenance_faulty_data')"
-                :description="trans('trans.maintenance_faulty_data_description')"
-            />
+        <Separator />
 
+        <div class="flex flex-wrap items-center justify-between gap-3 py-1">
+            <div class="min-w-0 flex-1">
+                <p class="text-sm font-medium text-foreground">
+                    {{
+                        trans('trans.maintenance_export_student_enrolments_with_count', {
+                            count: String(counts.studentEnrolments),
+                        })
+                    }}
+                </p>
+                <p class="text-xs text-muted-foreground">
+                    {{ trans('trans.maintenance_export_student_enrolments_description') }}
+                </p>
+            </div>
             <GenericButton
-                :icon="IconName.edit"
+                :icon="IconName.export"
                 :variant="ColorVariant.primary_outline"
-                :title="faultyDataLabel"
-                @click="goToFaultyData"
+                :title="trans('trans.export')"
+                :disabled="form.processing || isLoadingCounts"
+                @click="confirmEnrollmentExport"
             />
         </div>
+
+        <Separator />
+
+        <div class="flex flex-wrap items-center justify-between gap-3 py-1">
+            <div class="min-w-0 flex-1">
+                <p class="text-sm font-medium text-foreground">
+                    {{
+                        trans('trans.maintenance_export_applications_with_count', {
+                            count: String(counts.applications),
+                        })
+                    }}
+                </p>
+                <p class="text-xs text-muted-foreground">
+                    {{ trans('trans.maintenance_export_applications_description') }}
+                </p>
+            </div>
+            <GenericButton
+                :icon="IconName.export"
+                :variant="ColorVariant.primary_outline"
+                :title="trans('trans.export')"
+                :disabled="form.processing || isLoadingCounts"
+                @click="confirmApplicationExport"
+            />
+        </div>
+
+        <Separator />
+
+        <button
+            type="button"
+            class="flex w-full items-center justify-between gap-3 rounded-md py-1 text-left transition-colors hover:bg-muted/50"
+            @click="goToFaultyData"
+        >
+            <div class="min-w-0 flex-1">
+                <div class="flex items-center gap-2">
+                    <p class="text-sm font-medium text-foreground">
+                        {{ trans('trans.maintenance_faulty_data') }}
+                    </p>
+                    <span
+                        v-if="counts.faultyStudentIds > 0"
+                        class="rounded-full bg-destructive px-1.5 py-0.5 text-[10px] font-medium text-destructive-foreground"
+                    >
+                        {{ counts.faultyStudentIds }}
+                    </span>
+                </div>
+                <p class="text-xs text-muted-foreground">
+                    {{ trans('trans.maintenance_faulty_data_description') }}
+                </p>
+            </div>
+            <ChevronRight class="h-4 w-4 shrink-0 text-muted-foreground" />
+        </button>
     </div>
 </template>
