@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Services\Maintenance;
+namespace App\Services\Maintenance\Students;
 
 use App\Queries\Maintenance\FaultyStudentIdNumbersQuery;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;

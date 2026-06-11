@@ -13,7 +13,7 @@ import { ColorVariant } from '@/enums/colors';
 import { errorAlert, successAlert } from '@/lib/alerts';
 import { firstInertiaErrorMessage } from '@/lib/inertia-errors';
 import { trans } from 'laravel-vue-i18n';
-import { computed, toRefs, withDefaults } from 'vue';
+import { computed, toRefs } from 'vue';
 
 const props = withDefaults(
     defineProps<{

@@ -55,7 +55,7 @@ const visibleTabs = computed(() => maintenanceTabs().filter((tab) => tab.show));
                 v-for="tab in visibleTabs"
                 :key="'content_' + tab.value"
                 :value="tab.value"
-                class="py-4"
+                class="w-full min-w-0 py-4"
             >
                 <component :is="tab.component" v-bind="tabProps(tab.value)" />
             </TabsContent>

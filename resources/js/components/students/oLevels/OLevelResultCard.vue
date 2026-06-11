@@ -6,7 +6,7 @@ import { useOLevelResults } from '@/composables/students/useOLevelResults';
 import { ColorVariant } from '@/enums/colors';
 import { IconName } from '@/enums/icons';
 import { OLevelSubjectResult } from '@/types/enrolments';
-import { computed, defineEmits } from 'vue';
+import { computed } from 'vue';
 
 interface Props {
     result: OLevelSubjectResult;

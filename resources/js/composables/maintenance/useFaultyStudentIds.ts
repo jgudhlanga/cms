@@ -2,7 +2,7 @@ import { useDataTables } from '@/composables/core/useDataTables';
 import { useUtils } from '@/composables/core/useUtils';
 import { errorAlert, successAlert } from '@/lib/alerts';
 import { isValidZimbabweanIdNumber } from '@/lib/zimbabweanId';
-import FaultyStudentIdCorrectionCell from '@/pages/maintenance/partials/FaultyStudentIdCorrectionCell.vue';
+import FaultyStudentIdCorrectionCell from '@/pages/maintenance/partials/students/FaultyStudentIdCorrectionCell.vue';
 import HttpService from '@/services/http.service';
 import type { ApiFilterResponse } from '@/types/data-pagination';
 import type { FaultyStudentIdNumber, FaultyStudentIdsFiltersState } from '@/types/faulty-student-ids';

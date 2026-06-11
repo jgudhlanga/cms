@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Services\Maintenance;
+namespace App\Services\Maintenance\Users;
 
 use App\Models\Ledgers\Ledger;
 use App\Models\Users\User;

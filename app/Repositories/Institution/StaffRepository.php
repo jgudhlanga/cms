@@ -202,8 +202,8 @@ class StaffRepository extends BaseRepository implements IStaffRepository
         $user->email_verified_at = now();
         $user->save();
 
-        if ($dto->roleSlugs !== []) {
-            $user->syncRoles($dto->roleSlugs);
+        if ($dto->roleNames !== []) {
+            $user->syncRoles($dto->roleNames);
         }
 
         return $this->staff->create([
@@ -233,8 +233,8 @@ class StaffRepository extends BaseRepository implements IStaffRepository
 
         $this->userRepository->update($staff->user, $userDto);
 
-        if ($dto->roleSlugs !== []) {
-            $staff->user->syncRoles($dto->roleSlugs);
+        if ($dto->roleNames !== []) {
+            $staff->user->syncRoles($dto->roleNames);
         }
 
         $staff->update([

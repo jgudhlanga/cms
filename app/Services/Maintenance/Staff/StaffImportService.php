@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Services\Maintenance;
+namespace App\Services\Maintenance\Staff;
 
 use App\DTO\Institution\StaffImportRowDto;
 use App\Importers\Maintenance\StaffImporter;
@@ -29,6 +29,7 @@ class StaffImportService
 
     public function __construct(
         private readonly IStaffRepository $staffRepository,
+        private readonly StaffImportLookups $lookups,
     ) {}
 
     /**
@@ -36,6 +37,7 @@ class StaffImportService
      *     previewToken: string,
      *     fileName: string,
      *     summary: array<string, int>,
+     *     lookups: array<string, list<array{value: int, label: string}>>,
      *     rows: list<array<string, mixed>>,
      * }
      */
@@ -64,11 +66,13 @@ class StaffImportService
             'previewToken' => $previewToken,
             'fileName' => $file->getClientOriginalName(),
             'summary' => $analysis['summary'],
+            'lookups' => $this->lookups->optionsForPreview($tenantId),
             'rows' => $analysis['rows'],
         ];
     }
 
     /**
+     * @param  array<int|string, array<string, mixed>>|null  $rowCorrections
      * @return array{
      *     ingestRunId: int,
      *     importLogId: int,
@@ -76,9 +80,16 @@ class StaffImportService
      *     rowsSucceeded: int,
      *     rowsFailed: int,
      *     rowsSkipped: int,
+     *     failedRows: list<array{
+     *         rowNumber: int,
+     *         employeeNumber: string|null,
+     *         fullName: string|null,
+     *         email: string|null,
+     *         errors: list<string>,
+     *     }>,
      * }
      */
-    public function processFromPreview(int $tenantId, string $previewToken): array
+    public function processFromPreview(int $tenantId, string $previewToken, ?array $rowCorrections = null): array
     {
         $preview = Cache::get(self::PREVIEW_CACHE_PREFIX.$previewToken);
 
@@ -117,6 +128,7 @@ class StaffImportService
                 $tenantId,
                 $fullPath,
                 (string) ($preview['original_filename'] ?? 'import.xlsx'),
+                $rowCorrections,
             );
         } finally {
             Cache::forget(self::PREVIEW_CACHE_PREFIX.$previewToken);
@@ -125,6 +137,7 @@ class StaffImportService
     }
 
     /**
+     * @param  array<int|string, array<string, mixed>>|null  $rowCorrections
      * @return array{
      *     ingestRunId: int,
      *     importLogId: int,
@@ -132,10 +145,21 @@ class StaffImportService
      *     rowsSucceeded: int,
      *     rowsFailed: int,
      *     rowsSkipped: int,
+     *     failedRows: list<array{
+     *         rowNumber: int,
+     *         employeeNumber: string|null,
+     *         fullName: string|null,
+     *         email: string|null,
+     *         errors: list<string>,
+     *     }>,
      * }
      */
-    private function processStoredFile(int $tenantId, string $fullPath, string $originalFilename): array
-    {
+    private function processStoredFile(
+        int $tenantId,
+        string $fullPath,
+        string $originalFilename,
+        ?array $rowCorrections = null,
+    ): array {
         $user = Auth::user();
         $userId = $user instanceof User ? $user->id : null;
 
@@ -148,7 +172,7 @@ class StaffImportService
         ]);
 
         try {
-            $analysis = $this->analyseFile($fullPath, $tenantId, dryRun: false);
+            $analysis = $this->analyseFile($fullPath, $tenantId, dryRun: false, rowCorrections: $rowCorrections);
 
             if ($analysis['summary']['creates'] + $analysis['summary']['updates'] === 0) {
                 throw ValidationException::withMessages([
@@ -158,15 +182,32 @@ class StaffImportService
 
             $rowsSucceeded = 0;
             $rowsFailed = 0;
+            $failedRows = [];
 
             foreach ($analysis['operations'] as $operation) {
-                if ($operation['status'] === 'skipped' || $operation['status'] === 'failed') {
+                if ($operation['status'] === 'skipped') {
                     $this->recordIngestRow(
                         $ingestRun,
                         (int) $operation['rowNumber'],
                         $operation['status'],
                         (array) ($operation['raw'] ?? []),
                         $operation['errors'] ?? null,
+                    );
+
+                    continue;
+                }
+
+                if ($operation['status'] === 'failed') {
+                    $rowsFailed++;
+                    $errors = is_array($operation['errors'] ?? null) ? $operation['errors'] : null;
+                    $failedRows[] = $this->buildFailedRowPayload($operation, $errors);
+
+                    $this->recordIngestRow(
+                        $ingestRun,
+                        (int) $operation['rowNumber'],
+                        'failed',
+                        (array) ($operation['raw'] ?? []),
+                        $errors,
                     );
 
                     continue;
@@ -191,6 +232,8 @@ class StaffImportService
                     $errors = $exception instanceof ValidationException
                         ? $exception->errors()
                         : ['import' => [$exception->getMessage()]];
+
+                    $failedRows[] = $this->buildFailedRowPayload($operation, $errors);
 
                     $this->recordIngestRow(
                         $ingestRun,
@@ -236,6 +279,7 @@ class StaffImportService
                 'rowsSucceeded' => $rowsSucceeded,
                 'rowsFailed' => $rowsFailed,
                 'rowsSkipped' => $rowsSkipped,
+                'failedRows' => $failedRows,
             ];
         } catch (Throwable $exception) {
             $ingestRun->update([
@@ -248,14 +292,19 @@ class StaffImportService
     }
 
     /**
+     * @param  array<int|string, array<string, mixed>>|null  $rowCorrections
      * @return array{
      *     summary: array{total: int, succeeded: int, failed: int, skipped: int, creates: int, updates: int},
      *     operations: list<array<string, mixed>>,
      *     rows: list<array<string, mixed>>,
      * }
      */
-    private function analyseFile(string $fullPath, int $tenantId, bool $dryRun): array
-    {
+    private function analyseFile(
+        string $fullPath,
+        int $tenantId,
+        bool $dryRun,
+        ?array $rowCorrections = null,
+    ): array {
         $rawRows = $this->readRawRows($fullPath);
         $headerRowIndex = $this->detectHeaderRowIndex($rawRows);
 
@@ -288,7 +337,8 @@ class StaffImportService
             }
 
             $rowNumber++;
-            $analysis = $importer->analyseRow($rawRow);
+            $corrections = $this->correctionsForRow($rowCorrections, $rowNumber);
+            $analysis = $importer->analyseRow($rawRow, $corrections);
             $action = $analysis['action'];
 
             if ($action === 'skip_empty') {
@@ -313,6 +363,8 @@ class StaffImportService
                 'department' => $analysis['display']['department'] ?? null,
                 'action' => $action,
                 'errors' => $analysis['errors'],
+                'fields' => $analysis['fields'],
+                'needsReview' => $analysis['needsReview'],
             ];
 
             $operations[] = [
@@ -333,6 +385,21 @@ class StaffImportService
             'operations' => $operations,
             'rows' => $rows,
         ];
+    }
+
+    /**
+     * @param  array<int|string, array<string, mixed>>|null  $rowCorrections
+     * @return array<string, mixed>|null
+     */
+    private function correctionsForRow(?array $rowCorrections, int $rowNumber): ?array
+    {
+        if ($rowCorrections === null) {
+            return null;
+        }
+
+        $corrections = $rowCorrections[$rowNumber] ?? $rowCorrections[(string) $rowNumber] ?? null;
+
+        return is_array($corrections) ? $corrections : null;
     }
 
     /**
@@ -371,12 +438,77 @@ class StaffImportService
     private function rowHasContent(array $row): bool
     {
         foreach ($row as $value) {
-            if (trim((string) $value) !== '') {
+            $normalized = StaffImporter::normalizeCellValue($value);
+
+            if ($normalized !== null && $normalized !== '') {
                 return true;
             }
         }
 
         return false;
+    }
+
+    /**
+     * @param  array<string, mixed>  $operation
+     * @param  array<string, list<string>>|null  $errors
+     * @return array{
+     *     rowNumber: int,
+     *     employeeNumber: string|null,
+     *     fullName: string|null,
+     *     email: string|null,
+     *     errors: list<string>,
+     * }
+     */
+    private function buildFailedRowPayload(array $operation, ?array $errors): array
+    {
+        $raw = (array) ($operation['raw'] ?? []);
+        $dto = $operation['dto'] ?? null;
+
+        $employeeNumber = isset($raw['EMPLOYEE_NUMBER']) ? (string) $raw['EMPLOYEE_NUMBER'] : null;
+        $email = $dto instanceof StaffImportRowDto
+            ? $dto->email
+            : (isset($raw['EMAIL']) ? (string) $raw['EMAIL'] : null);
+
+        $fullName = trim(implode(' ', array_filter([
+            $raw['FIRST_NAME'] ?? null,
+            $raw['MIDDLE_NAME'] ?? null,
+            $raw['LAST_NAME'] ?? null,
+        ])));
+
+        return [
+            'rowNumber' => (int) $operation['rowNumber'],
+            'employeeNumber' => $employeeNumber !== '' ? $employeeNumber : null,
+            'fullName' => $fullName !== '' ? $fullName : null,
+            'email' => $email !== '' ? $email : null,
+            'errors' => $this->flattenRowErrors($errors),
+        ];
+    }
+
+    /**
+     * @param  array<string, list<string>>|null  $errors
+     * @return list<string>
+     */
+    private function flattenRowErrors(?array $errors): array
+    {
+        if ($errors === null) {
+            return [];
+        }
+
+        $messages = [];
+
+        foreach ($errors as $fieldMessages) {
+            if (! is_array($fieldMessages)) {
+                continue;
+            }
+
+            foreach ($fieldMessages as $message) {
+                if (is_string($message) && $message !== '') {
+                    $messages[] = $message;
+                }
+            }
+        }
+
+        return $messages;
     }
 
     /**

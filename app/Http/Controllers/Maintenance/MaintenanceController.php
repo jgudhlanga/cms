@@ -14,6 +14,7 @@ use App\Http\Requests\Maintenance\MaintenanceUserBulkPurgeRequest;
 use App\Http\Requests\Maintenance\MaintenanceUserPurgeRequest;
 use App\Http\Requests\Maintenance\MergeStudentAccountsRequest;
 use App\Http\Requests\Maintenance\RejectMergePreviewApplicationRequest;
+use App\Http\Requests\Maintenance\StaffImportCreateLookupRequest;
 use App\Http\Requests\Maintenance\StaffImportPreviewRequest;
 use App\Http\Requests\Maintenance\StaffImportProcessRequest;
 use App\Http\Resources\Maintenance\FaultyStudentIdNumberResource;
@@ -24,16 +25,17 @@ use App\Jobs\Enrolments\ExportStudentEnrollmentJob;
 use App\Models\Students\Student;
 use App\Models\Students\StudentProgram;
 use App\Models\Users\User;
-use App\Services\Maintenance\FaultyStudentIdNumbersService;
-use App\Services\Maintenance\MaintenanceExportCountsService;
-use App\Services\Maintenance\FixStudentIdNumberService;
-use App\Services\Maintenance\MaintenanceUserPurgeService;
-use App\Services\Maintenance\NonEnrolledStudentUsersService;
-use App\Services\Maintenance\StaffImportService;
-use App\Services\Maintenance\StaffImportTemplateService;
-use App\Services\Maintenance\RejectStudentProgramApplicationService;
-use App\Services\Maintenance\StudentAccountMergePreviewService;
-use App\Services\Maintenance\StudentAccountMergeService;
+use App\Services\Maintenance\Staff\StaffImportLookupCreator;
+use App\Services\Maintenance\Staff\StaffImportService;
+use App\Services\Maintenance\Staff\StaffImportTemplateService;
+use App\Services\Maintenance\Students\FaultyStudentIdNumbersService;
+use App\Services\Maintenance\Students\FixStudentIdNumberService;
+use App\Services\Maintenance\Students\MaintenanceExportCountsService;
+use App\Services\Maintenance\Students\RejectStudentProgramApplicationService;
+use App\Services\Maintenance\Students\StudentAccountMergePreviewService;
+use App\Services\Maintenance\Students\StudentAccountMergeService;
+use App\Services\Maintenance\Users\MaintenanceUserPurgeService;
+use App\Services\Maintenance\Users\NonEnrolledStudentUsersService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -138,6 +140,21 @@ class MaintenanceController extends Controller
         );
     }
 
+    public function createStaffImportLookup(
+        StaffImportCreateLookupRequest $request,
+        StaffImportLookupCreator $lookupCreator,
+    ): JsonResponse {
+        $validated = $request->validated();
+
+        $lookup = $lookupCreator->create(
+            $this->resolveTenantId(),
+            (string) $validated['type'],
+            (string) $validated['name'],
+        );
+
+        return response()->json($lookup);
+    }
+
     public function previewStaffImport(
         StaffImportPreviewRequest $request,
         StaffImportService $importService,
@@ -237,8 +254,12 @@ class MaintenanceController extends Controller
         StaffImportProcessRequest $request,
         StaffImportService $importService,
     ): RedirectResponse {
-        $previewToken = (string) $request->validated('preview_token');
-        $result = $importService->processFromPreview($this->resolveTenantId(), $previewToken);
+        $validated = $request->validated();
+        $previewToken = (string) $validated['preview_token'];
+        $rowCorrections = isset($validated['row_corrections']) && is_array($validated['row_corrections'])
+            ? $validated['row_corrections']
+            : null;
+        $result = $importService->processFromPreview($this->resolveTenantId(), $previewToken, $rowCorrections);
 
         return redirect()
             ->route('maintenance.index')

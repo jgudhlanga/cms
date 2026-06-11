@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Services\Maintenance;
+namespace App\Services\Maintenance\Students;
 
 use App\Exceptions\Maintenance\StudentIdNumberConflictException;
 use App\Models\Students\Student;

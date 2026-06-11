@@ -1,7 +1,10 @@
 <?php
 
+use App\Enums\Acl\RoleGroupEnum;
 use App\Exports\Maintenance\StaffImportTemplateExport;
+use App\Helpers\PermissionHelper;
 use App\Importers\Maintenance\StaffImporter;
+use App\Models\Acl\Role;
 use App\Models\Institution\Department;
 use App\Models\Institution\InstitutionDepartment;
 use App\Models\Institution\Staff;
@@ -13,7 +16,8 @@ use App\Models\Shared\Gender;
 use App\Models\Shared\MaritalStatus;
 use App\Models\Shared\Title;
 use App\Models\Users\User;
-use App\Services\Maintenance\StaffImportTemplateService;
+use App\Services\Maintenance\Staff\StaffImportTemplateService;
+use Database\Seeders\Acl\RoleGroupSeeder;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Cache;
 use Maatwebsite\Excel\Facades\Excel;
@@ -265,6 +269,328 @@ it('rejects preview token for a different user', function (): void {
     Cache::forget('staff-import-preview:'.$previewToken);
 });
 
+it('normalizes excel cell values for import parsing', function (): void {
+    expect(StaffImporter::normalizeCellValue(new DateTimeImmutable('1982-04-24')))->toBe('1982-04-24')
+        ->and(StaffImporter::normalizeCellValue(773801735))->toBe('773801735')
+        ->and(StaffImporter::normalizeCellValue('  Mr '))->toBe('Mr');
+});
+
+it('previews staff with fuzzy lookup values and returns field metadata', function (): void {
+    $context = makeStaffImportContext();
+    $marriedStatus = MaritalStatus::query()->firstOrCreate(['title' => 'Married']);
+    EmploymentType::query()->firstOrCreate(['name' => 'Full time']);
+
+    $file = storeStaffImportFile([
+        staffImportRowValues([
+            'TITLE' => 'Mr ',
+            'GENDER' => 'male',
+            'MARITAL_STATUS' => 'married',
+            'EMPLOYMENT_TYPE' => 'Full time',
+        ]),
+    ], $context['tenantId']);
+
+    $previewResponse = $this->post(route('maintenance.staff-import.preview'), [
+        'file' => $file,
+    ]);
+
+    $previewResponse->assertSuccessful()
+        ->assertJsonPath('summary.failed', 0)
+        ->assertJsonPath('summary.creates', 1)
+        ->assertJsonStructure([
+            'lookups' => ['titles', 'genders', 'maritalStatuses', 'employmentTypes', 'departments', 'roles'],
+            'rows' => [
+                [
+                    'fields' => ['title', 'gender', 'maritalStatus', 'employmentType', 'department', 'roles'],
+                    'needsReview',
+                ],
+            ],
+        ])
+        ->assertJsonPath('rows.0.fields.gender.resolvedId', $context['gender']->id)
+        ->assertJsonPath('rows.0.fields.maritalStatus.resolvedId', $marriedStatus->id);
+});
+
+it('normalizes DateTimeImmutable cell values during preview', function (): void {
+    actingAsRootMaintenanceUser();
+
+    $hospitalityFile = base_path('public/Departmental Staff Data HOSPITALITY.xlsx');
+
+    if (! file_exists($hospitalityFile)) {
+        $this->markTestSkipped('Hospitality staff import fixture is not available.');
+    }
+
+    $file = new UploadedFile($hospitalityFile, 'Departmental Staff Data HOSPITALITY.xlsx', null, null, true);
+
+    $previewResponse = $this->post(route('maintenance.staff-import.preview'), [
+        'file' => $file,
+    ]);
+
+    $previewResponse->assertSuccessful()
+        ->assertJsonStructure([
+            'previewToken',
+            'summary',
+            'lookups',
+            'rows' => [
+                [
+                    'rowNumber',
+                    'fields',
+                ],
+            ],
+        ])
+        ->assertJsonPath('summary.total', fn (int $total): bool => $total > 0);
+});
+
+it('includes importable role groups in preview lookups and resolves them by name', function (): void {
+    $this->seed(RoleGroupSeeder::class);
+
+    $context = makeStaffImportContext();
+
+    $genHandRole = Role::factory()->create([
+        'name' => 'Gen Hand',
+        'slug' => 'gen-hand',
+        'guard_name' => 'web',
+        'role_group_id' => PermissionHelper::getGroupId(RoleGroupEnum::ACADEMIC->value),
+    ]);
+
+    $registryClerkRole = Role::factory()->create([
+        'name' => 'Registry Clerk',
+        'slug' => 'registry-clerk',
+        'guard_name' => 'web',
+        'role_group_id' => PermissionHelper::getGroupId(RoleGroupEnum::ADMINISTRATIVE->value),
+    ]);
+
+    $file = storeStaffImportFile([
+        staffImportRowValues([
+            'ROLES' => 'Registry Clerk',
+        ]),
+    ], $context['tenantId']);
+
+    $previewResponse = $this->post(route('maintenance.staff-import.preview'), [
+        'file' => $file,
+    ]);
+
+    $previewResponse->assertSuccessful()
+        ->assertJsonPath('rows.0.fields.roles.0.resolvedId', $registryClerkRole->id)
+        ->assertJsonPath('rows.0.fields.roles.0.resolvedLabel', 'Registry Clerk');
+
+    $lookupRoles = collect($previewResponse->json('lookups.roles'));
+    $lookupRoleIds = $lookupRoles->pluck('value');
+
+    expect($lookupRoleIds)->toContain($genHandRole->id)
+        ->and($lookupRoleIds)->toContain($registryClerkRole->id)
+        ->and($lookupRoles->firstWhere('value', $genHandRole->id)['roleGroup'])->toBe('Academic')
+        ->and($lookupRoles->firstWhere('value', $registryClerkRole->id)['roleGroup'])->toBe('Administrative');
+});
+
+it('imports staff with lecturer role slug resolved to role name', function (): void {
+    $context = makeStaffImportContext();
+
+    $lecturerRole = Role::factory()->create([
+        'name' => 'Lecturer',
+        'slug' => 'lecturer',
+        'guard_name' => 'web',
+        'role_group_id' => PermissionHelper::getGroupId(RoleGroupEnum::ACADEMIC->value),
+    ]);
+
+    $file = storeStaffImportFile([
+        staffImportRowValues([
+            'ROLES' => 'lecturer',
+        ]),
+    ], $context['tenantId']);
+
+    staffImportPreviewAndProcess($file);
+
+    $staff = Staff::query()
+        ->where('employee_number', 'EC-IMPORT-001')
+        ->where('tenant_id', $context['tenantId'])
+        ->first();
+
+    expect($staff)->not->toBeNull()
+        ->and($staff->user->hasRole($lecturerRole->name))->toBeTrue();
+});
+
+it('processes import with row corrections overriding lookup values', function (): void {
+    $context = makeStaffImportContext();
+    $alternateGender = Gender::factory()->create(['title' => 'Female']);
+
+    $file = storeStaffImportFile([
+        staffImportRowValues([
+            'GENDER' => 'not-a-real-gender',
+        ]),
+    ], $context['tenantId']);
+
+    $previewResponse = $this->post(route('maintenance.staff-import.preview'), [
+        'file' => $file,
+    ]);
+
+    $previewResponse->assertSuccessful()
+        ->assertJsonPath('summary.failed', 1);
+
+    $previewToken = $previewResponse->json('previewToken');
+
+    $this->post(route('maintenance.staff-import.process'), [
+        'preview_token' => $previewToken,
+        'row_corrections' => [
+            1 => [
+                'genderId' => $alternateGender->id,
+            ],
+        ],
+    ])->assertRedirect(route('maintenance.index'));
+
+    $staff = Staff::query()
+        ->where('employee_number', 'EC-IMPORT-001')
+        ->where('tenant_id', $context['tenantId'])
+        ->first();
+
+    expect($staff)->not->toBeNull()
+        ->and($staff->gender_id)->toBe($alternateGender->id);
+});
+
+it('redirects guests from staff import lookup create endpoint', function (): void {
+    $this->post(route('maintenance.staff-import.lookups.create'), [
+        'type' => 'title',
+        'name' => 'Dr',
+    ])->assertRedirect('/login');
+});
+
+it('forbids users without root manage from staff import lookup create endpoint', function (): void {
+    $user = User::factory()->create();
+    $this->actingAs($user)
+        ->post(route('maintenance.staff-import.lookups.create'), [
+            'type' => 'title',
+            'name' => 'Dr',
+        ])
+        ->assertForbidden();
+});
+
+it('creates title lookup for staff import preview', function (): void {
+    actingAsRootMaintenanceUser();
+
+    $response = $this->postJson(route('maintenance.staff-import.lookups.create'), [
+        'type' => 'title',
+        'name' => 'Prof',
+    ]);
+
+    $response->assertSuccessful()
+        ->assertJsonStructure(['value', 'label'])
+        ->assertJsonPath('label', 'Prof');
+
+    expect(Title::query()->where('name', 'Prof')->exists())->toBeTrue();
+});
+
+it('creates role lookup for staff import preview', function (): void {
+    actingAsRootMaintenanceUser();
+
+    $response = $this->postJson(route('maintenance.staff-import.lookups.create'), [
+        'type' => 'role',
+        'name' => 'Guest Lecturer',
+    ]);
+
+    $response->assertSuccessful()
+        ->assertJsonStructure(['value', 'label'])
+        ->assertJsonPath('label', 'Guest Lecturer');
+
+    expect(Role::query()->where('name', 'Guest Lecturer')->exists())->toBeTrue();
+});
+
+it('processes import with newly created role correction', function (): void {
+    $context = makeStaffImportContext();
+
+    $createResponse = $this->postJson(route('maintenance.staff-import.lookups.create'), [
+        'type' => 'role',
+        'name' => 'Industry Mentor',
+    ]);
+
+    $createResponse->assertSuccessful();
+    $roleId = (int) $createResponse->json('value');
+
+    $file = storeStaffImportFile([
+        staffImportRowValues([
+            'ROLES' => 'industry-mentor',
+        ]),
+    ], $context['tenantId']);
+
+    $previewResponse = $this->post(route('maintenance.staff-import.preview'), [
+        'file' => $file,
+    ]);
+
+    $previewResponse->assertSuccessful();
+
+    $previewToken = $previewResponse->json('previewToken');
+
+    $this->post(route('maintenance.staff-import.process'), [
+        'preview_token' => $previewToken,
+        'row_corrections' => [
+            1 => [
+                'roleIds' => [$roleId],
+            ],
+        ],
+    ])->assertRedirect(route('maintenance.index'));
+
+    $staff = Staff::query()
+        ->where('employee_number', 'EC-IMPORT-001')
+        ->where('tenant_id', $context['tenantId'])
+        ->first();
+
+    expect($staff)->not->toBeNull()
+        ->and($staff->user->hasRole('Industry Mentor'))->toBeTrue();
+});
+
+it('creates department lookup linked to tenant for staff import preview', function (): void {
+    $context = makeStaffImportContext();
+
+    $response = $this->postJson(route('maintenance.staff-import.lookups.create'), [
+        'type' => 'department',
+        'name' => 'Hospitality',
+    ]);
+
+    $response->assertSuccessful()
+        ->assertJsonPath('label', 'Hospitality');
+
+    $institutionDepartment = InstitutionDepartment::query()
+        ->where('tenant_id', $context['tenantId'])
+        ->whereHas('department', fn ($query) => $query->where('name', 'Hospitality'))
+        ->first();
+
+    expect($institutionDepartment)->not->toBeNull()
+        ->and($response->json('value'))->toBe($institutionDepartment->id);
+});
+
+it('processes import with corrected email address', function (): void {
+    $context = makeStaffImportContext();
+
+    $file = storeStaffImportFile([
+        staffImportRowValues([
+            'EMAIL' => 'not-an-email',
+        ]),
+    ], $context['tenantId']);
+
+    $previewResponse = $this->post(route('maintenance.staff-import.preview'), [
+        'file' => $file,
+    ]);
+
+    $previewResponse->assertSuccessful()
+        ->assertJsonPath('summary.failed', 1);
+
+    $previewToken = $previewResponse->json('previewToken');
+
+    $this->post(route('maintenance.staff-import.process'), [
+        'preview_token' => $previewToken,
+        'row_corrections' => [
+            1 => [
+                'email' => 'fixed.email@example.test',
+            ],
+        ],
+    ])->assertRedirect(route('maintenance.index'));
+
+    $staff = Staff::query()
+        ->where('employee_number', 'EC-IMPORT-001')
+        ->where('tenant_id', $context['tenantId'])
+        ->first();
+
+    expect($staff)->not->toBeNull()
+        ->and($staff->user->email)->toBe('fixed.email@example.test');
+});
+
 it('fails preview row for duplicate email on create', function (): void {
     $context = makeStaffImportContext();
     User::factory()->create([
@@ -289,7 +615,16 @@ it('fails preview row for duplicate email on create', function (): void {
 
     $this->post(route('maintenance.staff-import.process'), [
         'preview_token' => $previewToken,
-    ])->assertRedirect(route('maintenance.index'));
+    ])
+        ->assertRedirect(route('maintenance.index'))
+        ->assertSessionHas('staffImportResult.failedRows', function (array $failedRows): bool {
+            expect($failedRows)->toHaveCount(1)
+                ->and($failedRows[0]['rowNumber'])->toBe(1)
+                ->and($failedRows[0]['employeeNumber'])->toBe('EC-IMPORT-002')
+                ->and($failedRows[0]['errors'])->toContain(__('trans.maintenance_staff_import_duplicate_email'));
+
+            return true;
+        });
 
     expect(Staff::query()->where('employee_number', 'EC-IMPORT-002')->exists())->toBeFalse();
 });
