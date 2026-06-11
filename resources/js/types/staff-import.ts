@@ -45,6 +45,8 @@ export interface StaffImportRowCorrection {
     institutionDepartmentId?: number;
     roleIds?: number[];
     email?: string;
+    phoneNumber?: string;
+    dateOfBirth?: string;
 }
 
 export interface StaffImportPreviewRow {
@@ -52,6 +54,8 @@ export interface StaffImportPreviewRow {
     employeeNumber: string | null;
     fullName: string | null;
     email: string | null;
+    phoneNumber: string | null;
+    dateOfBirth: string | null;
     department: string | null;
     action: 'create' | 'update' | 'skip_empty' | 'fail';
     errors: Record<string, string[]> | null;

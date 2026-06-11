@@ -259,7 +259,15 @@ class MaintenanceController extends Controller
         $rowCorrections = isset($validated['row_corrections']) && is_array($validated['row_corrections'])
             ? $validated['row_corrections']
             : null;
-        $result = $importService->processFromPreview($this->resolveTenantId(), $previewToken, $rowCorrections);
+        $excludedRowNumbers = isset($validated['excluded_row_numbers']) && is_array($validated['excluded_row_numbers'])
+            ? $validated['excluded_row_numbers']
+            : null;
+        $result = $importService->processFromPreview(
+            $this->resolveTenantId(),
+            $previewToken,
+            $rowCorrections,
+            $excludedRowNumbers,
+        );
 
         return redirect()
             ->route('maintenance.index')

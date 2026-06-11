@@ -157,6 +157,12 @@ class StaffImporter implements IngestDefinition
         if (isset($data['EMAIL'])) {
             $display['email'] = $data['EMAIL'];
         }
+        if (isset($data['PHONE_NUMBER'])) {
+            $display['phoneNumber'] = $data['PHONE_NUMBER'];
+        }
+        if (isset($data['DATE_OF_BIRTH'])) {
+            $display['dateOfBirth'] = $data['DATE_OF_BIRTH'];
+        }
         $resolved = $this->resolveLookupFields($data, $corrections);
         $fields = $resolved['fields'];
         $needsReview = $resolved['needsReview'];
@@ -301,6 +307,8 @@ class StaffImporter implements IngestDefinition
                 $data['LAST_NAME'],
             ]))),
             'email' => $data['EMAIL'],
+            'phoneNumber' => $data['PHONE_NUMBER'],
+            'dateOfBirth' => $data['DATE_OF_BIRTH'],
             'department' => $data['DEPARTMENT'],
         ];
     }
@@ -329,10 +337,12 @@ class StaffImporter implements IngestDefinition
             isset($corrections['titleId']) ? (int) $corrections['titleId'] : null,
         );
 
+        $genderRaw = (string) ($data['GENDER'] ?? '');
         $genderField = $this->resolveSingleLookupField(
-            (string) ($data['GENDER'] ?? ''),
+            $genderRaw,
             $this->lookups->genderCandidates(),
             isset($corrections['genderId']) ? (int) $corrections['genderId'] : null,
+            $this->normalizeGenderInput($genderRaw),
         );
 
         $maritalStatusField = $this->resolveSingleLookupField(
@@ -397,8 +407,12 @@ class StaffImporter implements IngestDefinition
      *     needsReview: bool,
      * }
      */
-    private function resolveSingleLookupField(string $raw, array $candidates, ?int $correctedId = null): array
-    {
+    private function resolveSingleLookupField(
+        string $raw,
+        array $candidates,
+        ?int $correctedId = null,
+        ?string $matchInput = null,
+    ): array {
         if ($correctedId !== null) {
             foreach ($candidates as $candidate) {
                 if ((int) $candidate['id'] === $correctedId) {
@@ -413,7 +427,7 @@ class StaffImporter implements IngestDefinition
             }
         }
 
-        $match = $this->matcher->match($raw, $candidates);
+        $match = $this->matcher->match($matchInput ?? $raw, $candidates);
 
         if ($match === null) {
             return [
@@ -584,7 +598,24 @@ class StaffImporter implements IngestDefinition
             $data['EMAIL'] = trim($corrections['email']);
         }
 
+        if (isset($corrections['phoneNumber']) && is_string($corrections['phoneNumber']) && trim($corrections['phoneNumber']) !== '') {
+            $data['PHONE_NUMBER'] = trim($corrections['phoneNumber']);
+        }
+
+        if (isset($corrections['dateOfBirth']) && is_string($corrections['dateOfBirth']) && trim($corrections['dateOfBirth']) !== '') {
+            $data['DATE_OF_BIRTH'] = Carbon::parse(trim($corrections['dateOfBirth']))->format('Y-m-d');
+        }
+
         return $data;
+    }
+
+    private function normalizeGenderInput(string $raw): string
+    {
+        return match (strtoupper(trim($raw))) {
+            'M' => 'Male',
+            'F' => 'Female',
+            default => $raw,
+        };
     }
 
     private function resolveAction(StaffImportRowDto $dto): string

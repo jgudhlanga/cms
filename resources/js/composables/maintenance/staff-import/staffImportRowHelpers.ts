@@ -16,6 +16,34 @@ export const isValidStaffImportEmail = (email: string): boolean => {
     return trimmed !== '' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed);
 };
 
+export const isValidStaffImportPhone = (phone: string): boolean => {
+    const trimmed = phone.trim();
+
+    return trimmed !== '' && trimmed.length <= 30;
+};
+
+export const isValidStaffImportDateOfBirth = (dateOfBirth: string): boolean => {
+    const trimmed = dateOfBirth.trim();
+
+    if (trimmed === '') {
+        return false;
+    }
+
+    const parsed = Date.parse(trimmed);
+
+    return !Number.isNaN(parsed);
+};
+
+export const formatStaffImportDateOfBirth = (dateOfBirth: string): string => {
+    const trimmed = dateOfBirth.trim();
+
+    if (!isValidStaffImportDateOfBirth(trimmed)) {
+        return trimmed;
+    }
+
+    return new Date(trimmed).toISOString().split('T')[0] ?? trimmed;
+};
+
 export const getEffectiveCorrection = (
     rowCorrections: Record<number, StaffImportRowCorrection>,
     row: StaffImportPreviewRow,
@@ -54,6 +82,34 @@ export const resolvedEmail = (
     }
 
     return row.email?.trim() ?? '';
+};
+
+export const resolvedPhoneNumber = (
+    row: StaffImportPreviewRow,
+    rowCorrections: Record<number, StaffImportRowCorrection>,
+): string => {
+    const correctionPhone = getEffectiveCorrection(rowCorrections, row).phoneNumber;
+
+    if (correctionPhone !== undefined && correctionPhone.trim() !== '') {
+        return correctionPhone.trim();
+    }
+
+    return row.phoneNumber?.trim() ?? '';
+};
+
+export const resolvedDateOfBirth = (
+    row: StaffImportPreviewRow,
+    rowCorrections: Record<number, StaffImportRowCorrection>,
+): string => {
+    const correctionDateOfBirth = getEffectiveCorrection(rowCorrections, row).dateOfBirth;
+
+    if (correctionDateOfBirth !== undefined && correctionDateOfBirth.trim() !== '') {
+        return formatStaffImportDateOfBirth(correctionDateOfBirth);
+    }
+
+    const rowDateOfBirth = row.dateOfBirth?.trim() ?? '';
+
+    return rowDateOfBirth !== '' ? formatStaffImportDateOfBirth(rowDateOfBirth) : '';
 };
 
 export const lookupOptionsKey = (
@@ -104,6 +160,14 @@ export const rowIsResolvable = (
         return false;
     }
 
+    if (!isValidStaffImportPhone(resolvedPhoneNumber(row, rowCorrections))) {
+        return false;
+    }
+
+    if (!isValidStaffImportDateOfBirth(resolvedDateOfBirth(row, rowCorrections))) {
+        return false;
+    }
+
     if (row.errors !== null) {
         const hasBlockingErrors = Object.keys(row.errors).some((key) => {
             if (STAFF_IMPORT_LOOKUP_ERROR_KEYS.includes(key as (typeof STAFF_IMPORT_LOOKUP_ERROR_KEYS)[number])) {
@@ -111,6 +175,14 @@ export const rowIsResolvable = (
             }
 
             if (key === 'EMAIL' && isValidStaffImportEmail(resolvedEmail(row, rowCorrections))) {
+                return false;
+            }
+
+            if (key === 'PHONE_NUMBER' && isValidStaffImportPhone(resolvedPhoneNumber(row, rowCorrections))) {
+                return false;
+            }
+
+            if (key === 'DATE_OF_BIRTH' && isValidStaffImportDateOfBirth(resolvedDateOfBirth(row, rowCorrections))) {
                 return false;
             }
 
@@ -220,9 +292,38 @@ export const activeRowErrors = (
         }
     }
 
+    const phoneNumber = resolvedPhoneNumber(row, rowCorrections);
+
+    if (!isValidStaffImportPhone(phoneNumber)) {
+        const phoneErrors = row.errors?.PHONE_NUMBER;
+
+        if (phoneErrors !== undefined && phoneErrors.length > 0) {
+            errors.push(...phoneErrors);
+        } else {
+            errors.push(trans('trans.maintenance_staff_import_invalid_phone'));
+        }
+    }
+
+    const dateOfBirth = resolvedDateOfBirth(row, rowCorrections);
+
+    if (!isValidStaffImportDateOfBirth(dateOfBirth)) {
+        const dateOfBirthErrors = row.errors?.DATE_OF_BIRTH;
+
+        if (dateOfBirthErrors !== undefined && dateOfBirthErrors.length > 0) {
+            errors.push(...dateOfBirthErrors);
+        } else {
+            errors.push(trans('trans.maintenance_staff_import_invalid_date_of_birth'));
+        }
+    }
+
     if (row.errors !== null) {
         for (const [key, messages] of Object.entries(row.errors)) {
-            if (STAFF_IMPORT_LOOKUP_ERROR_KEYS.includes(key as (typeof STAFF_IMPORT_LOOKUP_ERROR_KEYS)[number]) || key === 'EMAIL') {
+            if (
+                STAFF_IMPORT_LOOKUP_ERROR_KEYS.includes(key as (typeof STAFF_IMPORT_LOOKUP_ERROR_KEYS)[number])
+                || key === 'EMAIL'
+                || key === 'PHONE_NUMBER'
+                || key === 'DATE_OF_BIRTH'
+            ) {
                 continue;
             }
 
@@ -263,9 +364,14 @@ export const staffImportActionLabel = (action: string): string => {
     return trans(keys[action] ?? keys.fail);
 };
 
+export const isRowExcluded = (rowNumber: number, excludedRowNumbers: ReadonlySet<number>): boolean => {
+    return excludedRowNumbers.has(rowNumber);
+};
+
 export const computeEffectiveSummary = (
     preview: StaffImportPreview,
     rowCorrections: Record<number, StaffImportRowCorrection>,
+    excludedRowNumbers: ReadonlySet<number> = new Set(),
 ) => {
     let creates = 0;
     let updates = 0;
@@ -274,6 +380,11 @@ export const computeEffectiveSummary = (
 
     for (const row of preview.rows) {
         if (row.action === 'skip_empty') {
+            skipped++;
+            continue;
+        }
+
+        if (isRowExcluded(row.rowNumber, excludedRowNumbers)) {
             skipped++;
             continue;
         }
@@ -305,11 +416,12 @@ export const computeEffectiveSummary = (
 export const buildRowCorrectionsPayload = (
     preview: StaffImportPreview,
     rowCorrections: Record<number, StaffImportRowCorrection>,
+    excludedRowNumbers: ReadonlySet<number> = new Set(),
 ): Record<number, StaffImportRowCorrection> => {
     const payload: Record<number, StaffImportRowCorrection> = {};
 
     for (const row of preview.rows) {
-        if (row.action === 'skip_empty') {
+        if (row.action === 'skip_empty' || isRowExcluded(row.rowNumber, excludedRowNumbers)) {
             continue;
         }
 
@@ -350,6 +462,24 @@ export const buildRowCorrectionsPayload = (
 
         if (email !== '' && email !== originalEmail && isValidStaffImportEmail(email)) {
             correction.email = email;
+        }
+
+        const phoneNumber = resolvedPhoneNumber(row, rowCorrections);
+        const originalPhoneNumber = row.phoneNumber?.trim() ?? '';
+
+        if (phoneNumber !== '' && phoneNumber !== originalPhoneNumber && isValidStaffImportPhone(phoneNumber)) {
+            correction.phoneNumber = phoneNumber;
+        }
+
+        const dateOfBirth = resolvedDateOfBirth(row, rowCorrections);
+        const originalDateOfBirth = row.dateOfBirth?.trim() !== '' ? formatStaffImportDateOfBirth(row.dateOfBirth ?? '') : '';
+
+        if (
+            dateOfBirth !== ''
+            && dateOfBirth !== originalDateOfBirth
+            && isValidStaffImportDateOfBirth(dateOfBirth)
+        ) {
+            correction.dateOfBirth = dateOfBirth;
         }
 
         if (Object.keys(correction).length > 0) {

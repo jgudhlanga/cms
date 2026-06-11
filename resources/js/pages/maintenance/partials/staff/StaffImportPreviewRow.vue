@@ -1,7 +1,13 @@
 <script setup lang="ts">
+import {
+    formatStaffImportDateOfBirth,
+    isValidStaffImportDateOfBirth,
+    isValidStaffImportEmail,
+    isValidStaffImportPhone,
+} from '@/composables/maintenance/staff-import/staffImportRowHelpers';
 import StaffImportLookupCell from '@/pages/maintenance/partials/staff/StaffImportLookupCell.vue';
 import StaffImportRolesCell from '@/pages/maintenance/partials/staff/StaffImportRolesCell.vue';
-import { Check, X } from 'lucide-vue-next';
+import { Check, Trash2, X } from 'lucide-vue-next';
 import type {
     StaffImportFieldKey,
     StaffImportLookupOption,
@@ -11,7 +17,7 @@ import type {
 } from '@/types/staff-import';
 import { computed } from 'vue';
 
-const COLUMN_COUNT = 11;
+const COLUMN_COUNT = 13;
 
 const props = defineProps<{
     row: StaffImportPreviewRow;
@@ -27,6 +33,7 @@ const props = defineProps<{
 const emit = defineEmits<{
     'update:correction': [StaffImportRowCorrection];
     'lookup-created': [fieldKey: StaffImportFieldKey, option: StaffImportLookupOption];
+    remove: [];
 }>();
 
 const effectiveEmail = computed((): string => {
@@ -37,28 +44,73 @@ const effectiveEmail = computed((): string => {
     return props.row.email?.trim() ?? '';
 });
 
-const isValidEmail = (email: string): boolean => {
-    const trimmed = email.trim();
+const effectivePhone = computed((): string => {
+    if (props.correction.phoneNumber !== undefined && props.correction.phoneNumber.trim() !== '') {
+        return props.correction.phoneNumber.trim();
+    }
 
-    return trimmed !== '' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed);
-};
+    return props.row.phoneNumber?.trim() ?? '';
+});
 
-const emailInputClass = computed((): string => {
-    if (props.correction.email !== undefined && isValidEmail(props.correction.email)) {
+const effectiveDateOfBirth = computed((): string => {
+    if (props.correction.dateOfBirth !== undefined && props.correction.dateOfBirth.trim() !== '') {
+        return formatStaffImportDateOfBirth(props.correction.dateOfBirth);
+    }
+
+    const rowDateOfBirth = props.row.dateOfBirth?.trim() ?? '';
+
+    return rowDateOfBirth !== '' ? formatStaffImportDateOfBirth(rowDateOfBirth) : '';
+});
+
+const fieldInputClass = (isValid: boolean, hasCorrection: boolean): string => {
+    if (hasCorrection && isValid) {
         return 'border-green-500 bg-green-50';
     }
 
-    if (!isValidEmail(effectiveEmail.value)) {
+    if (!isValid) {
         return 'border-destructive bg-destructive/5';
     }
 
     return 'border-border';
+};
+
+const emailInputClass = computed((): string => {
+    return fieldInputClass(
+        isValidStaffImportEmail(effectiveEmail.value),
+        props.correction.email !== undefined,
+    );
+});
+
+const phoneInputClass = computed((): string => {
+    return fieldInputClass(
+        isValidStaffImportPhone(effectivePhone.value),
+        props.correction.phoneNumber !== undefined,
+    );
+});
+
+const dateOfBirthInputClass = computed((): string => {
+    return fieldInputClass(
+        isValidStaffImportDateOfBirth(effectiveDateOfBirth.value),
+        props.correction.dateOfBirth !== undefined,
+    );
 });
 
 const onEmailInput = (event: Event): void => {
     const value = (event.target as HTMLInputElement).value;
 
     updateCorrection({ email: value });
+};
+
+const onPhoneInput = (event: Event): void => {
+    const value = (event.target as HTMLInputElement).value;
+
+    updateCorrection({ phoneNumber: value });
+};
+
+const onDateOfBirthInput = (event: Event): void => {
+    const value = (event.target as HTMLInputElement).value;
+
+    updateCorrection({ dateOfBirth: value });
 };
 
 const effectiveId = (
@@ -109,6 +161,25 @@ const onLookupCreated = (fieldKey: StaffImportFieldKey, option: StaffImportLooku
                 :value="effectiveEmail"
                 :placeholder="$t('trans.email')"
                 @input="onEmailInput"
+            />
+        </td>
+        <td class="j-td min-w-[7rem]">
+            <input
+                type="tel"
+                class="h-7 w-full rounded border bg-background px-1.5 text-[10px]"
+                :class="phoneInputClass"
+                :value="effectivePhone"
+                :placeholder="$t('trans.phone_number')"
+                @input="onPhoneInput"
+            />
+        </td>
+        <td class="j-td min-w-[7rem]">
+            <input
+                type="date"
+                class="h-7 w-full rounded border bg-background px-1.5 text-[10px]"
+                :class="dateOfBirthInputClass"
+                :value="effectiveDateOfBirth"
+                @input="onDateOfBirthInput"
             />
         </td>
         <td class="j-td">
@@ -181,21 +252,31 @@ const onLookupCreated = (fieldKey: StaffImportFieldKey, option: StaffImportLooku
                 @created="onLookupCreated('roles', $event)"
             />
         </td>
-        <td class="j-td w-10 text-center">
-            <span
-                v-if="effectiveAction === 'create' || effectiveAction === 'update'"
-                class="inline-flex h-6 w-6 items-center justify-center rounded-full border border-green-200 bg-green-50"
-                :title="actionLabel"
-            >
-                <Check class="h-3.5 w-3.5 text-green-700" />
-            </span>
-            <span
-                v-else-if="effectiveAction === 'fail'"
-                class="inline-flex h-6 w-6 items-center justify-center rounded-full border border-destructive/30 bg-destructive/10"
-                :title="actionLabel"
-            >
-                <X class="h-3.5 w-3.5 text-destructive" />
-            </span>
+        <td class="j-td w-12 text-center">
+            <div class="flex flex-col items-center gap-0.5">
+                <span
+                    v-if="effectiveAction === 'create' || effectiveAction === 'update'"
+                    class="inline-flex h-6 w-6 items-center justify-center rounded-full border border-green-200 bg-green-50"
+                    :title="actionLabel"
+                >
+                    <Check class="h-3.5 w-3.5 text-green-700" />
+                </span>
+                <span
+                    v-else-if="effectiveAction === 'fail'"
+                    class="inline-flex h-6 w-6 items-center justify-center rounded-full border border-destructive/30 bg-destructive/10"
+                    :title="actionLabel"
+                >
+                    <X class="h-3.5 w-3.5 text-destructive" />
+                </span>
+                <button
+                    type="button"
+                    class="inline-flex h-6 w-6 items-center justify-center rounded-full border border-border text-muted-foreground hover:border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
+                    :title="$t('trans.maintenance_staff_import_remove_row')"
+                    @click="emit('remove')"
+                >
+                    <Trash2 class="h-3 w-3" />
+                </button>
+            </div>
             <p v-if="row.needsReview" class="mt-0.5 text-[10px] text-amber-700">
                 {{ $t('trans.maintenance_staff_import_needs_review') }}
             </p>

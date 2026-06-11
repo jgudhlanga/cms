@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { BaseButton } from '@/components/core/button';
-import BaseAlert from '@/components/core/alert/BaseAlert.vue';
 import BaseCombobox from '@/components/core/form/combobox/BaseCombobox.vue';
 import DataLoadingSpinner from '@/components/core/loader/DataLoadingSpinner.vue';
 import DataTable from '@/components/core/table/DataTable.vue';
@@ -13,7 +12,6 @@ import {
 import { PAGINATION_ITEMS_PER_PAGE } from '@/lib/constants';
 import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
-import { TypeVariant } from '@/enums/type-variants';
 import type { ApiFilterResponse, DataListProps } from '@/types/data-pagination';
 import type {
     MaintenanceApplicationStatusFilter,
@@ -214,12 +212,7 @@ watch(visibleUsers, () => pruneSelectionToVisibleUsers());
 </script>
 
 <template>
-    <div class="space-y-4">
-        <BaseAlert
-            :type="TypeVariant.info"
-            :description="trans('trans.maintenance_users_description')"
-        />
-
+    <div>
         <DataTable
             :data="users.data"
             :filters="filters"

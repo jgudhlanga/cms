@@ -31,6 +31,10 @@ class StaffImportProcessRequest extends FormRequest
             'row_corrections.*.roleIds' => ['sometimes', 'array'],
             'row_corrections.*.roleIds.*' => ['integer', 'exists:roles,id'],
             'row_corrections.*.email' => ['sometimes', 'string', 'email', 'max:255'],
+            'row_corrections.*.phoneNumber' => ['sometimes', 'string', 'max:30'],
+            'row_corrections.*.dateOfBirth' => ['sometimes', 'date'],
+            'excluded_row_numbers' => ['sometimes', 'array'],
+            'excluded_row_numbers.*' => ['integer', 'min:1'],
         ];
     }
 }

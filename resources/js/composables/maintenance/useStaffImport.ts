@@ -31,6 +31,7 @@ export const useStaffImport = () => {
     const previewLookups = ref<StaffImportPreviewLookups | null>(null);
     const previewError = ref<string | null>(null);
     const rowCorrections = reactive<Record<number, StaffImportRowCorrection>>({});
+    const excludedRowNumbers = reactive<Set<number>>(new Set());
     const createdFields = reactive<Record<number, StaffImportFieldKey[]>>({});
     const createdRoleNames = reactive<Record<number, string[]>>({});
     const bulkDepartmentId = ref<number | null>(null);
@@ -38,9 +39,11 @@ export const useStaffImport = () => {
     const confirmForm = useForm<{
         preview_token: string;
         row_corrections: Record<number, StaffImportRowCorrection>;
+        excluded_row_numbers: number[];
     }>({
         preview_token: '',
         row_corrections: {},
+        excluded_row_numbers: [],
     });
 
     const templateUrl = route('maintenance.staff-import.template');
@@ -52,7 +55,9 @@ export const useStaffImport = () => {
             return [];
         }
 
-        return preview.value.rows.filter((row) => row.action !== 'skip_empty');
+        return preview.value.rows.filter(
+            (row) => row.action !== 'skip_empty' && !excludedRowNumbers.has(row.rowNumber),
+        );
     });
 
     const effectiveSummary = computed(() => {
@@ -60,7 +65,7 @@ export const useStaffImport = () => {
             return null;
         }
 
-        return computeEffectiveSummary(preview.value, rowCorrections);
+        return computeEffectiveSummary(preview.value, rowCorrections, excludedRowNumbers);
     });
 
     const canConfirmImport = computed((): boolean => {
@@ -152,9 +157,11 @@ export const useStaffImport = () => {
         previewError.value = null;
         confirmForm.preview_token = '';
         confirmForm.row_corrections = {};
+        confirmForm.excluded_row_numbers = [];
         Object.keys(rowCorrections).forEach((key) => {
             delete rowCorrections[Number(key)];
         });
+        excludedRowNumbers.clear();
         Object.keys(createdFields).forEach((key) => {
             delete createdFields[Number(key)];
         });
@@ -227,6 +234,10 @@ export const useStaffImport = () => {
         rowCorrections[rowNumber] = correction;
     };
 
+    const removeRow = (rowNumber: number): void => {
+        excludedRowNumbers.add(rowNumber);
+    };
+
     const onLookupCreated = (
         rowNumber: number,
         fieldKey: StaffImportFieldKey,
@@ -288,7 +299,8 @@ export const useStaffImport = () => {
             return;
         }
 
-        confirmForm.row_corrections = buildRowCorrectionsPayload(preview.value, rowCorrections);
+        confirmForm.row_corrections = buildRowCorrectionsPayload(preview.value, rowCorrections, excludedRowNumbers);
+        confirmForm.excluded_row_numbers = [...excludedRowNumbers];
 
         confirmForm.post(processUrl, {
             preserveScroll: true,
@@ -344,6 +356,7 @@ export const useStaffImport = () => {
         onFileChange,
         runPreview,
         updateRowCorrection,
+        removeRow,
         onLookupCreated,
         applyBulkDepartment,
         onBulkDepartmentCreated,

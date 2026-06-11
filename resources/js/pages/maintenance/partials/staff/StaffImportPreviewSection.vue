@@ -39,6 +39,7 @@ const emit = defineEmits<{
     'bulk-department-apply': [];
     'update:correction': [rowNumber: number, correction: StaffImportRowCorrection];
     'lookup-created': [rowNumber: number, fieldKey: StaffImportFieldKey, option: StaffImportLookupOption];
+    'remove-row': [rowNumber: number];
 }>();
 </script>
 
@@ -56,23 +57,26 @@ const emit = defineEmits<{
             </p>
         </div>
 
-        <StaffImportPreviewTable
-            :rows="previewRows"
-            :lookups="lookups"
-            :bulk-department-field="bulkDepartmentField"
-            :bulk-department-id="bulkDepartmentId"
-            :get-correction="getCorrection"
-            :get-effective-action="getEffectiveAction"
-            :get-action-label="getActionLabel"
-            :get-active-errors="getActiveErrors"
-            :get-created-fields="getCreatedFields"
-            :get-created-role-names="getCreatedRoleNames"
-            @update:bulk-department-id="emit('update:bulkDepartmentId', $event)"
-            @bulk-department-created="emit('bulk-department-created', $event)"
-            @bulk-department-apply="emit('bulk-department-apply')"
-            @update:correction="(rowNumber, correction) => emit('update:correction', rowNumber, correction)"
-            @lookup-created="(rowNumber, fieldKey, option) => emit('lookup-created', rowNumber, fieldKey, option)"
-        />
+        <div class="max-h-[min(70vh,42rem)] overflow-auto rounded-md border border-border">
+            <StaffImportPreviewTable
+                :rows="previewRows"
+                :lookups="lookups"
+                :bulk-department-field="bulkDepartmentField"
+                :bulk-department-id="bulkDepartmentId"
+                :get-correction="getCorrection"
+                :get-effective-action="getEffectiveAction"
+                :get-action-label="getActionLabel"
+                :get-active-errors="getActiveErrors"
+                :get-created-fields="getCreatedFields"
+                :get-created-role-names="getCreatedRoleNames"
+                @update:bulk-department-id="emit('update:bulkDepartmentId', $event)"
+                @bulk-department-created="emit('bulk-department-created', $event)"
+                @bulk-department-apply="emit('bulk-department-apply')"
+                @update:correction="(rowNumber, correction) => emit('update:correction', rowNumber, correction)"
+                @lookup-created="(rowNumber, fieldKey, option) => emit('lookup-created', rowNumber, fieldKey, option)"
+                @remove-row="(rowNumber) => emit('remove-row', rowNumber)"
+            />
+        </div>
 
         <div class="flex flex-wrap gap-2">
             <BaseButton

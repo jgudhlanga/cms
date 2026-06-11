@@ -10,6 +10,7 @@ export function useMaintenance() {
     const maintenanceTabs = (): CustomTab[] => [
         {
             transLabel: () => trans_choice('trans.user', 2),
+            transDescription: () => trans('trans.maintenance_users_description'),
             value: 'users',
             component: h(UsersTab),
             icon: IconName.users,
@@ -17,6 +18,7 @@ export function useMaintenance() {
         },
         {
             transLabel: () => trans('trans.staff'),
+            transDescription: () => trans('trans.maintenance_staff_import_description'),
             value: 'staff',
             component: h(StaffTab),
             icon: IconName.briefcase,
@@ -24,6 +26,7 @@ export function useMaintenance() {
         },
         {
             transLabel: () => trans_choice('trans.student', 2),
+            transDescription: () => trans('trans.maintenance_students_section_description'),
             value: 'students',
             component: h(StudentEnrolmentExport),
             icon: IconName.user_check,

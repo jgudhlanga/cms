@@ -17,7 +17,7 @@ const emit = defineEmits<{
 
 <template>
     <tr class="j-tr border-b border-border bg-muted/40">
-        <td colspan="11" class="j-td py-1">
+        <td colspan="13" class="j-td py-1">
             <div class="flex min-w-0 items-center gap-2 text-[10px]">
                 <span class="shrink-0 font-medium text-muted-foreground">
                     {{ $t('trans.maintenance_staff_import_apply_department_all') }}
