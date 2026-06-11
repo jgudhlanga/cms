@@ -30,9 +30,9 @@ const {
     confirmForm,
     templateUrl,
     previewRows,
+    effectiveSummary,
     canConfirmImport,
     confirmBlockedMessage,
-    previewSummaryLabel,
     bulkDepartmentField,
     cancelImport,
     onFileChange,
@@ -101,11 +101,11 @@ const handleConfirm = (): void => {
         </div>
 
         <StaffImportPreviewSection
-            v-if="preview && previewLookups"
+            v-if="preview && previewLookups && effectiveSummary"
             :preview="preview"
+            :summary="effectiveSummary"
             :lookups="previewLookups"
             :preview-rows="previewRows"
-            :preview-summary-label="previewSummaryLabel"
             :confirm-blocked-message="confirmBlockedMessage"
             :can-confirm-import="canConfirmImport"
             :confirm-processing="confirmForm.processing"

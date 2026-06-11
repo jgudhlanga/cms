@@ -252,8 +252,8 @@ const onLookupCreated = (fieldKey: StaffImportFieldKey, option: StaffImportLooku
                 @created="onLookupCreated('roles', $event)"
             />
         </td>
-        <td class="j-td w-12 text-center">
-            <div class="flex flex-col items-center gap-0.5">
+        <td class="j-td w-16 text-center">
+            <div class="flex items-center justify-center gap-1">
                 <span
                     v-if="effectiveAction === 'create' || effectiveAction === 'update'"
                     class="inline-flex h-6 w-6 items-center justify-center rounded-full border border-green-200 bg-green-50"
