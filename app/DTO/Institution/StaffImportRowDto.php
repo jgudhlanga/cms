@@ -7,7 +7,7 @@ namespace App\DTO\Institution;
 readonly class StaffImportRowDto
 {
     /**
-     * @param  list<string>  $roleSlugs
+     * @param  list<string>  $roleNames
      */
     public function __construct(
         public int $tenantId,
@@ -23,7 +23,7 @@ readonly class StaffImportRowDto
         public string $email,
         public string $phoneNumber,
         public int $institutionDepartmentId,
-        public array $roleSlugs = [],
+        public array $roleNames = [],
         public ?string $idNumber = null,
         public ?string $passportNumber = null,
         public ?string $altPhoneNumber = null,

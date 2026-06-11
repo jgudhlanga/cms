@@ -1,4 +1,4 @@
-import FaultyStudentMergeSuccessDialog from '@/pages/maintenance/partials/FaultyStudentMergeSuccessDialog.vue';
+import FaultyStudentMergeSuccessDialog from '@/pages/maintenance/partials/students/FaultyStudentMergeSuccessDialog.vue';
 import type { FaultyStudentMergeResult } from '@/types/faulty-student-ids';
 import { router } from '@inertiajs/vue3';
 import { useModal } from 'vue-final-modal';

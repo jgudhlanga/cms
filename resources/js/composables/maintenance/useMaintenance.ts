@@ -1,7 +1,7 @@
 import { IconName } from '@/enums/icons';
-import StaffTab from '@/pages/maintenance/partials/StaffTab.vue';
-import StudentEnrolmentExport from '@/pages/maintenance/partials/StudentEnrolmentExport.vue';
-import UsersTab from '@/pages/maintenance/partials/UsersTab.vue';
+import StaffTab from '@/pages/maintenance/partials/staff/StaffTab.vue';
+import StudentEnrolmentExport from '@/pages/maintenance/partials/students/StudentEnrolmentExport.vue';
+import UsersTab from '@/pages/maintenance/partials/users/UsersTab.vue';
 import { CustomTab } from '@/types/utils';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 import { h } from 'vue';

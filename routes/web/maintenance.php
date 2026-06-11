@@ -33,6 +33,8 @@ Route::prefix('maintenance')->middleware(['auth', 'can:root:manage'])->group(fun
         ->name('maintenance.staff-import.template');
     Route::post('/staff-import/preview', [MaintenanceController::class, 'previewStaffImport'])
         ->name('maintenance.staff-import.preview');
+    Route::post('/staff-import/lookups', [MaintenanceController::class, 'createStaffImportLookup'])
+        ->name('maintenance.staff-import.lookups.create');
     Route::post('/staff-import', [MaintenanceController::class, 'processStaffImport'])
         ->name('maintenance.staff-import.process');
 });

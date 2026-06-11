@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Services\Maintenance;
+namespace App\Services\Maintenance\Users;
 
 use App\Queries\Maintenance\NonEnrolledStudentUsersQuery;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;

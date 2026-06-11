@@ -1,6 +1,6 @@
 import MaintenanceUserPurgeConfirmDialog, {
     type MaintenancePurgeDialogUser,
-} from '@/pages/maintenance/partials/MaintenanceUserPurgeConfirmDialog.vue';
+} from '@/pages/maintenance/partials/users/MaintenanceUserPurgeConfirmDialog.vue';
 import { useModal } from 'vue-final-modal';
 
 export const openMaintenancePurgeDialog = (
