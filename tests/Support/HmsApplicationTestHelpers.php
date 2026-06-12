@@ -10,6 +10,7 @@ use App\Models\HMS\HostelRoom;
 use App\Models\Students\StudentEnrolment;
 use App\Models\Students\StudentEnrolmentStatus;
 use App\Models\Students\StudentProgram;
+use App\Models\Users\User;
 
 function createRunningSemesterCalendar(string $calendarYear = '2025/2026'): AcademicCalendar
 {
@@ -95,6 +96,30 @@ function attachHostelApplicationEnrolment(
     ]);
 }
 
+function createHostelApplicationStaffUser(int $tenantId): User
+{
+    $user = User::factory()->create(['tenant_id' => $tenantId]);
+    $user->givePermissionTo('create:hostel-applications');
+
+    return $user;
+}
+
+function openHostelApplications(
+    int $tenantId,
+    ?string $start = null,
+    ?string $end = null,
+): HmsSetting {
+    $settings = HmsSetting::resolveForTenant($tenantId);
+
+    $settings->update([
+        'applications_open' => true,
+        'application_start_date' => $start ?? now()->subWeek()->toDateString(),
+        'application_end_date' => $end ?? now()->addMonths(6)->toDateString(),
+    ]);
+
+    return $settings->fresh();
+}
+
 function disableAllHmsApprovalRequirements(int $tenantId): HmsSetting
 {
     $settings = HmsSetting::resolveForTenant($tenantId);
@@ -112,6 +137,7 @@ function disableAllHmsApprovalRequirements(int $tenantId): HmsSetting
 function createStudentReadyForHostelApplication(
     string $studentNumber,
     bool $withRunningSemester = true,
+    bool $openApplications = true,
 ): StudentProgram {
     $studentProgram = createVerifiedStudentProgram($studentNumber);
 
@@ -121,6 +147,10 @@ function createStudentReadyForHostelApplication(
         : createPastSemesterCalendar($calendarYear);
 
     attachHostelApplicationEnrolment($studentProgram, $calendar);
+
+    if ($openApplications) {
+        openHostelApplications(TenantEnum::HARARE_POLY->id());
+    }
 
     return $studentProgram->fresh(['student', 'intakePeriod']);
 }

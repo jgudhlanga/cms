@@ -1,0 +1,12 @@
+Given https://hrepoly.test/institution/departments/14 > Syllabus tab, we need 
+- show import button on Datatables that list CourseSyllabus
+- on click it loads a page to import Course and their modules
+    - follow page structure (breadcrums which can go back to the privious page)
+    - description alert of what we intent to do (importing course_syllabuses and modules)
+    - show download button, to download template,
+    - template columns should be derived from 
+     - app/Importers/Institution/CourseSyllabusImporter.php
+     - app/Importers/Institution/CourseSyllabusModuleImporter.php
+    - also check public/tourism.xlsx for more insight on template columns.
+- check https://hrepoly.test/maintenance  staff import for functionality.
+Suggestions and reccomendations are welcome

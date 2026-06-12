@@ -94,14 +94,17 @@ const emit = defineEmits<{
             {{ saveValidationError }}
         </p>
 
-        <BaseButton
-            :color="ColorVariant.primary"
-            :size="ButtonSize.md"
-            :disabled="!canSubmit || isSaving"
-            :loading="isSaving"
-            @click="emit('submit')"
-        >
-            {{ $t('students.accommodation_submit_application') }}
-        </BaseButton>
+        <div class="flex">
+            <BaseButton
+                :classes="'w-full self-start sm:w-auto'"
+                :variant="ColorVariant.primary"
+                :size="ButtonSize.md"
+                :processing="isSaving"
+                :disabled="!canSubmit || isSaving"
+                @click="emit('submit')"
+            >
+                {{ $t('students.accommodation_submit_application') }}
+            </BaseButton>
+        </div>
     </div>
 </template>

@@ -4,6 +4,7 @@ import DataLoadingSpinner from '@/components/core/loader/DataLoadingSpinner.vue'
 import { useCourseSyllabuses } from '@/composables/institution/useCourseSyllabuses';
 import { hasAbility } from '@/lib/permissions';
 import { CourseSyllabus, InstitutionDepartment } from '@/types/institution';
+import { router } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
 
 interface Props {
@@ -14,6 +15,7 @@ const props = defineProps<Props>();
 const institutionDepartmentId = computed(() => String(props.department?.id ?? ''));
 const listUrl = computed(() => route('department-course-syllabuses.index', institutionDepartmentId.value));
 const canCreate = hasAbility('departmentSetup');
+const canImport = hasAbility('import:course-syllabuses');
 
 const courseSyllabusList = ref<CourseSyllabus[]>([]);
 const { createCourseSyllabusColumns, isLoading, listCourseSyllabuses, onCreateCourseSyllabus, courseSyllabuses } = useCourseSyllabuses();
@@ -40,7 +42,9 @@ watch(institutionDepartmentId, loadCourseSyllabuses, { immediate: true });
             :columns="createCourseSyllabusColumns(institutionDepartmentId)"
             :show-archived-filter="false"
             :on-create="() => onCreateCourseSyllabus(institutionDepartmentId)"
+            :on-import="() => router.visit(route('department-course-syllabuses.import', institutionDepartmentId))"
             :disable-create="!canCreate"
+            :disable-import="!canImport"
             :pagination="{ ...(courseSyllabuses?.links ?? {}), ...(courseSyllabuses?.meta ?? {}) }"
             :search-url="listUrl"
             :use-api="true"

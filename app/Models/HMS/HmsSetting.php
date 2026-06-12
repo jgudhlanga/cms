@@ -25,6 +25,9 @@ class HmsSetting extends Model
         'require_address_outside_campus',
         'campus_city',
         'allow_guests',
+        'applications_open',
+        'application_start_date',
+        'application_end_date',
     ];
 
     protected function casts(): array
@@ -35,6 +38,9 @@ class HmsSetting extends Model
             'require_accommodation_paid' => 'boolean',
             'require_address_outside_campus' => 'boolean',
             'allow_guests' => 'boolean',
+            'applications_open' => 'boolean',
+            'application_start_date' => 'date',
+            'application_end_date' => 'date',
         ];
     }
 
@@ -52,6 +58,7 @@ class HmsSetting extends Model
                 'require_address_outside_campus' => true,
                 'campus_city' => 'Harare',
                 'allow_guests' => false,
+                'applications_open' => false,
             ],
         );
     }

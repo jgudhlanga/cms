@@ -32,8 +32,16 @@ class CourseSyllabusModuleRepository extends BaseRepository implements ICourseSy
         return $this->courseSyllabusModule
             ->query()
             ->with('academicYearOption')
-            ->where('course_syllabus_id', $courseSyllabusId)
-            ->orderBy('title')
+            ->where('course_syllabus_modules.course_syllabus_id', $courseSyllabusId)
+            ->join(
+                'academic_year_options',
+                'academic_year_options.id',
+                '=',
+                'course_syllabus_modules.academic_year_option_id',
+            )
+            ->orderBy('academic_year_options.name')
+            ->orderBy('course_syllabus_modules.title')
+            ->select('course_syllabus_modules.*')
             ->paginate()
             ->withQueryString();
     }

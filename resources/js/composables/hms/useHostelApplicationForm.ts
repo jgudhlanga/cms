@@ -163,13 +163,6 @@ export function useHostelApplicationForm() {
                 form.setError('studentId', trans('hms.student_already_allocated'));
             }
 
-            if (!form.checkIn) {
-                form.setError('checkIn', trans('hms.no_running_semester'));
-            }
-
-            if (!form.checkOut) {
-                form.setError('checkOut', trans('hms.no_running_semester'));
-            }
         }
 
         if (applicationType.value === 'guest') {

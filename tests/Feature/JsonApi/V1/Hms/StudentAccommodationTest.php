@@ -4,7 +4,6 @@ use App\Enums\HMS\HostelAllocationStatusEnum;
 use App\Enums\HMS\HostelApplicationStatusEnum;
 use App\Enums\HMS\HostelApplicationTypeEnum;
 use App\Enums\Shared\TenantEnum;
-use App\Models\HMS\HmsSetting;
 use App\Models\HMS\HostelAmenity;
 use App\Models\HMS\HostelApplication;
 use App\Models\HMS\HostelRoomAllocation;
@@ -77,7 +76,7 @@ test('json api portal student can self lookup and apply for hostel', function ()
     Sanctum::actingAs($portalUser);
 
     disableAllHmsApprovalRequirements($tenant->id);
-    HmsSetting::resolveForTenant($tenant->id);
+    openHostelApplications($tenant->id);
 
     $studentProgram = createStudentReadyForHostelApplication('PORTAL-APPLY-01');
     $student = $studentProgram->student;
