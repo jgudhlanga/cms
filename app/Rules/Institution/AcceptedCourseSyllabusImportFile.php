@@ -11,7 +11,7 @@ use Illuminate\Http\UploadedFile;
 class AcceptedCourseSyllabusImportFile implements ValidationRule
 {
     /** @var list<string> */
-    public const EXTENSIONS = ['xlsx', 'xls', 'csv'];
+    public const EXTENSIONS = ['xlsx', 'csv'];
 
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {

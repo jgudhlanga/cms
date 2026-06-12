@@ -11,6 +11,7 @@ use App\Models\Institution\Syllabus\CourseSyllabus;
 use App\Models\Institution\Syllabus\CourseSyllabusImportLog;
 use App\Models\Institution\Syllabus\CourseSyllabusModule;
 use App\Models\Users\User;
+use App\Rules\Institution\AcceptedCourseSyllabusImportFile;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -45,7 +46,8 @@ class CourseSyllabusImportService
     public function preview(int $institutionDepartmentId, UploadedFile $file): array
     {
         $context = $this->resolveDepartmentContext($institutionDepartmentId);
-        $storedPath = $file->store('course-syllabus-imports/previews', 'ingest');
+        $originalFilename = $file->getClientOriginalName();
+        $storedPath = $this->storePreviewFile($file);
         $fullPath = Storage::disk('ingest')->path($storedPath);
 
         $analysis = $this->analyseFile(
@@ -53,6 +55,7 @@ class CourseSyllabusImportService
             $context['tenantId'],
             $context['institutionDepartmentId'],
             dryRun: true,
+            originalFilename: $originalFilename,
         );
 
         $templateData = $this->templateService->assemble($institutionDepartmentId);
@@ -186,6 +189,7 @@ class CourseSyllabusImportService
             dryRun: true,
             rowCorrections: $rowCorrections,
             excludedRowNumbers: $excludedRowNumbers,
+            originalFilename: $originalFilename,
         );
 
         if ($analysis['summary']['failed'] > 0) {
@@ -214,7 +218,12 @@ class CourseSyllabusImportService
         ]);
 
         try {
-            $parsedRows = $this->prepareParsedRows($fullPath, $rowCorrections, $excludedRowNumbers);
+            $parsedRows = $this->prepareParsedRows(
+                $fullPath,
+                $rowCorrections,
+                $excludedRowNumbers,
+                $originalFilename,
+            );
             $syllabusImporter = new CourseSyllabusImporter($tenantId, $institutionDepartmentId, fromFilesystem: false);
             $moduleImporter = new CourseSyllabusModuleImporter($tenantId, $institutionDepartmentId, fromFilesystem: false);
 
@@ -286,14 +295,12 @@ class CourseSyllabusImportService
     }
 
     /**
+     * @param  array<int|string, array<string, mixed>>|null  $rowCorrections
+     * @param  list<int>|null  $excludedRowNumbers
      * @return array{
      *     summary: array{total: int, syllabusCreates: int, syllabusUpdates: int, syllabusSkips: int, syllabusFails: int, moduleCreates: int, moduleUpdates: int, moduleSkips: int, moduleFails: int, failed: int},
      *     rows: list<array<string, mixed>>,
      * }
-     */
-    /**
-     * @param  array<int|string, array<string, mixed>>|null  $rowCorrections
-     * @param  list<int>|null  $excludedRowNumbers
      */
     private function analyseFile(
         string $fullPath,
@@ -302,8 +309,14 @@ class CourseSyllabusImportService
         bool $dryRun,
         ?array $rowCorrections = null,
         ?array $excludedRowNumbers = null,
+        ?string $originalFilename = null,
     ): array {
-        $parsedRows = $this->prepareParsedRows($fullPath, $rowCorrections, $excludedRowNumbers);
+        $parsedRows = $this->prepareParsedRows(
+            $fullPath,
+            $rowCorrections,
+            $excludedRowNumbers,
+            $originalFilename,
+        );
 
         if ($parsedRows === []) {
             throw ValidationException::withMessages([
@@ -553,11 +566,12 @@ class CourseSyllabusImportService
         string $fullPath,
         ?array $rowCorrections = null,
         ?array $excludedRowNumbers = null,
+        ?string $originalFilename = null,
     ): array {
         $excluded = $this->normalizeExcludedRowNumbers($excludedRowNumbers);
         $parsedRows = [];
 
-        foreach ($this->parseRows($fullPath) as $parsedRow) {
+        foreach ($this->parseRows($fullPath, $originalFilename) as $parsedRow) {
             if (in_array($parsedRow['number'], $excluded, true)) {
                 continue;
             }
@@ -631,9 +645,9 @@ class CourseSyllabusImportService
     /**
      * @return list<array{number: int, data: array<string, mixed>}>
      */
-    private function parseRows(string $fullPath): array
+    private function parseRows(string $fullPath, ?string $originalFilename = null): array
     {
-        $rawRows = $this->readRawRows($fullPath);
+        $rawRows = $this->readRawRows($fullPath, $originalFilename);
         $headerRowIndex = $this->detectHeaderRowIndex($rawRows);
 
         if ($headerRowIndex === null) {
@@ -665,15 +679,77 @@ class CourseSyllabusImportService
     /**
      * @return list<list<mixed>>
      */
-    private function readRawRows(string $fullPath): array
+    private function readRawRows(string $fullPath, ?string $originalFilename = null): array
     {
         $rows = [];
+        $readerType = $this->resolveReaderType($fullPath, $originalFilename);
 
-        SimpleExcelReader::create($fullPath)->noHeaderRow()->getRows()->each(function (array $row) use (&$rows): void {
+        SimpleExcelReader::create($fullPath, $readerType)->noHeaderRow()->getRows()->each(function (array $row) use (&$rows): void {
             $rows[] = array_values($row);
         });
 
         return $rows;
+    }
+
+    private function storePreviewFile(UploadedFile $file): string
+    {
+        $extension = $this->resolveImportExtension($file);
+
+        return $file->storeAs(
+            'course-syllabus-imports/previews',
+            Str::uuid()->toString().'.'.$extension,
+            'ingest',
+        );
+    }
+
+    private function resolveImportExtension(UploadedFile $file): string
+    {
+        $extension = strtolower($file->getClientOriginalExtension());
+
+        if ($extension === '') {
+            $extension = $this->extensionFromMimeType($file->getMimeType());
+        }
+
+        if ($extension === '' || ! in_array($extension, AcceptedCourseSyllabusImportFile::EXTENSIONS, true)) {
+            throw ValidationException::withMessages([
+                'file' => [__('syllabus.import_invalid_file_type')],
+            ]);
+        }
+
+        return $extension;
+    }
+
+    private function extensionFromMimeType(?string $mimeType): string
+    {
+        return match (strtolower((string) $mimeType)) {
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' => 'xlsx',
+            'application/vnd.ms-excel' => 'xls',
+            'text/csv', 'application/csv', 'text/plain' => 'csv',
+            default => '',
+        };
+    }
+
+    private function resolveReaderType(string $fullPath, ?string $originalFilename = null): string
+    {
+        $extension = strtolower(pathinfo($fullPath, PATHINFO_EXTENSION));
+
+        if ($extension === '' && $originalFilename !== null) {
+            $extension = strtolower(pathinfo($originalFilename, PATHINFO_EXTENSION));
+        }
+
+        if ($extension === 'xls') {
+            throw ValidationException::withMessages([
+                'file' => [__('syllabus.import_xls_not_supported')],
+            ]);
+        }
+
+        return match ($extension) {
+            'csv' => 'csv',
+            'xlsx' => 'xlsx',
+            default => throw ValidationException::withMessages([
+                'file' => [__('syllabus.import_invalid_file_type')],
+            ]),
+        };
     }
 
     /**
