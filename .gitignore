@@ -43,4 +43,5 @@ yarn-error.log
 /boost.json
 /.DS_Store
 /storage/data/staff-imports/previews/
+/storage/data/course-syllabus-imports/previews/
 /public/*.xlsx

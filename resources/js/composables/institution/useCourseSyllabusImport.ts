@@ -15,7 +15,7 @@ import { useForm } from '@inertiajs/vue3';
 import { trans } from 'laravel-vue-i18n';
 import { computed, reactive, ref } from 'vue';
 
-const ACCEPTED_EXTENSIONS = ['.xlsx', '.xls', '.csv'];
+const ACCEPTED_EXTENSIONS = ['.xlsx', '.csv'];
 
 export const useCourseSyllabusImport = (institutionDepartmentId: string) => {
     const selectedFile = ref<File | null>(null);
