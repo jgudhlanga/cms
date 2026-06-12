@@ -10,6 +10,7 @@ use App\Services\HMS\HostelApplicationApprovalOptionsService;
 use App\Services\HMS\HostelApplicationEligibilityService;
 use App\Services\HMS\HostelApplicationPendingService;
 use App\Services\HMS\HostelApplicationSemesterService;
+use App\Services\HMS\HostelApplicationWindowService;
 use App\Services\HMS\HostelRoomAvailabilityService;
 use App\Services\HMS\HostelStudentAllocationService;
 use App\Services\HMS\StudentAccommodationFeeService;
@@ -25,6 +26,7 @@ class HostelApplicationController extends JsonApiController
     public function __construct(
         protected HostelApplicationEligibilityService $eligibilityService,
         protected HostelApplicationSemesterService $semesterService,
+        protected HostelApplicationWindowService $windowService,
         protected HostelRoomAvailabilityService $roomAvailabilityService,
         protected HostelApplicationPendingService $pendingService,
         protected HostelStudentAllocationService $allocationService,
@@ -150,6 +152,7 @@ class HostelApplicationController extends JsonApiController
         $studentContact = $student->contacts->first();
         $address = StudentPhysicalAddressFormatter::fromStudent($student);
         $asOf = Carbon::now((string) config('app.timezone'));
+        $window = $this->windowService->windowStatus($student->tenant_id, $asOf);
         $semesterDates = $this->semesterService->datesForApplication($student, $asOf);
         $roomAvailability = $this->roomAvailabilityService->summaryForGender($student->gender_id);
 
@@ -161,8 +164,12 @@ class HostelApplicationController extends JsonApiController
             ? HostelStudentAllocationService::BLOCKER_STUDENT_ALREADY_ALLOCATED
             : null;
 
+        $applyBlockers = array_values(array_filter([
+            $window['blocker'],
+        ]));
+
         $blockers = array_values(array_filter([
-            $semesterDates['blocker'],
+            $window['blocker'],
             $roomAvailability['blocker'],
             $pendingBlocker,
             $allocationBlocker,
@@ -170,16 +177,24 @@ class HostelApplicationController extends JsonApiController
 
         $eligibilityPassed = $this->eligibilityService->allPassed($eligibility);
 
-        $canSubmit = $semesterDates['success']
+        $canSubmit = $window['success']
             && $roomAvailability['blocker'] === null
             && $pendingBlocker === null
             && $allocationBlocker === null;
+
+        $applicationDates = $this->windowService->configuredApplicationDates($student->tenant_id);
+        $checkIn = $semesterDates['success']
+            ? $semesterDates['checkIn']
+            : $applicationDates['checkIn'];
+        $checkOut = $semesterDates['success']
+            ? $semesterDates['checkOut']
+            : $applicationDates['checkOut'];
 
         return [
             'found' => true,
             'canSubmit' => $canSubmit,
             'canApply' => $canSubmit,
-            'applyBlockers' => $blockers,
+            'applyBlockers' => $applyBlockers,
             'message' => __('hms.student_found'),
             'blockers' => $blockers,
             'student' => [
@@ -198,10 +213,12 @@ class HostelApplicationController extends JsonApiController
                 'nextOfKinContact' => $nextOfKinContact?->phone_number,
                 'modeOfStudy' => $enrolment?->modeOfStudy?->name,
             ],
-            'semester' => $semesterDates['success'] ? [
-                'checkIn' => $semesterDates['checkIn'],
-                'checkOut' => $semesterDates['checkOut'],
-                'label' => $semesterDates['label'],
+            'semester' => ($checkIn && $checkOut) ? [
+                'checkIn' => $checkIn,
+                'checkOut' => $checkOut,
+                'label' => $semesterDates['success']
+                    ? $semesterDates['label']
+                    : null,
             ] : null,
             'roomAvailability' => [
                 'availableBeds' => $roomAvailability['availableBeds'],

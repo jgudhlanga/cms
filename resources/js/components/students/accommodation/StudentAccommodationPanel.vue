@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import BaseAlert from '@/components/core/alert/BaseAlert.vue';
 import BaseAccordion from '@/components/core/accordion/BaseAccordion.vue';
 import BaseAccordionItem from '@/components/core/accordion/BaseAccordionItem.vue';
 import DataLoadingSpinner from '@/components/core/loader/DataLoadingSpinner.vue';
@@ -15,7 +16,9 @@ import AccommodationQueryModal from '@/components/students/accommodation/modals/
 import { useStudentAccommodations } from '@/composables/students/useStudentAccommodations';
 import { useStudentAccommodationServices } from '@/composables/students/useStudentAccommodationServices';
 import { useStudentHostelApplicationForm } from '@/composables/students/useStudentHostelApplicationForm';
+import { TypeVariant } from '@/enums/type-variants';
 import type { Student } from '@/types/students';
+import { usePage } from '@inertiajs/vue3';
 import { computed, onMounted } from 'vue';
 
 interface Props {
@@ -63,6 +66,18 @@ const openQueriesCount = computed(
     () => services.queries.value.filter((q) => ['open', 'in-progress'].includes(q.attributes.status)).length,
 );
 
+const page = usePage();
+
+const paymentError = computed(() => {
+    if (props.context !== 'portal') {
+        return null;
+    }
+
+    const flashError = (page.props.flash as { error?: string | null } | undefined)?.error;
+
+    return typeof flashError === 'string' && flashError.length > 0 ? flashError : null;
+});
+
 onMounted(async () => {
     if (studentId.value) {
         await load();
@@ -83,6 +98,13 @@ const canCreateServices = computed(() => props.context === 'portal');
 
 <template>
     <div class="flex w-full min-w-0 flex-col py-4 font-sans">
+        <BaseAlert
+            v-if="paymentError"
+            class="mb-4"
+            :description="paymentError"
+            :type="TypeVariant.danger"
+        />
+
         <DataLoadingSpinner v-if="isLoading" />
 
         <div

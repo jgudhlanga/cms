@@ -91,7 +91,7 @@ test('json api hostel applications store creates guest application', function ()
 
 test('json api hostel applications student lookup returns semester dates and capacity', function () {
     $tenant = Tenant::query()->firstOrFail();
-    $user = User::factory()->create(['tenant_id' => $tenant->id]);
+    $user = createHostelApplicationStaffUser($tenant->id);
     Sanctum::actingAs($user);
 
     HmsSetting::resolveForTenant($tenant->id);
@@ -113,9 +113,9 @@ test('json api hostel applications student lookup returns semester dates and cap
         ->assertJsonPath('meta.roomAvailability.availableBeds', fn ($value) => $value > 0);
 });
 
-test('json api hostel applications student lookup blocks when no running semester', function () {
+test('json api hostel applications student lookup allows submit without running semester when applications are open', function () {
     $tenant = Tenant::query()->firstOrFail();
-    $user = User::factory()->create(['tenant_id' => $tenant->id]);
+    $user = createHostelApplicationStaffUser($tenant->id);
     Sanctum::actingAs($user);
 
     createStudentReadyForHostelApplication('LOOKUP-NO-SEM', withRunningSemester: false);
@@ -126,13 +126,39 @@ test('json api hostel applications student lookup blocks when no running semeste
         ->get(route('v1.json.hostel-applications.studentLookup', ['filter' => ['search' => 'LOOKUP-NO-SEM']]));
 
     $response->assertSuccessful()
-        ->assertJsonPath('meta.canSubmit', false)
-        ->assertJsonPath('meta.blockers', ['no_running_semester']);
+        ->assertJsonPath('meta.canSubmit', true)
+        ->assertJsonPath('meta.applyBlockers', [])
+        ->assertJsonPath('meta.semester.checkIn', fn ($value) => $value !== null)
+        ->assertJsonPath('meta.semester.checkOut', fn ($value) => $value !== null);
+});
+
+test('json api hostel applications student lookup blocks when applications are closed', function () {
+    $tenant = Tenant::query()->firstOrFail();
+    $user = createHostelApplicationStaffUser($tenant->id);
+    Sanctum::actingAs($user);
+
+    createStudentReadyForHostelApplication('LOOKUP-CLOSED', openApplications: false);
+
+    HmsSetting::resolveForTenant($tenant->id)->update([
+        'applications_open' => false,
+        'application_start_date' => now()->subWeek()->toDateString(),
+        'application_end_date' => now()->addMonths(6)->toDateString(),
+    ]);
+    ensureHostelRoomWithCapacity('Hostel D', 'D-LOOKUP-CLOSED');
+
+    $response = $this
+        ->jsonApi()
+        ->get(route('v1.json.hostel-applications.studentLookup', ['filter' => ['search' => 'LOOKUP-CLOSED']]));
+
+    $response->assertSuccessful()
+        ->assertJsonPath('meta.canSubmit', false);
+
+    expect($response->json('meta.blockers'))->toContain('applications_closed');
 });
 
 test('json api hostel applications student lookup blocks when no hostel capacity', function () {
     $tenant = Tenant::query()->firstOrFail();
-    $user = User::factory()->create(['tenant_id' => $tenant->id]);
+    $user = createHostelApplicationStaffUser($tenant->id);
     Sanctum::actingAs($user);
 
     createStudentReadyForHostelApplication('LOOKUP-FULL');
@@ -166,7 +192,7 @@ test('json api hostel applications student lookup blocks when no hostel capacity
 
 test('json api hostel applications student lookup blocks when student has pending application', function () {
     $tenant = Tenant::query()->firstOrFail();
-    $user = User::factory()->create(['tenant_id' => $tenant->id]);
+    $user = createHostelApplicationStaffUser($tenant->id);
     Sanctum::actingAs($user);
 
     $studentProgram = createStudentReadyForHostelApplication('LOOKUP-PENDING');
@@ -237,13 +263,19 @@ test('json api hostel applications store blocks duplicate pending student applic
     $response->assertUnprocessable();
 });
 
-test('json api hostel applications store blocks student application without running semester', function () {
+test('json api hostel applications store uses configured application dates without running semester', function () {
     $tenant = Tenant::query()->firstOrFail();
     $user = User::factory()->create(['tenant_id' => $tenant->id]);
     $user->givePermissionTo('create:hostel-applications');
     Sanctum::actingAs($user);
 
-    $studentProgram = createStudentReadyForHostelApplication('STORE-BLOCK', withRunningSemester: false);
+    openHostelApplications(
+        $tenant->id,
+        '2026-04-01',
+        '2026-11-30',
+    );
+
+    $studentProgram = createStudentReadyForHostelApplication('STORE-BLOCK', withRunningSemester: false, openApplications: false);
     ensureHostelRoomWithCapacity('Hostel D', 'D-STORE-BLOCK');
     $enrolmentId = $studentProgram->student->fresh(['latestEnrolment'])->latestEnrolment?->id;
 
@@ -257,13 +289,18 @@ test('json api hostel applications store blocks student application without runn
                 'studentEnrolmentId' => $enrolmentId,
                 'nextOfKinName' => 'Kin Name',
                 'nextOfKinContact' => '0771234567',
-                'checkIn' => now()->toDateString(),
-                'checkOut' => now()->addMonths(4)->toDateString(),
             ],
         ])
         ->post(route('v1.json.hms.hostel-applications.store'));
 
-    $response->assertUnprocessable();
+    $response->assertCreated();
+
+    $timezone = (string) config('app.timezone');
+
+    expect(Carbon::parse($response->json('data.attributes.checkIn'))->timezone($timezone)->toDateString())
+        ->toBe('2026-04-01')
+        ->and(Carbon::parse($response->json('data.attributes.checkOut'))->timezone($timezone)->toDateString())
+        ->toBe('2026-11-30');
 });
 
 test('json api hostel applications store creates student application with semester dates', function () {
@@ -331,6 +368,38 @@ test('json api hms settings update changes eligibility settings', function () {
         ->assertJsonPath('data.attributes.requireFullTimeStudy', false)
         ->assertJsonPath('data.attributes.requireAccommodationPaid', true)
         ->assertJsonPath('data.attributes.allowGuests', true);
+});
+
+test('json api hms settings update changes application window settings', function () {
+    $tenant = Tenant::query()->firstOrFail();
+    $user = User::factory()->create(['tenant_id' => $tenant->id]);
+    $user->givePermissionTo('update:hms-settings');
+    Sanctum::actingAs($user);
+
+    $settings = HmsSetting::resolveForTenant($tenant->id);
+
+    $response = $this
+        ->jsonApi('hms-settings')
+        ->withData([
+            'type' => 'hms-settings',
+            'id' => (string) $settings->id,
+            'attributes' => [
+                'applicationsOpen' => true,
+                'applicationStartDate' => '2026-01-01',
+                'applicationEndDate' => '2026-12-31',
+            ],
+        ])
+        ->patch(route('v1.json.hms.hms-settings.update', $settings));
+
+    $response->assertSuccessful()
+        ->assertJsonPath('data.attributes.applicationsOpen', true);
+
+    $timezone = (string) config('app.timezone');
+
+    expect(Carbon::parse($response->json('data.attributes.applicationStartDate'))->timezone($timezone)->toDateString())
+        ->toBe('2026-01-01')
+        ->and(Carbon::parse($response->json('data.attributes.applicationEndDate'))->timezone($timezone)->toDateString())
+        ->toBe('2026-12-31');
 });
 
 test('json api hms settings update can disable accommodation fee requirement', function () {
@@ -1524,7 +1593,7 @@ test('json api hostel applications show returns department calendar year and phy
 
 test('json api hostel applications student lookup blocks when student has awaiting payment application', function () {
     $tenant = Tenant::query()->firstOrFail();
-    $user = User::factory()->create(['tenant_id' => $tenant->id]);
+    $user = createHostelApplicationStaffUser($tenant->id);
     Sanctum::actingAs($user);
 
     $studentProgram = createStudentReadyForHostelApplication('LOOKUP-AWAITING');
@@ -1555,7 +1624,7 @@ test('json api hostel applications student lookup blocks when student has awaiti
 
 test('json api hostel applications student lookup blocks when student has active room allocation', function () {
     $tenant = Tenant::query()->firstOrFail();
-    $user = User::factory()->create(['tenant_id' => $tenant->id]);
+    $user = createHostelApplicationStaffUser($tenant->id);
     Sanctum::actingAs($user);
 
     $studentProgram = createStudentReadyForHostelApplication('LOOKUP-ALLOC-ACTIVE');
@@ -1584,7 +1653,7 @@ test('json api hostel applications student lookup blocks when student has active
 
 test('json api hostel applications student lookup blocks when student has pending room allocation', function () {
     $tenant = Tenant::query()->firstOrFail();
-    $user = User::factory()->create(['tenant_id' => $tenant->id]);
+    $user = createHostelApplicationStaffUser($tenant->id);
     Sanctum::actingAs($user);
 
     $studentProgram = createStudentReadyForHostelApplication('LOOKUP-ALLOC-PENDING');
@@ -1613,7 +1682,7 @@ test('json api hostel applications student lookup blocks when student has pendin
 
 test('json api hostel applications student lookup allows when student only has checked out allocation', function () {
     $tenant = Tenant::query()->firstOrFail();
-    $user = User::factory()->create(['tenant_id' => $tenant->id]);
+    $user = createHostelApplicationStaffUser($tenant->id);
     Sanctum::actingAs($user);
 
     $studentProgram = createStudentReadyForHostelApplication('LOOKUP-ALLOC-CHECKED');
@@ -1642,7 +1711,7 @@ test('json api hostel applications student lookup allows when student only has c
 
 test('json api hostel applications student lookup allows when student only has declined application', function () {
     $tenant = Tenant::query()->firstOrFail();
-    $user = User::factory()->create(['tenant_id' => $tenant->id]);
+    $user = createHostelApplicationStaffUser($tenant->id);
     Sanctum::actingAs($user);
 
     $studentProgram = createStudentReadyForHostelApplication('LOOKUP-DECLINED');

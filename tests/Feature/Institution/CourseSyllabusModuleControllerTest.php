@@ -106,6 +106,57 @@ it('validates required syllabus course module fields', function () {
     expect($validator->errors()->has('code'))->toBeTrue();
 });
 
+it('lists modules ordered by period then title', function () {
+    $ctx = makeSyllabusModuleContext();
+
+    $semesterTwoModuleB = CourseSyllabusModule::query()->create([
+        'tenant_id' => $ctx['tenant']->id,
+        'course_syllabus_id' => $ctx['courseSyllabus']->id,
+        'academic_year_option_id' => $ctx['semesterTwo']->id,
+        'title' => 'Module B',
+        'code' => 'S2-B-'.uniqid(),
+        'shared' => false,
+    ]);
+
+    $semesterOneModuleB = CourseSyllabusModule::query()->create([
+        'tenant_id' => $ctx['tenant']->id,
+        'course_syllabus_id' => $ctx['courseSyllabus']->id,
+        'academic_year_option_id' => $ctx['semesterOne']->id,
+        'title' => 'Module B',
+        'code' => 'S1-B-'.uniqid(),
+        'shared' => false,
+    ]);
+
+    $semesterTwoModuleA = CourseSyllabusModule::query()->create([
+        'tenant_id' => $ctx['tenant']->id,
+        'course_syllabus_id' => $ctx['courseSyllabus']->id,
+        'academic_year_option_id' => $ctx['semesterTwo']->id,
+        'title' => 'Module A',
+        'code' => 'S2-A-'.uniqid(),
+        'shared' => false,
+    ]);
+
+    $semesterOneModuleA = CourseSyllabusModule::query()->create([
+        'tenant_id' => $ctx['tenant']->id,
+        'course_syllabus_id' => $ctx['courseSyllabus']->id,
+        'academic_year_option_id' => $ctx['semesterOne']->id,
+        'title' => 'Module A',
+        'code' => 'S1-A-'.uniqid(),
+        'shared' => false,
+    ]);
+
+    $response = $this->actingAs($ctx['user'])->get(route('course-syllabus-modules.index', [
+        'institution_department' => $ctx['institutionDepartment']->id,
+        'course_syllabus' => $ctx['courseSyllabus']->id,
+    ]));
+
+    $response->assertOk()
+        ->assertJsonPath('data.0.id', $semesterOneModuleA->id)
+        ->assertJsonPath('data.1.id', $semesterOneModuleB->id)
+        ->assertJsonPath('data.2.id', $semesterTwoModuleA->id)
+        ->assertJsonPath('data.3.id', $semesterTwoModuleB->id);
+});
+
 it('lists only modules for the selected course syllabus', function () {
     $ctx = makeSyllabusModuleContext();
 

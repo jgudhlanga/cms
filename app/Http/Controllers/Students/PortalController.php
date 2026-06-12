@@ -28,6 +28,7 @@ use App\Http\Requests\Students\ProgramRequest;
 use App\Http\Requests\Users\UserRequest;
 use App\Http\Resources\AuditTrail\AuditTrailResource;
 use App\Http\Resources\Enrolments\EnrolmentResource;
+use App\Http\Resources\Institution\FeeStructureResource;
 use App\Http\Resources\Institution\LevelResource;
 use App\Http\Resources\Students\AcademicLevelResource;
 use App\Http\Resources\Students\AcademicRecordResource;
@@ -451,15 +452,20 @@ class PortalController extends Controller
     /**
      * @throws AuthorizationException
      */
-    public function accommodationFeePaymentOptions(StudentAccommodationFeeService $feeService): Response
+    public function accommodationFeePaymentOptions(StudentAccommodationFeeService $feeService): Response|RedirectResponse
     {
         $this->authorize('manageStudentAccommodationDetails');
 
-        $student = $this->getStudent(request());
-        $fees = $feeService->summaryForStudent($student);
-        $accommodationFee = PaymentHelper::getFeeStructureResourceBySlug(FeeTypeEnum::STUDENT_ACCOMMODATION_FEE->slug());
+        $feeStructure = PaymentHelper::getFeeStructureResourceBySlug(FeeTypeEnum::STUDENT_ACCOMMODATION_FEE->slug());
+        if ($feeStructure === null) {
+            return redirect()
+                ->route('portal.profile.accommodations')
+                ->with('error', __('students.accommodation_fee_payment_unavailable'));
+        }
+
+        $accommodationFee = FeeStructureResource::make($feeStructure);
+
         return Inertia::render('portal/student/profile/AccommodationFeePaymentOptions', [
-            'fees' => $fees,
             'accommodationFee' => $accommodationFee,
         ]);
     }

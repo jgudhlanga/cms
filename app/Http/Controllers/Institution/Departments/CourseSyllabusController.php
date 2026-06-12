@@ -3,19 +3,27 @@
 namespace App\Http\Controllers\Institution\Departments;
 
 use App\DTO\Institution\CourseSyllabusDto;
+use App\Exports\Institution\CourseSyllabusImportTemplateExport;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Institution\CourseSyllabusImportPreviewRequest;
+use App\Http\Requests\Institution\CourseSyllabusImportProcessRequest;
 use App\Http\Requests\Institution\CourseSyllabusRequest;
 use App\Http\Resources\Institution\CourseSyllabusResource;
 use App\Http\Resources\Institution\InstitutionDepartmentResource;
 use App\Models\Institution\InstitutionDepartment;
 use App\Models\Institution\Syllabus\CourseSyllabus;
 use App\Repositories\Institution\interface\ICourseSyllabusRepository;
+use App\Services\Institution\CourseSyllabusImportService;
+use App\Services\Institution\CourseSyllabusImportTemplateService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
+use Maatwebsite\Excel\Facades\Excel;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 
 class CourseSyllabusController extends Controller
@@ -29,6 +37,78 @@ class CourseSyllabusController extends Controller
         return CourseSyllabusResource::collection(
             $this->repository->allByInstitutionDepartment((int) $institutionDepartment->id)
         );
+    }
+
+    public function showImport(
+        InstitutionDepartment $institutionDepartment,
+    ): Response {
+        $this->authorize('import', CourseSyllabus::class);
+
+        $institutionDepartment->loadMissing('department');
+
+        return Inertia::render('institution/syllabus/Import', [
+            'institutionDepartment' => new InstitutionDepartmentResource($institutionDepartment),
+            'syllabusImportResult' => session('syllabusImportResult'),
+        ]);
+    }
+
+    public function downloadImportTemplate(
+        InstitutionDepartment $institutionDepartment,
+        CourseSyllabusImportTemplateService $templateService,
+    ): BinaryFileResponse {
+        $this->authorize('import', CourseSyllabus::class);
+
+        $data = $templateService->assemble((int) $institutionDepartment->id);
+
+        return Excel::download(
+            new CourseSyllabusImportTemplateExport($data),
+            $templateService->downloadFileName($institutionDepartment),
+        );
+    }
+
+    public function previewImport(
+        InstitutionDepartment $institutionDepartment,
+        CourseSyllabusImportPreviewRequest $request,
+        CourseSyllabusImportService $importService,
+    ): JsonResponse {
+        $this->authorize('import', CourseSyllabus::class);
+
+        return response()->json(
+            $importService->preview((int) $institutionDepartment->id, $request->file('file')),
+        );
+    }
+
+    public function processImport(
+        InstitutionDepartment $institutionDepartment,
+        CourseSyllabusImportProcessRequest $request,
+        CourseSyllabusImportService $importService,
+    ): RedirectResponse {
+        $this->authorize('import', CourseSyllabus::class);
+
+        $validated = $request->validated();
+        $rowCorrections = isset($validated['row_corrections']) && is_array($validated['row_corrections'])
+            ? $validated['row_corrections']
+            : null;
+        $excludedRowNumbers = isset($validated['excluded_row_numbers']) && is_array($validated['excluded_row_numbers'])
+            ? $validated['excluded_row_numbers']
+            : null;
+
+        $result = $importService->processFromPreview(
+            (int) $institutionDepartment->id,
+            (string) $validated['preview_token'],
+            $rowCorrections,
+            $excludedRowNumbers,
+        );
+
+        return to_route('department-course-syllabuses.import', [
+            'institution_department' => $institutionDepartment->id,
+        ])
+            ->with('syllabusImportResult', $result)
+            ->with('success', __('syllabus.import_success', [
+                'succeeded' => $result['rowsSucceeded'],
+                'failed' => $result['rowsFailed'],
+                'skipped' => $result['rowsSkipped'],
+            ]));
     }
 
     public function create(InstitutionDepartment $institutionDepartment): Response

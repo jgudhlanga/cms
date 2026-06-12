@@ -3,6 +3,7 @@ import ConfirmDialog from '@/components/core/modal/ConfirmDialog.vue';
 import ErrorDialog from '@/components/core/modal/ErrorDialog.vue';
 import AppSidebar from '@/components/core/sidebar/AppSidebar.vue';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
+import { useFlashAlerts } from '@/composables/core/useFlashAlerts';
 import { useUserPreference } from '@/composables/core/useUserPreference';
 import { usePreferencesStore } from '@/store/core/preferences.store';
 import { BreadcrumbItemType } from '@/types/ui';
@@ -15,6 +16,7 @@ defineProps<{
 }>();
 
 const page = usePage();
+useFlashAlerts();
 const preferencesStore = usePreferencesStore();
 const { hydratePreferenceOnce } = useUserPreference();
 const isAuthenticated = computed(() => Boolean(page.props.auth?.user));

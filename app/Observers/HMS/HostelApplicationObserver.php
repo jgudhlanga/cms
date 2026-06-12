@@ -8,11 +8,13 @@ use App\Enums\HMS\HostelEligibilityContextEnum;
 use App\Models\HMS\HmsSetting;
 use App\Models\HMS\HostelApplication;
 use App\Models\Students\Student;
+use App\Models\Students\StudentEnrolment;
 use App\Services\HMS\HostelApplicationApprovalService;
 use App\Services\HMS\HostelApplicationEligibilityService;
 use App\Services\HMS\HostelApplicationPendingService;
 use App\Services\HMS\HostelApplicationReviewService;
 use App\Services\HMS\HostelApplicationSemesterService;
+use App\Services\HMS\HostelApplicationWindowService;
 use App\Services\HMS\HostelRoomAvailabilityService;
 use App\Services\HMS\HostelStudentAllocationService;
 use App\Support\HMS\HostelApplicationPaymentVerification;
@@ -24,6 +26,7 @@ class HostelApplicationObserver
     public function __construct(
         protected HostelApplicationEligibilityService $eligibilityService,
         protected HostelApplicationSemesterService $semesterService,
+        protected HostelApplicationWindowService $windowService,
         protected HostelRoomAvailabilityService $roomAvailabilityService,
         protected HostelApplicationPendingService $pendingService,
         protected HostelStudentAllocationService $allocationService,
@@ -40,6 +43,7 @@ class HostelApplicationObserver
         $this->applyTypeDefaults($application);
 
         if ($application->type === HostelApplicationTypeEnum::STUDENT) {
+            $this->guardApplicationWindow($application);
             $this->applyStudentSemesterDates($application);
             $this->guardStudentHostelCapacity($application);
         }
@@ -195,12 +199,23 @@ class HostelApplicationObserver
     private function applyEligibilitySnapshot(
         HostelApplication $application,
         Student $student,
-        ?\App\Models\Students\StudentEnrolment $enrolment,
+        ?StudentEnrolment $enrolment,
         HostelEligibilityContextEnum $context,
     ): void {
         $rules = $this->eligibilityService->evaluate($student, $enrolment, context: $context);
         $application->eligibility_results = $rules;
         $application->address_outside_campus_priority = $this->eligibilityService->addressOutsideCampusPassed($rules);
+    }
+
+    private function guardApplicationWindow(HostelApplication $application): void
+    {
+        $window = $this->windowService->windowStatus($application->tenant_id);
+
+        if (! $window['success']) {
+            throw ValidationException::withMessages([
+                'check_in' => [__('hms.applications_closed')],
+            ]);
+        }
     }
 
     private function applyStudentSemesterDates(HostelApplication $application): void
@@ -215,16 +230,22 @@ class HostelApplicationObserver
 
         $asOf = Carbon::now((string) config('app.timezone'));
         $semesterDates = $this->semesterService->datesForApplication($student, $asOf);
+        $applicationDates = $this->windowService->configuredApplicationDates($application->tenant_id);
 
-        if (! $semesterDates['success']) {
-            throw ValidationException::withMessages([
-                'check_in' => [$this->messageForSemesterBlocker($semesterDates['blocker'])],
-            ]);
+        $checkIn = $semesterDates['success']
+            ? $semesterDates['checkIn']
+            : $applicationDates['checkIn'];
+        $checkOut = $semesterDates['success']
+            ? $semesterDates['checkOut']
+            : $applicationDates['checkOut'];
+
+        if ($checkIn === null || $checkOut === null) {
+            return;
         }
 
         $timezone = (string) config('app.timezone');
-        $application->check_in = Carbon::parse($semesterDates['checkIn'], $timezone)->startOfDay();
-        $application->check_out = Carbon::parse($semesterDates['checkOut'], $timezone)->startOfDay();
+        $application->check_in = Carbon::parse($checkIn, $timezone)->startOfDay();
+        $application->check_out = Carbon::parse($checkOut, $timezone)->startOfDay();
     }
 
     private function guardStudentHostelCapacity(HostelApplication $application): void
@@ -248,14 +269,6 @@ class HostelApplicationObserver
                 'check_in' => [__('hms.no_hostel_capacity')],
             ]);
         }
-    }
-
-    private function messageForSemesterBlocker(?string $blocker): string
-    {
-        return match ($blocker) {
-            HostelApplicationSemesterService::BLOCKER_CALENDAR_YEAR_MISSING => __('hms.calendar_year_missing'),
-            default => __('hms.no_running_semester'),
-        };
     }
 
     private function validateApplication(HostelApplication $application): void

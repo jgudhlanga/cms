@@ -417,6 +417,9 @@ export type HmsSettings = {
         requireAddressOutsideCampus: boolean;
         campusCity: string;
         allowGuests: boolean;
+        applicationsOpen: boolean;
+        applicationStartDate?: string | null;
+        applicationEndDate?: string | null;
         createdAt?: string;
         updatedAt?: string;
     };

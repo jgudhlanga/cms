@@ -29,6 +29,9 @@ class HmsSettingSchema extends Schema
             Boolean::make('requireAddressOutsideCampus', 'require_address_outside_campus'),
             Str::make('campusCity', 'campus_city'),
             Boolean::make('allowGuests', 'allow_guests'),
+            Boolean::make('applicationsOpen', 'applications_open'),
+            DateTime::make('applicationStartDate', 'application_start_date'),
+            DateTime::make('applicationEndDate', 'application_end_date'),
             DateTime::make('createdAt', 'created_at')->readOnly(),
             DateTime::make('updatedAt', 'updated_at')->readOnly(),
         ];

@@ -1,5 +1,8 @@
 <?php
 
+use App\Enums\Shared\FeeTypeEnum;
+use App\Models\Institution\FeeStructure;
+use App\Models\Shared\FeeType;
 use App\Models\Students\Student;
 use App\Models\Tenants\Tenant;
 use App\Models\Users\User;
@@ -87,7 +90,7 @@ test('portal profile accommodations route renders for authorized student', funct
         ->where('student.id', $student->id));
 });
 
-test('portal profile accommodations pay route renders for authorized student', function () {
+test('portal profile accommodations pay route returns not found when fee structure is missing', function () {
     $tenant = Tenant::query()->firstOrFail();
     $user = User::factory()->create(['tenant_id' => $tenant->id]);
     $user->givePermissionTo('manageOwnStudentAccommodationDetails:students');
@@ -121,11 +124,8 @@ test('portal profile accommodations pay route renders for authorized student', f
 
     $response = $this->actingAs($user)->get(route('portal.profile.accommodations.pay'));
 
-    $response->assertOk();
-    $response->assertInertia(fn ($page) => $page
-        ->component('portal/student/profile/AccommodationFeePaymentOptions')
-        ->has('fees')
-        ->where('fees.due', fn ($due) => is_string($due) || is_numeric($due)));
+    $response->assertRedirect(route('portal.profile.accommodations'));
+    $response->assertSessionHas('error', __('students.accommodation_fee_payment_unavailable'));
 });
 
 test('portal profile accommodations pay route exposes fee structure amount when no ledger exists', function () {
@@ -135,16 +135,16 @@ test('portal profile accommodations pay route exposes fee structure amount when 
     $user = User::query()->findOrFail($student->user_id);
     $user->givePermissionTo('manageOwnStudentAccommodationDetails:students');
 
-    $feeType = \App\Models\Shared\FeeType::query()->firstOrCreate(
-        ['slug' => \App\Enums\Shared\FeeTypeEnum::STUDENT_ACCOMMODATION_FEE->slug()],
+    $feeType = FeeType::query()->firstOrCreate(
+        ['slug' => FeeTypeEnum::STUDENT_ACCOMMODATION_FEE->slug()],
         [
-            'name' => \App\Enums\Shared\FeeTypeEnum::STUDENT_ACCOMMODATION_FEE->name(),
-            'description' => \App\Enums\Shared\FeeTypeEnum::STUDENT_ACCOMMODATION_FEE->description(),
-            'position' => \App\Enums\Shared\FeeTypeEnum::STUDENT_ACCOMMODATION_FEE->position(),
+            'name' => FeeTypeEnum::STUDENT_ACCOMMODATION_FEE->name(),
+            'description' => FeeTypeEnum::STUDENT_ACCOMMODATION_FEE->description(),
+            'position' => FeeTypeEnum::STUDENT_ACCOMMODATION_FEE->position(),
         ],
     );
 
-    \App\Models\Institution\FeeStructure::query()->create([
+    FeeStructure::query()->create([
         'tenant_id' => $tenant->id,
         'fee_type_id' => $feeType->id,
         'level_id' => $studentProgram->departmentLevel->level_id,
