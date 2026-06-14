@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import ModeOfStudyComboSelect from '@/components/core/form/combobox/ModeOfStudyComboSelect.vue';
+import BaseContextField from '@/components/core/layout/BaseContextField.vue';
+import BaseFilterBar from '@/components/core/layout/BaseFilterBar.vue';
 import { ModeOfStudy } from '@/types/institution';
 import { SelectOption } from '@/types/utils';
 
@@ -15,25 +17,38 @@ const modeOfStudyModel = defineModel<SelectOption | null>('modeOfStudyModel');
 </script>
 
 <template>
-    <div class="mt-4 flex w-full items-center justify-between space-x-4">
-        <BaseCombobox
+    <BaseFilterBar
+        bordered
+        :title="$t('trans.ui_class_filters')"
+        class="mt-4"
+        :columns="2"
+    >
+        <BaseContextField
             :label="$tChoice('academic_calendar.calendar_year', 1)"
-            :options="academicYearOptions ?? []"
-            v-model="academicYearModel"
-            :label-uppercase="true"
-            :vertical-layout="false"
-            :is-required="true"
-            @update:modelValue="handleFilterChange"
-            class="w-full"
-        />
-        <ModeOfStudyComboSelect
-            :data="modesOfStudy ?? []"
-            v-model="modeOfStudyModel!"
-            @update:modelValue="handleFilterChange"
-            :vertical-layout="false"
-            :label-uppercase="true"
-            :is-required="true"
-            class="w-full"
-        />
-    </div>
-</template> 
+            icon="calendar"
+            required
+        >
+            <BaseCombobox
+                label=""
+                :options="academicYearOptions ?? []"
+                v-model="academicYearModel"
+                :is-required="true"
+                @update:modelValue="handleFilterChange"
+            />
+        </BaseContextField>
+
+        <BaseContextField
+            :label="$tChoice('trans.mode_of_study', 1)"
+            icon="graduation_cape"
+            required
+        >
+            <ModeOfStudyComboSelect
+                label=""
+                :data="modesOfStudy ?? []"
+                v-model="modeOfStudyModel!"
+                @update:modelValue="handleFilterChange"
+                :is-required="true"
+            />
+        </BaseContextField>
+    </BaseFilterBar>
+</template>

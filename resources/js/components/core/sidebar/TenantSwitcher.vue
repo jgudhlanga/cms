@@ -18,14 +18,14 @@ const page = usePage<PageProps>();
 const appVersion = computed(() => page.props.appVersion);
 </script>
 <template>
-    <div class="relative" :class="isMobile ? 'px-3 py-5' : 'p-3'">
+    <div class="relative" :class="isMobile ? 'px-3 py-4' : 'p-2'">
         <div v-if="isMobile" class="flex items-start gap-3 pr-10 text-left">
             <div
                 class="bg-sidebar-primary text-sidebar-primary-foreground flex size-12 shrink-0 aspect-square items-center justify-center rounded-full"
             >
                 <component :is="activeTenant.attributes.logo" class="rounded-full border-2 border-white" />
             </div>
-            <div class="grid min-w-0 flex-1 justify-items-start gap-2.5 text-sm leading-normal">
+            <div class="grid min-w-0 flex-1 justify-items-start gap-1 text-sm leading-normal">
                 <span class="text-sidebar-foreground w-full min-w-0 truncate font-semibold uppercase">
                     {{ activeTenant.attributes.name }}
                 </span>
@@ -47,7 +47,7 @@ const appVersion = computed(() => page.props.appVersion);
         <div v-else class="flex items-center space-x-2">
             <div
                 class="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square items-center justify-center rounded-full"
-                :class="state === 'collapsed' ? 'size-6' : 'size-8'"
+                :class="state === 'collapsed' ? 'size-6' : 'size-7'"
             >
                 <component :is="activeTenant.attributes.logo" class="rounded-full border-2 border-white" />
             </div>

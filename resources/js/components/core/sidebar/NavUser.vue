@@ -29,16 +29,16 @@ const closeMobileSidebar = useCloseMobileSidebar();
             <DropdownMenu>
                 <DropdownMenuTrigger as-child>
                     <SidebarMenuButton size="lg" class="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
-                        <Avatar class="rounded-lg" :class="state === 'collapsed' ? 'size-6' : 'size-8'">
+                        <Avatar class="rounded-lg" :class="state === 'collapsed' ? 'size-6' : 'size-7'">
                             <AvatarImage
                                 :src="page.props.auth?.user.attributes.avatarUrl ?? defaultAvatarImage"
                                 :alt="page.props.auth?.user.attributes.name"
                             />
-                            <AvatarFallback class="rounded-lg" :class="state === 'collapsed' ? 'size-6' : 'size-8'">
+                            <AvatarFallback class="rounded-lg" :class="state === 'collapsed' ? 'size-6' : 'size-7'">
                                 {{ getInitials(page.props.auth.user.attributes.name) }}
                             </AvatarFallback>
                         </Avatar>
-                        <div class="grid flex-1 text-left text-sm leading-tight">
+                        <div class="grid flex-1 text-left text-sm leading-none">
                             <span class="truncate font-semibold">{{ page.props.auth.user.attributes.name }}</span>
                             <span class="truncate text-xs">{{ page.props.auth.user.attributes.email }}</span>
                         </div>

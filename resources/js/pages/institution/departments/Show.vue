@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import InstitutionDepartmentComboSelect from '@/components/core/form/combobox/InstitutionDepartmentComboSelect.vue';
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import BaseSectionNav from '@/components/core/tabs/BaseSectionNav.vue';
 import { useInstitution } from '@/composables/institution/useInstitution';
-import { hasAbility } from '@/lib/permissions';
 import ClassConfig from '@/pages/institution/academicCalendars/partials/ClassConfig.vue';
+import DepartmentContextBar from '@/pages/institution/departments/partials/DepartmentContextBar.vue';
 import LinkApplicationStepsToDepartment from '@/pages/institution/departments/partials/LinkApplicationStepsToDepartment.vue';
 import LinkCoursesToDepartment from '@/pages/institution/departments/partials/LinkCoursesToDepartment.vue';
 import LinkLevelsToDepartment from '@/pages/institution/departments/partials/LinkLevelsToDepartment.vue';
@@ -17,6 +16,7 @@ import { SelectOption } from '@/types/utils';
 import { Head, router, useForm } from '@inertiajs/vue3';
 import { storeToRefs } from 'pinia';
 import { computed, ref, watch } from 'vue';
+import { hasAbility } from '@/lib/permissions';
 
 interface Props {
     department: InstitutionDepartment;
@@ -62,28 +62,31 @@ const visibleTabs = computed(() => {
 });
 
 const activeSection = computed(() => visibleTabs.value.find((tab) => tab.value === activeTab.value));
+
+const activeTabDescription = computed(() => activeSection.value?.transDescription?.() ?? '');
 </script>
 
 <template>
     <Head :title="$tChoice('trans.department', 2)" />
     <PageContainer :breadcrumbs="breadcrumbs" :back-url="route('institution.index')">
-        <template #backNavigationLeading v-if="canViewAnyDepartmentMetaData">
-            <div class="flex w-full min-w-0 grow">
-                <InstitutionDepartmentComboSelect
-                    class="min-w-0 flex-1"
-                    :form="switchDepartmentForm"
-                    v-model="selectedDepartment"
-                    :label="$t('trans.ui_change_department')"
-                    :vertical-layout="false"
-                    :label-uppercase="true"
-                    width-class="w-full"
-                />
-            </div>
-        </template>
-        <BaseSectionNav v-model:active-tab="activeTab" :tabs="visibleTabs" />
+        <DepartmentContextBar
+            :department="department"
+            :form="switchDepartmentForm"
+            v-model="selectedDepartment"
+            :show-switcher="canViewAnyDepartmentMetaData"
+        />
+
+        <BaseSectionNav
+            v-model:active-tab="activeTab"
+            :tabs="visibleTabs"
+            :description="activeTabDescription"
+            class="mt-4"
+        />
+
         <div class="py-4">
             <component :is="activeSection?.component" v-if="activeSection" />
         </div>
+
         <LinkLevelsToDepartment :institution-department-id="institutionDepartmentId" />
         <LinkCoursesToDepartment :institution-department-id="institutionDepartmentId" />
         <LinkApplicationStepsToDepartment :institution-department-id="institutionDepartmentId" />

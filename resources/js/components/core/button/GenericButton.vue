@@ -9,7 +9,7 @@ defineProps<{ title?: string, variant?: ColorVariant, iconVariant?: ColorVariant
 </script>
 
 <template>
-	<BaseButton type="button" :variant="variant">
+	<BaseButton type="button" :variant="variant" v-bind="$attrs">
 		<BaseIcon v-if="icon" :name="icon" :color="iconVariant" />
 		<span v-if="title">{{ title }}</span>
 		<slot />
