@@ -25,6 +25,7 @@ use App\Jobs\Enrolments\ExportStudentEnrollmentJob;
 use App\Models\Students\Student;
 use App\Models\Students\StudentProgram;
 use App\Models\Users\User;
+use App\Services\Enrollment\EnrollmentLookupService;
 use App\Services\Maintenance\Staff\StaffImportLookupCreator;
 use App\Services\Maintenance\Staff\StaffImportService;
 use App\Services\Maintenance\Staff\StaffImportTemplateService;
@@ -41,6 +42,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response as HttpResponse;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 use Maatwebsite\Excel\Facades\Excel;
@@ -198,6 +200,11 @@ class MaintenanceController extends Controller
                 'conflict' => [
                     'conflictingStudentId' => $exception->conflictingStudentId,
                     'idNumber' => $exception->idNumber,
+                    'mergeUrl' => route('maintenance.faulty-student-ids.merge', [
+                        'student' => $student->id,
+                        'target' => $exception->conflictingStudentId,
+                        'id_number' => $exception->idNumber,
+                    ]),
                 ],
             ], 409);
         }
@@ -210,11 +217,20 @@ class MaintenanceController extends Controller
     public function mergeFaultyStudentPreview(
         Student $student,
         StudentAccountMergePreviewService $previewService,
-    ): Response {
+    ): Response|RedirectResponse {
         $targetId = (int) request()->query('target', 0);
-        $idNumber = (string) request()->query('id_number', '');
+        $idNumber = EnrollmentLookupService::normalizeNationalId((string) request()->query('id_number', ''));
 
-        $preview = $previewService->build($student, $targetId, $idNumber);
+        try {
+            $preview = $previewService->build($student, $targetId, $idNumber);
+        } catch (ValidationException $exception) {
+            $message = collect($exception->errors())->flatten()->first()
+                ?? __('trans.maintenance_faulty_data_merge_failure');
+
+            return redirect()
+                ->route('maintenance.faulty-student-ids')
+                ->with('error', $message);
+        }
 
         return Inertia::render('maintenance/FaultyStudentIdMerge', [
             'preview' => StudentAccountMergePreviewResource::make($preview)->resolve(),

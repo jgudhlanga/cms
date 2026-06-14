@@ -30,6 +30,16 @@ const loadCourseSyllabuses = async () => {
     courseSyllabusList.value = (courseSyllabuses.value?.data ?? []) as CourseSyllabus[];
 };
 
+const loadCourseSyllabusesFromUrl = async (url: string) => {
+    if (!institutionDepartmentId.value) {
+        courseSyllabusList.value = [];
+        return;
+    }
+
+    await listCourseSyllabuses(institutionDepartmentId.value, url);
+    courseSyllabusList.value = (courseSyllabuses.value?.data ?? []) as CourseSyllabus[];
+};
+
 watch(institutionDepartmentId, loadCourseSyllabuses, { immediate: true });
 </script>
 
@@ -48,7 +58,7 @@ watch(institutionDepartmentId, loadCourseSyllabuses, { immediate: true });
             :pagination="{ ...(courseSyllabuses?.links ?? {}), ...(courseSyllabuses?.meta ?? {}) }"
             :search-url="listUrl"
             :use-api="true"
-            :api-fetch-action="loadCourseSyllabuses"
+            :api-fetch-action="loadCourseSyllabusesFromUrl"
         />
     </div>
 </template>

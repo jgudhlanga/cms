@@ -1,20 +1,19 @@
 <?php
 
 use App\Http\Controllers\Students\AcademicRecordController;
-use App\Http\Controllers\Students\ApprenticeManagementController;
 use App\Http\Controllers\Students\SponsorController;
 use App\Http\Controllers\Students\StudentController;
 use App\Http\Controllers\Students\UserStudentController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('students')->middleware('auth')->group(function () {
-    # ==================================== SPONSORS ================================================================
+    // ==================================== SPONSORS ================================================================
     Route::post('sponsors', [SponsorController::class, 'store'])->name('sponsors.store');
     Route::put('sponsors/{sponsor}/restore', [SponsorController::class, 'restore'])->name('sponsors.restore');
     Route::put('sponsors/{sponsor}/update', [SponsorController::class, 'update'])->name('sponsors.update');
     Route::delete('sponsors/{sponsor}/delete', [SponsorController::class, 'destroy'])->name('sponsors.destroy');
     Route::delete('sponsors/{sponsor}/force-delete', [SponsorController::class, 'forceDelete'])->name('sponsors.force-delete');
-    # ==================================== ACADEMIC RECORDS ================================================================
+    // ==================================== ACADEMIC RECORDS ================================================================
     Route::post('academic-records', [AcademicRecordController::class, 'store'])->name('academic-records.store');
     Route::put('academic-records/{academic_record}/restore', [AcademicRecordController::class, 'restore'])->name('academic-records.restore');
     Route::put('academic-records/{academic_record}/update', [AcademicRecordController::class, 'update'])->name('academic-records.update');
@@ -28,8 +27,5 @@ Route::prefix('students')->middleware('auth')->group(function () {
     Route::get('{user}/profile', [UserStudentController::class, 'index'])->name('students.profile');
     Route::get('program/{student_program}/edit', [UserStudentController::class, 'edit'])->name('students.program-edit');
     Route::put('program/{student_program}/update', [UserStudentController::class, 'updateProgram'])->name('students.program-update');
-    Route::get('apprentices', [ApprenticeManagementController::class, 'index'])->name('students.apprentices.index');
-    Route::get('apprentices/import', [ApprenticeManagementController::class, 'showImport'])->name('students.apprentices.show-import');
-    Route::post('apprentices/import', [ApprenticeManagementController::class, 'processImport'])->name('students.apprentices.process-import');
 });
 Route::middleware('auth')->resource('students', StudentController::class)->names('students');

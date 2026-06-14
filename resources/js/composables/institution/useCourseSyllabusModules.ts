@@ -36,11 +36,17 @@ export const useCourseSyllabusModules = () => {
             shared: z.boolean(),
         });
 
-    const listCourseSyllabusModules = async (institutionDepartmentId: string, courseSyllabusId: string) => {
-        const endpoint = route('course-syllabus-modules.index', {
-            institution_department: institutionDepartmentId,
-            course_syllabus: courseSyllabusId,
-        });
+    const listCourseSyllabusModules = async (
+        institutionDepartmentId: string,
+        courseSyllabusId: string,
+        paginatorUrl?: string,
+    ) => {
+        const endpoint =
+            paginatorUrl
+            ?? route('course-syllabus-modules.index', {
+                institution_department: institutionDepartmentId,
+                course_syllabus: courseSyllabusId,
+            });
 
         try {
             isLoading.value = true;

@@ -267,6 +267,35 @@ it('updates a syllabus course module', function () {
         ->and((bool) $module->shared)->toBeTrue();
 });
 
+it('paginates modules using page and page_size query parameters', function () {
+    $ctx = makeSyllabusModuleContext();
+
+    for ($index = 1; $index <= 12; $index++) {
+        CourseSyllabusModule::query()->create([
+            'tenant_id' => $ctx['tenant']->id,
+            'course_syllabus_id' => $ctx['courseSyllabus']->id,
+            'academic_year_option_id' => $ctx['semesterOne']->id,
+            'title' => "Module {$index}",
+            'code' => "MOD-{$index}-".uniqid(),
+            'shared' => false,
+        ]);
+    }
+
+    $response = $this->actingAs($ctx['user'])->get(route('course-syllabus-modules.index', [
+        'institution_department' => $ctx['institutionDepartment']->id,
+        'course_syllabus' => $ctx['courseSyllabus']->id,
+        'page' => 2,
+        'page_size' => 5,
+    ]));
+
+    $response->assertOk()
+        ->assertJsonCount(5, 'data')
+        ->assertJsonPath('meta.current_page', 2)
+        ->assertJsonPath('meta.per_page', 5)
+        ->assertJsonPath('meta.total', 12)
+        ->assertJsonPath('meta.last_page', 3);
+});
+
 it('moves modules to another academic year option', function () {
     $ctx = makeSyllabusModuleContext();
 

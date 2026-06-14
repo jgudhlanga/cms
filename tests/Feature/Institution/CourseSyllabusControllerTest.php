@@ -9,6 +9,7 @@ use App\Models\Institution\DepartmentLevelCourse;
 use App\Models\Institution\InstitutionDepartment;
 use App\Models\Institution\Level;
 use App\Models\Institution\Syllabus\CourseSyllabus;
+use App\Models\Institution\Syllabus\CourseSyllabusModule;
 use App\Models\Tenants\Tenant;
 use App\Models\Users\User;
 use Illuminate\Http\UploadedFile;
@@ -344,4 +345,41 @@ it('returns not found when syllabus document is missing', function () {
     ]));
 
     $response->assertNotFound();
+});
+
+it('lists course syllabuses with module counts for the department', function () {
+    $ctx = makeCourseSyllabusContext();
+
+    $courseSyllabus = CourseSyllabus::query()->create([
+        'tenant_id' => $ctx['tenant']->id,
+        'institution_department_id' => $ctx['institutionDepartment']->id,
+        'department_level_course_id' => $ctx['departmentLevelCourse']->id,
+        'title' => 'Indexed Syllabus',
+        'code' => 'IDX-'.uniqid(),
+        'implementation_year' => '2026',
+        'status' => 'active',
+    ]);
+
+    CourseSyllabusModule::query()->create([
+        'tenant_id' => $ctx['tenant']->id,
+        'course_syllabus_id' => $courseSyllabus->id,
+        'title' => 'Module A',
+        'code' => 'MOD-A-'.uniqid(),
+        'shared' => false,
+    ]);
+
+    CourseSyllabusModule::query()->create([
+        'tenant_id' => $ctx['tenant']->id,
+        'course_syllabus_id' => $courseSyllabus->id,
+        'title' => 'Module B',
+        'code' => 'MOD-B-'.uniqid(),
+        'shared' => false,
+    ]);
+
+    $response = $this->actingAs($ctx['user'])->getJson(route('department-course-syllabuses.index', [
+        'institution_department' => $ctx['institutionDepartment']->id,
+    ]));
+
+    $response->assertOk()
+        ->assertJsonPath('data.0.attributes.modulesCount', 2);
 });

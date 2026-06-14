@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import InstitutionDepartmentComboSelect from '@/components/core/form/combobox/InstitutionDepartmentComboSelect.vue';
 import PageContainer from '@/components/core/page/PageContainer.vue';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import BaseSectionNav from '@/components/core/tabs/BaseSectionNav.vue';
 import { useInstitution } from '@/composables/institution/useInstitution';
-import { icons } from '@/lib/icons';
 import { hasAbility } from '@/lib/permissions';
 import ClassConfig from '@/pages/institution/academicCalendars/partials/ClassConfig.vue';
 import LinkApplicationStepsToDepartment from '@/pages/institution/departments/partials/LinkApplicationStepsToDepartment.vue';
@@ -61,6 +60,8 @@ watch(selectedDepartment, (nextDepartment) => {
 const visibleTabs = computed(() => {
     return departmentTabs(props.department).filter((tab) => tab.show);
 });
+
+const activeSection = computed(() => visibleTabs.value.find((tab) => tab.value === activeTab.value));
 </script>
 
 <template>
@@ -79,17 +80,10 @@ const visibleTabs = computed(() => {
                 />
             </div>
         </template>
-        <Tabs :default-value="activeTab" v-model="activeTab">
-            <TabsList class="w-full">
-                <TabsTrigger v-for="tab in visibleTabs" :key="'tab_' + tab.value" :value="tab.value" class="text-sm font-light uppercase">
-                    <component :is="icons[tab?.icon!]" />
-                    <span>{{ tab?.transLabel!() }}</span>
-                </TabsTrigger>
-            </TabsList>
-            <TabsContent v-for="tab in visibleTabs" :value="tab.value" :key="'content_' + tab.value" class="py-4">
-                <component :is="tab.component" />
-            </TabsContent>
-        </Tabs>
+        <BaseSectionNav v-model:active-tab="activeTab" :tabs="visibleTabs" />
+        <div class="py-4">
+            <component :is="activeSection?.component" v-if="activeSection" />
+        </div>
         <LinkLevelsToDepartment :institution-department-id="institutionDepartmentId" />
         <LinkCoursesToDepartment :institution-department-id="institutionDepartmentId" />
         <LinkApplicationStepsToDepartment :institution-department-id="institutionDepartmentId" />

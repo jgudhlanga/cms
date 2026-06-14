@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import MaintenancePageHeader from '@/pages/maintenance/partials/MaintenancePageHeader.vue';
-import MaintenanceSectionNav from '@/pages/maintenance/partials/MaintenanceSectionNav.vue';
+import BaseSectionNav from '@/components/core/tabs/BaseSectionNav.vue';
 import { cn } from '@/lib/utils';
 import type { MaintenanceExportCounts } from '@/types/maintenance-exports';
 import type { StaffImportResult } from '@/types/staff-import';
@@ -39,7 +39,7 @@ const contentWrapperClass = computed(() =>
         isFullBleedSection.value ? '' : 'rounded-lg border border-border bg-card p-4',
     ),
 );
-
+ 
 const tabProps = (tabValue: string) => {
     if (tabValue === 'staff') {
         return { staffImportResult: props.staffImportResult };
@@ -57,10 +57,11 @@ const tabProps = (tabValue: string) => {
     <div class="w-full min-w-0 space-y-4 px-2 sm:px-4">
         <MaintenancePageHeader :section-description="sectionDescription" />
 
-        <MaintenanceSectionNav
+        <BaseSectionNav
             v-model:active-tab="activeTabModel"
             :tabs="tabs"
             :badge-counts="badgeCounts"
+            :aria-label="$t('trans.maintenance')"
         />
 
         <div :class="contentWrapperClass">

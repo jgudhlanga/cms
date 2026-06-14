@@ -7,7 +7,6 @@ return [
     'apply_now' => 'Apply now',
     'mode' => 'Mode|Modes',
     'intake' => 'Intake',
-    'apprentice_management' => 'Apprentice Management',
     'male' => 'Male|Males',
     'female' => 'Female|Females',
     'in' => 'in',

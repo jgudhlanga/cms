@@ -203,6 +203,7 @@ export type CourseSyllabus = {
         title: string;
         code: string;
         implementationYear: string;
+        modulesCount?: number;
         status?: 'active' | 'terminated';
         syllabusDocumentId?: string | number | null;
         syllabusDocumentUrl?: string | null;

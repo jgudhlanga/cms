@@ -132,6 +132,16 @@ const onFieldInput = (field: keyof SyllabusImportRowCorrection, event: Event): v
                 :class="fieldInputClass('moduleCode', moduleErrors.length > 0)"
                 @input="onFieldInput('moduleCode', $event)"
             />
+            <p
+                v-if="row.moduleCodeRepeatedInFile"
+                class="mt-1 text-xs text-amber-700 dark:text-amber-400"
+            >
+                {{
+                    $t('syllabus.import_preview_module_code_repeated', {
+                        count: String(row.moduleCodeOccurrencesInFile),
+                    })
+                }}
+            </p>
         </td>
         <td class="px-2 py-2">
             <span :class="actionClass(syllabusAction)">{{ actionLabel(syllabusAction) }}</span>

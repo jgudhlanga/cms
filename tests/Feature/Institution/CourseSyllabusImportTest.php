@@ -169,6 +169,16 @@ it('previews valid syllabus import rows', function () {
         ->assertJsonPath('summary.moduleCreates', 1)
         ->assertJsonStructure([
             'previewToken',
+            'fileStats' => [
+                'totalRows',
+                'uniqueCourseCodes',
+                'uniqueModuleCodes',
+                'uniqueModuleRecords',
+                'duplicateModuleCodeGroups',
+                'extraRowsFromDuplicateModuleCodes',
+                'moduleRows',
+                'moduleSkipRows',
+            ],
             'lookups' => ['levels', 'courses', 'levelCourses', 'semesters'],
             'rows' => [
                 [
@@ -176,6 +186,8 @@ it('previews valid syllabus import rows', function () {
                     'courseCode',
                     'syllabusExists',
                     'moduleExists',
+                    'moduleCodeRepeatedInFile',
+                    'moduleCodeOccurrencesInFile',
                     'syllabusAction',
                     'moduleAction',
                     'syllabusErrors',
@@ -425,4 +437,75 @@ it('rejects process when preview contains failed rows', function () {
         ->assertSessionHasErrors('preview_token');
 
     Cache::forget('course-syllabus-import-preview:'.$previewToken);
+});
+
+it('imports duplicate module codes when they belong to different course syllabuses', function () {
+    $context = makeSyllabusWebImportContext();
+    $sharedModuleCode = 'MOD-SHARED-'.uniqid();
+
+    $rows = [
+        syllabusImportWebRowValues([
+            'COURSE_CODE' => 'CT/26/301',
+            'MODULE_CODE' => $sharedModuleCode,
+            'MODULE_TITLE' => 'National Studies',
+        ]),
+        syllabusImportWebRowValues([
+            'COURSE_CODE' => 'CT/26/302',
+            'MODULE_CODE' => $sharedModuleCode,
+            'MODULE_TITLE' => 'National Studies',
+        ]),
+    ];
+
+    $file = storeSyllabusImportFile($rows, $context['institutionDepartmentId']);
+
+    $this->actingAs($context['user'])
+        ->post(route('department-course-syllabuses.import.preview', [
+            'institution_department' => $context['institutionDepartmentId'],
+        ]), [
+            'file' => $file,
+        ])
+        ->assertSuccessful()
+        ->assertJsonPath('summary.total', 2)
+        ->assertJsonPath('summary.moduleCreates', 2)
+        ->assertJsonPath('summary.failed', 0);
+
+    syllabusImportPreviewAndProcess($file, $context['institutionDepartmentId'], $context['user']);
+
+    expect(CourseSyllabusModule::query()->where('code', $sharedModuleCode)->count())->toBe(2);
+});
+
+it('preview includes file stats when module codes are reused across courses', function () {
+    $context = makeSyllabusWebImportContext();
+    $sharedModuleCode = 'MOD-SHARED-'.uniqid();
+
+    $rows = [
+        syllabusImportWebRowValues([
+            'COURSE_CODE' => 'CT/26/401',
+            'MODULE_CODE' => $sharedModuleCode,
+            'MODULE_TITLE' => 'National Studies',
+        ]),
+        syllabusImportWebRowValues([
+            'COURSE_CODE' => 'CT/26/402',
+            'MODULE_CODE' => $sharedModuleCode,
+            'MODULE_TITLE' => 'National Studies',
+        ]),
+    ];
+
+    $file = storeSyllabusImportFile($rows, $context['institutionDepartmentId']);
+
+    $this->actingAs($context['user'])
+        ->post(route('department-course-syllabuses.import.preview', [
+            'institution_department' => $context['institutionDepartmentId'],
+        ]), [
+            'file' => $file,
+        ])
+        ->assertSuccessful()
+        ->assertJsonPath('fileStats.totalRows', 2)
+        ->assertJsonPath('fileStats.uniqueCourseCodes', 2)
+        ->assertJsonPath('fileStats.uniqueModuleCodes', 1)
+        ->assertJsonPath('fileStats.uniqueModuleRecords', 2)
+        ->assertJsonPath('fileStats.duplicateModuleCodeGroups', 1)
+        ->assertJsonPath('fileStats.extraRowsFromDuplicateModuleCodes', 1)
+        ->assertJsonPath('rows.0.moduleCodeRepeatedInFile', true)
+        ->assertJsonPath('rows.1.moduleCodeRepeatedInFile', true);
 });

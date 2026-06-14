@@ -189,3 +189,38 @@ it('fails syllabus row when relationship lookup cannot be resolved', function ()
 
     expect(CourseSyllabus::query()->where('code', 'CT/26/404')->exists())->toBeFalse();
 });
+
+it('imports the same module code for different course syllabuses', function () {
+    makeSyllabusImportContext();
+
+    $sharedModuleCode = 'MOD-SHARED-'.uniqid();
+
+    $rows = [
+        [
+            'DEPARTMENT' => 'Engineering',
+            'LEVEL' => 'Level 1',
+            'COURSE_TITLE' => 'Civil Technology',
+            'COURSE_CODE' => 'CT/26/201',
+            'SEMESTER' => 'Semester 1',
+            'MODULE_TITLE' => 'National Studies',
+            'MODULE_CODE' => $sharedModuleCode,
+        ],
+        [
+            'DEPARTMENT' => 'Engineering',
+            'LEVEL' => 'Level 1',
+            'COURSE_TITLE' => 'Civil Technology',
+            'COURSE_CODE' => 'CT/26/202',
+            'SEMESTER' => 'Semester 1',
+            'MODULE_TITLE' => 'National Studies',
+            'MODULE_CODE' => $sharedModuleCode,
+        ],
+    ];
+
+    $syllabusImport = runImporter(CourseSyllabusImporter::class, $rows);
+    $moduleImport = runImporter(CourseSyllabusModuleImporter::class, $rows);
+
+    expect($syllabusImport['results']['failed'])->toBe(0)
+        ->and($moduleImport['results']['failed'])->toBe(0)
+        ->and($moduleImport['results']['successful'])->toBe(2)
+        ->and(CourseSyllabusModule::query()->where('code', $sharedModuleCode)->count())->toBe(2);
+});

@@ -123,6 +123,79 @@ const handleConfirm = (): void => {
                     {{ previewSummaryLabel }}
                 </p>
 
+                <div
+                    v-if="preview.fileStats"
+                    class="overflow-x-auto rounded-md border border-border bg-muted/20"
+                >
+                    <table class="min-w-full text-sm">
+                        <thead>
+                            <tr class="border-b text-left text-xs uppercase text-muted-foreground">
+                                <th class="px-3 py-2">{{ $t('syllabus.import_preview_file_stats_metric') }}</th>
+                                <th class="px-3 py-2 text-right">
+                                    {{ $t('syllabus.import_preview_file_stats_count') }}
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="border-b">
+                                <td class="px-3 py-2">{{ $t('syllabus.import_preview_file_stats_total_rows') }}</td>
+                                <td class="px-3 py-2 text-right font-medium">{{ preview.fileStats.totalRows }}</td>
+                            </tr>
+                            <tr class="border-b">
+                                <td class="px-3 py-2">
+                                    {{ $t('syllabus.import_preview_file_stats_unique_course_codes') }}
+                                </td>
+                                <td class="px-3 py-2 text-right font-medium">
+                                    {{ preview.fileStats.uniqueCourseCodes }}
+                                </td>
+                            </tr>
+                            <tr class="border-b">
+                                <td class="px-3 py-2">
+                                    {{ $t('syllabus.import_preview_file_stats_unique_module_codes') }}
+                                </td>
+                                <td class="px-3 py-2 text-right font-medium">
+                                    {{ preview.fileStats.uniqueModuleCodes }}
+                                </td>
+                            </tr>
+                            <tr class="border-b">
+                                <td class="px-3 py-2">
+                                    {{ $t('syllabus.import_preview_file_stats_unique_module_records') }}
+                                </td>
+                                <td class="px-3 py-2 text-right font-medium">
+                                    {{ preview.fileStats.uniqueModuleRecords }}
+                                </td>
+                            </tr>
+                            <tr class="border-b">
+                                <td class="px-3 py-2">
+                                    {{ $t('syllabus.import_preview_file_stats_duplicate_groups') }}
+                                </td>
+                                <td class="px-3 py-2 text-right font-medium">
+                                    {{ preview.fileStats.duplicateModuleCodeGroups }}
+                                </td>
+                            </tr>
+                            <tr class="border-b">
+                                <td class="px-3 py-2">
+                                    {{ $t('syllabus.import_preview_file_stats_extra_duplicate_rows') }}
+                                </td>
+                                <td class="px-3 py-2 text-right font-medium">
+                                    {{ preview.fileStats.extraRowsFromDuplicateModuleCodes }}
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p
+                        v-if="preview.fileStats.duplicateModuleCodeGroups > 0"
+                        class="border-t px-3 py-2 text-xs text-muted-foreground"
+                    >
+                        {{
+                            $t('syllabus.import_preview_file_stats_duplicate_notice', {
+                                groups: String(preview.fileStats.duplicateModuleCodeGroups),
+                                extra: String(preview.fileStats.extraRowsFromDuplicateModuleCodes),
+                            })
+                        }}
+                    </p>
+                </div>
+
                 <p
                     class="text-sm"
                     :class="canConfirmImport ? 'text-muted-foreground' : 'text-destructive'"

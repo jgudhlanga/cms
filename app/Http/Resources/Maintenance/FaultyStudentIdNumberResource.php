@@ -5,21 +5,20 @@ declare(strict_types=1);
 namespace App\Http\Resources\Maintenance;
 
 use App\Models\Students\Student;
-use App\Rules\ZimbabweanIdNumber;
-use App\Services\Enrollment\EnrollmentLookupService;
+use App\Services\Maintenance\Students\FaultyStudentIdNumberAnalysis;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-/** @mixin Student */
+/**
+ * @property-read array<string, mixed>|null $faultyIdAnalysis
+ *
+ * @mixin Student
+ */
 class FaultyStudentIdNumberResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
-        $currentIdNumber = (string) $this->id_number;
-        $normalized = EnrollmentLookupService::normalizeNationalId($currentIdNumber);
-        $suggestedIdNumber = ZimbabweanIdNumber::isValid($normalized) && $normalized !== strtoupper(trim($currentIdNumber))
-            ? $normalized
-            : null;
+        $analysis = $this->faultyIdAnalysis ?? app(FaultyStudentIdNumberAnalysis::class)->analyze($this->resource);
 
         return [
             'type' => 'maintenance-faulty-student-id-number',
@@ -27,9 +26,13 @@ class FaultyStudentIdNumberResource extends JsonResource
             'attributes' => [
                 'name' => $this->user?->full_name,
                 'email' => $this->user?->email,
+                'phoneNumber' => $this->user?->phone_number,
                 'studentNumber' => $this->student_number,
-                'idNumber' => $currentIdNumber,
-                'suggestedIdNumber' => $suggestedIdNumber,
+                'idNumber' => (string) $this->id_number,
+                'suggestedIdNumber' => $analysis['suggestedIdNumber'],
+                'proposedIdNumber' => $analysis['proposedIdNumber'],
+                'rectificationStatus' => $analysis['rectificationStatus'],
+                'conflict' => $analysis['conflict'],
             ],
         ];
     }
