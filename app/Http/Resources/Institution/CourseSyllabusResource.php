@@ -26,6 +26,7 @@ class CourseSyllabusResource extends JsonResource
                 'title' => $this->resource->title,
                 'code' => $this->resource->code,
                 'implementationYear' => $this->resource->implementation_year,
+                'modulesCount' => (int) ($this->resource->syllabus_course_modules_count ?? 0),
                 'status' => $this->resource->status?->value,
                 'syllabusDocumentId' => $this->resource->syllabus_document_id,
                 'syllabusDocumentUrl' => $this->resource->syllabus_document_url,

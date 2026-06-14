@@ -205,7 +205,143 @@ it('returns conflict when corrected id is already taken', function (): void {
         'id_number' => '63-1234567N63',
     ])->assertStatus(409)
         ->assertJsonPath('conflict.conflictingStudentId', $target->id)
-        ->assertJsonPath('conflict.idNumber', '63-1234567N63');
+        ->assertJsonPath('conflict.idNumber', '63-1234567N63')
+        ->assertJsonPath(
+            'conflict.mergeUrl',
+            route('maintenance.faulty-student-ids.merge', [
+                'student' => $student->id,
+                'target' => $target->id,
+                'id_number' => '63-1234567N63',
+            ]),
+        );
+});
+
+it('loads merge preview using merge url from conflict payload', function (): void {
+    $rootUser = actingAsRootMaintenanceUser();
+
+    $target = createFaultyStudentTestRecord($rootUser, '63-1234567N63', 'MERGE-URL-'.strtoupper(Str::random(4)));
+    $student = createFaultyStudentTestRecord($rootUser, 'invalid-id');
+
+    $mergeUrl = $this->patchJson(route('maintenance.faulty-student-ids.fix', $student), [
+        'id_number' => '63-1234567N63',
+    ])->assertStatus(409)
+        ->json('conflict.mergeUrl');
+
+    $this->get($mergeUrl)
+        ->assertSuccessful()
+        ->assertInertia(fn ($page) => $page
+            ->component('maintenance/FaultyStudentIdMerge')
+            ->where('preview.proposedIdNumber', '63-1234567N63'));
+});
+
+it('includes duplicate conflict metadata and phone number in list data', function (): void {
+    $rootUser = actingAsRootMaintenanceUser();
+
+    $target = createFaultyStudentTestRecord($rootUser, '63-1234567N63', 'TAKEN-'.strtoupper(Str::random(4)));
+    $target->user?->update(['phone_number' => '+263771234567']);
+
+    $faulty = createFaultyStudentTestRecord($rootUser, '631234567N63', 'FAULTY-'.strtoupper(Str::random(4)));
+    $faulty->user?->update(['phone_number' => '+263779999999']);
+
+    $response = $this->getJson(route('maintenance.faulty-student-ids.data'));
+    $response->assertOk();
+
+    $matched = collect($response->json('data'))->firstWhere('id', $faulty->id);
+
+    expect($matched['attributes']['phoneNumber'])->toBe('+263779999999')
+        ->and($matched['attributes']['proposedIdNumber'])->toBe('63-1234567N63')
+        ->and($matched['attributes']['rectificationStatus'])->toBe('duplicate_merge')
+        ->and($matched['attributes']['conflict']['conflictingStudentId'])->toBe($target->id)
+        ->and($matched['attributes']['conflict']['conflictingPhoneNumber'])->toBe('+263771234567')
+        ->and($matched['attributes']['conflict']['mergePreviewUrl'])->toContain('/merge');
+});
+
+it('orders duplicate merge rows before ready to fix rows', function (): void {
+    $rootUser = actingAsRootMaintenanceUser();
+
+    $target = createFaultyStudentTestRecord($rootUser, '63-1234567N63', 'TAKEN-'.strtoupper(Str::random(4)));
+    $duplicateFaulty = createFaultyStudentTestRecord($rootUser, '631234567N63', 'DUP-'.strtoupper(Str::random(4)));
+    $readyFaulty = createFaultyStudentTestRecord($rootUser, '639999999N63', 'READY-'.strtoupper(Str::random(4)));
+
+    $ids = responseStudentIds($this->getJson(route('maintenance.faulty-student-ids.data')));
+
+    $duplicateIndex = array_search((int) $duplicateFaulty->id, $ids, true);
+    $readyIndex = array_search((int) $readyFaulty->id, $ids, true);
+
+    expect($duplicateIndex)->not->toBeFalse()
+        ->and($readyIndex)->not->toBeFalse()
+        ->and($duplicateIndex)->toBeLessThan($readyIndex);
+});
+
+it('respects page_size query parameter on faulty student ids data endpoint', function (): void {
+    $rootUser = actingAsRootMaintenanceUser();
+    $prefix = 'PAGE-SIZE-'.strtoupper(Str::random(4));
+
+    foreach (range(1, 30) as $index) {
+        createFaultyStudentTestRecord($rootUser, "invalid-{$index}", "{$prefix}-{$index}");
+    }
+
+    $this->getJson(route('maintenance.faulty-student-ids.data', [
+        'search' => $prefix,
+        'page_size' => 25,
+    ]))
+        ->assertOk()
+        ->assertJsonCount(25, 'data')
+        ->assertJsonPath('meta.per_page', 25);
+});
+
+it('returns a different page when page query parameter changes', function (): void {
+    $rootUser = actingAsRootMaintenanceUser();
+    $prefix = 'PAGE-NAV-'.strtoupper(Str::random(4));
+
+    foreach (range(1, 5) as $index) {
+        createFaultyStudentTestRecord($rootUser, "bad-{$index}", "{$prefix}-{$index}");
+    }
+
+    $pageOneIds = responseStudentIds($this->getJson(route('maintenance.faulty-student-ids.data', [
+        'search' => $prefix,
+        'page_size' => 2,
+        'page' => 1,
+    ])));
+
+    $pageTwoIds = responseStudentIds($this->getJson(route('maintenance.faulty-student-ids.data', [
+        'search' => $prefix,
+        'page_size' => 2,
+        'page' => 2,
+    ])));
+
+    expect($pageOneIds)->toHaveCount(2)
+        ->and($pageTwoIds)->toHaveCount(2)
+        ->and($pageOneIds)->not->toEqual($pageTwoIds);
+});
+
+it('preserves page_size in pagination links', function (): void {
+    $rootUser = actingAsRootMaintenanceUser();
+    $prefix = 'PAGE-LINK-'.strtoupper(Str::random(4));
+
+    foreach (range(1, 5) as $index) {
+        createFaultyStudentTestRecord($rootUser, "bad-link-{$index}", "{$prefix}-{$index}");
+    }
+
+    $response = $this->getJson(route('maintenance.faulty-student-ids.data', [
+        'search' => $prefix,
+        'page_size' => 2,
+        'page' => 1,
+    ]));
+
+    $response->assertOk();
+
+    expect($response->json('links.next'))->toContain('page_size=2');
+});
+
+it('redirects to faulty list when merge preview params are invalid', function (): void {
+    $rootUser = actingAsRootMaintenanceUser();
+
+    $faulty = createFaultyStudentTestRecord($rootUser, 'invalid-id');
+
+    $this->get(route('maintenance.faulty-student-ids.merge', ['student' => $faulty->id]))
+        ->assertRedirect(route('maintenance.faulty-student-ids'))
+        ->assertSessionHas('error');
 });
 
 it('returns conflict when corrected id is taken by a soft deleted student', function (): void {

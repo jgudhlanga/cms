@@ -19,6 +19,13 @@ class FaultyStudentIdNumbersQuery
         return $this->applyInvalidIdNumberConstraint($query)->orderBy('id');
     }
 
+    public function lightweightBaseQuery(): Builder
+    {
+        $query = Student::query()->whereNotNull('id_number');
+
+        return $this->applyInvalidIdNumberConstraint($query);
+    }
+
     public function count(): int
     {
         return $this->baseQuery()->count();

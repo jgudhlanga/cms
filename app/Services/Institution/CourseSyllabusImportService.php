@@ -39,6 +39,7 @@ class CourseSyllabusImportService
      *     previewToken: string,
      *     fileName: string,
      *     summary: array{total: int, syllabusCreates: int, syllabusUpdates: int, syllabusSkips: int, syllabusFails: int, moduleCreates: int, moduleUpdates: int, moduleSkips: int, moduleFails: int, failed: int},
+     *     fileStats: array{totalRows: int, uniqueCourseCodes: int, uniqueModuleCodes: int, uniqueModuleRecords: int, duplicateModuleCodeGroups: int, extraRowsFromDuplicateModuleCodes: int, moduleRows: int, moduleSkipRows: int},
      *     lookups: array{levels: list<string>, courses: list<string>, levelCourses: list<string>, semesters: list<string>},
      *     rows: list<array<string, mixed>>,
      * }
@@ -79,6 +80,7 @@ class CourseSyllabusImportService
             'previewToken' => $previewToken,
             'fileName' => $file->getClientOriginalName(),
             'summary' => $analysis['summary'],
+            'fileStats' => $analysis['fileStats'],
             'lookups' => [
                 'levels' => $templateData['lookups']['levels'],
                 'courses' => $templateData['lookups']['courses'],
@@ -299,6 +301,7 @@ class CourseSyllabusImportService
      * @param  list<int>|null  $excludedRowNumbers
      * @return array{
      *     summary: array{total: int, syllabusCreates: int, syllabusUpdates: int, syllabusSkips: int, syllabusFails: int, moduleCreates: int, moduleUpdates: int, moduleSkips: int, moduleFails: int, failed: int},
+     *     fileStats: array{totalRows: int, uniqueCourseCodes: int, uniqueModuleCodes: int, uniqueModuleRecords: int, duplicateModuleCodeGroups: int, extraRowsFromDuplicateModuleCodes: int, moduleRows: int, moduleSkipRows: int},
      *     rows: list<array<string, mixed>>,
      * }
      */
@@ -344,9 +347,12 @@ class CourseSyllabusImportService
         ];
 
         $rows = [];
+        $fileStats = CourseSyllabusImportFileStats::fromParsedRows($parsedRows);
+        $moduleCodeOccurrences = CourseSyllabusImportFileStats::moduleCodeOccurrences($parsedRows);
 
         foreach ($parsedRows as $parsedRow) {
             $rowData = $parsedRow['data'];
+            $moduleCode = trim((string) ($rowData['MODULE_CODE'] ?? ''));
             $syllabusAnalysis = $this->analyseSyllabusRow(
                 $rowProcessor,
                 $syllabusImporter,
@@ -383,16 +389,14 @@ class CourseSyllabusImportService
                 'courseCode' => trim((string) ($rowData['COURSE_CODE'] ?? '')),
                 'semester' => trim((string) ($rowData['SEMESTER'] ?? '')),
                 'moduleTitle' => trim((string) ($rowData['MODULE_TITLE'] ?? '')),
-                'moduleCode' => trim((string) ($rowData['MODULE_CODE'] ?? '')),
+                'moduleCode' => $moduleCode,
+                'moduleCodeOccurrencesInFile' => $moduleCodeOccurrences[$moduleCode] ?? 0,
+                'moduleCodeRepeatedInFile' => $moduleCode !== '' && ($moduleCodeOccurrences[$moduleCode] ?? 0) > 1,
                 'syllabusExists' => CourseSyllabus::query()
                     ->where('tenant_id', $tenantId)
                     ->where('code', trim((string) ($rowData['COURSE_CODE'] ?? '')))
                     ->exists(),
-                'moduleExists' => trim((string) ($rowData['MODULE_CODE'] ?? '')) !== ''
-                    && CourseSyllabusModule::query()
-                        ->where('tenant_id', $tenantId)
-                        ->where('code', trim((string) ($rowData['MODULE_CODE'] ?? '')))
-                        ->exists(),
+                'moduleExists' => $this->moduleExistsForImportRow($tenantId, $rowData),
                 'syllabusAction' => $syllabusAnalysis['action'],
                 'moduleAction' => $moduleAnalysis['action'],
                 'syllabusErrors' => $syllabusAnalysis['errors'],
@@ -402,6 +406,7 @@ class CourseSyllabusImportService
 
         return [
             'summary' => $summary,
+            'fileStats' => $fileStats,
             'rows' => $rows,
         ];
     }
@@ -473,15 +478,17 @@ class CourseSyllabusImportService
             ];
         }
 
-        $moduleExists = CourseSyllabusModule::query()
-            ->where('tenant_id', $tenantId)
-            ->where('code', $moduleCode)
-            ->exists();
-
         $courseSyllabusId = CourseSyllabus::query()
             ->where('tenant_id', $tenantId)
             ->where('code', $courseCode)
             ->value('id');
+
+        $moduleExists = $courseSyllabusId !== null
+            && CourseSyllabusModule::query()
+                ->where('tenant_id', $tenantId)
+                ->where('course_syllabus_id', $courseSyllabusId)
+                ->where('code', $moduleCode)
+                ->exists();
 
         if ($courseSyllabusId === null) {
             try {
@@ -780,6 +787,34 @@ class CourseSyllabusImportService
         }
 
         return false;
+    }
+
+    /**
+     * @param  array<string, mixed>  $rowData
+     */
+    private function moduleExistsForImportRow(int $tenantId, array $rowData): bool
+    {
+        $moduleCode = trim((string) ($rowData['MODULE_CODE'] ?? ''));
+        $courseCode = trim((string) ($rowData['COURSE_CODE'] ?? ''));
+
+        if ($moduleCode === '' || $courseCode === '') {
+            return false;
+        }
+
+        $courseSyllabusId = CourseSyllabus::query()
+            ->where('tenant_id', $tenantId)
+            ->where('code', $courseCode)
+            ->value('id');
+
+        if ($courseSyllabusId === null) {
+            return false;
+        }
+
+        return CourseSyllabusModule::query()
+            ->where('tenant_id', $tenantId)
+            ->where('course_syllabus_id', $courseSyllabusId)
+            ->where('code', $moduleCode)
+            ->exists();
     }
 
     /**

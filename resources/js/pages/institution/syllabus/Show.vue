@@ -100,6 +100,16 @@ const loadSyllabusModules = async () => {
     modulesList.value = (courseSyllabusModules.value?.data ?? []) as CourseSyllabusModule[];
 };
 
+const loadSyllabusModulesFromUrl = async (url: string) => {
+    if (!canViewModules || !institutionDepartmentId.value || !courseSyllabusId.value) {
+        modulesList.value = [];
+        return;
+    }
+
+    await listCourseSyllabusModules(institutionDepartmentId.value, courseSyllabusId.value, url);
+    modulesList.value = (courseSyllabusModules.value?.data ?? []) as CourseSyllabusModule[];
+};
+
 const moduleColumns = computed(() =>
     createCourseSyllabusModuleColumns({
         onEdit: (module) => onOpenModal(canUpdateModule, { courseSyllabusId: courseSyllabus.id ?? '' }, module),
@@ -178,7 +188,7 @@ watch([institutionDepartmentId, courseSyllabusId], () => loadSyllabusModules(), 
                         :pagination="{ ...(courseSyllabusModules?.links ?? {}), ...(courseSyllabusModules?.meta ?? {}) }"
                         :search-url="listUrl"
                         :use-api="true"
-                        :api-fetch-action="loadSyllabusModules" 
+                        :api-fetch-action="loadSyllabusModulesFromUrl"
                     >
                         <template #head-left v-if="canMoveModules && modulesList.length > 0">
                             <div

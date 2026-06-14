@@ -29,7 +29,14 @@ class CourseSyllabusModuleRequest extends FormRequest
                 }),
             ],
             'title' => ['required', 'string', 'max:255'],
-            'code' => ['required', 'string', 'max:255', Rule::unique('course_syllabus_modules', 'code')->ignore($moduleId)],
+            'code' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('course_syllabus_modules', 'code')
+                    ->where(fn ($query) => $query->where('course_syllabus_id', $courseSyllabusId))
+                    ->ignore($moduleId),
+            ],
             'duration_in_hours' => ['nullable', 'integer', 'min:1'],
             'nql_level' => ['nullable', 'integer', 'min:1'],
             'prerequisite_module_ids' => ['nullable', 'array'],

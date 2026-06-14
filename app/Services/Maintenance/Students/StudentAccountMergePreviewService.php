@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace App\Services\Maintenance\Students;
 
 use App\Models\Students\Student;
+use App\Models\Students\StudentProgram;
 use App\Models\Users\User;
 use App\Rules\ZimbabweanIdNumber;
 use App\Services\Enrollment\EnrollmentLookupService;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Validation\ValidationException;
 
 class StudentAccountMergePreviewService
@@ -88,17 +90,34 @@ class StudentAccountMergePreviewService
 
         $owner = $this->enrollmentLookup->findStudentByNationalIdUnscoped($normalizedIdNumber);
 
-        if ($owner === null || $owner->id !== $target->id) {
-            throw ValidationException::withMessages([
-                'id_number' => [__('trans.maintenance_faulty_data_merge_id_mismatch')],
-            ]);
+        if ($owner !== null && $owner->id === $target->id) {
+            return $target;
         }
 
-        return $target;
+        if ($this->targetOwnsNormalizedId($target, $normalizedIdNumber)) {
+            return $target;
+        }
+
+        throw ValidationException::withMessages([
+            'id_number' => [__('trans.maintenance_faulty_data_merge_id_mismatch')],
+        ]);
+    }
+
+    private function targetOwnsNormalizedId(Student $target, string $normalizedIdNumber): bool
+    {
+        if ($target->id_number === null) {
+            return false;
+        }
+
+        $targetNormalized = EnrollmentLookupService::normalizeNationalId((string) $target->id_number);
+        $proposedCompact = strtoupper(str_replace('-', '', $normalizedIdNumber));
+        $targetCompact = strtoupper(str_replace('-', '', $targetNormalized));
+
+        return $targetNormalized === $normalizedIdNumber || $targetCompact === $proposedCompact;
     }
 
     /**
-     * @return array{student: Student, counts: array<string, int>, programs: \Illuminate\Database\Eloquent\Collection<int, \App\Models\Students\StudentProgram>}
+     * @return array{student: Student, counts: array<string, int>, programs: Collection<int, StudentProgram>}
      */
     private function studentPreviewPayload(Student $student, bool $isFaultySource): array
     {

@@ -34,7 +34,7 @@ class CourseSyllabusModuleImporter implements IngestDefinition
     public function getConfig(): IngestConfig
     {
         $config = IngestConfig::for(CourseSyllabusModule::class)
-            ->keyedBy('MODULE_CODE')
+            ->keyedBy(['COURSE_CODE', 'MODULE_CODE'])
             ->onDuplicate(DuplicateStrategy::UPDATE)
             ->beforeRow(function (array &$row): void {
                 $row['__TENANT_ID'] = $this->tenantId;
