@@ -19,31 +19,32 @@ export const useShowUser = () => {
                 icon: IconName.user,
             },
             {
-                transLabel: () => trans('trans.roles_and_permissions'),
+                transLabel: () => trans('trans.roles'),
                 value: 'acl',
-                component: h(UserAcl),
+                component: h(UserAcl, { user }),
                 icon: IconName.shield,
             },
             {
                 transLabel: () => trans('trans.security'),
                 value: 'security',
-                component: h(UserSecurity),
+                component: h(UserSecurity, { user }),
                 icon: IconName.finger_print,
             },
             {
                 transLabel: () => trans('trans.preferences'),
                 value: 'preferences',
-                component: h(UserPreferences),
+                component: h(UserPreferences, { user }),
                 icon: IconName.settings,
             },
             {
                 transLabel: () => trans('trans.activity_log'),
                 value: 'activity',
-                component: h(UserActivity),
+                component: h(UserActivity, { user }),
                 icon: IconName.history,
             },
         ];
     };
+
     return {
         userProfileTabs,
     };

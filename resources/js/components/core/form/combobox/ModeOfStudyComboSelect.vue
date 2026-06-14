@@ -12,6 +12,7 @@ interface Props {
     form?: InertiaForm<any>;
     departmentCourseId?: string;
     departmentLevelId?: string;
+    label?: string;
 }
 
 const { isLoading, listCourseModesOfStudy, courseModesOfStudy, listModesOfStudy, modesOfStudy } = useModeOfStudy();
@@ -64,5 +65,5 @@ watch(
 </script>
 
 <template>
-    <BaseCombobox :label="$tChoice('trans.mode_of_study', 1)" :options="options" :is-loading="isLoading" v-bind="$attrs" :placeholder="placeholder" />
+    <BaseCombobox :label="label ?? $tChoice('trans.mode_of_study', 1)" :options="options" :is-loading="isLoading" v-bind="$attrs" :placeholder="placeholder" />
 </template>

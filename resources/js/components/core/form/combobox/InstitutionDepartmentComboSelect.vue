@@ -11,6 +11,7 @@ import { computed, onMounted } from 'vue';
 interface Props {
     form: InertiaForm<any>;
     disallowedDepartments?: string[] | number[];
+    label?: string;
 }
 
 const { isLoading, departments, listDepartments } = useInstitutionDepartments();
@@ -45,7 +46,7 @@ const whenSearch = debounce(async (search: string) => {
 
 <template>
     <BaseCombobox
-        :label="$tChoice('trans.department', 1)"
+        :label="label ?? $tChoice('trans.department', 1)"
         :options="options"
         :on-search="async (search: string) => await whenSearch(search)"
         :is-loading="isLoading"
