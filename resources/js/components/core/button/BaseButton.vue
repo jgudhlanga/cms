@@ -15,7 +15,7 @@ const props = withDefaults(defineProps<{
 }>(), {
 	processing: false,
 	variant: ColorVariant.primary,
-    size: ButtonSize.lg
+    size: ButtonSize.md
 });
 
 
