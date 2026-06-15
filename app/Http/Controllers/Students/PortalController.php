@@ -465,7 +465,7 @@ class PortalController extends Controller
 
         $accommodationFee = FeeStructureResource::make($feeStructure);
 
-        return Inertia::render('portal/student/profile/AccommodationFeePaymentOptions', [
+        return Inertia::render('portal/hms/AccommodationFeePaymentOptions', [
             'accommodationFee' => $accommodationFee,
         ]);
     }

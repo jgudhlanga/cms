@@ -49,16 +49,16 @@ const openAction = (url: string): void => {
             {{ $t('students.dashboard_quick_actions') }}
         </h2>
 
-        <div class="grid grid-cols-2 gap-1.5 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+        <div class="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
             <button
                 v-for="action in quickActions"
                 :key="action.url"
                 type="button"
-                class="flex min-w-0 items-center gap-2 rounded-lg border border-border bg-card px-2 py-1.5 text-left shadow-sm transition-colors hover:bg-muted/40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                class="flex min-h-11 min-w-0 items-center gap-2 rounded-lg border border-border bg-card px-2.5 py-2.5 text-left shadow-sm transition-colors hover:bg-muted/40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
                 @click="openAction(action.url)"
             >
-                <component :is="action.icon" class="h-3.5 w-3.5 shrink-0 text-primary" />
-                <span class="min-w-0 wrap-break-word text-[11px] font-medium leading-snug text-foreground">{{ action.label }}</span>
+                <component :is="action.icon" class="h-4 w-4 shrink-0 text-primary" />
+                <span class="min-w-0 wrap-break-word text-xs font-medium leading-snug text-foreground">{{ action.label }}</span>
             </button>
         </div>
     </section>

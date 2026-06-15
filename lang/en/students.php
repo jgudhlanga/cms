@@ -181,4 +181,5 @@ return [
     'dashboard_activity_application' => ':course application is at :step.',
     'dashboard_activity_course_work' => 'Course work in progress for :module.',
     'dashboard_activity_outstanding_balance' => 'Outstanding balance of $:amount on your account.',
+    'hms_payment' => 'Hostel Payment',
 ];
