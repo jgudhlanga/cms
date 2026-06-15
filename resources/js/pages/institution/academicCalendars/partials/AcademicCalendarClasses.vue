@@ -184,16 +184,14 @@ const showConfigModal = (payload: AcademicClassConfigPayload) => {
 </script>
 
 <template>
-    <div class="my-8 flex flex-col space-y-4">
-        <div class="mb-10 flex w-full justify-between space-x-4">
-            <AcademicCalendarClassFilters
-                v-model:academicYearModel="academicYear"
-                v-model:modeOfStudyModel="modeOfStudy"
-                :academic-year-options="academicYearOptions"
-                :modes-of-study="modesOfStudy ?? []"
-                :handle-filter-change="handleSelectionChange"
-            />
-        </div>
+    <div class="flex flex-col gap-4">
+        <AcademicCalendarClassFilters
+            v-model:academicYearModel="academicYear"
+            v-model:modeOfStudyModel="modeOfStudy"
+            :academic-year-options="academicYearOptions"
+            :modes-of-study="modesOfStudy ?? []"
+            :handle-filter-change="handleSelectionChange"
+        />
         <DataLoadingSpinner v-if="isLoading || isYearOptionsLoading || modesOfStudyLoading" />
         <div class="flex flex-col space-y-10" v-else>
             <template v-if="classStates && classStates.length > 0">

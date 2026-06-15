@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import ModeOfStudyComboSelect from '@/components/core/form/combobox/ModeOfStudyComboSelect.vue';
-import BaseContextField from '@/components/core/layout/BaseContextField.vue';
-import BaseFilterBar from '@/components/core/layout/BaseFilterBar.vue';
+import { IconName, icons } from '@/lib/icons';
 import { ModeOfStudy } from '@/types/institution';
 import { SelectOption } from '@/types/utils';
 
@@ -17,38 +16,38 @@ const modeOfStudyModel = defineModel<SelectOption | null>('modeOfStudyModel');
 </script>
 
 <template>
-    <BaseFilterBar
-        bordered
-        :title="$t('trans.ui_class_filters')"
-        class="mt-4"
-        :columns="2"
+    <div
+        class="flex flex-col gap-3 rounded-lg border border-border/60 bg-muted/20 p-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-6 sm:gap-y-2"
+        role="group"
+        :aria-label="$tChoice('academic_calendar.calendar_year', 2)"
     >
-        <BaseContextField
-            :label="$tChoice('academic_calendar.calendar_year', 1)"
-            icon="calendar"
-            required
-        >
+        <div class="flex min-w-0 flex-1 items-center gap-2 sm:min-w-[220px] sm:max-w-sm">
+            <component :is="icons[IconName.calendar]" class="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+            <span class="shrink-0 text-sm font-medium text-muted-foreground">{{ $tChoice('academic_calendar.calendar_year', 1) }}</span>
             <BaseCombobox
                 label=""
                 :options="academicYearOptions ?? []"
                 v-model="academicYearModel"
+                :vertical-layout="false"
                 :is-required="true"
+                width-class="w-full"
+                class="min-w-0 flex-1"
                 @update:modelValue="handleFilterChange"
             />
-        </BaseContextField>
-
-        <BaseContextField
-            :label="$tChoice('trans.mode_of_study', 1)"
-            icon="graduation_cape"
-            required
-        >
+        </div>
+        <div class="flex min-w-0 flex-1 items-center gap-2 sm:min-w-[220px] sm:max-w-sm">
+            <component :is="icons[IconName.graduation_cape]" class="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+            <span class="shrink-0 text-sm font-medium text-muted-foreground">{{ $tChoice('trans.mode_of_study', 1) }}</span>
             <ModeOfStudyComboSelect
                 label=""
                 :data="modesOfStudy ?? []"
                 v-model="modeOfStudyModel!"
-                @update:modelValue="handleFilterChange"
+                :vertical-layout="false"
                 :is-required="true"
+                width-class="w-full"
+                class="min-w-0 flex-1"
+                @update:modelValue="handleFilterChange"
             />
-        </BaseContextField>
-    </BaseFilterBar>
+        </div>
+    </div>
 </template>

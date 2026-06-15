@@ -29,10 +29,18 @@ const { department } = props;
 
 const institutionDepartmentId = String(department.id);
 
+const departmentTitle = () => {
+   let title = department.attributes.department;
+   if (department.attributes.departmentCode != '') {
+        title += ' ( ' + department.attributes.departmentCode + ' )'
+   }
+   return title;
+}
+
 const breadcrumbs: Array<Link> = [
     { transChoiceKey: 'institution', transChoiceKeyIndex: 1, href: route('institution.index') },
     { transChoiceKey: 'department', href: route('institution-departments.index', { is_academic: department.attributes?.isAcademic }) },
-    { title: department.attributes.department },
+    { title:  departmentTitle()},
 ];
 
 const { departmentTabs } = useInstitution();
@@ -69,21 +77,23 @@ const activeTabDescription = computed(() => activeSection.value?.transDescriptio
 <template>
     <Head :title="$tChoice('trans.department', 2)" />
     <PageContainer :breadcrumbs="breadcrumbs" :back-url="route('institution.index')">
-        <DepartmentContextBar
-            :department="department"
-            :form="switchDepartmentForm"
-            v-model="selectedDepartment"
-            :show-switcher="canViewAnyDepartmentMetaData"
-        />
+        <template #backNavigationLeading>
+            <DepartmentContextBar
+                :department="department"
+                :form="switchDepartmentForm"
+                v-model="selectedDepartment"
+                :show-switcher="canViewAnyDepartmentMetaData"
+            />
+        </template>
 
         <BaseSectionNav
             v-model:active-tab="activeTab"
             :tabs="visibleTabs"
             :description="activeTabDescription"
-            class="mt-4"
+            class=""
         />
 
-        <div class="py-4">
+        <div class="py-2">
             <component :is="activeSection?.component" v-if="activeSection" />
         </div>
 

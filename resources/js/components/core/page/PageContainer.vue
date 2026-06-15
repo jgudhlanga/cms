@@ -67,7 +67,7 @@ const backNavigationRowJustifyClass = computed((): string => {
     <div class="flex h-full min-w-0 w-full max-w-full flex-col overflow-x-clip pb-10">
         <div
             v-if="showBackNavigationRow"
-            class="mb-10 flex items-center gap-4"
+            class="mb-5 flex items-center gap-4"
             :class="backNavigationRowJustifyClass"
         >
             <div v-if="hasBackNavigationLeading" class="min-w-0 flex-1">
