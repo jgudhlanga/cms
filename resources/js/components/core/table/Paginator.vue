@@ -40,7 +40,7 @@ withDefaults(
 			:disabled="meta.current_page === meta.last_page"
 			:use-api="useApi"
 			:api-fetch-action="apiFetchAction" />
-		<div class="flex items-center gap-1 text-sm text-accent-foreground">
+		<div class="flex items-center gap-1 text-sm text-foreground">
 			<div>{{ $tChoice('trans.page', 1) }}</div>
 			<strong>{{ meta.current_page }}</strong>
 			<span>{{ $t('trans.of') }}</span>

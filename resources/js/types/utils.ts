@@ -85,14 +85,17 @@ export type ValueAndLabel = {
     transKey?: string;
     transChoiceKey?: string;
     isBoolean?: boolean;
+    icon?: IconName;
 };
 export type CustomTab = {
     label?: string;
     transLabel?: () => string;
+    transDescription?: () => string;
     value: string;
     component: Component;
     show?: boolean;
-    icon?: IconName;
+    icon?: IconName,
+    disabled?: boolean;
 };
 export type TimelineStep = {
     title: string;
@@ -101,7 +104,7 @@ export type TimelineStep = {
     label?: string;
     component: Component;
     onClick?: () => void | null;
-    props?: any;
+    props?: any,
     status?: 'active' | 'completed' | 'pending' | 'failed';
 };
 
@@ -109,5 +112,5 @@ export type AccordionItemProps = {
     value: string;
     title: () => string;
     description?: () => string;
-    content: Component;
-};
+    content: Component
+}

@@ -12,12 +12,23 @@ class HandleAppearance
     /**
      * Handle an incoming request.
      *
-     * @param Closure(Request): (Response) $next
+     * @param  Closure(Request): (Response)  $next
      */
     public function handle(Request $request, Closure $next): Response
     {
-        View::share('appearance', $request->cookie('appearance') ?? 'system');
+        $appearance = $request->cookie('appearance') ?? 'system';
 
-        return $next($request);
+        $systemPrefersDark = strcasecmp((string) $request->header('Sec-CH-Prefers-Color-Scheme', ''), 'dark') === 0;
+
+        View::share('appearance', $appearance);
+        View::share('systemPrefersDark', $systemPrefersDark);
+
+        $response = $next($request);
+
+        $response->headers->set('Accept-CH', 'Sec-CH-Prefers-Color-Scheme');
+        $response->headers->set('Critical-CH', 'Sec-CH-Prefers-Color-Scheme');
+        $response->headers->set('Vary', 'Sec-CH-Prefers-Color-Scheme');
+
+        return $response;
     }
 }

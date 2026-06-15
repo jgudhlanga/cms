@@ -2,6 +2,7 @@
 
 use App\Importers\Institution\CourseSyllabusImporter;
 use App\Importers\Institution\CourseSyllabusModuleImporter;
+use App\Models\AcademicCalendars\AcademicYearOption;
 use App\Models\Institution\Course;
 use App\Models\Institution\Department;
 use App\Models\Institution\DepartmentCourse;
@@ -12,12 +13,15 @@ use App\Models\Institution\Level;
 use App\Models\Institution\Syllabus\CourseSyllabus;
 use App\Models\Institution\Syllabus\CourseSyllabusModule;
 use App\Models\Tenants\Tenant;
+use Database\Seeders\AcademicCalendars\AcademicYearOptionSeeder;
 use LaravelIngest\Enums\IngestStatus;
 use LaravelIngest\Models\IngestRun;
 use LaravelIngest\Services\RowProcessor;
 
 function makeSyllabusImportContext(): array
 {
+    test()->seed(AcademicYearOptionSeeder::class);
+
     $tenant = Tenant::query()->findOrFail(1);
 
     $department = Department::factory()->create(['name' => 'Engineering']);
@@ -87,6 +91,7 @@ it('imports course syllabuses and modules from syllabus xlsx', function () {
             'LEVEL' => 'Level 1',
             'COURSE_TITLE' => 'Civil Technology',
             'COURSE_CODE' => 'CT/26/101',
+            'SEMESTER' => 'Semester 1',
             'MODULE_TITLE' => '  Module Intro  ',
             'MODULE_CODE' => '  MOD-CT-101  ',
         ],
@@ -107,14 +112,17 @@ it('imports course syllabuses and modules from syllabus xlsx', function () {
         ->and($courseSyllabus?->implementation_year)->toBe('2026');
 
     $module = CourseSyllabusModule::query()->where('code', 'MOD-CT-101')->first();
+    $semesterOneId = (int) AcademicYearOption::query()->where('slug', 'semester-1')->value('id');
+
     expect($module)->not->toBeNull()
         ->and($module?->tenant_id)->toBe(1)
         ->and($module?->title)->toBe('Module Intro')
         ->and($module?->code)->toBe('MOD-CT-101')
-        ->and($module?->course_syllabus_id)->toBe($courseSyllabus?->id);
+        ->and($module?->course_syllabus_id)->toBe($courseSyllabus?->id)
+        ->and($module?->academic_year_option_id)->toBe($semesterOneId);
 });
 
-it('skips existing syllabus and module records with matching codes', function () {
+it('updates existing syllabus and module records with matching codes', function () {
     $context = makeSyllabusImportContext();
 
     $existingSyllabus = CourseSyllabus::query()->create([
@@ -141,6 +149,7 @@ it('skips existing syllabus and module records with matching codes', function ()
             'LEVEL' => 'Level 1',
             'COURSE_TITLE' => 'Civil Technology',
             'COURSE_CODE' => 'CT/25/102',
+            'SEMESTER' => 'Semester 1',
             'MODULE_TITLE' => 'Updated Module Title',
             'MODULE_CODE' => 'MOD-CT-25-102',
         ],
@@ -155,9 +164,9 @@ it('skips existing syllabus and module records with matching codes', function ()
     $existingSyllabus->refresh();
     $existingModule->refresh();
 
-    expect($existingSyllabus->title)->toBe('Existing Syllabus')
+    expect($existingSyllabus->title)->toBe('Civil Technology')
         ->and($existingSyllabus->implementation_year)->toBe('2025')
-        ->and($existingModule->title)->toBe('Existing Module');
+        ->and($existingModule->title)->toBe('Updated Module Title');
 });
 
 it('fails syllabus row when relationship lookup cannot be resolved', function () {
@@ -169,6 +178,7 @@ it('fails syllabus row when relationship lookup cannot be resolved', function ()
             'LEVEL' => 'Level 1',
             'COURSE_TITLE' => 'Civil Technology',
             'COURSE_CODE' => 'CT/26/404',
+            'SEMESTER' => 'Semester 1',
             'MODULE_TITLE' => 'Unknown Module',
             'MODULE_CODE' => 'MOD-CT-404',
         ],
@@ -178,4 +188,39 @@ it('fails syllabus row when relationship lookup cannot be resolved', function ()
         ->and($import['results']['successful'])->toBe(0);
 
     expect(CourseSyllabus::query()->where('code', 'CT/26/404')->exists())->toBeFalse();
+});
+
+it('imports the same module code for different course syllabuses', function () {
+    makeSyllabusImportContext();
+
+    $sharedModuleCode = 'MOD-SHARED-'.uniqid();
+
+    $rows = [
+        [
+            'DEPARTMENT' => 'Engineering',
+            'LEVEL' => 'Level 1',
+            'COURSE_TITLE' => 'Civil Technology',
+            'COURSE_CODE' => 'CT/26/201',
+            'SEMESTER' => 'Semester 1',
+            'MODULE_TITLE' => 'National Studies',
+            'MODULE_CODE' => $sharedModuleCode,
+        ],
+        [
+            'DEPARTMENT' => 'Engineering',
+            'LEVEL' => 'Level 1',
+            'COURSE_TITLE' => 'Civil Technology',
+            'COURSE_CODE' => 'CT/26/202',
+            'SEMESTER' => 'Semester 1',
+            'MODULE_TITLE' => 'National Studies',
+            'MODULE_CODE' => $sharedModuleCode,
+        ],
+    ];
+
+    $syllabusImport = runImporter(CourseSyllabusImporter::class, $rows);
+    $moduleImport = runImporter(CourseSyllabusModuleImporter::class, $rows);
+
+    expect($syllabusImport['results']['failed'])->toBe(0)
+        ->and($moduleImport['results']['failed'])->toBe(0)
+        ->and($moduleImport['results']['successful'])->toBe(2)
+        ->and(CourseSyllabusModule::query()->where('code', $sharedModuleCode)->count())->toBe(2);
 });

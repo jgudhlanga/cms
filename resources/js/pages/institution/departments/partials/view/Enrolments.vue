@@ -47,16 +47,14 @@ const handleSelectionChange = async () => {
 </script>
 
 <template>
-    <div class="my-8 flex flex-col space-y-4">
-        <div class="mb-8 flex w-full justify-between space-x-4">
-            <EnrolmentFilters
-                v-model:intakePeriodModel="intakePeriod"
-                v-model:modeOfStudyModel="modeOfStudy"
-                :intake-periods="intakePeriods?.data ?? []"
-                :modes-of-study="modesOfStudy ?? []"
-                :handle-filter-change="handleSelectionChange"
-            />
-        </div>
+    <div class="flex flex-col gap-4">
+        <EnrolmentFilters
+            v-model:intakePeriodModel="intakePeriod"
+            v-model:modeOfStudyModel="modeOfStudy"
+            :intake-periods="intakePeriods?.data ?? []"
+            :modes-of-study="modesOfStudy ?? []"
+            :handle-filter-change="handleSelectionChange"
+        />
         <DataLoadingSpinner v-if="isLoading || intakePeriodsLoading || modesOfStudyLoading" />
         <div class="flex flex-col" v-else>
             <template v-if="enrolments && enrolments.length > 0">

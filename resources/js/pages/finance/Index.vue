@@ -1,9 +1,7 @@
 <script setup lang="ts">
 import PageContainer from '@/components/core/page/PageContainer.vue';
-import { useUtils } from '@/composables/core/useUtils';
-import { ButtonSize } from '@/enums/buttons';
-import { ColorVariant } from '@/enums/colors';
-import { IconName, icons } from '@/lib/icons';
+import AvatarTitleList from '@/components/core/util/AvatarTitleList.vue';
+import HeadingSmall from '@/components/core/util/HeadingSmall.vue';
 import { AuthObject } from '@/types/data-pagination';
 import { Link } from '@/types/ui';
 import { Head } from '@inertiajs/vue3';
@@ -15,25 +13,22 @@ const props = defineProps<{
 
 const breadcrumbs: Array<Link> = [{ transChoiceKey: 'finance.finance', transChoiceKeyIndex: 1 }];
 const can = props?.auth?.can;
-
-const { navigateTo } = useUtils();
+const tabs: Array<Link> = [
+    {
+        transChoiceKey: 'finance.reconciliation',
+        url: route('finance.reconciliation'),
+    },
+    {
+        transChoiceKey: 'finance.exchange_rate',
+        url: route('finance.exchange-rates.index'),
+    },
+];
 </script>
 
 <template>
     <Head :title="$tChoice('finance.finance', 1)" />
     <PageContainer :breadcrumbs="breadcrumbs">
-        <div class="flex w-full justify-between">
-            <HeadingSmall :title="$tChoice('finance.finance', 1)" />
-            <BaseButton
-                v-if="can['view:finance-settings']"
-                @click="() => navigateTo(route('finance.settings'))"
-                :title="$tChoice('finance.setting', 2)"
-                :size="ButtonSize.sm"
-                :variant="ColorVariant.primary_outline"
-                classes="rounded-full"
-            >
-                <component :is="icons[IconName.cogs]" />
-            </BaseButton>
-        </div>
+        <HeadingSmall :title="$tChoice('finance.finance', 1)" :description="$t('finance.finance_module_description')" />
+        <AvatarTitleList v-if="can['view:finance-settings'] || can['view:finances']" :tabs="tabs" />
     </PageContainer>
 </template>

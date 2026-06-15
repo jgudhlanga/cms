@@ -12,7 +12,7 @@ import { IconName } from '@/lib/icons';
 import { CourseRequirement, DepartmentLevelRequirement } from '@/types/department-meta-data';
 import { AcademicOLevelResult } from '@/types/enrolments';
 import { router } from '@inertiajs/vue3';
-import { computed, defineEmits, ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 
 interface Props {
     results: AcademicOLevelResult[];

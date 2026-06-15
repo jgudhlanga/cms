@@ -3,33 +3,66 @@ import { Head, Link as InertiaLink, useForm } from '@inertiajs/vue3';
 import { UserIcon, UserRoundIcon, UsersIcon } from 'lucide-vue-next';
 
 import PageContainer from '@/components/core/page/PageContainer.vue';
-import { ButtonSize } from '@/enums/buttons';
-import { ColorVariant } from '@/enums/colors';
-import { errorAlert, successAlert } from '@/lib/alerts';
-import { firstInertiaErrorMessage } from '@/lib/inertia-errors';
 import { AcademicCalendar, AcademicCalendarClassGenerationContext, AcademicCalendarClassPreview, ClassConfig } from '@/types/academic-calendar';
 import { AuthObject } from '@/types/data-pagination';
 import { DepartmentCourse, DepartmentLevel } from '@/types/department-meta-data';
 import { InstitutionDepartment, ModeOfStudy } from '@/types/institution';
 import type { Link } from '@/types/ui';
+import { ButtonSize } from '@/enums/buttons';
+import { ColorVariant } from '@/enums/colors';
+import { errorAlert, successAlert } from '@/lib/alerts';
+import { firstInertiaErrorMessage } from '@/lib/inertia-errors';
 import { trans } from 'laravel-vue-i18n';
 import { computed, toRefs } from 'vue';
 
-const props = defineProps<{
-    department: InstitutionDepartment;
-    academicCalendar: AcademicCalendar;
-    academicCalendars: AcademicCalendar[];
-    course: DepartmentCourse;
-    level: DepartmentLevel;
-    mode: ModeOfStudy;
-    auth: AuthObject;
-    classConfig: ClassConfig | null;
-    previewClasses: AcademicCalendarClassPreview[];
-    generationContext: AcademicCalendarClassGenerationContext;
-    errors: object;
-}>();
+const props = withDefaults(
+    defineProps<{
+        department: InstitutionDepartment;
+        academicCalendar: AcademicCalendar;
+        academicCalendars: AcademicCalendar[];
+        course: DepartmentCourse;
+        level: DepartmentLevel;
+        mode: ModeOfStudy;
+        auth: AuthObject;
+        classConfig: ClassConfig | null;
+        previewClasses: AcademicCalendarClassPreview[];
+        generationContext: AcademicCalendarClassGenerationContext;
+        errors: object;
+        canViewCourseWork?: boolean;
+    }>(),
+    {
+        canViewCourseWork: false,
+    },
+);
 
 const { department, academicCalendar, level, course, mode, classConfig, previewClasses, generationContext } = toRefs(props);
+
+const canOpenCourseWorkMarksheet = computed(
+    () =>
+        props.canViewCourseWork
+        && classConfig.value != null
+        && (generationContext.value.populatedExistingClassCount > 0
+            || previewClasses.value.some((preview) => preview.academicCalendarClassId != null)),
+);
+
+const classConfigQuery = computed((): Record<string, string> => {
+    const context = generationContext.value;
+
+    return {
+        class_config_id: String(context.classConfigId ?? classConfig.value?.id ?? ''),
+        department_course_id: String(context.departmentCourseId ?? ''),
+        department_level_id: String(context.departmentLevelId ?? ''),
+        mode_of_study_id: String(context.modeOfStudyId ?? ''),
+    };
+});
+
+const courseWorkMarksheetUrl = computed(() =>
+    route('academic-calendars.department-classes.course-work-marksheet', {
+        institution_department: String(department.value.id),
+        calendar_year: String(academicCalendar.value.attributes.calendarYear),
+        ...classConfigQuery.value,
+    }),
+);
 
 const hasNewStudentsToAssign = computed(() => generationContext.value.newFinalStudentCount > 0);
 
@@ -65,7 +98,9 @@ const previewEmptyAlert = computed((): PreviewEmptyAlert | null => {
 });
 
 const classActionTitle = computed(() =>
-    hasNewStudentsToAssign.value && generationContext.value.hasExistingClasses ? 'enrolment.add_student_to_class' : 'enrolment.generate_classes',
+    hasNewStudentsToAssign.value && generationContext.value.hasExistingClasses
+        ? 'enrolment.add_student_to_class'
+        : 'enrolment.generate_classes',
 );
 
 const breadcrumbs = computed<Array<Link>>(() => [
@@ -115,33 +150,62 @@ const saveClasses = () => {
         },
     );
 };
+
+const computedTitle = computed(() => {
+    let title = '';
+    if (classConfig?.value?.attributes?.departmentCourse) {
+        title += `${String(classConfig?.value?.attributes?.departmentCourse )} - `;
+    }
+    if (classConfig?.value?.attributes?.departmentLevel) {
+        title += `${String(classConfig?.value?.attributes?.departmentLevel)} - `;
+    }
+    if (classConfig?.value?.attributes?.modeOfStudy) {
+        title += `${String(classConfig?.value?.attributes?.modeOfStudy)} `;
+    }
+    if (classConfig?.value?.attributes?.calendarYear && String(classConfig?.value?.attributes?.calendarYear).trim() !== '') {
+        title += `( ${String(classConfig?.value?.attributes?.calendarYear )} )`;
+    }
+    return title;
+});
 </script>
 
 <template>
     <Head :title="$tChoice('academic_calendar.academic_calendar', 2)" />
     <PageContainer :breadcrumbs="breadcrumbs" :back-url="route('institution-departments.show', String(department.id))">
         <div class="flex flex-col space-y-6">
-            <BaseCard :title="String(classConfig?.attributes?.calendarYear ?? '---')">
-                <div class="grid grid-cols-2 gap-4 md:grid-cols-4">
-                    <LabelValue :label="$tChoice('trans.course', 1)" :value="classConfig?.attributes?.departmentCourse ?? '---'" />
+            <BaseCard :title="computedTitle">
+                <div class="grid grid-cols-2 gap-4 md:grid-cols-5">
+                    <LabelValue :label="$tChoice('syllabus.course_code', 2)" :value="classConfig?.attributes?.courseSyllabusCodes?.join(', ') ?? '---'" />
                     <LabelValue :label="$tChoice('trans.level', 1)" :value="classConfig?.attributes?.departmentLevel ?? '---'" />
                     <LabelValue :label="$tChoice('general.mode', 1)" :value="classConfig?.attributes?.modeOfStudy ?? '---'" />
+                    <LabelValue :label="$tChoice('academic_calendar.class_unit_size', 1)" :value="String(classConfig?.attributes?.studentsPerClass ?? '---')" />
                     <LabelValue
-                        :label="$tChoice('academic_calendar.class_unit_size', 1)"
-                        :value="String(classConfig?.attributes?.studentsPerClass ?? '---')"
+                        :label="$tChoice('trans.class', 2)"
+                        :value="String(generationContext.populatedExistingClassCount ?? 0)"
                     />
                 </div>
             </BaseCard>
 
-            <div class="flex items-center justify-between">
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <HeadingSmall :title="`${$t('enrolment.final_enrolments')} (${generationContext.finalStudentCount})`" />
-                <BaseButton
-                    :title="$t(classActionTitle)"
-                    :disabled="!hasNewStudentsToAssign || form.processing"
-                    :processing="form.processing"
-                    @click="saveClasses"
-                    classes="rounded-full"
-                />
+                <div class="flex flex-wrap items-center gap-2">
+                    <BaseButton
+                        :title="$t(classActionTitle)"
+                        :disabled="!hasNewStudentsToAssign || form.processing"
+                        :processing="form.processing"
+                        @click="saveClasses"
+                        classes="rounded-full"
+                    />
+                    <InertiaLink v-if="canOpenCourseWorkMarksheet" :href="courseWorkMarksheetUrl">
+                        <BaseButton
+                            type="button"
+                            :title="$t('academic_calendar.course_work_open_marksheet')"
+                            classes="rounded-full"
+                            :variant="ColorVariant.primary_outline"
+                            :size="ButtonSize.lg"
+                        />
+                    </InertiaLink>
+                </div>
             </div>
             <div class="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-gray-700">
                 <div class="flex items-center gap-1">
@@ -162,10 +226,13 @@ const saveClasses = () => {
                 </div>
             </div>
 
-            <BaseAlert v-if="previewEmptyAlert" :title="$t(previewEmptyAlert.titleKey)" :description="$t(previewEmptyAlert.descriptionKey)" />
-
+            <BaseAlert
+                v-if="previewEmptyAlert"
+                :title="$t(previewEmptyAlert.titleKey)"
+                :description="$t(previewEmptyAlert.descriptionKey)"
+            />
             <template v-else>
-                <BaseCard v-for="classPreview in previewClasses" :key="classPreview.name" :title="classPreview.name">
+                <BaseCard v-for="classPreview in previewClasses" :key="classPreview.name" :title="classPreview.name" color-variant="black" >
                     <div class="flex items-center justify-between gap-4">
                         <div class="flex flex-1 flex-wrap items-center gap-x-8 gap-y-2">
                             <p class="flex items-center gap-1 text-sm text-gray-700">
@@ -191,21 +258,9 @@ const saveClasses = () => {
                                 })
                             "
                         >
-                            <BaseButton
-                                :title="$t('enrolment.view_class')"
-                                classes="rounded-full"
-                                :size="ButtonSize.sm"
-                                :variant="ColorVariant.success"
-                            />
+                        <BaseButton :title="$t('enrolment.view_class')" classes="rounded-full" :size="ButtonSize.sm" :variant="ColorVariant.success" />
                         </InertiaLink>
-                        <BaseButton
-                            v-else
-                            :title="$t('enrolment.view_class')"
-                            :disabled="true"
-                            classes="rounded-full"
-                            :size="ButtonSize.sm"
-                            :variant="ColorVariant.success"
-                        />
+                        <BaseButton v-else :title="$t('enrolment.view_class')" :disabled="true" classes="rounded-full" :size="ButtonSize.sm" :variant="ColorVariant.success"/>
                     </div>
                 </BaseCard>
             </template>

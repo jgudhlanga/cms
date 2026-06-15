@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import PageContainer from '@/components/core/page/PageContainer.vue';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import BaseSectionNav from '@/components/core/tabs/BaseSectionNav.vue';
 import PageHeaderAvatar from '@/components/users/PageHeaderAvatar.vue';
 import { useStaff } from '@/composables/institution/useStaff';
-import { icons } from '@/lib/icons';
 import { useStaffTabsStore } from '@/store/institution/useStaffTabsStore';
 import { AuthObject } from '@/types/data-pagination';
 import { InstitutionDepartment } from '@/types/institution';
@@ -11,6 +10,7 @@ import { Staff } from '@/types/staff';
 import type { Link } from '@/types/ui';
 import { Head } from '@inertiajs/vue3';
 import { storeToRefs } from 'pinia';
+import { computed } from 'vue';
 
 interface Props {
     department: InstitutionDepartment;
@@ -32,27 +32,18 @@ const breadcrumbs: Array<Link> = [
 ];
 const { staffTabs } = useStaff();
 const { activeTab } = storeToRefs(useStaffTabsStore());
+
+const visibleTabs = computed(() => staffTabs(staff, institutionDepartmentId));
+const activeSection = computed(() => visibleTabs.value.find((tab) => tab.value === activeTab.value));
 </script>
 
 <template>
     <Head :title="`${$t('trans.staff')} ${$tChoice('trans.profile', 1)}`" />
     <PageContainer :breadcrumbs="breadcrumbs">
         <PageHeaderAvatar :line-one="user?.attributes?.name" :line-two="staff.attributes?.employeeNumber" :show-user-profile-link="true" />
-        <Tabs :default-value="activeTab" v-model="activeTab">
-            <TabsList class="w-full">
-                <TabsTrigger
-                    v-for="tab in staffTabs(staff, institutionDepartmentId)"
-                    :key="'tab_' + tab.value"
-                    :value="tab.value"
-                    class="flex items-center text-xs font-light uppercase"
-                >
-                    <component :is="icons[tab?.icon!]" />
-                    <span>{{ tab?.transLabel!() }}</span>
-                </TabsTrigger>
-            </TabsList>
-            <TabsContent v-for="tab in staffTabs(staff, institutionDepartmentId)" :value="tab.value" :key="'content_' + tab.value" class="py-4">
-                <component :is="tab.component" />
-            </TabsContent>
-        </Tabs>
+        <BaseSectionNav v-model:active-tab="activeTab" :tabs="visibleTabs" />
+        <div class="py-4">
+            <component :is="activeSection?.component" v-if="activeSection" />
+        </div>
     </PageContainer>
 </template>

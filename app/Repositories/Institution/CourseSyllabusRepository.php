@@ -41,7 +41,8 @@ class CourseSyllabusRepository extends BaseRepository implements ICourseSyllabus
     {
         return $this->courseSyllabus
             ->query()
-            ->with(['departmentLevelCourse.departmentLevel.level', 'syllabusDocument'])
+            ->with(['departmentLevelCourse.departmentLevel.level', 'departmentLevelCourse.departmentCourse.course', 'syllabusDocument'])
+            ->withCount('syllabusCourseModules')
             ->where('institution_department_id', $institutionDepartmentId)
             ->orderBy('title')
             ->paginate()

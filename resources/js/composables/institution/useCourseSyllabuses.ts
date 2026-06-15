@@ -25,10 +25,12 @@ export const useCourseSyllabuses = () => {
             status: z.enum(['active', 'terminated']),
         });
 
-    const listCourseSyllabuses = async (institutionDepartmentId: string) => {
+    const listCourseSyllabuses = async (institutionDepartmentId: string, paginatorUrl?: string) => {
+        const endpoint = paginatorUrl ?? route('department-course-syllabuses.index', institutionDepartmentId);
+
         try {
             isLoading.value = true;
-            courseSyllabuses.value = await HttpService.get(route('department-course-syllabuses.index', institutionDepartmentId));
+            courseSyllabuses.value = await HttpService.get(endpoint);
         } finally {
             isLoading.value = false;
         }
@@ -71,6 +73,11 @@ export const useCourseSyllabuses = () => {
             { header: trans_choice('trans.title', 1), accessorKey: 'attributes.title' },
             { header: trans_choice('trans.code', 1), accessorKey: 'attributes.code' },
             { header: trans('syllabus.implementation_year'), accessorKey: 'attributes.implementationYear', meta: { align: 'center' } },
+            {
+                header: trans_choice('syllabus.module', 2),
+                accessorKey: 'attributes.modulesCount',
+                meta: { align: 'center' },
+            },
             { header: trans('syllabus.status'), accessorKey: 'attributes.status', meta: { align: 'center' } },
             {
                 header: trans_choice('trans.action', 2),

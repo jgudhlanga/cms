@@ -1,7 +1,9 @@
 import { DepartmentApplicationStep, DepartmentCourse, DepartmentLevel } from '@/types/department-meta-data';
-import { InstitutionDepartment } from '@/types/institution';
+import { CourseSyllabus, InstitutionDepartment } from '@/types/institution';
 import { User } from '@/types/users';
 import { SelectOption } from '@/types/utils';
+import type { Address, Contact } from '@/types/shared';
+import type { NextOfKin } from '@/types/next-of-kin';
 
 export type Student = {
     type: string;
@@ -35,13 +37,93 @@ export type Student = {
         department?: string;
         level?: string;
         course?: string;
+        modeOfStudy?: string;
+        enrolmentStatus?: string;
         createdAt?: string;
         updatedAt?: string;
         deletedAt?: string;
     };
     relationships?: {
         user: User;
+        latestEnrolment: StudentEnrolment | null;
+        mainContact: Contact,
+        mainAddress: Address,
+        nextOfKin: NextOfKin,
     };
+};
+
+export type StudentHeader = {
+    studentId: string | number;
+    studentName: string;
+    avatarUrl?: any;
+    studentNumber: string;
+    level: string;
+    course: string;
+    modeOfStudy: string;
+    enrolmentStatus: string;
+    department: string;
+    academicCalendar: string;
+    academicYearOption: string;
+};
+
+export type StudentProgrammeModule = {
+    id?: number;
+    code: string | null;
+    name: string | null;
+    durationInHours: number | null;
+    grade: string | null;
+    score: number | null;
+    lecturer: string | null;
+    type: string | null;
+    assessment: string | null;
+    courseWork?: StudentProgrammeModuleCourseWork | null;
+};
+
+export type StudentProgrammeModuleCourseWork = {
+    assessments: Array<{
+        assessmentTypeId: number;
+        assessmentTypeName: string;
+        markId: number | null;
+        mark: number | null;
+        remark: string | null;
+    }>;
+    aggregation: {
+        components: Array<{
+            assessmentTypeId: number;
+            assessmentTypeName: string;
+            rawMark: number | null;
+            weightPercent: number;
+            weightedMark: number | null;
+        }>;
+        courseWorkTotal60: number | null;
+        isComplete: boolean;
+        remark: string | null;
+    };
+};
+
+export type StudentProgrammeSemester = {
+    id: string;
+    label: string | null;
+    year: string | null;
+    status: string | null;
+    studentEnrolmentId?: number;
+    module: StudentProgrammeModule[];
+};
+
+export type StudentProgramme = {
+    id: string;
+    level: string | null;
+    course: string | null;
+    courseCode: string | null;
+    calendarYear: string | null;
+    isActive?: boolean;
+    semesters: StudentProgrammeSemester[];
+};
+
+export type StudentProgrammesApiResponse = {
+    success: boolean;
+    message: string;
+    result: StudentProgramme[];
 };
 
 
@@ -235,7 +317,89 @@ export type StudentFiltersState = {
     level?: number[] | null;
     course?: number[] | null;
     mode_of_study?: number[] | null;
+    gender?: 'male' | 'female';
     academic_year?: number[] | null;
     calendar_type?: string[] | null;
     with_trashed?: boolean | null;
+};
+
+export type StudentEnrolment = {
+    type: string;
+    id: string | number;
+    attributes: {
+        instituionDepartmentId: string | number;
+        studentId: string | number;
+        studentProgramId: string | number;
+        departmentLevelId: string | number;
+        departmentCourseId: string | number;
+        modeOfStudyId: string | number;
+        academicYearOptionId: string | number;
+        academicCalendarId: string | number;
+        studentEnrolmentStatusId: string | number;
+        status: string;
+        academicYearOption: string;
+        academicCalendar: string;
+    };
+    relationships?: {
+        details: {
+            academicCalendarStudentEnrolmentId: string | number;
+            academicCalendarClassId: string | number;
+            classConfigId: string | number;
+            syllabi: Array<CourseSyllabus>;
+        };
+    };
+};
+
+export type StudentPortalDashboardModule = {
+    id: number;
+    code: string | null;
+    name: string | null;
+    score: number | null;
+    gradeDisplay: string;
+    progressPercent: number;
+};
+
+export type StudentPortalDashboardActivity = {
+    type: 'application' | 'financial' | 'course_work';
+    message: string;
+    severity: 'info' | 'warning' | 'success';
+};
+
+export type StudentPortalDashboardFinancial = {
+    paidPercent: number;
+    outstandingBalance: string;
+    totalInvoiced: string;
+    totalPayments: string;
+};
+
+export type StudentPortalDashboardTerm = {
+    label: string;
+    calendarYear: string;
+    openingDate: string;
+    closingDate: string | null;
+};
+
+export type StudentPortalDashboardNotice = {
+    id: string | number;
+    title: string;
+    message: string;
+    publishedAt: string | null;
+};
+
+export type StudentPortalCalendarType = 'term' | 'semester' | 'abma';
+
+export type StudentPortalDashboardStats = {
+    activeModuleCount: number;
+    totalModuleHours: number;
+    averageCourseWorkScore: number | null;
+    oLevelSubjectCount: number;
+    applicationCount: number;
+    pendingApplicationCount: number;
+    modules: StudentPortalDashboardModule[];
+    activities: StudentPortalDashboardActivity[];
+    notices: StudentPortalDashboardNotice[];
+    calendarType: StudentPortalCalendarType;
+    currentTerm: StudentPortalDashboardTerm | null;
+    nextTerm: StudentPortalDashboardTerm | null;
+    financial?: StudentPortalDashboardFinancial;
 };

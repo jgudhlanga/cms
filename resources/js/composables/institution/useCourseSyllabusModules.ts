@@ -1,3 +1,4 @@
+import { BaseCheckbox } from '@/components/core/form';
 import { useDataTables } from '@/composables/core/useDataTables';
 import { ColorVariant } from '@/enums/colors';
 import { forbiddenAlert, openModal } from '@/lib/alerts';
@@ -8,8 +9,15 @@ import { ApiFilterResponse } from '@/types/data-pagination';
 import { CourseSyllabusModule } from '@/types/institution';
 import { InertiaForm } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
-import { h, ref } from 'vue';
+import { h, ref, type Ref } from 'vue';
 import { z } from 'zod';
+
+type CreateColumnsOptions = {
+    onEdit: (module: CourseSyllabusModule) => void;
+    canUpdate: boolean;
+    canMoveModules?: boolean;
+    selectedModuleIds?: Ref<number[]>;
+};
 
 export const useCourseSyllabusModules = () => {
     const { actionButton } = useDataTables();
@@ -19,6 +27,7 @@ export const useCourseSyllabusModules = () => {
     const formSchema = () =>
         z.object({
             course_syllabus_id: z.number().min(1, trans('trans.select_valid_field', { field: trans_choice('syllabus.course_syllabus', 1) })),
+            academic_year_option_id: z.coerce.number().min(1, trans('trans.select_valid_field', { field: trans_choice('syllabus.calendar_year_option', 1) })),
             title: z.string().nonempty(trans('trans.enter_required_field', { field: trans_choice('trans.title', 1) })),
             code: z.string().nonempty(trans('trans.enter_required_field', { field: trans_choice('trans.code', 1) })),
             duration_in_hours: z.number().int().positive().nullable(),
@@ -27,11 +36,17 @@ export const useCourseSyllabusModules = () => {
             shared: z.boolean(),
         });
 
-    const listCourseSyllabusModules = async (institutionDepartmentId: string, courseSyllabusId: string) => {
-        const endpoint = route('course-syllabus-modules.index', {
-            institution_department: institutionDepartmentId,
-            course_syllabus: courseSyllabusId,
-        });
+    const listCourseSyllabusModules = async (
+        institutionDepartmentId: string,
+        courseSyllabusId: string,
+        paginatorUrl?: string,
+    ) => {
+        const endpoint =
+            paginatorUrl
+            ?? route('course-syllabus-modules.index', {
+                institution_department: institutionDepartmentId,
+                course_syllabus: courseSyllabusId,
+            });
 
         try {
             isLoading.value = true;
@@ -54,32 +69,68 @@ export const useCourseSyllabusModules = () => {
         form.post(route('course-syllabus-modules.store'), opts);
     };
 
-    const createCourseSyllabusModuleColumns = (onEdit: (module: CourseSyllabusModule) => void, canUpdate: boolean) => [
-        { header: trans_choice('trans.title', 1), accessorKey: 'attributes.title' },
-        { header: trans_choice('trans.code', 1), accessorKey: 'attributes.code' },
-        { header: trans('syllabus.duration_in_hours'), accessorKey: 'attributes.durationInHours', meta: { align: 'center' } },
-        { header: trans('syllabus.nql_level'), accessorKey: 'attributes.nqlLevel', meta: { align: 'center' } },
-        {
-            header: trans('syllabus.shared'),
-            accessorKey: 'attributes.shared',
-            meta: { align: 'center' },
-            cell: ({ row }: { row: { original: CourseSyllabusModule } }) => (row.original.attributes.shared ? trans('trans.yes') : trans('trans.no')),
-        },
-        {
-            header: trans_choice('trans.action', 2),
-            accessorKey: 'actions',
-            enableSorting: false,
-            meta: { align: 'right' },
-            cell: ({ row }: { row: { original: CourseSyllabusModule } }) =>
-                h('div', { class: 'flex items-center justify-end gap-2' }, [
-                    actionButton({
-                        title: trans('trans.edit'),
-                        variant: ColorVariant.primary_outline,
-                        onClick: () => onOpenModal(canUpdate, { courseSyllabusId: row.original.attributes.courseSyllabusId }, row.original),
-                    }),
-                ]),
-        },
-    ];
+    const createCourseSyllabusModuleColumns = ({ onEdit, canUpdate, canMoveModules, selectedModuleIds }: CreateColumnsOptions) => {
+        const columns: Array<Record<string, unknown>> = [];
+
+        if (canMoveModules && selectedModuleIds) {
+            columns.push({
+                header: '',
+                accessorKey: 'select',
+                enableSorting: false,
+                meta: { align: 'center' },
+                cell: ({ row }: { row: { original: CourseSyllabusModule } }) => {
+                    const moduleId = Number(row.original.id);
+                    if (Number.isNaN(moduleId)) {
+                        return null;
+                    }
+
+                    return h(BaseCheckbox, {
+                        inputId: `move_module_${moduleId}`,
+                        label: '',
+                        modelValue: selectedModuleIds.value,
+                        'onUpdate:modelValue': (value: number[]) => {
+                            selectedModuleIds.value = value;
+                        },
+                        value: moduleId,
+                    });
+                },
+            });
+        }
+
+        columns.push(
+            { header: trans_choice('trans.title', 1), accessorKey: 'attributes.title' },
+            { header: trans_choice('trans.code', 1), accessorKey: 'attributes.code' },
+            {
+                header: trans_choice('syllabus.calendar_year_option', 1),
+                accessorKey: 'attributes.academicYearOptionName',
+            },
+            { header: trans('syllabus.duration_in_hours'), accessorKey: 'attributes.durationInHours', meta: { align: 'center' } },
+            { header: trans('syllabus.nql_level'), accessorKey: 'attributes.nqlLevel', meta: { align: 'center' } },
+            {
+                header: trans('syllabus.shared'),
+                accessorKey: 'attributes.shared',
+                meta: { align: 'center' },
+                cell: ({ row }: { row: { original: CourseSyllabusModule } }) =>
+                    row.original.attributes.shared ? trans('trans.yes') : trans('trans.no'),
+            },
+            {
+                header: trans_choice('trans.action', 2),
+                accessorKey: 'actions',
+                enableSorting: false,
+                meta: { align: 'right' },
+                cell: ({ row }: { row: { original: CourseSyllabusModule } }) =>
+                    h('div', { class: 'flex items-center justify-end gap-2' }, [
+                        actionButton({
+                            title: trans('trans.edit'),
+                            variant: ColorVariant.primary_outline,
+                            onClick: () => onEdit(row.original),
+                        }),
+                    ]),
+            },
+        );
+
+        return columns;
+    };
 
     const onOpenModal = (can: boolean, parent: { courseSyllabusId: string | number }, module?: CourseSyllabusModule) => {
         if (!can) {

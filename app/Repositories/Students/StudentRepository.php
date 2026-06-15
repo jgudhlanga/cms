@@ -11,6 +11,8 @@ use App\DTO\Students\StudentProgramDto;
 use App\DTO\Students\UpdateStudentDto;
 use App\Enums\AcademicCalendars\AcademicCalendarTypeEnum;
 use App\Enums\Shared\AcademicLevelEnum;
+use App\Enums\Shared\GenderEnum;
+use App\Helpers\Helper;
 use App\Http\Filters\Students\StudentFilter;
 use App\Models\Shared\AcademicLevel;
 use App\Models\Students\Student;
@@ -20,6 +22,7 @@ use App\Repositories\Shared\interface\IContactRepository;
 use App\Repositories\Shared\interface\INextOfKinRepository;
 use App\Repositories\Students\interface\IStudentProgramRepository;
 use App\Repositories\Students\interface\IStudentRepository;
+use App\Services\Enrollment\EnrollmentLookupService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -43,9 +46,12 @@ class StudentRepository extends BaseRepository implements IStudentRepository
         $query = Student::query()
             ->with([
                 'user',
+                'gender',
                 'enrolments.institutionDepartment.department',
                 'enrolments.departmentLevel.level',
                 'enrolments.departmentCourse.course',
+                'enrolments.modeOfStudy',
+                'enrolments.academicCalendarStudentEnrolment',
             ])
             ->join('student_enrolments', 'student_enrolments.student_id', '=', 'students.id')
             ->select('students.*')
@@ -75,7 +81,26 @@ class StudentRepository extends BaseRepository implements IStudentRepository
 
         // Department filter (institution department ids)
         $departmentIds = $this->intListFromFilter($filters['department'] ?? null);
-        if ($departmentIds !== []) {
+        $isDepartmentUser = Helper::isDepartmentUser();
+        $userDepartments = Helper::resolveUserDepartments() ?? [];
+
+        if ($isDepartmentUser) {
+            if ($userDepartments === []) {
+                $query->whereRaw('1 = 0');
+            } else {
+                $departmentIds = $departmentIds !== []
+                    ? array_values(array_intersect($departmentIds, $userDepartments))
+                    : $userDepartments;
+
+                if ($departmentIds === []) {
+                    $query->whereRaw('1 = 0');
+                } else {
+                    $query->whereHas('enrolments', function ($q) use ($departmentIds): void {
+                        $q->whereIn('institution_department_id', $departmentIds);
+                    });
+                }
+            }
+        } elseif ($departmentIds !== []) {
             $query->whereHas('enrolments', function ($q) use ($departmentIds): void {
                 $q->whereIn('institution_department_id', $departmentIds);
             });
@@ -103,6 +128,13 @@ class StudentRepository extends BaseRepository implements IStudentRepository
             $query->whereHas('enrolments', function ($q) use ($modeIds): void {
                 $q->whereIn('mode_of_study_id', $modeIds);
             });
+        }
+
+        // Gender
+        $gender = strtolower(trim((string) ($filters['gender'] ?? '')));
+        if (in_array($gender, ['male', 'female'], true)) {
+            $title = $gender === 'male' ? GenderEnum::MALE->value : GenderEnum::FEMALE->value;
+            $query->whereHas('gender', fn ($q) => $q->where('title', $title));
         }
 
         // Trashed records
@@ -163,7 +195,9 @@ class StudentRepository extends BaseRepository implements IStudentRepository
 
     private function createFields(CreateApplicationDto|CreateStudentApplicationDto $dto): array
     {
-        $cleanIdNumber = str_replace(' ', '', trim($dto->id_number ?? ''));
+        $cleanIdNumber = $dto->id_number
+            ? EnrollmentLookupService::normalizeNationalId($dto->id_number)
+            : null;
 
         return [
             'user_id' => $dto->user_id,

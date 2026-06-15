@@ -5,17 +5,17 @@ namespace App\Models\Institution;
 use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
 /**
- *
  * @mixin Builder
  */
 class InstitutionDepartmentMetadata extends Model
 {
-    use SoftDeletes, BelongsToTenant, LogsActivity;
+    use BelongsToTenant, LogsActivity, SoftDeletes;
 
     protected $fillable = [
         'institution_department_id',
@@ -29,6 +29,11 @@ class InstitutionDepartmentMetadata extends Model
         'email',
         'phone_number',
     ];
+
+    public function institutionDepartment(): BelongsTo
+    {
+        return $this->belongsTo(InstitutionDepartment::class, 'institution_department_id');
+    }
 
     public function getActivitylogOptions(): LogOptions
     {

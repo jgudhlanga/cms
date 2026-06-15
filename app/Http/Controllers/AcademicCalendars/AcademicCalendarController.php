@@ -3,10 +3,14 @@
 namespace App\Http\Controllers\AcademicCalendars;
 
 use App\Enums\Shared\GenderEnum;
+use App\Exports\AcademicCalendars\CourseWorkImportTemplateExport;
+use App\Exports\AcademicCalendars\CourseWorkMarksheetExport;
 use App\Http\Controllers\Concerns\ResolvesAcademicCalendarFromCalendarYear;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AcademicCalendars\AcademicCalendarRequest;
 use App\Http\Requests\AcademicCalendars\ClassConfigRequest;
+use App\Http\Requests\AcademicCalendars\CourseWorkImportPreviewRequest;
+use App\Http\Requests\AcademicCalendars\CourseWorkImportProcessRequest;
 use App\Http\Requests\AcademicCalendars\MoveAcademicCalendarClassStudentsRequest;
 use App\Http\Requests\AcademicCalendars\StoreAcademicCalendarClassesRequest;
 use App\Http\Resources\AcademicCalendars\AcademicCalendarResource;
@@ -19,18 +23,29 @@ use App\Models\AcademicCalendars\AcademicCalendar;
 use App\Models\AcademicCalendars\AcademicCalendarClass;
 use App\Models\AcademicCalendars\AcademicCalendarStudentEnrolment;
 use App\Models\AcademicCalendars\ClassConfig;
+use App\Models\AcademicCalendars\CourseWorkMark;
 use App\Models\Institution\DepartmentCourse;
 use App\Models\Institution\DepartmentLevel;
 use App\Models\Institution\InstitutionDepartment;
 use App\Models\Institution\ModeOfStudy;
+use App\Models\Students\StudentEnrolment;
 use App\Queries\Enrolments\ConfirmedStudentsQuery;
+use App\Services\AcademicCalendars\CourseWorkImportService;
+use App\Services\AcademicCalendars\CourseWorkImportTemplateService;
+use App\Services\AcademicCalendars\CourseWorkMarksheetDataService;
+use App\Services\AcademicCalendars\CourseWorkMarksheetPdfService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Arr;
+use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
+use Maatwebsite\Excel\Facades\Excel;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class AcademicCalendarController extends Controller
 {
@@ -99,7 +114,8 @@ class AcademicCalendarController extends Controller
                     ->where('institution_department_id', $institutionDepartment->id)
                     ->where('department_level_id', (int) $departmentLevelId)
                     ->where('department_course_id', (int) $departmentCourseId)
-                    ->where('mode_of_study_id', (int) $modeOfStudyId);
+                    ->where('mode_of_study_id', (int) $modeOfStudyId)
+                    ->whereNull('academic_year_option_id');
             })
             ->first();
         $calendarIdsForYear = AcademicCalendar::idsForStartedCalendarYear((string) $academicCalendar->calendar_year);
@@ -114,19 +130,25 @@ class AcademicCalendarController extends Controller
         $assignedStudentEnrolmentIds = $this->resolveAssignedStudentEnrolmentIds($classConfig);
         $unassignedFinalStudentPrograms = $this->filterUnassignedFinalStudentPrograms($finalStudentPrograms, $assignedStudentEnrolmentIds);
         $existingClasses = $this->resolveExistingClassesForAllocation($classConfig);
-        $classNumberOffset = $this->resolveClassNumberOffset($existingClasses->pluck('name'), $this->resolveClassNamePrefix($level), $mode);
+        $classNamePrefix = $this->resolveClassNamePrefix($level);
+        $classNumberOffset = $this->resolveClassNumberOffset($existingClasses->pluck('name'), $classNamePrefix, $mode, $classConfig);
         $previewClasses = $this->buildPreviewClasses(
             $unassignedFinalStudentPrograms,
             (int) ($classConfig?->students_per_class ?? 0),
-            $this->resolveClassNamePrefix($level),
+            $classNamePrefix,
             [],
             $mode,
-            $classNumberOffset
+            $classNumberOffset,
+            $classConfig
         );
         $previewClasses = [
             ...$this->resolveExistingClassPreviews($classConfig),
             ...$previewClasses,
         ];
+        $populatedExistingClassCount = $existingClasses->filter(
+            fn ($row): bool => (int) ($row->student_count ?? 0) > 0
+        )->count();
+
         $context = $this->buildGenerationContext(
             $institutionDepartment,
             $academicCalendar,
@@ -136,7 +158,8 @@ class AcademicCalendarController extends Controller
             $classConfig,
             $finalStudentPrograms,
             $unassignedFinalStudentPrograms,
-            $existingClasses->count() > 0
+            $populatedExistingClassCount > 0,
+            $populatedExistingClassCount
         );
 
         return Inertia::render('institution/academicCalendars/DepartmentAcademicCalendarClasses', [
@@ -149,7 +172,138 @@ class AcademicCalendarController extends Controller
             'classConfig' => ClassConfigResource::make($classConfig) ?? null,
             'previewClasses' => $previewClasses,
             'generationContext' => $context,
+            'canViewCourseWork' => auth()->user()?->can('viewAny', CourseWorkMark::class) ?? false,
         ]);
+    }
+
+    public function showDepartmentAcademicCalendarClassConfigCourseWorkMarksheet(
+        Request $request,
+        InstitutionDepartment $institutionDepartment,
+        string $calendar_year,
+    ): Response {
+        $this->authorize('viewAny', CourseWorkMark::class);
+
+        $academicCalendar = $this->academicCalendarFromCalendarYear($calendar_year);
+        $classConfig = $this->resolveClassConfigForDepartment($institutionDepartment, $academicCalendar, $request);
+
+        $course = $classConfig->departmentCourse ?? DepartmentCourse::query()->find($classConfig->department_course_id);
+        $level = $classConfig->departmentLevel ?? DepartmentLevel::query()->find($classConfig->department_level_id);
+        $mode = $classConfig->modeOfStudy ?? ModeOfStudy::query()->find($classConfig->mode_of_study_id);
+
+        return Inertia::render('institution/academicCalendars/DepartmentAcademicCalendarClassConfigCourseWorkMarksheet', [
+            'department' => InstitutionDepartmentResource::make($institutionDepartment),
+            'academicCalendar' => AcademicCalendarResource::make($academicCalendar),
+            'course' => DepartmentCourseResource::make($course),
+            'level' => DepartmentLevelResource::make($level),
+            'mode' => ModeOfStudyResource::make($mode),
+            'classConfig' => ClassConfigResource::make($classConfig),
+            'classConfigQuery' => $this->classConfigQueryParams($classConfig, $request),
+            'canCreateCourseWork' => auth()->user()?->can('create', CourseWorkMark::class) ?? false,
+            'canUpdateCourseWork' => auth()->user()?->can('update', CourseWorkMark::class) ?? false,
+            'canExportCourseWork' => auth()->user()?->can('export', CourseWorkMark::class) ?? false,
+            'canImportCourseWork' => auth()->user()?->can('import', CourseWorkMark::class) ?? false,
+        ]);
+    }
+
+    public function showDepartmentAcademicCalendarClassConfigCourseWorkImport(
+        Request $request,
+        InstitutionDepartment $institutionDepartment,
+        string $calendar_year,
+    ): Response {
+        $this->authorize('import', CourseWorkMark::class);
+
+        $academicCalendar = $this->academicCalendarFromCalendarYear($calendar_year);
+        $classConfig = $this->resolveClassConfigForDepartment($institutionDepartment, $academicCalendar, $request);
+
+        $course = $classConfig->departmentCourse ?? DepartmentCourse::query()->find($classConfig->department_course_id);
+        $level = $classConfig->departmentLevel ?? DepartmentLevel::query()->find($classConfig->department_level_id);
+        $mode = $classConfig->modeOfStudy ?? ModeOfStudy::query()->find($classConfig->mode_of_study_id);
+
+        return Inertia::render('institution/academicCalendars/DepartmentAcademicCalendarClassConfigCourseWorkImport', [
+            'department' => InstitutionDepartmentResource::make($institutionDepartment),
+            'academicCalendar' => AcademicCalendarResource::make($academicCalendar),
+            'course' => DepartmentCourseResource::make($course),
+            'level' => DepartmentLevelResource::make($level),
+            'mode' => ModeOfStudyResource::make($mode),
+            'classConfig' => ClassConfigResource::make($classConfig),
+            'classConfigQuery' => $this->classConfigQueryParams($classConfig, $request),
+            'canImportCourseWork' => auth()->user()?->can('import', CourseWorkMark::class) ?? false,
+            'courseWorkImportResult' => session('courseWorkImportResult'),
+        ]);
+    }
+
+    public function downloadDepartmentAcademicCalendarClassConfigCourseWorkImportTemplate(
+        Request $request,
+        InstitutionDepartment $institutionDepartment,
+        string $calendar_year,
+        CourseWorkImportTemplateService $templateService,
+    ): BinaryFileResponse {
+        $this->authorize('import', CourseWorkMark::class);
+
+        $academicCalendar = $this->academicCalendarFromCalendarYear($calendar_year);
+        $classConfig = $this->resolveClassConfigForDepartment($institutionDepartment, $academicCalendar, $request);
+
+        $moduleId = (int) $request->query('module', 0);
+        abort_if($moduleId < 1, 422, __('academic_calendar.course_work_module_required'));
+
+        $data = $templateService->assembleForClassConfig((int) $classConfig->id, $moduleId);
+        $fileName = $templateService->downloadFileName($data);
+
+        return Excel::download(new CourseWorkImportTemplateExport($data), $fileName);
+    }
+
+    public function previewDepartmentAcademicCalendarClassConfigCourseWorkImport(
+        CourseWorkImportPreviewRequest $request,
+        InstitutionDepartment $institutionDepartment,
+        string $calendar_year,
+        CourseWorkImportService $importService,
+    ): JsonResponse {
+        $this->authorize('import', CourseWorkMark::class);
+
+        $academicCalendar = $this->academicCalendarFromCalendarYear($calendar_year);
+        $classConfig = $this->resolveClassConfigForDepartment($institutionDepartment, $academicCalendar, $request);
+
+        $moduleId = (int) $request->validated('module');
+        $file = $request->file('file');
+
+        abort_if($file === null, 422);
+
+        $preview = $importService->preview((int) $classConfig->id, $moduleId, $file);
+
+        return response()->json($preview);
+    }
+
+    public function processDepartmentAcademicCalendarClassConfigCourseWorkImport(
+        CourseWorkImportProcessRequest $request,
+        InstitutionDepartment $institutionDepartment,
+        string $calendar_year,
+        CourseWorkImportService $importService,
+    ): RedirectResponse {
+        $this->authorize('import', CourseWorkMark::class);
+
+        $academicCalendar = $this->academicCalendarFromCalendarYear($calendar_year);
+        $classConfig = $this->resolveClassConfigForDepartment($institutionDepartment, $academicCalendar, $request);
+
+        $moduleId = (int) $request->validated('module');
+        $previewToken = (string) $request->validated('preview_token');
+
+        $result = $importService->processFromPreview((int) $classConfig->id, $moduleId, $previewToken);
+
+        return redirect()
+            ->route('academic-calendars.department-classes.course-work-import', [
+                'institution_department' => $institutionDepartment->id,
+                'calendar_year' => $calendar_year,
+                ...$this->classConfigQueryParams($classConfig, $request),
+            ])
+            ->with('courseWorkImportResult', $result)
+            ->with(
+                'success',
+                __('academic_calendar.course_work_import_success', [
+                    'succeeded' => $result['rowsSucceeded'],
+                    'failed' => $result['rowsFailed'],
+                    'skipped' => $result['rowsSkipped'],
+                ]),
+            );
     }
 
     public function showDepartmentAcademicCalendarClass(
@@ -213,6 +367,7 @@ class AcademicCalendarController extends Controller
             'classConfig' => ClassConfigResource::make($classConfig) ?? null,
             'canUpdateAcademicCalendarStudentEnrolments' => auth()->user()?->can('update:academic-calendar-student-enrolments') ?? false,
             'canUpdateAcademicCalendarClass' => auth()->user()?->can('update', $academicCalendar) ?? false,
+            'canViewCourseWork' => auth()->user()?->can('viewAny', CourseWorkMark::class) ?? false,
             'moveTargetClasses' => $moveTargetClasses,
             'siblingAcademicCalendarClasses' => $siblingAcademicCalendarClasses,
             'academicCalendarClass' => [
@@ -223,6 +378,99 @@ class AcademicCalendarController extends Controller
                 'students' => $students,
             ],
         ]);
+    }
+
+    public function showDepartmentAcademicCalendarClassStudentCourseWork(
+        InstitutionDepartment $institutionDepartment,
+        string $calendar_year,
+        AcademicCalendarClass $academicCalendarClass,
+        StudentEnrolment $studentEnrolment,
+    ): Response {
+        $this->authorize('viewAny', CourseWorkMark::class);
+
+        $academicCalendar = $this->academicCalendarFromCalendarYear($calendar_year);
+
+        $academicCalendarClass->loadMissing([
+            'classConfig.departmentCourse',
+            'classConfig.departmentLevel',
+            'classConfig.modeOfStudy',
+        ]);
+
+        $classConfig = $academicCalendarClass->classConfig;
+
+        abort_unless(
+            $classConfig instanceof ClassConfig
+            && (int) $classConfig->institution_department_id === (int) $institutionDepartment->id
+            && (string) $classConfig->calendar_year === (string) $academicCalendar->calendar_year,
+            404
+        );
+
+        $enrolmentInClass = AcademicCalendarStudentEnrolment::query()
+            ->where('academic_calendar_class_id', $academicCalendarClass->id)
+            ->where('student_enrolment_id', $studentEnrolment->id)
+            ->whereNull('deleted_at')
+            ->exists();
+
+        abort_unless($enrolmentInClass, 404);
+
+        $students = $this->studentsPayloadForAcademicCalendarClass($academicCalendarClass);
+        $student = collect($students)->firstWhere('studentEnrolmentId', (int) $studentEnrolment->id);
+
+        abort_unless($student !== null, 404);
+
+        $course = $classConfig->departmentCourse ?? DepartmentCourse::query()->find($classConfig->department_course_id);
+        $level = $classConfig->departmentLevel ?? DepartmentLevel::query()->find($classConfig->department_level_id);
+        $mode = $classConfig->modeOfStudy ?? ModeOfStudy::query()->find($classConfig->mode_of_study_id);
+
+        return Inertia::render('institution/academicCalendars/DepartmentAcademicCalendarClassStudentCourseWork', [
+            'department' => InstitutionDepartmentResource::make($institutionDepartment),
+            'academicCalendar' => AcademicCalendarResource::make($academicCalendar),
+            'course' => DepartmentCourseResource::make($course),
+            'level' => DepartmentLevelResource::make($level),
+            'mode' => ModeOfStudyResource::make($mode),
+            'classConfig' => ClassConfigResource::make($classConfig),
+            'academicCalendarClass' => [
+                'id' => $academicCalendarClass->id,
+                'name' => $academicCalendarClass->name,
+            ],
+            'student' => $student,
+            'canCreateCourseWork' => auth()->user()?->can('create', CourseWorkMark::class) ?? false,
+            'canUpdateCourseWork' => auth()->user()?->can('update', CourseWorkMark::class) ?? false,
+            'canViewCourseWorkAuditTrail' => auth()->user()?->can('viewAuditTrail', CourseWorkMark::class) ?? false,
+        ]);
+    }
+
+    public function exportDepartmentAcademicCalendarClassConfigCourseWork(
+        Request $request,
+        InstitutionDepartment $institutionDepartment,
+        string $calendar_year,
+        CourseWorkMarksheetDataService $marksheetDataService,
+        CourseWorkMarksheetPdfService $marksheetPdfService,
+    ): BinaryFileResponse|\Illuminate\Http\Response {
+        $this->authorize('export', CourseWorkMark::class);
+
+        $academicCalendar = $this->academicCalendarFromCalendarYear($calendar_year);
+        $classConfig = $this->resolveClassConfigForDepartment($institutionDepartment, $academicCalendar, $request);
+
+        $moduleId = (int) $request->query('module', 0);
+        abort_if($moduleId < 1, 422, __('academic_calendar.course_work_module_required'));
+
+        $data = $marksheetDataService->assembleForClassConfig((int) $classConfig->id, $moduleId);
+        $marksheetDataService->assertExportable($data['issues'], $request->boolean('strict'));
+
+        $subjectCode = Str::slug((string) ($data['header']['subjectCode'] ?? 'marksheet'));
+        $format = strtolower((string) $request->query('format', 'xlsx'));
+
+        if ($format === 'pdf') {
+            $fileName = sprintf('%s-course-work-marksheet-%s.pdf', $subjectCode, time());
+            $viewData = $marksheetPdfService->assembleViewData($data);
+
+            return Pdf::loadView('academic-calendars.course-work-marksheet', $viewData)->stream($fileName);
+        }
+
+        $fileName = sprintf('%s-course-work-marksheet-%s.xlsx', $subjectCode, time());
+
+        return Excel::download(new CourseWorkMarksheetExport($data), $fileName);
     }
 
     public function moveDepartmentAcademicCalendarClassStudents(
@@ -276,15 +524,20 @@ class AcademicCalendarController extends Controller
     {
         $validated = $request->validated();
 
-        $lookup = [
-            'calendar_year' => $academicCalendar->calendar_year,
-            'institution_department_id' => $institutionDepartment->id,
-            ...Arr::only($validated, ['department_level_id', 'department_course_id', 'mode_of_study_id']),
-        ];
-
-        ClassConfig::updateOrCreate($lookup, [
-            'students_per_class' => $validated['students_per_class'],
-        ]);
+        ClassConfig::query()->updateOrCreate(
+            [
+                'calendar_year' => (string) $academicCalendar->calendar_year,
+                'institution_department_id' => $institutionDepartment->id,
+                'department_course_id' => (int) $validated['department_course_id'],
+                'department_level_id' => (int) $validated['department_level_id'],
+                'mode_of_study_id' => (int) $validated['mode_of_study_id'],
+                'academic_year_option_id' => (int) $validated['academic_year_option_id'],
+            ],
+            [
+                'students_per_class' => (int) $validated['students_per_class'],
+                'course_syllabus_ids' => $validated['course_syllabus_ids'] ?? [],
+            ],
+        );
 
         return back()->with('success', 'Class config successfully saved.');
     }
@@ -357,14 +610,16 @@ class AcademicCalendarController extends Controller
                 return;
             }
 
-            $classNumberOffset = $this->resolveClassNumberOffset($existingClasses->pluck('name'), $this->resolveClassNamePrefix($level), $mode);
+            $classNamePrefix = $this->resolveClassNamePrefix($level);
+            $classNumberOffset = $this->resolveClassNumberOffset($existingClasses->pluck('name'), $classNamePrefix, $mode, $classConfig);
             $newPreviewClasses = $this->buildPreviewClasses(
                 $remainingStudents,
                 (int) $validated['students_per_class'],
-                $this->resolveClassNamePrefix($level),
+                $classNamePrefix,
                 [],
                 $mode,
-                $classNumberOffset
+                $classNumberOffset,
+                $classConfig
             );
 
             foreach ($newPreviewClasses as $previewClass) {
@@ -452,7 +707,8 @@ class AcademicCalendarController extends Controller
         string $classNamePrefix = 'Class',
         array $existingClassMap = [],
         ?ModeOfStudy $mode = null,
-        int $classNumberOffset = 0
+        int $classNumberOffset = 0,
+        ?ClassConfig $classConfig = null,
     ): array {
         if ($studentsPerClass < 1 || $finalStudentPrograms->isEmpty()) {
             return [];
@@ -469,13 +725,17 @@ class AcademicCalendarController extends Controller
         );
 
         return $chunks
-            ->map(function (Collection $chunk, int $index) use ($nameBase, $existingClassMap, $classNumberOffset): array {
+            ->map(function (Collection $chunk, int $index) use ($nameBase, $existingClassMap, $classNumberOffset, $classConfig): array {
                 $genderCounts = [
                     'male' => 0,
                     'female' => 0,
                     'unknown' => 0,
                 ];
                 $className = $nameBase.' - '.($index + 1 + $classNumberOffset);
+
+                if ($classConfig instanceof ClassConfig) {
+                    $className .= ' - '.$classConfig->id;
+                }
 
                 foreach ($chunk as $student) {
                     $normalizedGender = $this->normalizeGenderValue($student->gender_title ?? null);
@@ -544,65 +804,104 @@ class AcademicCalendarController extends Controller
     private function splitStudentsIntoBalancedChunks(Collection $students, int $studentsPerClass): Collection
     {
         $maleStudents = $students
-            ->filter(fn (mixed $student): bool => $this->normalizeGenderValue($student->gender_title ?? null) === GenderEnum::MALE->value)
+            ->filter(fn ($student) => $this->normalizeGenderValue($student->gender_title ?? null) === GenderEnum::MALE->value
+            )
             ->values();
+
         $femaleStudents = $students
-            ->filter(fn (mixed $student): bool => $this->normalizeGenderValue($student->gender_title ?? null) === GenderEnum::FEMALE->value)
+            ->filter(fn ($student) => $this->normalizeGenderValue($student->gender_title ?? null) === GenderEnum::FEMALE->value
+            )
             ->values();
+
         $unknownGenderStudents = $students
-            ->filter(fn (mixed $student): bool => $this->normalizeGenderValue($student->gender_title ?? null) === null)
+            ->filter(fn ($student) => $this->normalizeGenderValue($student->gender_title ?? null) === null
+            )
             ->values();
+
+        $totalStudents = $students->count();
+        $totalClasses = (int) ceil($totalStudents / $studentsPerClass);
+
         $classChunks = collect();
 
-        while ($maleStudents->isNotEmpty() || $femaleStudents->isNotEmpty() || $unknownGenderStudents->isNotEmpty()) {
-            $remainingStudents = $maleStudents->count() + $femaleStudents->count() + $unknownGenderStudents->count();
+        for ($classIndex = 0; $classIndex < $totalClasses; $classIndex++) {
+
+            $remainingClasses = $totalClasses - $classIndex;
+
+            $remainingMale = $maleStudents->count();
+            $remainingFemale = $femaleStudents->count();
+            $remainingUnknown = $unknownGenderStudents->count();
+
+            $remainingStudents = $remainingMale + $remainingFemale + $remainingUnknown;
+
             $capacity = min($studentsPerClass, $remainingStudents);
-            $classStudents = collect();
-            $hasBothGenders = $maleStudents->isNotEmpty() && $femaleStudents->isNotEmpty();
 
-            if ($hasBothGenders) {
-                $maleTarget = (int) floor($capacity / 2);
-                $femaleTarget = $capacity - $maleTarget;
+            /*
+            |--------------------------------------------------------------------------
+            | Calculate fair proportional distribution
+            |--------------------------------------------------------------------------
+            */
 
-                $maleCount = min($maleTarget, $maleStudents->count());
-                $femaleCount = min($femaleTarget, $femaleStudents->count());
-                $remainingCapacity = $capacity - ($maleCount + $femaleCount);
+            $maleTarget = (int) round($remainingMale / $remainingClasses);
+            $femaleTarget = (int) round($remainingFemale / $remainingClasses);
 
-                if ($remainingCapacity > 0 && $maleStudents->count() > $maleCount) {
-                    $extraMaleCount = min($remainingCapacity, $maleStudents->count() - $maleCount);
-                    $maleCount += $extraMaleCount;
-                    $remainingCapacity -= $extraMaleCount;
+            /*
+            |--------------------------------------------------------------------------
+            | Ensure we do not exceed class capacity
+            |--------------------------------------------------------------------------
+            */
+
+            $allocated = $maleTarget + $femaleTarget;
+
+            if ($allocated > $capacity) {
+
+                $overflow = $allocated - $capacity;
+
+                if ($maleTarget >= $femaleTarget) {
+                    $maleTarget -= $overflow;
+                } else {
+                    $femaleTarget -= $overflow;
                 }
-
-                if ($remainingCapacity > 0 && $femaleStudents->count() > $femaleCount) {
-                    $extraFemaleCount = min($remainingCapacity, $femaleStudents->count() - $femaleCount);
-                    $femaleCount += $extraFemaleCount;
-                    $remainingCapacity -= $extraFemaleCount;
-                }
-
-                $classStudents = $classStudents
-                    ->merge($maleStudents->splice(0, $maleCount))
-                    ->merge($femaleStudents->splice(0, $femaleCount));
             }
 
-            if ($classStudents->count() < $capacity) {
-                $missingSeats = $capacity - $classStudents->count();
+            $classStudents = collect()
+                ->merge($maleStudents->splice(0, min($maleTarget, $remainingMale)))
+                ->merge($femaleStudents->splice(0, min($femaleTarget, $remainingFemale)));
 
-                if ($maleStudents->isNotEmpty()) {
-                    $maleFillCount = min($missingSeats, $maleStudents->count());
-                    $classStudents = $classStudents->merge($maleStudents->splice(0, $maleFillCount));
-                    $missingSeats -= $maleFillCount;
-                }
+            /*
+            |--------------------------------------------------------------------------
+            | Fill remaining seats fairly
+            |--------------------------------------------------------------------------
+            */
 
-                if ($missingSeats > 0 && $femaleStudents->isNotEmpty()) {
-                    $femaleFillCount = min($missingSeats, $femaleStudents->count());
-                    $classStudents = $classStudents->merge($femaleStudents->splice(0, $femaleFillCount));
-                    $missingSeats -= $femaleFillCount;
-                }
+            $missingSeats = $capacity - $classStudents->count();
 
-                if ($missingSeats > 0 && $unknownGenderStudents->isNotEmpty()) {
-                    $classStudents = $classStudents->merge($unknownGenderStudents->splice(0, $missingSeats));
-                }
+            if ($missingSeats > 0 && $maleStudents->isNotEmpty()) {
+
+                $take = min($missingSeats, $maleStudents->count());
+
+                $classStudents = $classStudents->merge(
+                    $maleStudents->splice(0, $take)
+                );
+
+                $missingSeats -= $take;
+            }
+
+            if ($missingSeats > 0 && $femaleStudents->isNotEmpty()) {
+
+                $take = min($missingSeats, $femaleStudents->count());
+
+                $classStudents = $classStudents->merge(
+                    $femaleStudents->splice(0, $take)
+                );
+
+                $missingSeats -= $take;
+            }
+
+            if ($missingSeats > 0 && $unknownGenderStudents->isNotEmpty()) {
+
+                $classStudents = $classStudents->merge(
+                    $unknownGenderStudents->splice(0, $missingSeats)
+                );
             }
 
             $classChunks->push($classStudents->values());
@@ -680,6 +979,7 @@ class AcademicCalendarController extends Controller
             ])
             ->orderBy('academic_calandar_classes.id')
             ->get()
+            ->filter(fn ($class): bool => (int) ($class->student_count ?? 0) > 0)
             ->map(function (mixed $class): array {
                 $maleCount = (int) ($class->male_count ?? 0);
                 $femaleCount = (int) ($class->female_count ?? 0);
@@ -709,7 +1009,8 @@ class AcademicCalendarController extends Controller
         ?ClassConfig $classConfig,
         Collection $finalStudentPrograms,
         Collection $unassignedFinalStudentPrograms,
-        bool $hasExistingClasses
+        bool $hasExistingClasses,
+        int $populatedExistingClassCount,
     ): array {
         $newStudentGenderCounts = [
             'male' => 0,
@@ -741,6 +1042,7 @@ class AcademicCalendarController extends Controller
             'newFinalStudentCount' => $unassignedFinalStudentPrograms->count(),
             'newStudentGenderCounts' => $newStudentGenderCounts,
             'hasExistingClasses' => $hasExistingClasses,
+            'populatedExistingClassCount' => $populatedExistingClassCount,
         ];
     }
 
@@ -796,8 +1098,12 @@ class AcademicCalendarController extends Controller
             ->get();
     }
 
-    private function resolveClassNumberOffset(Collection $existingClassNames, string $classNamePrefix = 'Class', ?ModeOfStudy $mode = null): int
-    {
+    private function resolveClassNumberOffset(
+        Collection $existingClassNames,
+        string $classNamePrefix = 'Class',
+        ?ModeOfStudy $mode = null,
+        ?ClassConfig $classConfig = null,
+    ): int {
         if ($existingClassNames->isEmpty()) {
             return 0;
         }
@@ -806,19 +1112,81 @@ class AcademicCalendarController extends Controller
         $nameBase = $modeName !== ''
             ? $classNamePrefix.' - '.$modeName
             : $classNamePrefix;
-        $pattern = '/^'.preg_quote($nameBase, '/').'\s-\s(\d+)$/';
+        $configSuffix = $classConfig instanceof ClassConfig
+            ? '\s-\s'.preg_quote((string) $classConfig->id, '/')
+            : '';
+        $pattern = '/^'.preg_quote($nameBase, '/').'\s-\s(\d+)'.$configSuffix.'$/';
+        $legacyPattern = $classConfig instanceof ClassConfig
+            ? '/^'.preg_quote($nameBase, '/').'\s-\s(\d+)$/'
+            : null;
         $highestClassNumber = 0;
 
         foreach ($existingClassNames as $existingClassName) {
             $className = (string) $existingClassName;
 
-            if (! preg_match($pattern, $className, $matches)) {
+            if (preg_match($pattern, $className, $matches)) {
+                $highestClassNumber = max($highestClassNumber, (int) ($matches[1] ?? 0));
+
                 continue;
             }
 
-            $highestClassNumber = max($highestClassNumber, (int) ($matches[1] ?? 0));
+            if ($legacyPattern !== null && preg_match($legacyPattern, $className, $matches)) {
+                $highestClassNumber = max($highestClassNumber, (int) ($matches[1] ?? 0));
+            }
         }
 
         return $highestClassNumber;
+    }
+
+    private function resolveClassConfigForDepartment(
+        InstitutionDepartment $institutionDepartment,
+        AcademicCalendar $academicCalendar,
+        Request $request,
+    ): ClassConfig {
+        $classConfigId = (int) $request->query('class_config_id', 0);
+        $departmentLevelId = (int) $request->query('department_level_id', 0);
+        $departmentCourseId = (int) $request->query('department_course_id', 0);
+        $modeOfStudyId = (int) $request->query('mode_of_study_id', 0);
+
+        $classConfig = ClassConfig::query()
+            ->when($classConfigId > 0, fn ($query) => $query->where('id', $classConfigId))
+            ->when($classConfigId < 1 && $departmentLevelId > 0 && $departmentCourseId > 0 && $modeOfStudyId > 0, function ($query) use (
+                $academicCalendar,
+                $institutionDepartment,
+                $departmentLevelId,
+                $departmentCourseId,
+                $modeOfStudyId,
+            ): void {
+                $query
+                    ->where('calendar_year', $academicCalendar->calendar_year)
+                    ->where('institution_department_id', $institutionDepartment->id)
+                    ->where('department_level_id', $departmentLevelId)
+                    ->where('department_course_id', $departmentCourseId)
+                    ->where('mode_of_study_id', $modeOfStudyId)
+                    ->whereNull('academic_year_option_id');
+            })
+            ->first();
+
+        abort_unless(
+            $classConfig instanceof ClassConfig
+            && (int) $classConfig->institution_department_id === (int) $institutionDepartment->id
+            && (string) $classConfig->calendar_year === (string) $academicCalendar->calendar_year,
+            404,
+        );
+
+        return $classConfig;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function classConfigQueryParams(ClassConfig $classConfig, Request $request): array
+    {
+        return array_filter([
+            'class_config_id' => (string) $classConfig->id,
+            'department_course_id' => $request->query('department_course_id') ? (string) $request->query('department_course_id') : (string) $classConfig->department_course_id,
+            'department_level_id' => $request->query('department_level_id') ? (string) $request->query('department_level_id') : (string) $classConfig->department_level_id,
+            'mode_of_study_id' => $request->query('mode_of_study_id') ? (string) $request->query('mode_of_study_id') : (string) $classConfig->mode_of_study_id,
+        ]);
     }
 }

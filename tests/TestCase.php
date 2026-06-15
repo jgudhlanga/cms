@@ -2,11 +2,14 @@
 
 namespace Tests;
 
+use Illuminate\Foundation\Testing\Concerns\InteractsWithDatabase;
+use Illuminate\Foundation\Testing\Concerns\MakesHttpRequests;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
+use LaravelJsonApi\Testing\MakesJsonApiRequests;
 
 /**
- * @mixin \Illuminate\Foundation\Testing\Concerns\MakesHttpRequests
- * @mixin \Illuminate\Foundation\Testing\Concerns\InteractsWithDatabase
+ * @mixin MakesHttpRequests
+ * @mixin InteractsWithDatabase
  *
  * @property string $password
  *
@@ -16,5 +19,5 @@ use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
  */
 abstract class TestCase extends BaseTestCase
 {
-    //
+    use MakesJsonApiRequests;
 }

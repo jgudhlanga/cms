@@ -1,4 +1,5 @@
 import { validateSelectOption } from '@/lib/forms';
+import { isValidZimbabweanIdNumber } from '@/lib/zimbabweanId';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 import { z } from 'zod';
 
@@ -13,7 +14,13 @@ export const useSharedFormSchema = () => {
         });
     const idNumberSchema = () =>
         z.object({
-            id_number: z.string().nonempty(trans('trans.enter_required_field', { field: trans('trans.id_number') })),
+            id_number: z
+                .string()
+                .nonempty(trans('trans.enter_required_field', { field: trans('trans.id_number') }))
+                .refine(
+                    (id_number) => !id_number?.trim() || isValidZimbabweanIdNumber(id_number),
+                    { message: trans('trans.enrollment_invalid_national_id') },
+                ),
         });
     const passportNumberSchema = () =>
         z.object({

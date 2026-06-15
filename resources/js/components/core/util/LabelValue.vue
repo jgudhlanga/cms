@@ -1,15 +1,23 @@
 <script setup lang="ts">
+import { twMerge } from 'tailwind-merge';
+
 interface Props {
     label?: string;
     value?: string;
     labelClasses?: string;
     valueClasses?: string;
 }
-defineProps<Props>();
+
+const props = defineProps<Props>();
 </script>
+
 <template>
-    <div class="text-accent-foreground flex w-full items-start gap-3 text-sm">
-        <div :class="`${labelClasses} shrink-0 font-medium wrap-break-word whitespace-normal`">{{ label }}:</div>
-        <div :class="`${valueClasses} min-w-0 flex-1 font-extralight wrap-anywhere whitespace-normal`">{{ !value ? '---' : value }}</div>
+    <div class="flex flex-col gap-0.5">
+        <span :class="twMerge('text-[0.65rem] font-semibold tracking-[0.1em] text-muted-foreground uppercase', props.labelClasses)">
+            {{ label }}
+        </span>
+        <span :class="twMerge('text-[0.85rem] font-bold tracking-[-0.01em] text-foreground', props.valueClasses)">
+            {{ !value ? '---' : value }}
+        </span>
     </div>
 </template>

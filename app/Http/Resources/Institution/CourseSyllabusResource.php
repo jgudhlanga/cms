@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\Institution;
 
+use BackedEnum;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -9,17 +10,23 @@ class CourseSyllabusResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
+        $calendarType = $this->resource->departmentLevelCourse?->departmentLevel?->level?->calendar_type;
+
         return [
             'type' => 'course-syllabus',
             'id' => $this->resource->id,
             'attributes' => [
                 'institutionDepartmentId' => $this->resource->institution_department_id,
                 'departmentLevelCourseId' => $this->resource->department_level_course_id,
+                'calendarType' => $calendarType instanceof BackedEnum
+                    ? $calendarType->value
+                    : $calendarType,
                 'level' => $this->resource->departmentLevelCourse?->departmentLevel?->level?->name ?? '---',
                 'course' => $this->resource->departmentLevelCourse?->departmentCourse?->course?->name ?? '---',
                 'title' => $this->resource->title,
                 'code' => $this->resource->code,
                 'implementationYear' => $this->resource->implementation_year,
+                'modulesCount' => (int) ($this->resource->syllabus_course_modules_count ?? 0),
                 'status' => $this->resource->status?->value,
                 'syllabusDocumentId' => $this->resource->syllabus_document_id,
                 'syllabusDocumentUrl' => $this->resource->syllabus_document_url,
@@ -29,7 +36,7 @@ class CourseSyllabusResource extends JsonResource
                         'course_syllabus' => $this->resource->id,
                     ])
                     : null,
-                $this->mergeWhen(true, [
+                $this->mergeWhen($request->routeIs('course-syllabuses.*'), [
                     'createdAt' => $this->resource->created_at,
                     'updatedAt' => $this->resource->updated_at,
                     'deletedAt' => $this->resource->deleted_at,

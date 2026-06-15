@@ -13,7 +13,7 @@ defineProps<Props>();
 </script>
 
 <template>
-    <BaseButton type="button" :variant="variant" class="size-6 rounded-full p-1">
-        <BaseIcon :name="icon" :color="ColorVariant.white" />
+    <BaseButton type="button" :variant="variant" classes="w-8 h-8 p-0 rounded-full flex items-center justify-center flex-shrink-0">
+        <BaseIcon :name="icon" :color="iconColor ?? ColorVariant.white" :size="iconSize" />
     </BaseButton>
 </template>

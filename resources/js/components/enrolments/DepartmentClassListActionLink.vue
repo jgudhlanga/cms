@@ -15,7 +15,7 @@ defineProps<Props>();
         v-if="actionable"
         :title="title"
         :href="routeName ?? ''"
-        classes="size-4 bg-persian-100 rounded-full px-2 py-1 hover:bg-persian-600 hover:text-persian-100"
+        classes="inline-flex min-w-8 items-center justify-center rounded-full border border-primary/30 bg-primary/15 px-2 py-1 text-primary hover:bg-primary hover:text-primary-foreground"
     />
     <span v-else>{{ title }}</span>
 </template>

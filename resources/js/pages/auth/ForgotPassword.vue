@@ -29,7 +29,9 @@ const submit = () => {
 
 <template>
     <Head :title="$t('trans.ui_forgot_password')" />
-    <div class="space-y-6">
+    <div
+        class="space-y-6 rounded-lg border border-border bg-card p-6 text-card-foreground shadow-md dark:shadow-sm"
+    >
         <BaseAlert v-if="status" :type="TypeVariant.success" :description="status" />
         <form @submit.prevent="submit">
             <div class="grid gap-2">

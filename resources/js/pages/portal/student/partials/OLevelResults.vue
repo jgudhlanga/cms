@@ -23,7 +23,7 @@ const verificationMode = isItTrue(import.meta.env.VITE_VERIFICATION_MODE);
         </div>
         <div
             v-if="!verificationMode"
-            class="border-persian-500 text-persian-600 mt-3 flex w-full flex-col space-y-1 space-x-3 rounded-md border-l-4 bg-gray-50 p-3 shadow-sm"
+            class="border-persian-500 text-persian-200 dark:text-persian-100 mt-3 flex w-full flex-col space-y-1 space-x-3 rounded-md border-l-4 bg-muted/30 p-3 shadow-sm"
         >
             <div>{{ $t('trans.ui_you_can_update_your_o_level_results_by_clicking_the_button_b') }}</div>
             <div class="flex flex-wrap">

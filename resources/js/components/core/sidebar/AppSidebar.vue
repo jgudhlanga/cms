@@ -17,10 +17,10 @@ const props = withDefaults(defineProps<SidebarProps>(), {
 </script>
 <template>
     <Sidebar v-bind="props">
-        <SidebarHeader>
+        <SidebarHeader class="group-data-[collapsible=icon]:pb-5">
             <TenantSwitcher />
         </SidebarHeader>
-        <SidebarContent class="mt-5">
+        <SidebarContent>
             <NavMain />
         </SidebarContent>
         <SidebarFooter>

@@ -1,5 +1,16 @@
 import { RoleMinimal } from '@/types/acl';
+import { Address, Contact } from '@/types/shared';
 import { SelectOption } from '@/types/utils';
+
+export type UserPreference = {
+    type?: string;
+    id?: string | number;
+    attributes: {
+        userId?: string | number;
+        sideBarState?: boolean;
+        locale?: string | null;
+    };
+};
 
 export type User = {
     type: string;
@@ -34,6 +45,9 @@ export type User = {
     relationships: {
         profile: Profile | null;
         roles: RoleMinimal[];
+        mainContact?: Contact | null;
+        mainAddress?: Address | null;
+        preference?: UserPreference | null;
     };
 };
 
@@ -97,5 +111,13 @@ export type UserStaffParams = {
     gender_id: string | number | null;
     role_ids: Array<string | undefined | null> | null;
     department_ids: Array<string | undefined | null> | null;
+}
+
+export type AuthCredentialsUpdate = {
+    email: string;
+    password: string;
+    password_confirmation: string;
+    change_email?: boolean;
+    change_password?: boolean;
 }
 

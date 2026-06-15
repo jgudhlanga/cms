@@ -3,6 +3,8 @@
 namespace App\Http\Requests\Students;
 
 use App\Enums\Shared\IdTypeEnum;
+use App\Rules\ZimbabweanIdNumber;
+use App\Services\Enrollment\EnrollmentLookupService;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -11,6 +13,15 @@ class UpdateStudentUserRequest extends FormRequest
     public function authorize(): bool
     {
         return true;
+    }
+
+    public function prepareForValidation(): void
+    {
+        if ($this->filled('id_number')) {
+            $this->merge([
+                'id_number' => EnrollmentLookupService::normalizeNationalId((string) $this->id_number),
+            ]);
+        }
     }
 
     public function rules(): array
@@ -47,19 +58,22 @@ class UpdateStudentUserRequest extends FormRequest
 
             'id_number' => [
                 'nullable',
-                'required_if:id_type_id,' . $idType,
+                'required_if:id_type_id,'.$idType,
+                'string',
+                'max:20',
+                new ZimbabweanIdNumber,
                 Rule::unique('students', 'id_number')->ignore($studentId),
             ],
 
             'passport_number' => [
                 'nullable',
-                'required_if:id_type_id,' . $passportType,
+                'required_if:id_type_id,'.$passportType,
                 Rule::unique('students', 'passport_number')->ignore($studentId),
             ],
 
             'country_id' => [
                 'nullable',
-                'required_if:id_type_id,' . $passportType,
+                'required_if:id_type_id,'.$passportType,
                 'exists:countries,id',
             ],
         ];

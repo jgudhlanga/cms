@@ -28,8 +28,8 @@ const props = withDefaults(
 		:data-active="isActive"
 		:class="
             cn(
-                'flex h-7 min-w-0 -translate-x-px items-center gap-2 overflow-hidden rounded-lg border border-transparent px-2 text-sidebar-foreground outline-hidden ring-sidebar-ring hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 [&>svg]:text-sidebar-accent-foreground',
-                'data-[active=true]:bg-white/10 data-[active=true]:text-white data-[active=true]:border-white/70 data-[active=true]:[&>svg]:text-white',
+                'flex min-h-8 min-w-0 -translate-x-px items-center gap-2 overflow-hidden rounded-md border border-transparent px-3 py-1.5 text-sidebar-foreground/90 outline-hidden ring-sidebar-ring transition-colors duration-150 hover:bg-sidebar-accent/10 hover:text-sidebar-foreground focus-visible:ring-2 focus-visible:ring-sidebar-ring/50 active:bg-sidebar-accent/15 disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 [&>svg]:text-sidebar-foreground/75',
+                'data-[active=true]:bg-sidebar-primary/12 data-[active=true]:font-medium data-[active=true]:text-sidebar-foreground data-[active=true]:shadow-[inset_3px_0_0_0_hsl(var(--sidebar-primary))] data-[active=true]:[&>svg]:text-sidebar-primary',
                 size === 'sm' && 'text-xs',
                 size === 'md' && 'text-sm',
                 'group-data-[collapsible=icon]:hidden',

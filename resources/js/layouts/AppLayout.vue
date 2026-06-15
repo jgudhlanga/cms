@@ -4,6 +4,7 @@ import ErrorDialog from '@/components/core/modal/ErrorDialog.vue';
 import AppPreferencesSheet from '@/components/core/preferences/AppPreferencesSheet.vue';
 import AppSidebar from '@/components/core/sidebar/AppSidebar.vue';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
+import { useFlashAlerts } from '@/composables/core/useFlashAlerts';
 import { useUserPreference } from '@/composables/core/useUserPreference';
 import { usePreferencesStore } from '@/store/core/preferences.store';
 import { BreadcrumbItemType } from '@/types/ui';
@@ -16,6 +17,7 @@ defineProps<{
 }>();
 
 const page = usePage();
+useFlashAlerts();
 const preferencesStore = usePreferencesStore();
 const { hydratePreferenceOnce } = useUserPreference();
 const isAuthenticated = computed(() => Boolean(page.props.auth?.user));
@@ -37,13 +39,12 @@ onMounted(async () => {
 <template>
     <SidebarProvider :open="preferencesStore.sideBarState" @update:open="updateSidebarState">
         <AppSidebar />
-        <SidebarInset>
-            <div class="flex h-full flex-1 flex-col gap-4 rounded-xl px-8">
+        <SidebarInset class="min-w-0 overflow-x-clip">
+            <div class="flex h-full min-w-0 w-full max-w-full flex-1 flex-col gap-3 overflow-x-clip rounded-xl px-3 sm:gap-4 sm:px-5 lg:px-8">
                 <slot />
             </div>
         </SidebarInset>
     </SidebarProvider>
-    <AppPreferencesSheet />
     <ConfirmDialog />
     <ErrorDialog />
     <ModalsContainer />

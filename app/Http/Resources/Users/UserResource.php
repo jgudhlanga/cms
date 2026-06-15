@@ -3,6 +3,9 @@
 namespace App\Http\Resources\Users;
 
 use App\Helpers\Helper;
+use App\Http\Resources\Preferences\UserPreferenceResource;
+use App\Http\Resources\Shared\AddressResource;
+use App\Http\Resources\Shared\ContactResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -11,6 +14,7 @@ class UserResource extends JsonResource
     public function toArray(Request $request): array
     {
         $hasAccessToNonAcademicDepartments = Helper::hasAccessToNonAcademicDepartments();
+
         return [
             'type' => 'user',
             'id' => $this->id,
@@ -46,7 +50,39 @@ class UserResource extends JsonResource
             'relationships' => [
                 'profile' => UserProfileData::forUser($this->resource),
                 'roles' => collect($this->roles->map(fn ($role) => ['id' => $role->id, 'name' => $role->name])),
+                'mainContact' => ContactResource::make($this->resolveMainContact()),
+                'mainAddress' => AddressResource::make($this->resolveMainAddress()),
+                'preference' => $this->whenLoaded(
+                    'preference',
+                    fn () => UserPreferenceResource::make($this->preference),
+                ),
             ],
         ];
+    }
+
+    private function resolveMainContact(): mixed
+    {
+        if ($this->has_staff_profile && $this->relationLoaded('staffProfile')) {
+            return $this->staffProfile?->contacts?->firstWhere('contact_is_main', 1);
+        }
+
+        if ($this->has_student_profile && $this->relationLoaded('studentProfile')) {
+            return $this->studentProfile?->contacts?->firstWhere('contact_is_main', 1);
+        }
+
+        return null;
+    }
+
+    private function resolveMainAddress(): mixed
+    {
+        if ($this->has_staff_profile && $this->relationLoaded('staffProfile')) {
+            return $this->staffProfile?->addresses?->firstWhere('address_is_main', 1);
+        }
+
+        if ($this->has_student_profile && $this->relationLoaded('studentProfile')) {
+            return $this->studentProfile?->addresses?->firstWhere('address_is_main', 1);
+        }
+
+        return null;
     }
 }

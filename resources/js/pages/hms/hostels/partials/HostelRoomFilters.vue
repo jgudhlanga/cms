@@ -1,0 +1,116 @@
+<script setup lang="ts">
+import { HOSTEL_SHOW_ALL_FLOORS, type HostelShowStatusFilter } from '@/composables/hms/useHostelShow';
+import { formatFloorLabel } from '@/lib/hms/hostelRoomDisplay';
+import { trans } from 'laravel-vue-i18n';
+import { IconName } from '@/enums/icons';
+
+interface Props {
+    totalRooms: number;
+    floorTabs: number[];
+    activeFloor: number;
+    statusFilter: HostelShowStatusFilter;
+    searchQuery: string;
+}
+
+defineProps<Props>();
+
+const emit = defineEmits<{
+    'update:activeFloor': [value: number];
+    'update:statusFilter': [value: HostelShowStatusFilter];
+    'update:searchQuery': [value: string];
+}>();
+</script>
+
+<template>
+    <div class="space-y-3">
+        <div class="flex flex-wrap gap-2">
+            <button
+                type="button"
+                class="rounded-lg border-[1.5px] px-4 py-2 text-sm font-semibold transition"
+                :class="
+                    activeFloor === HOSTEL_SHOW_ALL_FLOORS
+                        ? 'border-primary bg-primary text-primary-foreground'
+                        : 'border-border bg-card text-muted-foreground hover:border-primary/40'
+                "
+                @click="emit('update:activeFloor', HOSTEL_SHOW_ALL_FLOORS)"
+            >
+                {{ $t('hms.show_all_floors') }}
+            </button>
+            <button
+                v-for="floor in floorTabs"
+                :key="floor"
+                type="button"
+                class="rounded-lg border-[1.5px] px-4 py-2 text-sm font-semibold transition"
+                :class="
+                    activeFloor === floor
+                        ? 'border-primary bg-primary text-primary-foreground'
+                        : 'border-border bg-card text-muted-foreground hover:border-primary/40'
+                "
+                @click="emit('update:activeFloor', floor)"
+            >
+                {{ formatFloorLabel(floor, trans) }}
+            </button>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+            <button
+                type="button"
+                class="rounded-full border-[1.5px] px-4 py-2 text-sm font-semibold transition"
+                :class="
+                    statusFilter === 'all'
+                        ? 'border-indigo-500 bg-indigo-50 text-indigo-600'
+                        : 'border-border bg-card text-muted-foreground hover:border-primary/40'
+                "
+                @click="emit('update:statusFilter', 'all')"
+            >
+                {{ $t('hms.show_filter_all', { count: totalRooms }) }}
+            </button>
+            <button
+                type="button"
+                class="rounded-full border-[1.5px] px-4 py-2 text-sm font-semibold transition"
+                :class="
+                    statusFilter === 'available'
+                        ? 'border-indigo-500 bg-indigo-50 text-indigo-600'
+                        : 'border-border bg-card text-muted-foreground hover:border-primary/40'
+                "
+                @click="emit('update:statusFilter', 'available')"
+            >
+                {{ $t('hms.show_filter_available') }}
+            </button>
+            <button
+                type="button"
+                class="rounded-full border-[1.5px] px-4 py-2 text-sm font-semibold transition"
+                :class="
+                    statusFilter === 'partial'
+                        ? 'border-indigo-500 bg-indigo-50 text-indigo-600'
+                        : 'border-border bg-card text-muted-foreground hover:border-primary/40'
+                "
+                @click="emit('update:statusFilter', 'partial')"
+            >
+                {{ $t('hms.show_filter_partial') }}
+            </button>
+            <button
+                type="button"
+                class="rounded-full border-[1.5px] px-4 py-2 text-sm font-semibold transition"
+                :class="
+                    statusFilter === 'full'
+                        ? 'border-indigo-500 bg-indigo-50 text-indigo-600'
+                        : 'border-border bg-card text-muted-foreground hover:border-primary/40'
+                "
+                @click="emit('update:statusFilter', 'full')"
+            >
+                {{ $t('hms.show_filter_full') }}
+            </button>
+            <div class="ml-auto min-w-[200px] shrink-0">
+                <BaseInputWithIcon
+                    :icon="IconName.search"
+                    :placeholder="$t('hms.show_search_room_placeholder')"
+                    :model-value="searchQuery"
+                    full-width
+                    class="rounded-full"
+                    @update:model-value="emit('update:searchQuery', $event)"
+                />
+            </div>
+        </div>
+    </div>
+</template>

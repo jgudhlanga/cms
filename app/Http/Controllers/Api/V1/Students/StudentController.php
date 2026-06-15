@@ -10,13 +10,17 @@ use App\Http\Resources\Students\SponsorResource;
 use App\Http\Resources\Students\StudentResource;
 use App\Models\Students\Student;
 use App\Repositories\Students\interface\IStudentRepository;
+use App\Services\Students\StudentProgrammeDataService;
 use App\Traits\HttpUtil;
 
 class StudentController
 {
     use HttpUtil;
 
-    public function __construct(protected IStudentRepository $repository) {}
+    public function __construct(
+        protected IStudentRepository $repository,
+        protected StudentProgrammeDataService $programmeDataService,
+    ) {}
 
     public function index()
     {
@@ -28,6 +32,7 @@ class StudentController
                 'level',
                 'course',
                 'mode_of_study',
+                'gender',
                 'academic_year',
                 'calendar_type',
                 'with_trashed',
@@ -35,6 +40,13 @@ class StudentController
         );
 
         return StudentResource::collection($students);
+    }
+
+    public function studentEnrolements(Student $student)
+    {
+        abort_unless(request()->user()?->can('view', $student) ?? false, 403);
+
+        return $this->success($this->programmeDataService->buildProgrammesForStudent($student));
     }
 
     // ====== STUDENT ===========

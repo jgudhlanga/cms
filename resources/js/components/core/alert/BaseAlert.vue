@@ -13,7 +13,7 @@ const variants: Record<TypeVariant, string> = {
     [TypeVariant.warning]: 'border-amber-500 text-amber-500',
     [TypeVariant.danger]: 'border-red-600 text-red-600',
     [TypeVariant.success]: 'border-green-600 text-green-600',
-    [TypeVariant.primary]: 'border-persian-600 text-persian-600',
+    [TypeVariant.primary]: 'border-primary text-primary',
 };
 
 const iconVariants: Record<TypeVariant, string> = {

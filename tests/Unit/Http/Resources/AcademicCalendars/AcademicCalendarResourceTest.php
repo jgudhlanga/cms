@@ -4,7 +4,7 @@ use App\Enums\AcademicCalendars\AcademicCalendarTypeEnum;
 use App\Http\Resources\AcademicCalendars\AcademicCalendarResource;
 use Illuminate\Http\Request;
 
-test('abma calendar name uses term 1 when average month is in first quarter', function () {
+test('abma calendar name uses ABMA 1 when opening month is in first quarter', function () {
     $calendar = (object) [
         'id' => 1,
         'calendar_year' => '2026',
@@ -15,10 +15,10 @@ test('abma calendar name uses term 1 when average month is in first quarter', fu
 
     $data = (new AcademicCalendarResource($calendar))->toArray(Request::create('/'));
 
-    expect($data['attributes']['name'])->toStartWith('Term 1 - ');
+    expect($data['attributes']['name'])->toStartWith('ABMA 1 - ');
 });
 
-test('abma calendar name uses term 2 when average month is in second quarter', function () {
+test('abma calendar name uses ABMA 2 when opening month is in second quarter', function () {
     $calendar = (object) [
         'id' => 2,
         'calendar_year' => '2026',
@@ -29,10 +29,10 @@ test('abma calendar name uses term 2 when average month is in second quarter', f
 
     $data = (new AcademicCalendarResource($calendar))->toArray(Request::create('/'));
 
-    expect($data['attributes']['name'])->toStartWith('Term 2 - ');
+    expect($data['attributes']['name'])->toStartWith('ABMA 2 - ');
 });
 
-test('abma calendar name uses term 3 when average month is in third quarter', function () {
+test('abma calendar name uses ABMA 3 when opening month is in third quarter', function () {
     $calendar = (object) [
         'id' => 3,
         'calendar_year' => '2026',
@@ -43,10 +43,10 @@ test('abma calendar name uses term 3 when average month is in third quarter', fu
 
     $data = (new AcademicCalendarResource($calendar))->toArray(Request::create('/'));
 
-    expect($data['attributes']['name'])->toStartWith('Term 3 - ');
+    expect($data['attributes']['name'])->toStartWith('ABMA 3 - ');
 });
 
-test('abma calendar name uses term 4 when average month is in fourth quarter', function () {
+test('abma calendar name uses ABMA 4 when opening month is in fourth quarter', function () {
     $calendar = (object) [
         'id' => 4,
         'calendar_year' => '2026',
@@ -57,5 +57,5 @@ test('abma calendar name uses term 4 when average month is in fourth quarter', f
 
     $data = (new AcademicCalendarResource($calendar))->toArray(Request::create('/'));
 
-    expect($data['attributes']['name'])->toStartWith('Term 4 - ');
+    expect($data['attributes']['name'])->toStartWith('ABMA 4 - ');
 });

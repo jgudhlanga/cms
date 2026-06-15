@@ -68,7 +68,6 @@ declare module 'vue' {
     BaseStepperSeparator: typeof import('./resources/js/components/core/stepper/BaseStepperSeparator.vue')['default']
     BaseStepperTrigger: typeof import('./resources/js/components/core/stepper/BaseStepperTrigger.vue')['default']
     BaseSwitch: typeof import('./resources/js/components/core/form/radio/BaseSwitch.vue')['default']
-    BaseTabs: typeof import('./resources/js/components/core/tabs/BaseTabs.vue')['default']
     BaseTag: typeof import('./resources/js/components/core/util/BaseTag.vue')['default']
     BaseText: typeof import('./resources/js/components/core/util/BaseText.vue')['default']
     BaseTooltip: typeof import('./resources/js/components/core/util/BaseTooltip.vue')['default']

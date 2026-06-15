@@ -64,6 +64,8 @@ const APP_MODULE_KEYS = {
     fee_types: 'fee_types',
     fee_structures: 'fee_structures',
     finance_exchange_rates: 'finance_exchange_rates',
+    finance_transaction_queries: 'finance_transaction_queries',
+    finance_reconcile_preview: 'finance_reconcile_preview',
     show_payment_status: 'show_payment_status',
     o_level_subjects: 'o_level_subjects',
     academic_calendars: 'academic_calendars',
@@ -72,6 +74,13 @@ const APP_MODULE_KEYS = {
     student_enrolment_statuses: 'student_enrolment_statuses',
     academic_year_options: 'academic_year_options',
     course_syllabus_modules: 'course_syllabus_modules',
+    hostels: 'hostels',
+    hostel_rooms: 'hostel_rooms',
+    hostel_applications: 'hostel_applications',
+    hostel_application_decline: 'hostel_application_decline',
+    hostel_application_approve: 'hostel_application_approve',
+    hostel_accommodation_query: 'hostel_accommodation_query',
+    hostel_accommodation_leave: 'hostel_accommodation_leave',
 };
 const EXAM_SITTINGS = [
     { value: 'june', label: 'June' },

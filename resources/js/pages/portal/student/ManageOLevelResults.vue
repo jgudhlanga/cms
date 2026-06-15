@@ -21,6 +21,8 @@ import { Student } from '@/types/students';
 import { BreadcrumbItemInterface } from '@/types/ui';
 import { SelectOption } from '@/types/utils';
 import { Head, useForm } from '@inertiajs/vue3';
+import { useMediaQuery } from '@vueuse/core';
+import { computed } from 'vue';
 
 interface Props {
     auth: AuthObject;
@@ -79,26 +81,29 @@ const saveSubjectResult = (subjectId: string) => {
     });
 };
 const verificationMode = isItTrue(import.meta.env.VITE_VERIFICATION_MODE);
+const isMobile = useMediaQuery('(max-width: 639px)');
+const gradeRadioOrientation = computed(() => (isMobile.value ? 'vertical' : 'horizontal'));
+const gradeRadioVerticalLayout = computed(() => isMobile.value);
 </script>
 <template>
     <Head :title="$t('trans.ui_manage_o_level')" />
     <PageContainer :breadcrumbs="breadcrumbs">
-        <div class="my-6 flex items-center justify-between">
+        <div class="my-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <HeadingSmall
                 :title="$t('trans.ui_o_level_results')"
                 :description="$t('trans.ui_list_of_o_level_subjects_and_grades_attained_by_a_student')"
             />
-            <BaseButton classes="rounded-full" :variant="ColorVariant.primary_outline" @click="navigateTo(route('portal.list-o-levels'))">
+            <BaseButton classes="w-full rounded-full sm:w-auto" :variant="ColorVariant.primary_outline" @click="navigateTo(route('portal.list-o-levels'))">
                 <BaseIcon :name="IconName.back" />
                 <span>{{ $t('trans.back') }}</span>
             </BaseButton>
         </div>
         <div class="flex flex-col space-y-4" v-if="oLevelSubjectResults && oLevelSubjectResults?.length > 0">
             <form v-for="(row, index) in oLevelSubjectResults" :key="`mobile_${row?.id ?? ''}`" @submit.prevent="saveSubjectResult(String(row.id))">
-                <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow">
+                <div class="overflow-hidden rounded-lg border border-border bg-card text-card-foreground shadow">
                     <!-- Card Header -->
-                    <div class="bg-card border-b border-gray-100 px-4 py-2">
-                        <div class="text-accent-foreground flex items-center space-x-1 text-xs font-semibold uppercase">
+                    <div class="border-b border-border bg-muted/30 px-4 py-2">
+                        <div class="flex items-center space-x-1 text-xs font-semibold text-foreground uppercase">
                             <span>{{ `${index + 1}.` }}</span>
                             <h3>
                                 {{ row?.attributes?.subject }}
@@ -110,7 +115,7 @@ const verificationMode = isItTrue(import.meta.env.VITE_VERIFICATION_MODE);
                     <div class="p-4">
                         <div class="grid grid-cols-1 items-center gap-4 md:grid-cols-4">
                             <div>
-                                <p class="text-xs font-medium tracking-wide text-gray-500 uppercase">{{ $tChoice('trans.year', 1) }}</p>
+                                <p class="text-xs font-medium tracking-wide text-muted-foreground uppercase">{{ $tChoice('trans.year', 1) }}</p>
                                 <div class="mt-1">
                                     <SelectYear
                                         :input-id="`year_${row.id}`"
@@ -127,7 +132,7 @@ const verificationMode = isItTrue(import.meta.env.VITE_VERIFICATION_MODE);
                                 </div>
                             </div>
                             <div>
-                                <p class="text-xs font-medium tracking-wide text-gray-500 uppercase">{{ $tChoice('trans.sitting', 1) }}</p>
+                                <p class="text-xs font-medium tracking-wide text-muted-foreground uppercase">{{ $tChoice('trans.sitting', 1) }}</p>
                                 <div class="mt-1 flex w-full flex-col">
                                     <SelectSitting
                                         class="flex w-full"
@@ -142,7 +147,7 @@ const verificationMode = isItTrue(import.meta.env.VITE_VERIFICATION_MODE);
                                 </div>
                             </div>
                             <div>
-                                <p class="text-xs font-medium tracking-wide text-gray-500 uppercase">{{ $tChoice('trans.grade', 1) }}</p>
+                                <p class="text-xs font-medium tracking-wide text-muted-foreground uppercase">{{ $tChoice('trans.grade', 1) }}</p>
                                 <div class="mt-1">
                                     <SpinnerComponent class="flex w-full items-center justify-center" v-if="isLoading" />
                                     <template v-else>
@@ -156,8 +161,8 @@ const verificationMode = isItTrue(import.meta.env.VITE_VERIFICATION_MODE);
                                             "
                                             :label-uppercase="true"
                                             :is-required="true"
-                                            orientation="horizontal"
-                                            :vertical-layout="false"
+                                            :orientation="gradeRadioOrientation"
+                                            :vertical-layout="gradeRadioVerticalLayout"
                                             @update:modelValue="
                                                 (value) => {
                                                     const parts = value.split('|');

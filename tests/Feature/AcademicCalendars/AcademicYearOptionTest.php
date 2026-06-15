@@ -3,6 +3,7 @@
 use App\Models\AcademicCalendars\AcademicYearOption;
 use App\Models\Acl\Permission;
 use App\Models\Users\User;
+use Database\Seeders\AcademicCalendars\AcademicYearOptionSeeder;
 
 test('guests are redirected when visiting academic year options page', function () {
     $this->get(route('academic-year-options.index'))->assertRedirect('/login');
@@ -145,4 +146,34 @@ test('academic year options dropdown api returns data', function () {
     $this->get(route('v1.academic-year-options.index'))
         ->assertSuccessful()
         ->assertJsonFragment(['name' => 'Semester 2']);
+});
+
+test('academic year options api filters by calendar_type semester', function () {
+    $this->seed(AcademicYearOptionSeeder::class);
+    $response = $this->getJson(route('v1.academic-year-options.index').'?calendar_type=semester')->assertSuccessful();
+    $rows = $response->json('data') ?? [];
+    expect($rows)->not->toBeEmpty();
+    foreach ($rows as $row) {
+        expect((string) ($row['attributes']['name'] ?? ''))->toStartWith('Semester');
+    }
+});
+
+test('academic year options api filters by calendar_type term', function () {
+    $this->seed(AcademicYearOptionSeeder::class);
+    $response = $this->getJson(route('v1.academic-year-options.index').'?calendar_type=term')->assertSuccessful();
+    $rows = $response->json('data') ?? [];
+    expect($rows)->not->toBeEmpty();
+    foreach ($rows as $row) {
+        expect((string) ($row['attributes']['name'] ?? ''))->toStartWith('Term');
+    }
+});
+
+test('academic year options api filters by calendar_type abma', function () {
+    $this->seed(AcademicYearOptionSeeder::class);
+    $response = $this->getJson(route('v1.academic-year-options.index').'?calendar_type=abma')->assertSuccessful();
+    $rows = $response->json('data') ?? [];
+    expect($rows)->not->toBeEmpty();
+    foreach ($rows as $row) {
+        expect((string) ($row['attributes']['name'] ?? ''))->toStartWith('ABMA');
+    }
 });

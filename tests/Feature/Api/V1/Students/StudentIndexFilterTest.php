@@ -2,22 +2,26 @@
 
 use App\Models\AcademicCalendars\AcademicCalendar;
 use App\Models\AcademicCalendars\AcademicYearOption;
+use App\Models\Institution\Staff;
+use App\Models\Shared\Gender;
+use App\Models\Shared\MaritalStatus;
+use App\Models\Shared\Title;
 use App\Models\Students\StudentEnrolment;
 use App\Models\Students\StudentEnrolmentStatus;
+use App\Models\Students\StudentProgram;
 use App\Models\Users\User;
 use Illuminate\Support\Str;
 use Laravel\Sanctum\Sanctum;
 
-it('filters students by institution department id array', function (): void {
-    $program = createVerifiedStudentProgram('STU-IDX-'.strtoupper(Str::random(4)));
+function createStudentEnrolmentForProgram(StudentProgram $program): void
+{
+    $suffix = Str::lower(Str::random(6));
 
-    $user = User::factory()->create(['tenant_id' => $program->tenant_id]);
-    Sanctum::actingAs($user);
-
-    $academicYearOption = AcademicYearOption::query()->firstOrCreate(
-        ['slug' => 'api-filter-year'],
-        ['name' => 'Semester 1', 'description' => null],
-    );
+    $academicYearOption = AcademicYearOption::query()->create([
+        'slug' => 'api-filter-'.$suffix,
+        'name' => 'Semester '.$suffix,
+        'description' => null,
+    ]);
 
     $calendar = AcademicCalendar::query()->create([
         'calendar_year' => '2025/2026',
@@ -27,7 +31,7 @@ it('filters students by institution department id array', function (): void {
     ]);
 
     $status = StudentEnrolmentStatus::query()->firstOrCreate(
-        ['slug' => 'active-api-filter'],
+        ['slug' => 'active'],
         ['name' => 'Active', 'description' => 'Test'],
     );
 
@@ -42,6 +46,15 @@ it('filters students by institution department id array', function (): void {
         'mode_of_study_id' => $program->mode_of_study_id,
         'student_enrolment_status_id' => $status->id,
     ]);
+}
+
+it('filters students by institution department id array', function (): void {
+    $program = createVerifiedStudentProgram('STU-IDX-'.strtoupper(Str::random(4)));
+
+    $user = User::factory()->create(['tenant_id' => $program->tenant_id]);
+    Sanctum::actingAs($user);
+
+    createStudentEnrolmentForProgram($program);
 
     $deptId = (int) $program->institution_department_id;
 
@@ -53,4 +66,85 @@ it('filters students by institution department id array', function (): void {
     $empty = $this->getJson(route('v1.students.index').'?department[]=999999999');
     $empty->assertOk();
     expect($empty->json('data'))->toBe([]);
+});
+
+it('restricts students to the department user own departments', function (): void {
+    $ownProgram = createVerifiedStudentProgram('STU-OWN-'.strtoupper(Str::random(4)));
+    $otherProgram = createVerifiedStudentProgram('STU-OTH-'.strtoupper(Str::random(4)));
+
+    createStudentEnrolmentForProgram($ownProgram);
+    createStudentEnrolmentForProgram($otherProgram);
+
+    $departmentUser = User::factory()->create(['tenant_id' => $ownProgram->tenant_id]);
+    $departmentUser->givePermissionTo('viewOnlyOwnDepartment:departments');
+
+    $title = Title::query()->firstOrCreate(['name' => 'Mr']);
+    $gender = Gender::query()->firstOrCreate(['title' => 'Male']);
+    $maritalStatus = MaritalStatus::query()->firstOrCreate(['title' => 'Single']);
+
+    $staff = Staff::query()->create([
+        'tenant_id' => $ownProgram->tenant_id,
+        'user_id' => $departmentUser->id,
+        'title_id' => $title->id,
+        'gender_id' => $gender->id,
+        'marital_status_id' => $maritalStatus->id,
+    ]);
+
+    $staff->institutionDepartments()->attach($ownProgram->institution_department_id);
+
+    Sanctum::actingAs($departmentUser);
+
+    $response = $this->getJson(route('v1.students.index'));
+    $response->assertOk();
+
+    $ids = collect($response->json('data'))->pluck('id')->map(static fn ($id) => (int) $id)->all();
+
+    expect($ids)->toContain((int) $ownProgram->student_id)
+        ->and($ids)->not->toContain((int) $otherProgram->student_id);
+});
+
+it('filters students by gender', function (): void {
+    $maleProgram = createVerifiedStudentProgram('STU-MALE-'.strtoupper(Str::random(4)));
+    $femaleProgram = createVerifiedStudentProgram('STU-FEM-'.strtoupper(Str::random(4)));
+
+    $femaleGender = Gender::query()->firstOrCreate(['title' => 'Female']);
+    $femaleProgram->student->update(['gender_id' => $femaleGender->id]);
+
+    createStudentEnrolmentForProgram($maleProgram);
+    createStudentEnrolmentForProgram($femaleProgram);
+
+    $user = User::factory()->create(['tenant_id' => $maleProgram->tenant_id]);
+    Sanctum::actingAs($user);
+
+    $maleResponse = $this->getJson(route('v1.students.index').'?gender=male');
+    $maleResponse->assertOk();
+    $maleIds = collect($maleResponse->json('data'))->pluck('id')->map(static fn ($id) => (int) $id)->all();
+    expect($maleIds)->toContain((int) $maleProgram->student_id)
+        ->and($maleIds)->not->toContain((int) $femaleProgram->student_id);
+
+    $femaleResponse = $this->getJson(route('v1.students.index').'?gender=female');
+    $femaleResponse->assertOk();
+    $femaleIds = collect($femaleResponse->json('data'))->pluck('id')->map(static fn ($id) => (int) $id)->all();
+    expect($femaleIds)->toContain((int) $femaleProgram->student_id)
+        ->and($femaleIds)->not->toContain((int) $maleProgram->student_id);
+
+    $allResponse = $this->getJson(route('v1.students.index'));
+    $allResponse->assertOk();
+    $allIds = collect($allResponse->json('data'))->pluck('id')->map(static fn ($id) => (int) $id)->all();
+    expect($allIds)->toContain((int) $maleProgram->student_id)
+        ->and($allIds)->toContain((int) $femaleProgram->student_id);
+});
+
+it('returns no students when department user has no assigned departments', function (): void {
+    $program = createVerifiedStudentProgram('STU-NODEPT-'.strtoupper(Str::random(4)));
+    createStudentEnrolmentForProgram($program);
+
+    $departmentUser = User::factory()->create(['tenant_id' => $program->tenant_id]);
+    $departmentUser->givePermissionTo('viewOnlyOwnDepartment:departments');
+
+    Sanctum::actingAs($departmentUser);
+
+    $response = $this->getJson(route('v1.students.index'));
+    $response->assertOk();
+    expect($response->json('data'))->toBe([]);
 });

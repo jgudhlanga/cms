@@ -13,10 +13,10 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 class EnrolmentResource extends JsonResource
 {
-
     public function toArray(Request $request): array
     {
         $contact = $this->student?->contacts?->first();
+
         return [
             'type' => 'enrolments',
             'id' => $this->id,
@@ -42,6 +42,8 @@ class EnrolmentResource extends JsonResource
                 'levelId' => $this->departmentLevel?->level?->id,
                 'intakePeriod' => $this->intakePeriod?->name,
                 'intakePeriodId' => $this->intakePeriod?->id,
+                'intakePeriodCalendarYear' => $this->intakePeriod?->calendar_year,
+                'intakePeriodStartDate' => $this->intakePeriod?->start_date,
                 'allowedApplicationsPerLevel' => $this->departmentLevel?->level?->allowed_applications_per_level,
                 'departmentCourseId' => $this->department_course_id,
                 'course' => $this->departmentCourse?->course?->name,
@@ -66,7 +68,7 @@ class EnrolmentResource extends JsonResource
                 'departmentWorkflowStep' => DepartmentApplicationStepResource::make($this->departmentWorkflowStep),
                 'requirements' => $this->departmentLevel?->requirement ? DepartmentLevelRequirementResource::make($this->departmentLevel->requirement) : null,
                 'courseRequirements' => $this->departmentCourse?->requirement ? CourseRequirementResource::make($this->departmentCourse->requirement) : null,
-            ]
+            ],
         ];
     }
 }

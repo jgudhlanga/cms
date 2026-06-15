@@ -20,7 +20,7 @@ import { User } from '@/types/users';
 import { InertiaForm, usePage } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 import { ref } from 'vue';
-import { ZodObject } from 'zod';
+import { z, ZodObject } from 'zod';
 
 export const useUsers = () => {
     const { moreActionButton, onDelete, onForceDelete, onRestore, textLink, onView, actionButton } = useDataTables();
@@ -236,7 +236,40 @@ export const useUsers = () => {
                     errorAlert('An unexpected error happened, user could not be updated');
                 }
             },
-        });
+        }); 
+    };
+
+    const isValidating = ref(false);
+    const updateUserCredentials = async (
+        form: InertiaForm<any>,
+        userId: string,
+        options: { validateEmail?: boolean; validatePassword?: boolean } = {},
+    ) => {
+        const { validateEmail = true, validatePassword = true } = options;
+        const formSchema = () => {
+            const baseSchema = mergeValidationSchema(schemaFields)([], z.object({}));
+            const passwordSchema = validatePassword
+                ? mergeValidationSchema(schemaFields)(['passwordSchema'], schemaFields['passwordConfirmationSchema']())
+                : baseSchema;
+
+            return validateEmail
+                ? passwordSchema.merge(emailUniqueSchema(`api/v1/validations/check?current_id=${userId}&key=user_email&value=`))
+                : passwordSchema;
+        };
+        try {
+            isValidating.value = true;
+            await formSchema().parseAsync(form);
+            form.put(
+                route('users.update-user-credentials', {user: userId}),
+                buildFormOptions(form, 'Authentication credentials successfully updated', 'An unexpected error happened, user credentals could not be updated', undefined, () => {
+                    
+                }),
+            );
+        }  catch (error: any) {
+            form.setError(error.format());
+        } finally {
+            isValidating.value =false;
+        }
     };
 
     const isLoading = ref(false);
@@ -252,8 +285,20 @@ export const useUsers = () => {
         }
     };
 
+    const userPermissions = ref<ApiFilterResponse | null>(null);
+    const loadUserPermissions = async (url: string) => {
+        try {
+            isLoading.value = true;
+            userPermissions.value = await HttpService.get(url);
+        } catch {
+            errorAlert(trans('trans.load_data_failure', { data: trans_choice('trans.permission', 2) }));
+        } finally {
+            isLoading.value = false;
+        }
+    };
+
     function hasStudentRole(user: User): boolean {
-        return user.relationships.roles.some((role) => role.name === 'Student');
+        return (user.relationships?.roles ?? []).some((role) => role.name === 'Student');
     }
 
     return {
@@ -268,5 +313,9 @@ export const useUsers = () => {
         updateStudentUser,
         updateStudentUserSchema,
         hasStudentRole,
+        updateUserCredentials,
+        isValidating,
+        loadUserPermissions,
+        userPermissions,
     };
 };

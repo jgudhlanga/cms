@@ -17,11 +17,17 @@ const submit = () => {
 
 <template>
     <Head :title="$t('trans.ui_email_verification')" />
-    <div v-if="status === 'verification-link-sent'" class="mb-4 text-center text-sm font-medium text-green-600">
+    <div
+        v-if="status === 'verification-link-sent'"
+        class="mb-4 text-center text-sm font-medium text-green-600 dark:text-green-400"
+    >
         {{ $t('trans.ui_a_new_verification_link_has_been_sent_to_the_email_address_y') }}
     </div>
 
-    <form @submit.prevent="submit" class="space-y-6 text-center">
+    <form
+        @submit.prevent="submit"
+        class="space-y-6 rounded-lg border border-border bg-card p-6 text-center text-card-foreground shadow-md dark:shadow-sm"
+    >
         <Button :disabled="form.processing" variant="secondary">
             <LoaderCircle v-if="form.processing" class="h-4 w-4 animate-spin" />
             {{ $t('trans.ui_resend_verification_email') }}

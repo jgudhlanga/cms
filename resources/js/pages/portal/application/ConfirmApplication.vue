@@ -171,7 +171,7 @@ onMounted(() => {
 </script>
 <template>
     <StudentPageHeader />
-    <div class="mt-20 flex w-full flex-col bg-white px-5 md:p-0">
+    <div class="mt-20 flex w-full flex-col bg-background px-5 text-foreground md:p-0">
         <div class="flex w-full flex-col space-y-6 md:mx-auto md:w-7/8">
             <BaseAlert :description="$t('trans.ui_before_submitting_carefully_review_your_application_details')" :type="TypeVariant.success" />
             <ViewPersonalDetails :personal="personal" :title="$t('trans.personal_details')" />

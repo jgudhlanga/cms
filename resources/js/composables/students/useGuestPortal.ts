@@ -22,9 +22,10 @@ export function useGuestPortal() {
     };
 
     const isValidating = ref(false);
-    const createPortalUser = async (form: InertiaForm<any>) => {
+    const createPortalUser = async (form: InertiaForm<any>, registrationPath: 'zimbabwean' | 'international') => {
         try {
             isValidating.value = true;
+            form.registration_path = registrationPath;
             await formSchema().parseAsync(form);
             form.post(
                 route('portal.store'),

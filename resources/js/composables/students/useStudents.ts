@@ -26,6 +26,13 @@ export const useStudents = () => {
             {header: trans_choice('trans.id_number',1), accessorKey: 'attributes.idNumber',},
             {header: trans_choice('trans.student_number',1), accessorKey: 'attributes.studentNumber',},
             {
+                header: trans_choice('trans.gender', 1),
+                accessorKey: 'gender',
+                cell: ({ row }: { row: { original: Student } }) => {
+                    return row.original.attributes?.gender ?? '--';
+                },
+            },
+            {
                 header: trans_choice('trans.department', 1),
                 accessorKey: 'department',
                 cell: ({ row }: { row: { original: Student } }) => {
@@ -45,7 +52,14 @@ export const useStudents = () => {
                 cell: ({ row }: { row: { original: Student } }) => {
                     return row.original.attributes?.course ?? '--';
                 },
-            },
+            }, 
+            {
+                header: trans_choice('trans.mode_of_study', 1),
+                accessorKey: 'modeOfStudy',
+                cell: ({ row }: { row: { original: Student } }) => {
+                    return row.original.attributes?.modeOfStudy ?? '--';
+                },
+            }, 
             {
                 header: trans_choice('trans.action', 2),
                 accessorKey: 'actions',

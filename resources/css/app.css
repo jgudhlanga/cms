@@ -5,10 +5,21 @@
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 
-@variant dark (&:is(.dark *));
+@custom-variant dark {
+    &:where(.dark, .dark *) {
+        @slot;
+    }
+
+    @media (prefers-color-scheme: dark) {
+        &:where(:not(.light, .light *)) {
+            @slot;
+        }
+    }
+}
 
 @theme {
-    --font-sans: Instrument Sans, ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-sans: Instrument Sans, ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
+    'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 
     --radius-lg: var(--radius);
     --radius-md: calc(var(--radius) - 2px);
@@ -98,20 +109,68 @@
     ::before,
     ::backdrop,
     ::file-selector-button {
-        border-color: var(--color-gray-200, currentcolor);
+        border-color: hsl(var(--border));
     }
 }
 
 @layer utilities {
     body,
     html {
-        --font-sans:
-            Instrument Sans, ui-sans-serif, system-ui, sans-serif, Inter, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+        --font-sans: Instrument Sans, ui-sans-serif, system-ui, sans-serif, Inter, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
         --font-hand: Caveat, cursive;
     }
 }
 
 @layer base {
+    html.light {
+        color-scheme: light;
+    }
+
+    html.dark {
+        color-scheme: dark;
+    }
+
+    input[type='date'],
+    input[type='datetime-local'],
+    input[type='time'] {
+        color-scheme: light;
+    }
+
+    html.dark input[type='date'],
+    html.dark input[type='datetime-local'],
+    html.dark input[type='time'] {
+        color-scheme: dark;
+    }
+
+    @media (prefers-color-scheme: dark) {
+        :root:not(.light):not(.dark) {
+            color-scheme: dark;
+        }
+    }
+
+    html.light {
+        --background: 0 0% 100%;
+        --foreground: 0 0% 3.9%;
+        --card: 0 0% 100%;
+        --card-foreground: 0 0% 3.9%;
+        --popover: 0 0% 100%;
+        --popover-foreground: 0 0% 3.9%;
+        --primary: 231 91.3% 54.9%;
+        --primary-foreground: 0 0% 98%;
+        --secondary: 0 0% 92.1%;
+        --secondary-foreground: 0 0% 9%;
+        --muted: 0 0% 96.1%;
+        --muted-foreground: 0 0% 45.1%;
+        --accent: 0 0% 96.1%;
+        --accent-foreground: 0 0% 9%;
+        --destructive: 0 84.2% 60.2%;
+        --destructive-foreground: 0 0% 98%;
+        --border: 0 0% 92.8%;
+        --input: 0 0% 89.8%;
+        --ring: 205 81% 59%;
+        --radius: 0.5rem;
+    }
+
     :root {
         --background: 0 0% 100%;
         --foreground: 0 0% 3.9%;
@@ -133,55 +192,85 @@
         --input: 0 0% 89.8%;
         --ring: 205 81% 59%;
         --radius: 0.5rem;
-        --sidebar-background: 232 73% 15%;
-        --sidebar-foreground: 215 16% 65%;
-        --sidebar-primary: 173 56% 56%;
-        --sidebar-primary-foreground: 232 73% 12%;
-        --sidebar-accent: 231 91.3% 46%;
-        --sidebar-accent-foreground: 0 0% 98%;
-        --sidebar-border: 232 40% 22%;
-        --sidebar-ring: 231 91.3% 54.9%;
     }
 
+    html.dark,
     .dark {
-        --background: 0 0% 3.9%;
-        --foreground: 0 0% 98%;
-        --card: 0 0% 3.9%;
-        --card-foreground: 0 0% 98%;
-        --popover: 0 0% 3.9%;
-        --popover-foreground: 0 0% 98%;
-        --primary: 0 0% 98%;
-        --primary-foreground: 0 0% 9%;
-        --secondary: 0 0% 14.9%;
-        --secondary-foreground: 0 0% 98%;
-        --muted: 0 0% 6.9%;
-        --muted-foreground: 0 0% 63.9%;
-        --accent: 0 0% 14.9%;
-        --accent-foreground: 0 0% 98%;
+        /* Dark surfaces should feel grey-ish, not near-black. */
+        --background: 220 16% 14%;
+        --foreground: 210 20% 98%;
+        --card: 220 18% 17%;
+        --card-foreground: 210 20% 98%;
+        --popover: 220 16% 16%;
+        --popover-foreground: 210 20% 98%;
+        /* Sky blue primary — high contrast on dark surfaces */
+        --primary: 199 96% 82%;
+        --primary-foreground: 220 45% 10%;
+        --color-persian-500: #38bdf8;
+        --color-persian-600: #7dd3fc;
+        --color-persian-700: #bae6fd;
+        --color-persian-200: rgb(125 211 252 / 0.22);
+        --secondary: 220 16% 20%;
+        --secondary-foreground: 210 20% 98%;
+        --muted: 220 16% 18%;
+        --muted-foreground: 215 14% 72%;
+        --accent: 220 16% 20%;
+        --accent-foreground: 210 20% 98%;
         --destructive: 0 84% 60%;
         --destructive-foreground: 0 0% 98%;
-        --border: 0 0% 14.9%;
-        --input: 0 0% 14.9%;
-        --ring: 0 0% 83.1%;
-        --sidebar-background: 232 73% 15%;
+        --border: 220 13% 30%;
+        --input: 220 13% 26%;
+        --ring: 199 96% 82%;
+    }
+
+    @media (prefers-color-scheme: dark) {
+        :root:not(.light):not(.dark) {
+            /* System preference: dark (no explicit .dark class on html). */
+            --background: 220 16% 14%;
+            --foreground: 210 20% 98%;
+            --card: 220 18% 17%;
+            --card-foreground: 210 20% 98%;
+            --popover: 220 16% 16%;
+            --popover-foreground: 210 20% 98%;
+            --primary: 199 96% 82%;
+            --primary-foreground: 220 45% 10%;
+            --color-persian-500: #38bdf8;
+            --color-persian-600: #7dd3fc;
+            --color-persian-700: #bae6fd;
+            --color-persian-200: rgb(125 211 252 / 0.22);
+            --secondary: 220 16% 20%;
+            --secondary-foreground: 210 20% 98%;
+            --muted: 220 16% 18%;
+            --muted-foreground: 215 14% 72%;
+            --accent: 220 16% 20%;
+            --accent-foreground: 210 20% 98%;
+            --destructive: 0 84% 60%;
+            --destructive-foreground: 0 0% 98%;
+            --border: 220 13% 30%;
+            --input: 220 13% 26%;
+            --ring: 199 96% 82%;
+        }
+    }
+
+    /* Sidebar keeps dark-theme grey chrome when the app is in light mode. */
+    :root,
+    html.light,
+    html.dark,
+    .dark {
+        --sidebar-background: 220 16% 14%;
         --sidebar-foreground: 215 16% 65%;
         --sidebar-primary: 173 56% 56%;
         --sidebar-primary-foreground: 232 73% 12%;
-        --sidebar-accent: 231 91.3% 46%;
+        --sidebar-accent: 199 89% 55%;
         --sidebar-accent-foreground: 0 0% 98%;
-        --sidebar-border: 232 40% 22%;
-        --sidebar-ring: 231 91.3% 54.9%;
+        --sidebar-border: 220 13% 30%;
+        --sidebar-ring: 199 96% 82%;
     }
 }
 
 @layer utilities {
     .font-inter {
-        font-family:
-            Inter,
-            Instrument Sans,
-            ui-sans-serif,
-            system-ui,
-            sans-serif;
+        font-family: Inter, Instrument Sans, ui-sans-serif, system-ui, sans-serif;
     }
 
     .font-caveat {
@@ -198,7 +287,7 @@
 
     .bg-endless {
         position: relative;
-        background-image: url('/assets/images/profile-bg.svg');
+        background-image: url("/assets/images/profile-bg.svg");
         background-position: center;
         background-repeat: no-repeat;
         background-size: cover;
@@ -213,16 +302,29 @@
         @apply bg-[url('/assets/images/body-bg.svg')] bg-cover bg-no-repeat;
     }
 
+    /** Auth confirmation animated background — theme-aware */
+    .auth-infinite-area {
+        background: linear-gradient(to left, #6b7ee5, #2342f5);
+    }
+
+    .dark .auth-infinite-area {
+        background: linear-gradient(to left, #161e50, #2438af);
+    }
+
+    .auth-infinite-dot {
+        background: hsl(var(--primary) / 35%);
+    }
+
     .hava-table {
         @apply min-w-full text-xs font-extralight;
     }
 
     .hava-thead {
-        @apply bg-muted text-xs uppercase;
+        @apply text-xs uppercase bg-muted;
     }
 
     .hava-th {
-        @apply text-foreground p-3 text-xs font-bold;
+        @apply p-3 text-xs text-foreground font-bold;
     }
 
     /*  .hava-thead:first-child tr > th:first-child {
@@ -238,7 +340,7 @@
     }
 
     .hava-tr {
-        @apply even:bg-muted odd:bg-white;
+        @apply odd:bg-card even:bg-muted/30;
     }
 
     .hava-tr:last-child td:first-child {
@@ -254,7 +356,7 @@
     }
 
     .hava-tr-hightlight-one {
-        @apply bg-persian-100;
+        @apply bg-primary/15;
     }
 
     .hava-td {
@@ -265,6 +367,72 @@
         @apply text-red-300;
     }
 
+    /** @vuepic/vue-datepicker — theme-aware (all BaseDatePicker instances) */
+    .app-date-picker.dp__theme_light,
+    .app-date-picker.dp__theme_dark {
+        --dp-font-size: 0.875rem;
+        --dp-border-radius: calc(var(--radius) - 2px);
+        --dp-font-family: var(--font-sans);
+        --dp-background-color: hsl(var(--background));
+        --dp-text-color: hsl(var(--foreground));
+        --dp-border-color: hsl(var(--border));
+        --dp-border-color-hover: hsl(var(--ring));
+        --dp-border-color-focus: hsl(var(--ring));
+        --dp-menu-border-color: hsl(var(--border));
+        --dp-icon-color: hsl(var(--muted-foreground));
+        --dp-hover-color: hsl(var(--accent));
+        --dp-hover-text-color: hsl(var(--accent-foreground));
+        --dp-hover-icon-color: hsl(var(--foreground));
+        --dp-primary-color: hsl(var(--primary));
+        --dp-primary-text-color: hsl(var(--primary-foreground));
+        --dp-primary-disabled-color: hsl(var(--primary) / 0.5);
+        --dp-secondary-color: hsl(var(--muted-foreground));
+        --dp-disabled-color: hsl(var(--muted));
+        --dp-disabled-color-text: hsl(var(--muted-foreground));
+        --dp-scroll-bar-background: hsl(var(--muted));
+        --dp-scroll-bar-color: hsl(var(--muted-foreground));
+        --dp-highlight-color: hsl(var(--primary) / 0.2);
+        --dp-range-between-dates-background-color: hsl(var(--accent));
+        --dp-range-between-dates-text-color: hsl(var(--accent-foreground));
+        --dp-range-between-border-color: hsl(var(--border));
+        --dp-tooltip-color: hsl(var(--popover));
+        --dp-loader: 5px solid hsl(var(--primary));
+    }
+
+    .app-date-picker .dp__menu_disabled,
+    .app-date-picker .dp-menu-loading {
+        background: hsl(var(--background) / 0.6);
+    }
+
+    /** vue3-select-component — theme-aware (datatable pagination, forms, etc.) */
+    .custom-select {
+        --vs-background-color: hsl(var(--card));
+        --vs-text-color: hsl(var(--foreground));
+        --vs-border: 1px solid hsl(var(--border));
+        --vs-border-radius: var(--radius);
+        --vs-font-size: 0.875rem;
+        --vs-min-height: 2.25rem;
+        --vs-placeholder-color: hsl(var(--muted-foreground));
+        --vs-disabled-background-color: hsl(var(--muted));
+        --vs-outline-color: hsl(var(--ring));
+        --vs-outline-width: 2px;
+        --vs-menu-background-color: hsl(var(--popover));
+        --vs-menu-border: 1px solid hsl(var(--border));
+        --vs-menu-box-shadow: 0 4px 12px hsl(0 0% 0% / 0.25);
+        --vs-option-hover-background-color: hsl(var(--accent));
+        --vs-option-hover-text-color: hsl(var(--accent-foreground));
+        --vs-option-focused-background-color: hsl(var(--accent));
+        --vs-option-focused-text-color: hsl(var(--accent-foreground));
+        --vs-option-selected-background-color: hsl(var(--primary) / 0.25);
+        --vs-option-selected-text-color: hsl(var(--foreground));
+        --vs-option-disabled-background-color: hsl(var(--muted));
+        --vs-option-disabled-text-color: hsl(var(--muted-foreground));
+        --vs-indicator-icon-color: hsl(var(--muted-foreground));
+        --vs-spinner-color: hsl(var(--ring));
+        --vs-multi-value-background-color: hsl(var(--muted));
+        --vs-multi-value-label-text-color: hsl(var(--foreground));
+    }
+
     /** Table for large data not paginated */
 
     .j-table {
@@ -272,11 +440,11 @@
     }
 
     .j-thead {
-        @apply bg-muted text-[10px] uppercase;
+        @apply text-[10px] uppercase bg-muted;
     }
 
     .j-th {
-        @apply text-foreground p-3 text-[10px] font-bold;
+        @apply p-3 text-[10px] text-foreground font-bold;
     }
 
     .j-tbody {
@@ -284,21 +452,22 @@
     }
 
     .j-tr {
-        @apply even:bg-muted odd:bg-white;
+        @apply odd:bg-card even:bg-muted/30;
     }
 
     .j-td {
-        @apply text-foreground px-3 py-2 text-[12px] whitespace-nowrap;
+        @apply whitespace-nowrap px-3 py-2 text-[12px] text-foreground;
     }
     .j-td-l-border {
-        @apply border-persian-200 border-l;
+        @apply border-l border-border;
     }
 
     .j-td-r-border {
-        @apply border-persian-200 border-r;
+        @apply border-r border-border;
     }
+
     .j-td-b-border {
-        @apply border-persian-200 border-b;
+        @apply border-b border-border;
     }
 
     .fade-enter-active,
@@ -366,6 +535,7 @@
         padding: 16px;
     }
 
+
     .subject-name {
         font-weight: 600;
         color: #1f2937;
@@ -379,5 +549,6 @@
     }
 
     body {
+        @apply bg-background text-foreground;
     }
 }

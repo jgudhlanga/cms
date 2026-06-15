@@ -1,26 +1,44 @@
 <script setup lang="ts">
-import { AccordionItemProps } from '@/types/utils';
-import { ref } from 'vue';
+import { computed } from 'vue';
 
 interface Props {
-    defaultValue: string;
-    items: AccordionItemProps[];
+    defaultValue?: string[];
+    modelValue?: string[];
 }
 
-defineProps<Props>();
-const openItem = ref('courses');
+const props = withDefaults(defineProps<Props>(), {
+    defaultValue: () => [],
+});
+
+const emit = defineEmits<{
+    'update:modelValue': [value: string[]];
+}>();
+
+const isControlled = computed(() => props.modelValue !== undefined);
+
+const accordionValue = computed({
+    get: () => props.modelValue ?? [],
+    set: (value: string[]) => emit('update:modelValue', value),
+});
 </script>
+
 <template>
-    {{ openItem }}
-    <Accordion :value="openItem" type="single" class="w-full" collapsible :default-value="defaultValue" @onValueChange="openItem = $event">
-        <AccordionItem v-for="item in items" class="border-0" :value="item.value" :key="item.value">
-            <AccordionTrigger class="cursor-pointer hover:no-underline">
-                <HeadingSmall :title="item.title()" :description="item.description ? item.description() : ''" />
-            </AccordionTrigger>
-            <AccordionContent>
-                <component :is="item.content" />
-            </AccordionContent>
-            <CustomSeparator classes="h-1" />
-        </AccordionItem>
+    <Accordion
+        v-if="isControlled"
+        v-model="accordionValue"
+        type="multiple"
+        collapsible
+        class="flex w-full flex-col gap-3"
+    >
+        <slot />
+    </Accordion>
+    <Accordion
+        v-else
+        type="multiple"
+        collapsible
+        class="flex w-full flex-col gap-3"
+        :default-value="defaultValue"
+    >
+        <slot />
     </Accordion>
 </template>

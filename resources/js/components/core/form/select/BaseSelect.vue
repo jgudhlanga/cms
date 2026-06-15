@@ -58,13 +58,8 @@ const model = defineModel<any>();
     </div>
 </template>
 <style scoped>
-.custom-select {
-    --vs-outline-color: #30a8ff;
-    --vs-spinner-color: var(--vs-outline-color);
-    --vs-border-radius: 10px;
-}
-
 .error-select {
-    --vs-outline-color: #dc2626;
+    --vs-outline-color: hsl(var(--destructive));
+    --vs-spinner-color: hsl(var(--destructive));
 }
 </style>

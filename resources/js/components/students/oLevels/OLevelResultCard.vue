@@ -6,7 +6,7 @@ import { useOLevelResults } from '@/composables/students/useOLevelResults';
 import { ColorVariant } from '@/enums/colors';
 import { IconName } from '@/enums/icons';
 import { OLevelSubjectResult } from '@/types/enrolments';
-import { computed, defineEmits } from 'vue';
+import { computed } from 'vue';
 
 interface Props {
     result: OLevelSubjectResult;
@@ -38,10 +38,10 @@ const verificationMode = isItTrue(import.meta.env.VITE_VERIFICATION_MODE);
 </script>
 
 <template>
-    <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow">
-        <div class="bg-card border-b border-gray-100 px-4 py-2">
+    <div class="overflow-hidden rounded-lg border border-border bg-card text-card-foreground shadow">
+        <div class="border-b border-border bg-muted/30 px-4 py-2">
             <div class="flex items-center justify-between">
-                <h3 class="text-accent-foreground text-xs font-semibold uppercase">
+                <h3 class="text-xs font-semibold text-foreground uppercase">
                     {{ result?.attributes?.subject }}
                 </h3>
                 <div class="flex space-x-2" v-if="!verificationMode">
@@ -51,7 +51,7 @@ const verificationMode = isItTrue(import.meta.env.VITE_VERIFICATION_MODE);
             </div>
         </div>
         <div class="p-4">
-            <div class="grid grid-cols-3 gap-4 text-sm">
+            <div class="grid grid-cols-1 gap-3 text-sm sm:grid-cols-3 sm:gap-4">
                 <GridLabelValue :label="$tChoice('trans.year', 1)" :value="result?.attributes?.examYear" />
                 <GridLabelValue :label="$tChoice('trans.sitting', 1)" :value="sittingLabel" />
                 <GridLabelValue :label="$tChoice('trans.grade', 1)" :value="result.attributes?.grade" />

@@ -9,6 +9,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from '@/components/ui/sidebar';
+import { useCloseMobileSidebar } from '@/composables/core/useCloseMobileSidebar';
 import { useDefaults } from '@/composables/core/useDefaults';
 import { useInitials } from '@/composables/core/useInitials';
 import { IconName } from '@/enums/icons';
@@ -20,6 +21,7 @@ const page = usePage<PageProps>();
 const { isMobile, state } = useSidebar();
 const { getInitials } = useInitials();
 const { defaultAvatarImage } = useDefaults();
+const closeMobileSidebar = useCloseMobileSidebar();
 </script>
 <template>
     <SidebarMenu>
@@ -27,16 +29,16 @@ const { defaultAvatarImage } = useDefaults();
             <DropdownMenu>
                 <DropdownMenuTrigger as-child>
                     <SidebarMenuButton size="lg" class="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
-                        <Avatar class="rounded-lg" :class="state === 'collapsed' ? 'size-6' : 'size-8'">
+                        <Avatar class="rounded-lg" :class="state === 'collapsed' ? 'size-6' : 'size-7'">
                             <AvatarImage
                                 :src="page.props.auth?.user.attributes.avatarUrl ?? defaultAvatarImage"
                                 :alt="page.props.auth?.user.attributes.name"
                             />
-                            <AvatarFallback class="rounded-lg" :class="state === 'collapsed' ? 'size-6' : 'size-8'">
+                            <AvatarFallback class="rounded-lg" :class="state === 'collapsed' ? 'size-6' : 'size-7'">
                                 {{ getInitials(page.props.auth.user.attributes.name) }}
                             </AvatarFallback>
                         </Avatar>
-                        <div class="grid flex-1 text-left text-sm leading-tight">
+                        <div class="grid flex-1 text-left text-sm leading-none">
                             <span class="truncate font-semibold">{{ page.props.auth.user.attributes.name }}</span>
                             <span class="truncate text-xs">{{ page.props.auth.user.attributes.email }}</span>
                         </div>
@@ -71,7 +73,7 @@ const { defaultAvatarImage } = useDefaults();
                     </DropdownMenuItem>
                     <DropdownMenuItem>
                         <component :is="icons[IconName.logout]" />
-                        <Link class="" method="post" :href="route('logout')" as="button">{{ $t('trans.logout') }}</Link>
+                        <Link class="" method="post" :href="route('logout')" as="button" @click="closeMobileSidebar">{{ $t('trans.logout') }}</Link>
                     </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>

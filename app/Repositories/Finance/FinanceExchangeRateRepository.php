@@ -32,7 +32,7 @@ class FinanceExchangeRateRepository extends BaseRepository implements IFinanceEx
             'currency_from' => $dto->currency_from,
             'currency_to' => $dto->currency_to,
             'rate' => $dto->rate,
-        ]);
+        ])->refresh();
     }
 
     public function allFilter($columns = ['*'], ?FinanceExchangeRateFilter $filters = null)

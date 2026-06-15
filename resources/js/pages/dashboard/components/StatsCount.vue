@@ -8,8 +8,8 @@ defineProps<Props>();
 </script>
 
 <template>
-    <div class="stat-card flex flex-col overflow-hidden rounded-lg bg-white p-2 shadow">
-        <div class="truncate text-[11px] font-bold uppercase">{{ title }}</div>
+    <div class="stat-card flex flex-col overflow-hidden rounded-lg border border-border bg-card p-2 text-card-foreground shadow">
+        <div class="truncate text-[11px] font-bold uppercase text-muted-foreground">{{ title }}</div>
         <div class="stat-number">{{ value }}</div>
     </div>
 </template>
@@ -17,7 +17,7 @@ defineProps<Props>();
 .stat-number {
     font-size: 1rem;
     font-weight: 700;
-    color: #2575fc;
+    color: hsl(var(--primary));
     margin: 0;
 }
 

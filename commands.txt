@@ -1,0 +1,8 @@
+# RUN A SPECIFIC SEEDER
+## DEPLOYMENT SEEDER
+php artisan db:seed --class=Database\\Seeders\\DeploymentSeeder
+php artisan optimize:clear && php artisan queue:restart  && sudo supervisorctl restart all 
+
+SET FOREIGN_KEY_CHECKS = 0;
+DELETE FROM `levels` WHERE (`levels`.`id` = '12');
+SET FOREIGN_KEY_CHECKS = 1;

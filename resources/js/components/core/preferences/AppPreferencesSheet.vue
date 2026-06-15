@@ -1,11 +1,14 @@
 <script setup lang="ts">
+import { IconButton } from '@/components/core/button';
 import BaseSelect from '@/components/core/form/select/BaseSelect.vue';
-import Button from '@/components/ui/button/Button.vue';
+import AppearanceTabs from '@/components/core/util/AppearanceTabs.vue';
+import BaseTooltip from '@/components/core/util/BaseTooltip.vue';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import Switch from '@/components/ui/switch/Switch.vue';
 import { useUserPreference } from '@/composables/core/useUserPreference';
+import { ColorVariant } from '@/enums/colors';
+import { IconName } from '@/enums/icons';
 import { usePreferencesStore } from '@/store/core/preferences.store';
-import { SlidersHorizontal } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 
 const preferencesStore = usePreferencesStore();
@@ -27,22 +30,32 @@ const updateSidebarState = (open: boolean): void => {
 </script>
 
 <template>
-    <Button
-        class="fixed top-1/2 right-4 z-40 size-10 -translate-y-1/2 rounded-full border border-fuchsia-700 bg-fuchsia-600 text-white shadow-md hover:bg-fuchsia-700 hover:text-white"
-        size="icon"
-        variant="outline"
-        @click="isPreferencesDrawerOpen = true"
-    >
-        <SlidersHorizontal class="size-4" />
-        <span class="sr-only">{{ $t('trans.open_preferences') }}</span>
-    </Button>
-    <Sheet v-model:open="isPreferencesDrawerOpen">
+    <BaseTooltip :content="$t('trans.open_preferences')">
+        <button
+            type="button"
+            class="text-foreground flex items-center"
+            :aria-label="$t('trans.open_preferences')"
+            @click="isPreferencesDrawerOpen = true"
+        >
+            <IconButton :icon="IconName.settings" :variant="ColorVariant.primary_outline" />
+        </button>
+    </BaseTooltip>
+    <Sheet v-if="isPreferencesDrawerOpen" v-model:open="isPreferencesDrawerOpen">
         <SheetContent side="right" class="w-[420px] p-0 sm:max-w-[420px]">
             <SheetHeader class="bg-muted/30 border-b px-6 py-5">
                 <SheetTitle>{{ $t('trans.user_preferences') }}</SheetTitle>
                 <SheetDescription class="mt-1 text-sm">{{ $t('trans.preferences_panel_description') }}</SheetDescription>
             </SheetHeader>
             <div class="space-y-4 px-6 py-6">
+                <div class="border-primary/25 bg-card rounded-xl border p-4 shadow-xs">
+                    <div class="space-y-3">
+                        <div class="space-y-1">
+                            <p class="leading-none font-medium">{{ $t('trans.appearance') }}</p>
+                            <p class="text-muted-foreground text-sm">{{ $t('trans.appearance_description') }}</p>
+                        </div>
+                        <AppearanceTabs class="w-full justify-center" />
+                    </div>
+                </div>
                 <div class="border-primary/25 bg-card rounded-xl border p-4 shadow-xs">
                     <div class="flex items-start justify-between gap-4">
                         <div class="space-y-1">

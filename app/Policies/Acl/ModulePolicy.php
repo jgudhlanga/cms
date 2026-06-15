@@ -30,7 +30,7 @@ class ModulePolicy
     public function delete(User $user, Module $module): bool
     {
         return $user->can('delete:modules', $module);
-    }
+    } 
 
     public function restore(User $user, Module $module): bool
     {

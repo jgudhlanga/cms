@@ -41,4 +41,10 @@ class PortalPolicy
     {
         return $user->can('manageOwnStudentAcademicDetails:students');
     }
+
+    public function manageStudentAccommodationDetails(User $user): bool
+    {
+        return $user->can('manageOwnStudentAccommodationDetails:students')
+            || $user->can('manageOwnStudentPersonalDetails:students');
+    }
 }

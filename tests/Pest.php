@@ -19,6 +19,9 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 require_once __DIR__.'/Support/BulkFinaliseTestHelpers.php';
+require_once __DIR__.'/Support/FinanceTestHelpers.php';
+require_once __DIR__.'/Support/HmsIndexTestHelpers.php';
+require_once __DIR__.'/Support/HmsApplicationTestHelpers.php';
 
 pest()->extend(TestCase::class)
     ->use(RefreshDatabase::class)

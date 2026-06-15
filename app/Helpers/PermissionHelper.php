@@ -37,6 +37,7 @@ class PermissionHelper
             'manageOwnStudentContactDetails:students',
             'manageOwnStudentFinancialDetails:students',
             'manageOwnStudentAcademicDetails:students',
+            'manageOwnStudentAccommodationDetails:students',
             'view:next-of-kins',
             'create:next-of-kins',
             'update:next-of-kins',

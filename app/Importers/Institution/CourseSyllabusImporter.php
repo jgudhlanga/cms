@@ -16,25 +16,62 @@ use RuntimeException;
 
 class CourseSyllabusImporter implements IngestDefinition
 {
-    private const int TENANT_ID = 1;
+    public const string IMPORTER_NAME = 'course-syllabus-import';
+
+    public const int HEADER_ROW = 5;
+
+    public const int DATA_START_ROW = 6;
+
+    /** @var list<string> */
+    public const array WEB_COLUMNS = [
+        'LEVEL',
+        'COURSE_TITLE',
+        'COURSE_CODE',
+        'SEMESTER',
+        'MODULE_TITLE',
+        'MODULE_CODE',
+    ];
+
+    /** @var list<string> */
+    public const array CLI_COLUMNS = [
+        'DEPARTMENT',
+        'LEVEL',
+        'COURSE_TITLE',
+        'COURSE_CODE',
+        'SEMESTER',
+        'MODULE_TITLE',
+        'MODULE_CODE',
+    ];
+
+    public function __construct(
+        private int $tenantId = 1,
+        private ?int $institutionDepartmentId = null,
+        private bool $fromFilesystem = true,
+    ) {}
 
     public function getConfig(): IngestConfig
     {
-        return IngestConfig::for(CourseSyllabus::class)
-            ->fromSource(SourceType::FILESYSTEM, [
-                'disk' => 'ingest',
-                'path' => 'syllabus.xlsx',
-            ])
+        $config = IngestConfig::for(CourseSyllabus::class)
             ->keyedBy('COURSE_CODE')
-            ->onDuplicate(DuplicateStrategy::SKIP)
+            ->onDuplicate(DuplicateStrategy::UPDATE)
             ->beforeRow(function (array &$row): void {
-                $row['__TENANT_ID'] = self::TENANT_ID;
-                self::logValidationIssues($row);
+                $row['__TENANT_ID'] = $this->tenantId;
+
+                if ($this->isWebImport()) {
+                    $row['__INSTITUTION_DEPARTMENT_ID'] = $this->institutionDepartmentId;
+                } else {
+                    $row['__INSTITUTION_DEPARTMENT_ID'] = self::resolveInstitutionDepartmentId(
+                        $this->tenantId,
+                        (string) ($row['DEPARTMENT'] ?? ''),
+                    );
+                }
+
+                self::logValidationIssues($row, $this->isWebImport());
 
                 $courseCode = trim((string) ($row['COURSE_CODE'] ?? ''));
 
                 if ($courseCode !== '') {
-                    $row['__IMPLEMENTATION_YEAR'] = self::implementationYearFromCourseCode($courseCode);
+                    $row['__IMPLEMENTATION_YEAR'] = self::implementationYearFromCourseCode($courseCode, $this->tenantId);
                 }
             })
             ->map('COURSE_TITLE', 'title')
@@ -42,31 +79,107 @@ class CourseSyllabusImporter implements IngestDefinition
             ->map('__IMPLEMENTATION_YEAR', 'implementation_year')
             ->map('__TENANT_ID', 'tenant_id')
             ->mapAndTransform(
-                'DEPARTMENT',
+                '__INSTITUTION_DEPARTMENT_ID',
                 'institution_department_id',
-                static fn (string $department): int => self::resolveInstitutionDepartmentId($department)
+                fn (mixed $departmentId): int => (int) $departmentId,
             )
             ->mapAndTransform(
                 'LEVEL',
                 'department_level_course_id',
-                static fn (string $level, array $row): int => self::resolveDepartmentLevelCourseId(
-                    department: (string) ($row['DEPARTMENT'] ?? ''),
+                fn (string $level, array $row): int => self::resolveDepartmentLevelCourseId(
+                    tenantId: $this->tenantId,
+                    institutionDepartmentId: (int) ($row['__INSTITUTION_DEPARTMENT_ID'] ?? 0),
                     level: $level,
-                    courseTitle: (string) ($row['COURSE_TITLE'] ?? '')
+                    courseTitle: (string) ($row['COURSE_TITLE'] ?? ''),
                 )
             )
-            ->validate([
-                'DEPARTMENT' => ['required', 'string'],
+            ->validate($this->validationRules());
+
+        if ($this->fromFilesystem) {
+            return $config->fromSource(SourceType::FILESYSTEM, [
+                'disk' => 'ingest',
+                'path' => 'syllabus.xlsx',
+            ]);
+        }
+
+        return $config;
+    }
+
+    /**
+     * @param  list<mixed>  $headerRow
+     */
+    public static function isHeaderRow(array $headerRow): bool
+    {
+        $normalized = array_map(
+            static fn (mixed $value): string => strtoupper(trim((string) $value)),
+            array_values($headerRow),
+        );
+
+        return self::matchesColumnSet($normalized, self::WEB_COLUMNS)
+            || self::matchesColumnSet($normalized, self::CLI_COLUMNS);
+    }
+
+    /**
+     * @param  list<string>  $normalized
+     * @param  list<string>  $columns
+     */
+    private static function matchesColumnSet(array $normalized, array $columns): bool
+    {
+        foreach ($columns as $index => $column) {
+            if (($normalized[$index] ?? '') !== $column) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * @param  list<mixed>  $rawRow
+     * @param  list<string>  $columns
+     * @return array<string, mixed>
+     */
+    public static function rowToAssociative(array $rawRow, array $columns = self::WEB_COLUMNS): array
+    {
+        $associative = [];
+
+        foreach ($columns as $index => $column) {
+            $associative[$column] = $rawRow[$index] ?? null;
+        }
+
+        return $associative;
+    }
+
+    /**
+     * @return array<string, list<string>>
+     */
+    private function validationRules(): array
+    {
+        if ($this->isWebImport()) {
+            return [
                 'LEVEL' => ['required', 'string'],
                 'COURSE_TITLE' => ['required', 'string'],
                 'COURSE_CODE' => ['required', 'string'],
-            ]);
+            ];
+        }
+
+        return [
+            'DEPARTMENT' => ['required', 'string'],
+            'LEVEL' => ['required', 'string'],
+            'COURSE_TITLE' => ['required', 'string'],
+            'COURSE_CODE' => ['required', 'string'],
+        ];
     }
 
-    private static function resolveInstitutionDepartmentId(string $department): int
+    private function isWebImport(): bool
+    {
+        return $this->institutionDepartmentId !== null;
+    }
+
+    private static function resolveInstitutionDepartmentId(int $tenantId, string $department): int
     {
         $institutionDepartment = InstitutionDepartment::query()
-            ->where('tenant_id', self::TENANT_ID)
+            ->where('tenant_id', $tenantId)
             ->whereHas('department', function ($query) use ($department): void {
                 $query->whereRaw('LOWER(name) = ?', [self::normalize($department)]);
             })
@@ -74,7 +187,7 @@ class CourseSyllabusImporter implements IngestDefinition
 
         if ($institutionDepartment === null) {
             Log::warning('Syllabus import lookup failed: institution department missing.', [
-                'tenant_id' => self::TENANT_ID,
+                'tenant_id' => $tenantId,
                 'department' => $department,
             ]);
             throw new RuntimeException("Institution department not found for DEPARTMENT '{$department}'.");
@@ -83,12 +196,14 @@ class CourseSyllabusImporter implements IngestDefinition
         return $institutionDepartment->id;
     }
 
-    private static function resolveDepartmentLevelCourseId(string $department, string $level, string $courseTitle): int
-    {
-        $institutionDepartmentId = self::resolveInstitutionDepartmentId($department);
-
+    private static function resolveDepartmentLevelCourseId(
+        int $tenantId,
+        int $institutionDepartmentId,
+        string $level,
+        string $courseTitle,
+    ): int {
         $departmentLevel = DepartmentLevel::query()
-            ->where('tenant_id', self::TENANT_ID)
+            ->where('tenant_id', $tenantId)
             ->where('institution_department_id', $institutionDepartmentId)
             ->whereHas('level', function ($query) use ($level): void {
                 $query->whereRaw('LOWER(name) = ?', [self::normalize($level)]);
@@ -97,15 +212,15 @@ class CourseSyllabusImporter implements IngestDefinition
 
         if ($departmentLevel === null) {
             Log::warning('Syllabus import lookup failed: department level missing.', [
-                'tenant_id' => self::TENANT_ID,
-                'department' => $department,
+                'tenant_id' => $tenantId,
+                'institution_department_id' => $institutionDepartmentId,
                 'level' => $level,
             ]);
-            throw new RuntimeException("Department level not found for LEVEL '{$level}' in DEPARTMENT '{$department}'.");
+            throw new RuntimeException("Department level not found for LEVEL '{$level}'.");
         }
 
         $departmentCourse = DepartmentCourse::query()
-            ->where('tenant_id', self::TENANT_ID)
+            ->where('tenant_id', $tenantId)
             ->where('institution_department_id', $institutionDepartmentId)
             ->whereHas('course', function ($query) use ($courseTitle): void {
                 $query->whereRaw('LOWER(name) = ?', [self::normalize($courseTitle)]);
@@ -114,11 +229,11 @@ class CourseSyllabusImporter implements IngestDefinition
 
         if ($departmentCourse === null) {
             Log::warning('Syllabus import lookup failed: department course missing.', [
-                'tenant_id' => self::TENANT_ID,
-                'department' => $department,
+                'tenant_id' => $tenantId,
+                'institution_department_id' => $institutionDepartmentId,
                 'course_title' => $courseTitle,
             ]);
-            throw new RuntimeException("Department course not found for COURSE_TITLE '{$courseTitle}' in DEPARTMENT '{$department}'.");
+            throw new RuntimeException("Department course not found for COURSE_TITLE '{$courseTitle}'.");
         }
 
         $departmentLevelCourse = DepartmentLevelCourse::query()
@@ -128,13 +243,13 @@ class CourseSyllabusImporter implements IngestDefinition
 
         if ($departmentLevelCourse === null) {
             Log::warning('Syllabus import lookup failed: department level course missing.', [
-                'tenant_id' => self::TENANT_ID,
-                'department' => $department,
+                'tenant_id' => $tenantId,
+                'institution_department_id' => $institutionDepartmentId,
                 'level' => $level,
                 'course_title' => $courseTitle,
             ]);
             throw new RuntimeException(
-                "Department level course not found for DEPARTMENT '{$department}', LEVEL '{$level}', COURSE_TITLE '{$courseTitle}'."
+                "Department level course not found for LEVEL '{$level}', COURSE_TITLE '{$courseTitle}'."
             );
         }
 
@@ -146,14 +261,14 @@ class CourseSyllabusImporter implements IngestDefinition
         return mb_strtolower(trim($value));
     }
 
-    private static function implementationYearFromCourseCode(string $courseCode): string
+    private static function implementationYearFromCourseCode(string $courseCode, int $tenantId): string
     {
         $parts = array_map(static fn (string $value): string => trim($value), explode('/', $courseCode));
         $yearSegment = $parts[1] ?? null;
 
         if ($yearSegment === null || ! preg_match('/^\d{2}$/', $yearSegment)) {
             Log::warning('Syllabus import lookup failed: unable to derive implementation year from course code.', [
-                'tenant_id' => self::TENANT_ID,
+                'tenant_id' => $tenantId,
                 'course_code' => $courseCode,
             ]);
 
@@ -165,9 +280,11 @@ class CourseSyllabusImporter implements IngestDefinition
         return "20{$yearSegment}";
     }
 
-    private static function logValidationIssues(array $row): void
+    private static function logValidationIssues(array $row, bool $webImport): void
     {
-        $requiredFields = ['DEPARTMENT', 'LEVEL', 'COURSE_TITLE', 'COURSE_CODE'];
+        $requiredFields = $webImport
+            ? ['LEVEL', 'COURSE_TITLE', 'COURSE_CODE']
+            : ['DEPARTMENT', 'LEVEL', 'COURSE_TITLE', 'COURSE_CODE'];
         $missingFields = [];
 
         foreach ($requiredFields as $field) {
@@ -180,7 +297,6 @@ class CourseSyllabusImporter implements IngestDefinition
 
         if ($missingFields !== []) {
             Log::warning('Syllabus import validation failed: missing required fields.', [
-                'tenant_id' => self::TENANT_ID,
                 'missing_fields' => $missingFields,
                 'row' => $row,
             ]);

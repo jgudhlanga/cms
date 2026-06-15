@@ -17,6 +17,7 @@ interface Props {
     size?: SizeVariant;
     cancelBtnText?: string;
     actionBtnText?: string;
+    showActionButton?: boolean;
     onFormAction?: () => void;
     onCloseModal?: () => void;
     form?: InertiaForm<any>;
@@ -28,6 +29,7 @@ const props = withDefaults(defineProps<Props>(), {
     size: SizeVariant.md,
     cancelBtnText: 'trans.close',
     actionBtnText: 'trans.save',
+    showActionButton: true,
 });
 
 const baseClasses = 'max-h-[90vh] bg-background rounded-2xl shadow-lg overflow-y-auto overflow-x-hidden outline-hidden p-3';
@@ -78,7 +80,12 @@ const destroyModal = () => {
                         <BaseButton type="button" :variant="ColorVariant.shade" @click="() => destroyModal()" :size="ButtonSize.lg">
                             {{ $t(cancelBtnText) }}
                         </BaseButton>
-                        <BaseButton :processing="form.processing" :disabled="form.processing" :size="ButtonSize.lg">
+                        <BaseButton
+                            v-if="showActionButton"
+                            :processing="form?.processing"
+                            :disabled="form?.processing"
+                            :size="ButtonSize.lg"
+                        >
                             {{ $t(actionBtnText) }}
                         </BaseButton>
                         <slot name="action-button" />

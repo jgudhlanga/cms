@@ -1,22 +1,16 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
+import { computed } from 'vue';
 
 import BaseAlert from '@/components/core/alert/BaseAlert.vue';
-import { BaseButton } from '@/components/core/button';
 import PageContainer from '@/components/core/page/PageContainer.vue';
-import HeadingSmall from '@/components/core/util/HeadingSmall.vue';
-import { useFeeStructures } from '@/composables/institution/useFeeStructures';
-import { ButtonSize } from '@/enums/buttons';
-import { ColorVariant } from '@/enums/colors';
-import { IconName, icons } from '@/lib/icons';
-import CreateEdit from '@/pages/institution/feeStructures/partials/CreateEdit.vue';
 import FeeStructureTable from '@/pages/institution/feeStructures/partials/FeeStructureTable.vue';
+import CreateEdit from '@/pages/institution/feeStructures/partials/CreateEdit.vue';
 import { AuthObject } from '@/types/data-pagination';
 import { FeeStructure } from '@/types/institution';
 import { FeeType } from '@/types/settings';
 import type { Link } from '@/types/ui';
-
-const { onOpenModal } = useFeeStructures();
+import { trans_choice } from 'laravel-vue-i18n';
 
 const props = defineProps<{
     feeStructures: Record<string, FeeStructure[]>;
@@ -34,30 +28,48 @@ const breadcrumbs: Array<Link> = [
 const getTypeFeeStructures = (name: string): FeeStructure[] => {
     return props.feeStructures?.[name] || [];
 };
+
+const defaultOpenFeeTypeIds = computed((): string[] => {
+    const first = props.feeTypes[0];
+
+    return first?.id ? [String(first.id)] : [];
+});
+
+const feeTypeDescription = (fee: FeeType): string => {
+    const count = getTypeFeeStructures(fee.attributes.name).length;
+    const parts: string[] = [];
+
+    if (fee.attributes.description) {
+        parts.push(fee.attributes.description);
+    }
+
+    parts.push(trans_choice('trans.fee_structure', count, { count }));
+
+    return parts.join(' · ');
+};
 </script>
 
 <template>
     <Head :title="$tChoice('trans.fee_structure', 2)" />
     <PageContainer :breadcrumbs="breadcrumbs">
-        <template v-if="feeTypes.length > 0">
-            <div class="flex flex-col space-y-3" v-for="fee in feeTypes" :key="fee.id">
-                <div class="flex w-full justify-between">
-                    <HeadingSmall :title="fee.attributes.name" />
-                    <BaseButton
-                        @click="onOpenModal(undefined, fee)"
-                        :title="$t('trans.create')"
-                        :size="ButtonSize.sm"
-                        :variant="ColorVariant.primary_outline"
-                        classes="rounded-full"
-                    >
-                        <component :is="icons[IconName.add]" />
-                    </BaseButton>
-                </div>
-                <div class="mb-5">
-                    <FeeStructureTable :fee-structures="getTypeFeeStructures(fee.attributes.name)" :fee-type="fee" />
-                </div>
-            </div>
-        </template>
+        <BaseAccordion
+            v-if="feeTypes.length > 0"
+            class="w-full"
+            :default-value="defaultOpenFeeTypeIds"
+        >
+            <BaseAccordionItem
+                v-for="fee in feeTypes"
+                :key="fee.id"
+                :value="String(fee.id)"
+                :title="fee.attributes.name"
+                :description="feeTypeDescription(fee)"
+            >
+                <FeeStructureTable
+                    :fee-structures="getTypeFeeStructures(fee.attributes.name)"
+                    :fee-type="fee"
+                />
+            </BaseAccordionItem>
+        </BaseAccordion>
         <BaseAlert
             v-else
             :title="$t('trans.no_data')"

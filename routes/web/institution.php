@@ -38,6 +38,10 @@ Route::prefix('institution')->middleware('auth')->group(function () {
     Route::post('departments/course/{department_course}/modes', [DepartmentCourseController::class, 'storeCourseLevelModes'])->name('department-courses.modes.store');
     // ==================================== COURSE SYLLABUSES ==========================================================
     Route::get('departments/{institution_department}/course-syllabuses', [CourseSyllabusController::class, 'index'])->name('department-course-syllabuses.index');
+    Route::get('departments/{institution_department}/course-syllabuses/import', [CourseSyllabusController::class, 'showImport'])->name('department-course-syllabuses.import');
+    Route::get('departments/{institution_department}/course-syllabuses/import/template', [CourseSyllabusController::class, 'downloadImportTemplate'])->name('department-course-syllabuses.import.template');
+    Route::post('departments/{institution_department}/course-syllabuses/import/preview', [CourseSyllabusController::class, 'previewImport'])->name('department-course-syllabuses.import.preview');
+    Route::post('departments/{institution_department}/course-syllabuses/import', [CourseSyllabusController::class, 'processImport'])->name('department-course-syllabuses.import.process');
     Route::get('departments/{institution_department}/course-syllabuses/create', [CourseSyllabusController::class, 'create'])->name('department-course-syllabuses.create');
     Route::get('departments/{institution_department}/course-syllabuses/{course_syllabus}/show', [CourseSyllabusController::class, 'show'])->name('department-course-syllabuses.show');
     Route::get('departments/{institution_department}/course-syllabuses/{course_syllabus}/edit', [CourseSyllabusController::class, 'edit'])->name('department-course-syllabuses.edit');
@@ -57,6 +61,10 @@ Route::prefix('institution')->middleware('auth')->group(function () {
         'departments/course-syllabus-modules/{course_syllabus_module}',
         [CourseSyllabusModuleController::class, 'update']
     )->name('course-syllabus-modules.update');
+    Route::post(
+        'departments/{institution_department}/course-syllabuses/{course_syllabus}/modules/move',
+        [CourseSyllabusModuleController::class, 'moveModules']
+    )->name('course-syllabus-modules.move');
     // ==================================== DEPARTMENT APPLICATION STEPS ================================================
     Route::post('departments/{institution_department}/sync-application-steps', [DepartmentApplicationStepController::class, 'syncApplicationSteps'])->name('department-application-steps.sync');
     Route::get('departments/{department_application_step}/application-steps/show', [DepartmentApplicationStepController::class, 'show'])->name('department-application-steps.show');

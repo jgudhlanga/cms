@@ -6,7 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\Institution\Staff;
 use App\Models\Students\Student;
 use App\Models\Users\User;
+use App\Rules\ZimbabweanIdNumber;
+use App\Services\Enrollment\EnrollmentLookupService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 
 class ValidationController extends Controller
 {
@@ -18,6 +21,7 @@ class ValidationController extends Controller
         'staff_employee_number' => [Staff::class, 'employee_number'],
         'student_national_id' => [Student::class, 'id_number'],
         'student_passport_number' => [Student::class, 'passport_number'],
+        'student_number' => [Student::class, 'student_number'],
     ];
 
     public function check(Request $request)
@@ -26,23 +30,40 @@ class ValidationController extends Controller
         $value = $request->query('value');
         $currentId = $request->query('current_id');
 
-        if (!isset($this->validationMap[$key]) || empty($value)) {
+        if (! isset($this->validationMap[$key]) || empty($value)) {
             return response()->json([
-                'error' => 'Invalid key or value missing.'
+                'error' => 'Invalid key or value missing.',
             ], 422);
+        }
+
+        if ($key === 'student_national_id') {
+            $normalized = EnrollmentLookupService::normalizeNationalId((string) $value);
+            $formatValidator = Validator::make(
+                ['id_number' => $normalized],
+                ['id_number' => [new ZimbabweanIdNumber]],
+            );
+
+            if ($formatValidator->fails()) {
+                return response()->json([
+                    'available' => false,
+                    'error' => $formatValidator->errors()->first('id_number'),
+                ], 422);
+            }
+
+            $value = $normalized;
         }
 
         [$model, $column] = $this->validationMap[$key];
 
         $query = $model::where($column, $value);
 
-        if (!empty($currentId)) {
+        if (! empty($currentId)) {
             $keyName = (new $model)->getKeyName(); // usually 'id'
             $query->where($keyName, '!=', $currentId);
         }
 
         $exists = $query->exists();
 
-        return response()->json(['available' => !$exists]);
+        return response()->json(['available' => ! $exists]);
     }
 }

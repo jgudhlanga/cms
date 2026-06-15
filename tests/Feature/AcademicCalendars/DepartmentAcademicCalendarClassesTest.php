@@ -177,12 +177,13 @@ test('department classes page returns generation context and preview classes', f
     expect(data_get($page, 'props.generationContext.finalStudentCount'))->toBe(3);
     expect(data_get($page, 'props.generationContext.newFinalStudentCount'))->toBe(3);
     expect(data_get($page, 'props.generationContext.hasExistingClasses'))->toBeFalse();
+    expect(data_get($page, 'props.generationContext.populatedExistingClassCount'))->toBe(0);
     expect(data_get($page, 'props.generationContext.newStudentGenderCounts.male'))->toBeInt();
     expect(data_get($page, 'props.generationContext.newStudentGenderCounts.female'))->toBeInt();
     expect(data_get($page, 'props.generationContext.newStudentGenderCounts.unknown'))->toBeInt();
     expect(data_get($page, 'props.previewClasses'))->toHaveCount(2);
-    expect(data_get($page, 'props.previewClasses.0.name'))->toBe('Level 1 - Full Time - 1');
-    expect(data_get($page, 'props.previewClasses.1.name'))->toBe('Level 1 - Full Time - 2');
+    expect(data_get($page, 'props.previewClasses.0.name'))->toBe('Level 1 - Full Time - 1 - '.$context['classConfig']->id);
+    expect(data_get($page, 'props.previewClasses.1.name'))->toBe('Level 1 - Full Time - 2 - '.$context['classConfig']->id);
     expect(data_get($page, 'props.previewClasses.0.genderCounts.male'))->toBeInt();
     expect(data_get($page, 'props.previewClasses.0.genderCounts.female'))->toBeInt();
     expect(data_get($page, 'props.previewClasses.0.genderCounts.unknown'))->toBeInt();
@@ -302,6 +303,9 @@ test('department academic calendar api returns assigned and ready class counts',
     $expectedClassesCount = AcademicCalendarClass::query()
         ->where('class_config_id', $context['classConfig']->id)
         ->whereNull('deleted_at')
+        ->whereHas('studentEnrolments', function ($query): void {
+            $query->whereNull('deleted_at');
+        })
         ->count();
 
     $this->getJson($apiRoute)
@@ -498,6 +502,7 @@ test('department classes page shows existing classes when all final students are
     $page = $response->viewData('page');
 
     expect(data_get($page, 'props.generationContext.newFinalStudentCount'))->toBe(0);
+    expect(data_get($page, 'props.generationContext.populatedExistingClassCount'))->toBe(2);
     expect(data_get($page, 'props.previewClasses'))->toHaveCount(2);
     expect(data_get($page, 'props.previewClasses.0.academicCalendarClassId'))->toBeInt();
     expect(data_get($page, 'props.previewClasses.1.academicCalendarClassId'))->toBeInt();

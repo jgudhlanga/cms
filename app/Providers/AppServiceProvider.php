@@ -6,17 +6,22 @@ use App\Enums\Acl\RoleEnum;
 use App\Importers\Finance\FinanceExchangeRateImporter;
 use App\Importers\Institution\CourseSyllabusImporter;
 use App\Importers\Institution\CourseSyllabusModuleImporter;
+use App\JsonApi\V1\JsonApiAuthorizer;
+use App\Models\AcademicCalendars\CourseWorkMark;
 use App\Models\Institution\Syllabus\CourseSyllabus;
+use App\Policies\AcademicCalendars\CourseWorkPolicy;
 use App\Policies\Institution\CourseSyllabusPolicy;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\ServiceProvider;
 use Lab404\Impersonate\Events\LeaveImpersonation;
 use Lab404\Impersonate\Events\TakeImpersonation;
 use LaravelIngest\IngestServiceProvider;
+use LaravelJsonApi\Laravel\LaravelJsonApi;
 use Opcodes\LogViewer\Facades\LogViewer;
 
 class AppServiceProvider extends ServiceProvider
@@ -35,12 +40,15 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        LaravelJsonApi::defaultAuthorizer(JsonApiAuthorizer::class);
+
         // Disable JSON resource wrapping (no "data" key)
         JsonResource::withoutWrapping();
 
         // Dynamically register all Gate policies from config/custom.php
         $this->registerPoliciesFromConfig();
         Gate::policy(CourseSyllabus::class, CourseSyllabusPolicy::class);
+        Gate::policy(CourseWorkMark::class, CourseWorkPolicy::class);
 
         // Track user login statistics
         $this->registerLoginEventListener();
@@ -50,6 +58,15 @@ class AppServiceProvider extends ServiceProvider
 
         // Restrict Log Viewer access
         $this->registerLogViewerAuthorization();
+
+        $this->registerLocalMailRedirect();
+    }
+
+    private function registerLocalMailRedirect(): void
+    {
+        if ($this->app->environment('local') && ($devEmail = config('mail.dev_redirect'))) {
+            Mail::alwaysTo($devEmail);
+        }
     }
 
     /**

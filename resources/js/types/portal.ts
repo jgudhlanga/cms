@@ -1,12 +1,18 @@
 import { CourseRequirement, DepartmentLevelRequirement } from '@/types/department-meta-data';
 import { SelectOption } from '@/types/utils';
 
+export type RegistrationPath = 'zimbabwean' | 'international';
+
 export type CreateApplicationUserParams = {
     email: string;
     first_name: string | null;
+    middle_name?: string | null;
     last_name: string | null;
     password: string;
     password_confirmation: string;
+    id_number?: string;
+    passport_number?: string;
+    registration_path?: RegistrationPath;
 };
 
 export type CreateApplicationParams = {
