@@ -30,7 +30,7 @@ const appVersion = computed(() => page.props.appVersion);
                     {{ activeTenant.attributes.name }}
                 </span>
                 <span
-                    class="border-primary/40 text-sidebar-foreground/90 inline-flex w-fit max-w-full min-w-0 items-center truncate rounded-full border bg-transparent px-2 py-0.5 font-mono text-xs leading-tight font-semibold tracking-tight tabular-nums"
+                    class="text-sidebar-foreground/70 inline-flex w-fit max-w-full min-w-0 items-center truncate rounded-full border border-current bg-transparent px-2 py-0.5 font-mono text-xs leading-tight font-medium tracking-tight tabular-nums"
                     :aria-label="`${$t('general.version_label')} ${appVersion}`"
                 >
                     {{ appVersion }}
@@ -56,7 +56,7 @@ const appVersion = computed(() => page.props.appVersion);
                     {{ activeTenant.attributes.name }}
                 </span>
                 <span
-                    class="border-primary/40 text-sidebar-foreground/90 inline-flex w-fit max-w-full min-w-0 items-center truncate rounded-full border bg-transparent px-2 py-0.5 font-mono text-xs leading-tight font-semibold tracking-tight tabular-nums"
+                    class="text-sidebar-foreground/70 inline-flex w-fit max-w-full min-w-0 items-center truncate rounded-full border border-current bg-transparent px-2 py-0.5 font-mono text-xs leading-tight font-medium tracking-tight tabular-nums"
                     :aria-label="`${$t('general.version_label')} ${appVersion}`"
                 >
                     {{ appVersion }}
