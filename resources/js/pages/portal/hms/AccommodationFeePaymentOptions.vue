@@ -14,6 +14,7 @@ import axios from 'axios';
 import { trans } from 'laravel-vue-i18n';
 import { computed, ref } from 'vue';
 import { router } from '@inertiajs/vue3';
+import type { BreadcrumbItemInterface } from '@/types/ui';
 
 interface Props {
     accommodationFee: FeeStructure | null;
@@ -76,10 +77,16 @@ const submit = async () => {
         isLoading.value = false;
     }
 };
+const breadcrumbs = computed<BreadcrumbItemInterface[]>(() => [
+    { transChoiceKey: 'dashboard', href: route('portal.dashboard') },
+    {transChoiceKey: trans('students.accommodation'), href: route('portal.profile.accommodations') },
+    {transKey: 'students.hms_payment'},
+]);
 </script>
 
 <template>
-    <StudentPageHeader />
+    <Head :title="$t('students.hms_payment')" />
+    <PageContainer :breadcrumbs="breadcrumbs">
     <div class="min-h-svh bg-background px-4 pb-12 pt-28 text-foreground sm:px-6">
         <div class="mx-auto w-full max-w-2xl">
             <div class="rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-8">
@@ -87,7 +94,6 @@ const submit = async () => {
                     <p class="text-center text-sm text-muted-foreground">
                         {{ $t('students.accommodation_payment_required') }}
                     </p>
-
                     <div class="rounded-xl border border-border bg-muted/30 px-5 py-4">
                         <div class="flex items-center justify-between gap-4">
                             <div class="space-y-0.5">
@@ -137,4 +143,5 @@ const submit = async () => {
             </div>
         </div>
     </div>
+    </PageContainer>
 </template>

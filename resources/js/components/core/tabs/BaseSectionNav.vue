@@ -78,8 +78,8 @@ const navButtonClass = (isActive: boolean, isDisabled: boolean): string => {
                 ? 'cursor-not-allowed opacity-50'
                 : isActive
                   ? props.grouped
-                      ? 'bg-primary text-primary-foreground shadow-sm'
-                      : 'border-primary/30 bg-primary text-primary-foreground shadow-sm'
+                      ? 'bg-primary/10 text-primary shadow-sm'
+                      : 'border-primary/30 bg-primary/10 text-primary shadow-sm'
                   : props.grouped
                     ? 'text-muted-foreground hover:bg-muted/60 hover:text-foreground'
                     : 'text-muted-foreground hover:border-border hover:bg-muted/40 hover:text-foreground',
