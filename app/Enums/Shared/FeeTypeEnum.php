@@ -2,6 +2,10 @@
 
 namespace App\Enums\Shared;
 
+use App\Models\HMS\HostelApplication;
+use App\Models\Shared\FeeType;
+use App\Models\Students\StudentProgram;
+use App\Models\Users\User;
 use Illuminate\Support\Str;
 
 enum FeeTypeEnum: string
@@ -20,7 +24,7 @@ enum FeeTypeEnum: string
 
     public function name(): string
     {
-        return match($this) {
+        return match ($this) {
             self::EXAMINATION_FEE => 'Examination Fee',
             self::GRADUATION_FEE => 'Graduation Fee',
             self::GUEST_ACCOMMODATION_FEE => 'Guest Accommodation Fee',
@@ -37,7 +41,7 @@ enum FeeTypeEnum: string
 
     public function position(): string
     {
-        return match($this) {
+        return match ($this) {
             self::TUITION_FEE => 1,
             self::APPLICATION_FEE => 2,
             self::EXAMINATION_FEE => 3,
@@ -51,9 +55,10 @@ enum FeeTypeEnum: string
             self::OTHER_FEE => 11,
         };
     }
+
     public function description(): string
     {
-        return match($this) {
+        return match ($this) {
             self::EXAMINATION_FEE => 'Charges for sitting exams or assessments.',
             self::GRADUATION_FEE => 'Covers graduation ceremony and certification costs.',
             self::GUEST_ACCOMMODATION_FEE => 'Charges for guest lodging or temporary housing.',
@@ -73,14 +78,55 @@ enum FeeTypeEnum: string
         return Str::slug($this->name);
     }
 
+    public static function fromFeeType(FeeType $feeType): ?self
+    {
+        foreach (self::cases() as $case) {
+            if ($case->slug() === $feeType->slug) {
+                return $case;
+            }
+        }
+
+        return null;
+    }
+
+    public function ledgerableClass(): string
+    {
+        return match ($this) {
+            self::APPLICATION_FEE => User::class,
+            self::STUDENT_ACCOMMODATION_FEE, self::GUEST_ACCOMMODATION_FEE => HostelApplication::class,
+            self::TUITION_FEE => StudentProgram::class,
+            default => User::class,
+        };
+    }
+
+    public function requiresLedgerableId(): bool
+    {
+        return $this === self::TUITION_FEE;
+    }
+
+    public function postPaymentRoute(): string
+    {
+        return match ($this) {
+            self::APPLICATION_FEE => 'portal.application.create',
+            self::STUDENT_ACCOMMODATION_FEE, self::GUEST_ACCOMMODATION_FEE => 'portal.profile.accommodations',
+            self::TUITION_FEE => 'portal.profile.financials',
+            default => 'portal.dashboard',
+        };
+    }
+
+    public function isAccommodationFee(): bool
+    {
+        return in_array($this, [self::STUDENT_ACCOMMODATION_FEE, self::GUEST_ACCOMMODATION_FEE], true);
+    }
+
     public static function all(): array
     {
         $cases = self::cases();
 
         // Sort by label alphabetically
-        usort($cases, fn($a, $b) => strcmp($a->name(), $b->name()));
+        usort($cases, fn ($a, $b) => strcmp($a->name(), $b->name()));
 
-        return array_map(fn($case) => [
+        return array_map(fn ($case) => [
             'value' => $case->value,
             'name' => $case->name(),
             'description' => $case->description(),

@@ -149,10 +149,12 @@ class HostelApplicationSchema extends Schema
 
         if (request()->query('sort') === null) {
             $eloquent->orderByRaw(
-                'CASE hostel_applications.status WHEN ? THEN 0 WHEN ? THEN 1 WHEN ? THEN 2 WHEN ? THEN 3 ELSE 4 END',
+                'CASE hostel_applications.status WHEN ? THEN 0 WHEN ? THEN 1 WHEN ? THEN 2 WHEN ? THEN 3 WHEN ? THEN 4 WHEN ? THEN 5 ELSE 6 END',
                 [
                     HostelApplicationStatusEnum::PENDING->value,
                     HostelApplicationStatusEnum::AWAITING_PAYMENT->value,
+                    HostelApplicationStatusEnum::PARTIALLY_PAID->value,
+                    HostelApplicationStatusEnum::PAID->value,
                     HostelApplicationStatusEnum::APPROVED->value,
                     HostelApplicationStatusEnum::DECLINED->value,
                 ]

@@ -10,6 +10,7 @@ import { Ledger } from '@/types/integrations';
 
 interface Props {
     details: Ledger;
+    redirectRoute: string;
 }
 
 defineProps<Props>();
@@ -34,7 +35,7 @@ const { navigateTo } = useUtils();
             <BaseButton
                 classes="rounded-full"
                 :title="$t('trans.back')"
-                @click="navigateTo(route('portal.application.fee-payment'))"
+                @click="navigateTo(redirectRoute)"
                 :variant="ColorVariant.danger"
             />
         </template>

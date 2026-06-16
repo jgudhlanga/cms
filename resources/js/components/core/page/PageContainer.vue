@@ -10,6 +10,7 @@ import { useUtils } from '@/composables/core/useUtils';
 import { PageProps } from '@/types';
 import { BreadcrumbItemInterface } from '@/types/ui';
 import BackNavigationButton from '@/components/core/button/BackNavigationButton.vue';
+import HeaderActionGroup from '@/components/core/page/HeaderActionGroup.vue';
 import AppPreferencesSheet from '@/components/core/preferences/AppPreferencesSheet.vue';
 import { usePage } from '@inertiajs/vue3';
 import { computed, useSlots } from 'vue';
@@ -58,10 +59,12 @@ const backNavigationRowJustifyClass = computed((): string => {
             <Separator orientation="vertical" class="mr-1 hidden h-4 sm:mr-2 sm:block" />
             <Breadcrumbs :breadcrumbs="breadcrumbs ?? []" />
         </div>
-        <div class="flex shrink-0 items-center justify-center space-x-2 sm:space-x-4">
+        <div class="flex shrink-0 items-center justify-center gap-2 pr-2 sm:pr-4">
             <RemoveImpersonationButton v-if="isItTrue(page.props.auth.impersonating)" />
-            <LogoutButton />
-            <AppPreferencesSheet />
+            <HeaderActionGroup>
+                <LogoutButton />
+                <AppPreferencesSheet />
+            </HeaderActionGroup>
         </div>
     </header>
     <div class="flex h-full min-w-0 w-full max-w-full flex-col overflow-x-clip pb-10">

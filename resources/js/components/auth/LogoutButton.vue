@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { useAuth } from '@/composables/auth/useAuth';
-import { ColorVariant } from '@/enums/colors';
 import { IconName } from '@/enums/icons';
 import { router } from '@inertiajs/vue3';
 
@@ -14,8 +13,8 @@ const handleLogout = () => {
 
 <template>
     <BaseTooltip :content="`${$t('trans.logout')}`">
-        <TextLink @click.prevent="handleLogout" href="" method="post" as="button" classes="text-destructive flex items-center">
-            <IconButton :icon="IconName.logout" :variant="ColorVariant.danger_outline" />
+        <TextLink @click.prevent="handleLogout" href="" method="post" as="button" classes="flex items-center">
+            <IconButton :icon="IconName.logout" tone="header-danger" />
         </TextLink>
     </BaseTooltip>
 </template>

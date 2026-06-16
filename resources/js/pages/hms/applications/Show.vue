@@ -68,7 +68,9 @@ const allowsDirectAllocation = computed(() => {
 });
 
 const canReviewAwaitingPayment = computed(
-    () => attrs.value?.status === 'awaiting-payment' && hasAbility('update:hostel-applications'),
+    () =>
+        ['awaiting-payment', 'partially-paid', 'paid'].includes(attrs.value?.status ?? '')
+        && hasAbility('update:hostel-applications'),
 );
 
 const canAllocateRoom = computed(() => {
@@ -76,7 +78,7 @@ const canAllocateRoom = computed(() => {
         return false;
     }
 
-    if (attrs.value?.status === 'awaiting-payment') {
+    if (attrs.value?.status === 'awaiting-payment' || attrs.value?.status === 'paid') {
         return true;
     }
 
@@ -145,7 +147,10 @@ const studentProfileUrl = computed(() => {
 const eligibilityRules = computed((): HostelApplicationEligibilityRule[] => attrs.value?.eligibilityResults ?? []);
 
 const showAccommodationEligibility = computed(
-    () => attrs.value?.status === 'awaiting-payment',
+    () =>
+        attrs.value?.status === 'awaiting-payment'
+        || attrs.value?.status === 'partially-paid'
+        || attrs.value?.status === 'paid',
 );
 </script>
 
@@ -184,9 +189,14 @@ const showAccommodationEligibility = computed(
                     :description="$t('hms.approve_payment_helper')"
                 />
                 <BaseAlert
-                    v-if="attrs.status === 'awaiting-payment'"
+                    v-if="attrs.status === 'awaiting-payment' || attrs.status === 'partially-paid'"
                     :type="TypeVariant.warning"
                     :description="$t('hms.awaiting_payment_notice')"
+                />
+                <BaseAlert
+                    v-if="attrs.status === 'paid'"
+                    :type="TypeVariant.success"
+                    :description="$t('hms.paid_notice')"
                 />
                 <BaseAlert
                     v-if="attrs.status === 'declined' && attrs.declineReason"

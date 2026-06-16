@@ -4,6 +4,7 @@ import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
 import type { HostelAllocation, HostelApplication, StudentAccommodationFeesResponse } from '@/types/hms';
 import { router } from '@inertiajs/vue3';
+import { trans } from 'laravel-vue-i18n';
 import { Bed, Receipt, FileText } from 'lucide-vue-next';
 import { computed } from 'vue';
 
@@ -56,13 +57,24 @@ const applicationSummary = computed(() => {
         return null;
     }
 
+    const status = props.openApplication.attributes.status;
+
+    if (
+        props.fees?.isFullyPaid
+        && (status === 'awaiting-payment' || status === 'partially-paid')
+    ) {
+        return trans('hms.application_status_paid');
+    }
+
     return props.openApplication.attributes.statusLabel
         ?? props.openApplication.attributes.status
         ?? '';
 });
 
 const isAwaitingPayment = computed(
-    () => props.openApplication?.attributes.status === 'awaiting-payment',
+    () =>
+        props.openApplication?.attributes.status === 'awaiting-payment'
+        || props.openApplication?.attributes.status === 'partially-paid',
 );
 
 const showPaymentCta = computed(
@@ -75,8 +87,10 @@ const showPaymentCta = computed(
 const showFeesPaidConfirmation = computed(
     () =>
         props.context === 'portal'
-        && isAwaitingPayment.value
-        && props.fees?.isFullyPaid,
+        && props.fees?.isFullyPaid
+        && ['awaiting-payment', 'partially-paid', 'paid'].includes(
+            props.openApplication?.attributes.status ?? '',
+        ),
 );
 
 const goToPayment = () => {
@@ -142,7 +156,7 @@ const goToPayment = () => {
                             v-if="showFeesPaidConfirmation"
                             class="mt-2 text-xs text-emerald-600 dark:text-emerald-400"
                         >
-                            {{ $t('students.accommodation_fees_paid_confirmation') }}
+                            {{ $t('students.accommodation_payment_received_awaiting_review') }}
                         </p>
                         <div v-else-if="showPaymentCta" class="mt-3">
                             <BaseButton

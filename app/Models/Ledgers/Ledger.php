@@ -5,9 +5,11 @@ namespace App\Models\Ledgers;
 use App\Http\Filters\Ledgers\LedgerFilter;
 use App\Models\Institution\Level;
 use App\Models\Shared\FeeType;
+use App\Observers\Ledgers\LedgerObserver;
 use App\Traits\BelongsToTenant;
 use App\Traits\Filterable;
 use App\Traits\Paginatable;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -22,13 +24,14 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 /**
- *
  * @mixin Builder
+ *
  * @method static filter(LedgerFilter $filters)
  */
+#[ObservedBy([LedgerObserver::class])]
 class Ledger extends Model implements HasMedia
 {
-    use HasFactory, SoftDeletes, Filterable, BelongsToTenant, Paginatable, LogsActivity, InteractsWithMedia;
+    use BelongsToTenant, Filterable, HasFactory, InteractsWithMedia, LogsActivity, Paginatable, SoftDeletes;
 
     protected $fillable = [
         'tenant_id',
@@ -52,8 +55,16 @@ class Ledger extends Model implements HasMedia
         'level_id',
         'proof_of_payment_id',
         'payment_gateway',
-        'intake_period_id'
+        'intake_period_id',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'payment_date' => 'datetime',
+            'due_date' => 'datetime',
+        ];
+    }
 
     public function ledgerable(): MorphTo
     {

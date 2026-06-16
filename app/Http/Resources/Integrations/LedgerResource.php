@@ -2,21 +2,22 @@
 
 namespace App\Http\Resources\Integrations;
 
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Carbon\Carbon;
 
 class LedgerResource extends JsonResource
 {
-
     public function toArray(Request $request): array
     {
         return [
             'type' => 'ledgers',
             'id' => $this->id,
-            "attributes" => [
+            'attributes' => [
                 'feeTypeId' => $this->fee_type_id,
                 'feeType' => $this->feeType?->name,
+                'feeTypeSlug' => $this->feeType?->slug,
+                'feeTypeValue' => $this->feeType?->slug,
                 'paymentOption' => $this->payment_option,
                 'type' => $this->type,
                 'paymentStatus' => $this->payment_status,
@@ -36,7 +37,7 @@ class LedgerResource extends JsonResource
                 'createdAt' => Carbon::parse($this->created_at)->format('Y-m-d'),
                 'updatedAt' => Carbon::parse($this->updated_at)->format('Y-m-d'),
                 'deletedAt' => $this->deleted_at ? Carbon::parse($this->deleted_at)->format('Y-m-d') : null,
-            ]
+            ],
         ];
     }
 }

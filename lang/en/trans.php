@@ -473,6 +473,8 @@ return [
     'secure_payment_processed_by' => 'Secure payment processed by :payment_processor',
     'proceed_to_payment' => 'Go to payment',
     'payment_error_description' => 'An error occurred while initiating your payment. Please try again.',
+    'invalid_fee_type' => 'The selected fee type is invalid.',
+    'ledgerable_required' => 'A payment context is required for this fee type.',
     'payment_cancelled' => 'Payment Cancelled',
     'payment_cancelled_description' => 'Your transaction was not completed',
     'no_amount_deducted_description' => 'Your payment was cancelled. No amount has been deducted from your account.',

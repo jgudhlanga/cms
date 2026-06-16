@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Integrations\PaymentController;
 use App\Http\Controllers\Students\PortalController;
 use App\Http\Controllers\Students\StudentOLevelResultsController;
 use Illuminate\Support\Facades\Route;
@@ -14,7 +15,7 @@ Route::prefix('portal')->group(function () {
         Route::post('application/select-level', [PortalController::class, 'selectLevel'])->name('portal.application.select-level');
     });
     Route::middleware(['auth', 'verified', 'redirect.student'])->group(function () {
-        Route::get('application/fee-payment', [PortalController::class, 'registrationFeePaymentOptions'])->name('portal.application.fee-payment');
+        Route::get('application/fee-payment', [PaymentController::class, 'registrationFeePaymentOptions'])->name('portal.application.fee-payment');
         Route::get('application/create', [PortalController::class, 'createApplication'])->name('portal.application.create');
         Route::get('application/confirm', [PortalController::class, 'confirmApplication'])->name('portal.application.confirm');
         Route::get('application/{student_program}/view', [PortalController::class, 'viewApplication'])->name('portal.application.view');
@@ -30,7 +31,7 @@ Route::prefix('portal')->group(function () {
             Route::get('applications', [PortalController::class, 'profileApplications'])->name('applications');
             Route::get('financials', [PortalController::class, 'profileFinancials'])->name('financials');
             Route::get('accommodations', [PortalController::class, 'profileAccommodations'])->name('accommodations');
-            Route::get('accommodations/pay', [PortalController::class, 'accommodationFeePaymentOptions'])->name('accommodations.pay');
+            Route::get('accommodations/pay', [PaymentController::class, 'accommodationFeePaymentOptions'])->name('accommodations.pay');
             Route::get('documents', [PortalController::class, 'profileDocuments'])->name('documents');
             Route::get('authentication', [PortalController::class, 'profileAuthentication'])->name('authentication');
         });

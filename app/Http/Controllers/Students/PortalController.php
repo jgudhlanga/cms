@@ -28,7 +28,6 @@ use App\Http\Requests\Students\ProgramRequest;
 use App\Http\Requests\Users\UserRequest;
 use App\Http\Resources\AuditTrail\AuditTrailResource;
 use App\Http\Resources\Enrolments\EnrolmentResource;
-use App\Http\Resources\Institution\FeeStructureResource;
 use App\Http\Resources\Institution\LevelResource;
 use App\Http\Resources\Students\AcademicLevelResource;
 use App\Http\Resources\Students\AcademicRecordResource;
@@ -49,7 +48,6 @@ use App\Repositories\Students\interface\IStudentProgramRepository;
 use App\Repositories\Students\interface\IStudentRepository;
 use App\Repositories\Users\interface\IUserRepository;
 use App\Services\Enrollment\EnrollmentLookupService;
-use App\Services\HMS\StudentAccommodationFeeService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -159,13 +157,6 @@ class PortalController extends Controller
         return Inertia::render('portal/guest/RegistrationConfirmation', [
             'email' => $user->email,
         ]);
-    }
-
-    public function registrationFeePaymentOptions(): Response
-    {
-        $registrationFee = PaymentHelper::getFeeStructureResourceBySlug(FeeTypeEnum::APPLICATION_FEE->slug());
-
-        return Inertia::render('portal/application/RegistrationFeePaymentOptions', compact('registrationFee'));
     }
 
     // ========= Application Workflow =========
@@ -447,27 +438,6 @@ class PortalController extends Controller
     public function profileAccommodations(): Response
     {
         return $this->renderProfileSection('accommodations', 'manageStudentAccommodationDetails');
-    }
-
-    /**
-     * @throws AuthorizationException
-     */
-    public function accommodationFeePaymentOptions(StudentAccommodationFeeService $feeService): Response|RedirectResponse
-    {
-        $this->authorize('manageStudentAccommodationDetails');
-
-        $feeStructure = PaymentHelper::getFeeStructureResourceBySlug(FeeTypeEnum::STUDENT_ACCOMMODATION_FEE->slug());
-        if ($feeStructure === null) {
-            return redirect()
-                ->route('portal.profile.accommodations')
-                ->with('error', __('students.accommodation_fee_payment_unavailable'));
-        }
-
-        $accommodationFee = FeeStructureResource::make($feeStructure);
-
-        return Inertia::render('portal/hms/AccommodationFeePaymentOptions', [
-            'accommodationFee' => $accommodationFee,
-        ]);
     }
 
     /**

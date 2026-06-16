@@ -16,6 +16,8 @@ class HostelApplicationPendingService
             ->whereIn('status', [
                 HostelApplicationStatusEnum::PENDING,
                 HostelApplicationStatusEnum::AWAITING_PAYMENT,
+                HostelApplicationStatusEnum::PARTIALLY_PAID,
+                HostelApplicationStatusEnum::PAID,
             ])
             ->when($exceptApplicationId !== null, fn ($query) => $query->where('id', '!=', $exceptApplicationId))
             ->exists();

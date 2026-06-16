@@ -87,7 +87,10 @@ class HostelApplicationApprovalOptionsService
         $blockers = [];
         $status = $this->effectiveStatusForReview($application);
 
-        if ($status !== HostelApplicationStatusEnum::AWAITING_PAYMENT) {
+        if (! in_array($status, [
+            HostelApplicationStatusEnum::AWAITING_PAYMENT,
+            HostelApplicationStatusEnum::PAID,
+        ], true)) {
             $settings ??= HmsSetting::resolveForTenant($application->tenant_id);
             $canAllocateFromPending = $status === HostelApplicationStatusEnum::PENDING
                 && HostelApplicationPaymentVerification::allowsDirectRoomAllocation($settings);

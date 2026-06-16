@@ -49,7 +49,9 @@ const formData = {
 const checkPaymentStatus = async () => {
     isCheckingPayment.value = true;
     try {
-        checkData.value = await HttpService.post(route('check-payment-status-for-current-user'), {});
+        checkData.value = await HttpService.post(route('check-payment-status-for-current-user'), {
+            feeTypeId: props.registrationFee?.attributes?.feeTypeId ?? '',
+        });
     } catch (error: any) {
         checkData.value = null;
         errorAlert('Failed to check payment status. ' + error);

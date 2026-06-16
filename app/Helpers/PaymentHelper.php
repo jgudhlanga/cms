@@ -14,13 +14,11 @@ use App\Models\Ledgers\Ledger;
 use App\Models\Shared\FeeType;
 use App\Models\Students\StudentProgram;
 use App\Models\Users\User;
-
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
-use LaravelIdea\Helper\App\Models\Institution\_IH_Level_C;
 use Spatie\MediaLibrary\MediaCollections\Exceptions\FileDoesNotExist;
 use Spatie\MediaLibrary\MediaCollections\Exceptions\FileIsTooBig;
 
@@ -45,24 +43,67 @@ class PaymentHelper
     }
 
     public static function getLatestLedgerRecord(
-        string        $slug,
-        ?string       $recordType = null,
-        ?User         $user = null,
+        string $slug,
+        ?string $recordType = null,
+        ?User $user = null,
         ?IntakePeriod $intakePeriod = null
-    ): ?object
-    {
+    ): ?Ledger {
         $feeType = self::getFeeTypeBySlug($slug);
-        if (!$feeType) return null;
+        if (! $feeType) {
+            return null;
+        }
 
         $user = self::resolveUser($user);
+
+        return self::getLatestLedgerRecordForLedgerable($user, $slug, $recordType, $intakePeriod);
+    }
+
+    public static function getLatestLedgerRecordForLedgerable(
+        Model $ledgerable,
+        string $slug,
+        ?string $recordType = null,
+        ?IntakePeriod $intakePeriod = null
+    ): ?Ledger {
+        $feeType = self::getFeeTypeBySlug($slug);
+        if (! $feeType) {
+            return null;
+        }
+
         $intakePeriod = self::resolveIntakePeriod($intakePeriod);
 
-        return $user->ledgerTransactions()
+        return $ledgerable->ledgerTransactions()
             ->where('fee_type_id', $feeType->id)
-            ->when($recordType, fn($q, $type) => $q->where('type', $type))
+            ->when($recordType, fn ($q) => $q->where('type', $recordType))
             ->where('intake_period_id', $intakePeriod->id)
             ->latest()
             ->first();
+    }
+
+    /**
+     * @return array{invoice: ?Ledger, receipt: ?Ledger}
+     */
+    public static function getLedgerPairByOrderReference(string $orderReference): array
+    {
+        $records = Ledger::where('system_reference', $orderReference)->get();
+
+        return [
+            'invoice' => $records->firstWhere('type', 'invoice'),
+            'receipt' => $records->firstWhere('type', 'receipt'),
+        ];
+    }
+
+    public static function hasPaidReceipt(Model $ledgerable, FeeTypeEnum $feeType): bool
+    {
+        $feeTypeModel = self::getFeeTypeBySlug($feeType->slug());
+        if (! $feeTypeModel) {
+            return false;
+        }
+
+        return $ledgerable->ledgerTransactions()
+            ->where('fee_type_id', $feeTypeModel->id)
+            ->where('type', 'receipt')
+            ->where('payment_status', 'paid')
+            ->exists();
     }
 
     /* -----------------------------------------------------------------
@@ -79,7 +120,7 @@ class PaymentHelper
             'Accept' => 'application/json',
             'Content-Type' => 'application/json',
         ])->get(
-            config('custom.payments.payment-gateway.base_url') .
+            config('custom.payments.payment-gateway.base_url').
             "/payments/transaction/{$orderReference}/status/check"
         )->json();
     }
@@ -91,22 +132,32 @@ class PaymentHelper
 
     public static function createInvoiceEntry(
         CreateInvoiceDto $dto,
-        ?User            $user = null,
-        ?IntakePeriod    $intakePeriod = null,
-        bool             $hasPaymentGateway = true
-    ): Ledger
-    {
-        return self::createLedgerEntry($dto->toArray(), $user, $intakePeriod, $hasPaymentGateway);
+        Model $ledgerable,
+        ?IntakePeriod $intakePeriod = null,
+        bool $hasPaymentGateway = true,
+        ?int $studentProgramId = null,
+    ): Ledger {
+        $attributes = $dto->toArray();
+        if ($studentProgramId !== null) {
+            $attributes['student_program_id'] = $studentProgramId;
+        }
+
+        return self::createLedgerEntryOn($ledgerable, $attributes, $intakePeriod, $hasPaymentGateway);
     }
 
     public static function createReceiptEntry(
         CreateReceiptDto $dto,
-        ?User            $user = null,
-        ?IntakePeriod    $intakePeriod = null,
-        bool             $hasPaymentGateway = true
-    ): Ledger
-    {
-        return self::createLedgerEntry($dto->toArray(), $user, $intakePeriod, $hasPaymentGateway);
+        Model $ledgerable,
+        ?IntakePeriod $intakePeriod = null,
+        bool $hasPaymentGateway = true,
+        ?int $studentProgramId = null,
+    ): Ledger {
+        $attributes = $dto->toArray();
+        if ($studentProgramId !== null) {
+            $attributes['student_program_id'] = $studentProgramId;
+        }
+
+        return self::createLedgerEntryOn($ledgerable, $attributes, $intakePeriod, $hasPaymentGateway);
     }
 
     public static function updateReceiptEntry(Ledger $ledger, UpdateReceiptDto $dto): Ledger
@@ -116,16 +167,20 @@ class PaymentHelper
 
     public static function deleteNotPaidLedgerEntries(string $orderReference, ?IntakePeriod $intakePeriod = null): void
     {
-        $intakePeriod = self::resolveIntakePeriod($intakePeriod);
+        $ledger = Ledger::where('system_reference', $orderReference)->first();
 
-        $ledger = Ledger::where('system_reference', $orderReference)
-            ->where('intake_period_id', $intakePeriod->id)
-            ->first();
+        if (! $ledger) {
+            return;
+        }
 
-        if (!$ledger) return;
+        $intakePeriod = $intakePeriod ?? IntakePeriod::query()->find($ledger->intake_period_id);
+        if (! $intakePeriod) {
+            return;
+        }
 
         Ledger::where('ledgerable_id', $ledger->ledgerable_id)
             ->where('ledgerable_type', $ledger->ledgerable_type)
+            ->where('fee_type_id', $ledger->fee_type_id)
             ->where('intake_period_id', $intakePeriod->id)
             ->where('payment_status', '!=', 'paid')
             ->delete();
@@ -136,10 +191,10 @@ class PaymentHelper
      | -----------------------------------------------------------------
      */
 
-    public static function assembleInvoiceData(Request $request, array $data): CreateInvoiceDto
+    public static function assembleInvoiceData(Request $request, array $data, int $tenantId): CreateInvoiceDto
     {
         return new CreateInvoiceDto(
-            tenant_id: self::resolveUser()->tenant_id,
+            tenant_id: $tenantId,
             fee_type_id: $request->feeTypeId,
             type: 'invoice',
             payment_status: 'pending',
@@ -151,10 +206,10 @@ class PaymentHelper
         );
     }
 
-    public static function assembleReceiptData(Request $request, array $data): CreateReceiptDto
+    public static function assembleReceiptData(Request $request, array $data, int $tenantId): CreateReceiptDto
     {
         return new CreateReceiptDto(
-            tenant_id: self::resolveUser()->tenant_id,
+            tenant_id: $tenantId,
             fee_type_id: $request->feeTypeId,
             type: 'receipt',
             payment_status: 'pending',
@@ -205,7 +260,9 @@ class PaymentHelper
         }*/
 
         $feeType = self::getFeeTypeBySlug(FeeTypeEnum::APPLICATION_FEE->slug());
-        if (!$feeType) return false;
+        if (! $feeType) {
+            return false;
+        }
 
         return $user->ledgerTransactions()
             ->where('fee_type_id', $feeType->id)
@@ -234,14 +291,15 @@ class PaymentHelper
 
     public static function updateRegistrationFeeLedgerEntries(
         StudentProgram $studentProgram,
-        ?User          $user = null,
-        ?IntakePeriod  $intakePeriod = null
-    ): void
-    {
+        ?User $user = null,
+        ?IntakePeriod $intakePeriod = null
+    ): void {
         $invoice = self::getLatestLedgerRecord(FeeTypeEnum::APPLICATION_FEE->slug(), 'invoice', $user, $intakePeriod);
         $receipt = self::getLatestLedgerRecord(FeeTypeEnum::APPLICATION_FEE->slug(), 'receipt', $user, $intakePeriod);
 
-        if (!$invoice || !$receipt) return;
+        if (! $invoice || ! $receipt) {
+            return;
+        }
 
         $updateData = [
             'student_program_id' => $studentProgram->id,
@@ -262,15 +320,14 @@ class PaymentHelper
      * @throws FileIsTooBig
      */
     public static function invoiceCashStudent(
-        User           $user,
-        FeeType        $feeType,
-        float          $amount,
-        string         $systemReference,
-        string         $paymentReference,
+        User $user,
+        FeeType $feeType,
+        float $amount,
+        string $systemReference,
+        string $paymentReference,
         StudentProgram $studentProgram,
-        ?IntakePeriod  $intakePeriod = null
-    ): void
-    {
+        ?IntakePeriod $intakePeriod = null
+    ): void {
         $invoiceDto = new CreateInvoiceDto(
             tenant_id: $user->tenant_id,
             fee_type_id: $feeType->id,
@@ -315,11 +372,15 @@ class PaymentHelper
      */
     private static function handleProofOfPaymentUpload(Ledger $invoice): ?int
     {
-        if (!request()->hasFile('proof_of_payment')) return null;
+        if (! request()->hasFile('proof_of_payment')) {
+            return null;
+        }
 
         $file = request()->file('proof_of_payment');
 
-        if (!$file->isValid() || $file->getSize() <= 0) return null;
+        if (! $file->isValid() || $file->getSize() <= 0) {
+            return null;
+        }
 
         return $invoice->addMedia($file)
             ->toMediaCollection('receipts')
@@ -341,23 +402,21 @@ class PaymentHelper
         return $intakePeriod ?? Helper::resolveIntakePeriod();
     }
 
-    private static function createLedgerEntry(
-        array         $attributes,
-        ?User         $user = null,
+    private static function createLedgerEntryOn(
+        Model $ledgerable,
+        array $attributes,
         ?IntakePeriod $intakePeriod = null,
-        bool          $hasPaymentGateway = true
-    ): Ledger
-    {
-        $user = self::resolveUser($user);
+        bool $hasPaymentGateway = true
+    ): Ledger {
         $intakePeriod = self::resolveIntakePeriod($intakePeriod);
 
-        $attributes['tenant_id'] ??= $user->tenant_id;
+        $attributes['tenant_id'] ??= $ledgerable->tenant_id ?? self::resolveUser()->tenant_id;
         $attributes['intake_period_id'] = $intakePeriod->id;
         $attributes['payment_gateway'] = $hasPaymentGateway
             ? config('custom.payments.payment-gateway.name')
             : null;
 
-        return $user->ledgerTransactions()->create($attributes);
+        return $ledgerable->ledgerTransactions()->create($attributes);
     }
 
     public static function levelsWithApplicationFee(): Collection|array

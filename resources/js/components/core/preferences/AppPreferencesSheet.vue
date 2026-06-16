@@ -6,7 +6,6 @@ import BaseTooltip from '@/components/core/util/BaseTooltip.vue';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import Switch from '@/components/ui/switch/Switch.vue';
 import { useUserPreference } from '@/composables/core/useUserPreference';
-import { ColorVariant } from '@/enums/colors';
 import { IconName } from '@/enums/icons';
 import { usePreferencesStore } from '@/store/core/preferences.store';
 import { computed, ref } from 'vue';
@@ -33,11 +32,11 @@ const updateSidebarState = (open: boolean): void => {
     <BaseTooltip :content="$t('trans.open_preferences')">
         <button
             type="button"
-            class="text-foreground flex items-center"
+            class="flex items-center"
             :aria-label="$t('trans.open_preferences')"
             @click="isPreferencesDrawerOpen = true"
         >
-            <IconButton :icon="IconName.settings" :variant="ColorVariant.primary_outline" />
+            <IconButton :icon="IconName.settings" tone="header-primary" />
         </button>
     </BaseTooltip>
     <Sheet v-if="isPreferencesDrawerOpen" v-model:open="isPreferencesDrawerOpen">

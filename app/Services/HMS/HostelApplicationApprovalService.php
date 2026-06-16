@@ -31,7 +31,10 @@ class HostelApplicationApprovalService
                 : (string) $previousStatus;
 
             $settings = HmsSetting::resolveForTenant($application->tenant_id);
-            $allowedPreviousStatuses = [HostelApplicationStatusEnum::AWAITING_PAYMENT->value];
+            $allowedPreviousStatuses = [
+                HostelApplicationStatusEnum::AWAITING_PAYMENT->value,
+                HostelApplicationStatusEnum::PAID->value,
+            ];
 
             if (HostelApplicationPaymentVerification::allowsDirectRoomAllocation($settings)) {
                 $allowedPreviousStatuses[] = HostelApplicationStatusEnum::PENDING->value;

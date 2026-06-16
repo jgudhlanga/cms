@@ -145,7 +145,7 @@ export type HostelStudentFiltersState = {
 
 export type HostelApplicationType = 'student' | 'guest';
 
-export type HostelApplicationStatus = 'pending' | 'awaiting-payment' | 'approved' | 'declined';
+export type HostelApplicationStatus = 'pending' | 'awaiting-payment' | 'partially-paid' | 'paid' | 'approved' | 'declined';
 
 export type HostelApplicationEligibilitySeverity = 'success' | 'info' | 'warning';
 

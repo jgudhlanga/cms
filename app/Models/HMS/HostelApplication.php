@@ -4,6 +4,9 @@ namespace App\Models\HMS;
 
 use App\Enums\HMS\HostelApplicationStatusEnum;
 use App\Enums\HMS\HostelApplicationTypeEnum;
+use App\Enums\Shared\FeeTypeEnum;
+use App\Helpers\PaymentHelper;
+use App\Models\Ledgers\Ledger;
 use App\Models\Shared\Gender;
 use App\Models\Students\Student;
 use App\Models\Students\StudentEnrolment;
@@ -14,6 +17,7 @@ use App\Traits\Paginatable;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
@@ -69,6 +73,20 @@ class HostelApplication extends Model
     public function gender(): BelongsTo
     {
         return $this->belongsTo(Gender::class);
+    }
+
+    public function ledgerTransactions(): MorphMany
+    {
+        return $this->morphMany(Ledger::class, 'ledgerable')->withTrashed();
+    }
+
+    public function hasPaidAccommodationFee(): bool
+    {
+        $feeType = $this->type === HostelApplicationTypeEnum::GUEST
+            ? FeeTypeEnum::GUEST_ACCOMMODATION_FEE
+            : FeeTypeEnum::STUDENT_ACCOMMODATION_FEE;
+
+        return PaymentHelper::hasPaidReceipt($this, $feeType);
     }
 
     public function getActivitylogOptions(): LogOptions

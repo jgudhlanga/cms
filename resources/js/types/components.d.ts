@@ -232,6 +232,7 @@ declare module 'vue' {
     GridLabelValue: typeof import('./../components/core/util/GridLabelValue.vue')['default']
     GuestLayout: typeof import('./../layouts/GuestLayout.vue')['default']
     Header: typeof import('./../components/students/profile/Header.vue')['default']
+    HeaderActionGroup: typeof import('./../components/core/page/HeaderActionGroup.vue')['default']
     Heading: typeof import('./../components/core/util/Heading.vue')['default']
     HeadingSmall: typeof import('./../components/core/util/HeadingSmall.vue')['default']
     HostelCard: typeof import('./../components/hms/HostelCard.vue')['default']
