@@ -1,19 +1,1 @@
 Given https://hrepoly.test/dashboard,
-1. We need to crete permissions for dashboards
-    - our dasboard has tabs
-        - Overview: permission is 'view:dashboards', which is already set
-        - Academic: 'view-academic:dashboards',
-        - Enrolments: 'view-enrolment:dashboards',
-        - Attendance: 'view-attendance:dashboards',
-        - Staff: 'view-staff:dashboards',
-        - Finances: 'view-finance:dashboards',
-        - Hostels: 'view-hostel:dashboards',
-2. Given https://hrepoly.test/settings/acl/modules
- - we need to a textLink on module title to take us to module view.
- - on module view page 
-    - if module title is dashboards
-        - then we need to toggle the above dashboard tabs on and off.
-        - save these into the modules table in a json column called settings.
-        - also add another column on module called status whcih is a boolean (default(1)) to toggle module on or off.
-3. We only show a dashboard tab if use has permission and the tab is on from the dashboard settings, and the module is on.
-

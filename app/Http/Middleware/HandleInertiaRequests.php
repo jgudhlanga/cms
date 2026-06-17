@@ -6,6 +6,7 @@ use App\Enums\Acl\RoleEnum;
 use App\Helpers\PermissionHelper;
 use App\Http\Resources\Users\UserResource;
 use App\Models\Users\User;
+use App\Services\Acl\AclModuleStateService;
 use App\Support\Acl\PermissionRegistry;
 use App\Support\AppVersion;
 use Illuminate\Http\Request;
@@ -71,6 +72,7 @@ class HandleInertiaRequests extends Middleware
                 'can' => $user ? $this->permissions($user) : null,
                 'impersonating' => $isImpersonating,
             ],
+            'moduleState' => fn () => app(AclModuleStateService::class)->all(),
             'ziggy' => [
                 ...(new Ziggy)->toArray(),
                 'location' => $request->url(),

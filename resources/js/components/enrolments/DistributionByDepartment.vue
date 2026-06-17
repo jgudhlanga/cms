@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import IntakePeriodComboSelect from '@/components/core/form/combobox/IntakePeriodComboSelect.vue';
-import HeadingSmall from '@/components/core/util/HeadingSmall.vue';
 import DepartmentClassListActionLink from '@/components/enrolments/DepartmentClassListActionLink.vue';
+import { IconName, icons } from '@/lib/icons';
 import { hasAbility } from '@/lib/permissions';
 import { DepartmentDistribution } from '@/types/dasboard';
 import { IntakePeriod } from '@/types/institution';
@@ -104,18 +104,27 @@ const intakePeriodModel = defineModel<SelectOption | null>('intakePeriodModel');
 
 <template>
     <div class="rounded-lg border border-border bg-card px-4 py-2 text-card-foreground shadow">
-        <div class="mb-4 flex items-center justify-between text-lg font-medium text-foreground">
-            <HeadingSmall :title="$t('trans.ui_distribution_by_department')" />
-            <IntakePeriodComboSelect
+        <div class="mb-4 flex flex-nowrap items-center justify-between gap-4">
+            <div class="shrink-0 whitespace-nowrap text-xs font-bold uppercase text-accent-foreground">
+                {{ $t('trans.ui_distribution_by_department') }}
+            </div>
+            <div
                 v-if="showFilters"
-                v-model="intakePeriodModel"
-                :is-required="true"
-                class="w-1/2"
-                :label-uppercase="true"
-                :vertical-layout="false"
-                :data="intakePeriods ?? []"
-                @update:modelValue="handleFilterChange"
-            />
+                class="flex min-w-0 shrink-0 items-center gap-2 rounded-lg border border-border/60 bg-muted/20 px-3 py-2 sm:min-w-[280px] sm:max-w-md"
+            >
+                <component :is="icons[IconName.calendar]" class="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                <span class="shrink-0 text-sm font-medium text-muted-foreground">{{ $tChoice('trans.intake_period', 1) }}</span>
+                <IntakePeriodComboSelect
+                    :data="intakePeriods ?? []"
+                    label=""
+                    v-model="intakePeriodModel"
+                    :vertical-layout="false"
+                    :is-required="true"
+                    width-class="w-full"
+                    class="min-w-0 flex-1"
+                    @update:modelValue="handleFilterChange"
+                />
+            </div>
         </div>
         <div class="h-auto">
             <table class="j-table">

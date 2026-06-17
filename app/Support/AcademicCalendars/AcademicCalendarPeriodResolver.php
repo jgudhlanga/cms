@@ -69,4 +69,25 @@ final class AcademicCalendarPeriodResolver
             AcademicCalendarTypeEnum::TERM => 'Term 1',
         };
     }
+
+    public static function dashboardSelectLabel(AcademicCalendar $row): string
+    {
+        $ordinal = self::semesterOrTermOrdinal($row);
+
+        $prefix = match ($row->type) {
+            AcademicCalendarTypeEnum::ABMA => 'ABMA '.$ordinal,
+            AcademicCalendarTypeEnum::SEMESTER => 'Sem '.$ordinal,
+            AcademicCalendarTypeEnum::TERM => 'Term '.$ordinal,
+        };
+
+        return $prefix.' – '.$row->calendar_year;
+    }
+
+    public static function dateRangeLabel(AcademicCalendar $row): string
+    {
+        $opening = Carbon::parse($row->opening_date);
+        $closing = Carbon::parse($row->closing_date);
+
+        return $opening->format('M').' – '.$closing->format('M Y');
+    }
 }

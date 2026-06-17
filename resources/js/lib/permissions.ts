@@ -1,5 +1,5 @@
 import { useUtils } from '@/composables/core/useUtils';
-import { PageProps } from '@/types';
+import { ModuleState, PageProps } from '@/types';
 import { usePage } from '@inertiajs/vue3';
 
 export function getUserAbilities(): string[] {
@@ -30,4 +30,43 @@ export function hasProgram(): boolean {
     const { isItTrue } = useUtils();
     const { auth } = usePage<PageProps>().props;
     return isItTrue(auth?.user?.attributes?.hasProgram);
+}
+
+const DASHBOARD_TAB_PERMISSIONS = [
+    'view:dashboards',
+    'viewAny:dashboards',
+    'view-academic:dashboards',
+    'view-enrolment:dashboards',
+    'view-attendance:dashboards',
+    'view-staff:dashboards',
+    'view-finance:dashboards',
+    'view-hostel:dashboards',
+] as const;
+
+export function getModuleState(): ModuleState {
+    return usePage<PageProps>().props.moduleState ?? {};
+}
+
+export function isModuleEnabled(slug: string, moduleState?: ModuleState): boolean {
+    const state = moduleState ?? getModuleState();
+
+    return state[slug]?.enabled ?? true;
+}
+
+export function isDashboardModuleEnabled(moduleState?: ModuleState): boolean {
+    return isModuleEnabled('dashboards', moduleState);
+}
+
+export function hasDashboardAccess(moduleState?: ModuleState): boolean {
+    return isDashboardModuleEnabled(moduleState) && hasAbility([...DASHBOARD_TAB_PERMISSIONS]);
+}
+
+export function canShowMenuItem(permission: string | string[], moduleSlug?: string, moduleState?: ModuleState): boolean {
+    const state = moduleState ?? getModuleState();
+
+    if (moduleSlug && !isModuleEnabled(moduleSlug, state)) {
+        return false;
+    }
+
+    return hasAbility(permission);
 }

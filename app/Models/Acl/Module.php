@@ -16,21 +16,30 @@ use Spatie\Activitylog\Traits\LogsActivity;
 
 /**
  * @mixin Builder
+ *
  * @method static filter(ModuleFilter $filters)
  */
 #[ObservedBy([TitleSlugObserver::class])]
 class Module extends Model
 {
-	use HasFactory, SoftDeletes, Filterable, Paginatable, LogsActivity;
+    use Filterable, HasFactory, LogsActivity, Paginatable, SoftDeletes;
 
-	protected $fillable = ['title', 'slug', 'description'];
+    protected $fillable = ['title', 'slug', 'description', 'status', 'settings'];
 
-	public function getActivitylogOptions(): LogOptions
-	{
-		return LogOptions::defaults()
-			->logFillable()
-			->useLogName('AclModule')
-			->logOnlyDirty()
-			->dontSubmitEmptyLogs();
-	}
+    protected function casts(): array
+    {
+        return [
+            'status' => 'boolean',
+            'settings' => 'array',
+        ];
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logFillable()
+            ->useLogName('AclModule')
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs();
+    }
 }

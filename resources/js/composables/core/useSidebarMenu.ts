@@ -6,10 +6,12 @@ import {
 } from '@/composables/students/useStudentProfileTabs';
 import { IconName } from '@/enums/icons';
 import { icons } from '@/lib/icons';
-import { hasAbility, hasStudentProfile } from '@/lib/permissions';
+import { canShowMenuItem, hasAbility, hasDashboardAccess, hasStudentProfile } from '@/lib/permissions';
+import { PageProps } from '@/types';
 import { TenantInterface } from '@/types/tenants';
 import { MenuGroupInterface, MenuGroupKey, MenuItemInterface } from '@/types/ui';
 import { trans, trans_choice } from 'laravel-vue-i18n';
+import { usePage } from '@inertiajs/vue3';
 import { computed, markRaw } from 'vue';
 
 const menuGroupOrder: MenuGroupKey[] = [
@@ -27,6 +29,8 @@ export function getMenuItemKey(item: MenuItemInterface): string {
 }
 
 export function useSidebarMenu() {
+    const page = usePage<PageProps>();
+
     const tenants: Array<TenantInterface> = [
         {
             id: '1',
@@ -40,27 +44,30 @@ export function useSidebarMenu() {
         },
     ];
 
-    const menuOptions = computed<MenuItemInterface[]>(() => [
+    const menuOptions = computed<MenuItemInterface[]>(() => {
+        const moduleState = page.props.moduleState ?? {};
+
+        return [
         {
             groupKey: 'overview',
             transChoiceKey: 'trans.dashboard',
             icon: icons[IconName.dashboard],
             url: route('dashboard'),
-            show: hasAbility('view:dashboards'),
+            show: hasDashboardAccess(moduleState),
         },
         {
             groupKey: 'students',
             transChoiceKey: 'trans.enrolment',
             icon: icons[IconName.user_add],
             url: route('enrolments.index'),
-            show: hasAbility('view:student-programs'),
+            show: canShowMenuItem('view:student-programs', 'enrolments', moduleState),
         },
         {
             groupKey: 'students',
             transChoiceKey: 'trans.student',
             icon: icons[IconName.user_check],
             url: route('students.index'),
-            show: hasAbility('view:students'),
+            show: canShowMenuItem('view:students', 'students', moduleState),
         },
         {
             groupKey: 'students',
@@ -81,14 +88,14 @@ export function useSidebarMenu() {
             transChoiceKey: 'trans.report',
             url: '#',
             icon: icons[IconName.report],
-            show: hasAbility('view:report'),
+            show: canShowMenuItem('view:report', 'reports', moduleState),
         },
         {
             groupKey: 'operations',
             transChoiceKey: 'finance.financial',
             url: route('finance.index'),
             icon: icons[IconName.dollar],
-            show: hasAbility('view:finances'),
+            show: canShowMenuItem('view:finances', 'finance', moduleState),
         },
         {
             groupKey: 'institution',
@@ -96,35 +103,35 @@ export function useSidebarMenu() {
             transChoiceKeyIndex: 1,
             url: route('institution.index'),
             icon: icons[IconName.school],
-            show: hasAbility('view:institution-settings'),
+            show: canShowMenuItem('view:institution-settings', 'institution', moduleState),
         },
         {
             groupKey: 'institution',
             transChoiceKey: 'hms.title',
             icon: icons[IconName.bed],
             url: route('hostels.index'),
-            show: hasAbility('view:hostels'),
+            show: canShowMenuItem('view:hostels', 'hms', moduleState),
         },
         {
             groupKey: 'system',
             transKey: 'trans.settings',
             url: route('settings.index'),
             icon: icons[IconName.cogs],
-            show: hasAbility('view:settings'),
+            show: canShowMenuItem('view:settings', 'settings', moduleState),
         },
         {
             groupKey: 'system',
             transChoiceKey: 'trans.user',
             url: route('users.index'),
             icon: icons[IconName.users],
-            show: hasAbility('view:users'),
+            show: canShowMenuItem('view:users', 'users', moduleState),
         },
         {
             groupKey: 'system',
             transKey: 'trans.maintenance',
             url: route('maintenance.index'),
             icon: icons[IconName.maintenance],
-            show: hasAbility('root:manage'),
+            show: canShowMenuItem('root:manage', 'root', moduleState),
         },
         {
             groupKey: 'department',
@@ -132,7 +139,7 @@ export function useSidebarMenu() {
             transChoiceKeyIndex: 1,
             url: route('institution-departments.index', { is_academic: 1 }),
             icon: icons[IconName.school],
-            show: hasAbility('viewOnlyOwnDepartment:departments'),
+            show: canShowMenuItem('viewOnlyOwnDepartment:departments', 'institution', moduleState),
         },
         {
             groupKey: 'portal',
@@ -170,7 +177,8 @@ export function useSidebarMenu() {
                     hasStudentProfile()
                     && isStudentProfileTabVisible(tab.value as StudentProfileTabValue, 'portal'),
             })),
-    ]);
+    ];
+    });
 
     const menuGroups = computed<MenuGroupInterface[]>(() => {
         const visibleItems = menuOptions.value.filter((item) => item.show);

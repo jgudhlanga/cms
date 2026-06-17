@@ -11,6 +11,16 @@ export type PageModule = {
     };
 };
 
+export type ModuleState = Record<
+    string,
+    {
+        enabled: boolean;
+        settings?: {
+            tabs?: Record<string, boolean>;
+        };
+    }
+>;
+
 export type PageProps<T extends Record<string, unknown> = Record<string, unknown>> = T & {
     appVersion: string;
     auth: {
@@ -18,6 +28,7 @@ export type PageProps<T extends Record<string, unknown> = Record<string, unknown
         can: any;
         impersonating: boolean;
     };
+    moduleState?: ModuleState;
     ziggy: Config & { location: string };
 };
 

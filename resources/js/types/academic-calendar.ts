@@ -2,6 +2,10 @@ export type AcademicCalendar = {
     type: string;
     id: string;
     attributes: {
+        name: string;
+        shortLabel: string;
+        periodLabel: string;
+        dateRangeLabel: string;
         calendarYear: string;
         type: 'term' | 'semester' | 'abma';
         openingDate: string;

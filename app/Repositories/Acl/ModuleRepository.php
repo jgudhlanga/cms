@@ -5,8 +5,8 @@ namespace App\Repositories\Acl;
 use App\DTO\Acl\ModuleDto;
 use App\Http\Filters\Acl\ModuleFilter;
 use App\Models\Acl\Module;
-use App\Repositories\Base\BaseRepository;
 use App\Repositories\Acl\Interface\IModuleRepository;
+use App\Repositories\Base\BaseRepository;
 
 class ModuleRepository extends BaseRepository implements IModuleRepository
 {
@@ -31,14 +31,25 @@ class ModuleRepository extends BaseRepository implements IModuleRepository
         ]);
     }
 
+    public function updateSettings(Module $module, bool $status, ?array $settings = null): Module
+    {
+        $payload = ['status' => $status];
+
+        if ($settings !== null) {
+            $payload['settings'] = $settings;
+        }
+
+        return tap($module)->update($payload);
+    }
+
     public function allFilter($columns = ['*'], ?ModuleFilter $filters = null)
     {
         return $this->module
-			->select($columns)
-			->filter($filters)
-			->orderBy('title')
-			->orderBy('deleted_at')
-			->paginate()
-			->withQueryString();
+            ->select($columns)
+            ->filter($filters)
+            ->orderBy('title')
+            ->orderBy('deleted_at')
+            ->paginate()
+            ->withQueryString();
     }
 }

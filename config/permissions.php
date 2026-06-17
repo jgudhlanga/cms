@@ -51,6 +51,13 @@ return [
         'dashboards' => [
             'viewAny:dashboards',
             'view:dashboards',
+            'view-academic:dashboards',
+            'view-enrolment:dashboards',
+            'view-attendance:dashboards',
+            'view-staff:dashboards',
+            'view-finance:dashboards',
+            'view-hostel:dashboards',
+            'crud-settings:dashboards',
         ],
         'reports' => [
             'viewAny:reports',

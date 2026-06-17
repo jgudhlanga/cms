@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { useUtils } from '@/composables/core/useUtils';
-import { DailyDistribution, DepartmentDistribution, LevelDistribution } from '@/types/dasboard';
+import { DailyDistribution, DepartmentDistribution, EnrolmentSummary, LevelDistribution } from '@/types/dasboard';
 import { IntakePeriod } from '@/types/institution';
 import { SelectOption } from '@/types/utils';
 import { Chart, registerables } from 'chart.js';
-import { Check, FileText, ListChecks, TrendingUp, UserPlus } from 'lucide-vue-next';
+import { trans } from 'laravel-vue-i18n';
+import { Check, FileText, ListChecks, UserPlus } from 'lucide-vue-next';
 import { computed, onMounted, ref, watch } from 'vue';
 import DashboardCard from '../components/DashboardCard.vue';
 import MetricCard from '../components/MetricCard.vue';
@@ -15,12 +16,44 @@ interface Props {
     departmentDistribution: DepartmentDistribution[];
     levelDistribution: LevelDistribution[];
     dailyDistribution: DailyDistribution[];
+    enrolmentSummary: EnrolmentSummary;
     intakePeriods: IntakePeriod[];
     intakePeriodModel: SelectOption | null;
     handleFilterChange: (option: SelectOption) => void;
 }
 
 const props = defineProps<Props>();
+
+const applicationsTitle = computed(() => {
+    const intakeLabel = props.intakePeriodModel?.label;
+    if (!intakeLabel) {
+        return trans('dashboard.applications');
+    }
+
+    return trans('dashboard.applications_for_intake', { intake: intakeLabel });
+});
+
+const acceptanceRateSubtext = computed(() => {
+    const { applications, offersMade } = props.enrolmentSummary;
+    if (applications === 0) {
+        return trans('dashboard.acceptance_rate', { rate: '0' });
+    }
+
+    const rate = Math.round((offersMade / applications) * 100);
+
+    return trans('dashboard.acceptance_rate', { rate: String(rate) });
+});
+
+const yieldRateSubtext = computed(() => {
+    const { offersMade, confirmed } = props.enrolmentSummary;
+    if (offersMade === 0) {
+        return trans('dashboard.yield_rate', { rate: '0' });
+    }
+
+    const rate = Math.round((confirmed / offersMade) * 100);
+
+    return trans('dashboard.yield_rate', { rate: String(rate) });
+});
 
 const levelChart = ref<HTMLCanvasElement | null>(null);
 const enrollmentChart = ref<HTMLCanvasElement | null>(null);
@@ -131,19 +164,23 @@ watch(
 
 <template>
     <div class="mt-4 flex flex-col gap-4">
-        <!-- Top Metrics (Mock data as per design) -->
+        <!-- Top Metrics -->
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <MetricCard :title="$t('dashboard.applications_jan_26')" value="428" :subtext="$t('dashboard.vs_last_intake')" trend="up">
+            <MetricCard :title="applicationsTitle" :value="enrolmentSummary.applications" :subtext="$t('dashboard.total_applications')" trend="neutral">
                 <template #icon><FileText class="h-4 w-4" /></template>
-                <template #trendIcon><TrendingUp class="h-3 w-3" /></template>
             </MetricCard>
-            <MetricCard :title="$t('dashboard.offers_made')" value="276" :subtext="$t('dashboard.acceptance_rate')" trend="neutral">
+            <MetricCard :title="$t('dashboard.offers_made')" :value="enrolmentSummary.offersMade" :subtext="acceptanceRateSubtext" trend="neutral">
                 <template #icon><Check class="h-4 w-4" /></template>
             </MetricCard>
-            <MetricCard :title="$t('dashboard.confirmed')" value="148" :subtext="$t('dashboard.yield_rate')" trend="warning">
+            <MetricCard :title="$t('dashboard.confirmed')" :value="enrolmentSummary.confirmed" :subtext="yieldRateSubtext" trend="neutral">
                 <template #icon><UserPlus class="h-4 w-4" /></template>
             </MetricCard>
-            <MetricCard :title="$t('dashboard.waitlisted')" value="62" :subtext="$t('dashboard.across_8_programmes')" trend="neutral">
+            <MetricCard
+                :title="$t('dashboard.waitlisted')"
+                :value="enrolmentSummary.waitlisted"
+                :subtext="$t('dashboard.waitlisted_applications')"
+                trend="neutral"
+            >
                 <template #icon><ListChecks class="h-4 w-4" /></template>
             </MetricCard>
         </div>

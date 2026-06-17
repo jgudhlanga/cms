@@ -22,6 +22,7 @@ require_once __DIR__.'/Support/BulkFinaliseTestHelpers.php';
 require_once __DIR__.'/Support/FinanceTestHelpers.php';
 require_once __DIR__.'/Support/HmsIndexTestHelpers.php';
 require_once __DIR__.'/Support/HmsApplicationTestHelpers.php';
+require_once __DIR__.'/Support/DashboardTestHelpers.php';
 
 pest()->extend(TestCase::class)
     ->use(RefreshDatabase::class)
