@@ -1,11 +1,11 @@
 <script lang="ts" setup>
 import BaseText from '@/components/core/util/BaseText.vue';
 import BaseTooltip from '@/components/core/util/BaseTooltip.vue';
+import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
 import { IconName, icons } from '@/lib/icons';
 import { hasAbility } from '@/lib/permissions';
 import { DepartmentApplicationStep } from '@/types/department-meta-data';
-import { ButtonSize } from '@/enums/buttons';
 
 interface Props {
     step: DepartmentApplicationStep;

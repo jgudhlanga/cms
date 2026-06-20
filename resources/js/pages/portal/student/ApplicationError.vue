@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import { useUtils } from '@/composables/core/useUtils';
-import { AuthObject } from '@/types/data-pagination';
 import BaseAlert from '@/components/core/alert/BaseAlert.vue';
 import { BaseButton } from '@/components/core/button';
 import CustomSeparator from '@/components/core/util/CustomSeparator.vue';
 import StudentPageHeader from '@/components/shared/students/StudentPageHeader.vue';
+import { useUtils } from '@/composables/core/useUtils';
 import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
 import { TypeVariant } from '@/enums/type-variants';
+import { AuthObject } from '@/types/data-pagination';
 
 // Props
 interface Props {

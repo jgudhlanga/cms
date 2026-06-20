@@ -71,38 +71,18 @@ const save = () => {
         :form="form"
     >
         <template #body>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Name
-                    v-model="form.name"
-                    @input="clearFormErrors(form, 'name')"
-                    :error="form.errors.name"
-                    :is-required="true"
-                />
-                <SponsorTypeComboSelect
-                    :form="form"
-                    v-model="form.sponsorType"
-                    :error="form.errors.sponsorType"
-                />
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <Name v-model="form.name" @input="clearFormErrors(form, 'name')" :error="form.errors.name" :is-required="true" />
+                <SponsorTypeComboSelect :form="form" v-model="form.sponsorType" :error="form.errors.sponsorType" />
                 <PhoneNumber
                     v-model="form.phone_number"
                     @input="clearFormErrors(form, 'phone_number')"
                     :error="form.errors.phone_number"
                     :is-required="true"
                 />
-                <EmailAddress
-                    v-model="form.email"
-                    @input="clearFormErrors(form, 'email_address')"
-                    :error="form.errors.email"
-                />
-                <Address1
-                    v-model="form.address_1"
-                    @input="clearFormErrors(form, 'address_1')"
-                    :error="form.errors.address_1"
-                />
-                <Address2
-                    v-model="form.address_2"
-                    @input="clearFormErrors(form, 'address_2')"
-                    :error="form.errors.address_2" />
+                <EmailAddress v-model="form.email" @input="clearFormErrors(form, 'email_address')" :error="form.errors.email" />
+                <Address1 v-model="form.address_1" @input="clearFormErrors(form, 'address_1')" :error="form.errors.address_1" />
+                <Address2 v-model="form.address_2" @input="clearFormErrors(form, 'address_2')" :error="form.errors.address_2" />
                 <Address3 v-model="form.address_3" @input="clearFormErrors(form, 'address_3')" :error="form.errors.address_3" />
                 <Address4 v-model="form.address_4" @input="clearFormErrors(form, 'address_4')" :error="form.errors.address_4" />
             </div>

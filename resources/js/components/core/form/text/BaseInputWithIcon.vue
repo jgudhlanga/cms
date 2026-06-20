@@ -1,9 +1,8 @@
 <script setup lang="ts">
-import { onMounted } from 'vue';
 import { Input } from '@/components/ui/input';
 import { TextFieldType } from '@/enums/inputs';
-import { cn } from '@/lib/utils';
 import { IconName, icons } from '@/lib/icons';
+import { cn } from '@/lib/utils';
 
 interface Props {
 	icon: IconName
@@ -21,7 +20,6 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const baseClasses = 'px-2 py-1 focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-0';
-
 </script>
 <template>
 	<div

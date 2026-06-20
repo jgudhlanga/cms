@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
@@ -20,7 +21,7 @@ class AcademicCalendarClass extends Model
 {
     use BelongsToTenant, Filterable, LogsActivity,Paginatable, SoftDeletes;
 
-    protected $table = 'academic_calandar_classes';
+    protected $table = 'academic_calendar_classes';
 
     protected $fillable = ['tenant_id', 'class_config_id', 'name', 'description'];
 
@@ -35,11 +36,22 @@ class AcademicCalendarClass extends Model
         return $this->hasMany(AcademicCalendarStudentEnrolment::class, 'academic_calendar_class_id');
     }
 
+    public function metaData(): HasMany
+    {
+        return $this->hasMany(AcademicCalendarClassMetaData::class, 'academic_calendar_class_id');
+    }
+
+    public function lecturerMetaData(): HasOne
+    {
+        return $this->hasOne(AcademicCalendarClassMetaData::class, 'academic_calendar_class_id')
+            ->whereHas('classMetadataType', fn (Builder $query): Builder => $query->where('name', 'lecturer'));
+    }
+
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
             ->logFillable()
-            ->useLogName('AcademicCalandarClass')
+            ->useLogName('AcademicCalendarClass')
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
     }

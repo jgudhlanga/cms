@@ -15,10 +15,10 @@
                     v-for="step in visibleSteps"
                     :key="step.id"
                     class="rounded-2xl bg-sidebar-accent/20 p-5 shadow backdrop-blur-sm"
-                    :class="step.id === highlightedStep ? 'ring-2 ring-primary' : ''"
+                    :class="step.id === highlightedStep ? 'ring-2 ring-sidebar-accent' : ''"
                 >
                     <div class="flex items-start gap-4">
-                        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/20 text-primary">
+                        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-sidebar-accent/20 text-sidebar-accent">
                             <component :is="step.icon" class="h-5 w-5" />
                         </div>
                         <div>

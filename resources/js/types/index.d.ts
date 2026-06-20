@@ -1,6 +1,5 @@
-
-import { trans, trans_choice } from 'laravel-vue-i18n';
 import { User } from '@/types/users';
+import { trans, trans_choice } from 'laravel-vue-i18n';
 export interface Auth {
     user: User;
     can: any;
@@ -12,6 +11,16 @@ export type PageModule = {
     };
 };
 
+export type ModuleState = Record<
+    string,
+    {
+        enabled: boolean;
+        settings?: {
+            tabs?: Record<string, boolean>;
+        };
+    }
+>;
+
 export type PageProps<T extends Record<string, unknown> = Record<string, unknown>> = T & {
     appVersion: string;
     auth: {
@@ -19,6 +28,7 @@ export type PageProps<T extends Record<string, unknown> = Record<string, unknown
         can: any;
         impersonating: boolean;
     };
+    moduleState?: ModuleState;
     ziggy: Config & { location: string };
 };
 
@@ -28,7 +38,6 @@ declare module '@tanstack/table-core' {
         align?: string;
     }
 }
-
 
 declare module '@vue/runtime-core' {
     interface ComponentCustomProperties {
@@ -40,9 +49,9 @@ declare module '@vue/runtime-core' {
 
 // shims-wangeditor.d.ts (in your src/ or types/ folder)
 declare module '@wangeditor/editor-for-vue' {
-    import Editor from '@wangeditor/editor-for-vue/dist/src/index'
-    export * from '@wangeditor/editor-for-vue/dist/src/index'
-    export default Editor
+    import Editor from '@wangeditor/editor-for-vue/dist/src/index';
+    export * from '@wangeditor/editor-for-vue/dist/src/index';
+    export default Editor;
 }
 
 // shims-wangeditor.d.ts

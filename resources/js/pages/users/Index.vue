@@ -1,36 +1,36 @@
 <script setup lang="ts">
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import DataTable from '@/components/core/table/DataTable.vue';
+import { useUtils } from '@/composables/core/useUtils';
 import { useUsers } from '@/composables/users/useUsers';
 import { AuthObject, DataFilters, DataListProps } from '@/types/data-pagination';
 import { Head } from '@inertiajs/vue3';
-import { useUtils } from '@/composables/core/useUtils';
 
 const { createUserColumns, breadcrumbs } = useUsers();
-const {navigateTo} = useUtils();
+const { navigateTo } = useUtils();
 
 const props = defineProps<{
-	users: DataListProps;
-	trashedCount: any;
-	filters: DataFilters;
-	auth: AuthObject;
-	errors: object;
+    users: DataListProps;
+    trashedCount: any;
+    filters: DataFilters;
+    auth: AuthObject;
+    errors: object;
 }>();
 const can = props?.auth?.can;
 </script>
 
 <template>
-	<Head :title="$tChoice('trans.user', 2)" />
-	<PageContainer :breadcrumbs="breadcrumbs">
-		<DataTable
-			:data="users.data"
-			:trashed-count="trashedCount"
-			:filters="filters"
-			:search-url="route('users.index')"
-			:pagination="{ ...users.links, ...users.meta }"
-			:columns="createUserColumns()"
-			:on-create="() => navigateTo(route('users.create'))"
-			:disable-create="!can['create:users']"
-		/>
-	</PageContainer>
+    <Head :title="$tChoice('trans.user', 2)" />
+    <PageContainer :breadcrumbs="breadcrumbs">
+        <DataTable
+            :data="users.data"
+            :trashed-count="trashedCount"
+            :filters="filters"
+            :search-url="route('users.index')"
+            :pagination="{ ...users.links, ...users.meta }"
+            :columns="createUserColumns()"
+            :on-create="() => navigateTo(route('users.create'))"
+            :disable-create="!can['create:users']"
+        />
+    </PageContainer>
 </template>

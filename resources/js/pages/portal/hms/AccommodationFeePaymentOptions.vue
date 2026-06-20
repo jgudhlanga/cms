@@ -19,6 +19,7 @@ import type { BreadcrumbItemInterface } from '@/types/ui';
 interface Props {
     accommodationFee: FeeStructure | null;
     fees: StudentAccommodationFeesResponse;
+    hostelApplicationId: number;
     auth: AuthObject;
     errors: object;
 }
@@ -44,6 +45,7 @@ const feeTypeId = computed(() => props.accommodationFee?.attributes?.feeTypeId ?
 const buildFormData = () => ({
     orderReference: generateRandomCode('ORD'),
     feeTypeId: feeTypeId.value,
+    ledgerableId: props.hostelApplicationId,
     amount: amountDue.value,
     itemName: props.accommodationFee?.attributes?.feeType ?? 'Student Accommodation Fee',
     itemDescription: props.accommodationFee?.attributes?.feeType ?? 'Student Accommodation Fee',
@@ -72,14 +74,14 @@ const submit = async () => {
             errorAlert(response.data.responseMessage);
         }
     } catch {
-        errorAlert(trans('trans.payment_error_description'));
-    } finally {
+        errorAlert(trans('trans.payment_error_description')); 
+    } finally { 
         isLoading.value = false;
     }
 };
 const breadcrumbs = computed<BreadcrumbItemInterface[]>(() => [
     { transChoiceKey: 'dashboard', href: route('portal.dashboard') },
-    {transChoiceKey: trans('students.accommodation'), href: route('portal.profile.accommodations') },
+    {transChoiceKey: trans('students.accommodation'), href: route('portal.profile.accommodations') }, 
     {transKey: 'students.hms_payment'},
 ]);
 </script>

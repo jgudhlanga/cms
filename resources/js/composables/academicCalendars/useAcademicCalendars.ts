@@ -1,8 +1,8 @@
 import { useDropdowns } from '@/composables/core/useDropdowns';
 import { closeModal, errorAlert, forbiddenAlert, openModal, successAlert } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
-import { useDepartmentMetaStore } from '@/store/institution/useDepartmentMetaStore';
 import HttpService from '@/services/http.service';
+import { useDepartmentMetaStore } from '@/store/institution/useDepartmentMetaStore';
 import { AcademicCalendar } from '@/types/academic-calendar';
 import type { Link } from '@/types/ui';
 import type { SelectOption } from '@/types/utils';
@@ -58,7 +58,7 @@ export const useAcademicCalendars = () => {
         });
     };
 
-    const saveAcademicCalendar = (form: InertiaForm<any>, academicCalendar?: AcademicCalendar|null) => {
+    const saveAcademicCalendar = (form: InertiaForm<any>, academicCalendar?: AcademicCalendar | null) => {
         try {
             if (academicCalendar) {
                 updateAcademicCalendar(form, academicCalendar);
@@ -90,31 +90,29 @@ export const useAcademicCalendars = () => {
         }));
     };
 
-    const storePerClassSizeConfig = (
-        form: InertiaForm<any>,
-        institutionDepartmentId: string,
-        academicCalendarId: string,
-        onSuccess?: () => void,
-    ) => {
-        form.post(route('academic-calendars.classes-config.per-class-size.store', {
-            institution_department: institutionDepartmentId,
-            academic_calendar: academicCalendarId
-        }), {
-            onSuccess: () => {
-                successAlert('Academic calendar successfully config successfully saved');
-                closeModal(APP_MODULE_KEYS.student_per_class);
-                useDepartmentMetaStore().bumpAcademicClassConfigsRefresh();
-                onSuccess?.();
+    const storePerClassSizeConfig = (form: InertiaForm<any>, institutionDepartmentId: string, academicCalendarId: string, onSuccess?: () => void) => {
+        form.post(
+            route('academic-calendars.classes-config.per-class-size.store', {
+                institution_department: institutionDepartmentId,
+                academic_calendar: academicCalendarId,
+            }),
+            {
+                onSuccess: () => {
+                    successAlert('Academic calendar successfully config successfully saved');
+                    closeModal(APP_MODULE_KEYS.student_per_class);
+                    useDepartmentMetaStore().bumpAcademicClassConfigsRefresh();
+                    onSuccess?.();
+                },
+                onError: (errors: any) => {
+                    if (Object.keys(errors).length) {
+                        const allErrors = Object.values(errors).join('\n');
+                        errorAlert(allErrors);
+                    } else {
+                        errorAlert('An unexpected error happened, academic calendar could not be updated');
+                    }
+                },
             },
-            onError: (errors: any) => {
-                if (Object.keys(errors).length) {
-                    const allErrors = Object.values(errors).join('\n');
-                    errorAlert(allErrors);
-                } else {
-                    errorAlert('An unexpected error happened, academic calendar could not be updated');
-                }
-            },
-        });
+        );
     };
 
     return {

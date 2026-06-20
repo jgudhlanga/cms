@@ -1,13 +1,13 @@
 import { useUtils } from '@/composables/core/useUtils';
 import { IconName } from '@/lib/icons';
-import About from '@/pages/institution/departments/partials/view/About.vue';
 import AcademicCalendarClasses from '@/pages/institution/academicCalendars/partials/AcademicCalendarClasses.vue';
+import About from '@/pages/institution/departments/partials/view/About.vue';
 import Announcements from '@/pages/institution/departments/partials/view/Announcements.vue';
 import Calendar from '@/pages/institution/departments/partials/view/Calendar.vue';
+import CourseSyllabusTab from '@/pages/institution/departments/partials/view/CourseSyllabusTab.vue';
 import DepartmentSetup from '@/pages/institution/departments/partials/view/DepartmentSetup.vue';
 import Enrolments from '@/pages/institution/departments/partials/view/Enrolments.vue';
 import Staff from '@/pages/institution/departments/partials/view/Staff.vue';
-import CourseSyllabusTab from '@/pages/institution/departments/partials/view/CourseSyllabusTab.vue';
 import { InstitutionDepartment } from '@/types/institution';
 import { CustomTab } from '@/types/utils';
 import { trans, trans_choice } from 'laravel-vue-i18n';

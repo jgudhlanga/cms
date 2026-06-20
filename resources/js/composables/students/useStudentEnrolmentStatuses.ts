@@ -36,22 +36,16 @@ export const useStudentEnrolmentStatuses = () => {
                         { key: 'edit', action: () => onOpenModal(hasAbility('update:settings'), row.original) },
                         {
                             key: 'archive',
-                            action: () =>
-                                onDelete(hasAbility('delete:settings'), route('student-enrolment-statuses.destroy', id), getName()),
+                            action: () => onDelete(hasAbility('delete:settings'), route('student-enrolment-statuses.destroy', id), getName()),
                         },
                         {
                             key: 'restore',
-                            action: () =>
-                                onRestore(hasAbility('restore:settings'), route('student-enrolment-statuses.restore', id), getName()),
+                            action: () => onRestore(hasAbility('restore:settings'), route('student-enrolment-statuses.restore', id), getName()),
                         },
                         {
                             key: 'delete',
                             action: () =>
-                                onForceDelete(
-                                    hasAbility('forceDelete:settings'),
-                                    route('student-enrolment-statuses.force-delete', id),
-                                    getName(),
-                                ),
+                                onForceDelete(hasAbility('forceDelete:settings'), route('student-enrolment-statuses.force-delete', id), getName()),
                         },
                     ]);
                 },

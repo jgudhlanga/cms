@@ -5,6 +5,7 @@ namespace App\Helpers;
 use App\Enums\Institution\ModeOfStudyEnum;
 use App\Enums\Shared\StatusEnum;
 use App\Enums\Shared\TenantEnum;
+use App\Models\AcademicCalendars\AcademicCalendar;
 use App\Models\Institution\InstitutionDepartment;
 use App\Models\Institution\IntakePeriod;
 use App\Models\Institution\ModeOfStudy;
@@ -161,6 +162,23 @@ class Helper
 
         // Cache the fallback only once
         return $cachedIntakePeriod = IntakePeriod::orderByDesc('end_date')->firstOrFail();
+    }
+
+    public static function resolveAcademicCalendar(): AcademicCalendar
+    {
+        static $cachedAcademicCalendar;
+
+        if (request()->filled('academic_calendar_id') && request()->integer('academic_calendar_id') > 0) {
+            return AcademicCalendar::query()
+                ->semesters()
+                ->findOrFail(request()->integer('academic_calendar_id'));
+        }
+
+        if ($cachedAcademicCalendar instanceof AcademicCalendar) {
+            return $cachedAcademicCalendar;
+        }
+
+        return $cachedAcademicCalendar = AcademicCalendar::resolveSemesterForDate();
     }
 
     public static function resolveUserDepartments(): ?array

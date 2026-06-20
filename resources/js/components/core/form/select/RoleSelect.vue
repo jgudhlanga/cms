@@ -17,7 +17,7 @@ interface Props {
 }
 
 const props = defineProps<Props>();
-const {url} = props;
+const { url } = props;
 const { isLoading, listRoles, roles } = useRoles();
 
 onMounted(async () => {
@@ -42,5 +42,6 @@ const options = computed(() => {
         v-bind="$attrs"
         :is-multi="isMulti"
         :loading="isLoading"
-        :options="options" />
+        :options="options"
+    />
 </template>

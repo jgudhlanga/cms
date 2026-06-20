@@ -1,9 +1,9 @@
 import { closeModal, errorAlert, successAlert } from '@/lib/alerts';
 import { useLoadersStore } from '@/store/core/loaders.store';
+import { SelectOption } from '@/types/utils';
 import { InertiaForm, router } from '@inertiajs/vue3';
 import { storeToRefs } from 'pinia';
 import { ZodObject } from 'zod';
-import { SelectOption } from '@/types/utils';
 
 function clearFormErrors(inertiaForm: InertiaForm<any>, field: any) {
     inertiaForm.clearErrors(field);

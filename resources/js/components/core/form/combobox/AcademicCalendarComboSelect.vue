@@ -1,9 +1,9 @@
 <script lang="ts" setup>
 import BaseCombobox from '@/components/core/form/combobox/BaseCombobox.vue';
+import { AcademicCalendar } from '@/types/academic-calendar';
 import { SelectOption } from '@/types/utils';
 import { InertiaForm } from '@inertiajs/vue3';
 import { computed, onMounted } from 'vue';
-import { AcademicCalendar } from '@/types/academic-calendar';
 
 interface Props {
     data: AcademicCalendar[];

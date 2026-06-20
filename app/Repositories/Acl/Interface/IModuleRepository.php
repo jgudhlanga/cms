@@ -13,5 +13,7 @@ interface IModuleRepository extends IBaseRepository
 
     public function update(Module $module, ModuleDto $dto);
 
-    public function allFilter($columns = ['*'], ModuleFilter $filters = null);
+    public function updateSettings(Module $module, bool $status, ?array $settings = null): Module;
+
+    public function allFilter($columns = ['*'], ?ModuleFilter $filters = null);
 }

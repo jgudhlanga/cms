@@ -5,13 +5,13 @@ import DataLoadingSpinner from '@/components/core/loader/DataLoadingSpinner.vue'
 import DataTable from '@/components/core/table/DataTable.vue';
 import Empty from '@/components/core/util/Empty.vue';
 import GridLabelValue from '@/components/core/util/GridLabelValue.vue';
+import TabsAddNewButton from '@/components/students/tabs/TabsAddNewButton.vue';
 import { useSponsors } from '@/composables/students/useSponsors';
 import { useStudentPortal } from '@/composables/students/useStudentPortal';
 import { ColorVariant } from '@/enums/colors';
 import { IconName } from '@/enums/icons';
 import { Sponsor } from '@/types/students';
 import { onMounted, ref } from 'vue';
-import TabsAddNewButton from '@/components/students/tabs/TabsAddNewButton.vue';
 interface Props {
     url?: string;
 }

@@ -1,17 +1,17 @@
 <script setup lang="ts">
 import { BaseCheckbox } from '@/components/core/form';
-import BaseModal from '@/components/core/modal/BaseModal.vue';
 import SpinnerComponent from '@/components/core/loader/SpinnerComponent.vue';
+import BaseModal from '@/components/core/modal/BaseModal.vue';
+import { useCourses } from '@/composables/institution/useCourses';
+import { useDepartmentCourses } from '@/composables/institution/useDepartmentCourses';
+import { SizeVariant } from '@/enums/sizes';
 import { getModalEdit } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
 import { useModalStore } from '@/store/core/useModalStore';
 import { DepartmentCourseParams } from '@/types/department-meta-data';
+import { Course } from '@/types/institution';
 import { useForm } from '@inertiajs/vue3';
 import { ref, watch } from 'vue';
-import { useCourses } from '@/composables/institution/useCourses';
-import { useDepartmentCourses } from '@/composables/institution/useDepartmentCourses';
-import { Course } from '@/types/institution';
-import { SizeVariant } from '@/enums/sizes';
 
 interface Props {
     institutionDepartmentId: string;

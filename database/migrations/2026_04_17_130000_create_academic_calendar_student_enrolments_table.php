@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('tenant_id')->constrained('tenants', 'id', 'acc_cal_stu_enr_tenant_fk');
             $table->foreignId('student_enrolment_id')->constrained('student_enrolments', 'id', 'acc_cal_stu_enr_stu_enr_fk');
             $table->foreignId('academic_calendar_class_id')
-                ->constrained('academic_calandar_classes', 'id', 'acc_cal_stu_enr_class_fk');
+                ->constrained('academic_calendar_classes', 'id', 'acc_cal_stu_enr_class_fk');
             $table->timestamps();
             $table->softDeletes();
         });

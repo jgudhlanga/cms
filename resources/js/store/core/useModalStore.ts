@@ -1,34 +1,34 @@
 import { defineStore } from 'pinia';
 
 type ModalItem = {
-	opened?: boolean,
-	edit?: any,
-	parent?: any,
-}
+    opened?: boolean;
+    edit?: any;
+    parent?: any;
+};
 
 interface IModalStore {
-	modals?: Record<string, ModalItem>;
+    modals?: Record<string, ModalItem>;
 }
 
 export const useModalStore = defineStore('modal', {
-	state: (): IModalStore => ({
-		modals: {}
-	}),
-	actions: {
-		openModal(name: string, edit?: any, parent?: any) {
-			this.modals![name] = { opened: true, edit: edit, parent: parent };
-		},
-		closeModal(name: string) {
-			delete this.modals![name];
-		},
-		isOpen(name: string) {
-			return this.modals![name]?.opened;
-		},
-		getEdit(name: string) {
-			return this.modals![name]?.edit;
-		},
+    state: (): IModalStore => ({
+        modals: {},
+    }),
+    actions: {
+        openModal(name: string, edit?: any, parent?: any) {
+            this.modals![name] = { opened: true, edit: edit, parent: parent };
+        },
+        closeModal(name: string) {
+            delete this.modals![name];
+        },
+        isOpen(name: string) {
+            return this.modals![name]?.opened;
+        },
+        getEdit(name: string) {
+            return this.modals![name]?.edit;
+        },
         getParent(name: string) {
             return this.modals![name]?.parent;
-        }
-	}
+        },
+    },
 });

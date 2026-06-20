@@ -38,7 +38,7 @@ export const useDepartmentWorkflows = () => {
     };
     const syncWorkflowStepActionMetadata = (institutionDepartmentId: string, form: InertiaForm<any>) => {
         try {
-             form.post(route('department-application-steps.sync-metadata', institutionDepartmentId), {
+            form.post(route('department-application-steps.sync-metadata', institutionDepartmentId), {
                 preserveScroll: true,
                 onSuccess: () => {
                     successAlert(successMessage());

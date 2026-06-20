@@ -2,6 +2,7 @@
 import LogoutButton from '@/components/auth/LogoutButton.vue';
 import RemoveImpersonationButton from '@/components/auth/RemoveImpersonationButton.vue';
 import AppLogo from '@/components/core/image/AppLogo.vue';
+import HeaderActionGroup from '@/components/core/page/HeaderActionGroup.vue';
 import AppPreferencesSheet from '@/components/core/preferences/AppPreferencesSheet.vue';
 import Heading from '@/components/core/util/Heading.vue';
 import { useUtils } from '@/composables/core/useUtils';
@@ -21,10 +22,12 @@ const { isItTrue } = useUtils();
                 <AppLogo class="shrink-0 rounded-full" />
             </div>
             <Heading :title="page.props.auth.user.attributes?.name" />
-            <div class="flex items-center space-x-4">
+            <div class="flex items-center gap-2 pr-2 sm:pr-4">
                 <RemoveImpersonationButton v-if="isItTrue(page.props.auth.impersonating)" />
-                <LogoutButton />
-                <AppPreferencesSheet />
+                <HeaderActionGroup>
+                    <LogoutButton />
+                    <AppPreferencesSheet />
+                </HeaderActionGroup>
             </div>
         </div>
     </nav>

@@ -1,21 +1,21 @@
 import { SelectOption } from '@/types/utils';
 
 export type NextOfKin = {
-   type: string;
-   id: string | number;
-   attributes: {
-       name: string;
-       phoneNumber?: string;
-       relationship?: string;
-       relationshipId?: string | number;
-       address1?: string;
-       address2?: string;
-       address3?: string;
-       address4?: string;
-       createdAt?: string;
-       updatedAt?: string;
-       deletedAt?: string;
-   }
+    type: string;
+    id: string | number;
+    attributes: {
+        name: string;
+        phoneNumber?: string;
+        relationship?: string;
+        relationshipId?: string | number;
+        address1?: string;
+        address2?: string;
+        address3?: string;
+        address4?: string;
+        createdAt?: string;
+        updatedAt?: string;
+        deletedAt?: string;
+    };
 };
 export type NextOfKinParams = {
     name: string;

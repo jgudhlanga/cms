@@ -89,4 +89,3 @@ watch(modals!, () => {
         </template>
     </BaseModal>
 </template>
-

@@ -13,6 +13,10 @@ export function hostelApplicationStatusTagVariant(status: HostelApplicationStatu
             return ColorVariant.warning_outline;
         case 'awaiting-payment':
             return ColorVariant.primary_outline;
+        case 'partially-paid':
+            return ColorVariant.warning_outline;
+        case 'paid':
+            return ColorVariant.success_outline;
         case 'approved':
             return ColorVariant.success_outline;
         case 'declined':

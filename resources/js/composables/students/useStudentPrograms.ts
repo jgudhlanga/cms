@@ -55,7 +55,7 @@ export const useStudentPrograms = () => {
                     });
                 },
             },
-           {
+            {
                 header: `${trans_choice('trans.program', 1)} ${trans_choice('trans.status', 1)}`,
                 accessorKey: 'programStatus',
                 cell: ({ row }: { row: { original: StudentProgram } }) => {

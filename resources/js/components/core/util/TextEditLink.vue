@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { BaseButton } from '@/components/core/button';
 import BaseIcon from '@/components/core/icon/BaseIcon.vue';
-import { IconName } from '@/enums/icons';
 import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
+import { IconName } from '@/enums/icons';
 
 interface Props {
     title: string;

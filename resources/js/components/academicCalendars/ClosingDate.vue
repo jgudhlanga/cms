@@ -12,7 +12,7 @@ withDefaults(defineProps<Props>(), {
 <template>
     <BaseDatePicker
         input-id="closing_date"
-        :label="showLabel ?  $tChoice('academic_calendar.closing_date', 1) : ''"
+        :label="showLabel ? $tChoice('academic_calendar.closing_date', 1) : ''"
         v-bind="$attrs"
         :enable-time-picker="false"
         prevent-min-max-navigation

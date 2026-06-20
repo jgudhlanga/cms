@@ -388,7 +388,7 @@ test('saving generated classes is idempotent for the same context', function () 
     ]);
 
     $this->post($url, $payload)->assertSessionHas('success');
-    $classIdsAfterFirstSave = DB::table('academic_calandar_classes')
+    $classIdsAfterFirstSave = DB::table('academic_calendar_classes')
         ->whereNull('deleted_at')
         ->orderBy('id')
         ->pluck('id')
@@ -399,7 +399,7 @@ test('saving generated classes is idempotent for the same context', function () 
         ->all();
 
     $this->post($url, $payload)->assertSessionHas('success');
-    $classIdsAfterSecondSave = DB::table('academic_calandar_classes')
+    $classIdsAfterSecondSave = DB::table('academic_calendar_classes')
         ->whereNull('deleted_at')
         ->orderBy('id')
         ->pluck('id')
@@ -409,7 +409,7 @@ test('saving generated classes is idempotent for the same context', function () 
         ->pluck('academic_calendar_class_id', 'student_enrolment_id')
         ->all();
 
-    expect(DB::table('academic_calandar_classes')->whereNull('deleted_at')->count())->toBe(2);
+    expect(DB::table('academic_calendar_classes')->whereNull('deleted_at')->count())->toBe(2);
     expect(DB::table('academic_calendar_student_enrolments')->whereNull('deleted_at')->count())->toBe(3);
     expect($classIdsAfterSecondSave)->toBe($classIdsAfterFirstSave);
     expect($studentProgramToClassMapAfterSecondSave)->toBe($studentProgramToClassMapAfterFirstSave);
@@ -442,7 +442,7 @@ test('saving generated classes adds only newly-finalized students', function () 
         ->whereNull('deleted_at')
         ->pluck('academic_calendar_class_id', 'student_enrolment_id')
         ->all();
-    $classCountAfterFirstSave = DB::table('academic_calandar_classes')
+    $classCountAfterFirstSave = DB::table('academic_calendar_classes')
         ->whereNull('deleted_at')
         ->count();
 
@@ -457,7 +457,7 @@ test('saving generated classes adds only newly-finalized students', function () 
         ->all();
 
     expect(DB::table('academic_calendar_student_enrolments')->whereNull('deleted_at')->count())->toBe(5);
-    expect(DB::table('academic_calandar_classes')->whereNull('deleted_at')->count())->toBeGreaterThanOrEqual($classCountAfterFirstSave);
+    expect(DB::table('academic_calendar_classes')->whereNull('deleted_at')->count())->toBeGreaterThanOrEqual($classCountAfterFirstSave);
 
     foreach ($studentProgramToClassMapAfterFirstSave as $studentEnrolmentId => $academicCalendarClassId) {
         expect($studentProgramToClassMapAfterSecondSave[$studentEnrolmentId] ?? null)->toBe($academicCalendarClassId);

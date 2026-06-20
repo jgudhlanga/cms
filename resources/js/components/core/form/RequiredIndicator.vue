@@ -1,8 +1,5 @@
-<script setup lang="ts">
-
-</script>
+<script setup lang="ts"></script>
 
 <template>
-    <span class="p-1 text-destructive">*</span>
+    <span class="text-destructive p-1">*</span>
 </template>
-

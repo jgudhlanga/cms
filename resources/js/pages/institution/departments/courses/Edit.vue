@@ -65,7 +65,10 @@ const updateCourse = () => {
 
 <template>
     <Head :title="`${$tChoice('trans.department', 1)} ${$tChoice('trans.course', 1)}`" />
-    <PageContainer :breadcrumbs="breadcrumbs":back-url="route('institution-departments.show', getIdParams(institutionDepartment?.attributes?.departmentId.toString() ?? ''))">
+    <PageContainer
+        :breadcrumbs="breadcrumbs"
+        :back-url="route('institution-departments.show', getIdParams(institutionDepartment?.attributes?.departmentId.toString() ?? ''))"
+    >
         <form @submit.prevent="() => updateCourse()" class="flex flex-col">
             <div class="grid grid-cols-2 gap-3">
                 <BaseCard :title="`${$tChoice('trans.course', 1)} ${$tChoice('trans.level', 2)}`">

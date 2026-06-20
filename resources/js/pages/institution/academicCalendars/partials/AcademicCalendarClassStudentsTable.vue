@@ -2,9 +2,9 @@
 import { BaseButton } from '@/components/core/button';
 import { BaseCheckbox } from '@/components/core/form';
 import { normalizeGender } from '@/composables/academicCalendars/useAcademicCalendarClassStudents';
-import type { AcademicCalendarClassMoveTarget, AcademicCalendarClassPreviewStudent } from '@/types/academic-calendar';
 import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
+import type { AcademicCalendarClassMoveTarget, AcademicCalendarClassPreviewStudent } from '@/types/academic-calendar';
 import { Link as InertiaLink } from '@inertiajs/vue3';
 import { UserIcon, UserRoundIcon } from 'lucide-vue-next';
 

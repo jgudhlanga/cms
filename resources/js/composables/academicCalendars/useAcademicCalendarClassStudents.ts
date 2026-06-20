@@ -3,7 +3,9 @@ import type { Ref } from 'vue';
 import { computed } from 'vue';
 
 export function normalizeGender(gender: string | null | undefined): 'female' | 'male' | 'unknown' {
-    const normalized = String(gender ?? '').trim().toLowerCase();
+    const normalized = String(gender ?? '')
+        .trim()
+        .toLowerCase();
 
     if (normalized.includes('female')) {
         return 'female';

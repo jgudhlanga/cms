@@ -45,10 +45,10 @@ const invoiceItems = computed(() =>
                         class="rounded-md border border-border bg-card px-3 py-2 text-xs shadow-sm"
                     >
                         <div class="flex items-center justify-between gap-3">
-                            <div class="font-medium text-accent-foreground">
+                            <div class="text-accent-foreground font-medium">
                                 {{ $t(invoiceItem.label) }}
                             </div>
-                            <div class="font-semibold text-accent-foreground">
+                            <div class="text-accent-foreground font-semibold">
                                 {{ formatMoney(invoiceItem.value as string | number) }}
                             </div>
                         </div>

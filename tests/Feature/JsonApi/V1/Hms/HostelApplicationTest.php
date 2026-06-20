@@ -1304,6 +1304,19 @@ test('json api hostel applications pending queue returns pending and awaiting pa
         'check_out' => now()->addMonths(4)->toDateString(),
     ]));
 
+    $paidStudent = createStudentForAllocationIndexTest();
+    $paid = HostelApplication::withoutEvents(fn () => HostelApplication::query()->create([
+        'tenant_id' => TenantEnum::HARARE_POLY->id(),
+        'student_id' => $paidStudent->id,
+        'gender_id' => $paidStudent->gender_id,
+        'type' => HostelApplicationTypeEnum::STUDENT,
+        'status' => HostelApplicationStatusEnum::PAID,
+        'next_of_kin_name' => 'Kin Name',
+        'next_of_kin_contact' => '0771234567',
+        'check_in' => now()->toDateString(),
+        'check_out' => now()->addMonths(4)->toDateString(),
+    ]));
+
     $approvedStudent = createStudentForAllocationIndexTest();
     HostelApplication::withoutEvents(fn () => HostelApplication::query()->create([
         'tenant_id' => TenantEnum::HARARE_POLY->id(),
@@ -1324,7 +1337,7 @@ test('json api hostel applications pending queue returns pending and awaiting pa
 
     $ids = collect($response->json('meta.applications'))->pluck('id')->all();
 
-    expect($ids)->toContain($pending->id, $awaiting->id)
+    expect($ids)->toContain($pending->id, $awaiting->id, $paid->id)
         ->and($ids)->not->toContain($current->id);
 });
 
@@ -1819,4 +1832,43 @@ test('json api hostel applications store requires authentication', function () {
         ])
         ->post(route('v1.json.hms.hostel-applications.store'))
         ->assertUnauthorized();
+});
+
+test('json api hostel applications can approve from paid status', function () {
+    $tenant = Tenant::query()->firstOrFail();
+    $user = User::factory()->create(['tenant_id' => $tenant->id]);
+    $user->givePermissionTo('update:hostel-applications');
+    Sanctum::actingAs($user);
+
+    disableAllHmsApprovalRequirements($tenant->id);
+
+    $student = createStudentForAllocationIndexTest();
+    $room = ensureHostelRoomWithCapacity('Hostel D', 'APPROVE-PAID');
+    $room->hostel->update(['type' => 'male']);
+
+    $application = HostelApplication::withoutEvents(fn () => HostelApplication::query()->create([
+        'tenant_id' => TenantEnum::HARARE_POLY->id(),
+        'student_id' => $student->id,
+        'gender_id' => $student->gender_id,
+        'type' => HostelApplicationTypeEnum::STUDENT,
+        'status' => HostelApplicationStatusEnum::PAID,
+        'next_of_kin_name' => 'Kin Name',
+        'next_of_kin_contact' => '0771234567',
+        'check_in' => now()->toDateString(),
+        'check_out' => now()->addMonths(4)->toDateString(),
+    ]));
+
+    $this
+        ->jsonApi('hostel-applications')
+        ->withData([
+            'type' => 'hostel-applications',
+            'id' => (string) $application->id,
+            'attributes' => [
+                'status' => 'approved',
+                'hostelRoomId' => $room->id,
+            ],
+        ])
+        ->patch(route('v1.json.hms.hostel-applications.update', $application))
+        ->assertSuccessful()
+        ->assertJsonPath('data.attributes.status', 'approved');
 });

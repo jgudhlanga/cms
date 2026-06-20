@@ -13,6 +13,7 @@ import type {
 } from '@/types/hms';
 import type { InertiaForm } from '@inertiajs/vue3';
 import { router } from '@inertiajs/vue3';
+import { trans } from 'laravel-vue-i18n';
 import { computed } from 'vue';
 
 interface FormShape {
@@ -60,7 +61,9 @@ const showForm = computed(
 const showNotFoundMessage = computed(() => props.lookup?.found === false);
 
 const isAwaitingPayment = computed(
-    () => props.openApplication?.attributes.status === 'awaiting-payment',
+    () =>
+        props.openApplication?.attributes.status === 'awaiting-payment'
+        || props.openApplication?.attributes.status === 'partially-paid',
 );
 
 const showPaymentCta = computed(
@@ -73,9 +76,30 @@ const showPaymentCta = computed(
 const showFeesPaidConfirmation = computed(
     () =>
         props.context === 'portal'
-        && isAwaitingPayment.value
-        && props.fees?.isFullyPaid,
+        && props.fees?.isFullyPaid
+        && ['awaiting-payment', 'partially-paid', 'paid'].includes(
+            props.openApplication?.attributes.status ?? '',
+        ),
 );
+
+const openApplicationStatusLabel = computed(() => {
+    if (!props.openApplication) {
+        return '';
+    }
+
+    const status = props.openApplication.attributes.status;
+
+    if (
+        props.fees?.isFullyPaid
+        && (status === 'awaiting-payment' || status === 'partially-paid')
+    ) {
+        return trans('hms.application_status_paid');
+    }
+
+    return props.openApplication.attributes.statusLabel
+        ?? props.openApplication.attributes.status
+        ?? '';
+});
 
 const adminApplicationLink = (id: string | number) =>
     route('hostels.applications.show', { hostel_application: id });
@@ -99,14 +123,14 @@ const goToPayment = () => {
         >
             <p class="text-sm text-foreground">
                 {{ $t('students.accommodation_open_application', {
-                    status: openApplication.attributes.statusLabel ?? openApplication.attributes.status,
+                    status: openApplicationStatusLabel,
                 }) }}
             </p>
             <p
                 v-if="showFeesPaidConfirmation"
                 class="mt-2 text-sm text-emerald-600 dark:text-emerald-400"
             >
-                {{ $t('students.accommodation_fees_paid_confirmation') }}
+                {{ $t('students.accommodation_payment_received_awaiting_review') }}
             </p>
             <div v-else-if="showPaymentCta" class="mt-3 flex flex-col gap-2">
                 <p class="text-xs text-amber-600 dark:text-amber-400">

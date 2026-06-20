@@ -228,7 +228,7 @@ export const useEnrolments = () => {
             const mainSubjectsScore = mainScores.reduce((sum, s) => sum + s, 0);
             const hasInvalidGrade = [...mainScores, ...otherScores].some((score) => score >= 9);
 
-            if (hasInvalidGrade ) return;
+            if (hasInvalidGrade) return;
             //if (hasInvalidGrade || hasNoPayment ) return;
 
             scored.push({

@@ -41,7 +41,6 @@ import { Student } from '@/types/students';
 import { router, useForm } from '@inertiajs/vue3';
 import { trans } from 'laravel-vue-i18n';
 import { storeToRefs } from 'pinia';
-import ToastService from '@/services/toast.service';
 
 // Props
 interface Props {

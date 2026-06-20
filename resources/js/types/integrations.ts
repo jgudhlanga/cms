@@ -7,10 +7,10 @@ export type Ledger = {
         paymentOption: number | null;
         type: string | null;
         paymentStatus: string | null;
-        amount: string |number | null;
+        amount: string | number | null;
         currency: string | null;
-        clientFee : string | number | null;
-        merchantFee : string | number | null;
+        clientFee: string | number | null;
+        merchantFee: string | number | null;
         systemReference: string | null;
         paymentReference: string | null;
         dueDate: string | null;

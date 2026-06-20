@@ -11,7 +11,7 @@ defineProps<Props>();
                 <h3 v-if="title" class="text-accent-foreground text-xs font-semibold uppercase">
                     {{ title }}
                 </h3>
-                <slot name="title"/>
+                <slot name="title" />
                 <div class="flex space-x-2">
                     <slot name="header-buttons" />
                 </div>

@@ -2,9 +2,12 @@
 
 namespace App\Services;
 
+use App\Enums\Shared\ClassListTypeEnum;
+use App\Enums\Shared\WorkflowStepEnum;
 use App\Helpers\Helper;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -169,5 +172,97 @@ class ApplicationMetricsService
                 'count' => $rawCounts[$date->toDateString()] ?? 0,
             ];
         });
+    }
+
+    /**
+     * @return array{applications: int, offersMade: int, confirmed: int, waitlisted: int, provisional: int, failedRejected: int}
+     */
+    public function enrolmentSummaryMetrics(): array
+    {
+        $intakePeriod = Helper::resolveIntakePeriod();
+
+        $empty = [
+            'applications' => 0,
+            'offersMade' => 0,
+            'confirmed' => 0,
+            'waitlisted' => 0,
+            'provisional' => 0,
+            'failedRejected' => 0,
+        ];
+
+        if (! $intakePeriod || ($this->isDepartmentUser && empty($this->userDepartments))) {
+            return $empty;
+        }
+
+        $applications = $this->studentProgramsBaseQuery($intakePeriod->id)->count();
+
+        $offersMade = $this->studentProgramsBaseQuery($intakePeriod->id)
+            ->join('department_application_steps', 'student_programs.department_application_step_id', '=', 'department_application_steps.id')
+            ->join('workflow_steps', 'department_application_steps.workflow_step_id', '=', 'workflow_steps.id')
+            ->whereIn('workflow_steps.slug', [
+                WorkflowStepEnum::ACCEPTED->slug(),
+                WorkflowStepEnum::ENROLLED->slug(),
+            ])
+            ->count();
+
+        $waitlisted = $this->studentProgramsBaseQuery($intakePeriod->id)
+            ->join('department_application_steps', 'student_programs.department_application_step_id', '=', 'department_application_steps.id')
+            ->join('workflow_steps', 'department_application_steps.workflow_step_id', '=', 'workflow_steps.id')
+            ->where('workflow_steps.slug', WorkflowStepEnum::WAITLISTED->slug())
+            ->count();
+
+        $confirmed = $this->studentProgramsBaseQuery($intakePeriod->id)
+            ->whereExists(function (Builder $query): void {
+                $query->select(DB::raw(1))
+                    ->from('class_lists')
+                    ->whereColumn('class_lists.student_program_id', 'student_programs.id')
+                    ->whereNull('class_lists.deleted_at')
+                    ->where('class_lists.attributes->identity_confirmed', true)
+                    ->where('class_lists.attributes->disability_confirmed', true)
+                    ->where('class_lists.attributes->names_confirmed', true);
+            })
+            ->count();
+
+        $provisional = $this->studentProgramsBaseQuery($intakePeriod->id)
+            ->whereExists(function (Builder $query): void {
+                $query->select(DB::raw(1))
+                    ->from('class_lists')
+                    ->whereColumn('class_lists.student_program_id', 'student_programs.id')
+                    ->whereNull('class_lists.deleted_at')
+                    ->where('class_lists.type', ClassListTypeEnum::PROVISIONAL->value);
+            })
+            ->count();
+
+        $failedRejected = $this->studentProgramsBaseQuery($intakePeriod->id)
+            ->whereExists(function (Builder $query): void {
+                $query->select(DB::raw(1))
+                    ->from('class_lists')
+                    ->whereColumn('class_lists.student_program_id', 'student_programs.id')
+                    ->whereNull('class_lists.deleted_at')
+                    ->where('class_lists.type', ClassListTypeEnum::FAILED->value);
+            })
+            ->count();
+
+        return [
+            'applications' => $applications,
+            'offersMade' => $offersMade,
+            'confirmed' => $confirmed,
+            'waitlisted' => $waitlisted,
+            'provisional' => $provisional,
+            'failedRejected' => $failedRejected,
+        ];
+    }
+
+    private function studentProgramsBaseQuery(int $intakePeriodId): Builder
+    {
+        $query = DB::table('student_programs')
+            ->where('student_programs.intake_period_id', $intakePeriodId)
+            ->whereNull('student_programs.deleted_at');
+
+        if ($this->isDepartmentUser) {
+            $query->whereIn('student_programs.institution_department_id', $this->userDepartments);
+        }
+
+        return $query;
     }
 }

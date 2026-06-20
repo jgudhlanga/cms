@@ -1,8 +1,8 @@
 export enum TextFieldType {
-	textarea = 'textarea',
-	text = 'text',
-	password = 'password',
-	email = 'email',
-	number = 'number',
+    textarea = 'textarea',
+    text = 'text',
+    password = 'password',
+    email = 'email',
+    number = 'number',
     file = 'file',
 }

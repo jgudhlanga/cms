@@ -10,9 +10,12 @@ import { Ledger } from '@/types/integrations';
 
 interface Props {
     details: Ledger;
+    redirectRoute: string;
+    isApplicationFee?: boolean;
+    isAccommodationFee?: boolean;
 }
 
-defineProps<Props>();
+const props = defineProps<Props>();
 
 const { navigateTo } = useUtils();
 </script>
@@ -31,18 +34,24 @@ const { navigateTo } = useUtils();
             {{ details.attributes.paymentStatus }}
         </template>
         <template #next-steps>
-            <div class="mb-6">
+            <div v-if="isApplicationFee" class="mb-6">
                 <h3 class="mb-2 font-medium text-gray-700">{{ $tChoice('trans.next_step', 1) }}</h3>
                 <ul class="space-y-1 text-sm text-gray-600">
                     <li class="flex items-start"><span class="mr-2 text-green-500">•</span>{{ $t('trans.finish_registration_description') }}</li>
+                </ul>
+            </div>
+            <div v-else-if="isAccommodationFee" class="mb-6">
+                <h3 class="mb-2 font-medium text-gray-700">{{ $tChoice('trans.next_step', 1) }}</h3>
+                <ul class="space-y-1 text-sm text-gray-600">
+                    <li class="flex items-start"><span class="mr-2 text-green-500">•</span>{{ $t('students.accommodation_fees_paid_confirmation') }}</li>
                 </ul>
             </div>
         </template>
         <template #action-buttons>
             <BaseButton
                 classes="rounded-full"
-                :title="$t('trans.finish_registration')"
-                @click="navigateTo(route('portal.application.create'))"
+                :title="isApplicationFee ? $t('trans.finish_registration') : $t('trans.back')"
+                @click="navigateTo(redirectRoute)"
                 :variant="ColorVariant.success"
             />
         </template>

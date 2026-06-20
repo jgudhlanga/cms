@@ -3,7 +3,12 @@ export type Module = {
     id?: string;
     attributes: {
         title: string;
+        slug?: string;
         description?: string;
+        status?: boolean;
+        settings?: {
+            tabs?: Record<string, boolean>;
+        };
         createdAt?: string;
         updatedAt?: string;
         deletedAt?: string;
@@ -12,6 +17,12 @@ export type Module = {
 export type ModuleParams = {
     title: string;
     description?: string;
+};
+export type ModuleSettingsParams = {
+    status: boolean;
+    settings?: {
+        tabs: Record<string, boolean>;
+    };
 };
 export type PermissionParams = {
     name: string;
@@ -47,7 +58,7 @@ export type Role = {
 export type RoleMinimal = {
     id: string;
     name: string;
-}
+};
 export type Permission = {
     type?: string;
     id?: string;

@@ -1,4 +1,5 @@
 import { useDataTables } from '@/composables/core/useDataTables';
+import { ColorVariant } from '@/enums/colors';
 import { buildFormOptions } from '@/lib/forms';
 import { hasAbility } from '@/lib/permissions';
 import HttpService from '@/services/http.service';
@@ -8,8 +9,6 @@ import { InertiaForm, router } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 import { h, ref } from 'vue';
 import { z } from 'zod';
-import { ColorVariant } from '@/enums/colors';
-import { IconName } from '@/enums/icons';
 
 export const useCourseSyllabuses = () => {
     const { actionButton, onView } = useDataTables();
@@ -54,9 +53,10 @@ export const useCourseSyllabuses = () => {
 
         if (courseSyllabusId) {
             if (hasFile) {
-                form
-                    .transform((data: any) => ({ ...data, _method: 'put' }))
-                    .post(route('department-course-syllabuses.update', courseSyllabusId), { ...opts, forceFormData: true });
+                form.transform((data: any) => ({ ...data, _method: 'put' })).post(route('department-course-syllabuses.update', courseSyllabusId), {
+                    ...opts,
+                    forceFormData: true,
+                });
             } else {
                 form.put(route('department-course-syllabuses.update', courseSyllabusId), opts);
             }

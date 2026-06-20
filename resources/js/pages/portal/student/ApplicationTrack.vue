@@ -96,7 +96,6 @@ const currentStepIndex = computed(() => {
     return index >= 0 ? index : 0;
 });
 
-
 const currentStep = computed(() => {
     return props.application?.relationships?.departmentWorkflowStep;
 });

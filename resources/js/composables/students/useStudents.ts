@@ -1,10 +1,10 @@
 import { useDataTables } from '@/composables/core/useDataTables';
+import { useUtils } from '@/composables/core/useUtils';
+import { errorAlert, successAlert } from '@/lib/alerts';
 import { Enrolment } from '@/types/enrolments';
 import { Student, StudentFiltersState } from '@/types/students';
 import { trans, trans_choice } from 'laravel-vue-i18n';
-import { useUtils } from '@/composables/core/useUtils';
 import { InertiaForm } from '@inertiajs/vue3';
-import { errorAlert, successAlert } from '@/lib/alerts';
 import { mergeQueryParamsIntoRequestPath } from '@/lib/merge-query-into-url';
 import { ref } from 'vue';
 import HttpService from '@/services/http.service';
@@ -83,7 +83,8 @@ export const useStudents = () => {
         //return step?.toLowerCase() === 'review' ? 'Unsuccessful' : step;
     };
 
-    const hasOfferLetter = (application: Enrolment) => getApplicationStatus(application)?.toLowerCase() === 'accepted' || getApplicationStatus(application)?.toLowerCase() === 'enrolled';
+    const hasOfferLetter = (application: Enrolment) =>
+        getApplicationStatus(application)?.toLowerCase() === 'accepted' || getApplicationStatus(application)?.toLowerCase() === 'enrolled';
 
     const statusMessage = (application: Enrolment) => {
         const workflowStep = application?.relationships?.departmentWorkflowStep?.attributes?.workflowStep ?? '';

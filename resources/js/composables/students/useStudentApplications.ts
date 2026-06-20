@@ -1,5 +1,6 @@
 import { useDataTables } from '@/composables/core/useDataTables';
 import { useUtils } from '@/composables/core/useUtils';
+import { ColorVariant } from '@/enums/colors';
 import { errorAlert, openModal, successAlert, warningDialog } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
 import { buildFormOptions } from '@/lib/forms';
@@ -9,19 +10,13 @@ import HttpService from '@/services/http.service';
 import { PageProps } from '@/types';
 import { Role } from '@/types/acl';
 import { DepartmentApplicationStep } from '@/types/department-meta-data';
-import {
-    BulkApplicationApprovalParams,
-    BulkUpdatePaymentStatusParams,
-    Enrolment,
-    PaymentProofPreview
-} from '@/types/enrolments';
+import { BulkApplicationApprovalParams, BulkUpdatePaymentStatusParams, Enrolment, PaymentProofPreview } from '@/types/enrolments';
 import { StudentProgram } from '@/types/students';
 import { InertiaForm, router, usePage } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
-import { ColorVariant } from '@/enums/colors';
 
 export const useStudentApplications = () => {
-    const {  actionButton, textLink } = useDataTables();
+    const { actionButton, textLink } = useDataTables();
     const studentAbility = 'manageOwnStudentProgramDetails:students';
     const adminAbility = 'manageStudentMetadata:admin';
     const allowed = hasAbility([adminAbility, studentAbility]);
@@ -32,10 +27,7 @@ export const useStudentApplications = () => {
                 header: trans_choice('trans.program', 1),
                 accessorKey: 'course',
                 cell: ({ row }: { row: { original: Enrolment } }) => {
-                    return textLink(
-                        route('portal.application.view', row.original.id),
-                        row.original?.attributes?.course ?? '',
-                    );
+                    return textLink(route('portal.application.view', row.original.id), row.original?.attributes?.course ?? '');
                 },
             },
             {
@@ -166,8 +158,8 @@ export const useStudentApplications = () => {
         const successMessage = () => trans('trans.bulk_application_approval_success');
         const errorMessage = () => trans('trans.bulk_application_approval_failure');
         try {
-           warningDialog(() => {
-                 HttpService.post(route('students.bulk-approve-applications', institutionDepartmentId), params);
+            warningDialog(() => {
+                HttpService.post(route('students.bulk-approve-applications', institutionDepartmentId), params);
                 successAlert(successMessage());
                 router.visit(window.location.href, { replace: true });
             });

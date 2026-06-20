@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import type { PaginationRootLink, PaginationMeta } from '@/types/data-pagination';
-import { IconName } from '@/enums/icons';
 import NavigationLink from '@/components/core/table/NavigationLink.vue';
+import { IconName } from '@/enums/icons';
+import type { PaginationMeta, PaginationRootLink } from '@/types/data-pagination';
 
 withDefaults(
 	defineProps<{

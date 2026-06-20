@@ -103,9 +103,7 @@ const requiredLevel = computed(() => {
 });
 
 const nextConfirmHref = computed(() =>
-    nextTop.length > 0
-        ? route('enrolments.confirm', { student_program: String(nextTop[0].applicationId), type: queryParams['type'] })
-        : null,
+    nextTop.length > 0 ? route('enrolments.confirm', { student_program: String(nextTop[0].applicationId), type: queryParams['type'] }) : null,
 );
 
 const form = useForm<ClassListAttributeParams>({

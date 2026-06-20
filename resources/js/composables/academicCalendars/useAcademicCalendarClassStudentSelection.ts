@@ -2,9 +2,7 @@ import type { AcademicCalendarClassPreviewStudent } from '@/types/academic-calen
 import type { ComputedRef, Ref } from 'vue';
 import { computed, ref } from 'vue';
 
-export function useAcademicCalendarClassStudentSelection(
-    sortedStudents: ComputedRef<AcademicCalendarClassPreviewStudent[]>,
-): {
+export function useAcademicCalendarClassStudentSelection(sortedStudents: ComputedRef<AcademicCalendarClassPreviewStudent[]>): {
     selectedStudentEnrolmentIds: Ref<number[]>;
     selectAllChangeClassModel: ComputedRef<boolean>;
     toggleSelectAllChangeClassFromRow: () => void;

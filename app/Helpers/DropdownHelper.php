@@ -2,6 +2,7 @@
 
 namespace App\Helpers;
 
+use App\Models\AcademicCalendars\AcademicCalendar;
 use App\Models\Institution\IntakePeriod;
 use App\Models\Institution\ModeOfStudy;
 use Illuminate\Support\Collection;
@@ -34,6 +35,11 @@ class DropdownHelper
         }
 
         return collect($rows)->map(fn (array $row): object => (object) $row);
+    }
+
+    public static function getSemestersForCalendarYear(string $calendarYear): Collection
+    {
+        return AcademicCalendar::semestersForCalendarYear($calendarYear);
     }
 
     public static function getModesOfStudy(): Collection

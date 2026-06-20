@@ -24,7 +24,6 @@ export type AnchorParams = {
     title: string;
     href: string;
     classes?: string;
-
 };
 
 export type TableActionOption = {

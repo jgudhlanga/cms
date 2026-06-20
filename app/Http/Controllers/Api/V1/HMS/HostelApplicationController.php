@@ -8,6 +8,7 @@ use App\Models\HMS\HostelApplication;
 use App\Models\Students\Student;
 use App\Services\HMS\HostelApplicationApprovalOptionsService;
 use App\Services\HMS\HostelApplicationEligibilityService;
+use App\Services\HMS\HostelApplicationPaymentService;
 use App\Services\HMS\HostelApplicationPendingService;
 use App\Services\HMS\HostelApplicationSemesterService;
 use App\Services\HMS\HostelApplicationWindowService;
@@ -32,6 +33,7 @@ class HostelApplicationController extends JsonApiController
         protected HostelStudentAllocationService $allocationService,
         protected HostelApplicationApprovalOptionsService $approvalOptionsService,
         protected StudentAccommodationFeeService $accommodationFeeService,
+        protected HostelApplicationPaymentService $paymentService,
     ) {}
 
     public function studentLookup(Request $request): MetaResponse
@@ -135,8 +137,10 @@ class HostelApplicationController extends JsonApiController
 
         abort_unless(HmsStudentAccess::canViewStudentHms($request->user(), $student), 403);
 
+        $this->paymentService->syncOpenApplicationForStudent($student);
+
         return MetaResponse::make(
-            $this->accommodationFeeService->summaryForStudent($student),
+            $this->accommodationFeeService->summaryForStudent($student->fresh()),
         );
     }
 
@@ -296,6 +300,8 @@ class HostelApplicationController extends JsonApiController
             ->whereIn('status', [
                 HostelApplicationStatusEnum::PENDING,
                 HostelApplicationStatusEnum::AWAITING_PAYMENT,
+                HostelApplicationStatusEnum::PARTIALLY_PAID,
+                HostelApplicationStatusEnum::PAID,
             ])
             ->when($parsedExcludeId !== null, fn ($query) => $query->where('id', '!=', $parsedExcludeId))
             ->orderByDesc('address_outside_campus_priority')

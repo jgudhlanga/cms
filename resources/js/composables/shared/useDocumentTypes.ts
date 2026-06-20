@@ -65,7 +65,10 @@ export const useDocumentTypes = () => {
             nameSchema().parse(form);
             if (documentType) {
                 const id = getIdParams(documentType.id?.toString() ?? '');
-                form.put(route('document-types.update', id), buildFormOptions(form, successMessage(), errorMessage(), APP_MODULE_KEYS.document_types));
+                form.put(
+                    route('document-types.update', id),
+                    buildFormOptions(form, successMessage(), errorMessage(), APP_MODULE_KEYS.document_types),
+                );
             } else {
                 form.post(route('document-types.store'), buildFormOptions(form, successMessage(), errorMessage(), APP_MODULE_KEYS.document_types));
             }

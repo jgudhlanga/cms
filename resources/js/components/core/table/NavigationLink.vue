@@ -1,5 +1,4 @@
 <script setup lang="ts">
-
 import { IconName, icons } from '@/lib/icons';
 import { cn } from '@/lib/utils';
 import { Link } from '@inertiajs/vue3';

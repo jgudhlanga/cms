@@ -3,9 +3,5 @@ import BaseInput from './BaseInput.vue';
 </script>
 
 <template>
-	<BaseInput
-		input-id="email_address"
-		:label="$t('trans.email_address')"
-		v-bind="$attrs"
-	/>
+    <BaseInput input-id="email_address" :label="$t('trans.email_address')" v-bind="$attrs" />
 </template>

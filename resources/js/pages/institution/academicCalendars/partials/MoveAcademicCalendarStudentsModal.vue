@@ -32,9 +32,7 @@ const form = defineModel<
     >
         <template #body>
             <div class="flex flex-col gap-2">
-                <label class="text-sm font-medium uppercase" for="move_target_class">{{
-                    $t('academic_calendar.move_students_select_target')
-                }}</label>
+                <label class="text-sm font-medium uppercase" for="move_target_class">{{ $t('academic_calendar.move_students_select_target') }}</label>
                 <select
                     id="move_target_class"
                     v-model.number="form.target_academic_calendar_class_id"

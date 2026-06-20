@@ -1,6 +1,9 @@
 <?php
 
+use App\Enums\HMS\HostelApplicationStatusEnum;
+use App\Enums\HMS\HostelApplicationTypeEnum;
 use App\Enums\Shared\FeeTypeEnum;
+use App\Models\HMS\HostelApplication;
 use App\Models\Institution\FeeStructure;
 use App\Models\Shared\FeeType;
 use App\Models\Students\Student;
@@ -148,16 +151,31 @@ test('portal profile accommodations pay route exposes fee structure amount when 
         'tenant_id' => $tenant->id,
         'fee_type_id' => $feeType->id,
         'level_id' => $studentProgram->departmentLevel->level_id,
-        'mode_of_study_id' => $studentProgram->mode_of_study_id,
+        'mode_of_study_id' => null,
         'amount' => 150.00,
         'local_fca_amount' => 250.00,
     ]);
+
+    $enrolment = $student->latestEnrolment ?? attachHostelApplicationEnrolment($studentProgram);
+
+    HostelApplication::withoutEvents(fn () => HostelApplication::query()->create([
+        'tenant_id' => $studentProgram->tenant_id,
+        'student_id' => $student->id,
+        'student_enrolment_id' => $enrolment->id,
+        'gender_id' => $student->gender_id,
+        'type' => HostelApplicationTypeEnum::STUDENT,
+        'status' => HostelApplicationStatusEnum::AWAITING_PAYMENT,
+        'next_of_kin_name' => 'Kin',
+        'next_of_kin_contact' => '0771234567',
+        'check_in' => now()->toDateString(),
+        'check_out' => now()->addMonths(4)->toDateString(),
+    ]));
 
     $response = $this->actingAs($user)->get(route('portal.profile.accommodations.pay'));
 
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
-        ->component('portal/student/profile/AccommodationFeePaymentOptions')
+        ->component('portal/hms/AccommodationFeePaymentOptions')
         ->where('fees.due', '250.00')
         ->where('fees.total', '250.00')
         ->where('accommodationFee.attributes.localFcaAmount', fn ($amount) => (float) $amount === 250.0));

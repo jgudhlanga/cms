@@ -2,7 +2,9 @@
 
 namespace App\Services\HMS;
 
+use App\Enums\HMS\HostelApplicationStatusEnum;
 use App\Enums\Shared\FeeTypeEnum;
+use App\Models\HMS\HostelApplication;
 use App\Models\Institution\FeeStructure;
 use App\Models\Ledgers\Ledger;
 use App\Models\Students\Student;
@@ -27,14 +29,13 @@ class StudentAccommodationFeeService
         $student->loadMissing([
             'latestEnrolment.studentProgram.intakePeriod',
             'latestEnrolment.studentProgram.departmentLevel.level',
-            'latestEnrolment.studentProgram.modeOfStudy',
         ]);
 
         $studentProgram = $student->latestEnrolment?->studentProgram;
         $calendarYear = $student->latestEnrolment?->studentProgram?->intakePeriod?->calendar_year;
         $intakeLabel = $studentProgram?->intakePeriod?->name ?? $calendarYear;
 
-        $ledgers = $this->accommodationLedgers($studentProgram);
+        $ledgers = $this->accommodationLedgers($student, $studentProgram);
         $invoices = $ledgers->where('type', 'invoice');
         $receipts = $ledgers->where('type', 'receipt');
 
@@ -49,9 +50,7 @@ class StudentAccommodationFeeService
 
         $due = max(0, $total - $paid);
 
-        $isFullyPaid = $studentProgram !== null
-            ? $studentProgram->hasPaid(FeeTypeEnum::STUDENT_ACCOMMODATION_FEE)
-            : $due <= 0 && $total > 0;
+        $isFullyPaid = $this->studentHasPaidAccommodationFee($student, $studentProgram);
 
         if ($total === 0.0 && $isFullyPaid) {
             $paid = $paid > 0 ? $paid : 0.0;
@@ -81,11 +80,22 @@ class StudentAccommodationFeeService
         ];
     }
 
+    public function openAwaitingPaymentApplication(Student $student): ?HostelApplication
+    {
+        return HostelApplication::query()
+            ->where('student_id', $student->id)
+            ->whereIn('status', [
+                HostelApplicationStatusEnum::AWAITING_PAYMENT,
+                HostelApplicationStatusEnum::PARTIALLY_PAID,
+            ])
+            ->latest()
+            ->first();
+    }
+
     public function feeStructureForStudent(Student $student): ?FeeStructure
     {
         $student->loadMissing([
             'latestEnrolment.studentProgram.departmentLevel.level',
-            'latestEnrolment.studentProgram.modeOfStudy',
         ]);
 
         return $this->feeStructureForStudentProgram($student->latestEnrolment?->studentProgram);
@@ -97,37 +107,65 @@ class StudentAccommodationFeeService
             return null;
         }
 
-        $studentProgram->loadMissing(['departmentLevel.level', 'modeOfStudy']);
+        $studentProgram->loadMissing(['departmentLevel.level']);
 
         $levelId = $studentProgram->departmentLevel?->level?->id;
-        $modeOfStudyId = $studentProgram->mode_of_study_id;
 
-        if ($levelId === null || $modeOfStudyId === null) {
+        if ($levelId === null) {
             return null;
         }
 
         return FeeStructure::query()
             ->where('tenant_id', $studentProgram->tenant_id)
             ->where('level_id', $levelId)
-            ->where('mode_of_study_id', $modeOfStudyId)
             ->whereRelation('feeType', 'slug', FeeTypeEnum::STUDENT_ACCOMMODATION_FEE->slug())
             ->first();
+    }
+
+    private function studentHasPaidAccommodationFee(Student $student, ?StudentProgram $studentProgram): bool
+    {
+        if ($studentProgram?->hasPaid(FeeTypeEnum::STUDENT_ACCOMMODATION_FEE)) {
+            return true;
+        }
+
+        return HostelApplication::query()
+            ->where('student_id', $student->id)
+            ->get()
+            ->contains(fn (HostelApplication $application) => $application->hasPaidAccommodationFee());
     }
 
     /**
      * @return Collection<int, Ledger>
      */
-    private function accommodationLedgers(?StudentProgram $studentProgram): Collection
+    private function accommodationLedgers(Student $student, ?StudentProgram $studentProgram): Collection
     {
-        if ($studentProgram === null || $studentProgram->student?->user === null) {
-            return collect();
+        $accommodationSlugs = [
+            FeeTypeEnum::STUDENT_ACCOMMODATION_FEE->slug(),
+            FeeTypeEnum::GUEST_ACCOMMODATION_FEE->slug(),
+        ];
+
+        $ledgers = collect();
+
+        if ($studentProgram?->student?->user !== null) {
+            $ledgers = $studentProgram->student->user
+                ->ledgers()
+                ->with('feeType')
+                ->whereHas('feeType', fn ($query) => $query->whereIn('slug', $accommodationSlugs))
+                ->orderByDesc('created_at')
+                ->get();
         }
 
-        return $studentProgram->student->user
-            ->ledgers()
-            ->with('feeType')
-            ->whereRelation('feeType', 'slug', FeeTypeEnum::STUDENT_ACCOMMODATION_FEE->slug())
-            ->orderByDesc('created_at')
-            ->get();
+        $applicationLedgers = HostelApplication::query()
+            ->where('student_id', $student->id)
+            ->get()
+            ->flatMap(fn (HostelApplication $application) => $application->ledgerTransactions()
+                ->with('feeType')
+                ->whereHas('feeType', fn ($query) => $query->whereIn('slug', $accommodationSlugs))
+                ->get());
+
+        return $ledgers
+            ->merge($applicationLedgers)
+            ->sortByDesc(fn (Ledger $ledger) => $ledger->created_at)
+            ->values();
     }
 }

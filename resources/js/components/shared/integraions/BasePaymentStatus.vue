@@ -5,7 +5,7 @@ import { IconName } from '@/enums/icons';
 import { Ledger } from '@/types/integrations';
 
 interface Props {
-    details?: Ledger|any;
+    details?: Ledger | any;
     color: string;
     message?: string;
 }
@@ -39,7 +39,7 @@ const currentDate = new Date();
                         </div>
                         <div class="flex justify-between">
                             <span class="text-gray-600">{{ $tChoice('trans.amount', 1) }}</span>
-                            <span :class="`font-semibold text-${color}-600`">{{ formatCurrency(String(details?.attributes?.amount)) ?? '---'}}</span>
+                            <span :class="`font-semibold text-${color}-600`">{{ formatCurrency(String(details?.attributes?.amount)) ?? '---' }}</span>
                         </div>
                         <div class="flex justify-between">
                             <span class="text-gray-600">{{ $tChoice('trans.payment_option', 1) }}</span>

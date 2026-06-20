@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { BaseButton } from '@/components/core/button';
 import BaseCard from '@/components/core/card/BaseCard.vue';
-import BaseInput from '@/components/core/form/text/BaseInput.vue';
-import Code from '@/components/core/form/text/Code.vue';
 import DepartmentLevelCourseComboSelect from '@/components/core/form/combobox/DepartmentLevelCourseComboSelect.vue';
 import InstitutionDepartmentComboSelect from '@/components/core/form/combobox/InstitutionDepartmentComboSelect.vue';
+import BaseInput from '@/components/core/form/text/BaseInput.vue';
+import Code from '@/components/core/form/text/Code.vue';
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import { Label } from '@/components/ui/label';
 import { useCourseSyllabuses } from '@/composables/institution/useCourseSyllabuses';
@@ -14,8 +14,8 @@ import { CourseSyllabus, CourseSyllabusParams, InstitutionDepartment } from '@/t
 import type { Link } from '@/types/ui';
 import { SelectOption } from '@/types/utils';
 import { Head, useForm } from '@inertiajs/vue3';
-import { computed, ref } from 'vue';
 import { trans, trans_choice } from 'laravel-vue-i18n';
+import { computed, ref } from 'vue';
 
 interface Props {
     institutionDepartment: InstitutionDepartment;
@@ -73,10 +73,7 @@ const breadcrumbs = computed<Array<Link>>(() => [
         href: route('institution-departments.show', getIdParams(props.institutionDepartment?.id?.toString() ?? '')),
     },
     ...(isEditMode.value
-        ? [
-              { title: props.courseSyllabus?.attributes?.title },
-              { title: `${trans('trans.update')} ${trans_choice('syllabus.course_syllabus', 1)}` },
-          ]
+        ? [{ title: props.courseSyllabus?.attributes?.title }, { title: `${trans('trans.update')} ${trans_choice('syllabus.course_syllabus', 1)}` }]
         : [{ title: `${trans('trans.create')} ${trans_choice('syllabus.course_syllabus', 1)}` }]),
 ]);
 
@@ -150,13 +147,13 @@ const save = async () => {
                     <select
                         id="course_syllabus_status"
                         v-model="form.status"
-                        class="hava-input min-h-[42px] w-full rounded-md border bg-background px-3 py-2 text-sm"
+                        class="hava-input bg-background min-h-[42px] w-full rounded-md border px-3 py-2 text-sm"
                         @change="clearFormErrors(form, 'status')"
                     >
                         <option value="active">{{ $t('syllabus.status_active') }}</option>
                         <option value="terminated">{{ $t('syllabus.status_terminated') }}</option>
                     </select>
-                    <p v-if="form.errors.status" class="text-sm text-destructive">{{ form.errors.status }}</p>
+                    <p v-if="form.errors.status" class="text-destructive text-sm">{{ form.errors.status }}</p>
                 </div>
                 <div class="flex flex-col gap-2 md:col-span-2">
                     <Label for="syllabus_document" class="text-xs uppercase">{{ $t('syllabus.syllabus_document') }}</Label>
@@ -164,15 +161,15 @@ const save = async () => {
                         id="syllabus_document"
                         type="file"
                         accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                        class="block w-full text-sm text-muted-foreground file:mr-4 file:rounded-md file:border-0 file:bg-secondary file:px-4 file:py-2 file:text-sm file:font-medium"
+                        class="text-muted-foreground file:bg-secondary block w-full text-sm file:mr-4 file:rounded-md file:border-0 file:px-4 file:py-2 file:text-sm file:font-medium"
                         @change="onSyllabusDocumentChange"
                     />
-                    <p v-if="form.errors.syllabus_document" class="text-sm text-destructive">{{ form.errors.syllabus_document }}</p>
+                    <p v-if="form.errors.syllabus_document" class="text-destructive text-sm">{{ form.errors.syllabus_document }}</p>
                     <p v-if="courseSyllabus?.attributes?.syllabusDocumentUrl" class="text-sm">
                         <span class="text-muted-foreground">{{ $t('syllabus.current_document') }}:</span>
                         <a
                             :href="courseSyllabus.attributes.syllabusDocumentUrl"
-                            class="ml-1 font-medium text-primary underline"
+                            class="text-primary ml-1 font-medium underline"
                             target="_blank"
                             rel="noopener noreferrer"
                         >

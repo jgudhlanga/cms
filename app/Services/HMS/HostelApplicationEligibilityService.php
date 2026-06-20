@@ -2,9 +2,11 @@
 
 namespace App\Services\HMS;
 
+use App\Enums\HMS\HostelApplicationStatusEnum;
 use App\Enums\HMS\HostelEligibilityContextEnum;
 use App\Enums\Shared\FeeTypeEnum;
 use App\Models\HMS\HmsSetting;
+use App\Models\HMS\HostelApplication;
 use App\Models\Shared\Address;
 use App\Models\Students\Student;
 use App\Models\Students\StudentEnrolment;
@@ -57,6 +59,22 @@ class HostelApplicationEligibilityService
 
         if ($context === HostelEligibilityContextEnum::AWAITING_PAYMENT && $settings->require_accommodation_paid) {
             $passed = (bool) $enrolment?->studentProgram?->hasPaid(FeeTypeEnum::STUDENT_ACCOMMODATION_FEE);
+
+            if (! $passed) {
+                $application = HostelApplication::query()
+                    ->where('student_id', $student->id)
+                    ->whereIn('status', [
+                        HostelApplicationStatusEnum::AWAITING_PAYMENT,
+                        HostelApplicationStatusEnum::PARTIALLY_PAID,
+                        HostelApplicationStatusEnum::PAID,
+                    ])
+                    ->latest()
+                    ->first();
+
+                if ($application instanceof HostelApplication) {
+                    $passed = $application->hasPaidAccommodationFee();
+                }
+            }
 
             $rules[] = [
                 'key' => 'accommodation_paid',

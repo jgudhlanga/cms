@@ -130,6 +130,8 @@ class HostelApplicationObserver
             && in_array($previousValue, [
                 HostelApplicationStatusEnum::PENDING->value,
                 HostelApplicationStatusEnum::AWAITING_PAYMENT->value,
+                HostelApplicationStatusEnum::PARTIALLY_PAID->value,
+                HostelApplicationStatusEnum::PAID->value,
             ], true)) {
             $this->reviewService->dispatchDeclinedEmail($application);
         }

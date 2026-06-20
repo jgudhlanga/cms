@@ -8,10 +8,7 @@ import type { ComputedRef, Ref } from 'vue';
 
 export const EDIT_CLASS_MODAL = 'academic_calendar_edit_class';
 
-export function useAcademicCalendarClassEdit(
-    updateClassUrl: ComputedRef<string>,
-    academicCalendarClass: Ref<AcademicCalendarClassDetail>,
-) {
+export function useAcademicCalendarClassEdit(updateClassUrl: ComputedRef<string>, academicCalendarClass: Ref<AcademicCalendarClassDetail>) {
     const { openModal, closeModal } = useModalStore();
 
     const editClassForm = useForm({

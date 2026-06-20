@@ -6,8 +6,8 @@ import DataTable from '@/components/core/table/DataTable.vue';
 import { useIntakePeriods } from '@/composables/institution/useIntakePeriods';
 import { hasAbility } from '@/lib/permissions';
 import { AuthObject, DataFilters, DataListProps } from '@/types/data-pagination';
-import CreateEdit from './partials/CreateEdit.vue';
 import type { Link } from '@/types/ui';
+import CreateEdit from './partials/CreateEdit.vue';
 
 const { createIntakePeriodColumns, onOpenModal } = useIntakePeriods();
 

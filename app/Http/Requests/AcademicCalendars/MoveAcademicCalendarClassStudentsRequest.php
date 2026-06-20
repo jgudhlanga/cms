@@ -21,7 +21,7 @@ class MoveAcademicCalendarClassStudentsRequest extends FormRequest
         return [
             'student_enrolment_ids' => ['required', 'array', 'min:1'],
             'student_enrolment_ids.*' => ['integer', 'distinct', 'exists:student_enrolments,id'],
-            'target_academic_calendar_class_id' => ['required', 'integer', 'exists:academic_calandar_classes,id'],
+            'target_academic_calendar_class_id' => ['required', 'integer', 'exists:academic_calendar_classes,id'],
         ];
     }
 

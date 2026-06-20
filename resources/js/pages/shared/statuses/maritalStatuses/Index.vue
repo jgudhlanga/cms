@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
 
-import { AuthObject, DataFilters, DataListProps } from '@/types/data-pagination';
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import DataTable from '@/components/core/table/DataTable.vue';
-import CreateEdit from './partials/CreateEdit.vue';
 import { useMaritalStatuses } from '@/composables/shared/useMaritalStatuses';
+import { AuthObject, DataFilters, DataListProps } from '@/types/data-pagination';
+import CreateEdit from './partials/CreateEdit.vue';
 
 const { createTableColumns, breadcrumbs, onOpenModal } = useMaritalStatuses();
 

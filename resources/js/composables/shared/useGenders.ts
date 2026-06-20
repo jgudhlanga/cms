@@ -1,4 +1,5 @@
 import { useDataTables } from '@/composables/core/useDataTables';
+import { useDropdowns } from '@/composables/core/useDropdowns';
 import { useSharedFormSchema } from '@/composables/core/useSharedFormSchema';
 import { forbiddenAlert, openModal } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
@@ -10,7 +11,6 @@ import type { Link } from '@/types/ui';
 import { InertiaForm, usePage } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 import { ref } from 'vue';
-import { useDropdowns } from '@/composables/core/useDropdowns';
 
 export const useGenders = () => {
     const { moreActionButton, onDelete, onForceDelete, onRestore } = useDataTables();
@@ -92,6 +92,8 @@ export const useGenders = () => {
         breadcrumbs,
         onOpenModal,
         saveGender,
-        isLoading, genders, listGenders,
+        isLoading,
+        genders,
+        listGenders,
     };
 };

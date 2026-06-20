@@ -136,7 +136,7 @@ const updateLevel = () => {
         form.setError(formattedErrors);
         return;
     }
-   /* if (!isItTrue(isOLevelRequired.value) && !onlyReadWriteRequired.value && !form.required_level_id) {
+    /* if (!isItTrue(isOLevelRequired.value) && !onlyReadWriteRequired.value && !form.required_level_id) {
         errorAlert(trans('trans.nothing_has_changed_to_save'));
         return;
     }*/
@@ -165,7 +165,10 @@ const onInputOtherSubjectsCount = () => {
 
 <template>
     <Head :title="$t('trans.enrolment_requirements')" />
-    <PageContainer :breadcrumbs="breadcrumbs" :back-url="route('institution-departments.show', getIdParams(institutionDepartment?.attributes?.departmentId.toString() ?? ''))">
+    <PageContainer
+        :breadcrumbs="breadcrumbs"
+        :back-url="route('institution-departments.show', getIdParams(institutionDepartment?.attributes?.departmentId.toString() ?? ''))"
+    >
         <form @submit.prevent="() => updateLevel()" class="flex flex-col">
             <div class="flex flex-col">
                 <div class="flex flex-col space-y-3">

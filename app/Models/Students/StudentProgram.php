@@ -19,11 +19,9 @@ use App\Traits\Filterable;
 use App\Traits\Paginatable;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -34,14 +32,14 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 /**
- *
  * @mixin Builder
+ *
  * @method static filter(StudentProgramFilter $filters)
  */
 #[ObservedBy([StudentProgramObserver::class])]
 class StudentProgram extends Model implements HasMedia
 {
-    use HasFactory, SoftDeletes, Filterable, BelongsToTenant, Paginatable, LogsActivity, InteractsWithMedia;
+    use BelongsToTenant, Filterable, HasFactory, InteractsWithMedia, LogsActivity, Paginatable, SoftDeletes;
 
     protected $fillable = [
         'tenant_id',
@@ -116,7 +114,6 @@ class StudentProgram extends Model implements HasMedia
         return $this->receipts()->whereRelation('feeType', 'slug', $feeType->slug())->latest()->first();
     }
 
-
     public function offerLetter(): HasOne
     {
         return $this->hasOne(Media::class, 'id', 'offer_letter_id');
@@ -145,6 +142,11 @@ class StudentProgram extends Model implements HasMedia
     public function notes(): MorphMany
     {
         return $this->morphMany(StudentNote::class, 'noteable');
+    }
+
+    public function ledgerTransactions(): MorphMany
+    {
+        return $this->morphMany(Ledger::class, 'ledgerable')->withTrashed();
     }
 
     public function getActivitylogOptions(): LogOptions

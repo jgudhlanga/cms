@@ -2,14 +2,15 @@
 import { BaseButton } from '@/components/core/button';
 import BaseIcon from '@/components/core/icon/BaseIcon.vue';
 import AnimatedErrorIcon from '@/components/core/util/AnimatedErrorIcon.vue';
+import BasePaymentStatus from '@/components/shared/integraions/BasePaymentStatus.vue';
 import { useUtils } from '@/composables/core/useUtils';
 import { ColorVariant } from '@/enums/colors';
-import BasePaymentStatus from '@/components/shared/integraions/BasePaymentStatus.vue';
-import { Ledger } from '@/types/integrations';
 import { IconName } from '@/lib/icons';
+import { Ledger } from '@/types/integrations';
 
 interface Props {
     details: Ledger;
+    redirectRoute: string;
 }
 
 defineProps<Props>();
@@ -34,7 +35,7 @@ const { navigateTo } = useUtils();
             <BaseButton
                 classes="rounded-full"
                 :title="$t('trans.back')"
-                @click="navigateTo(route('portal.application.fee-payment'))"
+                @click="navigateTo(redirectRoute)"
                 :variant="ColorVariant.warning"
             />
         </template>

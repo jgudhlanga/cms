@@ -1,12 +1,12 @@
 <script lang="ts" setup>
-import { computed, onMounted } from 'vue';
-import { SelectOption } from '@/types/utils';
 import BaseCombobox from '@/components/core/form/combobox/BaseCombobox.vue';
+import { useEmploymentTypes } from '@/composables/shared/useEmploymentTypes';
 import { clearFormErrors } from '@/lib/forms';
+import { EmploymentType } from '@/types/settings';
+import { SelectOption } from '@/types/utils';
 import { InertiaForm } from '@inertiajs/vue3';
 import { debounce } from 'lodash';
-import { EmploymentType } from '@/types/settings';
-import { useEmploymentTypes } from '@/composables/shared/useEmploymentTypes';
+import { computed, onMounted } from 'vue';
 
 interface Props {
     form: InertiaForm<any>;

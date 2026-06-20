@@ -1,44 +1,41 @@
 export type PaymentDay = {
-	type?: string,
-	id?: string,
-	attributes: {
-		title: string,
-		createdAt?: string,
-		updatedAt?: string,
-		deletedAt?: string,
-	},
-
-}
+    type?: string;
+    id?: string;
+    attributes: {
+        title: string;
+        createdAt?: string;
+        updatedAt?: string;
+        deletedAt?: string;
+    };
+};
 export type PaymentDayParams = {
-	title: string,
-}
+    title: string;
+};
 
 export type PaymentFrequency = {
-	type?: string,
-	id?: string,
-	attributes: {
-		title: string,
-		deletedAt?: string,
-		createdAt?: string,
-		updatedAt?: string,
-	},
-
-}
+    type?: string;
+    id?: string;
+    attributes: {
+        title: string;
+        deletedAt?: string;
+        createdAt?: string;
+        updatedAt?: string;
+    };
+};
 export type PaymentFrequencyParams = {
-	title: string,
-}
+    title: string;
+};
 
 export type PaymentMethod = {
-	type?: string,
-	id?: string,
-	attributes: {
-		title: string,
-		deletedAt?: string,
-		createdAt?: string,
-		updatedAt?: string,
-	},
-
-}
+    type?: string;
+    id?: string;
+    attributes: {
+        title: string;
+        deletedAt?: string;
+        createdAt?: string;
+        updatedAt?: string;
+    };
+};
 export type PaymentMethodParams = {
-	title: string,
-}
+    title: string;
+};

@@ -1,18 +1,18 @@
 <script setup lang="ts">
 import Name from '@/components/core/form/text/Name.vue';
+import BaseModal from '@/components/core/modal/BaseModal.vue';
+import { useSponsorTypes } from '@/composables/shared/useSponsorTypes';
 import { getModalEdit } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
+import { clearFormErrors } from '@/lib/forms';
 import { useModalStore } from '@/store/core/useModalStore';
 import { SponsorType, SponsorTypeParams } from '@/types/settings';
 import { useForm } from '@inertiajs/vue3';
 import { ref, watch } from 'vue';
-import { clearFormErrors } from '@/lib/forms';
-import BaseModal from '@/components/core/modal/BaseModal.vue';
-import { useSponsorTypes } from '@/composables/shared/useSponsorTypes';
 
 const sponsorType = ref<SponsorType>();
 const form = useForm<SponsorTypeParams>({
-    name: ''
+    name: '',
 });
 
 const { saveSponsorType } = useSponsorTypes();
@@ -34,8 +34,7 @@ watch(modals!, () => {
         :form="form"
     >
         <template #body>
-            <Name :inputAutoFocus="true" v-model="form.name" @input="clearFormErrors(form, 'name')"
-                  :error="form.errors.name" />
+            <Name :inputAutoFocus="true" v-model="form.name" @input="clearFormErrors(form, 'name')" :error="form.errors.name" />
         </template>
     </BaseModal>
 </template>

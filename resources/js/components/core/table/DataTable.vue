@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { CreateButton, ExportButton, ImportButton } from '@/components/core/button';
 import { useDataTables } from '@/composables/core/useDataTables';
+import { ColorVariant } from '@/enums/colors';
 import { PAGINATION_ITEMS_PER_PAGE } from '@/lib/constants';
 import { DataFilters, PaginationMeta, PaginationRootLink } from '@/types/data-pagination';
 import { computed, onMounted, ref, useSlots, watch } from 'vue';
 import DataLoadingSpinner from '@/components/core/loader/DataLoadingSpinner.vue';
 import { Archived, ColumnFilter, GotoPage, Paginator, PerPageSize, Search, TableBody, TableHead } from './';
-import { ColorVariant } from '@/enums/colors';
 
 interface Props {
     data: Array<any>;

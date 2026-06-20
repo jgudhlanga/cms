@@ -27,10 +27,10 @@ onMounted(async () => {
 });
 
 const whenSearch = debounce(async (search: string) => {
-    if(props.form) {
+    if (props.form) {
         clearFormErrors(props.form, 'intakePeriod');
     }
-    if(url) {
+    if (url) {
         await listIntakePeriods(`${url}&search=${search}`);
     }
 }, 600);

@@ -4,7 +4,7 @@ export const usePaymentIntegrationStore = defineStore('payment-search', {
     state: () => {
         return {
             search: '',
-            reload: false
+            reload: false,
         };
     },
     actions: {

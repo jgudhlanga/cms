@@ -390,14 +390,14 @@ class CourseWorkTreeService
     private function studentsForClassConfig(int $classConfigId): array
     {
         return AcademicCalendarStudentEnrolment::query()
-            ->join('academic_calandar_classes', 'academic_calandar_classes.id', '=', 'academic_calendar_student_enrolments.academic_calendar_class_id')
+            ->join('academic_calendar_classes', 'academic_calendar_classes.id', '=', 'academic_calendar_student_enrolments.academic_calendar_class_id')
             ->join('student_enrolments', 'student_enrolments.id', '=', 'academic_calendar_student_enrolments.student_enrolment_id')
             ->join('student_programs', 'student_programs.id', '=', 'student_enrolments.student_program_id')
             ->join('students', 'students.id', '=', 'student_programs.student_id')
             ->join('users', 'users.id', '=', 'students.user_id')
-            ->where('academic_calandar_classes.class_config_id', $classConfigId)
+            ->where('academic_calendar_classes.class_config_id', $classConfigId)
             ->whereNull('academic_calendar_student_enrolments.deleted_at')
-            ->whereNull('academic_calandar_classes.deleted_at')
+            ->whereNull('academic_calendar_classes.deleted_at')
             ->select([
                 'student_enrolments.id as student_enrolment_id',
                 'student_programs.application_tracking_number',
@@ -405,10 +405,10 @@ class CourseWorkTreeService
                 'users.id as user_id',
                 'users.first_name',
                 'users.last_name',
-                'academic_calandar_classes.id as academic_calendar_class_id',
-                'academic_calandar_classes.name as class_name',
+                'academic_calendar_classes.id as academic_calendar_class_id',
+                'academic_calendar_classes.name as class_name',
             ])
-            ->orderBy('academic_calandar_classes.name')
+            ->orderBy('academic_calendar_classes.name')
             ->orderBy('users.first_name')
             ->orderBy('users.last_name')
             ->get()

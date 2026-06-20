@@ -26,6 +26,13 @@ class AcademicCalendarResource extends JsonResource
             'id' => $this->id,
             'attributes' => [
                 'name' => "{$calendarPeriodLabel} - ({$formattedOpeningDate} - {$formattedClosingDate})",
+                'shortLabel' => $this->resource instanceof AcademicCalendar
+                    ? AcademicCalendarPeriodResolver::dashboardSelectLabel($this->resource)
+                    : $calendarPeriodLabel,
+                'periodLabel' => $calendarPeriodLabel,
+                'dateRangeLabel' => $this->resource instanceof AcademicCalendar
+                    ? AcademicCalendarPeriodResolver::dateRangeLabel($this->resource)
+                    : $openingDate->format('M').' – '.$closingDate->format('M Y'),
                 'calendarYear' => $this->calendar_year,
                 'type' => is_string($calendarType) && $calendarType !== '' ? $calendarType : 'semester',
                 'openingDate' => $this->opening_date,

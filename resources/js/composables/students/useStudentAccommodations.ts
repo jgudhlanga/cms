@@ -38,7 +38,7 @@ export function useStudentAccommodations(
 
     const openApplication = computed(() =>
         applications.value.find((row) =>
-            ['pending', 'awaiting-payment'].includes(row.attributes.status ?? ''),
+            ['pending', 'awaiting-payment', 'partially-paid', 'paid'].includes(row.attributes.status ?? ''),
         ) ?? null,
     );
 
@@ -128,7 +128,9 @@ export function useStudentAccommodations(
         loadError.value = null;
 
         try {
-            await Promise.all([fetchAllocations(id), fetchApplications(id), fetchFees(id), fetchLookup()]);
+            await Promise.all([fetchAllocations(id), fetchLookup()]);
+            await fetchFees(id);
+            await fetchApplications(id);
 
             if (activeAllocation.value) {
                 await fetchRoommates(activeAllocation.value.id);

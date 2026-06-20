@@ -4,13 +4,13 @@ import { Head } from '@inertiajs/vue3';
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import DataTable from '@/components/core/table/DataTable.vue';
 import { useSubjects } from '@/composables/institution/useSubjects';
+import { hasAbility } from '@/lib/permissions';
 import { AuthObject, DataFilters, DataListProps } from '@/types/data-pagination';
 import CreateEdit from './partials/CreateEdit.vue';
-import { hasAbility } from '@/lib/permissions';
 
 const { createSubjectColumns, breadcrumbs, onOpenModal } = useSubjects();
 
- defineProps<{
+defineProps<{
     subjects: DataListProps;
     trashedCount: any;
     filters: DataFilters;
