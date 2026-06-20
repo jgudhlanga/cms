@@ -11,6 +11,20 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (Schema::hasTable('academic_calandar_class_meta_data')) {
+            if (Schema::hasTable('academic_calendar_class_meta_data')) {
+                Schema::drop('academic_calendar_class_meta_data');
+            }
+
+            Schema::rename('academic_calandar_class_meta_data', 'academic_calendar_class_meta_data');
+
+            return;
+        }
+
+        if (Schema::hasTable('academic_calendar_class_meta_data')) {
+            return;
+        }
+
         Schema::create('academic_calendar_class_meta_data', function (Blueprint $table) {
             $table->id();
             $table->foreignId('tenant_id')->constrained();
