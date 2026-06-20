@@ -1,19 +1,9 @@
 <script setup lang="ts">
 import Empty from '@/components/core/util/Empty.vue';
+import { useDashboardStore } from '@/store/dashboard/useDashboardStore';
 import type { OverviewDashboard } from '@/types/dasboard';
 import { trans } from 'laravel-vue-i18n';
-import {
-    AlertTriangle,
-    BarChart3,
-    Bed,
-    BookOpen,
-    Building,
-    CalendarCheck,
-    Coins,
-    TrendingDown,
-    TrendingUp,
-    Users,
-} from 'lucide-vue-next';
+import { AlertTriangle, BarChart3, Bed, ClipboardList, Users } from 'lucide-vue-next';
 import { computed } from 'vue';
 import DashboardCard from '../components/DashboardCard.vue';
 import MetricCard from '../components/MetricCard.vue';
@@ -24,7 +14,10 @@ interface Props {
 
 const props = defineProps<Props>();
 
-const { summary, enrolmentByDepartment, priorityAlerts } = props.overviewDashboard;
+const dashboardStore = useDashboardStore();
+
+const { summary, enrolmentByDepartment, priorityAlerts, enrolmentFunnel, academicSnapshot, quickInsights } =
+    props.overviewDashboard;
 
 const notAvailable = computed(() => trans('dashboard.overview_not_available'));
 
@@ -36,23 +29,59 @@ const formatCount = (value: number | null): string =>
 const metricSubtext = (value: string | null, fallback?: string): string =>
     value ?? fallback ?? notAvailable.value;
 
-const showTrendIcon = (value: string | null): boolean => value !== null;
-
 const hostelValue = computed(() => formatRate(summary.hostelOccupancyRate));
 
 const hostelSubtext = computed(() => {
-    if (summary.hostelAvailableBeds === null) {
-        return metricSubtext(summary.hostelSubtext);
+    if (summary.hostelSubtext) {
+        return summary.hostelSubtext;
     }
 
-    return trans('dashboard.overview_hostel_beds_available', { count: summary.hostelAvailableBeds });
+    return notAvailable.value;
 });
 
-const atRiskSubtext = computed(() =>
-    summary.atRiskStudents === null
-        ? metricSubtext(summary.atRiskSubtext)
-        : trans('dashboard.overview_at_risk_subtext'),
-);
+const funnelSteps = computed(() => [
+    {
+        key: 'applications',
+        label: trans('dashboard.overview_funnel_applications'),
+        count: enrolmentFunnel.applications,
+        rate: enrolmentFunnel.acceptanceRate,
+        rateLabel: trans('dashboard.acceptance_rate', {
+            rate: String(enrolmentFunnel.acceptanceRate ?? 0),
+        }),
+    },
+    {
+        key: 'offersMade',
+        label: trans('dashboard.overview_funnel_offers'),
+        count: enrolmentFunnel.offersMade,
+        rate: null,
+        rateLabel: null,
+    },
+    {
+        key: 'confirmed',
+        label: trans('dashboard.overview_funnel_confirmed'),
+        count: enrolmentFunnel.confirmed,
+        rate: enrolmentFunnel.yieldRate,
+        rateLabel: trans('dashboard.yield_rate', {
+            rate: String(enrolmentFunnel.yieldRate ?? 0),
+        }),
+    },
+    {
+        key: 'waitlisted',
+        label: trans('dashboard.overview_funnel_waitlisted'),
+        count: enrolmentFunnel.waitlisted,
+        rate: null,
+        rateLabel: null,
+    },
+]);
+
+const funnelMax = computed(() => Math.max(...funnelSteps.value.map((step) => step.count), 1));
+
+const gradeBarColors: Record<string, string> = {
+    distinction: 'bg-blue-500',
+    merit: 'bg-indigo-500',
+    pass: 'bg-emerald-500',
+    fail: 'bg-rose-500',
+};
 
 const departmentBarColors = [
     'bg-blue-500',
@@ -74,6 +103,13 @@ const alertDotClass = (severity: string): string => {
     return 'bg-blue-500';
 };
 
+const failureBadgeClass = (rate: number): string => {
+    if (rate >= 25) return 'bg-rose-100 text-rose-700';
+    if (rate >= 15) return 'bg-amber-100 text-amber-700';
+
+    return 'bg-emerald-100 text-emerald-700';
+};
+
 const formatAlertTime = (updatedAt: string | null): string => {
     if (!updatedAt) {
         return notAvailable.value;
@@ -81,89 +117,65 @@ const formatAlertTime = (updatedAt: string | null): string => {
 
     return new Date(updatedAt).toLocaleString();
 };
+
+const switchTab = (tab: string) => {
+    dashboardStore.activeTab = tab;
+};
 </script>
 
 <template>
     <div class="mt-4 flex flex-col gap-4">
-        <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <MetricCard
-                :title="$t('dashboard.overview_total_students')"
-                :value="formatCount(summary.totalStudents)"
-                :subtext="metricSubtext(summary.totalStudentsSubtext)"
-                :trend="summary.totalStudentsTrend ?? 'neutral'"
+        <div v-if="quickInsights.length > 0" class="flex flex-wrap gap-2">
+            <span class="text-xs font-medium text-gray-500">{{ $t('dashboard.overview_quick_insights') }}:</span>
+            <span
+                v-for="insight in quickInsights"
+                :key="insight.key"
+                class="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs text-gray-700"
             >
-                <template #icon><Users class="h-4 w-4" /></template>
-                <template v-if="showTrendIcon(summary.totalStudentsTrend)" #trendIcon>
-                    <TrendingUp v-if="summary.totalStudentsTrend === 'up'" class="h-3 w-3" />
-                    <TrendingDown v-else class="h-3 w-3" />
-                </template>
-            </MetricCard>
-            <MetricCard
-                :title="$t('dashboard.overview_attendance_rate')"
-                :value="formatRate(summary.attendanceRate)"
-                :subtext="metricSubtext(summary.attendanceSubtext)"
-                :trend="summary.attendanceTrend ?? 'neutral'"
-            >
-                <template #icon><CalendarCheck class="h-4 w-4" /></template>
-                <template v-if="showTrendIcon(summary.attendanceTrend)" #trendIcon>
-                    <TrendingUp v-if="summary.attendanceTrend === 'up'" class="h-3 w-3" />
-                    <TrendingDown v-else class="h-3 w-3" />
-                </template>
-            </MetricCard>
+                {{ insight.message }}
+            </span>
+        </div>
+
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
             <MetricCard
                 :title="$t('dashboard.overview_pass_rate')"
                 :value="formatRate(summary.passRate)"
                 :subtext="metricSubtext(summary.passRateSubtext)"
-                :trend="summary.passRateTrend ?? 'neutral'"
+                trend="neutral"
             >
                 <template #icon><BarChart3 class="h-4 w-4" /></template>
-                <template v-if="showTrendIcon(summary.passRateTrend)" #trendIcon>
-                    <TrendingUp v-if="summary.passRateTrend === 'up'" class="h-3 w-3" />
-                    <TrendingDown v-else class="h-3 w-3" />
-                </template>
             </MetricCard>
             <MetricCard
-                :title="$t('dashboard.overview_fee_collection')"
-                :value="formatRate(summary.feeCollectionRate)"
-                :subtext="metricSubtext(summary.feeCollectionSubtext)"
-                :trend="summary.feeCollectionTrend ?? 'neutral'"
+                :title="$t('dashboard.overview_mark_completion')"
+                :value="formatRate(summary.markCompletionRate)"
+                :subtext="metricSubtext(summary.markCompletionSubtext)"
+                trend="neutral"
             >
-                <template #icon><Coins class="h-4 w-4" /></template>
-            </MetricCard>
-        </div>
-
-        <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <MetricCard
-                :title="$t('dashboard.overview_programmes')"
-                :value="summary.programmeCount"
-                :subtext="metricSubtext(summary.programmeSubtext)"
-                :trend="summary.programmeTrend ?? 'neutral'"
-            >
-                <template #icon><BookOpen class="h-4 w-4" /></template>
+                <template #icon><ClipboardList class="h-4 w-4" /></template>
             </MetricCard>
             <MetricCard
-                :title="$t('dashboard.overview_departments')"
-                :value="summary.departmentCount"
-                :subtext="metricSubtext(summary.departmentSubtext)"
-                :trend="summary.departmentTrend ?? 'neutral'"
+                :title="$t('dashboard.overview_at_risk_students')"
+                :value="formatCount(summary.atRiskStudents)"
+                :subtext="metricSubtext(summary.atRiskSubtext)"
+                trend="warning"
             >
-                <template #icon><Building class="h-4 w-4" /></template>
+                <template #icon><AlertTriangle class="h-4 w-4" /></template>
             </MetricCard>
             <MetricCard
                 :title="$t('dashboard.overview_hostel_occupancy')"
                 :value="hostelValue"
                 :subtext="hostelSubtext"
-                :trend="summary.hostelTrend ?? 'neutral'"
+                trend="neutral"
             >
                 <template #icon><Bed class="h-4 w-4" /></template>
             </MetricCard>
             <MetricCard
-                :title="$t('dashboard.overview_at_risk_students')"
-                :value="formatCount(summary.atRiskStudents)"
-                :subtext="atRiskSubtext"
-                :trend="summary.atRiskTrend ?? 'neutral'"
+                :title="$t('dashboard.overview_total_staff')"
+                :value="summary.totalStaff.toLocaleString()"
+                :subtext="metricSubtext(summary.totalStaffSubtext)"
+                trend="neutral"
             >
-                <template #icon><AlertTriangle class="h-4 w-4" /></template>
+                <template #icon><Users class="h-4 w-4" /></template>
             </MetricCard>
         </div>
 
@@ -183,6 +195,96 @@ const formatAlertTime = (updatedAt: string | null): string => {
                         <div>
                             <div class="text-sm leading-snug text-gray-900">{{ alert.message }}</div>
                             <div class="mt-0.5 text-xs text-gray-500">{{ formatAlertTime(alert.updatedAt) }}</div>
+                        </div>
+                    </div>
+                </div>
+            </DashboardCard>
+
+            <DashboardCard :title="$t('dashboard.overview_enrolment_funnel')">
+                <button
+                    type="button"
+                    class="mb-3 text-xs text-emerald-700 hover:underline"
+                    @click="switchTab('enrolments')"
+                >
+                    {{ $t('dashboard.overview_view_enrolments') }} →
+                </button>
+                <div class="flex flex-col gap-3">
+                    <div v-for="step in funnelSteps" :key="step.key" class="flex flex-col gap-0.5">
+                        <div class="flex items-center gap-3">
+                            <div class="w-28 shrink-0 text-xs text-gray-700">{{ step.label }}</div>
+                            <div class="h-2 flex-1 overflow-hidden rounded-sm bg-gray-100">
+                                <div
+                                    class="h-2 rounded-sm bg-emerald-500"
+                                    :style="{ width: `${Math.round((step.count / funnelMax) * 100)}%` }"
+                                ></div>
+                            </div>
+                            <div class="w-12 text-right text-xs font-medium text-gray-900">
+                                {{ step.count.toLocaleString() }}
+                            </div>
+                        </div>
+                        <div v-if="step.rateLabel" class="pl-28 text-[10px] text-gray-500">{{ step.rateLabel }}</div>
+                    </div>
+                    <div
+                        v-if="enrolmentFunnel.provisional > 0"
+                        class="mt-1 flex items-center gap-2 rounded-md bg-amber-50 px-2 py-1.5 text-xs text-amber-800"
+                    >
+                        <span>{{ $t('dashboard.overview_funnel_provisional') }}:</span>
+                        <span class="font-medium">{{ enrolmentFunnel.provisional.toLocaleString() }}</span>
+                    </div>
+                </div>
+            </DashboardCard>
+
+            <DashboardCard :title="$t('dashboard.overview_academic_snapshot')">
+                <button
+                    type="button"
+                    class="mb-3 text-xs text-emerald-700 hover:underline"
+                    @click="switchTab('academic')"
+                >
+                    {{ $t('dashboard.overview_view_academic') }} →
+                </button>
+                <Empty
+                    v-if="academicSnapshot.gradeSegments.length === 0 && academicSnapshot.topFailureHotspots.length === 0"
+                    :message="$t('dashboard.academic_no_grade_data')"
+                />
+                <div v-else class="flex flex-col gap-4">
+                    <div v-if="academicSnapshot.gradeSegments.length > 0" class="flex flex-col gap-2">
+                        <div class="text-xs font-medium text-gray-500">{{ $t('dashboard.academic_grade_distribution') }}</div>
+                        <div
+                            v-for="segment in academicSnapshot.gradeSegments"
+                            :key="segment.key"
+                            class="flex items-center gap-2"
+                        >
+                            <div class="w-20 shrink-0 truncate text-xs text-gray-900">{{ segment.label }}</div>
+                            <div class="h-2 flex-1 overflow-hidden rounded-sm bg-gray-100">
+                                <div
+                                    class="h-2 rounded-sm"
+                                    :class="gradeBarColors[segment.key] ?? 'bg-gray-400'"
+                                    :style="{ width: `${segment.percent}%` }"
+                                ></div>
+                            </div>
+                            <div class="w-16 text-right text-xs text-gray-500">
+                                {{ segment.count.toLocaleString() }} ({{ segment.percent }}%)
+                            </div>
+                        </div>
+                    </div>
+                    <div v-if="academicSnapshot.topFailureHotspots.length > 0">
+                        <div class="mb-2 text-xs font-medium text-gray-500">
+                            {{ $t('dashboard.academic_module_failure_hotspots') }}
+                        </div>
+                        <div class="flex flex-col gap-1">
+                            <div
+                                v-for="hotspot in academicSnapshot.topFailureHotspots"
+                                :key="hotspot.moduleId"
+                                class="flex items-center justify-between gap-2 text-xs"
+                            >
+                                <span class="truncate text-gray-900">{{ hotspot.moduleName }}</span>
+                                <span
+                                    class="shrink-0 rounded px-1.5 py-0.5 font-medium"
+                                    :class="failureBadgeClass(hotspot.rate)"
+                                >
+                                    {{ hotspot.rate }}%
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </div>

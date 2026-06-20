@@ -48,24 +48,20 @@ test('dashboard returns overview metrics for users with overview tab access', fu
             ],
         ]);
 
-    $programmeCount = DepartmentCourse::query()
-        ->where('tenant_id', $user->tenant_id)
-        ->count();
-    $departmentCount = \App\Models\Institution\Department::query()->where('is_academic', true)->count();
-
     $this->actingAs($user)
         ->get(dashboardUrlFor($user))
         ->assertSuccessful()
         ->assertInertia(fn ($page) => $page
             ->component('dashboard/Index')
             ->has('overviewDashboard')
-            ->where('overviewDashboard.summary.totalStudents', 1)
-            ->where('overviewDashboard.summary.attendanceRate', null)
             ->where('overviewDashboard.summary.passRate', null)
-            ->where('overviewDashboard.summary.feeCollectionRate', null)
-            ->where('overviewDashboard.summary.programmeCount', $programmeCount)
-            ->where('overviewDashboard.summary.departmentCount', $departmentCount)
             ->where('overviewDashboard.summary.atRiskStudents', null)
+            ->has('overviewDashboard.summary.totalStaff')
+            ->has('overviewDashboard.enrolmentFunnel')
+            ->where('overviewDashboard.enrolmentFunnel.confirmed', 1)
+            ->where('overviewDashboard.enrolmentFunnel.applications', 1)
+            ->has('overviewDashboard.academicSnapshot')
+            ->has('overviewDashboard.quickInsights')
             ->has('overviewDashboard.enrolmentByDepartment', 1)
             ->where('overviewDashboard.enrolmentByDepartment.0.count', 1)
         );
@@ -100,6 +96,8 @@ test('dashboard overview reports pass rate and at-risk students from coursework 
             ->component('dashboard/Index')
             ->where('overviewDashboard.summary.passRate', 100)
             ->where('overviewDashboard.summary.atRiskStudents', null)
+            ->has('overviewDashboard.summary.markCompletionRate')
+            ->has('overviewDashboard.academicSnapshot.gradeSegments')
             ->has('overviewDashboard.priorityAlerts')
         );
 });
@@ -113,10 +111,10 @@ test('dashboard overview returns zero students and empty enrolment when no confi
         ->assertSuccessful()
         ->assertInertia(fn ($page) => $page
             ->component('dashboard/Index')
-            ->where('overviewDashboard.summary.totalStudents', 0)
             ->where('overviewDashboard.summary.passRate', null)
             ->where('overviewDashboard.summary.atRiskStudents', null)
             ->where('overviewDashboard.enrolmentByDepartment', [])
+            ->where('overviewDashboard.enrolmentFunnel.confirmed', 0)
         );
 });
 
@@ -167,9 +165,41 @@ test('dashboard overview includes priority alerts from hostel queries', function
         ->assertSuccessful()
         ->assertInertia(fn ($page) => $page
             ->component('dashboard/Index')
-            ->has('overviewDashboard.priorityAlerts', 1)
+            ->has('overviewDashboard.priorityAlerts')
             ->where('overviewDashboard.priorityAlerts.0.severity', 'critical')
             ->where('overviewDashboard.priorityAlerts.0.message', 'Burst pipe — Corridor flooding on level 2')
+        );
+});
+
+test('dashboard overview includes provisional enrolment alert', function () {
+    $user = userWithOverviewDashboardPermission();
+    $intakePeriod = seedDashboardIntakePeriod($user->tenant_id);
+
+    $program = createVerifiedStudentProgram('OVERVIEW-DASH-PROV-01');
+    $program->institutionDepartment->department->update(['is_academic' => true]);
+    $program->institutionDepartment->update(['tenant_id' => $user->tenant_id]);
+    $program->update([
+        'intake_period_id' => $intakePeriod->id,
+        'tenant_id' => $user->tenant_id,
+    ]);
+    ClassList::query()
+        ->where('student_program_id', $program->id)
+        ->update([
+            'type' => ClassListTypeEnum::PROVISIONAL->value,
+            'attributes' => [
+                'identity_confirmed' => false,
+                'disability_confirmed' => false,
+                'names_confirmed' => false,
+            ],
+        ]);
+
+    $this->actingAs($user)
+        ->get(dashboardUrlFor($user))
+        ->assertSuccessful()
+        ->assertInertia(fn ($page) => $page
+            ->component('dashboard/Index')
+            ->has('overviewDashboard.priorityAlerts')
+            ->where('overviewDashboard.enrolmentFunnel.provisional', 1)
         );
 });
 

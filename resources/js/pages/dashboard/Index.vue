@@ -35,7 +35,6 @@ interface Props {
     staffDashboard: StaffDashboard | null;
     academicDashboard: AcademicDashboard | null;
     academicCalendar: AcademicCalendar;
-    academicCalendars: AcademicCalendar[];
     academicContextSubtitle: string;
     intakePeriods: IntakePeriod[];
     intakePeriod: IntakePeriod;
@@ -80,21 +79,6 @@ const handleFilterChange = (option: SelectOption) => {
     );
 };
 
-const handleAcademicCalendarChange = (event: Event) => {
-    const target = event.target as HTMLSelectElement;
-    const params: Record<string, string> = {
-        academic_calendar_id: target.value,
-    };
-
-    if (props.intakePeriod?.id) {
-        params.intake_period_id = String(props.intakePeriod.id);
-    }
-
-    router.get(window.location.pathname, params, {
-        preserveState: true,
-        preserveScroll: true,
-    });
-};
 </script>
 
 <template>
@@ -102,32 +86,14 @@ const handleAcademicCalendarChange = (event: Event) => {
     <PageContainer :breadcrumbs="breadcrumbs">
         <div class="flex w-full flex-col">
             <!-- Topbar -->
-            <div class="mb-4 flex items-center justify-between border-b border-gray-200 pb-4">
-                <div>
-                    <h1 class="flex items-center gap-2 text-base font-medium text-gray-900">
-                        <School class="h-5 w-5 text-gray-500" />
-                        {{ dashboardTitle }}
-                    </h1>
-                    <p class="mt-0.5 text-[11px] text-gray-500">
-                        {{ academicContextSubtitle }}
-                    </p>
-                </div>
-                <div class="flex items-center gap-2">
-                    <span class="flex items-center gap-1.5 rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] text-emerald-800">
-                        <span class="h-1.5 w-1.5 rounded-full bg-emerald-600"></span> {{ $t('dashboard.live') }}
-                    </span>
-                    <select
-                        v-if="academicCalendars.length > 0"
-                        class="rounded border border-gray-300 px-2 py-1 text-xs focus:border-emerald-500 focus:ring-emerald-500"
-                        :aria-label="$tChoice('academic_calendar.academic_calendar', 1)"
-                        :value="String(academicCalendar.id)"
-                        @change="handleAcademicCalendarChange"
-                    >
-                        <option v-for="calendar in academicCalendars" :key="calendar.id" :value="String(calendar.id)">
-                            {{ calendar.attributes.shortLabel }}
-                        </option>
-                    </select>
-                </div>
+            <div class="mb-4 border-b border-gray-200 pb-4">
+                <h1 class="flex items-center gap-2 text-base font-medium text-gray-900">
+                    <School class="h-5 w-5 text-gray-500" />
+                    {{ dashboardTitle }}
+                </h1>
+                <p class="mt-0.5 text-[11px] text-gray-500">
+                    {{ academicContextSubtitle }}
+                </p>
             </div>
 
             <!-- Tabs Layout -->

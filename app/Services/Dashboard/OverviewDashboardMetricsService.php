@@ -6,9 +6,9 @@ use App\Enums\HMS\HostelQueryPriorityEnum;
 use App\Enums\HMS\HostelQueryStatusEnum;
 use App\Helpers\Helper;
 use App\Models\HMS\HostelQuery;
-use App\Models\Institution\DepartmentCourse;
 use App\Services\ApplicationMetricsService;
 use Illuminate\Database\Query\Builder as QueryBuilder;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 class OverviewDashboardMetricsService
@@ -22,6 +22,7 @@ class OverviewDashboardMetricsService
         private readonly ApplicationMetricsService $applicationMetricsService,
         private readonly AcademicDashboardMetricsService $academicDashboardMetricsService,
         private readonly HostelDashboardMetricsService $hostelDashboardMetricsService,
+        private readonly StaffDashboardMetricsService $staffDashboardMetricsService,
     ) {
         $this->isDepartmentUser = Helper::isDepartmentUser();
         $this->userDepartments = Helper::resolveUserDepartments() ?? [];
@@ -30,6 +31,9 @@ class OverviewDashboardMetricsService
     /**
      * @return array{
      *     summary: array<string, float|int|string|null>,
+     *     enrolmentFunnel: array<string, int>,
+     *     academicSnapshot: array<string, mixed>,
+     *     quickInsights: list<array{key: string, message: string}>,
      *     enrolmentByDepartment: list<array<string, mixed>>,
      *     priorityAlerts: list<array<string, mixed>>
      * }
@@ -39,60 +43,196 @@ class OverviewDashboardMetricsService
         $intakePeriod = Helper::resolveIntakePeriod();
         $enrolmentSummary = $this->applicationMetricsService->enrolmentSummaryMetrics();
         $academicDashboard = $this->academicDashboardMetricsService->build();
-        $hostelSummary = $this->hostelSummary();
+        $hostelDashboard = $this->hostelDashboardMetricsService->build();
+        $staffDashboard = $this->staffDashboardMetricsService->build();
+        $hostelSummary = $this->hostelSummary($hostelDashboard);
 
         return [
             'summary' => $this->summary(
-                $intakePeriod !== null,
-                $enrolmentSummary['confirmed'],
                 $academicDashboard,
                 $hostelSummary,
+                $staffDashboard,
             ),
+            'enrolmentFunnel' => $this->enrolmentFunnel($enrolmentSummary),
+            'academicSnapshot' => $this->academicSnapshot($academicDashboard),
+            'quickInsights' => $this->quickInsights($academicDashboard, $staffDashboard),
             'enrolmentByDepartment' => $this->enrolmentByDepartment($intakePeriod?->id),
-            'priorityAlerts' => $this->priorityAlerts($enrolmentSummary, $academicDashboard),
+            'priorityAlerts' => $this->priorityAlerts(
+                $enrolmentSummary,
+                $academicDashboard,
+                $hostelDashboard,
+            ),
         ];
     }
 
     /**
-     * @param  array{applications: int, offersMade: int, confirmed: int, waitlisted: int}  $enrolmentSummary
      * @param  array<string, mixed>  $academicDashboard
+     * @param  array<string, mixed>  $staffDashboard
      * @return array<string, float|int|string|null>
      */
     private function summary(
-        bool $hasIntakePeriod,
-        int $confirmedStudents,
         array $academicDashboard,
         ?array $hostelSummary,
+        array $staffDashboard,
     ): array {
+        $courseWorkStatus = $academicDashboard['courseWorkStatus'];
+        $academicSummary = $academicDashboard['summary'];
+        $staffSummary = $staffDashboard['summary'];
+
         return [
-            'totalStudents' => $hasIntakePeriod && ! ($this->isDepartmentUser && $this->userDepartments === [])
-                ? $confirmedStudents
-                : null,
-            'totalStudentsSubtext' => null,
-            'totalStudentsTrend' => null,
-            'attendanceRate' => null,
-            'attendanceSubtext' => null,
-            'attendanceTrend' => null,
-            'passRate' => $academicDashboard['summary']['passRate'],
-            'passRateSubtext' => null,
-            'passRateTrend' => null,
-            'feeCollectionRate' => null,
-            'feeCollectionSubtext' => null,
-            'feeCollectionTrend' => null,
-            'programmeCount' => $this->programmeCount(),
-            'programmeSubtext' => null,
-            'programmeTrend' => null,
-            'departmentCount' => $this->departmentCount(),
-            'departmentSubtext' => null,
-            'departmentTrend' => null,
+            'passRate' => $academicSummary['passRate'],
+            'passRateSubtext' => $this->passRateSubtext($academicSummary),
+            'markCompletionRate' => $courseWorkStatus['completeRate'],
+            'markCompletionSubtext' => $this->markCompletionSubtext($courseWorkStatus),
+            'atRiskStudents' => $this->academicDashboardMetricsService->atRiskStudentCount(),
+            'atRiskSubtext' => __('dashboard.overview_at_risk_subtext'),
             'hostelOccupancyRate' => $hostelSummary['occupancyRate'] ?? null,
             'hostelAvailableBeds' => $hostelSummary['availableBeds'] ?? null,
-            'hostelSubtext' => null,
-            'hostelTrend' => null,
-            'atRiskStudents' => $this->academicDashboardMetricsService->atRiskStudentCount(),
-            'atRiskSubtext' => null,
-            'atRiskTrend' => null,
+            'hostelSubtext' => $hostelSummary !== null
+                ? __('dashboard.overview_hostel_beds_available', ['count' => $hostelSummary['availableBeds']])
+                : null,
+            'totalStaff' => $staffSummary['totalStaff'],
+            'totalStaffSubtext' => __('dashboard.staff_academic_admin_subtext', [
+                'academic' => $staffSummary['academicCount'],
+                'admin' => $staffSummary['adminCount'],
+            ]),
         ];
+    }
+
+    /**
+     * @param  array{applications: int, offersMade: int, confirmed: int, waitlisted: int, provisional: int, failedRejected: int}  $enrolmentSummary
+     * @return array{applications: int, offersMade: int, confirmed: int, waitlisted: int, provisional: int, acceptanceRate: int|null, yieldRate: int|null}
+     */
+    private function enrolmentFunnel(array $enrolmentSummary): array
+    {
+        $applications = $enrolmentSummary['applications'];
+        $offersMade = $enrolmentSummary['offersMade'];
+        $confirmed = $enrolmentSummary['confirmed'];
+
+        return [
+            'applications' => $applications,
+            'offersMade' => $offersMade,
+            'confirmed' => $confirmed,
+            'waitlisted' => $enrolmentSummary['waitlisted'],
+            'provisional' => $enrolmentSummary['provisional'],
+            'acceptanceRate' => $applications > 0 ? (int) round(($offersMade / $applications) * 100) : null,
+            'yieldRate' => $offersMade > 0 ? (int) round(($confirmed / $offersMade) * 100) : null,
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $academicDashboard
+     * @return array{gradeSegments: list<array<string, mixed>>, topFailureHotspots: list<array<string, mixed>>, markCompletion: array<string, mixed>}
+     */
+    private function academicSnapshot(array $academicDashboard): array
+    {
+        $hotspots = $academicDashboard['moduleFailureHotspots'] ?? [];
+
+        return [
+            'gradeSegments' => $academicDashboard['gradeDistribution']['segments'] ?? [],
+            'topFailureHotspots' => array_slice($hotspots, 0, 3),
+            'markCompletion' => $academicDashboard['courseWorkStatus'],
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $academicDashboard
+     * @param  array<string, mixed>  $staffDashboard
+     * @return list<array{key: string, message: string}>
+     */
+    private function quickInsights(array $academicDashboard, array $staffDashboard): array
+    {
+        $insights = [];
+
+        $attachmentStatus = $academicDashboard['attachmentStatus'] ?? null;
+
+        if (is_array($attachmentStatus) && ($attachmentStatus['total'] ?? 0) > 0) {
+            $insights[] = [
+                'key' => 'attachment',
+                'message' => __('dashboard.overview_insight_attachment', [
+                    'placed' => $attachmentStatus['placed'],
+                    'total' => $attachmentStatus['total'],
+                    'year' => $attachmentStatus['calendarYear'],
+                ]),
+            ];
+        }
+
+        $passRates = $academicDashboard['passRateByDepartment'] ?? [];
+
+        if ($passRates !== []) {
+            $worst = collect($passRates)->sortBy('passRate')->first();
+
+            if (is_array($worst)) {
+                $insights[] = [
+                    'key' => 'lowest_pass_rate',
+                    'message' => __('dashboard.overview_insight_lowest_pass_rate', [
+                        'department' => $worst['departmentName'],
+                        'rate' => $worst['passRate'],
+                    ]),
+                ];
+            }
+        }
+
+        $ratios = $staffDashboard['lecturerRatios'] ?? [];
+
+        if ($ratios !== []) {
+            $highest = collect($ratios)
+                ->filter(fn (array $row): bool => $row['ratio'] !== null)
+                ->sortByDesc('ratio')
+                ->first();
+
+            if (is_array($highest)) {
+                $insights[] = [
+                    'key' => 'lecturer_ratio',
+                    'message' => __('dashboard.overview_insight_lecturer_ratio', [
+                        'department' => $highest['departmentName'],
+                        'ratio' => $highest['ratioLabel'],
+                    ]),
+                ];
+            }
+        }
+
+        return array_slice($insights, 0, 3);
+    }
+
+    /**
+     * @param  array{passRate: int|null, failRate: int|null, distinctionRate: int|null}  $academicSummary
+     */
+    private function passRateSubtext(array $academicSummary): ?string
+    {
+        if ($academicSummary['distinctionRate'] !== null) {
+            return __('dashboard.overview_pass_rate_distinction_subtext', [
+                'rate' => $academicSummary['distinctionRate'],
+            ]);
+        }
+
+        if ($academicSummary['failRate'] !== null) {
+            return __('dashboard.overview_pass_rate_fail_subtext', [
+                'rate' => $academicSummary['failRate'],
+            ]);
+        }
+
+        return null;
+    }
+
+    /**
+     * @param  array{incompleteCount: int, outstandingCount: int}  $courseWorkStatus
+     */
+    private function markCompletionSubtext(array $courseWorkStatus): ?string
+    {
+        if ($courseWorkStatus['incompleteCount'] > 0) {
+            return __('dashboard.overview_mark_completion_incomplete', [
+                'count' => $courseWorkStatus['incompleteCount'],
+            ]);
+        }
+
+        if ($courseWorkStatus['outstandingCount'] > 0) {
+            return __('dashboard.overview_mark_completion_outstanding', [
+                'count' => $courseWorkStatus['outstandingCount'],
+            ]);
+        }
+
+        return __('dashboard.overview_mark_completion_complete');
     }
 
     /**
@@ -130,12 +270,16 @@ class OverviewDashboardMetricsService
     }
 
     /**
-     * @param  array{applications: int, offersMade: int, confirmed: int, waitlisted: int}  $enrolmentSummary
+     * @param  array{applications: int, offersMade: int, confirmed: int, waitlisted: int, provisional: int, failedRejected: int}  $enrolmentSummary
      * @param  array<string, mixed>  $academicDashboard
+     * @param  array<string, mixed>  $hostelDashboard
      * @return list<array{severity: string, message: string, updatedAt: string|null}>
      */
-    private function priorityAlerts(array $enrolmentSummary, array $academicDashboard): array
-    {
+    private function priorityAlerts(
+        array $enrolmentSummary,
+        array $academicDashboard,
+        array $hostelDashboard,
+    ): array {
         $alerts = [];
 
         $topHotspot = $academicDashboard['moduleFailureHotspots'][0] ?? null;
@@ -146,6 +290,47 @@ class OverviewDashboardMetricsService
                 'message' => __('dashboard.overview_alert_module_failure', [
                     'module' => $topHotspot['moduleName'],
                     'rate' => $topHotspot['rate'],
+                ]),
+                'updatedAt' => null,
+            ];
+        }
+
+        $courseWorkStatus = $academicDashboard['courseWorkStatus'];
+        $topMissingDept = $academicDashboard['missingMarksByDepartment'][0] ?? null;
+
+        if (($courseWorkStatus['incompleteCount'] ?? 0) > 0) {
+            $departmentName = is_array($topMissingDept)
+                ? $topMissingDept['departmentName']
+                : __('dashboard.academic_unknown_department');
+
+            $alerts[] = [
+                'severity' => 'warning',
+                'message' => __('dashboard.overview_alert_incomplete_marks', [
+                    'count' => $courseWorkStatus['incompleteCount'],
+                    'department' => $departmentName,
+                ]),
+                'updatedAt' => null,
+            ];
+        }
+
+        if (($courseWorkStatus['outstandingCount'] ?? 0) > 0) {
+            $alerts[] = [
+                'severity' => 'warning',
+                'message' => __('dashboard.overview_alert_outstanding_marks', [
+                    'count' => $courseWorkStatus['outstandingCount'],
+                ]),
+                'updatedAt' => null,
+            ];
+        }
+
+        $topLecturer = $academicDashboard['lecturerMarkingStats'][0] ?? null;
+
+        if (is_array($topLecturer) && ($topLecturer['incompleteRate'] ?? 0) >= 25) {
+            $alerts[] = [
+                'severity' => 'warning',
+                'message' => __('dashboard.overview_alert_lecturer_incomplete', [
+                    'lecturer' => $topLecturer['lecturerName'],
+                    'rate' => $topLecturer['incompleteRate'],
                 ]),
                 'updatedAt' => null,
             ];
@@ -170,6 +355,28 @@ class OverviewDashboardMetricsService
                     'updatedAt' => $query->updated_at?->toIso8601String(),
                 ];
             });
+
+        $highPriorityQueries = (int) ($hostelDashboard['queryStats']['highPriority'] ?? 0);
+
+        if ($highPriorityQueries > 0) {
+            $alerts[] = [
+                'severity' => 'critical',
+                'message' => __('dashboard.overview_alert_hostel_high_priority', [
+                    'count' => $highPriorityQueries,
+                ]),
+                'updatedAt' => null,
+            ];
+        }
+
+        if ($enrolmentSummary['provisional'] > 0) {
+            $alerts[] = [
+                'severity' => 'warning',
+                'message' => __('dashboard.overview_alert_provisional', [
+                    'count' => $enrolmentSummary['provisional'],
+                ]),
+                'updatedAt' => null,
+            ];
+        }
 
         if ($enrolmentSummary['waitlisted'] > 0) {
             $alerts[] = [
@@ -207,11 +414,11 @@ class OverviewDashboardMetricsService
     }
 
     /**
+     * @param  array<string, mixed>  $hostelDashboard
      * @return array{occupancyRate: int, availableBeds: int}|null
      */
-    private function hostelSummary(): ?array
+    private function hostelSummary(array $hostelDashboard): ?array
     {
-        $hostelDashboard = $this->hostelDashboardMetricsService->build();
         $summary = $hostelDashboard['summary'];
 
         if (($summary['totalCapacity'] ?? 0) === 0) {
@@ -224,35 +431,10 @@ class OverviewDashboardMetricsService
         ];
     }
 
-    private function programmeCount(): int
-    {
-        $query = DepartmentCourse::query();
-
-        if ($this->isDepartmentUser) {
-            $query->whereIn('institution_department_id', $this->userDepartments);
-        }
-
-        return $query->count();
-    }
-
-    private function departmentCount(): int
-    {
-        $query = DB::table('departments')
-            ->where('departments.is_academic', true)
-            ->whereNull('departments.deleted_at');
-
-        if ($this->isDepartmentUser) {
-            $query->join('institution_departments', 'institution_departments.department_id', '=', 'departments.id')
-                ->whereIn('institution_departments.id', $this->userDepartments);
-        }
-
-        return (int) $query->distinct('departments.id')->count('departments.id');
-    }
-
     /**
-     * @return \Illuminate\Support\Collection<int, object{department_id: int, department_name: string, student_count: int}>
+     * @return Collection<int, object{department_id: int, department_name: string, student_count: int}>
      */
-    private function confirmedStudentsByDepartment(int $intakePeriodId): \Illuminate\Support\Collection
+    private function confirmedStudentsByDepartment(int $intakePeriodId): Collection
     {
         $query = DB::table('departments')
             ->select(

@@ -12,6 +12,7 @@ import { BreadcrumbItemInterface } from '@/types/ui';
 import BackNavigationButton from '@/components/core/button/BackNavigationButton.vue';
 import HeaderActionGroup from '@/components/core/page/HeaderActionGroup.vue';
 import AppPreferencesSheet from '@/components/core/preferences/AppPreferencesSheet.vue';
+import EnvironmentBadge from '@/components/core/util/EnvironmentBadge.vue';
 import { usePage } from '@inertiajs/vue3';
 import { computed, useSlots } from 'vue';
 
@@ -61,6 +62,7 @@ const backNavigationRowJustifyClass = computed((): string => {
         </div>
         <div class="flex shrink-0 items-center justify-center gap-2 pr-2 sm:pr-4">
             <RemoveImpersonationButton v-if="isItTrue(page.props.auth.impersonating)" />
+            <EnvironmentBadge />
             <HeaderActionGroup>
                 <LogoutButton />
                 <AppPreferencesSheet />

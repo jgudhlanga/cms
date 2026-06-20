@@ -286,31 +286,38 @@ export type AcademicDashboard = {
 };
 
 export type OverviewDashboardSummary = {
-    totalStudents: number | null;
-    totalStudentsSubtext: string | null;
-    totalStudentsTrend: string | null;
-    attendanceRate: number | null;
-    attendanceSubtext: string | null;
-    attendanceTrend: string | null;
     passRate: number | null;
     passRateSubtext: string | null;
-    passRateTrend: string | null;
-    feeCollectionRate: number | null;
-    feeCollectionSubtext: string | null;
-    feeCollectionTrend: string | null;
-    programmeCount: number;
-    programmeSubtext: string | null;
-    programmeTrend: string | null;
-    departmentCount: number;
-    departmentSubtext: string | null;
-    departmentTrend: string | null;
+    markCompletionRate: number | null;
+    markCompletionSubtext: string | null;
+    atRiskStudents: number | null;
+    atRiskSubtext: string | null;
     hostelOccupancyRate: number | null;
     hostelAvailableBeds: number | null;
     hostelSubtext: string | null;
-    hostelTrend: string | null;
-    atRiskStudents: number | null;
-    atRiskSubtext: string | null;
-    atRiskTrend: string | null;
+    totalStaff: number;
+    totalStaffSubtext: string | null;
+};
+
+export type OverviewEnrolmentFunnel = {
+    applications: number;
+    offersMade: number;
+    confirmed: number;
+    waitlisted: number;
+    provisional: number;
+    acceptanceRate: number | null;
+    yieldRate: number | null;
+};
+
+export type OverviewAcademicSnapshot = {
+    gradeSegments: AcademicGradeSegment[];
+    topFailureHotspots: AcademicModuleFailureHotspot[];
+    markCompletion: AcademicCourseWorkStatus;
+};
+
+export type OverviewQuickInsight = {
+    key: string;
+    message: string;
 };
 
 export type OverviewEnrolmentByDepartment = {
@@ -328,6 +335,9 @@ export type OverviewPriorityAlert = {
 
 export type OverviewDashboard = {
     summary: OverviewDashboardSummary;
+    enrolmentFunnel: OverviewEnrolmentFunnel;
+    academicSnapshot: OverviewAcademicSnapshot;
+    quickInsights: OverviewQuickInsight[];
     enrolmentByDepartment: OverviewEnrolmentByDepartment[];
     priorityAlerts: OverviewPriorityAlert[];
 };
