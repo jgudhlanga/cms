@@ -61,6 +61,7 @@ class HandleInertiaRequests extends Middleware
                 'warning' => fn () => $request->session()->get('warning'),
             ],
             'name' => config('app.name'),
+            'appEnv' => config('app.env'),
             'appVersion' => app(AppVersion::class)->resolve(),
             'appearance' => [
                 'preference' => $appearance,

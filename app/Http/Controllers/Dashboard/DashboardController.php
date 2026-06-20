@@ -34,9 +34,6 @@ class DashboardController extends Controller
         $intakePeriods = IntakePeriodResource::collection($intakePeriodList);
         $intakePeriod = IntakePeriodResource::make(Helper::resolveIntakePeriod());
         $academicCalendar = Helper::resolveAcademicCalendar();
-        $academicCalendars = AcademicCalendarResource::collection(
-            DropdownHelper::getSemestersForCalendarYear($academicCalendar->calendar_year),
-        );
         $academicContextSubtitle = __('dashboard.academic_context_subtitle', [
             'calendar_year' => $academicCalendar->calendar_year,
             'period' => AcademicCalendarPeriodResolver::displayPeriodLabel($academicCalendar),
@@ -54,7 +51,6 @@ class DashboardController extends Controller
             'dailyDistribution' => $dailyDistribution,
             'enrolmentSummary' => $enrolmentSummary,
             'academicCalendar' => AcademicCalendarResource::make($academicCalendar),
-            'academicCalendars' => $academicCalendars,
             'academicContextSubtitle' => $academicContextSubtitle,
             'hostelDashboard' => in_array('hostel', $visibleTabs, true)
                 ? app(HostelDashboardMetricsService::class)->build()

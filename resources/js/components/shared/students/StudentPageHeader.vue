@@ -4,6 +4,7 @@ import RemoveImpersonationButton from '@/components/auth/RemoveImpersonationButt
 import AppLogo from '@/components/core/image/AppLogo.vue';
 import HeaderActionGroup from '@/components/core/page/HeaderActionGroup.vue';
 import AppPreferencesSheet from '@/components/core/preferences/AppPreferencesSheet.vue';
+import EnvironmentBadge from '@/components/core/util/EnvironmentBadge.vue';
 import Heading from '@/components/core/util/Heading.vue';
 import { useUtils } from '@/composables/core/useUtils';
 import { PageProps } from '@/types';
@@ -24,6 +25,7 @@ const { isItTrue } = useUtils();
             <Heading :title="page.props.auth.user.attributes?.name" />
             <div class="flex items-center gap-2 pr-2 sm:pr-4">
                 <RemoveImpersonationButton v-if="isItTrue(page.props.auth.impersonating)" />
+                <EnvironmentBadge />
                 <HeaderActionGroup>
                     <LogoutButton />
                     <AppPreferencesSheet />

@@ -22,6 +22,7 @@ export type ModuleState = Record<
 >;
 
 export type PageProps<T extends Record<string, unknown> = Record<string, unknown>> = T & {
+    appEnv: string;
     appVersion: string;
     auth: {
         user: User;
