@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Card, CardContent } from '@/Components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { computed } from 'vue';
 
 interface Props {

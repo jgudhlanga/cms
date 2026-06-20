@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import IconButton from '@/Components/Core/Button/IconButton.vue';
-import Heading from '@/Components/Core/Utils/Heading.vue';
+import IconButton from '@/components/core/button/IconButton.vue';
+import Heading from '@/components/core/util/Heading.vue';
 import { ColorVariant } from '@/enums/colors';
 import { IconName } from '@/enums/icons';
 import type { IconButtonParams } from '@/types/utils';
