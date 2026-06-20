@@ -1,5 +1,7 @@
 <?php
 
+use App\Enums\AcademicCalendars\AcademicCalendarTypeEnum;
+use App\Models\AcademicCalendars\AcademicCalendar;
 use App\Models\Acl\Module;
 use App\Models\Acl\Permission;
 use App\Models\Institution\IntakePeriod;
@@ -38,6 +40,28 @@ function seedDashboardIntakePeriod(?int $tenantId = null): IntakePeriod
         'end_date' => now()->endOfMonth()->toDateString(),
         'calendar_year' => '2025/2026',
         'is_active' => true,
+    ]);
+}
+
+function seedDashboardAcademicCalendar(): AcademicCalendar
+{
+    $today = now()->toDateString();
+
+    $existing = AcademicCalendar::query()
+        ->semesters()
+        ->whereDate('opening_date', '<=', $today)
+        ->whereDate('closing_date', '>=', $today)
+        ->first();
+
+    if ($existing instanceof AcademicCalendar) {
+        return $existing;
+    }
+
+    return AcademicCalendar::query()->create([
+        'calendar_year' => (string) now()->year,
+        'type' => AcademicCalendarTypeEnum::SEMESTER->value,
+        'opening_date' => now()->startOfYear()->toDateString(),
+        'closing_date' => now()->endOfYear()->toDateString(),
     ]);
 }
 
@@ -95,9 +119,65 @@ function userWithHostelDashboardPermission(): User
     return $user;
 }
 
-function dashboardUrlFor(User $user): string
+function userWithStaffDashboardPermission(): User
+{
+    $user = userWithDashboardPermission('view-staff:dashboards');
+
+    enableDashboardModule([
+        'overview' => false,
+        'academic' => false,
+        'enrolments' => false,
+        'attendance' => false,
+        'staff' => true,
+        'finance' => false,
+        'hostel' => false,
+    ]);
+
+    return $user;
+}
+
+function userWithAcademicDashboardPermission(): User
+{
+    $user = userWithDashboardPermission('view-academic:dashboards');
+
+    enableDashboardModule([
+        'overview' => false,
+        'academic' => true,
+        'enrolments' => false,
+        'attendance' => false,
+        'staff' => false,
+        'finance' => false,
+        'hostel' => false,
+    ]);
+
+    return $user;
+}
+
+function userWithOverviewDashboardPermission(): User
+{
+    $user = userWithDashboardPermission('view:dashboards');
+
+    enableDashboardModule([
+        'overview' => true,
+        'academic' => false,
+        'enrolments' => false,
+        'attendance' => false,
+        'staff' => false,
+        'finance' => false,
+        'hostel' => false,
+    ]);
+
+    return $user;
+}
+
+function dashboardUrlFor(User $user, ?int $academicCalendarId = null): string
 {
     $intakePeriod = seedDashboardIntakePeriod($user->tenant_id);
+    $url = '/dashboard?intake_period_id='.$intakePeriod->id;
 
-    return '/dashboard?intake_period_id='.$intakePeriod->id;
+    if ($academicCalendarId !== null) {
+        $url .= '&academic_calendar_id='.$academicCalendarId;
+    }
+
+    return $url;
 }

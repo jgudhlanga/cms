@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\Shared\ClassListTypeEnum;
 use App\Enums\Shared\WorkflowStepEnum;
 use App\Helpers\Helper;
 use Carbon\Carbon;
@@ -174,7 +175,7 @@ class ApplicationMetricsService
     }
 
     /**
-     * @return array{applications: int, offersMade: int, confirmed: int, waitlisted: int}
+     * @return array{applications: int, offersMade: int, confirmed: int, waitlisted: int, provisional: int, failedRejected: int}
      */
     public function enrolmentSummaryMetrics(): array
     {
@@ -185,6 +186,8 @@ class ApplicationMetricsService
             'offersMade' => 0,
             'confirmed' => 0,
             'waitlisted' => 0,
+            'provisional' => 0,
+            'failedRejected' => 0,
         ];
 
         if (! $intakePeriod || ($this->isDepartmentUser && empty($this->userDepartments))) {
@@ -220,11 +223,33 @@ class ApplicationMetricsService
             })
             ->count();
 
+        $provisional = $this->studentProgramsBaseQuery($intakePeriod->id)
+            ->whereExists(function (Builder $query): void {
+                $query->select(DB::raw(1))
+                    ->from('class_lists')
+                    ->whereColumn('class_lists.student_program_id', 'student_programs.id')
+                    ->whereNull('class_lists.deleted_at')
+                    ->where('class_lists.type', ClassListTypeEnum::PROVISIONAL->value);
+            })
+            ->count();
+
+        $failedRejected = $this->studentProgramsBaseQuery($intakePeriod->id)
+            ->whereExists(function (Builder $query): void {
+                $query->select(DB::raw(1))
+                    ->from('class_lists')
+                    ->whereColumn('class_lists.student_program_id', 'student_programs.id')
+                    ->whereNull('class_lists.deleted_at')
+                    ->where('class_lists.type', ClassListTypeEnum::FAILED->value);
+            })
+            ->count();
+
         return [
             'applications' => $applications,
             'offersMade' => $offersMade,
             'confirmed' => $confirmed,
             'waitlisted' => $waitlisted,
+            'provisional' => $provisional,
+            'failedRejected' => $failedRejected,
         ];
     }
 

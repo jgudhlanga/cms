@@ -752,7 +752,7 @@ return [
     'ui_o_level_result' => 'O Level Result',
     'ui_secure_lock' => '🔒',
     'ui_ecocash_users_payment_device_warning' => 'Attention EcoCash users: To avoid network failures, please use separate devices when making your payments. Thank you for your cooperation.',
-    'ui_college_advert_warning' => 'CHECK THE COLLEGE ADVERT BEFORE APPLYING ONLINE.',
+    'ui_college_advert_warning' => 'Check college website www.hrepoly.ac.zw or newspaper advert for open places before applying online',
     'ui_checking_payment_status' => 'Checking payment status...',
     'ui_secure_redirect_to_payment_gateway' => 'You will be redirected to a secure payment page.',
     'enrollment_important_notices' => 'Important notices',

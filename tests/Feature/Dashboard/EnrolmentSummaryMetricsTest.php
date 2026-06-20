@@ -8,6 +8,7 @@ use App\Models\Students\StudentProgram;
 
 beforeEach(function () {
     enableDashboardModule();
+    seedDashboardAcademicCalendar();
 });
 
 test('dashboard returns enrolment summary metrics for selected intake period', function () {
@@ -54,15 +55,44 @@ test('dashboard returns enrolment summary metrics for selected intake period', f
             ],
         ]);
 
+    $provisionalOnlyProgram = createVerifiedStudentProgram('DASH-PROVISIONAL-01');
+    $provisionalOnlyProgram->update([
+        'intake_period_id' => $intakePeriod->id,
+        'department_application_step_id' => resolveDepartmentApplicationStep($provisionalOnlyProgram, WorkflowStepEnum::REVIEW)->id,
+    ]);
+    ClassList::query()
+        ->where('student_program_id', $provisionalOnlyProgram->id)
+        ->update([
+            'type' => ClassListTypeEnum::PROVISIONAL->value,
+            'attributes' => [
+                'identity_confirmed' => false,
+                'disability_confirmed' => false,
+                'names_confirmed' => false,
+            ],
+        ]);
+
+    $failedProgram = createVerifiedStudentProgram('DASH-FAILED-01');
+    $failedProgram->update([
+        'intake_period_id' => $intakePeriod->id,
+        'department_application_step_id' => resolveDepartmentApplicationStep($failedProgram, WorkflowStepEnum::REVIEW)->id,
+    ]);
+    ClassList::query()
+        ->where('student_program_id', $failedProgram->id)
+        ->update([
+            'type' => ClassListTypeEnum::FAILED->value,
+        ]);
+
     $this->actingAs($user)
         ->get('/dashboard?intake_period_id='.$intakePeriod->id)
         ->assertSuccessful()
         ->assertInertia(fn ($page) => $page
             ->component('dashboard/Index')
-            ->where('enrolmentSummary.applications', 5)
+            ->where('enrolmentSummary.applications', 7)
             ->where('enrolmentSummary.offersMade', 3)
             ->where('enrolmentSummary.confirmed', 1)
             ->where('enrolmentSummary.waitlisted', 1)
+            ->where('enrolmentSummary.provisional', 2)
+            ->where('enrolmentSummary.failedRejected', 1)
         );
 });
 
@@ -91,20 +121,42 @@ test('dashboard enrolment summary metrics are scoped to selected intake period',
         'department_application_step_id' => resolveDepartmentApplicationStep($otherProgram, WorkflowStepEnum::ACCEPTED)->id,
     ]);
 
+    $selectedProvisionalProgram = createVerifiedStudentProgram('DASH-SELECTED-PROV-01');
+    $selectedProvisionalProgram->update([
+        'intake_period_id' => $selectedIntake->id,
+        'department_application_step_id' => resolveDepartmentApplicationStep($selectedProvisionalProgram, WorkflowStepEnum::REVIEW)->id,
+    ]);
+    ClassList::query()
+        ->where('student_program_id', $selectedProvisionalProgram->id)
+        ->update(['type' => ClassListTypeEnum::PROVISIONAL->value]);
+
+    $otherFailedProgram = createVerifiedStudentProgram('DASH-OTHER-FAILED-01');
+    $otherFailedProgram->update([
+        'intake_period_id' => $otherIntake->id,
+        'department_application_step_id' => resolveDepartmentApplicationStep($otherFailedProgram, WorkflowStepEnum::REVIEW)->id,
+    ]);
+    ClassList::query()
+        ->where('student_program_id', $otherFailedProgram->id)
+        ->update(['type' => ClassListTypeEnum::FAILED->value]);
+
     $this->actingAs($user)
         ->get('/dashboard?intake_period_id='.$selectedIntake->id)
         ->assertSuccessful()
         ->assertInertia(fn ($page) => $page
-            ->where('enrolmentSummary.applications', 1)
+            ->where('enrolmentSummary.applications', 2)
             ->where('enrolmentSummary.offersMade', 1)
+            ->where('enrolmentSummary.provisional', 1)
+            ->where('enrolmentSummary.failedRejected', 0)
         );
 
     $this->actingAs($user)
         ->get('/dashboard?intake_period_id='.$otherIntake->id)
         ->assertSuccessful()
         ->assertInertia(fn ($page) => $page
-            ->where('enrolmentSummary.applications', 1)
+            ->where('enrolmentSummary.applications', 2)
             ->where('enrolmentSummary.offersMade', 1)
+            ->where('enrolmentSummary.provisional', 0)
+            ->where('enrolmentSummary.failedRejected', 1)
         );
 });
 

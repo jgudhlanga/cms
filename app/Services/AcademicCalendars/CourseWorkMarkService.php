@@ -191,11 +191,11 @@ class CourseWorkMarkService
         }
 
         $exists = AcademicCalendarStudentEnrolment::query()
-            ->join('academic_calandar_classes', 'academic_calandar_classes.id', '=', 'academic_calendar_student_enrolments.academic_calendar_class_id')
-            ->where('academic_calandar_classes.class_config_id', $classConfigId)
+            ->join('academic_calendar_classes', 'academic_calendar_classes.id', '=', 'academic_calendar_student_enrolments.academic_calendar_class_id')
+            ->where('academic_calendar_classes.class_config_id', $classConfigId)
             ->where('academic_calendar_student_enrolments.student_enrolment_id', $studentEnrolmentId)
             ->whereNull('academic_calendar_student_enrolments.deleted_at')
-            ->whereNull('academic_calandar_classes.deleted_at')
+            ->whereNull('academic_calendar_classes.deleted_at')
             ->exists();
 
         if (! $exists) {

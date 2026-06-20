@@ -1,11 +1,13 @@
 <script setup lang="ts">
+import IntakePeriodComboSelect from '@/components/core/form/combobox/IntakePeriodComboSelect.vue';
 import { useUtils } from '@/composables/core/useUtils';
+import { IconName, icons } from '@/lib/icons';
 import { DailyDistribution, DepartmentDistribution, EnrolmentSummary, LevelDistribution } from '@/types/dasboard';
 import { IntakePeriod } from '@/types/institution';
 import { SelectOption } from '@/types/utils';
 import { Chart, registerables } from 'chart.js';
 import { trans } from 'laravel-vue-i18n';
-import { Check, FileText, ListChecks, UserPlus } from 'lucide-vue-next';
+import { Check, Clock, FileText, ListChecks, UserPlus, XCircle } from 'lucide-vue-next';
 import { computed, onMounted, ref, watch } from 'vue';
 import DashboardCard from '../components/DashboardCard.vue';
 import MetricCard from '../components/MetricCard.vue';
@@ -18,14 +20,14 @@ interface Props {
     dailyDistribution: DailyDistribution[];
     enrolmentSummary: EnrolmentSummary;
     intakePeriods: IntakePeriod[];
-    intakePeriodModel: SelectOption | null;
     handleFilterChange: (option: SelectOption) => void;
 }
 
 const props = defineProps<Props>();
+const intakePeriodModel = defineModel<SelectOption | null>('intakePeriodModel');
 
 const applicationsTitle = computed(() => {
-    const intakeLabel = props.intakePeriodModel?.label;
+    const intakeLabel = intakePeriodModel.value?.label;
     if (!intakeLabel) {
         return trans('dashboard.applications');
     }
@@ -164,37 +166,94 @@ watch(
 
 <template>
     <div class="mt-4 flex flex-col gap-4">
-        <!-- Top Metrics -->
-        <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <MetricCard :title="applicationsTitle" :value="enrolmentSummary.applications" :subtext="$t('dashboard.total_applications')" trend="neutral">
-                <template #icon><FileText class="h-4 w-4" /></template>
-            </MetricCard>
-            <MetricCard :title="$t('dashboard.offers_made')" :value="enrolmentSummary.offersMade" :subtext="acceptanceRateSubtext" trend="neutral">
-                <template #icon><Check class="h-4 w-4" /></template>
-            </MetricCard>
-            <MetricCard :title="$t('dashboard.confirmed')" :value="enrolmentSummary.confirmed" :subtext="yieldRateSubtext" trend="neutral">
-                <template #icon><UserPlus class="h-4 w-4" /></template>
+        <div class="flex items-center justify-end gap-2">
+            <div
+                class="flex min-w-0 shrink-0 items-center gap-2 rounded-lg border border-border/60 bg-muted/20 px-3 py-2 sm:min-w-[280px] sm:max-w-md"
+            >
+                <component :is="icons[IconName.calendar]" class="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                <span class="shrink-0 text-sm font-medium text-muted-foreground">{{ $tChoice('trans.intake_period', 1) }}</span>
+                <IntakePeriodComboSelect
+                    :data="intakePeriods"
+                    label=""
+                    v-model="intakePeriodModel"
+                    :vertical-layout="false"
+                    :is-required="true"
+                    width-class="w-full"
+                    class="min-w-0 flex-1"
+                    @update:modelValue="handleFilterChange"
+                />
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
+            <MetricCard
+                compact
+                accent="bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300"
+                :title="applicationsTitle"
+                :value="enrolmentSummary.applications"
+                :subtext="$t('dashboard.total_applications')"
+                trend="neutral"
+            >
+                <template #icon><FileText class="h-3.5 w-3.5" /></template>
             </MetricCard>
             <MetricCard
+                compact
+                accent="bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-300"
+                :title="$t('dashboard.offers_made')"
+                :value="enrolmentSummary.offersMade"
+                :subtext="acceptanceRateSubtext"
+                trend="neutral"
+            >
+                <template #icon><Check class="h-3.5 w-3.5" /></template>
+            </MetricCard>
+            <MetricCard
+                compact
+                accent="bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
+                :title="$t('dashboard.confirmed')"
+                :value="enrolmentSummary.confirmed"
+                :subtext="yieldRateSubtext"
+                trend="neutral"
+            >
+                <template #icon><UserPlus class="h-3.5 w-3.5" /></template>
+            </MetricCard>
+            <MetricCard
+                compact
+                accent="bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300"
                 :title="$t('dashboard.waitlisted')"
                 :value="enrolmentSummary.waitlisted"
                 :subtext="$t('dashboard.waitlisted_applications')"
                 trend="neutral"
             >
-                <template #icon><ListChecks class="h-4 w-4" /></template>
+                <template #icon><ListChecks class="h-3.5 w-3.5" /></template>
+            </MetricCard>
+            <MetricCard
+                compact
+                accent="bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-300"
+                :title="$t('dashboard.provisional')"
+                :value="enrolmentSummary.provisional"
+                :subtext="$t('dashboard.provisional_applications')"
+                trend="neutral"
+            >
+                <template #icon><Clock class="h-3.5 w-3.5" /></template>
+            </MetricCard>
+            <MetricCard
+                compact
+                accent="bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300"
+                :title="$t('dashboard.failed_rejected')"
+                :value="enrolmentSummary.failedRejected"
+                :subtext="$t('dashboard.failed_rejected_applications')"
+                trend="down"
+            >
+                <template #icon><XCircle class="h-3.5 w-3.5" /></template>
             </MetricCard>
         </div>
 
         <div class="flex flex-col gap-4">
-            <!-- This uses the actual component and real data -->
             <DistributionByDepartment
                 :department-distribution="departmentDistribution"
                 :show-actions-column="true"
-                :show-filters="true"
-                :intakePeriodModel="intakePeriodModel"
-                @update:intakePeriodModel="$emit('update:intakePeriodModel', $event)"
-                :intake-periods="intakePeriods"
-                :handle-filter-change="handleFilterChange"
+                :show-filters="false"
+                v-model:intakePeriodModel="intakePeriodModel"
             />
             <DashboardCard :title="$t('dashboard.distribution_by_level')">
                 <div class="mt-2 h-64">
@@ -208,71 +267,12 @@ watch(
             </DashboardCard>
         </div>
 
-        <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
-            <DashboardCard :title="$t('dashboard.retention_rate')">
-                <div
-                    class="flex h-[185px] w-full items-center justify-center rounded border border-dashed border-gray-200 bg-gray-50 text-sm text-gray-500"
-                >
-                    {{ $t('dashboard.line_chart_placeholder') }}
-                </div>
-            </DashboardCard>
-
-            <DashboardCard :title="$t('dashboard.withdrawal_and_dropout_reasons')">
-                <table class="w-full table-fixed border-collapse text-left text-sm">
-                    <thead>
-                        <tr>
-                            <th class="w-[48%] border-b border-gray-100 pb-2 text-xs font-medium text-gray-500">{{ $t('dashboard.reason') }}</th>
-                            <th class="w-[16%] border-b border-gray-100 pb-2 text-xs font-medium text-gray-500">{{ $t('dashboard.count') }}</th>
-                            <th class="w-[36%] border-b border-gray-100 pb-2 text-xs font-medium text-gray-500">{{ $t('dashboard.share') }}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr class="border-b border-gray-100 last:border-0">
-                            <td class="truncate py-2 text-gray-900">{{ $t('dashboard.financial_hardship') }}</td>
-                            <td class="py-2 text-gray-900">62</td>
-                            <td class="py-2"><span class="inline-block rounded-full bg-rose-100 px-2 py-0.5 text-[10px] text-rose-700">42%</span></td>
-                        </tr>
-                        <tr class="border-b border-gray-100 last:border-0">
-                            <td class="truncate py-2 text-gray-900">{{ $t('dashboard.academic_failure') }}</td>
-                            <td class="py-2 text-gray-900">38</td>
-                            <td class="py-2">
-                                <span class="inline-block rounded-full bg-amber-100 px-2 py-0.5 text-[10px] text-amber-700">26%</span>
-                            </td>
-                        </tr>
-                        <tr class="border-b border-gray-100 last:border-0">
-                            <td class="truncate py-2 text-gray-900">{{ $t('dashboard.employment_work') }}</td>
-                            <td class="py-2 text-gray-900">24</td>
-                            <td class="py-2"><span class="inline-block rounded-full bg-blue-100 px-2 py-0.5 text-[10px] text-blue-700">16%</span></td>
-                        </tr>
-                        <tr class="border-b border-gray-100 last:border-0">
-                            <td class="truncate py-2 text-gray-900">{{ $t('dashboard.personal_family') }}</td>
-                            <td class="py-2 text-gray-900">16</td>
-                            <td class="py-2">
-                                <span class="inline-block rounded-full bg-purple-100 px-2 py-0.5 text-[10px] text-purple-700">11%</span>
-                            </td>
-                        </tr>
-                        <tr class="border-b border-gray-100 last:border-0">
-                            <td class="truncate py-2 text-gray-900">{{ $t('dashboard.transferred_out') }}</td>
-                            <td class="py-2 text-gray-900">8</td>
-                            <td class="py-2"><span class="inline-block rounded-full bg-gray-100 px-2 py-0.5 text-[10px] text-gray-700">5%</span></td>
-                        </tr>
-                    </tbody>
-                </table>
-                <div class="mt-4 flex flex-col gap-0">
-                    <div class="flex items-center justify-between border-b border-gray-100 py-1.5 last:border-0">
-                        <span class="text-xs text-gray-500">{{ $t('dashboard.total_withdrawals_this_semester') }}</span>
-                        <span class="text-xs font-medium text-gray-900">148</span>
-                    </div>
-                    <div class="flex items-center justify-between border-b border-gray-100 py-1.5 last:border-0">
-                        <span class="text-xs text-gray-500">{{ $t('dashboard.withdrawal_rate') }}</span>
-                        <span class="text-xs font-medium text-gray-900">2.2%</span>
-                    </div>
-                    <div class="flex items-center justify-between border-b border-gray-100 py-1.5 last:border-0">
-                        <span class="text-xs text-gray-500">{{ $t('dashboard.projected_completion_rate') }}</span>
-                        <span class="text-xs font-medium text-gray-900">81.4%</span>
-                    </div>
-                </div>
-            </DashboardCard>
-        </div>
+        <DashboardCard :title="$t('dashboard.retention_rate')">
+            <div
+                class="flex h-[185px] w-full items-center justify-center rounded border border-dashed border-gray-200 bg-gray-50 text-sm text-gray-500"
+            >
+                {{ $t('dashboard.line_chart_placeholder') }}
+            </div>
+        </DashboardCard>
     </div>
 </template>

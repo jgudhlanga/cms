@@ -1,191 +1,598 @@
 <script setup lang="ts">
-import { Award, Check, TrendingDown, TrendingUp, UserMinus, X } from 'lucide-vue-next';
+import Empty from '@/components/core/util/Empty.vue';
+import type { AcademicDashboard } from '@/types/dasboard';
+import { Chart, registerables } from 'chart.js';
+import { trans } from 'laravel-vue-i18n';
+import { AlertTriangle, Award, Briefcase, Check, ClipboardList, TrendingDown, TrendingUp, UserMinus, X } from 'lucide-vue-next';
+import { computed, onMounted, ref, watch } from 'vue';
 import DashboardCard from '../components/DashboardCard.vue';
 import MetricCard from '../components/MetricCard.vue';
+
+Chart.register(...registerables);
+
+interface Props {
+    academicDashboard: AcademicDashboard;
+}
+
+const props = defineProps<Props>();
+
+const {
+    summary,
+    courseWorkStatus,
+    gradeDistribution,
+    passRateByDepartment,
+    passRateByLevel,
+    passRateByCourse,
+    moduleFailureHotspots,
+    missingMarksByDepartment,
+    missingMarksByLevel,
+    missingMarksByCourse,
+    missingMarksByModule,
+    lecturerMarkingStats,
+    attachmentTotal,
+    attachmentCalendarYear,
+} = props.academicDashboard;
+
+const notAvailable = computed(() => trans('dashboard.academic_not_available'));
+
+const formatRate = (value: number | null): string => (value === null ? notAvailable.value : `${value}%`);
+
+const formatCount = (value: number | null): string => (value === null ? notAvailable.value : String(value));
+
+const metricSubtext = (value: string | null): string => value ?? notAvailable.value;
+
+const showTrendIcon = (value: string | null): boolean => value !== null;
+
+const passRateBarClass = (rate: number): string => {
+    if (rate >= 80) return 'bg-emerald-500';
+    if (rate >= 70) return 'bg-orange-400';
+
+    return 'bg-rose-500';
+};
+
+const failureBadgeClass = (rate: number): string => {
+    if (rate >= 25) return 'bg-rose-100 text-rose-700';
+    if (rate >= 15) return 'bg-amber-100 text-amber-700';
+
+    return 'bg-emerald-100 text-emerald-700';
+};
+
+const incompleteBadgeClass = (rate: number): string => {
+    if (rate >= 50) return 'bg-rose-100 text-rose-700';
+    if (rate >= 25) return 'bg-amber-100 text-amber-700';
+
+    return 'bg-emerald-100 text-emerald-700';
+};
+
+const attachmentSubtext = computed(() =>
+    attachmentTotal !== null
+        ? trans('dashboard.academic_attachment_calendar_year', { year: attachmentCalendarYear })
+        : notAvailable.value,
+);
+
+const gradeChart = ref<HTMLCanvasElement | null>(null);
+let gradeChartInstance: Chart | null = null;
+
+const segmentColors: Record<string, string> = {
+    distinction: 'rgba(59, 130, 246, 0.8)',
+    merit: 'rgba(99, 102, 241, 0.8)',
+    pass: 'rgba(16, 185, 129, 0.8)',
+    fail: 'rgba(244, 63, 94, 0.8)',
+};
+
+const gradeChartData = computed(() => {
+    const segments = gradeDistribution.segments;
+
+    return {
+        labels: segments.map((segment) => segment.label),
+        datasets: [
+            {
+                data: segments.map((segment) => segment.count),
+                backgroundColor: segments.map((segment) => segmentColors[segment.key] ?? 'rgba(156, 163, 175, 0.8)'),
+                borderWidth: 0,
+            },
+        ],
+    };
+});
+
+const initGradeChart = () => {
+    if (!gradeChart.value || gradeDistribution.segments.length === 0) {
+        if (gradeChartInstance) {
+            gradeChartInstance.destroy();
+            gradeChartInstance = null;
+        }
+
+        return;
+    }
+
+    if (gradeChartInstance) {
+        gradeChartInstance.destroy();
+    }
+
+    gradeChartInstance = new Chart(gradeChart.value, {
+        type: 'bar',
+        data: { ...gradeChartData.value },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true, grid: { drawBorder: false } },
+                x: { grid: { display: false } },
+            },
+        },
+    });
+};
+
+onMounted(() => {
+    initGradeChart();
+});
+
+watch(
+    () => gradeDistribution.segments,
+    () => {
+        initGradeChart();
+    },
+    { deep: true },
+);
 </script>
 
 <template>
-    <div class="mt-4 flex flex-col gap-4">
-        <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <MetricCard title="Pass rate" value="74.8%" subtext="+3.1% vs Sem 1" trend="up">
-                <template #icon><Check class="h-4 w-4" /></template>
-                <template #trendIcon><TrendingUp class="h-3 w-3" /></template>
+    <div class="mt-4 flex flex-col gap-3">
+        <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
+            <MetricCard
+                compact
+                accent="bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
+                :title="$t('dashboard.academic_pass_rate')"
+                :value="formatRate(summary.passRate)"
+                :subtext="metricSubtext(summary.passRateTrend)"
+                :trend="summary.passRate !== null && summary.passRateTrend ? 'up' : 'neutral'"
+            >
+                <template #icon><Check class="h-3.5 w-3.5" /></template>
+                <template v-if="showTrendIcon(summary.passRateTrend)" #trendIcon>
+                    <TrendingUp class="h-3 w-3" />
+                </template>
             </MetricCard>
-            <MetricCard title="Fail rate" value="25.2%" subtext="Down from 28.3%" trend="down">
-                <template #icon><X class="h-4 w-4" /></template>
-                <template #trendIcon><TrendingDown class="h-3 w-3" /></template>
+            <MetricCard
+                compact
+                accent="bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300"
+                :title="$t('dashboard.academic_fail_rate')"
+                :value="formatRate(summary.failRate)"
+                :subtext="metricSubtext(summary.failRateTrend)"
+                :trend="summary.failRate !== null && summary.failRateTrend ? 'down' : 'neutral'"
+            >
+                <template #icon><X class="h-3.5 w-3.5" /></template>
+                <template v-if="showTrendIcon(summary.failRateTrend)" #trendIcon>
+                    <TrendingDown class="h-3 w-3" />
+                </template>
             </MetricCard>
-            <MetricCard title="Distinctions" value="9.4%" subtext="+1.2% vs Sem 1" trend="up">
-                <template #icon><Award class="h-4 w-4" /></template>
-                <template #trendIcon><TrendingUp class="h-3 w-3" /></template>
+            <MetricCard
+                compact
+                accent="bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300"
+                :title="$t('dashboard.academic_distinctions')"
+                :value="formatRate(summary.distinctionRate)"
+                :subtext="metricSubtext(summary.distinctionTrend)"
+                :trend="summary.distinctionRate !== null && summary.distinctionTrend ? 'up' : 'neutral'"
+            >
+                <template #icon><Award class="h-3.5 w-3.5" /></template>
+                <template v-if="showTrendIcon(summary.distinctionTrend)" #trendIcon>
+                    <TrendingUp class="h-3 w-3" />
+                </template>
             </MetricCard>
-            <MetricCard title="Academic probation" value="218" subtext="3.2% of students" trend="warning">
-                <template #icon><UserMinus class="h-4 w-4" /></template>
+            <MetricCard
+                compact
+                accent="bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300"
+                :title="$t('dashboard.academic_probation')"
+                :value="summary.probationCount ?? notAvailable"
+                :subtext="summary.probationSubtext ?? notAvailable"
+                trend="warning"
+            >
+                <template #icon><UserMinus class="h-3.5 w-3.5" /></template>
+            </MetricCard>
+            <MetricCard
+                compact
+                accent="bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300"
+                :title="$t('dashboard.academic_mark_completion')"
+                :value="formatRate(summary.markCompletionRate)"
+                :subtext="`${courseWorkStatus.completeCount} / ${courseWorkStatus.expectedModuleResults}`"
+                trend="neutral"
+            >
+                <template #icon><ClipboardList class="h-3.5 w-3.5" /></template>
+            </MetricCard>
+            <MetricCard
+                compact
+                accent="bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-300"
+                :title="$t('dashboard.academic_incomplete_marks')"
+                :value="formatCount(courseWorkStatus.incompleteCount)"
+                :subtext="formatRate(courseWorkStatus.incompleteRate)"
+                trend="warning"
+            >
+                <template #icon><X class="h-3.5 w-3.5" /></template>
+            </MetricCard>
+            <MetricCard
+                compact
+                accent="bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-300"
+                :title="$t('dashboard.academic_outstanding_marks')"
+                :value="formatCount(courseWorkStatus.outstandingCount)"
+                :subtext="notAvailable"
+                trend="warning"
+            >
+                <template #icon><ClipboardList class="h-3.5 w-3.5" /></template>
+            </MetricCard>
+            <MetricCard
+                compact
+                accent="bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300"
+                :title="$t('dashboard.academic_at_risk_students')"
+                :value="formatCount(summary.atRiskStudentCount)"
+                :subtext="$t('dashboard.academic_at_risk_subtext')"
+                trend="warning"
+            >
+                <template #icon><AlertTriangle class="h-3.5 w-3.5" /></template>
+            </MetricCard>
+            <MetricCard
+                compact
+                accent="bg-teal-100 text-teal-700 dark:bg-teal-950 dark:text-teal-300"
+                :title="$t('dashboard.academic_attachment_total')"
+                :value="formatCount(attachmentTotal)"
+                :subtext="attachmentSubtext"
+                trend="neutral"
+            >
+                <template #icon><Briefcase class="h-3.5 w-3.5" /></template>
             </MetricCard>
         </div>
 
-        <div class="grid grid-cols-1 gap-4 lg:grid-cols-12">
-            <div class="lg:col-span-7">
-                <DashboardCard title="Grade distribution">
+        <div class="grid grid-cols-1 gap-3 lg:grid-cols-2">
+            <DashboardCard compact :title="$t('dashboard.academic_grade_distribution')">
+                <div v-if="gradeDistribution.segments.length === 0" class="h-[140px]">
+                    <Empty :message="$t('dashboard.academic_no_grade_data')" />
+                </div>
+                <div v-else class="h-[140px] w-full">
+                    <canvas ref="gradeChart"></canvas>
+                </div>
+            </DashboardCard>
+
+            <DashboardCard compact :title="$t('dashboard.academic_pass_rate_by_department')">
+                <div v-if="passRateByDepartment.length === 0" class="h-[140px]">
+                    <Empty :message="$t('dashboard.academic_no_department_pass_rates')" />
+                </div>
+                <div v-else class="flex flex-col gap-1.5">
                     <div
-                        class="flex h-[185px] w-full items-center justify-center rounded border border-dashed border-gray-200 bg-gray-50 text-sm text-gray-500"
+                        v-for="row in passRateByDepartment"
+                        :key="row.departmentId"
+                        class="flex items-center gap-2"
                     >
-                        [Bar Chart Placeholder: Distinction 9%, Merit 18%, Pass 48%, Fail 25%]
+                        <div class="w-28 shrink-0 truncate text-xs text-gray-900">{{ row.departmentName }}</div>
+                        <div class="h-1.5 flex-1 overflow-hidden rounded-sm bg-gray-100">
+                            <div
+                                class="h-1.5 rounded-sm"
+                                :class="passRateBarClass(row.passRate)"
+                                :style="{ width: `${row.barPercent}%` }"
+                            />
+                        </div>
+                        <div class="w-10 text-right text-xs text-gray-500">{{ row.passRate }}%</div>
                     </div>
-                </DashboardCard>
-            </div>
-            <div class="lg:col-span-5">
-                <DashboardCard title="Pass rate by department">
-                    <div class="mt-1 flex flex-col gap-2">
-                        <div class="flex items-center gap-2">
-                            <div class="w-32 shrink-0 truncate text-xs text-gray-900">Hospitality</div>
-                            <div class="h-2 flex-1 overflow-hidden rounded-sm bg-gray-100">
-                                <div class="h-2 rounded-sm bg-emerald-500" style="width: 88%"></div>
-                            </div>
-                            <div class="w-12 text-right text-xs text-gray-500">88%</div>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <div class="w-32 shrink-0 truncate text-xs text-gray-900">Fashion & Design</div>
-                            <div class="h-2 flex-1 overflow-hidden rounded-sm bg-gray-100">
-                                <div class="h-2 rounded-sm bg-emerald-500" style="width: 86%"></div>
-                            </div>
-                            <div class="w-12 text-right text-xs text-gray-500">86%</div>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <div class="w-32 shrink-0 truncate text-xs text-gray-900">Commerce & Mgt</div>
-                            <div class="h-2 flex-1 overflow-hidden rounded-sm bg-gray-100">
-                                <div class="h-2 rounded-sm bg-emerald-500" style="width: 82%"></div>
-                            </div>
-                            <div class="w-12 text-right text-xs text-gray-500">82%</div>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <div class="w-32 shrink-0 truncate text-xs text-gray-900">Applied Sciences</div>
-                            <div class="h-2 flex-1 overflow-hidden rounded-sm bg-gray-100">
-                                <div class="h-2 rounded-sm bg-orange-400" style="width: 78%"></div>
-                            </div>
-                            <div class="w-12 text-right text-xs text-gray-500">78%</div>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <div class="w-32 shrink-0 truncate text-xs text-gray-900">ICT</div>
-                            <div class="h-2 flex-1 overflow-hidden rounded-sm bg-gray-100">
-                                <div class="h-2 rounded-sm bg-orange-400" style="width: 76%"></div>
-                            </div>
-                            <div class="w-12 text-right text-xs text-gray-500">76%</div>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <div class="w-32 shrink-0 truncate text-xs text-gray-900">Built Environment</div>
-                            <div class="h-2 flex-1 overflow-hidden rounded-sm bg-gray-100">
-                                <div class="h-2 rounded-sm bg-orange-400" style="width: 73%"></div>
-                            </div>
-                            <div class="w-12 text-right text-xs text-gray-500">73%</div>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <div class="w-32 shrink-0 truncate text-xs text-gray-900">Automotive</div>
-                            <div class="h-2 flex-1 overflow-hidden rounded-sm bg-gray-100">
-                                <div class="h-2 rounded-sm bg-rose-500" style="width: 69%"></div>
-                            </div>
-                            <div class="w-12 text-right text-xs text-gray-500">69%</div>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <div class="w-32 shrink-0 truncate text-xs text-gray-900">Engineering Tech</div>
-                            <div class="h-2 flex-1 overflow-hidden rounded-sm bg-gray-100">
-                                <div class="h-2 rounded-sm bg-rose-500" style="width: 64%"></div>
-                            </div>
-                            <div class="w-12 text-right text-xs text-gray-500">64%</div>
-                        </div>
-                    </div>
-                </DashboardCard>
-            </div>
-        </div>
+                </div>
+            </DashboardCard>
 
-        <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
-            <DashboardCard title="Module failure hotspots">
+            <DashboardCard compact :title="$t('dashboard.academic_pass_rate_by_level')">
+                <div v-if="passRateByLevel.length === 0" class="h-[140px]">
+                    <Empty :message="$t('dashboard.academic_no_department_pass_rates')" />
+                </div>
+                <div v-else class="flex flex-col gap-1.5">
+                    <div v-for="row in passRateByLevel" :key="row.levelId" class="flex items-center gap-2">
+                        <div class="w-28 shrink-0 truncate text-xs text-gray-900">{{ row.levelName }}</div>
+                        <div class="h-1.5 flex-1 overflow-hidden rounded-sm bg-gray-100">
+                            <div
+                                class="h-1.5 rounded-sm"
+                                :class="passRateBarClass(row.passRate)"
+                                :style="{ width: `${row.barPercent}%` }"
+                            />
+                        </div>
+                        <div class="w-10 text-right text-xs text-gray-500">{{ row.passRate }}%</div>
+                    </div>
+                </div>
+            </DashboardCard>
+
+            <DashboardCard compact :title="$t('dashboard.academic_pass_rate_by_course')">
+                <div v-if="passRateByCourse.length === 0" class="h-[140px]">
+                    <Empty :message="$t('dashboard.academic_no_department_pass_rates')" />
+                </div>
+                <div v-else class="flex flex-col gap-1.5">
+                    <div v-for="row in passRateByCourse" :key="row.courseId" class="flex items-center gap-2">
+                        <div class="w-28 shrink-0 truncate text-xs text-gray-900">{{ row.courseName }}</div>
+                        <div class="h-1.5 flex-1 overflow-hidden rounded-sm bg-gray-100">
+                            <div
+                                class="h-1.5 rounded-sm"
+                                :class="passRateBarClass(row.passRate)"
+                                :style="{ width: `${row.barPercent}%` }"
+                            />
+                        </div>
+                        <div class="w-10 text-right text-xs text-gray-500">{{ row.passRate }}%</div>
+                    </div>
+                </div>
+            </DashboardCard>
+
+            <DashboardCard compact :title="$t('dashboard.academic_missing_marks_by_department')">
                 <table class="w-full table-fixed border-collapse text-left text-sm">
                     <thead>
                         <tr>
-                            <th class="w-[42%] border-b border-gray-100 pb-2 text-xs font-medium text-gray-500">Module</th>
-                            <th class="w-[18%] border-b border-gray-100 pb-2 text-xs font-medium text-gray-500">Enrolled</th>
-                            <th class="w-[14%] border-b border-gray-100 pb-2 text-xs font-medium text-gray-500">Failing</th>
-                            <th class="w-[26%] border-b border-gray-100 pb-2 text-xs font-medium text-gray-500">Rate</th>
+                            <th class="w-[42%] border-b border-gray-100 pb-1.5 text-xs font-medium text-gray-500">
+                                {{ $t('dashboard.overview_departments') }}
+                            </th>
+                            <th class="w-[18%] border-b border-gray-100 pb-1.5 text-xs font-medium text-gray-500">
+                                {{ $t('dashboard.academic_expected') }}
+                            </th>
+                            <th class="w-[18%] border-b border-gray-100 pb-1.5 text-xs font-medium text-gray-500">
+                                {{ $t('dashboard.academic_incomplete') }}
+                            </th>
+                            <th class="w-[22%] border-b border-gray-100 pb-1.5 text-xs font-medium text-gray-500">
+                                {{ $t('dashboard.academic_rate') }}
+                            </th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr class="border-b border-gray-100 last:border-0">
-                            <td class="truncate py-2 text-gray-900">Engineering Maths 2</td>
-                            <td class="py-2 text-gray-900">480</td>
-                            <td class="py-2 text-gray-900">163</td>
-                            <td class="py-2"><span class="inline-block rounded-full bg-rose-100 px-2 py-0.5 text-[10px] text-rose-700">34%</span></td>
-                        </tr>
-                        <tr class="border-b border-gray-100 last:border-0">
-                            <td class="truncate py-2 text-gray-900">Circuit Theory</td>
-                            <td class="py-2 text-gray-900">310</td>
-                            <td class="py-2 text-gray-900">90</td>
-                            <td class="py-2"><span class="inline-block rounded-full bg-rose-100 px-2 py-0.5 text-[10px] text-rose-700">29%</span></td>
-                        </tr>
-                        <tr class="border-b border-gray-100 last:border-0">
-                            <td class="truncate py-2 text-gray-900">Accounting 1</td>
-                            <td class="py-2 text-gray-900">520</td>
-                            <td class="py-2 text-gray-900">130</td>
-                            <td class="py-2">
-                                <span class="inline-block rounded-full bg-amber-100 px-2 py-0.5 text-[10px] text-amber-700">25%</span>
-                            </td>
-                        </tr>
-                        <tr class="border-b border-gray-100 last:border-0">
-                            <td class="truncate py-2 text-gray-900">Technical Drawing</td>
-                            <td class="py-2 text-gray-900">260</td>
-                            <td class="py-2 text-gray-900">60</td>
-                            <td class="py-2">
-                                <span class="inline-block rounded-full bg-amber-100 px-2 py-0.5 text-[10px] text-amber-700">23%</span>
-                            </td>
-                        </tr>
-                        <tr class="border-b border-gray-100 last:border-0">
-                            <td class="truncate py-2 text-gray-900">Computer Networks</td>
-                            <td class="py-2 text-gray-900">390</td>
-                            <td class="py-2 text-gray-900">74</td>
-                            <td class="py-2">
-                                <span class="inline-block rounded-full bg-amber-100 px-2 py-0.5 text-[10px] text-amber-700">19%</span>
-                            </td>
-                        </tr>
-                        <tr class="border-b border-gray-100 last:border-0">
-                            <td class="truncate py-2 text-gray-900">Business English</td>
-                            <td class="py-2 text-gray-900">640</td>
-                            <td class="py-2 text-gray-900">96</td>
-                            <td class="py-2">
-                                <span class="inline-block rounded-full bg-amber-100 px-2 py-0.5 text-[10px] text-amber-700">15%</span>
-                            </td>
-                        </tr>
-                        <tr class="border-b border-gray-100 last:border-0">
-                            <td class="truncate py-2 text-gray-900">ICT Fundamentals</td>
-                            <td class="py-2 text-gray-900">710</td>
-                            <td class="py-2 text-gray-900">85</td>
-                            <td class="py-2">
-                                <span class="inline-block rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] text-emerald-700">12%</span>
+                        <template v-if="missingMarksByDepartment.length === 0">
+                            <tr>
+                                <td colspan="4" class="py-3 text-center text-sm text-gray-500">
+                                    {{ $t('dashboard.academic_no_missing_marks_data') }}
+                                </td>
+                            </tr>
+                        </template>
+                        <tr
+                            v-for="row in missingMarksByDepartment"
+                            :key="row.departmentId"
+                            class="border-b border-gray-100 last:border-0"
+                        >
+                            <td class="truncate py-1.5 text-gray-900">{{ row.departmentName }}</td>
+                            <td class="py-1.5 text-gray-900">{{ row.expected }}</td>
+                            <td class="py-1.5 text-gray-900">{{ row.incomplete }}</td>
+                            <td class="py-1.5">
+                                <span
+                                    class="inline-block rounded-full px-2 py-0.5 text-[10px]"
+                                    :class="incompleteBadgeClass(row.rate)"
+                                >
+                                    {{ row.rate }}%
+                                </span>
                             </td>
                         </tr>
                     </tbody>
                 </table>
             </DashboardCard>
 
-            <DashboardCard title="Industrial attachment status">
-                <div
-                    class="mb-2 flex h-[160px] w-full items-center justify-center rounded border border-dashed border-gray-200 bg-gray-50 text-sm text-gray-500"
-                >
-                    [Donut Chart Placeholder]
-                </div>
-                <div class="mt-2 flex flex-wrap gap-3">
-                    <div class="flex items-center gap-1.5 text-xs text-gray-500">
-                        <div class="h-2.5 w-2.5 rounded-sm bg-emerald-500"></div>
-                        Placed 58%
-                    </div>
-                    <div class="flex items-center gap-1.5 text-xs text-gray-500">
-                        <div class="h-2.5 w-2.5 rounded-sm bg-amber-500"></div>
-                        Awaiting 27%
-                    </div>
-                    <div class="flex items-center gap-1.5 text-xs text-gray-500">
-                        <div class="h-2.5 w-2.5 rounded-sm bg-gray-400"></div>
-                        Exempt 15%
-                    </div>
-                </div>
+            <DashboardCard compact :title="$t('dashboard.academic_missing_marks_by_level')">
+                <table class="w-full table-fixed border-collapse text-left text-sm">
+                    <thead>
+                        <tr>
+                            <th class="w-[42%] border-b border-gray-100 pb-1.5 text-xs font-medium text-gray-500">Level</th>
+                            <th class="w-[18%] border-b border-gray-100 pb-1.5 text-xs font-medium text-gray-500">
+                                {{ $t('dashboard.academic_expected') }}
+                            </th>
+                            <th class="w-[18%] border-b border-gray-100 pb-1.5 text-xs font-medium text-gray-500">
+                                {{ $t('dashboard.academic_incomplete') }}
+                            </th>
+                            <th class="w-[22%] border-b border-gray-100 pb-1.5 text-xs font-medium text-gray-500">
+                                {{ $t('dashboard.academic_rate') }}
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <template v-if="missingMarksByLevel.length === 0">
+                            <tr>
+                                <td colspan="4" class="py-3 text-center text-sm text-gray-500">
+                                    {{ $t('dashboard.academic_no_missing_marks_data') }}
+                                </td>
+                            </tr>
+                        </template>
+                        <tr
+                            v-for="row in missingMarksByLevel"
+                            :key="row.levelId"
+                            class="border-b border-gray-100 last:border-0"
+                        >
+                            <td class="truncate py-1.5 text-gray-900">{{ row.levelName }}</td>
+                            <td class="py-1.5 text-gray-900">{{ row.expected }}</td>
+                            <td class="py-1.5 text-gray-900">{{ row.incomplete }}</td>
+                            <td class="py-1.5">
+                                <span
+                                    class="inline-block rounded-full px-2 py-0.5 text-[10px]"
+                                    :class="incompleteBadgeClass(row.rate)"
+                                >
+                                    {{ row.rate }}%
+                                </span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </DashboardCard>
+
+            <DashboardCard compact :title="$t('dashboard.academic_missing_marks_by_course')">
+                <table class="w-full table-fixed border-collapse text-left text-sm">
+                    <thead>
+                        <tr>
+                            <th class="w-[42%] border-b border-gray-100 pb-1.5 text-xs font-medium text-gray-500">Course</th>
+                            <th class="w-[18%] border-b border-gray-100 pb-1.5 text-xs font-medium text-gray-500">
+                                {{ $t('dashboard.academic_expected') }}
+                            </th>
+                            <th class="w-[18%] border-b border-gray-100 pb-1.5 text-xs font-medium text-gray-500">
+                                {{ $t('dashboard.academic_incomplete') }}
+                            </th>
+                            <th class="w-[22%] border-b border-gray-100 pb-1.5 text-xs font-medium text-gray-500">
+                                {{ $t('dashboard.academic_rate') }}
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <template v-if="missingMarksByCourse.length === 0">
+                            <tr>
+                                <td colspan="4" class="py-3 text-center text-sm text-gray-500">
+                                    {{ $t('dashboard.academic_no_missing_marks_data') }}
+                                </td>
+                            </tr>
+                        </template>
+                        <tr
+                            v-for="row in missingMarksByCourse"
+                            :key="row.courseId"
+                            class="border-b border-gray-100 last:border-0"
+                        >
+                            <td class="truncate py-1.5 text-gray-900">{{ row.courseName }}</td>
+                            <td class="py-1.5 text-gray-900">{{ row.expected }}</td>
+                            <td class="py-1.5 text-gray-900">{{ row.incomplete }}</td>
+                            <td class="py-1.5">
+                                <span
+                                    class="inline-block rounded-full px-2 py-0.5 text-[10px]"
+                                    :class="incompleteBadgeClass(row.rate)"
+                                >
+                                    {{ row.rate }}%
+                                </span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </DashboardCard>
+
+            <DashboardCard compact :title="$t('dashboard.academic_missing_marks_by_module')">
+                <table class="w-full table-fixed border-collapse text-left text-sm">
+                    <thead>
+                        <tr>
+                            <th class="w-[42%] border-b border-gray-100 pb-1.5 text-xs font-medium text-gray-500">
+                                {{ $t('dashboard.academic_module') }}
+                            </th>
+                            <th class="w-[18%] border-b border-gray-100 pb-1.5 text-xs font-medium text-gray-500">
+                                {{ $t('dashboard.academic_expected') }}
+                            </th>
+                            <th class="w-[18%] border-b border-gray-100 pb-1.5 text-xs font-medium text-gray-500">
+                                {{ $t('dashboard.academic_incomplete') }}
+                            </th>
+                            <th class="w-[22%] border-b border-gray-100 pb-1.5 text-xs font-medium text-gray-500">
+                                {{ $t('dashboard.academic_rate') }}
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <template v-if="missingMarksByModule.length === 0">
+                            <tr>
+                                <td colspan="4" class="py-3 text-center text-sm text-gray-500">
+                                    {{ $t('dashboard.academic_no_missing_marks_data') }}
+                                </td>
+                            </tr>
+                        </template>
+                        <tr
+                            v-for="row in missingMarksByModule"
+                            :key="row.moduleId"
+                            class="border-b border-gray-100 last:border-0"
+                        >
+                            <td class="truncate py-1.5 text-gray-900">{{ row.moduleName }}</td>
+                            <td class="py-1.5 text-gray-900">{{ row.expected }}</td>
+                            <td class="py-1.5 text-gray-900">{{ row.incomplete }}</td>
+                            <td class="py-1.5">
+                                <span
+                                    class="inline-block rounded-full px-2 py-0.5 text-[10px]"
+                                    :class="incompleteBadgeClass(row.rate)"
+                                >
+                                    {{ row.rate }}%
+                                </span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </DashboardCard>
+
+            <DashboardCard compact :title="$t('dashboard.academic_module_failure_hotspots')">
+                <table class="w-full table-fixed border-collapse text-left text-sm">
+                    <thead>
+                        <tr>
+                            <th class="w-[42%] border-b border-gray-100 pb-1.5 text-xs font-medium text-gray-500">
+                                {{ $t('dashboard.academic_module') }}
+                            </th>
+                            <th class="w-[18%] border-b border-gray-100 pb-1.5 text-xs font-medium text-gray-500">
+                                {{ $t('dashboard.academic_enrolled') }}
+                            </th>
+                            <th class="w-[14%] border-b border-gray-100 pb-1.5 text-xs font-medium text-gray-500">
+                                {{ $t('dashboard.academic_failing') }}
+                            </th>
+                            <th class="w-[26%] border-b border-gray-100 pb-1.5 text-xs font-medium text-gray-500">
+                                {{ $t('dashboard.academic_rate') }}
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <template v-if="moduleFailureHotspots.length === 0">
+                            <tr class="border-b border-gray-100 last:border-0">
+                                <td class="truncate py-1.5 text-gray-900">{{ notAvailable }}</td>
+                                <td class="py-1.5 text-gray-900">{{ notAvailable }}</td>
+                                <td class="py-1.5 text-gray-900">{{ notAvailable }}</td>
+                                <td class="py-1.5 text-gray-900">{{ notAvailable }}</td>
+                            </tr>
+                        </template>
+                        <tr
+                            v-for="row in moduleFailureHotspots"
+                            :key="row.moduleId"
+                            class="border-b border-gray-100 last:border-0"
+                        >
+                            <td class="truncate py-1.5 text-gray-900">{{ row.moduleName }}</td>
+                            <td class="py-1.5 text-gray-900">{{ row.enrolled }}</td>
+                            <td class="py-1.5 text-gray-900">{{ row.failing }}</td>
+                            <td class="py-1.5">
+                                <span
+                                    class="inline-block rounded-full px-2 py-0.5 text-[10px]"
+                                    :class="failureBadgeClass(row.rate)"
+                                >
+                                    {{ row.rate }}%
+                                </span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </DashboardCard>
+
+            <DashboardCard compact :title="$t('dashboard.academic_lecturer_marking_stats')">
+                <table class="w-full table-fixed border-collapse text-left text-sm">
+                    <thead>
+                        <tr>
+                            <th class="w-[30%] border-b border-gray-100 pb-1.5 text-xs font-medium text-gray-500">
+                                {{ $t('dashboard.academic_lecturer') }}
+                            </th>
+                            <th class="w-[14%] border-b border-gray-100 pb-1.5 text-xs font-medium text-gray-500">
+                                {{ $t('dashboard.academic_incomplete') }}
+                            </th>
+                            <th class="w-[14%] border-b border-gray-100 pb-1.5 text-xs font-medium text-gray-500">
+                                {{ $t('dashboard.academic_rate') }}
+                            </th>
+                            <th class="w-[14%] border-b border-gray-100 pb-1.5 text-xs font-medium text-gray-500">
+                                {{ $t('dashboard.academic_failing') }}
+                            </th>
+                            <th class="w-[14%] border-b border-gray-100 pb-1.5 text-xs font-medium text-gray-500">
+                                {{ $t('dashboard.academic_classes') }}
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <template v-if="lecturerMarkingStats.length === 0">
+                            <tr class="border-b border-gray-100 last:border-0">
+                                <td colspan="5" class="py-3 text-center text-sm text-gray-500">
+                                    {{ $t('dashboard.academic_no_lecturer_stats') }}
+                                </td>
+                            </tr>
+                        </template>
+                        <tr
+                            v-for="row in lecturerMarkingStats"
+                            :key="row.staffId"
+                            class="border-b border-gray-100 last:border-0"
+                        >
+                            <td class="truncate py-1.5 text-gray-900">{{ row.lecturerName }}</td>
+                            <td class="py-1.5 text-gray-900">{{ row.incomplete }}</td>
+                            <td class="py-1.5">
+                                <span
+                                    class="inline-block rounded-full px-2 py-0.5 text-[10px]"
+                                    :class="incompleteBadgeClass(row.incompleteRate)"
+                                >
+                                    {{ row.incompleteRate }}%
+                                </span>
+                            </td>
+                            <td class="py-1.5 text-gray-900">{{ row.failRate }}%</td>
+                            <td class="py-1.5 text-gray-900">{{ row.classesCount }}</td>
+                        </tr>
+                    </tbody>
+                </table>
             </DashboardCard>
         </div>
     </div>

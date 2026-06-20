@@ -25,7 +25,7 @@ const noticeCount = 2;
 
         <CollapsibleContent class="pt-1.5">
             <ul class="space-y-1 border-l-2 border-border pl-2.5 text-[10px] leading-snug uppercase sm:text-[11px]">
-                <li class="text-amber-700 dark:text-amber-400/90">
+                <li class="text-red-700 dark:text-red-400/90">
                     {{ $t('trans.ui_ecocash_users_payment_device_warning') }}
                 </li>
                 <li class="font-semibold text-red-700 dark:text-red-400/90">

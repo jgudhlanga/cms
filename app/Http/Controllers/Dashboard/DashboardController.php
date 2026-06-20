@@ -11,8 +11,11 @@ use App\Http\Resources\Enrolments\DepartmentDistributionResource;
 use App\Http\Resources\Enrolments\LevelDistributionResource;
 use App\Http\Resources\Institution\IntakePeriodResource;
 use App\Services\ApplicationMetricsService;
+use App\Services\Dashboard\AcademicDashboardMetricsService;
 use App\Services\Dashboard\DashboardModuleService;
 use App\Services\Dashboard\HostelDashboardMetricsService;
+use App\Services\Dashboard\OverviewDashboardMetricsService;
+use App\Services\Dashboard\StaffDashboardMetricsService;
 use App\Support\AcademicCalendars\AcademicCalendarPeriodResolver;
 use Inertia\Inertia;
 
@@ -55,6 +58,15 @@ class DashboardController extends Controller
             'academicContextSubtitle' => $academicContextSubtitle,
             'hostelDashboard' => in_array('hostel', $visibleTabs, true)
                 ? app(HostelDashboardMetricsService::class)->build()
+                : null,
+            'overviewDashboard' => in_array('overview', $visibleTabs, true)
+                ? app(OverviewDashboardMetricsService::class)->build()
+                : null,
+            'staffDashboard' => in_array('staff', $visibleTabs, true)
+                ? app(StaffDashboardMetricsService::class)->build()
+                : null,
+            'academicDashboard' => in_array('academic', $visibleTabs, true)
+                ? app(AcademicDashboardMetricsService::class)->build()
                 : null,
             'intakePeriod' => $intakePeriod,
             'intakePeriods' => $intakePeriods,

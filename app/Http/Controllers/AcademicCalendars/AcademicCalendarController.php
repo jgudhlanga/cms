@@ -961,23 +961,23 @@ class AcademicCalendarController extends Controller
 
         return AcademicCalendarClass::query()
             ->leftJoin('academic_calendar_student_enrolments', function ($join): void {
-                $join->on('academic_calendar_student_enrolments.academic_calendar_class_id', '=', 'academic_calandar_classes.id')
+                $join->on('academic_calendar_student_enrolments.academic_calendar_class_id', '=', 'academic_calendar_classes.id')
                     ->whereNull('academic_calendar_student_enrolments.deleted_at');
             })
             ->leftJoin('student_enrolments', 'student_enrolments.id', '=', 'academic_calendar_student_enrolments.student_enrolment_id')
             ->leftJoin('students', 'students.id', '=', 'student_enrolments.student_id')
             ->leftJoin('genders', 'genders.id', '=', 'students.gender_id')
-            ->where('academic_calandar_classes.class_config_id', $classConfig->id)
-            ->whereNull('academic_calandar_classes.deleted_at')
-            ->groupBy('academic_calandar_classes.id', 'academic_calandar_classes.name')
+            ->where('academic_calendar_classes.class_config_id', $classConfig->id)
+            ->whereNull('academic_calendar_classes.deleted_at')
+            ->groupBy('academic_calendar_classes.id', 'academic_calendar_classes.name')
             ->select([
-                'academic_calandar_classes.id',
-                'academic_calandar_classes.name',
+                'academic_calendar_classes.id',
+                'academic_calendar_classes.name',
                 DB::raw('COUNT(academic_calendar_student_enrolments.id) as student_count'),
                 DB::raw("SUM(CASE WHEN LOWER(genders.title) LIKE 'male%' THEN 1 ELSE 0 END) as male_count"),
                 DB::raw("SUM(CASE WHEN LOWER(genders.title) LIKE 'female%' THEN 1 ELSE 0 END) as female_count"),
             ])
-            ->orderBy('academic_calandar_classes.id')
+            ->orderBy('academic_calendar_classes.id')
             ->get()
             ->filter(fn ($class): bool => (int) ($class->student_count ?? 0) > 0)
             ->map(function (mixed $class): array {
@@ -1053,8 +1053,8 @@ class AcademicCalendarController extends Controller
         }
 
         return AcademicCalendarStudentEnrolment::query()
-            ->join('academic_calandar_classes', 'academic_calandar_classes.id', '=', 'academic_calendar_student_enrolments.academic_calendar_class_id')
-            ->where('academic_calandar_classes.class_config_id', $classConfig->id)
+            ->join('academic_calendar_classes', 'academic_calendar_classes.id', '=', 'academic_calendar_student_enrolments.academic_calendar_class_id')
+            ->where('academic_calendar_classes.class_config_id', $classConfig->id)
             ->pluck('academic_calendar_student_enrolments.student_enrolment_id')
             ->map(fn (mixed $id): int => (int) $id)
             ->values();
@@ -1083,18 +1083,18 @@ class AcademicCalendarController extends Controller
 
         return AcademicCalendarClass::query()
             ->leftJoin('academic_calendar_student_enrolments', function ($join): void {
-                $join->on('academic_calendar_student_enrolments.academic_calendar_class_id', '=', 'academic_calandar_classes.id')
+                $join->on('academic_calendar_student_enrolments.academic_calendar_class_id', '=', 'academic_calendar_classes.id')
                     ->whereNull('academic_calendar_student_enrolments.deleted_at');
             })
-            ->where('academic_calandar_classes.class_config_id', $classConfig->id)
-            ->whereNull('academic_calandar_classes.deleted_at')
-            ->groupBy('academic_calandar_classes.id', 'academic_calandar_classes.name')
+            ->where('academic_calendar_classes.class_config_id', $classConfig->id)
+            ->whereNull('academic_calendar_classes.deleted_at')
+            ->groupBy('academic_calendar_classes.id', 'academic_calendar_classes.name')
             ->select([
-                'academic_calandar_classes.id',
-                'academic_calandar_classes.name',
+                'academic_calendar_classes.id',
+                'academic_calendar_classes.name',
                 DB::raw('COUNT(academic_calendar_student_enrolments.id) as student_count'),
             ])
-            ->orderBy('academic_calandar_classes.id')
+            ->orderBy('academic_calendar_classes.id')
             ->get();
     }
 

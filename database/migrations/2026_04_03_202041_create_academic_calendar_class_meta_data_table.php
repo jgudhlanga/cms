@@ -11,12 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('academic_calandar_classes', function (Blueprint $table) {
+        Schema::create('academic_calendar_class_meta_data', function (Blueprint $table) {
             $table->id();
             $table->foreignId('tenant_id')->constrained();
-            $table->foreignId('class_config_id')->constrained();
-            $table->string('name');
-            $table->string('description')->nullable();
+            $table->morphs('metadatable', 'acc_cal_class_meta_metadatable_idx');
+            $table->foreignId('class_metadata_type_id')
+                ->constrained('class_meta_data_types', 'id', 'acc_cal_class_meta_type_fk');
             $table->timestamps();
             $table->softDeletes();
         });
@@ -27,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('academic_calandar_classes');
+        Schema::dropIfExists('academic_calendar_class_meta_data');
     }
 };

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { DailyDistribution, DepartmentDistribution, EnrolmentSummary, HostelDashboard, LevelDistribution } from '@/types/dasboard';
+import { AcademicDashboard, DailyDistribution, DepartmentDistribution, EnrolmentSummary, HostelDashboard, LevelDistribution, OverviewDashboard, StaffDashboard } from '@/types/dasboard';
 import { AcademicCalendar } from '@/types/academic-calendar';
 import { AuthObject } from '@/types/data-pagination';
 import { IntakePeriod } from '@/types/institution';
@@ -30,7 +30,10 @@ interface Props {
     levelDistribution: LevelDistribution[];
     dailyDistribution: DailyDistribution[];
     enrolmentSummary: EnrolmentSummary;
+    overviewDashboard: OverviewDashboard | null;
     hostelDashboard: HostelDashboard | null;
+    staffDashboard: StaffDashboard | null;
+    academicDashboard: AcademicDashboard | null;
     academicCalendar: AcademicCalendar;
     academicCalendars: AcademicCalendar[];
     academicContextSubtitle: string;
@@ -183,11 +186,11 @@ const handleAcademicCalendarChange = (event: Event) => {
 
                 <!-- Tab Contents -->
                 <TabsContent v-if="showTab('overview')" value="overview" class="mt-0">
-                    <OverviewTab />
+                    <OverviewTab v-if="overviewDashboard" :overview-dashboard="overviewDashboard" />
                 </TabsContent>
 
                 <TabsContent v-if="showTab('academic')" value="academic" class="mt-0">
-                    <AcademicTab />
+                    <AcademicTab v-if="academicDashboard" :academic-dashboard="academicDashboard" />
                 </TabsContent>
 
                 <TabsContent v-if="showTab('enrolments')" value="enrolments" class="mt-0">
@@ -207,7 +210,7 @@ const handleAcademicCalendarChange = (event: Event) => {
                 </TabsContent>
 
                 <TabsContent v-if="showTab('staff')" value="staff" class="mt-0">
-                    <StaffTab />
+                    <StaffTab v-if="staffDashboard" :staff-dashboard="staffDashboard" />
                 </TabsContent>
 
                 <TabsContent v-if="showTab('finance')" value="finance" class="mt-0">
