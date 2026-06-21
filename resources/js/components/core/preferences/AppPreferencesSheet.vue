@@ -4,6 +4,7 @@ import BaseSelect from '@/components/core/form/select/BaseSelect.vue';
 import AppearanceTabs from '@/components/core/util/AppearanceTabs.vue';
 import BaseTooltip from '@/components/core/util/BaseTooltip.vue';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { useSidebar } from '@/components/ui/sidebar';
 import Switch from '@/components/ui/switch/Switch.vue';
 import { useUserPreference } from '@/composables/core/useUserPreference';
 import { IconName } from '@/enums/icons';
@@ -11,6 +12,7 @@ import { usePreferencesStore } from '@/store/core/preferences.store';
 import { computed, ref } from 'vue';
 
 const preferencesStore = usePreferencesStore();
+const { isMobile } = useSidebar();
 const { persistSidebarState, persistLocale } = useUserPreference();
 const isPreferencesDrawerOpen = ref(false);
 const localeOptions = [{ value: 'en', label: 'English' }];
@@ -23,6 +25,10 @@ const selectedLocale = computed({
 });
 
 const updateSidebarState = (open: boolean): void => {
+    if (isMobile.value) {
+        return;
+    }
+
     preferencesStore.setSideBarState(open);
     void persistSidebarState(open);
 };
@@ -55,13 +61,21 @@ const updateSidebarState = (open: boolean): void => {
                         <AppearanceTabs class="w-full justify-center" />
                     </div>
                 </div>
-                <div class="border-primary/25 bg-card rounded-xl border p-4 shadow-xs">
+                <div
+                    class="border-primary/25 bg-card rounded-xl border p-4 shadow-xs"
+                    :class="{ 'opacity-60': isMobile }"
+                >
                     <div class="flex items-start justify-between gap-4">
                         <div class="space-y-1">
                             <p class="leading-none font-medium">{{ $t('trans.sidebar_expanded') }}</p>
                             <p class="text-muted-foreground text-sm">{{ $t('trans.sidebar_expanded_description') }}</p>
                         </div>
-                        <Switch class="mt-0.5" :model-value="preferencesStore.sideBarState" @update:model-value="updateSidebarState" />
+                        <Switch
+                            class="mt-0.5"
+                            :model-value="preferencesStore.sideBarState"
+                            :disabled="isMobile"
+                            @update:model-value="updateSidebarState"
+                        />
                     </div>
                 </div>
                 <div class="border-primary/25 bg-card rounded-xl border p-4 shadow-xs">
