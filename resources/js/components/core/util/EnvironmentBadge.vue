@@ -11,9 +11,9 @@ type EnvironmentStyle = {
 
 const environmentStyles: Record<string, EnvironmentStyle> = {
     local: {
-        badge: 'bg-emerald-100 text-emerald-800',
-        dot: 'bg-emerald-600',
-        ping: 'bg-emerald-400',
+        badge: 'bg-red-100 text-red-800',
+        dot: 'bg-red-600',
+        ping: 'bg-red-400',
     },
     staging: {
         badge: 'bg-amber-100 text-amber-800',
@@ -21,9 +21,9 @@ const environmentStyles: Record<string, EnvironmentStyle> = {
         ping: 'bg-amber-400',
     },
     production: {
-        badge: 'bg-red-100 text-red-800',
-        dot: 'bg-red-600',
-        ping: 'bg-red-400',
+        badge: 'bg-emerald-100 text-emerald-800',
+        dot: 'bg-emerald-600',
+        ping: 'bg-emerald-400',
     },
 };
 
@@ -46,7 +46,7 @@ const environmentLabel = computed(() => {
 
 <template>
     <span
-        class="flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px]"
+        class="hidden items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] sm:flex"
         :class="environmentStyle.badge"
     >
         <span class="relative flex h-2 w-2">
