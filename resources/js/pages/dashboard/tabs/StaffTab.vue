@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import Empty from '@/components/core/util/Empty.vue';
-import type { StaffDashboard } from '@/types/dasboard';
+import type { StaffDashboard } from '@/types/dashboard';
 import { Chart, registerables } from 'chart.js';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 import { Clock, UserCheck, Users, UserX } from 'lucide-vue-next';

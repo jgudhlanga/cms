@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import Empty from '@/components/core/util/Empty.vue';
 import { useDashboardStore } from '@/store/dashboard/useDashboardStore';
-import type { OverviewDashboard } from '@/types/dasboard';
+import type { OverviewDashboard } from '@/types/dashboard';
 import { trans } from 'laravel-vue-i18n';
 import { AlertTriangle, BarChart3, Bed, ClipboardList, Users } from 'lucide-vue-next';
 import { computed } from 'vue';
@@ -194,7 +194,12 @@ const switchTab = (tab: string) => {
                         ></div>
                         <div>
                             <div class="text-sm leading-snug text-gray-900">{{ alert.message }}</div>
-                            <div class="mt-0.5 text-xs text-gray-500">{{ formatAlertTime(alert.updatedAt) }}</div>
+                            <div
+                                v-if="alert.updatedAt && alert.updatedAt !== 'N/A'"
+                                class="mt-0.5 text-xs text-gray-500"
+                            >
+                                {{ formatAlertTime(alert.updatedAt) }}
+                            </div>
                         </div>
                     </div>
                 </div>
