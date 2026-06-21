@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import Empty from '@/components/core/util/Empty.vue';
-import type { HostelDashboard, HostelDashboardBlock } from '@/types/dasboard';
+import type { HostelDashboard, HostelDashboardBlock } from '@/types/dashboard';
 import { AlertTriangle, Bed, Building, Coins, DoorOpen, UserCheck } from 'lucide-vue-next';
 import { computed } from 'vue';
 import { trans, trans_choice } from 'laravel-vue-i18n';

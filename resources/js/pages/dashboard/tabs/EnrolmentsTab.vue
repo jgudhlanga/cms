@@ -2,7 +2,7 @@
 import IntakePeriodComboSelect from '@/components/core/form/combobox/IntakePeriodComboSelect.vue';
 import { useUtils } from '@/composables/core/useUtils';
 import { IconName, icons } from '@/lib/icons';
-import { DailyDistribution, DepartmentDistribution, EnrolmentSummary, LevelDistribution } from '@/types/dasboard';
+import { DailyDistribution, DepartmentDistribution, EnrolmentSummary, LevelDistribution } from '@/types/dashboard';
 import { IntakePeriod } from '@/types/institution';
 import { SelectOption } from '@/types/utils';
 import { Chart, registerables } from 'chart.js';

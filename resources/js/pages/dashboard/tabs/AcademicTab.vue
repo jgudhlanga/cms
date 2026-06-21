@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import Empty from '@/components/core/util/Empty.vue';
-import type { AcademicDashboard } from '@/types/dasboard';
+import type { AcademicDashboard } from '@/types/dashboard';
 import { Chart, registerables } from 'chart.js';
 import { trans } from 'laravel-vue-i18n';
 import { AlertTriangle, Award, Briefcase, Check, ClipboardList, TrendingDown, TrendingUp, UserMinus, X } from 'lucide-vue-next';
