@@ -52,6 +52,7 @@ const {
     genderOptions,
     modeOfStudyOptions,
     selectedDepartmentIds,
+    selectedLevelIds,
     whenDepartmentSearch,
     whenModeSearch,
     whenLevelSearch,
