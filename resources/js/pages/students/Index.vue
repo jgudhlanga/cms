@@ -8,6 +8,7 @@ import { AuthObject, DataListProps } from '@/types/data-pagination';
 import { Link } from '@/types/ui';
 import { onMounted, ref, watch } from 'vue';
 import StudentFilters from '@/components/students/filters/StudentFilters.vue';
+import StudentExportModal from '@/components/students/export/StudentExportModal.vue';
 import { storeToRefs } from 'pinia';
 import { useStudentsStore } from '@/store/students/useStudentsStore';
 import { Student, StudentFiltersState } from '@/types/students';
@@ -59,8 +60,9 @@ watch(studentRefreshKey, () => loadStudents(filters.value));
     <Head :title="$tChoice('student', 2)" />
     <PageContainer :breadcrumbs="breadcrumbs">
         <div class="bg-card relative inline-block min-w-full overflow-auto rounded-xl px-6 py-2 my-2 align-middle">
-            <StudentFilters :filters="filters" @change="onStudentFiltersChange" />
+            <StudentFilters :filters="filters" show-export-button @change="onStudentFiltersChange" />
         </div>
+        <StudentExportModal />
         <DataTable
             :data="students.data"
             :filters="filters"

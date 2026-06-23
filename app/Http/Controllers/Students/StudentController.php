@@ -12,7 +12,10 @@ use App\Helpers\PaymentHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Filters\Students\StudentFilter;
 use App\Http\Requests\Students\CreateStudentApplicationRequest;
+use App\Http\Requests\Students\ExportStudentListRequest;
 use App\Http\Requests\Students\UpdateStudentRequest;
+use App\Exports\Students\StudentListExport;
+use App\Services\Students\StudentListExportService;
 use App\Http\Resources\Students\StudentResource;
 use App\Http\Resources\Users\UserResource;
 use App\Models\Institution\FeeStructure;
@@ -31,6 +34,8 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
+use Maatwebsite\Excel\Facades\Excel;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Throwable;
 
 class StudentController extends Controller
@@ -53,6 +58,18 @@ class StudentController extends Controller
     {
         $this->authorize('viewAny', Student::class);
         return Inertia::render('students/Index');
+    }
+
+    public function export(ExportStudentListRequest $request, StudentListExportService $exportService): BinaryFileResponse
+    {
+        $this->authorize('export', Student::class);
+
+        $fileName = 'students-'.now()->format('Y-m-d_His').'.xlsx';
+
+        return Excel::download(
+            new StudentListExport($exportService->rows($request->validated())),
+            $fileName,
+        );
     }
 
 

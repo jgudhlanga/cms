@@ -23,6 +23,9 @@ Route::prefix('students')->middleware('auth')->group(function () {
 
 // ===================================== STUDENTS ======================================================================
 Route::prefix('students')->middleware('auth')->group(function () {
+    Route::get('export', [StudentController::class, 'export'])->name('students.export');
+});
+Route::prefix('students')->middleware('auth')->group(function () {
     // get student and programs through user account
     Route::get('{user}/profile', [UserStudentController::class, 'index'])->name('students.profile');
     Route::get('program/{student_program}/edit', [UserStudentController::class, 'edit'])->name('students.program-edit');

@@ -24,6 +24,7 @@ use App\Repositories\Students\interface\IStudentProgramRepository;
 use App\Repositories\Students\interface\IStudentRepository;
 use App\Services\Enrollment\EnrollmentLookupService;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
@@ -43,10 +44,34 @@ class StudentRepository extends BaseRepository implements IStudentRepository
 
     public function paginateForIndex(array $filters = []): LengthAwarePaginator
     {
-        $query = Student::query()
+        $query = $this->baseIndexQuery();
+        $this->applyIndexFilters($query, $filters);
+
+        return $query
+            ->latest('students.created_at')
+            ->paginate($this->student->getPerPage())
+            ->withQueryString();
+    }
+
+    public function queryForExport(array $filters = []): Builder
+    {
+        $exportFilters = collect($filters)->except(['name', 'search'])->all();
+        $query = $this->baseIndexQuery();
+        $this->applyIndexFilters($query, $exportFilters);
+
+        return $query->latest('students.created_at');
+    }
+
+    private function baseIndexQuery(): Builder
+    {
+        return Student::query()
             ->with([
                 'user',
                 'gender',
+                'latestEnrolment.institutionDepartment.department',
+                'latestEnrolment.departmentLevel.level',
+                'latestEnrolment.departmentCourse.course',
+                'latestEnrolment.modeOfStudy',
                 'enrolments.institutionDepartment.department',
                 'enrolments.departmentLevel.level',
                 'enrolments.departmentCourse.course',
@@ -56,7 +81,10 @@ class StudentRepository extends BaseRepository implements IStudentRepository
             ->join('student_enrolments', 'student_enrolments.student_id', '=', 'students.id')
             ->select('students.*')
             ->distinct();
+    }
 
+    private function applyIndexFilters(Builder $query, array $filters): void
+    {
         // Search filter
         if (! empty($filters['search'])) {
             $search = trim($filters['search']);
@@ -141,11 +169,6 @@ class StudentRepository extends BaseRepository implements IStudentRepository
         if (! empty($filters['with_trashed'])) {
             $query->withTrashed();
         }
-
-        return $query
-            ->latest('students.created_at')
-            ->paginate($this->student->getPerPage())
-            ->withQueryString();
     }
 
     public function create(CreateApplicationDto|CreateStudentApplicationDto $dto): Model

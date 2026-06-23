@@ -10,7 +10,7 @@ export function useSettings() {
             transChoiceKey: 'address_type',
             url: route('address-types.index'),
         },
-        {
+        { 
             transChoiceKey: 'communication_mode',
             url: route('communication-methods.index'),
         },
@@ -21,7 +21,7 @@ export function useSettings() {
         {
             transChoiceKey: 'district',
             url: route('districts.index'),
-        },
+        }, 
         {
             transChoiceKey: 'document_type',
             url: route('document-types.index'),

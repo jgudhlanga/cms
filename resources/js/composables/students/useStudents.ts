@@ -161,6 +161,18 @@ export const useStudents = () => {
         }
     };
 
+    const buildStudentExportUrl = (filters: StudentFiltersState): string => {
+        const exportFilters: StudentFiltersState = {
+            department: filters.department,
+            level: filters.level,
+            course: filters.course,
+            mode_of_study: filters.mode_of_study,
+            gender: filters.gender,
+        };
+
+        return mergeQueryParamsIntoRequestPath(route('students.export'), exportFilters as Record<string, unknown>);
+    };
+
     return {
         createStudentColumns,
         getApplicationStatus,
@@ -170,6 +182,7 @@ export const useStudents = () => {
         showEditProgramButton,
         updateProgram,
         fetchStudents,
+        buildStudentExportUrl,
         isLoading,
     };
 };
