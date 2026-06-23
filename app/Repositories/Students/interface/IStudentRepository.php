@@ -8,6 +8,7 @@ use App\DTO\Students\UpdateStudentDto;
 use App\Http\Filters\Students\StudentFilter;
 use App\Models\Students\Student;
 use App\Repositories\Base\Interface\IBaseRepository;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 interface IStudentRepository extends IBaseRepository
@@ -19,4 +20,6 @@ interface IStudentRepository extends IBaseRepository
     public function allFilter($columns = ['*'], ?StudentFilter $filters = null);
 
     public function paginateForIndex(array $filters = []): LengthAwarePaginator;
+
+    public function queryForExport(array $filters = []): Builder;
 }

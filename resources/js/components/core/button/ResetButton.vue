@@ -8,7 +8,8 @@ import { ButtonSize } from '@/enums/buttons';
 
 <template>
     <BaseButton
-    :variant="ColorVariant.shade"
+        type="button"
+        :variant="ColorVariant.shade"
     v-bind="$attrs"
     class="rounded-full"
     :size="ButtonSize.md"

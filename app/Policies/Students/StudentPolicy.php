@@ -51,4 +51,9 @@ class StudentPolicy
     {
         return $user->can('forceDelete:students', $student);
     }
+
+    public function export(User $user): bool
+    {
+        return $user->can('export:students');
+    }
 }
