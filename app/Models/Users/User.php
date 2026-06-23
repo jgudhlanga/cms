@@ -125,7 +125,7 @@ class User extends Authenticatable implements HasMedia, MustVerifyEmail
     {
         return $this->hasOne(Media::class, 'id', 'avatar_id');
     }
-
+ 
     public function getAvatarUrlAttribute(): ?array
     {
         return ($this->avatar_id > 0) ? ['thumb' => $this->image->getFullUrl('thumb'), 'card' => $this->image->getFullUrl('card')] : null;
