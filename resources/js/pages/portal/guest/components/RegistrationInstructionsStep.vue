@@ -67,7 +67,12 @@ const onContinue = () => {
             {{ $t('trans.registration_instructions_ack_required') }}
         </p>
 
-        <BaseButton type="button" class="w-full" :disabled="!acknowledgedAdvert" @click="onContinue">
+        <BaseButton
+            type="button"
+            :disabled="!acknowledgedAdvert"
+            classes="min-h-11 w-full rounded-xl dark:text-white"
+            @click="onContinue"
+        >
             {{ $t('trans.registration_instructions_continue') }}
         </BaseButton>
     </div>

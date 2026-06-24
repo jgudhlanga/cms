@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import AppearanceCycleToggle from '@/components/core/util/AppearanceCycleToggle.vue';
-import AppLogoMark from '@/components/core/image/AppLogoMark.vue';
+import AppLogo from '@/components/core/image/AppLogo.vue';
 </script>
 
 <template>
@@ -8,7 +8,7 @@ import AppLogoMark from '@/components/core/image/AppLogoMark.vue';
         <div aria-hidden="true" />
 
         <div class="flex flex-col items-center justify-self-center">
-            <AppLogoMark size="lg" />
+            <AppLogo classes="size-14 object-contain" />
         </div>
 
         <div class="flex items-center justify-self-end">

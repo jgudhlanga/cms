@@ -2,6 +2,8 @@
 import BaseAlert from '@/components/core/alert/BaseAlert.vue';
 import { BaseButton } from '@/components/core/button';
 import { BaseCheckbox, EmailInputWithIcon, PasswordInputWithToggle } from '@/components/core/form';
+import AppLogo from '@/components/core/image/AppLogo.vue';
+import AppearanceCycleToggle from '@/components/core/util/AppearanceCycleToggle.vue';
 import { useAuth } from '@/composables/auth/useAuth';
 import { useUtils } from '@/composables/core/useUtils';
 import { ColorVariant } from '@/enums/colors';
@@ -10,7 +12,6 @@ import { clearFormErrors } from '@/lib/forms';
 import ToastService from '@/services/toast.service';
 import { Login } from '@/types/auth';
 import { Head, useForm } from '@inertiajs/vue3';
-import { LogIn } from 'lucide-vue-next';
 import { onMounted } from 'vue';
 
 defineProps<{
@@ -49,12 +50,14 @@ const loginNavigateTo = () => {
     <BaseAlert v-if="status" :type="TypeVariant.success" :description="status" />
     <form @submit.prevent="login(form)" class="flex w-full flex-col">
         <div
-            class="flex w-full flex-col gap-6 rounded-3xl border border-white/40 bg-white/60 p-8 text-card-foreground shadow-xl backdrop-blur-xl dark:border-border/50 dark:bg-card/70"
+            class="relative flex w-full flex-col gap-6 rounded-3xl border border-white/40 bg-white/60 p-8 text-card-foreground shadow-xl backdrop-blur-xl dark:border-border/50 dark:bg-card/70"
         >
+            <div class="absolute top-4 right-4">
+                <AppearanceCycleToggle />
+            </div>
+
             <div class="flex flex-col items-center gap-3 text-center">
-                <div class="flex size-12 items-center justify-center rounded-2xl bg-white/80 shadow-sm ring-1 ring-black/5 dark:bg-muted dark:ring-border">
-                    <LogIn class="size-5 text-foreground" />
-                </div>
+                <AppLogo classes="size-14 object-contain" />
                 <div class="space-y-1">
                     <h1 class="text-xl font-semibold tracking-tight text-foreground">
                         {{ $t('trans.sign_in_with_email') }}

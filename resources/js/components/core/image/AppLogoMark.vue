@@ -19,10 +19,7 @@ const sizeClasses: Record<LogoMarkSize, string> = {
 </script>
 
 <template>
-	<div
-		class="flex aspect-square shrink-0 items-center justify-center overflow-hidden rounded-full bg-white"
-		:class="sizeClasses[size]"
-	>
-		<AppLogo classes="size-full rounded-full border-2 border-white object-contain object-center" />
+	<div class="flex shrink-0 items-center justify-center" :class="sizeClasses[size]">
+		<AppLogo classes="size-full object-contain object-center" />
 	</div>
 </template>

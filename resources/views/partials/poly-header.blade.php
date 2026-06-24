@@ -3,7 +3,7 @@
         <table>
             <tr>
                 <td style="width: 20%;">
-                    <img src="file://{{ public_path('assets/images/logo.jpeg') }}" alt="Left Logo" class="header-logo">
+                    <img src="file://{{ public_path('assets/images/logo.png') }}" alt="Left Logo" class="header-logo">
                 </td>
                 <td class="header-center" style="width: 70%;">
                     <h4>{{ $documentTemplate->header_line_1 }}</h4>
@@ -24,7 +24,7 @@
                     </p>
                 </td>
                 <td style="width: 20%;">
-                    <img src="file://{{ public_path('assets/images/logo.jpeg') }}" alt="Right Logo" class="header-logo">
+                    <img src="file://{{ public_path('assets/images/logo.png') }}" alt="Right Logo" class="header-logo">
                 </td>
             </tr>
         </table>

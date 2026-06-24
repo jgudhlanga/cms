@@ -4,6 +4,13 @@ import AppearanceCycleToggle from '@/components/core/util/AppearanceCycleToggle.
 import AppLogoMark from '@/components/core/image/AppLogoMark.vue';
 import PublicShell from '@/layouts/PublicShell.vue';
 
+withDefaults(
+	defineProps<{
+		showHeader?: boolean;
+	}>(),
+	{ showHeader: true },
+);
+
 const appName = import.meta.env.VITE_APP_NAME || 'Harare Polytechnic';
 </script>
 
@@ -11,7 +18,10 @@ const appName = import.meta.env.VITE_APP_NAME || 'Harare Polytechnic';
 	<PublicShell transparent-background :show-appearance-toggle="false">
 		<LoginSkyBackground />
 		<div class="relative isolate flex min-h-svh flex-col p-6 md:p-10">
-			<header class="relative z-10 mb-8 grid grid-cols-[1fr_auto_1fr] items-center gap-x-2">
+			<header
+				v-if="showHeader"
+				class="relative z-10 mb-8 grid grid-cols-[1fr_auto_1fr] items-center gap-x-2"
+			>
 				<div aria-hidden="true" class="md:hidden" />
 
 				<a

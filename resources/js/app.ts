@@ -35,7 +35,10 @@ createInertiaApp({
         const pages = import.meta.glob<PageModule>('./pages/**/*.vue', { eager: true });
         const page = pages[`./pages/${name}.vue`];
         if (name.startsWith('auth/')) {
-            page.default.layout = GuestLayout;
+            page.default.layout =
+                name === 'auth/Login'
+                    ? (h, page) => h(GuestLayout, { showHeader: false }, () => page)
+                    : GuestLayout;
         } else if (name === 'portal/guest/RegistrationUserForm') {
             page.default.layout = PortalRegistrationLayout;
         } else if (
