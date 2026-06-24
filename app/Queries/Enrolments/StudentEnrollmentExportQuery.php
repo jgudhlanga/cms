@@ -13,9 +13,9 @@ class StudentEnrollmentExportQuery
     public function baseQuery(?string $intakeYear = null): Builder
     {
         return StudentEnrolment::query()
-            ->whereHas('studentProgram', function (Builder $query) use ($intakeYear): void {
+            ->whereHas('studentApplication', function (Builder $query) use ($intakeYear): void {
                 $query
-                    ->whereNull('student_programs.deleted_at')
+                    ->whereNull('student_applications.deleted_at')
                     ->whereHas('classList', function (Builder $classListQuery): void {
                         $classListQuery
                             ->where('type', ClassListTypeEnum::FINAL->value)
@@ -36,8 +36,8 @@ class StudentEnrollmentExportQuery
                 'student.nextOfKins.contacts',
                 'student.nextOfKins.addresses',
                 'student.sponsors',
-                'studentProgram.intakePeriod',
-                'studentProgram.modeOfStudy',
+                'studentApplication.intakePeriod',
+                'studentApplication.modeOfStudy',
                 'departmentCourse',
                 'academicYearOption',
                 'academicCalendar',

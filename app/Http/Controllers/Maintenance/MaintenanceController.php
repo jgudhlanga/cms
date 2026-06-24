@@ -23,7 +23,7 @@ use App\Http\Resources\Maintenance\StudentAccountMergePreviewResource;
 use App\Jobs\Applications\ExportApplicationJob;
 use App\Jobs\Enrolments\ExportStudentEnrollmentJob;
 use App\Models\Students\Student;
-use App\Models\Students\StudentProgram;
+use App\Models\Students\StudentApplication;
 use App\Models\Users\User;
 use App\Services\Enrollment\EnrollmentLookupService;
 use App\Services\Maintenance\Staff\StaffImportLookupCreator;
@@ -32,7 +32,7 @@ use App\Services\Maintenance\Staff\StaffImportTemplateService;
 use App\Services\Maintenance\Students\FaultyStudentIdNumbersService;
 use App\Services\Maintenance\Students\FixStudentIdNumberService;
 use App\Services\Maintenance\Students\MaintenanceExportCountsService;
-use App\Services\Maintenance\Students\RejectStudentProgramApplicationService;
+use App\Services\Maintenance\Students\RejectStudentApplicationService;
 use App\Services\Maintenance\Students\StudentAccountMergePreviewService;
 use App\Services\Maintenance\Students\StudentAccountMergeService;
 use App\Services\Maintenance\Users\MaintenanceUserPurgeService;
@@ -239,10 +239,10 @@ class MaintenanceController extends Controller
 
     public function rejectMergePreviewApplication(
         RejectMergePreviewApplicationRequest $request,
-        StudentProgram $studentProgram,
-        RejectStudentProgramApplicationService $rejectService,
+        StudentApplication $studentApplication,
+        RejectStudentApplicationService $rejectService,
     ): RedirectResponse {
-        $rejectService->reject($studentProgram);
+        $rejectService->reject($studentApplication);
 
         return redirect()
             ->back()
@@ -313,7 +313,7 @@ class MaintenanceController extends Controller
             'phoneNumber' => $user?->phone_number,
             'studentNumber' => $survivor->student_number,
             'idNumber' => $survivor->id_number,
-            'programmesCount' => $survivor->programs()->count(),
+            'programmesCount' => $survivor->applications()->count(),
             'enrolmentsCount' => $survivor->enrolments()->count(),
         ];
     }

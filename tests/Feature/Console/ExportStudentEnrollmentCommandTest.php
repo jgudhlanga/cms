@@ -59,15 +59,15 @@ it('exports finalised student enrolments to Student_Enrollment.csv', function ()
     Storage::fake('local');
     config()->set('custom.bank-statements.plan_anchor_start', '2026-01-01');
 
-    $studentProgram = createVerifiedStudentProgram('EXP-001');
-    createEnrolledDepartmentStep($studentProgram);
+    $studentApplication = createVerifiedStudentApplication('EXP-001');
+    createEnrolledDepartmentStep($studentApplication);
     createBankCreditReceipt('EXP-001', '2026-01-10 09:00:00', 'TXN-EXP-001');
 
     $this->artisan('enrolments:bulk-finalise-enrolments-command')->assertSuccessful();
 
-    $student = $studentProgram->student()->firstOrFail();
+    $student = $studentApplication->student()->firstOrFail();
     $student->update(['id_type_id' => IdTypeEnum::ZIMBABWEAN_ID_NUMBER->id()]);
-    $tenantId = $studentProgram->tenant_id;
+    $tenantId = $studentApplication->tenant_id;
 
     Address::query()->create([
         'tenant_id' => $tenantId,
@@ -114,13 +114,13 @@ it('exports finalised student enrolments to Student_Enrollment.csv', function ()
     ]);
 
     $departmentLevelCourse = DepartmentLevelCourse::query()
-        ->where('department_level_id', $studentProgram->department_level_id)
-        ->where('department_course_id', $studentProgram->department_course_id)
+        ->where('department_level_id', $studentApplication->department_level_id)
+        ->where('department_course_id', $studentApplication->department_course_id)
         ->firstOrFail();
 
     CourseSyllabus::query()->create([
-        'tenant_id' => $studentProgram->tenant_id,
-        'institution_department_id' => $studentProgram->institution_department_id,
+        'tenant_id' => $studentApplication->tenant_id,
+        'institution_department_id' => $studentApplication->institution_department_id,
         'department_level_course_id' => $departmentLevelCourse->id,
         'title' => 'Export Test Syllabus',
         'code' => 'ICT101',
@@ -128,9 +128,9 @@ it('exports finalised student enrolments to Student_Enrollment.csv', function ()
         'status' => 'active',
     ]);
 
-    expect(ClassList::query()->where('student_program_id', $studentProgram->id)->value('type'))
+    expect(ClassList::query()->where('student_application_id', $studentApplication->id)->value('type'))
         ->toBe(ClassListTypeEnum::FINAL)
-        ->and(StudentEnrolment::query()->where('student_program_id', $studentProgram->id)->exists())
+        ->and(StudentEnrolment::query()->where('student_application_id', $studentApplication->id)->exists())
         ->toBeTrue();
 
     $this->artisan('enrolments:export-student-enrollment --sync --email=one@example.test,two@example.test')
@@ -182,11 +182,11 @@ it('filters export rows by intake year when the option is provided', function ()
     Storage::fake('local');
     config()->set('custom.bank-statements.plan_anchor_start', '2026-01-01');
 
-    $matchingProgram = createVerifiedStudentProgram('EXP-MATCH');
+    $matchingProgram = createVerifiedStudentApplication('EXP-MATCH');
     createEnrolledDepartmentStep($matchingProgram);
     createBankCreditReceipt('EXP-MATCH', '2026-01-10 09:00:00', 'TXN-EXP-MATCH');
 
-    $otherProgram = createVerifiedStudentProgram('EXP-OTHER');
+    $otherProgram = createVerifiedStudentApplication('EXP-OTHER');
     createEnrolledDepartmentStep($otherProgram);
     createBankCreditReceipt('EXP-OTHER', '2026-01-10 09:00:00', 'TXN-EXP-OTHER');
 

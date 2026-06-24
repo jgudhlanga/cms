@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Applications;
 
 use App\Mail\Applications\ApplicationExportMail;
-use App\Models\Students\StudentProgram;
+use App\Models\Students\StudentApplication;
 use App\Queries\Applications\ApplicationExportQuery;
 use App\Services\Students\CourseSyllabusCodeResolver;
 use App\Support\Exports\CsvExportWriter;
@@ -56,10 +56,10 @@ class ApplicationExportService
                     ->baseQuery($intakeYear)
                     ->chunkById(200, function (Collection $programs) use ($handle): void {
                         foreach ($programs as $program) {
-                            /** @var StudentProgram $program */
+                            /** @var StudentApplication $program */
                             fputcsv($handle, $this->mapRow($program));
                         }
-                    }, 'student_programs.id', 'id');
+                    }, 'student_applications.id', 'id');
             },
         );
 
@@ -96,7 +96,7 @@ class ApplicationExportService
     /**
      * @return list<string|null>
      */
-    public function mapRow(StudentProgram $program): array
+    public function mapRow(StudentApplication $program): array
     {
         $student = $program->student;
         $user = $student?->user;

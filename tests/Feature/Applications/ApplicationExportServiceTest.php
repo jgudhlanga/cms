@@ -15,7 +15,7 @@ use App\Models\Shared\Address;
 use App\Models\Shared\Contact;
 use App\Models\Shared\Country;
 use App\Models\Students\Student;
-use App\Models\Students\StudentProgram;
+use App\Models\Students\StudentApplication;
 use App\Queries\Applications\ApplicationExportQuery;
 use App\Services\Applications\ApplicationExportService;
 use Illuminate\Support\Facades\Mail;
@@ -26,7 +26,7 @@ it('exports accepted and enrolled applications to Application.csv', function ():
     Mail::fake();
     Storage::fake('local');
 
-    $program = createVerifiedStudentProgram('APP-ONLY');
+    $program = createVerifiedStudentApplication('APP-ONLY');
     $student = $program->student()->firstOrFail();
     $student->update([
         'id_type_id' => IdTypeEnum::ZIMBABWEAN_ID_NUMBER->id(),
@@ -103,7 +103,7 @@ it('exports accepted and enrolled applications to Application.csv', function ():
 it('prefers enrolled programmes over accepted when deduplicating by student', function (): void {
     Storage::fake('local');
 
-    $enrolledProgram = createVerifiedStudentProgram('APP-DEDUP');
+    $enrolledProgram = createVerifiedStudentApplication('APP-DEDUP');
     $enrolledStep = createEnrolledDepartmentStep($enrolledProgram);
     $enrolledProgram->update(['department_application_step_id' => $enrolledStep->id]);
 
@@ -122,7 +122,7 @@ it('prefers enrolled programmes over accepted when deduplicating by student', fu
         'status' => 'active',
     ]);
 
-    $acceptedProgram = createAdditionalStudentProgramForStudent(
+    $acceptedProgram = createAdditionalStudentApplicationForStudent(
         $enrolledProgram->student()->firstOrFail(),
         $enrolledProgram,
         WorkflowStepEnum::ACCEPTED,
@@ -150,18 +150,18 @@ it('prefers enrolled programmes over accepted when deduplicating by student', fu
 it('matches application export row count with the export query count', function (): void {
     Storage::fake('local');
 
-    $enrolledProgram = createVerifiedStudentProgram('APP-COUNT');
+    $enrolledProgram = createVerifiedStudentApplication('APP-COUNT');
     $enrolledStep = createEnrolledDepartmentStep($enrolledProgram);
     $enrolledProgram->update(['department_application_step_id' => $enrolledStep->id]);
 
-    createAdditionalStudentProgramForStudent(
+    createAdditionalStudentApplicationForStudent(
         $enrolledProgram->student()->firstOrFail(),
         $enrolledProgram,
         WorkflowStepEnum::ACCEPTED,
         'ICT202',
     );
 
-    createVerifiedStudentProgram('APP-COUNT-OTHER');
+    createVerifiedStudentApplication('APP-COUNT-OTHER');
 
     $exportCount = app(ApplicationExportQuery::class)->count();
 
@@ -184,8 +184,8 @@ it('matches application export row count with the export query count', function 
 it('filters application export rows by intake year when the option is provided', function (): void {
     Storage::fake('local');
 
-    $matchingProgram = createVerifiedStudentProgram('APP-MATCH');
-    $otherProgram = createVerifiedStudentProgram('APP-OTHER');
+    $matchingProgram = createVerifiedStudentApplication('APP-MATCH');
+    $otherProgram = createVerifiedStudentApplication('APP-OTHER');
     $otherProgram->intakePeriod()->update(['calendar_year' => '2024/2025']);
 
     $this->artisan('applications:export --sync --intake-year=2025/2026 --email=exports@example.test')
@@ -205,12 +205,12 @@ it('filters application export rows by intake year when the option is provided',
         ->and($rows[0][2])->toBe('Test Bulk');
 });
 
-function createAdditionalStudentProgramForStudent(
+function createAdditionalStudentApplicationForStudent(
     Student $student,
-    StudentProgram $template,
+    StudentApplication $template,
     WorkflowStepEnum $workflowStep,
     string $syllabusCode,
-): StudentProgram {
+): StudentApplication {
     $department = Department::factory()->create();
     $institutionDepartment = InstitutionDepartment::query()->create([
         'tenant_id' => $template->tenant_id,
@@ -249,14 +249,14 @@ function createAdditionalStudentProgramForStudent(
     ]);
 
     $departmentStep = resolveDepartmentApplicationStep(
-        StudentProgram::query()->make([
+        StudentApplication::query()->make([
             'tenant_id' => $template->tenant_id,
             'institution_department_id' => $institutionDepartment->id,
         ]),
         $workflowStep,
     );
 
-    return StudentProgram::query()->create([
+    return StudentApplication::query()->create([
         'tenant_id' => $template->tenant_id,
         'student_id' => $student->id,
         'institution_department_id' => $institutionDepartment->id,

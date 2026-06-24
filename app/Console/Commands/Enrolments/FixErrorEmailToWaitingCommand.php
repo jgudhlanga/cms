@@ -28,7 +28,7 @@ class FixErrorEmailToWaitingCommand extends Command
     public function handle(): void
     {
         $classes = DB::table('class_lists as cl')
-            ->join('student_programs as sp', 'sp.id', '=', 'cl.student_program_id')
+            ->join('student_applications as sp', 'sp.id', '=', 'cl.student_application_id')
             ->join('students as st', 'st.id', '=', 'sp.student_id')
             ->join('institution_departments as idp', 'idp.id', '=', 'sp.institution_department_id')
             ->join('departments as dp', 'dp.id', '=', 'idp.department_id')

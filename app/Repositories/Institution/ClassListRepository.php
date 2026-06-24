@@ -28,7 +28,7 @@ class ClassListRepository extends BaseRepository implements IClassListRepository
     private function getFields(ClassListDto $dto): array
     {
         return [
-            'student_program_id' => $dto->student_program_id,
+            'student_application_id' => $dto->student_application_id,
             'type' => $dto->type,
             'attributes' => $dto->attributes,
         ];

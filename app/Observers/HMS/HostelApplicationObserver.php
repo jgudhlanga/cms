@@ -179,7 +179,7 @@ class HostelApplicationObserver
         }
 
         $student = Student::query()
-            ->with(['latestEnrolment.modeOfStudy', 'latestEnrolment.studentProgram'])
+            ->with(['latestEnrolment.modeOfStudy', 'latestEnrolment.studentApplication'])
             ->find($application->student_id);
 
         if ($student === null) {
@@ -187,7 +187,7 @@ class HostelApplicationObserver
         }
 
         $enrolment = $application->student_enrolment_id
-            ? $student->enrolments()->with(['modeOfStudy', 'studentProgram'])->find($application->student_enrolment_id)
+            ? $student->enrolments()->with(['modeOfStudy', 'studentApplication'])->find($application->student_enrolment_id)
             : $student->latestEnrolment;
 
         $this->applyEligibilitySnapshot(
@@ -223,7 +223,7 @@ class HostelApplicationObserver
     private function applyStudentSemesterDates(HostelApplication $application): void
     {
         $student = Student::query()
-            ->with(['latestEnrolment.studentProgram.intakePeriod'])
+            ->with(['latestEnrolment.studentApplication.intakePeriod'])
             ->find($application->student_id);
 
         if ($student === null) {

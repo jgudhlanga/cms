@@ -22,7 +22,7 @@ class StudentPolicy
             return false;
         }
 
-        return $user->can('manageOwnStudentProgramDetails:students')
+        return $user->can('manageOwnStudentApplicationDetails:students')
             || $user->can('manageOwnStudentPersonalDetails:students')
             || $user->can('manageOwnStudentFinancialDetails:students');
     }

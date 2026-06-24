@@ -3,7 +3,7 @@
 namespace App\JsonApi\V1\Students;
 
 use App\Models\Students\Student;
-use App\Models\Students\StudentProgram;
+use App\Models\Students\StudentApplication;
 use App\Models\Users\User;
 use Illuminate\Http\Request;
 use LaravelJsonApi\Contracts\Auth\Authorizer;
@@ -14,7 +14,7 @@ class StudentsAuthorizer implements Authorizer
     {
         $user = $request->user();
 
-        if ($user === null || $modelClass !== StudentProgram::class) {
+        if ($user === null || $modelClass !== StudentApplication::class) {
             return false;
         }
 
@@ -30,11 +30,11 @@ class StudentsAuthorizer implements Authorizer
             return false;
         }
 
-        if ($this->canViewOwnStudentPrograms($user, $student)) {
+        if ($this->canViewOwnStudentApplications($user, $student)) {
             return true;
         }
 
-        if (! $this->hasStaffStudentProgramAccess($user)) {
+        if (! $this->hasStaffStudentApplicationAccess($user)) {
             return false;
         }
 
@@ -52,17 +52,17 @@ class StudentsAuthorizer implements Authorizer
     {
         $user = $request->user();
 
-        if ($user === null || ! $model instanceof StudentProgram) {
+        if ($user === null || ! $model instanceof StudentApplication) {
             return false;
         }
 
         $student = Student::query()->find($model->student_id);
 
-        if ($student !== null && $this->canViewOwnStudentPrograms($user, $student)) {
+        if ($student !== null && $this->canViewOwnStudentApplications($user, $student)) {
             return true;
         }
 
-        return $this->hasStaffStudentProgramAccess($user);
+        return $this->hasStaffStudentApplicationAccess($user);
     }
 
     public function update(Request $request, object $model): bool
@@ -100,21 +100,21 @@ class StudentsAuthorizer implements Authorizer
         return false;
     }
 
-    private function hasStaffStudentProgramAccess(User $user): bool
+    private function hasStaffStudentApplicationAccess(User $user): bool
     {
-        return $user->can('viewAny:student-programs')
-            || $user->can('view:student-programs')
+        return $user->can('viewAny:student-applications')
+            || $user->can('view:student-applications')
             || $user->can('root:manage')
             || $user->can('viewOnlyOwnDepartment:departments');
     }
 
-    private function canViewOwnStudentPrograms(User $user, Student $student): bool
+    private function canViewOwnStudentApplications(User $user, Student $student): bool
     {
         if ($user->studentProfile?->id !== $student->id) {
             return false;
         }
 
-        return $user->can('manageOwnStudentProgramDetails:students')
+        return $user->can('manageOwnStudentApplicationDetails:students')
             || $user->can('manageOwnStudentPersonalDetails:students');
     }
 }

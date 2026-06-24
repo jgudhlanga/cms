@@ -10,7 +10,7 @@ use App\Models\Enrolments\ClassList;
 use App\Models\Institution\DepartmentApplicationStep;
 use App\Models\Institution\ModeOfStudy;
 use App\Models\Shared\WorkflowStep;
-use App\Models\Students\StudentProgram;
+use App\Models\Students\StudentApplication;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Throwable;
@@ -38,7 +38,7 @@ class ProcessOjetOfferLetterCommand extends Command
             return;
         }
 
-        StudentProgram::with(['departmentWorkflowStep.workflowStep', 'student.user'])
+        StudentApplication::with(['departmentWorkflowStep.workflowStep', 'student.user'])
             ->where('mode_of_study_id', $ojet->id)
             ->whereHas('departmentWorkflowStep.workflowStep', function ($query) {
                 $query->whereNotIn('name', [
@@ -54,7 +54,7 @@ class ProcessOjetOfferLetterCommand extends Command
                         DB::transaction(function () use ($program, $acceptedStep) {
 
                             $classList = ClassList::firstOrNew([
-                                'student_program_id' => $program->id,
+                                'student_application_id' => $program->id,
                             ]);
                             $classList->fill([
                                 'tenant_id' => $program->tenant_id,

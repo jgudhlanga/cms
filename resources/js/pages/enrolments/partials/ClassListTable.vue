@@ -30,11 +30,11 @@ const getButtonTitle = (type: ClassListType) => {
 const getRouteName = (type: ClassListType, applicationId: string) => {
     switch (type) {
         case 'provisional':
-            return route('enrolments.verify', { student_program: applicationId, type: 'provisional' });
+            return route('enrolments.verify', { student_application: applicationId, type: 'provisional' });
         case 'waiting':
-            return route('enrolments.verify', { student_program: applicationId, type: 'waiting' });
+            return route('enrolments.verify', { student_application: applicationId, type: 'waiting' });
         case 'verified':
-            return route('enrolments.confirm', { student_program: applicationId, type: 'verified' });
+            return route('enrolments.confirm', { student_application: applicationId, type: 'verified' });
         default:
             return '';
     }
@@ -65,7 +65,7 @@ const getRouteName = (type: ClassListType, applicationId: string) => {
                     <td class="j-td">{{ application.classListType }}</td>
                     <td class="j-td text-right">
                         <BaseButton
-                            v-if="hasAbility('view:student-programs')"
+                            v-if="hasAbility('view:student-applications')"
                             :title="getButtonTitle(classListType as ClassListType)"
                             :size="ButtonSize.xs"
                             classes="rounded-full"

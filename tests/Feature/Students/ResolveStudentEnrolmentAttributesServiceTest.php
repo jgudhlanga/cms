@@ -5,7 +5,7 @@ use App\Models\AcademicCalendars\AcademicCalendar;
 use App\Models\AcademicCalendars\AcademicYearOption;
 use App\Models\Students\StudentEnrolment;
 use App\Models\Students\StudentEnrolmentStatus;
-use App\Models\Students\StudentProgram;
+use App\Models\Students\StudentApplication;
 use App\Services\Students\ResolveStudentEnrolmentAttributesService;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
@@ -32,7 +32,7 @@ afterEach(function (): void {
 
 it('resolves the academic calendar that contains the current date', function (): void {
     Carbon::setTestNow(Carbon::parse('2026-03-15', config('app.timezone')));
-    $studentProgram = createResolverStudentProgram('RESOLVE-CALENDAR-CURRENT', 'semester', '2025/2026');
+    $studentApplication = createResolverStudentApplication('RESOLVE-CALENDAR-CURRENT', 'semester', '2025/2026');
 
     $calendar = AcademicCalendar::query()->create([
         'calendar_year' => '2025/2026',
@@ -49,14 +49,14 @@ it('resolves the academic calendar that contains the current date', function ():
     ]);
 
     $service = app(ResolveStudentEnrolmentAttributesService::class);
-    $resolved = $service->resolve((int) $studentProgram->student_id, (int) $studentProgram->id);
+    $resolved = $service->resolve((int) $studentApplication->student_id, (int) $studentApplication->id);
 
     expect($resolved['academic_calendar_id'])->toBe((int) $calendar->id);
 });
 
 it('falls back to the nearest future academic calendar when none contain the current date', function (): void {
     Carbon::setTestNow(Carbon::parse('2025-06-01', config('app.timezone')));
-    $studentProgram = createResolverStudentProgram('RESOLVE-CALENDAR-FUTURE', 'semester', '2025/2026');
+    $studentApplication = createResolverStudentApplication('RESOLVE-CALENDAR-FUTURE', 'semester', '2025/2026');
 
     $future = AcademicCalendar::query()->create([
         'calendar_year' => '2025/2026',
@@ -66,14 +66,14 @@ it('falls back to the nearest future academic calendar when none contain the cur
     ]);
 
     $service = app(ResolveStudentEnrolmentAttributesService::class);
-    $resolved = $service->resolve((int) $studentProgram->student_id, (int) $studentProgram->id);
+    $resolved = $service->resolve((int) $studentApplication->student_id, (int) $studentApplication->id);
 
     expect($resolved['academic_calendar_id'])->toBe((int) $future->id);
 });
 
 it('throws when no academic calendar exists for the student program year and type', function (): void {
     Carbon::setTestNow(Carbon::parse('2030-01-01', config('app.timezone')));
-    $studentProgram = createResolverStudentProgram('RESOLVE-CALENDAR-MISS', 'semester', '2027/2028');
+    $studentApplication = createResolverStudentApplication('RESOLVE-CALENDAR-MISS', 'semester', '2027/2028');
 
     AcademicCalendar::query()->create([
         'calendar_year' => '2025/2026',
@@ -84,7 +84,7 @@ it('throws when no academic calendar exists for the student program year and typ
 
     $service = app(ResolveStudentEnrolmentAttributesService::class);
 
-    $service->resolve((int) $studentProgram->student_id, (int) $studentProgram->id);
+    $service->resolve((int) $studentApplication->student_id, (int) $studentApplication->id);
 })->throws(StudentEnrolmentResolutionException::class);
 
 it('throws when the student program does not exist', function (): void {
@@ -97,7 +97,7 @@ it('throws when the student program does not exist', function (): void {
 
 it('resolves semester one when the student has no completed enrolment', function (): void {
     Carbon::setTestNow(Carbon::parse('2026-03-01', config('app.timezone')));
-    $studentProgram = createResolverStudentProgram('RESOLVE-SEM-ONE', 'semester', '2025/2026');
+    $studentApplication = createResolverStudentApplication('RESOLVE-SEM-ONE', 'semester', '2025/2026');
 
     AcademicCalendar::query()->create([
         'calendar_year' => '2025/2026',
@@ -109,7 +109,7 @@ it('resolves semester one when the student has no completed enrolment', function
     $semesterOneId = (int) AcademicYearOption::query()->where('slug', 'semester-1')->value('id');
 
     $service = app(ResolveStudentEnrolmentAttributesService::class);
-    $resolved = $service->resolve((int) $studentProgram->student_id, (int) $studentProgram->id);
+    $resolved = $service->resolve((int) $studentApplication->student_id, (int) $studentApplication->id);
 
     expect($resolved['academic_year_option_id'])->toBe($semesterOneId);
 });
@@ -117,7 +117,7 @@ it('resolves semester one when the student has no completed enrolment', function
 it('resolves semester two when the student has a completed enrolment', function (): void {
     Carbon::setTestNow(Carbon::parse('2026-03-01', config('app.timezone')));
 
-    $sp1 = createResolverStudentProgram('RESOLVER-S1', 'semester', '2025/2026');
+    $sp1 = createResolverStudentApplication('RESOLVER-S1', 'semester', '2025/2026');
     $sp2 = createSiblingProgram($sp1);
 
     $calendar = AcademicCalendar::query()->create([
@@ -132,7 +132,7 @@ it('resolves semester two when the student has a completed enrolment', function 
 
     StudentEnrolment::query()->create([
         'student_id' => $sp1->student_id,
-        'student_program_id' => $sp1->id,
+        'student_application_id' => $sp1->id,
         'institution_department_id' => $sp1->institution_department_id,
         'department_level_id' => $sp1->department_level_id,
         'department_course_id' => $sp1->department_course_id,
@@ -153,7 +153,7 @@ it('resolves semester two when the student has a completed enrolment', function 
 it('caps term progression at the last available term option', function (): void {
     Carbon::setTestNow(Carbon::parse('2026-03-01', config('app.timezone')));
 
-    $sp = createResolverStudentProgram('RESOLVER-TERM-CAP', 'term', '2025/2026');
+    $sp = createResolverStudentApplication('RESOLVER-TERM-CAP', 'term', '2025/2026');
 
     $calendar = AcademicCalendar::query()->create([
         'calendar_year' => '2025/2026',
@@ -169,7 +169,7 @@ it('caps term progression at the last available term option', function (): void 
     for ($index = 0; $index < 5; $index++) {
         StudentEnrolment::query()->create([
             'student_id' => $sp->student_id,
-            'student_program_id' => $sp->id,
+            'student_application_id' => $sp->id,
             'institution_department_id' => $sp->institution_department_id,
             'department_level_id' => $sp->department_level_id,
             'department_course_id' => $sp->department_course_id,
@@ -188,7 +188,7 @@ it('caps term progression at the last available term option', function (): void 
 
 it('resolves the active student enrolment status id', function (): void {
     Carbon::setTestNow(Carbon::parse('2026-03-01', config('app.timezone')));
-    $studentProgram = createResolverStudentProgram('RESOLVE-STATUS', 'semester', '2025/2026');
+    $studentApplication = createResolverStudentApplication('RESOLVE-STATUS', 'semester', '2025/2026');
 
     AcademicCalendar::query()->create([
         'calendar_year' => '2025/2026',
@@ -200,37 +200,37 @@ it('resolves the active student enrolment status id', function (): void {
     $activeId = (int) StudentEnrolmentStatus::query()->where('slug', 'active')->value('id');
 
     $service = app(ResolveStudentEnrolmentAttributesService::class);
-    $resolved = $service->resolve((int) $studentProgram->student_id, (int) $studentProgram->id);
+    $resolved = $service->resolve((int) $studentApplication->student_id, (int) $studentApplication->id);
 
     expect($resolved['student_enrolment_status_id'])->toBe($activeId);
 });
 
-function createResolverStudentProgram(string $studentNumber, string $calendarType, string $calendarYear): StudentProgram
+function createResolverStudentApplication(string $studentNumber, string $calendarType, string $calendarYear): StudentApplication
 {
-    $studentProgram = createVerifiedStudentProgram($studentNumber);
+    $studentApplication = createVerifiedStudentApplication($studentNumber);
 
-    $studentProgram->intakePeriod()->update([
+    $studentApplication->intakePeriod()->update([
         'calendar_year' => $calendarYear,
     ]);
 
-    $studentProgram->departmentLevel->level->update([
+    $studentApplication->departmentLevel->level->update([
         'calendar_type' => $calendarType,
     ]);
 
-    return $studentProgram->fresh(['departmentLevel.level', 'intakePeriod']);
+    return $studentApplication->fresh(['departmentLevel.level', 'intakePeriod']);
 }
 
-function createSiblingProgram(StudentProgram $studentProgram): StudentProgram
+function createSiblingProgram(StudentApplication $studentApplication): StudentApplication
 {
-    return StudentProgram::query()->create([
-        'tenant_id' => $studentProgram->tenant_id,
-        'student_id' => $studentProgram->student_id,
-        'institution_department_id' => $studentProgram->institution_department_id,
-        'department_level_id' => $studentProgram->department_level_id,
-        'department_course_id' => $studentProgram->department_course_id,
-        'intake_period_id' => $studentProgram->intake_period_id,
-        'mode_of_study_id' => $studentProgram->mode_of_study_id,
+    return StudentApplication::query()->create([
+        'tenant_id' => $studentApplication->tenant_id,
+        'student_id' => $studentApplication->student_id,
+        'institution_department_id' => $studentApplication->institution_department_id,
+        'department_level_id' => $studentApplication->department_level_id,
+        'department_course_id' => $studentApplication->department_course_id,
+        'intake_period_id' => $studentApplication->intake_period_id,
+        'mode_of_study_id' => $studentApplication->mode_of_study_id,
         'application_tracking_number' => 'APP-'.strtoupper(Str::random(8)),
-        'program_status_id' => $studentProgram->program_status_id,
+        'program_status_id' => $studentApplication->program_status_id,
     ]);
 }

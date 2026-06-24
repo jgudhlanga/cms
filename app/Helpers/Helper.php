@@ -12,7 +12,7 @@ use App\Models\Institution\ModeOfStudy;
 use App\Models\Institution\Staff;
 use App\Models\Shared\Status;
 use App\Models\Students\Student;
-use App\Models\Students\StudentProgram;
+use App\Models\Students\StudentApplication;
 use App\Models\Tenants\Tenant;
 use Carbon\Carbon;
 use Illuminate\Contracts\Encryption\DecryptException;
@@ -30,7 +30,7 @@ class Helper
         return $prefix.$id.$suffix;
     }
 
-    public static function generateStudentNumber(StudentProgram $program): string
+    public static function generateStudentNumber(StudentApplication $program): string
     {
         $student = $program->student;
         $department = $program->institutionDepartment;

@@ -208,7 +208,7 @@ export type SponsorParams = {
     address_4?: string;
 };
 
-export type StudentProgram = {
+export type StudentApplication = {
     type: string;
     id: string | number;
     attributes: {
@@ -298,7 +298,7 @@ export type StudentPersonalDetailParams = {
     disability_status: 'yes' | 'no' | 'prefer_not_to_say' | null;
 };
 
-export type StudentProgramEdit = {
+export type StudentApplicationEdit = {
     institution_department_id: string | null;
     department_level_id: string | null;
     department_course_id: string | null;
@@ -329,7 +329,7 @@ export type StudentEnrolment = {
     attributes: {
         instituionDepartmentId: string | number;
         studentId: string | number;
-        studentProgramId: string | number;
+        studentApplicationId: string | number;
         departmentLevelId: string | number;
         departmentCourseId: string | number;
         modeOfStudyId: string | number;

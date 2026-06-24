@@ -2,21 +2,21 @@
 
 use App\Enums\AcademicCalendars\AcademicCalendarTypeEnum;
 use App\Models\AcademicCalendars\AcademicCalendar;
-use App\Models\Students\StudentProgram;
+use App\Models\Students\StudentApplication;
 use App\Services\HMS\HostelApplicationSemesterService;
 use Illuminate\Support\Carbon;
 
 it('resolves running semester dates for a student enrolment', function (): void {
     Carbon::setTestNow(Carbon::parse('2026-03-15', config('app.timezone')));
 
-    $studentProgram = createStudentReadyForHostelApplication('SEM-SERVICE-001');
+    $studentApplication = createStudentReadyForHostelApplication('SEM-SERVICE-001');
     $calendar = AcademicCalendar::query()
         ->where('calendar_year', '2025/2026')
         ->where('type', AcademicCalendarTypeEnum::SEMESTER)
         ->firstOrFail();
 
     $service = app(HostelApplicationSemesterService::class);
-    $result = $service->datesForApplication($studentProgram->student);
+    $result = $service->datesForApplication($studentApplication->student);
 
     expect($result['success'])->toBeTrue()
         ->and($result['checkIn'])->toBe(Carbon::parse($calendar->opening_date)->toDateString())
@@ -36,12 +36,12 @@ it('returns no running semester blocker when calendar is outside application dat
         'closing_date' => '2025-06-30',
     ]);
 
-    $studentProgram = StudentProgram::query()
+    $studentApplication = StudentApplication::query()
         ->whereHas('student', fn ($q) => $q->where('student_number', 'SEM-SERVICE-002'))
         ->firstOrFail();
 
     $service = app(HostelApplicationSemesterService::class);
-    $result = $service->datesForApplication($studentProgram->student);
+    $result = $service->datesForApplication($studentApplication->student);
 
     expect($result['success'])->toBeFalse()
         ->and($result['blocker'])->toBe(HostelApplicationSemesterService::BLOCKER_NO_RUNNING_SEMESTER);

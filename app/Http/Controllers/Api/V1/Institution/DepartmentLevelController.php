@@ -97,7 +97,7 @@ class DepartmentLevelController extends Controller
         ?int                  $modeOfStudyId,
                               $maxStep, $courseId)
     {
-        $query = $institutionDepartment->enrolments()
+        $query = $institutionDepartment->studentApplications()
             ->where('department_level_id', $departmentLevel->id)
             ->whereHas('departmentWorkflowStep', fn($q) => $q->where('position', '<', $maxStep->position))
             ->when($intakePeriodId, fn($q) => $q->where('intake_period_id', $intakePeriodId))
@@ -111,7 +111,7 @@ class DepartmentLevelController extends Controller
                 'departmentCourse.course',
                 'student.oLevelResults',
             ])
-            ->orderBy('student_programs.created_at');
+            ->orderBy('student_applications.created_at');
 
         return $query->get()
             ->groupBy(fn($enrolment) => $enrolment->departmentWorkflowStep->workflowStep->name)

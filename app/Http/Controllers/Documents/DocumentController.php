@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Documents;
 use App\Helpers\DocumentHelper;
 use App\Http\Controllers\Controller;
 use App\Models\Students\Student;
-use App\Models\Students\StudentProgram;
+use App\Models\Students\StudentApplication;
 use App\Models\Users\User;
 use App\Services\Finance\StudentFinancialStatementPdfService;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -19,11 +19,11 @@ class DocumentController extends Controller
         private readonly StudentFinancialStatementPdfService $studentFinancialStatementPdfService,
     ) {}
 
-    public function previewOfferLetter(StudentProgram $studentProgram)
+    public function previewOfferLetter(StudentApplication $studentApplication)
     {
-        // Get the StudentProgram only if it has a verified class list
+        // Get the StudentApplication only if it has a verified class list
         [$documentTemplate, $studentName, $studentIdNumber, $studentNumber, $intakePeriod, $department,
-            $level, $course, $modeOfStudy, $tuition] = DocumentHelper::assembleOfferLetter($studentProgram);
+            $level, $course, $modeOfStudy, $tuition] = DocumentHelper::assembleOfferLetter($studentApplication);
         // PDF Filename
         $fileName = Str::slug($studentName).'-offer-letter-'.time().'.pdf';
         // Generate PDF

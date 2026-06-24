@@ -307,17 +307,17 @@ class StaffDashboardMetricsService
             ->select(
                 'departments.id as department_id',
                 'departments.name as department_name',
-                DB::raw('COUNT(DISTINCT student_programs.id) as student_count'),
+                DB::raw('COUNT(DISTINCT student_applications.id) as student_count'),
             )
             ->join('institution_departments', 'institution_departments.department_id', '=', 'departments.id')
-            ->join('student_programs', 'student_programs.institution_department_id', '=', 'institution_departments.id')
+            ->join('student_applications', 'student_applications.institution_department_id', '=', 'institution_departments.id')
             ->where('departments.is_academic', true)
-            ->where('student_programs.intake_period_id', $intakePeriodId)
-            ->whereNull('student_programs.deleted_at')
+            ->where('student_applications.intake_period_id', $intakePeriodId)
+            ->whereNull('student_applications.deleted_at')
             ->whereExists(function (QueryBuilder $exists): void {
                 $exists->select(DB::raw(1))
                     ->from('class_lists')
-                    ->whereColumn('class_lists.student_program_id', 'student_programs.id')
+                    ->whereColumn('class_lists.student_application_id', 'student_applications.id')
                     ->whereNull('class_lists.deleted_at')
                     ->where('class_lists.attributes->identity_confirmed', true)
                     ->where('class_lists.attributes->disability_confirmed', true)

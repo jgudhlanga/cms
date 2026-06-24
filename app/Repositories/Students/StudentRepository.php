@@ -7,7 +7,7 @@ use App\DTO\Shared\ContactDto;
 use App\DTO\Shared\NextOfKinDto;
 use App\DTO\Students\CreateApplicationDto;
 use App\DTO\Students\CreateStudentApplicationDto;
-use App\DTO\Students\StudentProgramDto;
+use App\DTO\Students\StudentApplicationDto;
 use App\DTO\Students\UpdateStudentDto;
 use App\Enums\AcademicCalendars\AcademicCalendarTypeEnum;
 use App\Enums\Shared\AcademicLevelEnum;
@@ -20,7 +20,7 @@ use App\Repositories\Base\BaseRepository;
 use App\Repositories\Shared\interface\IAddressRepository;
 use App\Repositories\Shared\interface\IContactRepository;
 use App\Repositories\Shared\interface\INextOfKinRepository;
-use App\Repositories\Students\interface\IStudentProgramRepository;
+use App\Repositories\Students\interface\IStudentApplicationRepository;
 use App\Repositories\Students\interface\IStudentRepository;
 use App\Services\Enrollment\EnrollmentLookupService;
 use Carbon\Carbon;
@@ -37,7 +37,7 @@ class StudentRepository extends BaseRepository implements IStudentRepository
         protected IAddressRepository $addressRepository,
         protected IContactRepository $contactRepository,
         protected INextOfKinRepository $nextOfKinRepository,
-        protected IStudentProgramRepository $studentProgramRepository,
+        protected IStudentApplicationRepository $studentApplicationRepository,
     ) {
         parent::__construct($this->student);
     }
@@ -261,7 +261,7 @@ class StudentRepository extends BaseRepository implements IStudentRepository
 
     private function saveProgram(Student $student, CreateApplicationDto|CreateStudentApplicationDto $dto): void
     {
-        $programDto = new StudentProgramDto(
+        $programDto = new StudentApplicationDto(
             student_id: $student->id,
             mode_of_study_id: $dto->mode_of_study_id,
             institution_department_id: $dto->department_id,
@@ -271,7 +271,7 @@ class StudentRepository extends BaseRepository implements IStudentRepository
             required_level_completed: $dto->required_level_completed,
             read_write_acknowledged: $dto->read_write_acknowledged,
         );
-        $this->studentProgramRepository->create($programDto);
+        $this->studentApplicationRepository->create($programDto);
     }
 
     private function saveContact(Student $student, CreateApplicationDto|CreateStudentApplicationDto $dto): void

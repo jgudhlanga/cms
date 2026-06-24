@@ -21,7 +21,7 @@ use App\Models\Shared\Title;
 use App\Models\Students\Student;
 use App\Models\Students\StudentEnrolment;
 use App\Models\Students\StudentEnrolmentStatus;
-use App\Models\Students\StudentProgram;
+use App\Models\Students\StudentApplication;
 use App\Models\Tenants\Tenant;
 use App\Models\Users\User;
 
@@ -64,7 +64,7 @@ test('student course work page returns 404 when enrolment not in class', functio
 
     $otherEnrolment = StudentEnrolment::query()->create([
         'student_id' => $context['studentEnrolment']->student_id,
-        'student_program_id' => $context['studentEnrolment']->student_program_id,
+        'student_application_id' => $context['studentEnrolment']->student_application_id,
         'institution_department_id' => $context['studentEnrolment']->institution_department_id,
         'department_level_id' => $context['studentEnrolment']->department_level_id,
         'department_course_id' => $context['studentEnrolment']->department_course_id,
@@ -164,7 +164,7 @@ function createStudentCourseWorkPageContext(): array
         'end_date' => now()->endOfMonth()->toDateString(),
     ]);
 
-    $studentProgram = StudentProgram::query()->create([
+    $studentApplication = StudentApplication::query()->create([
         'tenant_id' => $tenant->id,
         'student_id' => $student->id,
         'institution_department_id' => $institutionDepartment->id,
@@ -182,7 +182,7 @@ function createStudentCourseWorkPageContext(): array
 
     $studentEnrolment = StudentEnrolment::query()->create([
         'student_id' => $student->id,
-        'student_program_id' => $studentProgram->id,
+        'student_application_id' => $studentApplication->id,
         'institution_department_id' => $institutionDepartment->id,
         'department_level_id' => $departmentLevel->id,
         'department_course_id' => $departmentCourse->id,

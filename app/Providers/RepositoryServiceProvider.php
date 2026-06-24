@@ -114,11 +114,11 @@ use App\Repositories\Students\AcademicRecordRepository;
 use App\Repositories\Students\interface\IAcademicRecordRepository;
 use App\Repositories\Students\interface\ISponsorRepository;
 use App\Repositories\Students\interface\IStudentEnrolmentStatusRepository;
-use App\Repositories\Students\interface\IStudentProgramRepository;
+use App\Repositories\Students\interface\IStudentApplicationRepository;
 use App\Repositories\Students\interface\IStudentRepository;
 use App\Repositories\Students\SponsorRepository;
 use App\Repositories\Students\StudentEnrolmentStatusRepository;
-use App\Repositories\Students\StudentProgramRepository;
+use App\Repositories\Students\StudentApplicationRepository;
 use App\Repositories\Students\StudentRepository;
 use App\Repositories\Users\interface\IUserRepository;
 use App\Repositories\Users\UserRepository;
@@ -239,7 +239,7 @@ class RepositoryServiceProvider extends ServiceProvider
     public function studentRepositories(): void
     {
         $this->app->bind(IStudentRepository::class, StudentRepository::class);
-        $this->app->bind(IStudentProgramRepository::class, StudentProgramRepository::class);
+        $this->app->bind(IStudentApplicationRepository::class, StudentApplicationRepository::class);
         $this->app->bind(ISponsorRepository::class, SponsorRepository::class);
         $this->app->bind(IAcademicRecordRepository::class, AcademicRecordRepository::class);
         $this->app->bind(IStudentEnrolmentStatusRepository::class, StudentEnrolmentStatusRepository::class);

@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import { BaseInput } from '@/components/core/form';
-import { TextFieldType } from '@/enums/inputs';
+import PasswordInputWithToggle from '@/components/core/form/text/PasswordInputWithToggle.vue';
+
+defineOptions({ inheritAttrs: false });
 </script>
 
 <template>
-    <BaseInput
-        inputId="password"
-        :type="TextFieldType.password"
+    <PasswordInputWithToggle
+        input-id="password"
         :label="$t('trans.password')"
-        autocomplete="password"
         :placeholder="$t('trans.password')"
+        v-bind="$attrs"
     />
 </template>

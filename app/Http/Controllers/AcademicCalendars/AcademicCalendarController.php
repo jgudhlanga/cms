@@ -119,7 +119,7 @@ class AcademicCalendarController extends Controller
             })
             ->first();
         $calendarIdsForYear = AcademicCalendar::idsForStartedCalendarYear((string) $academicCalendar->calendar_year);
-        $finalStudentPrograms = $this->resolveFinalStudentPrograms(
+        $finalStudentApplications = $this->resolveFinalStudentApplications(
             $institutionDepartment,
             $calendarIdsForYear,
             (int) $departmentLevelId,
@@ -128,12 +128,12 @@ class AcademicCalendarController extends Controller
         );
 
         $assignedStudentEnrolmentIds = $this->resolveAssignedStudentEnrolmentIds($classConfig);
-        $unassignedFinalStudentPrograms = $this->filterUnassignedFinalStudentPrograms($finalStudentPrograms, $assignedStudentEnrolmentIds);
+        $unassignedFinalStudentApplications = $this->filterUnassignedFinalStudentApplications($finalStudentApplications, $assignedStudentEnrolmentIds);
         $existingClasses = $this->resolveExistingClassesForAllocation($classConfig);
         $classNamePrefix = $this->resolveClassNamePrefix($level);
         $classNumberOffset = $this->resolveClassNumberOffset($existingClasses->pluck('name'), $classNamePrefix, $mode, $classConfig);
         $previewClasses = $this->buildPreviewClasses(
-            $unassignedFinalStudentPrograms,
+            $unassignedFinalStudentApplications,
             (int) ($classConfig?->students_per_class ?? 0),
             $classNamePrefix,
             [],
@@ -156,8 +156,8 @@ class AcademicCalendarController extends Controller
             $level,
             $mode,
             $classConfig,
-            $finalStudentPrograms,
-            $unassignedFinalStudentPrograms,
+            $finalStudentApplications,
+            $unassignedFinalStudentApplications,
             $populatedExistingClassCount > 0,
             $populatedExistingClassCount
         );
@@ -561,7 +561,7 @@ class AcademicCalendarController extends Controller
             ->firstOrFail();
 
         $calendarIdsForYear = AcademicCalendar::idsForStartedCalendarYear((string) $academicCalendar->calendar_year);
-        $finalStudentPrograms = $this->resolveFinalStudentPrograms(
+        $finalStudentApplications = $this->resolveFinalStudentApplications(
             $institutionDepartment,
             $calendarIdsForYear,
             (int) $validated['department_level_id'],
@@ -569,15 +569,15 @@ class AcademicCalendarController extends Controller
             (int) $validated['mode_of_study_id']
         );
         $assignedStudentEnrolmentIds = $this->resolveAssignedStudentEnrolmentIds($classConfig);
-        $unassignedFinalStudentPrograms = $this->filterUnassignedFinalStudentPrograms($finalStudentPrograms, $assignedStudentEnrolmentIds);
+        $unassignedFinalStudentApplications = $this->filterUnassignedFinalStudentApplications($finalStudentApplications, $assignedStudentEnrolmentIds);
         $level = DepartmentLevel::find((int) $validated['department_level_id']);
         $mode = ModeOfStudy::query()->find((int) $validated['mode_of_study_id']);
         $existingClasses = $this->resolveExistingClassesForAllocation($classConfig);
         $tenantId = function_exists('tenant') ? tenant('id') : null;
         $tenantId = $tenantId ?? auth()->user()?->tenant_id;
 
-        DB::transaction(function () use ($classConfig, $unassignedFinalStudentPrograms, $existingClasses, $validated, $level, $mode, $tenantId): void {
-            $remainingStudents = $unassignedFinalStudentPrograms->values();
+        DB::transaction(function () use ($classConfig, $unassignedFinalStudentApplications, $existingClasses, $validated, $level, $mode, $tenantId): void {
+            $remainingStudents = $unassignedFinalStudentApplications->values();
 
             foreach ($existingClasses as $existingClass) {
                 $remainingSeats = (int) $validated['students_per_class'] - (int) $existingClass->student_count;
@@ -600,7 +600,7 @@ class AcademicCalendarController extends Controller
                     ]);
                 }
 
-                $remainingStudents = $this->filterUnassignedFinalStudentPrograms(
+                $remainingStudents = $this->filterUnassignedFinalStudentApplications(
                     $remainingStudents,
                     $balancedChunk->pluck('student_enrolment_id')->map(fn (mixed $id): int => (int) $id)
                 )->values();
@@ -650,15 +650,15 @@ class AcademicCalendarController extends Controller
     {
         return AcademicCalendarStudentEnrolment::query()
             ->join('student_enrolments', 'student_enrolments.id', '=', 'academic_calendar_student_enrolments.student_enrolment_id')
-            ->join('student_programs', 'student_programs.id', '=', 'student_enrolments.student_program_id')
-            ->join('students', 'students.id', '=', 'student_programs.student_id')
+            ->join('student_applications', 'student_applications.id', '=', 'student_enrolments.student_application_id')
+            ->join('students', 'students.id', '=', 'student_applications.student_id')
             ->join('users', 'users.id', '=', 'students.user_id')
             ->leftJoin('genders', 'genders.id', '=', 'students.gender_id')
             ->where('academic_calendar_student_enrolments.academic_calendar_class_id', $academicCalendarClass->id)
             ->whereNull('academic_calendar_student_enrolments.deleted_at')
             ->select([
                 'student_enrolments.id as student_enrolment_id',
-                'student_programs.application_tracking_number',
+                'student_applications.application_tracking_number',
                 'students.student_number',
                 'users.id as user_id',
                 'genders.title as gender_title',
@@ -685,7 +685,7 @@ class AcademicCalendarController extends Controller
     /**
      * @param  list<int>  $academicCalendarIds
      */
-    private function resolveFinalStudentPrograms(
+    private function resolveFinalStudentApplications(
         InstitutionDepartment $institutionDepartment,
         array $academicCalendarIds,
         int $departmentLevelId,
@@ -702,7 +702,7 @@ class AcademicCalendarController extends Controller
     }
 
     private function buildPreviewClasses(
-        Collection $finalStudentPrograms,
+        Collection $finalStudentApplications,
         int $studentsPerClass,
         string $classNamePrefix = 'Class',
         array $existingClassMap = [],
@@ -710,7 +710,7 @@ class AcademicCalendarController extends Controller
         int $classNumberOffset = 0,
         ?ClassConfig $classConfig = null,
     ): array {
-        if ($studentsPerClass < 1 || $finalStudentPrograms->isEmpty()) {
+        if ($studentsPerClass < 1 || $finalStudentApplications->isEmpty()) {
             return [];
         }
 
@@ -720,7 +720,7 @@ class AcademicCalendarController extends Controller
             : $classNamePrefix;
 
         $chunks = $this->mergeTrailingChunkIfBelowHalf(
-            $this->splitStudentsIntoBalancedChunks($finalStudentPrograms, $studentsPerClass)->values(),
+            $this->splitStudentsIntoBalancedChunks($finalStudentApplications, $studentsPerClass)->values(),
             $studentsPerClass
         );
 
@@ -1007,8 +1007,8 @@ class AcademicCalendarController extends Controller
         ?DepartmentLevel $level,
         ?ModeOfStudy $mode,
         ?ClassConfig $classConfig,
-        Collection $finalStudentPrograms,
-        Collection $unassignedFinalStudentPrograms,
+        Collection $finalStudentApplications,
+        Collection $unassignedFinalStudentApplications,
         bool $hasExistingClasses,
         int $populatedExistingClassCount,
     ): array {
@@ -1018,7 +1018,7 @@ class AcademicCalendarController extends Controller
             'unknown' => 0,
         ];
 
-        foreach ($unassignedFinalStudentPrograms as $student) {
+        foreach ($unassignedFinalStudentApplications as $student) {
             $normalizedGender = $this->normalizeGenderValue($student->gender_title ?? null);
 
             if ($normalizedGender === GenderEnum::MALE->value) {
@@ -1038,8 +1038,8 @@ class AcademicCalendarController extends Controller
             'modeOfStudyId' => $mode?->id,
             'classConfigId' => $classConfig?->id,
             'studentsPerClass' => $classConfig?->students_per_class,
-            'finalStudentCount' => $finalStudentPrograms->count(),
-            'newFinalStudentCount' => $unassignedFinalStudentPrograms->count(),
+            'finalStudentCount' => $finalStudentApplications->count(),
+            'newFinalStudentCount' => $unassignedFinalStudentApplications->count(),
             'newStudentGenderCounts' => $newStudentGenderCounts,
             'hasExistingClasses' => $hasExistingClasses,
             'populatedExistingClassCount' => $populatedExistingClassCount,
@@ -1060,17 +1060,17 @@ class AcademicCalendarController extends Controller
             ->values();
     }
 
-    private function filterUnassignedFinalStudentPrograms(Collection $finalStudentPrograms, Collection $assignedStudentEnrolmentIds): Collection
+    private function filterUnassignedFinalStudentApplications(Collection $finalStudentApplications, Collection $assignedStudentEnrolmentIds): Collection
     {
         if ($assignedStudentEnrolmentIds->isEmpty()) {
-            return $finalStudentPrograms->values();
+            return $finalStudentApplications->values();
         }
 
         $assignedLookup = $assignedStudentEnrolmentIds
             ->mapWithKeys(fn (int $id): array => [$id => true])
             ->all();
 
-        return $finalStudentPrograms
+        return $finalStudentApplications
             ->reject(fn (mixed $student): bool => isset($assignedLookup[(int) $student->student_enrolment_id]))
             ->values();
     }

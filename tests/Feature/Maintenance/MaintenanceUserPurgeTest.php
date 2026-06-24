@@ -92,7 +92,7 @@ it('rejects purging a student user with a profile', function (): void {
 it('rejects purging a user outside the maintenance list', function (): void {
     $rootUser = actingAsRootMaintenanceUser();
 
-    $program = createVerifiedStudentProgram('PURGE-OUT-'.strtoupper(Str::random(4)));
+    $program = createVerifiedStudentApplication('PURGE-OUT-'.strtoupper(Str::random(4)));
     $studentUser = $program->student->user;
     $studentUser->update(['tenant_id' => $rootUser->tenant_id]);
     assignStudentRole($studentUser);
@@ -122,7 +122,7 @@ it('bulk purges eligible users and skips ineligible ones', function (): void {
     $eligibleOne = createNoProfileStudentUser($rootUser->tenant_id);
     $eligibleTwo = createNoProfileStudentUser($rootUser->tenant_id);
 
-    $program = createReviewStudentProgram('PURGE-BLK-'.strtoupper(Str::random(4)));
+    $program = createReviewStudentApplication('PURGE-BLK-'.strtoupper(Str::random(4)));
     $ineligible = $program->student->user;
     $ineligible->update(['tenant_id' => $rootUser->tenant_id]);
     assignStudentRole($ineligible);

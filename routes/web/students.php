@@ -28,7 +28,7 @@ Route::prefix('students')->middleware('auth')->group(function () {
 Route::prefix('students')->middleware('auth')->group(function () {
     // get student and programs through user account
     Route::get('{user}/profile', [UserStudentController::class, 'index'])->name('students.profile');
-    Route::get('program/{student_program}/edit', [UserStudentController::class, 'edit'])->name('students.program-edit');
-    Route::put('program/{student_program}/update', [UserStudentController::class, 'updateProgram'])->name('students.program-update');
+    Route::get('program/{student_application}/edit', [UserStudentController::class, 'edit'])->name('students.program-edit');
+    Route::put('program/{student_application}/update', [UserStudentController::class, 'updateProgram'])->name('students.program-update');
 });
 Route::middleware('auth')->resource('students', StudentController::class)->names('students');

@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Workflows;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Workflows\BulkUpdatePaymentStatusRequest;
 use Illuminate\Http\RedirectResponse;
-use App\Models\Students\StudentProgram;
+use App\Models\Students\StudentApplication;
 use App\Http\Requests\Workflows\UploadProofOfPaymentRequest;
 use App\Http\Requests\Workflows\BulkApplicationApproveRequest;
 use App\Helpers\WorkflowHelper;
@@ -19,7 +19,7 @@ class ApplicationWorkflowController extends Controller
     /**
      * @throws Throwable
      */
-    public function uploadProofOfPayment(StudentProgram $studentProgram, UploadProofOfPaymentRequest $request): RedirectResponse
+    public function uploadProofOfPayment(StudentApplication $studentApplication, UploadProofOfPaymentRequest $request): RedirectResponse
     {
         DB::beginTransaction();
         try {
@@ -30,11 +30,11 @@ class ApplicationWorkflowController extends Controller
                 $mediaCollection = 'tuition-fee';
                 $field = 'tuition_fee_proof_of_payment_id';
             }
-            $studentProgram->addMedia($request->proof_of_payment)->toMediaCollection($mediaCollection);
-            $file = $studentProgram->getMedia($mediaCollection)->last();
-            $currentStep = $studentProgram->departmentWorkflowStep;
-            $step = WorkflowHelper::getDepartmentApplicationStepByPosition($studentProgram->institution_department_id, $currentStep->position + 1);
-            $studentProgram->update([$field => $file->id, 'department_application_step_id' => $step->id]);
+            $studentApplication->addMedia($request->proof_of_payment)->toMediaCollection($mediaCollection);
+            $file = $studentApplication->getMedia($mediaCollection)->last();
+            $currentStep = $studentApplication->departmentWorkflowStep;
+            $step = WorkflowHelper::getDepartmentApplicationStepByPosition($studentApplication->institution_department_id, $currentStep->position + 1);
+            $studentApplication->update([$field => $file->id, 'department_application_step_id' => $step->id]);
             DB::commit();
             return back()->with('success', 'Proof of payment uploaded successfully');
         } catch (Throwable $e) {
@@ -48,11 +48,11 @@ class ApplicationWorkflowController extends Controller
     /**
      * @throws Throwable
      */
-    public function approveApplication(StudentProgram $studentProgram, DepartmentApplicationStep $departmentApplicationStep): RedirectResponse
+    public function approveApplication(StudentApplication $studentApplication, DepartmentApplicationStep $departmentApplicationStep): RedirectResponse
     {
         DB::beginTransaction();
         try {
-            $studentProgram->update(['department_application_step_id' => $departmentApplicationStep->id]);
+            $studentApplication->update(['department_application_step_id' => $departmentApplicationStep->id]);
             DB::commit();
             return back()->with('success', 'Application successfully moved to new step');
         } catch (Throwable $e) {
@@ -76,7 +76,7 @@ class ApplicationWorkflowController extends Controller
 
         DB::beginTransaction();
         try {
-            $institutionDepartment->enrolments()
+            $institutionDepartment->studentApplications()
                 ->when($departmentLevelId, fn($q) => $q->where('department_level_id', $departmentLevelId))
                 ->when($currentStepId, fn($q) => $q->where('department_application_step_id', $currentStepId))
                 ->when($intakePeriodId, fn($q) => $q->where('intake_period_id', $intakePeriodId))
@@ -107,7 +107,7 @@ class ApplicationWorkflowController extends Controller
 
         DB::beginTransaction();
         try {
-            $institutionDepartment->enrolments()
+            $institutionDepartment->studentApplications()
                 ->when($departmentLevelId, fn($q) => $q->where('department_level_id', $departmentLevelId))
                 ->when($currentStepId, fn($q) => $q->where('department_application_step_id', $currentStepId))
                 ->when($intakePeriodId, fn($q) => $q->where('intake_period_id', $intakePeriodId))
@@ -127,11 +127,11 @@ class ApplicationWorkflowController extends Controller
     /**
      * @throws Throwable
      */
-    public function confirmRegistrationFeePayment(StudentProgram $studentProgram): RedirectResponse
+    public function confirmRegistrationFeePayment(StudentApplication $studentApplication): RedirectResponse
     {
         DB::beginTransaction();
         try {
-            $studentProgram->update(['registration_fee_confirmed' => !$studentProgram->registration_fee_confirmed]);
+            $studentApplication->update(['registration_fee_confirmed' => !$studentApplication->registration_fee_confirmed]);
             DB::commit();
             return back()->with('success', 'Registration fee successfully confirmed');
         } catch (Throwable $e) {
@@ -145,11 +145,11 @@ class ApplicationWorkflowController extends Controller
     /**
      * @throws Throwable
      */
-    public function confirmTuitionFeePayment(StudentProgram $studentProgram): RedirectResponse
+    public function confirmTuitionFeePayment(StudentApplication $studentApplication): RedirectResponse
     {
         DB::beginTransaction();
         try {
-            $studentProgram->update(['tuition_fee_confirmed' => !$studentProgram->tuition_fee_confirmed]);
+            $studentApplication->update(['tuition_fee_confirmed' => !$studentApplication->tuition_fee_confirmed]);
             DB::commit();
             return back()->with('success', 'Tuition fee successfully confirmed');
         } catch (Throwable $e) {

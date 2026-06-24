@@ -1,5 +1,5 @@
 import { errorAlert } from '@/lib/alerts';
-import { buildJsonApiIndexParams, jsonApiRequestConfig, parseJsonApiStudentPrograms } from '@/lib/json-api';
+import { buildJsonApiIndexParams, jsonApiRequestConfig, parseJsonApiStudentApplications } from '@/lib/json-api';
 import HttpService from '@/services/http.service';
 import type { Enrolment } from '@/types/enrolments';
 import { trans } from 'laravel-vue-i18n';
@@ -20,12 +20,12 @@ export const useStudentProfileApplications = () => {
             isLoading.value = true;
             loadError.value = false;
 
-            const document = await HttpService.get(route('v1.json.students.student-programs.index'), {
+            const document = await HttpService.get(route('v1.json.students.student-applications.index'), {
                 ...jsonApiRequestConfig(),
                 params: buildJsonApiIndexParams({ student: studentId }, { size: 50 }),
             });
 
-            applications.value = parseJsonApiStudentPrograms(document);
+            applications.value = parseJsonApiStudentApplications(document);
         } catch {
             loadError.value = true;
             applications.value = [];

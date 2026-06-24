@@ -248,7 +248,7 @@ class HostelApplicationController extends JsonApiController
             'latestEnrolment.modeOfStudy',
             'latestEnrolment.departmentCourse.course',
             'latestEnrolment.departmentLevel.level',
-            'latestEnrolment.studentProgram.intakePeriod',
+            'latestEnrolment.studentApplication.intakePeriod',
             'latestEnrolment.academicCalendar',
         ];
     }

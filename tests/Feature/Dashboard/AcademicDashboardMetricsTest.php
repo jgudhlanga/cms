@@ -167,7 +167,7 @@ test('dashboard counts distinct ojet students across calendar year semesters', f
 
     $secondEnrolment = StudentEnrolment::query()->create([
         'student_id' => $context['studentEnrolment']->student_id,
-        'student_program_id' => $context['studentEnrolment']->student_program_id,
+        'student_application_id' => $context['studentEnrolment']->student_application_id,
         'institution_department_id' => $context['studentEnrolment']->institution_department_id,
         'department_level_id' => $context['studentEnrolment']->department_level_id,
         'department_course_id' => $context['studentEnrolment']->department_course_id,

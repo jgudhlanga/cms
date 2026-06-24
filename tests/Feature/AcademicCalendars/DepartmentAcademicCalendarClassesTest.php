@@ -23,7 +23,7 @@ use App\Models\Shared\Title;
 use App\Models\Students\Student;
 use App\Models\Students\StudentEnrolment;
 use App\Models\Students\StudentEnrolmentStatus;
-use App\Models\Students\StudentProgram;
+use App\Models\Students\StudentApplication;
 use App\Models\Tenants\Tenant;
 use App\Models\Users\User;
 use Illuminate\Support\Facades\DB;
@@ -92,7 +92,7 @@ function buildDepartmentClassContext(): array
     );
 }
 
-function createFinalStudentProgram(array $context, string $email, string $genderTitle = 'Male'): StudentProgram
+function createFinalStudentApplication(array $context, string $email, string $genderTitle = 'Male'): StudentApplication
 {
     $title = Title::query()->create(['name' => 'Mr '.str($email)->before('@')]);
     $gender = Gender::query()->create(['title' => $genderTitle.' '.str($email)->before('@')]);
@@ -113,7 +113,7 @@ function createFinalStudentProgram(array $context, string $email, string $gender
         'id_type_id' => $idType->id,
         'date_of_birth' => '2001-01-01',
     ]);
-    $studentProgram = StudentProgram::query()->create([
+    $studentApplication = StudentApplication::query()->create([
         'tenant_id' => $context['tenant']->id,
         'student_id' => $student->id,
         'institution_department_id' => $context['institutionDepartment']->id,
@@ -125,23 +125,23 @@ function createFinalStudentProgram(array $context, string $email, string $gender
     ]);
     ClassList::query()->create([
         'tenant_id' => $context['tenant']->id,
-        'student_program_id' => $studentProgram->id,
+        'student_application_id' => $studentApplication->id,
         'type' => ClassListTypeEnum::FINAL->value,
         'attributes' => [],
     ]);
 
     $academicYearOption = AcademicYearOption::query()->create([
-        'name' => 'Test year option '.$studentProgram->id,
+        'name' => 'Test year option '.$studentApplication->id,
         'description' => null,
     ]);
     $enrolmentStatus = StudentEnrolmentStatus::query()->create([
-        'name' => 'Active enrolment '.$studentProgram->id,
+        'name' => 'Active enrolment '.$studentApplication->id,
         'description' => 'Test',
     ]);
 
     StudentEnrolment::query()->create([
         'student_id' => $student->id,
-        'student_program_id' => $studentProgram->id,
+        'student_application_id' => $studentApplication->id,
         'institution_department_id' => $context['institutionDepartment']->id,
         'department_level_id' => $context['departmentLevel']->id,
         'department_course_id' => $context['departmentCourse']->id,
@@ -151,14 +151,14 @@ function createFinalStudentProgram(array $context, string $email, string $gender
         'student_enrolment_status_id' => $enrolmentStatus->id,
     ]);
 
-    return $studentProgram;
+    return $studentApplication;
 }
 
 test('department classes page returns generation context and preview classes', function () {
     $context = buildDepartmentClassContext();
-    createFinalStudentProgram($context, 'student-one@example.com');
-    createFinalStudentProgram($context, 'student-two@example.com');
-    createFinalStudentProgram($context, 'student-three@example.com');
+    createFinalStudentApplication($context, 'student-one@example.com');
+    createFinalStudentApplication($context, 'student-two@example.com');
+    createFinalStudentApplication($context, 'student-three@example.com');
 
     $this->actingAs($context['user']);
     $response = $this->get(route('academic-calendars.department-classes', [
@@ -198,7 +198,7 @@ test('department classes page includes final enrolments from any started academi
         'closing_date' => now()->addMonths(6)->toDateString(),
     ]);
 
-    createFinalStudentProgram($context, 'student-on-older-calendar@example.com');
+    createFinalStudentApplication($context, 'student-on-older-calendar@example.com');
 
     $this->actingAs($context['user']);
     $response = $this->get(route('academic-calendars.department-classes', [
@@ -222,7 +222,7 @@ test('preview merges trailing class when remainder is below half of students per
     $context['classConfig']->update(['students_per_class' => 10]);
 
     for ($i = 1; $i <= 24; $i++) {
-        createFinalStudentProgram($context, "merge-below-half-{$i}@example.com");
+        createFinalStudentApplication($context, "merge-below-half-{$i}@example.com");
     }
 
     $this->actingAs($context['user']);
@@ -248,7 +248,7 @@ test('preview keeps separate trailing class when remainder is at least half of s
     $context['classConfig']->update(['students_per_class' => 10]);
 
     for ($i = 1; $i <= 25; $i++) {
-        createFinalStudentProgram($context, "merge-at-least-half-{$i}@example.com");
+        createFinalStudentApplication($context, "merge-at-least-half-{$i}@example.com");
     }
 
     $this->actingAs($context['user']);
@@ -272,9 +272,9 @@ test('preview keeps separate trailing class when remainder is at least half of s
 
 test('department academic calendar api returns assigned and ready class counts', function () {
     $context = buildDepartmentClassContext();
-    createFinalStudentProgram($context, 'api-student-one@example.com');
-    createFinalStudentProgram($context, 'api-student-two@example.com');
-    createFinalStudentProgram($context, 'api-student-three@example.com');
+    createFinalStudentApplication($context, 'api-student-one@example.com');
+    createFinalStudentApplication($context, 'api-student-two@example.com');
+    createFinalStudentApplication($context, 'api-student-three@example.com');
 
     $this->actingAs($context['user']);
 
@@ -341,11 +341,11 @@ test('department academic calendar api total final list is scoped by intake cale
         'students_per_class' => 2,
     ]);
 
-    createFinalStudentProgram($context, 'intake-a-one@example.com');
-    createFinalStudentProgram($context, 'intake-a-two@example.com');
+    createFinalStudentApplication($context, 'intake-a-one@example.com');
+    createFinalStudentApplication($context, 'intake-a-two@example.com');
 
     $contextForIntakeB = array_merge($context, ['intakePeriod' => $intakeB]);
-    createFinalStudentProgram($contextForIntakeB, 'intake-b-one@example.com');
+    createFinalStudentApplication($contextForIntakeB, 'intake-b-one@example.com');
 
     $this->actingAs($context['user']);
 
@@ -368,9 +368,9 @@ test('department academic calendar api total final list is scoped by intake cale
 
 test('saving generated classes is idempotent for the same context', function () {
     $context = buildDepartmentClassContext();
-    createFinalStudentProgram($context, 'student-a@example.com');
-    createFinalStudentProgram($context, 'student-b@example.com');
-    createFinalStudentProgram($context, 'student-c@example.com');
+    createFinalStudentApplication($context, 'student-a@example.com');
+    createFinalStudentApplication($context, 'student-b@example.com');
+    createFinalStudentApplication($context, 'student-c@example.com');
 
     $this->actingAs($context['user']);
 
@@ -393,7 +393,7 @@ test('saving generated classes is idempotent for the same context', function () 
         ->orderBy('id')
         ->pluck('id')
         ->all();
-    $studentProgramToClassMapAfterFirstSave = DB::table('academic_calendar_student_enrolments')
+    $studentApplicationToClassMapAfterFirstSave = DB::table('academic_calendar_student_enrolments')
         ->whereNull('deleted_at')
         ->pluck('academic_calendar_class_id', 'student_enrolment_id')
         ->all();
@@ -404,7 +404,7 @@ test('saving generated classes is idempotent for the same context', function () 
         ->orderBy('id')
         ->pluck('id')
         ->all();
-    $studentProgramToClassMapAfterSecondSave = DB::table('academic_calendar_student_enrolments')
+    $studentApplicationToClassMapAfterSecondSave = DB::table('academic_calendar_student_enrolments')
         ->whereNull('deleted_at')
         ->pluck('academic_calendar_class_id', 'student_enrolment_id')
         ->all();
@@ -412,14 +412,14 @@ test('saving generated classes is idempotent for the same context', function () 
     expect(DB::table('academic_calendar_classes')->whereNull('deleted_at')->count())->toBe(2);
     expect(DB::table('academic_calendar_student_enrolments')->whereNull('deleted_at')->count())->toBe(3);
     expect($classIdsAfterSecondSave)->toBe($classIdsAfterFirstSave);
-    expect($studentProgramToClassMapAfterSecondSave)->toBe($studentProgramToClassMapAfterFirstSave);
+    expect($studentApplicationToClassMapAfterSecondSave)->toBe($studentApplicationToClassMapAfterFirstSave);
 });
 
 test('saving generated classes adds only newly-finalized students', function () {
     $context = buildDepartmentClassContext();
-    createFinalStudentProgram($context, 'student-aa1@example.com');
-    createFinalStudentProgram($context, 'student-bb1@example.com');
-    createFinalStudentProgram($context, 'student-cc1@example.com');
+    createFinalStudentApplication($context, 'student-aa1@example.com');
+    createFinalStudentApplication($context, 'student-bb1@example.com');
+    createFinalStudentApplication($context, 'student-cc1@example.com');
 
     $this->actingAs($context['user']);
 
@@ -438,7 +438,7 @@ test('saving generated classes adds only newly-finalized students', function () 
 
     $this->post($url, $payload)->assertSessionHas('success');
 
-    $studentProgramToClassMapAfterFirstSave = DB::table('academic_calendar_student_enrolments')
+    $studentApplicationToClassMapAfterFirstSave = DB::table('academic_calendar_student_enrolments')
         ->whereNull('deleted_at')
         ->pluck('academic_calendar_class_id', 'student_enrolment_id')
         ->all();
@@ -446,12 +446,12 @@ test('saving generated classes adds only newly-finalized students', function () 
         ->whereNull('deleted_at')
         ->count();
 
-    createFinalStudentProgram($context, 'student-dd1@example.com');
-    createFinalStudentProgram($context, 'student-ee1@example.com');
+    createFinalStudentApplication($context, 'student-dd1@example.com');
+    createFinalStudentApplication($context, 'student-ee1@example.com');
 
     $this->post($url, $payload)->assertSessionHas('success');
 
-    $studentProgramToClassMapAfterSecondSave = DB::table('academic_calendar_student_enrolments')
+    $studentApplicationToClassMapAfterSecondSave = DB::table('academic_calendar_student_enrolments')
         ->whereNull('deleted_at')
         ->pluck('academic_calendar_class_id', 'student_enrolment_id')
         ->all();
@@ -459,12 +459,12 @@ test('saving generated classes adds only newly-finalized students', function () 
     expect(DB::table('academic_calendar_student_enrolments')->whereNull('deleted_at')->count())->toBe(5);
     expect(DB::table('academic_calendar_classes')->whereNull('deleted_at')->count())->toBeGreaterThanOrEqual($classCountAfterFirstSave);
 
-    foreach ($studentProgramToClassMapAfterFirstSave as $studentEnrolmentId => $academicCalendarClassId) {
-        expect($studentProgramToClassMapAfterSecondSave[$studentEnrolmentId] ?? null)->toBe($academicCalendarClassId);
+    foreach ($studentApplicationToClassMapAfterFirstSave as $studentEnrolmentId => $academicCalendarClassId) {
+        expect($studentApplicationToClassMapAfterSecondSave[$studentEnrolmentId] ?? null)->toBe($academicCalendarClassId);
     }
 
-    $newlyAssignedClassIds = collect($studentProgramToClassMapAfterSecondSave)
-        ->except(array_keys($studentProgramToClassMapAfterFirstSave))
+    $newlyAssignedClassIds = collect($studentApplicationToClassMapAfterSecondSave)
+        ->except(array_keys($studentApplicationToClassMapAfterFirstSave))
         ->values();
 
     expect($newlyAssignedClassIds)->not->toBeEmpty();
@@ -472,9 +472,9 @@ test('saving generated classes adds only newly-finalized students', function () 
 
 test('department classes page shows existing classes when all final students are already assigned', function () {
     $context = buildDepartmentClassContext();
-    createFinalStudentProgram($context, 'assigned-one@example.com');
-    createFinalStudentProgram($context, 'assigned-two@example.com');
-    createFinalStudentProgram($context, 'assigned-three@example.com');
+    createFinalStudentApplication($context, 'assigned-one@example.com');
+    createFinalStudentApplication($context, 'assigned-two@example.com');
+    createFinalStudentApplication($context, 'assigned-three@example.com');
 
     $this->actingAs($context['user']);
 
@@ -513,11 +513,11 @@ test('saving generated classes balances gender when both genders exist', functio
     $context['classConfig']->update(['students_per_class' => 5]);
 
     foreach (range(1, 6) as $index) {
-        createFinalStudentProgram($context, "male-student-{$index}@example.com", 'Male');
+        createFinalStudentApplication($context, "male-student-{$index}@example.com", 'Male');
     }
 
     foreach (range(1, 5) as $index) {
-        createFinalStudentProgram($context, "female-student-{$index}@example.com", 'Female');
+        createFinalStudentApplication($context, "female-student-{$index}@example.com", 'Female');
     }
 
     $this->actingAs($context['user']);
@@ -548,8 +548,8 @@ test('saving generated classes balances gender when both genders exist', functio
 
         $genderCounts = DB::table('academic_calendar_student_enrolments')
             ->join('student_enrolments', 'student_enrolments.id', '=', 'academic_calendar_student_enrolments.student_enrolment_id')
-            ->join('student_programs', 'student_programs.id', '=', 'student_enrolments.student_program_id')
-            ->join('students', 'students.id', '=', 'student_programs.student_id')
+            ->join('student_applications', 'student_applications.id', '=', 'student_enrolments.student_application_id')
+            ->join('students', 'students.id', '=', 'student_applications.student_id')
             ->join('genders', 'genders.id', '=', 'students.gender_id')
             ->where('academic_calendar_student_enrolments.academic_calendar_class_id', $class->id)
             ->whereNull('academic_calendar_student_enrolments.deleted_at')
@@ -574,7 +574,7 @@ test('saving generated classes works with one available gender', function () {
     $context = buildDepartmentClassContext();
 
     foreach (range(1, 5) as $index) {
-        createFinalStudentProgram($context, "single-gender-{$index}@example.com", 'Male');
+        createFinalStudentApplication($context, "single-gender-{$index}@example.com", 'Male');
     }
 
     $this->actingAs($context['user']);
@@ -600,8 +600,8 @@ test('saving generated classes works with one available gender', function () {
     foreach ($classes as $class) {
         $genderCounts = DB::table('academic_calendar_student_enrolments')
             ->join('student_enrolments', 'student_enrolments.id', '=', 'academic_calendar_student_enrolments.student_enrolment_id')
-            ->join('student_programs', 'student_programs.id', '=', 'student_enrolments.student_program_id')
-            ->join('students', 'students.id', '=', 'student_programs.student_id')
+            ->join('student_applications', 'student_applications.id', '=', 'student_enrolments.student_application_id')
+            ->join('students', 'students.id', '=', 'student_applications.student_id')
             ->join('genders', 'genders.id', '=', 'students.gender_id')
             ->where('academic_calendar_student_enrolments.academic_calendar_class_id', $class->id)
             ->whereNull('academic_calendar_student_enrolments.deleted_at')
@@ -617,8 +617,8 @@ test('saving generated classes works with one available gender', function () {
 
 test('class detail page returns students', function () {
     $context = buildDepartmentClassContext();
-    createFinalStudentProgram($context, 'student-aa@example.com');
-    createFinalStudentProgram($context, 'student-bb@example.com');
+    createFinalStudentApplication($context, 'student-aa@example.com');
+    createFinalStudentApplication($context, 'student-bb@example.com');
 
     $this->actingAs($context['user']);
 
@@ -659,9 +659,9 @@ test('class detail page returns students', function () {
 
 test('class detail page exposes move targets and update flag when user has permission and multiple classes exist', function () {
     $context = buildDepartmentClassContext();
-    createFinalStudentProgram($context, 'move-a@example.com');
-    createFinalStudentProgram($context, 'move-b@example.com');
-    createFinalStudentProgram($context, 'move-c@example.com');
+    createFinalStudentApplication($context, 'move-a@example.com');
+    createFinalStudentApplication($context, 'move-b@example.com');
+    createFinalStudentApplication($context, 'move-c@example.com');
 
     $this->actingAs($context['user']);
 
@@ -715,9 +715,9 @@ test('class detail page exposes move targets and update flag when user has permi
 
 test('authorized user can move students to another class in the same config', function () {
     $context = buildDepartmentClassContext();
-    createFinalStudentProgram($context, 'auth-move-a@example.com');
-    createFinalStudentProgram($context, 'auth-move-b@example.com');
-    createFinalStudentProgram($context, 'auth-move-c@example.com');
+    createFinalStudentApplication($context, 'auth-move-a@example.com');
+    createFinalStudentApplication($context, 'auth-move-b@example.com');
+    createFinalStudentApplication($context, 'auth-move-c@example.com');
 
     $context['user']->givePermissionTo('update:academic-calendar-student-enrolments');
 
@@ -799,9 +799,9 @@ test('authorized user can move students to another class in the same config', fu
 
 test('user with student program permission but without viewAny academic calendars can move students', function () {
     $context = buildDepartmentClassContext();
-    createFinalStudentProgram($context, 'no-viewany-move-a@example.com');
-    createFinalStudentProgram($context, 'no-viewany-move-b@example.com');
-    createFinalStudentProgram($context, 'no-viewany-move-c@example.com');
+    createFinalStudentApplication($context, 'no-viewany-move-a@example.com');
+    createFinalStudentApplication($context, 'no-viewany-move-b@example.com');
+    createFinalStudentApplication($context, 'no-viewany-move-c@example.com');
 
     $context['user']->givePermissionTo('update:academic-calendar-student-enrolments');
     $context['user']->revokePermissionTo('viewAny:academic-calendars');
@@ -854,9 +854,9 @@ test('user with student program permission but without viewAny academic calendar
 
 test('moving students without permission is forbidden', function () {
     $context = buildDepartmentClassContext();
-    createFinalStudentProgram($context, 'forbid-a@example.com');
-    createFinalStudentProgram($context, 'forbid-b@example.com');
-    createFinalStudentProgram($context, 'forbid-c@example.com');
+    createFinalStudentApplication($context, 'forbid-a@example.com');
+    createFinalStudentApplication($context, 'forbid-b@example.com');
+    createFinalStudentApplication($context, 'forbid-c@example.com');
 
     $this->actingAs($context['user']);
 
@@ -897,9 +897,9 @@ test('moving students without permission is forbidden', function () {
 
 test('moving students validates target class and enrollment', function () {
     $context = buildDepartmentClassContext();
-    createFinalStudentProgram($context, 'val-a@example.com');
-    createFinalStudentProgram($context, 'val-b@example.com');
-    createFinalStudentProgram($context, 'val-c@example.com');
+    createFinalStudentApplication($context, 'val-a@example.com');
+    createFinalStudentApplication($context, 'val-b@example.com');
+    createFinalStudentApplication($context, 'val-c@example.com');
 
     $context['user']->givePermissionTo('update:academic-calendar-student-enrolments');
 
@@ -954,8 +954,8 @@ test('moving students validates target class and enrollment', function () {
 
 test('authorized user can update academic calendar class name and description', function () {
     $context = buildDepartmentClassContext();
-    createFinalStudentProgram($context, 'patch-class-a@example.com');
-    createFinalStudentProgram($context, 'patch-class-b@example.com');
+    createFinalStudentApplication($context, 'patch-class-a@example.com');
+    createFinalStudentApplication($context, 'patch-class-b@example.com');
 
     $this->actingAs($context['user']);
 
@@ -1006,8 +1006,8 @@ test('authorized user can update academic calendar class name and description', 
 
 test('user without update academic calendar permission cannot update class', function () {
     $context = buildDepartmentClassContext();
-    createFinalStudentProgram($context, 'patch-forbidden-a@example.com');
-    createFinalStudentProgram($context, 'patch-forbidden-b@example.com');
+    createFinalStudentApplication($context, 'patch-forbidden-a@example.com');
+    createFinalStudentApplication($context, 'patch-forbidden-b@example.com');
 
     $this->actingAs($context['user']);
 
@@ -1040,8 +1040,8 @@ test('user without update academic calendar permission cannot update class', fun
 
 test('updating class returns not found when institution department does not match class config', function () {
     $context = buildDepartmentClassContext();
-    createFinalStudentProgram($context, 'patch-404-a@example.com');
-    createFinalStudentProgram($context, 'patch-404-b@example.com');
+    createFinalStudentApplication($context, 'patch-404-a@example.com');
+    createFinalStudentApplication($context, 'patch-404-b@example.com');
 
     $this->actingAs($context['user']);
 
@@ -1080,8 +1080,8 @@ test('updating class returns not found when institution department does not matc
 
 test('updating class validates name is required', function () {
     $context = buildDepartmentClassContext();
-    createFinalStudentProgram($context, 'patch-val-a@example.com');
-    createFinalStudentProgram($context, 'patch-val-b@example.com');
+    createFinalStudentApplication($context, 'patch-val-a@example.com');
+    createFinalStudentApplication($context, 'patch-val-b@example.com');
 
     $this->actingAs($context['user']);
 

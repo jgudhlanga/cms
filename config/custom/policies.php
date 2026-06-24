@@ -80,7 +80,7 @@ return [
     PortalPolicy::class => [
         'viewStudentDashboard',
         'manageStudentPersonalDetails',
-        'manageStudentProgramDetails',
+        'manageStudentApplicationDetails',
         'manageStudentSponsors',
         'manageStudentContacts',
         'manageStudentFinancialRecords',

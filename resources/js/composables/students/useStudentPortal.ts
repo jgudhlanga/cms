@@ -265,12 +265,22 @@ export function useStudentPortal() {
         return null;
     };
 
-    const selectLevel = (levelId: string) => {
-        router.post(
-            route('portal.application.select-level', {
-                level_id: levelId,
-            }),
-        );
+    const selectLevel = (levelId: string, intakePeriodId?: number | null, requiresIntakeSelection = false) => {
+        const payload: Record<string, string | number> = {
+            level_id: levelId,
+        };
+
+        if (intakePeriodId) {
+            payload.intake_period_id = intakePeriodId;
+        }
+
+        router.post(route('portal.application.select-level'), payload, {
+            onError: () => {
+                if (requiresIntakeSelection && !intakePeriodId) {
+                    return;
+                }
+            },
+        });
     };
     return {
         steps,

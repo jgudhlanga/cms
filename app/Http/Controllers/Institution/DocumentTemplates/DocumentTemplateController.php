@@ -15,7 +15,7 @@ use App\Models\Institution\DocumentTemplate;
 use App\Models\Institution\FeeStructure;
 use App\Models\Shared\FeeType;
 use App\Models\Shared\WorkflowStep;
-use App\Models\Students\StudentProgram;
+use App\Models\Students\StudentApplication;
 use App\Repositories\Institution\interface\IDocumentTemplateRepository;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
@@ -132,11 +132,11 @@ class DocumentTemplateController extends Controller
     {
         $this->authorize('view', $documentTemplate);
 
-        $studentProgram = StudentProgram::join('class_lists', 'student_programs.id', '=', 'class_lists.student_program_id')
+        $studentApplication = StudentApplication::join('class_lists', 'student_applications.id', '=', 'class_lists.student_application_id')
             ->where('class_lists.type', 'verified')
-            ->select('student_programs.*')
+            ->select('student_applications.*')
             ->first();
-        $student = $studentProgram->student;
+        $student = $studentApplication->student;
         $user = $student->user;
 
         $studentName = $user->full_name;
@@ -145,15 +145,15 @@ class DocumentTemplateController extends Controller
             $studentIdNumber = $student->passport_number;
         }
         $studentNumber = $student->student_number;
-        $intakePeriod = $studentProgram?->intakePeriod?->name;
-        $department = $studentProgram?->institutionDepartment?->department?->name;
-        $level = $studentProgram?->departmentLevel?->level?->name;
-        $course = $studentProgram?->departmentCourse?->course?->name;
-        $modeOfStudy = $studentProgram?->modeOfStudy?->name;
+        $intakePeriod = $studentApplication?->intakePeriod?->name;
+        $department = $studentApplication?->institutionDepartment?->department?->name;
+        $level = $studentApplication?->departmentLevel?->level?->name;
+        $course = $studentApplication?->departmentCourse?->course?->name;
+        $modeOfStudy = $studentApplication?->modeOfStudy?->name;
 
         $tuitionFeeType = FeeType::where('name', FeeTypeEnum::TUITION_FEE->name())->first();
-        $feeStructure = FeeStructure::where('tenant_id', $studentProgram->tenant_id)->where('level_id', $studentProgram?->departmentLevel?->level?->id)
-            ->where('mode_of_study_id', $studentProgram?->modeOfStudy->id)->where('fee_type_id', $tuitionFeeType?->id)->first();
+        $feeStructure = FeeStructure::where('tenant_id', $studentApplication->tenant_id)->where('level_id', $studentApplication?->departmentLevel?->level?->id)
+            ->where('mode_of_study_id', $studentApplication?->modeOfStudy->id)->where('fee_type_id', $tuitionFeeType?->id)->first();
         $tuition = $feeStructure?->local_fca_amount ?? 0;
         $nameParts = array_filter([$user->first_name,$user->middle_name,$user->last_name]);
         $fileName =  implode('_', $nameParts).'_offer_letter_' . time() . '.pdf';

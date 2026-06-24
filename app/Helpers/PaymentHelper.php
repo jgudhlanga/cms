@@ -12,8 +12,10 @@ use App\Models\Institution\IntakePeriod;
 use App\Models\Institution\Level;
 use App\Models\Ledgers\Ledger;
 use App\Models\Shared\FeeType;
-use App\Models\Students\StudentProgram;
+use App\Models\Students\ApplicationFee;
+use App\Models\Students\StudentApplication;
 use App\Models\Users\User;
+use App\Services\Students\ApplicationFeeService;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Client\ConnectionException;
@@ -135,11 +137,11 @@ class PaymentHelper
         Model $ledgerable,
         ?IntakePeriod $intakePeriod = null,
         bool $hasPaymentGateway = true,
-        ?int $studentProgramId = null,
+        ?int $studentApplicationId = null,
     ): Ledger {
         $attributes = $dto->toArray();
-        if ($studentProgramId !== null) {
-            $attributes['student_program_id'] = $studentProgramId;
+        if ($studentApplicationId !== null) {
+            $attributes['student_application_id'] = $studentApplicationId;
         }
 
         return self::createLedgerEntryOn($ledgerable, $attributes, $intakePeriod, $hasPaymentGateway);
@@ -150,11 +152,11 @@ class PaymentHelper
         Model $ledgerable,
         ?IntakePeriod $intakePeriod = null,
         bool $hasPaymentGateway = true,
-        ?int $studentProgramId = null,
+        ?int $studentApplicationId = null,
     ): Ledger {
         $attributes = $dto->toArray();
-        if ($studentProgramId !== null) {
-            $attributes['student_program_id'] = $studentProgramId;
+        if ($studentApplicationId !== null) {
+            $attributes['student_application_id'] = $studentApplicationId;
         }
 
         return self::createLedgerEntryOn($ledgerable, $attributes, $intakePeriod, $hasPaymentGateway);
@@ -243,71 +245,80 @@ class PaymentHelper
     {
         $user = self::resolveUser($user);
         $intakePeriod = self::resolveIntakePeriod($intakePeriod);
-        /**$name = strtolower(trim($intakePeriod->name ?? ''));
-        if (
-            in_array(
-                $name,
-                ['january intake (sdp & abma)', 'january intake (sdp & abma & ojet)']
-            )
-        ) {
-            return true;
-        }*/
 
-        /*$debugEmails = ['jamesgudhlanga@gmail.com', 'ethanmuku2020@gmail.com'];
-        // Whitelist specific email for dev/testing
-        if (in_array($user->email, $debugEmails)) {
-            return true;
-        }*/
+        $applicationFee = app(ApplicationFeeService::class)->forUserAndIntake($user, $intakePeriod);
 
-        $feeType = self::getFeeTypeBySlug(FeeTypeEnum::APPLICATION_FEE->slug());
-        if (! $feeType) {
+        if ($applicationFee === null) {
             return false;
         }
 
-        return $user->ledgerTransactions()
-            ->where('fee_type_id', $feeType->id)
-            ->where('type', 'receipt')
-            ->where('payment_status', 'paid')
-            ->whereNull('student_program_id')
-            ->whereNull('level_id')
-            ->where('intake_period_id', $intakePeriod->id)
-            ->exists();
+        if ($applicationFee->student_application_id !== null) {
+            return false;
+        }
+
+        return $applicationFee->isPaid() || self::hasPaidReceipt($applicationFee, FeeTypeEnum::APPLICATION_FEE);
     }
 
     /**
      * Determine if the user has paid the application fee for the current intake.
      */
-    public static function hasPaidApplicationFee(User $user): bool
+    public static function hasPaidApplicationFee(User $user, ?IntakePeriod $intakePeriod = null): bool
     {
-        $feeType = PaymentHelper::getFeeTypeBySlug(FeeTypeEnum::APPLICATION_FEE->slug());
+        $intakePeriod = self::resolveIntakePeriod($intakePeriod);
+        $applicationFee = app(ApplicationFeeService::class)->forUserAndIntake($user, $intakePeriod);
 
-        return $user->ledgerTransactions()
-            ->where('type', 'receipt')
-            ->where('fee_type_id', $feeType->id)
-            ->where('payment_status', 'paid')
-            ->where('intake_period_id', Helper::resolveIntakePeriod()->id)
-            ->exists();
+        if ($applicationFee === null) {
+            return false;
+        }
+
+        return $applicationFee->isPaid() || self::hasPaidReceipt($applicationFee, FeeTypeEnum::APPLICATION_FEE);
     }
 
     public static function updateRegistrationFeeLedgerEntries(
-        StudentProgram $studentProgram,
+        StudentApplication $studentApplication,
         ?User $user = null,
         ?IntakePeriod $intakePeriod = null
     ): void {
-        $invoice = self::getLatestLedgerRecord(FeeTypeEnum::APPLICATION_FEE->slug(), 'invoice', $user, $intakePeriod);
-        $receipt = self::getLatestLedgerRecord(FeeTypeEnum::APPLICATION_FEE->slug(), 'receipt', $user, $intakePeriod);
+        $user = self::resolveUser($user);
+        $applicationFee = app(ApplicationFeeService::class)->activeApplicationFee($user);
+
+        if ($applicationFee === null) {
+            $intakePeriod = self::resolveIntakePeriod($intakePeriod);
+            $applicationFee = app(ApplicationFeeService::class)->forUserAndIntake($user, $intakePeriod);
+        } else {
+            $intakePeriod = $applicationFee->intakePeriod;
+        }
+
+        if ($applicationFee === null) {
+            return;
+        }
+
+        $invoice = self::getLatestLedgerRecordForLedgerable(
+            $applicationFee,
+            FeeTypeEnum::APPLICATION_FEE->slug(),
+            'invoice',
+            $intakePeriod,
+        );
+        $receipt = self::getLatestLedgerRecordForLedgerable(
+            $applicationFee,
+            FeeTypeEnum::APPLICATION_FEE->slug(),
+            'receipt',
+            $intakePeriod,
+        );
 
         if (! $invoice || ! $receipt) {
             return;
         }
 
         $updateData = [
-            'student_program_id' => $studentProgram->id,
-            'level_id' => $studentProgram->departmentLevel->level_id,
+            'student_application_id' => $studentApplication->id,
+            'level_id' => $studentApplication->departmentLevel->level_id,
         ];
 
         $invoice->update($updateData);
         $receipt->update($updateData);
+
+        app(ApplicationFeeService::class)->markSubmitted($applicationFee, $studentApplication);
     }
 
     /* -----------------------------------------------------------------
@@ -325,7 +336,7 @@ class PaymentHelper
         float $amount,
         string $systemReference,
         string $paymentReference,
-        StudentProgram $studentProgram,
+        StudentApplication $studentApplication,
         ?IntakePeriod $intakePeriod = null
     ): void {
         $invoiceDto = new CreateInvoiceDto(
@@ -353,7 +364,7 @@ class PaymentHelper
         $invoice = self::createInvoiceEntry($invoiceDto, $user, $intakePeriod, false);
         $receipt = self::createReceiptEntry($receiptDto, $user, $intakePeriod, false);
 
-        self::updateRegistrationFeeLedgerEntries($studentProgram, $user, $intakePeriod);
+        self::updateRegistrationFeeLedgerEntries($studentApplication, $user, $intakePeriod);
 
         if ($mediaId = self::handleProofOfPaymentUpload($invoice)) {
             $invoice->update(['proof_of_payment_id' => $mediaId]);

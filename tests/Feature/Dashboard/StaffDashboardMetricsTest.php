@@ -23,11 +23,11 @@ test('dashboard returns staff metrics for users with staff tab access', function
     $user = userWithStaffDashboardPermission();
     $intakePeriod = seedDashboardIntakePeriod($user->tenant_id);
 
-    $confirmedProgram = createVerifiedStudentProgram('STAFF-DASH-CONF-01');
+    $confirmedProgram = createVerifiedStudentApplication('STAFF-DASH-CONF-01');
     $confirmedProgram->institutionDepartment->department->update(['is_academic' => true]);
     $confirmedProgram->update(['intake_period_id' => $intakePeriod->id]);
     ClassList::query()
-        ->where('student_program_id', $confirmedProgram->id)
+        ->where('student_application_id', $confirmedProgram->id)
         ->update([
             'type' => ClassListTypeEnum::PROVISIONAL->value,
             'attributes' => [

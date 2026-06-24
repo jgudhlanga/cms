@@ -44,4 +44,5 @@ yarn-error.log
 .DS_Store
 /storage/data/staff-imports/previews/
 /storage/data/course-syllabus-imports/previews/
+/storage/data/course-work-imports/previews/
 /public/*.xlsx

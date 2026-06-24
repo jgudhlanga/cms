@@ -36,11 +36,11 @@ class HostelApplicationSchema extends Schema
         'student.latestEnrolment.institutionDepartment.department',
         'student.latestEnrolment.departmentLevel.level',
         'student.latestEnrolment.departmentCourse.course',
-        'student.latestEnrolment.studentProgram.intakePeriod',
+        'student.latestEnrolment.studentApplication.intakePeriod',
         'studentEnrolment.institutionDepartment.department',
         'studentEnrolment.departmentCourse.course',
         'studentEnrolment.departmentLevel.level',
-        'studentEnrolment.studentProgram.intakePeriod',
+        'studentEnrolment.studentApplication.intakePeriod',
         'gender',
     ];
 
@@ -118,8 +118,8 @@ class HostelApplicationSchema extends Schema
                     ?? $application->student?->latestEnrolment?->institutionDepartment?->department?->name
             )->readOnly(),
             Str::make('calendarYear')->extractUsing(
-                fn (HostelApplication $application) => $application->studentEnrolment?->studentProgram?->intakePeriod?->calendar_year
-                    ?? $application->student?->latestEnrolment?->studentProgram?->intakePeriod?->calendar_year
+                fn (HostelApplication $application) => $application->studentEnrolment?->studentApplication?->intakePeriod?->calendar_year
+                    ?? $application->student?->latestEnrolment?->studentApplication?->intakePeriod?->calendar_year
             )->readOnly(),
             Str::make('physicalAddress')->extractUsing(
                 fn (HostelApplication $application) => StudentPhysicalAddressFormatter::fromStudent($application->student)

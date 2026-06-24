@@ -16,7 +16,7 @@ use App\Models\Shared\Title;
 use App\Models\Students\Student;
 use App\Models\Students\StudentEnrolment;
 use App\Models\Students\StudentEnrolmentStatus;
-use App\Models\Students\StudentProgram;
+use App\Models\Students\StudentApplication;
 use App\Models\Users\User;
 use Illuminate\Support\Str;
 
@@ -52,21 +52,21 @@ function createFeeType(FeeTypeEnum $feeTypeEnum): FeeType
     );
 }
 
-function createReviewStudentProgram(string $studentNumber): StudentProgram
+function createReviewStudentApplication(string $studentNumber): StudentApplication
 {
-    $program = createVerifiedStudentProgram($studentNumber);
+    $program = createVerifiedStudentApplication($studentNumber);
     $reviewStep = resolveDepartmentApplicationStep($program, WorkflowStepEnum::REVIEW);
 
     $program->update([
         'department_application_step_id' => $reviewStep->id,
     ]);
 
-    ClassList::query()->where('student_program_id', $program->id)->delete();
+    ClassList::query()->where('student_application_id', $program->id)->delete();
 
     return $program->fresh();
 }
 
-function createActiveEnrolmentForProgram(StudentProgram $program): void
+function createActiveEnrolmentForProgram(StudentApplication $program): void
 {
     $suffix = Str::lower(Str::random(6));
 
@@ -90,7 +90,7 @@ function createActiveEnrolmentForProgram(StudentProgram $program): void
 
     StudentEnrolment::query()->create([
         'student_id' => $program->student_id,
-        'student_program_id' => $program->id,
+        'student_application_id' => $program->id,
         'institution_department_id' => $program->institution_department_id,
         'department_level_id' => $program->department_level_id,
         'department_course_id' => $program->department_course_id,
@@ -101,7 +101,7 @@ function createActiveEnrolmentForProgram(StudentProgram $program): void
     ]);
 }
 
-function createPaidApplicationReceipt(User $user, StudentProgram $program): void
+function createPaidApplicationReceipt(User $user, StudentApplication $program): void
 {
     $feeType = createFeeType(FeeTypeEnum::APPLICATION_FEE);
 
@@ -115,7 +115,7 @@ function createPaidApplicationReceipt(User $user, StudentProgram $program): void
         'amount' => 50,
         'currency' => 'USD',
         'system_reference' => 'SYS-'.Str::upper(Str::random(8)),
-        'student_program_id' => $program->id,
+        'student_application_id' => $program->id,
         'intake_period_id' => $program->intake_period_id,
     ]);
 }
@@ -151,7 +151,7 @@ it('includes student role users without a student profile', function (): void {
 it('includes student role users with a review programme and no active enrolment or fees', function (): void {
     $rootUser = actingAsRootMaintenanceUser();
 
-    $program = createReviewStudentProgram('NEU-REV-'.strtoupper(Str::random(4)));
+    $program = createReviewStudentApplication('NEU-REV-'.strtoupper(Str::random(4)));
     $studentUser = $program->student->user;
     $studentUser->update(['tenant_id' => $rootUser->tenant_id]);
     assignStudentRole($studentUser);
@@ -165,7 +165,7 @@ it('includes student role users with a review programme and no active enrolment 
 it('includes student role users with a verified class list and no active enrolment or fees', function (): void {
     $rootUser = actingAsRootMaintenanceUser();
 
-    $program = createVerifiedStudentProgram('NEU-VER-'.strtoupper(Str::random(4)));
+    $program = createVerifiedStudentApplication('NEU-VER-'.strtoupper(Str::random(4)));
     $studentUser = $program->student->user;
     $studentUser->update(['tenant_id' => $rootUser->tenant_id]);
     assignStudentRole($studentUser);
@@ -182,7 +182,7 @@ it('includes student role users with a verified class list and no active enrolme
 it('excludes student role users with an active enrolment', function (): void {
     actingAsRootMaintenanceUser();
 
-    $program = createVerifiedStudentProgram('NEU-ACT-'.strtoupper(Str::random(4)));
+    $program = createVerifiedStudentApplication('NEU-ACT-'.strtoupper(Str::random(4)));
     $studentUser = $program->student->user;
     assignStudentRole($studentUser);
     createActiveEnrolmentForProgram($program);
@@ -196,7 +196,7 @@ it('excludes student role users with an active enrolment', function (): void {
 it('includes student role users with a paid application receipt when otherwise eligible', function (): void {
     $rootUser = actingAsRootMaintenanceUser();
 
-    $program = createReviewStudentProgram('NEU-FEE-'.strtoupper(Str::random(4)));
+    $program = createReviewStudentApplication('NEU-FEE-'.strtoupper(Str::random(4)));
     $studentUser = $program->student->user;
     $studentUser->update(['tenant_id' => $rootUser->tenant_id]);
     assignStudentRole($studentUser);
@@ -218,7 +218,7 @@ it('filters non-enrolled student users by application status no profile', functi
     ]);
     assignStudentRole($noProfileUser);
 
-    $program = createVerifiedStudentProgram('NEU-FIL-'.strtoupper(Str::random(4)));
+    $program = createVerifiedStudentApplication('NEU-FIL-'.strtoupper(Str::random(4)));
     $verifiedUser = $program->student->user;
     $verifiedUser->update(['tenant_id' => $rootUser->tenant_id]);
     assignStudentRole($verifiedUser);
@@ -244,7 +244,7 @@ it('filters non-enrolled student users by application status verified', function
     ]);
     assignStudentRole($noProfileUser);
 
-    $program = createVerifiedStudentProgram('NEU-FVR-'.strtoupper(Str::random(4)));
+    $program = createVerifiedStudentApplication('NEU-FVR-'.strtoupper(Str::random(4)));
     $verifiedUser = $program->student->user;
     $verifiedUser->update(['tenant_id' => $rootUser->tenant_id]);
     assignStudentRole($verifiedUser);
@@ -270,7 +270,7 @@ it('filters non-enrolled student users by application status review', function (
     ]);
     assignStudentRole($noProfileUser);
 
-    $program = createReviewStudentProgram('NEU-FRV-'.strtoupper(Str::random(4)));
+    $program = createReviewStudentApplication('NEU-FRV-'.strtoupper(Str::random(4)));
     $reviewUser = $program->student->user;
     $reviewUser->update(['tenant_id' => $rootUser->tenant_id]);
     assignStudentRole($reviewUser);
@@ -289,7 +289,7 @@ it('filters non-enrolled student users by application status review', function (
 it('excludes non-student role users even when profile criteria match', function (): void {
     actingAsRootMaintenanceUser();
 
-    $program = createReviewStudentProgram('NEU-LEC-'.strtoupper(Str::random(4)));
+    $program = createReviewStudentApplication('NEU-LEC-'.strtoupper(Str::random(4)));
     $lecturerUser = $program->student->user;
     $lecturerUser->syncRoles([RoleEnum::LECTURER->name()]);
 

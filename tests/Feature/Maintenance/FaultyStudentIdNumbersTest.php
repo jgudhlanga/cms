@@ -9,7 +9,7 @@ use App\Models\Shared\MaritalStatus;
 use App\Models\Shared\Title;
 use App\Models\Students\Sponsor;
 use App\Models\Students\Student;
-use App\Models\Students\StudentProgram;
+use App\Models\Students\StudentApplication;
 use App\Models\Users\User;
 use Illuminate\Support\Str;
 
@@ -50,11 +50,11 @@ function responseStudentIds($response): array
         ->all();
 }
 
-function createMergePreviewStudentProgram(
+function createMergePreviewStudentApplication(
     Student $student,
     WorkflowStepEnum $workflowStep = WorkflowStepEnum::REVIEW,
-): StudentProgram {
-    $template = createVerifiedStudentProgram('TMP-'.strtoupper(Str::random(4)));
+): StudentApplication {
+    $template = createVerifiedStudentApplication('TMP-'.strtoupper(Str::random(4)));
     $departmentStep = resolveDepartmentApplicationStep($template, $workflowStep);
 
     $template->update([
@@ -67,7 +67,7 @@ function createMergePreviewStudentProgram(
     $template->departmentLevel()->update(['tenant_id' => $student->tenant_id]);
     $template->departmentCourse()->update(['tenant_id' => $student->tenant_id]);
     ClassList::query()
-        ->where('student_program_id', $template->id)
+        ->where('student_application_id', $template->id)
         ->update(['tenant_id' => $student->tenant_id]);
 
     return $template->fresh([
@@ -509,8 +509,8 @@ it('includes application statuses on merge preview page', function (): void {
     $target = createFaultyStudentTestRecord($rootUser, '63-1234567N63', 'MERGE-APP-TGT-'.strtoupper(Str::random(4)));
     $faulty = createFaultyStudentTestRecord($rootUser, 'invalid-id', 'MERGE-APP-FLT-'.strtoupper(Str::random(4)));
 
-    $faultyProgram = createMergePreviewStudentProgram($faulty, WorkflowStepEnum::REVIEW);
-    $targetProgram = createMergePreviewStudentProgram($target, WorkflowStepEnum::ACCEPTED);
+    $faultyProgram = createMergePreviewStudentApplication($faulty, WorkflowStepEnum::REVIEW);
+    $targetProgram = createMergePreviewStudentApplication($target, WorkflowStepEnum::ACCEPTED);
 
     $this->get(route('maintenance.faulty-student-ids.merge', [
         'student' => $faulty->id,
@@ -535,7 +535,7 @@ it('rejects an application from the merge preview page', function (): void {
 
     $target = createFaultyStudentTestRecord($rootUser, '63-1234567N63', 'MERGE-REJ-TGT-'.strtoupper(Str::random(4)));
     $faulty = createFaultyStudentTestRecord($rootUser, 'invalid-id', 'MERGE-REJ-FLT-'.strtoupper(Str::random(4)));
-    $program = createMergePreviewStudentProgram($faulty, WorkflowStepEnum::REVIEW);
+    $program = createMergePreviewStudentApplication($faulty, WorkflowStepEnum::REVIEW);
 
     $this->from(route('maintenance.faulty-student-ids.merge', [
         'student' => $faulty->id,
@@ -549,7 +549,7 @@ it('rejects an application from the merge preview page', function (): void {
 
     expect($program->fresh()->departmentWorkflowStep?->workflowStep?->slug)
         ->toBe(WorkflowStepEnum::REJECTED->slug())
-        ->and(ClassList::query()->where('student_program_id', $program->id)->first()?->type)
+        ->and(ClassList::query()->where('student_application_id', $program->id)->first()?->type)
         ->toBe(ClassListTypeEnum::FAILED);
 });
 
@@ -558,12 +558,12 @@ it('forbids rejecting terminal applications from merge preview', function (): vo
 
     $target = createFaultyStudentTestRecord($rootUser, '63-1234567N63');
     $faulty = createFaultyStudentTestRecord($rootUser, 'invalid-id');
-    $program = createMergePreviewStudentProgram($faulty, WorkflowStepEnum::ENROLLED);
+    $program = createMergePreviewStudentApplication($faulty, WorkflowStepEnum::ENROLLED);
 
     $this->patch(route('maintenance.faulty-student-ids.merge.reject-application', $program), [
         'source_student_id' => $faulty->id,
         'target_student_id' => $target->id,
-    ])->assertSessionHasErrors('student_program');
+    ])->assertSessionHasErrors('student_application');
 });
 
 it('forbids rejecting applications that are not part of the merge preview', function (): void {
@@ -572,12 +572,12 @@ it('forbids rejecting applications that are not part of the merge preview', func
     $target = createFaultyStudentTestRecord($rootUser, '63-1234567N63');
     $faulty = createFaultyStudentTestRecord($rootUser, 'invalid-id');
     $otherStudent = createFaultyStudentTestRecord($rootUser, 'also-invalid', 'OTHER-'.strtoupper(Str::random(4)));
-    $program = createMergePreviewStudentProgram($otherStudent, WorkflowStepEnum::REVIEW);
+    $program = createMergePreviewStudentApplication($otherStudent, WorkflowStepEnum::REVIEW);
 
     $this->patch(route('maintenance.faulty-student-ids.merge.reject-application', $program), [
         'source_student_id' => $faulty->id,
         'target_student_id' => $target->id,
-    ])->assertSessionHasErrors('student_program');
+    ])->assertSessionHasErrors('student_application');
 });
 
 it('forbids users without root manage from merge reject endpoint', function (): void {
@@ -585,7 +585,7 @@ it('forbids users without root manage from merge reject endpoint', function (): 
 
     $target = createFaultyStudentTestRecord($rootUser, '63-1234567N63');
     $faulty = createFaultyStudentTestRecord($rootUser, 'invalid-id');
-    $program = createMergePreviewStudentProgram($faulty, WorkflowStepEnum::REVIEW);
+    $program = createMergePreviewStudentApplication($faulty, WorkflowStepEnum::REVIEW);
     $user = User::factory()->create(['tenant_id' => $rootUser->tenant_id]);
 
     $this->actingAs($user)

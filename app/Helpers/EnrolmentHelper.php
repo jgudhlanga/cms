@@ -9,11 +9,11 @@ use App\Models\Enrolments\ClassList;
 use App\Models\Institution\DepartmentApplicationStep;
 use App\Models\Shared\WorkflowStep;
 use App\Models\Students\Student;
-use App\Models\Students\StudentProgram;
+use App\Models\Students\StudentApplication;
 
 class EnrolmentHelper
 {
-    public static function resolveStudentNumber(StudentProgram $program): string
+    public static function resolveStudentNumber(StudentApplication $program): string
     {
         $student = $program->student;
         $identity = $student->isZimbabwean() ? $student->id_number : $student->passport_number;
@@ -28,7 +28,7 @@ class EnrolmentHelper
     }
 
 
-    public static function isEntryLevel(StudentProgram $program): bool
+    public static function isEntryLevel(StudentApplication $program): bool
     {
         $entryLevels = [
             strtolower(LevelEnum::NC->name()),
@@ -41,11 +41,11 @@ class EnrolmentHelper
         return in_array($levelName, $entryLevels, true);
     }
 
-    public static function rejectOtherApplications(Student $student, StudentProgram $currentProgram): void
+    public static function rejectOtherApplications(Student $student, StudentApplication $currentProgram): void
     {
         $rejectedStepId = WorkflowStep::where('slug', WorkflowStepEnum::REJECTED->slug())->value('id');
 
-        $otherPrograms = $student->programs()
+        $otherPrograms = $student->applications()
             ->where('id', '!=', $currentProgram->id)
             ->with('classList')
             ->get();

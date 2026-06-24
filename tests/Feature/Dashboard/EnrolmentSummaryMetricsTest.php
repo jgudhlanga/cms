@@ -4,7 +4,7 @@ use App\Enums\Shared\ClassListTypeEnum;
 use App\Enums\Shared\WorkflowStepEnum;
 use App\Models\Enrolments\ClassList;
 use App\Models\Institution\IntakePeriod;
-use App\Models\Students\StudentProgram;
+use App\Models\Students\StudentApplication;
 
 beforeEach(function () {
     enableDashboardModule();
@@ -15,37 +15,37 @@ test('dashboard returns enrolment summary metrics for selected intake period', f
     $user = userWithDashboardPermission();
     $intakePeriod = seedDashboardIntakePeriod($user->tenant_id);
 
-    $reviewProgram = createVerifiedStudentProgram('DASH-REVIEW-01');
+    $reviewProgram = createVerifiedStudentApplication('DASH-REVIEW-01');
     $reviewProgram->update([
         'intake_period_id' => $intakePeriod->id,
         'department_application_step_id' => resolveDepartmentApplicationStep($reviewProgram, WorkflowStepEnum::REVIEW)->id,
     ]);
 
-    $acceptedProgram = createVerifiedStudentProgram('DASH-ACCEPTED-01');
+    $acceptedProgram = createVerifiedStudentApplication('DASH-ACCEPTED-01');
     $acceptedProgram->update([
         'intake_period_id' => $intakePeriod->id,
         'department_application_step_id' => resolveDepartmentApplicationStep($acceptedProgram, WorkflowStepEnum::ACCEPTED)->id,
     ]);
 
-    $enrolledProgram = createVerifiedStudentProgram('DASH-ENROLLED-01');
+    $enrolledProgram = createVerifiedStudentApplication('DASH-ENROLLED-01');
     $enrolledProgram->update([
         'intake_period_id' => $intakePeriod->id,
         'department_application_step_id' => resolveDepartmentApplicationStep($enrolledProgram, WorkflowStepEnum::ENROLLED)->id,
     ]);
 
-    $waitlistedProgram = createVerifiedStudentProgram('DASH-WAITLISTED-01');
+    $waitlistedProgram = createVerifiedStudentApplication('DASH-WAITLISTED-01');
     $waitlistedProgram->update([
         'intake_period_id' => $intakePeriod->id,
         'department_application_step_id' => resolveDepartmentApplicationStep($waitlistedProgram, WorkflowStepEnum::WAITLISTED)->id,
     ]);
 
-    $confirmedProgram = createVerifiedStudentProgram('DASH-CONFIRMED-01');
+    $confirmedProgram = createVerifiedStudentApplication('DASH-CONFIRMED-01');
     $confirmedProgram->update([
         'intake_period_id' => $intakePeriod->id,
         'department_application_step_id' => resolveDepartmentApplicationStep($confirmedProgram, WorkflowStepEnum::ACCEPTED)->id,
     ]);
     ClassList::query()
-        ->where('student_program_id', $confirmedProgram->id)
+        ->where('student_application_id', $confirmedProgram->id)
         ->update([
             'type' => ClassListTypeEnum::PROVISIONAL->value,
             'attributes' => [
@@ -55,13 +55,13 @@ test('dashboard returns enrolment summary metrics for selected intake period', f
             ],
         ]);
 
-    $provisionalOnlyProgram = createVerifiedStudentProgram('DASH-PROVISIONAL-01');
+    $provisionalOnlyProgram = createVerifiedStudentApplication('DASH-PROVISIONAL-01');
     $provisionalOnlyProgram->update([
         'intake_period_id' => $intakePeriod->id,
         'department_application_step_id' => resolveDepartmentApplicationStep($provisionalOnlyProgram, WorkflowStepEnum::REVIEW)->id,
     ]);
     ClassList::query()
-        ->where('student_program_id', $provisionalOnlyProgram->id)
+        ->where('student_application_id', $provisionalOnlyProgram->id)
         ->update([
             'type' => ClassListTypeEnum::PROVISIONAL->value,
             'attributes' => [
@@ -71,13 +71,13 @@ test('dashboard returns enrolment summary metrics for selected intake period', f
             ],
         ]);
 
-    $failedProgram = createVerifiedStudentProgram('DASH-FAILED-01');
+    $failedProgram = createVerifiedStudentApplication('DASH-FAILED-01');
     $failedProgram->update([
         'intake_period_id' => $intakePeriod->id,
         'department_application_step_id' => resolveDepartmentApplicationStep($failedProgram, WorkflowStepEnum::REVIEW)->id,
     ]);
     ClassList::query()
-        ->where('student_program_id', $failedProgram->id)
+        ->where('student_application_id', $failedProgram->id)
         ->update([
             'type' => ClassListTypeEnum::FAILED->value,
         ]);
@@ -109,34 +109,34 @@ test('dashboard enrolment summary metrics are scoped to selected intake period',
         'is_active' => true,
     ]);
 
-    $selectedProgram = createVerifiedStudentProgram('DASH-SELECTED-01');
+    $selectedProgram = createVerifiedStudentApplication('DASH-SELECTED-01');
     $selectedProgram->update([
         'intake_period_id' => $selectedIntake->id,
         'department_application_step_id' => resolveDepartmentApplicationStep($selectedProgram, WorkflowStepEnum::ACCEPTED)->id,
     ]);
 
-    $otherProgram = createVerifiedStudentProgram('DASH-OTHER-01');
+    $otherProgram = createVerifiedStudentApplication('DASH-OTHER-01');
     $otherProgram->update([
         'intake_period_id' => $otherIntake->id,
         'department_application_step_id' => resolveDepartmentApplicationStep($otherProgram, WorkflowStepEnum::ACCEPTED)->id,
     ]);
 
-    $selectedProvisionalProgram = createVerifiedStudentProgram('DASH-SELECTED-PROV-01');
+    $selectedProvisionalProgram = createVerifiedStudentApplication('DASH-SELECTED-PROV-01');
     $selectedProvisionalProgram->update([
         'intake_period_id' => $selectedIntake->id,
         'department_application_step_id' => resolveDepartmentApplicationStep($selectedProvisionalProgram, WorkflowStepEnum::REVIEW)->id,
     ]);
     ClassList::query()
-        ->where('student_program_id', $selectedProvisionalProgram->id)
+        ->where('student_application_id', $selectedProvisionalProgram->id)
         ->update(['type' => ClassListTypeEnum::PROVISIONAL->value]);
 
-    $otherFailedProgram = createVerifiedStudentProgram('DASH-OTHER-FAILED-01');
+    $otherFailedProgram = createVerifiedStudentApplication('DASH-OTHER-FAILED-01');
     $otherFailedProgram->update([
         'intake_period_id' => $otherIntake->id,
         'department_application_step_id' => resolveDepartmentApplicationStep($otherFailedProgram, WorkflowStepEnum::REVIEW)->id,
     ]);
     ClassList::query()
-        ->where('student_program_id', $otherFailedProgram->id)
+        ->where('student_application_id', $otherFailedProgram->id)
         ->update(['type' => ClassListTypeEnum::FAILED->value]);
 
     $this->actingAs($user)
@@ -164,18 +164,18 @@ test('dashboard enrolment summary metrics ignore soft deleted student programs',
     $user = userWithDashboardPermission();
     $intakePeriod = seedDashboardIntakePeriod($user->tenant_id);
 
-    $activeProgram = createVerifiedStudentProgram('DASH-ACTIVE-01');
+    $activeProgram = createVerifiedStudentApplication('DASH-ACTIVE-01');
     $activeProgram->update([
         'intake_period_id' => $intakePeriod->id,
         'department_application_step_id' => resolveDepartmentApplicationStep($activeProgram, WorkflowStepEnum::ACCEPTED)->id,
     ]);
 
-    $deletedProgram = createVerifiedStudentProgram('DASH-DELETED-01');
+    $deletedProgram = createVerifiedStudentApplication('DASH-DELETED-01');
     $deletedProgram->update([
         'intake_period_id' => $intakePeriod->id,
         'department_application_step_id' => resolveDepartmentApplicationStep($deletedProgram, WorkflowStepEnum::ACCEPTED)->id,
     ]);
-    StudentProgram::query()->whereKey($deletedProgram->id)->delete();
+    StudentApplication::query()->whereKey($deletedProgram->id)->delete();
 
     $this->actingAs($user)
         ->get('/dashboard?intake_period_id='.$intakePeriod->id)

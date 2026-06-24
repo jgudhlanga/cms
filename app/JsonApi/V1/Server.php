@@ -11,7 +11,7 @@ use App\JsonApi\V1\HMS\HostelQueries\HostelQuerySchema;
 use App\JsonApi\V1\HMS\HostelRoomAllocations\HostelRoomAllocationSchema;
 use App\JsonApi\V1\HMS\HostelRooms\HostelRoomSchema;
 use App\JsonApi\V1\HMS\Hostels\HostelSchema;
-use App\JsonApi\V1\Students\StudentPrograms\StudentProgramSchema;
+use App\JsonApi\V1\Students\StudentApplications\StudentApplicationSchema;
 use LaravelJsonApi\Core\Server\Server as BaseServer;
 
 class Server extends BaseServer
@@ -34,7 +34,7 @@ class Server extends BaseServer
             HostelLeaveSchema::class,
             HostelNoticeSchema::class,
             HmsSettingSchema::class,
-            StudentProgramSchema::class,
+            StudentApplicationSchema::class,
             CourseWorkMarkSchema::class,
         ];
     }

@@ -124,7 +124,7 @@ class HandleInertiaRequests extends Middleware
         return [
             'viewOwnDashboard:students',
             'manageOwnStudentPersonalDetails:students',
-            'manageOwnStudentProgramDetails:students',
+            'manageOwnStudentApplicationDetails:students',
             'manageOwnStudentSponsorDetails:students',
             'manageOwnStudentContactDetails:students',
             'manageOwnStudentFinancialDetails:students',

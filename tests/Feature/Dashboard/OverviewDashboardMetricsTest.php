@@ -27,7 +27,7 @@ test('dashboard returns overview metrics for users with overview tab access', fu
     $user = userWithOverviewDashboardPermission();
     $intakePeriod = seedDashboardIntakePeriod($user->tenant_id);
 
-    $confirmedProgram = createVerifiedStudentProgram('OVERVIEW-DASH-CONF-01');
+    $confirmedProgram = createVerifiedStudentApplication('OVERVIEW-DASH-CONF-01');
     $confirmedProgram->institutionDepartment->department->update(['is_academic' => true]);
     $confirmedProgram->institutionDepartment->update(['tenant_id' => $user->tenant_id]);
     DepartmentCourse::query()
@@ -38,7 +38,7 @@ test('dashboard returns overview metrics for users with overview tab access', fu
         'tenant_id' => $user->tenant_id,
     ]);
     ClassList::query()
-        ->where('student_program_id', $confirmedProgram->id)
+        ->where('student_application_id', $confirmedProgram->id)
         ->update([
             'type' => ClassListTypeEnum::PROVISIONAL->value,
             'attributes' => [
@@ -175,7 +175,7 @@ test('dashboard overview includes provisional enrolment alert', function () {
     $user = userWithOverviewDashboardPermission();
     $intakePeriod = seedDashboardIntakePeriod($user->tenant_id);
 
-    $program = createVerifiedStudentProgram('OVERVIEW-DASH-PROV-01');
+    $program = createVerifiedStudentApplication('OVERVIEW-DASH-PROV-01');
     $program->institutionDepartment->department->update(['is_academic' => true]);
     $program->institutionDepartment->update(['tenant_id' => $user->tenant_id]);
     $program->update([
@@ -183,7 +183,7 @@ test('dashboard overview includes provisional enrolment alert', function () {
         'tenant_id' => $user->tenant_id,
     ]);
     ClassList::query()
-        ->where('student_program_id', $program->id)
+        ->where('student_application_id', $program->id)
         ->update([
             'type' => ClassListTypeEnum::PROVISIONAL->value,
             'attributes' => [

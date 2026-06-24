@@ -2,7 +2,7 @@ import { RadioGroupOption } from '@/types/forms';
 
 const DEFAULT_AVATAR: string = '/assets/images/user.png';
 const DEFAULT_IMAGE: string = '/assets/images/object.svg';
-const LOGO: string = '/assets/images/logo.jpeg';
+const LOGO: string = '/assets/images/logo.png';
 const PAYMENT_METHODS: string = '/assets/images/payment_methods.png';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const API_VERSION = 'v1';
@@ -69,7 +69,7 @@ const APP_MODULE_KEYS = {
     show_payment_status: 'show_payment_status',
     o_level_subjects: 'o_level_subjects',
     academic_calendars: 'academic_calendars',
-    student_programs: 'student_programs',
+    student_applications: 'student_applications',
     student_per_class: 'student_per_class',
     student_enrolment_statuses: 'student_enrolment_statuses',
     academic_year_options: 'academic_year_options',

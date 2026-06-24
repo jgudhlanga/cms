@@ -45,7 +45,7 @@ class HostelApplicationEligibilityService
         }
 
         if ($settings->require_tuition_paid) {
-            $passed = (bool) $enrolment?->studentProgram?->hasPaid(FeeTypeEnum::TUITION_FEE);
+            $passed = (bool) $enrolment?->studentApplication?->hasPaid(FeeTypeEnum::TUITION_FEE);
 
             $rules[] = [
                 'key' => 'tuition_paid',
@@ -58,7 +58,7 @@ class HostelApplicationEligibilityService
         }
 
         if ($context === HostelEligibilityContextEnum::AWAITING_PAYMENT && $settings->require_accommodation_paid) {
-            $passed = (bool) $enrolment?->studentProgram?->hasPaid(FeeTypeEnum::STUDENT_ACCOMMODATION_FEE);
+            $passed = (bool) $enrolment?->studentApplication?->hasPaid(FeeTypeEnum::STUDENT_ACCOMMODATION_FEE);
 
             if (! $passed) {
                 $application = HostelApplication::query()

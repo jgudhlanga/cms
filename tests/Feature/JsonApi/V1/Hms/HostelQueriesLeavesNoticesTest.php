@@ -16,8 +16,8 @@ test('json api portal student can create and list hostel queries', function () {
     $portalUser->givePermissionTo('manageOwnStudentAccommodationDetails:students');
     Sanctum::actingAs($portalUser);
 
-    $studentProgram = createStudentReadyForHostelApplication('QUERY-STU-01');
-    $student = $studentProgram->student;
+    $studentApplication = createStudentReadyForHostelApplication('QUERY-STU-01');
+    $student = $studentApplication->student;
     $student->update(['user_id' => $portalUser->id]);
 
     $this
@@ -51,8 +51,8 @@ test('json api portal student can create hostel leave request', function () {
     $portalUser->givePermissionTo('manageOwnStudentAccommodationDetails:students');
     Sanctum::actingAs($portalUser);
 
-    $studentProgram = createStudentReadyForHostelApplication('LEAVE-STU-01');
-    $student = $studentProgram->student;
+    $studentApplication = createStudentReadyForHostelApplication('LEAVE-STU-01');
+    $student = $studentApplication->student;
     $student->update(['user_id' => $portalUser->id]);
 
     $this
@@ -77,8 +77,8 @@ test('json api staff can create notice with audience and student sees published 
     $staff->givePermissionTo('create:hostel-notices', 'viewAny:hostel-notices');
     Sanctum::actingAs($staff);
 
-    $studentProgram = createStudentReadyForHostelApplication('NOTICE-STU-01');
-    $student = $studentProgram->student;
+    $studentApplication = createStudentReadyForHostelApplication('NOTICE-STU-01');
+    $student = $studentApplication->student;
 
     $hostel = Hostel::query()->firstOrCreate(
         ['name' => 'Hostel D'],
@@ -146,15 +146,15 @@ test('json api broadcast notice visible to all students', function () {
         'published_at' => now(),
     ]));
 
-    $studentProgram = createStudentReadyForHostelApplication('NOTICE-ALL-01');
+    $studentApplication = createStudentReadyForHostelApplication('NOTICE-ALL-01');
     $portalUser = User::factory()->create(['tenant_id' => $tenant->id]);
     $portalUser->givePermissionTo('manageOwnStudentAccommodationDetails:students');
-    $studentProgram->student->update(['user_id' => $portalUser->id]);
+    $studentApplication->student->update(['user_id' => $portalUser->id]);
     Sanctum::actingAs($portalUser);
 
     $this
         ->jsonApi('hostel-notices')
-        ->filter(['student' => (string) $studentProgram->student_id])
+        ->filter(['student' => (string) $studentApplication->student_id])
         ->get(route('v1.json.hms.hostel-notices.index'))
         ->assertSuccessful()
         ->assertJsonCount(1, 'data');

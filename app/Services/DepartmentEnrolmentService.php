@@ -9,7 +9,8 @@ use App\Models\Institution\InstitutionDepartment;
 use App\Models\Ledgers\Ledger;
 use App\Models\Shared\AcademicLevel;
 use App\Models\Shared\FeeType;
-use App\Models\Students\StudentProgram;
+use App\Models\Students\ApplicationFee;
+use App\Models\Students\StudentApplication;
 use App\Models\Users\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -37,7 +38,7 @@ class DepartmentEnrolmentService
         // ------------------------------------------------------------
         // 2. Subquery for latest student program per student
         // ------------------------------------------------------------
-        $subQuery = StudentProgram::query()
+        $subQuery = StudentApplication::query()
             ->selectRaw('MAX(id) as id')
             ->where([
                 'institution_department_id' => $institutionDepartmentId,
@@ -51,7 +52,7 @@ class DepartmentEnrolmentService
         // ------------------------------------------------------------
         // 3. Eager load all necessary relations
         // ------------------------------------------------------------
-        $paginator = StudentProgram::query()
+        $paginator = StudentApplication::query()
             ->with([
                 'student.user:id,first_name,last_name,email',
                 'student.gender:id,title',
@@ -71,11 +72,11 @@ class DepartmentEnrolmentService
             ])
             ->paginate($perPage);
 
-        $studentPrograms = $paginator->getCollection();
+        $studentApplications = $paginator->getCollection();
 
-        $studentIds = $studentPrograms->pluck('student_id')->unique();
-        $userIds = $studentPrograms->pluck('student.user_id')->unique();
-        $studentProgramIds = $studentPrograms->pluck('application_id')->unique();
+        $studentIds = $studentApplications->pluck('student_id')->unique();
+        $userIds = $studentApplications->pluck('student.user_id')->unique();
+        $studentApplicationIds = $studentApplications->pluck('application_id')->unique();
 
         // ------------------------------------------------------------
         // 4. Preload academic stats & results in bulk
@@ -113,34 +114,22 @@ class DepartmentEnrolmentService
         // ------------------------------------------------------------
         // 5. Preload receipts in bulk
         // ------------------------------------------------------------
-        $receipts = Ledger::query()
-            ->whereIn('ledgerable_id', $userIds)
-            ->where('ledgerable_type', User::class)
-            ->whereNull('deleted_at')
-            ->where([
-                'fee_type_id' => $applicationFeeId,
-                'intake_period_id' => $intakePeriodId,
-                'payment_status' => 'paid',
-                'type' => 'receipt',
-            ])
-            ->select('ledgerable_id as user_id', 'id as receipt_id', 'amount as receipt_amount')
-            ->get()
-            ->keyBy('user_id');
+        $receipts = $this->preloadApplicationFeeReceipts($userIds, $applicationFeeId, $intakePeriodId);
 
         // ------------------------------------------------------------
         // 5.1 Preload class list membership
         // ------------------------------------------------------------
         $classLists = DB::table('class_lists')
-            ->whereIn('student_program_id', $studentProgramIds)
+            ->whereIn('student_application_id', $studentApplicationIds)
             ->whereNull('deleted_at')
-            ->select('student_program_id', 'type')
+            ->select('student_application_id', 'type')
             ->get()
-            ->keyBy('student_program_id');
+            ->keyBy('student_application_id');
 
         // ------------------------------------------------------------
         // 6. Transform students
         // ------------------------------------------------------------
-        $studentPrograms->transform(function ($sp) use ($academicStats, $academicResults, $receipts, $classLists) {
+        $studentApplications->transform(function ($sp) use ($academicStats, $academicResults, $receipts, $classLists) {
 
             $student = $sp->student;
             $user = $student?->user;
@@ -186,7 +175,7 @@ class DepartmentEnrolmentService
             return $sp;
         });
 
-        /*$studentPrograms->transform(function ($sp) use ($academicStats, $academicResults, $receipts, $classLists) {
+        /*$studentApplications->transform(function ($sp) use ($academicStats, $academicResults, $receipts, $classLists) {
 
             $student = $sp->student;
             $user = $student?->user;
@@ -228,24 +217,24 @@ class DepartmentEnrolmentService
         // 7. Group students by priority
         // ------------------------------------------------------------
         $grouped = [
-            'disabled' => $studentPrograms
+            'disabled' => $studentApplications
                 ->filter(fn($sp) => strtolower($sp->disability_status) === 'yes')
                 ->sortBy('student_name')
                 ->values(),
 
-            'females' => $studentPrograms
+            'females' => $studentApplications
                 ->filter(fn($sp) => strtolower($sp->disability_status) !== 'yes' &&
                     strtolower($sp->gender) === 'female')
                 ->sortBy('student_name')
                 ->values(),
 
-            'males' => $studentPrograms
+            'males' => $studentApplications
                 ->filter(fn($sp) => strtolower($sp->disability_status) !== 'yes' &&
                     strtolower($sp->gender) === 'male')
                 ->sortBy('student_name')
                 ->values(),
 
-            'others' => $studentPrograms
+            'others' => $studentApplications
                 ->filter(fn($sp) => strtolower($sp->disability_status) !== 'yes' &&
                     !in_array(strtolower($sp->gender), ['male', 'female']))
                 ->sortBy('student_name')
@@ -280,7 +269,7 @@ class DepartmentEnrolmentService
         // ------------------------------------------------------------
         // 1. Subquery for latest student program per student
         // ------------------------------------------------------------
-        $subQuery = StudentProgram::query()
+        $subQuery = StudentApplication::query()
             ->selectRaw('MAX(id) as id')
             ->where([
                 'institution_department_id' => $institutionDepartmentId,
@@ -295,25 +284,25 @@ class DepartmentEnrolmentService
         // 2. Eager load all necessary relations
         // ------------------------------------------------------------
         $type = request('type', ClassListTypeEnum::PROVISIONAL->value);
-        $paginator = StudentProgram::query()
-            ->join('class_lists', 'class_lists.student_program_id', '=', 'student_programs.id')
+        $paginator = StudentApplication::query()
+            ->join('class_lists', 'class_lists.student_application_id', '=', 'student_applications.id')
             ->with([
                 'student.user:id,first_name,last_name,email',
                 'student.gender:id,title',
                 'student.contacts' => fn($q) => $q->orderBy('created_at')->limit(1),
                 'departmentWorkflowStep.workflowStep:id,name',
             ])
-            ->whereIn('student_programs.id', $subQuery)
+            ->whereIn('student_applications.id', $subQuery)
             ->whereIn('class_lists.type', [$type])
             ->select([
-                'student_programs.id as application_id',
-                'student_programs.student_id',
-                'student_programs.department_application_step_id',
-                'student_programs.application_tracking_number',
-                'student_programs.created_at as application_date',
-                'student_programs.required_level_completed',
-                'student_programs.read_write_acknowledged',
-                'student_programs.offer_accepted',
+                'student_applications.id as application_id',
+                'student_applications.student_id',
+                'student_applications.department_application_step_id',
+                'student_applications.application_tracking_number',
+                'student_applications.created_at as application_date',
+                'student_applications.required_level_completed',
+                'student_applications.read_write_acknowledged',
+                'student_applications.offer_accepted',
                 'class_lists.type as class_list_type',
             ])
             ->orderBy('class_list_type')
@@ -321,14 +310,14 @@ class DepartmentEnrolmentService
             ->paginate($perPage);
 
 
-        $studentPrograms = $paginator->getCollection();
+        $studentApplications = $paginator->getCollection();
 
         // ------------------------------------------------------------
         // 3. Transform students
         // ------------------------------------------------------------
         $oLevelId = cache()->rememberForever('o_level_id', fn() => AcademicLevel::where('name', AcademicLevelEnum::SECONDARY_SCHOOL->value)->value('id')
         );
-        $studentIds = $studentPrograms->pluck('student_id')->unique();
+        $studentIds = $studentApplications->pluck('student_id')->unique();
 
         $academicResults = DB::table('student_academic_results as sar')
             ->join('subjects as s', 'sar.subject_id', '=', 's.id')
@@ -354,27 +343,15 @@ class DepartmentEnrolmentService
         // ------------------------------------------------------------
         // 4. Preload receipts in bulk
         // ------------------------------------------------------------
-        $userIds = $studentPrograms->pluck('student.user_id')->unique();
+        $userIds = $studentApplications->pluck('student.user_id')->unique();
         $applicationFeeId = cache()->rememberForever('application_fee_id', fn() => FeeType::where('slug', FeeTypeEnum::APPLICATION_FEE->slug())->value('id')
         );
-        $receipts = Ledger::query()
-            ->whereIn('ledgerable_id', $userIds)
-            ->where('ledgerable_type', User::class)
-            ->whereNull('deleted_at')
-            ->where([
-                'fee_type_id' => $applicationFeeId,
-                'intake_period_id' => $intakePeriodId,
-                'payment_status' => 'paid',
-                'type' => 'receipt',
-            ])
-            ->select('ledgerable_id as user_id', 'id as receipt_id', 'amount as receipt_amount')
-            ->get()
-            ->keyBy('user_id');
+        $receipts = $this->preloadApplicationFeeReceipts($userIds, $applicationFeeId, $intakePeriodId);
 
         // ------------------------------------------------------------
         // 5. Transform students
         // ------------------------------------------------------------
-        $studentPrograms->transform(function ($sp) use ($academicResults, $receipts) {
+        $studentApplications->transform(function ($sp) use ($academicResults, $receipts) {
             $student = $sp->student;
             $user = $student->user;
 
@@ -401,24 +378,24 @@ class DepartmentEnrolmentService
         // 6. Group students by priority
         // ------------------------------------------------------------
         $grouped = [
-            'disabled' => $studentPrograms
+            'disabled' => $studentApplications
                 ->filter(fn($sp) => strtolower($sp->disability_status) === 'yes')
                 ->sortBy('student_name')
                 ->values(),
 
-            'females' => $studentPrograms
+            'females' => $studentApplications
                 ->filter(fn($sp) => strtolower($sp->disability_status) !== 'yes' &&
                     strtolower($sp->gender) === 'female')
                 ->sortBy('student_name')
                 ->values(),
 
-            'males' => $studentPrograms
+            'males' => $studentApplications
                 ->filter(fn($sp) => strtolower($sp->disability_status) !== 'yes' &&
                     strtolower($sp->gender) === 'male')
                 ->sortBy('student_name')
                 ->values(),
 
-            'others' => $studentPrograms
+            'others' => $studentApplications
                 ->filter(fn($sp) => strtolower($sp->disability_status) !== 'yes' &&
                     !in_array(strtolower($sp->gender), ['male', 'female']))
                 ->sortBy('student_name')
@@ -455,5 +432,71 @@ class DepartmentEnrolmentService
             ->where('department_course_id', $departmentCourseId)
             ->where('intake_period_id', $intakePeriodId)
             ->where('mode_of_study_id', $modeOfStudyId)->pluck('class_size')->first() ?? 0;
+    }
+
+    private function preloadApplicationFeeReceipts($userIds, int $applicationFeeId, int $intakePeriodId)
+    {
+        $userIds = collect($userIds)->filter()->unique()->values();
+
+        if ($userIds->isEmpty()) {
+            return collect();
+        }
+
+        $applicationFees = ApplicationFee::query()
+            ->whereIn('user_id', $userIds)
+            ->where('intake_period_id', $intakePeriodId)
+            ->get()
+            ->keyBy('user_id');
+
+        $legacyReceipts = Ledger::query()
+            ->whereIn('ledgerable_id', $userIds)
+            ->where('ledgerable_type', User::class)
+            ->whereNull('deleted_at')
+            ->where([
+                'fee_type_id' => $applicationFeeId,
+                'intake_period_id' => $intakePeriodId,
+                'payment_status' => 'paid',
+                'type' => 'receipt',
+            ])
+            ->select('ledgerable_id as user_id', 'id as receipt_id', 'amount as receipt_amount')
+            ->get()
+            ->keyBy('user_id');
+
+        if ($applicationFees->isEmpty()) {
+            return $legacyReceipts;
+        }
+
+        $applicationFeeReceipts = Ledger::query()
+            ->whereIn('ledgerable_id', $applicationFees->pluck('id'))
+            ->where('ledgerable_type', ApplicationFee::class)
+            ->whereNull('deleted_at')
+            ->where([
+                'fee_type_id' => $applicationFeeId,
+                'intake_period_id' => $intakePeriodId,
+                'payment_status' => 'paid',
+                'type' => 'receipt',
+            ])
+            ->get()
+            ->keyBy('ledgerable_id');
+
+        return $userIds->mapWithKeys(function (int $userId) use ($applicationFees, $legacyReceipts, $applicationFeeReceipts) {
+            $applicationFee = $applicationFees->get($userId);
+
+            if ($applicationFee !== null) {
+                $receipt = $applicationFeeReceipts->get($applicationFee->id);
+
+                if ($receipt !== null) {
+                    return [$userId => (object) [
+                        'user_id' => $userId,
+                        'receipt_id' => $receipt->id,
+                        'receipt_amount' => $receipt->amount,
+                    ]];
+                }
+            }
+
+            $legacy = $legacyReceipts->get($userId);
+
+            return $legacy !== null ? [$userId => $legacy] : [];
+        });
     }
 }

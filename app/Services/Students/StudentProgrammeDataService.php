@@ -26,7 +26,7 @@ class StudentProgrammeDataService
     public function buildProgrammesForStudent(Student $student): array
     {
         $student->load([
-            'enrolments.studentProgram',
+            'enrolments.studentApplication',
             'enrolments.departmentLevel.level',
             'enrolments.departmentCourse.course',
             'enrolments.academicYearOption',
@@ -70,7 +70,7 @@ class StudentProgrammeDataService
         );
 
         $programme = $enrolments
-            ->groupBy('student_program_id')
+            ->groupBy('student_application_id')
             ->map(function (Collection $programmeEnrolments) use (
                 $modulesBySyllabusId,
                 $marksByKey,
@@ -79,14 +79,14 @@ class StudentProgrammeDataService
                 $sortedEnrolments = $programmeEnrolments
                     ->sortBy(fn (StudentEnrolment $enrolment) => $enrolment->academicCalendar?->opening_date ?? '')
                     ->values();
-                $studentProgram = $sortedEnrolments->first()?->studentProgram;
+                $studentApplication = $sortedEnrolments->first()?->studentApplication;
                 $latestEnrolment = $sortedEnrolments->sortByDesc(
                     fn (StudentEnrolment $enrolment) => $enrolment->academicCalendar?->opening_date ?? ''
                 )->first();
                 $level = $latestEnrolment?->departmentLevel?->level;
 
                 return [
-                    'id' => (string) ($studentProgram?->id ?? ''),
+                    'id' => (string) ($studentApplication?->id ?? ''),
                     'level' => $level?->name,
                     'course' => $latestEnrolment?->departmentCourse?->course?->name,
                     'courseCode' => $this->courseSyllabusCodeResolver->resolve($latestEnrolment),
@@ -95,7 +95,7 @@ class StudentProgrammeDataService
                     'semesters' => $sortedEnrolments
                         ->map(fn (StudentEnrolment $enrolment) => $this->mapSemesterEnrolment(
                             $enrolment,
-                            $studentProgram?->id,
+                            $studentApplication?->id,
                             $modulesBySyllabusId,
                             $marksByKey,
                             $assessmentTypesByModeId,
@@ -116,7 +116,7 @@ class StudentProgrammeDataService
      */
     private function mapSemesterEnrolment(
         StudentEnrolment $enrolment,
-        ?int $studentProgramId,
+        ?int $studentApplicationId,
         Collection $modulesBySyllabusId,
         Collection $marksByKey,
         Collection $assessmentTypesByModeId,
@@ -146,7 +146,7 @@ class StudentProgrammeDataService
         );
 
         return [
-            'id' => sprintf('%s-%s', $studentProgramId ?? '', $semesterSlug),
+            'id' => sprintf('%s-%s', $studentApplicationId ?? '', $semesterSlug),
             'label' => $enrolment->academicYearOption?->name,
             'year' => $enrolment->academicCalendar?->calendar_year,
             'status' => $enrolment->studentEnrolmentStatus?->name,

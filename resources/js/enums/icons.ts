@@ -46,6 +46,8 @@ export enum IconName {
     person_chat = 'person_chat',
     trash = 'trash',
     eye = 'eye',
+    eye_off = 'eye_off',
+    lock = 'lock',
     logout = 'logout',
     list = 'list',
     type = 'type',

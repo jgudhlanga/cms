@@ -386,7 +386,7 @@ export function parseJsonApiHmsSetting(document: { data?: JsonApiResource }): Hm
         attributes: resource.attributes as HmsSettings['attributes'],
     };
 }
-export type JsonApiStudentProgramAttributes = {
+export type JsonApiStudentApplicationAttributes = {
     studentId?: number;
     department?: string;
     level?: string;
@@ -401,8 +401,8 @@ export type JsonApiStudentProgramAttributes = {
     updatedAt?: string;
 };
 
-export function mapJsonApiStudentProgramToEnrolment(resource: JsonApiResource): Enrolment {
-    const attributes = resource.attributes as JsonApiStudentProgramAttributes;
+export function mapJsonApiStudentApplicationToEnrolment(resource: JsonApiResource): Enrolment {
+    const attributes = resource.attributes as JsonApiStudentApplicationAttributes;
 
     return {
         type: 'enrolments',
@@ -458,8 +458,8 @@ export function mapJsonApiStudentProgramToEnrolment(resource: JsonApiResource): 
     };
 }
 
-export function parseJsonApiStudentPrograms(document: JsonApiCollectionDocument): Enrolment[] {
-    return (document.data ?? []).map(mapJsonApiStudentProgramToEnrolment);
+export function parseJsonApiStudentApplications(document: JsonApiCollectionDocument): Enrolment[] {
+    return (document.data ?? []).map(mapJsonApiStudentApplicationToEnrolment);
 }
 
 export const COURSE_WORK_MARK_RESOURCE_TYPE = 'course-work-marks';

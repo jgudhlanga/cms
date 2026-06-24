@@ -33,7 +33,7 @@ class LedgerResource extends JsonResource
                 'responseCode' => $this->response_code,
                 'levelId' => $this->level_id,
                 'level' => $this->level?->name,
-                'studentProgramId' => $this->student_program_id,
+                'studentApplicationId' => $this->student_application_id,
                 'createdAt' => Carbon::parse($this->created_at)->format('Y-m-d'),
                 'updatedAt' => Carbon::parse($this->updated_at)->format('Y-m-d'),
                 'deletedAt' => $this->deleted_at ? Carbon::parse($this->deleted_at)->format('Y-m-d') : null,

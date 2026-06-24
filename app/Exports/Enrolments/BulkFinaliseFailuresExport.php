@@ -8,7 +8,7 @@ use Maatwebsite\Excel\Concerns\WithTitle;
 class BulkFinaliseFailuresExport implements FromArray, WithTitle
 {
     /**
-     * @param  array<int, array{student_program_id:int, student_id:int|null, student_number:string|null, student_id_number:string|null, user_full_name:string|null, class_list_id:int|null, reason:string, start_date:string, end_date:string, department:string|null, course:string|null, level:string|null}>  $failures
+     * @param  array<int, array{student_application_id:int, student_id:int|null, student_number:string|null, student_id_number:string|null, user_full_name:string|null, class_list_id:int|null, reason:string, start_date:string, end_date:string, department:string|null, course:string|null, level:string|null}>  $failures
      */
     public function __construct(private readonly array $failures) {}
 
@@ -17,7 +17,7 @@ class BulkFinaliseFailuresExport implements FromArray, WithTitle
      */
     public function array(): array
     {
-        /** @var array<string, array<string, array<string, array<int, array{student_program_id:int, student_id:int|null, student_number:string|null, student_id_number:string|null, user_full_name:string|null, class_list_id:int|null, reason:string, start_date:string, end_date:string, department:string|null, course:string|null, level:string|null}>>>> $grouped */
+        /** @var array<string, array<string, array<string, array<int, array{student_application_id:int, student_id:int|null, student_number:string|null, student_id_number:string|null, user_full_name:string|null, class_list_id:int|null, reason:string, start_date:string, end_date:string, department:string|null, course:string|null, level:string|null}>>>> $grouped */
         $grouped = [];
 
         foreach ($this->failures as $failure) {
@@ -39,7 +39,7 @@ class BulkFinaliseFailuresExport implements FromArray, WithTitle
             'studentNumber',
             'reason',
             'classListId',
-            'studentProgramId',
+            'studentApplicationId',
         ]];
 
         foreach ($grouped as $department => $courses) {
@@ -71,7 +71,7 @@ class BulkFinaliseFailuresExport implements FromArray, WithTitle
                             $entry['student_number'],
                             $entry['reason'],
                             $entry['class_list_id'],
-                            $entry['student_program_id'],
+                            $entry['student_application_id'],
                         ];
                     }
                 }

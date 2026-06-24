@@ -14,6 +14,6 @@ readonly class OnlinePaymentContext
         public FeeTypeEnum $feeTypeEnum,
         public Model $ledgerable,
         public IntakePeriod $intakePeriod,
-        public ?int $studentProgramId = null,
+        public ?int $studentApplicationId = null,
     ) {}
 }

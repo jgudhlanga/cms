@@ -363,14 +363,14 @@ class CourseWorkTreeService
     {
         return AcademicCalendarStudentEnrolment::query()
             ->join('student_enrolments', 'student_enrolments.id', '=', 'academic_calendar_student_enrolments.student_enrolment_id')
-            ->join('student_programs', 'student_programs.id', '=', 'student_enrolments.student_program_id')
-            ->join('students', 'students.id', '=', 'student_programs.student_id')
+            ->join('student_applications', 'student_applications.id', '=', 'student_enrolments.student_application_id')
+            ->join('students', 'students.id', '=', 'student_applications.student_id')
             ->join('users', 'users.id', '=', 'students.user_id')
             ->where('academic_calendar_student_enrolments.academic_calendar_class_id', $academicCalendarClassId)
             ->whereNull('academic_calendar_student_enrolments.deleted_at')
             ->select([
                 'student_enrolments.id as student_enrolment_id',
-                'student_programs.application_tracking_number',
+                'student_applications.application_tracking_number',
                 'students.student_number',
                 'users.id as user_id',
                 'users.first_name',
@@ -392,15 +392,15 @@ class CourseWorkTreeService
         return AcademicCalendarStudentEnrolment::query()
             ->join('academic_calendar_classes', 'academic_calendar_classes.id', '=', 'academic_calendar_student_enrolments.academic_calendar_class_id')
             ->join('student_enrolments', 'student_enrolments.id', '=', 'academic_calendar_student_enrolments.student_enrolment_id')
-            ->join('student_programs', 'student_programs.id', '=', 'student_enrolments.student_program_id')
-            ->join('students', 'students.id', '=', 'student_programs.student_id')
+            ->join('student_applications', 'student_applications.id', '=', 'student_enrolments.student_application_id')
+            ->join('students', 'students.id', '=', 'student_applications.student_id')
             ->join('users', 'users.id', '=', 'students.user_id')
             ->where('academic_calendar_classes.class_config_id', $classConfigId)
             ->whereNull('academic_calendar_student_enrolments.deleted_at')
             ->whereNull('academic_calendar_classes.deleted_at')
             ->select([
                 'student_enrolments.id as student_enrolment_id',
-                'student_programs.application_tracking_number',
+                'student_applications.application_tracking_number',
                 'students.student_number',
                 'users.id as user_id',
                 'users.first_name',

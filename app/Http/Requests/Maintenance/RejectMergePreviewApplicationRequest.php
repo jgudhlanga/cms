@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Maintenance;
 
-use App\Models\Students\StudentProgram;
+use App\Models\Students\StudentApplication;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
@@ -31,9 +31,9 @@ class RejectMergePreviewApplicationRequest extends FormRequest
                 return;
             }
 
-            $studentProgram = $this->route('student_program');
+            $studentApplication = $this->route('student_application');
 
-            if (! $studentProgram instanceof StudentProgram) {
+            if (! $studentApplication instanceof StudentApplication) {
                 return;
             }
 
@@ -42,9 +42,9 @@ class RejectMergePreviewApplicationRequest extends FormRequest
                 (int) $this->input('target_student_id'),
             ];
 
-            if (! in_array((int) $studentProgram->student_id, $participantIds, true)) {
+            if (! in_array((int) $studentApplication->student_id, $participantIds, true)) {
                 $validator->errors()->add(
-                    'student_program',
+                    'student_application',
                     __('trans.maintenance_faulty_data_merge_reject_not_participant'),
                 );
             }

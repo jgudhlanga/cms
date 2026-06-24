@@ -2,7 +2,7 @@
 
 namespace App\DTO\Students;
 
-use App\Http\Requests\Students\StudentProgramRequest;
+use App\Http\Requests\Students\StudentApplicationRequest;
 use App\Http\Requests\Students\ProgramRequest;
 use App\Models\Students\Student;
 

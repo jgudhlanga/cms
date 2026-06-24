@@ -12,13 +12,13 @@ use App\Models\Institution\DocumentTemplate;
 use App\Models\Institution\FeeStructure;
 use App\Models\Shared\DocumentType;
 use App\Models\Shared\FeeType;
-use App\Models\Students\StudentProgram;
+use App\Models\Students\StudentApplication;
 
 class DocumentHelper
 {
-    public static function assembleOfferLetter(StudentProgram $studentProgram): array
+    public static function assembleOfferLetter(StudentApplication $studentApplication): array
     {
-        $studentProgram = StudentProgram::query()
+        $studentApplication = StudentApplication::query()
             ->with([
                 'student.user',
                 'intakePeriod',
@@ -27,9 +27,9 @@ class DocumentHelper
                 'departmentCourse.course',
                 'modeOfStudy',
             ])
-            ->where('id', $studentProgram->id)
+            ->where('id', $studentApplication->id)
             ->whereHas('classList', fn ($q) => $q->whereIn('type', ['verified', 'final']))->firstOrFail();
-        $student = $studentProgram->student;
+        $student = $studentApplication->student;
         $user = $student->user;
 
         // Determine correct ID number (national vs passport)
@@ -40,18 +40,18 @@ class DocumentHelper
         // Extract student program info
         $studentName = $user->full_name;
         $studentNumber = $student->student_number;
-        $intakePeriod = $studentProgram->intakePeriod->name ?? '';
-        $department = $studentProgram->institutionDepartment->department->name ?? '';
-        $level = $studentProgram->departmentLevel->level->name ?? '';
-        $course = $studentProgram->departmentCourse->course->name ?? '';
-        $modeOfStudy = $studentProgram->modeOfStudy->name ?? '';
+        $intakePeriod = $studentApplication->intakePeriod->name ?? '';
+        $department = $studentApplication->institutionDepartment->department->name ?? '';
+        $level = $studentApplication->departmentLevel->level->name ?? '';
+        $course = $studentApplication->departmentCourse->course->name ?? '';
+        $modeOfStudy = $studentApplication->modeOfStudy->name ?? '';
 
         // Tuition Lookup
         $tuitionFeeType = FeeType::where('name', FeeTypeEnum::TUITION_FEE->name())->first();
         $feeStructure = FeeStructure::query()
-            ->where('tenant_id', $studentProgram->tenant_id)
-            ->where('level_id', $studentProgram->departmentLevel->level->id ?? null)
-            ->where('mode_of_study_id', $studentProgram->modeOfStudy->id ?? null)
+            ->where('tenant_id', $studentApplication->tenant_id)
+            ->where('level_id', $studentApplication->departmentLevel->level->id ?? null)
+            ->where('mode_of_study_id', $studentApplication->modeOfStudy->id ?? null)
             ->where('fee_type_id', $tuitionFeeType->id)
             ->first();
 
@@ -87,7 +87,7 @@ class DocumentHelper
         }
         // Base query
         $query = DocumentTemplate::query()
-            // ->where('intake_period_id', $studentProgram->intakePeriod->id ?? null)
+            // ->where('intake_period_id', $studentApplication->intakePeriod->id ?? null)
             ->where('document_type_id', $documentType->id);
 
         // Apply USD-only constraint if needed

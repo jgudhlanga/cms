@@ -97,7 +97,7 @@ const requiredLevel = computed(() => {
 const previousLevelLabel = computed(() => trans('enrolments.label_confirm_previous_level', { level: requiredLevel.value }));
 
 const nextVerifyHref = computed(() =>
-    nextTop.length > 0 ? route('enrolments.verify', { student_program: String(nextTop[0].applicationId) }) : null,
+    nextTop.length > 0 ? route('enrolments.verify', { student_application: String(nextTop[0].applicationId) }) : null,
 );
 
 const form = useForm<ClassListAttributeParams>({
@@ -156,7 +156,7 @@ const saveVerification = async () => {
         confirmText: trans('enrolments.confirm_action'),
     });
     if (confirmed) {
-        form.put(route('enrolments.update-class-list', { student_program: String(application.id) }), {
+        form.put(route('enrolments.update-class-list', { student_application: String(application.id) }), {
             onSuccess: () => {
                 successAlert(trans('enrolments.success_verified'));
                 if (nextVerifyHref.value) {
@@ -277,7 +277,7 @@ onMounted(() => {
                     <div class="mt-6 flex items-center justify-between">
                         <BaseButton :title="$t('enrolments.button_verify_and_offer')" @click="saveVerification" />
                         <RejectApplicationButton
-                            :student-program-id="String(application.id)"
+                            :student-application-id="String(application.id)"
                             :form="form"
                             required-ability="verify:class-lists"
                             :next-href="nextVerifyHref"

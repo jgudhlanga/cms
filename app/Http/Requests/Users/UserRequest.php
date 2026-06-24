@@ -63,6 +63,7 @@ class UserRequest extends FormRequest
                 'max:50',
                 Rule::unique('students', 'passport_number'),
             ],
+            'acknowledged_advert' => ['required', 'accepted'],
         ];
     }
 }

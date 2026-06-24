@@ -8,6 +8,7 @@ use App\Models\Institution\Staff;
 use App\Models\Ledgers\Ledger;
 use App\Models\Preferences\UserPreference;
 use App\Models\Shared\Status;
+use App\Models\Students\ApplicationFee;
 use App\Models\Students\Student;
 use App\Models\Tenants\Tenant;
 use App\Traits\Filterable;
@@ -16,6 +17,7 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -41,7 +43,7 @@ class User extends Authenticatable implements HasMedia, MustVerifyEmail
 
     protected $fillable = [
         'first_name', 'middle_name', 'last_name', 'email', 'password', 'tenant_id',
-        'email_verified_at', 'last_login_at', 'login_count', 'avatar_id', 'status_id', 'phone_number',
+        'email_verified_at', 'registration_instructions_acknowledged_at', 'last_login_at', 'login_count', 'avatar_id', 'status_id', 'phone_number',
     ];
 
     protected $appends = ['can_impersonate', 'can_be_impersonated', 'has_student_profile', 'has_staff_profile', 'avatar_url'];
@@ -52,7 +54,7 @@ class User extends Authenticatable implements HasMedia, MustVerifyEmail
 
     protected function casts(): array
     {
-        return ['email_verified_at' => 'datetime', 'password' => 'hashed'];
+        return ['email_verified_at' => 'datetime', 'registration_instructions_acknowledged_at' => 'datetime', 'password' => 'hashed'];
     }
 
     public function setPasswordAttribute(string $password): void
@@ -98,6 +100,11 @@ class User extends Authenticatable implements HasMedia, MustVerifyEmail
     public function getHasStudentProfileAttribute(): bool
     {
         return ! is_null($this->studentProfile);
+    }
+
+    public function applicationFees(): HasMany
+    {
+        return $this->hasMany(ApplicationFee::class);
     }
 
     public function ledgerTransactions(): MorphMany

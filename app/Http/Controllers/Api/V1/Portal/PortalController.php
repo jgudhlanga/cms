@@ -6,7 +6,7 @@ use App\Http\Resources\Shared\AddressResource;
 use App\Http\Resources\Shared\ContactResource;
 use App\Http\Resources\Shared\NextOfKinResource;
 use App\Http\Resources\Students\SponsorResource;
-use App\Http\Resources\Students\StudentProgramResource;
+use App\Http\Resources\Students\StudentApplicationResource;
 use App\Http\Resources\Students\StudentResource;
 use App\Repositories\Students\interface\IStudentRepository;
 use App\Traits\HttpUtil;
@@ -34,7 +34,7 @@ class PortalController
     public function programs()
     {
         $student = $this->getStudent();
-        return StudentProgramResource::collection($student->programs);
+        return StudentApplicationResource::collection($student->applications);
     }
 
     /**

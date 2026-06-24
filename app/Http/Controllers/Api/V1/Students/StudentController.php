@@ -57,7 +57,7 @@ class StudentController
 
     public function programs(Student $student)
     {
-        return EnrolmentResource::collection($student->programs);
+        return EnrolmentResource::collection($student->applications);
     }
 
     public function addresses(Student $student)

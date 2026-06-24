@@ -4,7 +4,7 @@ use App\Models\AcademicCalendars\AcademicCalendar;
 use App\Models\AcademicCalendars\AcademicYearOption;
 use App\Models\Students\StudentEnrolment;
 use App\Models\Students\StudentEnrolmentStatus;
-use App\Models\Students\StudentProgram;
+use App\Models\Students\StudentApplication;
 use App\Models\Users\User;
 use Illuminate\Support\Str;
 use Spatie\Permission\Models\Permission;
@@ -12,7 +12,7 @@ use Spatie\Permission\Models\Permission;
 require_once __DIR__.'/../Api/V1/Students/StudentIndexFilterTest.php';
 
 it('requires export permission to download student list', function (): void {
-    $program = createVerifiedStudentProgram('STU-EXP-'.strtoupper(Str::random(4)));
+    $program = createVerifiedStudentApplication('STU-EXP-'.strtoupper(Str::random(4)));
     $user = User::factory()->create(['tenant_id' => $program->tenant_id]);
     $user->givePermissionTo('viewAny:students');
 
@@ -24,7 +24,7 @@ it('requires export permission to download student list', function (): void {
 });
 
 it('validates department is required for student list export', function (): void {
-    $program = createVerifiedStudentProgram('STU-EXP-'.strtoupper(Str::random(4)));
+    $program = createVerifiedStudentApplication('STU-EXP-'.strtoupper(Str::random(4)));
     $user = User::factory()->create(['tenant_id' => $program->tenant_id]);
     Permission::findOrCreate('export:students', 'web');
     $user->givePermissionTo(['viewAny:students', 'export:students']);
@@ -37,8 +37,8 @@ it('validates department is required for student list export', function (): void
 });
 
 it('exports students filtered by department', function (): void {
-    $matchedProgram = createVerifiedStudentProgram('STU-MAT-'.strtoupper(Str::random(4)));
-    $otherProgram = createVerifiedStudentProgram('STU-OTH-'.strtoupper(Str::random(4)));
+    $matchedProgram = createVerifiedStudentApplication('STU-MAT-'.strtoupper(Str::random(4)));
+    $otherProgram = createVerifiedStudentApplication('STU-OTH-'.strtoupper(Str::random(4)));
 
     createStudentEnrolmentForProgram($matchedProgram);
     createStudentEnrolmentForProgram($otherProgram);

@@ -96,7 +96,7 @@ test('json api hostel applications student lookup returns semester dates and cap
 
     HmsSetting::resolveForTenant($tenant->id);
 
-    $studentProgram = createStudentReadyForHostelApplication('LOOKUP-001');
+    $studentApplication = createStudentReadyForHostelApplication('LOOKUP-001');
     $calendar = createRunningSemesterCalendar('2025/2026');
     ensureHostelRoomWithCapacity('Hostel D', 'D-LOOKUP-001');
 
@@ -195,14 +195,14 @@ test('json api hostel applications student lookup blocks when student has pendin
     $user = createHostelApplicationStaffUser($tenant->id);
     Sanctum::actingAs($user);
 
-    $studentProgram = createStudentReadyForHostelApplication('LOOKUP-PENDING');
+    $studentApplication = createStudentReadyForHostelApplication('LOOKUP-PENDING');
     createRunningSemesterCalendar('2025/2026');
     ensureHostelRoomWithCapacity('Hostel D', 'D-LOOKUP-PENDING');
 
     HostelApplication::withoutEvents(fn () => HostelApplication::query()->create([
         'tenant_id' => TenantEnum::HARARE_POLY->id(),
-        'student_id' => $studentProgram->student_id,
-        'gender_id' => $studentProgram->student->gender_id,
+        'student_id' => $studentApplication->student_id,
+        'gender_id' => $studentApplication->student->gender_id,
         'type' => HostelApplicationTypeEnum::STUDENT,
         'status' => HostelApplicationStatusEnum::PENDING,
         'next_of_kin_name' => 'Kin Name',
@@ -227,15 +227,15 @@ test('json api hostel applications store blocks duplicate pending student applic
     $user->givePermissionTo('create:hostel-applications');
     Sanctum::actingAs($user);
 
-    $studentProgram = createStudentReadyForHostelApplication('STORE-PENDING');
+    $studentApplication = createStudentReadyForHostelApplication('STORE-PENDING');
     createRunningSemesterCalendar('2025/2026');
     ensureHostelRoomWithCapacity('Hostel D', 'D-STORE-PENDING');
-    $enrolmentId = $studentProgram->student->fresh(['latestEnrolment'])->latestEnrolment?->id;
+    $enrolmentId = $studentApplication->student->fresh(['latestEnrolment'])->latestEnrolment?->id;
 
     HostelApplication::withoutEvents(fn () => HostelApplication::query()->create([
         'tenant_id' => TenantEnum::HARARE_POLY->id(),
-        'student_id' => $studentProgram->student_id,
-        'gender_id' => $studentProgram->student->gender_id,
+        'student_id' => $studentApplication->student_id,
+        'gender_id' => $studentApplication->student->gender_id,
         'type' => HostelApplicationTypeEnum::STUDENT,
         'status' => HostelApplicationStatusEnum::PENDING,
         'next_of_kin_name' => 'Kin Name',
@@ -250,7 +250,7 @@ test('json api hostel applications store blocks duplicate pending student applic
             'type' => 'hostel-applications',
             'attributes' => [
                 'applicationType' => 'student',
-                'studentId' => $studentProgram->student_id,
+                'studentId' => $studentApplication->student_id,
                 'studentEnrolmentId' => $enrolmentId,
                 'nextOfKinName' => 'Kin Name',
                 'nextOfKinContact' => '0771234567',
@@ -275,9 +275,9 @@ test('json api hostel applications store uses configured application dates witho
         '2026-11-30',
     );
 
-    $studentProgram = createStudentReadyForHostelApplication('STORE-BLOCK', withRunningSemester: false, openApplications: false);
+    $studentApplication = createStudentReadyForHostelApplication('STORE-BLOCK', withRunningSemester: false, openApplications: false);
     ensureHostelRoomWithCapacity('Hostel D', 'D-STORE-BLOCK');
-    $enrolmentId = $studentProgram->student->fresh(['latestEnrolment'])->latestEnrolment?->id;
+    $enrolmentId = $studentApplication->student->fresh(['latestEnrolment'])->latestEnrolment?->id;
 
     $response = $this
         ->jsonApi('hostel-applications')
@@ -285,7 +285,7 @@ test('json api hostel applications store uses configured application dates witho
             'type' => 'hostel-applications',
             'attributes' => [
                 'applicationType' => 'student',
-                'studentId' => $studentProgram->student_id,
+                'studentId' => $studentApplication->student_id,
                 'studentEnrolmentId' => $enrolmentId,
                 'nextOfKinName' => 'Kin Name',
                 'nextOfKinContact' => '0771234567',
@@ -309,11 +309,11 @@ test('json api hostel applications store creates student application with semest
     $user->givePermissionTo('create:hostel-applications');
     Sanctum::actingAs($user);
 
-    $studentProgram = createStudentReadyForHostelApplication('STORE-OK');
+    $studentApplication = createStudentReadyForHostelApplication('STORE-OK');
     $calendar = createRunningSemesterCalendar('2025/2026');
     ensureHostelRoomWithCapacity('Hostel D', 'D-STORE-OK');
 
-    $enrolmentId = $studentProgram->student->fresh(['latestEnrolment'])->latestEnrolment?->id;
+    $enrolmentId = $studentApplication->student->fresh(['latestEnrolment'])->latestEnrolment?->id;
 
     $response = $this
         ->jsonApi('hostel-applications')
@@ -321,7 +321,7 @@ test('json api hostel applications store creates student application with semest
             'type' => 'hostel-applications',
             'attributes' => [
                 'applicationType' => 'student',
-                'studentId' => $studentProgram->student_id,
+                'studentId' => $studentApplication->student_id,
                 'studentEnrolmentId' => $enrolmentId,
                 'nextOfKinName' => 'Kin Name',
                 'nextOfKinContact' => '0771234567',
@@ -485,10 +485,10 @@ test('json api hostel applications store snapshots eligibility without accommoda
         'require_address_outside_campus' => false,
     ]);
 
-    $studentProgram = createStudentReadyForHostelApplication('STORE-ELIG-SNAPSHOT');
+    $studentApplication = createStudentReadyForHostelApplication('STORE-ELIG-SNAPSHOT');
     createRunningSemesterCalendar('2025/2026');
     ensureHostelRoomWithCapacity('Hostel D', 'D-STORE-ELIG-SNAPSHOT');
-    $enrolmentId = $studentProgram->student->fresh(['latestEnrolment'])->latestEnrolment?->id;
+    $enrolmentId = $studentApplication->student->fresh(['latestEnrolment'])->latestEnrolment?->id;
 
     $response = $this
         ->jsonApi('hostel-applications')
@@ -496,7 +496,7 @@ test('json api hostel applications store snapshots eligibility without accommoda
             'type' => 'hostel-applications',
             'attributes' => [
                 'applicationType' => 'student',
-                'studentId' => $studentProgram->student_id,
+                'studentId' => $studentApplication->student_id,
                 'studentEnrolmentId' => $enrolmentId,
                 'nextOfKinName' => 'Kin Name',
                 'nextOfKinContact' => '0771234567',
@@ -524,10 +524,10 @@ test('json api hostel applications update to awaiting payment refreshes accommod
 
     HmsSetting::resolveForTenant($tenant->id)->update(['require_accommodation_paid' => true]);
 
-    $studentProgram = createStudentReadyForHostelApplication('AWAIT-ELIG-REFRESH');
+    $studentApplication = createStudentReadyForHostelApplication('AWAIT-ELIG-REFRESH');
     createRunningSemesterCalendar('2025/2026');
     ensureHostelRoomWithCapacity('Hostel D', 'D-AWAIT-ELIG-REFRESH');
-    $student = $studentProgram->student;
+    $student = $studentApplication->student;
     $enrolmentId = $student->fresh(['latestEnrolment'])->latestEnrolment?->id;
 
     $application = HostelApplication::query()->create([
@@ -1568,10 +1568,10 @@ test('json api hostel applications show returns department calendar year and phy
     $user = User::factory()->create(['tenant_id' => $tenant->id]);
     Sanctum::actingAs($user);
 
-    $studentProgram = createStudentReadyForHostelApplication('SHOW-ATTR-01');
-    $student = $studentProgram->student->fresh(['latestEnrolment.institutionDepartment.department']);
+    $studentApplication = createStudentReadyForHostelApplication('SHOW-ATTR-01');
+    $student = $studentApplication->student->fresh(['latestEnrolment.institutionDepartment.department']);
     $enrolment = $student->latestEnrolment;
-    $calendarYear = (string) ($studentProgram->intakePeriod?->calendar_year ?? '2025/2026');
+    $calendarYear = (string) ($studentApplication->intakePeriod?->calendar_year ?? '2025/2026');
     $departmentName = $enrolment?->institutionDepartment?->department?->name;
 
     Address::query()->create([
@@ -1609,14 +1609,14 @@ test('json api hostel applications student lookup blocks when student has awaiti
     $user = createHostelApplicationStaffUser($tenant->id);
     Sanctum::actingAs($user);
 
-    $studentProgram = createStudentReadyForHostelApplication('LOOKUP-AWAITING');
+    $studentApplication = createStudentReadyForHostelApplication('LOOKUP-AWAITING');
     createRunningSemesterCalendar('2025/2026');
     ensureHostelRoomWithCapacity('Hostel D', 'D-LOOKUP-AWAITING');
 
     HostelApplication::withoutEvents(fn () => HostelApplication::query()->create([
         'tenant_id' => TenantEnum::HARARE_POLY->id(),
-        'student_id' => $studentProgram->student_id,
-        'gender_id' => $studentProgram->student->gender_id,
+        'student_id' => $studentApplication->student_id,
+        'gender_id' => $studentApplication->student->gender_id,
         'type' => HostelApplicationTypeEnum::STUDENT,
         'status' => HostelApplicationStatusEnum::AWAITING_PAYMENT,
         'next_of_kin_name' => 'Kin Name',
@@ -1640,14 +1640,14 @@ test('json api hostel applications student lookup blocks when student has active
     $user = createHostelApplicationStaffUser($tenant->id);
     Sanctum::actingAs($user);
 
-    $studentProgram = createStudentReadyForHostelApplication('LOOKUP-ALLOC-ACTIVE');
+    $studentApplication = createStudentReadyForHostelApplication('LOOKUP-ALLOC-ACTIVE');
     createRunningSemesterCalendar('2025/2026');
     $room = ensureHostelRoomWithCapacity('Hostel D', 'D-LOOKUP-ALLOC-ACTIVE');
 
     HostelRoomAllocation::query()->create([
         'tenant_id' => TenantEnum::HARARE_POLY->id(),
         'hostel_room_id' => $room->id,
-        'student_id' => $studentProgram->student_id,
+        'student_id' => $studentApplication->student_id,
         'type' => HostelAllocationTypeEnum::DIRECT,
         'status' => HostelAllocationStatusEnum::ACTIVE,
         'check_in' => now()->toDateString(),
@@ -1669,14 +1669,14 @@ test('json api hostel applications student lookup blocks when student has pendin
     $user = createHostelApplicationStaffUser($tenant->id);
     Sanctum::actingAs($user);
 
-    $studentProgram = createStudentReadyForHostelApplication('LOOKUP-ALLOC-PENDING');
+    $studentApplication = createStudentReadyForHostelApplication('LOOKUP-ALLOC-PENDING');
     createRunningSemesterCalendar('2025/2026');
     $room = ensureHostelRoomWithCapacity('Hostel D', 'D-LOOKUP-ALLOC-PENDING');
 
     HostelRoomAllocation::query()->create([
         'tenant_id' => TenantEnum::HARARE_POLY->id(),
         'hostel_room_id' => $room->id,
-        'student_id' => $studentProgram->student_id,
+        'student_id' => $studentApplication->student_id,
         'type' => HostelAllocationTypeEnum::DIRECT,
         'status' => HostelAllocationStatusEnum::PENDING,
         'check_in' => now()->toDateString(),
@@ -1698,14 +1698,14 @@ test('json api hostel applications student lookup allows when student only has c
     $user = createHostelApplicationStaffUser($tenant->id);
     Sanctum::actingAs($user);
 
-    $studentProgram = createStudentReadyForHostelApplication('LOOKUP-ALLOC-CHECKED');
+    $studentApplication = createStudentReadyForHostelApplication('LOOKUP-ALLOC-CHECKED');
     createRunningSemesterCalendar('2025/2026');
     $room = ensureHostelRoomWithCapacity('Hostel D', 'D-LOOKUP-ALLOC-CHECKED');
 
     HostelRoomAllocation::query()->create([
         'tenant_id' => TenantEnum::HARARE_POLY->id(),
         'hostel_room_id' => $room->id,
-        'student_id' => $studentProgram->student_id,
+        'student_id' => $studentApplication->student_id,
         'type' => HostelAllocationTypeEnum::DIRECT,
         'status' => HostelAllocationStatusEnum::CHECKED_OUT,
         'check_in' => now()->subMonths(4)->toDateString(),
@@ -1727,14 +1727,14 @@ test('json api hostel applications student lookup allows when student only has d
     $user = createHostelApplicationStaffUser($tenant->id);
     Sanctum::actingAs($user);
 
-    $studentProgram = createStudentReadyForHostelApplication('LOOKUP-DECLINED');
+    $studentApplication = createStudentReadyForHostelApplication('LOOKUP-DECLINED');
     createRunningSemesterCalendar('2025/2026');
     ensureHostelRoomWithCapacity('Hostel D', 'D-LOOKUP-DECLINED');
 
     HostelApplication::withoutEvents(fn () => HostelApplication::query()->create([
         'tenant_id' => TenantEnum::HARARE_POLY->id(),
-        'student_id' => $studentProgram->student_id,
-        'gender_id' => $studentProgram->student->gender_id,
+        'student_id' => $studentApplication->student_id,
+        'gender_id' => $studentApplication->student->gender_id,
         'type' => HostelApplicationTypeEnum::STUDENT,
         'status' => HostelApplicationStatusEnum::DECLINED,
         'decline_reason' => 'Not eligible',
@@ -1760,15 +1760,15 @@ test('json api hostel applications store blocks student with open room allocatio
     $user->givePermissionTo('create:hostel-applications');
     Sanctum::actingAs($user);
 
-    $studentProgram = createStudentReadyForHostelApplication('STORE-ALLOC');
+    $studentApplication = createStudentReadyForHostelApplication('STORE-ALLOC');
     createRunningSemesterCalendar('2025/2026');
     $room = ensureHostelRoomWithCapacity('Hostel D', 'D-STORE-ALLOC');
-    $enrolmentId = $studentProgram->student->fresh(['latestEnrolment'])->latestEnrolment?->id;
+    $enrolmentId = $studentApplication->student->fresh(['latestEnrolment'])->latestEnrolment?->id;
 
     HostelRoomAllocation::query()->create([
         'tenant_id' => TenantEnum::HARARE_POLY->id(),
         'hostel_room_id' => $room->id,
-        'student_id' => $studentProgram->student_id,
+        'student_id' => $studentApplication->student_id,
         'type' => HostelAllocationTypeEnum::DIRECT,
         'status' => HostelAllocationStatusEnum::ACTIVE,
         'check_in' => now()->toDateString(),
@@ -1781,7 +1781,7 @@ test('json api hostel applications store blocks student with open room allocatio
             'type' => 'hostel-applications',
             'attributes' => [
                 'applicationType' => 'student',
-                'studentId' => $studentProgram->student_id,
+                'studentId' => $studentApplication->student_id,
                 'studentEnrolmentId' => $enrolmentId,
                 'nextOfKinName' => 'Kin Name',
                 'nextOfKinContact' => '0771234567',

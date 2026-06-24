@@ -11,13 +11,13 @@ import { PageProps } from '@/types';
 import { Role } from '@/types/acl';
 import { DepartmentApplicationStep } from '@/types/department-meta-data';
 import { BulkApplicationApprovalParams, BulkUpdatePaymentStatusParams, Enrolment, PaymentProofPreview } from '@/types/enrolments';
-import { StudentProgram } from '@/types/students';
+import { StudentApplication } from '@/types/students';
 import { InertiaForm, router, usePage } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 
 export const useStudentApplications = () => {
     const { actionButton, textLink } = useDataTables();
-    const studentAbility = 'manageOwnStudentProgramDetails:students';
+    const studentAbility = 'manageOwnStudentApplicationDetails:students';
     const adminAbility = 'manageStudentMetadata:admin';
     const allowed = hasAbility([adminAbility, studentAbility]);
     const { formatDate, navigateTo } = useUtils();
@@ -96,7 +96,7 @@ export const useStudentApplications = () => {
         openModal({ name: APP_MODULE_KEYS.preview_payment_proof, edit: preview });
     };
 
-    const uploadProofOfPayment = (form: InertiaForm<any>, application: StudentProgram) => {
+    const uploadProofOfPayment = (form: InertiaForm<any>, application: StudentApplication) => {
         const successMessage = () => trans('trans.proof_of_payment_uploaded');
         const errorMessage = () => trans('trans.proof_of_payment_failure');
         try {
@@ -127,7 +127,7 @@ export const useStudentApplications = () => {
         try {
             warningDialog(async () => {
                 await HttpService.post(
-                    route('students.approve-application', { student_program: enrolment.id.toString(), department_application_step: nextStepId }),
+                    route('students.approve-application', { student_application: enrolment.id.toString(), department_application_step: nextStepId }),
                     {},
                 );
                 successAlert(successMessage());
@@ -209,7 +209,7 @@ export const useStudentApplications = () => {
         const markAsMessage = () => trans('trans.mark_payment_as', { as: paid ? trans('trans.unpaid') : trans('trans.paid') });
         try {
             warningDialog(async () => {
-                await HttpService.post(route('students.confirm-registration-fee-payment', { student_program: enrolment.id?.toString() ?? '' }), {});
+                await HttpService.post(route('students.confirm-registration-fee-payment', { student_application: enrolment.id?.toString() ?? '' }), {});
                 successAlert(successMessage());
                 router.visit(window.location.href, { replace: true });
             }, markAsMessage());
@@ -223,7 +223,7 @@ export const useStudentApplications = () => {
         const errorMessage = () => trans('trans.tuition_fee_payment_failure', { action: paid ? trans('trans.unpaid') : trans('trans.paid') });
         try {
             warningDialog(async () => {
-                await HttpService.post(route('students.confirm-tuition-fee-payment', { student_program: enrolment?.id?.toString() ?? '' }), {});
+                await HttpService.post(route('students.confirm-tuition-fee-payment', { student_application: enrolment?.id?.toString() ?? '' }), {});
                 successAlert(successMessage());
                 router.visit(window.location.href, { replace: true });
             });

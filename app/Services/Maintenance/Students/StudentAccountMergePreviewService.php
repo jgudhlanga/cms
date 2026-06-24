@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Maintenance\Students;
 
 use App\Models\Students\Student;
-use App\Models\Students\StudentProgram;
+use App\Models\Students\StudentApplication;
 use App\Models\Users\User;
 use App\Rules\ZimbabweanIdNumber;
 use App\Services\Enrollment\EnrollmentLookupService;
@@ -34,8 +34,8 @@ class StudentAccountMergePreviewService
             ]);
         }
 
-        $programRelations = [
-            'programs' => fn ($query) => $query->with([
+        $applicationRelations = [
+            'applications' => fn ($query) => $query->with([
                 'institutionDepartment.department',
                 'departmentLevel.level',
                 'departmentCourse.course',
@@ -47,20 +47,20 @@ class StudentAccountMergePreviewService
         ];
 
         $source->loadCount([
-            'programs',
+            'applications',
             'enrolments',
             'contacts',
             'addresses',
             'hostelApplications',
-        ])->load(array_merge(['user'], $programRelations));
+        ])->load(array_merge(['user'], $applicationRelations));
 
         $target->loadCount([
-            'programs',
+            'applications',
             'enrolments',
             'contacts',
             'addresses',
             'hostelApplications',
-        ])->load(array_merge(['user'], $programRelations));
+        ])->load(array_merge(['user'], $applicationRelations));
 
         return [
             'source' => $this->studentPreviewPayload($source, true),
@@ -117,15 +117,15 @@ class StudentAccountMergePreviewService
     }
 
     /**
-     * @return array{student: Student, counts: array<string, int>, programs: Collection<int, StudentProgram>}
+     * @return array{student: Student, counts: array<string, int>, programs: Collection<int, StudentApplication>}
      */
     private function studentPreviewPayload(Student $student, bool $isFaultySource): array
     {
         return [
             'student' => $student,
-            'programs' => $student->programs,
+            'programs' => $student->applications,
             'counts' => [
-                'programmesCount' => (int) ($student->programs_count ?? 0),
+                'programmesCount' => (int) ($student->applications_count ?? 0),
                 'enrolmentsCount' => (int) ($student->enrolments_count ?? 0),
                 'paidReceiptsCount' => $this->countPaidReceipts($student->user),
                 'contactsCount' => (int) ($student->contacts_count ?? 0),

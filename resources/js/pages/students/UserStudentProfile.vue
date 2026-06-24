@@ -99,7 +99,7 @@ const personalDetails = computed<ValueAndLabel[]>(() => {
             </BaseCard>
             <div class="flex flex-col space-y-3" v-if="programs && programs.length > 0">
                 <div class="flex justify-between">
-                    <HeadingSmall :title="$t('trans.ui_student_programs')" />
+                    <HeadingSmall :title="$t('trans.ui_student_applications')" />
                     <div class="flex space-x-2">
                         <span>{{ $tChoice('trans.student_number', 1) }}:</span>
                         <BaseTag :variant="ColorVariant.success" :title="student.attributes.studentNumber ?? '---'" />
@@ -131,9 +131,9 @@ const personalDetails = computed<ValueAndLabel[]>(() => {
                             <td class="j-td">{{ application.relationships?.departmentWorkflowStep?.attributes?.workflowStep }}</td>
                             <td class="j-td text-right">
                                 <div class="flex items-center justify-end space-x-3">
-                                    <OfferLetterAnchor v-if="hasOfferLetter(application)" :student-program-id="String(application.id)" />
+                                    <OfferLetterAnchor v-if="hasOfferLetter(application)" :student-application-id="String(application.id)" />
                                     <BaseButton
-                                        v-if="hasAbility('update:student-programs')"
+                                        v-if="hasAbility('update:student-applications')"
                                         :title="$t('trans.edit')"
                                         :size="ButtonSize.xs"
                                         classes="rounded-full"

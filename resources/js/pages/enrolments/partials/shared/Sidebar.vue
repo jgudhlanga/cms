@@ -22,9 +22,9 @@ const getDescription = (type: ClassListType) => {
 const getRouteName = (type: ClassListType, applicationId: string) => {
     switch (type) {
         case 'provisional':
-            return route('enrolments.verify', { student_program: applicationId, type: 'provisional' });
+            return route('enrolments.verify', { student_application: applicationId, type: 'provisional' });
         case 'verified':
-            return route('enrolments.confirm', { student_program: applicationId, type: 'verified' });
+            return route('enrolments.confirm', { student_application: applicationId, type: 'verified' });
         default:
             return '';
     }
