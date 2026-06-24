@@ -18,7 +18,13 @@ return new class extends Migration
             $table->string('id_number')->nullable();
             $table->string('passport_number')->nullable();
             $table->string('status')->default('awaiting-payment');
-            $table->foreignId('student_application_id')->nullable()->constrained('student_applications');
+
+            if (Schema::hasTable('student_applications')) {
+                $table->foreignId('student_application_id')->nullable()->constrained('student_applications')->nullOnDelete();
+            } else {
+                $table->foreignId('student_program_id')->nullable()->constrained('student_programs')->nullOnDelete();
+            }
+
             $table->timestamps();
 
             $table->unique(['user_id', 'intake_period_id']);

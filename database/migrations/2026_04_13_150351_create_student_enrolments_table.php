@@ -14,7 +14,13 @@ return new class extends Migration
         Schema::create('student_enrolments', function (Blueprint $table) {
             $table->id();
             $table->foreignId('student_id')->constrained();
-            $table->foreignId('student_application_id')->constrained('student_applications');
+
+            if (Schema::hasTable('student_applications')) {
+                $table->foreignId('student_application_id')->constrained('student_applications');
+            } else {
+                $table->foreignId('student_program_id')->constrained('student_programs');
+            }
+
             $table->foreignId('institution_department_id')->constrained();
             $table->foreignId('department_level_id')->constrained();
             $table->foreignId('department_course_id')->constrained();

@@ -16,6 +16,12 @@ return new class extends Migration
         }
 
         Schema::table('class_configs', function (Blueprint $table): void {
+            if (! Schema::hasIndex('class_configs', 'class_configs_institution_department_id_index')) {
+                $table->index('institution_department_id');
+            }
+        });
+
+        Schema::table('class_configs', function (Blueprint $table): void {
             $table->dropUnique('class_configs_dept_course_level_mode_year_unique');
         });
     }
