@@ -15,11 +15,13 @@ use App\Models\Institution\IntakePeriod;
 use App\Models\Institution\Level;
 use App\Models\Ledgers\Ledger;
 use App\Models\Shared\FeeType;
+use App\Models\Students\ApplicationFee;
 use App\Models\Students\Student;
-use App\Models\Students\StudentProgram;
+use App\Models\Students\StudentApplication;
 use App\Models\Users\User;
 use App\Services\HMS\StudentAccommodationFeeService;
 use App\Services\Integrations\OnlinePaymentContextResolver;
+use App\Services\Students\ApplicationFeeService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\JsonResponse;
@@ -34,6 +36,7 @@ class PaymentController extends Controller
 {
     public function __construct(
         protected OnlinePaymentContextResolver $paymentContextResolver,
+        protected ApplicationFeeService $applicationFeeService,
     ) {}
 
     /**
@@ -85,13 +88,13 @@ class PaymentController extends Controller
                 PaymentHelper::assembleInvoiceData($request, $data, $tenantId),
                 $context->ledgerable,
                 $context->intakePeriod,
-                studentProgramId: $context->studentProgramId,
+                studentApplicationId: $context->studentApplicationId,
             );
             PaymentHelper::createReceiptEntry(
                 PaymentHelper::assembleReceiptData($request, $data, $tenantId),
                 $context->ledgerable,
                 $context->intakePeriod,
-                studentProgramId: $context->studentProgramId,
+                studentApplicationId: $context->studentApplicationId,
             );
         }
 
@@ -122,7 +125,11 @@ class PaymentController extends Controller
         $invoice->update(['payment_status' => 'cancelled']);
         $receipt->update(['payment_status' => 'cancelled']);
 
-        return $this->renderPaymentStatusPage('integrations/payments/Cancelled', $invoice);
+        return $this->renderPaymentStatusPage(
+            'integrations/payments/Cancelled',
+            $invoice,
+            useFailureRoute: true,
+        );
     }
 
     public function failed(): Response
@@ -134,10 +141,24 @@ class PaymentController extends Controller
         $invoice->update(['payment_status' => 'failed']);
         $receipt?->update(['payment_status' => 'failed']);
 
-        return $this->renderPaymentStatusPage('integrations/payments/Failure', $invoice);
+        return $this->renderPaymentStatusPage(
+            'integrations/payments/Failure',
+            $invoice,
+            useFailureRoute: true,
+        );
     }
 
-    public function result(): void {}
+    public function result(Request $request): JsonResponse
+    {
+        $this->assertValidPaymentWebhook($request);
+
+        $ledgerRequest = UpdateLedgerRequest::createFrom($request);
+        $ledgerRequest->setContainer(app())->setRedirector(app('redirect'))->validateResolved();
+
+        $this->updateLedgerRecords($ledgerRequest);
+
+        return response()->json(['status' => 'ok']);
+    }
 
     /**
      * @throws ConnectionException
@@ -224,17 +245,18 @@ class PaymentController extends Controller
             $user = $request->user();
 
             if ($feeTypeEnum && $user) {
-                $ledgerable = $user;
-
-                if ($feeTypeEnum->ledgerableClass() === HostelApplication::class) {
-                    $ledgerable = $this->paymentContextResolver->resolveForInitiate(
+                $ledgerable = match ($feeTypeEnum->ledgerableClass()) {
+                    ApplicationFee::class => $this->paymentContextResolver->resolveForInitiate(
                         $request->merge(['feeTypeId' => $feeType->id])
-                    )->ledgerable;
-                } elseif ($feeTypeEnum->ledgerableClass() === StudentProgram::class && $request->filled('ledgerableId')) {
-                    $ledgerable = $this->paymentContextResolver->resolveForInitiate(
+                    )->ledgerable,
+                    HostelApplication::class => $this->paymentContextResolver->resolveForInitiate(
                         $request->merge(['feeTypeId' => $feeType->id])
-                    )->ledgerable;
-                }
+                    )->ledgerable,
+                    StudentApplication::class => $this->paymentContextResolver->resolveForInitiate(
+                        $request->merge(['feeTypeId' => $feeType->id])
+                    )->ledgerable,
+                    default => $user,
+                };
 
                 $invoice = PaymentHelper::getLatestLedgerRecordForLedgerable(
                     $ledgerable,
@@ -244,6 +266,22 @@ class PaymentController extends Controller
                 $receipt = PaymentHelper::getLatestLedgerRecordForLedgerable(
                     $ledgerable,
                     $feeTypeEnum->slug(),
+                    'receipt',
+                );
+            }
+        }
+
+        if ($invoice === null) {
+            $applicationFee = $this->applicationFeeService->forUserAndIntake($request->user());
+            if ($applicationFee !== null) {
+                $invoice = PaymentHelper::getLatestLedgerRecordForLedgerable(
+                    $applicationFee,
+                    FeeTypeEnum::APPLICATION_FEE->slug(),
+                    'invoice',
+                );
+                $receipt = PaymentHelper::getLatestLedgerRecordForLedgerable(
+                    $applicationFee,
+                    FeeTypeEnum::APPLICATION_FEE->slug(),
                     'receipt',
                 );
             }
@@ -268,8 +306,9 @@ class PaymentController extends Controller
             return response()->json(['status' => $check['status']]);
         }
 
-        $invoice->update(['payment_status' => $check['status'] ?? 'pending']);
-        $receipt?->update(['payment_status' => $check['status'] ?? 'pending']);
+        $status = $check['status'] ?? 'pending';
+        $invoice->update(['payment_status' => $status]);
+        $receipt?->update(['payment_status' => $status]);
 
         return response()->json(['status' => 'not paid']);
     }
@@ -315,10 +354,16 @@ class PaymentController extends Controller
 
     public function checkUserIntakePeriodApplicationFeePaymentStatus(User $user, IntakePeriod $intakePeriod)
     {
-        return PaymentHelper::getLatestLedgerRecord(
+        $applicationFee = $this->applicationFeeService->forUserAndIntake($user, $intakePeriod);
+
+        if ($applicationFee === null) {
+            return null;
+        }
+
+        return PaymentHelper::getLatestLedgerRecordForLedgerable(
+            $applicationFee,
             FeeTypeEnum::APPLICATION_FEE->slug(),
             'receipt',
-            $user,
             $intakePeriod,
         );
     }
@@ -328,11 +373,28 @@ class PaymentController extends Controller
         return $level->has_application_fee_payment;
     }
 
-    public function registrationFeePaymentOptions(): Response
+    public function registrationFeePaymentOptions(): Response|RedirectResponse
     {
+        $user = request()->user();
+        $applicationFee = $this->applicationFeeService->activeApplicationFee($user);
+
+        if ($applicationFee === null) {
+            return redirect()
+                ->route('portal.application.level-options')
+                ->with('error', __('trans.application_fee_record_required'));
+        }
+
+        $applicationFee->load(['level', 'intakePeriod']);
         $registrationFee = PaymentHelper::getFeeStructureResourceBySlug(FeeTypeEnum::APPLICATION_FEE->slug());
 
-        return Inertia::render('portal/application/RegistrationFeePaymentOptions', compact('registrationFee'));
+        return Inertia::render('portal/application/RegistrationFeePaymentOptions', [
+            'registrationFee' => $registrationFee,
+            'applicationFeeId' => $applicationFee->id,
+            'applicationFeeStatus' => $applicationFee->status->value,
+            'levelName' => $applicationFee->level?->name,
+            'intakeName' => $applicationFee->intakePeriod?->name,
+            'applicationStep' => 'fee',
+        ]);
     }
 
     /**
@@ -393,32 +455,50 @@ class PaymentController extends Controller
         return request()->user()->studentProfile;
     }
 
-    private function renderPaymentStatusPage(string $page, Ledger $ledger): Response
+    private function renderPaymentStatusPage(string $page, Ledger $ledger, bool $useFailureRoute = false): Response
     {
         $ledger->loadMissing('feeType');
         $feeTypeEnum = $ledger->feeType
             ? FeeTypeEnum::fromFeeType($ledger->feeType)
             : null;
 
+        $redirectRoute = $useFailureRoute
+            ? $this->paymentContextResolver->postFailurePaymentRouteForLedger($ledger)
+            : $this->paymentContextResolver->postPaymentRouteForLedger($ledger);
+
         return Inertia::render($page, [
             'details' => LedgerResource::make($ledger),
-            'redirectRoute' => $this->paymentContextResolver->postPaymentRouteForLedger($ledger),
+            'redirectRoute' => $redirectRoute,
             'isApplicationFee' => $feeTypeEnum === FeeTypeEnum::APPLICATION_FEE,
             'isAccommodationFee' => $feeTypeEnum?->isAccommodationFee() ?? false,
         ]);
     }
 
+    private function assertValidPaymentWebhook(Request $request): void
+    {
+        $apiKey = config('custom.payments.payment-gateway.api_key');
+        $secret = config('custom.payments.payment-gateway.secret');
+
+        if (empty($apiKey) && empty($secret)) {
+            return;
+        }
+
+        if ($request->header('x-api-key') !== $apiKey || $request->header('x-api-secret') !== $secret) {
+            abort(401, 'Unauthorized payment webhook');
+        }
+    }
+
     private function extractFilters(UpdateLedgerRequest $request): array
     {
-        $amount = $request->amount ? $request->amount : null;
-        $clientFee = $request->clientFee ? $request->clientFee : null;
-        $createdDate = $request->createdDate ? $request->createdDate : null;
-        $currency = $request->currency ? $request->currency : null;
-        $merchantFee = $request->merchantFee ? $request->merchantFee : 0;
-        $orderReference = $request->orderReference ? $request->orderReference : null;
-        $paymentReference = $request->paymentReference ? $request->paymentReference : null;
-        $paymentStatus = $request->paymentStatus ? $request->paymentStatus : null;
-        $paymentOption = $request->paymentOption ? $request->paymentOption : null;
+        $amount = $request->filled('amount') ? $request->amount : null;
+        $clientFee = $request->filled('clientFee') ? (float) $request->clientFee : 0.0;
+        $createdDate = $request->filled('createdDate') ? $request->createdDate : null;
+        $currency = $request->filled('currency') ? $request->currency : null;
+        $merchantFee = $request->filled('merchantFee') ? (float) $request->merchantFee : 0.0;
+        $orderReference = $request->filled('orderReference') ? $request->orderReference : null;
+        $paymentReference = $request->filled('paymentReference') ? $request->paymentReference : null;
+        $paymentStatus = $request->filled('paymentStatus') ? $request->paymentStatus : null;
+        $paymentOption = $request->filled('paymentOption') ? $request->paymentOption : null;
 
         return [
             $amount, $clientFee, $createdDate, $currency, $merchantFee, $paymentOption,

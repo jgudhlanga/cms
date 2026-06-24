@@ -78,8 +78,8 @@ test('json api portal student can self lookup and apply for hostel', function ()
     disableAllHmsApprovalRequirements($tenant->id);
     openHostelApplications($tenant->id);
 
-    $studentProgram = createStudentReadyForHostelApplication('PORTAL-APPLY-01');
-    $student = $studentProgram->student;
+    $studentApplication = createStudentReadyForHostelApplication('PORTAL-APPLY-01');
+    $student = $studentApplication->student;
     $student->update(['user_id' => $portalUser->id]);
 
     ensureHostelRoomWithCapacity('Hostel D', 'PORTAL-APPLY-ROOM');
@@ -128,17 +128,17 @@ test('json api student lookup by id works for staff with view students', functio
 
     disableAllHmsApprovalRequirements($tenant->id);
 
-    $studentProgram = createStudentReadyForHostelApplication('LOOKUP-ID-01');
+    $studentApplication = createStudentReadyForHostelApplication('LOOKUP-ID-01');
     ensureHostelRoomWithCapacity('Hostel D', 'LOOKUP-ID-ROOM');
 
     $this
         ->jsonApi()
         ->get(route('v1.json.hostel-applications.studentLookup', [
-            'filter' => ['student' => (string) $studentProgram->student_id],
+            'filter' => ['student' => (string) $studentApplication->student_id],
         ]))
         ->assertSuccessful()
         ->assertJsonPath('meta.found', true)
-        ->assertJsonPath('meta.student.id', $studentProgram->student_id);
+        ->assertJsonPath('meta.student.id', $studentApplication->student_id);
 });
 
 test('json api accommodation fees meta returns summary for student', function () {
@@ -147,12 +147,12 @@ test('json api accommodation fees meta returns summary for student', function ()
     $user->givePermissionTo('view:students');
     Sanctum::actingAs($user);
 
-    $studentProgram = createStudentReadyForHostelApplication('FEES-META-01');
+    $studentApplication = createStudentReadyForHostelApplication('FEES-META-01');
 
     $this
         ->jsonApi()
         ->get(route('v1.json.hostel-applications.accommodationFees', [
-            'filter' => ['student' => (string) $studentProgram->student_id],
+            'filter' => ['student' => (string) $studentApplication->student_id],
         ]))
         ->assertSuccessful()
         ->assertJsonStructure([

@@ -13,6 +13,7 @@ export const useCreateUserFormStore = defineStore('portal-application-user-form'
             id_number: '',
             passport_number: '',
             registration_path: 'zimbabwean',
+            acknowledged_advert: false,
         };
     },
     persist: true,

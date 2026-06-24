@@ -133,8 +133,8 @@ test('portal profile accommodations pay route returns not found when fee structu
 
 test('portal profile accommodations pay route exposes fee structure amount when no ledger exists', function () {
     $tenant = Tenant::query()->firstOrFail();
-    $studentProgram = createStudentReadyForHostelApplication('PORTAL-ACCOMM-PAY-002');
-    $student = $studentProgram->student;
+    $studentApplication = createStudentReadyForHostelApplication('PORTAL-ACCOMM-PAY-002');
+    $student = $studentApplication->student;
     $user = User::query()->findOrFail($student->user_id);
     $user->givePermissionTo('manageOwnStudentAccommodationDetails:students');
 
@@ -150,16 +150,16 @@ test('portal profile accommodations pay route exposes fee structure amount when 
     FeeStructure::query()->create([
         'tenant_id' => $tenant->id,
         'fee_type_id' => $feeType->id,
-        'level_id' => $studentProgram->departmentLevel->level_id,
+        'level_id' => $studentApplication->departmentLevel->level_id,
         'mode_of_study_id' => null,
         'amount' => 150.00,
         'local_fca_amount' => 250.00,
     ]);
 
-    $enrolment = $student->latestEnrolment ?? attachHostelApplicationEnrolment($studentProgram);
+    $enrolment = $student->latestEnrolment ?? attachHostelApplicationEnrolment($studentApplication);
 
     HostelApplication::withoutEvents(fn () => HostelApplication::query()->create([
-        'tenant_id' => $studentProgram->tenant_id,
+        'tenant_id' => $studentApplication->tenant_id,
         'student_id' => $student->id,
         'student_enrolment_id' => $enrolment->id,
         'gender_id' => $student->gender_id,

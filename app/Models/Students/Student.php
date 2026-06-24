@@ -107,9 +107,9 @@ class Student extends Model
         return $this->belongsTo(Race::class);
     }
 
-    public function programs(): HasMany
+    public function applications(): HasMany
     {
-        return $this->hasMany(StudentProgram::class, 'student_id');
+        return $this->hasMany(StudentApplication::class, 'student_id');
     }
 
     public function enrolments(): HasMany
@@ -124,7 +124,7 @@ class Student extends Model
 
     public function currentLevel(): ?string
     {
-        return $this->programs()->latest()->first()?->levelEnum()?->name();
+        return $this->applications()->latest()->first()?->levelEnum()?->name();
     }
 
     public function contacts(): MorphMany

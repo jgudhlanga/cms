@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import PortalApplicationStepper from '@/components/portal/PortalApplicationStepper.vue';
 import BaseAlert from '@/components/core/alert/BaseAlert.vue';
 import BaseImage from '@/components/core/image/BaseImage.vue';
 import DataLoadingSpinner from '@/components/core/loader/DataLoadingSpinner.vue';
@@ -15,15 +16,24 @@ import { AuthObject } from '@/types/data-pagination';
 import { FeeStructure } from '@/types/institution';
 import axios from 'axios';
 import { trans } from 'laravel-vue-i18n';
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 
 interface Props {
     registrationFee: FeeStructure;
+    applicationFeeId: number;
+    applicationFeeStatus?: string;
+    levelName?: string | null;
+    intakeName?: string | null;
+    applicationStep?: 'level' | 'fee' | 'apply';
     auth: AuthObject;
     errors: object;
 }
 
-const props = defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+    applicationStep: 'fee',
+    applicationFeeStatus: 'awaiting_payment',
+});
+
 const { user } = props.auth;
 const checkData = ref<{ status: string } | null>(null);
 const isCheckingPayment = ref(false);
@@ -32,11 +42,17 @@ const { paymentMethods } = useDefaults();
 const { generateRandomCode, formatCurrency, navigateTo } = useUtils();
 const registrationFeeAmount = props.registrationFee?.attributes?.localFcaAmount ?? '20.00';
 
+const statusLabel = computed(() => {
+    const key = `trans.application_fee_status_${props.applicationFeeStatus}`;
+    return trans(key);
+});
+
 const isLoading = ref(false);
 
 const formData = {
     orderReference: generateRandomCode('ORD'),
     feeTypeId: props.registrationFee?.attributes?.feeTypeId ?? '',
+    ledgerableId: props.applicationFeeId,
     amount: registrationFeeAmount,
     itemName: props.registrationFee?.attributes?.feeType ?? '',
     itemDescription: props.registrationFee?.attributes?.feeType ?? '',
@@ -51,6 +67,7 @@ const checkPaymentStatus = async () => {
     try {
         checkData.value = await HttpService.post(route('check-payment-status-for-current-user'), {
             feeTypeId: props.registrationFee?.attributes?.feeTypeId ?? '',
+            ledgerableId: props.applicationFeeId,
         });
     } catch (error: any) {
         checkData.value = null;
@@ -82,8 +99,7 @@ onMounted(async () => {
     return;**/
     await checkPaymentStatus();
     const studentId = user.attributes?.studentId;
-    const userEmail = user.attributes.email;
-    if (String(checkData?.value?.status)?.toLowerCase() === 'paid' || userEmail === 'jamesgudhlanga0@gmail.com') {
+    if (String(checkData?.value?.status)?.toLowerCase() === 'paid') {
         if (Number(studentId) > 0) {
             window.location.href = route('portal.add-program', { student: studentId });
             return;
@@ -94,14 +110,28 @@ onMounted(async () => {
 </script>
 <template>
     <StudentPageHeader />
-    <div class="min-h-svh bg-background px-4 pb-12 pt-28 text-foreground sm:px-6">
+    <PortalApplicationStepper :current-step="applicationStep" />
+    <div class="min-h-svh bg-background px-4 pb-12 pt-8 text-foreground sm:px-6">
         <DataLoadingSpinner v-if="isCheckingPayment" :message="$t('trans.ui_checking_payment_status')" />
 
         <div v-else class="mx-auto w-full max-w-2xl">
             <div class="rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-8">
                 <div class="space-y-4">
-                    <div class="text-destructive text-center text-sm font-bold tracking-wide uppercase">
-                        {{ $t('trans.ui_please_check_for_the_available_courses_in_the_advert_before') }}
+                    <div class="rounded-xl border border-border bg-muted/20 p-4 text-sm">
+                        <dl class="grid gap-2 sm:grid-cols-2">
+                            <div v-if="levelName">
+                                <dt class="text-muted-foreground">{{ $tChoice('trans.level', 1) }}</dt>
+                                <dd class="font-medium text-foreground">{{ levelName }}</dd>
+                            </div>
+                            <div v-if="intakeName">
+                                <dt class="text-muted-foreground">{{ $tChoice('trans.intake_period', 1) }}</dt>
+                                <dd class="font-medium text-foreground">{{ intakeName }}</dd>
+                            </div>
+                            <div>
+                                <dt class="text-muted-foreground">{{ $t('trans.status') }}</dt>
+                                <dd class="font-medium text-foreground">{{ statusLabel }}</dd>
+                            </div>
+                        </dl>
                     </div>
 
                     <BaseAlert

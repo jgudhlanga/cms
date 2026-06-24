@@ -69,7 +69,7 @@ const APP_MODULE_KEYS = {
     show_payment_status: 'show_payment_status',
     o_level_subjects: 'o_level_subjects',
     academic_calendars: 'academic_calendars',
-    student_programs: 'student_programs',
+    student_applications: 'student_applications',
     student_per_class: 'student_per_class',
     student_enrolment_statuses: 'student_enrolment_statuses',
     academic_year_options: 'academic_year_options',

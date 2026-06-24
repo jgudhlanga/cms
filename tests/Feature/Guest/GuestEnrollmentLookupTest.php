@@ -103,6 +103,7 @@ test('portal store rejects invalid national id format', function () {
         'password' => 'Password1!',
         'password_confirmation' => 'Password1!',
         'id_number' => 'not-a-valid-id',
+        'acknowledged_advert' => true,
     ]);
 
     $response->assertSessionHasErrors('id_number');
@@ -119,9 +120,24 @@ test('portal store rejects duplicate national id registration', function () {
         'password' => 'Password1!',
         'password_confirmation' => 'Password1!',
         'id_number' => '44-0111222A44',
+        'acknowledged_advert' => true,
     ]);
 
     $response->assertSessionHasErrors('id_number');
+});
+
+test('portal store requires instruction acknowledgments', function () {
+    $response = $this->post(route('portal.store'), [
+        'registration_path' => 'zimbabwean',
+        'first_name' => 'New',
+        'last_name' => 'Applicant',
+        'email' => 'missing.ack.'.uniqid().'@example.com',
+        'password' => 'Password1!',
+        'password_confirmation' => 'Password1!',
+        'id_number' => '44-0888777C44',
+    ]);
+
+    $response->assertSessionHasErrors(['acknowledged_advert']);
 });
 
 test('portal store creates account and redirects to level selection for new zimbabwean', function () {
@@ -136,10 +152,12 @@ test('portal store creates account and redirects to level selection for new zimb
         'password' => 'Password1!',
         'password_confirmation' => 'Password1!',
         'id_number' => '44-0999888B44',
+        'acknowledged_advert' => true,
     ]);
 
     $response->assertRedirect(route('portal.application.level-options'));
     $this->assertAuthenticated();
     expect(session('registration.id_number'))->toBe('44-0999888B44');
     expect(auth()->user()?->middle_name)->toBe('Middle');
+    expect(auth()->user()?->registration_instructions_acknowledged_at)->not->toBeNull();
 });

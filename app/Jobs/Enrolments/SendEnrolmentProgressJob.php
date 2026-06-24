@@ -61,7 +61,7 @@ class SendEnrolmentProgressJob implements ShouldQueue
             };
             $step = WorkflowStep::where('slug', $type)->first();
             $departmentStep = DepartmentApplicationStep::where('institution_department_id', $this->institutionDepartmentId)->where('workflow_step_id', $step->id)->first();
-            DB::table('student_programs')->where('id', $details->application_id)->update(['department_application_step_id' => $departmentStep->id]);
+            DB::table('student_applications')->where('id', $details->application_id)->update(['department_application_step_id' => $departmentStep->id]);
             Mail::to($email)->send($mailable);
         }
     }
@@ -72,7 +72,7 @@ class SendEnrolmentProgressJob implements ShouldQueue
     protected function fetchApplicationDetails(): ?object
     {
         return DB::table('class_lists as cl')
-            ->join('student_programs as sp', 'sp.id', '=', 'cl.student_program_id')
+            ->join('student_applications as sp', 'sp.id', '=', 'cl.student_application_id')
             ->join('students as st', 'st.id', '=', 'sp.student_id')
             ->join('users as us', 'us.id', '=', 'st.user_id')
             ->where('cl.id', $this->classId)

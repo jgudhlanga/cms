@@ -6,7 +6,7 @@ namespace App\Http\Resources\Maintenance;
 
 use App\Enums\Shared\ClassListTypeEnum;
 use App\Enums\Shared\WorkflowStepEnum;
-use App\Models\Students\StudentProgram;
+use App\Models\Students\StudentApplication;
 use App\Models\Users\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -43,14 +43,14 @@ class NonEnrolledStudentUserResource extends JsonResource
             return __('trans.maintenance_users_status_no_profile');
         }
 
-        $programs = $this->studentProfile->programs;
+        $programs = $this->studentProfile->applications;
 
         if ($programs->isEmpty()) {
             return __('trans.maintenance_users_status_no_programmes');
         }
 
         $statuses = $programs
-            ->map(fn (StudentProgram $program): ?string => $this->resolveProgramStatus($program))
+            ->map(fn (StudentApplication $program): ?string => $this->resolveProgramStatus($program))
             ->filter()
             ->unique()
             ->values();
@@ -62,7 +62,7 @@ class NonEnrolledStudentUserResource extends JsonResource
         return $statuses->implode(', ');
     }
 
-    private function resolveProgramStatus(StudentProgram $program): ?string
+    private function resolveProgramStatus(StudentApplication $program): ?string
     {
         $classListType = $program->classList?->type;
         $verifiedType = $classListType instanceof ClassListTypeEnum

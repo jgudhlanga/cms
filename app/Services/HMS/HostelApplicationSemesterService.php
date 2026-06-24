@@ -18,7 +18,7 @@ class HostelApplicationSemesterService
 
     public function resolveCalendarYear(StudentEnrolment $enrolment): ?string
     {
-        $calendarYear = $enrolment->studentProgram?->intakePeriod?->calendar_year;
+        $calendarYear = $enrolment->studentApplication?->intakePeriod?->calendar_year;
 
         if ($calendarYear === null || $calendarYear === '') {
             return null;

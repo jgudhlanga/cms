@@ -12,7 +12,7 @@ use App\Models\Institution\Level;
 use App\Models\Institution\ModeOfStudy;
 use App\Models\Shared\WorkflowStep;
 use App\Models\Students\Student;
-use App\Models\Students\StudentProgram;
+use App\Models\Students\StudentApplication;
 use App\Models\Tenants\Tenant;
 use App\Models\Users\User;
 use Illuminate\Support\Facades\DB;
@@ -73,7 +73,7 @@ function createPortalDashboardStudent(): array
     );
 
     $portalUser = User::factory()->create(['tenant_id' => $tenant->id]);
-    $portalUser->givePermissionTo(['viewOwnDashboard:students', 'manageOwnStudentProgramDetails:students']);
+    $portalUser->givePermissionTo(['viewOwnDashboard:students', 'manageOwnStudentApplicationDetails:students']);
 
     $student = Student::query()->create([
         'tenant_id' => $tenant->id,
@@ -102,7 +102,7 @@ function createPortalDashboardStudent(): array
         'student_number' => 'DASH-'.uniqid(),
     ]);
 
-    $studentProgram = StudentProgram::query()->create([
+    $studentApplication = StudentApplication::query()->create([
         'tenant_id' => $tenant->id,
         'student_id' => $student->id,
         'institution_department_id' => $institutionDepartment->id,
@@ -114,17 +114,17 @@ function createPortalDashboardStudent(): array
         'application_tracking_number' => 'TRK-DASH-001',
     ]);
 
-    return compact('portalUser', 'student', 'studentProgram');
+    return compact('portalUser', 'student', 'studentApplication');
 }
 
 test('json api student portal dashboard stats returns meta for authenticated student', function () {
-    ['portalUser' => $portalUser, 'studentProgram' => $studentProgram] = createPortalDashboardStudent();
+    ['portalUser' => $portalUser, 'studentApplication' => $studentApplication] = createPortalDashboardStudent();
 
     Sanctum::actingAs($portalUser);
 
     $response = $this
-        ->jsonApi('student-programs')
-        ->get(route('v1.json.student-programs.dashboardStats'));
+        ->jsonApi('student-applications')
+        ->get(route('v1.json.student-applications.dashboardStats'));
 
     $response->assertSuccessful()
         ->assertHeader('Content-Type', 'application/vnd.api+json')
@@ -160,8 +160,8 @@ test('json api student portal dashboard stats is forbidden without student profi
     Sanctum::actingAs($user);
 
     $this
-        ->jsonApi('student-programs')
-        ->get(route('v1.json.student-programs.dashboardStats'))
+        ->jsonApi('student-applications')
+        ->get(route('v1.json.student-applications.dashboardStats'))
         ->assertForbidden();
 });
 
@@ -174,8 +174,8 @@ test('json api student portal dashboard stats is forbidden without dashboard per
     Sanctum::actingAs($user);
 
     $this
-        ->jsonApi('student-programs')
-        ->get(route('v1.json.student-programs.dashboardStats'))
+        ->jsonApi('student-applications')
+        ->get(route('v1.json.student-applications.dashboardStats'))
         ->assertForbidden();
 });
 
@@ -185,8 +185,8 @@ test('json api student portal dashboard stats includes financial summary when pe
     Sanctum::actingAs($portalUser);
 
     $response = $this
-        ->jsonApi('student-programs')
-        ->get(route('v1.json.student-programs.dashboardStats'));
+        ->jsonApi('student-applications')
+        ->get(route('v1.json.student-applications.dashboardStats'));
 
     $response->assertSuccessful()
         ->assertJsonStructure([
@@ -203,7 +203,7 @@ test('json api student portal dashboard stats includes financial summary when pe
 
 test('json api student portal dashboard stats requires authentication', function () {
     $this
-        ->jsonApi('student-programs')
-        ->get(route('v1.json.student-programs.dashboardStats'))
+        ->jsonApi('student-applications')
+        ->get(route('v1.json.student-applications.dashboardStats'))
         ->assertUnauthorized();
 });

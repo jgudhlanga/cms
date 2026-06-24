@@ -16,7 +16,7 @@ return new class extends Migration {
             $table->morphs('ledgerable');
             $table->foreignId('fee_type_id')->constrained();
             $table->foreignId('level_id')->nullable();
-            $table->foreignId('student_program_id')->nullable();
+            $table->foreignId('student_application_id')->nullable();
             $table->string('payment_option')->nullable();
             $table->enum('type', ['receipt', 'invoice'])->default('invoice');
             $table->enum('payment_status', ['cancelled', 'failed', 'pending', 'paid'])->nullable();

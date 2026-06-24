@@ -13,6 +13,7 @@ export type CreateApplicationUserParams = {
     id_number?: string;
     passport_number?: string;
     registration_path?: RegistrationPath;
+    acknowledged_advert?: boolean;
 };
 
 export type CreateApplicationParams = {

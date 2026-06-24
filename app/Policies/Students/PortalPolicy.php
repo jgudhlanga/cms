@@ -16,9 +16,9 @@ class PortalPolicy
         return $user->can('manageOwnStudentPersonalDetails:students');
     }
 
-    public function manageStudentProgramDetails(User $user): bool
+    public function manageStudentApplicationDetails(User $user): bool
     {
-        return $user->can('manageOwnStudentProgramDetails:students');
+        return $user->can('manageOwnStudentApplicationDetails:students');
     }
 
     public function manageStudentSponsors(User $user): bool

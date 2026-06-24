@@ -9,7 +9,7 @@ use App\Models\HMS\Hostel;
 use App\Models\HMS\HostelRoom;
 use App\Models\Students\StudentEnrolment;
 use App\Models\Students\StudentEnrolmentStatus;
-use App\Models\Students\StudentProgram;
+use App\Models\Students\StudentApplication;
 use App\Models\Users\User;
 
 function createRunningSemesterCalendar(string $calendarYear = '2025/2026'): AcademicCalendar
@@ -67,10 +67,10 @@ function ensureHostelRoomWithCapacity(string $hostelName, string $roomName = 'TE
 }
 
 function attachHostelApplicationEnrolment(
-    StudentProgram $studentProgram,
+    StudentApplication $studentApplication,
     ?AcademicCalendar $calendar = null,
 ): StudentEnrolment {
-    $calendarYear = (string) ($studentProgram->intakePeriod?->calendar_year ?? '2025/2026');
+    $calendarYear = (string) ($studentApplication->intakePeriod?->calendar_year ?? '2025/2026');
     $calendar ??= createRunningSemesterCalendar($calendarYear);
 
     $activeStatusId = (int) StudentEnrolmentStatus::query()->firstOrCreate(
@@ -84,14 +84,14 @@ function attachHostelApplicationEnrolment(
     )->id;
 
     return StudentEnrolment::query()->create([
-        'student_id' => $studentProgram->student_id,
-        'student_program_id' => $studentProgram->id,
-        'institution_department_id' => $studentProgram->institution_department_id,
-        'department_level_id' => $studentProgram->department_level_id,
-        'department_course_id' => $studentProgram->department_course_id,
+        'student_id' => $studentApplication->student_id,
+        'student_application_id' => $studentApplication->id,
+        'institution_department_id' => $studentApplication->institution_department_id,
+        'department_level_id' => $studentApplication->department_level_id,
+        'department_course_id' => $studentApplication->department_course_id,
         'academic_calendar_id' => $calendar->id,
         'academic_year_option_id' => $semesterOptionId,
-        'mode_of_study_id' => $studentProgram->mode_of_study_id,
+        'mode_of_study_id' => $studentApplication->mode_of_study_id,
         'student_enrolment_status_id' => $activeStatusId,
     ]);
 }
@@ -138,19 +138,19 @@ function createStudentReadyForHostelApplication(
     string $studentNumber,
     bool $withRunningSemester = true,
     bool $openApplications = true,
-): StudentProgram {
-    $studentProgram = createVerifiedStudentProgram($studentNumber);
+): StudentApplication {
+    $studentApplication = createVerifiedStudentApplication($studentNumber);
 
-    $calendarYear = (string) ($studentProgram->intakePeriod?->calendar_year ?? '2025/2026');
+    $calendarYear = (string) ($studentApplication->intakePeriod?->calendar_year ?? '2025/2026');
     $calendar = $withRunningSemester
         ? createRunningSemesterCalendar($calendarYear)
         : createPastSemesterCalendar($calendarYear);
 
-    attachHostelApplicationEnrolment($studentProgram, $calendar);
+    attachHostelApplicationEnrolment($studentApplication, $calendar);
 
     if ($openApplications) {
         openHostelApplications(TenantEnum::HARARE_POLY->id());
     }
 
-    return $studentProgram->fresh(['student', 'intakePeriod']);
+    return $studentApplication->fresh(['student', 'intakePeriod']);
 }

@@ -3,12 +3,16 @@
 use App\Enums\HMS\HostelApplicationStatusEnum;
 use App\Enums\HMS\HostelApplicationTypeEnum;
 use App\Enums\Shared\FeeTypeEnum;
+use App\Enums\Students\ApplicationFeeStatusEnum;
 use App\Helpers\PaymentHelper;
 use App\Models\HMS\HostelApplication;
+use App\Models\Institution\Level;
 use App\Models\Ledgers\Ledger;
 use App\Models\Shared\FeeType;
-use App\Models\Students\StudentProgram;
+use App\Models\Students\ApplicationFee;
+use App\Models\Students\StudentApplication;
 use App\Services\HMS\StudentAccommodationFeeService;
+use App\Services\Students\ApplicationFeeService;
 use Illuminate\Support\Facades\Http;
 
 function paymentTestFeeType(FeeTypeEnum $feeTypeEnum): FeeType
@@ -37,13 +41,13 @@ function configurePaymentGateway(): void
     ]);
 }
 
-function createAwaitingPaymentHostelApplication(StudentProgram $studentProgram): HostelApplication
+function createAwaitingPaymentHostelApplication(StudentApplication $studentApplication): HostelApplication
 {
-    $student = $studentProgram->student;
-    $enrolment = attachHostelApplicationEnrolment($studentProgram);
+    $student = $studentApplication->student;
+    $enrolment = attachHostelApplicationEnrolment($studentApplication);
 
     return HostelApplication::withoutEvents(fn () => HostelApplication::query()->create([
-        'tenant_id' => $studentProgram->tenant_id,
+        'tenant_id' => $studentApplication->tenant_id,
         'student_id' => $student->id,
         'student_enrolment_id' => $enrolment->id,
         'gender_id' => $student->gender_id,
@@ -92,9 +96,9 @@ function createLedgerPair(
 test('initiate accommodation payment creates ledgers on hostel application', function () {
     configurePaymentGateway();
 
-    $studentProgram = createStudentReadyForHostelApplication('PAY-HMS-01');
-    $user = $studentProgram->student->user;
-    $application = createAwaitingPaymentHostelApplication($studentProgram);
+    $studentApplication = createStudentReadyForHostelApplication('PAY-HMS-01');
+    $user = $studentApplication->student->user;
+    $application = createAwaitingPaymentHostelApplication($studentApplication);
     $feeType = paymentTestFeeType(FeeTypeEnum::STUDENT_ACCOMMODATION_FEE);
     $orderReference = 'ORD-ACC-001';
 
@@ -134,9 +138,9 @@ test('initiate accommodation payment creates ledgers on hostel application', fun
 test('feedback updates accommodation ledgers by order reference', function () {
     configurePaymentGateway();
 
-    $studentProgram = createStudentReadyForHostelApplication('PAY-HMS-02');
-    $user = $studentProgram->student->user;
-    $application = createAwaitingPaymentHostelApplication($studentProgram);
+    $studentApplication = createStudentReadyForHostelApplication('PAY-HMS-02');
+    $user = $studentApplication->student->user;
+    $application = createAwaitingPaymentHostelApplication($studentApplication);
     $feeType = paymentTestFeeType(FeeTypeEnum::STUDENT_ACCOMMODATION_FEE);
     $orderReference = 'ORD-ACC-002';
 
@@ -144,8 +148,8 @@ test('feedback updates accommodation ledgers by order reference', function () {
         $application,
         $feeType,
         $orderReference,
-        $studentProgram->intake_period_id,
-        $studentProgram->tenant_id,
+        $studentApplication->intake_period_id,
+        $studentApplication->tenant_id,
     );
 
     Http::fake([
@@ -179,25 +183,35 @@ test('feedback updates accommodation ledgers by order reference', function () {
 });
 
 test('delete not paid ledger entries is scoped by fee type', function () {
-    $studentProgram = createVerifiedStudentProgram('PAY-SCOPE-01');
-    $user = $studentProgram->student->user;
+    $studentApplication = createVerifiedStudentApplication('PAY-SCOPE-01');
+    $user = $studentApplication->student->user;
     $applicationFeeType = paymentTestFeeType(FeeTypeEnum::APPLICATION_FEE);
     $accommodationFeeType = paymentTestFeeType(FeeTypeEnum::STUDENT_ACCOMMODATION_FEE);
+    $level = Level::query()->where('has_application_fee_payment', true)->first()
+        ?? Level::query()->firstOrFail();
+
+    $applicationFee = ApplicationFee::query()->create([
+        'tenant_id' => $user->tenant_id,
+        'user_id' => $user->id,
+        'intake_period_id' => $studentApplication->intake_period_id,
+        'level_id' => $level->id,
+        'status' => ApplicationFeeStatusEnum::AWAITING_PAYMENT,
+    ]);
 
     createLedgerPair(
-        $user,
+        $applicationFee,
         $applicationFeeType,
         'ORD-APP-PENDING',
-        $studentProgram->intake_period_id,
-        $studentProgram->tenant_id,
+        $studentApplication->intake_period_id,
+        $studentApplication->tenant_id,
     );
 
     [$paidInvoice] = createLedgerPair(
         $user,
         $accommodationFeeType,
         'ORD-ACC-PAID',
-        $studentProgram->intake_period_id,
-        $studentProgram->tenant_id,
+        $studentApplication->intake_period_id,
+        $studentApplication->tenant_id,
         'paid',
     );
 
@@ -205,8 +219,8 @@ test('delete not paid ledger entries is scoped by fee type', function () {
         $user,
         $accommodationFeeType,
         'ORD-ACC-OLD-PENDING',
-        $studentProgram->intake_period_id,
-        $studentProgram->tenant_id,
+        $studentApplication->intake_period_id,
+        $studentApplication->tenant_id,
     );
 
     PaymentHelper::deleteNotPaidLedgerEntries($paidInvoice->system_reference);
@@ -218,8 +232,8 @@ test('delete not paid ledger entries is scoped by fee type', function () {
 });
 
 test('student accommodation fee service reports fully paid from hostel application receipt', function () {
-    $studentProgram = createStudentReadyForHostelApplication('PAY-HMS-03');
-    $application = createAwaitingPaymentHostelApplication($studentProgram);
+    $studentApplication = createStudentReadyForHostelApplication('PAY-HMS-03');
+    $application = createAwaitingPaymentHostelApplication($studentApplication);
     $feeType = paymentTestFeeType(FeeTypeEnum::STUDENT_ACCOMMODATION_FEE);
     $orderReference = 'ORD-ACC-003';
 
@@ -227,15 +241,15 @@ test('student accommodation fee service reports fully paid from hostel applicati
         $application,
         $feeType,
         $orderReference,
-        $studentProgram->intake_period_id,
-        $studentProgram->tenant_id,
+        $studentApplication->intake_period_id,
+        $studentApplication->tenant_id,
         'paid',
     );
 
     $receipt->update(['amount' => 150, 'payment_status' => 'paid']);
 
     $summary = app(StudentAccommodationFeeService::class)
-        ->summaryForStudent($studentProgram->student->fresh());
+        ->summaryForStudent($studentApplication->student->fresh());
 
     expect($summary['isFullyPaid'])->toBeTrue();
     expect($application->fresh()->hasPaidAccommodationFee())->toBeTrue();
@@ -244,8 +258,8 @@ test('student accommodation fee service reports fully paid from hostel applicati
 });
 
 test('direct receipt update syncs hostel application to paid via ledger observer', function () {
-    $studentProgram = createStudentReadyForHostelApplication('PAY-HMS-06');
-    $application = createAwaitingPaymentHostelApplication($studentProgram);
+    $studentApplication = createStudentReadyForHostelApplication('PAY-HMS-06');
+    $application = createAwaitingPaymentHostelApplication($studentApplication);
     $feeType = paymentTestFeeType(FeeTypeEnum::STUDENT_ACCOMMODATION_FEE);
     $orderReference = 'ORD-ACC-006';
 
@@ -253,8 +267,8 @@ test('direct receipt update syncs hostel application to paid via ledger observer
         $application,
         $feeType,
         $orderReference,
-        $studentProgram->intake_period_id,
-        $studentProgram->tenant_id,
+        $studentApplication->intake_period_id,
+        $studentApplication->tenant_id,
     );
 
     $receipt->update(['amount' => 150, 'payment_status' => 'paid']);
@@ -266,8 +280,8 @@ test('direct receipt update syncs hostel application to paid via ledger observer
 });
 
 test('partial accommodation receipt syncs hostel application to partially paid', function () {
-    $studentProgram = createStudentReadyForHostelApplication('PAY-HMS-07');
-    $application = createAwaitingPaymentHostelApplication($studentProgram);
+    $studentApplication = createStudentReadyForHostelApplication('PAY-HMS-07');
+    $application = createAwaitingPaymentHostelApplication($studentApplication);
     $feeType = paymentTestFeeType(FeeTypeEnum::STUDENT_ACCOMMODATION_FEE);
     $orderReference = 'ORD-ACC-007';
 
@@ -275,8 +289,8 @@ test('partial accommodation receipt syncs hostel application to partially paid',
         $application,
         $feeType,
         $orderReference,
-        $studentProgram->intake_period_id,
-        $studentProgram->tenant_id,
+        $studentApplication->intake_period_id,
+        $studentApplication->tenant_id,
     );
 
     $receipt->update(['amount' => 75, 'payment_status' => 'paid']);
@@ -288,8 +302,8 @@ test('partial accommodation receipt syncs hostel application to partially paid',
 });
 
 test('remaining accommodation receipt balance syncs hostel application to paid', function () {
-    $studentProgram = createStudentReadyForHostelApplication('PAY-HMS-08');
-    $application = createAwaitingPaymentHostelApplication($studentProgram);
+    $studentApplication = createStudentReadyForHostelApplication('PAY-HMS-08');
+    $application = createAwaitingPaymentHostelApplication($studentApplication);
     $feeType = paymentTestFeeType(FeeTypeEnum::STUDENT_ACCOMMODATION_FEE);
     $orderReference = 'ORD-ACC-008';
 
@@ -297,8 +311,8 @@ test('remaining accommodation receipt balance syncs hostel application to paid',
         $application,
         $feeType,
         $orderReference,
-        $studentProgram->intake_period_id,
-        $studentProgram->tenant_id,
+        $studentApplication->intake_period_id,
+        $studentApplication->tenant_id,
     );
 
     $receipt->update(['amount' => 75, 'payment_status' => 'paid']);
@@ -315,17 +329,27 @@ test('remaining accommodation receipt balance syncs hostel application to paid',
 test('application fee feedback still resolves by order reference', function () {
     configurePaymentGateway();
 
-    $studentProgram = createVerifiedStudentProgram('PAY-APP-01');
-    $user = $studentProgram->student->user;
+    $studentApplication = createVerifiedStudentApplication('PAY-APP-01');
+    $user = $studentApplication->student->user;
     $feeType = paymentTestFeeType(FeeTypeEnum::APPLICATION_FEE);
     $orderReference = 'ORD-APP-001';
+    $level = Level::query()->where('has_application_fee_payment', true)->first()
+        ?? Level::query()->firstOrFail();
+
+    $applicationFee = ApplicationFee::query()->create([
+        'tenant_id' => $user->tenant_id,
+        'user_id' => $user->id,
+        'intake_period_id' => $studentApplication->intake_period_id,
+        'level_id' => $level->id,
+        'status' => ApplicationFeeStatusEnum::AWAITING_PAYMENT,
+    ]);
 
     [, $receipt] = createLedgerPair(
-        $user,
+        $applicationFee,
         $feeType,
         $orderReference,
-        $studentProgram->intake_period_id,
-        $studentProgram->tenant_id,
+        $studentApplication->intake_period_id,
+        $studentApplication->tenant_id,
     );
 
     Http::fake([
@@ -356,10 +380,10 @@ test('application fee feedback still resolves by order reference', function () {
 test('portal accommodation fees endpoint works after paid receipt has payment date', function () {
     configurePaymentGateway();
 
-    $studentProgram = createStudentReadyForHostelApplication('PAY-HMS-04');
-    $user = $studentProgram->student->user;
+    $studentApplication = createStudentReadyForHostelApplication('PAY-HMS-04');
+    $user = $studentApplication->student->user;
     $user->givePermissionTo('manageOwnStudentAccommodationDetails:students');
-    $application = createAwaitingPaymentHostelApplication($studentProgram);
+    $application = createAwaitingPaymentHostelApplication($studentApplication);
     $feeType = paymentTestFeeType(FeeTypeEnum::STUDENT_ACCOMMODATION_FEE);
     $orderReference = 'ORD-ACC-004';
 
@@ -367,8 +391,8 @@ test('portal accommodation fees endpoint works after paid receipt has payment da
         $application,
         $feeType,
         $orderReference,
-        $studentProgram->intake_period_id,
-        $studentProgram->tenant_id,
+        $studentApplication->intake_period_id,
+        $studentApplication->tenant_id,
     );
 
     Http::fake([
@@ -401,7 +425,7 @@ test('portal accommodation fees endpoint works after paid receipt has payment da
 
     $this->actingAs($user)
         ->getJson(route('v1.json.hostel-applications.accommodationFees', [
-            'filter' => ['student' => (string) $studentProgram->student_id],
+            'filter' => ['student' => (string) $studentApplication->student_id],
         ]))
         ->assertSuccessful()
         ->assertJsonPath('meta.isFullyPaid', true)
@@ -409,18 +433,18 @@ test('portal accommodation fees endpoint works after paid receipt has payment da
 });
 
 test('accommodation fees endpoint syncs stale awaiting payment application after paid receipt', function () {
-    $studentProgram = createStudentReadyForHostelApplication('PAY-HMS-09');
-    $user = $studentProgram->student->user;
+    $studentApplication = createStudentReadyForHostelApplication('PAY-HMS-09');
+    $user = $studentApplication->student->user;
     $user->givePermissionTo('manageOwnStudentAccommodationDetails:students');
-    $application = createAwaitingPaymentHostelApplication($studentProgram);
+    $application = createAwaitingPaymentHostelApplication($studentApplication);
     $feeType = paymentTestFeeType(FeeTypeEnum::STUDENT_ACCOMMODATION_FEE);
 
     Ledger::withoutEvents(fn () => createLedgerPair(
         $application,
         $feeType,
         'ORD-ACC-009',
-        $studentProgram->intake_period_id,
-        $studentProgram->tenant_id,
+        $studentApplication->intake_period_id,
+        $studentApplication->tenant_id,
         'paid',
     ));
 
@@ -428,7 +452,7 @@ test('accommodation fees endpoint syncs stale awaiting payment application after
 
     $this->actingAs($user)
         ->getJson(route('v1.json.hostel-applications.accommodationFees', [
-            'filter' => ['student' => (string) $studentProgram->student_id],
+            'filter' => ['student' => (string) $studentApplication->student_id],
         ]))
         ->assertSuccessful()
         ->assertJsonPath('meta.isFullyPaid', true);
@@ -440,9 +464,9 @@ test('accommodation fees endpoint syncs stale awaiting payment application after
 test('initiate accommodation payment rejects paid hostel application', function () {
     configurePaymentGateway();
 
-    $studentProgram = createStudentReadyForHostelApplication('PAY-HMS-05');
-    $user = $studentProgram->student->user;
-    $application = createAwaitingPaymentHostelApplication($studentProgram);
+    $studentApplication = createStudentReadyForHostelApplication('PAY-HMS-05');
+    $user = $studentApplication->student->user;
+    $application = createAwaitingPaymentHostelApplication($studentApplication);
     $application->update(['status' => HostelApplicationStatusEnum::PAID]);
     $feeType = paymentTestFeeType(FeeTypeEnum::STUDENT_ACCOMMODATION_FEE);
 

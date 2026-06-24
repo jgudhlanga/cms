@@ -5,6 +5,7 @@ import ErrorDialog from '@/components/core/modal/ErrorDialog.vue';
 import { initializeTheme } from '@/composables/core/useAppearance';
 import AppLayout from '@/layouts/AppLayout.vue';
 import GuestLayout from '@/layouts/GuestLayout.vue';
+import PortalRegistrationLayout from '@/layouts/PortalRegistrationLayout.vue';
 import PlainLayout from '@/layouts/PlainLayout.vue';
 import { PageModule } from '@/types';
 import { createInertiaApp } from '@inertiajs/vue3';
@@ -35,6 +36,8 @@ createInertiaApp({
         const page = pages[`./pages/${name}.vue`];
         if (name.startsWith('auth/')) {
             page.default.layout = GuestLayout;
+        } else if (name === 'portal/guest/RegistrationUserForm') {
+            page.default.layout = PortalRegistrationLayout;
         } else if (
             name.startsWith('site/') ||
             name.startsWith('portal/guest') ||

@@ -4,13 +4,13 @@ import { useStudentApplications } from '@/composables/students/useStudentApplica
 import { TextFieldType } from '@/enums/inputs';
 import { SizeVariant } from '@/enums/sizes';
 import { APP_MODULE_KEYS } from '@/lib/constants';
-import { StudentProgram } from '@/types/students';
+import { StudentApplication } from '@/types/students';
 import { useForm } from '@inertiajs/vue3';
 import { ref } from 'vue';
 import BaseInput from '../../core/form/text/BaseInput.vue';
 
 interface Props {
-    application: StudentProgram;
+    application: StudentApplication;
     type: 'application_fee' | 'tuition_fee' | 'other';
 }
 

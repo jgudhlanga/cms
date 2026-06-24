@@ -2,7 +2,7 @@ import StudentAddresses from '@/components/students/tabs/StudentAddresses.vue';
 import StudentBasicInfo from '@/components/students/tabs/StudentBasicInfo.vue';
 import StudentContacts from '@/components/students/tabs/StudentContacts.vue';
 import StudentNextOfKin from '@/components/students/tabs/StudentNextOfKin.vue';
-import StudentPrograms from '@/components/students/tabs/StudentPrograms.vue';
+import StudentApplications from '@/components/students/tabs/StudentApplications.vue';
 import StudentSponsors from '@/components/students/tabs/StudentSponsors.vue';
 import { IconName } from '@/lib/icons';
 import { CustomTab } from '@/types/utils';
@@ -21,7 +21,7 @@ export function useShowEnrolment() {
             {
                 transLabel: () => trans_choice('trans.enrolment', 2),
                 value: 'enrolments',
-                component: h(StudentPrograms, { url: route('v1.students.programs', studentId) }),
+                component: h(StudentApplications, { url: route('v1.students.programs', studentId) }),
                 icon: IconName.folder,
             },
             {

@@ -18,7 +18,7 @@ class StudentEnrolmentResource extends JsonResource
             'attributes' => [
                 'instituionDepartmentId' => $this->institution_department_id,
                 'studentId' => $this->student_id,
-                'studentProgramId' => $this->student_program_id,
+                'studentApplicationId' => $this->student_application_id,
                 'departmentLevelId' => $this->department_level_id,
                 'departmentCourseId' => $this->department_course_id,
                 'modeOfStudyId' => $this->mode_of_study_id,

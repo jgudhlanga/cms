@@ -113,7 +113,7 @@ class StudentEnrollmentExportService
     {
         $student = $enrolment->student;
         $user = $student?->user;
-        $studentProgram = $enrolment->studentProgram;
+        $studentApplication = $enrolment->studentApplication;
         $mainAddress = $this->studentExportRowMapper->resolveMainAddress($student);
         $nextOfKin = $student?->nextOfKins->first();
         $sponsor = $student?->sponsors->first();
@@ -131,8 +131,8 @@ class StudentEnrollmentExportService
             $mainAddress?->address_2,
             $mainAddress?->address_1,
             $this->courseSyllabusCodeResolver->resolve($enrolment),
-            $studentProgram?->intakePeriod?->calendar_year,
-            $studentProgram?->modeOfStudy?->name,
+            $studentApplication?->intakePeriod?->calendar_year,
+            $studentApplication?->modeOfStudy?->name,
             $enrolment->academicCalendar?->calendar_year,
             $enrolment->academicYearOption?->name,
             $this->studentExportRowMapper->resolveInternationalFlag($student),

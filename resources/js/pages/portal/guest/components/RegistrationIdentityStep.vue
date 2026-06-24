@@ -37,7 +37,7 @@ const emit = defineEmits<{
 
 <template>
     <div class="flex flex-col space-y-4">
-        <h2 class="text-sm font-semibold uppercase text-foreground">
+        <h2 class="text-base font-semibold text-foreground">
             {{ $t('trans.enrollment_step_identity') }}
         </h2>
 
@@ -125,7 +125,7 @@ const emit = defineEmits<{
         />
         <div
             v-if="existingRecordBlocked && duplicateResult?.maskedName"
-            class="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-900 dark:border-red-900/50 dark:bg-red-950/50 dark:text-red-100"
+            class="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive"
         >
             <p>
                 <span class="font-medium">{{ $t('trans.enrollment_masked_name') }}:</span>

@@ -5,14 +5,14 @@ namespace App\Http\Controllers\Students;
 use App\Helpers\EnrolmentHelper;
 use App\Helpers\Helper;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Students\UpdateStudentProgramRequest;
+use App\Http\Requests\Students\UpdateStudentApplicationRequest;
 use App\Http\Resources\Enrolments\EnrolmentResource;
 use App\Http\Resources\Shared\ContactResource;
 use App\Http\Resources\Students\StudentResource;
 use App\Http\Resources\Users\UserResource;
 use App\Models\Institution\InstitutionDepartment;
 use App\Models\Students\Student;
-use App\Models\Students\StudentProgram;
+use App\Models\Students\StudentApplication;
 use App\Models\Users\User;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
@@ -32,7 +32,7 @@ class UserStudentController extends Controller
         return Inertia::render('students/UserStudentProfile', [
             'user' => UserResource::make($user),
             'student' => $user?->studentProfile ? StudentResource::make($user->studentProfile) : null,
-            'programs' => $studentModel?->programs ? EnrolmentResource::collection($studentModel->programs) : [],
+            'programs' => $studentModel?->applications ? EnrolmentResource::collection($studentModel->applications) : [],
             'contacts' => $studentModel?->contacts ? ContactResource::collection($studentModel?->contacts) : [],
         ]);
     }
@@ -40,15 +40,15 @@ class UserStudentController extends Controller
     /**
      * @throws AuthorizationException
      */
-    public function edit(StudentProgram $studentProgram)
+    public function edit(StudentApplication $studentApplication)
     {
-        $student = $studentProgram->student;
+        $student = $studentApplication->student;
         $user = $student->user;
         $this->authorize('update', $student);
-        return Inertia::render('students/EditStudentProgram', [
+        return Inertia::render('students/EditStudentApplication', [
             'user' => UserResource::make($user),
             'student' => $user?->studentProfile ? StudentResource::make($user->studentProfile) : null,
-            'program' => EnrolmentResource::make($studentProgram),
+            'program' => EnrolmentResource::make($studentApplication),
         ]);
     }
 
@@ -56,15 +56,15 @@ class UserStudentController extends Controller
      * @throws AuthorizationException
      * @throws Throwable
      */
-    public function updateProgram(StudentProgram $studentProgram, UpdateStudentProgramRequest $request)
+    public function updateProgram(StudentApplication $studentApplication, UpdateStudentApplicationRequest $request)
     {
-        $this->authorize('update', $studentProgram->student);
-        DB::transaction(function () use ($studentProgram, $request) {
-            $oldInstitutionDepartmentId = $studentProgram->institution_department_id;
-            $studentProgram->update($request->validated());
-            if ($oldInstitutionDepartmentId != $request->institution_department_id && $studentProgram->student->student_number_generated) {
-                $studentNumber = EnrolmentHelper::resolveStudentNumber($studentProgram);
-                $studentProgram->student->update([
+        $this->authorize('update', $studentApplication->student);
+        DB::transaction(function () use ($studentApplication, $request) {
+            $oldInstitutionDepartmentId = $studentApplication->institution_department_id;
+            $studentApplication->update($request->validated());
+            if ($oldInstitutionDepartmentId != $request->institution_department_id && $studentApplication->student->student_number_generated) {
+                $studentNumber = EnrolmentHelper::resolveStudentNumber($studentApplication);
+                $studentApplication->student->update([
                     'student_number' => $studentNumber,
                 ]);
             }

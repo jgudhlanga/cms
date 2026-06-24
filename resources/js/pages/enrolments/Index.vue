@@ -57,7 +57,7 @@ const handleFilterChange = (option: SelectOption) => {
                 :title="$t('trans.ui_faulty_applications')"
             />
             <GenericButton
-                v-if="hasAbility('create:student-programs')"
+                v-if="hasAbility('create:student-applications')"
                 :icon="IconName.add"
                 class="rounded-full"
                 :icon-variant="ColorVariant.white"

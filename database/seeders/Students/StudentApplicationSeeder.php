@@ -29,7 +29,7 @@ use App\Models\Shared\MaritalStatus;
 use App\Models\Shared\Race;
 use App\Models\Shared\Title;
 use App\Models\Students\Student;
-use App\Models\Students\StudentProgram;
+use App\Models\Students\StudentApplication;
 use App\Models\Users\User;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
@@ -108,7 +108,7 @@ class StudentApplicationSeeder extends Seeder
                                   $departmentCourseId,
         DepartmentApplicationStep $step, array $modesOfStudyIds): void
     {
-        StudentProgram::create([
+        StudentApplication::create([
             'tenant_id' => $this->getTenantId(),
             'student_id' => $student->id,
             'institution_department_id' => $institutionDepartmentId,

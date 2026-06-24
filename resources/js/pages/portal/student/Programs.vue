@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import DataTable from '@/components/core/table/DataTable.vue';
-import { useStudentPrograms } from '@/composables/students/useStudentPrograms';
+import { useStudentApplications } from '@/composables/students/useStudentApplications';
 import { AuthObject } from '@/types/data-pagination';
-import { StudentProgram } from '@/types/students';
+import { StudentApplication } from '@/types/students';
 import { BreadcrumbItemInterface } from '@/types/ui';
 import { Head } from '@inertiajs/vue3';
 
 interface Props {
-    programs: StudentProgram[];
+    programs: StudentApplication[];
     auth: AuthObject;
     errors: object;
 }
@@ -16,7 +16,7 @@ interface Props {
 const props = defineProps<Props>();
 const { user } = props.auth;
 const breadcrumbs: BreadcrumbItemInterface[] = [{ title: user.attributes?.name }, { transChoiceKey: 'program' }];
-const { createStudentProgramColumns, allowed } = useStudentPrograms();
+const { createStudentApplicationColumns, allowed } = useStudentApplications();
 </script>
 <template>
     <Head :title="$tChoice('trans.program', 2)" />
@@ -24,7 +24,7 @@ const { createStudentProgramColumns, allowed } = useStudentPrograms();
         <DataTable
             :data="programs"
             :show-archived-filter="false"
-            :columns="createStudentProgramColumns()"
+            :columns="createStudentApplicationColumns()"
             :on-create="() => {}"
             :disable-create="!allowed"
         />

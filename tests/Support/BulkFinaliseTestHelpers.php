@@ -20,13 +20,13 @@ use App\Models\Shared\MaritalStatus;
 use App\Models\Shared\Title;
 use App\Models\Shared\WorkflowStep;
 use App\Models\Students\Student;
-use App\Models\Students\StudentProgram;
+use App\Models\Students\StudentApplication;
 use App\Models\Tenants\Tenant;
 use App\Models\Users\User;
 use Illuminate\Support\Str;
 
-if (! function_exists('createVerifiedStudentProgram')) {
-    function createVerifiedStudentProgram(string $studentNumber): StudentProgram
+if (! function_exists('createVerifiedStudentApplication')) {
+    function createVerifiedStudentApplication(string $studentNumber): StudentApplication
     {
         $tenant = Tenant::query()->firstOrFail();
         $department = Department::factory()->create();
@@ -87,7 +87,7 @@ if (! function_exists('createVerifiedStudentProgram')) {
             'date_of_birth' => '2001-01-01',
         ]);
 
-        $studentProgram = StudentProgram::query()->create([
+        $studentApplication = StudentApplication::query()->create([
             'tenant_id' => $tenant->id,
             'student_id' => $student->id,
             'institution_department_id' => $institutionDepartment->id,
@@ -101,18 +101,18 @@ if (! function_exists('createVerifiedStudentProgram')) {
 
         ClassList::query()->create([
             'tenant_id' => $tenant->id,
-            'student_program_id' => $studentProgram->id,
+            'student_application_id' => $studentApplication->id,
             'type' => ClassListTypeEnum::VERIFIED->value,
             'attributes' => [],
         ]);
 
-        $acceptedDepartmentStep = resolveDepartmentApplicationStep($studentProgram, WorkflowStepEnum::ACCEPTED);
+        $acceptedDepartmentStep = resolveDepartmentApplicationStep($studentApplication, WorkflowStepEnum::ACCEPTED);
 
-        $studentProgram->update([
+        $studentApplication->update([
             'department_application_step_id' => $acceptedDepartmentStep->id,
         ]);
 
-        return $studentProgram;
+        return $studentApplication;
     }
 }
 
@@ -132,21 +132,21 @@ if (! function_exists('createBankCreditReceipt')) {
 }
 
 if (! function_exists('createEnrolledDepartmentStep')) {
-    function createEnrolledDepartmentStep(StudentProgram $studentProgram): DepartmentApplicationStep
+    function createEnrolledDepartmentStep(StudentApplication $studentApplication): DepartmentApplicationStep
     {
-        return resolveDepartmentApplicationStep($studentProgram, WorkflowStepEnum::ENROLLED);
+        return resolveDepartmentApplicationStep($studentApplication, WorkflowStepEnum::ENROLLED);
     }
 }
 
 if (! function_exists('createRejectedDepartmentStep')) {
-    function createRejectedDepartmentStep(StudentProgram $studentProgram): DepartmentApplicationStep
+    function createRejectedDepartmentStep(StudentApplication $studentApplication): DepartmentApplicationStep
     {
-        return resolveDepartmentApplicationStep($studentProgram, WorkflowStepEnum::REJECTED);
+        return resolveDepartmentApplicationStep($studentApplication, WorkflowStepEnum::REJECTED);
     }
 }
 
 if (! function_exists('resolveDepartmentApplicationStep')) {
-    function resolveDepartmentApplicationStep(StudentProgram $studentProgram, WorkflowStepEnum $workflowStep): DepartmentApplicationStep
+    function resolveDepartmentApplicationStep(StudentApplication $studentApplication, WorkflowStepEnum $workflowStep): DepartmentApplicationStep
     {
         $step = WorkflowStep::query()->firstOrCreate(
             ['slug' => $workflowStep->slug()],
@@ -159,8 +159,8 @@ if (! function_exists('resolveDepartmentApplicationStep')) {
 
         return DepartmentApplicationStep::query()->firstOrCreate(
             [
-                'tenant_id' => $studentProgram->tenant_id,
-                'institution_department_id' => $studentProgram->institution_department_id,
+                'tenant_id' => $studentApplication->tenant_id,
+                'institution_department_id' => $studentApplication->institution_department_id,
                 'workflow_step_id' => $step->id,
             ],
             [

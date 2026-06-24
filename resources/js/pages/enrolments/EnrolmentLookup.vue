@@ -72,7 +72,7 @@ const title = computed(() => {
 <template>
     <Head :title="$tChoice('enrolment', 2)" />
     <PageContainer :breadcrumbs="breadcrumbs">
-        <template v-if="hasAbility(['create:students', 'create:student-programs'])">
+        <template v-if="hasAbility(['create:students', 'create:student-applications'])">
             <div class="my-5 flex flex-col space-y-5">
                 <BaseCard
                     :title="$t('trans.ui_search_applicant_details')"

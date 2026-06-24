@@ -2,7 +2,7 @@
 import { IconName } from '@/enums/icons';
 
 interface Props {
-    studentProgramId: string;
+    studentApplicationId: string;
 }
 
 defineProps<Props>();
@@ -10,7 +10,7 @@ defineProps<Props>();
 
 <template>
     <a
-        :href="route('documents.offer-letter', { student_program: studentProgramId })"
+        :href="route('documents.offer-letter', { student_application: studentApplicationId })"
         class="flex h-6 items-center rounded-full border border-primary bg-transparent px-2 py-1 text-xs font-semibold text-primary hover:border-primary hover:bg-primary/20"
         target="_blank"
     >

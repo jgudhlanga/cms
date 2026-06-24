@@ -34,7 +34,7 @@ use App\Models\Institution\InstitutionDepartment;
 use App\Models\Shared\FeeType;
 use App\Models\Shared\WorkflowStep;
 use App\Models\Students\StudentEnrolment;
-use App\Models\Students\StudentProgram;
+use App\Models\Students\StudentApplication;
 use App\Repositories\Institution\interface\IClassListRepository;
 use App\Services\DepartmentEnrolmentService;
 use App\Services\Students\ResolveStudentEnrolmentAttributesService;
@@ -70,7 +70,7 @@ class ClassListController extends Controller
         }
     }
 
-    public function addToClassList(StudentProgram $studentProgram, AddToClassListRequest $request)
+    public function addToClassList(StudentApplication $studentApplication, AddToClassListRequest $request)
     {
         try {
             $defaultAttributes = [
@@ -88,7 +88,7 @@ class ClassListController extends Controller
                 'original_education_certificates_confirmed' => false,
             ];
             $dto = new ClassListDto(
-                student_program_id: $studentProgram->id,
+                student_application_id: $studentApplication->id,
                 type: $request->input('type'),
                 attributes: $defaultAttributes
             );
@@ -130,7 +130,7 @@ class ClassListController extends Controller
 
         return array_map(
             fn ($id) => new ClassListDto(
-                student_program_id: $id,
+                student_application_id: $id,
                 type: $type,
                 attributes: $defaultAttributes
             ),
@@ -161,7 +161,7 @@ class ClassListController extends Controller
     protected function getClassEntryDetails(int $classListId)
     {
         return DB::table('class_lists as cl')
-            ->join('student_programs as sp', 'sp.id', '=', 'cl.student_program_id')
+            ->join('student_applications as sp', 'sp.id', '=', 'cl.student_application_id')
             ->join('students as st', 'st.id', '=', 'sp.student_id')
             ->join('institution_departments as idp', 'idp.id', '=', 'sp.institution_department_id')
             ->join('departments as dp', 'dp.id', '=', 'idp.department_id')
@@ -183,12 +183,12 @@ class ClassListController extends Controller
             ])->first();
     }
 
-    public function update(UpdateClassEntryRequest $request, StudentProgram $studentProgram)
+    public function update(UpdateClassEntryRequest $request, StudentApplication $studentApplication)
     {
         try {
             $type = $request->input('type', 'provisional');
             // Get class list
-            $entry = ClassList::where('student_program_id', $studentProgram->id)->first();
+            $entry = ClassList::where('student_application_id', $studentApplication->id)->first();
             if (! $entry) {
                 return back()->with('error', 'Class list entry not found for the specified student program.');
             }
@@ -217,8 +217,8 @@ class ClassListController extends Controller
                 $entry->type = ($type === 'provisional' || $type === 'waiting') ? ClassListTypeEnum::VERIFIED->value : ClassListTypeEnum::FINAL->value;
                 $entry->save();
                 // Generate student number
-                $studentNumber = EnrolmentHelper::resolveStudentNumber($studentProgram);
-                $student = $studentProgram->student;
+                $studentNumber = EnrolmentHelper::resolveStudentNumber($studentApplication);
+                $student = $studentApplication->student;
                 $student->fresh()->update([
                     'student_number' => $studentNumber,
                     'student_number_generated' => true,
@@ -228,21 +228,21 @@ class ClassListController extends Controller
                 // Send email with offer letter
                 $user = $student->user;
                 if ($type === 'provisional' || $type === 'waiting') {
-                    SendOfferLetterJob::dispatch($user->full_name, $user->email, $studentProgram->id)->withoutDelay();
-                    if (EnrolmentHelper::isEntryLevel($studentProgram)) {
-                        EnrolmentHelper::rejectOtherApplications($studentProgram->student, $studentProgram);
+                    SendOfferLetterJob::dispatch($user->full_name, $user->email, $studentApplication->id)->withoutDelay();
+                    if (EnrolmentHelper::isEntryLevel($studentApplication)) {
+                        EnrolmentHelper::rejectOtherApplications($studentApplication->student, $studentApplication);
                     }
                 }
                 if ($type === 'verified') {
                     $step = WorkflowStep::where('slug', WorkflowStepEnum::ENROLLED->slug())->first();
-                    $this->createStudentEnrolment($studentProgram);
+                    $this->createStudentEnrolment($studentApplication);
                 }
                 // Update step
-                $departmentStep = DepartmentApplicationStep::where('institution_department_id', $studentProgram->institution_department_id)->where('workflow_step_id', $step->id)->first();
-                $studentProgram->update(['department_application_step_id' => $departmentStep->id]);
+                $departmentStep = DepartmentApplicationStep::where('institution_department_id', $studentApplication->institution_department_id)->where('workflow_step_id', $step->id)->first();
+                $studentApplication->update(['department_application_step_id' => $departmentStep->id]);
                 // Create notes / remarks
                 if ($request->has('remarks') && ! empty($request->remarks)) {
-                    $studentProgram->notes()->create(['title' => 'Application confirmation', 'body' => $request->remarks]);
+                    $studentApplication->notes()->create(['title' => 'Application confirmation', 'body' => $request->remarks]);
                 }
             }
 
@@ -252,44 +252,44 @@ class ClassListController extends Controller
         }
     }
 
-    private function createStudentEnrolment(StudentProgram $studentProgram): void
+    private function createStudentEnrolment(StudentApplication $studentApplication): void
     {
         try {
             $enrolmentAttributes = $this->resolveStudentEnrolmentAttributes->resolve(
-                (int) $studentProgram->student_id,
-                (int) $studentProgram->id,
+                (int) $studentApplication->student_id,
+                (int) $studentApplication->id,
             );
 
             StudentEnrolment::query()->updateOrCreate(
                 [
-                    'student_id' => $studentProgram->student_id,
-                    'student_program_id' => $studentProgram->id,
-                    'institution_department_id' => $studentProgram->institution_department_id,
-                    'department_level_id' => $studentProgram->department_level_id,
-                    'department_course_id' => $studentProgram->department_course_id,
+                    'student_id' => $studentApplication->student_id,
+                    'student_application_id' => $studentApplication->id,
+                    'institution_department_id' => $studentApplication->institution_department_id,
+                    'department_level_id' => $studentApplication->department_level_id,
+                    'department_course_id' => $studentApplication->department_course_id,
                     'academic_year_option_id' => $enrolmentAttributes['academic_year_option_id'],
                     'academic_calendar_id' => $enrolmentAttributes['academic_calendar_id'],
-                    'mode_of_study_id' => $studentProgram->mode_of_study_id,
+                    'mode_of_study_id' => $studentApplication->mode_of_study_id,
                 ],
                 [
-                    'student_program_id' => $studentProgram->id,
+                    'student_application_id' => $studentApplication->id,
                     'student_enrolment_status_id' => $enrolmentAttributes['student_enrolment_status_id'],
-                    'mode_of_study_id' => $studentProgram->mode_of_study_id,
+                    'mode_of_study_id' => $studentApplication->mode_of_study_id,
                 ],
             );
         } catch (StudentEnrolmentResolutionException $exception) {
             logger()->warning('Class list update: student enrolment not created.', [
-                'student_program_id' => (int) $studentProgram->id,
+                'student_application_id' => (int) $studentApplication->id,
                 'message' => $exception->getMessage(),
             ]);
         }
     }
 
-    public function rejectApplication(StudentProgram $studentProgram)
+    public function rejectApplication(StudentApplication $studentApplication)
     {
         try {
             // get class list
-            $entry = ClassList::where('student_program_id', $studentProgram->id)->first();
+            $entry = ClassList::where('student_application_id', $studentApplication->id)->first();
             if (! $entry) {
                 return back()->with('error', 'Class list entry not found for the specified student program.');
             }
@@ -297,8 +297,8 @@ class ClassListController extends Controller
             $entry->save();
             // change student application status to rejected
             $step = WorkflowStep::where('slug', WorkflowStepEnum::REJECTED->slug())->first();
-            $departmentStep = DepartmentApplicationStep::where('institution_department_id', $studentProgram->institution_department_id)->where('workflow_step_id', $step->id)->first();
-            $studentProgram->update(['department_application_step_id' => $departmentStep->id]);
+            $departmentStep = DepartmentApplicationStep::where('institution_department_id', $studentApplication->institution_department_id)->where('workflow_step_id', $step->id)->first();
+            $studentApplication->update(['department_application_step_id' => $departmentStep->id]);
 
             return back()->with('success', 'Class list entry updated successfully.');
         } catch (Throwable $e) {
@@ -306,36 +306,36 @@ class ClassListController extends Controller
         }
     }
 
-    public function verify(StudentProgram $studentProgram)
+    public function verify(StudentApplication $studentApplication)
     {
         $this->authorize('verify:class-lists');
-        $nextTop = $this->getStudent($studentProgram);
-        $student = $studentProgram->student;
-        $otherApplications = $student->programs()
-            ->where('id', '!=', $studentProgram->id)
+        $nextTop = $this->getStudent($studentApplication);
+        $student = $studentApplication->student;
+        $otherApplications = $student->applications()
+            ->where('id', '!=', $studentApplication->id)
             ->with(['institutionDepartment', 'departmentLevel.level', 'departmentCourse.course', 'intakePeriod', 'modeOfStudy', 'classList'])
             ->get();
 
         return Inertia::render('enrolments/ApplicationVerification', [
-            'application' => EnrolmentResource::make($studentProgram),
+            'application' => EnrolmentResource::make($studentApplication),
             'nextTop' => ClassListNextTopResource::collection($nextTop),
             'otherApplications' => OtherApplicationResource::collection($otherApplications),
         ]);
     }
 
-    public function confirm(StudentProgram $studentProgram)
+    public function confirm(StudentApplication $studentApplication)
     {
         $this->authorize('manage-final:class-lists');
-        $nextTop = $this->getStudent($studentProgram);
-        $department = $studentProgram->institutionDepartment->department->name ?? '';
-        $modeOfStudy = $studentProgram->modeOfStudy->name ?? '';
+        $nextTop = $this->getStudent($studentApplication);
+        $department = $studentApplication->institutionDepartment->department->name ?? '';
+        $modeOfStudy = $studentApplication->modeOfStudy->name ?? '';
 
         // Tuition Lookup
         $tuitionFeeType = FeeType::where('name', FeeTypeEnum::TUITION_FEE->name())->first();
         $feeStructure = FeeStructure::query()
-            ->where('tenant_id', $studentProgram->tenant_id)
-            ->where('level_id', $studentProgram->departmentLevel->level->id ?? null)
-            ->where('mode_of_study_id', $studentProgram->modeOfStudy->id ?? null)
+            ->where('tenant_id', $studentApplication->tenant_id)
+            ->where('level_id', $studentApplication->departmentLevel->level->id ?? null)
+            ->where('mode_of_study_id', $studentApplication->modeOfStudy->id ?? null)
             ->where('fee_type_id', $tuitionFeeType->id)->first();
 
         $tuition = $feeStructure->local_fca_amount ?? 0;
@@ -343,7 +343,7 @@ class ClassListController extends Controller
         $partTimeLevy = DepartmentHelper::partTimeLevy($modeOfStudy);
 
         return Inertia::render('enrolments/ApplicationConfirmation', [
-            'application' => EnrolmentResource::make($studentProgram),
+            'application' => EnrolmentResource::make($studentApplication),
             'nextTop' => ClassListNextTopResource::collection($nextTop),
             'tuition' => $tuition,
             'autoCardFee' => $autoCardFee,
@@ -401,9 +401,9 @@ class ClassListController extends Controller
         ]);
     }
 
-    public function getStudent(StudentProgram $studentProgram): Collection
+    public function getStudent(StudentApplication $studentApplication): Collection
     {
-        $studentProgram->load([
+        $studentApplication->load([
             'departmentWorkflowStep',
             'institutionDepartment',
             'departmentLevel.level',
@@ -420,18 +420,18 @@ class ClassListController extends Controller
             'student.user.ledgers.feeType',
         ]);
 
-        return DB::table('student_programs as sp')
-            ->join('class_lists as cl', 'cl.student_program_id', '=', 'sp.id')
+        return DB::table('student_applications as sp')
+            ->join('class_lists as cl', 'cl.student_application_id', '=', 'sp.id')
             ->join('students as st', 'st.id', '=', 'sp.student_id')
             ->join('users as us', 'us.id', '=', 'st.user_id')
             ->select('sp.id as application_id', 'us.first_name', 'us.middle_name', 'us.last_name')
-            ->whereNotIn('sp.id', [$studentProgram->id])
-            ->where('sp.institution_department_id', $studentProgram->institution_department_id)
-            ->where('sp.department_level_id', $studentProgram->department_level_id)
-            ->where('sp.department_course_id', $studentProgram->department_course_id)
-            ->where('sp.intake_period_id', $studentProgram->intake_period_id)
-            ->where('sp.mode_of_study_id', $studentProgram->mode_of_study_id)
-            ->where('cl.type', $studentProgram->classList->type)
+            ->whereNotIn('sp.id', [$studentApplication->id])
+            ->where('sp.institution_department_id', $studentApplication->institution_department_id)
+            ->where('sp.department_level_id', $studentApplication->department_level_id)
+            ->where('sp.department_course_id', $studentApplication->department_course_id)
+            ->where('sp.intake_period_id', $studentApplication->intake_period_id)
+            ->where('sp.mode_of_study_id', $studentApplication->mode_of_study_id)
+            ->where('cl.type', $studentApplication->classList->type)
             ->take(5)
             ->get();
     }

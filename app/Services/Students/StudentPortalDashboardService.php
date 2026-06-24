@@ -7,7 +7,7 @@ namespace App\Services\Students;
 use App\Enums\Shared\WorkflowStepEnum;
 use App\Helpers\StudentHelper;
 use App\Models\Students\Student;
-use App\Models\Students\StudentProgram;
+use App\Models\Students\StudentApplication;
 use App\Models\Users\User;
 use App\Services\Finance\StudentLedgerService;
 use Illuminate\Support\Str;
@@ -128,11 +128,11 @@ class StudentPortalDashboardService
     }
 
     /**
-     * @return array{total: int, pending: int, pendingPrograms: list<StudentProgram>}
+     * @return array{total: int, pending: int, pendingPrograms: list<StudentApplication>}
      */
     private function applicationStats(Student $student): array
     {
-        $programs = StudentProgram::query()
+        $programs = StudentApplication::query()
             ->where('student_id', $student->id)
             ->with([
                 'departmentWorkflowStep.workflowStep',
@@ -146,7 +146,7 @@ class StudentPortalDashboardService
             WorkflowStepEnum::REJECTED->slug(),
         ];
 
-        $pendingPrograms = $programs->filter(function (StudentProgram $program) use ($terminalSlugs): bool {
+        $pendingPrograms = $programs->filter(function (StudentApplication $program) use ($terminalSlugs): bool {
             $slug = Str::slug((string) ($program->departmentWorkflowStep?->workflowStep?->name ?? ''));
 
             return ! in_array($slug, $terminalSlugs, true);
@@ -161,7 +161,7 @@ class StudentPortalDashboardService
 
     /**
      * @param  list<array<string, mixed>>  $modules
-     * @param  list<StudentProgram>  $pendingPrograms
+     * @param  list<StudentApplication>  $pendingPrograms
      * @return list<array{type: string, message: string, severity: string}>
      */
     private function buildActivities(array $modules, array $pendingPrograms): array

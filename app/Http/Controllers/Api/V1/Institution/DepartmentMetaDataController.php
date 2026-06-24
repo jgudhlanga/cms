@@ -72,7 +72,7 @@ class DepartmentMetaDataController extends Controller
         $modeOfStudyId = request('mode_of_study_id');
 
         // Eager-load relationships to avoid N+1
-        $enrolments = $institutionDepartment->enrolments()
+        $enrolments = $institutionDepartment->studentApplications()
             ->with(['departmentCourse', 'departmentLevel.level'])
             ->when($intakePeriodId, fn ($q) => $q->where('intake_period_id', $intakePeriodId))
             ->when($modeOfStudyId, fn ($q) => $q->where('mode_of_study_id', $modeOfStudyId))
@@ -113,8 +113,8 @@ class DepartmentMetaDataController extends Controller
         $modeOfStudyId = request('mode_of_study_id');
         $type = request('type', ClassListTypeEnum::PROVISIONAL->value);
         // Eager-load relationships to avoid N+1
-        $enrolments = $institutionDepartment->enrolments()
-            ->join('class_lists', 'student_programs.id', '=', 'class_lists.student_program_id')
+        $enrolments = $institutionDepartment->studentApplications()
+            ->join('class_lists', 'student_applications.id', '=', 'class_lists.student_application_id')
             ->with(['departmentCourse', 'departmentLevel.level'])
             ->when($intakePeriodId, fn ($q) => $q->where('intake_period_id', $intakePeriodId))
             ->when($modeOfStudyId, fn ($q) => $q->where('mode_of_study_id', $modeOfStudyId))

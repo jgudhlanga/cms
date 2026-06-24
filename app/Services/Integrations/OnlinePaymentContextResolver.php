@@ -11,9 +11,11 @@ use App\Models\HMS\HostelApplication;
 use App\Models\Institution\IntakePeriod;
 use App\Models\Ledgers\Ledger;
 use App\Models\Shared\FeeType;
+use App\Models\Students\ApplicationFee;
 use App\Models\Students\Student;
-use App\Models\Students\StudentProgram;
+use App\Models\Students\StudentApplication;
 use App\Models\Users\User;
+use App\Services\Students\ApplicationFeeService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
@@ -22,6 +24,10 @@ use Illuminate\Validation\ValidationException;
 class OnlinePaymentContextResolver
 {
     public const SESSION_ORDER_REFERENCE_KEY = 'payment.order_reference';
+
+    public function __construct(
+        protected ApplicationFeeService $applicationFeeService,
+    ) {}
 
     public function resolveForInitiate(Request $request): OnlinePaymentContext
     {
@@ -37,14 +43,14 @@ class OnlinePaymentContextResolver
         $user = $request->user();
         $ledgerable = $this->resolveLedgerable($feeTypeEnum, $user, $request);
         $intakePeriod = $this->resolveIntakePeriod($feeTypeEnum, $ledgerable);
-        $studentProgramId = $this->resolveStudentProgramId($feeTypeEnum, $ledgerable);
+        $studentApplicationId = $this->resolveStudentApplicationId($feeTypeEnum, $ledgerable);
 
         return new OnlinePaymentContext(
             feeType: $feeType,
             feeTypeEnum: $feeTypeEnum,
             ledgerable: $ledgerable,
             intakePeriod: $intakePeriod,
-            studentProgramId: $studentProgramId,
+            studentApplicationId: $studentApplicationId,
         );
     }
 
@@ -87,13 +93,54 @@ class OnlinePaymentContextResolver
         return route($feeTypeEnum?->postPaymentRoute() ?? 'portal.dashboard');
     }
 
+    public function postFailurePaymentRouteForLedger(?Ledger $ledger): string
+    {
+        if ($ledger === null || $ledger->feeType === null) {
+            return route('portal.dashboard');
+        }
+
+        $feeTypeEnum = FeeTypeEnum::fromFeeType($ledger->feeType);
+
+        return route($feeTypeEnum?->postFailurePaymentRoute() ?? 'portal.dashboard');
+    }
+
     private function resolveLedgerable(FeeTypeEnum $feeTypeEnum, User $user, Request $request): Model
     {
         return match ($feeTypeEnum->ledgerableClass()) {
+            ApplicationFee::class => $this->resolveApplicationFee($user, $request),
             HostelApplication::class => $this->resolveHostelApplication($user, $request),
-            StudentProgram::class => $this->resolveStudentProgram($user, $request),
+            StudentApplication::class => $this->resolveStudentApplication($user, $request),
             default => $user,
         };
+    }
+
+    private function resolveApplicationFee(User $user, Request $request): ApplicationFee
+    {
+        $applicationFeeId = $request->input('ledgerableId');
+
+        $applicationFee = $applicationFeeId
+            ? ApplicationFee::query()->find($applicationFeeId)
+            : $this->applicationFeeService->forUserAndIntake($user);
+
+        if ($applicationFee === null) {
+            throw ValidationException::withMessages([
+                'ledgerableId' => [__('trans.application_fee_record_required')],
+            ]);
+        }
+
+        if ((int) $applicationFee->user_id !== (int) $user->id) {
+            throw ValidationException::withMessages([
+                'ledgerableId' => [__('trans.application_fee_record_required')],
+            ]);
+        }
+
+        if ($applicationFee->isPaid() && $applicationFee->student_application_id !== null) {
+            throw ValidationException::withMessages([
+                'ledgerableId' => [__('trans.application_fee_already_applied')],
+            ]);
+        }
+
+        return $applicationFee;
     }
 
     private function resolveHostelApplication(User $user, Request $request): HostelApplication
@@ -150,40 +197,48 @@ class OnlinePaymentContextResolver
         return $application;
     }
 
-    private function resolveStudentProgram(User $user, Request $request): StudentProgram
+    private function resolveStudentApplication(User $user, Request $request): StudentApplication
     {
-        $studentProgramId = $request->input('ledgerableId');
+        $studentApplicationId = $request->input('ledgerableId');
 
-        if (blank($studentProgramId)) {
+        if (blank($studentApplicationId)) {
             throw ValidationException::withMessages([
                 'ledgerableId' => [__('trans.ledgerable_required')],
             ]);
         }
 
-        $studentProgram = StudentProgram::query()
+        $studentApplication = StudentApplication::query()
             ->with('student')
-            ->find($studentProgramId);
+            ->find($studentApplicationId);
 
-        if ($studentProgram === null || (int) $studentProgram->student?->user_id !== (int) $user->id) {
+        if ($studentApplication === null || (int) $studentApplication->student?->user_id !== (int) $user->id) {
             throw ValidationException::withMessages([
                 'ledgerableId' => [__('trans.ledgerable_required')],
             ]);
         }
 
-        return $studentProgram;
+        return $studentApplication;
     }
 
     private function resolveIntakePeriod(FeeTypeEnum $feeTypeEnum, Model $ledgerable): IntakePeriod
     {
-        if ($ledgerable instanceof HostelApplication) {
-            $ledgerable->loadMissing('studentEnrolment.studentProgram.intakePeriod');
+        if ($ledgerable instanceof ApplicationFee) {
+            $ledgerable->loadMissing('intakePeriod');
 
-            if ($ledgerable->studentEnrolment?->studentProgram?->intakePeriod !== null) {
-                return $ledgerable->studentEnrolment->studentProgram->intakePeriod;
+            if ($ledgerable->intakePeriod !== null) {
+                return $ledgerable->intakePeriod;
             }
         }
 
-        if ($ledgerable instanceof StudentProgram) {
+        if ($ledgerable instanceof HostelApplication) {
+            $ledgerable->loadMissing('studentEnrolment.studentApplication.intakePeriod');
+
+            if ($ledgerable->studentEnrolment?->studentApplication?->intakePeriod !== null) {
+                return $ledgerable->studentEnrolment->studentApplication->intakePeriod;
+            }
+        }
+
+        if ($ledgerable instanceof StudentApplication) {
             $ledgerable->loadMissing('intakePeriod');
 
             if ($ledgerable->intakePeriod !== null) {
@@ -194,16 +249,16 @@ class OnlinePaymentContextResolver
         return Helper::resolveIntakePeriod();
     }
 
-    private function resolveStudentProgramId(FeeTypeEnum $feeTypeEnum, Model $ledgerable): ?int
+    private function resolveStudentApplicationId(FeeTypeEnum $feeTypeEnum, Model $ledgerable): ?int
     {
-        if ($ledgerable instanceof StudentProgram) {
+        if ($ledgerable instanceof StudentApplication) {
             return $ledgerable->id;
         }
 
         if ($ledgerable instanceof HostelApplication) {
             $ledgerable->loadMissing('studentEnrolment');
 
-            return $ledgerable->studentEnrolment?->student_program_id;
+            return $ledgerable->studentEnrolment?->student_application_id;
         }
 
         return null;

@@ -51,7 +51,7 @@ class Ledger extends Model implements HasMedia
         'payment_date',
         'response_message',
         'response_code',
-        'student_program_id',
+        'student_application_id',
         'level_id',
         'proof_of_payment_id',
         'payment_gateway',

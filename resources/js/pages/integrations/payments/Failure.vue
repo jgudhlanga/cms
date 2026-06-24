@@ -11,6 +11,7 @@ import { Ledger } from '@/types/integrations';
 interface Props {
     details: Ledger;
     redirectRoute: string;
+    isApplicationFee?: boolean;
 }
 
 defineProps<Props>();
@@ -34,7 +35,7 @@ const { navigateTo } = useUtils();
         <template #action-buttons>
             <BaseButton
                 classes="rounded-full"
-                :title="$t('trans.back')"
+                :title="isApplicationFee ? $t('trans.application_fee_payment_try_again') : $t('trans.back')"
                 @click="navigateTo(redirectRoute)"
                 :variant="ColorVariant.warning"
             />

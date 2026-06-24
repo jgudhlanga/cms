@@ -61,7 +61,7 @@ class StudentAccountMergeService
     private function reassignStudentForeignKeys(Student $absorbed, Student $survivor): void
     {
         $tables = [
-            'student_programs',
+            'student_applications',
             'student_enrolments',
             'sponsors',
             'academic_records',

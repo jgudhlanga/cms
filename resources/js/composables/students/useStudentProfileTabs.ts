@@ -44,7 +44,7 @@ const tabShowChecks: Record<
     },
     programs: {
         admin: () => hasAbility([...adminStudentAbilities]),
-        portal: () => hasAbility('manageOwnStudentProgramDetails:students'),
+        portal: () => hasAbility('manageOwnStudentApplicationDetails:students'),
     },
     applications: {
         admin: () => hasAbility([...adminStudentAbilities]),

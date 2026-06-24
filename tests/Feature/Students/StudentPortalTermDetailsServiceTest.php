@@ -5,7 +5,7 @@ use App\Models\AcademicCalendars\AcademicCalendar;
 use App\Models\AcademicCalendars\AcademicYearOption;
 use App\Models\Students\StudentEnrolment;
 use App\Models\Students\StudentEnrolmentStatus;
-use App\Models\Students\StudentProgram;
+use App\Models\Students\StudentApplication;
 use App\Services\Students\StudentPortalTermDetailsService;
 use Carbon\Carbon;
 use Illuminate\Support\Str;
@@ -44,21 +44,21 @@ test('portal term details uses term calendars and year options for term-based co
         'closing_date' => '2026-08-30',
     ]);
 
-    $studentProgram = createPortalTermDetailsStudentProgram('PORTAL-TERM', 'term', '2026');
-    $student = $studentProgram->student;
+    $studentApplication = createPortalTermDetailsStudentApplication('PORTAL-TERM', 'term', '2026');
+    $student = $studentApplication->student;
 
     $termOneOptionId = (int) AcademicYearOption::query()->where('slug', 'term-1')->value('id');
     $activeStatusId = (int) StudentEnrolmentStatus::query()->where('slug', 'active')->value('id');
 
     $enrolment = StudentEnrolment::query()->create([
         'student_id' => $student->id,
-        'student_program_id' => $studentProgram->id,
-        'institution_department_id' => $studentProgram->institution_department_id,
-        'department_level_id' => $studentProgram->department_level_id,
-        'department_course_id' => $studentProgram->department_course_id,
+        'student_application_id' => $studentApplication->id,
+        'institution_department_id' => $studentApplication->institution_department_id,
+        'department_level_id' => $studentApplication->department_level_id,
+        'department_course_id' => $studentApplication->department_course_id,
         'academic_year_option_id' => $termOneOptionId,
         'academic_calendar_id' => $termOne->id,
-        'mode_of_study_id' => $studentProgram->mode_of_study_id,
+        'mode_of_study_id' => $studentApplication->mode_of_study_id,
         'student_enrolment_status_id' => $activeStatusId,
     ]);
 
@@ -89,21 +89,21 @@ test('portal term details remaps semester enrolment to term calendars when cours
         'closing_date' => '2026-04-30',
     ]);
 
-    $studentProgram = createPortalTermDetailsStudentProgram('PORTAL-TERM-REMAP', 'term', '2026');
-    $student = $studentProgram->student;
+    $studentApplication = createPortalTermDetailsStudentApplication('PORTAL-TERM-REMAP', 'term', '2026');
+    $student = $studentApplication->student;
 
     $semesterOneOptionId = (int) AcademicYearOption::query()->where('slug', 'semester-1')->value('id');
     $activeStatusId = (int) StudentEnrolmentStatus::query()->where('slug', 'active')->value('id');
 
     $enrolment = StudentEnrolment::query()->create([
         'student_id' => $student->id,
-        'student_program_id' => $studentProgram->id,
-        'institution_department_id' => $studentProgram->institution_department_id,
-        'department_level_id' => $studentProgram->department_level_id,
-        'department_course_id' => $studentProgram->department_course_id,
+        'student_application_id' => $studentApplication->id,
+        'institution_department_id' => $studentApplication->institution_department_id,
+        'department_level_id' => $studentApplication->department_level_id,
+        'department_course_id' => $studentApplication->department_course_id,
         'academic_year_option_id' => $semesterOneOptionId,
         'academic_calendar_id' => $semesterCalendar->id,
-        'mode_of_study_id' => $studentProgram->mode_of_study_id,
+        'mode_of_study_id' => $studentApplication->mode_of_study_id,
         'student_enrolment_status_id' => $activeStatusId,
     ]);
 
@@ -116,17 +116,17 @@ test('portal term details remaps semester enrolment to term calendars when cours
         ->and($result['currentTerm']['openingDate'])->toBe('2026-02-03');
 });
 
-function createPortalTermDetailsStudentProgram(string $studentNumber, string $calendarType, string $calendarYear): StudentProgram
+function createPortalTermDetailsStudentApplication(string $studentNumber, string $calendarType, string $calendarYear): StudentApplication
 {
-    $studentProgram = createVerifiedStudentProgram($studentNumber);
+    $studentApplication = createVerifiedStudentApplication($studentNumber);
 
-    $studentProgram->intakePeriod()->update([
+    $studentApplication->intakePeriod()->update([
         'calendar_year' => $calendarYear,
     ]);
 
-    $studentProgram->departmentLevel->level->update([
+    $studentApplication->departmentLevel->level->update([
         'calendar_type' => $calendarType,
     ]);
 
-    return $studentProgram->fresh(['student', 'departmentLevel.level', 'intakePeriod']);
+    return $studentApplication->fresh(['student', 'departmentLevel.level', 'intakePeriod']);
 }

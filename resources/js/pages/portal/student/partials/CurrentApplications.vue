@@ -55,7 +55,7 @@ const { getApplicationStatus, hasOfferLetter, statusMessage } = useStudents();
                     <div :class="compact ? 'flex flex-col pt-2' : 'flex flex-col pt-4'">
                         <div class="text-primary text-xs">{{ statusMessage(application) }}</div>
                         <div class="flex justify-end gap-2">
-                            <OfferLetterAnchor v-if="hasOfferLetter(application)" :student-program-id="String(application.id)" />
+                            <OfferLetterAnchor v-if="hasOfferLetter(application)" :student-application-id="String(application.id)" />
                         </div>
                     </div>
                 </template>

@@ -60,7 +60,7 @@ export function useSidebarMenu() {
             transChoiceKey: 'trans.enrolment',
             icon: icons[IconName.user_add],
             url: route('enrolments.index'),
-            show: canShowMenuItem('view:student-programs', 'enrolments', moduleState),
+            show: canShowMenuItem('view:student-applications', 'enrolments', moduleState),
         },
         {
             groupKey: 'students',

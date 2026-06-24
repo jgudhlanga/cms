@@ -7,15 +7,15 @@ namespace App\Http\Resources\Maintenance;
 use App\Enums\Shared\ClassListTypeEnum;
 use App\Enums\Shared\WorkflowStepEnum;
 use App\Models\Students\Student;
-use App\Models\Students\StudentProgram;
+use App\Models\Students\StudentApplication;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Collection;
 
 /**
  * @property array{
- *     source: array{student: Student, programs: Collection<int, StudentProgram>, counts: array<string, int>},
- *     target: array{student: Student, programs: Collection<int, StudentProgram>, counts: array<string, int>},
+ *     source: array{student: Student, programs: Collection<int, StudentApplication>, counts: array<string, int>},
+ *     target: array{student: Student, programs: Collection<int, StudentApplication>, counts: array<string, int>},
  *     proposedIdNumber: string
  * } $resource
  */
@@ -40,7 +40,7 @@ class StudentAccountMergePreviewResource extends JsonResource
 
     /**
      * @param  array<string, int>  $counts
-     * @param  Collection<int, StudentProgram>  $programs
+     * @param  Collection<int, StudentApplication>  $programs
      * @return array<string, mixed>
      */
     private function studentSummary(Student $student, array $counts, Collection $programs): array
@@ -64,7 +64,7 @@ class StudentAccountMergePreviewResource extends JsonResource
             'academicResultsCount' => $counts['academicResultsCount'] ?? 0,
             'hostelApplicationsCount' => $counts['hostelApplicationsCount'] ?? 0,
             'applications' => $programs
-                ->map(fn (StudentProgram $program): array => $this->applicationRow($program))
+                ->map(fn (StudentApplication $program): array => $this->applicationRow($program))
                 ->values()
                 ->all(),
         ];
@@ -73,7 +73,7 @@ class StudentAccountMergePreviewResource extends JsonResource
     /**
      * @return array<string, mixed>
      */
-    private function applicationRow(StudentProgram $program): array
+    private function applicationRow(StudentApplication $program): array
     {
         $classListType = $program->classList?->type;
         $resolvedClassListType = $classListType instanceof ClassListTypeEnum

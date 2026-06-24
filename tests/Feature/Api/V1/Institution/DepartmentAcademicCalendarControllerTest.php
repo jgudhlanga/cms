@@ -26,7 +26,7 @@ use App\Models\Shared\Title;
 use App\Models\Students\Student;
 use App\Models\Students\StudentEnrolment;
 use App\Models\Students\StudentEnrolmentStatus;
-use App\Models\Students\StudentProgram;
+use App\Models\Students\StudentApplication;
 use App\Models\Tenants\Tenant;
 use App\Models\Users\User;
 use Laravel\Sanctum\Sanctum;
@@ -188,7 +188,7 @@ test('department academic calendar returns totalnClass and totalFinalList counts
         'id_type_id' => $idType->id,
         'date_of_birth' => '2001-01-01',
     ]);
-    $studentProgram = StudentProgram::query()->create([
+    $studentApplication = StudentApplication::query()->create([
         'tenant_id' => $tenant->id,
         'student_id' => $student->id,
         'institution_department_id' => $institutionDepartment->id,
@@ -200,7 +200,7 @@ test('department academic calendar returns totalnClass and totalFinalList counts
     ]);
     ClassList::query()->create([
         'tenant_id' => $tenant->id,
-        'student_program_id' => $studentProgram->id,
+        'student_application_id' => $studentApplication->id,
         'type' => ClassListTypeEnum::FINAL->value,
         'attributes' => [],
     ]);
@@ -220,7 +220,7 @@ test('department academic calendar returns totalnClass and totalFinalList counts
     foreach ([1, 2, 3] as $_) {
         $studentEnrolmentIds[] = (int) StudentEnrolment::query()->create([
             'student_id' => $student->id,
-            'student_program_id' => $studentProgram->id,
+            'student_application_id' => $studentApplication->id,
             'institution_department_id' => $institutionDepartment->id,
             'department_level_id' => $departmentLevel->id,
             'department_course_id' => $departmentCourse->id,
@@ -332,7 +332,7 @@ test('department academic calendar auto seeds class config from final list count
         'id_type_id' => $idType->id,
         'date_of_birth' => '2001-01-01',
     ]);
-    $studentProgram = StudentProgram::query()->create([
+    $studentApplication = StudentApplication::query()->create([
         'tenant_id' => $tenant->id,
         'student_id' => $student->id,
         'institution_department_id' => $institutionDepartment->id,
@@ -344,7 +344,7 @@ test('department academic calendar auto seeds class config from final list count
     ]);
     ClassList::query()->create([
         'tenant_id' => $tenant->id,
-        'student_program_id' => $studentProgram->id,
+        'student_application_id' => $studentApplication->id,
         'type' => ClassListTypeEnum::FINAL->value,
         'attributes' => [],
     ]);
@@ -460,7 +460,7 @@ test('department academic calendar does not overwrite existing class config stud
         'id_type_id' => $idType->id,
         'date_of_birth' => '2001-01-01',
     ]);
-    $studentProgram = StudentProgram::query()->create([
+    $studentApplication = StudentApplication::query()->create([
         'tenant_id' => $tenant->id,
         'student_id' => $student->id,
         'institution_department_id' => $institutionDepartment->id,
@@ -472,7 +472,7 @@ test('department academic calendar does not overwrite existing class config stud
     ]);
     ClassList::query()->create([
         'tenant_id' => $tenant->id,
-        'student_program_id' => $studentProgram->id,
+        'student_application_id' => $studentApplication->id,
         'type' => ClassListTypeEnum::FINAL->value,
         'attributes' => [],
     ]);
@@ -576,7 +576,7 @@ test('department academic calendar does not replace existing class config when s
         'id_type_id' => $idType->id,
         'date_of_birth' => '2001-01-01',
     ]);
-    $studentProgram = StudentProgram::query()->create([
+    $studentApplication = StudentApplication::query()->create([
         'tenant_id' => $tenant->id,
         'student_id' => $student->id,
         'institution_department_id' => $institutionDepartment->id,
@@ -588,7 +588,7 @@ test('department academic calendar does not replace existing class config when s
     ]);
     ClassList::query()->create([
         'tenant_id' => $tenant->id,
-        'student_program_id' => $studentProgram->id,
+        'student_application_id' => $studentApplication->id,
         'type' => ClassListTypeEnum::FINAL->value,
         'attributes' => [],
     ]);
@@ -695,7 +695,7 @@ test('department academic calendar does not violate class config unique index wh
         'id_type_id' => $idType->id,
         'date_of_birth' => '2001-01-01',
     ]);
-    $studentProgram = StudentProgram::query()->create([
+    $studentApplication = StudentApplication::query()->create([
         'tenant_id' => $tenant->id,
         'student_id' => $student->id,
         'institution_department_id' => $institutionDepartment->id,
@@ -707,7 +707,7 @@ test('department academic calendar does not violate class config unique index wh
     ]);
     ClassList::query()->create([
         'tenant_id' => $tenant->id,
-        'student_program_id' => $studentProgram->id,
+        'student_application_id' => $studentApplication->id,
         'type' => ClassListTypeEnum::FINAL->value,
         'attributes' => [],
     ]);

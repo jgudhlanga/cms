@@ -10,7 +10,7 @@ use App\Jobs\Enrolments\SendOfferLetterJob;
 use App\Models\Enrolments\ClassList;
 use App\Models\Institution\DepartmentApplicationStep;
 use App\Models\Shared\WorkflowStep;
-use App\Models\Students\StudentProgram;
+use App\Models\Students\StudentApplication;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -36,7 +36,7 @@ class BulkProcessOfferLettersCommand extends Command
             return;
         }
 
-        $query = StudentProgram::with(['departmentWorkflowStep.workflowStep', 'student.user'])
+        $query = StudentApplication::with(['departmentWorkflowStep.workflowStep', 'student.user'])
             ->whereHas('departmentLevel.level', function ($query) {
                 $query->whereIn('name', [LevelEnum::ND, LevelEnum::HND]);
             })
@@ -51,7 +51,7 @@ class BulkProcessOfferLettersCommand extends Command
                 ]);
             });
         $parsedDate = Carbon::parse($dateFrom)->startOfDay();
-        $query->where('student_programs.created_at', '>=', $parsedDate);
+        $query->where('student_applications.created_at', '>=', $parsedDate);
         $query->chunkById(100, function ($programs) use ($acceptedStep, &$successCount, &$failedCount) {
 
             foreach ($programs as $program) {
@@ -59,7 +59,7 @@ class BulkProcessOfferLettersCommand extends Command
                     DB::transaction(function () use ($program, $acceptedStep) {
 
                         $classList = ClassList::firstOrNew([
-                            'student_program_id' => $program->id
+                            'student_application_id' => $program->id
                         ]);
                         $classList->fill([
                             'tenant_id' => $program->tenant_id,

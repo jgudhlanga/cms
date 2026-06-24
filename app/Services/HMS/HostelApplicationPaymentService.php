@@ -125,9 +125,9 @@ class HostelApplicationPaymentService
             ->sum(fn (Ledger $ledger) => (float) $ledger->amount);
 
         if ($totalInvoiced <= 0.0) {
-            $application->loadMissing('studentEnrolment.studentProgram');
+            $application->loadMissing('studentEnrolment.studentApplication');
             $feeStructure = $this->accommodationFeeService
-                ->feeStructureForStudentProgram($application->studentEnrolment?->studentProgram);
+                ->feeStructureForStudentApplication($application->studentEnrolment?->studentApplication);
 
             $totalInvoiced = (float) ($feeStructure?->local_fca_amount ?? 0);
         }

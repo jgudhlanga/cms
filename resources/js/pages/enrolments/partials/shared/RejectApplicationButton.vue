@@ -9,7 +9,7 @@ import type { InertiaForm } from '@inertiajs/vue3';
 import { trans } from 'laravel-vue-i18n';
 
 const props = defineProps<{
-    studentProgramId: string;
+    studentApplicationId: string;
     form: InertiaForm<ClassListAttributeParams>;
     requiredAbility: string;
     nextHref: string | null;
@@ -28,7 +28,7 @@ const rejectApplication = async () => {
         confirmText: trans('enrolments.confirm_action'),
     });
     if (confirmed) {
-        props.form.put(route('enrolments.reject-application', { student_program: props.studentProgramId }), {
+        props.form.put(route('enrolments.reject-application', { student_application: props.studentApplicationId }), {
             onSuccess: () => {
                 successAlert(trans('enrolments.success_rejected'));
                 if (props.nextHref) {

@@ -13,7 +13,7 @@ return new class extends Migration {
         Schema::create('class_lists', function (Blueprint $table) {
             $table->id();
             $table->foreignId('tenant_id')->constrained();
-            $table->foreignId('student_program_id')->unique()->constrained();
+            $table->foreignId('student_application_id')->unique()->constrained('student_applications');
             $table->enum('type', ['provisional', 'verified', 'waiting', 'final', 'failed']);
             $table->json('attributes')->nullable();
             $table->timestamps();

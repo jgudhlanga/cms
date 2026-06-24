@@ -4,7 +4,7 @@ namespace App\Models\Institution;
 
 use App\Http\Filters\Institution\InstitutionDepartmentFilter;
 use App\Models\Institution\Syllabus\CourseSyllabus;
-use App\Models\Students\StudentProgram;
+use App\Models\Students\StudentApplication;
 use App\Traits\BelongsToTenant;
 use App\Traits\Filterable;
 use App\Traits\Paginatable;
@@ -70,9 +70,9 @@ class InstitutionDepartment extends Model
         return $this->hasMany(CourseSyllabus::class, 'institution_department_id');
     }
 
-    public function enrolments(): HasMany
+    public function studentApplications(): HasMany
     {
-        return $this->hasMany(StudentProgram::class, 'institution_department_id');
+        return $this->hasMany(StudentApplication::class, 'institution_department_id');
     }
 
     public function getActivitylogOptions(): LogOptions

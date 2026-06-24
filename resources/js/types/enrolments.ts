@@ -214,7 +214,7 @@ export type ClassListParams = {
 export type EnrolmentGroup = 'disabled' | 'females' | 'males';
 
 export type ClassList = {
-    studentProgramId: string | number;
+    studentApplicationId: string | number;
     type: string;
     attributes: ClassListAttribute;
 };

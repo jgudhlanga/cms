@@ -25,7 +25,7 @@ use App\Models\Shared\Title;
 use App\Models\Students\Student;
 use App\Models\Students\StudentEnrolment;
 use App\Models\Students\StudentEnrolmentStatus;
-use App\Models\Students\StudentProgram;
+use App\Models\Students\StudentApplication;
 use App\Models\Tenants\Tenant;
 use App\Models\Users\User;
 
@@ -135,7 +135,7 @@ if (! function_exists('createCourseWorkJsonApiContext')) {
             'date_of_birth' => '2001-01-01',
         ]);
 
-        $studentProgram = StudentProgram::query()->create([
+        $studentApplication = StudentApplication::query()->create([
             'tenant_id' => $tenant->id,
             'student_id' => $student->id,
             'institution_department_id' => $institutionDepartment->id,
@@ -152,8 +152,8 @@ if (! function_exists('createCourseWorkJsonApiContext')) {
         ]);
 
         $studentEnrolment = StudentEnrolment::query()->create([
-            'student_id' => $studentProgram->student_id,
-            'student_program_id' => $studentProgram->id,
+            'student_id' => $studentApplication->student_id,
+            'student_application_id' => $studentApplication->id,
             'institution_department_id' => $institutionDepartment->id,
             'department_level_id' => $departmentLevel->id,
             'department_course_id' => $departmentCourse->id,

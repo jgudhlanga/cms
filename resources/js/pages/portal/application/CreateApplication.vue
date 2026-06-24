@@ -20,6 +20,7 @@ import { CreateApplicationParams } from '@/types/portal';
 // Utilities
 import { BaseButton } from '@/components/core/button';
 import ComingSoonAnimated from '@/components/core/util/ComingSoonAnimated.vue';
+import PortalApplicationStepper from '@/components/portal/PortalApplicationStepper.vue';
 import StudentPageHeader from '@/components/shared/students/StudentPageHeader.vue';
 import { useErrorDialog } from '@/composables/core/useErrorDialog';
 import { useIdTypes } from '@/composables/shared/useIdTypes';
@@ -47,6 +48,7 @@ interface Props {
     auth: AuthObject;
     errors: object;
     registrationPrefill?: RegistrationPrefill | null;
+    applicationStep?: 'level' | 'fee' | 'apply';
 }
 
 const props = defineProps<Props>();
@@ -231,6 +233,7 @@ watch(storeRefs.level, async (newVal) => {
 </script>
 <template>
     <StudentPageHeader />
+    <PortalApplicationStepper :current-step="applicationStep ?? 'apply'" />
     <form @submit.prevent="() => save()">
         <div class="mt-20 flex w-full flex-col bg-background px-5 text-foreground md:p-0">
             <ComingSoonAnimated v-if="maintenanceMode" />

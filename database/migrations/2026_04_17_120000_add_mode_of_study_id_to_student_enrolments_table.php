@@ -21,10 +21,10 @@ return new class extends Migration
         });
 
         $rows = DB::table('student_enrolments')
-            ->join('student_programs', 'student_enrolments.student_program_id', '=', 'student_programs.id')
+            ->join('student_applications', 'student_enrolments.student_application_id', '=', 'student_applications.id')
             ->whereNull('student_enrolments.mode_of_study_id')
-            ->whereNotNull('student_programs.mode_of_study_id')
-            ->select('student_enrolments.id', 'student_programs.mode_of_study_id')
+            ->whereNotNull('student_applications.mode_of_study_id')
+            ->select('student_enrolments.id', 'student_applications.mode_of_study_id')
             ->get();
 
         foreach ($rows as $row) {

@@ -4,7 +4,7 @@ namespace App\Events\Students;
 
 use App\Models\Institution\DepartmentApplicationStep;
 use App\Models\Students\Student;
-use App\Models\Students\StudentProgram;
+use App\Models\Students\StudentApplication;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
@@ -20,7 +20,7 @@ class ApplicationWorkflowStepChanged
      */
     public function __construct(
         public Student                    $student,
-        public StudentProgram             $program,
+        public StudentApplication             $program,
         public DepartmentApplicationStep  $newStep,
         public ?DepartmentApplicationStep $oldStep = null)
     {

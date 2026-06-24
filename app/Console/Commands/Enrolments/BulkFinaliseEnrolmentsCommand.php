@@ -14,7 +14,7 @@ use App\Models\Institution\DepartmentApplicationStep;
 use App\Models\Integrations\Banks\ZBBankStatement;
 use App\Models\Shared\WorkflowStep;
 use App\Models\Students\StudentEnrolment;
-use App\Models\Students\StudentProgram;
+use App\Models\Students\StudentApplication;
 use App\Models\Users\User;
 use App\Services\Students\ResolveStudentEnrolmentAttributesService;
 use Carbon\CarbonImmutable;
@@ -51,22 +51,22 @@ class BulkFinaliseEnrolmentsCommand extends Command
     {
         $dryRun = (bool) $this->option('dry-run');
         ['start_date' => $startDate, 'end_date' => $endDate] = $this->resolveDateRange();
-        $studentPrograms = $this->loadVerifiedStudentPrograms();
+        $studentApplications = $this->loadVerifiedStudentApplications();
         $step = $this->resolveEnrolledWorkflowStep();
         $successfulFinalised = 0;
         $failedFinalisations = 0;
 
-        $this->output->progressStart($studentPrograms->count());
+        $this->output->progressStart($studentApplications->count());
 
-        /** @var array<int, array{student_program_id:int, student_id:int|null, student_number:string|null, student_id_number:string|null, user_full_name:string|null, class_list_id:int|null, reason:string, start_date:string, end_date:string, department:string|null, course:string|null, level:string|null}> $failures */
+        /** @var array<int, array{student_application_id:int, student_id:int|null, student_number:string|null, student_id_number:string|null, user_full_name:string|null, class_list_id:int|null, reason:string, start_date:string, end_date:string, department:string|null, course:string|null, level:string|null}> $failures */
         $failures = [];
-        /** @var array<int, array{student_program_id:int, student_id:int|null, student_number:string|null, student_id_number:string|null, user_full_name:string|null, class_list_id:int|null, reason:string, start_date:string, end_date:string, department:string|null, course:string|null, level:string|null}> $successes */
+        /** @var array<int, array{student_application_id:int, student_id:int|null, student_number:string|null, student_id_number:string|null, user_full_name:string|null, class_list_id:int|null, reason:string, start_date:string, end_date:string, department:string|null, course:string|null, level:string|null}> $successes */
         $successes = [];
 
-        foreach ($studentPrograms as $studentProgram) {
+        foreach ($studentApplications as $studentApplication) {
             try {
-                $result = $this->processStudentProgram(
-                    $studentProgram,
+                $result = $this->processStudentApplication(
+                    $studentApplication,
                     $startDate,
                     $endDate,
                     $step,
@@ -77,7 +77,7 @@ class BulkFinaliseEnrolmentsCommand extends Command
                 if ($this->shouldContinueAfterResolutionException($exception)) {
                     $failedFinalisations++;
                     $failures[] = $this->buildFailureRow(
-                        $studentProgram,
+                        $studentApplication,
                         $startDate,
                         $endDate,
                         'missing_calendar_type',
@@ -89,7 +89,7 @@ class BulkFinaliseEnrolmentsCommand extends Command
                 }
 
                 logger()->error('Bulk finalise enrolments failed for student program.', [
-                    'student_program_id' => (int) $studentProgram->id,
+                    'student_application_id' => (int) $studentApplication->id,
                     'message' => $exception->getMessage(),
                 ]);
                 $this->output->progressFinish();
@@ -160,13 +160,13 @@ class BulkFinaliseEnrolmentsCommand extends Command
     }
 
     /**
-     * @return Collection<int, StudentProgram>
+     * @return Collection<int, StudentApplication>
      */
-    private function loadVerifiedStudentPrograms(): Collection
+    private function loadVerifiedStudentApplications(): Collection
     {
-        return StudentProgram::query()
-            ->join('class_lists', 'class_lists.student_program_id', '=', 'student_programs.id')
-            ->select('student_programs.*', 'class_lists.id as classListId')
+        return StudentApplication::query()
+            ->join('class_lists', 'class_lists.student_application_id', '=', 'student_applications.id')
+            ->select('student_applications.*', 'class_lists.id as classListId')
             ->with([
                 'student.user',
                 'institutionDepartment.department',
@@ -188,26 +188,26 @@ class BulkFinaliseEnrolmentsCommand extends Command
     }
 
     /**
-     * @return array{successful: bool, success: array{student_program_id:int, student_id:int|null, student_number:string|null, student_id_number:string|null, user_full_name:string|null, class_list_id:int|null, reason:string, start_date:string, end_date:string, department:string|null, course:string|null, level:string|null}|null, failure: array{student_program_id:int, student_id:int|null, student_number:string|null, student_id_number:string|null, user_full_name:string|null, class_list_id:int|null, reason:string, start_date:string, end_date:string, department:string|null, course:string|null, level:string|null}|null}
+     * @return array{successful: bool, success: array{student_application_id:int, student_id:int|null, student_number:string|null, student_id_number:string|null, user_full_name:string|null, class_list_id:int|null, reason:string, start_date:string, end_date:string, department:string|null, course:string|null, level:string|null}|null, failure: array{student_application_id:int, student_id:int|null, student_number:string|null, student_id_number:string|null, user_full_name:string|null, class_list_id:int|null, reason:string, start_date:string, end_date:string, department:string|null, course:string|null, level:string|null}|null}
      *
      * @throws StudentEnrolmentResolutionException
      */
-    private function processStudentProgram(
-        StudentProgram $studentProgram,
+    private function processStudentApplication(
+        StudentApplication $studentApplication,
         CarbonImmutable $startDate,
         CarbonImmutable $endDate,
         ?WorkflowStep $step,
         ResolveStudentEnrolmentAttributesService $resolveStudentEnrolmentAttributes,
         bool $dryRun,
     ): array {
-        $student = $studentProgram->student;
+        $student = $studentApplication->student;
         $studentNumber = $student?->student_number;
 
         if ($studentNumber === null || $studentNumber === '') {
             return [
                 'successful' => false,
                 'success' => null,
-                'failure' => $this->buildFailureRow($studentProgram, $startDate, $endDate, 'missing_student_number'),
+                'failure' => $this->buildFailureRow($studentApplication, $startDate, $endDate, 'missing_student_number'),
             ];
         }
 
@@ -215,24 +215,24 @@ class BulkFinaliseEnrolmentsCommand extends Command
             return [
                 'successful' => false,
                 'success' => null,
-                'failure' => $this->buildFailureRow($studentProgram, $startDate, $endDate, 'no_matching_payment'),
+                'failure' => $this->buildFailureRow($studentApplication, $startDate, $endDate, 'no_matching_payment'),
             ];
         }
 
         $enrolmentAttributes = $resolveStudentEnrolmentAttributes->resolve(
-            (int) $studentProgram->student_id,
-            (int) $studentProgram->id,
+            (int) $studentApplication->student_id,
+            (int) $studentApplication->id,
         );
 
         if (! $dryRun) {
-            $this->finaliseClassList($studentProgram);
-            $this->updateDepartmentApplicationStep($studentProgram, $step);
-            $this->upsertStudentEnrolment($studentProgram, $enrolmentAttributes);
+            $this->finaliseClassList($studentApplication);
+            $this->updateDepartmentApplicationStep($studentApplication, $step);
+            $this->upsertStudentEnrolment($studentApplication, $enrolmentAttributes);
         }
 
         return [
             'successful' => true,
-            'success' => $this->buildSummaryRow($studentProgram, $startDate, $endDate, 'would_finalise'),
+            'success' => $this->buildSummaryRow($studentApplication, $startDate, $endDate, 'would_finalise'),
             'failure' => null,
         ];
     }
@@ -258,24 +258,24 @@ class BulkFinaliseEnrolmentsCommand extends Command
             ->exists();
     }
 
-    private function finaliseClassList(StudentProgram $studentProgram): void
+    private function finaliseClassList(StudentApplication $studentApplication): void
     {
         ClassList::query()
-            ->whereKey($studentProgram->classListId)
+            ->whereKey($studentApplication->classListId)
             ->update(['type' => ClassListTypeEnum::FINAL->value]);
     }
 
-    private function updateDepartmentApplicationStep(StudentProgram $studentProgram, ?WorkflowStep $step): void
+    private function updateDepartmentApplicationStep(StudentApplication $studentApplication, ?WorkflowStep $step): void
     {
         $departmentStep = null;
         if ($step !== null) {
             $departmentStep = DepartmentApplicationStep::query()
-                ->where('institution_department_id', $studentProgram->institution_department_id)
+                ->where('institution_department_id', $studentApplication->institution_department_id)
                 ->where('workflow_step_id', $step->id)
                 ->first();
         }
 
-        $studentProgram->update([
+        $studentApplication->update([
             'department_application_step_id' => $departmentStep?->id,
         ]);
     }
@@ -283,63 +283,63 @@ class BulkFinaliseEnrolmentsCommand extends Command
     /**
      * @param  array{academic_year_option_id:int, academic_calendar_id:int, student_enrolment_status_id:int}  $enrolmentAttributes
      */
-    private function upsertStudentEnrolment(StudentProgram $studentProgram, array $enrolmentAttributes): void
+    private function upsertStudentEnrolment(StudentApplication $studentApplication, array $enrolmentAttributes): void
     {
         StudentEnrolment::query()->updateOrCreate(
             [
-                'student_id' => $studentProgram->student_id,
-                'student_program_id' => $studentProgram->id,
-                'institution_department_id' => $studentProgram->institution_department_id,
-                'department_level_id' => $studentProgram->department_level_id,
-                'department_course_id' => $studentProgram->department_course_id,
+                'student_id' => $studentApplication->student_id,
+                'student_application_id' => $studentApplication->id,
+                'institution_department_id' => $studentApplication->institution_department_id,
+                'department_level_id' => $studentApplication->department_level_id,
+                'department_course_id' => $studentApplication->department_course_id,
                 'academic_year_option_id' => $enrolmentAttributes['academic_year_option_id'],
                 'academic_calendar_id' => $enrolmentAttributes['academic_calendar_id'],
-                'mode_of_study_id' => $studentProgram->mode_of_study_id,
+                'mode_of_study_id' => $studentApplication->mode_of_study_id,
             ],
             [
-                'student_program_id' => $studentProgram->id,
+                'student_application_id' => $studentApplication->id,
                 'student_enrolment_status_id' => $enrolmentAttributes['student_enrolment_status_id'],
-                'mode_of_study_id' => $studentProgram->mode_of_study_id,
+                'mode_of_study_id' => $studentApplication->mode_of_study_id,
             ],
         );
     }
 
     /**
-     * @return array{student_program_id:int, student_id:int|null, student_number:string|null, student_id_number:string|null, user_full_name:string|null, class_list_id:int|null, reason:string, start_date:string, end_date:string, department:string|null, course:string|null, level:string|null}
+     * @return array{student_application_id:int, student_id:int|null, student_number:string|null, student_id_number:string|null, user_full_name:string|null, class_list_id:int|null, reason:string, start_date:string, end_date:string, department:string|null, course:string|null, level:string|null}
      */
     private function buildFailureRow(
-        StudentProgram $studentProgram,
+        StudentApplication $studentApplication,
         CarbonImmutable $startDate,
         CarbonImmutable $endDate,
         string $reason,
     ): array {
-        return $this->buildSummaryRow($studentProgram, $startDate, $endDate, $reason);
+        return $this->buildSummaryRow($studentApplication, $startDate, $endDate, $reason);
     }
 
     /**
-     * @return array{student_program_id:int, student_id:int|null, student_number:string|null, student_id_number:string|null, user_full_name:string|null, class_list_id:int|null, reason:string, start_date:string, end_date:string, department:string|null, course:string|null, level:string|null}
+     * @return array{student_application_id:int, student_id:int|null, student_number:string|null, student_id_number:string|null, user_full_name:string|null, class_list_id:int|null, reason:string, start_date:string, end_date:string, department:string|null, course:string|null, level:string|null}
      */
     private function buildSummaryRow(
-        StudentProgram $studentProgram,
+        StudentApplication $studentApplication,
         CarbonImmutable $startDate,
         CarbonImmutable $endDate,
         string $reason,
     ): array {
-        $student = $studentProgram->student;
+        $student = $studentApplication->student;
 
         return [
-            'student_program_id' => (int) $studentProgram->id,
-            'student_id' => $studentProgram->student_id,
+            'student_application_id' => (int) $studentApplication->id,
+            'student_id' => $studentApplication->student_id,
             'student_number' => $student?->student_number,
             'student_id_number' => $student?->id_number,
             'user_full_name' => $student?->user?->full_name,
-            'class_list_id' => isset($studentProgram->classListId) ? (int) $studentProgram->classListId : null,
+            'class_list_id' => isset($studentApplication->classListId) ? (int) $studentApplication->classListId : null,
             'reason' => $reason,
             'start_date' => $startDate->toDateTimeString(),
             'end_date' => $endDate->toDateTimeString(),
-            'department' => $studentProgram->institutionDepartment?->department?->name,
-            'course' => $studentProgram->departmentCourse?->course?->name,
-            'level' => $studentProgram->departmentLevel?->level?->name,
+            'department' => $studentApplication->institutionDepartment?->department?->name,
+            'course' => $studentApplication->departmentCourse?->course?->name,
+            'level' => $studentApplication->departmentLevel?->level?->name,
         ];
     }
 
@@ -393,8 +393,8 @@ class BulkFinaliseEnrolmentsCommand extends Command
     }
 
     /**
-     * @param  array<int, array{student_program_id:int, student_id:int|null, student_number:string|null, student_id_number:string|null, user_full_name:string|null, class_list_id:int|null, reason:string, start_date:string, end_date:string, department:string|null, course:string|null, level:string|null}>  $successes
-     * @param  array<int, array{student_program_id:int, student_id:int|null, student_number:string|null, student_id_number:string|null, user_full_name:string|null, class_list_id:int|null, reason:string, start_date:string, end_date:string, department:string|null, course:string|null, level:string|null}>  $failures
+     * @param  array<int, array{student_application_id:int, student_id:int|null, student_number:string|null, student_id_number:string|null, user_full_name:string|null, class_list_id:int|null, reason:string, start_date:string, end_date:string, department:string|null, course:string|null, level:string|null}>  $successes
+     * @param  array<int, array{student_application_id:int, student_id:int|null, student_number:string|null, student_id_number:string|null, user_full_name:string|null, class_list_id:int|null, reason:string, start_date:string, end_date:string, department:string|null, course:string|null, level:string|null}>  $failures
      */
     private function writeDryRunReportXlsx(array $successes, array $failures): ?string
     {
@@ -419,7 +419,7 @@ class BulkFinaliseEnrolmentsCommand extends Command
     }
 
     /**
-     * @param  array<int, array{student_program_id:int, student_id:int|null, student_number:string|null, student_id_number:string|null, user_full_name:string|null, class_list_id:int|null, reason:string, start_date:string, end_date:string, department:string|null, course:string|null, level:string|null}>  $failures
+     * @param  array<int, array{student_application_id:int, student_id:int|null, student_number:string|null, student_id_number:string|null, user_full_name:string|null, class_list_id:int|null, reason:string, start_date:string, end_date:string, department:string|null, course:string|null, level:string|null}>  $failures
      */
     private function writeFailureReportXlsx(array $failures): ?string
     {

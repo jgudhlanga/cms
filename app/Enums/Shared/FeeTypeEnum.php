@@ -4,7 +4,8 @@ namespace App\Enums\Shared;
 
 use App\Models\HMS\HostelApplication;
 use App\Models\Shared\FeeType;
-use App\Models\Students\StudentProgram;
+use App\Models\Students\ApplicationFee;
+use App\Models\Students\StudentApplication;
 use App\Models\Users\User;
 use Illuminate\Support\Str;
 
@@ -92,22 +93,32 @@ enum FeeTypeEnum: string
     public function ledgerableClass(): string
     {
         return match ($this) {
-            self::APPLICATION_FEE => User::class,
+            self::APPLICATION_FEE => ApplicationFee::class,
             self::STUDENT_ACCOMMODATION_FEE, self::GUEST_ACCOMMODATION_FEE => HostelApplication::class,
-            self::TUITION_FEE => StudentProgram::class,
+            self::TUITION_FEE => StudentApplication::class,
             default => User::class,
         };
     }
 
     public function requiresLedgerableId(): bool
     {
-        return $this === self::TUITION_FEE;
+        return in_array($this, [self::TUITION_FEE, self::APPLICATION_FEE], true);
     }
 
     public function postPaymentRoute(): string
     {
         return match ($this) {
             self::APPLICATION_FEE => 'portal.application.create',
+            self::STUDENT_ACCOMMODATION_FEE, self::GUEST_ACCOMMODATION_FEE => 'portal.profile.accommodations',
+            self::TUITION_FEE => 'portal.profile.financials',
+            default => 'portal.dashboard',
+        };
+    }
+
+    public function postFailurePaymentRoute(): string
+    {
+        return match ($this) {
+            self::APPLICATION_FEE => 'portal.application.fee-payment',
             self::STUDENT_ACCOMMODATION_FEE, self::GUEST_ACCOMMODATION_FEE => 'portal.profile.accommodations',
             self::TUITION_FEE => 'portal.profile.financials',
             default => 'portal.dashboard',

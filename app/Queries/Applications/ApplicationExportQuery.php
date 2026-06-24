@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Queries\Applications;
 
 use App\Enums\Shared\WorkflowStepEnum;
-use App\Models\Students\StudentProgram;
+use App\Models\Students\StudentApplication;
 use Illuminate\Database\Eloquent\Builder;
 
 class ApplicationExportQuery
@@ -14,20 +14,20 @@ class ApplicationExportQuery
     {
         $rankedPrograms = $this->matchingProgramsQuery($intakeYear)
             ->select([
-                'student_programs.id',
-                'student_programs.student_id',
+                'student_applications.id',
+                'student_applications.student_id',
             ])
             ->selectRaw($this->exportRankSelectSql(), [
                 WorkflowStepEnum::ENROLLED->slug(),
             ]);
 
-        return StudentProgram::query()
-            ->whereIn('student_programs.id', function ($query) use ($rankedPrograms): void {
+        return StudentApplication::query()
+            ->whereIn('student_applications.id', function ($query) use ($rankedPrograms): void {
                 $query->fromSub($rankedPrograms, 'ranked_programs')
                     ->where('ranked_programs.export_rank', 1)
                     ->select('ranked_programs.id');
             })
-            ->orderBy('student_programs.student_id')
+            ->orderBy('student_applications.student_id')
             ->with([
                 'student.user',
                 'student.gender',
@@ -49,10 +49,10 @@ class ApplicationExportQuery
 
     private function matchingProgramsQuery(?string $intakeYear = null): Builder
     {
-        return StudentProgram::query()
+        return StudentApplication::query()
             ->leftJoin(
                 'department_application_steps',
-                'student_programs.department_application_step_id',
+                'student_applications.department_application_step_id',
                 '=',
                 'department_application_steps.id',
             )
@@ -62,13 +62,13 @@ class ApplicationExportQuery
                 '=',
                 'workflow_steps.id',
             )
-            ->whereNull('student_programs.deleted_at')
+            ->whereNull('student_applications.deleted_at')
             ->where(function (Builder $query): void {
-                $query->whereNotNull('student_programs.department_application_step_id')
+                $query->whereNotNull('student_applications.department_application_step_id')
                     ->orWhereExists(function ($subQuery): void {
                         $subQuery->selectRaw('1')
                             ->from('student_enrolments')
-                            ->whereColumn('student_enrolments.student_program_id', 'student_programs.id')
+                            ->whereColumn('student_enrolments.student_application_id', 'student_applications.id')
                             ->whereNull('student_enrolments.deleted_at');
                     });
             })
@@ -82,18 +82,18 @@ class ApplicationExportQuery
     private function exportRankSelectSql(): string
     {
         return 'ROW_NUMBER() OVER (
-            PARTITION BY student_programs.student_id
+            PARTITION BY student_applications.student_id
             ORDER BY
                 CASE
                     WHEN workflow_steps.slug = ? THEN 0
                     WHEN EXISTS (
                         SELECT 1 FROM student_enrolments
-                        WHERE student_enrolments.student_program_id = student_programs.id
+                        WHERE student_enrolments.student_application_id = student_applications.id
                         AND student_enrolments.deleted_at IS NULL
                     ) THEN 1
                     ELSE 2
                 END,
-                student_programs.id
+                student_applications.id
         ) as export_rank';
     }
 }

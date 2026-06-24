@@ -103,7 +103,7 @@ const requiredLevel = computed(() => {
 });
 
 const nextConfirmHref = computed(() =>
-    nextTop.length > 0 ? route('enrolments.confirm', { student_program: String(nextTop[0].applicationId), type: queryParams['type'] }) : null,
+    nextTop.length > 0 ? route('enrolments.confirm', { student_application: String(nextTop[0].applicationId), type: queryParams['type'] }) : null,
 );
 
 const form = useForm<ClassListAttributeParams>({
@@ -192,7 +192,7 @@ const saveConfirmation = async () => {
         confirmText: trans('enrolments.confirm_action'),
     });
     if (confirmed) {
-        form.put(route('enrolments.update-class-list', { student_program: String(application.id) }), {
+        form.put(route('enrolments.update-class-list', { student_application: String(application.id) }), {
             onSuccess: () => {
                 successAlert(trans('enrolments.success_student_confirmed'));
                 if (nextConfirmHref.value) {
@@ -290,7 +290,7 @@ onMounted(() => {
                     <div class="mt-4 flex items-center justify-between">
                         <BaseButton :title="$t('enrolment.add_student_to_class')" @click="saveConfirmation" />
                         <RejectApplicationButton
-                            :student-program-id="String(application.id)"
+                            :student-application-id="String(application.id)"
                             :form="form"
                             required-ability="manage-final:class-lists"
                             :next-href="nextConfirmHref"

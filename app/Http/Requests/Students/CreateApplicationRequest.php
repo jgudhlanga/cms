@@ -4,8 +4,12 @@ namespace App\Http\Requests\Students;
 
 use App\Enums\Shared\DisabilityStatusEnum;
 use App\Enums\Shared\IdTypeEnum;
+use App\Helpers\Helper;
+use App\Helpers\PaymentHelper;
+use App\Models\Institution\Level;
 use App\Rules\ZimbabweanIdNumber;
 use App\Services\Enrollment\EnrollmentLookupService;
+use App\Services\Students\ApplicationFeeService;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
@@ -147,6 +151,32 @@ class CreateApplicationRequest extends FormRequest
                     $validator->errors()->add(
                         'passport_number',
                         __('trans.registration_passport_mismatch'),
+                    );
+                }
+            }
+
+            $level = Level::query()->find($this->integer('level_id'));
+            if ($level?->has_application_fee_payment) {
+                $user = $this->user();
+                $applicationFeeService = app(ApplicationFeeService::class);
+                $applicationFee = $applicationFeeService->activeApplicationFee($user);
+                $intakePeriod = $applicationFee?->intakePeriod
+                    ?? $applicationFeeService->resolveIntakeForSubmit(
+                        $user,
+                        $this->filled('intake_period_id') ? $this->integer('intake_period_id') : null
+                    );
+
+                if ($applicationFee === null || ! PaymentHelper::hasPaidApplicationFeeAndNotApplied($user, $intakePeriod)) {
+                    $validator->errors()->add(
+                        'level_id',
+                        __('trans.application_fee_payment_required'),
+                    );
+                }
+
+                if ($applicationFee !== null && (int) $applicationFee->level_id !== (int) $level->id) {
+                    $validator->errors()->add(
+                        'level_id',
+                        __('trans.application_fee_level_mismatch'),
                     );
                 }
             }

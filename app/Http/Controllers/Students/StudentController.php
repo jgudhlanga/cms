@@ -26,7 +26,7 @@ use App\Models\Users\User;
 use App\Repositories\Shared\interface\IAddressRepository;
 use App\Repositories\Shared\interface\IContactRepository;
 use App\Repositories\Shared\interface\INextOfKinRepository;
-use App\Repositories\Students\interface\IStudentProgramRepository;
+use App\Repositories\Students\interface\IStudentApplicationRepository;
 use App\Repositories\Students\interface\IStudentRepository;
 use App\Repositories\Users\interface\IUserRepository;
 use Exception;
@@ -46,7 +46,7 @@ class StudentController extends Controller
         protected IContactRepository        $contactRepository,
         protected IAddressRepository        $addressRepository,
         protected INextOfKinRepository      $nextOfKinRepository,
-        protected IStudentProgramRepository $studentProgramRepository,
+        protected IStudentApplicationRepository $studentApplicationRepository,
     )
     {
     }
@@ -104,7 +104,7 @@ class StudentController extends Controller
 
             $user = $this->createUser($request, $tenant->id, $status->id);
             $student = $this->createStudentApplication($request, $user->id);
-            $program = $student->programs()->latest()->first();
+            $program = $student->applications()->latest()->first();
             Helper::initializeProgramWorkflow($program);
             Helper::generateAndAssignStudentNumber($student, $program);
             // invoice student
@@ -304,9 +304,9 @@ class StudentController extends Controller
     private function evaluateStudentEligibility(Student $student, bool $hasPaidApplicationFee): array
     {
         $currentLevel = $student->currentLevel();
-        $currentProgramCount = $student->programs()?->count() ?? 0;
+        $currentProgramCount = $student->applications()?->count() ?? 0;
 
-        $latestProgram = $student->programs()->latest()->first();
+        $latestProgram = $student->applications()->latest()->first();
         $level = $latestProgram?->departmentLevel?->level;
 
         $eligibleForEnrolment = true;

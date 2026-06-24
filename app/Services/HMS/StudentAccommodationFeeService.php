@@ -8,7 +8,7 @@ use App\Models\HMS\HostelApplication;
 use App\Models\Institution\FeeStructure;
 use App\Models\Ledgers\Ledger;
 use App\Models\Students\Student;
-use App\Models\Students\StudentProgram;
+use App\Models\Students\StudentApplication;
 use Illuminate\Support\Collection;
 
 class StudentAccommodationFeeService
@@ -27,15 +27,15 @@ class StudentAccommodationFeeService
     public function summaryForStudent(Student $student): array
     {
         $student->loadMissing([
-            'latestEnrolment.studentProgram.intakePeriod',
-            'latestEnrolment.studentProgram.departmentLevel.level',
+            'latestEnrolment.studentApplication.intakePeriod',
+            'latestEnrolment.studentApplication.departmentLevel.level',
         ]);
 
-        $studentProgram = $student->latestEnrolment?->studentProgram;
-        $calendarYear = $student->latestEnrolment?->studentProgram?->intakePeriod?->calendar_year;
-        $intakeLabel = $studentProgram?->intakePeriod?->name ?? $calendarYear;
+        $studentApplication = $student->latestEnrolment?->studentApplication;
+        $calendarYear = $student->latestEnrolment?->studentApplication?->intakePeriod?->calendar_year;
+        $intakeLabel = $studentApplication?->intakePeriod?->name ?? $calendarYear;
 
-        $ledgers = $this->accommodationLedgers($student, $studentProgram);
+        $ledgers = $this->accommodationLedgers($student, $studentApplication);
         $invoices = $ledgers->where('type', 'invoice');
         $receipts = $ledgers->where('type', 'receipt');
 
@@ -45,12 +45,12 @@ class StudentAccommodationFeeService
             ->sum(fn (Ledger $ledger) => (float) $ledger->amount);
 
         if ($total <= 0.0) {
-            $total = (float) ($this->feeStructureForStudentProgram($studentProgram)?->local_fca_amount ?? 0);
+            $total = (float) ($this->feeStructureForStudentApplication($studentApplication)?->local_fca_amount ?? 0);
         }
 
         $due = max(0, $total - $paid);
 
-        $isFullyPaid = $this->studentHasPaidAccommodationFee($student, $studentProgram);
+        $isFullyPaid = $this->studentHasPaidAccommodationFee($student, $studentApplication);
 
         if ($total === 0.0 && $isFullyPaid) {
             $paid = $paid > 0 ? $paid : 0.0;
@@ -95,36 +95,36 @@ class StudentAccommodationFeeService
     public function feeStructureForStudent(Student $student): ?FeeStructure
     {
         $student->loadMissing([
-            'latestEnrolment.studentProgram.departmentLevel.level',
+            'latestEnrolment.studentApplication.departmentLevel.level',
         ]);
 
-        return $this->feeStructureForStudentProgram($student->latestEnrolment?->studentProgram);
+        return $this->feeStructureForStudentApplication($student->latestEnrolment?->studentApplication);
     }
 
-    public function feeStructureForStudentProgram(?StudentProgram $studentProgram): ?FeeStructure
+    public function feeStructureForStudentApplication(?StudentApplication $studentApplication): ?FeeStructure
     {
-        if ($studentProgram === null) {
+        if ($studentApplication === null) {
             return null;
         }
 
-        $studentProgram->loadMissing(['departmentLevel.level']);
+        $studentApplication->loadMissing(['departmentLevel.level']);
 
-        $levelId = $studentProgram->departmentLevel?->level?->id;
+        $levelId = $studentApplication->departmentLevel?->level?->id;
 
         if ($levelId === null) {
             return null;
         }
 
         return FeeStructure::query()
-            ->where('tenant_id', $studentProgram->tenant_id)
+            ->where('tenant_id', $studentApplication->tenant_id)
             ->where('level_id', $levelId)
             ->whereRelation('feeType', 'slug', FeeTypeEnum::STUDENT_ACCOMMODATION_FEE->slug())
             ->first();
     }
 
-    private function studentHasPaidAccommodationFee(Student $student, ?StudentProgram $studentProgram): bool
+    private function studentHasPaidAccommodationFee(Student $student, ?StudentApplication $studentApplication): bool
     {
-        if ($studentProgram?->hasPaid(FeeTypeEnum::STUDENT_ACCOMMODATION_FEE)) {
+        if ($studentApplication?->hasPaid(FeeTypeEnum::STUDENT_ACCOMMODATION_FEE)) {
             return true;
         }
 
@@ -137,7 +137,7 @@ class StudentAccommodationFeeService
     /**
      * @return Collection<int, Ledger>
      */
-    private function accommodationLedgers(Student $student, ?StudentProgram $studentProgram): Collection
+    private function accommodationLedgers(Student $student, ?StudentApplication $studentApplication): Collection
     {
         $accommodationSlugs = [
             FeeTypeEnum::STUDENT_ACCOMMODATION_FEE->slug(),
@@ -146,8 +146,8 @@ class StudentAccommodationFeeService
 
         $ledgers = collect();
 
-        if ($studentProgram?->student?->user !== null) {
-            $ledgers = $studentProgram->student->user
+        if ($studentApplication?->student?->user !== null) {
+            $ledgers = $studentApplication->student->user
                 ->ledgers()
                 ->with('feeType')
                 ->whereHas('feeType', fn ($query) => $query->whereIn('slug', $accommodationSlugs))

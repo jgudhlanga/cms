@@ -11,7 +11,7 @@ class ClassListResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'studentProgramId' => $this->student_program_id,
+            'studentApplicationId' => $this->student_application_id,
             'attributes' => ClassListAttributesResource::make($this->attributes),
             'type' => $this->type,
         ];

@@ -341,7 +341,7 @@ export const useEnrolments = () => {
         return ['disabled', 'females', 'males'].some((group) => groups[group as EnrolmentGroup].some((enrolment) => enrolment.inClassList));
     };
 
-    const addToClassList = async (studentProgramId: string, type: string) => {
+    const addToClassList = async (studentApplicationId: string, type: string) => {
         const confirmed = await useCustomConfirmDialog().open({
             title: 'Create Class',
             message: `Are you sure you want to add application to ${type} list? `,
@@ -352,7 +352,7 @@ export const useEnrolments = () => {
                 type: type,
             });
             try {
-                form.post(route('enrolments.add-to-class-list', { student_program: studentProgramId }), {
+                form.post(route('enrolments.add-to-class-list', { student_application: studentApplicationId }), {
                     onSuccess: () => {
                         successAlert('Application added to class list successfully');
                         router.visit(window.location.href, { replace: true, preserveScroll: true });

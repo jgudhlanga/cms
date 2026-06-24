@@ -3,7 +3,7 @@
 namespace App\Jobs\Enrolments;
 
 use App\Helpers\EnrolmentHelper;
-use App\Models\Students\StudentProgram;
+use App\Models\Students\StudentApplication;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
@@ -15,7 +15,7 @@ class UpdateRejectedApplicationJob implements ShouldQueue
     /**
      * Create a new job instance.
      */
-    public function __construct(  protected ?array $studentPrograms = null)
+    public function __construct(  protected ?array $studentApplications = null)
     {
         //
     }
@@ -25,7 +25,7 @@ class UpdateRejectedApplicationJob implements ShouldQueue
      */
     public function handle(): void
     {
-        StudentProgram::query()
+        StudentApplication::query()
             ->with([
                 'student',
                 'institutionDepartment',
@@ -34,12 +34,12 @@ class UpdateRejectedApplicationJob implements ShouldQueue
             ])
             ->whereHas('student')
             ->whereDoesntHave('classList')
-            ->when($this->studentPrograms, fn($q) => $q->whereIn('id', $this->studentPrograms))
+            ->when($this->studentApplications, fn($q) => $q->whereIn('id', $this->studentApplications))
             ->chunkById(100, fn($programs) => $programs->each(fn($program) => $this->processProgram($program))
             );
     }
 
-    private function processProgram(StudentProgram $program): void
+    private function processProgram(StudentApplication $program): void
     {
         $student = $program->student;
         if ($student->student_number_generated) {

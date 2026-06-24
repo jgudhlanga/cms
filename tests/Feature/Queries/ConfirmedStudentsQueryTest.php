@@ -20,7 +20,7 @@ use App\Models\Shared\Title;
 use App\Models\Students\Student;
 use App\Models\Students\StudentEnrolment;
 use App\Models\Students\StudentEnrolmentStatus;
-use App\Models\Students\StudentProgram;
+use App\Models\Students\StudentApplication;
 use App\Models\Tenants\Tenant;
 use App\Models\Users\User;
 use App\Queries\Enrolments\ConfirmedStudentsQuery;
@@ -82,7 +82,7 @@ test('countsByCourseLevel excludes soft deleted final class lists', function () 
         'id_type_id' => $idType->id,
         'date_of_birth' => '2001-01-01',
     ]);
-    $studentProgram = StudentProgram::query()->create([
+    $studentApplication = StudentApplication::query()->create([
         'tenant_id' => $tenant->id,
         'student_id' => $student->id,
         'institution_department_id' => $institutionDepartment->id,
@@ -95,7 +95,7 @@ test('countsByCourseLevel excludes soft deleted final class lists', function () 
 
     $classList = ClassList::query()->create([
         'tenant_id' => $tenant->id,
-        'student_program_id' => $studentProgram->id,
+        'student_application_id' => $studentApplication->id,
         'type' => ClassListTypeEnum::FINAL->value,
         'attributes' => [],
     ]);
@@ -164,7 +164,7 @@ test('countsByCourseLevel is isolated by mode of study', function () {
         'id_type_id' => $idType->id,
         'date_of_birth' => '2002-01-01',
     ]);
-    $studentProgram = StudentProgram::query()->create([
+    $studentApplication = StudentApplication::query()->create([
         'tenant_id' => $tenant->id,
         'student_id' => $student->id,
         'institution_department_id' => $institutionDepartment->id,
@@ -177,7 +177,7 @@ test('countsByCourseLevel is isolated by mode of study', function () {
 
     ClassList::query()->create([
         'tenant_id' => $tenant->id,
-        'student_program_id' => $studentProgram->id,
+        'student_application_id' => $studentApplication->id,
         'type' => ClassListTypeEnum::FINAL->value,
         'attributes' => [],
     ]);
@@ -247,7 +247,7 @@ test('listForClassAllocation returns empty without matching student enrolment', 
         'id_type_id' => $idType->id,
         'date_of_birth' => '2003-01-01',
     ]);
-    $studentProgram = StudentProgram::query()->create([
+    $studentApplication = StudentApplication::query()->create([
         'tenant_id' => $tenant->id,
         'student_id' => $student->id,
         'institution_department_id' => $institutionDepartment->id,
@@ -260,7 +260,7 @@ test('listForClassAllocation returns empty without matching student enrolment', 
 
     ClassList::query()->create([
         'tenant_id' => $tenant->id,
-        'student_program_id' => $studentProgram->id,
+        'student_application_id' => $studentApplication->id,
         'type' => ClassListTypeEnum::FINAL->value,
         'attributes' => [],
     ]);
@@ -344,7 +344,7 @@ test('listForClassAllocation returns row when final list and enrolment exist', f
         'id_type_id' => $idType->id,
         'date_of_birth' => '2004-01-01',
     ]);
-    $studentProgram = StudentProgram::query()->create([
+    $studentApplication = StudentApplication::query()->create([
         'tenant_id' => $tenant->id,
         'student_id' => $student->id,
         'institution_department_id' => $institutionDepartment->id,
@@ -357,14 +357,14 @@ test('listForClassAllocation returns row when final list and enrolment exist', f
 
     ClassList::query()->create([
         'tenant_id' => $tenant->id,
-        'student_program_id' => $studentProgram->id,
+        'student_application_id' => $studentApplication->id,
         'type' => ClassListTypeEnum::FINAL->value,
         'attributes' => [],
     ]);
 
     $enrolment = StudentEnrolment::query()->create([
         'student_id' => $student->id,
-        'student_program_id' => $studentProgram->id,
+        'student_application_id' => $studentApplication->id,
         'institution_department_id' => $institutionDepartment->id,
         'department_level_id' => $departmentLevel->id,
         'department_course_id' => $departmentCourse->id,
@@ -503,7 +503,7 @@ test('listForClassAllocation matches student enrolment when any calendar id in t
         'id_type_id' => $idType->id,
         'date_of_birth' => '2005-01-01',
     ]);
-    $studentProgram = StudentProgram::query()->create([
+    $studentApplication = StudentApplication::query()->create([
         'tenant_id' => $tenant->id,
         'student_id' => $student->id,
         'institution_department_id' => $institutionDepartment->id,
@@ -516,14 +516,14 @@ test('listForClassAllocation matches student enrolment when any calendar id in t
 
     ClassList::query()->create([
         'tenant_id' => $tenant->id,
-        'student_program_id' => $studentProgram->id,
+        'student_application_id' => $studentApplication->id,
         'type' => ClassListTypeEnum::FINAL->value,
         'attributes' => [],
     ]);
 
     $enrolment = StudentEnrolment::query()->create([
         'student_id' => $student->id,
-        'student_program_id' => $studentProgram->id,
+        'student_application_id' => $studentApplication->id,
         'institution_department_id' => $institutionDepartment->id,
         'department_level_id' => $departmentLevel->id,
         'department_course_id' => $departmentCourse->id,

@@ -203,8 +203,8 @@
         --card-foreground: 210 20% 98%;
         --popover: 220 16% 16%;
         --popover-foreground: 210 20% 98%;
-        /* Sky blue primary — high contrast on dark surfaces */
-        --primary: 199 96% 82%;
+        /* Sky blue primary — aligned hue with light mode */
+        --primary: 231 75% 65%;
         --primary-foreground: 220 45% 10%;
         --color-persian-500: #38bdf8;
         --color-persian-600: #7dd3fc;
@@ -313,6 +313,28 @@
 
     .auth-infinite-dot {
         background: hsl(var(--primary) / 35%);
+    }
+
+    .login-sky-bg {
+        isolation: isolate;
+    }
+
+    .login-sky-ripples {
+        background-image:
+            radial-gradient(circle at 50% 100%, transparent 0%, transparent 18%, rgb(255 255 255 / 18%) 18.5%, transparent 19%),
+            radial-gradient(circle at 50% 100%, transparent 0%, transparent 28%, rgb(255 255 255 / 14%) 28.5%, transparent 29%),
+            radial-gradient(circle at 50% 100%, transparent 0%, transparent 38%, rgb(255 255 255 / 10%) 38.5%, transparent 39%),
+            radial-gradient(circle at 50% 100%, transparent 0%, transparent 48%, rgb(255 255 255 / 8%) 48.5%, transparent 49%),
+            radial-gradient(circle at 50% 100%, transparent 0%, transparent 58%, rgb(255 255 255 / 6%) 58.5%, transparent 59%);
+        mask-image: linear-gradient(to top, black 0%, transparent 85%);
+    }
+
+    .dark .login-sky-ripples {
+        background-image:
+            radial-gradient(circle at 50% 100%, transparent 0%, transparent 18%, rgb(148 163 184 / 12%) 18.5%, transparent 19%),
+            radial-gradient(circle at 50% 100%, transparent 0%, transparent 28%, rgb(148 163 184 / 10%) 28.5%, transparent 29%),
+            radial-gradient(circle at 50% 100%, transparent 0%, transparent 38%, rgb(148 163 184 / 8%) 38.5%, transparent 39%);
+        mask-image: linear-gradient(to top, black 0%, transparent 85%);
     }
 
     .hava-table {

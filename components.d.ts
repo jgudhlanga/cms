@@ -354,7 +354,7 @@ declare module 'vue' {
     StudentContacts: typeof import('./resources/js/components/students/tabs/StudentContacts.vue')['default']
     StudentNextOfKin: typeof import('./resources/js/components/students/tabs/StudentNextOfKin.vue')['default']
     StudentPageHeader: typeof import('./resources/js/components/shared/students/StudentPageHeader.vue')['default']
-    StudentPrograms: typeof import('./resources/js/components/students/tabs/StudentPrograms.vue')['default']
+    StudentApplications: typeof import('./resources/js/components/students/tabs/StudentApplications.vue')['default']
     StudentSponsors: typeof import('./resources/js/components/students/tabs/StudentSponsors.vue')['default']
     SubjectComboSelect: typeof import('./resources/js/components/core/form/combobox/SubjectComboSelect.vue')['default']
     Surname: typeof import('./resources/js/components/core/form/text/Surname.vue')['default']

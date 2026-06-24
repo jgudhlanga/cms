@@ -19,7 +19,7 @@ export type Ledger = {
         responseCode: string | null;
         levelId: number | null;
         level: string | null;
-        studentProgramId: number | null;
+        studentApplicationId: number | null;
         createdAt: string | null;
         updatedAt: string | null;
         deletedAt: string | null;

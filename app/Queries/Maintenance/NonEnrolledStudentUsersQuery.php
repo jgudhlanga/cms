@@ -20,9 +20,9 @@ class NonEnrolledStudentUsersQuery
             ->where('tenant_id', $tenantId)
             ->where(function (Builder $query): void {
                 $query->whereDoesntHave('studentProfile')
-                    ->orWhereHas('studentProfile', fn (Builder $profile) => $profile->whereDoesntHave('programs'))
-                    ->orWhereHas('studentProfile.programs', fn (Builder $program) => $program
-                        ->whereNull('student_programs.deleted_at')
+                    ->orWhereHas('studentProfile', fn (Builder $profile) => $profile->whereDoesntHave('applications'))
+                    ->orWhereHas('studentProfile.applications', fn (Builder $program) => $program
+                        ->whereNull('student_applications.deleted_at')
                         ->where(function (Builder $status): void {
                             $status->whereHas(
                                 'departmentWorkflowStep.workflowStep',
@@ -51,8 +51,8 @@ class NonEnrolledStudentUsersQuery
                 'status',
                 'roles',
                 'studentProfile',
-                'studentProfile.programs.departmentWorkflowStep.workflowStep',
-                'studentProfile.programs.classList',
+                'studentProfile.applications.departmentWorkflowStep.workflowStep',
+                'studentProfile.applications.classList',
             ])
             ->orderBy('first_name')
             ->orderBy('last_name');
@@ -91,29 +91,29 @@ class NonEnrolledStudentUsersQuery
             MaintenanceApplicationStatusFilterEnum::NO_PROFILE => $query->whereDoesntHave('studentProfile'),
             MaintenanceApplicationStatusFilterEnum::NO_PROGRAMMES => $query->whereHas(
                 'studentProfile',
-                fn (Builder $profile) => $profile->whereDoesntHave('programs'),
+                fn (Builder $profile) => $profile->whereDoesntHave('applications'),
             ),
             MaintenanceApplicationStatusFilterEnum::REVIEW => $query->whereHas(
-                'studentProfile.programs',
+                'studentProfile.applications',
                 fn (Builder $program) => $this->applyReviewProgrammeConstraint($program),
             ),
             MaintenanceApplicationStatusFilterEnum::WAITLISTED => $query->whereHas(
-                'studentProfile.programs',
+                'studentProfile.applications',
                 fn (Builder $program) => $this->applyWaitlistedProgrammeConstraint($program),
             ),
             MaintenanceApplicationStatusFilterEnum::VERIFIED => $query->whereHas(
-                'studentProfile.programs',
+                'studentProfile.applications',
                 fn (Builder $program) => $this->applyVerifiedProgrammeConstraint($program),
             ),
             MaintenanceApplicationStatusFilterEnum::UNKNOWN => $query
                 ->whereHas(
-                    'studentProfile.programs',
-                    fn (Builder $program) => $program->whereNull('student_programs.deleted_at'),
+                    'studentProfile.applications',
+                    fn (Builder $program) => $program->whereNull('student_applications.deleted_at'),
                 )
                 ->whereDoesntHave(
-                    'studentProfile.programs',
+                    'studentProfile.applications',
                     fn (Builder $program) => $program
-                        ->whereNull('student_programs.deleted_at')
+                        ->whereNull('student_applications.deleted_at')
                         ->where(function (Builder $status): void {
                             $status->whereHas(
                                 'departmentWorkflowStep.workflowStep',
@@ -136,7 +136,7 @@ class NonEnrolledStudentUsersQuery
     private function applyReviewProgrammeConstraint(Builder $program): void
     {
         $program
-            ->whereNull('student_programs.deleted_at')
+            ->whereNull('student_applications.deleted_at')
             ->whereHas(
                 'departmentWorkflowStep.workflowStep',
                 fn (Builder $workflowStep) => $workflowStep->where(
@@ -149,7 +149,7 @@ class NonEnrolledStudentUsersQuery
     private function applyWaitlistedProgrammeConstraint(Builder $program): void
     {
         $program
-            ->whereNull('student_programs.deleted_at')
+            ->whereNull('student_applications.deleted_at')
             ->whereHas(
                 'departmentWorkflowStep.workflowStep',
                 fn (Builder $workflowStep) => $workflowStep->where(
@@ -162,7 +162,7 @@ class NonEnrolledStudentUsersQuery
     private function applyVerifiedProgrammeConstraint(Builder $program): void
     {
         $program
-            ->whereNull('student_programs.deleted_at')
+            ->whereNull('student_applications.deleted_at')
             ->whereHas(
                 'classList',
                 fn (Builder $classList) => $classList->where(

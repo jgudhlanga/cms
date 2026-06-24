@@ -7,7 +7,7 @@ namespace App\Services\Students;
 use App\Models\AcademicCalendars\ClassConfig;
 use App\Models\Institution\Syllabus\CourseSyllabus;
 use App\Models\Students\StudentEnrolment;
-use App\Models\Students\StudentProgram;
+use App\Models\Students\StudentApplication;
 
 class CourseSyllabusCodeResolver
 {
@@ -26,7 +26,7 @@ class CourseSyllabusCodeResolver
         return $this->resolveCodeFromSyllabusIds($syllabusIds);
     }
 
-    public function resolveForProgram(?StudentProgram $program): ?string
+    public function resolveForProgram(?StudentApplication $program): ?string
     {
         if ($program === null) {
             return null;
@@ -55,7 +55,7 @@ class CourseSyllabusCodeResolver
     /**
      * @return list<int>
      */
-    public function resolveSyllabusIdsForProgram(StudentProgram $program): array
+    public function resolveSyllabusIdsForProgram(StudentApplication $program): array
     {
         return CourseSyllabus::query()
             ->whereHas('departmentLevelCourse', function ($query) use ($program): void {

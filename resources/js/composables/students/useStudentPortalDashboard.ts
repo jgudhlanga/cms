@@ -32,7 +32,7 @@ export function useStudentPortalDashboard() {
             loadError.value = false;
 
             const document = await HttpService.get(
-                route('v1.json.student-programs.dashboardStats'),
+                route('v1.json.student-applications.dashboardStats'),
                 jsonApiRequestConfig(),
             );
 

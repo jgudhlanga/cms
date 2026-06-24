@@ -3,6 +3,7 @@
 namespace App\Services\Enrollment;
 
 use App\Helpers\Helper;
+use App\Models\Students\ApplicationFee;
 use App\Models\Students\Student;
 use App\Models\Users\User;
 
@@ -77,12 +78,33 @@ class EnrollmentLookupService
 
     public function nationalIdExists(string $idNumber): bool
     {
-        return $this->findStudentByNationalId($idNumber) instanceof Student;
+        if ($this->findStudentByNationalId($idNumber) instanceof Student) {
+            return true;
+        }
+
+        $normalized = self::normalizeNationalId($idNumber);
+
+        return ApplicationFee::query()
+            ->where(function ($query) use ($normalized) {
+                $query->where('id_number', $normalized)
+                    ->orWhere('id_number', str_replace('-', '', $normalized));
+            })
+            ->whereNull('student_application_id')
+            ->exists();
     }
 
     public function passportExists(string $passportNumber): bool
     {
-        return $this->findStudentByPassport($passportNumber) instanceof Student;
+        if ($this->findStudentByPassport($passportNumber) instanceof Student) {
+            return true;
+        }
+
+        $normalized = self::normalizePassportNumber($passportNumber);
+
+        return ApplicationFee::query()
+            ->where('passport_number', $normalized)
+            ->whereNull('student_application_id')
+            ->exists();
     }
 
     public function findStudentByNationalId(string $idNumber): ?Student
@@ -156,7 +178,7 @@ class EnrollmentLookupService
             'found' => true,
             'maskedName' => Helper::mask($user->full_name),
             'maskedEmail' => $this->maskEmail($user->email),
-            'loginEmail' => $user->email,
+            'loginEmail' => null,
         ];
     }
 

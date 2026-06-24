@@ -40,8 +40,8 @@ class StudentPortalTermDetailsService
         }
 
         $enrolment->loadMissing([
-            'studentProgram.departmentLevel.level',
-            'studentProgram.intakePeriod',
+            'studentApplication.departmentLevel.level',
+            'studentApplication.intakePeriod',
             'academicCalendar',
             'academicYearOption',
         ]);
@@ -78,8 +78,8 @@ class StudentPortalTermDetailsService
                 ->with([
                     'academicCalendar',
                     'academicYearOption',
-                    'studentProgram.departmentLevel.level',
-                    'studentProgram.intakePeriod',
+                    'studentApplication.departmentLevel.level',
+                    'studentApplication.intakePeriod',
                 ])
                 ->find($enrolmentId);
 
@@ -91,8 +91,8 @@ class StudentPortalTermDetailsService
         $student->loadMissing([
             'latestEnrolment.academicCalendar',
             'latestEnrolment.academicYearOption',
-            'latestEnrolment.studentProgram.departmentLevel.level',
-            'latestEnrolment.studentProgram.intakePeriod',
+            'latestEnrolment.studentApplication.departmentLevel.level',
+            'latestEnrolment.studentApplication.intakePeriod',
         ]);
 
         return $student->latestEnrolment;
@@ -100,7 +100,7 @@ class StudentPortalTermDetailsService
 
     private function resolveCalendarType(StudentEnrolment $enrolment): AcademicCalendarTypeEnum
     {
-        $calendarType = $enrolment->studentProgram?->departmentLevel?->level?->calendar_type;
+        $calendarType = $enrolment->studentApplication?->departmentLevel?->level?->calendar_type;
 
         if ($calendarType instanceof AcademicCalendarTypeEnum) {
             return $calendarType;
@@ -154,7 +154,7 @@ class StudentPortalTermDetailsService
 
     private function resolveCalendarYear(StudentEnrolment $enrolment): string
     {
-        $fromIntake = $enrolment->studentProgram?->intakePeriod?->calendar_year;
+        $fromIntake = $enrolment->studentApplication?->intakePeriod?->calendar_year;
 
         if (is_string($fromIntake) && $fromIntake !== '') {
             return $fromIntake;

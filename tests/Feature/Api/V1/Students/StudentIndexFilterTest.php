@@ -8,12 +8,12 @@ use App\Models\Shared\MaritalStatus;
 use App\Models\Shared\Title;
 use App\Models\Students\StudentEnrolment;
 use App\Models\Students\StudentEnrolmentStatus;
-use App\Models\Students\StudentProgram;
+use App\Models\Students\StudentApplication;
 use App\Models\Users\User;
 use Illuminate\Support\Str;
 use Laravel\Sanctum\Sanctum;
 
-function createStudentEnrolmentForProgram(StudentProgram $program): void
+function createStudentEnrolmentForProgram(StudentApplication $program): void
 {
     $suffix = Str::lower(Str::random(6));
 
@@ -37,7 +37,7 @@ function createStudentEnrolmentForProgram(StudentProgram $program): void
 
     StudentEnrolment::query()->create([
         'student_id' => $program->student_id,
-        'student_program_id' => $program->id,
+        'student_application_id' => $program->id,
         'institution_department_id' => $program->institution_department_id,
         'department_level_id' => $program->department_level_id,
         'department_course_id' => $program->department_course_id,
@@ -49,7 +49,7 @@ function createStudentEnrolmentForProgram(StudentProgram $program): void
 }
 
 it('filters students by institution department id array', function (): void {
-    $program = createVerifiedStudentProgram('STU-IDX-'.strtoupper(Str::random(4)));
+    $program = createVerifiedStudentApplication('STU-IDX-'.strtoupper(Str::random(4)));
 
     $user = User::factory()->create(['tenant_id' => $program->tenant_id]);
     Sanctum::actingAs($user);
@@ -69,8 +69,8 @@ it('filters students by institution department id array', function (): void {
 });
 
 it('restricts students to the department user own departments', function (): void {
-    $ownProgram = createVerifiedStudentProgram('STU-OWN-'.strtoupper(Str::random(4)));
-    $otherProgram = createVerifiedStudentProgram('STU-OTH-'.strtoupper(Str::random(4)));
+    $ownProgram = createVerifiedStudentApplication('STU-OWN-'.strtoupper(Str::random(4)));
+    $otherProgram = createVerifiedStudentApplication('STU-OTH-'.strtoupper(Str::random(4)));
 
     createStudentEnrolmentForProgram($ownProgram);
     createStudentEnrolmentForProgram($otherProgram);
@@ -104,8 +104,8 @@ it('restricts students to the department user own departments', function (): voi
 });
 
 it('filters students by gender', function (): void {
-    $maleProgram = createVerifiedStudentProgram('STU-MALE-'.strtoupper(Str::random(4)));
-    $femaleProgram = createVerifiedStudentProgram('STU-FEM-'.strtoupper(Str::random(4)));
+    $maleProgram = createVerifiedStudentApplication('STU-MALE-'.strtoupper(Str::random(4)));
+    $femaleProgram = createVerifiedStudentApplication('STU-FEM-'.strtoupper(Str::random(4)));
 
     $femaleGender = Gender::query()->firstOrCreate(['title' => 'Female']);
     $femaleProgram->student->update(['gender_id' => $femaleGender->id]);
@@ -136,7 +136,7 @@ it('filters students by gender', function (): void {
 });
 
 it('returns no students when department user has no assigned departments', function (): void {
-    $program = createVerifiedStudentProgram('STU-NODEPT-'.strtoupper(Str::random(4)));
+    $program = createVerifiedStudentApplication('STU-NODEPT-'.strtoupper(Str::random(4)));
     createStudentEnrolmentForProgram($program);
 
     $departmentUser = User::factory()->create(['tenant_id' => $program->tenant_id]);

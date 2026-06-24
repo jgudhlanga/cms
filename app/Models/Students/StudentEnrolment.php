@@ -30,7 +30,7 @@ class StudentEnrolment extends Model
 
     protected $fillable = [
         'student_id',
-        'student_program_id',
+        'student_application_id',
         'institution_department_id',
         'department_level_id',
         'department_course_id',
@@ -45,9 +45,9 @@ class StudentEnrolment extends Model
         return $this->belongsTo(Student::class, 'student_id');
     }
 
-    public function studentProgram(): BelongsTo
+    public function studentApplication(): BelongsTo
     {
-        return $this->belongsTo(StudentProgram::class, 'student_program_id');
+        return $this->belongsTo(StudentApplication::class, 'student_application_id');
     }
 
     public function institutionDepartment(): BelongsTo 

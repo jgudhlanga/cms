@@ -46,9 +46,9 @@ class ApplicationMetricsService
                 'departments.name as department_name',
 
                 // use DISTINCT to avoid duplicates if joins cause repeats
-                DB::raw('COUNT(DISTINCT student_programs.id) as application_count'),
+                DB::raw('COUNT(DISTINCT student_applications.id) as application_count'),
 
-                // gender counts (use SUM of DISTINCT student_program id conditions would be complicated;
+                // gender counts (use SUM of DISTINCT student_application id conditions would be complicated;
                 DB::raw("SUM(CASE WHEN genders.title = 'Male' THEN 1 ELSE 0 END) as male_count"),
                 DB::raw("SUM(CASE WHEN genders.title = 'Female' THEN 1 ELSE 0 END) as female_count"),
 
@@ -74,11 +74,11 @@ class ApplicationMetricsService
 
             // JOINS
             ->leftJoin('institution_departments', 'institution_departments.department_id', '=', 'departments.id')
-            ->leftJoin('student_programs', 'student_programs.institution_department_id', '=', 'institution_departments.id')
-            ->leftJoin('students', 'student_programs.student_id', '=', 'students.id')
+            ->leftJoin('student_applications', 'student_applications.institution_department_id', '=', 'institution_departments.id')
+            ->leftJoin('students', 'student_applications.student_id', '=', 'students.id')
             ->leftJoin('genders', 'students.gender_id', '=', 'genders.id')
-            ->leftJoin('mode_of_studies', 'student_programs.mode_of_study_id', '=', 'mode_of_studies.id')
-            ->leftJoin('class_lists', 'class_lists.student_program_id', '=', 'student_programs.id')
+            ->leftJoin('mode_of_studies', 'student_applications.mode_of_study_id', '=', 'mode_of_studies.id')
+            ->leftJoin('class_lists', 'class_lists.student_application_id', '=', 'student_applications.id')
 
             // join the aggregated class sizes subquery (one row per institution_department)
             ->leftJoinSub($classSizesSub, 'class_sizes', function ($join) {
@@ -87,7 +87,7 @@ class ApplicationMetricsService
 
             // FILTERS
             ->where('departments.is_academic', true)
-            ->where('student_programs.intake_period_id', $intakePeriod?->id);
+            ->where('student_applications.intake_period_id', $intakePeriod?->id);
 
         if ($this->isDepartmentUser) {
             $query->whereIn('institution_departments.id', $this->userDepartments);
@@ -111,13 +111,13 @@ class ApplicationMetricsService
             ->select(
                 'levels.id as level_id',
                 'levels.name as level_name',
-                DB::raw('COUNT(student_programs.id) as level_count'),
+                DB::raw('COUNT(student_applications.id) as level_count'),
             )
             ->leftJoin('department_levels', 'department_levels.level_id', '=', 'levels.id')
-            ->leftJoin('student_programs', function ($join) use ($intakePeriod) {
-                $join->on('student_programs.department_level_id', '=', 'department_levels.id')
+            ->leftJoin('student_applications', function ($join) use ($intakePeriod) {
+                $join->on('student_applications.department_level_id', '=', 'department_levels.id')
                     ->when($intakePeriod, function ($q) use ($intakePeriod) {
-                        $q->where('student_programs.intake_period_id', $intakePeriod->id);
+                        $q->where('student_applications.intake_period_id', $intakePeriod->id);
                     });
             });
 
@@ -145,19 +145,19 @@ class ApplicationMetricsService
             return collect();
         }
 
-        $query = DB::table('student_programs')
-            ->selectRaw('DATE(student_programs.created_at) as count_date, COUNT(student_programs.id) as daily_count')
-            ->whereBetween('student_programs.created_at', [
+        $query = DB::table('student_applications')
+            ->selectRaw('DATE(student_applications.created_at) as count_date, COUNT(student_applications.id) as daily_count')
+            ->whereBetween('student_applications.created_at', [
                 $intakePeriod->start_date,
                 Carbon::parse($intakePeriod->end_date)->addDay()->endOfDay()->toDateTimeString(),
             ]);
 
         if ($this->isDepartmentUser) {
-            $query->whereIn('student_programs.institution_department_id', $this->userDepartments);
+            $query->whereIn('student_applications.institution_department_id', $this->userDepartments);
         }
 
         $rawCounts = $query
-            ->groupByRaw('DATE(student_programs.created_at)')
+            ->groupByRaw('DATE(student_applications.created_at)')
             ->orderBy('count_date')
             ->pluck('daily_count', 'count_date');
 
@@ -194,10 +194,10 @@ class ApplicationMetricsService
             return $empty;
         }
 
-        $applications = $this->studentProgramsBaseQuery($intakePeriod->id)->count();
+        $applications = $this->studentApplicationsBaseQuery($intakePeriod->id)->count();
 
-        $offersMade = $this->studentProgramsBaseQuery($intakePeriod->id)
-            ->join('department_application_steps', 'student_programs.department_application_step_id', '=', 'department_application_steps.id')
+        $offersMade = $this->studentApplicationsBaseQuery($intakePeriod->id)
+            ->join('department_application_steps', 'student_applications.department_application_step_id', '=', 'department_application_steps.id')
             ->join('workflow_steps', 'department_application_steps.workflow_step_id', '=', 'workflow_steps.id')
             ->whereIn('workflow_steps.slug', [
                 WorkflowStepEnum::ACCEPTED->slug(),
@@ -205,17 +205,17 @@ class ApplicationMetricsService
             ])
             ->count();
 
-        $waitlisted = $this->studentProgramsBaseQuery($intakePeriod->id)
-            ->join('department_application_steps', 'student_programs.department_application_step_id', '=', 'department_application_steps.id')
+        $waitlisted = $this->studentApplicationsBaseQuery($intakePeriod->id)
+            ->join('department_application_steps', 'student_applications.department_application_step_id', '=', 'department_application_steps.id')
             ->join('workflow_steps', 'department_application_steps.workflow_step_id', '=', 'workflow_steps.id')
             ->where('workflow_steps.slug', WorkflowStepEnum::WAITLISTED->slug())
             ->count();
 
-        $confirmed = $this->studentProgramsBaseQuery($intakePeriod->id)
+        $confirmed = $this->studentApplicationsBaseQuery($intakePeriod->id)
             ->whereExists(function (Builder $query): void {
                 $query->select(DB::raw(1))
                     ->from('class_lists')
-                    ->whereColumn('class_lists.student_program_id', 'student_programs.id')
+                    ->whereColumn('class_lists.student_application_id', 'student_applications.id')
                     ->whereNull('class_lists.deleted_at')
                     ->where('class_lists.attributes->identity_confirmed', true)
                     ->where('class_lists.attributes->disability_confirmed', true)
@@ -223,21 +223,21 @@ class ApplicationMetricsService
             })
             ->count();
 
-        $provisional = $this->studentProgramsBaseQuery($intakePeriod->id)
+        $provisional = $this->studentApplicationsBaseQuery($intakePeriod->id)
             ->whereExists(function (Builder $query): void {
                 $query->select(DB::raw(1))
                     ->from('class_lists')
-                    ->whereColumn('class_lists.student_program_id', 'student_programs.id')
+                    ->whereColumn('class_lists.student_application_id', 'student_applications.id')
                     ->whereNull('class_lists.deleted_at')
                     ->where('class_lists.type', ClassListTypeEnum::PROVISIONAL->value);
             })
             ->count();
 
-        $failedRejected = $this->studentProgramsBaseQuery($intakePeriod->id)
+        $failedRejected = $this->studentApplicationsBaseQuery($intakePeriod->id)
             ->whereExists(function (Builder $query): void {
                 $query->select(DB::raw(1))
                     ->from('class_lists')
-                    ->whereColumn('class_lists.student_program_id', 'student_programs.id')
+                    ->whereColumn('class_lists.student_application_id', 'student_applications.id')
                     ->whereNull('class_lists.deleted_at')
                     ->where('class_lists.type', ClassListTypeEnum::FAILED->value);
             })
@@ -253,14 +253,14 @@ class ApplicationMetricsService
         ];
     }
 
-    private function studentProgramsBaseQuery(int $intakePeriodId): Builder
+    private function studentApplicationsBaseQuery(int $intakePeriodId): Builder
     {
-        $query = DB::table('student_programs')
-            ->where('student_programs.intake_period_id', $intakePeriodId)
-            ->whereNull('student_programs.deleted_at');
+        $query = DB::table('student_applications')
+            ->where('student_applications.intake_period_id', $intakePeriodId)
+            ->whereNull('student_applications.deleted_at');
 
         if ($this->isDepartmentUser) {
-            $query->whereIn('student_programs.institution_department_id', $this->userDepartments);
+            $query->whereIn('student_applications.institution_department_id', $this->userDepartments);
         }
 
         return $query;

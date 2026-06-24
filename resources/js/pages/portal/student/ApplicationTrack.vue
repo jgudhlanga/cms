@@ -10,7 +10,7 @@ import { useStudentApplications } from '@/composables/students/useStudentApplica
 import { Audit } from '@/types/audit';
 import { AuthObject } from '@/types/data-pagination';
 import { DepartmentApplicationStep } from '@/types/department-meta-data';
-import { Student, StudentProgram } from '@/types/students';
+import { Student, StudentApplication } from '@/types/students';
 import { BreadcrumbItemInterface } from '@/types/ui';
 import { TimelineStep } from '@/types/utils';
 import { Head } from '@inertiajs/vue3';
@@ -21,7 +21,7 @@ interface Props {
     auth: AuthObject;
     errors: object;
     student: Student;
-    application: StudentProgram;
+    application: StudentApplication;
     audit: Audit[];
 }
 

@@ -3,7 +3,7 @@
 namespace App\Notifications\Students;
 
 use App\Models\Institution\DepartmentApplicationStep;
-use App\Models\Students\StudentProgram;
+use App\Models\Students\StudentApplication;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
@@ -17,7 +17,7 @@ class ApplicationSubmitted extends Notification
      */
     public function __construct(
         public string                    $name,
-        public StudentProgram            $program,
+        public StudentApplication            $program,
         public DepartmentApplicationStep $newStep,
         public DepartmentApplicationStep $oldStep
     )
