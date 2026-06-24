@@ -25,9 +25,11 @@ return new class extends Migration
             $table->dropForeign(['student_program_id']);
         });
 
-        Schema::table('application_fees', function (Blueprint $table): void {
-            $table->dropForeign(['student_program_id']);
-        });
+        if (Schema::hasTable('application_fees') && Schema::hasColumn('application_fees', 'student_program_id')) {
+            Schema::table('application_fees', function (Blueprint $table): void {
+                $table->dropForeign(['student_program_id']);
+            });
+        }
 
         Schema::table('class_lists', function (Blueprint $table): void {
             $table->renameColumn('student_program_id', 'student_application_id');
@@ -41,9 +43,11 @@ return new class extends Migration
             $table->renameColumn('student_program_id', 'student_application_id');
         });
 
-        Schema::table('application_fees', function (Blueprint $table): void {
-            $table->renameColumn('student_program_id', 'student_application_id');
-        });
+        if (Schema::hasTable('application_fees') && Schema::hasColumn('application_fees', 'student_program_id')) {
+            Schema::table('application_fees', function (Blueprint $table): void {
+                $table->renameColumn('student_program_id', 'student_application_id');
+            });
+        }
 
         Schema::rename('student_programs', 'student_applications');
 
@@ -59,12 +63,14 @@ return new class extends Migration
                 ->on('student_applications');
         });
 
-        Schema::table('application_fees', function (Blueprint $table): void {
-            $table->foreign('student_application_id')
-                ->references('id')
-                ->on('student_applications')
-                ->nullOnDelete();
-        });
+        if (Schema::hasTable('application_fees') && Schema::hasColumn('application_fees', 'student_application_id')) {
+            Schema::table('application_fees', function (Blueprint $table): void {
+                $table->foreign('student_application_id')
+                    ->references('id')
+                    ->on('student_applications')
+                    ->nullOnDelete();
+            });
+        }
 
         $this->updatePolymorphicTypes(self::OLD_MODEL, self::NEW_MODEL);
 
@@ -86,9 +92,11 @@ return new class extends Migration
             $table->dropForeign(['student_application_id']);
         });
 
-        Schema::table('application_fees', function (Blueprint $table): void {
-            $table->dropForeign(['student_application_id']);
-        });
+        if (Schema::hasTable('application_fees') && Schema::hasColumn('application_fees', 'student_application_id')) {
+            Schema::table('application_fees', function (Blueprint $table): void {
+                $table->dropForeign(['student_application_id']);
+            });
+        }
 
         Schema::table('class_lists', function (Blueprint $table): void {
             $table->renameColumn('student_application_id', 'student_program_id');
@@ -102,9 +110,11 @@ return new class extends Migration
             $table->renameColumn('student_application_id', 'student_program_id');
         });
 
-        Schema::table('application_fees', function (Blueprint $table): void {
-            $table->renameColumn('student_application_id', 'student_program_id');
-        });
+        if (Schema::hasTable('application_fees') && Schema::hasColumn('application_fees', 'student_application_id')) {
+            Schema::table('application_fees', function (Blueprint $table): void {
+                $table->renameColumn('student_application_id', 'student_program_id');
+            });
+        }
 
         Schema::rename('student_applications', 'student_programs');
 
@@ -120,12 +130,14 @@ return new class extends Migration
                 ->on('student_programs');
         });
 
-        Schema::table('application_fees', function (Blueprint $table): void {
-            $table->foreign('student_program_id')
-                ->references('id')
-                ->on('student_programs')
-                ->nullOnDelete();
-        });
+        if (Schema::hasTable('application_fees') && Schema::hasColumn('application_fees', 'student_program_id')) {
+            Schema::table('application_fees', function (Blueprint $table): void {
+                $table->foreign('student_program_id')
+                    ->references('id')
+                    ->on('student_programs')
+                    ->nullOnDelete();
+            });
+        }
 
         $this->updatePolymorphicTypes(self::NEW_MODEL, self::OLD_MODEL);
 

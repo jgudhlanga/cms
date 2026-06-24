@@ -13,9 +13,8 @@ return new class extends Migration {
         Schema::table('ledgers', function (Blueprint $table) {
             $table->unsignedBigInteger('proof_of_payment_id')
                 ->nullable()
-                ->after('payment_mode');
-            $table->string('payment_gateway')->nullable()->after('payment_mode');
-
+                ->after('payment_option');
+            $table->string('payment_gateway')->nullable()->after('proof_of_payment_id');
         });
     }
 

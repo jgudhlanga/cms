@@ -12,19 +12,28 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('student_enrolments', function (Blueprint $table) {
-            $table->foreignId('mode_of_study_id')
-                ->nullable()
-                ->after('academic_calendar_id')
-                ->constrained('mode_of_studies');
-            $table->index('mode_of_study_id');
-        });
+        if (! Schema::hasColumn('student_enrolments', 'mode_of_study_id')) {
+            Schema::table('student_enrolments', function (Blueprint $table) {
+                $table->foreignId('mode_of_study_id')
+                    ->nullable()
+                    ->after('academic_calendar_id')
+                    ->constrained('mode_of_studies');
+                $table->index('mode_of_study_id');
+            });
+        }
+
+        $applicationTable = Schema::hasTable('student_applications')
+            ? 'student_applications'
+            : 'student_programs';
+        $applicationColumn = Schema::hasColumn('student_enrolments', 'student_application_id')
+            ? 'student_application_id'
+            : 'student_program_id';
 
         $rows = DB::table('student_enrolments')
-            ->join('student_applications', 'student_enrolments.student_application_id', '=', 'student_applications.id')
+            ->join($applicationTable, "student_enrolments.{$applicationColumn}", '=', "{$applicationTable}.id")
             ->whereNull('student_enrolments.mode_of_study_id')
-            ->whereNotNull('student_applications.mode_of_study_id')
-            ->select('student_enrolments.id', 'student_applications.mode_of_study_id')
+            ->whereNotNull("{$applicationTable}.mode_of_study_id")
+            ->select('student_enrolments.id', "{$applicationTable}.mode_of_study_id")
             ->get();
 
         foreach ($rows as $row) {
