@@ -13,10 +13,18 @@ return new class extends Migration
 
     public function up(): void
     {
-        if (! Schema::hasTable('student_programs')) {
-            return;
+        if (Schema::hasTable('student_programs')) {
+            $this->renameStudentProgramSchema();
         }
 
+        $this->updatePolymorphicTypes(self::OLD_MODEL, self::NEW_MODEL);
+
+        $this->renamePermissions('student-programs', 'student-applications');
+        $this->renamePermission('manageOwnStudentProgramDetails:students', 'manageOwnStudentApplicationDetails:students');
+    }
+
+    private function renameStudentProgramSchema(): void
+    {
         Schema::table('class_lists', function (Blueprint $table): void {
             $table->dropForeign(['student_program_id']);
         });
@@ -71,11 +79,6 @@ return new class extends Migration
                     ->nullOnDelete();
             });
         }
-
-        $this->updatePolymorphicTypes(self::OLD_MODEL, self::NEW_MODEL);
-
-        $this->renamePermissions('student-programs', 'student-applications');
-        $this->renamePermission('manageOwnStudentProgramDetails:students', 'manageOwnStudentApplicationDetails:students');
     }
 
     public function down(): void
@@ -198,6 +201,18 @@ return new class extends Migration
     private function renamePermission(string $from, string $to): void
     {
         if (! Schema::hasTable('permissions')) {
+            return;
+        }
+
+        $legacyPermission = DB::table('permissions')->where('name', $from)->first();
+
+        if ($legacyPermission === null) {
+            return;
+        }
+
+        if (DB::table('permissions')->where('name', $to)->exists()) {
+            DB::table('permissions')->where('name', $from)->delete();
+
             return;
         }
 
