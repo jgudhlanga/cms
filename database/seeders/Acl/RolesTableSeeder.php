@@ -24,14 +24,14 @@ class RolesTableSeeder extends Seeder
                     PermissionHelper::assignSuperUserPermissions($role);
                 }
                 if ($role->name == RoleEnum::STUDENT->name()) {
-                    $role->givePermissionTo(PermissionHelper::portalPermissions());
+                    $role->syncPermissions(PermissionHelper::resolvePermissions(PermissionHelper::portalPermissions()));
                 }
             } else {
                 if ($exist->name == RoleEnum::SUPER_USER->name()) {
                     PermissionHelper::assignSuperUserPermissions($exist);
                 }
                 if ($exist->name == RoleEnum::STUDENT->name()) {
-                    $exist->syncPermissions(PermissionHelper::portalPermissions());
+                    $exist->syncPermissions(PermissionHelper::resolvePermissions(PermissionHelper::portalPermissions()));
                 }
             }
         }

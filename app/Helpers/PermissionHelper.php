@@ -2,8 +2,11 @@
 
 namespace App\Helpers;
 
+use App\Models\Acl\Permission;
 use App\Models\Acl\RoleGroup;
 use App\Support\Acl\PermissionRegistry;
+use Illuminate\Support\Collection;
+use Spatie\Permission\PermissionRegistrar;
 
 class PermissionHelper
 {
@@ -21,10 +24,12 @@ class PermissionHelper
             ['manageOwnData:tenants', 'viewOnlyOwnDepartment:departments']
         ));
 
-        $permissions = collect(PermissionRegistry::allValues())
+        $permissionNames = collect(PermissionRegistry::allValues())
             ->reject(fn ($permission) => $excludedPermissions->contains($permission))
-            ->mapWithKeys(fn ($permission) => [$permission => $permission]);
-        $role->syncPermissions(array_values($permissions->toArray()));
+            ->values()
+            ->all();
+
+        $role->syncPermissions(self::resolvePermissions($permissionNames));
     }
 
     public static function portalPermissions(): array
@@ -44,5 +49,43 @@ class PermissionHelper
             'delete:next-of-kins',
             'forceDelete:next-of-kins',
         ];
+    }
+
+    /**
+     * @param  array<int, string>  $permissionNames
+     */
+    public static function resolvePermissions(array $permissionNames): Collection
+    {
+        foreach ($permissionNames as $permissionName) {
+            self::ensurePermissionExists($permissionName);
+        }
+
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
+
+        return Permission::query()
+            ->whereIn('name', $permissionNames)
+            ->where('guard_name', 'web')
+            ->get();
+    }
+
+    public static function ensurePermissionExists(string $permissionName, string $guardName = 'web'): Permission
+    {
+        $permission = Permission::withTrashed()
+            ->where('name', $permissionName)
+            ->where('guard_name', $guardName)
+            ->first();
+
+        if ($permission instanceof Permission) {
+            if ($permission->trashed()) {
+                $permission->restore();
+            }
+
+            return $permission;
+        }
+
+        return Permission::query()->create([
+            'name' => $permissionName,
+            'guard_name' => $guardName,
+        ]);
     }
 }

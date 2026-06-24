@@ -2,10 +2,12 @@
 
 namespace Database\Seeders\Acl;
 
+use App\Helpers\PermissionHelper;
 use App\Models\Acl\Module;
 use App\Models\Acl\Permission;
 use App\Support\Acl\PermissionRegistry;
 use Illuminate\Database\Seeder;
+use Spatie\Permission\PermissionRegistrar;
 
 class PermissionsTableSeeder extends Seeder
 {
@@ -36,23 +38,19 @@ class PermissionsTableSeeder extends Seeder
             $module = Module::where('title', PermissionRegistry::moduleTitleForGroupKey($moduleKey))->withTrashed()->first();
 
             foreach ($permissionRows as $permission) {
-                $exist = Permission::where('name', $permission)->withTrashed()->first();
+                PermissionHelper::ensurePermissionExists($permission);
+                $permissionModel = Permission::query()
+                    ->where('name', $permission)
+                    ->where('guard_name', 'web')
+                    ->first();
 
-                if ($exist instanceof Permission) {
-                    if ($exist->trashed()) {
-                        $exist->restore();
-                    }
-
-                    if ($module !== null && $exist->module_id !== $module->id) {
-                        $exist->update(['module_id' => $module->id]);
-                    }
-
-                    continue;
+                if ($permissionModel !== null && $module !== null && $permissionModel->module_id !== $module->id) {
+                    $permissionModel->update(['module_id' => $module->id]);
                 }
-
-                Permission::create(['name' => $permission, 'module_id' => $module?->id]);
             }
         }
+
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
     }
 
     private function migrateLegacyPermissionNames(): void
