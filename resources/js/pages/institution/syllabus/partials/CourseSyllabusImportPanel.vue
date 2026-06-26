@@ -223,6 +223,7 @@ const handleConfirm = (): void => {
                                 {{ $t('syllabus.level') }} / {{ $t('syllabus.title') }} / {{ $t('syllabus.code') }}
                             </th>
                             <th class="px-2 py-2">{{ $tChoice('syllabus.semester', 1) }}</th>
+                            <th class="px-2 py-2">{{ $t('syllabus.all_semesters') }}</th>
                             <th class="px-2 py-2">{{ $t('syllabus.title') }} / {{ $t('syllabus.code') }}</th>
                             <th class="px-2 py-2">{{ $t('syllabus.import_preview_syllabus') }}</th>
                             <th class="px-2 py-2">{{ $t('syllabus.import_preview_module') }}</th>

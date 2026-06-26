@@ -29,6 +29,7 @@ class CourseSyllabusImportProcessRequest extends FormRequest
             'row_corrections.*.semester' => ['sometimes', 'string', 'max:255'],
             'row_corrections.*.moduleTitle' => ['sometimes', 'string', 'max:255'],
             'row_corrections.*.moduleCode' => ['sometimes', 'string', 'max:255'],
+            'row_corrections.*.allSemesters' => ['sometimes', 'boolean'],
             'excluded_row_numbers' => ['sometimes', 'array'],
             'excluded_row_numbers.*' => ['integer', 'min:1'],
         ];

@@ -34,6 +34,7 @@ export const useCourseSyllabusModules = () => {
             nql_level: z.number().int().positive().nullable(),
             prerequisite_module_ids: z.array(z.number().int().positive()).default([]),
             shared: z.boolean(),
+            all_semesters: z.boolean(),
         });
 
     const listCourseSyllabusModules = async (
@@ -112,6 +113,13 @@ export const useCourseSyllabusModules = () => {
                 meta: { align: 'center' },
                 cell: ({ row }: { row: { original: CourseSyllabusModule } }) =>
                     row.original.attributes.shared ? trans('trans.yes') : trans('trans.no'),
+            },
+            {
+                header: trans('syllabus.all_semesters'),
+                accessorKey: 'attributes.allSemesters',
+                meta: { align: 'center' },
+                cell: ({ row }: { row: { original: CourseSyllabusModule } }) =>
+                    row.original.attributes.allSemesters ? trans('trans.yes') : trans('trans.no'),
             },
             {
                 header: trans_choice('trans.action', 2),

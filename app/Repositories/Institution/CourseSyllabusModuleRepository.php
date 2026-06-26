@@ -57,6 +57,7 @@ class CourseSyllabusModuleRepository extends BaseRepository implements ICourseSy
             'nql_level' => $dto->nql_level,
             'prerequisite_module_ids' => $dto->prerequisite_module_ids,
             'shared' => $dto->shared,
+            'all_semesters' => $dto->all_semesters,
         ];
     }
 }

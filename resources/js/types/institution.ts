@@ -237,6 +237,7 @@ export type CourseSyllabusModule = {
         nqlLevel?: number | null;
         prerequisiteModuleIds: number[];
         shared: boolean;
+        allSemesters: boolean;
         createdAt?: string;
         updatedAt?: string;
         deletedAt?: string;
@@ -252,6 +253,7 @@ export type CourseSyllabusModuleParams = {
     nql_level: number | null;
     prerequisite_module_ids: number[];
     shared: boolean;
+    all_semesters: boolean;
 };
 export type DocumentTemplate = {
     type: string;

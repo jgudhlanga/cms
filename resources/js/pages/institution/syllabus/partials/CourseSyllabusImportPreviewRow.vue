@@ -5,8 +5,10 @@ import {
     effectiveModuleAction,
     effectiveSyllabusAction,
     getEffectiveCorrection,
+    resolvedAllSemesters,
     resolvedField,
 } from '@/composables/institution/syllabus-import/syllabusImportRowHelpers';
+import Switch from '@/components/ui/switch/Switch.vue';
 import type {
     SyllabusImportPreviewAction,
     SyllabusImportPreviewLookups,
@@ -46,6 +48,17 @@ const moduleErrors = computed(() =>
     activeModuleErrors(props.row, rowCorrections.value, props.lookups),
 );
 
+const allSemesters = computed(() => resolvedAllSemesters(props.row, rowCorrections.value));
+
+const hasModule = computed(() => {
+    const moduleCode = resolvedField(props.row, rowCorrections.value, 'moduleCode');
+    const moduleTitle = resolvedField(props.row, rowCorrections.value, 'moduleTitle');
+
+    return moduleCode !== '' || moduleTitle !== '';
+});
+
+const showAllSemestersSwitch = computed(() => !props.row.moduleGroupedSkip);
+
 const fieldInputClass = (field: keyof SyllabusImportRowCorrection, hasError: boolean): string => {
     const corrected = props.correction[field] !== undefined;
     const resolved = resolvedField(props.row, rowCorrections.value, field);
@@ -70,6 +83,10 @@ const updateCorrection = (patch: SyllabusImportRowCorrection): void => {
 
 const onFieldInput = (field: keyof SyllabusImportRowCorrection, event: Event): void => {
     updateCorrection({ [field]: (event.target as HTMLInputElement).value });
+};
+
+const onAllSemestersChange = (value: boolean): void => {
+    updateCorrection({ allSemesters: value });
 };
 </script>
 
@@ -120,6 +137,15 @@ const onFieldInput = (field: keyof SyllabusImportRowCorrection, event: Event): v
             />
         </td>
         <td class="px-2 py-2">
+            <Switch
+                v-if="showAllSemestersSwitch"
+                :id="`all-semesters-${row.rowNumber}`"
+                :model-value="allSemesters"
+                :disabled="!hasModule"
+                @update:model-value="onAllSemestersChange"
+            />
+        </td>
+        <td class="px-2 py-2">
             <input
                 :value="resolvedField(row, rowCorrections, 'moduleTitle')"
                 class="mb-1 w-full min-w-32 rounded-md border px-2 py-1 text-sm"
@@ -133,7 +159,13 @@ const onFieldInput = (field: keyof SyllabusImportRowCorrection, event: Event): v
                 @input="onFieldInput('moduleCode', $event)"
             />
             <p
-                v-if="row.moduleCodeRepeatedInFile"
+                v-if="row.moduleSpansAllPeriods"
+                class="mt-1 text-xs text-blue-700 dark:text-blue-400"
+            >
+                {{ $t('syllabus.import_preview_module_spans_all_periods') }}
+            </p>
+            <p
+                v-else-if="row.moduleCodeRepeatedInFile"
                 class="mt-1 text-xs text-amber-700 dark:text-amber-400"
             >
                 {{

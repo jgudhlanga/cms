@@ -30,6 +30,19 @@ export const resolvedField = (
     return row[field].trim();
 };
 
+export const resolvedAllSemesters = (
+    row: SyllabusImportPreviewRow,
+    rowCorrections: Record<number, SyllabusImportRowCorrection>,
+): boolean => {
+    const correction = getEffectiveCorrection(rowCorrections, row).allSemesters;
+
+    if (correction !== undefined) {
+        return correction;
+    }
+
+    return row.allSemesters;
+};
+
 const matchesLookup = (value: string, options: string[]): boolean => {
     const normalized = value.trim().toLowerCase();
 
@@ -65,6 +78,7 @@ const moduleFieldsChanged = (
         correction.semester !== undefined
         || correction.moduleTitle !== undefined
         || correction.moduleCode !== undefined
+        || correction.allSemesters !== undefined
     );
 };
 
@@ -212,6 +226,10 @@ export const effectiveModuleAction = (
         return 'skip';
     }
 
+    if (row.moduleGroupedSkip && !moduleFieldsChanged(row, rowCorrections)) {
+        return 'skip';
+    }
+
     if (!moduleRowIsValid(row, rowCorrections, lookups)) {
         return 'fail';
     }
@@ -305,6 +323,21 @@ export const buildRowCorrectionsPayload = (
 
         if (Object.keys(correction).length > 0) {
             payload[row.rowNumber] = correction;
+        }
+    }
+
+    for (const row of preview.rows) {
+        if (isRowExcluded(row.rowNumber, excludedRowNumbers)) {
+            continue;
+        }
+
+        const resolved = resolvedAllSemesters(row, rowCorrections);
+
+        if (resolved !== row.allSemesters) {
+            payload[row.rowNumber] = {
+                ...(payload[row.rowNumber] ?? {}),
+                allSemesters: resolved,
+            };
         }
     }
 

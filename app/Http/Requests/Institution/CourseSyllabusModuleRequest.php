@@ -42,6 +42,7 @@ class CourseSyllabusModuleRequest extends FormRequest
             'prerequisite_module_ids' => ['nullable', 'array'],
             'prerequisite_module_ids.*' => ['integer', 'distinct', 'exists:course_syllabus_modules,id'],
             'shared' => ['nullable', 'boolean'],
+            'all_semesters' => ['nullable', 'boolean'],
         ];
     }
 }
