@@ -7,11 +7,10 @@ namespace App\Services\Institution;
 use App\Importers\Institution\CourseSyllabusImporter;
 use App\Importers\Institution\CourseSyllabusModuleImporter;
 use App\Models\Institution\InstitutionDepartment;
-use App\Models\Institution\Syllabus\CourseSyllabus;
 use App\Models\Institution\Syllabus\CourseSyllabusImportLog;
-use App\Models\Institution\Syllabus\CourseSyllabusModule;
 use App\Models\Users\User;
 use App\Rules\Institution\AcceptedCourseSyllabusImportFile;
+use App\Support\Institution\SyllabusImportCode;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -392,10 +391,10 @@ class CourseSyllabusImportService
                 'moduleCode' => $moduleCode,
                 'moduleCodeOccurrencesInFile' => $moduleCodeOccurrences[$moduleCode] ?? 0,
                 'moduleCodeRepeatedInFile' => $moduleCode !== '' && ($moduleCodeOccurrences[$moduleCode] ?? 0) > 1,
-                'syllabusExists' => CourseSyllabus::query()
-                    ->where('tenant_id', $tenantId)
-                    ->where('code', trim((string) ($rowData['COURSE_CODE'] ?? '')))
-                    ->exists(),
+                'syllabusExists' => SyllabusImportCode::courseSyllabusExists(
+                    $tenantId,
+                    trim((string) ($rowData['COURSE_CODE'] ?? '')),
+                ),
                 'moduleExists' => $this->moduleExistsForImportRow($tenantId, $rowData),
                 'syllabusAction' => $syllabusAnalysis['action'],
                 'moduleAction' => $moduleAnalysis['action'],
@@ -432,10 +431,7 @@ class CourseSyllabusImportService
             ];
         }
 
-        $exists = CourseSyllabus::query()
-            ->where('tenant_id', $tenantId)
-            ->where('code', $courseCode)
-            ->exists();
+        $exists = SyllabusImportCode::courseSyllabusExists($tenantId, $courseCode);
 
         $analysis = $this->dryRunRow($rowProcessor, $importer->getConfig(), $parsedRow, $dryRun);
 
@@ -478,17 +474,10 @@ class CourseSyllabusImportService
             ];
         }
 
-        $courseSyllabusId = CourseSyllabus::query()
-            ->where('tenant_id', $tenantId)
-            ->where('code', $courseCode)
-            ->value('id');
+        $courseSyllabusId = SyllabusImportCode::findCourseSyllabusId($tenantId, $courseCode);
 
         $moduleExists = $courseSyllabusId !== null
-            && CourseSyllabusModule::query()
-                ->where('tenant_id', $tenantId)
-                ->where('course_syllabus_id', $courseSyllabusId)
-                ->where('code', $moduleCode)
-                ->exists();
+            && SyllabusImportCode::moduleExists($tenantId, $courseSyllabusId, $moduleCode);
 
         if ($courseSyllabusId === null) {
             try {
@@ -536,7 +525,11 @@ class CourseSyllabusImportService
 
             if (($results['failed'] ?? 0) > 0) {
                 $error = $ingestRun->rows()->where('status', 'failed')->value('errors');
-                $message = is_string($error) ? json_decode($error, true)['message'] ?? $error : __('syllabus.import_row_failed');
+                $message = match (true) {
+                    is_array($error) => $error['message'] ?? __('syllabus.import_row_failed'),
+                    is_string($error) => json_decode($error, true)['message'] ?? $error,
+                    default => __('syllabus.import_row_failed'),
+                };
 
                 return [
                     'action' => 'fail',
@@ -801,20 +794,13 @@ class CourseSyllabusImportService
             return false;
         }
 
-        $courseSyllabusId = CourseSyllabus::query()
-            ->where('tenant_id', $tenantId)
-            ->where('code', $courseCode)
-            ->value('id');
+        $courseSyllabusId = SyllabusImportCode::findCourseSyllabusId($tenantId, $courseCode);
 
         if ($courseSyllabusId === null) {
             return false;
         }
 
-        return CourseSyllabusModule::query()
-            ->where('tenant_id', $tenantId)
-            ->where('course_syllabus_id', $courseSyllabusId)
-            ->where('code', $moduleCode)
-            ->exists();
+        return SyllabusImportCode::moduleExists($tenantId, $courseSyllabusId, $moduleCode);
     }
 
     /**

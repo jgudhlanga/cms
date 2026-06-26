@@ -509,3 +509,68 @@ it('preview includes file stats when module codes are reused across courses', fu
         ->assertJsonPath('rows.0.moduleCodeRepeatedInFile', true)
         ->assertJsonPath('rows.1.moduleCodeRepeatedInFile', true);
 });
+
+it('previews dot-delimited course codes without failing', function () {
+    $context = makeSyllabusWebImportContext();
+    $file = storeSyllabusImportFile([
+        syllabusImportWebRowValues([
+            'COURSE_CODE' => '553.23.CO.MO',
+            'MODULE_CODE' => '553.23.M01',
+        ]),
+    ], $context['institutionDepartmentId']);
+
+    $this->actingAs($context['user'])
+        ->post(route('department-course-syllabuses.import.preview', [
+            'institution_department' => $context['institutionDepartmentId'],
+        ]), [
+            'file' => $file,
+        ])
+        ->assertSuccessful()
+        ->assertJsonPath('summary.failed', 0)
+        ->assertJsonPath('summary.syllabusCreates', 1)
+        ->assertJsonPath('summary.moduleCreates', 1);
+});
+
+it('previews existing syllabus and module when only delimiter style differs', function () {
+    $context = makeSyllabusWebImportContext();
+
+    $existingSyllabus = CourseSyllabus::query()->create([
+        'tenant_id' => 1,
+        'institution_department_id' => $context['institutionDepartmentId'],
+        'department_level_course_id' => $context['departmentLevelCourseId'],
+        'title' => 'Existing Syllabus',
+        'code' => '553/23/CO/MO',
+        'implementation_year' => '2023',
+        'status' => 'active',
+    ]);
+
+    CourseSyllabusModule::query()->create([
+        'tenant_id' => 1,
+        'course_syllabus_id' => $existingSyllabus->id,
+        'title' => 'Existing Module',
+        'code' => '553/23/M01',
+        'shared' => false,
+    ]);
+
+    $file = storeSyllabusImportFile([
+        syllabusImportWebRowValues([
+            'COURSE_CODE' => '553.23.CO.MO',
+            'MODULE_CODE' => '553.23.M01',
+            'MODULE_TITLE' => 'Updated Module Title',
+            'SEMESTER' => 'Semester 1',
+        ]),
+    ], $context['institutionDepartmentId']);
+
+    $this->actingAs($context['user'])
+        ->post(route('department-course-syllabuses.import.preview', [
+            'institution_department' => $context['institutionDepartmentId'],
+        ]), [
+            'file' => $file,
+        ])
+        ->assertSuccessful()
+        ->assertJsonPath('rows.0.syllabusExists', true)
+        ->assertJsonPath('rows.0.moduleExists', true)
+        ->assertJsonPath('summary.syllabusUpdates', 1)
+        ->assertJsonPath('summary.moduleUpdates', 1)
+        ->assertJsonPath('summary.failed', 0);
+});
