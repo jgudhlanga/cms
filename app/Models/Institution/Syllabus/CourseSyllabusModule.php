@@ -35,6 +35,7 @@ class CourseSyllabusModule extends Model
         'nql_level',
         'prerequisite_module_ids',
         'shared',
+        'all_semesters',
     ];
 
     protected function casts(): array
@@ -42,6 +43,7 @@ class CourseSyllabusModule extends Model
         return [
             'prerequisite_module_ids' => 'array',
             'shared' => 'boolean',
+            'all_semesters' => 'boolean',
         ];
     }
 

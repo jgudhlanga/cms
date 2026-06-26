@@ -63,6 +63,17 @@ class MoveCourseSyllabusModulesRequest extends FormRequest
                 return;
             }
 
+            $allSemestersModules = CourseSyllabusModule::query()
+                ->whereIn('id', $moduleIds)
+                ->where('all_semesters', true)
+                ->exists();
+
+            if ($allSemestersModules) {
+                $validator->errors()->add('course_syllabus_module_ids', __('syllabus.move_modules_all_semesters_not_allowed'));
+
+                return;
+            }
+
             $allAlreadyOnTarget = CourseSyllabusModule::query()
                 ->whereIn('id', $moduleIds)
                 ->where('academic_year_option_id', $targetOptionId)

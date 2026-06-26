@@ -8,6 +8,7 @@ use App\Models\AcademicCalendars\CourseWorkMark;
 use App\Models\Institution\AssessmentType;
 use App\Models\Institution\Syllabus\CourseSyllabus;
 use App\Models\Institution\Syllabus\CourseSyllabusModule;
+use App\Support\Institution\CourseSyllabusModulePeriod;
 use Illuminate\Support\Collection;
 
 class CourseWorkTreeService
@@ -133,9 +134,19 @@ class CourseWorkTreeService
             ->orderBy('code')
             ->get();
 
+        $slugPrefix = $syllabusIds !== []
+            ? CourseSyllabusModulePeriod::slugPrefixForSyllabus($syllabusIds[0])
+            : 'semester';
+
         $modulesBySyllabusId = CourseSyllabusModule::query()
             ->whereIn('course_syllabus_id', $syllabusIds)
-            ->where('academic_year_option_id', $classConfig->academic_year_option_id)
+            ->where(function ($query) use ($classConfig, $slugPrefix): void {
+                CourseSyllabusModulePeriod::scopeForPeriod(
+                    $query,
+                    (int) $classConfig->academic_year_option_id,
+                    $slugPrefix,
+                );
+            })
             ->orderBy('code')
             ->get()
             ->groupBy('course_syllabus_id');

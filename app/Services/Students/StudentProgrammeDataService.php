@@ -7,6 +7,7 @@ namespace App\Services\Students;
 use App\Models\AcademicCalendars\CourseWorkMark;
 use App\Models\Institution\AssessmentType;
 use App\Models\Institution\Syllabus\CourseSyllabusModule;
+use App\Support\Institution\CourseSyllabusModulePeriod;
 use App\Models\Students\Student;
 use App\Models\Students\StudentEnrolment;
 use App\Services\AcademicCalendars\CourseWorkAggregationService;
@@ -129,7 +130,10 @@ class StudentProgrammeDataService
 
         $modules = collect($syllabusIds)
             ->flatMap(fn (int $syllabusId) => $modulesBySyllabusId->get($syllabusId, collect()))
-            ->filter(fn (CourseSyllabusModule $module): bool => (int) $module->academic_year_option_id === $enrolmentOptionId)
+            ->filter(fn (CourseSyllabusModule $module): bool => CourseSyllabusModulePeriod::matchesPeriod(
+                $module,
+                $enrolmentOptionId,
+            ))
             ->map(fn (CourseSyllabusModule $module): array => $this->mapProgrammeModule(
                 $module,
                 $studentEnrolmentId,

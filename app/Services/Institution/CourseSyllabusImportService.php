@@ -225,6 +225,21 @@ class CourseSyllabusImportService
                 $excludedRowNumbers,
                 $originalFilename,
             );
+            $moduleGrouping = app(CourseSyllabusImportModuleGrouper::class)->group(
+                $parsedRows,
+                $tenantId,
+                $institutionDepartmentId,
+            );
+            $parsedRowsWithGrouping = array_map(
+                fn (array $parsedRow): array => $this->applyModuleGroupingToParsedRow(
+                    $parsedRow,
+                    $moduleGrouping[(int) $parsedRow['number']] ?? [
+                        'allSemesters' => false,
+                        'moduleImportRole' => 'primary',
+                    ],
+                ),
+                $parsedRows,
+            );
             $syllabusImporter = new CourseSyllabusImporter($tenantId, $institutionDepartmentId, fromFilesystem: false);
             $moduleImporter = new CourseSyllabusModuleImporter($tenantId, $institutionDepartmentId, fromFilesystem: false);
 
@@ -239,7 +254,7 @@ class CourseSyllabusImportService
                 false,
             );
 
-            $moduleChunk = $this->buildChunk($parsedRows);
+            $moduleChunk = $this->buildModuleChunk($parsedRowsWithGrouping);
             $moduleResults = $rowProcessor->processChunk(
                 $ingestRun,
                 $moduleImporter->getConfig(),
@@ -348,10 +363,24 @@ class CourseSyllabusImportService
         $rows = [];
         $fileStats = CourseSyllabusImportFileStats::fromParsedRows($parsedRows);
         $moduleCodeOccurrences = CourseSyllabusImportFileStats::moduleCodeOccurrences($parsedRows);
+        $moduleGrouping = app(CourseSyllabusImportModuleGrouper::class)->group(
+            $parsedRows,
+            $tenantId,
+            $institutionDepartmentId,
+        );
 
         foreach ($parsedRows as $parsedRow) {
             $rowData = $parsedRow['data'];
             $moduleCode = trim((string) ($rowData['MODULE_CODE'] ?? ''));
+            $rowNumber = (int) $parsedRow['number'];
+            $groupMeta = $moduleGrouping[$rowNumber] ?? [
+                'allSemesters' => false,
+                'moduleImportRole' => 'primary',
+                'groupKey' => null,
+                'moduleSpansAllPeriods' => false,
+                'moduleDuplicateSamePeriod' => false,
+            ];
+            $groupedParsedRow = $this->applyModuleGroupingToParsedRow($parsedRow, $groupMeta);
             $syllabusAnalysis = $this->analyseSyllabusRow(
                 $rowProcessor,
                 $syllabusImporter,
@@ -362,10 +391,11 @@ class CourseSyllabusImportService
             $moduleAnalysis = $this->analyseModuleRow(
                 $rowProcessor,
                 $moduleImporter,
-                $parsedRow,
+                $groupedParsedRow,
                 $tenantId,
                 $institutionDepartmentId,
                 $dryRun,
+                $groupMeta,
             );
 
             $summary['syllabusCreates'] += $syllabusAnalysis['action'] === 'create' ? 1 : 0;
@@ -390,7 +420,15 @@ class CourseSyllabusImportService
                 'moduleTitle' => trim((string) ($rowData['MODULE_TITLE'] ?? '')),
                 'moduleCode' => $moduleCode,
                 'moduleCodeOccurrencesInFile' => $moduleCodeOccurrences[$moduleCode] ?? 0,
-                'moduleCodeRepeatedInFile' => $moduleCode !== '' && ($moduleCodeOccurrences[$moduleCode] ?? 0) > 1,
+                'moduleCodeRepeatedInFile' => $groupMeta['moduleDuplicateSamePeriod']
+                    || (
+                        $moduleCode !== ''
+                        && ($moduleCodeOccurrences[$moduleCode] ?? 0) > 1
+                        && ! $groupMeta['moduleSpansAllPeriods']
+                    ),
+                'moduleSpansAllPeriods' => $groupMeta['moduleSpansAllPeriods'],
+                'allSemesters' => (bool) ($groupedParsedRow['data']['__ALL_SEMESTERS'] ?? false),
+                'moduleGroupedSkip' => $groupMeta['moduleImportRole'] === 'skip',
                 'syllabusExists' => SyllabusImportCode::courseSyllabusExists(
                     $tenantId,
                     trim((string) ($rowData['COURSE_CODE'] ?? '')),
@@ -456,7 +494,12 @@ class CourseSyllabusImportService
         int $tenantId,
         int $institutionDepartmentId,
         bool $dryRun,
+        array $groupMeta = [],
     ): array {
+        if (($groupMeta['moduleImportRole'] ?? 'primary') === 'skip') {
+            return ['action' => 'skip', 'errors' => []];
+        }
+
         $rowData = $parsedRow['data'];
         $moduleCode = trim((string) ($rowData['MODULE_CODE'] ?? ''));
         $moduleTitle = trim((string) ($rowData['MODULE_TITLE'] ?? ''));
@@ -558,6 +601,32 @@ class CourseSyllabusImportService
     }
 
     /**
+     * @param  list<array{number: int, data: array<string, mixed>}>  $parsedRows
+     * @return list<array{number: int, data: array<string, mixed>}>
+     */
+    private function buildModuleChunk(array $parsedRows): array
+    {
+        return array_values(array_filter(
+            $parsedRows,
+            static fn (array $parsedRow): bool => ($parsedRow['data']['__MODULE_IMPORT_ROLE'] ?? 'primary') !== 'skip',
+        ));
+    }
+
+    /**
+     * @param  array{number: int, data: array<string, mixed>}  $parsedRow
+     * @param  array{allSemesters?: bool, moduleImportRole?: string}  $groupMeta
+     * @return array{number: int, data: array<string, mixed>}
+     */
+    private function applyModuleGroupingToParsedRow(array $parsedRow, array $groupMeta): array
+    {
+        $manual = (bool) ($parsedRow['data']['__ALL_SEMESTERS'] ?? false);
+        $parsedRow['data']['__ALL_SEMESTERS'] = $manual || (bool) ($groupMeta['allSemesters'] ?? false);
+        $parsedRow['data']['__MODULE_IMPORT_ROLE'] = (string) ($groupMeta['moduleImportRole'] ?? 'primary');
+
+        return $parsedRow;
+    }
+
+    /**
      * @param  array<int|string, array<string, mixed>>|null  $rowCorrections
      * @param  list<int>|null  $excludedRowNumbers
      * @return list<array{number: int, data: array<string, mixed>}>
@@ -637,6 +706,13 @@ class CourseSyllabusImportService
             }
 
             $parsedRow['data'][$columnKey] = trim((string) $corrections[$correctionKey]);
+        }
+
+        if (array_key_exists('allSemesters', $corrections)) {
+            $parsedRow['data']['__ALL_SEMESTERS'] = filter_var(
+                $corrections['allSemesters'],
+                FILTER_VALIDATE_BOOLEAN,
+            );
         }
 
         return $parsedRow;

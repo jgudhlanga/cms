@@ -574,3 +574,147 @@ it('previews existing syllabus and module when only delimiter style differs', fu
         ->assertJsonPath('summary.moduleUpdates', 1)
         ->assertJsonPath('summary.failed', 0);
 });
+
+it('previews all_semesters module when same code spans semester 1 and semester 2', function () {
+    $context = makeSyllabusWebImportContext();
+    $courseCode = '317/25/CO/M0-'.substr(uniqid(), -4);
+    $moduleCode = '317/25/M10-'.substr(uniqid(), -4);
+
+    $file = storeSyllabusImportFile([
+        syllabusImportWebRowValues([
+            'COURSE_CODE' => $courseCode,
+            'SEMESTER' => 'Semester 1',
+            'MODULE_TITLE' => 'Skills Proficiency',
+            'MODULE_CODE' => $moduleCode,
+        ]),
+        syllabusImportWebRowValues([
+            'COURSE_CODE' => $courseCode,
+            'SEMESTER' => 'Semester 2',
+            'MODULE_TITLE' => 'Skills Proficiency',
+            'MODULE_CODE' => $moduleCode,
+        ]),
+    ], $context['institutionDepartmentId']);
+
+    $this->actingAs($context['user'])
+        ->post(route('department-course-syllabuses.import.preview', [
+            'institution_department' => $context['institutionDepartmentId'],
+        ]), [
+            'file' => $file,
+        ])
+        ->assertSuccessful()
+        ->assertJsonPath('rows.0.allSemesters', true)
+        ->assertJsonPath('rows.0.moduleSpansAllPeriods', true)
+        ->assertJsonPath('rows.0.moduleGroupedSkip', false)
+        ->assertJsonPath('rows.1.allSemesters', true)
+        ->assertJsonPath('rows.1.moduleGroupedSkip', true)
+        ->assertJsonPath('rows.1.moduleAction', 'skip')
+        ->assertJsonPath('summary.moduleSkips', 1)
+        ->assertJsonPath('summary.failed', 0);
+});
+
+it('imports all_semesters module once when code spans two semesters', function () {
+    $context = makeSyllabusWebImportContext();
+    $courseCode = '317/25/CO/M0-'.substr(uniqid(), -4);
+    $moduleCode = '317/25/M10-'.substr(uniqid(), -4);
+
+    $file = storeSyllabusImportFile([
+        syllabusImportWebRowValues([
+            'COURSE_CODE' => $courseCode,
+            'SEMESTER' => 'Semester 1',
+            'MODULE_TITLE' => 'Skills Proficiency',
+            'MODULE_CODE' => $moduleCode,
+        ]),
+        syllabusImportWebRowValues([
+            'COURSE_CODE' => $courseCode,
+            'SEMESTER' => 'Semester 2',
+            'MODULE_TITLE' => 'Skills Proficiency',
+            'MODULE_CODE' => $moduleCode,
+        ]),
+    ], $context['institutionDepartmentId']);
+
+    syllabusImportPreviewAndProcess($file, $context['institutionDepartmentId'], $context['user']);
+
+    expect(CourseSyllabusModule::query()->where('code', $moduleCode)->count())->toBe(1);
+
+    $module = CourseSyllabusModule::query()->where('code', $moduleCode)->first();
+
+    expect($module)->not->toBeNull()
+        ->and((bool) $module?->all_semesters)->toBeTrue();
+});
+
+it('does not set all_semesters when same module code repeats on the same period', function () {
+    $context = makeSyllabusWebImportContext();
+    $courseCode = '317/25/CO/M0-'.substr(uniqid(), -4);
+    $moduleCode = '317/25/M10-'.substr(uniqid(), -4);
+
+    $file = storeSyllabusImportFile([
+        syllabusImportWebRowValues([
+            'COURSE_CODE' => $courseCode,
+            'SEMESTER' => 'Semester 1',
+            'MODULE_TITLE' => 'Skills Proficiency',
+            'MODULE_CODE' => $moduleCode,
+        ]),
+        syllabusImportWebRowValues([
+            'COURSE_CODE' => $courseCode,
+            'SEMESTER' => 'Semester 1',
+            'MODULE_TITLE' => 'Skills Proficiency Copy',
+            'MODULE_CODE' => $moduleCode,
+        ]),
+    ], $context['institutionDepartmentId']);
+
+    $this->actingAs($context['user'])
+        ->post(route('department-course-syllabuses.import.preview', [
+            'institution_department' => $context['institutionDepartmentId'],
+        ]), [
+            'file' => $file,
+        ])
+        ->assertSuccessful()
+        ->assertJsonPath('rows.0.allSemesters', false)
+        ->assertJsonPath('rows.0.moduleSpansAllPeriods', false)
+        ->assertJsonPath('rows.0.moduleCodeRepeatedInFile', true)
+        ->assertJsonPath('rows.1.moduleCodeRepeatedInFile', true);
+});
+
+it('imports module with manual allSemesters correction on a single semester row', function () {
+    $context = makeSyllabusWebImportContext();
+    $courseCode = '317/25/CO/M0-'.substr(uniqid(), -4);
+    $moduleCode = '317/25/M01-'.substr(uniqid(), -4);
+
+    $row = syllabusImportWebRowValues([
+        'COURSE_CODE' => $courseCode,
+        'SEMESTER' => 'Semester 1',
+        'MODULE_TITLE' => 'Computer Systems Maintenance',
+        'MODULE_CODE' => $moduleCode,
+    ]);
+
+    $file = storeSyllabusImportFile([$row], $context['institutionDepartmentId']);
+
+    $previewResponse = $this->actingAs($context['user'])
+        ->post(route('department-course-syllabuses.import.preview', [
+            'institution_department' => $context['institutionDepartmentId'],
+        ]), [
+            'file' => $file,
+        ])
+        ->assertSuccessful()
+        ->assertJsonPath('rows.0.allSemesters', false);
+
+    $previewToken = $previewResponse->json('previewToken');
+
+    $this->actingAs($context['user'])
+        ->post(route('department-course-syllabuses.import.process', [
+            'institution_department' => $context['institutionDepartmentId'],
+        ]), [
+            'preview_token' => $previewToken,
+            'row_corrections' => [
+                1 => ['allSemesters' => true],
+            ],
+        ])
+        ->assertRedirect(route('department-course-syllabuses.import', [
+            'institution_department' => $context['institutionDepartmentId'],
+        ]));
+
+    $module = CourseSyllabusModule::query()->where('code', $moduleCode)->first();
+
+    expect($module)->not->toBeNull()
+        ->and((bool) $module?->all_semesters)->toBeTrue();
+});

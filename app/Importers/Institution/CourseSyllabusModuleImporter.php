@@ -40,6 +40,10 @@ class CourseSyllabusModuleImporter implements IngestDefinition
                 $row['__TENANT_ID'] = $this->tenantId;
                 self::logValidationIssues($row);
 
+                if (($row['__MODULE_IMPORT_ROLE'] ?? 'primary') === 'skip') {
+                    return;
+                }
+
                 $courseCode = trim((string) ($row['COURSE_CODE'] ?? ''));
 
                 if ($courseCode !== '') {
@@ -79,6 +83,11 @@ class CourseSyllabusModuleImporter implements IngestDefinition
                 static fn (string $moduleCode): string => trim($moduleCode)
             )
             ->map('__TENANT_ID', 'tenant_id')
+            ->mapAndTransform(
+                '__ALL_SEMESTERS',
+                'all_semesters',
+                static fn (mixed $value): bool => filter_var($value, FILTER_VALIDATE_BOOLEAN),
+            )
             ->mapAndTransform(
                 'COURSE_CODE',
                 'course_syllabus_id',

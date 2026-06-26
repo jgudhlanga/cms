@@ -2,6 +2,7 @@
 import BaseModal from '@/components/core/modal/BaseModal.vue';
 import BaseInput from '@/components/core/form/text/BaseInput.vue';
 import BaseSelect from '@/components/core/form/select/BaseSelect.vue';
+import BaseSwitch from '@/components/core/form/radio/BaseSwitch.vue';
 import Code from '@/components/core/form/text/Code.vue';
 import { useAcademicYearOptionsByCalendarType } from '@/composables/academicCalendars/useAcademicYearOptionsByCalendarType';
 import { useCourseSyllabusModules } from '@/composables/institution/useCourseSyllabusModules';
@@ -30,6 +31,7 @@ const form = useForm<CourseSyllabusModuleParams>({
     nql_level: null,
     prerequisite_module_ids: [],
     shared: false,
+    all_semesters: false,
 });
 
 const { modals } = useModalStore();
@@ -61,6 +63,7 @@ watch(modals!, async () => {
     form.nql_level = moduleRecord.value?.attributes?.nqlLevel ?? null;
     form.prerequisite_module_ids = moduleRecord.value?.attributes?.prerequisiteModuleIds ?? [];
     form.shared = moduleRecord.value?.attributes?.shared ?? false;
+    form.all_semesters = moduleRecord.value?.attributes?.allSemesters ?? false;
 
     await loadYearOptions(resolvedCalendarType.value);
 
@@ -146,7 +149,18 @@ const save = () => {
                     <input type="checkbox" v-model="form.shared" @change="clearFormErrors(form, 'shared')" />
                     <span>{{ $t('syllabus.shared') }}</span>
                 </label>
+                <div class="pt-6">
+                    <BaseSwitch
+                        input-id="all_semesters"
+                        v-model="form.all_semesters"
+                        :label="$t('syllabus.all_semesters')"
+                        :on-update="(value: boolean) => { form.all_semesters = value; clearFormErrors(form, 'all_semesters'); }"
+                    />
+                </div>
             </div>
+            <p v-if="form.all_semesters" class="mt-2 text-sm text-muted-foreground">
+                {{ $t('syllabus.all_semesters_hint') }}
+            </p>
         </template>
     </BaseModal>
 </template>

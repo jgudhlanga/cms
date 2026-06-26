@@ -7,6 +7,7 @@ export interface SyllabusImportRowCorrection {
     semester?: string;
     moduleTitle?: string;
     moduleCode?: string;
+    allSemesters?: boolean;
 }
 
 export interface SyllabusImportPreviewLookups {
@@ -26,6 +27,9 @@ export interface SyllabusImportPreviewRow {
     moduleCode: string;
     moduleCodeOccurrencesInFile: number;
     moduleCodeRepeatedInFile: boolean;
+    moduleSpansAllPeriods: boolean;
+    allSemesters: boolean;
+    moduleGroupedSkip: boolean;
     syllabusExists: boolean;
     moduleExists: boolean;
     syllabusAction: SyllabusImportPreviewAction;
