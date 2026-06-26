@@ -867,6 +867,7 @@ return [
     'save_changes' => 'Save changes',
     'login_profile_verification_title' => 'Verification may be required',
     'login_profile_verification_description' => 'After changing your email, you may need to verify the new address before it takes effect. You may also need to sign in again with your updated credentials.',
+    'login_profile_impersonation_credentials_locked' => 'Email and password cannot be changed while impersonating a user. Leave impersonation to update credentials.',
     'login_profile_email_helper' => 'You may need to verify your new email before it takes effect.',
     'login_profile_email_not_changed' => 'Email has not changed.',
     'login_profile_enter_password_details' => 'Enter password details to change the password.',

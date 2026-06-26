@@ -11,6 +11,7 @@ use App\Models\AcademicCalendars\CourseWorkMark;
 use App\Models\Institution\Syllabus\CourseSyllabus;
 use App\Policies\AcademicCalendars\CourseWorkPolicy;
 use App\Policies\Institution\CourseSyllabusPolicy;
+use App\Support\Auth\SyncSessionPasswordHash;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Auth;
@@ -113,12 +114,11 @@ class AppServiceProvider extends ServiceProvider
     private function registerImpersonationListeners(): void
     {
         Event::listen(TakeImpersonation::class, function (TakeImpersonation $event) {
-            // SAFE: metadata only
-            session()->put('impersonated_by', $event->impersonator->getAuthIdentifier());
+            SyncSessionPasswordHash::forUser($event->impersonated);
         });
 
-        Event::listen(LeaveImpersonation::class, function () {
-            session()->forget('impersonated_by');
+        Event::listen(LeaveImpersonation::class, function (LeaveImpersonation $event) {
+            SyncSessionPasswordHash::forUser($event->impersonator);
         });
     }
 

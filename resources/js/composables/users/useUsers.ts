@@ -57,12 +57,17 @@ export const useUsers = () => {
                     const page = usePage<PageProps>();
                     const canImpersonate = page.props.auth.user.attributes.canImpersonate;
                     const isImpersonating = page.props.auth.impersonating;
+
+                    if (isImpersonating) {
+                        return null;
+                    }
+
                     const canBeImpersonated = row.original?.attributes?.canBeImpersonated ?? false;
                     return canImpersonate && canBeImpersonated
                         ? actionButton({
                               title: isImpersonating ? 'Switch Impersonation' : 'Impersonate',
                               onClick: () => navigateTo(route('impersonate', { id: row.original.id })),
-                              variant: ColorVariant.success,
+                              variant: ColorVariant.warning_outline,
                           })
                         : null;
                 },
@@ -78,7 +83,7 @@ export const useUsers = () => {
                         ? actionButton({
                               title: trans('students.view_student'),
                               onClick: () => navigateTo(buildStudentShowUrl(studentId, { from: 'users' })),
-                              variant: ColorVariant.primary,
+                              variant: ColorVariant.primary_outline,
                           })
                         : null;
                 },

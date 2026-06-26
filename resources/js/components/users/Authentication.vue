@@ -6,14 +6,16 @@ import { BasePasswordInput } from '@/components/core/form';
 import EmailAddress from '@/components/core/form/text/EmailAddress.vue';
 import ProfileFieldCard from '@/components/users/profile/ProfileFieldCard.vue';
 import { useUsers } from '@/composables/users/useUsers';
+import { useUtils } from '@/composables/core/useUtils';
 import { ColorVariant } from '@/enums/colors';
 import { TypeVariant } from '@/enums/type-variants';
 import { clearFormErrors } from '@/lib/forms';
 import { scrollToFirstError } from '@/lib/scrollToFirstError';
 import { AuthCredentialsUpdate, User } from '@/types/users';
-import { useForm } from '@inertiajs/vue3';
+import { useForm, usePage } from '@inertiajs/vue3';
 import { trans } from 'laravel-vue-i18n';
 import { computed, nextTick, onMounted, ref } from 'vue';
+import { PageProps } from '@/types';
 
 interface Props {
     user?: User;
@@ -24,6 +26,9 @@ const props = withDefaults(defineProps<Props>(), {
     hideAuthorization: false,
 });
 const { user } = props;
+const { isItTrue } = useUtils();
+const page = usePage<PageProps>();
+const isImpersonating = computed(() => isItTrue(page.props.auth.impersonating));
 
 const MASKED_PASSWORD = '••••••••';
 
@@ -156,6 +161,15 @@ onMounted(async () => {
     <div class="flex flex-col justify-center space-y-6 py-4">
         <BaseCard :title="$t('trans.ui_login_profile')" color-variant="black">
             <BaseAlert
+                v-if="isImpersonating"
+                class="mb-6"
+                :type="TypeVariant.warning"
+                :title="$t('trans.ui_remove_impersonation')"
+                :description="$t('trans.login_profile_impersonation_credentials_locked')"
+            />
+
+            <BaseAlert
+                v-else
                 class="mb-6"
                 :type="TypeVariant.info"
                 :title="$t('trans.login_profile_verification_title')"
@@ -176,7 +190,7 @@ onMounted(async () => {
                     />
 
                     <button
-                        v-if="!changeEmail"
+                        v-if="!changeEmail && !isImpersonating"
                         ref="emailToggleRef"
                         type="button"
                         class="text-primary text-sm font-medium underline underline-offset-4 hover:text-primary/80"
@@ -235,7 +249,7 @@ onMounted(async () => {
                     <ProfileFieldCard :label="$t('trans.password')" :value="MASKED_PASSWORD" />
 
                     <button
-                        v-if="!changePassword"
+                        v-if="!changePassword && !isImpersonating"
                         ref="passwordToggleRef"
                         type="button"
                         class="text-primary text-sm font-medium underline underline-offset-4 hover:text-primary/80"

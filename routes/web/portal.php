@@ -36,7 +36,9 @@ Route::prefix('portal')->group(function () {
             Route::get('accommodations', [PortalController::class, 'profileAccommodations'])->name('accommodations');
             Route::get('accommodations/pay', [PaymentController::class, 'accommodationFeePaymentOptions'])->name('accommodations.pay');
             Route::get('documents', [PortalController::class, 'profileDocuments'])->name('documents');
-            Route::get('authentication', [PortalController::class, 'profileAuthentication'])->name('authentication');
+            Route::get('authentication', [PortalController::class, 'profileAuthentication'])
+                ->middleware('impersonate.protect')
+                ->name('authentication');
         });
         Route::get('personal-details', [PortalController::class, 'personal'])->name('portal.personal-details');
         Route::get('programs', [PortalController::class, 'programs'])->name('portal.programs');

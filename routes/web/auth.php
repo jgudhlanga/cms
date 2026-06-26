@@ -52,7 +52,9 @@ Route::middleware('auth')->group(function () {
 
     Route::post('confirm-password', [ConfirmablePasswordController::class, 'store']);
 
-    Route::put('password', [PasswordController::class, 'update'])->name('password.create');
+    Route::put('password', [PasswordController::class, 'update'])
+        ->middleware('impersonate.protect')
+        ->name('password.create');
 
-    Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])  ->name('logout');
+    Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 });

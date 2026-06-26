@@ -1,9 +1,9 @@
 <?php
 
 use App\Enums\Acl\RoleEnum;
-use App\Http\Middleware\EnsureCanImpersonate;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\RedirectImpersonatedToPortal;
 use App\Http\Middleware\RedirectStudentMiddleware;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Application;
@@ -32,13 +32,13 @@ return Application::configure(basePath: dirname(__DIR__))
             HandleAppearance::class,
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
+            RedirectImpersonatedToPortal::class,
         ]);
         $middleware->api(append: [
             EnsureFrontendRequestsAreStateful::class,
         ]);
         $middleware->alias([
             'redirect.student' => RedirectStudentMiddleware::class,
-            'ensure.can.impersonate' => EnsureCanImpersonate::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
