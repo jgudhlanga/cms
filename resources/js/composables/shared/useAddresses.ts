@@ -1,6 +1,7 @@
 import { useCustomConfirmDialog } from '@/composables/core/useCustomConfirmDialog';
 import { useDataTables } from '@/composables/core/useDataTables';
 import { useSharedFormSchema } from '@/composables/core/useSharedFormSchema';
+import { addressLabel } from '@/lib/addressFields';
 import { forbiddenAlert, openModal, successAlert } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
 import { buildFormOptions, mergeValidationSchema } from '@/lib/forms';
@@ -19,10 +20,10 @@ export const useAddresses = () => {
     const errorMessage = () => trans('trans.item_save_failure', { item: getName() });
     const createAddressColumns = () => {
         return [
-            { header: trans('trans.address_1'), accessorKey: 'attributes.address1' },
-            { header: trans('trans.address_2'), accessorKey: 'attributes.address2' },
-            { header: trans('trans.address_3'), accessorKey: 'attributes.address3' },
-            { header: trans('trans.address_4'), accessorKey: 'attributes.address4' },
+            { header: addressLabel(1), accessorKey: 'attributes.address1' },
+            { header: addressLabel(2), accessorKey: 'attributes.address2' },
+            { header: addressLabel(3), accessorKey: 'attributes.address3' },
+            { header: addressLabel(4), accessorKey: 'attributes.address4' },
             { header: trans('trans.address_5'), accessorKey: 'attributes.address5' },
             { header: trans('trans.address_6'), accessorKey: 'attributes.address6' },
             {

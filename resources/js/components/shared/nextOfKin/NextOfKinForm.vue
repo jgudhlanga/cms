@@ -1,5 +1,9 @@
 <script setup lang="ts">
 import { BaseInput } from '@/components/core/form';
+import Address1 from '@/components/core/form/text/Address1.vue';
+import Address2 from '@/components/core/form/text/Address2.vue';
+import Address3 from '@/components/core/form/text/Address3.vue';
+import Address4 from '@/components/core/form/text/Address4.vue';
 import RelationshipComboSelect from '@/components/core/form/combobox/RelationshipComboSelect.vue';
 import BaseModal from '@/components/core/modal/BaseModal.vue';
 import HeadingSmall from '@/components/core/util/HeadingSmall.vue';
@@ -102,43 +106,28 @@ const save = () => {
             <div class="flex flex-col">
                 <HeadingSmall :title="$t('trans.residential_address')" :description="$t('trans.residential_address_description')" class="my-5" />
             </div>
-            <div class="grid-col-1 grid gap-3 md:grid-cols-4">
-                <BaseInput
-                    input-id="address_1"
-                    :label="$t('trans.address_1')"
+            <div class="grid grid-cols-1 gap-3 md:grid-cols-4">
+                <Address1
                     v-model="form.address_1"
-                    :placeholder="$t('trans.ui_enter_address_line_1')"
-                    :label-uppercase="true"
                     @input="clearFormErrors(form, 'address_1')"
                     :error="form.errors.address_1"
                     :is-required="true"
                 />
-                <BaseInput
-                    input-id="address_2"
-                    :label="$t('trans.address_2')"
+                <Address2
                     v-model="form.address_2"
-                    :placeholder="$t('trans.ui_enter_address_line_2')"
-                    :label-uppercase="true"
                     @input="clearFormErrors(form, 'address_2')"
                     :error="form.errors.address_2"
                     :is-required="true"
                 />
-                <BaseInput
-                    input-id="address_3"
-                    :label="$t('trans.address_3')"
+                <Address3
                     v-model="form.address_3"
-                    :placeholder="$t('trans.ui_enter_address_line_3')"
-                    :label-uppercase="true"
                     @input="clearFormErrors(form, 'address_3')"
                     :error="form.errors.address_3"
                     :is-required="true"
                 />
-                <BaseInput
-                    input-id="address_4"
-                    :label="$t('trans.address_4')"
+                <Address4
                     v-model="form.address_4"
-                    :placeholder="$t('trans.ui_enter_address_line_4')"
-                    :label-uppercase="true"
+                    @input="clearFormErrors(form, 'address_4')"
                     :error="form.errors.address_4"
                 />
             </div>

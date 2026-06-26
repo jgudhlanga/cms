@@ -1,17 +1,23 @@
 <script setup lang="ts">
-import PortalApplicationStepper from '@/components/portal/PortalApplicationStepper.vue';
+import BaseAlert from '@/components/core/alert/BaseAlert.vue';
+import PortalApplicationShell from '@/components/portal/PortalApplicationShell.vue';
 import IntakePeriodComboSelect from '@/components/core/form/combobox/IntakePeriodComboSelect.vue';
-import StudentPageHeader from '@/components/shared/students/StudentPageHeader.vue';
-import { useStudentPortal } from '@/composables/students/useStudentPortal';
+import { usePortalLevelSelection } from '@/composables/students/usePortalLevelSelection';
+import { TypeVariant } from '@/enums/type-variants';
 import { AuthObject } from '@/types/data-pagination';
 import { IntakePeriod, Level } from '@/types/institution';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
+
+type AvailabilityIssue = 'no_open_levels' | 'no_active_intakes' | null;
 
 interface Props {
-    levels: Level[];
+    levels: Level[] | { data: Level[] };
     intakePeriods?: IntakePeriod[];
     requiresIntakeSelection?: boolean;
     applicationStep?: 'level' | 'fee' | 'apply';
+    openLevelCount?: number;
+    hasActiveIntakes?: boolean;
+    availabilityIssue?: AvailabilityIssue;
     auth: AuthObject;
     errors: object;
 }
@@ -20,22 +26,62 @@ const props = withDefaults(defineProps<Props>(), {
     requiresIntakeSelection: false,
     applicationStep: 'level',
     intakePeriods: () => [],
+    hasActiveIntakes: true,
+    availabilityIssue: null,
 });
+
+const levelList = computed(() => {
+    if (Array.isArray(props.levels)) {
+        return props.levels;
+    }
+
+    return Array.isArray(props.levels?.data) ? props.levels.data : [];
+});
+
+const hasLevels = computed(() => levelList.value.length > 0);
+const showNoLevelsAlert = computed(() => props.availabilityIssue === 'no_open_levels' || !hasLevels.value);
+const showNoIntakesAlert = computed(() => props.availabilityIssue === 'no_active_intakes');
+const canSelectLevel = computed(() => hasLevels.value && props.hasActiveIntakes);
 
 const selectedIntakePeriodId = ref<number | null>(
     props.intakePeriods.length === 1 ? Number(props.intakePeriods[0].id) : null,
 );
 
-const { selectLevel } = useStudentPortal();
+const { selectLevel } = usePortalLevelSelection();
 
-const onApply = (levelId: string, hasApplicationFeePayment: boolean) => {
+const displayedIntakeName = computed(() => {
+    if (selectedIntakePeriodId.value) {
+        const selected = props.intakePeriods.find((period) => Number(period.id) === selectedIntakePeriodId.value);
+
+        return selected?.attributes?.name ?? null;
+    }
+
+    if (props.intakePeriods.length === 1) {
+        return props.intakePeriods[0].attributes?.name ?? null;
+    }
+
+    return null;
+});
+
+const onApply = (levelId: string) => {
     selectLevel(levelId, selectedIntakePeriodId.value, props.requiresIntakeSelection);
 };
 </script>
 <template>
-    <StudentPageHeader />
-    <PortalApplicationStepper :current-step="applicationStep" />
-    <div class="mt-8 flex w-full flex-col items-center justify-center bg-background px-5 pb-12 text-foreground">
+    <PortalApplicationShell wide :intake-name="displayedIntakeName">
+        <div class="flex w-full flex-col items-center justify-center px-5 pb-12">
+        <div class="mb-6 w-full text-center">
+            <h1 class="text-xl font-semibold text-foreground">
+                {{ $t('trans.portal_application_step_level') }}
+            </h1>
+            <p v-if="showNoLevelsAlert" class="mt-2 text-sm text-muted-foreground">
+                {{ $t('trans.portal_no_levels_available_description') }}
+            </p>
+            <p v-else-if="showNoIntakesAlert" class="mt-2 text-sm text-muted-foreground">
+                {{ $t('trans.portal_no_active_intakes_description') }}
+            </p>
+        </div>
+
         <div v-if="requiresIntakeSelection && intakePeriods.length > 1" class="mb-8 w-full max-w-md">
             <IntakePeriodComboSelect
                 v-model="selectedIntakePeriodId"
@@ -44,9 +90,25 @@ const onApply = (levelId: string, hasApplicationFeePayment: boolean) => {
             />
         </div>
 
-        <div class="mb-10 grid w-full max-w-6xl grid-cols-1 gap-6 md:grid-cols-4">
+        <BaseAlert
+            v-if="showNoLevelsAlert"
+            class="mb-6 w-full max-w-2xl"
+            :title="$t('trans.portal_no_levels_available')"
+            :description="$t('trans.portal_no_levels_available_description')"
+            :type="TypeVariant.warning"
+        />
+
+        <BaseAlert
+            v-if="showNoIntakesAlert"
+            class="mb-6 w-full max-w-2xl"
+            :title="$t('trans.portal_no_active_intakes')"
+            :description="$t('trans.portal_no_active_intakes_description')"
+            :type="TypeVariant.warning"
+        />
+
+        <div v-if="canSelectLevel" class="mb-10 grid w-full grid-cols-1 gap-6 md:grid-cols-3">
             <div
-                v-for="(level, index) in levels"
+                v-for="(level, index) in levelList"
                 :key="level.id"
                 class="card-hover fade-in overflow-hidden rounded-2xl border border-border bg-card text-card-foreground shadow-xl dark:shadow-sm"
                 :style="{ 'animation-delay': Number(level.id) * 0.1 + 's' }"
@@ -57,12 +119,6 @@ const onApply = (levelId: string, hasApplicationFeePayment: boolean) => {
                             class="rounded-full bg-card/95 px-3 py-1 text-sm font-bold text-foreground shadow backdrop-blur-sm dark:bg-card/90"
                         >
                             #{{ Number(index) + 1 }}
-                        </span>
-                        <span
-                            v-if="level.attributes.hasApplicationFeePayment"
-                            class="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary"
-                        >
-                            {{ $t('trans.application_fee_required_badge') }}
                         </span>
                     </div>
                     <div class="p-6">
@@ -75,7 +131,7 @@ const onApply = (levelId: string, hasApplicationFeePayment: boolean) => {
                     <div class="flex items-center justify-center">
                         <button
                             type="button"
-                            @click="() => onApply(String(level.id), !!level.attributes.hasApplicationFeePayment)"
+                            @click="() => onApply(String(level.id))"
                             class="apply-button"
                             :disabled="!level.attributes.showOnCurrentApplicationPeriod"
                             :class="!level.attributes.showOnCurrentApplicationPeriod ? 'cursor-not-allowed opacity-50' : ''"
@@ -86,7 +142,8 @@ const onApply = (levelId: string, hasApplicationFeePayment: boolean) => {
                 </div>
             </div>
         </div>
-    </div>
+        </div>
+    </PortalApplicationShell>
 </template>
 <style scoped>
 .apply-button {

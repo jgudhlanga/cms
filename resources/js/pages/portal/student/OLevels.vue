@@ -10,6 +10,7 @@ import DataLoadingSpinner from '@/components/core/loader/DataLoadingSpinner.vue'
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import Empty from '@/components/core/util/Empty.vue';
 import HeadingSmall from '@/components/core/util/HeadingSmall.vue';
+import PortalOLevelHonestyBanner from '@/components/portal/PortalOLevelHonestyBanner.vue';
 import CreateEdit from '@/components/students/oLevels/modals/CreateEdit.vue';
 import OLevelResultCard from '@/components/students/oLevels/OLevelResultCard.vue';
 
@@ -64,6 +65,7 @@ onMounted(async () => {
 
 // Computed: Check if there are results
 const hasResults = computed(() => Array.isArray(oLevelResults.value) && oLevelResults.value.length > 0);
+const resultsCount = computed(() => oLevelResults.value?.length ?? 0);
 
 // Methods
 const reloadResults = async () => {
@@ -85,10 +87,14 @@ const verificationMode = isItTrue(import.meta.env.VITE_VERIFICATION_MODE);
                 :variant="ColorVariant.primary_outline"
                 @click="navigateTo(route('portal.manage-o-level-results'))"
             >
-                <BaseIcon :name="IconName.cogs" />
-                <span>{{ $t('trans.ui_add_new') }}</span>
+                <BaseIcon :name="IconName.edit" />
+                <span>{{ $t('trans.ui_manage_subjects') }}</span>
             </BaseButton>
         </div>
+        <PortalOLevelHonestyBanner v-if="!verificationMode" />
+        <p v-if="hasResults && !isLoading" class="mb-4 text-sm text-muted-foreground">
+            {{ $tChoice('trans.ui_o_level_results_saved', resultsCount, { count: resultsCount }) }}
+        </p>
         <template v-if="isLoading">
             <DataLoadingSpinner />
         </template>

@@ -3,6 +3,8 @@
 use App\Enums\Acl\RoleEnum;
 use App\Enums\Shared\TenantEnum;
 use App\Models\Acl\Role;
+use App\Models\Institution\IntakePeriod;
+use App\Models\Institution\Level;
 use App\Models\Shared\Gender;
 use App\Models\Shared\IdType;
 use App\Models\Shared\MaritalStatus;
@@ -140,6 +142,21 @@ test('portal store requires instruction acknowledgments', function () {
     $response->assertSessionHasErrors(['acknowledged_advert']);
 });
 
+test('portal store rejects weak password', function () {
+    $response = $this->post(route('portal.store'), [
+        'registration_path' => 'zimbabwean',
+        'first_name' => 'New',
+        'last_name' => 'Applicant',
+        'email' => 'weak.password.'.uniqid().'@example.com',
+        'password' => 'password',
+        'password_confirmation' => 'password',
+        'id_number' => '44-0777666D44',
+        'acknowledged_advert' => true,
+    ]);
+
+    $response->assertSessionHasErrors('password');
+});
+
 test('portal store creates account and redirects to level selection for new zimbabwean', function () {
     $email = 'fresh.student.'.uniqid().'@example.com';
 
@@ -160,4 +177,132 @@ test('portal store creates account and redirects to level selection for new zimb
     expect(session('registration.id_number'))->toBe('44-0999888B44');
     expect(auth()->user()?->middle_name)->toBe('Middle');
     expect(auth()->user()?->registration_instructions_acknowledged_at)->not->toBeNull();
+});
+
+test('portal level options page renders for newly registered student', function () {
+    $tenantId = TenantEnum::HARARE_POLY->id();
+
+    Level::factory()->create([
+        'show_on_current_application_period' => true,
+    ]);
+
+    IntakePeriod::query()->create([
+        'tenant_id' => $tenantId,
+        'name' => 'Test Intake '.uniqid(),
+        'start_date' => now()->startOfMonth()->toDateString(),
+        'end_date' => now()->addYear()->toDateString(),
+        'calendar_year' => '2026/2027',
+        'is_active' => true,
+    ]);
+
+    $email = 'level.page.'.uniqid().'@example.com';
+
+    $this->post(route('portal.store'), [
+        'registration_path' => 'zimbabwean',
+        'first_name' => 'Level',
+        'last_name' => 'Page',
+        'email' => $email,
+        'password' => 'Password1!',
+        'password_confirmation' => 'Password1!',
+        'id_number' => '44-0555444E44',
+        'acknowledged_advert' => true,
+    ])->assertRedirect(route('portal.application.level-options'));
+
+    $response = $this->get(route('portal.application.level-options'));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('portal/application/SelectLevelOption')
+        ->has('levels')
+        ->has('openLevelCount')
+        ->has('hasActiveIntakes')
+        ->where('availabilityIssue', null)
+    );
+});
+
+test('portal level options reports no open levels when none are configured', function () {
+    Level::query()->update(['show_on_current_application_period' => false]);
+
+    $user = User::factory()->create([
+        'email_verified_at' => now(),
+    ]);
+    $user->assignRole(RoleEnum::STUDENT);
+
+    $response = $this->actingAs($user)->get(route('portal.application.level-options'));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('portal/application/SelectLevelOption')
+        ->where('openLevelCount', 0)
+        ->where('availabilityIssue', 'no_open_levels')
+    );
+});
+
+test('student without profile can access portal level options', function () {
+    $user = User::factory()->create([
+        'email_verified_at' => now(),
+    ]);
+    $user->assignRole(RoleEnum::STUDENT);
+
+    $response = $this->actingAs($user)->get(route('portal.application.level-options'));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('portal/application/SelectLevelOption')
+    );
+});
+
+test('guest registration page includes intake metadata when intakes are open', function () {
+    $tenantId = TenantEnum::HARARE_POLY->id();
+    $intakeName = 'Guest Intake '.uniqid();
+
+    IntakePeriod::query()->update(['is_active' => false]);
+
+    IntakePeriod::query()->create([
+        'tenant_id' => $tenantId,
+        'name' => $intakeName,
+        'start_date' => now()->startOfMonth()->toDateString(),
+        'end_date' => now()->addYear()->toDateString(),
+        'calendar_year' => '2026/2027',
+        'is_active' => true,
+    ]);
+
+    $this->get(route('portal.create'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('portal/guest/RegistrationUserForm')
+            ->has('openIntakePeriods')
+            ->where('singleIntakeName', $intakeName)
+        );
+});
+
+test('create application page includes intake name', function () {
+    $tenantId = TenantEnum::HARARE_POLY->id();
+    $intakeName = 'Apply Intake '.uniqid();
+
+    IntakePeriod::query()->update(['is_active' => false]);
+
+    IntakePeriod::query()->create([
+        'tenant_id' => $tenantId,
+        'name' => $intakeName,
+        'start_date' => now()->startOfMonth()->toDateString(),
+        'end_date' => now()->addYears(10)->toDateString(),
+        'calendar_year' => '2026/2027',
+        'is_active' => true,
+    ]);
+
+    $user = User::factory()->create([
+        'tenant_id' => $tenantId,
+        'email_verified_at' => now(),
+    ]);
+    $user->assignRole(RoleEnum::STUDENT);
+    $user->givePermissionTo('manageOwnStudentPersonalDetails:students');
+
+    $this->actingAs($user)
+        ->get(route('portal.application.create'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('portal/application/CreateApplication')
+            ->where('intakeName', $intakeName)
+        );
 });

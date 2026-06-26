@@ -36,6 +36,7 @@ return [
     'home_address' => 'Home Address',
     'guardian' => 'Guardian',
     'guardian_contact' => 'Guardian Contact',
+    'guardian_address' => 'Guardian Address',
     'entry_qualification' => 'Entry Qualification',
     'programmes_load_failure' => 'Could not load programme records.',
     'no_programmes' => 'No programmes found',
@@ -190,4 +191,7 @@ return [
     'dashboard_activity_course_work' => 'Course work in progress for :module.',
     'dashboard_activity_outstanding_balance' => 'Outstanding balance of $:amount on your account.',
     'hms_payment' => 'Hostel Payment',
+    'view_student' => 'View student',
+    'current_intake' => 'Current intake',
+    'past_intake_applications_read_only' => 'Applications for past intakes are read-only. Only active intake applications can be edited.',
 ];

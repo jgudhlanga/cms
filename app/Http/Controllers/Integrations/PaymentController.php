@@ -391,6 +391,7 @@ class PaymentController extends Controller
             'registrationFee' => $registrationFee,
             'applicationFeeId' => $applicationFee->id,
             'applicationFeeStatus' => $applicationFee->status->value,
+            'applicationFeeStatusLabel' => $applicationFee->status->label(),
             'levelName' => $applicationFee->level?->name,
             'intakeName' => $applicationFee->intakePeriod?->name,
             'applicationStep' => 'fee',

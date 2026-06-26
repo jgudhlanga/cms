@@ -6,9 +6,10 @@ const { navigateTo } = useUtils();
 
 <template>
     <button
+        type="button"
+        class="inline-flex w-full cursor-pointer items-center justify-center rounded-[10px] border border-border bg-card px-4 py-2.5 text-base font-semibold text-foreground transition-colors hover:bg-muted/50"
         @click="() => navigateTo(route('portal.application.level-options'))"
-        class="inline-flex w-full cursor-pointer items-center justify-center rounded-[10px] border-0 bg-linear-to-br from-red-600 to-pink-400 p-2.5 text-lg font-semibold text-white uppercase shadow-[0_4px_15px_rgba(0,0,0,0.1)] transition-all duration-300"
     >
-        {{ $t('trans.cancel') }}
+        {{ $t('trans.portal_change_level') }}
     </button>
 </template>

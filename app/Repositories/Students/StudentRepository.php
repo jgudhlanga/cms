@@ -256,6 +256,7 @@ class StudentRepository extends BaseRepository implements IStudentRepository
             'height' => $dto->height,
             'weight' => $dto->weight,
             'study_permit_number' => $dto->study_permit_number,
+            'disability_status' => $dto->disability_status,
         ];
     }
 

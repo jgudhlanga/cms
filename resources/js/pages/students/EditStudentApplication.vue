@@ -1,21 +1,23 @@
 <script setup lang="ts">
 import { Head, useForm } from '@inertiajs/vue3';
+import { computed, onMounted, ref, watch } from 'vue';
 
 import { BaseButton } from '@/components/core/button';
 import ModeOfStudyComboSelect from '@/components/core/form/combobox/ModeOfStudyComboSelect.vue';
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import { useUtils } from '@/composables/core/useUtils';
 import { useStudentPortal } from '@/composables/students/useStudentPortal';
+import { useStudentShowNavigation } from '@/composables/students/useStudentShowNavigation';
 import { useStudents } from '@/composables/students/useStudents';
 import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
 import { clearFormErrors } from '@/lib/forms';
+import { buildStudentShowBreadcrumbs, buildStudentShowUrl } from '@/lib/studentShowNavigation';
 import { AuthObject } from '@/types/data-pagination';
 import { Enrolment } from '@/types/enrolments';
 import { Student, StudentApplicationEdit } from '@/types/students';
 import { Link } from '@/types/ui';
 import { User } from '@/types/users';
-import { onMounted, ref, watch } from 'vue';
 
 interface Props {
     user: User;
@@ -26,14 +28,23 @@ interface Props {
 }
 
 const props = defineProps<Props>();
-const { user, program } = props;
-const breadcrumbs: Array<Link> = [
-    { transKey: 'dashboard', href: route('dashboard') },
-    { transChoiceKey: 'user', href: route('users.index') },
-    { transChoiceKey: 'student', href: route('students.profile', String(user.id)), transChoiceKeyIndex: 1 },
-    { title: user.attributes.name ?? '', href: route('students.profile', String(user.id)) },
-    { title: 'Edit Program' },
-];
+const { student, program } = props;
+
+const { query, navigationOptions } = useStudentShowNavigation();
+
+const studentShowUrl = computed(() =>
+    student ? buildStudentShowUrl(student.id, { ...navigationOptions.value, tab: 'applications' }) : route('students.index'),
+);
+
+const breadcrumbs = computed((): Array<Link> => {
+    const parentCrumbs = buildStudentShowBreadcrumbs(query.value.from).slice(0, -1);
+
+    return [
+        ...parentCrumbs,
+        { title: student?.attributes?.name ?? props.user.attributes.name ?? '', href: studentShowUrl.value },
+        { title: 'Edit Program' },
+    ];
+});
 
 const { navigateTo } = useUtils();
 const { programFormSchema } = useStudentPortal();
@@ -101,7 +112,7 @@ watch(
 
 <template>
     <Head :title="$tChoice('student', 2)" />
-    <PageContainer :breadcrumbs="breadcrumbs">
+    <PageContainer :breadcrumbs="breadcrumbs" :back-url="studentShowUrl">
         <form @submit.prevent="() => save()">
             <div class="grid grid-cols-1 gap-6 md:grid-cols-4">
                 <AdminInstitutionDepartmentComboSelect :form="form" v-model="form.department" :error="form.errors.department" :is-required="true" />
@@ -123,7 +134,7 @@ watch(
             </div>
             <div class="my-6 flex flex-col justify-center space-y-3 space-x-3 md:flex-row">
                 <BaseButton
-                    @click="navigateTo(route('students.profile', String(user.id)))"
+                    @click="navigateTo(studentShowUrl)"
                     type="button"
                     :variant="ColorVariant.shade"
                     class="w-full md:w-50"

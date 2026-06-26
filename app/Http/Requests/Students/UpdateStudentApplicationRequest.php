@@ -2,16 +2,18 @@
 
 namespace App\Http\Requests\Students;
 
+use App\Models\Students\StudentApplication;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateStudentApplicationRequest extends FormRequest
 {
-
     public function authorize(): bool
     {
-        return true;
-    }
+        $studentApplication = $this->route('student_application');
 
+        return $studentApplication instanceof StudentApplication
+            && $this->user()->can('update', $studentApplication);
+    }
 
     public function rules(): array
     {

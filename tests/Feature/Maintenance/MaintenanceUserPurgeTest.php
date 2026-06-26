@@ -1,11 +1,15 @@
 <?php
 
 use App\Enums\Acl\RoleEnum;
+use App\Enums\Students\ApplicationFeeStatusEnum;
 use App\Models\Acl\Role;
+use App\Models\Institution\IntakePeriod;
+use App\Models\Institution\Level;
 use App\Models\Shared\Gender;
 use App\Models\Shared\IdType;
 use App\Models\Shared\MaritalStatus;
 use App\Models\Shared\Title;
+use App\Models\Students\ApplicationFee;
 use App\Models\Students\Student;
 use App\Models\Users\User;
 use Illuminate\Support\Str;
@@ -54,6 +58,39 @@ it('purges a student user without a profile', function (): void {
 
     expect(User::query()->whereKey($studentUser->id)->exists())->toBeFalse()
         ->and(User::withTrashed()->whereKey($studentUser->id)->exists())->toBeFalse();
+});
+
+it('purges a student user with application fees but no profile', function (): void {
+    $rootUser = actingAsRootMaintenanceUser();
+    $studentUser = createNoProfileStudentUser($rootUser->tenant_id);
+
+    $intakePeriod = IntakePeriod::query()->create([
+        'tenant_id' => $rootUser->tenant_id,
+        'name' => 'Purge Intake '.uniqid(),
+        'start_date' => now()->startOfMonth()->toDateString(),
+        'end_date' => now()->addYears(2)->toDateString(),
+        'calendar_year' => '2026/2027',
+        'is_active' => true,
+    ]);
+
+    $level = Level::factory()->create([
+        'has_application_fee_payment' => true,
+        'show_on_current_application_period' => true,
+    ]);
+
+    $applicationFee = ApplicationFee::query()->create([
+        'tenant_id' => $rootUser->tenant_id,
+        'user_id' => $studentUser->id,
+        'intake_period_id' => $intakePeriod->id,
+        'level_id' => $level->id,
+        'status' => ApplicationFeeStatusEnum::AWAITING_PAYMENT,
+    ]);
+
+    $this->deleteJson(route('maintenance.non-enrolled-student-users.purge', $studentUser))
+        ->assertNoContent();
+
+    expect(User::query()->whereKey($studentUser->id)->exists())->toBeFalse()
+        ->and(ApplicationFee::query()->whereKey($applicationFee->id)->exists())->toBeFalse();
 });
 
 it('rejects purging a student user with a profile', function (): void {

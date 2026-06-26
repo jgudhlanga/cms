@@ -93,7 +93,13 @@ async function handleLeaveCreate(payload: Parameters<typeof services.createLeave
     return services.createLeave(payload);
 }
 
-const canCreateServices = computed(() => props.context === 'portal');
+const canCreateServices = computed(
+    () => props.context === 'portal' && activeAllocation.value !== null,
+);
+
+const showNoAllocationHelper = computed(
+    () => props.context === 'portal' && !activeAllocation.value,
+);
 </script>
 
 <template>
@@ -168,6 +174,12 @@ const canCreateServices = computed(() => props.context === 'portal');
                 :title="$t('students.accommodation_section_queries')"
                 :description="$t('students.accommodation_section_queries_desc')"
             >
+                <p
+                    v-if="showNoAllocationHelper"
+                    class="mb-4 text-sm text-muted-foreground"
+                >
+                    {{ $t('students.accommodation_no_room_assigned') }}
+                </p>
                 <AccommodationQueriesSection
                     :queries="services.queries.value"
                     :is-loading="services.isQueriesLoading.value"
@@ -180,6 +192,12 @@ const canCreateServices = computed(() => props.context === 'portal');
                 :title="$t('students.accommodation_section_leaves')"
                 :description="$t('students.accommodation_section_leaves_desc')"
             >
+                <p
+                    v-if="showNoAllocationHelper"
+                    class="mb-4 text-sm text-muted-foreground"
+                >
+                    {{ $t('students.accommodation_no_room_assigned') }}
+                </p>
                 <AccommodationLeavesSection
                     :leaves="services.leaves.value"
                     :is-loading="services.isLeavesLoading.value"
@@ -209,7 +227,7 @@ const canCreateServices = computed(() => props.context === 'portal');
             </BaseAccordionItem>
         </BaseAccordion>
 
-        <AccommodationQueryModal :save="handleQueryCreate" />
-        <AccommodationLeaveModal :save="handleLeaveCreate" />
+        <AccommodationQueryModal v-if="canCreateServices" :save="handleQueryCreate" />
+        <AccommodationLeaveModal v-if="canCreateServices" :save="handleLeaveCreate" />
     </div>
 </template>

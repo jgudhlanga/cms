@@ -72,6 +72,10 @@ export const useStudentApplications = () => {
                 enableSorting: false,
                 meta: { align: 'right' },
                 cell: ({ row }: { row: { original: Enrolment } }) => {
+                    if (!allowed) {
+                        return null;
+                    }
+
                     return actionButton({
                         title: 'Edit Application',
                         variant: ColorVariant.success,

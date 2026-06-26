@@ -122,6 +122,11 @@ class Student extends Model
         return $this->hasOne(StudentEnrolment::class)->latestOfMany();
     }
 
+    public function latestApplication(): HasOne
+    {
+        return $this->hasOne(StudentApplication::class)->latestOfMany();
+    }
+
     public function currentLevel(): ?string
     {
         return $this->applications()->latest()->first()?->levelEnum()?->name();

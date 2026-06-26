@@ -29,9 +29,12 @@ const computedClass = computed(() => cn('flex w-full flex-col rounded-md border-
 
 <template>
     <div :class="computedClass">
-        <div class="flex w-full items-center space-x-3">
+        <div class="flex w-full items-start space-x-3">
             <component :is="icons[iconVariants[type] as IconName]" class="size-6 shrink-0" />
-            <div class="text-sm">{{ description }}</div>
+            <div class="space-y-1 text-sm">
+                <p v-if="title" class="font-semibold">{{ title }}</p>
+                <p>{{ description }}</p>
+            </div>
         </div>
         <slot />
     </div>

@@ -3,21 +3,18 @@
 namespace App\Http\Controllers\Users;
 
 use App\DTO\Institution\CreateStaffDto;
-use App\DTO\Students\UpdateStudentDto;
 use App\DTO\Users\UpdateUserDto;
 use App\DTO\Users\UserDto;
 use App\Enums\Shared\StatusEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Filters\Users\UserFilter;
 use App\Http\Requests\Institution\StaffRequest;
-use App\Http\Requests\Students\UpdateStudentUserRequest;
 use App\Http\Requests\Users\UpdateUserCredentialsRequest;
 use App\Http\Requests\Users\UpdateUserRequest;
 use App\Http\Requests\Users\UserRequest;
 use App\Http\Resources\Users\UserResource;
 use App\Models\Users\User;
 use App\Repositories\Institution\interface\IStaffRepository;
-use App\Repositories\Students\interface\IStudentRepository;
 use App\Repositories\Users\interface\IUserRepository;
 use Inertia\Inertia;
 
@@ -26,7 +23,7 @@ class UserController extends Controller
     public function __construct(
         protected IUserRepository $repository,
         protected IStaffRepository $staffRepository,
-        protected IStudentRepository $studentRepository) {}
+    ) {}
 
     public function index(UserFilter $filters)
     {
@@ -62,8 +59,6 @@ class UserController extends Controller
             'preference',
             'staffProfile.contacts',
             'staffProfile.addresses',
-            'studentProfile.contacts',
-            'studentProfile.addresses',
         ]);
         $user = UserResource::make($user);
 
@@ -72,8 +67,10 @@ class UserController extends Controller
 
     public function edit(User $user)
     {
-        // $this->authorize('update', $user);
-        // $user->load('staffProfile');
+        if ($user->has_student_profile && $user->studentProfile !== null) {
+            return redirect()->route('students.show', $user->studentProfile);
+        }
+
         $user = UserResource::make($user);
 
         return Inertia::render('users/Edit', compact('user'));
@@ -120,15 +117,6 @@ class UserController extends Controller
         );
 
         return to_route('users.show', ['user' => $user->id]);
-    }
-
-    public function updateStudentUser(UpdateStudentUserRequest $request, User $user)
-    {
-        $student = $user->studentProfile;
-        $this->studentRepository->update(
-            $student,
-            UpdateStudentDto::fromUpdateStudentUserRequest($request),
-        );
     }
 
     public function updateUserCredentials(UpdateUserCredentialsRequest $request, User $user)

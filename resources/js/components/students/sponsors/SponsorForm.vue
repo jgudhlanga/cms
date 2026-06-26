@@ -81,9 +81,9 @@ const save = () => {
                     :is-required="true"
                 />
                 <EmailAddress v-model="form.email" @input="clearFormErrors(form, 'email_address')" :error="form.errors.email" />
-                <Address1 v-model="form.address_1" @input="clearFormErrors(form, 'address_1')" :error="form.errors.address_1" />
-                <Address2 v-model="form.address_2" @input="clearFormErrors(form, 'address_2')" :error="form.errors.address_2" />
-                <Address3 v-model="form.address_3" @input="clearFormErrors(form, 'address_3')" :error="form.errors.address_3" />
+                <Address1 v-model="form.address_1" @input="clearFormErrors(form, 'address_1')" :error="form.errors.address_1" :is-required="true" />
+                <Address2 v-model="form.address_2" @input="clearFormErrors(form, 'address_2')" :error="form.errors.address_2" :is-required="true" />
+                <Address3 v-model="form.address_3" @input="clearFormErrors(form, 'address_3')" :error="form.errors.address_3" :is-required="true" />
                 <Address4 v-model="form.address_4" @input="clearFormErrors(form, 'address_4')" :error="form.errors.address_4" />
             </div>
         </template>

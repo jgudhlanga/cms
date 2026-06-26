@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import RegistrationStepper from '@/components/portal/RegistrationStepper.vue';
+import PortalApplicationIntakeBanner from '@/components/portal/PortalApplicationIntakeBanner.vue';
 import ComingSoonAnimated from '@/components/core/util/ComingSoonAnimated.vue';
 import { useUtils } from '@/composables/core/useUtils';
 import { useEnrollmentRegistration, type EnrollmentLookupResult, type ReturningLookupType } from '@/composables/students/useEnrollmentRegistration';
@@ -13,6 +14,7 @@ import RegistrationPathSelector from '@/pages/portal/guest/components/Registrati
 import RegistrationGuide from '@/pages/portal/guest/RegistrationGuide.vue';
 import { useCreateUserFormStore, type RegistrationPath } from '@/store/portal/useCreateUserFormStore';
 import { CreateApplicationUserParams } from '@/types/portal';
+import { IntakePeriod } from '@/types/institution';
 import { Head, useForm } from '@inertiajs/vue3';
 import { trans } from 'laravel-vue-i18n';
 import { storeToRefs } from 'pinia';
@@ -21,6 +23,12 @@ import { computed, onMounted, ref, watch } from 'vue';
 type EnrollmentPath = RegistrationPath | 'returning';
 type Step = 'identity' | 'account';
 type WizardPhase = 'instructions' | 'registration';
+
+const props = defineProps<{
+    openIntakePeriods?: IntakePeriod[];
+    singleIntakeName?: string | null;
+    openIntakeNames?: string | null;
+}>();
 
 const { createPortalUser } = useGuestPortal();
 const { navigateTo, isItTrue, formatZimIdNumber, isZimbabweanNationalId } = useUtils();
@@ -271,6 +279,11 @@ const clearFormError = (field: string) => {
                         :active-path="activePath"
                         :highlighted-step="stepperHighlight"
                         @navigate="navigateToStep"
+                    />
+
+                    <PortalApplicationIntakeBanner
+                        :intake-name="props.singleIntakeName"
+                        :open-intake-names="props.openIntakeNames"
                     />
 
                     <div class="rounded-2xl border border-border bg-card p-5 text-card-foreground shadow-md dark:shadow-sm sm:p-8 lg:p-10">

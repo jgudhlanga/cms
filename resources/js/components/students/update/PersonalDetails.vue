@@ -7,6 +7,7 @@ import IdTypeComboSelect from '@/components/core/form/combobox/IdTypeComboSelect
 import MaritalStatusComboSelect from '@/components/core/form/combobox/MaritalStatusComboSelect.vue';
 import TitleComboSelect from '@/components/core/form/combobox/TitleComboSelect.vue';
 import DateOfBirth from '@/components/core/form/date/DateOfBirth.vue';
+import InputError from '@/components/core/form/InputError.vue';
 import BaseRadioGroup from '@/components/core/form/radio-group/BaseRadioGroup.vue';
 import IdNumber from '@/components/core/form/text/IdNumber.vue';
 import PassportNumber from '@/components/core/form/text/PassportNumber.vue';
@@ -35,12 +36,18 @@ const {
     disability_status,
 } = storeToRefs(useCreateApplicationFormStore());
 
-const disabilityOptions = DISABILITY_OPTIONS;
-const onRadioChange = (value: any) => {
-    disability_status.value = value;
-};
+const disabilityOptions = DISABILITY_OPTIONS.filter((option) => option.value !== 'prefer_not_to_say');
 
-defineProps<{ form: InertiaForm<CreateApplicationParams> }>();
+const props = withDefaults(
+    defineProps<{
+        form: InertiaForm<CreateApplicationParams>;
+        bare?: boolean;
+    }>(),
+    {
+        bare: false,
+    },
+);
+const { form } = props;
 const { isNativeCitizen, formatZimIdNumber } = useUtils();
 
 watch(id_number, (value) => {
@@ -52,12 +59,22 @@ watch(id_number, (value) => {
         id_number.value = formatted;
     }
 });
+
+const onDisabilityChange = (value: string | boolean | null) => {
+    disability_status.value = value;
+    clearFormErrors(form, 'disability_status');
+};
 </script>
 
 <template>
-    <BaseCard :title="$t('trans.personal_details')" :description="$t('trans.personal_details_description')">
-        <div class="mt-4 grid grid-cols-1 gap-6 md:grid-cols-3">
-            <TitleComboSelect :form="form" v-model="title" :error="form.errors.title" :is-required="true" />
+    <component
+        :is="bare ? 'div' : BaseCard"
+        :class="bare ? 'space-y-6' : undefined"
+        :title="bare ? undefined : $t('trans.personal_details')"
+        :description="bare ? undefined : $t('trans.personal_details_description')"
+    >
+        <div :class="bare ? 'grid grid-cols-1 gap-6 sm:grid-cols-2' : 'mt-4 grid grid-cols-1 gap-6 sm:grid-cols-2'">
+            <TitleComboSelect :form="form" v-model="title" data-field="title" :error="form.errors.title" :is-required="true" />
             <BaseInput
                 input-id="first_name"
                 :label="$t('trans.first_name')"
@@ -77,16 +94,21 @@ watch(id_number, (value) => {
                 @input="clearFormErrors(form, 'last_name')"
                 :error="form.errors.last_name"
             />
-            <GenderComboSelect :form="form" v-model="gender" :error="form.errors.gender" :is-required="true" />
-            <MaritalStatusComboSelect :form="form" v-model="maritalStatus" :error="form.errors.maritalStatus" :is-required="true" />
+            <GenderComboSelect :form="form" v-model="gender" data-field="gender" :error="form.errors.gender" :is-required="true" />
+            <MaritalStatusComboSelect
+                :form="form"
+                v-model="maritalStatus"
+                data-field="maritalStatus"
+                :error="form.errors.maritalStatus"
+                :is-required="true"
+            />
         </div>
-        <div class="grid-col-1 mt-4 grid gap-3 md:grid-cols-3">
-            <IdTypeComboSelect :form="form" v-model="idType" :error="form.errors.idType" :is-required="true" />
+        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+            <IdTypeComboSelect :form="form" v-model="idType" data-field="idType" :error="form.errors.idType" :is-required="true" />
             <template v-if="isNativeCitizen(idType?.label ?? '')">
                 <IdNumber
                     v-model="id_number"
                     :is-required="true"
-                    :show-format-hint="true"
                     @input="clearFormErrors(form, 'id_number')"
                     :error="form.errors.id_number"
                 />
@@ -98,7 +120,7 @@ watch(id_number, (value) => {
                     @input="clearFormErrors(form, 'passport_number')"
                     :error="form.errors.passport_number"
                 />
-                <CountryComboSelect :form="form" v-model="country" :error="form.errors.country" :is-required="true" />
+                <CountryComboSelect :form="form" v-model="country" data-field="country" :error="form.errors.country" :is-required="true" />
                 <BaseInput
                     input-id="study_permit_number"
                     :label="$t('trans.study_permit_number')"
@@ -107,6 +129,8 @@ watch(id_number, (value) => {
                     :error="form.errors.study_permit_number"
                 />
             </template>
+        </div>
+        <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
             <DateOfBirth
                 v-model="date_of_birth"
                 :is-required="true"
@@ -114,18 +138,21 @@ watch(id_number, (value) => {
                 :error="form.errors.date_of_birth"
                 @update:model-value="clearFormErrors(form, 'date_of_birth')"
             />
+            <div id="disability_status" class="flex w-full flex-col items-start">
+                <BaseRadioGroup
+                    :label="$t('trans.disability')"
+                    v-model="disability_status"
+                    class="w-full"
+                    :options="disabilityOptions"
+                    :error="form.errors.disability_status"
+                    orientation="vertical"
+                    :vertical-layout="true"
+                    mobile-stack
+                    @update:modelValue="onDisabilityChange"
+                    :is-required="true"
+                />
+                <InputError :message="form.errors.disability_status" />
+            </div>
         </div>
-        <div class="mt-3 flex w-full flex-col items-start">
-            <BaseRadioGroup
-                :label="$t('trans.disability')"
-                class="flex items-center justify-center"
-                :options="disabilityOptions"
-                :label-uppercase="true"
-                orientation="horizontal"
-                @update:modelValue="onRadioChange"
-                :is-required="true"
-                :vertical-layout="false"
-            />
-        </div>
-    </BaseCard>
+    </component>
 </template>

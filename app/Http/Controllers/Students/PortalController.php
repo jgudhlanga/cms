@@ -8,16 +8,17 @@ use App\DTO\Shared\NextOfKinDto;
 use App\DTO\Students\CreateApplicationDto;
 use App\DTO\Students\ProgramDto;
 use App\DTO\Students\StudentApplicationDto;
+use App\DTO\Students\UpdateStudentDto;
 use App\DTO\Users\UserDto;
 use App\Enums\Acl\RoleEnum;
 use App\Enums\Institution\LevelEnum;
 use App\Enums\Shared\AcademicLevelEnum;
-use App\Enums\Shared\FeeTypeEnum;
 use App\Enums\Shared\IdTypeEnum;
 use App\Enums\Shared\StatusEnum;
 use App\Enums\Shared\TenantEnum;
 use App\Helpers\Helper;
 use App\Helpers\PaymentHelper;
+use App\Helpers\PermissionHelper;
 use App\Helpers\WorkflowHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Shared\AddressRequest;
@@ -25,6 +26,7 @@ use App\Http\Requests\Shared\ContactRequest;
 use App\Http\Requests\Shared\NextOfKinRequest;
 use App\Http\Requests\Students\CreateApplicationRequest;
 use App\Http\Requests\Students\ProgramRequest;
+use App\Http\Requests\Students\UpdateStudentRequest;
 use App\Http\Requests\Users\UserRequest;
 use App\Http\Resources\AuditTrail\AuditTrailResource;
 use App\Http\Resources\Enrolments\EnrolmentResource;
@@ -90,6 +92,12 @@ class PortalController extends Controller
             'latestEnrolment.academicCalendar',
             'latestEnrolment.academicYearOption',
             'latestEnrolment.studentEnrolmentStatus',
+            'latestApplication.institutionDepartment.department',
+            'latestApplication.departmentLevel.level',
+            'latestApplication.departmentCourse.course',
+            'latestApplication.modeOfStudy',
+            'latestApplication.intakePeriod',
+            'latestApplication.departmentWorkflowStep.workflowStep',
         ]);
 
         return Inertia::render('portal/student/Index', [
@@ -100,8 +108,15 @@ class PortalController extends Controller
     public function create(): Response
     {
         $this->logoutIfAuthenticated();
+        $openIntakes = $this->applicationFeeService->openIntakePeriodsForPortal();
 
-        return Inertia::render('portal/guest/RegistrationUserForm');
+        return Inertia::render('portal/guest/RegistrationUserForm', [
+            'openIntakePeriods' => IntakePeriodResource::collection($openIntakes),
+            'singleIntakeName' => $openIntakes->count() === 1 ? $openIntakes->first()->name : null,
+            'openIntakeNames' => $openIntakes->count() > 1
+                ? $openIntakes->pluck('name')->join(', ')
+                : null,
+        ]);
     }
 
     public function store(UserRequest $request, EnrollmentLookupService $enrollmentLookup): RedirectResponse
@@ -128,6 +143,7 @@ class PortalController extends Controller
         );
 
         $user->assignRole(RoleEnum::STUDENT);
+        $user->givePermissionTo(PermissionHelper::portalPermissions());
         $user->email_verified_at = now();
         $user->registration_instructions_acknowledged_at = now();
         $user->save();
@@ -180,6 +196,9 @@ class PortalController extends Controller
             'hasPaidApplicationFee' => PaymentHelper::hasPaidApplicationFeeAndNotApplied($user, $intakePeriod),
             'levelsWithPayment' => LevelResource::collection($levelsWithPayment),
             'applicationStep' => $applicationFee !== null && $applicationFee->isPaid() ? 'apply' : 'account',
+            'intakeName' => $intakePeriod->name,
+            'selectedLevelId' => session('application.level_id'),
+            'selectedLevelName' => $this->resolveSelectedLevelName(),
             'registrationPrefill' => [
                 'id_number' => session('registration.id_number'),
                 'passport_number' => session('registration.passport_number'),
@@ -194,16 +213,26 @@ class PortalController extends Controller
      */
     public function levelOptions(): Response
     {
-        $this->authorize('manageStudentPersonalDetails');
+        $this->authorizeApplicationLevelSelection();
         // the levels on the offer
         $levels = Level::where('show_on_current_application_period', 1)->orderBy('position')->orderBy('name')->get();
         $openIntakes = $this->applicationFeeService->openIntakePeriodsForPortal();
+        $openLevelCount = $levels->count();
+        $hasActiveIntakes = $openIntakes->isNotEmpty();
+        $availabilityIssue = match (true) {
+            $openLevelCount === 0 => 'no_open_levels',
+            ! $hasActiveIntakes => 'no_active_intakes',
+            default => null,
+        };
 
         return Inertia::render('portal/application/SelectLevelOption', [
             'levels' => LevelResource::collection($levels),
             'intakePeriods' => IntakePeriodResource::collection($openIntakes),
             'requiresIntakeSelection' => $openIntakes->count() > 1,
             'applicationStep' => 'level',
+            'openLevelCount' => $openLevelCount,
+            'hasActiveIntakes' => $hasActiveIntakes,
+            'availabilityIssue' => $availabilityIssue,
         ]);
     }
 
@@ -235,6 +264,7 @@ class PortalController extends Controller
             return to_route('portal.application.fee-payment');
         }
 
+        $this->applicationFeeService->abandonUnpaidApplicationFee($request->user());
         session(['application.level_id' => $level->id]);
 
         return to_route('portal.application.create');
@@ -312,6 +342,7 @@ class PortalController extends Controller
     public function editApplication(StudentApplication $studentApplication): Response
     {
         $this->authorize('manageStudentPersonalDetails');
+        $this->assertOwnsStudentApplication($studentApplication);
         $application = EnrolmentResource::make($studentApplication);
 
         return Inertia::render('portal/application/EditProgram', compact('application'));
@@ -323,6 +354,7 @@ class PortalController extends Controller
     public function createProgram(Student $student): Response
     {
         $this->authorize('manageStudentPersonalDetails');
+        $this->assertOwnsStudent($student);
         $oLevelResults = AcademicLevelResource::collection($student?->oLevelResults);
         $allowedLevels = []; // Level::where('allowed_applications_per_level', '>', '1')->pluck('id')->toArray();
         $currentLevels = $student->applications()->get()->map(fn ($program) => $program?->department_level_id)->filter()->toArray();
@@ -339,6 +371,7 @@ class PortalController extends Controller
     public function storeProgram(Student $student, ProgramRequest $request): RedirectResponse
     {
         $this->authorize('manageStudentPersonalDetails');
+        $this->assertOwnsStudent($student);
 
         DB::beginTransaction();
         [$mainSubjects, $examSittings, $examYears, $otherSubjects, $otherGrades, $otherExamYears, $otherSittings, $modeOfStudyId, $intakePeriodId] = $this->extractRequestFilters();
@@ -391,6 +424,7 @@ class PortalController extends Controller
     public function updateApplication(StudentApplication $studentApplication, ProgramRequest $request): RedirectResponse
     {
         $this->authorize('manageStudentPersonalDetails');
+        $this->assertOwnsStudentApplication($studentApplication);
 
         DB::beginTransaction();
         try {
@@ -429,6 +463,18 @@ class PortalController extends Controller
     public function profilePersonalInformation(): Response
     {
         return $this->renderProfileSection('basic_info', 'manageStudentPersonalDetails');
+    }
+
+    /**
+     * @throws AuthorizationException
+     */
+    public function updatePersonalDetails(UpdateStudentRequest $request): void
+    {
+        $this->authorize('manageStudentPersonalDetails');
+
+        $student = $this->getStudent($request);
+
+        $this->studentRepository->update($student, UpdateStudentDto::fromUpdateStudentRequest($request));
     }
 
     /**
@@ -547,6 +593,18 @@ class PortalController extends Controller
 
     // ========= Helpers =========
 
+    private function resolveSelectedLevelName(): ?string
+    {
+        $levelId = session('application.level_id');
+
+        if (! $levelId) {
+            $applicationFee = $this->applicationFeeService->activeApplicationFee(request()->user());
+            $levelId = $applicationFee?->level_id;
+        }
+
+        return $levelId ? Level::query()->find($levelId)?->name : null;
+    }
+
     /**
      * @throws AuthorizationException
      */
@@ -579,6 +637,12 @@ class PortalController extends Controller
             'latestEnrolment.academicCalendar',
             'latestEnrolment.academicYearOption',
             'latestEnrolment.studentEnrolmentStatus',
+            'latestApplication.institutionDepartment.department',
+            'latestApplication.departmentLevel.level',
+            'latestApplication.departmentCourse.course',
+            'latestApplication.modeOfStudy',
+            'latestApplication.intakePeriod',
+            'latestApplication.departmentWorkflowStep.workflowStep',
             'contacts',
             'addresses',
             'nextOfKins',
@@ -701,6 +765,52 @@ class PortalController extends Controller
         return $intakePeriodId
             ? IntakePeriod::find($intakePeriodId)
             : IntakePeriod::orderByDesc('end_date')->first();
+    }
+
+    /**
+     * @throws AuthorizationException
+     */
+    private function authorizeApplicationLevelSelection(): void
+    {
+        $user = request()->user();
+
+        if ($user === null) {
+            abort(403);
+        }
+
+        if ($user->can('manageOwnStudentPersonalDetails:students')) {
+            return;
+        }
+
+        if (! $user->has_student_profile && $this->userHasStudentRole($user)) {
+            return;
+        }
+
+        $this->authorize('manageStudentPersonalDetails');
+    }
+
+    private function userHasStudentRole(User $user): bool
+    {
+        return $user->hasRole(RoleEnum::STUDENT->value)
+            || $user->hasRole(RoleEnum::STUDENT->name());
+    }
+
+    private function assertOwnsStudentApplication(StudentApplication $studentApplication): void
+    {
+        $studentProfile = auth()->user()?->studentProfile;
+
+        if ($studentProfile === null || $studentApplication->student_id !== $studentProfile->id) {
+            abort(403);
+        }
+    }
+
+    private function assertOwnsStudent(Student $student): void
+    {
+        $studentProfile = auth()->user()?->studentProfile;
+
+        if ($studentProfile === null || $student->id !== $studentProfile->id) {
+            abort(403);
+        }
     }
 
     public function errors(string $message): Response

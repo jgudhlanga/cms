@@ -20,6 +20,7 @@ import {
 import { IconName } from '@/lib/icons';
 import HttpService from '@/services/http.service';
 import { hasAbility } from '@/lib/permissions';
+import { buildStudentShowUrl } from '@/lib/studentShowNavigation';
 import Hostels from '@/pages/hms/components/tabs/Hostels.vue';
 import Rooms from '@/pages/hms/components/tabs/Rooms.vue';
 import Students from '@/pages/hms/components/tabs/Students.vue';
@@ -542,7 +543,7 @@ export const useHms = () => {
                         return row.original.attributes.studentName ?? '--';
                     }
                     return textLink(
-                        route('students.show', String(studentId)),
+                        buildStudentShowUrl(studentId, { from: 'hms' }),
                         row.original.attributes.studentName ?? '--',
                     );
                 },
@@ -609,7 +610,7 @@ export const useHms = () => {
                         {
                             key: 'view',
                             action: () =>
-                                onView(hasAbility('view:students'), route('students.show', String(studentId ?? ''))),
+                                onView(hasAbility('view:students'), buildStudentShowUrl(String(studentId ?? ''), { from: 'hms' })),
                         },
                     ]);
                 },

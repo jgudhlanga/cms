@@ -23,10 +23,18 @@ import { Student, StudentPersonalDetailParams } from '@/types/students';
 import { useForm } from '@inertiajs/vue3';
 import { ref, watch } from 'vue';
 
+interface Props {
+    usePortalUpdate?: boolean;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+    usePortalUpdate: false,
+});
+
 const { isNativeCitizen } = useUtils();
 const student = ref<Student | null>(null);
 
-const { updateStudent, updateStudentSchema } = useStudentPortal();
+const { updateStudent, updatePortalPersonalDetails, updateStudentSchema } = useStudentPortal();
 
 const form = useForm<StudentPersonalDetailParams>({
     country: null,
@@ -101,7 +109,11 @@ const save = async () => {
     }
     try {
         await updateStudentSchema(isNative, studentId).parseAsync(form);
-        await updateStudent(studentId, form);
+        if (props.usePortalUpdate) {
+            await updatePortalPersonalDetails(form);
+        } else {
+            await updateStudent(studentId, form);
+        }
     } catch (error: any) {
         form.setError(error.format());
     }

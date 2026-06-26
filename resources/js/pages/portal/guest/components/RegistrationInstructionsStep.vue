@@ -23,31 +23,12 @@ const onContinue = () => {
 
 <template>
     <div class="flex flex-col space-y-6">
-        <div>
-            <h2 class="text-lg font-semibold text-foreground">{{ $t('trans.registration_instructions_title') }}</h2>
-            <p class="mt-1 text-sm text-muted-foreground">{{ $t('trans.registration_instructions_subtitle') }}</p>
-        </div>
-
-        <section class="space-y-4 rounded-xl border border-border bg-muted/20 p-4 sm:p-5">
-            <div>
-                <h3 class="text-sm font-medium text-foreground">{{ $t('trans.enrollment_important_notices') }}</h3>
-                <ul class="mt-3 space-y-3 text-sm leading-relaxed text-muted-foreground">
-                    <li class="rounded-md border border-border/60 bg-background/60 p-3">
-                        {{ $t('trans.ui_college_advert_warning') }}
-                    </li>
-                    <li class="rounded-md border border-border/60 bg-background/60 p-3">
-                        {{ $t('trans.ui_ecocash_users_payment_device_warning') }}
-                    </li>
-                </ul>
-            </div>
-
-            <div>
-                <h3 class="text-sm font-medium text-foreground">{{ $t('trans.registration_what_you_need') }}</h3>
-                <ul class="mt-2 list-inside list-disc space-y-1 text-sm text-muted-foreground">
-                    <li>{{ $t('trans.enrollment_enter_national_id') }}</li>
-                    <li>{{ $t('trans.email') }}</li>
-                </ul>
-            </div>
+        <section class="rounded-xl border border-border bg-muted/20 p-4 sm:p-5">
+            <h3 class="text-sm font-medium text-foreground">{{ $t('trans.registration_what_you_need') }}</h3>
+            <ul class="mt-2 list-inside list-disc space-y-1 text-sm text-muted-foreground">
+                <li>{{ $t('trans.enrollment_enter_national_id') }}</li>
+                <li>{{ $t('trans.email') }}</li>
+            </ul>
         </section>
 
         <fieldset>

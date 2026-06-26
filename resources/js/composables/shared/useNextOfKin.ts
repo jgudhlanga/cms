@@ -1,6 +1,7 @@
 import { useCustomConfirmDialog } from '@/composables/core/useCustomConfirmDialog';
 import { useDataTables } from '@/composables/core/useDataTables';
 import { useSharedFormSchema } from '@/composables/core/useSharedFormSchema';
+import { addressLabel } from '@/lib/addressFields';
 import { forbiddenAlert, openModal, successAlert } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
 import { buildFormOptions, mergeValidationSchema } from '@/lib/forms';
@@ -22,10 +23,10 @@ export const useNextOfKin = () => {
             { header: trans_choice('trans.name', 1), accessorKey: 'attributes.name' },
             { header: trans_choice('trans.relationship', 1), accessorKey: 'attributes.relationship' },
             { header: trans('trans.phone_number'), accessorKey: 'attributes.phoneNumber' },
-            { header: trans('trans.address_1'), accessorKey: 'attributes.address1' },
-            { header: trans('trans.address_2'), accessorKey: 'attributes.address2' },
-            { header: trans('trans.address_3'), accessorKey: 'attributes.address3' },
-            { header: trans('trans.address_4'), accessorKey: 'attributes.address4' },
+            { header: addressLabel(1), accessorKey: 'attributes.address1' },
+            { header: addressLabel(2), accessorKey: 'attributes.address2' },
+            { header: addressLabel(3), accessorKey: 'attributes.address3' },
+            { header: addressLabel(4), accessorKey: 'attributes.address4' },
             {
                 header: trans_choice('trans.action', 2),
                 accessorKey: 'actions',
@@ -57,7 +58,11 @@ export const useNextOfKin = () => {
     };
 
     const onOpenModal = (nextOfKin?: NextOfKin) => {
-        const allowed = hasAbility(['create:next-of-kins', 'update:next-of-kins', 'manageStudentMetadata:admin']);
+        const allowed = hasAbility([
+            'create:next-of-kins',
+            'update:next-of-kins',
+            'manageOwnStudentContactDetails:students',
+        ]);
         if (!allowed) return forbiddenAlert();
         openModal({ name: APP_MODULE_KEYS.next_of_kin, edit: nextOfKin });
     };

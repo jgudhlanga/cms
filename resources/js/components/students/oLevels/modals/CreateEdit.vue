@@ -1,14 +1,11 @@
 <script setup lang="ts">
 import SubjectComboSelect from '@/components/core/form/combobox/SubjectComboSelect.vue';
 import InputError from '@/components/core/form/InputError.vue';
-import BaseRadioGroup from '@/components/core/form/radio-group/BaseRadioGroup.vue';
-import RequiredIndicator from '@/components/core/form/RequiredIndicator.vue';
-import SpinnerComponent from '@/components/core/loader/SpinnerComponent.vue';
 import BaseModal from '@/components/core/modal/BaseModal.vue';
-import SelectSitting from '@/components/students/update/SelectSitting.vue';
-import SelectYear from '@/components/students/update/SelectYear.vue';
-import { Label } from '@/components/ui/label';
+import OLevelResultFields from '@/components/students/oLevels/OLevelResultFields.vue';
+import ItemLabel from '@/components/students/update/mobile/ItemLabel.vue';
 import { useOLevelResults } from '@/composables/students/useOLevelResults';
+import { SizeVariant } from '@/enums/sizes';
 import { closeModal, errorAlert, getModalEdit, successAlert } from '@/lib/alerts';
 import { APP_MODULE_KEYS, EXAM_SITTINGS } from '@/lib/constants';
 import { validateSelectOption } from '@/lib/forms';
@@ -17,8 +14,10 @@ import { OLevelSubjectResult, OLevelSubjectResultParams } from '@/types/enrolmen
 import { RadioGroupOption } from '@/types/forms';
 import { Grade } from '@/types/institution';
 import { SelectOption } from '@/types/utils';
+import { useMediaQuery } from '@vueuse/core';
 import { useForm } from '@inertiajs/vue3';
-import { ref, watch } from 'vue';
+import { trans } from 'laravel-vue-i18n';
+import { computed, ref, watch } from 'vue';
 import { z } from 'zod';
 
 const form = useForm<OLevelSubjectResultParams>({
@@ -40,53 +39,66 @@ const sittingOption = ref<SelectOption | null>(null);
 
 const { modals } = useModalStore();
 const { isLoading, grades } = useOLevelResults();
+const isMobile = useMediaQuery('(max-width: 639px)');
 
-// Schema
-// Updated Schema - better string handling
 const SubjectResultSchema = z.object({
     exam_year: z
         .union([z.string(), z.number()])
         .refine((v) => {
-            // Convert to string first, then to number for validation
             const yearStr = String(v).trim();
             if (yearStr === '') return false;
 
             const year = Number(yearStr);
             return !isNaN(year) && year > 1900 && year <= new Date().getFullYear();
         }, 'Year must be between 1900 and current year')
-        .transform((v) => String(v)), // Ensure it's always a string after validation
+        .transform((v) => String(v)),
     exam_sitting: z.any().refine(validateSelectOption, 'Exam sitting is required'),
     grade_id: z.string().min(1, 'Grade is required'),
 });
 
-// Helper functions
+const subjectId = computed(() => String(result.value?.id ?? 'new'));
+const isEditing = computed(() => Number(result.value?.attributes?.resultId) > 0);
+const modalTitle = computed(() =>
+    isEditing.value ? trans('trans.ui_edit_o_level_result') : trans('trans.ui_add_o_level_result'),
+);
+const modalSize = computed(() => (isMobile.value ? SizeVariant.full : SizeVariant.sm));
+
 const getExamSitting = (key: string) => {
     const sitting = examSittings.value.find((s) => String(s.value) === key);
     return sitting ? String(sitting.label) : '---';
 };
 
-const getOptionsForSubject = (): RadioGroupOption[] => {
+const gradeOptions = computed((): RadioGroupOption[] => {
     if (!grades.value) return [];
 
     return grades.value
         .filter((grade: Grade) => Number(grade.attributes.position) < 4)
         .map((grade: Grade) => ({
-            value: `${grade.id}`,
+            value: `${subjectId.value}|${grade.id}`,
             label: grade.attributes?.name,
-            inputId: `radio_${grade.id}`,
+            inputId: `radio_${subjectId.value}_${grade.id}`,
         }));
-};
+});
 
-// Validation helper - FIXED: uses form data directly
+const fieldErrors = computed(() => ({
+    exam_year: subjectErrors.value.exam_year,
+    exam_sitting: subjectErrors.value.exam_sitting,
+    grade_id: subjectErrors.value.grade_id,
+}));
+
 const validateSubjectForm = (): SubjectErrors => {
     const formData = {
         subject_id: String(subjectOption.value?.value),
         exam_year: form.exam_year,
-        exam_sitting: String(sittingOption.value?.value),
+        exam_sitting: sittingOption.value,
         grade_id: form.grade_id,
     };
     const parsed = SubjectResultSchema.safeParse(formData);
     const errors: SubjectErrors = {};
+
+    if (!subjectOption.value?.value) {
+        errors.subject_id = 'Subject is required';
+    }
 
     if (!parsed.success) {
         parsed.error.errors.forEach((err) => {
@@ -124,9 +136,7 @@ watch(modals!, () => {
 const emit = defineEmits(['saved']);
 
 const saveSubjectResult = () => {
-    // Reset errors
     subjectErrors.value = {};
-    // Validate form data
     const validationErrors = validateSubjectForm();
 
     if (Object.keys(validationErrors).length > 0) {
@@ -143,7 +153,7 @@ const saveSubjectResult = () => {
 
     try {
         Object.assign(form, payload);
-        if (Number(result?.value?.attributes?.resultId) > 0) {
+        if (isEditing.value) {
             handleUpdate(String(result?.value?.attributes?.resultId));
         } else {
             handleCreate();
@@ -173,7 +183,7 @@ const handleUpdate = (resultId: string) => {
     form.put(route('portal.update-o-level-results', resultId), {
         preserveScroll: true,
         onSuccess: () => {
-            successAlert('Result successfully created');
+            successAlert('Result successfully updated');
             subjectErrors.value = {};
             form.reset();
             emit('saved');
@@ -205,42 +215,30 @@ const handleSubmissionErrors = (errors: any): void => {
 <template>
     <BaseModal
         :name="APP_MODULE_KEYS.o_level_subjects"
-        :title="`${result ? $t('trans.create') : $t('trans.create')} O Level Result`"
+        :title="modalTitle"
+        :size="modalSize"
         :on-form-action="() => saveSubjectResult()"
         :form="form"
+        stack-footer-on-mobile
     >
         <template #body>
-            <div class="flex flex-col">
+            <div v-if="isEditing" class="flex flex-col space-y-1">
+                <ItemLabel :label="$tChoice('trans.subject', 1)" />
+                <p class="text-sm font-medium text-foreground">{{ result?.attributes?.subject }}</p>
+            </div>
+            <div v-else class="flex flex-col">
                 <SubjectComboSelect :form="form" :is-required="true" v-model="subjectOption" />
                 <InputError v-if="subjectErrors.subject_id" :message="subjectErrors.subject_id" class="mt-1 flex w-full lowercase" />
             </div>
-            `
-            <div class="">
-                <Label>{{ $tChoice('trans.year', 1) }}<RequiredIndicator /></Label>
-                <SelectYear input-id="exam_year" v-model="form.exam_year" />
-                <InputError v-if="subjectErrors.exam_year" :message="subjectErrors.exam_year" class="mt-1 flex w-full lowercase" />
-            </div>
-            <div class="flex flex-col space-y-3">
-                <Label>{{ $tChoice('trans.sitting', 1) }}<RequiredIndicator /></Label>
-                <SelectSitting class="flex w-full" v-model="sittingOption" />
-                <InputError v-if="subjectErrors.exam_sitting" :message="subjectErrors.exam_sitting" class="mt-1 flex w-full lowercase" />
-            </div>
-            <div class="flex flex-col space-y-3">
-                <Label>{{ $tChoice('trans.grade', 1) }}<RequiredIndicator /></Label>
-                <SpinnerComponent class="flex w-full items-center justify-center" v-if="isLoading" />
-                <BaseRadioGroup
-                    v-else
-                    class="flex items-center"
-                    :options="getOptionsForSubject()"
-                    :default-value="String(form.grade_id)"
-                    @update:modelValue="(value) => (form.grade_id = value)"
-                    :label-uppercase="true"
-                    :is-required="true"
-                    orientation="horizontal"
-                    :vertical-layout="false"
-                />
-                <InputError v-if="subjectErrors.grade_id" :message="subjectErrors.grade_id" class="mt-1 flex w-full lowercase" />
-            </div>
+            <OLevelResultFields
+                :subject-id="subjectId"
+                :grade-options="gradeOptions"
+                :errors="fieldErrors"
+                :is-loading="isLoading"
+                v-model:exam-year="form.exam_year"
+                v-model:exam-sitting="sittingOption"
+                v-model:grade-id="form.grade_id"
+            />
         </template>
     </BaseModal>
 </template>

@@ -1,7 +1,13 @@
 import { useCreateApplicationFormStore } from '@/store/portal/useCreateApplicationFormStore';
 import { useUpdateProgramFormStore } from '@/store/portal/useUpdateProgramFormStore';
+import {
+    collectDistinctExamYears,
+    MAX_DISTINCT_EXAM_YEARS,
+    validateExamYear,
+} from '@/lib/examYear';
 import { CreateApplicationParams, ProgramParams } from '@/types/portal';
 import { InertiaForm } from '@inertiajs/vue3';
+import { trans } from 'laravel-vue-i18n';
 import { storeToRefs } from 'pinia';
 
 type SittingOption = { value: string; label: string };
@@ -90,27 +96,56 @@ export const useApplicationFormHelper = (isEditing?: boolean) => {
             payment_date: storeRefs.payment_date?.value ?? null,
         });
     };
+
+    const dateOfBirth = () => storeRefs.date_of_birth?.value ?? null;
+
+    const validateDistinctExamYears = (): string | null => {
+        const distinctYears = collectDistinctExamYears(storeRefs.o_level_years?.value, storeRefs.o_level_other_years?.value);
+        if (distinctYears.length > MAX_DISTINCT_EXAM_YEARS) {
+            return trans('trans.portal_o_level_max_exam_years_exceeded', { max: String(MAX_DISTINCT_EXAM_YEARS) });
+        }
+        return null;
+    };
+
     const validateMainSubjects = (mainSubjectCount: number): string[] => {
         const selectedSubjects = storeRefs.o_level_subject_ids?.value ?? {};
         const selectedCount = Object.keys(selectedSubjects).length;
         const errors: string[] = [];
+
+        const primaryYearError = validateExamYear(storeRefs.o_level_primary_year?.value, dateOfBirth());
+        if (primaryYearError) {
+            errors.push(`Primary examination: ${primaryYearError}`);
+        }
+
+        const primarySitting = storeRefs.o_level_primary_sitting?.value?.value;
+        if (!primarySitting || String(primarySitting).trim() === '') {
+            errors.push('Primary examination: Sitting is required.');
+        }
+
         if (selectedCount < mainSubjectCount) {
             errors.push(`You must provide exactly ${mainSubjectCount} main subjects grades. Currently: ${selectedCount}`);
         }
+
         Object.keys(selectedSubjects).forEach((subjectId, index) => {
             const subjectLabel = `Main subject #${index + 1} (ID: ${subjectId})`;
             const year = storeRefs.o_level_years?.value?.[subjectId];
-
             const sittingObj = storeRefs.o_level_sittings?.value?.[subjectId] as SittingOption | undefined;
             const sitting = sittingObj?.value;
 
-            if (!year || isNaN(Number(year))) {
-                errors.push(`${subjectLabel}: Exam year is required.`);
+            const yearError = validateExamYear(year, dateOfBirth());
+            if (yearError) {
+                errors.push(`${subjectLabel}: ${yearError}`);
             }
             if (!sitting || String(sitting).trim() === '') {
                 errors.push(`${subjectLabel}: Sitting is required.`);
             }
         });
+
+        const distinctYearsError = validateDistinctExamYears();
+        if (distinctYearsError) {
+            errors.push(distinctYearsError);
+        }
+
         return errors;
     };
 
@@ -133,7 +168,6 @@ export const useApplicationFormHelper = (isEditing?: boolean) => {
 
         const keys = Object.keys(selectedSubjectIds);
 
-        // Must have exactly 2 subjects
         if (keys.length < otherSubjectCount) {
             errors.push(`You must provide exactly ${otherSubjectCount} other subjects. Provided: ${keys.length}`);
         }
@@ -142,10 +176,11 @@ export const useApplicationFormHelper = (isEditing?: boolean) => {
 
         keys.forEach((key, index) => {
             const label = `Other subject #${index + 1}`;
-            const subjectId = extractSubjectId(selectedSubjectIds[key]); // 👈 safe extraction
+            const subjectId = extractSubjectId(selectedSubjectIds[key]);
             const gradeId = gradeIds[key];
             const year = years[key];
-            const sitting = sittings[key];
+            const sittingObj = sittings[key] as SittingOption | undefined;
+            const sitting = sittingObj?.value ?? sittingObj;
 
             if (!subjectId || isNaN(subjectId)) {
                 errors.push(`${label}: Subject is required.`);
@@ -156,11 +191,12 @@ export const useApplicationFormHelper = (isEditing?: boolean) => {
                 seenSubjects.add(subjectId);
             }
 
-            if (!year || isNaN(Number(year))) {
-                errors.push(`${label}: Year is required.`);
+            const yearError = validateExamYear(year, dateOfBirth());
+            if (yearError) {
+                errors.push(`${label}: ${yearError}`);
             }
 
-            if (!sitting || sitting.toString().trim() === '') {
+            if (!sitting || String(sitting).trim() === '') {
                 errors.push(`${label}: Sitting is required.`);
             }
 
@@ -168,6 +204,12 @@ export const useApplicationFormHelper = (isEditing?: boolean) => {
                 errors.push(`${label}: Grade is required.`);
             }
         });
+
+        const distinctYearsError = validateDistinctExamYears();
+        if (distinctYearsError && !errors.includes(distinctYearsError)) {
+            errors.push(distinctYearsError);
+        }
+
         return errors;
     };
 

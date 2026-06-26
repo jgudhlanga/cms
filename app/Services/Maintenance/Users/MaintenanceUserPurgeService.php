@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Maintenance\Users;
 
 use App\Models\Ledgers\Ledger;
+use App\Models\Students\ApplicationFee;
 use App\Models\Users\User;
 use App\Queries\Maintenance\NonEnrolledStudentUsersQuery;
 use Illuminate\Support\Facades\DB;
@@ -92,12 +93,26 @@ class MaintenanceUserPurgeService
             ->get()
             ->each(fn (Ledger $ledger) => $this->forceDeleteLedger($ledger));
 
+        $user->applicationFees()
+            ->get()
+            ->each(fn (ApplicationFee $applicationFee) => $this->forceDeleteApplicationFee($applicationFee));
+
         $user->preference()?->delete();
 
         $this->forceDeleteUserMedia($user);
 
         $user->syncRoles([]);
         $user->syncPermissions([]);
+    }
+
+    private function forceDeleteApplicationFee(ApplicationFee $applicationFee): void
+    {
+        $applicationFee->ledgerTransactions()
+            ->withTrashed()
+            ->get()
+            ->each(fn (Ledger $ledger) => $this->forceDeleteLedger($ledger));
+
+        $applicationFee->delete();
     }
 
     private function forceDeleteLedger(Ledger $ledger): void

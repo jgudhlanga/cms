@@ -24,6 +24,10 @@ export const useUpdateProgramFormStore = defineStore('update-program-form', {
             o_level_other_grade_ids: null,
             o_level_other_years: null,
             o_level_other_sittings: null,
+            o_level_primary_year: null,
+            o_level_primary_sitting: null,
+            o_level_resit_subjects: null,
+            o_level_other_resit_rows: null,
         };
     },
     persist: true,

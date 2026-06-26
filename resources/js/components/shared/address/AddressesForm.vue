@@ -66,33 +66,29 @@ const save = () => {
         :form="form"
     >
         <template #body>
-            <div class="grid grid-cols-1 gap-3">
+            <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
                 <Address1
                     v-model="form.address_1"
                     @input="clearFormErrors(form, 'address_1')"
                     :error="form.errors.address_1"
                     :is-required="true"
-                    :label-uppercase="true"
                 />
                 <Address2
                     v-model="form.address_2"
                     @input="clearFormErrors(form, 'address_2')"
                     :error="form.errors.address_2"
                     :is-required="true"
-                    :label-uppercase="true"
                 />
                 <Address3
                     v-model="form.address_3"
                     @input="clearFormErrors(form, 'address_3')"
                     :error="form.errors.address_3"
                     :is-required="true"
-                    :label-uppercase="true"
                 />
                 <Address4
                     v-model="form.address_4"
                     @input="clearFormErrors(form, 'address_4')"
                     :error="form.errors.address_4"
-                    :label-uppercase="true"
                 />
                 <BaseCheckbox input-id="address_is_main" v-model="form.address_is_main" :label="$t('trans.main')" :label-uppercase="true" />
             </div>

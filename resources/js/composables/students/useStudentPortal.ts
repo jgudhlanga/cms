@@ -16,7 +16,8 @@ import { useUpdateProgramFormStore } from '@/store/portal/useUpdateProgramFormSt
 import { Step } from '@/types/forms';
 import { Student } from '@/types/students';
 import { CustomTab, SelectOption } from '@/types/utils';
-import { InertiaForm, router } from '@inertiajs/vue3';
+import { usePortalLevelSelection } from '@/composables/students/usePortalLevelSelection';
+import { InertiaForm } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 import { h, ref } from 'vue';
 import { ZodObject } from 'zod';
@@ -236,6 +237,17 @@ export function useStudentPortal() {
         }
     };
 
+    const updatePortalPersonalDetails = async (form: InertiaForm<any>) => {
+        try {
+            form.put(
+                route('portal.profile.personal-information.update'),
+                buildFormOptions(form, updateSuccessMessage(), updateErrorMessage(), APP_MODULE_KEYS.student_personal_details),
+            );
+        } catch (error: any) {
+            form.setError(error.format());
+        }
+    };
+
     const getMainSittingYear = (yearData: Record<string, string>): string | null => {
         if (yearData) {
             const years: any = Object.values(yearData).filter(Boolean);
@@ -265,23 +277,8 @@ export function useStudentPortal() {
         return null;
     };
 
-    const selectLevel = (levelId: string, intakePeriodId?: number | null, requiresIntakeSelection = false) => {
-        const payload: Record<string, string | number> = {
-            level_id: levelId,
-        };
+    const { selectLevel } = usePortalLevelSelection();
 
-        if (intakePeriodId) {
-            payload.intake_period_id = intakePeriodId;
-        }
-
-        router.post(route('portal.application.select-level'), payload, {
-            onError: () => {
-                if (requiresIntakeSelection && !intakePeriodId) {
-                    return;
-                }
-            },
-        });
-    };
     return {
         steps,
         applicationFormSchema,
@@ -291,6 +288,7 @@ export function useStudentPortal() {
         isLoading,
         onOpenPersonalDetailsModal,
         updateStudent,
+        updatePortalPersonalDetails,
         updateStudentSchema,
         getMainSittingYear,
         getMainSitting,

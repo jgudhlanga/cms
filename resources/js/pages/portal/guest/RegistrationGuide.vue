@@ -61,9 +61,6 @@ const isIdentityStep = computed(() =>
 const isCreateAccount = computed(() => props.highlightedStep === 'create-account');
 
 const headerTitleKey = computed(() => {
-    if (isInstructions.value) {
-        return 'trans.registration_instructions_title';
-    }
     if (isIdentityStep.value) {
         return 'trans.enrollment_step_identity';
     }
@@ -75,9 +72,6 @@ const headerTitleKey = computed(() => {
 });
 
 const headerSubtitleKey = computed(() => {
-    if (isInstructions.value) {
-        return 'trans.registration_instructions_subtitle';
-    }
     if (props.highlightedStep === 'verify-identity') {
         return 'trans.registration_guide_identity_new_body';
     }
@@ -96,15 +90,6 @@ const headerSubtitleKey = computed(() => {
 type GuideItem = { key: string; variant?: 'notice' };
 
 const currentStepItems = computed((): GuideItem[] => {
-    if (isInstructions.value) {
-        return [
-            { key: 'trans.ui_college_advert_warning', variant: 'notice' },
-            { key: 'trans.ui_ecocash_users_payment_device_warning', variant: 'notice' },
-            { key: 'trans.enrollment_enter_national_id' },
-            { key: 'trans.email' },
-        ];
-    }
-
     if (props.highlightedStep === 'verify-identity') {
         return [
             { key: 'trans.enrollment_enter_national_id' },
@@ -148,17 +133,6 @@ const currentStepSectionTitleKey = computed(() => {
     return 'trans.registration_guide_what_happens_next';
 });
 
-const instructionNotices = computed((): GuideItem[] => {
-    if (!isInstructions.value) {
-        return [];
-    }
-
-    return [
-        { key: 'trans.ui_college_advert_warning', variant: 'notice' },
-        { key: 'trans.ui_ecocash_users_payment_device_warning', variant: 'notice' },
-    ];
-});
-
 const instructionRequirements = computed((): GuideItem[] => {
     if (!isInstructions.value) {
         return [];
@@ -169,30 +143,12 @@ const instructionRequirements = computed((): GuideItem[] => {
 </script>
 
 <template>
-    <div class="hidden min-h-svh items-center border-l border-border bg-muted/30 py-10 text-foreground lg:flex lg:flex-1">
-        <div class="mx-auto max-w-sm space-y-6 p-6 xl:max-w-md">
-            <header>
+    <div class="hidden min-h-svh items-start border-l border-border bg-muted/30 p-4 pt-2 text-foreground sm:p-6 md:pt-6 lg:flex lg:flex-1 lg:p-10 xl:p-12">
+        <div class="mx-auto max-w-sm space-y-6 xl:max-w-md">
+            <header v-if="!isInstructions">
                 <h2 class="text-lg font-semibold text-foreground">{{ $t(headerTitleKey) }}</h2>
                 <p class="mt-1 text-sm text-muted-foreground">{{ $t(headerSubtitleKey) }}</p>
             </header>
-
-            <section v-if="isInstructions" class="rounded-xl border border-border/70 bg-background/50 p-4">
-                <p class="text-sm text-muted-foreground">{{ $t('trans.registration_guide_after_instructions') }}</p>
-                <p class="mt-3 text-xs text-muted-foreground">{{ $t('trans.registration_instructions_time_estimate') }}</p>
-            </section>
-
-            <section v-if="isInstructions">
-                <h3 class="text-sm font-medium text-foreground">{{ $t('trans.enrollment_important_notices') }}</h3>
-                <ul class="mt-3 space-y-3 text-sm text-muted-foreground">
-                    <li
-                        v-for="(item, index) in instructionNotices"
-                        :key="`${item.key}-${index}`"
-                        class="rounded-md border border-border/60 bg-background/60 p-3"
-                    >
-                        {{ $t(item.key) }}
-                    </li>
-                </ul>
-            </section>
 
             <section v-if="isInstructions">
                 <h3 class="text-sm font-medium text-foreground">{{ $t('trans.registration_what_you_need') }}</h3>

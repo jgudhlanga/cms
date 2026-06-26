@@ -19,10 +19,10 @@ const contactDetails: ValueAndLabel[] = [
     { transKey: 'trans.phone_number', value: contacts?.phoneNumber ?? '' },
     { transKey: 'trans.alt_phone_number', value: contacts?.altPhoneNumber ?? '' },
     { transKey: 'trans.email_address', value: contacts?.emailAddress ?? '' },
-    { transKey: 'trans.address_1', value: contacts?.address1 ?? '' },
-    { transKey: 'trans.address_2', value: contacts?.address2 ?? '' },
-    { transKey: 'trans.address_3', value: contacts?.address3 ?? '' },
-    { transKey: 'trans.address_4', value: contacts?.address4 ?? '' },
+    { transKey: 'trans.address_house_number', value: contacts?.address1 ?? '' },
+    { transKey: 'trans.address_street_name', value: contacts?.address2 ?? '' },
+    { transKey: 'trans.address_suburb', value: contacts?.address3 ?? '' },
+    { transKey: 'trans.address_city_town', value: contacts?.address4 ?? '' },
 ];
 </script>
 

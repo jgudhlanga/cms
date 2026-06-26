@@ -1,14 +1,12 @@
 <script setup lang="ts">
 import { BaseButton } from '@/components/core/button';
-import InputError from '@/components/core/form/InputError.vue';
-import BaseRadioGroup from '@/components/core/form/radio-group/BaseRadioGroup.vue';
 import BaseIcon from '@/components/core/icon/BaseIcon.vue';
 import SpinnerComponent from '@/components/core/loader/SpinnerComponent.vue';
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import Empty from '@/components/core/util/Empty.vue';
 import HeadingSmall from '@/components/core/util/HeadingSmall.vue';
-import SelectSitting from '@/components/students/update/SelectSitting.vue';
-import SelectYear from '@/components/students/update/SelectYear.vue';
+import PortalOLevelHonestyBanner from '@/components/portal/PortalOLevelHonestyBanner.vue';
+import OLevelResultFields from '@/components/students/oLevels/OLevelResultFields.vue';
 import { useUtils } from '@/composables/core/useUtils';
 import { useOLevelResults } from '@/composables/students/useOLevelResults';
 import { ButtonSize } from '@/enums/buttons';
@@ -19,9 +17,7 @@ import { AuthObject } from '@/types/data-pagination';
 import { OLevelSubjectResult } from '@/types/enrolments';
 import { Student } from '@/types/students';
 import { BreadcrumbItemInterface } from '@/types/ui';
-import { SelectOption } from '@/types/utils';
 import { Head, useForm } from '@inertiajs/vue3';
-import { useMediaQuery } from '@vueuse/core';
 import { computed } from 'vue';
 
 interface Props {
@@ -41,7 +37,40 @@ const breadcrumbs: BreadcrumbItemInterface[] = [
     { title: 'Manage O-Level' },
 ];
 
-const { subjectForms, subjectErrors, getOptionsForSubject, isLoading, SubjectResultSchema } = useOLevelResults(oLevelSubjectResults || []);
+const { subjectForms, subjectErrors, getOptionsForSubject, isLoading, formsReady, SubjectResultSchema } = useOLevelResults(
+    oLevelSubjectResults || [],
+);
+
+const isSubjectComplete = (row: OLevelSubjectResult): boolean => {
+    const subjectId = String(row.id);
+    const form = subjectForms.value[subjectId];
+    const hasExistingResult = Number(row.attributes?.resultId) > 0;
+
+    if (!form) {
+        return hasExistingResult;
+    }
+
+    return Boolean(
+        form.exam_year &&
+            form.exam_sitting?.value &&
+            form.grade_id,
+    );
+};
+
+const sortedSubjects = computed(() => {
+    const subjects = [...(oLevelSubjectResults ?? [])];
+    return subjects.sort((a, b) => {
+        const aComplete = isSubjectComplete(a);
+        const bComplete = isSubjectComplete(b);
+        if (aComplete !== bComplete) {
+            return aComplete ? 1 : -1;
+        }
+        const aName = String(a.attributes?.subject ?? '');
+        const bName = String(b.attributes?.subject ?? '');
+        return aName.localeCompare(bName);
+    });
+});
+
 const saveSubjectResult = (subjectId: string) => {
     const payload = subjectForms.value[subjectId];
     const parsed = SubjectResultSchema.safeParse(payload);
@@ -80,117 +109,70 @@ const saveSubjectResult = (subjectId: string) => {
         },
     });
 };
+
 const verificationMode = isItTrue(import.meta.env.VITE_VERIFICATION_MODE);
-const isMobile = useMediaQuery('(max-width: 639px)');
-const gradeRadioOrientation = computed(() => (isMobile.value ? 'vertical' : 'horizontal'));
-const gradeRadioVerticalLayout = computed(() => isMobile.value);
 </script>
 <template>
     <Head :title="$t('trans.ui_manage_o_level')" />
     <PageContainer :breadcrumbs="breadcrumbs">
         <div class="my-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <HeadingSmall
-                :title="$t('trans.ui_o_level_results')"
-                :description="$t('trans.ui_list_of_o_level_subjects_and_grades_attained_by_a_student')"
-            />
-            <BaseButton classes="w-full rounded-full sm:w-auto" :variant="ColorVariant.primary_outline" @click="navigateTo(route('portal.list-o-levels'))">
+            <HeadingSmall :title="$t('trans.ui_manage_o_level')" :description="$t('trans.ui_manage_o_level_description')" />
+            <BaseButton
+                classes="w-full rounded-full sm:w-auto"
+                :variant="ColorVariant.primary_outline"
+                @click="navigateTo(route('portal.list-o-levels'))"
+            >
                 <BaseIcon :name="IconName.back" />
                 <span>{{ $t('trans.back') }}</span>
             </BaseButton>
         </div>
-        <div class="flex flex-col space-y-4" v-if="oLevelSubjectResults && oLevelSubjectResults?.length > 0">
-            <form v-for="(row, index) in oLevelSubjectResults" :key="`mobile_${row?.id ?? ''}`" @submit.prevent="saveSubjectResult(String(row.id))">
+        <PortalOLevelHonestyBanner v-if="!verificationMode" />
+        <SpinnerComponent v-if="!formsReady || isLoading" class="flex w-full items-center justify-center py-8" />
+        <div class="flex flex-col space-y-4" v-else-if="sortedSubjects.length > 0">
+            <form
+                v-for="(row, index) in sortedSubjects"
+                :key="`subject_${row?.id ?? ''}`"
+                @submit.prevent="saveSubjectResult(String(row.id))"
+            >
                 <div class="overflow-hidden rounded-lg border border-border bg-card text-card-foreground shadow">
-                    <!-- Card Header -->
                     <div class="border-b border-border bg-muted/30 px-4 py-2">
-                        <div class="flex items-center space-x-1 text-xs font-semibold text-foreground uppercase">
-                            <span>{{ `${index + 1}.` }}</span>
-                            <h3>
-                                {{ row?.attributes?.subject }}
-                            </h3>
+                        <div class="flex items-center justify-between gap-2">
+                            <div class="flex min-w-0 items-center gap-1 text-xs font-semibold text-foreground uppercase">
+                                <span>{{ `${index + 1}.` }}</span>
+                                <h3 class="truncate">{{ row?.attributes?.subject }}</h3>
+                            </div>
+                            <span
+                                v-if="isSubjectComplete(row)"
+                                class="inline-flex shrink-0 items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary"
+                            >
+                                <BaseIcon :name="IconName.check" class="size-3.5" />
+                                {{ $t('trans.ui_saved') }}
+                            </span>
                         </div>
                     </div>
-
-                    <!-- Card Body -->
-                    <div class="p-4">
-                        <div class="grid grid-cols-1 items-center gap-4 md:grid-cols-4">
-                            <div>
-                                <p class="text-xs font-medium tracking-wide text-muted-foreground uppercase">{{ $tChoice('trans.year', 1) }}</p>
-                                <div class="mt-1">
-                                    <SelectYear
-                                        :input-id="`year_${row.id}`"
-                                        :model-value="subjectForms[row.id as string]?.exam_year"
-                                        @update:model-value="
-                                            (value) => (subjectForms[row.id as string].exam_year = value !== null ? String(value) : '')
-                                        "
-                                    />
-                                    <InputError
-                                        v-if="subjectErrors[row.id]?.exam_year"
-                                        :message="subjectErrors[row.id].exam_year"
-                                        class="mt-1 flex w-full lowercase"
-                                    />
-                                </div>
-                            </div>
-                            <div>
-                                <p class="text-xs font-medium tracking-wide text-muted-foreground uppercase">{{ $tChoice('trans.sitting', 1) }}</p>
-                                <div class="mt-1 flex w-full flex-col">
-                                    <SelectSitting
-                                        class="flex w-full"
-                                        :model-value="subjectForms[row.id as string]?.exam_sitting"
-                                        @update:modelValue="(option: SelectOption) => (subjectForms[row.id as string].exam_sitting = option)"
-                                    />
-                                    <InputError
-                                        v-if="subjectErrors[row.id]?.exam_sitting"
-                                        :message="subjectErrors[row.id].exam_sitting"
-                                        class="mt-1 flex w-full lowercase"
-                                    />
-                                </div>
-                            </div>
-                            <div>
-                                <p class="text-xs font-medium tracking-wide text-muted-foreground uppercase">{{ $tChoice('trans.grade', 1) }}</p>
-                                <div class="mt-1">
-                                    <SpinnerComponent class="flex w-full items-center justify-center" v-if="isLoading" />
-                                    <template v-else>
-                                        <BaseRadioGroup
-                                            class="flex items-center"
-                                            :options="getOptionsForSubject(row)"
-                                            :model-value="
-                                                subjectForms[row.id as string]?.grade_id
-                                                    ? `${row.id}|${subjectForms[row.id as string]?.grade_id}`
-                                                    : null
-                                            "
-                                            :label-uppercase="true"
-                                            :is-required="true"
-                                            :orientation="gradeRadioOrientation"
-                                            :vertical-layout="gradeRadioVerticalLayout"
-                                            @update:modelValue="
-                                                (value) => {
-                                                    const parts = value.split('|');
-                                                    subjectForms[row.id as string].grade_id = parts[1];
-                                                }
-                                            "
-                                        />
-                                    </template>
-                                    <InputError
-                                        v-if="subjectErrors[row.id]?.grade_id"
-                                        :message="subjectErrors[row.id].grade_id"
-                                        class="mt-1 flex w-full lowercase"
-                                    />
-                                </div>
-                            </div>
-                            <div class="justify-self-end-safe" v-if="!verificationMode">
-                                <BaseButton
-                                    :size="ButtonSize.sm"
-                                    :variant="ColorVariant.primary"
-                                    class="w-full rounded-full md:w-fit"
-                                    :title="$t('trans.save')"
-                                />
-                            </div>
+                    <div class="space-y-4 p-4">
+                        <OLevelResultFields
+                            v-if="subjectForms[String(row.id)]"
+                            :subject-id="String(row.id)"
+                            :grade-options="getOptionsForSubject(row)"
+                            :errors="subjectErrors[String(row.id)] ?? {}"
+                            :is-loading="isLoading"
+                            v-model:exam-year="subjectForms[String(row.id)].exam_year"
+                            v-model:exam-sitting="subjectForms[String(row.id)].exam_sitting"
+                            v-model:grade-id="subjectForms[String(row.id)].grade_id"
+                        />
+                        <div v-if="!verificationMode" class="pt-1">
+                            <BaseButton
+                                :size="ButtonSize.sm"
+                                :variant="ColorVariant.primary"
+                                class="w-full rounded-full sm:w-auto"
+                                :title="$t('trans.save')"
+                            />
                         </div>
                     </div>
                 </div>
             </form>
         </div>
-        <Empty v-else />
+        <Empty v-else-if="formsReady && !isLoading" />
     </PageContainer>
 </template>

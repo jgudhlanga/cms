@@ -4,15 +4,15 @@ import BaseSelect from '@/components/core/form/select/BaseSelect.vue';
 import AppearanceTabs from '@/components/core/util/AppearanceTabs.vue';
 import BaseTooltip from '@/components/core/util/BaseTooltip.vue';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { useSidebar } from '@/components/ui/sidebar';
 import Switch from '@/components/ui/switch/Switch.vue';
 import { useUserPreference } from '@/composables/core/useUserPreference';
 import { IconName } from '@/enums/icons';
 import { usePreferencesStore } from '@/store/core/preferences.store';
+import { useMediaQuery } from '@vueuse/core';
 import { computed, ref } from 'vue';
 
 const preferencesStore = usePreferencesStore();
-const { isMobile } = useSidebar();
+const isMobile = useMediaQuery('(max-width: 768px)');
 const { persistSidebarState, persistLocale } = useUserPreference();
 const isPreferencesDrawerOpen = ref(false);
 const localeOptions = [{ value: 'en', label: 'English' }];

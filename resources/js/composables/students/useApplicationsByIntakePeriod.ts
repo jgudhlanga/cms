@@ -60,10 +60,22 @@ export function groupApplicationsByIntakePeriod(applications: Enrolment[]): Inta
     return [...groups.values()].sort((a, b) => b.sortKey.localeCompare(a.sortKey));
 }
 
-export function useApplicationsByIntakePeriod(applications: Ref<Enrolment[]>) {
+export function useApplicationsByIntakePeriod(
+    applications: Ref<Enrolment[]>,
+    activeIntakePeriodIds?: Ref<Array<string | number>>,
+) {
+    const resolvedActiveIntakePeriodIds = activeIntakePeriodIds ?? computed(() => []);
+
     const groups = computed(() => groupApplicationsByIntakePeriod(applications.value));
 
     const defaultOpenIntakeIds = computed(() => {
+        const activeIds = resolvedActiveIntakePeriodIds.value.map((id) => String(id));
+        const activeGroup = groups.value.find((group) => activeIds.includes(group.intakePeriodId));
+
+        if (activeGroup) {
+            return [activeGroup.intakePeriodId];
+        }
+
         const latest = groups.value[0];
 
         return latest ? [latest.intakePeriodId] : [];

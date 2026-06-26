@@ -8,6 +8,7 @@ import {
 import { ColorVariant } from '@/enums/colors';
 import { PAGINATION_ITEMS_PER_PAGE } from '@/lib/constants';
 import { errorAlert, successAlert } from '@/lib/alerts';
+import { buildStudentShowUrl, currentPageReturnPath } from '@/lib/studentShowNavigation';
 import { getIdParams } from '@/lib/utils';
 import HttpService from '@/services/http.service';
 import type { ApiFilterResponse } from '@/types/data-pagination';
@@ -16,6 +17,7 @@ import type {
     MaintenanceUsersFiltersState,
     NonEnrolledStudentUser,
 } from '@/types/maintenance-users';
+import { usePage } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 import type { ComputedRef, Ref } from 'vue';
 import { h, ref } from 'vue';
@@ -43,6 +45,21 @@ export const parseNonEnrolledStudentUsersListUrl = (listUrl: string): Maintenanc
     };
 };
 
+export const mergeMaintenanceUsersFiltersFromUrl = (
+    currentFilters: MaintenanceUsersFiltersState,
+    listUrl: string,
+): MaintenanceUsersFiltersState => {
+    const parsedUrl = new URL(listUrl, window.location.origin);
+    const urlFilters = parseNonEnrolledStudentUsersListUrl(listUrl);
+
+    return {
+        applicationStatus: parsedUrl.searchParams.has('application_status')
+            ? urlFilters.applicationStatus
+            : currentFilters.applicationStatus,
+        search: parsedUrl.searchParams.has('search') ? urlFilters.search : undefined,
+    };
+};
+
 export const resolveNonEnrolledStudentUsersListPath = (
     filters: MaintenanceUsersFiltersState = {},
     paginatorUrl?: string,
@@ -52,6 +69,18 @@ export const resolveNonEnrolledStudentUsersListPath = (
         paginatorUrl ?? route('maintenance.non-enrolled-student-users'),
         window.location.origin,
     );
+
+    if (paginatorUrl) {
+        if (!parsed.searchParams.has('application_status') && filters.applicationStatus) {
+            parsed.searchParams.set('application_status', filters.applicationStatus);
+        }
+
+        if (!parsed.searchParams.has('search') && filters.search) {
+            parsed.searchParams.set('search', filters.search);
+        }
+
+        return `${parsed.pathname}${parsed.search}`;
+    }
 
     if (filters.search) {
         parsed.searchParams.set('search', filters.search);
@@ -65,18 +94,16 @@ export const resolveNonEnrolledStudentUsersListPath = (
         parsed.searchParams.delete('application_status');
     }
 
-    if (!paginatorUrl) {
-        const page = pagination.page ?? 1;
-        const pageSize = pagination.pageSize ?? PAGINATION_ITEMS_PER_PAGE;
+    const page = pagination.page ?? 1;
+    const pageSize = pagination.pageSize ?? PAGINATION_ITEMS_PER_PAGE;
 
-        if (page > 1) {
-            parsed.searchParams.set('page', String(page));
-        } else {
-            parsed.searchParams.delete('page');
-        }
-
-        parsed.searchParams.set('page_size', String(pageSize));
+    if (page > 1) {
+        parsed.searchParams.set('page', String(page));
+    } else {
+        parsed.searchParams.delete('page');
     }
+
+    parsed.searchParams.set('page_size', String(pageSize));
 
     return `${parsed.pathname}${parsed.search}`;
 };
@@ -84,6 +111,7 @@ export const resolveNonEnrolledStudentUsersListPath = (
 export const useMaintenanceUsers = () => {
     const { textLink, actionButton } = useDataTables();
     const { formatDate, navigateTo } = useUtils();
+    const page = usePage();
     const isLoading = ref(false);
     const isPurging = ref(false);
 
@@ -250,7 +278,13 @@ export const useMaintenanceUsers = () => {
                 if (row.original.attributes.hasStudentProfile && studentId !== null) {
                     return actionButton({
                         title: trans_choice('trans.profile', 1),
-                        onClick: () => navigateTo(route('students.show', String(studentId))),
+                        onClick: () =>
+                            navigateTo(
+                                buildStudentShowUrl(studentId, {
+                                    from: 'maintenance',
+                                    return: currentPageReturnPath(page.url, window.location.origin),
+                                }),
+                            ),
                         variant: ColorVariant.success,
                     });
                 }

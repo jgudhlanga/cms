@@ -21,6 +21,7 @@ interface Props {
     onFormAction?: () => void;
     onCloseModal?: () => void;
     form?: InertiaForm<any>;
+    stackFooterOnMobile?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -30,9 +31,10 @@ const props = withDefaults(defineProps<Props>(), {
     cancelBtnText: 'trans.close',
     actionBtnText: 'trans.save',
     showActionButton: true,
+    stackFooterOnMobile: false,
 });
 
-const baseClasses = 'max-h-[90vh] bg-background rounded-2xl shadow-lg overflow-y-auto overflow-x-hidden outline-hidden p-3';
+const baseClasses = 'max-h-[90vh] max-w-full bg-background rounded-2xl shadow-lg overflow-y-auto overflow-x-hidden outline-hidden p-3';
 const modalVariants: Record<SizeVariant, string> = {
     [SizeVariant.xs]: 'w-96',
     [SizeVariant.sm]: 'w-[640px]',
@@ -42,6 +44,15 @@ const modalVariants: Record<SizeVariant, string> = {
     [SizeVariant.full]: 'shadow-none w-full h-full rounded-none',
 };
 const computedClass = computed(() => cn(baseClasses, modalVariants[props.size]));
+const footerClasses = computed(() =>
+    cn(
+        'mt-6 flex w-full border-t-[1px] px-6 py-5',
+        props.stackFooterOnMobile
+            ? 'flex-col-reverse gap-2 sm:flex-row sm:justify-center sm:gap-0 sm:space-x-3'
+            : 'justify-center space-x-3',
+    ),
+);
+const footerButtonClasses = computed(() => (props.stackFooterOnMobile ? 'w-full sm:w-auto' : ''));
 const { isOpen, closeModal } = useModalStore();
 
 const destroyModal = () => {
@@ -76,14 +87,21 @@ const destroyModal = () => {
                         <slot name="body" />
                     </div>
                     <!-- Modal Footer -->
-                    <div class="mt-6 flex w-full justify-center space-x-3 border-t-[1px] px-6 py-5">
-                        <BaseButton type="button" :variant="ColorVariant.shade" @click="() => destroyModal()" :size="ButtonSize.lg">
+                    <div :class="footerClasses">
+                        <BaseButton
+                            type="button"
+                            :variant="ColorVariant.shade"
+                            :classes="footerButtonClasses"
+                            @click="() => destroyModal()"
+                            :size="ButtonSize.lg"
+                        >
                             {{ $t(cancelBtnText) }}
                         </BaseButton>
                         <BaseButton
                             v-if="showActionButton"
                             :processing="form?.processing"
                             :disabled="form?.processing"
+                            :classes="footerButtonClasses"
                             :size="ButtonSize.lg"
                         >
                             {{ $t(actionBtnText) }}

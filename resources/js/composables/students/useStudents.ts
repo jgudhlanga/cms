@@ -6,6 +6,7 @@ import { Student, StudentFiltersState } from '@/types/students';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 import { InertiaForm } from '@inertiajs/vue3';
 import { mergeQueryParamsIntoRequestPath } from '@/lib/merge-query-into-url';
+import { buildStudentShowUrl } from '@/lib/studentShowNavigation';
 import { ref } from 'vue';
 import HttpService from '@/services/http.service';
 
@@ -20,7 +21,7 @@ export const useStudents = () => {
                 header: trans_choice('trans.name', 1),
                 accessorKey: 'name',
                 cell: ({ row }: { row: { original: Student } }) => {
-                    return textLink(route('students.show', String(row.original?.id)), row.original?.relationships?.user?.attributes?.name ?? '');
+                    return textLink(buildStudentShowUrl(row.original?.id, { from: 'students' }), row.original?.relationships?.user?.attributes?.name ?? '');
                 },
             },
             {header: trans_choice('trans.id_number',1), accessorKey: 'attributes.idNumber',},
@@ -118,11 +119,14 @@ export const useStudents = () => {
         });
     };
 
-    const showEditProgramButton = (application: Enrolment, currentIntakePeriod: string): boolean => {
+    const showEditProgramButton = (application: Enrolment, activeIntakePeriodIds: Array<string | number>): boolean => {
         const { isItTrue } = useUtils();
         const workflowStep = application?.relationships?.departmentWorkflowStep?.attributes?.workflowStep;
         const verificationMode = isItTrue(import.meta.env.VITE_VERIFICATION_MODE);
-        return workflowStep !== 'Accepted' && String(application?.attributes?.intakePeriodId) === String(currentIntakePeriod) && !verificationMode;
+        const intakePeriodId = String(application?.attributes?.intakePeriodId ?? '');
+        const isActiveIntake = activeIntakePeriodIds.some((id) => String(id) === intakePeriodId);
+
+        return workflowStep !== 'Accepted' && isActiveIntake && !verificationMode;
     };
 
     const updateProgram = (applicationId: string, form: InertiaForm<any>) => {

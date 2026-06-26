@@ -2,14 +2,21 @@
 
 use App\Enums\Acl\RoleEnum;
 use App\Enums\Shared\FeeTypeEnum;
+use App\Enums\Shared\TenantEnum;
 use App\Enums\Students\ApplicationFeeStatusEnum;
 use App\Helpers\PaymentHelper;
 use App\Models\Acl\Role;
+use App\Models\Institution\FeeStructure;
 use App\Models\Institution\IntakePeriod;
 use App\Models\Institution\Level;
 use App\Models\Ledgers\Ledger;
 use App\Models\Shared\FeeType;
+use App\Models\Shared\Gender;
+use App\Models\Shared\IdType;
+use App\Models\Shared\MaritalStatus;
+use App\Models\Shared\Title;
 use App\Models\Students\ApplicationFee;
+use App\Models\Students\Student;
 use App\Models\Tenants\Tenant;
 use App\Models\Users\User;
 use App\Services\Students\ApplicationFeeService;
@@ -135,6 +142,70 @@ test('selecting level without fee does not create application fee record', funct
     expect(ApplicationFee::query()->where('user_id', $user->id)->exists())->toBeFalse();
 });
 
+test('switching from fee-required to fee-free level abandons unpaid application fee', function () {
+    $user = createPortalUserWithoutProfile();
+    $feeRequired = feeRequiredLevel();
+    $feeFree = feeFreeLevel();
+    $intake = createTestIntakePeriod();
+
+    $this->actingAs($user)
+        ->post(route('portal.application.select-level'), [
+            'level_id' => $feeRequired->id,
+            'intake_period_id' => $intake->id,
+        ])
+        ->assertRedirect(route('portal.application.fee-payment'));
+
+    $applicationFee = ApplicationFee::query()->where('user_id', $user->id)->first();
+    expect($applicationFee)->not->toBeNull()
+        ->and($applicationFee->status)->toBe(ApplicationFeeStatusEnum::AWAITING_PAYMENT);
+
+    $this->actingAs($user)
+        ->post(route('portal.application.select-level'), ['level_id' => $feeFree->id])
+        ->assertRedirect(route('portal.application.create'));
+
+    expect($applicationFee->fresh()->status)->toBe(ApplicationFeeStatusEnum::CANCELLED);
+    expect(app(ApplicationFeeService::class)->activeApplicationFee($user))->toBeNull();
+});
+
+test('unpaid fee student can access level options to change level', function () {
+    $user = createPortalUserWithoutProfile();
+    $feeRequired = feeRequiredLevel();
+    $intake = createTestIntakePeriod();
+
+    $this->actingAs($user)
+        ->post(route('portal.application.select-level'), [
+            'level_id' => $feeRequired->id,
+            'intake_period_id' => $intake->id,
+        ])
+        ->assertRedirect(route('portal.application.fee-payment'));
+
+    $this->actingAs($user)
+        ->get(route('portal.application.level-options'))
+        ->assertOk();
+});
+
+test('middleware sends fee-free level student to application create after level switch', function () {
+    $user = createPortalUserWithoutProfile();
+    $feeRequired = feeRequiredLevel();
+    $feeFree = feeFreeLevel();
+    $intake = createTestIntakePeriod();
+
+    $this->actingAs($user)
+        ->post(route('portal.application.select-level'), [
+            'level_id' => $feeRequired->id,
+            'intake_period_id' => $intake->id,
+        ])
+        ->assertRedirect(route('portal.application.fee-payment'));
+
+    $this->actingAs($user)
+        ->post(route('portal.application.select-level'), ['level_id' => $feeFree->id])
+        ->assertRedirect(route('portal.application.create'));
+
+    $this->actingAs($user)
+        ->get(route('portal.application.fee-payment'))
+        ->assertRedirect(route('portal.application.create'));
+});
+
 test('login redirects unpaid application fee student to fee payment', function () {
     $user = createPortalUserWithoutProfile();
     $user->forceFill(['email_verified_at' => now()])->save();
@@ -155,20 +226,60 @@ test('login redirects unpaid application fee student to fee payment', function (
     ])->assertRedirect(route('portal.application.fee-payment'));
 });
 
+test('fee payment page exposes human readable application fee status label', function () {
+    $user = createPortalUserWithoutProfile();
+    $level = feeRequiredLevel();
+    $intake = createTestIntakePeriod();
+    $feeType = FeeType::query()->firstOrCreate(
+        ['slug' => FeeTypeEnum::APPLICATION_FEE->slug()],
+        [
+            'name' => FeeTypeEnum::APPLICATION_FEE->name(),
+            'description' => FeeTypeEnum::APPLICATION_FEE->description(),
+            'position' => FeeTypeEnum::APPLICATION_FEE->position(),
+        ],
+    );
+
+    FeeStructure::query()->create([
+        'tenant_id' => $user->tenant_id,
+        'fee_type_id' => $feeType->id,
+        'level_id' => $level->id,
+        'mode_of_study_id' => null,
+        'amount' => 20.00,
+        'local_fca_amount' => 20.00,
+    ]);
+
+    ApplicationFee::query()->create([
+        'tenant_id' => $user->tenant_id,
+        'user_id' => $user->id,
+        'intake_period_id' => $intake->id,
+        'level_id' => $level->id,
+        'status' => ApplicationFeeStatusEnum::AWAITING_PAYMENT,
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('portal.application.fee-payment'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('portal/application/RegistrationFeePaymentOptions')
+            ->where('applicationFeeStatus', ApplicationFeeStatusEnum::AWAITING_PAYMENT->value)
+            ->where('applicationFeeStatusLabel', 'Awaiting payment')
+        );
+});
+
 test('guest lookup does not expose login email for duplicate records', function () {
-  // reuse existing student factory from guest test
-    $tenantId = \App\Enums\Shared\TenantEnum::HARARE_POLY->id();
-    $title = \App\Models\Shared\Title::query()->firstOrCreate(['name' => 'Mr Guest AF']);
-    $gender = \App\Models\Shared\Gender::query()->firstOrCreate(['title' => 'Male Guest AF']);
-    $maritalStatus = \App\Models\Shared\MaritalStatus::query()->firstOrCreate(['title' => 'Single Guest AF']);
-    $idType = \App\Models\Shared\IdType::query()->firstOrCreate(['name' => 'National ID Guest AF']);
+    // reuse existing student factory from guest test
+    $tenantId = TenantEnum::HARARE_POLY->id();
+    $title = Title::query()->firstOrCreate(['name' => 'Mr Guest AF']);
+    $gender = Gender::query()->firstOrCreate(['title' => 'Male Guest AF']);
+    $maritalStatus = MaritalStatus::query()->firstOrCreate(['title' => 'Single Guest AF']);
+    $idType = IdType::query()->firstOrCreate(['name' => 'National ID Guest AF']);
 
     $user = User::factory()->create([
         'tenant_id' => $tenantId,
         'email' => 'hidden.email@example.com',
     ]);
 
-    \App\Models\Students\Student::query()->create([
+    Student::query()->create([
         'tenant_id' => $tenantId,
         'user_id' => $user->id,
         'title_id' => $title->id,

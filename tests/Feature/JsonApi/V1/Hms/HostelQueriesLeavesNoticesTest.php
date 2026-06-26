@@ -1,14 +1,84 @@
 <?php
 
+use App\Enums\HMS\HostelAllocationStatusEnum;
 use App\Enums\HMS\HostelNoticeStatusEnum;
 use App\Enums\HMS\HostelNoticeTypeEnum;
 use App\Enums\HMS\HostelQueryStatusEnum;
 use App\Enums\Shared\TenantEnum;
 use App\Models\HMS\Hostel;
 use App\Models\HMS\HostelNotice;
+use App\Models\HMS\HostelRoomAllocation;
+use App\Models\Students\Student;
 use App\Models\Tenants\Tenant;
 use App\Models\Users\User;
 use Laravel\Sanctum\Sanctum;
+
+function createActiveHostelAllocationForStudent(Student $student, string $roomSuffix): HostelRoomAllocation
+{
+    $room = ensureHostelRoomWithCapacity('Hostel D', "ALLOC-{$roomSuffix}");
+
+    return HostelRoomAllocation::withoutEvents(fn () => HostelRoomAllocation::query()->create([
+        'tenant_id' => TenantEnum::HARARE_POLY->id(),
+        'hostel_room_id' => $room->id,
+        'student_id' => $student->id,
+        'type' => 'direct',
+        'status' => HostelAllocationStatusEnum::ACTIVE,
+        'check_in' => now()->toDateString(),
+        'check_out' => now()->addMonths(4)->toDateString(),
+    ]));
+}
+
+test('json api portal student without active allocation cannot create hostel query', function () {
+    $tenant = Tenant::query()->firstOrFail();
+    $portalUser = User::factory()->create(['tenant_id' => $tenant->id]);
+    $portalUser->givePermissionTo('manageOwnStudentAccommodationDetails:students');
+    Sanctum::actingAs($portalUser);
+
+    $studentApplication = createStudentReadyForHostelApplication('QUERY-DENY-01');
+    $student = $studentApplication->student;
+    $student->update(['user_id' => $portalUser->id]);
+
+    $this
+        ->jsonApi('hostel-queries')
+        ->withData([
+            'type' => 'hostel-queries',
+            'attributes' => [
+                'studentId' => $student->id,
+                'category' => 'plumbing',
+                'subject' => 'Leaking tap',
+                'description' => 'Bathroom tap leaking',
+                'priority' => 'high',
+            ],
+        ])
+        ->post(route('v1.json.hms.hostel-queries.store'))
+        ->assertForbidden();
+});
+
+test('json api portal student without active allocation cannot create hostel leave', function () {
+    $tenant = Tenant::query()->firstOrFail();
+    $portalUser = User::factory()->create(['tenant_id' => $tenant->id]);
+    $portalUser->givePermissionTo('manageOwnStudentAccommodationDetails:students');
+    Sanctum::actingAs($portalUser);
+
+    $studentApplication = createStudentReadyForHostelApplication('LEAVE-DENY-01');
+    $student = $studentApplication->student;
+    $student->update(['user_id' => $portalUser->id]);
+
+    $this
+        ->jsonApi('hostel-leaves')
+        ->withData([
+            'type' => 'hostel-leaves',
+            'attributes' => [
+                'studentId' => $student->id,
+                'leaveType' => 'Home Visit',
+                'fromDate' => now()->addWeek()->toDateString(),
+                'toDate' => now()->addWeeks(2)->toDateString(),
+                'reason' => 'Family visit',
+            ],
+        ])
+        ->post(route('v1.json.hms.hostel-leaves.store'))
+        ->assertForbidden();
+});
 
 test('json api portal student can create and list hostel queries', function () {
     $tenant = Tenant::query()->firstOrFail();
@@ -19,6 +89,8 @@ test('json api portal student can create and list hostel queries', function () {
     $studentApplication = createStudentReadyForHostelApplication('QUERY-STU-01');
     $student = $studentApplication->student;
     $student->update(['user_id' => $portalUser->id]);
+
+    createActiveHostelAllocationForStudent($student, 'QUERY-STU-01');
 
     $this
         ->jsonApi('hostel-queries')
@@ -54,6 +126,8 @@ test('json api portal student can create hostel leave request', function () {
     $studentApplication = createStudentReadyForHostelApplication('LEAVE-STU-01');
     $student = $studentApplication->student;
     $student->update(['user_id' => $portalUser->id]);
+
+    createActiveHostelAllocationForStudent($student, 'LEAVE-STU-01');
 
     $this
         ->jsonApi('hostel-leaves')

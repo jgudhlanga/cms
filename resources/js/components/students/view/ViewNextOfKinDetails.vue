@@ -19,10 +19,10 @@ const nextOfKinDetails: ValueAndLabel[] = [
     { transChoiceKey: 'trans.name', value: nextOfKin?.name ?? '' },
     { transKey: 'trans.phone_number', value: nextOfKin?.phoneNumber ?? '' },
     { transChoiceKey: 'trans.relationship', value: nextOfKin?.relationship ?? '' },
-    { transKey: 'trans.address_1', value: nextOfKin?.address1 ?? '' },
-    { transKey: 'trans.address_2', value: nextOfKin?.address2 ?? '' },
-    { transKey: 'trans.address_3', value: nextOfKin?.address3 ?? '' },
-    { transKey: 'trans.address_4', value: nextOfKin?.address4 ?? '' },
+    { transKey: 'trans.address_house_number', value: nextOfKin?.address1 ?? '' },
+    { transKey: 'trans.address_street_name', value: nextOfKin?.address2 ?? '' },
+    { transKey: 'trans.address_suburb', value: nextOfKin?.address3 ?? '' },
+    { transKey: 'trans.address_city_town', value: nextOfKin?.address4 ?? '' },
 ];
 </script>
 

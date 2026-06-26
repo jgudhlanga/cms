@@ -32,7 +32,9 @@ class UpdateStudentRequest extends FormRequest
     {
         $idType = IdTypeEnum::ZIMBABWEAN_ID_NUMBER->id();
         $passportType = IdTypeEnum::FOREIGN_PASSPORT_NUMBER->id();
-        $studentId = $this->route('student')?->id ?? $this->route('student'); // support both model or raw ID
+        $studentId = $this->route('student')?->id
+            ?? $this->route('student')
+            ?? $this->user()?->studentProfile?->id;
 
         return [
             'gender_id' => ['required', 'integer', 'exists:genders,id'],
@@ -55,6 +57,12 @@ class UpdateStudentRequest extends FormRequest
             ],
             'country_id' => ['required_if:id_type_id,'.$passportType, 'nullable', 'exists:countries,id'],
             'disability_status' => ['required', new Enum(DisabilityStatusEnum::class)],
+            'date_of_birth' => ['required', 'date'],
+            'race_id' => ['nullable', 'integer', 'exists:races,id'],
+            'religion_id' => ['nullable', 'integer', 'exists:religions,id'],
+            'denomination' => ['nullable', 'string', 'max:255'],
+            'height' => ['nullable', 'string', 'max:50'],
+            'weight' => ['nullable', 'string', 'max:50'],
         ];
     }
 

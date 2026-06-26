@@ -5,6 +5,7 @@ import DataLoadingSpinner from '@/components/core/loader/DataLoadingSpinner.vue'
 import DataTable from '@/components/core/table/DataTable.vue';
 import { useMaintenanceUserSelection } from '@/composables/maintenance/useMaintenanceUserSelection';
 import {
+    mergeMaintenanceUsersFiltersFromUrl,
     parseNonEnrolledStudentUsersListUrl,
     resolveNonEnrolledStudentUsersListPath,
     useMaintenanceUsers,
@@ -136,8 +137,9 @@ const loadUsers = async (
 };
 
 const loadUsersFromUrl = async (url: string) => {
-    const listPath = resolveNonEnrolledStudentUsersListPath(filters.value, url);
-    const response = await fetchNonEnrolledStudentUsers(filters.value, url);
+    const mergedFilters = mergeMaintenanceUsersFiltersFromUrl(filters.value, url);
+    const listPath = resolveNonEnrolledStudentUsersListPath(mergedFilters, url);
+    const response = await fetchNonEnrolledStudentUsers(mergedFilters, url);
 
     if (!response) {
         return;
@@ -153,7 +155,7 @@ const loadUsersFromUrl = async (url: string) => {
         const targetPage = Math.min(currentPage, lastPage);
 
         if (targetPage < currentPage) {
-            await loadUsers(filters.value, {
+            await loadUsers(mergedFilters, {
                 page: targetPage,
                 pageSize: response.meta?.per_page ?? PAGINATION_ITEMS_PER_PAGE,
             });

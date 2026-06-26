@@ -9,6 +9,7 @@ import TabsAddNewButton from '@/components/students/tabs/TabsAddNewButton.vue';
 import { useNextOfKin } from '@/composables/shared/useNextOfKin';
 import { ColorVariant } from '@/enums/colors';
 import { IconName } from '@/enums/icons';
+import { ADDRESS_FIELDS } from '@/lib/addressFields';
 import { hasAbility } from '@/lib/permissions';
 import { NextOfKin } from '@/types/next-of-kin';
 
@@ -50,10 +51,10 @@ const ability = hasAbility(['create:next-of-kins', 'update:next-of-kins']);
                         <GridLabelValue :label="$tChoice('trans.name', 1)" :value="nextOfKin?.attributes?.name ?? ''" />
                         <GridLabelValue :label="$tChoice('trans.relationship', 1)" :value="nextOfKin?.attributes?.relationship ?? ''" />
                         <GridLabelValue :label="$t('trans.phone_number')" :value="nextOfKin?.attributes?.phoneNumber ?? ''" />
-                        <GridLabelValue :label="$t('trans.address_1')" :value="nextOfKin?.attributes?.address1 ?? ''" />
-                        <GridLabelValue :label="$t('trans.address_1')" :value="nextOfKin?.attributes?.address2 ?? ''" />
-                        <GridLabelValue :label="$t('trans.address_3')" :value="nextOfKin?.attributes?.address3 ?? ''" />
-                        <GridLabelValue :label="$t('trans.address_4')" :value="nextOfKin?.attributes?.address4 ?? ''" />
+                        <GridLabelValue :label="$t(ADDRESS_FIELDS[0].labelKey)" :value="nextOfKin?.attributes?.address1 ?? ''" />
+                        <GridLabelValue :label="$t(ADDRESS_FIELDS[1].labelKey)" :value="nextOfKin?.attributes?.address2 ?? ''" />
+                        <GridLabelValue :label="$t(ADDRESS_FIELDS[2].labelKey)" :value="nextOfKin?.attributes?.address3 ?? ''" />
+                        <GridLabelValue :label="$t(ADDRESS_FIELDS[3].labelKey)" :value="nextOfKin?.attributes?.address4 ?? ''" />
                     </div>
                 </template>
             </CustomCard>

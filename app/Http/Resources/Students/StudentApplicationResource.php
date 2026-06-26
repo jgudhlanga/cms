@@ -21,7 +21,6 @@ use Illuminate\Http\Resources\Json\JsonResource;
  */
 class StudentApplicationResource extends JsonResource
 {
-
     public function toArray(Request $request): array
     {
         return [
@@ -33,6 +32,12 @@ class StudentApplicationResource extends JsonResource
                 'departmentCourseId' => $this->department_course_id,
                 'modeOfStudyId' => $this->mode_of_study_id,
                 'modeOfStudy' => $this->modeOfStudy?->name,
+                'department' => $this->institutionDepartment?->department?->name,
+                'level' => $this->departmentLevel?->level?->name,
+                'course' => $this->departmentCourse?->course?->name,
+                'intakePeriodId' => $this->intakePeriod?->id,
+                'intakePeriod' => $this->intakePeriod?->name,
+                'applicationStatus' => $this->departmentWorkflowStep?->workflowStep?->name,
                 'applicationTrackingNumber' => $this->application_tracking_number,
                 'registrationFeePaid' => $this->hasPaid(FeeTypeEnum::APPLICATION_FEE),
                 'tuitionFeePaid' => $this->hasPaid(FeeTypeEnum::TUITION_FEE),
@@ -45,12 +50,11 @@ class StudentApplicationResource extends JsonResource
                 'deletedAt' => $this->deleted_at,
             ],
             'relationships' => [
-                'student' => StudentResource::make($this->student),
                 'institutionDepartment' => InstitutionDepartmentResource::make($this->institutionDepartment),
                 'departmentLevel' => DepartmentLevelResource::make($this->departmentLevel),
                 'departmentCourse' => DepartmentCourseResource::make($this->departmentCourse),
-                'departmentWorkflowStep' => DepartmentApplicationStepResource::make($this->departmentWorkflowStep)
-            ]
+                'departmentWorkflowStep' => DepartmentApplicationStepResource::make($this->departmentWorkflowStep),
+            ],
         ];
     }
 }

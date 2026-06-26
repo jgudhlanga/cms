@@ -12,6 +12,7 @@ import { openModal } from '@/lib/alerts';
 import { IconName } from '@/enums/icons';
 import { APP_MODULE_KEYS } from '@/lib/constants';
 import { hasAbility } from '@/lib/permissions';
+import { buildStudentShowUrl, currentPageReturnPath } from '@/lib/studentShowNavigation';
 import HostelEligibilityStatus from '@/components/hms/HostelEligibilityStatus.vue';
 import ApplicationSidebar from '@/pages/hms/applications/partials/ApplicationSidebar.vue';
 import PaymentVerificationCard from '@/pages/hms/applications/partials/PaymentVerificationCard.vue';
@@ -19,7 +20,7 @@ import DeclineApplication from '@/pages/hms/components/forms/DeclineApplication.
 import { useHmsStore } from '@/store/hms/useHmsStore';
 import type { HostelApplication, HostelApplicationEligibilityRule, HmsSettings } from '@/types/hms';
 import type { BreadcrumbItemInterface } from '@/types/ui';
-import { Head, router } from '@inertiajs/vue3';
+import { Head, router, usePage } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 import { computed, onMounted, ref } from 'vue';
 import { ButtonSize } from '@/enums/buttons';
@@ -29,6 +30,7 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+const inertiaPage = usePage();
 
 const { formatDate } = useUtils();
 const { fetchApplication, fetchHmsSettings, updateApplicationStatus, isLoading } = useHms();
@@ -141,7 +143,10 @@ const studentProfileUrl = computed(() => {
         return null;
     }
 
-    return route('students.show', String(studentId));
+    return buildStudentShowUrl(studentId, {
+        from: 'hms',
+        return: currentPageReturnPath(inertiaPage.url, window.location.origin),
+    });
 });
 
 const eligibilityRules = computed((): HostelApplicationEligibilityRule[] => attrs.value?.eligibilityResults ?? []);
