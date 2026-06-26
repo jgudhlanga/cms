@@ -71,27 +71,6 @@ export type Profile = {
     departments?: Array<{ id?: string | number; name?: string } | undefined> | null;
 };
 
-export type StudentUserEditParams = {
-    id_type_id: string | number | null;
-    idType: SelectOption | null;
-    id_number?: string | null;
-    passport_number?: string | null;
-    country?: SelectOption | null;
-    country_id: string | number | null;
-    date_of_birth: string | null;
-    maritalStatus?: SelectOption | null;
-    marital_status_id: string | number | null;
-    title: SelectOption | null;
-    title_id: string | number | null;
-    gender: SelectOption | null;
-    gender_id: string | number | null;
-    email: string;
-    phone_number?: string;
-    first_name: string;
-    last_name: string;
-    middle_name: string;
-};
-
 export type UserStaffParams = {
     date_of_birth: string | null;
     maritalStatus?: SelectOption | null;

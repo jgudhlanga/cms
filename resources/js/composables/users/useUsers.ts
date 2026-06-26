@@ -7,11 +7,10 @@ import { buildFormOptions, mergeValidationSchema } from '@/lib/forms';
 import {
     emailUniqueSchema,
     employeeNumberUniqueSchema,
-    idNumberUniqueSchema,
-    passportNumberUniqueSchema,
     phoneNumberUniqueSchema,
 } from '@/lib/uniqueValidations';
 import { getIdParams } from '@/lib/utils';
+import { buildStudentShowUrl } from '@/lib/studentShowNavigation';
 import HttpService from '@/services/http.service';
 import { Auth, PageProps } from '@/types';
 import { ApiFilterResponse } from '@/types/data-pagination';
@@ -74,10 +73,11 @@ export const useUsers = () => {
                 enableSorting: false,
                 meta: { align: 'center' },
                 cell: ({ row }: { row: { original: User } }) => {
-                    return hasStudentRole(row.original)
+                    const studentId = row.original.attributes?.studentId;
+                    return hasStudentRole(row.original) && studentId
                         ? actionButton({
-                              title: trans_choice('trans.profile', 1),
-                              onClick: () => navigateTo(route('students.profile', { id: row.original.id })),
+                              title: trans('students.view_student'),
+                              onClick: () => navigateTo(buildStudentShowUrl(studentId, { from: 'users' })),
                               variant: ColorVariant.primary,
                           })
                         : null;
@@ -91,15 +91,20 @@ export const useUsers = () => {
                 cell: ({ row }: { row: { original: User } }) => {
                     const id = getIdParams(row.original.id?.toString() ?? '');
                     const name = trans_choice('trans.user', 1);
-                    return moreActionButton(!!row.original?.attributes?.deletedAt, [
+                    const isStudentUser = hasStudentRole(row.original);
+                    const actions = [
                         {
                             key: 'view',
                             action: () => onView(can['view:users'], route('users.show', id)),
                         },
-                        {
-                            key: 'edit',
-                            action: () => navigateTo(route('users.edit', id)),
-                        },
+                        ...(isStudentUser
+                            ? []
+                            : [
+                                  {
+                                      key: 'edit',
+                                      action: () => navigateTo(route('users.edit', id)),
+                                  },
+                              ]),
                         {
                             key: 'archive',
                             action: () => onDelete(can['delete:users'], route('users.destroy', id), name),
@@ -112,7 +117,8 @@ export const useUsers = () => {
                             key: 'delete',
                             action: () => onForceDelete(can['forceDelete:users'], route('users.force-delete', id), name),
                         },
-                    ]);
+                    ];
+                    return moreActionButton(!!row.original?.attributes?.deletedAt, actions);
                 },
             },
         ];
@@ -139,30 +145,6 @@ export const useUsers = () => {
                 .merge(phoneNumberUniqueSchema(`api/v1/validations/check?current_id=${userId}&key=user_phone_number&value=`))
                 .merge(employeeNumberUniqueSchema(`api/v1/validations/check?current_id=${staffId}&key=staff_employee_number&value=`)),
         );
-    };
-
-    const updateStudentUserSchema = (isNativeCitizen: boolean, userId: string, studentId: string) => {
-        const personal = ['genderSchema', 'maritalStatusSchema', 'dobSchema', 'idTypeSchema', 'phoneNumberSchema'];
-        let updateSchema = null;
-        if (isNativeCitizen) {
-            updateSchema = mergeValidationSchema(schemaFields)(
-                personal,
-                schemaFields['titleSchema']()
-                    .merge(idNumberUniqueSchema(`api/v1/validations/check?current_id=${studentId}&key=student_national_id&value=`))
-                    .merge(emailUniqueSchema(`api/v1/validations/check?current_id=${userId}&key=user_email&value=`))
-                    .merge(phoneNumberUniqueSchema(`api/v1/validations/check?current_id=${userId}&key=user_phone_number&value=`)),
-            );
-        } else {
-            personal.push('countrySchema');
-            updateSchema = mergeValidationSchema(schemaFields)(
-                personal,
-                schemaFields['titleSchema']()
-                    .merge(passportNumberUniqueSchema(`api/v1/validations/check?current_id=${studentId}&key=student_passport_number&value='`))
-                    .merge(emailUniqueSchema(`api/v1/validations/check?current_id=${userId}&key=user_email&value=`))
-                    .merge(phoneNumberUniqueSchema(`api/v1/validations/check?current_id=${userId}&key=user_phone_number&value=`)),
-            );
-        }
-        return updateSchema;
     };
 
     const saveUser = (form: InertiaForm<any>, userId?: string) => {
@@ -221,22 +203,6 @@ export const useUsers = () => {
                 }
             },
         });
-    };
-
-    const updateStudentUser = (form: InertiaForm<any>, userId: string) => {
-        form.put(route('users.update-student-user', userId), {
-            onSuccess: () => {
-                successAlert('User successfully updated');
-            },
-            onError: (errors: any) => {
-                if (Object.keys(errors).length) {
-                    const allErrors = Object.values(errors).join('\n');
-                    errorAlert(allErrors);
-                } else {
-                    errorAlert('An unexpected error happened, user could not be updated');
-                }
-            },
-        }); 
     };
 
     const isValidating = ref(false);
@@ -308,8 +274,6 @@ export const useUsers = () => {
         isLoading,
         validateFormSchema,
         saveStaffUser,
-        updateStudentUser,
-        updateStudentUserSchema,
         hasStudentRole,
         updateUserCredentials,
         isValidating,

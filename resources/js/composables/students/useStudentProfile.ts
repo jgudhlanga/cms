@@ -27,10 +27,10 @@ export {
     studentProfileTabDefinitions,
 } from '@/composables/students/useStudentProfileTabs';
 
-const tabComponents: Record<StudentProfileTabValue, (student: Student) => Component> = {
+const tabComponents: Record<StudentProfileTabValue, (student: Student, options?: { activeIntakePeriodIds?: Array<string | number> }) => Component> = {
     basic_info: (student) => h(Info, { student }),
     programs: (student) => h(Programs, { student }),
-    applications: (student) => h(Applications, { student }),
+    applications: (student, options) => h(Applications, { student, activeIntakePeriodIds: options?.activeIntakePeriodIds }),
     financials: (student) => h(Financials, { student }),
     accommodations: (student) => h(Hostels, { student }),
     documents: () => h(Documents),
@@ -38,7 +38,10 @@ const tabComponents: Record<StudentProfileTabValue, (student: Student) => Compon
 };
 
 export const useStudentProfile = () => {
-    const profileTabs = (student: Student): CustomTab[] =>
+    const profileTabs = (
+        student: Student,
+        options?: { activeIntakePeriodIds?: Array<string | number> },
+    ): CustomTab[] =>
         studentProfileTabDefinitions('admin')
             .filter((definition) => definition.show ?? false)
             .map((definition) => ({
@@ -46,7 +49,7 @@ export const useStudentProfile = () => {
                 icon: definition.icon,
                 show: definition.show ?? false,
                 transLabel: definition.transLabel,
-                component: tabComponents[definition.value](student),
+                component: tabComponents[definition.value](student, options),
             }));
 
     return {

@@ -342,6 +342,7 @@ class PortalController extends Controller
     public function editApplication(StudentApplication $studentApplication): Response
     {
         $this->authorize('manageStudentPersonalDetails');
+        $this->assertOwnsStudentApplication($studentApplication);
         $application = EnrolmentResource::make($studentApplication);
 
         return Inertia::render('portal/application/EditProgram', compact('application'));
@@ -353,6 +354,7 @@ class PortalController extends Controller
     public function createProgram(Student $student): Response
     {
         $this->authorize('manageStudentPersonalDetails');
+        $this->assertOwnsStudent($student);
         $oLevelResults = AcademicLevelResource::collection($student?->oLevelResults);
         $allowedLevels = []; // Level::where('allowed_applications_per_level', '>', '1')->pluck('id')->toArray();
         $currentLevels = $student->applications()->get()->map(fn ($program) => $program?->department_level_id)->filter()->toArray();
@@ -369,6 +371,7 @@ class PortalController extends Controller
     public function storeProgram(Student $student, ProgramRequest $request): RedirectResponse
     {
         $this->authorize('manageStudentPersonalDetails');
+        $this->assertOwnsStudent($student);
 
         DB::beginTransaction();
         [$mainSubjects, $examSittings, $examYears, $otherSubjects, $otherGrades, $otherExamYears, $otherSittings, $modeOfStudyId, $intakePeriodId] = $this->extractRequestFilters();
@@ -421,6 +424,7 @@ class PortalController extends Controller
     public function updateApplication(StudentApplication $studentApplication, ProgramRequest $request): RedirectResponse
     {
         $this->authorize('manageStudentPersonalDetails');
+        $this->assertOwnsStudentApplication($studentApplication);
 
         DB::beginTransaction();
         try {
@@ -789,6 +793,24 @@ class PortalController extends Controller
     {
         return $user->hasRole(RoleEnum::STUDENT->value)
             || $user->hasRole(RoleEnum::STUDENT->name());
+    }
+
+    private function assertOwnsStudentApplication(StudentApplication $studentApplication): void
+    {
+        $studentProfile = auth()->user()?->studentProfile;
+
+        if ($studentProfile === null || $studentApplication->student_id !== $studentProfile->id) {
+            abort(403);
+        }
+    }
+
+    private function assertOwnsStudent(Student $student): void
+    {
+        $studentProfile = auth()->user()?->studentProfile;
+
+        if ($studentProfile === null || $student->id !== $studentProfile->id) {
+            abort(403);
+        }
     }
 
     public function errors(string $message): Response

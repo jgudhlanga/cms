@@ -1,6 +1,7 @@
 import { useDataTables } from '@/composables/core/useDataTables';
 import { useUtils } from '@/composables/core/useUtils';
 import { errorAlert, successAlert } from '@/lib/alerts';
+import { buildStudentShowUrl } from '@/lib/studentShowNavigation';
 import { isValidZimbabweanIdNumber } from '@/lib/zimbabweanId';
 import FaultyStudentIdCorrectionCell from '@/pages/maintenance/partials/students/FaultyStudentIdCorrectionCell.vue';
 import HttpService from '@/services/http.service';
@@ -209,7 +210,13 @@ export const useFaultyStudentIds = () => {
             header: trans_choice('trans.name', 1),
             accessorKey: 'name',
             cell: ({ row }: { row: { original: FaultyStudentIdNumber } }) =>
-                textLink(route('students.show', String(row.original.id)), row.original.attributes.name ?? '---'),
+                textLink(
+                    buildStudentShowUrl(row.original.id, {
+                        from: 'maintenance',
+                        return: route('maintenance.faulty-student-ids'),
+                    }),
+                    row.original.attributes.name ?? '---',
+                ),
         },
         {
             header: trans('trans.phone_number'),

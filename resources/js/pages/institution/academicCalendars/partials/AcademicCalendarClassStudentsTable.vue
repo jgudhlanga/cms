@@ -4,8 +4,9 @@ import { BaseCheckbox } from '@/components/core/form';
 import { normalizeGender } from '@/composables/academicCalendars/useAcademicCalendarClassStudents';
 import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
+import { buildStudentShowUrl, currentPageReturnPath } from '@/lib/studentShowNavigation';
 import type { AcademicCalendarClassMoveTarget, AcademicCalendarClassPreviewStudent } from '@/types/academic-calendar';
-import { Link as InertiaLink } from '@inertiajs/vue3';
+import { Link as InertiaLink, usePage } from '@inertiajs/vue3';
 import { UserIcon, UserRoundIcon } from 'lucide-vue-next';
 
 defineProps<{
@@ -15,6 +16,14 @@ defineProps<{
     moveTargetClasses: AcademicCalendarClassMoveTarget[];
     studentCourseWorkUrl: (student: AcademicCalendarClassPreviewStudent) => string;
 }>();
+
+const page = usePage();
+
+const studentShowUrl = (studentId: number) =>
+    buildStudentShowUrl(studentId, {
+        from: 'academic-calendar',
+        return: currentPageReturnPath(page.url, window.location.origin),
+    });
 
 const emit = defineEmits<{
     toggleSelectAll: [];
@@ -106,7 +115,7 @@ const selectAllChangeClassModel = defineModel<boolean>('selectAllChangeClassMode
                     </InertiaLink>
                 </td>
                 <td class="j-td text-right">
-                    <InertiaLink :href="route('students.profile', String(student.studentId))">
+                    <InertiaLink :href="studentShowUrl(student.studentId)">
                         <BaseButton
                             :size="ButtonSize.xs"
                             :variant="ColorVariant.success"

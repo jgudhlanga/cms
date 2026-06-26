@@ -50,6 +50,7 @@ declare module 'vue' {
     AppearanceCycleToggle: typeof import('./../components/core/util/AppearanceCycleToggle.vue')['default']
     AppearanceTabs: typeof import('./../components/core/util/AppearanceTabs.vue')['default']
     AppLayout: typeof import('./../layouts/AppLayout.vue')['default']
+    ApplicationCard: typeof import('./../components/students/applications/ApplicationCard.vue')['default']
     ApplicationCover: typeof import('./../components/auth/ApplicationCover.vue')['default']
     ApplicationsByIntakePeriod: typeof import('./../components/students/applications/ApplicationsByIntakePeriod.vue')['default']
     AppLogo: typeof import('./../components/core/image/AppLogo.vue')['default']

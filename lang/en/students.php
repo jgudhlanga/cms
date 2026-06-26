@@ -191,4 +191,7 @@ return [
     'dashboard_activity_course_work' => 'Course work in progress for :module.',
     'dashboard_activity_outstanding_balance' => 'Outstanding balance of $:amount on your account.',
     'hms_payment' => 'Hostel Payment',
+    'view_student' => 'View student',
+    'current_intake' => 'Current intake',
+    'past_intake_applications_read_only' => 'Applications for past intakes are read-only. Only active intake applications can be edited.',
 ];

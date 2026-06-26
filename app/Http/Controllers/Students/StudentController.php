@@ -7,15 +7,13 @@ use App\DTO\Students\UpdateStudentDto;
 use App\DTO\Users\UserDto;
 use App\Enums\Acl\RoleEnum;
 use App\Enums\Shared\FeeTypeEnum;
+use App\Exports\Students\StudentListExport;
 use App\Helpers\Helper;
 use App\Helpers\PaymentHelper;
 use App\Http\Controllers\Controller;
-use App\Http\Filters\Students\StudentFilter;
 use App\Http\Requests\Students\CreateStudentApplicationRequest;
 use App\Http\Requests\Students\ExportStudentListRequest;
 use App\Http\Requests\Students\UpdateStudentRequest;
-use App\Exports\Students\StudentListExport;
-use App\Services\Students\StudentListExportService;
 use App\Http\Resources\Students\StudentResource;
 use App\Http\Resources\Users\UserResource;
 use App\Models\Institution\FeeStructure;
@@ -29,6 +27,8 @@ use App\Repositories\Shared\interface\INextOfKinRepository;
 use App\Repositories\Students\interface\IStudentApplicationRepository;
 use App\Repositories\Students\interface\IStudentRepository;
 use App\Repositories\Users\interface\IUserRepository;
+use App\Services\Students\IntakePeriodResolver;
+use App\Services\Students\StudentListExportService;
 use Exception;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
@@ -41,15 +41,13 @@ use Throwable;
 class StudentController extends Controller
 {
     public function __construct(
-        protected IStudentRepository        $repository,
-        protected IUserRepository           $userRepository,
-        protected IContactRepository        $contactRepository,
-        protected IAddressRepository        $addressRepository,
-        protected INextOfKinRepository      $nextOfKinRepository,
+        protected IStudentRepository $repository,
+        protected IUserRepository $userRepository,
+        protected IContactRepository $contactRepository,
+        protected IAddressRepository $addressRepository,
+        protected INextOfKinRepository $nextOfKinRepository,
         protected IStudentApplicationRepository $studentApplicationRepository,
-    )
-    {
-    }
+    ) {}
 
     /**
      * @throws AuthorizationException
@@ -57,6 +55,7 @@ class StudentController extends Controller
     public function index(): Response
     {
         $this->authorize('viewAny', Student::class);
+
         return Inertia::render('students/Index');
     }
 
@@ -72,7 +71,6 @@ class StudentController extends Controller
         );
     }
 
-
     public function create()
     {
         //
@@ -81,6 +79,7 @@ class StudentController extends Controller
     public function createProfile(string $paymentMode)
     {
         $this->authorize('create', Student::class);
+
         return Inertia::render('enrolments/Create', compact('paymentMode'));
     }
 
@@ -88,7 +87,6 @@ class StudentController extends Controller
     {
         return Inertia::render('enrolments/EnrolmentLookup');
     }
-
 
     /**
      * @throws Throwable
@@ -117,16 +115,17 @@ class StudentController extends Controller
         } catch (Throwable $e) {
             DB::rollBack();
             report($e);
+
             return back()->withErrors([
                 'error' => 'An error occurred while submitting your profile. Please try again.',
             ]);
         }
     }
 
-
     public function showProfile(Student $student)
     {
         $student = StudentResource::make($student);
+
         return Inertia::render('enrolments/Show', compact('student'));
     }
 
@@ -135,15 +134,15 @@ class StudentController extends Controller
         $this->authorize('view', $student);
         $user = UserResource::make($student->user);
         $student = StudentResource::make($student);
-        return Inertia::render('students/Show', compact('user', 'student'));
-    }
+        $activeIntakePeriodIds = app(IntakePeriodResolver::class)->activeIntakePeriodIds();
 
+        return Inertia::render('students/Show', compact('user', 'student', 'activeIntakePeriodIds'));
+    }
 
     public function edit(string $id)
     {
         //
     }
-
 
     public function update(UpdateStudentRequest $request, Student $student): void
     {
@@ -168,7 +167,7 @@ class StudentController extends Controller
 
         $user = $this->findUserBySearch($search);
 
-        if (!$user) {
+        if (! $user) {
             return $this->returnSearchResponse(
                 user: null,
                 message: 'No matching record found.',
@@ -178,7 +177,7 @@ class StudentController extends Controller
 
         $hasPaidApplicationFee = PaymentHelper::hasPaidApplicationFee($user);
         $student = $user->studentProfile;
-        $hasAdminRole = !$user->isStudent();
+        $hasAdminRole = ! $user->isStudent();
 
         $currentLevel = null;
         $currentProgramCount = null;
@@ -237,7 +236,6 @@ class StudentController extends Controller
         return null;
     }
 
-
     private function extractRequestFilters(): array
     {
         $search = request()->has('search') ? request('search') : null;
@@ -291,7 +289,7 @@ class StudentController extends Controller
     {
         $feeType = PaymentHelper::getFeeTypeBySlug(FeeTypeEnum::APPLICATION_FEE->slug());
         $registrationFee = FeeStructure::where('fee_type_id', $feeType->id)->first();
-        if (!$feeType || !$registrationFee) {
+        if (! $feeType || ! $registrationFee) {
             throw new Exception('Required fee type or structure not found');
         }
         $systemReference = Helper::generateRandomCode('ORD');
@@ -327,12 +325,11 @@ class StudentController extends Controller
         bool $eligibleForEnrolment = true,
         $currentLevel = null,
         $currentProgramCount = null,
-        string $message = null,
+        ?string $message = null,
         int $status = 200,
         bool $hasAdminRole = false,
-        int $studentId = null,
-    )
-    {
+        ?int $studentId = null,
+    ) {
         return response()->json([
             'user' => $user,
             'studentId' => $studentId,

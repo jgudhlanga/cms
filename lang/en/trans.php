@@ -81,6 +81,7 @@ return [
     'search' => 'search ...',
     'no_data' => 'No data found',
     'back' => 'Back',
+    'back_to' => 'Back to :destination',
     'okay' => 'Okay',
     'done' => 'Done',
     'page' => 'Page|Pages',
