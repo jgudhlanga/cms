@@ -9,6 +9,10 @@ import Financials from '@/pages/students/components/profile/Financials.vue';
 import Hostels from '@/pages/students/components/profile/Hostels.vue';
 import Documents from '@/pages/students/components/profile/Documents.vue';
 import Authentication from '@/components/users/Authentication.vue';
+import AddressesForm from '@/components/shared/address/AddressesForm.vue';
+import EditBasicInfo from '@/components/shared/basicInfo/EditBasicInfo.vue';
+import ContactsForm from '@/components/shared/contacts/ContactsForm.vue';
+import NextOfKinForm from '@/components/shared/nextOfKin/NextOfKinForm.vue';
 import {
     studentProfileTabDefinitions,
     type StudentProfileTabValue,
@@ -47,7 +51,7 @@ const pageTitle = computed(() => tabDefinition.value?.transLabel() ?? '');
     <PageContainer :breadcrumbs="breadcrumbs">
         <div class="w-full min-w-0 pb-24 md:pb-0">
             <StudentProfileShell :student="student" :active-tab="activeTab">
-                <Info v-if="activeTab === 'basic_info'" :student="student" />
+                <Info v-if="activeTab === 'basic_info'" :student="student" context="portal" />
                 <Programs v-else-if="activeTab === 'programs'" :student="student" />
                 <Applications v-else-if="activeTab === 'applications'" :student="student" />
                 <Financials v-else-if="activeTab === 'financials'" :student="student" />
@@ -65,5 +69,11 @@ const pageTitle = computed(() => tabDefinition.value?.transLabel() ?? '');
             </StudentProfileShell>
         </div>
         <PortalProfileMobileNav :active-tab="activeTab" />
+        <template v-if="activeTab === 'basic_info'">
+            <EditBasicInfo use-portal-update />
+            <ContactsForm :post-url="route('portal.contacts.store')" />
+            <AddressesForm :post-url="route('portal.address.store')" />
+            <NextOfKinForm :post-url="route('portal.next-of-kins.store')" />
+        </template>
     </PageContainer>
 </template>

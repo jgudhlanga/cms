@@ -10,6 +10,7 @@ import { useSponsors } from '@/composables/students/useSponsors';
 import { useStudentPortal } from '@/composables/students/useStudentPortal';
 import { ColorVariant } from '@/enums/colors';
 import { IconName } from '@/enums/icons';
+import { ADDRESS_FIELDS } from '@/lib/addressFields';
 import { Sponsor } from '@/types/students';
 import { onMounted, ref } from 'vue';
 interface Props {
@@ -52,10 +53,10 @@ onMounted(async () => {
                             <GridLabelValue :label="$tChoice('trans.sponsor_type', 1)" :value="sponsor?.attributes?.sponsorType ?? ''" />
                             <GridLabelValue :label="$t('trans.phone_number')" :value="sponsor?.attributes?.phoneNumber ?? ''" />
                             <GridLabelValue :label="$t('trans.email_address')" :value="sponsor?.attributes?.email ?? ''" />
-                            <GridLabelValue :label="$t('trans.address_1')" :value="sponsor?.attributes?.address1 ?? ''" />
-                            <GridLabelValue :label="$t('trans.address_2')" :value="sponsor?.attributes?.address2 ?? ''" />
-                            <GridLabelValue :label="$t('trans.address_3')" :value="sponsor?.attributes?.address3 ?? ''" />
-                            <GridLabelValue :label="$t('trans.address_4')" :value="sponsor?.attributes?.address4 ?? ''" />
+                            <GridLabelValue :label="$t(ADDRESS_FIELDS[0].labelKey)" :value="sponsor?.attributes?.address1 ?? ''" />
+                            <GridLabelValue :label="$t(ADDRESS_FIELDS[1].labelKey)" :value="sponsor?.attributes?.address2 ?? ''" />
+                            <GridLabelValue :label="$t(ADDRESS_FIELDS[2].labelKey)" :value="sponsor?.attributes?.address3 ?? ''" />
+                            <GridLabelValue :label="$t(ADDRESS_FIELDS[3].labelKey)" :value="sponsor?.attributes?.address4 ?? ''" />
                         </div>
                     </template>
                 </CustomCard>

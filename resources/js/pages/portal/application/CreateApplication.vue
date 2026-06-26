@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // UI components
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 
 // Page sections
 import ContactDetails from '@/components/students/update/ContactDetails.vue';
@@ -10,7 +10,7 @@ import Programs from '@/components/students/update/Programs.vue';
 
 // Composable
 import { useUtils } from '@/composables/core/useUtils';
-import { useStudentPortal } from '@/composables/students/useStudentPortal';
+import { useCreateApplicationWizard } from '@/composables/students/useCreateApplicationWizard';
 
 // Store & types
 import { useCreateApplicationFormStore } from '@/store/portal/useCreateApplicationFormStore';
@@ -18,20 +18,17 @@ import { AuthObject } from '@/types/data-pagination';
 import { CreateApplicationParams } from '@/types/portal';
 
 // Utilities
-import { BaseButton } from '@/components/core/button';
 import ComingSoonAnimated from '@/components/core/util/ComingSoonAnimated.vue';
+import PortalApplicationLevelChip from '@/components/portal/PortalApplicationLevelChip.vue';
+import PortalApplicationMobileFooter from '@/components/portal/PortalApplicationMobileFooter.vue';
+import PortalApplicationShell from '@/components/portal/PortalApplicationShell.vue';
 import PortalApplicationStepper from '@/components/portal/PortalApplicationStepper.vue';
-import StudentPageHeader from '@/components/shared/students/StudentPageHeader.vue';
-import { useErrorDialog } from '@/composables/core/useErrorDialog';
+import type { ApplicationFormStep } from '@/components/portal/PortalApplicationStepper.vue';
 import { useIdTypes } from '@/composables/shared/useIdTypes';
 import { useApplicationFormHelper } from '@/composables/students/useApplicationFormHelper';
-import { ButtonSize } from '@/enums/buttons';
-import { ColorVariant } from '@/enums/colors';
-import { errorAlert } from '@/lib/alerts';
 import { CourseRequirement, DepartmentLevelRequirement } from '@/types/department-meta-data';
 import { Level } from '@/types/institution';
-import { useForm } from '@inertiajs/vue3';
-import { trans } from 'laravel-vue-i18n';
+import { Head, useForm } from '@inertiajs/vue3';
 import { storeToRefs } from 'pinia';
 
 // Props
@@ -49,27 +46,27 @@ interface Props {
     errors: object;
     registrationPrefill?: RegistrationPrefill | null;
     applicationStep?: 'level' | 'fee' | 'apply';
+    intakeName?: string | null;
+    selectedLevelId?: number | null;
+    selectedLevelName?: string | null;
 }
 
 const props = defineProps<Props>();
 const { user } = props.auth;
 const requirements = ref<CourseRequirement | DepartmentLevelRequirement | null | undefined>(null);
-// Composable
 const { idTypes, listIdTypes } = useIdTypes();
-const { applicationFormSchema } = useStudentPortal();
-const { isNativeCitizen, isItTrue, navigateTo, formatZimIdNumber } = useUtils();
-const { validateMainSubjects, validateOtherSubjects, updateCreateForm } = useApplicationFormHelper();
+const { isItTrue, navigateTo, formatZimIdNumber } = useUtils();
+const { updateCreateForm } = useApplicationFormHelper();
 const store = useCreateApplicationFormStore();
 const storeRefs = storeToRefs(store);
+
 const getRequirements = () => {
     requirements.value =
         storeRefs.courseRequirements?.value && Number(String(storeRefs.courseRequirements?.value?.id)) > 0
             ? storeRefs.courseRequirements?.value
             : storeRefs.levelRequirements?.value;
 };
-// Store
 
-// Form
 const form = useForm<CreateApplicationParams>({
     email: '',
     first_name: '',
@@ -124,11 +121,13 @@ const form = useForm<CreateApplicationParams>({
     o_level_other_sittings: null,
 });
 
+const wizard = useCreateApplicationWizard(form);
+const { currentStep, isFirstStep, stepTitleKey, primaryActionLabel, stepErrorHint } = wizard;
+
 const defaultIdType = computed(() => {
     return idTypes.value.find((type) => isItTrue(type.attributes?.isDefault)) ?? null;
 });
 
-// Populate from user
 const populateInitialForm = () => {
     const attrs = user.attributes;
     storeRefs.first_name.value = attrs?.firstname;
@@ -156,107 +155,98 @@ const populateInitialForm = () => {
 };
 
 onMounted(async () => {
-    /**ToastService.warning('Sorry, The registration has ended for now. Contact the administration for more info.');
-    router.post(route('logout'));
-    return;*/
     await listIdTypes();
     populateInitialForm();
 });
 
 const isValidating = ref(false);
+const isProgrammeLevelAvailable = ref(true);
 
-const save = async () => {
-    getRequirements();
-    updateCreateForm(form);
+const onStepNavigate = (step: ApplicationFormStep) => {
+    wizard.goToStep(step);
+};
+
+const onPrimaryAction = async () => {
+    isValidating.value = true;
     try {
-        isValidating.value = true;
-        await applicationFormSchema(isNativeCitizen(storeRefs.idType?.value?.label ?? '')).parseAsync(form);
-        if (storeRefs.disability_status?.value === null || storeRefs.disability_status?.value === undefined) {
-            errorAlert('Please choose your disability status');
+        getRequirements();
+        updateCreateForm(form);
+
+        if (currentStep.value === 'programme') {
+            if (!isProgrammeLevelAvailable.value) {
+                return;
+            }
+            const valid = await wizard.validateFullForm(requirements.value);
+            if (valid) {
+                navigateTo(route('portal.application.confirm'));
+            }
             return;
         }
-        if (isItTrue(requirements.value?.attributes?.isOLevelRequired)) {
-            const mainSubjectsCount = Number(String(requirements.value?.attributes?.mainSubjectsCount ?? '0'));
-            const mainErrors = validateMainSubjects(mainSubjectsCount);
-            if (mainErrors && mainErrors.length > 0) {
-                errorAlert(mainErrors.join('\n'));
-                return;
-            }
-            const otherSubjectCount = Number(String(requirements.value?.attributes?.otherSubjectsCount ?? '0'));
-            const otherErrors = validateOtherSubjects(otherSubjectCount);
-            if (otherErrors && otherErrors.length > 0) {
-                errorAlert(otherErrors.join('\n'));
-                return;
-            }
-        }
-        if (isItTrue(Number(String(requirements.value?.attributes?.requiredLevelId)) > 0)) {
-            if (!isItTrue(storeRefs.required_level_completed?.value)) {
-                errorAlert(trans('trans.acknowledge_level_completed'));
-                return;
-            }
-        }
-        if (isItTrue(requirements.value?.attributes?.onlyReadWriteRequired)) {
-            if (!isItTrue(storeRefs.read_write_acknowledged?.value)) {
-                errorAlert(trans('trans.acknowledge_read_write'));
-                return;
-            }
-        }
-        navigateTo(route('portal.application.confirm'));
-    } catch (error: any) {
-        if (error?.format) {
-            form.setError(error.format());
-        } else {
-            console.error(error);
-        }
+
+        await wizard.goNext(requirements.value);
     } finally {
         isValidating.value = false;
     }
 };
-const maintenanceMode = isItTrue(import.meta.env.VITE_MAINTENANCE_MODE);
 
-watch(storeRefs.level, async (newVal) => {
-    const selectedLevel = props.levelsWithPayment?.filter((lv: Level) => Number(lv.id) === Number(newVal?.relationshipOneValue));
-    if (selectedLevel[0] && isItTrue(selectedLevel[0].attributes.hasApplicationFeePayment) && !isItTrue(props.hasPaidApplicationFee)) {
-        const confirmed = await useErrorDialog().open({
-            title: 'Application Fee Required',
-            message: 'The selected level requires an application fee to be paid before continuing.',
-            confirmText: 'Go to Payment',
-        });
-        if (confirmed) {
-            // unset level
-            storeRefs.level.value = null;
-            navigateTo(route('portal.application.fee-payment'));
-            return;
-        }
-    }
-});
+const maintenanceMode = isItTrue(import.meta.env.VITE_MAINTENANCE_MODE);
 </script>
+
 <template>
-    <StudentPageHeader />
-    <PortalApplicationStepper :current-step="applicationStep ?? 'apply'" />
-    <form @submit.prevent="() => save()">
-        <div class="mt-20 flex w-full flex-col bg-background px-5 text-foreground md:p-0">
+    <Head :title="$t('trans.complete_application')" />
+    <PortalApplicationShell
+        :intake-name="intakeName"
+        :page-title="$t('trans.application_form')"
+        :sticky-footer="!maintenanceMode"
+        hide-intake-banner
+    >
+        <template #header>
+            <div class="mb-3 space-y-1.5 text-center">
+                <PortalApplicationStepper compact :current-step="currentStep" @navigate="onStepNavigate" />
+                <PortalApplicationLevelChip :level-name="selectedLevelName" :intake-name="intakeName" />
+            </div>
+        </template>
+
+        <form @submit.prevent="onPrimaryAction">
             <ComingSoonAnimated v-if="maintenanceMode" />
-            <div v-else class="flex w-full flex-col space-y-6 md:mx-auto md:w-7/8">
-                <PersonalDetails :form="form" />
-                <ContactDetails :form="form" />
-                <NextOfKinDetails :form="form" />
-                <Programs :form="form" />
-                <div class="mb-5 flex flex-col items-center justify-center space-y-3 md:flex-row md:space-y-0 md:space-x-3">
-                    <BaseButton
-                        type="button"
-                        @click="() => navigateTo(route('portal.application.level-options'))"
-                        class="w-full md:w-50"
-                        :size="ButtonSize.xl"
-                        :variant="ColorVariant.danger"
-                    >
-                        {{ $t('trans.cancel') }}
-                    </BaseButton>
-                    <BaseButton class="w-full md:w-50" :size="ButtonSize.xl">
-                        {{ $t('trans.continue') }}
-                    </BaseButton>
+            <div v-else class="space-y-4">
+                <div>
+                    <h2 class="text-base font-semibold text-foreground">{{ $t(stepTitleKey) }}</h2>
+                    <p class="text-[11px] leading-tight text-muted-foreground">
+                        {{ $t('trans.required_fields_marked_prefix') }}
+                        <span class="text-destructive">*</span>
+                        {{ $t('trans.required_fields_marked_suffix') }}
+                    </p>
+                </div>
+
+                <div class="rounded-2xl border border-border bg-card p-5 text-card-foreground shadow-md dark:shadow-sm sm:p-6">
+                    <PersonalDetails v-if="currentStep === 'personal'" :form="form" bare />
+                    <ContactDetails v-else-if="currentStep === 'contact'" :form="form" email-read-only bare />
+                    <NextOfKinDetails v-else-if="currentStep === 'next_of_kin'" :form="form" bare />
+                    <Programs
+                        v-else-if="currentStep === 'programme'"
+                        :form="form"
+                        bare
+                        :selected-level-name="selectedLevelName"
+                        :has-paid-application-fee="hasPaidApplicationFee"
+                        :levels-with-payment="levelsWithPayment"
+                        @level-availability-change="isProgrammeLevelAvailable = $event"
+                    />
+
                 </div>
             </div>
-        </div>
-    </form>
+        </form>
+
+        <template v-if="!maintenanceMode" #footer>
+            <PortalApplicationMobileFooter
+                :primary-label="primaryActionLabel"
+                :processing="isValidating"
+                :error-hint="stepErrorHint"
+                :show-back="!isFirstStep"
+                :primary-disabled="currentStep === 'programme' && !isProgrammeLevelAvailable"
+                @primary="onPrimaryAction"
+                @back="wizard.goBack"
+            />
+        </template>
+    </PortalApplicationShell>
 </template>

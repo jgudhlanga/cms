@@ -4,9 +4,9 @@ namespace App\Http\Requests\Students;
 
 use App\Enums\Shared\DisabilityStatusEnum;
 use App\Enums\Shared\IdTypeEnum;
-use App\Helpers\Helper;
 use App\Helpers\PaymentHelper;
 use App\Models\Institution\Level;
+use App\Rules\Students\ValidateOLevelResults;
 use App\Rules\ZimbabweanIdNumber;
 use App\Services\Enrollment\EnrollmentLookupService;
 use App\Services\Students\ApplicationFeeService;
@@ -180,6 +180,8 @@ class CreateApplicationRequest extends FormRequest
                     );
                 }
             }
+
+            app(ValidateOLevelResults::class)->validate($this, $validator);
         });
     }
 }

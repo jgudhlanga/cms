@@ -9,11 +9,13 @@ import { ButtonSize } from '@/enums/buttons';
 const props = withDefaults(defineProps<{
 	classes?: string;
 	processing?: boolean,
+	disabled?: boolean,
 	variant?: ColorVariant | ButtonVariants,
 	size?: ButtonSize | ButtonVariants,
 	title?: string,
 }>(), {
 	processing: false,
+	disabled: false,
 	variant: ColorVariant.primary,
     size: ButtonSize.md
 });
@@ -61,7 +63,7 @@ const computedClass = computed(() =>
 <template>
 	<Button
 		v-bind="$attrs"
-		:class="cn('uppercase rounded-md cursor-pointer', computedClass, props.classes)" :disabled="processing">
+		:class="cn('uppercase rounded-md cursor-pointer', computedClass, props.classes)" :disabled="processing || disabled">
 		<component :is="icons[IconName.loader]" v-if="processing" class="h-4 w-4 animate-spin" />
         <span v-if="title">{{ title }}</span>
 		<slot />

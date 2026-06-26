@@ -95,7 +95,11 @@ class RedirectStudentMiddleware
                 return $next($request);
             }
 
-            if (! $request->routeIs('portal.application.fee-payment')) {
+            if (! $request->routeIs(
+                'portal.application.fee-payment',
+                'portal.application.level-options',
+                'portal.application.select-level',
+            )) {
                 return to_route('portal.application.fee-payment');
             }
 

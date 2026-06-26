@@ -14,11 +14,13 @@ interface Props {
     isRequired?: boolean;
     orientation?: 'vertical' | 'horizontal';
     disabled?: boolean;
+    mobileStack?: boolean;
 }
 
 withDefaults(defineProps<Props>(), {
     orientation: 'vertical',
     verticalLayout: true,
+    mobileStack: false,
 });
 
 const model = defineModel<string | boolean | null>();
@@ -35,8 +37,13 @@ const model = defineModel<string | boolean | null>();
             >{{ label }}
             <RequiredIndicator v-if="isRequired" />
         </Label>
-        <div class="flex items-center space-x-2" v-for="option in options" :key="option.inputId">
-            <RadioGroupItem :id="option.inputId" :value="option.value" class="p-3" />
+        <div
+            class="flex items-center space-x-2"
+            :class="mobileStack ? 'min-h-12 w-full rounded-md border border-border px-3 py-2' : ''"
+            v-for="option in options"
+            :key="option.inputId"
+        >
+            <RadioGroupItem :id="option.inputId" :value="option.value" :class="mobileStack ? 'size-5' : 'p-3'" />
             <template v-if="typeof option.label === 'string' && option.label.startsWith('<')">
                 <!-- HTML string with icon -->
                 <Label :for="option.inputId">

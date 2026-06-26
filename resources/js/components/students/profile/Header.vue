@@ -8,12 +8,35 @@ import { trans } from 'laravel-vue-i18n';
     data: StudentHeader | null;
   }
   const props = defineProps<Props>();
-    
+
     const yearSemesterDisplay = computed(() => {
-      return `${props.data?.academicCalendar} · ${props.data?.academicYearOption}`;
+      const calendar = props.data?.academicCalendar?.trim();
+      const yearOption = props.data?.academicYearOption?.trim();
+
+      if (calendar && yearOption) {
+        return `${calendar} · ${yearOption}`;
+      }
+
+      return calendar || yearOption || '';
     });
+
     const levelCourseDisplay = computed(() => {
-      return `${props.data?.level} ${trans('general.in')} ${props.data?.course}`;
+      const level = props.data?.level?.trim();
+      const course = props.data?.course?.trim();
+
+      if (level && course) {
+        return `${level} ${trans('general.in')} ${course}`;
+      }
+
+      return level || course || '';
+    });
+
+    const trackingBadge = computed(() => {
+      if (props.data?.studentNumber?.trim()) {
+        return props.data.studentNumber;
+      }
+
+      return props.data?.applicationTrackingNumber?.trim() || '';
     });
 
 </script>
@@ -31,10 +54,16 @@ import { trans } from 'laravel-vue-i18n';
           {{ data.enrolmentStatus }}
         </span>
         <span
-          v-if="data?.studentNumber"
+          v-else-if="data?.applicationStatus"
+          class="inline-flex shrink-0 items-center rounded-full border border-amber-500/30 bg-amber-500/15 px-1.5 py-px text-[10px] font-semibold leading-none text-amber-700 dark:text-amber-400"
+        >
+          {{ data.applicationStatus }}
+        </span>
+        <span
+          v-if="trackingBadge"
           class="shrink-0 rounded-full bg-muted px-1.5 py-px font-mono text-[10px] leading-none tracking-wide text-foreground"
         >
-          {{ data.studentNumber }}
+          {{ trackingBadge }}
         </span>
       </div>
 
@@ -51,6 +80,12 @@ import { trans } from 'laravel-vue-i18n';
           class="inline-flex max-w-full items-center rounded-full border border-primary/30 bg-primary/15 px-1.5 py-0.5 text-[10px] font-medium leading-snug text-primary"
         >
           <span class="min-w-0 wrap-break-word">📅 {{ yearSemesterDisplay }}</span>
+        </span>
+        <span
+          v-else-if="data?.intakePeriod"
+          class="inline-flex max-w-full items-center rounded-full border border-primary/30 bg-primary/15 px-1.5 py-0.5 text-[10px] font-medium leading-snug text-primary"
+        >
+          <span class="min-w-0 wrap-break-word">📅 {{ data.intakePeriod }}</span>
         </span>
         <span
           v-if="data?.modeOfStudy"

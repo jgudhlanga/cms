@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { BaseButton } from '@/components/core/button';
+import { BasePasswordInput } from '@/components/core/form';
 import BaseInput from '@/components/core/form/text/BaseInput.vue';
-import { TextFieldType } from '@/enums/inputs';
 
 defineProps<{
     firstName: string;
@@ -59,7 +59,6 @@ const emit = defineEmits<{
             :error="errors.middle_name"
             @update:model-value="emit('update:middleName', $event)"
             @input="emit('clear-error', 'middle_name')"
-            class="uppercase"
         />
         <BaseInput
             input-id="last_name"
@@ -83,27 +82,28 @@ const emit = defineEmits<{
             @update:model-value="emit('update:email', $event)"
             @input="emit('clear-error', 'email')"
         />
-        <BaseInput
+        <BasePasswordInput
             input-id="password"
             :label-uppercase="true"
             :placeholder="$t('trans.ui_enter_password')"
             :model-value="password"
-            :type="TextFieldType.password"
             :vertical-layout="false"
             :is-required="true"
             :error="errors.password"
+            show-strength
+            autocomplete="new-password"
             @update:model-value="emit('update:password', $event)"
             @input="emit('clear-error', 'password')"
         />
-        <BaseInput
+        <BasePasswordInput
             input-id="password_confirmation"
             :label-uppercase="true"
             :placeholder="$t('trans.ui_confirm_password')"
             :model-value="passwordConfirmation"
-            :type="TextFieldType.password"
             :is-required="true"
             :vertical-layout="false"
             :error="errors.password_confirmation"
+            autocomplete="off"
             @update:model-value="emit('update:passwordConfirmation', $event)"
             @input="emit('clear-error', 'password_confirmation')"
         />

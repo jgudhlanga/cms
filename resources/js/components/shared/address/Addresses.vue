@@ -9,6 +9,7 @@ import TabsAddNewButton from '@/components/students/tabs/TabsAddNewButton.vue';
 import { useAddresses } from '@/composables/shared/useAddresses';
 import { ColorVariant } from '@/enums/colors';
 import { IconName } from '@/enums/icons';
+import { ADDRESS_FIELDS } from '@/lib/addressFields';
 import { hasAbility } from '@/lib/permissions';
 import { Address } from '@/types/shared';
 
@@ -47,10 +48,10 @@ const ability = hasAbility(['create:addresses', 'update:addresses', 'manageOwnSt
                 </template>
                 <template #body>
                     <div class="grid grid-cols-1 gap-4 text-sm">
-                        <GridLabelValue :label="$t('trans.address_1')" :value="address?.attributes?.address1 ?? ''" />
-                        <GridLabelValue :label="$t('trans.address_1')" :value="address?.attributes?.address2 ?? ''" />
-                        <GridLabelValue :label="$t('trans.address_3')" :value="address?.attributes?.address3 ?? ''" />
-                        <GridLabelValue :label="$t('trans.address_4')" :value="address?.attributes?.address4 ?? ''" />
+                        <GridLabelValue :label="$t(ADDRESS_FIELDS[0].labelKey)" :value="address?.attributes?.address1 ?? ''" />
+                        <GridLabelValue :label="$t(ADDRESS_FIELDS[1].labelKey)" :value="address?.attributes?.address2 ?? ''" />
+                        <GridLabelValue :label="$t(ADDRESS_FIELDS[2].labelKey)" :value="address?.attributes?.address3 ?? ''" />
+                        <GridLabelValue :label="$t(ADDRESS_FIELDS[3].labelKey)" :value="address?.attributes?.address4 ?? ''" />
                     </div>
                 </template>
             </CustomCard>

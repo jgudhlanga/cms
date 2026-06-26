@@ -29,6 +29,7 @@ Route::prefix('portal')->group(function () {
         Route::get('dashboard', [PortalController::class, 'dashboard'])->name('portal.dashboard');
         Route::prefix('profile')->name('portal.profile.')->group(function () {
             Route::get('personal-information', [PortalController::class, 'profilePersonalInformation'])->name('personal-information');
+            Route::put('personal-information', [PortalController::class, 'updatePersonalDetails'])->name('personal-information.update');
             Route::get('programs', [PortalController::class, 'profilePrograms'])->name('programs');
             Route::get('applications', [PortalController::class, 'profileApplications'])->name('applications');
             Route::get('financials', [PortalController::class, 'profileFinancials'])->name('financials');

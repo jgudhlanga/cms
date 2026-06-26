@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import PortalOLevelHonestyBanner from '@/components/portal/PortalOLevelHonestyBanner.vue';
 import OLevelMainSubjects from '@/components/students/update/OLevelMainSubjects.vue';
 import OLevelOtherSubjects from '@/components/students/update/OLevelOtherSubjects.vue';
 import EditOLevelSubjects from '@/components/students/update/partials/EditOLevelSubjects.vue';
@@ -32,6 +33,7 @@ const isApplicationEditPage = computed(() => page.url.startsWith('/portal/applic
         />
     </div>
     <div v-else>
+        <PortalOLevelHonestyBanner v-if="!isViewOnly" />
         <OLevelMainSubjects :application="application" :is-view-only="isViewOnly" />
         <OLevelOtherSubjects :application="application" :is-view-only="isViewOnly" />
     </div>

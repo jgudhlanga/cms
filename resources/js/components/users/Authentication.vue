@@ -1,15 +1,19 @@
 <script setup lang="ts">
+import BaseAlert from '@/components/core/alert/BaseAlert.vue';
 import { BaseButton } from '@/components/core/button';
 import BaseCard from '@/components/core/card/BaseCard.vue';
-import { BaseCheckbox, BaseInput } from '@/components/core/form';
+import { BasePasswordInput } from '@/components/core/form';
 import EmailAddress from '@/components/core/form/text/EmailAddress.vue';
+import ProfileFieldCard from '@/components/users/profile/ProfileFieldCard.vue';
 import { useUsers } from '@/composables/users/useUsers';
 import { ColorVariant } from '@/enums/colors';
-import { TextFieldType } from '@/enums/inputs';
+import { TypeVariant } from '@/enums/type-variants';
 import { clearFormErrors } from '@/lib/forms';
+import { scrollToFirstError } from '@/lib/scrollToFirstError';
 import { AuthCredentialsUpdate, User } from '@/types/users';
 import { useForm } from '@inertiajs/vue3';
-import { computed, onMounted, ref, watch } from 'vue';
+import { trans } from 'laravel-vue-i18n';
+import { computed, nextTick, onMounted, ref } from 'vue';
 
 interface Props {
     user?: User;
@@ -20,6 +24,8 @@ const props = withDefaults(defineProps<Props>(), {
     hideAuthorization: false,
 });
 const { user } = props;
+
+const MASKED_PASSWORD = '••••••••';
 
 const form = useForm<AuthCredentialsUpdate>({
     email: '',
@@ -33,60 +39,105 @@ const { updateUserCredentials, isValidating, loadUserPermissions, userPermission
 const initialEmail = ref('');
 const changeEmail = ref(false);
 const changePassword = ref(false);
+const emailToggleRef = ref<HTMLButtonElement | null>(null);
+const passwordToggleRef = ref<HTMLButtonElement | null>(null);
+
 const emailDirty = computed(() => form.email.trim() !== initialEmail.value.trim());
 const passwordDirty = computed(() => form.password.trim().length > 0 || form.password_confirmation.trim().length > 0);
-const canSubmit = computed(
-    () => (changeEmail.value && emailDirty.value) || (changePassword.value && passwordDirty.value),
+const passwordMatches = computed(() => !form.password || form.password === form.password_confirmation);
+const canSubmitEmail = computed(() => changeEmail.value && emailDirty.value);
+const canSubmitPassword = computed(
+    () => changePassword.value && passwordDirty.value && passwordMatches.value && form.password.trim().length > 0,
 );
 
-watch(changeEmail, (enabled) => {
-    if (!enabled) {
-        form.email = initialEmail.value;
-        clearFormErrors(form, 'email');
+const resetEmailFields = () => {
+    form.email = initialEmail.value;
+    clearFormErrors(form, 'email');
+};
+
+const resetPasswordFields = () => {
+    form.password = '';
+    form.password_confirmation = '';
+    clearFormErrors(form, 'password');
+    clearFormErrors(form, 'password_confirmation');
+};
+
+const cancelEmail = async (returnFocus = true) => {
+    changeEmail.value = false;
+    resetEmailFields();
+    if (returnFocus) {
+        await nextTick();
+        emailToggleRef.value?.focus();
     }
-});
+};
 
-watch(changePassword, (enabled) => {
-    if (!enabled) {
-        form.password = '';
-        form.password_confirmation = '';
-        clearFormErrors(form, 'password');
-        clearFormErrors(form, 'password_confirmation');
+const cancelPassword = async (returnFocus = true) => {
+    changePassword.value = false;
+    resetPasswordFields();
+    if (returnFocus) {
+        await nextTick();
+        passwordToggleRef.value?.focus();
     }
-});
+};
 
-const submitForm = () => {
-    form.change_email = changeEmail.value;
-    form.change_password = changePassword.value;
-
-    if (!changeEmail.value && emailDirty.value) {
-        form.setError('email', 'Tick Change Email to save an email update.');
-        return;
+const openEmailPanel = async () => {
+    if (changePassword.value) {
+        await cancelPassword(false);
     }
+    changeEmail.value = true;
+};
 
-    if (!changePassword.value && passwordDirty.value) {
-        form.setError('password', 'Tick Change Password to save a password update.');
-        return;
+const openPasswordPanel = async () => {
+    if (changeEmail.value) {
+        await cancelEmail(false);
     }
+    changePassword.value = true;
+};
 
-    if (changeEmail.value && !emailDirty.value) {
-        form.setError('email', 'Email has not changed.');
-        return;
-    }
+const submitEmail = () => {
+    form.change_email = true;
+    form.change_password = false;
 
-    if (changePassword.value && !passwordDirty.value) {
-        form.setError('password', 'Enter password details to change the password.');
-        return;
-    }
-
-    if (changePassword.value && form.password_confirmation !== form.password) {
-        form.setError('password_confirmation', 'Passwords do not match.');
+    if (!emailDirty.value) {
+        form.setError('email', trans('trans.login_profile_email_not_changed'));
+        scrollToFirstError(form.errors);
         return;
     }
 
     updateUserCredentials(form, String(user?.id), {
-        validateEmail: changeEmail.value,
-        validatePassword: changePassword.value,
+        validateEmail: true,
+        validatePassword: false,
+        onSuccess: () => {
+            initialEmail.value = form.email;
+            changeEmail.value = false;
+            resetPasswordFields();
+        },
+    });
+};
+
+const submitPassword = () => {
+    form.change_email = false;
+    form.change_password = true;
+
+    if (!passwordDirty.value) {
+        form.setError('password', trans('trans.login_profile_enter_password_details'));
+        scrollToFirstError(form.errors);
+        return;
+    }
+
+    if (!passwordMatches.value) {
+        form.setError('password_confirmation', trans('trans.ui_password_and_confirm_password_do_not_match'));
+        scrollToFirstError(form.errors);
+        return;
+    }
+
+    updateUserCredentials(form, String(user?.id), {
+        validateEmail: false,
+        validatePassword: true,
+        onSuccess: () => {
+            changePassword.value = false;
+            resetPasswordFields();
+        },
     });
 };
 
@@ -99,74 +150,175 @@ onMounted(async () => {
         }
     }
 });
-
 </script>
 
 <template>
-    <form @submit.prevent="() => submitForm()">
-        <div class="flex flex-col py-4 justify-center space-y-6">
-            <BaseCard
-                :title="$t('trans.ui_login_profile')"
-                :description="$t('trans.change_login_credentials_warning')"
-                color-variant="black"
-            >
-                <div class="mb-4 flex flex-wrap items-center gap-4">
-                    <BaseCheckbox input-id="change_email" v-model="changeEmail" label="Change Email" />
-                    <BaseCheckbox input-id="change_password" v-model="changePassword" label="Change Password" />
-                </div>
-                <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-                    <EmailAddress
-                        v-model="form.email"
-                        :label-uppercase="true"
-                        :is-required="changeEmail"
-                        :disabled="!changeEmail"
-                        @input="clearFormErrors(form, 'email')"
-                        :error="form.errors.email"
+    <div class="flex flex-col justify-center space-y-6 py-4">
+        <BaseCard :title="$t('trans.ui_login_profile')" color-variant="black">
+            <BaseAlert
+                class="mb-6"
+                :type="TypeVariant.info"
+                :title="$t('trans.login_profile_verification_title')"
+                :description="$t('trans.login_profile_verification_description')"
+            />
+
+            <div class="space-y-8">
+                <section class="space-y-3">
+                    <h2 class="text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+                        {{ $t('trans.email_address') }}
+                    </h2>
+
+                    <ProfileFieldCard
+                        :label="$t('trans.email_address')"
+                        :value="initialEmail"
+                        :is-empty="!initialEmail"
+                        :empty-label="$t('trans.not_provided')"
                     />
-                    <BaseInput
-                        input-id="password"
-                        :label="$t('trans.password')"
-                        :label-uppercase="true"
-                        :placeholder="$t('trans.ui_enter_password')"
-                        v-model="form.password"
-                        :type="TextFieldType.password"
-                        :vertical-layout="true"
-                        :is-required="changePassword"
-                        :disabled="!changePassword"
-                        @input="clearFormErrors(form, 'password')"
-                        :error="form.errors.password"
-                    />
-                    <BaseInput
-                        input-id="password_confirmation"
-                        :label="$t('trans.confirm_password')"
-                        :label-uppercase="true"
-                        :placeholder="$t('trans.ui_confirm_password')"
-                        v-model="form.password_confirmation"
-                        :type="TextFieldType.password"
-                        :is-required="changePassword"
-                        :disabled="!changePassword"
-                        :vertical-layout="true"
-                        @input="clearFormErrors(form, 'password_confirmation')"
-                        :error="form.errors.password_confirmation"
-                    />
+
+                    <button
+                        v-if="!changeEmail"
+                        ref="emailToggleRef"
+                        type="button"
+                        class="text-primary text-sm font-medium underline underline-offset-4 hover:text-primary/80"
+                        :aria-expanded="false"
+                        @click="openEmailPanel"
+                    >
+                        {{ $t('trans.change_email') }}
+                    </button>
+
+                    <fieldset
+                        v-else
+                        class="space-y-4 rounded-xl border border-border/60 bg-muted/20 p-4"
+                    >
+                        <legend class="sr-only">{{ $t('trans.login_profile_change_email_sr') }}</legend>
+
+                        <EmailAddress
+                            v-model="form.email"
+                            :input-auto-focus="true"
+                            :is-required="true"
+                            @input="clearFormErrors(form, 'email')"
+                            :error="form.errors.email"
+                        />
+
+                        <p class="text-sm text-muted-foreground">
+                            {{ $t('trans.login_profile_email_helper') }}
+                        </p>
+
+                        <div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                            <BaseButton
+                                type="button"
+                                class="w-full sm:w-auto"
+                                :variant="ColorVariant.shade_outline"
+                                @click="cancelEmail()"
+                            >
+                                {{ $t('trans.cancel') }}
+                            </BaseButton>
+                            <BaseButton
+                                type="button"
+                                class="w-full sm:w-auto"
+                                :processing="form.processing || isValidating"
+                                :disabled="!canSubmitEmail"
+                                :variant="ColorVariant.primary"
+                                @click="submitEmail"
+                            >
+                                {{ $t('trans.save_changes') }}
+                            </BaseButton>
+                        </div>
+                    </fieldset>
+                </section>
+
+                <section class="space-y-3">
+                    <h2 class="text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+                        {{ $t('trans.password') }}
+                    </h2>
+
+                    <ProfileFieldCard :label="$t('trans.password')" :value="MASKED_PASSWORD" />
+
+                    <button
+                        v-if="!changePassword"
+                        ref="passwordToggleRef"
+                        type="button"
+                        class="text-primary text-sm font-medium underline underline-offset-4 hover:text-primary/80"
+                        :aria-expanded="false"
+                        @click="openPasswordPanel"
+                    >
+                        {{ $t('trans.change_password') }}
+                    </button>
+
+                    <fieldset
+                        v-else
+                        class="space-y-4 rounded-xl border border-border/60 bg-muted/20 p-4"
+                    >
+                        <legend class="sr-only">{{ $t('trans.login_profile_change_password_sr') }}</legend>
+
+                        <BasePasswordInput
+                            input-id="password"
+                            :label="$t('trans.password')"
+                            :placeholder="$t('trans.ui_enter_password')"
+                            v-model="form.password"
+                            :input-auto-focus="true"
+                            :is-required="true"
+                            show-strength
+                            autocomplete="new-password"
+                            @input="clearFormErrors(form, 'password')"
+                            :error="form.errors.password"
+                        />
+
+                        <BasePasswordInput
+                            input-id="password_confirmation"
+                            :label="$t('trans.confirm_password')"
+                            :placeholder="$t('trans.ui_confirm_password')"
+                            v-model="form.password_confirmation"
+                            :is-required="true"
+                            autocomplete="new-password"
+                            @input="clearFormErrors(form, 'password_confirmation')"
+                            :error="form.errors.password_confirmation"
+                        />
+
+                        <p
+                            v-if="passwordDirty && !passwordMatches"
+                            class="text-sm text-red-600 lowercase dark:text-red-400"
+                        >
+                            {{ $t('trans.ui_password_and_confirm_password_do_not_match') }}
+                        </p>
+
+                        <div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                            <BaseButton
+                                type="button"
+                                class="w-full sm:w-auto"
+                                :variant="ColorVariant.shade_outline"
+                                @click="cancelPassword()"
+                            >
+                                {{ $t('trans.cancel') }}
+                            </BaseButton>
+                            <BaseButton
+                                type="button"
+                                class="w-full sm:w-auto"
+                                :processing="form.processing || isValidating"
+                                :disabled="!canSubmitPassword"
+                                :variant="ColorVariant.primary"
+                                @click="submitPassword"
+                            >
+                                {{ $t('trans.save_changes') }}
+                            </BaseButton>
+                        </div>
+                    </fieldset>
+                </section>
+            </div>
+        </BaseCard>
+
+        <BaseCard
+            v-if="!hideAuthorization"
+            :title="$t('trans.authorization')"
+            :description="$t('trans.roles_and_permissions')"
+            color-variant="black"
+        >
+            <DataLoadingSpinner v-if="isLoading" />
+            <div v-else class="grid grid-cols-1 gap-x-3 gap-y-1 text-xs md:grid-cols-4">
+                <div v-for="(permission, index) in userPermissions" :key="index">
+                    {{ permission?.attributes?.name }}
                 </div>
-                <div class="flex w-full px-6 pt-5">
-                    <BaseButton :processing="form.processing || isValidating" :disabled="!canSubmit" :variant="ColorVariant.warning">
-                        {{ $t('trans.save') }}
-                    </BaseButton>
-                </div>
-            </BaseCard>
-            <BaseCard
-                v-if="!hideAuthorization"
-                :title="$t('trans.authorization')"
-                :description="$t('trans.roles_and_permissions')"
-                color-variant="black"
-            >
-                <DataLoadingSpinner v-if="isLoading"/>
-                    <div v-else class="grid grid-cols-1 gap-x-3 gap-y-1 text-xs md:grid-cols-4">
-                        <div v-for="(permission, index) in userPermissions" :key="index">{{ permission?.attributes?.name }}</div>
-                    </div>
-            </BaseCard>
-        </div>
-    </form>
+            </div>
+        </BaseCard>
+    </div>
 </template>

@@ -241,7 +241,6 @@ const onUpdated = () => {
                         <DepartmentLevelComboSelect
                             :form="form"
                             :institution-department-id="department?.value?.toString() ?? ''"
-                            :allowed-levels="allowedLevels ?? []"
                             v-model="level"
                             :error="form.errors.level"
                             :is-required="true"

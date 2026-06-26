@@ -243,9 +243,9 @@ export const useUsers = () => {
     const updateUserCredentials = async (
         form: InertiaForm<any>,
         userId: string,
-        options: { validateEmail?: boolean; validatePassword?: boolean } = {},
+        options: { validateEmail?: boolean; validatePassword?: boolean; onSuccess?: () => void } = {},
     ) => {
-        const { validateEmail = true, validatePassword = true } = options;
+        const { validateEmail = true, validatePassword = true, onSuccess } = options;
         const formSchema = () => {
             const baseSchema = mergeValidationSchema(schemaFields)([], z.object({}));
             const passwordSchema = validatePassword
@@ -261,9 +261,7 @@ export const useUsers = () => {
             await formSchema().parseAsync(form);
             form.put(
                 route('users.update-user-credentials', {user: userId}),
-                buildFormOptions(form, 'Authentication credentials successfully updated', 'An unexpected error happened, user credentals could not be updated', undefined, () => {
-                    
-                }),
+                buildFormOptions(form, 'Authentication credentials successfully updated', 'An unexpected error happened, user credentals could not be updated', undefined, onSuccess),
             );
         }  catch (error: any) {
             form.setError(error.format());

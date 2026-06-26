@@ -70,6 +70,11 @@ class HmsStudentAccess
         return $user->can('viewAny:hostel-room-allocations') || $user->can('view:hostel-room-allocations');
     }
 
+    public static function hasActiveHostelAllocation(Student $student): bool
+    {
+        return $student->activeHostelAllocation()->exists();
+    }
+
     public static function isStaffHmsUser(User $user): bool
     {
         return $user->can('viewAny:hostel-applications')

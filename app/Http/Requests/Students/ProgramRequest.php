@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests\Students;
 
+use App\Rules\Students\ValidateOLevelResults;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Validator;
 
 /**
  * @property mixed $o_level_subject_ids
@@ -15,7 +17,6 @@ use Illuminate\Foundation\Http\FormRequest;
  */
 class ProgramRequest extends FormRequest
 {
-
     public function authorize(): bool
     {
         return true;
@@ -64,9 +65,15 @@ class ProgramRequest extends FormRequest
     {
         return [
             'department_id' => ['required', 'integer'],
-            'level_id' => ['required', 'integer',],
-            'course_id' => ['required', 'integer',],
+            'level_id' => ['required', 'integer'],
+            'course_id' => ['required', 'integer'],
         ];
     }
 
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function (Validator $validator) {
+            app(ValidateOLevelResults::class)->validate($this, $validator);
+        });
+    }
 }

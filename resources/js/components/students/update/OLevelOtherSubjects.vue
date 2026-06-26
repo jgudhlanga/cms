@@ -1,15 +1,15 @@
 <script setup lang="ts">
-import BaseRadioGroup from '@/components/core/form/radio-group/BaseRadioGroup.vue';
+import { BaseCheckbox } from '@/components/core/form';
 import SpinnerComponent from '@/components/core/loader/SpinnerComponent.vue';
 import Empty from '@/components/core/util/Empty.vue';
 import HeadingSmall from '@/components/core/util/HeadingSmall.vue';
 import ItemLabel from '@/components/students/update/mobile/ItemLabel.vue';
+import OLevelGradeButtons from '@/components/students/update/OLevelGradeButtons.vue';
+import SelectExamYear from '@/components/students/update/SelectExamYear.vue';
 import SelectOtherSubject from '@/components/students/update/SelectOtherSubject.vue';
 import SelectSitting from '@/components/students/update/SelectSitting.vue';
-import SelectYear from '@/components/students/update/SelectYear.vue';
 import { useGrades } from '@/composables/institution/useGrades';
 import { useSubjects } from '@/composables/institution/useSubjects';
-import { useStudentPortal } from '@/composables/students/useStudentPortal';
 import { EXAM_SITTINGS } from '@/lib/constants';
 import { useCreateApplicationFormStore } from '@/store/portal/useCreateApplicationFormStore';
 import { useUpdateProgramFormStore } from '@/store/portal/useUpdateProgramFormStore';
@@ -18,7 +18,7 @@ import { RadioGroupOption } from '@/types/forms';
 import { Grade, Subject } from '@/types/institution';
 import { SelectOption } from '@/types/utils';
 import { storeToRefs } from 'pinia';
-import { computed, onMounted, ref, Ref, watchEffect } from 'vue';
+import { computed, onMounted, Ref, watchEffect } from 'vue';
 
 interface Props {
     application?: Enrolment | null;
@@ -33,8 +33,18 @@ const { application } = props;
 const isEditing = Number(String(application?.id)) > 0;
 
 const store = isEditing ? useUpdateProgramFormStore() : useCreateApplicationFormStore();
-const { o_level_other_subject_ids, o_level_other_grade_ids, o_level_other_years, o_level_other_sittings, levelRequirements, courseRequirements } =
-    storeToRefs(store);
+const {
+    o_level_other_subject_ids,
+    o_level_other_grade_ids,
+    o_level_other_years,
+    o_level_other_sittings,
+    o_level_primary_year,
+    o_level_primary_sitting,
+    o_level_other_resit_rows,
+    levelRequirements,
+    courseRequirements,
+} = storeToRefs(store);
+const examDateOfBirth = computed(() => (isEditing ? null : useCreateApplicationFormStore().date_of_birth));
 const { listSubjects, isLoading: subjectsLoading, subjects } = useSubjects();
 const { listGrades, isLoading: gradesLoading, grades } = useGrades();
 
@@ -47,7 +57,7 @@ const requirements = computed(() => {
     }
     return null;
 });
-const { getMainSittingYear, getMainSitting } = useStudentPortal();
+
 function ensureObjectRef<T extends object>(refObj: Ref<T | undefined | null> | undefined, defaultValue: T): T {
     if (!refObj) throw new Error('Ref is undefined');
     if (!refObj.value) {
@@ -55,10 +65,12 @@ function ensureObjectRef<T extends object>(refObj: Ref<T | undefined | null> | u
     }
     return refObj.value;
 }
-const mainSubjectIds = requirements?.value?.attributes?.mainSubjectIds ?? [];
+
+const mainSubjectIds = computed(() => requirements.value?.attributes?.mainSubjectIds ?? []);
+
 const options = computed(() => {
     return subjects.value
-        .filter((subject: Subject) => !mainSubjectIds.includes(Number(subject.id)))
+        .filter((subject: Subject) => !mainSubjectIds.value.includes(Number(subject.id)))
         .map(
             (subject: Subject) =>
                 <SelectOption>{
@@ -69,8 +81,32 @@ const options = computed(() => {
 });
 
 const otherSubjects = computed(() => {
-    return subjects.value.filter((subject: Subject) => !mainSubjectIds.includes(Number(subject.id)));
+    return subjects.value.filter((subject: Subject) => !mainSubjectIds.value.includes(Number(subject.id)));
 });
+
+const isResitRow = (index: string): boolean => Boolean(o_level_other_resit_rows.value?.[index]);
+
+const applyPrimaryToRow = (index: string) => {
+    if (isResitRow(index)) {
+        return;
+    }
+    const yearData = ensureObjectRef(o_level_other_years, {});
+    const sittingData = ensureObjectRef(o_level_other_sittings, {});
+    if (o_level_primary_year.value) {
+        yearData[index] = o_level_primary_year.value;
+    }
+    if (o_level_primary_sitting.value) {
+        sittingData[index] = o_level_primary_sitting.value;
+    }
+};
+
+const onResitToggle = (index: string, checked: boolean) => {
+    const resitData = ensureObjectRef(o_level_other_resit_rows, {});
+    resitData[index] = checked;
+    if (!checked) {
+        applyPrimaryToRow(index);
+    }
+};
 
 const onGradeChange = (value: string) => {
     const [index, gradeId] = value.split('|');
@@ -78,34 +114,18 @@ const onGradeChange = (value: string) => {
 
     const gradeData = ensureObjectRef(o_level_other_grade_ids, {});
     gradeData[index] = gradeId;
-};
-const onYearChange = (value: string, index: string) => {
-    if (!o_level_other_years) {
-        return;
-    }
-    if (!o_level_other_years.value) {
-        o_level_other_years.value = {};
-    }
-    o_level_other_years.value[index] = value;
+    applyPrimaryToRow(index);
 };
 
-const onSubjectChange = (value: any, index: string) => {
-    if (!o_level_other_subject_ids) {
-        return;
-    }
-    if (!o_level_other_subject_ids.value) {
-        o_level_other_subject_ids.value = {};
-    }
-    o_level_other_subject_ids.value[index] = value;
+const onSubjectChange = (value: SelectOption, index: string) => {
+    const subjectData = ensureObjectRef(o_level_other_subject_ids, {});
+    subjectData[index] = value;
+    applyPrimaryToRow(index);
 };
-const onSittingChange = (value: any, index: string) => {
-    if (!o_level_other_sittings) {
-        return;
-    }
-    if (!o_level_other_sittings.value) {
-        o_level_other_sittings.value = {};
-    }
-    o_level_other_sittings.value[index] = value;
+
+const onSittingChange = (value: SelectOption | null, index: string) => {
+    const sittingData = ensureObjectRef(o_level_other_sittings, {});
+    sittingData[index] = value ?? ({} as SelectOption);
 };
 
 const getOptionsForSubject = (index: string): RadioGroupOption[] => {
@@ -119,47 +139,51 @@ const getOptionsForSubject = (index: string): RadioGroupOption[] => {
         }));
 };
 
-const getDefaultOLevels = (index: string) => {
-    if (!index || !o_level_other_grade_ids?.value || !grades.value) return null;
-    const gradeId = o_level_other_grade_ids.value[index ?? ''];
-    if (!gradeId) return null;
-    const grade = grades.value.find((g: Grade) => g.id == gradeId);
-    if (!grade) return null;
-    return `${index}|${gradeId}`;
+const getSelectedGradeId = (index: string): string | null => o_level_other_grade_ids?.value?.[index] ?? null;
+
+const selectGrade = (index: string, gradeId: string) => {
+    onGradeChange(`${index}|${gradeId}`);
 };
 
-const mainSitting = ref<SelectOption | null>(null);
-const mainYear = ref<string | null>(null);
+const inferResitRowsFromApplication = () => {
+    const count = Number(requirements.value?.attributes?.otherSubjectsCount) || 0;
+    if (!count) return;
+    const resitData = ensureObjectRef(o_level_other_resit_rows, {});
+    const primaryYear = o_level_primary_year.value;
+    const primarySitting = o_level_primary_sitting.value?.value;
+
+    for (let n = 1; n <= count; n++) {
+        const index = String(n);
+        const year = o_level_other_years.value?.[index];
+        const sitting = o_level_other_sittings.value?.[index]?.value;
+        const differsFromPrimary =
+            (primaryYear && year && year !== primaryYear) || (primarySitting && sitting && sitting !== primarySitting);
+        resitData[index] = Boolean(differsFromPrimary);
+    }
+};
+
 onMounted(() => {
+    ensureObjectRef(o_level_other_years, {});
     listGrades();
     listSubjects();
-
-    // === Main Year logic ===
-    if (o_level_other_years?.value) {
-        mainYear.value = getMainSittingYear(o_level_other_years.value);
-    }
-
-    // === Main Sitting logic ===
-    if (o_level_other_sittings?.value) {
-        mainSitting.value = getMainSitting(o_level_other_sittings.value);
-    }
 
     watchEffect(() => {
         if (!subjectsLoading.value && subjects.value?.length) {
             populateCurrentDataFromApplication();
+            inferResitRowsFromApplication();
         }
     });
 });
+
 const populateCurrentDataFromApplication = () => {
     const oLevelResults = application?.relationships?.oLevelResults ?? [];
-    const subjects = otherSubjects.value as Subject[] | undefined;
-    if (!subjects?.length || !oLevelResults.length) return;
+    const subjectsList = otherSubjects.value as Subject[] | undefined;
+    if (!subjectsList?.length || !oLevelResults.length) return;
 
-    const count = Number(requirements?.value?.attributes?.otherSubjectsCount) || 0;
+    const count = Number(requirements.value?.attributes?.otherSubjectsCount) || 0;
     if (!count) return;
 
-    // Filter subjects to only those that have matching O-Level results
-    const matchedSubjects = subjects
+    const matchedSubjects = subjectsList
         .map((subject) => {
             const subjectId = subject.id?.toString();
             if (!subjectId) return null;
@@ -177,40 +201,26 @@ const populateCurrentDataFromApplication = () => {
         })
         .filter(Boolean) as { subjectId: string; label: string; examYear: string; examSitting: string; gradeId: string }[];
 
-    // Take only the first `count` unique subjects
-
     matchedSubjects.slice(0, count).forEach((subj, index) => {
-        //============== SUBJECTS ===========================
-        if (!o_level_other_subject_ids) return;
-        if (!o_level_other_subject_ids.value) o_level_other_subject_ids.value = {};
-        o_level_other_subject_ids.value[String(index + 1)] = {
+        const rowIndex = String(index + 1);
+        const subjectData = ensureObjectRef(o_level_other_subject_ids, {});
+        subjectData[rowIndex] = {
             value: subj.subjectId,
             label: subj.label,
         };
-        // ============== YEARS ===========================
-        if (!o_level_other_years) {
-            return;
-        }
-        if (!o_level_other_years.value) {
-            o_level_other_years.value = {};
-        }
-        o_level_other_years.value[index + 1] = subj.examYear;
-        // ============== SITTING ===========================
-        if (!o_level_other_sittings) {
-            return;
-        }
-        if (!o_level_other_sittings.value) {
-            o_level_other_sittings.value = {};
-        }
+
+        const yearData = ensureObjectRef(o_level_other_years, {});
+        yearData[rowIndex] = subj.examYear;
+
+        const sittingData = ensureObjectRef(o_level_other_sittings, {});
         const sittingLabel = EXAM_SITTINGS.find((sitting) => sitting.value === subj.examSitting)?.label ?? subj.examSitting;
-        o_level_other_sittings.value[index + 1] = {
+        sittingData[rowIndex] = {
             value: subj.examSitting,
             label: sittingLabel,
         };
-        // ============== GRADES ===========================
-        if (!o_level_other_grade_ids) return;
-        if (!o_level_other_grade_ids.value) o_level_other_grade_ids.value = {};
-        o_level_other_grade_ids.value[index + 1] = subj.gradeId;
+
+        const gradeData = ensureObjectRef(o_level_other_grade_ids, {});
+        gradeData[rowIndex] = subj.gradeId;
     });
 };
 </script>
@@ -223,14 +233,22 @@ const populateCurrentDataFromApplication = () => {
     <template v-if="requirements?.attributes && Number(requirements?.attributes?.otherSubjectsCount) > 0">
         <div class="my-6 flex flex-col space-y-3">
             <div
-                class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow"
+                class="overflow-hidden rounded-lg border border-border bg-card shadow-sm"
                 v-for="n in requirements?.attributes?.otherSubjectsCount"
                 :key="`mobile_other${n}`"
             >
-                <div class="bg-card border-b border-gray-100 px-4 py-2">
-                    <h3 class="text-accent-foreground text-xs font-semibold uppercase">{{ `${$tChoice('trans.subject', 1)} ${n}` }}</h3>
+                <div class="border-b border-border bg-muted/50 px-4 py-2">
+                    <h3 class="text-xs font-semibold uppercase text-accent-foreground">{{ `${$tChoice('trans.subject', 1)} ${n}` }}</h3>
                 </div>
                 <div class="space-y-3 p-4">
+                    <div v-if="!isViewOnly" class="flex items-center">
+                        <BaseCheckbox
+                            :input-id="`other_resit_${n}`"
+                            :model-value="Boolean(o_level_other_resit_rows?.[String(n)])"
+                            :label="$t('trans.portal_o_level_resit_toggle')"
+                            @update:model-value="(checked: boolean) => onResitToggle(String(n), checked)"
+                        />
+                    </div>
                     <div class="grid grid-cols-1 gap-6 md:grid-cols-4">
                         <div class="flex flex-col space-y-1">
                             <ItemLabel :label="$tChoice('trans.subject', 1)" />
@@ -246,42 +264,39 @@ const populateCurrentDataFromApplication = () => {
                                 />
                             </div>
                         </div>
-                        <div class="flex flex-col space-y-1">
-                            <ItemLabel :label="$tChoice('trans.year', 1)" />
-                            <div class="flex w-full">
-                                <SelectYear
-                                    :disabled="isViewOnly"
-                                    :input-id="`other_year_${n}`"
-                                    :model-value="o_level_other_years?.[n?.toString() ?? ''] || null"
-                                    @update:model-value="(value: string) => onYearChange(value, n.toString() ?? '')"
-                                />
+                        <template v-if="isViewOnly || isResitRow(String(n))">
+                            <div class="flex flex-col space-y-1">
+                                <ItemLabel :label="$tChoice('trans.year', 1)" />
+                                <div class="flex w-full">
+                                    <SelectExamYear
+                                        :disabled="isViewOnly"
+                                        :input-id="`other_year_${n}`"
+                                        :date-of-birth="examDateOfBirth"
+                                        v-model="o_level_other_years![String(n)]"
+                                    />
+                                </div>
                             </div>
-                        </div>
-                        <div class="flex flex-col space-y-1">
-                            <ItemLabel :label="$tChoice('trans.sitting', 1)" />
-                            <div class="flex w-full">
-                                <SelectSitting
-                                    :disabled="isViewOnly"
-                                    class="flex w-full"
-                                    :model-value="o_level_other_sittings?.[n.toString() ?? ''] || null"
-                                    @update:modelValue="(option: SelectOption) => onSittingChange(option, n.toString() ?? '')"
-                                />
+                            <div class="flex flex-col space-y-1">
+                                <ItemLabel :label="$tChoice('trans.sitting', 1)" />
+                                <div class="flex w-full">
+                                    <SelectSitting
+                                        :disabled="isViewOnly"
+                                        class="flex w-full"
+                                        :model-value="o_level_other_sittings?.[n.toString() ?? ''] || null"
+                                        @update:modelValue="(option: SelectOption) => onSittingChange(option, n.toString() ?? '')"
+                                    />
+                                </div>
                             </div>
-                        </div>
-                        <div class="flex flex-col space-y-1">
+                        </template>
+                        <div class="flex flex-col space-y-1" :class="{ 'md:col-span-2': !isViewOnly && !isResitRow(String(n)) }">
                             <ItemLabel :label="$tChoice('trans.grade', 1)" />
                             <SpinnerComponent class="flex w-full items-center justify-center" v-if="gradesLoading || subjectsLoading" />
                             <template v-else>
-                                <BaseRadioGroup
-                                    :disabled="isViewOnly"
-                                    class="flex"
+                                <OLevelGradeButtons
                                     :options="getOptionsForSubject(n.toString() ?? '')"
-                                    :default-value="getDefaultOLevels(n.toString() ?? '')"
-                                    :label-uppercase="true"
-                                    :is-required="true"
-                                    orientation="horizontal"
-                                    @update:modelValue="onGradeChange"
-                                    :vertical-layout="false"
+                                    :selected-grade-id="getSelectedGradeId(n.toString() ?? '')"
+                                    :disabled="isViewOnly"
+                                    @select="(gradeId) => selectGrade(n.toString() ?? '', gradeId)"
                                 />
                             </template>
                         </div>

@@ -38,7 +38,8 @@ class HostelQueryPolicy
         }
 
         return HmsStudentAccess::canManageOwnAccommodation($user)
-            && HmsStudentAccess::ownsStudent($user, $student);
+            && HmsStudentAccess::ownsStudent($user, $student)
+            && HmsStudentAccess::hasActiveHostelAllocation($student);
     }
 
     public function update(User $user, HostelQuery $hostelQuery): bool

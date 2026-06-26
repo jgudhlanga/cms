@@ -43,6 +43,21 @@ export const parseNonEnrolledStudentUsersListUrl = (listUrl: string): Maintenanc
     };
 };
 
+export const mergeMaintenanceUsersFiltersFromUrl = (
+    currentFilters: MaintenanceUsersFiltersState,
+    listUrl: string,
+): MaintenanceUsersFiltersState => {
+    const parsedUrl = new URL(listUrl, window.location.origin);
+    const urlFilters = parseNonEnrolledStudentUsersListUrl(listUrl);
+
+    return {
+        applicationStatus: parsedUrl.searchParams.has('application_status')
+            ? urlFilters.applicationStatus
+            : currentFilters.applicationStatus,
+        search: parsedUrl.searchParams.has('search') ? urlFilters.search : undefined,
+    };
+};
+
 export const resolveNonEnrolledStudentUsersListPath = (
     filters: MaintenanceUsersFiltersState = {},
     paginatorUrl?: string,
@@ -52,6 +67,18 @@ export const resolveNonEnrolledStudentUsersListPath = (
         paginatorUrl ?? route('maintenance.non-enrolled-student-users'),
         window.location.origin,
     );
+
+    if (paginatorUrl) {
+        if (!parsed.searchParams.has('application_status') && filters.applicationStatus) {
+            parsed.searchParams.set('application_status', filters.applicationStatus);
+        }
+
+        if (!parsed.searchParams.has('search') && filters.search) {
+            parsed.searchParams.set('search', filters.search);
+        }
+
+        return `${parsed.pathname}${parsed.search}`;
+    }
 
     if (filters.search) {
         parsed.searchParams.set('search', filters.search);
@@ -65,18 +92,16 @@ export const resolveNonEnrolledStudentUsersListPath = (
         parsed.searchParams.delete('application_status');
     }
 
-    if (!paginatorUrl) {
-        const page = pagination.page ?? 1;
-        const pageSize = pagination.pageSize ?? PAGINATION_ITEMS_PER_PAGE;
+    const page = pagination.page ?? 1;
+    const pageSize = pagination.pageSize ?? PAGINATION_ITEMS_PER_PAGE;
 
-        if (page > 1) {
-            parsed.searchParams.set('page', String(page));
-        } else {
-            parsed.searchParams.delete('page');
-        }
-
-        parsed.searchParams.set('page_size', String(pageSize));
+    if (page > 1) {
+        parsed.searchParams.set('page', String(page));
+    } else {
+        parsed.searchParams.delete('page');
     }
+
+    parsed.searchParams.set('page_size', String(pageSize));
 
     return `${parsed.pathname}${parsed.search}`;
 };

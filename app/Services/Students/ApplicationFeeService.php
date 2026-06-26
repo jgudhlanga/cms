@@ -57,8 +57,22 @@ class ApplicationFeeService
         return ApplicationFee::query()
             ->where('user_id', $user->id)
             ->whereNull('student_application_id')
+            ->whereNot('status', ApplicationFeeStatusEnum::CANCELLED)
             ->latest('id')
             ->first();
+    }
+
+    public function abandonUnpaidApplicationFee(User $user): void
+    {
+        $applicationFee = $this->activeApplicationFee($user);
+
+        if ($applicationFee === null || ! $applicationFee->isAwaitingPayment()) {
+            return;
+        }
+
+        $applicationFee->update([
+            'status' => ApplicationFeeStatusEnum::CANCELLED,
+        ]);
     }
 
     public function paidAwaitingApplication(User $user): ?ApplicationFee
@@ -123,7 +137,11 @@ class ApplicationFeeService
             $attributes['passport_number'] = session('registration.passport_number');
         }
 
-        if (! $applicationFee->exists || $applicationFee->status === ApplicationFeeStatusEnum::AWAITING_PAYMENT) {
+        if (
+            ! $applicationFee->exists
+            || $applicationFee->status === ApplicationFeeStatusEnum::AWAITING_PAYMENT
+            || $applicationFee->status === ApplicationFeeStatusEnum::CANCELLED
+        ) {
             $attributes['status'] = ApplicationFeeStatusEnum::AWAITING_PAYMENT;
         }
 

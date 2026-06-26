@@ -7,7 +7,7 @@ withDefaults(
         helperText?: string;
     }>(),
     {
-        showFormatHint: true,
+        showFormatHint: false,
     },
 );
 </script>

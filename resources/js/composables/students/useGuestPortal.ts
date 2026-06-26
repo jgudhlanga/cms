@@ -30,9 +30,7 @@ export function useGuestPortal() {
             form.post(
                 route('portal.store'),
                 buildFormOptions(form, successMessage(), errorMessage(), undefined, () => {
-                    const store = useCreateUserFormStore();
-                    store.$reset();
-                    store.$dispose();
+                    useCreateUserFormStore().$reset();
                 }),
             );
         } catch (error: any) {

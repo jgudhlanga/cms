@@ -36,6 +36,7 @@ return [
     'home_address' => 'Home Address',
     'guardian' => 'Guardian',
     'guardian_contact' => 'Guardian Contact',
+    'guardian_address' => 'Guardian Address',
     'entry_qualification' => 'Entry Qualification',
     'programmes_load_failure' => 'Could not load programme records.',
     'no_programmes' => 'No programmes found',

@@ -27,32 +27,48 @@ export function useOLevelResults(oLevelSubjectResults?: OLevelSubjectResult[]) {
     const subjectForms = ref<Record<string, SubjectResult>>({});
     const subjectErrors = ref<Record<string, Record<string, string>>>({});
     const examSittings = ref(EXAM_SITTINGS);
+    const formsReady = ref(!oLevelSubjectResults?.length);
 
     const { listGrades, grades, isLoading } = useGrades();
 
-    const initForms = async () => {
-        await listGrades();
-
+    const initializeSubjectFormShells = () => {
         oLevelSubjectResults?.forEach((subject: OLevelSubjectResult) => {
-            subjectForms.value[subject.id as string] = {
+            const subjectId = String(subject.id);
+            subjectForms.value[subjectId] = {
                 exam_year: '',
                 exam_sitting: { value: '', label: '' },
                 grade_id: '',
             };
-            subjectErrors.value[subject.id as string] = {}; // blank error bag
+            subjectErrors.value[subjectId] = {};
         });
+    };
 
+    const hydrateSubjectForms = () => {
         oLevelSubjectResults?.forEach((result) => {
-            const subjectId = result.id;
-            if (subjectForms.value[subjectId]) {
-                subjectForms.value[subjectId].exam_year = String(result.attributes.examYear);
-                subjectForms.value[subjectId].exam_sitting = {
-                    value: String(result.attributes.examSitting),
-                    label: getExamSitting(String(subjectId)),
-                };
-                subjectForms.value[subjectId].grade_id = String(result.attributes.gradeId);
+            const subjectId = String(result.id);
+            const form = subjectForms.value[subjectId];
+            if (!form) {
+                return;
             }
+
+            form.exam_year = String(result.attributes.examYear ?? '');
+            form.exam_sitting = {
+                value: String(result.attributes.examSitting ?? ''),
+                label: getExamSitting(subjectId),
+            };
+            form.grade_id = String(result.attributes.gradeId ?? '');
         });
+    };
+
+    initializeSubjectFormShells();
+
+    const initForms = async () => {
+        try {
+            await listGrades();
+            hydrateSubjectForms();
+        } finally {
+            formsReady.value = true;
+        }
     };
 
     const findResultBySubjectId = (subjectId: string) => oLevelSubjectResults?.find((r) => String(r.id) === subjectId);
@@ -112,6 +128,7 @@ export function useOLevelResults(oLevelSubjectResults?: OLevelSubjectResult[]) {
         subjectErrors,
         examSittings,
         isLoading,
+        formsReady,
         getOptionsForSubject,
         SubjectResultSchema,
         onCreateOrEdit,

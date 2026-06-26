@@ -39,6 +39,10 @@ export type Student = {
         course?: string;
         modeOfStudy?: string;
         enrolmentStatus?: string;
+        applicationStatus?: string;
+        intakePeriod?: string;
+        applicationTrackingNumber?: string;
+        profileContext?: 'enrolled' | 'applicant' | null;
         createdAt?: string;
         updatedAt?: string;
         deletedAt?: string;
@@ -61,6 +65,10 @@ export type StudentHeader = {
     course: string;
     modeOfStudy: string;
     enrolmentStatus: string;
+    applicationStatus?: string;
+    intakePeriod?: string;
+    applicationTrackingNumber?: string;
+    profileContext?: 'enrolled' | 'applicant' | null;
     department: string;
     academicCalendar: string;
     academicYearOption: string;

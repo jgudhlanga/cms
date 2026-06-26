@@ -1,4 +1,5 @@
 import { validateSelectOption } from '@/lib/forms';
+import { buildPasswordZodSchema } from '@/lib/passwordRules';
 import { isValidZimbabweanIdNumber } from '@/lib/zimbabweanId';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 import { z } from 'zod';
@@ -54,16 +55,7 @@ export const useSharedFormSchema = () => {
         z.object({
             order_reference: z.string().nonempty(trans('trans.enter_required_field', { field: trans('trans.order_reference') })),
         });
-    const passwordSchema = () =>
-        z.object({
-            password: z
-                .string()
-                .min(8, 'Password must be at least 8 characters')
-                .regex(/[a-z]/, 'Must contain at least one lowercase letter')
-                .regex(/[A-Z]/, 'Must contain at least one uppercase letter')
-                .regex(/[0-9]/, 'Must contain at least one number')
-                .regex(/[^a-zA-Z0-9]/, 'Must contain at least one symbol'),
-        });
+    const passwordSchema = () => buildPasswordZodSchema();
     const passwordConfirmationSchema = () =>
         z.object({
             password_confirmation: z.string().nonempty(trans('trans.confirm_password_description')),
@@ -103,15 +95,15 @@ export const useSharedFormSchema = () => {
         });
     const addressOneSchema = () =>
         z.object({
-            address_1: z.string().nonempty(trans('trans.enter_required_field', { field: trans('trans.address_1') })),
+            address_1: z.string().nonempty(trans('trans.enter_required_field', { field: trans('trans.address_house_number') })),
         });
     const addressTwoSchema = () =>
         z.object({
-            address_2: z.string().nonempty(trans('trans.enter_required_field', { field: trans('trans.address_2') })),
+            address_2: z.string().nonempty(trans('trans.enter_required_field', { field: trans('trans.address_street_name') })),
         });
     const addressThreeSchema = () =>
         z.object({
-            address_3: z.string().nonempty(trans('trans.enter_required_field', { field: trans('trans.address_3') })),
+            address_3: z.string().nonempty(trans('trans.enter_required_field', { field: trans('trans.address_suburb') })),
         });
 
     const nextOfKinNameSchema = () =>
@@ -125,15 +117,15 @@ export const useSharedFormSchema = () => {
         });
     const nextOfKinAddressOneSchema = () =>
         z.object({
-            next_of_kin_address_1: z.string().nonempty(trans('trans.enter_required_field', { field: trans('trans.address_1') })),
+            next_of_kin_address_1: z.string().nonempty(trans('trans.enter_required_field', { field: trans('trans.address_house_number') })),
         });
     const nextOfKinAddressTwoSchema = () =>
         z.object({
-            next_of_kin_address_2: z.string().nonempty(trans('trans.enter_required_field', { field: trans('trans.address_2') })),
+            next_of_kin_address_2: z.string().nonempty(trans('trans.enter_required_field', { field: trans('trans.address_street_name') })),
         });
     const nextOfKinAddressThreeSchema = () =>
         z.object({
-            next_of_kin_address_3: z.string().nonempty(trans('trans.enter_required_field', { field: trans('trans.address_3') })),
+            next_of_kin_address_3: z.string().nonempty(trans('trans.enter_required_field', { field: trans('trans.address_suburb') })),
         });
     const dobSchema = () =>
         z.object({

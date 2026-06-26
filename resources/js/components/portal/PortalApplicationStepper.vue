@@ -1,53 +1,76 @@
 <script setup lang="ts">
 import { cn } from '@/lib/utils';
+import { computed } from 'vue';
 
-type ApplicationStep = 'level' | 'fee' | 'apply';
+export type ApplicationFormStep = 'personal' | 'contact' | 'next_of_kin' | 'programme';
+
+const steps = [
+    { id: 'personal' as const, labelKey: 'trans.personal_details' },
+    { id: 'contact' as const, labelKey: 'trans.contact_details' },
+    { id: 'next_of_kin' as const, labelKey: 'trans.next_of_kin' },
+    { id: 'programme' as const, labelKey: 'trans.programs' },
+];
 
 const props = withDefaults(
     defineProps<{
-        currentStep?: ApplicationStep;
+        currentStep: ApplicationFormStep;
+        compact?: boolean;
     }>(),
     {
-        currentStep: 'level',
+        compact: false,
     },
 );
 
-const steps = [
-    { id: 'level', labelKey: 'trans.portal_application_step_level' },
-    { id: 'fee', labelKey: 'trans.portal_application_step_fee' },
-    { id: 'apply', labelKey: 'trans.portal_application_step_apply' },
-] as const;
+const emit = defineEmits<{
+    navigate: [stepId: ApplicationFormStep];
+}>();
 
-const stepIndex = (id: string) => steps.findIndex((step) => step.id === id);
+const currentIndex = computed(() => steps.findIndex((step) => step.id === props.currentStep));
 
-const isComplete = (id: string) => stepIndex(props.currentStep) > stepIndex(id);
+const isComplete = (index: number) => index < currentIndex.value;
+const isCurrent = (index: number) => index === currentIndex.value;
 
-const isCurrent = (id: string) => props.currentStep === id;
+const onStepClick = (stepId: ApplicationFormStep, index: number) => {
+    if (isComplete(index)) {
+        emit('navigate', stepId);
+    }
+};
 </script>
 
 <template>
-    <nav aria-label="Application progress" class="mx-auto mb-6 w-full max-w-2xl overflow-x-auto px-4 sm:px-0">
-        <ol class="flex min-w-max items-center gap-3">
-            <li v-for="(step, index) in steps" :key="step.id" class="flex items-center gap-3">
-                <div class="flex items-center gap-2">
-                    <span
-                        class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold"
-                        :class="
-                            cn(
-                                isCurrent(step.id) && 'bg-primary text-primary-foreground',
-                                isComplete(step.id) && 'bg-primary/15 text-primary',
-                                !isCurrent(step.id) && !isComplete(step.id) && 'bg-muted text-muted-foreground',
-                            )
-                        "
-                    >
-                        {{ index + 1 }}
-                    </span>
-                    <span class="text-sm font-medium" :class="isCurrent(step.id) ? 'text-foreground' : 'text-muted-foreground'">
-                        {{ $t(step.labelKey) }}
-                    </span>
-                </div>
-                <span v-if="index < steps.length - 1" class="h-px w-8 bg-border" aria-hidden="true" />
+    <nav aria-label="Application progress" :class="compact ? 'mb-1.5 w-full' : 'mb-4 w-full'">
+        <ol class="flex w-full items-center">
+            <li
+                v-for="(step, index) in steps"
+                :key="step.id"
+                class="flex flex-1 items-center"
+                :aria-current="isCurrent(index) ? 'step' : undefined"
+                :aria-label="isCurrent(index) ? $t(step.labelKey) : undefined"
+            >
+                <span v-if="index > 0" class="pointer-events-none h-px flex-1 bg-border" aria-hidden="true" />
+                <component
+                    :is="isComplete(index) ? 'button' : 'span'"
+                    :type="isComplete(index) ? 'button' : undefined"
+                    class="relative z-10 flex shrink-0 items-center justify-center rounded-full text-xs font-semibold"
+                    :class="
+                        cn(
+                            compact ? 'h-8 w-8' : 'h-7 w-7',
+                            isCurrent(index) && 'bg-primary text-primary-foreground',
+                            isComplete(index) &&
+                                'cursor-pointer bg-primary/15 text-primary transition-colors hover:bg-primary/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
+                            !isCurrent(index) && !isComplete(index) && 'bg-muted text-muted-foreground',
+                        )
+                    "
+                    :aria-label="isComplete(index) ? $t(step.labelKey) : undefined"
+                    @click="onStepClick(step.id, index)"
+                >
+                    {{ index + 1 }}
+                </component>
+                <span v-if="index < steps.length - 1" class="pointer-events-none h-px flex-1 bg-border" aria-hidden="true" />
             </li>
         </ol>
+        <p v-if="!compact && isCurrent(currentIndex)" class="mt-2 text-center text-xs font-medium text-foreground">
+            {{ $t(steps[currentIndex].labelKey) }}
+        </p>
     </nav>
 </template>

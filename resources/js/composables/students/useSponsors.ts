@@ -1,6 +1,7 @@
 import { useCustomConfirmDialog } from '@/composables/core/useCustomConfirmDialog';
 import { useDataTables } from '@/composables/core/useDataTables';
 import { useSharedFormSchema } from '@/composables/core/useSharedFormSchema';
+import { addressLabel } from '@/lib/addressFields';
 import { forbiddenAlert, openModal, successAlert } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
 import { buildFormOptions, mergeValidationSchema } from '@/lib/forms';
@@ -26,10 +27,10 @@ export const useSponsors = () => {
             { header: trans_choice('trans.sponsor_type', 1), accessorKey: 'attributes.sponsorType' },
             { header: trans('trans.phone_number'), accessorKey: 'attributes.phoneNumber' },
             { header: trans('trans.email_address'), accessorKey: 'attributes.email' },
-            { header: trans('trans.address_1'), accessorKey: 'attributes.address1' },
-            { header: trans('trans.address_2'), accessorKey: 'attributes.address2' },
-            { header: trans('trans.address_3'), accessorKey: 'attributes.address3' },
-            { header: trans('trans.address_4'), accessorKey: 'attributes.address4' },
+            { header: addressLabel(1), accessorKey: 'attributes.address1' },
+            { header: addressLabel(2), accessorKey: 'attributes.address2' },
+            { header: addressLabel(3), accessorKey: 'attributes.address3' },
+            { header: addressLabel(4), accessorKey: 'attributes.address4' },
             {
                 header: trans_choice('trans.action', 2),
                 accessorKey: 'actions',

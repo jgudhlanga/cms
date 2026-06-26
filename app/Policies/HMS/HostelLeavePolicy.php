@@ -38,7 +38,8 @@ class HostelLeavePolicy
         }
 
         return HmsStudentAccess::canManageOwnAccommodation($user)
-            && HmsStudentAccess::ownsStudent($user, $student);
+            && HmsStudentAccess::ownsStudent($user, $student)
+            && HmsStudentAccess::hasActiveHostelAllocation($student);
     }
 
     public function update(User $user, HostelLeave $hostelLeave): bool
