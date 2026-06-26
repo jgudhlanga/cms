@@ -3,9 +3,9 @@
 namespace App\Importers\Institution;
 
 use App\Models\Institution\InstitutionDepartment;
-use App\Models\Institution\Syllabus\CourseSyllabus;
 use App\Models\Institution\Syllabus\CourseSyllabusModule;
 use App\Services\Institution\ResolveAcademicYearOptionFromImport;
+use App\Support\Institution\SyllabusImportCode;
 use Illuminate\Support\Facades\Log;
 use LaravelIngest\Contracts\IngestDefinition;
 use LaravelIngest\Enums\DuplicateStrategy;
@@ -39,6 +39,34 @@ class CourseSyllabusModuleImporter implements IngestDefinition
             ->beforeRow(function (array &$row): void {
                 $row['__TENANT_ID'] = $this->tenantId;
                 self::logValidationIssues($row);
+
+                $courseCode = trim((string) ($row['COURSE_CODE'] ?? ''));
+
+                if ($courseCode !== '') {
+                    $storedCourseCode = SyllabusImportCode::findStoredCourseCode($this->tenantId, $courseCode);
+
+                    if ($storedCourseCode !== null) {
+                        $row['COURSE_CODE'] = $storedCourseCode;
+                    }
+                }
+
+                $moduleCode = trim((string) ($row['MODULE_CODE'] ?? ''));
+
+                if ($moduleCode !== '' && $courseCode !== '') {
+                    $courseSyllabusId = self::tryResolveCourseSyllabusId($this->tenantId, (string) ($row['COURSE_CODE'] ?? ''));
+
+                    if ($courseSyllabusId !== null) {
+                        $storedModuleCode = SyllabusImportCode::findStoredModuleCode(
+                            $this->tenantId,
+                            $courseSyllabusId,
+                            $moduleCode,
+                        );
+
+                        if ($storedModuleCode !== null) {
+                            $row['MODULE_CODE'] = $storedModuleCode;
+                        }
+                    }
+                }
             })
             ->mapAndTransform(
                 'MODULE_TITLE',
@@ -122,16 +150,7 @@ class CourseSyllabusModuleImporter implements IngestDefinition
 
     private static function tryResolveCourseSyllabusId(int $tenantId, string $courseCode): ?int
     {
-        $courseCode = trim($courseCode);
-
-        if ($courseCode === '') {
-            return null;
-        }
-
-        return CourseSyllabus::query()
-            ->where('tenant_id', $tenantId)
-            ->where('code', $courseCode)
-            ->value('id');
+        return SyllabusImportCode::findCourseSyllabusId($tenantId, trim($courseCode));
     }
 
     private static function logValidationIssues(array $row): void

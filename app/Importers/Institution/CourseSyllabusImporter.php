@@ -7,6 +7,7 @@ use App\Models\Institution\DepartmentLevel;
 use App\Models\Institution\DepartmentLevelCourse;
 use App\Models\Institution\InstitutionDepartment;
 use App\Models\Institution\Syllabus\CourseSyllabus;
+use App\Support\Institution\SyllabusImportCode;
 use Illuminate\Support\Facades\Log;
 use LaravelIngest\Contracts\IngestDefinition;
 use LaravelIngest\Enums\DuplicateStrategy;
@@ -71,7 +72,14 @@ class CourseSyllabusImporter implements IngestDefinition
                 $courseCode = trim((string) ($row['COURSE_CODE'] ?? ''));
 
                 if ($courseCode !== '') {
-                    $row['__IMPLEMENTATION_YEAR'] = self::implementationYearFromCourseCode($courseCode, $this->tenantId);
+                    $storedCourseCode = SyllabusImportCode::findStoredCourseCode($this->tenantId, $courseCode);
+
+                    if ($storedCourseCode !== null) {
+                        $row['COURSE_CODE'] = $storedCourseCode;
+                        $courseCode = $storedCourseCode;
+                    }
+
+                    $row['__IMPLEMENTATION_YEAR'] = SyllabusImportCode::implementationYear($courseCode);
                 }
             })
             ->map('COURSE_TITLE', 'title')
@@ -259,25 +267,6 @@ class CourseSyllabusImporter implements IngestDefinition
     private static function normalize(string $value): string
     {
         return mb_strtolower(trim($value));
-    }
-
-    private static function implementationYearFromCourseCode(string $courseCode, int $tenantId): string
-    {
-        $parts = array_map(static fn (string $value): string => trim($value), explode('/', $courseCode));
-        $yearSegment = $parts[1] ?? null;
-
-        if ($yearSegment === null || ! preg_match('/^\d{2}$/', $yearSegment)) {
-            Log::warning('Syllabus import lookup failed: unable to derive implementation year from course code.', [
-                'tenant_id' => $tenantId,
-                'course_code' => $courseCode,
-            ]);
-
-            throw new RuntimeException(
-                "Invalid COURSE_CODE '{$courseCode}'. Expected second slash-separated segment to be a two-digit year."
-            );
-        }
-
-        return "20{$yearSegment}";
     }
 
     private static function logValidationIssues(array $row, bool $webImport): void

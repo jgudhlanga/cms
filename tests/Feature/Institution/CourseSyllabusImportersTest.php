@@ -224,3 +224,81 @@ it('imports the same module code for different course syllabuses', function () {
         ->and($moduleImport['results']['successful'])->toBe(2)
         ->and(CourseSyllabusModule::query()->where('code', $sharedModuleCode)->count())->toBe(2);
 });
+
+it('imports course syllabuses with dot-delimited course codes', function () {
+    makeSyllabusImportContext();
+
+    $rows = [
+        [
+            'DEPARTMENT' => 'Engineering',
+            'LEVEL' => 'Level 1',
+            'COURSE_TITLE' => 'Civil Technology',
+            'COURSE_CODE' => '553.23.CO.MO',
+            'SEMESTER' => 'Semester 1',
+            'MODULE_TITLE' => 'Module Intro',
+            'MODULE_CODE' => '553.23.M01',
+        ],
+    ];
+
+    $syllabusImport = runImporter(CourseSyllabusImporter::class, $rows);
+    $moduleImport = runImporter(CourseSyllabusModuleImporter::class, $rows);
+
+    expect($syllabusImport['errors'])->toBe([])
+        ->and($syllabusImport['results']['failed'])->toBe(0)
+        ->and($moduleImport['results']['failed'])->toBe(0);
+
+    $courseSyllabus = CourseSyllabus::query()->where('code', '553.23.CO.MO')->first();
+
+    expect($courseSyllabus)->not->toBeNull()
+        ->and($courseSyllabus?->implementation_year)->toBe('2023');
+
+    expect(CourseSyllabusModule::query()->where('code', '553.23.M01')->exists())->toBeTrue();
+});
+
+it('updates existing syllabus and module when import uses alternate delimiter style', function () {
+    $context = makeSyllabusImportContext();
+
+    $existingSyllabus = CourseSyllabus::query()->create([
+        'tenant_id' => 1,
+        'institution_department_id' => $context['institutionDepartment']->id,
+        'department_level_course_id' => $context['departmentLevelCourse']->id,
+        'title' => 'Existing Syllabus',
+        'code' => '553/23/CO/MO',
+        'implementation_year' => '2023',
+        'status' => 'active',
+    ]);
+
+    $existingModule = CourseSyllabusModule::query()->create([
+        'tenant_id' => 1,
+        'course_syllabus_id' => $existingSyllabus->id,
+        'title' => 'Existing Module',
+        'code' => '553/23/M01',
+        'shared' => false,
+    ]);
+
+    $rows = [
+        [
+            'DEPARTMENT' => 'Engineering',
+            'LEVEL' => 'Level 1',
+            'COURSE_TITLE' => 'Civil Technology',
+            'COURSE_CODE' => '553.23.CO.MO',
+            'SEMESTER' => 'Semester 1',
+            'MODULE_TITLE' => 'Updated Module Title',
+            'MODULE_CODE' => '553.23.M01',
+        ],
+    ];
+
+    $syllabusImport = runImporter(CourseSyllabusImporter::class, $rows);
+    $moduleImport = runImporter(CourseSyllabusModuleImporter::class, $rows);
+
+    expect($syllabusImport['results']['failed'])->toBe(0)
+        ->and($moduleImport['results']['failed'])->toBe(0)
+        ->and(CourseSyllabus::query()->where('code', '553/23/CO/MO')->count())->toBe(1)
+        ->and(CourseSyllabus::query()->where('code', '553.23.CO.MO')->count())->toBe(0);
+
+    $existingSyllabus->refresh();
+    $existingModule->refresh();
+
+    expect($existingSyllabus->title)->toBe('Civil Technology')
+        ->and($existingModule->title)->toBe('Updated Module Title');
+});
