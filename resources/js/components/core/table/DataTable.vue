@@ -116,11 +116,10 @@ const showToolBar = computed(() => {
                 <Archived v-if="showArchivedFilter" :handle-archived="handleArchived" :trashed="+trashed" :trashed-count="trashedCount" />
             </div>
             <div v-if="showToolBar" class="flex items-center justify-end space-x-3">
-                <ColumnFilter v-if="showColumnFilters" :variant="ColorVariant.primary_outline" :table="table" :toggleColumnVisibility="toggleColumnVisibility" />
+                <ColumnFilter v-if="showColumnFilters" :table="table" :toggleColumnVisibility="toggleColumnVisibility" />
                 <ExportButton :variant="ColorVariant.primary_outline" class="rounded-full" v-if="onExport" @click="() => (onExport ? onExport() : null)" :disable="disableExport" />
                 <ImportButton :variant="ColorVariant.primary_outline" class="rounded-full" v-if="onImport" @click="() => (onImport ? onImport() : null)" :disable="disableImport" />
                 <CreateButton
-                    :variant="ColorVariant.primary_outline"
                     class="rounded-full"
                     v-if="onCreate"
                     :label="createLabel"

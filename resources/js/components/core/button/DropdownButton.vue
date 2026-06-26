@@ -66,6 +66,19 @@ const getOptions = () => {
 	});
 	return options;
 };
+
+const optionColorClass = (key: string): string => {
+	switch (key) {
+		case 'archive':
+			return 'text-amber-600';
+		case 'delete':
+			return 'text-destructive';
+		case 'restore':
+			return 'text-green-600';
+		default:
+			return '';
+	}
+};
 </script>
 
 <template>
@@ -80,7 +93,11 @@ const getOptions = () => {
 		<DropdownMenuContent>
 			<DropdownMenuGroup>
 				<DropdownMenuItem v-for="option in getOptions()" :key="option.key">
-					<button class="flex w-full items-center space-x-2" @click="() => option.action()">
+					<button
+						class="flex w-full items-center space-x-2"
+						:class="optionColorClass(option.key)"
+						@click="() => option.action()"
+					>
 						<component :is="icons[option.icon as IconName]" size="12" />
 						<TransText :item="option" :key-index="1" />
 					</button>
