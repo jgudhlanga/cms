@@ -50,6 +50,8 @@ test('student is redirected to portal dashboard when accessing staff dashboard',
 });
 
 test('student without profile is redirected to application level options on forbidden staff page', function () {
+    ensureCurrentIntakeStatus(\App\Enums\Institution\IntakePeriodStatusEnum::Open->value);
+
     $tenant = Tenant::query()->firstOrFail();
     $user = User::factory()->create(['tenant_id' => $tenant->id]);
     $user->assignRole(RoleEnum::STUDENT->name());

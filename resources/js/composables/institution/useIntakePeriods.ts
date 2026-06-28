@@ -6,11 +6,33 @@ import { getIdParams } from '@/lib/utils';
 import HttpService from '@/services/http.service';
 import { Auth } from '@/types';
 import { ApiFilterResponse } from '@/types/data-pagination';
-import { IntakePeriod } from '@/types/institution';
+import { IntakePeriod, IntakePeriodStatus } from '@/types/institution';
 import { InertiaForm, usePage } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
-import { ref } from 'vue';
+import { h, ref } from 'vue';
 import { z } from 'zod';
+
+const intakePeriodStatusLabel = (status: IntakePeriodStatus | undefined): string => {
+    switch (status) {
+        case 'suspended':
+            return trans('trans.intake_period_status_suspended');
+        case 'closed':
+            return trans('trans.intake_period_status_closed');
+        default:
+            return trans('trans.intake_period_status_open');
+    }
+};
+
+const intakePeriodStatusBadgeClass = (status: IntakePeriodStatus | undefined): string => {
+    switch (status) {
+        case 'suspended':
+            return 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200';
+        case 'closed':
+            return 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200';
+        default:
+            return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200';
+    }
+};
 
 export const useIntakePeriods = () => {
     const { moreActionButton, onDelete, onForceDelete, onRestore } = useDataTables();
@@ -21,6 +43,21 @@ export const useIntakePeriods = () => {
             { header: trans_choice('trans.name', 1), accessorKey: 'attributes.name' },
             { header: trans('trans.start_date'), accessorKey: 'attributes.startDate' },
             { header: trans('trans.end_date'), accessorKey: 'attributes.endDate' },
+            {
+                header: trans_choice('trans.status', 1),
+                accessorKey: 'attributes.status',
+                cell: ({ row }: { row: { original: IntakePeriod } }) => {
+                    const status = row.original.attributes?.status ?? 'open';
+
+                    return h(
+                        'span',
+                        {
+                            class: `inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase ${intakePeriodStatusBadgeClass(status)}`,
+                        },
+                        intakePeriodStatusLabel(status),
+                    );
+                },
+            },
             { header: trans_choice('trans.description', 1), accessorKey: 'attributes.description' },
             {
                 header: trans_choice('trans.action', 2),
@@ -66,6 +103,7 @@ export const useIntakePeriods = () => {
                     .refine((val) => !isNaN(Date.parse(val)), {
                         message: trans('trans.date_must_be_valid', { field: trans('trans.end_date') }),
                     }),
+                status: z.enum(['open', 'suspended', 'closed']),
             })
             .refine(
                 (data) => {
@@ -104,12 +142,19 @@ export const useIntakePeriods = () => {
         }
     };
 
+    const statusOptions = () => [
+        { value: 'open', label: trans('trans.intake_period_status_open') },
+        { value: 'suspended', label: trans('trans.intake_period_status_suspended') },
+        { value: 'closed', label: trans('trans.intake_period_status_closed') },
+    ];
+
     return {
         createIntakePeriodColumns,
         onOpenModal,
         saveIntakePeriod,
         listIntakePeriods,
         formSchema,
+        statusOptions,
         isLoading,
         intakePeriods,
     };

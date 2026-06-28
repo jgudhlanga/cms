@@ -12,6 +12,7 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     AcademicCalendarClassFilters: typeof import('./../components/academicCalendars/AcademicCalendarClassFilters.vue')['default']
+    AcademicCalendarClassLecturerBadge: typeof import('./../components/academicCalendars/AcademicCalendarClassLecturerBadge.vue')['default']
     AcademicCalendarClassNavComboSelect: typeof import('./../components/academicCalendars/AcademicCalendarClassNavComboSelect.vue')['default']
     AcademicCalendarComboSelect: typeof import('./../components/core/form/combobox/AcademicCalendarComboSelect.vue')['default']
     AcademicLevelComboSelect: typeof import('./../components/core/form/combobox/AcademicLevelComboSelect.vue')['default']
@@ -59,6 +60,7 @@ declare module 'vue' {
     AppSidebar: typeof import('./../components/core/sidebar/AppSidebar.vue')['default']
     Archived: typeof import('./../components/core/table/Archived.vue')['default']
     ArchivesButton: typeof import('./../components/core/button/ArchivesButton.vue')['default']
+    AssignClassLecturerModal: typeof import('./../components/academicCalendars/AssignClassLecturerModal.vue')['default']
     Authentication: typeof import('./../components/users/Authentication.vue')['default']
     Avatar: typeof import('./../components/core/util/Avatar.vue')['default']
     AvatarFallback: typeof import('./../components/ui/avatar/AvatarFallback.vue')['default']
@@ -132,6 +134,8 @@ declare module 'vue' {
     CardTitle: typeof import('./../components/ui/card/CardTitle.vue')['default']
     Checkbox: typeof import('./../components/ui/checkbox/Checkbox.vue')['default']
     CitizenSwitch: typeof import('./../components/core/form/radio/CitizenSwitch.vue')['default']
+    ClassListExportClassPicker: typeof import('./../components/academicCalendars/ClassListExportClassPicker.vue')['default']
+    ClassListExportModal: typeof import('./../components/academicCalendars/ClassListExportModal.vue')['default']
     ClosingDate: typeof import('./../components/academicCalendars/ClosingDate.vue')['default']
     Code: typeof import('./../components/core/form/text/Code.vue')['default']
     Collapsible: typeof import('./../components/ui/collapsible/Collapsible.vue')['default']

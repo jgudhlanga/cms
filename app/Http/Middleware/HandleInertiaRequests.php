@@ -7,6 +7,7 @@ use App\Helpers\PermissionHelper;
 use App\Http\Resources\Users\UserResource;
 use App\Models\Users\User;
 use App\Services\Acl\AclModuleStateService;
+use App\Services\Students\RegistrationAvailabilityService;
 use App\Support\Acl\PermissionRegistry;
 use App\Support\AppVersion;
 use Illuminate\Http\Request;
@@ -61,6 +62,7 @@ class HandleInertiaRequests extends Middleware
                 'warning' => fn () => $request->session()->get('warning'),
             ],
             'name' => config('app.name'),
+            'displayName' => config('app.display_name'),
             'appEnv' => config('app.env'),
             'appVersion' => app(AppVersion::class)->resolve(),
             'appearance' => [
@@ -74,6 +76,11 @@ class HandleInertiaRequests extends Middleware
                 'impersonating' => $isImpersonating,
             ],
             'moduleState' => fn () => app(AclModuleStateService::class)->all(),
+            'registration' => fn () => [
+                'isOpen' => app(RegistrationAvailabilityService::class)->isRegistrationOpen(),
+                'status' => app(RegistrationAvailabilityService::class)->blockReason()?->value,
+                'maintenanceUrl' => route('portal.registration.maintenance'),
+            ],
             'ziggy' => [
                 ...(new Ziggy)->toArray(),
                 'location' => $request->url(),

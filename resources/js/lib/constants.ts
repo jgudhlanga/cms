@@ -82,6 +82,8 @@ const APP_MODULE_KEYS = {
     hostel_accommodation_query: 'hostel_accommodation_query',
     hostel_accommodation_leave: 'hostel_accommodation_leave',
     student_list_export: 'student_list_export',
+    class_list_export: 'class_list_export',
+    assign_class_lecturer: 'assign_class_lecturer',
 };
 const EXAM_SITTINGS = [
     { value: 'june', label: 'June' },

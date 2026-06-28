@@ -2,6 +2,7 @@
 
 namespace App\Models\Institution;
 
+use App\Enums\Institution\IntakePeriodStatusEnum;
 use App\Http\Filters\Shared\SharedNameFilter;
 use App\Traits\BelongsToTenant;
 use App\Traits\Filterable;
@@ -22,7 +23,14 @@ class IntakePeriod extends Model
 {
     use BelongsToTenant, Filterable, HasFactory, LogsActivity, Paginatable, SoftDeletes;
 
-    protected $fillable = ['tenant_id', 'name', 'calendar_year', 'description', 'start_date', 'end_date', 'is_active'];
+    protected $fillable = ['tenant_id', 'name', 'calendar_year', 'description', 'start_date', 'end_date', 'is_active', 'status'];
+
+    protected function casts(): array
+    {
+        return [
+            'status' => IntakePeriodStatusEnum::class,
+        ];
+    }
 
     public function getActivitylogOptions(): LogOptions
     {

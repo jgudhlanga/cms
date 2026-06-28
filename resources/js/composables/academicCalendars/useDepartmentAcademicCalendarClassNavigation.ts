@@ -75,11 +75,19 @@ export function useDepartmentAcademicCalendarClassNavigation(
             student_enrolment: String(student.studentEnrolmentId),
         });
 
+    const classConfigQuery = computed((): Record<string, string> => ({
+        class_config_id: String(classConfig.value?.id ?? ''),
+        department_course_id: String(course.value.id),
+        department_level_id: String(level.value.id),
+        mode_of_study_id: String(mode.value.id),
+    }));
+
     return {
         departmentClassesUrl,
         moveStudentsUrl,
         updateClassUrl,
         classShowUrl,
+        classConfigQuery,
         studentCourseWorkUrl,
         breadcrumbs,
     };

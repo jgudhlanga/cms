@@ -79,6 +79,17 @@ export type AcademicCalendarClassPreviewStudent = {
     name: string;
 };
 
+export type ClassLecturerSummary = {
+    id: number;
+    name: string;
+} | null;
+
+export type ClassListExportClassOption = {
+    academicCalendarClassId: number | null;
+    name: string;
+    studentCount: number;
+};
+
 export type AcademicCalendarClassPreview = {
     academicCalendarClassId: number | null;
     name: string;
@@ -89,6 +100,7 @@ export type AcademicCalendarClassPreview = {
         unknown: number;
     };
     students: AcademicCalendarClassPreviewStudent[];
+    lecturer?: ClassLecturerSummary;
 };
 
 export type AcademicCalendarClassMoveTarget = {
@@ -102,6 +114,7 @@ export type AcademicCalendarClassDetail = {
     description: string | null;
     studentCount: number;
     students: AcademicCalendarClassPreviewStudent[];
+    lecturer?: ClassLecturerSummary;
 };
 
 export type AcademicCalendarClassGenerationContext = {

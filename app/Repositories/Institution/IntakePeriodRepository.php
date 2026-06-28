@@ -48,6 +48,7 @@ class IntakePeriodRepository extends BaseRepository implements IIntakePeriodRepo
             'start_date' => Carbon::parse($dto->start_date)->format('Y-m-d'),
             'end_date' => Carbon::parse($dto->end_date)->format('Y-m-d'),
             'description' => $dto->description,
+            'status' => $dto->status,
         ];
     }
 }

@@ -3,10 +3,11 @@ import BaseAlert from '@/components/core/alert/BaseAlert.vue';
 import PortalApplicationShell from '@/components/portal/PortalApplicationShell.vue';
 import IntakePeriodComboSelect from '@/components/core/form/combobox/IntakePeriodComboSelect.vue';
 import { usePortalLevelSelection } from '@/composables/students/usePortalLevelSelection';
+import { useRegistrationAvailability } from '@/composables/students/useRegistrationAvailability';
 import { TypeVariant } from '@/enums/type-variants';
 import { AuthObject } from '@/types/data-pagination';
 import { IntakePeriod, Level } from '@/types/institution';
-import { computed, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 
 type AvailabilityIssue = 'no_open_levels' | 'no_active_intakes' | null;
 
@@ -48,6 +49,11 @@ const selectedIntakePeriodId = ref<number | null>(
 );
 
 const { selectLevel } = usePortalLevelSelection();
+const { redirectIfClosed } = useRegistrationAvailability();
+
+onMounted(() => {
+    redirectIfClosed();
+});
 
 const displayedIntakeName = computed(() => {
     if (selectedIntakePeriodId.value) {

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import BaseSelect from '@/components/core/form/select/BaseSelect.vue';
 import BaseDatePicker from '@/components/core/form/date/BaseDatePicker.vue';
 import Description from '@/components/core/form/text/Description.vue';
 import Name from '@/components/core/form/text/Name.vue';
@@ -18,9 +19,10 @@ const form = useForm<IntakePeriodParams>({
     start_date: '',
     end_date: '',
     description: '',
+    status: 'open',
 });
 
-const { saveIntakePeriod, formSchema } = useIntakePeriods();
+const { saveIntakePeriod, formSchema, statusOptions } = useIntakePeriods();
 
 const { modals } = useModalStore();
 
@@ -30,6 +32,7 @@ watch(modals!, () => {
     form.start_date = intakePeriod.value?.attributes?.startDate ?? '';
     form.end_date = intakePeriod.value?.attributes?.endDate ?? '';
     form.description = intakePeriod.value?.attributes?.description ?? '';
+    form.status = intakePeriod.value?.attributes?.status ?? 'open';
     form.defaults();
 });
 
@@ -42,6 +45,7 @@ const save = () => {
             start_date: '',
             end_date: '',
             description: '',
+            status: '',
         };
 
         (Object.keys(fieldErrors) as (keyof typeof fieldErrors)[]).forEach((key) => {
@@ -89,6 +93,15 @@ const save = () => {
                     @update:model-value="clearFormErrors(form, 'end_date')"
                 />
             </div>
+
+            <BaseSelect
+                :label="$tChoice('trans.status', 1)"
+                v-model="form.status"
+                :options="statusOptions()"
+                :is-required="true"
+                :error="form.errors.status"
+                @update:model-value="clearFormErrors(form, 'status')"
+            />
 
             <Description v-model="form.description" @input="clearFormErrors(form, 'description')" :error="form.errors.description" />
         </template>

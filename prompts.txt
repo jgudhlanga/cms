@@ -1,0 +1,17 @@
+1. Given /Users/jgudhlanga/Projects/HararePoly/hrepoly/public/class-list.pdf
+On our system we need to export a file as th eone given above on pages
+   for example: https://hrepoly.test/institution/academic-calendars/department/14/classes/2026?class_config_id=8&department_course_id=29&department_level_id=22&mode_of_study_id=1
+        'show export class lists' button whcih will show a pop up with what to be exported.
+        - when confirm is clicked then it generates a lost of all students following the template above which is pdf.
+        - You can fill the pdf with information from the system
+        - The bottom part should be left blank for manual fill with a pen.
+        - Header should be dynamic, {Harare Polytechnic} should be coming form the app_name
+    We can do the same on https://hrepoly.test/institution/academic-calendars/department/14/classes/2026/show/1
+     - however we are only exporting a specic class we are viewing not the whole level course students.
+2. Give a list of classes, https://hrepoly.test/institution/academic-calendars/department/14/classes/2026?class_config_id=8&department_course_id=29&department_level_id=22&mode_of_study_id=1,
+    - We need a button on each class to add a lecturer to the class. A pop up should show with a list of staff in this department when we going to select the lecturer and save. Thus, capturing class metadata,
+    We can do the same on https://hrepoly.test/institution/academic-calendars/department/14/classes/2026/show/1.
+- Reusability of components and functionality its a must.
+- Investigate of possible bugs and propose solutions.
+- Ask questions fo clarity / sugsestions.
+- Implement HCI principles in this

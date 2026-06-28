@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import RegistrationStepper from '@/components/portal/RegistrationStepper.vue';
 import PortalApplicationIntakeBanner from '@/components/portal/PortalApplicationIntakeBanner.vue';
-import ComingSoonAnimated from '@/components/core/util/ComingSoonAnimated.vue';
 import { useUtils } from '@/composables/core/useUtils';
 import { useEnrollmentRegistration, type EnrollmentLookupResult, type ReturningLookupType } from '@/composables/students/useEnrollmentRegistration';
 import { useGuestPortal } from '@/composables/students/useGuestPortal';
+import { useRegistrationAvailability } from '@/composables/students/useRegistrationAvailability';
 import { clearFormErrors } from '@/lib/forms';
 import RegistrationAccountForm from '@/pages/portal/guest/components/RegistrationAccountForm.vue';
 import RegistrationBrandHeader from '@/pages/portal/guest/components/RegistrationBrandHeader.vue';
@@ -31,7 +31,8 @@ const props = defineProps<{
 }>();
 
 const { createPortalUser } = useGuestPortal();
-const { navigateTo, isItTrue, formatZimIdNumber, isZimbabweanNationalId } = useUtils();
+const { navigateTo, formatZimIdNumber, isZimbabweanNationalId } = useUtils();
+const { redirectIfClosed } = useRegistrationAvailability();
 const { checkNationalId, checkPassport, lookupReturning } = useEnrollmentRegistration();
 
 const store = useCreateUserFormStore();
@@ -72,7 +73,9 @@ const form = useForm<CreateApplicationUserParams & { registration_path: Registra
     acknowledged_advert: false,
 });
 
-const maintenanceMode = isItTrue(import.meta.env.VITE_MAINTENANCE_MODE);
+onMounted(() => {
+    redirectIfClosed();
+});
 
 const isReturning = computed(() => activePath.value === 'returning');
 const isInternational = computed(() => activePath.value === 'international');
@@ -269,8 +272,7 @@ const clearFormError = (field: string) => {
 <template>
     <Head :title="$t('trans.application_form')" />
     <div class="min-h-svh bg-background">
-        <ComingSoonAnimated v-if="maintenanceMode" :title="$t('trans.ui_sorry')" message="Enrolment has been closed" />
-        <div v-else class="flex min-h-svh flex-col lg:flex-row">
+        <div class="flex min-h-svh flex-col lg:flex-row">
             <div class="flex w-full flex-1 flex-col p-4 pt-2 sm:p-6 md:pt-6 lg:w-[62%] lg:min-w-0 lg:p-10 xl:w-[65%] xl:p-12 2xl:w-[68%]">
                 <div class="mx-auto flex w-full max-w-2xl flex-1 flex-col">
                     <RegistrationBrandHeader />

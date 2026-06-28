@@ -18,7 +18,6 @@ import { AuthObject } from '@/types/data-pagination';
 import { CreateApplicationParams } from '@/types/portal';
 
 // Utilities
-import ComingSoonAnimated from '@/components/core/util/ComingSoonAnimated.vue';
 import PortalApplicationLevelChip from '@/components/portal/PortalApplicationLevelChip.vue';
 import PortalApplicationMobileFooter from '@/components/portal/PortalApplicationMobileFooter.vue';
 import PortalApplicationShell from '@/components/portal/PortalApplicationShell.vue';
@@ -26,6 +25,7 @@ import PortalApplicationStepper from '@/components/portal/PortalApplicationStepp
 import type { ApplicationFormStep } from '@/components/portal/PortalApplicationStepper.vue';
 import { useIdTypes } from '@/composables/shared/useIdTypes';
 import { useApplicationFormHelper } from '@/composables/students/useApplicationFormHelper';
+import { useRegistrationAvailability } from '@/composables/students/useRegistrationAvailability';
 import { CourseRequirement, DepartmentLevelRequirement } from '@/types/department-meta-data';
 import { Level } from '@/types/institution';
 import { Head, useForm } from '@inertiajs/vue3';
@@ -154,12 +154,13 @@ const populateInitialForm = () => {
     }
 };
 
+const { redirectIfClosed } = useRegistrationAvailability();
+
 onMounted(async () => {
+    redirectIfClosed();
     await listIdTypes();
     populateInitialForm();
 });
-
-const isValidating = ref(false);
 const isProgrammeLevelAvailable = ref(true);
 
 const onStepNavigate = (step: ApplicationFormStep) => {
@@ -189,7 +190,7 @@ const onPrimaryAction = async () => {
     }
 };
 
-const maintenanceMode = isItTrue(import.meta.env.VITE_MAINTENANCE_MODE);
+const isValidating = ref(false);
 </script>
 
 <template>
@@ -197,7 +198,7 @@ const maintenanceMode = isItTrue(import.meta.env.VITE_MAINTENANCE_MODE);
     <PortalApplicationShell
         :intake-name="intakeName"
         :page-title="$t('trans.application_form')"
-        :sticky-footer="!maintenanceMode"
+        :sticky-footer="true"
         hide-intake-banner
     >
         <template #header>
@@ -208,8 +209,7 @@ const maintenanceMode = isItTrue(import.meta.env.VITE_MAINTENANCE_MODE);
         </template>
 
         <form @submit.prevent="onPrimaryAction">
-            <ComingSoonAnimated v-if="maintenanceMode" />
-            <div v-else class="space-y-4">
+            <div class="space-y-4">
                 <div>
                     <h2 class="text-base font-semibold text-foreground">{{ $t(stepTitleKey) }}</h2>
                     <p class="text-[11px] leading-tight text-muted-foreground">
@@ -237,7 +237,7 @@ const maintenanceMode = isItTrue(import.meta.env.VITE_MAINTENANCE_MODE);
             </div>
         </form>
 
-        <template v-if="!maintenanceMode" #footer>
+        <template #footer>
             <PortalApplicationMobileFooter
                 :primary-label="primaryActionLabel"
                 :processing="isValidating"
