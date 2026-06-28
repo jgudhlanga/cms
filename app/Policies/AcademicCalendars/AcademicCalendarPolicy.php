@@ -41,4 +41,9 @@ class AcademicCalendarPolicy
     {
         return $user->can('forceDelete:academic-calendars', $academicCalendar);
     }
+
+    public function export(User $user): bool
+    {
+        return $user->can('export:academic-calendars');
+    }
 }

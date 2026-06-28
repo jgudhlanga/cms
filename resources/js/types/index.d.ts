@@ -21,6 +21,12 @@ export type ModuleState = Record<
     }
 >;
 
+export type RegistrationAvailabilityProps = {
+    isOpen: boolean;
+    status?: 'suspended' | 'closed' | null;
+    maintenanceUrl: string;
+};
+
 export type PageProps<T extends Record<string, unknown> = Record<string, unknown>> = T & {
     appEnv: string;
     appVersion: string;
@@ -30,6 +36,7 @@ export type PageProps<T extends Record<string, unknown> = Record<string, unknown
         impersonating: boolean;
     };
     moduleState?: ModuleState;
+    registration?: RegistrationAvailabilityProps;
     ziggy: Config & { location: string };
 };
 

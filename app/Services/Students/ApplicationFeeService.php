@@ -2,6 +2,7 @@
 
 namespace App\Services\Students;
 
+use App\Enums\Institution\IntakePeriodStatusEnum;
 use App\Enums\Students\ApplicationFeeStatusEnum;
 use App\Helpers\Helper;
 use App\Models\Institution\IntakePeriod;
@@ -24,11 +25,13 @@ class ApplicationFeeService
         if ($intakePeriodId !== null && $intakePeriodId > 0) {
             return IntakePeriod::query()
                 ->where('is_active', true)
+                ->where('status', IntakePeriodStatusEnum::Open)
                 ->findOrFail($intakePeriodId);
         }
 
         return IntakePeriod::query()
             ->where('is_active', true)
+            ->where('status', IntakePeriodStatusEnum::Open)
             ->orderByDesc('end_date')
             ->firstOrFail();
     }
@@ -40,6 +43,7 @@ class ApplicationFeeService
     {
         return IntakePeriod::query()
             ->where('is_active', true)
+            ->where('status', IntakePeriodStatusEnum::Open)
             ->orderByDesc('end_date')
             ->get();
     }
@@ -181,6 +185,7 @@ class ApplicationFeeService
 
         $intakePeriod = IntakePeriod::query()
             ->where('is_active', true)
+            ->where('status', IntakePeriodStatusEnum::Open)
             ->find($intakePeriodId);
 
         if ($intakePeriod === null) {

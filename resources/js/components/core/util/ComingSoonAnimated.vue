@@ -8,6 +8,7 @@ import { onMounted, onUnmounted, ref } from 'vue';
 interface Props {
     title?: string;
     message?: string;
+    showCountdown?: boolean;
 }
 const targetDate = new Date('2026-01-06T12:59:59');
 
@@ -17,7 +18,9 @@ const hours = ref(0);
 const minutes = ref(0);
 const seconds = ref(0);
 
-defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+    showCountdown: true,
+});
 
 const updateTimer = () => {
     const now = new Date();
@@ -37,8 +40,10 @@ let timerInterval: any;
 const lottieContainer = ref(null);
 
 onMounted(() => {
-    updateTimer();
-    timerInterval = setInterval(updateTimer, 1000);
+    if (props.showCountdown) {
+        updateTimer();
+        timerInterval = setInterval(updateTimer, 1000);
+    }
 
     lottie.loadAnimation({
         container: lottieContainer.value,
@@ -48,8 +53,6 @@ onMounted(() => {
         path: '/assets/json/web_construction.json',
     });
 });
-
-const showCountdown = true;
 
 onUnmounted(() => {
     clearInterval(timerInterval);
@@ -70,7 +73,7 @@ const { goBack } = useUtils();
             </div>
 
             <!-- Countdown Timer -->
-            <div v-if="showCountdown" class="mt-4 flex justify-center space-x-6 font-mono text-2xl">
+            <div v-if="props.showCountdown" class="mt-4 flex justify-center space-x-6 font-mono text-2xl">
                 <div>
                     <span class="block text-5xl font-bold">{{ days }}</span>
                     <span class="text-sm uppercase">{{ $t('trans.ui_days') }}</span>

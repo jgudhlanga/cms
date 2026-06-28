@@ -170,6 +170,8 @@ export type InstitutionDepartmentParams = {
     department_ids: Array<string | undefined | null>;
 };
 
+export type IntakePeriodStatus = 'open' | 'suspended' | 'closed';
+
 export type IntakePeriod = {
     type?: string;
     id?: string;
@@ -178,6 +180,7 @@ export type IntakePeriod = {
         startDate: string;
         endDate: string;
         isActive: boolean | number;
+        status?: IntakePeriodStatus;
         description?: string;
         createdAt?: string;
         updatedAt?: string;
@@ -189,6 +192,7 @@ export type IntakePeriodParams = {
     start_date: string;
     end_date: string;
     description?: string;
+    status: IntakePeriodStatus;
 };
 
 export type CourseSyllabus = {

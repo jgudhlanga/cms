@@ -30,6 +30,8 @@ use App\Models\Institution\InstitutionDepartment;
 use App\Models\Institution\ModeOfStudy;
 use App\Models\Students\StudentEnrolment;
 use App\Queries\Enrolments\ConfirmedStudentsQuery;
+use App\Services\AcademicCalendars\ClassListDataService;
+use App\Services\AcademicCalendars\ClassListPdfService;
 use App\Services\AcademicCalendars\CourseWorkImportService;
 use App\Services\AcademicCalendars\CourseWorkImportTemplateService;
 use App\Services\AcademicCalendars\CourseWorkMarksheetDataService;
@@ -173,7 +175,63 @@ class AcademicCalendarController extends Controller
             'previewClasses' => $previewClasses,
             'generationContext' => $context,
             'canViewCourseWork' => auth()->user()?->can('viewAny', CourseWorkMark::class) ?? false,
+            'canExportClassList' => auth()->user()?->can('export', AcademicCalendar::class) ?? false,
+            'canAssignClassLecturer' => auth()->user()?->can('update:academic-calendars') ?? false,
         ]);
+    }
+
+    public function exportDepartmentAcademicCalendarClassList(
+        Request $request,
+        InstitutionDepartment $institutionDepartment,
+        string $calendar_year,
+        ClassListDataService $classListDataService,
+        ClassListPdfService $classListPdfService,
+    ): \Illuminate\Http\Response {
+        $this->authorize('export', AcademicCalendar::class);
+
+        $academicCalendar = $this->academicCalendarFromCalendarYear($calendar_year);
+        $classConfig = $this->resolveClassConfigForDepartment($institutionDepartment, $academicCalendar, $request);
+
+        $classIds = collect($request->query('class_ids', []))
+            ->map(fn (mixed $id): int => (int) $id)
+            ->filter(fn (int $id): bool => $id > 0)
+            ->values()
+            ->all();
+
+        $data = $classListDataService->assembleForClassConfig($classConfig, $classIds);
+        $viewData = $classListPdfService->assembleViewData($data);
+        $fileName = sprintf('class-list-%s-%s.pdf', $classConfig->id, time());
+
+        return Pdf::loadView('academic-calendars.class-list', $viewData)->stream($fileName);
+    }
+
+    public function exportDepartmentAcademicCalendarClassListForClass(
+        Request $request,
+        InstitutionDepartment $institutionDepartment,
+        string $calendar_year,
+        AcademicCalendarClass $academicCalendarClass,
+        ClassListDataService $classListDataService,
+        ClassListPdfService $classListPdfService,
+    ): \Illuminate\Http\Response {
+        $this->authorize('export', AcademicCalendar::class);
+
+        $academicCalendar = $this->academicCalendarFromCalendarYear($calendar_year);
+
+        $academicCalendarClass->loadMissing('classConfig');
+        $classConfig = $academicCalendarClass->classConfig;
+
+        abort_unless(
+            $classConfig instanceof ClassConfig
+            && (int) $classConfig->institution_department_id === (int) $institutionDepartment->id
+            && (string) $classConfig->calendar_year === (string) $academicCalendar->calendar_year,
+            404
+        );
+
+        $data = $classListDataService->assembleForClassConfig($classConfig, [(int) $academicCalendarClass->id]);
+        $viewData = $classListPdfService->assembleViewData($data);
+        $fileName = sprintf('class-list-%s-%s.pdf', $academicCalendarClass->id, time());
+
+        return Pdf::loadView('academic-calendars.class-list', $viewData)->stream($fileName);
     }
 
     public function showDepartmentAcademicCalendarClassConfigCourseWorkMarksheet(
@@ -319,6 +377,7 @@ class AcademicCalendarController extends Controller
             'classConfig.departmentCourse',
             'classConfig.departmentLevel',
             'classConfig.modeOfStudy',
+            'lecturerMetaData.staff.user',
         ]);
 
         $classConfig = $academicCalendarClass->classConfig;
@@ -368,6 +427,8 @@ class AcademicCalendarController extends Controller
             'canUpdateAcademicCalendarStudentEnrolments' => auth()->user()?->can('update:academic-calendar-student-enrolments') ?? false,
             'canUpdateAcademicCalendarClass' => auth()->user()?->can('update', $academicCalendar) ?? false,
             'canViewCourseWork' => auth()->user()?->can('viewAny', CourseWorkMark::class) ?? false,
+            'canExportClassList' => auth()->user()?->can('export', AcademicCalendar::class) ?? false,
+            'canAssignClassLecturer' => auth()->user()?->can('update', $academicCalendar) ?? false,
             'moveTargetClasses' => $moveTargetClasses,
             'siblingAcademicCalendarClasses' => $siblingAcademicCalendarClasses,
             'academicCalendarClass' => [
@@ -376,6 +437,7 @@ class AcademicCalendarController extends Controller
                 'description' => $academicCalendarClass->description,
                 'studentCount' => count($students),
                 'students' => $students,
+                'lecturer' => $this->lecturerPayload($academicCalendarClass->lecturerMetaData),
             ],
         ]);
     }
@@ -998,6 +1060,67 @@ class AcademicCalendarController extends Controller
                 ];
             })
             ->all();
+
+        return $this->attachLecturersToClassPreviews($previews);
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $previews
+     * @return list<array<string, mixed>>
+     */
+    private function attachLecturersToClassPreviews(array $previews): array
+    {
+        $classIds = collect($previews)
+            ->pluck('academicCalendarClassId')
+            ->filter(fn (mixed $id): bool => $id !== null && (int) $id > 0)
+            ->map(fn (mixed $id): int => (int) $id)
+            ->values()
+            ->all();
+
+        if ($classIds === []) {
+            return array_map(function (array $preview): array {
+                $preview['lecturer'] = null;
+
+                return $preview;
+            }, $previews);
+        }
+
+        $lecturersByClassId = AcademicCalendarClass::query()
+            ->with(['lecturerMetaData.staff.user'])
+            ->whereIn('id', $classIds)
+            ->get()
+            ->mapWithKeys(fn (AcademicCalendarClass $class): array => [
+                (int) $class->id => $this->lecturerPayload($class->lecturerMetaData),
+            ]);
+
+        return array_map(function (array $preview) use ($lecturersByClassId): array {
+            $classId = (int) ($preview['academicCalendarClassId'] ?? 0);
+            $preview['lecturer'] = $classId > 0 ? ($lecturersByClassId[$classId] ?? null) : null;
+
+            return $preview;
+        }, $previews);
+    }
+
+    /**
+     * @return array{id: int, name: string}|null
+     */
+    private function lecturerPayload(?\App\Models\AcademicCalendars\AcademicCalendarClassMetaData $lecturerMetaData): ?array
+    {
+        if ($lecturerMetaData === null || $lecturerMetaData->staff_id === null) {
+            return null;
+        }
+
+        $lecturerMetaData->loadMissing('staff.user');
+        $user = $lecturerMetaData->staff?->user;
+
+        if ($user === null) {
+            return null;
+        }
+
+        return [
+            'id' => (int) $lecturerMetaData->staff_id,
+            'name' => trim(sprintf('%s %s', (string) ($user->first_name ?? ''), (string) ($user->last_name ?? ''))),
+        ];
     }
 
     private function buildGenerationContext(

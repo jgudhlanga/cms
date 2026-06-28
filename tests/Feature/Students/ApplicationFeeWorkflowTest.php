@@ -75,16 +75,7 @@ function createPortalUserWithoutProfile(): User
 
 function createTestIntakePeriod(): IntakePeriod
 {
-    $tenant = Tenant::query()->firstOrFail();
-
-    return IntakePeriod::query()->create([
-        'tenant_id' => $tenant->id,
-        'name' => 'Test Intake '.uniqid(),
-        'start_date' => now()->startOfMonth()->toDateString(),
-        'end_date' => now()->addYears(2)->toDateString(),
-        'calendar_year' => '2026/2027',
-        'is_active' => true,
-    ]);
+    return ensureCurrentIntakeStatus(\App\Enums\Institution\IntakePeriodStatusEnum::Open->value);
 }
 
 function feeRequiredLevel(): Level
@@ -132,6 +123,7 @@ test('selecting fee required level creates one application fee per intake', func
 });
 
 test('selecting level without fee does not create application fee record', function () {
+    ensureCurrentIntakeStatus(\App\Enums\Institution\IntakePeriodStatusEnum::Open->value);
     $user = createPortalUserWithoutProfile();
     $level = feeFreeLevel();
 

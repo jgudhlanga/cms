@@ -3,6 +3,7 @@ import BaseAlert from '@/components/core/alert/BaseAlert.vue';
 import BaseCard from '@/components/core/card/BaseCard.vue';
 import InputError from '@/components/core/form/InputError.vue';
 import { useUtils } from '@/composables/core/useUtils';
+import { useRegistrationAvailability } from '@/composables/students/useRegistrationAvailability';
 import { useDepartmentCourses } from '@/composables/institution/useDepartmentCourses';
 import { useDepartmentLevels } from '@/composables/institution/useDepartmentLevels';
 import { useErrorDialog } from '@/composables/core/useErrorDialog';
@@ -37,7 +38,8 @@ const emit = defineEmits<{
 }>();
 
 const { form, application } = props;
-const { isItTrue, navigateTo } = useUtils();
+const { isItTrue } = useUtils();
+const { navigateToRegistrationOrMaintenance } = useRegistrationAvailability();
 
 const isEditing = Number(String(application?.id)) > 0;
 
@@ -189,7 +191,7 @@ watch(course, async () => {
 });
 
 const goToPayment = () => {
-    navigateTo(route('portal.application.fee-payment'));
+    navigateToRegistrationOrMaintenance(route('portal.application.fee-payment'));
 };
 </script>
 

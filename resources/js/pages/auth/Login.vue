@@ -6,10 +6,10 @@ import AppLogo from '@/components/core/image/AppLogo.vue';
 import AppearanceCycleToggle from '@/components/core/util/AppearanceCycleToggle.vue';
 import { useAuth } from '@/composables/auth/useAuth';
 import { useUtils } from '@/composables/core/useUtils';
+import { useRegistrationAvailability } from '@/composables/students/useRegistrationAvailability';
 import { ColorVariant } from '@/enums/colors';
 import { TypeVariant } from '@/enums/type-variants';
 import { clearFormErrors } from '@/lib/forms';
-import ToastService from '@/services/toast.service';
 import { Login } from '@/types/auth';
 import { Head, useForm } from '@inertiajs/vue3';
 import { onMounted } from 'vue';
@@ -20,14 +20,13 @@ defineProps<{
 }>();
 
 const { login } = useAuth();
-const { navigateTo, isItTrue, getQueryParams } = useUtils();
+const { getQueryParams } = useUtils();
+const { navigateToRegistrationOrMaintenance } = useRegistrationAvailability();
 const form = useForm<Login>({
     email: '',
     password: '',
     remember: false,
 });
-
-const maintenanceMode = isItTrue(import.meta.env.VITE_MAINTENANCE_MODE);
 
 onMounted(() => {
     const params = getQueryParams();
@@ -37,11 +36,7 @@ onMounted(() => {
 });
 
 const loginNavigateTo = () => {
-    if (maintenanceMode) {
-        ToastService.warning('Sorry, system updates underway, we will be back soon');
-        return;
-    }
-    navigateTo(route('portal.create'));
+    navigateToRegistrationOrMaintenance(route('portal.create'));
 };
 </script>
 

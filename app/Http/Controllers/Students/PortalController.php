@@ -52,6 +52,7 @@ use App\Repositories\Students\interface\IStudentRepository;
 use App\Repositories\Users\interface\IUserRepository;
 use App\Services\Enrollment\EnrollmentLookupService;
 use App\Services\Students\ApplicationFeeService;
+use App\Services\Students\RegistrationAvailabilityService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -72,6 +73,7 @@ class PortalController extends Controller
         protected INextOfKinRepository $nextOfKinRepository,
         protected IStudentApplicationRepository $studentApplicationRepository,
         protected ApplicationFeeService $applicationFeeService,
+        protected RegistrationAvailabilityService $registrationAvailability,
     ) {}
 
     // ========= Dashboard and Registration =========
@@ -811,6 +813,26 @@ class PortalController extends Controller
         if ($studentProfile === null || $student->id !== $studentProfile->id) {
             abort(403);
         }
+    }
+
+    public function registrationMaintenance(): Response|RedirectResponse
+    {
+        if ($this->registrationAvailability->isRegistrationOpen()) {
+            return to_route('login');
+        }
+
+        $intakePeriod = $this->registrationAvailability->currentIntakePeriod();
+        $reason = $this->registrationAvailability->blockReason();
+
+        if ($reason === null || $intakePeriod === null) {
+            return to_route('login');
+        }
+
+        return Inertia::render('portal/registration/RegistrationMaintenance', [
+            'status' => $reason->value,
+            'message' => $reason->maintenanceMessage($intakePeriod->name),
+            'intakeName' => $intakePeriod->name,
+        ]);
     }
 
     public function errors(string $message): Response

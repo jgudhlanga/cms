@@ -1,10 +1,12 @@
 <?php
 
 use App\Enums\Acl\RoleEnum;
+use App\Http\Middleware\EnsureRegistrationOpen;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\RedirectImpersonatedToPortal;
 use App\Http\Middleware\RedirectStudentMiddleware;
+use App\Services\Students\RegistrationAvailabilityService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -39,6 +41,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
         $middleware->alias([
             'redirect.student' => RedirectStudentMiddleware::class,
+            'registration.open' => EnsureRegistrationOpen::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
@@ -63,7 +66,9 @@ return Application::configure(basePath: dirname(__DIR__))
 
             $route = $user->has_student_profile
                 ? 'portal.dashboard'
-                : 'portal.application.level-options';
+                : (app(RegistrationAvailabilityService::class)->isRegistrationOpen()
+                    ? 'portal.application.level-options'
+                    : 'portal.registration.maintenance');
 
             return to_route($route);
         };

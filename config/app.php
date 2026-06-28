@@ -17,6 +17,17 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Application Display Name
+    |--------------------------------------------------------------------------
+    |
+    | Human-readable institution name for documents and UI (e.g. PDF headers).
+    |
+    */
+
+    'display_name' => env('APP_DISPLAY_NAME', env('APP_NAME', 'Laravel')),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Version (release string)
     |--------------------------------------------------------------------------
     |

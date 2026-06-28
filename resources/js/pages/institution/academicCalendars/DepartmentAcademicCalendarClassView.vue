@@ -1,7 +1,11 @@
 <script setup lang="ts">
 import AcademicCalendarClassNavComboSelect from '@/components/academicCalendars/AcademicCalendarClassNavComboSelect.vue';
+import AssignClassLecturerModal from '@/components/academicCalendars/AssignClassLecturerModal.vue';
+import ClassListExportModal from '@/components/academicCalendars/ClassListExportModal.vue';
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import { EDIT_CLASS_MODAL, useAcademicCalendarClassEdit } from '@/composables/academicCalendars/useAcademicCalendarClassEdit';
+import { openAssignClassLecturerModal } from '@/composables/academicCalendars/useAcademicCalendarClassLecturer';
+import { openClassListExportModal } from '@/composables/academicCalendars/useClassListExport';
 import { MOVE_STUDENTS_MODAL, useAcademicCalendarClassMoveStudents } from '@/composables/academicCalendars/useAcademicCalendarClassMoveStudents';
 import { useAcademicCalendarClassStudentFilters } from '@/composables/academicCalendars/useAcademicCalendarClassStudentFilters';
 import { useAcademicCalendarClassStudentSelection } from '@/composables/academicCalendars/useAcademicCalendarClassStudentSelection';
@@ -32,19 +36,23 @@ const props = withDefaults(
         siblingAcademicCalendarClasses: AcademicCalendarClassMoveTarget[];
         canUpdateAcademicCalendarClass?: boolean;
         canViewCourseWork?: boolean;
+        canExportClassList?: boolean;
+        canAssignClassLecturer?: boolean;
     }>(),
     {
         moveTargetClasses: () => [],
         siblingAcademicCalendarClasses: () => [],
         canUpdateAcademicCalendarClass: false,
         canViewCourseWork: false,
+        canExportClassList: false,
+        canAssignClassLecturer: false,
     },
 );
 
 const { department, academicCalendar, academicCalendarClass, course, level, mode, classConfig, moveTargetClasses, siblingAcademicCalendarClasses } =
     toRefs(props);
 
-const { departmentClassesUrl, moveStudentsUrl, updateClassUrl, breadcrumbs, studentCourseWorkUrl } =
+const { departmentClassesUrl, moveStudentsUrl, updateClassUrl, breadcrumbs, studentCourseWorkUrl, classConfigQuery } =
     useDepartmentAcademicCalendarClassNavigation(
     department,
     academicCalendar,
@@ -79,6 +87,14 @@ const { editClassForm, openEditClassModal, submitEditClass, resetEditClassFormOn
 );
 
 const canMoveStudents = computed(() => hasAbility(['update:academic-calendar-student-enrolments']));
+
+const singleClassExportOption = computed(() => [
+    {
+        academicCalendarClassId: academicCalendarClass.value.id,
+        name: academicCalendarClass.value.name,
+        studentCount: academicCalendarClass.value.studentCount,
+    },
+]);
 </script>
 
 <template>
@@ -97,8 +113,18 @@ const canMoveStudents = computed(() => hasAbility(['update:academic-calendar-stu
                 :title="academicCalendarClass.name"
                 :description="academicCalendarClass.description"
                 :student-count="academicCalendarClass.studentCount"
+                :lecturer="academicCalendarClass.lecturer ?? null"
                 :can-update="canUpdateAcademicCalendarClass"
+                :can-export-class-list="canExportClassList"
+                :can-assign-lecturer="canAssignClassLecturer"
                 @edit="openEditClassModal"
+                @export-class-list="openClassListExportModal"
+                @assign-lecturer="
+                    openAssignClassLecturerModal({
+                        academicCalendarClassId: academicCalendarClass.id,
+                        staffId: academicCalendarClass.lecturer?.id ?? null,
+                    })
+                "
             />
             <div class="space-y-4">
                 <h2 class="text-lg font-semibold text-foreground">{{ $tChoice('trans.student', 2) }}</h2>
@@ -135,6 +161,19 @@ const canMoveStudents = computed(() => hasAbility(['update:academic-calendar-stu
                 :move-target-classes="moveTargetClasses"
                 :on-form-action="submitMoveStudents"
                 :on-close-modal="resetMoveFormOnModalClose"
+            />
+            <ClassListExportModal
+                v-if="canExportClassList"
+                :institution-department-id="Number(department.id)"
+                :calendar-year="String(academicCalendar.attributes.calendarYear)"
+                :class-config-query="classConfigQuery"
+                :classes="singleClassExportOption"
+                :single-class-id="academicCalendarClass.id"
+            />
+            <AssignClassLecturerModal
+                v-if="canAssignClassLecturer"
+                :institution-department-id="Number(department.id)"
+                :calendar-year="String(academicCalendar.attributes.calendarYear)"
             />
         </div>
     </PageContainer>

@@ -6,6 +6,7 @@ import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useUtils } from '@/composables/core/useUtils';
 import { useDepartmentLevels } from '@/composables/institution/useDepartmentLevels';
 import { useStudentPortal } from '@/composables/students/useStudentPortal';
+import { useRegistrationAvailability } from '@/composables/students/useRegistrationAvailability';
 
 // Store & types
 import { AuthObject } from '@/types/data-pagination';
@@ -62,6 +63,7 @@ const { student } = props;
 const { listLevelRequirements, levelRequirements, isLoading: levelRequirementsLoading } = useDepartmentLevels();
 const { listCourseRequirements, courseRequirements, isLoading: courseRequirementsLoading } = useDepartmentCourses();
 const { isItTrue, navigateTo } = useUtils();
+const { redirectIfClosed } = useRegistrationAvailability();
 const { updateProgramForm } = useApplicationFormHelper(false);
 const { programFormSchema, addProgram } = useStudentPortal();
 const { listSubjects } = useSubjects();
@@ -137,9 +139,7 @@ watch(course, async () => {
 });
 
 onMounted(async () => {
-    /**ToastService.warning('Sorry, The registration has ended for now. Contact the administration for more info.');
-    navigateTo(route('login'));
-    return;*/
+    redirectIfClosed();
     await listSubjects();
 });
 const validateSubjectRequirements = async () => {

@@ -7,11 +7,13 @@ use App\Enums\Students\ApplicationFeeStatusEnum;
 use App\Models\Institution\Level;
 use App\Models\Users\User;
 use App\Services\Students\ApplicationFeeService;
+use App\Services\Students\RegistrationAvailabilityService;
 
 class ImpersonationLandingResolver
 {
     public function __construct(
         protected ApplicationFeeService $applicationFeeService,
+        protected RegistrationAvailabilityService $registrationAvailability,
     ) {}
 
     public function isStudentPortalUser(User $user): bool
@@ -32,6 +34,10 @@ class ImpersonationLandingResolver
     {
         if ($user->has_student_profile) {
             return route('portal.dashboard');
+        }
+
+        if (! $this->registrationAvailability->isRegistrationOpen()) {
+            return route('portal.registration.maintenance');
         }
 
         $applicationFee = $this->applicationFeeService->activeApplicationFee($user);

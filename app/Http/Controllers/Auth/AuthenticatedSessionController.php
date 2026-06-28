@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Models\Institution\Level;
 use App\Services\Students\ApplicationFeeService;
+use App\Services\Students\RegistrationAvailabilityService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -32,7 +33,7 @@ class AuthenticatedSessionController extends Controller
     /**
      * Handle an incoming authentication request.
      */
-    public function store(LoginRequest $request, ApplicationFeeService $applicationFeeService): RedirectResponse
+    public function store(LoginRequest $request, ApplicationFeeService $applicationFeeService, RegistrationAvailabilityService $registrationAvailability): RedirectResponse
     {
         $request->authenticate();
         $request->session()->regenerate();
@@ -40,6 +41,10 @@ class AuthenticatedSessionController extends Controller
         if ($user->hasRole(RoleEnum::STUDENT->name())) {
             if ($user->has_student_profile) {
                 return to_route('portal.dashboard');
+            }
+
+            if (! $registrationAvailability->isRegistrationOpen()) {
+                return to_route('portal.registration.maintenance');
             }
 
             $applicationFee = $applicationFeeService->activeApplicationFee($user);

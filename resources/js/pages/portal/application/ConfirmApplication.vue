@@ -15,6 +15,7 @@ import LevelRequirements from '@/components/students/update/LevelRequirements.vu
 import OLevelRequirements from '@/components/students/update/OLevelRequirements.vue';
 import SDPRequirements from '@/components/students/update/SDPRequirements.vue';
 import { useApplicationFormHelper } from '@/composables/students/useApplicationFormHelper';
+import { useRegistrationAvailability } from '@/composables/students/useRegistrationAvailability';
 import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
 import { TypeVariant } from '@/enums/type-variants';
@@ -26,6 +27,7 @@ import { onMounted } from 'vue';
 // Composable
 const { saveApplication, selectLevel } = useStudentPortal();
 const { isItTrue, navigateTo } = useUtils();
+const { redirectIfClosed } = useRegistrationAvailability();
 const { updateCreateForm } = useApplicationFormHelper();
 
 const {
@@ -163,10 +165,7 @@ const save = async () => {
     saveApplication(form);
 };
 onMounted(() => {
-    // selectLevel(String(form.level_id));
-    /*ToastService.warning('Sorry, The registration has ended for now. Contact the administration for more info.');
-    navigateTo(route('login'));
-    return;*/
+    redirectIfClosed();
 });
 </script>
 <template>

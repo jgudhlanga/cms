@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\RateLimiter;
 beforeEach(function () {
     RateLimiter::clear('api');
     Role::findOrCreate(RoleEnum::STUDENT->value, 'web');
+    ensureCurrentIntakeStatus(\App\Enums\Institution\IntakePeriodStatusEnum::Open->value);
 });
 
 function createGuestEnrollmentStudent(string $idNumber, ?string $studentNumber = null): Student
@@ -223,7 +224,9 @@ test('portal level options page renders for newly registered student', function 
 test('portal level options reports no open levels when none are configured', function () {
     Level::query()->update(['show_on_current_application_period' => false]);
 
+    $tenant = TenantEnum::HARARE_POLY->id();
     $user = User::factory()->create([
+        'tenant_id' => $tenant,
         'email_verified_at' => now(),
     ]);
     $user->assignRole(RoleEnum::STUDENT);
@@ -239,7 +242,9 @@ test('portal level options reports no open levels when none are configured', fun
 });
 
 test('student without profile can access portal level options', function () {
+    $tenant = TenantEnum::HARARE_POLY->id();
     $user = User::factory()->create([
+        'tenant_id' => $tenant,
         'email_verified_at' => now(),
     ]);
     $user->assignRole(RoleEnum::STUDENT);

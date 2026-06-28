@@ -18,6 +18,7 @@ class IntakePeriodResource extends JsonResource
                 'startDate' => $this->resource->start_date,
                 'endDate' => $this->resource->end_date,
                 'isActive' => $this->resource->is_active,
+                'status' => $this->resource->status?->value ?? $this->resource->status,
                 'description' => $this->resource->description,
                 $this->mergeWhen($request->routeIs('intake-periods.*'), [
                     'createdAt' => $this->resource->created_at,

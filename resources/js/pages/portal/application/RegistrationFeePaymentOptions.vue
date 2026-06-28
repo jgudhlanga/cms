@@ -6,6 +6,7 @@ import BaseImage from '@/components/core/image/BaseImage.vue';
 import DataLoadingSpinner from '@/components/core/loader/DataLoadingSpinner.vue';
 import { useDefaults } from '@/composables/core/useDefaults';
 import { useUtils } from '@/composables/core/useUtils';
+import { useRegistrationAvailability } from '@/composables/students/useRegistrationAvailability';
 import { ColorVariant } from '@/enums/colors';
 import { IconName } from '@/enums/icons';
 import { TypeVariant } from '@/enums/type-variants';
@@ -44,6 +45,7 @@ const isCheckingPayment = ref(false);
 
 const { paymentMethods } = useDefaults();
 const { generateRandomCode, formatCurrency } = useUtils();
+const { redirectIfClosed } = useRegistrationAvailability();
 const registrationFeeAmount = props.registrationFee?.attributes?.localFcaAmount ?? '20.00';
 
 const statusBadgeClass = computed(() => {
@@ -104,6 +106,7 @@ const submit = async () => {
 };
 
 onMounted(async () => {
+    redirectIfClosed();
     await checkPaymentStatus();
     const studentId = user.attributes?.studentId;
     if (String(checkData?.value?.status)?.toLowerCase() === 'paid') {

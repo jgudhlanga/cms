@@ -11,6 +11,7 @@ readonly class IntakePeriodDto
         public string  $start_date,
         public string  $end_date,
         public ?string $description,
+        public string  $status,
     )
     {
     }
@@ -23,6 +24,7 @@ readonly class IntakePeriodDto
             start_date: $request->start_date,
             end_date: $request->end_date,
             description: $request->description,
+            status: $request->status,
         );
     }
 }

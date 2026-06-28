@@ -39,11 +39,15 @@ createInertiaApp({
                 name === 'auth/Login'
                     ? (h, page) => h(GuestLayout, { showHeader: false }, () => page)
                     : GuestLayout;
-        } else if (name === 'portal/guest/RegistrationUserForm') {
+        } else if (
+            name === 'portal/guest/RegistrationUserForm' ||
+            name === 'portal/registration/RegistrationMaintenance'
+        ) {
             page.default.layout = PortalRegistrationLayout;
         } else if (
             name.startsWith('site/') ||
             name.startsWith('portal/guest') ||
+            name.startsWith('portal/registration') ||
             name.startsWith('portal/application') ||
             name.startsWith('integrations')
         ) {
