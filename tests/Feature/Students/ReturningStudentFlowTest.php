@@ -245,7 +245,7 @@ test('unacknowledged returning student is redirected from profile level selectio
         ->assertRedirect(route('portal.profile.applications'));
 });
 
-test('returning student prefill includes programme labels from prior application', function () {
+test('returning student prefill excludes programme fields from prior application', function () {
     $intake = ensureCurrentIntakeStatus(IntakePeriodStatusEnum::Open->value);
     [$user, $student] = createReturningStudentUser();
 
@@ -270,11 +270,21 @@ test('returning student prefill includes programme labels from prior application
 
     $prefill = app(ReturningStudentApplicationPrefillService::class)->build($student->fresh());
 
-    expect($prefill['department_id'])->toBe($institutionDepartmentId);
-    expect($prefill['department'])->toHaveKeys(['value', 'label']);
-    expect($prefill['level'])->toHaveKeys(['value', 'label']);
-    expect($prefill['course'])->toHaveKeys(['value', 'label']);
-    expect($prefill['modeOfStudy'])->toHaveKeys(['value', 'label']);
+    expect($prefill)->not->toHaveKeys([
+        'department_id',
+        'level_id',
+        'course_id',
+        'mode_of_study_id',
+        'department',
+        'level',
+        'course',
+        'modeOfStudy',
+        'required_level_completed',
+        'read_write_acknowledged',
+        'source_application_id',
+    ]);
+    expect($prefill['title'])->toHaveKeys(['value', 'label']);
+    expect($prefill['gender'])->toHaveKeys(['value', 'label']);
 });
 
 test('profile student with paid fee and acknowledgement can open returning wizard', function () {

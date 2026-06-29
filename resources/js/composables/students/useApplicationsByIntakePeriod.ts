@@ -76,9 +76,7 @@ export function useApplicationsByIntakePeriod(
             return [activeGroup.intakePeriodId];
         }
 
-        const latest = groups.value[0];
-
-        return latest ? [latest.intakePeriodId] : [];
+        return [];
     });
 
     const intakeGroupDescription = (group: IntakeApplicationGroup): string => {

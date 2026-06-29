@@ -2,8 +2,12 @@
 import BaseCombobox from '@/components/core/form/combobox/BaseCombobox.vue';
 import { useUtils } from '@/composables/core/useUtils';
 import { useDepartmentLevels } from '@/composables/institution/useDepartmentLevels';
+import {
+    filterDepartmentLevelOptions,
+    findMatchingDepartmentLevelOption,
+    normalizeLevelName,
+} from '@/lib/departmentLevelComboOptions';
 import { clearFormErrors } from '@/lib/forms';
-import { DepartmentLevel } from '@/types/department-meta-data';
 import { SelectOption } from '@/types/utils';
 import { InertiaForm } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
@@ -13,11 +17,13 @@ interface Props {
     form: InertiaForm<any>;
     institutionDepartmentId: string;
     selectedLevelName?: string | null;
+    restrictToSelectedLevel?: boolean;
     triggerSearch?: boolean;
     label?: string;
 }
 
 const props = withDefaults(defineProps<Props>(), {
+    restrictToSelectedLevel: true,
     triggerSearch: true,
     label: '',
 });
@@ -31,13 +37,8 @@ const emit = defineEmits<{
 const { isLoading, departmentLevels, listDepartmentLevels } = useDepartmentLevels();
 const { isItTrue } = useUtils();
 
-const normalizeLevelName = (name?: string | null) => name?.trim().toLowerCase() ?? '';
-
-const toSelectOption = (item: DepartmentLevel): SelectOption => ({
-    value: Number(item.id?.toString() ?? ''),
-    label: item?.attributes?.level,
-    relationshipOneValue: String(item.attributes.levelId),
-});
+const isSameOption = (a: SelectOption | null | undefined, b: SelectOption | null | undefined) =>
+    Number(a?.value) === Number(b?.value) && normalizeLevelName(a?.label) === normalizeLevelName(b?.label);
 
 onMounted(async () => {
     if (Number(props.institutionDepartmentId ?? '') > 0) {
@@ -45,24 +46,20 @@ onMounted(async () => {
     }
 });
 
-const options = computed(() => {
-    const selectedName = normalizeLevelName(props.selectedLevelName);
-
-    return departmentLevels.value
-        .filter((item: DepartmentLevel) => {
-            if (!selectedName) {
-                return true;
-            }
-
-            return normalizeLevelName(item.attributes.level) === selectedName;
-        })
-        .map(toSelectOption);
-});
-
-const isSameOption = (a: SelectOption | null | undefined, b: SelectOption | null | undefined) =>
-    Number(a?.value) === Number(b?.value) && normalizeLevelName(a?.label) === normalizeLevelName(b?.label);
+const options = computed(() =>
+    filterDepartmentLevelOptions(
+        departmentLevels.value,
+        props.selectedLevelName,
+        props.restrictToSelectedLevel,
+    ),
+);
 
 const syncAllowedLevel = () => {
+    if (!props.restrictToSelectedLevel) {
+        emit('allowedLevelStatus', { available: true });
+        return;
+    }
+
     if (!normalizeLevelName(props.selectedLevelName)) {
         emit('allowedLevelStatus', { available: true });
         return;
@@ -73,11 +70,9 @@ const syncAllowedLevel = () => {
         return;
     }
 
-    const selectedName = normalizeLevelName(props.selectedLevelName);
-    const match = departmentLevels.value.find((item) => normalizeLevelName(item.attributes.level) === selectedName);
+    const option = findMatchingDepartmentLevelOption(departmentLevels.value, props.selectedLevelName);
 
-    if (match) {
-        const option = toSelectOption(match);
+    if (option) {
         if (!isSameOption(model.value, option)) {
             model.value = option;
         }
@@ -102,9 +97,12 @@ watch(
     },
 );
 
-watch([options, isLoading, () => props.institutionDepartmentId, () => props.selectedLevelName], () => {
-    syncAllowedLevel();
-});
+watch(
+    [options, isLoading, () => props.institutionDepartmentId, () => props.selectedLevelName, () => props.restrictToSelectedLevel],
+    () => {
+        syncAllowedLevel();
+    },
+);
 
 const placeholder = computed(() => {
     if (departmentLevels.value.length > 0) {

@@ -6,24 +6,9 @@ namespace App\Services\Students;
 
 use App\Models\Students\Student;
 use App\Models\Students\StudentAcademicResult;
-use App\Models\Students\StudentApplication;
 
 class ReturningStudentApplicationPrefillService
 {
-    public function sourceApplication(Student $student): ?StudentApplication
-    {
-        return $student->applications()
-            ->whereNull('student_applications.deleted_at')
-            ->with([
-                'institutionDepartment.department',
-                'departmentLevel.level',
-                'departmentCourse.course',
-                'modeOfStudy',
-            ])
-            ->latest('student_applications.id')
-            ->first();
-    }
-
     /**
      * @return array<string, mixed>
      */
@@ -56,7 +41,6 @@ class ReturningStudentApplicationPrefillService
             ?? $nextOfKin?->contacts->first();
         $kinAddress = $nextOfKin?->addresses->firstWhere('address_is_main', true)
             ?? $nextOfKin?->addresses->first();
-        $application = $this->sourceApplication($student);
 
         return array_merge(
             [
@@ -88,35 +72,12 @@ class ReturningStudentApplicationPrefillService
                 'next_of_kin_address_2' => $kinAddress?->address_2,
                 'next_of_kin_address_3' => $kinAddress?->address_3,
                 'next_of_kin_address_4' => $kinAddress?->address_4,
-                'mode_of_study_id' => $application?->mode_of_study_id,
-                'department_id' => $application?->institution_department_id,
-                'level_id' => $application?->department_level_id,
-                'course_id' => $application?->department_course_id,
-                'required_level_completed' => $application?->required_level_completed,
-                'read_write_acknowledged' => $application?->read_write_acknowledged,
-                'source_application_id' => $application?->id,
                 'title' => $this->comboOption($student->title_id, $student->title?->name),
                 'gender' => $this->comboOption($student->gender_id, $student->gender?->title),
                 'maritalStatus' => $this->comboOption($student->marital_status_id, $student->maritalStatus?->title),
                 'country' => $this->comboOption($student->country_id, $student->country?->name),
                 'idType' => $this->comboOption($student->id_type_id, $student->idType?->name),
                 'relationship' => $this->comboOption($nextOfKin?->relationship_id, $nextOfKin?->relationship?->name),
-                'department' => $this->comboOption(
-                    $application?->institution_department_id,
-                    $application?->institutionDepartment?->department?->name,
-                ),
-                'level' => $this->comboOption(
-                    $application?->department_level_id,
-                    $application?->departmentLevel?->level?->name,
-                ),
-                'course' => $this->comboOption(
-                    $application?->department_course_id,
-                    $application?->departmentCourse?->course?->name,
-                ),
-                'modeOfStudy' => $this->comboOption(
-                    $application?->mode_of_study_id,
-                    $application?->modeOfStudy?->name,
-                ),
             ],
             $this->buildOLevelPrefill($student),
         );

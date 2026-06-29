@@ -92,7 +92,7 @@ export const useCourses = () => {
     const listCourses = async (search?: string) => {
         const { data, fetchData } = useDropdowns();
         isLoading.value = true;
-        await fetchData({ url: 'api/v1/courses?page_size=100', search, transChoiceKey: 'trans.course' });
+        await fetchData({ url: 'api/v1/courses?page_size=all', search, transChoiceKey: 'trans.course' });
         isLoading.value = false;
         courses.value = data.value;
     };
