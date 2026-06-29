@@ -28,7 +28,7 @@ class UserRepository extends BaseRepository implements IUserRepository
     public function update(User $user, UpdateUserDto $dto): User
     {
         if (!empty($dto->role_ids)) {
-            $user->assignRole($dto->role_ids);
+            $user->syncRoles($dto->role_ids);
         }
         return tap($user)->update($this->getUpdateFields($dto));
     }
