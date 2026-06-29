@@ -10,7 +10,7 @@ interface Props {
 
 defineProps<Props>();
 const { navigateToRegistrationOrMaintenance } = useRegistrationAvailability();
-const paymentUrl = route('portal.application.fee-payment');
+const applicationsUrl = route('portal.profile.applications');
 </script>
 
 <template>
@@ -19,7 +19,7 @@ const paymentUrl = route('portal.application.fee-payment');
         class="w-full rounded-full md:w-50"
         :icon-variant="ColorVariant.white"
         :variant="ColorVariant.primary_outline"
-        @click="() => navigateToRegistrationOrMaintenance(paymentUrl)"
+        @click="() => navigateToRegistrationOrMaintenance(applicationsUrl)"
         :title="$t('trans.ui_add_new_program')"
     />
 </template>

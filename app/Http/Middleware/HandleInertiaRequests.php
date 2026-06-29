@@ -8,6 +8,7 @@ use App\Http\Resources\Users\UserResource;
 use App\Models\Users\User;
 use App\Services\Acl\AclModuleStateService;
 use App\Services\Students\RegistrationAvailabilityService;
+use App\Services\Students\ReturningStudentContextService;
 use App\Support\Acl\PermissionRegistry;
 use App\Support\AppVersion;
 use Illuminate\Http\Request;
@@ -81,6 +82,7 @@ class HandleInertiaRequests extends Middleware
                 'status' => app(RegistrationAvailabilityService::class)->blockReason()?->value,
                 'maintenanceUrl' => route('portal.registration.maintenance'),
             ],
+            'returningStudent' => fn () => $this->returningStudentProps($user),
             'ziggy' => [
                 ...(new Ziggy)->toArray(),
                 'location' => $request->url(),
@@ -154,5 +156,19 @@ class HandleInertiaRequests extends Middleware
         }
 
         return false;
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function returningStudentProps(?User $user): ?array
+    {
+        $student = $user?->studentProfile;
+
+        if ($student === null) {
+            return null;
+        }
+
+        return app(ReturningStudentContextService::class)->toInertiaProps($student);
     }
 }

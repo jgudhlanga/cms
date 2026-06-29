@@ -16,6 +16,7 @@ use App\Helpers\Helper;
 use App\Http\Filters\Students\StudentFilter;
 use App\Models\Shared\AcademicLevel;
 use App\Models\Students\Student;
+use App\Models\Students\StudentApplication;
 use App\Repositories\Base\BaseRepository;
 use App\Repositories\Shared\interface\IAddressRepository;
 use App\Repositories\Shared\interface\IContactRepository;
@@ -183,6 +184,39 @@ class StudentRepository extends BaseRepository implements IStudentRepository
         return $student->refresh();
     }
 
+    public function applyReturningApplication(Student $student, CreateApplicationDto $dto): StudentApplication
+    {
+        return DB::transaction(function () use ($student, $dto) {
+            $user = $student->user;
+            $user->update([
+                'email' => $dto->email,
+                'phone_number' => $dto->phone_number,
+                'first_name' => $dto->first_name,
+                'middle_name' => $dto->middle_name,
+                'last_name' => $dto->last_name,
+            ]);
+
+            $student->update($this->createFields($dto));
+            $this->upsertContact($student, $dto);
+            $this->upsertAddress($student, $dto);
+            $this->upsertNextOfKin($student, $dto);
+            $this->syncAcademicResults($student, $dto);
+
+            $programDto = new StudentApplicationDto(
+                student_id: $student->id,
+                mode_of_study_id: $dto->mode_of_study_id,
+                institution_department_id: $dto->department_id,
+                department_level_id: $dto->level_id,
+                department_course_id: $dto->course_id,
+                intake_period_id: $dto->intake_period_id,
+                required_level_completed: $dto->required_level_completed,
+                read_write_acknowledged: $dto->read_write_acknowledged,
+            );
+
+            return $this->studentApplicationRepository->create($programDto);
+        });
+    }
+
     /**
      * @throws Throwable
      */
@@ -323,6 +357,76 @@ class StudentRepository extends BaseRepository implements IStudentRepository
 
     private function saveAcademicResults(Student $student, CreateApplicationDto|CreateStudentApplicationDto $dto): void
     {
+        $this->syncAcademicResults($student, $dto, creating: true);
+    }
+
+    private function upsertContact(Student $student, CreateApplicationDto $dto): void
+    {
+        $nameParts = array_filter([$dto->first_name, $dto->middle_name, $dto->last_name]);
+        $contactDto = new ContactDto(
+            name: implode(' ', $nameParts),
+            phone_number: $dto->phone_number,
+            alt_phone_number: $dto->alt_phone_number,
+            email_address: $dto->email,
+            alt_email_address: null,
+            contact_is_main: 1,
+        );
+        $existing = $student->contacts()->where('contact_is_main', true)->first()
+            ?? $student->contacts()->first();
+
+        if ($existing !== null) {
+            $this->contactRepository->update($existing, $contactDto);
+        } else {
+            $this->contactRepository->create($student, $contactDto);
+        }
+    }
+
+    private function upsertAddress(Student $student, CreateApplicationDto $dto): void
+    {
+        $addressDto = new AddressDto(
+            address_1: $dto->address_1,
+            address_2: $dto->address_2,
+            address_3: $dto->address_3,
+            address_4: $dto->address_4,
+            address_5: null,
+            address_6: null,
+            address_is_main: 1,
+        );
+        $existing = $student->addresses()->where('address_is_main', true)->first()
+            ?? $student->addresses()->first();
+
+        if ($existing !== null) {
+            $this->addressRepository->update($existing, $addressDto);
+        } else {
+            $this->addressRepository->create($student, $addressDto);
+        }
+    }
+
+    private function upsertNextOfKin(Student $student, CreateApplicationDto $dto): void
+    {
+        $nextOfKinDto = new NextOfKinDto(
+            name: $dto->next_of_kin_name,
+            relationship_id: $dto->relationship_id,
+            phone_number: $dto->next_of_kin_phone_number,
+            address_1: $dto->next_of_kin_address_1,
+            address_2: $dto->next_of_kin_address_2,
+            address_3: $dto->next_of_kin_address_3,
+            address_4: $dto->next_of_kin_address_4,
+        );
+        $existing = $student->nextOfKins()->first();
+
+        if ($existing !== null) {
+            $this->nextOfKinRepository->update($existing, $nextOfKinDto);
+        } else {
+            $this->nextOfKinRepository->create($student, $nextOfKinDto);
+        }
+    }
+
+    private function syncAcademicResults(
+        Student $student,
+        CreateApplicationDto|CreateStudentApplicationDto $dto,
+        bool $creating = false,
+    ): void {
         $mainSubjects = $dto->o_level_subject_ids;
         $examSittings = $dto->o_level_sittings;
         $examYears = $dto->o_level_years;
@@ -331,31 +435,59 @@ class StudentRepository extends BaseRepository implements IStudentRepository
         $otherExamYears = $dto->o_level_other_years;
         $otherSittings = $dto->o_level_other_sittings;
         $level = AcademicLevel::where('name', AcademicLevelEnum::SECONDARY_SCHOOL->value)->first();
+
         if (! empty($mainSubjects) && is_array($mainSubjects)) {
             foreach ($mainSubjects as $subjectId => $gradeId) {
                 $examSitting = $examSittings[$subjectId] ?? null;
                 $examYear = $examYears[$subjectId] ?? null;
-                $student->oLevelResults()->create([
-                    'academic_level_id' => $level->id,
-                    'subject_id' => $subjectId,
+                $attributes = [
                     'exam_year' => $examYear,
-                    'exam_sitting' => $examSitting['value'] ?? null,
+                    'exam_sitting' => is_array($examSitting) ? ($examSitting['value'] ?? null) : $examSitting,
                     'grade_id' => $gradeId,
-                ]);
+                ];
+
+                if ($creating) {
+                    $student->oLevelResults()->create(array_merge([
+                        'academic_level_id' => $level->id,
+                        'subject_id' => $subjectId,
+                    ], $attributes));
+                } else {
+                    $student->oLevelResults()->updateOrCreate(
+                        ['academic_level_id' => $level->id, 'subject_id' => $subjectId],
+                        $attributes,
+                    );
+                }
             }
         }
+
         if (! empty($otherSubjects) && is_array($otherSubjects)) {
             foreach ($otherSubjects as $key => $subject) {
+                $subjectId = is_array($subject) ? ($subject['value'] ?? null) : $subject;
                 $otherGrade = $otherGrades[$key] ?? null;
                 $otherSitting = $otherSittings[$key] ?? null;
                 $otherExamYear = $otherExamYears[$key] ?? null;
-                $student->oLevelResults()->create([
-                    'academic_level_id' => $level->id,
-                    'subject_id' => $subject['value'] ?? null,
+
+                if (! $subjectId) {
+                    continue;
+                }
+
+                $attributes = [
                     'exam_year' => $otherExamYear,
-                    'exam_sitting' => $otherSitting['value'] ?? null,
+                    'exam_sitting' => is_array($otherSitting) ? ($otherSitting['value'] ?? null) : $otherSitting,
                     'grade_id' => $otherGrade,
-                ]);
+                ];
+
+                if ($creating) {
+                    $student->oLevelResults()->create(array_merge([
+                        'academic_level_id' => $level->id,
+                        'subject_id' => $subjectId,
+                    ], $attributes));
+                } else {
+                    $student->oLevelResults()->updateOrCreate(
+                        ['academic_level_id' => $level->id, 'subject_id' => $subjectId],
+                        $attributes,
+                    );
+                }
             }
         }
     }

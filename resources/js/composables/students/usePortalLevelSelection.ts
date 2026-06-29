@@ -1,6 +1,6 @@
 import { router } from '@inertiajs/vue3';
 
-export function usePortalLevelSelection() {
+export function usePortalLevelSelection(selectLevelRoute = 'portal.application.select-level') {
     const selectLevel = (levelId: string, intakePeriodId?: number | null, requiresIntakeSelection = false) => {
         const payload: Record<string, string | number> = {
             level_id: levelId,
@@ -10,7 +10,7 @@ export function usePortalLevelSelection() {
             payload.intake_period_id = intakePeriodId;
         }
 
-        router.post(route('portal.application.select-level'), payload, {
+        router.post(route(selectLevelRoute), payload, {
             onError: () => {
                 if (requiresIntakeSelection && !intakePeriodId) {
                     return;

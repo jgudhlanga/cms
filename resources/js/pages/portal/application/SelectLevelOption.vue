@@ -19,6 +19,7 @@ interface Props {
     openLevelCount?: number;
     hasActiveIntakes?: boolean;
     availabilityIssue?: AvailabilityIssue;
+    selectLevelRoute?: string;
     auth: AuthObject;
     errors: object;
 }
@@ -29,6 +30,7 @@ const props = withDefaults(defineProps<Props>(), {
     intakePeriods: () => [],
     hasActiveIntakes: true,
     availabilityIssue: null,
+    selectLevelRoute: 'portal.application.select-level',
 });
 
 const levelList = computed(() => {
@@ -48,7 +50,7 @@ const selectedIntakePeriodId = ref<number | null>(
     props.intakePeriods.length === 1 ? Number(props.intakePeriods[0].id) : null,
 );
 
-const { selectLevel } = usePortalLevelSelection();
+const { selectLevel } = usePortalLevelSelection(props.selectLevelRoute);
 const { redirectIfClosed } = useRegistrationAvailability();
 
 onMounted(() => {

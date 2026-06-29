@@ -90,6 +90,13 @@ class OnlinePaymentContextResolver
 
         $feeTypeEnum = FeeTypeEnum::fromFeeType($ledger->feeType);
 
+        if ($feeTypeEnum === FeeTypeEnum::APPLICATION_FEE) {
+            $user = auth()->user();
+            if ($user?->has_student_profile) {
+                return route('portal.profile.applications', ['fee_paid' => 1]);
+            }
+        }
+
         return route($feeTypeEnum?->postPaymentRoute() ?? 'portal.dashboard');
     }
 

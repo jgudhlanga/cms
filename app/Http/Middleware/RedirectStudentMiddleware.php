@@ -8,6 +8,7 @@ use App\Helpers\PaymentHelper;
 use App\Models\Institution\Level;
 use App\Models\Students\ApplicationFee;
 use App\Services\Students\ApplicationFeeService;
+use App\Services\Students\ReturningStudentContextService;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -16,6 +17,7 @@ class RedirectStudentMiddleware
 {
     public function __construct(
         protected ApplicationFeeService $applicationFeeService,
+        protected ReturningStudentContextService $returningStudentContext,
     ) {}
 
     public function handle(Request $request, Closure $next): Response
@@ -34,17 +36,7 @@ class RedirectStudentMiddleware
         }
 
         if ($user->has_student_profile) {
-            if ($request->routeIs(
-                'portal.application.fee-payment',
-                'portal.application.create',
-                'portal.application.confirm',
-                'portal.application.level-options',
-                'portal.store-application',
-            )) {
-                return to_route('portal.dashboard');
-            }
-
-            return $next($request);
+            return $this->handleReturningStudentProfile($request, $next, $user);
         }
 
         $applicationFee = $this->applicationFeeService->activeApplicationFee($user);
@@ -112,6 +104,55 @@ class RedirectStudentMiddleware
             'portal.store-application',
         )) {
             return to_route('portal.application.create');
+        }
+
+        return $next($request);
+    }
+
+    private function handleReturningStudentProfile(Request $request, Closure $next, $user): Response
+    {
+        if ($request->routeIs(
+            'portal.application.create',
+            'portal.application.confirm',
+            'portal.application.level-options',
+            'portal.store-application',
+        )) {
+            return to_route('portal.dashboard');
+        }
+
+        $student = $user->studentProfile;
+
+        if ($student !== null && $this->returningStudentContext->needsContinueInClassPage($student)) {
+            if (! $request->routeIs(
+                'portal.returning-student.continue.*',
+                'logout',
+                'portal.profile.*',
+                'portal.application.view',
+                'portal.applications',
+            )) {
+                return to_route('portal.returning-student.continue.show');
+            }
+        }
+
+        if ($request->routeIs('portal.application.returning*')) {
+            $applicationFee = $this->applicationFeeService->activeApplicationFee($user);
+            $intakePeriod = $applicationFee?->intakePeriod ?? $this->returningStudentContext->openIntakes()->first();
+
+            if (
+                $student !== null
+                && $intakePeriod !== null
+                && $this->returningStudentContext->hasReapplyAcknowledgementForIntake($student, $intakePeriod)
+            ) {
+                $level = $applicationFee?->level ?? Level::query()->find(session('application.level_id'));
+
+                if ($level?->has_application_fee_payment && ! PaymentHelper::hasPaidApplicationFeeAndNotApplied($user, $intakePeriod)) {
+                    return to_route('portal.application.fee-payment');
+                }
+
+                return $next($request);
+            }
+
+            return to_route('portal.profile.applications');
         }
 
         return $next($request);

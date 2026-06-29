@@ -9,6 +9,7 @@ use App\Http\Requests\Auth\LoginRequest;
 use App\Models\Institution\Level;
 use App\Services\Students\ApplicationFeeService;
 use App\Services\Students\RegistrationAvailabilityService;
+use App\Services\Students\ReturningStudentContextService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -33,13 +34,21 @@ class AuthenticatedSessionController extends Controller
     /**
      * Handle an incoming authentication request.
      */
-    public function store(LoginRequest $request, ApplicationFeeService $applicationFeeService, RegistrationAvailabilityService $registrationAvailability): RedirectResponse
+    public function store(LoginRequest $request, ApplicationFeeService $applicationFeeService, RegistrationAvailabilityService $registrationAvailability, ReturningStudentContextService $returningStudentContext): RedirectResponse
     {
         $request->authenticate();
         $request->session()->regenerate();
         $user = request()->user();
         if ($user->hasRole(RoleEnum::STUDENT->name())) {
             if ($user->has_student_profile) {
+                $student = $user->studentProfile;
+                if ($student !== null && $returningStudentContext->needsContinueInClassPage($student)) {
+                    return to_route('portal.returning-student.continue.show');
+                }
+                if ($student !== null && $returningStudentContext->canStartApplication($student)) {
+                    return to_route('portal.profile.applications');
+                }
+
                 return to_route('portal.dashboard');
             }
 

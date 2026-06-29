@@ -129,16 +129,24 @@ class ApplicationFeeService
             'level_id' => $level->id,
         ];
 
+        $student = $user->studentProfile;
+
         if (session()->has('registration.id_type_id')) {
             $attributes['id_type_id'] = session('registration.id_type_id');
+        } elseif ($student?->id_type_id !== null) {
+            $attributes['id_type_id'] = $student->id_type_id;
         }
 
         if (session('registration.id_number')) {
             $attributes['id_number'] = session('registration.id_number');
+        } elseif ($student?->id_number !== null) {
+            $attributes['id_number'] = $student->id_number;
         }
 
         if (session('registration.passport_number')) {
             $attributes['passport_number'] = session('registration.passport_number');
+        } elseif ($student?->passport_number !== null) {
+            $attributes['passport_number'] = $student->passport_number;
         }
 
         if (
