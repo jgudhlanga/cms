@@ -26,6 +26,7 @@ use App\Http\Requests\Shared\ContactRequest;
 use App\Http\Requests\Shared\NextOfKinRequest;
 use App\Http\Requests\Students\CreateApplicationRequest;
 use App\Http\Requests\Students\ProgramRequest;
+use App\Http\Requests\Students\UpdateReturningApplicationRequest;
 use App\Http\Requests\Students\UpdateStudentRequest;
 use App\Http\Requests\Users\UserRequest;
 use App\Http\Resources\AuditTrail\AuditTrailResource;
@@ -53,6 +54,9 @@ use App\Repositories\Users\interface\IUserRepository;
 use App\Services\Enrollment\EnrollmentLookupService;
 use App\Services\Students\ApplicationFeeService;
 use App\Services\Students\RegistrationAvailabilityService;
+use App\Services\Students\ReturningStudentApplicationPrefillService;
+use App\Services\Students\ReturningStudentContextService;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -74,6 +78,8 @@ class PortalController extends Controller
         protected IStudentApplicationRepository $studentApplicationRepository,
         protected ApplicationFeeService $applicationFeeService,
         protected RegistrationAvailabilityService $registrationAvailability,
+        protected ReturningStudentContextService $returningStudentContext,
+        protected ReturningStudentApplicationPrefillService $returningApplicationPrefillService,
     ) {}
 
     // ========= Dashboard and Registration =========
@@ -384,6 +390,19 @@ class PortalController extends Controller
         if ($programCount == $programMax) {
             return redirect()->route('portal.applications.errors', __("You have reached the maximum number of applications allowed {$programMax}."));
         }
+
+        $user = $request->user();
+        $applicationFee = $this->applicationFeeService->activeApplicationFee($user);
+        $feeLevel = $applicationFee?->level;
+
+        if ($feeLevel?->has_application_fee_payment) {
+            if ($applicationFee === null || ! PaymentHelper::hasPaidApplicationFeeAndNotApplied($user, $intakePeriod)) {
+                return back()->withErrors([
+                    'level_id' => __('trans.application_fee_payment_required'),
+                ]);
+            }
+        }
+
         try {
             $programDto = new StudentApplicationDto(
                 student_id: $student->id,
@@ -407,6 +426,8 @@ class PortalController extends Controller
             if (collect($filters)->flatten()->filter()->isNotEmpty()) {
                 $this->updateAcademicResults();
             }
+
+            PaymentHelper::updateRegistrationFeeLedgerEntries($program, $user, $intakePeriod);
 
             DB::commit();
 
@@ -492,7 +513,17 @@ class PortalController extends Controller
      */
     public function profileApplications(): Response
     {
-        return $this->renderProfileSection('applications', 'manageStudentPersonalDetails');
+        $this->authorize('manageStudentPersonalDetails');
+        $student = $this->profileStudent();
+        $user = request()->user();
+        $openIntakes = $this->returningStudentContext->openIntakes();
+
+        return Inertia::render('portal/student/profile/Section', [
+            'student' => StudentResource::make($student),
+            'activeTab' => 'applications',
+            'activeIntakePeriodIds' => $openIntakes->pluck('id')->values()->all(),
+            'applicationHub' => $this->returningStudentContext->applicationHubFor($student, $user),
+        ]);
     }
 
     /**
@@ -838,5 +869,211 @@ class PortalController extends Controller
     public function errors(string $message): Response
     {
         return Inertia::render('portal/student/ApplicationError', compact('message'));
+    }
+
+    /**
+     * @throws AuthorizationException
+     */
+    public function acknowledgeApplicationHub(Request $request): RedirectResponse
+    {
+        $this->authorize('manageStudentPersonalDetails');
+        $student = $this->getStudent($request);
+        $openIntakes = $this->returningStudentContext->openIntakes();
+
+        $data = $request->validate([
+            'intake_period_id' => ['required', 'integer', 'exists:intake_periods,id'],
+            'acknowledged' => ['accepted'],
+        ]);
+
+        $intakePeriod = $this->applicationFeeService->assertPortalIntakePeriod((int) $data['intake_period_id']);
+
+        if (! $openIntakes->contains('id', $intakePeriod->id)) {
+            throw ValidationException::withMessages([
+                'intake_period_id' => [__('trans.portal_intake_period_invalid')],
+            ]);
+        }
+
+        $this->returningStudentContext->persistAcknowledgement($student, 'reapply', $intakePeriod);
+
+        return to_route('portal.profile.applications');
+    }
+
+    /**
+     * @throws AuthorizationException
+     */
+    public function profileApplicationLevelOptions(): Response|RedirectResponse
+    {
+        $this->authorize('manageStudentPersonalDetails');
+        $student = $this->getStudent(request());
+        $openIntakes = $this->returningStudentContext->openIntakes();
+
+        $hasAcknowledgement = $openIntakes->contains(
+            fn (IntakePeriod $intake): bool => $this->returningStudentContext->hasReapplyAcknowledgementForIntake($student, $intake)
+        );
+
+        if (! $hasAcknowledgement) {
+            return to_route('portal.profile.applications');
+        }
+
+        $levels = Level::query()
+            ->where('show_on_current_application_period', 1)
+            ->orderBy('position')
+            ->orderBy('name')
+            ->get();
+        $openLevelCount = $levels->count();
+        $hasActiveIntakes = $openIntakes->isNotEmpty();
+        $availabilityIssue = match (true) {
+            $openLevelCount === 0 => 'no_open_levels',
+            ! $hasActiveIntakes => 'no_active_intakes',
+            default => null,
+        };
+
+        return Inertia::render('portal/application/SelectLevelOption', [
+            'levels' => LevelResource::collection($levels),
+            'intakePeriods' => IntakePeriodResource::collection($openIntakes),
+            'requiresIntakeSelection' => $openIntakes->count() > 1,
+            'applicationStep' => 'level',
+            'openLevelCount' => $openLevelCount,
+            'hasActiveIntakes' => $hasActiveIntakes,
+            'availabilityIssue' => $availabilityIssue,
+            'selectLevelRoute' => 'portal.profile.applications.select-level',
+        ]);
+    }
+
+    /**
+     * @throws AuthorizationException
+     */
+    public function selectApplicationLevel(Request $request): RedirectResponse
+    {
+        $this->authorize('manageStudentPersonalDetails');
+        $student = $this->getStudent($request);
+        $openIntakes = $this->returningStudentContext->openIntakes();
+
+        $rules = [
+            'level_id' => ['required', 'exists:levels,id'],
+            'intake_period_id' => ['nullable', 'integer', 'exists:intake_periods,id'],
+        ];
+
+        if ($openIntakes->count() > 1) {
+            $rules['intake_period_id'] = ['required', 'integer', 'exists:intake_periods,id'];
+        }
+
+        $data = $request->validate($rules);
+        $level = Level::query()->findOrFail($data['level_id']);
+
+        $intakePeriod = $openIntakes->count() > 1
+            ? $this->applicationFeeService->resolvePortalIntakePeriod((int) $data['intake_period_id'])
+            : ($openIntakes->first() ?? $this->applicationFeeService->resolvePortalIntakePeriod());
+
+        if (! $this->returningStudentContext->hasReapplyAcknowledgementForIntake($student, $intakePeriod)) {
+            return to_route('portal.profile.applications');
+        }
+
+        if ($level->has_application_fee_payment) {
+            $this->applicationFeeService->ensureForFeeRequiredLevel($request->user(), $level, $intakePeriod);
+
+            return to_route('portal.application.fee-payment');
+        }
+
+        $this->applicationFeeService->abandonUnpaidApplicationFee($request->user());
+        session(['application.level_id' => $level->id]);
+
+        return to_route('portal.application.returning');
+    }
+
+    /**
+     * @throws AuthorizationException
+     */
+    public function returningApplication(): Response|RedirectResponse
+    {
+        $this->authorize('manageStudentPersonalDetails');
+        $student = $this->getStudent(request());
+        $user = request()->user();
+        $applicationFee = $this->applicationFeeService->activeApplicationFee($user);
+        $intakePeriod = $applicationFee?->intakePeriod ?? $this->returningStudentContext->openIntakes()->first();
+
+        if ($intakePeriod === null || ! $this->returningStudentContext->hasReapplyAcknowledgementForIntake($student, $intakePeriod)) {
+            return to_route('portal.profile.applications');
+        }
+
+        $level = $applicationFee?->level ?? Level::query()->find(session('application.level_id'));
+        if ($level?->has_application_fee_payment && ! PaymentHelper::hasPaidApplicationFeeAndNotApplied($user, $intakePeriod)) {
+            return to_route('portal.application.fee-payment');
+        }
+
+        return Inertia::render('portal/application/ReturningApplication', [
+            'returningPrefill' => $this->returningApplicationPrefillService->build($student),
+            'studentId' => $student->id,
+            'targetIntake' => IntakePeriodResource::make($intakePeriod),
+            'hasPaidApplicationFee' => PaymentHelper::hasPaidApplicationFeeAndNotApplied($user, $intakePeriod),
+            'levelsWithPayment' => LevelResource::collection(PaymentHelper::levelsWithApplicationFee()),
+            'selectedLevelId' => $applicationFee?->level_id ?? session('application.level_id'),
+            'selectedLevelName' => $level?->name,
+        ]);
+    }
+
+    /**
+     * @throws AuthorizationException|Throwable
+     */
+    public function storeReturningApplication(UpdateReturningApplicationRequest $request): RedirectResponse
+    {
+        $this->authorize('manageStudentPersonalDetails');
+        $student = $this->getStudent($request);
+        $user = $request->user();
+
+        $intakePeriod = $this->applicationFeeService->resolveIntakeForSubmit(
+            $user,
+            $request->filled('intake_period_id') ? $request->integer('intake_period_id') : null,
+        );
+
+        if (! $this->returningStudentContext->hasReapplyAcknowledgementForIntake($student, $intakePeriod)) {
+            return to_route('portal.profile.applications');
+        }
+
+        DB::beginTransaction();
+        try {
+            $dto = CreateApplicationDto::fromReturningApplicationRequest($request, $user, $intakePeriod);
+            $application = $this->studentRepository->applyReturningApplication($student, $dto);
+
+            $stepOne = WorkflowHelper::getDepartmentApplicationStepByPosition($application->institution_department_id, 1);
+            $stepTwo = WorkflowHelper::getDepartmentApplicationStepByPosition($application->institution_department_id, 2);
+            $application->update(['department_application_step_id' => $stepOne?->id ?? null]);
+
+            PaymentHelper::updateRegistrationFeeLedgerEntries($application);
+
+            DB::commit();
+
+            if ($stepTwo) {
+                $application->update(['department_application_step_id' => $stepTwo->id]);
+            }
+
+            return to_route('portal.profile.applications');
+        } catch (Throwable $e) {
+            DB::rollBack();
+
+            return back()->withErrors([
+                'error' => __('trans.returning_student_application_submit_failed'),
+            ]);
+        }
+    }
+
+    /**
+     * @throws AuthorizationException
+     */
+    public function confirmReturningApplication(): Response|RedirectResponse
+    {
+        $this->authorize('manageStudentPersonalDetails');
+        $student = $this->getStudent(request());
+        $user = request()->user();
+        $applicationFee = $this->applicationFeeService->activeApplicationFee($user);
+        $intakePeriod = $applicationFee?->intakePeriod ?? $this->returningStudentContext->openIntakes()->first();
+
+        if ($intakePeriod === null || ! $this->returningStudentContext->hasReapplyAcknowledgementForIntake($student, $intakePeriod)) {
+            return to_route('portal.profile.applications');
+        }
+
+        return Inertia::render('portal/application/ConfirmReturningApplication', [
+            'targetIntake' => IntakePeriodResource::make($intakePeriod),
+        ]);
     }
 }

@@ -19,7 +19,10 @@ export type { ApplicationFormStep };
 
 const STEP_ORDER: ApplicationFormStep[] = ['personal', 'contact', 'next_of_kin', 'programme'];
 
-export function useCreateApplicationWizard(form: InertiaForm<CreateApplicationParams>) {
+export function useCreateApplicationWizard(
+    form: InertiaForm<CreateApplicationParams>,
+    studentId?: string | number | null,
+) {
     const currentStep = ref<ApplicationFormStep>('personal');
     const stepErrorHint = ref<string | null>(null);
     const storeRefs = storeToRefs(useCreateApplicationFormStore());
@@ -65,15 +68,20 @@ export function useCreateApplicationWizard(form: InertiaForm<CreateApplicationPa
             'dobSchema',
             'idTypeSchema',
         ];
+        const currentIdQuery = studentId != null && studentId !== '' ? `current_id=${studentId}&` : '';
         if (isNativeCitizen(storeRefs.idType?.value?.label ?? '')) {
             return mergeValidationSchema(schemaFields)(
                 base,
-                schemaFields['titleSchema']().merge(idNumberUniqueSchema('api/v1/validations/check?key=student_national_id&value=')),
+                schemaFields['titleSchema']().merge(
+                    idNumberUniqueSchema(`api/v1/validations/check?${currentIdQuery}key=student_national_id&value=`),
+                ),
             );
         }
         return mergeValidationSchema(schemaFields)(
             [...base, 'countrySchema'],
-            schemaFields['titleSchema']().merge(passportNumberUniqueSchema('api/v1/validations/check?key=student_passport_number&value=')),
+            schemaFields['titleSchema']().merge(
+                passportNumberUniqueSchema(`api/v1/validations/check?${currentIdQuery}key=student_passport_number&value=`),
+            ),
         );
     };
 
@@ -219,7 +227,7 @@ export function useCreateApplicationWizard(form: InertiaForm<CreateApplicationPa
             inlineErrors.disability_status = trans('trans.enter_required_field', { field: trans('trans.disability') });
         }
         try {
-            await applicationFormSchema(isNativeCitizen(storeRefs.idType?.value?.label ?? '')).parseAsync(form);
+            await applicationFormSchema(isNativeCitizen(storeRefs.idType?.value?.label ?? ''), studentId).parseAsync(form);
         } catch (error: any) {
             setZodErrors(error);
             scrollToFirstError(form.errors, Object.keys(inlineErrors));

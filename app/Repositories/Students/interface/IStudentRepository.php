@@ -7,6 +7,7 @@ use App\DTO\Students\CreateStudentApplicationDto;
 use App\DTO\Students\UpdateStudentDto;
 use App\Http\Filters\Students\StudentFilter;
 use App\Models\Students\Student;
+use App\Models\Students\StudentApplication;
 use App\Repositories\Base\Interface\IBaseRepository;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -14,6 +15,8 @@ use Illuminate\Pagination\LengthAwarePaginator;
 interface IStudentRepository extends IBaseRepository
 {
     public function create(CreateApplicationDto|CreateStudentApplicationDto $dto);
+
+    public function applyReturningApplication(Student $student, CreateApplicationDto $dto): StudentApplication;
 
     public function update(Student $student, UpdateStudentDto $dto);
 

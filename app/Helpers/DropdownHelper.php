@@ -5,6 +5,7 @@ namespace App\Helpers;
 use App\Models\AcademicCalendars\AcademicCalendar;
 use App\Models\Institution\IntakePeriod;
 use App\Models\Institution\ModeOfStudy;
+use BackedEnum;
 use Illuminate\Support\Collection;
 
 class DropdownHelper
@@ -18,18 +19,26 @@ class DropdownHelper
             $rows = cache()->rememberForever('all_intake_periods', fn () => IntakePeriod::query()
                 ->where('is_active', 1)
                 ->orderByDesc('end_date')
-                ->get(['id', 'name', 'start_date', 'end_date', 'is_active', 'description', 'created_at', 'updated_at', 'deleted_at'])
-                ->map(fn (IntakePeriod $period): array => $period->only([
-                    'id',
-                    'name',
-                    'start_date',
-                    'end_date',
-                    'is_active',
-                    'description',
-                    'created_at',
-                    'updated_at',
-                    'deleted_at',
-                ]))
+                ->get(['id', 'name', 'start_date', 'end_date', 'is_active', 'status', 'description', 'created_at', 'updated_at', 'deleted_at'])
+                ->map(function (IntakePeriod $period): array {
+                    $row = $period->only([
+                        'id',
+                        'name',
+                        'start_date',
+                        'end_date',
+                        'is_active',
+                        'status',
+                        'description',
+                        'created_at',
+                        'updated_at',
+                        'deleted_at',
+                    ]);
+
+                    $status = $row['status'] ?? null;
+                    $row['status'] = $status instanceof BackedEnum ? $status->value : $status;
+
+                    return $row;
+                })
                 ->values()
                 ->all());
         }
@@ -71,9 +80,17 @@ class DropdownHelper
             return false;
         }
 
+        $requiredKeys = ['id', 'name', 'status'];
+
         foreach ($rows as $row) {
             if (! is_array($row)) {
                 return false;
+            }
+
+            foreach ($requiredKeys as $key) {
+                if (! array_key_exists($key, $row)) {
+                    return false;
+                }
             }
         }
 

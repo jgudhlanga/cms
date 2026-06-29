@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Integrations\PaymentController;
 use App\Http\Controllers\Students\PortalController;
+use App\Http\Controllers\Students\ReturningStudentController;
 use App\Http\Controllers\Students\StudentOLevelResultsController;
 use Illuminate\Support\Facades\Route;
 
@@ -31,6 +32,15 @@ Route::prefix('portal')->group(function () {
             Route::get('application/confirm', [PortalController::class, 'confirmApplication'])->name('portal.application.confirm');
             Route::get('application/{student}/add-program', [PortalController::class, 'createProgram'])->name('portal.add-program');
             Route::post('application/{student}/add-program', [PortalController::class, 'storeProgram'])->name('portal.program.store');
+
+            Route::prefix('returning-student')->name('portal.returning-student.')->group(function () {
+                Route::get('continue', [ReturningStudentController::class, 'showContinue'])->name('continue.show');
+                Route::post('continue', [ReturningStudentController::class, 'continueInClass'])->name('continue');
+            });
+
+            Route::get('application/returning', [PortalController::class, 'returningApplication'])->name('portal.application.returning');
+            Route::get('application/returning/confirm', [PortalController::class, 'confirmReturningApplication'])->name('portal.application.returning.confirm');
+            Route::post('application/returning', [PortalController::class, 'storeReturningApplication'])->name('portal.application.returning.store');
         });
         Route::get('application/{student_application}/view', [PortalController::class, 'viewApplication'])->name('portal.application.view');
         Route::get('application/{student_application}/edit', [PortalController::class, 'editApplication'])->name('portal.application.edit');
@@ -42,6 +52,9 @@ Route::prefix('portal')->group(function () {
             Route::put('personal-information', [PortalController::class, 'updatePersonalDetails'])->name('personal-information.update');
             Route::get('programs', [PortalController::class, 'profilePrograms'])->name('programs');
             Route::get('applications', [PortalController::class, 'profileApplications'])->name('applications');
+            Route::get('applications/level', [PortalController::class, 'profileApplicationLevelOptions'])->name('applications.level');
+            Route::post('applications/acknowledge', [PortalController::class, 'acknowledgeApplicationHub'])->name('applications.acknowledge');
+            Route::post('applications/select-level', [PortalController::class, 'selectApplicationLevel'])->name('applications.select-level');
             Route::get('financials', [PortalController::class, 'profileFinancials'])->name('financials');
             Route::get('accommodations', [PortalController::class, 'profileAccommodations'])->name('accommodations');
             Route::get('accommodations/pay', [PaymentController::class, 'accommodationFeePaymentOptions'])->name('accommodations.pay');

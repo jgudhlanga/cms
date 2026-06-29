@@ -65,7 +65,17 @@ class Student extends Model
         'weight',
         'required_exam_sitting_count',
         'disability_status',
+        'meta_data',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'meta_data' => 'array',
+            'student_number_generated' => 'boolean',
+            'date_of_birth' => 'date',
+        ];
+    }
 
     public function user(): BelongsTo
     {

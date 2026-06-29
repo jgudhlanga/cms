@@ -3,6 +3,7 @@
 namespace App\DTO\Students;
 
 use App\Http\Requests\Students\CreateApplicationRequest;
+use App\Http\Requests\Students\UpdateReturningApplicationRequest;
 use App\Models\Institution\IntakePeriod;
 use App\Models\Users\User;
 
@@ -10,60 +11,74 @@ readonly class CreateApplicationDto
 {
     public function __construct(
         /** Personal details */
-        public int     $user_id,
-        public string  $id_type_id,
+        public int $user_id,
+        public string $id_type_id,
         public ?string $id_number,
         public ?string $passport_number,
-        public ?int    $country_id,
+        public ?int $country_id,
         public ?string $study_permit_number,
-        public string  $date_of_birth,
-        public ?int    $marital_status_id,
-        public ?int    $race_id,
-        public string  $email,
-        public string  $first_name,
+        public string $date_of_birth,
+        public ?int $marital_status_id,
+        public ?int $race_id,
+        public string $email,
+        public string $first_name,
         public ?string $middle_name,
-        public string  $last_name,
-        public int     $title_id,
-        public int     $gender_id,
-        public ?string  $disability_status,
+        public string $last_name,
+        public int $title_id,
+        public int $gender_id,
+        public ?string $disability_status,
         /** Contact details, addresses */
-        public string  $phone_number,
+        public string $phone_number,
         public ?string $alt_phone_number,
-        public string  $address_1,
-        public string  $address_2,
-        public string  $address_3,
+        public string $address_1,
+        public string $address_2,
+        public string $address_3,
         public ?string $address_4,
         /** Next of kin details */
-        public string  $next_of_kin_name,
-        public int     $relationship_id,
-        public string  $next_of_kin_address_1,
-        public string  $next_of_kin_address_2,
-        public string  $next_of_kin_address_3,
+        public string $next_of_kin_name,
+        public int $relationship_id,
+        public string $next_of_kin_address_1,
+        public string $next_of_kin_address_2,
+        public string $next_of_kin_address_3,
         public ?string $next_of_kin_address_4,
-        public string  $next_of_kin_phone_number,
+        public string $next_of_kin_phone_number,
         /** Programs */
-        public int     $mode_of_study_id,
-        public int     $department_id,
-        public int     $level_id,
-        public int     $course_id,
-        public ?bool   $required_level_completed,
-        public ?bool   $read_write_acknowledged,
-        public ?array  $o_level_subject_ids,
-        public ?array  $o_level_years,
-        public ?array  $o_level_sittings,
-        public ?array  $o_level_other_subject_ids,
-        public ?array  $o_level_other_grade_ids,
-        public ?array  $o_level_other_years,
-        public ?array  $o_level_other_sittings,
-        public int  $intake_period_id,
-    )
-    {
-    }
+        public int $mode_of_study_id,
+        public int $department_id,
+        public int $level_id,
+        public int $course_id,
+        public ?bool $required_level_completed,
+        public ?bool $read_write_acknowledged,
+        public ?array $o_level_subject_ids,
+        public ?array $o_level_years,
+        public ?array $o_level_sittings,
+        public ?array $o_level_other_subject_ids,
+        public ?array $o_level_other_grade_ids,
+        public ?array $o_level_other_years,
+        public ?array $o_level_other_sittings,
+        public int $intake_period_id,
+    ) {}
 
     public static function fromCreateApplicationRequest(CreateApplicationRequest $request, User $user, IntakePeriod $intakePeriod): CreateApplicationDto
     {
+        return self::fromApplicationRequest($request, $user, $intakePeriod);
+    }
+
+    public static function fromReturningApplicationRequest(
+        UpdateReturningApplicationRequest $request,
+        User $user,
+        IntakePeriod $intakePeriod,
+    ): CreateApplicationDto {
+        return self::fromApplicationRequest($request, $user, $intakePeriod);
+    }
+
+    private static function fromApplicationRequest(
+        CreateApplicationRequest $request,
+        User $user,
+        IntakePeriod $intakePeriod,
+    ): CreateApplicationDto {
         return new self(
-        /** Personal details */
+            /** Personal details */
             user_id: $user->id,
             id_type_id: $request->id_type_id,
             id_number: $request->id_number,

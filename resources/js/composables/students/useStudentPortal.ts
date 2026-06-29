@@ -34,7 +34,7 @@ export function useStudentPortal() {
 
     const schemaFields = useSharedFormSchema() as Record<string, () => ZodObject<any, any>>;
 
-    const applicationFormSchema = (isNativeCitizen: boolean) => {
+    const applicationFormSchema = (isNativeCitizen: boolean, studentId?: string | number | null) => {
         const personal = [
             'firstNameSchema',
             'lastNameSchema',
@@ -58,17 +58,22 @@ export function useStudentPortal() {
             'departmentSchema',
             'modeOfStudySchema',
         ];
+        const currentIdQuery = studentId != null && studentId !== '' ? `current_id=${studentId}&` : '';
         let personalDetails = null;
         if (isNativeCitizen) {
             personalDetails = mergeValidationSchema(schemaFields)(
                 personal,
-                schemaFields['titleSchema']().merge(idNumberUniqueSchema('api/v1/validations/check?key=student_national_id&value=')),
+                schemaFields['titleSchema']().merge(
+                    idNumberUniqueSchema(`api/v1/validations/check?${currentIdQuery}key=student_national_id&value=`),
+                ),
             );
         } else {
             personal.push('countrySchema');
             personalDetails = mergeValidationSchema(schemaFields)(
                 personal,
-                schemaFields['titleSchema']().merge(passportNumberUniqueSchema('api/v1/validations/check?key=student_passport_number&value=')),
+                schemaFields['titleSchema']().merge(
+                    passportNumberUniqueSchema(`api/v1/validations/check?${currentIdQuery}key=student_passport_number&value=`),
+                ),
             );
         }
         return personalDetails;
@@ -77,6 +82,29 @@ export function useStudentPortal() {
         const validations = ['courseSchema', 'departmentSchema', 'modeOfStudySchema'];
 
         return mergeValidationSchema(schemaFields)(validations, schemaFields['levelSchema']());
+    };
+
+    const saveReturningApplication = (form: InertiaForm<any>) => {
+        try {
+            form.post(route('portal.application.returning.store'), {
+                onSuccess: () => {
+                    const store = useCreateApplicationFormStore();
+                    store.$reset();
+                    store.$dispose();
+                    successAlert('Application successfully created');
+                },
+                onError: (errors: any) => {
+                    if (Object.keys(errors).length) {
+                        const allErrors = Object.values(errors).join('\n');
+                        errorAlert(allErrors);
+                    } else {
+                        errorAlert('An unexpected error happened, application could not be created');
+                    }
+                },
+            });
+        } catch (error: any) {
+            form.setError(error.format());
+        }
     };
 
     const saveApplication = (form: InertiaForm<any>) => {
@@ -283,6 +311,7 @@ export function useStudentPortal() {
         steps,
         applicationFormSchema,
         saveApplication,
+        saveReturningApplication,
         studentTabs,
         getStudentData,
         isLoading,

@@ -28,6 +28,8 @@ interface Props {
     activeTab: StudentProfileTabValue;
     auth: AuthObject;
     errors: object;
+    activeIntakePeriodIds?: Array<string | number>;
+    applicationHub?: Record<string, unknown> | null;
 }
 
 const props = defineProps<Props>();
@@ -53,7 +55,12 @@ const pageTitle = computed(() => tabDefinition.value?.transLabel() ?? '');
             <StudentProfileShell :student="student" :active-tab="activeTab">
                 <Info v-if="activeTab === 'basic_info'" :student="student" context="portal" />
                 <Programs v-else-if="activeTab === 'programs'" :student="student" />
-                <Applications v-else-if="activeTab === 'applications'" :student="student" />
+                <Applications
+                    v-else-if="activeTab === 'applications'"
+                    :student="student"
+                    :active-intake-period-ids="activeIntakePeriodIds"
+                    :application-hub="applicationHub"
+                />
                 <Financials v-else-if="activeTab === 'financials'" :student="student" />
                 <Hostels
                     v-else-if="activeTab === 'accommodations'"

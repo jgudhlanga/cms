@@ -167,6 +167,7 @@ declare module 'vue' {
     CreateButton: typeof import('./../components/core/button/CreateButton.vue')['default']
     CreateEdit: typeof import('./../components/students/oLevels/modals/CreateEdit.vue')['default']
     CrumbTitle: typeof import('./../components/core/util/CrumbTitle.vue')['default']
+    CurrentIntakeApplicationHub: typeof import('./../components/students/applications/CurrentIntakeApplicationHub.vue')['default']
     CustomCard: typeof import('./../components/core/card/CustomCard.vue')['default']
     CustomModal: typeof import('./../components/core/modal/CustomModal.vue')['default']
     CustomSeparator: typeof import('./../components/core/util/CustomSeparator.vue')['default']

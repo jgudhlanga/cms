@@ -111,7 +111,7 @@ onMounted(async () => {
     const studentId = user.attributes?.studentId;
     if (String(checkData?.value?.status)?.toLowerCase() === 'paid') {
         if (Number(studentId) > 0) {
-            window.location.href = route('portal.add-program', { student: studentId });
+            window.location.href = route('portal.profile.applications', { fee_paid: 1 });
             return;
         }
         window.location.href = route('portal.application.create');
