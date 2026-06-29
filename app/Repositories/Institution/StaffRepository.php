@@ -94,7 +94,7 @@ class StaffRepository extends BaseRepository implements IStaffRepository
         }
 
         if (! empty($dto->department_ids) && is_array($dto->department_ids) && count($dto->department_ids) > 0) {
-            $staff->institutionDepartments()->syncWithoutDetaching($dto->department_ids);
+            $staff->institutionDepartments()->sync($dto->department_ids);
         }
 
         return $staff;
