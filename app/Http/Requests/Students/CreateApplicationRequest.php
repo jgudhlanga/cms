@@ -5,6 +5,7 @@ namespace App\Http\Requests\Students;
 use App\Enums\Shared\DisabilityStatusEnum;
 use App\Enums\Shared\IdTypeEnum;
 use App\Helpers\PaymentHelper;
+use App\Models\Institution\DepartmentLevel;
 use App\Models\Institution\Level;
 use App\Rules\Students\ValidateOLevelResults;
 use App\Rules\ZimbabweanIdNumber;
@@ -155,33 +156,54 @@ class CreateApplicationRequest extends FormRequest
                 }
             }
 
-            $level = Level::query()->find($this->integer('level_id'));
-            if ($level?->has_application_fee_payment) {
-                $user = $this->user();
-                $applicationFeeService = app(ApplicationFeeService::class);
-                $applicationFee = $applicationFeeService->activeApplicationFee($user);
-                $intakePeriod = $applicationFee?->intakePeriod
-                    ?? $applicationFeeService->resolveIntakeForSubmit(
-                        $user,
-                        $this->filled('intake_period_id') ? $this->integer('intake_period_id') : null
-                    );
-
-                if ($applicationFee === null || ! PaymentHelper::hasPaidApplicationFeeAndNotApplied($user, $intakePeriod)) {
-                    $validator->errors()->add(
-                        'level_id',
-                        __('trans.application_fee_payment_required'),
-                    );
-                }
-
-                if ($applicationFee !== null && (int) $applicationFee->level_id !== (int) $level->id) {
-                    $validator->errors()->add(
-                        'level_id',
-                        __('trans.application_fee_level_mismatch'),
-                    );
-                }
-            }
+            $this->validateApplicationFee($validator);
 
             app(ValidateOLevelResults::class)->validate($this, $validator);
         });
+    }
+
+    protected function validateApplicationFee(Validator $validator): void
+    {
+        $departmentLevel = DepartmentLevel::query()->find($this->integer('level_id'));
+
+        if ($departmentLevel === null) {
+            return;
+        }
+
+        if ((int) $departmentLevel->institution_department_id !== (int) $this->integer('department_id')) {
+            $validator->errors()->add(
+                'level_id',
+                __('validation.exists', ['attribute' => 'level']),
+            );
+        }
+
+        if (! $departmentLevel->show_on_current_application_period) {
+            $validator->errors()->add(
+                'level_id',
+                __('trans.portal_selected_level_not_active_toast'),
+            );
+        }
+
+        $institutionLevel = Level::query()->find($departmentLevel->level_id);
+
+        if (! $institutionLevel?->has_application_fee_payment) {
+            return;
+        }
+
+        $user = $this->user();
+        $applicationFeeService = app(ApplicationFeeService::class);
+        $applicationFee = $applicationFeeService->activeApplicationFee($user);
+        $intakePeriod = $applicationFee?->intakePeriod
+            ?? $applicationFeeService->resolveIntakeForSubmit(
+                $user,
+                $this->filled('intake_period_id') ? $this->integer('intake_period_id') : null
+            );
+
+        if ($applicationFee === null || ! PaymentHelper::hasPaidApplicationFeeAndNotApplied($user, $intakePeriod)) {
+            $validator->errors()->add(
+                'level_id',
+                __('trans.application_fee_payment_required'),
+            );
+        }
     }
 }

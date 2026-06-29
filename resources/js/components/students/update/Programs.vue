@@ -60,7 +60,13 @@ const hasShownLevelUnavailableToast = ref(false);
 
 const normalizeLevelName = (name?: string | null) => name?.trim().toLowerCase() ?? '';
 
+const restrictProgrammeLevelToPaidLevel = computed(() => !isItTrue(props.hasPaidApplicationFee));
+
 const clearStaleLevelSelection = () => {
+    if (!restrictProgrammeLevelToPaidLevel.value) {
+        return;
+    }
+
     if (!normalizeLevelName(props.selectedLevelName) || !level.value?.label) {
         return;
     }
@@ -202,8 +208,15 @@ const goToPayment = () => {
         :title="bare ? undefined : $t('trans.programs')"
         :description="bare ? undefined : $t('trans.programme_step_description')"
     >
-        <p v-if="selectedLevelName" class="mb-4 text-sm text-muted-foreground">
-            {{ $t('trans.programme_level_context', { level: selectedLevelName }) }}
+        <p
+            v-if="hasPaidApplicationFee || selectedLevelName"
+            class="mb-4 text-sm text-muted-foreground"
+        >
+            {{
+                hasPaidApplicationFee
+                    ? $t('trans.programme_level_context_paid_fee')
+                    : $t('trans.programme_level_context', { level: selectedLevelName })
+            }}
         </p>
 
         <BaseAlert
@@ -219,7 +232,7 @@ const goToPayment = () => {
         </BaseAlert>
 
         <BaseAlert
-            v-if="selectedLevelUnavailable"
+            v-if="restrictProgrammeLevelToPaidLevel && selectedLevelUnavailable"
             class="mb-4"
             :title="$t('trans.portal_selected_level_not_active_title')"
             :description="$t('trans.portal_selected_level_not_active_description', { level: selectedLevelName ?? '' })"
@@ -238,6 +251,7 @@ const goToPayment = () => {
                 :form="form"
                 :institution-department-id="department?.value?.toString() ?? ''"
                 :selected-level-name="selectedLevelName"
+                :restrict-to-selected-level="restrictProgrammeLevelToPaidLevel"
                 v-model="level"
                 data-field="level"
                 :error="form.errors.level"

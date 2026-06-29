@@ -4,30 +4,9 @@ import type { SelectOption } from '@/types/utils';
 
 export type ReturningPrefill = Record<string, unknown>;
 
-type ComboField =
-    | 'title'
-    | 'gender'
-    | 'maritalStatus'
-    | 'country'
-    | 'idType'
-    | 'relationship'
-    | 'department'
-    | 'level'
-    | 'course'
-    | 'modeOfStudy';
+type ComboField = 'title' | 'gender' | 'maritalStatus' | 'country' | 'idType' | 'relationship';
 
-const comboFields: ComboField[] = [
-    'title',
-    'gender',
-    'maritalStatus',
-    'country',
-    'idType',
-    'relationship',
-    'department',
-    'level',
-    'course',
-    'modeOfStudy',
-];
+const comboFields: ComboField[] = ['title', 'gender', 'maritalStatus', 'country', 'idType', 'relationship'];
 
 const oLevelFields = [
     'o_level_subject_ids',
@@ -38,6 +17,43 @@ const oLevelFields = [
     'o_level_other_years',
     'o_level_other_sittings',
 ] as const;
+
+type StoreRefs = ReturnType<typeof useCreateApplicationFormStore> extends never
+    ? never
+    : Record<string, Ref<unknown>>;
+
+export function clearProgrammeSelections(storeRefs: StoreRefs): void {
+    const programmeScalars = [
+        'mode_of_study_id',
+        'department_id',
+        'level_id',
+        'course_id',
+        'required_level_completed',
+        'read_write_acknowledged',
+    ] as const;
+
+    const programmeCombos = ['department', 'level', 'course', 'modeOfStudy'] as const;
+
+    programmeScalars.forEach((field) => {
+        if (storeRefs[field]) {
+            (storeRefs[field] as Ref<unknown>).value = null;
+        }
+    });
+
+    programmeCombos.forEach((field) => {
+        if (storeRefs[field]) {
+            (storeRefs[field] as Ref<unknown>).value = null;
+        }
+    });
+
+    if (storeRefs.levelRequirements) {
+        storeRefs.levelRequirements.value = null;
+    }
+
+    if (storeRefs.courseRequirements) {
+        storeRefs.courseRequirements.value = null;
+    }
+}
 
 function toComboOption(value: unknown): SelectOption | null {
     if (!value || typeof value !== 'object') {
@@ -55,10 +71,7 @@ function toComboOption(value: unknown): SelectOption | null {
     };
 }
 
-export function useReturningApplicationPrefill(
-    prefill: ReturningPrefill,
-    storeRefs: ReturnType<typeof useCreateApplicationFormStore> extends never ? never : Record<string, Ref<unknown>>,
-) {
+export function useReturningApplicationPrefill(prefill: ReturningPrefill, storeRefs: StoreRefs) {
     const applyPrefill = () => {
         const scalarFields = [
             'email',
@@ -89,12 +102,6 @@ export function useReturningApplicationPrefill(
             'next_of_kin_address_2',
             'next_of_kin_address_3',
             'next_of_kin_address_4',
-            'mode_of_study_id',
-            'department_id',
-            'level_id',
-            'course_id',
-            'required_level_completed',
-            'read_write_acknowledged',
         ] as const;
 
         scalarFields.forEach((field) => {
@@ -117,6 +124,8 @@ export function useReturningApplicationPrefill(
                 (storeRefs[field] as Ref<unknown>).value = value;
             }
         });
+
+        clearProgrammeSelections(storeRefs);
     };
 
     return { applyPrefill };

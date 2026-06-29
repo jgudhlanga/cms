@@ -1,6 +1,7 @@
 <script setup lang="ts">
+import BaseAlert from '@/components/core/alert/BaseAlert.vue';
 import { BaseCheckbox } from '@/components/core/form';
-import HeadingSmall from '@/components/core/util/HeadingSmall.vue';
+import { TypeVariant } from '@/enums/type-variants';
 import { useUtils } from '@/composables/core/useUtils';
 import { IconName, icons } from '@/lib/icons';
 import { useCreateApplicationFormStore } from '@/store/portal/useCreateApplicationFormStore';
@@ -51,28 +52,28 @@ onMounted(() => {
 </script>
 
 <template>
-    <HeadingSmall
+    <BaseAlert
+        class="my-4"
+        :type="TypeVariant.warning"
         :title="$t('trans.level_required', { level: requirements?.attributes?.requiredLevel ?? '' })"
-        :description="$t('trans.level_required_description', { level: requirements?.attributes?.requiredLevel ?? '', current: level?.label ?? '' })"
-    />
-    <div v-if="!isViewOnly" class="flex flex-col space-y-6">
-        <BaseCheckbox
-            input-id="required_level_completed"
-            @click="acknowledgeLevelCompleted($event.target.checked)"
-            v-model="requiredLevelCompleted"
-            :label="`${$t('trans.acknowledge_required_level_completed', { level: requirements?.attributes?.requiredLevel ?? '' })}`"
-        />
-        <!--<BaseInput
-            input-id="required_level_upload"
-            classes="w-1/3"
-            :label-uppercase="true"
-            :label="`${$t('trans.upload')} ${levelRequirements?.attributes?.requiredLevel} ${$tChoice('trans.certificate', 1)}`"
-            :type="TextFieldType.file"
-            @change="handleUploadFileChange"
-        />-->
-    </div>
-    <div v-else class="mt-4 flex items-center space-x-2">
-        <component :is="icons[IconName.check]" />
-        <span>{{ `${$t('trans.acknowledge_required_level_completed', { level: requirements?.attributes?.requiredLevel ?? '' })}` }}</span>
-    </div>
+        :description="
+            $t('trans.level_required_description', {
+                level: requirements?.attributes?.requiredLevel ?? '',
+                current: level?.label ?? '',
+            })
+        "
+    >
+        <div v-if="!isViewOnly" class="mt-3 border-t border-amber-200 pt-3">
+            <BaseCheckbox
+                input-id="required_level_completed"
+                @click="acknowledgeLevelCompleted($event.target.checked)"
+                v-model="requiredLevelCompleted"
+                :label="`${$t('trans.acknowledge_required_level_completed', { level: requirements?.attributes?.requiredLevel ?? '' })}`"
+            />
+        </div>
+        <div v-else class="mt-3 flex items-center space-x-2 border-t border-amber-200 pt-3 font-medium">
+            <component :is="icons[IconName.check]" />
+            <span>{{ `${$t('trans.acknowledge_required_level_completed', { level: requirements?.attributes?.requiredLevel ?? '' })}` }}</span>
+        </div>
+    </BaseAlert>
 </template>
