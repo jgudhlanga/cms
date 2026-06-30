@@ -153,10 +153,12 @@ class ApplicationMetricsService
 
         $query = DB::table('student_applications')
             ->selectRaw('DATE(student_applications.created_at) as count_date, COUNT(student_applications.id) as daily_count')
+            ->where('student_applications.intake_period_id', $intakePeriod->id)
             ->whereBetween('student_applications.created_at', [
                 $intakePeriod->start_date,
                 Carbon::parse($intakePeriod->end_date)->addDay()->endOfDay()->toDateTimeString(),
-            ]);
+            ])
+            ->whereNull('student_applications.deleted_at');
 
         if ($this->isDepartmentUser) {
             $query->whereIn('student_applications.institution_department_id', $this->userDepartments);

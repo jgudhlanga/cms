@@ -20,7 +20,6 @@ const props = withDefaults(defineProps<Props>(), {
     showActionsColumn: false,
     showFilters: false,
 });
-const { departmentDistribution } = props;
 
 // Generate consistent RGBA color from department name
 const colorFromDepartment = (name: string, alpha = 0.7): string => {
@@ -35,13 +34,13 @@ const colorFromDepartment = (name: string, alpha = 0.7): string => {
 };
 
 // Total number of applications across all departments
-const totalApplications = computed(() => departmentDistribution?.reduce((sum, d) => sum + d.applicationCount, 0) ?? 0);
+const totalApplications = computed(() => props.departmentDistribution?.reduce((sum, d) => sum + d.applicationCount, 0) ?? 0);
 
 // Build per-department table data with color + percentage
 const departmentTableData = computed(() => {
     const total = totalApplications.value || 0;
     return (
-        departmentDistribution?.map((d) => {
+        props.departmentDistribution?.map((d) => {
             const color = colorFromDepartment(d.departmentName, 0.7);
             const percentage = total > 0 ? ((d.applicationCount / total) * 100).toFixed(1) : '0.0';
             return {
@@ -54,7 +53,7 @@ const departmentTableData = computed(() => {
 });
 
 const departmentTotals = computed(() => {
-    return departmentDistribution?.reduce(
+    return props.departmentDistribution?.reduce(
         (acc, d) => {
             acc.male += Number(d.maleCount) || 0;
             acc.female += Number(d.femaleCount) || 0;
@@ -81,7 +80,7 @@ const departmentTotals = computed(() => {
     );
 });
 const classListTotals = computed(() => {
-    return departmentDistribution?.reduce(
+    return props.departmentDistribution?.reduce(
         (acc, d) => {
             acc.provisional += Number(d.provisionalCount) || 0;
             acc.waiting += Number(d.waitingCount) || 0;

@@ -324,6 +324,66 @@ test('dashboard enrolment metrics ignore academic calendar id in request', funct
     expect($withOtherCalendar['departmentDistribution'])->toBe($withoutCalendar['departmentDistribution']);
 });
 
+test('dashboard department distribution is scoped to selected intake period', function () {
+    $user = userWithDashboardPermission();
+    $selectedIntake = seedDashboardIntakePeriod($user->tenant_id);
+
+    $otherIntake = IntakePeriod::withoutGlobalScopes()->create([
+        'tenant_id' => $user->tenant_id,
+        'name' => 'Other Intake Dept Dist 2025',
+        'start_date' => now()->subMonths(6)->startOfMonth()->toDateString(),
+        'end_date' => now()->subMonths(4)->endOfMonth()->toDateString(),
+        'calendar_year' => '2024/2025',
+        'is_active' => true,
+    ]);
+
+    $selectedProgram = createVerifiedStudentApplication('DASH-DEPT-SELECTED-01');
+    $selectedProgram->institutionDepartment->department->update(['is_academic' => true]);
+    $selectedProgram->update([
+        'intake_period_id' => $selectedIntake->id,
+        'tenant_id' => $user->tenant_id,
+        'department_application_step_id' => resolveDepartmentApplicationStep($selectedProgram, WorkflowStepEnum::ACCEPTED)->id,
+    ]);
+
+    $selectedProgramTwo = createVerifiedStudentApplication('DASH-DEPT-SELECTED-02');
+    $selectedProgramTwo->institutionDepartment->department->update(['is_academic' => true]);
+    $selectedProgramTwo->update([
+        'intake_period_id' => $selectedIntake->id,
+        'tenant_id' => $user->tenant_id,
+        'department_application_step_id' => resolveDepartmentApplicationStep($selectedProgramTwo, WorkflowStepEnum::REVIEW)->id,
+    ]);
+
+    $otherProgram = createVerifiedStudentApplication('DASH-DEPT-OTHER-01');
+    $otherProgram->institutionDepartment->department->update(['is_academic' => true]);
+    $otherProgram->update([
+        'intake_period_id' => $otherIntake->id,
+        'tenant_id' => $user->tenant_id,
+        'department_application_step_id' => resolveDepartmentApplicationStep($otherProgram, WorkflowStepEnum::ACCEPTED)->id,
+    ]);
+
+    $this->actingAs($user)
+        ->get('/dashboard?intake_period_id='.$selectedIntake->id)
+        ->assertSuccessful()
+        ->assertInertia(fn ($page) => $page
+            ->where('enrolmentSummary.applications', 2)
+        );
+
+    $selectedProps = $this->actingAs($user)
+        ->get('/dashboard?intake_period_id='.$selectedIntake->id)
+        ->assertSuccessful()
+        ->original->getData()['page']['props'];
+
+    $otherProps = $this->actingAs($user)
+        ->get('/dashboard?intake_period_id='.$otherIntake->id)
+        ->assertSuccessful()
+        ->original->getData()['page']['props'];
+
+    expect(collect($selectedProps['departmentDistribution'])->sum('applicationCount'))->toBe(2);
+    expect(collect($otherProps['departmentDistribution'])->sum('applicationCount'))->toBe(1);
+    expect($otherProps['enrolmentSummary']['applications'])->toBe(1);
+    expect($selectedProps['departmentDistribution'])->not->toBe($otherProps['departmentDistribution']);
+});
+
 test('dashboard department distribution includes unassigned applications without academic department link', function () {
     $user = userWithDashboardPermission();
     $intakePeriod = seedDashboardIntakePeriod($user->tenant_id);

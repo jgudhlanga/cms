@@ -10,7 +10,7 @@ import { useDashboardStore } from '@/store/dashboard/useDashboardStore';
 import { Head, router } from '@inertiajs/vue3';
 import { School } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
-import { computed, onMounted, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 
 // Tab Components
 import AcademicTab from './tabs/AcademicTab.vue';
@@ -59,11 +59,15 @@ const resolvedActiveTab = computed({
 
 const showTab = (tab: string) => props.visibleTabs.includes(tab);
 
-onMounted(() => {
-    if (props.intakePeriod) {
-        intakePeriodModel.value = { value: Number(props.intakePeriod.id), label: props.intakePeriod.attributes.name };
-    }
-});
+watch(
+    () => props.intakePeriod,
+    (period) => {
+        if (period) {
+            intakePeriodModel.value = { value: Number(period.id), label: period.attributes.name };
+        }
+    },
+    { immediate: true },
+);
 
 const handleFilterChange = (option: SelectOption) => {
     // Enrolment metrics use intake_period_id only; academic_calendar_id is for other dashboard tabs.
