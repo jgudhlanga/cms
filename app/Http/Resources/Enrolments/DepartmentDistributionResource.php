@@ -7,10 +7,10 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 class DepartmentDistributionResource extends JsonResource
 {
-
     public function toArray(Request $request): array
     {
         return [
+            'institutionDepartmentId' => (int) $this->institution_department_id,
             'departmentId' => $this->department_id,
             'departmentName' => $this->department_name,
             'applicationCount' => $this->application_count,

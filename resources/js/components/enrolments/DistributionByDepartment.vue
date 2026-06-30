@@ -158,7 +158,7 @@ const intakePeriodModel = defineModel<SelectOption | null>('intakePeriodModel');
                     </tr>
                 </thead>
                 <tbody class="j-tbody">
-                    <tr class="j-tr" v-for="data in departmentTableData" :key="data.departmentId">
+                    <tr class="j-tr" v-for="data in departmentTableData" :key="data.institutionDepartmentId || data.departmentId">
                         <td class="j-td flex items-center gap-2">
                             <span class="inline-block h-3 w-3 rounded-full" :style="{ backgroundColor: data.color }"></span>
                             <span>{{ data.departmentName }}</span>
@@ -175,11 +175,11 @@ const intakePeriodModel = defineModel<SelectOption | null>('intakePeriodModel');
                         <td class="j-td text-center">{{ data.percentage }}</td>
                         <td class="j-td j-td-l-border text-center">
                             <DepartmentClassListActionLink
-                                :actionable="hasAbility('verify:class-lists') && showActionsColumn"
+                                :actionable="hasAbility('verify:class-lists') && showActionsColumn && data.institutionDepartmentId > 0"
                                 :title="String(data.provisionalCount)"
                                 :route-name="
                                     route('enrolments.department-applications', {
-                                        institution_department: data.departmentId,
+                                        institution_department: data.institutionDepartmentId,
                                         intake_period_id: intakePeriodModel?.value.toString(),
                                         type: 'provisional',
                                     })
@@ -188,11 +188,11 @@ const intakePeriodModel = defineModel<SelectOption | null>('intakePeriodModel');
                         </td>
                         <td class="j-td j-td-l-border text-center">
                             <DepartmentClassListActionLink
-                                :actionable="hasAbility('verify:class-lists') && showActionsColumn"
+                                :actionable="hasAbility('verify:class-lists') && showActionsColumn && data.institutionDepartmentId > 0"
                                 :title="String(data.waitingCount)"
                                 :route-name="
                                     route('enrolments.department-applications', {
-                                        institution_department: data.departmentId,
+                                        institution_department: data.institutionDepartmentId,
                                         intake_period_id: intakePeriodModel?.value.toString(),
                                         type: 'waiting',
                                     })
@@ -204,11 +204,11 @@ const intakePeriodModel = defineModel<SelectOption | null>('intakePeriodModel');
                         </td>
                         <td class="j-td j-td-l-border text-center">
                             <DepartmentClassListActionLink
-                                :actionable="hasAbility('manage-final:class-lists') && showActionsColumn"
+                                :actionable="hasAbility('manage-final:class-lists') && showActionsColumn && data.institutionDepartmentId > 0"
                                 :title="String(data.verifiedCount)"
                                 :route-name="
                                     route('enrolments.department-applications', {
-                                        institution_department: data.departmentId,
+                                        institution_department: data.institutionDepartmentId,
                                         intake_period_id: intakePeriodModel?.value.toString(),
                                         type: 'verified',
                                     })
@@ -217,11 +217,11 @@ const intakePeriodModel = defineModel<SelectOption | null>('intakePeriodModel');
                         </td>
                         <td class="j-td j-td-l-border j-td-r-border text-center">
                             <DepartmentClassListActionLink
-                                :actionable="hasAbility('manage-final:class-lists') && showActionsColumn"
+                                :actionable="hasAbility('manage-final:class-lists') && showActionsColumn && data.institutionDepartmentId > 0"
                                 :title="String(data.finalCount)"
                                 :route-name="
                                     route('enrolments.department-applications', {
-                                        institution_department: data.departmentId,
+                                        institution_department: data.institutionDepartmentId,
                                         intake_period_id: intakePeriodModel?.value.toString(),
                                         type: 'final',
                                     })

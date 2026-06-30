@@ -857,6 +857,7 @@ return [
     'ui_this_course_is_only_for_students_with_no_5_o_levels' => 'This course is only for students with no 5 O levels',
     'ui_toggle_sidebar' => 'Toggle Sidebar',
     'ui_total' => 'Total',
+    'ui_unassigned' => 'Unassigned',
     'ui_transaction_found' => 'Transaction found',
     'ui_undergraduate_and_postgraduate_programs' => 'Undergraduate & Postgraduate Programs',
     'ui_update_student_payment_status' => 'Update Student Payment Status',
