@@ -170,6 +170,29 @@ function userWithOverviewDashboardPermission(): User
     return $user;
 }
 
+function userWithFullOverviewDashboardPermission(): User
+{
+    $permissions = [
+        'view:dashboards',
+        'view-academic:dashboards',
+        'view-enrolment:dashboards',
+        'view-staff:dashboards',
+        'view-hostel:dashboards',
+    ];
+
+    $user = User::factory()->create();
+    seedDashboardIntakePeriod($user->tenant_id);
+
+    foreach ($permissions as $permission) {
+        Permission::findOrCreate($permission, 'web');
+        $user->givePermissionTo($permission);
+    }
+
+    enableDashboardModule();
+
+    return $user;
+}
+
 function dashboardUrlFor(User $user, ?int $academicCalendarId = null): string
 {
     $intakePeriod = seedDashboardIntakePeriod($user->tenant_id);

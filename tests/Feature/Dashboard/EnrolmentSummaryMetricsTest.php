@@ -2,6 +2,7 @@
 
 use App\Enums\Shared\ClassListTypeEnum;
 use App\Enums\Shared\WorkflowStepEnum;
+use App\Models\AcademicCalendars\AcademicCalendar;
 use App\Models\Enrolments\ClassList;
 use App\Models\Institution\IntakePeriod;
 use App\Models\Students\StudentApplication;
@@ -183,5 +184,174 @@ test('dashboard enrolment summary metrics ignore soft deleted student programs',
         ->assertInertia(fn ($page) => $page
             ->where('enrolmentSummary.applications', 1)
             ->where('enrolmentSummary.offersMade', 1)
+        );
+});
+
+test('dashboard returns department distribution for academic departments', function () {
+    $user = userWithDashboardPermission();
+    $intakePeriod = seedDashboardIntakePeriod($user->tenant_id);
+
+    $program = createVerifiedStudentApplication('DASH-DEPT-DIST-01');
+    $program->institutionDepartment->department->update(['is_academic' => true]);
+    $program->update([
+        'intake_period_id' => $intakePeriod->id,
+        'tenant_id' => $user->tenant_id,
+        'department_application_step_id' => resolveDepartmentApplicationStep($program, WorkflowStepEnum::ACCEPTED)->id,
+    ]);
+
+    $this->actingAs($user)
+        ->get('/dashboard?intake_period_id='.$intakePeriod->id)
+        ->assertSuccessful()
+        ->assertInertia(fn ($page) => $page
+            ->component('dashboard/Index')
+            ->has('departmentDistribution', 1)
+            ->where('departmentDistribution.0.applicationCount', 1)
+            ->where('departmentDistribution.0.institutionDepartmentId', $program->institution_department_id)
+            ->where('enrolmentSummary.applications', 1)
+        );
+});
+
+test('dashboard department distribution totals align with enrolment summary applications', function () {
+    $user = userWithDashboardPermission();
+    $intakePeriod = seedDashboardIntakePeriod($user->tenant_id);
+
+    foreach (['DASH-DEPT-A', 'DASH-DEPT-B', 'DASH-DEPT-C'] as $studentNumber) {
+        $program = createVerifiedStudentApplication($studentNumber);
+        $program->institutionDepartment->department->update(['is_academic' => true]);
+        $program->update([
+            'intake_period_id' => $intakePeriod->id,
+            'tenant_id' => $user->tenant_id,
+            'department_application_step_id' => resolveDepartmentApplicationStep($program, WorkflowStepEnum::REVIEW)->id,
+        ]);
+    }
+
+    $response = $this->actingAs($user)
+        ->get('/dashboard?intake_period_id='.$intakePeriod->id)
+        ->assertSuccessful();
+
+    $props = $response->original->getData()['page']['props'];
+    $departmentTotal = collect($props['departmentDistribution'])->sum('applicationCount');
+
+    expect($departmentTotal)->toBe($props['enrolmentSummary']['applications']);
+    expect($departmentTotal)->toBe(3);
+});
+
+test('dashboard department distribution excludes soft deleted applications', function () {
+    $user = userWithDashboardPermission();
+    $intakePeriod = seedDashboardIntakePeriod($user->tenant_id);
+
+    $activeProgram = createVerifiedStudentApplication('DASH-DEPT-ACTIVE');
+    $activeProgram->institutionDepartment->department->update(['is_academic' => true]);
+    $activeProgram->update([
+        'intake_period_id' => $intakePeriod->id,
+        'tenant_id' => $user->tenant_id,
+        'department_application_step_id' => resolveDepartmentApplicationStep($activeProgram, WorkflowStepEnum::ACCEPTED)->id,
+    ]);
+
+    $deletedProgram = createVerifiedStudentApplication('DASH-DEPT-DELETED');
+    $deletedProgram->institutionDepartment->department->update(['is_academic' => true]);
+    $deletedProgram->update([
+        'intake_period_id' => $intakePeriod->id,
+        'tenant_id' => $user->tenant_id,
+        'department_application_step_id' => resolveDepartmentApplicationStep($deletedProgram, WorkflowStepEnum::ACCEPTED)->id,
+    ]);
+    StudentApplication::query()->whereKey($deletedProgram->id)->delete();
+
+    $this->actingAs($user)
+        ->get('/dashboard?intake_period_id='.$intakePeriod->id)
+        ->assertSuccessful()
+        ->assertInertia(fn ($page) => $page
+            ->has('departmentDistribution', 1)
+            ->where('departmentDistribution.0.applicationCount', 1)
+            ->where('enrolmentSummary.applications', 1)
+        );
+});
+
+test('dashboard department distribution excludes non academic departments', function () {
+    $user = userWithDashboardPermission();
+    $intakePeriod = seedDashboardIntakePeriod($user->tenant_id);
+
+    $program = createVerifiedStudentApplication('DASH-NON-ACAD');
+    $program->institutionDepartment->department->update(['is_academic' => false]);
+    $program->update([
+        'intake_period_id' => $intakePeriod->id,
+        'tenant_id' => $user->tenant_id,
+        'department_application_step_id' => resolveDepartmentApplicationStep($program, WorkflowStepEnum::ACCEPTED)->id,
+    ]);
+
+    $this->actingAs($user)
+        ->get('/dashboard?intake_period_id='.$intakePeriod->id)
+        ->assertSuccessful()
+        ->assertInertia(fn ($page) => $page
+            ->has('departmentDistribution', 1)
+            ->where('departmentDistribution.0.departmentName', __('trans.ui_unassigned'))
+            ->where('departmentDistribution.0.applicationCount', 1)
+            ->where('enrolmentSummary.applications', 1)
+        );
+});
+
+test('dashboard enrolment metrics ignore academic calendar id in request', function () {
+    $user = userWithDashboardPermission();
+    $intakePeriod = seedDashboardIntakePeriod($user->tenant_id);
+    $calendar = seedDashboardAcademicCalendar();
+
+    $program = createVerifiedStudentApplication('DASH-CAL-IGNORE');
+    $program->institutionDepartment->department->update(['is_academic' => true]);
+    $program->update([
+        'intake_period_id' => $intakePeriod->id,
+        'tenant_id' => $user->tenant_id,
+        'department_application_step_id' => resolveDepartmentApplicationStep($program, WorkflowStepEnum::ACCEPTED)->id,
+    ]);
+
+    $otherCalendar = AcademicCalendar::query()->create([
+        'calendar_year' => (string) (now()->year - 1),
+        'type' => $calendar->type,
+        'opening_date' => now()->subYears(2)->startOfYear()->toDateString(),
+        'closing_date' => now()->subYears(2)->endOfYear()->toDateString(),
+    ]);
+
+    $withoutCalendar = $this->actingAs($user)
+        ->get('/dashboard?intake_period_id='.$intakePeriod->id)
+        ->assertSuccessful()
+        ->original->getData()['page']['props'];
+
+    $withOtherCalendar = $this->actingAs($user)
+        ->get('/dashboard?intake_period_id='.$intakePeriod->id.'&academic_calendar_id='.$otherCalendar->id)
+        ->assertSuccessful()
+        ->original->getData()['page']['props'];
+
+    expect($withOtherCalendar['enrolmentSummary'])->toBe($withoutCalendar['enrolmentSummary']);
+    expect($withOtherCalendar['departmentDistribution'])->toBe($withoutCalendar['departmentDistribution']);
+});
+
+test('dashboard department distribution includes unassigned applications without academic department link', function () {
+    $user = userWithDashboardPermission();
+    $intakePeriod = seedDashboardIntakePeriod($user->tenant_id);
+
+    $linkedProgram = createVerifiedStudentApplication('DASH-LINKED');
+    $linkedProgram->institutionDepartment->department->update(['is_academic' => true]);
+    $linkedProgram->update([
+        'intake_period_id' => $intakePeriod->id,
+        'tenant_id' => $user->tenant_id,
+        'department_application_step_id' => resolveDepartmentApplicationStep($linkedProgram, WorkflowStepEnum::ACCEPTED)->id,
+    ]);
+
+    $unlinkedProgram = createVerifiedStudentApplication('DASH-UNLINKED');
+    $unlinkedProgram->institutionDepartment->department->update(['is_academic' => false]);
+    $unlinkedProgram->update([
+        'intake_period_id' => $intakePeriod->id,
+        'tenant_id' => $user->tenant_id,
+        'department_application_step_id' => resolveDepartmentApplicationStep($unlinkedProgram, WorkflowStepEnum::ACCEPTED)->id,
+    ]);
+
+    $this->actingAs($user)
+        ->get('/dashboard?intake_period_id='.$intakePeriod->id)
+        ->assertSuccessful()
+        ->assertInertia(fn ($page) => $page
+            ->has('departmentDistribution', 2)
+            ->where('enrolmentSummary.applications', 2)
+            ->where('departmentDistribution.1.departmentName', __('trans.ui_unassigned'))
+            ->where('departmentDistribution.1.applicationCount', 1)
+            ->where('departmentDistribution.1.institutionDepartmentId', 0)
         );
 });

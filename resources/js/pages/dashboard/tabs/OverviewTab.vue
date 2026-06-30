@@ -10,11 +10,58 @@ import MetricCard from '../components/MetricCard.vue';
 
 interface Props {
     overviewDashboard: OverviewDashboard;
+    visibleTabs: string[];
 }
 
 const props = defineProps<Props>();
 
 const dashboardStore = useDashboardStore();
+
+const showSection = (tab: string): boolean => props.visibleTabs.includes(tab);
+
+const showPriorityAlerts = computed(
+    () => showSection('academic') || showSection('hostel') || showSection('enrolments'),
+);
+
+const visibleMetricCount = computed(() => {
+    let count = 0;
+
+    if (showSection('academic')) {
+        count += 3;
+    }
+
+    if (showSection('hostel')) {
+        count += 1;
+    }
+
+    if (showSection('staff')) {
+        count += 1;
+    }
+
+    return count;
+});
+
+const metricGridClass = computed(() => {
+    const count = visibleMetricCount.value;
+
+    if (count <= 1) {
+        return 'grid-cols-1';
+    }
+
+    if (count === 2) {
+        return 'grid-cols-1 sm:grid-cols-2';
+    }
+
+    if (count === 3) {
+        return 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3';
+    }
+
+    if (count === 4) {
+        return 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4';
+    }
+
+    return 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-5';
+});
 
 const { summary, enrolmentByDepartment, priorityAlerts, enrolmentFunnel, academicSnapshot, quickInsights } =
     props.overviewDashboard;
@@ -136,8 +183,9 @@ const switchTab = (tab: string) => {
             </span>
         </div>
 
-        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <div class="grid gap-4" :class="metricGridClass">
             <MetricCard
+                v-if="showSection('academic')"
                 :title="$t('dashboard.overview_pass_rate')"
                 :value="formatRate(summary.passRate)"
                 :subtext="metricSubtext(summary.passRateSubtext)"
@@ -146,6 +194,7 @@ const switchTab = (tab: string) => {
                 <template #icon><BarChart3 class="h-4 w-4" /></template>
             </MetricCard>
             <MetricCard
+                v-if="showSection('academic')"
                 :title="$t('dashboard.overview_mark_completion')"
                 :value="formatRate(summary.markCompletionRate)"
                 :subtext="metricSubtext(summary.markCompletionSubtext)"
@@ -154,6 +203,7 @@ const switchTab = (tab: string) => {
                 <template #icon><ClipboardList class="h-4 w-4" /></template>
             </MetricCard>
             <MetricCard
+                v-if="showSection('academic')"
                 :title="$t('dashboard.overview_at_risk_students')"
                 :value="formatCount(summary.atRiskStudents)"
                 :subtext="metricSubtext(summary.atRiskSubtext)"
@@ -162,6 +212,7 @@ const switchTab = (tab: string) => {
                 <template #icon><AlertTriangle class="h-4 w-4" /></template>
             </MetricCard>
             <MetricCard
+                v-if="showSection('hostel')"
                 :title="$t('dashboard.overview_hostel_occupancy')"
                 :value="hostelValue"
                 :subtext="hostelSubtext"
@@ -170,6 +221,7 @@ const switchTab = (tab: string) => {
                 <template #icon><Bed class="h-4 w-4" /></template>
             </MetricCard>
             <MetricCard
+                v-if="showSection('staff')"
                 :title="$t('dashboard.overview_total_staff')"
                 :value="summary.totalStaff.toLocaleString()"
                 :subtext="metricSubtext(summary.totalStaffSubtext)"
@@ -180,7 +232,7 @@ const switchTab = (tab: string) => {
         </div>
 
         <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
-            <DashboardCard :title="$t('dashboard.overview_priority_alerts')">
+            <DashboardCard v-if="showPriorityAlerts" :title="$t('dashboard.overview_priority_alerts')">
                 <Empty v-if="priorityAlerts.length === 0" :message="$t('dashboard.overview_no_alerts')" />
                 <div v-else class="flex flex-col gap-0">
                     <div
@@ -205,7 +257,7 @@ const switchTab = (tab: string) => {
                 </div>
             </DashboardCard>
 
-            <DashboardCard :title="$t('dashboard.overview_enrolment_funnel')">
+            <DashboardCard v-if="showSection('enrolments')" :title="$t('dashboard.overview_enrolment_funnel')">
                 <button
                     type="button"
                     class="mb-3 text-xs text-emerald-700 hover:underline"
@@ -239,7 +291,7 @@ const switchTab = (tab: string) => {
                 </div>
             </DashboardCard>
 
-            <DashboardCard :title="$t('dashboard.overview_academic_snapshot')">
+            <DashboardCard v-if="showSection('academic')" :title="$t('dashboard.overview_academic_snapshot')">
                 <button
                     type="button"
                     class="mb-3 text-xs text-emerald-700 hover:underline"
@@ -295,7 +347,7 @@ const switchTab = (tab: string) => {
                 </div>
             </DashboardCard>
 
-            <DashboardCard :title="$t('dashboard.overview_enrolment_by_department')">
+            <DashboardCard v-if="showSection('enrolments')" :title="$t('dashboard.overview_enrolment_by_department')">
                 <Empty
                     v-if="enrolmentByDepartment.length === 0"
                     :message="$t('dashboard.overview_no_enrolment_data')"

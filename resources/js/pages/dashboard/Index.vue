@@ -66,6 +66,7 @@ onMounted(() => {
 });
 
 const handleFilterChange = (option: SelectOption) => {
+    // Enrolment metrics use intake_period_id only; academic_calendar_id is for other dashboard tabs.
     router.get(
         window.location.pathname,
         {
@@ -152,7 +153,11 @@ const handleFilterChange = (option: SelectOption) => {
 
                 <!-- Tab Contents -->
                 <TabsContent v-if="showTab('overview')" value="overview" class="mt-0">
-                    <OverviewTab v-if="overviewDashboard" :overview-dashboard="overviewDashboard" />
+                    <OverviewTab
+                        v-if="overviewDashboard"
+                        :overview-dashboard="overviewDashboard"
+                        :visible-tabs="visibleTabs"
+                    />
                 </TabsContent>
 
                 <TabsContent v-if="showTab('academic')" value="academic" class="mt-0">

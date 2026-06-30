@@ -1,4 +1,5 @@
 export type DepartmentDistribution = {
+    institutionDepartmentId: number;
     departmentId: number;
     departmentName: string;
     applicationCount: number;

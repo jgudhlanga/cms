@@ -56,7 +56,7 @@ class DashboardController extends Controller
                 ? app(HostelDashboardMetricsService::class)->build()
                 : null,
             'overviewDashboard' => in_array('overview', $visibleTabs, true)
-                ? app(OverviewDashboardMetricsService::class)->build()
+                ? app(OverviewDashboardMetricsService::class)->build($visibleTabs)
                 : null,
             'staffDashboard' => in_array('staff', $visibleTabs, true)
                 ? app(StaffDashboardMetricsService::class)->build()

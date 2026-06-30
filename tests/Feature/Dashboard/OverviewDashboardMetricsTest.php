@@ -24,7 +24,7 @@ beforeEach(function () {
 });
 
 test('dashboard returns overview metrics for users with overview tab access', function () {
-    $user = userWithOverviewDashboardPermission();
+    $user = userWithFullOverviewDashboardPermission();
     $intakePeriod = seedDashboardIntakePeriod($user->tenant_id);
 
     $confirmedProgram = createVerifiedStudentApplication('OVERVIEW-DASH-CONF-01');
@@ -70,7 +70,7 @@ test('dashboard returns overview metrics for users with overview tab access', fu
 test('dashboard overview reports pass rate and at-risk students from coursework data', function () {
     $context = createCourseWorkJsonApiContext();
 
-    $user = userWithOverviewDashboardPermission();
+    $user = userWithFullOverviewDashboardPermission();
     $user->update(['tenant_id' => $context['tenant']->id]);
 
     $context['assessmentType']->update(['weight_percent' => 100]);
@@ -103,7 +103,7 @@ test('dashboard overview reports pass rate and at-risk students from coursework 
 });
 
 test('dashboard overview returns zero students and empty enrolment when no confirmed students exist', function () {
-    $user = userWithOverviewDashboardPermission();
+    $user = userWithFullOverviewDashboardPermission();
     seedDashboardIntakePeriod($user->tenant_id);
 
     $this->actingAs($user)
@@ -143,7 +143,7 @@ test('dashboard omits overview metrics when overview tab is not visible', functi
 });
 
 test('dashboard overview includes priority alerts from hostel queries', function () {
-    $user = userWithOverviewDashboardPermission();
+    $user = userWithFullOverviewDashboardPermission();
     $tenantId = $user->tenant_id;
     seedDashboardIntakePeriod($tenantId);
 
@@ -171,8 +171,27 @@ test('dashboard overview includes priority alerts from hostel queries', function
         );
 });
 
-test('dashboard overview includes provisional enrolment alert', function () {
+test('dashboard overview hides section metrics without corresponding tab permissions', function () {
     $user = userWithOverviewDashboardPermission();
+    seedDashboardIntakePeriod($user->tenant_id);
+
+    $this->actingAs($user)
+        ->get(dashboardUrlFor($user))
+        ->assertSuccessful()
+        ->assertInertia(fn ($page) => $page
+            ->component('dashboard/Index')
+            ->has('overviewDashboard')
+            ->where('overviewDashboard.summary.passRate', null)
+            ->where('overviewDashboard.summary.hostelOccupancyRate', null)
+            ->where('overviewDashboard.summary.totalStaff', 0)
+            ->where('overviewDashboard.enrolmentByDepartment', [])
+            ->where('overviewDashboard.priorityAlerts', [])
+            ->where('overviewDashboard.quickInsights', [])
+        );
+});
+
+test('dashboard overview includes provisional enrolment alert', function () {
+    $user = userWithFullOverviewDashboardPermission();
     $intakePeriod = seedDashboardIntakePeriod($user->tenant_id);
 
     $program = createVerifiedStudentApplication('OVERVIEW-DASH-PROV-01');

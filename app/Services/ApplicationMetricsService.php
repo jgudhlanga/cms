@@ -23,86 +23,94 @@ class ApplicationMetricsService
         $this->userDepartments = Helper::resolveUserDepartments();
     }
 
+    /**
+     * Enrolment department distribution is scoped by intake period only (not academic calendar).
+     */
     public function applicationsByDepartment(): Collection
     {
         $intakePeriod = Helper::resolveIntakePeriod();
 
-        if ($this->isDepartmentUser && empty($this->userDepartments)) {
+        if (! $intakePeriod || ($this->isDepartmentUser && empty($this->userDepartments))) {
             return collect();
         }
 
-        // pre-aggregate class sizes so join doesn't multiply row
         $classSizesSub = DB::table('department_intake_class_sizes')
             ->select(
                 'institution_department_id',
                 DB::raw('SUM(class_size) as total_class_size')
             )
-            ->where('intake_period_id', $intakePeriod?->id)
+            ->where('intake_period_id', $intakePeriod->id)
             ->groupBy('institution_department_id');
 
-        $query = DB::table('departments')
+        $query = DB::table('student_applications')
             ->select(
+                'institution_departments.id as institution_department_id',
                 'departments.id as department_id',
                 'departments.name as department_name',
-
-                // use DISTINCT to avoid duplicates if joins cause repeats
                 DB::raw('COUNT(DISTINCT student_applications.id) as application_count'),
-
-                // gender counts (use SUM of DISTINCT student_application id conditions would be complicated;
-                DB::raw("SUM(CASE WHEN genders.title = 'Male' THEN 1 ELSE 0 END) as male_count"),
-                DB::raw("SUM(CASE WHEN genders.title = 'Female' THEN 1 ELSE 0 END) as female_count"),
-
-                // disability counts
-                DB::raw("SUM(CASE WHEN students.disability_status = 'yes' THEN 1 ELSE 0 END) as disabled_count"),
-
-                // mode of study counts
-                DB::raw("SUM(CASE WHEN mode_of_studies.name = 'Full Time' THEN 1 ELSE 0 END) as full_time_count"),
-                DB::raw("SUM(CASE WHEN mode_of_studies.name = 'Part Time' THEN 1 ELSE 0 END) as part_time_count"),
-                DB::raw("SUM(CASE WHEN mode_of_studies.name = 'Block Release' THEN 1 ELSE 0 END) as block_release_count"),
-                DB::raw("SUM(CASE WHEN mode_of_studies.name = 'Ojet' THEN 1 ELSE 0 END) as ojet_count"),
-
-                // class_list counts
-                DB::raw("SUM(CASE WHEN class_lists.type = 'provisional' THEN 1 ELSE 0 END) as provisional_count"),
-                DB::raw("SUM(CASE WHEN class_lists.type = 'verified' THEN 1 ELSE 0 END) as verified_count"),
-                DB::raw("SUM(CASE WHEN class_lists.type = 'waiting' THEN 1 ELSE 0 END) as waiting_count"),
-                DB::raw("SUM(CASE WHEN class_lists.type = 'final' THEN 1 ELSE 0 END) as final_count"),
-                DB::raw("SUM(CASE WHEN class_lists.type = 'failed' THEN 1 ELSE 0 END) as failed_count"),
-
-                // from the pre-aggregated subquery; coalesce to 0 when null
-                DB::raw('COALESCE(class_sizes.total_class_size, 0) as total_class_size')
+                DB::raw("COUNT(DISTINCT CASE WHEN genders.title = 'Male' THEN student_applications.id END) as male_count"),
+                DB::raw("COUNT(DISTINCT CASE WHEN genders.title = 'Female' THEN student_applications.id END) as female_count"),
+                DB::raw("COUNT(DISTINCT CASE WHEN students.disability_status = 'yes' THEN student_applications.id END) as disabled_count"),
+                DB::raw("COUNT(DISTINCT CASE WHEN mode_of_studies.name = 'Full Time' THEN student_applications.id END) as full_time_count"),
+                DB::raw("COUNT(DISTINCT CASE WHEN mode_of_studies.name = 'Part Time' THEN student_applications.id END) as part_time_count"),
+                DB::raw("COUNT(DISTINCT CASE WHEN mode_of_studies.name = 'Block Release' THEN student_applications.id END) as block_release_count"),
+                DB::raw("COUNT(DISTINCT CASE WHEN mode_of_studies.name = 'Ojet' THEN student_applications.id END) as ojet_count"),
+                DB::raw("COUNT(DISTINCT CASE WHEN class_lists.type = 'provisional' THEN student_applications.id END) as provisional_count"),
+                DB::raw("COUNT(DISTINCT CASE WHEN class_lists.type = 'verified' THEN student_applications.id END) as verified_count"),
+                DB::raw("COUNT(DISTINCT CASE WHEN class_lists.type = 'waiting' THEN student_applications.id END) as waiting_count"),
+                DB::raw("COUNT(DISTINCT CASE WHEN class_lists.type = 'final' THEN student_applications.id END) as final_count"),
+                DB::raw("COUNT(DISTINCT CASE WHEN class_lists.type = 'failed' THEN student_applications.id END) as failed_count"),
+                DB::raw('COALESCE(class_sizes.total_class_size, 0) as total_class_size'),
             )
-
-            // JOINS
-            ->leftJoin('institution_departments', 'institution_departments.department_id', '=', 'departments.id')
-            ->leftJoin('student_applications', 'student_applications.institution_department_id', '=', 'institution_departments.id')
+            ->join('institution_departments', function ($join): void {
+                $join->on('student_applications.institution_department_id', '=', 'institution_departments.id')
+                    ->whereNull('institution_departments.deleted_at');
+            })
+            ->join('departments', function ($join): void {
+                $join->on('institution_departments.department_id', '=', 'departments.id')
+                    ->whereNull('departments.deleted_at')
+                    ->where('departments.is_academic', true);
+            })
             ->leftJoin('students', 'student_applications.student_id', '=', 'students.id')
             ->leftJoin('genders', 'students.gender_id', '=', 'genders.id')
             ->leftJoin('mode_of_studies', 'student_applications.mode_of_study_id', '=', 'mode_of_studies.id')
-            ->leftJoin('class_lists', 'class_lists.student_application_id', '=', 'student_applications.id')
-
-            // join the aggregated class sizes subquery (one row per institution_department)
-            ->leftJoinSub($classSizesSub, 'class_sizes', function ($join) {
+            ->leftJoin('class_lists', function ($join): void {
+                $join->on('class_lists.student_application_id', '=', 'student_applications.id')
+                    ->whereNull('class_lists.deleted_at');
+            })
+            ->leftJoinSub($classSizesSub, 'class_sizes', function ($join): void {
                 $join->on('class_sizes.institution_department_id', '=', 'institution_departments.id');
             })
-
-            // FILTERS
-            ->where('departments.is_academic', true)
-            ->where('student_applications.intake_period_id', $intakePeriod?->id);
+            ->where('student_applications.intake_period_id', $intakePeriod->id)
+            ->whereNull('student_applications.deleted_at');
 
         if ($this->isDepartmentUser) {
             $query->whereIn('institution_departments.id', $this->userDepartments);
         }
 
-        return $query
-            ->groupBy('departments.id', 'departments.name', 'class_sizes.total_class_size')
+        $rows = $query
+            ->groupBy(
+                'institution_departments.id',
+                'departments.id',
+                'departments.name',
+                'class_sizes.total_class_size',
+            )
+            ->orderBy('departments.name')
             ->get();
+
+        $unassigned = $this->unassignedApplicationsByDepartmentMetrics($intakePeriod->id);
+
+        if ($unassigned !== null) {
+            $rows->push($unassigned);
+        }
+
+        return $rows;
     }
 
     public function applicationsByLevel(): Collection
     {
         $intakePeriod = Helper::resolveIntakePeriod();
 
-        // 🔒 If restricted user and no departments, return empty
         if ($this->isDepartmentUser && empty($this->userDepartments)) {
             return collect();
         }
@@ -121,7 +129,6 @@ class ApplicationMetricsService
                     });
             });
 
-        // 🔒 Restrict to levels belonging to user's departments
         if ($this->isDepartmentUser) {
             $query->whereIn('department_levels.institution_department_id', $this->userDepartments);
         }
@@ -140,7 +147,6 @@ class ApplicationMetricsService
             return collect();
         }
 
-        // 🔒 If restricted user and no departments, return empty
         if ($this->isDepartmentUser && empty($this->userDepartments)) {
             return collect();
         }
@@ -264,5 +270,79 @@ class ApplicationMetricsService
         }
 
         return $query;
+    }
+
+    private function unassignedApplicationsBaseQuery(int $intakePeriodId): Builder
+    {
+        $query = $this->studentApplicationsBaseQuery($intakePeriodId)
+            ->whereNotExists(function (Builder $exists): void {
+                $exists->select(DB::raw(1))
+                    ->from('institution_departments')
+                    ->join('departments', 'departments.id', '=', 'institution_departments.department_id')
+                    ->whereColumn('institution_departments.id', 'student_applications.institution_department_id')
+                    ->whereNull('institution_departments.deleted_at')
+                    ->whereNull('departments.deleted_at')
+                    ->where('departments.is_academic', true);
+            });
+
+        if ($this->isDepartmentUser) {
+            return $query->whereRaw('0 = 1');
+        }
+
+        return $query;
+    }
+
+    private function unassignedApplicationsByDepartmentMetrics(int $intakePeriodId): ?object
+    {
+        $base = $this->unassignedApplicationsBaseQuery($intakePeriodId);
+
+        if ((clone $base)->count() === 0) {
+            return null;
+        }
+
+        $metrics = (clone $base)
+            ->leftJoin('students', 'student_applications.student_id', '=', 'students.id')
+            ->leftJoin('genders', 'students.gender_id', '=', 'genders.id')
+            ->leftJoin('mode_of_studies', 'student_applications.mode_of_study_id', '=', 'mode_of_studies.id')
+            ->leftJoin('class_lists', function ($join): void {
+                $join->on('class_lists.student_application_id', '=', 'student_applications.id')
+                    ->whereNull('class_lists.deleted_at');
+            })
+            ->select(
+                DB::raw('COUNT(DISTINCT student_applications.id) as application_count'),
+                DB::raw("COUNT(DISTINCT CASE WHEN genders.title = 'Male' THEN student_applications.id END) as male_count"),
+                DB::raw("COUNT(DISTINCT CASE WHEN genders.title = 'Female' THEN student_applications.id END) as female_count"),
+                DB::raw("COUNT(DISTINCT CASE WHEN students.disability_status = 'yes' THEN student_applications.id END) as disabled_count"),
+                DB::raw("COUNT(DISTINCT CASE WHEN mode_of_studies.name = 'Full Time' THEN student_applications.id END) as full_time_count"),
+                DB::raw("COUNT(DISTINCT CASE WHEN mode_of_studies.name = 'Part Time' THEN student_applications.id END) as part_time_count"),
+                DB::raw("COUNT(DISTINCT CASE WHEN mode_of_studies.name = 'Block Release' THEN student_applications.id END) as block_release_count"),
+                DB::raw("COUNT(DISTINCT CASE WHEN mode_of_studies.name = 'Ojet' THEN student_applications.id END) as ojet_count"),
+                DB::raw("COUNT(DISTINCT CASE WHEN class_lists.type = 'provisional' THEN student_applications.id END) as provisional_count"),
+                DB::raw("COUNT(DISTINCT CASE WHEN class_lists.type = 'verified' THEN student_applications.id END) as verified_count"),
+                DB::raw("COUNT(DISTINCT CASE WHEN class_lists.type = 'waiting' THEN student_applications.id END) as waiting_count"),
+                DB::raw("COUNT(DISTINCT CASE WHEN class_lists.type = 'final' THEN student_applications.id END) as final_count"),
+                DB::raw("COUNT(DISTINCT CASE WHEN class_lists.type = 'failed' THEN student_applications.id END) as failed_count"),
+            )
+            ->first();
+
+        return (object) [
+            'institution_department_id' => 0,
+            'department_id' => 0,
+            'department_name' => __('trans.ui_unassigned'),
+            'application_count' => (int) $metrics->application_count,
+            'male_count' => (int) $metrics->male_count,
+            'female_count' => (int) $metrics->female_count,
+            'disabled_count' => (int) $metrics->disabled_count,
+            'full_time_count' => (int) $metrics->full_time_count,
+            'part_time_count' => (int) $metrics->part_time_count,
+            'block_release_count' => (int) $metrics->block_release_count,
+            'ojet_count' => (int) $metrics->ojet_count,
+            'provisional_count' => (int) $metrics->provisional_count,
+            'verified_count' => (int) $metrics->verified_count,
+            'waiting_count' => (int) $metrics->waiting_count,
+            'final_count' => (int) $metrics->final_count,
+            'failed_count' => (int) $metrics->failed_count,
+            'total_class_size' => 0,
+        ];
     }
 }

@@ -38,31 +38,54 @@ class OverviewDashboardMetricsService
      *     priorityAlerts: list<array<string, mixed>>
      * }
      */
-    public function build(): array
+    /**
+     * @param  list<string>  $visibleTabs
+     */
+    public function build(array $visibleTabs = []): array
     {
+        $hasAcademic = $this->hasTab($visibleTabs, 'academic');
+        $hasHostel = $this->hasTab($visibleTabs, 'hostel');
+        $hasStaff = $this->hasTab($visibleTabs, 'staff');
+        $hasEnrolments = $this->hasTab($visibleTabs, 'enrolments');
+
         $intakePeriod = Helper::resolveIntakePeriod();
-        $enrolmentSummary = $this->applicationMetricsService->enrolmentSummaryMetrics();
-        $academicDashboard = $this->academicDashboardMetricsService->build();
-        $hostelDashboard = $this->hostelDashboardMetricsService->build();
-        $staffDashboard = $this->staffDashboardMetricsService->build();
-        $hostelSummary = $this->hostelSummary($hostelDashboard);
+        $enrolmentSummary = $hasEnrolments
+            ? $this->applicationMetricsService->enrolmentSummaryMetrics()
+            : $this->emptyEnrolmentSummary();
+        $academicDashboard = $hasAcademic ? $this->academicDashboardMetricsService->build() : [];
+        $hostelDashboard = $hasHostel ? $this->hostelDashboardMetricsService->build() : [];
+        $staffDashboard = $hasStaff ? $this->staffDashboardMetricsService->build() : [];
+        $hostelSummary = $hasHostel ? $this->hostelSummary($hostelDashboard) : null;
 
         return [
             'summary' => $this->summary(
                 $academicDashboard,
                 $hostelSummary,
                 $staffDashboard,
+                $hasAcademic,
+                $hasStaff,
             ),
-            'enrolmentFunnel' => $this->enrolmentFunnel($enrolmentSummary),
-            'academicSnapshot' => $this->academicSnapshot($academicDashboard),
-            'quickInsights' => $this->quickInsights($academicDashboard, $staffDashboard),
-            'enrolmentByDepartment' => $this->enrolmentByDepartment($intakePeriod?->id),
+            'enrolmentFunnel' => $hasEnrolments ? $this->enrolmentFunnel($enrolmentSummary) : $this->emptyEnrolmentFunnel(),
+            'academicSnapshot' => $hasAcademic ? $this->academicSnapshot($academicDashboard) : $this->emptyAcademicSnapshot(),
+            'quickInsights' => $this->quickInsights($academicDashboard, $staffDashboard, $hasAcademic, $hasStaff),
+            'enrolmentByDepartment' => $hasEnrolments ? $this->enrolmentByDepartment($intakePeriod?->id) : [],
             'priorityAlerts' => $this->priorityAlerts(
                 $enrolmentSummary,
                 $academicDashboard,
                 $hostelDashboard,
+                $hasAcademic,
+                $hasHostel,
+                $hasEnrolments,
             ),
         ];
+    }
+
+    /**
+     * @param  list<string>  $visibleTabs
+     */
+    private function hasTab(array $visibleTabs, string $tab): bool
+    {
+        return in_array($tab, $visibleTabs, true);
     }
 
     /**
@@ -74,28 +97,32 @@ class OverviewDashboardMetricsService
         array $academicDashboard,
         ?array $hostelSummary,
         array $staffDashboard,
+        bool $hasAcademic,
+        bool $hasStaff,
     ): array {
-        $courseWorkStatus = $academicDashboard['courseWorkStatus'];
-        $academicSummary = $academicDashboard['summary'];
-        $staffSummary = $staffDashboard['summary'];
+        $courseWorkStatus = $academicDashboard['courseWorkStatus'] ?? [];
+        $academicSummary = $academicDashboard['summary'] ?? [];
+        $staffSummary = $staffDashboard['summary'] ?? [];
 
         return [
-            'passRate' => $academicSummary['passRate'],
-            'passRateSubtext' => $this->passRateSubtext($academicSummary),
-            'markCompletionRate' => $courseWorkStatus['completeRate'],
-            'markCompletionSubtext' => $this->markCompletionSubtext($courseWorkStatus),
-            'atRiskStudents' => $this->academicDashboardMetricsService->atRiskStudentCount(),
-            'atRiskSubtext' => __('dashboard.overview_at_risk_subtext'),
+            'passRate' => $hasAcademic ? ($academicSummary['passRate'] ?? null) : null,
+            'passRateSubtext' => $hasAcademic ? $this->passRateSubtext($academicSummary) : null,
+            'markCompletionRate' => $hasAcademic ? ($courseWorkStatus['completeRate'] ?? null) : null,
+            'markCompletionSubtext' => $hasAcademic ? $this->markCompletionSubtext($courseWorkStatus) : null,
+            'atRiskStudents' => $hasAcademic ? $this->academicDashboardMetricsService->atRiskStudentCount() : null,
+            'atRiskSubtext' => $hasAcademic ? __('dashboard.overview_at_risk_subtext') : null,
             'hostelOccupancyRate' => $hostelSummary['occupancyRate'] ?? null,
             'hostelAvailableBeds' => $hostelSummary['availableBeds'] ?? null,
             'hostelSubtext' => $hostelSummary !== null
                 ? __('dashboard.overview_hostel_beds_available', ['count' => $hostelSummary['availableBeds']])
                 : null,
-            'totalStaff' => $staffSummary['totalStaff'],
-            'totalStaffSubtext' => __('dashboard.staff_academic_admin_subtext', [
-                'academic' => $staffSummary['academicCount'],
-                'admin' => $staffSummary['adminCount'],
-            ]),
+            'totalStaff' => $hasStaff ? ($staffSummary['totalStaff'] ?? 0) : 0,
+            'totalStaffSubtext' => $hasStaff
+                ? __('dashboard.staff_academic_admin_subtext', [
+                    'academic' => $staffSummary['academicCount'] ?? 0,
+                    'admin' => $staffSummary['adminCount'] ?? 0,
+                ])
+                : null,
         ];
     }
 
@@ -140,11 +167,19 @@ class OverviewDashboardMetricsService
      * @param  array<string, mixed>  $staffDashboard
      * @return list<array{key: string, message: string}>
      */
-    private function quickInsights(array $academicDashboard, array $staffDashboard): array
-    {
+    private function quickInsights(
+        array $academicDashboard,
+        array $staffDashboard,
+        bool $hasAcademic,
+        bool $hasStaff,
+    ): array {
         $insights = [];
 
-        $attachmentStatus = $academicDashboard['attachmentStatus'] ?? null;
+        if (! $hasAcademic && ! $hasStaff) {
+            return [];
+        }
+
+        $attachmentStatus = $hasAcademic ? ($academicDashboard['attachmentStatus'] ?? null) : null;
 
         if (is_array($attachmentStatus) && ($attachmentStatus['total'] ?? 0) > 0) {
             $insights[] = [
@@ -157,7 +192,7 @@ class OverviewDashboardMetricsService
             ];
         }
 
-        $passRates = $academicDashboard['passRateByDepartment'] ?? [];
+        $passRates = $hasAcademic ? ($academicDashboard['passRateByDepartment'] ?? []) : [];
 
         if ($passRates !== []) {
             $worst = collect($passRates)->sortBy('passRate')->first();
@@ -173,7 +208,7 @@ class OverviewDashboardMetricsService
             }
         }
 
-        $ratios = $staffDashboard['lecturerRatios'] ?? [];
+        $ratios = $hasStaff ? ($staffDashboard['lecturerRatios'] ?? []) : [];
 
         if ($ratios !== []) {
             $highest = collect($ratios)
@@ -279,10 +314,17 @@ class OverviewDashboardMetricsService
         array $enrolmentSummary,
         array $academicDashboard,
         array $hostelDashboard,
+        bool $hasAcademic,
+        bool $hasHostel,
+        bool $hasEnrolments,
     ): array {
         $alerts = [];
 
-        $topHotspot = $academicDashboard['moduleFailureHotspots'][0] ?? null;
+        if (! $hasAcademic && ! $hasHostel && ! $hasEnrolments) {
+            return [];
+        }
+
+        $topHotspot = $hasAcademic ? ($academicDashboard['moduleFailureHotspots'][0] ?? null) : null;
 
         if (is_array($topHotspot) && ($topHotspot['rate'] ?? 0) > 0) {
             $alerts[] = [
@@ -295,10 +337,10 @@ class OverviewDashboardMetricsService
             ];
         }
 
-        $courseWorkStatus = $academicDashboard['courseWorkStatus'];
-        $topMissingDept = $academicDashboard['missingMarksByDepartment'][0] ?? null;
+        $courseWorkStatus = $hasAcademic ? ($academicDashboard['courseWorkStatus'] ?? []) : [];
+        $topMissingDept = $hasAcademic ? ($academicDashboard['missingMarksByDepartment'][0] ?? null) : null;
 
-        if (($courseWorkStatus['incompleteCount'] ?? 0) > 0) {
+        if ($hasAcademic && ($courseWorkStatus['incompleteCount'] ?? 0) > 0) {
             $departmentName = is_array($topMissingDept)
                 ? $topMissingDept['departmentName']
                 : __('dashboard.academic_unknown_department');
@@ -313,7 +355,7 @@ class OverviewDashboardMetricsService
             ];
         }
 
-        if (($courseWorkStatus['outstandingCount'] ?? 0) > 0) {
+        if ($hasAcademic && ($courseWorkStatus['outstandingCount'] ?? 0) > 0) {
             $alerts[] = [
                 'severity' => 'warning',
                 'message' => __('dashboard.overview_alert_outstanding_marks', [
@@ -323,9 +365,9 @@ class OverviewDashboardMetricsService
             ];
         }
 
-        $topLecturer = $academicDashboard['lecturerMarkingStats'][0] ?? null;
+        $topLecturer = $hasAcademic ? ($academicDashboard['lecturerMarkingStats'][0] ?? null) : null;
 
-        if (is_array($topLecturer) && ($topLecturer['incompleteRate'] ?? 0) >= 25) {
+        if ($hasAcademic && is_array($topLecturer) && ($topLecturer['incompleteRate'] ?? 0) >= 25) {
             $alerts[] = [
                 'severity' => 'warning',
                 'message' => __('dashboard.overview_alert_lecturer_incomplete', [
@@ -340,25 +382,27 @@ class OverviewDashboardMetricsService
         $inProgressStatus = HostelQueryStatusEnum::IN_PROGRESS->value;
         $highPriority = HostelQueryPriorityEnum::HIGH->value;
 
-        HostelQuery::query()
-            ->where('priority', $highPriority)
-            ->whereIn('status', [$openStatus, $inProgressStatus])
-            ->orderByDesc('updated_at')
-            ->limit(2)
-            ->get()
-            ->each(function (HostelQuery $query) use (&$alerts): void {
-                $message = trim($query->subject.' — '.$query->description, ' —');
+        if ($hasHostel) {
+            HostelQuery::query()
+                ->where('priority', $highPriority)
+                ->whereIn('status', [$openStatus, $inProgressStatus])
+                ->orderByDesc('updated_at')
+                ->limit(2)
+                ->get()
+                ->each(function (HostelQuery $query) use (&$alerts): void {
+                    $message = trim($query->subject.' — '.$query->description, ' —');
 
-                $alerts[] = [
-                    'severity' => 'critical',
-                    'message' => $message !== '' ? $message : __('dashboard.overview_alert_hostel_query'),
-                    'updatedAt' => $query->updated_at?->toIso8601String(),
-                ];
-            });
+                    $alerts[] = [
+                        'severity' => 'critical',
+                        'message' => $message !== '' ? $message : __('dashboard.overview_alert_hostel_query'),
+                        'updatedAt' => $query->updated_at?->toIso8601String(),
+                    ];
+                });
+        }
 
-        $highPriorityQueries = (int) ($hostelDashboard['queryStats']['highPriority'] ?? 0);
+        $highPriorityQueries = $hasHostel ? (int) ($hostelDashboard['queryStats']['highPriority'] ?? 0) : 0;
 
-        if ($highPriorityQueries > 0) {
+        if ($hasHostel && $highPriorityQueries > 0) {
             $alerts[] = [
                 'severity' => 'critical',
                 'message' => __('dashboard.overview_alert_hostel_high_priority', [
@@ -368,7 +412,7 @@ class OverviewDashboardMetricsService
             ];
         }
 
-        if ($enrolmentSummary['provisional'] > 0) {
+        if ($hasEnrolments && $enrolmentSummary['provisional'] > 0) {
             $alerts[] = [
                 'severity' => 'warning',
                 'message' => __('dashboard.overview_alert_provisional', [
@@ -378,7 +422,7 @@ class OverviewDashboardMetricsService
             ];
         }
 
-        if ($enrolmentSummary['waitlisted'] > 0) {
+        if ($hasEnrolments && $enrolmentSummary['waitlisted'] > 0) {
             $alerts[] = [
                 'severity' => 'warning',
                 'message' => __('dashboard.overview_alert_waitlisted', [
@@ -388,7 +432,7 @@ class OverviewDashboardMetricsService
             ];
         }
 
-        if ($enrolmentSummary['applications'] > 0) {
+        if ($hasEnrolments && $enrolmentSummary['applications'] > 0) {
             $alerts[] = [
                 'severity' => 'info',
                 'message' => __('dashboard.overview_alert_applications', [
@@ -398,9 +442,9 @@ class OverviewDashboardMetricsService
             ];
         }
 
-        $attachmentStatus = $academicDashboard['attachmentStatus'] ?? null;
+        $attachmentStatus = $hasAcademic ? ($academicDashboard['attachmentStatus'] ?? null) : null;
 
-        if (is_array($attachmentStatus) && ($attachmentStatus['placed'] ?? 0) > 0) {
+        if ($hasAcademic && is_array($attachmentStatus) && ($attachmentStatus['placed'] ?? 0) > 0) {
             $alerts[] = [
                 'severity' => 'success',
                 'message' => __('dashboard.overview_alert_attachment', [
@@ -417,6 +461,49 @@ class OverviewDashboardMetricsService
      * @param  array<string, mixed>  $hostelDashboard
      * @return array{occupancyRate: int, availableBeds: int}|null
      */
+    /**
+     * @return array{applications: int, offersMade: int, confirmed: int, waitlisted: int, provisional: int, failedRejected: int}
+     */
+    private function emptyEnrolmentSummary(): array
+    {
+        return [
+            'applications' => 0,
+            'offersMade' => 0,
+            'confirmed' => 0,
+            'waitlisted' => 0,
+            'provisional' => 0,
+            'failedRejected' => 0,
+        ];
+    }
+
+    /**
+     * @return array{applications: int, offersMade: int, confirmed: int, waitlisted: int, provisional: int, acceptanceRate: null, yieldRate: null}
+     */
+    private function emptyEnrolmentFunnel(): array
+    {
+        return [
+            'applications' => 0,
+            'offersMade' => 0,
+            'confirmed' => 0,
+            'waitlisted' => 0,
+            'provisional' => 0,
+            'acceptanceRate' => null,
+            'yieldRate' => null,
+        ];
+    }
+
+    /**
+     * @return array{gradeSegments: array{}, topFailureHotspots: array{}, markCompletion: array{}}
+     */
+    private function emptyAcademicSnapshot(): array
+    {
+        return [
+            'gradeSegments' => [],
+            'topFailureHotspots' => [],
+            'markCompletion' => [],
+        ];
+    }
+
     private function hostelSummary(array $hostelDashboard): ?array
     {
         $summary = $hostelDashboard['summary'];
