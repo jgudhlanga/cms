@@ -27,10 +27,6 @@ const activeSection = computed(() => props.tabs.find((tab) => tab.value === prop
 
 const sectionDescription = computed(() => activeSection.value?.transDescription?.() ?? '');
 
-const badgeCounts = computed(() => ({
-    students: props.exportCounts?.faultyStudentIds,
-}));
-
 const isFullBleedSection = computed(() => props.activeTab === 'users' || props.activeTab === 'staff');
 
 const contentWrapperClass = computed(() =>
@@ -60,7 +56,6 @@ const tabProps = (tabValue: string) => {
         <BaseSectionNav
             v-model:active-tab="activeTabModel"
             :tabs="tabs"
-            :badge-counts="badgeCounts"
             :aria-label="$t('trans.maintenance')"
         />
 

@@ -17,6 +17,16 @@ Route::prefix('maintenance')->middleware(['auth', 'can:root:manage'])->group(fun
         ->name('maintenance.exports.student-enrollment');
     Route::post('/exports/application', [MaintenanceController::class, 'exportApplication'])
         ->name('maintenance.exports.application');
+    Route::get('/verified-students-final-enrolment', [MaintenanceController::class, 'verifiedStudentsFinalEnrolment'])
+        ->name('maintenance.verified-students-final-enrolment');
+    Route::get('/verified-students-final-enrolment/data', [MaintenanceController::class, 'verifiedStudentsFinalEnrolmentData'])
+        ->name('maintenance.verified-students-final-enrolment.data');
+    Route::get('/verified-students-final-enrolment/summary', [MaintenanceController::class, 'verifiedStudentsFinalEnrolmentSummary'])
+        ->name('maintenance.verified-students-final-enrolment.summary');
+    Route::post('/verified-students-final-enrolment/run', [MaintenanceController::class, 'dispatchBulkFinaliseEnrolments'])
+        ->name('maintenance.verified-students-final-enrolment.run');
+    Route::get('/verified-students-final-enrolment/runs/{runId}', [MaintenanceController::class, 'bulkFinaliseEnrolmentsRunStatus'])
+        ->name('maintenance.verified-students-final-enrolment.run-status');
     Route::get('/faulty-student-ids', [MaintenanceController::class, 'faultyStudentIds'])
         ->name('maintenance.faulty-student-ids');
     Route::get('/faulty-student-ids/data', [MaintenanceController::class, 'faultyStudentIdNumbers'])

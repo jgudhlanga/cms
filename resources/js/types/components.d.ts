@@ -497,6 +497,7 @@ declare module 'vue' {
     UserProfileHeader: typeof import('./../components/users/UserProfileHeader.vue')['default']
     UserSecurity: typeof import('./../components/users/tabs/UserSecurity.vue')['default']
     UserSelect: typeof import('./../components/core/form/select/UserSelect.vue')['default']
+    VerifiedStudentsFinalEnrolmentFilters: typeof import('./../components/maintenance/VerifiedStudentsFinalEnrolmentFilters.vue')['default']
     ViewContactDetails: typeof import('./../components/students/view/ViewContactDetails.vue')['default']
     ViewNextOfKinDetails: typeof import('./../components/students/view/ViewNextOfKinDetails.vue')['default']
     ViewPersonalDetails: typeof import('./../components/students/view/ViewPersonalDetails.vue')['default']

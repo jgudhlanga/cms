@@ -28,11 +28,7 @@ const form = useForm({
     recipient_emails: defaultRecipientEmail,
 });
 
-const counts = ref<MaintenanceExportCounts>({
-    studentEnrolments: props.exportCounts?.studentEnrolments ?? 0,
-    applications: props.exportCounts?.applications ?? 0,
-    faultyStudentIds: props.exportCounts?.faultyStudentIds ?? 0,
-});
+const faultyStudentIdsCount = ref(props.exportCounts?.faultyStudentIds ?? 0);
 
 const isLoadingCounts = ref(false);
 
@@ -42,7 +38,7 @@ const loadExportCounts = async (intakeYear?: string) => {
     try {
         const params = intakeYear ? { intake_year: intakeYear } : undefined;
         const response = (await HttpService.get(route('maintenance.exports.counts'), { params })) as MaintenanceExportCounts;
-        counts.value = response;
+        faultyStudentIdsCount.value = response.faultyStudentIds;
     } finally {
         isLoadingCounts.value = false;
     }
@@ -121,6 +117,7 @@ const confirmApplicationExport = () => {
 };
 
 const goToFaultyData = () => navigateTo(route('maintenance.faulty-student-ids'));
+const goToVerifiedStudentsFinalEnrolment = () => navigateTo(route('maintenance.verified-students-final-enrolment'));
 </script>
 
 <template>
@@ -153,11 +150,7 @@ const goToFaultyData = () => navigateTo(route('maintenance.faulty-student-ids'))
         <div class="flex flex-wrap items-center justify-between gap-3 py-1">
             <div class="min-w-0 flex-1">
                 <p class="text-sm font-medium text-foreground">
-                    {{
-                        trans('trans.maintenance_export_student_enrolments_with_count', {
-                            count: String(counts.studentEnrolments),
-                        })
-                    }}
+                    {{ trans('trans.maintenance_export_student_enrolments') }}
                 </p>
                 <p class="text-xs text-muted-foreground">
                     {{ trans('trans.maintenance_export_student_enrolments_description') }}
@@ -177,11 +170,7 @@ const goToFaultyData = () => navigateTo(route('maintenance.faulty-student-ids'))
         <div class="flex flex-wrap items-center justify-between gap-3 py-1">
             <div class="min-w-0 flex-1">
                 <p class="text-sm font-medium text-foreground">
-                    {{
-                        trans('trans.maintenance_export_applications_with_count', {
-                            count: String(counts.applications),
-                        })
-                    }}
+                    {{ trans('trans.maintenance_export_applications') }}
                 </p>
                 <p class="text-xs text-muted-foreground">
                     {{ trans('trans.maintenance_export_applications_description') }}
@@ -201,6 +190,24 @@ const goToFaultyData = () => navigateTo(route('maintenance.faulty-student-ids'))
         <button
             type="button"
             class="flex w-full items-center justify-between gap-3 rounded-md py-1 text-left transition-colors hover:bg-muted/50"
+            @click="goToVerifiedStudentsFinalEnrolment"
+        >
+            <div class="min-w-0 flex-1">
+                <p class="text-sm font-medium text-foreground">
+                    {{ trans('trans.maintenance_verified_students_final_enrolment') }}
+                </p>
+                <p class="text-xs text-muted-foreground">
+                    {{ trans('trans.maintenance_verified_students_final_enrolment_description') }}
+                </p>
+            </div>
+            <ChevronRight class="h-4 w-4 shrink-0 text-muted-foreground" />
+        </button>
+
+        <Separator />
+
+        <button
+            type="button"
+            class="flex w-full items-center justify-between gap-3 rounded-md py-1 text-left transition-colors hover:bg-muted/50"
             @click="goToFaultyData"
         >
             <div class="min-w-0 flex-1">
@@ -209,10 +216,10 @@ const goToFaultyData = () => navigateTo(route('maintenance.faulty-student-ids'))
                         {{ trans('trans.maintenance_faulty_data') }}
                     </p>
                     <span
-                        v-if="counts.faultyStudentIds > 0"
+                        v-if="faultyStudentIdsCount > 0"
                         class="rounded-full bg-destructive px-1.5 py-0.5 text-[10px] font-medium text-destructive-foreground"
                     >
-                        {{ counts.faultyStudentIds }}
+                        {{ faultyStudentIdsCount }}
                     </span>
                 </div>
                 <p class="text-xs text-muted-foreground">

@@ -10,7 +10,7 @@ import { debounce } from 'lodash';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 import { computed, onMounted, ref, watch, type Ref } from 'vue';
 
-export type StudentFilterVariant = 'index' | 'export';
+export type StudentFilterVariant = 'index' | 'export' | 'program';
 
 function unwrapList<T>(res: unknown): T[] {
     if (Array.isArray(res)) {
@@ -291,8 +291,18 @@ export function useStudentFilters({ filters, variant, onChange }: UseStudentFilt
             gender: resolveGenderFilter(),
         };
 
-        if (variant === 'export') {
-            return comboboxFilters;
+        if (variant === 'export' || variant === 'program') {
+            return {
+                department: comboboxFilters.department,
+                level: comboboxFilters.level,
+                course: comboboxFilters.course,
+                ...(variant === 'export'
+                    ? {
+                          mode_of_study: comboboxFilters.mode_of_study,
+                          gender: comboboxFilters.gender,
+                      }
+                    : {}),
+            };
         }
 
         return {
@@ -309,7 +319,9 @@ export function useStudentFilters({ filters, variant, onChange }: UseStudentFilt
     const watchedRefs =
         variant === 'index'
             ? [search, name, departmentSelection, levelSelection, courseSelection, modeOfStudySelection, genderSelection]
-            : [departmentSelection, levelSelection, courseSelection, modeOfStudySelection, genderSelection];
+            : variant === 'program'
+              ? [departmentSelection, levelSelection, courseSelection]
+              : [departmentSelection, levelSelection, courseSelection, modeOfStudySelection, genderSelection];
 
     watch(watchedRefs, applyFilters, { deep: true });
 
@@ -328,11 +340,16 @@ export function useStudentFilters({ filters, variant, onChange }: UseStudentFilt
     };
 
     onMounted(async () => {
-        await Promise.all([
+        const tasks = [
             listDepartments(route('v1.institution-departments.index', { is_academic: 1, page_size: 'all' })),
-            listModesOfStudy(),
             loadAllLevelsForFilter(),
-        ]);
+        ];
+
+        if (variant !== 'program') {
+            tasks.push(listModesOfStudy());
+        }
+
+        await Promise.all(tasks);
     });
 
     return {
