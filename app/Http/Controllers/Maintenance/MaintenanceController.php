@@ -20,11 +20,15 @@ use App\Http\Requests\Maintenance\StaffImportProcessRequest;
 use App\Http\Resources\Maintenance\FaultyStudentIdNumberResource;
 use App\Http\Resources\Maintenance\NonEnrolledStudentUserResource;
 use App\Http\Resources\Maintenance\StudentAccountMergePreviewResource;
+use App\Http\Resources\Maintenance\VerifiedStudentForFinalEnrolmentResource;
 use App\Jobs\Applications\ExportApplicationJob;
+use App\Jobs\Enrolments\BulkFinaliseEnrolmentsJob;
 use App\Jobs\Enrolments\ExportStudentEnrollmentJob;
 use App\Models\Students\Student;
 use App\Models\Students\StudentApplication;
 use App\Models\Users\User;
+use App\Services\Enrolments\BulkFinaliseEnrolmentsService;
+use App\Services\Enrolments\StudentBankPaymentMatcher;
 use App\Services\Enrollment\EnrollmentLookupService;
 use App\Services\Maintenance\Staff\StaffImportLookupCreator;
 use App\Services\Maintenance\Staff\StaffImportService;
@@ -35,6 +39,7 @@ use App\Services\Maintenance\Students\MaintenanceExportCountsService;
 use App\Services\Maintenance\Students\RejectStudentApplicationService;
 use App\Services\Maintenance\Students\StudentAccountMergePreviewService;
 use App\Services\Maintenance\Students\StudentAccountMergeService;
+use App\Services\Maintenance\Students\VerifiedStudentsForFinalEnrolmentService;
 use App\Services\Maintenance\Users\MaintenanceUserPurgeService;
 use App\Services\Maintenance\Users\NonEnrolledStudentUsersService;
 use Illuminate\Http\JsonResponse;
@@ -42,6 +47,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response as HttpResponse;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -212,6 +218,109 @@ class MaintenanceController extends Controller
         return response()->json([
             'data' => FaultyStudentIdNumberResource::make($student),
         ]);
+    }
+
+    public function verifiedStudentsFinalEnrolment(
+        StudentBankPaymentMatcher $paymentMatcher,
+    ): Response {
+        ['start_date' => $startDate, 'end_date' => $endDate] = $paymentMatcher->resolveDefaultDateRange();
+
+        return Inertia::render('maintenance/VerifiedStudentsFinalEnrolment', [
+            'paymentWindow' => [
+                'startDate' => $startDate->toDateTimeString(),
+                'endDate' => $endDate->toDateTimeString(),
+            ],
+        ]);
+    }
+
+    public function verifiedStudentsFinalEnrolmentData(
+        VerifiedStudentsForFinalEnrolmentService $service,
+    ): AnonymousResourceCollection {
+        $filters = request()->only(['search', 'department', 'level', 'course']);
+        $meta = $service->resolveBasicMeta($filters);
+
+        return VerifiedStudentForFinalEnrolmentResource::collection(
+            $service->paginate($filters),
+        )->additional([
+            'paymentWindow' => [
+                'startDate' => $meta['startDate'],
+                'endDate' => $meta['endDate'],
+            ],
+            'summary' => $meta['summary'],
+        ]);
+    }
+
+    public function verifiedStudentsFinalEnrolmentSummary(
+        VerifiedStudentsForFinalEnrolmentService $service,
+    ): JsonResponse {
+        $filters = request()->only(['search', 'department', 'level', 'course']);
+        $meta = $service->resolvePaymentSummary($filters);
+
+        return response()->json([
+            'paymentWindow' => [
+                'startDate' => $meta['startDate'],
+                'endDate' => $meta['endDate'],
+            ],
+            'summary' => $meta['summary'],
+        ]);
+    }
+
+    public function dispatchBulkFinaliseEnrolments(
+        BulkFinaliseEnrolmentsService $bulkFinaliseService,
+        StudentBankPaymentMatcher $paymentMatcher,
+    ): JsonResponse {
+        if ($bulkFinaliseService->isRunActive()) {
+            return response()->json([
+                'message' => __('trans.maintenance_verified_students_final_enrolment_run_already_active'),
+            ], 409);
+        }
+
+        ['start_date' => $startDate, 'end_date' => $endDate] = $paymentMatcher->resolveDefaultDateRange();
+        $runId = (string) Str::uuid();
+
+        if (! $bulkFinaliseService->acquireActiveRun($runId)) {
+            return response()->json([
+                'message' => __('trans.maintenance_verified_students_final_enrolment_run_already_active'),
+            ], 409);
+        }
+
+        $bulkFinaliseService->writeRunProgress($runId, [
+            'status' => 'pending',
+            'processed' => 0,
+            'total' => $bulkFinaliseService->loadVerifiedStudentApplications()->count(),
+            'successful' => 0,
+            'failed' => 0,
+            'message' => null,
+        ]);
+
+        BulkFinaliseEnrolmentsJob::dispatch(
+            $runId,
+            $startDate->toDateTimeString(),
+            $endDate->toDateTimeString(),
+        )->withoutDelay();
+
+        return response()->json([
+            'runId' => $runId,
+            'startDate' => $startDate->toDateTimeString(),
+            'endDate' => $endDate->toDateTimeString(),
+            'message' => __('trans.maintenance_verified_students_final_enrolment_run_queued', [
+                'start' => $startDate->toDateTimeString(),
+                'end' => $endDate->toDateTimeString(),
+            ]),
+        ]);
+    }
+
+    public function bulkFinaliseEnrolmentsRunStatus(
+        string $runId,
+        BulkFinaliseEnrolmentsService $bulkFinaliseService,
+    ): JsonResponse {
+        $progress = $bulkFinaliseService->getRunProgress($runId);
+
+        if ($progress === null) {
+            abort(404);
+        }
+
+        return response()->json($progress);
     }
 
     public function mergeFaultyStudentPreview(
