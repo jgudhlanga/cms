@@ -55,6 +55,7 @@ class VerifiedStudentsForFinalEnrolmentQuery
      *     department?: array<int|string>|int|string|null,
      *     level?: array<int|string>|int|string|null,
      *     course?: array<int|string>|int|string|null,
+     *     payment_status?: string|null,
      * }  $filters
      * @return Builder<StudentApplication>
      */
@@ -80,7 +81,43 @@ class VerifiedStudentsForFinalEnrolmentQuery
             $query->whereIn('student_applications.department_course_id', $courseIds);
         }
 
-        return $query;
+        return $this->applyPaymentStatusSqlFilter($query, $filters);
+    }
+
+    /**
+     * @param  array{payment_status?: string|null}  $filters
+     * @return Builder<StudentApplication>
+     */
+    public function applyPaymentStatusSqlFilter(Builder $query, array $filters = []): Builder
+    {
+        $paymentStatus = $filters['payment_status'] ?? null;
+
+        if ($paymentStatus !== 'missing_student_number') {
+            return $query;
+        }
+
+        if (! $this->queryHasStudentsJoin($query)) {
+            $query->join('students', 'students.id', '=', 'student_applications.student_id');
+        }
+
+        return $query->where(function (Builder $builder): void {
+            $builder
+                ->whereNull('students.student_number')
+                ->orWhere('students.student_number', '');
+        });
+    }
+
+    private function queryHasStudentsJoin(Builder $query): bool
+    {
+        $joins = $query->getQuery()->joins ?? [];
+
+        foreach ($joins as $join) {
+            if ($join->table === 'students') {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

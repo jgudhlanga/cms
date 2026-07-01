@@ -31,11 +31,23 @@ export interface VerifiedStudentsFinalEnrolmentPaymentWindow {
     endDate: string;
 }
 
+export type VerifiedStudentPaymentStatusFilter =
+    | 'all'
+    | 'eligible'
+    | 'no_payment'
+    | 'missing_student_number';
+
 export interface VerifiedStudentsFinalEnrolmentFiltersState {
     search?: string;
     department?: number[];
     level?: number[];
     course?: number[];
+    payment_status?: VerifiedStudentPaymentStatusFilter;
+}
+
+export interface BulkFinaliseDispatchPayload {
+    student_application_ids?: number[];
+    force_finalise?: boolean;
 }
 
 export interface BulkFinaliseRunProgress {

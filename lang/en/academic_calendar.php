@@ -157,4 +157,5 @@ return [
     'no_lecturer_assigned' => 'No lecturer assigned',
     'change_lecturer' => 'Change lecturer',
     'class_lecturer' => 'Class lecturer',
+    'view_classes' => 'View Classes (:count)',
 ];
