@@ -5,6 +5,7 @@ import DataTable from '@/components/core/table/DataTable.vue';
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import VerifiedStudentsFinalEnrolmentFilters from '@/components/maintenance/VerifiedStudentsFinalEnrolmentFilters.vue';
 import { useVerifiedStudentsFinalEnrolment } from '@/composables/maintenance/useVerifiedStudentsFinalEnrolment';
+import { useVerifiedStudentsFinalEnrolmentSelection } from '@/composables/maintenance/useVerifiedStudentsFinalEnrolmentSelection';
 import { ColorVariant } from '@/enums/colors';
 import { IconName } from '@/enums/icons';
 import { TypeVariant } from '@/enums/type-variants';
@@ -69,6 +70,11 @@ const summary = ref<VerifiedStudentsFinalEnrolmentSummary>({
     paymentSummaryReady: false,
 });
 
+const visibleStudents = computed(() => students.value.data);
+
+const { selectedStudentApplicationIds, selectAllModel, clearSelection, pruneSelectionToVisibleStudents } =
+    useVerifiedStudentsFinalEnrolmentSelection(visibleStudents);
+
 const paymentWindowLabel = computed(() =>
     trans('trans.maintenance_verified_students_final_enrolment_payment_window', {
         start: props.paymentWindow.startDate,
@@ -76,7 +82,12 @@ const paymentWindowLabel = computed(() =>
     }),
 );
 
-const columns = computed(() => createVerifiedStudentColumns());
+const columns = computed(() =>
+    createVerifiedStudentColumns({
+        selectedStudentApplicationIds,
+        selectAllModel,
+    }),
+);
 
 const applyResponse = (response: Awaited<ReturnType<typeof fetchVerifiedStudents>>): void => {
     if (!response) {
@@ -92,6 +103,8 @@ const applyResponse = (response: Awaited<ReturnType<typeof fetchVerifiedStudents
     if (response.summary) {
         summary.value = response.summary;
     }
+
+    pruneSelectionToVisibleStudents();
 };
 
 const loadPaymentSummary = async (): Promise<void> => {
@@ -117,6 +130,7 @@ const loadStudents = async (nextFilters: VerifiedStudentsFinalEnrolmentFiltersSt
 };
 
 const onFiltersChange = async (nextFilters: VerifiedStudentsFinalEnrolmentFiltersState) => {
+    clearSelection();
     await loadStudents(nextFilters);
 };
 
@@ -125,12 +139,13 @@ const loadStudentsFromUrl = async (url: string) => {
 };
 
 const reloadStudents = async () => {
+    clearSelection();
     await loadStudents(filters.value);
     await loadPaymentSummary();
 };
 
 const onRunBulkFinalise = () => {
-    void confirmAndRunBulkFinalise(reloadStudents);
+    void confirmAndRunBulkFinalise(reloadStudents, selectedStudentApplicationIds.value);
 };
 
 onMounted(() => {
@@ -210,18 +225,19 @@ onMounted(() => {
                     :show-column-filters="false"
                 >
                     <template #head-left>
-                        <VerifiedStudentsFinalEnrolmentFilters :filters="filters" @change="onFiltersChange" />
-                    </template>
-                    <template #head-right>
-                        <GenericButton
-                            class="ml-2 rounded-full"
-                            :icon="IconName.check"
-                            :variant="ColorVariant.primary"
-                            :title="runButtonLabel()"
-                            :disabled="isRunning"
-                            :processing="isRunning"
-                            @click="onRunBulkFinalise"
-                        />
+                        <VerifiedStudentsFinalEnrolmentFilters :filters="filters" @change="onFiltersChange">
+                            <template #actions>
+                                <GenericButton
+                                    class="rounded-full"
+                                    :icon="IconName.check"
+                                    :variant="ColorVariant.primary"
+                                    :title="runButtonLabel()"
+                                    :disabled="isRunning"
+                                    :processing="isRunning"
+                                    @click="onRunBulkFinalise"
+                                />
+                            </template>
+                        </VerifiedStudentsFinalEnrolmentFilters>
                     </template>
                 </DataTable>
             </div>

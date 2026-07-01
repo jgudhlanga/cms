@@ -6,6 +6,7 @@ namespace App\Services\Enrolments;
 
 use App\DataTransferObjects\Enrolments\BulkFinaliseEnrolmentsResult;
 use App\Enums\Acl\RoleEnum;
+use App\Enums\Enrolments\BulkFinaliseEnrolmentAuditEventEnum;
 use App\Enums\Shared\ClassListTypeEnum;
 use App\Enums\Shared\WorkflowStepEnum;
 use App\Exceptions\Students\StudentEnrolmentResolutionException;
@@ -44,6 +45,7 @@ class BulkFinaliseEnrolmentsService
         protected VerifiedStudentsForFinalEnrolmentQuery $verifiedStudentsQuery,
         protected StudentBankPaymentMatcher $paymentMatcher,
         protected ResolveStudentEnrolmentAttributesService $resolveStudentEnrolmentAttributes,
+        protected BulkFinaliseEnrolmentAuditLogger $auditLogger,
     ) {}
 
     /**
@@ -68,8 +70,11 @@ class BulkFinaliseEnrolmentsService
         bool $dryRun = false,
         ?string $runId = null,
         ?callable $onProgress = null,
+        ?int $initiatedByUserId = null,
+        array $studentApplicationIds = [],
+        bool $forceFinalise = false,
     ): BulkFinaliseEnrolmentsResult {
-        $studentApplications = $this->loadVerifiedStudentApplications();
+        $studentApplications = $this->loadVerifiedStudentApplications($studentApplicationIds);
         $step = $this->resolveEnrolledWorkflowStep();
         $successfulFinalised = 0;
         $failedFinalisations = 0;
@@ -117,6 +122,9 @@ class BulkFinaliseEnrolmentsService
                     $step,
                     $dryRun,
                     $paymentMap,
+                    $forceFinalise,
+                    $runId,
+                    $initiatedByUserId,
                 );
             } catch (StudentEnrolmentResolutionException $exception) {
                 if ($this->shouldContinueAfterResolutionException($exception)) {
@@ -225,7 +233,38 @@ class BulkFinaliseEnrolmentsService
                     'failed' => $failedFinalisations,
                     'message' => null,
                 ]);
+
+                if (! $dryRun) {
+                    $this->auditLogger->log(
+                        runId: $runId,
+                        event: BulkFinaliseEnrolmentAuditEventEnum::RunCompleted,
+                        userId: $initiatedByUserId,
+                        forceFinalise: $forceFinalise,
+                        metadata: [
+                            'successful' => $successfulFinalised,
+                            'failed' => $failedFinalisations,
+                            'total' => $total,
+                            'student_application_ids' => $studentApplicationIds,
+                        ],
+                    );
+                }
             }
+        }
+
+        if ($aborted && $runId !== null && ! $dryRun) {
+            $this->auditLogger->log(
+                runId: $runId,
+                event: BulkFinaliseEnrolmentAuditEventEnum::RunFailed,
+                userId: $initiatedByUserId,
+                forceFinalise: $forceFinalise,
+                reason: $abortMessage,
+                metadata: [
+                    'successful' => $successfulFinalised,
+                    'failed' => $failedFinalisations,
+                    'total' => $total,
+                    'student_application_ids' => $studentApplicationIds,
+                ],
+            );
         }
 
         if ($runId !== null) {
@@ -293,7 +332,7 @@ class BulkFinaliseEnrolmentsService
         return $progress;
     }
 
-    public function markRunFailed(string $runId, string $message): void
+    public function markRunFailed(string $runId, string $message, ?int $initiatedByUserId = null, bool $forceFinalise = false): void
     {
         $progress = $this->getRunProgress($runId) ?? [
             'processed' => 0,
@@ -311,15 +350,36 @@ class BulkFinaliseEnrolmentsService
             'message' => $message,
         ]);
 
+        $this->auditLogger->log(
+            runId: $runId,
+            event: BulkFinaliseEnrolmentAuditEventEnum::RunFailed,
+            userId: $initiatedByUserId,
+            forceFinalise: $forceFinalise,
+            reason: $message,
+            metadata: [
+                'processed' => (int) ($progress['processed'] ?? 0),
+                'total' => (int) ($progress['total'] ?? 0),
+                'successful' => (int) ($progress['successful'] ?? 0),
+                'failed' => (int) ($progress['failed'] ?? 0),
+            ],
+        );
+
         $this->releaseActiveRun();
     }
 
     /**
+     * @param  list<int>  $studentApplicationIds
      * @return Collection<int, StudentApplication>
      */
-    public function loadVerifiedStudentApplications(): Collection
+    public function loadVerifiedStudentApplications(array $studentApplicationIds = []): Collection
     {
-        return $this->verifiedStudentsQuery->withRelations()->get();
+        $query = $this->verifiedStudentsQuery->withRelations();
+
+        if ($studentApplicationIds !== []) {
+            $query->whereIn('student_applications.id', $studentApplicationIds);
+        }
+
+        return $query->get();
     }
 
     private function resolveEnrolledWorkflowStep(): ?WorkflowStep
@@ -342,11 +402,24 @@ class BulkFinaliseEnrolmentsService
         ?WorkflowStep $step,
         bool $dryRun,
         array $paymentMap = [],
+        bool $forceFinalise = false,
+        ?string $runId = null,
+        ?int $initiatedByUserId = null,
     ): array {
         $student = $studentApplication->student;
         $studentNumber = $student?->student_number;
 
         if ($studentNumber === null || $studentNumber === '') {
+            $this->logStudentSkipped(
+                $runId,
+                $initiatedByUserId,
+                $studentApplication,
+                'missing_student_number',
+                $forceFinalise,
+                'missing_student_number',
+                $dryRun,
+            );
+
             return [
                 'successful' => false,
                 'success' => null,
@@ -358,7 +431,19 @@ class BulkFinaliseEnrolmentsService
             ? ($paymentMap[$studentNumber] ?? false)
             : $this->paymentMatcher->hasPaymentInRange($studentNumber, $startDate, $endDate);
 
-        if (! $hasPayment) {
+        $paymentEligibility = $hasPayment ? 'eligible' : 'no_payment';
+
+        if (! $hasPayment && ! $forceFinalise) {
+            $this->logStudentSkipped(
+                $runId,
+                $initiatedByUserId,
+                $studentApplication,
+                $paymentEligibility,
+                $forceFinalise,
+                'no_matching_payment',
+                $dryRun,
+            );
+
             return [
                 'successful' => false,
                 'success' => null,
@@ -375,6 +460,14 @@ class BulkFinaliseEnrolmentsService
             $this->finaliseClassList($studentApplication);
             $this->updateDepartmentApplicationStep($studentApplication, $step);
             $this->upsertStudentEnrolment($studentApplication, $enrolmentAttributes);
+
+            $this->logStudentFinalised(
+                $runId,
+                $initiatedByUserId,
+                $studentApplication,
+                $paymentEligibility,
+                $forceFinalise,
+            );
         }
 
         return [
@@ -384,11 +477,60 @@ class BulkFinaliseEnrolmentsService
         ];
     }
 
+    private function logStudentFinalised(
+        ?string $runId,
+        ?int $initiatedByUserId,
+        StudentApplication $studentApplication,
+        string $paymentEligibility,
+        bool $forceFinalise,
+    ): void {
+        if ($runId === null) {
+            return;
+        }
+
+        $this->auditLogger->log(
+            runId: $runId,
+            event: BulkFinaliseEnrolmentAuditEventEnum::StudentFinalised,
+            userId: $initiatedByUserId,
+            studentApplication: $studentApplication,
+            paymentEligibility: $paymentEligibility,
+            forceFinalise: $forceFinalise,
+        );
+    }
+
+    private function logStudentSkipped(
+        ?string $runId,
+        ?int $initiatedByUserId,
+        StudentApplication $studentApplication,
+        string $paymentEligibility,
+        bool $forceFinalise,
+        string $reason,
+        bool $dryRun,
+    ): void {
+        if ($runId === null || $dryRun) {
+            return;
+        }
+
+        $this->auditLogger->log(
+            runId: $runId,
+            event: BulkFinaliseEnrolmentAuditEventEnum::StudentSkipped,
+            userId: $initiatedByUserId,
+            studentApplication: $studentApplication,
+            paymentEligibility: $paymentEligibility,
+            forceFinalise: $forceFinalise,
+            reason: $reason,
+        );
+    }
+
     private function finaliseClassList(StudentApplication $studentApplication): void
     {
-        ClassList::query()
-            ->whereKey($studentApplication->classListId)
-            ->update(['type' => ClassListTypeEnum::FINAL->value]);
+        $classList = ClassList::query()->whereKey($studentApplication->classListId)->first();
+
+        if ($classList === null) {
+            return;
+        }
+
+        $classList->update(['type' => ClassListTypeEnum::FINAL->value]);
     }
 
     private function updateDepartmentApplicationStep(StudentApplication $studentApplication, ?WorkflowStep $step): void

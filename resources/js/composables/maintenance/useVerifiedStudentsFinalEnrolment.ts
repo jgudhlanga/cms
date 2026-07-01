@@ -1,9 +1,12 @@
+import { BaseCheckbox } from '@/components/core/form';
 import { useDataTables } from '@/composables/core/useDataTables';
 import { buildStudentShowUrl } from '@/lib/studentShowNavigation';
 import { mergeQueryParamsIntoRequestPath } from '@/lib/merge-query-into-url';
 import { errorAlert, successAlert, warningDialog } from '@/lib/alerts';
 import HttpService from '@/services/http.service';
+import type { ComputedRef, Ref } from 'vue';
 import type {
+    BulkFinaliseDispatchPayload,
     BulkFinaliseDispatchResponse,
     BulkFinaliseRunProgress,
     VerifiedStudentForFinalEnrolment,
@@ -46,6 +49,11 @@ const rowHighlightClass = (eligibility: VerifiedStudentPaymentEligibility): stri
         : 'bg-destructive/5';
 };
 
+interface CreateVerifiedStudentColumnsOptions {
+    selectedStudentApplicationIds: Ref<number[]>;
+    selectAllModel: ComputedRef<boolean>;
+}
+
 export const useVerifiedStudentsFinalEnrolment = () => {
     const { textLink } = useDataTables();
     const isLoading = ref(false);
@@ -54,7 +62,42 @@ export const useVerifiedStudentsFinalEnrolment = () => {
     const runProgress = ref<BulkFinaliseRunProgress | null>(null);
     const activeRunId = ref<string | null>(null);
 
-    const createVerifiedStudentColumns = () => [
+    const createVerifiedStudentColumns = ({
+        selectedStudentApplicationIds,
+        selectAllModel,
+    }: CreateVerifiedStudentColumnsOptions) => [
+        {
+            header: () =>
+                h(BaseCheckbox, {
+                    inputId: 'select_all_verified_students_final_enrolment',
+                    label: '',
+                    modelValue: selectAllModel.value,
+                    'onUpdate:modelValue': (value: boolean) => {
+                        selectAllModel.value = value;
+                    },
+                }),
+            accessorKey: 'select',
+            enableSorting: false,
+            meta: { align: 'center' },
+            cell: ({ row }: { row: { original: VerifiedStudentForFinalEnrolment } }) =>
+                h(BaseCheckbox, {
+                    inputId: `select_verified_student_final_enrolment_${row.original.id}`,
+                    label: '',
+                    modelValue: selectedStudentApplicationIds.value.includes(row.original.id),
+                    'onUpdate:modelValue': (checked: boolean) => {
+                        const id = row.original.id;
+                        if (checked) {
+                            if (!selectedStudentApplicationIds.value.includes(id)) {
+                                selectedStudentApplicationIds.value = [...selectedStudentApplicationIds.value, id];
+                            }
+                        } else {
+                            selectedStudentApplicationIds.value = selectedStudentApplicationIds.value.filter(
+                                (selectedId) => selectedId !== id,
+                            );
+                        }
+                    },
+                }),
+        },
         {
             header: trans('trans.maintenance_verified_students_final_enrolment_column_name'),
             accessorKey: 'name',
@@ -190,9 +233,11 @@ export const useVerifiedStudentsFinalEnrolment = () => {
         }
     };
 
-    const dispatchBulkFinalise = async (): Promise<BulkFinaliseDispatchResponse | undefined> => {
+    const dispatchBulkFinalise = async (
+        payload: BulkFinaliseDispatchPayload = {},
+    ): Promise<BulkFinaliseDispatchResponse | undefined> => {
         try {
-            return (await HttpService.post(route('maintenance.verified-students-final-enrolment.run'))) as BulkFinaliseDispatchResponse;
+            return (await HttpService.post(route('maintenance.verified-students-final-enrolment.run'), payload)) as BulkFinaliseDispatchResponse;
         } catch (error: unknown) {
             const response = error as { response?: { data?: { message?: string }; status?: number } };
             const message =
@@ -241,17 +286,34 @@ export const useVerifiedStudentsFinalEnrolment = () => {
             void poll();
         });
 
-    const confirmAndRunBulkFinalise = async (onComplete: () => void | Promise<void>): Promise<void> => {
+    const confirmAndRunBulkFinalise = async (
+        onComplete: () => void | Promise<void>,
+        selectedStudentApplicationIds: number[] = [],
+    ): Promise<void> => {
         if (isRunning.value) {
             return;
         }
+
+        const hasSelection = selectedStudentApplicationIds.length > 0;
+        const confirmMessage = hasSelection
+            ? trans('trans.maintenance_verified_students_final_enrolment_run_confirm_selected', {
+                  count: String(selectedStudentApplicationIds.length),
+              })
+            : trans('trans.maintenance_verified_students_final_enrolment_run_confirm');
 
         warningDialog(
             async () => {
                 isRunning.value = true;
                 runProgress.value = null;
 
-                const dispatch = await dispatchBulkFinalise();
+                const dispatch = await dispatchBulkFinalise(
+                    hasSelection
+                        ? {
+                              student_application_ids: selectedStudentApplicationIds,
+                              force_finalise: true,
+                          }
+                        : {},
+                );
 
                 if (!dispatch) {
                     isRunning.value = false;
@@ -290,7 +352,7 @@ export const useVerifiedStudentsFinalEnrolment = () => {
 
                 return true;
             },
-            trans('trans.maintenance_verified_students_final_enrolment_run_confirm'),
+            confirmMessage,
             trans('trans.warning'),
             trans('trans.maintenance_verified_students_final_enrolment_run'),
         );

@@ -2,16 +2,18 @@
 import { useAcademicCalendars } from '@/composables/academicCalendars/useAcademicCalendars';
 import { useModeOfStudy } from '@/composables/institution/useModeOfStudy';
 import { useServerSide } from '@/composables/shared/useServerSide';
+import { ButtonSize } from '@/enums/buttons';
+import { ColorVariant } from '@/enums/colors';
 import { openModal } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
+import { useDepartmentMetaStore } from '@/store/institution/useDepartmentMetaStore';
 import { AcademicClassConfigPayload, ClassLevelSummary, DepartmentCourseClassCount } from '@/types/academic-calendar';
 import { InstitutionDepartment, ModeOfStudy } from '@/types/institution';
 import { SelectOption } from '@/types/utils';
-import { useDepartmentMetaStore } from '@/store/institution/useDepartmentMetaStore';
+import { Link as InertiaLink } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 import { storeToRefs } from 'pinia';
 import { onMounted, ref, watch } from 'vue';
-import { ColorVariant } from '@/enums/colors';
 
 interface Props {
     department: InstitutionDepartment;
@@ -139,31 +141,8 @@ const getDisplayedStudentsPerClass = (studentsPerClass: string | number | null):
     return Number(studentsPerClass ?? 0);
 };
 
-const getSuggestedClassCount = (level: ClassLevelSummary): number | null => {
-    const perClass = getDisplayedStudentsPerClass(level.studentsPerClass);
-    if (perClass < 1) {
-        return null;
-    }
-    const total = getDisplayedTotalFinalList(level.totalFinalList, level.totalnClass);
-    if (total < 1) {
-        return null;
-    }
-    return Math.ceil(total / perClass);
-};
-
-const getClassesLinkLabel = (level: ClassLevelSummary): string => {
-    const created = Number(level.classesCount ?? 0);
-    const suggested = getSuggestedClassCount(level);
-    if (suggested !== null && suggested > created) {
-        return String(
-            trans('academic_calendar.classes_count_with_suggested', {
-                created,
-                suggested,
-            }),
-        );
-    }
-    return String(created);
-};
+const getViewClassesLabel = (level: ClassLevelSummary): string =>
+    trans('academic_calendar.view_classes', { count: Number(level.classesCount ?? 0) });
 
 const getClassConfigTagTitle = (level: ClassLevelSummary): string => {
     const base = `${trans_choice('academic_calendar.class_unit_size', 1)}: ${getDisplayedStudentsPerClass(level.studentsPerClass)} - ${level.academicYearOption ?? 'semester'}`;
@@ -239,9 +218,8 @@ const showConfigModal = (payload: AcademicClassConfigPayload) => {
                                 </td>
                                 <td class="j-td text-center">{{ codesLabel(level) }}</td>
                                 <td class="j-td text-center">
-                                    <TextLink
+                                    <InertiaLink
                                         v-if="level.classConfigId !== null"
-                                        :title="String(level.classesCount ?? 0)"
                                         :href="
                                             route('academic-calendars.department-classes', {
                                                 institution_department: institutionDepartmentId,
@@ -252,8 +230,14 @@ const showConfigModal = (payload: AcademicClassConfigPayload) => {
                                                 class_config_id: String(level.classConfigId),
                                             })
                                         "
-                                        classes="size-4 bg-green-100 rounded-full px-2 py-1 hover:bg-green-600 text-green-600 hover:text-green-100"
-                                    />
+                                    >
+                                        <BaseButton
+                                            :title="getViewClassesLabel(level)"
+                                            classes="rounded-full"
+                                            :size="ButtonSize.xs"
+                                            :variant="ColorVariant.success_outline"
+                                        />
+                                    </InertiaLink>
                                     <span v-else>---</span>
                                 </td>
                             </tr>

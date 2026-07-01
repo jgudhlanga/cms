@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Maintenance;
 
+use App\Enums\Enrolments\BulkFinaliseEnrolmentAuditEventEnum;
 use App\Exceptions\Maintenance\StudentIdNumberConflictException;
 use App\Exports\Maintenance\StaffImportTemplateExport;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Maintenance\DispatchBulkFinaliseEnrolmentsRequest;
 use App\Http\Requests\Maintenance\ExportApplicationRequest;
 use App\Http\Requests\Maintenance\ExportStudentEnrollmentRequest;
 use App\Http\Requests\Maintenance\FixStudentIdNumberRequest;
@@ -27,9 +29,10 @@ use App\Jobs\Enrolments\ExportStudentEnrollmentJob;
 use App\Models\Students\Student;
 use App\Models\Students\StudentApplication;
 use App\Models\Users\User;
+use App\Services\Enrollment\EnrollmentLookupService;
+use App\Services\Enrolments\BulkFinaliseEnrolmentAuditLogger;
 use App\Services\Enrolments\BulkFinaliseEnrolmentsService;
 use App\Services\Enrolments\StudentBankPaymentMatcher;
-use App\Services\Enrollment\EnrollmentLookupService;
 use App\Services\Maintenance\Staff\StaffImportLookupCreator;
 use App\Services\Maintenance\Staff\StaffImportService;
 use App\Services\Maintenance\Staff\StaffImportTemplateService;
@@ -236,7 +239,7 @@ class MaintenanceController extends Controller
     public function verifiedStudentsFinalEnrolmentData(
         VerifiedStudentsForFinalEnrolmentService $service,
     ): AnonymousResourceCollection {
-        $filters = request()->only(['search', 'department', 'level', 'course']);
+        $filters = request()->only(['search', 'department', 'level', 'course', 'payment_status']);
         $meta = $service->resolveBasicMeta($filters);
 
         return VerifiedStudentForFinalEnrolmentResource::collection(
@@ -253,7 +256,7 @@ class MaintenanceController extends Controller
     public function verifiedStudentsFinalEnrolmentSummary(
         VerifiedStudentsForFinalEnrolmentService $service,
     ): JsonResponse {
-        $filters = request()->only(['search', 'department', 'level', 'course']);
+        $filters = request()->only(['search', 'department', 'level', 'course', 'payment_status']);
         $meta = $service->resolvePaymentSummary($filters);
 
         return response()->json([
@@ -266,7 +269,9 @@ class MaintenanceController extends Controller
     }
 
     public function dispatchBulkFinaliseEnrolments(
+        DispatchBulkFinaliseEnrolmentsRequest $request,
         BulkFinaliseEnrolmentsService $bulkFinaliseService,
+        BulkFinaliseEnrolmentAuditLogger $auditLogger,
         StudentBankPaymentMatcher $paymentMatcher,
     ): JsonResponse {
         if ($bulkFinaliseService->isRunActive()) {
@@ -277,6 +282,9 @@ class MaintenanceController extends Controller
 
         ['start_date' => $startDate, 'end_date' => $endDate] = $paymentMatcher->resolveDefaultDateRange();
         $runId = (string) Str::uuid();
+        $studentApplicationIds = $request->studentApplicationIds();
+        $forceFinalise = $request->forceFinalise();
+        $initiatedByUserId = auth()->id();
 
         if (! $bulkFinaliseService->acquireActiveRun($runId)) {
             return response()->json([
@@ -287,16 +295,31 @@ class MaintenanceController extends Controller
         $bulkFinaliseService->writeRunProgress($runId, [
             'status' => 'pending',
             'processed' => 0,
-            'total' => $bulkFinaliseService->loadVerifiedStudentApplications()->count(),
+            'total' => $bulkFinaliseService->loadVerifiedStudentApplications($studentApplicationIds)->count(),
             'successful' => 0,
             'failed' => 0,
             'message' => null,
         ]);
 
+        $auditLogger->log(
+            runId: $runId,
+            event: BulkFinaliseEnrolmentAuditEventEnum::RunStarted,
+            userId: is_int($initiatedByUserId) ? $initiatedByUserId : null,
+            forceFinalise: $forceFinalise,
+            metadata: [
+                'student_application_ids' => $studentApplicationIds,
+                'start_date' => $startDate->toDateTimeString(),
+                'end_date' => $endDate->toDateTimeString(),
+            ],
+        );
+
         BulkFinaliseEnrolmentsJob::dispatch(
-            $runId,
-            $startDate->toDateTimeString(),
-            $endDate->toDateTimeString(),
+            runId: $runId,
+            startDate: $startDate->toDateTimeString(),
+            endDate: $endDate->toDateTimeString(),
+            initiatedByUserId: is_int($initiatedByUserId) ? $initiatedByUserId : null,
+            studentApplicationIds: $studentApplicationIds,
+            forceFinalise: $forceFinalise,
         )->withoutDelay();
 
         return response()->json([
