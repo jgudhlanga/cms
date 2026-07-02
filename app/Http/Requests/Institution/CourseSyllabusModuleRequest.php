@@ -2,12 +2,27 @@
 
 namespace App\Http\Requests\Institution;
 
+use App\Enums\Acl\RoleEnum;
+use App\Models\Institution\Staff;
+use App\Models\Institution\Syllabus\CourseSyllabus;
 use App\Services\Institution\ResolveCalendarTypeSlugPrefixFromCourseSyllabus;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 class CourseSyllabusModuleRequest extends FormRequest
 {
+    /** @return array<int, string> */
+    private static function academicStaffRoleSlugs(): array
+    {
+        return [
+            RoleEnum::LECTURER->value,
+            RoleEnum::SENIOR_LECTURER->value,
+            RoleEnum::LECTURER_IN_CHARGE->value,
+            RoleEnum::HEAD_OF_DEPARTMENT->value,
+        ];
+    }
+
     public function authorize(): bool
     {
         return true;
@@ -43,6 +58,52 @@ class CourseSyllabusModuleRequest extends FormRequest
             'prerequisite_module_ids.*' => ['integer', 'distinct', 'exists:course_syllabus_modules,id'],
             'shared' => ['nullable', 'boolean'],
             'all_semesters' => ['nullable', 'boolean'],
+            'staff_ids' => ['nullable', 'array'],
+            'staff_ids.*' => ['integer', 'distinct', Rule::exists('staff', 'id')->whereNull('deleted_at')],
         ];
+    }
+
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function (Validator $validator): void {
+            $staffIds = array_map('intval', $this->input('staff_ids', []));
+
+            if ($staffIds === []) {
+                return;
+            }
+
+            $courseSyllabusId = (int) $this->input('course_syllabus_id', 0);
+            $institutionDepartmentId = CourseSyllabus::query()
+                ->whereKey($courseSyllabusId)
+                ->value('institution_department_id');
+
+            $validStaff = Staff::query()
+                ->whereIn('id', $staffIds)
+                ->whereNull('deleted_at')
+                ->when(
+                    $institutionDepartmentId,
+                    fn ($query) => $query->whereHas(
+                        'institutionDepartments',
+                        fn ($departmentQuery) => $departmentQuery->where(
+                            'institution_departments.id',
+                            (int) $institutionDepartmentId,
+                        ),
+                    ),
+                )
+                ->whereHas('user.roles', function ($query): void {
+                    $query->whereIn('slug', self::academicStaffRoleSlugs());
+                })
+                ->pluck('id')
+                ->all();
+
+            foreach ($staffIds as $index => $staffId) {
+                if (! in_array($staffId, $validStaff, true)) {
+                    $validator->errors()->add(
+                        "staff_ids.{$index}",
+                        __('validation.exists', ['attribute' => 'staff_ids.'.$index]),
+                    );
+                }
+            }
+        });
     }
 }

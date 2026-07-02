@@ -3,6 +3,7 @@
 namespace App\Models\Institution\Syllabus;
 
 use App\Models\AcademicCalendars\AcademicYearOption;
+use App\Models\Institution\Staff;
 use App\Traits\BelongsToTenant;
 use App\Traits\Filterable;
 use App\Traits\Paginatable;
@@ -10,6 +11,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
@@ -55,6 +57,12 @@ class CourseSyllabusModule extends Model
     public function academicYearOption(): BelongsTo
     {
         return $this->belongsTo(AcademicYearOption::class, 'academic_year_option_id');
+    }
+
+    public function lecturers(): BelongsToMany
+    {
+        return $this->belongsToMany(Staff::class, 'course_syllabus_module_lecturers')
+            ->withTimestamps();
     }
 
     public function getActivitylogOptions(): LogOptions

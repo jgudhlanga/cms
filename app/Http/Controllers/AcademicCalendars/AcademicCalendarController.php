@@ -30,6 +30,7 @@ use App\Models\Institution\InstitutionDepartment;
 use App\Models\Institution\ModeOfStudy;
 use App\Models\Students\StudentEnrolment;
 use App\Queries\Enrolments\ConfirmedStudentsQuery;
+use App\Services\AcademicCalendars\AcademicCalendarClassNameFormatter;
 use App\Services\AcademicCalendars\ClassListDataService;
 use App\Services\AcademicCalendars\ClassListPdfService;
 use App\Services\AcademicCalendars\CourseWorkImportService;
@@ -52,6 +53,10 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 class AcademicCalendarController extends Controller
 {
     use ResolvesAcademicCalendarFromCalendarYear;
+
+    public function __construct(
+        private readonly AcademicCalendarClassNameFormatter $classNameFormatter,
+    ) {}
 
     public function index()
     {
@@ -133,7 +138,7 @@ class AcademicCalendarController extends Controller
         $unassignedFinalStudentApplications = $this->filterUnassignedFinalStudentApplications($finalStudentApplications, $assignedStudentEnrolmentIds);
         $existingClasses = $this->resolveExistingClassesForAllocation($classConfig);
         $classNamePrefix = $this->resolveClassNamePrefix($level);
-        $classNumberOffset = $this->resolveClassNumberOffset($existingClasses->pluck('name'), $classNamePrefix, $mode, $classConfig);
+        $classNumberOffset = $this->resolveClassNumberOffset($existingClasses->pluck('name'), $classNamePrefix, $mode);
         $previewClasses = $this->buildPreviewClasses(
             $unassignedFinalStudentApplications,
             (int) ($classConfig?->students_per_class ?? 0),
@@ -141,7 +146,6 @@ class AcademicCalendarController extends Controller
             [],
             $mode,
             $classNumberOffset,
-            $classConfig
         );
         $previewClasses = [
             ...$this->resolveExistingClassPreviews($classConfig),
@@ -176,7 +180,6 @@ class AcademicCalendarController extends Controller
             'generationContext' => $context,
             'canViewCourseWork' => auth()->user()?->can('viewAny', CourseWorkMark::class) ?? false,
             'canExportClassList' => auth()->user()?->can('export', AcademicCalendar::class) ?? false,
-            'canAssignClassLecturer' => auth()->user()?->can('update:academic-calendars') ?? false,
         ]);
     }
 
@@ -198,8 +201,13 @@ class AcademicCalendarController extends Controller
             ->values()
             ->all();
 
+        $classConfig->loadMissing('institutionDepartment');
+
         $data = $classListDataService->assembleForClassConfig($classConfig, $classIds);
-        $viewData = $classListPdfService->assembleViewData($data);
+        $viewData = $classListPdfService->assembleViewData(
+            $data,
+            $classConfig->institutionDepartment?->tenant_id,
+        );
         $fileName = sprintf('class-list-%s-%s.pdf', $classConfig->id, time());
 
         return Pdf::loadView('academic-calendars.class-list', $viewData)->stream($fileName);
@@ -227,8 +235,13 @@ class AcademicCalendarController extends Controller
             404
         );
 
+        $classConfig->loadMissing('institutionDepartment');
+
         $data = $classListDataService->assembleForClassConfig($classConfig, [(int) $academicCalendarClass->id]);
-        $viewData = $classListPdfService->assembleViewData($data);
+        $viewData = $classListPdfService->assembleViewData(
+            $data,
+            $classConfig->institutionDepartment?->tenant_id,
+        );
         $fileName = sprintf('class-list-%s-%s.pdf', $academicCalendarClass->id, time());
 
         return Pdf::loadView('academic-calendars.class-list', $viewData)->stream($fileName);
@@ -428,7 +441,6 @@ class AcademicCalendarController extends Controller
             'canUpdateAcademicCalendarClass' => auth()->user()?->can('update', $academicCalendar) ?? false,
             'canViewCourseWork' => auth()->user()?->can('viewAny', CourseWorkMark::class) ?? false,
             'canExportClassList' => auth()->user()?->can('export', AcademicCalendar::class) ?? false,
-            'canAssignClassLecturer' => auth()->user()?->can('update', $academicCalendar) ?? false,
             'moveTargetClasses' => $moveTargetClasses,
             'siblingAcademicCalendarClasses' => $siblingAcademicCalendarClasses,
             'academicCalendarClass' => [
@@ -437,7 +449,6 @@ class AcademicCalendarController extends Controller
                 'description' => $academicCalendarClass->description,
                 'studentCount' => count($students),
                 'students' => $students,
-                'lecturer' => $this->lecturerPayload($academicCalendarClass->lecturerMetaData),
             ],
         ]);
     }
@@ -673,7 +684,7 @@ class AcademicCalendarController extends Controller
             }
 
             $classNamePrefix = $this->resolveClassNamePrefix($level);
-            $classNumberOffset = $this->resolveClassNumberOffset($existingClasses->pluck('name'), $classNamePrefix, $mode, $classConfig);
+            $classNumberOffset = $this->resolveClassNumberOffset($existingClasses->pluck('name'), $classNamePrefix, $mode);
             $newPreviewClasses = $this->buildPreviewClasses(
                 $remainingStudents,
                 (int) $validated['students_per_class'],
@@ -681,7 +692,6 @@ class AcademicCalendarController extends Controller
                 [],
                 $mode,
                 $classNumberOffset,
-                $classConfig
             );
 
             foreach ($newPreviewClasses as $previewClass) {
@@ -770,16 +780,12 @@ class AcademicCalendarController extends Controller
         array $existingClassMap = [],
         ?ModeOfStudy $mode = null,
         int $classNumberOffset = 0,
-        ?ClassConfig $classConfig = null,
     ): array {
         if ($studentsPerClass < 1 || $finalStudentApplications->isEmpty()) {
             return [];
         }
 
         $modeName = $mode instanceof ModeOfStudy ? trim((string) ($mode->name ?? '')) : '';
-        $nameBase = $modeName !== ''
-            ? $classNamePrefix.' - '.$modeName
-            : $classNamePrefix;
 
         $chunks = $this->mergeTrailingChunkIfBelowHalf(
             $this->splitStudentsIntoBalancedChunks($finalStudentApplications, $studentsPerClass)->values(),
@@ -787,17 +793,17 @@ class AcademicCalendarController extends Controller
         );
 
         return $chunks
-            ->map(function (Collection $chunk, int $index) use ($nameBase, $existingClassMap, $classNumberOffset, $classConfig): array {
+            ->map(function (Collection $chunk, int $index) use ($classNamePrefix, $modeName, $existingClassMap, $classNumberOffset): array {
                 $genderCounts = [
                     'male' => 0,
                     'female' => 0,
                     'unknown' => 0,
                 ];
-                $className = $nameBase.' - '.($index + 1 + $classNumberOffset);
-
-                if ($classConfig instanceof ClassConfig) {
-                    $className .= ' - '.$classConfig->id;
-                }
+                $className = $this->classNameFormatter->format(
+                    $classNamePrefix,
+                    $modeName !== '' ? $modeName : null,
+                    $index + 1 + $classNumberOffset,
+                );
 
                 foreach ($chunk as $student) {
                     $normalizedGender = $this->normalizeGenderValue($student->gender_title ?? null);
@@ -1061,66 +1067,7 @@ class AcademicCalendarController extends Controller
             })
             ->all();
 
-        return $this->attachLecturersToClassPreviews($previews);
-    }
-
-    /**
-     * @param  list<array<string, mixed>>  $previews
-     * @return list<array<string, mixed>>
-     */
-    private function attachLecturersToClassPreviews(array $previews): array
-    {
-        $classIds = collect($previews)
-            ->pluck('academicCalendarClassId')
-            ->filter(fn (mixed $id): bool => $id !== null && (int) $id > 0)
-            ->map(fn (mixed $id): int => (int) $id)
-            ->values()
-            ->all();
-
-        if ($classIds === []) {
-            return array_map(function (array $preview): array {
-                $preview['lecturer'] = null;
-
-                return $preview;
-            }, $previews);
-        }
-
-        $lecturersByClassId = AcademicCalendarClass::query()
-            ->with(['lecturerMetaData.staff.user'])
-            ->whereIn('id', $classIds)
-            ->get()
-            ->mapWithKeys(fn (AcademicCalendarClass $class): array => [
-                (int) $class->id => $this->lecturerPayload($class->lecturerMetaData),
-            ]);
-
-        return array_map(function (array $preview) use ($lecturersByClassId): array {
-            $classId = (int) ($preview['academicCalendarClassId'] ?? 0);
-            $preview['lecturer'] = $classId > 0 ? ($lecturersByClassId[$classId] ?? null) : null;
-
-            return $preview;
-        }, $previews);
-    }
-
-    /**
-     * @return array{id: int, name: string}|null
-     */
-    private function lecturerPayload(?\App\Models\AcademicCalendars\AcademicCalendarClassMetaData $lecturerMetaData): ?array
-    {
-        if ($lecturerMetaData === null || $lecturerMetaData->staff_id === null) {
-            return null;
-        }
-
-        $lecturerMetaData->loadMissing('staff.user');
-        $user = $lecturerMetaData->staff?->user;
-
-        if ($user === null) {
-            return null;
-        }
-
-        return [
-            'id' => (int) $lecturerMetaData->staff_id,
-            'name' => trim(sprintf('%s %s', (string) ($user->first_name ?? ''), (string) ($user->last_name ?? ''))),
-        ];
+        return $previews;
     }
 
     private function buildGenerationContext(
@@ -1225,40 +1172,18 @@ class AcademicCalendarController extends Controller
         Collection $existingClassNames,
         string $classNamePrefix = 'Class',
         ?ModeOfStudy $mode = null,
-        ?ClassConfig $classConfig = null,
     ): int {
         if ($existingClassNames->isEmpty()) {
             return 0;
         }
 
         $modeName = $mode instanceof ModeOfStudy ? trim((string) ($mode->name ?? '')) : '';
-        $nameBase = $modeName !== ''
-            ? $classNamePrefix.' - '.$modeName
-            : $classNamePrefix;
-        $configSuffix = $classConfig instanceof ClassConfig
-            ? '\s-\s'.preg_quote((string) $classConfig->id, '/')
-            : '';
-        $pattern = '/^'.preg_quote($nameBase, '/').'\s-\s(\d+)'.$configSuffix.'$/';
-        $legacyPattern = $classConfig instanceof ClassConfig
-            ? '/^'.preg_quote($nameBase, '/').'\s-\s(\d+)$/'
-            : null;
-        $highestClassNumber = 0;
 
-        foreach ($existingClassNames as $existingClassName) {
-            $className = (string) $existingClassName;
-
-            if (preg_match($pattern, $className, $matches)) {
-                $highestClassNumber = max($highestClassNumber, (int) ($matches[1] ?? 0));
-
-                continue;
-            }
-
-            if ($legacyPattern !== null && preg_match($legacyPattern, $className, $matches)) {
-                $highestClassNumber = max($highestClassNumber, (int) ($matches[1] ?? 0));
-            }
-        }
-
-        return $highestClassNumber;
+        return $this->classNameFormatter->extractHighestClassNumber(
+            $existingClassNames->all(),
+            $classNamePrefix,
+            $modeName !== '' ? $modeName : null,
+        );
     }
 
     private function resolveClassConfigForDepartment(

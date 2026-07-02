@@ -1,6 +1,5 @@
 <?php
 
-use App\Enums\AcademicCalendars\AcademicCalendarTypeEnum;
 use App\Http\Requests\Institution\CourseSyllabusModuleRequest;
 use App\Models\Institution\Syllabus\CourseSyllabus;
 use App\Models\Institution\Syllabus\CourseSyllabusModule;
@@ -316,4 +315,104 @@ it('forbids creating modules without module create permission', function () {
     ]);
 
     $response->assertForbidden();
+});
+
+it('stores module lecturers when staff_ids are provided', function () {
+    $ctx = makeSyllabusModuleContext();
+    $lecturer = makeSyllabusModuleLecturerStaff($ctx);
+
+    $response = $this->actingAs($ctx['user'])->post(route('course-syllabus-modules.store'), [
+        'course_syllabus_id' => $ctx['courseSyllabus']->id,
+        'academic_year_option_id' => $ctx['semesterOne']->id,
+        'title' => 'Lectured Module',
+        'code' => 'LM-'.uniqid(),
+        'prerequisite_module_ids' => [],
+        'shared' => false,
+        'staff_ids' => [$lecturer->id],
+    ]);
+
+    $response->assertSuccessful();
+
+    $module = CourseSyllabusModule::query()->where('title', 'Lectured Module')->firstOrFail();
+
+    expect($module->lecturers->pluck('id')->all())->toBe([$lecturer->id]);
+});
+
+it('syncs module lecturers on update', function () {
+    $ctx = makeSyllabusModuleContext();
+    $firstLecturer = makeSyllabusModuleLecturerStaff($ctx);
+    $secondLecturer = makeSyllabusModuleLecturerStaff($ctx);
+
+    $module = CourseSyllabusModule::query()->create([
+        'tenant_id' => $ctx['tenant']->id,
+        'course_syllabus_id' => $ctx['courseSyllabus']->id,
+        'academic_year_option_id' => $ctx['semesterOne']->id,
+        'title' => 'Sync Module',
+        'code' => 'SYNC-'.uniqid(),
+        'shared' => false,
+    ]);
+
+    $module->lecturers()->sync([
+        $firstLecturer->id => ['tenant_id' => $ctx['tenant']->id],
+    ]);
+
+    $response = $this->actingAs($ctx['user'])->put(route('course-syllabus-modules.update', $module), [
+        'course_syllabus_id' => $ctx['courseSyllabus']->id,
+        'academic_year_option_id' => $ctx['semesterOne']->id,
+        'title' => 'Sync Module',
+        'code' => $module->code,
+        'prerequisite_module_ids' => [],
+        'shared' => false,
+        'staff_ids' => [$secondLecturer->id],
+    ]);
+
+    $response->assertOk();
+
+    expect($module->refresh()->lecturers->pluck('id')->all())->toBe([$secondLecturer->id]);
+});
+
+it('rejects staff without academic lecturer role for module assignment', function () {
+    $ctx = makeSyllabusModuleContext();
+    $nonLecturer = makeSyllabusModuleNonLecturerStaff($ctx);
+
+    $response = $this->actingAs($ctx['user'])->post(route('course-syllabus-modules.store'), [
+        'course_syllabus_id' => $ctx['courseSyllabus']->id,
+        'academic_year_option_id' => $ctx['semesterOne']->id,
+        'title' => 'Invalid Lecturer Module',
+        'code' => 'IL-'.uniqid(),
+        'prerequisite_module_ids' => [],
+        'shared' => false,
+        'staff_ids' => [$nonLecturer->id],
+    ]);
+
+    $response->assertSessionHasErrors('staff_ids.0');
+});
+
+it('returns lecturers in module index response', function () {
+    $ctx = makeSyllabusModuleContext();
+    $lecturer = makeSyllabusModuleLecturerStaff($ctx);
+
+    $module = CourseSyllabusModule::query()->create([
+        'tenant_id' => $ctx['tenant']->id,
+        'course_syllabus_id' => $ctx['courseSyllabus']->id,
+        'academic_year_option_id' => $ctx['semesterOne']->id,
+        'title' => 'Listed Module',
+        'code' => 'LIST-'.uniqid(),
+        'shared' => false,
+    ]);
+
+    $module->lecturers()->sync([
+        $lecturer->id => ['tenant_id' => $ctx['tenant']->id],
+    ]);
+
+    $response = $this->actingAs($ctx['user'])->get(route('course-syllabus-modules.index', [
+        'institution_department' => $ctx['institutionDepartment']->id,
+        'course_syllabus' => $ctx['courseSyllabus']->id,
+    ]));
+
+    $response->assertOk()
+        ->assertJsonPath('data.0.attributes.staffIds.0', $lecturer->id)
+        ->assertJsonPath('data.0.attributes.lecturers.0.id', $lecturer->id);
+
+    expect($response->json('data.0.attributes.lecturers.0.name'))->not->toBeEmpty();
 });

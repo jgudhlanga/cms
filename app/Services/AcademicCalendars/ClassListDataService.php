@@ -7,13 +7,13 @@ use App\Models\AcademicCalendars\AcademicCalendarStudentEnrolment;
 use App\Models\AcademicCalendars\ClassConfig;
 use App\Models\Students\Student;
 use Carbon\Carbon;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class ClassListDataService
 {
-    public const ROWS_PER_PAGE = 21;
+    public const ROWS_PER_FIRST_PAGE = 18;
+    public const ROWS_PER_CONTINUATION_PAGE = 24;
 
     /**
      * @param  list<int>  $classIds
@@ -87,6 +87,8 @@ class ClassListDataService
         return [
             'header' => $header,
             'pages' => $pages,
+            'totalPages' => count($pages),
+            'studentCount' => count($studentRows),
         ];
     }
 
@@ -138,8 +140,8 @@ class ClassListDataService
                 'student_applications.application_tracking_number',
                 'genders.title as gender_title',
             ])
-            ->orderBy('users.last_name')
             ->orderBy('users.first_name')
+            ->orderBy('users.last_name')
             ->get()
             ->map(function (AcademicCalendarStudentEnrolment $row): array {
                 return [
@@ -163,47 +165,60 @@ class ClassListDataService
      */
     private function paginateRows(array $studentRows): array
     {
-        $pages = [];
-        $chunks = $studentRows === []
-            ? [collect()]
-            : collect($studentRows)->chunk(self::ROWS_PER_PAGE)->values();
-
-        foreach ($chunks as $chunk) {
-            $rows = $chunk->values()->all();
-            $startNumber = count($pages) * self::ROWS_PER_PAGE + 1;
-            $paddedRows = $this->padRowsToPageSize($rows, $startNumber);
-            $pages[] = ['rows' => $paddedRows];
+        if ($studentRows === []) {
+            return [[
+                'pageNumber' => 1,
+                'totalPages' => 1,
+                'isFirstPage' => true,
+                'isLastPage' => true,
+                'rows' => [],
+            ]];
         }
 
-        return $pages;
-    }
+        $chunks = collect();
+        $remainingRows = $studentRows;
 
-    /**
-     * @param  list<array<string, string|null>>  $rows
-     * @return list<array<string, string|int|null>>
-     */
-    private function padRowsToPageSize(array $rows, int $startNumber): array
-    {
-        $padded = [];
+        $firstPageRows = array_slice($remainingRows, 0, self::ROWS_PER_FIRST_PAGE);
+        $chunks->push(collect($firstPageRows));
+        $remainingRows = array_slice($remainingRows, self::ROWS_PER_FIRST_PAGE);
 
-        for ($index = 0; $index < self::ROWS_PER_PAGE; $index++) {
-            $rowNumber = $startNumber + $index;
-            $student = $rows[$index] ?? null;
+        if ($remainingRows !== []) {
+            foreach (array_chunk($remainingRows, self::ROWS_PER_CONTINUATION_PAGE) as $chunk) {
+                $chunks->push(collect($chunk));
+            }
+        }
 
-            $padded[] = [
-                'number' => $rowNumber,
-                'surname' => $student['surname'] ?? null,
-                'firstName' => $student['firstName'] ?? null,
-                'dateOfBirth' => $student['dateOfBirth'] ?? null,
-                'nationalId' => $student['nationalId'] ?? null,
-                'contactNumber' => $student['contactNumber'] ?? null,
-                'studentNumber' => $student['studentNumber'] ?? null,
-                'applicationNumber' => $student['applicationNumber'] ?? null,
-                'gender' => $student['gender'] ?? null,
+        $totalPages = $chunks->count();
+        $pages = [];
+        $currentNumber = 1;
+
+        foreach ($chunks as $pageIndex => $chunk) {
+            $rows = [];
+
+            foreach ($chunk->values()->all() as $offset => $student) {
+                $rows[] = [
+                    'number' => $currentNumber++,
+                    'surname' => $student['surname'] ?? null,
+                    'firstName' => $student['firstName'] ?? null,
+                    'dateOfBirth' => $student['dateOfBirth'] ?? null,
+                    'nationalId' => $student['nationalId'] ?? null,
+                    'contactNumber' => $student['contactNumber'] ?? null,
+                    'studentNumber' => $student['studentNumber'] ?? null,
+                    'applicationNumber' => $student['applicationNumber'] ?? null,
+                    'gender' => $student['gender'] ?? null,
+                ];
+            }
+
+            $pages[] = [
+                'pageNumber' => $pageIndex + 1,
+                'totalPages' => $totalPages,
+                'isFirstPage' => $pageIndex === 0,
+                'isLastPage' => $pageIndex === $totalPages - 1,
+                'rows' => $rows,
             ];
         }
 
-        return $padded;
+        return $pages;
     }
 
     private function formatDateOfBirth(mixed $dateOfBirth): ?string

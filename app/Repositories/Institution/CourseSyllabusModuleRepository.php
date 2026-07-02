@@ -7,6 +7,7 @@ use App\Models\Institution\Syllabus\CourseSyllabusModule;
 use App\Repositories\Base\BaseRepository;
 use App\Repositories\Institution\interface\ICourseSyllabusModuleRepository;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\DB;
 
 class CourseSyllabusModuleRepository extends BaseRepository implements ICourseSyllabusModuleRepository
 {
@@ -17,21 +18,29 @@ class CourseSyllabusModuleRepository extends BaseRepository implements ICourseSy
 
     public function create(CourseSyllabusModuleDto $dto): CourseSyllabusModule
     {
-        return $this->courseSyllabusModule->create($this->getFields($dto))->refresh();
+        return DB::transaction(function () use ($dto): CourseSyllabusModule {
+            $module = $this->courseSyllabusModule->create($this->getFields($dto))->refresh();
+            $this->syncLecturers($module, $dto->staff_ids);
+
+            return $module->refresh();
+        });
     }
 
     public function update(CourseSyllabusModule $courseSyllabusModule, CourseSyllabusModuleDto $dto): CourseSyllabusModule
     {
-        $courseSyllabusModule->update($this->getFields($dto));
+        return DB::transaction(function () use ($courseSyllabusModule, $dto): CourseSyllabusModule {
+            $courseSyllabusModule->update($this->getFields($dto));
+            $this->syncLecturers($courseSyllabusModule, $dto->staff_ids);
 
-        return $courseSyllabusModule->refresh();
+            return $courseSyllabusModule->refresh();
+        });
     }
 
     public function allByCourseSyllabus(int $courseSyllabusId): LengthAwarePaginator
     {
         return $this->courseSyllabusModule
             ->query()
-            ->with('academicYearOption')
+            ->with(['academicYearOption', 'lecturers.user'])
             ->where('course_syllabus_modules.course_syllabus_id', $courseSyllabusId)
             ->join(
                 'academic_year_options',
@@ -59,5 +68,15 @@ class CourseSyllabusModuleRepository extends BaseRepository implements ICourseSy
             'shared' => $dto->shared,
             'all_semesters' => $dto->all_semesters,
         ];
+    }
+
+    /** @param array<int> $staffIds */
+    private function syncLecturers(CourseSyllabusModule $module, array $staffIds): void
+    {
+        $syncData = collect($staffIds)->mapWithKeys(
+            fn (int $staffId): array => [$staffId => ['tenant_id' => $module->tenant_id]],
+        )->all();
+
+        $module->lecturers()->sync($syncData);
     }
 }

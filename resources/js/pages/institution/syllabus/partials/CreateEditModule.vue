@@ -3,6 +3,7 @@ import BaseModal from '@/components/core/modal/BaseModal.vue';
 import BaseInput from '@/components/core/form/text/BaseInput.vue';
 import BaseSelect from '@/components/core/form/select/BaseSelect.vue';
 import BaseSwitch from '@/components/core/form/radio/BaseSwitch.vue';
+import SelectLecturerSelect from '@/components/core/form/select/SelectLecturerSelect.vue';
 import Code from '@/components/core/form/text/Code.vue';
 import { useAcademicYearOptionsByCalendarType } from '@/composables/academicCalendars/useAcademicYearOptionsByCalendarType';
 import { useCourseSyllabusModules } from '@/composables/institution/useCourseSyllabusModules';
@@ -13,10 +14,12 @@ import { useModalStore } from '@/store/core/useModalStore';
 import { CourseSyllabusModule, CourseSyllabusModuleParams } from '@/types/institution';
 import { useForm } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
+import { SizeVariant } from '@/enums/sizes';
 
 interface Props {
     courseSyllabusId: number;
     courseSyllabusTitle: string;
+    institutionDepartmentId: number;
     calendarType?: 'term' | 'semester' | 'abma' | null;
 }
 
@@ -32,6 +35,7 @@ const form = useForm<CourseSyllabusModuleParams>({
     prerequisite_module_ids: [],
     shared: false,
     all_semesters: false,
+    staff_ids: [],
 });
 
 const { modals } = useModalStore();
@@ -64,6 +68,7 @@ watch(modals!, async () => {
     form.prerequisite_module_ids = moduleRecord.value?.attributes?.prerequisiteModuleIds ?? [];
     form.shared = moduleRecord.value?.attributes?.shared ?? false;
     form.all_semesters = moduleRecord.value?.attributes?.allSemesters ?? false;
+    form.staff_ids = moduleRecord.value?.attributes?.staffIds ?? [];
 
     await loadYearOptions(resolvedCalendarType.value);
 
@@ -104,6 +109,7 @@ const save = () => {
         :title="`${moduleRecord ? $t('trans.update') : $t('trans.create')} ${$tChoice('syllabus.module', 1)}`"
         :on-form-action="save"
         :form="form"
+        :size="SizeVariant.lg"
     >
         <template #body>
             <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
@@ -144,6 +150,12 @@ const save = () => {
                     type="number"
                     :error="form.errors.nql_level"
                     @input="clearFormErrors(form, 'nql_level')"
+                />
+                <SelectLecturerSelect
+                    v-model="form.staff_ids"
+                    :institution-department-id="institutionDepartmentId"
+                    :form="form"
+                    :error="form.errors.staff_ids"
                 />
                 <label class="flex items-center gap-2 pt-6">
                     <input type="checkbox" v-model="form.shared" @change="clearFormErrors(form, 'shared')" />

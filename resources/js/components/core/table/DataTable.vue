@@ -101,7 +101,7 @@ const showToolBar = computed(() => {
 
 <template>
     <div class="data-table w-full">
-    <div class="bg-card relative inline-block min-w-full overflow-auto rounded-xl px-6 pb-6 align-middle">
+    <div class="-bg-card relative inline-block min-w-full overflow-auto rounded-xl -px-6 pb-6 align-middle">
         <div
             v-if="loading"
             class="absolute inset-0 z-10 flex items-center justify-center overflow-auto rounded-xl bg-background/70 px-6 backdrop-blur-[1px]"

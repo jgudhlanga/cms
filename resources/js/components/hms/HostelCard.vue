@@ -13,10 +13,12 @@ import {
     Users,
     Venus,
 } from '@lucide/vue';
-import { IconButton } from '@/components/core/button';
+import BaseButton from '@/components/core/button/BaseButton.vue';
+import BaseIcon from '@/components/core/icon/BaseIcon.vue';
+import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
 import { IconName } from '@/enums/icons';
-import { router } from '@inertiajs/vue3';
+import { Link as InertiaLink } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import type { Hostel } from '@/types/hms';
 
@@ -70,10 +72,14 @@ const locationAbbr = computed(() => {
 const locationIcon = computed(() =>
     (props.hostel.attributes.location ?? '').toLowerCase().includes('north') ? Mountain : TreePine,
 );
+const showUrl = computed(() => route('hostels.show', String(props.hostel.id)));
 </script>
 
 <template>
-    <div class="overflow-hidden rounded-2xl border border-border bg-card shadow-md transition-all duration-200 hover:-translate-y-1 hover:shadow-xl">
+    <InertiaLink
+        :href="showUrl"
+        class="block overflow-hidden rounded-2xl border border-border bg-card shadow-md transition-all duration-200 hover:-translate-y-1 hover:shadow-xl"
+    >
         <!-- Gender / type accent strip -->
         <div
             class="h-0.5"
@@ -185,22 +191,18 @@ const locationIcon = computed(() =>
                     <span class="text-muted-foreground">{{ wardenName }}</span>
                 </div>
 
-                <div class="flex items-center gap-2">
-                    <!-- View -->
-                    <IconButton
-                        :id="`hostel-view-${hostel.id}`"
-                        :icon="IconName.eye"
-                        :variant="ColorVariant.primary_outline"
-                        @click="router.get(route('hostels.show', String(hostel.id)))"
-                    />
-
-                    <!-- Edit -->
-                    <IconButton
+                <div class="flex items-center gap-2" @click.stop>
+                    <BaseButton
                         :id="`hostel-edit-${hostel.id}`"
-                        :icon="IconName.edit"
-                        :variant="ColorVariant.success_outline"
+                        type="button"
+                        :size="ButtonSize.sm"
+                        :variant="ColorVariant.shade"
+                        classes="inline-flex items-center gap-1.5 rounded-full"
                         @click="emit('edit', hostel)"
-                    />
+                    >
+                        <BaseIcon :name="IconName.edit" class="h-3.5 w-3.5" />
+                        <span>{{ $t('trans.edit') }}</span>
+                    </BaseButton>
                 </div>
             </div>
 
@@ -210,5 +212,5 @@ const locationIcon = computed(() =>
                 <span>{{ hostel.attributes.roomsCount }} {{ $t('hms.rooms') }} • {{ hostel.attributes.floorCount }} {{ $t('hms.floors') }}</span>
             </div>
         </div>
-    </div>
+    </InertiaLink>
 </template>

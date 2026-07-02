@@ -242,6 +242,8 @@ export type CourseSyllabusModule = {
         prerequisiteModuleIds: number[];
         shared: boolean;
         allSemesters: boolean;
+        lecturers?: Array<{ id: number; name: string }>;
+        staffIds?: number[];
         createdAt?: string;
         updatedAt?: string;
         deletedAt?: string;
@@ -258,6 +260,7 @@ export type CourseSyllabusModuleParams = {
     prerequisite_module_ids: number[];
     shared: boolean;
     all_semesters: boolean;
+    staff_ids: number[];
 };
 export type DocumentTemplate = {
     type: string;

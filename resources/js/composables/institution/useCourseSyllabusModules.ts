@@ -35,6 +35,7 @@ export const useCourseSyllabusModules = () => {
             prerequisite_module_ids: z.array(z.number().int().positive()).default([]),
             shared: z.boolean(),
             all_semesters: z.boolean(),
+            staff_ids: z.array(z.number().int().positive()).default([]),
         });
 
     const listCourseSyllabusModules = async (
@@ -105,8 +106,6 @@ export const useCourseSyllabusModules = () => {
                 header: trans_choice('syllabus.calendar_year_option', 1),
                 accessorKey: 'attributes.academicYearOptionName',
             },
-            { header: trans('syllabus.duration_in_hours'), accessorKey: 'attributes.durationInHours', meta: { align: 'center' } },
-            { header: trans('syllabus.nql_level'), accessorKey: 'attributes.nqlLevel', meta: { align: 'center' } },
             {
                 header: trans('syllabus.shared'),
                 accessorKey: 'attributes.shared',
@@ -120,6 +119,15 @@ export const useCourseSyllabusModules = () => {
                 meta: { align: 'center' },
                 cell: ({ row }: { row: { original: CourseSyllabusModule } }) =>
                     row.original.attributes.allSemesters ? trans('trans.yes') : trans('trans.no'),
+            },
+            {
+                header: trans_choice('syllabus.lecturer', 2),
+                accessorKey: 'attributes.lecturers',
+                cell: ({ row }: { row: { original: CourseSyllabusModule } }) =>
+                    row.original.attributes.lecturers
+                        ?.map((lecturer) => lecturer.name)
+                        .filter(Boolean)
+                        .join(', ') || '—',
             },
             {
                 header: trans_choice('trans.action', 2),

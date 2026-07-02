@@ -1,12 +1,9 @@
 <script setup lang="ts">
 import { Head, Link as InertiaLink, useForm } from '@inertiajs/vue3';
-import { UserIcon, UserRoundIcon, UsersIcon } from 'lucide-vue-next';
+import { UserIcon, UserRoundIcon } from 'lucide-vue-next';
 
-import AcademicCalendarClassLecturerBadge from '@/components/academicCalendars/AcademicCalendarClassLecturerBadge.vue';
-import AssignClassLecturerModal from '@/components/academicCalendars/AssignClassLecturerModal.vue';
 import ClassListExportModal from '@/components/academicCalendars/ClassListExportModal.vue';
 import PageContainer from '@/components/core/page/PageContainer.vue';
-import { openAssignClassLecturerModal } from '@/composables/academicCalendars/useAcademicCalendarClassLecturer';
 import { openClassListExportModal } from '@/composables/academicCalendars/useClassListExport';
 import { AcademicCalendar, AcademicCalendarClassGenerationContext, AcademicCalendarClassPreview, ClassConfig } from '@/types/academic-calendar';
 import { AuthObject } from '@/types/data-pagination';
@@ -19,6 +16,7 @@ import { errorAlert, successAlert } from '@/lib/alerts';
 import { firstInertiaErrorMessage } from '@/lib/inertia-errors';
 import { trans } from 'laravel-vue-i18n';
 import { computed, toRefs } from 'vue';
+import AcademicCalendarClassPreviewCard from './partials/AcademicCalendarClassPreviewCard.vue';
 
 const props = withDefaults(
     defineProps<{
@@ -35,12 +33,10 @@ const props = withDefaults(
         errors: object;
         canViewCourseWork?: boolean;
         canExportClassList?: boolean;
-        canAssignClassLecturer?: boolean;
     }>(),
     {
         canViewCourseWork: false,
         canExportClassList: false,
-        canAssignClassLecturer: false,
     },
 );
 
@@ -168,6 +164,18 @@ const saveClasses = () => {
     );
 };
 
+const classShowUrl = (classPreview: AcademicCalendarClassPreview): string | null => {
+    if (classPreview.academicCalendarClassId == null) {
+        return null;
+    }
+
+    return route('academic-calendars.department-classes.show', {
+        institution_department: String(department.value.id),
+        calendar_year: String(academicCalendar.value.attributes.calendarYear),
+        academic_calendar_class: String(classPreview.academicCalendarClassId),
+    });
+};
+
 const computedTitle = computed(() => {
     let title = '';
     if (classConfig?.value?.attributes?.departmentCourse) {
@@ -210,6 +218,7 @@ const computedTitle = computed(() => {
                         :title="$t(classActionTitle)"
                         :disabled="!hasNewStudentsToAssign || form.processing"
                         :processing="form.processing"
+                        :size="ButtonSize.sm"
                         @click="saveClasses"
                         classes="rounded-full"
                     />
@@ -219,7 +228,7 @@ const computedTitle = computed(() => {
                             :title="$t('academic_calendar.course_work_open_marksheet')"
                             classes="rounded-full"
                             :variant="ColorVariant.primary_outline"
-                            :size="ButtonSize.lg"
+                            :size="ButtonSize.sm"
                         />
                     </InertiaLink>
                     <BaseButton
@@ -228,7 +237,7 @@ const computedTitle = computed(() => {
                         :title="$t('academic_calendar.export_class_lists')"
                         classes="rounded-full"
                         :variant="ColorVariant.primary_outline"
-                        :size="ButtonSize.lg"
+                        :size="ButtonSize.sm"
                         @click="openClassListExportModal"
                     />
                 </div>
@@ -258,53 +267,14 @@ const computedTitle = computed(() => {
                 :description="$t(previewEmptyAlert.descriptionKey)"
             />
             <template v-else>
-                <BaseCard v-for="classPreview in previewClasses" :key="classPreview.name" :title="classPreview.name" color-variant="black" >
-                    <div class="flex flex-col gap-4">
-                        <div class="flex items-center justify-between gap-4">
-                            <div class="flex flex-1 flex-wrap items-center gap-x-8 gap-y-2">
-                                <p class="flex items-center gap-1 text-sm text-gray-700">
-                                    <UsersIcon class="h-4 w-4 text-gray-600" />
-                                    <span class="font-semibold">{{ $t('students.class_total') }}: {{ classPreview.studentCount }}</span>
-                                </p>
-                                <p v-if="classPreview.academicCalendarClassId" class="flex items-center gap-1 text-sm text-gray-700">
-                                    <UserIcon class="h-4 w-4 text-blue-600" />
-                                    <span class="font-semibold">{{ $tChoice('general.male', 2) }}: {{ classPreview.genderCounts?.male ?? 0 }}</span>
-                                </p>
-                                <p v-if="classPreview.academicCalendarClassId" class="flex items-center gap-1 text-sm text-gray-700">
-                                    <UserRoundIcon class="h-4 w-4 text-pink-600" />
-                                    <span class="font-semibold">{{ $tChoice('general.female', 2) }}: {{ classPreview.genderCounts?.female ?? 0 }}</span>
-                                </p>
-                            </div>
-                            <div class="flex flex-wrap items-center gap-2">
-                                <InertiaLink
-                                    v-if="classPreview.academicCalendarClassId"
-                                    :href="
-                                        route('academic-calendars.department-classes.show', {
-                                            institution_department: String(department.id),
-                                            calendar_year: String(academicCalendar.attributes.calendarYear),
-                                            academic_calendar_class: String(classPreview.academicCalendarClassId),
-                                        })
-                                    "
-                                >
-                                    <BaseButton :title="$t('enrolment.view_class')" classes="rounded-full" :size="ButtonSize.sm" :variant="ColorVariant.success" />
-                                </InertiaLink>
-                                <BaseButton v-else :title="$t('enrolment.view_class')" :disabled="true" classes="rounded-full" :size="ButtonSize.sm" :variant="ColorVariant.success"/>
-                            </div>
-                        </div>
-                        <AcademicCalendarClassLecturerBadge
-                            v-if="classPreview.academicCalendarClassId && canAssignClassLecturer"
-                            :lecturer="classPreview.lecturer ?? null"
-                            :can-assign="canAssignClassLecturer"
-                            compact
-                            @assign="
-                                openAssignClassLecturerModal({
-                                    academicCalendarClassId: classPreview.academicCalendarClassId as number,
-                                    staffId: classPreview.lecturer?.id ?? null,
-                                })
-                            "
-                        />
-                    </div>
-                </BaseCard>
+                <div class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+                    <AcademicCalendarClassPreviewCard
+                        v-for="classPreview in previewClasses"
+                        :key="classPreview.name"
+                        :class-preview="classPreview"
+                        :show-url="classShowUrl(classPreview)"
+                    />
+                </div>
             </template>
             <ClassListExportModal
                 v-if="canExportClassLists"
@@ -312,11 +282,6 @@ const computedTitle = computed(() => {
                 :calendar-year="String(academicCalendar.attributes.calendarYear)"
                 :class-config-query="classConfigQuery"
                 :classes="exportablePreviewClasses"
-            />
-            <AssignClassLecturerModal
-                v-if="canAssignClassLecturer"
-                :institution-department-id="Number(department.id)"
-                :calendar-year="String(academicCalendar.attributes.calendarYear)"
             />
         </div>
     </PageContainer>
