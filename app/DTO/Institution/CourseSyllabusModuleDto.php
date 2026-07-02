@@ -17,6 +17,8 @@ readonly class CourseSyllabusModuleDto
         public ?array $prerequisite_module_ids,
         public bool $shared,
         public bool $all_semesters,
+        /** @var array<int> */
+        public array $staff_ids,
     ) {}
 
     public static function fromRequest(CourseSyllabusModuleRequest $request): self
@@ -33,6 +35,7 @@ readonly class CourseSyllabusModuleDto
                 : null,
             shared: $request->boolean('shared'),
             all_semesters: $request->boolean('all_semesters'),
+            staff_ids: array_map('intval', $request->input('staff_ids', [])),
         );
     }
 }

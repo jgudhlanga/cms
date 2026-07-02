@@ -28,6 +28,11 @@ export type SelectOption = {
     triggerActionValue?: boolean;
 };
 
+export type GroupedSelectOption = {
+    heading: string;
+    options: SelectOption[];
+};
+
 export type DropdownButtonOption = {
     label: string;
     key: string;

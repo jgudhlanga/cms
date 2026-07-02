@@ -3,6 +3,7 @@
 namespace App\Models\Institution;
 
 use App\Http\Filters\Institution\StaffFilter;
+use App\Models\Institution\Syllabus\CourseSyllabusModule;
 use App\Models\Shared\Address;
 use App\Models\Shared\Contact;
 use App\Models\Shared\Country;
@@ -104,6 +105,12 @@ class Staff extends Model
     public function institutionDepartments(): BelongsToMany
     {
         return $this->belongsToMany(InstitutionDepartment::class, 'institution_department_staff');
+    }
+
+    public function courseSyllabusModules(): BelongsToMany
+    {
+        return $this->belongsToMany(CourseSyllabusModule::class, 'course_syllabus_module_lecturers')
+            ->withTimestamps();
     }
 
     public function contacts(): MorphMany

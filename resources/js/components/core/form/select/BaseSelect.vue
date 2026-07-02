@@ -19,6 +19,7 @@ interface Props {
     labelUppercase?: boolean;
     verticalLayout?: boolean;
     isRequired?: boolean;
+    teleport?: string;
 }
 
 withDefaults(defineProps<Props>(), {
@@ -28,6 +29,7 @@ withDefaults(defineProps<Props>(), {
     labelUppercase: false,
     verticalLayout: true,
     isRequired: false,
+    teleport: undefined,
 });
 
 const model = defineModel<any>();

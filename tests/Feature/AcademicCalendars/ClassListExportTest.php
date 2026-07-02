@@ -1,59 +1,11 @@
 <?php
 
-use App\Enums\AcademicCalendars\ClassMetaDataTypeEnum;
 use App\Models\AcademicCalendars\AcademicCalendarClass;
-use App\Models\AcademicCalendars\AcademicCalendarClassMetaData;
-use App\Models\AcademicCalendars\ClassMetaDataType;
-use App\Models\Institution\Staff;
-use App\Models\Shared\EmploymentType;
-use App\Models\Shared\Gender;
-use App\Models\Shared\MaritalStatus;
-use App\Models\Shared\Title;
-use App\Models\Users\User;
+use App\Services\AcademicCalendars\ClassListDataService;
+use App\Services\AcademicCalendars\ClassListPdfService;
 use Spatie\Permission\Models\Permission;
 
 require_once __DIR__.'/../../Support/AcademicCalendarClassTestHelpers.php';
-
-function seedClassMetaDataTypes(): void
-{
-    foreach (ClassMetaDataTypeEnum::cases() as $row) {
-        ClassMetaDataType::query()->firstOrCreate(
-            ['name' => $row->value],
-            ['description' => $row->label()],
-        );
-    }
-}
-
-function createDepartmentStaffForClassTests(array $context): Staff
-{
-    $title = Title::query()->firstOrCreate(['name' => 'Mr Class Test']);
-    $gender = Gender::query()->firstOrCreate(['title' => 'Male Class Test']);
-    $marital = MaritalStatus::query()->firstOrCreate(['title' => 'Single Class Test']);
-    $employmentType = EmploymentType::query()->firstOrCreate(
-        ['name' => 'full-time-class-test'],
-        ['description' => 'Full time'],
-    );
-
-    $staffUser = User::factory()->create([
-        'tenant_id' => $context['tenant']->id,
-        'first_name' => 'Class',
-        'last_name' => 'Lecturer',
-    ]);
-
-    $staff = Staff::query()->create([
-        'tenant_id' => $context['tenant']->id,
-        'user_id' => $staffUser->id,
-        'title_id' => $title->id,
-        'gender_id' => $gender->id,
-        'marital_status_id' => $marital->id,
-        'employment_type_id' => $employmentType->id,
-        'employee_number' => 'CLASS-LECT-'.random_int(1000, 9999),
-    ]);
-
-    $context['institutionDepartment']->staff()->syncWithoutDetaching([$staff->id]);
-
-    return $staff;
-}
 
 function createPopulatedClassContext(): array
 {
@@ -143,114 +95,86 @@ test('authorized user can export single class list pdf from show route', functio
     expect($response->headers->get('content-type'))->toContain('application/pdf');
 });
 
-test('assign class lecturer requires update permission', function () {
-    seedClassMetaDataTypes();
-    $context = createPopulatedClassContext();
-    $staff = createDepartmentStaffForClassTests($context);
-    $context['user']->revokePermissionTo('update:academic-calendars');
-
-    $this->actingAs($context['user'])
-        ->patch(route('academic-calendars.department-classes.assign-lecturer', [
-            'institution_department' => $context['institutionDepartment']->id,
-            'calendar_year' => $context['calendar']->calendar_year,
-            'academic_calendar_class' => $context['academicCalendarClass']->id,
-        ]), [
-            'staff_id' => $staff->id,
-        ])
-        ->assertForbidden();
-});
-
-test('authorized user can assign update and clear class lecturer', function () {
-    seedClassMetaDataTypes();
-    $context = createPopulatedClassContext();
-    $staff = createDepartmentStaffForClassTests($context);
-    $otherStaff = createDepartmentStaffForClassTests($context);
-
-    $lecturerTypeId = ClassMetaDataType::query()
-        ->where('name', ClassMetaDataTypeEnum::LECTURER->value)
-        ->value('id');
-
-    $this->actingAs($context['user'])
-        ->patch(route('academic-calendars.department-classes.assign-lecturer', [
-            'institution_department' => $context['institutionDepartment']->id,
-            'calendar_year' => $context['calendar']->calendar_year,
-            'academic_calendar_class' => $context['academicCalendarClass']->id,
-        ]), [
-            'staff_id' => $staff->id,
-        ])
-        ->assertSessionHas('success');
-
-    expect(AcademicCalendarClassMetaData::query()
-        ->where('academic_calendar_class_id', $context['academicCalendarClass']->id)
-        ->where('class_metadata_type_id', $lecturerTypeId)
-        ->value('staff_id'))->toBe($staff->id);
-
-    $this->actingAs($context['user'])
-        ->patch(route('academic-calendars.department-classes.assign-lecturer', [
-            'institution_department' => $context['institutionDepartment']->id,
-            'calendar_year' => $context['calendar']->calendar_year,
-            'academic_calendar_class' => $context['academicCalendarClass']->id,
-        ]), [
-            'staff_id' => $otherStaff->id,
-        ])
-        ->assertSessionHas('success');
-
-    expect(AcademicCalendarClassMetaData::query()
-        ->where('academic_calendar_class_id', $context['academicCalendarClass']->id)
-        ->where('class_metadata_type_id', $lecturerTypeId)
-        ->count())->toBe(1);
-
-    expect(AcademicCalendarClassMetaData::query()
-        ->where('academic_calendar_class_id', $context['academicCalendarClass']->id)
-        ->where('class_metadata_type_id', $lecturerTypeId)
-        ->value('staff_id'))->toBe($otherStaff->id);
-
-    $this->actingAs($context['user'])
-        ->patch(route('academic-calendars.department-classes.assign-lecturer', [
-            'institution_department' => $context['institutionDepartment']->id,
-            'calendar_year' => $context['calendar']->calendar_year,
-            'academic_calendar_class' => $context['academicCalendarClass']->id,
-        ]), [
-            'staff_id' => null,
-        ])
-        ->assertSessionHas('success');
-
-    expect(AcademicCalendarClassMetaData::query()
-        ->where('academic_calendar_class_id', $context['academicCalendarClass']->id)
-        ->where('class_metadata_type_id', $lecturerTypeId)
-        ->exists())->toBeFalse();
-});
-
-test('assign class lecturer rejects staff outside department', function () {
-    seedClassMetaDataTypes();
+test('class list export pdf view data matches enrolled student count', function () {
+    Permission::findOrCreate('export:academic-calendars', 'web');
     $context = createPopulatedClassContext();
 
-    $title = Title::query()->firstOrCreate(['name' => 'Ms Outside']);
-    $gender = Gender::query()->firstOrCreate(['title' => 'Female Outside']);
-    $marital = MaritalStatus::query()->firstOrCreate(['title' => 'Single Outside']);
-    $employmentType = EmploymentType::query()->firstOrCreate(
-        ['name' => 'part-time-outside'],
-        ['description' => 'Part time'],
+    $data = app(ClassListDataService::class)->assembleForClassConfig(
+        $context['classConfig'],
+        [$context['academicCalendarClass']->id],
     );
 
-    $outsideUser = User::factory()->create(['tenant_id' => $context['tenant']->id]);
-    $outsideStaff = Staff::query()->create([
-        'tenant_id' => $context['tenant']->id,
-        'user_id' => $outsideUser->id,
-        'title_id' => $title->id,
-        'gender_id' => $gender->id,
-        'marital_status_id' => $marital->id,
-        'employment_type_id' => $employmentType->id,
-        'employee_number' => 'OUTSIDE-'.random_int(1000, 9999),
+    $viewData = app(ClassListPdfService::class)->assembleViewData(
+        $data,
+        $context['institutionDepartment']->tenant_id,
+    );
+
+    $rows = collect($viewData['sections'][0]['pages'])->flatMap(fn (array $page) => $page['rows'])->values();
+
+    expect($viewData['documentTemplate'])->not->toBeNull()
+        ->and($rows)->toHaveCount(2)
+        ->and($rows->pluck('number')->all())->toBe([1, 2]);
+
+    $html = view('academic-calendars.class-list', $viewData)->render();
+
+    expect($html)
+        ->toContain('Enrolment: Class list')
+        ->toContain('Compiled by:')
+        ->toContain('-- 1 of 1 --')
+        ->toContain('class="content page-main"')
+        ->not->toContain('Class:');
+});
+
+test('class list export renders header once and signatures on final page for multi-page classes', function () {
+    Permission::findOrCreate('export:academic-calendars', 'web');
+
+    $context = buildDepartmentClassContext();
+    $context['user']->givePermissionTo([
+        'export:academic-calendars',
+        'update:academic-calendars',
     ]);
 
-    $this->actingAs($context['user'])
-        ->patch(route('academic-calendars.department-classes.assign-lecturer', [
-            'institution_department' => $context['institutionDepartment']->id,
-            'calendar_year' => $context['calendar']->calendar_year,
-            'academic_calendar_class' => $context['academicCalendarClass']->id,
-        ]), [
-            'staff_id' => $outsideStaff->id,
-        ])
-        ->assertSessionHasErrors('staff_id');
+    for ($index = 1; $index <= 23; $index++) {
+        createFinalStudentApplication($context, "class-export-multi-{$index}@example.com");
+    }
+
+    test()->actingAs($context['user'])->post(route('academic-calendars.department-classes.store', [
+        'institution_department' => $context['institutionDepartment']->id,
+        'calendar_year' => $context['calendar']->calendar_year,
+    ]), [
+        'class_config_id' => $context['classConfig']->id,
+        'department_level_id' => $context['departmentLevel']->id,
+        'department_course_id' => $context['departmentCourse']->id,
+        'mode_of_study_id' => $context['modeOfStudy']->id,
+        'students_per_class' => 23,
+    ])->assertSessionHas('success');
+
+    $academicCalendarClass = AcademicCalendarClass::query()
+        ->where('class_config_id', $context['classConfig']->id)
+        ->orderBy('id')
+        ->firstOrFail();
+
+    $data = app(ClassListDataService::class)->assembleForClassConfig(
+        $context['classConfig'],
+        [$academicCalendarClass->id],
+    );
+
+    $viewData = app(ClassListPdfService::class)->assembleViewData(
+        $data,
+        $context['institutionDepartment']->tenant_id,
+    );
+
+    expect($viewData['sections'][0]['pages'])->toHaveCount(2)
+        ->and($viewData['sections'][0]['pages'][0]['isFirstPage'])->toBeTrue()
+        ->and($viewData['sections'][0]['pages'][1]['isFirstPage'])->toBeFalse()
+        ->and($viewData['sections'][0]['pages'][1]['isLastPage'])->toBeTrue();
+
+    $html = view('academic-calendars.class-list', $viewData)->render();
+
+    expect(substr_count($html, 'Enrolment: Class list'))->toBe(1)
+        ->and(substr_count($html, 'Compiled by:'))->toBe(1)
+        ->and(substr_count($html, 'class="content page-main"'))->toBe(2)
+        ->and(substr_count($html, 'class="content page-footer-section"'))->toBe(1)
+        ->and(substr_count($html, '-- 1 of 2 --'))->toBe(1)
+        ->and(substr_count($html, '-- 2 of 2 --'))->toBe(1);
 });

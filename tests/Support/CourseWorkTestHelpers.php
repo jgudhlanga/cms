@@ -23,9 +23,9 @@ use App\Models\Shared\IdType;
 use App\Models\Shared\MaritalStatus;
 use App\Models\Shared\Title;
 use App\Models\Students\Student;
+use App\Models\Students\StudentApplication;
 use App\Models\Students\StudentEnrolment;
 use App\Models\Students\StudentEnrolmentStatus;
-use App\Models\Students\StudentApplication;
 use App\Models\Tenants\Tenant;
 use App\Models\Users\User;
 
@@ -111,7 +111,7 @@ if (! function_exists('createCourseWorkJsonApiContext')) {
         $academicCalendarClass = AcademicCalendarClass::query()->create([
             'tenant_id' => $tenant->id,
             'class_config_id' => $classConfig->id,
-            'name' => 'NC-FULL-TIME-1-8',
+            'name' => 'NC-FULL-TIME-1',
             'description' => null,
         ]);
 

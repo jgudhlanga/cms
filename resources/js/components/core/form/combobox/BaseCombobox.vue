@@ -14,10 +14,11 @@ import {
     ComboboxItemIndicator,
     ComboboxList,
     ComboboxTrigger,
+    ComboboxViewport,
 } from '@/components/ui/combobox';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
-import { SelectOption } from '@/types/utils';
+import { SelectOption, GroupedSelectOption } from '@/types/utils';
 import { trans } from 'laravel-vue-i18n';
 import { Check, ChevronsUpDown, Search } from 'lucide-vue-next';
 import { computed } from 'vue';
@@ -26,6 +27,7 @@ interface Props {
     label?: string;
     placeholder?: string;
     options?: Array<SelectOption>;
+    groupedOptions?: Array<GroupedSelectOption>;
     error?: string | object;
     onSearch?: (search: string) => void;
     isLoading?: boolean;
@@ -40,6 +42,7 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
     options: () => [],
+    groupedOptions: () => [],
     isLoading: false,
     labelUppercase: false,
     verticalLayout: true,
@@ -112,6 +115,14 @@ const fieldPlaceHolder = computed(() => {
 
     return trans('trans.select_one');
 });
+
+const hasVisibleOptions = computed(() => {
+    if (props.groupedOptions.length > 0) {
+        return props.groupedOptions.some((group) => group.options.length > 0);
+    }
+
+    return props.options.length > 0;
+});
 </script>
 
 <template>
@@ -141,17 +152,29 @@ const fieldPlaceHolder = computed(() => {
                             <Search class="text-muted-foreground size-4" />
                         </span>
                     </div>
-                    <ComboboxEmpty v-if="!isLoading">
-                        <Empty :message="$t('trans.no_options_found')" />
-                    </ComboboxEmpty>
-                    <ComboboxGroup>
-                        <ComboboxItem v-for="option in options" :key="String(option.value)" :value="option">
-                            {{ option.label }}
-                            <ComboboxItemIndicator>
-                                <Check :class="cn('ml-auto h-4 w-4')" />
-                            </ComboboxItemIndicator>
-                        </ComboboxItem>
-                    </ComboboxGroup>
+                    <ComboboxViewport>
+                        <ComboboxEmpty v-if="!isLoading && !hasVisibleOptions">
+                            <Empty :message="$t('trans.no_options_found')" />
+                        </ComboboxEmpty>
+                        <template v-if="groupedOptions.length > 0">
+                            <ComboboxGroup v-for="group in groupedOptions" :key="group.heading" :heading="group.heading">
+                                <ComboboxItem v-for="option in group.options" :key="String(option.value)" :value="option">
+                                    {{ option.label }}
+                                    <ComboboxItemIndicator>
+                                        <Check :class="cn('ml-auto h-4 w-4')" />
+                                    </ComboboxItemIndicator>
+                                </ComboboxItem>
+                            </ComboboxGroup>
+                        </template>
+                        <ComboboxGroup v-else>
+                            <ComboboxItem v-for="option in options" :key="String(option.value)" :value="option">
+                                {{ option.label }}
+                                <ComboboxItemIndicator>
+                                    <Check :class="cn('ml-auto h-4 w-4')" />
+                                </ComboboxItemIndicator>
+                            </ComboboxItem>
+                        </ComboboxGroup>
+                    </ComboboxViewport>
                 </ComboboxList>
             </Combobox>
         </div>

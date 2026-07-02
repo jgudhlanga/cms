@@ -15,6 +15,7 @@ return [
     'syllabus_document' => 'Syllabus document',
     'current_document' => 'Current document',
     'module' => 'Module|Modules',
+    'lecturer' => 'Lecturer|Lecturers',
     'duration_in_hours' => 'Duration in hours',
     'nql_level' => 'NQL level',
     'prerequisite_modules' => 'Prerequisite modules',

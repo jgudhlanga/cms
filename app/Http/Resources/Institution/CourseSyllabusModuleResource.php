@@ -25,6 +25,17 @@ class CourseSyllabusModuleResource extends JsonResource
                 'prerequisiteModuleIds' => $this->resource->prerequisite_module_ids ?? [],
                 'shared' => (bool) $this->resource->shared,
                 'allSemesters' => (bool) $this->resource->all_semesters,
+                'lecturers' => $this->when(
+                    $this->resource->relationLoaded('lecturers'),
+                    fn () => $this->resource->lecturers->map(fn ($staff) => [
+                        'id' => $staff->id,
+                        'name' => $staff->user?->full_name,
+                    ])->values(),
+                ),
+                'staffIds' => $this->when(
+                    $this->resource->relationLoaded('lecturers'),
+                    fn () => $this->resource->lecturers->pluck('id')->values(),
+                ),
                 'createdAt' => $this->resource->created_at,
                 'updatedAt' => $this->resource->updated_at,
                 'deletedAt' => $this->resource->deleted_at,

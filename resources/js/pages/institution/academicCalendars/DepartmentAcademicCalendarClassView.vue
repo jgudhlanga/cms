@@ -1,10 +1,8 @@
 <script setup lang="ts">
 import AcademicCalendarClassNavComboSelect from '@/components/academicCalendars/AcademicCalendarClassNavComboSelect.vue';
-import AssignClassLecturerModal from '@/components/academicCalendars/AssignClassLecturerModal.vue';
 import ClassListExportModal from '@/components/academicCalendars/ClassListExportModal.vue';
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import { EDIT_CLASS_MODAL, useAcademicCalendarClassEdit } from '@/composables/academicCalendars/useAcademicCalendarClassEdit';
-import { openAssignClassLecturerModal } from '@/composables/academicCalendars/useAcademicCalendarClassLecturer';
 import { openClassListExportModal } from '@/composables/academicCalendars/useClassListExport';
 import { MOVE_STUDENTS_MODAL, useAcademicCalendarClassMoveStudents } from '@/composables/academicCalendars/useAcademicCalendarClassMoveStudents';
 import { useAcademicCalendarClassStudentFilters } from '@/composables/academicCalendars/useAcademicCalendarClassStudentFilters';
@@ -37,7 +35,6 @@ const props = withDefaults(
         canUpdateAcademicCalendarClass?: boolean;
         canViewCourseWork?: boolean;
         canExportClassList?: boolean;
-        canAssignClassLecturer?: boolean;
     }>(),
     {
         moveTargetClasses: () => [],
@@ -45,7 +42,6 @@ const props = withDefaults(
         canUpdateAcademicCalendarClass: false,
         canViewCourseWork: false,
         canExportClassList: false,
-        canAssignClassLecturer: false,
     },
 );
 
@@ -113,18 +109,10 @@ const singleClassExportOption = computed(() => [
                 :title="academicCalendarClass.name"
                 :description="academicCalendarClass.description"
                 :student-count="academicCalendarClass.studentCount"
-                :lecturer="academicCalendarClass.lecturer ?? null"
                 :can-update="canUpdateAcademicCalendarClass"
                 :can-export-class-list="canExportClassList"
-                :can-assign-lecturer="canAssignClassLecturer"
                 @edit="openEditClassModal"
                 @export-class-list="openClassListExportModal"
-                @assign-lecturer="
-                    openAssignClassLecturerModal({
-                        academicCalendarClassId: academicCalendarClass.id,
-                        staffId: academicCalendarClass.lecturer?.id ?? null,
-                    })
-                "
             />
             <div class="space-y-4">
                 <h2 class="text-lg font-semibold text-foreground">{{ $tChoice('trans.student', 2) }}</h2>
@@ -169,11 +157,6 @@ const singleClassExportOption = computed(() => [
                 :class-config-query="classConfigQuery"
                 :classes="singleClassExportOption"
                 :single-class-id="academicCalendarClass.id"
-            />
-            <AssignClassLecturerModal
-                v-if="canAssignClassLecturer"
-                :institution-department-id="Number(department.id)"
-                :calendar-year="String(academicCalendar.attributes.calendarYear)"
             />
         </div>
     </PageContainer>

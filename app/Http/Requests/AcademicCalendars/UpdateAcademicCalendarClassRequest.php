@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests\AcademicCalendars;
 
+use App\Models\AcademicCalendars\AcademicCalendarClass;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateAcademicCalendarClassRequest extends FormRequest
 {
@@ -20,8 +22,18 @@ class UpdateAcademicCalendarClassRequest extends FormRequest
 
     public function rules(): array
     {
+        /** @var AcademicCalendarClass|null $academicCalendarClass */
+        $academicCalendarClass = $this->route('academic_calendar_class');
+
         return [
-            'name' => ['required', 'string', 'max:255'],
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('academic_calendar_classes', 'name')
+                    ->where('class_config_id', $academicCalendarClass?->class_config_id)
+                    ->ignore($academicCalendarClass?->id),
+            ],
             'description' => ['nullable', 'string', 'max:255'],
         ];
     }

@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\V1\Institution\InstitutionDepartmentController;
 use App\Http\Controllers\Api\V1\Institution\IntakePeriodController;
 use App\Http\Controllers\Api\V1\Institution\ModeOfStudyController;
 use App\Http\Controllers\Api\V1\Institution\StudentApplicationDropdownController;
+use App\Http\Controllers\Api\V1\Staff\AcademicStaffController;
 use App\Http\Controllers\Api\V1\Staff\StaffController;
 use Illuminate\Support\Facades\Route;
 
@@ -37,6 +38,7 @@ Route::prefix('v1')->group(function () {
     Route::get('institution-departments/levels/{department_level}/requirements', [DepartmentLevelController::class, 'levelRequirements'])->name('v1.department-level-requirements');
     Route::get('institution-departments/{department_level}/courses/{department_course}/requirements', [DepartmentCourseController::class, 'courseRequirements'])->name('v1.department-course-requirements');
     Route::apiResource('staff', StaffController::class)->names('v1.staff');
+    Route::get('academic-staff/grouped-by-department', [AcademicStaffController::class, 'groupedByDepartment'])->name('v1.academic-staff.grouped-by-department');
     Route::apiResource('intake-periods', IntakePeriodController::class)->names('v1.intake-periods');
     Route::get('course-modes/{department_course}/course/{department_level}/level', [ModeOfStudyController::class, 'courseModes'])->name('v1.modes-of-study.course-modes');
     Route::apiResource('modes-of-study', ModeOfStudyController::class)->names('v1.modes-of-study');
