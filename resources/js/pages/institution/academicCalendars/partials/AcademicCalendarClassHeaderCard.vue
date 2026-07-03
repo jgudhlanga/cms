@@ -1,9 +1,11 @@
 <script setup lang="ts">
+import AcademicCalendarClassTutorBadge from '@/components/academicCalendars/AcademicCalendarClassTutorBadge.vue';
 import BaseButton from '@/components/core/button/BaseButton.vue';
 import BaseCard from '@/components/core/card/BaseCard.vue';
 import BaseIcon from '@/components/core/icon/BaseIcon.vue';
 import HeadingSmall from '@/components/core/util/HeadingSmall.vue';
 import LabelValue from '@/components/core/util/LabelValue.vue';
+import type { ClassTutorSummary } from '@/types/academic-calendar';
 import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
 import { IconName } from '@/enums/icons';
@@ -12,13 +14,16 @@ defineProps<{
     title: string;
     description: string | null;
     studentCount: number;
+    tutor: ClassTutorSummary;
     canUpdate: boolean;
     canExportClassList?: boolean;
+    canAssignStaffing?: boolean;
 }>();
 
 const emit = defineEmits<{
     edit: [];
     exportClassList: [];
+    assignTutor: [];
 }>();
 </script>
 
@@ -59,6 +64,11 @@ const emit = defineEmits<{
                     </BaseButton>
                 </div>
             </div>
+            <AcademicCalendarClassTutorBadge
+                :tutor="tutor"
+                :can-assign="canAssignStaffing === true"
+                @assign="emit('assignTutor')"
+            />
         </div>
     </BaseCard>
 </template>

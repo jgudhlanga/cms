@@ -1,11 +1,16 @@
 <script setup lang="ts">
-import { Head, Link as InertiaLink, useForm } from '@inertiajs/vue3';
-import { UserIcon, UserRoundIcon } from 'lucide-vue-next';
-
+import AssignClassTutorModal from '@/components/academicCalendars/AssignClassTutorModal.vue';
 import ClassListExportModal from '@/components/academicCalendars/ClassListExportModal.vue';
 import PageContainer from '@/components/core/page/PageContainer.vue';
+import { openAssignClassTutorModal } from '@/composables/academicCalendars/useAcademicCalendarClassTutor';
 import { openClassListExportModal } from '@/composables/academicCalendars/useClassListExport';
-import { AcademicCalendar, AcademicCalendarClassGenerationContext, AcademicCalendarClassPreview, ClassConfig } from '@/types/academic-calendar';
+import {
+    AcademicCalendar,
+    AcademicCalendarClassGenerationContext,
+    AcademicCalendarClassPreview,
+    ClassConfig,
+    ClassStaffingSummary,
+} from '@/types/academic-calendar';
 import { AuthObject } from '@/types/data-pagination';
 import { DepartmentCourse, DepartmentLevel } from '@/types/department-meta-data';
 import { InstitutionDepartment, ModeOfStudy } from '@/types/institution';
@@ -14,9 +19,12 @@ import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
 import { errorAlert, successAlert } from '@/lib/alerts';
 import { firstInertiaErrorMessage } from '@/lib/inertia-errors';
+import { Head, Link as InertiaLink, useForm } from '@inertiajs/vue3';
+import { UserIcon, UserRoundIcon } from 'lucide-vue-next';
 import { trans } from 'laravel-vue-i18n';
 import { computed, toRefs } from 'vue';
 import AcademicCalendarClassPreviewCard from './partials/AcademicCalendarClassPreviewCard.vue';
+import AcademicCalendarClassStaffingSummaryCard from './partials/AcademicCalendarClassStaffingSummaryCard.vue';
 
 const props = withDefaults(
     defineProps<{
@@ -30,13 +38,29 @@ const props = withDefaults(
         classConfig: ClassConfig | null;
         previewClasses: AcademicCalendarClassPreview[];
         generationContext: AcademicCalendarClassGenerationContext;
+        staffingSummary: ClassStaffingSummary;
+        selectedAcademicYearOptionId: number | null;
+        calendarType: 'term' | 'semester' | 'abma';
+        semesterConfigHasSyllabi: boolean;
+        canAssignStaffing?: boolean;
         errors: object;
         canViewCourseWork?: boolean;
         canExportClassList?: boolean;
     }>(),
     {
+        canAssignStaffing: false,
         canViewCourseWork: false,
         canExportClassList: false,
+        staffingSummary: () => ({
+            tutorsAssigned: 0,
+            classCount: 0,
+            modulesTotal: 0,
+            moduleSlotsStaffed: 0,
+            semesterModuleCount: 0,
+        }),
+        selectedAcademicYearOptionId: null,
+        calendarType: 'semester',
+        semesterConfigHasSyllabi: false,
     },
 );
 
@@ -60,13 +84,18 @@ const canExportClassLists = computed(
 
 const classConfigQuery = computed((): Record<string, string> => {
     const context = generationContext.value;
-
-    return {
+    const query: Record<string, string> = {
         class_config_id: String(context.classConfigId ?? classConfig.value?.id ?? ''),
         department_course_id: String(context.departmentCourseId ?? ''),
         department_level_id: String(context.departmentLevelId ?? ''),
         mode_of_study_id: String(context.modeOfStudyId ?? ''),
     };
+
+    if (props.selectedAcademicYearOptionId != null) {
+        query.academic_year_option_id = String(props.selectedAcademicYearOptionId);
+    }
+
+    return query;
 });
 
 const courseWorkMarksheetUrl = computed(() =>
@@ -169,17 +198,20 @@ const classShowUrl = (classPreview: AcademicCalendarClassPreview): string | null
         return null;
     }
 
-    return route('academic-calendars.department-classes.show', {
+    const params: Record<string, string> = {
         institution_department: String(department.value.id),
         calendar_year: String(academicCalendar.value.attributes.calendarYear),
         academic_calendar_class: String(classPreview.academicCalendarClassId),
-    });
+        ...classConfigQuery.value,
+    };
+
+    return route('academic-calendars.department-classes.show', params);
 };
 
 const computedTitle = computed(() => {
     let title = '';
     if (classConfig?.value?.attributes?.departmentCourse) {
-        title += `${String(classConfig?.value?.attributes?.departmentCourse )} - `;
+        title += `${String(classConfig?.value?.attributes?.departmentCourse)} - `;
     }
     if (classConfig?.value?.attributes?.departmentLevel) {
         title += `${String(classConfig?.value?.attributes?.departmentLevel)} - `;
@@ -188,28 +220,28 @@ const computedTitle = computed(() => {
         title += `${String(classConfig?.value?.attributes?.modeOfStudy)} `;
     }
     if (classConfig?.value?.attributes?.calendarYear && String(classConfig?.value?.attributes?.calendarYear).trim() !== '') {
-        title += `( ${String(classConfig?.value?.attributes?.calendarYear )} )`;
+        title += `( ${String(classConfig?.value?.attributes?.calendarYear)} )`;
     }
     return title;
 });
+
+const onAssignTutor = (classId: number, staffId?: number | null): void => {
+    openAssignClassTutorModal({ academicCalendarClassId: classId, staffId });
+};
 </script>
 
 <template>
     <Head :title="$tChoice('academic_calendar.academic_calendar', 2)" />
     <PageContainer :breadcrumbs="breadcrumbs" :back-url="route('institution-departments.show', String(department.id))">
         <div class="flex flex-col space-y-6">
-            <BaseCard :title="computedTitle">
-                <div class="grid grid-cols-2 gap-4 md:grid-cols-5">
-                    <LabelValue :label="$tChoice('syllabus.course_code', 2)" :value="classConfig?.attributes?.courseSyllabusCodes?.join(', ') ?? '---'" />
-                    <LabelValue :label="$tChoice('trans.level', 1)" :value="classConfig?.attributes?.departmentLevel ?? '---'" />
-                    <LabelValue :label="$tChoice('general.mode', 1)" :value="classConfig?.attributes?.modeOfStudy ?? '---'" />
-                    <LabelValue :label="$tChoice('academic_calendar.class_unit_size', 1)" :value="String(classConfig?.attributes?.studentsPerClass ?? '---')" />
-                    <LabelValue
-                        :label="$tChoice('trans.class', 2)"
-                        :value="String(generationContext.populatedExistingClassCount ?? 0)"
-                    />
-                </div>
-            </BaseCard>
+            <AcademicCalendarClassStaffingSummaryCard
+                :title="computedTitle"
+                :class-config="classConfig"
+                :staffing-summary="staffingSummary"
+                :selected-academic-year-option-id="selectedAcademicYearOptionId"
+                :calendar-type="calendarType"
+                :semester-config-has-syllabi="semesterConfigHasSyllabi"
+            />
 
             <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <HeadingSmall :title="`${$t('enrolment.final_enrolments')} (${generationContext.finalStudentCount})`" />
@@ -267,15 +299,23 @@ const computedTitle = computed(() => {
                 :description="$t(previewEmptyAlert.descriptionKey)"
             />
             <template v-else>
-                <div class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+                <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                     <AcademicCalendarClassPreviewCard
                         v-for="classPreview in previewClasses"
                         :key="classPreview.name"
                         :class-preview="classPreview"
                         :show-url="classShowUrl(classPreview)"
+                        :can-assign-staffing="canAssignStaffing"
+                        :show-module-staffing="selectedAcademicYearOptionId != null"
+                        @assign-tutor="onAssignTutor"
                     />
                 </div>
             </template>
+            <AssignClassTutorModal
+                v-if="canAssignStaffing"
+                :institution-department-id="Number(department.id)"
+                :calendar-year="String(academicCalendar.attributes.calendarYear)"
+            />
             <ClassListExportModal
                 v-if="canExportClassLists"
                 :institution-department-id="Number(department.id)"

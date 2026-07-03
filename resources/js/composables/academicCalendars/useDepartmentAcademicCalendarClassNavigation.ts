@@ -13,7 +13,14 @@ export function useDepartmentAcademicCalendarClassNavigation(
     mode: Ref<ModeOfStudy>,
     classConfig: Ref<ClassConfig | null>,
     academicCalendarClass: Ref<AcademicCalendarClassDetail>,
+    selectedAcademicYearOptionId?: Ref<number | null>,
 ) {
+    const semesterQuery = computed((): Record<string, string> => {
+        const optionId = selectedAcademicYearOptionId?.value;
+
+        return optionId != null ? { academic_year_option_id: String(optionId) } : {};
+    });
+
     const departmentClassesUrl = computed(() =>
         route('academic-calendars.department-classes', {
             institution_department: String(department.value.id),
@@ -22,6 +29,7 @@ export function useDepartmentAcademicCalendarClassNavigation(
             department_course_id: String(course.value.id),
             mode_of_study_id: String(mode.value.id),
             ...(classConfig.value?.id ? { class_config_id: String(classConfig.value.id) } : {}),
+            ...semesterQuery.value,
         }),
     );
 
@@ -64,6 +72,7 @@ export function useDepartmentAcademicCalendarClassNavigation(
             institution_department: String(department.value.id),
             calendar_year: String(academicCalendar.value.attributes.calendarYear),
             academic_calendar_class: String(academicCalendarClass.value.id),
+            ...semesterQuery.value,
         }),
     );
 
@@ -80,6 +89,7 @@ export function useDepartmentAcademicCalendarClassNavigation(
         department_course_id: String(course.value.id),
         department_level_id: String(level.value.id),
         mode_of_study_id: String(mode.value.id),
+        ...semesterQuery.value,
     }));
 
     return {

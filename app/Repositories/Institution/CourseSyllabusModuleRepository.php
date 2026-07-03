@@ -73,10 +73,22 @@ class CourseSyllabusModuleRepository extends BaseRepository implements ICourseSy
     /** @param array<int> $staffIds */
     private function syncLecturers(CourseSyllabusModule $module, array $staffIds): void
     {
-        $syncData = collect($staffIds)->mapWithKeys(
-            fn (int $staffId): array => [$staffId => ['tenant_id' => $module->tenant_id]],
-        )->all();
+        DB::table('course_syllabus_module_lecturers')
+            ->where('course_syllabus_module_id', $module->id)
+            ->whereNull('academic_calendar_class_id')
+            ->delete();
 
-        $module->lecturers()->sync($syncData);
+        $now = now();
+
+        foreach (array_values(array_unique(array_map('intval', $staffIds))) as $staffId) {
+            DB::table('course_syllabus_module_lecturers')->insert([
+                'tenant_id' => $module->tenant_id,
+                'course_syllabus_module_id' => $module->id,
+                'staff_id' => $staffId,
+                'academic_calendar_class_id' => null,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]);
+        }
     }
 }

@@ -228,6 +228,9 @@ const showConfigModal = (payload: AcademicClassConfigPayload) => {
                                                 department_course_id: stats.departmentCourseId,
                                                 department_level_id: String(level.departmentLevelId),
                                                 class_config_id: String(level.classConfigId),
+                                                ...(level.academicYearOptionId != null
+                                                    ? { academic_year_option_id: String(level.academicYearOptionId) }
+                                                    : {}),
                                             })
                                         "
                                     >

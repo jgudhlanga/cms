@@ -110,6 +110,7 @@ class Staff extends Model
     public function courseSyllabusModules(): BelongsToMany
     {
         return $this->belongsToMany(CourseSyllabusModule::class, 'course_syllabus_module_lecturers')
+            ->withPivot('academic_calendar_class_id', 'tenant_id')
             ->withTimestamps();
     }
 

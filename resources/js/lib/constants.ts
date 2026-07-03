@@ -84,6 +84,7 @@ const APP_MODULE_KEYS = {
     student_list_export: 'student_list_export',
     class_list_export: 'class_list_export',
     assign_class_lecturer: 'assign_class_lecturer',
+    assign_class_tutor: 'assign_class_tutor',
 };
 const EXAM_SITTINGS = [
     { value: 'june', label: 'June' },

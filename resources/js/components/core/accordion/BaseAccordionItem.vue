@@ -19,7 +19,7 @@ defineProps<Props>();
             class="group cursor-pointer gap-2 px-3 py-3 hover:no-underline sm:px-4 [&[data-state=open]_.accordion-chevron]:rotate-180 [&>svg]:ml-auto"
         >
             <div class="flex min-w-0 flex-1 flex-col items-start gap-1 text-left">
-                <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+                <div class="flex w-full min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
                     <span class="wrap-break-word text-left text-xs font-bold uppercase text-accent-foreground">{{ title }}</span>
                     <slot name="trigger-extra" />
                 </div>

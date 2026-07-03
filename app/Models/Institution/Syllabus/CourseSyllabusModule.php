@@ -62,6 +62,16 @@ class CourseSyllabusModule extends Model
     public function lecturers(): BelongsToMany
     {
         return $this->belongsToMany(Staff::class, 'course_syllabus_module_lecturers')
+            ->wherePivotNull('academic_calendar_class_id')
+            ->withPivot('academic_calendar_class_id', 'tenant_id')
+            ->withTimestamps();
+    }
+
+    public function classLecturers(): BelongsToMany
+    {
+        return $this->belongsToMany(Staff::class, 'course_syllabus_module_lecturers')
+            ->wherePivotNotNull('academic_calendar_class_id')
+            ->withPivot('academic_calendar_class_id', 'tenant_id')
             ->withTimestamps();
     }
 
