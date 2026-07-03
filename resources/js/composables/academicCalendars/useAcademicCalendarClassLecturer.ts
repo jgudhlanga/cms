@@ -1,12 +1,13 @@
-import { APP_MODULE_KEYS } from '@/lib/constants';
-import { useModalStore } from '@/store/core/useModalStore';
+import { openAssignClassTutorModal } from '@/composables/academicCalendars/useAcademicCalendarClassTutor';
 
 export type AssignClassLecturerModalParams = {
     academicCalendarClassId: number;
     staffId?: number | null;
 };
 
+/** @deprecated Use openAssignClassTutorModal */
 export function openAssignClassLecturerModal(params: AssignClassLecturerModalParams): void {
-    const { openModal } = useModalStore();
-    openModal(APP_MODULE_KEYS.assign_class_lecturer, params);
+    openAssignClassTutorModal(params);
 }
+
+export { openAssignClassTutorModal, type AssignClassTutorModalParams } from '@/composables/academicCalendars/useAcademicCalendarClassTutor';

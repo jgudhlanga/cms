@@ -2,12 +2,14 @@
 
 namespace App\Models\AcademicCalendars;
 
+use App\Models\Institution\Syllabus\CourseSyllabusModule;
 use App\Traits\BelongsToTenant;
 use App\Traits\Filterable;
 use App\Traits\Paginatable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -45,6 +47,14 @@ class AcademicCalendarClass extends Model
     {
         return $this->hasOne(AcademicCalendarClassMetaData::class, 'academic_calendar_class_id')
             ->whereHas('classMetadataType', fn (Builder $query): Builder => $query->where('name', 'lecturer'));
+    }
+
+    public function moduleLecturers(): BelongsToMany
+    {
+        return $this->belongsToMany(CourseSyllabusModule::class, 'course_syllabus_module_lecturers')
+            ->wherePivotNotNull('academic_calendar_class_id')
+            ->withPivot('tenant_id')
+            ->withTimestamps();
     }
 
     public function getActivitylogOptions(): LogOptions

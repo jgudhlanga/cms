@@ -1148,4 +1148,5 @@ return [
     'maintenance_faulty_data_merge_view_profile' => 'View profile',
     'maintenance_faulty_data_merge_survivor_details' => 'Survivor profile',
     'created_at' => 'Created at',
+    'select' => 'Select',
 ];

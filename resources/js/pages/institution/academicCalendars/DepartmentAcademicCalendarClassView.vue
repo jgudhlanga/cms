@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import AcademicCalendarClassNavComboSelect from '@/components/academicCalendars/AcademicCalendarClassNavComboSelect.vue';
+import AssignClassTutorModal from '@/components/academicCalendars/AssignClassTutorModal.vue';
 import ClassListExportModal from '@/components/academicCalendars/ClassListExportModal.vue';
 import PageContainer from '@/components/core/page/PageContainer.vue';
+import { openAssignClassTutorModal } from '@/composables/academicCalendars/useAcademicCalendarClassTutor';
 import { EDIT_CLASS_MODAL, useAcademicCalendarClassEdit } from '@/composables/academicCalendars/useAcademicCalendarClassEdit';
 import { openClassListExportModal } from '@/composables/academicCalendars/useClassListExport';
 import { MOVE_STUDENTS_MODAL, useAcademicCalendarClassMoveStudents } from '@/composables/academicCalendars/useAcademicCalendarClassMoveStudents';
@@ -10,13 +12,14 @@ import { useAcademicCalendarClassStudentSelection } from '@/composables/academic
 import { useAcademicCalendarClassStudents } from '@/composables/academicCalendars/useAcademicCalendarClassStudents';
 import { useDepartmentAcademicCalendarClassNavigation } from '@/composables/academicCalendars/useDepartmentAcademicCalendarClassNavigation';
 import { hasAbility } from '@/lib/permissions';
-import { AcademicCalendar, AcademicCalendarClassDetail, AcademicCalendarClassMoveTarget, ClassConfig } from '@/types/academic-calendar';
+import { AcademicCalendar, AcademicCalendarClassDetail, AcademicCalendarClassMoveTarget, ClassConfig, ClassSemesterModule } from '@/types/academic-calendar';
 import { DepartmentCourse, DepartmentLevel } from '@/types/department-meta-data';
 import { InstitutionDepartment, ModeOfStudy } from '@/types/institution';
 import { Head } from '@inertiajs/vue3';
 import { computed, toRefs, watch } from 'vue';
 import AcademicCalendarClassStudentFilters from './partials/AcademicCalendarClassStudentFilters.vue';
 import AcademicCalendarClassHeaderCard from './partials/AcademicCalendarClassHeaderCard.vue';
+import AcademicCalendarClassModulesPanel from './partials/AcademicCalendarClassModulesPanel.vue';
 import AcademicCalendarClassStudentsTable from './partials/AcademicCalendarClassStudentsTable.vue';
 import EditAcademicCalendarClassModal from './partials/EditAcademicCalendarClassModal.vue';
 import MoveAcademicCalendarStudentsModal from './partials/MoveAcademicCalendarStudentsModal.vue';
@@ -35,6 +38,11 @@ const props = withDefaults(
         canUpdateAcademicCalendarClass?: boolean;
         canViewCourseWork?: boolean;
         canExportClassList?: boolean;
+        semesterModules?: ClassSemesterModule[];
+        selectedAcademicYearOptionId?: number | null;
+        calendarType?: 'term' | 'semester' | 'abma';
+        semesterConfigHasSyllabi?: boolean;
+        canAssignStaffing?: boolean;
     }>(),
     {
         moveTargetClasses: () => [],
@@ -42,10 +50,15 @@ const props = withDefaults(
         canUpdateAcademicCalendarClass: false,
         canViewCourseWork: false,
         canExportClassList: false,
+        semesterModules: () => [],
+        selectedAcademicYearOptionId: null,
+        calendarType: 'semester',
+        semesterConfigHasSyllabi: false,
+        canAssignStaffing: false,
     },
 );
 
-const { department, academicCalendar, academicCalendarClass, course, level, mode, classConfig, moveTargetClasses, siblingAcademicCalendarClasses } =
+const { department, academicCalendar, academicCalendarClass, course, level, mode, classConfig, moveTargetClasses, siblingAcademicCalendarClasses, selectedAcademicYearOptionId } =
     toRefs(props);
 
 const { departmentClassesUrl, moveStudentsUrl, updateClassUrl, breadcrumbs, studentCourseWorkUrl, classConfigQuery } =
@@ -57,6 +70,7 @@ const { departmentClassesUrl, moveStudentsUrl, updateClassUrl, breadcrumbs, stud
     mode,
     classConfig,
     academicCalendarClass,
+    selectedAcademicYearOptionId,
 );
 
 const { sortedStudents } = useAcademicCalendarClassStudents(academicCalendarClass);
@@ -91,6 +105,13 @@ const singleClassExportOption = computed(() => [
         studentCount: academicCalendarClass.value.studentCount,
     },
 ]);
+
+const onAssignTutor = (): void => {
+    openAssignClassTutorModal({
+        academicCalendarClassId: academicCalendarClass.value.id,
+        staffId: academicCalendarClass.value.tutor?.id ?? null,
+    });
+};
 </script>
 
 <template>
@@ -105,14 +126,29 @@ const singleClassExportOption = computed(() => [
             />
         </template>
         <div class="flex flex-col space-y-6">
-            <AcademicCalendarClassHeaderCard
-                :title="academicCalendarClass.name"
-                :description="academicCalendarClass.description"
-                :student-count="academicCalendarClass.studentCount"
-                :can-update="canUpdateAcademicCalendarClass"
-                :can-export-class-list="canExportClassList"
-                @edit="openEditClassModal"
-                @export-class-list="openClassListExportModal"
+            <div>
+                <AcademicCalendarClassHeaderCard
+                    :title="academicCalendarClass.name"
+                    :description="academicCalendarClass.description"
+                    :student-count="academicCalendarClass.studentCount"
+                    :tutor="academicCalendarClass.tutor ?? null"
+                    :can-update="canUpdateAcademicCalendarClass"
+                    :can-export-class-list="canExportClassList"
+                    :can-assign-staffing="canAssignStaffing"
+                    @edit="openEditClassModal"
+                    @export-class-list="openClassListExportModal"
+                    @assign-tutor="onAssignTutor"
+                />
+            </div>
+            <AcademicCalendarClassModulesPanel
+                :institution-department-id="Number(department.id)"
+                :calendar-year="String(academicCalendar.attributes.calendarYear)"
+                :academic-calendar-class-id="academicCalendarClass.id"
+                :semester-modules="semesterModules"
+                :selected-academic-year-option-id="selectedAcademicYearOptionId"
+                :calendar-type="calendarType"
+                :semester-config-has-syllabi="semesterConfigHasSyllabi"
+                :can-assign-staffing="canAssignStaffing"
             />
             <div class="space-y-4">
                 <h2 class="text-lg font-semibold text-foreground">{{ $tChoice('trans.student', 2) }}</h2>
@@ -157,6 +193,11 @@ const singleClassExportOption = computed(() => [
                 :class-config-query="classConfigQuery"
                 :classes="singleClassExportOption"
                 :single-class-id="academicCalendarClass.id"
+            />
+            <AssignClassTutorModal
+                v-if="canAssignStaffing"
+                :institution-department-id="Number(department.id)"
+                :calendar-year="String(academicCalendar.attributes.calendarYear)"
             />
         </div>
     </PageContainer>

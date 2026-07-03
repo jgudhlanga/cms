@@ -79,10 +79,34 @@ export type AcademicCalendarClassPreviewStudent = {
     name: string;
 };
 
-export type ClassLecturerSummary = {
+export type ClassTutorSummary = {
     id: number;
     name: string;
 } | null;
+
+/** @deprecated Use ClassTutorSummary */
+export type ClassLecturerSummary = ClassTutorSummary;
+
+export type ClassModuleStaffingSummary = {
+    staffed: number;
+    total: number;
+};
+
+export type ClassStaffingSummary = {
+    tutorsAssigned: number;
+    classCount: number;
+    modulesTotal: number;
+    moduleSlotsStaffed: number;
+    semesterModuleCount: number;
+};
+
+export type ClassSemesterModule = {
+    moduleId: number;
+    code: string;
+    title: string;
+    staffIds: number[];
+    syllabusDefaultStaffIds: number[];
+};
 
 export type ClassListExportClassOption = {
     academicCalendarClassId: number | null;
@@ -100,7 +124,10 @@ export type AcademicCalendarClassPreview = {
         unknown: number;
     };
     students: AcademicCalendarClassPreviewStudent[];
+    tutor?: ClassTutorSummary;
+    /** @deprecated Use tutor */
     lecturer?: ClassLecturerSummary;
+    moduleStaffing?: ClassModuleStaffingSummary;
 };
 
 export type AcademicCalendarClassMoveTarget = {
@@ -114,6 +141,8 @@ export type AcademicCalendarClassDetail = {
     description: string | null;
     studentCount: number;
     students: AcademicCalendarClassPreviewStudent[];
+    tutor?: ClassTutorSummary;
+    /** @deprecated Use tutor */
     lecturer?: ClassLecturerSummary;
 };
 

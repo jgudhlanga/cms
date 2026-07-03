@@ -33,6 +33,7 @@ use App\Queries\Enrolments\ConfirmedStudentsQuery;
 use App\Services\AcademicCalendars\AcademicCalendarClassNameFormatter;
 use App\Services\AcademicCalendars\ClassListDataService;
 use App\Services\AcademicCalendars\ClassListPdfService;
+use App\Services\AcademicCalendars\ClassStaffingService;
 use App\Services\AcademicCalendars\CourseWorkImportService;
 use App\Services\AcademicCalendars\CourseWorkImportTemplateService;
 use App\Services\AcademicCalendars\CourseWorkMarksheetDataService;
@@ -56,6 +57,7 @@ class AcademicCalendarController extends Controller
 
     public function __construct(
         private readonly AcademicCalendarClassNameFormatter $classNameFormatter,
+        private readonly ClassStaffingService $classStaffingService,
     ) {}
 
     public function index()
@@ -106,6 +108,10 @@ class AcademicCalendarController extends Controller
         $course = DepartmentCourse::find($departmentCourseId);
         $level = DepartmentLevel::find($departmentLevelId);
         $mode = ModeOfStudy::find($modeOfStudyId);
+        $level?->loadMissing('level');
+        $selectedAcademicYearOptionId = request()->filled('academic_year_option_id')
+            ? (int) request()->query('academic_year_option_id')
+            : null;
         $classConfigId = request()->query('class_config_id');
         $classConfig = ClassConfig::query()
             ->when($classConfigId, fn ($query) => $query->where('id', $classConfigId))
@@ -168,6 +174,12 @@ class AcademicCalendarController extends Controller
             $populatedExistingClassCount
         );
 
+        $staffingContext = $this->buildStaffingContextForPreviews(
+            $classConfig,
+            $previewClasses,
+            $selectedAcademicYearOptionId,
+        );
+
         return Inertia::render('institution/academicCalendars/DepartmentAcademicCalendarClasses', [
             'department' => InstitutionDepartmentResource::make($institutionDepartment),
             'academicCalendar' => AcademicCalendarResource::make($academicCalendar),
@@ -176,8 +188,13 @@ class AcademicCalendarController extends Controller
             'level' => DepartmentLevelResource::make($level),
             'mode' => ModeOfStudyResource::make($mode),
             'classConfig' => ClassConfigResource::make($classConfig) ?? null,
-            'previewClasses' => $previewClasses,
+            'previewClasses' => $staffingContext['previewClasses'],
             'generationContext' => $context,
+            'staffingSummary' => $staffingContext['staffingSummary'],
+            'selectedAcademicYearOptionId' => $selectedAcademicYearOptionId,
+            'calendarType' => $level?->level?->calendar_type?->value ?? 'semester',
+            'semesterConfigHasSyllabi' => $staffingContext['semesterConfigHasSyllabi'],
+            'canAssignStaffing' => auth()->user()?->can('update', $academicCalendar) ?? false,
             'canViewCourseWork' => auth()->user()?->can('viewAny', CourseWorkMark::class) ?? false,
             'canExportClassList' => auth()->user()?->can('export', AcademicCalendar::class) ?? false,
         ]);
@@ -408,6 +425,17 @@ class AcademicCalendarController extends Controller
 
         $students = $this->studentsPayloadForAcademicCalendarClass($academicCalendarClass);
 
+        $selectedAcademicYearOptionId = request()->filled('academic_year_option_id')
+            ? (int) request()->query('academic_year_option_id')
+            : null;
+
+        $level?->loadMissing('level');
+        $staffingContext = $this->buildStaffingContextForClass(
+            $academicCalendarClass,
+            $classConfig,
+            $selectedAcademicYearOptionId,
+        );
+
         $siblingClassesCollection = AcademicCalendarClass::query()
             ->where('class_config_id', $classConfig->id)
             ->whereNull('deleted_at')
@@ -449,7 +477,13 @@ class AcademicCalendarController extends Controller
                 'description' => $academicCalendarClass->description,
                 'studentCount' => count($students),
                 'students' => $students,
+                'tutor' => $staffingContext['tutor'],
             ],
+            'semesterModules' => $staffingContext['semesterModules'],
+            'selectedAcademicYearOptionId' => $selectedAcademicYearOptionId,
+            'calendarType' => $level?->level?->calendar_type?->value ?? 'semester',
+            'semesterConfigHasSyllabi' => $staffingContext['semesterConfigHasSyllabi'],
+            'canAssignStaffing' => auth()->user()?->can('update', $academicCalendar) ?? false,
         ]);
     }
 
@@ -1066,8 +1100,114 @@ class AcademicCalendarController extends Controller
                 ];
             })
             ->all();
+    }
 
-        return $previews;
+    /**
+     * @param  list<array<string, mixed>>  $previewClasses
+     * @return array{previewClasses: list<array<string, mixed>>, staffingSummary: array<string, mixed>, semesterConfigHasSyllabi: bool}
+     */
+    private function buildStaffingContextForPreviews(
+        ?ClassConfig $classConfig,
+        array $previewClasses,
+        ?int $academicYearOptionId,
+    ): array {
+        $emptySummary = [
+            'tutorsAssigned' => 0,
+            'classCount' => 0,
+            'modulesTotal' => 0,
+            'moduleSlotsStaffed' => 0,
+            'semesterModuleCount' => 0,
+        ];
+
+        if (! $classConfig instanceof ClassConfig) {
+            return [
+                'previewClasses' => $previewClasses,
+                'staffingSummary' => $emptySummary,
+                'semesterConfigHasSyllabi' => false,
+            ];
+        }
+
+        $classIds = array_values(array_filter(array_map(
+            fn (array $preview): ?int => isset($preview['academicCalendarClassId'])
+                ? (int) $preview['academicCalendarClassId']
+                : null,
+            $previewClasses,
+        )));
+
+        $tutorsByClassId = $this->classStaffingService->tutorsByClassId($classIds);
+        $semesterConfig = $this->classStaffingService->resolveSemesterClassConfig($classConfig, $academicYearOptionId);
+        $modules = $semesterConfig instanceof ClassConfig
+            ? $this->classStaffingService->resolveSemesterModules($semesterConfig)
+            : collect();
+        $classModuleStaffIdsByClassId = $this->classStaffingService->classModuleStaffIdsByClassId($classIds, $modules);
+
+        $enrichedPreviews = array_map(function (array $preview) use (
+            $tutorsByClassId,
+            $modules,
+            $classModuleStaffIdsByClassId,
+        ): array {
+            $classId = $preview['academicCalendarClassId'] ?? null;
+
+            if ($classId === null) {
+                return $preview;
+            }
+
+            $preview['tutor'] = $this->classStaffingService->formatTutorSummary(
+                $tutorsByClassId[(int) $classId] ?? null,
+            );
+            $preview['moduleStaffing'] = $this->classStaffingService->moduleStaffingForClass(
+                (int) $classId,
+                $modules,
+                $classModuleStaffIdsByClassId,
+            );
+
+            return $preview;
+        }, $previewClasses);
+
+        return [
+            'previewClasses' => $enrichedPreviews,
+            'staffingSummary' => $this->classStaffingService->buildStaffingSummary(
+                $enrichedPreviews,
+                $modules,
+                $tutorsByClassId,
+                $classModuleStaffIdsByClassId,
+            ),
+            'semesterConfigHasSyllabi' => $semesterConfig instanceof ClassConfig
+                && $this->classStaffingService->syllabusIdsForSemesterConfig($semesterConfig) !== [],
+        ];
+    }
+
+    /**
+     * @return array{tutor: array<string, mixed>|null, semesterModules: list<array<string, mixed>>, semesterConfigHasSyllabi: bool}
+     */
+    private function buildStaffingContextForClass(
+        AcademicCalendarClass $academicCalendarClass,
+        ClassConfig $allocationConfig,
+        ?int $academicYearOptionId,
+    ): array {
+        $classId = (int) $academicCalendarClass->id;
+        $tutorsByClassId = $this->classStaffingService->tutorsByClassId([$classId]);
+        $semesterConfig = $this->classStaffingService->resolveSemesterClassConfig(
+            $allocationConfig,
+            $academicYearOptionId,
+        );
+        $modules = $semesterConfig instanceof ClassConfig
+            ? $this->classStaffingService->resolveSemesterModules($semesterConfig)
+            : collect();
+        $classModuleStaffIdsByClassId = $this->classStaffingService->classModuleStaffIdsByClassId([$classId], $modules);
+        $templateStaffIdsByModuleId = $this->classStaffingService->templateStaffIdsByModuleId($modules);
+
+        return [
+            'tutor' => $this->classStaffingService->formatTutorSummary($tutorsByClassId[$classId] ?? null),
+            'semesterModules' => $this->classStaffingService->buildSemesterModulesPayload(
+                $academicCalendarClass,
+                $modules,
+                $classModuleStaffIdsByClassId,
+                $templateStaffIdsByModuleId,
+            ),
+            'semesterConfigHasSyllabi' => $semesterConfig instanceof ClassConfig
+                && $this->classStaffingService->syllabusIdsForSemesterConfig($semesterConfig) !== [],
+        ];
     }
 
     private function buildGenerationContext(
