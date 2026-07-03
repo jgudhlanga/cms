@@ -2,6 +2,7 @@
 import { Head } from '@inertiajs/vue3';
 
 import { BaseButton } from '@/components/core/button';
+import BaseRadioGroup from '@/components/core/form/radio-group/BaseRadioGroup.vue';
 import BaseIcon from '@/components/core/icon/BaseIcon.vue';
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import HeadingSmall from '@/components/core/util/HeadingSmall.vue';
@@ -11,10 +12,11 @@ import StatusModal from '@/pages/institution/tools/partials/StatusModal.vue';
 import HttpService from '@/services/http.service';
 import { usePaymentIntegrationStore } from '@/store/institution/usePaymentIntegrationStore';
 import { AuthObject } from '@/types/data-pagination';
-import { Ledger } from '@/types/integrations';
+import { Ledger, LedgerEmailSearchTypeOption, LedgerEmailSearchTypeSelectionResponse } from '@/types/integrations';
+import { RadioGroupOption } from '@/types/forms';
 import { Link } from '@/types/ui';
 import { storeToRefs } from 'pinia';
-import { onBeforeUnmount, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import BaseInput from '../../../components/core/form/text/BaseInput.vue';
 import LedgerList from './partials/LedgerList.vue';
 
@@ -36,17 +38,59 @@ const breadcrumbs: Array<Link> = [
 
 const isSearching = ref(false);
 const store = usePaymentIntegrationStore();
-const { search, reload } = storeToRefs(store);
+const { search, reload, selectedLedgerableType } = storeToRefs(store);
 const ledgers = ref<Ledger[] | null>([]);
+const availableTypes = ref<LedgerEmailSearchTypeOption[]>([]);
+const requiresTypeSelection = ref(false);
+
+const typeOptions = computed<RadioGroupOption[]>(() =>
+    availableTypes.value.map((type) => ({
+        inputId: `ledgerable-type-${type.value}`,
+        value: type.value,
+        label: type.label,
+    })),
+);
+
+const isTypeSelectionResponse = (
+    response: Ledger[] | LedgerEmailSearchTypeSelectionResponse,
+): response is LedgerEmailSearchTypeSelectionResponse => {
+    return 'requiresTypeSelection' in response && response.requiresTypeSelection === true;
+};
+
+const buildSearchUrl = () => {
+    const encodedSearch = encodeURIComponent(search.value);
+    const params = selectedLedgerableType.value ? `?ledgerableType=${selectedLedgerableType.value}` : '';
+
+    return `integrations/payments/ledger-entries/${encodedSearch}${params}`;
+};
 
 const searchLedger = async () => {
     if (search.value === '') {
         errorAlert('Please enter a search term');
         return;
     }
+
+    if (requiresTypeSelection.value && !selectedLedgerableType.value) {
+        errorAlert('Please select a ledger type');
+        return;
+    }
+
     isSearching.value = true;
+
     try {
-        ledgers.value = await HttpService.get(`integrations/payments/ledger-entries/${search.value}`);
+        const response = await HttpService.get(buildSearchUrl());
+
+        if (isTypeSelectionResponse(response)) {
+            availableTypes.value = response.types;
+            requiresTypeSelection.value = true;
+            ledgers.value = [];
+            selectedLedgerableType.value = '';
+            return;
+        }
+
+        requiresTypeSelection.value = false;
+        availableTypes.value = [];
+        ledgers.value = response;
     } catch (error: any) {
         const message = error?.response?.data?.message;
         if (message) errorAlert(error?.response?.data?.message);
@@ -54,6 +98,13 @@ const searchLedger = async () => {
         isSearching.value = false;
     }
 };
+
+watch(search, () => {
+    requiresTypeSelection.value = false;
+    availableTypes.value = [];
+    selectedLedgerableType.value = '';
+    ledgers.value = [];
+});
 
 watch(reload, async (newVal) => {
     if (newVal) {
@@ -80,6 +131,19 @@ onBeforeUnmount(() => {
                         :label="$t('trans.ui_order_reference_payment_reference_user_email')"
                         v-model="search"
                         :placeholder="$t('trans.ui_enter_order_reference_payment_reference_user_email')"
+                        :vertical-layout="true"
+                        :label-uppercase="true"
+                        :is-required="true"
+                    />
+                </div>
+                <div
+                    v-if="requiresTypeSelection && typeOptions.length > 0"
+                    class="mt-6 flex w-full flex-col"
+                >
+                    <BaseRadioGroup
+                        v-model="selectedLedgerableType"
+                        label="Ledger type"
+                        :options="typeOptions"
                         :vertical-layout="true"
                         :label-uppercase="true"
                         :is-required="true"

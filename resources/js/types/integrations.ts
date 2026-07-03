@@ -25,3 +25,13 @@ export type Ledger = {
         deletedAt: string | null;
     };
 };
+
+export type LedgerEmailSearchTypeOption = {
+    value: string;
+    label: string;
+};
+
+export type LedgerEmailSearchTypeSelectionResponse = {
+    requiresTypeSelection: true;
+    types: LedgerEmailSearchTypeOption[];
+};

@@ -5,12 +5,14 @@ export const usePaymentIntegrationStore = defineStore('payment-search', {
         return {
             search: '',
             reload: false,
+            selectedLedgerableType: '' as string,
         };
     },
     actions: {
         clearSearch() {
             this.search = '';
             this.reload = false;
+            this.selectedLedgerableType = '';
         },
     },
     persist: true,

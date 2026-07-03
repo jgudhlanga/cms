@@ -9,7 +9,7 @@ import { useCustomConfirmDialog } from '@/composables/core/useCustomConfirmDialo
 import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
 import { TypeVariant } from '@/enums/type-variants';
-import { errorAlert, successAlert, warningDialog } from '@/lib/alerts';
+import { errorAlert, warningDialog } from '@/lib/alerts';
 import type {
     StudentAccountMergeApplication,
     StudentAccountMergePreview,
@@ -113,9 +113,6 @@ const rejectApplication = async (application: StudentAccountMergeApplication) =>
         },
         {
             preserveScroll: true,
-            onSuccess: () => {
-                successAlert(trans('trans.maintenance_faulty_data_merge_reject_success'));
-            },
             onError: (errors: Record<string, string | string[]>) => {
                 if (Object.keys(errors).length) {
                     errorAlert(Object.values(errors).flat().join('\n'));
