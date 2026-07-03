@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Integrations;
 
+use App\Enums\Integrations\LedgerEmailSearchTypeEnum;
 use App\Enums\Shared\FeeTypeEnum;
 use App\Helpers\PaymentHelper;
 use App\Http\Controllers\Controller;
@@ -20,6 +21,7 @@ use App\Models\Students\Student;
 use App\Models\Students\StudentApplication;
 use App\Models\Users\User;
 use App\Services\HMS\StudentAccommodationFeeService;
+use App\Services\Integrations\LedgerEmailSearchService;
 use App\Services\Integrations\OnlinePaymentContextResolver;
 use App\Services\Students\ApplicationFeeService;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -37,6 +39,7 @@ class PaymentController extends Controller
     public function __construct(
         protected OnlinePaymentContextResolver $paymentContextResolver,
         protected ApplicationFeeService $applicationFeeService,
+        protected LedgerEmailSearchService $ledgerEmailSearchService,
     ) {}
 
     /**
@@ -163,24 +166,28 @@ class PaymentController extends Controller
     /**
      * @throws ConnectionException
      */
-    public function checkStatus(string $orderReference): array
+    public function checkStatus(string $orderReference, ?Request $request = null): array
     {
-        $reference = Ledger::where('system_reference', $orderReference)->first();
-        if (! $reference) {
-            $reference = Ledger::where('payment_reference', $orderReference)->first();
-        }
+        $request ??= request();
 
-        if (! $reference) {
-            $user = User::where('email', $orderReference)->first();
+        $reference = $this->ledgerEmailSearchService->findByReference($orderReference);
 
-            if ($user) {
-                $reference = Ledger::where('ledgerable_id', $user->id)
-                    ->where('ledgerable_type', User::class)
-                    ->first();
+        if ($reference === null) {
+            $user = $this->ledgerEmailSearchService->findUserByEmail($orderReference);
+
+            if ($user !== null) {
+                $requestedType = LedgerEmailSearchTypeEnum::tryFromRequest(
+                    $request->input('ledgerableType') ?? $request->query('ledgerableType'),
+                );
+
+                $reference = $this->ledgerEmailSearchService->resolveReferenceLedgerByEmailPriority(
+                    $user,
+                    $requestedType,
+                );
             }
         }
 
-        if (! $reference) {
+        if ($reference === null) {
             return ['status' => 'not_found'];
         }
 
@@ -192,36 +199,52 @@ class PaymentController extends Controller
         return $response->json() ?? [];
     }
 
-    public function getLedgerEntries(string $search)
+    public function getLedgerEntries(string $search, Request $request)
     {
-        $reference = Ledger::where('system_reference', $search)
-            ->orWhere('payment_reference', $search)
-            ->withTrashed()
-            ->first();
+        $reference = $this->ledgerEmailSearchService->findByReference($search, withTrashed: true);
 
-        if (! $reference) {
-            $user = User::where('email', $search)->first();
-
-            if ($user) {
-                $reference = Ledger::where('ledgerable_id', $user->id)
-                    ->withTrashed()
-                    ->where('ledgerable_type', User::class)
-                    ->first();
-            }
+        if ($reference !== null) {
+            return LedgerResource::collection(
+                $this->ledgerEmailSearchService->invoicesForReferenceLedger($reference),
+            );
         }
 
-        if (! $reference) {
+        $user = $this->ledgerEmailSearchService->findUserByEmail($search);
+
+        if ($user === null) {
             return response()->json([
                 'message' => "No ledger entries found for the provided search {$search}",
             ], 404);
         }
 
-        $entries = Ledger::where('ledgerable_id', $reference->ledgerable_id)
-            ->where('ledgerable_type', $reference->ledgerable_type)
-            ->where('type', 'invoice')
-            ->get();
+        $discoveredTypes = $this->ledgerEmailSearchService->discoverTypes($user);
 
-        return LedgerResource::collection($entries);
+        if ($discoveredTypes->isEmpty()) {
+            return response()->json([
+                'message' => "No ledger entries found for the provided search {$search}",
+            ], 404);
+        }
+
+        $requestedType = LedgerEmailSearchTypeEnum::tryFromRequest($request->query('ledgerableType'));
+
+        if ($requestedType !== null && ! $discoveredTypes->contains($requestedType)) {
+            return response()->json([
+                'message' => 'Invalid ledgerable type for the provided search.',
+            ], 422);
+        }
+
+        if ($requestedType === null) {
+            return response()->json([
+                'requiresTypeSelection' => true,
+                'types' => $this->ledgerEmailSearchService->formatTypeOptions($discoveredTypes),
+            ]);
+        }
+
+        $type = $requestedType;
+
+        return LedgerResource::collection(
+            $this->ledgerEmailSearchService->resolveInvoices($user, $type),
+        );
     }
 
     /**

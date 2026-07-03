@@ -2,6 +2,7 @@
 
 namespace App\Services\Students;
 
+use App\Enums\Institution\IntakePeriodStatusEnum;
 use App\Models\Institution\IntakePeriod;
 use App\Models\Students\StudentApplication;
 
@@ -14,6 +15,7 @@ class IntakePeriodResolver
     {
         return IntakePeriod::query()
             ->where('is_active', true)
+            ->where('status', IntakePeriodStatusEnum::Open)
             ->pluck('id')
             ->all();
     }
