@@ -14,20 +14,24 @@ import type {
     CourseWorkStudent,
     CourseWorkTree,
 } from '@/types/course-work';
+import { trans } from 'laravel-vue-i18n';
 import { computed, ref } from 'vue';
 
 type SaveMarkInput = {
     markId: number | null;
     studentEnrolmentId: number;
     courseSyllabusModuleId: number;
-    assessmentTypeId: number;
+    assessmentTypeId: number | null;
     mark: number | null;
     remark: string | null;
 };
 
-type UseCourseWorkClassMarksheetOptions =
+type UseCourseWorkClassMarksheetOptions = (
     | { academicCalendarClassId: number; classConfigId?: never }
-    | { classConfigId: number; academicCalendarClassId?: never };
+    | { classConfigId: number; academicCalendarClassId?: never }
+) & {
+    initialModuleId?: number | null;
+};
 
 export function useCourseWorkClassMarksheet(options: UseCourseWorkClassMarksheetOptions) {
     const tree = ref<CourseWorkTree | null>(null);
@@ -52,7 +56,10 @@ export function useCourseWorkClassMarksheet(options: UseCourseWorkClassMarksheet
             for (const courseModule of syllabus.modules) {
                 const code = courseModule.code?.trim() ?? '';
                 const title = courseModule.title?.trim() ?? '';
-                const label = [code, title].filter(Boolean).join(' — ') || String(courseModule.id);
+                const baseLabel = [code, title].filter(Boolean).join(' — ') || String(courseModule.id);
+                const label = courseModule.captureMarkOnly
+                    ? `${baseLabel} (${trans('academic_calendar.course_work_mark_only_badge')})`
+                    : baseLabel;
 
                 moduleOptionsList.push({
                     moduleId: courseModule.id,
@@ -60,6 +67,7 @@ export function useCourseWorkClassMarksheet(options: UseCourseWorkClassMarksheet
                     code: courseModule.code,
                     title: courseModule.title,
                     label,
+                    captureMarkOnly: courseModule.captureMarkOnly,
                 });
             }
         }
@@ -90,6 +98,21 @@ export function useCourseWorkClassMarksheet(options: UseCourseWorkClassMarksheet
         return [];
     });
 
+    const selectedModuleCaptureMarkOnly = computed((): boolean => {
+        if (selectedModuleId.value === null || !tree.value) {
+            return false;
+        }
+
+        for (const syllabus of tree.value.syllabi) {
+            const courseModule = syllabus.modules.find((item) => item.id === selectedModuleId.value);
+            if (courseModule) {
+                return Boolean(courseModule.captureMarkOnly);
+            }
+        }
+
+        return false;
+    });
+
     const assessmentTypes = computed(() => tree.value?.assessmentTypes ?? []);
 
     const loadTree = async (): Promise<void> => {
@@ -105,7 +128,12 @@ export function useCourseWorkClassMarksheet(options: UseCourseWorkClassMarksheet
             tree.value = parseJsonApiCourseWorkTree(document);
 
             if (tree.value && selectedModuleId.value === null && moduleOptions.value.length > 0) {
-                selectedModuleId.value = moduleOptions.value[0].moduleId;
+                const initialModuleId = options.initialModuleId ?? null;
+                const matchingOption = initialModuleId != null
+                    ? moduleOptions.value.find((option) => option.moduleId === initialModuleId)
+                    : undefined;
+
+                selectedModuleId.value = matchingOption?.moduleId ?? moduleOptions.value[0].moduleId;
             }
         } catch {
             error.value = 'academic_calendar.course_work_load_failed';
@@ -116,16 +144,20 @@ export function useCourseWorkClassMarksheet(options: UseCourseWorkClassMarksheet
     };
 
     const saveMark = async (input: SaveMarkInput): Promise<boolean> => {
-        const key = `${input.studentEnrolmentId}:${input.courseSyllabusModuleId}:${input.assessmentTypeId}`;
+        const assessmentKey = input.assessmentTypeId ?? 'mark-only';
+        const key = `${input.studentEnrolmentId}:${input.courseSyllabusModuleId}:${assessmentKey}`;
         savingKey.value = key;
 
         const attributes: Record<string, unknown> = {
             studentEnrolmentId: input.studentEnrolmentId,
             courseSyllabusModuleId: input.courseSyllabusModuleId,
-            assessmentTypeId: input.assessmentTypeId,
             mark: input.mark,
             remark: input.remark,
         };
+
+        if (input.assessmentTypeId !== null) {
+            attributes.assessmentTypeId = input.assessmentTypeId;
+        }
 
         try {
             const config = {
@@ -156,8 +188,12 @@ export function useCourseWorkClassMarksheet(options: UseCourseWorkClassMarksheet
         }
     };
 
-    const isSaving = (studentEnrolmentId: number, moduleId: number, assessmentTypeId: number): boolean =>
-        savingKey.value === `${studentEnrolmentId}:${moduleId}:${assessmentTypeId}`;
+    const isSaving = (
+        studentEnrolmentId: number,
+        moduleId: number,
+        assessmentTypeId: number | null = null,
+    ): boolean =>
+        savingKey.value === `${studentEnrolmentId}:${moduleId}:${assessmentTypeId ?? 'mark-only'}`;
 
     const findAssessment = (student: CourseWorkStudent, assessmentTypeId: number): CourseWorkAssessment | undefined =>
         student.assessments.find((item) => item.assessmentTypeId === assessmentTypeId);
@@ -165,6 +201,7 @@ export function useCourseWorkClassMarksheet(options: UseCourseWorkClassMarksheet
     return {
         tree,
         selectedModuleId,
+        selectedModuleCaptureMarkOnly,
         moduleOptions,
         selectedModuleSummary,
         moduleStudents,

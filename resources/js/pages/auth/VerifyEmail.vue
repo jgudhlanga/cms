@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import TextLink from '@/components/core/util/TextLink.vue';
-import { Button } from '@/components/ui/button';
+import AuthCard from '@/components/auth/AuthCard.vue';
+import BaseAlert from '@/components/core/alert/BaseAlert.vue';
+import { BaseButton } from '@/components/core/button';
+import { ColorVariant } from '@/enums/colors';
+import { TypeVariant } from '@/enums/type-variants';
 import { Head, useForm } from '@inertiajs/vue3';
-import { LoaderCircle } from 'lucide-vue-next';
 
-defineProps<{
+const props = defineProps<{
     status?: string;
 }>();
 
@@ -17,21 +19,34 @@ const submit = () => {
 
 <template>
     <Head :title="$t('trans.ui_email_verification')" />
-    <div
-        v-if="status === 'verification-link-sent'"
-        class="mb-4 text-center text-sm font-medium text-green-600 dark:text-green-400"
-    >
-        {{ $t('trans.ui_a_new_verification_link_has_been_sent_to_the_email_address_y') }}
-    </div>
+    <BaseAlert
+        v-if="props.status === 'verification-link-sent'"
+        :type="TypeVariant.success"
+        :description="$t('trans.ui_a_new_verification_link_has_been_sent_to_the_email_address_y')"
+    />
+    <form @submit.prevent="submit" class="flex w-full flex-col">
+        <AuthCard :title="$t('trans.ui_email_verification')" :subtitle="$t('trans.verify_email_subtitle')">
+            <BaseButton
+                :variant="ColorVariant.primary"
+                type="submit"
+                :tabindex="1"
+                :processing="form.processing"
+                classes="min-h-11 w-full rounded-xl dark:text-white"
+            >
+                {{ $t('trans.ui_resend_verification_email') }}
+            </BaseButton>
 
-    <form
-        @submit.prevent="submit"
-        class="space-y-6 rounded-lg border border-border bg-card p-6 text-center text-card-foreground shadow-md dark:shadow-sm"
-    >
-        <Button :disabled="form.processing" variant="secondary">
-            <LoaderCircle v-if="form.processing" class="h-4 w-4 animate-spin" />
-            {{ $t('trans.ui_resend_verification_email') }}
-        </Button>
-        <TextLink :href="route('logout')" method="post" as="button" class="mx-auto block text-sm"> {{ $t('trans.ui_log_out') }}</TextLink>
+            <div class="text-center">
+                <TextLink
+                    :href="route('logout')"
+                    method="post"
+                    as="button"
+                    class="text-sm text-muted-foreground underline-offset-4 transition-colors hover:text-primary hover:underline"
+                    :tabindex="2"
+                >
+                    {{ $t('trans.ui_log_out') }}
+                </TextLink>
+            </div>
+        </AuthCard>
     </form>
 </template>

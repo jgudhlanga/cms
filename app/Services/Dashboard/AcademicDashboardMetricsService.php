@@ -518,7 +518,7 @@ class AcademicDashboardMetricsService
             $modules = $this->modulesForClassConfig($classConfig);
             $assessmentTypes = $this->assessmentTypesForMode((int) $enrolment->mode_of_study_id);
 
-            if ($assessmentTypes === [] || $modules === []) {
+            if ($modules === []) {
                 continue;
             }
 
@@ -528,6 +528,40 @@ class AcademicDashboardMetricsService
             $lecturer = $this->lecturerByClassId[(int) $class->id] ?? null;
 
             foreach ($modules as $module) {
+                if ($module->capture_mark_only) {
+                    $markKey = $enrolment->id.'-'.$module->id;
+                    $markGroup = $marks->get($markKey, collect());
+                    $saved = $markGroup->firstWhere(fn (CourseWorkMark $mark): bool => $mark->assessment_type_id === null);
+                    $hasNoMarks = $saved === null || $saved->mark === null;
+                    $isComplete = $saved !== null && $saved->mark !== null;
+
+                    $results[] = [
+                        'studentEnrolmentId' => (int) $enrolment->id,
+                        'studentId' => (int) $enrolment->student_id,
+                        'departmentId' => (int) ($department?->id ?? 0),
+                        'departmentName' => (string) ($department?->name ?? __('dashboard.academic_unknown_department')),
+                        'levelId' => (int) ($level?->id ?? 0),
+                        'levelName' => (string) ($level?->name ?? __('dashboard.academic_unknown_level')),
+                        'courseId' => (int) ($course?->id ?? 0),
+                        'courseName' => (string) ($course?->name ?? __('dashboard.academic_unknown_course')),
+                        'moduleId' => (int) $module->id,
+                        'moduleName' => (string) $module->title,
+                        'academicCalendarClassId' => (int) $class->id,
+                        'className' => (string) $class->name,
+                        'isComplete' => $isComplete,
+                        'hasNoMarks' => $hasNoMarks,
+                        'band' => null,
+                        'lecturerStaffId' => $lecturer['staffId'] ?? null,
+                        'lecturerName' => $lecturer['lecturerName'] ?? null,
+                    ];
+
+                    continue;
+                }
+
+                if ($assessmentTypes === []) {
+                    continue;
+                }
+
                 $markKey = $enrolment->id.'-'.$module->id;
                 $markGroup = $marks->get($markKey, collect());
                 $hasNoMarks = $markGroup->isEmpty() || $markGroup->every(fn (CourseWorkMark $mark): bool => $mark->mark === null);

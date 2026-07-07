@@ -114,7 +114,7 @@ class CourseWorkMarkController extends JsonApiController
         $mark = $this->markService->upsert([
             'studentEnrolmentId' => (int) $validated['studentEnrolmentId'],
             'courseSyllabusModuleId' => (int) $validated['courseSyllabusModuleId'],
-            'assessmentTypeId' => (int) $validated['assessmentTypeId'],
+            'assessmentTypeId' => isset($validated['assessmentTypeId']) ? (int) $validated['assessmentTypeId'] : null,
             'mark' => $validated['mark'] ?? null,
             'remark' => $validated['remark'] ?? null,
         ], $classId, $classConfigId);
@@ -132,7 +132,9 @@ class CourseWorkMarkController extends JsonApiController
         $updated = $this->markService->upsert([
             'studentEnrolmentId' => (int) ($validated['studentEnrolmentId'] ?? $mark->student_enrolment_id),
             'courseSyllabusModuleId' => (int) ($validated['courseSyllabusModuleId'] ?? $mark->course_syllabus_module_id),
-            'assessmentTypeId' => (int) ($validated['assessmentTypeId'] ?? $mark->assessment_type_id),
+            'assessmentTypeId' => array_key_exists('assessmentTypeId', $validated)
+                ? ($validated['assessmentTypeId'] !== null ? (int) $validated['assessmentTypeId'] : null)
+                : $mark->assessment_type_id,
             'mark' => array_key_exists('mark', $validated) ? $validated['mark'] : $mark->mark,
             'remark' => array_key_exists('remark', $validated) ? $validated['remark'] : $mark->remark,
         ], $classId, $classConfigId);

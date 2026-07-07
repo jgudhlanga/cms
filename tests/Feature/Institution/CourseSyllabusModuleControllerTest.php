@@ -1,11 +1,13 @@
 <?php
 
 use App\Http\Requests\Institution\CourseSyllabusModuleRequest;
+use App\Models\AcademicCalendars\CourseWorkMark;
 use App\Models\Institution\Syllabus\CourseSyllabus;
 use App\Models\Institution\Syllabus\CourseSyllabusModule;
 use Illuminate\Support\Facades\Validator;
 
 require_once __DIR__.'/../../Support/SyllabusModuleTestHelpers.php';
+require_once __DIR__.'/../../Support/CourseWorkTestHelpers.php';
 
 it('validates required syllabus course module fields', function () {
     $request = new CourseSyllabusModuleRequest;
@@ -415,4 +417,56 @@ it('returns lecturers in module index response', function () {
         ->assertJsonPath('data.0.attributes.lecturers.0.id', $lecturer->id);
 
     expect($response->json('data.0.attributes.lecturers.0.name'))->not->toBeEmpty();
+});
+
+it('stores and returns capture_mark_only on syllabus modules', function () {
+    $ctx = makeSyllabusModuleContext();
+
+    $response = $this->actingAs($ctx['user'])->post(route('course-syllabus-modules.store'), [
+        'course_syllabus_id' => $ctx['courseSyllabus']->id,
+        'academic_year_option_id' => $ctx['semesterOne']->id,
+        'title' => 'Mark Only Module',
+        'code' => 'MO-'.uniqid(),
+        'prerequisite_module_ids' => [],
+        'shared' => false,
+        'capture_mark_only' => true,
+    ]);
+
+    $response->assertSuccessful();
+
+    $module = CourseSyllabusModule::query()->where('title', 'Mark Only Module')->first();
+    expect($module)->not->toBeNull()
+        ->and($module->capture_mark_only)->toBeTrue();
+});
+
+it('blocks changing capture_mark_only after marks exist', function () {
+    $ctx = makeSyllabusModuleContext();
+    $cw = createCourseWorkJsonApiContext();
+
+    $module = CourseSyllabusModule::query()->create([
+        'tenant_id' => $ctx['tenant']->id,
+        'course_syllabus_id' => $ctx['courseSyllabus']->id,
+        'academic_year_option_id' => $ctx['semesterOne']->id,
+        'title' => 'Locked Module',
+        'code' => 'LOCK-'.uniqid(),
+        'capture_mark_only' => false,
+    ]);
+
+    CourseWorkMark::query()->create([
+        'tenant_id' => $ctx['tenant']->id,
+        'student_enrolment_id' => $cw['studentEnrolment']->id,
+        'course_syllabus_module_id' => $module->id,
+        'assessment_type_id' => null,
+        'mark' => 50,
+    ]);
+
+    $response = $this->actingAs($ctx['user'])->put(route('course-syllabus-modules.update', $module), [
+        'course_syllabus_id' => $ctx['courseSyllabus']->id,
+        'academic_year_option_id' => $ctx['semesterOne']->id,
+        'title' => $module->title,
+        'code' => $module->code,
+        'capture_mark_only' => true,
+    ]);
+
+    $response->assertSessionHasErrors('capture_mark_only');
 });

@@ -104,6 +104,7 @@ export type ClassSemesterModule = {
     moduleId: number;
     code: string;
     title: string;
+    captureMarkOnly?: boolean;
     staffIds: number[];
     syllabusDefaultStaffIds: number[];
 };

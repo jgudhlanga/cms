@@ -186,3 +186,79 @@ test('json api course work student tree rejects enrolment not in class', functio
 test('permission registry resolves course work module title', function () {
     expect(PermissionRegistry::moduleTitleForGroupKey('course-work'))->toBe('Course Work');
 });
+
+test('json api course work store creates mark-only row without assessment type', function () {
+    $context = createCourseWorkJsonApiContext();
+    $context['module']->update(['capture_mark_only' => true]);
+
+    Permission::findOrCreate('create:course-work', 'web');
+    $context['user']->givePermissionTo('create:course-work');
+    Sanctum::actingAs($context['user']);
+
+    $this->jsonApi('course-work-marks')
+        ->withData([
+            'type' => 'course-work-marks',
+            'attributes' => [
+                'studentEnrolmentId' => $context['studentEnrolment']->id,
+                'courseSyllabusModuleId' => $context['module']->id,
+                'mark' => 81,
+                'remark' => 'Direct mark',
+            ],
+        ])
+        ->post(route('v1.json.course-work-marks.store', ['filter' => ['academicCalendarClass' => $context['academicCalendarClass']->id]]))
+        ->assertCreated()
+        ->assertJsonPath('data.attributes.mark', 81);
+
+    $mark = CourseWorkMark::query()->whereNull('assessment_type_id')->first();
+    expect($mark)->not->toBeNull()
+        ->and($mark->mark)->toBe(81);
+});
+
+test('json api course work store rejects assessment type on mark-only module', function () {
+    $context = createCourseWorkJsonApiContext();
+    $context['module']->update(['capture_mark_only' => true]);
+
+    Permission::findOrCreate('create:course-work', 'web');
+    $context['user']->givePermissionTo('create:course-work');
+    Sanctum::actingAs($context['user']);
+
+    $this->jsonApi('course-work-marks')
+        ->withData([
+            'type' => 'course-work-marks',
+            'attributes' => [
+                'studentEnrolmentId' => $context['studentEnrolment']->id,
+                'courseSyllabusModuleId' => $context['module']->id,
+                'assessmentTypeId' => $context['assessmentType']->id,
+                'mark' => 70,
+            ],
+        ])
+        ->post(route('v1.json.course-work-marks.store', ['filter' => ['academicCalendarClass' => $context['academicCalendarClass']->id]]))
+        ->assertStatus(422);
+});
+
+test('json api course work tree exposes mark-only module payload', function () {
+    $context = createCourseWorkJsonApiContext();
+    $context['module']->update(['capture_mark_only' => true]);
+
+    Permission::findOrCreate('viewAny:course-work', 'web');
+    Permission::findOrCreate('create:course-work', 'web');
+    $context['user']->givePermissionTo(['viewAny:course-work', 'create:course-work']);
+    Sanctum::actingAs($context['user']);
+
+    CourseWorkMark::query()->create([
+        'tenant_id' => $context['tenant']->id,
+        'student_enrolment_id' => $context['studentEnrolment']->id,
+        'course_syllabus_module_id' => $context['module']->id,
+        'assessment_type_id' => null,
+        'mark' => 65,
+        'created_by' => $context['user']->id,
+        'updated_by' => $context['user']->id,
+    ]);
+
+    $this->jsonApi()
+        ->get(route('v1.json.course-work-marks.tree', ['filter' => ['academicCalendarClass' => $context['academicCalendarClass']->id]]))
+        ->assertSuccessful()
+        ->assertJsonPath('meta.syllabi.0.modules.0.captureMarkOnly', true)
+        ->assertJsonPath('meta.syllabi.0.modules.0.students.0.moduleMark.mark', 65)
+        ->assertJsonMissingPath('meta.syllabi.0.modules.0.students.0.aggregation');
+});

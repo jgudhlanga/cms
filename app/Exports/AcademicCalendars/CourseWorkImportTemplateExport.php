@@ -2,6 +2,7 @@
 
 namespace App\Exports\AcademicCalendars;
 
+use App\Importers\AcademicCalendars\CourseWorkMarkImporter;
 use Maatwebsite\Excel\Concerns\FromArray;
 use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Concerns\WithMultipleSheets;
@@ -55,6 +56,32 @@ class CourseWorkImportTemplateMarksSheetExport implements FromArray, WithEvents,
         $assessmentTypes = $this->data['assessmentTypes'] ?? [];
         /** @var list<array<string, mixed>> $rows */
         $rows = $this->data['rows'] ?? [];
+        $layout = (string) ($this->data['layout'] ?? 'wide');
+
+        if ($layout === 'mark_only') {
+            $columnHeaders = CourseWorkMarkImporter::markOnlyHeaderColumns();
+            $output = [
+                ['Course Work Import Template (Mark Only)'],
+                ['Module', $header['moduleCode'] ?? null, $header['moduleTitle'] ?? null],
+                ['Course', $header['course'] ?? null, 'Level', $header['level'] ?? null],
+                ['Mode', $header['modeOfStudy'] ?? null, 'Year', $header['calendarYear'] ?? null],
+                ['Generated', $header['generatedAt'] ?? null],
+                $columnHeaders,
+            ];
+
+            foreach ($rows as $row) {
+                $output[] = [
+                    $row['studentEnrolmentId'] ?? null,
+                    $row['studentNumber'] ?? null,
+                    $row['studentName'] ?? null,
+                    $row['className'] ?? null,
+                    $row['mark'] ?? null,
+                    $row['remark'] ?? null,
+                ];
+            }
+
+            return $output;
+        }
 
         $columnHeaders = [
             'STUDENT_ENROLMENT_ID',

@@ -5,6 +5,7 @@ use App\Models\AcademicCalendars\CourseWorkAuditLog;
 use App\Models\AcademicCalendars\CourseWorkImportLog;
 use App\Models\AcademicCalendars\CourseWorkMark;
 use App\Models\Institution\AssessmentType;
+use App\Models\Institution\ModeOfStudy;
 use App\Services\AcademicCalendars\CourseWorkImportTemplateService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Str;
@@ -111,7 +112,31 @@ test('authorized user can view course work import page', function () {
         ->assertSuccessful()
         ->assertInertia(fn ($page) => $page
             ->component('institution/academicCalendars/DepartmentAcademicCalendarClassConfigCourseWorkImport')
-            ->has('classConfig'));
+            ->has('classConfig')
+            ->where('initialCourseWorkModuleId', null));
+});
+
+test('course work import page receives module query param for pre-selection', function () {
+    $context = createCourseWorkJsonApiContext();
+    Permission::findOrCreate('import:course-work', 'web');
+    $context['user']->givePermissionTo('import:course-work');
+
+    $classConfig = $context['academicCalendarClass']->classConfig;
+
+    $this->actingAs($context['user'])
+        ->get(route('academic-calendars.department-classes.course-work-import', [
+            'institution_department' => $classConfig->institution_department_id,
+            'calendar_year' => $classConfig->calendar_year,
+            'class_config_id' => $classConfig->id,
+            'department_course_id' => $classConfig->department_course_id,
+            'department_level_id' => $classConfig->department_level_id,
+            'mode_of_study_id' => $classConfig->mode_of_study_id,
+            'module' => $context['module']->id,
+        ]))
+        ->assertSuccessful()
+        ->assertInertia(fn ($page) => $page
+            ->component('institution/academicCalendars/DepartmentAcademicCalendarClassConfigCourseWorkImport')
+            ->where('initialCourseWorkModuleId', $context['module']->id));
 });
 
 test('course work import template requires import permission', function () {
@@ -360,13 +385,175 @@ test('course work import imports only filled assessment marks on partially fille
 
     courseWorkImportPreviewAndProcess($file, $context, (int) $context['module']->id);
 
-    expect(CourseWorkMark::query()->count())->toBe(1)
-        ->and(CourseWorkMark::query()->value('mark'))->toBe(70)
-        ->and(CourseWorkMark::query()->value('assessment_type_id'))->toBe($context['assessmentType']->id);
+    expect(CourseWorkMark::query()->count())->toBe(2);
+
+    $marksByType = CourseWorkMark::query()
+        ->pluck('mark', 'assessment_type_id')
+        ->all();
+
+    expect($marksByType[$context['assessmentType']->id])->toBe(70)
+        ->and($marksByType[$secondType->id])->toBe(0);
 
     $result = session('courseWorkImportResult');
-    expect($result['rowsSucceeded'])->toBe(1)
-        ->and($result['rowsSkipped'])->toBeGreaterThan(0);
+    expect($result['rowsSucceeded'])->toBe(2);
+});
+
+test('course work import creates zero for empty columns when row is partially filled', function () {
+    $context = createCourseWorkJsonApiContext();
+    $context['assessmentType']->update(['weight_percent' => 20, 'name' => 'Research Based']);
+
+    $secondType = AssessmentType::factory()->create([
+        'tenant_id' => $context['tenant']->id,
+        'name' => 'Innovation Based',
+        'weight_percent' => 20,
+        'modes_of_study' => [$context['modeOfStudy']->id],
+    ]);
+
+    $thirdType = AssessmentType::factory()->create([
+        'tenant_id' => $context['tenant']->id,
+        'name' => 'Test',
+        'weight_percent' => 20,
+        'modes_of_study' => [$context['modeOfStudy']->id],
+    ]);
+
+    Permission::findOrCreate('import:course-work', 'web');
+    Permission::findOrCreate('create:course-work', 'web');
+    $context['user']->givePermissionTo(['import:course-work', 'create:course-work']);
+
+    /** @var CourseWorkImportTemplateService $templateService */
+    $templateService = app(CourseWorkImportTemplateService::class);
+    $data = $templateService->assembleForClassConfig(
+        (int) $context['academicCalendarClass']->class_config_id,
+        (int) $context['module']->id,
+    );
+
+    setCourseWorkWideImportMark($data, (int) $context['assessmentType']->id, 90);
+
+    $file = storeCourseWorkImportFile($data);
+
+    courseWorkImportPreviewAndProcess($file, $context, (int) $context['module']->id);
+
+    expect(CourseWorkMark::query()->count())->toBe(3)
+        ->and(CourseWorkMark::query()->where('assessment_type_id', $context['assessmentType']->id)->value('mark'))->toBe(90)
+        ->and(CourseWorkMark::query()->where('assessment_type_id', $secondType->id)->value('mark'))->toBe(0)
+        ->and(CourseWorkMark::query()->where('assessment_type_id', $thirdType->id)->value('mark'))->toBe(0);
+});
+
+test('course work import skips unchanged columns when existing mark and empty cell', function () {
+    $context = createCourseWorkJsonApiContext();
+    $context['assessmentType']->update(['weight_percent' => 20, 'name' => 'Research Based']);
+
+    $secondType = AssessmentType::factory()->create([
+        'tenant_id' => $context['tenant']->id,
+        'name' => 'Innovation Based',
+        'weight_percent' => 20,
+        'modes_of_study' => [$context['modeOfStudy']->id],
+    ]);
+
+    CourseWorkMark::query()->create([
+        'tenant_id' => $context['tenant']->id,
+        'student_enrolment_id' => $context['studentEnrolment']->id,
+        'course_syllabus_module_id' => $context['module']->id,
+        'assessment_type_id' => $context['assessmentType']->id,
+        'mark' => 80,
+        'created_by' => $context['user']->id,
+        'updated_by' => $context['user']->id,
+    ]);
+
+    Permission::findOrCreate('import:course-work', 'web');
+    Permission::findOrCreate('create:course-work', 'web');
+    Permission::findOrCreate('update:course-work', 'web');
+    $context['user']->givePermissionTo(['import:course-work', 'create:course-work', 'update:course-work']);
+
+    /** @var CourseWorkImportTemplateService $templateService */
+    $templateService = app(CourseWorkImportTemplateService::class);
+    $data = $templateService->assembleForClassConfig(
+        (int) $context['academicCalendarClass']->class_config_id,
+        (int) $context['module']->id,
+    );
+
+    $data['rows'][0]['marks'][$context['assessmentType']->id] = null;
+    setCourseWorkWideImportMark($data, (int) $secondType->id, 75);
+
+    $file = storeCourseWorkImportFile($data);
+
+    $response = test()->actingAs($context['user'])
+        ->post(route('academic-calendars.department-classes.course-work-import.preview', courseWorkImportRouteParams($context)), [
+            'module' => $context['module']->id,
+            'file' => $file,
+        ]);
+
+    $response->assertSuccessful();
+
+    $marks = $response->json('rows.0.marks');
+    expect($marks[(string) $context['assessmentType']->id]['action'])->toBe('skip_unchanged')
+        ->and($marks[(string) $context['assessmentType']->id]['mark'])->toBe(80)
+        ->and($marks[(string) $secondType->id]['action'])->toBe('create');
+
+    courseWorkImportPreviewAndProcess($file, $context, (int) $context['module']->id);
+
+    expect(CourseWorkMark::query()->where('assessment_type_id', $context['assessmentType']->id)->value('mark'))->toBe(80)
+        ->and(CourseWorkMark::query()->where('assessment_type_id', $secondType->id)->value('mark'))->toBe(75);
+});
+
+test('course work import template prepopulates existing marks', function () {
+    $context = createCourseWorkJsonApiContext();
+    $context['assessmentType']->update(['weight_percent' => 20]);
+
+    CourseWorkMark::query()->create([
+        'tenant_id' => $context['tenant']->id,
+        'student_enrolment_id' => $context['studentEnrolment']->id,
+        'course_syllabus_module_id' => $context['module']->id,
+        'assessment_type_id' => $context['assessmentType']->id,
+        'mark' => 66,
+        'created_by' => $context['user']->id,
+        'updated_by' => $context['user']->id,
+    ]);
+
+    /** @var CourseWorkImportTemplateService $service */
+    $service = app(CourseWorkImportTemplateService::class);
+    $data = $service->assembleForClassConfig(
+        (int) $context['academicCalendarClass']->class_config_id,
+        (int) $context['module']->id,
+    );
+
+    expect($data['rows'][0]['marks'][$context['assessmentType']->id])->toBe(66);
+});
+
+test('course work import fails when student mode of study mismatches class config', function () {
+    $context = createCourseWorkJsonApiContext();
+    $context['assessmentType']->update(['weight_percent' => 20]);
+
+    $otherMode = ModeOfStudy::query()->create(['name' => 'Part Time CW '.uniqid()]);
+    $context['studentEnrolment']->update(['mode_of_study_id' => $otherMode->id]);
+
+    Permission::findOrCreate('import:course-work', 'web');
+    Permission::findOrCreate('create:course-work', 'web');
+    $context['user']->givePermissionTo(['import:course-work', 'create:course-work']);
+
+    /** @var CourseWorkImportTemplateService $templateService */
+    $templateService = app(CourseWorkImportTemplateService::class);
+    $data = $templateService->assembleForClassConfig(
+        (int) $context['academicCalendarClass']->class_config_id,
+        (int) $context['module']->id,
+    );
+
+    setCourseWorkWideImportMark($data, (int) $context['assessmentType']->id, 70);
+
+    $file = storeCourseWorkImportFile($data);
+
+    $response = test()->actingAs($context['user'])
+        ->postJson(route('academic-calendars.department-classes.course-work-import.preview', courseWorkImportRouteParams($context)), [
+            'module' => $context['module']->id,
+            'file' => $file,
+        ])
+        ->assertSuccessful()
+        ->assertJsonPath('summary.failed', 1);
+
+    $marks = $response->json('rows.0.marks');
+    expect($marks[(string) $context['assessmentType']->id]['action'])->toBe('fail');
+
+    expect(CourseWorkMark::query()->count())->toBe(0);
 });
 
 test('course work import restores soft deleted mark instead of creating duplicate', function () {

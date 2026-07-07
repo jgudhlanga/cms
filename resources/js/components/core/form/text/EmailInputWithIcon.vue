@@ -18,6 +18,8 @@ interface Props {
     modelValue?: string;
     placeholder?: string;
     tabindex?: number | string;
+    readonly?: boolean;
+    disabled?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -73,6 +75,8 @@ onMounted(() => setAutoFocus());
                 :class="inputClasses"
                 :placeholder="placeholder"
                 :tabindex="tabindex"
+                :readonly="readonly"
+                :disabled="disabled"
                 autocomplete="email"
                 @input="emit('input')"
             />

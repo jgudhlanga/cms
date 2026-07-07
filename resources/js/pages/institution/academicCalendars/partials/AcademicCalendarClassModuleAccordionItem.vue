@@ -55,6 +55,12 @@ const accordionValue = computed(() => `module-${props.module.moduleId}`);
                 {{ lecturerCountLabel }}
             </span>
             <span
+                v-if="module.captureMarkOnly"
+                class="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[10px] font-medium text-blue-800"
+            >
+                {{ $t('academic_calendar.course_work_mark_only_badge') }}
+            </span>
+            <span
                 v-if="isDirty"
                 class="inline-flex items-center rounded-full border border-border bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground"
             >

@@ -1,11 +1,10 @@
 <script setup lang="ts">
-import InputError from '@/components/core/form/InputError.vue';
-import TextLink from '@/components/core/util/TextLink.vue';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import AuthCard from '@/components/auth/AuthCard.vue';
+import { BaseButton } from '@/components/core/button';
+import { BaseInput, EmailInputWithIcon, PasswordInputWithToggle } from '@/components/core/form';
+import { ColorVariant } from '@/enums/colors';
+import { clearFormErrors } from '@/lib/forms';
 import { Head, useForm } from '@inertiajs/vue3';
-import { LoaderCircle } from 'lucide-vue-next';
 
 const form = useForm<any>({
     name: '',
@@ -23,77 +22,75 @@ const submit = () => {
 
 <template>
     <Head :title="$t('trans.ui_register')" />
-    <form
-        @submit.prevent="submit"
-        class="flex flex-col gap-6 rounded-lg border border-border bg-card p-6 text-card-foreground shadow-md dark:shadow-sm"
-    >
-        <div class="grid gap-6">
-            <div class="grid gap-2">
-                <Label for="name">{{ $tChoice('trans.name', 1) }}</Label>
-                <Input
-                    id="name"
-                    type="text"
-                    required
-                    autofocus
-                    :tabindex="1"
-                    autocomplete="name"
+    <form @submit.prevent="submit" class="flex w-full flex-col">
+        <AuthCard :title="$t('trans.ui_register')" :subtitle="$t('trans.register_subtitle')">
+            <div class="space-y-4">
+                <BaseInput
                     v-model="form.name"
+                    input-id="name"
+                    :input-auto-focus="true"
+                    :tabindex="1"
+                    :error="form.errors.name"
+                    :label="$tChoice('trans.name', 1)"
                     :placeholder="$t('trans.ui_full_name')"
+                    :is-required="true"
+                    classes="min-h-11 rounded-xl bg-background/80"
+                    autocomplete="name"
+                    @update:model-value="clearFormErrors(form, 'name')"
                 />
-                <InputError :message="form.errors.name" />
-            </div>
-
-            <div class="grid gap-2">
-                <Label for="email">{{ $t('trans.email_address') }}</Label>
-                <Input
-                    id="email"
-                    type="email"
-                    required
-                    :tabindex="2"
-                    autocomplete="email"
+                <EmailInputWithIcon
                     v-model="form.email"
-                    :placeholder="$t('trans.ui_email_example_com')"
+                    :tabindex="2"
+                    :error="form.errors.email"
+                    :label="$t('trans.email')"
+                    :placeholder="$t('trans.email')"
+                    :is-required="true"
+                    @input="clearFormErrors(form, 'email')"
                 />
-                <InputError :message="form.errors.email" />
-            </div>
-
-            <div class="grid gap-2">
-                <Label for="password">{{ $t('trans.password') }}</Label>
-                <Input
-                    id="password"
-                    type="password"
-                    required
-                    :tabindex="3"
-                    autocomplete="new-password"
+                <PasswordInputWithToggle
                     v-model="form.password"
+                    input-id="password"
+                    :tabindex="3"
+                    :error="form.errors.password"
+                    :label="$t('trans.password')"
                     :placeholder="$t('trans.password')"
-                />
-                <InputError :message="form.errors.password" />
-            </div>
-
-            <div class="grid gap-2">
-                <Label for="password_confirmation">{{ $t('trans.ui_confirm_password_2') }}</Label>
-                <Input
-                    id="password_confirmation"
-                    type="password"
-                    required
-                    :tabindex="4"
+                    :is-required="true"
                     autocomplete="new-password"
-                    v-model="form.password_confirmation"
-                    :placeholder="$t('trans.ui_confirm_password_2')"
+                    @input="clearFormErrors(form, 'password')"
                 />
-                <InputError :message="form.errors.password_confirmation" />
+                <PasswordInputWithToggle
+                    v-model="form.password_confirmation"
+                    input-id="password_confirmation"
+                    :tabindex="4"
+                    :error="form.errors.password_confirmation"
+                    :label="$t('trans.ui_confirm_password_2')"
+                    :placeholder="$t('trans.ui_confirm_password_2')"
+                    :is-required="true"
+                    autocomplete="new-password"
+                    @input="clearFormErrors(form, 'password_confirmation')"
+                />
             </div>
 
-            <Button type="submit" class="mt-2 w-full" tabindex="5" :disabled="form.processing">
-                <LoaderCircle v-if="form.processing" class="h-4 w-4 animate-spin" />
+            <BaseButton
+                :variant="ColorVariant.primary"
+                type="submit"
+                :tabindex="5"
+                :processing="form.processing"
+                classes="min-h-11 w-full rounded-xl dark:text-white"
+            >
                 {{ $t('trans.ui_create_account') }}
-            </Button>
-        </div>
+            </BaseButton>
 
-        <div class="text-muted-foreground text-center text-sm">
-            {{ $t('trans.ui_already_have_an_account') }}
-            <TextLink :href="route('login')" class="underline underline-offset-4" :tabindex="6">{{ $t('trans.ui_log_in') }}</TextLink>
-        </div>
+            <div class="text-center text-sm text-muted-foreground">
+                <span>{{ $t('trans.ui_already_have_an_account') }} </span>
+                <TextLink
+                    :href="route('login')"
+                    class="underline-offset-4 transition-colors hover:text-primary hover:underline"
+                    :tabindex="6"
+                >
+                    {{ $t('trans.ui_log_in') }}
+                </TextLink>
+            </div>
+        </AuthCard>
     </form>
 </template>

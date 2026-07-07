@@ -41,26 +41,44 @@ withDefaults(defineProps<Props>(), {
             :description="courseModule.code ? displayValue(courseModule.code) : undefined"
         >
             <div class="flex flex-col gap-3">
-                <CourseWorkAssessmentFields
-                    v-for="assessment in courseModule.assessments"
-                    :key="assessment.assessmentTypeId"
-                    :assessment="assessment"
-                    :can-create="canCreate"
-                    :can-update="canUpdate"
-                    :saving="savingKey === `${courseModule.id}:${assessment.assessmentTypeId}`"
-                    :on-save-row="(mark, remark) =>
-                        onSaveRow(
-                            courseModule.id,
-                            assessment.assessmentTypeId,
-                            mark,
-                            remark,
-                            assessment.markId,
-                        )"
-                />
-                <CourseWorkModuleAggregation
-                    :aggregation="courseModule.aggregation"
-                    :updating="refreshing"
-                />
+                <template v-if="courseModule.captureMarkOnly">
+                    <CourseWorkAssessmentFields
+                        :assessment="{
+                            assessmentTypeId: 0,
+                            assessmentTypeName: $t('academic_calendar.course_work_mark'),
+                            markId: courseModule.moduleMark?.markId ?? null,
+                            mark: courseModule.moduleMark?.mark ?? null,
+                            remark: courseModule.moduleMark?.remark ?? null,
+                        }"
+                        :can-create="canCreate"
+                        :can-update="canUpdate"
+                        :saving="savingKey === `${courseModule.id}:mark-only`"
+                        :on-save-row="(mark, remark) =>
+                            onSaveRow(courseModule.id, 0, mark, remark, courseModule.moduleMark?.markId ?? null)"
+                    />
+                </template>
+                <template v-else>
+                    <CourseWorkAssessmentFields
+                        v-for="assessment in courseModule.assessments"
+                        :key="assessment.assessmentTypeId"
+                        :assessment="assessment"
+                        :can-create="canCreate"
+                        :can-update="canUpdate"
+                        :saving="savingKey === `${courseModule.id}:${assessment.assessmentTypeId}`"
+                        :on-save-row="(mark, remark) =>
+                            onSaveRow(
+                                courseModule.id,
+                                assessment.assessmentTypeId,
+                                mark,
+                                remark,
+                                assessment.markId,
+                            )"
+                    />
+                    <CourseWorkModuleAggregation
+                        :aggregation="courseModule.aggregation"
+                        :updating="refreshing"
+                    />
+                </template>
             </div>
         </BaseAccordionItem>
     </BaseAccordion>

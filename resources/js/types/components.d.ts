@@ -63,6 +63,7 @@ declare module 'vue' {
     ArchivesButton: typeof import('./../components/core/button/ArchivesButton.vue')['default']
     AssignClassLecturerModal: typeof import('./../components/academicCalendars/AssignClassLecturerModal.vue')['default']
     AssignClassTutorModal: typeof import('./../components/academicCalendars/AssignClassTutorModal.vue')['default']
+    AuthCard: typeof import('./../components/auth/AuthCard.vue')['default']
     Authentication: typeof import('./../components/users/Authentication.vue')['default']
     Avatar: typeof import('./../components/core/util/Avatar.vue')['default']
     AvatarFallback: typeof import('./../components/ui/avatar/AvatarFallback.vue')['default']

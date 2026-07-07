@@ -67,6 +67,7 @@ class CourseSyllabusModuleRepository extends BaseRepository implements ICourseSy
             'prerequisite_module_ids' => $dto->prerequisite_module_ids,
             'shared' => $dto->shared,
             'all_semesters' => $dto->all_semesters,
+            'capture_mark_only' => $dto->capture_mark_only,
         ];
     }
 

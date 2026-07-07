@@ -18,6 +18,7 @@ const props = defineProps<{
     classConfig: ClassConfig;
     classConfigQuery: Record<string, string>;
     canImportCourseWork?: boolean;
+    initialCourseWorkModuleId?: number | null;
     courseWorkImportResult?: CourseWorkImportResult | null;
 }>();
 
@@ -96,6 +97,7 @@ const breadcrumbs = computed<Array<Link>>(() => {
             :department-id="Number(department.id)"
             :calendar-year="String(academicCalendar.attributes.calendarYear)"
             :can-import-course-work="canImportCourseWork ?? false"
+            :initial-module-id="initialCourseWorkModuleId ?? null"
             :course-work-import-template-url="courseWorkImportTemplateUrl"
             :course-work-import-preview-url="courseWorkImportPreviewUrl"
             :course-work-import-process-url="courseWorkImportProcessUrl"

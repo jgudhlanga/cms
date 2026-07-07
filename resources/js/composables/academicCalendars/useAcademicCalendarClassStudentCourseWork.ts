@@ -39,6 +39,8 @@ type SaveMarkInput = {
     remark: string | null;
 };
 
+const isMarkOnlyAssessment = (assessmentTypeId: number): boolean => assessmentTypeId === 0;
+
 export function useAcademicCalendarClassStudentCourseWork(
     academicCalendarClassId: number,
     studentEnrolmentId: number,
@@ -110,16 +112,21 @@ export function useAcademicCalendarClassStudentCourseWork(
     };
 
     const saveMark = async (input: SaveMarkInput): Promise<boolean> => {
-        const key = `${input.courseSyllabusModuleId}:${input.assessmentTypeId}`;
+        const key = isMarkOnlyAssessment(input.assessmentTypeId)
+            ? `${input.courseSyllabusModuleId}:mark-only`
+            : `${input.courseSyllabusModuleId}:${input.assessmentTypeId}`;
         savingKey.value = key;
 
         const attributes: Record<string, unknown> = {
             studentEnrolmentId,
             courseSyllabusModuleId: input.courseSyllabusModuleId,
-            assessmentTypeId: input.assessmentTypeId,
             mark: input.mark,
             remark: input.remark,
         };
+
+        if (! isMarkOnlyAssessment(input.assessmentTypeId)) {
+            attributes.assessmentTypeId = input.assessmentTypeId;
+        }
 
         try {
             const config = {

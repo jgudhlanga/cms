@@ -205,21 +205,95 @@ class CourseWorkMarkImporter implements IngestDefinition
         ];
     }
 
-    public static function markKey(int $studentEnrolmentId, int $moduleId, int $assessmentTypeId): string
+    public static function isMarkOnlyFormatHeader(array $headerRow): bool
     {
+        $values = array_map(
+            static fn ($value): string => strtoupper(trim((string) $value)),
+            array_values($headerRow),
+        );
+
+        return in_array('STUDENT_ENROLMENT_ID', $values, true)
+            && in_array('MARK', $values, true)
+            && ! in_array('ASSESSMENT_TYPE_ID', $values, true);
+    }
+
+    /**
+     * @param  array<int|string, mixed>  $studentRow
+     * @return array{studentEnrolmentId: int, courseSyllabusModuleId: int, assessmentTypeId: null, mark: int, remark: string|null}
+     */
+    public function extractMarkOnlyPayload(array $studentRow, mixed $markValue, ?string $remarkValue): array
+    {
+        $values = array_values($studentRow);
+        $studentEnrolmentId = $values[0] ?? null;
+
+        $validator = Validator::make([
+            'STUDENT_ENROLMENT_ID' => $studentEnrolmentId,
+            'MARK' => $markValue,
+        ], [
+            'STUDENT_ENROLMENT_ID' => ['required', 'integer'],
+            'MARK' => ['required', new ValidCourseWorkMark],
+        ], [
+            'MARK.required' => __('academic_calendar.course_work_import_mark_required'),
+        ]);
+
+        if ($validator->fails()) {
+            throw ValidationException::withMessages($validator->errors()->toArray());
+        }
+
+        $validated = $validator->validated();
+        $mark = CourseWorkMarkValue::tryParse($validated['MARK']);
+
+        if ($mark === null) {
+            throw ValidationException::withMessages([
+                'MARK' => [__('academic_calendar.course_work_mark_invalid')],
+            ]);
+        }
+
+        return [
+            'studentEnrolmentId' => (int) $validated['STUDENT_ENROLMENT_ID'],
+            'courseSyllabusModuleId' => $this->moduleId,
+            'assessmentTypeId' => null,
+            'mark' => $mark,
+            'remark' => $remarkValue,
+        ];
+    }
+
+    public static function markKey(int $studentEnrolmentId, int $moduleId, ?int $assessmentTypeId): string
+    {
+        if ($assessmentTypeId === null) {
+            return sprintf('%d:%d:mark-only', $studentEnrolmentId, $moduleId);
+        }
+
         return sprintf('%d:%d:%d', $studentEnrolmentId, $moduleId, $assessmentTypeId);
     }
 
     /**
-     * @param  array{studentEnrolmentId: int, courseSyllabusModuleId: int, assessmentTypeId: int}  $payload
+     * @param  array{studentEnrolmentId: int, courseSyllabusModuleId: int, assessmentTypeId?: int|null}  $payload
      */
     public static function markKeyFromPayload(array $payload): string
     {
         return self::markKey(
             (int) $payload['studentEnrolmentId'],
             (int) $payload['courseSyllabusModuleId'],
-            (int) $payload['assessmentTypeId'],
+            array_key_exists('assessmentTypeId', $payload) && $payload['assessmentTypeId'] !== null
+                ? (int) $payload['assessmentTypeId']
+                : null,
         );
+    }
+
+    /**
+     * @return list<string>
+     */
+    public static function markOnlyHeaderColumns(): array
+    {
+        return [
+            'STUDENT_ENROLMENT_ID',
+            'STUDENT_NUMBER',
+            'STUDENT_NAME',
+            'CLASS_NAME',
+            'MARK',
+            'REMARK',
+        ];
     }
 
     /**

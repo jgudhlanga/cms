@@ -61,13 +61,13 @@ const courseWorkExportUrl = (moduleId: number, format: 'xlsx' | 'pdf', strict = 
         format,
         ...(strict ? { strict: '1' } : {}),
     });
-const courseWorkImportUrl = computed(() =>
+const courseWorkImportUrl = (moduleId: number): string =>
     route('academic-calendars.department-classes.course-work-import', {
         institution_department: String(department.value.id),
         calendar_year: String(academicCalendar.value.attributes.calendarYear),
         ...classConfigQuery.value,
-    }),
-);
+        module: String(moduleId),
+    });
 </script>
 
 <template>

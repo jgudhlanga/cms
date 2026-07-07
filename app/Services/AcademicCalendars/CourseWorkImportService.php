@@ -5,8 +5,11 @@ namespace App\Services\AcademicCalendars;
 use App\Importers\AcademicCalendars\CourseWorkMarkImporter;
 use App\Models\AcademicCalendars\CourseWorkImportLog;
 use App\Models\AcademicCalendars\CourseWorkMark;
+use App\Models\Institution\Syllabus\CourseSyllabusModule;
+use App\Models\Students\StudentEnrolment;
 use App\Models\Users\User;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
@@ -46,7 +49,7 @@ class CourseWorkImportService
         $storedPath = $file->store('course-work-imports/previews', 'ingest');
         $fullPath = Storage::disk('ingest')->path($storedPath);
 
-        $analysis = $this->analyseFile($fullPath, $importer, dryRun: true);
+        $analysis = $this->analyseFile($fullPath, $importer, $moduleId, dryRun: true);
 
         $user = Auth::user();
         $previewToken = Str::random(40);
@@ -59,6 +62,7 @@ class CourseWorkImportService
                 'module_id' => $moduleId,
                 'user_id' => $user instanceof User ? $user->id : null,
                 'original_filename' => $file->getClientOriginalName(),
+                'layout' => $analysis['layout'],
             ],
             now()->addMinutes(self::PREVIEW_TTL_MINUTES),
         );
@@ -66,10 +70,12 @@ class CourseWorkImportService
         return [
             'previewToken' => $previewToken,
             'fileName' => $file->getClientOriginalName(),
-            'layout' => 'wide',
+            'layout' => $analysis['layout'],
             'assessmentColumns' => $analysis['assessmentColumns'],
             'summary' => $analysis['summary'],
-            'rows' => $this->formatWidePreviewRows($analysis),
+            'rows' => $analysis['layout'] === 'mark_only'
+                ? $this->formatMarkOnlyPreviewRows($analysis)
+                : $this->formatWidePreviewRows($analysis),
         ];
     }
 
@@ -162,7 +168,7 @@ class CourseWorkImportService
         ]);
 
         try {
-            $analysis = $this->analyseFile($fullPath, $importer, dryRun: false);
+            $analysis = $this->analyseFile($fullPath, $importer, $moduleId, dryRun: false);
 
             if ($analysis['summary']['succeeded'] === 0) {
                 throw ValidationException::withMessages([
@@ -187,7 +193,7 @@ class CourseWorkImportService
                 }
 
                 try {
-                    /** @var array{studentEnrolmentId: int, courseSyllabusModuleId: int, assessmentTypeId: int, mark: int|null, remark: string|null} $payload */
+                    /** @var array{studentEnrolmentId: int, courseSyllabusModuleId: int, assessmentTypeId?: int|null, mark: int|null, remark: string|null} $payload */
                     $payload = $operation['payload'];
                     $this->markService->upsert($payload, classConfigId: $classConfigId);
                     $rowsSucceeded++;
@@ -270,8 +276,9 @@ class CourseWorkImportService
      *     studentRows: list<array<string, mixed>>,
      * }
      */
-    private function analyseFile(string $fullPath, CourseWorkMarkImporter $importer, bool $dryRun): array
+    private function analyseFile(string $fullPath, CourseWorkMarkImporter $importer, int $moduleId, bool $dryRun): array
     {
+        $module = CourseSyllabusModule::query()->findOrFail($moduleId);
         $rawRows = $this->readRawRows($fullPath);
         $headerRowIndex = $this->detectHeaderRowIndex($rawRows);
 
@@ -282,12 +289,41 @@ class CourseWorkImportService
         }
 
         $headerRow = $rawRows[$headerRowIndex];
+        $isMarkOnlyHeader = CourseWorkMarkImporter::isMarkOnlyFormatHeader($headerRow);
+        $isWideHeader = CourseWorkMarkImporter::isWideFormatHeader($headerRow);
 
-        if (! CourseWorkMarkImporter::isWideFormatHeader($headerRow)) {
+        if ($module->capture_mark_only) {
+            if (! $isMarkOnlyHeader) {
+                throw ValidationException::withMessages([
+                    'file' => [__('academic_calendar.course_work_import_layout_mismatch')],
+                ]);
+            }
+
+            return $this->analyseMarkOnlyFile($rawRows, $headerRowIndex, $importer, $dryRun);
+        }
+
+        if (! $isWideHeader || $isMarkOnlyHeader) {
             throw ValidationException::withMessages([
-                'file' => [__('academic_calendar.course_work_import_invalid_format')],
+                'file' => [__('academic_calendar.course_work_import_layout_mismatch')],
             ]);
         }
+
+        return $this->analyseWideFile($rawRows, $headerRowIndex, $importer, $dryRun);
+    }
+
+    /**
+     * @param  list<array<int|string, mixed>>  $rawRows
+     * @return array{
+     *     layout: string,
+     *     summary: array{total: int, succeeded: int, failed: int, skipped: int, creates: int, updates: int},
+     *     assessmentColumns: list<array{id: int, name: string, weightPercent: int|null}>,
+     *     markOperations: list<array<string, mixed>>,
+     *     studentRows: list<array<string, mixed>>,
+     * }
+     */
+    private function analyseWideFile(array $rawRows, int $headerRowIndex, CourseWorkMarkImporter $importer, bool $dryRun): array
+    {
+        $headerRow = $rawRows[$headerRowIndex];
 
         $idRow = $rawRows[$headerRowIndex + 1] ?? [];
         $columnMap = CourseWorkMarkImporter::parseWideColumnMap($idRow);
@@ -299,6 +335,38 @@ class CourseWorkImportService
         }
 
         $assessmentColumns = CourseWorkMarkImporter::assessmentColumnsFromHeader($headerRow, $columnMap);
+        $classConfig = $this->markService->assertClassConfigExists($importer->classConfigId());
+        $expectedModeOfStudyId = (int) $classConfig->mode_of_study_id;
+        $moduleId = $importer->moduleId();
+
+        $studentEnrolmentIds = $this->collectStudentEnrolmentIdsFromRows(
+            $rawRows,
+            $headerRowIndex,
+        );
+
+        /** @var Collection<string, Collection<int, CourseWorkMark>> $existingMarksByKey */
+        $existingMarksByKey = $studentEnrolmentIds === []
+            ? collect()
+            : CourseWorkMark::query()
+                ->withTrashed()
+                ->where('course_syllabus_module_id', $moduleId)
+                ->whereIn('student_enrolment_id', $studentEnrolmentIds)
+                ->get()
+                ->groupBy(fn (CourseWorkMark $mark): string => CourseWorkMarkImporter::markKey(
+                    (int) $mark->student_enrolment_id,
+                    (int) $mark->course_syllabus_module_id,
+                    $mark->assessment_type_id !== null ? (int) $mark->assessment_type_id : null,
+                ));
+
+        /** @var array<int, int|null> $modeOfStudyByEnrolmentId */
+        $modeOfStudyByEnrolmentId = $studentEnrolmentIds === []
+            ? []
+            : StudentEnrolment::query()
+                ->whereIn('id', $studentEnrolmentIds)
+                ->pluck('mode_of_study_id', 'id')
+                ->map(fn ($modeId): ?int => $modeId !== null ? (int) $modeId : null)
+                ->all();
+
         $markOperations = [];
         $studentRows = [];
 
@@ -347,26 +415,105 @@ class CourseWorkImportService
                 continue;
             }
 
+            $rowValues = array_values($studentRow);
+            $studentEnrolmentId = isset($rowValues[0]) && is_numeric($rowValues[0])
+                ? (int) $rowValues[0]
+                : 0;
+            $studentModeOfStudyId = $modeOfStudyByEnrolmentId[$studentEnrolmentId] ?? null;
+
+            if ($studentModeOfStudyId === null || $studentModeOfStudyId !== $expectedModeOfStudyId) {
+                $modeMismatchErrors = [
+                    'import' => [__('academic_calendar.course_work_import_mode_of_study_mismatch')],
+                ];
+
+                foreach ($columnMap as $assessmentTypeId) {
+                    $summary['failed']++;
+                    $cellResults[$assessmentTypeId] = [
+                        'mark' => null,
+                        'action' => 'fail',
+                        'errors' => $modeMismatchErrors,
+                    ];
+
+                    $markOperations[] = [
+                        'rowNumber' => $studentRowNumber,
+                        'status' => 'failed',
+                        'action' => 'fail',
+                        'assessmentTypeId' => $assessmentTypeId,
+                        'raw' => $studentRow,
+                        'errors' => $modeMismatchErrors,
+                        ...$display,
+                    ];
+                }
+
+                $studentRows[] = [
+                    'rowNumber' => $studentRowNumber,
+                    ...$display,
+                    'className' => $display['className'],
+                    'cellResults' => $cellResults,
+                    'raw' => $studentRow,
+                ];
+
+                continue;
+            }
+
             foreach ($columnMap as $columnIndex => $assessmentTypeId) {
-                $values = array_values($studentRow);
-                $markValue = $values[$columnIndex] ?? null;
+                $markValue = $rowValues[$columnIndex] ?? null;
                 $markEmpty = $markValue === null || $markValue === '';
 
                 if ($markEmpty) {
-                    $summary['skipped']++;
-                    $cellResults[$assessmentTypeId] = [
-                        'mark' => null,
-                        'action' => 'skip_empty',
-                        'errors' => null,
-                    ];
+                    $markKey = CourseWorkMarkImporter::markKey($studentEnrolmentId, $moduleId, $assessmentTypeId);
+                    $existing = $existingMarksByKey->get($markKey)?->first();
 
-                    continue;
+                    if ($existing !== null && ! $existing->trashed()) {
+                        $summary['skipped']++;
+                        $cellResults[$assessmentTypeId] = [
+                            'mark' => $existing->mark !== null ? (int) $existing->mark : null,
+                            'action' => 'skip_unchanged',
+                            'errors' => null,
+                        ];
+
+                        continue;
+                    }
+
+                    $payload = [
+                        'studentEnrolmentId' => $studentEnrolmentId,
+                        'courseSyllabusModuleId' => $moduleId,
+                        'assessmentTypeId' => $assessmentTypeId,
+                        'mark' => 0,
+                        'remark' => null,
+                    ];
+                } else {
+                    try {
+                        $payload = $importer->extractWideMarkPayload($studentRow, $assessmentTypeId, $markValue);
+                    } catch (Throwable $exception) {
+                        $summary['failed']++;
+                        $errors = $exception instanceof ValidationException
+                            ? $exception->errors()
+                            : ['import' => [$exception->getMessage()]];
+
+                        $cellResults[$assessmentTypeId] = [
+                            'mark' => is_numeric($markValue) ? (int) $markValue : null,
+                            'action' => 'fail',
+                            'errors' => $errors,
+                        ];
+
+                        $markOperations[] = [
+                            'rowNumber' => $studentRowNumber,
+                            'status' => 'failed',
+                            'action' => 'fail',
+                            'assessmentTypeId' => $assessmentTypeId,
+                            'raw' => $studentRow,
+                            'errors' => $errors,
+                            ...$display,
+                        ];
+
+                        continue;
+                    }
                 }
 
                 $summary['total']++;
 
                 try {
-                    $payload = $importer->extractWideMarkPayload($studentRow, $assessmentTypeId, $markValue);
                     $markKey = CourseWorkMarkImporter::markKeyFromPayload($payload);
 
                     if (isset($seenMarkKeys[$markKey])) {
@@ -401,13 +548,7 @@ class CourseWorkImportService
                         $this->assertRowPermissions($payload);
                     }
 
-                    $existing = CourseWorkMark::query()
-                        ->withTrashed()
-                        ->where('student_enrolment_id', $payload['studentEnrolmentId'])
-                        ->where('course_syllabus_module_id', $payload['courseSyllabusModuleId'])
-                        ->where('assessment_type_id', $payload['assessmentTypeId'])
-                        ->first();
-
+                    $existing = $existingMarksByKey->get($markKey)?->first();
                     $action = ($existing !== null && ! $existing->trashed()) ? 'update' : 'create';
 
                     if ($action === 'create') {
@@ -443,7 +584,7 @@ class CourseWorkImportService
                         : ['import' => [$exception->getMessage()]];
 
                     $cellResults[$assessmentTypeId] = [
-                        'mark' => is_numeric($markValue) ? (int) $markValue : null,
+                        'mark' => $payload['mark'] ?? (is_numeric($markValue) ? (int) $markValue : null),
                         'action' => 'fail',
                         'errors' => $errors,
                     ];
@@ -475,9 +616,246 @@ class CourseWorkImportService
             ]);
         }
 
-        if ($summary['total'] === 0) {
+        if ($summary['succeeded'] === 0 && $summary['failed'] === 0) {
             throw ValidationException::withMessages([
                 'file' => [__('academic_calendar.course_work_import_no_marks')],
+            ]);
+        }
+
+        return [
+            'layout' => 'wide',
+            'summary' => $summary,
+            'assessmentColumns' => $assessmentColumns,
+            'markOperations' => $markOperations,
+            'studentRows' => $studentRows,
+        ];
+    }
+
+    /**
+     * @param  list<array<int|string, mixed>>  $rawRows
+     * @return array{
+     *     layout: string,
+     *     summary: array{total: int, succeeded: int, failed: int, skipped: int, creates: int, updates: int},
+     *     assessmentColumns: list<array{id: int, name: string, weightPercent: int|null}>,
+     *     markOperations: list<array<string, mixed>>,
+     *     studentRows: list<array<string, mixed>>,
+     * }
+     */
+    private function analyseMarkOnlyFile(
+        array $rawRows,
+        int $headerRowIndex,
+        CourseWorkMarkImporter $importer,
+        bool $dryRun,
+    ): array {
+        $classConfig = $this->markService->assertClassConfigExists($importer->classConfigId());
+        $expectedModeOfStudyId = (int) $classConfig->mode_of_study_id;
+        $moduleId = $importer->moduleId();
+
+        $studentEnrolmentIds = $this->collectStudentEnrolmentIdsFromRows($rawRows, $headerRowIndex, dataRowOffset: 1);
+
+        /** @var Collection<string, Collection<int, CourseWorkMark>> $existingMarksByKey */
+        $existingMarksByKey = $studentEnrolmentIds === []
+            ? collect()
+            : CourseWorkMark::query()
+                ->withTrashed()
+                ->where('course_syllabus_module_id', $moduleId)
+                ->whereIn('student_enrolment_id', $studentEnrolmentIds)
+                ->whereNull('assessment_type_id')
+                ->get()
+                ->groupBy(fn (CourseWorkMark $mark): string => CourseWorkMarkImporter::markKey(
+                    (int) $mark->student_enrolment_id,
+                    (int) $mark->course_syllabus_module_id,
+                    null,
+                ));
+
+        /** @var array<int, int|null> $modeOfStudyByEnrolmentId */
+        $modeOfStudyByEnrolmentId = $studentEnrolmentIds === []
+            ? []
+            : StudentEnrolment::query()
+                ->whereIn('id', $studentEnrolmentIds)
+                ->pluck('mode_of_study_id', 'id')
+                ->map(fn ($modeId): ?int => $modeId !== null ? (int) $modeId : null)
+                ->all();
+
+        $markOperations = [];
+        $studentRows = [];
+        $summary = [
+            'total' => 0,
+            'succeeded' => 0,
+            'failed' => 0,
+            'skipped' => 0,
+            'creates' => 0,
+            'updates' => 0,
+        ];
+
+        $studentRowNumber = 0;
+
+        for ($index = $headerRowIndex + 1; $index < count($rawRows); $index++) {
+            $studentRow = $rawRows[$index];
+
+            if (! $this->rowHasContent($studentRow)) {
+                continue;
+            }
+
+            $studentRowNumber++;
+            $display = CourseWorkMarkImporter::displayFromWideRow($studentRow);
+            $rowValues = array_values($studentRow);
+            $studentEnrolmentId = isset($rowValues[0]) && is_numeric($rowValues[0])
+                ? (int) $rowValues[0]
+                : 0;
+            $markValue = $rowValues[4] ?? null;
+            $remarkValue = isset($rowValues[5]) && $rowValues[5] !== '' ? (string) $rowValues[5] : null;
+            $markEmpty = $markValue === null || $markValue === '';
+
+            if ($markEmpty) {
+                $markKey = CourseWorkMarkImporter::markKey($studentEnrolmentId, $moduleId, null);
+                $existing = $existingMarksByKey->get($markKey)?->first();
+
+                if ($existing !== null && ! $existing->trashed()) {
+                    $summary['skipped']++;
+                    $studentRows[] = [
+                        'rowNumber' => $studentRowNumber,
+                        ...$display,
+                        'className' => $display['className'],
+                        'cellResult' => [
+                            'mark' => $existing->mark !== null ? (int) $existing->mark : null,
+                            'remark' => $existing->remark,
+                            'action' => 'skip_unchanged',
+                            'errors' => null,
+                        ],
+                        'raw' => $studentRow,
+                    ];
+
+                    continue;
+                }
+
+                $summary['skipped']++;
+                $studentRows[] = [
+                    'rowNumber' => $studentRowNumber,
+                    ...$display,
+                    'className' => $display['className'],
+                    'cellResult' => [
+                        'mark' => null,
+                        'remark' => null,
+                        'action' => 'skip_empty',
+                        'errors' => null,
+                    ],
+                    'raw' => $studentRow,
+                ];
+
+                continue;
+            }
+
+            $studentModeOfStudyId = $modeOfStudyByEnrolmentId[$studentEnrolmentId] ?? null;
+
+            if ($studentModeOfStudyId === null || $studentModeOfStudyId !== $expectedModeOfStudyId) {
+                $summary['failed']++;
+                $modeMismatchErrors = [
+                    'import' => [__('academic_calendar.course_work_import_mode_of_study_mismatch')],
+                ];
+                $studentRows[] = [
+                    'rowNumber' => $studentRowNumber,
+                    ...$display,
+                    'className' => $display['className'],
+                    'cellResult' => [
+                        'mark' => is_numeric($markValue) ? (int) $markValue : null,
+                        'remark' => $remarkValue,
+                        'action' => 'fail',
+                        'errors' => $modeMismatchErrors,
+                    ],
+                    'raw' => $studentRow,
+                ];
+                $markOperations[] = [
+                    'rowNumber' => $studentRowNumber,
+                    'status' => 'failed',
+                    'action' => 'fail',
+                    'raw' => $studentRow,
+                    'errors' => $modeMismatchErrors,
+                    ...$display,
+                ];
+
+                continue;
+            }
+
+            $summary['total']++;
+
+            try {
+                $payload = $importer->extractMarkOnlyPayload($studentRow, $markValue, $remarkValue);
+
+                if ($dryRun) {
+                    $this->assertRowPermissionsForPreview($payload);
+                } else {
+                    $this->assertRowPermissions($payload);
+                }
+
+                $markKey = CourseWorkMarkImporter::markKeyFromPayload($payload);
+                $existing = $existingMarksByKey->get($markKey)?->first();
+                $action = ($existing !== null && ! $existing->trashed()) ? 'update' : 'create';
+
+                if ($action === 'create') {
+                    $summary['creates']++;
+                } else {
+                    $summary['updates']++;
+                }
+
+                $summary['succeeded']++;
+
+                $studentRows[] = [
+                    'rowNumber' => $studentRowNumber,
+                    ...$display,
+                    'className' => $display['className'],
+                    'cellResult' => [
+                        'mark' => $payload['mark'],
+                        'remark' => $payload['remark'],
+                        'action' => $action,
+                        'errors' => null,
+                    ],
+                    'raw' => $studentRow,
+                ];
+
+                $markOperations[] = [
+                    'rowNumber' => $studentRowNumber,
+                    'status' => 'ready',
+                    'action' => $action,
+                    'payload' => $payload,
+                    'raw' => $studentRow,
+                    'errors' => null,
+                    ...$display,
+                    'mark' => $payload['mark'],
+                ];
+            } catch (Throwable $exception) {
+                $summary['failed']++;
+                $errors = $exception instanceof ValidationException
+                    ? $exception->errors()
+                    : ['import' => [$exception->getMessage()]];
+
+                $studentRows[] = [
+                    'rowNumber' => $studentRowNumber,
+                    ...$display,
+                    'className' => $display['className'],
+                    'cellResult' => [
+                        'mark' => is_numeric($markValue) ? (int) $markValue : null,
+                        'remark' => $remarkValue,
+                        'action' => 'fail',
+                        'errors' => $errors,
+                    ],
+                    'raw' => $studentRow,
+                ];
+
+                $markOperations[] = [
+                    'rowNumber' => $studentRowNumber,
+                    'status' => 'failed',
+                    'action' => 'fail',
+                    'raw' => $studentRow,
+                    'errors' => $errors,
+                    ...$display,
+                ];
+            }
+        }
+
+        if ($studentRowNumber === 0) {
+            throw ValidationException::withMessages([
+                'file' => [__('academic_calendar.course_work_import_no_rows')],
             ]);
         }
 
@@ -488,11 +866,51 @@ class CourseWorkImportService
         }
 
         return [
+            'layout' => 'mark_only',
             'summary' => $summary,
-            'assessmentColumns' => $assessmentColumns,
+            'assessmentColumns' => [
+                ['id' => 0, 'name' => __('academic_calendar.course_work_mark'), 'weightPercent' => null],
+            ],
             'markOperations' => $markOperations,
             'studentRows' => $studentRows,
         ];
+    }
+
+    /**
+     * @param  array{
+     *     studentRows: list<array<string, mixed>>,
+     * }  $analysis
+     * @return list<array<string, mixed>>
+     */
+    private function formatMarkOnlyPreviewRows(array $analysis): array
+    {
+        $rows = [];
+
+        foreach ($analysis['studentRows'] as $studentRow) {
+            $cell = $studentRow['cellResult'] ?? [
+                'mark' => null,
+                'remark' => null,
+                'action' => 'skip_empty',
+                'errors' => null,
+            ];
+
+            $rows[] = [
+                'rowNumber' => $studentRow['rowNumber'],
+                'studentName' => $studentRow['studentName'] ?? null,
+                'studentNumber' => $studentRow['studentNumber'] ?? null,
+                'className' => $studentRow['className'] ?? null,
+                'marks' => [
+                    0 => [
+                        'mark' => $cell['mark'],
+                        'action' => $cell['action'],
+                        'errors' => $cell['errors'],
+                    ],
+                ],
+                'remark' => $cell['remark'] ?? null,
+            ];
+        }
+
+        return $rows;
     }
 
     /**
@@ -577,6 +995,32 @@ class CourseWorkImportService
     }
 
     /**
+     * @param  list<array<int|string, mixed>>  $rawRows
+     * @return list<int>
+     */
+    private function collectStudentEnrolmentIdsFromRows(array $rawRows, int $headerRowIndex, int $dataRowOffset = 2): array
+    {
+        $ids = [];
+
+        for ($index = $headerRowIndex + $dataRowOffset; $index < count($rawRows); $index++) {
+            $studentRow = $rawRows[$index];
+
+            if (! $this->rowHasContent($studentRow)) {
+                continue;
+            }
+
+            $values = array_values($studentRow);
+            $studentEnrolmentId = $values[0] ?? null;
+
+            if ($studentEnrolmentId !== null && $studentEnrolmentId !== '' && is_numeric($studentEnrolmentId)) {
+                $ids[] = (int) $studentEnrolmentId;
+            }
+        }
+
+        return array_values(array_unique($ids));
+    }
+
+    /**
      * @param  array<string, mixed>  $row
      */
     private function rowHasContent(array $row): bool
@@ -609,17 +1053,23 @@ class CourseWorkImportService
         $existing = CourseWorkMark::query()
             ->withTrashed()
             ->where('student_enrolment_id', $payload['studentEnrolmentId'])
-            ->where('course_syllabus_module_id', $payload['courseSyllabusModuleId'])
-            ->where('assessment_type_id', $payload['assessmentTypeId'])
-            ->first();
+            ->where('course_syllabus_module_id', $payload['courseSyllabusModuleId']);
 
-        if ($existing !== null && ! $existing->trashed() && ! $user->can('update', CourseWorkMark::class)) {
+        if (($payload['assessmentTypeId'] ?? null) === null) {
+            $existing->whereNull('assessment_type_id');
+        } else {
+            $existing->where('assessment_type_id', $payload['assessmentTypeId']);
+        }
+
+        $existingMark = $existing->first();
+
+        if ($existingMark !== null && ! $existingMark->trashed() && ! $user->can('update', CourseWorkMark::class)) {
             throw ValidationException::withMessages([
                 'permission' => [__('academic_calendar.course_work_import_update_denied')],
             ]);
         }
 
-        if (($existing === null || $existing->trashed()) && ! $user->can('create', CourseWorkMark::class)) {
+        if (($existingMark === null || $existingMark->trashed()) && ! $user->can('create', CourseWorkMark::class)) {
             throw ValidationException::withMessages([
                 'permission' => [__('academic_calendar.course_work_import_create_denied')],
             ]);

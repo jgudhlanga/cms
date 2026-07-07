@@ -7,6 +7,7 @@ use App\Models\AcademicCalendars\AcademicCalendarClass;
 use App\Models\AcademicCalendars\AcademicCalendarStudentEnrolment;
 use App\Models\AcademicCalendars\ClassConfig;
 use App\Models\AcademicCalendars\CourseWorkMark;
+use App\Models\Institution\Syllabus\CourseSyllabusModule;
 use App\Models\Users\User;
 use App\Support\AcademicCalendars\CourseWorkMarkValue;
 use Illuminate\Support\Facades\Auth;
@@ -20,7 +21,7 @@ class CourseWorkMarkService
     ) {}
 
     /**
-     * @param  array{studentEnrolmentId: int, courseSyllabusModuleId: int, assessmentTypeId: int, mark?: int|null, remark?: string|null}  $data
+     * @param  array{studentEnrolmentId: int, courseSyllabusModuleId: int, assessmentTypeId?: int|null, mark?: int|null, remark?: string|null}  $data
      */
     public function upsert(array $data, ?int $academicCalendarClassId = null, ?int $classConfigId = null): CourseWorkMark
     {
@@ -29,6 +30,13 @@ class CourseWorkMarkService
             $academicCalendarClassId,
             $classConfigId,
         );
+
+        $module = CourseSyllabusModule::query()->findOrFail((int) $data['courseSyllabusModuleId']);
+        $assessmentTypeId = array_key_exists('assessmentTypeId', $data) && $data['assessmentTypeId'] !== null
+            ? (int) $data['assessmentTypeId']
+            : null;
+
+        $this->assertMarkCaptureMode($module, $assessmentTypeId);
 
         if (array_key_exists('mark', $data) && $data['mark'] !== null) {
             $parsedMark = CourseWorkMarkValue::tryParse($data['mark']);
@@ -42,14 +50,19 @@ class CourseWorkMarkService
             $data['mark'] = $parsedMark;
         }
 
-        return DB::transaction(function () use ($data): CourseWorkMark {
-            $mark = CourseWorkMark::query()
+        return DB::transaction(function () use ($data, $assessmentTypeId): CourseWorkMark {
+            $query = CourseWorkMark::query()
                 ->withTrashed()
                 ->where('student_enrolment_id', $data['studentEnrolmentId'])
-                ->where('course_syllabus_module_id', $data['courseSyllabusModuleId'])
-                ->where('assessment_type_id', $data['assessmentTypeId'])
-                ->lockForUpdate()
-                ->first();
+                ->where('course_syllabus_module_id', $data['courseSyllabusModuleId']);
+
+            if ($assessmentTypeId === null) {
+                $query->whereNull('assessment_type_id');
+            } else {
+                $query->where('assessment_type_id', $assessmentTypeId);
+            }
+
+            $mark = $query->lockForUpdate()->first();
 
             $user = Auth::user();
             $userId = $user instanceof User ? $user->id : null;
@@ -74,7 +87,7 @@ class CourseWorkMarkService
                 $created = CourseWorkMark::query()->create([
                     'student_enrolment_id' => $data['studentEnrolmentId'],
                     'course_syllabus_module_id' => $data['courseSyllabusModuleId'],
-                    'assessment_type_id' => $data['assessmentTypeId'],
+                    'assessment_type_id' => $assessmentTypeId,
                     'mark' => $attributes['mark'],
                     'remark' => $attributes['remark'],
                     'created_by' => $userId,
@@ -106,6 +119,25 @@ class CourseWorkMarkService
 
             return $mark;
         });
+    }
+
+    private function assertMarkCaptureMode(CourseSyllabusModule $module, ?int $assessmentTypeId): void
+    {
+        if ($module->capture_mark_only) {
+            if ($assessmentTypeId !== null) {
+                throw ValidationException::withMessages([
+                    'assessmentTypeId' => [__('academic_calendar.course_work_mark_only_no_assessment')],
+                ]);
+            }
+
+            return;
+        }
+
+        if ($assessmentTypeId === null) {
+            throw ValidationException::withMessages([
+                'assessmentTypeId' => [__('academic_calendar.course_work_assessment_required')],
+            ]);
+        }
     }
 
     public function delete(CourseWorkMark $mark, ?int $academicCalendarClassId = null, ?int $classConfigId = null): void

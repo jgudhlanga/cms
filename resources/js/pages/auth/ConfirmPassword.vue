@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import InputError from '@/components/core/form/InputError.vue';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import AuthCard from '@/components/auth/AuthCard.vue';
+import { BaseButton } from '@/components/core/button';
+import { PasswordInputWithToggle } from '@/components/core/form';
+import { ColorVariant } from '@/enums/colors';
+import { clearFormErrors } from '@/lib/forms';
 import { Head, useForm } from '@inertiajs/vue3';
-import { LoaderCircle } from 'lucide-vue-next';
 
 const form = useForm<any>({
     password: '',
@@ -21,32 +21,31 @@ const submit = () => {
 
 <template>
     <Head :title="$t('trans.ui_confirm_password_2')" />
-    <form
-        @submit.prevent="submit"
-        class="rounded-lg border border-border bg-card p-6 text-card-foreground shadow-md dark:shadow-sm"
-    >
-        <div class="space-y-6">
-            <div class="grid gap-2">
-                <Label htmlFor="password">{{ $t('trans.password') }}</Label>
-                <Input
-                    id="password"
-                    type="password"
-                    class="mt-1 block w-full"
+    <form @submit.prevent="submit" class="flex w-full flex-col">
+        <AuthCard :title="$t('trans.confirm_password')" :subtitle="$t('trans.confirm_password_description')">
+            <div class="space-y-4">
+                <PasswordInputWithToggle
                     v-model="form.password"
-                    required
+                    :input-auto-focus="true"
+                    :tabindex="1"
+                    :error="form.errors.password"
+                    :label="$t('trans.password')"
+                    :placeholder="$t('trans.password')"
+                    :is-required="true"
                     autocomplete="current-password"
-                    autofocus
+                    @input="clearFormErrors(form, 'password')"
                 />
-
-                <InputError :message="form.errors.password" />
             </div>
 
-            <div class="flex items-center">
-                <Button class="w-full" :disabled="form.processing">
-                    <LoaderCircle v-if="form.processing" class="h-4 w-4 animate-spin" />
-                    {{ $t('trans.confirm_password') }}
-                </Button>
-            </div>
-        </div>
+            <BaseButton
+                :variant="ColorVariant.primary"
+                type="submit"
+                :tabindex="2"
+                :processing="form.processing"
+                classes="min-h-11 w-full rounded-xl dark:text-white"
+            >
+                {{ $t('trans.confirm_password') }}
+            </BaseButton>
+        </AuthCard>
     </form>
 </template>

@@ -33,6 +33,7 @@ const props = defineProps<{
     departmentId: number;
     calendarYear: string;
     canImportCourseWork: boolean;
+    initialModuleId?: number | null;
     courseWorkImportTemplateUrl: (moduleId: number) => string;
     courseWorkImportPreviewUrl: string;
     courseWorkImportProcessUrl: string;
@@ -45,7 +46,10 @@ const {
     loading,
     error,
     loadTree,
-} = useCourseWorkClassMarksheet({ classConfigId: props.classConfigId });
+} = useCourseWorkClassMarksheet({
+    classConfigId: props.classConfigId,
+    initialModuleId: props.initialModuleId ?? null,
+});
 
 const fileInput = ref<HTMLInputElement | null>(null);
 const selectedFile = ref<File | null>(null);
@@ -158,6 +162,7 @@ const actionLabel = (action: string): string => {
         create: 'academic_calendar.course_work_import_preview_action_create',
         update: 'academic_calendar.course_work_import_preview_action_update',
         skip_empty: 'academic_calendar.course_work_import_preview_action_skip_empty',
+        skip_unchanged: 'academic_calendar.course_work_import_preview_action_skip_unchanged',
         skip_duplicate: 'academic_calendar.course_work_import_preview_action_skip_duplicate',
         fail: 'academic_calendar.course_work_import_preview_action_fail',
     };
@@ -290,7 +295,7 @@ const markCellActionClass = (action: CourseWorkImportPreviewMarkCell['action']):
         return 'text-green-700';
     }
 
-    if (action === 'skip_empty' || action === 'skip_duplicate') {
+    if (action === 'skip_empty' || action === 'skip_duplicate' || action === 'skip_unchanged') {
         return 'text-muted-foreground';
     }
 

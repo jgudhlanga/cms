@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Institution;
 
 use App\Enums\Acl\RoleEnum;
+use App\Models\AcademicCalendars\CourseWorkMark;
 use App\Models\Institution\Staff;
 use App\Models\Institution\Syllabus\CourseSyllabus;
 use App\Services\Institution\ResolveCalendarTypeSlugPrefixFromCourseSyllabus;
@@ -58,6 +59,7 @@ class CourseSyllabusModuleRequest extends FormRequest
             'prerequisite_module_ids.*' => ['integer', 'distinct', 'exists:course_syllabus_modules,id'],
             'shared' => ['nullable', 'boolean'],
             'all_semesters' => ['nullable', 'boolean'],
+            'capture_mark_only' => ['nullable', 'boolean'],
             'staff_ids' => ['nullable', 'array'],
             'staff_ids.*' => ['integer', 'distinct', Rule::exists('staff', 'id')->whereNull('deleted_at')],
         ];
@@ -66,6 +68,22 @@ class CourseSyllabusModuleRequest extends FormRequest
     public function withValidator(Validator $validator): void
     {
         $validator->after(function (Validator $validator): void {
+            $module = $this->route('course_syllabus_module');
+
+            if ($module !== null && $this->has('capture_mark_only')) {
+                $requested = $this->boolean('capture_mark_only');
+                $current = (bool) $module->capture_mark_only;
+
+                if ($requested !== $current && CourseWorkMark::query()
+                    ->where('course_syllabus_module_id', $module->id)
+                    ->exists()) {
+                    $validator->errors()->add(
+                        'capture_mark_only',
+                        __('syllabus.capture_mark_only_locked'),
+                    );
+                }
+            }
+
             $staffIds = array_map('intval', $this->input('staff_ids', []));
 
             if ($staffIds === []) {

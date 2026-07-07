@@ -85,9 +85,10 @@ class CourseWorkMarksheetDataService
         CourseSyllabusModule $module,
         ?AcademicCalendarClass $academicCalendarClass,
     ): array {
+        $captureMarkOnly = (bool) $module->capture_mark_only;
         $assessmentTypes = $tree['assessmentTypes'] ?? [];
 
-        if ($assessmentTypes === []) {
+        if (! $captureMarkOnly && $assessmentTypes === []) {
             throw ValidationException::withMessages([
                 'academicCalendarClassId' => [__('academic_calendar.course_work_no_assessment_types')],
             ]);
@@ -104,9 +105,6 @@ class CourseWorkMarksheetDataService
         $issues = [];
 
         foreach ($modulePayload['students'] as $student) {
-            $assessments = $student['assessments'] ?? [];
-            $aggregation = $this->aggregationService->aggregateStudentModule($assessmentTypes, $assessments);
-
             $candidateNumber = $student['studentNumber'] ?? null;
             if ($candidateNumber === null || trim((string) $candidateNumber) === '') {
                 $issues[] = [
@@ -115,6 +113,36 @@ class CourseWorkMarksheetDataService
                     'issue' => __('academic_calendar.course_work_export_issue_missing_candidate_number'),
                 ];
             }
+
+            if ($captureMarkOnly) {
+                $moduleMark = $student['moduleMark'] ?? [];
+                $isComplete = (bool) ($moduleMark['isComplete'] ?? false);
+
+                if (! $isComplete) {
+                    $issues[] = [
+                        'studentEnrolmentId' => $student['studentEnrolmentId'],
+                        'studentName' => $student['name'],
+                        'issue' => __('academic_calendar.course_work_export_issue_incomplete_marks'),
+                    ];
+                }
+
+                $rows[] = [
+                    'studentEnrolmentId' => $student['studentEnrolmentId'],
+                    'candidateNumber' => $candidateNumber,
+                    'name' => $student['name'],
+                    'components' => [],
+                    'componentMarksByTypeId' => [],
+                    'moduleMark' => $moduleMark['mark'] ?? null,
+                    'courseWorkTotal60' => null,
+                    'isComplete' => $isComplete,
+                    'remark' => $moduleMark['remark'] ?? null,
+                ];
+
+                continue;
+            }
+
+            $assessments = $student['assessments'] ?? [];
+            $aggregation = $this->aggregationService->aggregateStudentModule($assessmentTypes, $assessments);
 
             if (! $aggregation['isComplete']) {
                 $issues[] = [
@@ -145,6 +173,7 @@ class CourseWorkMarksheetDataService
 
         return [
             'header' => $this->buildHeader($classConfig, $module, $academicCalendarClass),
+            'captureMarkOnly' => $captureMarkOnly,
             'assessmentTypes' => $assessmentTypes,
             'rows' => $rows,
             'summary' => [
