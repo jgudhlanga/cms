@@ -42,6 +42,24 @@ class StudentController
         return StudentResource::collection($students);
     }
 
+    public function stats()
+    {
+        return response()->json(
+            $this->repository->statsForIndex(
+                request()->only([
+                    'search',
+                    'name',
+                    'department',
+                    'level',
+                    'course',
+                    'mode_of_study',
+                    'gender',
+                    'with_trashed',
+                ])
+            )
+        );
+    }
+
     public function studentEnrolements(Student $student)
     {
         abort_unless(request()->user()?->can('view', $student) ?? false, 403);

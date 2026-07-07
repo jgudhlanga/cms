@@ -2,7 +2,7 @@ import { useDataTables } from '@/composables/core/useDataTables';
 import { useUtils } from '@/composables/core/useUtils';
 import { errorAlert, successAlert } from '@/lib/alerts';
 import { Enrolment } from '@/types/enrolments';
-import { Student, StudentFiltersState } from '@/types/students';
+import { Student, StudentFiltersState, StudentStats } from '@/types/students';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 import { InertiaForm } from '@inertiajs/vue3';
 import { mergeQueryParamsIntoRequestPath } from '@/lib/merge-query-into-url';
@@ -14,6 +14,7 @@ export const useStudents = () => {
     const { moreActionButton, textLink } = useDataTables();
 
     const isLoading = ref(false);
+    const isStatsLoading = ref(false);
 
     const createStudentColumns = () => {
         return [
@@ -165,6 +166,22 @@ export const useStudents = () => {
         }
     };
 
+    const fetchStudentStats = async (filters: StudentFiltersState = {}): Promise<StudentStats | undefined> => {
+        try {
+            isStatsLoading.value = true;
+            const path = mergeQueryParamsIntoRequestPath(
+                route('v1.students.stats'),
+                filters as Record<string, unknown>,
+                studentListMergeOptions,
+            );
+            return (await HttpService.get(path)) as StudentStats;
+        } catch {
+            errorAlert(trans('trans.load_data_failure', { data: trans('trans.data') }));
+        } finally {
+            isStatsLoading.value = false;
+        }
+    };
+
     const buildStudentExportUrl = (filters: StudentFiltersState): string => {
         const exportFilters: StudentFiltersState = {
             department: filters.department,
@@ -186,7 +203,9 @@ export const useStudents = () => {
         showEditProgramButton,
         updateProgram,
         fetchStudents,
+        fetchStudentStats,
         buildStudentExportUrl,
         isLoading,
+        isStatsLoading,
     };
 };

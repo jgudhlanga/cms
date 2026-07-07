@@ -47,6 +47,11 @@ type UseStudentFiltersOptions = {
 };
 
 export function useStudentFilters({ filters, variant, onChange }: UseStudentFiltersOptions) {
+    const buildAllGendersOption = (): SelectOption => ({
+        value: 'all',
+        label: 'All',
+    });
+
     const search = ref(filters.value.search ?? '');
     const name = ref(filters.value.name ?? '');
 
@@ -54,10 +59,7 @@ export function useStudentFilters({ filters, variant, onChange }: UseStudentFilt
     const levelSelection = ref<SelectOption | null>(null);
     const courseSelection = ref<SelectOption[]>([]);
     const modeOfStudySelection = ref<SelectOption[]>([]);
-    const genderSelection = ref<SelectOption | null>({
-        value: 'all',
-        label: 'All genders',
-    });
+    const genderSelection = ref<SelectOption | null>(buildAllGendersOption());
 
     const { isLoading: departmentsLoading, departments, listDepartments } = useInstitutionDepartments();
     const { isLoading: modesLoading, modesOfStudy, listModesOfStudy } = useModeOfStudy();
@@ -282,6 +284,36 @@ export function useStudentFilters({ filters, variant, onChange }: UseStudentFilt
         return value === 'male' || value === 'female' ? value : undefined;
     };
 
+    const normalizeFiltersState = (state: StudentFiltersState): Record<string, unknown> => {
+        const normalizeNumberArray = (value?: number[] | null): number[] | undefined =>
+            value?.length ? [...value].map((item) => Number(item)).sort((a, b) => a - b) : undefined;
+
+        const normalizeStringArray = (value?: string[] | null): string[] | undefined =>
+            value?.length ? [...value].map((item) => String(item)).sort((a, b) => a.localeCompare(b)) : undefined;
+
+        return {
+            search: state.search?.trim() || undefined,
+            name: state.name?.trim() || undefined,
+            department: normalizeNumberArray(state.department),
+            level: normalizeNumberArray(state.level),
+            course: normalizeNumberArray(state.course),
+            mode_of_study: normalizeNumberArray(state.mode_of_study),
+            gender: state.gender || undefined,
+            academic_year: normalizeNumberArray(state.academic_year),
+            calendar_type: normalizeStringArray(state.calendar_type),
+            with_trashed: state.with_trashed || undefined,
+        };
+    };
+
+    const areFiltersEquivalent = (left: StudentFiltersState, right: StudentFiltersState): boolean =>
+        JSON.stringify(normalizeFiltersState(left)) === JSON.stringify(normalizeFiltersState(right));
+
+    const areOptionIdsEqual = (left: SelectOption[], rightIds: number[]): boolean => {
+        const leftIds = left.map((option) => Number(option.value)).filter((id) => id > 0);
+
+        return JSON.stringify(leftIds) === JSON.stringify(rightIds);
+    };
+
     const buildFiltersState = (): StudentFiltersState => {
         const comboboxFilters: StudentFiltersState = {
             department: toOptionalSingleIdArray(departmentSelection.value),
@@ -312,9 +344,80 @@ export function useStudentFilters({ filters, variant, onChange }: UseStudentFilt
         };
     };
 
+    const isExternalFilterSync = ref(false);
+
     const applyFilters = useDebounceFn(() => {
-        onChange(buildFiltersState());
+        if (isExternalFilterSync.value) {
+            return;
+        }
+
+        const nextState = buildFiltersState();
+
+        if (areFiltersEquivalent(nextState, filters.value)) {
+            return;
+        }
+
+        onChange(nextState);
     }, 400);
+
+    if (variant === 'index') {
+        watch(
+            () => filters.value,
+            (next) => {
+                isExternalFilterSync.value = true;
+
+                if ((next.search ?? '') !== search.value) {
+                    search.value = next.search ?? '';
+                }
+
+                if ((next.name ?? '') !== name.value) {
+                    name.value = next.name ?? '';
+                }
+
+                if (next.gender === 'male' || next.gender === 'female') {
+                    const nextGenderOption = genderOptions.value.find((option) => option.value === next.gender) ?? null;
+                    if (nextGenderOption && genderSelection.value?.value !== nextGenderOption.value) {
+                        genderSelection.value = nextGenderOption;
+                    }
+                } else if (!next.gender) {
+                    if (genderSelection.value?.value !== 'all') {
+                        genderSelection.value = buildAllGendersOption();
+                    }
+                }
+
+                const levelId = next.level?.[0];
+                if (levelId) {
+                    const levelOption =
+                        levelOptions.value.find((option) => Number(option.value) === levelId) ??
+                        globalLevelOptions.value.find((option) => Number(option.value) === levelId);
+                    if (levelOption && Number(levelSelection.value?.value ?? 0) !== levelId) {
+                        levelSelection.value = levelOption;
+                    }
+                } else if (!next.level?.length) {
+                    if (levelSelection.value !== null) {
+                        levelSelection.value = null;
+                    }
+                }
+
+                const modeIds = next.mode_of_study ?? [];
+                if (modeIds.length) {
+                    const nextModeOptions = modeIds
+                        .map((id) => modeOfStudyOptions.value.find((option) => Number(option.value) === id))
+                        .filter((option): option is SelectOption => option !== undefined);
+                    if (!areOptionIdsEqual(modeOfStudySelection.value, modeIds)) {
+                        modeOfStudySelection.value = nextModeOptions;
+                    }
+                } else if (!modeIds.length) {
+                    if (modeOfStudySelection.value.length) {
+                        modeOfStudySelection.value = [];
+                    }
+                }
+
+                isExternalFilterSync.value = false;
+            },
+            { deep: true },
+        );
+    }
 
     const watchedRefs =
         variant === 'index'
@@ -332,10 +435,7 @@ export function useStudentFilters({ filters, variant, onChange }: UseStudentFilt
         levelSelection.value = null;
         courseSelection.value = [];
         modeOfStudySelection.value = [];
-        genderSelection.value = {
-            value: 'all',
-            label: trans('students.filter_all_genders'),
-        };
+        genderSelection.value = buildAllGendersOption();
         departmentLevelsForFilter.value = [];
     };
 

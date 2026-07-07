@@ -331,6 +331,25 @@ export type StudentFiltersState = {
     with_trashed?: boolean | null;
 };
 
+export type StudentStatBreakdown = {
+    id: number;
+    name: string;
+    count: number;
+};
+
+export type StudentStats = {
+    global: {
+        total: number;
+        male: number;
+        female: number;
+        byLevel: StudentStatBreakdown[];
+        byModeOfStudy: StudentStatBreakdown[];
+    };
+    filtered: {
+        total: number;
+    };
+};
+
 export type StudentEnrolment = {
     type: string;
     id: string | number;

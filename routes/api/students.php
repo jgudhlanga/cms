@@ -12,5 +12,6 @@ Route::prefix('v1/students')->middleware('auth:sanctum')->group(function () {
     Route::get('{student}/student-enrolements', [StudentController::class, 'studentEnrolements'])->name('v1.students.student-enrolements');
 });
 Route::middleware('auth:sanctum')->group(function () {
+    Route::get('students/stats', [StudentController::class, 'stats'])->name('v1.students.stats');
     Route::apiResource('students', StudentController::class)->names('v1.students');
 });
