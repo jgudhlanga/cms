@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Institution\Config\AssessmentCalendarController;
 use App\Http\Controllers\Institution\Config\AssessmentTypeController;
 use App\Http\Controllers\Institution\Config\FeeStructureController;
 use App\Http\Controllers\Institution\Config\InstitutionConfigController;
@@ -78,6 +79,9 @@ Route::prefix('institution')->middleware('auth')->group(function () {
     Route::put('assessment-types/{assessment_type}/restore', [AssessmentTypeController::class, 'restore'])->name('assessment-types.restore');
     Route::delete('assessment-types/{assessment_type}/force-delete', [AssessmentTypeController::class, 'forceDelete'])->name('assessment-types.force-delete');
     Route::resource('assessment-types', AssessmentTypeController::class)->names('assessment-types');
+    Route::put('assessment-types/{assessment_type}/calendars/{calendar}/restore', [AssessmentCalendarController::class, 'restore'])->name('assessment-calendars.restore');
+    Route::delete('assessment-types/{assessment_type}/calendars/{calendar}/force-delete', [AssessmentCalendarController::class, 'forceDelete'])->name('assessment-calendars.force-delete');
+    Route::resource('assessment-types.calendars', AssessmentCalendarController::class)->names('assessment-calendars')->scoped();
     // ==================================== DOCUMENT TEMPLATES ==============================================================
     Route::get('document-templates/{document_template}/preview', [DocumentTemplateController::class, 'preview'])->name('document-templates.preview');
     Route::put('document-templates/{document_template}/restore', [DocumentTemplateController::class, 'restore'])->name('document-templates.restore');

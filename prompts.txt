@@ -1,1 +1,31 @@
 
+Given https://hrepoly.test/institution/assessment-types
+- We need a table column called calendars (ui)
+    - upon clicking it, it redirect to a page called AssesmentCalendars.vue
+      - We need a model /Users/jgudhlanga/Projects/HararePoly/hrepoly/app/Models/Institution/AssesmentCalendar/AssesmentCalendar.php
+        - create a migration for the model
+         - columns
+            id, 
+            assessment_type_id (foreign),
+            start_date (date),
+            end_date(date), 
+            type(enum(semster|term|abma),
+            academic_calendar_id (foreign),
+            softdeletes,
+            timestamps (created_at, updated_at),
+- We should create its permissions (/Users/jgudhlanga/Projects/HararePoly/hrepoly/config/permissions.php) under module course-work
+    'viewAny:assessment-calendar',
+    'view:assessment-calendar',
+    'create:assessment-calendar',
+    'update:assessment-calendar',
+    'delete:assessment-calendar',
+    'restore:assessment-calendar',
+    'forceDelete:assessment-calendar',
+    'import:assessment-calendar',
+    'export:assessment-calendar',
+    'viewAuditTrail:assessment-calendar',
+- add coresponding AssesmentCalendarPolicy
+- allow person should action these
+- Create the CRUD using modals as in https://hrepoly.test/settings/genders
+- Breadcrumbs should and back button should work as expected
+- ask for clarity if need be.

@@ -1,7 +1,26 @@
 import { Link } from '@/types/ui';
 
 export function useInstitutionSetup() {
-    const tabs: Array<Link> = [
+    const configTabs: Array<Link> = [
+        {
+            transChoiceKey: 'intake_period',
+            url: route('intake-periods.index'),
+        },
+        {
+            transChoiceKey: 'document_template',
+            url: route('document-templates.index'),
+        },
+        {
+            transChoiceKey: 'fee_levy_structure',
+            url: route('fee-structures.index'),
+        },
+        {
+            transChoiceKey: 'academic_calendar.academic_calendar',
+            url: route('academic-calendars.index'),
+        },
+    ];
+
+    const dropdownTabs: Array<Link> = [
         {
             transChoiceKey: 'course',
             url: route('courses.index'),
@@ -26,7 +45,7 @@ export function useInstitutionSetup() {
             transChoiceKey: 'mode_of_study',
             url: route('mode-of-studies.index'),
         },
-        { 
+        {
             transChoiceKey: 'assessment_type',
             url: route('assessment-types.index'),
         },
@@ -43,5 +62,6 @@ export function useInstitutionSetup() {
             url: route('academic-year-options.index'),
         },
     ];
-    return { tabs };
+
+    return { configTabs, dropdownTabs };
 }

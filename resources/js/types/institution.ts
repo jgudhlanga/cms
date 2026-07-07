@@ -133,6 +133,35 @@ export type AssessmentTypeParams = {
     description?: string;
 };
 
+export type AssessmentCalendar = {
+    type?: string;
+    id?: string;
+    attributes: {
+        assessmentTypeId: number;
+        academicCalendarId: number;
+        academicCalendarName?: string;
+        startDate: string;
+        endDate: string;
+        type: string;
+        typeLabel: string;
+        createdAt?: string;
+        updatedAt?: string;
+        deletedAt?: string;
+    };
+};
+
+export type AssessmentCalendarParams = {
+    academic_calendar_id: string;
+    start_date: string;
+    end_date: string;
+    type: string;
+};
+
+export type CalendarTypeOption = {
+    value: string;
+    label: string;
+};
+
 export type Subject = {
     type?: string;
     id?: string;

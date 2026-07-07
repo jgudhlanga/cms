@@ -45,7 +45,7 @@ const canViewAcademicDepartments = computed(() => {
             />
             <SettingsButton class="mt-2" @click="gotToDepartments(1)" :title="$t('trans.manage')" />
         </template>
-        <template v-if="hasAbility('root:manage')">
+        <template v-if="hasAbility('view:institution-settings')">
             <HeadingSmall :title="$t('trans.institution_config')" :description="$t('trans.institution_config_description')" class="mt-6" />
             <SettingsButton class="mt-2" @click="navigateTo(route('institution.setup'))" :title="$t('trans.setup')" />
         </template>

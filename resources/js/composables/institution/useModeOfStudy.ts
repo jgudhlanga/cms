@@ -51,8 +51,12 @@ export const useModeOfStudy = () => {
 
     const breadcrumbs: Array<Link> = [
         {
-            transChoiceKey: 'settings',
-            href: route('settings.index'),
+            transChoiceKey: 'institution',
+            href: route('institution.index'),
+        },
+        {
+            transKey: 'institution_setup',
+            href: route('institution.setup'),
         },
         { transChoiceKey: 'mode_of_study' },
     ];

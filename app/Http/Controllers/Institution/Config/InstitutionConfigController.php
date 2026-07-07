@@ -12,6 +12,8 @@ class InstitutionConfigController extends Controller
 
     public function index(Request $request): Response
     {
+        $this->authorize('viewInstitutionSettings');
+
         return Inertia::render('institution/config/Setup', []);
     }
 }
