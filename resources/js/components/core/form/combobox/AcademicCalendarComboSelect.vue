@@ -15,15 +15,13 @@ const props = defineProps<Props>();
 onMounted(async () => {});
 
 const options = computed(() => {
-    return props.data.length > 0
-        ? props.data.map(
-              (academicCalendar: AcademicCalendar) =>
-                  <SelectOption>{
-                      value: String(academicCalendar.id),
-                      label: `${academicCalendar?.attributes?.name}`,
-                  },
-          )
-        : [];
+    return (props.data ?? []).map(
+        (academicCalendar: AcademicCalendar) =>
+            <SelectOption>{
+                value: String(academicCalendar.id),
+                label: `${academicCalendar?.attributes?.name}`,
+            },
+    );
 });
 </script>
 

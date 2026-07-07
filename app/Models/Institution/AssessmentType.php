@@ -3,12 +3,14 @@
 namespace App\Models\Institution;
 
 use App\Http\Filters\Shared\SharedNameFilter;
+use App\Models\Institution\AssessmentCalendar\AssessmentCalendar;
 use App\Traits\BelongsToTenant;
 use App\Traits\Filterable;
 use App\Traits\Paginatable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
@@ -29,6 +31,11 @@ class AssessmentType extends Model
         return [
             'modes_of_study' => 'array',
         ];
+    }
+
+    public function calendars(): HasMany
+    {
+        return $this->hasMany(AssessmentCalendar::class);
     }
 
     public function modeOfStudyNames(): string

@@ -195,6 +195,7 @@ return [
     'division' => 'Division|Divisions',
     'mode_of_study' => 'Mode of study|Modes of study',
     'assessment_type' => 'Assessment type|Assessment types',
+    'assessment_calendar' => 'Assessment calendar|Assessment calendars',
     'syllabus' => 'Syllabus|Syllabi',
     'coming_soon' => 'Coming Soon',
     'coming_soon_description' => 'We are working on it!',

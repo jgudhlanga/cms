@@ -18,6 +18,7 @@ use App\Repositories\HMS\HostelRepository;
 use App\Repositories\HMS\HostelRoomRepository;
 use App\Repositories\HMS\interface\IHostelRepository;
 use App\Repositories\HMS\interface\IHostelRoomRepository;
+use App\Repositories\Institution\AssessmentCalendarRepository;
 use App\Repositories\Institution\AssessmentTypeRepository;
 use App\Repositories\Institution\ClassListRepository;
 use App\Repositories\Institution\CourseRepository;
@@ -33,6 +34,7 @@ use App\Repositories\Institution\FeeStructureRepository;
 use App\Repositories\Institution\GradeRepository;
 use App\Repositories\Institution\InstitutionDepartmentRepository;
 use App\Repositories\Institution\IntakePeriodRepository;
+use App\Repositories\Institution\interface\IAssessmentCalendarRepository;
 use App\Repositories\Institution\interface\IAssessmentTypeRepository;
 use App\Repositories\Institution\interface\IClassListRepository;
 use App\Repositories\Institution\interface\ICourseRepository;
@@ -210,6 +212,7 @@ class RepositoryServiceProvider extends ServiceProvider
 
     public function institutionRepositories(): void
     {
+        $this->app->bind(IAssessmentCalendarRepository::class, AssessmentCalendarRepository::class);
         $this->app->bind(IAssessmentTypeRepository::class, AssessmentTypeRepository::class);
         $this->app->bind(ICourseRepository::class, CourseRepository::class);
         $this->app->bind(IDepartmentRepository::class, DepartmentRepository::class);

@@ -55,8 +55,12 @@ export const useAcademicYearOptions = () => {
 
     const breadcrumbs: Array<Link> = [
         {
-            transChoiceKey: 'settings',
-            href: route('settings.index'),
+            transChoiceKey: 'institution',
+            href: route('institution.index'),
+        },
+        {
+            transKey: 'institution_setup',
+            href: route('institution.setup'),
         },
         { transChoiceKey: 'academic_years.calendar_year_option' },
     ];

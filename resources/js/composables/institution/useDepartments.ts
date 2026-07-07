@@ -60,8 +60,12 @@ export const useDepartments = () => {
 
     const breadcrumbs: Array<Link> = [
         {
-            transChoiceKey: 'settings',
-            href: route('settings.index'),
+            transChoiceKey: 'institution',
+            href: route('institution.index'),
+        },
+        {
+            transKey: 'institution_setup',
+            href: route('institution.setup'),
         },
         { transChoiceKey: 'department' },
     ];

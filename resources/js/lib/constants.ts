@@ -51,6 +51,7 @@ const APP_MODULE_KEYS = {
     workflow_step_actions: 'workflow_step_actions',
     intake_periods: 'intake_periods',
     assessment_types: 'assessment_types',
+    assessment_type_calendars: 'assessment_type_calendars',
     employment_types: 'employment_types',
     id_types: 'id_types',
     department_application_steps: 'department_application_steps',
