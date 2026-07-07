@@ -1,9 +1,8 @@
 <script setup lang="ts">
+import AuthCard from '@/components/auth/AuthCard.vue';
 import BaseAlert from '@/components/core/alert/BaseAlert.vue';
 import { BaseButton } from '@/components/core/button';
 import { BaseCheckbox, EmailInputWithIcon, PasswordInputWithToggle } from '@/components/core/form';
-import AppLogo from '@/components/core/image/AppLogo.vue';
-import AppearanceCycleToggle from '@/components/core/util/AppearanceCycleToggle.vue';
 import { useAuth } from '@/composables/auth/useAuth';
 import { useUtils } from '@/composables/core/useUtils';
 import { useRegistrationAvailability } from '@/composables/students/useRegistrationAvailability';
@@ -44,25 +43,7 @@ const loginNavigateTo = () => {
     <Head :title="$t('trans.login')" />
     <BaseAlert v-if="status" :type="TypeVariant.success" :description="status" />
     <form @submit.prevent="login(form)" class="flex w-full flex-col">
-        <div
-            class="relative flex w-full flex-col gap-6 rounded-3xl border border-white/40 bg-white/60 p-8 text-card-foreground shadow-xl backdrop-blur-xl dark:border-border/50 dark:bg-card/70"
-        >
-            <div class="absolute top-4 right-4">
-                <AppearanceCycleToggle />
-            </div>
-
-            <div class="flex flex-col items-center gap-3 text-center">
-                <AppLogo classes="size-14 object-contain" />
-                <div class="space-y-1">
-                    <h1 class="text-xl font-semibold tracking-tight text-foreground">
-                        {{ $t('trans.sign_in_with_email') }}
-                    </h1>
-                    <p class="text-sm text-muted-foreground">
-                        {{ $t('trans.sign_in_subtitle') }}
-                    </p>
-                </div>
-            </div>
-
+        <AuthCard :title="$t('trans.sign_in_with_email')" :subtitle="$t('trans.sign_in_subtitle')">
             <div class="space-y-4">
                 <EmailInputWithIcon
                     v-model="form.email"
@@ -87,14 +68,13 @@ const loginNavigateTo = () => {
 
             <div class="flex items-center justify-between gap-4">
                 <BaseCheckbox input-id="remember" v-model="form.remember" :tabindex="3" :label="$t('trans.remember_me')" />
-                <button
-                    type="button"
-                    class="text-sm text-muted-foreground underline-offset-4 transition-colors hover:text-primary hover:underline"
+                <TextLink
+                    :href="route('password.request')"
+                    class="text-sm text-muted-foreground underline-offset-4 pointer-anchor transition-colors hover:text-primary hover:underline"
                     :tabindex="4"
-                    @click="() => navigateTo(route('password.request'))"
                 >
                     {{ $t('trans.forgot_password') }}
-                </button>
+                </TextLink>
             </div>
 
             <div class="space-y-3">
@@ -118,6 +98,6 @@ const loginNavigateTo = () => {
                     {{ $t('trans.new_student_registration') }}
                 </BaseButton>
             </div>
-        </div>
+        </AuthCard>
     </form>
 </template>

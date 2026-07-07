@@ -28,6 +28,13 @@ export type CourseWorkAssessment = {
     remark: string | null;
 };
 
+export type CourseWorkModuleMark = {
+    markId: number | null;
+    mark: number | null;
+    remark: string | null;
+    isComplete?: boolean;
+};
+
 export type CourseWorkStudent = {
     studentEnrolmentId: number;
     studentId: number;
@@ -36,6 +43,7 @@ export type CourseWorkStudent = {
     academicCalendarClassId?: number;
     className?: string | null;
     assessments: CourseWorkAssessment[];
+    moduleMark?: CourseWorkModuleMark;
     aggregation?: CourseWorkAggregation;
 };
 
@@ -44,6 +52,7 @@ export type CourseWorkModule = {
     code: string | null;
     title: string | null;
     durationInHours: number | null;
+    captureMarkOnly?: boolean;
     students: CourseWorkStudent[];
 };
 
@@ -52,7 +61,9 @@ export type CourseWorkModuleWithAssessments = {
     code: string | null;
     title: string | null;
     durationInHours: number | null;
+    captureMarkOnly?: boolean;
     assessments: CourseWorkAssessment[];
+    moduleMark?: CourseWorkModuleMark;
     aggregation?: CourseWorkAggregation;
 };
 
@@ -113,6 +124,7 @@ export type CourseWorkClassModuleOption = {
     code: string | null;
     title: string | null;
     label: string;
+    captureMarkOnly?: boolean;
 };
 
 export type CourseWorkAuditLogEntry = {
@@ -133,7 +145,7 @@ export type CourseWorkAuditLogEntry = {
 
 export type CourseWorkImportPreviewMarkCell = {
     mark: number | null;
-    action: 'create' | 'update' | 'skip_empty' | 'skip_duplicate' | 'fail';
+    action: 'create' | 'update' | 'skip_empty' | 'skip_unchanged' | 'skip_duplicate' | 'fail';
     errors?: Record<string, string[]> | null;
 };
 
@@ -154,7 +166,7 @@ export type CourseWorkImportPreviewRow = {
 export type CourseWorkImportPreview = {
     previewToken: string;
     fileName: string;
-    layout: 'wide';
+    layout: 'wide' | 'mark_only';
     assessmentColumns: CourseWorkImportPreviewAssessmentColumn[];
     summary: {
         total: number;

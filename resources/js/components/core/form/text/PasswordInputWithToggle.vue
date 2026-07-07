@@ -18,12 +18,14 @@ interface Props {
     modelValue?: string;
     placeholder?: string;
     tabindex?: number | string;
+    autocomplete?: string;
 }
 
 const props = withDefaults(defineProps<Props>(), {
     inputId: 'password',
     labelUppercase: false,
     isRequired: false,
+    autocomplete: 'current-password',
 });
 
 const emit = defineEmits<{
@@ -74,7 +76,7 @@ onMounted(() => setAutoFocus());
                 :class="inputClasses"
                 :placeholder="placeholder"
                 :tabindex="tabindex"
-                autocomplete="current-password"
+                :autocomplete="autocomplete"
                 @input="emit('input')"
             />
             <span class="pointer-events-none absolute inset-y-0 start-0 flex items-center px-3">

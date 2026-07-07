@@ -10,8 +10,8 @@ class CourseWorkAggregationService
      * @param  list<array{id: int, name: string, weightPercent: int|null}>  $assessmentTypes
      * @param  list<array{assessmentTypeId: int, assessmentTypeName?: string, mark: int|null, remark: string|null}>  $assessments
      * @return array{
-     *     components: list<array{assessmentTypeId: int, assessmentTypeName: string, rawMark: int|null, weightPercent: int, weightedMark: float|null}>,
-     *     courseWorkTotal60: float|null,
+     *     components: list<array{assessmentTypeId: int, assessmentTypeName: string, rawMark: int|null, weightPercent: int, weightedMark: int|null}>,
+     *     courseWorkTotal60: int|null,
      *     isComplete: bool,
      *     remark: string|null
      * }
@@ -31,7 +31,7 @@ class CourseWorkAggregationService
         $marksByTypeId = collect($assessments)->keyBy('assessmentTypeId');
 
         $components = [];
-        $total = 0.0;
+        $total = 0;
         $isComplete = true;
         $remark = null;
 
@@ -44,7 +44,7 @@ class CourseWorkAggregationService
             $weightPercent = $weightsByTypeId[$typeId] ?? 0;
 
             $weightedMark = $rawMark !== null
-                ? round($rawMark * $weightPercent / 100, 2)
+                ? (int) ceil($rawMark * $weightPercent / 100)
                 : null;
 
             if ($rawMark === null) {
@@ -68,7 +68,7 @@ class CourseWorkAggregationService
         }
 
         $courseWorkTotal60 = $isComplete
-            ? round(min(self::COURSEWORK_CAP, $total), 2)
+            ? (int) min(self::COURSEWORK_CAP, (int) ceil($total))
             : null;
 
         return [

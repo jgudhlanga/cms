@@ -18,11 +18,12 @@ const props = defineProps<{
         canExport: boolean;
         canImport?: boolean;
         courseWorkExportUrl: (moduleId: number, format: 'xlsx' | 'pdf', strict?: boolean) => string;
-        courseWorkImportUrl?: string;
+        courseWorkImportUrl?: (moduleId: number) => string;
     }>();
 
 const {
     selectedModuleId,
+    selectedModuleCaptureMarkOnly,
     moduleOptions,
     selectedModuleSummary,
     moduleStudents,
@@ -37,13 +38,23 @@ const {
 
 const draftMarks = ref<Record<string, string>>({});
 
-const draftKey = (studentEnrolmentId: number, assessmentTypeId: number): string =>
-    `${studentEnrolmentId}:${assessmentTypeId}`;
+const draftKey = (studentEnrolmentId: number, assessmentTypeId?: number | null): string =>
+    assessmentTypeId != null
+        ? `${studentEnrolmentId}:${assessmentTypeId}`
+        : `${studentEnrolmentId}:mark-only`;
 
 const syncDraftsFromStudents = (): void => {
     const next: Record<string, string> = {};
 
     for (const student of moduleStudents.value) {
+        if (selectedModuleCaptureMarkOnly.value) {
+            const moduleMark = student.moduleMark;
+            next[draftKey(student.studentEnrolmentId)] =
+                moduleMark?.mark !== null && moduleMark?.mark !== undefined ? String(moduleMark.mark) : '';
+
+            continue;
+        }
+
         for (const assessment of student.assessments) {
             next[draftKey(student.studentEnrolmentId, assessment.assessmentTypeId)] =
                 assessment.mark !== null ? String(assessment.mark) : '';
@@ -69,6 +80,44 @@ const completionLabel = computed(() => {
 
 const canEditAssessment = (assessment: CourseWorkAssessment): boolean =>
     assessment.markId != null ? props.canUpdate : props.canCreate;
+
+const canEditModuleMark = (student: CourseWorkStudent): boolean =>
+    student.moduleMark?.markId != null ? props.canUpdate : props.canCreate;
+
+const onModuleMarkBlur = async (student: CourseWorkStudent): Promise<void> => {
+    if (!canEditModuleMark(student) || selectedModuleId.value === null) {
+        return;
+    }
+
+    const key = draftKey(student.studentEnrolmentId);
+    const rawValue = draftMarks.value[key] ?? '';
+
+    if (isCourseWorkMarkInputInvalid(rawValue)) {
+        errorAlert(trans('academic_calendar.course_work_mark_invalid'));
+        draftMarks.value[key] =
+            student.moduleMark?.mark !== null && student.moduleMark?.mark !== undefined
+                ? String(student.moduleMark.mark)
+                : '';
+
+        return;
+    }
+
+    const nextMark = parseCourseWorkMark(rawValue);
+    const currentMark = student.moduleMark?.mark ?? null;
+
+    if (nextMark === currentMark) {
+        return;
+    }
+
+    await saveMark({
+        markId: student.moduleMark?.markId ?? null,
+        studentEnrolmentId: student.studentEnrolmentId,
+        courseSyllabusModuleId: selectedModuleId.value,
+        assessmentTypeId: null,
+        mark: nextMark,
+        remark: student.moduleMark?.remark ?? null,
+    });
+};
 
 const onMarkBlur = async (student: CourseWorkStudent, assessment: CourseWorkAssessment): Promise<void> => {
     if (!canEditAssessment(assessment) || selectedModuleId.value === null) {
@@ -147,7 +196,7 @@ onMounted(() => {
                 <div v-if="(canExport || canImport) && selectedModuleId" class="flex shrink-0 flex-wrap gap-2">
                     <InertiaLink
                         v-if="canImport && courseWorkImportUrl"
-                        :href="courseWorkImportUrl"
+                        :href="courseWorkImportUrl(selectedModuleId)"
                         class="inline-flex"
                     >
                         <BaseButton type="button" :variant="ColorVariant.primary_outline" :size="ButtonSize.sm">
@@ -179,12 +228,53 @@ onMounted(() => {
                 </div>
             </div>
 
-            <p class="text-xs text-muted-foreground">{{ $t('academic_calendar.course_work_phase2_note') }}</p>
+            <p v-if="!selectedModuleCaptureMarkOnly" class="text-xs text-muted-foreground">
+                {{ $t('academic_calendar.course_work_phase2_note') }}
+            </p>
 
             <Empty
                 v-if="moduleStudents.length === 0"
                 :message="$t('academic_calendar.course_work_no_students')"
             />
+
+            <div v-else-if="selectedModuleCaptureMarkOnly" class="overflow-x-auto rounded-lg border border-border">
+                <table class="j-table min-w-full">
+                    <thead class="j-thead">
+                        <tr class="j-th">
+                            <th class="j-th text-left">{{ $tChoice('trans.name', 1) }}</th>
+                            <th class="j-th text-left">{{ $t('academic_calendar.course_work_candidate_number') }}</th>
+                            <th class="j-th text-left">{{ $tChoice('students.student_number', 1) }}</th>
+                            <th class="j-th text-center">{{ $t('academic_calendar.course_work_mark') }}</th>
+                            <th class="j-th text-left">{{ $t('academic_calendar.course_work_remark') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody class="j-tbody">
+                        <tr v-for="student in moduleStudents" :key="student.studentEnrolmentId" class="j-tr">
+                            <td class="j-td">{{ student.name }}</td>
+                            <td class="j-td">{{ (student as { candidateNumber?: string | null }).candidateNumber ?? student.studentNumber ?? '---' }}</td>
+                            <td class="j-td font-mono text-xs">{{ student.studentNumber ?? $t('students.not_available') }}</td>
+                            <td class="j-td text-center">
+                                <input
+                                    v-model="draftMarks[draftKey(student.studentEnrolmentId)]"
+                                    type="number"
+                                    min="0"
+                                    max="100"
+                                    step="1"
+                                    class="mx-auto h-8 w-16 rounded-md border border-input bg-background px-2 text-center text-sm"
+                                    :disabled="
+                                        !canEditModuleMark(student) ||
+                                        isSaving(student.studentEnrolmentId, selectedModuleId!)
+                                    "
+                                    @blur="onModuleMarkBlur(student)"
+                                />
+                            </td>
+                            <td class="j-td text-sm text-muted-foreground">
+                                {{ student.moduleMark?.remark ?? '—' }}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
 
             <div v-else class="overflow-x-auto rounded-lg border border-border">
                 <table class="j-table min-w-full">

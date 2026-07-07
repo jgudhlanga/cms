@@ -7,10 +7,10 @@ namespace App\Services\Students;
 use App\Models\AcademicCalendars\CourseWorkMark;
 use App\Models\Institution\AssessmentType;
 use App\Models\Institution\Syllabus\CourseSyllabusModule;
-use App\Support\Institution\CourseSyllabusModulePeriod;
 use App\Models\Students\Student;
 use App\Models\Students\StudentEnrolment;
 use App\Services\AcademicCalendars\CourseWorkAggregationService;
+use App\Support\Institution\CourseSyllabusModulePeriod;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
@@ -63,7 +63,7 @@ class StudentProgrammeDataService
                 ->groupBy(fn (CourseWorkMark $mark): string => $this->courseWorkMarkKey(
                     (int) $mark->student_enrolment_id,
                     (int) $mark->course_syllabus_module_id,
-                    (int) $mark->assessment_type_id,
+                    $mark->assessment_type_id !== null ? (int) $mark->assessment_type_id : null,
                 ));
 
         $assessmentTypesByModeId = $this->assessmentTypesByModeOfStudy(
@@ -169,6 +169,31 @@ class StudentProgrammeDataService
         Collection $marksByKey,
         array $assessmentTypes,
     ): array {
+        if ($module->capture_mark_only) {
+            $saved = $marksByKey->get($this->courseWorkMarkKey($studentEnrolmentId, (int) $module->id, null))?->first();
+
+            return [
+                'id' => $module->id,
+                'code' => $module->code,
+                'name' => $module->title,
+                'durationInHours' => $module->duration_in_hours,
+                'grade' => null,
+                'score' => $saved?->mark,
+                'lecturer' => null,
+                'type' => null,
+                'assessment' => null,
+                'captureMarkOnly' => true,
+                'courseWork' => [
+                    'moduleMark' => [
+                        'markId' => $saved?->id,
+                        'mark' => $saved?->mark,
+                        'remark' => $saved?->remark,
+                        'isComplete' => $saved?->mark !== null,
+                    ],
+                ],
+            ];
+        }
+
         $assessments = collect($assessmentTypes)->map(function (array $type) use (
             $studentEnrolmentId,
             $module,
@@ -202,6 +227,7 @@ class StudentProgrammeDataService
             'lecturer' => null,
             'type' => null,
             'assessment' => null,
+            'captureMarkOnly' => false,
             'courseWork' => $hasAnyMark || $assessmentTypes !== []
                 ? [
                     'assessments' => $assessments,
@@ -281,8 +307,12 @@ class StudentProgrammeDataService
         return Str::lower(trim((string) $status)) === 'active';
     }
 
-    private function courseWorkMarkKey(int $studentEnrolmentId, int $moduleId, int $assessmentTypeId): string
+    private function courseWorkMarkKey(int $studentEnrolmentId, int $moduleId, ?int $assessmentTypeId): string
     {
+        if ($assessmentTypeId === null) {
+            return sprintf('%d:%d:mark-only', $studentEnrolmentId, $moduleId);
+        }
+
         return sprintf('%d:%d:%d', $studentEnrolmentId, $moduleId, $assessmentTypeId);
     }
 }

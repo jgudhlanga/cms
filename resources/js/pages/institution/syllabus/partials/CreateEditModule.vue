@@ -35,6 +35,7 @@ const form = useForm<CourseSyllabusModuleParams>({
     prerequisite_module_ids: [],
     shared: false,
     all_semesters: false,
+    capture_mark_only: false,
     staff_ids: [],
 });
 
@@ -68,6 +69,7 @@ watch(modals!, async () => {
     form.prerequisite_module_ids = moduleRecord.value?.attributes?.prerequisiteModuleIds ?? [];
     form.shared = moduleRecord.value?.attributes?.shared ?? false;
     form.all_semesters = moduleRecord.value?.attributes?.allSemesters ?? false;
+    form.capture_mark_only = moduleRecord.value?.attributes?.captureMarkOnly ?? false;
     form.staff_ids = moduleRecord.value?.attributes?.staffIds ?? [];
 
     await loadYearOptions(resolvedCalendarType.value);
@@ -168,11 +170,22 @@ const save = () => {
                         :label="$t('syllabus.all_semesters')"
                         :on-update="(value: boolean) => { form.all_semesters = value; clearFormErrors(form, 'all_semesters'); }"
                     />
+                    <p class="mt-2 text-sm text-muted-foreground">
+                        {{ $t('syllabus.all_semesters_hint') }}
+                    </p>
+                </div>
+                <div class="pt-6">
+                    <BaseSwitch
+                        input-id="capture_mark_only"
+                        v-model="form.capture_mark_only"
+                        :label="$t('syllabus.capture_mark_only')"
+                        :on-update="(value: boolean) => { form.capture_mark_only = value; clearFormErrors(form, 'capture_mark_only'); }"
+                    />
+                    <p class="mt-2 text-sm text-muted-foreground">
+                        {{ $t('syllabus.capture_mark_only_hint') }}
+                    </p>
                 </div>
             </div>
-            <p v-if="form.all_semesters" class="mt-2 text-sm text-muted-foreground">
-                {{ $t('syllabus.all_semesters_hint') }}
-            </p>
         </template>
     </BaseModal>
 </template>

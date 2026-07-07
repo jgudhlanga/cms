@@ -35,6 +35,7 @@ export const useCourseSyllabusModules = () => {
             prerequisite_module_ids: z.array(z.number().int().positive()).default([]),
             shared: z.boolean(),
             all_semesters: z.boolean(),
+            capture_mark_only: z.boolean(),
             staff_ids: z.array(z.number().int().positive()).default([]),
         });
 
@@ -119,6 +120,13 @@ export const useCourseSyllabusModules = () => {
                 meta: { align: 'center' },
                 cell: ({ row }: { row: { original: CourseSyllabusModule } }) =>
                     row.original.attributes.allSemesters ? trans('trans.yes') : trans('trans.no'),
+            },
+            {
+                header: trans('syllabus.capture_mark_only'),
+                accessorKey: 'attributes.captureMarkOnly',
+                meta: { align: 'center' },
+                cell: ({ row }: { row: { original: CourseSyllabusModule } }) =>
+                    row.original.attributes.captureMarkOnly ? trans('trans.yes') : trans('trans.no'),
             },
             {
                 header: trans_choice('syllabus.lecturer', 2),

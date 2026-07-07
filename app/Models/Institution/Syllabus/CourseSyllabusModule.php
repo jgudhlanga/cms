@@ -38,6 +38,7 @@ class CourseSyllabusModule extends Model
         'prerequisite_module_ids',
         'shared',
         'all_semesters',
+        'capture_mark_only',
     ];
 
     protected function casts(): array
@@ -46,6 +47,7 @@ class CourseSyllabusModule extends Model
             'prerequisite_module_ids' => 'array',
             'shared' => 'boolean',
             'all_semesters' => 'boolean',
+            'capture_mark_only' => 'boolean',
         ];
     }
 

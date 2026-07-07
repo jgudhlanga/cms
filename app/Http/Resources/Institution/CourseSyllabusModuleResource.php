@@ -25,6 +25,7 @@ class CourseSyllabusModuleResource extends JsonResource
                 'prerequisiteModuleIds' => $this->resource->prerequisite_module_ids ?? [],
                 'shared' => (bool) $this->resource->shared,
                 'allSemesters' => (bool) $this->resource->all_semesters,
+                'captureMarkOnly' => (bool) $this->resource->capture_mark_only,
                 'lecturers' => $this->when(
                     $this->resource->relationLoaded('lecturers'),
                     fn () => $this->resource->lecturers->map(fn ($staff) => [

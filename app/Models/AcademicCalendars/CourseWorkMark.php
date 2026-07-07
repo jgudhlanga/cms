@@ -56,6 +56,16 @@ class CourseWorkMark extends Model
         return $this->belongsTo(AssessmentType::class);
     }
 
+    public function scopeMarkOnly(Builder $query): Builder
+    {
+        return $query->whereNull('assessment_type_id');
+    }
+
+    public function scopeForAssessment(Builder $query): Builder
+    {
+        return $query->whereNotNull('assessment_type_id');
+    }
+
     public function createdBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');

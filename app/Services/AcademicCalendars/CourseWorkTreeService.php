@@ -90,7 +90,7 @@ class CourseWorkTreeService
                 ->groupBy(fn (CourseWorkMark $mark): string => $this->markKey(
                     (int) $mark->student_enrolment_id,
                     (int) $mark->course_syllabus_module_id,
-                    (int) $mark->assessment_type_id,
+                    $mark->assessment_type_id !== null ? (int) $mark->assessment_type_id : null,
                 ));
 
         $includeClassFields = array_key_exists('classConfigId', $meta);
@@ -206,56 +206,30 @@ class CourseWorkTreeService
                     $assessmentTypes,
                     $includeClassFields,
                 ): array {
-                    return [
+                    $modulePayload = [
                         'id' => $module->id,
                         'code' => $module->code,
                         'title' => $module->title,
                         'durationInHours' => $module->duration_in_hours,
-                        'students' => collect($students)->map(function (array $student) use (
+                        'captureMarkOnly' => (bool) $module->capture_mark_only,
+                    ];
+
+                    $modulePayload['students'] = collect($students)->map(function (array $student) use (
+                        $module,
+                        $marks,
+                        $assessmentTypes,
+                        $includeClassFields,
+                    ): array {
+                        return $this->buildStudentRowForModule(
+                            $student,
                             $module,
                             $marks,
                             $assessmentTypes,
                             $includeClassFields,
-                        ): array {
-                            $assessments = collect($assessmentTypes)->map(function (array $type) use ($student, $module, $marks): array {
-                                $key = $this->markKey(
-                                    (int) $student['studentEnrolmentId'],
-                                    (int) $module->id,
-                                    (int) $type['id'],
-                                );
-                                $saved = $marks->get($key)?->first();
+                        );
+                    })->values()->all();
 
-                                return [
-                                    'assessmentTypeId' => $type['id'],
-                                    'assessmentTypeName' => $type['name'],
-                                    'markId' => $saved?->id,
-                                    'mark' => $saved?->mark,
-                                    'remark' => $saved?->remark,
-                                ];
-                            })->values()->all();
-
-                            $aggregation = $this->aggregationService->aggregateStudentModule(
-                                $assessmentTypes,
-                                $assessments,
-                            );
-
-                            $row = [
-                                'studentEnrolmentId' => $student['studentEnrolmentId'],
-                                'studentId' => $student['studentId'],
-                                'name' => $student['name'],
-                                'studentNumber' => $student['studentNumber'],
-                                'assessments' => $assessments,
-                                'aggregation' => $aggregation,
-                            ];
-
-                            if ($includeClassFields) {
-                                $row['academicCalendarClassId'] = $student['academicCalendarClassId'] ?? null;
-                                $row['className'] = $student['className'] ?? null;
-                            }
-
-                            return $row;
-                        })->values()->all(),
-                    ];
+                    return $modulePayload;
                 })->values()->all(),
             ];
         })->values()->all();
@@ -304,7 +278,7 @@ class CourseWorkTreeService
             ->groupBy(fn (CourseWorkMark $mark): string => $this->markKey(
                 (int) $mark->student_enrolment_id,
                 (int) $mark->course_syllabus_module_id,
-                (int) $mark->assessment_type_id,
+                $mark->assessment_type_id !== null ? (int) $mark->assessment_type_id : null,
             ));
 
         $syllabiPayload = $context['syllabi']->map(function (CourseSyllabus $syllabus) use (
@@ -323,36 +297,44 @@ class CourseWorkTreeService
                     $marks,
                     $context,
                 ): array {
-                    $assessments = collect($context['assessmentTypes'])->map(function (array $type) use (
-                        $studentEnrolmentId,
-                        $module,
-                        $marks,
-                    ): array {
-                        $key = $this->markKey($studentEnrolmentId, (int) $module->id, (int) $type['id']);
-                        $saved = $marks->get($key)?->first();
-
-                        return [
-                            'assessmentTypeId' => $type['id'],
-                            'assessmentTypeName' => $type['name'],
-                            'markId' => $saved?->id,
-                            'mark' => $saved?->mark,
-                            'remark' => $saved?->remark,
-                        ];
-                    })->values()->all();
-
-                    $aggregation = $this->aggregationService->aggregateStudentModule(
-                        $context['assessmentTypes'],
-                        $assessments,
-                    );
-
-                    return [
+                    $modulePayload = [
                         'id' => $module->id,
                         'code' => $module->code,
                         'title' => $module->title,
                         'durationInHours' => $module->duration_in_hours,
-                        'assessments' => $assessments,
-                        'aggregation' => $aggregation,
+                        'captureMarkOnly' => (bool) $module->capture_mark_only,
                     ];
+
+                    if ($module->capture_mark_only) {
+                        $saved = $marks->get($this->markKey($studentEnrolmentId, (int) $module->id, null))?->first();
+                        $modulePayload['moduleMark'] = $this->formatModuleMark($saved);
+                        $modulePayload['assessments'] = [];
+                    } else {
+                        $assessments = collect($context['assessmentTypes'])->map(function (array $type) use (
+                            $studentEnrolmentId,
+                            $module,
+                            $marks,
+                        ): array {
+                            $key = $this->markKey($studentEnrolmentId, (int) $module->id, (int) $type['id']);
+                            $saved = $marks->get($key)?->first();
+
+                            return [
+                                'assessmentTypeId' => $type['id'],
+                                'assessmentTypeName' => $type['name'],
+                                'markId' => $saved?->id,
+                                'mark' => $saved?->mark,
+                                'remark' => $saved?->remark,
+                            ];
+                        })->values()->all();
+
+                        $modulePayload['assessments'] = $assessments;
+                        $modulePayload['aggregation'] = $this->aggregationService->aggregateStudentModule(
+                            $context['assessmentTypes'],
+                            $assessments,
+                        );
+                    }
+
+                    return $modulePayload;
                 })->values()->all(),
             ];
         })->values()->all();
@@ -459,7 +441,13 @@ class CourseWorkTreeService
             foreach ($syllabus['modules'] ?? [] as $module) {
                 $students = $module['students'] ?? [];
                 $completeCount = collect($students)
-                    ->filter(fn (array $student): bool => (bool) ($student['aggregation']['isComplete'] ?? false))
+                    ->filter(function (array $student): bool {
+                        if (isset($student['moduleMark'])) {
+                            return (bool) ($student['moduleMark']['isComplete'] ?? false);
+                        }
+
+                        return (bool) ($student['aggregation']['isComplete'] ?? false);
+                    })
                     ->count();
 
                 $summary[] = [
@@ -475,8 +463,86 @@ class CourseWorkTreeService
         return $summary;
     }
 
-    private function markKey(int $studentEnrolmentId, int $moduleId, int $assessmentTypeId): string
+    private function markKey(int $studentEnrolmentId, int $moduleId, ?int $assessmentTypeId): string
     {
+        if ($assessmentTypeId === null) {
+            return sprintf('%d:%d:mark-only', $studentEnrolmentId, $moduleId);
+        }
+
         return sprintf('%d:%d:%d', $studentEnrolmentId, $moduleId, $assessmentTypeId);
+    }
+
+    /**
+     * @param  array<string, mixed>  $student
+     * @param  Collection<string, Collection<int, CourseWorkMark>>  $marks
+     * @param  list<array{id: int, name: string, description: string|null, weightPercent: int|null}>  $assessmentTypes
+     * @return array<string, mixed>
+     */
+    private function buildStudentRowForModule(
+        array $student,
+        CourseSyllabusModule $module,
+        Collection $marks,
+        array $assessmentTypes,
+        bool $includeClassFields,
+    ): array {
+        $row = [
+            'studentEnrolmentId' => $student['studentEnrolmentId'],
+            'studentId' => $student['studentId'],
+            'name' => $student['name'],
+            'studentNumber' => $student['studentNumber'],
+        ];
+
+        if ($module->capture_mark_only) {
+            $saved = $marks->get($this->markKey(
+                (int) $student['studentEnrolmentId'],
+                (int) $module->id,
+                null,
+            ))?->first();
+            $row['moduleMark'] = $this->formatModuleMark($saved);
+            $row['assessments'] = [];
+        } else {
+            $assessments = collect($assessmentTypes)->map(function (array $type) use ($student, $module, $marks): array {
+                $key = $this->markKey(
+                    (int) $student['studentEnrolmentId'],
+                    (int) $module->id,
+                    (int) $type['id'],
+                );
+                $saved = $marks->get($key)?->first();
+
+                return [
+                    'assessmentTypeId' => $type['id'],
+                    'assessmentTypeName' => $type['name'],
+                    'markId' => $saved?->id,
+                    'mark' => $saved?->mark,
+                    'remark' => $saved?->remark,
+                ];
+            })->values()->all();
+
+            $row['assessments'] = $assessments;
+            $row['aggregation'] = $this->aggregationService->aggregateStudentModule(
+                $assessmentTypes,
+                $assessments,
+            );
+        }
+
+        if ($includeClassFields) {
+            $row['academicCalendarClassId'] = $student['academicCalendarClassId'] ?? null;
+            $row['className'] = $student['className'] ?? null;
+        }
+
+        return $row;
+    }
+
+    /**
+     * @return array{markId: int|null, mark: int|null, remark: string|null, isComplete: bool}
+     */
+    private function formatModuleMark(?CourseWorkMark $saved): array
+    {
+        return [
+            'markId' => $saved?->id,
+            'mark' => $saved?->mark,
+            'remark' => $saved?->remark,
+            'isComplete' => $saved?->mark !== null,
+        ];
     }
 }

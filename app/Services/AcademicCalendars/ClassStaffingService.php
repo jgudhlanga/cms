@@ -231,6 +231,7 @@ class ClassStaffingService
                 'moduleId' => (int) $module->id,
                 'code' => (string) $module->code,
                 'title' => (string) $module->title,
+                'captureMarkOnly' => (bool) $module->capture_mark_only,
                 'staffIds' => array_values(array_unique($staffIds)),
                 'syllabusDefaultStaffIds' => array_values(array_unique($syllabusDefaultStaffIds)),
             ];

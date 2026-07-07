@@ -316,6 +316,7 @@ class AcademicCalendarController extends Controller
             'classConfig' => ClassConfigResource::make($classConfig),
             'classConfigQuery' => $this->classConfigQueryParams($classConfig, $request),
             'canImportCourseWork' => auth()->user()?->can('import', CourseWorkMark::class) ?? false,
+            'initialCourseWorkModuleId' => $this->initialCourseWorkModuleIdFromRequest($request),
             'courseWorkImportResult' => session('courseWorkImportResult'),
         ]);
     }
@@ -382,6 +383,7 @@ class AcademicCalendarController extends Controller
                 'institution_department' => $institutionDepartment->id,
                 'calendar_year' => $calendar_year,
                 ...$this->classConfigQueryParams($classConfig, $request),
+                'module' => (string) $moduleId,
             ])
             ->with('courseWorkImportResult', $result)
             ->with(
@@ -1362,6 +1364,11 @@ class AcademicCalendarController extends Controller
             404,
         );
 
+        $requestModeOfStudyId = (int) $request->query('mode_of_study_id', 0);
+        if ($requestModeOfStudyId > 0 && $requestModeOfStudyId !== (int) $classConfig->mode_of_study_id) {
+            abort(422, __('academic_calendar.course_work_import_mode_of_study_mismatch'));
+        }
+
         return $classConfig;
     }
 
@@ -1376,5 +1383,12 @@ class AcademicCalendarController extends Controller
             'department_level_id' => $request->query('department_level_id') ? (string) $request->query('department_level_id') : (string) $classConfig->department_level_id,
             'mode_of_study_id' => $request->query('mode_of_study_id') ? (string) $request->query('mode_of_study_id') : (string) $classConfig->mode_of_study_id,
         ]);
+    }
+
+    private function initialCourseWorkModuleIdFromRequest(Request $request): ?int
+    {
+        $moduleId = (int) $request->query('module', 0);
+
+        return $moduleId > 0 ? $moduleId : null;
     }
 }

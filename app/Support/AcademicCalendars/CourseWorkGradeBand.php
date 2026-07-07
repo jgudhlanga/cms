@@ -14,7 +14,7 @@ class CourseWorkGradeBand
 
     public const FAIL = 'fail';
 
-    public static function classify(?float $courseWorkTotal60): ?string
+    public static function classify(?int $courseWorkTotal60): ?string
     {
         if ($courseWorkTotal60 === null) {
             return null;

@@ -20,8 +20,30 @@ test('aggregates weighted course work total out of 60', function () {
     $result = $service->aggregateStudentModule($assessmentTypes, $assessments);
 
     expect($result['isComplete'])->toBeTrue()
-        ->and($result['courseWorkTotal60'])->toBe(48.0)
+        ->and($result['courseWorkTotal60'])->toBe(48)
         ->and($result['remark'])->toBe('Strong');
+});
+
+test('ceils weighted marks and course total to whole numbers', function () {
+    $service = new CourseWorkAggregationService;
+
+    $assessmentTypes = [
+        ['id' => 1, 'name' => 'Research Based', 'weightPercent' => 20],
+        ['id' => 2, 'name' => 'Innovation Based', 'weightPercent' => 20],
+        ['id' => 3, 'name' => 'Test', 'weightPercent' => 20],
+    ];
+
+    $assessments = [
+        ['assessmentTypeId' => 1, 'assessmentTypeName' => 'Research Based', 'mark' => 71, 'remark' => null],
+        ['assessmentTypeId' => 2, 'assessmentTypeName' => 'Innovation Based', 'mark' => 71, 'remark' => null],
+        ['assessmentTypeId' => 3, 'assessmentTypeName' => 'Test', 'mark' => 71, 'remark' => null],
+    ];
+
+    $result = $service->aggregateStudentModule($assessmentTypes, $assessments);
+
+    expect($result['isComplete'])->toBeTrue()
+        ->and($result['components'][0]['weightedMark'])->toBe(15)
+        ->and($result['courseWorkTotal60'])->toBe(45);
 });
 
 test('returns incomplete aggregation when a component mark is missing', function () {
@@ -60,5 +82,5 @@ test('uses equal weight split when assessment weights are missing', function () 
 
     $result = $service->aggregateStudentModule($assessmentTypes, $assessments);
 
-    expect($result['courseWorkTotal60'])->toBe(60.0);
+    expect($result['courseWorkTotal60'])->toBe(60);
 });

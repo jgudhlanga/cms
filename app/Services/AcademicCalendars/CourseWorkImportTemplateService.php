@@ -2,6 +2,7 @@
 
 namespace App\Services\AcademicCalendars;
 
+use App\Models\AcademicCalendars\CourseWorkMark;
 use App\Models\Institution\Syllabus\CourseSyllabusModule;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -67,13 +68,56 @@ class CourseWorkImportTemplateService
 
         /** @var list<array{id: int, name: string, weightPercent: int|null}> $assessmentTypes */
         $assessmentTypes = array_values($tree['assessmentTypes'] ?? []);
+        $captureMarkOnly = (bool) $module->capture_mark_only;
+
+        $studentEnrolmentIds = collect($modulePayload['students'])
+            ->pluck('studentEnrolmentId')
+            ->map(fn ($id): int => (int) $id)
+            ->all();
+
+        $savedMarksByKey = $studentEnrolmentIds === []
+            ? collect()
+            : CourseWorkMark::query()
+                ->where('course_syllabus_module_id', $courseSyllabusModuleId)
+                ->whereIn('student_enrolment_id', $studentEnrolmentIds)
+                ->when(
+                    $captureMarkOnly,
+                    fn ($query) => $query->whereNull('assessment_type_id'),
+                    fn ($query) => $query->whereNotNull('assessment_type_id'),
+                )
+                ->get()
+                ->groupBy(fn (CourseWorkMark $mark): string => $captureMarkOnly
+                    ? sprintf('%d', (int) $mark->student_enrolment_id)
+                    : sprintf('%d:%d', (int) $mark->student_enrolment_id, (int) $mark->assessment_type_id));
+
         $rows = [];
 
         foreach ($modulePayload['students'] as $student) {
+            $studentEnrolmentId = (int) $student['studentEnrolmentId'];
+
+            if ($captureMarkOnly) {
+                $saved = $savedMarksByKey->get((string) $studentEnrolmentId)?->first();
+                $rows[] = [
+                    'studentEnrolmentId' => $student['studentEnrolmentId'],
+                    'studentNumber' => $student['studentNumber'],
+                    'studentName' => $student['name'],
+                    'className' => $student['className'] ?? null,
+                    'mark' => $saved?->mark !== null ? (int) $saved->mark : null,
+                    'remark' => $saved?->remark,
+                ];
+
+                continue;
+            }
+
             $marks = [];
 
             foreach ($assessmentTypes as $type) {
-                $marks[(int) $type['id']] = null;
+                $typeId = (int) $type['id'];
+                $saved = $savedMarksByKey
+                    ->get(sprintf('%d:%d', $studentEnrolmentId, $typeId))
+                    ?->first();
+
+                $marks[$typeId] = $saved?->mark !== null ? (int) $saved->mark : null;
             }
 
             $rows[] = [
@@ -86,6 +130,7 @@ class CourseWorkImportTemplateService
         }
 
         return [
+            'layout' => $captureMarkOnly ? 'mark_only' : 'wide',
             'header' => [
                 'moduleCode' => $module->code,
                 'moduleTitle' => $module->title,
