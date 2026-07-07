@@ -8,12 +8,13 @@ import { AuthObject, DataListProps } from '@/types/data-pagination';
 import { Link } from '@/types/ui';
 import { onMounted, ref, watch } from 'vue';
 import StudentFilters from '@/components/students/filters/StudentFilters.vue';
+import StudentStats from '@/components/students/StudentStats.vue';
 import StudentExportModal from '@/components/students/export/StudentExportModal.vue';
 import { storeToRefs } from 'pinia';
 import { useStudentsStore } from '@/store/students/useStudentsStore';
 import { Student, StudentFiltersState } from '@/types/students';
 
-const { createStudentColumns, fetchStudents, isLoading } = useStudents();
+const { createStudentColumns, fetchStudents, isLoading, isStatsLoading } = useStudents();
 
 interface Props {
     auth: AuthObject;
@@ -51,6 +52,11 @@ const onStudentFiltersChange = async (f: StudentFiltersState) => {
     await loadStudents(f);
 };
 
+const onStatFilter = async (partial: Partial<StudentFiltersState>) => {
+    const nextFilters = { ...filters.value, ...partial };
+    await onStudentFiltersChange(nextFilters);
+};
+
 onMounted(() => loadStudents());
 watch(studentRefreshKey, () => loadStudents(filters.value));
 
@@ -60,6 +66,12 @@ watch(studentRefreshKey, () => loadStudents(filters.value));
     <Head :title="$tChoice('student', 2)" />
     <PageContainer :breadcrumbs="breadcrumbs">
         <div class="bg-card relative inline-block min-w-full overflow-auto rounded-xl px-6 py-2 my-2 align-middle">
+            <StudentStats
+                :filters="filters"
+                :loading="isStatsLoading"
+                :refresh-key="studentRefreshKey"
+                @filter="onStatFilter"
+            />
             <StudentFilters :filters="filters" show-export-button @change="onStudentFiltersChange" />
         </div>
         <StudentExportModal />

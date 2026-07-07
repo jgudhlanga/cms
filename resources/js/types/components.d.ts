@@ -466,6 +466,7 @@ declare module 'vue' {
     StudentPaymentTypeBadge: typeof import('./../components/finance/StudentPaymentTypeBadge.vue')['default']
     StudentProfileShell: typeof import('./../components/students/profile/StudentProfileShell.vue')['default']
     StudentSponsors: typeof import('./../components/students/tabs/StudentSponsors.vue')['default']
+    StudentStats: typeof import('./../components/students/StudentStats.vue')['default']
     SubjectComboSelect: typeof import('./../components/core/form/combobox/SubjectComboSelect.vue')['default']
     Surname: typeof import('./../components/core/form/text/Surname.vue')['default']
     Switch: typeof import('./../components/ui/switch/Switch.vue')['default']

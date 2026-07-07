@@ -24,5 +24,10 @@ interface IStudentRepository extends IBaseRepository
 
     public function paginateForIndex(array $filters = []): LengthAwarePaginator;
 
+    /**
+     * @return array{global: array{total: int, male: int, female: int, byLevel: list<array{id: int, name: string, count: int}>, byModeOfStudy: list<array{id: int, name: string, count: int}>}, filtered: array{total: int}}
+     */
+    public function statsForIndex(array $filters = []): array;
+
     public function queryForExport(array $filters = []): Builder;
 }

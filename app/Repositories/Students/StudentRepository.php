@@ -54,6 +54,22 @@ class StudentRepository extends BaseRepository implements IStudentRepository
             ->withQueryString();
     }
 
+    public function statsForIndex(array $filters = []): array
+    {
+        $globalQuery = $this->baseStatsQuery();
+        $this->applyIndexFilters($globalQuery, $this->globalStatsFilters($filters));
+
+        $filteredQuery = $this->baseStatsQuery();
+        $this->applyIndexFilters($filteredQuery, $filters);
+
+        return [
+            'global' => $this->aggregateGlobalStats($globalQuery),
+            'filtered' => [
+                'total' => $this->distinctStudentCount($filteredQuery),
+            ],
+        ];
+    }
+
     public function queryForExport(array $filters = []): Builder
     {
         $exportFilters = collect($filters)->except(['name', 'search'])->all();
@@ -82,6 +98,85 @@ class StudentRepository extends BaseRepository implements IStudentRepository
             ->join('student_enrolments', 'student_enrolments.student_id', '=', 'students.id')
             ->select('students.*')
             ->distinct();
+    }
+
+    private function baseStatsQuery(): Builder
+    {
+        return Student::query()
+            ->join('student_enrolments', 'student_enrolments.student_id', '=', 'students.id')
+            ->select('students.id');
+    }
+
+    /**
+     * @return array{total: int, male: int, female: int, byLevel: list<array{id: int, name: string, count: int}>, byModeOfStudy: list<array{id: int, name: string, count: int}>}
+     */
+    private function aggregateGlobalStats(Builder $query): array
+    {
+        $total = $this->distinctStudentCount(clone $query);
+
+        $male = $this->distinctStudentCount(
+            (clone $query)->whereHas('gender', fn ($q) => $q->where('title', GenderEnum::MALE->value))
+        );
+
+        $female = $this->distinctStudentCount(
+            (clone $query)->whereHas('gender', fn ($q) => $q->where('title', GenderEnum::FEMALE->value))
+        );
+
+        // Students with multiple enrolments may appear in more than one level/mode bucket.
+        $byLevel = (clone $query)
+            ->join('department_levels', 'student_enrolments.department_level_id', '=', 'department_levels.id')
+            ->join('levels', 'department_levels.level_id', '=', 'levels.id')
+            ->select('levels.id as id', 'levels.name as name')
+            ->selectRaw('count(distinct students.id) as count')
+            ->groupBy('levels.id', 'levels.name')
+            ->orderBy('levels.name')
+            ->get()
+            ->map(fn ($row) => [
+                'id' => (int) $row->id,
+                'name' => (string) $row->name,
+                'count' => (int) $row->count,
+            ])
+            ->values()
+            ->all();
+
+        $byModeOfStudy = (clone $query)
+            ->join('mode_of_studies', 'student_enrolments.mode_of_study_id', '=', 'mode_of_studies.id')
+            ->select('mode_of_studies.id as id', 'mode_of_studies.name as name')
+            ->selectRaw('count(distinct students.id) as count')
+            ->groupBy('mode_of_studies.id', 'mode_of_studies.name')
+            ->orderBy('mode_of_studies.name')
+            ->get()
+            ->map(fn ($row) => [
+                'id' => (int) $row->id,
+                'name' => (string) $row->name,
+                'count' => (int) $row->count,
+            ])
+            ->values()
+            ->all();
+
+        return [
+            'total' => $total,
+            'male' => $male,
+            'female' => $female,
+            'byLevel' => $byLevel,
+            'byModeOfStudy' => $byModeOfStudy,
+        ];
+    }
+
+    private function distinctStudentCount(Builder $query): int
+    {
+        return (int) (clone $query)->distinct()->count('students.id');
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function globalStatsFilters(array $filters): array
+    {
+        return [
+            'department' => $filters['department'] ?? null,
+            'with_trashed' => $filters['with_trashed'] ?? null,
+        ];
     }
 
     private function applyIndexFilters(Builder $query, array $filters): void
