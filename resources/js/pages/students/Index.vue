@@ -65,7 +65,7 @@ watch(studentRefreshKey, () => loadStudents(filters.value));
 <template>
     <Head :title="$tChoice('student', 2)" />
     <PageContainer :breadcrumbs="breadcrumbs">
-        <div class="bg-card relative inline-block min-w-full overflow-auto rounded-xl px-6 py-2 my-2 align-middle">
+        <div class="bg-card relative inline-block min-w-full overflow-auto rounded-xl  py-2 mt-2 align-middle">
             <StudentStats
                 :filters="filters"
                 :loading="isStatsLoading"
@@ -74,7 +74,6 @@ watch(studentRefreshKey, () => loadStudents(filters.value));
             />
             <StudentFilters :filters="filters" show-export-button @change="onStudentFiltersChange" />
         </div>
-        <StudentExportModal />
         <DataTable
             :data="students.data"
             :filters="filters"
@@ -88,5 +87,6 @@ watch(studentRefreshKey, () => loadStudents(filters.value));
             :loading="isLoading"
             :show-column-filters="false"
         />
+        <StudentExportModal />
     </PageContainer>
 </template>

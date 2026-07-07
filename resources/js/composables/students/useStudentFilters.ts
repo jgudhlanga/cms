@@ -49,7 +49,7 @@ type UseStudentFiltersOptions = {
 export function useStudentFilters({ filters, variant, onChange }: UseStudentFiltersOptions) {
     const buildAllGendersOption = (): SelectOption => ({
         value: 'all',
-        label: trans('students.filter_all_genders'),
+        label: 'All',
     });
 
     const search = ref(filters.value.search ?? '');

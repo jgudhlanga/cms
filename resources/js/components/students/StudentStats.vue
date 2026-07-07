@@ -219,7 +219,7 @@ const chipBaseClass =
         <div class="space-y-3 transition-opacity" :class="{ 'pointer-events-none opacity-60': effectiveLoading }">
             <div class="flex flex-col gap-2">
                 <div class="flex space-x-4">
-                    <div class="flex space-x-2">
+                    <div class="flex space-x-2 items-center">
                         <div class="text-muted-foreground pt-1 text-[11px] font-semibold uppercase tracking-wide">{{ `${$t('trans.overview')}:` }}</div>
                         <div class="flex flex-wrap gap-2">
                                 <button
@@ -236,7 +236,7 @@ const chipBaseClass =
                                 </button>
                         </div>
                     </div>
-                    <div class="flex space-x-2">
+                    <div class="flex space-x-2 items-center">
                         <div class="text-muted-foreground pt-1 text-[11px] font-semibold uppercase tracking-wide">
                             {{ `${$tChoice('trans.gender', 1)}:` }}
                         </div>
@@ -259,7 +259,7 @@ const chipBaseClass =
                                 </button>
                         </div>
                     </div>
-                    <div class="flex space-x-2">
+                    <div class="flex space-x-2 items-center">
                         <template v-if="modeChips.length">
                             <div class="text-muted-foreground pt-1 text-[11px] font-semibold uppercase tracking-wide">
                                 {{ `${$t('trans.mode')}:` }}
@@ -286,7 +286,7 @@ const chipBaseClass =
                     </div>
                 </div>
                 <template v-if="levelChips.length">
-                    <div class="flex space-x-2">
+                    <div class="flex space-x-2 items-center">
                         <div class="text-muted-foreground pt-1 text-[11px] font-semibold uppercase tracking-wide">
                             {{ `${$tChoice('trans.level', 1)}:` }}
                         </div>

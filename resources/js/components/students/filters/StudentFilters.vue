@@ -40,21 +40,15 @@ const {
     departmentSelection,
     levelSelection,
     courseSelection,
-    modeOfStudySelection,
-    genderSelection,
     departmentsLoading,
-    modesLoading,
     courseOptions,
     coursesLoading,
     departmentOptions,
     levelOptions,
     levelsLoading,
-    genderOptions,
-    modeOfStudyOptions,
     selectedDepartmentIds,
     selectedLevelIds,
     whenDepartmentSearch,
-    whenModeSearch,
     whenLevelSearch,
     resetFilters,
 } = useStudentFilters({
@@ -66,40 +60,7 @@ const {
 
 <template>
     <div class="flex w-full max-w-full min-w-0 flex-col gap-4">
-        <!-- Row 1: name, student details search, mode of study -->
-        <div class="grid min-w-0 grid-cols-1 gap-3 md:grid-cols-3 md:gap-4">
-            <div class="min-w-0">
-                <BaseInputWithIcon
-                    :icon="IconName.user"
-                    full-width
-                    :placeholder="$t('students.search_by_name_placeholder')"
-                    v-model="name"
-                    class="w-full"
-                />
-            </div>
-            <div class="min-w-0">
-                <BaseInputWithIcon
-                    :icon="IconName.search"
-                    full-width
-                    :placeholder="$t('students.search_by_student_details_placeholder')"
-                    v-model="search"
-                    class="w-full"
-                />
-            </div>
-            <div class="min-w-0">
-                <BaseCombobox
-                    v-model="modeOfStudySelection"
-                    multiple
-                    :options="modeOfStudyOptions"
-                    :placeholder="$t('students.search_by_mode_of_study_placeholder')"
-                    :on-search="async (q: string) => await whenModeSearch(q)"
-                    :is-loading="modesLoading"
-                    class="rounded-full"
-                />
-            </div>
-        </div>
-
-        <!-- Row 2: department, level, course -->
+        <!-- Row 1: department, level, course -->
         <div class="grid min-w-0 grid-cols-1 gap-3 md:grid-cols-3 md:gap-4">
             <div class="min-w-0">
                 <BaseCombobox
@@ -134,17 +95,27 @@ const {
             </div>
         </div>
 
-        <!-- Row 3: gender, reset/export -->
+        <!-- Row 2: name, student details search, actions -->
         <div class="grid min-w-0 grid-cols-1 items-end gap-3 md:grid-cols-3 md:gap-4">
             <div class="min-w-0">
-                <BaseCombobox
-                    v-model="genderSelection"
-                    :options="genderOptions"
-                    :placeholder="$t('students.search_by_gender_placeholder')"
-                    class="w-full rounded-full"
+                <BaseInputWithIcon
+                    :icon="IconName.user"
+                    full-width
+                    :placeholder="$t('students.search_by_name_placeholder')"
+                    v-model="name"
+                    class="w-full"
                 />
             </div>
-            <div v-if="showResetButton || canExportStudents" class="flex min-w-0 items-center space-x-2">
+            <div class="min-w-0">
+                <BaseInputWithIcon
+                    :icon="IconName.search"
+                    full-width
+                    :placeholder="$t('students.search_by_student_details_placeholder')"
+                    v-model="search"
+                    class="w-full"
+                />
+            </div>
+            <div v-if="showResetButton || canExportStudents" class="flex min-w-0 items-center justify-end space-x-2">
                 <ResetButton v-if="showResetButton" @click="resetFilters" />
                 <GenericButton
                     v-if="canExportStudents"
