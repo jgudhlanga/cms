@@ -39,6 +39,10 @@ class StudentApplicationPolicy
 
     public function update(User $user, StudentApplication $studentApplication): bool
     {
+        if ($user->can('root:manage')) {
+            return true;
+        }
+
         if (! $user->can('update:student-applications')) {
             return false;
         }
