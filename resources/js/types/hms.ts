@@ -46,6 +46,12 @@ export type Hostel = {
         occupiedCount: number;
         vacantCount: number;
         maintenanceCount: number;
+        sectionCount?: number;
+        occupiedSectionCount?: number;
+        availableSectionCount?: number;
+        roomAmenitiesCount?: number;
+        sectionAmenitiesCount?: number;
+        totalAmenitiesCount?: number;
         description?: string;
         wardenName?: string | null;
         warden?: Staff | null;
@@ -62,6 +68,18 @@ export type HostelFiltersState = {
     with_trashed?: boolean | null;
 };
 
+export type HostelAmenity = {
+    type: string;
+    id: number | string;
+    attributes: {
+        name: string;
+        slug: string;
+        createdAt?: string;
+        updatedAt?: string;
+        deletedAt?: string;
+    };
+};
+
 export type HostelRoom = {
     type: string;
     id: number | string;
@@ -75,6 +93,12 @@ export type HostelRoom = {
         status: 'vacant' | 'occupied' | 'maintenance';
         maxOccupancy: number;
         floorNumber?: number | null;
+        sectionCount?: number;
+        occupiedSectionCount?: number;
+        availableSectionCount?: number;
+        roomAmenitiesCount?: number;
+        sectionAmenitiesCount?: number;
+        totalAmenitiesCount?: number;
         description?: string | null;
         createdAt?: string;
         updatedAt?: string;
@@ -237,6 +261,7 @@ export type HostelApplicationApprovalOptionsResponse = {
     rooms: HostelApplicationApprovalRoomOption[];
     requiredPaymentVerification?: HostelApplicationPaymentVerificationKey[];
     allowsDirectAllocation?: boolean;
+    autoAllocateRooms?: boolean;
 };
 
 export type HostelApplicationStudentLookupResponse = {
@@ -417,6 +442,7 @@ export type HmsSettings = {
         requireAddressOutsideCampus: boolean;
         campusCity: string;
         allowGuests: boolean;
+        autoAllocateRooms: boolean;
         applicationsOpen: boolean;
         applicationStartDate?: string | null;
         applicationEndDate?: string | null;

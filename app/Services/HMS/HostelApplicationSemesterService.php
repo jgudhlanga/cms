@@ -2,12 +2,9 @@
 
 namespace App\Services\HMS;
 
-use App\Enums\AcademicCalendars\AcademicCalendarTypeEnum;
-use App\Models\AcademicCalendars\AcademicCalendar;
 use App\Models\Students\Student;
 use App\Models\Students\StudentEnrolment;
-use App\Support\AcademicCalendars\AcademicCalendarPeriodResolver;
-use Carbon\Carbon;
+use App\Services\Students\StudentPortalTermDetailsService;
 use Carbon\CarbonInterface;
 
 class HostelApplicationSemesterService
@@ -15,6 +12,10 @@ class HostelApplicationSemesterService
     public const BLOCKER_NO_RUNNING_SEMESTER = 'no_running_semester';
 
     public const BLOCKER_CALENDAR_YEAR_MISSING = 'calendar_year_missing';
+
+    public function __construct(
+        protected StudentPortalTermDetailsService $termDetailsService,
+    ) {}
 
     public function resolveCalendarYear(StudentEnrolment $enrolment): ?string
     {
@@ -25,21 +26,6 @@ class HostelApplicationSemesterService
         }
 
         return (string) $calendarYear;
-    }
-
-    public function resolveRunningSemester(string $calendarYear, ?CarbonInterface $asOf = null): ?AcademicCalendar
-    {
-        $asOf = $asOf ?? Carbon::now((string) config('app.timezone'));
-        $today = $asOf->copy()->startOfDay();
-
-        return AcademicCalendar::query()
-            ->where('calendar_year', $calendarYear)
-            ->where('type', AcademicCalendarTypeEnum::SEMESTER)
-            ->whereDate('opening_date', '<=', $today)
-            ->whereDate('closing_date', '>=', $today)
-            ->orderByDesc('opening_date')
-            ->orderByDesc('id')
-            ->first();
     }
 
     /**
@@ -65,18 +51,22 @@ class HostelApplicationSemesterService
             return $this->failure(self::BLOCKER_CALENDAR_YEAR_MISSING);
         }
 
-        $semester = $this->resolveRunningSemester($calendarYear, $asOf);
+        $termDetails = $this->termDetailsService->build($student, [
+            'studentEnrolmentId' => $enrolment->id,
+        ]);
 
-        if ($semester === null) {
+        $term = $termDetails['currentTerm'] ?? $termDetails['nextTerm'];
+
+        if ($term === null || empty($term['openingDate']) || empty($term['closingDate'])) {
             return $this->failure(self::BLOCKER_NO_RUNNING_SEMESTER);
         }
 
         return [
             'success' => true,
             'blocker' => null,
-            'checkIn' => Carbon::parse($semester->opening_date)->toDateString(),
-            'checkOut' => Carbon::parse($semester->closing_date)->toDateString(),
-            'label' => AcademicCalendarPeriodResolver::displayPeriodLabel($semester),
+            'checkIn' => $term['openingDate'],
+            'checkOut' => $term['closingDate'],
+            'label' => $term['label'],
         ];
     }
 

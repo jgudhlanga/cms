@@ -93,6 +93,12 @@ import {
     RotateCcw,NotebookPen,FileStack,
     House,Mail,Phone,ArrowDownToLine,
     Wrench,
+    Armchair,
+    Blinds,
+    Box,
+    Monitor,
+    Lightbulb,
+    Plug,
 } from 'lucide-vue-next';
 import type { Component } from 'vue';
 
@@ -198,6 +204,12 @@ const icons: Record<IconName, Component> = {
     [IconName.room]: DoorOpen,
     [IconName.reset]: RotateCcw,
     [IconName.maintenance]: Wrench,
+    [IconName.chair]: Armchair,
+    [IconName.curtain]: Blinds,
+    [IconName.cupboard]: Box,
+    [IconName.desk]: Monitor,
+    [IconName.lamp]: Lightbulb,
+    [IconName.plug]: Plug,
 };
 
 export { IconName, icons };

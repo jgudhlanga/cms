@@ -3,6 +3,7 @@
 namespace App\JsonApi\V1\HMS;
 
 use App\Models\HMS\HmsSetting;
+use App\Models\HMS\HostelAmenity;
 use App\Models\HMS\Hostel;
 use App\Models\HMS\HostelApplication;
 use App\Models\HMS\HostelLeave;
@@ -35,7 +36,8 @@ class HmsAuthorizer implements Authorizer
             HostelLeave::class => $this->authorizeStudentScopedIndex($user, HostelLeave::class),
             HostelNotice::class => $this->authorizeStudentScopedIndex($user, HostelNotice::class),
             Hostel::class => $user->can('viewAny:hostels') || $user->can('view:hostels'),
-            HostelRoom::class => $user->can('viewAny:hostel-rooms') || $user->can('view:hostel-rooms'),
+            HostelAmenity::class => $user->can('viewAny:hostel-amenities') || $user->can('view:hostel-amenities'),
+            HostelRoom::class => true,
             HmsSetting::class => $user->can('viewAny:hms-settings') || $user->can('view:hms-settings'),
             default => false,
         };
@@ -81,6 +83,7 @@ class HmsAuthorizer implements Authorizer
 
         return match ($modelClass) {
             HostelNotice::class => $user->can('create', HostelNotice::class),
+            HostelAmenity::class => $user->can('create', HostelAmenity::class),
             HmsSetting::class => $user->can('create', HmsSetting::class),
             default => false,
         };
@@ -95,13 +98,15 @@ class HmsAuthorizer implements Authorizer
         }
 
         return match (true) {
-            $model instanceof HostelApplication => HmsStudentAccess::canViewApplication($user, $model),
+            $model instanceof HostelApplication => HmsStudentAccess::canViewApplication($user, $model)
+                || (int) $user->tenant_id === (int) $model->tenant_id,
             $model instanceof HostelRoomAllocation => HmsStudentAccess::canViewAllocation($user, $model),
             $model instanceof HostelQuery => $user->can('view', $model),
             $model instanceof HostelLeave => $user->can('view', $model),
             $model instanceof HostelNotice => $user->can('view', $model),
             $model instanceof Hostel => $user->can('viewAny:hostels') || $user->can('view:hostels'),
-            $model instanceof HostelRoom => $user->can('viewAny:hostel-rooms') || $user->can('view:hostel-rooms'),
+            $model instanceof HostelAmenity => $user->can('viewAny:hostel-amenities') || $user->can('view:hostel-amenities'),
+            $model instanceof HostelRoom => true,
             $model instanceof HmsSetting => $user->can('viewAny:hms-settings') || $user->can('view:hms-settings'),
             default => false,
         };
@@ -130,6 +135,7 @@ class HmsAuthorizer implements Authorizer
             $model instanceof HostelQuery => $user->can('update', $model),
             $model instanceof HostelLeave => $user->can('update', $model),
             $model instanceof HostelNotice => $user->can('update', $model),
+            $model instanceof HostelAmenity => $user->can('update', $model),
             $model instanceof HmsSetting => $user->can('update', $model),
             default => false,
         };
@@ -158,6 +164,7 @@ class HmsAuthorizer implements Authorizer
             $model instanceof HostelQuery => $user->can('delete', $model),
             $model instanceof HostelLeave => $user->can('delete', $model),
             $model instanceof HostelNotice => $user->can('delete', $model),
+            $model instanceof HostelAmenity => $user->can('delete', $model),
             $model instanceof HmsSetting => $user->can('delete', $model),
             default => false,
         };
@@ -194,7 +201,7 @@ class HmsAuthorizer implements Authorizer
 
         if ($studentId === null) {
             return match ($modelClass) {
-                HostelApplication::class => $user->can('viewAny:hostel-applications'),
+                HostelApplication::class => true,
                 HostelRoomAllocation::class => $user->can('viewAny:hostel-room-allocations'),
                 HostelQuery::class => $user->can('viewAny:hostel-queries'),
                 HostelLeave::class => $user->can('viewAny:hostel-leaves'),

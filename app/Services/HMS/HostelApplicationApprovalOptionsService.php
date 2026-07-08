@@ -35,6 +35,7 @@ class HostelApplicationApprovalOptionsService
      *     rooms: list<array{id: int, name: string, maxOccupancy: int, currentOccupancy: int, availableBeds: int, occupancyLabel: string}>,
      *     requiredPaymentVerification: list<string>,
      *     allowsDirectAllocation: bool,
+     *     autoAllocateRooms: bool,
      * }
      */
     public function forApplication(HostelApplication $application, ?int $hostelId = null): array
@@ -52,6 +53,7 @@ class HostelApplicationApprovalOptionsService
                 'rooms' => [],
                 'requiredPaymentVerification' => $requiredPaymentVerification,
                 'allowsDirectAllocation' => $allowsDirectAllocation,
+                'autoAllocateRooms' => (bool) $settings->auto_allocate_rooms,
             ];
         }
 
@@ -74,6 +76,7 @@ class HostelApplicationApprovalOptionsService
             'rooms' => $rooms,
             'requiredPaymentVerification' => $requiredPaymentVerification,
             'allowsDirectAllocation' => $allowsDirectAllocation,
+            'autoAllocateRooms' => (bool) $settings->auto_allocate_rooms,
         ];
     }
 

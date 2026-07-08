@@ -13,12 +13,12 @@ class HostelAmenitySeeder extends Seeder
      * @var list<string>
      */
     private const array DEFAULT_AMENITIES = [
-        'Bed',
         'Chair',
-        'Desk',
-        'Wardrobe',
-        'Fan',
-        'Locker',
+        'Bed',
+        'Curtain',
+        'BIC',
+        'Reading Lamp',
+        'Power outlet',
     ];
 
     public function run(): void

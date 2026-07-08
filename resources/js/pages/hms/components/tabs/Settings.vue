@@ -24,6 +24,7 @@ const form = ref({
     requireAddressOutsideCampus: true,
     campusCity: '',
     allowGuests: false,
+    autoAllocateRooms: false,
 });
 
 const loadSettings = async () => {
@@ -41,6 +42,7 @@ const loadSettings = async () => {
         requireAddressOutsideCampus: res.attributes.requireAddressOutsideCampus,
         campusCity: res.attributes.campusCity,
         allowGuests: res.attributes.allowGuests ?? false,
+        autoAllocateRooms: res.attributes.autoAllocateRooms ?? false,
     };
 };
 
@@ -137,6 +139,12 @@ onMounted(() => loadSettings());
                     v-model="form.allowGuests"
                     :label="$t('hms.allow_guests')"
                     :on-update="(value) => (form.allowGuests = value)"
+                />
+                <BaseSwitch
+                    input-id="auto_allocate_rooms"
+                    v-model="form.autoAllocateRooms"
+                    :label="$t('hms.auto_allocate_rooms')"
+                    :on-update="(value) => (form.autoAllocateRooms = value)"
                 />
             </div>
 

@@ -10,6 +10,8 @@ use Database\Seeders\Acl\RolesTableSeeder;
 use Database\Seeders\Institution\AssessmentTypesTableSeeder;
 use Database\Seeders\Students\StudentEnrolmentStatusSeeder;
 use Illuminate\Database\Seeder;
+use Database\Seeders\HMS\HostelAmenitySeeder;
+use Database\Seeders\HMS\HostelRoomSectionSeeder;
 
 class DeploymentSeeder extends Seeder
 {
@@ -26,6 +28,8 @@ class DeploymentSeeder extends Seeder
             ClassMetaDataTypeSeeder::class,
             StudentEnrolmentStatusSeeder::class,
             AssessmentTypesTableSeeder::class,
+            HostelAmenitySeeder::class,
+            HostelRoomSectionSeeder::class,
         ]);
     }
 }

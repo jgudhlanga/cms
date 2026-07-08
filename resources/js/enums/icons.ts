@@ -100,4 +100,10 @@ export enum IconName {
     room = "room",
     hostel = "hostel",
     maintenance = "maintenance",
+    chair = "chair",
+    curtain = "curtain",
+    cupboard = "cupboard",
+    desk = "desk",
+    lamp = "lamp",
+    plug = "plug",
 }

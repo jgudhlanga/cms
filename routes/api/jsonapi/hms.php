@@ -12,6 +12,13 @@ $server->resource('hostels', JsonApiController::class)
     ->readOnly()
     ->names(['index' => 'hms.hostels.index', 'show' => 'hms.hostels.show']);
 
+$server->resource('hostel-amenities', JsonApiController::class)
+    ->readOnly()
+    ->names([
+        'index' => 'hms.hostel-amenities.index',
+        'show' => 'hms.hostel-amenities.show',
+    ]);
+
 $server->resource('hostel-rooms', HostelRoomController::class)
     ->readOnly()
     ->names(['index' => 'hms.hostel-rooms.index', 'show' => 'hms.hostel-rooms.show'])

@@ -586,6 +586,7 @@ return [
     'registration_ack_advert_label' => 'I confirm I have read the college advert at www.hrepoly.ac.zw and I am applying for an advertised intake and placement.',
     'overview' => 'Overview',
     'mode' => 'Mode',
+    'slug' => 'Slug',
     'registration_ack_ecocash_label' => 'I understand the EcoCash payment notice above.',
     'registration_instructions_ack_required' => 'Please confirm you have read the instructions to continue.',
     'registration_instructions_continue' => 'Continue to registration',

@@ -76,6 +76,7 @@ const APP_MODULE_KEYS = {
     academic_year_options: 'academic_year_options',
     course_syllabus_modules: 'course_syllabus_modules',
     hostels: 'hostels',
+    hostel_amenities: 'hostel_amenities',
     hostel_rooms: 'hostel_rooms',
     hostel_applications: 'hostel_applications',
     hostel_application_decline: 'hostel_application_decline',

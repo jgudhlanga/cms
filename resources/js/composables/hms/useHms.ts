@@ -1,13 +1,13 @@
 import { useUtils } from '@/composables/core/useUtils';
-import { errorAlert, successAlert } from '@/lib/alerts';
+import { errorAlert, successAlert, openModal } from '@/lib/alerts';
 import {
     buildJsonApiIndexParams,
     jsonApiRequestConfig,
     jsonApiWriteConfig,
     mergeJsonApiFiltersIntoRequestPath,
+    parseJsonApiHostelAmenities,
     parseJsonApiHostelAllocations,
     parseJsonApiHostelApplication,
-    parseJsonApiHostelApplications,
     parseJsonApiHostelRooms,
     parseJsonApiHostelRoomStats,
     parseJsonApiHostels,
@@ -16,12 +16,15 @@ import {
     toHostelApplicationJsonApiFilters,
     toHostelJsonApiFilters,
     toHostelRoomJsonApiFilters,
+    parseJsonApiHostelApplications,
 } from '@/lib/json-api';
 import { IconName } from '@/lib/icons';
+import { buildHostelRoomShowUrl, currentHostelPageReturnPath } from '@/lib/hms/hostelRoomNavigation';
 import HttpService from '@/services/http.service';
 import { hasAbility } from '@/lib/permissions';
 import { buildStudentShowUrl } from '@/lib/studentShowNavigation';
 import Hostels from '@/pages/hms/components/tabs/Hostels.vue';
+import Amenities from '@/pages/hms/components/tabs/Amenities.vue';
 import Rooms from '@/pages/hms/components/tabs/Rooms.vue';
 import Students from '@/pages/hms/components/tabs/Students.vue';
 import Applications from '@/pages/hms/components/tabs/Applications.vue';
@@ -30,6 +33,7 @@ import { CustomTab } from '@/types/utils';
 import type { DataListProps } from '@/types/data-pagination';
 import type {
     Hostel,
+    HostelAmenity,
     HostelAllocation,
     HostelApplication,
     HostelApplicationFiltersState,
@@ -53,12 +57,13 @@ import {
     hostelApplicationStatusTagVariant,
     hostelApplicationTypeTagVariant,
 } from '@/lib/hms/applicationTagVariants';
+import { APP_MODULE_KEYS } from '@/lib/constants';
 
 export const useHms = () => {
     const { formatDate, navigateTo } = useUtils();
     const isLoading = ref(false);
     const isStatsLoading = ref(false);
-    const { moreActionButton, onView, tag, textLink, actionButton } = useDataTables();
+    const { moreActionButton, onDelete, onRestore, onView, tag, textLink, actionButton } = useDataTables();
 
     const hmsTabs = (): Array<CustomTab> => {
         return [
@@ -89,6 +94,13 @@ export const useHms = () => {
                 component: h(Applications),
                 show: hasAbility('viewAny:hostel-applications'),
                 icon: IconName.file,
+            },
+            {
+                transLabel: () => trans_choice('hms.amenity', 2),
+                value: 'amenities',
+                component: h(Amenities),
+                show: hasAbility(['viewAny:hostel-amenities', 'view:hostel-amenities']),
+                icon: IconName.settings,
             },
             {
                 transLabel: () => trans_choice('hms.settings', 2),
@@ -149,6 +161,30 @@ export const useHms = () => {
             });
 
             return parseJsonApiHostelRooms(document);
+        } catch {
+            errorAlert(trans('trans.load_data_failure', { data: trans('trans.data') }));
+        } finally {
+            isLoading.value = false;
+        }
+    };
+
+    const fetchAmenities = async (
+        paginatorUrl?: string,
+    ): Promise<DataListProps<HostelAmenity> | undefined> => {
+        try {
+            isLoading.value = true;
+            const path = paginatorUrl
+                ? paginatorUrl
+                : route('v1.json.hms.hostel-amenities.index');
+
+            const params = paginatorUrl ? undefined : buildJsonApiIndexParams({});
+
+            const document = await HttpService.get(path, {
+                ...jsonApiRequestConfig(),
+                ...(params ? { params } : {}),
+            });
+
+            return parseJsonApiHostelAmenities(document);
         } catch {
             errorAlert(trans('trans.load_data_failure', { data: trans('trans.data') }));
         } finally {
@@ -389,12 +425,12 @@ export const useHms = () => {
 
     const approveApplication = async (
         application: HostelApplication,
-        hostelRoomId: number,
+        hostelRoomId?: number | null,
     ): Promise<boolean> => {
         return saveApplication(
             {
                 status: 'approved',
-                hostelRoomId,
+                ...(hostelRoomId ? { hostelRoomId } : {}),
             },
             application.id,
         );
@@ -640,12 +676,97 @@ export const useHms = () => {
                     return tag(row.original.attributes.status, '', ColorVariant.primary);
                 },
             },
+            {
+                header: trans_choice('trans.action', 2),
+                accessorKey: 'actions',
+                enableSorting: false,
+                meta: { align: 'right' },
+                cell: ({ row }: { row: { original: HostelRoom } }) => {
+                    const room = row.original;
+
+                    return moreActionButton(!!room.attributes.deletedAt, [
+                        {
+                            key: 'view',
+                            action: () => onView(
+                                hasAbility(['viewAny:hostel-rooms', 'view:hostel-rooms']),
+                                buildHostelRoomShowUrl(room.id, {
+                                    return: currentHostelPageReturnPath(
+                                        typeof window !== 'undefined'
+                                            ? `${window.location.pathname}${window.location.search}`
+                                            : route('hostels.index'),
+                                    ),
+                                }),
+                            ),
+                        },
+                        {
+                            key: 'edit',
+                            action: () => {
+                                if (!hasAbility('update:hostel-rooms')) {
+                                    return;
+                                }
+
+                                openModal({ name: APP_MODULE_KEYS.hostel_rooms, edit: room });
+                            },
+                        },
+                    ]);
+                },
+            },
+        ];
+    };
+
+    const hostelAmenityColumns = () => {
+        return [
+            { header: trans_choice('hms.amenity', 1), accessorKey: 'attributes.name' },
+            { header: trans('trans.slug'), accessorKey: 'attributes.slug' },
+            {
+                header: trans_choice('trans.action', 2),
+                accessorKey: 'actions',
+                enableSorting: false,
+                meta: { align: 'right' },
+                cell: ({ row }: { row: { original: HostelAmenity } }) => {
+                    const amenity = row.original;
+
+                    return moreActionButton(!!amenity.attributes.deletedAt, [
+                        {
+                            key: 'edit',
+                            action: () => {
+                                if (!hasAbility('update:hostel-amenities')) {
+                                    return;
+                                }
+
+                                openModal({ name: APP_MODULE_KEYS.hostel_amenities, edit: amenity });
+                            },
+                        },
+                        {
+                            key: 'delete',
+                            action: () => {
+                                onDelete(
+                                    hasAbility('delete:hostel-amenities'),
+                                    route('hostel-amenities.destroy', String(amenity.id)),
+                                    amenity.attributes.name,
+                                );
+                            },
+                        },
+                        {
+                            key: 'restore',
+                            action: () => {
+                                onRestore(
+                                    hasAbility('restore:hostel-amenities'),
+                                    route('hostel-amenities.restore', String(amenity.id)),
+                                    amenity.attributes.name,
+                                );
+                            },
+                        },
+                    ]);
+                },
+            },
         ];
     };
 
     return {
         hmsTabs,
         fetchHostels,
+        fetchAmenities,
         fetchRooms,
         fetchHostelAllocations,
         fetchRoomStats,
@@ -661,6 +782,7 @@ export const useHms = () => {
         approveApplication,
         fetchHmsSettings,
         saveHmsSettings,
+        hostelAmenityColumns,
         hostelRoomColumns,
         hostelStudentColumns,
         hostelApplicationColumns,

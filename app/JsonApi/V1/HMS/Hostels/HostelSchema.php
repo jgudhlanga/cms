@@ -7,6 +7,8 @@ use App\JsonApi\V1\HMS\Hostels\Filters\HostelSearchFilter;
 use App\JsonApi\V1\HMS\Hostels\Filters\HostelTypeFilter;
 use App\JsonApi\V1\HMS\Hostels\Filters\HostelWardenFilter;
 use App\Models\HMS\Hostel;
+use App\Models\HMS\HostelRoomSection;
+use Illuminate\Support\Facades\DB;
 use LaravelJsonApi\Eloquent\Contracts\Paginator;
 use LaravelJsonApi\Eloquent\Fields\DateTime;
 use LaravelJsonApi\Eloquent\Fields\ID;
@@ -50,6 +52,30 @@ class HostelSchema extends Schema
             Number::make('maintenanceCount')->extractUsing(
                 fn (Hostel $hostel) => (int) ($hostel->maintenance_rooms_count ?? 0),
             )->readOnly(),
+            Number::make('sectionCount')->extractUsing(
+                fn (Hostel $hostel) => (int) ($hostel->sections_count ?? 0),
+            )->readOnly(),
+            Number::make('occupiedSectionCount')->extractUsing(
+                fn (Hostel $hostel) => min(
+                    (int) ($hostel->occupied_sections_count ?? 0),
+                    (int) ($hostel->sections_count ?? 0),
+                ),
+            )->readOnly(),
+            Number::make('availableSectionCount')->extractUsing(
+                fn (Hostel $hostel) => max(
+                    0,
+                    (int) ($hostel->sections_count ?? 0) - min((int) ($hostel->occupied_sections_count ?? 0), (int) ($hostel->sections_count ?? 0)),
+                ),
+            )->readOnly(),
+            Number::make('roomAmenitiesCount')->extractUsing(
+                fn (Hostel $hostel) => (int) ($hostel->room_amenities_count ?? 0),
+            )->readOnly(),
+            Number::make('sectionAmenitiesCount')->extractUsing(
+                fn (Hostel $hostel) => (int) ($hostel->section_amenities_count ?? 0),
+            )->readOnly(),
+            Number::make('totalAmenitiesCount')->extractUsing(
+                fn (Hostel $hostel) => (int) (($hostel->room_amenities_count ?? 0) + ($hostel->section_amenities_count ?? 0)),
+            )->readOnly(),
             Number::make('wardenId', 'warden_id'),
             Str::make('wardenName')->extractUsing(
                 fn (Hostel $hostel) => $hostel->warden?->user?->full_name
@@ -87,6 +113,45 @@ class HostelSchema extends Schema
                 'rooms as vacant_rooms_count' => fn ($builder) => $builder->where('status', 'vacant'),
                 'rooms as maintenance_rooms_count' => fn ($builder) => $builder->where('status', 'maintenance'),
             ]);
+
+        $query
+            ->selectSub(
+                DB::table('hostel_room_sections')
+                    ->join('hostel_rooms', 'hostel_rooms.id', '=', 'hostel_room_sections.hostel_room_id')
+                    ->selectRaw('count(*)')
+                    ->whereColumn('hostel_rooms.hostel_id', 'hostels.id')
+                    ->limit(1),
+                'sections_count',
+            )
+            ->selectSub(
+                DB::table('hostel_room_allocations')
+                    ->join('hostel_rooms', 'hostel_rooms.id', '=', 'hostel_room_allocations.hostel_room_id')
+                    ->selectRaw('count(*)')
+                    ->whereColumn('hostel_rooms.hostel_id', 'hostels.id')
+                    ->where('hostel_room_allocations.status', 'active')
+                    ->limit(1),
+                'occupied_sections_count',
+            )
+            ->selectSub(
+                DB::table('hostel_room_amenity')
+                    ->join('hostel_rooms', 'hostel_rooms.id', '=', 'hostel_room_amenity.hostel_room_id')
+                    ->selectRaw('count(*)')
+                    ->whereColumn('hostel_rooms.hostel_id', 'hostels.id')
+                    ->limit(1),
+                'room_amenities_count',
+            )
+            ->selectSub(
+                DB::table('amenityables')
+                    ->join('hostel_room_sections', function ($join) {
+                        $join->on('amenityables.amenityable_id', '=', 'hostel_room_sections.id')
+                            ->where('amenityables.amenityable_type', HostelRoomSection::class);
+                    })
+                    ->join('hostel_rooms', 'hostel_rooms.id', '=', 'hostel_room_sections.hostel_room_id')
+                    ->selectRaw('count(*)')
+                    ->whereColumn('hostel_rooms.hostel_id', 'hostels.id')
+                    ->limit(1),
+                'section_amenities_count',
+            );
 
         return parent::newQuery($query);
     }

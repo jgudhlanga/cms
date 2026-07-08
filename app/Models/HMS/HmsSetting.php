@@ -25,6 +25,7 @@ class HmsSetting extends Model
         'require_address_outside_campus',
         'campus_city',
         'allow_guests',
+        'auto_allocate_rooms',
         'applications_open',
         'application_start_date',
         'application_end_date',
@@ -38,6 +39,7 @@ class HmsSetting extends Model
             'require_accommodation_paid' => 'boolean',
             'require_address_outside_campus' => 'boolean',
             'allow_guests' => 'boolean',
+            'auto_allocate_rooms' => 'boolean',
             'applications_open' => 'boolean',
             'application_start_date' => 'date',
             'application_end_date' => 'date',
@@ -58,6 +60,7 @@ class HmsSetting extends Model
                 'require_address_outside_campus' => true,
                 'campus_city' => 'Harare',
                 'allow_guests' => false,
+                'auto_allocate_rooms' => false,
                 'applications_open' => false,
             ],
         );

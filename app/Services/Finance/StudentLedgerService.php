@@ -63,6 +63,11 @@ class StudentLedgerService
         ];
     }
 
+    public function hasRecordedPayments(Student $student): bool
+    {
+        return (float) $this->build($student)['summary']['totalPayments'] > 0;
+    }
+
     private function studentStatementQuery(Student $student): Builder
     {
         $studentStatementMatchPatterns = StudentBankStatementMatchPatterns::forStudent($student);

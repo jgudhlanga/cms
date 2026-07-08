@@ -6,9 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\HMS\StoreHostelRequest;
 use App\Http\Requests\HMS\UpdateHostelRequest;
 use App\Models\HMS\Hostel;
+use App\Models\HMS\HostelRoomSection;
 use App\Models\Institution\InstitutionDepartment;
 use App\Models\Institution\Staff;
 use App\Repositories\HMS\interface\IHostelRepository;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class HostelController extends Controller
@@ -41,6 +43,32 @@ class HostelController extends Controller
             'warden.institutionDepartments.metadata:id,institution_department_id,email,phone_number,location',
         ]);
         $hostel->loadSum('rooms as occupied_beds_sum', 'current_occupancy');
+        $hostel->loadCount([
+            'rooms as vacant_rooms_count' => fn ($builder) => $builder->where('status', 'vacant'),
+            'rooms as maintenance_rooms_count' => fn ($builder) => $builder->where('status', 'maintenance'),
+        ]);
+        $hostel->loadCount([
+            'rooms as occupied_sections_count' => fn ($builder) => $builder
+                ->join('hostel_room_allocations', 'hostel_room_allocations.hostel_room_id', '=', 'hostel_rooms.id')
+                ->where('hostel_room_allocations.status', 'active'),
+        ]);
+
+        $hostel->setAttribute('sections_count', DB::table('hostel_room_sections')
+            ->join('hostel_rooms', 'hostel_rooms.id', '=', 'hostel_room_sections.hostel_room_id')
+            ->where('hostel_rooms.hostel_id', $hostel->id)
+            ->count());
+        $hostel->setAttribute('room_amenities_count', DB::table('hostel_room_amenity')
+            ->join('hostel_rooms', 'hostel_rooms.id', '=', 'hostel_room_amenity.hostel_room_id')
+            ->where('hostel_rooms.hostel_id', $hostel->id)
+            ->count());
+        $hostel->setAttribute('section_amenities_count', DB::table('amenityables')
+            ->join('hostel_room_sections', function ($join) {
+                $join->on('amenityables.amenityable_id', '=', 'hostel_room_sections.id')
+                    ->where('amenityables.amenityable_type', HostelRoomSection::class);
+            })
+            ->join('hostel_rooms', 'hostel_rooms.id', '=', 'hostel_room_sections.hostel_room_id')
+            ->where('hostel_rooms.hostel_id', $hostel->id)
+            ->count());
 
         $wardens = Staff::query()
             ->select(['id', 'user_id'])

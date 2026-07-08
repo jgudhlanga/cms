@@ -6,6 +6,7 @@ use App\Enums\HMS\HostelAllocationStatusEnum;
 use App\Enums\HMS\HostelAllocationTypeEnum;
 use App\Models\HMS\HostelRoom;
 use App\Models\HMS\HostelRoomAllocation;
+use App\Models\HMS\HostelRoomSection;
 use Illuminate\Validation\ValidationException;
 
 class HostelRoomAllocationObserver
@@ -77,6 +78,9 @@ class HostelRoomAllocationObserver
             ]);
         }
 
+        $this->validateSectionBelongsToRoom($allocation, $room);
+        $this->validateSectionNotOccupied($allocation);
+
         $activeOnRoom = $room->allocations()
             ->active()
             ->when($allocation->exists, fn ($q) => $q->where('id', '!=', $allocation->id))
@@ -97,6 +101,46 @@ class HostelRoomAllocationObserver
         if ($studentAlreadyAssigned) {
             throw ValidationException::withMessages([
                 'student_id' => [__('hms.student_already_allocated')],
+            ]);
+        }
+    }
+
+    private function validateSectionBelongsToRoom(HostelRoomAllocation $allocation, HostelRoom $room): void
+    {
+        if ($allocation->hostel_room_section_id === null) {
+            return;
+        }
+
+        $section = HostelRoomSection::query()->find($allocation->hostel_room_section_id);
+
+        if ($section === null) {
+            throw ValidationException::withMessages([
+                'hostel_room_section_id' => [__('hms.room_section_not_found')],
+            ]);
+        }
+
+        if ((int) $section->hostel_room_id !== (int) $room->id) {
+            throw ValidationException::withMessages([
+                'hostel_room_section_id' => [__('hms.room_section_mismatch')],
+            ]);
+        }
+    }
+
+    private function validateSectionNotOccupied(HostelRoomAllocation $allocation): void
+    {
+        if ($allocation->hostel_room_section_id === null) {
+            return;
+        }
+
+        $sectionAlreadyOccupied = HostelRoomAllocation::query()
+            ->active()
+            ->where('hostel_room_section_id', $allocation->hostel_room_section_id)
+            ->when($allocation->exists, fn ($q) => $q->where('id', '!=', $allocation->id))
+            ->exists();
+
+        if ($sectionAlreadyOccupied) {
+            throw ValidationException::withMessages([
+                'hostel_room_section_id' => [__('hms.room_section_already_occupied')],
             ]);
         }
     }

@@ -3,6 +3,7 @@ import type { Enrolment } from '@/types/enrolments';
 import type { CourseWorkStudentTree, CourseWorkTree } from '@/types/course-work';
 import type { StudentPortalDashboardStats } from '@/types/students';
 import type {
+    HostelAmenity,
     HostelAllocation,
     HostelApplication,
     HostelApplicationFiltersState,
@@ -257,6 +258,20 @@ export function parseJsonApiHostels(document: JsonApiCollectionDocument): DataLi
         type: resource.type,
         id: resource.id,
         attributes: resource.attributes as Hostel['attributes'],
+    }));
+
+    return {
+        data: rows,
+        meta: mapJsonApiPageMeta(document.meta?.page),
+        links: mapJsonApiLinks(document.links),
+    };
+}
+
+export function parseJsonApiHostelAmenities(document: JsonApiCollectionDocument): DataListProps<HostelAmenity> {
+    const rows: HostelAmenity[] = (document.data ?? []).map((resource) => ({
+        type: resource.type,
+        id: resource.id,
+        attributes: resource.attributes as HostelAmenity['attributes'],
     }));
 
     return {
