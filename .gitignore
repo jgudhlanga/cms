@@ -32,6 +32,7 @@ yarn-error.log
 /deploy.txt
 /commands.txt
 /prompts.txt
+/lang/php_en.json
 /.tmp_laravel_skills_commands.txt
 /.tmp_laravel_skills_install_report.json
 /.tmp_laravel_skills_summary.json
