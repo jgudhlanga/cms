@@ -1,18 +1,23 @@
 <?php
 
+use App\Enums\AcademicCalendars\AcademicCalendarTypeEnum;
 use App\Enums\HMS\HostelAllocationStatusEnum;
 use App\Enums\HMS\HostelAllocationTypeEnum;
 use App\Enums\HMS\HostelApplicationStatusEnum;
 use App\Enums\HMS\HostelApplicationTypeEnum;
+use App\Enums\Shared\FeeTypeEnum;
 use App\Enums\Shared\TenantEnum;
 use App\Jobs\HMS\SendHostelApplicationAwaitingPaymentEmail;
 use App\Jobs\HMS\SendHostelApplicationDeclinedEmail;
 use App\Jobs\HMS\SendHostelRoomAllocationEmail;
 use App\Mail\HMS\HostelRoomAllocationConfirmedMail;
+use App\Models\AcademicCalendars\AcademicCalendar;
 use App\Models\HMS\HmsSetting;
 use App\Models\HMS\HostelApplication;
 use App\Models\HMS\HostelRoom;
 use App\Models\HMS\HostelRoomAllocation;
+use App\Models\Ledgers\Ledger;
+use App\Models\Shared\FeeType;
 use App\Models\Shared\Address;
 use App\Models\Students\Student;
 use App\Models\Tenants\Tenant;
@@ -275,7 +280,17 @@ test('json api hostel applications store uses configured application dates witho
         '2026-11-30',
     );
 
-    $studentApplication = createStudentReadyForHostelApplication('STORE-BLOCK', withRunningSemester: false, openApplications: false);
+    $studentApplication = createVerifiedStudentApplication('STORE-BLOCK');
+    $studentApplication->intakePeriod()->update(['calendar_year' => '2099/2100']);
+
+    $placeholderCalendar = AcademicCalendar::query()->create([
+        'calendar_year' => '2026',
+        'type' => AcademicCalendarTypeEnum::SEMESTER,
+        'opening_date' => '2026-01-01',
+        'closing_date' => '2026-12-31',
+    ]);
+
+    attachHostelApplicationEnrolment($studentApplication, $placeholderCalendar);
     ensureHostelRoomWithCapacity('Hostel D', 'D-STORE-BLOCK');
     $enrolmentId = $studentApplication->student->fresh(['latestEnrolment'])->latestEnrolment?->id;
 
@@ -1522,6 +1537,81 @@ test('json api hostel applications update can move pending student application t
         ->and(HostelRoomAllocation::query()->where('student_id', $student->id)->exists())->toBeFalse();
 
     Queue::assertPushed(SendHostelApplicationAwaitingPaymentEmail::class);
+});
+
+test('json api hostel applications update to awaiting payment refreshes paid status immediately', function () {
+    Queue::fake();
+
+    $tenant = Tenant::query()->firstOrFail();
+    $user = User::factory()->create(['tenant_id' => $tenant->id]);
+    $user->givePermissionTo('update:hostel-applications');
+    Sanctum::actingAs($user);
+
+    $studentApplication = createStudentReadyForHostelApplication('AWAIT-PAID-REFRESH');
+    $student = $studentApplication->student;
+    $application = HostelApplication::withoutEvents(fn () => HostelApplication::query()->create([
+        'tenant_id' => TenantEnum::HARARE_POLY->id(),
+        'student_id' => $student->id,
+        'student_enrolment_id' => $student->latestEnrolment?->id,
+        'gender_id' => $student->gender_id,
+        'type' => HostelApplicationTypeEnum::STUDENT,
+        'status' => HostelApplicationStatusEnum::PENDING,
+        'next_of_kin_name' => 'Kin Name',
+        'next_of_kin_contact' => '0771234567',
+        'check_in' => now()->toDateString(),
+        'check_out' => now()->addMonths(4)->toDateString(),
+    ]));
+
+    $feeType = FeeType::query()->firstOrCreate(
+        ['slug' => FeeTypeEnum::STUDENT_ACCOMMODATION_FEE->slug()],
+        [
+            'name' => FeeTypeEnum::STUDENT_ACCOMMODATION_FEE->name(),
+            'description' => FeeTypeEnum::STUDENT_ACCOMMODATION_FEE->description(),
+            'position' => FeeTypeEnum::STUDENT_ACCOMMODATION_FEE->position(),
+        ],
+    );
+
+    Ledger::withoutEvents(function () use ($application, $feeType, $studentApplication): void {
+        $shared = [
+            'tenant_id' => $studentApplication->tenant_id,
+            'ledgerable_type' => $application::class,
+            'ledgerable_id' => $application->id,
+            'fee_type_id' => $feeType->id,
+            'system_reference' => 'ORD-AWAIT-PAID-001',
+            'intake_period_id' => $studentApplication->intake_period_id,
+            'payment_gateway' => 'smile-n-pay',
+        ];
+
+        Ledger::query()->create(array_merge($shared, [
+            'type' => 'invoice',
+            'payment_status' => 'paid',
+            'amount' => 150.00,
+        ]));
+
+        Ledger::query()->create(array_merge($shared, [
+            'type' => 'receipt',
+            'payment_status' => 'paid',
+            'amount' => 150.00,
+        ]));
+    });
+
+    $this
+        ->jsonApi('hostel-applications')
+        ->withData([
+            'type' => 'hostel-applications',
+            'id' => (string) $application->id,
+            'attributes' => [
+                'status' => 'awaiting-payment',
+            ],
+        ])
+        ->patch(route('v1.json.hms.hostel-applications.update', $application))
+        ->assertSuccessful()
+        ->assertJsonPath('data.attributes.status', 'paid');
+
+    expect($application->fresh()->status)->toBe(HostelApplicationStatusEnum::PAID)
+        ->and($application->fresh()->payment_verification['accommodation_fees_paid_confirmed'] ?? false)->toBeTrue();
+
+    Queue::assertNotPushed(SendHostelApplicationAwaitingPaymentEmail::class);
 });
 
 test('json api hostel applications update decline queues rejection email', function () {

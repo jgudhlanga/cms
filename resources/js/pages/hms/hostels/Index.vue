@@ -3,6 +3,7 @@ import PageContainer from '@/components/core/page/PageContainer.vue';
 import BaseSectionNav from '@/components/core/tabs/BaseSectionNav.vue';
 import { useHms } from '@/composables/hms/useHms';
 import CreateEditHostel from '@/pages/hms/components/forms/CreateEditHostel.vue';
+import CreateEditHostelAmenity from '@/pages/hms/components/forms/CreateEditHostelAmenity.vue';
 import CreateEditRoom from '@/pages/hms/components/forms/CreateEditRoom.vue';
 import CreateEditApplication from '@/pages/hms/components/forms/CreateEditApplication.vue';
 import { useHmsStore } from '@/store/hms/useHmsStore';
@@ -40,6 +41,7 @@ const activeSection = computed(() => visibleTabs.value.find((tab) => tab.value =
         </div>
         <!-- ── Create / Edit modal ───────────────────────────────────────── -->
         <CreateEditHostel :wardens="wardens" />
+        <CreateEditHostelAmenity />
         <CreateEditRoom />
         <CreateEditApplication />
     </PageContainer>

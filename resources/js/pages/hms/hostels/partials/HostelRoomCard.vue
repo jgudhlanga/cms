@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import type { HostelRoomViewModel } from '@/composables/hms/useHostelShow';
 import { formatFloorLabel } from '@/lib/hms/hostelRoomDisplay';
+import { buildHostelRoomShowUrl, currentHostelPageReturnPath } from '@/lib/hms/hostelRoomNavigation';
 import { Bed } from '@lucide/vue';
+import { Link as InertiaLink, usePage } from '@inertiajs/vue3';
 import { trans } from 'laravel-vue-i18n';
 import { computed } from 'vue';
 
@@ -10,10 +12,13 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+const page = usePage();
 
-const emit = defineEmits<{
-    select: [room: HostelRoomViewModel];
-}>();
+const roomShowUrl = computed(() =>
+    buildHostelRoomShowUrl(props.room.id, {
+        return: currentHostelPageReturnPath(String(page.url)),
+    }),
+);
 
 const statusLabelKey = computed(() => {
     switch (props.room.availability) {
@@ -61,11 +66,10 @@ const roomTypeLabel = computed(() => `hms.room_type_${props.room.roomType}`);
 </script>
 
 <template>
-    <button
-        type="button"
-        class="w-full overflow-hidden rounded-2xl border-[1.5px] bg-card text-left transition hover:-translate-y-0.5 hover:shadow-lg"
+    <InertiaLink
+        :href="roomShowUrl"
+        class="block w-full overflow-hidden rounded-2xl border-[1.5px] bg-card text-left transition hover:-translate-y-0.5 hover:shadow-lg"
         :class="cardBorderClass"
-        @click="emit('select', room)"
     >
         <div class="flex items-start justify-between border-b border-border px-4 py-3">
             <div>
@@ -124,5 +128,5 @@ const roomTypeLabel = computed(() => `hms.room_type_${props.room.roomType}`);
                 {{ $t('hms.show_room_no_students') }}
             </p>
         </div>
-    </button>
+    </InertiaLink>
 </template>

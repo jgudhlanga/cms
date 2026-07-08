@@ -9,7 +9,6 @@ import CreateEditRoom from '@/pages/hms/components/forms/CreateEditRoom.vue';
 import HostelFloorOccupancyChart from '@/pages/hms/hostels/partials/HostelFloorOccupancyChart.vue';
 import HostelHero from '@/pages/hms/hostels/partials/HostelHero.vue';
 import HostelRoomCatalogue from '@/pages/hms/hostels/partials/HostelRoomCatalogue.vue';
-import HostelRoomDetailModal from '@/pages/hms/hostels/partials/HostelRoomDetailModal.vue';
 import HostelWardenCard from '@/pages/hms/hostels/partials/HostelWardenCard.vue';
 import { useHmsStore } from '@/store/hms/useHmsStore';
 import type { Hostel, HostelWardenProfile } from '@/types/hms';
@@ -44,6 +43,12 @@ type InertiaHostel = {
     warden_id?: number | string | null;
     warden?: HostelWarden | null;
     occupied_beds_sum?: number | null;
+    section_count?: number | null;
+    occupied_section_count?: number | null;
+    available_section_count?: number | null;
+    room_amenities_count?: number | null;
+    section_amenities_count?: number | null;
+    total_amenities_count?: number | null;
 };
 
 interface Props {
@@ -67,6 +72,12 @@ const hostelSnapshot = computed<HostelShowSnapshot>(() => ({
     type: props.hostel.type,
     description: props.hostel.description,
     occupied_beds_sum: props.hostel.occupied_beds_sum,
+    section_count: props.hostel.section_count,
+    occupied_section_count: props.hostel.occupied_section_count,
+    available_section_count: props.hostel.available_section_count,
+    room_amenities_count: props.hostel.room_amenities_count,
+    section_amenities_count: props.hostel.section_amenities_count,
+    total_amenities_count: props.hostel.total_amenities_count,
 }));
 
 const hostelId = toRef(() => props.hostel.id);
@@ -77,7 +88,6 @@ const {
     statusFilter,
     activeFloor,
     searchQuery,
-    selectedRoom,
     occupiedBeds,
     availableBeds,
     stats,
@@ -137,6 +147,12 @@ const hostelAsJsonApi = computed((): Hostel => ({
         occupiedCount: occupiedBeds.value,
         vacantCount: availableBeds.value,
         maintenanceCount: 0,
+        sectionCount: props.hostel.section_count ?? stats.value.totalSections,
+        occupiedSectionCount: props.hostel.occupied_section_count ?? stats.value.occupiedSections,
+        availableSectionCount: props.hostel.available_section_count ?? stats.value.availableSections,
+        roomAmenitiesCount: props.hostel.room_amenities_count ?? stats.value.roomAmenities,
+        sectionAmenitiesCount: props.hostel.section_amenities_count ?? stats.value.sectionAmenities,
+        totalAmenitiesCount: props.hostel.total_amenities_count ?? stats.value.totalAmenities,
         description: props.hostel.description ?? '',
         wardenName: wardenName.value,
     },
@@ -193,16 +209,9 @@ const openAddRoom = () => {
                 @update:active-floor="activeFloor = $event"
                 @update:status-filter="statusFilter = $event"
                 @update:search-query="searchQuery = $event"
-                @select-room="selectedRoom = $event"
                 @add-room="openAddRoom"
             />
         </div>
-
-        <HostelRoomDetailModal
-            :room="selectedRoom"
-            :hostel-name="hostel.name"
-            @close="selectedRoom = null"
-        />
 
         <CreateEditHostel :wardens="wardens" />
         <CreateEditRoom :default-hostel-id="hostel.id" />

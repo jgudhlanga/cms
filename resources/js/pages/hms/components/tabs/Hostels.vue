@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { Bed, DoorOpen, Users, Warehouse } from '@lucide/vue';
 import BaseButton from '@/components/core/button/BaseButton.vue';
 import BaseIcon from '@/components/core/icon/BaseIcon.vue';
 import { Paginator } from '@/components/core/table';
@@ -19,6 +18,7 @@ import { computed, onMounted, ref, watch } from 'vue';
 import { useHms } from '@/composables/hms/useHms';
 import { useHmsStore } from '@/store/hms/useHmsStore';
 import { storeToRefs } from 'pinia';
+import { icons } from '@/lib/icons';
 
 const { fetchHostels } = useHms();
 const { hostelRefreshKey } = storeToRefs(useHmsStore());
@@ -89,29 +89,29 @@ const totalOccupied = computed(() =>
         <div class="mb-3 flex flex-wrap gap-3">
             <HostelStatsBadge
                 :label="$t('hms.stat_blocks')"
-                :value="String(hostelsList.data.length)"
-                :icon="Warehouse"
+                :value="String(hostelsList.meta.total || hostelsList.data.length)"
+                :icon="icons[IconName.warehouse]"
                 icon-class="text-indigo-500"
                 value-class="text-indigo-700"
             />
             <HostelStatsBadge
                 :label="$t('hms.stat_total_capacity')"
                 :value="String(totalCapacity)"
-                :icon="Bed"
+                :icon="icons[IconName.bed]"
                 icon-class="text-emerald-600"
                 value-class="text-emerald-700"
             />
             <HostelStatsBadge
                 :label="$t('hms.stat_rooms')"
                 :value="String(totalRooms)"
-                :icon="DoorOpen"
+                :icon="icons[IconName.room]"
                 icon-class="text-amber-600"
                 value-class="text-amber-700"
             />
             <HostelStatsBadge
                 :label="$t('hms.stat_occupied_beds')"
                 :value="String(totalOccupied)"
-                :icon="Users"
+                :icon="icons[IconName.users]"
                 icon-class="text-rose-500"
                 value-class="text-rose-600"
             />

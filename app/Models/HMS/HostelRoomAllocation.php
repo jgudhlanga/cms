@@ -28,6 +28,7 @@ class HostelRoomAllocation extends Model
     protected $fillable = [
         'tenant_id',
         'hostel_room_id',
+        'hostel_room_section_id',
         'student_id',
         'type',
         'status',
@@ -64,6 +65,11 @@ class HostelRoomAllocation extends Model
     public function room(): BelongsTo
     {
         return $this->belongsTo(HostelRoom::class, 'hostel_room_id');
+    }
+
+    public function section(): BelongsTo
+    {
+        return $this->belongsTo(HostelRoomSection::class, 'hostel_room_section_id');
     }
 
     public function student(): BelongsTo

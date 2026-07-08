@@ -10,9 +10,13 @@ use App\Models\HMS\HostelApplication;
 use App\Models\Shared\Address;
 use App\Models\Students\Student;
 use App\Models\Students\StudentEnrolment;
+use App\Services\Finance\StudentLedgerService;
 
 class HostelApplicationEligibilityService
 {
+    public function __construct(
+        protected StudentLedgerService $studentLedgerService,
+    ) {}
     /**
      * @return list<array{key: string, passed: bool, message: string, severity: string, modeOfStudy?: string|null}>
      */
@@ -45,7 +49,8 @@ class HostelApplicationEligibilityService
         }
 
         if ($settings->require_tuition_paid) {
-            $passed = (bool) $enrolment?->studentApplication?->hasPaid(FeeTypeEnum::TUITION_FEE);
+            $passed = $this->studentLedgerService->hasRecordedPayments($student)
+                || (bool) $enrolment?->studentApplication?->tuition_fee_confirmed;
 
             $rules[] = [
                 'key' => 'tuition_paid',

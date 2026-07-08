@@ -48,6 +48,7 @@ const resolveSelectId = (value: SelectOption | string | number | null | undefine
 };
 
 const hasSelectedHostel = computed(() => resolveSelectId(selectedHostel.value) !== null);
+const isAutoAllocationEnabled = computed(() => options.value?.autoAllocateRooms ?? false);
 
 const form = useForm({
     hostelRoomId: null as number | null,
@@ -93,7 +94,9 @@ const roomSelectOptions = computed<SelectOption[]>(() =>
 );
 
 const showActionButton = computed(
-    () => (options.value?.canApprove ?? false) && hostelSelectOptions.value.some((option) => !option.disabled),
+    () =>
+        (options.value?.canApprove ?? false)
+        && (isAutoAllocationEnabled.value || hostelSelectOptions.value.some((option) => !option.disabled)),
 );
 
 const loadHostels = async (): Promise<void> => {
@@ -193,12 +196,15 @@ const save = async (): Promise<void> => {
         return;
     }
 
-    if (!form.hostelRoomId) {
+    if (!isAutoAllocationEnabled.value && !form.hostelRoomId) {
         form.setError('hostelRoomId', trans('hms.hostel_room_required_for_approval'));
         return;
     }
 
-    const ok = await approveApplication(application.value, form.hostelRoomId);
+    const ok = await approveApplication(
+        application.value,
+        isAutoAllocationEnabled.value ? null : form.hostelRoomId,
+    );
     if (ok) {
         hmsStore.refreshApplications();
         hmsStore.refreshStudents();
@@ -235,7 +241,11 @@ const save = async (): Promise<void> => {
                 />
 
                 <template v-if="(options?.hostels?.length ?? 0) > 0">
-                    <div class="space-y-2">
+                    <p v-if="isAutoAllocationEnabled" class="text-sm text-muted-foreground">
+                        {{ $t('hms.auto_allocate_rooms_helper') }}
+                    </p>
+
+                    <div v-if="!isAutoAllocationEnabled" class="space-y-2">
                         <Label>
                             {{ $t('hms.select_hostel') }}
                             <RequiredIndicator />
@@ -251,7 +261,7 @@ const save = async (): Promise<void> => {
                         />
                     </div>
 
-                    <div v-if="hasSelectedHostel" class="space-y-2">
+                    <div v-if="!isAutoAllocationEnabled && hasSelectedHostel" class="space-y-2">
                         <Label>
                             {{ $t('hms.select_room') }}
                             <RequiredIndicator />

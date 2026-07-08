@@ -19,6 +19,7 @@ class HmsSettingRequest extends ResourceRequest
             'requireAddressOutsideCampus' => ['sometimes', 'boolean'],
             'campusCity' => ['sometimes', 'string', 'max:255'],
             'allowGuests' => ['sometimes', 'boolean'],
+            'autoAllocateRooms' => ['sometimes', 'boolean'],
             'applicationsOpen' => ['sometimes', 'boolean'],
             'applicationStartDate' => [
                 Rule::requiredIf($applicationsOpen),

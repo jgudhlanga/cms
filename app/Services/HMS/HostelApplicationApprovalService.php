@@ -9,6 +9,7 @@ use App\Models\HMS\HmsSetting;
 use App\Models\HMS\HostelApplication;
 use App\Models\HMS\HostelRoom;
 use App\Models\HMS\HostelRoomAllocation;
+use App\Models\HMS\HostelRoomSection;
 use App\Support\HMS\HostelApplicationPaymentVerification;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -18,9 +19,10 @@ class HostelApplicationApprovalService
     public function __construct(
         protected HostelApplicationApprovalOptionsService $approvalOptionsService,
         protected HostelRoomAvailabilityService $roomAvailabilityService,
+        protected HostelRoomSectionService $roomSectionService,
     ) {}
 
-    public function approve(HostelApplication $application, int $hostelRoomId): void
+    public function approve(HostelApplication $application, ?int $hostelRoomId = null): void
     {
         DB::transaction(function () use ($application, $hostelRoomId): void {
             $application->loadMissing(['student']);
@@ -54,18 +56,29 @@ class HostelApplicationApprovalService
                 ]);
             }
 
-            $genderId = (int) ($application->gender_id ?? $application->student?->gender_id);
-            $room = $this->resolveAssignableRoom($hostelRoomId, $genderId);
+            $room = $settings->auto_allocate_rooms
+                ? $this->resolveAutomaticRoom($application)
+                : $this->resolveManualRoom($application, $hostelRoomId);
 
             if ($room === null) {
                 throw ValidationException::withMessages([
-                    'hostelRoomId' => [__('hms.room_at_capacity')],
+                    'hostelRoomId' => [__('hms.no_hostel_capacity')],
+                ]);
+            }
+
+            $this->roomSectionService->ensureSectionsForRoom($room);
+            $section = $this->resolveFreeSection($room);
+
+            if ($section === null) {
+                throw ValidationException::withMessages([
+                    'hostel_room_section_id' => [__('hms.no_free_room_section')],
                 ]);
             }
 
             HostelRoomAllocation::query()->create([
                 'tenant_id' => $application->tenant_id,
                 'hostel_room_id' => $room->id,
+                'hostel_room_section_id' => $section->id,
                 'student_id' => $application->student_id,
                 'type' => HostelAllocationTypeEnum::DIRECT,
                 'status' => HostelAllocationStatusEnum::ACTIVE,
@@ -75,8 +88,31 @@ class HostelApplicationApprovalService
         });
     }
 
-    private function resolveAssignableRoom(int $hostelRoomId, int $genderId): ?HostelRoom
+    private function resolveFreeSection(HostelRoom $room): ?HostelRoomSection
     {
+        $occupiedSectionIds = HostelRoomAllocation::query()
+            ->active()
+            ->where('hostel_room_id', $room->id)
+            ->whereNotNull('hostel_room_section_id')
+            ->pluck('hostel_room_section_id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
+        return HostelRoomSection::query()
+            ->where('hostel_room_id', $room->id)
+            ->when($occupiedSectionIds !== [], fn ($query) => $query->whereNotIn('id', $occupiedSectionIds))
+            ->orderBy('name')
+            ->first();
+    }
+
+    private function resolveManualRoom(HostelApplication $application, ?int $hostelRoomId): ?HostelRoom
+    {
+        if (($hostelRoomId ?? 0) < 1) {
+            return null;
+        }
+
+        $genderId = (int) ($application->gender_id ?? $application->student?->gender_id);
+
         $allowedHostelIds = $this->roomAvailabilityService
             ->hostelsForGender($genderId)
             ->pluck('id')
@@ -99,5 +135,54 @@ class HostelApplicationApprovalService
         }
 
         return $room;
+    }
+
+    private function resolveAutomaticRoom(HostelApplication $application): ?HostelRoom
+    {
+        $genderId = (int) ($application->gender_id ?? $application->student?->gender_id);
+        $hostels = $this->roomAvailabilityService
+            ->hostelsForGender($genderId)
+            ->sortBy('name')
+            ->values();
+
+        $rooms = $hostels
+            ->flatMap(fn ($hostel) => $this->roomAvailabilityService->availableRoomsForHostel((int) $hostel->id))
+            ->filter(fn (HostelRoom $room) => $this->roomAvailabilityService->availableBedsForRoom($room) > 0)
+            ->values();
+
+        if ($rooms->isEmpty()) {
+            return null;
+        }
+
+        $isDisabledStudent = $application->student?->disability_status === 'yes';
+
+        $groundFloorRooms = $rooms
+            ->filter(fn (HostelRoom $room) => (int) ($room->floor_number ?? 0) === 0)
+            ->sort(function (HostelRoom $left, HostelRoom $right): int {
+                return [(int) $left->hostel_id, (string) $left->name]
+                    <=> [(int) $right->hostel_id, (string) $right->name];
+            })
+            ->values();
+
+        $upperFloorRooms = $rooms
+            ->filter(fn (HostelRoom $room) => (int) ($room->floor_number ?? 0) > 0)
+            ->sort(function (HostelRoom $left, HostelRoom $right): int {
+                return [
+                    -1 * (int) ($left->floor_number ?? 0),
+                    (int) $left->hostel_id,
+                    (string) $left->name,
+                ] <=> [
+                    -1 * (int) ($right->floor_number ?? 0),
+                    (int) $right->hostel_id,
+                    (string) $right->name,
+                ];
+            })
+            ->values();
+
+        $orderedRooms = $isDisabledStudent
+            ? $groundFloorRooms->concat($upperFloorRooms)
+            : $upperFloorRooms->concat($groundFloorRooms);
+
+        return $orderedRooms->first();
     }
 }

@@ -51,7 +51,7 @@ const isMale   = computed(() => props.hostel.attributes.type === 'male');
 
 // ── Occupancy ────────────────────────────────────────────────────────────────
 const occupied         = computed(() => props.hostel.attributes.occupiedCount ?? 0);
-const availableBeds    = computed(() => props.hostel.attributes.capacity - occupied.value);
+const availableBeds    = computed(() => Math.max(0, props.hostel.attributes.capacity - occupied.value));
 const occupancyPercent = computed(() =>
     props.hostel.attributes.capacity > 0 ? (occupied.value / props.hostel.attributes.capacity) * 100 : 0,
 );

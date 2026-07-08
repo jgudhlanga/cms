@@ -5,10 +5,14 @@ namespace App\Repositories\HMS;
 use App\Models\HMS\HostelRoom;
 use App\Repositories\Base\BaseRepository;
 use App\Repositories\HMS\interface\IHostelRoomRepository;
+use App\Services\HMS\HostelRoomSectionService;
 
 class HostelRoomRepository extends BaseRepository implements IHostelRoomRepository
 {
-    public function __construct(protected HostelRoom $room)
+    public function __construct(
+        protected HostelRoom $room,
+        protected HostelRoomSectionService $sectionService,
+    )
     {
         parent::__construct($this->room);
     }
@@ -32,12 +36,16 @@ class HostelRoomRepository extends BaseRepository implements IHostelRoomReposito
 
     public function create(array $data): HostelRoom
     {
-        return $this->room->create($data)->refresh();
+        $room = $this->room->create($data);
+        $this->sectionService->ensureSectionsForRoom($room);
+
+        return $room->refresh();
     }
 
     public function update(HostelRoom $room, array $data): HostelRoom
     {
         $room->update($data);
+        $this->sectionService->ensureSectionsForRoom($room);
 
         return $room->refresh();
     }

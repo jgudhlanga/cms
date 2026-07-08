@@ -26,6 +26,12 @@ export type HostelShowSnapshot = {
     type?: 'male' | 'female' | 'mixed' | null;
     description?: string | null;
     occupied_beds_sum?: number | null;
+    section_count?: number | null;
+    occupied_section_count?: number | null;
+    available_section_count?: number | null;
+    room_amenities_count?: number | null;
+    section_amenities_count?: number | null;
+    total_amenities_count?: number | null;
 };
 
 export type HostelRoomStudentView = {
@@ -47,6 +53,12 @@ export type HostelRoomViewModel = {
     status: string;
     current: number;
     max: number;
+    sectionCount: number;
+    occupiedSectionCount: number;
+    availableSectionCount: number;
+    roomAmenitiesCount: number;
+    sectionAmenitiesCount: number;
+    totalAmenitiesCount: number;
     availability: RoomAvailabilityStatus;
     students: HostelRoomStudentView[];
 };
@@ -56,6 +68,12 @@ export type HostelShowStats = {
     occupiedRooms: number;
     availableRooms: number;
     occupancyRate: number;
+    totalSections: number;
+    occupiedSections: number;
+    availableSections: number;
+    roomAmenities: number;
+    sectionAmenities: number;
+    totalAmenities: number;
 };
 
 export type HostelFloorChartData = {
@@ -148,6 +166,18 @@ function buildRoomViewModels(rooms: HostelRoom[], allocations: HostelAllocation[
             status: room.attributes.status,
             current,
             max,
+            sectionCount: Number(room.attributes.sectionCount ?? 0),
+            occupiedSectionCount: Number(room.attributes.occupiedSectionCount ?? current),
+            availableSectionCount: Math.max(
+                0,
+                Number(room.attributes.availableSectionCount ?? Number(room.attributes.sectionCount ?? max) - current),
+            ),
+            roomAmenitiesCount: Number(room.attributes.roomAmenitiesCount ?? 0),
+            sectionAmenitiesCount: Number(room.attributes.sectionAmenitiesCount ?? 0),
+            totalAmenitiesCount: Number(
+                room.attributes.totalAmenitiesCount
+                ?? Number(room.attributes.roomAmenitiesCount ?? 0) + Number(room.attributes.sectionAmenitiesCount ?? 0),
+            ),
             availability,
             students: roomKey ? (studentsByRoomId.get(roomKey) ?? []) : [],
         };
@@ -162,7 +192,6 @@ export function useHostelShow(hostelId: Ref<string | number>, hostelSnapshot: Re
     const statusFilter = ref<HostelShowStatusFilter>('all');
     const activeFloor = ref(HOSTEL_SHOW_ALL_FLOORS);
     const searchQuery = ref('');
-    const selectedRoom = ref<HostelRoomViewModel | null>(null);
 
     const loadData = async (): Promise<void> => {
         isLoading.value = true;
@@ -205,12 +234,38 @@ export function useHostelShow(hostelId: Ref<string | number>, hostelSnapshot: Re
 
     const stats = computed<HostelShowStats>(() => {
         const occupiedRooms = rooms.value.filter((room) => room.current > 0).length;
+        const totalSectionsFromRooms = rooms.value.reduce((total, room) => total + room.sectionCount, 0);
+        const occupiedSectionsFromRooms = rooms.value.reduce((total, room) => total + room.occupiedSectionCount, 0);
+        const roomAmenitiesFromRooms = rooms.value.reduce((total, room) => total + room.roomAmenitiesCount, 0);
+        const sectionAmenitiesFromRooms = rooms.value.reduce((total, room) => total + room.sectionAmenitiesCount, 0);
+        const totalAmenitiesFromRooms = rooms.value.reduce((total, room) => total + room.totalAmenitiesCount, 0);
+        const totalSections = totalSectionsFromRooms > 0
+            ? totalSectionsFromRooms
+            : Number(hostelSnapshot.value?.section_count ?? 0);
+        const occupiedSections = occupiedSectionsFromRooms > 0
+            ? occupiedSectionsFromRooms
+            : Number(hostelSnapshot.value?.occupied_section_count ?? 0);
+        const availableSections = totalSections > 0
+            ? Math.max(0, totalSections - occupiedSections)
+            : Number(hostelSnapshot.value?.available_section_count ?? 0);
 
         return {
             totalRooms: rooms.value.length,
             occupiedRooms,
             availableRooms: rooms.value.length - occupiedRooms,
             occupancyRate: occupancyRate.value,
+            totalSections,
+            occupiedSections,
+            availableSections,
+            roomAmenities: roomAmenitiesFromRooms > 0
+                ? roomAmenitiesFromRooms
+                : Number(hostelSnapshot.value?.room_amenities_count ?? 0),
+            sectionAmenities: sectionAmenitiesFromRooms > 0
+                ? sectionAmenitiesFromRooms
+                : Number(hostelSnapshot.value?.section_amenities_count ?? 0),
+            totalAmenities: totalAmenitiesFromRooms > 0
+                ? totalAmenitiesFromRooms
+                : Number(hostelSnapshot.value?.total_amenities_count ?? 0),
         };
     });
 
@@ -286,7 +341,6 @@ export function useHostelShow(hostelId: Ref<string | number>, hostelSnapshot: Re
         statusFilter,
         activeFloor,
         searchQuery,
-        selectedRoom,
         occupiedBeds,
         availableBeds,
         occupancyRate,

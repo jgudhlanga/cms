@@ -4,6 +4,7 @@ namespace App\JsonApi\V1;
 
 use App\JsonApi\V1\AcademicCalendars\CourseWorkMarks\CourseWorkMarkSchema;
 use App\JsonApi\V1\HMS\HmsSettings\HmsSettingSchema;
+use App\JsonApi\V1\HMS\HostelAmenities\HostelAmenitySchema;
 use App\JsonApi\V1\HMS\HostelApplications\HostelApplicationSchema;
 use App\JsonApi\V1\HMS\HostelLeaves\HostelLeaveSchema;
 use App\JsonApi\V1\HMS\HostelNotices\HostelNoticeSchema;
@@ -27,6 +28,7 @@ class Server extends BaseServer
     {
         return [
             HostelSchema::class,
+            HostelAmenitySchema::class,
             HostelRoomSchema::class,
             HostelRoomAllocationSchema::class,
             HostelApplicationSchema::class,

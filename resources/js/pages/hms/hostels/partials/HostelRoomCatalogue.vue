@@ -26,7 +26,6 @@ const emit = defineEmits<{
     'update:activeFloor': [value: number];
     'update:statusFilter': [value: HostelShowStatusFilter];
     'update:searchQuery': [value: string];
-    selectRoom: [room: HostelRoomViewModel];
     addRoom: [];
 }>();
 </script>
@@ -75,7 +74,6 @@ const emit = defineEmits<{
                 v-for="room in filteredRooms"
                 :key="room.id"
                 :room="room"
-                @select="emit('selectRoom', $event)"
             />
         </div>
     </section>

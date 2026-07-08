@@ -16,7 +16,7 @@ class UpdateHostelRoomRequest extends FormRequest
     {
         return [
             'hostel_id'    => ['required', 'integer', Rule::exists('hostels', 'id')],
-            'room_number'  => ['required', 'integer', 'min:1'],
+            'name'         => ['required', 'string', 'max:255'],
             'room_type'    => ['required', Rule::in(['single', 'double', 'triple', 'suite'])],
             'capacity'     => ['required', 'integer', 'min:1'],
             'status'       => ['required', Rule::in(['vacant', 'occupied', 'maintenance'])],

@@ -11,6 +11,7 @@ use App\Models\Students\Student;
 use App\Models\Students\StudentEnrolment;
 use App\Services\HMS\HostelApplicationApprovalService;
 use App\Services\HMS\HostelApplicationEligibilityService;
+use App\Services\HMS\HostelApplicationPaymentService;
 use App\Services\HMS\HostelApplicationPendingService;
 use App\Services\HMS\HostelApplicationReviewService;
 use App\Services\HMS\HostelApplicationSemesterService;
@@ -31,6 +32,7 @@ class HostelApplicationObserver
         protected HostelApplicationPendingService $pendingService,
         protected HostelStudentAllocationService $allocationService,
         protected HostelApplicationApprovalService $approvalService,
+        protected HostelApplicationPaymentService $paymentService,
         protected HostelApplicationReviewService $reviewService,
     ) {}
 
@@ -100,13 +102,13 @@ class HostelApplicationObserver
 
             $hostelRoomId = (int) data_get(request()->input('data'), 'attributes.hostelRoomId', 0);
 
-            if ($hostelRoomId < 1) {
+            if (! $settings->auto_allocate_rooms && $hostelRoomId < 1) {
                 throw ValidationException::withMessages([
                     'hostelRoomId' => [__('hms.hostel_room_required_for_approval')],
                 ]);
             }
 
-            $this->approvalService->approve($application, $hostelRoomId);
+            $this->approvalService->approve($application, $hostelRoomId > 0 ? $hostelRoomId : null);
         }
     }
 
@@ -120,6 +122,14 @@ class HostelApplicationObserver
         $previousValue = $previousStatus instanceof HostelApplicationStatusEnum
             ? $previousStatus->value
             : (string) $previousStatus;
+
+        if (in_array($application->status, [
+            HostelApplicationStatusEnum::AWAITING_PAYMENT,
+            HostelApplicationStatusEnum::PARTIALLY_PAID,
+        ], true)) {
+            $this->syncStudentPaymentStatus($application);
+            $application->refresh();
+        }
 
         if ($application->status === HostelApplicationStatusEnum::AWAITING_PAYMENT
             && $previousValue === HostelApplicationStatusEnum::PENDING->value) {
@@ -140,6 +150,21 @@ class HostelApplicationObserver
             && $previousValue !== HostelApplicationStatusEnum::APPROVED->value) {
             $this->reviewService->dispatchRoomAllocationEmail($application);
         }
+    }
+
+    private function syncStudentPaymentStatus(HostelApplication $application): void
+    {
+        if ($application->type !== HostelApplicationTypeEnum::STUDENT || blank($application->student_id)) {
+            return;
+        }
+
+        $student = Student::query()->find($application->student_id);
+
+        if ($student === null) {
+            return;
+        }
+
+        $this->paymentService->syncOpenApplicationForStudent($student);
     }
 
     private function applyTypeDefaults(HostelApplication $application): void

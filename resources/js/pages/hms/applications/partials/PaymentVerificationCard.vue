@@ -153,8 +153,13 @@ const roomSelectOptions = computed<SelectOption[]>(() =>
     })),
 );
 
+const isAutoAllocationEnabled = computed(() => options.value?.autoAllocateRooms ?? false);
+
 const showRoomSelection = computed(
-    () => (options.value?.canApprove ?? false) && hostelSelectOptions.value.some((option) => !option.disabled),
+    () =>
+        (options.value?.canApprove ?? false)
+        && !isAutoAllocationEnabled.value
+        && hostelSelectOptions.value.some((option) => !option.disabled),
 );
 
 const allVerificationsAnswered = computed(() => {
@@ -168,7 +173,13 @@ const allVerificationsAnswered = computed(() => {
 });
 
 const canApproveAndAllocate = computed(
-    () => showRoomSelection.value && allVerificationsAnswered.value && form.hostelRoomId !== null,
+    () => {
+        if (isAutoAllocationEnabled.value) {
+            return (options.value?.canApprove ?? false) && allVerificationsAnswered.value;
+        }
+
+        return showRoomSelection.value && allVerificationsAnswered.value && form.hostelRoomId !== null;
+    },
 );
 
 const isDirectAllocationOnly = computed(
@@ -286,14 +297,18 @@ const approveAndAllocate = async (): Promise<void> => {
         return;
     }
 
-    if (!form.hostelRoomId) {
+    if (!isAutoAllocationEnabled.value && !form.hostelRoomId) {
         form.setError('hostelRoomId', trans('hms.hostel_room_required_for_approval'));
         return;
     }
 
     const confirmed = await openConfirm({
         title: trans('hms.verify_allocate_dialog_title'),
-        message: trans('hms.verify_allocate_dialog_message'),
+        message: trans(
+            isAutoAllocationEnabled.value
+                ? 'hms.verify_auto_allocate_dialog_message'
+                : 'hms.verify_allocate_dialog_message',
+        ),
         note: '',
         confirmText: trans('hms.button_approve_and_allocate'),
     });
@@ -305,7 +320,7 @@ const approveAndAllocate = async (): Promise<void> => {
     const ok = await saveApplication(
         {
             status: 'approved',
-            hostelRoomId: form.hostelRoomId,
+            ...(isAutoAllocationEnabled.value ? {} : { hostelRoomId: form.hostelRoomId }),
             paymentVerification: paymentVerificationPayload(),
         },
         props.application.id,
@@ -391,6 +406,10 @@ const approveAndAllocate = async (): Promise<void> => {
                 </div>
             </div>
         </template>
+
+        <p v-else-if="isAutoAllocationEnabled" class="mt-4 text-sm text-muted-foreground">
+            {{ $t('hms.auto_allocate_rooms_helper') }}
+        </p>
 
         <p v-else-if="isLoadingHostels" class="mt-4 text-sm text-muted-foreground">
             {{ $t('trans.loading') }}…

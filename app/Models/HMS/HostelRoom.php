@@ -81,6 +81,11 @@ class HostelRoom extends Model
         return $this->belongsToMany(HostelAmenity::class, 'hostel_room_amenity');
     }
 
+    public function sections(): HasMany
+    {
+        return $this->hasMany(HostelRoomSection::class);
+    }
+
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
