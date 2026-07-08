@@ -57,7 +57,7 @@ const isActiveIntakeGroup = (intakePeriodId: string): boolean =>
                 :active-intake-period-ids="activeIntakePeriodIds"
                 :can-edit="canEdit"
                 :compact="compact"
-                :editable="editable"
+                :editable="editable" 
                 :show-header="showHeader"
             />
         </BaseAccordionItem>
