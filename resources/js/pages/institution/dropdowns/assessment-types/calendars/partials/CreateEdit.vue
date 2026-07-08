@@ -5,10 +5,15 @@ import BaseDatePicker from '@/components/core/form/date/BaseDatePicker.vue';
 import BaseModal from '@/components/core/modal/BaseModal.vue';
 import {
     buildCalendarTypeOptions,
+    defaultAssessmentCalendarDates,
     defaultCalendarTypeOption,
+    filterAcademicCalendarsForType,
+    findAcademicCalendarById,
+    normalizeAssessmentCalendarRecords,
     resolveAcademicCalendarOption,
     resolveCalendarTypeOption,
     useAssessmentCalendars,
+    type AssessmentCalendarLimits,
 } from '@/composables/institution/useAssessmentCalendars';
 import { getModalEdit } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
@@ -23,6 +28,8 @@ import { computed, ref, watch } from 'vue';
 const props = defineProps<{
     assessmentType: AssessmentType;
     academicCalendars: AcademicCalendar[];
+    existingAssessmentCalendars: AssessmentCalendar[] | { data?: AssessmentCalendar[] };
+    assessmentCalendarLimits: AssessmentCalendarLimits;
 }>();
 
 const assessmentCalendar = ref<AssessmentCalendar>();
@@ -38,6 +45,27 @@ const form = useForm<AssessmentCalendarParams>({
 
 const { saveAssessmentCalendar, formSchema } = useAssessmentCalendars(props.assessmentType);
 const typeOptions = computed(() => buildCalendarTypeOptions());
+
+const existingRecords = computed(() => normalizeAssessmentCalendarRecords(props.existingAssessmentCalendars));
+
+const availableAcademicCalendars = computed(() =>
+    filterAcademicCalendarsForType(
+        props.academicCalendars,
+        String(calendarTypeOption.value?.value ?? 'semester'),
+        existingRecords.value,
+        assessmentCalendar.value?.id?.toString(),
+    ),
+);
+
+const selectedAcademicCalendar = computed(() =>
+    findAcademicCalendarById(props.academicCalendars, academicCalendarOption.value?.value),
+);
+
+const applyDefaultDatesFromCalendar = (calendar: AcademicCalendar) => {
+    const defaults = defaultAssessmentCalendarDates(calendar);
+    form.start_date = defaults.start_date;
+    form.end_date = defaults.end_date;
+};
 
 const { modals } = useModalStore();
 
@@ -64,11 +92,50 @@ watch(modals!, () => {
     form.defaults();
 });
 
+watch(calendarTypeOption, (nextType, previousType) => {
+    if (!nextType || nextType.value === previousType?.value) {
+        return;
+    }
+
+    const selectedId = academicCalendarOption.value ? String(academicCalendarOption.value.value) : '';
+    const stillValid = availableAcademicCalendars.value.some((calendar) => String(calendar.id) === selectedId);
+
+    if (!stillValid) {
+        academicCalendarOption.value = null;
+        form.academic_calendar_id = '';
+        form.start_date = '';
+        form.end_date = '';
+    }
+});
+
+watch(academicCalendarOption, (nextOption, previousOption) => {
+    if (!nextOption || nextOption.value === previousOption?.value) {
+        return;
+    }
+
+    const calendar = findAcademicCalendarById(props.academicCalendars, nextOption.value);
+    if (!calendar) {
+        return;
+    }
+
+    form.academic_calendar_id = String(nextOption.value);
+
+    if (!assessmentCalendar.value || previousOption?.value) {
+        applyDefaultDatesFromCalendar(calendar);
+    }
+});
+
 const save = () => {
     form.academic_calendar_id = academicCalendarOption.value ? String(academicCalendarOption.value.value) : '';
     form.type = String(calendarTypeOption.value?.value ?? 'semester');
 
-    const result = formSchema().safeParse(form.data());
+    const result = formSchema({
+        academicCalendars: props.academicCalendars,
+        existingRecords: existingRecords.value,
+        editingId: assessmentCalendar.value?.id?.toString() ?? null,
+        limits: props.assessmentCalendarLimits,
+    }).safeParse(form.data());
+
     if (!result.success) {
         const fieldErrors = result.error.flatten().fieldErrors;
         const formattedErrors: Record<keyof AssessmentCalendarParams, string> = {
@@ -101,9 +168,17 @@ const save = () => {
         :form="form"
     >
         <template #body>
+            <BaseCombobox
+                :label="$tChoice('trans.type', 1)"
+                v-model="calendarTypeOption"
+                :options="typeOptions"
+                :is-required="true"
+                :error="form.errors.type"
+                @update:model-value="clearFormErrors(form, 'type')"
+            />
             <AcademicCalendarComboSelect
                 :input-auto-focus="true"
-                :data="academicCalendars"
+                :data="availableAcademicCalendars"
                 v-model="academicCalendarOption"
                 :is-required="true"
                 :error="form.errors.academic_calendar_id"
@@ -117,6 +192,8 @@ const save = () => {
                     v-model="form.start_date"
                     :is-required="true"
                     :teleport="true"
+                    :min-date="selectedAcademicCalendar?.attributes?.openingDate"
+                    :max-date="selectedAcademicCalendar?.attributes?.closingDate"
                     :error="form.errors.start_date"
                     @update:model-value="clearFormErrors(form, 'start_date')"
                 />
@@ -127,18 +204,12 @@ const save = () => {
                     v-model="form.end_date"
                     :is-required="true"
                     :teleport="true"
+                    :min-date="selectedAcademicCalendar?.attributes?.openingDate"
+                    :max-date="selectedAcademicCalendar?.attributes?.closingDate"
                     :error="form.errors.end_date"
                     @update:model-value="clearFormErrors(form, 'end_date')"
                 />
             </div>
-            <BaseCombobox
-                :label="$tChoice('trans.type', 1)"
-                v-model="calendarTypeOption"
-                :options="typeOptions"
-                :is-required="true"
-                :error="form.errors.type"
-                @update:model-value="clearFormErrors(form, 'type')"
-            />
         </template>
     </BaseModal>
 </template>

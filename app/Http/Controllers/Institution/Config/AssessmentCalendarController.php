@@ -46,6 +46,18 @@ class AssessmentCalendarController extends Controller
             ])->values(),
             'filters' => request()->only(['search', 'trashed']),
             'trashedCount' => $this->repository->allTrashedForAssessmentType($assessmentType->id)->count(),
+            'existingAssessmentCalendars' => AssessmentCalendarResource::collection(
+                AssessmentCalendar::query()
+                    ->with('academicCalendar')
+                    ->where('assessment_type_id', $assessmentType->id)
+                    ->whereHas('academicCalendar', fn ($query) => $query->where('calendar_year', (string) now()->year))
+                    ->get()
+            ),
+            'assessmentCalendarLimits' => [
+                'semester' => AcademicCalendarTypeEnum::SEMESTER->maxAssessmentCalendarsPerYear(),
+                'term' => AcademicCalendarTypeEnum::TERM->maxAssessmentCalendarsPerYear(),
+                'abma' => AcademicCalendarTypeEnum::ABMA->maxAssessmentCalendarsPerYear(),
+            ],
         ]);
     }
 

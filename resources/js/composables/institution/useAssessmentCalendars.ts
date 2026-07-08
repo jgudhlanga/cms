@@ -14,6 +14,77 @@ import { z } from 'zod';
 
 const calendarTypeValues = ['semester', 'term', 'abma'] as const;
 
+export type AssessmentCalendarLimits = {
+    semester: number;
+    term: number;
+    abma: number;
+};
+
+export type AssessmentCalendarFormSchemaContext = {
+    academicCalendars: AcademicCalendar[];
+    existingRecords: AssessmentCalendar[];
+    editingId?: string | null;
+    limits: AssessmentCalendarLimits;
+};
+
+export const normalizeAssessmentCalendarRecords = (
+    records: AssessmentCalendar[] | { data?: AssessmentCalendar[] },
+): AssessmentCalendar[] => {
+    if (Array.isArray(records)) {
+        return records;
+    }
+
+    return records?.data ?? [];
+};
+
+export const getAssessmentCalendarLimit = (type: string, limits: AssessmentCalendarLimits): number => {
+    if (type === 'term') {
+        return limits.term;
+    }
+
+    if (type === 'abma') {
+        return limits.abma;
+    }
+
+    return limits.semester;
+};
+
+export const countExistingForType = (
+    existingRecords: AssessmentCalendar[],
+    type: string,
+    editingId?: string | null,
+): number => {
+    return existingRecords.filter(
+        (record) => record.attributes?.type === type && String(record.id) !== String(editingId ?? ''),
+    ).length;
+};
+
+export const filterAcademicCalendarsForType = (
+    academicCalendars: AcademicCalendar[],
+    type: string,
+    existingRecords: AssessmentCalendar[],
+    editingId?: string | null,
+): AcademicCalendar[] => {
+    const usedIds = new Set(
+        existingRecords
+            .filter((record) => String(record.id) !== String(editingId ?? ''))
+            .map((record) => String(record.attributes?.academicCalendarId)),
+    );
+
+    return academicCalendars.filter(
+        (calendar) => calendar.attributes?.type === type && !usedIds.has(String(calendar.id)),
+    );
+};
+
+export const isAllAssessmentCalendarLimitsReached = (
+    existingRecords: AssessmentCalendar[],
+    limits: AssessmentCalendarLimits,
+): boolean => {
+    return calendarTypeValues.every(
+        (type) => countExistingForType(existingRecords, type) >= getAssessmentCalendarLimit(type, limits),
+    );
+};
+
 export const buildCalendarTypeOptions = (): SelectOption[] =>
     calendarTypeValues.map((value) => ({
         value,
@@ -52,6 +123,22 @@ export const resolveAcademicCalendarOption = (
     };
 };
 
+export const defaultAssessmentCalendarDates = (calendar: AcademicCalendar) => ({
+    start_date: calendar.attributes.openingDate,
+    end_date: calendar.attributes.closingDate,
+});
+
+export const findAcademicCalendarById = (
+    academicCalendars: AcademicCalendar[],
+    academicCalendarId?: string | number | null,
+): AcademicCalendar | undefined => {
+    if (!academicCalendarId) {
+        return undefined;
+    }
+
+    return academicCalendars.find((calendar) => String(calendar.id) === String(academicCalendarId));
+};
+
 export const useAssessmentCalendars = (assessmentType: AssessmentType) => {
     const { moreActionButton, onDelete, onForceDelete, onRestore } = useDataTables();
     const assessmentTypeId = String(assessmentType.id);
@@ -61,10 +148,23 @@ export const useAssessmentCalendars = (assessmentType: AssessmentType) => {
         const { can } = props?.auth as Auth;
 
         return [
+            {
+                header: trans_choice('trans.type', 1),
+                accessorKey: 'attributes.type',
+                cell: ({ row }: { row: { original: AssessmentCalendar } }) =>
+                    trans_choice(`academic_calendar.${row.original.attributes?.type}`, 1),
+            },
+            {
+                header: trans_choice('academic_calendar.academic_calendar', 1),
+                accessorKey: 'attributes.academicCalendarName',
+            },
+            {
+                header: trans_choice('trans.assessment_type', 1),
+                accessorKey: 'attributes.assessmentTypeName',
+                cell: () => assessmentType.attributes?.name ?? '',
+            },
             { header: trans('trans.start_date'), accessorKey: 'attributes.startDate' },
             { header: trans('trans.end_date'), accessorKey: 'attributes.endDate' },
-            { header: trans_choice('trans.type', 1), accessorKey: 'attributes.typeLabel' },
-            { header: trans_choice('academic_calendar.academic_calendar', 1), accessorKey: 'attributes.academicCalendarName' },
             {
                 header: trans_choice('trans.action', 2),
                 accessorKey: 'actions',
@@ -126,7 +226,7 @@ export const useAssessmentCalendars = (assessmentType: AssessmentType) => {
         { transChoiceKey: 'assessment_calendar' },
     ];
 
-    const formSchema = () =>
+    const formSchema = (context: AssessmentCalendarFormSchemaContext) =>
         z
             .object({
                 academic_calendar_id: z.string().nonempty(
@@ -149,6 +249,86 @@ export const useAssessmentCalendars = (assessmentType: AssessmentType) => {
             .refine((data) => new Date(data.end_date) >= new Date(data.start_date), {
                 message: trans('trans.end_date_start_date_validation'),
                 path: ['end_date'],
+            })
+            .superRefine((data, ctx) => {
+                const selectedAcademicCalendar = context.academicCalendars.find(
+                    (calendar) => String(calendar.id) === String(data.academic_calendar_id),
+                );
+
+                if (!selectedAcademicCalendar) {
+                    return;
+                }
+
+                if (selectedAcademicCalendar.attributes?.type !== data.type) {
+                    ctx.addIssue({
+                        code: z.ZodIssueCode.custom,
+                        message: trans('trans.assessment_calendar_type_mismatch'),
+                        path: ['type'],
+                    });
+                }
+
+                const openingDate = selectedAcademicCalendar.attributes?.openingDate;
+                const closingDate = selectedAcademicCalendar.attributes?.closingDate;
+
+                if (openingDate && closingDate) {
+                    const startDate = new Date(data.start_date);
+                    const endDate = new Date(data.end_date);
+                    const opening = new Date(openingDate);
+                    const closing = new Date(closingDate);
+
+                    if (startDate < opening || startDate > closing) {
+                        ctx.addIssue({
+                            code: z.ZodIssueCode.custom,
+                            message: trans('trans.assessment_calendar_date_out_of_range', {
+                                field: trans('trans.start_date'),
+                                opening: openingDate,
+                                closing: closingDate,
+                            }),
+                            path: ['start_date'],
+                        });
+                    }
+
+                    if (endDate < opening || endDate > closing) {
+                        ctx.addIssue({
+                            code: z.ZodIssueCode.custom,
+                            message: trans('trans.assessment_calendar_date_out_of_range', {
+                                field: trans('trans.end_date'),
+                                opening: openingDate,
+                                closing: closingDate,
+                            }),
+                            path: ['end_date'],
+                        });
+                    }
+                }
+
+                const duplicateExists = context.existingRecords.some(
+                    (record) =>
+                        String(record.attributes?.academicCalendarId) === String(data.academic_calendar_id) &&
+                        String(record.id) !== String(context.editingId ?? ''),
+                );
+
+                if (duplicateExists) {
+                    ctx.addIssue({
+                        code: z.ZodIssueCode.custom,
+                        message: trans('trans.assessment_calendar_academic_calendar_already_used'),
+                        path: ['academic_calendar_id'],
+                    });
+                }
+
+                const existingCount = countExistingForType(context.existingRecords, data.type, context.editingId);
+                const maxAllowed = getAssessmentCalendarLimit(data.type, context.limits);
+
+                if (existingCount >= maxAllowed) {
+                    ctx.addIssue({
+                        code: z.ZodIssueCode.custom,
+                        message: trans('trans.assessment_calendar_year_limit_reached', {
+                            type: trans_choice(`academic_calendar.${data.type}`, 1),
+                            max: String(maxAllowed),
+                            year: String(new Date().getFullYear()),
+                        }),
+                        path: ['type'],
+                    });
+                }
             });
 
     const saveAssessmentCalendar = (form: InertiaForm<any>, assessmentCalendar?: AssessmentCalendar) => {
@@ -191,4 +371,6 @@ export const useAssessmentCalendars = (assessmentType: AssessmentType) => {
 
 export type AssessmentCalendarPageProps = {
     academicCalendars: AcademicCalendar[];
+    existingAssessmentCalendars: AssessmentCalendar[] | { data?: AssessmentCalendar[] };
+    assessmentCalendarLimits: AssessmentCalendarLimits;
 };
