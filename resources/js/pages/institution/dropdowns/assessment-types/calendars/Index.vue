@@ -1,9 +1,14 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
+import { computed } from 'vue';
 
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import DataTable from '@/components/core/table/DataTable.vue';
-import { useAssessmentCalendars } from '@/composables/institution/useAssessmentCalendars';
+import {
+    isAllAssessmentCalendarLimitsReached,
+    normalizeAssessmentCalendarRecords,
+    useAssessmentCalendars,
+} from '@/composables/institution/useAssessmentCalendars';
 import { AssessmentType } from '@/types/institution';
 import { AuthObject, DataFilters, DataListProps } from '@/types/data-pagination';
 import CreateEdit from './partials/CreateEdit.vue';
@@ -22,6 +27,14 @@ const props = defineProps<
 
 const { createAssessmentCalendarColumns, breadcrumbs, onOpenModal } = useAssessmentCalendars(props.assessmentType);
 const can = props?.auth?.can;
+
+const existingRecords = computed(() => normalizeAssessmentCalendarRecords(props.existingAssessmentCalendars));
+
+const disableCreate = computed(
+    () =>
+        !can['create:assessment-calendar'] ||
+        isAllAssessmentCalendarLimitsReached(existingRecords.value, props.assessmentCalendarLimits),
+);
 </script>
 
 <template>
@@ -39,8 +52,13 @@ const can = props?.auth?.can;
             :pagination="{ ...assessmentCalendars.links, ...assessmentCalendars.meta }"
             :columns="createAssessmentCalendarColumns()"
             :on-create="() => onOpenModal(can['create:assessment-calendar'])"
-            :disable-create="!can['create:assessment-calendar']"
+            :disable-create="disableCreate"
         />
-        <CreateEdit :assessment-type="assessmentType" :academic-calendars="academicCalendars" />
+        <CreateEdit
+            :assessment-type="assessmentType"
+            :academic-calendars="academicCalendars"
+            :existing-assessment-calendars="existingAssessmentCalendars"
+            :assessment-calendar-limits="assessmentCalendarLimits"
+        />
     </PageContainer>
 </template>
