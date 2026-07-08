@@ -10,6 +10,7 @@ use App\Http\Resources\Students\StudentResource;
 use App\Http\Resources\Users\UserResource;
 use App\Models\Students\Student;
 use App\Models\Students\StudentApplication;
+use App\Models\Students\StudentEnrolment;
 use App\Models\Users\User;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
@@ -58,11 +59,24 @@ class UserStudentController extends Controller
     public function updateProgram(StudentApplication $studentApplication, UpdateStudentApplicationRequest $request)
     {
         $this->authorize('update', $studentApplication);
+        $validated = $request->validated();
 
-        DB::transaction(function () use ($studentApplication, $request) {
+        DB::transaction(function () use ($studentApplication, $validated) {
             $oldInstitutionDepartmentId = $studentApplication->institution_department_id;
-            $studentApplication->update($request->validated());
-            if ($oldInstitutionDepartmentId != $request->institution_department_id && $studentApplication->student->student_number_generated) {
+            $studentApplication->update($validated);
+
+            $studentEnrolment = StudentEnrolment::query()
+                ->where('student_application_id', $studentApplication->id)
+                ->first();
+
+            $studentEnrolment?->update([
+                'institution_department_id' => $validated['institution_department_id'],
+                'department_level_id' => $validated['department_level_id'],
+                'department_course_id' => $validated['department_course_id'],
+                'mode_of_study_id' => $validated['mode_of_study_id'],
+            ]);
+
+            if ($oldInstitutionDepartmentId != $validated['institution_department_id'] && $studentApplication->student->student_number_generated) {
                 $studentNumber = EnrolmentHelper::resolveStudentNumber($studentApplication);
                 $studentApplication->student->update([
                     'student_number' => $studentNumber,

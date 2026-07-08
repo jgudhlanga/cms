@@ -1,8 +1,16 @@
 <?php
 
 use App\Enums\Shared\WorkflowStepEnum;
+use App\Models\AcademicCalendars\AcademicCalendar;
+use App\Models\AcademicCalendars\AcademicYearOption;
+use App\Models\Institution\DepartmentCourse;
+use App\Models\Institution\DepartmentLevel;
 use App\Models\Institution\IntakePeriod;
+use App\Models\Institution\InstitutionDepartment;
+use App\Models\Institution\ModeOfStudy;
 use App\Models\Students\StudentApplication;
+use App\Models\Students\StudentEnrolment;
+use App\Models\Students\StudentEnrolmentStatus;
 use App\Models\Tenants\Tenant;
 use App\Models\Users\User;
 use Illuminate\Support\Str;
@@ -72,6 +80,143 @@ test('staff with update permission can update active intake application', functi
     $response = $this->actingAs($admin)->put(route('students.program-update', $program), $payload);
 
     $response->assertSuccessful();
+});
+
+test('root manage user can edit and update any application', function () {
+    $program = createVerifiedStudentApplication('PROF-ROOT-'.strtoupper(Str::random(4)));
+
+    $inactiveIntake = IntakePeriod::query()->create([
+        'tenant_id' => $program->tenant_id,
+        'name' => 'Root Intake '.Str::random(4),
+        'start_date' => now()->subYear()->startOfMonth()->toDateString(),
+        'end_date' => now()->subYear()->endOfMonth()->toDateString(),
+        'is_active' => false,
+    ]);
+
+    $program->update(['intake_period_id' => $inactiveIntake->id]);
+
+    $rootUser = User::factory()->create(['tenant_id' => $program->tenant_id]);
+    $rootUser->givePermissionTo('root:manage');
+
+    $this->actingAs($rootUser)
+        ->get(route('students.program-edit', $program))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page->component('students/EditStudentApplication'));
+
+    $payload = [
+        'institution_department_id' => $program->institution_department_id,
+        'department_level_id' => $program->department_level_id,
+        'department_course_id' => $program->department_course_id,
+        'mode_of_study_id' => $program->mode_of_study_id,
+    ];
+
+    $this->actingAs($rootUser)
+        ->put(route('students.program-update', $program), $payload)
+        ->assertSuccessful();
+});
+
+test('updating application syncs linked student enrolment fields', function () {
+    $program = createReviewStudentApplicationForConsolidation('PROF-SYNC-'.strtoupper(Str::random(4)));
+    IntakePeriod::query()->whereKey($program->intake_period_id)->update(['is_active' => true]);
+
+    $admin = User::factory()->create(['tenant_id' => $program->tenant_id]);
+    $admin->givePermissionTo('update:student-applications');
+
+    $targetInstitutionDepartment = InstitutionDepartment::query()->create([
+        'tenant_id' => $program->tenant_id,
+        'department_id' => $program->institutionDepartment->department_id,
+        'department_code' => 'SYNC-'.strtoupper(Str::random(6)),
+        'description' => 'Sync target department',
+    ]);
+
+    $targetDepartmentLevel = DepartmentLevel::query()->create([
+        'tenant_id' => $program->tenant_id,
+        'institution_department_id' => $targetInstitutionDepartment->id,
+        'level_id' => $program->departmentLevel->level_id,
+    ]);
+
+    $targetDepartmentCourse = DepartmentCourse::query()->create([
+        'tenant_id' => $program->tenant_id,
+        'institution_department_id' => $targetInstitutionDepartment->id,
+        'course_id' => $program->departmentCourse->course_id,
+        'show_on_current_application_period' => true,
+    ]);
+
+    $targetModeOfStudy = ModeOfStudy::factory()->create();
+    $academicYearOption = AcademicYearOption::query()->create([
+        'name' => 'Sync Year Option',
+        'slug' => 'sync-year-option-'.strtolower(Str::random(6)),
+    ]);
+    $academicCalendar = AcademicCalendar::query()->create([
+        'calendar_year' => (string) now()->year,
+        'type' => 'term',
+        'opening_date' => now()->startOfMonth()->toDateString(),
+        'closing_date' => now()->endOfMonth()->toDateString(),
+    ]);
+    $studentEnrolmentStatus = StudentEnrolmentStatus::query()->create([
+        'name' => 'Active Sync Status',
+        'slug' => 'active-sync-status-'.strtolower(Str::random(6)),
+    ]);
+
+    $studentEnrolment = StudentEnrolment::query()->create([
+        'student_id' => $program->student_id,
+        'student_application_id' => $program->id,
+        'institution_department_id' => $program->institution_department_id,
+        'department_level_id' => $program->department_level_id,
+        'department_course_id' => $program->department_course_id,
+        'academic_year_option_id' => $academicYearOption->id,
+        'academic_calendar_id' => $academicCalendar->id,
+        'mode_of_study_id' => $program->mode_of_study_id,
+        'student_enrolment_status_id' => $studentEnrolmentStatus->id,
+    ]);
+
+    $payload = [
+        'institution_department_id' => $targetInstitutionDepartment->id,
+        'department_level_id' => $targetDepartmentLevel->id,
+        'department_course_id' => $targetDepartmentCourse->id,
+        'mode_of_study_id' => $targetModeOfStudy->id,
+    ];
+
+    $this->actingAs($admin)
+        ->put(route('students.program-update', $program), $payload)
+        ->assertSuccessful();
+
+    $program->refresh();
+    $studentEnrolment->refresh();
+
+    expect($program->institution_department_id)->toBe($targetInstitutionDepartment->id)
+        ->and($program->department_level_id)->toBe($targetDepartmentLevel->id)
+        ->and($program->department_course_id)->toBe($targetDepartmentCourse->id)
+        ->and($program->mode_of_study_id)->toBe($targetModeOfStudy->id)
+        ->and($studentEnrolment->institution_department_id)->toBe($targetInstitutionDepartment->id)
+        ->and($studentEnrolment->department_level_id)->toBe($targetDepartmentLevel->id)
+        ->and($studentEnrolment->department_course_id)->toBe($targetDepartmentCourse->id)
+        ->and($studentEnrolment->mode_of_study_id)->toBe($targetModeOfStudy->id);
+});
+
+test('updating application without linked enrolment does not create student enrolment', function () {
+    $program = createReviewStudentApplicationForConsolidation('PROF-NOENR-'.strtoupper(Str::random(4)));
+    IntakePeriod::query()->whereKey($program->intake_period_id)->update(['is_active' => true]);
+
+    $admin = User::factory()->create(['tenant_id' => $program->tenant_id]);
+    $admin->givePermissionTo('update:student-applications');
+
+    $targetModeOfStudy = ModeOfStudy::factory()->create();
+
+    $payload = [
+        'institution_department_id' => $program->institution_department_id,
+        'department_level_id' => $program->department_level_id,
+        'department_course_id' => $program->department_course_id,
+        'mode_of_study_id' => $targetModeOfStudy->id,
+    ];
+
+    expect(StudentEnrolment::query()->where('student_application_id', $program->id)->count())->toBe(0);
+
+    $this->actingAs($admin)
+        ->put(route('students.program-update', $program), $payload)
+        ->assertSuccessful();
+
+    expect(StudentEnrolment::query()->where('student_application_id', $program->id)->count())->toBe(0);
 });
 
 test('staff without update permission cannot update application', function () {
