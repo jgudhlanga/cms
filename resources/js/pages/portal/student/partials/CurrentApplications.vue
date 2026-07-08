@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import ApplicationCard from '@/components/students/applications/ApplicationCard.vue';
 import { useStudents } from '@/composables/students/useStudents';
+import { hasAbility } from '@/lib/permissions';
 import { buildProgramEditUrl, navigationOptionsFromQuery, parseStudentShowQuery } from '@/lib/studentShowNavigation';
 import ComponentHeader from '@/pages/dashboard/components/ComponentHeader.vue';
 import { Enrolment } from '@/types/enrolments';
@@ -32,12 +33,18 @@ const navigationOptions = computed(() => {
 
     return navigationOptionsFromQuery(parseStudentShowQuery(searchParams));
 });
+const canRootManageApplications = hasAbility('root:manage');
 
 const programEditUrl = (applicationId: string | number) =>
     buildProgramEditUrl(applicationId, navigationOptions.value);
 
-const canEditApplication = (application: Enrolment): boolean =>
-    props.editable && props.canEdit && showEditProgramButton(application, props.activeIntakePeriodIds);
+const canEditApplication = (application: Enrolment): boolean => {
+    if (!props.editable) {
+        return false;
+    }
+
+    return (props.canEdit && showEditProgramButton(application, props.activeIntakePeriodIds)) || canRootManageApplications;
+};
 </script>
 
 <template>
