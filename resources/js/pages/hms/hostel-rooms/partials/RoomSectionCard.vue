@@ -176,7 +176,7 @@ const onUnlink = (amenityId: number | string) => {
                 </div>
             </div>
 
-            <div class="space-y-2.5">
+            <div v-if="availableAmenities.length > 0" class="space-y-2.5">
                 <p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
                     {{ $t('hms.section_available_amenities') }}
                 </p>
@@ -193,12 +193,6 @@ const onUnlink = (amenityId: number | string) => {
                         {{ amenity.name }}
                         <BaseIcon :name="IconName.add" class="h-3 w-3 text-primary" />
                     </button>
-                    <span
-                        v-if="availableAmenities.length === 0"
-                        class="rounded-xl border border-dashed border-border px-3 py-1.5 text-xs text-muted-foreground"
-                    >
-                        {{ $t('hms.no_amenities_found') }}
-                    </span>
                 </div>
             </div>
         </div>

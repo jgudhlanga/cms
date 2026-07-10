@@ -1,11 +1,8 @@
 <script setup lang="ts">
 import AccommodationApplicationForm from '@/components/students/accommodation/AccommodationApplicationForm.vue';
+import AccommodationOpenApplicationCard from '@/components/students/accommodation/AccommodationOpenApplicationCard.vue';
 import BaseAlert from '@/components/core/alert/BaseAlert.vue';
-import { IconButton } from '@/components/core/button';
-import BaseButton from '@/components/core/button/BaseButton.vue';
-import { ButtonSize } from '@/enums/buttons';
-import { ColorVariant } from '@/enums/colors';
-import { IconName } from '@/enums/icons';
+import BaseIcon from '@/components/core/icon/BaseIcon.vue';
 import { useUtils } from '@/composables/core/useUtils';
 import { TypeVariant } from '@/enums/type-variants';
 import type {
@@ -15,8 +12,6 @@ import type {
     StudentAccommodationFeesResponse,
 } from '@/types/hms';
 import type { InertiaForm } from '@inertiajs/vue3';
-import { router } from '@inertiajs/vue3';
-import { trans } from 'laravel-vue-i18n';
 import { computed } from 'vue';
 
 interface FormShape {
@@ -75,107 +70,51 @@ const showForm = computed(
 
 const showNotFoundMessage = computed(() => props.lookup?.found === false);
 
-const isAwaitingPayment = computed(
-    () =>
-        props.openApplication?.attributes.status === 'awaiting-payment'
-        || props.openApplication?.attributes.status === 'partially-paid',
-);
+const isPortal = computed(() => props.context === 'portal');
 
-const showPaymentCta = computed(
-    () =>
-        props.context === 'portal'
-        && isAwaitingPayment.value
-        && !props.fees?.isFullyPaid,
-);
-
-const showFeesPaidConfirmation = computed(
-    () =>
-        props.context === 'portal'
-        && props.fees?.isFullyPaid
-        && ['awaiting-payment', 'partially-paid', 'paid'].includes(
-            props.openApplication?.attributes.status ?? '',
-        ),
-);
-
-const openApplicationStatusLabel = computed(() => {
-    if (!props.openApplication) {
-        return '';
-    }
-
-    const status = props.openApplication.attributes.status;
-
-    if (
-        props.fees?.isFullyPaid
-        && (status === 'awaiting-payment' || status === 'partially-paid')
-    ) {
-        return trans('hms.application_status_paid');
-    }
-
-    return props.openApplication.attributes.statusLabel
-        ?? props.openApplication.attributes.status
-        ?? '';
+const allocationDateRange = computed(() => {
+    const attrs = props.activeAllocation?.attributes;
+    return formatApplicationDateRange(attrs?.checkIn, attrs?.checkOut);
 });
+
+const currentApplication = computed(() => sortedApplications.value[0] ?? null);
 
 const adminApplicationLink = (id: string | number) =>
     route('hostels.applications.show', { hostel_application: id });
-
-const goToPayment = () => {
-    router.visit(route('portal.profile.accommodations.pay'));
-};
-
-const reloadPage = () => {
-    window.location.reload();
-};
 </script>
 
 <template>
     <div class="flex flex-col gap-4">
+        <template v-if="activeAllocation && isPortal">
+            <div class="flex flex-wrap items-center gap-2 text-sm">
+                <BaseIcon name="history" class="h-4 w-4 shrink-0 text-muted-foreground" />
+                <span class="font-medium text-foreground">
+                    {{ currentApplication?.attributes.statusLabel ?? $t('students.accommodation_active_allocation') }}
+                </span>
+                <span class="font-semibold text-foreground">{{ allocationDateRange }}</span>
+                <span class="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+                    {{ $t('students.accommodation_current') }}
+                </span>
+            </div>
+            <p class="flex items-start gap-1.5 text-sm text-muted-foreground">
+                <BaseIcon name="info" class="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                {{ $t('students.accommodation_has_allocation') }}
+            </p>
+        </template>
+
         <BaseAlert
-            v-if="activeAllocation"
+            v-else-if="activeAllocation"
             :description="$t('students.accommodation_has_allocation')"
             :type="TypeVariant.info"
         />
 
-        <div
+        <AccommodationOpenApplicationCard
             v-else-if="openApplication"
-            class="rounded-lg border border-border bg-muted/20 p-3"
-        >
-            <div class="flex items-start justify-between gap-2">
-                <p class="min-w-0 flex-1 text-sm text-foreground">
-                    {{ $t('students.accommodation_open_application', {
-                        status: openApplicationStatusLabel,
-                    }) }}
-                </p>
-                <IconButton
-                    v-if="context === 'portal'"
-                    :icon="IconName.refresh"
-                    tone="header-primary"
-                    :aria-label="$t('trans.refresh')"
-                    class="shrink-0"
-                    @click="reloadPage"
-                />
-            </div>
-            <p
-                v-if="showFeesPaidConfirmation"
-                class="mt-2 text-sm text-emerald-600 dark:text-emerald-400"
-            >
-                {{ $t('students.accommodation_payment_received_awaiting_review') }}
-            </p>
-            <div v-else-if="showPaymentCta" class="mt-3 flex flex-col gap-2">
-                <p class="text-xs text-amber-600 dark:text-amber-400">
-                    {{ $t('students.accommodation_payment_required') }}
-                </p>
-                <div>
-                    <BaseButton
-                        type="button"
-                        :color="ColorVariant.primary"
-                        :size="ButtonSize.md"
-                        :title="$t('students.accommodation_proceed_to_payment')"
-                        @click="goToPayment"
-                    />
-                </div>
-            </div>
-        </div>
+            :open-application="openApplication"
+            :fees="fees"
+            :context="context"
+            :show-progress="false"
+        />
 
         <BaseAlert
             v-else-if="showNotFoundMessage"
@@ -205,7 +144,10 @@ const reloadPage = () => {
             @submit="emit('submit')"
         />
 
-        <div v-if="sortedApplications.length" class="rounded-xl border border-border bg-card p-4">
+        <div
+            v-if="sortedApplications.length && !(activeAllocation && isPortal)"
+            class="rounded-xl border border-border bg-card p-4"
+        >
             <h4 class="mb-3 text-sm font-semibold text-foreground">{{ $t('students.accommodation_application_history') }}</h4>
             <ul class="flex flex-col gap-2">
                 <li

@@ -1,14 +1,19 @@
 <script setup lang="ts">
+import AccommodationSectionEmpty from '@/components/students/accommodation/AccommodationSectionEmpty.vue';
 import DataLoadingSpinner from '@/components/core/loader/DataLoadingSpinner.vue';
 import type { HostelNotice, HostelNoticeType } from '@/types/hms';
+import { FileText } from 'lucide-vue-next';
 import { computed } from 'vue';
 
 interface Props {
     notices: HostelNotice[];
     isLoading: boolean;
+    context?: 'admin' | 'portal';
 }
 
-const props = defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+    context: 'admin',
+});
 
 function typeBadgeClass(type: HostelNoticeType, urgent?: boolean): string {
     if (urgent || type === 'urgent') {
@@ -29,22 +34,26 @@ function typeBadgeClass(type: HostelNoticeType, urgent?: boolean): string {
 const publishedNotices = computed(() =>
     props.notices.filter((n) => n.attributes.status === 'published'),
 );
+
+const isPortal = computed(() => props.context === 'portal');
 </script>
 
 <template>
     <div class="flex flex-col gap-4">
-        <p class="text-left text-sm text-muted-foreground">
+        <p
+            v-if="!isPortal"
+            class="text-left text-sm text-muted-foreground"
+        >
             {{ $t('students.accommodation_notices_count', { count: notices.length }) }}
         </p>
 
         <DataLoadingSpinner v-if="isLoading" />
 
-        <div
+        <AccommodationSectionEmpty
             v-else-if="notices.length === 0"
-            class="rounded-xl border border-dashed border-border py-8 text-center text-sm text-muted-foreground"
-        >
-            {{ $t('students.accommodation_no_notices') }}
-        </div>
+            :icon="FileText"
+            :message="$t('students.accommodation_no_notices')"
+        />
 
         <div v-else class="grid gap-3 sm:grid-cols-2">
             <article
