@@ -12,6 +12,7 @@ use Database\Seeders\Students\StudentEnrolmentStatusSeeder;
 use Illuminate\Database\Seeder;
 use Database\Seeders\HMS\HostelAmenitySeeder;
 use Database\Seeders\HMS\HostelRoomSectionSeeder;
+use Database\Seeders\HMS\RoomSectionAmenitySeeder;
 
 class DeploymentSeeder extends Seeder
 {
@@ -30,6 +31,7 @@ class DeploymentSeeder extends Seeder
             AssessmentTypesTableSeeder::class,
             HostelAmenitySeeder::class,
             HostelRoomSectionSeeder::class,
+            RoomSectionAmenitySeeder::class,
         ]);
     }
 }

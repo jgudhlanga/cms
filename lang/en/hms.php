@@ -68,6 +68,7 @@ return [
     'amenity_save_failed' => 'Failed to save amenity',
     'amenity_deleted' => 'Amenity deleted',
     'amenity_name_required' => 'Amenity name is required',
+    'market_value' => 'Market value',
     'no_amenities_found' => 'No amenities found',
 
     // ── Hostel show page ───────────────────────────────────────────────────

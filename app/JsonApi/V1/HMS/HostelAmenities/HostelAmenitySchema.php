@@ -8,6 +8,7 @@ use App\Models\HMS\HostelAmenity;
 use LaravelJsonApi\Eloquent\Contracts\Paginator;
 use LaravelJsonApi\Eloquent\Fields\DateTime;
 use LaravelJsonApi\Eloquent\Fields\ID;
+use LaravelJsonApi\Eloquent\Fields\Number;
 use LaravelJsonApi\Eloquent\Fields\Str;
 use LaravelJsonApi\Eloquent\Filters\WhereIdIn;
 use LaravelJsonApi\Eloquent\Pagination\PagePagination;
@@ -29,6 +30,7 @@ class HostelAmenitySchema extends Schema
             ID::make(),
             Str::make('name')->sortable(),
             Str::make('slug')->sortable(),
+            Number::make('marketValue', 'market_value')->sortable(),
             DateTime::make('createdAt', 'created_at')->sortable()->readOnly(),
             DateTime::make('updatedAt', 'updated_at')->sortable()->readOnly(),
             DateTime::make('deletedAt', 'deleted_at')->readOnly(),

@@ -17,6 +17,7 @@ class HostelAmenityRepository extends BaseRepository implements IHostelAmenityRe
     {
         return $this->hostelAmenity->create([
             'name' => trim((string) ($data['name'] ?? '')),
+            'market_value' => $this->resolveMarketValue($data),
         ])->refresh();
     }
 
@@ -24,8 +25,18 @@ class HostelAmenityRepository extends BaseRepository implements IHostelAmenityRe
     {
         $hostelAmenity->update([
             'name' => trim((string) ($data['name'] ?? '')),
+            'market_value' => $this->resolveMarketValue($data),
         ]);
 
         return $hostelAmenity->refresh();
+    }
+
+    private function resolveMarketValue(array $data): ?float
+    {
+        if (! array_key_exists('market_value', $data) || $data['market_value'] === null || $data['market_value'] === '') {
+            return null;
+        }
+
+        return (float) $data['market_value'];
     }
 }

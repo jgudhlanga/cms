@@ -74,6 +74,7 @@ export type HostelAmenity = {
     attributes: {
         name: string;
         slug: string;
+        marketValue?: number | null;
         createdAt?: string;
         updatedAt?: string;
         deletedAt?: string;

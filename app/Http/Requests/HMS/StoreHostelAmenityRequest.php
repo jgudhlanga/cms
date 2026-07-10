@@ -15,6 +15,7 @@ class StoreHostelAmenityRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
+            'market_value' => ['nullable', 'numeric', 'min:0'],
         ];
     }
 }

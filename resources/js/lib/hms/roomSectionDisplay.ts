@@ -29,6 +29,7 @@ const AMENITY_ICON_BY_SLUG: Record<string, IconName> = {
     lamp: IconName.lamp,
     'power-outlet': IconName.plug,
     desk: IconName.desk,
+    windows: IconName.windows,
 };
 
 export function amenityIconName(slugOrName: string | null | undefined): IconName {

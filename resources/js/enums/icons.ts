@@ -106,4 +106,5 @@ export enum IconName {
     desk = "desk",
     lamp = "lamp",
     plug = "plug",
+    windows = "windows",
 }

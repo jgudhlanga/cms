@@ -60,7 +60,7 @@ import {
 import { APP_MODULE_KEYS } from '@/lib/constants';
 
 export const useHms = () => {
-    const { formatDate, navigateTo } = useUtils();
+    const { formatDate, formatCurrency, navigateTo } = useUtils();
     const isLoading = ref(false);
     const isStatsLoading = ref(false);
     const { moreActionButton, onDelete, onRestore, onView, tag, textLink, actionButton } = useDataTables();
@@ -717,7 +717,15 @@ export const useHms = () => {
     const hostelAmenityColumns = () => {
         return [
             { header: trans_choice('hms.amenity', 1), accessorKey: 'attributes.name' },
-            { header: trans('trans.slug'), accessorKey: 'attributes.slug' },
+            {
+                header: trans('hms.market_value'),
+                accessorKey: 'attributes.marketValue',
+                cell: ({ row }: { row: { original: HostelAmenity } }) => {
+                    const marketValue = row.original.attributes.marketValue;
+
+                    return formatCurrency(marketValue != null ? String(marketValue) : undefined);
+                },
+            },
             {
                 header: trans_choice('trans.action', 2),
                 accessorKey: 'actions',

@@ -14,6 +14,7 @@ import { ref, watch } from 'vue';
 
 const form = useForm({
     name: '',
+    market_value: null as number | null,
 });
 
 const { modals } = useModalStore();
@@ -25,6 +26,7 @@ watch(modals!, () => {
     amenity.value = (getModalEdit(APP_MODULE_KEYS.hostel_amenities) as HostelAmenity | null) ?? null;
 
     form.name = amenity.value?.attributes.name ?? '';
+    form.market_value = amenity.value?.attributes.marketValue ?? null;
     form.defaults();
     form.clearErrors();
 });
@@ -69,6 +71,14 @@ const save = () => {
                     :is-required="true"
                     :error="form.errors.name"
                     @input="clearFormErrors(form, 'name')"
+                />
+                <BaseInput
+                    input-id="amenity_market_value"
+                    :label="$t('hms.market_value')"
+                    :type="TextFieldType.number"
+                    v-model="form.market_value"
+                    :error="form.errors.market_value"
+                    @input="clearFormErrors(form, 'market_value')"
                 />
             </div>
         </template>

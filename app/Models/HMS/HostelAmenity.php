@@ -23,7 +23,15 @@ class HostelAmenity extends Model
         'tenant_id',
         'name',
         'slug',
+        'market_value',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'market_value' => 'float',
+        ];
+    }
 
     public function rooms(): BelongsToMany
     {

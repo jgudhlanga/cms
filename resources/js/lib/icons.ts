@@ -99,6 +99,7 @@ import {
     Monitor,
     Lightbulb,
     Plug,
+    Grid2x2,
 } from 'lucide-vue-next';
 import type { Component } from 'vue';
 
@@ -210,6 +211,7 @@ const icons: Record<IconName, Component> = {
     [IconName.desk]: Monitor,
     [IconName.lamp]: Lightbulb,
     [IconName.plug]: Plug,
+    [IconName.windows]: Grid2x2,
 };
 
 export { IconName, icons };
