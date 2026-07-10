@@ -32,7 +32,7 @@ class SendHostelRoomAllocationEmail implements ShouldQueue
         }
 
         $allocation = HostelRoomAllocation::query()
-            ->with(['room.hostel'])
+            ->with(['room.hostel', 'section'])
             ->where('student_id', $application->student_id)
             ->active()
             ->latest('id')
@@ -55,6 +55,7 @@ class SendHostelRoomAllocationEmail implements ShouldQueue
             $name,
             (string) $hostel->name,
             (string) $room->name,
+            filled($allocation->section?->name) ? (string) $allocation->section->name : null,
             filled($room->floor_number) ? (string) $room->floor_number : null,
             $this->roomTypeLabel($room->room_type),
             $allocation->check_in?->format($dateFormat) ?? '',

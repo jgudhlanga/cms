@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import AccommodationApplicationForm from '@/components/students/accommodation/AccommodationApplicationForm.vue';
 import BaseAlert from '@/components/core/alert/BaseAlert.vue';
+import { IconButton } from '@/components/core/button';
 import BaseButton from '@/components/core/button/BaseButton.vue';
 import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
+import { IconName } from '@/enums/icons';
+import { useUtils } from '@/composables/core/useUtils';
 import { TypeVariant } from '@/enums/type-variants';
 import type {
     HostelAllocation,
@@ -38,6 +41,18 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+
+const { formatDate } = useUtils();
+
+const formatApplicationDateRange = (
+    checkIn?: string | null,
+    checkOut?: string | null,
+): string => {
+    const formattedCheckIn = checkIn ? formatDate(checkIn, 'L') : '—';
+    const formattedCheckOut = checkOut ? formatDate(checkOut, 'L') : '—';
+
+    return `${formattedCheckIn} — ${formattedCheckOut}`;
+};
 
 const emit = defineEmits<{
     submit: [];
@@ -107,6 +122,10 @@ const adminApplicationLink = (id: string | number) =>
 const goToPayment = () => {
     router.visit(route('portal.profile.accommodations.pay'));
 };
+
+const reloadPage = () => {
+    window.location.reload();
+};
 </script>
 
 <template>
@@ -121,11 +140,21 @@ const goToPayment = () => {
             v-else-if="openApplication"
             class="rounded-lg border border-border bg-muted/20 p-3"
         >
-            <p class="text-sm text-foreground">
-                {{ $t('students.accommodation_open_application', {
-                    status: openApplicationStatusLabel,
-                }) }}
-            </p>
+            <div class="flex items-start justify-between gap-2">
+                <p class="min-w-0 flex-1 text-sm text-foreground">
+                    {{ $t('students.accommodation_open_application', {
+                        status: openApplicationStatusLabel,
+                    }) }}
+                </p>
+                <IconButton
+                    v-if="context === 'portal'"
+                    :icon="IconName.refresh"
+                    tone="header-primary"
+                    :aria-label="$t('trans.refresh')"
+                    class="shrink-0"
+                    @click="reloadPage"
+                />
+            </div>
             <p
                 v-if="showFeesPaidConfirmation"
                 class="mt-2 text-sm text-emerald-600 dark:text-emerald-400"
@@ -189,7 +218,10 @@ const goToPayment = () => {
                             {{ application.attributes.statusLabel ?? application.attributes.status }}
                         </p>
                         <p class="text-xs text-muted-foreground">
-                            {{ application.attributes.checkIn }} — {{ application.attributes.checkOut }}
+                            {{ formatApplicationDateRange(
+                                application.attributes.checkIn,
+                                application.attributes.checkOut,
+                            ) }}
                         </p>
                     </div>
                     <a

@@ -7,6 +7,7 @@ use App\Enums\Shared\TenantEnum;
 use App\Models\HMS\HostelAmenity;
 use App\Models\HMS\HostelApplication;
 use App\Models\HMS\HostelRoomAllocation;
+use App\Services\HMS\HostelRoomSectionService;
 use App\Models\Tenants\Tenant;
 use App\Models\Users\User;
 use Laravel\Sanctum\Sanctum;
@@ -232,7 +233,55 @@ test('json api allocation includes amenities when attached to room', function ()
         ->get(route('v1.json.hms.hostel-room-allocations.index'))
         ->assertSuccessful()
         ->assertJsonPath('data.0.id', (string) $allocation->id)
-        ->assertJsonPath('data.0.attributes.amenities.0', 'Bed');
+        ->assertJsonPath('data.0.attributes.amenities.0.name', 'Bed')
+        ->assertJsonPath('data.0.attributes.amenities.0.slug', 'bed');
+});
+
+test('json api allocation includes section amenities with market value when allocated to section', function () {
+    $tenant = Tenant::query()->firstOrFail();
+    $user = User::factory()->create(['tenant_id' => $tenant->id]);
+    $user->givePermissionTo('viewAny:hostel-room-allocations');
+    Sanctum::actingAs($user);
+
+    $amenity = HostelAmenity::query()->firstOrCreate(
+        [
+            'tenant_id' => TenantEnum::HARARE_POLY->id(),
+            'slug' => 'bed',
+        ],
+        [
+            'name' => 'Bed',
+            'market_value' => 125.5,
+        ],
+    );
+    $amenity->update(['market_value' => 125.5]);
+
+    $student = createStudentForAllocationIndexTest();
+    $room = ensureHostelRoomWithCapacity('Hostel D', 'SECTION-AMENITY-ROOM');
+    $sections = app(HostelRoomSectionService::class)->ensureSectionsForRoom($room);
+    $section = $sections->firstWhere('name', 'A');
+    $section->amenities()->sync([$amenity->id]);
+
+    $allocation = HostelRoomAllocation::withoutEvents(fn () => HostelRoomAllocation::query()->create([
+        'tenant_id' => TenantEnum::HARARE_POLY->id(),
+        'hostel_room_id' => $room->id,
+        'hostel_room_section_id' => $section->id,
+        'student_id' => $student->id,
+        'type' => 'direct',
+        'status' => HostelAllocationStatusEnum::ACTIVE,
+        'check_in' => now()->toDateString(),
+        'check_out' => now()->addMonths(4)->toDateString(),
+    ]));
+
+    $this
+        ->jsonApi('hostel-room-allocations')
+        ->filter(['student' => (string) $student->id])
+        ->get(route('v1.json.hms.hostel-room-allocations.index'))
+        ->assertSuccessful()
+        ->assertJsonPath('data.0.id', (string) $allocation->id)
+        ->assertJsonPath('data.0.attributes.sectionName', 'A')
+        ->assertJsonPath('data.0.attributes.amenities.0.name', 'Bed')
+        ->assertJsonPath('data.0.attributes.amenities.0.slug', 'bed')
+        ->assertJsonPath('data.0.attributes.amenities.0.marketValue', 125.5);
 });
 
 test('json api hostel applications can be filtered by student', function () {

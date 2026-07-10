@@ -125,6 +125,13 @@ export type HostelAllocationType = 'direct' | 'apprentice' | 'guest' | 'other';
 
 export type HostelAllocationStatus = 'active' | 'checked-out' | 'closed' | 'pending';
 
+export type HostelAllocationAmenity = {
+    id: number;
+    name: string;
+    slug?: string | null;
+    marketValue?: number | null;
+};
+
 export type HostelAllocation = {
     type: string;
     id: number | string;
@@ -151,7 +158,9 @@ export type HostelAllocation = {
         maxOccupancy?: number | null;
         currentOccupancy?: number | null;
         occupancyLabel?: string | null;
-        amenities?: string[];
+        sectionId?: number | null;
+        sectionName?: string | null;
+        amenities?: HostelAllocationAmenity[];
         createdAt?: string;
         updatedAt?: string;
         deletedAt?: string;
@@ -225,6 +234,20 @@ export type HostelApplicationApprovalRoomOption = {
     currentOccupancy: number;
     availableBeds: number;
     occupancyLabel: string;
+};
+
+export type HostelApplicationAllocationPreview = {
+    hostelId: number;
+    hostelName: string;
+    roomId: number;
+    roomName: string;
+    sectionId: number;
+    sectionName: string;
+    floorNumber?: string | null;
+};
+
+export type HostelApplicationAllocationPreviewResponse = {
+    preview: HostelApplicationAllocationPreview | null;
 };
 
 export type HostelApplicationPaymentVerification = {

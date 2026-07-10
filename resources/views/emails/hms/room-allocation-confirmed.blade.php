@@ -8,6 +8,10 @@
 
 **{{ __('hms.hostel_room_allocation_email_room') }}:** {{ $roomName }}
 
+@if(filled($sectionName))
+**{{ __('hms.hostel_room_allocation_email_section') }}:** {{ $sectionName }}
+@endif
+
 @if(filled($floorNumber))
 **{{ __('hms.hostel_room_allocation_email_floor') }}:** {{ $floorNumber }}
 @endif

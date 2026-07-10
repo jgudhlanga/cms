@@ -303,3 +303,61 @@ it('rejects a second active allocation on the same room section', function (): v
         'check_out' => now()->addMonths(4)->toDateString(),
     ]))->toThrow(ValidationException::class);
 });
+
+it('preview allocation matches the room and section assigned on approval', function (): void {
+    $tenantId = TenantEnum::HARARE_POLY->id();
+    $student = createStudentForAllocationIndexTest();
+
+    $hostel = Hostel::query()->create([
+        'tenant_id' => $tenantId,
+        'name' => 'Hostel Preview',
+        'location' => 'East',
+        'floor_count' => 2,
+        'rooms_count' => 1,
+        'capacity' => 2,
+        'status' => 'active',
+        'type' => 'male',
+    ]);
+
+    $room = HostelRoom::query()->create([
+        'tenant_id' => $tenantId,
+        'hostel_id' => $hostel->id,
+        'name' => 'PREVIEW-01',
+        'room_type' => 'double',
+        'capacity' => 2,
+        'max_occupancy' => 2,
+        'current_occupancy' => 0,
+        'status' => 'vacant',
+        'floor_number' => 1,
+    ]);
+
+    disableAllHmsApprovalRequirements($tenantId)->update(['auto_allocate_rooms' => true]);
+
+    $application = HostelApplication::withoutEvents(fn () => HostelApplication::query()->create([
+        'tenant_id' => $tenantId,
+        'student_id' => $student->id,
+        'gender_id' => $student->gender_id,
+        'type' => HostelApplicationTypeEnum::STUDENT,
+        'status' => HostelApplicationStatusEnum::PAID,
+        'next_of_kin_name' => 'Kin Name',
+        'next_of_kin_contact' => '0771234567',
+        'check_in' => now()->toDateString(),
+        'check_out' => now()->addMonths(4)->toDateString(),
+    ]));
+
+    $service = app(HostelApplicationApprovalService::class);
+    $preview = $service->previewAllocation($application);
+
+    expect($preview)->not->toBeNull()
+        ->and($preview['hostelName'])->toBe('Hostel Preview')
+        ->and($preview['roomName'])->toBe('PREVIEW-01')
+        ->and($preview['sectionName'])->toBe('A')
+        ->and($preview['roomId'])->toBe($room->id);
+
+    $service->approve($application);
+
+    $allocation = HostelRoomAllocation::query()->where('student_id', $student->id)->latest('id')->first();
+
+    expect($allocation->hostel_room_id)->toBe($preview['roomId'])
+        ->and($allocation->hostel_room_section_id)->toBe($preview['sectionId']);
+});

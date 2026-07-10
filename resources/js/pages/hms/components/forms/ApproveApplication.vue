@@ -10,11 +10,13 @@ import { SizeVariant } from '@/enums/sizes';
 import { closeModal, getModalEdit } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
 import { clearFormErrors } from '@/lib/forms';
+import AllocationPreviewCard from '@/pages/hms/applications/partials/AllocationPreviewCard.vue';
 import { useHms } from '@/composables/hms/useHms';
 import { useHmsStore } from '@/store/hms/useHmsStore';
 import { useModalStore } from '@/store/core/useModalStore';
 import type {
     HostelApplication,
+    HostelApplicationAllocationPreview,
     HostelApplicationApprovalHostelOption,
     HostelApplicationApprovalOptionsResponse,
     HostelApplicationApprovalRoomOption,
@@ -24,14 +26,16 @@ import { useForm } from '@inertiajs/vue3';
 import { trans } from 'laravel-vue-i18n';
 import { computed, ref, watch } from 'vue';
 
-const { fetchApplicationApprovalOptions, fetchApplicationApprovalRooms, fetchHostelRoomsForApplication, approveApplication } = useHms();
+const { fetchApplicationApprovalOptions, fetchApplicationApprovalRooms, fetchApplicationAllocationPreview, fetchHostelRoomsForApplication, approveApplication } = useHms();
 const { modals } = useModalStore();
 const hmsStore = useHmsStore();
 
 const application = ref<HostelApplication | null>(null);
 const options = ref<HostelApplicationApprovalOptionsResponse | null>(null);
+const allocationPreview = ref<HostelApplicationAllocationPreview | null>(null);
 const isLoadingHostels = ref(false);
 const isLoadingRooms = ref(false);
+const isLoadingPreview = ref(false);
 const roomsLoaded = ref(false);
 const selectedHostel = ref<SelectOption | string | number | null>(null);
 const selectedRoom = ref<SelectOption | string | number | null>(null);
@@ -99,6 +103,28 @@ const showActionButton = computed(
         && (isAutoAllocationEnabled.value || hostelSelectOptions.value.some((option) => !option.disabled)),
 );
 
+const loadAllocationPreview = async (hostelRoomId?: number | null): Promise<void> => {
+    if (!application.value || !(options.value?.canApprove ?? false)) {
+        allocationPreview.value = null;
+        return;
+    }
+
+    if (!isAutoAllocationEnabled.value && (hostelRoomId ?? 0) < 1) {
+        allocationPreview.value = null;
+        return;
+    }
+
+    isLoadingPreview.value = true;
+    try {
+        allocationPreview.value = await fetchApplicationAllocationPreview(
+            application.value,
+            hostelRoomId ?? undefined,
+        );
+    } finally {
+        isLoadingPreview.value = false;
+    }
+};
+
 const loadHostels = async (): Promise<void> => {
     if (!application.value) {
         return;
@@ -116,6 +142,11 @@ const loadHostels = async (): Promise<void> => {
         selectedRoom.value = null;
         form.hostelRoomId = null;
         roomsLoaded.value = false;
+        allocationPreview.value = null;
+
+        if (response.canApprove && (response.autoAllocateRooms ?? false)) {
+            await loadAllocationPreview();
+        }
     } finally {
         isLoadingHostels.value = false;
     }
@@ -156,6 +187,7 @@ const onHostelChange = async (value: SelectOption | string | number | null): Pro
             options.value = { ...options.value, rooms: [] };
         }
         roomsLoaded.value = false;
+        allocationPreview.value = null;
         return;
     }
 
@@ -165,6 +197,7 @@ const onHostelChange = async (value: SelectOption | string | number | null): Pro
 watch(modals!, () => {
     application.value = getModalEdit(APP_MODULE_KEYS.hostel_application_approve) ?? null;
     options.value = null;
+    allocationPreview.value = null;
     selectedHostel.value = null;
     selectedRoom.value = null;
     form.reset();
@@ -179,11 +212,19 @@ watch(modals!, () => {
 watch(selectedRoom, (room) => {
     form.hostelRoomId = resolveSelectId(room);
     clearFormErrors(form, 'hostelRoomId');
+
+    const roomId = resolveSelectId(room);
+    if (roomId !== null) {
+        void loadAllocationPreview(roomId);
+    } else {
+        allocationPreview.value = null;
+    }
 });
 
 const onClose = (): void => {
     application.value = null;
     options.value = null;
+    allocationPreview.value = null;
     selectedHostel.value = null;
     selectedRoom.value = null;
     form.reset();
@@ -284,6 +325,22 @@ const save = async (): Promise<void> => {
                         <InputError :message="form.errors.hostelRoomId" />
                     </div>
                 </template>
+
+                <p v-if="isLoadingPreview" class="text-sm text-muted-foreground">
+                    {{ $t('trans.loading') }}…
+                </p>
+
+                <AllocationPreviewCard
+                    v-else-if="allocationPreview"
+                    :preview="allocationPreview"
+                />
+
+                <p
+                    v-else-if="(options?.canApprove ?? false) && (isAutoAllocationEnabled || form.hostelRoomId)"
+                    class="text-sm text-muted-foreground"
+                >
+                    {{ $t('hms.allocation_preview_unavailable') }}
+                </p>
 
                 <p v-else-if="isLoadingHostels" class="text-sm text-muted-foreground">
                     {{ $t('trans.loading') }}…

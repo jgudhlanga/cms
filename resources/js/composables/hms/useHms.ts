@@ -40,6 +40,8 @@ import type {
     HostelApplicationApprovalOptionsResponse,
     HostelApplicationApprovalRoomOption,
     HostelApplicationApprovalRoomsResponse,
+    HostelApplicationAllocationPreview,
+    HostelApplicationAllocationPreviewResponse,
     HostelApplicationPendingQueueResponse,
     HostelApplicationStudentLookupResponse,
     HostelFiltersState,
@@ -401,6 +403,27 @@ export const useHms = () => {
         } catch {
             errorAlert(trans('trans.load_data_failure', { data: trans('trans.data') }));
             return [];
+        }
+    };
+
+    const fetchApplicationAllocationPreview = async (
+        application: HostelApplication,
+        hostelRoomId?: number | null,
+    ): Promise<HostelApplicationAllocationPreview | null> => {
+        try {
+            const document = await HttpService.get(
+                route('v1.json.hostel-applications.allocationPreview', hostelApplicationRouteParam(application.id)),
+                {
+                    ...jsonApiRequestConfig(),
+                    ...(hostelRoomId ? { params: { hostelRoomId } } : {}),
+                },
+            );
+
+            const meta = document.meta as HostelApplicationAllocationPreviewResponse;
+
+            return meta?.preview ?? null;
+        } catch {
+            return null;
         }
     };
 
@@ -783,6 +806,7 @@ export const useHms = () => {
         fetchApplicationStudentLookup,
         fetchApplicationApprovalOptions,
         fetchApplicationApprovalRooms,
+        fetchApplicationAllocationPreview,
         fetchHostelRoomsForApplication,
         fetchPendingApplicationQueue,
         saveApplication,

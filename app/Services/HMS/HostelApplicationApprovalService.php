@@ -22,6 +22,53 @@ class HostelApplicationApprovalService
         protected HostelRoomSectionService $roomSectionService,
     ) {}
 
+    /**
+     * @return array{
+     *     hostelId: int,
+     *     hostelName: string,
+     *     roomId: int,
+     *     roomName: string,
+     *     sectionId: int,
+     *     sectionName: string,
+     *     floorNumber: ?string,
+     * }|null
+     */
+    public function previewAllocation(HostelApplication $application, ?int $hostelRoomId = null): ?array
+    {
+        $application->loadMissing(['student']);
+
+        $settings = HmsSetting::resolveForTenant($application->tenant_id);
+
+        $room = ($hostelRoomId ?? 0) > 0
+            ? $this->resolveManualRoom($application, $hostelRoomId)
+            : ($settings->auto_allocate_rooms
+                ? $this->resolveAutomaticRoom($application)
+                : null);
+
+        if ($room === null) {
+            return null;
+        }
+
+        $this->roomSectionService->ensureSectionsForRoom($room);
+        $section = $this->resolveFreeSection($room);
+
+        if ($section === null) {
+            return null;
+        }
+
+        $room->loadMissing('hostel');
+
+        return [
+            'hostelId' => (int) $room->hostel_id,
+            'hostelName' => (string) $room->hostel->name,
+            'roomId' => (int) $room->id,
+            'roomName' => (string) $room->name,
+            'sectionId' => (int) $section->id,
+            'sectionName' => (string) $section->name,
+            'floorNumber' => filled($room->floor_number) ? (string) $room->floor_number : null,
+        ];
+    }
+
     public function approve(HostelApplication $application, ?int $hostelRoomId = null): void
     {
         DB::transaction(function () use ($application, $hostelRoomId): void {

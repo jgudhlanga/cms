@@ -51,6 +51,7 @@ $server->resource('hostel-applications', HostelApplicationController::class)
         $actions->get('pending-queue', 'pendingQueue');
         $actions->withId()->get('approval-options', 'approvalOptions');
         $actions->withId()->get('approval-rooms', 'approvalRooms');
+        $actions->withId()->get('allocation-preview', 'allocationPreview');
     });
 
 $server->resource('hostel-queries', JsonApiController::class)

@@ -5,7 +5,6 @@ import BaseAccordionItem from '@/components/core/accordion/BaseAccordionItem.vue
 import DataLoadingSpinner from '@/components/core/loader/DataLoadingSpinner.vue';
 import Empty from '@/components/core/util/Empty.vue';
 import AccommodationApplicationSection from '@/components/students/accommodation/AccommodationApplicationSection.vue';
-import AccommodationDashboardSection from '@/components/students/accommodation/AccommodationDashboardSection.vue';
 import AccommodationFeesSection from '@/components/students/accommodation/AccommodationFeesSection.vue';
 import AccommodationLeavesSection from '@/components/students/accommodation/AccommodationLeavesSection.vue';
 import AccommodationMyRoomSection from '@/components/students/accommodation/AccommodationMyRoomSection.vue';
@@ -60,10 +59,6 @@ const { form, isSaving, saveValidationError, submit } = useStudentHostelApplicat
         await refresh();
         await services.loadAll();
     },
-);
-
-const openQueriesCount = computed(
-    () => services.queries.value.filter((q) => ['open', 'in-progress'].includes(q.attributes.status)).length,
 );
 
 const page = usePage();
@@ -123,22 +118,8 @@ const showNoAllocationHelper = computed(
         <BaseAccordion
             v-else
             class="w-full"
-            :default-value="['dashboard']"
+            :default-value="['my-room']"
         >
-            <BaseAccordionItem
-                value="dashboard"
-                :title="$t('students.accommodation_section_dashboard')"
-                :description="$t('students.accommodation_section_dashboard_desc')"
-            >
-                <AccommodationDashboardSection
-                    :active-allocation="activeAllocation"
-                    :open-application="openApplication"
-                    :fees="fees"
-                    :open-queries-count="openQueriesCount"
-                    :context="context"
-                />
-            </BaseAccordionItem>
-
             <BaseAccordionItem
                 value="my-room"
                 :title="$t('students.accommodation_section_my_room')"
@@ -147,6 +128,27 @@ const showNoAllocationHelper = computed(
                 <AccommodationMyRoomSection
                     :allocation="activeAllocation"
                     :roommates="roommates"
+                />
+            </BaseAccordionItem>
+
+            <BaseAccordionItem
+                value="application"
+                :title="$t('students.accommodation_section_application')"
+                :description="$t('students.accommodation_section_application_desc')"
+            >
+                <AccommodationApplicationSection
+                    :applications="applications"
+                    :active-allocation="activeAllocation"
+                    :open-application="openApplication"
+                    :lookup="lookup"
+                    :fees="fees"
+                    :can-apply="canApply"
+                    :apply-blockers="applyBlockers"
+                    :form="form"
+                    :is-saving="isSaving"
+                    :save-validation-error="saveValidationError"
+                    :context="context"
+                    @submit="submit"
                 />
             </BaseAccordionItem>
 
@@ -202,27 +204,6 @@ const showNoAllocationHelper = computed(
                     :leaves="services.leaves.value"
                     :is-loading="services.isLeavesLoading.value"
                     :can-create="canCreateServices"
-                />
-            </BaseAccordionItem>
-
-            <BaseAccordionItem
-                value="application"
-                :title="$t('students.accommodation_section_application')"
-                :description="$t('students.accommodation_section_application_desc')"
-            >
-                <AccommodationApplicationSection
-                    :applications="applications"
-                    :active-allocation="activeAllocation"
-                    :open-application="openApplication"
-                    :lookup="lookup"
-                    :fees="fees"
-                    :can-apply="canApply"
-                    :apply-blockers="applyBlockers"
-                    :form="form"
-                    :is-saving="isSaving"
-                    :save-validation-error="saveValidationError"
-                    :context="context"
-                    @submit="submit"
                 />
             </BaseAccordionItem>
         </BaseAccordion>

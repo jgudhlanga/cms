@@ -39,6 +39,7 @@ class HostelRoomAllocationSchema extends Schema
         'student.latestEnrolment.departmentCourse.course',
         'room.hostel',
         'room.amenities',
+        'section.amenities',
     ];
 
     protected ?array $defaultPagination = ['number' => 1, 'size' => 15];
@@ -105,11 +106,12 @@ class HostelRoomAllocationSchema extends Schema
             Str::make('occupancyLabel')->extractUsing(
                 fn (HostelRoomAllocation $allocation) => $allocation->room?->occupancyLabel()
             )->readOnly(),
+            Number::make('sectionId', 'hostel_room_section_id')->readOnly(),
+            Str::make('sectionName')->extractUsing(
+                fn (HostelRoomAllocation $allocation) => $allocation->section?->name
+            )->readOnly(),
             ArrayList::make('amenities')->extractUsing(
-                fn (HostelRoomAllocation $allocation) => $allocation->room?->amenities
-                    ?->pluck('name')
-                    ->values()
-                    ->all() ?? []
+                fn (HostelRoomAllocation $allocation) => $this->amenitiesForAllocation($allocation)
             )->readOnly(),
             BelongsTo::make('student')->readOnly(),
             BelongsTo::make('room')->readOnly(),
@@ -166,5 +168,30 @@ class HostelRoomAllocationSchema extends Schema
     {
         return PagePagination::make()
             ->withDefaultPerPage((int) config('custom.system.pagination_items_per_page', 15));
+    }
+
+    /**
+     * @return list<array{id: int, name: string, slug: string, marketValue: ?float}>
+     */
+    private function amenitiesForAllocation(HostelRoomAllocation $allocation): array
+    {
+        $sectionAmenities = $allocation->section?->amenities;
+        $amenities = ($sectionAmenities !== null && $sectionAmenities->isNotEmpty())
+            ? $sectionAmenities
+            : $allocation->room?->amenities;
+
+        if ($amenities === null || $amenities->isEmpty()) {
+            return [];
+        }
+
+        return $amenities
+            ->map(fn ($amenity): array => [
+                'id' => (int) $amenity->id,
+                'name' => (string) $amenity->name,
+                'slug' => (string) $amenity->slug,
+                'marketValue' => $amenity->market_value !== null ? (float) $amenity->market_value : null,
+            ])
+            ->values()
+            ->all();
     }
 }

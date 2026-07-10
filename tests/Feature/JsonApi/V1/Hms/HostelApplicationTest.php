@@ -917,6 +917,7 @@ test('json api hostel applications approve queues room allocation email with roo
         return $mail->hasTo($student->user->email)
             && str_contains($html, 'Block D Test Hostel')
             && str_contains($html, 'Room 101')
+            && str_contains($html, 'A')
             && str_contains($html, '2');
     });
 });
@@ -1272,6 +1273,103 @@ test('json api hostel applications approval rooms returns assignable rooms for h
     ]))
         ->assertSuccessful()
         ->assertJsonPath('meta.rooms.0.id', $room->id);
+});
+
+test('json api hostel applications allocation preview returns auto allocation details', function () {
+    $tenant = Tenant::query()->firstOrFail();
+    $user = User::factory()->create(['tenant_id' => $tenant->id]);
+    Sanctum::actingAs($user);
+
+    $student = createStudentForAllocationIndexTest();
+    $room = ensureHostelRoomWithCapacity('Hostel D', 'PREVIEW-AUTO-01');
+    $room->hostel->update(['type' => 'male', 'name' => 'Preview Hostel']);
+    $room->update(['name' => 'Preview Room 01', 'room_type' => 'double']);
+
+    disableAllHmsApprovalRequirements($tenant->id)->update(['auto_allocate_rooms' => true]);
+
+    $application = HostelApplication::withoutEvents(fn () => HostelApplication::query()->create([
+        'tenant_id' => TenantEnum::HARARE_POLY->id(),
+        'student_id' => $student->id,
+        'gender_id' => $student->gender_id,
+        'type' => HostelApplicationTypeEnum::STUDENT,
+        'status' => HostelApplicationStatusEnum::PAID,
+        'next_of_kin_name' => 'Kin Name',
+        'next_of_kin_contact' => '0771234567',
+        'check_in' => now()->toDateString(),
+        'check_out' => now()->addMonths(4)->toDateString(),
+    ]));
+
+    $this->getJson(route('v1.json.hostel-applications.allocationPreview', [
+        'hostel_application' => $application->id,
+    ]))
+        ->assertSuccessful()
+        ->assertJsonPath('meta.preview.hostelName', 'Preview Hostel')
+        ->assertJsonPath('meta.preview.roomName', 'Preview Room 01')
+        ->assertJsonPath('meta.preview.sectionName', 'A')
+        ->assertJsonPath('meta.preview.roomId', $room->id);
+});
+
+test('json api hostel applications allocation preview returns manual room section details', function () {
+    $tenant = Tenant::query()->firstOrFail();
+    $user = User::factory()->create(['tenant_id' => $tenant->id]);
+    Sanctum::actingAs($user);
+
+    $student = createStudentForAllocationIndexTest();
+    $room = ensureHostelRoomWithCapacity('Hostel D', 'PREVIEW-MANUAL-01');
+    $room->hostel->update(['type' => 'male', 'name' => 'Manual Preview Hostel']);
+    $room->update(['name' => 'Manual Room 01', 'room_type' => 'double']);
+
+    disableAllHmsApprovalRequirements($tenant->id)->update(['auto_allocate_rooms' => false]);
+
+    $application = HostelApplication::withoutEvents(fn () => HostelApplication::query()->create([
+        'tenant_id' => TenantEnum::HARARE_POLY->id(),
+        'student_id' => $student->id,
+        'gender_id' => $student->gender_id,
+        'type' => HostelApplicationTypeEnum::STUDENT,
+        'status' => HostelApplicationStatusEnum::PAID,
+        'next_of_kin_name' => 'Kin Name',
+        'next_of_kin_contact' => '0771234567',
+        'check_in' => now()->toDateString(),
+        'check_out' => now()->addMonths(4)->toDateString(),
+    ]));
+
+    $this->getJson(route('v1.json.hostel-applications.allocationPreview', [
+        'hostel_application' => $application->id,
+        'hostelRoomId' => $room->id,
+    ]))
+        ->assertSuccessful()
+        ->assertJsonPath('meta.preview.hostelName', 'Manual Preview Hostel')
+        ->assertJsonPath('meta.preview.roomName', 'Manual Room 01')
+        ->assertJsonPath('meta.preview.sectionName', 'A')
+        ->assertJsonPath('meta.preview.roomId', $room->id);
+});
+
+test('json api hostel applications allocation preview returns null when blockers exist', function () {
+    $tenant = Tenant::query()->firstOrFail();
+    $user = User::factory()->create(['tenant_id' => $tenant->id]);
+    Sanctum::actingAs($user);
+
+    $student = createStudentForAllocationIndexTest();
+    $room = ensureHostelRoomWithCapacity('Hostel D', 'PREVIEW-BLOCKED-01');
+    $room->hostel->update(['type' => 'male']);
+
+    $application = HostelApplication::withoutEvents(fn () => HostelApplication::query()->create([
+        'tenant_id' => TenantEnum::HARARE_POLY->id(),
+        'student_id' => $student->id,
+        'gender_id' => $student->gender_id,
+        'type' => HostelApplicationTypeEnum::STUDENT,
+        'status' => HostelApplicationStatusEnum::APPROVED,
+        'next_of_kin_name' => 'Kin Name',
+        'next_of_kin_contact' => '0771234567',
+        'check_in' => now()->toDateString(),
+        'check_out' => now()->addMonths(4)->toDateString(),
+    ]));
+
+    $this->getJson(route('v1.json.hostel-applications.allocationPreview', [
+        'hostel_application' => $application->id,
+    ]))
+        ->assertSuccessful()
+        ->assertJsonPath('meta.preview', null);
 });
 
 test('json api hostel applications pending queue returns pending and awaiting payment applications', function () {

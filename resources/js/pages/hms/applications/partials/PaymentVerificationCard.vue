@@ -8,6 +8,7 @@ import RequiredIndicator from '@/components/core/form/RequiredIndicator.vue';
 import BaseRadioGroup from '@/components/core/form/radio-group/BaseRadioGroup.vue';
 import BaseSelect from '@/components/core/form/select/BaseSelect.vue';
 import { Label } from '@/components/ui/label';
+import AllocationPreviewCard from '@/pages/hms/applications/partials/AllocationPreviewCard.vue';
 import { useCustomConfirmDialog } from '@/composables/core/useCustomConfirmDialog';
 import { useUtils } from '@/composables/core/useUtils';
 import { useHms } from '@/composables/hms/useHms';
@@ -16,6 +17,7 @@ import { errorAlert } from '@/lib/alerts';
 import { clearFormErrors } from '@/lib/forms';
 import type {
     HostelApplication,
+    HostelApplicationAllocationPreview,
     HostelApplicationApprovalHostelOption,
     HostelApplicationApprovalOptionsResponse,
     HostelApplicationApprovalRoomOption,
@@ -38,13 +40,15 @@ const emit = defineEmits<{
     decline: [];
 }>();
 
-const { fetchApplicationApprovalOptions, fetchApplicationApprovalRooms, fetchHostelRoomsForApplication, saveApplication } = useHms();
+const { fetchApplicationApprovalOptions, fetchApplicationApprovalRooms, fetchApplicationAllocationPreview, fetchHostelRoomsForApplication, saveApplication } = useHms();
 const { open: openConfirm } = useCustomConfirmDialog();
 const { isItTrue } = useUtils();
 
 const options = ref<HostelApplicationApprovalOptionsResponse | null>(null);
+const allocationPreview = ref<HostelApplicationAllocationPreview | null>(null);
 const isLoadingHostels = ref(false);
 const isLoadingRooms = ref(false);
+const isLoadingPreview = ref(false);
 const roomsLoaded = ref(false);
 const selectedHostel = ref<SelectOption | string | number | null>(null);
 const selectedRoom = ref<SelectOption | string | number | null>(null);
@@ -193,6 +197,28 @@ const hydrateFromApplication = (verification?: HostelApplicationPaymentVerificat
     form.accommodationFeesPaidConfirmed = toConfirmationValue(verification?.accommodationFeesPaidConfirmed);
 };
 
+const loadAllocationPreview = async (hostelRoomId?: number | null): Promise<void> => {
+    if (!(options.value?.canApprove ?? false)) {
+        allocationPreview.value = null;
+        return;
+    }
+
+    if (!isAutoAllocationEnabled.value && (hostelRoomId ?? 0) < 1) {
+        allocationPreview.value = null;
+        return;
+    }
+
+    isLoadingPreview.value = true;
+    try {
+        allocationPreview.value = await fetchApplicationAllocationPreview(
+            props.application,
+            hostelRoomId ?? undefined,
+        );
+    } finally {
+        isLoadingPreview.value = false;
+    }
+};
+
 const loadHostels = async (): Promise<void> => {
     isLoadingHostels.value = true;
     try {
@@ -210,6 +236,11 @@ const loadHostels = async (): Promise<void> => {
         selectedRoom.value = null;
         form.hostelRoomId = null;
         roomsLoaded.value = false;
+        allocationPreview.value = null;
+
+        if (response.canApprove && (response.autoAllocateRooms ?? false)) {
+            await loadAllocationPreview();
+        }
     } finally {
         isLoadingHostels.value = false;
     }
@@ -249,6 +280,7 @@ const onHostelChange = async (value: SelectOption | string | number | null): Pro
             options.value = { ...options.value, rooms: [] };
         }
         roomsLoaded.value = false;
+        allocationPreview.value = null;
         return;
     }
 
@@ -263,6 +295,7 @@ watch(
         selectedRoom.value = null;
         form.hostelRoomId = null;
         options.value = null;
+        allocationPreview.value = null;
         void loadHostels();
     },
     { immediate: true },
@@ -271,6 +304,13 @@ watch(
 watch(selectedRoom, (room) => {
     form.hostelRoomId = resolveSelectId(room);
     clearFormErrors(form, 'hostelRoomId');
+
+    const roomId = resolveSelectId(room);
+    if (roomId !== null) {
+        void loadAllocationPreview(roomId);
+    } else {
+        allocationPreview.value = null;
+    }
 });
 
 const paymentVerificationPayload = (): HostelApplicationPaymentVerification => {
@@ -409,6 +449,23 @@ const approveAndAllocate = async (): Promise<void> => {
 
         <p v-else-if="isAutoAllocationEnabled" class="mt-4 text-sm text-muted-foreground">
             {{ $t('hms.auto_allocate_rooms_helper') }}
+        </p>
+
+        <p v-if="isLoadingPreview" class="mt-4 text-sm text-muted-foreground">
+            {{ $t('trans.loading') }}…
+        </p>
+
+        <AllocationPreviewCard
+            v-else-if="allocationPreview"
+            class="mt-4"
+            :preview="allocationPreview"
+        />
+
+        <p
+            v-else-if="(options?.canApprove ?? false) && (isAutoAllocationEnabled || form.hostelRoomId)"
+            class="mt-4 text-sm text-muted-foreground"
+        >
+            {{ $t('hms.allocation_preview_unavailable') }}
         </p>
 
         <p v-else-if="isLoadingHostels" class="mt-4 text-sm text-muted-foreground">

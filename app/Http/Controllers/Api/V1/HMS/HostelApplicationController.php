@@ -7,6 +7,7 @@ use App\Enums\HMS\HostelEligibilityContextEnum;
 use App\Models\HMS\HostelApplication;
 use App\Models\Students\Student;
 use App\Services\HMS\HostelApplicationApprovalOptionsService;
+use App\Services\HMS\HostelApplicationApprovalService;
 use App\Services\HMS\HostelApplicationEligibilityService;
 use App\Services\HMS\HostelApplicationPaymentService;
 use App\Services\HMS\HostelApplicationPendingService;
@@ -32,6 +33,7 @@ class HostelApplicationController extends JsonApiController
         protected HostelApplicationPendingService $pendingService,
         protected HostelStudentAllocationService $allocationService,
         protected HostelApplicationApprovalOptionsService $approvalOptionsService,
+        protected HostelApplicationApprovalService $approvalService,
         protected StudentAccommodationFeeService $accommodationFeeService,
         protected HostelApplicationPaymentService $paymentService,
     ) {}
@@ -265,6 +267,31 @@ class HostelApplicationController extends JsonApiController
         return MetaResponse::make(
             $this->approvalOptionsService->forApplication($hostelApplication, $parsedHostelId)
         );
+    }
+
+    public function allocationPreview(HostelApplication $hostelApplication, Request $request): MetaResponse
+    {
+        abort_unless($request->user() !== null, 403);
+
+        $hostelApplication->load(['student.gender', 'gender']);
+
+        $blockers = $this->approvalOptionsService->blockersForApplication($hostelApplication);
+
+        if ($blockers !== []) {
+            return MetaResponse::make([
+                'preview' => null,
+            ]);
+        }
+
+        $hostelRoomId = $request->query('hostelRoomId');
+        $parsedHostelRoomId = is_numeric($hostelRoomId) ? (int) $hostelRoomId : null;
+
+        return MetaResponse::make([
+            'preview' => $this->approvalService->previewAllocation(
+                $hostelApplication,
+                $parsedHostelRoomId,
+            ),
+        ]);
     }
 
     public function approvalRooms(HostelApplication $hostelApplication, Request $request): MetaResponse
