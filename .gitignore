@@ -46,4 +46,5 @@ yarn-error.log
 /storage/data/staff-imports/previews/
 /storage/data/course-syllabus-imports/previews/
 /storage/data/course-work-imports/previews/
+/storage/data/course-work-imports/*.xlsx
 /public/*.xlsx
