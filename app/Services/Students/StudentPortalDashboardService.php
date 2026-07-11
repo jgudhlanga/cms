@@ -52,6 +52,7 @@ class StudentPortalDashboardService
                 'name' => $module['name'],
                 'score' => $module['score'],
                 'gradeDisplay' => $this->moduleGradeDisplay($module),
+                'statusKey' => $this->moduleStatusKey($module),
                 'progressPercent' => $module['score'] !== null ? (int) round($module['score']) : 0,
             ])
             ->values()
@@ -239,6 +240,25 @@ class StudentPortalDashboardService
         }
 
         return __('students.not_available');
+    }
+
+    /**
+     * @param  array<string, mixed>  $module
+     * @return 'graded'|'in_progress'|'not_graded'
+     */
+    private function moduleStatusKey(array $module): string
+    {
+        $courseWork = $module['courseWork'] ?? null;
+        $total = $courseWork['aggregation']['courseWorkTotal60'] ?? null;
+
+        if ($total !== null) {
+            return 'graded';
+        }
+
+        $hasPartialMarks = collect($courseWork['assessments'] ?? [])
+            ->contains(fn (array $assessment): bool => $assessment['mark'] !== null);
+
+        return $hasPartialMarks ? 'in_progress' : 'not_graded';
     }
 
     private function isActiveEnrolmentStatus(?string $status): bool

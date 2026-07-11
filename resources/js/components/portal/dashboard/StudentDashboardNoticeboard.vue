@@ -1,5 +1,7 @@
 <script setup lang="ts">
+import StudentDashboardEmptyState from '@/components/portal/dashboard/StudentDashboardEmptyState.vue';
 import type { StudentPortalDashboardNotice } from '@/types/students';
+import { Bell } from 'lucide-vue-next';
 
 interface Props {
     notices?: StudentPortalDashboardNotice[];
@@ -22,44 +24,44 @@ const formatDate = (value: string | null | undefined): string => {
 </script>
 
 <template>
-    <section class="w-full min-w-0 rounded-lg border border-border bg-card px-3 py-2.5 shadow-sm">
-        <div class="mb-2">
-            <h2 class="text-sm font-semibold leading-none text-foreground">
+    <section class="w-full min-w-0 rounded-2xl border border-border bg-card px-4 py-4 shadow-sm sm:px-5">
+        <div class="mb-3">
+            <h2 class="text-base font-semibold text-foreground">
                 {{ $t('students.dashboard_noticeboard') }}
             </h2>
-            <p class="mt-0.5 text-[11px] text-muted-foreground">
+            <p class="mt-0.5 text-sm text-muted-foreground">
                 {{ $t('students.dashboard_noticeboard_description') }}
             </p>
         </div>
 
-        <div
+        <StudentDashboardEmptyState
             v-if="notices.length === 0"
-            class="rounded-md border border-dashed border-border py-3 text-center text-xs text-muted-foreground"
-        >
-            {{ $t('students.dashboard_no_notices') }}
-        </div>
+            :icon="Bell"
+            :title="$t('students.dashboard_noticeboard_empty_title')"
+            :description="$t('students.dashboard_noticeboard_empty_description')"
+        />
 
         <ul
             v-else
-            class="max-h-48 space-y-2 overflow-y-auto"
+            class="max-h-56 space-y-2 overflow-y-auto"
         >
             <li
                 v-for="notice in notices"
                 :key="notice.id"
-                class="rounded-md border border-border/70 bg-muted/20 px-2.5 py-2"
+                class="rounded-xl border border-border/70 bg-muted/20 px-3 py-2.5"
             >
                 <div class="flex min-w-0 items-start justify-between gap-2">
-                    <p class="min-w-0 flex-1 wrap-break-word text-xs font-semibold leading-snug text-foreground">
+                    <p class="min-w-0 flex-1 wrap-break-word text-sm font-semibold leading-snug text-foreground">
                         {{ notice.title }}
                     </p>
                     <time
                         v-if="notice.publishedAt"
-                        class="shrink-0 text-[10px] text-muted-foreground"
+                        class="shrink-0 text-xs text-muted-foreground"
                     >
                         {{ formatDate(notice.publishedAt) }}
                     </time>
                 </div>
-                <p class="mt-0.5 text-[11px] leading-snug text-muted-foreground">
+                <p class="mt-1 text-sm leading-snug text-muted-foreground">
                     {{ notice.message }}
                 </p>
             </li>

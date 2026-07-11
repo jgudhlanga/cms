@@ -35,6 +35,8 @@ Route::prefix('maintenance')->middleware(['auth', 'can:root:manage'])->group(fun
         ->name('maintenance.faulty-student-ids.merge.reject-application');
     Route::post('/faulty-student-ids/merge', [MaintenanceController::class, 'mergeFaultyStudentAccounts'])
         ->name('maintenance.faulty-student-ids.merge.execute');
+    Route::get('/faulty-student-ids/{student}/merge-preview', [MaintenanceController::class, 'mergeFaultyStudentPreviewData'])
+        ->name('maintenance.faulty-student-ids.merge-preview');
     Route::get('/faulty-student-ids/{student}/merge', [MaintenanceController::class, 'mergeFaultyStudentPreview'])
         ->name('maintenance.faulty-student-ids.merge');
     Route::patch('/faulty-student-ids/{student}', [MaintenanceController::class, 'fixFaultyStudentIdNumber'])
@@ -47,4 +49,14 @@ Route::prefix('maintenance')->middleware(['auth', 'can:root:manage'])->group(fun
         ->name('maintenance.staff-import.lookups.create');
     Route::post('/staff-import', [MaintenanceController::class, 'processStaffImport'])
         ->name('maintenance.staff-import.process');
+    Route::get('/apprentice-management', [MaintenanceController::class, 'apprenticeManagement'])
+        ->name('maintenance.apprentice-management');
+    Route::get('/apprentice-management/template', [MaintenanceController::class, 'downloadApprenticeImportTemplate'])
+        ->name('maintenance.apprentice-management.template');
+    Route::post('/apprentice-management/preview', [MaintenanceController::class, 'previewApprenticeImport'])
+        ->name('maintenance.apprentice-management.preview');
+    Route::post('/apprentice-management/process', [MaintenanceController::class, 'processApprenticeImport'])
+        ->name('maintenance.apprentice-management.process');
+    Route::post('/apprentice-management/refresh-row', [MaintenanceController::class, 'refreshApprenticeImportRow'])
+        ->name('maintenance.apprentice-management.refresh-row');
 });

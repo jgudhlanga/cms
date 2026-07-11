@@ -377,12 +377,22 @@ export type StudentEnrolment = {
     };
 };
 
+export type CourseWorkModuleStatusKey = 'in_progress' | 'not_graded' | 'graded';
+
+export type CourseWorkModuleListItem = {
+    id: string | number;
+    code: string | null;
+    name: string | null;
+    statusKey: CourseWorkModuleStatusKey;
+};
+
 export type StudentPortalDashboardModule = {
     id: number;
     code: string | null;
     name: string | null;
     score: number | null;
     gradeDisplay: string;
+    statusKey: CourseWorkModuleStatusKey;
     progressPercent: number;
 };
 

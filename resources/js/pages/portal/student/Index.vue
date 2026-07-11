@@ -38,7 +38,7 @@ onMounted(() => {
 <template>
     <Head :title="$tChoice('trans.dashboard', 1)" />
     <PageContainer :breadcrumbs="breadcrumbs">
-        <div class="mt-2 flex w-full min-w-0 max-w-full flex-col gap-3 overflow-x-clip">
+        <div class="mt-2 flex w-full min-w-0 max-w-full flex-col gap-5 overflow-x-clip">
             <StudentDashboardHeader :student="student" />
 
             <div
@@ -66,9 +66,12 @@ onMounted(() => {
 
                 <StudentDashboardQuickActions />
 
-                <StudentDashboardModuleProgress :modules="stats.modules" />
+                <StudentDashboardModuleProgress
+                    :modules="stats.modules"
+                    :current-term="stats.currentTerm"
+                />
 
-                <div class="grid gap-2 lg:grid-cols-2">
+                <div class="grid gap-5 lg:grid-cols-2">
                     <StudentDashboardNoticeboard :notices="stats.notices" />
                     <StudentDashboardActivity :activities="stats.activities" />
                 </div>
