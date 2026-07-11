@@ -48,10 +48,22 @@ class StudentRepository extends BaseRepository implements IStudentRepository
         $query = $this->baseIndexQuery();
         $this->applyIndexFilters($query, $filters);
 
-        return $query
+        $total = $this->distinctStudentCount($query);
+        $perPage = $this->student->getPerPage();
+        $page = LengthAwarePaginator::resolveCurrentPage();
+
+        $items = (clone $query)
             ->latest('students.created_at')
-            ->paginate($this->student->getPerPage())
-            ->withQueryString();
+            ->forPage($page, $perPage)
+            ->get();
+
+        return (new LengthAwarePaginator(
+            $items,
+            $total,
+            $perPage,
+            $page,
+            ['path' => LengthAwarePaginator::resolveCurrentPath()]
+        ))->withQueryString();
     }
 
     public function statsForIndex(array $filters = []): array
@@ -108,7 +120,7 @@ class StudentRepository extends BaseRepository implements IStudentRepository
     }
 
     /**
-     * @return array{total: int, male: int, female: int, byLevel: list<array{id: int, name: string, count: int}>, byModeOfStudy: list<array{id: int, name: string, count: int}>}
+     * @return array{total: int, male: int, female: int, byLevel: list<array{id: int, name: string, count: int}>, byModeOfStudy: list<array{id: int, name: string, count: int}>, byStudentType: list<array{id: string, name: string, count: int}>}
      */
     private function aggregateGlobalStats(Builder $query): array
     {
@@ -120,6 +132,14 @@ class StudentRepository extends BaseRepository implements IStudentRepository
 
         $female = $this->distinctStudentCount(
             (clone $query)->whereHas('gender', fn ($q) => $q->where('title', GenderEnum::FEMALE->value))
+        );
+
+        $directCount = $this->distinctStudentCount(
+            (clone $query)->whereDoesntHave('apprentices')
+        );
+
+        $apprenticeCount = $this->distinctStudentCount(
+            (clone $query)->whereHas('apprentices')
         );
 
         // Students with multiple enrolments may appear in more than one level/mode bucket.
@@ -160,6 +180,18 @@ class StudentRepository extends BaseRepository implements IStudentRepository
             'female' => $female,
             'byLevel' => $byLevel,
             'byModeOfStudy' => $byModeOfStudy,
+            'byStudentType' => [
+                [
+                    'id' => 'direct',
+                    'name' => __('students.stat_student_type_direct'),
+                    'count' => $directCount,
+                ],
+                [
+                    'id' => 'apprentice',
+                    'name' => __('students.stat_student_type_apprentice'),
+                    'count' => $apprenticeCount,
+                ],
+            ],
         ];
     }
 
@@ -259,6 +291,14 @@ class StudentRepository extends BaseRepository implements IStudentRepository
         if (in_array($gender, ['male', 'female'], true)) {
             $title = $gender === 'male' ? GenderEnum::MALE->value : GenderEnum::FEMALE->value;
             $query->whereHas('gender', fn ($q) => $q->where('title', $title));
+        }
+
+        // Student type (direct vs apprentice)
+        $studentType = strtolower(trim((string) ($filters['student_type'] ?? '')));
+        if ($studentType === 'apprentice') {
+            $query->whereHas('apprentices');
+        } elseif ($studentType === 'direct') {
+            $query->whereDoesntHave('apprentices');
         }
 
         // Trashed records

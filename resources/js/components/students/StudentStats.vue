@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { BookOpen, GraduationCap, User, Users, UserRound } from '@lucide/vue';
+import { BookOpen, Briefcase, GraduationCap, User, Users, UserRound } from '@lucide/vue';
 import { useStudents } from '@/composables/students/useStudents';
 import type { StudentFiltersState, StudentStats } from '@/types/students';
 import { useDebounceFn } from '@vueuse/core';
@@ -44,6 +44,7 @@ const stats = ref<StudentStats>({
         female: 0,
         byLevel: [],
         byModeOfStudy: [],
+        byStudentType: [],
     },
     filtered: {
         total: 0,
@@ -60,6 +61,7 @@ const normalizeFilters = (filters: StudentFiltersState): string =>
         course: filters.course?.length ? [...filters.course].sort((a, b) => a - b) : undefined,
         mode_of_study: filters.mode_of_study?.length ? [...filters.mode_of_study].sort((a, b) => a - b) : undefined,
         gender: filters.gender || undefined,
+        student_type: filters.student_type || undefined,
         with_trashed: filters.with_trashed || undefined,
     });
 
@@ -99,6 +101,7 @@ const hasActiveFilters = computed(() => {
             filters.course?.length ||
             filters.mode_of_study?.length ||
             filters.gender ||
+            filters.student_type ||
             filters.with_trashed,
     );
 });
@@ -113,6 +116,7 @@ const visibleModes = computed(() => stats.value.global.byModeOfStudy.filter((row
 const isGenderActive = (gender: 'male' | 'female') => props.filters.gender === gender;
 const isLevelActive = (id: number) => props.filters.level?.includes(id) ?? false;
 const isModeActive = (id: number) => props.filters.mode_of_study?.includes(id) ?? false;
+const isStudentTypeActive = (type: 'direct' | 'apprentice') => props.filters.student_type === type;
 
 const toggleGender = (gender: 'male' | 'female') => {
     emit('filter', { gender: isGenderActive(gender) ? undefined : gender });
@@ -128,11 +132,16 @@ const toggleMode = (id: number) => {
     emit('filter', { mode_of_study: next.length ? next : undefined });
 };
 
+const toggleStudentType = (type: 'direct' | 'apprentice') => {
+    emit('filter', { student_type: isStudentTypeActive(type) ? undefined : type });
+};
+
 const clearDimensionalFilters = () => {
     emit('filter', {
         gender: undefined,
         level: undefined,
         mode_of_study: undefined,
+        student_type: undefined,
     });
 };
 
@@ -210,6 +219,21 @@ const modeChips = computed<StatChip[]>(() =>
     })),
 );
 
+const typeChips = computed<StatChip[]>(() =>
+    stats.value.global.byStudentType.map((type) => ({
+        id: `type-${type.id}`,
+        label: type.name,
+        value: String(type.count),
+        icon: type.id === 'apprentice' ? Briefcase : User,
+        active: isStudentTypeActive(type.id),
+        iconClass: type.id === 'apprentice' ? 'text-violet-600' : 'text-slate-600',
+        valueClass: type.id === 'apprentice' ? 'text-violet-700' : 'text-slate-700',
+        activeClass: type.id === 'apprentice' ? 'border-violet-300 bg-violet-50' : 'border-slate-300 bg-slate-50',
+        ariaLabel: filterAriaLabel(type.name, type.count),
+        onClick: () => toggleStudentType(type.id),
+    })),
+);
+
 const chipBaseClass =
     'flex items-center gap-1.5 cursor-pointer rounded-full border px-2.5 py-1 text-xs font-medium transition focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none';
 </script>
@@ -267,6 +291,31 @@ const chipBaseClass =
                             <div class="flex flex-wrap gap-2">
                                 <button
                                     v-for="chip in modeChips"
+                                    :key="chip.id"
+                                    type="button"
+                                    :aria-label="chip.ariaLabel"
+                                    :aria-pressed="chip.active"
+                                    :class="[
+                                        chipBaseClass,
+                                        chip.active ? chip.activeClass : 'border-border bg-card hover:border-primary/40',
+                                    ]"
+                                    @click="chip.onClick"
+                                >
+                                    <component :is="chip.icon" class="h-3.5 w-3.5" :class="chip.iconClass" />
+                                    <span class="text-foreground">{{ chip.label }}</span>
+                                    <span class="font-semibold" :class="chip.valueClass">{{ chip.value }}</span>
+                                </button>
+                            </div>
+                        </template>
+                    </div>
+                    <div class="flex space-x-2 items-center">
+                        <template v-if="typeChips.length">
+                            <div class="text-muted-foreground pt-1 text-[11px] font-semibold uppercase tracking-wide">
+                                {{ `${$tChoice('trans.type', 1)}:` }}
+                            </div>
+                            <div class="flex flex-wrap gap-2">
+                                <button
+                                    v-for="chip in typeChips"
                                     :key="chip.id"
                                     type="button"
                                     :aria-label="chip.ariaLabel"

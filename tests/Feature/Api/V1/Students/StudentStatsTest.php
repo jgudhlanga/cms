@@ -4,6 +4,7 @@ use App\Models\Institution\Staff;
 use App\Models\Shared\Gender;
 use App\Models\Shared\MaritalStatus;
 use App\Models\Shared\Title;
+use App\Models\Students\StudentApprentice;
 use App\Models\Users\User;
 use Laravel\Sanctum\Sanctum;
 
@@ -34,6 +35,34 @@ it('returns aggregated student stats for enrolled students', function (): void {
 
     $modeNames = collect($response->json('global.byModeOfStudy'))->pluck('name')->all();
     expect($modeNames)->toContain('Full Time');
+
+    $typeIds = collect($response->json('global.byStudentType'))->pluck('id')->all();
+    expect($typeIds)->toContain('direct', 'apprentice');
+});
+
+it('returns student type breakdown counts in stats', function (): void {
+    $directProgram = createVerifiedStudentApplication('STU-STAT-D-'.strtoupper(str()->random(4)));
+    $apprenticeProgram = createVerifiedStudentApplication('STU-STAT-A-'.strtoupper(str()->random(4)));
+
+    createStudentEnrolmentForProgram($directProgram);
+    createStudentEnrolmentForProgram($apprenticeProgram);
+
+    StudentApprentice::query()->create([
+        'tenant_id' => $apprenticeProgram->tenant_id,
+        'student_id' => $apprenticeProgram->student_id,
+        'calendar_year' => 2026,
+    ]);
+
+    $user = User::factory()->create(['tenant_id' => $directProgram->tenant_id]);
+    Sanctum::actingAs($user);
+
+    $response = $this->getJson(route('v1.students.stats'));
+    $response->assertOk();
+
+    $byType = collect($response->json('global.byStudentType'))->keyBy('id');
+
+    expect($byType->get('direct')['count'])->toBe(1)
+        ->and($byType->get('apprentice')['count'])->toBe(1);
 });
 
 it('returns a lower filtered total when gender filter is applied', function (): void {

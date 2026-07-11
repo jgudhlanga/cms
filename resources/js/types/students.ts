@@ -326,6 +326,7 @@ export type StudentFiltersState = {
     course?: number[] | null;
     mode_of_study?: number[] | null;
     gender?: 'male' | 'female';
+    student_type?: 'direct' | 'apprentice';
     academic_year?: number[] | null;
     calendar_type?: string[] | null;
     with_trashed?: boolean | null;
@@ -337,6 +338,12 @@ export type StudentStatBreakdown = {
     count: number;
 };
 
+export type StudentTypeStatBreakdown = {
+    id: 'direct' | 'apprentice';
+    name: string;
+    count: number;
+};
+
 export type StudentStats = {
     global: {
         total: number;
@@ -344,6 +351,7 @@ export type StudentStats = {
         female: number;
         byLevel: StudentStatBreakdown[];
         byModeOfStudy: StudentStatBreakdown[];
+        byStudentType: StudentTypeStatBreakdown[];
     };
     filtered: {
         total: number;

@@ -16,6 +16,8 @@ return [
     'stat_total_students' => 'Total students',
     'stat_male' => 'Male',
     'stat_female' => 'Female',
+    'stat_student_type_direct' => 'Direct',
+    'stat_student_type_apprentice' => 'Apprentice',
     'showing_filtered_of_total' => 'Showing :filtered of :total students',
     'filter_all_genders' => 'All genders',
     'search_by_academic_year_placeholder' => 'year...',
