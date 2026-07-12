@@ -79,14 +79,10 @@ const termTitle = (term: StudentPortalDashboardTerm): string => {
             </div>
 
             <div class="mt-3">
-                <div class="relative h-2 rounded-full bg-muted">
+                <div class="h-0.5 overflow-hidden rounded-full bg-muted">
                     <div
-                        class="absolute inset-y-0 left-0 rounded-full bg-primary transition-all"
+                        class="h-full rounded-full bg-primary transition-all"
                         :style="{ width: `${elapsedPercent}%` }"
-                    />
-                    <div
-                        class="absolute top-1/2 size-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-primary bg-background shadow-sm"
-                        :style="{ left: `${elapsedPercent}%` }"
                     />
                 </div>
             </div>

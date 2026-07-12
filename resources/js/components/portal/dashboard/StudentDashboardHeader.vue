@@ -50,40 +50,46 @@ const levelCourseDisplay = computed(() => {
 </script>
 
 <template>
-    <section class="w-full min-w-0 rounded-2xl border border-border bg-card px-4 py-4 shadow-sm sm:px-6 sm:py-5">
-        <div class="flex w-full min-w-0 items-start gap-4">
-            <Avatar class="size-14 shrink-0 sm:size-16">
+    <section class="w-full min-w-0 rounded-2xl border border-border bg-card px-4 py-3 shadow-sm sm:px-5">
+        <div class="flex w-full min-w-0 items-start gap-3">
+            <Avatar class="size-9 shrink-0">
                 <AvatarImage :src="avatarSrc" :alt="headerData.studentName" />
-                <AvatarFallback class="bg-violet-600 text-base font-bold text-white sm:text-lg">
+                <AvatarFallback class="bg-violet-600 text-xs font-bold text-white">
                     {{ getInitials(headerData.studentName) }}
                 </AvatarFallback>
             </Avatar>
 
-            <div class="min-w-0 flex-1">
-                <p class="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-500 dark:text-emerald-400">
-                    <span class="inline-block size-1.5 shrink-0 rounded-full bg-emerald-500 dark:bg-emerald-400" />
-                    {{ $t('students.dashboard_live') }} · {{ liveDateLabel }}
-                </p>
-                <h1 class="mt-0.5 wrap-break-word text-xl font-bold leading-tight tracking-tight text-foreground sm:text-2xl">
-                    {{ greeting }}, {{ headerData.studentName }}
-                </h1>
-                <p
-                    v-if="levelCourseDisplay"
-                    class="mt-0.5 wrap-break-word text-sm text-muted-foreground"
-                >
-                    {{ levelCourseDisplay }}
-                </p>
-
-                <div class="mt-3 flex min-w-0 flex-wrap items-center gap-2">
+            <div class="min-w-0 flex-1 basis-0">
+                <div class="flex min-w-0 items-center justify-between gap-3">
+                    <p class="flex min-w-0 flex-1 items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-500 dark:text-emerald-400">
+                        <span class="inline-block size-1.5 shrink-0 rounded-full bg-emerald-500 dark:bg-emerald-400" />
+                        <span class="truncate">{{ $t('students.dashboard_live') }} · {{ liveDateLabel }}</span>
+                    </p>
                     <span
                         v-if="headerData.studentNumber"
-                        class="rounded-md bg-muted px-2 py-1 font-mono text-xs text-foreground"
+                        class="shrink-0 rounded-md bg-muted px-2 py-0.5 font-mono text-[11px] text-foreground"
                     >
                         {{ headerData.studentNumber }}
                     </span>
+                </div>
+
+                <h1 class="mt-0.5 wrap-break-word text-lg font-bold leading-tight tracking-tight text-foreground sm:text-xl">
+                    {{ greeting }}, {{ headerData.studentName }}
+                </h1>
+
+                <div
+                    v-if="levelCourseDisplay || headerData.enrolmentStatus"
+                    class="mt-0.5 flex min-w-0 flex-wrap items-center gap-2"
+                >
+                    <p
+                        v-if="levelCourseDisplay"
+                        class="wrap-break-word text-sm text-muted-foreground"
+                    >
+                        {{ levelCourseDisplay }}
+                    </p>
                     <span
                         v-if="headerData.enrolmentStatus"
-                        class="inline-flex items-center gap-1.5 rounded-md border border-emerald-500/30 bg-emerald-500/15 px-2 py-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400"
+                        class="inline-flex shrink-0 items-center gap-1 rounded-md border border-emerald-500/30 bg-emerald-500/15 px-2 py-0.5 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400"
                     >
                         <span class="inline-block size-1.5 shrink-0 rounded-full bg-emerald-500 dark:bg-emerald-400" />
                         {{ headerData.enrolmentStatus }}
