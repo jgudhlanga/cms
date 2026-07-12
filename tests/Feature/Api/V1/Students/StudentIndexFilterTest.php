@@ -9,6 +9,7 @@ use App\Models\Shared\Title;
 use App\Models\Students\StudentEnrolment;
 use App\Models\Students\StudentEnrolmentStatus;
 use App\Models\Students\StudentApplication;
+use App\Models\Students\StudentApprentice;
 use App\Models\Users\User;
 use Illuminate\Support\Str;
 use Laravel\Sanctum\Sanctum;
@@ -147,4 +148,83 @@ it('returns no students when department user has no assigned departments', funct
     $response = $this->getJson(route('v1.students.index'));
     $response->assertOk();
     expect($response->json('data'))->toBe([]);
+});
+
+it('returns the same distinct student count in index meta and stats when a student has multiple enrolments', function (): void {
+    $program = createVerifiedStudentApplication('STU-MULTI-'.strtoupper(Str::random(4)));
+
+    createStudentEnrolmentForProgram($program);
+    createStudentEnrolmentForProgram($program);
+
+    $user = User::factory()->create(['tenant_id' => $program->tenant_id]);
+    Sanctum::actingAs($user);
+
+    $indexResponse = $this->getJson(route('v1.students.index'));
+    $indexResponse->assertOk();
+
+    $statsResponse = $this->getJson(route('v1.students.stats'));
+    $statsResponse->assertOk();
+
+    expect($indexResponse->json('meta.total'))
+        ->toBe($statsResponse->json('filtered.total'))
+        ->toBe($statsResponse->json('global.total'))
+        ->toBe(1);
+});
+
+it('filters students by apprentice type', function (): void {
+    $directProgram = createVerifiedStudentApplication('STU-DIR-'.strtoupper(Str::random(4)));
+    $apprenticeProgram = createVerifiedStudentApplication('STU-APP-'.strtoupper(Str::random(4)));
+
+    createStudentEnrolmentForProgram($directProgram);
+    createStudentEnrolmentForProgram($apprenticeProgram);
+
+    StudentApprentice::query()->create([
+        'tenant_id' => $apprenticeProgram->tenant_id,
+        'student_id' => $apprenticeProgram->student_id,
+        'calendar_year' => 2026,
+        'employer' => 'Test Employer',
+        'apprentice_number' => 'APP-001',
+    ]);
+
+    $user = User::factory()->create(['tenant_id' => $directProgram->tenant_id]);
+    Sanctum::actingAs($user);
+
+    $apprenticeResponse = $this->getJson(route('v1.students.index').'?student_type=apprentice');
+    $apprenticeResponse->assertOk();
+    $apprenticeIds = collect($apprenticeResponse->json('data'))->pluck('id')->map(static fn ($id) => (int) $id)->all();
+    expect($apprenticeIds)->toContain((int) $apprenticeProgram->student_id)
+        ->and($apprenticeIds)->not->toContain((int) $directProgram->student_id)
+        ->and($apprenticeResponse->json('meta.total'))->toBe(1);
+
+    $directResponse = $this->getJson(route('v1.students.index').'?student_type=direct');
+    $directResponse->assertOk();
+    $directIds = collect($directResponse->json('data'))->pluck('id')->map(static fn ($id) => (int) $id)->all();
+    expect($directIds)->toContain((int) $directProgram->student_id)
+        ->and($directIds)->not->toContain((int) $apprenticeProgram->student_id)
+        ->and($directResponse->json('meta.total'))->toBe(1);
+});
+
+it('matches filtered stats total with index meta total when student type filter is applied', function (): void {
+    $directProgram = createVerifiedStudentApplication('STU-TYPE-'.strtoupper(Str::random(4)));
+    $apprenticeProgram = createVerifiedStudentApplication('STU-TYPE-A-'.strtoupper(Str::random(4)));
+
+    createStudentEnrolmentForProgram($directProgram);
+    createStudentEnrolmentForProgram($apprenticeProgram);
+
+    StudentApprentice::query()->create([
+        'tenant_id' => $apprenticeProgram->tenant_id,
+        'student_id' => $apprenticeProgram->student_id,
+        'calendar_year' => 2026,
+    ]);
+
+    $user = User::factory()->create(['tenant_id' => $directProgram->tenant_id]);
+    Sanctum::actingAs($user);
+
+    $indexResponse = $this->getJson(route('v1.students.index').'?student_type=apprentice');
+    $statsResponse = $this->getJson(route('v1.students.stats').'?student_type=apprentice');
+
+    $indexResponse->assertOk();
+    $statsResponse->assertOk();
+
+    expect($indexResponse->json('meta.total'))->toBe($statsResponse->json('filtered.total'));
 });

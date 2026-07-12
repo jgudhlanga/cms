@@ -33,6 +33,7 @@ class StudentController
                 'course',
                 'mode_of_study',
                 'gender',
+                'student_type',
                 'academic_year',
                 'calendar_type',
                 'with_trashed',
@@ -54,6 +55,7 @@ class StudentController
                     'course',
                     'mode_of_study',
                     'gender',
+                    'student_type',
                     'with_trashed',
                 ])
             )

@@ -1,4 +1,10 @@
-import type { StudentProgrammeModule, StudentProgrammeSemester } from '@/types/students';
+import type {
+    CourseWorkModuleListItem,
+    CourseWorkModuleStatusKey,
+    StudentPortalDashboardModule,
+    StudentProgrammeModule,
+    StudentProgrammeSemester,
+} from '@/types/students';
 import { trans } from 'laravel-vue-i18n';
 
 export const programmeHeading = (
@@ -168,6 +174,71 @@ export const moduleGradeDisplay = (module: StudentProgrammeModule): string => {
 
     return module.grade ? module.grade : trans('students.not_available');
 };
+
+export const moduleStatusKey = (module: StudentProgrammeModule): CourseWorkModuleStatusKey => {
+    const total = module.courseWork?.aggregation.courseWorkTotal60;
+
+    if (total !== null && total !== undefined) {
+        return 'graded';
+    }
+
+    const hasPartialMarks = module.courseWork?.assessments?.some((assessment) => assessment.mark !== null);
+
+    return hasPartialMarks ? 'in_progress' : 'not_graded';
+};
+
+export const courseWorkModuleStatusLabel = (statusKey: CourseWorkModuleStatusKey): string => {
+    switch (statusKey) {
+        case 'in_progress':
+            return trans('students.dashboard_module_status_in_progress');
+        case 'graded':
+            return trans('students.dashboard_module_status_graded');
+        default:
+            return trans('students.dashboard_module_status_not_graded');
+    }
+};
+
+export const courseWorkModuleStatusBadgeClass = (statusKey: CourseWorkModuleStatusKey): string => {
+    switch (statusKey) {
+        case 'in_progress':
+            return 'border-primary/20 bg-primary/10 text-primary';
+        case 'graded':
+            return 'border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400';
+        default:
+            return 'border-amber-500/20 bg-amber-500/10 text-amber-600 dark:text-amber-400';
+    }
+};
+
+const courseWorkAccents = [
+    'bg-emerald-500',
+    'bg-blue-500',
+    'bg-amber-500',
+    'bg-red-500',
+    'bg-purple-500',
+    'bg-cyan-500',
+];
+
+export const courseWorkModuleDotAccent = (index: number): string =>
+    courseWorkAccents[index % courseWorkAccents.length];
+
+export const mapDashboardModuleToListItem = (
+    module: StudentPortalDashboardModule,
+): CourseWorkModuleListItem => ({
+    id: module.id,
+    code: module.code,
+    name: module.name,
+    statusKey: module.statusKey,
+});
+
+export const mapProgrammeModuleToListItem = (
+    module: StudentProgrammeModule,
+    fallbackId: string | number,
+): CourseWorkModuleListItem => ({
+    id: module.id ?? fallbackId,
+    code: module.code,
+    name: module.name,
+    statusKey: moduleStatusKey(module),
+});
 
 export const moduleGradeBadgeClass = (module: StudentProgrammeModule): string => {
     const total = module.courseWork?.aggregation.courseWorkTotal60;

@@ -10,6 +10,7 @@ import AccommodationLeavesSection from '@/components/students/accommodation/Acco
 import AccommodationMyRoomSection from '@/components/students/accommodation/AccommodationMyRoomSection.vue';
 import AccommodationNoticesSection from '@/components/students/accommodation/AccommodationNoticesSection.vue';
 import AccommodationQueriesSection from '@/components/students/accommodation/AccommodationQueriesSection.vue';
+import AccommodationSectionCard from '@/components/students/accommodation/AccommodationSectionCard.vue';
 import AccommodationLeaveModal from '@/components/students/accommodation/modals/AccommodationLeaveModal.vue';
 import AccommodationQueryModal from '@/components/students/accommodation/modals/AccommodationQueryModal.vue';
 import { useStudentAccommodations } from '@/composables/students/useStudentAccommodations';
@@ -18,6 +19,15 @@ import { useStudentHostelApplicationForm } from '@/composables/students/useStude
 import { TypeVariant } from '@/enums/type-variants';
 import type { Student } from '@/types/students';
 import { usePage } from '@inertiajs/vue3';
+import { trans } from 'laravel-vue-i18n';
+import {
+    Building,
+    CircleHelp,
+    Coins,
+    DoorOpen,
+    FileText,
+    Megaphone,
+} from 'lucide-vue-next';
 import { computed, onMounted } from 'vue';
 
 interface Props {
@@ -95,6 +105,63 @@ const canCreateServices = computed(
 const showNoAllocationHelper = computed(
     () => props.context === 'portal' && !activeAllocation.value,
 );
+
+const isPortal = computed(() => props.context === 'portal');
+
+const myRoomBadge = computed(() => ({
+    label: activeAllocation.value?.attributes?.roomName
+        ?? trans('students.accommodation_no_room'),
+    variant: activeAllocation.value ? 'default' as const : 'warning' as const,
+}));
+
+const applicationBadge = computed(() => {
+    if (activeAllocation.value) {
+        return {
+            label: trans('students.accommodation_active_allocation'),
+            variant: 'info' as const,
+        };
+    }
+
+    if (openApplication.value) {
+        return {
+            label: openApplication.value.attributes.statusLabel
+                ?? openApplication.value.attributes.status
+                ?? trans('students.accommodation_application_status'),
+            variant: 'warning' as const,
+        };
+    }
+
+    return {
+        label: String(applications.value.length),
+        variant: 'default' as const,
+    };
+});
+
+const feesBadge = computed(() => {
+    if (!fees.value) {
+        return { label: '—', variant: 'default' as const };
+    }
+
+    return {
+        label: fees.value.isFullyPaid ? fees.value.total : fees.value.due,
+        variant: fees.value.isFullyPaid ? 'success' as const : 'warning' as const,
+    };
+});
+
+const noticesBadge = computed(() => ({
+    label: trans('students.accommodation_notices_count', { count: services.notices.value.length }),
+    variant: 'default' as const,
+}));
+
+const queriesBadge = computed(() => ({
+    label: String(services.queries.value.length),
+    variant: 'default' as const,
+}));
+
+const leavesBadge = computed(() => ({
+    label: String(services.leaves.value.length),
+    variant: 'default' as const,
+}));
 </script>
 
 <template>
@@ -115,6 +182,113 @@ const showNoAllocationHelper = computed(
             <Empty :message="loadError" />
         </div>
 
+        <div
+            v-else-if="isPortal"
+            class="flex w-full flex-col gap-4"
+        >
+            <AccommodationSectionCard
+                :title="$t('students.accommodation_section_my_room')"
+                :icon="Building"
+                icon-tone="blue"
+                :badge="myRoomBadge"
+            >
+                <AccommodationMyRoomSection
+                    :allocation="activeAllocation"
+                    :roommates="roommates"
+                    :open-application="openApplication"
+                    :fees="fees"
+                    context="portal"
+                />
+            </AccommodationSectionCard>
+
+            <AccommodationSectionCard
+                :title="$t('students.accommodation_section_application')"
+                :icon="FileText"
+                icon-tone="blue"
+                :badge="applicationBadge"
+            >
+                <AccommodationApplicationSection
+                    :applications="applications"
+                    :active-allocation="activeAllocation"
+                    :open-application="openApplication"
+                    :lookup="lookup"
+                    :fees="fees"
+                    :can-apply="canApply"
+                    :apply-blockers="applyBlockers"
+                    :form="form"
+                    :is-saving="isSaving"
+                    :save-validation-error="saveValidationError"
+                    context="portal"
+                    @submit="submit"
+                />
+            </AccommodationSectionCard>
+
+            <AccommodationSectionCard
+                :title="$t('students.accommodation_section_fees')"
+                :icon="Coins"
+                icon-tone="amber"
+                :badge="feesBadge"
+            >
+                <AccommodationFeesSection
+                    :fees="fees"
+                    context="portal"
+                />
+            </AccommodationSectionCard>
+
+            <AccommodationSectionCard
+                :title="$t('students.accommodation_section_notices')"
+                :icon="Megaphone"
+                icon-tone="red"
+                :badge="noticesBadge"
+            >
+                <AccommodationNoticesSection
+                    :notices="services.notices.value"
+                    :is-loading="services.isNoticesLoading.value"
+                    context="portal"
+                />
+            </AccommodationSectionCard>
+
+            <AccommodationSectionCard
+                :title="$t('students.accommodation_section_queries')"
+                :icon="CircleHelp"
+                icon-tone="blue"
+                :badge="queriesBadge"
+            >
+                <p
+                    v-if="showNoAllocationHelper"
+                    class="mb-4 text-sm text-muted-foreground"
+                >
+                    {{ $t('students.accommodation_no_room_assigned') }}
+                </p>
+                <AccommodationQueriesSection
+                    :queries="services.queries.value"
+                    :is-loading="services.isQueriesLoading.value"
+                    :can-create="canCreateServices"
+                    context="portal"
+                />
+            </AccommodationSectionCard>
+
+            <AccommodationSectionCard
+                :title="$t('students.accommodation_section_leaves')"
+                :icon="DoorOpen"
+                icon-tone="green"
+                :badge="leavesBadge"
+            >
+                <p
+                    v-if="showNoAllocationHelper"
+                    class="mb-4 text-sm text-muted-foreground"
+                >
+                    {{ $t('students.accommodation_no_room_assigned') }}
+                </p>
+                <AccommodationLeavesSection
+                    :leaves="services.leaves.value"
+                    :is-loading="services.isLeavesLoading.value"
+                    :can-create="canCreateServices"
+                    context="portal"
+                />
+            </AccommodationSectionCard>
+        </div>
+
         <BaseAccordion
             v-else
             class="w-full"
@@ -128,6 +302,9 @@ const showNoAllocationHelper = computed(
                 <AccommodationMyRoomSection
                     :allocation="activeAllocation"
                     :roommates="roommates"
+                    :open-application="openApplication"
+                    :fees="fees"
+                    :context="context"
                 />
             </BaseAccordionItem>
 
@@ -157,7 +334,7 @@ const showNoAllocationHelper = computed(
                 :title="$t('students.accommodation_section_fees')"
                 :description="$t('students.accommodation_section_fees_desc')"
             >
-                <AccommodationFeesSection :fees="fees" />
+                <AccommodationFeesSection :fees="fees" :context="context" />
             </BaseAccordionItem>
 
             <BaseAccordionItem
@@ -168,6 +345,7 @@ const showNoAllocationHelper = computed(
                 <AccommodationNoticesSection
                     :notices="services.notices.value"
                     :is-loading="services.isNoticesLoading.value"
+                    :context="context"
                 />
             </BaseAccordionItem>
 
@@ -176,16 +354,11 @@ const showNoAllocationHelper = computed(
                 :title="$t('students.accommodation_section_queries')"
                 :description="$t('students.accommodation_section_queries_desc')"
             >
-                <p
-                    v-if="showNoAllocationHelper"
-                    class="mb-4 text-sm text-muted-foreground"
-                >
-                    {{ $t('students.accommodation_no_room_assigned') }}
-                </p>
                 <AccommodationQueriesSection
                     :queries="services.queries.value"
                     :is-loading="services.isQueriesLoading.value"
                     :can-create="canCreateServices"
+                    :context="context"
                 />
             </BaseAccordionItem>
 
@@ -194,16 +367,11 @@ const showNoAllocationHelper = computed(
                 :title="$t('students.accommodation_section_leaves')"
                 :description="$t('students.accommodation_section_leaves_desc')"
             >
-                <p
-                    v-if="showNoAllocationHelper"
-                    class="mb-4 text-sm text-muted-foreground"
-                >
-                    {{ $t('students.accommodation_no_room_assigned') }}
-                </p>
                 <AccommodationLeavesSection
                     :leaves="services.leaves.value"
                     :is-loading="services.isLeavesLoading.value"
                     :can-create="canCreateServices"
+                    :context="context"
                 />
             </BaseAccordionItem>
         </BaseAccordion>

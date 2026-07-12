@@ -6,8 +6,12 @@ namespace App\Http\Controllers\Maintenance;
 
 use App\Enums\Enrolments\BulkFinaliseEnrolmentAuditEventEnum;
 use App\Exceptions\Maintenance\StudentIdNumberConflictException;
+use App\Exports\Maintenance\ApprenticeImportTemplateExport;
 use App\Exports\Maintenance\StaffImportTemplateExport;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Maintenance\ApprenticeImportPreviewRequest;
+use App\Http\Requests\Maintenance\ApprenticeImportProcessRequest;
+use App\Http\Requests\Maintenance\ApprenticeImportRefreshRowRequest;
 use App\Http\Requests\Maintenance\DispatchBulkFinaliseEnrolmentsRequest;
 use App\Http\Requests\Maintenance\ExportApplicationRequest;
 use App\Http\Requests\Maintenance\ExportStudentEnrollmentRequest;
@@ -36,6 +40,8 @@ use App\Services\Enrolments\StudentBankPaymentMatcher;
 use App\Services\Maintenance\Staff\StaffImportLookupCreator;
 use App\Services\Maintenance\Staff\StaffImportService;
 use App\Services\Maintenance\Staff\StaffImportTemplateService;
+use App\Services\Maintenance\Students\ApprenticeImportService;
+use App\Services\Maintenance\Students\ApprenticeImportTemplateService;
 use App\Services\Maintenance\Students\FaultyStudentIdNumbersService;
 use App\Services\Maintenance\Students\FixStudentIdNumberService;
 use App\Services\Maintenance\Students\MaintenanceExportCountsService;
@@ -179,6 +185,85 @@ class MaintenanceController extends Controller
         $preview = $importService->preview($this->resolveTenantId(), $file);
 
         return response()->json($preview);
+    }
+
+    public function apprenticeManagement(): Response
+    {
+        return Inertia::render('maintenance/ApprenticeManager', [
+            'calendarYear' => (int) now()->format('Y'),
+        ]);
+    }
+
+    public function downloadApprenticeImportTemplate(
+        ApprenticeImportTemplateService $templateService,
+    ): BinaryFileResponse {
+        $data = $templateService->assemble();
+
+        return Excel::download(
+            new ApprenticeImportTemplateExport($data),
+            $templateService->downloadFileName(),
+        );
+    }
+
+    public function previewApprenticeImport(
+        ApprenticeImportPreviewRequest $request,
+        ApprenticeImportService $importService,
+    ): JsonResponse {
+        $validated = $request->validated();
+        $file = $request->file('file');
+
+        if ($file === null) {
+            abort(422);
+        }
+
+        $preview = $importService->preview(
+            $file,
+            (int) $validated['institution_department_id'],
+            (int) $validated['calendar_year'],
+        );
+
+        return response()->json($preview);
+    }
+
+    public function processApprenticeImport(
+        ApprenticeImportProcessRequest $request,
+        ApprenticeImportService $importService,
+    ): JsonResponse {
+        $validated = $request->validated();
+
+        /** @var list<array{rowNumber: int, studentApplicationId: int, apprenticeNumber?: string|null, employer?: string|null}> $rows */
+        $rows = $validated['rows'];
+
+        $result = $importService->process(
+            $rows,
+            (int) $validated['institution_department_id'],
+            (int) $validated['calendar_year'],
+        );
+
+        return response()->json($result);
+    }
+
+    public function refreshApprenticeImportRow(
+        ApprenticeImportRefreshRowRequest $request,
+        ApprenticeImportService $importService,
+    ): JsonResponse {
+        $validated = $request->validated();
+
+        $parsedRow = [
+            'rowNumber' => (int) $validated['rowNumber'],
+            'idNumber' => $validated['idNumber'] ?? null,
+            'studentNumber' => $validated['studentNumber'] ?? null,
+            'apprenticeNumber' => $validated['apprenticeNumber'] ?? null,
+            'employer' => $validated['employer'] ?? null,
+        ];
+
+        $result = $importService->refreshPreviewRow(
+            $parsedRow,
+            (int) $validated['institution_department_id'],
+            (int) $validated['calendar_year'],
+        );
+
+        return response()->json($result);
     }
 
     public function faultyStudentIds(): Response
@@ -344,6 +429,29 @@ class MaintenanceController extends Controller
         }
 
         return response()->json($progress);
+    }
+
+    public function mergeFaultyStudentPreviewData(
+        Student $student,
+        StudentAccountMergePreviewService $previewService,
+    ): JsonResponse {
+        $targetId = (int) request()->query('target', 0);
+        $idNumber = EnrollmentLookupService::normalizeNationalId((string) request()->query('id_number', ''));
+
+        try {
+            $preview = $previewService->build($student, $targetId, $idNumber);
+        } catch (ValidationException $exception) {
+            $message = collect($exception->errors())->flatten()->first()
+                ?? __('trans.maintenance_faulty_data_merge_failure');
+
+            return response()->json([
+                'message' => $message,
+            ], 422);
+        }
+
+        return response()->json([
+            'data' => StudentAccountMergePreviewResource::make($preview)->resolve(),
+        ]);
     }
 
     public function mergeFaultyStudentPreview(

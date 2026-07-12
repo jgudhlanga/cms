@@ -189,6 +189,7 @@ export const useStudents = () => {
             course: filters.course,
             mode_of_study: filters.mode_of_study,
             gender: filters.gender,
+            student_type: filters.student_type,
         };
 
         return mergeQueryParamsIntoRequestPath(route('students.export'), exportFilters as Record<string, unknown>);

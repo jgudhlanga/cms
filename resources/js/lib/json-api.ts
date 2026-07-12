@@ -316,7 +316,10 @@ export function parseJsonApiStudentPortalDashboardStats(document: JsonApiMetaDoc
         oLevelSubjectCount: meta.oLevelSubjectCount ?? 0,
         applicationCount: meta.applicationCount ?? 0,
         pendingApplicationCount: meta.pendingApplicationCount ?? 0,
-        modules: meta.modules ?? [],
+        modules: (meta.modules ?? []).map((module) => ({
+            ...module,
+            statusKey: module.statusKey ?? 'not_graded',
+        })),
         activities: meta.activities ?? [],
         notices: meta.notices ?? [],
         calendarType: meta.calendarType ?? 'semester',

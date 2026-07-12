@@ -139,7 +139,14 @@ test('json api student portal dashboard stats returns meta for authenticated stu
                 'oLevelSubjectCount',
                 'applicationCount',
                 'pendingApplicationCount',
-                'modules',
+                'modules' => [
+                    '*' => [
+                        'id',
+                        'code',
+                        'name',
+                        'statusKey',
+                    ],
+                ],
                 'activities',
                 'notices',
                 'calendarType',

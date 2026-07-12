@@ -1,19 +1,29 @@
 <script setup lang="ts">
+import AccommodationOpenApplicationCard from '@/components/students/accommodation/AccommodationOpenApplicationCard.vue';
+import AccommodationAmenityList from '@/components/students/accommodation/AccommodationAmenityList.vue';
 import BaseIcon from '@/components/core/icon/BaseIcon.vue';
-import { useUtils } from '@/composables/core/useUtils';
-import { amenityIconName } from '@/lib/hms/roomSectionDisplay';
-import type { HostelAllocation, HostelAllocationAmenity, HostelAllocationRoommate } from '@/types/hms';
+import type {
+    HostelAllocation,
+    HostelAllocationRoommate,
+    HostelApplication,
+    StudentAccommodationFeesResponse,
+} from '@/types/hms';
 import { Bed, Users } from 'lucide-vue-next';
 import { computed } from 'vue';
 
 interface Props {
     allocation: HostelAllocation | null;
     roommates: HostelAllocationRoommate[];
+    openApplication?: HostelApplication | null;
+    fees?: StudentAccommodationFeesResponse | null;
+    context?: 'admin' | 'portal';
 }
 
-const props = defineProps<Props>();
-
-const { formatCurrency } = useUtils();
+const props = withDefaults(defineProps<Props>(), {
+    openApplication: null,
+    fees: null,
+    context: 'admin',
+});
 
 const attrs = computed(() => props.allocation?.attributes ?? null);
 
@@ -26,9 +36,7 @@ const roomTypeLabel = computed(() => {
     return type.charAt(0).toUpperCase() + type.slice(1);
 });
 
-const hasAmenityMarketValues = computed(
-    () => (attrs.value?.amenities ?? []).some((amenity) => amenity.marketValue != null),
-);
+const isPortal = computed(() => props.context === 'portal');
 
 function roommateInitials(name?: string | null): string {
     if (!name) {
@@ -47,21 +55,81 @@ function roommateSubtitle(roommate: HostelAllocationRoommate): string {
     const parts = [roommate.course, roommate.level].filter(Boolean);
     return parts.join(' — ');
 }
-
-function amenityMarketValueLabel(amenity: HostelAllocationAmenity): string | null {
-    if (amenity.marketValue == null) {
-        return null;
-    }
-
-    return `USD ${formatCurrency(String(amenity.marketValue))}`;
-}
 </script>
 
 <template>
-    <div v-if="!allocation" class="rounded-xl border border-dashed border-border bg-muted/20 py-10 text-center">
+    <AccommodationOpenApplicationCard
+        v-if="!allocation && openApplication"
+        :open-application="openApplication"
+        :fees="fees"
+        :context="context"
+    />
+
+    <div
+        v-else-if="!allocation"
+        class="rounded-xl border border-dashed border-border bg-muted/20 py-10 text-center"
+    >
         <p class="text-sm text-muted-foreground">{{ $t('students.accommodation_no_room_assigned') }}</p>
     </div>
 
+    <!-- Portal compact layout -->
+    <div v-else-if="isPortal" class="flex flex-col gap-4">
+        <div class="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
+            <div>
+                <span class="text-muted-foreground">{{ $t('students.accommodation_hostel') }}</span>
+                <span class="ml-1.5 font-semibold text-foreground">{{ attrs?.hostelName ?? '—' }}</span>
+            </div>
+            <div v-if="attrs?.sectionName">
+                <span class="text-muted-foreground">{{ $t('students.accommodation_section') }}</span>
+                <span class="ml-1.5 font-semibold text-foreground">{{ attrs.sectionName }}</span>
+            </div>
+            <div>
+                <span class="text-muted-foreground">{{ $t('students.accommodation_floor') }}</span>
+                <span class="ml-1.5 font-semibold text-foreground">{{ attrs?.floorNumber ?? '—' }}</span>
+            </div>
+            <div>
+                <span class="text-muted-foreground">{{ $t('students.accommodation_type') }}</span>
+                <span class="ml-1.5 font-semibold text-foreground">{{ roomTypeLabel }}</span>
+            </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2 text-sm">
+            <span
+                class="inline-flex items-center gap-1 rounded-full bg-emerald-600 px-2.5 py-0.5 text-xs font-medium capitalize text-white dark:bg-emerald-700"
+            >
+                <BaseIcon name="check" class="h-3 w-3" />
+                {{ attrs?.roomStatus ?? attrs?.statusLabel }}
+            </span>
+            <span class="text-muted-foreground">·</span>
+            <span v-if="roommates.length === 0" class="text-muted-foreground">
+                {{ $t('students.accommodation_no_roommates') }}
+            </span>
+            <div v-else class="flex flex-wrap items-center gap-2">
+                <span
+                    v-for="roommate in roommates.slice(0, 2)"
+                    :key="roommate.id"
+                    class="inline-flex items-center gap-1.5 rounded-full bg-muted/40 px-2 py-0.5"
+                >
+                    <span
+                        class="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-[10px] font-semibold text-white dark:bg-emerald-700"
+                    >
+                        {{ roommateInitials(roommate.name) }}
+                    </span>
+                    <span class="text-xs font-medium text-foreground">{{ roommate.name }}</span>
+                </span>
+                <span
+                    v-if="roommates.length > 2"
+                    class="text-xs text-muted-foreground"
+                >
+                    {{ $t('students.accommodation_roommates_more', { count: roommates.length - 2 }) }}
+                </span>
+            </div>
+        </div>
+
+        <AccommodationAmenityList :amenities="attrs?.amenities ?? []" />
+    </div>
+
+    <!-- Admin layout -->
     <div v-else class="flex flex-col gap-4">
         <div class="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-5">
             <div class="flex items-start gap-3 border-b border-border pb-4">
@@ -104,40 +172,7 @@ function amenityMarketValueLabel(amenity: HostelAllocationAmenity): string | nul
             </div>
 
             <div class="mt-4">
-                <div class="mb-2">
-                    <p class="text-xs text-muted-foreground">{{ $t('students.accommodation_amenities') }}</p>
-                    <p
-                        v-if="hasAmenityMarketValues"
-                        class="mt-0.5 text-[10px] leading-snug text-muted-foreground"
-                    >
-                        {{ $t('students.accommodation_amenity_market_value_hint') }}
-                    </p>
-                </div>
-                <div
-                    v-if="attrs?.amenities?.length"
-                    class="grid w-full grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-[repeat(auto-fill,minmax(7rem,1fr))]"
-                >
-                    <div
-                        v-for="amenity in attrs.amenities"
-                        :key="amenity.id"
-                        class="flex min-w-0 w-full items-center rounded-xl border border-primary/15 bg-primary/5 px-2 py-1"
-                    >
-                        <span class="inline-flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs font-medium text-foreground">
-                            <BaseIcon
-                                :name="amenityIconName(amenity.slug ?? amenity.name)"
-                                class="h-3.5 w-3.5 shrink-0 text-primary"
-                            />
-                            <span class="truncate">{{ amenity.name }}</span>
-                            <span
-                                v-if="amenityMarketValueLabel(amenity)"
-                                class="text-[10px] font-normal leading-none text-muted-foreground"
-                            >
-                                {{ amenityMarketValueLabel(amenity) }}
-                            </span>
-                        </span>
-                    </div>
-                </div>
-                <p v-else class="text-sm text-muted-foreground">{{ $t('students.accommodation_no_amenities') }}</p>
+                <AccommodationAmenityList :amenities="attrs?.amenities ?? []" />
             </div>
         </div>
 

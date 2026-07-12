@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useStudentPortalTermProgress } from '@/composables/students/useStudentPortalTermProgress';
 import type { StudentPortalCalendarType, StudentPortalDashboardTerm } from '@/types/students';
 import { CalendarDays } from 'lucide-vue-next';
 import { computed } from 'vue';
@@ -13,6 +14,10 @@ const props = withDefaults(defineProps<Props>(), {
     calendarType: 'semester',
 });
 
+const { daysRemaining, elapsedPercent, isTodayWithinTerm } = useStudentPortalTermProgress(
+    () => props.currentTerm,
+);
+
 const currentPeriodHeadingKey = computed(() => {
     switch (props.calendarType) {
         case 'term':
@@ -24,14 +29,14 @@ const currentPeriodHeadingKey = computed(() => {
     }
 });
 
-const nextPeriodHeadingKey = computed(() => {
+const periodNounKey = computed(() => {
     switch (props.calendarType) {
         case 'term':
-            return 'students.dashboard_next_term_period';
+            return 'students.dashboard_period_term';
         case 'abma':
-            return 'students.dashboard_next_abma';
+            return 'students.dashboard_period_abma';
         default:
-            return 'students.dashboard_next_semester';
+            return 'students.dashboard_period_semester';
     }
 });
 
@@ -46,70 +51,101 @@ const formatDate = (value: string | null | undefined): string => {
         year: 'numeric',
     }).format(new Date(`${value}T00:00:00`));
 };
+
+const termTitle = (term: StudentPortalDashboardTerm): string => {
+    return `${term.label} · ${term.calendarYear}`;
+};
 </script>
 
 <template>
-    <div class="grid w-full min-w-0 grid-cols-1 gap-1.5 sm:grid-cols-2">
-        <article class="min-w-0 rounded-md border border-primary/20 bg-card px-2 py-1.5 shadow-sm">
-            <div class="flex items-center gap-1">
-                <CalendarDays class="h-3 w-3 shrink-0 text-primary" />
-                <h3 class="text-[9px] font-semibold uppercase tracking-wide text-muted-foreground">
-                    {{ $t(currentPeriodHeadingKey) }}
-                </h3>
-            </div>
-            <template v-if="currentTerm">
-                <p class="mt-0.5 wrap-break-word text-xs font-semibold leading-snug text-foreground sm:leading-tight">
-                    {{ currentTerm.label }}
-                    <span class="font-normal text-muted-foreground">· {{ currentTerm.calendarYear }}</span>
+    <section class="w-full min-w-0 rounded-2xl border border-border bg-card px-4 py-4 shadow-sm sm:px-6 sm:py-5">
+        <template v-if="currentTerm">
+            <div class="flex min-w-0 flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between sm:gap-3">
+                <p class="min-w-0 wrap-break-word">
+                    <span class="text-[11px] font-semibold uppercase tracking-wide text-primary">
+                        {{ $t(currentPeriodHeadingKey) }}
+                    </span>
+                    <span class="ml-2 text-base font-bold text-foreground">
+                        {{ termTitle(currentTerm) }}
+                    </span>
                 </p>
-                <dl class="mt-1 grid grid-cols-2 gap-x-2 gap-y-0.5 text-[10px] leading-tight">
-                    <div>
-                        <dt class="text-muted-foreground">{{ $t('students.dashboard_term_opens') }}</dt>
-                        <dd class="font-medium text-foreground">{{ formatDate(currentTerm.openingDate) }}</dd>
-                    </div>
-                    <div>
-                        <dt class="text-muted-foreground">{{ $t('students.dashboard_term_closes') }}</dt>
-                        <dd class="font-medium text-foreground">{{ formatDate(currentTerm.closingDate) }}</dd>
-                    </div>
-                </dl>
-            </template>
-            <p
-                v-else
-                class="mt-0.5 text-[10px] leading-snug text-muted-foreground"
-            >
-                {{ $t('students.dashboard_term_unavailable') }}
-            </p>
-        </article>
+                <p
+                    v-if="daysRemaining !== null"
+                    class="shrink-0 text-sm text-muted-foreground"
+                >
+                    <span class="font-semibold text-foreground">{{ daysRemaining }}</span>
+                    {{ $t('students.dashboard_days_remaining', { period: $t(periodNounKey) }) }}
+                </p>
+            </div>
 
-        <article class="min-w-0 rounded-md border border-sky-500/20 bg-card px-2 py-1.5 shadow-sm">
-            <div class="flex items-center gap-1">
-                <CalendarDays class="h-3 w-3 shrink-0 text-sky-500 dark:text-sky-400" />
-                <h3 class="text-[9px] font-semibold uppercase tracking-wide text-muted-foreground">
-                    {{ $t(nextPeriodHeadingKey) }}
-                </h3>
+            <div class="mt-3">
+                <div class="h-0.5 overflow-hidden rounded-full bg-muted">
+                    <div
+                        class="h-full rounded-full bg-primary transition-all"
+                        :style="{ width: `${elapsedPercent}%` }"
+                    />
+                </div>
             </div>
-            <template v-if="nextTerm">
-                <p class="mt-0.5 wrap-break-word text-xs font-semibold leading-snug text-foreground sm:leading-tight">
-                    {{ nextTerm.label }}
-                    <span class="font-normal text-muted-foreground">· {{ nextTerm.calendarYear }}</span>
+
+            <div class="mt-2 flex items-center justify-between gap-2 text-xs">
+                <p class="min-w-0 wrap-break-word text-muted-foreground">
+                    {{ $t('students.dashboard_term_opens') }} ·
+                    <span class="font-medium text-foreground">{{ formatDate(currentTerm.openingDate) }}</span>
                 </p>
-                <dl class="mt-1 grid grid-cols-2 gap-x-2 gap-y-0.5 text-[10px] leading-tight">
-                    <div>
-                        <dt class="text-muted-foreground">{{ $t('students.dashboard_term_opens') }}</dt>
-                        <dd class="font-medium text-foreground">{{ formatDate(nextTerm.openingDate) }}</dd>
-                    </div>
-                    <div v-if="nextTerm.closingDate">
-                        <dt class="text-muted-foreground">{{ $t('students.dashboard_term_closes') }}</dt>
-                        <dd class="font-medium text-foreground">{{ formatDate(nextTerm.closingDate) }}</dd>
-                    </div>
-                </dl>
-            </template>
-            <p
-                v-else
-                class="mt-0.5 text-[10px] leading-snug text-muted-foreground"
-            >
-                {{ $t('students.dashboard_next_term_unavailable') }}
-            </p>
-        </article>
-    </div>
+                <p class="flex min-w-0 items-center justify-end gap-1.5 wrap-break-word text-muted-foreground">
+                    {{ $t('students.dashboard_term_closes') }}
+                    <span
+                        v-if="isTodayWithinTerm"
+                        class="rounded bg-primary/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary"
+                    >
+                        {{ $t('students.dashboard_today') }}
+                    </span>
+                    <span class="font-medium text-foreground">{{ formatDate(currentTerm.closingDate) }}</span>
+                </p>
+            </div>
+        </template>
+
+        <p
+            v-else
+            class="text-sm text-muted-foreground"
+        >
+            {{ $t('students.dashboard_term_unavailable') }}
+        </p>
+
+        <div class="my-4 border-t border-dashed border-border" />
+
+        <div class="flex min-w-0 items-center gap-3">
+            <span class="flex size-9 shrink-0 items-center justify-center rounded-lg bg-amber-500/15 text-amber-600 dark:text-amber-400">
+                <CalendarDays class="size-4" />
+            </span>
+            <div class="flex min-w-0 flex-1 flex-col gap-0.5 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+                <div class="min-w-0">
+                    <p class="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                        {{ $t('students.dashboard_next_up') }}
+                    </p>
+                    <p
+                        v-if="nextTerm"
+                        class="wrap-break-word text-sm font-semibold text-foreground"
+                    >
+                        {{ termTitle(nextTerm) }}
+                    </p>
+                </div>
+                <p
+                    v-if="nextTerm"
+                    class="shrink-0 text-xs text-muted-foreground"
+                >
+                    {{ $t('students.dashboard_term_opens') }} {{ formatDate(nextTerm.openingDate) }}
+                    <template v-if="nextTerm.closingDate">
+                        → {{ $t('students.dashboard_term_closes') }} {{ formatDate(nextTerm.closingDate) }}
+                    </template>
+                </p>
+                <p
+                    v-else
+                    class="text-xs text-muted-foreground"
+                >
+                    {{ $t('students.dashboard_next_term_unavailable') }}
+                </p>
+            </div>
+        </div>
+    </section>
 </template>

@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import Empty from '@/components/core/util/Empty.vue';
+import StudentCourseWorkModuleRow from '@/components/students/course-work/StudentCourseWorkModuleRow.vue';
 import {
+    mapProgrammeModuleToListItem,
     semesterHeaderMeta,
     statusBadgeClass,
 } from '@/composables/students/studentProgrammeDisplay';
-import ProgrammeModuleRow from '@/pages/students/components/profile/programs/ProgrammeModuleRow.vue';
+import ProgrammeModuleDetails from '@/pages/students/components/profile/programs/ProgrammeModuleDetails.vue';
 import type { StudentProgrammeSemester } from '@/types/students';
 import { CalendarDays } from 'lucide-vue-next';
 import { computed, onMounted, ref, watch } from 'vue';
@@ -113,13 +115,32 @@ watch(
             v-else
             class="divide-y divide-border"
         >
-            <ProgrammeModuleRow
+            <div
                 v-for="(module, moduleIndex) in semester.module"
                 :key="`${semester.id}-${module.code ?? moduleIndex}`"
-                :module="module"
-                :open="isModuleOpen(moduleIndex)"
-                @toggle="toggleModule(moduleIndex)"
-            />
+                class="min-w-0"
+            >
+                <StudentCourseWorkModuleRow
+                    :module="mapProgrammeModuleToListItem(module, `${semester.id}-${moduleIndex}`)"
+                    :accent-index="moduleIndex"
+                    mode="expandable"
+                    :expanded="isModuleOpen(moduleIndex)"
+                    @activate="toggleModule(moduleIndex)"
+                />
+                <Transition
+                    enter-active-class="transition-all duration-200 ease-out"
+                    enter-from-class="max-h-0 opacity-0"
+                    enter-to-class="max-h-[2000px] opacity-100"
+                    leave-active-class="transition-all duration-150 ease-in"
+                    leave-from-class="max-h-[2000px] opacity-100"
+                    leave-to-class="max-h-0 opacity-0"
+                >
+                    <ProgrammeModuleDetails
+                        v-if="isModuleOpen(moduleIndex)"
+                        :module="module"
+                    />
+                </Transition>
+            </div>
         </div>
     </div>
 </template>
