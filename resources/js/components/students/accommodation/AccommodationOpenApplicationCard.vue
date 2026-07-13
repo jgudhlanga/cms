@@ -61,6 +61,11 @@ const dateRange = computed(() => {
     const checkIn = props.openApplication.attributes.checkIn;
     const checkOut = props.openApplication.attributes.checkOut;
     const formattedCheckIn = checkIn ? formatDate(checkIn, 'L') : '—';
+
+    if (props.context === 'portal') {
+        return formattedCheckIn;
+    }
+
     const formattedCheckOut = checkOut ? formatDate(checkOut, 'L') : '—';
 
     return `${formattedCheckIn} — ${formattedCheckOut}`;

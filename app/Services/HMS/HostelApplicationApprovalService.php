@@ -103,9 +103,11 @@ class HostelApplicationApprovalService
                 ]);
             }
 
-            $room = $settings->auto_allocate_rooms
-                ? $this->resolveAutomaticRoom($application)
-                : $this->resolveManualRoom($application, $hostelRoomId);
+            $room = ($hostelRoomId ?? 0) > 0
+                ? $this->resolveManualRoom($application, $hostelRoomId)
+                : ($settings->auto_allocate_rooms
+                    ? $this->resolveAutomaticRoom($application)
+                    : $this->resolveManualRoom($application, $hostelRoomId));
 
             if ($room === null) {
                 throw ValidationException::withMessages([
@@ -201,8 +203,6 @@ class HostelApplicationApprovalService
             return null;
         }
 
-        $isDisabledStudent = $application->student?->disability_status === 'yes';
-
         $groundFloorRooms = $rooms
             ->filter(fn (HostelRoom $room) => (int) ($room->floor_number ?? 0) === 0)
             ->sort(function (HostelRoom $left, HostelRoom $right): int {
@@ -215,20 +215,18 @@ class HostelApplicationApprovalService
             ->filter(fn (HostelRoom $room) => (int) ($room->floor_number ?? 0) > 0)
             ->sort(function (HostelRoom $left, HostelRoom $right): int {
                 return [
-                    -1 * (int) ($left->floor_number ?? 0),
+                    (int) ($left->floor_number ?? 0),
                     (int) $left->hostel_id,
                     (string) $left->name,
                 ] <=> [
-                    -1 * (int) ($right->floor_number ?? 0),
+                    (int) ($right->floor_number ?? 0),
                     (int) $right->hostel_id,
                     (string) $right->name,
                 ];
             })
             ->values();
 
-        $orderedRooms = $isDisabledStudent
-            ? $groundFloorRooms->concat($upperFloorRooms)
-            : $upperFloorRooms->concat($groundFloorRooms);
+        $orderedRooms = $groundFloorRooms->concat($upperFloorRooms);
 
         return $orderedRooms->first();
     }

@@ -6,6 +6,7 @@ import CreateEditHostel from '@/pages/hms/components/forms/CreateEditHostel.vue'
 import CreateEditHostelAmenity from '@/pages/hms/components/forms/CreateEditHostelAmenity.vue';
 import CreateEditRoom from '@/pages/hms/components/forms/CreateEditRoom.vue';
 import CreateEditApplication from '@/pages/hms/components/forms/CreateEditApplication.vue';
+import ReassignRoomDialog from '@/pages/hms/components/forms/ReassignRoomDialog.vue';
 import { useHmsStore } from '@/store/hms/useHmsStore';
 import { BreadcrumbItemInterface } from '@/types/ui';
 import { Head } from '@inertiajs/vue3';
@@ -44,5 +45,6 @@ const activeSection = computed(() => visibleTabs.value.find((tab) => tab.value =
         <CreateEditHostelAmenity />
         <CreateEditRoom />
         <CreateEditApplication />
+        <ReassignRoomDialog />
     </PageContainer>
 </template>

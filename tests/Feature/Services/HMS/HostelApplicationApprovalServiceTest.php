@@ -13,7 +13,7 @@ use App\Services\HMS\HostelApplicationApprovalService;
 use App\Services\HMS\HostelRoomSectionService;
 use Illuminate\Validation\ValidationException;
 
-it('auto allocates non-disabled students from the top floor downward before ground floor', function (): void {
+it('auto allocates non-disabled students from the ground floor upward', function (): void {
     $tenantId = TenantEnum::HARARE_POLY->id();
     $student = createStudentForAllocationIndexTest();
 
@@ -69,8 +69,8 @@ it('auto allocates non-disabled students from the top floor downward before grou
     app(HostelApplicationApprovalService::class)->approve($application);
 
     expect(HostelRoomAllocation::query()->where('student_id', $student->id)->latest('id')->value('hostel_room_id'))
-        ->toBe($topRoom->id)
-        ->not->toBe($groundRoom->id);
+        ->toBe($groundRoom->id)
+        ->not->toBe($topRoom->id);
 });
 
 it('auto allocates disabled students to the ground floor first', function (): void {
@@ -131,6 +131,81 @@ it('auto allocates disabled students to the ground floor first', function (): vo
 
     expect(HostelRoomAllocation::query()->where('student_id', $student->id)->latest('id')->value('hostel_room_id'))
         ->toBe($groundRoom->id);
+});
+
+it('allocates sequential approvals from ground floor upward', function (): void {
+    $tenantId = TenantEnum::HARARE_POLY->id();
+    $firstStudent = createStudentForAllocationIndexTest();
+    $secondStudent = createStudentForAllocationIndexTest();
+
+    $hostel = Hostel::query()->create([
+        'tenant_id' => $tenantId,
+        'name' => 'Hostel D2',
+        'location' => 'West',
+        'floor_count' => 4,
+        'rooms_count' => 2,
+        'capacity' => 4,
+        'status' => 'active',
+        'type' => 'male',
+    ]);
+
+    $groundRoom = HostelRoom::query()->create([
+        'tenant_id' => $tenantId,
+        'hostel_id' => $hostel->id,
+        'name' => 'D2-G-01',
+        'room_type' => 'single',
+        'capacity' => 1,
+        'max_occupancy' => 1,
+        'current_occupancy' => 0,
+        'status' => 'vacant',
+        'floor_number' => 0,
+    ]);
+
+    $upperRoom = HostelRoom::query()->create([
+        'tenant_id' => $tenantId,
+        'hostel_id' => $hostel->id,
+        'name' => 'D2-1-01',
+        'room_type' => 'single',
+        'capacity' => 1,
+        'max_occupancy' => 1,
+        'current_occupancy' => 0,
+        'status' => 'vacant',
+        'floor_number' => 1,
+    ]);
+
+    disableAllHmsApprovalRequirements($tenantId)->update(['auto_allocate_rooms' => true]);
+
+    $firstApplication = HostelApplication::withoutEvents(fn () => HostelApplication::query()->create([
+        'tenant_id' => $tenantId,
+        'student_id' => $firstStudent->id,
+        'gender_id' => $firstStudent->gender_id,
+        'type' => HostelApplicationTypeEnum::STUDENT,
+        'status' => HostelApplicationStatusEnum::PENDING,
+        'next_of_kin_name' => 'Kin Name',
+        'next_of_kin_contact' => '0771234567',
+        'check_in' => now()->toDateString(),
+        'check_out' => now()->addMonths(4)->toDateString(),
+    ]));
+
+    $secondApplication = HostelApplication::withoutEvents(fn () => HostelApplication::query()->create([
+        'tenant_id' => $tenantId,
+        'student_id' => $secondStudent->id,
+        'gender_id' => $secondStudent->gender_id,
+        'type' => HostelApplicationTypeEnum::STUDENT,
+        'status' => HostelApplicationStatusEnum::PENDING,
+        'next_of_kin_name' => 'Kin Name',
+        'next_of_kin_contact' => '0771234568',
+        'check_in' => now()->toDateString(),
+        'check_out' => now()->addMonths(4)->toDateString(),
+    ]));
+
+    app(HostelApplicationApprovalService::class)->approve($firstApplication);
+    app(HostelApplicationApprovalService::class)->approve($secondApplication);
+
+    expect(HostelRoomAllocation::query()->where('student_id', $firstStudent->id)->latest('id')->value('hostel_room_id'))
+        ->toBe($groundRoom->id)
+        ->and(HostelRoomAllocation::query()->where('student_id', $secondStudent->id)->latest('id')->value('hostel_room_id'))
+        ->toBe($upperRoom->id);
 });
 
 it('assigns the first free room section when approving an application', function (): void {

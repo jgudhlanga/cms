@@ -6,6 +6,7 @@ use App\Enums\HMS\HostelApplicationStatusEnum;
 use App\Enums\HMS\HostelEligibilityContextEnum;
 use App\Models\HMS\HostelApplication;
 use App\Models\Students\Student;
+use App\Models\Users\User;
 use App\Services\HMS\HostelApplicationApprovalOptionsService;
 use App\Services\HMS\HostelApplicationApprovalService;
 use App\Services\HMS\HostelApplicationEligibilityService;
@@ -58,7 +59,7 @@ class HostelApplicationController extends JsonApiController
 
             abort_unless(HmsStudentAccess::canViewStudentHms($request->user(), $student), 403);
 
-            return MetaResponse::make($this->buildStudentLookupMeta($student));
+            return MetaResponse::make($this->buildStudentLookupMeta($student, $request->user()));
         }
 
         abort_unless(
@@ -98,7 +99,7 @@ class HostelApplicationController extends JsonApiController
             ]);
         }
 
-        return MetaResponse::make($this->buildStudentLookupMeta($student));
+        return MetaResponse::make($this->buildStudentLookupMeta($student, $request->user()));
     }
 
     public function selfLookup(Request $request): MetaResponse
@@ -118,7 +119,7 @@ class HostelApplicationController extends JsonApiController
 
         $student->load($this->studentLookupRelations());
 
-        return MetaResponse::make($this->buildStudentLookupMeta($student));
+        return MetaResponse::make($this->buildStudentLookupMeta($student, $request->user()));
     }
 
     public function accommodationFees(Request $request): MetaResponse
@@ -149,7 +150,7 @@ class HostelApplicationController extends JsonApiController
     /**
      * @return array<string, mixed>
      */
-    private function buildStudentLookupMeta(Student $student): array
+    private function buildStudentLookupMeta(Student $student, ?User $user = null): array
     {
         $enrolment = $student->latestEnrolment;
         $eligibility = $this->eligibilityService->evaluate($student, $enrolment, context: HostelEligibilityContextEnum::APPLICATION);
@@ -219,13 +220,13 @@ class HostelApplicationController extends JsonApiController
                 'nextOfKinContact' => $nextOfKinContact?->phone_number,
                 'modeOfStudy' => $enrolment?->modeOfStudy?->name,
             ],
-            'semester' => ($checkIn && $checkOut) ? [
+            'semester' => ($checkIn && $checkOut) ? array_filter([
                 'checkIn' => $checkIn,
-                'checkOut' => $checkOut,
+                'checkOut' => HmsStudentAccess::canViewCheckoutDates($user) ? $checkOut : null,
                 'label' => $semesterDates['success']
                     ? $semesterDates['label']
                     : null,
-            ] : null,
+            ], fn ($value) => $value !== null) : null,
             'roomAvailability' => [
                 'availableBeds' => $roomAvailability['availableBeds'],
                 'hostels' => $roomAvailability['hostels'],

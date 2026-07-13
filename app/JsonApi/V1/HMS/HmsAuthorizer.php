@@ -132,6 +132,7 @@ class HmsAuthorizer implements Authorizer
 
         return match (true) {
             $model instanceof HostelApplication => $user->can('update', $model),
+            $model instanceof HostelRoomAllocation => $user->can('update', $model),
             $model instanceof HostelQuery => $user->can('update', $model),
             $model instanceof HostelLeave => $user->can('update', $model),
             $model instanceof HostelNotice => $user->can('update', $model),

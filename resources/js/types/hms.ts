@@ -467,6 +467,7 @@ export type HmsSettings = {
         campusCity: string;
         allowGuests: boolean;
         autoAllocateRooms: boolean;
+        daysToPay: number;
         applicationsOpen: boolean;
         applicationStartDate?: string | null;
         applicationEndDate?: string | null;

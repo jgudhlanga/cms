@@ -31,10 +31,14 @@ class SendHostelApplicationAwaitingPaymentEmail implements ShouldQueue
         }
 
         $name = $application->student?->user?->full_name ?? $application->name ?? 'Student';
- 
+
+        $paymentDueDate = $application->payment_due_at?->timezone(config('app.timezone'))->format('j F Y')
+            ?? now()->addDays(7)->format('j F Y');
+
         Mail::to($email)->send(new HostelApplicationAwaitingPaymentMail(
             $name,
             route('portal.profile.accommodations.pay', absolute: true),
+            $paymentDueDate,
         ));
     }
 }

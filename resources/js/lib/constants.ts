@@ -83,6 +83,7 @@ const APP_MODULE_KEYS = {
     hostel_application_approve: 'hostel_application_approve',
     hostel_accommodation_query: 'hostel_accommodation_query',
     hostel_accommodation_leave: 'hostel_accommodation_leave',
+    hostel_room_reassign: 'hostel_room_reassign',
     student_list_export: 'student_list_export',
     class_list_export: 'class_list_export',
     assign_class_lecturer: 'assign_class_lecturer',

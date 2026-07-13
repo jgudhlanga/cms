@@ -82,6 +82,17 @@ class HmsStudentAccess
             || $user->can('viewAny:hostel-room-allocations');
     }
 
+    public static function canViewCheckoutDates(?User $user): bool
+    {
+        if ($user === null) {
+            return false;
+        }
+
+        return self::isStaffHmsUser($user)
+            || $user->can('update:hostel-applications')
+            || $user->can('view:hostel-applications');
+    }
+
     public static function studentIdFromRequest(): ?int
     {
         $studentId = request()->input('filter.student');

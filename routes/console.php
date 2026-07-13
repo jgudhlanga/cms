@@ -11,3 +11,5 @@ Artisan::command('inspire', function () {
 Schedule::command('statements:dispatch-fetch-jobs')->everyTenMinutes()->withoutOverlapping();
 
 Schedule::command('statements:plan-fetch-windows')->dailyAt('00:00')->withoutOverlapping();
+
+Schedule::command('hms:expire-unpaid-applications')->dailyAt('01:00')->withoutOverlapping();

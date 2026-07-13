@@ -21,8 +21,6 @@
 @endif
 
 **{{ __('hms.hostel_room_allocation_email_check_in') }}:** {{ $checkIn }}
-
-**{{ __('hms.hostel_room_allocation_email_check_out') }}:** {{ $checkOut }}
 @endcomponent
 
 {{ __('trans.thanks') }},<br>
