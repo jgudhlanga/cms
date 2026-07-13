@@ -29,6 +29,7 @@ const pageSizeOptions = ref([
 			:is-searchable="false"
 			:is-clearable="false"
 			:vertical-layout="false"
+			teleport="body"
 		/>
 	</div>
 </template>

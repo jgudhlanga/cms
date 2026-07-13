@@ -19,6 +19,9 @@ class StudentRelationPurgeService
         $enrolmentIds = $student->enrolments()->withTrashed()->pluck('id');
 
         $this->purgeEnrolmentDependents($enrolmentIds);
+        $student->enrolments()->withTrashed()->forceDelete();
+
+        $this->purgeApplicationDependents($applicationIds);
         $this->purgeApplications($applicationIds);
 
         DB::table('hostel_notice_student')->where('student_id', $student->id)->delete();
@@ -27,7 +30,6 @@ class StudentRelationPurgeService
         $student->hostelRoomAllocations()->withTrashed()->forceDelete();
         $student->hostelQueries()->withTrashed()->forceDelete();
         $student->hostelLeaves()->withTrashed()->forceDelete();
-        $student->enrolments()->withTrashed()->forceDelete();
         $student->sponsors()->withTrashed()->forceDelete();
         $student->academicRecord()->withTrashed()->forceDelete();
         $student->oLevelResults()->withTrashed()->forceDelete();
@@ -58,6 +60,20 @@ class StudentRelationPurgeService
         DB::table('course_work_audit_logs')->whereIn('student_enrolment_id', $enrolmentIds)->delete();
         DB::table('course_work_marks')->whereIn('student_enrolment_id', $enrolmentIds)->delete();
         DB::table('academic_calendar_student_enrolments')->whereIn('student_enrolment_id', $enrolmentIds)->delete();
+    }
+
+    /**
+     * @param  Collection<int, int>  $applicationIds
+     */
+    private function purgeApplicationDependents($applicationIds): void
+    {
+        if ($applicationIds->isEmpty()) {
+            return;
+        }
+
+        DB::table('bulk_finalise_enrolment_audit_logs')
+            ->whereIn('student_application_id', $applicationIds)
+            ->delete();
     }
 
     /**

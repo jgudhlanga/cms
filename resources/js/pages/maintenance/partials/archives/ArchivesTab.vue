@@ -232,22 +232,22 @@ onMounted(() => loadArchives());
             :show-column-filters="false"
         >
             <template #head-left>
-                <div class="flex flex-wrap items-center gap-2">
-                    <BaseCombobox
-                        :model-value="purgeTypeSelection"
-                        :options="purgeTypeOptions"
-                        :placeholder="trans('trans.maintenance_archives_filter_all_types')"
-                        class="min-w-48 rounded-full"
-                        @update:model-value="onPurgeTypeChange"
-                    />
-                    <BaseCombobox
-                        :model-value="statusSelection"
-                        :options="statusOptions"
-                        :placeholder="trans('trans.maintenance_archives_filter_all_statuses')"
-                        class="min-w-44 rounded-full"
-                        @update:model-value="onStatusChange"
-                    />
-                </div>
+                <BaseCombobox
+                    :model-value="purgeTypeSelection"
+                    :options="purgeTypeOptions"
+                    :placeholder="trans('trans.maintenance_archives_filter_all_types')"
+                    width-class="min-w-48"
+                    class="!w-auto shrink-0 rounded-full"
+                    @update:model-value="onPurgeTypeChange"
+                />
+                <BaseCombobox
+                    :model-value="statusSelection"
+                    :options="statusOptions"
+                    :placeholder="trans('trans.maintenance_archives_filter_all_statuses')"
+                    width-class="min-w-44"
+                    class="!w-auto shrink-0 rounded-full"
+                    @update:model-value="onStatusChange"
+                />
             </template>
         </DataTable>
 
