@@ -17,6 +17,8 @@ return [
     'hostel_deleted' => 'Hostel deleted',
     'hostel_placeholder' => 'Select hostel',
     'hostel_full_view' => 'Hostel full view',
+    'ui_switch_hostel' => 'Switch hostel',
+    'ui_switch_room' => 'Switch room',
 
     // ── Fields ────────────────────────────────────────────────────────────
     'status' => 'Status|Statuses',

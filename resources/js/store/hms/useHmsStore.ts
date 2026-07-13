@@ -7,6 +7,7 @@ export type IHmsTabsStore = {
     roomRefreshKey: number;
     studentRefreshKey: number;
     applicationRefreshKey: number;
+    hostelListReload: (() => void | Promise<void>) | null;
 };
 
 export const useHmsStore = defineStore('hms-store', {
@@ -18,11 +19,16 @@ export const useHmsStore = defineStore('hms-store', {
             roomRefreshKey: 0,
             studentRefreshKey: 0,
             applicationRefreshKey: 0,
+            hostelListReload: null,
         };
     },
     actions: {
+        registerHostelListReload(handler: (() => void | Promise<void>) | null) {
+            this.hostelListReload = handler;
+        },
         refreshHostels() {
             this.hostelRefreshKey++;
+            void this.hostelListReload?.();
         },
         refreshAmenities() {
             this.amenityRefreshKey++;

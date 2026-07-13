@@ -6,6 +6,7 @@ import { APP_MODULE_KEYS } from '@/lib/constants';
 import { hasAbility } from '@/lib/permissions';
 import CreateEditHostel from '@/pages/hms/components/forms/CreateEditHostel.vue';
 import CreateEditRoom from '@/pages/hms/components/forms/CreateEditRoom.vue';
+import HostelContextBar from '@/pages/hms/hostels/partials/HostelContextBar.vue';
 import HostelFloorOccupancyChart from '@/pages/hms/hostels/partials/HostelFloorOccupancyChart.vue';
 import HostelHero from '@/pages/hms/hostels/partials/HostelHero.vue';
 import HostelRoomCatalogue from '@/pages/hms/hostels/partials/HostelRoomCatalogue.vue';
@@ -13,10 +14,11 @@ import HostelWardenCard from '@/pages/hms/hostels/partials/HostelWardenCard.vue'
 import { useHmsStore } from '@/store/hms/useHmsStore';
 import type { Hostel, HostelWardenProfile } from '@/types/hms';
 import type { BreadcrumbItemInterface } from '@/types/ui';
-import { Head, router } from '@inertiajs/vue3';
+import type { SelectOption } from '@/types/utils';
+import { Head, router, useForm } from '@inertiajs/vue3';
 import { trans } from 'laravel-vue-i18n';
 import { storeToRefs } from 'pinia';
-import { computed, toRef, watch } from 'vue';
+import { computed, ref, toRef, watch } from 'vue';
 
 type HostelWardenUser = {
     first_name?: string | null;
@@ -58,6 +60,35 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+
+const switchHostelForm = useForm({
+    hostel: null,
+});
+const selectedHostel = ref<SelectOption>({
+    value: Number(props.hostel.id ?? 0),
+    label: props.hostel.name ?? '',
+});
+
+watch(
+    () => props.hostel.id,
+    (nextHostelId) => {
+        selectedHostel.value = {
+            value: Number(nextHostelId ?? 0),
+            label: props.hostel.name ?? '',
+        };
+    },
+);
+
+watch(selectedHostel, (nextHostel) => {
+    const selectedHostelId = Number(nextHostel?.value ?? 0);
+    const currentHostelId = Number(props.hostel.id ?? 0);
+
+    if (selectedHostelId <= 0 || selectedHostelId === currentHostelId) {
+        return;
+    }
+
+    router.get(route('hostels.show', selectedHostelId));
+});
 
 const { roomRefreshKey, hostelRefreshKey } = storeToRefs(useHmsStore());
 
@@ -176,7 +207,10 @@ const openAddRoom = () => {
     <PageContainer :breadcrumbs="breadcrumbs" :back-url="route('hostels.index')" 
     :hasBackNavigationLeading="true">
         <template #backNavigationLeading>
-            <HeadingSmall :title="$t('hms.hostel_full_view')" />
+            <HostelContextBar
+                :form="switchHostelForm"
+                v-model="selectedHostel"
+            />
         </template>
         <div class="space-y-6">
             <HostelHero

@@ -18,7 +18,7 @@ import BaseIcon from '@/components/core/icon/BaseIcon.vue';
 import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
 import { IconName } from '@/enums/icons';
-import { Link as InertiaLink } from '@inertiajs/vue3';
+import { router } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import type { Hostel } from '@/types/hms';
 
@@ -73,12 +73,19 @@ const locationIcon = computed(() =>
     (props.hostel.attributes.location ?? '').toLowerCase().includes('north') ? Mountain : TreePine,
 );
 const showUrl = computed(() => route('hostels.show', String(props.hostel.id)));
+
+const openHostel = () => {
+    router.visit(showUrl.value);
+};
 </script>
 
 <template>
-    <InertiaLink
-        :href="showUrl"
-        class="block overflow-hidden rounded-2xl border border-border bg-card shadow-md transition-all duration-200 hover:-translate-y-1 hover:shadow-xl"
+    <div
+        role="link"
+        tabindex="0"
+        class="block cursor-pointer overflow-hidden rounded-2xl border border-border bg-card shadow-md transition-all duration-200 hover:-translate-y-1 hover:shadow-xl"
+        @click="openHostel"
+        @keyup.enter="openHostel"
     >
         <!-- Gender / type accent strip -->
         <div
@@ -198,7 +205,7 @@ const showUrl = computed(() => route('hostels.show', String(props.hostel.id)));
                         :size="ButtonSize.sm"
                         :variant="ColorVariant.shade"
                         classes="inline-flex items-center gap-1.5 rounded-full"
-                        @click="emit('edit', hostel)"
+                        @click.stop="emit('edit', hostel)"
                     >
                         <BaseIcon :name="IconName.edit" class="h-3.5 w-3.5" />
                         <span>{{ $t('trans.edit') }}</span>
@@ -212,5 +219,5 @@ const showUrl = computed(() => route('hostels.show', String(props.hostel.id)));
                 <span>{{ hostel.attributes.roomsCount }} {{ $t('hms.rooms') }} • {{ hostel.attributes.floorCount }} {{ $t('hms.floors') }}</span>
             </div>
         </div>
-    </InertiaLink>
+    </div>
 </template>

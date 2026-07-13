@@ -4,6 +4,7 @@ import BaseButton from '@/components/core/button/BaseButton.vue';
 import BaseIcon from '@/components/core/icon/BaseIcon.vue';
 import { IconName } from '@/enums/icons';
 import CreateEditRoom from '@/pages/hms/components/forms/CreateEditRoom.vue';
+import HostelRoomContextBar from '@/pages/hms/hostel-rooms/partials/HostelRoomContextBar.vue';
 import RoomSectionCard from '@/pages/hms/hostel-rooms/partials/RoomSectionCard.vue';
 import { openModal, errorAlert, successAlert } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
@@ -11,12 +12,13 @@ import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
 import { amenityIconName } from '@/lib/hms/roomSectionDisplay';
 import { hasAbility } from '@/lib/permissions';
-import { resolveHostelRoomBackUrl } from '@/lib/hms/hostelRoomNavigation';
+import { buildHostelRoomShowUrl, resolveHostelRoomBackUrl } from '@/lib/hms/hostelRoomNavigation';
 import { icons } from '@/lib/icons';
 import { useHmsStore } from '@/store/hms/useHmsStore';
 import type { HostelRoom } from '@/types/hms';
 import type { BreadcrumbItemInterface } from '@/types/ui';
-import { Head, router, usePage } from '@inertiajs/vue3';
+import type { SelectOption } from '@/types/utils';
+import { Head, router, useForm, usePage } from '@inertiajs/vue3';
 import { trans } from 'laravel-vue-i18n';
 import { storeToRefs } from 'pinia';
 import { computed, ref, watch } from 'vue';
@@ -77,6 +79,45 @@ interface Props {
 const props = defineProps<Props>();
 const page = usePage();
 const { roomRefreshKey } = storeToRefs(useHmsStore());
+
+const switchRoomForm = useForm({
+    room: null,
+});
+const selectedRoom = ref<SelectOption>({
+    value: Number(props.room.id ?? 0),
+    label: props.room.name ?? '',
+});
+
+watch(
+    () => props.room.id,
+    (nextRoomId) => {
+        selectedRoom.value = {
+            value: Number(nextRoomId ?? 0),
+            label: props.room.name ?? '',
+        };
+    },
+);
+
+const returnQuery = computed(() => {
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://localhost';
+
+    return new URL(String(page.url), origin).searchParams.get('return');
+});
+
+watch(selectedRoom, (nextRoom) => {
+    const selectedRoomId = Number(nextRoom?.value ?? 0);
+    const currentRoomId = Number(props.room.id ?? 0);
+
+    if (selectedRoomId <= 0 || selectedRoomId === currentRoomId) {
+        return;
+    }
+
+    const returnPath = returnQuery.value;
+
+    router.get(
+        buildHostelRoomShowUrl(selectedRoomId, returnPath ? { return: returnPath } : {}),
+    );
+});
 
 const selectedAmenities = ref<Record<string, number[]>>({});
 const savingSectionId = ref<string | null>(null);
@@ -327,7 +368,11 @@ const openEditRoom = () => {
         :hasBackNavigationLeading="true"
     >
         <template #backNavigationLeading>
-            <HeadingSmall :title="$t('hms.room_view')" />
+            <HostelRoomContextBar
+                :form="switchRoomForm"
+                :hostel-id="room.hostel.id"
+                v-model="selectedRoom"
+            />
         </template>
 
         <div class="space-y-5">
