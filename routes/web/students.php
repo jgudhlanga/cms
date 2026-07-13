@@ -24,6 +24,9 @@ Route::prefix('students')->middleware('auth')->group(function () {
 // ===================================== STUDENTS ======================================================================
 Route::prefix('students')->middleware('auth')->group(function () {
     Route::get('export', [StudentController::class, 'export'])->name('students.export');
+    Route::delete('{student}/purge', [StudentController::class, 'purge'])
+        ->middleware('can:root:manage')
+        ->name('students.purge');
 });
 Route::prefix('students')->middleware('auth')->group(function () {
     // get student and programs through user account

@@ -25,6 +25,7 @@ const form = ref({
     campusCity: '',
     allowGuests: false,
     autoAllocateRooms: false,
+    daysToPay: 7,
 });
 
 const loadSettings = async () => {
@@ -43,6 +44,7 @@ const loadSettings = async () => {
         campusCity: res.attributes.campusCity,
         allowGuests: res.attributes.allowGuests ?? false,
         autoAllocateRooms: res.attributes.autoAllocateRooms ?? false,
+        daysToPay: res.attributes.daysToPay ?? 7,
     };
 };
 
@@ -70,82 +72,126 @@ onMounted(() => loadSettings());
             <div class="space-y-4 rounded-lg border border-border p-4">
                 <p class="text-sm text-muted-foreground">{{ $t('hms.settings_application_window_description') }}</p>
 
-                <BaseSwitch
-                    input-id="applications_open"
-                    v-model="form.applicationsOpen"
-                    :label="$t('hms.applications_open')"
-                    :on-update="(value) => (form.applicationsOpen = value)"
-                />
+                <div>
+                    <BaseSwitch
+                        input-id="applications_open"
+                        v-model="form.applicationsOpen"
+                        :label="$t('hms.applications_open')"
+                        :on-update="(value) => (form.applicationsOpen = value)"
+                    />
+                    <p class="mt-1 text-sm text-muted-foreground">{{ $t('hms.applications_open_helper') }}</p>
+                </div>
 
                 <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                    <BaseDatePicker
-                        input-id="application_start_date"
-                        v-model="form.applicationStartDate"
-                        :label="$t('hms.application_start_date')"
-                        :enable-time-picker="false"
-                        :teleport="true"
-                        :disabled="!form.applicationsOpen"
-                    />
-                    <BaseDatePicker
-                        input-id="application_end_date"
-                        v-model="form.applicationEndDate"
-                        :label="$t('hms.application_end_date')"
-                        :enable-time-picker="false"
-                        :teleport="true"
-                        :disabled="!form.applicationsOpen"
-                    />
+                    <div>
+                        <BaseDatePicker
+                            input-id="application_start_date"
+                            v-model="form.applicationStartDate"
+                            :label="$t('hms.application_start_date')"
+                            :enable-time-picker="false"
+                            :teleport="true"
+                            :disabled="!form.applicationsOpen"
+                        />
+                        <p class="mt-1 text-sm text-muted-foreground">{{ $t('hms.application_start_date_helper') }}</p>
+                    </div>
+                    <div>
+                        <BaseDatePicker
+                            input-id="application_end_date"
+                            v-model="form.applicationEndDate"
+                            :label="$t('hms.application_end_date')"
+                            :enable-time-picker="false"
+                            :teleport="true"
+                            :disabled="!form.applicationsOpen"
+                        />
+                        <p class="mt-1 text-sm text-muted-foreground">{{ $t('hms.application_end_date_helper') }}</p>
+                    </div>
                 </div>
             </div>
 
             <div class="space-y-4">
-                <BaseSwitch
-                    input-id="require_full_time"
-                    v-model="form.requireFullTimeStudy"
-                    :label="$t('hms.require_full_time_study')"
-                    :on-update="(value) => (form.requireFullTimeStudy = value)"
-                />
-                <BaseInput
-                    input-id="full_time_mode_name"
-                    v-model="form.fullTimeModeName"
-                    :label="$t('hms.full_time_mode_name')"
-                    :disabled="!form.requireFullTimeStudy"
-                />
-                <BaseSwitch
-                    input-id="require_tuition"
-                    v-model="form.requireTuitionPaid"
-                    :label="$t('hms.require_tuition_paid')"
-                    :on-update="(value) => (form.requireTuitionPaid = value)"
-                />
-                <BaseSwitch
-                    input-id="require_accommodation"
-                    v-model="form.requireAccommodationPaid"
-                    :label="$t('hms.require_accommodation_paid')"
-                    :on-update="(value) => (form.requireAccommodationPaid = value)"
-                />
-                <BaseSwitch
-                    input-id="require_address"
-                    v-model="form.requireAddressOutsideCampus"
-                    :label="$t('hms.require_address_outside_campus')"
-                    :on-update="(value) => (form.requireAddressOutsideCampus = value)"
-                />
-                <BaseInput
-                    input-id="campus_city"
-                    v-model="form.campusCity"
-                    :label="$t('hms.campus_city')"
-                    :disabled="!form.requireAddressOutsideCampus"
-                />
-                <BaseSwitch
-                    input-id="allow_guests"
-                    v-model="form.allowGuests"
-                    :label="$t('hms.allow_guests')"
-                    :on-update="(value) => (form.allowGuests = value)"
-                />
-                <BaseSwitch
-                    input-id="auto_allocate_rooms"
-                    v-model="form.autoAllocateRooms"
-                    :label="$t('hms.auto_allocate_rooms')"
-                    :on-update="(value) => (form.autoAllocateRooms = value)"
-                />
+                <div>
+                    <BaseSwitch
+                        input-id="require_full_time"
+                        v-model="form.requireFullTimeStudy"
+                        :label="$t('hms.require_full_time_study')"
+                        :on-update="(value) => (form.requireFullTimeStudy = value)"
+                    />
+                    <p class="mt-1 text-sm text-muted-foreground">{{ $t('hms.require_full_time_study_helper') }}</p>
+                </div>
+                <div>
+                    <BaseInput
+                        input-id="full_time_mode_name"
+                        v-model="form.fullTimeModeName"
+                        :label="$t('hms.full_time_mode_name')"
+                        :disabled="!form.requireFullTimeStudy"
+                    />
+                    <p class="mt-1 text-sm text-muted-foreground">{{ $t('hms.full_time_mode_name_helper') }}</p>
+                </div>
+                <div>
+                    <BaseSwitch
+                        input-id="require_tuition"
+                        v-model="form.requireTuitionPaid"
+                        :label="$t('hms.require_tuition_paid')"
+                        :on-update="(value) => (form.requireTuitionPaid = value)"
+                    />
+                    <p class="mt-1 text-sm text-muted-foreground">{{ $t('hms.require_tuition_paid_helper') }}</p>
+                </div>
+                <div>
+                    <BaseSwitch
+                        input-id="require_accommodation"
+                        v-model="form.requireAccommodationPaid"
+                        :label="$t('hms.require_accommodation_paid')"
+                        :on-update="(value) => (form.requireAccommodationPaid = value)"
+                    />
+                    <p class="mt-1 text-sm text-muted-foreground">{{ $t('hms.require_accommodation_paid_helper') }}</p>
+                </div>
+                <div>
+                    <BaseSwitch
+                        input-id="require_address"
+                        v-model="form.requireAddressOutsideCampus"
+                        :label="$t('hms.require_address_outside_campus')"
+                        :on-update="(value) => (form.requireAddressOutsideCampus = value)"
+                    />
+                    <p class="mt-1 text-sm text-muted-foreground">{{ $t('hms.require_address_outside_campus_helper') }}</p>
+                </div>
+                <div>
+                    <BaseInput
+                        input-id="campus_city"
+                        v-model="form.campusCity"
+                        :label="$t('hms.campus_city')"
+                        :disabled="!form.requireAddressOutsideCampus"
+                    />
+                    <p class="mt-1 text-sm text-muted-foreground">{{ $t('hms.campus_city_helper') }}</p>
+                </div>
+                <div>
+                    <BaseSwitch
+                        input-id="allow_guests"
+                        v-model="form.allowGuests"
+                        :label="$t('hms.allow_guests')"
+                        :on-update="(value) => (form.allowGuests = value)"
+                    />
+                    <p class="mt-1 text-sm text-muted-foreground">{{ $t('hms.allow_guests_helper') }}</p>
+                </div>
+                <div>
+                    <BaseSwitch
+                        input-id="auto_allocate_rooms"
+                        v-model="form.autoAllocateRooms"
+                        :label="$t('hms.auto_allocate_rooms')"
+                        :on-update="(value) => (form.autoAllocateRooms = value)"
+                    />
+                    <p class="mt-1 text-sm text-muted-foreground">{{ $t('hms.auto_allocate_rooms_helper') }}</p>
+                </div>
+                <div>
+                    <BaseInput
+                        input-id="days_to_pay"
+                        v-model.number="form.daysToPay"
+                        type="number"
+                        min="1"
+                        max="365"
+                        :label="$t('hms.days_to_pay')"
+                    />
+                    <p class="mt-1 text-sm text-muted-foreground">{{ $t('hms.days_to_pay_helper') }}</p>
+                </div>
             </div>
 
             <div class="flex">

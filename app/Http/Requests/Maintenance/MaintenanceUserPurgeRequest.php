@@ -27,6 +27,8 @@ class MaintenanceUserPurgeRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [];
+        return [
+            'reason' => ['required', 'string', 'min:10', 'max:2000'],
+        ];
     }
 }

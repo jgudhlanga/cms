@@ -36,17 +36,12 @@ class StudentAccommodationFeeService
         $intakeLabel = $studentApplication?->intakePeriod?->name ?? $calendarYear;
 
         $ledgers = $this->accommodationLedgers($student, $studentApplication);
-        $invoices = $ledgers->where('type', 'invoice');
         $receipts = $ledgers->where('type', 'receipt');
 
-        $total = (float) $invoices->sum(fn (Ledger $ledger) => (float) $ledger->amount);
+        $total = (float) ($this->resolveFeeStructureForStudent($student)?->local_fca_amount ?? 0);
         $paid = (float) $receipts
             ->where('payment_status', 'paid')
             ->sum(fn (Ledger $ledger) => (float) $ledger->amount);
-
-        if ($total <= 0.0) {
-            $total = (float) ($this->feeStructureForStudentApplication($studentApplication)?->local_fca_amount ?? 0);
-        }
 
         $due = max(0, $total - $paid);
 
@@ -120,6 +115,48 @@ class StudentAccommodationFeeService
             ->where('level_id', $levelId)
             ->whereRelation('feeType', 'slug', FeeTypeEnum::STUDENT_ACCOMMODATION_FEE->slug())
             ->first();
+    }
+
+    public function resolveFeeStructureForStudent(Student $student, ?HostelApplication $openApplication = null): ?FeeStructure
+    {
+        $feeStructure = $this->feeStructureForStudent($student);
+
+        if ($feeStructure !== null) {
+            return $feeStructure;
+        }
+
+        $openApplication ??= $this->openAwaitingPaymentApplication($student);
+
+        if ($openApplication !== null) {
+            $openApplication->loadMissing('studentEnrolment.studentApplication.departmentLevel.level');
+
+            $feeStructure = $this->feeStructureForStudentApplication(
+                $openApplication->studentEnrolment?->studentApplication,
+            );
+
+            if ($feeStructure !== null) {
+                return $feeStructure;
+            }
+        }
+
+        return $this->defaultAccommodationFeeStructure((int) $student->tenant_id);
+    }
+
+    public function defaultAccommodationFeeStructure(int $tenantId): ?FeeStructure
+    {
+        $baseQuery = FeeStructure::query()
+            ->where('tenant_id', $tenantId)
+            ->whereRelation('feeType', 'slug', FeeTypeEnum::STUDENT_ACCOMMODATION_FEE->slug());
+
+        return (clone $baseQuery)
+            ->whereNull('level_id')
+            ->first()
+            ?? $baseQuery->first();
+    }
+
+    public function amountDueForStudent(Student $student, ?FeeStructure $feeStructure = null): string
+    {
+        return $this->summaryForStudent($student)['due'];
     }
 
     private function studentHasPaidAccommodationFee(Student $student, ?StudentApplication $studentApplication): bool

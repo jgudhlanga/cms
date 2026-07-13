@@ -16,6 +16,7 @@ class HostelApplicationAwaitingPaymentMail extends Mailable
     public function __construct(
         protected string $name,
         protected string $portalUrl,
+        protected string $paymentDueDate,
     ) {}
 
     public function envelope(): Envelope
@@ -32,6 +33,7 @@ class HostelApplicationAwaitingPaymentMail extends Mailable
             with: [
                 'name' => $this->name,
                 'portalUrl' => $this->portalUrl,
+                'paymentDueDate' => $this->paymentDueDate,
             ],
         );
     }

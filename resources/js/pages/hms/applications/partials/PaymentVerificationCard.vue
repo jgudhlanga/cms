@@ -13,7 +13,7 @@ import { useCustomConfirmDialog } from '@/composables/core/useCustomConfirmDialo
 import { useUtils } from '@/composables/core/useUtils';
 import { useHms } from '@/composables/hms/useHms';
 import { TypeVariant } from '@/enums/type-variants';
-import { errorAlert } from '@/lib/alerts';
+import { hasAbility } from '@/lib/permissions';
 import { clearFormErrors } from '@/lib/forms';
 import type {
     HostelApplication,
@@ -159,11 +159,15 @@ const roomSelectOptions = computed<SelectOption[]>(() =>
 
 const isAutoAllocationEnabled = computed(() => options.value?.autoAllocateRooms ?? false);
 
+const canOverrideRoom = computed(
+    () => hasAbility('update:hostel-applications') || hasAbility('update:hostel-room-allocations'),
+);
+
 const showRoomSelection = computed(
     () =>
         (options.value?.canApprove ?? false)
-        && !isAutoAllocationEnabled.value
-        && hostelSelectOptions.value.some((option) => !option.disabled),
+        && hostelSelectOptions.value.some((option) => !option.disabled)
+        && (!isAutoAllocationEnabled.value || canOverrideRoom.value),
 );
 
 const allVerificationsAnswered = computed(() => {
@@ -178,11 +182,15 @@ const allVerificationsAnswered = computed(() => {
 
 const canApproveAndAllocate = computed(
     () => {
-        if (isAutoAllocationEnabled.value) {
-            return (options.value?.canApprove ?? false) && allVerificationsAnswered.value;
+        if (!(options.value?.canApprove ?? false) || !allVerificationsAnswered.value) {
+            return false;
         }
 
-        return showRoomSelection.value && allVerificationsAnswered.value && form.hostelRoomId !== null;
+        if (isAutoAllocationEnabled.value) {
+            return form.hostelRoomId !== null || allocationPreview.value !== null;
+        }
+
+        return showRoomSelection.value && form.hostelRoomId !== null;
     },
 );
 
@@ -342,6 +350,11 @@ const approveAndAllocate = async (): Promise<void> => {
         return;
     }
 
+    if (isAutoAllocationEnabled.value && !form.hostelRoomId && !allocationPreview.value) {
+        form.setError('hostelRoomId', trans('hms.no_hostel_capacity'));
+        return;
+    }
+
     const confirmed = await openConfirm({
         title: trans('hms.verify_allocate_dialog_title'),
         message: trans(
@@ -360,7 +373,7 @@ const approveAndAllocate = async (): Promise<void> => {
     const ok = await saveApplication(
         {
             status: 'approved',
-            ...(isAutoAllocationEnabled.value ? {} : { hostelRoomId: form.hostelRoomId }),
+            ...(form.hostelRoomId ? { hostelRoomId: form.hostelRoomId } : {}),
             paymentVerification: paymentVerificationPayload(),
         },
         props.application.id,
@@ -406,17 +419,20 @@ const approveAndAllocate = async (): Promise<void> => {
 
         <template v-if="showRoomSelection">
             <div class="mt-6 space-y-4">
+                <p v-if="isAutoAllocationEnabled" class="text-sm text-muted-foreground">
+                    {{ $t('hms.room_override_helper') }}
+                </p>
                 <div class="space-y-2">
                     <Label>
                         {{ $t('hms.select_hostel') }}
-                        <RequiredIndicator />
+                        <RequiredIndicator v-if="!isAutoAllocationEnabled" />
                     </Label>
                     <BaseSelect
                         v-model="selectedHostel"
                         :options="hostelSelectOptions"
                         :placeholder="$t('hms.select_hostel')"
-                        :is-required="true"
-                        :is-clearable="false"
+                        :is-required="!isAutoAllocationEnabled"
+                        :is-clearable="isAutoAllocationEnabled"
                         :loading="isLoadingHostels"
                         @update:model-value="onHostelChange"
                     />
@@ -425,14 +441,14 @@ const approveAndAllocate = async (): Promise<void> => {
                 <div v-if="hasSelectedHostel" class="space-y-2">
                     <Label>
                         {{ $t('hms.select_room') }}
-                        <RequiredIndicator />
+                        <RequiredIndicator v-if="!isAutoAllocationEnabled" />
                     </Label>
                     <BaseSelect
                         v-model="selectedRoom"
                         :options="roomSelectOptions"
                         :placeholder="$t('hms.select_room')"
-                        :is-required="true"
-                        :is-clearable="false"
+                        :is-required="!isAutoAllocationEnabled"
+                        :is-clearable="isAutoAllocationEnabled"
                         :loading="isLoadingRooms"
                         :disabled="isLoadingRooms || roomSelectOptions.length === 0"
                     />
@@ -447,7 +463,7 @@ const approveAndAllocate = async (): Promise<void> => {
             </div>
         </template>
 
-        <p v-else-if="isAutoAllocationEnabled" class="mt-4 text-sm text-muted-foreground">
+        <p v-else-if="isAutoAllocationEnabled && !canOverrideRoom" class="mt-4 text-sm text-muted-foreground">
             {{ $t('hms.auto_allocate_rooms_helper') }}
         </p>
 

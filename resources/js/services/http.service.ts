@@ -7,7 +7,7 @@ export interface IHttpService {
     post: (url: string, data: any, config?: AxiosRequestConfig) => Promise<any>;
     put: (url: string, data: any, config?: AxiosRequestConfig) => Promise<any>;
     patch: (url: string, data: any, config?: AxiosRequestConfig) => Promise<any>;
-    delete: (url: string) => Promise<any>;
+    delete: (url: string, config?: AxiosRequestConfig) => Promise<any>;
     baseUrl: () => string;
 }
 
@@ -16,9 +16,9 @@ class HttpService implements IHttpService {
         return API_BASE_URL;
     }
 
-    async delete(url: string): Promise<any> {
+    async delete(url: string, config?: AxiosRequestConfig): Promise<any> {
         try {
-            return await customAxios(this.baseUrl()).delete(url);
+            return await customAxios(this.baseUrl()).delete(url, config);
         } catch (error) {
             throw error;
         }

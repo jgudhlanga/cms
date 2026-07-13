@@ -7,14 +7,14 @@ namespace App\Services\Maintenance\Students;
 use App\Models\Ledgers\Ledger;
 use App\Models\Students\Student;
 use App\Models\Users\User;
+use App\Services\AccountPurge\UserAccountRelationPurgeService;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\ValidationException;
-use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class StudentAccountMergeService
 {
     public function __construct(
         private readonly StudentAccountMergePreviewService $previewService,
+        private readonly UserAccountRelationPurgeService $userRelationPurgeService,
     ) {}
 
     public function merge(
@@ -161,42 +161,7 @@ class StudentAccountMergeService
             return;
         }
 
-        $this->hardDeleteUserRelations($user);
+        $this->userRelationPurgeService->purge($user);
         $user->forceDelete();
-    }
-
-    private function hardDeleteUserRelations(User $user): void
-    {
-        $user->tokens()->delete();
-
-        DB::table('sessions')->where('user_id', $user->id)->delete();
-        DB::table('password_reset_tokens')->where('email', $user->email)->delete();
-
-        $user->notifications()->delete();
-
-        $user->ledgerTransactions()
-            ->withTrashed()
-            ->get()
-            ->each(function (Ledger $ledger): void {
-                if ($ledger->proof_of_payment_id) {
-                    Media::query()->whereKey($ledger->proof_of_payment_id)->delete();
-                }
-
-                $ledger->clearMediaCollection('receipts');
-                $ledger->forceDelete();
-            });
-
-        $user->preference()?->delete();
-
-        $user->clearMediaCollection('user-avatar');
-
-        if ($user->avatar_id) {
-            Media::query()->whereKey($user->avatar_id)->delete();
-        }
-
-        $user->media()->each(fn (Media $media) => $media->delete());
-
-        $user->syncRoles([]);
-        $user->syncPermissions([]);
     }
 }

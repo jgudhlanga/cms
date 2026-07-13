@@ -81,6 +81,18 @@ class HostelApplicationObserver
             if ($previousValue === HostelApplicationStatusEnum::PENDING->value) {
                 $this->refreshEligibilityForAwaitingPayment($application);
             }
+
+            $settings = HmsSetting::resolveForTenant($application->tenant_id);
+            $application->payment_due_at = now()->addDays($settings->days_to_pay);
+        }
+
+        if ($application->isDirty('status')
+            && in_array($application->status, [
+                HostelApplicationStatusEnum::PAID,
+                HostelApplicationStatusEnum::APPROVED,
+                HostelApplicationStatusEnum::DECLINED,
+            ], true)) {
+            $application->payment_due_at = null;
         }
 
         if ($application->isDirty('status')

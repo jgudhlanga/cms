@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Auth;
 use LaravelJsonApi\Eloquent\Fields\Boolean;
 use LaravelJsonApi\Eloquent\Fields\DateTime;
 use LaravelJsonApi\Eloquent\Fields\ID;
+use LaravelJsonApi\Eloquent\Fields\Number;
 use LaravelJsonApi\Eloquent\Fields\Str;
 use LaravelJsonApi\Eloquent\Filters\WhereIdIn;
 use LaravelJsonApi\Eloquent\QueryBuilder\JsonApiBuilder;
@@ -30,6 +31,7 @@ class HmsSettingSchema extends Schema
             Str::make('campusCity', 'campus_city'),
             Boolean::make('allowGuests', 'allow_guests'),
             Boolean::make('autoAllocateRooms', 'auto_allocate_rooms'),
+            Number::make('daysToPay', 'days_to_pay'),
             Boolean::make('applicationsOpen', 'applications_open'),
             DateTime::make('applicationStartDate', 'application_start_date'),
             DateTime::make('applicationEndDate', 'application_end_date'),

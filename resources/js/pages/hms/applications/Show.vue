@@ -9,14 +9,15 @@ import { useHms } from '@/composables/hms/useHms';
 import { ColorVariant } from '@/enums/colors';
 import { TypeVariant } from '@/enums/type-variants';
 import { openModal } from '@/lib/alerts';
-import { IconName } from '@/enums/icons';
 import { APP_MODULE_KEYS } from '@/lib/constants';
+import { IconName } from '@/enums/icons';
 import { hasAbility } from '@/lib/permissions';
 import { buildStudentShowUrl, currentPageReturnPath } from '@/lib/studentShowNavigation';
 import HostelEligibilityStatus from '@/components/hms/HostelEligibilityStatus.vue';
 import ApplicationSidebar from '@/pages/hms/applications/partials/ApplicationSidebar.vue';
 import PaymentVerificationCard from '@/pages/hms/applications/partials/PaymentVerificationCard.vue';
 import DeclineApplication from '@/pages/hms/components/forms/DeclineApplication.vue';
+import ReassignRoomDialog from '@/pages/hms/components/forms/ReassignRoomDialog.vue';
 import { useHmsStore } from '@/store/hms/useHmsStore';
 import type { HostelApplication, HostelApplicationEligibilityRule, HmsSettings } from '@/types/hms';
 import type { BreadcrumbItemInterface } from '@/types/ui';
@@ -33,7 +34,7 @@ const props = defineProps<Props>();
 const inertiaPage = usePage();
 
 const { formatDate } = useUtils();
-const { fetchApplication, fetchHmsSettings, updateApplicationStatus, isLoading } = useHms();
+const { fetchApplication, fetchHmsSettings, fetchHostelAllocations, updateApplicationStatus, isLoading } = useHms();
 const hmsStore = useHmsStore();
 const { open: openConfirm } = useCustomConfirmDialog();
 
@@ -150,6 +151,31 @@ const studentProfileUrl = computed(() => {
 });
 
 const eligibilityRules = computed((): HostelApplicationEligibilityRule[] => attrs.value?.eligibilityResults ?? []);
+
+const canReassignRoom = computed(
+    () =>
+        attrs.value?.status === 'approved'
+        && isStudentApplication.value
+        && hasAbility('update:hostel-room-allocations'),
+);
+
+const openReassignRoom = async (): Promise<void> => {
+    const studentId = attrs.value?.studentId;
+
+    if (!studentId) {
+        return;
+    }
+
+    const result = await fetchHostelAllocations({ student: String(studentId), status: 'active' });
+
+    const allocation = result?.data?.[0];
+
+    if (!allocation) {
+        return;
+    }
+
+    openModal({ name: APP_MODULE_KEYS.hostel_room_reassign, edit: allocation });
+};
 
 const showAccommodationEligibility = computed(
     () =>
@@ -323,6 +349,15 @@ const showAccommodationEligibility = computed(
                     @decline="openDecline"
                 />
 
+                <div v-if="canReassignRoom" class="flex flex-wrap gap-2">
+                    <BaseButton
+                        type="button"
+                        :variant="ColorVariant.primary_outline"
+                        :title="$t('hms.reassign_room')"
+                        @click="openReassignRoom"
+                    />
+                </div>
+
                 <div v-if="canReviewPending && !showPaymentStepOnPending" class="flex flex-wrap gap-2">
                     <BaseButton
                         type="button"
@@ -345,5 +380,6 @@ const showAccommodationEligibility = computed(
         </div>
 
         <DeclineApplication @declined="loadApplication" />
+        <ReassignRoomDialog />
     </PageContainer>
 </template>

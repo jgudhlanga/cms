@@ -10,6 +10,7 @@ use App\Models\Preferences\UserPreference;
 use App\Models\Shared\Status;
 use App\Models\Students\ApplicationFee;
 use App\Models\Students\Student;
+use App\Models\Students\StudentNote;
 use App\Models\Tenants\Tenant;
 use App\Traits\Filterable;
 use App\Traits\Paginatable;
@@ -105,6 +106,11 @@ class User extends Authenticatable implements HasMedia, MustVerifyEmail
     public function applicationFees(): HasMany
     {
         return $this->hasMany(ApplicationFee::class);
+    }
+
+    public function notes(): MorphMany
+    {
+        return $this->morphMany(StudentNote::class, 'noteable');
     }
 
     public function ledgerTransactions(): MorphMany

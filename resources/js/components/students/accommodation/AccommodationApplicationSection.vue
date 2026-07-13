@@ -42,8 +42,14 @@ const { formatDate } = useUtils();
 const formatApplicationDateRange = (
     checkIn?: string | null,
     checkOut?: string | null,
+    includeCheckOut = true,
 ): string => {
     const formattedCheckIn = checkIn ? formatDate(checkIn, 'L') : '—';
+
+    if (!includeCheckOut) {
+        return formattedCheckIn;
+    }
+
     const formattedCheckOut = checkOut ? formatDate(checkOut, 'L') : '—';
 
     return `${formattedCheckIn} — ${formattedCheckOut}`;
@@ -74,7 +80,7 @@ const isPortal = computed(() => props.context === 'portal');
 
 const allocationDateRange = computed(() => {
     const attrs = props.activeAllocation?.attributes;
-    return formatApplicationDateRange(attrs?.checkIn, attrs?.checkOut);
+    return formatApplicationDateRange(attrs?.checkIn, attrs?.checkOut, !isPortal.value);
 });
 
 const currentApplication = computed(() => sortedApplications.value[0] ?? null);
@@ -109,7 +115,7 @@ const adminApplicationLink = (id: string | number) =>
         />
 
         <AccommodationOpenApplicationCard
-            v-else-if="openApplication"
+            v-else-if="openApplication && !isPortal"
             :open-application="openApplication"
             :fees="fees"
             :context="context"
@@ -138,6 +144,7 @@ const adminApplicationLink = (id: string | number) =>
             :semester-label="lookup?.semester?.label"
             :check-in="lookup?.semester?.checkIn"
             :check-out="lookup?.semester?.checkOut"
+            :show-check-out="context === 'admin'"
             :can-submit="canApply"
             :is-saving="isSaving"
             :save-validation-error="saveValidationError"
@@ -163,6 +170,7 @@ const adminApplicationLink = (id: string | number) =>
                             {{ formatApplicationDateRange(
                                 application.attributes.checkIn,
                                 application.attributes.checkOut,
+                                context === 'admin',
                             ) }}
                         </p>
                     </div>

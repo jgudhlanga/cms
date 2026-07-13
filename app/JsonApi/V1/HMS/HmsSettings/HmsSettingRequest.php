@@ -20,6 +20,7 @@ class HmsSettingRequest extends ResourceRequest
             'campusCity' => ['sometimes', 'string', 'max:255'],
             'allowGuests' => ['sometimes', 'boolean'],
             'autoAllocateRooms' => ['sometimes', 'boolean'],
+            'daysToPay' => ['sometimes', 'integer', 'min:1', 'max:365'],
             'applicationsOpen' => ['sometimes', 'boolean'],
             'applicationStartDate' => [
                 Rule::requiredIf($applicationsOpen),

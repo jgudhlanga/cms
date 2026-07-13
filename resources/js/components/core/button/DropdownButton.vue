@@ -63,6 +63,9 @@ const getOptions = () => {
 		if (option.key == 'decline') {
 			options.push({ key: 'decline', icon: IconName.danger, action: option.action, transKey: 'hms.decline_application' });
 		}
+		if (option.key == 'reassign') {
+			options.push({ key: 'reassign', icon: IconName.edit, action: option.action, transKey: 'hms.reassign_room' });
+		}
 	});
 	return options;
 };

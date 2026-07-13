@@ -27,13 +27,16 @@ $server->resource('hostel-rooms', HostelRoomController::class)
     });
 
 $server->resource('hostel-room-allocations', HostelRoomAllocationController::class)
-    ->readOnly()
+    ->only('index', 'show', 'update')
     ->names([
         'index' => 'hms.hostel-room-allocations.index',
         'show' => 'hms.hostel-room-allocations.show',
+        'update' => 'hms.hostel-room-allocations.update',
     ])
     ->actions('-actions', function (ActionRegistrar $actions) {
         $actions->withId()->get('roommates', 'roommates');
+        $actions->withId()->get('reassignment-options', 'reassignmentOptions');
+        $actions->withId()->get('reassignment-rooms', 'reassignmentRooms');
     });
 
 $server->resource('hostel-applications', HostelApplicationController::class)

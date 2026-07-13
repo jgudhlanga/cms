@@ -11,6 +11,8 @@ use App\JsonApi\V1\HMS\HostelApplications\Filters\ApplicationTypeFilter;
 use App\Models\HMS\HostelApplication;
 use App\Services\HMS\StudentPhysicalAddressFormatter;
 use App\Support\HMS\HostelApplicationPaymentVerification;
+use App\Support\HMS\HmsStudentAccess;
+use Illuminate\Support\Facades\Auth;
 use LaravelJsonApi\Eloquent\Contracts\Paginator;
 use LaravelJsonApi\Eloquent\Fields\ArrayHash;
 use LaravelJsonApi\Eloquent\Fields\ArrayList;
@@ -48,7 +50,7 @@ class HostelApplicationSchema extends Schema
 
     public function fields(): array
     {
-        return [
+        $fields = [
             ID::make(),
             Str::make('applicationType', 'type')->extractUsing(
                 fn (HostelApplication $application) => $application->type?->value
@@ -71,7 +73,13 @@ class HostelApplicationSchema extends Schema
             Str::make('nextOfKinName', 'next_of_kin_name'),
             Str::make('nextOfKinContact', 'next_of_kin_contact'),
             DateTime::make('checkIn', 'check_in'),
-            DateTime::make('checkOut', 'check_out'),
+        ];
+
+        if (HmsStudentAccess::canViewCheckoutDates(Auth::user())) {
+            $fields[] = DateTime::make('checkOut', 'check_out');
+        }
+
+        return array_merge($fields, [
             ArrayList::make('eligibilityResults', 'eligibility_results')->readOnly(),
             ArrayHash::make('paymentVerification', 'payment_verification')
                 ->camelizeFields()
@@ -127,7 +135,7 @@ class HostelApplicationSchema extends Schema
             DateTime::make('createdAt', 'created_at')->sortable()->readOnly(),
             DateTime::make('updatedAt', 'updated_at')->sortable()->readOnly(),
             DateTime::make('deletedAt', 'deleted_at')->readOnly(),
-        ];
+        ]);
     }
 
     public function filters(): array

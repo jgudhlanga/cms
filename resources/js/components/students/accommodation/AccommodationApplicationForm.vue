@@ -21,12 +21,15 @@ interface Props {
     semesterLabel?: string | null;
     checkIn?: string | null;
     checkOut?: string | null;
+    showCheckOut?: boolean;
     canSubmit: boolean;
     isSaving: boolean;
     saveValidationError?: string | null;
 }
 
-defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+    showCheckOut: false,
+});
 
 const emit = defineEmits<{
     submit: [];
@@ -74,13 +77,15 @@ const emit = defineEmits<{
             </div>
         </div>
 
-        <div class="grid gap-3 sm:grid-cols-2">
+        <div v-if="checkIn || showCheckOut" class="grid gap-3 sm:grid-cols-2">
             <BaseInput
+                v-if="checkIn"
                 :model-value="checkIn ?? ''"
                 :label="$t('hms.check_in')"
                 disabled
             />
             <BaseInput
+                v-if="showCheckOut"
                 :model-value="checkOut ?? ''"
                 :label="$t('hms.check_out')"
                 disabled

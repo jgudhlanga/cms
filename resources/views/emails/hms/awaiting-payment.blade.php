@@ -3,6 +3,8 @@
 
 {{ __('hms.hostel_application_awaiting_payment_intro') }}
 
+**{{ __('hms.payment_due_date') }}:** {{ $paymentDueDate }}
+
 @component('mail::button', ['url' => $portalUrl])
 Student portal
 @endcomponent

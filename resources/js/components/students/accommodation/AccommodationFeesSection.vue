@@ -1,9 +1,5 @@
 <script setup lang="ts">
-import BaseButton from '@/components/core/button/BaseButton.vue';
-import { ButtonSize } from '@/enums/buttons';
-import { ColorVariant } from '@/enums/colors';
 import type { StudentAccommodationFeesResponse } from '@/types/hms';
-import { router } from '@inertiajs/vue3';
 import { computed } from 'vue';
 
 interface Props {
@@ -26,14 +22,6 @@ const statusBadge = computed(() =>
 );
 
 const isPortal = computed(() => props.context === 'portal');
-
-const showPaymentCta = computed(
-    () => isPortal.value && props.fees && !props.fees.isFullyPaid,
-);
-
-const goToPayment = () => {
-    router.visit(route('portal.profile.accommodations.pay'));
-};
 </script>
 
 <template>
@@ -80,16 +68,6 @@ const goToPayment = () => {
                 <p class="font-semibold text-foreground">{{ fees.due }}</p>
             </div>
         </div>
-
-        <BaseButton
-            v-if="showPaymentCta"
-            :color="ColorVariant.primary"
-            :size="ButtonSize.sm"
-            class="self-start"
-            @click="goToPayment"
-        >
-            {{ $t('students.accommodation_proceed_to_payment') }}
-        </BaseButton>
 
         <div>
             <h5 class="mb-2 text-sm font-semibold text-foreground">{{ $t('students.accommodation_payment_history') }}</h5>

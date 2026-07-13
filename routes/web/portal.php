@@ -57,6 +57,7 @@ Route::prefix('portal')->group(function () {
             Route::post('applications/select-level', [PortalController::class, 'selectApplicationLevel'])->name('applications.select-level');
             Route::get('financials', [PortalController::class, 'profileFinancials'])->name('financials');
             Route::get('accommodations', [PortalController::class, 'profileAccommodations'])->name('accommodations');
+            Route::get('accommodations/pay/currency', [PaymentController::class, 'accommodationFeeCurrencySelection'])->name('accommodations.pay.currency');
             Route::get('accommodations/pay', [PaymentController::class, 'accommodationFeePaymentOptions'])->name('accommodations.pay');
             Route::get('documents', [PortalController::class, 'profileDocuments'])->name('documents');
             Route::get('authentication', [PortalController::class, 'profileAuthentication'])

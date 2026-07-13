@@ -1,34 +1,19 @@
-import MaintenanceUserPurgeConfirmDialog, {
-    type MaintenancePurgeDialogUser,
-} from '@/pages/maintenance/partials/users/MaintenanceUserPurgeConfirmDialog.vue';
-import { useModal } from 'vue-final-modal';
+import {
+    openAccountPurgeDialog,
+    maintenanceUserPurgeItems,
+    toPurgeDialogUser,
+    type AccountPurgeDialogUser,
+} from '@/composables/account-purge/useAccountPurgeDialog';
 
 export const openMaintenancePurgeDialog = (
-    users: MaintenancePurgeDialogUser[],
-    onConfirm: () => void,
+    users: AccountPurgeDialogUser[],
+    onConfirm: (reason: string) => void,
 ): void => {
-    const { open, destroy } = useModal({
-        defaultModelValue: false,
-        keepAlive: false,
-        component: MaintenanceUserPurgeConfirmDialog,
-        attrs: {
-            users,
-            onConfirm: () => {
-                onConfirm();
-                destroy();
-            },
-            onClosed: () => {
-                destroy();
-            },
-        },
+    openAccountPurgeDialog({
+        users,
+        purgeItems: [...maintenanceUserPurgeItems],
+        onConfirm,
     });
-
-    void open();
 };
 
-export const toPurgeDialogUser = (user: {
-    attributes: { name: string; email: string };
-}): MaintenancePurgeDialogUser => ({
-    name: user.attributes.name,
-    email: user.attributes.email,
-});
+export { toPurgeDialogUser };

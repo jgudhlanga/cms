@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { TypeVariant } from '@/enums/type-variants';
 import { SizeVariant } from '@/enums/sizes';
 import { closeModal, getModalEdit } from '@/lib/alerts';
+import { hasAbility } from '@/lib/permissions';
 import { APP_MODULE_KEYS } from '@/lib/constants';
 import { clearFormErrors } from '@/lib/forms';
 import AllocationPreviewCard from '@/pages/hms/applications/partials/AllocationPreviewCard.vue';
@@ -97,10 +98,29 @@ const roomSelectOptions = computed<SelectOption[]>(() =>
     })),
 );
 
-const showActionButton = computed(
+const canOverrideRoom = computed(
+    () => hasAbility('update:hostel-applications') || hasAbility('update:hostel-room-allocations'),
+);
+
+const showRoomSelection = computed(
     () =>
         (options.value?.canApprove ?? false)
-        && (isAutoAllocationEnabled.value || hostelSelectOptions.value.some((option) => !option.disabled)),
+        && hostelSelectOptions.value.some((option) => !option.disabled)
+        && (!isAutoAllocationEnabled.value || canOverrideRoom.value),
+);
+
+const showActionButton = computed(
+    () => {
+        if (!(options.value?.canApprove ?? false)) {
+            return false;
+        }
+
+        if (isAutoAllocationEnabled.value) {
+            return form.hostelRoomId !== null || allocationPreview.value !== null;
+        }
+
+        return showRoomSelection.value && form.hostelRoomId !== null;
+    },
 );
 
 const loadAllocationPreview = async (hostelRoomId?: number | null): Promise<void> => {
@@ -242,9 +262,14 @@ const save = async (): Promise<void> => {
         return;
     }
 
+    if (isAutoAllocationEnabled.value && !form.hostelRoomId && !allocationPreview.value) {
+        form.setError('hostelRoomId', trans('hms.no_hostel_capacity'));
+        return;
+    }
+
     const ok = await approveApplication(
         application.value,
-        isAutoAllocationEnabled.value ? null : form.hostelRoomId,
+        form.hostelRoomId,
     );
     if (ok) {
         hmsStore.refreshApplications();
@@ -281,38 +306,38 @@ const save = async (): Promise<void> => {
                     :type="TypeVariant.danger"
                 />
 
-                <template v-if="(options?.hostels?.length ?? 0) > 0">
+                <template v-if="showRoomSelection">
                     <p v-if="isAutoAllocationEnabled" class="text-sm text-muted-foreground">
-                        {{ $t('hms.auto_allocate_rooms_helper') }}
+                        {{ $t('hms.room_override_helper') }}
                     </p>
 
-                    <div v-if="!isAutoAllocationEnabled" class="space-y-2">
+                    <div class="space-y-2">
                         <Label>
                             {{ $t('hms.select_hostel') }}
-                            <RequiredIndicator />
+                            <RequiredIndicator v-if="!isAutoAllocationEnabled" />
                         </Label>
                         <BaseSelect
                             v-model="selectedHostel"
                             :options="hostelSelectOptions"
                             :placeholder="$t('hms.select_hostel')"
-                            :is-required="true"
-                            :is-clearable="false"
+                            :is-required="!isAutoAllocationEnabled"
+                            :is-clearable="isAutoAllocationEnabled"
                             :loading="isLoadingHostels"
                             @update:model-value="onHostelChange"
                         />
                     </div>
 
-                    <div v-if="!isAutoAllocationEnabled && hasSelectedHostel" class="space-y-2">
+                    <div v-if="hasSelectedHostel" class="space-y-2">
                         <Label>
                             {{ $t('hms.select_room') }}
-                            <RequiredIndicator />
+                            <RequiredIndicator v-if="!isAutoAllocationEnabled" />
                         </Label>
                         <BaseSelect
                             v-model="selectedRoom"
                             :options="roomSelectOptions"
                             :placeholder="$t('hms.select_room')"
-                            :is-required="true"
-                            :is-clearable="false"
+                            :is-required="!isAutoAllocationEnabled"
+                            :is-clearable="isAutoAllocationEnabled"
                             :loading="isLoadingRooms"
                             :disabled="isLoadingRooms || roomSelectOptions.length === 0"
                         />
@@ -325,6 +350,10 @@ const save = async (): Promise<void> => {
                         <InputError :message="form.errors.hostelRoomId" />
                     </div>
                 </template>
+
+                <p v-else-if="isAutoAllocationEnabled" class="text-sm text-muted-foreground">
+                    {{ $t('hms.auto_allocate_rooms_helper') }}
+                </p>
 
                 <p v-if="isLoadingPreview" class="text-sm text-muted-foreground">
                     {{ $t('trans.loading') }}…

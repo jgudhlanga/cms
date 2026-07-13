@@ -13,6 +13,8 @@ use App\JsonApi\V1\HMS\HostelRoomAllocations\Filters\AllocationStatusFilter;
 use App\JsonApi\V1\HMS\HostelRoomAllocations\Filters\AllocationStudentFilter;
 use App\JsonApi\V1\HMS\HostelRoomAllocations\Filters\AllocationTypeFilter;
 use App\Models\HMS\HostelRoomAllocation;
+use App\Support\HMS\HmsStudentAccess;
+use Illuminate\Support\Facades\Auth;
 use LaravelJsonApi\Eloquent\Contracts\Paginator;
 use LaravelJsonApi\Eloquent\Fields\ArrayList;
 use LaravelJsonApi\Eloquent\Fields\DateTime;
@@ -46,7 +48,7 @@ class HostelRoomAllocationSchema extends Schema
 
     public function fields(): array
     {
-        return [
+        $fields = [
             ID::make(),
             Str::make('allocationType')->extractUsing(
                 fn (HostelRoomAllocation $allocation) => $allocation->type?->value
@@ -61,7 +63,13 @@ class HostelRoomAllocationSchema extends Schema
                 fn (HostelRoomAllocation $allocation) => $allocation->status?->label()
             )->readOnly(),
             DateTime::make('checkIn', 'check_in')->readOnly(),
-            DateTime::make('checkOut', 'check_out')->readOnly(),
+        ];
+
+        if (HmsStudentAccess::canViewCheckoutDates(Auth::user())) {
+            $fields[] = DateTime::make('checkOut', 'check_out')->readOnly();
+        }
+
+        return array_merge($fields, [
             Number::make('studentId', 'student_id')->readOnly(),
             Str::make('studentNumber')->extractUsing(
                 fn (HostelRoomAllocation $allocation) => $allocation->student?->student_number
@@ -85,6 +93,7 @@ class HostelRoomAllocationSchema extends Schema
                 fn (HostelRoomAllocation $allocation) => $allocation->room?->hostel?->name
             )->readOnly(),
             Number::make('roomId', 'hostel_room_id')->readOnly(),
+            Number::make('hostelRoomId', 'hostel_room_id'),
             Str::make('roomName')->extractUsing(
                 fn (HostelRoomAllocation $allocation) => $allocation->room?->name
             )->readOnly(),
@@ -118,7 +127,7 @@ class HostelRoomAllocationSchema extends Schema
             DateTime::make('createdAt', 'created_at')->sortable()->readOnly(),
             DateTime::make('updatedAt', 'updated_at')->sortable()->readOnly(),
             DateTime::make('deletedAt', 'deleted_at')->readOnly(),
-        ];
+        ]);
     }
 
     public function filters(): array

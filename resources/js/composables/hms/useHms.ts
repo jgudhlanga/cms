@@ -37,6 +37,7 @@ import type {
     HostelAllocation,
     HostelApplication,
     HostelApplicationFiltersState,
+    HostelApplicationApprovalHostelOption,
     HostelApplicationApprovalOptionsResponse,
     HostelApplicationApprovalRoomOption,
     HostelApplicationApprovalRoomsResponse,
@@ -459,6 +460,57 @@ export const useHms = () => {
         );
     };
 
+    const fetchAllocationReassignmentOptions = async (
+        allocation: HostelAllocation,
+    ): Promise<HostelApplicationApprovalHostelOption[]> => {
+        const response = await HttpService.get(
+            route('v1.json.hostel-room-allocations.reassignmentOptions', allocation.id),
+            jsonApiRequestConfig(),
+        );
+
+        return (response?.meta?.hostels ?? []) as HostelApplicationApprovalHostelOption[];
+    };
+
+    const fetchAllocationReassignmentRooms = async (
+        allocation: HostelAllocation,
+        hostelId: number,
+    ): Promise<HostelApplicationApprovalRoomOption[]> => {
+        const response = await HttpService.get(
+            route('v1.json.hostel-room-allocations.reassignmentRooms', allocation.id),
+            {
+                ...jsonApiRequestConfig(),
+                params: { hostelId },
+            },
+        );
+
+        return (response?.meta?.rooms ?? []) as HostelApplicationApprovalRoomOption[];
+    };
+
+    const reassignHostelAllocation = async (
+        allocation: HostelAllocation,
+        hostelRoomId: number,
+    ): Promise<boolean> => {
+        try {
+            await HttpService.patch(
+                route('v1.json.hms.hostel-room-allocations.update', allocation.id),
+                {
+                    data: {
+                        type: 'hostel-room-allocations',
+                        id: String(allocation.id),
+                        attributes: { hostelRoomId },
+                    },
+                },
+                jsonApiWriteConfig(),
+            );
+
+            successAlert(trans('hms.reassign_room_saved'));
+            return true;
+        } catch {
+            errorAlert(trans('hms.reassign_room_failed'));
+            return false;
+        }
+    };
+
     const fetchHmsSettings = async (): Promise<HmsSettings | undefined> => {
         try {
             const document = await HttpService.get(route('v1.json.hms.hms-settings.index'), jsonApiRequestConfig());
@@ -665,13 +717,25 @@ export const useHms = () => {
                 meta: { align: 'right' },
                 cell: ({ row }: { row: { original: HostelAllocation } }) => {
                     const studentId = row.original.attributes.studentId;
-                    return moreActionButton(false, [
+                    const actions = [
                         {
                             key: 'view',
                             action: () =>
                                 onView(hasAbility('view:students'), buildStudentShowUrl(String(studentId ?? ''), { from: 'hms' })),
                         },
-                    ]);
+                    ];
+
+                    if (
+                        hasAbility('update:hostel-room-allocations')
+                        && row.original.attributes.status === 'active'
+                    ) {
+                        actions.push({
+                            key: 'reassign',
+                            action: () => openModal({ name: APP_MODULE_KEYS.hostel_room_reassign, edit: row.original }),
+                        });
+                    }
+
+                    return moreActionButton(false, actions);
                 },
             },
         ];
@@ -812,6 +876,9 @@ export const useHms = () => {
         saveApplication,
         updateApplicationStatus,
         approveApplication,
+        fetchAllocationReassignmentOptions,
+        fetchAllocationReassignmentRooms,
+        reassignHostelAllocation,
         fetchHmsSettings,
         saveHmsSettings,
         hostelAmenityColumns,

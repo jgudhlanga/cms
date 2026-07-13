@@ -61,6 +61,11 @@ const dateRange = computed(() => {
     const checkIn = props.openApplication.attributes.checkIn;
     const checkOut = props.openApplication.attributes.checkOut;
     const formattedCheckIn = checkIn ? formatDate(checkIn, 'L') : '—';
+
+    if (props.context === 'portal') {
+        return formattedCheckIn;
+    }
+
     const formattedCheckOut = checkOut ? formatDate(checkOut, 'L') : '—';
 
     return `${formattedCheckIn} — ${formattedCheckOut}`;
@@ -71,7 +76,7 @@ const progressSteps = computed(() =>
 );
 
 const goToPayment = () => {
-    router.visit(route('portal.profile.accommodations.pay'));
+    router.visit(route('portal.profile.accommodations.pay.currency'));
 };
 
 const reloadPage = () => {
