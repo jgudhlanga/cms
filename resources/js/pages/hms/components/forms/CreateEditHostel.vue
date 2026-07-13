@@ -11,6 +11,7 @@ import { getModalEdit } from '@/lib/alerts';
 import { trans } from 'laravel-vue-i18n';
 import { APP_MODULE_KEYS } from '@/lib/constants';
 import { buildFormOptions, clearFormErrors } from '@/lib/forms';
+import { genderTitleMatchesHostelType, type HostelGenderType } from '@/lib/hms/genderHostelMatch';
 import { useModalStore } from '@/store/core/useModalStore';
 import type { SelectOption } from '@/types/utils';
 import { useForm } from '@inertiajs/vue3';
@@ -20,7 +21,7 @@ import { useHmsStore } from '@/store/hms/useHmsStore';
 
 
 interface Props {
-    wardens: Array<{ id: number | string; name: string | null }>;
+    wardens: Array<{ id: number | string; name: string | null; gender?: string | null }>;
 }
 
 const props = defineProps<Props>();
@@ -46,11 +47,31 @@ const wardenOption = ref<string | null>(null);
 const statusOption = ref<'active' | 'inactive'>('active');
 const typeOption = ref<'male' | 'female' | 'mixed' | null>(null);
 
-const wardenOptions = computed<SelectOption[]>(() =>
-    (props.wardens ?? [])
-        .filter((w) => !!w?.id)
-        .map((w) => ({ label: w.name ?? '---', value: String(w.id) }))
-);
+const wardenOptions = computed<SelectOption[]>(() => {
+    const eligibleWardens = (props.wardens ?? []).filter((warden) => !!warden?.id);
+    const hostelType = typeOption.value as HostelGenderType | null;
+    const selectedWardenId = wardenOption.value != null ? String(wardenOption.value) : null;
+
+    const filtered = eligibleWardens.filter((warden) =>
+        genderTitleMatchesHostelType(warden.gender, hostelType),
+    );
+
+    if (
+        selectedWardenId
+        && !filtered.some((warden) => String(warden.id) === selectedWardenId)
+    ) {
+        const selectedWarden = eligibleWardens.find((warden) => String(warden.id) === selectedWardenId);
+
+        if (selectedWarden) {
+            filtered.unshift(selectedWarden);
+        }
+    }
+
+    return filtered.map((warden) => ({
+        label: warden.name ?? '---',
+        value: String(warden.id),
+    }));
+});
 
 const statusOptions = computed<SelectOption[]>(() => [
     { label: trans('hms.status_active'), value: 'active' },
@@ -81,6 +102,18 @@ watch(modals!, () => {
     typeOption.value = form.type ?? null;
 
     form.defaults();
+});
+
+watch(typeOption, (nextType) => {
+    if (
+        wardenOption.value != null
+        && !genderTitleMatchesHostelType(
+            props.wardens.find((warden) => String(warden.id) === String(wardenOption.value))?.gender,
+            nextType as HostelGenderType | null,
+        )
+    ) {
+        wardenOption.value = null;
+    }
 });
 
 const save = () => {

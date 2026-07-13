@@ -1,6 +1,7 @@
 # RUN A SPECIFIC SEEDER
 ## DEPLOYMENT SEEDER
-php artisan migrate & php artisan db:seed --class=Database\\Seeders\\DeploymentSeeder & npm run build & php artisan optimize:clear && php artisan queue:restart  && sudo supervisorctl restart all 
+php artisan migrate & php artisan db:seed --class=Database\\Seeders\\DeploymentSeeder & npm run build 
+php artisan optimize:clear && php artisan queue:restart  && sudo supervisorctl restart all 
 
 SET FOREIGN_KEY_CHECKS = 0;
 DELETE FROM `levels` WHERE (`levels`.`id` = '12');

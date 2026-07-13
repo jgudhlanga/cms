@@ -109,6 +109,7 @@ return [
     'accommodation_roommates' => 'Roommates',
     'accommodation_no_roommates' => 'No other occupants in this room.',
     'accommodation_fees_unavailable' => 'Fee information is not available.',
+    'accommodation_fees_no_application' => 'Fee details will appear once a hostel application is in progress.',
     'accommodation_fee_payment_unavailable' => 'We could not load your accommodation fee for payment. Please contact student services for assistance.',
     'accommodation_paid_badge' => 'Paid',
     'accommodation_unpaid_badge' => 'Outstanding',

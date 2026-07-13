@@ -14,14 +14,15 @@ import { dangerDialog, openModal, successAlert } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
 import { router } from '@inertiajs/vue3';
 import { trans } from 'laravel-vue-i18n';
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useHms } from '@/composables/hms/useHms';
 import { useHmsStore } from '@/store/hms/useHmsStore';
 import { storeToRefs } from 'pinia';
 import { icons } from '@/lib/icons';
 
 const { fetchHostels } = useHms();
-const { hostelRefreshKey } = storeToRefs(useHmsStore());
+const hmsStore = useHmsStore();
+const { hostelRefreshKey } = storeToRefs(hmsStore);
 const hostelsList = ref<DataListProps<Hostel>>({
     data: [],
     links: { first: null, last: null, prev: null, next: null },
@@ -57,8 +58,18 @@ const loadHostelsFromUrl = async (url: string) => {
     }
 };
 
-onMounted(() => loadHostels());
-watch(hostelRefreshKey, () => loadHostels(filters.value));
+onMounted(() => {
+    void loadHostels();
+    hmsStore.registerHostelListReload(() => loadHostels(filters.value));
+});
+
+onUnmounted(() => {
+    hmsStore.registerHostelListReload(null);
+});
+
+watch(hostelRefreshKey, () => {
+    void loadHostels(filters.value);
+});
 
 const openCreate = () => openModal({ name: APP_MODULE_KEYS.hostels });
 const openEdit = (hostel: Hostel) => openModal({ name: APP_MODULE_KEYS.hostels, edit: hostel });
@@ -67,7 +78,10 @@ const onDelete = (hostel: Hostel) => {
     dangerDialog(() => {
         router.delete(route('hostels.destroy', String(hostel.id)), {
             preserveScroll: true,
-            onSuccess: () => successAlert(trans('hms.hostel_deleted')),
+            onSuccess: () => {
+                successAlert(trans('hms.hostel_deleted'));
+                hmsStore.refreshHostels();
+            },
         });
         return true;
     });

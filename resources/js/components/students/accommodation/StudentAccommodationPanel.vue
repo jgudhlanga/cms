@@ -138,6 +138,10 @@ const applicationBadge = computed(() => {
 });
 
 const feesBadge = computed(() => {
+    if (!openApplication.value) {
+        return { label: '—', variant: 'default' as const };
+    }
+
     if (!fees.value) {
         return { label: '—', variant: 'default' as const };
     }
@@ -147,6 +151,8 @@ const feesBadge = computed(() => {
         variant: fees.value.isFullyPaid ? 'success' as const : 'warning' as const,
     };
 });
+
+const showFeeStats = computed(() => openApplication.value !== null);
 
 const noticesBadge = computed(() => ({
     label: trans('students.accommodation_notices_count', { count: services.notices.value.length }),
@@ -231,6 +237,7 @@ const leavesBadge = computed(() => ({
             >
                 <AccommodationFeesSection
                     :fees="fees"
+                    :show-stats="showFeeStats"
                     context="portal"
                 />
             </AccommodationSectionCard>
@@ -334,7 +341,7 @@ const leavesBadge = computed(() => ({
                 :title="$t('students.accommodation_section_fees')"
                 :description="$t('students.accommodation_section_fees_desc')"
             >
-                <AccommodationFeesSection :fees="fees" :context="context" />
+                <AccommodationFeesSection :fees="fees" :show-stats="showFeeStats" :context="context" />
             </BaseAccordionItem>
 
             <BaseAccordionItem

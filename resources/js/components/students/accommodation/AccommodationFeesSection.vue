@@ -5,10 +5,12 @@ import { computed } from 'vue';
 interface Props {
     fees: StudentAccommodationFeesResponse | null;
     context?: 'admin' | 'portal';
+    showStats?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
     context: 'admin',
+    showStats: false,
 });
 
 const periodLabel = computed(
@@ -27,6 +29,13 @@ const isPortal = computed(() => props.context === 'portal');
 <template>
     <div v-if="!fees" class="rounded-xl border border-dashed border-border py-10 text-center text-sm text-muted-foreground">
         {{ $t('students.accommodation_fees_unavailable') }}
+    </div>
+
+    <div
+        v-else-if="!showStats"
+        class="rounded-xl border border-dashed border-border py-10 text-center text-sm text-muted-foreground"
+    >
+        {{ $t('students.accommodation_fees_no_application') }}
     </div>
 
     <div v-else :class="isPortal ? 'flex flex-col gap-4' : 'rounded-xl border border-border bg-card p-4 shadow-sm sm:p-5'">

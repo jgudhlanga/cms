@@ -19,19 +19,8 @@ class HostelController extends Controller
 
     public function index()
     {
-        $wardens = Staff::query()
-            ->select(['id', 'user_id'])
-            ->with(['user:id,first_name,middle_name,last_name'])
-            ->orderByDesc('id')
-            ->get()
-            ->map(fn (Staff $staff) => [
-                'id' => $staff->id,
-                'name' => $staff->user?->full_name,
-            ])
-            ->values();
-
         return Inertia::render('hms/hostels/Index', [
-            'wardens' => $wardens,
+            'wardens' => $this->wardenOptions(),
         ]);
     }
 
@@ -70,22 +59,35 @@ class HostelController extends Controller
             ->where('hostel_rooms.hostel_id', $hostel->id)
             ->count());
 
-        $wardens = Staff::query()
-            ->select(['id', 'user_id'])
-            ->with(['user:id,first_name,middle_name,last_name'])
-            ->orderByDesc('id')
-            ->get()
-            ->map(fn (Staff $staff) => [
-                'id' => $staff->id,
-                'name' => $staff->user?->full_name,
-            ])
-            ->values();
+        $wardens = $this->wardenOptions();
 
         return Inertia::render('hms/hostels/Show', [
             'hostel' => $hostel,
             'wardens' => $wardens,
             'wardenProfile' => $this->wardenProfile($hostel->warden),
         ]);
+    }
+
+    /**
+     * @return list<array{id: int|string, name: string|null, gender: string|null}>
+     */
+    private function wardenOptions(): array
+    {
+        return Staff::query()
+            ->select(['id', 'user_id', 'gender_id'])
+            ->with([
+                'user:id,first_name,middle_name,last_name',
+                'gender:id,title',
+            ])
+            ->orderByDesc('id')
+            ->get()
+            ->map(fn (Staff $staff): array => [
+                'id' => $staff->id,
+                'name' => $staff->user?->full_name,
+                'gender' => $staff->gender?->title,
+            ])
+            ->values()
+            ->all();
     }
 
     /**
