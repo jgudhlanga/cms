@@ -6,6 +6,8 @@ use App\Enums\Shared\FeeTypeEnum;
 use App\Enums\Students\ApplicationFeeStatusEnum;
 use App\Helpers\PaymentHelper;
 use App\Models\HMS\HostelApplication;
+use App\Models\Finance\FinanceExchangeRate;
+use App\Models\Institution\FeeStructure;
 use App\Models\Institution\Level;
 use App\Models\Ledgers\Ledger;
 use App\Models\Shared\FeeType;
@@ -39,6 +41,27 @@ function configurePaymentGateway(): void
         'custom.payments.payment-gateway.failure_url' => 'https://app.test/failure',
         'custom.payments.payment-gateway.result_url' => 'https://app.test/result',
     ]);
+}
+
+function createAccommodationFeeStructureForStudentApplication(
+    StudentApplication $studentApplication,
+    float $usdAmount = 150.00,
+): FeeStructure {
+    $studentApplication->loadMissing('departmentLevel');
+    $feeType = paymentTestFeeType(FeeTypeEnum::STUDENT_ACCOMMODATION_FEE);
+
+    return FeeStructure::query()->updateOrCreate(
+        [
+            'tenant_id' => $studentApplication->tenant_id,
+            'fee_type_id' => $feeType->id,
+            'level_id' => $studentApplication->departmentLevel->level_id,
+        ],
+        [
+            'mode_of_study_id' => null,
+            'amount' => $usdAmount,
+            'local_fca_amount' => $usdAmount,
+        ],
+    );
 }
 
 function createAwaitingPaymentHostelApplication(StudentApplication $studentApplication): HostelApplication
@@ -99,6 +122,7 @@ test('initiate accommodation payment creates ledgers on hostel application', fun
     $studentApplication = createStudentReadyForHostelApplication('PAY-HMS-01');
     $user = $studentApplication->student->user;
     $application = createAwaitingPaymentHostelApplication($studentApplication);
+    createAccommodationFeeStructureForStudentApplication($studentApplication, 150.00);
     $feeType = paymentTestFeeType(FeeTypeEnum::STUDENT_ACCOMMODATION_FEE);
     $orderReference = 'ORD-ACC-001';
 
@@ -133,6 +157,74 @@ test('initiate accommodation payment creates ledgers on hostel application', fun
         ->where('ledgerable_type', HostelApplication::class)
         ->where('ledgerable_id', $application->id)
         ->count())->toBe(2);
+});
+
+test('initiate accommodation payment with zwg currency uses converted amount', function () {
+    configurePaymentGateway();
+
+    $studentApplication = createStudentReadyForHostelApplication('PAY-HMS-ZWG-01');
+    $user = $studentApplication->student->user;
+    $application = createAwaitingPaymentHostelApplication($studentApplication);
+    createAccommodationFeeStructureForStudentApplication($studentApplication, 150.00);
+    $feeType = paymentTestFeeType(FeeTypeEnum::STUDENT_ACCOMMODATION_FEE);
+
+    FinanceExchangeRate::query()->create([
+        'date' => now()->toDateString(),
+        'currency_from' => 'USD',
+        'currency_to' => 'ZWG',
+        'rate' => '26.380300',
+    ]);
+
+    Http::fake([
+        'gateway.test/payments/initiate-transaction' => Http::response([
+            'paymentUrl' => 'https://pay.test/checkout',
+            'transactionReference' => 'TXN-ACC-ZWG-001',
+            'responseCode' => '00',
+            'responseMessage' => 'OK',
+        ]),
+    ]);
+
+    $this->actingAs($user)
+        ->postJson(route('integrations.payments.initiate'), [
+            'orderReference' => 'ORD-ACC-ZWG-001',
+            'feeTypeId' => $feeType->id,
+            'ledgerableId' => $application->id,
+            'amount' => '3957.05',
+            'itemName' => 'Student Accommodation Fee',
+            'itemDescription' => 'Student Accommodation Fee',
+            'currencyCode' => '924',
+            'firstName' => 'Test',
+            'lastName' => 'Student',
+            'email' => $user->email,
+        ])
+        ->assertSuccessful()
+        ->assertJsonPath('paymentUrl', 'https://pay.test/checkout');
+});
+
+test('initiate accommodation payment rejects mismatched amount', function () {
+    configurePaymentGateway();
+
+    $studentApplication = createStudentReadyForHostelApplication('PAY-HMS-INVALID-01');
+    $user = $studentApplication->student->user;
+    $application = createAwaitingPaymentHostelApplication($studentApplication);
+    createAccommodationFeeStructureForStudentApplication($studentApplication, 150.00);
+    $feeType = paymentTestFeeType(FeeTypeEnum::STUDENT_ACCOMMODATION_FEE);
+
+    $this->actingAs($user)
+        ->postJson(route('integrations.payments.initiate'), [
+            'orderReference' => 'ORD-ACC-INVALID-001',
+            'feeTypeId' => $feeType->id,
+            'ledgerableId' => $application->id,
+            'amount' => 999,
+            'itemName' => 'Student Accommodation Fee',
+            'itemDescription' => 'Student Accommodation Fee',
+            'currencyCode' => '840',
+            'firstName' => 'Test',
+            'lastName' => 'Student',
+            'email' => $user->email,
+        ])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['amount']);
 });
 
 test('feedback updates accommodation ledgers by order reference', function () {
@@ -255,6 +347,32 @@ test('student accommodation fee service reports fully paid from hostel applicati
     expect($application->fresh()->hasPaidAccommodationFee())->toBeTrue();
     expect($application->fresh()->status)->toBe(HostelApplicationStatusEnum::PAID);
     expect($application->fresh()->payment_verification['accommodation_fees_paid_confirmed'] ?? false)->toBeTrue();
+});
+
+test('accommodation fee summary uses fee structure total despite cancelled payment invoices', function () {
+    $studentApplication = createStudentReadyForHostelApplication('PAY-HMS-CANCELLED-01');
+    $application = createAwaitingPaymentHostelApplication($studentApplication);
+    createAccommodationFeeStructureForStudentApplication($studentApplication, 250.00);
+    $feeType = paymentTestFeeType(FeeTypeEnum::STUDENT_ACCOMMODATION_FEE);
+
+    foreach (['ORD-ACC-CANCEL-001', 'ORD-ACC-CANCEL-002', 'ORD-ACC-CANCEL-003'] as $orderReference) {
+        createLedgerPair(
+            $application,
+            $feeType,
+            $orderReference,
+            $studentApplication->intake_period_id,
+            $studentApplication->tenant_id,
+            'cancelled',
+        );
+    }
+
+    $summary = app(StudentAccommodationFeeService::class)
+        ->summaryForStudent($studentApplication->student->fresh());
+
+    expect($summary['total'])->toBe('250.00')
+        ->and($summary['due'])->toBe('250.00')
+        ->and($summary['paid'])->toBe('0.00')
+        ->and($summary['isFullyPaid'])->toBeFalse();
 });
 
 test('direct receipt update syncs hostel application to paid via ledger observer', function () {

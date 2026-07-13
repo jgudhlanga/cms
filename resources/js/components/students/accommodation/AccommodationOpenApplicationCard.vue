@@ -76,7 +76,7 @@ const progressSteps = computed(() =>
 );
 
 const goToPayment = () => {
-    router.visit(route('portal.profile.accommodations.pay'));
+    router.visit(route('portal.profile.accommodations.pay.currency'));
 };
 
 const reloadPage = () => {

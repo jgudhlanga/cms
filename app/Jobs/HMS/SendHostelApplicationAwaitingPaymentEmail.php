@@ -37,7 +37,7 @@ class SendHostelApplicationAwaitingPaymentEmail implements ShouldQueue
 
         Mail::to($email)->send(new HostelApplicationAwaitingPaymentMail(
             $name,
-            route('portal.profile.accommodations.pay', absolute: true),
+            route('portal.profile.accommodations.pay.currency', absolute: true),
             $paymentDueDate,
         ));
     }

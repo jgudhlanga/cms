@@ -4,6 +4,7 @@ use App\Enums\HMS\HostelApplicationStatusEnum;
 use App\Enums\HMS\HostelApplicationTypeEnum;
 use App\Enums\Shared\FeeTypeEnum;
 use App\Enums\Shared\WorkflowStepEnum;
+use App\Models\Finance\FinanceExchangeRate;
 use App\Models\HMS\HostelApplication;
 use App\Models\Institution\Course;
 use App\Models\Institution\Department;
@@ -218,41 +219,131 @@ test('portal profile accommodations route renders for authorized student', funct
 });
 
 test('portal profile accommodations pay route returns not found when fee structure is missing', function () {
-    $tenant = Tenant::query()->firstOrFail();
-    $user = User::factory()->create(['tenant_id' => $tenant->id]);
+    $studentApplication = createStudentReadyForHostelApplication('PORTAL-ACCOMM-PAY-001');
+    $student = $studentApplication->student;
+    $user = User::query()->findOrFail($student->user_id);
     $user->givePermissionTo('manageOwnStudentAccommodationDetails:students');
 
-    Student::query()->create([
-        'tenant_id' => $tenant->id,
-        'user_id' => $user->id,
-        'title_id' => DB::table('titles')->insertGetId([
-            'name' => 'Mr Accommodations Pay',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]),
-        'gender_id' => DB::table('genders')->insertGetId([
-            'title' => 'Male Accommodations Pay',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]),
-        'marital_status_id' => DB::table('marital_statuses')->insertGetId([
-            'title' => 'Single Accommodations Pay',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]),
-        'id_type_id' => DB::table('id_types')->insertGetId([
-            'name' => 'National ID Accommodations Pay',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]),
-        'date_of_birth' => '2000-01-01',
-        'student_number' => 'PORTAL-ACCOMM-PAY-001',
-    ]);
+    $enrolment = $student->latestEnrolment ?? attachHostelApplicationEnrolment($studentApplication);
+
+    HostelApplication::withoutEvents(fn () => HostelApplication::query()->create([
+        'tenant_id' => $studentApplication->tenant_id,
+        'student_id' => $student->id,
+        'student_enrolment_id' => $enrolment->id,
+        'gender_id' => $student->gender_id,
+        'type' => HostelApplicationTypeEnum::STUDENT,
+        'status' => HostelApplicationStatusEnum::AWAITING_PAYMENT,
+        'next_of_kin_name' => 'Kin',
+        'next_of_kin_contact' => '0771234567',
+        'check_in' => now()->toDateString(),
+        'check_out' => now()->addMonths(4)->toDateString(),
+    ]));
 
     $response = $this->actingAs($user)->get(route('portal.profile.accommodations.pay'));
 
     $response->assertRedirect(route('portal.profile.accommodations'));
     $response->assertSessionHas('error', __('students.accommodation_fee_payment_unavailable'));
+});
+
+test('portal profile accommodations pay route redirects to currency selection without currency', function () {
+    $tenant = Tenant::query()->firstOrFail();
+    $studentApplication = createStudentReadyForHostelApplication('PORTAL-ACCOMM-PAY-003');
+    $student = $studentApplication->student;
+    $user = User::query()->findOrFail($student->user_id);
+    $user->givePermissionTo('manageOwnStudentAccommodationDetails:students');
+
+    $feeType = FeeType::query()->firstOrCreate(
+        ['slug' => FeeTypeEnum::STUDENT_ACCOMMODATION_FEE->slug()],
+        [
+            'name' => FeeTypeEnum::STUDENT_ACCOMMODATION_FEE->name(),
+            'description' => FeeTypeEnum::STUDENT_ACCOMMODATION_FEE->description(),
+            'position' => FeeTypeEnum::STUDENT_ACCOMMODATION_FEE->position(),
+        ],
+    );
+
+    FeeStructure::query()->create([
+        'tenant_id' => $tenant->id,
+        'fee_type_id' => $feeType->id,
+        'level_id' => $studentApplication->departmentLevel->level_id,
+        'mode_of_study_id' => null,
+        'amount' => 150.00,
+        'local_fca_amount' => 250.00,
+    ]);
+
+    $enrolment = $student->latestEnrolment ?? attachHostelApplicationEnrolment($studentApplication);
+
+    HostelApplication::withoutEvents(fn () => HostelApplication::query()->create([
+        'tenant_id' => $studentApplication->tenant_id,
+        'student_id' => $student->id,
+        'student_enrolment_id' => $enrolment->id,
+        'gender_id' => $student->gender_id,
+        'type' => HostelApplicationTypeEnum::STUDENT,
+        'status' => HostelApplicationStatusEnum::AWAITING_PAYMENT,
+        'next_of_kin_name' => 'Kin',
+        'next_of_kin_contact' => '0771234567',
+        'check_in' => now()->toDateString(),
+        'check_out' => now()->addMonths(4)->toDateString(),
+    ]));
+
+    $this->actingAs($user)
+        ->get(route('portal.profile.accommodations.pay'))
+        ->assertRedirect(route('portal.profile.accommodations.pay.currency'));
+});
+
+test('portal profile accommodations currency route exposes usd and zwg quotes', function () {
+    $tenant = Tenant::query()->firstOrFail();
+    $studentApplication = createStudentReadyForHostelApplication('PORTAL-ACCOMM-CURRENCY-001');
+    $student = $studentApplication->student;
+    $user = User::query()->findOrFail($student->user_id);
+    $user->givePermissionTo('manageOwnStudentAccommodationDetails:students');
+
+    $feeType = FeeType::query()->firstOrCreate(
+        ['slug' => FeeTypeEnum::STUDENT_ACCOMMODATION_FEE->slug()],
+        [
+            'name' => FeeTypeEnum::STUDENT_ACCOMMODATION_FEE->name(),
+            'description' => FeeTypeEnum::STUDENT_ACCOMMODATION_FEE->description(),
+            'position' => FeeTypeEnum::STUDENT_ACCOMMODATION_FEE->position(),
+        ],
+    );
+
+    FeeStructure::query()->create([
+        'tenant_id' => $tenant->id,
+        'fee_type_id' => $feeType->id,
+        'level_id' => $studentApplication->departmentLevel->level_id,
+        'mode_of_study_id' => null,
+        'amount' => 150.00,
+        'local_fca_amount' => 250.00,
+    ]);
+
+    FinanceExchangeRate::query()->create([
+        'date' => now()->toDateString(),
+        'currency_from' => 'USD',
+        'currency_to' => 'ZWG',
+        'rate' => '26.380300',
+    ]);
+
+    $enrolment = $student->latestEnrolment ?? attachHostelApplicationEnrolment($studentApplication);
+
+    HostelApplication::withoutEvents(fn () => HostelApplication::query()->create([
+        'tenant_id' => $studentApplication->tenant_id,
+        'student_id' => $student->id,
+        'student_enrolment_id' => $enrolment->id,
+        'gender_id' => $student->gender_id,
+        'type' => HostelApplicationTypeEnum::STUDENT,
+        'status' => HostelApplicationStatusEnum::AWAITING_PAYMENT,
+        'next_of_kin_name' => 'Kin',
+        'next_of_kin_contact' => '0771234567',
+        'check_in' => now()->toDateString(),
+        'check_out' => now()->addMonths(4)->toDateString(),
+    ]));
+
+    $response = $this->actingAs($user)->get(route('portal.profile.accommodations.pay.currency'));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('portal/hms/AccommodationFeeCurrencySelection')
+        ->where('quote.usdDue', '250.00')
+        ->where('quote.zwgDue', '6595.08'));
 });
 
 test('portal profile accommodations pay route exposes fee structure amount when no ledger exists', function () {
@@ -295,14 +386,176 @@ test('portal profile accommodations pay route exposes fee structure amount when 
         'check_out' => now()->addMonths(4)->toDateString(),
     ]));
 
-    $response = $this->actingAs($user)->get(route('portal.profile.accommodations.pay'));
+    $response = $this->actingAs($user)->get(route('portal.profile.accommodations.pay', ['currency' => 'usd']));
 
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
         ->component('portal/hms/AccommodationFeePaymentOptions')
         ->where('fees.due', '250.00')
         ->where('fees.total', '250.00')
+        ->where('selectedCurrency', 'usd')
+        ->where('paymentAmount', '250.00')
+        ->where('currencyCode', '840')
         ->where('accommodationFee.attributes.localFcaAmount', fn ($amount) => (float) $amount === 250.0));
+});
+
+test('portal profile accommodations pay route exposes zwg amount when currency is zwg', function () {
+    $tenant = Tenant::query()->firstOrFail();
+    $studentApplication = createStudentReadyForHostelApplication('PORTAL-ACCOMM-PAY-ZWG-001');
+    $student = $studentApplication->student;
+    $user = User::query()->findOrFail($student->user_id);
+    $user->givePermissionTo('manageOwnStudentAccommodationDetails:students');
+
+    $feeType = FeeType::query()->firstOrCreate(
+        ['slug' => FeeTypeEnum::STUDENT_ACCOMMODATION_FEE->slug()],
+        [
+            'name' => FeeTypeEnum::STUDENT_ACCOMMODATION_FEE->name(),
+            'description' => FeeTypeEnum::STUDENT_ACCOMMODATION_FEE->description(),
+            'position' => FeeTypeEnum::STUDENT_ACCOMMODATION_FEE->position(),
+        ],
+    );
+
+    FeeStructure::query()->create([
+        'tenant_id' => $tenant->id,
+        'fee_type_id' => $feeType->id,
+        'level_id' => $studentApplication->departmentLevel->level_id,
+        'mode_of_study_id' => null,
+        'amount' => 150.00,
+        'local_fca_amount' => 250.00,
+    ]);
+
+    FinanceExchangeRate::query()->create([
+        'date' => now()->toDateString(),
+        'currency_from' => 'USD',
+        'currency_to' => 'ZWG',
+        'rate' => '26.380300',
+    ]);
+
+    $enrolment = $student->latestEnrolment ?? attachHostelApplicationEnrolment($studentApplication);
+
+    HostelApplication::withoutEvents(fn () => HostelApplication::query()->create([
+        'tenant_id' => $studentApplication->tenant_id,
+        'student_id' => $student->id,
+        'student_enrolment_id' => $enrolment->id,
+        'gender_id' => $student->gender_id,
+        'type' => HostelApplicationTypeEnum::STUDENT,
+        'status' => HostelApplicationStatusEnum::AWAITING_PAYMENT,
+        'next_of_kin_name' => 'Kin',
+        'next_of_kin_contact' => '0771234567',
+        'check_in' => now()->toDateString(),
+        'check_out' => now()->addMonths(4)->toDateString(),
+    ]));
+
+    $response = $this->actingAs($user)->get(route('portal.profile.accommodations.pay', ['currency' => 'zwg']));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('portal/hms/AccommodationFeePaymentOptions')
+        ->where('selectedCurrency', 'zwg')
+        ->where('paymentAmount', '6595.08')
+        ->where('currencyCode', '924'));
+});
+
+test('accommodation payment resolves tenant default fee structure when level specific record is missing', function () {
+    $tenant = Tenant::query()->firstOrFail();
+    $studentApplication = createStudentReadyForHostelApplication('PORTAL-ACCOMM-DEFAULT-FEE-001');
+    $student = $studentApplication->student;
+    $user = User::query()->findOrFail($student->user_id);
+    $user->givePermissionTo('manageOwnStudentAccommodationDetails:students');
+
+    $feeType = FeeType::query()->firstOrCreate(
+        ['slug' => FeeTypeEnum::STUDENT_ACCOMMODATION_FEE->slug()],
+        [
+            'name' => FeeTypeEnum::STUDENT_ACCOMMODATION_FEE->name(),
+            'description' => FeeTypeEnum::STUDENT_ACCOMMODATION_FEE->description(),
+            'position' => FeeTypeEnum::STUDENT_ACCOMMODATION_FEE->position(),
+        ],
+    );
+
+    FeeStructure::query()->create([
+        'tenant_id' => $tenant->id,
+        'fee_type_id' => $feeType->id,
+        'level_id' => null,
+        'mode_of_study_id' => null,
+        'amount' => 150.00,
+        'local_fca_amount' => 180.00,
+    ]);
+
+    $enrolment = $student->latestEnrolment ?? attachHostelApplicationEnrolment($studentApplication);
+
+    HostelApplication::withoutEvents(fn () => HostelApplication::query()->create([
+        'tenant_id' => $studentApplication->tenant_id,
+        'student_id' => $student->id,
+        'student_enrolment_id' => $enrolment->id,
+        'gender_id' => $student->gender_id,
+        'type' => HostelApplicationTypeEnum::STUDENT,
+        'status' => HostelApplicationStatusEnum::AWAITING_PAYMENT,
+        'next_of_kin_name' => 'Kin',
+        'next_of_kin_contact' => '0771234567',
+        'check_in' => now()->toDateString(),
+        'check_out' => now()->addMonths(4)->toDateString(),
+    ]));
+
+    $response = $this->actingAs($user)->get(route('portal.profile.accommodations.pay.currency'));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('portal/hms/AccommodationFeeCurrencySelection')
+        ->where('quote.usdDue', '180.00'));
+});
+
+test('accommodation payment quote falls back to fee structure when ledger due is zero', function () {
+    $tenant = Tenant::query()->firstOrFail();
+    $studentApplication = createStudentReadyForHostelApplication('PORTAL-ACCOMM-QUOTE-001');
+    $student = $studentApplication->student;
+    $user = User::query()->findOrFail($student->user_id);
+    $user->givePermissionTo('manageOwnStudentAccommodationDetails:students');
+
+    $feeType = FeeType::query()->firstOrCreate(
+        ['slug' => FeeTypeEnum::STUDENT_ACCOMMODATION_FEE->slug()],
+        [
+            'name' => FeeTypeEnum::STUDENT_ACCOMMODATION_FEE->name(),
+            'description' => FeeTypeEnum::STUDENT_ACCOMMODATION_FEE->description(),
+            'position' => FeeTypeEnum::STUDENT_ACCOMMODATION_FEE->position(),
+        ],
+    );
+
+    $feeStructure = FeeStructure::query()->create([
+        'tenant_id' => $tenant->id,
+        'fee_type_id' => $feeType->id,
+        'level_id' => $studentApplication->departmentLevel->level_id,
+        'mode_of_study_id' => null,
+        'amount' => 150.00,
+        'local_fca_amount' => 250.00,
+    ]);
+
+    FinanceExchangeRate::query()->create([
+        'date' => now()->toDateString(),
+        'currency_from' => 'USD',
+        'currency_to' => 'ZWG',
+        'rate' => '26.380300',
+    ]);
+
+    $enrolment = $student->latestEnrolment ?? attachHostelApplicationEnrolment($studentApplication);
+
+    HostelApplication::withoutEvents(fn () => HostelApplication::query()->create([
+        'tenant_id' => $studentApplication->tenant_id,
+        'student_id' => $student->id,
+        'student_enrolment_id' => $enrolment->id,
+        'gender_id' => $student->gender_id,
+        'type' => HostelApplicationTypeEnum::STUDENT,
+        'status' => HostelApplicationStatusEnum::AWAITING_PAYMENT,
+        'next_of_kin_name' => 'Kin',
+        'next_of_kin_contact' => '0771234567',
+        'check_in' => now()->toDateString(),
+        'check_out' => now()->addMonths(4)->toDateString(),
+    ]));
+
+    $quoteService = app(\App\Services\HMS\AccommodationPaymentQuoteService::class);
+    $quote = $quoteService->previewForStudent($student, $feeStructure);
+
+    expect($quote['usdDue'])->toBe('250.00')
+        ->and($quote['zwgDue'])->toBe('6595.08');
 });
 
 test('legacy portal personal details route redirects to profile personal information', function () {

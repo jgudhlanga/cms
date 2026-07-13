@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Integrations;
 
+use App\Enums\Integrations\PaymentCurrencyCodeEnum;
 use App\Enums\Integrations\LedgerEmailSearchTypeEnum;
 use App\Enums\Shared\FeeTypeEnum;
 use App\Helpers\PaymentHelper;
@@ -20,6 +21,7 @@ use App\Models\Students\ApplicationFee;
 use App\Models\Students\Student;
 use App\Models\Students\StudentApplication;
 use App\Models\Users\User;
+use App\Services\HMS\AccommodationPaymentQuoteService;
 use App\Services\HMS\StudentAccommodationFeeService;
 use App\Services\Integrations\LedgerEmailSearchService;
 use App\Services\Integrations\OnlinePaymentContextResolver;
@@ -424,22 +426,77 @@ class PaymentController extends Controller
     /**
      * @throws AuthorizationException
      */
-    public function accommodationFeePaymentOptions(StudentAccommodationFeeService $feeService): Response|RedirectResponse
+    public function accommodationFeeCurrencySelection(
+        StudentAccommodationFeeService $feeService,
+        AccommodationPaymentQuoteService $quoteService,
+    ): Response|RedirectResponse {
+        $context = $this->resolveAccommodationPaymentOrRedirect($feeService);
+
+        if ($context instanceof RedirectResponse) {
+            return $context;
+        }
+
+        return Inertia::render('portal/hms/AccommodationFeeCurrencySelection', [
+            'accommodationFee' => FeeStructureResource::make($context['feeStructure']),
+            'fees' => $context['fees'],
+            'hostelApplicationId' => $context['openApplication']->id,
+            'quote' => $quoteService->previewForStudent($context['student'], $context['feeStructure']),
+        ]);
+    }
+
+    /**
+     * @throws AuthorizationException
+     */
+    public function accommodationFeePaymentOptions(
+        StudentAccommodationFeeService $feeService,
+        AccommodationPaymentQuoteService $quoteService,
+    ): Response|RedirectResponse {
+        $context = $this->resolveAccommodationPaymentOrRedirect($feeService);
+
+        if ($context instanceof RedirectResponse) {
+            return $context;
+        }
+
+        $currency = request()->query('currency');
+
+        if (! is_string($currency) || PaymentCurrencyCodeEnum::tryFromSelection($currency) === null) {
+            return redirect()->route('portal.profile.accommodations.pay.currency');
+        }
+
+        $quote = $quoteService->quoteForCurrency($context['student'], $currency, $context['feeStructure']);
+
+        if ($quote === null) {
+            return redirect()
+                ->route('portal.profile.accommodations.pay.currency')
+                ->with('error', __('students.accommodation_payment_currency_unavailable'));
+        }
+
+        return Inertia::render('portal/hms/AccommodationFeePaymentOptions', [
+            'accommodationFee' => FeeStructureResource::make($context['feeStructure']),
+            'fees' => $context['fees'],
+            'hostelApplicationId' => $context['openApplication']->id,
+            'selectedCurrency' => $quote['selectedCurrency'],
+            'paymentAmount' => $quote['paymentAmount'],
+            'currencyCode' => $quote['currencyCode'],
+            'exchangeRate' => $quote['exchangeRate'],
+        ]);
+    }
+
+    /**
+     * @return array{
+     *     student: Student,
+     *     feeStructure: FeeStructure,
+     *     openApplication: HostelApplication,
+     *     fees: array<string, mixed>
+     * }|RedirectResponse
+     *
+     * @throws AuthorizationException
+     */
+    private function resolveAccommodationPaymentOrRedirect(StudentAccommodationFeeService $feeService): array|RedirectResponse
     {
         $this->authorize('manageStudentAccommodationDetails');
 
         $student = $this->profileStudent();
-        $feeType = PaymentHelper::getFeeTypeBySlug(FeeTypeEnum::STUDENT_ACCOMMODATION_FEE->slug());
-        $feeStructure = $feeType
-            ? FeeStructure::query()->where('fee_type_id', $feeType->id)->first()
-            : null;
-
-        if ($feeStructure === null) {
-            return redirect()
-                ->route('portal.profile.accommodations')
-                ->with('error', __('students.accommodation_fee_payment_unavailable'));
-        }
-
         $openApplication = $feeService->openAwaitingPaymentApplication($student);
 
         if ($openApplication === null) {
@@ -448,11 +505,20 @@ class PaymentController extends Controller
                 ->with('error', __('students.accommodation_payment_application_required'));
         }
 
-        return Inertia::render('portal/hms/AccommodationFeePaymentOptions', [
-            'accommodationFee' => FeeStructureResource::make($feeStructure),
+        $feeStructure = $feeService->resolveFeeStructureForStudent($student, $openApplication);
+
+        if ($feeStructure === null) {
+            return redirect()
+                ->route('portal.profile.accommodations')
+                ->with('error', __('students.accommodation_fee_payment_unavailable'));
+        }
+
+        return [
+            'student' => $student,
+            'feeStructure' => $feeStructure,
+            'openApplication' => $openApplication,
             'fees' => $feeService->summaryForStudent($student),
-            'hostelApplicationId' => $openApplication->id,
-        ]);
+        ];
     }
 
     private function syncLedgerPaymentStatus(Ledger $invoice, ?Ledger $receipt, array $check): ?Ledger

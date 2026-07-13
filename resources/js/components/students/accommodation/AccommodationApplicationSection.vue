@@ -115,7 +115,7 @@ const adminApplicationLink = (id: string | number) =>
         />
 
         <AccommodationOpenApplicationCard
-            v-else-if="openApplication"
+            v-else-if="openApplication && !isPortal"
             :open-application="openApplication"
             :fees="fees"
             :context="context"
