@@ -1,3 +1,5 @@
+import { BaseButton } from '@/components/core/button';
+import BaseTooltip from '@/components/core/util/BaseTooltip.vue';
 import { useDataTables } from '@/composables/core/useDataTables';
 import { useUtils } from '@/composables/core/useUtils';
 import {
@@ -5,10 +7,13 @@ import {
     openArchiveRestoreDialog,
     toArchiveDialogTarget,
 } from '@/composables/maintenance/useMaintenanceArchiveDialogs';
+import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
+import { IconName } from '@/enums/icons';
 import { PAGINATION_ITEMS_PER_PAGE } from '@/lib/constants';
 import { errorAlert, successAlert } from '@/lib/alerts';
 import { getIdParams } from '@/lib/utils';
+import { icons } from '@/lib/icons';
 import HttpService from '@/services/http.service';
 import type { ApiFilterResponse } from '@/types/data-pagination';
 import type {
@@ -115,7 +120,7 @@ const statusBadgeClass = (status: AccountPurgeArchiveStatus): string => {
     }
 };
 
-const truncateText = (value: string | null, maxLength = 60): string => {
+const truncateText = (value: string | null, maxLength = 40): string => {
     if (!value) {
         return '---';
     }
@@ -127,6 +132,37 @@ const truncateText = (value: string | null, maxLength = 60): string => {
     return `${value.slice(0, maxLength)}…`;
 };
 
+const renderTruncatedWithTooltip = (
+    value: string | null,
+    maxWidthClass = 'max-w-[9rem]',
+    maxLength = 40,
+) => {
+    if (!value) {
+        return '---';
+    }
+
+    const truncated = truncateText(value, maxLength);
+
+    if (truncated === value) {
+        return h('span', { class: `block truncate ${maxWidthClass}` }, value);
+    }
+
+    return h(
+        BaseTooltip,
+        { content: value },
+        {
+            default: () =>
+                h(
+                    'span',
+                    {
+                        class: `block cursor-help truncate ${maxWidthClass} underline decoration-dotted underline-offset-2`,
+                    },
+                    truncated,
+                ),
+        },
+    );
+};
+
 interface ArchiveActionError {
     response?: {
         data?: {
@@ -136,7 +172,7 @@ interface ArchiveActionError {
 }
 
 export const useMaintenanceArchives = () => {
-    const { actionButton, textLink } = useDataTables();
+    const { textLink } = useDataTables();
     const { formatDate, navigateTo } = useUtils();
     const isLoading = ref(false);
     const isRestoring = ref(false);
@@ -265,7 +301,8 @@ export const useMaintenanceArchives = () => {
         {
             header: trans('trans.email_address'),
             accessorKey: 'attributes.email',
-            cell: ({ row }: { row: { original: AccountPurgeArchive } }) => row.original.attributes.email ?? '---',
+            cell: ({ row }: { row: { original: AccountPurgeArchive } }) =>
+                renderTruncatedWithTooltip(row.original.attributes.email, 'max-w-[10rem]', 28),
         },
         {
             header: trans_choice('trans.student_number', 1),
@@ -274,11 +311,11 @@ export const useMaintenanceArchives = () => {
                 row.original.attributes.studentNumber ?? '---',
         },
         {
-            header: trans('trans.type'),
+            header: trans_choice('trans.type', 1),
             accessorKey: 'attributes.purgeTypeLabel',
         },
         {
-            header: trans('trans.status'),
+            header: trans_choice('trans.status', 1),
             accessorKey: 'attributes.status',
             cell: ({ row }: { row: { original: AccountPurgeArchive } }) => {
                 const status = row.original.attributes.status;
@@ -296,7 +333,7 @@ export const useMaintenanceArchives = () => {
             header: trans('trans.maintenance_archives_column_purged_by'),
             accessorKey: 'attributes.purgedByName',
             cell: ({ row }: { row: { original: AccountPurgeArchive } }) =>
-                row.original.attributes.purgedByName ?? '---',
+                renderTruncatedWithTooltip(row.original.attributes.purgedByName, 'max-w-[8rem]', 24),
         },
         {
             header: trans('trans.purged_at'),
@@ -338,22 +375,6 @@ export const useMaintenanceArchives = () => {
             },
         },
         {
-            header: trans('trans.maintenance_archives_column_purge_reason'),
-            accessorKey: 'attributes.purgeReason',
-            cell: ({ row }: { row: { original: AccountPurgeArchive } }) => {
-                const reason = row.original.attributes.purgeReason;
-
-                return h(
-                    'span',
-                    {
-                        title: reason ?? undefined,
-                        class: 'block max-w-xs truncate',
-                    },
-                    truncateText(reason),
-                );
-            },
-        },
-        {
             header: trans_choice('trans.action', 2),
             accessorKey: 'actions',
             enableSorting: false,
@@ -364,21 +385,35 @@ export const useMaintenanceArchives = () => {
 
                 if (archive.attributes.canRestore) {
                     buttons.push(
-                        actionButton({
-                            title: trans('trans.maintenance_archives_restore'),
-                            onClick: () => handleRestoreArchive(archive, onActionSuccess),
-                            variant: ColorVariant.success_outline,
-                        }),
+                        h(
+                            BaseButton,
+                            {
+                                variant: ColorVariant.success_outline,
+                                size: ButtonSize.sm,
+                                classes:
+                                    'rounded-full flex h-8 w-8 shrink-0 items-center justify-center p-0 normal-case',
+                                'aria-label': trans('trans.maintenance_archives_restore'),
+                                onClick: () => handleRestoreArchive(archive, onActionSuccess),
+                            },
+                            () => h(icons[IconName.restore], { size: 16 }),
+                        ),
                     );
                 }
 
                 if (archive.attributes.canFlush) {
                     buttons.push(
-                        actionButton({
-                            title: trans('trans.maintenance_archives_delete'),
-                            onClick: () => handleFlushArchive(archive, onActionSuccess),
-                            variant: ColorVariant.danger_outline,
-                        }),
+                        h(
+                            BaseButton,
+                            {
+                                variant: ColorVariant.danger_outline,
+                                size: ButtonSize.sm,
+                                classes:
+                                    'rounded-full flex h-8 w-8 shrink-0 items-center justify-center p-0 normal-case',
+                                'aria-label': trans('trans.maintenance_archives_delete'),
+                                onClick: () => handleFlushArchive(archive, onActionSuccess),
+                            },
+                            () => h(icons[IconName.trash], { size: 16 }),
+                        ),
                     );
                 }
 
@@ -386,8 +421,14 @@ export const useMaintenanceArchives = () => {
                     return '---';
                 }
 
-                return h('div', { class: 'flex flex-wrap justify-end gap-2' }, buttons);
+                return h('div', { class: 'flex shrink-0 justify-end gap-1 whitespace-nowrap' }, buttons);
             },
+        },
+        {
+            header: trans('trans.maintenance_archives_column_purge_reason'),
+            accessorKey: 'attributes.purgeReason',
+            cell: ({ row }: { row: { original: AccountPurgeArchive } }) =>
+                renderTruncatedWithTooltip(row.original.attributes.purgeReason, 'max-w-[8rem]', 32),
         },
     ];
 

@@ -50,6 +50,7 @@ const model = defineModel<any>();
                 :is-searchable="isSearchable"
                 :is-loading="loading"
                 :is-clearable="isClearable"
+                :teleport="teleport"
             >
                 <template #no-options>
                     <Empty :message="$t('trans.no_options_found')" />

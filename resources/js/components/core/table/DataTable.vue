@@ -101,10 +101,10 @@ const showToolBar = computed(() => {
 
 <template>
     <div class="data-table w-full">
-    <div class="relative inline-block min-w-full overflow-auto rounded-xl pb-6 align-middle">
+    <div class="relative inline-block min-w-full rounded-xl pb-6 align-middle">
         <div
             v-if="loading"
-            class="absolute inset-0 z-10 flex items-center justify-center overflow-auto rounded-xl bg-background/70 px-6 backdrop-blur-[1px]"
+            class="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-background/70 px-6 backdrop-blur-[1px]"
             role="status"
             aria-live="polite">
             <DataLoadingSpinner class="w-full" />
@@ -132,10 +132,12 @@ const showToolBar = computed(() => {
         <div v-if="dragItems" class="text-primary my-2 flex w-1/4 rounded-full bg-muted px-3 py-1 text-xs font-bold">
             {{ $t('trans.draggable_description') }}
         </div>
-        <table class="hava-table">
-            <TableHead :table="table" />
-            <TableBody :table="table" :drag-items="dragItems" :draggable-update-url="draggableUpdateUrl" />
-        </table>
+        <div class="overflow-x-auto">
+            <table class="hava-table">
+                <TableHead :table="table" />
+                <TableBody :table="table" :drag-items="dragItems" :draggable-update-url="draggableUpdateUrl" />
+            </table>
+        </div>
     </div>
     <div class="my-3 flex w-full items-center justify-between px-6 text-muted-foreground" v-if="pagination">
         <PerPageSize v-model="pageSize" />

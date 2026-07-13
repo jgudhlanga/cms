@@ -7,7 +7,13 @@ use App\Models\Shared\Gender;
 use App\Models\Shared\IdType;
 use App\Models\Shared\MaritalStatus;
 use App\Models\Shared\Title;
+
+require_once __DIR__.'/../Maintenance/NonEnrolledStudentUsersTest.php';
+require_once __DIR__.'/../../Support/BulkFinaliseTestHelpers.php';
+
 use App\Models\Students\Student;
+use App\Models\Students\StudentApplication;
+use App\Models\Students\StudentEnrolment;
 use App\Models\Students\StudentNote;
 use App\Models\Users\User;
 use Illuminate\Support\Str;
@@ -109,6 +115,27 @@ it('purges a student account and creates archive and note', function (): void {
         ->and($note->body)->toBe($reason)
         ->and($note->created_by)->toBe($rootUser->id)
         ->and($note->updated_by)->toBe($rootUser->id);
+});
+
+it('purges a student account with enrolments linked to applications', function (): void {
+    $rootUser = actingAsRootStudentPurgeUser();
+    $program = createVerifiedStudentApplication('PURGE-ENR-'.strtoupper(Str::random(4)));
+    $student = $program->student;
+    $student->update(['tenant_id' => $rootUser->tenant_id]);
+    $student->user?->update(['tenant_id' => $rootUser->tenant_id]);
+    $program->update(['tenant_id' => $rootUser->tenant_id]);
+
+    createActiveEnrolmentForProgram($program->fresh());
+
+    expect(StudentEnrolment::query()->where('student_application_id', $program->id)->exists())->toBeTrue();
+
+    $this->deleteJson(route('students.purge', $student), [
+        'reason' => 'Purge student with enrolment and application records.',
+    ])->assertRedirect(route('students.index'));
+
+    expect(Student::query()->whereKey($student->id)->exists())->toBeFalse()
+        ->and(StudentApplication::query()->whereKey($program->id)->exists())->toBeFalse()
+        ->and(StudentEnrolment::query()->where('student_application_id', $program->id)->exists())->toBeFalse();
 });
 
 it('forbids purging a student from another tenant', function (): void {
