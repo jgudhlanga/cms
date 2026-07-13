@@ -3,17 +3,11 @@ import { BaseButton } from '@/components/core/button';
 import { ColorVariant } from '@/enums/colors';
 import { IconName, icons } from '@/lib/icons';
 import { cn } from '@/lib/utils';
-import { trans } from 'laravel-vue-i18n';
-import { computed } from 'vue';
-
-export interface MaintenancePurgeDialogUser {
-    name: string;
-    email: string;
-}
+import type { AccountPurgeArchiveDialogTarget } from '@/types/maintenance-archives';
 
 const props = withDefaults(
     defineProps<{
-        users: MaintenancePurgeDialogUser[];
+        archive: AccountPurgeArchiveDialogTarget;
         processing?: boolean;
     }>(),
     {
@@ -26,23 +20,10 @@ const emit = defineEmits<{
     confirm: [];
 }>();
 
-const isBulk = computed(() => props.users.length > 1);
-
-const introText = computed(() =>
-    isBulk.value
-        ? trans('trans.maintenance_users_bulk_purge_confirm_intro', { count: props.users.length })
-        : trans('trans.maintenance_users_purge_confirm_intro', {
-              name: props.users[0]?.name ?? '',
-          }),
-);
-
-const purgeItems = [
-    'trans.maintenance_users_purge_item_account',
-    'trans.maintenance_users_purge_item_roles',
-    'trans.maintenance_users_purge_item_preferences',
-    'trans.maintenance_users_purge_item_ledgers',
-    'trans.maintenance_users_purge_item_tokens',
-    'trans.maintenance_users_purge_item_avatar',
+const flushItems = [
+    'trans.maintenance_archives_flush_item_payload',
+    'trans.maintenance_archives_flush_item_media',
+    'trans.maintenance_archives_flush_item_note',
 ] as const;
 </script>
 
@@ -66,40 +47,35 @@ const purgeItems = [
 
             <div class="px-6 pt-3">
                 <div class="rounded-md border-l-4 border-red-600 bg-gray-50 p-4 shadow-sm">
-                    <p class="text-sm text-red-700">{{ introText }}</p>
+                    <p class="text-sm text-red-700">
+                        {{
+                            $t('trans.maintenance_archives_flush_confirm_intro', {
+                                name: archive.name,
+                            })
+                        }}
+                    </p>
 
-                    <div class="mt-4">
-                        <p class="text-xs font-semibold uppercase tracking-wide text-red-800">
-                            {{ $t('trans.maintenance_users_purge_affected_users') }}
-                        </p>
-                        <ul
-                            class="mt-2 max-h-40 space-y-2 overflow-y-auto text-sm text-red-700"
-                            :class="{ 'list-none': !isBulk }"
-                        >
-                            <li
-                                v-for="(user, index) in users"
-                                :key="`${user.email}-${index}`"
-                                class="rounded-md border border-red-100 bg-white px-3 py-2"
-                            >
-                                <span class="font-medium">{{ user.name }}</span>
-                                <span class="text-red-600/80"> — {{ user.email }}</span>
-                            </li>
-                        </ul>
+                    <div class="mt-4 rounded-md border border-red-100 bg-white px-3 py-2 text-sm text-red-700">
+                        <span class="font-medium">{{ archive.name }}</span>
+                        <span v-if="archive.email" class="text-red-600/80"> — {{ archive.email }}</span>
+                        <span class="mt-1 block text-xs uppercase tracking-wide text-red-700">
+                            {{ archive.purgeTypeLabel }}
+                        </span>
                     </div>
 
                     <div class="mt-4">
                         <p class="text-xs font-semibold uppercase tracking-wide text-red-800">
-                            {{ $t('trans.maintenance_users_purge_items_heading') }}
+                            {{ $t('trans.maintenance_archives_flush_confirm_items_heading') }}
                         </p>
                         <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-red-700">
-                            <li v-for="itemKey in purgeItems" :key="itemKey">
+                            <li v-for="itemKey in flushItems" :key="itemKey">
                                 {{ $t(itemKey) }}
                             </li>
                         </ul>
                     </div>
 
                     <p class="mt-4 text-sm font-medium text-red-800">
-                        {{ $t('trans.maintenance_users_purge_irreversible') }}
+                        {{ $t('trans.maintenance_archives_flush_irreversible') }}
                     </p>
                 </div>
             </div>
@@ -120,7 +96,7 @@ const purgeItems = [
                     :processing="processing"
                     @click="emit('confirm')"
                 >
-                    {{ $t('trans.continue') }}
+                    {{ $t('trans.maintenance_archives_delete') }}
                 </BaseButton>
             </div>
         </div>

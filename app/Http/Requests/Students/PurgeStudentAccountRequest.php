@@ -2,24 +2,26 @@
 
 declare(strict_types=1);
 
-namespace App\Http\Requests\Maintenance;
+namespace App\Http\Requests\Students;
 
-use App\Models\Users\User;
+use App\Models\Students\Student;
 use Illuminate\Foundation\Http\FormRequest;
 
-class MaintenanceUserPurgeRequest extends FormRequest
+class PurgeStudentAccountRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        $user = $this->route('user');
+        $student = $this->route('student');
 
-        if (! $user instanceof User) {
+        if (! $student instanceof Student) {
             return false;
         }
 
         $authUser = $this->user();
 
-        return $authUser !== null && (int) $user->tenant_id === (int) $authUser->tenant_id;
+        return $authUser !== null
+            && $authUser->can('root:manage')
+            && (int) $student->tenant_id === (int) $authUser->tenant_id;
     }
 
     /**

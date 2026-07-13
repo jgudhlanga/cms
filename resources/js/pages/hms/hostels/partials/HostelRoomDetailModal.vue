@@ -108,6 +108,13 @@ const availableBeds = computed(() => {
                                     </div>
                                     <div v-if="student.level" class="text-muted-foreground text-[11px]">{{ student.level }}</div>
                                 </div>
+                                <span
+                                    v-if="student.sectionName"
+                                    class="text-muted-foreground shrink-0 rounded-full border border-border bg-muted/40 px-2 py-0.5 text-[10px] font-bold"
+                                    :title="$t('hms.room_section_name', { name: student.sectionName })"
+                                >
+                                    {{ student.sectionName }}
+                                </span>
                                 <span class="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
                                     {{ $t('hms.allocation_status_active') }}
                                 </span>

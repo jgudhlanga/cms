@@ -83,6 +83,7 @@ class HandleInertiaRequests extends Middleware
                 'maintenanceUrl' => route('portal.registration.maintenance'),
             ],
             'returningStudent' => fn () => $this->returningStudentProps($user),
+            'purgeArchiveRetentionDays' => (int) config('purge.archive_retention_days', 30),
             'ziggy' => [
                 ...(new Ziggy)->toArray(),
                 'location' => $request->url(),

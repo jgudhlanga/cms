@@ -115,13 +115,16 @@ export const useMaintenanceUsers = () => {
     const isLoading = ref(false);
     const isPurging = ref(false);
 
-    const purgeMaintenanceUser = async (userId: number): Promise<void> => {
-        await HttpService.delete(route('maintenance.non-enrolled-student-users.purge', userId));
+    const purgeMaintenanceUser = async (userId: number, reason: string): Promise<void> => {
+        await HttpService.delete(route('maintenance.non-enrolled-student-users.purge', userId), {
+            data: { reason },
+        });
     };
 
-    const purgeMaintenanceUsersBulk = async (userIds: number[]): Promise<MaintenanceUserBulkPurgeResult> => {
+    const purgeMaintenanceUsersBulk = async (userIds: number[], reason: string): Promise<MaintenanceUserBulkPurgeResult> => {
         return await HttpService.post(route('maintenance.non-enrolled-student-users.bulk-purge'), {
             user_ids: userIds,
+            reason,
         });
     };
 
@@ -143,9 +146,9 @@ export const useMaintenanceUsers = () => {
     };
 
     const handlePurgeUser = (user: NonEnrolledStudentUser, onPurgeSuccess: () => void | Promise<void>) => {
-        openMaintenancePurgeDialog([toPurgeDialogUser(user)], () => {
+        openMaintenancePurgeDialog([toPurgeDialogUser(user)], (reason) => {
             isPurging.value = true;
-            void purgeMaintenanceUser(user.id)
+            void purgeMaintenanceUser(user.id, reason)
                 .then(async () => {
                     successAlert(trans('trans.maintenance_users_purge_success'));
                     await onPurgeSuccess();
@@ -169,9 +172,9 @@ export const useMaintenanceUsers = () => {
 
         openMaintenancePurgeDialog(
             users.map(toPurgeDialogUser),
-            () => {
+            (reason) => {
                 isPurging.value = true;
-                void purgeMaintenanceUsersBulk(userIds)
+                void purgeMaintenanceUsersBulk(userIds, reason)
                     .then(async (result) => {
                         if (result.purged.length > 0) {
                             successAlert(

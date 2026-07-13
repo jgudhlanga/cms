@@ -40,12 +40,16 @@ it('returns unauthorized for guests on single purge endpoint', function (): void
         ->assertUnauthorized();
 });
 
+const PURGE_REASON = 'Valid maintenance purge reason for testing.';
+
 it('forbids users without root manage from single purge endpoint', function (): void {
     $actor = User::factory()->create();
     $target = User::factory()->create(['tenant_id' => $actor->tenant_id]);
 
     $this->actingAs($actor)
-        ->deleteJson(route('maintenance.non-enrolled-student-users.purge', $target))
+        ->deleteJson(route('maintenance.non-enrolled-student-users.purge', $target), [
+            'reason' => PURGE_REASON,
+        ])
         ->assertForbidden();
 });
 
@@ -53,7 +57,9 @@ it('purges a student user without a profile', function (): void {
     $rootUser = actingAsRootMaintenanceUser();
     $studentUser = createNoProfileStudentUser($rootUser->tenant_id);
 
-    $this->deleteJson(route('maintenance.non-enrolled-student-users.purge', $studentUser))
+    $this->deleteJson(route('maintenance.non-enrolled-student-users.purge', $studentUser), [
+        'reason' => PURGE_REASON,
+    ])
         ->assertNoContent();
 
     expect(User::query()->whereKey($studentUser->id)->exists())->toBeFalse()
@@ -86,7 +92,9 @@ it('purges a student user with application fees but no profile', function (): vo
         'status' => ApplicationFeeStatusEnum::AWAITING_PAYMENT,
     ]);
 
-    $this->deleteJson(route('maintenance.non-enrolled-student-users.purge', $studentUser))
+    $this->deleteJson(route('maintenance.non-enrolled-student-users.purge', $studentUser), [
+        'reason' => PURGE_REASON,
+    ])
         ->assertNoContent();
 
     expect(User::query()->whereKey($studentUser->id)->exists())->toBeFalse()
@@ -119,7 +127,9 @@ it('rejects purging a student user with a profile', function (): void {
         'date_of_birth' => '2000-01-01',
     ]);
 
-    $this->deleteJson(route('maintenance.non-enrolled-student-users.purge', $studentUser))
+    $this->deleteJson(route('maintenance.non-enrolled-student-users.purge', $studentUser), [
+        'reason' => PURGE_REASON,
+    ])
         ->assertUnprocessable()
         ->assertJsonValidationErrors('user');
 
@@ -135,7 +145,9 @@ it('rejects purging a user outside the maintenance list', function (): void {
     assignStudentRole($studentUser);
     createActiveEnrolmentForProgram($program);
 
-    $this->deleteJson(route('maintenance.non-enrolled-student-users.purge', $studentUser))
+    $this->deleteJson(route('maintenance.non-enrolled-student-users.purge', $studentUser), [
+        'reason' => PURGE_REASON,
+    ])
         ->assertUnprocessable()
         ->assertJsonValidationErrors('user');
 
@@ -166,6 +178,7 @@ it('bulk purges eligible users and skips ineligible ones', function (): void {
 
     $response = $this->postJson(route('maintenance.non-enrolled-student-users.bulk-purge'), [
         'user_ids' => [$eligibleOne->id, $ineligible->id, $eligibleTwo->id],
+        'reason' => PURGE_REASON,
     ]);
 
     $response->assertOk()
@@ -187,6 +200,7 @@ it('forbids users without root manage from bulk purge endpoint', function (): vo
     $this->actingAs($actor)
         ->postJson(route('maintenance.non-enrolled-student-users.bulk-purge'), [
             'user_ids' => [$target->id],
+            'reason' => PURGE_REASON,
         ])
         ->assertForbidden();
 });

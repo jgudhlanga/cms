@@ -1,4 +1,5 @@
 import { IconName } from '@/enums/icons';
+import ArchivesTab from '@/pages/maintenance/partials/archives/ArchivesTab.vue';
 import StaffTab from '@/pages/maintenance/partials/staff/StaffTab.vue';
 import StudentEnrolmentExport from '@/pages/maintenance/partials/students/StudentEnrolmentExport.vue';
 import UsersTab from '@/pages/maintenance/partials/users/UsersTab.vue';
@@ -30,6 +31,14 @@ export function useMaintenance() {
             value: 'students',
             component: h(StudentEnrolmentExport),
             icon: IconName.user_check,
+            show: true,
+        },
+        {
+            transLabel: () => trans('trans.maintenance_archives'),
+            transDescription: () => trans('trans.maintenance_archives_description'),
+            value: 'archives',
+            component: h(ArchivesTab),
+            icon: IconName.trash,
             show: true,
         },
     ];

@@ -122,6 +122,13 @@ const roomTypeLabel = computed(() => `hms.room_type_${props.room.roomType}`);
                             {{ student.level }}
                         </div>
                     </div>
+                    <span
+                        v-if="student.sectionName"
+                        class="text-muted-foreground shrink-0 rounded-full border border-border bg-muted/40 px-2 py-0.5 text-[10px] font-bold"
+                        :title="$t('hms.room_section_name', { name: student.sectionName })"
+                    >
+                        {{ student.sectionName }}
+                    </span>
                 </div>
             </div>
             <p v-else class="text-muted-foreground px-1 text-xs italic">

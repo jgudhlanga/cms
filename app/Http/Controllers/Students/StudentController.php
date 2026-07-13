@@ -13,6 +13,7 @@ use App\Helpers\PaymentHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Students\CreateStudentApplicationRequest;
 use App\Http\Requests\Students\ExportStudentListRequest;
+use App\Http\Requests\Students\PurgeStudentAccountRequest;
 use App\Http\Requests\Students\UpdateStudentRequest;
 use App\Http\Resources\Students\StudentResource;
 use App\Http\Resources\Users\UserResource;
@@ -27,10 +28,13 @@ use App\Repositories\Shared\interface\INextOfKinRepository;
 use App\Repositories\Students\interface\IStudentApplicationRepository;
 use App\Repositories\Students\interface\IStudentRepository;
 use App\Repositories\Users\interface\IUserRepository;
+use App\Services\AccountPurge\StudentAccountPurgeService;
 use App\Services\Students\IntakePeriodResolver;
 use App\Services\Students\StudentListExportService;
 use Exception;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -152,6 +156,31 @@ class StudentController extends Controller
     public function destroy(string $id)
     {
         //
+    }
+
+    public function purge(
+        PurgeStudentAccountRequest $request,
+        Student $student,
+        StudentAccountPurgeService $purgeService,
+    ): RedirectResponse {
+        $authUser = Auth::user();
+
+        abort_if($authUser === null, 403);
+
+        $purgeService->purge(
+            $student,
+            $authUser,
+            $request->validated('reason'),
+            (int) $authUser->tenant_id,
+        );
+
+        $redirectRoute = match ($request->query('from')) {
+            'users' => route('users.index'),
+            'maintenance' => route('maintenance.index'),
+            default => route('students.index'),
+        };
+
+        return redirect($redirectRoute)->with('success', __('trans.student_account_purge_success'));
     }
 
     public function searchProfile()

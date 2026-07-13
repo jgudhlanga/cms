@@ -7,8 +7,10 @@ import { useUtils } from '@/composables/core/useUtils';
 import { ColorVariant } from '@/enums/colors';
 import { IconName } from '@/enums/icons';
 import { icons } from '@/lib/icons';
+import { buildStudentShowUrl, currentPageReturnPath } from '@/lib/studentShowNavigation';
 import { hasAbility } from '@/lib/permissions';
 import type { User } from '@/types/users';
+import { usePage } from '@inertiajs/vue3';
 import { Circle } from 'lucide-vue-next';
 import { computed } from 'vue';
 import { ButtonSize } from '@/enums/buttons';
@@ -18,11 +20,25 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+const page = usePage();
 const { getInitials } = useInitials();
 const { defaultAvatarImage } = useDefaults();
 const { navigateTo } = useUtils();
 
 const canEdit = hasAbility('update:users');
+
+const studentProfileUrl = computed(() => {
+    const studentId = props.user.attributes.studentId;
+
+    if (!props.user.attributes.hasStudentProfile || !studentId || !hasAbility('view:students')) {
+        return null;
+    }
+
+    return buildStudentShowUrl(studentId, {
+        from: 'users',
+        return: currentPageReturnPath(page.url, window.location.origin),
+    });
+});
 
 const avatarSrc = computed(() => {
     const avatarUrl = props.user.attributes.avatarUrl;
@@ -48,6 +64,12 @@ const phoneNumber = computed(() => props.user.attributes.phoneNumber?.trim() ?? 
 
 const onEditProfile = (): void => {
     navigateTo(route('users.edit', props.user.id));
+};
+
+const onStudentProfile = (): void => {
+    if (studentProfileUrl.value) {
+        navigateTo(studentProfileUrl.value);
+    }
 };
 </script>
 
@@ -101,15 +123,26 @@ const onEditProfile = (): void => {
                 </div>
             </div>
 
-            <GenericButton
-                v-if="canEdit"
-                :title="$t('trans.edit_profile')"
-                :icon="IconName.edit"
-                :variant="ColorVariant.shade_outline"
-                class="rounded-full"
-                :size="ButtonSize.sm"
-                @click="onEditProfile"
-            />
+            <div v-if="canEdit || studentProfileUrl" class="flex shrink-0 flex-col gap-2">
+                <GenericButton
+                    v-if="canEdit"
+                    :title="$t('trans.edit_profile')"
+                    :icon="IconName.edit"
+                    :variant="ColorVariant.shade_outline"
+                    class="rounded-full"
+                    :size="ButtonSize.sm"
+                    @click="onEditProfile"
+                />
+                <GenericButton
+                    v-if="studentProfileUrl"
+                    :title="$t('trans.ui_student_profile')"
+                    :icon="IconName.graduation_cape"
+                    :variant="ColorVariant.shade_outline"
+                    class="rounded-full"
+                    :size="ButtonSize.sm"
+                    @click="onStudentProfile"
+                />
+            </div>
         </div>
     </div>
 </template>

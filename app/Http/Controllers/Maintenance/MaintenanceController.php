@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Maintenance;
 
 use App\Enums\Enrolments\BulkFinaliseEnrolmentAuditEventEnum;
+use App\Exceptions\AccountPurge\AccountPurgeArchiveRestoreException;
 use App\Exceptions\Maintenance\StudentIdNumberConflictException;
 use App\Exports\Maintenance\ApprenticeImportTemplateExport;
 use App\Exports\Maintenance\StaffImportTemplateExport;
@@ -23,6 +24,7 @@ use App\Http\Requests\Maintenance\RejectMergePreviewApplicationRequest;
 use App\Http\Requests\Maintenance\StaffImportCreateLookupRequest;
 use App\Http\Requests\Maintenance\StaffImportPreviewRequest;
 use App\Http\Requests\Maintenance\StaffImportProcessRequest;
+use App\Http\Resources\Maintenance\AccountPurgeArchiveResource;
 use App\Http\Resources\Maintenance\FaultyStudentIdNumberResource;
 use App\Http\Resources\Maintenance\NonEnrolledStudentUserResource;
 use App\Http\Resources\Maintenance\StudentAccountMergePreviewResource;
@@ -30,9 +32,13 @@ use App\Http\Resources\Maintenance\VerifiedStudentForFinalEnrolmentResource;
 use App\Jobs\Applications\ExportApplicationJob;
 use App\Jobs\Enrolments\BulkFinaliseEnrolmentsJob;
 use App\Jobs\Enrolments\ExportStudentEnrollmentJob;
+use App\Models\AccountPurge\AccountPurgeArchive;
 use App\Models\Students\Student;
 use App\Models\Students\StudentApplication;
 use App\Models\Users\User;
+use App\Services\AccountPurge\AccountPurgeArchiveFlushService;
+use App\Services\AccountPurge\AccountPurgeArchiveRestoreService;
+use App\Services\AccountPurge\AccountPurgeArchivesListService;
 use App\Services\Enrollment\EnrollmentLookupService;
 use App\Services\Enrolments\BulkFinaliseEnrolmentAuditLogger;
 use App\Services\Enrolments\BulkFinaliseEnrolmentsService;
@@ -81,6 +87,55 @@ class MaintenanceController extends Controller
         return response()->json($exportCountsService->resolve($intakeYear));
     }
 
+    public function accountPurgeArchives(
+        AccountPurgeArchivesListService $service,
+    ): AnonymousResourceCollection {
+        return AccountPurgeArchiveResource::collection(
+            $service->paginate(
+                $this->resolveTenantId(),
+                request()->only(['search', 'purge_type', 'status']),
+            ),
+        );
+    }
+
+    public function restoreAccountPurgeArchive(
+        AccountPurgeArchive $archive,
+        AccountPurgeArchiveRestoreService $restoreService,
+    ): JsonResponse {
+        $this->assertArchiveTenant($archive);
+
+        try {
+            $result = $restoreService->restore($archive);
+        } catch (AccountPurgeArchiveRestoreException $exception) {
+            return response()->json([
+                'message' => $exception->getMessage(),
+                'errorCode' => $exception->errorCode,
+            ], 422);
+        }
+
+        return response()->json([
+            'message' => __('trans.maintenance_archives_restore_success'),
+            'data' => $result,
+        ]);
+    }
+
+    public function flushAccountPurgeArchive(
+        AccountPurgeArchive $archive,
+        AccountPurgeArchiveFlushService $flushService,
+    ): HttpResponse {
+        $this->assertArchiveTenant($archive);
+
+        if (! $archive->isFlushable()) {
+            throw ValidationException::withMessages([
+                'archive' => [__('trans.maintenance_archives_flush_not_allowed')],
+            ]);
+        }
+
+        $flushService->flushArchive($archive);
+
+        return response()->noContent();
+    }
+
     public function nonEnrolledStudentUsers(
         NonEnrolledStudentUsersService $service,
     ): AnonymousResourceCollection {
@@ -97,7 +152,15 @@ class MaintenanceController extends Controller
         User $user,
         MaintenanceUserPurgeService $purgeService,
     ): HttpResponse {
-        $purgeService->purge($user, $this->resolveTenantId());
+        $authUser = Auth::user();
+        abort_if($authUser === null, 403);
+
+        $purgeService->purge(
+            $user,
+            $authUser,
+            $request->validated('reason'),
+            $this->resolveTenantId(),
+        );
 
         return response()->noContent();
     }
@@ -106,10 +169,18 @@ class MaintenanceController extends Controller
         MaintenanceUserBulkPurgeRequest $request,
         MaintenanceUserPurgeService $purgeService,
     ): JsonResponse {
+        $authUser = Auth::user();
+        abort_if($authUser === null, 403);
+
         /** @var list<int> $userIds */
         $userIds = array_map('intval', $request->validated('user_ids'));
 
-        $result = $purgeService->purgeMany($userIds, $this->resolveTenantId());
+        $result = $purgeService->purgeMany(
+            $userIds,
+            $authUser,
+            $request->validated('reason'),
+            $this->resolveTenantId(),
+        );
 
         return response()->json($result);
     }
@@ -556,6 +627,13 @@ class MaintenanceController extends Controller
             'programmesCount' => $survivor->applications()->count(),
             'enrolmentsCount' => $survivor->enrolments()->count(),
         ];
+    }
+
+    private function assertArchiveTenant(AccountPurgeArchive $archive): void
+    {
+        if ($archive->tenant_id !== $this->resolveTenantId()) {
+            abort(403);
+        }
     }
 
     private function resolveTenantId(): int

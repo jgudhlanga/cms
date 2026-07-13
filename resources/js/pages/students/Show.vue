@@ -5,6 +5,7 @@ import { storeToRefs } from 'pinia';
 
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import BaseSectionNav from '@/components/core/tabs/BaseSectionNav.vue';
+import StudentProfileDangerZone from '@/components/students/profile/StudentProfileDangerZone.vue';
 import StudentProfileShell from '@/components/students/profile/StudentProfileShell.vue';
 import { useStudentProfile } from '@/composables/students/useStudentProfile';
 import { useStudentShowNavigation } from '@/composables/students/useStudentShowNavigation';
@@ -68,6 +69,7 @@ watch(
             <div class="px-2 py-1">
                 <component :is="activeSection?.component" v-if="activeSection" />
             </div>
+            <StudentProfileDangerZone :student="student" />
         </StudentProfileShell>
     </PageContainer>
 </template>

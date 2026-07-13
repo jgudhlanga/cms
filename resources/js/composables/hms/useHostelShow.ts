@@ -40,6 +40,7 @@ export type HostelRoomStudentView = {
     studentNumber: string;
     course: string;
     level: string;
+    sectionName: string;
     initials: string;
     color: string;
 };
@@ -140,6 +141,7 @@ function buildRoomViewModels(rooms: HostelRoom[], allocations: HostelAllocation[
             studentNumber: allocation.attributes.studentNumber?.trim() || '—',
             course: allocation.attributes.course?.trim() || '—',
             level: allocation.attributes.level?.trim() || '',
+            sectionName: allocation.attributes.sectionName?.trim() || '',
             initials: studentInitials(allocation.attributes.studentName),
             color: avatarColorForName(allocation.attributes.studentName),
         };
@@ -179,7 +181,11 @@ function buildRoomViewModels(rooms: HostelRoom[], allocations: HostelAllocation[
                 ?? Number(room.attributes.roomAmenitiesCount ?? 0) + Number(room.attributes.sectionAmenitiesCount ?? 0),
             ),
             availability,
-            students: roomKey ? (studentsByRoomId.get(roomKey) ?? []) : [],
+            students: roomKey
+                ? [...(studentsByRoomId.get(roomKey) ?? [])].sort((left, right) =>
+                      left.sectionName.localeCompare(right.sectionName, undefined, { sensitivity: 'base' }),
+                  )
+                : [],
         };
     });
 }
