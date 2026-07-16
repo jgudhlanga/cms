@@ -142,7 +142,11 @@ class ExaminationImportService
         $recipients = $this->notifyRecipients($starter ?? $import->starter);
 
         if ($recipients !== []) {
-            Mail::to($recipients)->queue(new ExaminationImportStartedMail($import));
+            Mail::to($recipients)->queue(
+                (new ExaminationImportStartedMail($import))
+                    ->onConnection((string) config('examinations.queue_connection', 'database'))
+                    ->onQueue((string) config('examinations.queue', 'exams'))
+            );
         }
 
         ImportExaminationResultsJob::dispatch($import->id);

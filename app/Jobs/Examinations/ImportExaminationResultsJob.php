@@ -20,8 +20,10 @@ class ImportExaminationResultsJob implements ShouldQueue
 
     public function __construct(public int $examinationImportId)
     {
-        $this->tries = max(1, (int) config('examinations.job_tries', 1));
-        $this->timeout = max(60, (int) config('examinations.job_timeout', 3600));
+        $this->tries = max(1, (int) config('examinations.job_tries', 3));
+        $this->timeout = max(60, (int) config('examinations.job_timeout', 300));
+        $this->onConnection((string) config('examinations.queue_connection', 'database'));
+        $this->onQueue((string) config('examinations.queue', 'exams'));
     }
 
     public function handle(ExaminationImportService $service): void
@@ -34,7 +36,11 @@ class ImportExaminationResultsJob implements ShouldQueue
         $recipients = $service->notifyRecipients($import->starter);
 
         if ($recipients !== []) {
-            Mail::to($recipients)->queue(new ExaminationImportCompletedMail($import));
+            Mail::to($recipients)->queue(
+                (new ExaminationImportCompletedMail($import))
+                    ->onConnection((string) config('examinations.queue_connection', 'database'))
+                    ->onQueue((string) config('examinations.queue', 'exams'))
+            );
         }
     }
 
@@ -53,7 +59,11 @@ class ImportExaminationResultsJob implements ShouldQueue
         $recipients = $service->notifyRecipients($import->starter);
 
         if ($recipients !== []) {
-            Mail::to($recipients)->queue(new ExaminationImportCompletedMail($import));
+            Mail::to($recipients)->queue(
+                (new ExaminationImportCompletedMail($import))
+                    ->onConnection((string) config('examinations.queue_connection', 'database'))
+                    ->onQueue((string) config('examinations.queue', 'exams'))
+            );
         }
     }
 }

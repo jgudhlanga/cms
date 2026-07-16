@@ -216,7 +216,10 @@ it('queues import job on upload', function (): void {
     ])->assertSuccessful()
         ->assertJsonPath('import.status', 'pending');
 
-    Bus::assertDispatched(ImportExaminationResultsJob::class);
+    Bus::assertDispatched(ImportExaminationResultsJob::class, function (ImportExaminationResultsJob $job): bool {
+        return $job->queue === config('examinations.queue')
+            && $job->connection === config('examinations.queue_connection');
+    });
     expect(ExaminationImport::query()->count())->toBe(1);
 });
 
