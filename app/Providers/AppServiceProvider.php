@@ -8,9 +8,11 @@ use App\Importers\Institution\CourseSyllabusImporter;
 use App\Importers\Institution\CourseSyllabusModuleImporter;
 use App\JsonApi\V1\JsonApiAuthorizer;
 use App\Models\AcademicCalendars\CourseWorkMark;
+use App\Models\Examinations\ExaminationResult;
 use App\Models\Institution\AssessmentCalendar\AssessmentCalendar;
 use App\Models\Institution\Syllabus\CourseSyllabus;
 use App\Policies\AcademicCalendars\CourseWorkPolicy;
+use App\Policies\Examinations\ExaminationPolicy;
 use App\Policies\Institution\AssessmentCalendarPolicy;
 use App\Policies\Institution\CourseSyllabusPolicy;
 use App\Support\Auth\SyncSessionPasswordHash;
@@ -60,6 +62,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(CourseSyllabus::class, CourseSyllabusPolicy::class);
         Gate::policy(CourseWorkMark::class, CourseWorkPolicy::class);
         Gate::policy(AssessmentCalendar::class, AssessmentCalendarPolicy::class);
+        Gate::policy(ExaminationResult::class, ExaminationPolicy::class);
 
         // Track user login statistics
         $this->registerLoginEventListener();

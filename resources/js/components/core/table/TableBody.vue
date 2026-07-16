@@ -54,7 +54,10 @@ const onChange = (evt: any) => {
     </tr>
     <draggable v-if="dragItems" class="hava-tbody" tag="tbody" v-model="draggableRows" item-key="id" @change="onChange" :move="onMove">
         <template #item="{ element }">
-            <tr class="hava-tr cursor-move" :class="`hava-tr cursor-move ${element.attributes.deletedAt && 'hava-tr-highlight-archived'}`">
+            <tr
+                class="hava-tr cursor-move"
+                :class="`hava-tr cursor-move ${element.attributes?.deletedAt && 'hava-tr-highlight-archived'}`"
+            >
                 <td
                     v-for="cell in getRowByOriginal(element)?.getVisibleCells() ?? []"
                     :key="cell.id"
@@ -70,7 +73,7 @@ const onChange = (evt: any) => {
         <tr
             v-for="row in table.getRowModel().rows"
             :key="row.id"
-            :class="`hava-tr ${row.original.attributes.deletedAt && 'hava-tr-highlight-archived'}`"
+            :class="`hava-tr ${row.original?.attributes?.deletedAt && 'hava-tr-highlight-archived'}`"
         >
             <td v-for="cell in row.getVisibleCells()" :key="cell.id" :align="cell.column.columnDef.meta?.align ?? 'left'" class="hava-td">
                 <FlexRender :render="cell.column.columnDef.cell" :props="cell.getContext()" />
