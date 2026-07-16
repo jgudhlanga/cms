@@ -73,8 +73,12 @@ export function useSidebarMenu() {
             groupKey: 'students',
             transChoiceKey: 'trans.examination',
             icon: icons[IconName.book_check],
-            url: route('dashboard'),
-            show: false /*hasAbility('view:examinations'),*/,
+            url: route('examinations.index'),
+            show: canShowMenuItem(
+                ['viewAny:examinations', 'view:examinations'],
+                'examinations',
+                moduleState,
+            ),
         },
         {
             groupKey: 'students',
