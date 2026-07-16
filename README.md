@@ -73,10 +73,13 @@ Excel export/import temporary files use `sys_get_temp_dir()` via `config/excel.p
 
 ```bash
 php artisan queue:work --daemon database --env=production --queue=default,bank-statements --delay=300 --tries=10 --timeout=120
-php artisan queue:health --queues=default,bank-statements
+php artisan queue:work database --queue=exams --sleep=3 --tries=3 --timeout=300 --max-time=3600
+php artisan queue:health --queues=default,bank-statements,exams
 OR
 php artisan horizon
 ```
+
+Examination imports and their progress emails are dispatched on the `exams` queue (`EXAMINATIONS_IMPORT_JOB_DISPATCH_QUEUE`, connection `database`). Run `php artisan examinations:watch` under Supervisor for inbox dumps.
 
 ### Production storage permissions
 

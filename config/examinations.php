@@ -37,9 +37,17 @@ return [
 
     'chunk_size' => (int) env('EXAMINATIONS_IMPORT_CHUNK_SIZE', 500),
 
-    'job_timeout' => (int) env('EXAMINATIONS_IMPORT_JOB_TIMEOUT', 3600),
+    /*
+    | Align with production Supervisor worker-exams:
+    | queue:work database --queue=exams --tries=3 --timeout=300
+    */
+    'job_timeout' => (int) (env('EXAMINATIONS_IMPORT_JOB_TIMEOUT') ?: 300),
 
-    'job_tries' => (int) env('EXAMINATIONS_IMPORT_JOB_TRIES', 1),
+    'job_tries' => (int) (env('EXAMINATIONS_IMPORT_JOB_TRIES') ?: 3),
+
+    'queue' => env('EXAMINATIONS_IMPORT_JOB_DISPATCH_QUEUE') ?: 'exams',
+
+    'queue_connection' => env('EXAMINATIONS_IMPORT_JOB_DISPATCH_QUEUE_CONNECTION') ?: 'database',
 
     /*
     |--------------------------------------------------------------------------
