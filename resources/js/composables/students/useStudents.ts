@@ -85,8 +85,17 @@ export const useStudents = () => {
         //return step?.toLowerCase() === 'review' ? 'Unsuccessful' : step;
     };
 
-    const hasOfferLetter = (application: Enrolment) =>
-        getApplicationStatus(application)?.toLowerCase() === 'accepted' || getApplicationStatus(application)?.toLowerCase() === 'enrolled';
+    const hasOfferLetter = (
+        application: Enrolment,
+        activeIntakePeriodIds: Array<string | number> = [],
+    ) => {
+        const status = getApplicationStatus(application)?.toLowerCase();
+        const isAcceptedOrEnrolled = status === 'accepted' || status === 'enrolled';
+        const intakePeriodId = String(application?.attributes?.intakePeriodId ?? '');
+        const isActiveIntake = activeIntakePeriodIds.some((id) => String(id) === intakePeriodId);
+
+        return isAcceptedOrEnrolled && isActiveIntake;
+    };
 
     const statusMessage = (application: Enrolment) => {
         const workflowStep = application?.relationships?.departmentWorkflowStep?.attributes?.workflowStep ?? '';

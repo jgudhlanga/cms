@@ -24,9 +24,11 @@ import { z, ZodObject } from 'zod';
 export const useUsers = () => {
     const { moreActionButton, onDelete, onForceDelete, onRestore, textLink, onView, actionButton } = useDataTables();
     const createUserColumns = () => {
-        const { props } = usePage();
-        const { formatDate, navigateTo } = useUtils();
-        const { can } = props?.auth as Auth;
+        const page = usePage<PageProps>();
+        const { formatDate, navigateTo, isItTrue } = useUtils();
+        const { can } = page.props?.auth as Auth;
+        const canImpersonate = isItTrue(page.props.auth.user?.attributes?.canImpersonate);
+
         return [
             {
                 header: trans_choice('trans.name', 1),
@@ -48,30 +50,30 @@ export const useUsers = () => {
                     return loginDate ? formatDate(loginDate, 'LL') : '---';
                 },
             },
-            {
-                header: 'Impersonate',
-                accessorKey: 'canImpersonate',
-                enableSorting: false,
-                meta: { align: 'center' },
-                cell: ({ row }: { row: { original: User } }) => {
-                    const page = usePage<PageProps>();
-                    const canImpersonate = page.props.auth.user.attributes.canImpersonate;
-                    const isImpersonating = page.props.auth.impersonating;
+            ...(canImpersonate
+                ? [
+                      {
+                          header: 'Impersonate',
+                          accessorKey: 'canImpersonate',
+                          enableSorting: false,
+                          meta: { align: 'center' },
+                          cell: ({ row }: { row: { original: User } }) => {
+                              if (isItTrue(page.props.auth.impersonating)) {
+                                  return null;
+                              }
 
-                    if (isImpersonating) {
-                        return null;
-                    }
-
-                    const canBeImpersonated = row.original?.attributes?.canBeImpersonated ?? false;
-                    return canImpersonate && canBeImpersonated
-                        ? actionButton({
-                              title: isImpersonating ? 'Switch Impersonation' : 'Impersonate',
-                              onClick: () => navigateTo(route('impersonate', { id: row.original.id })),
-                              variant: ColorVariant.warning_outline,
-                          })
-                        : null;
-                },
-            },
+                              const canBeImpersonated = row.original?.attributes?.canBeImpersonated ?? false;
+                              return canBeImpersonated
+                                  ? actionButton({
+                                        title: 'Impersonate',
+                                        onClick: () => navigateTo(route('impersonate', { id: row.original.id })),
+                                        variant: ColorVariant.warning_outline,
+                                    })
+                                  : null;
+                          },
+                      },
+                  ]
+                : []),
             {
                 header: trans_choice('trans.student', 1),
                 accessorKey: 'student',

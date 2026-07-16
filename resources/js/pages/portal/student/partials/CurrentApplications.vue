@@ -63,6 +63,7 @@ const canEditApplication = (application: Enrolment): boolean => {
                 v-for="application in applications"
                 :key="application.id"
                 :application="application"
+                :active-intake-period-ids="activeIntakePeriodIds"
                 :compact="compact"
                 :can-edit="canEditApplication(application)"
                 :edit-url="programEditUrl(application.id)"
