@@ -13,6 +13,7 @@ use App\Models\Institution\FeeStructure;
 use App\Models\Shared\DocumentType;
 use App\Models\Shared\FeeType;
 use App\Models\Students\StudentApplication;
+use App\Services\Students\IntakePeriodResolver;
 
 class DocumentHelper
 {
@@ -29,6 +30,12 @@ class DocumentHelper
             ])
             ->where('id', $studentApplication->id)
             ->whereHas('classList', fn ($q) => $q->whereIn('type', ['verified', 'final']))->firstOrFail();
+
+        abort_unless(
+            app(IntakePeriodResolver::class)->isApplicationInActiveIntake($studentApplication),
+            404
+        );
+
         $student = $studentApplication->student;
         $user = $student->user;
 

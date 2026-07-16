@@ -848,7 +848,7 @@ return [
     'ui_read_write_acknowledged' => 'Read / Write Acknowledged',
     'ui_register' => 'Register',
     'ui_rejected' => 'Rejected',
-    'ui_remove_impersonation' => 'Remove Impersonation',
+    'ui_remove_impersonation' => 'Exit impersonation',
     'ui_resend_verification_email' => 'Resend verification email',
     'ui_reset_password' => 'Reset password',
     'ui_scoring_formula' => 'Scoring Formula:',
