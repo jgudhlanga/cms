@@ -35,12 +35,18 @@ class StudentListExportService
     public function rows(array $filters): array
     {
         $rows = [self::HEADERS];
+        $exportedIds = [];
 
         $this->repository
             ->queryForExport($filters)
-            ->chunkById(200, function (Collection $students) use (&$rows): void {
+            ->chunkById(200, function (Collection $students) use (&$rows, &$exportedIds): void {
                 foreach ($students as $student) {
                     /** @var Student $student */
+                    $id = (int) $student->id;
+                    if (isset($exportedIds[$id])) {
+                        continue;
+                    }
+                    $exportedIds[$id] = true;
                     $rows[] = $this->mapRow($student);
                 }
             }, 'students.id', 'id');

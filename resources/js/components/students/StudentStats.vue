@@ -3,7 +3,7 @@ import { BookOpen, Briefcase, GraduationCap, User, Users, UserRound } from '@luc
 import { useStudents } from '@/composables/students/useStudents';
 import type { StudentFiltersState, StudentStats } from '@/types/students';
 import { useDebounceFn } from '@vueuse/core';
-import { trans } from 'laravel-vue-i18n';
+import { trans, trans_choice } from 'laravel-vue-i18n';
 import type { Component } from 'vue';
 import { computed, onMounted, ref, watch } from 'vue';
 
@@ -24,6 +24,12 @@ type StatChip = {
     activeClass: string;
     ariaLabel: string;
     onClick: () => void;
+};
+
+type ChipGroup = {
+    id: string;
+    label: string;
+    chips: StatChip[];
 };
 
 const props = withDefaults(defineProps<Props>(), {
@@ -234,112 +240,67 @@ const typeChips = computed<StatChip[]>(() =>
     })),
 );
 
+const primaryGroups = computed<ChipGroup[]>(() => {
+    const groups: ChipGroup[] = [
+        { id: 'overview', label: `${trans('trans.overview')}:`, chips: overviewChips.value },
+        { id: 'gender', label: `${trans_choice('trans.gender', 1)}:`, chips: genderChips.value },
+    ];
+
+    if (modeChips.value.length) {
+        groups.push({ id: 'mode', label: `${trans('trans.mode')}:`, chips: modeChips.value });
+    }
+
+    if (typeChips.value.length) {
+        groups.push({ id: 'type', label: `${trans_choice('trans.type', 1)}:`, chips: typeChips.value });
+    }
+
+    return groups;
+});
+
 const chipBaseClass =
-    'flex items-center gap-1.5 cursor-pointer rounded-full border px-2.5 py-1 text-xs font-medium transition focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none';
+    'inline-flex h-7 shrink-0 items-center gap-1.5 cursor-pointer rounded-full border px-2.5 text-xs font-medium transition focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none';
+
+const groupLabelClass = 'shrink-0 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground';
 </script>
 
 <template>
-    <div class="mb-4 space-y-3 border-b pb-4">
-        <div class="space-y-3 transition-opacity" :class="{ 'pointer-events-none opacity-60': effectiveLoading }">
-            <div class="flex flex-col gap-2">
-                <div class="flex space-x-4">
-                    <div class="flex space-x-2 items-center">
-                        <div class="text-muted-foreground pt-1 text-[11px] font-semibold uppercase tracking-wide">{{ `${$t('trans.overview')}:` }}</div>
-                        <div class="flex flex-wrap gap-2">
-                                <button
-                                    v-for="chip in overviewChips"
-                                    :key="chip.id"
-                                    type="button"
-                                    :aria-label="chip.ariaLabel"
-                                    :class="[chipBaseClass, 'border-border bg-card hover:border-indigo-300 hover:bg-indigo-50']"
-                                    @click="chip.onClick"
-                                >
-                                    <component :is="chip.icon" class="h-3.5 w-3.5" :class="chip.iconClass" />
-                                    <span class="text-foreground">{{ chip.label }}</span>
-                                    <span class="font-semibold" :class="chip.valueClass">{{ chip.value }}</span>
-                                </button>
-                        </div>
-                    </div>
-                    <div class="flex space-x-2 items-center">
-                        <div class="text-muted-foreground pt-1 text-[11px] font-semibold uppercase tracking-wide">
-                            {{ `${$tChoice('trans.gender', 1)}:` }}
-                        </div>
-                        <div class="flex flex-wrap gap-2">
-                                <button
-                                    v-for="chip in genderChips"
-                                    :key="chip.id"
-                                    type="button"
-                                    :aria-label="chip.ariaLabel"
-                                    :aria-pressed="chip.active"
-                                    :class="[
-                                        chipBaseClass,
-                                        chip.active ? chip.activeClass : 'border-border bg-card hover:border-primary/40',
-                                    ]"
-                                    @click="chip.onClick"
-                                >
-                                    <component :is="chip.icon" class="h-3.5 w-3.5" :class="chip.iconClass" />
-                                    <span class="text-foreground">{{ chip.label }}</span>
-                                    <span class="font-semibold" :class="chip.valueClass">{{ chip.value }}</span>
-                                </button>
-                        </div>
-                    </div>
-                    <div class="flex space-x-2 items-center">
-                        <template v-if="modeChips.length">
-                            <div class="text-muted-foreground pt-1 text-[11px] font-semibold uppercase tracking-wide">
-                                {{ `${$t('trans.mode')}:` }}
-                            </div>
-                            <div class="flex flex-wrap gap-2">
-                                <button
-                                    v-for="chip in modeChips"
-                                    :key="chip.id"
-                                    type="button"
-                                    :aria-label="chip.ariaLabel"
-                                    :aria-pressed="chip.active"
-                                    :class="[
-                                        chipBaseClass,
-                                        chip.active ? chip.activeClass : 'border-border bg-card hover:border-primary/40',
-                                    ]"
-                                    @click="chip.onClick"
-                                >
-                                    <component :is="chip.icon" class="h-3.5 w-3.5" :class="chip.iconClass" />
-                                    <span class="text-foreground">{{ chip.label }}</span>
-                                    <span class="font-semibold" :class="chip.valueClass">{{ chip.value }}</span>
-                                </button>
-                            </div>
-                        </template>
-                    </div>
-                    <div class="flex space-x-2 items-center">
-                        <template v-if="typeChips.length">
-                            <div class="text-muted-foreground pt-1 text-[11px] font-semibold uppercase tracking-wide">
-                                {{ `${$tChoice('trans.type', 1)}:` }}
-                            </div>
-                            <div class="flex flex-wrap gap-2">
-                                <button
-                                    v-for="chip in typeChips"
-                                    :key="chip.id"
-                                    type="button"
-                                    :aria-label="chip.ariaLabel"
-                                    :aria-pressed="chip.active"
-                                    :class="[
-                                        chipBaseClass,
-                                        chip.active ? chip.activeClass : 'border-border bg-card hover:border-primary/40',
-                                    ]"
-                                    @click="chip.onClick"
-                                >
-                                    <component :is="chip.icon" class="h-3.5 w-3.5" :class="chip.iconClass" />
-                                    <span class="text-foreground">{{ chip.label }}</span>
-                                    <span class="font-semibold" :class="chip.valueClass">{{ chip.value }}</span>
-                                </button>
-                            </div>
-                        </template>
+    <div class="mb-3 space-y-2.5 border-b pb-3">
+        <div class="space-y-2 transition-opacity" :class="{ 'pointer-events-none opacity-60': effectiveLoading }">
+            <div class="flex flex-wrap items-center gap-x-5 gap-y-2">
+                <div
+                    v-for="group in primaryGroups"
+                    :key="group.id"
+                    class="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1.5"
+                >
+                    <span :class="groupLabelClass">{{ group.label }}</span>
+                    <div class="flex flex-wrap items-center gap-1.5">
+                        <button
+                            v-for="chip in group.chips"
+                            :key="chip.id"
+                            type="button"
+                            :aria-label="chip.ariaLabel"
+                            :aria-pressed="chip.active || undefined"
+                            :class="[
+                                chipBaseClass,
+                                chip.id === 'total'
+                                    ? 'border-border bg-card hover:border-indigo-300 hover:bg-indigo-50'
+                                    : chip.active
+                                      ? chip.activeClass
+                                      : 'border-border bg-card hover:border-primary/40',
+                            ]"
+                            @click="chip.onClick"
+                        >
+                            <component :is="chip.icon" class="h-3.5 w-3.5 shrink-0" :class="chip.iconClass" />
+                            <span class="text-foreground whitespace-nowrap">{{ chip.label }}</span>
+                            <span class="font-semibold tabular-nums" :class="chip.valueClass">{{ chip.value }}</span>
+                        </button>
                     </div>
                 </div>
-                <template v-if="levelChips.length">
-                    <div class="flex space-x-2 items-center">
-                        <div class="text-muted-foreground pt-1 text-[11px] font-semibold uppercase tracking-wide">
-                            {{ `${$tChoice('trans.level', 1)}:` }}
-                        </div>
-                    <div class="flex flex-wrap gap-2">
+            </div>
+
+            <div v-if="levelChips.length" class="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1.5">
+                <span :class="groupLabelClass">{{ `${$tChoice('trans.level', 1)}:` }}</span>
+                <div class="flex flex-wrap items-center gap-1.5">
                     <button
                         v-for="chip in levelChips"
                         :key="chip.id"
@@ -352,13 +313,11 @@ const chipBaseClass =
                         ]"
                         @click="chip.onClick"
                     >
-                        <component :is="chip.icon" class="h-3.5 w-3.5" :class="chip.iconClass" />
-                        <span class="text-foreground">{{ chip.label }}</span>
-                        <span class="font-semibold" :class="chip.valueClass">{{ chip.value }}</span>
+                        <component :is="chip.icon" class="h-3.5 w-3.5 shrink-0" :class="chip.iconClass" />
+                        <span class="text-foreground whitespace-nowrap">{{ chip.label }}</span>
+                        <span class="font-semibold tabular-nums" :class="chip.valueClass">{{ chip.value }}</span>
                     </button>
-                    </div>
                 </div>
-                </template>
             </div>
         </div>
 

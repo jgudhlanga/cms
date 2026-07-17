@@ -30,6 +30,9 @@ class ExportStudentListRequest extends FormRequest
             'mode_of_study' => ['nullable', 'array'],
             'mode_of_study.*' => ['integer'],
             'gender' => ['nullable', Rule::in(['male', 'female'])],
+            'student_type' => ['nullable', Rule::in(['direct', 'apprentice'])],
+            'search' => ['nullable', 'string', 'max:255'],
+            'name' => ['nullable', 'string', 'max:255'],
         ];
     }
 

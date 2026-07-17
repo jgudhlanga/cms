@@ -31,7 +31,7 @@ const { openModal } = useModalStore();
 const canExportStudents = computed(() => props.showExportButton && hasAbility('export:students'));
 
 const openExportModal = (): void => {
-    openModal(APP_MODULE_KEYS.student_list_export);
+    openModal(APP_MODULE_KEYS.student_list_export, { ...props.filters });
 };
 
 const {
@@ -59,9 +59,8 @@ const {
 </script>
 
 <template>
-    <div class="flex w-full max-w-full min-w-0 flex-col gap-4">
-        <!-- Row 1: department, level, course -->
-        <div class="grid min-w-0 grid-cols-1 gap-3 md:grid-cols-3 md:gap-4">
+    <div class="flex w-full max-w-full min-w-0 flex-col gap-3">
+        <div class="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <div class="min-w-0">
                 <BaseCombobox
                     v-model="departmentSelection"
@@ -82,7 +81,7 @@ const {
                     class="rounded-full"
                 />
             </div>
-            <div class="min-w-0">
+            <div class="min-w-0 sm:col-span-2 lg:col-span-1">
                 <BaseCombobox
                     v-model="courseSelection"
                     multiple
@@ -95,8 +94,10 @@ const {
             </div>
         </div>
 
-        <!-- Row 2: name, student details search, actions -->
-        <div class="grid min-w-0 grid-cols-1 items-end gap-3 md:grid-cols-3 md:gap-4">
+        <div
+            class="grid min-w-0 grid-cols-1 items-center gap-3 sm:grid-cols-2"
+            :class="showResetButton || canExportStudents ? 'lg:grid-cols-[1fr_1fr_auto]' : 'lg:grid-cols-2'"
+        >
             <div class="min-w-0">
                 <BaseInputWithIcon
                     :icon="IconName.user"
@@ -115,7 +116,10 @@ const {
                     class="w-full"
                 />
             </div>
-            <div v-if="showResetButton || canExportStudents" class="flex min-w-0 items-center justify-end space-x-2">
+            <div
+                v-if="showResetButton || canExportStudents"
+                class="flex min-w-0 items-center justify-start gap-2 sm:col-span-2 lg:col-span-1 lg:justify-end"
+            >
                 <ResetButton v-if="showResetButton" @click="resetFilters" />
                 <GenericButton
                     v-if="canExportStudents"

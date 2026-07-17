@@ -228,3 +228,65 @@ it('matches filtered stats total with index meta total when student type filter 
 
     expect($indexResponse->json('meta.total'))->toBe($statsResponse->json('filtered.total'));
 });
+
+it('requires department, level, and mode to match on the same enrolment', function (): void {
+    $matchedProgram = createVerifiedStudentApplication('STU-SAME-'.strtoupper(Str::random(4)));
+    createStudentEnrolmentForProgram($matchedProgram);
+
+    $splitProgram = createVerifiedStudentApplication('STU-SPLIT-'.strtoupper(Str::random(4)));
+    $ojet = \App\Models\Institution\ModeOfStudy::query()->firstOrCreate(['name' => 'Ojet']);
+    $fullTime = \App\Models\Institution\ModeOfStudy::query()->firstOrCreate(['name' => 'Full Time']);
+
+    $splitProgram->update(['mode_of_study_id' => $fullTime->id]);
+    createStudentEnrolmentForProgram($splitProgram);
+
+    $secondLevel = \App\Models\Institution\Level::factory()->create([
+        'name' => 'ND-'.strtoupper(Str::random(4)),
+        'calendar_type' => 'semester',
+    ]);
+    $secondDepartmentLevel = \App\Models\Institution\DepartmentLevel::query()->create([
+        'tenant_id' => $splitProgram->tenant_id,
+        'institution_department_id' => $splitProgram->institution_department_id,
+        'level_id' => $secondLevel->id,
+    ]);
+
+    $secondApplication = \App\Models\Students\StudentApplication::query()->create([
+        'tenant_id' => $splitProgram->tenant_id,
+        'student_id' => $splitProgram->student_id,
+        'institution_department_id' => $splitProgram->institution_department_id,
+        'department_level_id' => $secondDepartmentLevel->id,
+        'department_course_id' => $splitProgram->department_course_id,
+        'intake_period_id' => $splitProgram->intake_period_id,
+        'mode_of_study_id' => $ojet->id,
+        'application_tracking_number' => 'APP-'.strtoupper(Str::random(8)),
+        'program_status_id' => $splitProgram->program_status_id,
+    ]);
+    createStudentEnrolmentForProgram($secondApplication);
+
+    $matchedProgram->update(['mode_of_study_id' => $ojet->id]);
+    StudentEnrolment::query()
+        ->where('student_id', $matchedProgram->student_id)
+        ->update(['mode_of_study_id' => $ojet->id]);
+
+    $user = User::factory()->create(['tenant_id' => $matchedProgram->tenant_id]);
+    Sanctum::actingAs($user);
+
+    $query = http_build_query([
+        'department' => [$matchedProgram->institution_department_id],
+        'level' => [$matchedProgram->departmentLevel->level_id],
+        'mode_of_study' => [$ojet->id],
+    ]);
+
+    $indexResponse = $this->getJson(route('v1.students.index').'?'.$query);
+    $statsResponse = $this->getJson(route('v1.students.stats').'?'.$query);
+
+    $indexResponse->assertOk();
+    $statsResponse->assertOk();
+
+    $ids = collect($indexResponse->json('data'))->pluck('id')->map(static fn ($id) => (int) $id)->all();
+
+    expect($ids)->toContain((int) $matchedProgram->student_id)
+        ->and($ids)->not->toContain((int) $splitProgram->student_id)
+        ->and($indexResponse->json('meta.total'))->toBe($statsResponse->json('filtered.total'))
+        ->and($indexResponse->json('meta.total'))->toBe(1);
+});

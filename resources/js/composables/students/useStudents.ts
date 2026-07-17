@@ -193,6 +193,8 @@ export const useStudents = () => {
 
     const buildStudentExportUrl = (filters: StudentFiltersState): string => {
         const exportFilters: StudentFiltersState = {
+            search: filters.search,
+            name: filters.name,
             department: filters.department,
             level: filters.level,
             course: filters.course,
