@@ -11,6 +11,7 @@ use App\Models\Institution\Level;
 use App\Services\Students\ApplicationFeeService;
 use App\Services\Students\RegistrationAvailabilityService;
 use App\Services\Students\ReturningStudentContextService;
+use App\Support\Auth\DefaultHome;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -93,7 +94,11 @@ class AuthenticatedSessionController extends Controller
             return to_route('portal.application.level-options');
         }
 
-        return redirect()->intended();
+        if (DefaultHome::shouldUseLecturerHome($user)) {
+            return to_route('lecturer.dashboard');
+        }
+
+        return redirect()->intended(route(DefaultHome::routeName($user)));
     }
 
     /**

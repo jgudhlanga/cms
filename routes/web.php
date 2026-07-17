@@ -2,11 +2,12 @@
 
 use App\Http\Controllers\Auth\ImpersonationController;
 use App\Http\Controllers\Dashboard\DashboardController;
+use App\Support\Auth\DefaultHome;
 use Illuminate\Support\Facades\Route;
 use Lab404\Impersonate\Controllers\ImpersonateController as VendorImpersonateController;
 
 Route::get('/', function () {
-    return to_route('dashboard');
+    return to_route(DefaultHome::routeName(auth()->user()));
 })->middleware(['auth', 'verified'])->name('home');
 
 Route::middleware(['web', 'auth'])->group(function () {
@@ -32,5 +33,6 @@ require __DIR__.'/web/workflows.php';
 require __DIR__.'/web/documents.php';
 require __DIR__.'/web/hms.php';
 require __DIR__.'/web/academic-calendars.php';
+require __DIR__.'/web/lecturer.php';
 require __DIR__.'/web/maintenance.php';
 require __DIR__.'/web/examinations.php';

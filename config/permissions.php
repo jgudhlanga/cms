@@ -189,6 +189,9 @@ return [
             'export:academic-calendars',
             'viewAuditTrail:academic-calendars',
             'update:academic-calendar-student-enrolments',
+            'view:lecturer-dashboard',
+            'view:lecturer-classes',
+            'view:lecturer-modules',
         ],
         'shared' => [
             'viewAny:bank-details',

@@ -7,6 +7,7 @@ use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\RedirectImpersonatedToPortal;
 use App\Http\Middleware\RedirectStudentMiddleware;
 use App\Services\Students\RegistrationAvailabilityService;
+use App\Support\Auth\DefaultHome;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -49,41 +50,52 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $exceptions->render(ExceptionParser::renderer());
 
-        $redirectStudentFromForbidden = static function (Request $request): ?RedirectResponse {
+        $redirectFromForbidden = static function (Request $request): ?RedirectResponse {
             if ($request->is('api*') || $request->expectsJson()) {
                 return null;
             }
 
             $user = $request->user();
 
-            if ($user === null || $user->isImpersonated() || ! $user->hasRole(RoleEnum::STUDENT->name())) {
+            if ($user === null || $user->isImpersonated()) {
                 return null;
             }
 
-            if ($request->routeIs('portal.*')) {
-                return null;
+            if ($user->hasRole(RoleEnum::STUDENT->name())) {
+                if ($request->routeIs('portal.*')) {
+                    return null;
+                }
+
+                $route = $user->has_student_profile
+                    ? 'portal.dashboard'
+                    : (app(RegistrationAvailabilityService::class)->isRegistrationOpen()
+                        ? 'portal.application.level-options'
+                        : 'portal.registration.maintenance');
+
+                return to_route($route);
             }
 
-            $route = $user->has_student_profile
-                ? 'portal.dashboard'
-                : (app(RegistrationAvailabilityService::class)->isRegistrationOpen()
-                    ? 'portal.application.level-options'
-                    : 'portal.registration.maintenance');
+            if (
+                DefaultHome::shouldUseLecturerHome($user)
+                && ($request->routeIs('dashboard') || $request->routeIs('home'))
+            ) {
+                return to_route('lecturer.dashboard');
+            }
 
-            return to_route($route);
+            return null;
         };
 
-        $exceptions->renderable(function (AuthorizationException $e, Request $request) use ($redirectStudentFromForbidden) {
-            return $redirectStudentFromForbidden($request);
+        $exceptions->renderable(function (AuthorizationException $e, Request $request) use ($redirectFromForbidden) {
+            return $redirectFromForbidden($request);
         });
 
-        $exceptions->renderable(function (HttpException $e, Request $request) use ($redirectStudentFromForbidden) {
-            $studentRedirect = $e->getStatusCode() === 403
-                ? $redirectStudentFromForbidden($request)
+        $exceptions->renderable(function (HttpException $e, Request $request) use ($redirectFromForbidden) {
+            $redirect = $e->getStatusCode() === 403
+                ? $redirectFromForbidden($request)
                 : null;
 
-            if ($studentRedirect !== null) {
-                return $studentRedirect;
+            if ($redirect !== null) {
+                return $redirect;
             }
 
             if ($request->is('api*') || $request->expectsJson()) {

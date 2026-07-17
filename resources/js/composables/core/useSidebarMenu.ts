@@ -16,6 +16,7 @@ import { computed, markRaw } from 'vue';
 
 const menuGroupOrder: MenuGroupKey[] = [
     'overview',
+    'lecturer',
     'students',
     'operations',
     'institution',
@@ -54,6 +55,27 @@ export function useSidebarMenu() {
             icon: icons[IconName.dashboard],
             url: route('dashboard'),
             show: hasDashboardAccess(moduleState),
+        },
+        {
+            groupKey: 'lecturer',
+            transChoiceKey: 'trans.dashboard',
+            icon: icons[IconName.dashboard],
+            url: route('lecturer.dashboard'),
+            show: canShowMenuItem('view:lecturer-dashboard', 'institution', moduleState),
+        },
+        {
+            groupKey: 'lecturer',
+            transChoiceKey: 'trans.class',
+            icon: icons[IconName.users],
+            url: route('lecturer.classes.index'),
+            show: canShowMenuItem('view:lecturer-classes', 'institution', moduleState),
+        },
+        {
+            groupKey: 'lecturer',
+            transChoiceKey: 'trans.module',
+            icon: icons[IconName.book_check],
+            url: route('lecturer.modules.index'),
+            show: canShowMenuItem('view:lecturer-modules', 'institution', moduleState),
         },
         {
             groupKey: 'students',
