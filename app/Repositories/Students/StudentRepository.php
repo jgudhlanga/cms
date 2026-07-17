@@ -84,15 +84,17 @@ class StudentRepository extends BaseRepository implements IStudentRepository
 
     public function queryForExport(array $filters = []): Builder
     {
-        $exportFilters = collect($filters)->except(['name', 'search'])->all();
         $query = $this->baseIndexQuery();
-        $this->applyIndexFilters($query, $exportFilters);
+        $this->applyIndexFilters($query, $filters);
 
-        return $query->latest('students.created_at');
+        // Order by primary key only — chunkById skips/duplicates rows when ordered by created_at.
+        return $query->reorder()->orderBy('students.id');
     }
 
     private function baseIndexQuery(): Builder
     {
+        // Prefer whereHas over joining enrolments so multi-enrolment students are not
+        // duplicated in pagination or export chunkById iteration.
         return Student::query()
             ->with([
                 'user',
@@ -107,15 +109,15 @@ class StudentRepository extends BaseRepository implements IStudentRepository
                 'enrolments.modeOfStudy',
                 'enrolments.academicCalendarStudentEnrolment',
             ])
-            ->join('student_enrolments', 'student_enrolments.student_id', '=', 'students.id')
-            ->select('students.*')
-            ->distinct();
+            ->whereHas('enrolments')
+            ->select('students.*');
     }
 
     private function baseStatsQuery(): Builder
     {
         return Student::query()
             ->join('student_enrolments', 'student_enrolments.student_id', '=', 'students.id')
+            ->whereNull('student_enrolments.deleted_at')
             ->select('students.id');
     }
 
@@ -235,7 +237,7 @@ class StudentRepository extends BaseRepository implements IStudentRepository
             });
         }
 
-        // Department filter (institution department ids)
+        // Programme filters (department / level / course / mode) must match on the same enrolment.
         $departmentIds = $this->intListFromFilter($filters['department'] ?? null);
         $isDepartmentUser = Helper::isDepartmentUser();
         $userDepartments = Helper::resolveUserDepartments() ?? [];
@@ -243,46 +245,49 @@ class StudentRepository extends BaseRepository implements IStudentRepository
         if ($isDepartmentUser) {
             if ($userDepartments === []) {
                 $query->whereRaw('1 = 0');
-            } else {
-                $departmentIds = $departmentIds !== []
-                    ? array_values(array_intersect($departmentIds, $userDepartments))
-                    : $userDepartments;
 
-                if ($departmentIds === []) {
-                    $query->whereRaw('1 = 0');
-                } else {
-                    $query->whereHas('enrolments', function ($q) use ($departmentIds): void {
-                        $q->whereIn('institution_department_id', $departmentIds);
+                return;
+            }
+
+            $departmentIds = $departmentIds !== []
+                ? array_values(array_intersect($departmentIds, $userDepartments))
+                : $userDepartments;
+
+            if ($departmentIds === []) {
+                $query->whereRaw('1 = 0');
+
+                return;
+            }
+        }
+
+        $levelIds = $this->intListFromFilter($filters['level'] ?? null);
+        $courseIds = $this->intListFromFilter($filters['course'] ?? null);
+        $modeIds = $this->intListFromFilter($filters['mode_of_study'] ?? null);
+
+        $hasProgrammeFilters = $departmentIds !== []
+            || $levelIds !== []
+            || $courseIds !== []
+            || $modeIds !== [];
+
+        if ($hasProgrammeFilters) {
+            $query->whereHas('enrolments', function ($q) use ($departmentIds, $levelIds, $courseIds, $modeIds): void {
+                if ($departmentIds !== []) {
+                    $q->whereIn('institution_department_id', $departmentIds);
+                }
+
+                if ($levelIds !== []) {
+                    $q->whereHas('departmentLevel', function ($levelQuery) use ($levelIds): void {
+                        $levelQuery->whereIn('level_id', $levelIds);
                     });
                 }
-            }
-        } elseif ($departmentIds !== []) {
-            $query->whereHas('enrolments', function ($q) use ($departmentIds): void {
-                $q->whereIn('institution_department_id', $departmentIds);
-            });
-        }
 
-        // Level filter (canonical level ids on department_levels)
-        $levelIds = $this->intListFromFilter($filters['level'] ?? null);
-        if ($levelIds !== []) {
-            $query->whereHas('enrolments.departmentLevel', function ($q) use ($levelIds): void {
-                $q->whereIn('level_id', $levelIds);
-            });
-        }
+                if ($courseIds !== []) {
+                    $q->whereIn('department_course_id', $courseIds);
+                }
 
-        // Course filter (department_course ids)
-        $courseIds = $this->intListFromFilter($filters['course'] ?? null);
-        if ($courseIds !== []) {
-            $query->whereHas('enrolments', function ($q) use ($courseIds): void {
-                $q->whereIn('department_course_id', $courseIds);
-            });
-        }
-
-        // Mode of study
-        $modeIds = $this->intListFromFilter($filters['mode_of_study'] ?? null);
-        if ($modeIds !== []) {
-            $query->whereHas('enrolments', function ($q) use ($modeIds): void {
-                $q->whereIn('mode_of_study_id', $modeIds);
+                if ($modeIds !== []) {
+                    $q->whereIn('mode_of_study_id', $modeIds);
+                }
             });
         }
 

@@ -6,15 +6,33 @@ import { APP_MODULE_KEYS } from '@/lib/constants';
 import { successAlert } from '@/lib/alerts';
 import { useModalStore } from '@/store/core/useModalStore';
 import type { StudentFiltersState } from '@/types/students';
-import { trans } from 'laravel-vue-i18n';
-import { ref } from 'vue';
 import { SizeVariant } from '@/enums/sizes';
+import { storeToRefs } from 'pinia';
+import { trans } from 'laravel-vue-i18n';
+import { ref, watch } from 'vue';
 
 const { buildStudentExportUrl } = useStudents();
-const { closeModal } = useModalStore();
+const modalStore = useModalStore();
+const { closeModal, getEdit, isOpen } = modalStore;
+const { modals } = storeToRefs(modalStore);
 
 const exportFilters = ref<StudentFiltersState>({});
 const departmentError = ref('');
+
+const seedFromPageFilters = (): void => {
+    const seeded = (getEdit(APP_MODULE_KEYS.student_list_export) as StudentFiltersState | undefined) ?? {};
+    exportFilters.value = { ...seeded };
+    departmentError.value = '';
+};
+
+watch(
+    () => modals.value?.[APP_MODULE_KEYS.student_list_export]?.opened,
+    (opened) => {
+        if (opened) {
+            seedFromPageFilters();
+        }
+    },
+);
 
 const onExportFiltersChange = (filters: StudentFiltersState): void => {
     exportFilters.value = filters;
@@ -56,7 +74,11 @@ const handleExport = (): void => {
                 <p v-if="departmentError" class="text-sm text-destructive">
                     {{ departmentError }}
                 </p>
-                <StudentExportFilters :filters="exportFilters" @change="onExportFiltersChange" />
+                <StudentExportFilters
+                    v-if="isOpen(APP_MODULE_KEYS.student_list_export)"
+                    :filters="exportFilters"
+                    @change="onExportFiltersChange"
+                />
             </div>
         </template>
     </BaseModal>

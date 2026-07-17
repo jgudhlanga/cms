@@ -194,7 +194,7 @@ return [
     'relationship' => 'Relationship|Relationships',
     'grade' => 'Grade|Grades',
     'division' => 'Division|Divisions',
-    'mode_of_study' => 'Mode of study|Modes of study',
+    'mode_of_study' => 'Mode|Modes',
     'assessment_type' => 'Assessment type|Assessment types',
     'assessment_calendar' => 'Assessment calendar|Assessment calendars',
     'assessment_calendar_type_mismatch' => 'The selected type must match the academic calendar type.',

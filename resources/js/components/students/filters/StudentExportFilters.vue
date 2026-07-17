@@ -3,7 +3,6 @@ import { toRef } from 'vue';
 
 import BaseCombobox from '@/components/core/form/combobox/BaseCombobox.vue';
 import { useStudentFilters } from '@/composables/students/useStudentFilters';
-import { IconName } from '@/enums/icons';
 import type { StudentFiltersState } from '@/types/students';
 
 interface Props {
@@ -48,9 +47,8 @@ const {
 </script>
 
 <template>
-    <div class="flex w-full max-w-full min-w-0 flex-col gap-4">
-        <!-- Row 1: department, level, course -->
-        <div class="grid min-w-0 grid-cols-1 gap-3 md:grid-cols-3 md:gap-4">
+    <div class="flex w-full max-w-full min-w-0 flex-col gap-3">
+        <div class="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <div class="min-w-0">
                 <BaseCombobox
                     v-model="departmentSelection"
@@ -71,7 +69,7 @@ const {
                     class="rounded-full"
                 />
             </div>
-            <div class="min-w-0">
+            <div class="min-w-0 sm:col-span-2 lg:col-span-1">
                 <BaseCombobox
                     v-model="courseSelection"
                     multiple
@@ -84,8 +82,10 @@ const {
             </div>
         </div>
 
-        <!-- Row 2: mode, gender, reset -->
-        <div class="grid min-w-0 grid-cols-1 items-end gap-3 md:grid-cols-3 md:gap-4">
+        <div
+            class="grid min-w-0 grid-cols-1 items-center gap-3 sm:grid-cols-2"
+            :class="showResetButton ? 'lg:grid-cols-[1fr_1fr_auto]' : 'lg:grid-cols-2'"
+        >
             <div class="min-w-0">
                 <BaseCombobox
                     v-model="modeOfStudySelection"
@@ -105,7 +105,10 @@ const {
                     class="w-full rounded-full"
                 />
             </div>
-            <div v-if="showResetButton" class="min-w-0">
+            <div
+                v-if="showResetButton"
+                class="flex min-w-0 items-center justify-start sm:col-span-2 lg:col-span-1 lg:justify-end"
+            >
                 <ResetButton @click="resetFilters" />
             </div>
         </div>

@@ -53,7 +53,14 @@ const onStudentFiltersChange = async (f: StudentFiltersState) => {
 };
 
 const onStatFilter = async (partial: Partial<StudentFiltersState>) => {
-    const nextFilters = { ...filters.value, ...partial };
+    const nextFilters: StudentFiltersState = { ...filters.value, ...partial };
+
+    (Object.keys(partial) as Array<keyof StudentFiltersState>).forEach((key) => {
+        if (partial[key] === undefined) {
+            delete nextFilters[key];
+        }
+    });
+
     await onStudentFiltersChange(nextFilters);
 };
 
