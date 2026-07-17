@@ -2,6 +2,7 @@
 
 namespace App\Jobs\Examinations;
 
+use App\Enums\Examinations\ExaminationImportStatusEnum;
 use App\Mail\Examinations\ExaminationImportCompletedMail;
 use App\Models\Examinations\ExaminationImport;
 use App\Services\Examinations\ExaminationImportService;
@@ -33,6 +34,11 @@ class ImportExaminationResultsJob implements ShouldQueue
         $service->processImport($import);
 
         $import->refresh();
+
+        if ($import->status === ExaminationImportStatusEnum::Cancelled) {
+            return;
+        }
+
         $recipients = $service->notifyRecipients($import->starter);
 
         if ($recipients !== []) {

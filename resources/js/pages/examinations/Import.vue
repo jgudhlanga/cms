@@ -2,10 +2,11 @@
 import BaseAlert from '@/components/core/alert/BaseAlert.vue';
 import { BaseButton } from '@/components/core/button';
 import PageContainer from '@/components/core/page/PageContainer.vue';
+import { useCustomConfirmDialog } from '@/composables/core/useCustomConfirmDialog';
 import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
 import { TypeVariant } from '@/enums/type-variants';
-import { errorAlert, successAlert } from '@/lib/alerts';
+import { errorAlert, infoAlert, successAlert } from '@/lib/alerts';
 import customAxios from '@/services/http-init';
 import type { Link } from '@/types/ui';
 import { Head, router } from '@inertiajs/vue3';
@@ -34,11 +35,20 @@ const fileInput = ref<HTMLInputElement | null>(null);
 const selectedFile = ref<File | null>(null);
 const fileError = ref<string | null>(null);
 const uploading = ref(false);
+const cancelling = ref(false);
 const uploadPercent = ref(0);
 const currentImport = ref<ImportPayload | null>(null);
 let pollTimer: ReturnType<typeof setInterval> | null = null;
 
 const ACCEPTED = '.xlsx,.xls,.csv';
+
+const importActive = computed<boolean>(
+    () =>
+        currentImport.value !== null &&
+        ['pending', 'processing'].includes(currentImport.value.status),
+);
+
+const importInProgress = computed<boolean>(() => uploading.value || importActive.value);
 
 const onFileChange = (event: Event): void => {
     const input = event.target as HTMLInputElement;
@@ -67,10 +77,12 @@ const pollImport = (id: number): void => {
             );
             consecutiveFailures = 0;
             currentImport.value = response.data.import;
-            if (['completed', 'failed'].includes(response.data.import.status)) {
+            if (['completed', 'failed', 'cancelled'].includes(response.data.import.status)) {
                 clearPoll();
                 if (response.data.import.status === 'completed') {
                     successAlert(trans('examinations.import_status_completed'));
+                } else if (response.data.import.status === 'cancelled') {
+                    infoAlert(trans('examinations.import_cancelled'));
                 } else {
                     errorAlert(response.data.import.errorMessage ?? trans('examinations.import_status_failed'));
                 }
@@ -130,6 +142,44 @@ const startImport = async (): Promise<void> => {
     }
 };
 
+const cancelImport = async (): Promise<void> => {
+    const importId = currentImport.value?.id;
+
+    if (!importId) {
+        return;
+    }
+
+    const confirmed = await useCustomConfirmDialog().open({
+        title: trans('examinations.cancel_import_dialog_title'),
+        message: trans('examinations.cancel_import_dialog_message'),
+        note: trans('examinations.cancel_import_note'),
+        confirmText: trans('examinations.cancel_import_confirm'),
+        cancelText: trans('examinations.cancel_import_dismiss'),
+    });
+
+    if (!confirmed) {
+        return;
+    }
+
+    cancelling.value = true;
+
+    try {
+        const response = await customAxios('').post<{ import: ImportPayload; message: string }>(
+            route('examinations.imports.cancel', importId),
+        );
+        clearPoll();
+        currentImport.value = response.data.import;
+        infoAlert(response.data.message);
+    } catch (error: unknown) {
+        const message =
+            (error as { response?: { data?: { message?: string } } })?.response?.data?.message ??
+            trans('examinations.import_cancel_failed');
+        errorAlert(message);
+    } finally {
+        cancelling.value = false;
+    }
+};
+
 onUnmounted(() => {
     clearPoll();
 });
@@ -153,9 +203,17 @@ onUnmounted(() => {
                     ref="fileInput"
                     type="file"
                     :accept="ACCEPTED"
-                    class="block w-full text-sm"
+                    class="hidden"
                     @change="onFileChange"
                 />
+                <button
+                    type="button"
+                    :disabled="importInProgress"
+                    class="inline-flex items-center gap-2 rounded-md border-2 border-dashed border-primary/50 bg-primary/5 px-6 py-3 text-sm font-semibold uppercase tracking-wide text-primary transition-colors hover:border-primary hover:bg-primary/10 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-primary/50 disabled:hover:bg-primary/5"
+                    @click="fileInput?.click()"
+                >
+                    {{ selectedFile ? $t('examinations.change_file') : $t('examinations.choose_file') }}
+                </button>
                 <p v-if="selectedFile" class="text-sm text-muted-foreground">{{ selectedFile.name }}</p>
                 <p v-if="fileError" class="text-sm text-red-600">{{ fileError }}</p>
 
@@ -170,11 +228,12 @@ onUnmounted(() => {
                 </div>
 
                 <BaseButton
+                    v-if="selectedFile"
                     :variant="ColorVariant.primary"
                     :size="ButtonSize.md"
                     :title="$t('examinations.start_import')"
                     :processing="uploading"
-                    :disabled="uploading || !selectedFile"
+                    :disabled="importInProgress"
                     @click="startImport"
                 />
             </div>
@@ -201,12 +260,24 @@ onUnmounted(() => {
                     {{ $t('examinations.rows_failed') }}: {{ currentImport.rowsFailed }}
                 </p>
                 <p v-if="currentImport.errorMessage" class="text-sm text-red-600">{{ currentImport.errorMessage }}</p>
-                <BaseButton
-                    :variant="ColorVariant.primary_outline"
-                    :size="ButtonSize.sm"
-                    :title="$t('examinations.import_history')"
-                    @click="router.visit(route('examinations.imports.index'))"
-                />
+                <div class="flex flex-wrap gap-2">
+                    <BaseButton
+                        v-if="importActive"
+                        :variant="ColorVariant.danger"
+                        :size="ButtonSize.sm"
+                        :title="$t('examinations.cancel_import')"
+                        :processing="cancelling"
+                        :disabled="cancelling"
+                        @click="cancelImport"
+                    />
+                    <BaseButton
+                        :variant="ColorVariant.primary_outline"
+                        :size="ButtonSize.sm"
+                        :title="$t('examinations.import_history')"
+                        :disabled="importInProgress"
+                        @click="router.visit(route('examinations.imports.index'))"
+                    />
+                </div>
             </div>
         </div>
     </PageContainer>

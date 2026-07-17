@@ -223,6 +223,28 @@ it('queues import job on upload', function (): void {
     expect(ExaminationImport::query()->count())->toBe(1);
 });
 
+it('notifies both the importing user and configured recipients', function (): void {
+    config()->set('examinations.notify', ['exams@example.com']);
+    $user = User::factory()->create(['email' => 'lecturer@example.com']);
+
+    $recipients = app(ExaminationImportService::class)->notifyRecipients($user);
+
+    expect($recipients)->toBe([
+        'lecturer@example.com',
+        'exams@example.com',
+    ]);
+});
+
+it('notifies an email only once when the importer and configured recipient match', function (): void {
+    config()->set('examinations.notify', ['LECTURER@example.com']);
+    $user = User::factory()->create(['email' => 'lecturer@example.com']);
+
+    $recipients = app(ExaminationImportService::class)->notifyRecipients($user);
+
+    expect($recipients)->toHaveCount(1)
+        ->and(strtolower($recipients[0]))->toBe('lecturer@example.com');
+});
+
 it('returns json import progress with starter full name', function (): void {
     $user = createExaminationUser(['import:examinations', 'viewAny:examinations']);
     $this->actingAs($user);

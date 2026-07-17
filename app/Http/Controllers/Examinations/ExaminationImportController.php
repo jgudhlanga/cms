@@ -69,6 +69,24 @@ class ExaminationImportController extends Controller
         ]);
     }
 
+    public function cancel(Request $request, ExaminationImport $examinationImport): JsonResponse
+    {
+        $this->authorize('import', ExaminationResult::class);
+
+        $cancelled = $this->importService->cancelImport($examinationImport);
+
+        $payload = ExaminationImportResource::make(
+            $examinationImport->fresh() ?? $examinationImport
+        )->resolve();
+
+        return response()->json([
+            'import' => $payload,
+            'message' => $cancelled
+                ? __('examinations.import_cancelled')
+                : __('examinations.import_cancel_failed'),
+        ], $cancelled ? 200 : 422);
+    }
+
     public function show(Request $request, ExaminationImport $examinationImport): JsonResponse|Response
     {
         $this->authorize('import', ExaminationResult::class);

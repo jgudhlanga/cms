@@ -65,11 +65,12 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Notify emails (watcher imports; UI uses the uploading user)
+    | Notify emails
     |--------------------------------------------------------------------------
     |
-    | Comma-separated list. When empty, users with import:examinations and an
-    | email address are notified for watcher-sourced imports.
+    | Comma-separated list. Upload imports notify both the uploading user and
+    | these addresses, with duplicates removed. When empty, watcher imports
+    | notify users with import:examinations and an email address.
     |
     */
 
