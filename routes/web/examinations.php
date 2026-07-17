@@ -15,4 +15,5 @@ Route::prefix('examinations')->middleware(['auth', 'verified'])->group(function 
 
     Route::get('/imports', [ExaminationImportController::class, 'index'])->name('examinations.imports.index');
     Route::get('/imports/{examinationImport}', [ExaminationImportController::class, 'show'])->name('examinations.imports.show');
+    Route::post('/imports/{examinationImport}/cancel', [ExaminationImportController::class, 'cancel'])->name('examinations.imports.cancel');
 });

@@ -27,14 +27,21 @@ class ExaminationImportService
      */
     public function notifyRecipients(?User $starter = null): array
     {
+        $configured = config('examinations.notify', []);
+        $recipients = [];
+
         if ($starter instanceof User && filled($starter->email)) {
-            return [(string) $starter->email];
+            $recipients[] = (string) $starter->email;
         }
 
-        $configured = config('examinations.notify', []);
+        if (is_array($configured)) {
+            $recipients = array_merge($recipients, array_map('strval', $configured));
+        }
 
-        if (is_array($configured) && $configured !== []) {
-            return array_values(array_filter(array_map('strval', $configured)));
+        $recipients = $this->uniqueEmails($recipients);
+
+        if ($recipients !== []) {
+            return $recipients;
         }
 
         return User::query()
@@ -42,9 +49,28 @@ class ExaminationImportService
             ->whereNotNull('email')
             ->where('email', '!=', '')
             ->pluck('email')
-            ->unique()
-            ->values()
             ->all();
+    }
+
+    /**
+     * @param  list<string>  $emails
+     * @return list<string>
+     */
+    private function uniqueEmails(array $emails): array
+    {
+        $unique = [];
+
+        foreach ($emails as $email) {
+            $email = trim($email);
+
+            if ($email === '') {
+                continue;
+            }
+
+            $unique[strtolower($email)] = $email;
+        }
+
+        return array_values($unique);
     }
 
     public function startFromUpload(UploadedFile $file, User $user): ExaminationImport
@@ -155,8 +181,40 @@ class ExaminationImportService
     /**
      * @return array{upserted: int, failed: int, processed: int}
      */
+    public function cancelImport(ExaminationImport $import): bool
+    {
+        if ($import->status->isFinished()) {
+            return false;
+        }
+
+        $import->forceFill([
+            'status' => ExaminationImportStatusEnum::Cancelled,
+            'completed_at' => now(),
+        ])->save();
+
+        return true;
+    }
+
+    public function isCancelled(ExaminationImport $import): bool
+    {
+        $status = ExaminationImport::query()
+            ->withoutGlobalScopes()
+            ->whereKey($import->getKey())
+            ->value('status');
+
+        $status = $status instanceof ExaminationImportStatusEnum
+            ? $status
+            : ExaminationImportStatusEnum::tryFrom((string) $status);
+
+        return $status === ExaminationImportStatusEnum::Cancelled;
+    }
+
     public function processImport(ExaminationImport $import): array
     {
+        if ($this->isCancelled($import)) {
+            return ['upserted' => 0, 'failed' => 0, 'processed' => 0];
+        }
+
         $import->forceFill([
             'status' => ExaminationImportStatusEnum::Processing,
             'started_at' => $import->started_at ?? now(),
@@ -239,6 +297,25 @@ class ExaminationImportService
                     'rows_upserted' => $upserted,
                     'rows_failed' => $failed,
                 ])->save();
+
+                if ($this->isCancelled($import)) {
+                    $import->forceFill([
+                        'status' => ExaminationImportStatusEnum::Cancelled,
+                        'rows_total' => $rowsTotal,
+                        'rows_processed' => $processed,
+                        'rows_upserted' => $upserted,
+                        'rows_failed' => $failed,
+                        'completed_at' => now(),
+                    ])->save();
+
+                    $this->archiveProcessedFile($import);
+
+                    return [
+                        'upserted' => $upserted,
+                        'failed' => $failed,
+                        'processed' => $processed,
+                    ];
+                }
             }
         }
 
