@@ -7,6 +7,7 @@ use App\Services\Dashboard\DashboardModuleService;
 
 beforeEach(function () {
     enableDashboardModule();
+    seedDashboardAcademicCalendar();
 });
 
 test('dashboard returns forbidden when module is disabled', function () {

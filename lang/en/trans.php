@@ -965,6 +965,7 @@ return [
     'reason' => 'Reason',
     'nav_groups' => [
         'overview' => 'Overview',
+        'lecturer' => 'Teaching',
         'students' => 'Students',
         'operations' => 'Operations',
         'institution' => 'Institution',

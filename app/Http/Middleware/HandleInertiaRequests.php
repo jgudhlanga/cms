@@ -147,6 +147,9 @@ class HandleInertiaRequests extends Middleware
             'forceDelete:next-of-kins',
             'viewOnlyOwnDepartment:departments',
             'manageOwnData:tenants',
+            'view:lecturer-dashboard',
+            'view:lecturer-classes',
+            'view:lecturer-modules',
         ];
     }
 

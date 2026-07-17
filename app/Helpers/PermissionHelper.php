@@ -52,6 +52,23 @@ class PermissionHelper
     }
 
     /**
+     * @return list<string>
+     */
+    public static function lecturerPermissions(): array
+    {
+        return [
+            'view:lecturer-dashboard',
+            'view:lecturer-classes',
+            'view:lecturer-modules',
+            'viewAny:course-work',
+            'view:course-work',
+            'update:course-work',
+            'import:course-work',
+            'view:academic-calendars',
+        ];
+    }
+
+    /**
      * @param  array<int, string>  $permissionNames
      */
     public static function resolvePermissions(array $permissionNames): Collection

@@ -16,6 +16,7 @@ export type MenuGroupKey =
 	| 'institution'
 	| 'system'
 	| 'department'
+	| 'lecturer'
 	| 'portal';
 
 export interface MenuGroupInterface {

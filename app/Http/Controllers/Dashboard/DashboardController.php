@@ -17,18 +17,29 @@ use App\Services\Dashboard\HostelDashboardMetricsService;
 use App\Services\Dashboard\OverviewDashboardMetricsService;
 use App\Services\Dashboard\StaffDashboardMetricsService;
 use App\Support\AcademicCalendars\AcademicCalendarPeriodResolver;
+use App\Support\Auth\DefaultHome;
+use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
+use Inertia\Response;
 
 class DashboardController extends Controller
 {
     public function __construct(protected ApplicationMetricsService $metricsService) {}
 
-    public function __invoke()
+    public function __invoke(): RedirectResponse|Response
     {
-        $this->authorize('viewDashboard');
-
         $user = auth()->user();
         $dashboardModuleService = app(DashboardModuleService::class);
+
+        if (! $dashboardModuleService->canAccessDashboard($user)) {
+            if (DefaultHome::shouldUseLecturerHome($user)) {
+                return to_route('lecturer.dashboard');
+            }
+
+            $this->authorize('viewDashboard');
+        }
+
+        $this->authorize('viewDashboard');
 
         $intakePeriodList = DropdownHelper::getIntakePeriods();
         $intakePeriods = IntakePeriodResource::collection($intakePeriodList);
