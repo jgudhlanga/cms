@@ -5,6 +5,7 @@ namespace App\Services\Students;
 use App\Enums\Institution\IntakePeriodStatusEnum;
 use App\Enums\Students\ApplicationFeeStatusEnum;
 use App\Helpers\Helper;
+use App\Helpers\PaymentHelper;
 use App\Models\Institution\IntakePeriod;
 use App\Models\Institution\Level;
 use App\Models\Students\ApplicationFee;
@@ -113,7 +114,7 @@ class ApplicationFeeService
 
     public function ensureForFeeRequiredLevel(User $user, Level $level, ?IntakePeriod $intakePeriod = null): ApplicationFee
     {
-        if (! $level->has_application_fee_payment) {
+        if (! PaymentHelper::levelRequiresApplicationFeePayment($level, $user)) {
             throw new \InvalidArgumentException('Level does not require an application fee.');
         }
 

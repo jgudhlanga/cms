@@ -12,7 +12,6 @@ use App\Models\Institution\IntakePeriod;
 use App\Models\Institution\Level;
 use App\Models\Ledgers\Ledger;
 use App\Models\Shared\FeeType;
-use App\Models\Students\ApplicationFee;
 use App\Models\Students\StudentApplication;
 use App\Models\Users\User;
 use App\Services\Students\ApplicationFeeService;
@@ -240,6 +239,27 @@ class PaymentHelper
      |  Registration Fee Helpers
      | -----------------------------------------------------------------
      */
+
+    public static function isApplicationFeeExempt(?User $user): bool
+    {
+        if ($user === null || ! is_string($user->email)) {
+            return false;
+        }
+
+        $email = strtolower(trim($user->email));
+        $exemptEmails = array_map(
+            static fn (mixed $exemptEmail): string => strtolower(trim((string) $exemptEmail)),
+            (array) config('custom.applications.application_fee_exempt_emails', []),
+        );
+
+        return in_array($email, $exemptEmails, true);
+    }
+
+    public static function levelRequiresApplicationFeePayment(Level $level, ?User $user = null): bool
+    {
+        return (bool) $level->has_application_fee_payment
+            && ! self::isApplicationFeeExempt($user);
+    }
 
     public static function hasPaidApplicationFeeAndNotApplied(?User $user = null, ?IntakePeriod $intakePeriod = null): bool
     {

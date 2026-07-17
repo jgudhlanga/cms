@@ -337,7 +337,7 @@ defineExpose({ resetFilters });
                     v-for="tag in activeTags"
                     :key="tag.id"
                     type="button"
-                    class="inline-flex h-5 max-w-full items-center gap-0.5 rounded-md border border-primary/30 bg-primary/10 px-1.5 text-[10px] font-medium text-primary"
+                    class="inline-flex h-5 max-w-full items-center gap-0.5 rounded-md border border-border bg-muted px-1.5 text-[10px] font-medium text-foreground"
                     @click="tag.clear()"
                 >
                     <span class="truncate">{{ tag.label }}</span>

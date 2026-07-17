@@ -29,7 +29,7 @@ readonly class UserDto
             tenant_id: $tenantId,
             status_id: $statusId,
             first_name: $request->first_name,
-            middle_name: $request?->middle_name,
+            middle_name: $request->filled('middle_name') ? $request->string('middle_name')->toString() : null,
             last_name: $request->last_name,
             email: $request->email,
             phone_number: $request->phone_number,

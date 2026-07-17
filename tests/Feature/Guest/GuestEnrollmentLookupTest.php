@@ -178,6 +178,12 @@ test('portal store creates account and redirects to level selection for new zimb
     expect(session('registration.id_number'))->toBe('44-0999888B44');
     expect(auth()->user()?->middle_name)->toBe('Middle');
     expect(auth()->user()?->registration_instructions_acknowledged_at)->not->toBeNull();
+    $this->assertDatabaseHas('users', [
+        'email' => $email,
+        'first_name' => 'Fresh',
+        'middle_name' => 'Middle',
+        'last_name' => 'Student',
+    ]);
 });
 
 test('portal level options page renders for newly registered student', function () {

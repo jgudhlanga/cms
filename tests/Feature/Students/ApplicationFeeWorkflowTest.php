@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\Acl\RoleEnum;
+use App\Enums\Institution\IntakePeriodStatusEnum;
 use App\Enums\Shared\FeeTypeEnum;
 use App\Enums\Shared\TenantEnum;
 use App\Enums\Students\ApplicationFeeStatusEnum;
@@ -58,13 +59,13 @@ function createApplicationFeeLedgerPair(
     return [$invoice, $receipt];
 }
 
-function createPortalUserWithoutProfile(): User
+function createPortalUserWithoutProfile(array $attributes = []): User
 {
     $tenant = Tenant::query()->firstOrFail();
-    $user = User::factory()->make([
+    $user = User::factory()->make(array_merge([
         'tenant_id' => $tenant->id,
         'email_verified_at' => now(),
-    ]);
+    ], $attributes));
     $user->password = 'Password1!';
     $user->save();
     $user->assignRole(RoleEnum::STUDENT->name());
@@ -75,7 +76,7 @@ function createPortalUserWithoutProfile(): User
 
 function createTestIntakePeriod(): IntakePeriod
 {
-    return ensureCurrentIntakeStatus(\App\Enums\Institution\IntakePeriodStatusEnum::Open->value);
+    return ensureCurrentIntakeStatus(IntakePeriodStatusEnum::Open->value);
 }
 
 function feeRequiredLevel(): Level
@@ -122,8 +123,26 @@ test('selecting fee required level creates one application fee per intake', func
     expect(ApplicationFee::query()->where('user_id', $user->id)->count())->toBe(1);
 });
 
+test('application fee exempt user skips payment for a fee required level', function () {
+    $user = createPortalUserWithoutProfile([
+        'email' => 'teststundent@system.com',
+    ]);
+    $level = feeRequiredLevel();
+    $intake = createTestIntakePeriod();
+
+    $this->actingAs($user)
+        ->post(route('portal.application.select-level'), [
+            'level_id' => $level->id,
+            'intake_period_id' => $intake->id,
+        ])
+        ->assertRedirect(route('portal.application.create'))
+        ->assertSessionHas('application.level_id', $level->id);
+
+    expect(ApplicationFee::query()->where('user_id', $user->id)->exists())->toBeFalse();
+});
+
 test('selecting level without fee does not create application fee record', function () {
-    ensureCurrentIntakeStatus(\App\Enums\Institution\IntakePeriodStatusEnum::Open->value);
+    ensureCurrentIntakeStatus(IntakePeriodStatusEnum::Open->value);
     $user = createPortalUserWithoutProfile();
     $level = feeFreeLevel();
 
@@ -216,6 +235,31 @@ test('login redirects unpaid application fee student to fee payment', function (
         'email' => $user->email,
         'password' => 'Password1!',
     ])->assertRedirect(route('portal.application.fee-payment'));
+});
+
+test('login redirects an exempt user with an unpaid fee to the application form', function () {
+    $user = createPortalUserWithoutProfile([
+        'email' => 'teststundent@system.com',
+    ]);
+    $level = feeRequiredLevel();
+    $intake = createTestIntakePeriod();
+
+    $applicationFee = ApplicationFee::query()->create([
+        'tenant_id' => $user->tenant_id,
+        'user_id' => $user->id,
+        'intake_period_id' => $intake->id,
+        'level_id' => $level->id,
+        'status' => ApplicationFeeStatusEnum::AWAITING_PAYMENT,
+    ]);
+
+    $this->post(route('login'), [
+        'email' => $user->email,
+        'password' => 'Password1!',
+    ])
+        ->assertRedirect(route('portal.application.create'))
+        ->assertSessionHas('application.level_id', $level->id);
+
+    expect($applicationFee->fresh()->status)->toBe(ApplicationFeeStatusEnum::CANCELLED);
 });
 
 test('fee payment page exposes human readable application fee status label', function () {
