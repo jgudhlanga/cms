@@ -12,7 +12,7 @@ import StudentStats from '@/components/students/StudentStats.vue';
 import StudentExportModal from '@/components/students/export/StudentExportModal.vue';
 import { storeToRefs } from 'pinia';
 import { useStudentsStore } from '@/store/students/useStudentsStore';
-import { Student, StudentFiltersState } from '@/types/students';
+import { Student, StudentFiltersState, StudentStats as StudentStatsType } from '@/types/students';
 
 const { createStudentColumns, fetchStudents, isLoading, isStatsLoading } = useStudents();
 
@@ -25,17 +25,28 @@ defineProps<Props>();
 const breadcrumbs: Array<Link> = [{ transKey: 'dashboard', href: route('dashboard') }, { transChoiceKey: 'student' }];
 
 const { studentRefreshKey } = storeToRefs(useStudentsStore());
-const students  = ref<DataListProps<Student>>({data: [], links: {
-    first: null,
-    last: null,
-    prev: null,
-    next: null
-}, meta: {
-    total: 0, per_page: 0, current_page: 0, last_page: 0, from: 0, to: 0,
-    path: null,
-    links: null
-}});  
+const students = ref<DataListProps<Student>>({
+    data: [],
+    links: {
+        first: null,
+        last: null,
+        prev: null,
+        next: null,
+    },
+    meta: {
+        total: 0,
+        per_page: 0,
+        current_page: 0,
+        last_page: 0,
+        from: 0,
+        to: 0,
+        path: null,
+        links: null,
+    },
+});
 const filters = ref<StudentFiltersState>({});
+const studentStats = ref<StudentStatsType | null>(null);
+const studentFiltersRef = ref<InstanceType<typeof StudentFilters> | null>(null);
 
 const loadStudents = async (f: StudentFiltersState = {}) => {
     const res = await fetchStudents(f);
@@ -64,22 +75,35 @@ const onStatFilter = async (partial: Partial<StudentFiltersState>) => {
     await onStudentFiltersChange(nextFilters);
 };
 
+const onStats = (stats: StudentStatsType) => {
+    studentStats.value = stats;
+};
+
+const onResetFilters = () => studentFiltersRef.value?.resetFilters();
+
 onMounted(() => loadStudents());
 watch(studentRefreshKey, () => loadStudents(filters.value));
-
 </script>
 
 <template>
     <Head :title="$tChoice('student', 2)" />
     <PageContainer :breadcrumbs="breadcrumbs">
-        <div class="bg-card relative inline-block min-w-full overflow-auto rounded-xl  py-2 mt-2 align-middle">
+        <div class="relative mt-1 inline-block min-w-full overflow-auto align-middle">
             <StudentStats
                 :filters="filters"
                 :loading="isStatsLoading"
                 :refresh-key="studentRefreshKey"
+                show-export-button
+                @stats="onStats"
+                @reset="onResetFilters"
+            />
+            <StudentFilters
+                ref="studentFiltersRef"
+                :filters="filters"
+                :stats="studentStats"
+                @change="onStudentFiltersChange"
                 @filter="onStatFilter"
             />
-            <StudentFilters :filters="filters" show-export-button @change="onStudentFiltersChange" />
         </div>
         <DataTable
             :data="students.data"
@@ -90,7 +114,7 @@ watch(studentRefreshKey, () => loadStudents(filters.value));
             :use-api="true"
             :search-url="route('v1.students.index')"
             :api-fetch-action="loadStudentsFromUrl"
-            :hide-built-in-search="true" 
+            :hide-built-in-search="true"
             :loading="isLoading"
             :show-column-filters="false"
         />

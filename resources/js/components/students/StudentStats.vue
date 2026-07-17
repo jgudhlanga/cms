@@ -1,45 +1,41 @@
 <script setup lang="ts">
-import { BookOpen, Briefcase, GraduationCap, User, Users, UserRound } from '@lucide/vue';
+import GenericButton from '@/components/core/button/GenericButton.vue';
 import { useStudents } from '@/composables/students/useStudents';
+import { ColorVariant } from '@/enums/colors';
+import { IconName } from '@/enums/icons';
+import { APP_MODULE_KEYS } from '@/lib/constants';
+import { hasAbility } from '@/lib/permissions';
+import { useModalStore } from '@/store/core/useModalStore';
 import type { StudentFiltersState, StudentStats } from '@/types/students';
 import { useDebounceFn } from '@vueuse/core';
-import { trans, trans_choice } from 'laravel-vue-i18n';
-import type { Component } from 'vue';
 import { computed, onMounted, ref, watch } from 'vue';
 
 interface Props {
     filters: StudentFiltersState;
     loading?: boolean;
     refreshKey?: number;
+    showExportButton?: boolean;
+    showResetButton?: boolean;
 }
-
-type StatChip = {
-    id: string;
-    label: string;
-    value: string;
-    icon: Component;
-    active: boolean;
-    iconClass: string;
-    valueClass: string;
-    activeClass: string;
-    ariaLabel: string;
-    onClick: () => void;
-};
-
-type ChipGroup = {
-    id: string;
-    label: string;
-    chips: StatChip[];
-};
 
 const props = withDefaults(defineProps<Props>(), {
     loading: false,
     refreshKey: 0,
+    showExportButton: false,
+    showResetButton: true,
 });
 
 const emit = defineEmits<{
-    (e: 'filter', filters: Partial<StudentFiltersState>): void;
+    (e: 'stats', value: StudentStats): void;
+    (e: 'reset'): void;
 }>();
+
+const { openModal } = useModalStore();
+const canExportStudents = computed(() => props.showExportButton && hasAbility('export:students'));
+
+const openExportModal = (): void => {
+    openModal(APP_MODULE_KEYS.student_list_export, { ...props.filters });
+};
 
 const { fetchStudentStats } = useStudents();
 
@@ -74,12 +70,22 @@ const normalizeFilters = (filters: StudentFiltersState): string =>
 const filterSignature = computed(() => normalizeFilters(props.filters));
 const effectiveLoading = computed(() => props.loading || isLocalLoading.value);
 
+const largestMode = computed(() => {
+    const modes = stats.value.global.byModeOfStudy;
+    if (!modes.length) {
+        return null;
+    }
+
+    return modes.reduce((best, row) => (row.count > best.count ? row : best));
+});
+
 const loadStats = async () => {
     try {
         isLocalLoading.value = true;
         const res = await fetchStudentStats(props.filters);
         if (res) {
             stats.value = res;
+            emit('stats', res);
         }
     } finally {
         isLocalLoading.value = false;
@@ -95,239 +101,58 @@ watch(filterSignature, (next, previous) => {
     }
 });
 watch(() => props.refreshKey, () => loadStats());
-
-const hasActiveFilters = computed(() => {
-    const { filters } = props;
-
-    return Boolean(
-        filters.search ||
-            filters.name ||
-            filters.department?.length ||
-            filters.level?.length ||
-            filters.course?.length ||
-            filters.mode_of_study?.length ||
-            filters.gender ||
-            filters.student_type ||
-            filters.with_trashed,
-    );
-});
-
-const showFilteredSubtitle = computed(
-    () => hasActiveFilters.value && stats.value.filtered.total !== stats.value.global.total,
-);
-
-const visibleLevels = computed(() => stats.value.global.byLevel.filter((row) => row.count > 0));
-const visibleModes = computed(() => stats.value.global.byModeOfStudy.filter((row) => row.count > 0));
-
-const isGenderActive = (gender: 'male' | 'female') => props.filters.gender === gender;
-const isLevelActive = (id: number) => props.filters.level?.includes(id) ?? false;
-const isModeActive = (id: number) => props.filters.mode_of_study?.includes(id) ?? false;
-const isStudentTypeActive = (type: 'direct' | 'apprentice') => props.filters.student_type === type;
-
-const toggleGender = (gender: 'male' | 'female') => {
-    emit('filter', { gender: isGenderActive(gender) ? undefined : gender });
-};
-
-const toggleLevel = (id: number) => {
-    emit('filter', { level: isLevelActive(id) ? undefined : [id] });
-};
-
-const toggleMode = (id: number) => {
-    const current = props.filters.mode_of_study ?? [];
-    const next = current.includes(id) ? current.filter((value) => value !== id) : [...current, id];
-    emit('filter', { mode_of_study: next.length ? next : undefined });
-};
-
-const toggleStudentType = (type: 'direct' | 'apprentice') => {
-    emit('filter', { student_type: isStudentTypeActive(type) ? undefined : type });
-};
-
-const clearDimensionalFilters = () => {
-    emit('filter', {
-        gender: undefined,
-        level: undefined,
-        mode_of_study: undefined,
-        student_type: undefined,
-    });
-};
-
-const filterAriaLabel = (label: string, count: number) => `${label}, ${count}`;
-
-const overviewChips = computed<StatChip[]>(() => [
-    {
-        id: 'total',
-        label: trans('students.stat_total_students'),
-        value: String(stats.value.global.total),
-        icon: Users,
-        active: false,
-        iconClass: 'text-indigo-500',
-        valueClass: 'text-indigo-700',
-        activeClass: 'border-indigo-300 bg-indigo-50',
-        ariaLabel: filterAriaLabel(trans('students.stat_total_students'), stats.value.global.total),
-        onClick: clearDimensionalFilters,
-    },
-]);
-
-const genderChips = computed<StatChip[]>(() => [
-    {
-        id: 'male',
-        label: trans('students.stat_male'),
-        value: String(stats.value.global.male),
-        icon: User,
-        active: isGenderActive('male'),
-        iconClass: 'text-sky-500',
-        valueClass: 'text-sky-700',
-        activeClass: 'border-sky-300 bg-sky-50',
-        ariaLabel: filterAriaLabel(trans('students.stat_male'), stats.value.global.male),
-        onClick: () => toggleGender('male'),
-    },
-    {
-        id: 'female',
-        label: trans('students.stat_female'),
-        value: String(stats.value.global.female),
-        icon: UserRound,
-        active: isGenderActive('female'),
-        iconClass: 'text-rose-500',
-        valueClass: 'text-rose-600',
-        activeClass: 'border-rose-300 bg-rose-50',
-        ariaLabel: filterAriaLabel(trans('students.stat_female'), stats.value.global.female),
-        onClick: () => toggleGender('female'),
-    },
-]);
-
-const levelChips = computed<StatChip[]>(() =>
-    visibleLevels.value.map((level) => ({
-        id: `level-${level.id}`,
-        label: level.name,
-        value: String(level.count),
-        icon: GraduationCap,
-        active: isLevelActive(level.id),
-        iconClass: 'text-amber-600',
-        valueClass: 'text-amber-700',
-        activeClass: 'border-amber-300 bg-amber-50',
-        ariaLabel: filterAriaLabel(level.name, level.count),
-        onClick: () => toggleLevel(level.id),
-    })),
-);
-
-const modeChips = computed<StatChip[]>(() =>
-    visibleModes.value.map((mode) => ({
-        id: `mode-${mode.id}`,
-        label: mode.name,
-        value: String(mode.count),
-        icon: BookOpen,
-        active: isModeActive(mode.id),
-        iconClass: 'text-emerald-600',
-        valueClass: 'text-emerald-700',
-        activeClass: 'border-emerald-300 bg-emerald-50',
-        ariaLabel: filterAriaLabel(mode.name, mode.count),
-        onClick: () => toggleMode(mode.id),
-    })),
-);
-
-const typeChips = computed<StatChip[]>(() =>
-    stats.value.global.byStudentType.map((type) => ({
-        id: `type-${type.id}`,
-        label: type.name,
-        value: String(type.count),
-        icon: type.id === 'apprentice' ? Briefcase : User,
-        active: isStudentTypeActive(type.id),
-        iconClass: type.id === 'apprentice' ? 'text-violet-600' : 'text-slate-600',
-        valueClass: type.id === 'apprentice' ? 'text-violet-700' : 'text-slate-700',
-        activeClass: type.id === 'apprentice' ? 'border-violet-300 bg-violet-50' : 'border-slate-300 bg-slate-50',
-        ariaLabel: filterAriaLabel(type.name, type.count),
-        onClick: () => toggleStudentType(type.id),
-    })),
-);
-
-const primaryGroups = computed<ChipGroup[]>(() => {
-    const groups: ChipGroup[] = [
-        { id: 'overview', label: `${trans('trans.overview')}:`, chips: overviewChips.value },
-        { id: 'gender', label: `${trans_choice('trans.gender', 1)}:`, chips: genderChips.value },
-    ];
-
-    if (modeChips.value.length) {
-        groups.push({ id: 'mode', label: `${trans('trans.mode')}:`, chips: modeChips.value });
-    }
-
-    if (typeChips.value.length) {
-        groups.push({ id: 'type', label: `${trans_choice('trans.type', 1)}:`, chips: typeChips.value });
-    }
-
-    return groups;
-});
-
-const chipBaseClass =
-    'inline-flex h-7 shrink-0 items-center gap-1.5 cursor-pointer rounded-full border px-2.5 text-xs font-medium transition focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none';
-
-const groupLabelClass = 'shrink-0 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground';
 </script>
 
 <template>
-    <div class="mb-3 space-y-2.5 border-b pb-3">
-        <div class="space-y-2 transition-opacity" :class="{ 'pointer-events-none opacity-60': effectiveLoading }">
-            <div class="flex flex-wrap items-center gap-x-5 gap-y-2">
-                <div
-                    v-for="group in primaryGroups"
-                    :key="group.id"
-                    class="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1.5"
-                >
-                    <span :class="groupLabelClass">{{ group.label }}</span>
-                    <div class="flex flex-wrap items-center gap-1.5">
-                        <button
-                            v-for="chip in group.chips"
-                            :key="chip.id"
-                            type="button"
-                            :aria-label="chip.ariaLabel"
-                            :aria-pressed="chip.active || undefined"
-                            :class="[
-                                chipBaseClass,
-                                chip.id === 'total'
-                                    ? 'border-border bg-card hover:border-indigo-300 hover:bg-indigo-50'
-                                    : chip.active
-                                      ? chip.activeClass
-                                      : 'border-border bg-card hover:border-primary/40',
-                            ]"
-                            @click="chip.onClick"
-                        >
-                            <component :is="chip.icon" class="h-3.5 w-3.5 shrink-0" :class="chip.iconClass" />
-                            <span class="text-foreground whitespace-nowrap">{{ chip.label }}</span>
-                            <span class="font-semibold tabular-nums" :class="chip.valueClass">{{ chip.value }}</span>
-                        </button>
+    <div class="mb-1.5 transition-opacity" :class="{ 'pointer-events-none opacity-60': effectiveLoading }">
+        <div class="flex items-start justify-between gap-2">
+            <div class="min-w-0 flex-1">
+                <p class="mb-1 text-[10px] font-semibold tracking-wide text-muted-foreground uppercase">
+                    {{ $t('students.overview_read_only') }}
+                </p>
+                <div class="flex flex-wrap items-end gap-x-5 gap-y-1">
+                    <div class="min-w-0">
+                        <p class="text-sm leading-none font-bold tabular-nums text-indigo-700">
+                            {{ stats.global.total.toLocaleString() }}
+                        </p>
+                        <p class="mt-0.5 text-[10px] text-muted-foreground">{{ $t('students.stat_total_students') }}</p>
+                    </div>
+                    <div class="min-w-0">
+                        <p class="text-sm leading-none font-bold tabular-nums">
+                            <span class="text-sky-700">{{ stats.global.male.toLocaleString() }}</span>
+                            <span class="font-normal text-muted-foreground"> / </span>
+                            <span class="text-rose-600">{{ stats.global.female.toLocaleString() }}</span>
+                        </p>
+                        <p class="mt-0.5 text-[10px] text-muted-foreground">{{ $t('students.male_female') }}</p>
+                    </div>
+                    <div v-if="largestMode" class="min-w-0">
+                        <p class="text-sm leading-none font-bold tabular-nums text-emerald-700">
+                            {{ largestMode.count.toLocaleString() }}
+                        </p>
+                        <p class="mt-0.5 text-[10px] text-muted-foreground">
+                            {{ $t('students.largest_mode_label', { name: largestMode.name }) }}
+                        </p>
                     </div>
                 </div>
             </div>
-
-            <div v-if="levelChips.length" class="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1.5">
-                <span :class="groupLabelClass">{{ `${$tChoice('trans.level', 1)}:` }}</span>
-                <div class="flex flex-wrap items-center gap-1.5">
-                    <button
-                        v-for="chip in levelChips"
-                        :key="chip.id"
-                        type="button"
-                        :aria-label="chip.ariaLabel"
-                        :aria-pressed="chip.active"
-                        :class="[
-                            chipBaseClass,
-                            chip.active ? chip.activeClass : 'border-border bg-card hover:border-primary/40',
-                        ]"
-                        @click="chip.onClick"
-                    >
-                        <component :is="chip.icon" class="h-3.5 w-3.5 shrink-0" :class="chip.iconClass" />
-                        <span class="text-foreground whitespace-nowrap">{{ chip.label }}</span>
-                        <span class="font-semibold tabular-nums" :class="chip.valueClass">{{ chip.value }}</span>
-                    </button>
-                </div>
+            <div
+                v-if="showResetButton || canExportStudents"
+                class="flex shrink-0 items-center gap-1.5"
+            >
+                <ResetButton
+                    v-if="showResetButton"
+                    class="!h-7 !rounded-md !px-2.5 !text-xs"
+                    @click="emit('reset')"
+                />
+                <GenericButton
+                    v-if="canExportStudents"
+                    :icon="IconName.export"
+                    :variant="ColorVariant.primary"
+                    :title="$t('trans.export')"
+                    class="!h-7 !rounded-md !px-2.5 !text-xs"
+                    @click="openExportModal"
+                />
             </div>
         </div>
-
-        <p v-if="showFilteredSubtitle" class="text-muted-foreground text-sm">
-            {{
-                $t('students.showing_filtered_of_total', {
-                    filtered: stats.filtered.total,
-                    total: stats.global.total,
-                })
-            }}
-        </p>
     </div>
 </template>
