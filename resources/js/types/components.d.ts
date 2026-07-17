@@ -465,6 +465,7 @@ declare module 'vue' {
     StudentEnrolmentStatusComboSelect: typeof import('./../components/core/form/combobox/StudentEnrolmentStatusComboSelect.vue')['default']
     StudentExportFilters: typeof import('./../components/students/filters/StudentExportFilters.vue')['default']
     StudentExportModal: typeof import('./../components/students/export/StudentExportModal.vue')['default']
+    StudentFilterChip: typeof import('./../components/students/filters/StudentFilterChip.vue')['default']
     StudentFilters: typeof import('./../components/students/filters/StudentFilters.vue')['default']
     StudentFinancialSummaryRow: typeof import('./../components/finance/StudentFinancialSummaryRow.vue')['default']
     StudentNextOfKin: typeof import('./../components/students/tabs/StudentNextOfKin.vue')['default']
