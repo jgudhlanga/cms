@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers\Integrations;
 
-use App\Enums\Integrations\PaymentCurrencyCodeEnum;
 use App\Enums\Integrations\LedgerEmailSearchTypeEnum;
+use App\Enums\Integrations\PaymentCurrencyCodeEnum;
 use App\Enums\Shared\FeeTypeEnum;
 use App\Helpers\PaymentHelper;
 use App\Http\Controllers\Controller;
@@ -395,7 +395,7 @@ class PaymentController extends Controller
 
     public function checkLevelRequiresApplicationFeePayment(Level $level): bool
     {
-        return $level->has_application_fee_payment;
+        return PaymentHelper::levelRequiresApplicationFeePayment($level, request()->user());
     }
 
     public function registrationFeePaymentOptions(): Response|RedirectResponse
@@ -407,6 +407,13 @@ class PaymentController extends Controller
             return redirect()
                 ->route('portal.application.level-options')
                 ->with('error', __('trans.application_fee_record_required'));
+        }
+
+        if (PaymentHelper::isApplicationFeeExempt($user)) {
+            $this->applicationFeeService->abandonUnpaidApplicationFee($user);
+            session(['application.level_id' => $applicationFee->level_id]);
+
+            return to_route('portal.application.create');
         }
 
         $applicationFee->load(['level', 'intakePeriod']);

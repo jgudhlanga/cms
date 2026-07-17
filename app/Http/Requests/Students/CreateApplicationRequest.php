@@ -186,7 +186,10 @@ class CreateApplicationRequest extends FormRequest
 
         $institutionLevel = Level::query()->find($departmentLevel->level_id);
 
-        if (! $institutionLevel?->has_application_fee_payment) {
+        if (
+            $institutionLevel === null
+            || ! PaymentHelper::levelRequiresApplicationFeePayment($institutionLevel, $this->user())
+        ) {
             return;
         }
 

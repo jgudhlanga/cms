@@ -42,6 +42,7 @@ const emit = defineEmits<{
         <BaseInput
             input-id="first_name"
             :model-value="firstName"
+            :label="$t('trans.first_name')"
             :placeholder="$t('trans.ui_enter_first_name')"
             :vertical-layout="false"
             :label-uppercase="true"
@@ -53,6 +54,7 @@ const emit = defineEmits<{
         <BaseInput
             input-id="middle_name"
             :model-value="middleName"
+            :label="$t('trans.middle_name')"
             :placeholder="$t('trans.ui_enter_middlename')"
             :vertical-layout="false"
             :label-uppercase="true"
@@ -63,6 +65,7 @@ const emit = defineEmits<{
         <BaseInput
             input-id="last_name"
             :model-value="lastName"
+            :label="$t('trans.last_name')"
             :placeholder="$t('trans.ui_enter_surname')"
             :label-uppercase="true"
             :is-required="true"
@@ -74,6 +77,7 @@ const emit = defineEmits<{
         <BaseInput
             input-id="email"
             :model-value="email"
+            :label="$t('trans.email')"
             :label-uppercase="true"
             :is-required="true"
             :vertical-layout="false"

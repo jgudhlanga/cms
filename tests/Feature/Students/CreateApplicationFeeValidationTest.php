@@ -21,7 +21,7 @@ beforeEach(function () {
     Role::findOrCreate(RoleEnum::STUDENT->name(), 'web');
 });
 
-function validateReturningApplicationFee(User $user, array $overrides = []): \Illuminate\Validation\Validator
+function validateReturningApplicationFee(User $user, array $overrides = []): Illuminate\Validation\Validator
 {
     $data = array_merge([
         'first_name' => 'Test',
@@ -158,4 +158,24 @@ test('unpaid fee-required level is rejected during returning application validat
 
     expect($validator->fails())->toBeTrue();
     expect($validator->errors()->first('level_id'))->toBe(__('trans.application_fee_payment_required'));
+});
+
+test('application fee exempt user passes fee validation without payment', function () {
+    ensureCurrentIntakeStatus(IntakePeriodStatusEnum::Open->value);
+    [, $institutionDepartment, , , $paidDepartmentLevel, $departmentCourse] = createApplicationFeeValidationFixture();
+    [$user, $student] = createReturningStudentUser();
+    $user->forceFill(['email' => 'teststundent@system.com'])->save();
+
+    $validator = validateReturningApplicationFee($user, [
+        'gender_id' => $student->gender_id,
+        'marital_status_id' => $student->marital_status_id,
+        'title_id' => $student->title_id,
+        'id_type_id' => $student->id_type_id,
+        'id_number' => $student->id_number,
+        'department_id' => $institutionDepartment->id,
+        'level_id' => $paidDepartmentLevel->id,
+        'course_id' => $departmentCourse->id,
+    ]);
+
+    expect($validator->errors()->has('level_id'))->toBeFalse();
 });

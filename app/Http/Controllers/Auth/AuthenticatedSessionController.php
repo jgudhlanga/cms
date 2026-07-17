@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Enums\Acl\RoleEnum;
 use App\Enums\Students\ApplicationFeeStatusEnum;
+use App\Helpers\PaymentHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Models\Institution\Level;
@@ -19,7 +20,6 @@ use Inertia\Response;
 
 class AuthenticatedSessionController extends Controller
 {
-
     /**
      * Display the login view.
      */
@@ -63,6 +63,13 @@ class AuthenticatedSessionController extends Controller
                     return to_route('portal.applications');
                 }
 
+                if (PaymentHelper::isApplicationFeeExempt($user)) {
+                    $applicationFeeService->abandonUnpaidApplicationFee($user);
+                    session(['application.level_id' => $applicationFee->level_id]);
+
+                    return to_route('portal.application.create');
+                }
+
                 if ($applicationFee->isPaid()) {
                     return to_route('portal.application.create');
                 }
@@ -75,7 +82,7 @@ class AuthenticatedSessionController extends Controller
             $levelId = session('application.level_id');
             $level = $levelId ? Level::find($levelId) : null;
 
-            if ($level !== null && ! $level->has_application_fee_payment) {
+            if ($level !== null && ! PaymentHelper::levelRequiresApplicationFeePayment($level, $user)) {
                 return to_route('portal.application.create');
             }
 
@@ -100,6 +107,7 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerateToken();
         $request->user()?->tokens()?->delete();
+
         return redirect()->intended(route('home'));
     }
 }

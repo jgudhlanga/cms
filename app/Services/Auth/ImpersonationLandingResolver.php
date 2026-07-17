@@ -4,6 +4,7 @@ namespace App\Services\Auth;
 
 use App\Enums\Acl\RoleEnum;
 use App\Enums\Students\ApplicationFeeStatusEnum;
+use App\Helpers\PaymentHelper;
 use App\Models\Institution\Level;
 use App\Models\Users\User;
 use App\Services\Students\ApplicationFeeService;
@@ -47,6 +48,13 @@ class ImpersonationLandingResolver
                 return route('portal.applications');
             }
 
+            if (PaymentHelper::isApplicationFeeExempt($user)) {
+                $this->applicationFeeService->abandonUnpaidApplicationFee($user);
+                session(['application.level_id' => $applicationFee->level_id]);
+
+                return route('portal.application.create');
+            }
+
             if ($applicationFee->isPaid()) {
                 return route('portal.application.create');
             }
@@ -59,7 +67,7 @@ class ImpersonationLandingResolver
         $levelId = session('application.level_id');
         $level = $levelId ? Level::find($levelId) : null;
 
-        if ($level !== null && ! $level->has_application_fee_payment) {
+        if ($level !== null && ! PaymentHelper::levelRequiresApplicationFeePayment($level, $user)) {
             return route('portal.application.create');
         }
 

@@ -56,13 +56,13 @@ use App\Services\Students\ApplicationFeeService;
 use App\Services\Students\RegistrationAvailabilityService;
 use App\Services\Students\ReturningStudentApplicationPrefillService;
 use App\Services\Students\ReturningStudentContextService;
-use Illuminate\Validation\ValidationException;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 use Throwable;
@@ -263,7 +263,7 @@ class PortalController extends Controller
         $data = $request->validate($rules);
         $level = Level::findOrFail($data['level_id']);
 
-        if ($level->has_application_fee_payment) {
+        if (PaymentHelper::levelRequiresApplicationFeePayment($level, $request->user())) {
             $intakePeriod = $openIntakes->count() > 1
                 ? $this->applicationFeeService->resolvePortalIntakePeriod((int) $data['intake_period_id'])
                 : ($openIntakes->first() ?? $this->applicationFeeService->resolvePortalIntakePeriod());
@@ -395,7 +395,7 @@ class PortalController extends Controller
         $applicationFee = $this->applicationFeeService->activeApplicationFee($user);
         $feeLevel = $applicationFee?->level;
 
-        if ($feeLevel?->has_application_fee_payment) {
+        if ($feeLevel !== null && PaymentHelper::levelRequiresApplicationFeePayment($feeLevel, $user)) {
             if ($applicationFee === null || ! PaymentHelper::hasPaidApplicationFeeAndNotApplied($user, $intakePeriod)) {
                 return back()->withErrors([
                     'level_id' => __('trans.application_fee_payment_required'),
@@ -691,9 +691,18 @@ class PortalController extends Controller
 
     private function updateUserNamesIfChanged(User $user, Request $request): void
     {
-        $user->fill($request->only(['first_name', 'middle_name', 'last_name']));
+        $attributes = [
+            'first_name' => $request->input('first_name', $user->first_name),
+            'last_name' => $request->input('last_name', $user->last_name),
+        ];
 
-        if ($user->isDirty(['first_name', 'middle_name', 'last_name'])) {
+        if ($request->filled('middle_name')) {
+            $attributes['middle_name'] = $request->string('middle_name')->toString();
+        }
+
+        $user->fill($attributes);
+
+        if ($user->isDirty(array_keys($attributes))) {
             $user->save();
             Auth::login($user);
         }
@@ -969,7 +978,7 @@ class PortalController extends Controller
             return to_route('portal.profile.applications');
         }
 
-        if ($level->has_application_fee_payment) {
+        if (PaymentHelper::levelRequiresApplicationFeePayment($level, $request->user())) {
             $this->applicationFeeService->ensureForFeeRequiredLevel($request->user(), $level, $intakePeriod);
 
             return to_route('portal.application.fee-payment');
@@ -997,7 +1006,11 @@ class PortalController extends Controller
         }
 
         $level = $applicationFee?->level ?? Level::query()->find(session('application.level_id'));
-        if ($level?->has_application_fee_payment && ! PaymentHelper::hasPaidApplicationFeeAndNotApplied($user, $intakePeriod)) {
+        if (
+            $level !== null
+            && PaymentHelper::levelRequiresApplicationFeePayment($level, $user)
+            && ! PaymentHelper::hasPaidApplicationFeeAndNotApplied($user, $intakePeriod)
+        ) {
             return to_route('portal.application.fee-payment');
         }
 

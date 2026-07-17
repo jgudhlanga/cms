@@ -64,7 +64,7 @@ class RedirectStudentMiddleware
             return $next($request);
         }
 
-        if ($level->has_application_fee_payment) {
+        if (PaymentHelper::levelRequiresApplicationFeePayment($level, $user)) {
             if ($applicationFee === null) {
                 if (! $request->routeIs('portal.application.level-options', 'portal.application.select-level')) {
                     return to_route('portal.application.level-options');
@@ -145,7 +145,11 @@ class RedirectStudentMiddleware
             ) {
                 $level = $applicationFee?->level ?? Level::query()->find(session('application.level_id'));
 
-                if ($level?->has_application_fee_payment && ! PaymentHelper::hasPaidApplicationFeeAndNotApplied($user, $intakePeriod)) {
+                if (
+                    $level !== null
+                    && PaymentHelper::levelRequiresApplicationFeePayment($level, $user)
+                    && ! PaymentHelper::hasPaidApplicationFeeAndNotApplied($user, $intakePeriod)
+                ) {
                     return to_route('portal.application.fee-payment');
                 }
 
