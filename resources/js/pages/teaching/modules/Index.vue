@@ -19,7 +19,7 @@ interface Props {
 defineProps<Props>();
 
 const breadcrumbs = computed<BreadcrumbItemInterface[]>(() => [
-    { title: trans('dashboard.lecturer_dashboard_title'), href: route('lecturer.dashboard') },
+    { title: trans('dashboard.lecturer_dashboard_title'), href: route('dashboard') },
     { title: trans_choice('trans.module', 2) },
 ]);
 </script>

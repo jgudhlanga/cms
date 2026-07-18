@@ -342,3 +342,5 @@ export type OverviewDashboard = {
     enrolmentByDepartment: OverviewEnrolmentByDepartment[];
     priorityAlerts: OverviewPriorityAlert[];
 };
+
+export type { LecturerDashboard as TeachingDashboard } from '@/types/lecturer';

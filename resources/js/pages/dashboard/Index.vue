@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AcademicDashboard, DailyDistribution, DepartmentDistribution, EnrolmentSummary, HostelDashboard, LevelDistribution, OverviewDashboard, StaffDashboard } from '@/types/dasboard';
+import { AcademicDashboard, DailyDistribution, DepartmentDistribution, EnrolmentSummary, HostelDashboard, LevelDistribution, OverviewDashboard, StaffDashboard } from '@/types/dashboard';
 import { AcademicCalendar } from '@/types/academic-calendar';
 import { AuthObject } from '@/types/data-pagination';
 import { IntakePeriod } from '@/types/institution';
+import { LecturerDashboard } from '@/types/lecturer';
 import { BreadcrumbItemInterface } from '@/types/ui';
 import { SelectOption } from '@/types/utils';
 import { useDashboardStore } from '@/store/dashboard/useDashboardStore';
@@ -20,6 +21,7 @@ import FinanceTab from './tabs/FinanceTab.vue';
 import HostelTab from './tabs/HostelTab.vue';
 import OverviewTab from './tabs/OverviewTab.vue';
 import StaffTab from './tabs/StaffTab.vue';
+import TeachingTab from './tabs/TeachingTab.vue';
 
 const breadcrumbs: BreadcrumbItemInterface[] = [{ transChoiceKey: 'dashboard' }];
 
@@ -34,6 +36,7 @@ interface Props {
     hostelDashboard: HostelDashboard | null;
     staffDashboard: StaffDashboard | null;
     academicDashboard: AcademicDashboard | null;
+    teachingDashboard: LecturerDashboard | null;
     academicCalendar: AcademicCalendar;
     academicContextSubtitle: string;
     intakePeriods: IntakePeriod[];
@@ -165,7 +168,10 @@ const handleFilterChange = (option: SelectOption) => {
                 </TabsContent>
 
                 <TabsContent v-if="showTab('academic')" value="academic" class="mt-0">
-                    <AcademicTab v-if="academicDashboard" :academic-dashboard="academicDashboard" />
+                    <div class="space-y-6">
+                        <AcademicTab v-if="academicDashboard" :academic-dashboard="academicDashboard" />
+                        <TeachingTab v-if="teachingDashboard" :teaching-dashboard="teachingDashboard" />
+                    </div>
                 </TabsContent>
 
                 <TabsContent v-if="showTab('enrolments')" value="enrolments" class="mt-0">

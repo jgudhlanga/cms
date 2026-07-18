@@ -50,12 +50,26 @@ class DashboardModuleService
                 continue;
             }
 
-            if ($user->can('viewAny:dashboards') || $user->can($tab->permission())) {
+            if ($this->userCanViewTab($user, $tab)) {
                 $visible[] = $tab->value;
             }
         }
 
         return $visible;
+    }
+
+    private function userCanViewTab(User $user, DashboardTab $tab): bool
+    {
+        if ($user->can('viewAny:dashboards')) {
+            return true;
+        }
+
+        if ($tab === DashboardTab::Academic) {
+            return $user->can('view-academic:dashboards')
+                || $user->can('view:lecturer-dashboard');
+        }
+
+        return $user->can($tab->permission());
     }
 
     public function canAccessDashboard(User $user): bool

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Lecturer;
+namespace App\Http\Controllers\Teaching;
 
 use App\Helpers\Helper;
 use App\Http\Controllers\Controller;
@@ -10,16 +10,16 @@ use App\Support\AcademicCalendars\AcademicCalendarPeriodResolver;
 use Inertia\Inertia;
 use Inertia\Response;
 
-class ClassesController extends Controller
+class ModulesController extends Controller
 {
     public function index(LecturerTeachingListService $teachingListService): Response
     {
-        $this->authorize('viewLecturerClasses');
+        $this->authorize('viewLecturerModules');
 
         $academicCalendar = Helper::resolveAcademicCalendar();
 
-        return Inertia::render('lecturer/classes/Index', [
-            'classes' => $teachingListService->classesFor(auth()->user()),
+        return Inertia::render('teaching/modules/Index', [
+            'modules' => $teachingListService->modulesFor(auth()->user()),
             'academicCalendar' => AcademicCalendarResource::make($academicCalendar),
             'academicContextSubtitle' => __('dashboard.academic_context_subtitle', [
                 'calendar_year' => $academicCalendar->calendar_year,

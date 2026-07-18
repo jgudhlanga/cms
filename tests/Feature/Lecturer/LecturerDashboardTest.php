@@ -23,6 +23,8 @@ use Illuminate\Support\Facades\DB;
 beforeEach(function () {
     $this->seed(ClassMetaDataTypeSeeder::class);
     seedDashboardTestRoles();
+    enableDashboardModule();
+    seedDashboardAcademicCalendar();
 });
 
 function createLecturerUserWithStaff(array $context): array
@@ -105,19 +107,29 @@ function prepareLecturerCalendar(array $context): int
     return $calendarId;
 }
 
-test('unauthorized users cannot access lecturer dashboard', function () {
+test('unauthorized users cannot access academic dashboard tab', function () {
     $user = User::factory()->create();
 
     $this->actingAs($user)
-        ->get(route('lecturer.dashboard'))
+        ->get(route('dashboard'))
         ->assertForbidden();
 });
 
-test('lecturer dashboard returns scoped metrics and null attendance', function () {
+test('lecturer-only user sees academic tab with teaching metrics and null attendance', function () {
     $context = createCourseWorkJsonApiContext();
     [$lecturerUser, $staff] = createLecturerUserWithStaff($context);
     assignLecturerToClassModule($context, $staff);
     $calendarId = prepareLecturerCalendar($context);
+
+    enableDashboardModule([
+        'overview' => false,
+        'academic' => true,
+        'enrolments' => false,
+        'attendance' => false,
+        'staff' => false,
+        'finance' => false,
+        'hostel' => false,
+    ]);
 
     $context['assessmentType']->update(['weight_percent' => 100]);
 
@@ -130,41 +142,82 @@ test('lecturer dashboard returns scoped metrics and null attendance', function (
     ]);
 
     $this->actingAs($lecturerUser)
-        ->get(route('lecturer.dashboard', ['academic_calendar_id' => $calendarId]))
+        ->get(dashboardUrlFor($lecturerUser, $calendarId))
         ->assertSuccessful()
         ->assertInertia(fn ($page) => $page
-            ->component('lecturer/dashboard/Index')
-            ->where('dashboard.attendance', null)
-            ->where('dashboard.summary.passRate', 100)
-            ->where('dashboard.summary.averageMark', 60)
-            ->where('dashboard.summary.modulesCount', 1)
-            ->where('dashboard.summary.classesCount', 1)
-            ->has('dashboard.topPerformingStudents', 1)
-            ->where('dashboard.topPerformingStudents.0.averageMark', 60)
-            ->has('dashboard.modules', 1)
+            ->component('dashboard/Index')
+            ->where('visibleTabs', ['academic'])
+            ->where('teachingDashboard.attendance', null)
+            ->where('teachingDashboard.summary.passRate', 100)
+            ->where('teachingDashboard.summary.averageMark', 60)
+            ->where('teachingDashboard.summary.modulesCount', 1)
+            ->has('teachingDashboard.topPerformingStudents', 1)
+            ->where('overviewDashboard', null)
+            ->where('academicDashboard', null)
         );
 });
 
-test('lecturer dashboard shows null metrics when no marks exist', function () {
+test('teaching dashboard shows null metrics when no marks exist', function () {
     $context = createCourseWorkJsonApiContext();
     [$lecturerUser, $staff] = createLecturerUserWithStaff($context);
     assignLecturerToClassModule($context, $staff);
     $calendarId = prepareLecturerCalendar($context);
 
+    enableDashboardModule([
+        'overview' => false,
+        'academic' => true,
+        'enrolments' => false,
+        'attendance' => false,
+        'staff' => false,
+        'finance' => false,
+        'hostel' => false,
+    ]);
+
     $this->actingAs($lecturerUser)
-        ->get(route('lecturer.dashboard', ['academic_calendar_id' => $calendarId]))
+        ->get(dashboardUrlFor($lecturerUser, $calendarId))
         ->assertSuccessful()
         ->assertInertia(fn ($page) => $page
-            ->component('lecturer/dashboard/Index')
-            ->where('dashboard.attendance', null)
-            ->where('dashboard.summary.passRate', null)
-            ->where('dashboard.summary.averageMark', null)
-            ->where('dashboard.summary.missingCourseWorkCount', 1)
-            ->has('dashboard.missingCourseWork', 1)
+            ->component('dashboard/Index')
+            ->where('visibleTabs', ['academic'])
+            ->where('teachingDashboard.attendance', null)
+            ->where('teachingDashboard.summary.passRate', null)
+            ->where('teachingDashboard.summary.averageMark', null)
+            ->where('teachingDashboard.summary.missingCourseWorkCount', 1)
+            ->has('teachingDashboard.missingCourseWork', 1)
         );
 });
 
-test('lecturer classes index only returns assigned classes', function () {
+test('dual permission user sees single academic tab with both dashboards', function () {
+    $context = createCourseWorkJsonApiContext();
+    [$lecturerUser, $staff] = createLecturerUserWithStaff($context);
+    assignLecturerToClassModule($context, $staff);
+    $calendarId = prepareLecturerCalendar($context);
+
+    Permission::findOrCreate('view-academic:dashboards', 'web');
+    $lecturerUser->givePermissionTo('view-academic:dashboards');
+
+    enableDashboardModule([
+        'overview' => false,
+        'academic' => true,
+        'enrolments' => false,
+        'attendance' => false,
+        'staff' => false,
+        'finance' => false,
+        'hostel' => false,
+    ]);
+
+    $this->actingAs($lecturerUser)
+        ->get(dashboardUrlFor($lecturerUser, $calendarId))
+        ->assertSuccessful()
+        ->assertInertia(fn ($page) => $page
+            ->component('dashboard/Index')
+            ->where('visibleTabs', ['academic'])
+            ->where('teachingDashboard', fn ($value) => $value !== null)
+            ->where('academicDashboard', fn ($value) => $value !== null)
+        );
+});
+
+test('teaching classes index only returns assigned classes', function () {
     $context = createCourseWorkJsonApiContext();
     [$lecturerUser, $staff] = createLecturerUserWithStaff($context);
     assignLecturerToClassModule($context, $staff);
@@ -178,10 +231,10 @@ test('lecturer classes index only returns assigned classes', function () {
     ]);
 
     $this->actingAs($lecturerUser)
-        ->get(route('lecturer.classes.index', ['academic_calendar_id' => $calendarId]))
+        ->get(route('teaching.classes.index', ['academic_calendar_id' => $calendarId]))
         ->assertSuccessful()
         ->assertInertia(fn ($page) => $page
-            ->component('lecturer/classes/Index')
+            ->component('teaching/classes/Index')
             ->has('classes', 1)
             ->where('classes.0.id', $context['academicCalendarClass']->id)
             ->where('classes.0.name', $context['academicCalendarClass']->name)
@@ -189,17 +242,17 @@ test('lecturer classes index only returns assigned classes', function () {
         );
 });
 
-test('lecturer modules index only returns assigned modules', function () {
+test('teaching modules index only returns assigned modules', function () {
     $context = createCourseWorkJsonApiContext();
     [$lecturerUser, $staff] = createLecturerUserWithStaff($context);
     assignLecturerToClassModule($context, $staff, asTutor: false);
     $calendarId = prepareLecturerCalendar($context);
 
     $this->actingAs($lecturerUser)
-        ->get(route('lecturer.modules.index', ['academic_calendar_id' => $calendarId]))
+        ->get(route('teaching.modules.index', ['academic_calendar_id' => $calendarId]))
         ->assertSuccessful()
         ->assertInertia(fn ($page) => $page
-            ->component('lecturer/modules/Index')
+            ->component('teaching/modules/Index')
             ->has('modules', 1)
             ->where('modules.0.id', $context['module']->id)
             ->where('modules.0.title', $context['module']->title)
@@ -215,22 +268,21 @@ test('lecturer role seeder receives lecturer portal permissions', function () {
         ->and($role->hasPermissionTo('view:course-work'))->toBeTrue();
 });
 
-test('admin dashboard redirects lecturer-only users to lecturer dashboard', function () {
+test('legacy lecturer dashboard url redirects to shared dashboard', function () {
     $context = createCourseWorkJsonApiContext();
     [$lecturerUser] = createLecturerUserWithStaff($context);
-    prepareLecturerCalendar($context);
 
     $this->actingAs($lecturerUser)
-        ->get('/dashboard')
-        ->assertRedirect(route('lecturer.dashboard'));
+        ->get('/lecturer/dashboard')
+        ->assertRedirect('/dashboard');
 });
 
-test('home redirects lecturer-only users to lecturer dashboard', function () {
+test('home redirects staff to shared dashboard', function () {
     $context = createCourseWorkJsonApiContext();
     [$lecturerUser] = createLecturerUserWithStaff($context);
     prepareLecturerCalendar($context);
 
     $this->actingAs($lecturerUser)
         ->get('/')
-        ->assertRedirect(route('lecturer.dashboard'));
+        ->assertRedirect(route('dashboard'));
 });
