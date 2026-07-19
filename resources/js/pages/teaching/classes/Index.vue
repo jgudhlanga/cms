@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import Empty from '@/components/core/util/Empty.vue';
+import { BaseButton } from '@/components/core/button';
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import ComponentHeader from '@/pages/dashboard/components/ComponentHeader.vue';
 import DashboardCard from '@/pages/dashboard/components/DashboardCard.vue';
 import type { LecturerClassRow } from '@/types/lecturer';
 import type { AcademicCalendar } from '@/types/academic-calendar';
 import type { BreadcrumbItemInterface } from '@/types/ui';
-import { Head } from '@inertiajs/vue3';
+import { ButtonSize } from '@/enums/buttons';
+import { ColorVariant } from '@/enums/colors';
+import { Head, Link } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 import { computed } from 'vue';
 
@@ -14,6 +17,9 @@ interface Props {
     classes: LecturerClassRow[];
     academicCalendar: AcademicCalendar;
     academicContextSubtitle: string;
+    canEnterMarks?: boolean;
+    canExportCourseWork?: boolean;
+    canImportCourseWork?: boolean;
 }
 
 defineProps<Props>();
@@ -47,7 +53,8 @@ const breadcrumbs = computed<BreadcrumbItemInterface[]>(() => [
                                 <th class="py-2 pr-3 font-medium">{{ $tChoice('trans.course', 1) }}</th>
                                 <th class="py-2 pr-3 font-medium">{{ $tChoice('trans.level', 1) }}</th>
                                 <th class="py-2 pr-3 font-medium">{{ $tChoice('trans.module', 2) }}</th>
-                                <th class="py-2 font-medium">{{ $tChoice('trans.role', 1) }}</th>
+                                <th class="py-2 pr-3 font-medium">{{ $tChoice('trans.role', 1) }}</th>
+                                <th class="py-2 font-medium text-right">{{ $tChoice('trans.action', 2) }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -56,16 +63,38 @@ const breadcrumbs = computed<BreadcrumbItemInterface[]>(() => [
                                 :key="row.id"
                                 class="border-b border-border/60 last:border-0"
                             >
-                                <td class="py-2 pr-3 font-medium text-foreground">{{ row.name }}</td>
-                                <td class="py-2 pr-3">{{ row.departmentName || '—' }}</td>
-                                <td class="py-2 pr-3">{{ row.courseName || '—' }}</td>
-                                <td class="py-2 pr-3">{{ row.levelName || '—' }}</td>
-                                <td class="py-2 pr-3">{{ row.modulesCount }}</td>
-                                <td class="py-2">
-                                    <span v-if="row.isTutor" class="text-xs text-muted-foreground">
+                                <td class="py-2.5 pr-3 font-medium text-foreground">
+                                    <Link
+                                        :href="route('teaching.classes.show', row.id)"
+                                        class="text-primary hover:underline"
+                                    >
+                                        {{ row.name }}
+                                    </Link>
+                                </td>
+                                <td class="py-2.5 pr-3 text-muted-foreground">{{ row.departmentName || '—' }}</td>
+                                <td class="py-2.5 pr-3 text-muted-foreground">{{ row.courseName || '—' }}</td>
+                                <td class="py-2.5 pr-3 text-muted-foreground">{{ row.levelName || '—' }}</td>
+                                <td class="py-2.5 pr-3">{{ row.modulesCount }}</td>
+                                <td class="py-2.5 pr-3">
+                                    <span
+                                        v-if="row.isTutor"
+                                        class="inline-flex rounded-md bg-muted px-2 py-0.5 text-xs text-muted-foreground"
+                                    >
                                         {{ $t('dashboard.lecturer_is_tutor') }}
                                     </span>
-                                    <span v-else>—</span>
+                                    <span v-else class="text-muted-foreground">—</span>
+                                </td>
+                                <td class="py-2.5 text-right">
+                                    <Link :href="route('teaching.classes.show', row.id)" class="inline-flex">
+                                        <BaseButton
+                                            type="button"
+                                            :variant="ColorVariant.primary_outline"
+                                            :size="ButtonSize.xs"
+                                            classes="rounded-full"
+                                        >
+                                            {{ $t('dashboard.lecturer_open_class') }}
+                                        </BaseButton>
+                                    </Link>
                                 </td>
                             </tr>
                         </tbody>

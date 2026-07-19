@@ -4,6 +4,7 @@ import AssignClassTutorModal from '@/components/academicCalendars/AssignClassTut
 import ClassListExportModal from '@/components/academicCalendars/ClassListExportModal.vue';
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import { openAssignClassTutorModal } from '@/composables/academicCalendars/useAcademicCalendarClassTutor';
+import { useCustomConfirmDialog } from '@/composables/core/useCustomConfirmDialog';
 import { EDIT_CLASS_MODAL, useAcademicCalendarClassEdit } from '@/composables/academicCalendars/useAcademicCalendarClassEdit';
 import { openClassListExportModal } from '@/composables/academicCalendars/useClassListExport';
 import { MOVE_STUDENTS_MODAL, useAcademicCalendarClassMoveStudents } from '@/composables/academicCalendars/useAcademicCalendarClassMoveStudents';
@@ -11,11 +12,14 @@ import { useAcademicCalendarClassStudentFilters } from '@/composables/academicCa
 import { useAcademicCalendarClassStudentSelection } from '@/composables/academicCalendars/useAcademicCalendarClassStudentSelection';
 import { useAcademicCalendarClassStudents } from '@/composables/academicCalendars/useAcademicCalendarClassStudents';
 import { useDepartmentAcademicCalendarClassNavigation } from '@/composables/academicCalendars/useDepartmentAcademicCalendarClassNavigation';
+import { errorAlert } from '@/lib/alerts';
+import { firstInertiaErrorMessage } from '@/lib/inertia-errors';
 import { hasAbility } from '@/lib/permissions';
 import { AcademicCalendar, AcademicCalendarClassDetail, AcademicCalendarClassMoveTarget, ClassConfig, ClassSemesterModule } from '@/types/academic-calendar';
 import { DepartmentCourse, DepartmentLevel } from '@/types/department-meta-data';
 import { InstitutionDepartment, ModeOfStudy } from '@/types/institution';
-import { Head } from '@inertiajs/vue3';
+import { Head, router } from '@inertiajs/vue3';
+import { trans } from 'laravel-vue-i18n';
 import { computed, toRefs, watch } from 'vue';
 import AcademicCalendarClassStudentFilters from './partials/AcademicCalendarClassStudentFilters.vue';
 import AcademicCalendarClassHeaderCard from './partials/AcademicCalendarClassHeaderCard.vue';
@@ -112,6 +116,36 @@ const onAssignTutor = (): void => {
         staffId: academicCalendarClass.value.tutor?.id ?? null,
     });
 };
+
+const { open: openConfirmDialog } = useCustomConfirmDialog();
+
+const onRemoveTutor = async (): Promise<void> => {
+    const confirmed = await openConfirmDialog({
+        title: trans('academic_calendar.remove_tutor_confirm_title'),
+        message: trans('academic_calendar.remove_tutor_confirm_message'),
+        confirmText: trans('academic_calendar.remove_tutor'),
+        cancelText: trans('trans.cancel'),
+    });
+
+    if (!confirmed) {
+        return;
+    }
+
+    router.patch(
+        route('academic-calendars.department-classes.assign-tutor', {
+            institution_department: String(department.value.id),
+            calendar_year: String(academicCalendar.value.attributes.calendarYear),
+            academic_calendar_class: String(academicCalendarClass.value.id),
+        }),
+        { staff_id: null },
+        {
+            preserveScroll: true,
+            onError: (errors) => {
+                errorAlert(firstInertiaErrorMessage(errors, trans('academic_calendar.tutor_assign_failed')));
+            },
+        },
+    );
+};
 </script>
 
 <template>
@@ -138,6 +172,7 @@ const onAssignTutor = (): void => {
                     @edit="openEditClassModal"
                     @export-class-list="openClassListExportModal"
                     @assign-tutor="onAssignTutor"
+                    @remove-tutor="onRemoveTutor"
                 />
             </div>
             <AcademicCalendarClassModulesPanel

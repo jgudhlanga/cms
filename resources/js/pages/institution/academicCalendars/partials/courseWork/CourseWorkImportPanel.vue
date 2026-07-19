@@ -28,12 +28,14 @@ const ACCEPTED_EXTENSIONS = ['.xlsx', '.xls', '.csv'];
 const IMPORT_RESULT_AUTO_DISMISS_MS = 10_000;
 
 const props = defineProps<{
-    classConfigId: number;
-    classConfigQuery: Record<string, string>;
-    departmentId: number;
-    calendarYear: string;
+    classConfigId?: number;
+    academicCalendarClassId?: number;
+    classConfigQuery?: Record<string, string>;
+    departmentId?: number;
+    calendarYear?: string;
     canImportCourseWork: boolean;
     initialModuleId?: number | null;
+    allowedModuleIds?: number[] | null;
     courseWorkImportTemplateUrl: (moduleId: number) => string;
     courseWorkImportPreviewUrl: string;
     courseWorkImportProcessUrl: string;
@@ -46,10 +48,19 @@ const {
     loading,
     error,
     loadTree,
-} = useCourseWorkClassMarksheet({
-    classConfigId: props.classConfigId,
-    initialModuleId: props.initialModuleId ?? null,
-});
+} = useCourseWorkClassMarksheet(
+    props.academicCalendarClassId != null
+        ? {
+              academicCalendarClassId: props.academicCalendarClassId,
+              initialModuleId: props.initialModuleId ?? null,
+              allowedModuleIds: props.allowedModuleIds ?? null,
+          }
+        : {
+              classConfigId: props.classConfigId as number,
+              initialModuleId: props.initialModuleId ?? null,
+              allowedModuleIds: props.allowedModuleIds ?? null,
+          },
+);
 
 const fileInput = ref<HTMLInputElement | null>(null);
 const selectedFile = ref<File | null>(null);
@@ -346,7 +357,12 @@ onUnmounted(() => {
                         target="_blank"
                         rel="noopener noreferrer"
                     >
-                        <BaseButton type="button" :variant="ColorVariant.primary_outline" :size="ButtonSize.sm">
+                        <BaseButton
+                            type="button"
+                            :variant="ColorVariant.primary_outline"
+                            :size="ButtonSize.xs"
+                            classes="rounded-full"
+                        >
                             {{ $t('academic_calendar.course_work_import_download_template') }}
                         </BaseButton>
                     </a>
@@ -379,7 +395,8 @@ onUnmounted(() => {
                 <BaseButton
                     type="button"
                     :variant="ColorVariant.primary_outline"
-                    :size="ButtonSize.sm"
+                    :size="ButtonSize.xs"
+                    classes="rounded-full"
                     :processing="previewLoading"
                     :disabled="!selectedFile || previewLoading || Boolean(fileError)"
                     @click="runPreview"
@@ -455,7 +472,8 @@ onUnmounted(() => {
                     <BaseButton
                         type="button"
                         :variant="ColorVariant.warning"
-                        :size="ButtonSize.sm"
+                        :size="ButtonSize.xs"
+                        classes="rounded-full"
                         :disabled="confirmForm.processing"
                         @click="cancelImport"
                     >
@@ -464,7 +482,8 @@ onUnmounted(() => {
                     <BaseButton
                         type="button"
                         :variant="ColorVariant.primary"
-                        :size="ButtonSize.sm"
+                        :size="ButtonSize.xs"
+                        classes="rounded-full"
                         :processing="confirmForm.processing"
                         :disabled="!canConfirmImport || confirmForm.processing"
                         @click="submitImport"
@@ -483,7 +502,8 @@ onUnmounted(() => {
                     <BaseButton
                         type="button"
                         :variant="ColorVariant.warning_outline"
-                        :size="ButtonSize.sm"
+                        :size="ButtonSize.xs"
+                        classes="rounded-full"
                         @click="dismissImportResult"
                     >
                         {{ $t('trans.close') }}

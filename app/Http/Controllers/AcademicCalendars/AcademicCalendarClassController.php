@@ -82,7 +82,14 @@ class AcademicCalendarClassController extends Controller
             $tenantId,
         );
 
-        return back()->with('success', __('academic_calendar.tutor_assigned_success'));
+        $staffId = $request->validated('staff_id');
+
+        return back()->with(
+            'success',
+            $staffId === null
+                ? __('academic_calendar.tutor_removed_success')
+                : __('academic_calendar.tutor_assigned_success'),
+        );
     }
 
     public function syncModuleLecturers(

@@ -14,6 +14,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
     assignTutor: [classId: number, staffId?: number | null];
+    removeTutor: [classId: number];
 }>();
 
 const isSavedClass = computed(() => props.classPreview.academicCalendarClassId != null);
@@ -33,6 +34,14 @@ const onAssignTutor = (): void => {
     }
 
     emit('assignTutor', props.classPreview.academicCalendarClassId, props.classPreview.tutor?.id ?? null);
+};
+
+const onRemoveTutor = (): void => {
+    if (props.classPreview.academicCalendarClassId == null) {
+        return;
+    }
+
+    emit('removeTutor', props.classPreview.academicCalendarClassId);
 };
 
 const onCardClick = (): void => {
@@ -89,6 +98,7 @@ const onCardClick = (): void => {
                     :can-assign="canAssignStaffing === true"
                     compact
                     @assign="onAssignTutor"
+                    @remove="onRemoveTutor"
                 />
             </div>
 

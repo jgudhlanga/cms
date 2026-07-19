@@ -28,6 +28,7 @@ use App\Models\Students\StudentEnrolment;
 use App\Models\Students\StudentEnrolmentStatus;
 use App\Models\Tenants\Tenant;
 use App\Models\Users\User;
+use Spatie\Permission\Models\Permission;
 
 if (! function_exists('createCourseWorkJsonApiContext')) {
     /**
@@ -37,6 +38,9 @@ if (! function_exists('createCourseWorkJsonApiContext')) {
     {
         $tenant = Tenant::query()->firstOrFail();
         $user = User::factory()->create(['tenant_id' => $tenant->id]);
+
+        Permission::findOrCreate('viewAny:academic-calendars', 'web');
+        $user->givePermissionTo('viewAny:academic-calendars');
 
         $department = Department::factory()->create(['name' => 'ICT Course Work '.uniqid()]);
         $institutionDepartment = InstitutionDepartment::query()->create([
@@ -178,6 +182,8 @@ if (! function_exists('createCourseWorkJsonApiContext')) {
         return compact(
             'tenant',
             'user',
+            'institutionDepartment',
+            'classConfig',
             'academicCalendarClass',
             'studentEnrolment',
             'module',

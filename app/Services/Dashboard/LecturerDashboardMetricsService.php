@@ -473,10 +473,10 @@ class LecturerDashboardMetricsService
             [
                 'key' => 'enter_marks',
                 'label' => __('dashboard.lecturer_action_enter_marks'),
-                'url' => $user->can('view:course-work') || $user->can('update:course-work')
-                    ? route('teaching.modules.index')
+                'url' => $user->can('view:course-work') || $user->can('update:course-work') || $user->can('viewAny:course-work')
+                    ? route('teaching.classes.index')
                     : null,
-                'enabled' => $user->can('view:course-work') || $user->can('update:course-work'),
+                'enabled' => $user->can('view:course-work') || $user->can('update:course-work') || $user->can('viewAny:course-work'),
             ],
         ];
     }

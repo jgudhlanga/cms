@@ -24,6 +24,7 @@ const emit = defineEmits<{
     edit: [];
     exportClassList: [];
     assignTutor: [];
+    removeTutor: [];
 }>();
 </script>
 
@@ -68,6 +69,7 @@ const emit = defineEmits<{
                 :tutor="tutor"
                 :can-assign="canAssignStaffing === true"
                 @assign="emit('assignTutor')"
+                @remove="emit('removeTutor')"
             />
         </div>
     </BaseCard>

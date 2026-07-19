@@ -12,13 +12,17 @@ import { Link as InertiaLink } from '@inertiajs/vue3';
 import { computed, onMounted, ref, watch } from 'vue';
 
 const props = defineProps<{
-        classConfigId: number;
+        classConfigId?: number;
+        academicCalendarClassId?: number;
+        initialModuleId?: number | null;
+        allowedModuleIds?: number[] | null;
         canCreate: boolean;
         canUpdate: boolean;
         canExport: boolean;
         canImport?: boolean;
         courseWorkExportUrl: (moduleId: number, format: 'xlsx' | 'pdf', strict?: boolean) => string;
         courseWorkImportUrl?: (moduleId: number) => string;
+        studentCourseWorkUrl?: (studentEnrolmentId: number) => string | null;
     }>();
 
 const {
@@ -34,7 +38,20 @@ const {
     saveMark,
     isSaving,
     findAssessment,
-} = useCourseWorkClassMarksheet({ classConfigId: props.classConfigId });
+} = useCourseWorkClassMarksheet(
+    props.academicCalendarClassId != null
+        ? {
+              academicCalendarClassId: props.academicCalendarClassId,
+              initialModuleId: props.initialModuleId ?? null,
+              allowedModuleIds: props.allowedModuleIds ?? null,
+          }
+        : {
+              classConfigId: props.classConfigId as number,
+              initialModuleId: props.initialModuleId ?? null,
+              allowedModuleIds: props.allowedModuleIds ?? null,
+          },
+);
+
 
 const draftMarks = ref<Record<string, string>>({});
 
@@ -199,7 +216,12 @@ onMounted(() => {
                         :href="courseWorkImportUrl(selectedModuleId)"
                         class="inline-flex"
                     >
-                        <BaseButton type="button" :variant="ColorVariant.primary_outline" :size="ButtonSize.sm">
+                        <BaseButton
+                            type="button"
+                            :variant="ColorVariant.primary_outline"
+                            :size="ButtonSize.xs"
+                            classes="rounded-full"
+                        >
                             {{ $t('academic_calendar.course_work_import') }}
                         </BaseButton>
                     </InertiaLink>
@@ -210,7 +232,12 @@ onMounted(() => {
                         target="_blank"
                         rel="noopener noreferrer"
                     >
-                        <BaseButton type="button" :variant="ColorVariant.primary_outline" :size="ButtonSize.sm">
+                        <BaseButton
+                            type="button"
+                            :variant="ColorVariant.primary_outline"
+                            :size="ButtonSize.xs"
+                            classes="rounded-full"
+                        >
                             {{ $t('academic_calendar.course_work_export_excel') }}
                         </BaseButton>
                     </a>
@@ -221,7 +248,12 @@ onMounted(() => {
                         target="_blank"
                         rel="noopener noreferrer"
                     >
-                        <BaseButton type="button" :variant="ColorVariant.primary_outline" :size="ButtonSize.sm">
+                        <BaseButton
+                            type="button"
+                            :variant="ColorVariant.primary_outline"
+                            :size="ButtonSize.xs"
+                            classes="rounded-full"
+                        >
                             {{ $t('academic_calendar.course_work_export_pdf') }}
                         </BaseButton>
                     </a>

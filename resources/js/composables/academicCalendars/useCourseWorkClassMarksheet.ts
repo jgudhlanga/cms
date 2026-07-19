@@ -31,6 +31,7 @@ type UseCourseWorkClassMarksheetOptions = (
     | { classConfigId: number; academicCalendarClassId?: never }
 ) & {
     initialModuleId?: number | null;
+    allowedModuleIds?: number[] | null;
 };
 
 export function useCourseWorkClassMarksheet(options: UseCourseWorkClassMarksheetOptions) {
@@ -50,10 +51,15 @@ export function useCourseWorkClassMarksheet(options: UseCourseWorkClassMarksheet
             return [];
         }
 
+        const allowed = options.allowedModuleIds;
         const moduleOptionsList: CourseWorkClassModuleOption[] = [];
 
         for (const syllabus of tree.value.syllabi) {
             for (const courseModule of syllabus.modules) {
+                if (allowed != null && allowed.length > 0 && !allowed.includes(courseModule.id)) {
+                    continue;
+                }
+
                 const code = courseModule.code?.trim() ?? '';
                 const title = courseModule.title?.trim() ?? '';
                 const baseLabel = [code, title].filter(Boolean).join(' — ') || String(courseModule.id);

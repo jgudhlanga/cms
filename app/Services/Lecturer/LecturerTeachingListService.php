@@ -133,4 +133,115 @@ class LecturerTeachingListService
             ->values()
             ->all();
     }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    public function classDetailFor(User $user, AcademicCalendarClass $class): ?array
+    {
+        $resolved = $this->assignmentResolver->resolveForUser($user);
+        $classId = (int) $class->id;
+
+        if (! in_array($classId, $resolved['classIds'], true)) {
+            return null;
+        }
+
+        $class->loadMissing([
+            'classConfig.institutionDepartment.department',
+            'classConfig.departmentCourse.course',
+            'classConfig.departmentLevel.level',
+            'classConfig.modeOfStudy',
+        ]);
+
+        $config = $class->classConfig;
+        $moduleIds = [];
+
+        foreach ($resolved['assignmentKeys'] as $key) {
+            [$assignedClassId, $moduleId] = array_map('intval', explode('-', $key, 2));
+
+            if ($assignedClassId === $classId) {
+                $moduleIds[] = $moduleId;
+            }
+        }
+
+        $moduleIds = array_values(array_unique($moduleIds));
+        $modules = CourseSyllabusModule::query()
+            ->whereIn('id', $moduleIds)
+            ->orderBy('code')
+            ->get(['id', 'title', 'code']);
+
+        $studentCount = $class->studentEnrolments()
+            ->whereNull('deleted_at')
+            ->count();
+
+        return [
+            'id' => $classId,
+            'name' => (string) $class->name,
+            'description' => $class->description,
+            'departmentName' => (string) ($config?->institutionDepartment?->department?->name ?? ''),
+            'courseName' => (string) ($config?->departmentCourse?->course?->name ?? ''),
+            'levelName' => (string) ($config?->departmentLevel?->level?->name ?? ''),
+            'modeOfStudyName' => (string) ($config?->modeOfStudy?->name ?? ''),
+            'calendarYear' => (string) ($config?->calendar_year ?? ''),
+            'classConfigId' => (int) ($config?->id ?? 0),
+            'institutionDepartmentId' => (int) ($config?->institution_department_id ?? 0),
+            'isTutor' => in_array($classId, $resolved['tutorClassIds'], true),
+            'studentCount' => $studentCount,
+            'modules' => $modules->map(fn (CourseSyllabusModule $module): array => [
+                'id' => (int) $module->id,
+                'title' => (string) $module->title,
+                'code' => (string) ($module->code ?? ''),
+            ])->values()->all(),
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    public function moduleDetailFor(User $user, CourseSyllabusModule $module): ?array
+    {
+        $resolved = $this->assignmentResolver->resolveForUser($user);
+        $moduleId = (int) $module->id;
+
+        if (! in_array($moduleId, $resolved['moduleIds'], true)) {
+            return null;
+        }
+
+        $module->loadMissing(['courseSyllabus.institutionDepartment.department']);
+
+        $classIds = [];
+
+        foreach ($resolved['assignmentKeys'] as $key) {
+            [$classId, $assignedModuleId] = array_map('intval', explode('-', $key, 2));
+
+            if ($assignedModuleId === $moduleId) {
+                $classIds[] = $classId;
+            }
+        }
+
+        $classIds = array_values(array_unique($classIds));
+        $classes = AcademicCalendarClass::query()
+            ->whereIn('id', $classIds)
+            ->with(['classConfig'])
+            ->orderBy('name')
+            ->get();
+
+        return [
+            'id' => $moduleId,
+            'title' => (string) $module->title,
+            'code' => (string) ($module->code ?? ''),
+            'departmentName' => (string) ($module->courseSyllabus?->institutionDepartment?->department?->name ?? ''),
+            'classes' => $classes->map(function (AcademicCalendarClass $class): array {
+                $config = $class->classConfig;
+
+                return [
+                    'id' => (int) $class->id,
+                    'name' => (string) $class->name,
+                    'classConfigId' => (int) ($config?->id ?? 0),
+                    'institutionDepartmentId' => (int) ($config?->institution_department_id ?? 0),
+                    'calendarYear' => (string) ($config?->calendar_year ?? ''),
+                ];
+            })->values()->all(),
+        ];
+    }
 }

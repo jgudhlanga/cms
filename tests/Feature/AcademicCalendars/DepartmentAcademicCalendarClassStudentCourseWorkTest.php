@@ -92,6 +92,9 @@ function createStudentCourseWorkPageContext(): array
     $tenant = Tenant::query()->firstOrFail();
     $user = User::factory()->create(['tenant_id' => $tenant->id]);
 
+    Permission::findOrCreate('viewAny:academic-calendars', 'web');
+    $user->givePermissionTo('viewAny:academic-calendars');
+
     $department = Department::factory()->create(['name' => 'ICT CW Page '.uniqid()]);
     $institutionDepartment = InstitutionDepartment::query()->create([
         'tenant_id' => $tenant->id,

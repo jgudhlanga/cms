@@ -38,6 +38,7 @@ use App\Services\AcademicCalendars\CourseWorkImportService;
 use App\Services\AcademicCalendars\CourseWorkImportTemplateService;
 use App\Services\AcademicCalendars\CourseWorkMarksheetDataService;
 use App\Services\AcademicCalendars\CourseWorkMarksheetPdfService;
+use App\Services\Lecturer\LecturerCourseWorkAccess;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -218,6 +219,17 @@ class AcademicCalendarController extends Controller
             ->values()
             ->all();
 
+        $access = app(LecturerCourseWorkAccess::class);
+        $user = $request->user();
+
+        if ($classIds === []) {
+            $access->assertCanAccessClassConfig($user, (int) $classConfig->id);
+        } else {
+            foreach ($classIds as $classId) {
+                $access->assertCanAccessClass($user, $classId);
+            }
+        }
+
         $classConfig->loadMissing('institutionDepartment');
 
         $data = $classListDataService->assembleForClassConfig($classConfig, $classIds);
@@ -252,6 +264,8 @@ class AcademicCalendarController extends Controller
             404
         );
 
+        app(LecturerCourseWorkAccess::class)->assertCanAccessClass($request->user(), (int) $academicCalendarClass->id);
+
         $classConfig->loadMissing('institutionDepartment');
 
         $data = $classListDataService->assembleForClassConfig($classConfig, [(int) $academicCalendarClass->id]);
@@ -273,6 +287,7 @@ class AcademicCalendarController extends Controller
 
         $academicCalendar = $this->academicCalendarFromCalendarYear($calendar_year);
         $classConfig = $this->resolveClassConfigForDepartment($institutionDepartment, $academicCalendar, $request);
+        app(LecturerCourseWorkAccess::class)->assertCanAccessClassConfig($request->user(), (int) $classConfig->id);
 
         $course = $classConfig->departmentCourse ?? DepartmentCourse::query()->find($classConfig->department_course_id);
         $level = $classConfig->departmentLevel ?? DepartmentLevel::query()->find($classConfig->department_level_id);
@@ -302,6 +317,7 @@ class AcademicCalendarController extends Controller
 
         $academicCalendar = $this->academicCalendarFromCalendarYear($calendar_year);
         $classConfig = $this->resolveClassConfigForDepartment($institutionDepartment, $academicCalendar, $request);
+        app(LecturerCourseWorkAccess::class)->assertCanAccessClassConfig($request->user(), (int) $classConfig->id);
 
         $course = $classConfig->departmentCourse ?? DepartmentCourse::query()->find($classConfig->department_course_id);
         $level = $classConfig->departmentLevel ?? DepartmentLevel::query()->find($classConfig->department_level_id);
@@ -335,6 +351,12 @@ class AcademicCalendarController extends Controller
         $moduleId = (int) $request->query('module', 0);
         abort_if($moduleId < 1, 422, __('academic_calendar.course_work_module_required'));
 
+        app(LecturerCourseWorkAccess::class)->assertCanAccessModuleInClassConfig(
+            $request->user(),
+            (int) $classConfig->id,
+            $moduleId,
+        );
+
         $data = $templateService->assembleForClassConfig((int) $classConfig->id, $moduleId);
         $fileName = $templateService->downloadFileName($data);
 
@@ -357,6 +379,12 @@ class AcademicCalendarController extends Controller
 
         abort_if($file === null, 422);
 
+        app(LecturerCourseWorkAccess::class)->assertCanAccessModuleInClassConfig(
+            $request->user(),
+            (int) $classConfig->id,
+            $moduleId,
+        );
+
         $preview = $importService->preview((int) $classConfig->id, $moduleId, $file);
 
         return response()->json($preview);
@@ -375,6 +403,12 @@ class AcademicCalendarController extends Controller
 
         $moduleId = (int) $request->validated('module');
         $previewToken = (string) $request->validated('preview_token');
+
+        app(LecturerCourseWorkAccess::class)->assertCanAccessModuleInClassConfig(
+            $request->user(),
+            (int) $classConfig->id,
+            $moduleId,
+        );
 
         $result = $importService->processFromPreview((int) $classConfig->id, $moduleId, $previewToken);
 
@@ -522,6 +556,11 @@ class AcademicCalendarController extends Controller
 
         abort_unless($enrolmentInClass, 404);
 
+        app(LecturerCourseWorkAccess::class)->assertCanAccessClass(
+            request()->user(),
+            (int) $academicCalendarClass->id,
+        );
+
         $students = $this->studentsPayloadForAcademicCalendarClass($academicCalendarClass);
         $student = collect($students)->firstWhere('studentEnrolmentId', (int) $studentEnrolment->id);
 
@@ -563,6 +602,12 @@ class AcademicCalendarController extends Controller
 
         $moduleId = (int) $request->query('module', 0);
         abort_if($moduleId < 1, 422, __('academic_calendar.course_work_module_required'));
+
+        app(LecturerCourseWorkAccess::class)->assertCanAccessModuleInClassConfig(
+            $request->user(),
+            (int) $classConfig->id,
+            $moduleId,
+        );
 
         $data = $marksheetDataService->assembleForClassConfig((int) $classConfig->id, $moduleId);
         $marksheetDataService->assertExportable($data['issues'], $request->boolean('strict'));

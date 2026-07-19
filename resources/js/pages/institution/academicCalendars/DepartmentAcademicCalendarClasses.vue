@@ -4,6 +4,7 @@ import ClassListExportModal from '@/components/academicCalendars/ClassListExport
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import { openAssignClassTutorModal } from '@/composables/academicCalendars/useAcademicCalendarClassTutor';
 import { openClassListExportModal } from '@/composables/academicCalendars/useClassListExport';
+import { useCustomConfirmDialog } from '@/composables/core/useCustomConfirmDialog';
 import {
     AcademicCalendar,
     AcademicCalendarClassGenerationContext,
@@ -19,7 +20,7 @@ import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
 import { errorAlert, successAlert } from '@/lib/alerts';
 import { firstInertiaErrorMessage } from '@/lib/inertia-errors';
-import { Head, Link as InertiaLink, useForm } from '@inertiajs/vue3';
+import { Head, Link as InertiaLink, router, useForm } from '@inertiajs/vue3';
 import { UserIcon, UserRoundIcon } from 'lucide-vue-next';
 import { trans } from 'laravel-vue-i18n';
 import { computed, toRefs } from 'vue';
@@ -228,6 +229,36 @@ const computedTitle = computed(() => {
 const onAssignTutor = (classId: number, staffId?: number | null): void => {
     openAssignClassTutorModal({ academicCalendarClassId: classId, staffId });
 };
+
+const { open: openConfirmDialog } = useCustomConfirmDialog();
+
+const onRemoveTutor = async (classId: number): Promise<void> => {
+    const confirmed = await openConfirmDialog({
+        title: trans('academic_calendar.remove_tutor_confirm_title'),
+        message: trans('academic_calendar.remove_tutor_confirm_message'),
+        confirmText: trans('academic_calendar.remove_tutor'),
+        cancelText: trans('trans.cancel'),
+    });
+
+    if (!confirmed) {
+        return;
+    }
+
+    router.patch(
+        route('academic-calendars.department-classes.assign-tutor', {
+            institution_department: String(department.value.id),
+            calendar_year: String(academicCalendar.value.attributes.calendarYear),
+            academic_calendar_class: String(classId),
+        }),
+        { staff_id: null },
+        {
+            preserveScroll: true,
+            onError: (errors) => {
+                errorAlert(firstInertiaErrorMessage(errors, trans('academic_calendar.tutor_assign_failed')));
+            },
+        },
+    );
+};
 </script>
 
 <template>
@@ -308,6 +339,7 @@ const onAssignTutor = (classId: number, staffId?: number | null): void => {
                         :can-assign-staffing="canAssignStaffing"
                         :show-module-staffing="selectedAcademicYearOptionId != null"
                         @assign-tutor="onAssignTutor"
+                        @remove-tutor="onRemoveTutor"
                     />
                 </div>
             </template>

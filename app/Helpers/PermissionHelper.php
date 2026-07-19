@@ -62,8 +62,10 @@ class PermissionHelper
             'view:lecturer-modules',
             'viewAny:course-work',
             'view:course-work',
+            'create:course-work',
             'update:course-work',
             'import:course-work',
+            'export:course-work',
             'view:academic-calendars',
         ];
     }
