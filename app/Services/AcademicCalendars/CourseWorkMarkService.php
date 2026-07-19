@@ -9,6 +9,7 @@ use App\Models\AcademicCalendars\ClassConfig;
 use App\Models\AcademicCalendars\CourseWorkMark;
 use App\Models\Institution\Syllabus\CourseSyllabusModule;
 use App\Models\Users\User;
+use App\Services\Lecturer\LecturerCourseWorkAccess;
 use App\Support\AcademicCalendars\CourseWorkMarkValue;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -18,6 +19,7 @@ class CourseWorkMarkService
 {
     public function __construct(
         private readonly CourseWorkAuditLogger $auditLogger,
+        private readonly LecturerCourseWorkAccess $lecturerCourseWorkAccess,
     ) {}
 
     /**
@@ -29,6 +31,12 @@ class CourseWorkMarkService
             (int) $data['studentEnrolmentId'],
             $academicCalendarClassId,
             $classConfigId,
+        );
+
+        $this->assertLecturerAssignmentForMutation(
+            (int) $data['studentEnrolmentId'],
+            (int) $data['courseSyllabusModuleId'],
+            $academicCalendarClassId,
         );
 
         $module = CourseSyllabusModule::query()->findOrFail((int) $data['courseSyllabusModuleId']);
@@ -148,6 +156,12 @@ class CourseWorkMarkService
             $classConfigId,
         );
 
+        $this->assertLecturerAssignmentForMutation(
+            (int) $mark->student_enrolment_id,
+            (int) $mark->course_syllabus_module_id,
+            $academicCalendarClassId,
+        );
+
         $oldValues = $mark->only(['mark', 'remark']);
         $mark->delete();
 
@@ -165,6 +179,12 @@ class CourseWorkMarkService
             (int) $mark->student_enrolment_id,
             $academicCalendarClassId,
             $classConfigId,
+        );
+
+        $this->assertLecturerAssignmentForMutation(
+            (int) $mark->student_enrolment_id,
+            (int) $mark->course_syllabus_module_id,
+            $academicCalendarClassId,
         );
 
         $mark->restore();
@@ -261,5 +281,24 @@ class CourseWorkMarkService
         }
 
         return $class;
+    }
+
+    private function assertLecturerAssignmentForMutation(
+        int $studentEnrolmentId,
+        int $moduleId,
+        ?int $academicCalendarClassId,
+    ): void {
+        $user = Auth::user();
+
+        if (! $user instanceof User) {
+            return;
+        }
+
+        $this->lecturerCourseWorkAccess->assertCanAccessEnrolmentModule(
+            $user,
+            $studentEnrolmentId,
+            $moduleId,
+            $academicCalendarClassId,
+        );
     }
 }

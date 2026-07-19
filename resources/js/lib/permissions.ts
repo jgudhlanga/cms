@@ -35,6 +35,7 @@ export function hasProgram(): boolean {
 const DASHBOARD_TAB_PERMISSIONS = [
     'view:dashboards',
     'viewAny:dashboards',
+    'view:lecturer-dashboard',
     'view-academic:dashboards',
     'view-enrolment:dashboards',
     'view-attendance:dashboards',

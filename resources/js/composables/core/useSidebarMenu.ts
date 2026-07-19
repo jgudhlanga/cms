@@ -58,23 +58,16 @@ export function useSidebarMenu() {
         },
         {
             groupKey: 'lecturer',
-            transChoiceKey: 'trans.dashboard',
-            icon: icons[IconName.dashboard],
-            url: route('lecturer.dashboard'),
-            show: canShowMenuItem('view:lecturer-dashboard', 'institution', moduleState),
-        },
-        {
-            groupKey: 'lecturer',
             transChoiceKey: 'trans.class',
             icon: icons[IconName.users],
-            url: route('lecturer.classes.index'),
+            url: route('teaching.classes.index'),
             show: canShowMenuItem('view:lecturer-classes', 'institution', moduleState),
         },
         {
             groupKey: 'lecturer',
             transChoiceKey: 'trans.module',
             icon: icons[IconName.book_check],
-            url: route('lecturer.modules.index'),
+            url: route('teaching.modules.index'),
             show: canShowMenuItem('view:lecturer-modules', 'institution', moduleState),
         },
         {

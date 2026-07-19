@@ -14,11 +14,10 @@ use App\Services\ApplicationMetricsService;
 use App\Services\Dashboard\AcademicDashboardMetricsService;
 use App\Services\Dashboard\DashboardModuleService;
 use App\Services\Dashboard\HostelDashboardMetricsService;
+use App\Services\Dashboard\LecturerDashboardMetricsService;
 use App\Services\Dashboard\OverviewDashboardMetricsService;
 use App\Services\Dashboard\StaffDashboardMetricsService;
 use App\Support\AcademicCalendars\AcademicCalendarPeriodResolver;
-use App\Support\Auth\DefaultHome;
-use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -26,20 +25,12 @@ class DashboardController extends Controller
 {
     public function __construct(protected ApplicationMetricsService $metricsService) {}
 
-    public function __invoke(): RedirectResponse|Response
+    public function __invoke(): Response
     {
+        $this->authorize('viewDashboard');
+
         $user = auth()->user();
         $dashboardModuleService = app(DashboardModuleService::class);
-
-        if (! $dashboardModuleService->canAccessDashboard($user)) {
-            if (DefaultHome::shouldUseLecturerHome($user)) {
-                return to_route('lecturer.dashboard');
-            }
-
-            $this->authorize('viewDashboard');
-        }
-
-        $this->authorize('viewDashboard');
 
         $intakePeriodList = DropdownHelper::getIntakePeriods();
         $intakePeriods = IntakePeriodResource::collection($intakePeriodList);
@@ -55,6 +46,7 @@ class DashboardController extends Controller
         $dailyDistribution = DailyDistributionResource::collection($this->metricsService->getDailyCountStats());
         $enrolmentSummary = $this->metricsService->enrolmentSummaryMetrics();
         $visibleTabs = $dashboardModuleService->visibleTabsFor($user);
+        $academicTabVisible = in_array('academic', $visibleTabs, true);
 
         return Inertia::render('dashboard/Index', [
             'departmentDistribution' => $departmentDistribution,
@@ -72,8 +64,12 @@ class DashboardController extends Controller
             'staffDashboard' => in_array('staff', $visibleTabs, true)
                 ? app(StaffDashboardMetricsService::class)->build()
                 : null,
-            'academicDashboard' => in_array('academic', $visibleTabs, true)
+            'academicDashboard' => $academicTabVisible
+                && ($user->can('viewAny:dashboards') || $user->can('view-academic:dashboards'))
                 ? app(AcademicDashboardMetricsService::class)->build()
+                : null,
+            'teachingDashboard' => $academicTabVisible && $user->can('view:lecturer-dashboard')
+                ? app(LecturerDashboardMetricsService::class)->build($user)
                 : null,
             'intakePeriod' => $intakePeriod,
             'intakePeriods' => $intakePeriods,

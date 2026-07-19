@@ -94,10 +94,6 @@ class AuthenticatedSessionController extends Controller
             return to_route('portal.application.level-options');
         }
 
-        if (DefaultHome::shouldUseLecturerHome($user)) {
-            return to_route('lecturer.dashboard');
-        }
-
         return redirect()->intended(route(DefaultHome::routeName($user)));
     }
 

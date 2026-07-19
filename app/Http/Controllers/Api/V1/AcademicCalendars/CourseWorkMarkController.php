@@ -8,6 +8,7 @@ use App\Models\AcademicCalendars\CourseWorkAuditLog;
 use App\Models\AcademicCalendars\CourseWorkMark;
 use App\Services\AcademicCalendars\CourseWorkMarkService;
 use App\Services\AcademicCalendars\CourseWorkTreeService;
+use App\Services\Lecturer\LecturerCourseWorkAccess;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Collection;
@@ -29,6 +30,9 @@ class CourseWorkMarkController extends JsonApiController
     {
         abort_unless($request->user()?->can('viewAny', CourseWorkMark::class) ?? false, 403);
 
+        $user = $request->user();
+        $access = app(LecturerCourseWorkAccess::class);
+
         $classId = (int) data_get($request->input('filter'), 'academicCalendarClass', 0);
         $classConfigId = (int) data_get($request->input('filter'), 'classConfig', 0);
         $studentEnrolmentId = (int) data_get($request->input('filter'), 'studentEnrolment', 0);
@@ -44,10 +48,14 @@ class CourseWorkMarkController extends JsonApiController
                 abort(422, __('academic_calendar.course_work_student_filter_class_only'));
             }
 
+            $access->assertCanAccessClassConfig($user, $classConfigId);
+
             return MetaResponse::make($this->treeService->buildForClassConfig($classConfigId));
         }
 
         abort_if($classId < 1, 422, __('academic_calendar.course_work_scope_filter_required'));
+
+        $access->assertCanAccessClass($user, $classId);
 
         if ($studentEnrolmentId > 0) {
             return MetaResponse::make($this->treeService->buildForStudent($classId, $studentEnrolmentId));

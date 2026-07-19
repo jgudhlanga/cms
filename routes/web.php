@@ -33,6 +33,6 @@ require __DIR__.'/web/workflows.php';
 require __DIR__.'/web/documents.php';
 require __DIR__.'/web/hms.php';
 require __DIR__.'/web/academic-calendars.php';
-require __DIR__.'/web/lecturer.php';
+require __DIR__.'/web/teaching.php';
 require __DIR__.'/web/maintenance.php';
 require __DIR__.'/web/examinations.php';
