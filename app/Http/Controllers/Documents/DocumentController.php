@@ -40,7 +40,7 @@ class DocumentController extends Controller
             'tuition'
         ));
 
-        return $pdf->stream($fileName);
+        return $pdf->download($fileName);
     }
 
     public function exportTransactionStatement(Request $request, Student $student)
