@@ -32,7 +32,7 @@ class DocumentHelper
             ->whereHas('classList', fn ($q) => $q->whereIn('type', ['verified', 'final']))->firstOrFail();
 
         abort_unless(
-            app(IntakePeriodResolver::class)->isApplicationInActiveIntake($studentApplication),
+            app(IntakePeriodResolver::class)->isApplicationEligibleForOfferLetter($studentApplication),
             404
         );
 

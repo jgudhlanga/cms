@@ -60,6 +60,7 @@ test('student show page includes active intake period ids', function () {
     $response->assertInertia(fn ($page) => $page
         ->component('students/Show')
         ->has('activeIntakePeriodIds')
+        ->has('offerLetterIntakePeriodIds')
         ->where('student.id', $student->id));
 });
 

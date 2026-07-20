@@ -8,6 +8,7 @@ import { toRef } from 'vue';
 interface Props {
     applications: Enrolment[];
     activeIntakePeriodIds?: Array<string | number>;
+    offerLetterIntakePeriodIds?: Array<string | number>;
     canEdit?: boolean;
     compact?: boolean;
     editable?: boolean;
@@ -16,6 +17,7 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
     activeIntakePeriodIds: () => [],
+    offerLetterIntakePeriodIds: () => [],
     canEdit: false,
     compact: false,
     editable: false,
@@ -55,6 +57,7 @@ const isActiveIntakeGroup = (intakePeriodId: string): boolean =>
             <CurrentApplications
                 :applications="group.applications"
                 :active-intake-period-ids="activeIntakePeriodIds"
+                :offer-letter-intake-period-ids="offerLetterIntakePeriodIds"
                 :can-edit="canEdit"
                 :compact="compact"
                 :editable="editable" 

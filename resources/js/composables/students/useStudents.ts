@@ -87,14 +87,14 @@ export const useStudents = () => {
 
     const hasOfferLetter = (
         application: Enrolment,
-        activeIntakePeriodIds: Array<string | number> = [],
+        offerLetterIntakePeriodIds: Array<string | number> = [],
     ) => {
         const status = getApplicationStatus(application)?.toLowerCase();
         const isAcceptedOrEnrolled = status === 'accepted' || status === 'enrolled';
         const intakePeriodId = String(application?.attributes?.intakePeriodId ?? '');
-        const isActiveIntake = activeIntakePeriodIds.some((id) => String(id) === intakePeriodId);
+        const isEligibleIntake = offerLetterIntakePeriodIds.some((id) => String(id) === intakePeriodId);
 
-        return isAcceptedOrEnrolled && isActiveIntake;
+        return isAcceptedOrEnrolled && isEligibleIntake;
     };
 
     const statusMessage = (application: Enrolment) => {

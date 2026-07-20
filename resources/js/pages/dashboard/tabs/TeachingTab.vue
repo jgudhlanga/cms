@@ -2,7 +2,7 @@
 import Empty from '@/components/core/util/Empty.vue';
 import MetricCard from '@/pages/dashboard/components/MetricCard.vue';
 import DashboardCard from '@/pages/dashboard/components/DashboardCard.vue';
-import type { LecturerDashboard } from '@/types/lecturer';
+import type { LecturerDashboard, LecturerPriorityAlert } from '@/types/lecturer';
 import { useUtils } from '@/composables/core/useUtils';
 import {
     AlertTriangle,
@@ -34,16 +34,110 @@ const formatCount = (value: number | null | undefined): string =>
 const formatMark = (value: number | null | undefined): string =>
     value === null || value === undefined ? notAvailable.value : String(value);
 
-const alertDotClass = (severity: string): string => {
-    if (severity === 'critical') {
+const assessmentUrgencyLevel = (daysRemaining: number): number => {
+    if (daysRemaining <= 1) {
+        return 4;
+    }
+
+    if (daysRemaining <= 3) {
+        return 3;
+    }
+
+    if (daysRemaining <= 7) {
+        return 2;
+    }
+
+    if (daysRemaining <= 14) {
+        return 1;
+    }
+
+    return 0;
+};
+
+const alertDotClass = (alert: LecturerPriorityAlert): string => {
+    if (alert.daysRemaining != null) {
+        const urgency = assessmentUrgencyLevel(alert.daysRemaining);
+
+        if (urgency >= 4) {
+            return 'bg-rose-700';
+        }
+
+        if (urgency === 3) {
+            return 'bg-rose-500';
+        }
+
+        if (urgency === 2) {
+            return 'bg-orange-500';
+        }
+
+        if (urgency === 1) {
+            return 'bg-amber-500';
+        }
+
+        return 'bg-sky-500';
+    }
+
+    if (alert.severity === 'critical') {
         return 'bg-rose-500';
     }
 
-    if (severity === 'warning') {
+    if (alert.severity === 'warning') {
         return 'bg-amber-500';
     }
 
     return 'bg-sky-500';
+};
+
+const alertRowClass = (alert: LecturerPriorityAlert): string => {
+    if (alert.daysRemaining == null) {
+        return 'border-b border-gray-100 py-2 last:border-0';
+    }
+
+    const urgency = assessmentUrgencyLevel(alert.daysRemaining);
+
+    if (urgency >= 4) {
+        return 'border-b border-rose-100 bg-rose-50/80 py-2 last:border-0';
+    }
+
+    if (urgency === 3) {
+        return 'border-b border-rose-100 bg-rose-50/50 py-2 last:border-0';
+    }
+
+    if (urgency === 2) {
+        return 'border-b border-orange-100 bg-orange-50/40 py-2 last:border-0';
+    }
+
+    if (urgency === 1) {
+        return 'border-b border-amber-100 bg-amber-50/30 py-2 last:border-0';
+    }
+
+    return 'border-b border-sky-100 bg-sky-50/20 py-2 last:border-0';
+};
+
+const alertTextClass = (alert: LecturerPriorityAlert): string => {
+    if (alert.daysRemaining == null) {
+        return 'text-sm leading-snug text-gray-900';
+    }
+
+    const urgency = assessmentUrgencyLevel(alert.daysRemaining);
+
+    if (urgency >= 4) {
+        return 'text-sm font-medium leading-snug text-rose-800';
+    }
+
+    if (urgency === 3) {
+        return 'text-sm font-medium leading-snug text-rose-700';
+    }
+
+    if (urgency === 2) {
+        return 'text-sm leading-snug text-orange-800';
+    }
+
+    if (urgency === 1) {
+        return 'text-sm leading-snug text-amber-800';
+    }
+
+    return 'text-sm leading-snug text-sky-900';
 };
 
 const openAction = (url: string | null, enabled: boolean): void => {
@@ -144,17 +238,18 @@ const dashboard = computed(() => props.teachingDashboard);
                     v-if="dashboard.priorityAlerts.length === 0"
                     :message="$t('dashboard.lecturer_no_alerts')"
                 />
-                <div v-else class="flex flex-col gap-0">
+                <div v-else class="flex flex-col gap-0 overflow-hidden rounded-md">
                     <div
                         v-for="(alert, index) in dashboard.priorityAlerts"
                         :key="index"
-                        class="flex gap-3 border-b border-gray-100 py-2 last:border-0"
+                        class="flex gap-3 px-2"
+                        :class="alertRowClass(alert)"
                     >
                         <div
                             class="mt-1.5 h-2 w-2 shrink-0 rounded-full"
-                            :class="alertDotClass(alert.severity)"
+                            :class="alertDotClass(alert)"
                         ></div>
-                        <div class="text-sm leading-snug text-gray-900">{{ alert.message }}</div>
+                        <div :class="alertTextClass(alert)">{{ alert.message }}</div>
                     </div>
                 </div>
             </DashboardCard>

@@ -11,6 +11,7 @@ import { computed } from 'vue';
 interface Props {
     applications: Enrolment[];
     activeIntakePeriodIds?: Array<string | number>;
+    offerLetterIntakePeriodIds?: Array<string | number>;
     canEdit?: boolean;
     compact?: boolean;
     editable?: boolean;
@@ -19,6 +20,7 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
     activeIntakePeriodIds: () => [],
+    offerLetterIntakePeriodIds: () => [],
     canEdit: false,
     compact: false,
     editable: false,
@@ -64,6 +66,7 @@ const canEditApplication = (application: Enrolment): boolean => {
                 :key="application.id"
                 :application="application"
                 :active-intake-period-ids="activeIntakePeriodIds"
+                :offer-letter-intake-period-ids="offerLetterIntakePeriodIds"
                 :compact="compact"
                 :can-edit="canEditApplication(application)"
                 :edit-url="programEditUrl(application.id)"

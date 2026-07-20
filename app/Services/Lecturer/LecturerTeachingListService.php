@@ -4,67 +4,39 @@ namespace App\Services\Lecturer;
 
 use App\Helpers\Helper;
 use App\Models\AcademicCalendars\AcademicCalendarClass;
+use App\Models\AcademicCalendars\AcademicCalendarStudentEnrolment;
+use App\Models\AcademicCalendars\ClassConfig;
 use App\Models\Institution\Syllabus\CourseSyllabusModule;
 use App\Models\Users\User;
-use Illuminate\Support\Collection;
+use App\Services\AcademicCalendars\CourseWorkAssessmentLockService;
+use App\Services\AcademicCalendars\ClassStaffingService;
 
 class LecturerTeachingListService
 {
     public function __construct(
         private readonly LecturerAssignmentResolver $assignmentResolver,
+        private readonly ClassStaffingService $classStaffingService,
+        private readonly LecturerTeachingClassesIndexService $classesIndexService,
+        private readonly CourseWorkAssessmentLockService $courseWorkAssessmentLockService,
     ) {}
+
+    /**
+     * @return array{
+     *     classes: list<array<string, mixed>>,
+     *     summary: array<string, int>
+     * }
+     */
+    public function classesIndexFor(User $user): array
+    {
+        return $this->classesIndexService->build($user);
+    }
 
     /**
      * @return list<array<string, mixed>>
      */
     public function classesFor(User $user): array
     {
-        $resolved = $this->assignmentResolver->resolveForUser($user);
-
-        if ($resolved['classIds'] === []) {
-            return [];
-        }
-
-        $academicCalendar = Helper::resolveAcademicCalendar();
-        $calendarYear = (string) $academicCalendar->calendar_year;
-
-        /** @var Collection<int, AcademicCalendarClass> $classes */
-        $classes = AcademicCalendarClass::query()
-            ->whereIn('id', $resolved['classIds'])
-            ->with([
-                'classConfig.institutionDepartment.department',
-                'classConfig.departmentCourse.course',
-                'classConfig.departmentLevel.level',
-                'classConfig.modeOfStudy',
-            ])
-            ->orderBy('name')
-            ->get();
-
-        return $classes
-            ->filter(function (AcademicCalendarClass $class) use ($calendarYear): bool {
-                return (string) ($class->classConfig?->calendar_year ?? '') === $calendarYear;
-            })
-            ->map(function (AcademicCalendarClass $class) use ($resolved): array {
-                $config = $class->classConfig;
-                $moduleCount = collect($resolved['assignmentKeys'])
-                    ->filter(fn (string $key): bool => str_starts_with($key, $class->id.'-'))
-                    ->count();
-
-                return [
-                    'id' => (int) $class->id,
-                    'name' => (string) $class->name,
-                    'description' => $class->description,
-                    'departmentName' => (string) ($config?->institutionDepartment?->department?->name ?? ''),
-                    'courseName' => (string) ($config?->departmentCourse?->course?->name ?? ''),
-                    'levelName' => (string) ($config?->departmentLevel?->level?->name ?? ''),
-                    'modeOfStudyName' => (string) ($config?->modeOfStudy?->name ?? ''),
-                    'calendarYear' => (string) ($config?->calendar_year ?? ''),
-                    'modulesCount' => $moduleCount,
-                    'isTutor' => in_array((int) $class->id, $resolved['tutorClassIds'], true),
-                ];
-            })
-            ->values()
-            ->all();
+        return $this->classesIndexFor($user)['classes'];
     }
 
     /**
@@ -154,21 +126,56 @@ class LecturerTeachingListService
         ]);
 
         $config = $class->classConfig;
-        $moduleIds = [];
+        $assignedModuleIds = [];
 
         foreach ($resolved['assignmentKeys'] as $key) {
             [$assignedClassId, $moduleId] = array_map('intval', explode('-', $key, 2));
 
             if ($assignedClassId === $classId) {
-                $moduleIds[] = $moduleId;
+                $assignedModuleIds[] = $moduleId;
             }
         }
 
-        $moduleIds = array_values(array_unique($moduleIds));
-        $modules = CourseSyllabusModule::query()
-            ->whereIn('id', $moduleIds)
-            ->orderBy('code')
-            ->get(['id', 'title', 'code']);
+        $assignedModuleIds = array_values(array_unique($assignedModuleIds));
+        $isTutor = in_array($classId, $resolved['tutorClassIds'], true);
+
+        if ($isTutor && $config instanceof ClassConfig) {
+            $moduleRecords = $this->classStaffingService
+                ->resolveSemesterModules($config)
+                ->values();
+        } else {
+            $moduleRecords = CourseSyllabusModule::query()
+                ->whereIn('id', $assignedModuleIds)
+                ->orderBy('code')
+                ->get(['id', 'title', 'code', 'capture_mark_only']);
+        }
+
+        $moduleLocksById = $this->courseWorkAssessmentLockService->locksForClassAndModules($class, $moduleRecords);
+        $modules = $moduleRecords
+            ->map(function (CourseSyllabusModule $module) use ($assignedModuleIds, $isTutor, $moduleLocksById): array {
+                $moduleId = (int) $module->id;
+                $lock = $moduleLocksById[$moduleId] ?? [
+                    'moduleId' => $moduleId,
+                    'hasEditableCourseWork' => true,
+                    'allAssessmentTypesLocked' => false,
+                    'lockedAssessmentTypeIds' => [],
+                    'lockedAssessmentTypeNames' => [],
+                    'readOnlyMessage' => null,
+                ];
+
+                return [
+                    'id' => $moduleId,
+                    'title' => (string) $module->title,
+                    'code' => (string) ($module->code ?? ''),
+                    'canManage' => $isTutor
+                        ? in_array($moduleId, $assignedModuleIds, true)
+                        : true,
+                    'captureMarkOnly' => (bool) $module->capture_mark_only,
+                    'courseWorkLock' => $lock,
+                ];
+            })
+            ->values()
+            ->all();
 
         $studentCount = $class->studentEnrolments()
             ->whereNull('deleted_at')
@@ -185,13 +192,10 @@ class LecturerTeachingListService
             'calendarYear' => (string) ($config?->calendar_year ?? ''),
             'classConfigId' => (int) ($config?->id ?? 0),
             'institutionDepartmentId' => (int) ($config?->institution_department_id ?? 0),
-            'isTutor' => in_array($classId, $resolved['tutorClassIds'], true),
+            'isTutor' => $isTutor,
             'studentCount' => $studentCount,
-            'modules' => $modules->map(fn (CourseSyllabusModule $module): array => [
-                'id' => (int) $module->id,
-                'title' => (string) $module->title,
-                'code' => (string) ($module->code ?? ''),
-            ])->values()->all(),
+            'students' => $this->studentsPayloadForAcademicCalendarClass($class),
+            'modules' => $modules,
         ];
     }
 
@@ -243,5 +247,44 @@ class LecturerTeachingListService
                 ];
             })->values()->all(),
         ];
+    }
+
+    /**
+     * @return list<array{studentEnrolmentId: int, studentId: int, applicationTrackingNumber: mixed, studentNumber: mixed, gender: mixed, name: string}>
+     */
+    private function studentsPayloadForAcademicCalendarClass(AcademicCalendarClass $academicCalendarClass): array
+    {
+        return AcademicCalendarStudentEnrolment::query()
+            ->join('student_enrolments', 'student_enrolments.id', '=', 'academic_calendar_student_enrolments.student_enrolment_id')
+            ->join('student_applications', 'student_applications.id', '=', 'student_enrolments.student_application_id')
+            ->join('students', 'students.id', '=', 'student_applications.student_id')
+            ->join('users', 'users.id', '=', 'students.user_id')
+            ->leftJoin('genders', 'genders.id', '=', 'students.gender_id')
+            ->where('academic_calendar_student_enrolments.academic_calendar_class_id', $academicCalendarClass->id)
+            ->whereNull('academic_calendar_student_enrolments.deleted_at')
+            ->select([
+                'student_enrolments.id as student_enrolment_id',
+                'student_applications.application_tracking_number',
+                'students.student_number',
+                'users.id as user_id',
+                'genders.title as gender_title',
+                'users.first_name',
+                'users.last_name',
+            ])
+            ->orderBy('users.first_name')
+            ->orderBy('users.last_name')
+            ->get()
+            ->map(function (AcademicCalendarStudentEnrolment $row): array {
+                return [
+                    'studentEnrolmentId' => (int) $row->student_enrolment_id,
+                    'studentId' => (int) $row->user_id,
+                    'applicationTrackingNumber' => $row->application_tracking_number,
+                    'studentNumber' => $row->student_number ?: $row->application_tracking_number,
+                    'gender' => $row->gender_title,
+                    'name' => trim(sprintf('%s %s', (string) ($row->first_name ?? ''), (string) ($row->last_name ?? ''))),
+                ];
+            })
+            ->values()
+            ->all();
     }
 }

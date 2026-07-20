@@ -2,6 +2,7 @@
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import BaseSectionNav from '@/components/core/tabs/BaseSectionNav.vue';
 import UserProfileHeader from '@/components/users/UserProfileHeader.vue';
+import UserProfileImpersonateSection from '@/components/users/profile/UserProfileImpersonateSection.vue';
 import { useShowUser } from '@/composables/users/useShowUser';
 import { useUserTabsStore } from '@/store/users/useUserTabsStore';
 import { AuthObject } from '@/types/data-pagination';
@@ -46,6 +47,8 @@ const activeSection = computed(() => visibleTabs.value.find((tab) => tab.value =
                     <component :is="activeSection?.component" v-if="activeSection" />
                 </div>
             </div>
+
+            <UserProfileImpersonateSection :user="user" />
         </div>
     </PageContainer>
 </template>

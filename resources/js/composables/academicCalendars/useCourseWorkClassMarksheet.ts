@@ -121,8 +121,10 @@ export function useCourseWorkClassMarksheet(options: UseCourseWorkClassMarksheet
 
     const assessmentTypes = computed(() => tree.value?.assessmentTypes ?? []);
 
-    const loadTree = async (): Promise<void> => {
-        loading.value = true;
+    const loadTree = async (loadOptions: { silent?: boolean } = {}): Promise<void> => {
+        if (!loadOptions.silent) {
+            loading.value = true;
+        }
         error.value = null;
 
         try {
@@ -145,7 +147,9 @@ export function useCourseWorkClassMarksheet(options: UseCourseWorkClassMarksheet
             error.value = 'academic_calendar.course_work_load_failed';
             tree.value = null;
         } finally {
-            loading.value = false;
+            if (!loadOptions.silent) {
+                loading.value = false;
+            }
         }
     };
 
@@ -185,7 +189,7 @@ export function useCourseWorkClassMarksheet(options: UseCourseWorkClassMarksheet
                 );
             }
 
-            await loadTree();
+            await loadTree({ silent: true });
             return true;
         } catch {
             return false;
@@ -213,6 +217,7 @@ export function useCourseWorkClassMarksheet(options: UseCourseWorkClassMarksheet
         moduleStudents,
         assessmentTypes,
         loading,
+        savingKey,
         error,
         loadTree,
         saveMark,

@@ -97,6 +97,42 @@ if (! function_exists('assignLecturerToClassModule')) {
     }
 }
 
+if (! function_exists('assignClassTutorOnly')) {
+    /**
+     * @param  array<string, mixed>  $context
+     */
+    function assignClassTutorOnly(array $context, Staff $staff): void
+    {
+        $lecturerTypeId = ClassMetaDataType::query()
+            ->where('name', ClassMetaDataTypeEnum::LECTURER->value)
+            ->value('id');
+
+        AcademicCalendarClassMetaData::query()->create([
+            'tenant_id' => $context['tenant']->id,
+            'academic_calendar_class_id' => $context['academicCalendarClass']->id,
+            'staff_id' => $staff->id,
+            'class_metadata_type_id' => $lecturerTypeId,
+        ]);
+    }
+}
+
+if (! function_exists('assignSyllabusTemplateLecturer')) {
+    /**
+     * @param  array<string, mixed>  $context
+     */
+    function assignSyllabusTemplateLecturer(array $context, Staff $staff): void
+    {
+        DB::table('course_syllabus_module_lecturers')->insert([
+            'tenant_id' => $context['tenant']->id,
+            'course_syllabus_module_id' => $context['module']->id,
+            'staff_id' => $staff->id,
+            'academic_calendar_class_id' => null,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+}
+
 if (! function_exists('prepareLecturerCalendar')) {
     /**
      * @param  array<string, mixed>  $context

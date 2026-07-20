@@ -84,9 +84,6 @@ export type ClassTutorSummary = {
     name: string;
 } | null;
 
-/** @deprecated Use ClassTutorSummary */
-export type ClassLecturerSummary = ClassTutorSummary;
-
 export type ClassModuleStaffingSummary = {
     staffed: number;
     total: number;
@@ -126,8 +123,6 @@ export type AcademicCalendarClassPreview = {
     };
     students: AcademicCalendarClassPreviewStudent[];
     tutor?: ClassTutorSummary;
-    /** @deprecated Use tutor */
-    lecturer?: ClassLecturerSummary;
     moduleStaffing?: ClassModuleStaffingSummary;
 };
 
@@ -143,8 +138,6 @@ export type AcademicCalendarClassDetail = {
     studentCount: number;
     students: AcademicCalendarClassPreviewStudent[];
     tutor?: ClassTutorSummary;
-    /** @deprecated Use tutor */
-    lecturer?: ClassLecturerSummary;
 };
 
 export type AcademicCalendarClassGenerationContext = {

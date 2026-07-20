@@ -16,6 +16,7 @@ import { computed } from 'vue';
 interface Props {
     application: Enrolment;
     activeIntakePeriodIds?: Array<string | number>;
+    offerLetterIntakePeriodIds?: Array<string | number>;
     compact?: boolean;
     canEdit?: boolean;
     editUrl?: string;
@@ -23,6 +24,7 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
     activeIntakePeriodIds: () => [],
+    offerLetterIntakePeriodIds: () => [],
     compact: false,
     canEdit: false,
 });
@@ -85,7 +87,7 @@ const showMetadata = computed(() => Boolean(applicationDate.value || modeOfStudy
                 </div>
                 <div class="flex shrink-0 flex-wrap items-center justify-end gap-2">
                     <OfferLetterAnchor
-                        v-if="hasOfferLetter(application, activeIntakePeriodIds)"
+                        v-if="hasOfferLetter(application, offerLetterIntakePeriodIds)"
                         :student-application-id="String(application.id)"
                     />
                     <BaseButton

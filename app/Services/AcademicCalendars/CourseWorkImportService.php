@@ -1074,6 +1074,13 @@ class CourseWorkImportService
                 'permission' => [__('academic_calendar.course_work_import_create_denied')],
             ]);
         }
+
+        $module = CourseSyllabusModule::query()->findOrFail($payload['courseSyllabusModuleId']);
+        $this->markService->assertMutationUnlocked(
+            (int) $payload['studentEnrolmentId'],
+            $module,
+            ($payload['assessmentTypeId'] ?? null) !== null ? (int) $payload['assessmentTypeId'] : null,
+        );
     }
 
     /**

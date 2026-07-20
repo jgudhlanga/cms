@@ -10,6 +10,6 @@ class PaymentSettingsController extends Controller
 
 	public function __invoke()
 	{
-		return Inertia::render('payments/Index', []);
+		return Inertia::render('shared/payments/Index', []);
 	}
 }

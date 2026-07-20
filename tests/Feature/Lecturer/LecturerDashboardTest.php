@@ -1,10 +1,12 @@
 <?php
 
 use App\Enums\Acl\RoleEnum;
+use App\Enums\AcademicCalendars\AcademicCalendarTypeEnum;
 use App\Models\AcademicCalendars\AcademicCalendarClass;
 use App\Models\AcademicCalendars\CourseWorkMark;
 use App\Models\Acl\Permission;
 use App\Models\Acl\Role;
+use App\Models\Institution\AssessmentCalendar\AssessmentCalendar;
 use App\Models\Institution\Syllabus\CourseSyllabusModule;
 use App\Models\Users\User;
 use Database\Seeders\AcademicCalendars\ClassMetaDataTypeSeeder;
@@ -145,10 +147,70 @@ test('teaching classes index only returns assigned classes', function () {
         ->assertSuccessful()
         ->assertInertia(fn ($page) => $page
             ->component('teaching/classes/Index')
+            ->has('summary')
+            ->where('summary.classCount', 1)
             ->has('classes', 1)
-            ->where('classes.0.id', $context['academicCalendarClass']->id)
+            ->where('classes.0.academicCalendarClassId', $context['academicCalendarClass']->id)
             ->where('classes.0.name', $context['academicCalendarClass']->name)
-            ->where('classes.0.id', fn ($id) => (int) $id !== (int) $otherClass->id)
+            ->where('classes.0.academicCalendarClassId', fn ($id) => (int) $id !== (int) $otherClass->id)
+            ->has('classes.0.genderCounts')
+            ->has('classes.0.studentCount')
+            ->has('classes.0.moduleCodes', 1)
+            ->where('classes.0.moduleCodes.0', $context['module']->code)
+            ->has('classes.0.assignedModuleCodes', 1)
+            ->has('classes.0.assessmentWindows')
+            ->has('classes.0.stats')
+        );
+});
+
+test('teaching classes index includes assessment windows for class mode of study', function () {
+    $context = createCourseWorkJsonApiContext();
+    [$lecturerUser, $staff] = createLecturerUserWithStaff($context);
+    assignLecturerToClassModule($context, $staff, asTutor: false);
+    $calendarId = prepareLecturerCalendar($context);
+
+    AssessmentCalendar::query()->create([
+        'tenant_id' => $context['tenant']->id,
+        'assessment_type_id' => $context['assessmentType']->id,
+        'academic_calendar_id' => $calendarId,
+        'start_date' => now()->subDay()->toDateString(),
+        'end_date' => now()->addWeek()->toDateString(),
+        'type' => AcademicCalendarTypeEnum::SEMESTER->value,
+    ]);
+
+    $this->actingAs($lecturerUser)
+        ->get(route('teaching.classes.index', ['academic_calendar_id' => $calendarId]))
+        ->assertSuccessful()
+        ->assertInertia(fn ($page) => $page
+            ->component('teaching/classes/Index')
+            ->has('classes.0.assessmentWindows', 1)
+            ->where('classes.0.assessmentWindows.0.assessmentTypeName', $context['assessmentType']->name)
+            ->where('classes.0.assessmentWindows.0.isOpen', true)
+            ->where('summary.openAssessmentWindowCount', 1)
+        );
+});
+
+test('module lecturer class index only shows assigned module codes', function () {
+    $context = createCourseWorkJsonApiContext();
+    [$lecturerUser, $staff] = createLecturerUserWithStaff($context);
+    assignLecturerToClassModule($context, $staff, asTutor: false);
+    $calendarId = prepareLecturerCalendar($context);
+
+    CourseSyllabusModule::query()->create([
+        'tenant_id' => $context['tenant']->id,
+        'course_syllabus_id' => $context['module']->course_syllabus_id,
+        'academic_year_option_id' => $context['module']->academic_year_option_id,
+        'title' => 'Unassigned Module',
+        'code' => 'UNAS1',
+        'duration_in_hours' => 20,
+    ]);
+
+    $this->actingAs($lecturerUser)
+        ->get(route('teaching.classes.index', ['academic_calendar_id' => $calendarId]))
+        ->assertSuccessful()
+        ->assertInertia(fn ($page) => $page
+            ->has('classes.0.moduleCodes', 1)
+            ->where('classes.0.moduleCodes.0', $context['module']->code)
         );
 });
 
@@ -176,6 +238,45 @@ test('lecturer role seeder receives lecturer portal permissions', function () {
         ->and($role->hasPermissionTo('view:lecturer-classes'))->toBeTrue()
         ->and($role->hasPermissionTo('view:lecturer-modules'))->toBeTrue()
         ->and($role->hasPermissionTo('view:course-work'))->toBeTrue();
+});
+
+test('teaching dashboard priority alerts include applicable assessment calendars', function () {
+    $context = createCourseWorkJsonApiContext();
+    [$lecturerUser, $staff] = createLecturerUserWithStaff($context);
+    assignLecturerToClassModule($context, $staff);
+    $calendarId = prepareLecturerCalendar($context);
+
+    enableDashboardModule([
+        'overview' => false,
+        'academic' => true,
+        'enrolments' => false,
+        'attendance' => false,
+        'staff' => false,
+        'finance' => false,
+        'hostel' => false,
+    ]);
+
+    AssessmentCalendar::query()->create([
+        'tenant_id' => $context['tenant']->id,
+        'assessment_type_id' => $context['assessmentType']->id,
+        'academic_calendar_id' => $calendarId,
+        'start_date' => now()->subDay()->toDateString(),
+        'end_date' => now()->addDays(2)->toDateString(),
+        'type' => AcademicCalendarTypeEnum::SEMESTER->value,
+    ]);
+
+    $this->actingAs($lecturerUser)
+        ->get(dashboardUrlFor($lecturerUser, $calendarId))
+        ->assertSuccessful()
+        ->assertInertia(fn ($page) => $page
+            ->component('dashboard/Index')
+            ->where('visibleTabs', ['academic'])
+            ->has('teachingDashboard.priorityAlerts')
+            ->where('teachingDashboard.priorityAlerts.0.kind', 'assessment_calendar')
+            ->where('teachingDashboard.priorityAlerts.0.severity', 'critical')
+            ->where('teachingDashboard.priorityAlerts.0.daysRemaining', 2)
+            ->where('teachingDashboard.priorityAlerts.0.assessmentTypeName', $context['assessmentType']->name)
+        );
 });
 
 test('legacy lecturer dashboard url redirects to shared dashboard', function () {

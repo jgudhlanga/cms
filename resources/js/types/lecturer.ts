@@ -9,6 +9,10 @@ export interface LecturerPriorityAlert {
     severity: string;
     message: string;
     updatedAt: string | null;
+    kind?: string | null;
+    daysRemaining?: number | null;
+    endDate?: string | null;
+    assessmentTypeName?: string | null;
 }
 
 export interface LecturerStudentRow {
@@ -63,22 +67,56 @@ export interface LecturerDashboard {
     quickActions: LecturerQuickAction[];
 }
 
-export interface LecturerClassRow {
-    id: number;
-    name: string;
-    description: string | null;
-    departmentName: string;
-    courseName: string;
-    levelName: string;
-    modeOfStudyName: string;
-    calendarYear: string;
-    modulesCount: number;
-    isTutor: boolean;
-}
-
 export interface LecturerModuleClass {
     id: number;
     name: string;
+}
+
+export interface TeachingClassAssessmentWindow {
+    assessmentTypeName: string;
+    startDate: string | null;
+    endDate: string | null;
+    isOpen: boolean;
+}
+
+export interface TeachingClassStats {
+    assignedModuleCount: number;
+    missingCourseWorkCount: number;
+    passRate: number | null;
+    averageMark: number | null;
+}
+
+export interface TeachingClassCard {
+    academicCalendarClassId: number | null;
+    name: string;
+    studentCount: number;
+    genderCounts: {
+        male: number;
+        female: number;
+        unknown: number;
+    };
+    tutor?: {
+        id: number;
+        name: string;
+    } | null;
+    isTutor?: boolean;
+    departmentName?: string;
+    courseName?: string;
+    levelName?: string;
+    modeOfStudyName?: string;
+    calendarYear?: string;
+    moduleCodes: string[];
+    assignedModuleCodes: string[];
+    assessmentWindows: TeachingClassAssessmentWindow[];
+    stats: TeachingClassStats;
+}
+
+export interface TeachingClassesSummary {
+    classCount: number;
+    studentCount: number;
+    assignedModuleCount: number;
+    openAssessmentWindowCount: number;
+    missingCourseWorkCount: number;
 }
 
 export interface LecturerModuleRow {

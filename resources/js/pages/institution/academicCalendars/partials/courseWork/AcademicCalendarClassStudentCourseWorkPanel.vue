@@ -15,6 +15,13 @@ const props = withDefaults(
         canCreate?: boolean;
         canUpdate?: boolean;
         canViewAuditTrail?: boolean;
+        moduleLocks?: Record<number, {
+            hasEditableCourseWork: boolean;
+            allAssessmentTypesLocked: boolean;
+            lockedAssessmentTypeIds: number[];
+            lockedAssessmentTypeNames: string[];
+            readOnlyMessage: string | null;
+        }>;
     }>(),
     {
         canCreate: false,
@@ -135,6 +142,7 @@ onMounted(async () => {
                     :can-update="canUpdate"
                     :refreshing="refreshing"
                     :saving-key="savingKey"
+                    :module-locks="moduleLocks"
                     :on-save-row="onSaveRow"
                 />
             </div>

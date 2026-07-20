@@ -11,7 +11,19 @@ import { computed } from 'vue';
 interface ClassDetail {
     id: number;
     name: string;
-    modules: Array<{ id: number; title: string; code: string }>;
+    modules: Array<{
+        id: number;
+        title: string;
+        code: string;
+        captureMarkOnly?: boolean;
+        courseWorkLock: {
+            hasEditableCourseWork: boolean;
+            allAssessmentTypesLocked: boolean;
+            lockedAssessmentTypeIds: number[];
+            lockedAssessmentTypeNames: string[];
+            readOnlyMessage: string | null;
+        };
+    }>;
 }
 
 interface Props {
@@ -54,6 +66,12 @@ const studentCourseWorkUrl = (studentEnrolmentId: number): string =>
         academic_calendar_class: props.classDetail.id,
         student_enrolment: studentEnrolmentId,
     });
+
+const moduleLocks = computed<Record<number, ClassDetail['modules'][number]['courseWorkLock']>>(() =>
+    Object.fromEntries(
+        props.classDetail.modules.map((module) => [module.id, module.courseWorkLock]),
+    ),
+);
 </script>
 
 <template>
@@ -81,6 +99,7 @@ const studentCourseWorkUrl = (studentEnrolmentId: number): string =>
             :course-work-export-url="courseWorkExportUrl"
             :course-work-import-url="courseWorkImportUrl"
             :student-course-work-url="studentCourseWorkUrl"
+            :module-locks="moduleLocks"
         />
     </PageContainer>
 </template>

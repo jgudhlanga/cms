@@ -53,6 +53,7 @@ use App\Repositories\Students\interface\IStudentRepository;
 use App\Repositories\Users\interface\IUserRepository;
 use App\Services\Enrollment\EnrollmentLookupService;
 use App\Services\Students\ApplicationFeeService;
+use App\Services\Students\IntakePeriodResolver;
 use App\Services\Students\RegistrationAvailabilityService;
 use App\Services\Students\ReturningStudentApplicationPrefillService;
 use App\Services\Students\ReturningStudentContextService;
@@ -517,11 +518,13 @@ class PortalController extends Controller
         $student = $this->profileStudent();
         $user = request()->user();
         $openIntakes = $this->returningStudentContext->openIntakes();
+        $offerLetterIntakePeriodIds = app(IntakePeriodResolver::class)->offerLetterIntakePeriodIds();
 
         return Inertia::render('portal/student/profile/Section', [
             'student' => StudentResource::make($student),
             'activeTab' => 'applications',
             'activeIntakePeriodIds' => $openIntakes->pluck('id')->values()->all(),
+            'offerLetterIntakePeriodIds' => $offerLetterIntakePeriodIds,
             'applicationHub' => $this->returningStudentContext->applicationHubFor($student, $user),
         ]);
     }
