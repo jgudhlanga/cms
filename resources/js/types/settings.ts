@@ -179,6 +179,7 @@ export type AcademicLevel = {
     id?: string;
     attributes: {
         name: string;
+        position?: number | null;
         description: string;
         createdAt?: string;
         updatedAt?: string;

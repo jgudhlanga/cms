@@ -25,7 +25,6 @@ const APP_MODULE_KEYS = {
     races: 'races',
     statuses: 'statuses',
     titles: 'titles',
-    insurers: 'insurers',
     address_types: 'address_types',
     contacts: 'contacts',
     addresses: 'addresses',
@@ -70,7 +69,6 @@ const APP_MODULE_KEYS = {
     show_payment_status: 'show_payment_status',
     o_level_subjects: 'o_level_subjects',
     academic_calendars: 'academic_calendars',
-    student_applications: 'student_applications',
     student_per_class: 'student_per_class',
     student_enrolment_statuses: 'student_enrolment_statuses',
     academic_year_options: 'academic_year_options',
@@ -86,7 +84,6 @@ const APP_MODULE_KEYS = {
     hostel_room_reassign: 'hostel_room_reassign',
     student_list_export: 'student_list_export',
     class_list_export: 'class_list_export',
-    assign_class_lecturer: 'assign_class_lecturer',
     assign_class_tutor: 'assign_class_tutor',
 };
 const EXAM_SITTINGS = [
