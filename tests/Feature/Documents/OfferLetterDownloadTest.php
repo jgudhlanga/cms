@@ -133,3 +133,34 @@ it('blocks offer letter download for applications in a past closed intake that i
         'student_application' => $studentApplication->id,
     ]))->assertNotFound();
 });
+
+it('allows offer letter download while impersonating a student', function (): void {
+    \App\Models\Acl\Role::findOrCreate(\App\Enums\Acl\RoleEnum::STUDENT->name(), 'web');
+
+    $studentApplication = createVerifiedStudentApplication('OFFER-IMP-'.strtoupper(str()->random(4)));
+    $studentUser = $studentApplication->student->user;
+    $studentUser->assignRole(\App\Enums\Acl\RoleEnum::STUDENT->name());
+
+    $studentApplication->intakePeriod->update([
+        'is_active' => true,
+        'status' => IntakePeriodStatusEnum::Open,
+        'end_date' => now()->addYear()->toDateString(),
+    ]);
+
+    seedOfferLetterDocumentPrerequisites($studentApplication);
+
+    $impersonator = \App\Models\Users\User::factory()->create();
+    $impersonator->givePermissionTo('root:manage');
+
+    $this->actingAs($impersonator)
+        ->get(route('impersonate', ['id' => $studentUser->id]))
+        ->assertRedirect();
+
+    $response = $this->get(route('documents.offer-letter', [
+        'student_application' => $studentApplication->id,
+    ]));
+
+    $response->assertSuccessful();
+    expect($response->headers->get('content-type'))->toContain('application/pdf');
+    expect($response->headers->get('content-disposition'))->toContain('attachment');
+});

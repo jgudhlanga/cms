@@ -29,7 +29,13 @@ class RedirectImpersonatedToPortal
             return $next($request);
         }
 
-        if ($request->routeIs('portal.*', 'impersonate', 'impersonate.leave', 'logout')) {
+        if ($request->routeIs(
+            'portal.*',
+            'impersonate',
+            'impersonate.leave',
+            'logout',
+            'documents.*',
+        )) {
             return $next($request);
         }
 
