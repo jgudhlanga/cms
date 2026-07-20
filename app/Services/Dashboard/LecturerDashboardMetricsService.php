@@ -4,8 +4,10 @@ namespace App\Services\Dashboard;
 
 use App\Enums\Institution\ModeOfStudyEnum;
 use App\Helpers\Helper;
+use App\Models\AcademicCalendars\AcademicCalendarClass;
 use App\Models\AcademicCalendars\ClassConfig;
 use App\Models\AcademicCalendars\CourseWorkMark;
+use App\Models\Institution\AssessmentCalendar\AssessmentCalendar;
 use App\Models\Institution\AssessmentType;
 use App\Models\Institution\Syllabus\CourseSyllabusModule;
 use App\Models\Students\StudentEnrolment;
@@ -14,6 +16,8 @@ use App\Services\AcademicCalendars\CourseWorkAggregationService;
 use App\Services\Lecturer\LecturerAssignmentResolver;
 use App\Support\AcademicCalendars\CourseWorkGradeBand;
 use App\Support\Institution\CourseSyllabusModulePeriod;
+use Carbon\Carbon;
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
@@ -46,10 +50,19 @@ class LecturerDashboardMetricsService
             'lowPerformingStudents' => $this->rankedStudents($gradedResults, 'asc', 5),
             'riskyStudents' => $this->riskyStudents($gradedResults),
             'missingCourseWork' => $this->missingCourseWork($moduleResults),
-            'priorityAlerts' => $this->priorityAlerts($moduleResults, $gradedResults),
+            'priorityAlerts' => $this->priorityAlerts($moduleResults, $gradedResults, $resolved),
             'modules' => $this->moduleSummaries($moduleResults, $resolved),
             'quickActions' => $this->quickActions($user),
         ];
+    }
+
+    /**
+     * @param  array{staff: mixed, classIds: list<int>, moduleIds: list<int>, assignmentKeys: list<string>, tutorClassIds: list<int>}  $resolved
+     * @return list<array<string, mixed>>
+     */
+    public function moduleResultsForResolved(array $resolved): array
+    {
+        return $this->moduleResults($resolved);
     }
 
     /**
@@ -357,16 +370,18 @@ class LecturerDashboardMetricsService
     /**
      * @param  list<array<string, mixed>>  $moduleResults
      * @param  list<array<string, mixed>>  $gradedResults
-     * @return list<array{severity: string, message: string, updatedAt: string|null}>
+     * @param  array{staff: mixed, classIds: list<int>, moduleIds: list<int>, assignmentKeys: list<string>, tutorClassIds: list<int>}  $resolved
+     * @return list<array<string, mixed>>
      */
-    private function priorityAlerts(array $moduleResults, array $gradedResults): array
+    private function priorityAlerts(array $moduleResults, array $gradedResults, array $resolved): array
     {
-        $alerts = [];
+        $alerts = $this->assessmentCalendarAlerts($resolved);
         $missing = $this->missingCourseWork($moduleResults);
 
         if ($missing !== []) {
             $top = $missing[0];
             $alerts[] = [
+                'kind' => 'missing_marks',
                 'severity' => 'warning',
                 'message' => __('dashboard.lecturer_alert_missing_marks', [
                     'count' => $top['incompleteCount'],
@@ -374,6 +389,9 @@ class LecturerDashboardMetricsService
                     'class' => $top['className'],
                 ]),
                 'updatedAt' => null,
+                'daysRemaining' => null,
+                'endDate' => null,
+                'assessmentTypeName' => null,
             ];
         }
 
@@ -381,11 +399,15 @@ class LecturerDashboardMetricsService
 
         if ($risky !== []) {
             $alerts[] = [
+                'kind' => 'risky_students',
                 'severity' => 'critical',
                 'message' => __('dashboard.lecturer_alert_risky_students', [
                     'count' => count($risky),
                 ]),
                 'updatedAt' => null,
+                'daysRemaining' => null,
+                'endDate' => null,
+                'assessmentTypeName' => null,
             ];
         }
 
@@ -399,14 +421,165 @@ class LecturerDashboardMetricsService
 
             if ($failRate >= 30) {
                 $alerts[] = [
+                    'kind' => 'fail_rate',
                     'severity' => 'warning',
                     'message' => __('dashboard.lecturer_alert_high_fail_rate', [
                         'rate' => $failRate,
                     ]),
                     'updatedAt' => null,
+                    'daysRemaining' => null,
+                    'endDate' => null,
+                    'assessmentTypeName' => null,
                 ];
             }
         }
+
+        return $this->sortPriorityAlerts($alerts);
+    }
+
+    /**
+     * @param  array{staff: mixed, classIds: list<int>, moduleIds: list<int>, assignmentKeys: list<string>, tutorClassIds: list<int>}  $resolved
+     * @return list<array<string, mixed>>
+     */
+    private function assessmentCalendarAlerts(array $resolved): array
+    {
+        if ($resolved['classIds'] === []) {
+            return [];
+        }
+
+        $modeIds = AcademicCalendarClass::query()
+            ->whereIn('id', $resolved['classIds'])
+            ->with('classConfig')
+            ->get()
+            ->map(fn (AcademicCalendarClass $class): int => (int) ($class->classConfig?->mode_of_study_id ?? 0))
+            ->filter(fn (int $modeId): bool => $modeId > 0)
+            ->unique()
+            ->values()
+            ->all();
+
+        if ($modeIds === []) {
+            return [];
+        }
+
+        $academicCalendar = Helper::resolveAcademicCalendar();
+        $today = now()->startOfDay();
+        $alertsByTypeId = [];
+
+        $calendars = AssessmentCalendar::query()
+            ->where('academic_calendar_id', (int) $academicCalendar->id)
+            ->with('assessmentType')
+            ->get();
+
+        foreach ($calendars as $calendar) {
+            $assessmentType = $calendar->assessmentType;
+
+            if (! $assessmentType instanceof AssessmentType) {
+                continue;
+            }
+
+            $typeModeIds = array_values(array_filter(
+                array_map('intval', $assessmentType->modes_of_study ?? []),
+                static fn (int $modeId): bool => $modeId > 0,
+            ));
+
+            if (array_intersect($modeIds, $typeModeIds) === []) {
+                continue;
+            }
+
+            $startDate = $calendar->start_date;
+            $endDate = $calendar->end_date;
+
+            if (! $startDate instanceof CarbonInterface || ! $endDate instanceof CarbonInterface) {
+                continue;
+            }
+
+            $start = Carbon::parse($startDate)->startOfDay();
+            $end = Carbon::parse($endDate)->startOfDay();
+
+            if (! $today->between($start, $end->copy()->endOfDay())) {
+                continue;
+            }
+
+            $daysRemaining = (int) $today->diffInDays($end, false);
+            $typeId = (int) $assessmentType->id;
+            $endDateFormatted = $end->format('Y-m-d');
+
+            if (
+                isset($alertsByTypeId[$typeId])
+                && (int) $alertsByTypeId[$typeId]['daysRemaining'] <= $daysRemaining
+            ) {
+                continue;
+            }
+
+            $alertsByTypeId[$typeId] = [
+                'kind' => 'assessment_calendar',
+                'severity' => $this->assessmentAlertSeverity($daysRemaining),
+                'message' => $daysRemaining === 0
+                    ? __('dashboard.lecturer_alert_assessment_window_today', [
+                        'assessment' => (string) $assessmentType->name,
+                        'end_date' => $endDateFormatted,
+                    ])
+                    : trans_choice('dashboard.lecturer_alert_assessment_window', $daysRemaining, [
+                        'assessment' => (string) $assessmentType->name,
+                        'days' => $daysRemaining,
+                        'end_date' => $endDateFormatted,
+                    ]),
+                'updatedAt' => null,
+                'daysRemaining' => $daysRemaining,
+                'endDate' => $endDateFormatted,
+                'assessmentTypeName' => (string) $assessmentType->name,
+            ];
+        }
+
+        return array_values($alertsByTypeId);
+    }
+
+    private function assessmentAlertSeverity(int $daysRemaining): string
+    {
+        if ($daysRemaining <= 3) {
+            return 'critical';
+        }
+
+        if ($daysRemaining <= 7) {
+            return 'warning';
+        }
+
+        return 'info';
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $alerts
+     * @return list<array<string, mixed>>
+     */
+    private function sortPriorityAlerts(array $alerts): array
+    {
+        $severityWeight = [
+            'critical' => 0,
+            'warning' => 1,
+            'info' => 2,
+        ];
+
+        usort($alerts, function (array $left, array $right) use ($severityWeight): int {
+            $leftDays = $left['daysRemaining'] ?? null;
+            $rightDays = $right['daysRemaining'] ?? null;
+
+            if ($leftDays !== null && $rightDays !== null && $leftDays !== $rightDays) {
+                return $leftDays <=> $rightDays;
+            }
+
+            if ($leftDays !== null && $rightDays === null) {
+                return -1;
+            }
+
+            if ($leftDays === null && $rightDays !== null) {
+                return 1;
+            }
+
+            $leftSeverity = $severityWeight[(string) ($left['severity'] ?? 'info')] ?? 3;
+            $rightSeverity = $severityWeight[(string) ($right['severity'] ?? 'info')] ?? 3;
+
+            return $leftSeverity <=> $rightSeverity;
+        });
 
         return $alerts;
     }

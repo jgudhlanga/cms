@@ -45,9 +45,11 @@ class ClassesController extends Controller
         $this->authorize('viewLecturerClasses');
 
         $academicCalendar = Helper::resolveAcademicCalendar();
+        $indexPayload = $this->teachingListService->classesIndexFor(auth()->user());
 
         return Inertia::render('teaching/classes/Index', [
-            'classes' => $this->teachingListService->classesFor(auth()->user()),
+            'classes' => $indexPayload['classes'],
+            'summary' => $indexPayload['summary'],
             'academicCalendar' => AcademicCalendarResource::make($academicCalendar),
             'academicContextSubtitle' => $this->academicContextSubtitle($academicCalendar),
             'canEnterMarks' => $this->canEnterMarks(),

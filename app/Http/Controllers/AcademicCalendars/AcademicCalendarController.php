@@ -1108,45 +1108,17 @@ class AcademicCalendarController extends Controller
             return [];
         }
 
-        return AcademicCalendarClass::query()
-            ->leftJoin('academic_calendar_student_enrolments', function ($join): void {
-                $join->on('academic_calendar_student_enrolments.academic_calendar_class_id', '=', 'academic_calendar_classes.id')
-                    ->whereNull('academic_calendar_student_enrolments.deleted_at');
-            })
-            ->leftJoin('student_enrolments', 'student_enrolments.id', '=', 'academic_calendar_student_enrolments.student_enrolment_id')
-            ->leftJoin('students', 'students.id', '=', 'student_enrolments.student_id')
-            ->leftJoin('genders', 'genders.id', '=', 'students.gender_id')
-            ->where('academic_calendar_classes.class_config_id', $classConfig->id)
-            ->whereNull('academic_calendar_classes.deleted_at')
-            ->groupBy('academic_calendar_classes.id', 'academic_calendar_classes.name')
-            ->select([
-                'academic_calendar_classes.id',
-                'academic_calendar_classes.name',
-                DB::raw('COUNT(academic_calendar_student_enrolments.id) as student_count'),
-                DB::raw("SUM(CASE WHEN LOWER(genders.title) LIKE 'male%' THEN 1 ELSE 0 END) as male_count"),
-                DB::raw("SUM(CASE WHEN LOWER(genders.title) LIKE 'female%' THEN 1 ELSE 0 END) as female_count"),
-            ])
-            ->orderBy('academic_calendar_classes.id')
-            ->get()
-            ->filter(fn ($class): bool => (int) ($class->student_count ?? 0) > 0)
-            ->map(function (mixed $class): array {
-                $maleCount = (int) ($class->male_count ?? 0);
-                $femaleCount = (int) ($class->female_count ?? 0);
-                $studentCount = (int) ($class->student_count ?? 0);
-
-                return [
-                    'academicCalendarClassId' => (int) $class->id,
-                    'name' => (string) $class->name,
-                    'studentCount' => $studentCount,
-                    'genderCounts' => [
-                        'male' => $maleCount,
-                        'female' => $femaleCount,
-                        'unknown' => max(0, $studentCount - ($maleCount + $femaleCount)),
-                    ],
-                    'students' => [],
-                ];
-            })
+        $classIds = AcademicCalendarClass::query()
+            ->where('class_config_id', $classConfig->id)
+            ->whereNull('deleted_at')
+            ->pluck('id')
+            ->map(fn ($id): int => (int) $id)
             ->all();
+
+        return array_values(array_filter(
+            $this->classStaffingService->classPreviewsByClassId($classIds),
+            fn (array $preview): bool => (int) ($preview['studentCount'] ?? 0) > 0,
+        ));
     }
 
     /**

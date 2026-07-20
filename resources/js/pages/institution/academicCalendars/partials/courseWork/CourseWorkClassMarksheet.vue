@@ -4,9 +4,10 @@ import Empty from '@/components/core/util/Empty.vue';
 import { useCourseWorkClassMarksheet } from '@/composables/academicCalendars/useCourseWorkClassMarksheet';
 import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
-import { errorAlert } from '@/lib/alerts';
+import { errorAlert, successAlert } from '@/lib/alerts';
 import { isCourseWorkMarkInputInvalid, parseCourseWorkMark } from '@/lib/course-work';
 import type { CourseWorkAssessment, CourseWorkStudent } from '@/types/course-work';
+import { LoaderCircle } from 'lucide-vue-next';
 import { trans } from 'laravel-vue-i18n';
 import { Link as InertiaLink } from '@inertiajs/vue3';
 import { computed, onMounted, ref, watch } from 'vue';
@@ -23,6 +24,13 @@ const props = defineProps<{
         courseWorkExportUrl: (moduleId: number, format: 'xlsx' | 'pdf', strict?: boolean) => string;
         courseWorkImportUrl?: (moduleId: number) => string;
         studentCourseWorkUrl?: (studentEnrolmentId: number) => string | null;
+        moduleLocks?: Record<number, {
+            hasEditableCourseWork: boolean;
+            allAssessmentTypesLocked: boolean;
+            lockedAssessmentTypeIds: number[];
+            lockedAssessmentTypeNames: string[];
+            readOnlyMessage: string | null;
+        }>;
     }>();
 
 const {
@@ -33,6 +41,7 @@ const {
     moduleStudents,
     assessmentTypes,
     loading,
+    savingKey,
     error,
     loadTree,
     saveMark,
@@ -95,11 +104,49 @@ const completionLabel = computed(() => {
     });
 });
 
+const isSavingAny = computed(() => savingKey.value != null);
+
+const selectedModuleLock = computed(() =>
+    selectedModuleId.value !== null ? props.moduleLocks?.[selectedModuleId.value] ?? null : null,
+);
+
 const canEditAssessment = (assessment: CourseWorkAssessment): boolean =>
-    assessment.markId != null ? props.canUpdate : props.canCreate;
+    !selectedModuleLock.value?.lockedAssessmentTypeIds.includes(assessment.assessmentTypeId)
+    && (assessment.markId != null ? props.canUpdate : props.canCreate);
 
 const canEditModuleMark = (student: CourseWorkStudent): boolean =>
-    student.moduleMark?.markId != null ? props.canUpdate : props.canCreate;
+    !selectedModuleLock.value?.allAssessmentTypesLocked
+    && (student.moduleMark?.markId != null ? props.canUpdate : props.canCreate);
+
+const persistMark = async (
+    student: CourseWorkStudent,
+    assessment: CourseWorkAssessment | null,
+    nextMark: number | null,
+    draftKeyValue: string,
+    previousValue: string,
+): Promise<void> => {
+    if (selectedModuleId.value === null) {
+        return;
+    }
+
+    const saved = await saveMark({
+        markId: assessment?.markId ?? student.moduleMark?.markId ?? null,
+        studentEnrolmentId: student.studentEnrolmentId,
+        courseSyllabusModuleId: selectedModuleId.value,
+        assessmentTypeId: assessment?.assessmentTypeId ?? null,
+        mark: nextMark,
+        remark: assessment?.remark ?? student.moduleMark?.remark ?? null,
+    });
+
+    if (saved) {
+        successAlert(trans('academic_calendar.course_work_saved'));
+
+        return;
+    }
+
+    draftMarks.value[draftKeyValue] = previousValue;
+    errorAlert(trans('academic_calendar.course_work_save_failed'));
+};
 
 const onModuleMarkBlur = async (student: CourseWorkStudent): Promise<void> => {
     if (!canEditModuleMark(student) || selectedModuleId.value === null) {
@@ -108,13 +155,14 @@ const onModuleMarkBlur = async (student: CourseWorkStudent): Promise<void> => {
 
     const key = draftKey(student.studentEnrolmentId);
     const rawValue = draftMarks.value[key] ?? '';
+    const previousValue =
+        student.moduleMark?.mark !== null && student.moduleMark?.mark !== undefined
+            ? String(student.moduleMark.mark)
+            : '';
 
     if (isCourseWorkMarkInputInvalid(rawValue)) {
         errorAlert(trans('academic_calendar.course_work_mark_invalid'));
-        draftMarks.value[key] =
-            student.moduleMark?.mark !== null && student.moduleMark?.mark !== undefined
-                ? String(student.moduleMark.mark)
-                : '';
+        draftMarks.value[key] = previousValue;
 
         return;
     }
@@ -126,14 +174,7 @@ const onModuleMarkBlur = async (student: CourseWorkStudent): Promise<void> => {
         return;
     }
 
-    await saveMark({
-        markId: student.moduleMark?.markId ?? null,
-        studentEnrolmentId: student.studentEnrolmentId,
-        courseSyllabusModuleId: selectedModuleId.value,
-        assessmentTypeId: null,
-        mark: nextMark,
-        remark: student.moduleMark?.remark ?? null,
-    });
+    await persistMark(student, null, nextMark, key, previousValue);
 };
 
 const onMarkBlur = async (student: CourseWorkStudent, assessment: CourseWorkAssessment): Promise<void> => {
@@ -143,10 +184,11 @@ const onMarkBlur = async (student: CourseWorkStudent, assessment: CourseWorkAsse
 
     const key = draftKey(student.studentEnrolmentId, assessment.assessmentTypeId);
     const rawValue = draftMarks.value[key] ?? '';
+    const previousValue = assessment.mark !== null ? String(assessment.mark) : '';
 
     if (isCourseWorkMarkInputInvalid(rawValue)) {
         errorAlert(trans('academic_calendar.course_work_mark_invalid'));
-        draftMarks.value[key] = assessment.mark !== null ? String(assessment.mark) : '';
+        draftMarks.value[key] = previousValue;
 
         return;
     }
@@ -158,14 +200,7 @@ const onMarkBlur = async (student: CourseWorkStudent, assessment: CourseWorkAsse
         return;
     }
 
-    await saveMark({
-        markId: assessment.markId,
-        studentEnrolmentId: student.studentEnrolmentId,
-        courseSyllabusModuleId: selectedModuleId.value,
-        assessmentTypeId: assessment.assessmentTypeId,
-        mark: nextMark,
-        remark: assessment.remark,
-    });
+    await persistMark(student, assessment, nextMark, key, previousValue);
 };
 
 const formatTotal = (value: number | null | undefined): string =>
@@ -182,7 +217,17 @@ onMounted(() => {
             <h2 class="text-lg font-semibold text-foreground">
                 {{ $t('academic_calendar.course_work_marksheet') }}
             </h2>
-            <p v-if="completionLabel" class="text-sm text-muted-foreground">{{ completionLabel }}</p>
+            <div class="flex flex-wrap items-center gap-3">
+                <p
+                    v-if="isSavingAny"
+                    class="inline-flex items-center gap-1.5 text-sm text-muted-foreground"
+                    aria-live="polite"
+                >
+                    <LoaderCircle class="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+                    {{ $t('academic_calendar.course_work_saving') }}
+                </p>
+                <p v-else-if="completionLabel" class="text-sm text-muted-foreground">{{ completionLabel }}</p>
+            </div>
         </div>
 
         <p v-if="loading" class="text-sm text-muted-foreground">{{ $t('academic_calendar.course_work_loading') }}</p>
@@ -212,7 +257,7 @@ onMounted(() => {
 
                 <div v-if="(canExport || canImport) && selectedModuleId" class="flex shrink-0 flex-wrap gap-2">
                     <InertiaLink
-                        v-if="canImport && courseWorkImportUrl"
+                        v-if="canImport && courseWorkImportUrl && !selectedModuleLock?.allAssessmentTypesLocked"
                         :href="courseWorkImportUrl(selectedModuleId)"
                         class="inline-flex"
                     >
@@ -263,6 +308,12 @@ onMounted(() => {
             <p v-if="!selectedModuleCaptureMarkOnly" class="text-xs text-muted-foreground">
                 {{ $t('academic_calendar.course_work_phase2_note') }}
             </p>
+            <p
+                v-if="selectedModuleLock?.readOnlyMessage"
+                class="rounded-lg border border-border bg-muted/30 px-3 py-2 text-sm text-muted-foreground"
+            >
+                {{ selectedModuleLock.readOnlyMessage }}
+            </p>
 
             <Empty
                 v-if="moduleStudents.length === 0"
@@ -286,19 +337,26 @@ onMounted(() => {
                             <td class="j-td">{{ (student as { candidateNumber?: string | null }).candidateNumber ?? student.studentNumber ?? '---' }}</td>
                             <td class="j-td font-mono text-xs">{{ student.studentNumber ?? $t('students.not_available') }}</td>
                             <td class="j-td text-center">
-                                <input
-                                    v-model="draftMarks[draftKey(student.studentEnrolmentId)]"
-                                    type="number"
-                                    min="0"
-                                    max="100"
-                                    step="1"
-                                    class="mx-auto h-8 w-16 rounded-md border border-input bg-background px-2 text-center text-sm"
-                                    :disabled="
-                                        !canEditModuleMark(student) ||
-                                        isSaving(student.studentEnrolmentId, selectedModuleId!)
-                                    "
-                                    @blur="onModuleMarkBlur(student)"
-                                />
+                                <div class="inline-flex items-center justify-center gap-1.5">
+                                    <input
+                                        v-model="draftMarks[draftKey(student.studentEnrolmentId)]"
+                                        type="number"
+                                        min="0"
+                                        max="100"
+                                        step="1"
+                                        class="h-8 w-16 rounded-md border border-input bg-background px-2 text-center text-sm"
+                                        :disabled="
+                                            !canEditModuleMark(student) ||
+                                            isSaving(student.studentEnrolmentId, selectedModuleId!)
+                                        "
+                                        @blur="onModuleMarkBlur(student)"
+                                    />
+                                    <LoaderCircle
+                                        v-if="isSaving(student.studentEnrolmentId, selectedModuleId!)"
+                                        class="h-3.5 w-3.5 animate-spin text-muted-foreground"
+                                        aria-hidden="true"
+                                    />
+                                </div>
                             </td>
                             <td class="j-td text-sm text-muted-foreground">
                                 {{ student.moduleMark?.remark ?? '—' }}
@@ -340,19 +398,26 @@ onMounted(() => {
                                 class="j-td text-center"
                             >
                                 <template v-if="findAssessment(student, type.id)">
-                                    <input
-                                        v-model="draftMarks[draftKey(student.studentEnrolmentId, type.id)]"
-                                        type="number"
-                                        min="0"
-                                        max="100"
-                                        step="1"
-                                        class="mx-auto h-8 w-16 rounded-md border border-input bg-background px-2 text-center text-sm"
-                                        :disabled="
-                                            !canEditAssessment(findAssessment(student, type.id)!) ||
-                                            isSaving(student.studentEnrolmentId, selectedModuleId!, type.id)
-                                        "
-                                        @blur="onMarkBlur(student, findAssessment(student, type.id)!)"
-                                    />
+                                    <div class="inline-flex items-center justify-center gap-1.5">
+                                        <input
+                                            v-model="draftMarks[draftKey(student.studentEnrolmentId, type.id)]"
+                                            type="number"
+                                            min="0"
+                                            max="100"
+                                            step="1"
+                                            class="h-8 w-16 rounded-md border border-input bg-background px-2 text-center text-sm"
+                                            :disabled="
+                                                !canEditAssessment(findAssessment(student, type.id)!) ||
+                                                isSaving(student.studentEnrolmentId, selectedModuleId!, type.id)
+                                            "
+                                            @blur="onMarkBlur(student, findAssessment(student, type.id)!)"
+                                        />
+                                        <LoaderCircle
+                                            v-if="isSaving(student.studentEnrolmentId, selectedModuleId!, type.id)"
+                                            class="h-3.5 w-3.5 animate-spin text-muted-foreground"
+                                            aria-hidden="true"
+                                        />
+                                    </div>
                                 </template>
                             </td>
                             <td class="j-td text-center font-semibold">

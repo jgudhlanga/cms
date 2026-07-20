@@ -11,6 +11,16 @@ import { computed } from 'vue';
 interface ClassDetail {
     id: number;
     name: string;
+    modules: Array<{
+        id: number;
+        courseWorkLock: {
+            hasEditableCourseWork: boolean;
+            allAssessmentTypesLocked: boolean;
+            lockedAssessmentTypeIds: number[];
+            lockedAssessmentTypeNames: string[];
+            readOnlyMessage: string | null;
+        };
+    }>;
 }
 
 interface Props {
@@ -36,6 +46,12 @@ const breadcrumbs = computed<BreadcrumbItemInterface[]>(() => [
     { title: props.classDetail.name, href: route('teaching.classes.show', props.classDetail.id) },
     { title: props.student.studentName || trans_choice('trans.student', 1) },
 ]);
+
+const moduleLocks = computed<Record<number, ClassDetail['modules'][number]['courseWorkLock']>>(() =>
+    Object.fromEntries(
+        props.classDetail.modules.map((module) => [module.id, module.courseWorkLock]),
+    ),
+);
 </script>
 
 <template>
@@ -58,6 +74,7 @@ const breadcrumbs = computed<BreadcrumbItemInterface[]>(() => [
             :can-create="canCreateCourseWork"
             :can-update="canUpdateCourseWork"
             :can-view-audit-trail="false"
+            :module-locks="moduleLocks"
         />
     </PageContainer>
 </template>

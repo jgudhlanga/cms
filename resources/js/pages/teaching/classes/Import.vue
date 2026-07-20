@@ -13,6 +13,16 @@ interface ClassDetail {
     id: number;
     name: string;
     classConfigId: number;
+    modules: Array<{
+        id: number;
+        courseWorkLock: {
+            hasEditableCourseWork: boolean;
+            allAssessmentTypesLocked: boolean;
+            lockedAssessmentTypeIds: number[];
+            lockedAssessmentTypeNames: string[];
+            readOnlyMessage: string | null;
+        };
+    }>;
 }
 
 interface Props {
@@ -52,6 +62,10 @@ const courseWorkImportProcessUrl = computed(() =>
         course_syllabus_module: props.module.id,
     }),
 );
+
+const selectedModuleLock = computed(
+    () => props.classDetail.modules.find((module) => module.id === props.module.id)?.courseWorkLock ?? null,
+);
 </script>
 
 <template>
@@ -82,6 +96,8 @@ const courseWorkImportProcessUrl = computed(() =>
             :course-work-import-preview-url="courseWorkImportPreviewUrl"
             :course-work-import-process-url="courseWorkImportProcessUrl"
             :course-work-import-result="courseWorkImportResult"
+            :read-only="selectedModuleLock?.allAssessmentTypesLocked ?? false"
+            :read-only-message="selectedModuleLock?.readOnlyMessage ?? null"
         />
     </PageContainer>
 </template>

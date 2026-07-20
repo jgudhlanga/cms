@@ -16,6 +16,8 @@ interface Props {
     canCreate: boolean;
     canUpdate: boolean;
     saving: boolean;
+    readOnly?: boolean;
+    readOnlyMessage?: string | null;
     onSaveRow: (mark: number | null, remark: string | null) => Promise<boolean>;
 }
 
@@ -34,7 +36,7 @@ watch(
 );
 
 const canEdit = computed((): boolean =>
-    props.assessment.markId != null ? props.canUpdate : props.canCreate,
+    !props.readOnly && (props.assessment.markId != null ? props.canUpdate : props.canCreate),
 );
 
 const normalizedMark = (): number | null => parseCourseWorkMark(markInput.value);
@@ -108,6 +110,9 @@ const onSave = async (): Promise<void> => {
             <label class="text-xs font-bold text-muted-foreground uppercase">
                 {{ assessment.assessmentTypeName }}
             </label>
+            <p v-if="readOnly && readOnlyMessage" class="text-xs text-muted-foreground">
+                {{ readOnlyMessage }}
+            </p>
             <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
                     <span class="mb-1 block text-[0.7rem] uppercase tracking-wide text-muted-foreground">

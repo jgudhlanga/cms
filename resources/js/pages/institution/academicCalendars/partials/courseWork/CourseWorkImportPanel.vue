@@ -40,6 +40,8 @@ const props = defineProps<{
     courseWorkImportPreviewUrl: string;
     courseWorkImportProcessUrl: string;
     courseWorkImportResult?: CourseWorkImportResult | null;
+    readOnly?: boolean;
+    readOnlyMessage?: string | null;
 }>();
 
 const {
@@ -349,7 +351,7 @@ onUnmounted(() => {
                     </select>
                 </div>
 
-                <div v-if="canImportCourseWork && selectedModuleId" class="flex shrink-0 flex-wrap gap-2">
+                <div v-if="canImportCourseWork && selectedModuleId && !readOnly" class="flex shrink-0 flex-wrap gap-2">
                     <a
                         v-if="templateUrl"
                         :href="templateUrl"
@@ -369,6 +371,13 @@ onUnmounted(() => {
                 </div>
             </div>
 
+            <p
+                v-if="readOnly && readOnlyMessage"
+                class="rounded-lg border border-border bg-muted/30 px-3 py-2 text-sm text-muted-foreground"
+            >
+                {{ readOnlyMessage }}
+            </p>
+
             <div
                 v-if="canImportCourseWork && selectedModuleId"
                 class="space-y-4 rounded-lg border border-border p-4"
@@ -382,6 +391,7 @@ onUnmounted(() => {
                         ref="fileInput"
                         type="file"
                         accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv"
+                        :disabled="readOnly"
                         class="block w-full text-sm text-muted-foreground file:mr-4 file:rounded-md file:border-0 file:bg-secondary file:px-4 file:py-2 file:text-sm file:font-medium"
                         @change="onFileChange"
                     />
@@ -398,7 +408,7 @@ onUnmounted(() => {
                     :size="ButtonSize.xs"
                     classes="rounded-full"
                     :processing="previewLoading"
-                    :disabled="!selectedFile || previewLoading || Boolean(fileError)"
+                    :disabled="readOnly || !selectedFile || previewLoading || Boolean(fileError)"
                     @click="runPreview"
                 >
                     {{ $t('academic_calendar.course_work_import_preview') }}

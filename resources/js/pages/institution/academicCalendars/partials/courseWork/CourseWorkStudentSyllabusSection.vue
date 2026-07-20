@@ -9,6 +9,13 @@ interface Props {
     syllabus: CourseWorkStudentSyllabus;
     canCreate: boolean;
     canUpdate: boolean;
+    moduleLocks?: Record<number, {
+        hasEditableCourseWork: boolean;
+        allAssessmentTypesLocked: boolean;
+        lockedAssessmentTypeIds: number[];
+        lockedAssessmentTypeNames: string[];
+        readOnlyMessage: string | null;
+    }>;
     refreshing?: boolean;
     savingKey?: string | null;
     onSaveRow: (
@@ -20,10 +27,15 @@ interface Props {
     ) => Promise<boolean>;
 }
 
-withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<Props>(), {
     refreshing: false,
     savingKey: null,
 });
+
+const moduleLockFor = (moduleId: number) => props.moduleLocks?.[moduleId] ?? null;
+
+const isAssessmentLocked = (moduleId: number, assessmentTypeId: number): boolean =>
+    moduleLockFor(moduleId)?.lockedAssessmentTypeIds.includes(assessmentTypeId) ?? false;
 </script>
 
 <template>
@@ -53,6 +65,8 @@ withDefaults(defineProps<Props>(), {
                         :can-create="canCreate"
                         :can-update="canUpdate"
                         :saving="savingKey === `${courseModule.id}:mark-only`"
+                        :read-only="moduleLockFor(courseModule.id)?.allAssessmentTypesLocked ?? false"
+                        :read-only-message="moduleLockFor(courseModule.id)?.readOnlyMessage ?? null"
                         :on-save-row="(mark, remark) =>
                             onSaveRow(courseModule.id, 0, mark, remark, courseModule.moduleMark?.markId ?? null)"
                     />
@@ -65,6 +79,8 @@ withDefaults(defineProps<Props>(), {
                         :can-create="canCreate"
                         :can-update="canUpdate"
                         :saving="savingKey === `${courseModule.id}:${assessment.assessmentTypeId}`"
+                        :read-only="isAssessmentLocked(courseModule.id, assessment.assessmentTypeId)"
+                        :read-only-message="moduleLockFor(courseModule.id)?.readOnlyMessage ?? null"
                         :on-save-row="(mark, remark) =>
                             onSaveRow(
                                 courseModule.id,

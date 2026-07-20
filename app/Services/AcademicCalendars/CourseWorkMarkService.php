@@ -20,6 +20,7 @@ class CourseWorkMarkService
     public function __construct(
         private readonly CourseWorkAuditLogger $auditLogger,
         private readonly LecturerCourseWorkAccess $lecturerCourseWorkAccess,
+        private readonly CourseWorkAssessmentLockService $courseWorkAssessmentLockService,
     ) {}
 
     /**
@@ -45,6 +46,13 @@ class CourseWorkMarkService
             : null;
 
         $this->assertMarkCaptureMode($module, $assessmentTypeId);
+        $this->assertMutationUnlocked(
+            (int) $data['studentEnrolmentId'],
+            $module,
+            $assessmentTypeId,
+            $academicCalendarClassId,
+            $classConfigId,
+        );
 
         if (array_key_exists('mark', $data) && $data['mark'] !== null) {
             $parsedMark = CourseWorkMarkValue::tryParse($data['mark']);
@@ -161,6 +169,14 @@ class CourseWorkMarkService
             (int) $mark->course_syllabus_module_id,
             $academicCalendarClassId,
         );
+        $module = CourseSyllabusModule::query()->findOrFail((int) $mark->course_syllabus_module_id);
+        $this->assertMutationUnlocked(
+            (int) $mark->student_enrolment_id,
+            $module,
+            $mark->assessment_type_id !== null ? (int) $mark->assessment_type_id : null,
+            $academicCalendarClassId,
+            $classConfigId,
+        );
 
         $oldValues = $mark->only(['mark', 'remark']);
         $mark->delete();
@@ -185,6 +201,14 @@ class CourseWorkMarkService
             (int) $mark->student_enrolment_id,
             (int) $mark->course_syllabus_module_id,
             $academicCalendarClassId,
+        );
+        $module = CourseSyllabusModule::query()->findOrFail((int) $mark->course_syllabus_module_id);
+        $this->assertMutationUnlocked(
+            (int) $mark->student_enrolment_id,
+            $module,
+            $mark->assessment_type_id !== null ? (int) $mark->assessment_type_id : null,
+            $academicCalendarClassId,
+            $classConfigId,
         );
 
         $mark->restore();
@@ -300,5 +324,46 @@ class CourseWorkMarkService
             $moduleId,
             $academicCalendarClassId,
         );
+    }
+
+    public function assertMutationUnlocked(
+        int $studentEnrolmentId,
+        CourseSyllabusModule $module,
+        ?int $assessmentTypeId,
+        ?int $academicCalendarClassId = null,
+        ?int $classConfigId = null,
+    ): void {
+        $config = $this->resolveClassConfigForMutation($studentEnrolmentId, $academicCalendarClassId, $classConfigId);
+
+        if (! $config instanceof ClassConfig) {
+            return;
+        }
+
+        $this->courseWorkAssessmentLockService->assertMutationAllowed($config, $module, $assessmentTypeId);
+    }
+
+    private function resolveClassConfigForMutation(
+        int $studentEnrolmentId,
+        ?int $academicCalendarClassId,
+        ?int $classConfigId,
+    ): ?ClassConfig {
+        if ($classConfigId !== null) {
+            return $this->assertClassConfigExists($classConfigId);
+        }
+
+        if ($academicCalendarClassId !== null) {
+            return $this->assertClassExists($academicCalendarClassId)->classConfig;
+        }
+
+        $classId = AcademicCalendarStudentEnrolment::query()
+            ->where('student_enrolment_id', $studentEnrolmentId)
+            ->whereNull('deleted_at')
+            ->value('academic_calendar_class_id');
+
+        if ($classId === null) {
+            return null;
+        }
+
+        return $this->assertClassExists((int) $classId)->classConfig;
     }
 }

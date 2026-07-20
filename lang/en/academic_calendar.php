@@ -56,6 +56,8 @@ return [
     'course_work_mark_invalid' => 'Marks must be whole numbers from 0 to 100.',
     'course_work_mark_only_no_assessment' => 'This module captures a single mark only. Do not provide an assessment type.',
     'course_work_assessment_required' => 'An assessment type is required for this module.',
+    'course_work_assessment_locked' => ':assessment is now read-only because its assessment window ended on :end_date.',
+    'course_work_assessment_read_only_notice' => 'Some coursework fields are read-only because these assessment windows have closed: :assessments.',
     'course_work_mark_only_badge' => 'Mark only',
     'course_work_import_layout_mismatch' => 'The import file layout does not match the selected module capture mode.',
     'course_work_remark' => 'Remark',
