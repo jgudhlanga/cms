@@ -16,6 +16,7 @@ import { computed, onMounted } from 'vue';
 interface Props {
     student: Student;
     activeIntakePeriodIds?: Array<string | number>;
+    offerLetterIntakePeriodIds?: Array<string | number>;
     applicationHub?: ApplicationHubProps | null;
 }
 
@@ -27,6 +28,7 @@ const { showEditProgramButton } = useStudents();
 const studentId = computed(() => props.student?.id ?? '');
 const canEditApplications = computed(() => hasAbility('update:student-applications'));
 const activeIntakePeriodIds = computed(() => props.activeIntakePeriodIds ?? []);
+const offerLetterIntakePeriodIds = computed(() => props.offerLetterIntakePeriodIds ?? []);
 
 const existingApplicationIntakeIds = computed(() =>
     applications.value
@@ -102,6 +104,7 @@ onMounted(async () => {
                 v-if="applications.length > 0"
                 :applications="applications"
                 :active-intake-period-ids="activeIntakePeriodIds"
+                :offer-letter-intake-period-ids="offerLetterIntakePeriodIds"
                 :can-edit="canEditApplications"
                 compact
                 editable

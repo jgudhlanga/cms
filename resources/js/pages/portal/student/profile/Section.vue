@@ -29,6 +29,7 @@ interface Props {
     auth: AuthObject;
     errors: object;
     activeIntakePeriodIds?: Array<string | number>;
+    offerLetterIntakePeriodIds?: Array<string | number>;
     applicationHub?: Record<string, unknown> | null;
 }
 
@@ -59,6 +60,7 @@ const pageTitle = computed(() => tabDefinition.value?.transLabel() ?? '');
                     v-else-if="activeTab === 'applications'"
                     :student="student"
                     :active-intake-period-ids="activeIntakePeriodIds"
+                    :offer-letter-intake-period-ids="offerLetterIntakePeriodIds"
                     :application-hub="applicationHub"
                 />
                 <Financials v-else-if="activeTab === 'financials'" :student="student" />

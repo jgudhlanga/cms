@@ -138,9 +138,16 @@ class StudentController extends Controller
         $this->authorize('view', $student);
         $user = UserResource::make($student->user);
         $student = StudentResource::make($student);
-        $activeIntakePeriodIds = app(IntakePeriodResolver::class)->activeIntakePeriodIds();
+        $intakePeriodResolver = app(IntakePeriodResolver::class);
+        $activeIntakePeriodIds = $intakePeriodResolver->activeIntakePeriodIds();
+        $offerLetterIntakePeriodIds = $intakePeriodResolver->offerLetterIntakePeriodIds();
 
-        return Inertia::render('students/Show', compact('user', 'student', 'activeIntakePeriodIds'));
+        return Inertia::render('students/Show', compact(
+            'user',
+            'student',
+            'activeIntakePeriodIds',
+            'offerLetterIntakePeriodIds',
+        ));
     }
 
     public function edit(string $id)

@@ -4,6 +4,7 @@ use App\Enums\Institution\IntakePeriodStatusEnum;
 use App\Enums\Shared\DocumentTypeEnum;
 use App\Enums\Shared\FeeTypeEnum;
 use App\Models\Institution\DocumentTemplate;
+use App\Models\Institution\IntakePeriod;
 use App\Models\Shared\DocumentType;
 use App\Models\Shared\FeeType;
 use App\Models\Students\StudentApplication;
@@ -34,6 +35,20 @@ function seedOfferLetterDocumentPrerequisites(StudentApplication $studentApplica
     );
 }
 
+function makeIntakeLatest(IntakePeriod $intakePeriod): void
+{
+    IntakePeriod::query()
+        ->whereKeyNot($intakePeriod->id)
+        ->update([
+            'end_date' => now()->subYears(2)->toDateString(),
+        ]);
+
+    $intakePeriod->update([
+        'start_date' => now()->startOfMonth()->toDateString(),
+        'end_date' => now()->addYear()->toDateString(),
+    ]);
+}
+
 it('allows offer letter download for applications in an active open intake', function (): void {
     $studentApplication = createVerifiedStudentApplication('OFFER-ACTIVE-'.strtoupper(str()->random(4)));
 
@@ -52,12 +67,64 @@ it('allows offer letter download for applications in an active open intake', fun
     expect($response->headers->get('content-type'))->toContain('application/pdf');
 });
 
-it('blocks offer letter download for applications in a past closed intake', function (): void {
+it('allows offer letter download for applications on the latest closed intake', function (): void {
+    $studentApplication = createVerifiedStudentApplication('OFFER-LATEST-CLOSED-'.strtoupper(str()->random(4)));
+
+    makeIntakeLatest($studentApplication->intakePeriod);
+
+    $studentApplication->intakePeriod->update([
+        'is_active' => true,
+        'status' => IntakePeriodStatusEnum::Closed,
+    ]);
+
+    seedOfferLetterDocumentPrerequisites($studentApplication);
+
+    $response = $this->get(route('documents.offer-letter', [
+        'student_application' => $studentApplication->id,
+    ]));
+
+    $response->assertSuccessful();
+    expect($response->headers->get('content-type'))->toContain('application/pdf');
+});
+
+it('allows offer letter download for applications on the latest suspended intake', function (): void {
+    $studentApplication = createVerifiedStudentApplication('OFFER-LATEST-SUSP-'.strtoupper(str()->random(4)));
+
+    makeIntakeLatest($studentApplication->intakePeriod);
+
+    $studentApplication->intakePeriod->update([
+        'is_active' => true,
+        'status' => IntakePeriodStatusEnum::Suspended,
+    ]);
+
+    seedOfferLetterDocumentPrerequisites($studentApplication);
+
+    $response = $this->get(route('documents.offer-letter', [
+        'student_application' => $studentApplication->id,
+    ]));
+
+    $response->assertSuccessful();
+    expect($response->headers->get('content-type'))->toContain('application/pdf');
+});
+
+it('blocks offer letter download for applications in a past closed intake that is not latest', function (): void {
     $studentApplication = createVerifiedStudentApplication('OFFER-PAST-'.strtoupper(str()->random(4)));
 
     $studentApplication->intakePeriod->update([
         'is_active' => false,
         'status' => IntakePeriodStatusEnum::Closed,
+        'start_date' => now()->subYears(3)->startOfMonth()->toDateString(),
+        'end_date' => now()->subYears(3)->endOfMonth()->toDateString(),
+    ]);
+
+    IntakePeriod::query()->create([
+        'tenant_id' => $studentApplication->tenant_id,
+        'name' => 'Newer Intake '.strtoupper(str()->random(4)),
+        'start_date' => now()->startOfMonth()->toDateString(),
+        'end_date' => now()->addYear()->toDateString(),
+        'calendar_year' => '2026/2027',
+        'is_active' => true,
+        'status' => IntakePeriodStatusEnum::Open,
     ]);
 
     seedOfferLetterDocumentPrerequisites($studentApplication);

@@ -16,6 +16,7 @@ import { Student } from '@/types/students';
 interface Props {
     student: Student;
     activeIntakePeriodIds?: Array<string | number>;
+    offerLetterIntakePeriodIds?: Array<string | number>;
     auth: AuthObject;
     errors: object;
 }
@@ -30,7 +31,10 @@ const { backUrl, backDestination, breadcrumbs, showBack } = useStudentShowNaviga
 
 const { activeTab } = storeToRefs(useStudentsStore());
 
-const visibleTabs = computed(() => profileTabs(student, { activeIntakePeriodIds: props.activeIntakePeriodIds }));
+const visibleTabs = computed(() => profileTabs(student, {
+    activeIntakePeriodIds: props.activeIntakePeriodIds,
+    offerLetterIntakePeriodIds: props.offerLetterIntakePeriodIds,
+}));
 
 const activeSection = computed(() => visibleTabs.value.find((tab) => tab.value === activeTab.value));
 
