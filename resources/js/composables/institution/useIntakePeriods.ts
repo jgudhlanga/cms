@@ -58,6 +58,23 @@ export const useIntakePeriods = () => {
                     );
                 },
             },
+            {
+                header: trans('trans.intake_period_continuous_badge'),
+                accessorKey: 'attributes.isContinuous',
+                cell: ({ row }: { row: { original: IntakePeriod } }) => {
+                    const isContinuous = row.original.attributes?.isContinuous ?? false;
+
+                    return h(
+                        'span',
+                        {
+                            class: isContinuous
+                                ? 'inline-flex rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-semibold uppercase text-sky-800 dark:bg-sky-900/40 dark:text-sky-200'
+                                : 'inline-flex rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase text-muted-foreground',
+                        },
+                        isContinuous ? trans('trans.yes') : trans('trans.no'),
+                    );
+                },
+            },
             { header: trans_choice('trans.description', 1), accessorKey: 'attributes.description' },
             {
                 header: trans_choice('trans.action', 2),
@@ -104,6 +121,7 @@ export const useIntakePeriods = () => {
                         message: trans('trans.date_must_be_valid', { field: trans('trans.end_date') }),
                     }),
                 status: z.enum(['open', 'suspended', 'closed']),
+                is_continuous: z.boolean().optional(),
             })
             .refine(
                 (data) => {

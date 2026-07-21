@@ -2,11 +2,19 @@
 import BaseAlert from '@/components/core/alert/BaseAlert.vue';
 import BaseCard from '@/components/core/card/BaseCard.vue';
 import InputError from '@/components/core/form/InputError.vue';
+import InstitutionDepartmentComboSelect from '@/components/core/form/combobox/InstitutionDepartmentComboSelect.vue';
+import DepartmentLevelComboSelect from '@/components/core/form/combobox/DepartmentLevelComboSelect.vue';
+import DepartmentCourseComboSelect from '@/components/core/form/combobox/DepartmentCourseComboSelect.vue';
+import ModeOfStudyComboSelect from '@/components/core/form/combobox/ModeOfStudyComboSelect.vue';
+import SpinnerComponent from '@/components/core/loader/SpinnerComponent.vue';
+import LevelRequirements from '@/components/students/update/LevelRequirements.vue';
+import OLevelRequirements from '@/components/students/update/OLevelRequirements.vue';
+import SDPRequirements from '@/components/students/update/SDPRequirements.vue';
 import { useUtils } from '@/composables/core/useUtils';
-import { useRegistrationAvailability } from '@/composables/students/useRegistrationAvailability';
+import { useErrorDialog } from '@/composables/core/useErrorDialog';
 import { useDepartmentCourses } from '@/composables/institution/useDepartmentCourses';
 import { useDepartmentLevels } from '@/composables/institution/useDepartmentLevels';
-import { useErrorDialog } from '@/composables/core/useErrorDialog';
+import { useRegistrationAvailability } from '@/composables/students/useRegistrationAvailability';
 import { TypeVariant } from '@/enums/type-variants';
 import { clearFormErrors } from '@/lib/forms';
 import { errorAlert } from '@/lib/alerts';
@@ -27,10 +35,12 @@ interface Props {
     hasPaidApplicationFee?: boolean | null;
     levelsWithPayment?: Level[];
     bare?: boolean;
+    applicationTrack?: string | null;
 }
 
 const props = withDefaults(defineProps<Props>(), {
     bare: false,
+    applicationTrack: null,
 });
 
 const emit = defineEmits<{
@@ -277,6 +287,7 @@ const goToPayment = () => {
                 :is-required="true"
             />
         </div>
+
         <div class="my-4 flex w-full flex-col">
             <template v-if="levelRequirementsLoading || courseRequirementsLoading">
                 <SpinnerComponent class="flex w-full items-center justify-center" />

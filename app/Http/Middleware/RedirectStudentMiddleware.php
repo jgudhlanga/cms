@@ -4,10 +4,12 @@ namespace App\Http\Middleware;
 
 use App\Enums\Acl\RoleEnum;
 use App\Enums\Students\ApplicationFeeStatusEnum;
+use App\Enums\Students\ApplicationTrackEnum;
 use App\Helpers\PaymentHelper;
 use App\Models\Institution\Level;
 use App\Models\Students\ApplicationFee;
 use App\Services\Students\ApplicationFeeService;
+use App\Services\Students\ApplicationTrackSession;
 use App\Services\Students\ReturningStudentContextService;
 use Closure;
 use Illuminate\Http\Request;
@@ -18,6 +20,7 @@ class RedirectStudentMiddleware
     public function __construct(
         protected ApplicationFeeService $applicationFeeService,
         protected ReturningStudentContextService $returningStudentContext,
+        protected ApplicationTrackSession $trackSession,
     ) {}
 
     public function handle(Request $request, Closure $next): Response
@@ -40,15 +43,49 @@ class RedirectStudentMiddleware
         }
 
         $applicationFee = $this->applicationFeeService->activeApplicationFee($user);
+
+        if ($applicationFee?->status === ApplicationFeeStatusEnum::SUBMITTED) {
+            if (! $request->routeIs('portal.applications', 'portal.application.view', 'portal.profile.applications')) {
+                return to_route('portal.applications');
+            }
+
+            return $next($request);
+        }
+
+        if ($this->trackSession->get() === null) {
+            if (! $request->routeIs('portal.application.track', 'portal.application.select-track')) {
+                return to_route('portal.application.track');
+            }
+
+            return $next($request);
+        }
+
+        $track = $this->trackSession->get();
+        if ($track === ApplicationTrackEnum::Apprentice) {
+            if (! $request->routeIs(
+                'portal.application.track',
+                'portal.application.select-track',
+                'portal.application.apprentice',
+                'portal.application.apprentice.store',
+            )) {
+                return to_route('portal.application.apprentice');
+            }
+
+            return $next($request);
+        }
+
         $level = $this->resolveLevel($applicationFee, $user);
 
         if ($level === null) {
             if (! $request->routeIs(
+                'portal.application.track',
+                'portal.application.select-track',
                 'portal.application.level-options',
                 'portal.application.select-level',
                 'portal.application.confirm',
                 'portal.application.create',
                 'portal.application.fee-payment',
+                'portal.store-application',
             )) {
                 return to_route('portal.application.level-options');
             }
@@ -56,17 +93,14 @@ class RedirectStudentMiddleware
             return $next($request);
         }
 
-        if ($applicationFee?->status === ApplicationFeeStatusEnum::SUBMITTED) {
-            if (! $request->routeIs('portal.applications', 'portal.application.view')) {
-                return to_route('portal.applications');
-            }
-
-            return $next($request);
-        }
-
         if (PaymentHelper::levelRequiresApplicationFeePayment($level, $user)) {
             if ($applicationFee === null) {
-                if (! $request->routeIs('portal.application.level-options', 'portal.application.select-level')) {
+                if (! $request->routeIs(
+                    'portal.application.track',
+                    'portal.application.select-track',
+                    'portal.application.level-options',
+                    'portal.application.select-level',
+                )) {
                     return to_route('portal.application.level-options');
                 }
 
@@ -91,6 +125,8 @@ class RedirectStudentMiddleware
                 'portal.application.fee-payment',
                 'portal.application.level-options',
                 'portal.application.select-level',
+                'portal.application.track',
+                'portal.application.select-track',
             )) {
                 return to_route('portal.application.fee-payment');
             }
@@ -115,6 +151,7 @@ class RedirectStudentMiddleware
             'portal.application.create',
             'portal.application.confirm',
             'portal.application.level-options',
+            'portal.application.track',
             'portal.store-application',
         )) {
             return to_route('portal.dashboard');

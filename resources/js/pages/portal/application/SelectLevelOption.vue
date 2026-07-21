@@ -20,6 +20,8 @@ interface Props {
     hasActiveIntakes?: boolean;
     availabilityIssue?: AvailabilityIssue;
     selectLevelRoute?: string;
+    applicationTrack?: string | null;
+    applicationTrackLabel?: string | null;
     auth: AuthObject;
     errors: object;
 }
@@ -31,6 +33,8 @@ const props = withDefaults(defineProps<Props>(), {
     hasActiveIntakes: true,
     availabilityIssue: null,
     selectLevelRoute: 'portal.application.select-level',
+    applicationTrack: null,
+    applicationTrackLabel: null,
 });
 
 const levelList = computed(() => {
@@ -82,6 +86,9 @@ const onApply = (levelId: string) => {
             <h1 class="text-xl font-semibold text-foreground">
                 {{ $t('trans.portal_application_step_level') }}
             </h1>
+            <p v-if="applicationTrackLabel" class="mt-1 text-sm font-medium text-primary">
+                {{ applicationTrackLabel }}
+            </p>
             <p v-if="showNoLevelsAlert" class="mt-2 text-sm text-muted-foreground">
                 {{ $t('trans.portal_no_levels_available_description') }}
             </p>

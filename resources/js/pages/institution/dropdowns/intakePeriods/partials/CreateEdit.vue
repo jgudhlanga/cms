@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import BaseSelect from '@/components/core/form/select/BaseSelect.vue';
 import BaseDatePicker from '@/components/core/form/date/BaseDatePicker.vue';
+import BaseCheckbox from '@/components/core/form/radio/BaseCheckbox.vue';
+import InputError from '@/components/core/form/InputError.vue';
 import Description from '@/components/core/form/text/Description.vue';
 import Name from '@/components/core/form/text/Name.vue';
 import BaseModal from '@/components/core/modal/BaseModal.vue';
@@ -20,6 +22,7 @@ const form = useForm<IntakePeriodParams>({
     end_date: '',
     description: '',
     status: 'open',
+    is_continuous: false,
 });
 
 const { saveIntakePeriod, formSchema, statusOptions } = useIntakePeriods();
@@ -33,6 +36,7 @@ watch(modals!, () => {
     form.end_date = intakePeriod.value?.attributes?.endDate ?? '';
     form.description = intakePeriod.value?.attributes?.description ?? '';
     form.status = intakePeriod.value?.attributes?.status ?? 'open';
+    form.is_continuous = !!intakePeriod.value?.attributes?.isContinuous;
     form.defaults();
 });
 
@@ -46,6 +50,7 @@ const save = () => {
             end_date: '',
             description: '',
             status: '',
+            is_continuous: '',
         };
 
         (Object.keys(fieldErrors) as (keyof typeof fieldErrors)[]).forEach((key) => {
@@ -102,6 +107,17 @@ const save = () => {
                 :error="form.errors.status"
                 @update:model-value="clearFormErrors(form, 'status')"
             />
+
+            <BaseCheckbox
+                input-id="is_continuous"
+                v-model="form.is_continuous"
+                :label="$t('trans.intake_period_is_continuous')"
+                @update:model-value="clearFormErrors(form, 'is_continuous')"
+            />
+            <p class="mb-3 text-xs text-muted-foreground">
+                {{ $t('trans.intake_period_is_continuous_help') }}
+            </p>
+            <InputError v-if="form.errors.is_continuous" :message="form.errors.is_continuous" />
 
             <Description v-model="form.description" @input="clearFormErrors(form, 'description')" :error="form.errors.description" />
         </template>

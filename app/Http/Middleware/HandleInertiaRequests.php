@@ -77,11 +77,7 @@ class HandleInertiaRequests extends Middleware
                 'impersonating' => $isImpersonating,
             ],
             'moduleState' => fn () => app(AclModuleStateService::class)->all(),
-            'registration' => fn () => [
-                'isOpen' => app(RegistrationAvailabilityService::class)->isRegistrationOpen(),
-                'status' => app(RegistrationAvailabilityService::class)->blockReason()?->value,
-                'maintenanceUrl' => route('portal.registration.maintenance'),
-            ],
+            'registration' => fn () => app(RegistrationAvailabilityService::class)->sharedProps(),
             'returningStudent' => fn () => $this->returningStudentProps($user),
             'purgeArchiveRetentionDays' => (int) config('purge.archive_retention_days', 30),
             'ziggy' => [

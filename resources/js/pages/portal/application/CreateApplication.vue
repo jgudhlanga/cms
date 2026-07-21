@@ -49,6 +49,8 @@ interface Props {
     intakeName?: string | null;
     selectedLevelId?: number | null;
     selectedLevelName?: string | null;
+    applicationTrack?: string | null;
+    applicationTrackLabel?: string | null;
 }
 
 const props = defineProps<Props>();
@@ -119,6 +121,8 @@ const form = useForm<CreateApplicationParams>({
     o_level_other_grade_ids: null,
     o_level_other_years: null,
     o_level_other_sittings: null,
+    employer: null,
+    apprentice_number: null,
 });
 
 const wizard = useCreateApplicationWizard(form);
@@ -231,6 +235,7 @@ const isValidating = ref(false);
                         :selected-level-name="selectedLevelName"
                         :has-paid-application-fee="hasPaidApplicationFee"
                         :levels-with-payment="levelsWithPayment"
+                        :application-track="applicationTrack"
                         @level-availability-change="isProgrammeLevelAvailable = $event"
                     />
 

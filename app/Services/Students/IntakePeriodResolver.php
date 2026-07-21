@@ -9,25 +9,57 @@ use App\Models\Students\StudentApplication;
 class IntakePeriodResolver
 {
     /**
+     * Active open non-continuous intakes used for regular / apprentice applications.
+     *
      * @return array<int, int>
      */
     public function activeIntakePeriodIds(): array
     {
         return IntakePeriod::query()
+            ->where('is_continuous', false)
             ->where('is_active', true)
             ->where('status', IntakePeriodStatusEnum::Open)
             ->pluck('id')
             ->all();
     }
 
+    /**
+     * @return array<int, int>
+     */
+    public function activeContinuousIntakePeriodIds(): array
+    {
+        return IntakePeriod::query()
+            ->where('is_continuous', true)
+            ->where('is_active', true)
+            ->where('status', IntakePeriodStatusEnum::Open)
+            ->pluck('id')
+            ->all();
+    }
+
+    public function continuousIntakePeriod(): ?IntakePeriod
+    {
+        return IntakePeriod::query()
+            ->where('is_continuous', true)
+            ->where('is_active', true)
+            ->where('status', IntakePeriodStatusEnum::Open)
+            ->orderByDesc('end_date')
+            ->first();
+    }
+
     public function isApplicationInActiveIntake(StudentApplication $application): bool
     {
-        return in_array($application->intake_period_id, $this->activeIntakePeriodIds(), true);
+        $ids = array_merge(
+            $this->activeIntakePeriodIds(),
+            $this->activeContinuousIntakePeriodIds(),
+        );
+
+        return in_array($application->intake_period_id, $ids, true);
     }
 
     public function latestIntakePeriodId(): ?int
     {
         $id = IntakePeriod::query()
+            ->where('is_continuous', false)
             ->orderByDesc('end_date')
             ->value('id');
 
@@ -35,14 +67,17 @@ class IntakePeriodResolver
     }
 
     /**
-     * Open active intakes plus the latest intake (any status), so offer letters
-     * remain downloadable after the current intake is closed or suspended.
+     * Open active intakes (regular + continuous) plus the latest regular intake (any status),
+     * so offer letters remain downloadable after the current intake is closed or suspended.
      *
      * @return array<int, int>
      */
     public function offerLetterIntakePeriodIds(): array
     {
-        $ids = $this->activeIntakePeriodIds();
+        $ids = array_merge(
+            $this->activeIntakePeriodIds(),
+            $this->activeContinuousIntakePeriodIds(),
+        );
         $latestId = $this->latestIntakePeriodId();
 
         if ($latestId !== null) {

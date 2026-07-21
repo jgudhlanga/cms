@@ -9,8 +9,10 @@ use App\Models\Acl\Role;
 use App\Models\Institution\IntakePeriod;
 use App\Models\Institution\Level;
 use App\Models\Students\ApplicationFee;
+use App\Models\Students\Student;
 use App\Models\Tenants\Tenant;
 use App\Models\Users\User;
+use Illuminate\Support\Facades\DB;
 
 beforeEach(function () {
     Role::findOrCreate(RoleEnum::STUDENT->name(), 'web');
@@ -95,14 +97,36 @@ test('student mid registration is redirected to maintenance when intake is suspe
     $user = createStudentWithoutProfile();
 
     $this->actingAs($user)
+        ->withSession(['application.track' => 'regular'])
         ->get(route('portal.application.level-options'))
         ->assertOk();
 
     ensureCurrentIntakeStatus(IntakePeriodStatusEnum::Suspended->value);
 
     $this->actingAs($user)
+        ->withSession(['application.track' => 'regular'])
         ->get(route('portal.application.level-options'))
         ->assertRedirect(route('portal.registration.maintenance'));
+});
+
+test('guest registration remains available when regular is closed but continuous is open', function () {
+    ensureCurrentIntakeStatus(IntakePeriodStatusEnum::Closed->value);
+    ensureContinuousIntakeOpen();
+
+    $this->get(route('portal.create'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page->component('portal/guest/RegistrationUserForm'));
+});
+
+test('maintenance page exposes continuous apply when continuous intake is open', function () {
+    ensureCurrentIntakeStatus(IntakePeriodStatusEnum::Closed->value);
+    ensureContinuousIntakeOpen();
+
+    $this->get(route('portal.registration.maintenance'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('portal/registration/RegistrationMaintenance')
+            ->where('continuousOpen', true));
 });
 
 test('submitted applications page remains accessible when registration is closed', function () {
@@ -131,25 +155,25 @@ test('enrolled student dashboard remains accessible when registration is closed'
     $user->assignRole(RoleEnum::STUDENT->name());
     $user->givePermissionTo('viewOwnDashboard:students');
 
-    \App\Models\Students\Student::query()->create([
+    Student::query()->create([
         'tenant_id' => $tenant->id,
         'user_id' => $user->id,
-        'title_id' => \Illuminate\Support\Facades\DB::table('titles')->insertGetId([
+        'title_id' => DB::table('titles')->insertGetId([
             'name' => 'Mr Enrolled',
             'created_at' => now(),
             'updated_at' => now(),
         ]),
-        'gender_id' => \Illuminate\Support\Facades\DB::table('genders')->insertGetId([
+        'gender_id' => DB::table('genders')->insertGetId([
             'title' => 'Male Enrolled',
             'created_at' => now(),
             'updated_at' => now(),
         ]),
-        'marital_status_id' => \Illuminate\Support\Facades\DB::table('marital_statuses')->insertGetId([
+        'marital_status_id' => DB::table('marital_statuses')->insertGetId([
             'title' => 'Single Enrolled',
             'created_at' => now(),
             'updated_at' => now(),
         ]),
-        'id_type_id' => \Illuminate\Support\Facades\DB::table('id_types')->insertGetId([
+        'id_type_id' => DB::table('id_types')->insertGetId([
             'name' => 'National ID Enrolled',
             'created_at' => now(),
             'updated_at' => now(),

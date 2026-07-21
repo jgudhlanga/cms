@@ -16,14 +16,21 @@ interface Props {
     status?: 'suspended' | 'closed' | null;
     message: string;
     intakeName?: string | null;
+    continuousOpen?: boolean;
+    continuousApplyUrl?: string | null;
 }
 
-const props = defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+    continuousOpen: false,
+    continuousApplyUrl: null,
+});
 const { navigateTo } = useUtils();
-const { redirectIfOpen } = useRegistrationAvailability();
+const { redirectIfOpen, registration } = useRegistrationAvailability();
 
 onMounted(() => {
-    redirectIfOpen();
+    if (registration.value.regularOpen) {
+        redirectIfOpen();
+    }
 });
 
 const title = computed(() => {
@@ -77,9 +84,19 @@ const alertDescription = computed(() => {
 
                     <div class="space-y-3 pt-2">
                         <BaseButton
+                            v-if="continuousOpen && continuousApplyUrl"
                             type="button"
                             class="w-full"
                             :variant="ColorVariant.primary"
+                            @click="navigateTo(continuousApplyUrl)"
+                        >
+                            {{ $t('trans.registration_maintenance_continuous_cta') }}
+                        </BaseButton>
+
+                        <BaseButton
+                            type="button"
+                            class="w-full"
+                            :variant="continuousOpen ? ColorVariant.secondary : ColorVariant.primary"
                             @click="navigateTo(route('login'))"
                         >
                             {{ $t('trans.registration_maintenance_return_to_sign_in') }}

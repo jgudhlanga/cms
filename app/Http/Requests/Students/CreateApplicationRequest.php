@@ -4,16 +4,21 @@ namespace App\Http\Requests\Students;
 
 use App\Enums\Shared\DisabilityStatusEnum;
 use App\Enums\Shared\IdTypeEnum;
+use App\Enums\Students\ApplicationTrackEnum;
 use App\Helpers\PaymentHelper;
 use App\Models\Institution\DepartmentLevel;
 use App\Models\Institution\Level;
+use App\Models\Institution\ModeOfStudy;
 use App\Rules\Students\ValidateOLevelResults;
 use App\Rules\ZimbabweanIdNumber;
 use App\Services\Enrollment\EnrollmentLookupService;
+use App\Services\Students\ApplicationEligibilityService;
 use App\Services\Students\ApplicationFeeService;
+use App\Services\Students\ApplicationTrackSession;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Validation\Validator;
 
 /**
@@ -96,6 +101,7 @@ class CreateApplicationRequest extends FormRequest
             'title_id' => ['required', 'integer', 'exists:titles,id'],
             'mode_of_study_id' => ['required', 'integer', 'exists:mode_of_studies,id'],
             'id_type_id' => ['required', 'integer', 'exists:id_types,id'],
+            'date_of_birth' => ['required', 'date', 'before:today'],
             'id_number' => [
                 'required_if:id_type_id,'.$idType,
                 'nullable',
@@ -128,6 +134,8 @@ class CreateApplicationRequest extends FormRequest
             'level_id' => ['required', 'integer'],
             'course_id' => ['required', 'integer'],
             'disability_status' => ['required', new Enum(DisabilityStatusEnum::class)],
+            'employer' => ['nullable', 'string', 'max:255'],
+            'apprentice_number' => ['nullable', 'string', 'max:255'],
         ];
     }
 
@@ -156,14 +164,63 @@ class CreateApplicationRequest extends FormRequest
                 }
             }
 
+            $this->validateApplicationTrack($validator);
             $this->validateApplicationFee($validator);
 
             app(ValidateOLevelResults::class)->validate($this, $validator);
         });
     }
 
+    protected function validateApplicationTrack(Validator $validator): void
+    {
+        $trackSession = app(ApplicationTrackSession::class);
+        $eligibility = app(ApplicationEligibilityService::class);
+        $track = $trackSession->require();
+
+        $departmentLevel = DepartmentLevel::query()->with('level')->find($this->integer('level_id'));
+        $mode = ModeOfStudy::query()->find($this->integer('mode_of_study_id'));
+
+        if ($departmentLevel === null || $mode === null || $departmentLevel->level === null) {
+            return;
+        }
+
+        $applicationFeeService = app(ApplicationFeeService::class);
+        $intakePeriod = $track->usesContinuousIntake()
+            ? $applicationFeeService->continuousIntakePeriod()
+            : $applicationFeeService->resolveIntakeForSubmit(
+                $this->user(),
+                $this->filled('intake_period_id') ? $this->integer('intake_period_id') : ($trackSession->intakePeriodId())
+            );
+
+        if ($intakePeriod === null) {
+            $validator->errors()->add('level_id', __('trans.application_track_not_open'));
+
+            return;
+        }
+
+        try {
+            $eligibility->assertTrackAllowsSubmit($track, $departmentLevel->level, $mode, $intakePeriod);
+        } catch (ValidationException $e) {
+            foreach ($e->errors() as $field => $messages) {
+                foreach ($messages as $message) {
+                    $validator->errors()->add($field, $message);
+                }
+            }
+        }
+
+        if ($track === ApplicationTrackEnum::Apprentice) {
+            $validator->errors()->add('track', __('trans.application_track_not_open'));
+        }
+    }
+
     protected function validateApplicationFee(Validator $validator): void
     {
+        $track = app(ApplicationTrackSession::class)->require();
+
+        if ($track->skipsApplicationFee()) {
+            return;
+        }
+
         $departmentLevel = DepartmentLevel::query()->find($this->integer('level_id'));
 
         if ($departmentLevel === null) {
@@ -197,12 +254,14 @@ class CreateApplicationRequest extends FormRequest
         $applicationFeeService = app(ApplicationFeeService::class);
         $applicationFee = $applicationFeeService->activeApplicationFee($user);
         $intakePeriod = $applicationFee?->intakePeriod
-            ?? $applicationFeeService->resolveIntakeForSubmit(
-                $user,
-                $this->filled('intake_period_id') ? $this->integer('intake_period_id') : null
-            );
+            ?? ($track->usesContinuousIntake()
+                ? $applicationFeeService->continuousIntakePeriod()
+                : $applicationFeeService->resolveIntakeForSubmit(
+                    $user,
+                    $this->filled('intake_period_id') ? $this->integer('intake_period_id') : null
+                ));
 
-        if ($applicationFee === null || ! PaymentHelper::hasPaidApplicationFeeAndNotApplied($user, $intakePeriod)) {
+        if ($applicationFee === null || $intakePeriod === null || ! PaymentHelper::hasPaidApplicationFeeAndNotApplied($user, $intakePeriod)) {
             $validator->errors()->add(
                 'level_id',
                 __('trans.application_fee_payment_required'),

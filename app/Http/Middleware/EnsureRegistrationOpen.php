@@ -7,6 +7,9 @@ use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
+/**
+ * Allows guest registration when regular OR continuous registration is open.
+ */
 class EnsureRegistrationOpen
 {
     public function __construct(
@@ -15,7 +18,7 @@ class EnsureRegistrationOpen
 
     public function handle(Request $request, Closure $next): Response
     {
-        if ($this->registrationAvailability->isRegistrationOpen()) {
+        if ($this->registrationAvailability->isAnyRegistrationOpen()) {
             return $next($request);
         }
 

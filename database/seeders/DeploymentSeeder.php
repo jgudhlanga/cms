@@ -7,12 +7,13 @@ use Database\Seeders\AcademicCalendars\ClassMetaDataTypeSeeder;
 use Database\Seeders\Acl\ModulesTableSeeder;
 use Database\Seeders\Acl\PermissionsTableSeeder;
 use Database\Seeders\Acl\RolesTableSeeder;
-use Database\Seeders\Institution\AssessmentTypesTableSeeder;
-use Database\Seeders\Students\StudentEnrolmentStatusSeeder;
-use Illuminate\Database\Seeder;
 use Database\Seeders\HMS\HostelAmenitySeeder;
 use Database\Seeders\HMS\HostelRoomSectionSeeder;
 use Database\Seeders\HMS\RoomSectionAmenitySeeder;
+use Database\Seeders\Institution\AssessmentTypesTableSeeder;
+use Database\Seeders\Institution\ContinuousIntakePeriodSeeder;
+use Database\Seeders\Students\StudentEnrolmentStatusSeeder;
+use Illuminate\Database\Seeder;
 
 class DeploymentSeeder extends Seeder
 {
@@ -32,6 +33,7 @@ class DeploymentSeeder extends Seeder
             HostelAmenitySeeder::class,
             HostelRoomSectionSeeder::class,
             RoomSectionAmenitySeeder::class,
+            ContinuousIntakePeriodSeeder::class,
         ]);
     }
 }

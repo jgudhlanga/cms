@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Students;
 
-use App\DTO\Shared\AddressDto;
+use App\Actions\Students\CreateApprenticeApplicantAction;
 use App\DTO\Shared\ContactDto;
 use App\DTO\Shared\NextOfKinDto;
 use App\DTO\Students\CreateApplicationDto;
@@ -16,6 +16,7 @@ use App\Enums\Shared\AcademicLevelEnum;
 use App\Enums\Shared\IdTypeEnum;
 use App\Enums\Shared\StatusEnum;
 use App\Enums\Shared\TenantEnum;
+use App\Enums\Students\ApplicationTrackEnum;
 use App\Helpers\Helper;
 use App\Helpers\PaymentHelper;
 use App\Helpers\PermissionHelper;
@@ -26,6 +27,7 @@ use App\Http\Requests\Shared\ContactRequest;
 use App\Http\Requests\Shared\NextOfKinRequest;
 use App\Http\Requests\Students\CreateApplicationRequest;
 use App\Http\Requests\Students\ProgramRequest;
+use App\Http\Requests\Students\StoreApprenticeApplicationRequest;
 use App\Http\Requests\Students\UpdateReturningApplicationRequest;
 use App\Http\Requests\Students\UpdateStudentRequest;
 use App\Http\Requests\Users\UserRequest;
@@ -52,7 +54,9 @@ use App\Repositories\Students\interface\IStudentApplicationRepository;
 use App\Repositories\Students\interface\IStudentRepository;
 use App\Repositories\Users\interface\IUserRepository;
 use App\Services\Enrollment\EnrollmentLookupService;
+use App\Services\Students\ApplicationEligibilityService;
 use App\Services\Students\ApplicationFeeService;
+use App\Services\Students\ApplicationTrackSession;
 use App\Services\Students\IntakePeriodResolver;
 use App\Services\Students\RegistrationAvailabilityService;
 use App\Services\Students\ReturningStudentApplicationPrefillService;
@@ -62,6 +66,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
@@ -81,6 +86,8 @@ class PortalController extends Controller
         protected RegistrationAvailabilityService $registrationAvailability,
         protected ReturningStudentContextService $returningStudentContext,
         protected ReturningStudentApplicationPrefillService $returningApplicationPrefillService,
+        protected ApplicationTrackSession $trackSession,
+        protected ApplicationEligibilityService $eligibility,
     ) {}
 
     // ========= Dashboard and Registration =========
@@ -178,7 +185,7 @@ class PortalController extends Controller
 
         Auth::login($user);
 
-        return to_route('portal.application.level-options');
+        return to_route('portal.application.track');
     }
 
     public function registrationConfirmation(User $user): Response
@@ -208,6 +215,8 @@ class PortalController extends Controller
             'intakeName' => $intakePeriod->name,
             'selectedLevelId' => session('application.level_id'),
             'selectedLevelName' => $this->resolveSelectedLevelName(),
+            'applicationTrack' => $this->trackSession->get()?->value,
+            'applicationTrackLabel' => $this->trackSession->get()?->label(),
             'registrationPrefill' => [
                 'id_number' => session('registration.id_number'),
                 'passport_number' => session('registration.passport_number'),
@@ -220,12 +229,138 @@ class PortalController extends Controller
     /**
      * @throws AuthorizationException
      */
-    public function levelOptions(): Response
+    public function chooseTrack(): Response|RedirectResponse
+    {
+        $this->authorize('manageStudentPersonalDetails');
+
+        if (! $this->registrationAvailability->isAnyRegistrationOpen()) {
+            return to_route('portal.registration.maintenance');
+        }
+
+        $tracks = collect($this->eligibility->availableTracks())->map(fn (ApplicationTrackEnum $track) => [
+            'value' => $track->value,
+            'label' => $track->label(),
+            'description' => $track->description(),
+        ]);
+
+        if ($tracks->count() === 1) {
+            $only = ApplicationTrackEnum::from($tracks->first()['value']);
+            $this->trackSession->set($only);
+            $this->bindIntakeForTrack($only);
+
+            return $this->redirectForTrack($only);
+        }
+
+        return Inertia::render('portal/application/SelectApplicationTrack', [
+            'tracks' => $tracks,
+            'currentTrack' => $this->trackSession->get()?->value,
+            'applicationStep' => 'track',
+        ]);
+    }
+
+    /**
+     * @throws AuthorizationException
+     */
+    public function selectTrack(Request $request): RedirectResponse
+    {
+        $this->authorize('manageStudentPersonalDetails');
+
+        $data = $request->validate([
+            'track' => ['required', 'string', 'in:'.implode(',', array_column(ApplicationTrackEnum::cases(), 'value'))],
+        ]);
+
+        $track = ApplicationTrackEnum::from($data['track']);
+
+        if (! $this->registrationAvailability->isTrackOpen($track)) {
+            throw ValidationException::withMessages([
+                'track' => __('trans.application_track_not_open'),
+            ]);
+        }
+
+        $this->trackSession->set($track);
+        $this->bindIntakeForTrack($track);
+
+        return $this->redirectForTrack($track);
+    }
+
+    /**
+     * @throws AuthorizationException
+     */
+    public function apprenticeApplication(): Response|RedirectResponse
+    {
+        $this->authorize('manageStudentPersonalDetails');
+
+        $track = $this->trackSession->get();
+        if ($track !== ApplicationTrackEnum::Apprentice) {
+            return to_route('portal.application.track');
+        }
+
+        if (! $this->registrationAvailability->isApprenticeRegistrationOpen()) {
+            return to_route('portal.application.track');
+        }
+
+        return Inertia::render('portal/application/ApprenticeExpressApplication', [
+            'applicationStep' => 'apprentice',
+            'applicationTrack' => $track->value,
+            'applicationTrackLabel' => $track->label(),
+        ]);
+    }
+
+    /**
+     * @throws AuthorizationException|Throwable
+     */
+    public function storeApprenticeApplication(
+        StoreApprenticeApplicationRequest $request,
+        CreateApprenticeApplicantAction $action,
+    ): RedirectResponse {
+        $this->authorize('manageStudentPersonalDetails');
+
+        DB::beginTransaction();
+        try {
+            $action->execute(
+                $request->user(),
+                $request->string('employer')->toString(),
+                $request->string('apprentice_number')->toString(),
+            );
+            DB::commit();
+            $this->trackSession->clear();
+
+            return to_route('portal.applications')
+                ->with('success', __('trans.application_apprentice_submitted_success'));
+        } catch (Throwable $e) {
+            DB::rollBack();
+
+            return back()->withErrors([
+                'error' => 'An error occurred while submitting your apprentice details. Please try again.',
+            ]);
+        }
+    }
+
+    /**
+     * @throws AuthorizationException
+     */
+    public function levelOptions(): Response|RedirectResponse
     {
         $this->authorizeApplicationLevelSelection();
-        // the levels on the offer
-        $levels = Level::where('show_on_current_application_period', 1)->orderBy('position')->orderBy('name')->get();
-        $openIntakes = $this->applicationFeeService->openIntakePeriodsForPortal();
+        $track = $this->trackSession->require();
+
+        if ($track === ApplicationTrackEnum::Apprentice) {
+            return to_route('portal.application.apprentice');
+        }
+
+        $levels = Level::where('show_on_current_application_period', 1)
+            ->orderBy('position')
+            ->orderBy('name')
+            ->get();
+
+        if ($track === ApplicationTrackEnum::Continuous) {
+            $levels = $this->eligibility->filterLevelsForContinuousTrack($levels);
+        }
+
+        $openIntakes = $track === ApplicationTrackEnum::Continuous
+            ? collect(array_filter([$this->applicationFeeService->continuousIntakePeriod()]))
+            : $this->applicationFeeService->openIntakePeriodsForPortal();
+
         $openLevelCount = $levels->count();
         $hasActiveIntakes = $openIntakes->isNotEmpty();
         $availabilityIssue = match (true) {
@@ -237,11 +372,13 @@ class PortalController extends Controller
         return Inertia::render('portal/application/SelectLevelOption', [
             'levels' => LevelResource::collection($levels),
             'intakePeriods' => IntakePeriodResource::collection($openIntakes),
-            'requiresIntakeSelection' => $openIntakes->count() > 1,
+            'requiresIntakeSelection' => $track !== ApplicationTrackEnum::Continuous && $openIntakes->count() > 1,
             'applicationStep' => 'level',
             'openLevelCount' => $openLevelCount,
             'hasActiveIntakes' => $hasActiveIntakes,
             'availabilityIssue' => $availabilityIssue,
+            'applicationTrack' => $track->value,
+            'applicationTrackLabel' => $track->label(),
         ]);
     }
 
@@ -251,30 +388,46 @@ class PortalController extends Controller
     public function selectLevel(Request $request): RedirectResponse
     {
         $this->authorize('manageStudentPersonalDetails');
-        $openIntakes = $this->applicationFeeService->openIntakePeriodsForPortal();
+        $track = $this->trackSession->require();
+
+        $openIntakes = $track === ApplicationTrackEnum::Continuous
+            ? collect(array_filter([$this->applicationFeeService->continuousIntakePeriod()]))
+            : $this->applicationFeeService->openIntakePeriodsForPortal();
+
         $rules = [
             'level_id' => ['required', 'exists:levels,id'],
             'intake_period_id' => ['nullable', 'integer', 'exists:intake_periods,id'],
         ];
 
-        if ($openIntakes->count() > 1) {
+        if ($track !== ApplicationTrackEnum::Continuous && $openIntakes->count() > 1) {
             $rules['intake_period_id'] = ['required', 'integer', 'exists:intake_periods,id'];
         }
 
         $data = $request->validate($rules);
         $level = Level::findOrFail($data['level_id']);
 
-        if (PaymentHelper::levelRequiresApplicationFeePayment($level, $request->user())) {
-            $intakePeriod = $openIntakes->count() > 1
-                ? $this->applicationFeeService->resolvePortalIntakePeriod((int) $data['intake_period_id'])
-                : ($openIntakes->first() ?? $this->applicationFeeService->resolvePortalIntakePeriod());
+        if ($track === ApplicationTrackEnum::Continuous && ! $this->eligibility->isLevelEligibleForContinuous($level)) {
+            throw ValidationException::withMessages([
+                'level_id' => __('trans.application_continuous_sdp_or_ojet_required'),
+            ]);
+        }
+
+        $intakePeriod = $this->eligibility->resolveIntakeForTrack(
+            $track,
+            isset($data['intake_period_id']) ? (int) $data['intake_period_id'] : null
+        );
+
+        $this->trackSession->setLevel($level->id);
+        $this->trackSession->setIntakePeriodId($intakePeriod->id);
+        session(['application.level_id' => $level->id]);
+
+        if ($this->eligibility->trackRequiresApplicationFee($track, $level, $request->user())) {
             $this->applicationFeeService->ensureForFeeRequiredLevel($request->user(), $level, $intakePeriod);
 
             return to_route('portal.application.fee-payment');
         }
 
         $this->applicationFeeService->abandonUnpaidApplicationFee($request->user());
-        session(['application.level_id' => $level->id]);
 
         return to_route('portal.application.create');
     }
@@ -299,10 +452,17 @@ class PortalController extends Controller
         try {
             $this->updateUserNamesIfChanged($user, $request);
 
-            $intakePeriod = $this->applicationFeeService->resolveIntakeForSubmit(
+            $track = $this->trackSession->require();
+            $intakePeriod = $this->applicationFeeService->resolveIntakeForApplicationSubmit(
                 $user,
+                $track,
                 $request->filled('intake_period_id') ? $request->integer('intake_period_id') : null
             );
+
+            if ($intakePeriod->is_continuous && ! $track->usesContinuousIntake()) {
+                $intakePeriod = $this->eligibility->resolveIntakeForTrack($track, null);
+            }
+
             $student = $this->studentRepository->create(
                 CreateApplicationDto::fromCreateApplicationRequest($request, $user, $intakePeriod)
             );
@@ -312,10 +472,9 @@ class PortalController extends Controller
             $application->update(['department_application_step_id' => $stepOne?->id ?? null]);
             // update payment status of registration fee to 'paid'
             PaymentHelper::updateRegistrationFeeLedgerEntries($application);
-            // generate student number
-            // $studentNumber = Helper::generateStudentNumber($student, $application->institutionDepartment);
-            // $student->update(['student_number' => $studentNumber]);
+
             DB::commit();
+            $this->trackSession->clear();
             if ($stepTwo) {
                 $application->update([
                     'department_application_step_id' => $stepTwo->id,
@@ -325,6 +484,11 @@ class PortalController extends Controller
             return to_route('portal.applications');
         } catch (Throwable $e) {
             DB::rollBack();
+            Log::error('Portal application submit failed', [
+                'user_id' => $user?->id,
+                'message' => $e->getMessage(),
+                'exception' => $e,
+            ]);
 
             return back()->withErrors([
                 'error' => 'An error occurred while submitting your application. Please try again.',
@@ -860,22 +1024,42 @@ class PortalController extends Controller
 
     public function registrationMaintenance(): Response|RedirectResponse
     {
-        if ($this->registrationAvailability->isRegistrationOpen()) {
+        if ($this->registrationAvailability->isRegularRegistrationOpen()) {
             return to_route('login');
         }
 
-        $intakePeriod = $this->registrationAvailability->currentIntakePeriod();
+        $intakePeriod = $this->registrationAvailability->currentRegularIntakePeriod();
         $reason = $this->registrationAvailability->blockReason();
+        $continuousOpen = $this->registrationAvailability->isContinuousRegistrationOpen();
 
-        if ($reason === null || $intakePeriod === null) {
+        if (($reason === null || $intakePeriod === null) && ! $continuousOpen) {
             return to_route('login');
         }
 
         return Inertia::render('portal/registration/RegistrationMaintenance', [
-            'status' => $reason->value,
-            'message' => $reason->maintenanceMessage($intakePeriod->name),
-            'intakeName' => $intakePeriod->name,
+            'status' => $reason?->value,
+            'message' => $reason && $intakePeriod
+                ? $reason->maintenanceMessage($intakePeriod->name)
+                : __('trans.registration_maintenance_closed', ['intake' => $intakePeriod?->name ?? '']),
+            'intakeName' => $intakePeriod?->name,
+            'continuousOpen' => $continuousOpen,
+            'continuousApplyUrl' => $continuousOpen ? route('portal.create') : null,
         ]);
+    }
+
+    private function bindIntakeForTrack(ApplicationTrackEnum $track): void
+    {
+        $intake = $this->eligibility->resolveIntakeForTrack($track);
+        $this->trackSession->setIntakePeriodId($intake->id);
+    }
+
+    private function redirectForTrack(ApplicationTrackEnum $track): RedirectResponse
+    {
+        if ($track === ApplicationTrackEnum::Apprentice) {
+            return to_route('portal.application.apprentice');
+        }
+
+        return to_route('portal.application.level-options');
     }
 
     public function errors(string $message): Response

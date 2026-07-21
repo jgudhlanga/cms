@@ -15,18 +15,19 @@ class IntakePeriodResource extends JsonResource
 
         return [
             'type' => 'intake-period',
-            'id' => $this->resource->id,
+            'id' => data_get($this->resource, 'id'),
             'attributes' => [
-                'name' => $this->resource->name,
-                'startDate' => $this->resource->start_date,
-                'endDate' => $this->resource->end_date,
-                'isActive' => $this->resource->is_active,
+                'name' => data_get($this->resource, 'name'),
+                'startDate' => data_get($this->resource, 'start_date'),
+                'endDate' => data_get($this->resource, 'end_date'),
+                'isActive' => data_get($this->resource, 'is_active'),
                 'status' => $status,
-                'description' => $this->resource->description,
+                'isContinuous' => (bool) data_get($this->resource, 'is_continuous', false),
+                'description' => data_get($this->resource, 'description'),
                 $this->mergeWhen($request->routeIs('intake-periods.*'), [
-                    'createdAt' => $this->resource->created_at,
-                    'updatedAt' => $this->resource->updated_at,
-                    'deletedAt' => $this->resource->deleted_at,
+                    'createdAt' => data_get($this->resource, 'created_at'),
+                    'updatedAt' => data_get($this->resource, 'updated_at'),
+                    'deletedAt' => data_get($this->resource, 'deleted_at'),
                 ]),
             ],
         ];

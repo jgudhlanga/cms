@@ -37,7 +37,7 @@ class ImpersonationLandingResolver
             return route('portal.dashboard');
         }
 
-        if (! $this->registrationAvailability->isRegistrationOpen()) {
+        if (! $this->registrationAvailability->isAnyRegistrationOpen()) {
             return route('portal.registration.maintenance');
         }
 
@@ -75,6 +75,6 @@ class ImpersonationLandingResolver
             return route('portal.application.fee-payment');
         }
 
-        return route('portal.application.level-options');
+        return route('portal.application.track');
     }
 }

@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\Acl\RoleEnum;
+use App\Enums\Institution\IntakePeriodStatusEnum;
 use App\Models\Acl\Role;
 use App\Models\Students\Student;
 use App\Models\Tenants\Tenant;
@@ -134,14 +135,16 @@ test('admin impersonates staff user without redirecting to student portal', func
     $this->assertAuthenticatedAs($staffUser);
 });
 
-test('admin impersonates student applicant and redirects to application level options', function () {
+test('admin impersonates student applicant and redirects to application track chooser', function () {
+    ensureCurrentIntakeStatus(IntakePeriodStatusEnum::Open->value);
+
     $impersonator = impersonatorUser();
     $applicantUser = createImpersonatableStudentApplicant();
 
     $this
         ->actingAs($impersonator)
         ->get(route('impersonate', ['id' => $applicantUser->id]))
-        ->assertRedirect(route('portal.application.level-options'));
+        ->assertRedirect(route('portal.application.track'));
 
     $this->assertAuthenticatedAs($applicantUser);
 });

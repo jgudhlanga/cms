@@ -7,15 +7,13 @@ use App\Http\Requests\Institution\IntakePeriodRequest;
 readonly class IntakePeriodDto
 {
     public function __construct(
-        public string  $name,
-        public string  $start_date,
-        public string  $end_date,
+        public string $name,
+        public string $start_date,
+        public string $end_date,
         public ?string $description,
-        public string  $status,
-    )
-    {
-    }
-
+        public string $status,
+        public bool $is_continuous = false,
+    ) {}
 
     public static function fromIntakePeriodRequest(IntakePeriodRequest $request): IntakePeriodDto
     {
@@ -25,6 +23,7 @@ readonly class IntakePeriodDto
             end_date: $request->end_date,
             description: $request->description,
             status: $request->status,
+            is_continuous: $request->boolean('is_continuous'),
         );
     }
 }

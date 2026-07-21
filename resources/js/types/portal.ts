@@ -78,6 +78,9 @@ export type CreateApplicationParams = {
     o_level_primary_sitting?: SelectOption | null;
     o_level_resit_subjects?: Record<string, boolean> | null;
     o_level_other_resit_rows?: Record<string, boolean> | null;
+    /** Apprentice track */
+    employer?: string | null;
+    apprentice_number?: string | null;
     /** Proof of Payment */
     proof_of_payment?: string | null;
     payment_reference?: string | null;
