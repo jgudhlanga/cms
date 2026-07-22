@@ -24,6 +24,15 @@ export type Student = {
         idNumber?: string;
         idNumberValid?: boolean | null;
         suggestedIdNumber?: string | null;
+        idNumberRectificationStatus?: 'duplicate_merge' | 'ready_to_fix' | 'manual_correction' | null;
+        idNumberConflict?: {
+            conflictingStudentId: number;
+            conflictingStudentName: string | null;
+            conflictingStudentNumber: string | null;
+            conflictingPhoneNumber: string | null;
+            idNumber: string;
+            mergePreviewUrl?: string | null;
+        } | null;
         passportNumber?: string;
         countryId?: string | number;
         country?: string;

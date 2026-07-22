@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import BackNavigationButton from '@/components/core/button/BackNavigationButton.vue';
 import Header from '@/components/students/profile/Header.vue';
+import InvalidIdNumberBanner from '@/components/students/profile/InvalidIdNumberBanner.vue';
 import { useStudentProfileHeader } from '@/composables/students/useStudentProfileHeader';
 import type { StudentProfileTabValue } from '@/composables/students/useStudentProfile';
 import type { Student } from '@/types/students';
@@ -28,6 +29,9 @@ const { headerData } = useStudentProfileHeader(() => props.student);
                 <BackNavigationButton :url="backUrl" :destination="backDestination" />
             </template>
         </Header>
+        <div class="px-2 sm:px-3">
+            <InvalidIdNumberBanner :student="props.student" />
+        </div>
         <div class="w-full min-w-0 px-2 py-0.5 pb-3 sm:px-3 md:pb-1">
             <slot />
         </div>

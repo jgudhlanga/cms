@@ -101,6 +101,7 @@ class PortalController extends Controller
         $student = $this->getStudent(request());
         $student->load([
             'user',
+            'idType',
             'latestEnrolment.institutionDepartment.department',
             'latestEnrolment.departmentLevel.level',
             'latestEnrolment.departmentCourse.course',

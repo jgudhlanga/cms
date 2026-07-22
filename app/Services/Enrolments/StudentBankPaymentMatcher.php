@@ -63,7 +63,7 @@ class StudentBankPaymentMatcher
     }
 
     /**
-     * @param  list<string>  $studentNumbers
+     * @param  list<string|null>  $studentNumbers
      * @return array<string, bool>
      */
     public function hasPaymentForAny(
@@ -91,7 +91,7 @@ class StudentBankPaymentMatcher
     }
 
     /**
-     * @param  list<string>  $studentNumbers
+     * @param  list<string|null>  $studentNumbers
      * @return array<string, bool>
      */
     public function matchStudentNumbersInRange(
@@ -148,13 +148,13 @@ class StudentBankPaymentMatcher
     }
 
     /**
-     * @param  list<string>  $studentNumbers
+     * @param  list<string|null>  $studentNumbers
      * @return list<string>
      */
     private function normalizeStudentNumbers(array $studentNumbers): array
     {
         return collect($studentNumbers)
-            ->filter(fn (string $number): bool => $number !== '')
+            ->filter(fn (mixed $number): bool => is_string($number) && $number !== '')
             ->unique()
             ->values()
             ->all();
