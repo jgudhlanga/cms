@@ -7,6 +7,7 @@ import StudentDashboardModuleProgress from '@/components/portal/dashboard/Studen
 import StudentDashboardNoticeboard from '@/components/portal/dashboard/StudentDashboardNoticeboard.vue';
 import StudentDashboardQuickActions from '@/components/portal/dashboard/StudentDashboardQuickActions.vue';
 import StudentDashboardTermDetails from '@/components/portal/dashboard/StudentDashboardTermDetails.vue';
+import InvalidIdNumberBanner from '@/components/students/profile/InvalidIdNumberBanner.vue';
 import { useStudentPortalDashboard, studentPortalDashboardKey } from '@/composables/students/useStudentPortalDashboard';
 import { AuthObject } from '@/types/data-pagination';
 import { Student } from '@/types/students';
@@ -40,6 +41,8 @@ onMounted(() => {
     <PageContainer :breadcrumbs="breadcrumbs">
         <div class="mt-2 flex w-full min-w-0 max-w-full flex-col gap-5 overflow-x-clip">
             <StudentDashboardHeader :student="student" />
+
+            <InvalidIdNumberBanner :student="student" />
 
             <div
                 v-if="loadError"

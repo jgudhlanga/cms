@@ -263,6 +263,7 @@ declare module 'vue' {
     InstitutionDepartmentSelect: typeof import('./../components/core/form/select/InstitutionDepartmentSelect.vue')['default']
     IntakePeriodComboSelect: typeof import('./../components/core/form/combobox/IntakePeriodComboSelect.vue')['default']
     IntakePeriodSelect: typeof import('./../components/core/form/select/IntakePeriodSelect.vue')['default']
+    InvalidIdNumberBanner: typeof import('./../components/students/profile/InvalidIdNumberBanner.vue')['default']
     ItemLabel: typeof import('./../components/students/update/mobile/ItemLabel.vue')['default']
     ItemTitle: typeof import('./../components/core/util/ItemTitle.vue')['default']
     Label: typeof import('./../components/ui/label/Label.vue')['default']

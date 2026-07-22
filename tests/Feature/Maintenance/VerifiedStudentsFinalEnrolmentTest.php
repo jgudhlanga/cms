@@ -239,6 +239,16 @@ it('filters verified students by payment status', function (): void {
 
     expect($missingNumberIds)->toContain($missingNumberApplication->id)
         ->and($missingNumberIds)->not->toContain($paidApplication->id, $unpaidApplication->id);
+
+    $summary = $this->getJson(route('maintenance.verified-students-final-enrolment.summary'))
+        ->assertSuccessful()
+        ->json('summary');
+
+    expect($summary['eligible'] + $summary['noPayment'] + $summary['missingStudentNumber'])
+        ->toBe($summary['total'])
+        ->and($summary['missingStudentNumber'])->toBeGreaterThanOrEqual(1)
+        ->and($summary['eligible'])->toBeGreaterThanOrEqual(1)
+        ->and($summary['noPayment'])->toBeGreaterThanOrEqual(1);
 });
 
 it('force finalises selected students without matching payment', function (): void {

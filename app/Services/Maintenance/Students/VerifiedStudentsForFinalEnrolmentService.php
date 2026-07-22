@@ -132,7 +132,7 @@ class VerifiedStudentsForFinalEnrolmentService
             $this->summaryCacheKey($startDate, $endDate, $filters),
             $this->summaryCacheTtlSeconds(),
             function () use ($startDate, $endDate, $filters): array {
-                $numbersToCheck = $this->studentNumbersForSummaryQuery($filters)->all();
+                $numbersToCheck = $this->matchableStudentNumbersForSummaryQuery($filters);
                 $paymentMap = $this->paymentMatcher->matchStudentNumbersInRange($numbersToCheck, $startDate, $endDate);
                 $eligible = collect($paymentMap)->filter()->count();
 
@@ -204,7 +204,7 @@ class VerifiedStudentsForFinalEnrolmentService
         }
 
         $counts = $this->resolveStudentNumberCounts($filters);
-        $numbersToCheck = $this->studentNumbersForSummaryQuery($filters)->all();
+        $numbersToCheck = $this->matchableStudentNumbersForSummaryQuery($filters);
         $paymentMap = $this->paymentMatcher->matchStudentNumbersInRange($numbersToCheck, $startDate, $endDate);
         $eligible = collect($paymentMap)->filter()->count();
 
@@ -393,6 +393,25 @@ class VerifiedStudentsForFinalEnrolmentService
             ->select('students.student_number')
             ->toBase()
             ->pluck('student_number');
+    }
+
+    /**
+     * @param  array{
+     *     search?: string|null,
+     *     department?: array<int|string>|int|string|null,
+     *     level?: array<int|string>|int|string|null,
+     *     course?: array<int|string>|int|string|null,
+     *     payment_status?: string|null,
+     * }  $filters
+     * @return list<string>
+     */
+    private function matchableStudentNumbersForSummaryQuery(array $filters = []): array
+    {
+        return $this->studentNumbersForSummaryQuery($filters)
+            ->filter(fn (mixed $number): bool => is_string($number) && $number !== '')
+            ->unique()
+            ->values()
+            ->all();
     }
 
     /**
