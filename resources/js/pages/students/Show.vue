@@ -22,7 +22,6 @@ interface Props {
 }
 
 const props = defineProps<Props>();
-const { student } = props;
 
 const validTabValues = ['basic_info', 'programs', 'applications', 'financials', 'accommodations', 'documents', 'authentication'] as const;
 
@@ -31,7 +30,7 @@ const { backUrl, backDestination, breadcrumbs, showBack } = useStudentShowNaviga
 
 const { activeTab } = storeToRefs(useStudentsStore());
 
-const visibleTabs = computed(() => profileTabs(student, {
+const visibleTabs = computed(() => profileTabs(props.student, {
     activeIntakePeriodIds: props.activeIntakePeriodIds,
     offerLetterIntakePeriodIds: props.offerLetterIntakePeriodIds,
 }));
@@ -64,16 +63,16 @@ watch(
     <Head :title="$tChoice('student', 2)" />
     <PageContainer :breadcrumbs="breadcrumbs">
         <StudentProfileShell
-            :student="student"
+            :student="props.student"
             :back-url="backUrl"
             :back-destination="backDestination"
             :show-back="showBack"
         >
             <BaseSectionNav v-model:active-tab="activeTab" :tabs="visibleTabs" />
             <div class="px-2 py-1">
-                <component :is="activeSection?.component" v-if="activeSection" />
+                <component :is="activeSection?.component" v-if="activeSection" :key="`${activeTab}-${props.student.attributes?.idNumber ?? ''}`" />
             </div>
-            <StudentProfileDangerZone :student="student" />
+            <StudentProfileDangerZone :student="props.student" />
         </StudentProfileShell>
     </PageContainer>
 </template>

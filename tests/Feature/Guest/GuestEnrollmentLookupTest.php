@@ -18,6 +18,7 @@ beforeEach(function () {
     RateLimiter::clear('api');
     Role::findOrCreate(RoleEnum::STUDENT->value, 'web');
     ensureCurrentIntakeStatus(IntakePeriodStatusEnum::Open->value);
+    Level::factory()->create(['show_on_current_application_period' => true]);
 });
 
 function createGuestEnrollmentStudent(string $idNumber, ?string $studentNumber = null): Student
@@ -108,6 +109,7 @@ test('portal store rejects invalid national id format', function () {
         'password_confirmation' => 'Password1!',
         'id_number' => 'not-a-valid-id',
         'acknowledged_advert' => true,
+        'track' => 'regular',
     ]);
 
     $response->assertSessionHasErrors('id_number');
@@ -125,6 +127,7 @@ test('portal store rejects duplicate national id registration', function () {
         'password_confirmation' => 'Password1!',
         'id_number' => '44-0111222A44',
         'acknowledged_advert' => true,
+        'track' => 'regular',
     ]);
 
     $response->assertSessionHasErrors('id_number');
@@ -139,6 +142,7 @@ test('portal store requires instruction acknowledgments', function () {
         'password' => 'Password1!',
         'password_confirmation' => 'Password1!',
         'id_number' => '44-0888777C44',
+        'track' => 'regular',
     ]);
 
     $response->assertSessionHasErrors(['acknowledged_advert']);
@@ -154,6 +158,7 @@ test('portal store rejects weak password', function () {
         'password_confirmation' => 'password',
         'id_number' => '44-0777666D44',
         'acknowledged_advert' => true,
+        'track' => 'regular',
     ]);
 
     $response->assertSessionHasErrors('password');
@@ -172,10 +177,12 @@ test('portal store creates account and redirects to level selection for new zimb
         'password_confirmation' => 'Password1!',
         'id_number' => '44-0999888B44',
         'acknowledged_advert' => true,
+        'track' => 'regular',
     ]);
 
-    $response->assertRedirect(route('portal.application.track'));
+    $response->assertRedirect(route('portal.application.level-options'));
     $this->assertAuthenticated();
+    expect(session('application.track'))->toBe('regular');
     expect(session('registration.id_number'))->toBe('44-0999888B44');
     expect(auth()->user()?->middle_name)->toBe('Middle');
     expect(auth()->user()?->registration_instructions_acknowledged_at)->not->toBeNull();

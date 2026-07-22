@@ -409,6 +409,7 @@ export type JsonApiStudentApplicationAttributes = {
     department?: string;
     level?: string;
     course?: string;
+    modeOfStudy?: string;
     intakePeriodId?: number;
     intakePeriod?: string;
     intakePeriodCalendarYear?: string;
@@ -429,7 +430,7 @@ export function mapJsonApiStudentApplicationToEnrolment(resource: JsonApiResourc
             studentId: attributes.studentId ?? '',
             studentName: '',
             modeOfStudyId: '',
-            modeOfStudy: '',
+            modeOfStudy: attributes.modeOfStudy ?? '',
             phoneNumber: '',
             email: '',
             institutionDepartmentId: '',

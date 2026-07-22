@@ -89,10 +89,20 @@ class IntakePeriodResolver
 
     public function isApplicationEligibleForOfferLetter(StudentApplication $application): bool
     {
-        return in_array(
+        if (in_array(
             $application->intake_period_id,
             $this->offerLetterIntakePeriodIds(),
             true
-        );
+        )) {
+            return true;
+        }
+
+        $application->loadMissing('modeOfStudy');
+
+        if ($application->modeOfStudy === null) {
+            return false;
+        }
+
+        return app(ApplicationEligibilityService::class)->isOjetMode($application->modeOfStudy);
     }
 }

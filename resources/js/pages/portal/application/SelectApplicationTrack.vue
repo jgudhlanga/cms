@@ -3,43 +3,73 @@ import PortalApplicationShell from '@/components/portal/PortalApplicationShell.v
 import { useRegistrationAvailability } from '@/composables/students/useRegistrationAvailability';
 import { ColorVariant } from '@/enums/colors';
 import { BaseButton } from '@/components/core/button';
+import RegistrationTrackStep, {
+    type ContinuousFocus,
+    type TrackOption,
+} from '@/pages/portal/guest/components/RegistrationTrackStep.vue';
 import { router } from '@inertiajs/vue3';
-import { onMounted, ref } from 'vue';
-
-type TrackOption = {
-    value: string;
-    label: string;
-    description: string;
-};
+import { computed, onMounted, ref } from 'vue';
 
 interface Props {
     tracks: TrackOption[];
     currentTrack?: string | null;
+    currentContinuousFocus?: ContinuousFocus | null;
+    continuousHasSdp?: boolean;
+    continuousHasOjet?: boolean;
     applicationStep?: string;
 }
 
-const props = defineProps<Props>();
-const selected = ref(props.currentTrack ?? props.tracks[0]?.value ?? null);
+const props = withDefaults(defineProps<Props>(), {
+    continuousHasSdp: true,
+    continuousHasOjet: true,
+    currentContinuousFocus: null,
+});
+
+const selectedTrack = ref<string | null>(props.currentTrack ?? props.tracks[0]?.value ?? null);
+const continuousFocus = ref<ContinuousFocus | null>(
+    props.currentTrack === 'continuous'
+        ? (props.currentContinuousFocus ?? (props.continuousHasSdp ? 'sdp' : props.continuousHasOjet ? 'ojet' : null))
+        : null,
+);
 const submitting = ref(false);
 const { redirectIfClosed } = useRegistrationAvailability();
 
 onMounted(() => {
     redirectIfClosed();
+
+    if (selectedTrack.value === 'continuous' && continuousFocus.value === null) {
+        if (props.continuousHasSdp) {
+            continuousFocus.value = 'sdp';
+        } else if (props.continuousHasOjet) {
+            continuousFocus.value = 'ojet';
+        }
+    }
 });
 
-const selectTrack = (value: string) => {
-    selected.value = value;
-};
+const canContinue = computed(() => {
+    if (!selectedTrack.value) {
+        return false;
+    }
+
+    if (selectedTrack.value === 'continuous') {
+        return continuousFocus.value === 'sdp' || continuousFocus.value === 'ojet';
+    }
+
+    return true;
+});
 
 const continueWithTrack = () => {
-    if (!selected.value) {
+    if (!canContinue.value || !selectedTrack.value) {
         return;
     }
 
     submitting.value = true;
     router.post(
         route('portal.application.select-track'),
-        { track: selected.value },
+        {
+            track: selectedTrack.value,
+            continuous_focus: selectedTrack.value === 'continuous' ? continuousFocus.value : null,
+        },
         {
             onFinish: () => {
                 submitting.value = false;
@@ -61,35 +91,19 @@ const continueWithTrack = () => {
                 </p>
             </div>
 
-            <div
-                role="radiogroup"
-                :aria-label="$t('trans.application_track_choose_title')"
-                class="flex flex-col gap-3"
-            >
-                <button
-                    v-for="track in tracks"
-                    :key="track.value"
-                    type="button"
-                    role="radio"
-                    :aria-checked="selected === track.value"
-                    class="rounded-2xl border p-5 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    :class="
-                        selected === track.value
-                            ? 'border-primary bg-primary/5 shadow-sm'
-                            : 'border-border bg-card hover:border-primary/40'
-                    "
-                    @click="selectTrack(track.value)"
-                >
-                    <div class="font-semibold text-foreground">{{ track.label }}</div>
-                    <p class="mt-1 text-sm text-muted-foreground">{{ track.description }}</p>
-                </button>
-            </div>
+            <RegistrationTrackStep
+                v-model:selected-track="selectedTrack"
+                v-model:continuous-focus="continuousFocus"
+                :tracks="tracks"
+                :continuous-has-sdp="continuousHasSdp"
+                :continuous-has-ojet="continuousHasOjet"
+            />
 
             <div class="mt-8 flex justify-end">
                 <BaseButton
                     type="button"
                     :variant="ColorVariant.primary"
-                    :disabled="!selected || submitting"
+                    :disabled="!canContinue || submitting"
                     @click="continueWithTrack"
                 >
                     {{ $t('trans.continue') }}

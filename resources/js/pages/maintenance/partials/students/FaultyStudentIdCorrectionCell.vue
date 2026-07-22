@@ -46,7 +46,7 @@ const emit = defineEmits<{
             :size="ButtonSize.xs"
             type="button"
             class="shrink-0 rounded-full capitalize"
-            :disabled="disabled || !canSave"
+            :disabled="disabled"
             @click="emit('save')"
         />
     </div>

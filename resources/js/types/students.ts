@@ -22,6 +22,8 @@ export type Student = {
         studentNumber: string;
         idType: string;
         idNumber?: string;
+        idNumberValid?: boolean | null;
+        suggestedIdNumber?: string | null;
         passportNumber?: string;
         countryId?: string | number;
         country?: string;

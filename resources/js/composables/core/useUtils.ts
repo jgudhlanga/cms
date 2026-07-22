@@ -135,7 +135,7 @@ export function useUtils() {
     const formatZimIdNumber = (id_number: string) => {
         if (!id_number) return;
 
-        let raw = id_number.replace(/-/g, '');
+        let raw = id_number.toUpperCase().replace(/[^A-Z0-9]/g, '');
 
         if (raw.length > 1) {
             raw = raw.slice(0, 2) + '-' + raw.slice(2);
