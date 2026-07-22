@@ -1,13 +1,18 @@
 <?php
 
+use App\Enums\Acl\RoleEnum;
 use App\Enums\Institution\IntakePeriodStatusEnum;
+use App\Enums\Institution\ModeOfStudyEnum;
 use App\Enums\Shared\DocumentTypeEnum;
 use App\Enums\Shared\FeeTypeEnum;
+use App\Models\Acl\Role;
 use App\Models\Institution\DocumentTemplate;
 use App\Models\Institution\IntakePeriod;
+use App\Models\Institution\ModeOfStudy;
 use App\Models\Shared\DocumentType;
 use App\Models\Shared\FeeType;
 use App\Models\Students\StudentApplication;
+use App\Models\Users\User;
 
 function seedOfferLetterDocumentPrerequisites(StudentApplication $studentApplication): void
 {
@@ -134,12 +139,45 @@ it('blocks offer letter download for applications in a past closed intake that i
     ]))->assertNotFound();
 });
 
+it('allows offer letter download for OJET applications on a past closed intake that is not latest', function (): void {
+    $studentApplication = createVerifiedStudentApplication('OFFER-OJET-'.strtoupper(str()->random(4)));
+
+    $ojetMode = ModeOfStudy::query()->firstOrCreate(['name' => ModeOfStudyEnum::OJET->value]);
+    $studentApplication->update(['mode_of_study_id' => $ojetMode->id]);
+
+    $studentApplication->intakePeriod->update([
+        'is_active' => false,
+        'status' => IntakePeriodStatusEnum::Closed,
+        'start_date' => now()->subYears(3)->startOfMonth()->toDateString(),
+        'end_date' => now()->subYears(3)->endOfMonth()->toDateString(),
+    ]);
+
+    IntakePeriod::query()->create([
+        'tenant_id' => $studentApplication->tenant_id,
+        'name' => 'Newer Intake '.strtoupper(str()->random(4)),
+        'start_date' => now()->startOfMonth()->toDateString(),
+        'end_date' => now()->addYear()->toDateString(),
+        'calendar_year' => '2026/2027',
+        'is_active' => true,
+        'status' => IntakePeriodStatusEnum::Open,
+    ]);
+
+    seedOfferLetterDocumentPrerequisites($studentApplication);
+
+    $response = $this->get(route('documents.offer-letter', [
+        'student_application' => $studentApplication->id,
+    ]));
+
+    $response->assertSuccessful();
+    expect($response->headers->get('content-type'))->toContain('application/pdf');
+});
+
 it('allows offer letter download while impersonating a student', function (): void {
-    \App\Models\Acl\Role::findOrCreate(\App\Enums\Acl\RoleEnum::STUDENT->name(), 'web');
+    Role::findOrCreate(RoleEnum::STUDENT->name(), 'web');
 
     $studentApplication = createVerifiedStudentApplication('OFFER-IMP-'.strtoupper(str()->random(4)));
     $studentUser = $studentApplication->student->user;
-    $studentUser->assignRole(\App\Enums\Acl\RoleEnum::STUDENT->name());
+    $studentUser->assignRole(RoleEnum::STUDENT->name());
 
     $studentApplication->intakePeriod->update([
         'is_active' => true,
@@ -149,7 +187,7 @@ it('allows offer letter download while impersonating a student', function (): vo
 
     seedOfferLetterDocumentPrerequisites($studentApplication);
 
-    $impersonator = \App\Models\Users\User::factory()->create();
+    $impersonator = User::factory()->create();
     $impersonator->givePermissionTo('root:manage');
 
     $this->actingAs($impersonator)

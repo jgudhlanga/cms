@@ -4,6 +4,9 @@ import { computed } from 'vue';
 
 export type RegistrationAvailability = {
     isOpen: boolean;
+    regularOpen?: boolean;
+    continuousOpen?: boolean;
+    apprenticeOpen?: boolean;
     status?: 'suspended' | 'closed' | null;
     maintenanceUrl: string;
 };
@@ -16,12 +19,16 @@ export const useRegistrationAvailability = () => {
         () =>
             (page.props.registration as RegistrationAvailability | undefined) ?? {
                 isOpen: true,
+                regularOpen: true,
+                continuousOpen: false,
+                apprenticeOpen: true,
                 status: null,
                 maintenanceUrl: route('portal.registration.maintenance'),
             },
     );
 
     const isRegistrationOpen = computed(() => registration.value.isOpen);
+    const isRegularOpen = computed(() => registration.value.regularOpen ?? registration.value.isOpen);
 
     const maintenanceUrl = computed(() => registration.value.maintenanceUrl);
 
@@ -32,7 +39,7 @@ export const useRegistrationAvailability = () => {
     };
 
     const redirectIfOpen = () => {
-        if (isRegistrationOpen.value) {
+        if (isRegularOpen.value) {
             navigateTo(route('login'));
         }
     };
@@ -49,6 +56,7 @@ export const useRegistrationAvailability = () => {
     return {
         registration,
         isRegistrationOpen,
+        isRegularOpen,
         maintenanceUrl,
         redirectIfClosed,
         redirectIfOpen,

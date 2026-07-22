@@ -74,6 +74,14 @@ function createPortalUserWithoutProfile(array $attributes = []): User
     return $user;
 }
 
+/**
+ * @return array{application.track: string}
+ */
+function regularTrackSession(): array
+{
+    return ['application.track' => 'regular'];
+}
+
 function createTestIntakePeriod(): IntakePeriod
 {
     return ensureCurrentIntakeStatus(IntakePeriodStatusEnum::Open->value);
@@ -105,6 +113,7 @@ test('selecting fee required level creates one application fee per intake', func
     ]);
 
     $this->actingAs($user)
+        ->withSession(regularTrackSession())
         ->post(route('portal.application.select-level'), [
             'level_id' => $level->id,
             'intake_period_id' => $intake->id,
@@ -114,6 +123,7 @@ test('selecting fee required level creates one application fee per intake', func
     expect(ApplicationFee::query()->where('user_id', $user->id)->count())->toBe(1);
 
     $this->actingAs($user)
+        ->withSession(regularTrackSession())
         ->post(route('portal.application.select-level'), [
             'level_id' => $level->id,
             'intake_period_id' => $intake->id,
@@ -131,6 +141,7 @@ test('application fee exempt user skips payment for a fee required level', funct
     $intake = createTestIntakePeriod();
 
     $this->actingAs($user)
+        ->withSession(regularTrackSession())
         ->post(route('portal.application.select-level'), [
             'level_id' => $level->id,
             'intake_period_id' => $intake->id,
@@ -147,6 +158,7 @@ test('selecting level without fee does not create application fee record', funct
     $level = feeFreeLevel();
 
     $this->actingAs($user)
+        ->withSession(regularTrackSession())
         ->post(route('portal.application.select-level'), ['level_id' => $level->id])
         ->assertRedirect(route('portal.application.create'));
 
@@ -160,6 +172,7 @@ test('switching from fee-required to fee-free level abandons unpaid application 
     $intake = createTestIntakePeriod();
 
     $this->actingAs($user)
+        ->withSession(regularTrackSession())
         ->post(route('portal.application.select-level'), [
             'level_id' => $feeRequired->id,
             'intake_period_id' => $intake->id,
@@ -171,6 +184,7 @@ test('switching from fee-required to fee-free level abandons unpaid application 
         ->and($applicationFee->status)->toBe(ApplicationFeeStatusEnum::AWAITING_PAYMENT);
 
     $this->actingAs($user)
+        ->withSession(regularTrackSession())
         ->post(route('portal.application.select-level'), ['level_id' => $feeFree->id])
         ->assertRedirect(route('portal.application.create'));
 
@@ -184,6 +198,7 @@ test('unpaid fee student can access level options to change level', function () 
     $intake = createTestIntakePeriod();
 
     $this->actingAs($user)
+        ->withSession(regularTrackSession())
         ->post(route('portal.application.select-level'), [
             'level_id' => $feeRequired->id,
             'intake_period_id' => $intake->id,
@@ -191,6 +206,7 @@ test('unpaid fee student can access level options to change level', function () 
         ->assertRedirect(route('portal.application.fee-payment'));
 
     $this->actingAs($user)
+        ->withSession(regularTrackSession())
         ->get(route('portal.application.level-options'))
         ->assertOk();
 });
@@ -202,6 +218,7 @@ test('middleware sends fee-free level student to application create after level 
     $intake = createTestIntakePeriod();
 
     $this->actingAs($user)
+        ->withSession(regularTrackSession())
         ->post(route('portal.application.select-level'), [
             'level_id' => $feeRequired->id,
             'intake_period_id' => $intake->id,
@@ -209,10 +226,12 @@ test('middleware sends fee-free level student to application create after level 
         ->assertRedirect(route('portal.application.fee-payment'));
 
     $this->actingAs($user)
+        ->withSession(regularTrackSession())
         ->post(route('portal.application.select-level'), ['level_id' => $feeFree->id])
         ->assertRedirect(route('portal.application.create'));
 
     $this->actingAs($user)
+        ->withSession(regularTrackSession())
         ->get(route('portal.application.fee-payment'))
         ->assertRedirect(route('portal.application.create'));
 });
@@ -293,6 +312,7 @@ test('fee payment page exposes human readable application fee status label', fun
     ]);
 
     $this->actingAs($user)
+        ->withSession(regularTrackSession())
         ->get(route('portal.application.fee-payment'))
         ->assertOk()
         ->assertInertia(fn ($page) => $page
@@ -452,6 +472,7 @@ test('create application page reports paid status from application fee not pendi
     session(['application.level_id' => $level->id]);
 
     $this->actingAs($user)
+        ->withSession(regularTrackSession())
         ->get(route('portal.application.create'))
         ->assertOk()
         ->assertInertia(fn ($page) => $page

@@ -47,25 +47,25 @@ function makeApplication(intakePeriodId: string | number, intakePeriodStartDate?
 
 describe('useApplicationsByIntakePeriod', () => {
     describe('defaultOpenIntakeIds', () => {
-        it('opens only the active intake group when the student has an application for it', () => {
+        it('opens the most recent intake group by default', () => {
             const applications = ref([
                 makeApplication(10, '2025-01-01'),
                 makeApplication(20, '2026-08-01'),
             ]);
-            const activeIntakePeriodIds = ref([20]);
+            const activeIntakePeriodIds = ref([10]);
 
             const { defaultOpenIntakeIds } = useApplicationsByIntakePeriod(applications, activeIntakePeriodIds);
 
             expect(defaultOpenIntakeIds.value).toEqual(['20']);
         });
 
-        it('returns an empty array when only past intake applications exist', () => {
+        it('opens the only intake group when there is a single group', () => {
             const applications = ref([makeApplication(10, '2025-01-01')]);
             const activeIntakePeriodIds = ref([20]);
 
             const { defaultOpenIntakeIds } = useApplicationsByIntakePeriod(applications, activeIntakePeriodIds);
 
-            expect(defaultOpenIntakeIds.value).toEqual([]);
+            expect(defaultOpenIntakeIds.value).toEqual(['10']);
         });
 
         it('returns an empty array when there are no applications', () => {

@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\Acl\RoleEnum;
+use App\Http\Middleware\EnsureApplicationTrackAllowed;
 use App\Http\Middleware\EnsureRegistrationOpen;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
@@ -42,6 +43,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'redirect.student' => RedirectStudentMiddleware::class,
             'registration.open' => EnsureRegistrationOpen::class,
+            'application.track' => EnsureApplicationTrackAllowed::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
@@ -66,8 +68,8 @@ return Application::configure(basePath: dirname(__DIR__))
 
             $route = $user->has_student_profile
                 ? 'portal.dashboard'
-                : (app(RegistrationAvailabilityService::class)->isRegistrationOpen()
-                    ? 'portal.application.level-options'
+                : (app(RegistrationAvailabilityService::class)->isAnyRegistrationOpen()
+                    ? 'portal.application.track'
                     : 'portal.registration.maintenance');
 
             return to_route($route);

@@ -93,8 +93,9 @@ export const useStudents = () => {
         const isAcceptedOrEnrolled = status === 'accepted' || status === 'enrolled';
         const intakePeriodId = String(application?.attributes?.intakePeriodId ?? '');
         const isEligibleIntake = offerLetterIntakePeriodIds.some((id) => String(id) === intakePeriodId);
+        const isOjet = (application?.attributes?.modeOfStudy ?? '').trim().toLowerCase() === 'ojet';
 
-        return isAcceptedOrEnrolled && isEligibleIntake;
+        return isAcceptedOrEnrolled && (isEligibleIntake || isOjet);
     };
 
     const statusMessage = (application: Enrolment) => {

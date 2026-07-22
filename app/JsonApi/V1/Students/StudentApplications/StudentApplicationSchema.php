@@ -26,6 +26,7 @@ class StudentApplicationSchema extends Schema
         'departmentCourse.course',
         'departmentWorkflowStep.workflowStep',
         'intakePeriod',
+        'modeOfStudy',
     ];
 
     protected ?array $defaultPagination = ['number' => 1, 'size' => 50];
@@ -45,6 +46,9 @@ class StudentApplicationSchema extends Schema
             )->readOnly(),
             Str::make('course')->extractUsing(
                 fn (StudentApplication $program) => $program->departmentCourse?->course?->name
+            )->readOnly(),
+            Str::make('modeOfStudy')->extractUsing(
+                fn (StudentApplication $program) => $program->modeOfStudy?->name
             )->readOnly(),
             Number::make('intakePeriodId', 'intake_period_id')->readOnly(),
             Str::make('intakePeriod')->extractUsing(

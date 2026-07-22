@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\Acl\RoleEnum;
+use App\Enums\Institution\IntakePeriodStatusEnum;
 use App\Models\Acl\Role;
 use App\Models\Students\Student;
 use App\Models\Tenants\Tenant;
@@ -49,8 +50,8 @@ test('student is redirected to portal dashboard when accessing staff dashboard',
     $response->assertRedirect(route('portal.dashboard'));
 });
 
-test('student without profile is redirected to application level options on forbidden staff page', function () {
-    ensureCurrentIntakeStatus(\App\Enums\Institution\IntakePeriodStatusEnum::Open->value);
+test('student without profile is redirected to application track chooser on forbidden staff page', function () {
+    ensureCurrentIntakeStatus(IntakePeriodStatusEnum::Open->value);
 
     $tenant = Tenant::query()->firstOrFail();
     $user = User::factory()->create(['tenant_id' => $tenant->id]);
@@ -58,7 +59,7 @@ test('student without profile is redirected to application level options on forb
 
     $response = $this->actingAs($user)->get(route('dashboard'));
 
-    $response->assertRedirect(route('portal.application.level-options'));
+    $response->assertRedirect(route('portal.application.track'));
 });
 
 test('student still receives forbidden response for api requests', function () {

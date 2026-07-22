@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\Acl\RoleEnum;
+use App\Enums\Institution\IntakePeriodStatusEnum;
 use App\Enums\Shared\TenantEnum;
 use App\Models\Acl\Role;
 use App\Models\Institution\IntakePeriod;
@@ -16,7 +17,8 @@ use Illuminate\Support\Facades\RateLimiter;
 beforeEach(function () {
     RateLimiter::clear('api');
     Role::findOrCreate(RoleEnum::STUDENT->value, 'web');
-    ensureCurrentIntakeStatus(\App\Enums\Institution\IntakePeriodStatusEnum::Open->value);
+    ensureCurrentIntakeStatus(IntakePeriodStatusEnum::Open->value);
+    Level::factory()->create(['show_on_current_application_period' => true]);
 });
 
 function createGuestEnrollmentStudent(string $idNumber, ?string $studentNumber = null): Student
@@ -107,6 +109,7 @@ test('portal store rejects invalid national id format', function () {
         'password_confirmation' => 'Password1!',
         'id_number' => 'not-a-valid-id',
         'acknowledged_advert' => true,
+        'track' => 'regular',
     ]);
 
     $response->assertSessionHasErrors('id_number');
@@ -124,6 +127,7 @@ test('portal store rejects duplicate national id registration', function () {
         'password_confirmation' => 'Password1!',
         'id_number' => '44-0111222A44',
         'acknowledged_advert' => true,
+        'track' => 'regular',
     ]);
 
     $response->assertSessionHasErrors('id_number');
@@ -138,6 +142,7 @@ test('portal store requires instruction acknowledgments', function () {
         'password' => 'Password1!',
         'password_confirmation' => 'Password1!',
         'id_number' => '44-0888777C44',
+        'track' => 'regular',
     ]);
 
     $response->assertSessionHasErrors(['acknowledged_advert']);
@@ -153,6 +158,7 @@ test('portal store rejects weak password', function () {
         'password_confirmation' => 'password',
         'id_number' => '44-0777666D44',
         'acknowledged_advert' => true,
+        'track' => 'regular',
     ]);
 
     $response->assertSessionHasErrors('password');
@@ -171,10 +177,12 @@ test('portal store creates account and redirects to level selection for new zimb
         'password_confirmation' => 'Password1!',
         'id_number' => '44-0999888B44',
         'acknowledged_advert' => true,
+        'track' => 'regular',
     ]);
 
     $response->assertRedirect(route('portal.application.level-options'));
     $this->assertAuthenticated();
+    expect(session('application.track'))->toBe('regular');
     expect(session('registration.id_number'))->toBe('44-0999888B44');
     expect(auth()->user()?->middle_name)->toBe('Middle');
     expect(auth()->user()?->registration_instructions_acknowledged_at)->not->toBeNull();
@@ -213,7 +221,10 @@ test('portal level options page renders for newly registered student', function 
         'password_confirmation' => 'Password1!',
         'id_number' => '44-0555444E44',
         'acknowledged_advert' => true,
-    ])->assertRedirect(route('portal.application.level-options'));
+    ])->assertRedirect(route('portal.application.track'));
+
+    $this->post(route('portal.application.select-track'), ['track' => 'regular'])
+        ->assertRedirect(route('portal.application.level-options'));
 
     $response = $this->get(route('portal.application.level-options'));
 
@@ -237,7 +248,9 @@ test('portal level options reports no open levels when none are configured', fun
     ]);
     $user->assignRole(RoleEnum::STUDENT);
 
-    $response = $this->actingAs($user)->get(route('portal.application.level-options'));
+    $response = $this->actingAs($user)
+        ->withSession(['application.track' => 'regular'])
+        ->get(route('portal.application.level-options'));
 
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
@@ -255,7 +268,9 @@ test('student without profile can access portal level options', function () {
     ]);
     $user->assignRole(RoleEnum::STUDENT);
 
-    $response = $this->actingAs($user)->get(route('portal.application.level-options'));
+    $response = $this->actingAs($user)
+        ->withSession(['application.track' => 'regular'])
+        ->get(route('portal.application.level-options'));
 
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
@@ -300,6 +315,8 @@ test('create application page includes intake name', function () {
         'end_date' => now()->addYears(10)->toDateString(),
         'calendar_year' => '2026/2027',
         'is_active' => true,
+        'status' => IntakePeriodStatusEnum::Open,
+        'is_continuous' => false,
     ]);
 
     $user = User::factory()->create([
@@ -310,6 +327,7 @@ test('create application page includes intake name', function () {
     $user->givePermissionTo('manageOwnStudentPersonalDetails:students');
 
     $this->actingAs($user)
+        ->withSession(['application.track' => 'regular'])
         ->get(route('portal.application.create'))
         ->assertOk()
         ->assertInertia(fn ($page) => $page

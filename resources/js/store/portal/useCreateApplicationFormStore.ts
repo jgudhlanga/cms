@@ -61,6 +61,8 @@ export const useCreateApplicationFormStore = defineStore('portal-application-for
             o_level_primary_sitting: null,
             o_level_resit_subjects: null,
             o_level_other_resit_rows: null,
+            employer: null,
+            apprentice_number: null,
             /** Proof of Payment */
             proof_of_payment: null,
             payment_reference: null,

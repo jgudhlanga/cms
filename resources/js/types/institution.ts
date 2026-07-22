@@ -210,6 +210,7 @@ export type IntakePeriod = {
         endDate: string;
         isActive: boolean | number;
         status?: IntakePeriodStatus;
+        isContinuous?: boolean;
         description?: string;
         createdAt?: string;
         updatedAt?: string;
@@ -222,6 +223,7 @@ export type IntakePeriodParams = {
     end_date: string;
     description?: string;
     status: IntakePeriodStatus;
+    is_continuous?: boolean;
 };
 
 export type CourseSyllabus = {

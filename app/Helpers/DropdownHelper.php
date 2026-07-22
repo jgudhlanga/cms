@@ -19,7 +19,19 @@ class DropdownHelper
             $rows = cache()->rememberForever('all_intake_periods', fn () => IntakePeriod::query()
                 ->where('is_active', 1)
                 ->orderByDesc('end_date')
-                ->get(['id', 'name', 'start_date', 'end_date', 'is_active', 'status', 'description', 'created_at', 'updated_at', 'deleted_at'])
+                ->get([
+                    'id',
+                    'name',
+                    'start_date',
+                    'end_date',
+                    'is_active',
+                    'status',
+                    'is_continuous',
+                    'description',
+                    'created_at',
+                    'updated_at',
+                    'deleted_at',
+                ])
                 ->map(function (IntakePeriod $period): array {
                     $row = $period->only([
                         'id',
@@ -28,6 +40,7 @@ class DropdownHelper
                         'end_date',
                         'is_active',
                         'status',
+                        'is_continuous',
                         'description',
                         'created_at',
                         'updated_at',
@@ -36,6 +49,7 @@ class DropdownHelper
 
                     $status = $row['status'] ?? null;
                     $row['status'] = $status instanceof BackedEnum ? $status->value : $status;
+                    $row['is_continuous'] = (bool) ($row['is_continuous'] ?? false);
 
                     return $row;
                 })
@@ -80,7 +94,7 @@ class DropdownHelper
             return false;
         }
 
-        $requiredKeys = ['id', 'name', 'status'];
+        $requiredKeys = ['id', 'name', 'status', 'is_continuous'];
 
         foreach ($rows as $row) {
             if (! is_array($row)) {

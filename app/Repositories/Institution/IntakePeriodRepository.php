@@ -2,7 +2,6 @@
 
 namespace App\Repositories\Institution;
 
-
 use App\DTO\Institution\IntakePeriodDto;
 use App\Http\Filters\Shared\SharedNameFilter;
 use App\Models\Institution\IntakePeriod;
@@ -27,7 +26,7 @@ class IntakePeriodRepository extends BaseRepository implements IIntakePeriodRepo
         return tap($intakePeriod)->update($this->getFields($dto))->refresh();
     }
 
-    public function allFilter($columns = ['*'], SharedNameFilter $filters = null)
+    public function allFilter($columns = ['*'], ?SharedNameFilter $filters = null)
     {
         return $this->intakePeriod
             ->select($columns)
@@ -49,6 +48,7 @@ class IntakePeriodRepository extends BaseRepository implements IIntakePeriodRepo
             'end_date' => Carbon::parse($dto->end_date)->format('Y-m-d'),
             'description' => $dto->description,
             'status' => $dto->status,
+            'is_continuous' => $dto->is_continuous,
         ];
     }
 }

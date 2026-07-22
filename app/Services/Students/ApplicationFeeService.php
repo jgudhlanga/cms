@@ -4,6 +4,7 @@ namespace App\Services\Students;
 
 use App\Enums\Institution\IntakePeriodStatusEnum;
 use App\Enums\Students\ApplicationFeeStatusEnum;
+use App\Enums\Students\ApplicationTrackEnum;
 use App\Helpers\Helper;
 use App\Helpers\PaymentHelper;
 use App\Models\Institution\IntakePeriod;
@@ -25,24 +26,57 @@ class ApplicationFeeService
     {
         if ($intakePeriodId !== null && $intakePeriodId > 0) {
             return IntakePeriod::query()
+                ->where('is_continuous', false)
                 ->where('is_active', true)
                 ->where('status', IntakePeriodStatusEnum::Open)
                 ->findOrFail($intakePeriodId);
         }
 
         return IntakePeriod::query()
+            ->where('is_continuous', false)
             ->where('is_active', true)
             ->where('status', IntakePeriodStatusEnum::Open)
             ->orderByDesc('end_date')
             ->firstOrFail();
     }
 
+    public function resolveContinuousIntakePeriod(?int $intakePeriodId = null): IntakePeriod
+    {
+        if ($intakePeriodId !== null && $intakePeriodId > 0) {
+            return IntakePeriod::query()
+                ->where('is_continuous', true)
+                ->where('is_active', true)
+                ->where('status', IntakePeriodStatusEnum::Open)
+                ->findOrFail($intakePeriodId);
+        }
+
+        return IntakePeriod::query()
+            ->where('is_continuous', true)
+            ->where('is_active', true)
+            ->where('status', IntakePeriodStatusEnum::Open)
+            ->orderByDesc('end_date')
+            ->firstOrFail();
+    }
+
+    public function continuousIntakePeriod(): ?IntakePeriod
+    {
+        return IntakePeriod::query()
+            ->where('is_continuous', true)
+            ->where('is_active', true)
+            ->where('status', IntakePeriodStatusEnum::Open)
+            ->orderByDesc('end_date')
+            ->first();
+    }
+
     /**
+     * Open non-continuous intakes for regular / apprentice portal pickers.
+     *
      * @return Collection<int, IntakePeriod>
      */
     public function openIntakePeriodsForPortal(): Collection
     {
         return IntakePeriod::query()
+            ->where('is_continuous', false)
             ->where('is_active', true)
             ->where('status', IntakePeriodStatusEnum::Open)
             ->orderByDesc('end_date')
@@ -97,6 +131,28 @@ class ApplicationFeeService
 
         if ($applicationFee !== null) {
             return $applicationFee->intakePeriod;
+        }
+
+        return $this->resolvePortalIntakePeriod($requestIntakePeriodId);
+    }
+
+    /**
+     * Resolve intake for portal application submit, honouring the selected track
+     * before falling back to open regular intakes (which may be closed).
+     */
+    public function resolveIntakeForApplicationSubmit(
+        User $user,
+        ApplicationTrackEnum $track,
+        ?int $requestIntakePeriodId = null,
+    ): IntakePeriod {
+        $applicationFee = $this->activeApplicationFee($user);
+
+        if ($applicationFee !== null) {
+            return $applicationFee->intakePeriod;
+        }
+
+        if ($track->usesContinuousIntake()) {
+            return $this->resolveContinuousIntakePeriod();
         }
 
         return $this->resolvePortalIntakePeriod($requestIntakePeriodId);

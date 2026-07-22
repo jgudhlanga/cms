@@ -63,6 +63,7 @@ declare module 'vue' {
     AppLogo: typeof import('./../components/core/image/AppLogo.vue')['default']
     AppLogoMark: typeof import('./../components/core/image/AppLogoMark.vue')['default']
     AppPreferencesSheet: typeof import('./../components/core/preferences/AppPreferencesSheet.vue')['default']
+    ApprenticeDetails: typeof import('./../components/students/update/ApprenticeDetails.vue')['default']
     AppSidebar: typeof import('./../components/core/sidebar/AppSidebar.vue')['default']
     Archived: typeof import('./../components/core/table/Archived.vue')['default']
     AssignClassTutorModal: typeof import('./../components/academicCalendars/AssignClassTutorModal.vue')['default']

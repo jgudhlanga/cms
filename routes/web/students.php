@@ -24,6 +24,8 @@ Route::prefix('students')->middleware('auth')->group(function () {
 // ===================================== STUDENTS ======================================================================
 Route::prefix('students')->middleware('auth')->group(function () {
     Route::get('export', [StudentController::class, 'export'])->name('students.export');
+    Route::patch('{student}/id-number', [StudentController::class, 'updateIdNumber'])
+        ->name('students.id-number.update');
     Route::delete('{student}/purge', [StudentController::class, 'purge'])
         ->middleware('can:root:manage')
         ->name('students.purge');

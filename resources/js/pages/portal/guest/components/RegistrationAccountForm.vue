@@ -88,6 +88,7 @@ const emit = defineEmits<{
         />
         <BasePasswordInput
             input-id="password"
+            :label="$t('trans.password')"
             :label-uppercase="true"
             :placeholder="$t('trans.ui_enter_password')"
             :model-value="password"
@@ -101,6 +102,7 @@ const emit = defineEmits<{
         />
         <BasePasswordInput
             input-id="password_confirmation"
+            :label="$t('trans.confirm_password')"
             :label-uppercase="true"
             :placeholder="$t('trans.ui_confirm_password')"
             :model-value="passwordConfirmation"

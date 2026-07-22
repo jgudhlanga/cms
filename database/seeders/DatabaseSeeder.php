@@ -6,6 +6,7 @@ use Database\Seeders\Acl\ModulesTableSeeder;
 use Database\Seeders\Acl\PermissionsTableSeeder;
 use Database\Seeders\Acl\RoleGroupSeeder;
 use Database\Seeders\Acl\RolesTableSeeder;
+use Database\Seeders\Institution\ContinuousIntakePeriodSeeder;
 use Database\Seeders\Institution\CoursesTableSeeder;
 use Database\Seeders\Institution\DepartmentsTableSeeder;
 use Database\Seeders\Institution\DivisionsTableSeeder;
@@ -88,6 +89,7 @@ class DatabaseSeeder extends Seeder
             FeeTypeSeeder::class,
             DocumentTypeSeeder::class,
             FeeStructureSeeder::class,
+            ContinuousIntakePeriodSeeder::class,
             StudentEnrolmentStatusSeeder::class,
         ]);
     }

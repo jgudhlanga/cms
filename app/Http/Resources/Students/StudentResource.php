@@ -2,12 +2,15 @@
 
 namespace App\Http\Resources\Students;
 
+use App\Enums\Shared\IdTypeEnum;
 use App\Http\Resources\Shared\AddressResource;
 use App\Http\Resources\Shared\ContactResource;
 use App\Http\Resources\Shared\NextOfKinResource;
 use App\Http\Resources\Users\UserSummaryResource;
 use App\Models\Students\StudentApplication;
 use App\Models\Students\StudentEnrolment;
+use App\Rules\ZimbabweanIdNumber;
+use App\Services\Maintenance\Students\FaultyStudentIdNumberAnalysis;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -16,6 +19,7 @@ class StudentResource extends JsonResource
     public function toArray(Request $request): array
     {
         $profileSummary = $this->resolveProfileSummary();
+        [$idNumberValid, $suggestedIdNumber] = $this->resolveIdNumberValidation();
 
         return [
             'type' => 'student',
@@ -34,6 +38,8 @@ class StudentResource extends JsonResource
                 'idType' => $this?->idType?->name ?? null,
                 'studentNumber' => $this?->student_number ?? null,
                 'idNumber' => $this?->id_number ?? null,
+                'idNumberValid' => $idNumberValid,
+                'suggestedIdNumber' => $suggestedIdNumber,
                 'passportNumber' => $this?->passport_number ?? null,
                 'countryId' => $this?->country_id ?? null,
                 'country' => $this->country?->name ?? null,
@@ -68,6 +74,38 @@ class StudentResource extends JsonResource
                 'nextOfKin' => NextOfKinResource::make($this->nextOfKins->first()),
             ],
         ];
+    }
+
+    /**
+     * @return array{0: bool|null, 1: string|null}
+     */
+    private function resolveIdNumberValidation(): array
+    {
+        if (! $this->isZimbabweanIdType()) {
+            return [null, null];
+        }
+
+        $idNumber = (string) ($this->id_number ?? '');
+        $isValid = ZimbabweanIdNumber::isValid($idNumber);
+
+        if ($isValid) {
+            return [true, null];
+        }
+
+        $analysis = app(FaultyStudentIdNumberAnalysis::class)->analyze($this->resource);
+
+        return [false, $analysis['suggestedIdNumber'] ?? null];
+    }
+
+    private function isZimbabweanIdType(): bool
+    {
+        $idTypeName = $this->idType?->name;
+
+        if ($idTypeName !== null) {
+            return strcasecmp((string) $idTypeName, IdTypeEnum::ZIMBABWEAN_ID_NUMBER->value) === 0;
+        }
+
+        return (int) $this->id_type_id === IdTypeEnum::ZIMBABWEAN_ID_NUMBER->id();
     }
 
     /**

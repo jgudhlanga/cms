@@ -12,7 +12,7 @@ class EnrollmentLookupService
     public static function normalizeNationalId(string $idNumber): string
     {
         $value = strtoupper(trim(str_replace(' ', '', $idNumber)));
-        $raw = str_replace('-', '', $value);
+        $raw = preg_replace('/[^A-Z0-9]/', '', $value) ?? '';
 
         if (strlen($raw) <= 2) {
             return $value;

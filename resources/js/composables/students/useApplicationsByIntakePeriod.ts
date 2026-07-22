@@ -62,21 +62,18 @@ export function groupApplicationsByIntakePeriod(applications: Enrolment[]): Inta
 
 export function useApplicationsByIntakePeriod(
     applications: Ref<Enrolment[]>,
-    activeIntakePeriodIds?: Ref<Array<string | number>>,
+    _activeIntakePeriodIds?: Ref<Array<string | number>>,
 ) {
-    const resolvedActiveIntakePeriodIds = activeIntakePeriodIds ?? computed(() => []);
-
     const groups = computed(() => groupApplicationsByIntakePeriod(applications.value));
 
     const defaultOpenIntakeIds = computed(() => {
-        const activeIds = resolvedActiveIntakePeriodIds.value.map((id) => String(id));
-        const activeGroup = groups.value.find((group) => activeIds.includes(group.intakePeriodId));
+        const topGroup = groups.value[0];
 
-        if (activeGroup) {
-            return [activeGroup.intakePeriodId];
+        if (!topGroup) {
+            return [];
         }
 
-        return [];
+        return [topGroup.intakePeriodId];
     });
 
     const intakeGroupDescription = (group: IntakeApplicationGroup): string => {

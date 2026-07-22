@@ -12,27 +12,37 @@ Route::prefix('portal')->group(function () {
 
     Route::middleware('registration.open')->group(function () {
         Route::get('create-account', [PortalController::class, 'create'])->name('portal.create');
-        Route::post('store', [PortalController::class, 'store'])->name('portal.store');
+        Route::post('store', [PortalController::class, 'store'])
+            ->middleware('throttle:10,1')
+            ->name('portal.store');
     });
 
     Route::get('{user}/confirmation', [PortalController::class, 'registrationConfirmation'])->name('portal.confirmation');
     Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('application', [PortalController::class, 'storeApplication'])
-            ->middleware(['registration.open', 'redirect.student'])
+            ->middleware(['registration.open', 'application.track', 'redirect.student'])
             ->name('portal.store-application');
-        Route::middleware('registration.open')->group(function () {
+        Route::middleware(['registration.open', 'application.track'])->group(function () {
+            Route::get('application/track', [PortalController::class, 'chooseTrack'])->name('portal.application.track');
+            Route::post('application/track', [PortalController::class, 'selectTrack'])->name('portal.application.select-track');
+            Route::get('application/apprentice', [PortalController::class, 'apprenticeApplication'])->name('portal.application.apprentice');
             Route::get('application/level', [PortalController::class, 'levelOptions'])->name('portal.application.level-options');
             Route::post('application/select-level', [PortalController::class, 'selectLevel'])->name('portal.application.select-level');
         });
+        Route::post('application/apprentice', [PortalController::class, 'storeApprenticeApplication'])
+            ->middleware(['registration.open', 'application.track', 'redirect.student'])
+            ->name('portal.application.apprentice.store');
     });
     Route::middleware(['auth', 'verified', 'redirect.student'])->group(function () {
-        Route::middleware('registration.open')->group(function () {
+        Route::middleware(['registration.open', 'application.track'])->group(function () {
             Route::get('application/fee-payment', [PaymentController::class, 'registrationFeePaymentOptions'])->name('portal.application.fee-payment');
             Route::get('application/create', [PortalController::class, 'createApplication'])->name('portal.application.create');
             Route::get('application/confirm', [PortalController::class, 'confirmApplication'])->name('portal.application.confirm');
             Route::get('application/{student}/add-program', [PortalController::class, 'createProgram'])->name('portal.add-program');
             Route::post('application/{student}/add-program', [PortalController::class, 'storeProgram'])->name('portal.program.store');
+        });
 
+        Route::middleware('registration.open')->group(function () {
             Route::prefix('returning-student')->name('portal.returning-student.')->group(function () {
                 Route::get('continue', [ReturningStudentController::class, 'showContinue'])->name('continue.show');
                 Route::post('continue', [ReturningStudentController::class, 'continueInClass'])->name('continue');

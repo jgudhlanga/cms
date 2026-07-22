@@ -7,12 +7,14 @@ use App\DTO\Students\UpdateStudentDto;
 use App\DTO\Users\UserDto;
 use App\Enums\Acl\RoleEnum;
 use App\Enums\Shared\FeeTypeEnum;
+use App\Exceptions\Maintenance\StudentIdNumberConflictException;
 use App\Exports\Students\StudentListExport;
 use App\Helpers\Helper;
 use App\Helpers\PaymentHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Students\CreateStudentApplicationRequest;
 use App\Http\Requests\Students\ExportStudentListRequest;
+use App\Http\Requests\Students\FixStudentIdNumberRequest;
 use App\Http\Requests\Students\PurgeStudentAccountRequest;
 use App\Http\Requests\Students\UpdateStudentRequest;
 use App\Http\Resources\Students\StudentResource;
@@ -29,10 +31,12 @@ use App\Repositories\Students\interface\IStudentApplicationRepository;
 use App\Repositories\Students\interface\IStudentRepository;
 use App\Repositories\Users\interface\IUserRepository;
 use App\Services\AccountPurge\StudentAccountPurgeService;
+use App\Services\Maintenance\Students\FixStudentIdNumberService;
 use App\Services\Students\IntakePeriodResolver;
 use App\Services\Students\StudentListExportService;
 use Exception;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -158,6 +162,28 @@ class StudentController extends Controller
     public function update(UpdateStudentRequest $request, Student $student): void
     {
         $this->repository->update($student, UpdateStudentDto::fromUpdateStudentRequest($request));
+    }
+
+    public function updateIdNumber(
+        FixStudentIdNumberRequest $request,
+        Student $student,
+        FixStudentIdNumberService $fixService,
+    ): JsonResponse {
+        try {
+            $student = $fixService->fix($student, (string) $request->validated('id_number'));
+        } catch (StudentIdNumberConflictException $exception) {
+            return response()->json([
+                'message' => $exception->getMessage(),
+                'errors' => [
+                    'id_number' => [$exception->getMessage()],
+                ],
+            ], 409);
+        }
+
+        return response()->json([
+            'message' => __('trans.item_saved', ['item' => __('trans.id_number')]),
+            'data' => StudentResource::make($student),
+        ]);
     }
 
     public function destroy(string $id)

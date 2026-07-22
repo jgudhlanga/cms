@@ -62,17 +62,31 @@ onMounted(() => setAutoFocus());
 </script>
 
 <template>
-    <div class="flex w-full flex-col">
-        <div :class="cn('flex space-x-3', verticalLayout && 'flex-col space-y-2')">
+    <div
+        :class="
+            cn(
+                'w-full',
+                verticalLayout ? 'flex flex-col' : 'grid grid-cols-[11rem_minmax(0,1fr)] items-start gap-x-3 gap-y-1',
+            )
+        "
+    >
+        <div :class="cn(verticalLayout ? 'flex flex-col space-y-2' : 'contents')">
             <Label
                 v-if="label"
                 :for="inputId"
-                :class="cn('font-medium', error && 'text-destructive', labelUppercase && 'uppercase', !verticalLayout && 'flex w-1/4 items-center')"
+                :class="
+                    cn(
+                        'font-medium',
+                        error && 'text-destructive',
+                        labelUppercase && 'uppercase',
+                        !verticalLayout && 'self-center leading-snug',
+                    )
+                "
             >
                 {{ label }}<RequiredIndicator v-if="isRequired" />
             </Label>
 
-            <div :class="cn('w-full', !verticalLayout && !label && 'flex-1', !verticalLayout && label && 'flex-1')">
+            <div :class="cn('min-w-0', !verticalLayout && !label && 'col-start-2')">
                 <div class="relative w-full">
                     <Input
                         :id="inputId"
@@ -99,6 +113,9 @@ onMounted(() => setAutoFocus());
             </div>
         </div>
 
-        <InputError :message="error" :class="cn('flex w-full lowercase', !verticalLayout && 'justify-end')" />
+        <InputError
+            :message="error"
+            :class="cn('flex w-full lowercase', !verticalLayout && (label ? 'col-start-2' : 'col-span-2'))"
+        />
     </div>
 </template>

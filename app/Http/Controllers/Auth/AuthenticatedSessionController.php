@@ -53,7 +53,7 @@ class AuthenticatedSessionController extends Controller
                 return to_route('portal.dashboard');
             }
 
-            if (! $registrationAvailability->isRegistrationOpen()) {
+            if (! $registrationAvailability->isAnyRegistrationOpen()) {
                 return to_route('portal.registration.maintenance');
             }
 
@@ -91,7 +91,7 @@ class AuthenticatedSessionController extends Controller
                 return to_route('portal.application.fee-payment');
             }
 
-            return to_route('portal.application.level-options');
+            return to_route('portal.application.track');
         }
 
         return redirect()->intended(route(DefaultHome::routeName($user)));
