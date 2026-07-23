@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { BaseCheckbox } from '@/components/core/form';
+import BaseAlert from '@/components/core/alert/BaseAlert.vue';
 import SpinnerComponent from '@/components/core/loader/SpinnerComponent.vue';
 import Empty from '@/components/core/util/Empty.vue';
 import HeadingSmall from '@/components/core/util/HeadingSmall.vue';
@@ -10,12 +11,14 @@ import SelectSitting from '@/components/students/update/SelectSitting.vue';
 import { useGrades } from '@/composables/institution/useGrades';
 import { useStudentPortal } from '@/composables/students/useStudentPortal';
 import { EXAM_SITTINGS } from '@/lib/constants';
+import { isValidDateOfBirth } from '@/lib/examYear';
 import { useCreateApplicationFormStore } from '@/store/portal/useCreateApplicationFormStore';
 import { useUpdateProgramFormStore } from '@/store/portal/useUpdateProgramFormStore';
 import { AcademicOLevelResult, Enrolment } from '@/types/enrolments';
 import { RadioGroupOption } from '@/types/forms';
 import { Grade, Subject } from '@/types/institution';
 import { SelectOption } from '@/types/utils';
+import { TypeVariant } from '@/enums/type-variants';
 import { storeToRefs } from 'pinia';
 import { computed, onMounted, Ref, watch, watchEffect } from 'vue';
 
@@ -42,6 +45,7 @@ const {
     courseRequirements,
 } = storeToRefs(store);
 const examDateOfBirth = computed(() => (isEditing ? null : useCreateApplicationFormStore().date_of_birth));
+const hasValidExamDateOfBirth = computed(() => isEditing || isValidDateOfBirth(examDateOfBirth.value));
 const { listGrades, isLoading, grades } = useGrades();
 const { getMainSittingYear, getMainSitting } = useStudentPortal();
 
@@ -245,6 +249,13 @@ const populateCurrentDataFromApplication = () => {
     <HeadingSmall
         :title="`${$t('trans.o_level_main_subjects')} (${requirements?.attributes?.mainSubjectsCount})`"
         :description="$t('trans.o_level_results_description')"
+    />
+    <BaseAlert
+        v-if="!isViewOnly && !hasValidExamDateOfBirth"
+        class="mb-4"
+        :type="TypeVariant.warning"
+        :title="$t('trans.date_of_birth')"
+        :description="$t('trans.portal_o_level_invalid_date_of_birth')"
     />
     <template v-if="requirements?.relationships?.subjects && requirements.relationships.subjects.length > 0">
         <div v-if="!isViewOnly" class="my-4 rounded-lg border border-border bg-muted/30 p-4">

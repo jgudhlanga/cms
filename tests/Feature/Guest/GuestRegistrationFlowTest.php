@@ -29,6 +29,52 @@ test('guest can select track without an account', function () {
     );
 });
 
+test('guest path step labels Direct track and lists levels without apprentice fee wording', function () {
+    ensureCurrentIntakeStatus(IntakePeriodStatusEnum::Open->value);
+    ensureContinuousIntakeOpen();
+
+    expect(__('trans.application_track_regular'))->toBe('Direct')
+        ->and(__('trans.application_track_regular_description'))
+        ->toContain('NC')
+        ->toContain('ND')
+        ->toContain('SDP')
+        ->toContain('HND')
+        ->toContain('BTech')
+        ->toContain('ABMA')
+        ->and(__('trans.application_track_apprentice_description'))
+        ->not->toContain('application fee')
+        ->not->toContain('Application Fee')
+        ->and(__('trans.registration_express_apprentice_hint'))
+        ->not->toContain('application fee')
+        ->not->toContain('Application Fee');
+
+    $this->get(route('portal.register.track'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('portal/guest/SelectRegistrationTrack')
+            ->where('tracks', function ($tracks) {
+                $regular = collect($tracks)->firstWhere('value', ApplicationTrackEnum::Regular->value);
+                $apprentice = collect($tracks)->firstWhere('value', ApplicationTrackEnum::Apprentice->value);
+
+                if ($regular === null || $apprentice === null) {
+                    return false;
+                }
+
+                $description = (string) ($regular['description'] ?? '');
+                $apprenticeDescription = (string) ($apprentice['description'] ?? '');
+
+                return ($regular['label'] ?? null) === 'Direct'
+                    && str_contains($description, 'NC')
+                    && str_contains($description, 'ND')
+                    && str_contains($description, 'SDP')
+                    && str_contains($description, 'HND')
+                    && str_contains($description, 'BTech')
+                    && str_contains($description, 'ABMA')
+                    && ! str_contains(strtolower($apprenticeDescription), 'application fee');
+            })
+        );
+});
+
 test('guest track selection redirects to level for regular track', function () {
     $regular = ensureCurrentIntakeStatus(IntakePeriodStatusEnum::Open->value);
     ensureContinuousIntakeOpen();
@@ -244,6 +290,62 @@ test('apprentice guest store redirects to express application', function () {
     $response->assertRedirect(route('portal.application.apprentice'));
     $this->assertAuthenticated();
     expect(session('application.track'))->toBe(ApplicationTrackEnum::Apprentice->value);
+});
+
+test('apprentice express I1 guest flow binds regular intake through programme to account without fee', function () {
+    $seeded = seedGuestRegistrationProgramme();
+
+    $this->post(route('portal.register.select-track'), [
+        'track' => ApplicationTrackEnum::Apprentice->value,
+    ])->assertRedirect(route('portal.register.level'));
+
+    expect(session(RegistrationIntentSession::INTAKE_KEY))->toBe($seeded['intakeId']);
+
+    $this->post(route('portal.register.select-level'), [
+        'level_id' => $seeded['level']->id,
+        'intake_period_id' => $seeded['intakeId'],
+    ])->assertRedirect(route('portal.register.programme'));
+
+    expect(session(RegistrationIntentSession::REQUIRES_FEE_KEY))->toBeFalse();
+
+    $this->post(route('portal.register.select-programme'), [
+        'department_id' => $seeded['departmentId'],
+        'department_level_id' => $seeded['departmentLevelId'],
+        'course_id' => $seeded['courseId'],
+        'mode_of_study_id' => $seeded['modeId'],
+    ])->assertRedirect(route('portal.register.account'));
+
+    $this->get(route('portal.register.account'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('portal/guest/RegistrationUserForm')
+            ->where('stepperVariant', 'apprentice')
+            ->where('requiresFee', false)
+        );
+});
+
+test('apprentice store without programme creates no user', function () {
+    $seeded = seedGuestRegistrationProgramme();
+    $email = 'orphan.apprentice.'.uniqid().'@example.com';
+
+    $this->withSession([
+        RegistrationIntentSession::TRACK_KEY => ApplicationTrackEnum::Apprentice->value,
+        RegistrationIntentSession::LEVEL_KEY => $seeded['level']->id,
+        RegistrationIntentSession::INTAKE_KEY => $seeded['intakeId'],
+        RegistrationIntentSession::INSTRUCTIONS_KEY => true,
+    ])->post(route('portal.store'), [
+        'registration_path' => 'zimbabwean',
+        'first_name' => 'Orphan',
+        'last_name' => 'Apprentice',
+        'email' => $email,
+        'password' => 'Password1!',
+        'password_confirmation' => 'Password1!',
+        'id_number' => '44-0777888B44',
+        'acknowledged_advert' => true,
+    ])->assertRedirect(route('portal.register.track'));
+
+    $this->assertGuest();
+    $this->assertDatabaseMissing('users', ['email' => $email]);
 });
 
 test('admin intake ordering places continuous second to most recent regular', function () {

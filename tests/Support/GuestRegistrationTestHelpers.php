@@ -2,6 +2,7 @@
 
 use App\Enums\Institution\IntakePeriodStatusEnum;
 use App\Enums\Institution\LevelEnum;
+use App\Enums\Institution\ModeOfStudyEnum;
 use App\Enums\Shared\TenantEnum;
 use App\Enums\Students\ApplicationTrackEnum;
 use App\Models\Institution\Course;
@@ -116,5 +117,112 @@ function guestRegistrationIntentSession(
         RegistrationIntentSession::READY_FOR_ACCOUNT_KEY => true,
         RegistrationIntentSession::INSTRUCTIONS_KEY => true,
         RegistrationIntentSession::REQUIRES_FEE_KEY => $track !== ApplicationTrackEnum::Apprentice,
+    ];
+}
+
+/**
+ * Seed a continuous-eligible programme with Full Time + OJET modes for SDP/OJET filter tests.
+ *
+ * @return array{
+ *     level: Level,
+ *     intakeId: int,
+ *     continuousIntakeId: int,
+ *     departmentId: int,
+ *     departmentLevelId: int,
+ *     courseId: int,
+ *     fullTimeModeId: int,
+ *     ojetModeId: int
+ * }
+ */
+function seedGuestContinuousProgramme(string $focus = 'sdp'): array
+{
+    $tenantId = TenantEnum::HARARE_POLY->id();
+    $regular = ensureCurrentIntakeStatus(IntakePeriodStatusEnum::Closed->value);
+    $continuous = ensureContinuousIntakeOpen();
+
+    $levelName = $focus === 'sdp' ? LevelEnum::SDP->value : LevelEnum::NC->value;
+    $level = Level::query()->firstOrCreate(
+        ['name' => $levelName],
+        [
+            'description' => $levelName,
+            'position' => $focus === 'sdp' ? 9 : 5,
+            'show_on_current_application_period' => true,
+            'has_application_fee_payment' => false,
+        ],
+    );
+    $level->update([
+        'show_on_current_application_period' => true,
+        'has_application_fee_payment' => false,
+    ]);
+
+    $department = Department::query()->firstOrCreate(
+        ['name' => 'Guest Continuous Dept '.uniqid()],
+        ['description' => 'Test'],
+    );
+
+    $institutionDepartment = InstitutionDepartment::query()->firstOrCreate(
+        [
+            'tenant_id' => $tenantId,
+            'department_id' => $department->id,
+        ],
+        ['department_code' => 'GCD'],
+    );
+
+    $departmentLevel = DepartmentLevel::query()->firstOrCreate(
+        [
+            'tenant_id' => $tenantId,
+            'institution_department_id' => $institutionDepartment->id,
+            'level_id' => $level->id,
+        ],
+        ['show_on_current_application_period' => true],
+    );
+    $departmentLevel->update(['show_on_current_application_period' => true]);
+
+    $course = Course::query()->firstOrCreate(
+        ['name' => 'Guest Continuous Course '.uniqid()],
+        ['description' => 'Test'],
+    );
+
+    $departmentCourse = DepartmentCourse::query()->firstOrCreate(
+        [
+            'tenant_id' => $tenantId,
+            'institution_department_id' => $institutionDepartment->id,
+            'course_id' => $course->id,
+        ],
+        ['show_on_current_application_period' => true],
+    );
+    $departmentCourse->update(['show_on_current_application_period' => true]);
+
+    DepartmentLevelCourse::query()->firstOrCreate([
+        'department_level_id' => $departmentLevel->id,
+        'department_course_id' => $departmentCourse->id,
+    ]);
+
+    $fullTime = ModeOfStudy::query()->firstOrCreate(
+        ['name' => ModeOfStudyEnum::FULL_TIME->value],
+        ['description' => 'Full Time'],
+    );
+    $ojet = ModeOfStudy::query()->firstOrCreate(
+        ['name' => ModeOfStudyEnum::OJET->value],
+        ['description' => 'Ojet'],
+    );
+
+    CourseLevelMode::query()->updateOrCreate(
+        [
+            'department_course_id' => $departmentCourse->id,
+            'department_level_id' => $departmentLevel->id,
+        ],
+        ['modes' => [$fullTime->id, $ojet->id]],
+    );
+
+    return [
+        'level' => $level,
+        'intakeId' => $regular->id,
+        'continuousIntakeId' => $continuous->id,
+        'departmentId' => $institutionDepartment->id,
+        'departmentLevelId' => $departmentLevel->id,
+        'courseId' => $departmentCourse->id,
+        'fullTimeModeId' => $fullTime->id,
+        'ojetModeId' => $ojet->id,
     ];
 }

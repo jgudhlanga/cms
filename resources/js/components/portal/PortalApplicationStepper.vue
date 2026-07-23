@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { cn } from '@/lib/utils';
+import { Check } from 'lucide-vue-next';
 import { computed } from 'vue';
 
 export type ApplicationFormStep = 'personal' | 'contact' | 'next_of_kin' | 'programme';
@@ -64,7 +65,10 @@ const onStepClick = (stepId: ApplicationFormStep, index: number) => {
                     :aria-label="isComplete(index) ? $t(step.labelKey) : undefined"
                     @click="onStepClick(step.id, index)"
                 >
-                    {{ index + 1 }}
+                    <Check v-if="isComplete(index) && !isCurrent(index)" class="size-3.5" aria-hidden="true" />
+                    <template v-else>
+                        {{ index + 1 }}
+                    </template>
                 </component>
                 <span v-if="index < steps.length - 1" class="pointer-events-none h-px flex-1 bg-border" aria-hidden="true" />
             </li>

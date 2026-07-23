@@ -226,6 +226,7 @@ class RegistrationIntentSession
             self::DEPARTMENT_LEVEL_KEY,
             self::COURSE_KEY,
             self::MODE_KEY,
+            self::READY_FOR_ACCOUNT_KEY,
         ]);
     }
 

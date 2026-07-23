@@ -2,6 +2,7 @@ import { useSharedFormSchema } from '@/composables/core/useSharedFormSchema';
 import { useApplicationFormHelper } from '@/composables/students/useApplicationFormHelper';
 import { useStudentPortal } from '@/composables/students/useStudentPortal';
 import { useUtils } from '@/composables/core/useUtils';
+import { isValidDateOfBirth } from '@/lib/examYear';
 import { scrollToFirstError } from '@/lib/scrollToFirstError';
 import { mergeValidationSchema } from '@/lib/forms';
 import { idNumberUniqueSchema, passportNumberUniqueSchema } from '@/lib/uniqueValidations';
@@ -187,6 +188,9 @@ export function useCreateApplicationWizard(
         }
 
         if (isItTrue(requirements?.attributes?.isOLevelRequired)) {
+            if (!isValidDateOfBirth(storeRefs.date_of_birth?.value)) {
+                inlineErrors.date_of_birth = trans('trans.portal_o_level_invalid_date_of_birth');
+            }
             const mainSubjectsCount = Number(String(requirements?.attributes?.mainSubjectsCount ?? '0'));
             const mainErrors = validateMainSubjects(mainSubjectsCount);
             if (mainErrors?.length) {
@@ -211,6 +215,10 @@ export function useCreateApplicationWizard(
 
         if (Object.keys(inlineErrors).length > 0) {
             form.setError(inlineErrors);
+            if (inlineErrors.date_of_birth) {
+                currentStep.value = 'personal';
+                stepErrorHint.value = inlineErrors.date_of_birth;
+            }
             scrollToFirstError(inlineErrors);
             return false;
         }
@@ -235,6 +243,9 @@ export function useCreateApplicationWizard(
         }
 
         if (isItTrue(requirements?.attributes?.isOLevelRequired)) {
+            if (!isValidDateOfBirth(storeRefs.date_of_birth?.value)) {
+                inlineErrors.date_of_birth = trans('trans.portal_o_level_invalid_date_of_birth');
+            }
             const mainSubjectsCount = Number(String(requirements?.attributes?.mainSubjectsCount ?? '0'));
             const mainErrors = validateMainSubjects(mainSubjectsCount);
             if (mainErrors?.length) {
@@ -259,6 +270,10 @@ export function useCreateApplicationWizard(
 
         if (Object.keys(inlineErrors).length > 0) {
             form.setError(inlineErrors);
+            if (inlineErrors.date_of_birth) {
+                currentStep.value = 'personal';
+                stepErrorHint.value = inlineErrors.date_of_birth;
+            }
             scrollToFirstError(inlineErrors);
             return false;
         }

@@ -22,7 +22,8 @@ import { TypeVariant } from '@/enums/type-variants';
 import { ContactDetailView, NextOfKinDetailView, PersonalDetailView, ProgramDetailView } from '@/types/students';
 import { useForm } from '@inertiajs/vue3';
 import { storeToRefs } from 'pinia';
-import { onMounted } from 'vue';
+import { computed, onMounted } from 'vue';
+import { resolveEffectiveEnrolmentRequirements } from '@/lib/resolveEffectiveEnrolmentRequirements';
 
 // Composable
 const { saveApplication, selectLevel } = useStudentPortal();
@@ -61,8 +62,13 @@ const {
     course,
     level,
     levelRequirements,
+    courseRequirements,
     disability_status,
 } = storeToRefs(useCreateApplicationFormStore());
+
+const requirements = computed(() =>
+    resolveEffectiveEnrolmentRequirements(courseRequirements.value, levelRequirements.value),
+);
 const personal: PersonalDetailView = {
     title: title.value?.label ?? '',
     firstname: first_name?.value ?? '',
@@ -177,14 +183,14 @@ onMounted(() => {
             <ViewContactDetails :contacts="contacts" :title="$t('trans.contact_details')" />
             <ViewNextOfKinDetails :next-of-kin="nextOfKin" :title="$t('trans.next_of_kin')" />
             <ProgramDetails :program="programDetails" :title="$tChoice('trans.program', 1)">
-                <div class="mt-5 flex flex-col" v-if="levelRequirements">
-                    <template v-if="isItTrue(levelRequirements.attributes.isOLevelRequired)">
-                        <OLevelRequirements :is-view-only="true" />
+                <div class="mt-5 flex flex-col" v-if="requirements">
+                    <template v-if="isItTrue(requirements.attributes.isOLevelRequired)">
+                        <OLevelRequirements :is-view-only="true" :requirements="requirements" />
                     </template>
-                    <template v-if="levelRequirements.attributes.requiredLevel">
-                        <LevelRequirements :requirements="levelRequirements" :is-view-only="true" />
+                    <template v-if="Number(String(requirements.attributes.requiredLevelId ?? 0)) > 0">
+                        <LevelRequirements :requirements="requirements" :is-view-only="true" />
                     </template>
-                    <template v-if="isItTrue(levelRequirements.attributes.onlyReadWriteRequired)">
+                    <template v-if="isItTrue(requirements.attributes.onlyReadWriteRequired)">
                         <SDPRequirements :is-view-only="true" />
                     </template>
                 </div>

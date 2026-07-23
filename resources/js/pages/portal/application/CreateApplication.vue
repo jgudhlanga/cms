@@ -21,6 +21,7 @@ import { CourseRequirement, DepartmentLevelRequirement } from '@/types/departmen
 import { Level } from '@/types/institution';
 import { Head, useForm } from '@inertiajs/vue3';
 import { storeToRefs } from 'pinia';
+import { resolveEffectiveEnrolmentRequirements } from '@/lib/resolveEffectiveEnrolmentRequirements';
 
 const applicationFormSections = {
     PersonalDetails,
@@ -74,10 +75,10 @@ const store = useCreateApplicationFormStore();
 const storeRefs = storeToRefs(store);
 
 const getRequirements = () => {
-    requirements.value =
-        storeRefs.courseRequirements?.value && Number(String(storeRefs.courseRequirements?.value?.id)) > 0
-            ? storeRefs.courseRequirements?.value
-            : storeRefs.levelRequirements?.value;
+    requirements.value = resolveEffectiveEnrolmentRequirements(
+        storeRefs.courseRequirements?.value,
+        storeRefs.levelRequirements?.value,
+    );
 };
 
 const form = useForm<CreateApplicationParams>({
@@ -209,6 +210,7 @@ onMounted(async () => {
     populateInitialForm();
 });
 const isProgrammeLevelAvailable = ref(true);
+const isRequirementsLoading = ref(false);
 
 const onStepNavigate = (step: ApplicationFormStep) => {
     wizard.goToStep(step);
@@ -217,6 +219,10 @@ const onStepNavigate = (step: ApplicationFormStep) => {
 const onPrimaryAction = async () => {
     isValidating.value = true;
     try {
+        if (currentStep.value === 'programme' && isRequirementsLoading.value) {
+            return;
+        }
+
         getRequirements();
         updateCreateForm(form);
 
@@ -296,6 +302,7 @@ const isValidating = ref(false);
                         :levels-with-payment="levelsWithPayment"
                         :application-track="applicationTrack"
                         @level-availability-change="isProgrammeLevelAvailable = $event"
+                        @requirements-loading-change="isRequirementsLoading = $event"
                     />
                 </div>
             </div>
@@ -307,7 +314,9 @@ const isValidating = ref(false);
                 :processing="isValidating"
                 :error-hint="stepErrorHint"
                 :show-back="!isFirstStep"
-                :primary-disabled="currentStep === 'programme' && !isProgrammeLevelAvailable"
+                :primary-disabled="
+                    currentStep === 'programme' && (!isProgrammeLevelAvailable || isRequirementsLoading)
+                "
                 @primary="onPrimaryAction"
                 @back="wizard.goBack"
             />

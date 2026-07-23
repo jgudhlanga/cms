@@ -1,8 +1,8 @@
 import { SelectOption } from '@/types/utils';
 
 const CURRENT_YEAR = new Date().getFullYear();
-const MAX_HISTORY = 20;
-const MIN_AGE_AT_EXAM = 14;
+const MAX_HISTORY = 60;
+const MIN_AGE_AT_EXAM = 12;
 export const MAX_DISTINCT_EXAM_YEARS = 3;
 
 export function getBirthYear(dateOfBirth: string | null | undefined): number | null {
@@ -14,6 +14,10 @@ export function getBirthYear(dateOfBirth: string | null | undefined): number | n
         return null;
     }
     return parsed.getFullYear();
+}
+
+export function isValidDateOfBirth(dateOfBirth?: string | null): boolean {
+    return getBirthYear(dateOfBirth) !== null;
 }
 
 export function getExamYearBounds(dateOfBirth?: string | null): { minYear: number; maxYear: number } {

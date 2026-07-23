@@ -185,7 +185,7 @@ const submit = () => {
 
                         <div v-else class="space-y-3">
                             <label class="block space-y-1">
-                                <span class="text-xs font-medium text-foreground">{{ $t('trans.department') }}</span>
+                                <span class="text-xs font-medium text-foreground">{{ $tChoice('trans.department', 1) }}</span>
                                 <select
                                     v-model.number="departmentId"
                                     class="h-9 w-full rounded-lg border border-border bg-background px-2.5 text-sm"

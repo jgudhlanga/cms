@@ -109,6 +109,12 @@ class RegistrationLevelOptionsService
             ]);
         }
 
+        if ($intakePeriodId !== null && $openIntakes->firstWhere('id', $intakePeriodId) === null) {
+            throw ValidationException::withMessages([
+                'intake_period_id' => __('trans.application_track_not_open'),
+            ]);
+        }
+
         $intakePeriod = $this->eligibility->resolveIntakeForTrack($track, $intakePeriodId);
 
         return [
