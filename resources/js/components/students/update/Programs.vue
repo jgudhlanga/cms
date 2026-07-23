@@ -18,6 +18,7 @@ import { useRegistrationAvailability } from '@/composables/students/useRegistrat
 import { TypeVariant } from '@/enums/type-variants';
 import { clearFormErrors } from '@/lib/forms';
 import { errorAlert } from '@/lib/alerts';
+import { resolveEffectiveEnrolmentRequirements } from '@/lib/resolveEffectiveEnrolmentRequirements';
 import { useCreateApplicationFormStore } from '@/store/portal/useCreateApplicationFormStore';
 import { useUpdateProgramFormStore } from '@/store/portal/useUpdateProgramFormStore';
 import { Enrolment } from '@/types/enrolments';
@@ -45,6 +46,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<{
     levelAvailabilityChange: [available: boolean];
+    requirementsLoadingChange: [loading: boolean];
 }>();
 
 const { form, application } = props;
@@ -56,6 +58,7 @@ const isEditing = Number(String(application?.id)) > 0;
 const store = isEditing ? useUpdateProgramFormStore() : useCreateApplicationFormStore();
 let skipFirstDepartmentWatch = isEditing;
 let skipFirstLevelWatch = isEditing;
+let skipFirstCourseWatch = isEditing;
 
 const { department, level, course, modeOfStudy } = storeToRefs(store);
 
@@ -104,9 +107,32 @@ const onAllowedLevelStatus = ({ available }: { available: boolean }) => {
     emit('levelAvailabilityChange', available);
 };
 
-const requirements = computed(() => {
-    return courseRequirements.value && Number(String(courseRequirements.value?.id)) > 0 ? courseRequirements.value : levelRequirements.value;
-});
+const requirements = computed(() =>
+    resolveEffectiveEnrolmentRequirements(courseRequirements.value, levelRequirements.value),
+);
+
+const loadRequirementsForSelection = async () => {
+    const levelId = Number(level.value?.value ?? 0);
+    const courseId = Number(course.value?.value ?? 0);
+
+    if (courseId > 0 && levelId > 0) {
+        await Promise.all([
+            listCourseRequirements(String(levelId), String(courseId)),
+            listLevelRequirements(String(levelId)),
+        ]);
+        return;
+    }
+
+    if (levelId > 0) {
+        await listLevelRequirements(String(levelId));
+    }
+};
+
+watch(
+    () => Boolean(levelRequirementsLoading.value || courseRequirementsLoading.value),
+    (loading) => emit('requirementsLoadingChange', loading),
+    { immediate: true },
+);
 
 const resetProgrammeSelections = () => {
     level.value = null;
@@ -186,25 +212,28 @@ watch(level, async (newVal, oldVal) => {
     clearFormErrors(form, 'course');
 });
 
-watch(course, async () => {
-    levelRequirements.value = null;
-    courseRequirements.value = null;
-    if (skipFirstLevelWatch) {
-        skipFirstLevelWatch = false;
-        return;
-    }
-    if (Number(course.value?.value) > 0) {
-        if (course.value?.triggerActionValue) {
-            await listCourseRequirements(level.value?.value?.toString() ?? '', course.value?.value?.toString() ?? '');
-            if (Number(requirements.value?.attributes?.departmentLeveId) !== Number(level.value?.value)) {
-                await listLevelRequirements(level.value?.value?.toString() ?? '');
+watch(
+    course,
+    async () => {
+        if (skipFirstCourseWatch) {
+            skipFirstCourseWatch = false;
+            if (Number(course.value?.value) > 0) {
+                await loadRequirementsForSelection();
             }
-        } else {
-            if (Number(level.value?.value) > 0) await listLevelRequirements(level.value?.value?.toString() ?? '');
+            return;
         }
-    }
-    clearFormErrors(form, 'course');
-});
+
+        levelRequirements.value = null;
+        courseRequirements.value = null;
+
+        if (Number(course.value?.value) > 0) {
+            await loadRequirementsForSelection();
+        }
+
+        clearFormErrors(form, 'course');
+    },
+    { immediate: true },
+);
 
 const goToPayment = () => {
     navigateToRegistrationOrMaintenance(route('portal.application.fee-payment'));

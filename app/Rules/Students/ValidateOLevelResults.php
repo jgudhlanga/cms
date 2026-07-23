@@ -12,9 +12,9 @@ class ValidateOLevelResults
 {
     private const int MAX_DISTINCT_EXAM_YEARS = 3;
 
-    private const int MAX_HISTORY = 20;
+    private const int MAX_HISTORY = 60;
 
-    private const int MIN_AGE_AT_EXAM = 14;
+    private const int MIN_AGE_AT_EXAM = 12;
 
     private const array ALLOWED_SITTINGS = ['june', 'november', 'other'];
 

@@ -126,7 +126,8 @@ test('maintenance page exposes continuous apply when continuous intake is open',
         ->assertOk()
         ->assertInertia(fn ($page) => $page
             ->component('portal/registration/RegistrationMaintenance')
-            ->where('continuousOpen', true));
+            ->where('continuousOpen', true)
+            ->where('continuousApplyUrl', route('portal.register.track')));
 });
 
 test('submitted applications page remains accessible when registration is closed', function () {

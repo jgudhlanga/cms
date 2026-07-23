@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Integrations\PaymentController;
+use App\Http\Controllers\Students\GuestRegistrationController;
 use App\Http\Controllers\Students\PortalController;
 use App\Http\Controllers\Students\ReturningStudentController;
 use App\Http\Controllers\Students\StudentOLevelResultsController;
@@ -15,6 +16,16 @@ Route::prefix('portal')->group(function () {
         Route::post('store', [PortalController::class, 'store'])
             ->middleware('throttle:10,1')
             ->name('portal.store');
+
+        Route::prefix('register')->name('portal.register.')->group(function () {
+            Route::get('track', [GuestRegistrationController::class, 'chooseTrack'])->name('track');
+            Route::post('track', [GuestRegistrationController::class, 'selectTrack'])->name('select-track');
+            Route::get('level', [GuestRegistrationController::class, 'levelOptions'])->name('level');
+            Route::post('select-level', [GuestRegistrationController::class, 'selectLevel'])->name('select-level');
+            Route::get('programme', [GuestRegistrationController::class, 'programmeOptions'])->name('programme');
+            Route::post('select-programme', [GuestRegistrationController::class, 'selectProgramme'])->name('select-programme');
+            Route::get('account', [GuestRegistrationController::class, 'account'])->name('account');
+        });
     });
 
     Route::get('{user}/confirmation', [PortalController::class, 'registrationConfirmation'])->name('portal.confirmation');

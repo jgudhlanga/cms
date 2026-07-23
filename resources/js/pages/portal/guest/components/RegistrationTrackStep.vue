@@ -129,19 +129,45 @@ const optionKey = (option: VisibleOption): string =>
             "
             @click="selectOption(option)"
         >
-            <div class="font-semibold text-foreground">
-                <template v-if="option.kind === 'focus'">
-                    {{ $t(option.labelKey) }}
-                </template>
-                <template v-else>
-                    {{ option.label }}
-                </template>
+            <div class="flex items-start justify-between gap-2">
+                <div class="font-semibold text-foreground">
+                    <template v-if="option.kind === 'focus'">
+                        {{ $t(option.labelKey) }}
+                    </template>
+                    <template v-else>
+                        {{ option.label }}
+                    </template>
+                </div>
+                <span
+                    v-if="option.kind === 'focus' && option.focus === 'sdp'"
+                    class="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-primary"
+                >
+                    Express
+                </span>
+                <span
+                    v-else-if="option.kind === 'track' && option.value === 'apprentice'"
+                    class="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-primary"
+                >
+                    Express
+                </span>
             </div>
             <p
                 v-if="option.kind === 'track'"
                 class="mt-1 text-sm text-muted-foreground"
             >
                 {{ option.description }}
+            </p>
+            <p
+                v-else-if="option.kind === 'focus' && option.focus === 'sdp'"
+                class="mt-1 text-sm text-muted-foreground"
+            >
+                {{ $t('trans.registration_express_sdp_hint') }}
+            </p>
+            <p
+                v-else-if="option.kind === 'focus' && option.focus === 'ojet'"
+                class="mt-1 text-sm text-muted-foreground"
+            >
+                {{ $t('trans.application_continuous_focus_ojet_description') }}
             </p>
         </button>
     </div>

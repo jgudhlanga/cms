@@ -10,7 +10,7 @@ import { ZodObject } from 'zod';
 export function useGuestPortal() {
     const schemaFields = useSharedFormSchema() as Record<string, () => ZodObject<any, any>>;
 
-    const successMessage = () => 'User account successfully created, select level to continue with your application';
+    const successMessage = () => 'Account created. Continue with your application.';
     const errorMessage = () => trans('trans.item_save_failure', { item: trans_choice('trans.application', 1) });
 
     const formSchema = () => {

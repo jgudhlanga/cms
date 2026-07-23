@@ -39,8 +39,12 @@ use App\Http\Resources\Students\AcademicLevelResource;
 use App\Http\Resources\Students\AcademicRecordResource;
 use App\Http\Resources\Students\StudentApplicationResource;
 use App\Http\Resources\Students\StudentResource;
+use App\Models\Institution\DepartmentCourse;
+use App\Models\Institution\DepartmentLevel;
+use App\Models\Institution\InstitutionDepartment;
 use App\Models\Institution\IntakePeriod;
 use App\Models\Institution\Level;
+use App\Models\Institution\ModeOfStudy;
 use App\Models\Shared\AcademicLevel;
 use App\Models\Shared\Status;
 use App\Models\Students\Student;
@@ -59,6 +63,9 @@ use App\Services\Students\ApplicationFeeService;
 use App\Services\Students\ApplicationTrackSession;
 use App\Services\Students\IntakePeriodResolver;
 use App\Services\Students\RegistrationAvailabilityService;
+use App\Services\Students\RegistrationIntentSession;
+use App\Services\Students\RegistrationLevelOptionsService;
+use App\Services\Students\RegistrationProgrammeAvailabilityService;
 use App\Services\Students\ReturningStudentApplicationPrefillService;
 use App\Services\Students\ReturningStudentContextService;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -88,6 +95,9 @@ class PortalController extends Controller
         protected ReturningStudentApplicationPrefillService $returningApplicationPrefillService,
         protected ApplicationTrackSession $trackSession,
         protected ApplicationEligibilityService $eligibility,
+        protected RegistrationIntentSession $intentSession,
+        protected RegistrationLevelOptionsService $levelOptionsService,
+        protected RegistrationProgrammeAvailabilityService $programmeAvailability,
     ) {}
 
     // ========= Dashboard and Registration =========
@@ -122,9 +132,15 @@ class PortalController extends Controller
         ]);
     }
 
-    public function create(): Response
+    public function create(): Response|RedirectResponse
     {
         $this->logoutIfAuthenticated();
+
+        // After guest eligibility, send applicants to the dedicated account step.
+        if ($this->intentSession->isReadyForAccount()) {
+            return to_route('portal.register.account');
+        }
+
         $openIntakes = $this->applicationFeeService->openIntakePeriodsForPortal();
 
         return Inertia::render('portal/guest/RegistrationUserForm', [
@@ -133,12 +149,57 @@ class PortalController extends Controller
             'openIntakeNames' => $openIntakes->count() > 1
                 ? $openIntakes->pluck('name')->join(', ')
                 : null,
+            'intentSummary' => $this->intentSummaryWithLabels(),
+            'stepperVariant' => $this->intentSession->stepperVariant(),
+            'requiresFee' => $this->intentSession->requiresFee(),
+            'eligibilityComplete' => false,
+            'startAtIdentity' => false,
+            'requireEligibilityFirst' => true,
         ]);
     }
 
     public function store(UserRequest $request, EnrollmentLookupService $enrollmentLookup): RedirectResponse
     {
         $path = $request->string('registration_path')->toString();
+
+        if (! $this->intentSession->isCompleteForAccountCreation()) {
+            return to_route('portal.register.track')
+                ->withErrors(['track' => __('trans.registration_intent_required')]);
+        }
+
+        $track = $this->intentSession->getTrack();
+
+        if ($track === null || ! $this->registrationAvailability->isTrackOpen($track)) {
+            return to_route('portal.register.track')
+                ->withErrors(['track' => __('trans.application_track_not_open')]);
+        }
+
+        // Re-validate level/intake are still open (prevent stale session abuse).
+        $levelId = $this->intentSession->levelId();
+        $intakePeriodId = $this->intentSession->intakePeriodId();
+
+        if ($levelId === null) {
+            return to_route('portal.register.level');
+        }
+
+        try {
+            $this->levelOptionsService->resolveAndValidateSelection($track, $levelId, $intakePeriodId);
+        } catch (ValidationException $e) {
+            $this->intentSession->clearLevelAndBelow();
+
+            return to_route('portal.register.level')->withErrors($e->errors());
+        }
+
+        if (! $this->programmeAvailability->hasAvailableProgrammes(
+            $track,
+            $levelId,
+            $this->intentSession->continuousFocus(),
+        )) {
+            return to_route('portal.register.programme')
+                ->withErrors(['department_id' => __('trans.registration_programme_none_available', [
+                    'level' => Level::query()->whereKey($levelId)->value('name') ?? '',
+                ])]);
+        }
 
         if ($path === 'zimbabwean' && $enrollmentLookup->nationalIdExists($request->string('id_number')->toString())) {
             return back()->withErrors([
@@ -184,9 +245,11 @@ class PortalController extends Controller
 
         session($registrationSession);
 
+        $this->intentSession->promoteToApplicationSession($this->trackSession);
+
         Auth::login($user);
 
-        return to_route('portal.application.track');
+        return $this->redirectAfterAccountCreation($track, $user);
     }
 
     public function registrationConfirmation(User $user): Response
@@ -206,7 +269,11 @@ class PortalController extends Controller
         $this->authorize('manageStudentPersonalDetails');
         $user = request()->user();
         $applicationFee = $this->applicationFeeService->activeApplicationFee($user);
-        $intakePeriod = $applicationFee?->intakePeriod ?? Helper::resolveIntakePeriod();
+        $intakePeriod = $applicationFee?->intakePeriod
+            ?? ($this->trackSession->intakePeriodId()
+                ? IntakePeriod::query()->find($this->trackSession->intakePeriodId())
+                : null)
+            ?? Helper::resolveIntakePeriod();
         $levelsWithPayment = PaymentHelper::levelsWithApplicationFee();
 
         return Inertia::render('portal/application/CreateApplication', [
@@ -224,6 +291,7 @@ class PortalController extends Controller
                 'id_type_id' => session('registration.id_type_id'),
                 'path' => session('registration.path'),
             ],
+            'programmePrefill' => $this->resolveProgrammePrefill(),
         ]);
     }
 
@@ -255,6 +323,9 @@ class PortalController extends Controller
         return Inertia::render('portal/application/SelectApplicationTrack', [
             'tracks' => $tracks,
             'currentTrack' => $this->trackSession->get()?->value,
+            'currentContinuousFocus' => session('application.continuous_focus'),
+            'continuousHasSdp' => $this->levelOptionsService->continuousHasSdp(),
+            'continuousHasOjet' => $this->levelOptionsService->continuousHasOjet(),
             'applicationStep' => 'track',
         ]);
     }
@@ -268,6 +339,7 @@ class PortalController extends Controller
 
         $data = $request->validate([
             'track' => ['required', 'string', 'in:'.implode(',', array_column(ApplicationTrackEnum::cases(), 'value'))],
+            'continuous_focus' => ['nullable', 'string', 'in:sdp,ojet'],
         ]);
 
         $track = ApplicationTrackEnum::from($data['track']);
@@ -280,6 +352,12 @@ class PortalController extends Controller
 
         $this->trackSession->set($track);
         $this->bindIntakeForTrack($track);
+
+        if ($track === ApplicationTrackEnum::Continuous) {
+            session(['application.continuous_focus' => $data['continuous_focus'] ?? null]);
+        } else {
+            session()->forget('application.continuous_focus');
+        }
 
         return $this->redirectForTrack($track);
     }
@@ -349,35 +427,16 @@ class PortalController extends Controller
             return to_route('portal.application.apprentice');
         }
 
-        $levels = Level::where('show_on_current_application_period', 1)
-            ->orderBy('position')
-            ->orderBy('name')
-            ->get();
-
-        if ($track === ApplicationTrackEnum::Continuous) {
-            $levels = $this->eligibility->filterLevelsForContinuousTrack($levels);
-        }
-
-        $openIntakes = $track === ApplicationTrackEnum::Continuous
-            ? collect(array_filter([$this->applicationFeeService->continuousIntakePeriod()]))
-            : $this->applicationFeeService->openIntakePeriodsForPortal();
-
-        $openLevelCount = $levels->count();
-        $hasActiveIntakes = $openIntakes->isNotEmpty();
-        $availabilityIssue = match (true) {
-            $openLevelCount === 0 => 'no_open_levels',
-            ! $hasActiveIntakes => 'no_active_intakes',
-            default => null,
-        };
+        $options = $this->levelOptionsService->optionsForTrack($track);
 
         return Inertia::render('portal/application/SelectLevelOption', [
-            'levels' => LevelResource::collection($levels),
-            'intakePeriods' => IntakePeriodResource::collection($openIntakes),
-            'requiresIntakeSelection' => $track !== ApplicationTrackEnum::Continuous && $openIntakes->count() > 1,
+            'levels' => LevelResource::collection($options['levels']),
+            'intakePeriods' => IntakePeriodResource::collection($options['intakePeriods']),
+            'requiresIntakeSelection' => $options['requiresIntakeSelection'],
             'applicationStep' => 'level',
-            'openLevelCount' => $openLevelCount,
-            'hasActiveIntakes' => $hasActiveIntakes,
-            'availabilityIssue' => $availabilityIssue,
+            'openLevelCount' => $options['openLevelCount'],
+            'hasActiveIntakes' => $options['hasActiveIntakes'],
+            'availabilityIssue' => $options['availabilityIssue'],
             'applicationTrack' => $track->value,
             'applicationTrackLabel' => $track->label(),
         ]);
@@ -1044,8 +1103,101 @@ class PortalController extends Controller
                 : __('trans.registration_maintenance_closed', ['intake' => $intakePeriod?->name ?? '']),
             'intakeName' => $intakePeriod?->name,
             'continuousOpen' => $continuousOpen,
-            'continuousApplyUrl' => $continuousOpen ? route('portal.create') : null,
+            'continuousApplyUrl' => $continuousOpen ? route('portal.register.track') : null,
         ]);
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function resolveProgrammePrefill(): ?array
+    {
+        $departmentId = session('application.department_id');
+        $departmentLevelId = session('application.department_level_id');
+        $courseId = session('application.course_id');
+        $modeOfStudyId = session('application.mode_of_study_id');
+
+        if (! $departmentId || ! $departmentLevelId || ! $courseId || ! $modeOfStudyId) {
+            return null;
+        }
+
+        $institutionDepartment = InstitutionDepartment::query()
+            ->with('department')
+            ->find($departmentId);
+        $departmentLevel = DepartmentLevel::query()
+            ->with('level')
+            ->find($departmentLevelId);
+        $departmentCourse = DepartmentCourse::query()
+            ->with('course')
+            ->find($courseId);
+        $modeOfStudy = ModeOfStudy::query()->find($modeOfStudyId);
+
+        return [
+            'department_id' => (int) $departmentId,
+            'department_label' => $institutionDepartment?->department?->name
+                ?? $institutionDepartment?->department_code
+                ?? null,
+            'department_level_id' => (int) $departmentLevelId,
+            'department_level_label' => $departmentLevel?->level?->name,
+            'level_relationship_one_value' => $departmentLevel?->level_id,
+            'course_id' => (int) $courseId,
+            'course_label' => $departmentCourse?->course?->name,
+            'mode_of_study_id' => (int) $modeOfStudyId,
+            'mode_of_study_label' => $modeOfStudy?->name,
+        ];
+    }
+
+    private function redirectAfterAccountCreation(ApplicationTrackEnum $track, User $user): RedirectResponse
+    {
+        if ($track === ApplicationTrackEnum::Apprentice) {
+            $this->intentSession->clear();
+
+            return to_route('portal.application.apprentice');
+        }
+
+        $levelId = $this->trackSession->levelId();
+        $level = $levelId !== null ? Level::query()->find($levelId) : null;
+
+        if ($level !== null && $this->eligibility->trackRequiresApplicationFee($track, $level, $user)) {
+            $intakePeriodId = $this->trackSession->intakePeriodId();
+            $intakePeriod = $intakePeriodId !== null
+                ? IntakePeriod::query()->findOrFail($intakePeriodId)
+                : $this->eligibility->resolveIntakeForTrack($track, null);
+
+            $this->applicationFeeService->ensureForFeeRequiredLevel($user, $level, $intakePeriod);
+            $this->intentSession->clear();
+
+            return to_route('portal.application.fee-payment');
+        }
+
+        $this->applicationFeeService->abandonUnpaidApplicationFee($user);
+        $this->intentSession->clear();
+
+        return to_route('portal.application.create');
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function intentSummaryWithLabels(): array
+    {
+        $summary = $this->intentSession->summary();
+
+        if ($summary['levelId'] !== null) {
+            $summary['levelName'] = Level::query()->whereKey($summary['levelId'])->value('name');
+        } else {
+            $summary['levelName'] = null;
+        }
+
+        if ($summary['intakePeriodId'] !== null) {
+            $summary['intakeName'] = IntakePeriod::query()
+                ->whereKey($summary['intakePeriodId'])
+                ->value('name');
+        } else {
+            $summary['intakeName'] = null;
+        }
+
+        return $summary;
     }
 
     private function bindIntakeForTrack(ApplicationTrackEnum $track): void

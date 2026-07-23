@@ -288,7 +288,6 @@ export const useDepartmentCourses = (isEditingProgram?: boolean) => {
 
     const {
         courseRequirements: requirements,
-        levelRequirements,
         o_level_subject_ids,
         required_level_completed,
         read_write_acknowledged,
@@ -302,9 +301,6 @@ export const useDepartmentCourses = (isEditingProgram?: boolean) => {
             courseRequirements.value = await HttpService.get(
                 `api/v1/institution-departments/${departmentLevelId}/courses/${departmentCourseId}/requirements`,
             );
-            if (levelRequirements && Number(courseRequirements.value?.id) > 0) {
-                levelRequirements.value = null;
-            }
 
             requirements!.value = courseRequirements.value;
             o_level_subject_ids!.value = null;

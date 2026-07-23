@@ -97,7 +97,7 @@ test('o level validation rejects missing exam year', function () {
 test('o level validation rejects exam year outside allowed range', function () {
     [$departmentLevel, $departmentCourse, $subjects, $gradeA] = createOLevelRequirementFixture();
     $subjectId = (string) $subjects->first()->id;
-    $invalidYear = (int) now()->format('Y') - 50;
+    $invalidYear = (int) now()->format('Y') - 70;
 
     $validator = validateOLevelPayload([
         'department_id' => $departmentLevel->institution_department_id,
@@ -137,4 +137,25 @@ test('o level validation accepts valid main subject results', function () {
     ]);
 
     expect($validator->errors()->has('o_level'))->toBeFalse();
+});
+
+test('o level validation rejects missing main subject grades payload', function () {
+    [$departmentLevel, $departmentCourse] = createOLevelRequirementFixture();
+
+    $validator = validateOLevelPayload([
+        'department_id' => $departmentLevel->institution_department_id,
+        'level_id' => $departmentLevel->id,
+        'course_id' => $departmentCourse->id,
+        'date_of_birth' => now()->subYears(18)->toDateString(),
+        'o_level_subject_ids' => null,
+        'o_level_years' => null,
+        'o_level_sittings' => null,
+        'o_level_other_subject_ids' => null,
+        'o_level_other_grade_ids' => null,
+        'o_level_other_years' => null,
+        'o_level_other_sittings' => null,
+    ]);
+
+    expect($validator->errors()->has('o_level'))->toBeTrue()
+        ->and($validator->errors()->first('o_level'))->toBe(__('trans.o_level_validation_main_subjects_required'));
 });

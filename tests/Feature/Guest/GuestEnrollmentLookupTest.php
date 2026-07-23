@@ -3,6 +3,7 @@
 use App\Enums\Acl\RoleEnum;
 use App\Enums\Institution\IntakePeriodStatusEnum;
 use App\Enums\Shared\TenantEnum;
+use App\Enums\Students\ApplicationTrackEnum;
 use App\Models\Acl\Role;
 use App\Models\Institution\IntakePeriod;
 use App\Models\Institution\Level;
@@ -117,18 +118,20 @@ test('portal store rejects invalid national id format', function () {
 
 test('portal store rejects duplicate national id registration', function () {
     createGuestEnrollmentStudent('44-0111222A44');
+    $seeded = seedGuestRegistrationProgramme();
 
-    $response = $this->post(route('portal.store'), [
-        'registration_path' => 'zimbabwean',
-        'first_name' => 'New',
-        'last_name' => 'Applicant',
-        'email' => 'new.applicant.'.uniqid().'@example.com',
-        'password' => 'Password1!',
-        'password_confirmation' => 'Password1!',
-        'id_number' => '44-0111222A44',
-        'acknowledged_advert' => true,
-        'track' => 'regular',
-    ]);
+    $response = $this->withSession(guestRegistrationIntentSession(ApplicationTrackEnum::Regular, $seeded))
+        ->post(route('portal.store'), [
+            'registration_path' => 'zimbabwean',
+            'first_name' => 'New',
+            'last_name' => 'Applicant',
+            'email' => 'new.applicant.'.uniqid().'@example.com',
+            'password' => 'Password1!',
+            'password_confirmation' => 'Password1!',
+            'id_number' => '44-0111222A44',
+            'acknowledged_advert' => true,
+            'track' => 'regular',
+        ]);
 
     $response->assertSessionHasErrors('id_number');
 });
@@ -164,25 +167,43 @@ test('portal store rejects weak password', function () {
     $response->assertSessionHasErrors('password');
 });
 
-test('portal store creates account and redirects to level selection for new zimbabwean', function () {
-    $email = 'fresh.student.'.uniqid().'@example.com';
-
+test('portal store rejects registration without guest eligibility intent', function () {
     $response = $this->post(route('portal.store'), [
         'registration_path' => 'zimbabwean',
         'first_name' => 'Fresh',
-        'middle_name' => 'Middle',
         'last_name' => 'Student',
-        'email' => $email,
+        'email' => 'no.intent.'.uniqid().'@example.com',
         'password' => 'Password1!',
         'password_confirmation' => 'Password1!',
         'id_number' => '44-0999888B44',
         'acknowledged_advert' => true,
-        'track' => 'regular',
     ]);
 
-    $response->assertRedirect(route('portal.application.level-options'));
+    $response->assertRedirect(route('portal.register.track'));
+    $this->assertGuest();
+});
+
+test('portal store creates account and skips track selection when intent is complete', function () {
+    $seeded = seedGuestRegistrationProgramme();
+    $email = 'fresh.student.'.uniqid().'@example.com';
+
+    $response = $this->withSession(guestRegistrationIntentSession(ApplicationTrackEnum::Regular, $seeded))
+        ->post(route('portal.store'), [
+            'registration_path' => 'zimbabwean',
+            'first_name' => 'Fresh',
+            'middle_name' => 'Middle',
+            'last_name' => 'Student',
+            'email' => $email,
+            'password' => 'Password1!',
+            'password_confirmation' => 'Password1!',
+            'id_number' => '44-0999888B44',
+            'acknowledged_advert' => true,
+        ]);
+
+    $response->assertRedirect(route('portal.application.create'));
     $this->assertAuthenticated();
     expect(session('application.track'))->toBe('regular');
+    expect(session('application.level_id'))->toBe($seeded['level']->id);
     expect(session('registration.id_number'))->toBe('44-0999888B44');
     expect(auth()->user()?->middle_name)->toBe('Middle');
     expect(auth()->user()?->registration_instructions_acknowledged_at)->not->toBeNull();
@@ -194,7 +215,7 @@ test('portal store creates account and redirects to level selection for new zimb
     ]);
 });
 
-test('portal level options page renders for newly registered student', function () {
+test('portal level options page renders for authenticated student with track session', function () {
     $tenantId = TenantEnum::HARARE_POLY->id();
 
     Level::factory()->create([
@@ -208,25 +229,20 @@ test('portal level options page renders for newly registered student', function 
         'end_date' => now()->addYear()->toDateString(),
         'calendar_year' => '2026/2027',
         'is_active' => true,
+        'status' => IntakePeriodStatusEnum::Open,
+        'is_continuous' => false,
     ]);
 
-    $email = 'level.page.'.uniqid().'@example.com';
+    $user = User::factory()->create([
+        'tenant_id' => $tenantId,
+        'email_verified_at' => now(),
+    ]);
+    $user->assignRole(RoleEnum::STUDENT);
+    $user->givePermissionTo('manageOwnStudentPersonalDetails:students');
 
-    $this->post(route('portal.store'), [
-        'registration_path' => 'zimbabwean',
-        'first_name' => 'Level',
-        'last_name' => 'Page',
-        'email' => $email,
-        'password' => 'Password1!',
-        'password_confirmation' => 'Password1!',
-        'id_number' => '44-0555444E44',
-        'acknowledged_advert' => true,
-    ])->assertRedirect(route('portal.application.track'));
-
-    $this->post(route('portal.application.select-track'), ['track' => 'regular'])
-        ->assertRedirect(route('portal.application.level-options'));
-
-    $response = $this->get(route('portal.application.level-options'));
+    $response = $this->actingAs($user)
+        ->withSession(['application.track' => 'regular'])
+        ->get(route('portal.application.level-options'));
 
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page

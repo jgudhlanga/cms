@@ -7,7 +7,7 @@
 
     We truly appreciate your desire to pursue your studies with us and encourage you not to be discouraged. You are welcome to reapply in future intakes should you wish to do so.
 
-    On behalf of the Harare Polytechnic, we wish you every success in your future academic and professional endeavours.
+    On behalf of the Harare Polytechnic, we wish you every success in your future academic and professional endeavors.
 
     Yours sincerely,
 

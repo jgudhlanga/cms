@@ -10,11 +10,13 @@ use App\Rules\ZimbabweanIdNumber;
 use App\Services\Enrollment\EnrollmentLookupService;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Validation\ValidationException;
+use Throwable;
 
 class FixStudentIdNumberService
 {
     public function __construct(
         private readonly EnrollmentLookupService $enrollmentLookup,
+        private readonly FaultyStudentIdNumberAnalysis $analysis,
     ) {}
 
     public function fix(Student $student, string $idNumber): Student
@@ -47,5 +49,76 @@ class FixStudentIdNumberService
         }
 
         return $student->fresh(['user']);
+    }
+
+    /**
+     * @param  list<int>  $studentIds
+     * @return array{
+     *     fixed_ids: list<int>,
+     *     failed: list<array{id: int, message: string}>
+     * }
+     */
+    public function fixMany(array $studentIds): array
+    {
+        $students = Student::query()
+            ->whereIn('id', $studentIds)
+            ->get()
+            ->keyBy('id');
+
+        $fixedIds = [];
+        $failed = [];
+
+        foreach ($studentIds as $studentId) {
+            $student = $students->get($studentId);
+
+            if ($student === null) {
+                $failed[] = [
+                    'id' => $studentId,
+                    'message' => __('trans.maintenance_faulty_data_bulk_fix_not_found'),
+                ];
+
+                continue;
+            }
+
+            $analysis = $this->analysis->analyze($student);
+
+            if (
+                $analysis['rectificationStatus'] !== FaultyStudentIdNumberAnalysis::STATUS_READY_TO_FIX
+                || $analysis['proposedIdNumber'] === null
+            ) {
+                $failed[] = [
+                    'id' => $studentId,
+                    'message' => __('trans.maintenance_faulty_data_bulk_fix_not_ready'),
+                ];
+
+                continue;
+            }
+
+            try {
+                $this->fix($student, $analysis['proposedIdNumber']);
+                $fixedIds[] = $studentId;
+            } catch (StudentIdNumberConflictException $exception) {
+                $failed[] = [
+                    'id' => $studentId,
+                    'message' => $exception->getMessage(),
+                ];
+            } catch (ValidationException $exception) {
+                $messages = $exception->errors()['id_number'] ?? [];
+                $failed[] = [
+                    'id' => $studentId,
+                    'message' => $messages[0] ?? __('trans.maintenance_faulty_data_fix_failure'),
+                ];
+            } catch (Throwable) {
+                $failed[] = [
+                    'id' => $studentId,
+                    'message' => __('trans.maintenance_faulty_data_fix_failure'),
+                ];
+            }
+        }
+
+        return [
+            'fixed_ids' => $fixedIds,
+            'failed' => $failed,
+        ];
     }
 }

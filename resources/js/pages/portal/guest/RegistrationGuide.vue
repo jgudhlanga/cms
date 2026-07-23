@@ -1,49 +1,80 @@
 <script setup lang="ts">
+import type { EnrollmentPath, GuestStep, StepperVariant } from '@/components/portal/RegistrationStepper.vue';
 import { cn } from '@/lib/utils';
+import { Check } from 'lucide-vue-next';
 import { computed } from 'vue';
 
-type EnrollmentPath = 'zimbabwean' | 'returning' | 'international';
+type StepDef = { id: GuestStep; labelKey: string };
 
-const props = defineProps<{
-    activePath: EnrollmentPath;
-    highlightedStep: string;
-}>();
+const props = withDefaults(
+    defineProps<{
+        activePath: EnrollmentPath;
+        highlightedStep: string;
+        stepperVariant?: StepperVariant;
+        requiresFee?: boolean;
+    }>(),
+    {
+        stepperVariant: 'regular',
+        requiresFee: false,
+    },
+);
 
-const instructionStep = { id: 'read-instructions', labelKey: 'trans.registration_instructions_step' } as const;
+const instructionStep: StepDef = { id: 'read-instructions', labelKey: 'trans.registration_step_instructions' };
+const pathStep: StepDef = { id: 'choose-track', labelKey: 'trans.registration_step_path' };
+const levelStep: StepDef = { id: 'choose-level', labelKey: 'trans.registration_step_level' };
+const programStep: StepDef = { id: 'choose-programme', labelKey: 'trans.registration_step_program' };
+const identityStep: StepDef = { id: 'verify-identity', labelKey: 'trans.registration_step_identity' };
+const passportStep: StepDef = { id: 'verify-passport', labelKey: 'trans.registration_step_identity' };
+const accountStep: StepDef = { id: 'create-account', labelKey: 'trans.registration_step_account' };
+const feeStep: StepDef = { id: 'pay-fee', labelKey: 'trans.registration_step_fee' };
+const finishStep: StepDef = { id: 'complete-application', labelKey: 'trans.registration_step_finish' };
 
-const newStudentSteps = [
+const withFee = (stepList: StepDef[]): StepDef[] => {
+    if (!props.requiresFee) {
+        return stepList;
+    }
+
+    const finishIndex = stepList.findIndex((step) => step.id === 'complete-application');
+    if (finishIndex === -1) {
+        return [...stepList, feeStep];
+    }
+
+    const copy = [...stepList];
+    copy.splice(finishIndex, 0, feeStep);
+    return copy;
+};
+
+const returningSteps: StepDef[] = [
     instructionStep,
-    { id: 'verify-identity', labelKey: 'trans.portal_registration_step_verify_identity' },
-    { id: 'create-account', labelKey: 'trans.portal_registration_step_create_account' },
-    { id: 'choose-level', labelKey: 'trans.portal_registration_step_select_level' },
-    { id: 'pay-fee', labelKey: 'trans.portal_registration_step_application_fee' },
-    { id: 'complete-application', labelKey: 'trans.portal_registration_step_finish_application' },
-] as const;
-
-const returningSteps = [
-    instructionStep,
-    { id: 'lookup', labelKey: 'trans.portal_registration_step_verify_identity' },
+    { id: 'lookup', labelKey: 'trans.registration_step_identity' },
     { id: 'login', labelKey: 'trans.portal_registration_step_sign_in' },
-    { id: 'choose-level', labelKey: 'trans.portal_registration_step_select_level' },
+    levelStep,
     { id: 'track', labelKey: 'trans.portal_registration_step_track_application' },
-] as const;
+];
 
-const internationalSteps = [
-    instructionStep,
-    { id: 'verify-passport', labelKey: 'trans.portal_registration_step_verify_identity' },
-    { id: 'create-account', labelKey: 'trans.portal_registration_step_create_account' },
-    { id: 'choose-level', labelKey: 'trans.portal_registration_step_select_level' },
-    { id: 'complete-application', labelKey: 'trans.portal_registration_step_finish_application' },
-] as const;
-
-const steps = computed(() => {
+const steps = computed((): StepDef[] => {
     if (props.activePath === 'returning') {
         return returningSteps;
     }
+
     if (props.activePath === 'international') {
-        return internationalSteps;
+        const base: StepDef[] = [instructionStep, pathStep];
+        if (props.stepperVariant !== 'sdp') {
+            base.push(levelStep);
+        }
+        base.push(programStep, passportStep, accountStep, finishStep);
+        return withFee(base);
     }
-    return newStudentSteps;
+
+    if (props.stepperVariant === 'apprentice') {
+        return [instructionStep, pathStep, levelStep, programStep, identityStep, accountStep, finishStep];
+    }
+
+    if (props.stepperVariant === 'sdp') {
+        return withFee([instructionStep, pathStep, programStep, identityStep, accountStep, finishStep]);
+    }
+
+    return withFee([instructionStep, pathStep, levelStep, programStep, identityStep, accountStep, finishStep]);
 });
 
 const stepIndex = (id: string) => steps.value.findIndex((step) => step.id === id);
@@ -193,12 +224,19 @@ const instructionRequirements = computed((): GuideItem[] => {
                             :class="
                                 cn(
                                     isCurrent(step.id) && 'bg-primary text-primary-foreground',
-                                    isComplete(step.id) && 'bg-primary/15 text-primary',
+                                    isComplete(step.id) && !isCurrent(step.id) && 'bg-primary/15 text-primary',
                                     !isCurrent(step.id) && !isComplete(step.id) && 'bg-muted text-muted-foreground',
                                 )
                             "
                         >
-                            {{ index + 1 }}
+                            <Check
+                                v-if="isComplete(step.id) && !isCurrent(step.id)"
+                                class="size-3.5"
+                                aria-hidden="true"
+                            />
+                            <template v-else>
+                                {{ index + 1 }}
+                            </template>
                         </span>
                         <span
                             :class="

@@ -29,6 +29,25 @@ const { saveIntakePeriod, formSchema, statusOptions } = useIntakePeriods();
 
 const { modals } = useModalStore();
 
+const currentYearDateBounds = (): { start: string; end: string } => {
+    const year = new Date().getFullYear();
+
+    return {
+        start: `${year}-01-01`,
+        end: `${year}-12-31`,
+    };
+};
+
+const applyContinuousYearDatesIfNeeded = (isContinuous: boolean): void => {
+    if (!isContinuous || intakePeriod.value) {
+        return;
+    }
+
+    const bounds = currentYearDateBounds();
+    form.start_date = bounds.start;
+    form.end_date = bounds.end;
+};
+
 watch(modals!, () => {
     intakePeriod.value = getModalEdit(APP_MODULE_KEYS.intake_periods);
     form.name = intakePeriod.value?.attributes?.name ?? '';
@@ -39,6 +58,13 @@ watch(modals!, () => {
     form.is_continuous = !!intakePeriod.value?.attributes?.isContinuous;
     form.defaults();
 });
+
+const onContinuousChange = (value: boolean | string | number): void => {
+    const isContinuous = !!value;
+    form.is_continuous = isContinuous;
+    clearFormErrors(form, 'is_continuous');
+    applyContinuousYearDatesIfNeeded(isContinuous);
+};
 
 const save = () => {
     const result = formSchema().safeParse(form.data());
@@ -112,7 +138,7 @@ const save = () => {
                 input-id="is_continuous"
                 v-model="form.is_continuous"
                 :label="$t('trans.intake_period_is_continuous')"
-                @update:model-value="clearFormErrors(form, 'is_continuous')"
+                @update:model-value="onContinuousChange"
             />
             <p class="mb-3 text-xs text-muted-foreground">
                 {{ $t('trans.intake_period_is_continuous_help') }}

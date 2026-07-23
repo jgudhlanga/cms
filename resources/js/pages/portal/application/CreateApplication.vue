@@ -1,23 +1,14 @@
 <script setup lang="ts">
-// UI components
 import { computed, onMounted, ref } from 'vue';
-
-// Page sections
 import ContactDetails from '@/components/students/update/ContactDetails.vue';
 import NextOfKinDetails from '@/components/students/update/NextOfKinDetails.vue';
 import PersonalDetails from '@/components/students/update/PersonalDetails.vue';
 import Programs from '@/components/students/update/Programs.vue';
-
-// Composable
 import { useUtils } from '@/composables/core/useUtils';
 import { useCreateApplicationWizard } from '@/composables/students/useCreateApplicationWizard';
-
-// Store & types
 import { useCreateApplicationFormStore } from '@/store/portal/useCreateApplicationFormStore';
 import { AuthObject } from '@/types/data-pagination';
 import { CreateApplicationParams } from '@/types/portal';
-
-// Utilities
 import PortalApplicationLevelChip from '@/components/portal/PortalApplicationLevelChip.vue';
 import PortalApplicationMobileFooter from '@/components/portal/PortalApplicationMobileFooter.vue';
 import PortalApplicationShell from '@/components/portal/PortalApplicationShell.vue';
@@ -30,6 +21,14 @@ import { CourseRequirement, DepartmentLevelRequirement } from '@/types/departmen
 import { Level } from '@/types/institution';
 import { Head, useForm } from '@inertiajs/vue3';
 import { storeToRefs } from 'pinia';
+import { resolveEffectiveEnrolmentRequirements } from '@/lib/resolveEffectiveEnrolmentRequirements';
+
+const applicationFormSections = {
+    PersonalDetails,
+    ContactDetails,
+    NextOfKinDetails,
+    Programs,
+} as const;
 
 // Props
 interface RegistrationPrefill {
@@ -39,12 +38,25 @@ interface RegistrationPrefill {
     path?: string | null;
 }
 
+interface ProgrammePrefill {
+    department_id?: number | null;
+    department_label?: string | null;
+    department_level_id?: number | null;
+    department_level_label?: string | null;
+    level_relationship_one_value?: number | null;
+    course_id?: number | null;
+    course_label?: string | null;
+    mode_of_study_id?: number | null;
+    mode_of_study_label?: string | null;
+}
+
 interface Props {
     hasPaidApplicationFee: boolean | null;
     levelsWithPayment: Level[];
     auth: AuthObject;
     errors: object;
     registrationPrefill?: RegistrationPrefill | null;
+    programmePrefill?: ProgrammePrefill | null;
     applicationStep?: 'level' | 'fee' | 'apply';
     intakeName?: string | null;
     selectedLevelId?: number | null;
@@ -63,10 +75,10 @@ const store = useCreateApplicationFormStore();
 const storeRefs = storeToRefs(store);
 
 const getRequirements = () => {
-    requirements.value =
-        storeRefs.courseRequirements?.value && Number(String(storeRefs.courseRequirements?.value?.id)) > 0
-            ? storeRefs.courseRequirements?.value
-            : storeRefs.levelRequirements?.value;
+    requirements.value = resolveEffectiveEnrolmentRequirements(
+        storeRefs.courseRequirements?.value,
+        storeRefs.levelRequirements?.value,
+    );
 };
 
 const form = useForm<CreateApplicationParams>({
@@ -157,6 +169,37 @@ const populateInitialForm = () => {
     if (props.registrationPrefill?.passport_number && !storeRefs.passport_number?.value) {
         storeRefs.passport_number.value = props.registrationPrefill.passport_number;
     }
+
+    const programme = props.programmePrefill;
+    if (programme?.department_id && !storeRefs.department?.value) {
+        storeRefs.department.value = {
+            label: programme.department_label ?? '',
+            value: Number(programme.department_id),
+        };
+        storeRefs.department_id.value = Number(programme.department_id);
+    }
+    if (programme?.department_level_id && !storeRefs.level?.value) {
+        storeRefs.level.value = {
+            label: programme.department_level_label ?? '',
+            value: Number(programme.department_level_id),
+            relationshipOneValue: String(programme.level_relationship_one_value ?? ''),
+        };
+        storeRefs.level_id.value = Number(programme.department_level_id);
+    }
+    if (programme?.course_id && !storeRefs.course?.value) {
+        storeRefs.course.value = {
+            label: programme.course_label ?? '',
+            value: Number(programme.course_id),
+        };
+        storeRefs.course_id.value = Number(programme.course_id);
+    }
+    if (programme?.mode_of_study_id && !storeRefs.modeOfStudy?.value) {
+        storeRefs.modeOfStudy.value = {
+            label: programme.mode_of_study_label ?? '',
+            value: Number(programme.mode_of_study_id),
+        };
+        storeRefs.mode_of_study_id.value = Number(programme.mode_of_study_id);
+    }
 };
 
 const { redirectIfClosed } = useRegistrationAvailability();
@@ -167,6 +210,7 @@ onMounted(async () => {
     populateInitialForm();
 });
 const isProgrammeLevelAvailable = ref(true);
+const isRequirementsLoading = ref(false);
 
 const onStepNavigate = (step: ApplicationFormStep) => {
     wizard.goToStep(step);
@@ -175,6 +219,10 @@ const onStepNavigate = (step: ApplicationFormStep) => {
 const onPrimaryAction = async () => {
     isValidating.value = true;
     try {
+        if (currentStep.value === 'programme' && isRequirementsLoading.value) {
+            return;
+        }
+
         getRequirements();
         updateCreateForm(form);
 
@@ -225,10 +273,27 @@ const isValidating = ref(false);
                 </div>
 
                 <div class="rounded-2xl border border-border bg-card p-5 text-card-foreground shadow-md dark:shadow-sm sm:p-6">
-                    <PersonalDetails v-if="currentStep === 'personal'" :form="form" bare />
-                    <ContactDetails v-else-if="currentStep === 'contact'" :form="form" email-read-only bare />
-                    <NextOfKinDetails v-else-if="currentStep === 'next_of_kin'" :form="form" bare />
-                    <Programs
+                    <component
+                        :is="applicationFormSections.PersonalDetails"
+                        v-if="currentStep === 'personal'"
+                        :form="form"
+                        bare
+                    />
+                    <component
+                        :is="applicationFormSections.ContactDetails"
+                        v-else-if="currentStep === 'contact'"
+                        :form="form"
+                        email-read-only
+                        bare
+                    />
+                    <component
+                        :is="applicationFormSections.NextOfKinDetails"
+                        v-else-if="currentStep === 'next_of_kin'"
+                        :form="form"
+                        bare
+                    />
+                    <component
+                        :is="applicationFormSections.Programs"
                         v-else-if="currentStep === 'programme'"
                         :form="form"
                         bare
@@ -237,8 +302,8 @@ const isValidating = ref(false);
                         :levels-with-payment="levelsWithPayment"
                         :application-track="applicationTrack"
                         @level-availability-change="isProgrammeLevelAvailable = $event"
+                        @requirements-loading-change="isRequirementsLoading = $event"
                     />
-
                 </div>
             </div>
         </form>
@@ -249,7 +314,9 @@ const isValidating = ref(false);
                 :processing="isValidating"
                 :error-hint="stepErrorHint"
                 :show-back="!isFirstStep"
-                :primary-disabled="currentStep === 'programme' && !isProgrammeLevelAvailable"
+                :primary-disabled="
+                    currentStep === 'programme' && (!isProgrammeLevelAvailable || isRequirementsLoading)
+                "
                 @primary="onPrimaryAction"
                 @back="wizard.goBack"
             />

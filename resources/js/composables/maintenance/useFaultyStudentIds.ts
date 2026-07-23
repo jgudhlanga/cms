@@ -1,6 +1,7 @@
+import { BaseCheckbox } from '@/components/core/form';
 import { useDataTables } from '@/composables/core/useDataTables';
 import { useUtils } from '@/composables/core/useUtils';
-import { errorAlert, successAlert } from '@/lib/alerts';
+import { errorAlert, successAlert, warningDialog } from '@/lib/alerts';
 import { buildStudentShowUrl } from '@/lib/studentShowNavigation';
 import { isValidZimbabweanIdNumber } from '@/lib/zimbabweanId';
 import FaultyStudentIdCorrectionCell from '@/pages/maintenance/partials/students/FaultyStudentIdCorrectionCell.vue';
@@ -9,19 +10,22 @@ import type { ApiFilterResponse } from '@/types/data-pagination';
 import type {
     FaultyStudentIdConflict,
     FaultyStudentIdNumber,
+    FaultyStudentIdsBulkFixResult,
     FaultyStudentIdsFiltersState,
     FaultyStudentRectificationStatus,
     FixStudentIdConflictResponse,
 } from '@/types/faulty-student-ids';
 import { router } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
-import type { Ref } from 'vue';
+import type { ComputedRef, Ref } from 'vue';
 import { h, ref } from 'vue';
 
 interface CreateFaultyStudentIdColumnsOptions {
     draftIdNumbers: Ref<Record<number, string>>;
     savingStudentIds: Ref<Set<number>>;
-    onSaveSuccess: () => void | Promise<void>;
+    selectedStudentIds: Ref<number[]>;
+    selectAllModel: ComputedRef<boolean>;
+    onFixed: (studentIds: number[]) => void | Promise<void>;
 }
 
 interface FixStudentIdError {
@@ -133,10 +137,14 @@ const resolveMergeUrl = (
     return null;
 };
 
+const isReadyToFix = (student: FaultyStudentIdNumber): boolean =>
+    student.attributes.rectificationStatus === 'ready_to_fix';
+
 export const useFaultyStudentIds = () => {
     const { textLink } = useDataTables();
     const { formatZimIdNumber } = useUtils();
     const isLoading = ref(false);
+    const isBulkFixing = ref(false);
 
     const visitMergePreview = (url: string): void => {
         router.visit(url, {
@@ -153,11 +161,17 @@ export const useFaultyStudentIds = () => {
         });
     };
 
+    const bulkFixStudentIdNumbers = async (studentIds: number[]): Promise<FaultyStudentIdsBulkFixResult> => {
+        return await HttpService.post(route('maintenance.faulty-student-ids.bulk-fix'), {
+            student_ids: studentIds,
+        });
+    };
+
     const handleSave = (
         student: FaultyStudentIdNumber,
         draftIdNumbers: Ref<Record<number, string>>,
         savingStudentIds: Ref<Set<number>>,
-        onSaveSuccess: () => void | Promise<void>,
+        onFixed: (studentIds: number[]) => void | Promise<void>,
     ) => {
         const studentId = student.id;
         const currentDraft = (draftIdNumbers.value[studentId] ?? '').trim();
@@ -179,7 +193,7 @@ export const useFaultyStudentIds = () => {
         void fixStudentIdNumber(studentId, currentDraft)
             .then(async () => {
                 successAlert(trans('trans.maintenance_faulty_data_fix_success'));
-                await onSaveSuccess();
+                await onFixed([studentId]);
             })
             .catch((error: FixStudentIdError) => {
                 const responseData = error?.response?.data;
@@ -201,11 +215,98 @@ export const useFaultyStudentIds = () => {
             });
     };
 
+    const handleBulkFix = (
+        studentIds: number[],
+        onFixed: (studentIds: number[]) => void | Promise<void>,
+    ): void => {
+        if (studentIds.length === 0 || isBulkFixing.value) {
+            return;
+        }
+
+        warningDialog(
+            async () => {
+                isBulkFixing.value = true;
+
+                try {
+                    const result = await bulkFixStudentIdNumbers(studentIds);
+                    const fixedCount = result.fixed_ids.length;
+                    const failedCount = result.failed.length;
+
+                    if (fixedCount > 0) {
+                        if (failedCount > 0) {
+                            successAlert(
+                                trans('trans.maintenance_faulty_data_bulk_fix_partial', {
+                                    fixed: String(fixedCount),
+                                    failed: String(failedCount),
+                                }),
+                            );
+                        } else {
+                            successAlert(
+                                trans('trans.maintenance_faulty_data_bulk_fix_success', {
+                                    count: String(fixedCount),
+                                }),
+                            );
+                        }
+
+                        await onFixed(result.fixed_ids);
+                    } else {
+                        const firstFailure = result.failed[0]?.message;
+                        errorAlert(firstFailure ?? trans('trans.maintenance_faulty_data_bulk_fix_failure'));
+                    }
+                } catch {
+                    errorAlert(trans('trans.maintenance_faulty_data_bulk_fix_failure'));
+                } finally {
+                    isBulkFixing.value = false;
+                }
+
+                return true;
+            },
+            trans('trans.maintenance_faulty_data_bulk_fix_confirm', {
+                count: String(studentIds.length),
+            }),
+            trans('trans.warning'),
+            trans('trans.maintenance_faulty_data_bulk_fix', {
+                count: String(studentIds.length),
+            }),
+        );
+    };
+
     const createFaultyStudentIdColumns = ({
         draftIdNumbers,
         savingStudentIds,
-        onSaveSuccess,
+        selectedStudentIds,
+        selectAllModel,
+        onFixed,
     }: CreateFaultyStudentIdColumnsOptions) => [
+        {
+            header: () =>
+                h(BaseCheckbox, {
+                    inputId: 'select_all_faulty_student_ids',
+                    label: '',
+                    modelValue: selectAllModel.value,
+                    'onUpdate:modelValue': (value: boolean) => {
+                        selectAllModel.value = value;
+                    },
+                }),
+            accessorKey: 'select',
+            enableSorting: false,
+            meta: { align: 'center' },
+            cell: ({ row }: { row: { original: FaultyStudentIdNumber } }) => {
+                const student = row.original;
+                const selectable = isReadyToFix(student);
+
+                return h(BaseCheckbox, {
+                    inputId: `select_faulty_student_${student.id}`,
+                    label: '',
+                    modelValue: selectedStudentIds.value,
+                    'onUpdate:modelValue': (value: number[]) => {
+                        selectedStudentIds.value = value;
+                    },
+                    value: student.id,
+                    disabled: !selectable,
+                });
+            },
+        },
         {
             header: trans_choice('trans.name', 1),
             accessorKey: 'name',
@@ -271,11 +372,13 @@ export const useFaultyStudentIds = () => {
                 const isValid = isValidZimbabweanIdNumber(currentDraft);
                 const suggested = student.attributes.suggestedIdNumber;
                 const isDuplicateMerge = student.attributes.rectificationStatus === 'duplicate_merge';
+                const isSaving = savingStudentIds.value.has(studentId);
 
                 return h(FaultyStudentIdCorrectionCell, {
                     modelValue: currentDraft,
                     suggestedIdNumber: suggested,
-                    disabled: savingStudentIds.value.has(studentId),
+                    inputId: `faulty_id_number_correction_${studentId}`,
+                    processing: isSaving,
                     canSave: !isUnchanged && isValid,
                     showSaveButton: !isDuplicateMerge,
                     'onUpdate:modelValue': (value: string) => {
@@ -286,7 +389,7 @@ export const useFaultyStudentIds = () => {
                             draftIdNumbers.value[studentId] = suggested;
                         }
                     },
-                    onSave: () => handleSave(student, draftIdNumbers, savingStudentIds, onSaveSuccess),
+                    onSave: () => handleSave(student, draftIdNumbers, savingStudentIds, onFixed),
                 });
             },
         },
@@ -347,6 +450,8 @@ export const useFaultyStudentIds = () => {
         createFaultyStudentIdColumns,
         fetchFaultyStudentIds,
         syncDraftIdNumbers,
+        handleBulkFix,
         isLoading,
+        isBulkFixing,
     };
 };

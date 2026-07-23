@@ -82,6 +82,7 @@ const onSave = (): void => {
                 <FaultyStudentIdCorrectionCell
                     v-model="draftIdNumber"
                     :suggested-id-number="row.suggestedIdNumber"
+                    :input-id="`apprentice_faulty_id_number_correction_${row.studentId ?? row.rowNumber}`"
                     :disabled="saving"
                     :show-save-button="false"
                     @use-suggested="onUseSuggested"
