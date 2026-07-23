@@ -14,6 +14,7 @@ use App\Models\Shared\Status;
 use App\Models\Students\Student;
 use App\Models\Students\StudentApplication;
 use App\Models\Tenants\Tenant;
+use App\Services\Students\IntakePeriodOrderingService;
 use Carbon\Carbon;
 use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Database\Eloquent\Collection;
@@ -160,7 +161,14 @@ class Helper
             return $cachedIntakePeriod;
         }
 
-        // Cache the fallback only once
+        $ordering = app(IntakePeriodOrderingService::class);
+        $default = $ordering->defaultAdminIntakePeriod();
+
+        if ($default !== null) {
+            return $cachedIntakePeriod = $default;
+        }
+
+        // Cache the fallback only once (legacy: any intake by end_date)
         return $cachedIntakePeriod = IntakePeriod::orderByDesc('end_date')->firstOrFail();
     }
 

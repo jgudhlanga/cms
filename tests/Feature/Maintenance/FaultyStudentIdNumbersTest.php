@@ -595,3 +595,60 @@ it('forbids users without root manage from merge reject endpoint', function (): 
         ])
         ->assertForbidden();
 });
+
+it('bulk fixes multiple ready-to-fix student id numbers', function (): void {
+    $rootUser = actingAsRootMaintenanceUser();
+
+    $first = createFaultyStudentTestRecord($rootUser, '631111111N63', 'BULK-A-'.strtoupper(Str::random(4)));
+    $second = createFaultyStudentTestRecord($rootUser, '632222222N63', 'BULK-B-'.strtoupper(Str::random(4)));
+
+    $this->postJson(route('maintenance.faulty-student-ids.bulk-fix'), [
+        'student_ids' => [$first->id, $second->id],
+    ])
+        ->assertOk()
+        ->assertJsonPath('fixed_ids', [$first->id, $second->id])
+        ->assertJsonPath('failed', []);
+
+    expect($first->fresh()->id_number)->toBe('63-1111111N63')
+        ->and($second->fresh()->id_number)->toBe('63-2222222N63');
+
+    $ids = responseStudentIds($this->getJson(route('maintenance.faulty-student-ids.data')));
+    expect($ids)->not->toContain($first->id)
+        ->and($ids)->not->toContain($second->id);
+});
+
+it('skips non ready-to-fix students in bulk fix', function (): void {
+    $rootUser = actingAsRootMaintenanceUser();
+
+    $target = createFaultyStudentTestRecord($rootUser, '63-1234567N63', 'BULK-TGT-'.strtoupper(Str::random(4)));
+    $duplicateFaulty = createFaultyStudentTestRecord($rootUser, '631234567N63', 'BULK-DUP-'.strtoupper(Str::random(4)));
+    $manualFaulty = createFaultyStudentTestRecord($rootUser, 'invalid-id', 'BULK-MAN-'.strtoupper(Str::random(4)));
+    $readyFaulty = createFaultyStudentTestRecord($rootUser, '639999999N63', 'BULK-RDY-'.strtoupper(Str::random(4)));
+
+    $response = $this->postJson(route('maintenance.faulty-student-ids.bulk-fix'), [
+        'student_ids' => [$duplicateFaulty->id, $manualFaulty->id, $readyFaulty->id],
+    ])->assertOk();
+
+    expect($response->json('fixed_ids'))->toBe([$readyFaulty->id]);
+
+    $failedIds = collect($response->json('failed'))->pluck('id')->all();
+    expect($failedIds)->toContain($duplicateFaulty->id)
+        ->and($failedIds)->toContain($manualFaulty->id)
+        ->and($readyFaulty->fresh()->id_number)->toBe('63-9999999N63')
+        ->and($duplicateFaulty->fresh()->id_number)->toBe('631234567N63')
+        ->and($manualFaulty->fresh()->id_number)->toBe('invalid-id')
+        ->and($target->fresh()->id_number)->toBe('63-1234567N63');
+});
+
+it('forbids users without root manage from bulk fix endpoint', function (): void {
+    $rootUser = actingAsRootMaintenanceUser();
+
+    $student = createFaultyStudentTestRecord($rootUser, '631234567N63');
+    $user = User::factory()->create(['tenant_id' => $rootUser->tenant_id]);
+
+    $this->actingAs($user)
+        ->postJson(route('maintenance.faulty-student-ids.bulk-fix'), [
+            'student_ids' => [$student->id],
+        ])
+        ->assertForbidden();
+});

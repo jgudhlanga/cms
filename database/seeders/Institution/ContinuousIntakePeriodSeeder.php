@@ -27,11 +27,11 @@ class ContinuousIntakePeriodSeeder extends Seeder
 
         IntakePeriod::query()->create([
             'tenant_id' => $tenantId,
-            'name' => 'Continuous SDP / OJET Intake',
+            'name' => 'SDP / OJET Intake',
             'calendar_year' => (string) now()->year,
             'start_date' => now()->startOfYear()->toDateString(),
-            'end_date' => now()->addYears(10)->endOfYear()->toDateString(),
-            'description' => 'Year-round intake for Skills Development Program (SDP) and OJET applications.',
+            'end_date' => now()->endOfYear()->toDateString(),
+            'description' => 'Continuous intake for Skills Development Program (SDP) and OJET applications.',
             'is_active' => true,
             'status' => IntakePeriodStatusEnum::Open,
             'is_continuous' => true,

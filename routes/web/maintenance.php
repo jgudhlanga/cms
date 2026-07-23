@@ -37,6 +37,8 @@ Route::prefix('maintenance')->middleware(['auth', 'can:root:manage'])->group(fun
         ->name('maintenance.faulty-student-ids');
     Route::get('/faulty-student-ids/data', [MaintenanceController::class, 'faultyStudentIdNumbers'])
         ->name('maintenance.faulty-student-ids.data');
+    Route::post('/faulty-student-ids/bulk-fix', [MaintenanceController::class, 'bulkFixFaultyStudentIdNumbers'])
+        ->name('maintenance.faulty-student-ids.bulk-fix');
     Route::patch('/faulty-student-ids/merge/applications/{student_application}/reject', [MaintenanceController::class, 'rejectMergePreviewApplication'])
         ->name('maintenance.faulty-student-ids.merge.reject-application');
     Route::post('/faulty-student-ids/merge', [MaintenanceController::class, 'mergeFaultyStudentAccounts'])

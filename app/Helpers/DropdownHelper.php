@@ -5,6 +5,7 @@ namespace App\Helpers;
 use App\Models\AcademicCalendars\AcademicCalendar;
 use App\Models\Institution\IntakePeriod;
 use App\Models\Institution\ModeOfStudy;
+use App\Services\Students\IntakePeriodOrderingService;
 use BackedEnum;
 use Illuminate\Support\Collection;
 
@@ -16,45 +17,35 @@ class DropdownHelper
 
         if (! self::isValidRows($rows)) {
             cache()->forget('all_intake_periods');
-            $rows = cache()->rememberForever('all_intake_periods', fn () => IntakePeriod::query()
-                ->where('is_active', 1)
-                ->orderByDesc('end_date')
-                ->get([
-                    'id',
-                    'name',
-                    'start_date',
-                    'end_date',
-                    'is_active',
-                    'status',
-                    'is_continuous',
-                    'description',
-                    'created_at',
-                    'updated_at',
-                    'deleted_at',
-                ])
-                ->map(function (IntakePeriod $period): array {
-                    $row = $period->only([
-                        'id',
-                        'name',
-                        'start_date',
-                        'end_date',
-                        'is_active',
-                        'status',
-                        'is_continuous',
-                        'description',
-                        'created_at',
-                        'updated_at',
-                        'deleted_at',
-                    ]);
+            $rows = cache()->rememberForever('all_intake_periods', function () {
+                $ordering = app(IntakePeriodOrderingService::class);
 
-                    $status = $row['status'] ?? null;
-                    $row['status'] = $status instanceof BackedEnum ? $status->value : $status;
-                    $row['is_continuous'] = (bool) ($row['is_continuous'] ?? false);
+                return $ordering->orderedForAdminDropdown(true)
+                    ->map(function (IntakePeriod $period) use ($ordering): array {
+                        $row = $period->only([
+                            'id',
+                            'name',
+                            'start_date',
+                            'end_date',
+                            'is_active',
+                            'status',
+                            'is_continuous',
+                            'description',
+                            'created_at',
+                            'updated_at',
+                            'deleted_at',
+                        ]);
 
-                    return $row;
-                })
-                ->values()
-                ->all());
+                        $status = $row['status'] ?? null;
+                        $row['status'] = $status instanceof BackedEnum ? $status->value : $status;
+                        $row['is_continuous'] = (bool) ($row['is_continuous'] ?? false);
+                        $row['name'] = $ordering->displayName($period);
+
+                        return $row;
+                    })
+                    ->values()
+                    ->all();
+            });
         }
 
         return collect($rows)->map(fn (array $row): object => (object) $row);

@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import RegistrationStepper from '@/components/portal/RegistrationStepper.vue';
+import type { StepperVariant } from '@/components/portal/RegistrationStepper.vue';
+import RegistrationIntentSummary from '@/components/portal/RegistrationIntentSummary.vue';
 import PortalApplicationIntakeBanner from '@/components/portal/PortalApplicationIntakeBanner.vue';
 import { useUtils } from '@/composables/core/useUtils';
 import { useEnrollmentRegistration, type EnrollmentLookupResult, type ReturningLookupType } from '@/composables/students/useEnrollmentRegistration';
 import { useGuestPortal } from '@/composables/students/useGuestPortal';
 import { useRegistrationAvailability } from '@/composables/students/useRegistrationAvailability';
+import { useRegistrationStepNavigation } from '@/composables/students/useRegistrationStepNavigation';
 import { clearFormErrors } from '@/lib/forms';
 import RegistrationAccountForm from '@/pages/portal/guest/components/RegistrationAccountForm.vue';
 import RegistrationBrandHeader from '@/pages/portal/guest/components/RegistrationBrandHeader.vue';
@@ -15,7 +18,7 @@ import RegistrationGuide from '@/pages/portal/guest/RegistrationGuide.vue';
 import { useCreateUserFormStore, type RegistrationPath } from '@/store/portal/useCreateUserFormStore';
 import { CreateApplicationUserParams } from '@/types/portal';
 import { IntakePeriod } from '@/types/institution';
-import { Head, useForm } from '@inertiajs/vue3';
+import { Head, router, useForm } from '@inertiajs/vue3';
 import { trans } from 'laravel-vue-i18n';
 import { storeToRefs } from 'pinia';
 import { computed, onMounted, ref, watch } from 'vue';
@@ -24,16 +27,37 @@ type EnrollmentPath = RegistrationPath | 'returning';
 type Step = 'identity' | 'account';
 type WizardPhase = 'instructions' | 'registration';
 
-const props = defineProps<{
-    openIntakePeriods?: IntakePeriod[];
-    singleIntakeName?: string | null;
-    openIntakeNames?: string | null;
-}>();
+type IntentSummary = {
+    track?: string | null;
+    trackLabel?: string | null;
+    continuousFocus?: string | null;
+    levelName?: string | null;
+    intakeName?: string | null;
+};
+
+const props = withDefaults(
+    defineProps<{
+        openIntakePeriods?: IntakePeriod[];
+        singleIntakeName?: string | null;
+        openIntakeNames?: string | null;
+        intentSummary?: IntentSummary | null;
+        eligibilityComplete?: boolean;
+        startAtIdentity?: boolean;
+        requireEligibilityFirst?: boolean;
+        stepperVariant?: StepperVariant;
+        requiresFee?: boolean;
+    }>(),
+    {
+        stepperVariant: 'regular',
+        requiresFee: false,
+    },
+);
 
 const { createPortalUser } = useGuestPortal();
 const { navigateTo, formatZimIdNumber, isZimbabweanNationalId } = useUtils();
 const { redirectIfClosed } = useRegistrationAvailability();
 const { checkNationalId, checkPassport, lookupReturning } = useEnrollmentRegistration();
+const { navigateToRegistrationStep } = useRegistrationStepNavigation();
 
 const store = useCreateUserFormStore();
 const {
@@ -49,7 +73,9 @@ const {
     acknowledged_advert,
 } = storeToRefs(store);
 
-const wizardPhase = ref<WizardPhase>(acknowledged_advert.value ? 'registration' : 'instructions');
+const wizardPhase = ref<WizardPhase>(
+    props.startAtIdentity || acknowledged_advert.value ? 'registration' : 'instructions',
+);
 const showInstructionsValidationHint = ref(false);
 const activePath = ref<EnrollmentPath>('zimbabwean');
 const step = ref<Step>('identity');
@@ -71,10 +97,6 @@ const form = useForm<CreateApplicationUserParams & { registration_path: Registra
     passport_number: '',
     registration_path: 'zimbabwean',
     acknowledged_advert: false,
-});
-
-onMounted(() => {
-    redirectIfClosed();
 });
 
 const isReturning = computed(() => activePath.value === 'returning');
@@ -108,14 +130,29 @@ const stepperHighlight = computed(() => {
 });
 
 onMounted(() => {
-    wizardPhase.value = acknowledged_advert.value ? 'registration' : 'instructions';
+    redirectIfClosed();
+
+    if (props.startAtIdentity) {
+        acknowledged_advert.value = true;
+        wizardPhase.value = 'registration';
+        step.value = 'identity';
+        return;
+    }
+
+    // Always show Instructions on this page so stepper back-nav works.
+    // Continue → Path is handled by completeInstructions().
+    wizardPhase.value = 'instructions';
 });
 
 watch(acknowledged_advert, (acknowledged) => {
-    if (!acknowledged) {
+    if (!acknowledged && !props.startAtIdentity) {
         wizardPhase.value = 'instructions';
     }
 });
+
+const goToEligibilityFlow = () => {
+    router.visit(route('portal.register.track'));
+};
 
 const completeInstructions = () => {
     if (!acknowledged_advert.value) {
@@ -124,6 +161,12 @@ const completeInstructions = () => {
     }
 
     showInstructionsValidationHint.value = false;
+
+    if (props.requireEligibilityFirst && !props.eligibilityComplete && activePath.value !== 'returning') {
+        goToEligibilityFlow();
+        return;
+    }
+
     wizardPhase.value = 'registration';
 };
 
@@ -138,6 +181,16 @@ const switchPath = (path: EnrollmentPath) => {
     step.value = 'identity';
     resetLookupState();
     returningLookupValue.value = '';
+
+    if (
+        props.requireEligibilityFirst &&
+        !props.eligibilityComplete &&
+        !props.startAtIdentity &&
+        path !== 'returning' &&
+        wizardPhase.value === 'registration'
+    ) {
+        goToEligibilityFlow();
+    }
 };
 
 watch(id_number, (value) => {
@@ -255,13 +308,19 @@ const navigateToStep = (stepId: string) => {
         return;
     }
 
-    wizardPhase.value = 'registration';
-
     if (stepId === 'verify-identity' || stepId === 'lookup' || stepId === 'verify-passport') {
+        wizardPhase.value = 'registration';
         step.value = 'identity';
-    } else if (stepId === 'create-account') {
-        step.value = 'account';
+        return;
     }
+
+    if (stepId === 'create-account') {
+        wizardPhase.value = 'registration';
+        step.value = 'account';
+        return;
+    }
+
+    navigateToRegistrationStep(stepId);
 };
 
 const clearFormError = (field: string) => {
@@ -280,8 +339,12 @@ const clearFormError = (field: string) => {
                     <RegistrationStepper
                         :active-path="activePath"
                         :highlighted-step="stepperHighlight"
+                        :stepper-variant="stepperVariant"
+                        :requires-fee="requiresFee"
                         @navigate="navigateToStep"
                     />
+
+                    <RegistrationIntentSummary v-if="intentSummary" :summary="intentSummary" />
 
                     <PortalApplicationIntakeBanner
                         :intake-name="props.singleIntakeName"
@@ -357,7 +420,12 @@ const clearFormError = (field: string) => {
                     </div>
                 </div>
             </div>
-            <RegistrationGuide :active-path="activePath" :highlighted-step="stepperHighlight" />
+            <RegistrationGuide
+                :active-path="activePath"
+                :highlighted-step="stepperHighlight"
+                :stepper-variant="stepperVariant"
+                :requires-fee="requiresFee"
+            />
         </div>
     </div>
 </template>

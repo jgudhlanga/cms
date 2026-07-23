@@ -8,7 +8,9 @@ import { trans } from 'laravel-vue-i18n';
 defineProps<{
     modelValue: string;
     suggestedIdNumber: string | null;
+    inputId: string;
     disabled?: boolean;
+    processing?: boolean;
     canSave?: boolean;
     showSaveButton?: boolean;
 }>();
@@ -25,6 +27,7 @@ const emit = defineEmits<{
         <BaseInput
             :model-value="modelValue"
             class="min-w-[140px] flex-1"
+            :input-id="inputId"
             name="faulty_id_number_correction"
             :placeholder="trans('trans.ui_eg_63_1234567n63')"
             :disabled="disabled"
@@ -34,7 +37,7 @@ const emit = defineEmits<{
             v-if="suggestedIdNumber"
             type="button"
             class="shrink-0 text-xs text-primary cursor-pointer"
-            :disabled="disabled"
+            :disabled="disabled || processing"
             @click="emit('useSuggested')"
         >
             {{ trans('trans.maintenance_faulty_data_use_suggested') }}
@@ -46,7 +49,8 @@ const emit = defineEmits<{
             :size="ButtonSize.xs"
             type="button"
             class="shrink-0 rounded-full capitalize"
-            :disabled="disabled"
+            :processing="processing"
+            :disabled="canSave === false"
             @click="emit('save')"
         />
     </div>

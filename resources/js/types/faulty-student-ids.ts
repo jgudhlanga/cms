@@ -77,6 +77,14 @@ export interface StudentAccountMergePreview {
     target: StudentAccountMergeSummary;
 }
 
+export interface FaultyStudentIdsBulkFixResult {
+    fixed_ids: number[];
+    failed: Array<{
+        id: number;
+        message: string;
+    }>;
+}
+
 export interface FaultyStudentMergeResult {
     studentId: number;
     userId: number;

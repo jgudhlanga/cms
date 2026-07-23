@@ -16,6 +16,7 @@ use App\Http\Requests\Maintenance\ApprenticeImportRefreshRowRequest;
 use App\Http\Requests\Maintenance\DispatchBulkFinaliseEnrolmentsRequest;
 use App\Http\Requests\Maintenance\ExportApplicationRequest;
 use App\Http\Requests\Maintenance\ExportStudentEnrollmentRequest;
+use App\Http\Requests\Maintenance\FixFaultyStudentIdNumbersBulkRequest;
 use App\Http\Requests\Maintenance\FixStudentIdNumberRequest;
 use App\Http\Requests\Maintenance\MaintenanceUserBulkPurgeRequest;
 use App\Http\Requests\Maintenance\MaintenanceUserPurgeRequest;
@@ -377,6 +378,16 @@ class MaintenanceController extends Controller
         return response()->json([
             'data' => FaultyStudentIdNumberResource::make($student),
         ]);
+    }
+
+    public function bulkFixFaultyStudentIdNumbers(
+        FixFaultyStudentIdNumbersBulkRequest $request,
+        FixStudentIdNumberService $fixService,
+    ): JsonResponse {
+        /** @var list<int> $studentIds */
+        $studentIds = array_map('intval', $request->validated('student_ids'));
+
+        return response()->json($fixService->fixMany($studentIds));
     }
 
     public function verifiedStudentsFinalEnrolment(
