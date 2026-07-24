@@ -11,6 +11,8 @@ class AcademicLevelResource extends JsonResource
 
     public function toArray(Request $request): array
     {
+        $this->resource->loadMissing(['academicLevel', 'subject', 'grade']);
+
         return [
             'type' => 'academic-level-results',
             'id' => $this->id,

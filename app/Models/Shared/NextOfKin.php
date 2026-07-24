@@ -51,12 +51,16 @@ class NextOfKin extends Model
 
     public function firstContact(): Attribute
     {
-        return Attribute::get(fn() => $this->contacts()->first());
+        return Attribute::get(fn () => $this->relationLoaded('contacts')
+            ? $this->contacts->first()
+            : $this->contacts()->first());
     }
 
     public function firstAddress(): Attribute
     {
-        return Attribute::get(fn() => $this->addresses()->first());
+        return Attribute::get(fn () => $this->relationLoaded('addresses')
+            ? $this->addresses->first()
+            : $this->addresses()->first());
     }
 
     public function getActivitylogOptions(): LogOptions

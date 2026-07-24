@@ -108,6 +108,12 @@ class StudentApplication extends Model implements HasMedia
 
     public function receipts()
     {
+        $this->loadMissing('student.user');
+
+        if ($this->student?->user === null) {
+            return Ledger::query()->whereRaw('0 = 1');
+        }
+
         return $this->student->user->ledgers()->with('feeType')->where('type', 'receipt');
     }
 

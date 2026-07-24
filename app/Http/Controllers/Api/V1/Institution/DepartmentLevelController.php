@@ -104,12 +104,22 @@ class DepartmentLevelController extends Controller
             ->when($modeOfStudyId, fn($q) => $q->where('mode_of_study_id', $modeOfStudyId))
             ->when($courseId, fn($q) => $q->where('department_course_id', $courseId))
             ->with([
-                'departmentWorkflowStep',
+                'departmentWorkflowStep.workflowStep',
                 'student.user',
+                'student.idType',
+                'student.country',
+                'student.contacts',
+                'student.oLevelResults.academicLevel',
+                'student.oLevelResults.subject',
+                'student.oLevelResults.grade',
+                'modeOfStudy',
                 'institutionDepartment.department',
                 'departmentLevel.level',
+                'departmentLevel.requirement',
                 'departmentCourse.course',
-                'student.oLevelResults',
+                'departmentCourse.requirement',
+                'intakePeriod',
+                'classList',
             ])
             ->orderBy('student_applications.created_at');
 

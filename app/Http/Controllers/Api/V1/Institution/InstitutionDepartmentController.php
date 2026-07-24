@@ -22,12 +22,14 @@ class InstitutionDepartmentController extends ApiDropdownController
     public function index(InstitutionDepartmentFilter $filters)
     {
         // select only departments which are in department_courses or department_levels
-        $departments = InstitutionDepartment::join(
-            'department_courses as dc',
-            'dc.institution_department_id',
-            '=',
-            'institution_departments.id'
-        )
+        $departments = InstitutionDepartment::query()
+            ->with('department')
+            ->join(
+                'department_courses as dc',
+                'dc.institution_department_id',
+                '=',
+                'institution_departments.id'
+            )
             ->where('dc.show_on_current_application_period', true)
             ->select('institution_departments.*')
             ->distinct()

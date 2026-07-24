@@ -18,6 +18,13 @@ class VerifiedStudentForFinalEnrolmentResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
+        $this->resource->loadMissing([
+            'student.user',
+            'institutionDepartment.department',
+            'departmentCourse.course',
+            'departmentLevel.level',
+        ]);
+
         return [
             'type' => 'maintenance-verified-student-final-enrolment',
             'id' => $this->id,

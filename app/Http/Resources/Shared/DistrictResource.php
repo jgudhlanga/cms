@@ -10,6 +10,8 @@ class DistrictResource extends JsonResource
 
     public function toArray(Request $request): array
     {
+        $this->resource->loadMissing('province');
+
         return [
             'type' => 'district',
             'id' => $this->resource->id,

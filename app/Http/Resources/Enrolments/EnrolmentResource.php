@@ -15,6 +15,26 @@ class EnrolmentResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
+        $this->resource->loadMissing([
+            'student.user',
+            'student.idType',
+            'student.country',
+            'student.contacts',
+            'student.oLevelResults.academicLevel',
+            'student.oLevelResults.subject',
+            'student.oLevelResults.grade',
+            'modeOfStudy',
+            'institutionDepartment.department',
+            'departmentLevel.level',
+            'departmentLevel.requirement',
+            'departmentCourse.course',
+            'departmentCourse.requirement',
+            'intakePeriod',
+            'classList',
+            'departmentWorkflowStep.workflowStep',
+            'departmentWorkflowStep.metadata',
+        ]);
+
         $contact = $this->student?->contacts?->first();
 
         return [

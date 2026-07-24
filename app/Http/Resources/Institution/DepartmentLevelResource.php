@@ -12,6 +12,8 @@ class DepartmentLevelResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
+        $this->resource->loadMissing(['level', 'requirement']);
+
         return [
             'type' => 'department-level',
             'id' => $this->resource->id,

@@ -77,6 +77,25 @@ class StudentController
 
     public function programs(Student $student)
     {
+        $student->loadMissing([
+            'applications.student.user',
+            'applications.student.idType',
+            'applications.student.country',
+            'applications.student.contacts',
+            'applications.student.oLevelResults.academicLevel',
+            'applications.student.oLevelResults.subject',
+            'applications.student.oLevelResults.grade',
+            'applications.modeOfStudy',
+            'applications.institutionDepartment.department',
+            'applications.departmentLevel.level',
+            'applications.departmentLevel.requirement',
+            'applications.departmentCourse.course',
+            'applications.departmentCourse.requirement',
+            'applications.intakePeriod',
+            'applications.classList',
+            'applications.departmentWorkflowStep.workflowStep',
+        ]);
+
         return EnrolmentResource::collection($student->applications);
     }
 
@@ -92,11 +111,15 @@ class StudentController
 
     public function sponsors(Student $student)
     {
+        $student->loadMissing(['sponsors.sponsorType', 'sponsors.contacts', 'sponsors.addresses']);
+
         return SponsorResource::collection($student->sponsors);
     }
 
     public function nextOfKin(Student $student)
     {
+        $student->loadMissing(['nextOfKins.relationship', 'nextOfKins.contacts', 'nextOfKins.addresses']);
+
         return NextOfKinResource::collection($student->nextOfKins);
     }
 }

@@ -10,6 +10,8 @@ class FeeStructureResource extends JsonResource
 
     public function toArray(Request $request): array
     {
+        $this->resource->loadMissing(['feeType', 'level', 'modeOfStudy']);
+
         return [
             'type' => 'fee-structure',
             'id' => $this->id,

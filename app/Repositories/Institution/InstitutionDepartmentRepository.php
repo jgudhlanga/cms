@@ -24,7 +24,10 @@ class InstitutionDepartmentRepository extends BaseRepository implements IInstitu
         if ($isDepartmentUser && empty($userDepartments)) {
             return collect();
         }
-        $query = $this->institutionDepartment->select($columns)->filter($filters);
+        $query = $this->institutionDepartment
+            ->with('department')
+            ->select($columns)
+            ->filter($filters);
         if (!empty($userDepartments)) {
             $query->whereIn('id', $userDepartments);
         }

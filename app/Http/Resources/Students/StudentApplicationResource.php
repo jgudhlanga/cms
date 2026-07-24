@@ -23,6 +23,20 @@ class StudentApplicationResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
+        $this->resource->loadMissing([
+            'student.user',
+            'modeOfStudy',
+            'institutionDepartment.department',
+            'departmentLevel.level',
+            'departmentLevel.requirement',
+            'departmentCourse.course',
+            'departmentCourse.requirement',
+            'departmentCourse.departmentCourseLevels',
+            'intakePeriod',
+            'departmentWorkflowStep.workflowStep',
+            'departmentWorkflowStep.metadata',
+        ]);
+
         return [
             'type' => 'student-program',
             'id' => $this->id,

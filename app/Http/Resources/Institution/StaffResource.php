@@ -12,6 +12,19 @@ class StaffResource extends JsonResource
 
     public function toArray(Request $request): array
     {
+        $this->resource->loadMissing([
+            'title',
+            'gender',
+            'maritalStatus',
+            'race',
+            'employmentType',
+            'idType',
+            'country',
+            'religion',
+            'user.status',
+            'user.roles',
+        ]);
+
         return [
             'type' => 'staff',
             'id' => $this->id,

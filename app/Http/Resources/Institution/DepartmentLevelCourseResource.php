@@ -10,6 +10,11 @@ class DepartmentLevelCourseResource extends JsonResource
 
     public function toArray(Request $request): array
     {
+        $this->resource->loadMissing([
+            'departmentLevel.level',
+            'departmentCourse.course',
+        ]);
+
         return [
             'id' => $this->id,
             'departmentCourseId' => $this?->department_course_id,
