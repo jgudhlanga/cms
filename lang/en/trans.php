@@ -1037,7 +1037,6 @@ return [
         'operations' => 'Operations',
         'institution' => 'Institution',
         'system' => 'System',
-        'department' => 'Department',
         'portal' => 'Student Portal',
     ],
     'maintenance' => 'Maintenance',

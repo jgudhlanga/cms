@@ -288,6 +288,7 @@ declare module 'vue' {
     NavigationMenuTrigger: typeof import('./../components/ui/navigation-menu/NavigationMenuTrigger.vue')['default']
     NavigationMenuViewport: typeof import('./../components/ui/navigation-menu/NavigationMenuViewport.vue')['default']
     NavMain: typeof import('./../components/core/sidebar/NavMain.vue')['default']
+    NavMainNestedItem: typeof import('./../components/core/sidebar/NavMainNestedItem.vue')['default']
     NavUser: typeof import('./../components/core/sidebar/NavUser.vue')['default']
     NextOfKinDetails: typeof import('./../components/students/update/NextOfKinDetails.vue')['default']
     NextOfKinForm: typeof import('./../components/shared/nextOfKin/NextOfKinForm.vue')['default']
