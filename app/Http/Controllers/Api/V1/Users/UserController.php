@@ -11,7 +11,7 @@ use App\Http\Filters\Users\UserFilter;
 use App\Http\Requests\Preferences\UserPreferenceRequest;
 use App\Http\Requests\Users\UpdateUserRequest;
 use App\Http\Requests\Users\UserRequest;
-use App\Http\Resources\Acl\PermissionResource;
+use App\Http\Resources\Rbac\PermissionResource;
 use App\Http\Resources\AuditTrail\AuditTrailResource;
 use App\Http\Resources\Preferences\UserPreferenceResource;
 use App\Http\Resources\Users\UserResource;

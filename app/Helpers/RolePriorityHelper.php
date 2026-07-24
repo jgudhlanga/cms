@@ -2,7 +2,7 @@
 
 namespace App\Helpers;
 
-use App\Enums\Acl\RoleEnum;
+use App\Enums\Rbac\RoleEnum;
 use App\Models\Users\User;
 
 class RolePriorityHelper

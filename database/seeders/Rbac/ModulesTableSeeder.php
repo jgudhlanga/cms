@@ -1,0 +1,28 @@
+<?php
+
+namespace Database\Seeders\Rbac;
+
+use App\Enums\Shared\ModuleEnum;
+use App\Models\Rbac\Module;
+use Illuminate\Database\Seeder;
+
+class ModulesTableSeeder extends Seeder
+{
+    /**
+     * Run the database seeds.
+     */
+    public function run(): void
+    {
+        $accommodationsModule = Module::where('title', 'Accommodations')->first();
+        if ($accommodationsModule) {
+            $accommodationsModule->forceDelete();
+        }
+
+        foreach (ModuleEnum::cases() as $row) {
+            $exist = Module::where('title', $row->value)->first();
+            if (! $exist instanceof Module) {
+                Module::create(['title' => $row->value]);
+            }
+        }
+    }
+}

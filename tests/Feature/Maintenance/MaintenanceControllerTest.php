@@ -2,7 +2,7 @@
 
 use App\Jobs\Applications\ExportApplicationJob;
 use App\Jobs\Enrolments\ExportStudentEnrollmentJob;
-use App\Models\Acl\Permission;
+use App\Models\Rbac\Permission;
 use App\Models\Users\User;
 use Illuminate\Support\Facades\Queue;
 

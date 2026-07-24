@@ -2,7 +2,7 @@
 
 namespace App\Models\Institution;
 
-use App\Models\Acl\Role;
+use App\Models\Rbac\Role;
 use App\Models\Shared\WorkflowStepAction;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;

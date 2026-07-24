@@ -1,7 +1,7 @@
 <?php
 
 use App\Models\AcademicCalendars\AcademicYearOption;
-use App\Models\Acl\Permission;
+use App\Models\Rbac\Permission;
 use App\Models\Users\User;
 use Database\Seeders\AcademicCalendars\AcademicYearOptionSeeder;
 

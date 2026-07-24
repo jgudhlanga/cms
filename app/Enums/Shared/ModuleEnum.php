@@ -4,7 +4,7 @@ namespace App\Enums\Shared;
 
 enum ModuleEnum: string
 {
-    case ACL = 'Acl';
+    case RBAC = 'Rbac';
     case COMMUNICATIONS = 'Communications';
     case DASHBOARDS = 'Dashboards';
     case ENROLMENTS = 'Enrolments';
@@ -25,7 +25,7 @@ enum ModuleEnum: string
     public function label(): string
     {
         return match ($this) {
-            self::ACL => 'Acl',
+            self::RBAC => 'Rbac',
             self::COMMUNICATIONS => 'Communications',
             self::DASHBOARDS => 'Dashboards',
             self::ENROLMENTS => 'Enrolments',

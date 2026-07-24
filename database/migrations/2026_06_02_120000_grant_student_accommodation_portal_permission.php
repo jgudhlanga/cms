@@ -1,9 +1,9 @@
 <?php
 
-use App\Enums\Acl\RoleEnum;
-use App\Models\Acl\Permission;
-use App\Models\Acl\Role;
-use App\Support\Acl\PermissionRegistry;
+use App\Enums\Rbac\RoleEnum;
+use App\Models\Rbac\Permission;
+use App\Models\Rbac\Role;
+use App\Support\Rbac\PermissionRegistry;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\Artisan;
 

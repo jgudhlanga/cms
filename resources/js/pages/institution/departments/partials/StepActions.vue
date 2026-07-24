@@ -3,7 +3,7 @@ import BaseCard from '@/components/core/card/BaseCard.vue';
 import { BaseCheckbox } from '@/components/core/form';
 import SpinnerComponent from '@/components/core/loader/SpinnerComponent.vue';
 import BaseModal from '@/components/core/modal/BaseModal.vue';
-import { useRoles } from '@/composables/acl/useRoles';
+import { useRoles } from '@/composables/rbac/useRoles';
 import { useDepartmentWorkflows } from '@/composables/institution/useDepartmentWorkflows';
 import { useWorkflowStepActions } from '@/composables/shared/useWorkflowStepActions';
 import { SizeVariant } from '@/enums/sizes';
@@ -27,7 +27,7 @@ const onlyRoles = 'head-of-department,head-of-division,lecturer,lecturer-in-char
 const onlyStaffRoles = 'head-of-department,head-of-division,lecturer,lecturer-in-charge,senior-lecturer,registrar,selection-officer';
 
 onMounted(async () => {
-    await listRoles(`api/v1/acl/roles?page_size=all&only=${onlyRoles}`);
+    await listRoles(`api/v1/rbac/roles?page_size=all&only=${onlyRoles}`);
     await listWorkflowStepActions();
 });
 const { modals } = useModalStore();

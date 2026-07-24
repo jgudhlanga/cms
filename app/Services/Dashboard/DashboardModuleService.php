@@ -4,23 +4,23 @@ namespace App\Services\Dashboard;
 
 use App\Helpers\RolePriorityHelper;
 use App\Models\Users\User;
-use App\Services\Acl\AclModuleStateService;
+use App\Services\Rbac\RbacModuleStateService;
 use App\Support\Dashboard\DashboardTab;
 
 class DashboardModuleService
 {
     private const string MODULE_SLUG = 'dashboards';
 
-    public function __construct(private AclModuleStateService $aclModuleState) {}
+    public function __construct(private RbacModuleStateService $rbacModuleState) {}
 
     public function clearCache(): void
     {
-        $this->aclModuleState->clearCache();
+        $this->rbacModuleState->clearCache();
     }
 
     public function isEnabled(): bool
     {
-        return $this->aclModuleState->isEnabled(self::MODULE_SLUG);
+        return $this->rbacModuleState->isEnabled(self::MODULE_SLUG);
     }
 
     /**
@@ -29,7 +29,7 @@ class DashboardModuleService
     public function enabledTabs(): array
     {
         $defaults = DashboardTab::defaultTabSettings();
-        $stored = $this->aclModuleState->settingsFor(self::MODULE_SLUG)['tabs'] ?? [];
+        $stored = $this->rbacModuleState->settingsFor(self::MODULE_SLUG)['tabs'] ?? [];
 
         return array_merge($defaults, array_intersect_key($stored, $defaults));
     }

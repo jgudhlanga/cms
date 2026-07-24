@@ -1,11 +1,11 @@
 <?php
 
-use App\Enums\Acl\RoleEnum;
+use App\Enums\Rbac\RoleEnum;
 use App\Enums\Institution\IntakePeriodStatusEnum;
 use App\Enums\Institution\LevelEnum;
 use App\Enums\Students\ApplicationTrackEnum;
 use App\Helpers\DropdownHelper;
-use App\Models\Acl\Role;
+use App\Models\Rbac\Role;
 use App\Models\Institution\DepartmentLevel;
 use App\Models\Institution\Level;
 use App\Services\Students\ApplicationEligibilityService;

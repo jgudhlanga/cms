@@ -1,7 +1,7 @@
 <?php
 
 use App\Enums\AcademicCalendars\AcademicCalendarTypeEnum;
-use App\Models\Acl\Permission;
+use App\Models\Rbac\Permission;
 use App\Models\AcademicCalendars\AcademicCalendar;
 use App\Models\Institution\AssessmentCalendar\AssessmentCalendar;
 use App\Models\Institution\AssessmentType;

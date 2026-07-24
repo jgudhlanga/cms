@@ -2,7 +2,7 @@
 
 use App\Enums\AccountPurge\AccountPurgeTypeEnum;
 use App\Models\AccountPurge\AccountPurgeArchive;
-use App\Models\Acl\Permission;
+use App\Models\Rbac\Permission;
 use App\Models\Shared\Gender;
 use App\Models\Shared\IdType;
 use App\Models\Shared\MaritalStatus;

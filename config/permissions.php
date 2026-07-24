@@ -2,7 +2,7 @@
 
 return [
     'groups' => [
-        'acl' => [
+        'rbac' => [
             'view:acl-settings',
             'viewAny:modules',
             'view:modules',

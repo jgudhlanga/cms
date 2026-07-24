@@ -205,7 +205,7 @@ onMounted(() => {
                         :error="form.errors.email"
                     />
                     <RoleSelect
-                        :url="`api/v1/acl/roles?page_size=all`"
+                        :url="`api/v1/rbac/roles?page_size=all`"
                         :label-uppercase="true"
                         :is-multi="true"
                         :is-searchable="true"

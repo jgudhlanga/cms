@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1\Staff;
 
-use App\Enums\Acl\RoleEnum;
+use App\Enums\Rbac\RoleEnum;
 use App\Http\Controllers\Controller;
 use App\Models\Institution\Staff;
 use Illuminate\Http\JsonResponse;

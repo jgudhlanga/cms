@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\Acl\Module;
+use App\Models\Rbac\Module;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;

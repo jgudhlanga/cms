@@ -2,13 +2,13 @@
 
 use App\Enums\AcademicCalendars\AcademicCalendarTypeEnum;
 use App\Enums\AcademicCalendars\ClassMetaDataTypeEnum;
-use App\Enums\Acl\RoleEnum;
+use App\Enums\Rbac\RoleEnum;
 use App\Enums\Shared\EmploymentTypeEnum;
 use App\Models\AcademicCalendars\AcademicCalendar;
 use App\Models\AcademicCalendars\AcademicCalendarClassMetaData;
 use App\Models\AcademicCalendars\ClassMetaDataType;
-use App\Models\Acl\Permission;
-use App\Models\Acl\Role;
+use App\Models\Rbac\Permission;
+use App\Models\Rbac\Role;
 use App\Models\Institution\Staff;
 use App\Models\Shared\EmploymentType;
 use App\Models\Shared\Gender;

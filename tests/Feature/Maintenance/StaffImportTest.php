@@ -1,10 +1,10 @@
 <?php
 
-use App\Enums\Acl\RoleGroupEnum;
+use App\Enums\Rbac\RoleGroupEnum;
 use App\Exports\Maintenance\StaffImportTemplateExport;
 use App\Helpers\PermissionHelper;
 use App\Importers\Maintenance\StaffImporter;
-use App\Models\Acl\Role;
+use App\Models\Rbac\Role;
 use App\Models\Institution\Department;
 use App\Models\Institution\InstitutionDepartment;
 use App\Models\Institution\Staff;
@@ -17,7 +17,7 @@ use App\Models\Shared\MaritalStatus;
 use App\Models\Shared\Title;
 use App\Models\Users\User;
 use App\Services\Maintenance\Staff\StaffImportTemplateService;
-use Database\Seeders\Acl\RoleGroupSeeder;
+use Database\Seeders\Rbac\RoleGroupSeeder;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Cache;
 use Maatwebsite\Excel\Facades\Excel;

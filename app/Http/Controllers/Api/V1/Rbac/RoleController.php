@@ -1,0 +1,44 @@
+<?php
+
+namespace App\Http\Controllers\Api\V1\Rbac;
+
+use App\Http\Controllers\Api\V1\Utils\ApiDropdownController;
+use App\Http\Filters\Rbac\RoleFilter;
+use App\Http\Resources\Rbac\RoleResource;
+use App\Repositories\Rbac\Interface\IRoleRepository;
+use App\Traits\HttpUtil;
+use Illuminate\Http\Request;
+
+class RoleController extends ApiDropdownController
+{
+    use HttpUtil;
+
+    public function __construct(protected IRoleRepository $repository)
+    {
+
+    }
+
+    public function index(RoleFilter $filters)
+    {
+        return RoleResource::collection($this->repository->allFilter(['*'], $filters))->additional([
+            'filters' => request()->only(['search', 'trashed']),
+            'trashedCount' => $this->repository->allTrashed()->count(),
+        ]);
+    }
+
+    public function store(Request $request)
+    {
+    }
+
+    public function show(string $id)
+    {
+    }
+
+    public function update(Request $request, string $id)
+    {
+    }
+
+    public function destroy(string $id)
+    {
+    }
+}

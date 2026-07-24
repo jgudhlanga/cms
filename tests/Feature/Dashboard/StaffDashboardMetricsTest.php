@@ -1,10 +1,10 @@
 <?php
 
-use App\Enums\Acl\RoleEnum;
+use App\Enums\Rbac\RoleEnum;
 use App\Enums\Shared\ClassListTypeEnum;
 use App\Enums\Shared\EmploymentTypeEnum;
-use App\Models\Acl\Permission;
-use App\Models\Acl\Role;
+use App\Models\Rbac\Permission;
+use App\Models\Rbac\Role;
 use App\Models\Enrolments\ClassList;
 use App\Models\Institution\Staff;
 use App\Models\Shared\EmploymentType;

@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Students;
 use App\DTO\Students\CreateStudentApplicationDto;
 use App\DTO\Students\UpdateStudentDto;
 use App\DTO\Users\UserDto;
-use App\Enums\Acl\RoleEnum;
+use App\Enums\Rbac\RoleEnum;
 use App\Enums\Shared\FeeTypeEnum;
 use App\Exceptions\Maintenance\StudentIdNumberConflictException;
 use App\Exports\Students\StudentListExport;

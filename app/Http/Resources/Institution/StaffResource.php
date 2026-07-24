@@ -2,7 +2,7 @@
 
 namespace App\Http\Resources\Institution;
 
-use App\Http\Resources\Acl\RoleResource;
+use App\Http\Resources\Rbac\RoleResource;
 use App\Http\Resources\Users\UserSummaryResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;

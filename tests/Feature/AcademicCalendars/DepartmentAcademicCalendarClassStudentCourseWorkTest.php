@@ -5,7 +5,7 @@ use App\Models\AcademicCalendars\AcademicCalendarClass;
 use App\Models\AcademicCalendars\AcademicCalendarStudentEnrolment;
 use App\Models\AcademicCalendars\AcademicYearOption;
 use App\Models\AcademicCalendars\ClassConfig;
-use App\Models\Acl\Permission;
+use App\Models\Rbac\Permission;
 use App\Models\Institution\Course;
 use App\Models\Institution\Department;
 use App\Models\Institution\DepartmentCourse;

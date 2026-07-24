@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { BaseSelect } from '@/components/core/form';
-import { useRoles } from '@/composables/acl/useRoles';
-import { Role } from '@/types/acl';
+import { useRoles } from '@/composables/rbac/useRoles';
+import { Role } from '@/types/rbac';
 import { SelectOption } from '@/types/utils';
 import { computed, onMounted } from 'vue';
 

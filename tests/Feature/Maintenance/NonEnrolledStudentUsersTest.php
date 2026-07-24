@@ -1,11 +1,11 @@
 <?php
 
-use App\Enums\Acl\RoleEnum;
+use App\Enums\Rbac\RoleEnum;
 use App\Enums\Shared\FeeTypeEnum;
 use App\Enums\Shared\WorkflowStepEnum;
 use App\Models\AcademicCalendars\AcademicCalendar;
 use App\Models\AcademicCalendars\AcademicYearOption;
-use App\Models\Acl\Role;
+use App\Models\Rbac\Role;
 use App\Models\Enrolments\ClassList;
 use App\Models\Ledgers\Ledger;
 use App\Models\Shared\FeeType;

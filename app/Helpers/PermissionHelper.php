@@ -2,9 +2,9 @@
 
 namespace App\Helpers;
 
-use App\Models\Acl\Permission;
-use App\Models\Acl\RoleGroup;
-use App\Support\Acl\PermissionRegistry;
+use App\Models\Rbac\Permission;
+use App\Models\Rbac\RoleGroup;
+use App\Support\Rbac\PermissionRegistry;
 use Illuminate\Support\Collection;
 use Spatie\Permission\PermissionRegistrar;
 

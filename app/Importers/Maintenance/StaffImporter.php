@@ -6,7 +6,7 @@ namespace App\Importers\Maintenance;
 
 use App\DTO\Institution\StaffImportRowDto;
 use App\Helpers\DateHelper;
-use App\Models\Acl\Role;
+use App\Models\Rbac\Role;
 use App\Models\Institution\Staff;
 use App\Services\Maintenance\Staff\ImportLookupMatcher;
 use App\Services\Maintenance\Staff\StaffImportLookups;

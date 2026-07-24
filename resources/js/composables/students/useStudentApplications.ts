@@ -8,7 +8,7 @@ import { hasAbility } from '@/lib/permissions';
 import { getIdParams } from '@/lib/utils';
 import HttpService from '@/services/http.service';
 import { PageProps } from '@/types';
-import { Role } from '@/types/acl';
+import { Role } from '@/types/rbac';
 import { DepartmentApplicationStep } from '@/types/department-meta-data';
 import { BulkApplicationApprovalParams, BulkUpdatePaymentStatusParams, Enrolment, PaymentProofPreview } from '@/types/enrolments';
 import { StudentApplication } from '@/types/students';

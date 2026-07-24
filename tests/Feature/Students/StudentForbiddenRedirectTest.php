@@ -1,8 +1,8 @@
 <?php
 
-use App\Enums\Acl\RoleEnum;
+use App\Enums\Rbac\RoleEnum;
 use App\Enums\Institution\IntakePeriodStatusEnum;
-use App\Models\Acl\Role;
+use App\Models\Rbac\Role;
 use App\Models\Students\Student;
 use App\Models\Tenants\Tenant;
 use App\Models\Users\User;

@@ -2,7 +2,7 @@
 
 namespace App\Http\Middleware;
 
-use App\Enums\Acl\RoleEnum;
+use App\Enums\Rbac\RoleEnum;
 use App\Enums\Students\ApplicationFeeStatusEnum;
 use App\Enums\Students\ApplicationTrackEnum;
 use App\Helpers\PaymentHelper;

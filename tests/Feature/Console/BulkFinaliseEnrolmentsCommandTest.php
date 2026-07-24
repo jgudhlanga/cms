@@ -1,12 +1,12 @@
 <?php
 
-use App\Enums\Acl\RoleEnum;
+use App\Enums\Rbac\RoleEnum;
 use App\Enums\Shared\ClassListTypeEnum;
 use App\Enums\Shared\WorkflowStepEnum;
 use App\Mail\Enrolments\BulkFinaliseEnrolmentsReportMail;
 use App\Models\AcademicCalendars\AcademicCalendar;
 use App\Models\AcademicCalendars\AcademicYearOption;
-use App\Models\Acl\Role;
+use App\Models\Rbac\Role;
 use App\Models\Enrolments\ClassList;
 use App\Models\Students\StudentEnrolment;
 use App\Models\Students\StudentEnrolmentStatus;

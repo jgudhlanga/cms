@@ -1,4 +1,4 @@
-import { Role } from '@/types/acl';
+import { Role } from '@/types/rbac';
 import { User } from '@/types/users';
 import { SelectOption } from '@/types/utils';
 

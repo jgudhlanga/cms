@@ -2,7 +2,7 @@
 
 use App\Models\AcademicCalendars\AcademicCalendarClass;
 use App\Models\AcademicCalendars\CourseWorkMark;
-use App\Models\Acl\Permission;
+use App\Models\Rbac\Permission;
 use App\Models\AcademicCalendars\AcademicCalendar;
 use App\Models\Institution\AssessmentCalendar\AssessmentCalendar;
 use App\Models\Institution\Syllabus\CourseSyllabusModule;
@@ -203,8 +203,8 @@ test('assigned lecturer can open import page for assigned module', function () {
 });
 
 test('lecturer role seeder includes create and export course work', function () {
-    $role = \App\Models\Acl\Role::query()
-        ->where('name', \App\Enums\Acl\RoleEnum::LECTURER->name())
+    $role = \App\Models\Rbac\Role::query()
+        ->where('name', \App\Enums\Rbac\RoleEnum::LECTURER->name())
         ->firstOrFail();
 
     expect($role->hasPermissionTo('create:course-work'))->toBeTrue()

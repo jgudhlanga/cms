@@ -2,7 +2,7 @@
 
 use App\Enums\Institution\IntakePeriodStatusEnum;
 use App\Enums\Shared\TenantEnum;
-use App\Models\Acl\Permission;
+use App\Models\Rbac\Permission;
 use App\Models\Institution\IntakePeriod;
 use App\Models\Users\User;
 use Database\Seeders\Institution\ContinuousIntakePeriodSeeder;
