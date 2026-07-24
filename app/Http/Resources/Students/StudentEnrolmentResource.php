@@ -11,7 +11,14 @@ class StudentEnrolmentResource extends JsonResource
 
     public function toArray(Request $request): array
     {
-       $classConfig = $this->academicCalendarStudentEnrolment?->academicCalendarClass?->classConfig;
+        $this->resource->loadMissing([
+            'studentEnrolmentStatus',
+            'academicYearOption',
+            'academicCalendar',
+            'academicCalendarStudentEnrolment.academicCalendarClass.classConfig.syllabus',
+        ]);
+
+        $classConfig = $this->academicCalendarStudentEnrolment?->academicCalendarClass?->classConfig;
         return [
             'type' => 'student-enrolment',
             'id' => $this->id,

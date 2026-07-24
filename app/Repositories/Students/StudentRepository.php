@@ -97,12 +97,34 @@ class StudentRepository extends BaseRepository implements IStudentRepository
         // duplicated in pagination or export chunkById iteration.
         return Student::query()
             ->with([
-                'user',
+                'user.status',
+                'title',
                 'gender',
+                'maritalStatus',
+                'race',
+                'idType',
+                'country',
+                'religion',
+                'contacts',
+                'addresses',
+                'nextOfKins.relationship',
+                'nextOfKins.contacts',
+                'nextOfKins.addresses',
                 'latestEnrolment.institutionDepartment.department',
                 'latestEnrolment.departmentLevel.level',
                 'latestEnrolment.departmentCourse.course',
                 'latestEnrolment.modeOfStudy',
+                'latestEnrolment.studentEnrolmentStatus',
+                'latestEnrolment.academicYearOption',
+                'latestEnrolment.academicCalendar',
+                'latestEnrolment.academicCalendarStudentEnrolment.academicCalendarClass.classConfig.syllabus',
+                'latestApplication.student.user',
+                'latestApplication.institutionDepartment.department',
+                'latestApplication.departmentLevel.level',
+                'latestApplication.departmentCourse.course',
+                'latestApplication.modeOfStudy',
+                'latestApplication.departmentWorkflowStep.workflowStep',
+                'latestApplication.intakePeriod',
             ])
             ->whereHas('enrolments')
             ->select('students.*');

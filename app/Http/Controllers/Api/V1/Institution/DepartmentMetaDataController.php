@@ -25,6 +25,8 @@ class DepartmentMetaDataController extends Controller
 
     public function courses(InstitutionDepartment $institutionDepartment): JsonResponse
     {
+        $institutionDepartment->loadMissing('departmentCourses.course');
+
         $courses = DepartmentCourseResource::collection($institutionDepartment->departmentCourses);
         $departmentCoursesIds = $institutionDepartment->departmentCourses?->pluck('course_id');
 
@@ -33,6 +35,8 @@ class DepartmentMetaDataController extends Controller
 
     public function levels(InstitutionDepartment $institutionDepartment): JsonResponse
     {
+        $institutionDepartment->loadMissing(['departmentLevels.level', 'departmentLevels.requirement']);
+
         $levels = DepartmentLevelResource::collection($institutionDepartment->departmentLevels);
         $departmentLevelsIds = $institutionDepartment?->departmentLevels?->pluck('level_id');
         $showOnCurrentApplicationPeriodIds = $institutionDepartment?->departmentLevels->where('show_on_current_application_period', true)->pluck('level_id');
@@ -73,7 +77,7 @@ class DepartmentMetaDataController extends Controller
 
         // Eager-load relationships to avoid N+1
         $enrolments = $institutionDepartment->studentApplications()
-            ->with(['departmentCourse', 'departmentLevel.level'])
+            ->with(['departmentCourse.course', 'departmentLevel.level'])
             ->when($intakePeriodId, fn ($q) => $q->where('intake_period_id', $intakePeriodId))
             ->when($modeOfStudyId, fn ($q) => $q->where('mode_of_study_id', $modeOfStudyId))
             ->get();
@@ -115,7 +119,7 @@ class DepartmentMetaDataController extends Controller
         // Eager-load relationships to avoid N+1
         $enrolments = $institutionDepartment->studentApplications()
             ->join('class_lists', 'student_applications.id', '=', 'class_lists.student_application_id')
-            ->with(['departmentCourse', 'departmentLevel.level'])
+            ->with(['departmentCourse.course', 'departmentLevel.level'])
             ->when($intakePeriodId, fn ($q) => $q->where('intake_period_id', $intakePeriodId))
             ->when($modeOfStudyId, fn ($q) => $q->where('mode_of_study_id', $modeOfStudyId))
             ->whereIn('class_lists.type', [$type])

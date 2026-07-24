@@ -49,6 +49,8 @@ class RoleRepository extends BaseRepository implements IRoleRepository
         ];
 
         return $this->role
+            ->with(['roleGroup', 'permissions'])
+            ->withCount('users')
             ->select($columns)
             ->filter($filters)
             ->whereNotIn('slug', $excludes)

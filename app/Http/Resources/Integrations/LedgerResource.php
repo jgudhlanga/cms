@@ -10,6 +10,8 @@ class LedgerResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
+        $this->resource->loadMissing(['feeType', 'level']);
+
         return [
             'type' => 'ledgers',
             'id' => $this->id,

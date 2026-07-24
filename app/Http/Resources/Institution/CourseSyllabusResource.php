@@ -10,6 +10,11 @@ class CourseSyllabusResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
+        $this->resource->loadMissing([
+            'departmentLevelCourse.departmentLevel.level',
+            'departmentLevelCourse.departmentCourse.course',
+        ]);
+
         $calendarType = $this->resource->departmentLevelCourse?->departmentLevel?->level?->calendar_type;
 
         return [

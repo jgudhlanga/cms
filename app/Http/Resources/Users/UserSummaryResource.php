@@ -9,6 +9,8 @@ class UserSummaryResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
+        $this->resource->loadMissing(['status']);
+
         return [
             'type' => 'user',
             'id' => $this->id,

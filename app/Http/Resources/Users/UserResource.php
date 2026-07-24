@@ -13,6 +13,16 @@ class UserResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
+        $this->resource->loadMissing([
+            'tenant',
+            'status',
+            'roles',
+            'studentProfile.contacts',
+            'studentProfile.addresses',
+            'staffProfile.contacts',
+            'staffProfile.addresses',
+        ]);
+
         $hasAccessToNonAcademicDepartments = Helper::hasAccessToNonAcademicDepartments();
 
         return [

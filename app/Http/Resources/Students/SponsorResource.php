@@ -10,6 +10,8 @@ class SponsorResource extends JsonResource
 
     public function toArray(Request $request): array
     {
+        $this->resource->loadMissing(['sponsorType', 'contacts', 'addresses']);
+
         $contact = $this->contacts->first() ?? null;
         $address = $this->addresses->first() ?? null;
         return [

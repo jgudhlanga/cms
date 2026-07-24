@@ -13,6 +13,8 @@ class AccountPurgeArchiveResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
+        $this->resource->loadMissing(['studentNote', 'purgedBy']);
+
         $summary = is_array($this->summary) ? $this->summary : [];
         $status = $this->status();
 

@@ -103,6 +103,18 @@ class StaffRepository extends BaseRepository implements IStaffRepository
     public function allFilter($columns = ['*'], ?StaffFilter $filters = null)
     {
         return $this->staff
+            ->with([
+                'title',
+                'gender',
+                'maritalStatus',
+                'race',
+                'employmentType',
+                'idType',
+                'country',
+                'religion',
+                'user.status',
+                'user.roles',
+            ])
             ->select($columns)
             ->filter($filters)
             ->orderBy('created_at')

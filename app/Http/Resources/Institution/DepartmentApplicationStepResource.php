@@ -10,6 +10,8 @@ class DepartmentApplicationStepResource extends JsonResource
 
     public function toArray(Request $request): array
     {
+        $this->resource->loadMissing(['workflowStep', 'metadata']);
+
         return [
             'type' => 'department-application-step',
             'id' => $this->resource->id,
@@ -25,7 +27,7 @@ class DepartmentApplicationStepResource extends JsonResource
                 'deletedAt' => $this->resource->deleted_at,
             ],
             "relationships" => [
-                'metadata' => DepartmentWorkflowStepMetadataResource::make($this?->workflowStep?->metadata?->first()),
+                'metadata' => DepartmentWorkflowStepMetadataResource::make($this->metadata?->first()),
             ],
         ];
     }

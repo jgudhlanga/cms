@@ -20,6 +20,37 @@ class StudentResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
+        $this->resource->loadMissing([
+            'title',
+            'gender',
+            'maritalStatus',
+            'race',
+            'idType',
+            'country',
+            'religion',
+            'user.status',
+            'contacts',
+            'addresses',
+            'nextOfKins.relationship',
+            'nextOfKins.contacts',
+            'nextOfKins.addresses',
+            'latestEnrolment.institutionDepartment.department',
+            'latestEnrolment.departmentLevel.level',
+            'latestEnrolment.departmentCourse.course',
+            'latestEnrolment.modeOfStudy',
+            'latestEnrolment.studentEnrolmentStatus',
+            'latestEnrolment.academicYearOption',
+            'latestEnrolment.academicCalendar',
+            'latestEnrolment.academicCalendarStudentEnrolment.academicCalendarClass.classConfig.syllabus',
+            'latestApplication.student.user',
+            'latestApplication.institutionDepartment.department',
+            'latestApplication.departmentLevel.level',
+            'latestApplication.departmentCourse.course',
+            'latestApplication.modeOfStudy',
+            'latestApplication.departmentWorkflowStep.workflowStep',
+            'latestApplication.intakePeriod',
+        ]);
+
         $profileSummary = $this->resolveProfileSummary();
         $idNumberValidation = $this->resolveIdNumberValidation($request);
         $apprenticeSummary = $this->resolveApprenticeSummary();
@@ -159,6 +190,14 @@ class StudentResource extends JsonResource
         $enrolment = $this->latestEnrolment;
 
         if ($enrolment instanceof StudentEnrolment) {
+            $enrolment->loadMissing([
+                'institutionDepartment.department',
+                'departmentLevel.level',
+                'departmentCourse.course',
+                'modeOfStudy',
+                'studentEnrolmentStatus',
+            ]);
+
             return [
                 'department' => $enrolment->institutionDepartment?->department?->name,
                 'level' => $enrolment->departmentLevel?->level?->name,
@@ -175,6 +214,15 @@ class StudentResource extends JsonResource
         $application = $this->latestApplication;
 
         if ($application instanceof StudentApplication) {
+            $application->loadMissing([
+                'institutionDepartment.department',
+                'departmentLevel.level',
+                'departmentCourse.course',
+                'modeOfStudy',
+                'departmentWorkflowStep.workflowStep',
+                'intakePeriod',
+            ]);
+
             return [
                 'department' => $application->institutionDepartment?->department?->name,
                 'level' => $application->departmentLevel?->level?->name,

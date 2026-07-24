@@ -14,6 +14,8 @@ class InstitutionDepartmentResource extends JsonResource
 
     public function toArray(Request $request): array
     {
+        $this->resource->loadMissing('department');
+
         return [
             'type' => 'institution-department',
             'id' => $this->resource->id,

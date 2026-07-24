@@ -53,6 +53,8 @@ class UserRepository extends BaseRepository implements IUserRepository
                 'studentProfile.country',
                 'studentProfile.maritalStatus',
                 'studentProfile.idType',
+                'studentProfile.contacts',
+                'studentProfile.addresses',
                 'staffProfile',
                 'staffProfile.gender',
                 'staffProfile.title',
@@ -60,6 +62,8 @@ class UserRepository extends BaseRepository implements IUserRepository
                 'staffProfile.idType',
                 'staffProfile.country',
                 'staffProfile.employmentType',
+                'staffProfile.contacts',
+                'staffProfile.addresses',
                 'staffProfile.institutionDepartments.department',
             )
             ->select($columns)

@@ -18,6 +18,8 @@ class FaultyStudentIdNumberResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
+        $this->resource->loadMissing('user');
+
         $analysis = $this->faultyIdAnalysis ?? app(FaultyStudentIdNumberAnalysis::class)->analyze($this->resource);
 
         return [

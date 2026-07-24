@@ -9,6 +9,8 @@ class CourseSyllabusModuleResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
+        $this->resource->loadMissing('academicYearOption');
+
         return [
             'type' => 'course-syllabus-module',
             'id' => $this->resource->id,

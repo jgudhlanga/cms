@@ -16,6 +16,12 @@ class NonEnrolledStudentUserResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
+        $this->resource->loadMissing([
+            'roles',
+            'studentProfile.applications.classList',
+            'studentProfile.applications.departmentWorkflowStep.workflowStep',
+        ]);
+
         return [
             'type' => 'maintenance-non-enrolled-student-user',
             'id' => $this->id,
