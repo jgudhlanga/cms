@@ -10,6 +10,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Filters\Users\UserFilter;
 use App\Http\Requests\Institution\StaffRequest;
 use App\Http\Requests\Users\UpdateUserCredentialsRequest;
+use App\Http\Requests\Users\UpdateUserNamesRequest;
 use App\Http\Requests\Users\UpdateUserRequest;
 use App\Http\Requests\Users\UserRequest;
 use App\Http\Resources\Users\UserResource;
@@ -136,5 +137,18 @@ class UserController extends Controller
         if (! empty($updates)) {
             $user->update($updates);
         }
+    }
+
+    public function updateUserNames(UpdateUserNamesRequest $request, User $user): void
+    {
+        $this->authorize('updateCredentials', $user);
+
+        $validated = $request->validated();
+
+        $user->update([
+            'first_name' => $validated['first_name'],
+            'middle_name' => $validated['middle_name'] ?? null,
+            'last_name' => $validated['last_name'],
+        ]);
     }
 }

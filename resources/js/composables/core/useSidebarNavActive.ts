@@ -41,7 +41,7 @@ function queryParamsMatch(hrefParams: URLSearchParams, currentParams: URLSearchP
 /**
  * Whether a sidebar link href matches the current Inertia page URL.
  * Path match (exact or nested). When the href includes query params (e.g. tab, is_academic),
- * those values must also match so sibling links stay distinct.
+ * the pathname must be exact and those values must match so sibling links stay distinct.
  */
 export function useSidebarNavActive(): {
     isActive: (url: string | undefined) => boolean;
@@ -69,9 +69,9 @@ export function useSidebarNavActive(): {
         }
 
         if ([...href.searchParams.keys()].length > 0) {
-            // Nested paths (e.g. /institution/config under /institution) ignore child query keys.
+            // Query-param siblings (e.g. is_academic=0|1) must not both light up on nested routes.
             if (current.pathname !== href.pathname) {
-                return true;
+                return false;
             }
 
             return queryParamsMatch(href.searchParams, current.searchParams);

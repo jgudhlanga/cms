@@ -2,7 +2,11 @@ import { describe, expect, it } from 'vitest';
 
 import { ColorVariant } from '@/enums/colors';
 import { TypeVariant } from '@/enums/type-variants';
-import { applicationStatusAlertType, applicationStatusVariant } from '@/lib/applicationStatusPresentation';
+import {
+    applicationStatusAlertType,
+    applicationStatusSortPriority,
+    applicationStatusVariant,
+} from '@/lib/applicationStatusPresentation';
 
 describe('applicationStatusVariant', () => {
     it('maps workflow steps to badge colors', () => {
@@ -35,5 +39,15 @@ describe('applicationStatusAlertType', () => {
     it('defaults unknown steps to info', () => {
         expect(applicationStatusAlertType('')).toBe(TypeVariant.info);
         expect(applicationStatusAlertType('Unknown')).toBe(TypeVariant.info);
+    });
+});
+
+describe('applicationStatusSortPriority', () => {
+    it('ranks positive statuses ahead of rejected ones', () => {
+        expect(applicationStatusSortPriority('Enrolled')).toBeLessThan(applicationStatusSortPriority('Accepted'));
+        expect(applicationStatusSortPriority('Accepted')).toBeLessThan(applicationStatusSortPriority('Review'));
+        expect(applicationStatusSortPriority('Review')).toBeLessThan(applicationStatusSortPriority('Rejected'));
+        expect(applicationStatusSortPriority('Rejected')).toBeLessThan(applicationStatusSortPriority('Unknown'));
+        expect(applicationStatusSortPriority(null)).toBe(99);
     });
 });

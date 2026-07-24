@@ -243,6 +243,39 @@ export const useUsers = () => {
         }
     };
 
+    const updateUserNames = async (
+        form: InertiaForm<any>,
+        userId: string,
+        options: { onSuccess?: () => void } = {},
+    ) => {
+        const { onSuccess } = options;
+        const formSchema = mergeValidationSchema(schemaFields)(
+            ['firstNameSchema', 'lastNameSchema'],
+            z.object({
+                middle_name: z.string().optional().nullable(),
+            }),
+        );
+
+        try {
+            isValidating.value = true;
+            await formSchema.parseAsync(form);
+            form.put(
+                route('users.update-user-names', { user: userId }),
+                buildFormOptions(
+                    form,
+                    trans('trans.login_profile_names_updated'),
+                    trans('trans.login_profile_names_update_failure'),
+                    undefined,
+                    onSuccess,
+                ),
+            );
+        } catch (error: any) {
+            form.setError(error.format());
+        } finally {
+            isValidating.value = false;
+        }
+    };
+
     const isLoading = ref(false);
     const users = ref<ApiFilterResponse | null>(null);
     const loadUsers = async (url: string) => {
@@ -283,6 +316,7 @@ export const useUsers = () => {
         saveStaffUser,
         hasStudentRole,
         updateUserCredentials,
+        updateUserNames,
         isValidating,
         loadUserPermissions,
         userPermissions,

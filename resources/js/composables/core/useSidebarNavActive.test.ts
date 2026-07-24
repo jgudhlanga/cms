@@ -44,6 +44,20 @@ describe('useSidebarNavActive', () => {
         expect(isActive('/institution-departments?is_academic=0')).toBe(false);
     });
 
+    it('does not activate query-param siblings on nested department routes', () => {
+        pageState.url = '/institution-departments/123';
+        const { isActive } = useSidebarNavActive();
+        expect(isActive('/institution-departments?is_academic=0')).toBe(false);
+        expect(isActive('/institution-departments?is_academic=1')).toBe(false);
+    });
+
+    it('does not activate tab query siblings on nested hostel routes', () => {
+        pageState.url = '/hms/hostels/5';
+        const { isActive } = useSidebarNavActive();
+        expect(isActive('/hms/hostels?tab=hostels')).toBe(false);
+        expect(isActive('/hms/hostels?tab=applications')).toBe(false);
+    });
+
     it('isAnyActive returns true when any url matches', () => {
         pageState.url = '/hms/hostels?tab=rooms';
         const { isAnyActive } = useSidebarNavActive();

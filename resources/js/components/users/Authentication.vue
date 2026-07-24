@@ -2,7 +2,7 @@
 import BaseAlert from '@/components/core/alert/BaseAlert.vue';
 import { BaseButton } from '@/components/core/button';
 import BaseCard from '@/components/core/card/BaseCard.vue';
-import { BasePasswordInput } from '@/components/core/form';
+import { BaseInput, BasePasswordInput } from '@/components/core/form';
 import EmailAddress from '@/components/core/form/text/EmailAddress.vue';
 import ProfileFieldCard from '@/components/users/profile/ProfileFieldCard.vue';
 import { useUsers } from '@/composables/users/useUsers';
@@ -11,7 +11,7 @@ import { ColorVariant } from '@/enums/colors';
 import { TypeVariant } from '@/enums/type-variants';
 import { clearFormErrors } from '@/lib/forms';
 import { scrollToFirstError } from '@/lib/scrollToFirstError';
-import { AuthCredentialsUpdate, User } from '@/types/users';
+import { AuthCredentialsUpdate, AuthNamesUpdate, User } from '@/types/users';
 import { useForm, usePage } from '@inertiajs/vue3';
 import { trans } from 'laravel-vue-i18n';
 import { computed, nextTick, onMounted, ref } from 'vue';
@@ -32,6 +32,12 @@ const isImpersonating = computed(() => isItTrue(page.props.auth.impersonating));
 
 const MASKED_PASSWORD = '••••••••';
 
+const namesForm = useForm<AuthNamesUpdate>({
+    first_name: '',
+    middle_name: '',
+    last_name: '',
+});
+
 const form = useForm<AuthCredentialsUpdate>({
     email: '',
     password: '',
@@ -40,20 +46,49 @@ const form = useForm<AuthCredentialsUpdate>({
     change_password: false,
 });
 
-const { updateUserCredentials, isValidating, loadUserPermissions, userPermissions, isLoading } = useUsers();
+const { updateUserCredentials, updateUserNames, isValidating, loadUserPermissions, userPermissions, isLoading } = useUsers();
 const initialEmail = ref('');
+const initialFirstName = ref('');
+const initialMiddleName = ref('');
+const initialLastName = ref('');
+const changeName = ref(false);
 const changeEmail = ref(false);
 const changePassword = ref(false);
+const nameToggleRef = ref<HTMLButtonElement | null>(null);
 const emailToggleRef = ref<HTMLButtonElement | null>(null);
 const passwordToggleRef = ref<HTMLButtonElement | null>(null);
 
+const fullNameDisplay = computed(() => {
+    const parts = [initialFirstName.value, initialMiddleName.value, initialLastName.value]
+        .map((part) => part.trim())
+        .filter(Boolean);
+
+    return parts.join(' ');
+});
+
+const namesDirty = computed(
+    () =>
+        namesForm.first_name.trim() !== initialFirstName.value.trim()
+        || namesForm.middle_name.trim() !== initialMiddleName.value.trim()
+        || namesForm.last_name.trim() !== initialLastName.value.trim(),
+);
 const emailDirty = computed(() => form.email.trim() !== initialEmail.value.trim());
 const passwordDirty = computed(() => form.password.trim().length > 0 || form.password_confirmation.trim().length > 0);
 const passwordMatches = computed(() => !form.password || form.password === form.password_confirmation);
+const canSubmitNames = computed(() => changeName.value && namesDirty.value);
 const canSubmitEmail = computed(() => changeEmail.value && emailDirty.value);
 const canSubmitPassword = computed(
     () => changePassword.value && passwordDirty.value && passwordMatches.value && form.password.trim().length > 0,
 );
+
+const resetNameFields = () => {
+    namesForm.first_name = initialFirstName.value;
+    namesForm.middle_name = initialMiddleName.value;
+    namesForm.last_name = initialLastName.value;
+    clearFormErrors(namesForm, 'first_name');
+    clearFormErrors(namesForm, 'middle_name');
+    clearFormErrors(namesForm, 'last_name');
+};
 
 const resetEmailFields = () => {
     form.email = initialEmail.value;
@@ -65,6 +100,15 @@ const resetPasswordFields = () => {
     form.password_confirmation = '';
     clearFormErrors(form, 'password');
     clearFormErrors(form, 'password_confirmation');
+};
+
+const cancelName = async (returnFocus = true) => {
+    changeName.value = false;
+    resetNameFields();
+    if (returnFocus) {
+        await nextTick();
+        nameToggleRef.value?.focus();
+    }
 };
 
 const cancelEmail = async (returnFocus = true) => {
@@ -85,18 +129,48 @@ const cancelPassword = async (returnFocus = true) => {
     }
 };
 
-const openEmailPanel = async () => {
-    if (changePassword.value) {
+const closeOtherPanels = async (except: 'name' | 'email' | 'password') => {
+    if (except !== 'name' && changeName.value) {
+        await cancelName(false);
+    }
+    if (except !== 'email' && changeEmail.value) {
+        await cancelEmail(false);
+    }
+    if (except !== 'password' && changePassword.value) {
         await cancelPassword(false);
     }
+};
+
+const openNamePanel = async () => {
+    await closeOtherPanels('name');
+    changeName.value = true;
+};
+
+const openEmailPanel = async () => {
+    await closeOtherPanels('email');
     changeEmail.value = true;
 };
 
 const openPasswordPanel = async () => {
-    if (changeEmail.value) {
-        await cancelEmail(false);
-    }
+    await closeOtherPanels('password');
     changePassword.value = true;
+};
+
+const submitNames = () => {
+    if (!namesDirty.value) {
+        namesForm.setError('first_name', trans('trans.login_profile_names_not_changed'));
+        scrollToFirstError(namesForm.errors);
+        return;
+    }
+
+    updateUserNames(namesForm, String(user?.id), {
+        onSuccess: () => {
+            initialFirstName.value = namesForm.first_name;
+            initialMiddleName.value = namesForm.middle_name;
+            initialLastName.value = namesForm.last_name;
+            changeName.value = false;
+        },
+    });
 };
 
 const submitEmail = () => {
@@ -148,6 +222,13 @@ const submitPassword = () => {
 
 onMounted(async () => {
     if (user) {
+        namesForm.first_name = user.attributes.firstname ?? '';
+        namesForm.middle_name = user.attributes.middleName ?? '';
+        namesForm.last_name = user.attributes.lastname ?? '';
+        initialFirstName.value = namesForm.first_name;
+        initialMiddleName.value = namesForm.middle_name;
+        initialLastName.value = namesForm.last_name;
+
         form.email = user.attributes.email ?? '';
         initialEmail.value = user.attributes.email ?? '';
         if (!props.hideAuthorization) {
@@ -158,26 +239,111 @@ onMounted(async () => {
 </script>
 
 <template>
-    <div class="flex flex-col justify-center space-y-6 py-4">
+    <div class="flex flex-col justify-center space-y-3 py-2">
+        <BaseCard :title="$t('trans.ui_full_name')" color-variant="black">
+            <BaseAlert
+                v-if="isImpersonating"
+                class="mb-3"
+                :type="TypeVariant.warning"
+                :title="$t('trans.ui_remove_impersonation')"
+                :description="$t('trans.login_profile_impersonation_names_locked')"
+            />
+
+            <div class="space-y-3">
+                <ProfileFieldCard
+                    :label="$t('trans.ui_full_name')"
+                    :value="fullNameDisplay"
+                    :is-empty="!fullNameDisplay"
+                    :empty-label="$t('trans.not_provided')"
+                    class="rounded-lg! px-3! py-2!"
+                />
+
+                <button
+                    v-if="!changeName && !isImpersonating"
+                    ref="nameToggleRef"
+                    type="button"
+                    class="text-primary text-sm font-medium underline underline-offset-4 hover:text-primary/80"
+                    :aria-expanded="false"
+                    @click="openNamePanel"
+                >
+                    {{ $t('trans.change_name') }}
+                </button>
+
+                <fieldset
+                    v-else-if="changeName"
+                    class="space-y-3 rounded-lg border border-border/60 bg-muted/20 p-3"
+                >
+                    <legend class="sr-only">{{ $t('trans.login_profile_change_name_sr') }}</legend>
+
+                    <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                        <BaseInput
+                            input-id="auth_first_name"
+                            :label="$t('trans.first_name')"
+                            v-model="namesForm.first_name"
+                            :input-auto-focus="true"
+                            :is-required="true"
+                            @input="clearFormErrors(namesForm, 'first_name')"
+                            :error="namesForm.errors.first_name"
+                        />
+                        <BaseInput
+                            input-id="auth_middle_name"
+                            :label="$t('trans.middle_name')"
+                            v-model="namesForm.middle_name"
+                            @input="clearFormErrors(namesForm, 'middle_name')"
+                            :error="namesForm.errors.middle_name"
+                        />
+                        <BaseInput
+                            input-id="auth_last_name"
+                            :label="$t('trans.last_name')"
+                            v-model="namesForm.last_name"
+                            :is-required="true"
+                            @input="clearFormErrors(namesForm, 'last_name')"
+                            :error="namesForm.errors.last_name"
+                        />
+                    </div>
+
+                    <div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                        <BaseButton
+                            type="button"
+                            class="w-full sm:w-auto"
+                            :variant="ColorVariant.shade_outline"
+                            @click="cancelName()"
+                        >
+                            {{ $t('trans.cancel') }}
+                        </BaseButton>
+                        <BaseButton
+                            type="button"
+                            class="w-full sm:w-auto"
+                            :processing="namesForm.processing || isValidating"
+                            :disabled="!canSubmitNames"
+                            :variant="ColorVariant.primary"
+                            @click="submitNames"
+                        >
+                            {{ $t('trans.save_changes') }}
+                        </BaseButton>
+                    </div>
+                </fieldset>
+            </div>
+        </BaseCard>
+
         <BaseCard :title="$t('trans.ui_login_profile')" color-variant="black">
             <BaseAlert
                 v-if="isImpersonating"
-                class="mb-6"
+                class="mb-3"
                 :type="TypeVariant.warning"
                 :title="$t('trans.ui_remove_impersonation')"
                 :description="$t('trans.login_profile_impersonation_credentials_locked')"
             />
 
-            <BaseAlert
+            <p
                 v-else
-                class="mb-6"
-                :type="TypeVariant.info"
-                :title="$t('trans.login_profile_verification_title')"
-                :description="$t('trans.login_profile_verification_description')"
-            />
+                class="mb-3 text-xs leading-snug text-muted-foreground"
+            >
+                {{ $t('trans.login_profile_verification_description_short') }}
+            </p>
 
-            <div class="space-y-8">
-                <section class="space-y-3">
+            <div class="space-y-4">
+                <section class="space-y-2">
                     <h2 class="text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
                         {{ $t('trans.email_address') }}
                     </h2>
@@ -187,6 +353,7 @@ onMounted(async () => {
                         :value="initialEmail"
                         :is-empty="!initialEmail"
                         :empty-label="$t('trans.not_provided')"
+                        class="rounded-lg! px-3! py-2!"
                     />
 
                     <button
@@ -202,7 +369,7 @@ onMounted(async () => {
 
                     <fieldset
                         v-else
-                        class="space-y-4 rounded-xl border border-border/60 bg-muted/20 p-4"
+                        class="space-y-3 rounded-lg border border-border/60 bg-muted/20 p-3"
                     >
                         <legend class="sr-only">{{ $t('trans.login_profile_change_email_sr') }}</legend>
 
@@ -214,7 +381,7 @@ onMounted(async () => {
                             :error="form.errors.email"
                         />
 
-                        <p class="text-sm text-muted-foreground">
+                        <p class="text-xs text-muted-foreground">
                             {{ $t('trans.login_profile_email_helper') }}
                         </p>
 
@@ -241,12 +408,16 @@ onMounted(async () => {
                     </fieldset>
                 </section>
 
-                <section class="space-y-3">
+                <section class="space-y-2">
                     <h2 class="text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
                         {{ $t('trans.password') }}
                     </h2>
 
-                    <ProfileFieldCard :label="$t('trans.password')" :value="MASKED_PASSWORD" />
+                    <ProfileFieldCard
+                        :label="$t('trans.password')"
+                        :value="MASKED_PASSWORD"
+                        class="rounded-lg! px-3! py-2!"
+                    />
 
                     <button
                         v-if="!changePassword && !isImpersonating"
@@ -261,7 +432,7 @@ onMounted(async () => {
 
                     <fieldset
                         v-else
-                        class="space-y-4 rounded-xl border border-border/60 bg-muted/20 p-4"
+                        class="space-y-3 rounded-lg border border-border/60 bg-muted/20 p-3"
                     >
                         <legend class="sr-only">{{ $t('trans.login_profile_change_password_sr') }}</legend>
 

@@ -1,47 +1,111 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed } from 'vue';
 import { StudentHeader } from '@/types/students';
-import { trans } from 'laravel-vue-i18n';
+import { trans, trans_choice } from 'laravel-vue-i18n';
 
+interface Props {
+  data: StudentHeader | null;
+}
 
-  interface Props {
-    data: StudentHeader | null;
+interface HeaderFact {
+  label: string;
+  value: string;
+}
+
+const props = defineProps<Props>();
+
+const yearSemesterDisplay = computed(() => {
+  const calendar = props.data?.academicCalendar?.trim();
+  const yearOption = props.data?.academicYearOption?.trim();
+
+  if (calendar && yearOption) {
+    return `${calendar} · ${yearOption}`;
   }
-  const props = defineProps<Props>();
 
-    const yearSemesterDisplay = computed(() => {
-      const calendar = props.data?.academicCalendar?.trim();
-      const yearOption = props.data?.academicYearOption?.trim();
+  return calendar || yearOption || '';
+});
 
-      if (calendar && yearOption) {
-        return `${calendar} · ${yearOption}`;
-      }
+const levelCourseDisplay = computed(() => {
+  const level = props.data?.level?.trim();
+  const course = props.data?.course?.trim();
 
-      return calendar || yearOption || '';
+  if (level && course) {
+    return `${level} ${trans('general.in')} ${course}`;
+  }
+
+  return level || course || '';
+});
+
+const trackingBadge = computed(() => {
+  if (props.data?.studentNumber?.trim()) {
+    return props.data.studentNumber;
+  }
+
+  return props.data?.applicationTrackingNumber?.trim() || '';
+});
+
+const programmeFacts = computed<HeaderFact[]>(() => {
+  const facts: HeaderFact[] = [];
+  const intakeOrYear = yearSemesterDisplay.value || props.data?.intakePeriod?.trim() || '';
+  const mode = props.data?.modeOfStudy?.trim() || '';
+  const department = props.data?.department?.trim() || '';
+
+  if (intakeOrYear) {
+    facts.push({
+      label: trans('trans.intake'),
+      value: intakeOrYear,
     });
+  }
 
-    const levelCourseDisplay = computed(() => {
-      const level = props.data?.level?.trim();
-      const course = props.data?.course?.trim();
-
-      if (level && course) {
-        return `${level} ${trans('general.in')} ${course}`;
-      }
-
-      return level || course || '';
+  if (mode) {
+    facts.push({
+      label: trans('trans.mode'),
+      value: mode,
     });
+  }
 
-    const trackingBadge = computed(() => {
-      if (props.data?.studentNumber?.trim()) {
-        return props.data.studentNumber;
-      }
-
-      return props.data?.applicationTrackingNumber?.trim() || '';
+  if (department) {
+    facts.push({
+      label: trans_choice('trans.department', 1),
+      value: department,
     });
+  }
 
+  return facts;
+});
+
+const apprenticeFacts = computed<HeaderFact[]>(() => {
+  if (!props.data?.isApprenticeThisYear) {
+    return [];
+  }
+
+  const facts: HeaderFact[] = [];
+  const employer = props.data?.employer?.trim();
+  const apprenticeNumber = props.data?.apprenticeNumber?.trim();
+
+  if (employer) {
+    facts.push({
+      label: trans('trans.employer'),
+      value: employer,
+    });
+  }
+
+  if (apprenticeNumber) {
+    facts.push({
+      label: trans('trans.apprentice_no'),
+      value: apprenticeNumber,
+    });
+  }
+
+  return facts;
+});
+
+const hasProgrammeFacts = computed(() => programmeFacts.value.length > 0);
+const hasApprenticeFacts = computed(() => apprenticeFacts.value.length > 0);
 </script>
+
 <template>
-  <section class="w-full min-w-0 px-2 py-1.5 sm:px-3">
+  <section class="w-full min-w-0 border-b border-border px-2 py-1.5 sm:px-3">
     <div class="flex w-full min-w-0 flex-col gap-1.5">
       <div class="flex w-full min-w-0 items-center justify-between gap-2">
         <div class="flex min-w-0 flex-1 flex-wrap items-center gap-x-1.5 gap-y-0.5">
@@ -79,37 +143,63 @@ import { trans } from 'laravel-vue-i18n';
         {{ levelCourseDisplay }}
       </p>
 
-      <div class="flex w-full min-w-0 flex-wrap items-start gap-1">
-        <span
-          v-if="yearSemesterDisplay"
-          class="inline-flex max-w-full items-center rounded-full border border-primary/30 bg-primary/15 px-1.5 py-0.5 text-[10px] font-medium leading-snug text-primary"
+      <div
+        v-if="hasProgrammeFacts || hasApprenticeFacts"
+        class="flex w-full min-w-0 flex-col gap-1"
+      >
+        <dl
+          v-if="hasProgrammeFacts"
+          class="flex w-full min-w-0 flex-wrap items-baseline text-[10px] leading-snug sm:text-[11px]"
         >
-          <span class="min-w-0 wrap-break-word">📅 {{ yearSemesterDisplay }}</span>
-        </span>
-        <span
-          v-else-if="data?.intakePeriod"
-          class="inline-flex max-w-full items-center rounded-full border border-primary/30 bg-primary/15 px-1.5 py-0.5 text-[10px] font-medium leading-snug text-primary"
+          <template v-for="(fact, index) in programmeFacts" :key="`programme-${fact.label}`">
+            <span
+              v-if="index > 0"
+              class="mx-1.5 text-muted-foreground/40"
+              aria-hidden="true"
+            >|</span>
+            <div class="inline-flex min-w-0 max-w-full items-baseline gap-1">
+              <dt class="shrink-0 text-muted-foreground">
+                {{ fact.label }}
+              </dt>
+              <dd class="min-w-0 font-bold wrap-break-word text-foreground">
+                {{ fact.value }}
+              </dd>
+            </div>
+          </template>
+        </dl>
+
+        <div
+          v-if="hasApprenticeFacts"
+          class="flex min-w-0 max-w-full flex-wrap items-baseline gap-x-2 gap-y-0.5 border-foreground/15 text-[10px] leading-snug sm:text-[11px]"
         >
-          <span class="min-w-0 wrap-break-word">📅 {{ data.intakePeriod }}</span>
-        </span>
-        <span
-          v-if="data?.modeOfStudy"
-          class="inline-flex max-w-full items-center rounded-full border border-sky-500/30 bg-sky-500/15 px-1.5 py-0.5 text-[10px] font-medium leading-snug text-sky-600 dark:text-sky-400"
-        >
-          <span class="min-w-0 wrap-break-word">⏱️ {{ data.modeOfStudy }}</span>
-        </span>
-        <span
-          v-if="data?.department"
-          class="inline-flex max-w-full items-center rounded-full border border-purple-500/30 bg-purple-500/15 px-1.5 py-0.5 text-[10px] font-medium leading-snug text-purple-600 dark:text-purple-400"
-        >
-          <span class="min-w-0 wrap-break-word">🏛️ {{ data.department }}</span>
-        </span>
+          <span class="shrink-0 font-semibold tracking-wide text-primary uppercase">
+            {{ $t('trans.apprentice') }}
+          </span>
+          <dl class="flex min-w-0 flex-wrap items-baseline">
+            <template v-for="(fact, index) in apprenticeFacts" :key="`apprentice-${fact.label}`">
+              <span
+                v-if="index > 0"
+                class="mx-1.5 text-muted-foreground/40"
+                aria-hidden="true"
+              >·</span>
+              <div class="inline-flex min-w-0 max-w-full items-baseline gap-1">
+                <dt class="shrink-0 text-muted-foreground">
+                  {{ fact.label }}
+                </dt>
+                <dd class="min-w-0 font-bold wrap-break-word text-foreground">
+                  {{ fact.value }}
+                </dd>
+              </div>
+            </template>
+          </dl>
+        </div>
       </div>
     </div>
   </section>
 </template>
+
 <style scoped>
-    button:active {
-      transform: scale(0.97);
-    }
-  </style>
+button:active {
+  transform: scale(0.97);
+}
+</style>

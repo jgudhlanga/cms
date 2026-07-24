@@ -15,6 +15,7 @@ class UserSummaryResource extends JsonResource
             'attributes' => [
                 'name' => $this->full_name,
                 'firstname' => $this->first_name,
+                'middleName' => $this->middle_name,
                 'lastname' => $this->last_name,
                 'email' => $this->email,
                 'avatarUrl' => $this?->avatarUrl,

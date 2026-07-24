@@ -54,6 +54,9 @@ export type Student = {
         intakePeriod?: string;
         applicationTrackingNumber?: string;
         profileContext?: 'enrolled' | 'applicant' | null;
+        isApprenticeThisYear?: boolean;
+        employer?: string | null;
+        apprenticeNumber?: string | null;
         createdAt?: string;
         updatedAt?: string;
         deletedAt?: string;
@@ -83,6 +86,9 @@ export type StudentHeader = {
     department: string;
     academicCalendar: string;
     academicYearOption: string;
+    isApprenticeThisYear?: boolean;
+    employer?: string;
+    apprenticeNumber?: string;
 };
 
 export type StudentProgrammeModule = {
