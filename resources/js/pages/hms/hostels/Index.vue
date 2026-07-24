@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import BaseSectionNav from '@/components/core/tabs/BaseSectionNav.vue';
+import { useSectionTabQuerySync } from '@/composables/core/useSectionTabQuerySync';
 import { useHms } from '@/composables/hms/useHms';
 import CreateEditHostel from '@/pages/hms/components/forms/CreateEditHostel.vue';
 import CreateEditHostelAmenity from '@/pages/hms/components/forms/CreateEditHostelAmenity.vue';
@@ -13,12 +14,11 @@ import { Head } from '@inertiajs/vue3';
 import { storeToRefs } from 'pinia';
 import { computed } from 'vue';
 
-
 interface Props {
     wardens: Array<{ id: number | string; name: string | null }>;
 }
 
-const props = defineProps<Props>();
+defineProps<Props>();
 
 const breadcrumbs: BreadcrumbItemInterface[] = [{ transChoiceKey: 'hms.title' }];
 
@@ -30,6 +30,8 @@ const visibleTabs = computed(() => {
 });
 
 const activeSection = computed(() => visibleTabs.value.find((tab) => tab.value === activeTab.value));
+
+useSectionTabQuerySync(activeTab, () => visibleTabs.value.map((tab) => tab.value));
 </script>
 
 <template>

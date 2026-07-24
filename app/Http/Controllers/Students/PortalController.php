@@ -112,6 +112,7 @@ class PortalController extends Controller
         $student->load([
             'user',
             'idType',
+            'apprentices',
             'latestEnrolment.institutionDepartment.department',
             'latestEnrolment.departmentLevel.level',
             'latestEnrolment.departmentCourse.course',
@@ -890,6 +891,7 @@ class PortalController extends Controller
             'idType',
             'country',
             'religion',
+            'apprentices',
             'latestEnrolment.institutionDepartment.department',
             'latestEnrolment.departmentLevel.level',
             'latestEnrolment.departmentCourse.course',

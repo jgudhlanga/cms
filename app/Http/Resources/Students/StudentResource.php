@@ -9,8 +9,10 @@ use App\Http\Resources\Shared\NextOfKinResource;
 use App\Http\Resources\Users\UserSummaryResource;
 use App\Models\Students\StudentApplication;
 use App\Models\Students\StudentEnrolment;
+use App\Models\Students\StudentApprentice;
 use App\Rules\ZimbabweanIdNumber;
 use App\Services\Maintenance\Students\FaultyStudentIdNumberAnalysis;
+use App\Services\Students\ReturningStudentContextService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -20,6 +22,7 @@ class StudentResource extends JsonResource
     {
         $profileSummary = $this->resolveProfileSummary();
         $idNumberValidation = $this->resolveIdNumberValidation($request);
+        $apprenticeSummary = $this->resolveApprenticeSummary();
 
         return [
             'type' => 'student',
@@ -66,6 +69,9 @@ class StudentResource extends JsonResource
                 'intakePeriod' => $profileSummary['intakePeriod'],
                 'applicationTrackingNumber' => $profileSummary['applicationTrackingNumber'],
                 'profileContext' => $profileSummary['profileContext'],
+                'isApprenticeThisYear' => $apprenticeSummary['isApprenticeThisYear'],
+                'employer' => $apprenticeSummary['employer'],
+                'apprenticeNumber' => $apprenticeSummary['apprenticeNumber'],
             ],
             'relationships' => [
                 'user' => UserSummaryResource::make($this->user),
@@ -192,6 +198,33 @@ class StudentResource extends JsonResource
             'intakePeriod' => null,
             'applicationTrackingNumber' => null,
             'profileContext' => null,
+        ];
+    }
+
+    /**
+     * @return array{
+     *     isApprenticeThisYear: bool,
+     *     employer: ?string,
+     *     apprenticeNumber: ?string
+     * }
+     */
+    private function resolveApprenticeSummary(): array
+    {
+        $apprentice = app(ReturningStudentContextService::class)
+            ->currentApprenticeForStudentProfile($this->resource);
+
+        if (! $apprentice instanceof StudentApprentice) {
+            return [
+                'isApprenticeThisYear' => false,
+                'employer' => null,
+                'apprenticeNumber' => null,
+            ];
+        }
+
+        return [
+            'isApprenticeThisYear' => true,
+            'employer' => $apprentice->employer,
+            'apprenticeNumber' => $apprentice->apprentice_number,
         ];
     }
 }

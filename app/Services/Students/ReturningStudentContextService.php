@@ -41,18 +41,81 @@ class ReturningStudentContextService
 
     public function hasApprenticeRecordForOpenIntakeYear(Student $student): bool
     {
-        foreach ($this->openIntakes() as $intake) {
-            $exists = StudentApprentice::query()
-                ->where('student_id', $student->id)
-                ->where('calendar_year', $intake->calendarYearInteger())
-                ->exists();
+        return $this->currentApprenticeForOpenIntakeYear($student) !== null;
+    }
 
-            if ($exists) {
-                return true;
-            }
+    public function currentApprenticeForOpenIntakeYear(Student $student): ?StudentApprentice
+    {
+        $years = $this->openIntakes()
+            ->map(fn (IntakePeriod $intake): int => $intake->calendarYearInteger())
+            ->unique()
+            ->values()
+            ->all();
+
+        return $this->apprenticeForCalendarYears($student, $years);
+    }
+
+    /**
+     * Apprentice for profile header: open intake year first, then the student's
+     * current application/enrolment calendar year (works when intakes are closed).
+     */
+    public function currentApprenticeForStudentProfile(Student $student): ?StudentApprentice
+    {
+        $openMatch = $this->currentApprenticeForOpenIntakeYear($student);
+
+        if ($openMatch instanceof StudentApprentice) {
+            return $openMatch;
         }
 
-        return false;
+        return $this->apprenticeForCalendarYears($student, $this->profileCalendarYears($student));
+    }
+
+    /**
+     * @param  list<int>  $years
+     */
+    private function apprenticeForCalendarYears(Student $student, array $years): ?StudentApprentice
+    {
+        if ($years === []) {
+            return null;
+        }
+
+        if ($student->relationLoaded('apprentices')) {
+            /** @var StudentApprentice|null $match */
+            $match = $student->apprentices
+                ->filter(fn (StudentApprentice $apprentice): bool => in_array((int) $apprentice->calendar_year, $years, true))
+                ->sortByDesc(fn (StudentApprentice $apprentice): int => (int) $apprentice->calendar_year)
+                ->first();
+
+            return $match;
+        }
+
+        return StudentApprentice::query()
+            ->where('student_id', $student->id)
+            ->whereIn('calendar_year', $years)
+            ->orderByDesc('calendar_year')
+            ->first();
+    }
+
+    /**
+     * @return list<int>
+     */
+    private function profileCalendarYears(Student $student): array
+    {
+        $years = [];
+
+        $applicationIntake = $student->latestApplication?->intakePeriod;
+        if ($applicationIntake instanceof IntakePeriod) {
+            $years[] = $applicationIntake->calendarYearInteger();
+        }
+
+        $enrolmentYear = $student->latestEnrolment?->academicCalendar?->calendar_year;
+        if (is_numeric($enrolmentYear)) {
+            $years[] = (int) $enrolmentYear;
+        } elseif (is_string($enrolmentYear) && preg_match('/(\d{4})/', $enrolmentYear, $matches) === 1) {
+            $years[] = (int) $matches[1];
+        }
+
+        return array_values(array_unique($years));
     }
 
     public function shouldSkipApplicationFeeForStudent(Student $student, ?User $user = null): bool

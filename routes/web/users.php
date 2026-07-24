@@ -11,5 +11,8 @@ Route::middleware('auth')->group(function () {
     Route::put('users/{user}/update-user-credentials', [UserController::class, 'updateUserCredentials'])
         ->middleware('impersonate.protect')
         ->name('users.update-user-credentials');
+    Route::put('users/{user}/update-user-names', [UserController::class, 'updateUserNames'])
+        ->middleware('impersonate.protect')
+        ->name('users.update-user-names');
     Route::resource('users', UserController::class)->names('users');
 });

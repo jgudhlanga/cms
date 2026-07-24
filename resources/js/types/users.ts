@@ -100,3 +100,9 @@ export type AuthCredentialsUpdate = {
     change_password?: boolean;
 }
 
+export type AuthNamesUpdate = {
+    first_name: string;
+    middle_name: string;
+    last_name: string;
+}
+

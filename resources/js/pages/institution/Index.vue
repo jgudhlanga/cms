@@ -3,28 +3,26 @@ import SettingsButton from '@/components/core/button/SettingsButton.vue';
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import HeadingSmall from '@/components/core/util/HeadingSmall.vue';
 import { useUtils } from '@/composables/core/useUtils';
-import { hasAbility } from '@/lib/permissions';
+import {
+    canViewAcademicDepartmentsMenu,
+    canViewNonAcademicDepartmentsMenu,
+    hasAbility,
+} from '@/lib/permissions';
 import { AuthObject } from '@/types/data-pagination';
 import { BreadcrumbItemInterface } from '@/types/ui';
 import { Head } from '@inertiajs/vue3';
 import { computed } from 'vue';
 
-const props = defineProps<{ auth: AuthObject; errors: object }>();
-const { user } = props.auth;
+defineProps<{ auth: AuthObject; errors: object }>();
 const breadcrumbs: BreadcrumbItemInterface[] = [{ transChoiceKey: 'institution', transChoiceKeyIndex: 1 }];
 
-const { navigateTo, isItTrue } = useUtils();
+const { navigateTo } = useUtils();
 const gotToDepartments = (is_academic: number) => {
     return navigateTo(route('institution-departments.index', { is_academic: is_academic }));
 };
 
-const canViewNonAcademicDepartments = computed(() => {
-    return hasAbility('root:manage') || isItTrue(user.attributes?.hasAccessToNonAcademicDepartments);
-});
-
-const canViewAcademicDepartments = computed(() => {
-    return hasAbility('root:manage') || hasAbility('view:department-metadata') || hasAbility('viewOnlyOwnDepartment:departments');
-});
+const canViewNonAcademicDepartments = computed(() => canViewNonAcademicDepartmentsMenu());
+const canViewAcademicDepartments = computed(() => canViewAcademicDepartmentsMenu());
 </script>
 
 <template>

@@ -15,7 +15,6 @@ export type MenuGroupKey =
 	| 'operations'
 	| 'institution'
 	| 'system'
-	| 'department'
 	| 'lecturer'
 	| 'portal';
 

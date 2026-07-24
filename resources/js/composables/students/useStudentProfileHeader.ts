@@ -21,6 +21,9 @@ export function useStudentProfileHeader(student: MaybeRefOrGetter<Student | null
             profileContext: value?.attributes.profileContext ?? null,
             modeOfStudy: value?.attributes.modeOfStudy ?? '',
             department: value?.attributes.department ?? '',
+            isApprenticeThisYear: value?.attributes.isApprenticeThisYear ?? false,
+            employer: value?.attributes.employer ?? '',
+            apprenticeNumber: value?.attributes.apprenticeNumber ?? '',
         };
     });
 

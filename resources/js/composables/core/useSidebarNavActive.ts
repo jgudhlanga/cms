@@ -1,7 +1,47 @@
 import { usePage } from '@inertiajs/vue3';
 
+function getOrigin(): string {
+    if (typeof window !== 'undefined' && window.location?.origin) {
+        return window.location.origin;
+    }
+
+    return 'http://localhost';
+}
+
+function parseUrl(url: string): { pathname: string; searchParams: URLSearchParams } | null {
+    try {
+        const parsed = new URL(url, getOrigin());
+
+        return { pathname: parsed.pathname, searchParams: parsed.searchParams };
+    } catch {
+        return null;
+    }
+}
+
+function currentPageUrl(pageUrl: string): { pathname: string; searchParams: URLSearchParams } {
+    const raw = String(pageUrl);
+    const withOrigin = raw.startsWith('http')
+        ? raw
+        : `${getOrigin()}${raw.startsWith('/') ? '' : '/'}${raw}`;
+    const parsed = parseUrl(withOrigin);
+
+    return parsed ?? { pathname: raw.split('?')[0] ?? '', searchParams: new URLSearchParams() };
+}
+
+function queryParamsMatch(hrefParams: URLSearchParams, currentParams: URLSearchParams): boolean {
+    for (const key of hrefParams.keys()) {
+        if (hrefParams.get(key) !== currentParams.get(key)) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 /**
- * Whether a sidebar link href matches the current Inertia page URL (path match or nested path).
+ * Whether a sidebar link href matches the current Inertia page URL.
+ * Path match (exact or nested). When the href includes query params (e.g. tab, is_academic),
+ * the pathname must be exact and those values must match so sibling links stay distinct.
  */
 export function useSidebarNavActive(): {
     isActive: (url: string | undefined) => boolean;
@@ -14,24 +54,30 @@ export function useSidebarNavActive(): {
             return false;
         }
 
-        let path: string;
-        try {
-            path = new URL(url, window.location.origin).pathname;
-        } catch {
+        const href = parseUrl(url);
+        if (!href) {
             return false;
         }
 
-        const current = String(page.url).split('?')[0] ?? '';
+        const current = currentPageUrl(page.url);
+        const pathMatches =
+            current.pathname === href.pathname
+            || (href.pathname !== '/' && current.pathname.startsWith(`${href.pathname}/`));
 
-        if (current === path) {
-            return true;
+        if (!pathMatches) {
+            return false;
         }
 
-        if (path !== '/' && current.startsWith(`${path}/`)) {
-            return true;
+        if ([...href.searchParams.keys()].length > 0) {
+            // Query-param siblings (e.g. is_academic=0|1) must not both light up on nested routes.
+            if (current.pathname !== href.pathname) {
+                return false;
+            }
+
+            return queryParamsMatch(href.searchParams, current.searchParams);
         }
 
-        return false;
+        return true;
     }
 
     function isAnyActive(urls: Array<string | undefined> | undefined): boolean {

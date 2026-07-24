@@ -71,3 +71,28 @@ export function canShowMenuItem(permission: string | string[], moduleSlug?: stri
 
     return hasAbility(permission);
 }
+
+/** Mirrors institution Index.vue non-academic departments visibility. */
+export function canViewNonAcademicDepartmentsMenu(): boolean {
+    const { isItTrue } = useUtils();
+    const user = usePage<PageProps>().props.auth?.user;
+
+    return hasAbility('root:manage') || isItTrue(user?.attributes?.hasAccessToNonAcademicDepartments);
+}
+
+/** Mirrors institution Index.vue academic departments visibility. */
+export function canViewAcademicDepartmentsMenu(): boolean {
+    return (
+        hasAbility('root:manage')
+        || hasAbility('view:department-metadata')
+        || hasAbility('viewOnlyOwnDepartment:departments')
+    );
+}
+
+/**
+ * Institution hub sidebar: academic departments for admins/metadata viewers only.
+ * Heads of department use the separate "My Departments" menu item instead.
+ */
+export function canViewInstitutionHubAcademicDepartments(): boolean {
+    return hasAbility('root:manage') || hasAbility('view:department-metadata');
+}

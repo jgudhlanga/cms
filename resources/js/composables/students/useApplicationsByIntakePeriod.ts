@@ -1,4 +1,5 @@
 import type { Enrolment } from '@/types/enrolments';
+import { applicationStatusSortPriority } from '@/lib/applicationStatusPresentation';
 import { computed, type Ref } from 'vue';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 
@@ -34,6 +35,27 @@ function intakeGroupSortKey(application: Enrolment): string {
     return application.attributes?.createdAt ?? '';
 }
 
+function applicationStatus(application: Enrolment): string {
+    return application.relationships?.departmentWorkflowStep?.attributes?.workflowStep ?? '';
+}
+
+export function sortApplicationsByStatusPriority(applications: Enrolment[]): Enrolment[] {
+    return [...applications].sort((a, b) => {
+        const priorityDiff =
+            applicationStatusSortPriority(applicationStatus(a))
+            - applicationStatusSortPriority(applicationStatus(b));
+
+        if (priorityDiff !== 0) {
+            return priorityDiff;
+        }
+
+        const aCreated = a.attributes?.createdAt ?? '';
+        const bCreated = b.attributes?.createdAt ?? '';
+
+        return bCreated.localeCompare(aCreated);
+    });
+}
+
 export function groupApplicationsByIntakePeriod(applications: Enrolment[]): IntakeApplicationGroup[] {
     const groups = new Map<string, IntakeApplicationGroup>();
 
@@ -57,7 +79,12 @@ export function groupApplicationsByIntakePeriod(applications: Enrolment[]): Inta
         });
     }
 
-    return [...groups.values()].sort((a, b) => b.sortKey.localeCompare(a.sortKey));
+    return [...groups.values()]
+        .map((group) => ({
+            ...group,
+            applications: sortApplicationsByStatusPriority(group.applications),
+        }))
+        .sort((a, b) => b.sortKey.localeCompare(a.sortKey));
 }
 
 export function useApplicationsByIntakePeriod(

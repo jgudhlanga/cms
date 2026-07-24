@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import PageContainer from '@/components/core/page/PageContainer.vue';
+import { useSectionTabQuerySync } from '@/composables/core/useSectionTabQuerySync';
 import { useMaintenance } from '@/composables/maintenance/useMaintenance';
 import MaintenanceShell from '@/pages/maintenance/partials/MaintenanceShell.vue';
 import { useMaintenanceStore } from '@/store/maintenance/useMaintenanceStore';
@@ -8,7 +9,7 @@ import type { StaffImportResult } from '@/types/staff-import';
 import { BreadcrumbItemInterface } from '@/types/ui';
 import { Head } from '@inertiajs/vue3';
 import { storeToRefs } from 'pinia';
-import { computed, onMounted, watch } from 'vue';
+import { computed } from 'vue';
 
 const props = defineProps<{
     staffImportResult?: StaffImportResult | null;
@@ -23,18 +24,11 @@ const { activeTab } = storeToRefs(maintenanceStore);
 
 const visibleTabs = computed(() => maintenanceTabs().filter((tab) => tab.show));
 
-onMounted(() => {
-    if (props.staffImportResult) {
-        activeTab.value = 'staff';
-    }
-});
-
-watch(
-    () => props.staffImportResult,
-    (result) => {
-        if (result) {
-            activeTab.value = 'staff';
-        }
+useSectionTabQuerySync(
+    activeTab,
+    () => visibleTabs.value.map((tab) => tab.value),
+    {
+        preferTab: () => (props.staffImportResult ? 'staff' : null),
     },
 );
 </script>
