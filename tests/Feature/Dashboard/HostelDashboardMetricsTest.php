@@ -20,6 +20,7 @@ use App\Models\Users\User;
 
 beforeEach(function () {
     enableDashboardModule();
+    seedDashboardAcademicCalendar();
 });
 
 test('dashboard returns hostel metrics for users with hostel tab access', function () {
@@ -116,7 +117,7 @@ test('dashboard returns hostel metrics for users with hostel tab access', functi
     createHostelApplicationForDashboardTest($femaleStudent, HostelApplicationStatusEnum::AWAITING_PAYMENT, $tenantId);
     createHostelApplicationForDashboardTest(createStudentForDashboardHostelTest($maleGender, $tenantId), HostelApplicationStatusEnum::DECLINED, $tenantId);
 
-    $this->get('/dashboard')
+    $this->get(dashboardUrlFor($user))
         ->assertSuccessful()
         ->assertInertia(fn ($page) => $page
             ->component('dashboard/Index')
@@ -147,7 +148,7 @@ test('dashboard omits hostel metrics when hostel tab is not visible', function (
     ]);
 
     $this->actingAs($user)
-        ->get('/dashboard')
+        ->get(dashboardUrlFor($user))
         ->assertSuccessful()
         ->assertInertia(fn ($page) => $page
             ->where('hostelDashboard', null)

@@ -109,6 +109,35 @@ php artisan queue:health --queues=default,bank-statements
 php artisan queue:failed
 ```
 
+### Production performance checklist
+
+On each deploy (see `deploy/optimize.sh` and `deploy/verify-performance.sh`):
+
+```bash
+php artisan migrate --force
+bash deploy/verify-performance.sh
+```
+
+Or step-by-step:
+
+```bash
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+php artisan event:cache
+php artisan performance:diagnose
+```
+
+Production `.env` recommendations (do **not** scale the Linode until these and query fixes are in place):
+
+- `APP_DEBUG=false`
+- `LOG_LEVEL=warning`
+- `CACHE_STORE=redis` and `SESSION_DRIVER=redis` (Redis + phpredis)
+- Confirm PHP OPcache is enabled in PHP-FPM
+- `composer install --no-dev`
+
+Scale gate: stay on the current 8GB plan if CPU/RAM stay moderate after Redis + the query optimizations. Upgrade RAM or split MySQL only when PHP and MySQL contend for memory after Redis is live.
+
 ### Important
 
 Do not commit the following files to the git repo as they are all dynamically generated

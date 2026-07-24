@@ -35,6 +35,9 @@ class AcademicDashboardMetricsService
     /** @var array<int, array{staffId: int, lecturerName: string}|null> */
     private array $lecturerByClassId = [];
 
+    /** @var array<int, ClassConfig> */
+    private array $classConfigById = [];
+
     /** @var list<array<string, mixed>>|null */
     private ?array $cachedModuleResults = null;
 
@@ -47,22 +50,7 @@ class AcademicDashboardMetricsService
 
     public function atRiskStudentCount(): ?int
     {
-        $failuresByEnrolment = [];
-
-        foreach ($this->gradedResults() as $result) {
-            if ($result['band'] !== CourseWorkGradeBand::FAIL) {
-                continue;
-            }
-
-            $enrolmentId = $result['studentEnrolmentId'];
-            $failuresByEnrolment[$enrolmentId] = ($failuresByEnrolment[$enrolmentId] ?? 0) + 1;
-        }
-
-        if ($failuresByEnrolment === []) {
-            return null;
-        }
-
-        return count(array_filter($failuresByEnrolment, fn (int $count): bool => $count >= 2));
+        return $this->atRiskStudentCountFromGraded($this->gradedResults());
     }
 
     /**
@@ -90,7 +78,31 @@ class AcademicDashboardMetricsService
             'attachmentStatus' => $attachmentStatus,
             'attachmentTotal' => $attachmentStatus['total'] ?? null,
             'attachmentCalendarYear' => $attachmentStatus['calendarYear'] ?? Helper::resolveAcademicCalendar()->calendar_year,
+            'atRiskStudentCount' => $this->atRiskStudentCountFromGraded($gradedResults),
         ];
+    }
+
+    /**
+     * @param  list<array{band: string, studentEnrolmentId: int}>  $gradedResults
+     */
+    private function atRiskStudentCountFromGraded(array $gradedResults): ?int
+    {
+        $failuresByEnrolment = [];
+
+        foreach ($gradedResults as $result) {
+            if ($result['band'] !== CourseWorkGradeBand::FAIL) {
+                continue;
+            }
+
+            $enrolmentId = $result['studentEnrolmentId'];
+            $failuresByEnrolment[$enrolmentId] = ($failuresByEnrolment[$enrolmentId] ?? 0) + 1;
+        }
+
+        if ($failuresByEnrolment === []) {
+            return null;
+        }
+
+        return count(array_filter($failuresByEnrolment, fn (int $count): bool => $count >= 2));
     }
 
     /**
@@ -484,6 +496,7 @@ class AcademicDashboardMetricsService
             ->all();
 
         $this->preloadLecturersByClassId($classIds);
+        $this->preloadClassConfigs($enrolments);
 
         $enrolmentIds = $enrolments->pluck('id')->all();
 
@@ -507,9 +520,7 @@ class AcademicDashboardMetricsService
                 continue;
             }
 
-            $classConfig = ClassConfig::query()
-                ->with(['departmentCourse.course', 'departmentLevel.level', 'institutionDepartment.department'])
-                ->find($class->class_config_id);
+            $classConfig = $this->classConfigById[(int) $class->class_config_id] ?? null;
 
             if ($classConfig === null) {
                 continue;
@@ -638,6 +649,31 @@ class AcademicDashboardMetricsService
             })
             ->orderBy('code')
             ->get()
+            ->all();
+    }
+
+    /**
+     * @param  Collection<int, StudentEnrolment>  $enrolments
+     */
+    private function preloadClassConfigs(Collection $enrolments): void
+    {
+        $classConfigIds = $enrolments
+            ->map(fn (StudentEnrolment $enrolment): ?int => $enrolment->academicCalendarStudentEnrolment?->academicCalendarClass?->class_config_id)
+            ->filter()
+            ->map(fn ($id): int => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
+
+        if ($classConfigIds === []) {
+            return;
+        }
+
+        $this->classConfigById = ClassConfig::query()
+            ->with(['departmentCourse.course', 'departmentLevel.level', 'institutionDepartment.department'])
+            ->whereIn('id', $classConfigIds)
+            ->get()
+            ->keyBy(fn (ClassConfig $config): int => (int) $config->id)
             ->all();
     }
 

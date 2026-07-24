@@ -4,13 +4,22 @@ namespace App\Traits;
 
 trait Paginatable
 {
-
     public function getPerPage(): int
     {
-        $pageSize = request('page_size', config('custom.system.pagination_items_per_page'));
+        $default = (int) config('custom.system.pagination_items_per_page', 15);
+        $max = (int) config('custom.system.pagination_max_limit', 200);
+        $pageSize = request('page_size', $default);
+
         if ($pageSize === 'all') {
-            return (int)config('custom.system.pagination_max_limit');
+            return max(1, $max);
         }
-        return (int)$pageSize;
+
+        $pageSize = (int) $pageSize;
+
+        if ($pageSize < 1) {
+            return $default;
+        }
+
+        return min($pageSize, $max);
     }
 }

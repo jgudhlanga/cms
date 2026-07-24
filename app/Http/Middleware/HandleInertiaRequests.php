@@ -2,14 +2,12 @@
 
 namespace App\Http\Middleware;
 
-use App\Enums\Rbac\RoleEnum;
-use App\Helpers\PermissionHelper;
 use App\Http\Resources\Users\UserResource;
 use App\Models\Users\User;
 use App\Services\Rbac\RbacModuleStateService;
+use App\Services\Rbac\UserPermissionMapService;
 use App\Services\Students\RegistrationAvailabilityService;
 use App\Services\Students\ReturningStudentContextService;
-use App\Support\Rbac\PermissionRegistry;
 use App\Support\AppVersion;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -47,8 +45,12 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
-        // [$message, $author] = str(Inspiring::quotes()->random())->explode('-');
         $user = $request->user();
+
+        if ($user instanceof User) {
+            $this->eagerLoadAuthRelations($user);
+        }
+
         $impersonate = app(ImpersonateManager::class);
         $isImpersonating = $impersonate->isImpersonating();
 
@@ -70,7 +72,6 @@ class HandleInertiaRequests extends Middleware
                 'preference' => $appearance,
                 'systemPrefersDark' => $systemPrefersDark,
             ],
-            // 'quote' => ['message' => trim($message), 'author' => trim($author)],
             'auth' => [
                 'user' => $user ? new UserResource($user) : null,
                 'can' => $user ? $this->permissions($user) : null,
@@ -81,81 +82,37 @@ class HandleInertiaRequests extends Middleware
             'returningStudent' => fn () => $this->returningStudentProps($user),
             'purgeArchiveRetentionDays' => (int) config('purge.archive_retention_days', 30),
             'ziggy' => [
-                ...(new Ziggy)->toArray(),
+                ...(new Ziggy)->filter([
+                    '!*telescope*',
+                    '!*horizon*',
+                    '!*debugbar*',
+                    '!*log-viewer*',
+                    '!sanctum.*',
+                ])->toArray(),
                 'location' => $request->url(),
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
     }
 
+    private function eagerLoadAuthRelations(User $user): void
+    {
+        $user->loadMissing([
+            'roles',
+            'permissions',
+            'studentProfile',
+            'staffProfile',
+            'tenant',
+            'status',
+        ]);
+    }
+
+    /**
+     * @return Collection<string, bool>
+     */
     private function permissions(User $user): Collection
     {
-        // If user is super admin, return all permissions as true
-        if ($user->hasRole(RoleEnum::SUPER_USER->name())) {
-            return collect(PermissionRegistry::allValues())
-                ->reject(fn (string $permission) => $this->isExcludedPermission($permission))
-                ->mapWithKeys(fn ($permission) => [$permission => true]);
-        }
-
-        $permissions = $user->getAllPermissions()
-            ->pluck('name')
-            ->flip()
-            ->map(fn () => true);
-
-        return $this->mergePortalStudentAbilities($user, $permissions);
-    }
-
-    private function mergePortalStudentAbilities(User $user, Collection $permissions): Collection
-    {
-        if ($user->studentProfile === null) {
-            return $permissions;
-        }
-
-        foreach (PermissionHelper::portalPermissions() as $portalPermission) {
-            if ($user->can($portalPermission)) {
-                $permissions->put($portalPermission, true);
-            }
-        }
-
-        // Portal students with profile access should always see accommodation self-service.
-        if ($user->can('manageOwnStudentPersonalDetails:students')) {
-            $permissions->put('manageOwnStudentAccommodationDetails:students', true);
-        }
-
-        return $permissions;
-    }
-
-    private function excludePermissions(): array
-    {
-        return [
-            'viewOwnDashboard:students',
-            'manageOwnStudentPersonalDetails:students',
-            'manageOwnStudentApplicationDetails:students',
-            'manageOwnStudentSponsorDetails:students',
-            'manageOwnStudentContactDetails:students',
-            'manageOwnStudentFinancialDetails:students',
-            'manageOwnStudentAcademicDetails:students',
-            'manageOwnStudentAccommodationDetails:students',
-            'view:next-of-kins',
-            'create:next-of-kins',
-            'update:next-of-kins',
-            'delete:next-of-kins',
-            'forceDelete:next-of-kins',
-            'viewOnlyOwnDepartment:departments',
-            'manageOwnData:tenants',
-            'view:lecturer-dashboard',
-            'view:lecturer-classes',
-            'view:lecturer-modules',
-        ];
-    }
-
-    private function isExcludedPermission(string $permission): bool
-    {
-        if (in_array($permission, $this->excludePermissions(), true)) {
-            return true;
-        }
-
-        return false;
+        return app(UserPermissionMapService::class)->forUser($user);
     }
 
     /**
