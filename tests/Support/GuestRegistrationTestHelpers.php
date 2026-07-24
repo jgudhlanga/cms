@@ -74,8 +74,12 @@ function seedGuestRegistrationProgramme(?Level $level = null): array
     ]);
 
     $mode = ModeOfStudy::query()->firstOrCreate(
-        ['name' => 'Full Time'],
+        ['name' => ModeOfStudyEnum::FULL_TIME->value],
         ['description' => 'Full Time'],
+    );
+    $blockRelease = ModeOfStudy::query()->firstOrCreate(
+        ['name' => ModeOfStudyEnum::BLOCK_RELEASE->value],
+        ['description' => 'Block Release'],
     );
 
     CourseLevelMode::query()->updateOrCreate(
@@ -83,7 +87,7 @@ function seedGuestRegistrationProgramme(?Level $level = null): array
             'department_course_id' => $departmentCourse->id,
             'department_level_id' => $departmentLevel->id,
         ],
-        ['modes' => [$mode->id]],
+        ['modes' => [$mode->id, $blockRelease->id]],
     );
 
     return [
@@ -93,11 +97,20 @@ function seedGuestRegistrationProgramme(?Level $level = null): array
         'departmentLevelId' => $departmentLevel->id,
         'courseId' => $departmentCourse->id,
         'modeId' => $mode->id,
+        'blockReleaseModeId' => $blockRelease->id,
     ];
 }
 
 /**
- * @param  array{level: Level, intakeId: int, departmentId: int, departmentLevelId: int, courseId: int, modeId: int}|null  $seeded
+ * @param  array{
+ *     level: Level,
+ *     intakeId: int,
+ *     departmentId: int,
+ *     departmentLevelId: int,
+ *     courseId: int,
+ *     modeId: int,
+ *     blockReleaseModeId?: int
+ * }|null  $seeded
  * @return array<string, mixed>
  */
 function guestRegistrationIntentSession(
@@ -105,6 +118,9 @@ function guestRegistrationIntentSession(
     ?array $seeded = null,
 ): array {
     $seeded ??= seedGuestRegistrationProgramme();
+    $modeId = $track === ApplicationTrackEnum::Apprentice
+        ? ($seeded['blockReleaseModeId'] ?? $seeded['modeId'])
+        : $seeded['modeId'];
 
     return [
         RegistrationIntentSession::TRACK_KEY => $track->value,
@@ -113,7 +129,7 @@ function guestRegistrationIntentSession(
         RegistrationIntentSession::DEPARTMENT_KEY => $seeded['departmentId'],
         RegistrationIntentSession::DEPARTMENT_LEVEL_KEY => $seeded['departmentLevelId'],
         RegistrationIntentSession::COURSE_KEY => $seeded['courseId'],
-        RegistrationIntentSession::MODE_KEY => $seeded['modeId'],
+        RegistrationIntentSession::MODE_KEY => $modeId,
         RegistrationIntentSession::READY_FOR_ACCOUNT_KEY => true,
         RegistrationIntentSession::INSTRUCTIONS_KEY => true,
         RegistrationIntentSession::REQUIRES_FEE_KEY => $track !== ApplicationTrackEnum::Apprentice,

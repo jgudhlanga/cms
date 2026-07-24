@@ -107,7 +107,7 @@ test('apprentice track is available only when regular intake is open', function 
 
     $this->actingAs($user)
         ->post(route('portal.application.select-track'), ['track' => ApplicationTrackEnum::Apprentice->value])
-        ->assertRedirect(route('portal.application.apprentice'));
+        ->assertRedirect(route('portal.application.level-options'));
 
     expect(session('application.track'))->toBe(ApplicationTrackEnum::Apprentice->value);
 
@@ -154,22 +154,57 @@ test('continuous level filtering excludes non-ojet levels without ojet offerings
 });
 
 test('express apprentice application creates student apprentice record without application fee', function () {
-    $intake = ensureCurrentIntakeStatus(IntakePeriodStatusEnum::Open->value);
+    $seeded = seedGuestRegistrationProgramme();
     $user = createTrackApplicant();
 
     $title = Title::query()->firstOrCreate(['name' => 'Mr Apprentice Track']);
     $gender = Gender::query()->firstOrCreate(['title' => 'Male Apprentice Track']);
     $maritalStatus = MaritalStatus::query()->firstOrCreate(['title' => 'Single Apprentice Track']);
-    $idType = IdType::query()->firstOrCreate(['name' => 'National ID Apprentice Track']);
+    $relationship = Relationship::query()->firstOrCreate(['name' => 'Guardian Apprentice Track']);
+    $idType = IdType::query()->firstOrCreate(
+        ['id' => IdTypeEnum::ZIMBABWEAN_ID_NUMBER->id()],
+        ['name' => IdTypeEnum::ZIMBABWEAN_ID_NUMBER->value],
+    );
+
+    $idNumber = '63-1234567A63';
 
     $this->actingAs($user)
         ->withSession([
             'application.track' => ApplicationTrackEnum::Apprentice->value,
-            'application.intake_period_id' => $intake->id,
-            'registration.id_number' => '63-1234567A63',
+            'application.intake_period_id' => $seeded['intakeId'],
+            'application.level_id' => $seeded['level']->id,
+            'application.department_id' => $seeded['departmentId'],
+            'application.department_level_id' => $seeded['departmentLevelId'],
+            'application.course_id' => $seeded['courseId'],
+            'application.mode_of_study_id' => $seeded['blockReleaseModeId'],
+            'registration.id_number' => $idNumber,
             'registration.id_type_id' => $idType->id,
         ])
-        ->post(route('portal.application.apprentice.store'), [
+        ->post(route('portal.store-application'), [
+            'first_name' => 'App',
+            'last_name' => 'Rentice',
+            'gender_id' => $gender->id,
+            'marital_status_id' => $maritalStatus->id,
+            'title_id' => $title->id,
+            'mode_of_study_id' => $seeded['blockReleaseModeId'],
+            'id_type_id' => $idType->id,
+            'id_number' => $idNumber,
+            'date_of_birth' => '2000-01-01',
+            'address_1' => 'Address 1',
+            'address_2' => 'Address 2',
+            'address_3' => 'Address 3',
+            'email' => $user->email,
+            'phone_number' => '0777000000',
+            'next_of_kin_name' => 'Kin Name',
+            'next_of_kin_address_1' => 'Kin 1',
+            'next_of_kin_address_2' => 'Kin 2',
+            'next_of_kin_address_3' => 'Kin 3',
+            'relationship_id' => $relationship->id,
+            'next_of_kin_phone_number' => '0777111111',
+            'department_id' => $seeded['departmentId'],
+            'level_id' => $seeded['departmentLevelId'],
+            'course_id' => $seeded['courseId'],
+            'disability_status' => 'no',
             'employer' => 'ACME Engineering',
             'apprentice_number' => 'APP-2026-001',
         ])
@@ -177,7 +212,12 @@ test('express apprentice application creates student apprentice record without a
 
     $student = Student::query()->where('user_id', $user->id)->first();
     expect($student)->not->toBeNull()
-        ->and($student->id_number)->toBe('63-1234567A63');
+        ->and($student->id_number)->toBe($idNumber);
+
+    expect($student->contacts()->exists())->toBeTrue()
+        ->and($student->nextOfKins()->exists())->toBeTrue();
+
+    $intake = \App\Models\Institution\IntakePeriod::query()->findOrFail($seeded['intakeId']);
 
     $apprentice = StudentApprentice::query()
         ->where('student_id', $student->id)
@@ -188,18 +228,94 @@ test('express apprentice application creates student apprentice record without a
         ->and($apprentice->employer)->toBe('ACME Engineering')
         ->and($apprentice->apprentice_number)->toBe('APP-2026-001');
 
+    $application = $student->applications()->latest()->first();
+    expect($application)->not->toBeNull()
+        ->and($application->institution_department_id)->toBe($seeded['departmentId'])
+        ->and($application->department_level_id)->toBe($seeded['departmentLevelId'])
+        ->and($application->department_course_id)->toBe($seeded['courseId'])
+        ->and($application->mode_of_study_id)->toBe($seeded['blockReleaseModeId'])
+        ->and($application->intake_period_id)->toBe($seeded['intakeId']);
+
     expect(ApplicationFee::query()->where('user_id', $user->id)->exists())->toBeFalse();
     expect(session('application.track'))->toBeNull();
 });
 
-test('apprentice express route redirects level options to express form', function () {
+test('apprentice application requires employer details on store', function () {
+    $seeded = seedGuestRegistrationProgramme();
+    $user = createTrackApplicant();
+
+    $this->actingAs($user)
+        ->withSession([
+            'application.track' => ApplicationTrackEnum::Apprentice->value,
+            'application.intake_period_id' => $seeded['intakeId'],
+            'application.level_id' => $seeded['level']->id,
+        ])
+        ->from(route('portal.application.apprentice'))
+        ->post(route('portal.store-application'), [
+            'first_name' => 'App',
+            'last_name' => 'Rentice',
+            'employer' => '',
+            'apprentice_number' => '',
+        ])
+        ->assertSessionHasErrors(['employer', 'apprentice_number']);
+});
+test('apprentice reapply from hub does not redirect to fee payment', function () {
+    $seeded = seedGuestRegistrationProgramme();
+    $seeded['level']->update(['has_application_fee_payment' => true]);
+    $user = createTrackApplicant();
+
+    $title = Title::query()->firstOrCreate(['name' => 'Mr Apprentice Hub']);
+    $gender = Gender::query()->firstOrCreate(['title' => 'Male Apprentice Hub']);
+    $maritalStatus = MaritalStatus::query()->firstOrCreate(['title' => 'Single Apprentice Hub']);
+    $idType = IdType::query()->firstOrCreate(['name' => 'National ID Apprentice Hub']);
+
+    $student = Student::query()->create([
+        'tenant_id' => $user->tenant_id,
+        'user_id' => $user->id,
+        'title_id' => $title->id,
+        'gender_id' => $gender->id,
+        'marital_status_id' => $maritalStatus->id,
+        'id_type_id' => $idType->id,
+        'id_number' => '63-7654321H63',
+        'date_of_birth' => '2000-01-01',
+        'meta_data' => [
+            'returning_student' => [
+                'path' => 'reapply',
+                'acknowledged_at' => now()->toIso8601String(),
+                'intake_period_id' => $seeded['intakeId'],
+            ],
+        ],
+    ]);
+
+    $intake = \App\Models\Institution\IntakePeriod::query()->findOrFail($seeded['intakeId']);
+    StudentApprentice::query()->create([
+        'tenant_id' => $student->tenant_id,
+        'student_id' => $student->id,
+        'calendar_year' => $intake->calendarYearInteger(),
+        'employer' => 'Existing Employer',
+        'apprentice_number' => 'APP-EXISTING',
+    ]);
+
+    $this->actingAs($user)
+        ->post(route('portal.profile.applications.select-level'), [
+            'level_id' => $seeded['level']->id,
+            'intake_period_id' => $seeded['intakeId'],
+        ])
+        ->assertRedirect(route('portal.profile.applications'))
+        ->assertSessionHasErrors('error');
+
+    expect(ApplicationFee::query()->where('user_id', $user->id)->exists())->toBeFalse();
+});
+
+test('apprentice level options stay on level selection for wizard entry', function () {
     ensureCurrentIntakeStatus(IntakePeriodStatusEnum::Open->value);
     $user = createTrackApplicant();
 
     $this->actingAs($user)
         ->withSession(['application.track' => ApplicationTrackEnum::Apprentice->value])
         ->get(route('portal.application.level-options'))
-        ->assertRedirect(route('portal.application.apprentice'));
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page->component('portal/application/SelectLevelOption'));
 });
 
 test('continuous intake is excluded from regular portal intake list', function () {

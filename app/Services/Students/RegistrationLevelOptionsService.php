@@ -128,14 +128,89 @@ class RegistrationLevelOptionsService
      */
     public function availableTrackOptions(): array
     {
+        $regularLevelNames = Level::query()
+            ->where('show_on_current_application_period', true)
+            ->orderBy('position')
+            ->orderBy('name')
+            ->pluck('name')
+            ->filter(fn ($name) => is_string($name) && $name !== '')
+            ->values()
+            ->all();
+
         return collect($this->eligibility->availableTracks())
             ->map(fn (ApplicationTrackEnum $track) => [
                 'value' => $track->value,
                 'label' => $track->label(),
-                'description' => $track->description(),
+                'description' => $track === ApplicationTrackEnum::Regular
+                    ? $this->regularTrackDescription($this->groupLevelNamesForDescription($regularLevelNames))
+                    : $track->description(),
             ])
             ->values()
             ->all();
+    }
+
+    /**
+     * @param  list<string>  $levelNames
+     * @return list<string>
+     */
+    private function groupLevelNamesForDescription(array $levelNames): array
+    {
+        $grouped = [];
+        $abmaAdded = false;
+
+        foreach ($levelNames as $name) {
+            if ($this->isAbmaLevelName($name)) {
+                if (! $abmaAdded) {
+                    $grouped[] = 'ABMA';
+                    $abmaAdded = true;
+                }
+
+                continue;
+            }
+
+            $grouped[] = $name;
+        }
+
+        return $grouped;
+    }
+
+    private function isAbmaLevelName(string $name): bool
+    {
+        return str_starts_with(strtoupper(trim($name)), 'ABMA');
+    }
+
+    /**
+     * @param  list<string>  $levelNames
+     */
+    private function regularTrackDescription(array $levelNames): string
+    {
+        if ($levelNames === []) {
+            return __('trans.application_track_regular_description_fallback');
+        }
+
+        return __('trans.application_track_regular_description', [
+            'levels' => $this->formatLevelList($levelNames),
+        ]);
+    }
+
+    /**
+     * @param  list<string>  $levelNames
+     */
+    private function formatLevelList(array $levelNames): string
+    {
+        $count = count($levelNames);
+
+        if ($count === 1) {
+            return $levelNames[0];
+        }
+
+        if ($count === 2) {
+            return $levelNames[0].' and '.$levelNames[1];
+        }
+
+        $last = array_pop($levelNames);
+
+        return implode(', ', $levelNames).' and '.$last;
     }
 
     public function continuousHasSdp(): bool

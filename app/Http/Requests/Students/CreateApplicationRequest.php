@@ -6,7 +6,9 @@ use App\Enums\Shared\DisabilityStatusEnum;
 use App\Enums\Shared\IdTypeEnum;
 use App\Enums\Students\ApplicationTrackEnum;
 use App\Helpers\PaymentHelper;
+use App\Models\Institution\CourseRequirement;
 use App\Models\Institution\DepartmentLevel;
+use App\Models\Institution\DepartmentLevelRequirement;
 use App\Models\Institution\Level;
 use App\Models\Institution\ModeOfStudy;
 use App\Rules\Students\ValidateOLevelResults;
@@ -15,6 +17,7 @@ use App\Services\Enrollment\EnrollmentLookupService;
 use App\Services\Students\ApplicationEligibilityService;
 use App\Services\Students\ApplicationFeeService;
 use App\Services\Students\ApplicationTrackSession;
+use App\Services\Students\RegistrationProgrammeAvailabilityService;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
@@ -136,6 +139,8 @@ class CreateApplicationRequest extends FormRequest
             'disability_status' => ['required', new Enum(DisabilityStatusEnum::class)],
             'employer' => ['nullable', 'string', 'max:255'],
             'apprentice_number' => ['nullable', 'string', 'max:255'],
+            'required_level_completed' => ['nullable', 'boolean'],
+            'read_write_acknowledged' => ['nullable', 'boolean'],
         ];
     }
 
@@ -166,6 +171,8 @@ class CreateApplicationRequest extends FormRequest
 
             $this->validateApplicationTrack($validator);
             $this->validateApplicationFee($validator);
+            $this->validateApprenticeDetails($validator);
+            $this->validateLevelAcknowledgements($validator);
 
             app(ValidateOLevelResults::class)->validate($this, $validator);
         });
@@ -209,7 +216,75 @@ class CreateApplicationRequest extends FormRequest
         }
 
         if ($track === ApplicationTrackEnum::Apprentice) {
-            $validator->errors()->add('track', __('trans.application_track_not_open'));
+            try {
+                app(RegistrationProgrammeAvailabilityService::class)
+                    ->assertProgrammeSelection(
+                        $track,
+                        (int) $departmentLevel->level_id,
+                        (int) $this->integer('department_id'),
+                        (int) $this->integer('level_id'),
+                        (int) $this->integer('course_id'),
+                        (int) $this->integer('mode_of_study_id'),
+                    );
+            } catch (ValidationException $e) {
+                foreach ($e->errors() as $field => $messages) {
+                    foreach ($messages as $message) {
+                        $validator->errors()->add($field, $message);
+                    }
+                }
+            }
+        }
+    }
+
+    protected function validateApprenticeDetails(Validator $validator): void
+    {
+        $track = app(ApplicationTrackSession::class)->get();
+
+        if ($track !== ApplicationTrackEnum::Apprentice) {
+            return;
+        }
+
+        if (! $this->filled('employer')) {
+            $validator->errors()->add('employer', __('validation.required', ['attribute' => 'employer']));
+        }
+
+        if (! $this->filled('apprentice_number')) {
+            $validator->errors()->add(
+                'apprentice_number',
+                __('validation.required', ['attribute' => 'apprentice number']),
+            );
+        }
+    }
+
+    protected function validateLevelAcknowledgements(Validator $validator): void
+    {
+        $departmentLevelId = $this->integer('level_id');
+        $departmentCourseId = $this->integer('course_id');
+
+        $courseRequirement = CourseRequirement::query()
+            ->where('department_level_id', $departmentLevelId)
+            ->where('department_course_id', $departmentCourseId)
+            ->first();
+
+        $levelRequirement = DepartmentLevelRequirement::query()
+            ->where('department_level_id', $departmentLevelId)
+            ->first();
+
+        $requiredLevelId = $courseRequirement?->required_level_id ?: $levelRequirement?->required_level_id;
+        $onlyReadWrite = (bool) ($courseRequirement?->only_read_write_required || $levelRequirement?->only_read_write_required);
+
+        if ($requiredLevelId && ! $this->boolean('required_level_completed')) {
+            $validator->errors()->add(
+                'required_level_completed',
+                __('trans.acknowledge_level_completed'),
+            );
+        }
+
+        if ($onlyReadWrite && ! $this->boolean('read_write_acknowledged')) {
+            $validator->errors()->add(
+                'read_write_acknowledged',
+                __('trans.acknowledge_read_write'),
+            );
         }
     }
 
