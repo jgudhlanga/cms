@@ -99,10 +99,6 @@ const onApply = (levelId: string) => {
                             <h1 class="text-lg font-semibold text-foreground">
                                 {{ $t('trans.portal_application_step_level') }}
                             </h1>
-                            <p v-if="applicationTrackLabel" class="mt-1 text-sm font-medium text-primary">
-                                {{ applicationTrackLabel }}
-                                <template v-if="continuousFocus"> · {{ continuousFocus.toUpperCase() }}</template>
-                            </p>
                             <p v-if="showNoLevelsAlert" class="mt-2 text-sm text-muted-foreground">
                                 {{ $t('trans.portal_no_levels_available_description') }}
                             </p>

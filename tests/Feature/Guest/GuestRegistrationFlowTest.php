@@ -29,18 +29,40 @@ test('guest can select track without an account', function () {
     );
 });
 
-test('guest path step labels Direct track and lists levels without apprentice fee wording', function () {
+test('guest path step labels Direct track and lists only open application period levels', function () {
     ensureCurrentIntakeStatus(IntakePeriodStatusEnum::Open->value);
     ensureContinuousIntakeOpen();
 
+    Level::query()->update(['show_on_current_application_period' => false]);
+
+    $nc = Level::query()->firstOrCreate(
+        ['name' => LevelEnum::NC->value],
+        ['description' => 'NC', 'position' => 5],
+    );
+    $hnd = Level::query()->firstOrCreate(
+        ['name' => LevelEnum::HND->value],
+        ['description' => 'HND', 'position' => 7],
+    );
+    $sdp = Level::query()->firstOrCreate(
+        ['name' => LevelEnum::SDP->value],
+        ['description' => 'SDP', 'position' => 9],
+    );
+    $abma3 = Level::query()->firstOrCreate(
+        ['name' => LevelEnum::ABMA_LEVEL_3->value],
+        ['description' => 'ABMA 3', 'position' => 1],
+    );
+    $abma4 = Level::query()->firstOrCreate(
+        ['name' => LevelEnum::ABMA_LEVEL_4->value],
+        ['description' => 'ABMA 4', 'position' => 2],
+    );
+
+    $nc->update(['show_on_current_application_period' => true]);
+    $hnd->update(['show_on_current_application_period' => true]);
+    $sdp->update(['show_on_current_application_period' => false]);
+    $abma3->update(['show_on_current_application_period' => true]);
+    $abma4->update(['show_on_current_application_period' => true]);
+
     expect(__('trans.application_track_regular'))->toBe('Direct')
-        ->and(__('trans.application_track_regular_description'))
-        ->toContain('NC')
-        ->toContain('ND')
-        ->toContain('SDP')
-        ->toContain('HND')
-        ->toContain('BTech')
-        ->toContain('ABMA')
         ->and(__('trans.application_track_apprentice_description'))
         ->not->toContain('application fee')
         ->not->toContain('Application Fee')
@@ -64,12 +86,11 @@ test('guest path step labels Direct track and lists levels without apprentice fe
                 $apprenticeDescription = (string) ($apprentice['description'] ?? '');
 
                 return ($regular['label'] ?? null) === 'Direct'
-                    && str_contains($description, 'NC')
-                    && str_contains($description, 'ND')
-                    && str_contains($description, 'SDP')
-                    && str_contains($description, 'HND')
-                    && str_contains($description, 'BTech')
+                    && str_contains($description, LevelEnum::NC->value)
+                    && str_contains($description, LevelEnum::HND->value)
                     && str_contains($description, 'ABMA')
+                    && ! str_contains($description, 'ABMA Level')
+                    && ! str_contains($description, LevelEnum::SDP->value)
                     && ! str_contains(strtolower($apprenticeDescription), 'application fee');
             })
         );
@@ -271,7 +292,30 @@ test('guest programmes api returns empty when no programmes shown', function () 
         ->assertJsonPath('available', false);
 });
 
-test('apprentice guest store redirects to express application', function () {
+test('apprentice programmes api only returns block release modes', function () {
+    $seeded = seedGuestRegistrationProgramme();
+
+    $response = $this->getJson(route('v1.guest.enrollment.programmes', [
+        'track' => ApplicationTrackEnum::Apprentice->value,
+        'level_id' => $seeded['level']->id,
+    ]));
+
+    $response->assertOk()->assertJsonPath('available', true);
+
+    $modeIds = collect($response->json('departments'))
+        ->flatMap(fn ($dept) => $dept['levels'])
+        ->flatMap(fn ($level) => $level['courses'])
+        ->flatMap(fn ($course) => $course['modes'])
+        ->pluck('id')
+        ->unique()
+        ->values()
+        ->all();
+
+    expect($modeIds)->toBe([$seeded['blockReleaseModeId']])
+        ->and($modeIds)->not->toContain($seeded['modeId']);
+});
+
+test('apprentice guest store redirects to create application wizard', function () {
     $seeded = seedGuestRegistrationProgramme();
     $email = 'apprentice.guest.'.uniqid().'@example.com';
 
@@ -287,7 +331,7 @@ test('apprentice guest store redirects to express application', function () {
             'acknowledged_advert' => true,
         ]);
 
-    $response->assertRedirect(route('portal.application.apprentice'));
+    $response->assertRedirect(route('portal.application.create'));
     $this->assertAuthenticated();
     expect(session('application.track'))->toBe(ApplicationTrackEnum::Apprentice->value);
 });
@@ -312,7 +356,7 @@ test('apprentice express I1 guest flow binds regular intake through programme to
         'department_id' => $seeded['departmentId'],
         'department_level_id' => $seeded['departmentLevelId'],
         'course_id' => $seeded['courseId'],
-        'mode_of_study_id' => $seeded['modeId'],
+        'mode_of_study_id' => $seeded['blockReleaseModeId'],
     ])->assertRedirect(route('portal.register.account'));
 
     $this->get(route('portal.register.account'))

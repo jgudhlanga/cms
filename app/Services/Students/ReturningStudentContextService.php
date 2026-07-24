@@ -6,10 +6,12 @@ namespace App\Services\Students;
 
 use App\Enums\Shared\ClassListTypeEnum;
 use App\Enums\Shared\WorkflowStepEnum;
+use App\Enums\Students\ApplicationTrackEnum;
 use App\Helpers\PaymentHelper;
 use App\Http\Resources\Institution\IntakePeriodResource;
 use App\Models\Institution\IntakePeriod;
 use App\Models\Students\Student;
+use App\Models\Students\StudentApprentice;
 use App\Models\Students\StudentApplication;
 use App\Models\Users\User;
 use Illuminate\Support\Collection;
@@ -30,7 +32,38 @@ class ReturningStudentContextService
             return false;
         }
 
+        if ($this->hasApprenticeRecordForOpenIntakeYear($student)) {
+            return false;
+        }
+
         return $this->openIntakes()->isNotEmpty();
+    }
+
+    public function hasApprenticeRecordForOpenIntakeYear(Student $student): bool
+    {
+        foreach ($this->openIntakes() as $intake) {
+            $exists = StudentApprentice::query()
+                ->where('student_id', $student->id)
+                ->where('calendar_year', $intake->calendarYearInteger())
+                ->exists();
+
+            if ($exists) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public function shouldSkipApplicationFeeForStudent(Student $student, ?User $user = null): bool
+    {
+        if ($this->hasApprenticeRecordForOpenIntakeYear($student)) {
+            return true;
+        }
+
+        $track = session('application.track');
+
+        return is_string($track) && $track === ApplicationTrackEnum::Apprentice->value;
     }
 
     public function needsContinueInClassPage(Student $student): bool

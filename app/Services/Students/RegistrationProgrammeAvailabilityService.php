@@ -70,6 +70,9 @@ class RegistrationProgrammeAvailabilityService
         $ojetModeId = ModeOfStudy::query()->where('name', ModeOfStudyEnum::OJET->value)->value('id');
         $ojetModeId = $ojetModeId !== null ? (int) $ojetModeId : null;
 
+        $blockReleaseModeId = ModeOfStudy::query()->where('name', ModeOfStudyEnum::BLOCK_RELEASE->value)->value('id');
+        $blockReleaseModeId = $blockReleaseModeId !== null ? (int) $blockReleaseModeId : null;
+
         $departments = [];
 
         foreach ($departmentLevels->groupBy('institution_department_id') as $institutionDepartmentId => $levels) {
@@ -81,7 +84,13 @@ class RegistrationProgrammeAvailabilityService
             $levelNodes = [];
 
             foreach ($levels as $departmentLevel) {
-                $courses = $this->coursesForDepartmentLevel($departmentLevel, $track, $continuousFocus, $ojetModeId);
+                $courses = $this->coursesForDepartmentLevel(
+                    $departmentLevel,
+                    $track,
+                    $continuousFocus,
+                    $ojetModeId,
+                    $blockReleaseModeId,
+                );
 
                 $levelNodes[] = [
                     'id' => (int) $departmentLevel->id,
@@ -113,9 +122,13 @@ class RegistrationProgrammeAvailabilityService
             'departments' => $departments,
             'unavailableReason' => $available
                 ? null
-                : __('trans.registration_programme_none_available', [
-                    'level' => $institutionLevel->name,
-                ]),
+                : ($track === ApplicationTrackEnum::Apprentice
+                    ? __('trans.registration_programme_none_available_apprentice', [
+                        'level' => $institutionLevel->name,
+                    ])
+                    : __('trans.registration_programme_none_available', [
+                        'level' => $institutionLevel->name,
+                    ])),
         ];
     }
 
@@ -236,6 +249,7 @@ class RegistrationProgrammeAvailabilityService
         ApplicationTrackEnum $track,
         ?string $continuousFocus,
         ?int $ojetModeId,
+        ?int $blockReleaseModeId,
     ): array {
         $levelCourses = DepartmentLevelCourse::query()
             ->with(['departmentCourse.course'])
@@ -258,6 +272,7 @@ class RegistrationProgrammeAvailabilityService
                 $track,
                 $continuousFocus,
                 $ojetModeId,
+                $blockReleaseModeId,
             );
 
             if ($modes === []) {
@@ -285,6 +300,7 @@ class RegistrationProgrammeAvailabilityService
         ApplicationTrackEnum $track,
         ?string $continuousFocus,
         ?int $ojetModeId,
+        ?int $blockReleaseModeId,
     ): array {
         $courseLevelMode = CourseLevelMode::query()
             ->where('department_course_id', $departmentCourseId)
@@ -302,6 +318,12 @@ class RegistrationProgrammeAvailabilityService
         $result = [];
 
         foreach ($modes as $mode) {
+            if ($track === ApplicationTrackEnum::Apprentice) {
+                if ($blockReleaseModeId === null || (int) $mode->id !== $blockReleaseModeId) {
+                    continue;
+                }
+            }
+
             if ($track === ApplicationTrackEnum::Continuous && $continuousFocus === 'ojet') {
                 if ($ojetModeId === null || (int) $mode->id !== $ojetModeId) {
                     continue;

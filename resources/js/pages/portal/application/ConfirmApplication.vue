@@ -25,12 +25,23 @@ import { storeToRefs } from 'pinia';
 import { computed, onMounted } from 'vue';
 import { resolveEffectiveEnrolmentRequirements } from '@/lib/resolveEffectiveEnrolmentRequirements';
 
+interface Props {
+    applicationTrack?: string | null;
+    applicationTrackLabel?: string | null;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+    applicationTrack: null,
+    applicationTrackLabel: null,
+});
+
 // Composable
-const { saveApplication, selectLevel } = useStudentPortal();
+const { saveApplication } = useStudentPortal();
 const { isItTrue, navigateTo } = useUtils();
 const { redirectIfClosed } = useRegistrationAvailability();
 const { updateCreateForm } = useApplicationFormHelper();
 
+const isApprentice = computed(() => props.applicationTrack === 'apprentice');
 const {
     email,
     first_name,
@@ -166,8 +177,13 @@ const form = useForm<CreateApplicationParams>({
 });
 
 const save = async () => {
-    // selectLevel(String(form.level_id));
     updateCreateForm(form);
+
+    if (isApprentice.value) {
+        navigateTo(route('portal.application.apprentice'));
+        return;
+    }
+
     saveApplication(form);
 };
 onMounted(() => {
@@ -205,7 +221,7 @@ onMounted(() => {
                     >{{ $t('trans.edit') }}</BaseButton
                 >
                 <BaseButton type="button" @click="save" class="w-full md:w-50" :size="ButtonSize.xl">
-                    {{ $t('trans.submit') }}
+                    {{ isApprentice ? $t('trans.continue') : $t('trans.submit') }}
                 </BaseButton>
             </div>
         </div>

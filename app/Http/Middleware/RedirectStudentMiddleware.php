@@ -65,10 +65,19 @@ class RedirectStudentMiddleware
             if (! $request->routeIs(
                 'portal.application.track',
                 'portal.application.select-track',
+                'portal.application.level-options',
+                'portal.application.select-level',
+                'portal.application.create',
+                'portal.application.confirm',
+                'portal.store-application',
                 'portal.application.apprentice',
                 'portal.application.apprentice.store',
             )) {
-                return to_route('portal.application.apprentice');
+                $levelId = session('application.level_id') ?? $this->trackSession->levelId();
+
+                return $levelId !== null
+                    ? to_route('portal.application.create')
+                    : to_route('portal.application.level-options');
             }
 
             return $next($request);

@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Students;
 
-use App\Actions\Students\CreateApprenticeApplicantAction;
 use App\DTO\Shared\ContactDto;
 use App\DTO\Shared\NextOfKinDto;
 use App\DTO\Students\CreateApplicationDto;
@@ -27,7 +26,6 @@ use App\Http\Requests\Shared\ContactRequest;
 use App\Http\Requests\Shared\NextOfKinRequest;
 use App\Http\Requests\Students\CreateApplicationRequest;
 use App\Http\Requests\Students\ProgramRequest;
-use App\Http\Requests\Students\StoreApprenticeApplicationRequest;
 use App\Http\Requests\Students\UpdateReturningApplicationRequest;
 use App\Http\Requests\Students\UpdateStudentRequest;
 use App\Http\Requests\Users\UserRequest;
@@ -48,6 +46,7 @@ use App\Models\Institution\ModeOfStudy;
 use App\Models\Shared\AcademicLevel;
 use App\Models\Shared\Status;
 use App\Models\Students\Student;
+use App\Models\Students\StudentApprentice;
 use App\Models\Students\StudentApplication;
 use App\Models\Tenants\Tenant;
 use App\Models\Users\User;
@@ -74,6 +73,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
@@ -306,11 +306,7 @@ class PortalController extends Controller
             return to_route('portal.registration.maintenance');
         }
 
-        $tracks = collect($this->eligibility->availableTracks())->map(fn (ApplicationTrackEnum $track) => [
-            'value' => $track->value,
-            'label' => $track->label(),
-            'description' => $track->description(),
-        ]);
+        $tracks = collect($this->levelOptionsService->availableTrackOptions());
 
         if ($tracks->count() === 1) {
             $only = ApplicationTrackEnum::from($tracks->first()['value']);
@@ -321,7 +317,7 @@ class PortalController extends Controller
         }
 
         return Inertia::render('portal/application/SelectApplicationTrack', [
-            'tracks' => $tracks,
+            'tracks' => $tracks->values()->all(),
             'currentTrack' => $this->trackSession->get()?->value,
             'currentContinuousFocus' => session('application.continuous_focus'),
             'continuousHasSdp' => $this->levelOptionsService->continuousHasSdp(),
@@ -382,37 +378,19 @@ class PortalController extends Controller
             'applicationStep' => 'apprentice',
             'applicationTrack' => $track->value,
             'applicationTrackLabel' => $track->label(),
+            'programmeSummary' => $this->resolveProgrammePrefill(),
         ]);
     }
 
     /**
-     * @throws AuthorizationException|Throwable
+     * @throws AuthorizationException
      */
-    public function storeApprenticeApplication(
-        StoreApprenticeApplicationRequest $request,
-        CreateApprenticeApplicantAction $action,
-    ): RedirectResponse {
+    public function storeApprenticeApplication(): RedirectResponse
+    {
         $this->authorize('manageStudentPersonalDetails');
 
-        DB::beginTransaction();
-        try {
-            $action->execute(
-                $request->user(),
-                $request->string('employer')->toString(),
-                $request->string('apprentice_number')->toString(),
-            );
-            DB::commit();
-            $this->trackSession->clear();
-
-            return to_route('portal.applications')
-                ->with('success', __('trans.application_apprentice_submitted_success'));
-        } catch (Throwable $e) {
-            DB::rollBack();
-
-            return back()->withErrors([
-                'error' => 'An error occurred while submitting your apprentice details. Please try again.',
-            ]);
-        }
+        return to_route('portal.application.create')
+            ->with('info', __('trans.application_apprentice_complete_details_first'));
     }
 
     /**
@@ -422,10 +400,6 @@ class PortalController extends Controller
     {
         $this->authorizeApplicationLevelSelection();
         $track = $this->trackSession->require();
-
-        if ($track === ApplicationTrackEnum::Apprentice) {
-            return to_route('portal.application.apprentice');
-        }
 
         $options = $this->levelOptionsService->optionsForTrack($track);
 
@@ -496,7 +470,10 @@ class PortalController extends Controller
     {
         $this->authorize('manageStudentPersonalDetails');
 
-        return Inertia::render('portal/application/ConfirmApplication');
+        return Inertia::render('portal/application/ConfirmApplication', [
+            'applicationTrack' => $this->trackSession->get()?->value,
+            'applicationTrackLabel' => $this->trackSession->get()?->label(),
+        ]);
     }
 
     /**
@@ -533,8 +510,31 @@ class PortalController extends Controller
             // update payment status of registration fee to 'paid'
             PaymentHelper::updateRegistrationFeeLedgerEntries($application);
 
+            if ($track === ApplicationTrackEnum::Apprentice) {
+                StudentApprentice::query()->updateOrCreate(
+                    [
+                        'student_id' => $student->id,
+                        'calendar_year' => $intakePeriod->calendarYearInteger(),
+                    ],
+                    [
+                        'tenant_id' => $student->tenant_id,
+                        'employer' => $request->string('employer')->toString(),
+                        'apprentice_number' => $request->string('apprentice_number')->toString(),
+                    ],
+                );
+            }
+
             DB::commit();
             $this->trackSession->clear();
+            Session::forget([
+                'application.department_id',
+                'application.department_level_id',
+                'application.course_id',
+                'application.mode_of_study_id',
+                'application.continuous_focus',
+                'application.requires_fee',
+                'application.level_id',
+            ]);
             if ($stepTwo) {
                 $application->update([
                     'department_application_step_id' => $stepTwo->id,
@@ -1149,16 +1149,14 @@ class PortalController extends Controller
 
     private function redirectAfterAccountCreation(ApplicationTrackEnum $track, User $user): RedirectResponse
     {
-        if ($track === ApplicationTrackEnum::Apprentice) {
-            $this->intentSession->clear();
-
-            return to_route('portal.application.apprentice');
-        }
-
         $levelId = $this->trackSession->levelId();
         $level = $levelId !== null ? Level::query()->find($levelId) : null;
 
-        if ($level !== null && $this->eligibility->trackRequiresApplicationFee($track, $level, $user)) {
+        if (
+            $track !== ApplicationTrackEnum::Apprentice
+            && $level !== null
+            && $this->eligibility->trackRequiresApplicationFee($track, $level, $user)
+        ) {
             $intakePeriodId = $this->trackSession->intakePeriodId();
             $intakePeriod = $intakePeriodId !== null
                 ? IntakePeriod::query()->findOrFail($intakePeriodId)
@@ -1208,10 +1206,6 @@ class PortalController extends Controller
 
     private function redirectForTrack(ApplicationTrackEnum $track): RedirectResponse
     {
-        if ($track === ApplicationTrackEnum::Apprentice) {
-            return to_route('portal.application.apprentice');
-        }
-
         return to_route('portal.application.level-options');
     }
 
@@ -1318,6 +1312,13 @@ class PortalController extends Controller
             return to_route('portal.profile.applications');
         }
 
+        if ($this->returningStudentContext->shouldSkipApplicationFeeForStudent($student, $request->user())) {
+            $this->applicationFeeService->abandonUnpaidApplicationFee($request->user());
+
+            return to_route('portal.profile.applications')
+                ->withErrors(['error' => __('trans.application_apprentice_reapply_blocked')]);
+        }
+
         if (PaymentHelper::levelRequiresApplicationFeePayment($level, $request->user())) {
             $this->applicationFeeService->ensureForFeeRequiredLevel($request->user(), $level, $intakePeriod);
 
@@ -1346,6 +1347,13 @@ class PortalController extends Controller
         }
 
         $level = $applicationFee?->level ?? Level::query()->find(session('application.level_id'));
+        if ($this->returningStudentContext->shouldSkipApplicationFeeForStudent($student, $user)) {
+            $this->applicationFeeService->abandonUnpaidApplicationFee($user);
+
+            return to_route('portal.profile.applications')
+                ->withErrors(['error' => __('trans.application_apprentice_reapply_blocked')]);
+        }
+
         if (
             $level !== null
             && PaymentHelper::levelRequiresApplicationFeePayment($level, $user)
