@@ -1,12 +1,12 @@
 <?php
 
-use App\Enums\Acl\RoleEnum;
+use App\Enums\Rbac\RoleEnum;
 use App\Enums\Institution\IntakePeriodStatusEnum;
 use App\Enums\Institution\LevelEnum;
 use App\Enums\Shared\IdTypeEnum;
 use App\Enums\Shared\TenantEnum;
 use App\Enums\Students\ApplicationTrackEnum;
-use App\Models\Acl\Role;
+use App\Models\Rbac\Role;
 use App\Models\Institution\IntakePeriod;
 use App\Models\Institution\Level;
 use App\Models\Shared\Gender;

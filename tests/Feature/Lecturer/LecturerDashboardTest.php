@@ -1,11 +1,11 @@
 <?php
 
-use App\Enums\Acl\RoleEnum;
+use App\Enums\Rbac\RoleEnum;
 use App\Enums\AcademicCalendars\AcademicCalendarTypeEnum;
 use App\Models\AcademicCalendars\AcademicCalendarClass;
 use App\Models\AcademicCalendars\CourseWorkMark;
-use App\Models\Acl\Permission;
-use App\Models\Acl\Role;
+use App\Models\Rbac\Permission;
+use App\Models\Rbac\Role;
 use App\Models\Institution\AssessmentCalendar\AssessmentCalendar;
 use App\Models\Institution\Syllabus\CourseSyllabusModule;
 use App\Models\Users\User;

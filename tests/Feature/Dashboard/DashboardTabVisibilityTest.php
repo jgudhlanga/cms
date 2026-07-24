@@ -1,7 +1,7 @@
 <?php
 
-use App\Enums\Acl\RoleEnum;
-use App\Models\Acl\Role;
+use App\Enums\Rbac\RoleEnum;
+use App\Models\Rbac\Role;
 use App\Models\Users\User;
 use App\Services\Dashboard\DashboardModuleService;
 

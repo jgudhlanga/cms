@@ -2,7 +2,7 @@
 
 namespace App\Models\Users;
 
-use App\Enums\Acl\RoleEnum;
+use App\Enums\Rbac\RoleEnum;
 use App\Models\Institution\Staff;
 use App\Models\Ledgers\Ledger;
 use App\Models\Preferences\UserPreference;

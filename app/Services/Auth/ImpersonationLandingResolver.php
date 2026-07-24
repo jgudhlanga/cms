@@ -2,7 +2,7 @@
 
 namespace App\Services\Auth;
 
-use App\Enums\Acl\RoleEnum;
+use App\Enums\Rbac\RoleEnum;
 use App\Enums\Students\ApplicationFeeStatusEnum;
 use App\Helpers\PaymentHelper;
 use App\Models\Institution\Level;

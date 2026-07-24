@@ -1,4 +1,4 @@
-import UserAcl from '@/components/users/tabs/UserAcl.vue';
+import UserRbac from '@/components/users/tabs/UserRbac.vue';
 import UserActivity from '@/components/users/tabs/UserActivity.vue';
 import UserInfo from '@/components/users/tabs/UserInfo.vue';
 import UserPreferences from '@/components/users/tabs/UserPreferences.vue';
@@ -20,8 +20,8 @@ export const useShowUser = () => {
             },
             {
                 transLabel: () => trans('trans.roles'),
-                value: 'acl',
-                component: h(UserAcl, { user }),
+                value: 'rbac',
+                component: h(UserRbac, { user }),
                 icon: IconName.shield,
             },
             {

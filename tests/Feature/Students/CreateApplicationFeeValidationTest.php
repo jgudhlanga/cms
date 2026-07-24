@@ -1,11 +1,11 @@
 <?php
 
-use App\Enums\Acl\RoleEnum;
+use App\Enums\Rbac\RoleEnum;
 use App\Enums\Institution\IntakePeriodStatusEnum;
 use App\Enums\Students\ApplicationFeeStatusEnum;
 use App\Helpers\PaymentHelper;
 use App\Http\Requests\Students\UpdateReturningApplicationRequest;
-use App\Models\Acl\Role;
+use App\Models\Rbac\Role;
 use App\Models\Institution\Course;
 use App\Models\Institution\Department;
 use App\Models\Institution\DepartmentCourse;

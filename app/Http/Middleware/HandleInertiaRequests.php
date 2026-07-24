@@ -2,14 +2,14 @@
 
 namespace App\Http\Middleware;
 
-use App\Enums\Acl\RoleEnum;
+use App\Enums\Rbac\RoleEnum;
 use App\Helpers\PermissionHelper;
 use App\Http\Resources\Users\UserResource;
 use App\Models\Users\User;
-use App\Services\Acl\AclModuleStateService;
+use App\Services\Rbac\RbacModuleStateService;
 use App\Services\Students\RegistrationAvailabilityService;
 use App\Services\Students\ReturningStudentContextService;
-use App\Support\Acl\PermissionRegistry;
+use App\Support\Rbac\PermissionRegistry;
 use App\Support\AppVersion;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -76,7 +76,7 @@ class HandleInertiaRequests extends Middleware
                 'can' => $user ? $this->permissions($user) : null,
                 'impersonating' => $isImpersonating,
             ],
-            'moduleState' => fn () => app(AclModuleStateService::class)->all(),
+            'moduleState' => fn () => app(RbacModuleStateService::class)->all(),
             'registration' => fn () => app(RegistrationAvailabilityService::class)->sharedProps(),
             'returningStudent' => fn () => $this->returningStudentProps($user),
             'purgeArchiveRetentionDays' => (int) config('purge.archive_retention_days', 30),

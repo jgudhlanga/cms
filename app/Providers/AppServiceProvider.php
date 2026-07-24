@@ -2,7 +2,7 @@
 
 namespace App\Providers;
 
-use App\Enums\Acl\RoleEnum;
+use App\Enums\Rbac\RoleEnum;
 use App\Importers\Finance\FinanceExchangeRateImporter;
 use App\Importers\Institution\CourseSyllabusImporter;
 use App\Importers\Institution\CourseSyllabusModuleImporter;

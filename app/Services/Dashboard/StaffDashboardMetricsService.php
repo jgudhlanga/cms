@@ -2,8 +2,8 @@
 
 namespace App\Services\Dashboard;
 
-use App\Enums\Acl\RoleEnum;
-use App\Enums\Acl\RoleGroupEnum;
+use App\Enums\Rbac\RoleEnum;
+use App\Enums\Rbac\RoleGroupEnum;
 use App\Enums\Shared\EmploymentTypeEnum;
 use App\Helpers\Helper;
 use App\Helpers\RolePriorityHelper;

@@ -2,10 +2,10 @@
 
 namespace Database\Seeders;
 
-use Database\Seeders\Acl\ModulesTableSeeder;
-use Database\Seeders\Acl\PermissionsTableSeeder;
-use Database\Seeders\Acl\RoleGroupSeeder;
-use Database\Seeders\Acl\RolesTableSeeder;
+use Database\Seeders\Rbac\ModulesTableSeeder;
+use Database\Seeders\Rbac\PermissionsTableSeeder;
+use Database\Seeders\Rbac\RoleGroupSeeder;
+use Database\Seeders\Rbac\RolesTableSeeder;
 use Database\Seeders\Institution\ContinuousIntakePeriodSeeder;
 use Database\Seeders\Institution\CoursesTableSeeder;
 use Database\Seeders\Institution\DepartmentsTableSeeder;

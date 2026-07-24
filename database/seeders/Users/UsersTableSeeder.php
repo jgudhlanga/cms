@@ -2,7 +2,7 @@
 
 namespace Database\Seeders\Users;
 
-use App\Enums\Acl\RoleEnum;
+use App\Enums\Rbac\RoleEnum;
 use App\Enums\Shared\StatusEnum;
 use App\Enums\Shared\TenantEnum;
 use App\Models\Users\User;

@@ -2,7 +2,7 @@
 
 namespace Database\Seeders\Students;
 
-use App\Enums\Acl\RoleEnum;
+use App\Enums\Rbac\RoleEnum;
 use App\Enums\Institution\CourseEnum;
 use App\Enums\Institution\DepartmentEnum;
 use App\Enums\Institution\GradeEnum;

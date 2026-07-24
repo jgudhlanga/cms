@@ -1,8 +1,8 @@
 <?php
 
-use App\Enums\Acl\RoleEnum;
+use App\Enums\Rbac\RoleEnum;
 use App\Enums\Students\ApplicationFeeStatusEnum;
-use App\Models\Acl\Role;
+use App\Models\Rbac\Role;
 use App\Models\Institution\IntakePeriod;
 use App\Models\Institution\Level;
 use App\Models\Shared\Gender;

@@ -7,7 +7,7 @@ use App\Enums\HMS\HostelQueryStatusEnum;
 use App\Enums\Shared\ClassListTypeEnum;
 use App\Models\AcademicCalendars\AcademicCalendar;
 use App\Models\AcademicCalendars\CourseWorkMark;
-use App\Models\Acl\Permission;
+use App\Models\Rbac\Permission;
 use App\Models\Enrolments\ClassList;
 use App\Models\HMS\HostelQuery;
 use App\Models\Institution\DepartmentCourse;

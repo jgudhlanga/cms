@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Queries\Maintenance;
 
-use App\Enums\Acl\RoleEnum;
+use App\Enums\Rbac\RoleEnum;
 use App\Enums\Maintenance\MaintenanceApplicationStatusFilterEnum;
 use App\Enums\Shared\ClassListTypeEnum;
 use App\Enums\Shared\WorkflowStepEnum;

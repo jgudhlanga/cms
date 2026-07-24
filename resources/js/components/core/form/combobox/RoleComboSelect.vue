@@ -1,8 +1,8 @@
 <script lang="ts" setup>
 import BaseCombobox from '@/components/core/form/combobox/BaseCombobox.vue';
-import { useRoles } from '@/composables/acl/useRoles';
+import { useRoles } from '@/composables/rbac/useRoles';
 import { clearFormErrors } from '@/lib/forms';
-import { Role } from '@/types/acl';
+import { Role } from '@/types/rbac';
 import { SelectOption } from '@/types/utils';
 import { InertiaForm } from '@inertiajs/vue3';
 import { debounce } from 'lodash';

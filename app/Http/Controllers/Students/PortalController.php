@@ -9,7 +9,7 @@ use App\DTO\Students\ProgramDto;
 use App\DTO\Students\StudentApplicationDto;
 use App\DTO\Students\UpdateStudentDto;
 use App\DTO\Users\UserDto;
-use App\Enums\Acl\RoleEnum;
+use App\Enums\Rbac\RoleEnum;
 use App\Enums\Institution\LevelEnum;
 use App\Enums\Shared\AcademicLevelEnum;
 use App\Enums\Shared\IdTypeEnum;

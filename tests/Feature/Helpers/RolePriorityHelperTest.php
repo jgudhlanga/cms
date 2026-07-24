@@ -1,8 +1,8 @@
 <?php
 
-use App\Enums\Acl\RoleEnum;
+use App\Enums\Rbac\RoleEnum;
 use App\Helpers\RolePriorityHelper;
-use App\Models\Acl\Role;
+use App\Models\Rbac\Role;
 use App\Models\Users\User;
 
 beforeEach(function () {

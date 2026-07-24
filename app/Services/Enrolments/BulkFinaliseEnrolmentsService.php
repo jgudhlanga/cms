@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Enrolments;
 
 use App\DataTransferObjects\Enrolments\BulkFinaliseEnrolmentsResult;
-use App\Enums\Acl\RoleEnum;
+use App\Enums\Rbac\RoleEnum;
 use App\Enums\Enrolments\BulkFinaliseEnrolmentAuditEventEnum;
 use App\Enums\Shared\ClassListTypeEnum;
 use App\Enums\Shared\WorkflowStepEnum;

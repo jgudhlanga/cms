@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\Acl\Permission;
+use App\Models\Rbac\Permission;
 use App\Models\Students\StudentEnrolmentStatus;
 use App\Models\Users\User;
 

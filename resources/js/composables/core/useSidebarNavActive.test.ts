@@ -58,10 +58,17 @@ describe('useSidebarNavActive', () => {
         expect(isActive('/hms/hostels?tab=applications')).toBe(false);
     });
 
-    it('isAnyActive returns true when any url matches', () => {
-        pageState.url = '/hms/hostels?tab=rooms';
-        const { isAnyActive } = useSidebarNavActive();
-        expect(isAnyActive(['/hms/hostels?tab=hostels', '/hms/hostels?tab=rooms'])).toBe(true);
-        expect(isAnyActive(['/hms/hostels?tab=hostels', '/hms/hostels?tab=students'])).toBe(false);
+    it('does not activate /settings parent for /rbac nested paths', () => {
+        pageState.url = '/rbac/roles';
+        const { isActive } = useSidebarNavActive();
+        expect(isActive('/rbac')).toBe(true);
+        expect(isActive('/settings')).toBe(false);
+    });
+
+    it('does not activate /rbac parent for /settings nested paths', () => {
+        pageState.url = '/settings/countries';
+        const { isActive } = useSidebarNavActive();
+        expect(isActive('/settings')).toBe(true);
+        expect(isActive('/rbac')).toBe(false);
     });
 });

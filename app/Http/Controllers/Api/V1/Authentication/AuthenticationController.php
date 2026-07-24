@@ -14,7 +14,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Validation\ValidationException;
-use App\Enums\Acl\RoleEnum;
+use App\Enums\Rbac\RoleEnum;
 
 class AuthenticationController extends Controller
 {

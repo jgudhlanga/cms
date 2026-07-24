@@ -3,7 +3,7 @@
 use App\Models\AcademicCalendars\CourseWorkAuditLog;
 use App\Models\AcademicCalendars\CourseWorkMark;
 use App\Models\Students\StudentEnrolment;
-use App\Support\Acl\PermissionRegistry;
+use App\Support\Rbac\PermissionRegistry;
 use Laravel\Sanctum\Sanctum;
 use Spatie\Permission\Models\Permission;
 

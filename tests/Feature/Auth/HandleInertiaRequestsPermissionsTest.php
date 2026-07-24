@@ -1,8 +1,8 @@
 <?php
 
-use App\Enums\Acl\RoleEnum;
+use App\Enums\Rbac\RoleEnum;
 use App\Http\Middleware\HandleInertiaRequests;
-use App\Models\Acl\Role;
+use App\Models\Rbac\Role;
 use App\Models\Users\User;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;

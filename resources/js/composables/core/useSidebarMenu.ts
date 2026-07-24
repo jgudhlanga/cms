@@ -6,7 +6,7 @@ import {
 } from '@/composables/students/useStudentProfileTabs';
 import { IconName } from '@/enums/icons';
 import { icons } from '@/lib/icons';
-import { useAcl } from '@/composables/acl/useAcl';
+import { useRbac } from '@/composables/rbac/useRbac';
 import { useSettings } from '@/composables/settings/useSettings';
 import { useUtils } from '@/composables/core/useUtils';
 import {
@@ -232,7 +232,7 @@ export function useSidebarMenu() {
         })(),
         (() => {
             const canViewSettings = canShowMenuItem('view:settings', 'settings', moduleState);
-            const aclChildren: MenuItemInterface[] = useAcl().tabs.map((tab) => ({
+            const rbacChildren: MenuItemInterface[] = useRbac().tabs.map((tab) => ({
                 transChoiceKey: tab.transChoiceKey,
                 url: tab.url,
                 show: canViewSettings,
@@ -240,10 +240,10 @@ export function useSidebarMenu() {
 
             return {
                 groupKey: 'system' as const,
-                transKey: 'trans.access_control_list',
-                url: route('settings.index'),
+                transKey: 'trans.rbac',
+                url: route('rbac.index'),
                 icon: icons[IconName.shield],
-                items: aclChildren,
+                items: rbacChildren,
                 show: canViewSettings,
             };
         })(),

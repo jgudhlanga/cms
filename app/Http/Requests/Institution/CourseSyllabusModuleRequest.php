@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests\Institution;
 
-use App\Enums\Acl\RoleEnum;
+use App\Enums\Rbac\RoleEnum;
 use App\Models\AcademicCalendars\CourseWorkMark;
 use App\Models\Institution\Staff;
 use App\Models\Institution\Syllabus\CourseSyllabus;

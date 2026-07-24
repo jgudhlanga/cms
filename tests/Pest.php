@@ -11,8 +11,8 @@
 |
 */
 
-use Database\Seeders\Acl\ModulesTableSeeder;
-use Database\Seeders\Acl\PermissionsTableSeeder;
+use Database\Seeders\Rbac\ModulesTableSeeder;
+use Database\Seeders\Rbac\PermissionsTableSeeder;
 use Database\Seeders\Statuses\StatusSeeder;
 use Database\Seeders\Tenants\TenantsTableSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;

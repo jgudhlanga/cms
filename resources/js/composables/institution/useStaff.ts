@@ -16,7 +16,7 @@ import { hasAbility } from '@/lib/permissions';
 import { emailUniqueSchema, employeeNumberUniqueSchema, phoneNumberUniqueSchema } from '@/lib/uniqueValidations';
 import HttpService from '@/services/http.service';
 import { useStaffCreateFormStore, useStaffDataStore } from '@/store/institution/useStaffStore';
-import { Role } from '@/types/acl';
+import { Role } from '@/types/rbac';
 import { ApiFilterResponse } from '@/types/data-pagination';
 import { Staff } from '@/types/staff';
 import { CustomTab } from '@/types/utils';

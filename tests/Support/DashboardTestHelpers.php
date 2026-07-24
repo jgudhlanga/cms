@@ -2,14 +2,14 @@
 
 use App\Enums\AcademicCalendars\AcademicCalendarTypeEnum;
 use App\Models\AcademicCalendars\AcademicCalendar;
-use App\Models\Acl\Module;
-use App\Models\Acl\Permission;
+use App\Models\Rbac\Module;
+use App\Models\Rbac\Permission;
 use App\Models\Institution\IntakePeriod;
 use App\Models\Tenants\Tenant;
 use App\Models\Users\User;
 use App\Services\Dashboard\DashboardModuleService;
-use Database\Seeders\Acl\RoleGroupSeeder;
-use Database\Seeders\Acl\RolesTableSeeder;
+use Database\Seeders\Rbac\RoleGroupSeeder;
+use Database\Seeders\Rbac\RolesTableSeeder;
 
 function seedDashboardTestRoles(): void
 {

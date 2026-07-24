@@ -1,6 +1,6 @@
 <?php
 
-use App\Enums\Acl\RoleEnum;
+use App\Enums\Rbac\RoleEnum;
 use App\Http\Middleware\EnsureApplicationTrackAllowed;
 use App\Http\Middleware\EnsureRegistrationOpen;
 use App\Http\Middleware\HandleAppearance;

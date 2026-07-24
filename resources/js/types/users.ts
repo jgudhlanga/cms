@@ -1,4 +1,4 @@
-import { RoleMinimal } from '@/types/acl';
+import { RoleMinimal } from '@/types/rbac';
 import { Address, Contact } from '@/types/shared';
 import { SelectOption } from '@/types/utils';
 

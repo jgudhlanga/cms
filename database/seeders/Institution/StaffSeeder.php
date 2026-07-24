@@ -2,7 +2,7 @@
 
 namespace Database\Seeders\Institution;
 
-use App\Enums\Acl\RoleEnum;
+use App\Enums\Rbac\RoleEnum;
 use App\Enums\Institution\DepartmentEnum;
 use App\Enums\Shared\TenantEnum;
 use App\Models\Institution\Department;

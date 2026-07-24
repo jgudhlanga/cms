@@ -1,9 +1,9 @@
 <?php
 
 use App\Enums\AcademicCalendars\AcademicCalendarTypeEnum;
-use App\Enums\Acl\RoleEnum;
+use App\Enums\Rbac\RoleEnum;
 use App\Models\AcademicCalendars\AcademicYearOption;
-use App\Models\Acl\Role;
+use App\Models\Rbac\Role;
 use App\Models\Institution\Course;
 use App\Models\Institution\Department;
 use App\Models\Institution\DepartmentCourse;
@@ -19,8 +19,8 @@ use App\Models\Shared\MaritalStatus;
 use App\Models\Shared\Title;
 use App\Models\Tenants\Tenant;
 use App\Models\Users\User;
-use Database\Seeders\Acl\RoleGroupSeeder;
-use Database\Seeders\Acl\RolesTableSeeder;
+use Database\Seeders\Rbac\RoleGroupSeeder;
+use Database\Seeders\Rbac\RolesTableSeeder;
 
 function ensureSyllabusModuleRoles(): void
 {

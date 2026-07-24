@@ -1,12 +1,12 @@
 <?php
 
-use App\Enums\Acl\RoleEnum;
+use App\Enums\Rbac\RoleEnum;
 use App\Enums\Institution\IntakePeriodStatusEnum;
 use App\Enums\Shared\ClassListTypeEnum;
 use App\Enums\Shared\FeeTypeEnum;
 use App\Enums\Shared\WorkflowStepEnum;
 use App\Enums\Students\ApplicationFeeStatusEnum;
-use App\Models\Acl\Role;
+use App\Models\Rbac\Role;
 use App\Models\Enrolments\ClassList;
 use App\Models\Institution\DepartmentApplicationStep;
 use App\Models\Institution\IntakePeriod;
