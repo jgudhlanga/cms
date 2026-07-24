@@ -8,6 +8,7 @@ use App\Http\Filters\Users\UserFilter;
 use App\Models\Users\User;
 use App\Repositories\Base\BaseRepository;
 use App\Repositories\Users\interface\IUserRepository;
+use App\Services\Rbac\UserPermissionMapService;
 
 class UserRepository extends BaseRepository implements IUserRepository
 {
@@ -19,21 +20,25 @@ class UserRepository extends BaseRepository implements IUserRepository
     public function create(UserDto $dto): User
     {
         $user = $this->user->create($this->getFields($dto));
-        if (!empty($dto->role_ids)) {
+        if (! empty($dto->role_ids)) {
             $user->assignRole($dto->role_ids);
+            app(UserPermissionMapService::class)->forgetForUser((int) $user->id);
         }
+
         return $user->refresh();
     }
 
     public function update(User $user, UpdateUserDto $dto): User
     {
-        if (!empty($dto->role_ids)) {
+        if (! empty($dto->role_ids)) {
             $user->syncRoles($dto->role_ids);
+            app(UserPermissionMapService::class)->forgetForUser((int) $user->id);
         }
+
         return tap($user)->update($this->getUpdateFields($dto));
     }
 
-    public function allFilter($columns = ['*'], UserFilter $filters = null)
+    public function allFilter($columns = ['*'], ?UserFilter $filters = null)
     {
         return $this->user
             ->with(

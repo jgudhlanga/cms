@@ -109,7 +109,7 @@ class OverviewDashboardMetricsService
             'passRateSubtext' => $hasAcademic ? $this->passRateSubtext($academicSummary) : null,
             'markCompletionRate' => $hasAcademic ? ($courseWorkStatus['completeRate'] ?? null) : null,
             'markCompletionSubtext' => $hasAcademic ? $this->markCompletionSubtext($courseWorkStatus) : null,
-            'atRiskStudents' => $hasAcademic ? $this->academicDashboardMetricsService->atRiskStudentCount() : null,
+            'atRiskStudents' => $hasAcademic ? ($academicDashboard['atRiskStudentCount'] ?? null) : null,
             'atRiskSubtext' => $hasAcademic ? __('dashboard.overview_at_risk_subtext') : null,
             'hostelOccupancyRate' => $hostelSummary['occupancyRate'] ?? null,
             'hostelAvailableBeds' => $hostelSummary['availableBeds'] ?? null,

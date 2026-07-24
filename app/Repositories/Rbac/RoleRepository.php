@@ -4,11 +4,11 @@ namespace App\Repositories\Rbac;
 
 use App\DTO\Rbac\RoleDto;
 use App\Enums\Rbac\RoleEnum;
-use App\Http\Filters\Rbac\PermissionFilter;
 use App\Http\Filters\Rbac\RoleFilter;
 use App\Models\Rbac\Role;
 use App\Repositories\Base\BaseRepository;
 use App\Repositories\Rbac\Interface\IRoleRepository;
+use App\Services\Rbac\UserPermissionMapService;
 
 class RoleRepository extends BaseRepository implements IRoleRepository
 {
@@ -20,9 +20,11 @@ class RoleRepository extends BaseRepository implements IRoleRepository
     public function create(RoleDto $dto): Role
     {
         $role = $this->role->create($this->getFields($dto));
-        if (!is_null($dto->permissions)) {
+        if (! is_null($dto->permissions)) {
             $role->syncPermissions(array_values($dto->permissions));
+            app(UserPermissionMapService::class)->flushAll();
         }
+
         return $role->fresh();
     }
 
@@ -30,9 +32,11 @@ class RoleRepository extends BaseRepository implements IRoleRepository
     {
         $role = tap($role)->update($this->getFields($dto));
 
-        if (!is_null($dto->permissions)) {
+        if (! is_null($dto->permissions)) {
             $role->syncPermissions(array_values($dto->permissions));
+            app(UserPermissionMapService::class)->flushAll();
         }
+
         return $role->fresh();
     }
 
@@ -43,6 +47,7 @@ class RoleRepository extends BaseRepository implements IRoleRepository
             RoleEnum::STUDENT->value,
             RoleEnum::SUPER_USER->value,
         ];
+
         return $this->role
             ->select($columns)
             ->filter($filters)
@@ -54,10 +59,6 @@ class RoleRepository extends BaseRepository implements IRoleRepository
             ->withQueryString();
     }
 
-    /**
-     * @param RoleDto $dto
-     * @return array
-     */
     public function getFields(RoleDto $dto): array
     {
         return [
@@ -65,5 +66,4 @@ class RoleRepository extends BaseRepository implements IRoleRepository
             'description' => $dto->description,
         ];
     }
-
 }

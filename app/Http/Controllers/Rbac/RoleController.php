@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Rbac;
 use App\DTO\Rbac\RoleDto;
 use App\Http\Controllers\Controller;
 use App\Http\Filters\Rbac\PermissionFilter;
+use App\Http\Filters\Rbac\RoleFilter;
 use App\Http\Requests\Rbac\RoleRequest;
 use App\Http\Resources\Rbac\PermissionResource;
 use App\Http\Resources\Rbac\RoleResource;
@@ -12,17 +13,16 @@ use App\Models\Rbac\Permission;
 use App\Models\Rbac\Role;
 use App\Repositories\Rbac\Interface\IPermissionRepository;
 use App\Repositories\Rbac\Interface\IRoleRepository;
+use App\Services\Rbac\UserPermissionMapService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
-use App\Http\Filters\Rbac\RoleFilter;
 use Inertia\Response;
 
 class RoleController extends Controller
 {
-    public function __construct(protected IRoleRepository $repository, protected IPermissionRepository $permissionRepository)
-    {
-    }
+    public function __construct(protected IRoleRepository $repository, protected IPermissionRepository $permissionRepository) {}
 
     /**
      * @throws AuthorizationException
@@ -63,7 +63,9 @@ class RoleController extends Controller
     {
         $this->authorize('view', $role);
         $permissions = PermissionResource::collection($this->permissionRepository->allFilter(['*'], $filters));
-        $allPermissions = PermissionResource::collection(Permission::all());
+        $allPermissions = PermissionResource::collection(
+            Cache::remember('rbac_all_permissions', 300, fn () => Permission::query()->orderBy('name')->get())
+        );
 
         return Inertia::render('rbac/roles/Show', [
             'role' => new RoleResource($role),
@@ -118,5 +120,7 @@ class RoleController extends Controller
     public function syncPermissions(Role $role, Request $request)
     {
         $role->syncPermissions(array_values($request->permissions));
+        app(UserPermissionMapService::class)->flushAll();
+        Cache::forget('rbac_all_permissions');
     }
 }

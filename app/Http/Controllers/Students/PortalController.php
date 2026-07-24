@@ -9,8 +9,8 @@ use App\DTO\Students\ProgramDto;
 use App\DTO\Students\StudentApplicationDto;
 use App\DTO\Students\UpdateStudentDto;
 use App\DTO\Users\UserDto;
-use App\Enums\Rbac\RoleEnum;
 use App\Enums\Institution\LevelEnum;
+use App\Enums\Rbac\RoleEnum;
 use App\Enums\Shared\AcademicLevelEnum;
 use App\Enums\Shared\IdTypeEnum;
 use App\Enums\Shared\StatusEnum;
@@ -46,8 +46,8 @@ use App\Models\Institution\ModeOfStudy;
 use App\Models\Shared\AcademicLevel;
 use App\Models\Shared\Status;
 use App\Models\Students\Student;
-use App\Models\Students\StudentApprentice;
 use App\Models\Students\StudentApplication;
+use App\Models\Students\StudentApprentice;
 use App\Models\Tenants\Tenant;
 use App\Models\Users\User;
 use App\Repositories\Shared\interface\IAddressRepository;
@@ -591,9 +591,15 @@ class PortalController extends Controller
         $this->assertOwnsStudent($student);
         $oLevelResults = AcademicLevelResource::collection($student?->oLevelResults);
         $allowedLevels = []; // Level::where('allowed_applications_per_level', '>', '1')->pluck('id')->toArray();
-        $currentLevels = $student->applications()->get()->map(fn ($program) => $program?->department_level_id)->filter()->toArray();
-        $currentCourses = $student->applications()->get()->map(fn ($program) => $program?->department_course_id)->filter()->toArray();
-        $currentDepartments = $student->applications()->get()->map(fn ($program) => $program?->institution_department_id)->filter()->toArray();
+        $applications = $student->applications()->get([
+            'id',
+            'department_level_id',
+            'department_course_id',
+            'institution_department_id',
+        ]);
+        $currentLevels = $applications->pluck('department_level_id')->filter()->values()->all();
+        $currentCourses = $applications->pluck('department_course_id')->filter()->values()->all();
+        $currentDepartments = $applications->pluck('institution_department_id')->filter()->values()->all();
 
         return Inertia::render('portal/application/AddProgram',
             compact('student', 'oLevelResults', 'allowedLevels', 'currentLevels', 'currentDepartments', 'currentCourses'));

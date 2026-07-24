@@ -123,6 +123,8 @@ class StudentApplicationController extends Controller
         array $relations = ['student'],
         int $perPage = 1000
     ) {
+        $perPage = (int) config('custom.system.pagination_max_limit', 200);
+
         $query = StudentApplication::with($relations)
             ->whereIn('id', $ids);
 

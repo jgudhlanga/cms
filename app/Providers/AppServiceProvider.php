@@ -17,6 +17,7 @@ use App\Policies\Institution\AssessmentCalendarPolicy;
 use App\Policies\Institution\CourseSyllabusPolicy;
 use App\Support\Auth\SyncSessionPasswordHash;
 use Illuminate\Auth\Events\Login;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Event;
@@ -46,6 +47,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Model::preventLazyLoading($this->app->environment('local'));
+
         Password::defaults(fn () => Password::min(8)
             ->letters()
             ->mixedCase()

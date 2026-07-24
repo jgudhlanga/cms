@@ -149,44 +149,47 @@ class Helper
 
     public static function resolveIntakePeriod()
     {
-        static $cachedIntakePeriod;
-
         // If request explicitly provides intake_period_id, always use it (no caching)
         if (request()->filled('intake_period_id') && request()->intake_period_id > 0) {
             return IntakePeriod::findOrFail(request()->intake_period_id);
         }
 
-        // Otherwise fallback to cached period
-        if ($cachedIntakePeriod) {
-            return $cachedIntakePeriod;
+        if (request()->attributes->has('resolved_intake_period')) {
+            return request()->attributes->get('resolved_intake_period');
         }
 
         $ordering = app(IntakePeriodOrderingService::class);
         $default = $ordering->defaultAdminIntakePeriod();
 
         if ($default !== null) {
-            return $cachedIntakePeriod = $default;
+            request()->attributes->set('resolved_intake_period', $default);
+
+            return $default;
         }
 
-        // Cache the fallback only once (legacy: any intake by end_date)
-        return $cachedIntakePeriod = IntakePeriod::orderByDesc('end_date')->firstOrFail();
+        // Fallback to any intake by end_date
+        $fallback = IntakePeriod::orderByDesc('end_date')->firstOrFail();
+        request()->attributes->set('resolved_intake_period', $fallback);
+
+        return $fallback;
     }
 
     public static function resolveAcademicCalendar(): AcademicCalendar
     {
-        static $cachedAcademicCalendar;
-
         if (request()->filled('academic_calendar_id') && request()->integer('academic_calendar_id') > 0) {
             return AcademicCalendar::query()
                 ->semesters()
                 ->findOrFail(request()->integer('academic_calendar_id'));
         }
 
-        if ($cachedAcademicCalendar instanceof AcademicCalendar) {
-            return $cachedAcademicCalendar;
+        if (request()->attributes->has('resolved_academic_calendar')) {
+            return request()->attributes->get('resolved_academic_calendar');
         }
 
-        return $cachedAcademicCalendar = AcademicCalendar::resolveSemesterForDate();
+        $calendar = AcademicCalendar::resolveSemesterForDate();
+        request()->attributes->set('resolved_academic_calendar', $calendar);
+
+        return $calendar;
     }
 
     public static function resolveUserDepartments(): ?array

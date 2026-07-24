@@ -29,6 +29,9 @@ class StaffDashboardMetricsService
     /** @var list<int> */
     protected array $userDepartments = [];
 
+    /** @var Collection<int, Staff>|null */
+    private ?Collection $cachedStaffMembers = null;
+
     public function __construct()
     {
         $this->isDepartmentUser = Helper::isDepartmentUser();
@@ -236,7 +239,7 @@ class StaffDashboardMetricsService
      */
     private function staffMembers(): Collection
     {
-        return $this->staffBaseQuery()
+        return $this->cachedStaffMembers ??= $this->staffBaseQuery()
             ->with(['user.roles', 'employmentType', 'gender'])
             ->get();
     }

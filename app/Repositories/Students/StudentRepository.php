@@ -103,11 +103,6 @@ class StudentRepository extends BaseRepository implements IStudentRepository
                 'latestEnrolment.departmentLevel.level',
                 'latestEnrolment.departmentCourse.course',
                 'latestEnrolment.modeOfStudy',
-                'enrolments.institutionDepartment.department',
-                'enrolments.departmentLevel.level',
-                'enrolments.departmentCourse.course',
-                'enrolments.modeOfStudy',
-                'enrolments.academicCalendarStudentEnrolment',
             ])
             ->whereHas('enrolments')
             ->select('students.*');
@@ -128,21 +123,21 @@ class StudentRepository extends BaseRepository implements IStudentRepository
     {
         $total = $this->distinctStudentCount(clone $query);
 
-        $male = $this->distinctStudentCount(
-            (clone $query)->whereHas('gender', fn ($q) => $q->where('title', GenderEnum::MALE->value))
-        );
+        $genderCounts = (clone $query)
+            ->join('genders', 'students.gender_id', '=', 'genders.id')
+            ->whereNull('genders.deleted_at')
+            ->select('genders.title')
+            ->selectRaw('count(distinct students.id) as aggregate_count')
+            ->groupBy('genders.title')
+            ->pluck('aggregate_count', 'genders.title');
 
-        $female = $this->distinctStudentCount(
-            (clone $query)->whereHas('gender', fn ($q) => $q->where('title', GenderEnum::FEMALE->value))
-        );
-
-        $directCount = $this->distinctStudentCount(
-            (clone $query)->whereDoesntHave('apprentices')
-        );
+        $male = (int) ($genderCounts[GenderEnum::MALE->value] ?? 0);
+        $female = (int) ($genderCounts[GenderEnum::FEMALE->value] ?? 0);
 
         $apprenticeCount = $this->distinctStudentCount(
             (clone $query)->whereHas('apprentices')
         );
+        $directCount = max(0, $total - $apprenticeCount);
 
         // Students with multiple enrolments may appear in more than one level/mode bucket.
         $byLevel = (clone $query)

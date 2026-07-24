@@ -12,7 +12,6 @@ use App\Models\Shared\FeeType;
 use App\Models\Students\ApplicationFee;
 use App\Models\Students\StudentApplication;
 use App\Models\Users\User;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class DepartmentEnrolmentService
@@ -23,16 +22,13 @@ class DepartmentEnrolmentService
         int $intakePeriodId,
         int $modeOfStudyId,
         int $courseId,
-        int $perPage = 1500
-    ): array
-    {
-        // ------------------------------------------------------------
-        // 1. Cached IDs
-        // ------------------------------------------------------------
-        $oLevelId = cache()->rememberForever('o_level_id', fn() => AcademicLevel::where('name', AcademicLevelEnum::SECONDARY_SCHOOL->value)->value('id')
+        ?int $perPage = null
+    ): array {
+        $perPage ??= (int) config('custom.system.class_list_page_size', 200);
+        $oLevelId = cache()->rememberForever('o_level_id', fn () => AcademicLevel::where('name', AcademicLevelEnum::SECONDARY_SCHOOL->value)->value('id')
         );
 
-        $applicationFeeId = cache()->rememberForever('application_fee_id', fn() => FeeType::where('slug', FeeTypeEnum::APPLICATION_FEE->slug())->value('id')
+        $applicationFeeId = cache()->rememberForever('application_fee_id', fn () => FeeType::where('slug', FeeTypeEnum::APPLICATION_FEE->slug())->value('id')
         );
 
         // ------------------------------------------------------------
@@ -56,7 +52,7 @@ class DepartmentEnrolmentService
             ->with([
                 'student.user:id,first_name,last_name,email',
                 'student.gender:id,title',
-                'student.contacts' => fn($q) => $q->orderBy('created_at')->limit(1),
+                'student.contacts' => fn ($q) => $q->orderBy('created_at')->limit(1),
                 'departmentWorkflowStep.workflowStep:id,name',
             ])
             ->whereIn('id', $subQuery)
@@ -218,25 +214,25 @@ class DepartmentEnrolmentService
         // ------------------------------------------------------------
         $grouped = [
             'disabled' => $studentApplications
-                ->filter(fn($sp) => strtolower($sp->disability_status) === 'yes')
+                ->filter(fn ($sp) => strtolower($sp->disability_status) === 'yes')
                 ->sortBy('student_name')
                 ->values(),
 
             'females' => $studentApplications
-                ->filter(fn($sp) => strtolower($sp->disability_status) !== 'yes' &&
+                ->filter(fn ($sp) => strtolower($sp->disability_status) !== 'yes' &&
                     strtolower($sp->gender) === 'female')
                 ->sortBy('student_name')
                 ->values(),
 
             'males' => $studentApplications
-                ->filter(fn($sp) => strtolower($sp->disability_status) !== 'yes' &&
+                ->filter(fn ($sp) => strtolower($sp->disability_status) !== 'yes' &&
                     strtolower($sp->gender) === 'male')
                 ->sortBy('student_name')
                 ->values(),
 
             'others' => $studentApplications
-                ->filter(fn($sp) => strtolower($sp->disability_status) !== 'yes' &&
-                    !in_array(strtolower($sp->gender), ['male', 'female']))
+                ->filter(fn ($sp) => strtolower($sp->disability_status) !== 'yes' &&
+                    ! in_array(strtolower($sp->gender), ['male', 'female']))
                 ->sortBy('student_name')
                 ->values(),
         ];
@@ -262,9 +258,9 @@ class DepartmentEnrolmentService
         int $intakePeriodId,
         int $modeOfStudyId,
         int $courseId,
-        int $perPage = 1500
-    ): array
-    {
+        ?int $perPage = null
+    ): array {
+        $perPage ??= (int) config('custom.system.class_list_page_size', 200);
 
         // ------------------------------------------------------------
         // 1. Subquery for latest student program per student
@@ -289,7 +285,7 @@ class DepartmentEnrolmentService
             ->with([
                 'student.user:id,first_name,last_name,email',
                 'student.gender:id,title',
-                'student.contacts' => fn($q) => $q->orderBy('created_at')->limit(1),
+                'student.contacts' => fn ($q) => $q->orderBy('created_at')->limit(1),
                 'departmentWorkflowStep.workflowStep:id,name',
             ])
             ->whereIn('student_applications.id', $subQuery)
@@ -309,13 +305,12 @@ class DepartmentEnrolmentService
             ->orderBy('class_lists.created_at')
             ->paginate($perPage);
 
-
         $studentApplications = $paginator->getCollection();
 
         // ------------------------------------------------------------
         // 3. Transform students
         // ------------------------------------------------------------
-        $oLevelId = cache()->rememberForever('o_level_id', fn() => AcademicLevel::where('name', AcademicLevelEnum::SECONDARY_SCHOOL->value)->value('id')
+        $oLevelId = cache()->rememberForever('o_level_id', fn () => AcademicLevel::where('name', AcademicLevelEnum::SECONDARY_SCHOOL->value)->value('id')
         );
         $studentIds = $studentApplications->pluck('student_id')->unique();
 
@@ -344,7 +339,7 @@ class DepartmentEnrolmentService
         // 4. Preload receipts in bulk
         // ------------------------------------------------------------
         $userIds = $studentApplications->pluck('student.user_id')->unique();
-        $applicationFeeId = cache()->rememberForever('application_fee_id', fn() => FeeType::where('slug', FeeTypeEnum::APPLICATION_FEE->slug())->value('id')
+        $applicationFeeId = cache()->rememberForever('application_fee_id', fn () => FeeType::where('slug', FeeTypeEnum::APPLICATION_FEE->slug())->value('id')
         );
         $receipts = $this->preloadApplicationFeeReceipts($userIds, $applicationFeeId, $intakePeriodId);
 
@@ -379,28 +374,29 @@ class DepartmentEnrolmentService
         // ------------------------------------------------------------
         $grouped = [
             'disabled' => $studentApplications
-                ->filter(fn($sp) => strtolower($sp->disability_status) === 'yes')
+                ->filter(fn ($sp) => strtolower($sp->disability_status) === 'yes')
                 ->sortBy('student_name')
                 ->values(),
 
             'females' => $studentApplications
-                ->filter(fn($sp) => strtolower($sp->disability_status) !== 'yes' &&
+                ->filter(fn ($sp) => strtolower($sp->disability_status) !== 'yes' &&
                     strtolower($sp->gender) === 'female')
                 ->sortBy('student_name')
                 ->values(),
 
             'males' => $studentApplications
-                ->filter(fn($sp) => strtolower($sp->disability_status) !== 'yes' &&
+                ->filter(fn ($sp) => strtolower($sp->disability_status) !== 'yes' &&
                     strtolower($sp->gender) === 'male')
                 ->sortBy('student_name')
                 ->values(),
 
             'others' => $studentApplications
-                ->filter(fn($sp) => strtolower($sp->disability_status) !== 'yes' &&
-                    !in_array(strtolower($sp->gender), ['male', 'female']))
+                ->filter(fn ($sp) => strtolower($sp->disability_status) !== 'yes' &&
+                    ! in_array(strtolower($sp->gender), ['male', 'female']))
                 ->sortBy('student_name')
                 ->values(),
         ];
+
         // ------------------------------------------------------------
         // 7. Return
         // ------------------------------------------------------------
@@ -418,9 +414,9 @@ class DepartmentEnrolmentService
 
     public function extractFilters(): array
     {
-        $intakePeriodId = request('intake_period_id') > 0 ? (int)request('intake_period_id') : null;
-        $modeOfStudyId = request('mode_of_study_id') > 0 ? (int)request('mode_of_study_id') : null;
-        $courseId = request('department_course_id') > 0 ? (int)request('department_course_id') : null;
+        $intakePeriodId = request('intake_period_id') > 0 ? (int) request('intake_period_id') : null;
+        $modeOfStudyId = request('mode_of_study_id') > 0 ? (int) request('mode_of_study_id') : null;
+        $courseId = request('department_course_id') > 0 ? (int) request('department_course_id') : null;
 
         return [$intakePeriodId, $modeOfStudyId, $courseId];
     }
