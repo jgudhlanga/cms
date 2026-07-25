@@ -148,13 +148,13 @@ export function useSidebarMenu() {
             const institutionModuleOn = isModuleEnabled('institution', moduleState);
             const institutionChildren: MenuItemInterface[] = [
                 {
-                    transChoiceKey: 'trans.non_academic_department',
+                    transChoiceKey: 'trans.non_academic_department_sidebar',
                     transChoiceKeyIndex: 2,
                     url: route('institution-departments.index', { is_academic: 0 }),
                     show: institutionModuleOn && canViewNonAcademicDepartmentsMenu(),
                 },
                 {
-                    transChoiceKey: 'trans.academic_department',
+                    transChoiceKey: 'trans.academic_department_sidebar',
                     transChoiceKeyIndex: 2,
                     url: route('institution-departments.index', { is_academic: 1 }),
                     show: institutionModuleOn && canViewInstitutionHubAcademicDepartments(),
