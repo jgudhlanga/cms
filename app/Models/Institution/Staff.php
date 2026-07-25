@@ -11,6 +11,7 @@ use App\Models\Shared\EmploymentType;
 use App\Models\Shared\Gender;
 use App\Models\Shared\IdType;
 use App\Models\Shared\MaritalStatus;
+use App\Models\Shared\Race;
 use App\Models\Shared\Religion;
 use App\Models\Shared\Title;
 use App\Models\Users\User;
@@ -80,6 +81,11 @@ class Staff extends Model
     public function maritalStatus(): BelongsTo
     {
         return $this->belongsTo(MaritalStatus::class);
+    }
+
+    public function race(): BelongsTo
+    {
+        return $this->belongsTo(Race::class);
     }
 
     public function religion(): BelongsTo
