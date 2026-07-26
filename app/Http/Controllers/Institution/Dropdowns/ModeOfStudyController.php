@@ -19,7 +19,7 @@ class ModeOfStudyController extends Controller
 
     public function index(SharedNameFilter $filters)
     {
-        $this->authorize('viewSettings');
+        $this->authorize('viewAny', ModeOfStudy::class);
         $modesOfStudy = ModeOfStudyResource::collection($this->repository->allFilter(['*'], $filters));
         return Inertia::render('institution/dropdowns/modesOfStudy/Index', [
             'modesOfStudy' => $modesOfStudy,
@@ -30,12 +30,12 @@ class ModeOfStudyController extends Controller
 
     public function create()
     {
-        $this->authorize('createSettings');
+        $this->authorize('create', ModeOfStudy::class);
     }
 
     public function store(ModeOfStudyRequest $request)
     {
-        $this->authorize('createSettings');
+        $this->authorize('create', ModeOfStudy::class);
         $this->repository->create(ModeOfStudyDto::fromModeOfStudyRequest($request));
     }
 
@@ -51,26 +51,26 @@ class ModeOfStudyController extends Controller
 
     public function update(ModeOfStudyRequest $request, ModeOfStudy $modeOfStudy)
     {
-        $this->authorize('updateInstitutionSettings');
+        $this->authorize('update', $modeOfStudy);
         $this->repository->update($modeOfStudy, ModeOfStudyDto::fromModeOfStudyRequest($request));
     }
 
     public function destroy(ModeOfStudy $modeOfStudy)
     {
-        $this->authorize('deleteInstitutionSettings');
+        $this->authorize('delete', $modeOfStudy);
         $this->repository->delete($modeOfStudy);
     }
 
     public function restore(string $id)
     {
         $modeOfStudy = $this->repository->findTrashed($id);
-        $this->authorize('restoreInstitutionSettings');
+        $this->authorize('restore', $modeOfStudy);
         $this->repository->restore($modeOfStudy);
     }
 
     public function forceDelete(ModeOfStudy $modeOfStudy)
     {
-        $this->authorize('forceDeleteInstitutionSettings');
+        $this->authorize('forceDelete', $modeOfStudy);
         $this->repository->delete($modeOfStudy, true);
     }
 }

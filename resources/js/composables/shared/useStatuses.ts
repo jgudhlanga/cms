@@ -31,18 +31,18 @@ export const useStatuses = () => {
                     const id = getIdParams(row.original.id?.toString() ?? '');
                     const name = trans_choice('trans.status', 1);
                     return moreActionButton(!!row.original?.attributes?.deletedAt, [
-                        { key: 'edit', action: () => onOpenModal(can['update:settings'], row.original) },
+                        { key: 'edit', action: () => onOpenModal(can['update:statuses'], row.original) },
                         {
                             key: 'archive',
-                            action: () => onDelete(can['delete:settings'], route('statuses.destroy', id), name),
+                            action: () => onDelete(can['delete:statuses'], route('statuses.destroy', id), name),
                         },
                         {
                             key: 'restore',
-                            action: () => onRestore(can['restore:settings'], route('statuses.restore', id), name),
+                            action: () => onRestore(can['restore:statuses'], route('statuses.restore', id), name),
                         },
                         {
                             key: 'delete',
-                            action: () => onForceDelete(can['forceDelete:settings'], route('statuses.force-delete', id), name),
+                            action: () => onForceDelete(can['forceDelete:statuses'], route('statuses.force-delete', id), name),
                         },
                     ]);
                 },

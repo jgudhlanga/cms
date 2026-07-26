@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\HMS;
 
+use App\Helpers\Helper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\HMS\StoreHostelRequest;
 use App\Http\Requests\HMS\UpdateHostelRequest;
@@ -19,6 +20,8 @@ class HostelController extends Controller
 
     public function index()
     {
+        $this->authorize('viewAny', Hostel::class);
+
         return Inertia::render('hms/hostels/Index', [
             'wardens' => $this->wardenOptions(),
         ]);
@@ -26,6 +29,13 @@ class HostelController extends Controller
 
     public function show(Hostel $hostel)
     {
+        $this->authorize('view', $hostel);
+
+        $hostelIds = Helper::resolveUserHostels();
+        if ($hostelIds !== null && ! in_array((int) $hostel->id, $hostelIds, true)) {
+            abort(403);
+        }
+
         $hostel->load([
             'warden.user:id,first_name,middle_name,last_name,email,phone_number',
             'warden.institutionDepartments.department:id,name',
@@ -135,16 +145,19 @@ class HostelController extends Controller
 
     public function store(StoreHostelRequest $request): void
     {
+        $this->authorize('create', Hostel::class);
         $this->repository->create($request->validated());
     }
 
     public function update(UpdateHostelRequest $request, Hostel $hostel): void
     {
+        $this->authorize('update', $hostel);
         $this->repository->update($hostel, $request->validated());
     }
 
     public function destroy(Hostel $hostel): void
     {
+        $this->authorize('delete', $hostel);
         $this->repository->delete($hostel);
     }
 

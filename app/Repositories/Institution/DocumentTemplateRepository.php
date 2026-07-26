@@ -30,6 +30,7 @@ class DocumentTemplateRepository extends BaseRepository implements IDocumentTemp
     {
         return $this->documentTemplate
             ->select($columns)
+            ->with(['documentType', 'headerLogoOne', 'headerLogoTwo'])
             ->filter($filters)
             ->orderBy('name')
             ->orderBy('deleted_at')

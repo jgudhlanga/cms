@@ -175,6 +175,7 @@ class User extends Authenticatable implements HasMedia, MustVerifyEmail
     {
         return LogOptions::defaults()
             ->logFillable()
+            ->logExcept(['password', 'remember_token'])
             ->useLogName('User')
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();

@@ -23,13 +23,18 @@ const canEdit = hasAbility('update:users');
 const roles = computed(() => props.user.relationships?.roles ?? []);
 
 const permissions = computed<Permission[]>(() => {
-    const data = userPermissions.value?.data;
+    const value = userPermissions.value as unknown;
 
-    if (!Array.isArray(data)) {
-        return [];
+    if (Array.isArray(value)) {
+        return value as Permission[];
     }
 
-    return data as Permission[];
+    const wrapped = value as { data?: unknown } | null;
+    if (Array.isArray(wrapped?.data)) {
+        return wrapped.data as Permission[];
+    }
+
+    return [];
 });
 
 const permissionsByModule = computed(() => {

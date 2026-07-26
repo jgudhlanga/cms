@@ -19,7 +19,7 @@ class PaymentMethodController extends Controller
 
 	public function index(SharedTitleFilter $filters)
 	{
-		$this->authorize('viewSettings');
+		$this->authorize('viewAny', PaymentMethod::class);
 		$paymentMethods = PaymentMethodResource::collection($this->repository->allFilter(['*'], $filters));
 		return Inertia::render('shared/payments/paymentMethods/Index', [
 			'paymentMethods' => $paymentMethods,
@@ -30,12 +30,12 @@ class PaymentMethodController extends Controller
 
 	public function create()
 	{
-		$this->authorize('createSettings');
+		$this->authorize('create', PaymentMethod::class);
 	}
 
 	public function store(PaymentMethodRequest $request)
 	{
-		$this->authorize('createSettings');
+		$this->authorize('create', PaymentMethod::class);
 		$this->repository->create(PaymentMethodDto::fromPaymentMethodRequest($request));
 	}
 
@@ -51,26 +51,26 @@ class PaymentMethodController extends Controller
 
 	public function update(PaymentMethodRequest $request, PaymentMethod $paymentMethod)
 	{
-		$this->authorize('updateSettings');
+		$this->authorize('update', $paymentMethod);
 		$this->repository->update($paymentMethod, PaymentMethodDto::fromPaymentMethodRequest($request));
 	}
 
 	public function destroy(PaymentMethod $paymentMethod)
 	{
-		$this->authorize('deleteSettings');
+		$this->authorize('delete', $paymentMethod);
 		$this->repository->delete($paymentMethod);
 	}
 
 	public function restore(string $id)
 	{
 		$paymentMethod = $this->repository->findTrashed($id);
-		$this->authorize('restoreSettings');
+		$this->authorize('restore', $paymentMethod);
 		$this->repository->restore($paymentMethod);
 	}
 
 	public function forceDelete(PaymentMethod $paymentMethod)
 	{
-		$this->authorize('forceDeleteSettings');
+		$this->authorize('forceDelete', $paymentMethod);
 		$this->repository->delete($paymentMethod, true);
 	}
 }

@@ -29,8 +29,8 @@ const can = props?.auth?.can;
             :search-url="route('provinces.index')"
             :pagination="{ ...provinces.links, ...provinces.meta }"
             :columns="createProvinceColumns()"
-            :on-create="() => onOpenModal(can['create:settings'])"
-            :disable-create="!can['create:settings']"
+            :on-create="() => onOpenModal(can['create:provinces'])"
+            :disable-create="!can['create:provinces']"
         />
         <CreateEdit />
     </PageContainer>

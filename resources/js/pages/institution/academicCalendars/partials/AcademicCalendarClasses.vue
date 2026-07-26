@@ -26,11 +26,11 @@ const { getData, isLoading } = useServerSide();
 const academicYear = ref<SelectOption | null>(null);
 const resolvedAcademicCalendarId = ref<number | null>(null);
 const modeOfStudy = ref<SelectOption | null>(null);
-const { listAcademicYearOptions } = useAcademicCalendars();
+const { listSemesters } = useAcademicCalendars();
 const { isLoading: modesOfStudyLoading, listModesOfStudy, modesOfStudy } = useModeOfStudy();
 
 const isYearOptionsLoading = ref(false);
-const academicYearOptions = ref<SelectOption[]>([]);
+const semesters = ref<SelectOption[]>([]);
 const classStates = ref<DepartmentCourseClassCount[] | []>([]);
 
 const getSelectedAcademicYearFromUrl = (): SelectOption | null => {
@@ -38,7 +38,7 @@ const getSelectedAcademicYearFromUrl = (): SelectOption | null => {
     if (!raw) {
         return null;
     }
-    const match = academicYearOptions.value.find((o) => String(o.value) === raw) ?? null;
+    const match = semesters.value.find((o) => String(o.value) === raw) ?? null;
     if (!match) {
         return { value: raw, label: raw };
     }
@@ -65,7 +65,7 @@ const syncFiltersToUrl = (): void => {
     currentUrl.searchParams.set('academic_year', String(academicYear.value?.value ?? ''));
     currentUrl.searchParams.set('mode_of_study_id', String(modeOfStudy.value?.value ?? ''));
     currentUrl.searchParams.delete('academic_calendar_type');
-    currentUrl.searchParams.delete('academic_year_option_id');
+    currentUrl.searchParams.delete('semester_id');
 
     window.history.replaceState({}, '', currentUrl.toString());
 };
@@ -73,7 +73,7 @@ const syncFiltersToUrl = (): void => {
 onMounted(async () => {
     isYearOptionsLoading.value = true;
     try {
-        academicYearOptions.value = await listAcademicYearOptions();
+        semesters.value = await listSemesters();
     } finally {
         isYearOptionsLoading.value = false;
     }
@@ -81,7 +81,7 @@ onMounted(async () => {
 
     const currentCalendarYear = String(new Date().getFullYear());
     const defaultYearOption =
-        academicYearOptions.value.find((o) => String(o.value) === currentCalendarYear) ?? academicYearOptions.value[0] ?? null;
+        semesters.value.find((o) => String(o.value) === currentCalendarYear) ?? semesters.value[0] ?? null;
 
     const defaultModeOption = modesOfStudy.value?.filter((row: ModeOfStudy) => row.attributes.name.toLowerCase() === 'full time')[0] ?? null;
 
@@ -145,7 +145,7 @@ const getViewClassesLabel = (level: ClassLevelSummary): string =>
     trans('academic_calendar.view_classes', { count: Number(level.classesCount ?? 0) });
 
 const getClassConfigTagTitle = (level: ClassLevelSummary): string => {
-    const base = `${trans_choice('academic_calendar.class_unit_size', 1)}: ${getDisplayedStudentsPerClass(level.studentsPerClass)} - ${level.academicYearOption ?? 'semester'}`;
+    const base = `${trans_choice('academic_calendar.class_unit_size', 1)}: ${getDisplayedStudentsPerClass(level.studentsPerClass)} - ${level.semester ?? 'semester'}`;
     return `${base}`;
 };
 
@@ -167,7 +167,7 @@ const showConfigModal = (payload: AcademicClassConfigPayload) => {
         <AcademicCalendarClassFilters
             v-model:academicYearModel="academicYear"
             v-model:modeOfStudyModel="modeOfStudy"
-            :academic-year-options="academicYearOptions"
+            :semesters="semesters"
             :modes-of-study="modesOfStudy ?? []"
             :handle-filter-change="handleSelectionChange"
         />
@@ -207,7 +207,7 @@ const showConfigModal = (payload: AcademicClassConfigPayload) => {
                                                     mode_of_study_id: String(modeOfStudy?.value ?? ''),
                                                     students_per_class: String(level.studentsPerClass ?? ''),
                                                     calendarType: level.calendarType ?? 'semester',
-                                                    academic_year_option_id: level.academicYearOptionId ?? null,
+                                                    semester_id: level.semesterId ?? null,
                                                     course_syllabus_ids: (level.courseSyllabusIds ?? []).map((id) => String(id)),
                                                     courseSyllabusCodes: level.courseSyllabusCodes,
                                                 })
@@ -228,8 +228,8 @@ const showConfigModal = (payload: AcademicClassConfigPayload) => {
                                                 department_course_id: stats.departmentCourseId,
                                                 department_level_id: String(level.departmentLevelId),
                                                 class_config_id: String(level.classConfigId),
-                                                ...(level.academicYearOptionId != null
-                                                    ? { academic_year_option_id: String(level.academicYearOptionId) }
+                                                ...(level.semesterId != null
+                                                    ? { semester_id: String(level.semesterId) }
                                                     : {}),
                                             })
                                         "

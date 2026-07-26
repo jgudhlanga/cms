@@ -30,18 +30,18 @@ export const useSponsorTypes = () => {
                     const id = getIdParams(row.original.id?.toString() ?? '');
                     const name = trans_choice('trans.name', 1);
                     return moreActionButton(!!row.original?.attributes?.deletedAt, [
-                        { key: 'edit', action: () => onOpenModal(can['update:settings'], row.original) },
+                        { key: 'edit', action: () => onOpenModal(can['update:sponsor-types'], row.original) },
                         {
                             key: 'archive',
-                            action: () => onDelete(can['delete:settings'], route('sponsor-types.destroy', id), name),
+                            action: () => onDelete(can['delete:sponsor-types'], route('sponsor-types.destroy', id), name),
                         },
                         {
                             key: 'restore',
-                            action: () => onRestore(can['restore:settings'], route('sponsor-types.restore', id), name),
+                            action: () => onRestore(can['restore:sponsor-types'], route('sponsor-types.restore', id), name),
                         },
                         {
                             key: 'delete',
-                            action: () => onForceDelete(can['forceDelete:settings'], route('sponsor-types.force-delete', id), name),
+                            action: () => onForceDelete(can['forceDelete:sponsor-types'], route('sponsor-types.force-delete', id), name),
                         },
                     ]);
                 },

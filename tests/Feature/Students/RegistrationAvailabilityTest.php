@@ -245,8 +245,8 @@ test('intake period status can be updated from institution settings', function (
     $intake = ensureCurrentIntakeStatus(IntakePeriodStatusEnum::Open->value);
     $user = User::factory()->create(['tenant_id' => $intake->tenant_id]);
 
-    Permission::findOrCreate('update:institution-settings', 'web');
-    $user->givePermissionTo('update:institution-settings');
+    Permission::findOrCreate('update:intake-periods', 'web');
+    $user->givePermissionTo('update:intake-periods');
 
     $this->actingAs($user)
         ->put(route('intake-periods.update', $intake->id), [

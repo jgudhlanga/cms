@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace App\Support\Institution;
 
-use App\Models\AcademicCalendars\AcademicYearOption;
+use App\Models\AcademicCalendars\Semester;
 use App\Models\Institution\Syllabus\CourseSyllabusModule;
 use App\Services\Institution\ResolveCalendarTypeSlugPrefixFromCourseSyllabus;
 use Illuminate\Database\Eloquent\Builder;
 
 final class CourseSyllabusModulePeriod
 {
-    public static function matchesPeriod(CourseSyllabusModule $module, int $academicYearOptionId): bool
+    public static function matchesPeriod(CourseSyllabusModule $module, int $semesterId): bool
     {
-        if ((int) $module->academic_year_option_id === $academicYearOptionId) {
+        if ((int) $module->semester_id === $semesterId) {
             return true;
         }
 
@@ -24,8 +24,8 @@ final class CourseSyllabusModulePeriod
         $slugPrefix = app(ResolveCalendarTypeSlugPrefixFromCourseSyllabus::class)
             ->resolve((int) $module->course_syllabus_id);
 
-        $optionSlug = AcademicYearOption::query()
-            ->whereKey($academicYearOptionId)
+        $optionSlug = Semester::query()
+            ->whereKey($semesterId)
             ->value('slug');
 
         if (! is_string($optionSlug)) {
@@ -41,16 +41,16 @@ final class CourseSyllabusModulePeriod
      */
     public static function scopeForPeriod(
         Builder $query,
-        int $academicYearOptionId,
+        int $semesterId,
         string $slugPrefix,
     ): Builder {
-        return $query->where(function (Builder $periodQuery) use ($academicYearOptionId, $slugPrefix): void {
+        return $query->where(function (Builder $periodQuery) use ($semesterId, $slugPrefix): void {
             $periodQuery
-                ->where('academic_year_option_id', $academicYearOptionId)
+                ->where('semester_id', $semesterId)
                 ->orWhere(function (Builder $allSemestersQuery) use ($slugPrefix): void {
                     $allSemestersQuery
                         ->where('all_semesters', true)
-                        ->whereHas('academicYearOption', function (Builder $optionQuery) use ($slugPrefix): void {
+                        ->whereHas('semester', function (Builder $optionQuery) use ($slugPrefix): void {
                             $optionQuery->where('slug', 'like', $slugPrefix.'-%');
                         });
                 });

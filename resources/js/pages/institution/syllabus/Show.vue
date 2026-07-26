@@ -7,7 +7,7 @@ import { BaseCheckbox } from '@/components/core/form';
 import BaseTooltip from '@/components/core/util/BaseTooltip.vue';
 import LabelValue from '@/components/core/util/LabelValue.vue';
 import { Badge } from '@/components/ui/badge';
-import { useAcademicYearOptionsByCalendarType } from '@/composables/academicCalendars/useAcademicYearOptionsByCalendarType';
+import { useSemestersByCalendarType } from '@/composables/academicCalendars/useSemestersByCalendarType';
 import { useCourseSyllabusModuleMove, MOVE_SYLLABUS_MODULES_MODAL } from '@/composables/institution/useCourseSyllabusModuleMove';
 import { useCourseSyllabusModuleSelection } from '@/composables/institution/useCourseSyllabusModuleSelection';
 import { useCourseSyllabusModules } from '@/composables/institution/useCourseSyllabusModules';
@@ -60,7 +60,7 @@ const institutionDepartmentId = computed(() => String(institutionDepartment?.id 
 const courseSyllabusId = computed(() => String(courseSyllabus?.id ?? ''));
 const calendarType = computed(() => courseSyllabus?.attributes?.calendarType ?? 'semester');
 
-const { yearOptions: moveTargetOptions, loadYearOptions } = useAcademicYearOptionsByCalendarType();
+const { yearOptions: moveTargetOptions, loadYearOptions } = useSemestersByCalendarType();
 
 const modulesListComputed = computed(() => modulesList.value);
 

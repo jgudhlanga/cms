@@ -9,17 +9,17 @@ class CourseSyllabusModuleResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
-        $this->resource->loadMissing('academicYearOption');
+        $this->resource->loadMissing('semester');
 
         return [
             'type' => 'course-syllabus-module',
             'id' => $this->resource->id,
             'attributes' => [
                 'courseSyllabusId' => $this->resource->course_syllabus_id,
-                'academicYearOptionId' => $this->resource->academic_year_option_id,
-                'academicYearOptionName' => $this->resource->all_semesters
+                'semesterId' => $this->resource->semester_id,
+                'semesterName' => $this->resource->all_semesters
                     ? __('syllabus.all_semesters')
-                    : $this->resource->academicYearOption?->name,
+                    : $this->resource->semester?->name,
                 'title' => $this->resource->title,
                 'code' => $this->resource->code,
                 'durationInHours' => $this->resource->duration_in_hours,

@@ -82,6 +82,7 @@ class DocumentTemplateController extends Controller
     public function edit(DocumentTemplate $documentTemplate): Response
     {
         $this->authorize('update', $documentTemplate);
+        $documentTemplate->loadMissing(['documentType', 'headerLogoOne', 'headerLogoTwo']);
         $documentTemplate = DocumentTemplateResource::make($documentTemplate);
         return Inertia::render('institution/document-templates/Edit', compact('documentTemplate'));
     }

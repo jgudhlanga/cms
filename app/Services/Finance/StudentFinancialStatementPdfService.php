@@ -43,7 +43,7 @@ class StudentFinancialStatementPdfService
                 'department' => $enrolment?->institutionDepartment?->department?->name,
                 'modeOfStudy' => $enrolment?->modeOfStudy?->name,
                 'academicCalendar' => $enrolment?->academicCalendar?->calendar_year,
-                //'academicYearOption' => $enrolment?->academicYearOption?->name,
+                //'semester' => $enrolment?->semester?->name,
                 'enrolmentStatus' => $enrolment?->studentEnrolmentStatus?->name,
             ], fn (?string $value) => filled($value)),
             'summary' => [
@@ -67,7 +67,7 @@ class StudentFinancialStatementPdfService
                     'latestEnrolment.departmentCourse.course',
                     'latestEnrolment.modeOfStudy',
                     'latestEnrolment.academicCalendar',
-                    'latestEnrolment.academicYearOption',
+                    'latestEnrolment.semester',
                     'latestEnrolment.studentEnrolmentStatus',
                 ])
                 ->findOrFail($student->id);
@@ -80,7 +80,7 @@ class StudentFinancialStatementPdfService
             'latestEnrolment.departmentCourse.course',
             'latestEnrolment.modeOfStudy',
             'latestEnrolment.academicCalendar',
-            'latestEnrolment.academicYearOption',
+            'latestEnrolment.semester',
             'latestEnrolment.studentEnrolmentStatus',
         ]);
 

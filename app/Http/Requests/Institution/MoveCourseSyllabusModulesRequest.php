@@ -25,10 +25,10 @@ class MoveCourseSyllabusModulesRequest extends FormRequest
         return [
             'course_syllabus_module_ids' => ['required', 'array', 'min:1'],
             'course_syllabus_module_ids.*' => ['integer', 'distinct', 'exists:course_syllabus_modules,id'],
-            'target_academic_year_option_id' => [
+            'target_semester_id' => [
                 'required',
                 'integer',
-                Rule::exists('academic_year_options', 'id')->where(function ($query) use ($slugPrefix): void {
+                Rule::exists('semesters', 'id')->where(function ($query) use ($slugPrefix): void {
                     $query->where('slug', 'like', $slugPrefix.'-%');
                 }),
             ],
@@ -50,7 +50,7 @@ class MoveCourseSyllabusModulesRequest extends FormRequest
 
             /** @var array<int, int> $moduleIds */
             $moduleIds = array_map('intval', $this->input('course_syllabus_module_ids', []));
-            $targetOptionId = (int) $this->input('target_academic_year_option_id');
+            $targetOptionId = (int) $this->input('target_semester_id');
 
             $countOnSyllabus = CourseSyllabusModule::query()
                 ->where('course_syllabus_id', $courseSyllabus->id)
@@ -76,11 +76,11 @@ class MoveCourseSyllabusModulesRequest extends FormRequest
 
             $allAlreadyOnTarget = CourseSyllabusModule::query()
                 ->whereIn('id', $moduleIds)
-                ->where('academic_year_option_id', $targetOptionId)
+                ->where('semester_id', $targetOptionId)
                 ->count() === count($moduleIds);
 
             if ($allAlreadyOnTarget) {
-                $validator->errors()->add('target_academic_year_option_id', __('syllabus.move_modules_same_period'));
+                $validator->errors()->add('target_semester_id', __('syllabus.move_modules_same_period'));
             }
         });
     }

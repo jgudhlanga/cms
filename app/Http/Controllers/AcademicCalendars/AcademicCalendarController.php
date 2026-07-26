@@ -110,8 +110,8 @@ class AcademicCalendarController extends Controller
         $level = DepartmentLevel::find($departmentLevelId);
         $mode = ModeOfStudy::find($modeOfStudyId);
         $level?->loadMissing('level');
-        $selectedAcademicYearOptionId = request()->filled('academic_year_option_id')
-            ? (int) request()->query('academic_year_option_id')
+        $selectedSemesterId = request()->filled('semester_id')
+            ? (int) request()->query('semester_id')
             : null;
         $classConfigId = request()->query('class_config_id');
         $classConfig = ClassConfig::query()
@@ -129,7 +129,7 @@ class AcademicCalendarController extends Controller
                     ->where('department_level_id', (int) $departmentLevelId)
                     ->where('department_course_id', (int) $departmentCourseId)
                     ->where('mode_of_study_id', (int) $modeOfStudyId)
-                    ->whereNull('academic_year_option_id');
+                    ->whereNull('semester_id');
             })
             ->first();
         $calendarIdsForYear = AcademicCalendar::idsForStartedCalendarYear((string) $academicCalendar->calendar_year);
@@ -178,7 +178,7 @@ class AcademicCalendarController extends Controller
         $staffingContext = $this->buildStaffingContextForPreviews(
             $classConfig,
             $previewClasses,
-            $selectedAcademicYearOptionId,
+            $selectedSemesterId,
         );
 
         return Inertia::render('institution/academicCalendars/DepartmentAcademicCalendarClasses', [
@@ -192,7 +192,7 @@ class AcademicCalendarController extends Controller
             'previewClasses' => $staffingContext['previewClasses'],
             'generationContext' => $context,
             'staffingSummary' => $staffingContext['staffingSummary'],
-            'selectedAcademicYearOptionId' => $selectedAcademicYearOptionId,
+            'selectedSemesterId' => $selectedSemesterId,
             'calendarType' => $level?->level?->calendar_type?->value ?? 'semester',
             'semesterConfigHasSyllabi' => $staffingContext['semesterConfigHasSyllabi'],
             'canAssignStaffing' => auth()->user()?->can('update', $academicCalendar) ?? false,
@@ -461,15 +461,15 @@ class AcademicCalendarController extends Controller
 
         $students = $this->studentsPayloadForAcademicCalendarClass($academicCalendarClass);
 
-        $selectedAcademicYearOptionId = request()->filled('academic_year_option_id')
-            ? (int) request()->query('academic_year_option_id')
+        $selectedSemesterId = request()->filled('semester_id')
+            ? (int) request()->query('semester_id')
             : null;
 
         $level?->loadMissing('level');
         $staffingContext = $this->buildStaffingContextForClass(
             $academicCalendarClass,
             $classConfig,
-            $selectedAcademicYearOptionId,
+            $selectedSemesterId,
         );
 
         $siblingClassesCollection = AcademicCalendarClass::query()
@@ -516,7 +516,7 @@ class AcademicCalendarController extends Controller
                 'tutor' => $staffingContext['tutor'],
             ],
             'semesterModules' => $staffingContext['semesterModules'],
-            'selectedAcademicYearOptionId' => $selectedAcademicYearOptionId,
+            'selectedSemesterId' => $selectedSemesterId,
             'calendarType' => $level?->level?->calendar_type?->value ?? 'semester',
             'semesterConfigHasSyllabi' => $staffingContext['semesterConfigHasSyllabi'],
             'canAssignStaffing' => auth()->user()?->can('update', $academicCalendar) ?? false,
@@ -685,7 +685,7 @@ class AcademicCalendarController extends Controller
                 'department_course_id' => (int) $validated['department_course_id'],
                 'department_level_id' => (int) $validated['department_level_id'],
                 'mode_of_study_id' => (int) $validated['mode_of_study_id'],
-                'academic_year_option_id' => (int) $validated['academic_year_option_id'],
+                'semester_id' => (int) $validated['semester_id'],
             ],
             [
                 'students_per_class' => (int) $validated['students_per_class'],
@@ -1128,7 +1128,7 @@ class AcademicCalendarController extends Controller
     private function buildStaffingContextForPreviews(
         ?ClassConfig $classConfig,
         array $previewClasses,
-        ?int $academicYearOptionId,
+        ?int $semesterId,
     ): array {
         $emptySummary = [
             'tutorsAssigned' => 0,
@@ -1154,7 +1154,7 @@ class AcademicCalendarController extends Controller
         )));
 
         $tutorsByClassId = $this->classStaffingService->tutorsByClassId($classIds);
-        $semesterConfig = $this->classStaffingService->resolveSemesterClassConfig($classConfig, $academicYearOptionId);
+        $semesterConfig = $this->classStaffingService->resolveSemesterClassConfig($classConfig, $semesterId);
         $modules = $semesterConfig instanceof ClassConfig
             ? $this->classStaffingService->resolveSemesterModules($semesterConfig)
             : collect();
@@ -1202,13 +1202,13 @@ class AcademicCalendarController extends Controller
     private function buildStaffingContextForClass(
         AcademicCalendarClass $academicCalendarClass,
         ClassConfig $allocationConfig,
-        ?int $academicYearOptionId,
+        ?int $semesterId,
     ): array {
         $classId = (int) $academicCalendarClass->id;
         $tutorsByClassId = $this->classStaffingService->tutorsByClassId([$classId]);
         $semesterConfig = $this->classStaffingService->resolveSemesterClassConfig(
             $allocationConfig,
-            $academicYearOptionId,
+            $semesterId,
         );
         $modules = $semesterConfig instanceof ClassConfig
             ? $this->classStaffingService->resolveSemesterModules($semesterConfig)
@@ -1370,7 +1370,7 @@ class AcademicCalendarController extends Controller
                     ->where('department_level_id', $departmentLevelId)
                     ->where('department_course_id', $departmentCourseId)
                     ->where('mode_of_study_id', $modeOfStudyId)
-                    ->whereNull('academic_year_option_id');
+                    ->whereNull('semester_id');
             })
             ->first();
 

@@ -28,8 +28,8 @@ const can = props?.auth?.can;
             :search-url="route('payment-days.index')"
             :pagination="{ ...paymentDays.links, ...paymentDays.meta }"
             :columns="createPaymentDayColumns()"
-            :on-create="() => onOpenModal(can['create:settings'])"
-            :disable-create="!can['create:settings']"
+            :on-create="() => onOpenModal(can['create:payment-days'])"
+            :disable-create="!can['create:payment-days']"
         />
         <CreateEdit />
     </PageContainer>

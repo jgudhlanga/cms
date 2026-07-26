@@ -13,7 +13,7 @@ class StudentEnrolmentResource extends JsonResource
     {
         $this->resource->loadMissing([
             'studentEnrolmentStatus',
-            'academicYearOption',
+            'semester',
             'academicCalendar',
             'academicCalendarStudentEnrolment.academicCalendarClass.classConfig.syllabus',
         ]);
@@ -29,11 +29,11 @@ class StudentEnrolmentResource extends JsonResource
                 'departmentLevelId' => $this->department_level_id,
                 'departmentCourseId' => $this->department_course_id,
                 'modeOfStudyId' => $this->mode_of_study_id,
-                'academicYearOptionId' => $this->academic_year_option_id,
+                'semesterId' => $this->semester_id,
                 'academicCalendarId' => $this->academic_calendar_id,
                 'studentEnrolmentStatusId' => $this->student_enrolment_status_id,
                 'status' => $this->studentEnrolmentStatus?->name,
-                'academicYearOption' => $this->academicYearOption?->name,
+                'semester' => $this->semester?->name,
                 'academicCalendar' => $this->academicCalendar?->calendar_year,
             ],
             'relationships' => [

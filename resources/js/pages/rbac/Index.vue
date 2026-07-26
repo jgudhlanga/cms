@@ -19,9 +19,9 @@ const can = props?.auth?.can;
     <Head :title="$t('trans.rbac')" />
     <PageContainer :breadcrumbs="breadcrumbs">
         <HeadingSmall :title="$t('trans.rbac')" :description="$t('trans.rbac_settings_description')" />
-        <AvatarTitleList v-if="can['view:settings']" :tabs="tabs" />
+        <AvatarTitleList v-if="can['root:manage']" :tabs="tabs" />
         <BaseAlert
-            v-if="!can['view:settings']"
+            v-if="!can['root:manage']"
             :title="$t('trans.forbidden')"
             :description="$t('trans.forbidden_message')"
         />

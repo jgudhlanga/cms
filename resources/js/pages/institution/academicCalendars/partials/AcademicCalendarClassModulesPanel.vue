@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import BaseAccordion from '@/components/core/accordion/BaseAccordion.vue';
 import BaseAccordionItem from '@/components/core/accordion/BaseAccordionItem.vue';
-import SelectAcademicYearOptionSelect from '@/components/core/form/select/SelectAcademicYearOptionSelect.vue';
+import SelectSemesterSelect from '@/components/core/form/select/SelectSemesterSelect.vue';
 import BaseButton from '@/components/core/button/BaseButton.vue';
 import BaseTag from '@/components/core/util/BaseTag.vue';
 import AcademicCalendarClassModuleAccordionItem from '@/pages/institution/academicCalendars/partials/AcademicCalendarClassModuleAccordionItem.vue';
@@ -20,7 +20,7 @@ const props = defineProps<{
     calendarYear: string;
     academicCalendarClassId: number;
     semesterModules: ClassSemesterModule[];
-    selectedAcademicYearOptionId: number | null;
+    selectedSemesterId: number | null;
     calendarType: 'term' | 'semester' | 'abma';
     semesterConfigHasSyllabi: boolean;
     canAssignStaffing: boolean;
@@ -59,7 +59,7 @@ const {
 } = useClassModuleLecturerSave(
     () => syncModuleUrl.value,
     () => copyDefaultsUrl.value,
-    () => props.selectedAcademicYearOptionId,
+    () => props.selectedSemesterId,
 );
 
 const syncModuleStaffIds = (modules: ClassSemesterModule[]): void => {
@@ -85,14 +85,14 @@ watch(
 );
 
 const selectedSemester = computed({
-    get: () => props.selectedAcademicYearOptionId,
+    get: () => props.selectedSemesterId,
     set: (value: number | null) => {
         const currentUrl = new URL(window.location.href);
 
         if (value == null) {
-            currentUrl.searchParams.delete('academic_year_option_id');
+            currentUrl.searchParams.delete('semester_id');
         } else {
-            currentUrl.searchParams.set('academic_year_option_id', String(value));
+            currentUrl.searchParams.set('semester_id', String(value));
         }
 
         router.get(currentUrl.pathname + currentUrl.search, {}, { preserveScroll: true, preserveState: false });
@@ -105,7 +105,7 @@ const handleSaveModule = async (module: ClassSemesterModule): Promise<void> => {
 };
 
 const handleCopyDefaults = async (): Promise<void> => {
-    if (props.selectedAcademicYearOptionId == null) {
+    if (props.selectedSemesterId == null) {
         return;
     }
 
@@ -155,13 +155,13 @@ const moduleCountLabel = computed(
                     @mousedown.stop
                 >
                     <div class="w-48 shrink-0">
-                        <SelectAcademicYearOptionSelect
+                        <SelectSemesterSelect
                             v-model="selectedSemester"
                             :calendar-type="calendarType"
                         />
                     </div>
                     <BaseButton
-                        v-if="canAssignStaffing && selectedAcademicYearOptionId != null && semesterConfigHasSyllabi"
+                        v-if="canAssignStaffing && selectedSemesterId != null && semesterConfigHasSyllabi"
                         type="button"
                         :title="$t('academic_calendar.copy_syllabus_defaults')"
                         :variant="ColorVariant.primary_outline"
@@ -171,7 +171,7 @@ const moduleCountLabel = computed(
                         @click.stop="handleCopyDefaults"
                     />
                     <BaseTag
-                        v-if="selectedAcademicYearOptionId != null"
+                        v-if="selectedSemesterId != null"
                         :title="moduleCountLabel"
                         :variant="ColorVariant.fuchsia_outline"
                         classes="cursor-default text-[10px] font-medium"
@@ -181,19 +181,19 @@ const moduleCountLabel = computed(
 
             <div class="space-y-3">
                 <p
-                    v-if="selectedAcademicYearOptionId != null && !semesterConfigHasSyllabi"
+                    v-if="selectedSemesterId != null && !semesterConfigHasSyllabi"
                     class="text-sm text-amber-700"
                 >
                     {{ $t('academic_calendar.semester_config_missing') }}
                 </p>
 
                 <Empty
-                    v-else-if="selectedAcademicYearOptionId != null && !hasModules"
+                    v-else-if="selectedSemesterId != null && !hasModules"
                     :message="$t('academic_calendar.no_modules_for_semester')"
                 />
 
                 <BaseAccordion
-                    v-else-if="selectedAcademicYearOptionId != null && hasModules"
+                    v-else-if="selectedSemesterId != null && hasModules"
                     v-model="expandedModules"
                 >
                     <AcademicCalendarClassModuleAccordionItem

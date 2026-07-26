@@ -45,15 +45,15 @@ export const useDocumentTemplates = () => {
                         { key: 'edit', action: () => navigateTo(route('document-templates.edit', id)) },
                         {
                             key: 'archive',
-                            action: () => onDelete(can['delete:institution-settings'], route('document-templates.destroy', id), name),
+                            action: () => onDelete(can['delete:document-templates'], route('document-templates.destroy', id), name),
                         },
                         {
                             key: 'restore',
-                            action: () => onRestore(can['restore:institution-settings'], route('document-templates.restore', id), name),
+                            action: () => onRestore(can['restore:document-templates'], route('document-templates.restore', id), name),
                         },
                         {
                             key: 'delete',
-                            action: () => onForceDelete(can['forceDelete:institution-settings'], route('document-templates.force-delete', id), name),
+                            action: () => onForceDelete(can['forceDelete:document-templates'], route('document-templates.force-delete', id), name),
                         },
                     ]);
                 },

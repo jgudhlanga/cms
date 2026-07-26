@@ -30,7 +30,7 @@ class StudentProgrammeDataService
             'enrolments.studentApplication',
             'enrolments.departmentLevel.level',
             'enrolments.departmentCourse.course',
-            'enrolments.academicYearOption',
+            'enrolments.semester',
             'enrolments.academicCalendar',
             'enrolments.studentEnrolmentStatus',
             'enrolments.academicCalendarStudentEnrolment.academicCalendarClass.classConfig',
@@ -124,7 +124,7 @@ class StudentProgrammeDataService
     ): array {
         $syllabusIds = $this->courseSyllabusCodeResolver->resolveSyllabusIds($enrolment);
 
-        $enrolmentOptionId = (int) $enrolment->academic_year_option_id;
+        $enrolmentOptionId = (int) $enrolment->semester_id;
         $studentEnrolmentId = (int) $enrolment->id;
         $assessmentTypes = $assessmentTypesByModeId->get((int) $enrolment->mode_of_study_id, collect())->all();
 
@@ -144,14 +144,14 @@ class StudentProgrammeDataService
             ->all();
 
         $semesterSlug = Str::slug(
-            $enrolment->academicYearOption?->slug
-            ?? $enrolment->academicYearOption?->name
+            $enrolment->semester?->slug
+            ?? $enrolment->semester?->name
             ?? ''
         );
 
         return [
             'id' => sprintf('%s-%s', $studentApplicationId ?? '', $semesterSlug),
-            'label' => $enrolment->academicYearOption?->name,
+            'label' => $enrolment->semester?->name,
             'year' => $enrolment->academicCalendar?->calendar_year,
             'status' => $enrolment->studentEnrolmentStatus?->name,
             'studentEnrolmentId' => $studentEnrolmentId,

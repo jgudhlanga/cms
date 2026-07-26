@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Institution;
 
 use App\Importers\Institution\CourseSyllabusImporter;
-use App\Models\AcademicCalendars\AcademicYearOption;
+use App\Models\AcademicCalendars\Semester;
 use App\Models\Institution\DepartmentCourse;
 use App\Models\Institution\DepartmentLevel;
 use App\Models\Institution\DepartmentLevelCourse;
@@ -70,7 +70,7 @@ class CourseSyllabusImportTemplateService
             ->pluck('code')
             ->all();
 
-        $semesters = AcademicYearOption::query()
+        $semesters = Semester::query()
             ->orderBy('name')
             ->pluck('name')
             ->all();

@@ -27,18 +27,18 @@ export const useLanguages = () => {
                     const id = getIdParams(row.original.id?.toString() ?? '');
                     const name = trans_choice('trans.language', 1);
                     return moreActionButton(!!row.original?.attributes?.deletedAt, [
-                        { key: 'edit', action: () => onOpenModal(can['update:settings'], row.original) },
+                        { key: 'edit', action: () => onOpenModal(can['update:languages'], row.original) },
                         {
                             key: 'archive',
-                            action: () => onDelete(can['delete:settings'], route('languages.destroy', id), name),
+                            action: () => onDelete(can['delete:languages'], route('languages.destroy', id), name),
                         },
                         {
                             key: 'restore',
-                            action: () => onRestore(can['restore:settings'], route('languages.restore', id), name),
+                            action: () => onRestore(can['restore:languages'], route('languages.restore', id), name),
                         },
                         {
                             key: 'delete',
-                            action: () => onForceDelete(can['forceDelete:settings'], route('languages.force-delete', id), name),
+                            action: () => onForceDelete(can['forceDelete:languages'], route('languages.force-delete', id), name),
                         },
                     ]);
                 },

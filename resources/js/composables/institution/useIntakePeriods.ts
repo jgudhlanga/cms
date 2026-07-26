@@ -85,18 +85,18 @@ export const useIntakePeriods = () => {
                     const id = getIdParams(row.original.id?.toString() ?? '');
                     const name = trans_choice('trans.intake_period', 1);
                     return moreActionButton(!!row.original?.attributes?.deletedAt, [
-                        { key: 'edit', action: () => onOpenModal(can['update:institution-settings'], row.original) },
+                        { key: 'edit', action: () => onOpenModal(can['update:intake-periods'], row.original) },
                         {
                             key: 'archive',
-                            action: () => onDelete(can['delete:institution-settings'], route('intake-periods.destroy', id), name),
+                            action: () => onDelete(can['delete:intake-periods'], route('intake-periods.destroy', id), name),
                         },
                         {
                             key: 'restore',
-                            action: () => onRestore(can['restore:institution-settings'], route('intake-periods.restore', id), name),
+                            action: () => onRestore(can['restore:intake-periods'], route('intake-periods.restore', id), name),
                         },
                         {
                             key: 'delete',
-                            action: () => onForceDelete(can['forceDelete:institution-settings'], route('intake-periods.force-delete', id), name),
+                            action: () => onForceDelete(can['forceDelete:intake-periods'], route('intake-periods.force-delete', id), name),
                         },
                     ]);
                 },

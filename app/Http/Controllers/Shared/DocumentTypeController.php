@@ -24,7 +24,7 @@ class DocumentTypeController extends Controller
      */
     public function index(SharedNameFilter $filters): Response
     {
-		$this->authorize('viewSettings');
+		$this->authorize('viewAny', DocumentType::class);
 		$documentTypes = DocumentTypeResource::collection($this->repository->allFilter(['*'], $filters));
 		return Inertia::render('shared/documentTypes/Index', [
 			'documentTypes' => $documentTypes,
@@ -38,7 +38,7 @@ class DocumentTypeController extends Controller
      */
     public function create(): void
     {
-		$this->authorize('createSettings');
+		$this->authorize('create', DocumentType::class);
 	}
 
     /**
@@ -46,7 +46,7 @@ class DocumentTypeController extends Controller
      */
     public function store(DocumentTypeRequest $request): void
     {
-		$this->authorize('createSettings');
+		$this->authorize('create', DocumentType::class);
 		$this->repository->create(DocumentTypeDto::fromDocumentTypeRequest($request));
 	}
 
@@ -65,7 +65,7 @@ class DocumentTypeController extends Controller
      */
     public function update(DocumentTypeRequest $request, DocumentType $documentType): void
     {
-		$this->authorize('updateSettings');
+		$this->authorize('update', $documentType);
 		$this->repository->update($documentType, DocumentTypeDto::fromDocumentTypeRequest($request));
 	}
 
@@ -74,7 +74,7 @@ class DocumentTypeController extends Controller
      */
     public function destroy(DocumentType $documentType): void
     {
-		$this->authorize('deleteSettings');
+		$this->authorize('delete', $documentType);
 		$this->repository->delete($documentType);
 	}
 
@@ -84,7 +84,7 @@ class DocumentTypeController extends Controller
     public function restore(string $id): void
     {
 		$documentType = $this->repository->findTrashed($id);
-		$this->authorize('restoreSettings');
+		$this->authorize('restore', $documentType);
 		$this->repository->restore($documentType);
 	}
 
@@ -93,7 +93,7 @@ class DocumentTypeController extends Controller
      */
     public function forceDelete(DocumentType $documentType): void
     {
-		$this->authorize('forceDeleteSettings');
+		$this->authorize('forceDelete', $documentType);
 		$this->repository->delete($documentType, true);
 	}
 }

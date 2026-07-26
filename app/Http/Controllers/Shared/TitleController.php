@@ -19,7 +19,7 @@ class TitleController extends Controller
 
 	public function index(SharedNameFilter $filters)
 	{
-		$this->authorize('viewSettings');
+		$this->authorize('viewAny', Title::class);
 		$titles = TitleResource::collection($this->repository->allFilter(['*'], $filters));
 		return Inertia::render('shared/titles/Index', [
 			'titles' => $titles,
@@ -30,12 +30,12 @@ class TitleController extends Controller
 
 	public function create()
 	{
-		$this->authorize('createSettings');
+		$this->authorize('create', Title::class);
 	}
 
 	public function store(TitleRequest $request)
 	{
-		$this->authorize('createSettings');
+		$this->authorize('create', Title::class);
 		$this->repository->create(TitleDto::fromTitleRequest($request));
 	}
 
@@ -51,26 +51,26 @@ class TitleController extends Controller
 
 	public function update(TitleRequest $request, Title $title)
 	{
-		$this->authorize('updateSettings');
+		$this->authorize('update', $title);
 		$this->repository->update($title, TitleDto::fromTitleRequest($request));
 	}
 
 	public function destroy(Title $title)
 	{
-		$this->authorize('deleteSettings');
+		$this->authorize('delete', $title);
 		$this->repository->delete($title);
 	}
 
 	public function restore(string $id)
 	{
 		$title = $this->repository->findTrashed($id);
-		$this->authorize('restoreSettings');
+		$this->authorize('restore', $title);
 		$this->repository->restore($title);
 	}
 
 	public function forceDelete(Title $title)
 	{
-		$this->authorize('forceDeleteSettings');
+		$this->authorize('forceDelete', $title);
 		$this->repository->delete($title, true);
 	}
 }

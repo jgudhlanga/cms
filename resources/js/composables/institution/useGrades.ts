@@ -30,18 +30,18 @@ export const useGrades = () => {
                     const id = getIdParams(row.original.id?.toString() ?? '');
                     const name = trans_choice('trans.grade', 1);
                     return moreActionButton(!!row.original?.attributes?.deletedAt, [
-                        { key: 'edit', action: () => onOpenModal(can['update:institution-settings'], row.original) },
+                        { key: 'edit', action: () => onOpenModal(can['update:grades'], row.original) },
                         {
                             key: 'archive',
-                            action: () => onDelete(can['delete:institution-settings'], route('grades.destroy', id), name),
+                            action: () => onDelete(can['delete:grades'], route('grades.destroy', id), name),
                         },
                         {
                             key: 'restore',
-                            action: () => onRestore(can['restore:institution-settings'], route('grades.restore', id), name),
+                            action: () => onRestore(can['restore:grades'], route('grades.restore', id), name),
                         },
                         {
                             key: 'delete',
-                            action: () => onForceDelete(can['forceDelete:institution-settings'], route('grades.force-delete', id), name),
+                            action: () => onForceDelete(can['forceDelete:grades'], route('grades.force-delete', id), name),
                         },
                     ]);
                 },

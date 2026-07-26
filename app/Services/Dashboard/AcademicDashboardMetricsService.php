@@ -61,6 +61,8 @@ class AcademicDashboardMetricsService
         $moduleResults = $this->moduleResults();
         $gradedResults = $this->gradedResultsFromModuleResults($moduleResults);
         $attachmentStatus = $this->attachmentStatus();
+        $passRateByCourse = $this->passRateByCourse($gradedResults);
+        $passRateByModule = $this->passRateByModule($gradedResults);
 
         return [
             'summary' => $this->summary($gradedResults, $moduleResults),
@@ -68,7 +70,12 @@ class AcademicDashboardMetricsService
             'gradeDistribution' => $this->gradeDistribution($gradedResults),
             'passRateByDepartment' => $this->passRateByDepartment($gradedResults),
             'passRateByLevel' => $this->passRateByLevel($gradedResults),
-            'passRateByCourse' => $this->passRateByCourse($gradedResults),
+            'passRateByCourse' => $passRateByCourse,
+            'passRateByModule' => $passRateByModule,
+            'topPerformingCourses' => array_slice($passRateByCourse, 0, 5),
+            'bottomPerformingCourses' => array_slice(array_reverse($passRateByCourse), 0, 5),
+            'topPerformingModules' => array_slice($passRateByModule, 0, 5),
+            'bottomPerformingModules' => array_slice(array_reverse($passRateByModule), 0, 5),
             'moduleFailureHotspots' => $this->moduleFailureHotspots($gradedResults),
             'missingMarksByDepartment' => $this->missingMarksBreakdown($moduleResults, 'departmentId', 'departmentName'),
             'missingMarksByLevel' => $this->missingMarksBreakdown($moduleResults, 'levelId', 'levelName'),
@@ -285,6 +292,15 @@ class AcademicDashboardMetricsService
     private function passRateByCourse(array $gradedResults): array
     {
         return $this->passRateBreakdown($gradedResults, 'courseId', 'courseName', 'course');
+    }
+
+    /**
+     * @param  list<array{band: string, moduleId: int, moduleName: string}>  $gradedResults
+     * @return list<array<string, mixed>>
+     */
+    private function passRateByModule(array $gradedResults): array
+    {
+        return $this->passRateBreakdown($gradedResults, 'moduleId', 'moduleName', 'module');
     }
 
     /**
@@ -643,7 +659,7 @@ class AcademicDashboardMetricsService
             ->where(function ($query) use ($classConfig, $slugPrefix): void {
                 CourseSyllabusModulePeriod::scopeForPeriod(
                     $query,
-                    (int) $classConfig->academic_year_option_id,
+                    (int) $classConfig->semester_id,
                     $slugPrefix,
                 );
             })

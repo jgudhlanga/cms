@@ -27,18 +27,18 @@ export const usePaymentDays = () => {
                     const id = getIdParams(row.original.id?.toString() ?? '');
                     const name = trans_choice('trans.payment_day', 1);
                     return moreActionButton(!!row.original?.attributes?.deletedAt, [
-                        { key: 'edit', action: () => onOpenModal(can['update:settings'], row.original) },
+                        { key: 'edit', action: () => onOpenModal(can['update:payment-days'], row.original) },
                         {
                             key: 'archive',
-                            action: () => onDelete(can['delete:settings'], route('payment-days.destroy', id), name),
+                            action: () => onDelete(can['delete:payment-days'], route('payment-days.destroy', id), name),
                         },
                         {
                             key: 'restore',
-                            action: () => onRestore(can['restore:settings'], route('payment-days.restore', id), name),
+                            action: () => onRestore(can['restore:payment-days'], route('payment-days.restore', id), name),
                         },
                         {
                             key: 'delete',
-                            action: () => onForceDelete(can['forceDelete:settings'], route('payment-days.force-delete', id), name),
+                            action: () => onForceDelete(can['forceDelete:payment-days'], route('payment-days.force-delete', id), name),
                         },
                     ]);
                 },

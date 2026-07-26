@@ -6,6 +6,7 @@ import Empty from '@/components/core/util/Empty.vue';
 import { useUtils } from '@/composables/core/useUtils';
 import { useDepartmentCourses } from '@/composables/institution/useDepartmentCourses';
 import { ColorVariant } from '@/enums/colors';
+import { hasAbility } from '@/lib/permissions';
 import { getIdParams } from '@/lib/utils';
 import { AuthObject } from '@/types/data-pagination';
 import { DepartmentCourse, DepartmentCourseLevel, DepartmentCourseUpdateParams, DepartmentLevel } from '@/types/department-meta-data';
@@ -39,10 +40,14 @@ const breadcrumbs: Array<Link> = [
     },
 ];
 const { navigateTo, isItTrue } = useUtils();
+const canToggleCourseworkCapture = hasAbility('toggle:coursework-capture');
 const allSelected = ref(false);
 const form = useForm<DepartmentCourseUpdateParams>({
     department_level_ids: departmentCourse?.relationships?.departmentCourseLevels?.map((item: DepartmentCourseLevel) => item?.departmentLevelId),
     show_on_current_application_period: isItTrue(departmentCourse?.attributes?.showOnCurrentApplicationPeriod),
+    ...(canToggleCourseworkCapture
+        ? { coursework_capture_enabled: departmentCourse?.attributes?.courseworkCaptureEnabled !== false }
+        : {}),
 });
 const selectAll = () => {
     if (allSelected.value) {
@@ -105,6 +110,12 @@ const updateCourse = () => {
                             input-id="show_on_current_application_period"
                             v-model="form.show_on_current_application_period"
                             :label="`${$t('trans.show_on_current_application_period')}`"
+                        />
+                        <BaseCheckbox
+                            v-if="canToggleCourseworkCapture"
+                            input-id="coursework_capture_enabled"
+                            v-model="form.coursework_capture_enabled"
+                            :label="$t('trans.coursework_capture_enabled')"
                         />
                     </div>
                 </BaseCard>

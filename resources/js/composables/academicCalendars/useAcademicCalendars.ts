@@ -81,7 +81,7 @@ export const useAcademicCalendars = () => {
         academicCalendars.value = data.value;
     };
 
-    const listAcademicYearOptions = async (): Promise<SelectOption[]> => {
+    const listSemesters = async (): Promise<SelectOption[]> => {
         const body = await HttpService.get(route('v1.academic-calendars.options'));
         const rows = (body?.data ?? []) as Array<{ academicYear: string }>;
         return rows.map((row) => ({
@@ -122,7 +122,7 @@ export const useAcademicCalendars = () => {
         isLoading,
         academicCalendars,
         listAcademicCalendars,
-        listAcademicYearOptions,
+        listSemesters,
         storePerClassSizeConfig,
     };
 };

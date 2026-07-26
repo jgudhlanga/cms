@@ -20,7 +20,7 @@ class CourseController extends Controller
 
     public function index(SharedNameFilter $filters)
     {
-        $this->authorize('viewSettings');
+        $this->authorize('viewAny', Course::class);
         $courses = CourseResource::collection($this->repository->allFilter(['*'], $filters));
         return Inertia::render('institution/dropdowns/courses/Index', [
             'courses' => $courses,
@@ -31,12 +31,12 @@ class CourseController extends Controller
 
     public function create()
     {
-        $this->authorize('createSettings');
+        $this->authorize('create', Course::class);
     }
 
     public function store(CourseRequest $request)
     {
-        $this->authorize('createSettings');
+        $this->authorize('create', Course::class);
         $this->repository->create(CourseDto::fromCourseRequest($request));
     }
 
@@ -52,32 +52,32 @@ class CourseController extends Controller
 
     public function update(CourseRequest $request, Course $course)
     {
-        $this->authorize('updateInstitutionSettings');
+        $this->authorize('update', $course);
         $this->repository->update($course, CourseDto::fromCourseRequest($request));
     }
 
     public function movePosition(PositionRequest $request, Course $course)
     {
-        $this->authorize('updateInstitutionSettings');
+        $this->authorize('update', $course);
         $this->repository->movePosition($course, $request);
     }
 
     public function destroy(Course $course)
     {
-        $this->authorize('deleteInstitutionSettings');
+        $this->authorize('delete', $course);
         $this->repository->delete($course);
     }
 
     public function restore(string $id)
     {
         $course = $this->repository->findTrashed($id);
-        $this->authorize('restoreInstitutionSettings');
+        $this->authorize('restore', $course);
         $this->repository->restore($course);
     }
 
     public function forceDelete(Course $course)
     {
-        $this->authorize('forceDeleteInstitutionSettings');
+        $this->authorize('forceDelete', $course);
         $this->repository->delete($course, true);
     }
 }

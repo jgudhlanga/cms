@@ -24,7 +24,7 @@ class IdTypeController extends Controller
      */
     public function index(SharedNameFilter $filters): Response
     {
-		$this->authorize('viewSettings');
+		$this->authorize('viewAny', IdType::class);
 		$idTypes = IdTypeResource::collection($this->repository->allFilter(['*'], $filters));
 		return Inertia::render('shared/idTypes/Index', [
 			'idTypes' => $idTypes,
@@ -38,7 +38,7 @@ class IdTypeController extends Controller
      */
     public function create(): void
     {
-		$this->authorize('createSettings');
+		$this->authorize('create', IdType::class);
 	}
 
     /**
@@ -46,7 +46,7 @@ class IdTypeController extends Controller
      */
     public function store(IdTypeRequest $request): void
     {
-		$this->authorize('createSettings');
+		$this->authorize('create', IdType::class);
 		$this->repository->create(IdTypeDto::fromIdTypeRequest($request));
 	}
 
@@ -65,7 +65,7 @@ class IdTypeController extends Controller
      */
     public function update(IdTypeRequest $request, IdType $idType): void
     {
-		$this->authorize('updateSettings');
+		$this->authorize('update', $idType);
 		$this->repository->update($idType, IdTypeDto::fromIdTypeRequest($request));
 	}
 
@@ -74,7 +74,7 @@ class IdTypeController extends Controller
      */
     public function destroy(IdType $idType): void
     {
-		$this->authorize('deleteSettings');
+		$this->authorize('delete', $idType);
 		$this->repository->delete($idType);
 	}
 
@@ -84,7 +84,7 @@ class IdTypeController extends Controller
     public function restore(string $id): void
     {
 		$idType = $this->repository->findTrashed($id);
-		$this->authorize('restoreSettings');
+		$this->authorize('restore', $idType);
 		$this->repository->restore($idType);
 	}
 
@@ -93,7 +93,7 @@ class IdTypeController extends Controller
      */
     public function forceDelete(IdType $idType): void
     {
-		$this->authorize('forceDeleteSettings');
+		$this->authorize('forceDelete', $idType);
 		$this->repository->delete($idType, true);
 	}
 }

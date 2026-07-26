@@ -32,18 +32,18 @@ export const useSubjects = () => {
                     const id = getIdParams(row.original.id?.toString() ?? '');
                     const name = trans_choice('trans.subject', 1);
                     return moreActionButton(!!row.original?.attributes?.deletedAt, [
-                        { key: 'edit', action: () => onOpenModal(can['update:institution-settings'], row.original) },
+                        { key: 'edit', action: () => onOpenModal(can['update:subjects'], row.original) },
                         {
                             key: 'archive',
-                            action: () => onDelete(can['delete:institution-settings'], route('subjects.destroy', id), name),
+                            action: () => onDelete(can['delete:subjects'], route('subjects.destroy', id), name),
                         },
                         {
                             key: 'restore',
-                            action: () => onRestore(can['restore:institution-settings'], route('subjects.restore', id), name),
+                            action: () => onRestore(can['restore:subjects'], route('subjects.restore', id), name),
                         },
                         {
                             key: 'delete',
-                            action: () => onForceDelete(can['forceDelete:institution-settings'], route('subjects.force-delete', id), name),
+                            action: () => onForceDelete(can['forceDelete:subjects'], route('subjects.force-delete', id), name),
                         },
                     ]);
                 },

@@ -72,7 +72,7 @@ test('assigned lecturer can open marksheet and unassigned module is forbidden', 
     $otherModule = CourseSyllabusModule::query()->create([
         'tenant_id' => $context['tenant']->id,
         'course_syllabus_id' => $context['module']->course_syllabus_id,
-        'academic_year_option_id' => $context['module']->academic_year_option_id,
+        'semester_id' => $context['module']->semester_id,
         'title' => 'Other Module',
         'code' => 'OTH999',
         'duration_in_hours' => 20,
@@ -122,7 +122,7 @@ test('lecturer cannot store course work marks for unassigned module', function (
     $otherModule = CourseSyllabusModule::query()->create([
         'tenant_id' => $context['tenant']->id,
         'course_syllabus_id' => $context['module']->course_syllabus_id,
-        'academic_year_option_id' => $context['module']->academic_year_option_id,
+        'semester_id' => $context['module']->semester_id,
         'title' => 'Forbidden Module',
         'code' => 'FORB1',
         'duration_in_hours' => 20,
@@ -220,7 +220,7 @@ test('tutor only can open class show with read-only semester modules and export 
     $otherModule = CourseSyllabusModule::query()->create([
         'tenant_id' => $context['tenant']->id,
         'course_syllabus_id' => $context['module']->course_syllabus_id,
-        'academic_year_option_id' => $context['module']->academic_year_option_id,
+        'semester_id' => $context['module']->semester_id,
         'title' => 'Tutor Oversight Module',
         'code' => 'TUT201',
         'duration_in_hours' => 20,
@@ -263,7 +263,7 @@ test('tutor only class index shows all semester module codes', function () {
     CourseSyllabusModule::query()->create([
         'tenant_id' => $context['tenant']->id,
         'course_syllabus_id' => $context['module']->course_syllabus_id,
-        'academic_year_option_id' => $context['module']->academic_year_option_id,
+        'semester_id' => $context['module']->semester_id,
         'title' => 'Tutor Oversight Module',
         'code' => 'TUT201',
         'duration_in_hours' => 20,

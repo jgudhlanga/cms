@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import Empty from '@/components/core/util/Empty.vue';
 import type { HostelDashboard, HostelDashboardBlock } from '@/types/dashboard';
-import { AlertTriangle, Bed, Building, Coins, DoorOpen, UserCheck } from 'lucide-vue-next';
+import { AlertTriangle, Bed, Building, Coins, DoorOpen, Wrench, UserCheck } from 'lucide-vue-next';
 import { computed } from 'vue';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 import DashboardCard from '../components/DashboardCard.vue';
@@ -13,7 +13,7 @@ interface Props {
 
 const props = defineProps<Props>();
 
-const { summary, blocks, genderSplit, queryStats, applicationStats } = props.hostelDashboard;
+const { summary, blocks, genderSplit, queryStats, applicationStats, amenityStatus } = props.hostelDashboard;
 
 const occupancySubtext = computed(() =>
     trans('dashboard.hostel_occupancy_rate', { rate: String(summary.occupancyRate) }),
@@ -32,6 +32,12 @@ const collectionSubtext = computed(() =>
         paid: String(applicationStats.paid + applicationStats.approved),
         total: String(applicationStats.total),
     }),
+);
+
+const amenitySubtext = computed(() =>
+    amenityStatus.needsAttention > 0
+        ? trans('dashboard.hostel_amenities_needs_attention', { count: String(amenityStatus.needsAttention) })
+        : trans('dashboard.hostel_amenities_working', { working: String(amenityStatus.working) }),
 );
 
 const genderTotal = computed(() => genderSplit.male + genderSplit.female + genderSplit.other);
@@ -95,7 +101,7 @@ const blockBarClass = (block: HostelDashboardBlock): string => {
 
 <template>
     <div class="mt-4 flex flex-col gap-4">
-        <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-5">
             <MetricCard
                 :title="$t('dashboard.hostel_total_capacity')"
                 :value="summary.totalCapacity"
@@ -127,6 +133,14 @@ const blockBarClass = (block: HostelDashboardBlock): string => {
                 :trend="applicationStats.paidRate < 80 ? 'warning' : 'neutral'"
             >
                 <template #icon><Coins class="h-4 w-4" /></template>
+            </MetricCard>
+            <MetricCard
+                :title="$t('dashboard.hostel_amenity_status')"
+                :value="amenityStatus.working"
+                :subtext="amenitySubtext"
+                :trend="amenityStatus.needsAttention > 0 ? 'warning' : 'neutral'"
+            >
+                <template #icon><Wrench class="h-4 w-4" /></template>
             </MetricCard>
         </div>
 

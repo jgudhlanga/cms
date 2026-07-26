@@ -21,7 +21,7 @@ class PermissionHelper
     {
         $excludedPermissions = collect(array_merge(
             self::portalPermissions(),
-            ['manageOwnData:tenants', 'viewOnlyOwnDepartment:departments']
+            ['manageOwnData:tenants', 'viewOnlyOwnDepartment:departments', 'viewOnlyOwnHostel:hostels']
         ));
 
         $permissionNames = collect(PermissionRegistry::allValues())
@@ -67,6 +67,345 @@ class PermissionHelper
             'import:course-work',
             'export:course-work',
             'view:academic-calendars',
+        ];
+    }
+
+    /**
+     * @return list<string>
+     */
+    public static function hodPermissions(): array
+    {
+        return array_values(array_unique(array_merge(
+            [
+                'view:dashboards',
+                'view-academic:dashboards',
+                'view-enrolment:dashboards',
+                'viewOnlyOwnDepartment:departments',
+                'viewAny:department-metadata',
+                'view:department-metadata',
+                'update:department-metadata',
+                'department-setup:levels',
+                'department-setup:courses',
+                'department-setup:class-sizes',
+                'department-setup:workflows',
+                'viewAny:course-syllabuses',
+                'view:course-syllabuses',
+                'create:course-syllabuses',
+                'update:course-syllabuses',
+                'delete:course-syllabuses',
+                'import:course-syllabuses',
+                'export:course-syllabuses',
+                'viewAny:course-syllabus-modules',
+                'view:course-syllabus-modules',
+                'create:course-syllabus-modules',
+                'update:course-syllabus-modules',
+                'delete:course-syllabus-modules',
+                'import:course-syllabus-modules',
+                'export:course-syllabus-modules',
+                'viewAny:students',
+                'view:students',
+                'export:students',
+                'viewAny:student-applications',
+                'view:student-applications',
+                'update:student-applications',
+                'export:student-applications',
+                'view:class-lists',
+                'create:class-lists',
+                'update:class-lists',
+                'verify:class-lists',
+                'viewAny:examinations',
+                'view:examinations',
+                'export:examinations',
+                'viewAny:course-work',
+                'view:course-work',
+                'create:course-work',
+                'update:course-work',
+                'import:course-work',
+                'export:course-work',
+                'viewAny:assessment-calendar',
+                'view:assessment-calendar',
+                'viewAny:academic-calendars',
+                'view:academic-calendars',
+            ],
+            self::lecturerPermissions()
+        )));
+    }
+
+    /**
+     * @return list<string>
+     */
+    public static function headOfDivisionPermissions(): array
+    {
+        return array_values(array_unique(array_merge(
+            self::hodPermissions(),
+            [
+                'viewAny:department-metadata',
+                'view:department-metadata',
+            ]
+        )));
+    }
+
+    /**
+     * @return list<string>
+     */
+    public static function vpAcademicsPermissions(): array
+    {
+        return [
+            'view:dashboards',
+            'view-academic:dashboards',
+            'view-enrolment:dashboards',
+            'view-staff:dashboards',
+            'viewAny:department-metadata',
+            'view:department-metadata',
+            'create:department-metadata',
+            'update:department-metadata',
+            'department-setup:levels',
+            'department-setup:courses',
+            'department-setup:class-sizes',
+            'department-setup:workflows',
+            'viewAny:course-syllabuses',
+            'view:course-syllabuses',
+            'create:course-syllabuses',
+            'update:course-syllabuses',
+            'viewAny:course-syllabus-modules',
+            'view:course-syllabus-modules',
+            'create:course-syllabus-modules',
+            'update:course-syllabus-modules',
+            'viewAny:students',
+            'view:students',
+            'export:students',
+            'viewAny:student-applications',
+            'view:student-applications',
+            'update:student-applications',
+            'export:student-applications',
+            'view:class-lists',
+            'create:class-lists',
+            'update:class-lists',
+            'verify:class-lists',
+            'manage-final:class-lists',
+            'viewAny:examinations',
+            'view:examinations',
+            'export:examinations',
+            'viewAny:course-work',
+            'view:course-work',
+            'create:course-work',
+            'update:course-work',
+            'import:course-work',
+            'export:course-work',
+            'crud-settings:course-work',
+            'viewAny:assessment-calendar',
+            'view:assessment-calendar',
+            'create:assessment-calendar',
+            'update:assessment-calendar',
+            'delete:assessment-calendar',
+            'viewAny:academic-calendars',
+            'view:academic-calendars',
+            'create:academic-calendars',
+            'update:academic-calendars',
+            'delete:academic-calendars',
+            'update:academic-calendar-student-enrolments',
+            'toggle:coursework-capture',
+            'view:institution-settings',
+            ...self::resourceAbilities(['divisions', 'departments', 'intake-periods', 'assessment-types'], ['viewAny', 'view', 'create', 'update']),
+            ...self::resourceAbilities(['document-templates'], ['viewAny', 'view', 'create', 'update']),
+            'viewAny:users',
+            'view:users',
+            'update:users',
+            'viewAny:roles',
+            'view:roles',
+            'update:roles',
+        ];
+    }
+
+    /**
+     * @return list<string>
+     */
+    public static function vpAdminPermissions(): array
+    {
+        return array_values(array_unique(array_merge(
+            [
+                'view:dashboards',
+                'view-finance:dashboards',
+                'view-hostel:dashboards',
+                'viewAny:finances',
+                'view:finances',
+                'export:finances',
+                'viewAny:finance-settings',
+                'view:finance-settings',
+            ],
+            self::deanPermissions()
+        )));
+    }
+
+    /**
+     * @return list<string>
+     */
+    public static function principalPermissions(): array
+    {
+        $settingsResources = [
+            'genders',
+            'countries',
+            'languages',
+            'provinces',
+            'races',
+            'statuses',
+            'marital-statuses',
+            'titles',
+            'relationships',
+            'address-types',
+            'districts',
+            'religions',
+            'communication-methods',
+            'employment-types',
+            'id-types',
+            'document-types',
+            'fee-types',
+            'sponsor-types',
+            'workflow-steps',
+            'workflow-step-actions',
+            'academic-levels',
+            'payment-methods',
+            'payment-days',
+            'payment-frequencies',
+        ];
+
+        $institutionConfigResources = [
+            'divisions',
+            'departments',
+            'courses',
+            'grades',
+            'levels',
+            'mode-of-studies',
+            'subjects',
+            'intake-periods',
+            'assessment-types',
+            'student-enrolment-statuses',
+            'semesters',
+        ];
+
+        return array_values(array_unique(array_merge(
+            self::vpAcademicsPermissions(),
+            self::vpAdminPermissions(),
+            [
+                'viewAny:dashboards',
+                'view-attendance:dashboards',
+                'view-staff:dashboards',
+                'view:acl-settings',
+                'viewAny:permissions',
+                'view:permissions',
+                'create:users',
+                'delete:users',
+                'restore:users',
+                'export:users',
+                'create:roles',
+                'view:settings',
+                'view:institution-settings',
+            ],
+            self::resourceAbilities($settingsResources, ['viewAny', 'view', 'update']),
+            self::resourceAbilities($institutionConfigResources, ['viewAny', 'view', 'update'])
+        )));
+    }
+
+    /**
+     * @param  list<string>  $resources
+     * @param  list<string>  $abilities
+     * @return list<string>
+     */
+    public static function resourceAbilities(array $resources, array $abilities): array
+    {
+        $permissions = [];
+        foreach ($resources as $resource) {
+            foreach ($abilities as $ability) {
+                $permissions[] = "{$ability}:{$resource}";
+            }
+        }
+
+        return $permissions;
+    }
+    /**
+     * @return list<string>
+     */
+    public static function deanPermissions(): array
+    {
+        return [
+            'view:dashboards',
+            'view-hostel:dashboards',
+            'viewAny:hostels',
+            'view:hostels',
+            'create:hostels',
+            'update:hostels',
+            'delete:hostels',
+            'restore:hostels',
+            'crud-settings:hostels',
+            'viewAny:hostel-amenities',
+            'view:hostel-amenities',
+            'create:hostel-amenities',
+            'update:hostel-amenities',
+            'delete:hostel-amenities',
+            'viewAny:hostel-rooms',
+            'view:hostel-rooms',
+            'create:hostel-rooms',
+            'update:hostel-rooms',
+            'delete:hostel-rooms',
+            'viewAny:hostel-room-allocations',
+            'view:hostel-room-allocations',
+            'create:hostel-room-allocations',
+            'update:hostel-room-allocations',
+            'delete:hostel-room-allocations',
+            'viewAny:hostel-applications',
+            'view:hostel-applications',
+            'create:hostel-applications',
+            'update:hostel-applications',
+            'delete:hostel-applications',
+            'viewAny:hms-settings',
+            'view:hms-settings',
+            'create:hms-settings',
+            'update:hms-settings',
+            'viewAny:hostel-queries',
+            'view:hostel-queries',
+            'update:hostel-queries',
+            'viewAny:hostel-leaves',
+            'view:hostel-leaves',
+            'update:hostel-leaves',
+            'viewAny:hostel-notices',
+            'view:hostel-notices',
+            'create:hostel-notices',
+            'update:hostel-notices',
+            'manage:hostel-check-in',
+        ];
+    }
+
+    /**
+     * @return list<string>
+     */
+    public static function wardenPermissions(): array
+    {
+        return [
+            'view:dashboards',
+            'view-hostel:dashboards',
+            'viewOnlyOwnHostel:hostels',
+            'viewAny:hostels',
+            'view:hostels',
+            'update:hostels',
+            'viewAny:hostel-amenities',
+            'view:hostel-amenities',
+            'update:hostel-amenities',
+            'viewAny:hostel-rooms',
+            'view:hostel-rooms',
+            'update:hostel-rooms',
+            'viewAny:hostel-room-allocations',
+            'view:hostel-room-allocations',
+            'update:hostel-room-allocations',
+            'viewAny:hostel-applications',
+            'view:hostel-applications',
+            'update:hostel-applications',
+            'viewAny:hostel-queries',
+            'view:hostel-queries',
+            'update:hostel-queries',
+            'viewAny:hostel-leaves',
+            'view:hostel-leaves',
+            'update:hostel-leaves',
+            'manage:hostel-check-in',
         ];
     }
 

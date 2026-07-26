@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import BaseSelect from '@/components/core/form/select/BaseSelect.vue';
 import LabelValue from '@/components/core/util/LabelValue.vue';
-import { useAcademicYearOptionsByCalendarType } from '@/composables/academicCalendars/useAcademicYearOptionsByCalendarType';
+import { useSemestersByCalendarType } from '@/composables/academicCalendars/useSemestersByCalendarType';
 import type { ClassConfig, ClassStaffingSummary } from '@/types/academic-calendar';
 import { router } from '@inertiajs/vue3';
 import { trans } from 'laravel-vue-i18n';
@@ -11,12 +11,12 @@ const props = defineProps<{
     title: string;
     classConfig: ClassConfig | null;
     staffingSummary: ClassStaffingSummary;
-    selectedAcademicYearOptionId: number | null;
+    selectedSemesterId: number | null;
     calendarType: 'term' | 'semester' | 'abma';
     semesterConfigHasSyllabi: boolean;
 }>();
 
-const { yearOptions, yearOptionsLoading, loadYearOptions } = useAcademicYearOptionsByCalendarType();
+const { yearOptions, yearOptionsLoading, loadYearOptions } = useSemestersByCalendarType();
 
 onMounted(() => {
     void loadYearOptions(props.calendarType);
@@ -30,14 +30,14 @@ watch(
 );
 
 const selectedSemester = computed({
-    get: () => (props.selectedAcademicYearOptionId != null ? String(props.selectedAcademicYearOptionId) : ''),
+    get: () => (props.selectedSemesterId != null ? String(props.selectedSemesterId) : ''),
     set: (value: string) => {
         const currentUrl = new URL(window.location.href);
 
         if (value === '') {
-            currentUrl.searchParams.delete('academic_year_option_id');
+            currentUrl.searchParams.delete('semester_id');
         } else {
-            currentUrl.searchParams.set('academic_year_option_id', value);
+            currentUrl.searchParams.set('semester_id', value);
         }
 
         router.get(currentUrl.pathname + currentUrl.search, {}, { preserveScroll: true, preserveState: false });
@@ -70,7 +70,7 @@ const modulesComplete = computed(
         && props.staffingSummary.moduleSlotsStaffed >= props.staffingSummary.modulesTotal,
 );
 
-const showSemesterHelper = computed(() => props.selectedAcademicYearOptionId == null);
+const showSemesterHelper = computed(() => props.selectedSemesterId == null);
 </script>
 
 <template>
@@ -113,7 +113,7 @@ const showSemesterHelper = computed(() => props.selectedAcademicYearOptionId == 
                         {{ tutorsProgressLabel }}
                     </span>
                     <span
-                        v-if="selectedAcademicYearOptionId != null"
+                        v-if="selectedSemesterId != null"
                         class="inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium"
                         :class="
                             modulesComplete
@@ -130,7 +130,7 @@ const showSemesterHelper = computed(() => props.selectedAcademicYearOptionId == 
                     {{ $t('academic_calendar.select_semester_for_modules') }}
                 </p>
                 <p
-                    v-else-if="selectedAcademicYearOptionId != null && !semesterConfigHasSyllabi"
+                    v-else-if="selectedSemesterId != null && !semesterConfigHasSyllabi"
                     class="text-sm text-amber-700"
                 >
                     {{ $t('academic_calendar.semester_config_missing') }}

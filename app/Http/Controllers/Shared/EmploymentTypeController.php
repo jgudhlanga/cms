@@ -19,7 +19,7 @@ class EmploymentTypeController extends Controller
 
 	public function index(SharedNameFilter $filters)
 	{
-		$this->authorize('viewSettings');
+		$this->authorize('viewAny', EmploymentType::class);
 		$employmentTypes = EmploymentTypeResource::collection($this->repository->allFilter(['*'], $filters));
 		return Inertia::render('shared/employmentTypes/Index', [
 			'employmentTypes' => $employmentTypes,
@@ -30,12 +30,12 @@ class EmploymentTypeController extends Controller
 
 	public function create()
 	{
-		$this->authorize('createSettings');
+		$this->authorize('create', EmploymentType::class);
 	}
 
 	public function store(EmploymentTypeRequest $request)
 	{
-		$this->authorize('createSettings');
+		$this->authorize('create', EmploymentType::class);
 		$this->repository->create(EmploymentTypeDto::fromEmploymentTypeRequest($request));
 	}
 
@@ -51,26 +51,26 @@ class EmploymentTypeController extends Controller
 
 	public function update(EmploymentTypeRequest $request, EmploymentType $employmentType)
 	{
-		$this->authorize('updateSettings');
+		$this->authorize('update', $employmentType);
 		$this->repository->update($employmentType, EmploymentTypeDto::fromEmploymentTypeRequest($request));
 	}
 
 	public function destroy(EmploymentType $employmentType)
 	{
-		$this->authorize('deleteSettings');
+		$this->authorize('delete', $employmentType);
 		$this->repository->delete($employmentType);
 	}
 
 	public function restore(string $id)
 	{
 		$employmentType = $this->repository->findTrashed($id);
-		$this->authorize('restoreSettings');
+		$this->authorize('restore', $employmentType);
 		$this->repository->restore($employmentType);
 	}
 
 	public function forceDelete(EmploymentType $employmentType)
 	{
-		$this->authorize('forceDeleteSettings');
+		$this->authorize('forceDelete', $employmentType);
 		$this->repository->delete($employmentType, true);
 	}
 }

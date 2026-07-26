@@ -45,9 +45,32 @@ function queryParamsMatch(hrefParams: URLSearchParams, currentParams: URLSearchP
  */
 export function useSidebarNavActive(): {
     isActive: (url: string | undefined) => boolean;
+    isExactActive: (url: string | undefined) => boolean;
     isAnyActive: (urls: Array<string | undefined> | undefined) => boolean;
 } {
     const page = usePage();
+
+    function isExactActive(url: string | undefined): boolean {
+        if (!url || url === '#') {
+            return false;
+        }
+
+        const href = parseUrl(url);
+        if (!href) {
+            return false;
+        }
+
+        const current = currentPageUrl(page.url);
+        if (current.pathname !== href.pathname) {
+            return false;
+        }
+
+        if ([...href.searchParams.keys()].length > 0) {
+            return queryParamsMatch(href.searchParams, current.searchParams);
+        }
+
+        return true;
+    }
 
     function isActive(url: string | undefined): boolean {
         if (!url || url === '#') {
@@ -84,5 +107,5 @@ export function useSidebarNavActive(): {
         return urls?.some((u) => isActive(u)) ?? false;
     }
 
-    return { isActive, isAnyActive };
+    return { isActive, isExactActive, isAnyActive };
 }

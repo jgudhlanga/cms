@@ -4,7 +4,7 @@ use App\Enums\Shared\ClassListTypeEnum;
 use App\Enums\Shared\IdTypeEnum;
 use App\Mail\Enrolments\StudentEnrollmentExportMail;
 use App\Models\AcademicCalendars\AcademicCalendar;
-use App\Models\AcademicCalendars\AcademicYearOption;
+use App\Models\AcademicCalendars\Semester;
 use App\Models\Enrolments\ClassList;
 use App\Models\Institution\DepartmentLevelCourse;
 use App\Models\Institution\Syllabus\CourseSyllabus;
@@ -36,7 +36,7 @@ beforeEach(function (): void {
     );
 
     foreach (['Semester 1', 'Semester 2'] as $name) {
-        AcademicYearOption::query()->firstOrCreate(
+        Semester::query()->firstOrCreate(
             ['slug' => Str::slug($name)],
             ['name' => $name, 'description' => null],
         );

@@ -2,7 +2,7 @@
 
 use App\Enums\Shared\ClassListTypeEnum;
 use App\Models\AcademicCalendars\AcademicCalendar;
-use App\Models\AcademicCalendars\AcademicYearOption;
+use App\Models\AcademicCalendars\Semester;
 use App\Models\Enrolments\ClassList;
 use App\Models\Institution\Course;
 use App\Models\Institution\Department;
@@ -321,7 +321,7 @@ test('listForClassAllocation returns row when final list and enrolment exist', f
         'closing_date' => now()->endOfMonth()->toDateString(),
     ]);
 
-    $academicYearOption = AcademicYearOption::query()->firstOrCreate(
+    $semester = Semester::query()->firstOrCreate(
         ['slug' => 'q-list-option'],
         ['name' => 'Q List Option', 'description' => null],
     );
@@ -368,7 +368,7 @@ test('listForClassAllocation returns row when final list and enrolment exist', f
         'institution_department_id' => $institutionDepartment->id,
         'department_level_id' => $departmentLevel->id,
         'department_course_id' => $departmentCourse->id,
-        'academic_year_option_id' => $academicYearOption->id,
+        'semester_id' => $semester->id,
         'academic_calendar_id' => $calendar->id,
         'mode_of_study_id' => $modeOfStudy->id,
         'student_enrolment_status_id' => $activeEnrolmentStatus->id,
@@ -480,7 +480,7 @@ test('listForClassAllocation matches student enrolment when any calendar id in t
         'closing_date' => now()->addMonths(6)->toDateString(),
     ]);
 
-    $academicYearOption = AcademicYearOption::query()->firstOrCreate(
+    $semester = Semester::query()->firstOrCreate(
         ['slug' => 'q-list-option-multi'],
         ['name' => 'Q List Option Multi', 'description' => null],
     );
@@ -527,7 +527,7 @@ test('listForClassAllocation matches student enrolment when any calendar id in t
         'institution_department_id' => $institutionDepartment->id,
         'department_level_id' => $departmentLevel->id,
         'department_course_id' => $departmentCourse->id,
-        'academic_year_option_id' => $academicYearOption->id,
+        'semester_id' => $semester->id,
         'academic_calendar_id' => $calendarOlder->id,
         'mode_of_study_id' => $modeOfStudy->id,
         'student_enrolment_status_id' => $activeEnrolmentStatus->id,

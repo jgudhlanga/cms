@@ -39,7 +39,7 @@ class StudentEnrollmentExportQuery
                 'studentApplication.intakePeriod',
                 'studentApplication.modeOfStudy',
                 'departmentCourse',
-                'academicYearOption',
+                'semester',
                 'academicCalendar',
                 'academicCalendarStudentEnrolment.academicCalendarClass.classConfig',
             ])

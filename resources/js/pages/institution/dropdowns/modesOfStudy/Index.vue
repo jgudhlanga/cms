@@ -29,8 +29,8 @@ const can = props?.auth?.can;
             :search-url="route('mode-of-studies.index')"
             :pagination="{ ...modesOfStudy.links, ...modesOfStudy.meta }"
             :columns="createModeOfStudyColumns()"
-            :on-create="() => onOpenModal(can['create:institution-settings'])"
-            :disable-create="!can['create:institution-settings']"
+            :on-create="() => onOpenModal(can['create:mode-of-studies'])"
+            :disable-create="!can['create:mode-of-studies']"
         />
         <CreateEdit />
     </PageContainer>

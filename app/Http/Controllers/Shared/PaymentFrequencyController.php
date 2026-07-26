@@ -19,7 +19,7 @@ class PaymentFrequencyController extends Controller
 
 	public function index(SharedTitleFilter $filters)
 	{
-		$this->authorize('viewSettings');
+		$this->authorize('viewAny', PaymentFrequency::class);
 		$paymentFrequencies = PaymentFrequencyResource::collection($this->repository->allFilter(['*'], $filters));
 		return Inertia::render('shared/payments/paymentFrequencies/Index', [
 			'paymentFrequencies' => $paymentFrequencies,
@@ -30,12 +30,12 @@ class PaymentFrequencyController extends Controller
 
 	public function create()
 	{
-		$this->authorize('createSettings');
+		$this->authorize('create', PaymentFrequency::class);
 	}
 
 	public function store(PaymentFrequencyRequest $request)
 	{
-		$this->authorize('createSettings');
+		$this->authorize('create', PaymentFrequency::class);
 		$this->repository->create(PaymentFrequencyDto::fromPaymentFrequencyRequest($request));
 	}
 
@@ -51,26 +51,26 @@ class PaymentFrequencyController extends Controller
 
 	public function update(PaymentFrequencyRequest $request, PaymentFrequency $paymentFrequency)
 	{
-		$this->authorize('updateSettings');
+		$this->authorize('update', $paymentFrequency);
 		$this->repository->update($paymentFrequency, PaymentFrequencyDto::fromPaymentFrequencyRequest($request));
 	}
 
 	public function destroy(PaymentFrequency $paymentFrequency)
 	{
-		$this->authorize('deleteSettings');
+		$this->authorize('delete', $paymentFrequency);
 		$this->repository->delete($paymentFrequency);
 	}
 
 	public function restore(string $id)
 	{
 		$paymentFrequency = $this->repository->findTrashed($id);
-		$this->authorize('restoreSettings');
+		$this->authorize('restore', $paymentFrequency);
 		$this->repository->restore($paymentFrequency);
 	}
 
 	public function forceDelete(PaymentFrequency $paymentFrequency)
 	{
-		$this->authorize('forceDeleteSettings');
+		$this->authorize('forceDelete', $paymentFrequency);
 		$this->repository->delete($paymentFrequency, true);
 	}
 }

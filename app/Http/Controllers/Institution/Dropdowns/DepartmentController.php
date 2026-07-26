@@ -20,7 +20,7 @@ class DepartmentController extends Controller
 
     public function index(DepartmentFilter $filters)
     {
-        $this->authorize('viewSettings');
+        $this->authorize('viewAny', Department::class);
         $departments = DepartmentResource::collection($this->repository->allFilter(['*'], $filters));
         return Inertia::render('institution/dropdowns/departments/Index', [
             'departments' => $departments,
@@ -31,12 +31,12 @@ class DepartmentController extends Controller
 
     public function create()
     {
-        $this->authorize('createSettings');
+        $this->authorize('create', Department::class);
     }
 
     public function store(DepartmentRequest $request)
     {
-        $this->authorize('createSettings');
+        $this->authorize('create', Department::class);
         $this->repository->create(DepartmentDto::fromDepartmentRequest($request));
     }
 
@@ -52,32 +52,32 @@ class DepartmentController extends Controller
 
     public function update(DepartmentRequest $request, Department $department)
     {
-        $this->authorize('updateInstitutionSettings');
+        $this->authorize('update', $department);
         $this->repository->update($department, DepartmentDto::fromDepartmentRequest($request));
     }
 
     public function movePosition(PositionRequest $request, Department $department)
     {
-        $this->authorize('updateInstitutionSettings');
+        $this->authorize('update', $department);
         $this->repository->movePosition($department, $request);
     }
 
     public function destroy(Department $department)
     {
-        $this->authorize('deleteInstitutionSettings');
+        $this->authorize('delete', $department);
         $this->repository->delete($department);
     }
 
     public function restore(string $id)
     {
         $department = $this->repository->findTrashed($id);
-        $this->authorize('restoreInstitutionSettings');
+        $this->authorize('restore', $department);
         $this->repository->restore($department);
     }
 
     public function forceDelete(Department $department)
     {
-        $this->authorize('forceDeleteInstitutionSettings');
+        $this->authorize('forceDelete', $department);
         $this->repository->delete($department, true);
     }
 }

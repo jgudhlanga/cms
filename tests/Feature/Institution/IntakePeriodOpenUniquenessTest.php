@@ -11,9 +11,9 @@ function intakePeriodSettingsUser(int $tenantId): User
 {
     $user = User::factory()->create(['tenant_id' => $tenantId]);
 
-    Permission::findOrCreate('create:settings', 'web');
-    Permission::findOrCreate('update:institution-settings', 'web');
-    $user->givePermissionTo(['create:settings', 'update:institution-settings']);
+    Permission::findOrCreate('create:intake-periods', 'web');
+    Permission::findOrCreate('update:intake-periods', 'web');
+    $user->givePermissionTo(['create:intake-periods', 'update:intake-periods']);
 
     return $user;
 }

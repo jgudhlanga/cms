@@ -58,6 +58,21 @@ const nameToggleRef = ref<HTMLButtonElement | null>(null);
 const emailToggleRef = ref<HTMLButtonElement | null>(null);
 const passwordToggleRef = ref<HTMLButtonElement | null>(null);
 
+const authorizationPermissions = computed(() => {
+    const value = userPermissions.value as unknown;
+
+    if (Array.isArray(value)) {
+        return value;
+    }
+
+    const wrapped = value as { data?: unknown } | null;
+    if (Array.isArray(wrapped?.data)) {
+        return wrapped.data;
+    }
+
+    return [];
+});
+
 const fullNameDisplay = computed(() => {
     const parts = [initialFirstName.value, initialMiddleName.value, initialLastName.value]
         .map((part) => part.trim())
@@ -500,7 +515,7 @@ onMounted(async () => {
         >
             <DataLoadingSpinner v-if="isLoading" />
             <div v-else class="grid grid-cols-1 gap-x-3 gap-y-1 text-xs md:grid-cols-4">
-                <div v-for="(permission, index) in userPermissions" :key="index">
+                <div v-for="(permission, index) in authorizationPermissions" :key="index">
                     {{ permission?.attributes?.name }}
                 </div>
             </div>

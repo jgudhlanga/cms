@@ -115,7 +115,7 @@ class StudentRepository extends BaseRepository implements IStudentRepository
                 'latestEnrolment.departmentCourse.course',
                 'latestEnrolment.modeOfStudy',
                 'latestEnrolment.studentEnrolmentStatus',
-                'latestEnrolment.academicYearOption',
+                'latestEnrolment.semester',
                 'latestEnrolment.academicCalendar',
                 'latestEnrolment.academicCalendarStudentEnrolment.academicCalendarClass.classConfig.syllabus',
                 'latestApplication.student.user',

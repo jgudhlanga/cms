@@ -14,7 +14,11 @@ class HostelPolicy
 
     public function view(User $user, Hostel $hostel): bool
     {
-        return $user->can('viewAny:hostels') || $user->can('view:hostels');
+        if (! ($user->can('viewAny:hostels') || $user->can('view:hostels'))) {
+            return false;
+        }
+
+        return $this->canAccessHostel($user, $hostel);
     }
 
     public function create(User $user): bool
@@ -24,21 +28,52 @@ class HostelPolicy
 
     public function update(User $user, Hostel $hostel): bool
     {
-        return $user->can('update:hostels', $hostel);
+        if (! $user->can('update:hostels')) {
+            return false;
+        }
+
+        return $this->canAccessHostel($user, $hostel);
     }
 
     public function delete(User $user, Hostel $hostel): bool
     {
-        return $user->can('delete:hostels', $hostel);
+        if (! $user->can('delete:hostels')) {
+            return false;
+        }
+
+        return $this->canAccessHostel($user, $hostel);
     }
 
     public function restore(User $user, Hostel $hostel): bool
     {
-        return $user->can('restore:hostels', $hostel);
+        if (! $user->can('restore:hostels')) {
+            return false;
+        }
+
+        return $this->canAccessHostel($user, $hostel);
     }
 
     public function forceDelete(User $user, Hostel $hostel): bool
     {
-        return $user->can('forceDelete:hostels', $hostel);
+        if (! $user->can('forceDelete:hostels')) {
+            return false;
+        }
+
+        return $this->canAccessHostel($user, $hostel);
+    }
+
+    private function canAccessHostel(User $user, Hostel $hostel): bool
+    {
+        if (! $user->can('viewOnlyOwnHostel:hostels')) {
+            return true;
+        }
+
+        $staffId = $user->staffProfile?->id;
+
+        if ($staffId === null) {
+            return false;
+        }
+
+        return (int) $hostel->warden_id === (int) $staffId;
     }
 }

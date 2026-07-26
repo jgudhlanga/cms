@@ -25,7 +25,7 @@ class DivisionRepository extends BaseRepository implements IDivisionRepository
         return tap($division)->update($this->getFields($dto));
     }
 
-    public function allFilter($columns = ['*'], SharedNameFilter $filters = null)
+    public function allFilter($columns = ['*'], ?SharedNameFilter $filters = null)
     {
         return $this->division
             ->select($columns)
@@ -42,6 +42,7 @@ class DivisionRepository extends BaseRepository implements IDivisionRepository
         return [
             'name' => $dto->name,
             'description' => $dto->description,
+            'head_of_division_id' => $dto->headOfDivisionId,
         ];
     }
 }

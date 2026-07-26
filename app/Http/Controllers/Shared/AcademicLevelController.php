@@ -20,7 +20,7 @@ class AcademicLevelController extends Controller
 
     public function index(SharedNameFilter $filters)
     {
-        $this->authorize('viewSettings');
+        $this->authorize('viewAny', AcademicLevel::class);
         $academicLevels = AcademicLevelResource::collection($this->repository->allFilter(['*'], $filters));
         return Inertia::render('shared/academicLevels/Index', [
             'academicLevels' => $academicLevels,
@@ -31,12 +31,12 @@ class AcademicLevelController extends Controller
 
     public function create()
     {
-        $this->authorize('createSettings');
+        $this->authorize('create', AcademicLevel::class);
     }
 
     public function store(AcademicLevelRequest $request)
     {
-        $this->authorize('createSettings');
+        $this->authorize('create', AcademicLevel::class);
         $this->repository->create(AcademicLevelDto::fromAcademicLevelRequest($request));
     }
 
@@ -52,26 +52,26 @@ class AcademicLevelController extends Controller
 
     public function update(AcademicLevelRequest $request, AcademicLevel $academicLevel)
     {
-        $this->authorize('updateInstitutionSettings');
+        $this->authorize('update', $academicLevel);
         $this->repository->update($academicLevel, AcademicLevelDto::fromAcademicLevelRequest($request));
     }
 
     public function destroy(AcademicLevel $academicLevel)
     {
-        $this->authorize('deleteInstitutionSettings');
+        $this->authorize('delete', $academicLevel);
         $this->repository->delete($academicLevel);
     }
 
     public function restore(string $id)
     {
         $academicLevel = $this->repository->findTrashed($id);
-        $this->authorize('restoreInstitutionSettings');
+        $this->authorize('restore', $academicLevel);
         $this->repository->restore($academicLevel);
     }
 
     public function forceDelete(AcademicLevel $academicLevel)
     {
-        $this->authorize('forceDeleteInstitutionSettings');
+        $this->authorize('forceDelete', $academicLevel);
         $this->repository->delete($academicLevel, true);
     }
 }

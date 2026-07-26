@@ -32,18 +32,18 @@ export const useFeeTypes = () => {
                     const id = getIdParams(row.original.id?.toString() ?? '');
 
                     return moreActionButton(!!row.original?.attributes?.deletedAt, [
-                        { key: 'edit', action: () => onOpenModal(hasAbility('update:settings'), row.original) },
+                        { key: 'edit', action: () => onOpenModal(hasAbility('update:fee-types'), row.original) },
                         {
                             key: 'archive',
-                            action: () => onDelete(hasAbility('delete:settings'), route('fee-types.destroy', id), getName()),
+                            action: () => onDelete(hasAbility('delete:fee-types'), route('fee-types.destroy', id), getName()),
                         },
                         {
                             key: 'restore',
-                            action: () => onRestore(hasAbility('restore:settings'), route('fee-types.restore', id), getName()),
+                            action: () => onRestore(hasAbility('restore:fee-types'), route('fee-types.restore', id), getName()),
                         },
                         {
                             key: 'delete',
-                            action: () => onForceDelete(hasAbility('forceDelete:settings'), route('fee-types.force-delete', id), getName()),
+                            action: () => onForceDelete(hasAbility('forceDelete:fee-types'), route('fee-types.force-delete', id), getName()),
                         },
                     ]);
                 },

@@ -2,7 +2,7 @@
 
 use App\Enums\Shared\WorkflowStepEnum;
 use App\Models\AcademicCalendars\AcademicCalendar;
-use App\Models\AcademicCalendars\AcademicYearOption;
+use App\Models\AcademicCalendars\Semester;
 use App\Models\Institution\DepartmentCourse;
 use App\Models\Institution\DepartmentLevel;
 use App\Models\Institution\IntakePeriod;
@@ -144,7 +144,7 @@ test('updating application syncs linked student enrolment fields', function () {
     ]);
 
     $targetModeOfStudy = ModeOfStudy::factory()->create();
-    $academicYearOption = AcademicYearOption::query()->create([
+    $semester = Semester::query()->create([
         'name' => 'Sync Year Option',
         'slug' => 'sync-year-option-'.strtolower(Str::random(6)),
     ]);
@@ -165,7 +165,7 @@ test('updating application syncs linked student enrolment fields', function () {
         'institution_department_id' => $program->institution_department_id,
         'department_level_id' => $program->department_level_id,
         'department_course_id' => $program->department_course_id,
-        'academic_year_option_id' => $academicYearOption->id,
+        'semester_id' => $semester->id,
         'academic_calendar_id' => $academicCalendar->id,
         'mode_of_study_id' => $program->mode_of_study_id,
         'student_enrolment_status_id' => $studentEnrolmentStatus->id,

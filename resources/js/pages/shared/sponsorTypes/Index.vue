@@ -29,8 +29,8 @@ const can = props?.auth?.can;
             :search-url="route('sponsor-types.index')"
             :pagination="{ ...sponsorTypes.links, ...sponsorTypes.meta }"
             :columns="createSponsorTypeColumns()"
-            :on-create="() => onOpenModal(can['create:settings'])"
-            :disable-create="!can['create:settings']"
+            :on-create="() => onOpenModal(can['create:sponsor-types'])"
+            :disable-create="!can['create:sponsor-types']"
         />
         <CreateEdit />
     </PageContainer>

@@ -19,7 +19,7 @@ interface Props {
 
 defineProps<Props>();
 
-const allowed = hasAbility('create:institution-settings');
+const allowed = hasAbility('create:levels');
 </script>
 
 <template>

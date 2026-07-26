@@ -23,7 +23,12 @@ class PermissionResource extends JsonResource
 				])
 			],
 			'relationships' => [
-				'module' => ModuleResource::make($this->resource->module),
+				'module' => $this->whenLoaded(
+					'module',
+					fn () => $this->resource->module
+						? ModuleResource::make($this->resource->module)
+						: null
+				),
 			],
 		];
 	}

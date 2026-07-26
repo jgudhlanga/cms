@@ -27,10 +27,14 @@ export const useInstitutionDepartments = () => {
                 header: trans_choice('trans.code', 1),
                 accessorKey: 'departmentCode',
                 cell: ({ row }: { row: { original: InstitutionDepartment } }) => {
-                    const id = getIdParams(row.original.id?.toString() ?? '');
-                    return textEditLink(row.original?.attributes?.departmentCode ?? '', () => {
-                        console.log('Edit department code');
-                    });
+                    return row.original?.attributes?.departmentCode ?? '';
+                },
+            },
+            {
+                header: trans_choice('trans.division', 1),
+                accessorKey: 'division',
+                cell: ({ row }: { row: { original: InstitutionDepartment } }) => {
+                    return row.original?.attributes?.division ?? '—';
                 },
             },
             {
@@ -45,10 +49,19 @@ export const useInstitutionDepartments = () => {
                             key: 'view',
                             action: () => viewDepartment(id),
                         },
+                        {
+                            key: 'edit',
+                            action: () => openDepartmentDivisionModal(row.original),
+                        },
                     ]);
                 },
             },
         ];
+    };
+
+    const openDepartmentDivisionModal = (department: InstitutionDepartment) => {
+        if (!hasAbility('update:department-metadata')) return forbiddenAlert();
+        openModal({ name: APP_MODULE_KEYS.institution_department_division, edit: department });
     };
 
     const syncInstitutionDepartments = (form: InertiaForm<any>) => {
@@ -104,6 +117,7 @@ export const useInstitutionDepartments = () => {
         createInstitutionDepartmentColumns,
         deleteDepartment,
         openInstitutionDepartmentsModal,
+        openDepartmentDivisionModal,
         restoreDepartment,
         syncInstitutionDepartments,
         viewDepartment,

@@ -72,7 +72,7 @@ class CourseSyllabusModuleController extends Controller
         $validated = $request->validated();
         /** @var array<int, int> $moduleIds */
         $moduleIds = array_map('intval', $validated['course_syllabus_module_ids']);
-        $targetOptionId = (int) $validated['target_academic_year_option_id'];
+        $targetOptionId = (int) $validated['target_semester_id'];
 
         $modules = CourseSyllabusModule::query()
             ->where('course_syllabus_id', $courseSyllabus->id)
@@ -86,7 +86,7 @@ class CourseSyllabusModuleController extends Controller
         DB::transaction(function () use ($moduleIds, $targetOptionId): void {
             CourseSyllabusModule::query()
                 ->whereIn('id', $moduleIds)
-                ->update(['academic_year_option_id' => $targetOptionId]);
+                ->update(['semester_id' => $targetOptionId]);
         });
 
         return back()->with('success', __('syllabus.move_modules_success'));

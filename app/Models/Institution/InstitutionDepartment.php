@@ -28,11 +28,16 @@ class InstitutionDepartment extends Model
 {
     use BelongsToTenant, Filterable, HasFactory, LogsActivity, Paginatable, SoftDeletes;
 
-    protected $fillable = ['tenant_id', 'department_id', 'description', 'department_code'];
+    protected $fillable = ['tenant_id', 'department_id', 'description', 'department_code', 'division_id'];
 
     public function department(): BelongsTo
     {
         return $this->belongsTo(Department::class);
+    }
+
+    public function division(): BelongsTo
+    {
+        return $this->belongsTo(Division::class);
     }
 
     public function departmentLevels(): HasMany

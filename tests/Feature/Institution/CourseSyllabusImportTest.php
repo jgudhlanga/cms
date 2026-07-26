@@ -2,7 +2,7 @@
 
 use App\Exports\Institution\CourseSyllabusImportTemplateExport;
 use App\Importers\Institution\CourseSyllabusImporter;
-use App\Models\AcademicCalendars\AcademicYearOption;
+use App\Models\AcademicCalendars\Semester;
 use App\Models\Institution\Syllabus\CourseSyllabus;
 use App\Models\Institution\Syllabus\CourseSyllabusImportLog;
 use App\Models\Institution\Syllabus\CourseSyllabusModule;
@@ -250,12 +250,12 @@ it('processes syllabus import and creates syllabus and module records', function
         ->and($courseSyllabus?->implementation_year)->toBe('2026');
 
     $module = CourseSyllabusModule::query()->where('code', $moduleCode)->first();
-    $semesterOneId = (int) AcademicYearOption::query()->where('slug', 'semester-1')->value('id');
+    $semesterOneId = (int) Semester::query()->where('slug', 'semester-1')->value('id');
 
     expect($module)->not->toBeNull()
         ->and($module?->title)->toBe('Module Intro')
         ->and($module?->course_syllabus_id)->toBe($courseSyllabus?->id)
-        ->and($module?->academic_year_option_id)->toBe($semesterOneId);
+        ->and($module?->semester_id)->toBe($semesterOneId);
 
     expect(CourseSyllabusImportLog::query()->count())->toBe(1);
 });

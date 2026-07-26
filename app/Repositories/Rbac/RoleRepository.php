@@ -49,7 +49,7 @@ class RoleRepository extends BaseRepository implements IRoleRepository
         ];
 
         return $this->role
-            ->with(['roleGroup', 'permissions'])
+            ->with(['roleGroup', 'permissions.module'])
             ->withCount('users')
             ->select($columns)
             ->filter($filters)

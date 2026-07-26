@@ -27,7 +27,7 @@ export const useCourseSyllabusModules = () => {
     const formSchema = () =>
         z.object({
             course_syllabus_id: z.number().min(1, trans('trans.select_valid_field', { field: trans_choice('syllabus.course_syllabus', 1) })),
-            academic_year_option_id: z.coerce.number().min(1, trans('trans.select_valid_field', { field: trans_choice('syllabus.calendar_year_option', 1) })),
+            semester_id: z.coerce.number().min(1, trans('trans.select_valid_field', { field: trans_choice('syllabus.semester', 1) })),
             title: z.string().nonempty(trans('trans.enter_required_field', { field: trans_choice('trans.title', 1) })),
             code: z.string().nonempty(trans('trans.enter_required_field', { field: trans_choice('trans.code', 1) })),
             duration_in_hours: z.number().int().positive().nullable(),
@@ -104,8 +104,8 @@ export const useCourseSyllabusModules = () => {
             { header: trans_choice('trans.title', 1), accessorKey: 'attributes.title' },
             { header: trans_choice('trans.code', 1), accessorKey: 'attributes.code' },
             {
-                header: trans_choice('syllabus.calendar_year_option', 1),
-                accessorKey: 'attributes.academicYearOptionName',
+                header: trans_choice('syllabus.semester', 1),
+                accessorKey: 'attributes.semesterName',
             },
             {
                 header: trans('syllabus.shared'),

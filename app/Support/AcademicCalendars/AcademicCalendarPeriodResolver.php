@@ -39,7 +39,7 @@ final class AcademicCalendarPeriodResolver
         return $beforeCount + 1;
     }
 
-    public static function academicYearOptionSlugForCalendar(AcademicCalendar $row): string
+    public static function semesterSlugForCalendar(AcademicCalendar $row): string
     {
         $opening = Carbon::parse($row->opening_date)->startOfDay();
 

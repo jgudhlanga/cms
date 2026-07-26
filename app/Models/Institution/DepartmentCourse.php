@@ -17,19 +17,26 @@ use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
 /**
- *
  * @mixin Builder
+ *
  * @method static filter(DepartmentMetaDataFilter $filters)
  */
 class DepartmentCourse extends Model
 {
-    use HasFactory, SoftDeletes, Filterable, BelongsToTenant, Paginatable, LogsActivity;
+    use BelongsToTenant, Filterable, HasFactory, LogsActivity, Paginatable, SoftDeletes;
 
     protected $fillable = [
         'tenant_id', 'institution_department_id', 'course_id',
-        'description', 'show_on_current_application_period'
+        'description', 'show_on_current_application_period', 'coursework_capture_enabled',
     ];
 
+    protected function casts(): array
+    {
+        return [
+            'show_on_current_application_period' => 'boolean',
+            'coursework_capture_enabled' => 'boolean',
+        ];
+    }
 
     public function course(): BelongsTo
     {
@@ -45,7 +52,6 @@ class DepartmentCourse extends Model
     {
         return $this->hasMany(DepartmentLevelCourse::class, 'department_course_id')->orderBy('department_level_id');
     }
-
 
     public function courseLevelModes(): HasMany
     {

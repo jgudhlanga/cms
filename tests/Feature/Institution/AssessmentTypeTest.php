@@ -11,15 +11,15 @@ test('guests are redirected when visiting assessment types page', function () {
 
 test('authenticated users with permission can view assessment types page', function () {
     $user = User::factory()->create();
-    Permission::findOrCreate('view:settings', 'web');
-    $user->givePermissionTo('view:settings');
+    Permission::findOrCreate('viewAny:assessment-types', 'web');
+    $user->givePermissionTo('viewAny:assessment-types');
 
     $this->actingAs($user)
         ->get(route('assessment-types.index'))
         ->assertSuccessful();
 });
 
-test('store requires create settings permission', function () {
+test('store requires create assessment types permission', function () {
     $user = User::factory()->create();
     $modeOfStudy = ModeOfStudy::factory()->create();
     $payload = [
@@ -32,8 +32,8 @@ test('store requires create settings permission', function () {
         ->post(route('assessment-types.store'), $payload)
         ->assertForbidden();
 
-    Permission::findOrCreate('create:settings', 'web');
-    $user->givePermissionTo('create:settings');
+    Permission::findOrCreate('create:assessment-types', 'web');
+    $user->givePermissionTo('create:assessment-types');
 
     $this->actingAs($user)
         ->post(route('assessment-types.store'), $payload)
@@ -45,7 +45,7 @@ test('store requires create settings permission', function () {
         ->and($record->modes_of_study)->toBe([$modeOfStudy->id]);
 });
 
-test('update requires update institution settings permission', function () {
+test('update requires update assessment types permission', function () {
     $user = User::factory()->create();
     $initialMode = ModeOfStudy::factory()->create();
     $nextMode = ModeOfStudy::factory()->create();
@@ -65,8 +65,8 @@ test('update requires update institution settings permission', function () {
         ->put(route('assessment-types.update', $assessmentType->id), $payload)
         ->assertForbidden();
 
-    Permission::findOrCreate('update:institution-settings', 'web');
-    $user->givePermissionTo('update:institution-settings');
+    Permission::findOrCreate('update:assessment-types', 'web');
+    $user->givePermissionTo('update:assessment-types');
 
     $this->actingAs($user)
         ->put(route('assessment-types.update', $assessmentType->id), $payload)
@@ -76,7 +76,7 @@ test('update requires update institution settings permission', function () {
         ->and($assessmentType->modes_of_study)->toBe([$nextMode->id]);
 });
 
-test('archive requires delete institution settings permission', function () {
+test('archive requires delete assessment types permission', function () {
     $user = User::factory()->create();
     $assessmentType = AssessmentType::factory()->create([
         'tenant_id' => $user->tenant_id,
@@ -86,8 +86,8 @@ test('archive requires delete institution settings permission', function () {
         ->delete(route('assessment-types.destroy', $assessmentType->id))
         ->assertForbidden();
 
-    Permission::findOrCreate('delete:institution-settings', 'web');
-    $user->givePermissionTo('delete:institution-settings');
+    Permission::findOrCreate('delete:assessment-types', 'web');
+    $user->givePermissionTo('delete:assessment-types');
 
     $this->actingAs($user)
         ->delete(route('assessment-types.destroy', $assessmentType->id))
@@ -96,7 +96,7 @@ test('archive requires delete institution settings permission', function () {
     expect($assessmentType->refresh()->deleted_at)->not->toBeNull();
 });
 
-test('restore requires restore institution settings permission', function () {
+test('restore requires restore assessment types permission', function () {
     $user = User::factory()->create();
     $assessmentType = AssessmentType::factory()->create([
         'tenant_id' => $user->tenant_id,
@@ -107,8 +107,8 @@ test('restore requires restore institution settings permission', function () {
         ->put(route('assessment-types.restore', $assessmentType->id))
         ->assertForbidden();
 
-    Permission::findOrCreate('restore:institution-settings', 'web');
-    $user->givePermissionTo('restore:institution-settings');
+    Permission::findOrCreate('restore:assessment-types', 'web');
+    $user->givePermissionTo('restore:assessment-types');
 
     $this->actingAs($user)
         ->put(route('assessment-types.restore', $assessmentType->id))
@@ -117,7 +117,7 @@ test('restore requires restore institution settings permission', function () {
     expect($assessmentType->fresh()->deleted_at)->toBeNull();
 });
 
-test('force delete requires force delete institution settings permission', function () {
+test('force delete requires force delete assessment types permission', function () {
     $user = User::factory()->create();
     $assessmentType = AssessmentType::factory()->create([
         'tenant_id' => $user->tenant_id,
@@ -127,8 +127,8 @@ test('force delete requires force delete institution settings permission', funct
         ->delete(route('assessment-types.force-delete', $assessmentType->id))
         ->assertForbidden();
 
-    Permission::findOrCreate('forceDelete:institution-settings', 'web');
-    $user->givePermissionTo('forceDelete:institution-settings');
+    Permission::findOrCreate('forceDelete:assessment-types', 'web');
+    $user->givePermissionTo('forceDelete:assessment-types');
 
     $this->actingAs($user)
         ->delete(route('assessment-types.force-delete', $assessmentType->id))

@@ -28,18 +28,18 @@ export const useRaces = () => {
                     const id = getIdParams(row.original.id?.toString() ?? '');
                     const name = trans_choice('trans.race', 1);
                     return moreActionButton(!!row.original?.attributes?.deletedAt, [
-                        { key: 'edit', action: () => onOpenModal(can['update:settings'], row.original) },
+                        { key: 'edit', action: () => onOpenModal(can['update:races'], row.original) },
                         {
                             key: 'archive',
-                            action: () => onDelete(can['delete:settings'], route('races.destroy', id), name),
+                            action: () => onDelete(can['delete:races'], route('races.destroy', id), name),
                         },
                         {
                             key: 'restore',
-                            action: () => onRestore(can['restore:settings'], route('races.restore', id), name),
+                            action: () => onRestore(can['restore:races'], route('races.restore', id), name),
                         },
                         {
                             key: 'delete',
-                            action: () => onForceDelete(can['forceDelete:settings'], route('races.force-delete', id), name),
+                            action: () => onForceDelete(can['forceDelete:races'], route('races.force-delete', id), name),
                         },
                     ]);
                 },

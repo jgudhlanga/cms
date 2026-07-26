@@ -25,9 +25,13 @@ class DocumentTemplateResource extends JsonResource
                 'headerEmail' => $this->header_email,
                 'headerWebsite' => $this->header_website,
                 'headerLogoOne' => $this->header_logo_1,
-                'headerLogoOneUrl' => $this->header_logo_one_url,
+                'headerLogoOneUrl' => ($this->header_logo_1 ?? 0) > 0
+                    ? $this->headerLogoOne?->getFullUrl()
+                    : null,
                 'headerLogo2' => $this->header_logo_2,
-                'headerLogo2Url' => $this->header_logo_two_url,
+                'headerLogo2Url' => ($this->header_logo_2 ?? 0) > 0
+                    ? $this->headerLogoTwo?->getFullUrl()
+                    : null,
                 'body' => $this->body,
                 'logoOneUrl' => $this->logo_one_url,
                 'createdAt' => $this->created_at,

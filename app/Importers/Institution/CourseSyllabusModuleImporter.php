@@ -4,7 +4,7 @@ namespace App\Importers\Institution;
 
 use App\Models\Institution\InstitutionDepartment;
 use App\Models\Institution\Syllabus\CourseSyllabusModule;
-use App\Services\Institution\ResolveAcademicYearOptionFromImport;
+use App\Services\Institution\ResolveSemesterFromImport;
 use App\Support\Institution\SyllabusImportCode;
 use Illuminate\Support\Facades\Log;
 use LaravelIngest\Contracts\IngestDefinition;
@@ -95,8 +95,8 @@ class CourseSyllabusModuleImporter implements IngestDefinition
             )
             ->mapAndTransform(
                 'SEMESTER',
-                'academic_year_option_id',
-                fn (string $semester, array $row): int => app(ResolveAcademicYearOptionFromImport::class)->resolve(
+                'semester_id',
+                fn (string $semester, array $row): int => app(ResolveSemesterFromImport::class)->resolve(
                     $semester,
                     self::tryResolveCourseSyllabusId($this->tenantId, (string) ($row['COURSE_CODE'] ?? '')),
                     $this->resolveInstitutionDepartmentId($row),

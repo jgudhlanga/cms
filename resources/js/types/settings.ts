@@ -316,7 +316,7 @@ export type StudentEnrolmentStatusParams = {
     description?: string;
     color?: string;
 };
-export type AcademicYearOption = {
+export type Semester = {
     type?: string;
     id?: string;
     attributes: {
@@ -327,7 +327,7 @@ export type AcademicYearOption = {
         deletedAt?: string;
     };
 };
-export type AcademicYearOptionParams = {
+export type SemesterParams = {
     name: string;
     description?: string;
 };

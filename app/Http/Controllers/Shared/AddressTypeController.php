@@ -20,7 +20,7 @@ class AddressTypeController extends Controller
 
 	public function index(SharedTitleFilter $filters)
 	{
-		$this->authorize('viewSettings');
+		$this->authorize('viewAny', AddressType::class);
 		$addressTypes = AddressTypeResource::collection($this->repository->allFilter(['*'], $filters));
 		return Inertia::render('shared/addressTypes/Index', [
 			'addressTypes' => $addressTypes,
@@ -31,12 +31,12 @@ class AddressTypeController extends Controller
 
 	public function create()
 	{
-		$this->authorize('createSettings');
+		$this->authorize('create', AddressType::class);
 	}
 
 	public function store(AddressTypeRequest $request)
 	{
-		$this->authorize('createSettings');
+		$this->authorize('create', AddressType::class);
 		$this->repository->create(AddressTypeDto::fromAddressTypeRequest($request));
 	}
 
@@ -52,26 +52,26 @@ class AddressTypeController extends Controller
 
 	public function update(AddressTypeRequest $request, AddressType $addressType)
 	{
-		$this->authorize('updateSettings');
+		$this->authorize('update', $addressType);
 		$this->repository->update($addressType, AddressTypeDto::fromAddressTypeRequest($request));
 	}
 
 	public function destroy(AddressType $addressType)
 	{
-		$this->authorize('deleteSettings');
+		$this->authorize('delete', $addressType);
 		$this->repository->delete($addressType);
 	}
 
 	public function restore(string $id)
 	{
 		$addressType = $this->repository->findTrashed($id);
-		$this->authorize('restoreSettings');
+		$this->authorize('restore', $addressType);
 		$this->repository->restore($addressType);
 	}
 
 	public function forceDelete(AddressType $addressType)
 	{
-		$this->authorize('forceDeleteSettings');
+		$this->authorize('forceDelete', $addressType);
 		$this->repository->delete($addressType, true);
 	}
 }

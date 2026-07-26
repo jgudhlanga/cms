@@ -23,6 +23,8 @@ const {
     passRateByDepartment,
     passRateByLevel,
     passRateByCourse,
+    topPerformingCourses,
+    bottomPerformingCourses,
     moduleFailureHotspots,
     missingMarksByDepartment,
     missingMarksByLevel,
@@ -299,6 +301,50 @@ watch(
                 </div>
                 <div v-else class="flex flex-col gap-1.5">
                     <div v-for="row in passRateByCourse" :key="row.courseId" class="flex items-center gap-2">
+                        <div class="w-28 shrink-0 truncate text-xs text-gray-900">{{ row.courseName }}</div>
+                        <div class="h-1.5 flex-1 overflow-hidden rounded-sm bg-gray-100">
+                            <div
+                                class="h-1.5 rounded-sm"
+                                :class="passRateBarClass(row.passRate)"
+                                :style="{ width: `${row.barPercent}%` }"
+                            />
+                        </div>
+                        <div class="w-10 text-right text-xs text-gray-500">{{ row.passRate }}%</div>
+                    </div>
+                </div>
+            </DashboardCard>
+
+            <DashboardCard
+                v-if="topPerformingCourses.length > 0"
+                compact
+                :title="$t('dashboard.academic_top_performing_courses')"
+            >
+                <div class="flex flex-col gap-1.5">
+                    <div v-for="row in topPerformingCourses" :key="`top-course-${row.courseId}`" class="flex items-center gap-2">
+                        <div class="w-28 shrink-0 truncate text-xs text-gray-900">{{ row.courseName }}</div>
+                        <div class="h-1.5 flex-1 overflow-hidden rounded-sm bg-gray-100">
+                            <div
+                                class="h-1.5 rounded-sm"
+                                :class="passRateBarClass(row.passRate)"
+                                :style="{ width: `${row.barPercent}%` }"
+                            />
+                        </div>
+                        <div class="w-10 text-right text-xs text-gray-500">{{ row.passRate }}%</div>
+                    </div>
+                </div>
+            </DashboardCard>
+
+            <DashboardCard
+                v-if="bottomPerformingCourses.length > 0"
+                compact
+                :title="$t('dashboard.academic_bottom_performing_courses')"
+            >
+                <div class="flex flex-col gap-1.5">
+                    <div
+                        v-for="row in bottomPerformingCourses"
+                        :key="`bottom-course-${row.courseId}`"
+                        class="flex items-center gap-2"
+                    >
                         <div class="w-28 shrink-0 truncate text-xs text-gray-900">{{ row.courseName }}</div>
                         <div class="h-1.5 flex-1 overflow-hidden rounded-sm bg-gray-100">
                             <div

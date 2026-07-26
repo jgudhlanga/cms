@@ -3,13 +3,13 @@
 namespace App\Http\Requests\Institution;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 /**
  * @property mixed $department_ids
  */
 class InstitutionDepartmentRequest extends FormRequest
 {
-
     public function authorize(): bool
     {
         return true;
@@ -24,9 +24,16 @@ class InstitutionDepartmentRequest extends FormRequest
         }
     }
 
-
     public function rules(): array
     {
+        if ($this->isMethod('put') || $this->isMethod('patch')) {
+            return [
+                'division_id' => ['nullable', 'integer', Rule::exists('divisions', 'id')],
+                'department_code' => ['nullable', 'string', 'max:50'],
+                'description' => ['nullable', 'string', 'max:1000'],
+            ];
+        }
+
         return [
             'is_academic' => ['required', 'boolean'],
             'department_ids' => ['nullable', 'array'],

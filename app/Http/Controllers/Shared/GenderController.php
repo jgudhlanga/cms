@@ -19,7 +19,7 @@ class GenderController extends Controller
 
 	public function index(SharedTitleFilter $filters)
 	{
-		$this->authorize('viewSettings');
+		$this->authorize('viewAny', Gender::class);
 		$genders = GenderResource::collection($this->repository->allFilter(['*'], $filters));
 		return Inertia::render('shared/genders/Index', [
 			'genders' => $genders,
@@ -30,12 +30,12 @@ class GenderController extends Controller
 
 	public function create()
 	{
-		$this->authorize('createSettings');
+		$this->authorize('create', Gender::class);
 	}
 
 	public function store(GenderRequest $request)
 	{
-		$this->authorize('createSettings');
+		$this->authorize('create', Gender::class);
 		$this->repository->create(GenderDto::fromGenderRequest($request));
 	}
 
@@ -51,26 +51,26 @@ class GenderController extends Controller
 
 	public function update(GenderRequest $request, Gender $gender)
 	{
-		$this->authorize('updateSettings');
+		$this->authorize('update', $gender);
 		$this->repository->update($gender, GenderDto::fromGenderRequest($request));
 	}
 
 	public function destroy(Gender $gender)
 	{
-		$this->authorize('deleteSettings');
+		$this->authorize('delete', $gender);
 		$this->repository->delete($gender);
 	}
 
 	public function restore(string $id)
 	{
 		$gender = $this->repository->findTrashed($id);
-		$this->authorize('restoreSettings');
+		$this->authorize('restore', $gender);
 		$this->repository->restore($gender);
 	}
 
 	public function forceDelete(Gender $gender)
 	{
-		$this->authorize('forceDeleteSettings');
+		$this->authorize('forceDelete', $gender);
 		$this->repository->delete($gender, true);
 	}
 }

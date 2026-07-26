@@ -5,7 +5,7 @@ import BaseSelect from '@/components/core/form/select/BaseSelect.vue';
 import BaseSwitch from '@/components/core/form/radio/BaseSwitch.vue';
 import SelectLecturerSelect from '@/components/core/form/select/SelectLecturerSelect.vue';
 import Code from '@/components/core/form/text/Code.vue';
-import { useAcademicYearOptionsByCalendarType } from '@/composables/academicCalendars/useAcademicYearOptionsByCalendarType';
+import { useSemestersByCalendarType } from '@/composables/academicCalendars/useSemestersByCalendarType';
 import { useCourseSyllabusModules } from '@/composables/institution/useCourseSyllabusModules';
 import { APP_MODULE_KEYS } from '@/lib/constants';
 import { clearFormErrors } from '@/lib/forms';
@@ -27,7 +27,7 @@ const props = defineProps<Props>();
 const moduleRecord = ref<CourseSyllabusModule>();
 const form = useForm<CourseSyllabusModuleParams>({
     course_syllabus_id: props.courseSyllabusId || null,
-    academic_year_option_id: null,
+    semester_id: null,
     title: '',
     code: '',
     duration_in_hours: null,
@@ -41,7 +41,7 @@ const form = useForm<CourseSyllabusModuleParams>({
 
 const { modals } = useModalStore();
 const { formSchema, saveCourseSyllabusModule } = useCourseSyllabusModules();
-const { yearOptions, yearOptionsLoading, loadYearOptions } = useAcademicYearOptionsByCalendarType();
+const { yearOptions, yearOptionsLoading, loadYearOptions } = useSemestersByCalendarType();
 
 const resolvedCalendarType = computed(() => props.calendarType ?? 'semester');
 
@@ -75,15 +75,15 @@ watch(modals!, async () => {
     await loadYearOptions(resolvedCalendarType.value);
 
     const preferred =
-        moduleRecord.value?.attributes?.academicYearOptionId != null
-            ? String(moduleRecord.value.attributes.academicYearOptionId)
+        moduleRecord.value?.attributes?.semesterId != null
+            ? String(moduleRecord.value.attributes.semesterId)
             : null;
     if (preferred !== null && yearOptions.value.some((o) => o.value === preferred)) {
-        form.academic_year_option_id = preferred;
+        form.semester_id = preferred;
     } else if (yearOptions.value.length > 0) {
-        form.academic_year_option_id = yearOptions.value[0].value;
+        form.semester_id = yearOptions.value[0].value;
     } else {
-        form.academic_year_option_id = null;
+        form.semester_id = null;
     }
 
     form.defaults();
@@ -118,15 +118,15 @@ const save = () => {
                 <BaseInput input-id="course_syllabus" :label="$tChoice('syllabus.course_syllabus', 1)" :model-value="selectedSyllabusTitle" :disabled="true" />
                 <BaseSelect
                     class="w-full"
-                    :label="$tChoice('syllabus.calendar_year_option', 1)"
+                    :label="$tChoice('syllabus.semester', 1)"
                     placeholder=""
                     :options="yearOptions"
                     :loading="yearOptionsLoading"
-                    v-model="form.academic_year_option_id"
+                    v-model="form.semester_id"
                     :is-searchable="false"
                     :is-required="true"
-                    @update:modelValue="clearFormErrors(form, 'academic_year_option_id')"
-                    :error="form.errors.academic_year_option_id"
+                    @update:modelValue="clearFormErrors(form, 'semester_id')"
+                    :error="form.errors.semester_id"
                 />
                 <BaseInput
                     input-id="title"

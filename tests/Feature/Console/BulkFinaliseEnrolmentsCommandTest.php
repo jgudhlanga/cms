@@ -5,7 +5,7 @@ use App\Enums\Shared\ClassListTypeEnum;
 use App\Enums\Shared\WorkflowStepEnum;
 use App\Mail\Enrolments\BulkFinaliseEnrolmentsReportMail;
 use App\Models\AcademicCalendars\AcademicCalendar;
-use App\Models\AcademicCalendars\AcademicYearOption;
+use App\Models\AcademicCalendars\Semester;
 use App\Models\Rbac\Role;
 use App\Models\Enrolments\ClassList;
 use App\Models\Students\StudentEnrolment;
@@ -32,7 +32,7 @@ beforeEach(function (): void {
     );
 
     foreach (['Semester 1', 'Semester 2'] as $name) {
-        AcademicYearOption::query()->firstOrCreate(
+        Semester::query()->firstOrCreate(
             ['slug' => Str::slug($name)],
             ['name' => $name, 'description' => null],
         );
@@ -64,7 +64,7 @@ it('finalises verified students with matching payments in the date window', func
 
     $enrolment = StudentEnrolment::query()->where('student_id', $studentApplication->student_id)->first();
     $activeStatusId = StudentEnrolmentStatus::query()->where('slug', 'active')->value('id');
-    $semesterOneId = AcademicYearOption::query()->where('slug', 'semester-1')->value('id');
+    $semesterOneId = Semester::query()->where('slug', 'semester-1')->value('id');
     $calendarId = AcademicCalendar::query()->where('calendar_year', '2025/2026')->value('id');
 
     expect($freshStudentApplication->program_status_id)->toBe(ClassListTypeEnum::VERIFIED->value)
@@ -73,7 +73,7 @@ it('finalises verified students with matching payments in the date window', func
         ->and($classList->type)->toBe(ClassListTypeEnum::FINAL)
         ->and($enrolment)->not->toBeNull()
         ->and($enrolment->student_enrolment_status_id)->toBe($activeStatusId)
-        ->and($enrolment->academic_year_option_id)->toBe($semesterOneId)
+        ->and($enrolment->semester_id)->toBe($semesterOneId)
         ->and($enrolment->academic_calendar_id)->toBe($calendarId)
         ->and($enrolment->mode_of_study_id)->toBe($freshStudentApplication->mode_of_study_id);
 });

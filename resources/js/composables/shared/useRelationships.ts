@@ -30,18 +30,18 @@ export const useRelationships = () => {
                     const id = getIdParams(row.original.id?.toString() ?? '');
                     const name = trans_choice('trans.name', 1);
                     return moreActionButton(!!row.original?.attributes?.deletedAt, [
-                        { key: 'edit', action: () => onOpenModal(can['update:settings'], row.original) },
+                        { key: 'edit', action: () => onOpenModal(can['update:relationships'], row.original) },
                         {
                             key: 'archive',
-                            action: () => onDelete(can['delete:settings'], route('relationships.destroy', id), name),
+                            action: () => onDelete(can['delete:relationships'], route('relationships.destroy', id), name),
                         },
                         {
                             key: 'restore',
-                            action: () => onRestore(can['restore:settings'], route('relationships.restore', id), name),
+                            action: () => onRestore(can['restore:relationships'], route('relationships.restore', id), name),
                         },
                         {
                             key: 'delete',
-                            action: () => onForceDelete(can['forceDelete:settings'], route('relationships.force-delete', id), name),
+                            action: () => onForceDelete(can['forceDelete:relationships'], route('relationships.force-delete', id), name),
                         },
                     ]);
                 },

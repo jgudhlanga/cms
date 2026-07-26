@@ -17,7 +17,7 @@ defineProps<{
     auth: AuthObject;
     errors: object;
 }>();
-const allowed = hasAbility('create:settings');
+const allowed = hasAbility('create:workflow-step-actions');
 </script>
 
 <template>

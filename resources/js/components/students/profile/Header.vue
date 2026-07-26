@@ -16,7 +16,7 @@ const props = defineProps<Props>();
 
 const yearSemesterDisplay = computed(() => {
   const calendar = props.data?.academicCalendar?.trim();
-  const yearOption = props.data?.academicYearOption?.trim();
+  const yearOption = props.data?.semester?.trim();
 
   if (calendar && yearOption) {
     return `${calendar} · ${yearOption}`;

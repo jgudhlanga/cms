@@ -43,18 +43,18 @@ export const useAcademicLevels = () => {
                     const id = getIdParams(row.original.id?.toString() ?? '');
                     const name = trans_choice('trans.level', 1);
                     return moreActionButton(!!row.original?.attributes?.deletedAt, [
-                        { key: 'edit', action: () => onOpenModal(can['update:settings'], row.original) },
+                        { key: 'edit', action: () => onOpenModal(can['update:academic-levels'], row.original) },
                         {
                             key: 'archive',
-                            action: () => onDelete(can['delete:settings'], route('academic-levels.destroy', id), name),
+                            action: () => onDelete(can['delete:academic-levels'], route('academic-levels.destroy', id), name),
                         },
                         {
                             key: 'restore',
-                            action: () => onRestore(can['restore:settings'], route('academic-levels.restore', id), name),
+                            action: () => onRestore(can['restore:academic-levels'], route('academic-levels.restore', id), name),
                         },
                         {
                             key: 'delete',
-                            action: () => onForceDelete(can['forceDelete:settings'], route('academic-levels.force-delete', id), name),
+                            action: () => onForceDelete(can['forceDelete:academic-levels'], route('academic-levels.force-delete', id), name),
                         },
                     ]);
                 },

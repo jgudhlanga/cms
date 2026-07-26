@@ -6,7 +6,7 @@ namespace App\Services\Students;
 
 use App\Enums\AcademicCalendars\AcademicCalendarTypeEnum;
 use App\Models\AcademicCalendars\AcademicCalendar;
-use App\Models\AcademicCalendars\AcademicYearOption;
+use App\Models\AcademicCalendars\Semester;
 use App\Models\Students\Student;
 use App\Models\Students\StudentApplication;
 use App\Models\Students\StudentEnrolment;
@@ -205,9 +205,9 @@ class StudentPortalTermDetailsService
 
     private function resolveYearOptionLabel(AcademicCalendar $calendar): string
     {
-        $slug = AcademicCalendarPeriodResolver::academicYearOptionSlugForCalendar($calendar);
+        $slug = AcademicCalendarPeriodResolver::semesterSlugForCalendar($calendar);
 
-        $name = AcademicYearOption::query()->where('slug', $slug)->value('name');
+        $name = Semester::query()->where('slug', $slug)->value('name');
 
         if (is_string($name) && $name !== '') {
             return $name;

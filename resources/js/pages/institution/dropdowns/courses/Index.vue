@@ -17,7 +17,7 @@ defineProps<{
     auth: AuthObject;
     errors: object;
 }>();
-const allowed = hasAbility('create:institution-settings');
+const allowed = hasAbility('create:courses');
 </script>
 
 <template>

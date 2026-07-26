@@ -134,7 +134,7 @@ class StudentEnrollmentExportService
             $studentApplication?->intakePeriod?->calendar_year,
             $studentApplication?->modeOfStudy?->name,
             $enrolment->academicCalendar?->calendar_year,
-            $enrolment->academicYearOption?->name,
+            $enrolment->semester?->name,
             $this->studentExportRowMapper->resolveInternationalFlag($student),
             $sponsor !== null ? 'Yes' : 'No',
             $sponsor?->name,

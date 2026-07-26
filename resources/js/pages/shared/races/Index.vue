@@ -29,8 +29,8 @@ const can = props?.auth?.can;
             :search-url="route('races.index')"
             :pagination="{ ...races.links, ...races.meta }"
             :columns="createRaceColumns()"
-            :on-create="() => onOpenModal(can['create:settings'])"
-            :disable-create="!can['create:settings']"
+            :on-create="() => onOpenModal(can['create:races'])"
+            :disable-create="!can['create:races']"
         />
         <CreateEdit />
     </PageContainer>

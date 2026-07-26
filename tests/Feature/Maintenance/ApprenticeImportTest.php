@@ -5,7 +5,7 @@ use App\Enums\Shared\WorkflowStepEnum;
 use App\Exports\Maintenance\ApprenticeImportTemplateExport;
 use App\Importers\Maintenance\ApprenticeImporter;
 use App\Models\AcademicCalendars\AcademicCalendar;
-use App\Models\AcademicCalendars\AcademicYearOption;
+use App\Models\AcademicCalendars\Semester;
 use App\Models\Enrolments\ClassList;
 use App\Models\Institution\Course;
 use App\Models\Institution\Department;
@@ -66,7 +66,7 @@ function makeApprenticeImportContext(): array
     ]);
 
     foreach (['Semester 1', 'Semester 2'] as $name) {
-        AcademicYearOption::query()->firstOrCreate(
+        Semester::query()->firstOrCreate(
             ['slug' => Str::slug($name)],
             ['name' => $name, 'description' => null],
         );
@@ -199,7 +199,7 @@ function createApprenticeImportStudent(
     }
 
     if ($options['createEnrolment'] ?? false) {
-        $academicYearOption = AcademicYearOption::query()->firstOrCreate(
+        $semester = Semester::query()->firstOrCreate(
             ['slug' => 'semester-1'],
             ['name' => 'Semester 1', 'description' => null],
         );
@@ -214,7 +214,7 @@ function createApprenticeImportStudent(
             'institution_department_id' => $institutionDepartmentId,
             'department_level_id' => $departmentLevel->id,
             'department_course_id' => $departmentCourse->id,
-            'academic_year_option_id' => $academicYearOption->id,
+            'semester_id' => $semester->id,
             'academic_calendar_id' => $context['calendar']->id,
             'mode_of_study_id' => $modeOfStudy->id,
             'student_enrolment_status_id' => $enrolmentStatus->id,

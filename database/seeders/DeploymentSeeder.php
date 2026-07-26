@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use Database\Seeders\AcademicCalendars\AcademicYearOptionSeeder;
+use Database\Seeders\AcademicCalendars\SemesterSeeder;
 use Database\Seeders\AcademicCalendars\ClassMetaDataTypeSeeder;
 use Database\Seeders\Rbac\ModulesTableSeeder;
 use Database\Seeders\Rbac\PermissionsTableSeeder;
@@ -14,6 +14,7 @@ use Database\Seeders\Institution\AssessmentTypesTableSeeder;
 use Database\Seeders\Institution\ContinuousIntakePeriodSeeder;
 use Database\Seeders\Students\StudentEnrolmentStatusSeeder;
 use Illuminate\Database\Seeder;
+use Database\Seeders\Rbac\RoleGroupSeeder;
 
 class DeploymentSeeder extends Seeder
 {
@@ -25,8 +26,9 @@ class DeploymentSeeder extends Seeder
         $this->call([
             ModulesTableSeeder::class,
             PermissionsTableSeeder::class,
+            RoleGroupSeeder::class,
             RolesTableSeeder::class,
-            AcademicYearOptionSeeder::class,
+            SemesterSeeder::class,
             ClassMetaDataTypeSeeder::class,
             StudentEnrolmentStatusSeeder::class,
             AssessmentTypesTableSeeder::class,

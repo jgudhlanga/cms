@@ -37,8 +37,8 @@ export type ClassLevelSummary = {
     classesCount: number;
     totalnClass: string | number | null;
     totalFinalList: string | number | null;
-    academicYearOption: string | null;
-    academicYearOptionId: string | number | null;
+    semester: string | null;
+    semesterId: string | number | null;
     courseSyllabusIds?: (string | number)[];
     courseSyllabusCodes?: string[];
 };
@@ -50,7 +50,7 @@ export type AcademicClassConfigPayload = {
     mode_of_study_id: string | number | null;
     students_per_class: string | number | null;
     calendarType?: 'term' | 'semester' | 'abma' | null;
-    academic_year_option_id?: string | number | null;
+    semester_id?: string | number | null;
     course_syllabus_ids?: (string | number)[];
     courseSyllabusCodes?: string[];
 };

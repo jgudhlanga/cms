@@ -3,7 +3,7 @@
 use App\Enums\AcademicCalendars\AcademicCalendarTypeEnum;
 use App\Enums\Shared\TenantEnum;
 use App\Models\AcademicCalendars\AcademicCalendar;
-use App\Models\AcademicCalendars\AcademicYearOption;
+use App\Models\AcademicCalendars\Semester;
 use App\Models\HMS\HmsSetting;
 use App\Models\HMS\Hostel;
 use App\Models\HMS\HostelRoom;
@@ -78,7 +78,7 @@ function attachHostelApplicationEnrolment(
         ['name' => 'Active', 'description' => 'Test'],
     )->id;
 
-    $semesterOptionId = (int) AcademicYearOption::query()->firstOrCreate(
+    $semesterOptionId = (int) Semester::query()->firstOrCreate(
         ['slug' => 'semester-1'],
         ['name' => 'Semester 1', 'description' => null],
     )->id;
@@ -90,7 +90,7 @@ function attachHostelApplicationEnrolment(
         'department_level_id' => $studentApplication->department_level_id,
         'department_course_id' => $studentApplication->department_course_id,
         'academic_calendar_id' => $calendar->id,
-        'academic_year_option_id' => $semesterOptionId,
+        'semester_id' => $semesterOptionId,
         'mode_of_study_id' => $studentApplication->mode_of_study_id,
         'student_enrolment_status_id' => $activeStatusId,
     ]);

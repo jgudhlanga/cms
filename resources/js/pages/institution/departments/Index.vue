@@ -9,6 +9,7 @@ import { ColorVariant } from '@/enums/colors';
 import { IconName } from '@/lib/icons';
 import { hasAbility } from '@/lib/permissions';
 import LinkDepartmentsToInstitution from '@/pages/institution/departments/partials/LinkDepartmentsToInstitution.vue';
+import EditDepartmentDivision from '@/pages/institution/departments/partials/EditDepartmentDivision.vue';
 import { AuthObject, DataFilters, DataListProps } from '@/types/data-pagination';
 import { Link } from '@/types/ui';
 
@@ -21,6 +22,7 @@ interface Props {
     auth: AuthObject;
     errors: object;
     institutionDepartmentIds: Array<string | undefined | null> | null;
+    divisionOptions: Array<{ id: number | string; name: string | null }>;
 }
 
 defineProps<Props>();
@@ -60,5 +62,6 @@ const breadcrumbs: Array<Link> = [
             </template>
         </DataTable>
         <LinkDepartmentsToInstitution />
+        <EditDepartmentDivision :division-options="divisionOptions" />
     </PageContainer>
 </template>
