@@ -29,8 +29,8 @@ const can = props?.auth?.can;
             :search-url="route('countries.index')"
             :pagination="{ ...countries.links, ...countries.meta }"
             :columns="createCountryColumns()"
-            :on-create="() => onOpenModal(can['create:settings'])"
-            :disable-create="!can['create:settings']"
+            :on-create="() => onOpenModal(can['create:countries'])"
+            :disable-create="!can['create:countries']"
         />
         <CreateEdit />
     </PageContainer>

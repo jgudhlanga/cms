@@ -10,15 +10,15 @@ test('guests are redirected when visiting student enrolment statuses page', func
 
 test('authenticated users with permission can view student enrolment statuses page', function () {
     $user = User::factory()->create();
-    Permission::findOrCreate('view:settings', 'web');
-    $user->givePermissionTo('view:settings');
+    Permission::findOrCreate('viewAny:student-enrolment-statuses', 'web');
+    $user->givePermissionTo('viewAny:student-enrolment-statuses');
 
     $this->actingAs($user)
         ->get(route('student-enrolment-statuses.index'))
         ->assertSuccessful();
 });
 
-test('store requires create settings permission', function () {
+test('store requires create student enrolment statuses permission', function () {
     $user = User::factory()->create();
     $payload = [
         'name' => 'On Leave',
@@ -29,8 +29,8 @@ test('store requires create settings permission', function () {
         ->post(route('student-enrolment-statuses.store'), $payload)
         ->assertForbidden();
 
-    Permission::findOrCreate('create:settings', 'web');
-    $user->givePermissionTo('create:settings');
+    Permission::findOrCreate('create:student-enrolment-statuses', 'web');
+    $user->givePermissionTo('create:student-enrolment-statuses');
 
     $this->actingAs($user)
         ->post(route('student-enrolment-statuses.store'), $payload)
@@ -41,7 +41,7 @@ test('store requires create settings permission', function () {
         ->and($record->name)->toBe('On Leave');
 });
 
-test('update requires update settings permission', function () {
+test('update requires update student enrolment statuses permission', function () {
     $user = User::factory()->create();
     $status = StudentEnrolmentStatus::query()->create([
         'name' => 'Active',
@@ -57,8 +57,8 @@ test('update requires update settings permission', function () {
         ->put(route('student-enrolment-statuses.update', $status->id), $payload)
         ->assertForbidden();
 
-    Permission::findOrCreate('update:settings', 'web');
-    $user->givePermissionTo('update:settings');
+    Permission::findOrCreate('update:student-enrolment-statuses', 'web');
+    $user->givePermissionTo('update:student-enrolment-statuses');
 
     $this->actingAs($user)
         ->put(route('student-enrolment-statuses.update', $status->id), $payload)
@@ -67,7 +67,7 @@ test('update requires update settings permission', function () {
     expect($status->refresh()->name)->toBe('Active Updated');
 });
 
-test('archive requires delete settings permission', function () {
+test('archive requires delete student enrolment statuses permission', function () {
     $user = User::factory()->create();
     $status = StudentEnrolmentStatus::query()->create([
         'name' => 'Archive Me',
@@ -78,8 +78,8 @@ test('archive requires delete settings permission', function () {
         ->delete(route('student-enrolment-statuses.destroy', $status->id))
         ->assertForbidden();
 
-    Permission::findOrCreate('delete:settings', 'web');
-    $user->givePermissionTo('delete:settings');
+    Permission::findOrCreate('delete:student-enrolment-statuses', 'web');
+    $user->givePermissionTo('delete:student-enrolment-statuses');
 
     $this->actingAs($user)
         ->delete(route('student-enrolment-statuses.destroy', $status->id))
@@ -88,7 +88,7 @@ test('archive requires delete settings permission', function () {
     expect($status->refresh()->deleted_at)->not->toBeNull();
 });
 
-test('restore requires restore settings permission', function () {
+test('restore requires restore student enrolment statuses permission', function () {
     $user = User::factory()->create();
     $status = StudentEnrolmentStatus::query()->create([
         'name' => 'Restore Me',
@@ -100,8 +100,8 @@ test('restore requires restore settings permission', function () {
         ->put(route('student-enrolment-statuses.restore', $status->id))
         ->assertForbidden();
 
-    Permission::findOrCreate('restore:settings', 'web');
-    $user->givePermissionTo('restore:settings');
+    Permission::findOrCreate('restore:student-enrolment-statuses', 'web');
+    $user->givePermissionTo('restore:student-enrolment-statuses');
 
     $this->actingAs($user)
         ->put(route('student-enrolment-statuses.restore', $status->id))
@@ -110,7 +110,7 @@ test('restore requires restore settings permission', function () {
     expect($status->fresh()->deleted_at)->toBeNull();
 });
 
-test('force delete requires force delete settings permission', function () {
+test('force delete requires force delete student enrolment statuses permission', function () {
     $user = User::factory()->create();
     $status = StudentEnrolmentStatus::query()->create([
         'name' => 'Delete Me',
@@ -121,8 +121,8 @@ test('force delete requires force delete settings permission', function () {
         ->delete(route('student-enrolment-statuses.force-delete', $status->id))
         ->assertForbidden();
 
-    Permission::findOrCreate('forceDelete:settings', 'web');
-    $user->givePermissionTo('forceDelete:settings');
+    Permission::findOrCreate('forceDelete:student-enrolment-statuses', 'web');
+    $user->givePermissionTo('forceDelete:student-enrolment-statuses');
 
     $this->actingAs($user)
         ->delete(route('student-enrolment-statuses.force-delete', $status->id))

@@ -18,6 +18,7 @@ export const useDivisions = () => {
         return [
             { header: trans_choice('#', 1), accessorKey: 'attributes.position', meta: { align: 'left' } },
             { header: trans_choice('trans.name', 1), accessorKey: 'attributes.name' },
+            { header: trans('trans.head_of_division'), accessorKey: 'attributes.headOfDivision' },
             { header: trans_choice('trans.description', 1), accessorKey: 'attributes.description' },
             {
                 header: trans_choice('trans.action', 2),
@@ -28,18 +29,18 @@ export const useDivisions = () => {
                     const id = getIdParams(row.original.id?.toString() ?? '');
                     const name = trans_choice('trans.division', 1);
                     return moreActionButton(!!row.original?.attributes?.deletedAt, [
-                        { key: 'edit', action: () => onOpenModal(can['update:institution-settings'], row.original) },
+                        { key: 'edit', action: () => onOpenModal(can['update:divisions'], row.original) },
                         {
                             key: 'archive',
-                            action: () => onDelete(can['delete:institution-settings'], route('divisions.destroy', id), name),
+                            action: () => onDelete(can['delete:divisions'], route('divisions.destroy', id), name),
                         },
                         {
                             key: 'restore',
-                            action: () => onRestore(can['restore:institution-settings'], route('divisions.restore', id), name),
+                            action: () => onRestore(can['restore:divisions'], route('divisions.restore', id), name),
                         },
                         {
                             key: 'delete',
-                            action: () => onForceDelete(can['forceDelete:institution-settings'], route('divisions.force-delete', id), name),
+                            action: () => onForceDelete(can['forceDelete:divisions'], route('divisions.force-delete', id), name),
                         },
                     ]);
                 },

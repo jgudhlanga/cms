@@ -43,7 +43,7 @@ const props = withDefaults(
         canViewCourseWork?: boolean;
         canExportClassList?: boolean;
         semesterModules?: ClassSemesterModule[];
-        selectedAcademicYearOptionId?: number | null;
+        selectedSemesterId?: number | null;
         calendarType?: 'term' | 'semester' | 'abma';
         semesterConfigHasSyllabi?: boolean;
         canAssignStaffing?: boolean;
@@ -55,14 +55,14 @@ const props = withDefaults(
         canViewCourseWork: false,
         canExportClassList: false,
         semesterModules: () => [],
-        selectedAcademicYearOptionId: null,
+        selectedSemesterId: null,
         calendarType: 'semester',
         semesterConfigHasSyllabi: false,
         canAssignStaffing: false,
     },
 );
 
-const { department, academicCalendar, academicCalendarClass, course, level, mode, classConfig, moveTargetClasses, siblingAcademicCalendarClasses, selectedAcademicYearOptionId } =
+const { department, academicCalendar, academicCalendarClass, course, level, mode, classConfig, moveTargetClasses, siblingAcademicCalendarClasses, selectedSemesterId } =
     toRefs(props);
 
 const { departmentClassesUrl, moveStudentsUrl, updateClassUrl, breadcrumbs, studentCourseWorkUrl, classConfigQuery } =
@@ -74,7 +74,7 @@ const { departmentClassesUrl, moveStudentsUrl, updateClassUrl, breadcrumbs, stud
     mode,
     classConfig,
     academicCalendarClass,
-    selectedAcademicYearOptionId,
+    selectedSemesterId,
 );
 
 const { sortedStudents } = useAcademicCalendarClassStudents(academicCalendarClass);
@@ -180,7 +180,7 @@ const onRemoveTutor = async (): Promise<void> => {
                 :calendar-year="String(academicCalendar.attributes.calendarYear)"
                 :academic-calendar-class-id="academicCalendarClass.id"
                 :semester-modules="semesterModules"
-                :selected-academic-year-option-id="selectedAcademicYearOptionId"
+                :selected-semester-id="selectedSemesterId"
                 :calendar-type="calendarType"
                 :semester-config-has-syllabi="semesterConfigHasSyllabi"
                 :can-assign-staffing="canAssignStaffing"

@@ -132,7 +132,7 @@ final class CourseSyllabusImportModuleGrouper
         }
 
         try {
-            return app(ResolveAcademicYearOptionFromImport::class)->resolve(
+            return app(ResolveSemesterFromImport::class)->resolve(
                 $semester,
                 SyllabusImportCode::findCourseSyllabusId($tenantId, $courseCode),
                 $institutionDepartmentId,

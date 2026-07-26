@@ -29,8 +29,8 @@ const can = props?.auth?.can;
             :search-url="route('religions.index')"
             :pagination="{ ...religions.links, ...religions.meta }"
             :columns="createReligionColumns()"
-            :on-create="() => onOpenModal(can['create:settings'])"
-            :disable-create="!can['create:settings']"
+            :on-create="() => onOpenModal(can['create:religions'])"
+            :disable-create="!can['create:religions']"
         />
         <CreateEdit />
     </PageContainer>

@@ -18,7 +18,7 @@ class SyncAcademicCalendarClassModuleLecturersRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'academic_year_option_id' => ['required', 'integer', 'exists:academic_year_options,id'],
+            'semester_id' => ['required', 'integer', 'exists:semesters,id'],
             'course_syllabus_module_id' => ['required', 'integer', 'exists:course_syllabus_modules,id'],
             'staff_ids' => ['nullable', 'array'],
             'staff_ids.*' => ['integer', 'distinct', Rule::exists('staff', 'id')->whereNull('deleted_at')],

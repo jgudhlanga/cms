@@ -2,7 +2,7 @@
 
 use App\Enums\AcademicCalendars\AcademicCalendarTypeEnum;
 use App\Models\AcademicCalendars\AcademicCalendar;
-use App\Models\AcademicCalendars\AcademicYearOption;
+use App\Models\AcademicCalendars\Semester;
 use App\Models\Students\StudentApplication;
 use App\Services\HMS\HostelApplicationSemesterService;
 use Illuminate\Support\Carbon;
@@ -10,7 +10,7 @@ use Illuminate\Support\Str;
 
 beforeEach(function (): void {
     foreach (['Term 1', 'Term 2', 'Semester 1', 'Semester 2'] as $name) {
-        AcademicYearOption::query()->firstOrCreate(
+        Semester::query()->firstOrCreate(
             ['slug' => Str::slug($name)],
             ['name' => $name, 'description' => null],
         );

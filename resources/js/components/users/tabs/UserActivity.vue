@@ -46,6 +46,13 @@ const loadMore = async (): Promise<void> => {
     await loadActivities();
 };
 
+const SENSITIVE_PROPERTY_KEYS = new Set([
+    'password',
+    'password_confirmation',
+    'current_password',
+    'remember_token',
+]);
+
 const formatActivityLine = (activity: Audit): string => {
     const parts = [activity.attributes.description, activity.attributes.logName].filter(Boolean);
 
@@ -60,6 +67,7 @@ const formatProperties = (activity: Audit): string => {
     }
 
     return Object.entries(properties)
+        .filter(([key]) => !SENSITIVE_PROPERTY_KEYS.has(key.toLowerCase()))
         .map(([key, value]) => `${key}: ${String(value)}`)
         .join(', ');
 };

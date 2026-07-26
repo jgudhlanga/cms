@@ -2,8 +2,8 @@
 
 namespace App\Providers;
 
-use App\Repositories\AcademicCalendars\AcademicYearOptionRepository;
-use App\Repositories\AcademicCalendars\interface\IAcademicYearOptionRepository;
+use App\Repositories\AcademicCalendars\SemesterRepository;
+use App\Repositories\AcademicCalendars\interface\ISemesterRepository;
 use App\Repositories\Rbac\Interface\IModuleRepository;
 use App\Repositories\Rbac\Interface\IPermissionRepository;
 use App\Repositories\Rbac\Interface\IRoleGroupRepository;
@@ -253,6 +253,6 @@ class RepositoryServiceProvider extends ServiceProvider
 
     public function academicCalendarRepositories(): void
     {
-        $this->app->bind(IAcademicYearOptionRepository::class, AcademicYearOptionRepository::class);
+        $this->app->bind(ISemesterRepository::class, SemesterRepository::class);
     }
 }

@@ -16,7 +16,10 @@ const breadcrumbs: Array<Link> = [{ transChoiceKey: 'settings', href: route('set
 <template>
     <Head :title="$tChoice('trans.payment', 2)" />
     <PageContainer :breadcrumbs="breadcrumbs">
-        <AvatarTitleList v-if="can['view:settings']" :tabs="tabs" />
+        <AvatarTitleList
+            v-if="can['viewAny:payment-methods'] || can['view:payment-methods'] || can['viewAny:payment-days'] || can['view:payment-days'] || can['viewAny:payment-frequencies'] || can['view:payment-frequencies']"
+            :tabs="tabs"
+        />
         <BaseAlert v-else :description="$t('trans.forbidden_message')" :title="$t('trans.forbidden')" />
     </PageContainer>
 </template>

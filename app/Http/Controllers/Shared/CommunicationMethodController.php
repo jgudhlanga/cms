@@ -19,7 +19,7 @@ class CommunicationMethodController extends Controller
 
 	public function index(SharedTitleFilter $filters)
 	{
-		$this->authorize('viewSettings');
+		$this->authorize('viewAny', CommunicationMethod::class);
 		$methods = CommunicationMethodResource::collection($this->repository->allFilter(['*'], $filters));
 		return Inertia::render('shared/communications/methods/Index', [
 			'methods' => $methods,
@@ -30,12 +30,12 @@ class CommunicationMethodController extends Controller
 
 	public function create()
 	{
-		$this->authorize('createSettings');
+		$this->authorize('create', CommunicationMethod::class);
 	}
 
 	public function store(CommunicationMethodRequest $request)
 	{
-		$this->authorize('createSettings');
+		$this->authorize('create', CommunicationMethod::class);
 		$this->repository->create(CommunicationMethodDto::fromCommunicationMethodRequest($request));
 	}
 
@@ -51,26 +51,26 @@ class CommunicationMethodController extends Controller
 
 	public function update(CommunicationMethodRequest $request, CommunicationMethod $communicationMethod)
 	{
-		$this->authorize('updateSettings');
+		$this->authorize('update', $communicationMethod);
 		$this->repository->update($communicationMethod, CommunicationMethodDto::fromCommunicationMethodRequest($request));
 	}
 
 	public function destroy(CommunicationMethod $communicationMethod)
 	{
-		$this->authorize('deleteSettings');
+		$this->authorize('delete', $communicationMethod);
 		$this->repository->delete($communicationMethod);
 	}
 
 	public function restore(string $id)
 	{
-		$model = $this->repository->findTrashed($id);
-		$this->authorize('restoreSettings');
-		$this->repository->restore($model);
+		$communicationMethod = $this->repository->findTrashed($id);
+		$this->authorize('restore', $communicationMethod);
+		$this->repository->restore($communicationMethod);
 	}
 
 	public function forceDelete(CommunicationMethod $communicationMethod)
 	{
-		$this->authorize('forceDeleteSettings');
+		$this->authorize('forceDelete', $communicationMethod);
 		$this->repository->delete($communicationMethod, true);
 	}
 }

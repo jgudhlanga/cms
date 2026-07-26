@@ -19,7 +19,7 @@ class CountryController extends Controller
 
 	public function index(SharedNameFilter $filters)
 	{
-		$this->authorize('viewSettings');
+		$this->authorize('viewAny', Country::class);
 		$countries = CountryResource::collection($this->repository->allFilter(['*'], $filters));
 		return Inertia::render('shared/countries/Index', [
 			'countries' => $countries,
@@ -30,12 +30,12 @@ class CountryController extends Controller
 
 	public function create()
 	{
-		$this->authorize('createSettings');
+		$this->authorize('create', Country::class);
 	}
 
 	public function store(CountryRequest $request)
 	{
-		$this->authorize('createSettings');
+		$this->authorize('create', Country::class);
 		$this->repository->create(CountryDto::fromCountryRequest($request));
 	}
 
@@ -51,26 +51,26 @@ class CountryController extends Controller
 
 	public function update(CountryRequest $request, Country $country)
 	{
-		$this->authorize('updateSettings');
+		$this->authorize('update', $country);
 		$this->repository->update($country, CountryDto::fromCountryRequest($request));
 	}
 
 	public function destroy(Country $country)
 	{
-		$this->authorize('deleteSettings');
+		$this->authorize('delete', $country);
 		$this->repository->delete($country);
 	}
 
 	public function restore(string $id)
 	{
-		$model = $this->repository->findTrashed($id);
-		$this->authorize('restoreSettings');
-		$this->repository->restore($model);
+		$country = $this->repository->findTrashed($id);
+		$this->authorize('restore', $country);
+		$this->repository->restore($country);
 	}
 
 	public function forceDelete(Country $country)
 	{
-		$this->authorize('forceDeleteSettings');
+		$this->authorize('forceDelete', $country);
 		$this->repository->delete($country, true);
 	}
 }

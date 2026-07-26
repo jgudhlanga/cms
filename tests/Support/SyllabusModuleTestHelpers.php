@@ -2,7 +2,7 @@
 
 use App\Enums\AcademicCalendars\AcademicCalendarTypeEnum;
 use App\Enums\Rbac\RoleEnum;
-use App\Models\AcademicCalendars\AcademicYearOption;
+use App\Models\AcademicCalendars\Semester;
 use App\Models\Rbac\Role;
 use App\Models\Institution\Course;
 use App\Models\Institution\Department;
@@ -89,15 +89,15 @@ function makeSyllabusModuleContext(?AcademicCalendarTypeEnum $calendarType = nul
         'status' => 'active',
     ]);
 
-    $semesterOne = AcademicYearOption::query()->firstOrCreate(
+    $semesterOne = Semester::query()->firstOrCreate(
         ['slug' => 'semester-1'],
         ['name' => 'Semester 1', 'description' => null],
     );
-    $semesterTwo = AcademicYearOption::query()->firstOrCreate(
+    $semesterTwo = Semester::query()->firstOrCreate(
         ['slug' => 'semester-2'],
         ['name' => 'Semester 2', 'description' => null],
     );
-    $termOne = AcademicYearOption::query()->firstOrCreate(
+    $termOne = Semester::query()->firstOrCreate(
         ['slug' => 'term-1'],
         ['name' => 'Term 1', 'description' => null],
     );

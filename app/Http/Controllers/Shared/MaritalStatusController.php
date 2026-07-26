@@ -19,7 +19,7 @@ class MaritalStatusController extends Controller
 
     public function index(SharedTitleFilter $filters)
     {
-        $this->authorize('viewSettings');
+        $this->authorize('viewAny', MaritalStatus::class);
         $maritalStatuses = MaritalStatusResource::collection($this->repository->allFilter(['*'], $filters));
         return Inertia::render('shared/statuses/maritalStatuses/Index', [
             'maritalStatuses' => $maritalStatuses,
@@ -30,12 +30,12 @@ class MaritalStatusController extends Controller
 
     public function create()
     {
-        $this->authorize('createSettings');
+        $this->authorize('create', MaritalStatus::class);
     }
 
     public function store(MaritalStatusRequest $request)
     {
-        $this->authorize('createSettings');
+        $this->authorize('create', MaritalStatus::class);
         $this->repository->create(MaritalStatusDto::fromMaritalStatusRequest($request));
     }
 
@@ -51,26 +51,26 @@ class MaritalStatusController extends Controller
 
     public function update(MaritalStatusRequest $request, MaritalStatus $maritalStatus)
     {
-        $this->authorize('updateSettings');
+        $this->authorize('update', $maritalStatus);
         $this->repository->update($maritalStatus, MaritalStatusDto::fromMaritalStatusRequest($request));
     }
 
     public function destroy(MaritalStatus $maritalStatus)
     {
-        $this->authorize('deleteSettings');
+        $this->authorize('delete', $maritalStatus);
         $this->repository->delete($maritalStatus);
     }
 
     public function restore(string $id)
     {
         $maritalStatus = $this->repository->findTrashed($id);
-        $this->authorize('restoreSettings');
+        $this->authorize('restore', $maritalStatus);
         $this->repository->restore($maritalStatus);
     }
 
     public function forceDelete(MaritalStatus $maritalStatus)
     {
-        $this->authorize('forceDeleteSettings');
+        $this->authorize('forceDelete', $maritalStatus);
         $this->repository->delete($maritalStatus, true);
     }
 }

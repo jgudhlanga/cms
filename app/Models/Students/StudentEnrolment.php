@@ -3,7 +3,7 @@
 namespace App\Models\Students;
 
 use App\Models\AcademicCalendars\AcademicCalendar;
-use App\Models\AcademicCalendars\AcademicYearOption;
+use App\Models\AcademicCalendars\Semester;
 use App\Models\Institution\DepartmentCourse;
 use App\Models\Institution\DepartmentLevel;
 use App\Models\Institution\InstitutionDepartment;
@@ -34,7 +34,7 @@ class StudentEnrolment extends Model
         'institution_department_id',
         'department_level_id',
         'department_course_id',
-        'academic_year_option_id',
+        'semester_id',
         'academic_calendar_id',
         'mode_of_study_id',
         'student_enrolment_status_id',
@@ -65,9 +65,9 @@ class StudentEnrolment extends Model
         return $this->belongsTo(DepartmentCourse::class, 'department_course_id');
     }
 
-    public function academicYearOption(): BelongsTo
+    public function semester(): BelongsTo
     {
-        return $this->belongsTo(AcademicYearOption::class, 'academic_year_option_id');
+        return $this->belongsTo(Semester::class, 'semester_id');
     }
 
     public function academicCalendar(): BelongsTo

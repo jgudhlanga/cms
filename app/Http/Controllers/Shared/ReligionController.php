@@ -19,7 +19,7 @@ class ReligionController extends Controller
 
 	public function index(SharedNameFilter $filters)
 	{
-		$this->authorize('viewSettings');
+		$this->authorize('viewAny', Religion::class);
 		$religions = ReligionResource::collection($this->repository->allFilter(['*'], $filters));
 		return Inertia::render('shared/religions/Index', [
 			'religions' => $religions,
@@ -30,12 +30,12 @@ class ReligionController extends Controller
 
 	public function create()
 	{
-		$this->authorize('createSettings');
+		$this->authorize('create', Religion::class);
 	}
 
 	public function store(ReligionRequest $request)
 	{
-		$this->authorize('createSettings');
+		$this->authorize('create', Religion::class);
 		$this->repository->create(ReligionDto::fromReligionRequest($request));
 	}
 
@@ -51,26 +51,26 @@ class ReligionController extends Controller
 
 	public function update(ReligionRequest $request, Religion $religion)
 	{
-		$this->authorize('updateSettings');
+		$this->authorize('update', $religion);
 		$this->repository->update($religion, ReligionDto::fromReligionRequest($request));
 	}
 
 	public function destroy(Religion $religion)
 	{
-		$this->authorize('deleteSettings');
+		$this->authorize('delete', $religion);
 		$this->repository->delete($religion);
 	}
 
 	public function restore(string $id)
 	{
-		$model = $this->repository->findTrashed($id);
-		$this->authorize('restoreSettings');
-		$this->repository->restore($model);
+		$religion = $this->repository->findTrashed($id);
+		$this->authorize('restore', $religion);
+		$this->repository->restore($religion);
 	}
 
 	public function forceDelete(Religion $religion)
 	{
-		$this->authorize('forceDeleteSettings');
+		$this->authorize('forceDelete', $religion);
 		$this->repository->delete($religion, true);
 	}
 }

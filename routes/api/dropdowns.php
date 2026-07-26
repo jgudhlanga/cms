@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\Api\V1\AcademicCalendars\AcademicYearOptionController;
+use App\Http\Controllers\Api\V1\AcademicCalendars\SemesterController;
 use App\Http\Controllers\Api\V1\Institution\CourseController;
 use App\Http\Controllers\Api\V1\Institution\DepartmentController;
 use App\Http\Controllers\Api\V1\Institution\LevelController;
@@ -76,5 +76,5 @@ Route::prefix('v1')->group(function () {
     // ==================================== STUDENT ENROLMENT STATUS ======================================================
     Route::apiResource('student-enrolment-statuses', StudentEnrolmentStatusController::class)->names('v1.student-enrolment-statuses');
     // ==================================== ACADEMIC YEAR OPTIONS ======================================================
-    Route::apiResource('academic-year-options', AcademicYearOptionController::class)->names('v1.academic-year-options');
+    Route::apiResource('semesters', SemesterController::class)->names('v1.semesters');
 });

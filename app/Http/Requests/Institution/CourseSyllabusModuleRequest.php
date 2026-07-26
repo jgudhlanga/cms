@@ -37,10 +37,10 @@ class CourseSyllabusModuleRequest extends FormRequest
 
         return [
             'course_syllabus_id' => ['required', 'exists:course_syllabuses,id'],
-            'academic_year_option_id' => [
+            'semester_id' => [
                 'required',
                 'integer',
-                Rule::exists('academic_year_options', 'id')->where(function ($query) use ($slugPrefix): void {
+                Rule::exists('semesters', 'id')->where(function ($query) use ($slugPrefix): void {
                     $query->where('slug', 'like', $slugPrefix.'-%');
                 }),
             ],

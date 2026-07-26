@@ -20,7 +20,7 @@ class SubjectController extends Controller
 
     public function index(SharedNameFilter $filters)
     {
-        $this->authorize('viewSettings');
+        $this->authorize('viewAny', Subject::class);
         $subjects = SubjectResource::collection($this->repository->allFilter(['*'], $filters));
         return Inertia::render('institution/dropdowns/subjects/Index', [
             'subjects' => $subjects,
@@ -31,12 +31,12 @@ class SubjectController extends Controller
 
     public function create()
     {
-        $this->authorize('createSettings');
+        $this->authorize('create', Subject::class);
     }
 
     public function store(SubjectRequest $request)
     {
-        $this->authorize('createSettings');
+        $this->authorize('create', Subject::class);
         $this->repository->create(SubjectDto::fromSubjectRequest($request));
     }
 
@@ -52,32 +52,32 @@ class SubjectController extends Controller
 
     public function update(SubjectRequest $request, Subject $subject)
     {
-        $this->authorize('updateInstitutionSettings');
+        $this->authorize('update', $subject);
         $this->repository->update($subject, SubjectDto::fromSubjectRequest($request));
     }
 
     public function movePosition(PositionRequest $request, Subject $subject): void
     {
-        $this->authorize('updateInstitutionSettings');
+        $this->authorize('update', $subject);
         $this->repository->movePosition($subject, $request);
     }
 
     public function destroy(Subject $subject)
     {
-        $this->authorize('deleteInstitutionSettings');
+        $this->authorize('delete', $subject);
         $this->repository->delete($subject);
     }
 
     public function restore(string $id)
     {
         $subject = $this->repository->findTrashed($id);
-        $this->authorize('restoreInstitutionSettings');
+        $this->authorize('restore', $subject);
         $this->repository->restore($subject);
     }
 
     public function forceDelete(Subject $subject)
     {
-        $this->authorize('forceDeleteInstitutionSettings');
+        $this->authorize('forceDelete', $subject);
         $this->repository->delete($subject, true);
     }
 }

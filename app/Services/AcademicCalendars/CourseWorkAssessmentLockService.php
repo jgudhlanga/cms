@@ -54,6 +54,17 @@ class CourseWorkAssessmentLockService
             return;
         }
 
+        $classConfig->loadMissing('departmentCourse');
+        $departmentCourse = $classConfig->departmentCourse;
+
+        if ($departmentCourse !== null && $departmentCourse->coursework_capture_enabled === false) {
+            throw ValidationException::withMessages([
+                'courseworkCaptureEnabled' => [
+                    __('academic_calendar.course_work_capture_disabled'),
+                ],
+            ]);
+        }
+
         if ($assessmentTypeId === null) {
             return;
         }
@@ -93,7 +104,7 @@ class CourseWorkAssessmentLockService
             ->where('academic_calendar_id', (int) $academicCalendar->id)
             ->with('assessmentType')
             ->get()
-            ->reduce(function (array $carry, AssessmentCalendar $calendar) use ($modeOfStudyId, $today): array {
+            ->reduce(function (array $carry, AssessmentCalendar $calendar) use ($modeOfStudyId): array {
                 $assessmentType = $calendar->assessmentType;
 
                 if (! $assessmentType instanceof AssessmentType) {

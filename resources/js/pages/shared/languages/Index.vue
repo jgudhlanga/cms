@@ -29,8 +29,8 @@ const can = props?.auth?.can;
             :search-url="route('languages.index')"
             :pagination="{ ...languages.links, ...languages.meta }"
             :columns="createLanguageColumns()"
-            :on-create="() => onOpenModal(can['create:settings'])"
-            :disable-create="!can['create:settings']"
+            :on-create="() => onOpenModal(can['create:languages'])"
+            :disable-create="!can['create:languages']"
         />
         <CreateEdit />
     </PageContainer>

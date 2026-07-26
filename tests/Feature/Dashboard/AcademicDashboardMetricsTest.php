@@ -171,7 +171,7 @@ test('dashboard counts distinct ojet students across calendar year semesters', f
         'institution_department_id' => $context['studentEnrolment']->institution_department_id,
         'department_level_id' => $context['studentEnrolment']->department_level_id,
         'department_course_id' => $context['studentEnrolment']->department_course_id,
-        'academic_year_option_id' => $context['studentEnrolment']->academic_year_option_id,
+        'semester_id' => $context['studentEnrolment']->semester_id,
         'academic_calendar_id' => $secondCalendar->id,
         'mode_of_study_id' => $ojetMode->id,
         'student_enrolment_status_id' => $enrolmentStatus->id,

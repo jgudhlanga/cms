@@ -5,7 +5,7 @@ import { ModeOfStudy } from '@/types/institution';
 import { SelectOption } from '@/types/utils';
 
 interface Props {
-    academicYearOptions: SelectOption[];
+    semesters: SelectOption[];
     modesOfStudy: ModeOfStudy[];
     handleFilterChange: () => void;
 }
@@ -26,7 +26,7 @@ const modeOfStudyModel = defineModel<SelectOption | null>('modeOfStudyModel');
             <span class="shrink-0 text-sm font-medium text-muted-foreground">{{ $tChoice('academic_calendar.calendar_year', 1) }}</span>
             <BaseCombobox
                 label=""
-                :options="academicYearOptions ?? []"
+                :options="semesters ?? []"
                 v-model="academicYearModel"
                 :vertical-layout="false"
                 :is-required="true"

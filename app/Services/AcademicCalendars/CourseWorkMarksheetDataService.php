@@ -26,7 +26,7 @@ class CourseWorkMarksheetDataService
             'departmentLevel.level',
             'modeOfStudy',
             'institutionDepartment.department',
-            'academicYearOption',
+            'semester',
         ]);
 
         $module = CourseSyllabusModule::query()->find($courseSyllabusModuleId);
@@ -52,7 +52,7 @@ class CourseWorkMarksheetDataService
             'classConfig.departmentLevel.level',
             'classConfig.modeOfStudy',
             'classConfig.institutionDepartment.department',
-            'classConfig.academicYearOption',
+            'classConfig.semester',
         ]);
 
         $classConfig = $academicCalendarClass->classConfig;
@@ -226,7 +226,7 @@ class CourseWorkMarksheetDataService
             'className' => $academicCalendarClass?->name,
             'session' => sprintf('%02d/%s', now()->month, $classConfig->calendar_year),
             'modeOfStudy' => $classConfig->modeOfStudy?->name,
-            'academicYearOption' => $classConfig->academicYearOption?->name,
+            'semester' => $classConfig->semester?->name,
             'generatedAt' => now()->format('d M Y'),
         ];
     }

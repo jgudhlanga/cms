@@ -32,18 +32,18 @@ export const useIdTypes = () => {
                     const id = getIdParams(row.original.id?.toString() ?? '');
 
                     return moreActionButton(!!row.original?.attributes?.deletedAt, [
-                        { key: 'edit', action: () => onOpenModal(hasAbility('update:settings'), row.original) },
+                        { key: 'edit', action: () => onOpenModal(hasAbility('update:id-types'), row.original) },
                         {
                             key: 'archive',
-                            action: () => onDelete(hasAbility('delete:settings'), route('id-types.destroy', id), getName()),
+                            action: () => onDelete(hasAbility('delete:id-types'), route('id-types.destroy', id), getName()),
                         },
                         {
                             key: 'restore',
-                            action: () => onRestore(hasAbility('restore:settings'), route('id-types.restore', id), getName()),
+                            action: () => onRestore(hasAbility('restore:id-types'), route('id-types.restore', id), getName()),
                         },
                         {
                             key: 'delete',
-                            action: () => onForceDelete(hasAbility('forceDelete:settings'), route('id-types.force-delete', id), getName()),
+                            action: () => onForceDelete(hasAbility('forceDelete:id-types'), route('id-types.force-delete', id), getName()),
                         },
                     ]);
                 },

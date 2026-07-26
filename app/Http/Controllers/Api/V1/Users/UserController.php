@@ -119,6 +119,7 @@ class UserController extends ApiDropdownController
     {
         $this->authorize('view', $user);
         $permissions = $user->getAllPermissions();
+        $permissions->loadMissing('module');
 
         return PermissionResource::collection($permissions);
     }

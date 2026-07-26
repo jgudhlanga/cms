@@ -26,18 +26,18 @@ export const useWorkflowStepActions = () => {
                     const id = getIdParams(row.original.id?.toString() ?? '');
                     const name = trans_choice('trans.name', 1);
                     return moreActionButton(!!row.original?.attributes?.deletedAt, [
-                        { key: 'edit', action: () => onOpenModal(hasAbility('update:settings'), row.original) },
+                        { key: 'edit', action: () => onOpenModal(hasAbility('update:workflow-step-actions'), row.original) },
                         {
                             key: 'archive',
-                            action: () => onDelete(hasAbility('delete:settings'), route('workflow-step-actions.destroy', id), name),
+                            action: () => onDelete(hasAbility('delete:workflow-step-actions'), route('workflow-step-actions.destroy', id), name),
                         },
                         {
                             key: 'restore',
-                            action: () => onRestore(hasAbility('restore:settings'), route('workflow-step-actions.restore', id), name),
+                            action: () => onRestore(hasAbility('restore:workflow-step-actions'), route('workflow-step-actions.restore', id), name),
                         },
                         {
                             key: 'delete',
-                            action: () => onForceDelete(hasAbility('forceDelete:settings'), route('workflow-step-actions.force-delete', id), name),
+                            action: () => onForceDelete(hasAbility('forceDelete:workflow-step-actions'), route('workflow-step-actions.force-delete', id), name),
                         },
                     ]);
                 },

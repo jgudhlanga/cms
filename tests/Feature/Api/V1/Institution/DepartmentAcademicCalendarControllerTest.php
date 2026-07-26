@@ -6,7 +6,7 @@ use App\Enums\Shared\ClassListTypeEnum;
 use App\Models\AcademicCalendars\AcademicCalendar;
 use App\Models\AcademicCalendars\AcademicCalendarClass;
 use App\Models\AcademicCalendars\AcademicCalendarStudentEnrolment;
-use App\Models\AcademicCalendars\AcademicYearOption;
+use App\Models\AcademicCalendars\Semester;
 use App\Models\AcademicCalendars\ClassConfig;
 use App\Models\Enrolments\ClassList;
 use App\Models\Institution\Course;
@@ -81,7 +81,7 @@ test('department academic calendar returns totalnClass and totalFinalList counts
     $tenant = Tenant::query()->firstOrFail();
     $user = User::factory()->create(['tenant_id' => $tenant->id]);
 
-    $semesterOneId = (int) AcademicYearOption::query()->firstOrCreate(
+    $semesterOneId = (int) Semester::query()->firstOrCreate(
         ['slug' => 'semester-1'],
         ['name' => 'Semester 1', 'description' => null],
     )->id;
@@ -130,7 +130,7 @@ test('department academic calendar returns totalnClass and totalFinalList counts
 
     $classConfig = ClassConfig::query()->create([
         'calendar_year' => $calendar->calendar_year,
-        'academic_year_option_id' => $semesterOneId,
+        'semester_id' => $semesterOneId,
         'institution_department_id' => $institutionDepartment->id,
         'department_course_id' => $departmentCourse->id,
         'department_level_id' => $departmentLevel->id,
@@ -205,7 +205,7 @@ test('department academic calendar returns totalnClass and totalFinalList counts
         'attributes' => [],
     ]);
 
-    $academicYearOption = AcademicYearOption::query()->firstOrCreate(
+    $semester = Semester::query()->firstOrCreate(
         ['slug' => 'dept-cal-api-count-option'],
         ['name' => 'Dept Cal API Count', 'description' => null],
     );
@@ -214,7 +214,7 @@ test('department academic calendar returns totalnClass and totalFinalList counts
         ['description' => 'Test'],
     );
     $activeEnrolmentStatusId = (int) $activeEnrolmentStatus->id;
-    $academicYearOptionId = (int) $academicYearOption->id;
+    $semesterId = (int) $semester->id;
 
     $studentEnrolmentIds = [];
     foreach ([1, 2, 3] as $_) {
@@ -224,7 +224,7 @@ test('department academic calendar returns totalnClass and totalFinalList counts
             'institution_department_id' => $institutionDepartment->id,
             'department_level_id' => $departmentLevel->id,
             'department_course_id' => $departmentCourse->id,
-            'academic_year_option_id' => $academicYearOptionId,
+            'semester_id' => $semesterId,
             'academic_calendar_id' => $calendar->id,
             'mode_of_study_id' => $modeOfStudy->id,
             'student_enrolment_status_id' => $activeEnrolmentStatusId,
@@ -247,7 +247,7 @@ test('department academic calendar returns totalnClass and totalFinalList counts
     $response = $this->getJson("/api/v1/departments/{$institutionDepartment->id}/academic-calendars?academic_year={$calendar->calendar_year}&mode_of_study_id={$modeOfStudy->id}");
 
     $response->assertOk();
-    $response->assertJsonPath('meta.resolvedAcademicYearOptionId', $semesterOneId);
+    $response->assertJsonPath('meta.resolvedSemesterId', $semesterOneId);
     $response->assertJsonFragment([
         'departmentLevelId' => (string) $departmentLevel->id,
         'calendarType' => 'semester',
@@ -255,8 +255,8 @@ test('department academic calendar returns totalnClass and totalFinalList counts
         'classesCount' => 2,
         'totalnClass' => 3,
         'totalFinalList' => 1,
-        'academicYearOptionId' => $semesterOneId,
-        'academicYearOption' => 'Semester 1',
+        'semesterId' => $semesterOneId,
+        'semester' => 'Semester 1',
         'courseSyllabusIds' => [$courseSyllabus->id],
         'courseSyllabusCodes' => [$courseSyllabus->code],
     ]);
@@ -268,7 +268,7 @@ test('department academic calendar auto seeds class config from final list count
     $tenant = Tenant::query()->firstOrFail();
     $user = User::factory()->create(['tenant_id' => $tenant->id]);
 
-    $semesterOneId = (int) AcademicYearOption::query()->firstOrCreate(
+    $semesterOneId = (int) Semester::query()->firstOrCreate(
         ['slug' => 'semester-1'],
         ['name' => 'Semester 1', 'description' => null],
     )->id;
@@ -361,11 +361,11 @@ test('department academic calendar auto seeds class config from final list count
         ->where('department_course_id', $departmentCourse->id)
         ->where('department_level_id', $departmentLevel->id)
         ->where('mode_of_study_id', $modeOfStudy->id)
-        ->where('academic_year_option_id', $semesterOneId)
+        ->where('semester_id', $semesterOneId)
         ->sole();
 
     expect($classConfig->students_per_class)->toBe(1)
-        ->and($classConfig->academic_year_option_id)->toBe($semesterOneId);
+        ->and($classConfig->semester_id)->toBe($semesterOneId);
 
     $response->assertJsonFragment([
         'departmentLevelId' => (string) $departmentLevel->id,
@@ -375,8 +375,8 @@ test('department academic calendar auto seeds class config from final list count
         'totalnClass' => 0,
         'totalFinalList' => 1,
         'studentsPerClass' => 1,
-        'academicYearOptionId' => $semesterOneId,
-        'academicYearOption' => 'Semester 1',
+        'semesterId' => $semesterOneId,
+        'semester' => 'Semester 1',
     ]);
 });
 
@@ -386,7 +386,7 @@ test('department academic calendar does not overwrite existing class config stud
     $tenant = Tenant::query()->firstOrFail();
     $user = User::factory()->create(['tenant_id' => $tenant->id]);
 
-    $semesterOneId = (int) AcademicYearOption::query()->firstOrCreate(
+    $semesterOneId = (int) Semester::query()->firstOrCreate(
         ['slug' => 'semester-1'],
         ['name' => 'Semester 1', 'description' => null],
     )->id;
@@ -435,7 +435,7 @@ test('department academic calendar does not overwrite existing class config stud
 
     $existingConfig = ClassConfig::query()->create([
         'calendar_year' => $calendar->calendar_year,
-        'academic_year_option_id' => $semesterOneId,
+        'semester_id' => $semesterOneId,
         'institution_department_id' => $institutionDepartment->id,
         'department_course_id' => $departmentCourse->id,
         'department_level_id' => $departmentLevel->id,
@@ -488,8 +488,8 @@ test('department academic calendar does not overwrite existing class config stud
         'classConfigId' => $existingConfig->id,
         'studentsPerClass' => 99,
         'totalFinalList' => 1,
-        'academicYearOptionId' => $semesterOneId,
-        'academicYearOption' => 'Semester 1',
+        'semesterId' => $semesterOneId,
+        'semester' => 'Semester 1',
     ]);
 
     expect(ClassConfig::query()->whereKey($existingConfig->id)->value('students_per_class'))->toBe(99);
@@ -502,7 +502,7 @@ test('department academic calendar does not replace existing class config when s
     $tenant = Tenant::query()->firstOrFail();
     $user = User::factory()->create(['tenant_id' => $tenant->id]);
 
-    $semesterOneId = (int) AcademicYearOption::query()->firstOrCreate(
+    $semesterOneId = (int) Semester::query()->firstOrCreate(
         ['slug' => 'semester-1'],
         ['name' => 'Semester 1', 'description' => null],
     )->id;
@@ -551,7 +551,7 @@ test('department academic calendar does not replace existing class config when s
 
     $existingConfig = ClassConfig::query()->create([
         'calendar_year' => $calendar->calendar_year,
-        'academic_year_option_id' => $semesterOneId,
+        'semester_id' => $semesterOneId,
         'institution_department_id' => $institutionDepartment->id,
         'department_course_id' => $departmentCourse->id,
         'department_level_id' => $departmentLevel->id,
@@ -604,8 +604,8 @@ test('department academic calendar does not replace existing class config when s
         'classConfigId' => $existingConfig->id,
         'studentsPerClass' => 0,
         'totalFinalList' => 1,
-        'academicYearOptionId' => $semesterOneId,
-        'academicYearOption' => 'Semester 1',
+        'semesterId' => $semesterOneId,
+        'semester' => 'Semester 1',
     ]);
 
     expect(ClassConfig::query()->where('institution_department_id', $institutionDepartment->id)->count())->toBe(1);
@@ -617,11 +617,11 @@ test('department academic calendar does not violate class config unique index wh
     $tenant = Tenant::query()->firstOrFail();
     $user = User::factory()->create(['tenant_id' => $tenant->id]);
 
-    $semesterOneId = (int) AcademicYearOption::query()->firstOrCreate(
+    $semesterOneId = (int) Semester::query()->firstOrCreate(
         ['slug' => 'semester-1'],
         ['name' => 'Semester 1', 'description' => null],
     )->id;
-    $semesterTwoId = (int) AcademicYearOption::query()->firstOrCreate(
+    $semesterTwoId = (int) Semester::query()->firstOrCreate(
         ['slug' => 'semester-2'],
         ['name' => 'Semester 2', 'description' => null],
     )->id;
@@ -670,7 +670,7 @@ test('department academic calendar does not violate class config unique index wh
 
     $existingConfig = ClassConfig::query()->create([
         'calendar_year' => $calendar->calendar_year,
-        'academic_year_option_id' => $semesterTwoId,
+        'semester_id' => $semesterTwoId,
         'institution_department_id' => $institutionDepartment->id,
         'department_course_id' => $departmentCourse->id,
         'department_level_id' => $departmentLevel->id,
@@ -720,13 +720,13 @@ test('department academic calendar does not violate class config unique index wh
     $response->assertJsonFragment([
         'departmentLevelId' => (string) $departmentLevel->id,
         'totalFinalList' => 1,
-        'academicYearOptionId' => $semesterOneId,
-        'academicYearOption' => 'Semester 1',
+        'semesterId' => $semesterOneId,
+        'semester' => 'Semester 1',
     ]);
 
     expect($existingConfig->fresh())
         ->students_per_class->toBe(25)
-        ->academic_year_option_id->toBe($semesterTwoId);
+        ->semester_id->toBe($semesterTwoId);
 
     expect(ClassConfig::query()
         ->where('institution_department_id', $institutionDepartment->id)
@@ -734,7 +734,7 @@ test('department academic calendar does not violate class config unique index wh
         ->where('department_level_id', $departmentLevel->id)
         ->where('mode_of_study_id', $modeOfStudy->id)
         ->where('calendar_year', $calendar->calendar_year)
-        ->where('academic_year_option_id', $semesterOneId)
+        ->where('semester_id', $semesterOneId)
         ->exists())->toBeTrue();
 });
 
@@ -744,7 +744,7 @@ test('department academic calendar returns zero totalFinalList when class config
     $tenant = Tenant::query()->firstOrFail();
     $user = User::factory()->create(['tenant_id' => $tenant->id]);
 
-    AcademicYearOption::query()->firstOrCreate(
+    Semester::query()->firstOrCreate(
         ['slug' => 'semester-1'],
         ['name' => 'Semester 1', 'description' => null],
     );
@@ -796,7 +796,7 @@ test('department academic calendar returns zero totalFinalList when class config
     $response = $this->getJson("/api/v1/departments/{$institutionDepartment->id}/academic-calendars?academic_year={$calendar->calendar_year}&mode_of_study_id={$modeOfStudy->id}");
 
     $response->assertOk();
-    $response->assertJsonPath('meta.resolvedAcademicYearOptionId', null);
+    $response->assertJsonPath('meta.resolvedSemesterId', null);
     $response->assertJsonFragment([
         'departmentLevelId' => (string) $departmentLevel->id,
         'calendarType' => 'semester',
@@ -804,7 +804,7 @@ test('department academic calendar returns zero totalFinalList when class config
         'classesCount' => 0,
         'totalnClass' => 0,
         'totalFinalList' => 0,
-        'academicYearOptionId' => null,
-        'academicYearOption' => null,
+        'semesterId' => null,
+        'semester' => null,
     ]);
 });

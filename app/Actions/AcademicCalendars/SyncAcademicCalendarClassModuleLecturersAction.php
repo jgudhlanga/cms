@@ -21,14 +21,14 @@ class SyncAcademicCalendarClassModuleLecturersAction
     public function execute(
         AcademicCalendarClass $academicCalendarClass,
         ClassConfig $allocationConfig,
-        int $academicYearOptionId,
+        int $semesterId,
         CourseSyllabusModule $module,
         array $staffIds,
         int $tenantId,
     ): void {
         $semesterConfig = $this->classStaffingService->resolveSemesterClassConfig(
             $allocationConfig,
-            $academicYearOptionId,
+            $semesterId,
         );
 
         abort_unless(

@@ -524,7 +524,7 @@ class CourseSyllabusImportService
 
         if ($courseSyllabusId === null) {
             try {
-                app(ResolveAcademicYearOptionFromImport::class)->resolve(
+                app(ResolveSemesterFromImport::class)->resolve(
                     $semester,
                     null,
                     $institutionDepartmentId,

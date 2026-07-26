@@ -33,6 +33,7 @@ export type DepartmentCourse = {
         courseId: string | number;
         course: string;
         showOnCurrentApplicationPeriod: boolean;
+        courseworkCaptureEnabled?: boolean | null;
         hasEnrolmentRequirements: boolean;
         description?: string;
         createdAt?: string;
@@ -59,6 +60,7 @@ export type DepartmentCourseParams = {
 export type DepartmentCourseUpdateParams = {
     department_level_ids?: Array<any> | null;
     show_on_current_application_period?: boolean;
+    coursework_capture_enabled?: boolean | null;
 };
 
 export interface DepartmentMetaData {

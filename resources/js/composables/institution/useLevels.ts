@@ -64,18 +64,18 @@ export const useLevels = () => {
                     const id = getIdParams(row.original.id?.toString() ?? '');
                     const name = trans_choice('trans.level', 1);
                     return moreActionButton(!!row.original?.attributes?.deletedAt, [
-                        { key: 'edit', action: () => onOpenModal(can['update:institution-settings'], row.original) },
+                        { key: 'edit', action: () => onOpenModal(can['update:levels'], row.original) },
                         {
                             key: 'archive',
-                            action: () => onDelete(can['delete:institution-settings'], route('levels.destroy', id), name),
+                            action: () => onDelete(can['delete:levels'], route('levels.destroy', id), name),
                         },
                         {
                             key: 'restore',
-                            action: () => onRestore(can['restore:institution-settings'], route('levels.restore', id), name),
+                            action: () => onRestore(can['restore:levels'], route('levels.restore', id), name),
                         },
                         {
                             key: 'delete',
-                            action: () => onForceDelete(can['forceDelete:institution-settings'], route('levels.force-delete', id), name),
+                            action: () => onForceDelete(can['forceDelete:levels'], route('levels.force-delete', id), name),
                         },
                     ]);
                 },

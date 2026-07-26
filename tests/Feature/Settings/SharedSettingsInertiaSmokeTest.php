@@ -6,8 +6,10 @@ use App\Models\Users\User;
 function settingsSmokeUser(): User
 {
     $user = User::factory()->create();
-    Permission::findOrCreate('view:settings', 'web');
-    $user->givePermissionTo(['view:settings']);
+    foreach (['viewAny:payment-methods', 'viewAny:payment-days', 'viewAny:payment-frequencies', 'viewAny:academic-levels'] as $permission) {
+        Permission::findOrCreate($permission, 'web');
+        $user->givePermissionTo($permission);
+    }
 
     return $user;
 }

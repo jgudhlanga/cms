@@ -13,7 +13,8 @@ enum RoleEnum: string
 
     // Executive
     case PRINCIPAL = 'principal';
-    case VICE_PRINCIPAL = 'vice-principal';
+    case VICE_PRINCIPAL = 'vice-principal-academics';
+    case VICE_PRINCIPAL_ADMIN = 'vice-principal-admin';
     case REGISTRAR = 'registrar';
     case DEAN = 'dean';
     case BURSAR = 'bursar';
@@ -42,8 +43,8 @@ enum RoleEnum: string
     // Support and Service Staff
     case IT_SUPPORT_TECHNICIAN = 'it-support-technician';
     case LAB_TECHNICIAN = 'lab-technician';
-
     case SECURITY_OFFICER = 'security-officer';
+    case WARDEN = 'warden';
 
     // Student
     case STUDENT = 'student';
@@ -61,7 +62,8 @@ enum RoleEnum: string
 
             // Executive
             self::PRINCIPAL => 'Principal',
-            self::VICE_PRINCIPAL => 'Vice Principal',
+            self::VICE_PRINCIPAL => 'Vice Principal Academics',
+            self::VICE_PRINCIPAL_ADMIN => 'Vice Principal Admin',
             self::REGISTRAR => 'Registrar',
             self::DEAN => 'Dean',
             self::BURSAR => 'Bursar',
@@ -92,6 +94,7 @@ enum RoleEnum: string
             self::IT_SUPPORT_TECHNICIAN => 'IT Support Technician',
             self::LAB_TECHNICIAN => 'Lab Technician',
             self::SECURITY_OFFICER => 'Security Officer',
+            self::WARDEN => 'Warden',
 
             // Student
             self::STUDENT => 'Student',
@@ -110,9 +113,10 @@ enum RoleEnum: string
 
             // Executive
             self::PRINCIPAL => 'The head of the institution.',
-            self::VICE_PRINCIPAL => 'Deputy to the Principal.',
+            self::VICE_PRINCIPAL => 'Oversees academic affairs across the college.',
+            self::VICE_PRINCIPAL_ADMIN => 'Oversees administrative, financial, and hostel affairs.',
             self::REGISTRAR => 'Oversees academic records and administrative operations.',
-            self::DEAN => 'Leads a faculty or academic division.',
+            self::DEAN => 'Leads student affairs and hostel management (Dean of Students).',
             self::BURSAR => 'Oversees and Manages finances of the institution.',
             self::LIBRARIAN => 'Manages library resources and services.',
             self::REGISTRY_OFFICER => 'Verifies and manages enrolments.',
@@ -141,6 +145,7 @@ enum RoleEnum: string
             self::IT_SUPPORT_TECHNICIAN => 'Provides technical support.',
             self::LAB_TECHNICIAN => 'Prepares and maintains lab equipment.',
             self::SECURITY_OFFICER => 'Maintains safety and security.',
+            self::WARDEN => 'Manages an assigned hostel and day-to-day student accommodation operations.',
 
             // Student
             self::STUDENT => 'Learner enrolled in the institution.',
@@ -152,11 +157,11 @@ enum RoleEnum: string
         return match ($this) {
             self::SUPER_ADMINISTRATOR, self::SUPER_USER => 'super-user',
             self::TESC => 'tesc',
-            self::PRINCIPAL, self::VICE_PRINCIPAL, self::BURSAR, self::REGISTRAR, self::LIBRARIAN, self::DEAN, self::REGISTRY_OFFICER => 'executive',
+            self::PRINCIPAL, self::VICE_PRINCIPAL, self::VICE_PRINCIPAL_ADMIN, self::BURSAR, self::REGISTRAR, self::LIBRARIAN, self::DEAN, self::REGISTRY_OFFICER => 'executive',
             self::HEAD_OF_DEPARTMENT, self::HEAD_OF_DIVISION, self::SELECTION_OFFICER, self::LECTURER, self::LECTURER_IN_CHARGE, self::SENIOR_LECTURER => 'academic',
             self::HR_OFFICER, self::ACCOUNTANT, self::ADMINISTRATIVE_OFFICER, self::IT_MANAGER => 'managerial',
             self::HR_OFFICER_ASSISTANT, self::ACCOUNTANT_ASSISTANT, self::IT_SYSTEM_ADMINISTRATOR, self::ADMINISTRATIVE_ASSISTANT => 'administrative',
-            self::IT_SUPPORT_TECHNICIAN, self::LAB_TECHNICIAN, self::SECURITY_OFFICER => 'service-and-support',
+            self::IT_SUPPORT_TECHNICIAN, self::LAB_TECHNICIAN, self::SECURITY_OFFICER, self::WARDEN => 'service-and-support',
             self::STUDENT => 'student',
         };
     }
@@ -164,7 +169,7 @@ enum RoleEnum: string
     public static function options(): array
     {
         return array_map(
-            fn(self $type) => [
+            fn (self $type) => [
                 'value' => $type->value,
                 'name' => $type->name(),
                 'description' => $type->description(),
@@ -174,4 +179,3 @@ enum RoleEnum: string
         );
     }
 }
-

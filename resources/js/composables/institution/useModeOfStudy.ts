@@ -30,18 +30,18 @@ export const useModeOfStudy = () => {
                     const id = getIdParams(row.original.id?.toString() ?? '');
                     const name = trans_choice('trans.mode_of_study', 1);
                     return moreActionButton(!!row.original?.attributes?.deletedAt, [
-                        { key: 'edit', action: () => onOpenModal(can['update:institution-settings'], row.original) },
+                        { key: 'edit', action: () => onOpenModal(can['update:mode-of-studies'], row.original) },
                         {
                             key: 'archive',
-                            action: () => onDelete(can['delete:institution-settings'], route('mode-of-studies.destroy', id), name),
+                            action: () => onDelete(can['delete:mode-of-studies'], route('mode-of-studies.destroy', id), name),
                         },
                         {
                             key: 'restore',
-                            action: () => onRestore(can['restore:institution-settings'], route('mode-of-studies.restore', id), name),
+                            action: () => onRestore(can['restore:mode-of-studies'], route('mode-of-studies.restore', id), name),
                         },
                         {
                             key: 'delete',
-                            action: () => onForceDelete(can['forceDelete:institution-settings'], route('mode-of-studies.force-delete', id), name),
+                            action: () => onForceDelete(can['forceDelete:mode-of-studies'], route('mode-of-studies.force-delete', id), name),
                         },
                     ]);
                 },

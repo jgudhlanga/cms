@@ -10,12 +10,10 @@ use Illuminate\Foundation\Http\FormRequest;
  */
 class DepartmentCourseUpdateRequest extends FormRequest
 {
-
     public function authorize(): bool
     {
         return true;
     }
-
 
     public function prepareForValidation(): void
     {
@@ -26,11 +24,28 @@ class DepartmentCourseUpdateRequest extends FormRequest
         }
     }
 
-
     public function rules(): array
     {
         return [
             'department_level_ids' => ['nullable', 'array'],
+            'show_on_current_application_period' => ['sometimes', 'boolean'],
+            'coursework_capture_enabled' => ['sometimes', 'nullable', 'boolean'],
         ];
+    }
+
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator): void {
+            if (! $this->has('coursework_capture_enabled')) {
+                return;
+            }
+
+            if (! $this->user()?->can('toggle:coursework-capture')) {
+                $validator->errors()->add(
+                    'coursework_capture_enabled',
+                    __('trans.unauthorized'),
+                );
+            }
+        });
     }
 }

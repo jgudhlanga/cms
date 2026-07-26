@@ -30,8 +30,8 @@ const can = props?.auth?.can;
             :search-url="route('assessment-types.index')"
             :pagination="{ ...assessmentTypes.links, ...assessmentTypes.meta }"
             :columns="createAssessmentTypeColumns()"
-            :on-create="() => onOpenModal(can['create:institution-settings'])"
-            :disable-create="!can['create:institution-settings']"
+            :on-create="() => onOpenModal(can['create:assessment-types'])"
+            :disable-create="!can['create:assessment-types']"
         />
         <CreateEdit :modes-of-study="modesOfStudy" />
     </PageContainer>

@@ -9,12 +9,12 @@ use App\Models\AcademicCalendars\AcademicCalendar;
 use App\Models\Institution\InstitutionDepartment;
 use App\Models\Institution\IntakePeriod;
 use App\Models\Institution\ModeOfStudy;
-use App\Models\Institution\Staff;
 use App\Models\Shared\Status;
 use App\Models\Students\Student;
 use App\Models\Students\StudentApplication;
 use App\Models\Tenants\Tenant;
 use App\Services\Students\IntakePeriodOrderingService;
+use App\Support\Rbac\UserAccessScope;
 use Carbon\Carbon;
 use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Database\Eloquent\Collection;
@@ -192,28 +192,50 @@ class Helper
         return $calendar;
     }
 
-    public static function resolveUserDepartments(): ?array
+    /**
+     * @return list<int>
+     */
+    public static function resolveUserDepartments(): array
     {
-        $departments = [];
-        if (self::isDepartmentUser()) {
-            $user = auth()->user();
-            $staffProfile = $user->staffProfile;
-            if ($staffProfile && $staffProfile instanceof Staff) {
-                $departments = $staffProfile
-                    ->institutionDepartments()
-                    ->pluck('institution_departments.id')
-                    ->toArray();
-            }
+        $scope = UserAccessScope::for();
+
+        if (! $scope->isScopedToDepartments()) {
+            return [];
         }
 
-        return $departments;
+        return $scope->departmentIds() ?? [];
+    }
+
+    /**
+     * @return list<int>
+     */
+    public static function resolveUserDivisionDepartmentIds(): array
+    {
+        return self::resolveUserDepartments();
+    }
+
+    /**
+     * @return list<int>|null
+     */
+    public static function resolveUserHostels(): ?array
+    {
+        $scope = UserAccessScope::for();
+
+        if (! $scope->isScopedToHostels()) {
+            return null;
+        }
+
+        return $scope->hostelIds() ?? [];
     }
 
     public static function isDepartmentUser(): bool
     {
-        $user = auth()->user();
+        return UserAccessScope::for()->isScopedToDepartments();
+    }
 
-        return $user && $user->can('viewOnlyOwnDepartment:departments');
+    public static function isHostelScopedUser(): bool
+    {
+        return UserAccessScope::for()->isScopedToHostels();
     }
 
     public static function hasAccessToNonAcademicDepartments(): bool

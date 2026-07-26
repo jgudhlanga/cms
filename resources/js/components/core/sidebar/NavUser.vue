@@ -69,7 +69,14 @@ const closeMobileSidebar = useCloseMobileSidebar();
                     <DropdownMenuSeparator />
                     <DropdownMenuItem>
                         <component :is="icons[IconName.user]" />
-                        <Link class="" href="#" as="button">{{ $tChoice('trans.account', 1) }}</Link>
+                        <Link
+                            class=""
+                            :href="route('users.show', page.props.auth.user.id)"
+                            as="button"
+                            @click="closeMobileSidebar"
+                        >
+                            {{ $tChoice('trans.account', 1) }}
+                        </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem>
                         <component :is="icons[IconName.logout]" />

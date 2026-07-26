@@ -55,18 +55,18 @@ export const useAssessmentTypes = () => {
                     const name = trans_choice('trans.assessment_type', 1);
 
                     return moreActionButton(!!row.original?.attributes?.deletedAt, [
-                        { key: 'edit', action: () => onOpenModal(can['update:institution-settings'], row.original) },
+                        { key: 'edit', action: () => onOpenModal(can['update:assessment-types'], row.original) },
                         {
                             key: 'archive',
-                            action: () => onDelete(can['delete:institution-settings'], route('assessment-types.destroy', id), name),
+                            action: () => onDelete(can['delete:assessment-types'], route('assessment-types.destroy', id), name),
                         },
                         {
                             key: 'restore',
-                            action: () => onRestore(can['restore:institution-settings'], route('assessment-types.restore', id), name),
+                            action: () => onRestore(can['restore:assessment-types'], route('assessment-types.restore', id), name),
                         },
                         {
                             key: 'delete',
-                            action: () => onForceDelete(can['forceDelete:institution-settings'], route('assessment-types.force-delete', id), name),
+                            action: () => onForceDelete(can['forceDelete:assessment-types'], route('assessment-types.force-delete', id), name),
                         },
                     ]);
                 },

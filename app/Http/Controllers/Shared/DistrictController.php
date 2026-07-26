@@ -19,7 +19,7 @@ class DistrictController extends Controller
 
     public function index(SharedNameFilter $filters)
     {
-        $this->authorize('viewSettings');
+        $this->authorize('viewAny', District::class);
         $districts = DistrictResource::collection($this->repository->allFilter(['*'], $filters));
         return Inertia::render('shared/districts/Index', [
             'districts' => $districts,
@@ -30,12 +30,12 @@ class DistrictController extends Controller
 
     public function create()
     {
-        $this->authorize('createSettings');
+        $this->authorize('create', District::class);
     }
 
     public function store(DistrictRequest $request)
     {
-        $this->authorize('createSettings');
+        $this->authorize('create', District::class);
         $this->repository->create(DistrictDto::fromDistrictRequest($request));
     }
 
@@ -51,26 +51,26 @@ class DistrictController extends Controller
 
     public function update(DistrictRequest $request, District $district)
     {
-        $this->authorize('updateSettings');
+        $this->authorize('update', $district);
         $this->repository->update($district, DistrictDto::fromDistrictRequest($request));
     }
 
     public function destroy(District $district)
     {
-        $this->authorize('deleteSettings');
+        $this->authorize('delete', $district);
         $this->repository->delete($district);
     }
 
     public function restore(string $id)
     {
         $district = $this->repository->findTrashed($id);
-        $this->authorize('restoreSettings');
+        $this->authorize('restore', $district);
         $this->repository->restore($district);
     }
 
     public function forceDelete(District $district)
     {
-        $this->authorize('forceDeleteSettings');
+        $this->authorize('forceDelete', $district);
         $this->repository->delete($district, true);
     }
 }

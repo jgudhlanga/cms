@@ -1,7 +1,7 @@
 <?php
 
 use App\Models\AcademicCalendars\AcademicCalendar;
-use App\Models\AcademicCalendars\AcademicYearOption;
+use App\Models\AcademicCalendars\Semester;
 use App\Models\Institution\Staff;
 use App\Models\Shared\Gender;
 use App\Models\Shared\MaritalStatus;
@@ -18,7 +18,7 @@ function createStudentEnrolmentForProgram(StudentApplication $program): void
 {
     $suffix = Str::lower(Str::random(6));
 
-    $academicYearOption = AcademicYearOption::query()->create([
+    $semester = Semester::query()->create([
         'slug' => 'api-filter-'.$suffix,
         'name' => 'Semester '.$suffix,
         'description' => null,
@@ -42,7 +42,7 @@ function createStudentEnrolmentForProgram(StudentApplication $program): void
         'institution_department_id' => $program->institution_department_id,
         'department_level_id' => $program->department_level_id,
         'department_course_id' => $program->department_course_id,
-        'academic_year_option_id' => $academicYearOption->id,
+        'semester_id' => $semester->id,
         'academic_calendar_id' => $calendar->id,
         'mode_of_study_id' => $program->mode_of_study_id,
         'student_enrolment_status_id' => $status->id,

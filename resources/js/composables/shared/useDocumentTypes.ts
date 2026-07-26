@@ -32,18 +32,18 @@ export const useDocumentTypes = () => {
                     const id = getIdParams(row.original.id?.toString() ?? '');
 
                     return moreActionButton(!!row.original?.attributes?.deletedAt, [
-                        { key: 'edit', action: () => onOpenModal(hasAbility('update:settings'), row.original) },
+                        { key: 'edit', action: () => onOpenModal(hasAbility('update:document-types'), row.original) },
                         {
                             key: 'archive',
-                            action: () => onDelete(hasAbility('delete:settings'), route('document-types.destroy', id), getName()),
+                            action: () => onDelete(hasAbility('delete:document-types'), route('document-types.destroy', id), getName()),
                         },
                         {
                             key: 'restore',
-                            action: () => onRestore(hasAbility('restore:settings'), route('document-types.restore', id), getName()),
+                            action: () => onRestore(hasAbility('restore:document-types'), route('document-types.restore', id), getName()),
                         },
                         {
                             key: 'delete',
-                            action: () => onForceDelete(hasAbility('forceDelete:settings'), route('document-types.force-delete', id), getName()),
+                            action: () => onForceDelete(hasAbility('forceDelete:document-types'), route('document-types.force-delete', id), getName()),
                         },
                     ]);
                 },

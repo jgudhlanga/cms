@@ -44,7 +44,7 @@ function extractErrorMessage(error: unknown, fallback: string): string {
 export function useClassModuleLecturerSave(
     syncModuleUrl: () => string,
     copyDefaultsUrl: () => string,
-    academicYearOptionId: () => number | null,
+    semesterId: () => number | null,
 ) {
     const savingModuleId = reactive<Record<number, boolean>>({});
     const copyingDefaults = ref(false);
@@ -60,7 +60,7 @@ export function useClassModuleLecturerSave(
     };
 
     const saveModuleLecturers = async (module: ClassSemesterModule, staffIds: number[]): Promise<boolean> => {
-        const optionId = academicYearOptionId();
+        const optionId = semesterId();
 
         if (optionId == null) {
             return false;
@@ -73,7 +73,7 @@ export function useClassModuleLecturerSave(
             const { data } = await axios.put<SyncModuleLecturersResponse>(
                 syncModuleUrl(),
                 {
-                    academic_year_option_id: optionId,
+                    semester_id: optionId,
                     course_syllabus_module_id: module.moduleId,
                     staff_ids: staffIds,
                 },
@@ -104,7 +104,7 @@ export function useClassModuleLecturerSave(
     };
 
     const copyDefaults = async (): Promise<ClassSemesterModule[] | null> => {
-        const optionId = academicYearOptionId();
+        const optionId = semesterId();
 
         if (optionId == null) {
             return null;
@@ -115,7 +115,7 @@ export function useClassModuleLecturerSave(
         try {
             const { data } = await axios.post<CopyDefaultsResponse>(
                 copyDefaultsUrl(),
-                { academic_year_option_id: optionId },
+                { semester_id: optionId },
                 {
                     headers: { Accept: 'application/json' },
                     withCredentials: true,

@@ -24,7 +24,7 @@ class FeeTypeController extends Controller
      */
     public function index(SharedNameFilter $filters): Response
     {
-		$this->authorize('viewSettings');
+		$this->authorize('viewAny', FeeType::class);
 		$feeTypes = FeeTypeResource::collection($this->repository->allFilter(['*'], $filters));
 		return Inertia::render('shared/feeTypes/Index', [
 			'feeTypes' => $feeTypes,
@@ -38,7 +38,7 @@ class FeeTypeController extends Controller
      */
     public function create(): void
     {
-		$this->authorize('createSettings');
+		$this->authorize('create', FeeType::class);
 	}
 
     /**
@@ -46,7 +46,7 @@ class FeeTypeController extends Controller
      */
     public function store(FeeTypeRequest $request): void
     {
-		$this->authorize('createSettings');
+		$this->authorize('create', FeeType::class);
 		$this->repository->create(FeeTypeDto::fromFeeTypeRequest($request));
 	}
 
@@ -65,7 +65,7 @@ class FeeTypeController extends Controller
      */
     public function update(FeeTypeRequest $request, FeeType $feeType): void
     {
-		$this->authorize('updateSettings');
+		$this->authorize('update', $feeType);
 		$this->repository->update($feeType, FeeTypeDto::fromFeeTypeRequest($request));
 	}
 
@@ -74,7 +74,7 @@ class FeeTypeController extends Controller
      */
     public function destroy(FeeType $feeType): void
     {
-		$this->authorize('deleteSettings');
+		$this->authorize('delete', $feeType);
 		$this->repository->delete($feeType);
 	}
 
@@ -84,7 +84,7 @@ class FeeTypeController extends Controller
     public function restore(string $id): void
     {
 		$feeType = $this->repository->findTrashed($id);
-		$this->authorize('restoreSettings');
+		$this->authorize('restore', $feeType);
 		$this->repository->restore($feeType);
 	}
 
@@ -93,7 +93,7 @@ class FeeTypeController extends Controller
      */
     public function forceDelete(FeeType $feeType): void
     {
-		$this->authorize('forceDeleteSettings');
+		$this->authorize('forceDelete', $feeType);
 		$this->repository->delete($feeType, true);
 	}
 }

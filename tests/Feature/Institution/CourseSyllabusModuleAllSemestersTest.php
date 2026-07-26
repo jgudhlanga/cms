@@ -11,7 +11,7 @@ it('matches module period exactly or when all_semesters is enabled', function ()
     $module = CourseSyllabusModule::query()->create([
         'tenant_id' => $ctx['tenant']->id,
         'course_syllabus_id' => $ctx['courseSyllabus']->id,
-        'academic_year_option_id' => $ctx['semesterOne']->id,
+        'semester_id' => $ctx['semesterOne']->id,
         'title' => 'Shared Module',
         'code' => 'MOD-ALL-'.uniqid(),
         'all_semesters' => true,
@@ -27,7 +27,7 @@ it('does not match all_semesters module for a different calendar type', function
     $module = CourseSyllabusModule::query()->create([
         'tenant_id' => $ctx['tenant']->id,
         'course_syllabus_id' => $ctx['courseSyllabus']->id,
-        'academic_year_option_id' => $ctx['semesterOne']->id,
+        'semester_id' => $ctx['semesterOne']->id,
         'title' => 'Semester Module',
         'code' => 'MOD-SEM-'.uniqid(),
         'all_semesters' => true,

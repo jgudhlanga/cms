@@ -20,7 +20,7 @@ class GradeController extends Controller
 
     public function index(SharedNameFilter $filters)
     {
-        $this->authorize('viewSettings');
+        $this->authorize('viewAny', Grade::class);
         $grades = GradeResource::collection($this->repository->allFilter(['*'], $filters));
         return Inertia::render('institution/dropdowns/grades/Index', [
             'grades' => $grades,
@@ -31,12 +31,12 @@ class GradeController extends Controller
 
     public function create()
     {
-        $this->authorize('createSettings');
+        $this->authorize('create', Grade::class);
     }
 
     public function store(GradeRequest $request)
     {
-        $this->authorize('createSettings');
+        $this->authorize('create', Grade::class);
         $this->repository->create(GradeDto::fromGradeRequest($request));
     }
 
@@ -52,32 +52,32 @@ class GradeController extends Controller
 
     public function update(GradeRequest $request, Grade $grade)
     {
-        $this->authorize('updateInstitutionSettings');
+        $this->authorize('update', $grade);
         $this->repository->update($grade, GradeDto::fromGradeRequest($request));
     }
 
     public function movePosition(PositionRequest $request, Grade $grade)
     {
-        $this->authorize('updateInstitutionSettings');
+        $this->authorize('update', $grade);
         $this->repository->movePosition($grade, $request);
     }
 
     public function destroy(Grade $grade)
     {
-        $this->authorize('deleteInstitutionSettings');
+        $this->authorize('delete', $grade);
         $this->repository->delete($grade);
     }
 
     public function restore(string $id)
     {
         $grade = $this->repository->findTrashed($id);
-        $this->authorize('restoreInstitutionSettings');
+        $this->authorize('restore', $grade);
         $this->repository->restore($grade);
     }
 
     public function forceDelete(Grade $grade)
     {
-        $this->authorize('forceDeleteInstitutionSettings');
+        $this->authorize('forceDelete', $grade);
         $this->repository->delete($grade, true);
     }
 }

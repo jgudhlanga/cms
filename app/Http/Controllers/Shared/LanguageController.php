@@ -19,7 +19,7 @@ class LanguageController extends Controller
 
 	public function index(SharedTitleFilter $filters)
 	{
-		$this->authorize('viewSettings');
+		$this->authorize('viewAny', Language::class);
 		$languages = LanguageResource::collection($this->repository->allFilter(['*'], $filters));
 		return Inertia::render('shared/languages/Index', [
 			'languages' => $languages,
@@ -30,12 +30,12 @@ class LanguageController extends Controller
 
 	public function create()
 	{
-		$this->authorize('createSettings');
+		$this->authorize('create', Language::class);
 	}
 
 	public function store(LanguageRequest $request)
 	{
-		$this->authorize('createSettings');
+		$this->authorize('create', Language::class);
 		$this->repository->create(LanguageDto::fromLanguageRequest($request));
 	}
 
@@ -51,26 +51,26 @@ class LanguageController extends Controller
 
 	public function update(LanguageRequest $request, Language $language)
 	{
-		$this->authorize('updateSettings');
+		$this->authorize('update', $language);
 		$this->repository->update($language, LanguageDto::fromLanguageRequest($request));
 	}
 
 	public function destroy(Language $language)
 	{
-		$this->authorize('deleteSettings');
+		$this->authorize('delete', $language);
 		$this->repository->delete($language);
 	}
 
 	public function restore(string $id)
 	{
 		$language = $this->repository->findTrashed($id);
-		$this->authorize('restoreSettings');
+		$this->authorize('restore', $language);
 		$this->repository->restore($language);
 	}
 
 	public function forceDelete(Language $language)
 	{
-		$this->authorize('forceDeleteSettings');
+		$this->authorize('forceDelete', $language);
 		$this->repository->delete($language, true);
 	}
 }

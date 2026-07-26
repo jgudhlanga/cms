@@ -25,7 +25,7 @@ class ClassConfigRequest extends FormRequest
             $merge['students_per_class'] = (int) $this->input('students_per_class');
         }
 
-        foreach (['department_level_id', 'department_course_id', 'mode_of_study_id', 'academic_year_option_id'] as $key) {
+        foreach (['department_level_id', 'department_course_id', 'mode_of_study_id', 'semester_id'] as $key) {
             if ($this->has($key) && $this->input($key) !== '' && $this->input($key) !== null) {
                 $merge[$key] = (int) $this->input($key);
             }
@@ -70,10 +70,10 @@ class ClassConfigRequest extends FormRequest
                 ),
             ],
             'mode_of_study_id' => ['required', 'exists:mode_of_studies,id'],
-            'academic_year_option_id' => [
+            'semester_id' => [
                 'required',
                 'integer',
-                Rule::exists('academic_year_options', 'id')->where(function ($query): void {
+                Rule::exists('semesters', 'id')->where(function ($query): void {
                     $prefix = $this->calendarTypeSlugPrefix();
 
                     $query->where('slug', 'like', $prefix.'-%');

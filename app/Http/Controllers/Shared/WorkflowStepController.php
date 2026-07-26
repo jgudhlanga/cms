@@ -20,7 +20,7 @@ class WorkflowStepController extends Controller
 
     public function index(SharedNameFilter $filters)
     {
-        $this->authorize('viewSettings');
+        $this->authorize('viewAny', WorkflowStep::class);
         $workflowSteps = WorkflowStepResource::collection($this->repository->allFilter(['*'], $filters));
         return Inertia::render('shared/workflowSteps/Index', [
             'workflowSteps' => $workflowSteps,
@@ -31,12 +31,12 @@ class WorkflowStepController extends Controller
 
     public function create()
     {
-        $this->authorize('createSettings');
+        $this->authorize('create', WorkflowStep::class);
     }
 
     public function store(WorkflowStepRequest $request)
     {
-        $this->authorize('createSettings');
+        $this->authorize('create', WorkflowStep::class);
         $this->repository->create(WorkflowStepDto::fromWorkflowStepRequest($request));
     }
 
@@ -52,32 +52,32 @@ class WorkflowStepController extends Controller
 
     public function update(WorkflowStepRequest $request, WorkflowStep $workflowStep)
     {
-        $this->authorize('updateSettings');
+        $this->authorize('update', $workflowStep);
         $this->repository->update($workflowStep, WorkflowStepDto::fromWorkflowStepRequest($request));
     }
 
     public function movePosition(PositionRequest $request, WorkflowStep $workflowStep)
     {
-        $this->authorize('updateSettings');
+        $this->authorize('update', $workflowStep);
         $this->repository->movePosition($workflowStep, $request);
     }
 
     public function destroy(WorkflowStep $workflowStep)
     {
-        $this->authorize('deleteSettings');
+        $this->authorize('delete', $workflowStep);
         $this->repository->delete($workflowStep);
     }
 
     public function restore(string $id)
     {
         $workflowStep = $this->repository->findTrashed($id);
-        $this->authorize('restoreSettings');
+        $this->authorize('restore', $workflowStep);
         $this->repository->restore($workflowStep);
     }
 
     public function forceDelete(WorkflowStep $workflowStep)
     {
-        $this->authorize('forceDeleteSettings');
+        $this->authorize('forceDelete', $workflowStep);
         $this->repository->delete($workflowStep, true);
     }
 }

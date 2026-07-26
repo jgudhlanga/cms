@@ -14,7 +14,7 @@ class CopySyllabusModuleLecturersToClassRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'academic_year_option_id' => ['required', 'integer', 'exists:academic_year_options,id'],
+            'semester_id' => ['required', 'integer', 'exists:semesters,id'],
         ];
     }
 }

@@ -18,7 +18,7 @@ class AssessmentTypeController extends Controller
 
     public function index(SharedNameFilter $filters)
     {
-        $this->authorize('viewSettings');
+        $this->authorize('viewAny', AssessmentType::class);
         $assessmentTypes = AssessmentTypeResource::collection($this->repository->allFilter(['*'], $filters));
 
         return Inertia::render('institution/dropdowns/assessment-types/Index', [
@@ -33,12 +33,12 @@ class AssessmentTypeController extends Controller
 
     public function create()
     {
-        $this->authorize('createSettings');
+        $this->authorize('create', AssessmentType::class);
     }
 
     public function store(AssessmentTypeRequest $request)
     {
-        $this->authorize('createSettings');
+        $this->authorize('create', AssessmentType::class);
         $this->repository->create(AssessmentTypeDto::fromAssessmentTypeRequest($request));
     }
 
@@ -54,26 +54,26 @@ class AssessmentTypeController extends Controller
 
     public function update(AssessmentTypeRequest $request, AssessmentType $assessmentType)
     {
-        $this->authorize('updateInstitutionSettings');
+        $this->authorize('update', $assessmentType);
         $this->repository->update($assessmentType, AssessmentTypeDto::fromAssessmentTypeRequest($request));
     }
 
     public function destroy(AssessmentType $assessmentType)
     {
-        $this->authorize('deleteInstitutionSettings');
+        $this->authorize('delete', $assessmentType);
         $this->repository->delete($assessmentType);
     }
 
     public function restore(string $id)
     {
         $assessmentType = $this->repository->findTrashed($id);
-        $this->authorize('restoreInstitutionSettings');
+        $this->authorize('restore', $assessmentType);
         $this->repository->restore($assessmentType);
     }
 
     public function forceDelete(AssessmentType $assessmentType)
     {
-        $this->authorize('forceDeleteInstitutionSettings');
+        $this->authorize('forceDelete', $assessmentType);
         $this->repository->delete($assessmentType, true);
     }
 }

@@ -3,8 +3,8 @@
 namespace App\JsonApi\V1\HMS;
 
 use App\Models\HMS\HmsSetting;
-use App\Models\HMS\HostelAmenity;
 use App\Models\HMS\Hostel;
+use App\Models\HMS\HostelAmenity;
 use App\Models\HMS\HostelApplication;
 use App\Models\HMS\HostelLeave;
 use App\Models\HMS\HostelNotice;
@@ -35,7 +35,7 @@ class HmsAuthorizer implements Authorizer
             HostelQuery::class => $this->authorizeStudentScopedIndex($user, HostelQuery::class),
             HostelLeave::class => $this->authorizeStudentScopedIndex($user, HostelLeave::class),
             HostelNotice::class => $this->authorizeStudentScopedIndex($user, HostelNotice::class),
-            Hostel::class => $user->can('viewAny:hostels') || $user->can('view:hostels'),
+            Hostel::class => true,
             HostelAmenity::class => $user->can('viewAny:hostel-amenities') || $user->can('view:hostel-amenities'),
             HostelRoom::class => true,
             HmsSetting::class => $user->can('viewAny:hms-settings') || $user->can('view:hms-settings'),
@@ -104,7 +104,7 @@ class HmsAuthorizer implements Authorizer
             $model instanceof HostelQuery => $user->can('view', $model),
             $model instanceof HostelLeave => $user->can('view', $model),
             $model instanceof HostelNotice => $user->can('view', $model),
-            $model instanceof Hostel => $user->can('viewAny:hostels') || $user->can('view:hostels'),
+            $model instanceof Hostel => $user->can('view', $model),
             $model instanceof HostelAmenity => $user->can('viewAny:hostel-amenities') || $user->can('view:hostel-amenities'),
             $model instanceof HostelRoom => true,
             $model instanceof HmsSetting => $user->can('viewAny:hms-settings') || $user->can('view:hms-settings'),

@@ -20,7 +20,7 @@ class IntakePeriodController extends Controller
 
     public function index(SharedNameFilter $filters)
     {
-        $this->authorize('viewSettings');
+        $this->authorize('viewAny', IntakePeriod::class);
         $intakePeriods = IntakePeriodResource::collection($this->repository->allFilter(['*'], $filters));
         return Inertia::render('institution/dropdowns/intakePeriods/Index', [
             'intakePeriods' => $intakePeriods,
@@ -31,12 +31,12 @@ class IntakePeriodController extends Controller
 
     public function create()
     {
-        $this->authorize('createSettings');
+        $this->authorize('create', IntakePeriod::class);
     }
 
     public function store(IntakePeriodRequest $request)
     {
-        $this->authorize('createSettings');
+        $this->authorize('create', IntakePeriod::class);
         $this->repository->create(IntakePeriodDto::fromIntakePeriodRequest($request));
     }
 
@@ -52,26 +52,26 @@ class IntakePeriodController extends Controller
 
     public function update(IntakePeriodRequest $request, IntakePeriod $intakePeriod)
     {
-        $this->authorize('updateInstitutionSettings');
+        $this->authorize('update', $intakePeriod);
         $this->repository->update($intakePeriod, IntakePeriodDto::fromIntakePeriodRequest($request));
     }
 
     public function destroy(IntakePeriod $intakePeriod)
     {
-        $this->authorize('deleteInstitutionSettings');
+        $this->authorize('delete', $intakePeriod);
         $this->repository->delete($intakePeriod);
     }
 
     public function restore(string $id)
     {
         $intakePeriod = $this->repository->findTrashed($id);
-        $this->authorize('restoreInstitutionSettings');
+        $this->authorize('restore', $intakePeriod);
         $this->repository->restore($intakePeriod);
     }
 
     public function forceDelete(IntakePeriod $intakePeriod)
     {
-        $this->authorize('forceDeleteInstitutionSettings');
+        $this->authorize('forceDelete', $intakePeriod);
         $this->repository->delete($intakePeriod, true);
     }
 }

@@ -16,7 +16,7 @@ defineProps<{
     auth: AuthObject;
     errors: object;
 }>();
-const allowed = hasAbility('create:settings');
+const allowed = hasAbility('create:roles');
 </script>
 
 <template>

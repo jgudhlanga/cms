@@ -29,8 +29,8 @@ const can = props?.auth?.can;
             :search-url="route('academic-levels.index')"
             :pagination="{ ...academicLevels.links, ...academicLevels.meta }"
             :columns="createAcademicLevelColumns()"
-            :on-create="() => onOpenModal(can['create:settings'])"
-            :disable-create="!can['create:settings']"
+            :on-create="() => onOpenModal(can['create:academic-levels'])"
+            :disable-create="!can['create:academic-levels']"
         />
         <CreateEdit />
     </PageContainer>

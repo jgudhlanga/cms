@@ -29,8 +29,8 @@ const can = props?.auth?.can;
             :search-url="route('districts.index')"
             :pagination="{ ...districts.links, ...districts.meta }"
             :columns="createDistrictColumns()"
-            :on-create="() => onOpenModal(can['create:settings'])"
-            :disable-create="!can['create:settings']"
+            :on-create="() => onOpenModal(can['create:districts'])"
+            :disable-create="!can['create:districts']"
         />
         <CreateEdit />
     </PageContainer>

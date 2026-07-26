@@ -18,6 +18,7 @@ class RolePriorityHelper
             RoleEnum::TESC->name(),
             RoleEnum::PRINCIPAL->name(),
             RoleEnum::VICE_PRINCIPAL->name(),
+            RoleEnum::VICE_PRINCIPAL_ADMIN->name(),
             RoleEnum::REGISTRAR->name(),
             RoleEnum::DEAN->name(),
             RoleEnum::BURSAR->name(),
@@ -39,6 +40,7 @@ class RolePriorityHelper
             RoleEnum::ADMINISTRATIVE_ASSISTANT->name(),
             RoleEnum::IT_SUPPORT_TECHNICIAN->name(),
             RoleEnum::LAB_TECHNICIAN->name(),
+            RoleEnum::WARDEN->name(),
             RoleEnum::SECURITY_OFFICER->name(),
             RoleEnum::STUDENT->name(),
         ];

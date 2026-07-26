@@ -19,7 +19,7 @@ class RaceController extends Controller
 
 	public function index(SharedTitleFilter $filters)
 	{
-		$this->authorize('viewSettings');
+		$this->authorize('viewAny', Race::class);
 		$races = RaceResource::collection($this->repository->allFilter(['*'], $filters));
 		return Inertia::render('shared/races/Index', [
 			'races' => $races,
@@ -30,12 +30,12 @@ class RaceController extends Controller
 
 	public function create()
 	{
-		$this->authorize('createSettings');
+		$this->authorize('create', Race::class);
 	}
 
 	public function store(RaceRequest $request)
 	{
-		$this->authorize('createSettings');
+		$this->authorize('create', Race::class);
 		$this->repository->create(RaceDto::fromRaceRequest($request));
 	}
 
@@ -51,26 +51,26 @@ class RaceController extends Controller
 
 	public function update(RaceRequest $request, Race $race)
 	{
-		$this->authorize('updateSettings');
+		$this->authorize('update', $race);
 		$this->repository->update($race, RaceDto::fromRaceRequest($request));
 	}
 
 	public function destroy(Race $race)
 	{
-		$this->authorize('deleteSettings');
+		$this->authorize('delete', $race);
 		$this->repository->delete($race);
 	}
 
 	public function restore(string $id)
 	{
 		$race = $this->repository->findTrashed($id);
-		$this->authorize('restoreSettings');
+		$this->authorize('restore', $race);
 		$this->repository->restore($race);
 	}
 
 	public function forceDelete(Race $race)
 	{
-		$this->authorize('forceDeleteSettings');
+		$this->authorize('forceDelete', $race);
 		$this->repository->delete($race, true);
 	}
 }

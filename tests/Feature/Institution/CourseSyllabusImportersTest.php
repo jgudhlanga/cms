@@ -2,7 +2,7 @@
 
 use App\Importers\Institution\CourseSyllabusImporter;
 use App\Importers\Institution\CourseSyllabusModuleImporter;
-use App\Models\AcademicCalendars\AcademicYearOption;
+use App\Models\AcademicCalendars\Semester;
 use App\Models\Institution\Course;
 use App\Models\Institution\Department;
 use App\Models\Institution\DepartmentCourse;
@@ -13,14 +13,14 @@ use App\Models\Institution\Level;
 use App\Models\Institution\Syllabus\CourseSyllabus;
 use App\Models\Institution\Syllabus\CourseSyllabusModule;
 use App\Models\Tenants\Tenant;
-use Database\Seeders\AcademicCalendars\AcademicYearOptionSeeder;
+use Database\Seeders\AcademicCalendars\SemesterSeeder;
 use LaravelIngest\Enums\IngestStatus;
 use LaravelIngest\Models\IngestRun;
 use LaravelIngest\Services\RowProcessor;
 
 function makeSyllabusImportContext(): array
 {
-    test()->seed(AcademicYearOptionSeeder::class);
+    test()->seed(SemesterSeeder::class);
 
     $tenant = Tenant::query()->findOrFail(1);
 
@@ -112,14 +112,14 @@ it('imports course syllabuses and modules from syllabus xlsx', function () {
         ->and($courseSyllabus?->implementation_year)->toBe('2026');
 
     $module = CourseSyllabusModule::query()->where('code', 'MOD-CT-101')->first();
-    $semesterOneId = (int) AcademicYearOption::query()->where('slug', 'semester-1')->value('id');
+    $semesterOneId = (int) Semester::query()->where('slug', 'semester-1')->value('id');
 
     expect($module)->not->toBeNull()
         ->and($module?->tenant_id)->toBe(1)
         ->and($module?->title)->toBe('Module Intro')
         ->and($module?->code)->toBe('MOD-CT-101')
         ->and($module?->course_syllabus_id)->toBe($courseSyllabus?->id)
-        ->and($module?->academic_year_option_id)->toBe($semesterOneId);
+        ->and($module?->semester_id)->toBe($semesterOneId);
 });
 
 it('updates existing syllabus and module records with matching codes', function () {

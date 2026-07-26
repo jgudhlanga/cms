@@ -13,7 +13,7 @@ export function useStudentProfileHeader(student: MaybeRefOrGetter<Student | null
             level: value?.attributes.level ?? '',
             course: value?.attributes.course ?? '',
             academicCalendar: value?.relationships?.latestEnrolment?.attributes.academicCalendar ?? '',
-            academicYearOption: value?.relationships?.latestEnrolment?.attributes.academicYearOption ?? '',
+            semester: value?.relationships?.latestEnrolment?.attributes.semester ?? '',
             enrolmentStatus: value?.attributes.enrolmentStatus ?? '',
             applicationStatus: value?.attributes.applicationStatus ?? '',
             intakePeriod: value?.attributes.intakePeriod ?? '',

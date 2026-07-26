@@ -5,6 +5,7 @@ namespace App\Services\Dashboard;
 use App\Enums\HMS\HostelApplicationStatusEnum;
 use App\Enums\HMS\HostelQueryPriorityEnum;
 use App\Enums\HMS\HostelQueryStatusEnum;
+use App\Helpers\Helper;
 use App\Models\HMS\Hostel;
 use App\Models\HMS\HostelApplication;
 use App\Models\HMS\HostelQuery;
@@ -23,7 +24,8 @@ class HostelDashboardMetricsService
      *     blocks: list<array<string, mixed>>,
      *     genderSplit: array{male: int, female: int, other: int},
      *     queryStats: array<string, int>,
-     *     applicationStats: array<string, int|float>
+     *     applicationStats: array<string, int|float>,
+     *     amenityStatus: array{working: int, needsAttention: int, total: int}
      * }
      */
     public function build(): array
@@ -50,18 +52,26 @@ class HostelDashboardMetricsService
             'genderSplit' => $this->genderSplit(),
             'queryStats' => $this->queryStats(),
             'applicationStats' => $this->applicationStats(),
+            'amenityStatus' => $this->amenityStatusSummary(),
         ];
     }
 
     private function hostelQuery()
     {
-        return Hostel::query()
+        $query = Hostel::query()
             ->withSum('rooms as occupied_beds_sum', 'current_occupancy')
             ->withCount([
                 'rooms as vacant_rooms_count' => fn ($builder) => $builder->where('status', 'vacant'),
                 'rooms as maintenance_rooms_count' => fn ($builder) => $builder->where('status', 'maintenance'),
             ])
             ->orderBy('name');
+
+        $hostelIds = Helper::resolveUserHostels();
+        if ($hostelIds !== null) {
+            $query->whereIn('id', $hostelIds);
+        }
+
+        return $query;
     }
 
     /**
@@ -111,10 +121,16 @@ class HostelDashboardMetricsService
      */
     private function genderSplit(): array
     {
-        $allocations = HostelRoomAllocation::query()
+        $query = HostelRoomAllocation::query()
             ->active()
-            ->with('student.gender')
-            ->get();
+            ->with('student.gender');
+
+        $hostelIds = Helper::resolveUserHostels();
+        if ($hostelIds !== null) {
+            $query->whereHas('room', fn ($builder) => $builder->whereIn('hostel_id', $hostelIds));
+        }
+
+        $allocations = $query->get();
 
         $male = 0;
         $female = 0;
@@ -149,7 +165,13 @@ class HostelDashboardMetricsService
         $resolvedStatus = HostelQueryStatusEnum::RESOLVED->value;
         $highPriority = HostelQueryPriorityEnum::HIGH->value;
 
-        $stats = HostelQuery::query()
+        $query = HostelQuery::query();
+        $hostelIds = Helper::resolveUserHostels();
+        if ($hostelIds !== null) {
+            $query->whereIn('hostel_id', $hostelIds);
+        }
+
+        $stats = $query
             ->selectRaw('count(*) as total')
             ->selectRaw('sum(case when status = ? then 1 else 0 end) as open_count', [$openStatus])
             ->selectRaw('sum(case when status = ? then 1 else 0 end) as in_progress_count', [$inProgressStatus])
@@ -176,7 +198,13 @@ class HostelDashboardMetricsService
      */
     private function applicationStats(): array
     {
-        $counts = HostelApplication::query()
+        $query = HostelApplication::query();
+        $hostelIds = Helper::resolveUserHostels();
+        if ($hostelIds !== null) {
+            $query->whereIn('hostel_id', $hostelIds);
+        }
+
+        $counts = $query
             ->select('status', DB::raw('count(*) as total'))
             ->groupBy('status')
             ->pluck('total', 'status');
@@ -200,6 +228,36 @@ class HostelDashboardMetricsService
             'approved' => $approved,
             'declined' => $declined,
             'paidRate' => $paidRate,
+        ];
+    }
+
+    /**
+     * Room amenities have no pivot status column, so linked amenities count as working
+     * and rooms under maintenance count as needing attention.
+     *
+     * @return array{working: int, needsAttention: int, total: int}
+     */
+    public function amenityStatusSummary(): array
+    {
+        $hostels = $this->hostelQuery()->with('rooms.amenities')->get();
+        $working = 0;
+        $needsAttention = 0;
+
+        foreach ($hostels as $hostel) {
+            foreach ($hostel->rooms as $room) {
+                $amenityCount = $room->amenities?->count() ?? 0;
+                $working += $amenityCount;
+
+                if (strtolower((string) $room->status) === 'maintenance') {
+                    $needsAttention++;
+                }
+            }
+        }
+
+        return [
+            'working' => $working,
+            'needsAttention' => $needsAttention,
+            'total' => $working + $needsAttention,
         ];
     }
 }

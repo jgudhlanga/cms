@@ -13,12 +13,12 @@ export function useDepartmentAcademicCalendarClassNavigation(
     mode: Ref<ModeOfStudy>,
     classConfig: Ref<ClassConfig | null>,
     academicCalendarClass: Ref<AcademicCalendarClassDetail>,
-    selectedAcademicYearOptionId?: Ref<number | null>,
+    selectedSemesterId?: Ref<number | null>,
 ) {
     const semesterQuery = computed((): Record<string, string> => {
-        const optionId = selectedAcademicYearOptionId?.value;
+        const optionId = selectedSemesterId?.value;
 
-        return optionId != null ? { academic_year_option_id: String(optionId) } : {};
+        return optionId != null ? { semester_id: String(optionId) } : {};
     });
 
     const departmentClassesUrl = computed(() =>

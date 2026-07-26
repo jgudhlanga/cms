@@ -19,7 +19,7 @@ class RelationshipController extends Controller
 
     public function index(SharedNameFilter $filters)
     {
-        $this->authorize('viewSettings');
+        $this->authorize('viewAny', Relationship::class);
         $relationships = RelationshipResource::collection($this->repository->allFilter(['*'], $filters));
         return Inertia::render('shared/relationships/Index', [
             'relationships' => $relationships,
@@ -30,12 +30,12 @@ class RelationshipController extends Controller
 
     public function create()
     {
-        $this->authorize('createSettings');
+        $this->authorize('create', Relationship::class);
     }
 
     public function store(RelationshipRequest $request)
     {
-        $this->authorize('createSettings');
+        $this->authorize('create', Relationship::class);
         $this->repository->create(RelationshipDto::fromRelationshipRequest($request));
     }
 
@@ -51,26 +51,26 @@ class RelationshipController extends Controller
 
     public function update(RelationshipRequest $request, Relationship $relationship)
     {
-        $this->authorize('updateSettings');
+        $this->authorize('update', $relationship);
         $this->repository->update($relationship, RelationshipDto::fromRelationshipRequest($request));
     }
 
     public function destroy(Relationship $relationship)
     {
-        $this->authorize('deleteSettings');
+        $this->authorize('delete', $relationship);
         $this->repository->delete($relationship);
     }
 
     public function restore(string $id)
     {
         $relationship = $this->repository->findTrashed($id);
-        $this->authorize('restoreSettings');
+        $this->authorize('restore', $relationship);
         $this->repository->restore($relationship);
     }
 
     public function forceDelete(Relationship $relationship)
     {
-        $this->authorize('forceDeleteSettings');
+        $this->authorize('forceDelete', $relationship);
         $this->repository->delete($relationship, true);
     }
 }

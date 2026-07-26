@@ -45,6 +45,8 @@ export type Division = {
         name: string;
         position: string | number;
         description?: string;
+        headOfDivisionId?: number | string | null;
+        headOfDivision?: string | null;
         createdAt?: string;
         updatedAt?: string;
         deletedAt?: string;
@@ -53,6 +55,7 @@ export type Division = {
 export type DivisionParams = {
     name: string;
     description?: string;
+    head_of_division_id?: number | string | null;
 };
 
 export type Grade = {
@@ -186,6 +189,8 @@ export type InstitutionDepartment = {
         departmentId: string | number;
         department: string;
         departmentCode?: string;
+        divisionId?: number | string | null;
+        division?: string | null;
         isAcademic: boolean | number;
         description?: string;
         createdAt?: string;
@@ -197,6 +202,7 @@ export type InstitutionDepartment = {
 export type InstitutionDepartmentParams = {
     is_academic: boolean;
     department_ids: Array<string | undefined | null>;
+    division_id?: number | string | null;
 };
 
 export type IntakePeriodStatus = 'open' | 'suspended' | 'closed';
@@ -264,8 +270,8 @@ export type CourseSyllabusModule = {
     id?: string;
     attributes: {
         courseSyllabusId: string | number;
-        academicYearOptionId?: string | number | null;
-        academicYearOptionName?: string | null;
+        semesterId?: string | number | null;
+        semesterName?: string | null;
         title: string;
         code: string;
         durationInHours?: number | null;
@@ -284,7 +290,7 @@ export type CourseSyllabusModule = {
 
 export type CourseSyllabusModuleParams = {
     course_syllabus_id: number | null;
-    academic_year_option_id: string | number | null;
+    semester_id: string | number | null;
     title: string;
     code: string;
     duration_in_hours: number | null;

@@ -85,7 +85,7 @@ export type StudentHeader = {
     profileContext?: 'enrolled' | 'applicant' | null;
     department: string;
     academicCalendar: string;
-    academicYearOption: string;
+    semester: string;
     isApprenticeThisYear?: boolean;
     employer?: string;
     apprenticeNumber?: string;
@@ -385,11 +385,11 @@ export type StudentEnrolment = {
         departmentLevelId: string | number;
         departmentCourseId: string | number;
         modeOfStudyId: string | number;
-        academicYearOptionId: string | number;
+        semesterId: string | number;
         academicCalendarId: string | number;
         studentEnrolmentStatusId: string | number;
         status: string;
-        academicYearOption: string;
+        semester: string;
         academicCalendar: string;
     };
     relationships?: {

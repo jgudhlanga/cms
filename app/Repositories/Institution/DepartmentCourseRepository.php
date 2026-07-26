@@ -2,9 +2,9 @@
 
 namespace App\Repositories\Institution;
 
+use App\DTO\Institution\CourseRequirementsDto;
 use App\DTO\Institution\DepartmentCourseDto;
 use App\DTO\Institution\DepartmentCourseUpdateDto;
-use App\DTO\Institution\CourseRequirementsDto;
 use App\Models\Institution\DepartmentCourse;
 use App\Models\Institution\InstitutionDepartment;
 use App\Repositories\Base\BaseRepository;
@@ -16,7 +16,6 @@ class DepartmentCourseRepository extends BaseRepository implements IDepartmentCo
     {
         parent::__construct($this->departmentCourse);
     }
-
 
     public function syncDepartmentCourses(InstitutionDepartment $institutionDepartment, DepartmentCourseDto $dto): void
     {
@@ -33,7 +32,7 @@ class DepartmentCourseRepository extends BaseRepository implements IDepartmentCo
         $toRemove = array_diff($existing, $newIds);
 
         // Delete removed courses
-        if (!empty($toRemove)) {
+        if (! empty($toRemove)) {
             $this->departmentCourse->whereIn('course_id', $toRemove)->delete();
         }
 
@@ -45,8 +44,16 @@ class DepartmentCourseRepository extends BaseRepository implements IDepartmentCo
 
     public function update(DepartmentCourse $departmentCourse, DepartmentCourseUpdateDto $dto)
     {
-        $departmentCourse = tap($departmentCourse)->update(['show_on_current_application_period' => $dto->show_on_current_application_period]);
-        # Get existing department_ linked to this department
+        $attributes = [
+            'show_on_current_application_period' => $dto->show_on_current_application_period,
+        ];
+
+        if ($dto->coursework_capture_enabled !== null) {
+            $attributes['coursework_capture_enabled'] = $dto->coursework_capture_enabled;
+        }
+
+        $departmentCourse = tap($departmentCourse)->update($attributes);
+        // Get existing department_ linked to this department
         $existingCourseLevels = $departmentCourse->departmentCourseLevels()->where('department_course_id', $departmentCourse->id)->pluck('department_level_id')->toArray();
         $newCourseLevelIds = $dto->department_level_ids;
 
@@ -55,7 +62,7 @@ class DepartmentCourseRepository extends BaseRepository implements IDepartmentCo
         $toRemoveCourseLevels = array_diff($existingCourseLevels, $newCourseLevelIds);
 
         // Delete removed courses
-        if (!empty($toRemoveCourseLevels)) {
+        if (! empty($toRemoveCourseLevels)) {
             $departmentCourse->departmentCourseLevels()->whereIn('department_level_id', $toRemoveCourseLevels)->delete();
         }
         // Add new courses
@@ -68,7 +75,7 @@ class DepartmentCourseRepository extends BaseRepository implements IDepartmentCo
 
     public function updateLevelCourseRequirements(DepartmentCourse $departmentCourse, CourseRequirementsDto $dto): void
     {
-        if (!empty($departmentCourse->requirement)) {
+        if (! empty($departmentCourse->requirement)) {
             $departmentCourse->requirement()->update($this->getFields($dto));
         } else {
             $departmentCourse->requirement()->create(array_merge([
@@ -90,5 +97,4 @@ class DepartmentCourseRepository extends BaseRepository implements IDepartmentCo
             'required_level_id' => $dto->required_level_id,
         ];
     }
-
 }

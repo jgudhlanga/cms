@@ -87,12 +87,37 @@ export type HostelApplicationStats = {
     paidRate: number;
 };
 
+export type HostelAmenityStatus = {
+    working: number;
+    needsAttention: number;
+    total: number;
+};
+
 export type HostelDashboard = {
     summary: HostelDashboardSummary;
     blocks: HostelDashboardBlock[];
     genderSplit: HostelGenderSplit;
     queryStats: HostelQueryStats;
     applicationStats: HostelApplicationStats;
+    amenityStatus: HostelAmenityStatus;
+};
+
+export type FinanceCashFlowSummary = {
+    todayTotal: number;
+    todayCount: number;
+    reconciledToday: number;
+};
+
+export type FinanceCashFlowByDepartment = {
+    departmentId: number;
+    departmentName: string;
+    amount: number;
+    transactionCount: number;
+};
+
+export type FinanceDashboard = {
+    summary: FinanceCashFlowSummary;
+    byDepartment: FinanceCashFlowByDepartment[];
 };
 
 export type StaffDashboardSummary = {
@@ -226,6 +251,13 @@ export type AcademicCoursePassRate = {
     barPercent: number;
 };
 
+export type AcademicModulePassRate = {
+    moduleId: number;
+    moduleName: string;
+    passRate: number;
+    barPercent: number;
+};
+
 export type AcademicGradeSegment = {
     key: string;
     label: string;
@@ -275,6 +307,11 @@ export type AcademicDashboard = {
     passRateByDepartment: AcademicDepartmentPassRate[];
     passRateByLevel: AcademicLevelPassRate[];
     passRateByCourse: AcademicCoursePassRate[];
+    passRateByModule?: AcademicModulePassRate[];
+    topPerformingCourses: AcademicCoursePassRate[];
+    bottomPerformingCourses: AcademicCoursePassRate[];
+    topPerformingModules: AcademicModulePassRate[];
+    bottomPerformingModules: AcademicModulePassRate[];
     moduleFailureHotspots: AcademicModuleFailureHotspot[];
     missingMarksByDepartment: AcademicMissingMarksByDepartment[];
     missingMarksByLevel: AcademicMissingMarksByLevel[];

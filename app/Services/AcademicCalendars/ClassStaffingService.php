@@ -20,9 +20,9 @@ class ClassStaffingService
 {
     public function resolveSemesterClassConfig(
         ClassConfig $allocationConfig,
-        ?int $academicYearOptionId,
+        ?int $semesterId,
     ): ?ClassConfig {
-        if ($academicYearOptionId === null || $academicYearOptionId < 1) {
+        if ($semesterId === null || $semesterId < 1) {
             return null;
         }
 
@@ -32,7 +32,7 @@ class ClassStaffingService
             ->where('department_course_id', $allocationConfig->department_course_id)
             ->where('department_level_id', $allocationConfig->department_level_id)
             ->where('mode_of_study_id', $allocationConfig->mode_of_study_id)
-            ->where('academic_year_option_id', $academicYearOptionId)
+            ->where('semester_id', $semesterId)
             ->first();
     }
 
@@ -46,7 +46,7 @@ class ClassStaffingService
             array_filter($semesterConfig->course_syllabus_ids ?? []),
         ));
 
-        if ($syllabusIds === [] || $semesterConfig->academic_year_option_id === null) {
+        if ($syllabusIds === [] || $semesterConfig->semester_id === null) {
             return collect();
         }
 
@@ -57,7 +57,7 @@ class ClassStaffingService
             ->where(function ($query) use ($semesterConfig, $slugPrefix): void {
                 CourseSyllabusModulePeriod::scopeForPeriod(
                     $query,
-                    (int) $semesterConfig->academic_year_option_id,
+                    (int) $semesterConfig->semester_id,
                     $slugPrefix,
                 );
             })
@@ -402,13 +402,13 @@ class ClassStaffingService
             return false;
         }
 
-        if ($semesterConfig->academic_year_option_id === null) {
+        if ($semesterConfig->semester_id === null) {
             return false;
         }
 
         return CourseSyllabusModulePeriod::matchesPeriod(
             $module,
-            (int) $semesterConfig->academic_year_option_id,
+            (int) $semesterConfig->semester_id,
         );
     }
 

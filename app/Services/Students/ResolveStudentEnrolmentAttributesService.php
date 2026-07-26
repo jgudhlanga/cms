@@ -5,7 +5,7 @@ namespace App\Services\Students;
 use App\Enums\AcademicCalendars\AcademicCalendarTypeEnum;
 use App\Exceptions\Students\StudentEnrolmentResolutionException;
 use App\Models\AcademicCalendars\AcademicCalendar;
-use App\Models\AcademicCalendars\AcademicYearOption;
+use App\Models\AcademicCalendars\Semester;
 use App\Models\Students\StudentEnrolment;
 use App\Models\Students\StudentEnrolmentStatus;
 use App\Models\Students\StudentApplication;
@@ -23,7 +23,7 @@ class ResolveStudentEnrolmentAttributesService
     public const STUDENT_ENROLMENT_STATUS_SLUG_COMPLETED = 'completed';
 
     /**
-     * @return array{academic_calendar_id: int, academic_year_option_id: int, student_enrolment_status_id: int}
+     * @return array{academic_calendar_id: int, semester_id: int, student_enrolment_status_id: int}
      */
     public function resolve(int $studentId, int $studentApplicationId, ?CarbonInterface $asOf = null): array
     {
@@ -32,7 +32,7 @@ class ResolveStudentEnrolmentAttributesService
 
         return [
             'academic_calendar_id' => $this->resolveAcademicCalendarId($studentApplication, $asOf),
-            'academic_year_option_id' => $this->resolveAcademicYearOptionId($studentId, $studentApplication),
+            'semester_id' => $this->resolveSemesterId($studentId, $studentApplication),
             'student_enrolment_status_id' => $this->resolveActiveStudentEnrolmentStatusId(),
         ];
     }
@@ -110,13 +110,13 @@ class ResolveStudentEnrolmentAttributesService
         return $calendarYear;
     }
 
-    private function resolveAcademicYearOptionId(int $studentId, StudentApplication $studentApplication): int
+    private function resolveSemesterId(int $studentId, StudentApplication $studentApplication): int
     {
         $prefix = $this->resolveCalendarType($studentApplication)->value;
-        $options = AcademicYearOption::query()
+        $options = Semester::query()
             ->where('slug', 'like', "{$prefix}-%")
             ->get()
-            ->sortBy(function (AcademicYearOption $option): int {
+            ->sortBy(function (Semester $option): int {
                 $parts = explode('-', (string) $option->slug);
 
                 return (int) end($parts);

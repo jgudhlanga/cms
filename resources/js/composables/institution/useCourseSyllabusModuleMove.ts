@@ -18,7 +18,7 @@ export function useCourseSyllabusModuleMove(
 
     const moveForm = useForm({
         course_syllabus_module_ids: [] as number[],
-        target_academic_year_option_id: null as number | null,
+        target_semester_id: null as number | null,
     });
 
     const openMoveModulesModal = (): void => {
@@ -26,7 +26,7 @@ export function useCourseSyllabusModuleMove(
             return;
         }
         moveForm.course_syllabus_module_ids = [...selectedModuleIds.value];
-        moveForm.target_academic_year_option_id = Number(moveTargetOptions.value[0]?.value ?? null) || null;
+        moveForm.target_semester_id = Number(moveTargetOptions.value[0]?.value ?? null) || null;
         moveForm.clearErrors();
         openModal(MOVE_SYLLABUS_MODULES_MODAL);
     };

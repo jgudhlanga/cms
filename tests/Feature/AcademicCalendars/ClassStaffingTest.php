@@ -45,7 +45,7 @@ function buildClassStaffingContext(): array
         'status' => 'active',
     ]);
 
-    $context['semesterOne'] = \App\Models\AcademicCalendars\AcademicYearOption::query()->firstOrCreate(
+    $context['semesterOne'] = \App\Models\AcademicCalendars\Semester::query()->firstOrCreate(
         ['slug' => 'semester-1'],
         ['name' => 'Semester 1', 'description' => null],
     );
@@ -56,7 +56,7 @@ function buildClassStaffingContext(): array
         'department_course_id' => $context['departmentCourse']->id,
         'department_level_id' => $context['departmentLevel']->id,
         'mode_of_study_id' => $context['modeOfStudy']->id,
-        'academic_year_option_id' => $context['semesterOne']->id,
+        'semester_id' => $context['semesterOne']->id,
         'course_syllabus_ids' => [$context['courseSyllabus']->id],
         'students_per_class' => 2,
     ]);
@@ -64,7 +64,7 @@ function buildClassStaffingContext(): array
     $module = CourseSyllabusModule::query()->create([
         'tenant_id' => $context['tenant']->id,
         'course_syllabus_id' => $context['courseSyllabus']->id,
-        'academic_year_option_id' => $context['semesterOne']->id,
+        'semester_id' => $context['semesterOne']->id,
         'title' => 'Staffing Module',
         'code' => 'STF-'.uniqid(),
         'shared' => false,
@@ -158,7 +158,7 @@ test('sync class module lecturers stores class scoped pivot rows', function () {
             'academic_calendar_class' => $context['academicCalendarClass']->id,
         ]),
         [
-            'academic_year_option_id' => $context['semesterOne']->id,
+            'semester_id' => $context['semesterOne']->id,
             'course_syllabus_module_id' => $context['module']->id,
             'staff_ids' => [$firstLecturer->id, $secondLecturer->id],
         ],
@@ -195,7 +195,7 @@ test('copy defaults copies template lecturers to class scoped rows', function ()
             'calendar_year' => $context['calendar']->calendar_year,
             'academic_calendar_class' => $context['academicCalendarClass']->id,
         ]),
-        ['academic_year_option_id' => $context['semesterOne']->id],
+        ['semester_id' => $context['semesterOne']->id],
     )->assertRedirect();
 
     expect(DB::table('course_syllabus_module_lecturers')
@@ -231,7 +231,7 @@ test('syllabus module template sync does not remove class scoped lecturer rows',
 
     $this->actingAs($context['user'])->put(route('course-syllabus-modules.update', $context['module']), [
         'course_syllabus_id' => $context['courseSyllabus']->id,
-        'academic_year_option_id' => $context['semesterOne']->id,
+        'semester_id' => $context['semesterOne']->id,
         'title' => $context['module']->title,
         'code' => $context['module']->code,
         'prerequisite_module_ids' => [],
@@ -258,7 +258,7 @@ test('sync class module lecturers returns json when accept header is application
             'academic_calendar_class' => $context['academicCalendarClass']->id,
         ]),
         [
-            'academic_year_option_id' => $context['semesterOne']->id,
+            'semester_id' => $context['semesterOne']->id,
             'course_syllabus_module_id' => $context['module']->id,
             'staff_ids' => [$firstLecturer->id, $secondLecturer->id],
         ],
@@ -290,7 +290,7 @@ test('copy defaults returns json with semester modules when accept header is app
             'calendar_year' => $context['calendar']->calendar_year,
             'academic_calendar_class' => $context['academicCalendarClass']->id,
         ]),
-        ['academic_year_option_id' => $context['semesterOne']->id],
+        ['semester_id' => $context['semesterOne']->id],
     );
 
     $response->assertOk()
@@ -321,7 +321,7 @@ test('department classes page includes tutor and staffing summary when semester 
         'department_course_id' => $context['departmentCourse']->id,
         'mode_of_study_id' => $context['modeOfStudy']->id,
         'class_config_id' => $context['classConfig']->id,
-        'academic_year_option_id' => $context['semesterOne']->id,
+        'semester_id' => $context['semesterOne']->id,
     ]));
 
     $response->assertSuccessful();
@@ -332,5 +332,5 @@ test('department classes page includes tutor and staffing summary when semester 
 
     expect(data_get($page, 'props.staffingSummary.tutorsAssigned'))->toBe(1)
         ->and(data_get($previewClass, 'tutor.id'))->toBe($tutor->id)
-        ->and(data_get($page, 'props.selectedAcademicYearOptionId'))->toBe($context['semesterOne']->id);
+        ->and(data_get($page, 'props.selectedSemesterId'))->toBe($context['semesterOne']->id);
 });

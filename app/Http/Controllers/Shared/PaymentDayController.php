@@ -19,7 +19,7 @@ class PaymentDayController extends Controller
 
 	public function index(SharedTitleFilter $filters)
 	{
-		$this->authorize('viewSettings');
+		$this->authorize('viewAny', PaymentDay::class);
 		$paymentDays = PaymentDayResource::collection($this->repository->allFilter(['*'], $filters));
 		return Inertia::render('shared/payments/paymentDays/Index', [
 			'paymentDays' => $paymentDays,
@@ -30,12 +30,12 @@ class PaymentDayController extends Controller
 
 	public function create()
 	{
-		$this->authorize('createSettings');
+		$this->authorize('create', PaymentDay::class);
 	}
 
 	public function store(PaymentDayRequest $request)
 	{
-		$this->authorize('createSettings');
+		$this->authorize('create', PaymentDay::class);
 		$this->repository->create(PaymentDayDto::fromPaymentDayRequest($request));
 	}
 
@@ -51,26 +51,26 @@ class PaymentDayController extends Controller
 
 	public function update(PaymentDayRequest $request, PaymentDay $paymentDay)
 	{
-		$this->authorize('updateSettings');
+		$this->authorize('update', $paymentDay);
 		$this->repository->update($paymentDay, PaymentDayDto::fromPaymentDayRequest($request));
 	}
 
 	public function destroy(PaymentDay $paymentDay)
 	{
-		$this->authorize('deleteSettings');
+		$this->authorize('delete', $paymentDay);
 		$this->repository->delete($paymentDay);
 	}
 
 	public function restore(string $id)
 	{
 		$paymentDay = $this->repository->findTrashed($id);
-		$this->authorize('restoreSettings');
+		$this->authorize('restore', $paymentDay);
 		$this->repository->restore($paymentDay);
 	}
 
 	public function forceDelete(PaymentDay $paymentDay)
 	{
-		$this->authorize('forceDeleteSettings');
+		$this->authorize('forceDelete', $paymentDay);
 		$this->repository->delete($paymentDay, true);
 	}
 }

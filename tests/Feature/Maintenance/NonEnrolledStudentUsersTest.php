@@ -4,7 +4,7 @@ use App\Enums\Rbac\RoleEnum;
 use App\Enums\Shared\FeeTypeEnum;
 use App\Enums\Shared\WorkflowStepEnum;
 use App\Models\AcademicCalendars\AcademicCalendar;
-use App\Models\AcademicCalendars\AcademicYearOption;
+use App\Models\AcademicCalendars\Semester;
 use App\Models\Rbac\Role;
 use App\Models\Enrolments\ClassList;
 use App\Models\Ledgers\Ledger;
@@ -70,7 +70,7 @@ function createActiveEnrolmentForProgram(StudentApplication $program): void
 {
     $suffix = Str::lower(Str::random(6));
 
-    $academicYearOption = AcademicYearOption::query()->create([
+    $semester = Semester::query()->create([
         'slug' => 'maint-users-'.$suffix,
         'name' => 'Semester '.$suffix,
         'description' => null,
@@ -94,7 +94,7 @@ function createActiveEnrolmentForProgram(StudentApplication $program): void
         'institution_department_id' => $program->institution_department_id,
         'department_level_id' => $program->department_level_id,
         'department_course_id' => $program->department_course_id,
-        'academic_year_option_id' => $academicYearOption->id,
+        'semester_id' => $semester->id,
         'academic_calendar_id' => $calendar->id,
         'mode_of_study_id' => $program->mode_of_study_id,
         'student_enrolment_status_id' => $status->id,

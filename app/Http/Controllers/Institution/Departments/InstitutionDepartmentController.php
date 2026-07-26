@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Filters\Institution\InstitutionDepartmentFilter;
 use App\Http\Requests\Institution\InstitutionDepartmentRequest;
 use App\Http\Resources\Institution\InstitutionDepartmentResource;
+use App\Models\Institution\Division;
 use App\Models\Institution\InstitutionDepartment;
 use App\Repositories\Institution\interface\IInstitutionDepartmentRepository;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -15,9 +16,7 @@ use Inertia\Response;
 
 class InstitutionDepartmentController extends Controller
 {
-    public function __construct(protected IInstitutionDepartmentRepository $repository)
-    {
-    }
+    public function __construct(protected IInstitutionDepartmentRepository $repository) {}
 
     /**
      * @throws AuthorizationException
@@ -27,11 +26,22 @@ class InstitutionDepartmentController extends Controller
         $this->authorize('viewDepartmentMetaData');
         $departments = InstitutionDepartmentResource::collection($this->repository->allFilter(['*'], $filters));
         $institutionDepartmentIds = InstitutionDepartment::all()->pluck('id');
+
         return Inertia::render('institution/departments/Index', [
             'departments' => $departments,
             'filters' => request()->only(['search', 'trashed']),
             'trashedCount' => $this->repository->allTrashed()->count(),
             'institutionDepartmentIds' => $institutionDepartmentIds,
+            'divisionOptions' => Division::query()
+                ->orderBy('position')
+                ->orderBy('name')
+                ->get(['id', 'name'])
+                ->map(fn (Division $division): array => [
+                    'id' => $division->id,
+                    'name' => $division->name,
+                ])
+                ->values()
+                ->all(),
         ]);
     }
 
@@ -57,6 +67,7 @@ class InstitutionDepartmentController extends Controller
     public function show(InstitutionDepartment $department): Response
     {
         $this->authorize('viewDepartmentMetaData');
+
         return Inertia::render('institution/departments/Show', [
             'department' => new InstitutionDepartmentResource($department),
         ]);
@@ -72,7 +83,8 @@ class InstitutionDepartmentController extends Controller
      */
     public function update(InstitutionDepartmentRequest $request, InstitutionDepartment $department): void
     {
-        $this->authorize('createDepartmentMetaData');
+        $this->authorize('updateDepartmentMetaData');
+        $department->update($request->only(['division_id', 'department_code', 'description']));
     }
 
     /**

@@ -2,7 +2,7 @@
 
 use App\Exceptions\Students\StudentEnrolmentResolutionException;
 use App\Models\AcademicCalendars\AcademicCalendar;
-use App\Models\AcademicCalendars\AcademicYearOption;
+use App\Models\AcademicCalendars\Semester;
 use App\Models\Students\StudentEnrolment;
 use App\Models\Students\StudentEnrolmentStatus;
 use App\Models\Students\StudentApplication;
@@ -12,7 +12,7 @@ use Illuminate\Support\Str;
 
 beforeEach(function (): void {
     foreach (['Semester 1', 'Semester 2', 'Term 1', 'Term 2', 'Term 3', 'Term 4'] as $name) {
-        AcademicYearOption::query()->firstOrCreate(
+        Semester::query()->firstOrCreate(
             ['slug' => Str::slug($name)],
             ['name' => $name, 'description' => null],
         );
@@ -106,12 +106,12 @@ it('resolves semester one when the student has no completed enrolment', function
         'closing_date' => '2026-12-31',
     ]);
 
-    $semesterOneId = (int) AcademicYearOption::query()->where('slug', 'semester-1')->value('id');
+    $semesterOneId = (int) Semester::query()->where('slug', 'semester-1')->value('id');
 
     $service = app(ResolveStudentEnrolmentAttributesService::class);
     $resolved = $service->resolve((int) $studentApplication->student_id, (int) $studentApplication->id);
 
-    expect($resolved['academic_year_option_id'])->toBe($semesterOneId);
+    expect($resolved['semester_id'])->toBe($semesterOneId);
 });
 
 it('resolves semester two when the student has a completed enrolment', function (): void {
@@ -128,7 +128,7 @@ it('resolves semester two when the student has a completed enrolment', function 
     ]);
 
     $completedId = (int) StudentEnrolmentStatus::query()->where('slug', 'completed')->value('id');
-    $semesterOneId = (int) AcademicYearOption::query()->where('slug', 'semester-1')->value('id');
+    $semesterOneId = (int) Semester::query()->where('slug', 'semester-1')->value('id');
 
     StudentEnrolment::query()->create([
         'student_id' => $sp1->student_id,
@@ -136,18 +136,18 @@ it('resolves semester two when the student has a completed enrolment', function 
         'institution_department_id' => $sp1->institution_department_id,
         'department_level_id' => $sp1->department_level_id,
         'department_course_id' => $sp1->department_course_id,
-        'academic_year_option_id' => $semesterOneId,
+        'semester_id' => $semesterOneId,
         'academic_calendar_id' => $calendar->id,
         'mode_of_study_id' => $sp1->mode_of_study_id,
         'student_enrolment_status_id' => $completedId,
     ]);
 
-    $semesterTwoId = (int) AcademicYearOption::query()->where('slug', 'semester-2')->value('id');
+    $semesterTwoId = (int) Semester::query()->where('slug', 'semester-2')->value('id');
 
     $service = app(ResolveStudentEnrolmentAttributesService::class);
     $resolved = $service->resolve((int) $sp2->student_id, (int) $sp2->id);
 
-    expect($resolved['academic_year_option_id'])->toBe($semesterTwoId);
+    expect($resolved['semester_id'])->toBe($semesterTwoId);
 });
 
 it('caps term progression at the last available term option', function (): void {
@@ -163,8 +163,8 @@ it('caps term progression at the last available term option', function (): void 
     ]);
 
     $completedId = (int) StudentEnrolmentStatus::query()->where('slug', 'completed')->value('id');
-    $termOneId = (int) AcademicYearOption::query()->where('slug', 'term-1')->value('id');
-    $termFourId = (int) AcademicYearOption::query()->where('slug', 'term-4')->value('id');
+    $termOneId = (int) Semester::query()->where('slug', 'term-1')->value('id');
+    $termFourId = (int) Semester::query()->where('slug', 'term-4')->value('id');
 
     for ($index = 0; $index < 5; $index++) {
         StudentEnrolment::query()->create([
@@ -173,7 +173,7 @@ it('caps term progression at the last available term option', function (): void 
             'institution_department_id' => $sp->institution_department_id,
             'department_level_id' => $sp->department_level_id,
             'department_course_id' => $sp->department_course_id,
-            'academic_year_option_id' => $termOneId,
+            'semester_id' => $termOneId,
             'academic_calendar_id' => $calendar->id,
             'mode_of_study_id' => $sp->mode_of_study_id,
             'student_enrolment_status_id' => $completedId,
@@ -183,7 +183,7 @@ it('caps term progression at the last available term option', function (): void 
     $service = app(ResolveStudentEnrolmentAttributesService::class);
     $resolved = $service->resolve((int) $sp->student_id, (int) $sp->id);
 
-    expect($resolved['academic_year_option_id'])->toBe($termFourId);
+    expect($resolved['semester_id'])->toBe($termFourId);
 });
 
 it('resolves the active student enrolment status id', function (): void {

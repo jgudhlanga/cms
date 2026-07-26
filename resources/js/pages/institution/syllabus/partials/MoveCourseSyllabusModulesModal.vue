@@ -14,7 +14,7 @@ defineProps<{
 const form = defineModel<
     InertiaForm<{
         course_syllabus_module_ids: number[];
-        target_academic_year_option_id: number | null;
+        target_semester_id: number | null;
     }>
 >('form', { required: true });
 </script>
@@ -37,16 +37,16 @@ const form = defineModel<
                 }}</label>
                 <select
                     id="move_target_period"
-                    v-model.number="form.target_academic_year_option_id"
+                    v-model.number="form.target_semester_id"
                     class="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900"
-                    :class="{ 'border-red-500': form.errors.target_academic_year_option_id }"
+                    :class="{ 'border-red-500': form.errors.target_semester_id }"
                 >
                     <option v-for="option in moveTargetOptions" :key="option.value" :value="Number(option.value)">
                         {{ option.label }}
                     </option>
                 </select>
-                <p v-if="form.errors.target_academic_year_option_id" class="text-sm text-red-600">
-                    {{ form.errors.target_academic_year_option_id }}
+                <p v-if="form.errors.target_semester_id" class="text-sm text-red-600">
+                    {{ form.errors.target_semester_id }}
                 </p>
                 <p v-if="form.errors.course_syllabus_module_ids" class="text-sm text-red-600">
                     {{ form.errors.course_syllabus_module_ids }}

@@ -31,7 +31,7 @@ const props = defineProps<{
 }>();
 
 const { isMobile, state } = useSidebar();
-const { isActive, isAnyActive } = useSidebarNavActive();
+const { isActive, isExactActive, isAnyActive } = useSidebarNavActive();
 const closeMobileSidebar = useCloseMobileSidebar();
 
 const itemKey = computed(() => getMenuItemKey(props.item));
@@ -41,12 +41,17 @@ const visibleChildren = computed(() => (props.item.items ?? []).filter((child) =
 
 const childUrls = computed(() => visibleChildren.value.map((child) => child.url));
 
-const sectionActive = computed(
-	() => isActive(props.item.url) || isAnyActive(childUrls.value),
-);
+/** Nested parents: active only via exact hub URL or a child — never via unrelated sibling prefixes. */
+const sectionActive = computed(() => {
+	if (visibleChildren.value.length > 0) {
+		return isAnyActive(childUrls.value) || isExactActive(props.item.url);
+	}
+
+	return isActive(props.item.url);
+});
 
 const overviewActive = computed(
-	() => Boolean(props.item.url) && isActive(props.item.url) && !isAnyActive(childUrls.value),
+	() => Boolean(props.item.url) && isExactActive(props.item.url) && !isAnyActive(childUrls.value),
 );
 
 watch(

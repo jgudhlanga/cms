@@ -22,7 +22,7 @@ class StudentEnrolmentStatusController extends Controller
      */
     public function index(SharedNameFilter $filters): Response
     {
-        $this->authorize('viewSettings');
+        $this->authorize('viewAny', StudentEnrolmentStatus::class);
         $statuses = StudentEnrolmentStatusResource::collection($this->repository->allFilter(['*'], $filters));
 
         return Inertia::render('students/studentEnrolmentStatuses/Index', [
@@ -37,7 +37,7 @@ class StudentEnrolmentStatusController extends Controller
      */
     public function create(): void
     {
-        $this->authorize('createSettings');
+        $this->authorize('create', StudentEnrolmentStatus::class);
     }
 
     /**
@@ -45,7 +45,7 @@ class StudentEnrolmentStatusController extends Controller
      */
     public function store(StudentEnrolmentStatusRequest $request): void
     {
-        $this->authorize('createSettings');
+        $this->authorize('create', StudentEnrolmentStatus::class);
         $this->repository->create(StudentEnrolmentStatusDto::fromRequest($request));
     }
 
@@ -58,7 +58,7 @@ class StudentEnrolmentStatusController extends Controller
      */
     public function update(StudentEnrolmentStatusRequest $request, StudentEnrolmentStatus $studentEnrolmentStatus): void
     {
-        $this->authorize('updateSettings');
+        $this->authorize('update', $studentEnrolmentStatus);
         $this->repository->update($studentEnrolmentStatus, StudentEnrolmentStatusDto::fromRequest($request));
     }
 
@@ -67,7 +67,7 @@ class StudentEnrolmentStatusController extends Controller
      */
     public function destroy(StudentEnrolmentStatus $studentEnrolmentStatus): void
     {
-        $this->authorize('deleteSettings');
+        $this->authorize('delete', $studentEnrolmentStatus);
         $this->repository->delete($studentEnrolmentStatus);
     }
 
@@ -76,9 +76,9 @@ class StudentEnrolmentStatusController extends Controller
      */
     public function restore(string $id): void
     {
-        $status = $this->repository->findTrashed($id);
-        $this->authorize('restoreSettings');
-        $this->repository->restore($status);
+        $studentEnrolmentStatus = $this->repository->findTrashed($id);
+        $this->authorize('restore', $studentEnrolmentStatus);
+        $this->repository->restore($studentEnrolmentStatus);
     }
 
     /**
@@ -86,7 +86,7 @@ class StudentEnrolmentStatusController extends Controller
      */
     public function forceDelete(StudentEnrolmentStatus $studentEnrolmentStatus): void
     {
-        $this->authorize('forceDeleteSettings');
+        $this->authorize('forceDelete', $studentEnrolmentStatus);
         $this->repository->delete($studentEnrolmentStatus, true);
     }
 }

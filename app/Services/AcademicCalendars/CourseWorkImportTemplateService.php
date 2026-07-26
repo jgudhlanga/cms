@@ -47,7 +47,7 @@ class CourseWorkImportTemplateService
             'departmentLevel.level',
             'modeOfStudy',
             'institutionDepartment.department',
-            'academicYearOption',
+            'semester',
         ]);
 
         $module = CourseSyllabusModule::query()->find($courseSyllabusModuleId);

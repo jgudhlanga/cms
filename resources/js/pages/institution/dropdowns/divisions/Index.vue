@@ -16,8 +16,9 @@ defineProps<{
     filters: DataFilters;
     auth: AuthObject;
     errors: object;
+    staffOptions: Array<{ id: number | string; name: string | null }>;
 }>();
-const allowed = hasAbility('create:institution-settings');
+const allowed = hasAbility('create:divisions');
 </script>
 
 <template>
@@ -35,6 +36,6 @@ const allowed = hasAbility('create:institution-settings');
             :drag-items="true"
             draggable-update-url="divisions.move-position"
         />
-        <CreateEdit />
+        <CreateEdit :staff-options="staffOptions" />
     </PageContainer>
 </template>

@@ -88,7 +88,7 @@ class CourseSyllabusCodeResolver
         $classConfig = ClassConfig::query()
             ->where('department_level_id', $enrolment->department_level_id)
             ->where('department_course_id', $enrolment->department_course_id)
-            ->where('academic_year_option_id', $enrolment->academic_year_option_id)
+            ->where('semester_id', $enrolment->semester_id)
             ->where('mode_of_study_id', $enrolment->mode_of_study_id)
             ->when(
                 $enrolment->academicCalendar?->calendar_year,

@@ -199,7 +199,7 @@ test('module lecturer class index only shows assigned module codes', function ()
     CourseSyllabusModule::query()->create([
         'tenant_id' => $context['tenant']->id,
         'course_syllabus_id' => $context['module']->course_syllabus_id,
-        'academic_year_option_id' => $context['module']->academic_year_option_id,
+        'semester_id' => $context['module']->semester_id,
         'title' => 'Unassigned Module',
         'code' => 'UNAS1',
         'duration_in_hours' => 20,

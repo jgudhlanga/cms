@@ -28,8 +28,8 @@ const can = props?.auth?.can;
             :search-url="route('payment-methods.index')"
             :pagination="{ ...paymentMethods.links, ...paymentMethods.meta }"
             :columns="createPaymentMethodColumns()"
-            :on-create="() => onOpenModal(can['create:settings'])"
-            :disable-create="!can['create:settings']"
+            :on-create="() => onOpenModal(can['create:payment-methods'])"
+            :disable-create="!can['create:payment-methods']"
         />
         <CreateEdit />
     </PageContainer>

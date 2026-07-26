@@ -19,7 +19,7 @@ class SponsorTypeController extends Controller
 
     public function index(SharedNameFilter $filters)
     {
-        $this->authorize('viewSettings');
+        $this->authorize('viewAny', SponsorType::class);
         $sponsorTypes = SponsorTypeResource::collection($this->repository->allFilter(['*'], $filters));
         return Inertia::render('shared/sponsorTypes/Index', [
             'sponsorTypes' => $sponsorTypes,
@@ -30,12 +30,12 @@ class SponsorTypeController extends Controller
 
     public function create()
     {
-        $this->authorize('createSettings');
+        $this->authorize('create', SponsorType::class);
     }
 
     public function store(SponsorTypeRequest $request)
     {
-        $this->authorize('createSettings');
+        $this->authorize('create', SponsorType::class);
         $this->repository->create(SponsorTypeDto::fromSponsorTypeRequest($request));
     }
 
@@ -51,26 +51,26 @@ class SponsorTypeController extends Controller
 
     public function update(SponsorTypeRequest $request, SponsorType $sponsorType)
     {
-        $this->authorize('updateSettings');
+        $this->authorize('update', $sponsorType);
         $this->repository->update($sponsorType, SponsorTypeDto::fromSponsorTypeRequest($request));
     }
 
     public function destroy(SponsorType $sponsorType)
     {
-        $this->authorize('deleteSettings');
+        $this->authorize('delete', $sponsorType);
         $this->repository->delete($sponsorType);
     }
 
     public function restore(string $id)
     {
         $sponsorType = $this->repository->findTrashed($id);
-        $this->authorize('restoreSettings');
+        $this->authorize('restore', $sponsorType);
         $this->repository->restore($sponsorType);
     }
 
     public function forceDelete(SponsorType $sponsorType)
     {
-        $this->authorize('forceDeleteSettings');
+        $this->authorize('forceDelete', $sponsorType);
         $this->repository->delete($sponsorType, true);
     }
 }

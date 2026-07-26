@@ -13,45 +13,59 @@ class RolesTableSeeder extends Seeder
     {
         foreach (RoleEnum::cases() as $row) {
             $exist = Role::where('name', $row->name())->withTrashed()->first();
+
             if (! $exist instanceof Role) {
-                $role = Role::create(
-                    [
-                        'name' => $row->name(),
-                        'role_group_id' => PermissionHelper::getGroupId($row->group()),
-                        'description' => $row->description(),
-                    ]);
-                if ($role->name == RoleEnum::SUPER_USER->name()) {
-                    PermissionHelper::assignSuperUserPermissions($role);
-                }
-                if ($role->name == RoleEnum::STUDENT->name()) {
-                    $role->syncPermissions(PermissionHelper::resolvePermissions(PermissionHelper::portalPermissions()));
-                }
-                if (in_array($role->name, self::lecturerRoleNames(), true)) {
-                    $role->syncPermissions(PermissionHelper::resolvePermissions(PermissionHelper::lecturerPermissions()));
-                }
+                $role = Role::create([
+                    'name' => $row->name(),
+                    'role_group_id' => PermissionHelper::getGroupId($row->group()),
+                    'description' => $row->description(),
+                ]);
+                $this->syncRolePermissions($role);
             } else {
-                if ($exist->name == RoleEnum::SUPER_USER->name()) {
-                    PermissionHelper::assignSuperUserPermissions($exist);
-                }
-                if ($exist->name == RoleEnum::STUDENT->name()) {
-                    $exist->syncPermissions(PermissionHelper::resolvePermissions(PermissionHelper::portalPermissions()));
-                }
-                if (in_array($exist->name, self::lecturerRoleNames(), true)) {
-                    $exist->syncPermissions(PermissionHelper::resolvePermissions(PermissionHelper::lecturerPermissions()));
-                }
+                $exist->update([
+                    'role_group_id' => PermissionHelper::getGroupId($row->group()),
+                    'description' => $row->description(),
+                ]);
+                $this->syncRolePermissions($exist);
             }
         }
     }
 
-    /**
-     * @return list<string>
-     */
-    private static function lecturerRoleNames(): array
+    private function syncRolePermissions(Role $role): void
     {
-        return [
+        if ($role->name === RoleEnum::SUPER_USER->name()) {
+            PermissionHelper::assignSuperUserPermissions($role);
+
+            return;
+        }
+
+        $pack = $this->permissionPackForRoleName($role->name);
+
+        if ($pack === null) {
+            return;
+        }
+
+        $role->syncPermissions(PermissionHelper::resolvePermissions($pack));
+    }
+
+    /**
+     * @return list<string>|null
+     */
+    private function permissionPackForRoleName(string $roleName): ?array
+    {
+        return match ($roleName) {
+            RoleEnum::STUDENT->name() => PermissionHelper::portalPermissions(),
             RoleEnum::LECTURER->name(),
             RoleEnum::SENIOR_LECTURER->name(),
-            RoleEnum::LECTURER_IN_CHARGE->name(),
-        ];
+            RoleEnum::LECTURER_IN_CHARGE->name() => PermissionHelper::lecturerPermissions(),
+            RoleEnum::HEAD_OF_DEPARTMENT->name() => PermissionHelper::hodPermissions(),
+            RoleEnum::HEAD_OF_DIVISION->name() => PermissionHelper::headOfDivisionPermissions(),
+            RoleEnum::VICE_PRINCIPAL->name() => PermissionHelper::vpAcademicsPermissions(),
+            RoleEnum::VICE_PRINCIPAL_ADMIN->name() => PermissionHelper::vpAdminPermissions(),
+            RoleEnum::PRINCIPAL->name() => PermissionHelper::principalPermissions(),
+            RoleEnum::DEAN->name() => PermissionHelper::deanPermissions(),
+            RoleEnum::WARDEN->name() => PermissionHelper::wardenPermissions(),
+            default => null,
+        };
     }
 }

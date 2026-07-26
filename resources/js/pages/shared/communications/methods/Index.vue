@@ -28,8 +28,8 @@ const can = props?.auth?.can;
             :search-url="route('communication-methods.index')"
             :pagination="{ ...methods.links, ...methods.meta }"
             :columns="createMethodsColumns()"
-            :on-create="() => onOpenModal(can['create:settings'])"
-            :disable-create="!can['create:settings']"
+            :on-create="() => onOpenModal(can['create:communication-methods'])"
+            :disable-create="!can['create:communication-methods']"
         />
         <CreateEdit />
     </PageContainer>

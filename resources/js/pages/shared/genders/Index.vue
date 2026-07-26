@@ -29,8 +29,8 @@ const can = props?.auth?.can;
             :search-url="route('genders.index')"
             :pagination="{ ...genders.links, ...genders.meta }"
             :columns="createGenderColumns()"
-            :on-create="() => onOpenModal(can['create:settings'])"
-            :disable-create="!can['create:settings']"
+            :on-create="() => onOpenModal(can['create:genders'])"
+            :disable-create="!can['create:genders']"
         />
         <CreateEdit />
     </PageContainer>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AcademicDashboard, DailyDistribution, DepartmentDistribution, EnrolmentSummary, HostelDashboard, LevelDistribution, OverviewDashboard, StaffDashboard } from '@/types/dashboard';
+import { AcademicDashboard, DailyDistribution, DepartmentDistribution, EnrolmentSummary, FinanceDashboard, HostelDashboard, LevelDistribution, OverviewDashboard, StaffDashboard } from '@/types/dashboard';
 import { AcademicCalendar } from '@/types/academic-calendar';
 import { AuthObject } from '@/types/data-pagination';
 import { IntakePeriod } from '@/types/institution';
@@ -34,6 +34,7 @@ interface Props {
     enrolmentSummary: EnrolmentSummary;
     overviewDashboard: OverviewDashboard | null;
     hostelDashboard: HostelDashboard | null;
+    financeDashboard: FinanceDashboard | null;
     staffDashboard: StaffDashboard | null;
     academicDashboard: AcademicDashboard | null;
     teachingDashboard: LecturerDashboard | null;
@@ -195,7 +196,7 @@ const handleFilterChange = (option: SelectOption) => {
                 </TabsContent>
 
                 <TabsContent v-if="showTab('finance')" value="finance" class="mt-0">
-                    <FinanceTab />
+                    <FinanceTab v-if="financeDashboard" :finance-dashboard="financeDashboard" />
                 </TabsContent>
 
                 <TabsContent v-if="showTab('hostel')" value="hostel" class="mt-0">

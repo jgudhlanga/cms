@@ -167,7 +167,7 @@ test('json api course work student tree rejects enrolment not in class', functio
         'institution_department_id' => $context['studentEnrolment']->institution_department_id,
         'department_level_id' => $context['studentEnrolment']->department_level_id,
         'department_course_id' => $context['studentEnrolment']->department_course_id,
-        'academic_year_option_id' => $context['studentEnrolment']->academic_year_option_id,
+        'semester_id' => $context['studentEnrolment']->semester_id,
         'academic_calendar_id' => $context['studentEnrolment']->academic_calendar_id,
         'mode_of_study_id' => $context['studentEnrolment']->mode_of_study_id,
         'student_enrolment_status_id' => $context['studentEnrolment']->student_enrolment_status_id,

@@ -31,18 +31,18 @@ export const useCountries = () => {
                     const id = getIdParams(row.original.id?.toString() ?? '');
                     const name = trans_choice('trans.country', 1);
                     return moreActionButton(!!row.original?.attributes?.deletedAt, [
-                        { key: 'edit', action: () => onOpenModal(can['update:settings'], row.original) },
+                        { key: 'edit', action: () => onOpenModal(can['update:countries'], row.original) },
                         {
                             key: 'archive',
-                            action: () => onDelete(can['delete:settings'], route('countries.destroy', id), name),
+                            action: () => onDelete(can['delete:countries'], route('countries.destroy', id), name),
                         },
                         {
                             key: 'restore',
-                            action: () => onRestore(can['restore:settings'], route('countries.restore', id), name),
+                            action: () => onRestore(can['restore:countries'], route('countries.restore', id), name),
                         },
                         {
                             key: 'delete',
-                            action: () => onForceDelete(can['forceDelete:settings'], route('countries.force-delete', id), name),
+                            action: () => onForceDelete(can['forceDelete:countries'], route('countries.force-delete', id), name),
                         },
                     ]);
                 },

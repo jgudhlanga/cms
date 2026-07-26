@@ -29,6 +29,7 @@ class PermissionRepository extends BaseRepository implements IPermissionReposito
     {
         return $this->permission
             ->select($columns)
+            ->with('module')
             ->filter($filters)
             ->orderBy('module_id')
             ->orderBy('name')

@@ -45,18 +45,18 @@ export const useRoleGroups = () => {
                 cell: ({ row }: { row: { original: RoleGroup } }) => {
                     const id = getIdParams(row.original.id?.toString() ?? '');
                     return moreActionButton(!!row.original?.attributes?.deletedAt, [
-                        { key: 'edit', action: () => onOpenModal(hasAbility('update:settings'), row.original) },
+                        { key: 'edit', action: () => onOpenModal(hasAbility('update:roles'), row.original) },
                         {
                             key: 'archive',
-                            action: () => onDelete(hasAbility('delete:settings'), route('role-groups.destroy', id), getName()),
+                            action: () => onDelete(hasAbility('delete:roles'), route('role-groups.destroy', id), getName()),
                         },
                         {
                             key: 'restore',
-                            action: () => onRestore(hasAbility('restore:settings'), route('role-groups.restore', id), getName()),
+                            action: () => onRestore(hasAbility('restore:roles'), route('role-groups.restore', id), getName()),
                         },
                         {
                             key: 'delete',
-                            action: () => onForceDelete(hasAbility('forceDelete:settings'), route('role-groups.force-delete', id), getName()),
+                            action: () => onForceDelete(hasAbility('forceDelete:roles'), route('role-groups.force-delete', id), getName()),
                         },
                     ]);
                 },

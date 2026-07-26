@@ -681,7 +681,7 @@ class LecturerDashboardMetricsService
             ->where(function ($query) use ($classConfig, $slugPrefix): void {
                 CourseSyllabusModulePeriod::scopeForPeriod(
                     $query,
-                    (int) $classConfig->academic_year_option_id,
+                    (int) $classConfig->semester_id,
                     $slugPrefix,
                 );
             })

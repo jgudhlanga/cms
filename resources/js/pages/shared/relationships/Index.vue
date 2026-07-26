@@ -29,8 +29,8 @@ const can = props?.auth?.can;
             :search-url="route('relationships.index')"
             :pagination="{ ...relationships.links, ...relationships.meta }"
             :columns="createRelationshipColumns()"
-            :on-create="() => onOpenModal(can['create:settings'])"
-            :disable-create="!can['create:settings']"
+            :on-create="() => onOpenModal(can['create:relationships'])"
+            :disable-create="!can['create:relationships']"
         />
         <CreateEdit />
     </PageContainer>

@@ -4,7 +4,7 @@ use App\Enums\Institution\CourseSyllabusStatusEnum;
 use App\Models\AcademicCalendars\AcademicCalendar;
 use App\Models\AcademicCalendars\AcademicCalendarClass;
 use App\Models\AcademicCalendars\AcademicCalendarStudentEnrolment;
-use App\Models\AcademicCalendars\AcademicYearOption;
+use App\Models\AcademicCalendars\Semester;
 use App\Models\AcademicCalendars\ClassConfig;
 use App\Models\Institution\AssessmentType;
 use App\Models\Institution\Course;
@@ -71,7 +71,7 @@ if (! function_exists('createCourseWorkJsonApiContext')) {
         ]);
 
         $modeOfStudy = ModeOfStudy::query()->create(['name' => 'Full Time CW '.uniqid()]);
-        $academicYearOption = AcademicYearOption::query()->create([
+        $semester = Semester::query()->create([
             'name' => 'Semester 1 CW',
             'description' => null,
         ]);
@@ -95,7 +95,7 @@ if (! function_exists('createCourseWorkJsonApiContext')) {
         $module = CourseSyllabusModule::query()->create([
             'tenant_id' => $tenant->id,
             'course_syllabus_id' => $syllabus->id,
-            'academic_year_option_id' => $academicYearOption->id,
+            'semester_id' => $semester->id,
             'title' => 'Networking',
             'code' => 'NET101',
             'duration_in_hours' => 40,
@@ -103,7 +103,7 @@ if (! function_exists('createCourseWorkJsonApiContext')) {
 
         $classConfig = ClassConfig::query()->create([
             'calendar_year' => $calendar->calendar_year,
-            'academic_year_option_id' => $academicYearOption->id,
+            'semester_id' => $semester->id,
             'institution_department_id' => $institutionDepartment->id,
             'department_course_id' => $departmentCourse->id,
             'department_level_id' => $departmentLevel->id,
@@ -161,7 +161,7 @@ if (! function_exists('createCourseWorkJsonApiContext')) {
             'institution_department_id' => $institutionDepartment->id,
             'department_level_id' => $departmentLevel->id,
             'department_course_id' => $departmentCourse->id,
-            'academic_year_option_id' => $academicYearOption->id,
+            'semester_id' => $semester->id,
             'academic_calendar_id' => $calendar->id,
             'mode_of_study_id' => $modeOfStudy->id,
             'student_enrolment_status_id' => $enrolmentStatus->id,

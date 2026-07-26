@@ -23,7 +23,7 @@ const breadcrumbs: Array<Link> = [
     { transKey: 'config', href: route('institution.setup') },
     { transChoiceKey: 'intake_period' },
 ];
-const allowed = hasAbility('create:institution-settings');
+const allowed = hasAbility('create:intake-periods');
 </script>
 
 <template>

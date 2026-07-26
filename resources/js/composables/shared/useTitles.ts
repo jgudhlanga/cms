@@ -30,18 +30,18 @@ export const useTitles = () => {
                     const id = getIdParams(row.original.id?.toString() ?? '');
                     const name = trans_choice('trans.name', 1);
                     return moreActionButton(!!row.original?.attributes?.deletedAt, [
-                        { key: 'edit', action: () => onOpenModal(can['update:settings'], row.original) },
+                        { key: 'edit', action: () => onOpenModal(can['update:titles'], row.original) },
                         {
                             key: 'archive',
-                            action: () => onDelete(can['delete:settings'], route('titles.destroy', id), name),
+                            action: () => onDelete(can['delete:titles'], route('titles.destroy', id), name),
                         },
                         {
                             key: 'restore',
-                            action: () => onRestore(can['restore:settings'], route('titles.restore', id), name),
+                            action: () => onRestore(can['restore:titles'], route('titles.restore', id), name),
                         },
                         {
                             key: 'delete',
-                            action: () => onForceDelete(can['forceDelete:settings'], route('titles.force-delete', id), name),
+                            action: () => onForceDelete(can['forceDelete:titles'], route('titles.force-delete', id), name),
                         },
                     ]);
                 },

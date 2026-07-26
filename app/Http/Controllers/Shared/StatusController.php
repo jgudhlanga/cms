@@ -19,7 +19,7 @@ class StatusController extends Controller
 
 	public function index(SharedTitleFilter $filters)
 	{
-		$this->authorize('viewSettings');
+		$this->authorize('viewAny', Status::class);
 		$statuses = StatusResource::collection($this->repository->allFilter(['*'], $filters));
 		return Inertia::render('shared/statuses/Index', [
 			'statuses' => $statuses,
@@ -30,12 +30,12 @@ class StatusController extends Controller
 
 	public function create()
 	{
-		$this->authorize('createSettings');
+		$this->authorize('create', Status::class);
 	}
 
 	public function store(StatusRequest $request)
 	{
-		$this->authorize('createSettings');
+		$this->authorize('create', Status::class);
 		$this->repository->create(StatusDto::fromStatusRequest($request));
 	}
 
@@ -51,26 +51,26 @@ class StatusController extends Controller
 
 	public function update(StatusRequest $request, Status $status)
 	{
-		$this->authorize('updateSettings');
+		$this->authorize('update', $status);
 		$this->repository->update($status, StatusDto::fromStatusRequest($request));
 	}
 
 	public function destroy(Status $status)
 	{
-		$this->authorize('deleteSettings');
+		$this->authorize('delete', $status);
 		$this->repository->delete($status);
 	}
 
 	public function restore(string $id)
 	{
 		$status = $this->repository->findTrashed($id);
-		$this->authorize('restoreSettings');
+		$this->authorize('restore', $status);
 		$this->repository->restore($status);
 	}
 
 	public function forceDelete(Status $status)
 	{
-		$this->authorize('forceDeleteSettings');
+		$this->authorize('forceDelete', $status);
 		$this->repository->delete($status, true);
 	}
 }

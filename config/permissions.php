@@ -1,5 +1,70 @@
 <?php
 
+$resourceCrud = static function (string $resource): array {
+    return [
+        "viewAny:{$resource}",
+        "view:{$resource}",
+        "create:{$resource}",
+        "update:{$resource}",
+        "delete:{$resource}",
+        "restore:{$resource}",
+        "forceDelete:{$resource}",
+        "import:{$resource}",
+        "export:{$resource}",
+        "viewAuditTrail:{$resource}",
+    ];
+};
+
+$settingsResources = [
+    'genders',
+    'countries',
+    'languages',
+    'provinces',
+    'races',
+    'statuses',
+    'marital-statuses',
+    'titles',
+    'relationships',
+    'address-types',
+    'districts',
+    'religions',
+    'communication-methods',
+    'employment-types',
+    'id-types',
+    'document-types',
+    'fee-types',
+    'sponsor-types',
+    'workflow-steps',
+    'workflow-step-actions',
+    'academic-levels',
+    'payment-methods',
+    'payment-days',
+    'payment-frequencies',
+];
+
+$institutionConfigResources = [
+    'divisions',
+    'departments',
+    'courses',
+    'grades',
+    'levels',
+    'mode-of-studies',
+    'subjects',
+    'intake-periods',
+    'assessment-types',
+    'student-enrolment-statuses',
+    'semesters',
+];
+
+$expandResources = static function (array $resources) use ($resourceCrud): array {
+    $permissions = [];
+    foreach ($resources as $resource) {
+        $permissions = array_merge($permissions, $resourceCrud($resource));
+    }
+
+    return $permissions;
+};
+
 return [
     'groups' => [
         'rbac' => [
@@ -100,27 +165,14 @@ return [
         'root' => [
             'root:manage',
         ],
-        'settings' => [
-            'view:settings',
-            'create:settings',
-            'update:settings',
-            'delete:settings',
-            'restore:settings',
-            'forceDelete:settings',
-            'import:settings',
-            'export:settings',
-            'viewAuditTrail:settings',
-            'view:institution-settings',
-            'create:institution-settings',
-            'update:institution-settings',
-            'delete:institution-settings',
-            'restore:institution-settings',
-            'forceDelete:institution-settings',
-            'import:institution-settings',
-            'export:institution-settings',
-            'viewAuditTrail:institution-settings',
-        ],
-        'institution' => [
+        'settings' => array_merge(
+            [
+                'view:settings',
+                'view:institution-settings',
+            ],
+            $expandResources($settingsResources),
+        ),
+        'institution' => array_merge([
             'viewAny:department-metadata',
             'view:department-metadata',
             'create:department-metadata',
@@ -192,7 +244,7 @@ return [
             'view:lecturer-dashboard',
             'view:lecturer-classes',
             'view:lecturer-modules',
-        ],
+        ], $expandResources($institutionConfigResources)),
         'shared' => [
             'viewAny:bank-details',
             'view:bank-details',
@@ -297,6 +349,7 @@ return [
             'export:course-work',
             'crud-settings:course-work',
             'viewAuditTrail:course-work',
+            'toggle:coursework-capture',
             'viewAny:assessment-calendar',
             'view:assessment-calendar',
             'create:assessment-calendar',
@@ -342,6 +395,8 @@ return [
             'export:hostels',
             'crud-settings:hostels',
             'viewAuditTrail:hostels',
+            'viewOnlyOwnHostel:hostels',
+            'manage:hostel-check-in',
             'viewAny:hostel-amenities',
             'view:hostel-amenities',
             'create:hostel-amenities',

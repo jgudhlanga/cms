@@ -29,8 +29,8 @@ const can = props?.auth?.can;
             :search-url="route('statuses.index')"
             :pagination="{ ...statuses.links, ...statuses.meta }"
             :columns="createStatusColumns()"
-            :on-create="() => onOpenModal(can['create:settings'])"
-            :disable-create="!can['create:settings']"
+            :on-create="() => onOpenModal(can['create:statuses'])"
+            :disable-create="!can['create:statuses']"
         />
         <CreateEdit />
     </PageContainer>

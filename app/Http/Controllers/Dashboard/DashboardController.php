@@ -13,6 +13,7 @@ use App\Http\Resources\Institution\IntakePeriodResource;
 use App\Services\ApplicationMetricsService;
 use App\Services\Dashboard\AcademicDashboardMetricsService;
 use App\Services\Dashboard\DashboardModuleService;
+use App\Services\Dashboard\FinanceCashFlowMetricsService;
 use App\Services\Dashboard\HostelDashboardMetricsService;
 use App\Services\Dashboard\LecturerDashboardMetricsService;
 use App\Services\Dashboard\OverviewDashboardMetricsService;
@@ -57,6 +58,9 @@ class DashboardController extends Controller
             'academicContextSubtitle' => $academicContextSubtitle,
             'hostelDashboard' => in_array('hostel', $visibleTabs, true)
                 ? app(HostelDashboardMetricsService::class)->build()
+                : null,
+            'financeDashboard' => in_array('finance', $visibleTabs, true)
+                ? app(FinanceCashFlowMetricsService::class)->build()
                 : null,
             'overviewDashboard' => in_array('overview', $visibleTabs, true)
                 ? app(OverviewDashboardMetricsService::class)->build($visibleTabs)

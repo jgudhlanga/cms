@@ -30,18 +30,18 @@ export const useProvinces = () => {
                     const id = getIdParams(row.original.id?.toString() ?? '');
                     const name = trans_choice('trans.province', 1);
                     return moreActionButton(!!row.original?.attributes?.deletedAt, [
-                        { key: 'edit', action: () => onOpenModal(can['update:settings'], row.original) },
+                        { key: 'edit', action: () => onOpenModal(can['update:provinces'], row.original) },
                         {
                             key: 'archive',
-                            action: () => onDelete(can['delete:settings'], route('provinces.destroy', id), name),
+                            action: () => onDelete(can['delete:provinces'], route('provinces.destroy', id), name),
                         },
                         {
                             key: 'restore',
-                            action: () => onRestore(can['restore:settings'], route('provinces.restore', id), name),
+                            action: () => onRestore(can['restore:provinces'], route('provinces.restore', id), name),
                         },
                         {
                             key: 'delete',
-                            action: () => onForceDelete(can['forceDelete:settings'], route('provinces.force-delete', id), name),
+                            action: () => onForceDelete(can['forceDelete:provinces'], route('provinces.force-delete', id), name),
                         },
                     ]);
                 },

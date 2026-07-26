@@ -3,7 +3,7 @@
 use App\Models\AcademicCalendars\AcademicCalendar;
 use App\Models\AcademicCalendars\AcademicCalendarClass;
 use App\Models\AcademicCalendars\AcademicCalendarStudentEnrolment;
-use App\Models\AcademicCalendars\AcademicYearOption;
+use App\Models\AcademicCalendars\Semester;
 use App\Models\AcademicCalendars\ClassConfig;
 use App\Models\Rbac\Permission;
 use App\Models\Institution\Course;
@@ -68,7 +68,7 @@ test('student course work page returns 404 when enrolment not in class', functio
         'institution_department_id' => $context['studentEnrolment']->institution_department_id,
         'department_level_id' => $context['studentEnrolment']->department_level_id,
         'department_course_id' => $context['studentEnrolment']->department_course_id,
-        'academic_year_option_id' => $context['studentEnrolment']->academic_year_option_id,
+        'semester_id' => $context['studentEnrolment']->semester_id,
         'academic_calendar_id' => $context['studentEnrolment']->academic_calendar_id,
         'mode_of_study_id' => $context['studentEnrolment']->mode_of_study_id,
         'student_enrolment_status_id' => $context['studentEnrolment']->student_enrolment_status_id,
@@ -118,7 +118,7 @@ function createStudentCourseWorkPageContext(): array
     ]);
 
     $modeOfStudy = ModeOfStudy::query()->create(['name' => 'Full Time CW Page']);
-    $academicYearOption = AcademicYearOption::query()->create([
+    $semester = Semester::query()->create([
         'name' => 'Semester 1 CW Page',
         'description' => null,
     ]);
@@ -131,7 +131,7 @@ function createStudentCourseWorkPageContext(): array
 
     $classConfig = ClassConfig::query()->create([
         'calendar_year' => $calendar->calendar_year,
-        'academic_year_option_id' => $academicYearOption->id,
+        'semester_id' => $semester->id,
         'institution_department_id' => $institutionDepartment->id,
         'department_course_id' => $departmentCourse->id,
         'department_level_id' => $departmentLevel->id,
@@ -189,7 +189,7 @@ function createStudentCourseWorkPageContext(): array
         'institution_department_id' => $institutionDepartment->id,
         'department_level_id' => $departmentLevel->id,
         'department_course_id' => $departmentCourse->id,
-        'academic_year_option_id' => $academicYearOption->id,
+        'semester_id' => $semester->id,
         'academic_calendar_id' => $calendar->id,
         'mode_of_study_id' => $modeOfStudy->id,
         'student_enrolment_status_id' => $enrolmentStatus->id,

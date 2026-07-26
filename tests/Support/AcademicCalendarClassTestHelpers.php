@@ -2,7 +2,7 @@
 
 use App\Enums\Shared\ClassListTypeEnum;
 use App\Models\AcademicCalendars\AcademicCalendar;
-use App\Models\AcademicCalendars\AcademicYearOption;
+use App\Models\AcademicCalendars\Semester;
 use App\Models\AcademicCalendars\ClassConfig;
 use App\Models\Enrolments\ClassList;
 use App\Models\Institution\Course;
@@ -127,7 +127,7 @@ function createFinalStudentApplication(array $context, string $email, string $ge
         'attributes' => [],
     ]);
 
-    $academicYearOption = AcademicYearOption::query()->create([
+    $semester = Semester::query()->create([
         'name' => 'Test year option '.$studentApplication->id,
         'description' => null,
     ]);
@@ -142,7 +142,7 @@ function createFinalStudentApplication(array $context, string $email, string $ge
         'institution_department_id' => $context['institutionDepartment']->id,
         'department_level_id' => $context['departmentLevel']->id,
         'department_course_id' => $context['departmentCourse']->id,
-        'academic_year_option_id' => $academicYearOption->id,
+        'semester_id' => $semester->id,
         'academic_calendar_id' => $context['calendar']->id,
         'mode_of_study_id' => $context['modeOfStudy']->id,
         'student_enrolment_status_id' => $enrolmentStatus->id,

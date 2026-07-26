@@ -23,7 +23,7 @@ class ClassConfig extends Model
 {
     use LogsActivity, Paginatable, SoftDeletes;
 
-    protected $fillable = ['calendar_year', 'academic_year_option_id',
+    protected $fillable = ['calendar_year', 'semester_id',
         'institution_department_id', 'department_course_id',
         'department_level_id', 'mode_of_study_id',
         'students_per_class', 'status', 'course_syllabus_ids'];
@@ -58,9 +58,9 @@ class ClassConfig extends Model
         return $this->belongsTo(ModeOfStudy::class);
     }
 
-    public function academicYearOption(): BelongsTo
+    public function semester(): BelongsTo
     {
-        return $this->belongsTo(AcademicYearOption::class);
+        return $this->belongsTo(Semester::class);
     } 
 
     public function getActivitylogOptions(): LogOptions

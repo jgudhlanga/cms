@@ -32,8 +32,8 @@ const { can } = props?.auth as Auth;
             :search-url="route('address-types.index')"
             :pagination="{ ...addressTypes.links, ...addressTypes.meta }"
             :columns="createAddressTypeColumns()"
-            :on-create="() => onOpenModal(can['create:settings'])"
-            :disable-create="!can['create:settings']"
+            :on-create="() => onOpenModal(can['create:address-types'])"
+            :disable-create="!can['create:address-types']"
         />
         <CreateEdit />
     </PageContainer>

@@ -64,7 +64,11 @@ class RoleController extends Controller
         $this->authorize('view', $role);
         $permissions = PermissionResource::collection($this->permissionRepository->allFilter(['*'], $filters));
         $allPermissions = PermissionResource::collection(
-            Cache::remember('rbac_all_permissions', 300, fn () => Permission::query()->orderBy('name')->get())
+            Cache::remember(
+                'rbac_all_permissions',
+                300,
+                fn () => Permission::query()->with('module')->orderBy('name')->get()
+            )->loadMissing('module')
         );
 
         return Inertia::render('rbac/roles/Show', [

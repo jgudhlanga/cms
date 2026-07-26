@@ -40,7 +40,7 @@ const props = withDefaults(
         previewClasses: AcademicCalendarClassPreview[];
         generationContext: AcademicCalendarClassGenerationContext;
         staffingSummary: ClassStaffingSummary;
-        selectedAcademicYearOptionId: number | null;
+        selectedSemesterId: number | null;
         calendarType: 'term' | 'semester' | 'abma';
         semesterConfigHasSyllabi: boolean;
         canAssignStaffing?: boolean;
@@ -59,7 +59,7 @@ const props = withDefaults(
             moduleSlotsStaffed: 0,
             semesterModuleCount: 0,
         }),
-        selectedAcademicYearOptionId: null,
+        selectedSemesterId: null,
         calendarType: 'semester',
         semesterConfigHasSyllabi: false,
     },
@@ -92,8 +92,8 @@ const classConfigQuery = computed((): Record<string, string> => {
         mode_of_study_id: String(context.modeOfStudyId ?? ''),
     };
 
-    if (props.selectedAcademicYearOptionId != null) {
-        query.academic_year_option_id = String(props.selectedAcademicYearOptionId);
+    if (props.selectedSemesterId != null) {
+        query.semester_id = String(props.selectedSemesterId);
     }
 
     return query;
@@ -269,7 +269,7 @@ const onRemoveTutor = async (classId: number): Promise<void> => {
                 :title="computedTitle"
                 :class-config="classConfig"
                 :staffing-summary="staffingSummary"
-                :selected-academic-year-option-id="selectedAcademicYearOptionId"
+                :selected-semester-id="selectedSemesterId"
                 :calendar-type="calendarType"
                 :semester-config-has-syllabi="semesterConfigHasSyllabi"
             />
@@ -337,7 +337,7 @@ const onRemoveTutor = async (classId: number): Promise<void> => {
                         :class-preview="classPreview"
                         :show-url="classShowUrl(classPreview)"
                         :can-assign-staffing="canAssignStaffing"
-                        :show-module-staffing="selectedAcademicYearOptionId != null"
+                        :show-module-staffing="selectedSemesterId != null"
                         @assign-tutor="onAssignTutor"
                         @remove-tutor="onRemoveTutor"
                     />

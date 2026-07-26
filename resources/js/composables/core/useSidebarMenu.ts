@@ -160,9 +160,12 @@ export function useSidebarMenu() {
                     show: institutionModuleOn && canViewInstitutionHubAcademicDepartments(),
                 },
                 {
-                    transKey: 'trans.institution_config',
-                    url: route('institution.setup'),
-                    show: canShowMenuItem('view:institution-settings', 'institution', moduleState),
+                    transKey: 'trans.my_departments',
+                    url: route('institution-departments.index', { is_academic: 1 }),
+                    show:
+                        institutionModuleOn
+                        && hasAbility('viewOnlyOwnDepartment:departments')
+                        && !canViewInstitutionHubAcademicDepartments(),
                 },
                 {
                     transKey: 'trans.ui_payments_debug',
@@ -179,6 +182,90 @@ export function useSidebarMenu() {
                 icon: icons[IconName.school],
                 items: institutionChildren,
                 show: institutionChildren.length > 0,
+            };
+        })(),
+        (() => {
+            const institutionModuleOn = isModuleEnabled('institution', moduleState);
+            const institutionConfigChildren: MenuItemInterface[] = [
+                {
+                    transChoiceKey: 'trans.intake_period',
+                    url: route('intake-periods.index'),
+                    show: institutionModuleOn && hasAbility(['viewAny:intake-periods', 'view:intake-periods']),
+                },
+                {
+                    transChoiceKey: 'trans.document_template',
+                    url: route('document-templates.index'),
+                    show: institutionModuleOn && hasAbility('viewAny:document-templates'),
+                },
+                {
+                    transChoiceKey: 'trans.fee_levy_structure',
+                    url: route('fee-structures.index'),
+                    show: institutionModuleOn && hasAbility('viewAny:fee-structures'),
+                },
+                {
+                    transChoiceKey: 'academic_calendar.academic_calendar',
+                    url: route('academic-calendars.index'),
+                    show: institutionModuleOn && hasAbility('viewAny:academic-calendars'),
+                },
+                {
+                    transChoiceKey: 'trans.course',
+                    url: route('courses.index'),
+                    show: institutionModuleOn && hasAbility(['viewAny:courses', 'view:courses']),
+                },
+                {
+                    transChoiceKey: 'trans.department',
+                    url: route('departments.index'),
+                    show: institutionModuleOn && hasAbility(['viewAny:departments', 'view:departments']),
+                },
+                {
+                    transChoiceKey: 'trans.division',
+                    url: route('divisions.index'),
+                    show: institutionModuleOn && hasAbility(['viewAny:divisions', 'view:divisions']),
+                },
+                {
+                    transChoiceKey: 'trans.grade',
+                    url: route('grades.index'),
+                    show: institutionModuleOn && hasAbility(['viewAny:grades', 'view:grades']),
+                },
+                {
+                    transChoiceKey: 'trans.level',
+                    url: route('levels.index'),
+                    show: institutionModuleOn && hasAbility(['viewAny:levels', 'view:levels']),
+                },
+                {
+                    transChoiceKey: 'trans.mode_of_study',
+                    url: route('mode-of-studies.index'),
+                    show: institutionModuleOn && hasAbility(['viewAny:mode-of-studies', 'view:mode-of-studies']),
+                },
+                {
+                    transChoiceKey: 'trans.assessment_type',
+                    url: route('assessment-types.index'),
+                    show: institutionModuleOn && hasAbility(['viewAny:assessment-types', 'view:assessment-types']),
+                },
+                {
+                    transChoiceKey: 'trans.subject',
+                    url: route('subjects.index'),
+                    show: institutionModuleOn && hasAbility(['viewAny:subjects', 'view:subjects']),
+                },
+                {
+                    transChoiceKey: 'students.enrolment_status',
+                    url: route('student-enrolment-statuses.index'),
+                    show: institutionModuleOn && hasAbility(['viewAny:student-enrolment-statuses', 'view:student-enrolment-statuses']),
+                },
+                {
+                    transChoiceKey: 'academic_years.semester',
+                    url: route('semesters.index'),
+                    show: institutionModuleOn && hasAbility(['viewAny:semesters', 'view:semesters']),
+                },
+            ].filter((child) => child.show);
+
+            return {
+                groupKey: 'institution' as const,
+                transKey: 'trans.institution_config',
+                url: route('institution.setup'),
+                icon: icons[IconName.scheme],
+                items: institutionConfigChildren,
+                show: institutionModuleOn && institutionConfigChildren.length > 0,
             };
         })(),
         (() => {
@@ -231,11 +318,11 @@ export function useSidebarMenu() {
             };
         })(),
         (() => {
-            const canViewSettings = canShowMenuItem('view:settings', 'settings', moduleState);
+            const canManageRbac = canShowMenuItem('root:manage', 'root', moduleState);
             const rbacChildren: MenuItemInterface[] = useRbac().tabs.map((tab) => ({
                 transChoiceKey: tab.transChoiceKey,
                 url: tab.url,
-                show: canViewSettings,
+                show: canManageRbac,
             })).filter((child) => child.show);
 
             return {
@@ -244,7 +331,7 @@ export function useSidebarMenu() {
                 url: route('rbac.index'),
                 icon: icons[IconName.shield],
                 items: rbacChildren,
-                show: canViewSettings,
+                show: canManageRbac,
             };
         })(),
         (() => {

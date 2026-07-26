@@ -10,9 +10,10 @@ class RoleResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
-        $this->resource->loadMissing(['roleGroup', 'permissions']);
+        $this->resource->loadMissing(['roleGroup', 'permissions.module']);
 
         $permissions = $this->getVisiblePermissions();
+        $permissions->loadMissing('module');
 
         return [
             'type' => 'role',
@@ -60,7 +61,10 @@ class RoleResource extends JsonResource
     private function getVisiblePermissions()
     {
         if ($this->resource->permissions->contains('name', 'root:manage')) {
-            return Permission::whereNotIn('name', ['manageOwnData:tenants'])->get();
+            return Permission::query()
+                ->with('module')
+                ->whereNotIn('name', ['manageOwnData:tenants'])
+                ->get();
         }
 
         return $this->resource->permissions;

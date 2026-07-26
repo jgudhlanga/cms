@@ -29,8 +29,8 @@ const can = props?.auth?.can;
             :search-url="route('titles.index')"
             :pagination="{ ...titles.links, ...titles.meta }"
             :columns="createTitleColumns()"
-            :on-create="() => onOpenModal(can['create:settings'])"
-            :disable-create="!can['create:settings']"
+            :on-create="() => onOpenModal(can['create:titles'])"
+            :disable-create="!can['create:titles']"
         />
         <CreateEdit />
     </PageContainer>

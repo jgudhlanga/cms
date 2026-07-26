@@ -3,7 +3,7 @@
 use App\Enums\AcademicCalendars\AcademicCalendarTypeEnum;
 use App\Enums\Institution\CourseSyllabusStatusEnum;
 use App\Models\AcademicCalendars\AcademicCalendar;
-use App\Models\AcademicCalendars\AcademicYearOption;
+use App\Models\AcademicCalendars\Semester;
 use App\Models\AcademicCalendars\ClassConfig;
 use App\Models\Institution\Course;
 use App\Models\Institution\Department;
@@ -96,14 +96,14 @@ test('per class size store rejects course syllabus from another department level
         'closing_date' => '2026-12-31',
     ]);
 
-    $academicYearOption = AcademicYearOption::query()->firstOrCreate(
+    $semester = Semester::query()->firstOrCreate(
         ['slug' => 'semester-pcs-syl-test'],
         ['name' => 'Semester PCS Syl', 'description' => null],
     );
 
     ClassConfig::query()->create([
         'calendar_year' => $calendar->calendar_year,
-        'academic_year_option_id' => $academicYearOption->id,
+        'semester_id' => $semester->id,
         'institution_department_id' => $institutionDepartment->id,
         'department_course_id' => $departmentCourseA->id,
         'department_level_id' => $departmentLevelA->id,
@@ -123,7 +123,7 @@ test('per class size store rejects course syllabus from another department level
         'department_level_id' => $departmentLevelA->id,
         'department_course_id' => $departmentCourseA->id,
         'mode_of_study_id' => $modeOfStudy->id,
-        'academic_year_option_id' => $academicYearOption->id,
+        'semester_id' => $semester->id,
         'course_syllabus_ids' => [$syllabusOnB->id],
     ])->assertSessionHasErrors(['course_syllabus_ids.0']);
 
@@ -132,7 +132,7 @@ test('per class size store rejects course syllabus from another department level
         'department_level_id' => $departmentLevelA->id,
         'department_course_id' => $departmentCourseA->id,
         'mode_of_study_id' => $modeOfStudy->id,
-        'academic_year_option_id' => $academicYearOption->id,
+        'semester_id' => $semester->id,
         'course_syllabus_ids' => [$syllabusOnA->id],
     ])->assertSessionHasNoErrors();
 

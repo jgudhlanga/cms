@@ -16,24 +16,10 @@ return [
 
     SettingPolicy::class => [
         'viewSettings',
-        'createSettings',
-        'updateSettings',
-        'deleteSettings',
-        'restoreSettings',
-        'forceDeleteSettings',
-        'importSettings',
-        'exportSettings',
     ],
 
     InstitutionSetupPolicy::class => [
         'viewInstitutionSettings',
-        'createInstitutionSettings',
-        'updateInstitutionSettings',
-        'deleteInstitutionSettings',
-        'restoreInstitutionSettings',
-        'forceDeleteInstitutionSettings',
-        'importInstitutionSettings',
-        'exportInstitutionSettings',
     ],
 
     DepartmentMetaDataPolicy::class => [

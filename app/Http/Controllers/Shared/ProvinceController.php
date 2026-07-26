@@ -19,7 +19,7 @@ class ProvinceController extends Controller
 
 	public function index(SharedTitleFilter $filters)
 	{
-		$this->authorize('viewSettings');
+		$this->authorize('viewAny', Province::class);
 		$provinces = ProvinceResource::collection($this->repository->allFilter(['*'], $filters));
 		return Inertia::render('shared/provinces/Index', [
 			'provinces' => $provinces,
@@ -30,12 +30,12 @@ class ProvinceController extends Controller
 
 	public function create()
 	{
-		$this->authorize('createSettings');
+		$this->authorize('create', Province::class);
 	}
 
 	public function store(ProvinceRequest $request)
 	{
-		$this->authorize('createSettings');
+		$this->authorize('create', Province::class);
 		$this->repository->create(ProvinceDto::fromProvinceRequest($request));
 	}
 
@@ -51,26 +51,26 @@ class ProvinceController extends Controller
 
 	public function update(ProvinceRequest $request, Province $province)
 	{
-		$this->authorize('updateSettings');
+		$this->authorize('update', $province);
 		$this->repository->update($province, ProvinceDto::fromProvinceRequest($request));
 	}
 
 	public function destroy(Province $province)
 	{
-		$this->authorize('deleteSettings');
+		$this->authorize('delete', $province);
 		$this->repository->delete($province);
 	}
 
 	public function restore(string $id)
 	{
 		$province = $this->repository->findTrashed($id);
-		$this->authorize('restoreSettings');
+		$this->authorize('restore', $province);
 		$this->repository->restore($province);
 	}
 
 	public function forceDelete(Province $province)
 	{
-		$this->authorize('forceDeleteSettings');
+		$this->authorize('forceDelete', $province);
 		$this->repository->delete($province, true);
 	}
 }

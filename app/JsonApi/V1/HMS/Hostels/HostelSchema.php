@@ -2,6 +2,7 @@
 
 namespace App\JsonApi\V1\HMS\Hostels;
 
+use App\Helpers\Helper;
 use App\JsonApi\V1\HMS\Filters\TrashedFilter;
 use App\JsonApi\V1\HMS\Hostels\Filters\HostelSearchFilter;
 use App\JsonApi\V1\HMS\Hostels\Filters\HostelTypeFilter;
@@ -106,6 +107,11 @@ class HostelSchema extends Schema
     public function newQuery($query = null): JsonApiBuilder
     {
         $query ??= Hostel::query();
+
+        $hostelIds = Helper::resolveUserHostels();
+        if ($hostelIds !== null) {
+            $query->whereIn('id', $hostelIds);
+        }
 
         $query
             ->withSum('rooms as occupied_beds_sum', 'current_occupancy')
