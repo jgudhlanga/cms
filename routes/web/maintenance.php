@@ -49,6 +49,8 @@ Route::prefix('maintenance')->middleware(['auth', 'can:root:manage'])->group(fun
         ->name('maintenance.faulty-student-ids.merge');
     Route::patch('/faulty-student-ids/{student}', [MaintenanceController::class, 'fixFaultyStudentIdNumber'])
         ->name('maintenance.faulty-student-ids.fix');
+    Route::get('/staff/export', [MaintenanceController::class, 'exportStaff'])
+        ->name('maintenance.staff.export');
     Route::get('/staff-import/template', [MaintenanceController::class, 'downloadStaffImportTemplate'])
         ->name('maintenance.staff-import.template');
     Route::post('/staff-import/preview', [MaintenanceController::class, 'previewStaffImport'])

@@ -109,13 +109,13 @@ const showToolBar = computed(() => {
             aria-live="polite">
             <DataLoadingSpinner class="w-full" />
         </div>
-        <div class="text-muted-foreground mb-6 flex w-full justify-between text-sm">
-            <div class="flex  flex-1 items-center space-x-3">
+        <div class="text-muted-foreground mb-6 flex w-full flex-wrap items-center justify-between gap-y-2 text-sm">
+            <div class="flex min-w-0 flex-1 items-center space-x-3">
                 <slot name="head-left" />
                 <Search v-model="filter" v-if="(searchUrl || apiFetchAction) && !hideBuiltInSearch" />
                 <Archived v-if="showArchivedFilter" :handle-archived="handleArchived" :trashed="+trashed" :trashed-count="trashedCount" />
             </div>
-            <div v-if="showToolBar" class="flex items-center justify-end space-x-3">
+            <div v-if="showToolBar" class="flex shrink-0 items-center justify-end space-x-3">
                 <ColumnFilter v-if="showColumnFilters" :table="table" :toggleColumnVisibility="toggleColumnVisibility" />
                 <ExportButton :variant="ColorVariant.primary_outline" class="rounded-full" v-if="onExport" @click="() => (onExport ? onExport() : null)" :disable="disableExport" />
                 <ImportButton :variant="ColorVariant.primary_outline" class="rounded-full" v-if="onImport" @click="() => (onImport ? onImport() : null)" :disable="disableImport" />

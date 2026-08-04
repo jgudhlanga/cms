@@ -47,4 +47,7 @@ yarn-error.log
 /storage/data/course-syllabus-imports/previews/
 /storage/data/course-work-imports/previews/
 /storage/data/course-work-imports/*.xlsx
+/scripts/examinations/.venv/
+/storage/app/.venv-xls/
+/storage/app/examinations/flattened/
 /public/*.xlsx

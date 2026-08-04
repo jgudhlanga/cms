@@ -2,6 +2,7 @@
 import { BaseButton } from '@/components/core/button';
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import DataTable from '@/components/core/table/DataTable.vue';
+import BaseTooltip from '@/components/core/util/BaseTooltip.vue';
 import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
 import { hasAbility } from '@/lib/permissions';
@@ -32,8 +33,52 @@ defineProps<{
 
 const breadcrumbs = computed<Link[]>(() => [{ transChoiceKey: 'examinations.title' }]);
 
+const truncateText = (value: string, maxLength = 40): string => {
+    if (value.length <= maxLength) {
+        return value;
+    }
+
+    return `${value.slice(0, maxLength)}…`;
+};
+
+const renderTruncatedWithTooltip = (
+    value: string | null,
+    maxWidthClass = 'max-w-[12rem]',
+    maxLength = 40,
+) => {
+    if (!value) {
+        return '---';
+    }
+
+    const truncated = truncateText(value, maxLength);
+
+    if (truncated === value) {
+        return h('span', { class: `block truncate ${maxWidthClass}` }, value);
+    }
+
+    return h(
+        BaseTooltip,
+        { content: value },
+        {
+            default: () =>
+                h(
+                    'span',
+                    {
+                        class: `block cursor-help truncate ${maxWidthClass} underline decoration-dotted underline-offset-2`,
+                    },
+                    truncated,
+                ),
+        },
+    );
+};
+
 const columns = computed(() => [
-    { header: 'Discipline', accessorKey: 'discipline' },
+    {
+        header: 'Discipline',
+        accessorKey: 'discipline',
+        cell: ({ row }: { row: { original: ResultRow } }) =>
+            renderTruncatedWithTooltip(row.original.discipline),
+    },
     { header: 'Course Code', accessorKey: 'courseCode' },
     {
         header: 'Candidate_Number',
@@ -51,7 +96,12 @@ const columns = computed(() => [
     { header: 'Surname', accessorKey: 'surname' },
     { header: 'First_Names', accessorKey: 'firstNames' },
     { header: 'Subject Code', accessorKey: 'subjectCode' },
-    { header: 'Subject', accessorKey: 'subject' },
+    {
+        header: 'Subject',
+        accessorKey: 'subject',
+        cell: ({ row }: { row: { original: ResultRow } }) =>
+            renderTruncatedWithTooltip(row.original.subject),
+    },
     { header: 'Grade', accessorKey: 'grade' },
     { header: 'Session', accessorKey: 'session' },
     { header: 'Course Comment', accessorKey: 'courseComment' },
