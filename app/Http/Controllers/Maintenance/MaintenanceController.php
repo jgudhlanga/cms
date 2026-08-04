@@ -9,6 +9,7 @@ use App\Exceptions\AccountPurge\AccountPurgeArchiveRestoreException;
 use App\Exceptions\Maintenance\StudentIdNumberConflictException;
 use App\Exports\Maintenance\ApprenticeImportTemplateExport;
 use App\Exports\Maintenance\StaffImportTemplateExport;
+use App\Exports\Maintenance\StaffListExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Maintenance\ApprenticeImportPreviewRequest;
 use App\Http\Requests\Maintenance\ApprenticeImportProcessRequest;
@@ -44,6 +45,7 @@ use App\Services\Enrollment\EnrollmentLookupService;
 use App\Services\Enrolments\BulkFinaliseEnrolmentAuditLogger;
 use App\Services\Enrolments\BulkFinaliseEnrolmentsService;
 use App\Services\Enrolments\StudentBankPaymentMatcher;
+use App\Services\Maintenance\Staff\StaffExportService;
 use App\Services\Maintenance\Staff\StaffImportLookupCreator;
 use App\Services\Maintenance\Staff\StaffImportService;
 use App\Services\Maintenance\Staff\StaffImportTemplateService;
@@ -226,6 +228,14 @@ class MaintenanceController extends Controller
         return Excel::download(
             new StaffImportTemplateExport($data),
             $templateService->downloadFileName(),
+        );
+    }
+
+    public function exportStaff(StaffExportService $exportService): BinaryFileResponse
+    {
+        return Excel::download(
+            new StaffListExport($exportService->rows()),
+            $exportService->downloadFileName(),
         );
     }
 
