@@ -31,21 +31,16 @@ const toggleAppearance = () => {
 
 const buttonClass = computed(() =>
     cn(
-        'flex size-10 items-center justify-center transition-colors',
+        'flex size-11 items-center justify-center rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none',
         props.variant === 'on-dark'
-            ? 'text-white hover:text-white/80'
+            ? 'text-white hover:text-white/80 focus-visible:ring-white focus-visible:ring-offset-slate-950'
             : 'text-primary hover:text-primary/80 dark:text-foreground dark:hover:text-foreground/80',
     ),
 );
 </script>
 
 <template>
-    <button
-        type="button"
-        :class="buttonClass"
-        :aria-label="isDark ? 'Switch to light mode' : 'Switch to dark mode'"
-        @click="toggleAppearance"
-    >
+    <button type="button" :class="buttonClass" :aria-label="isDark ? 'Switch to light mode' : 'Switch to dark mode'" @click="toggleAppearance">
         <Moon v-if="!isDark" class="size-6" :stroke-width="2.25" />
         <Sun v-else class="size-6" :stroke-width="2.25" />
     </button>

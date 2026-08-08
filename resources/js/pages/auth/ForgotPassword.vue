@@ -30,7 +30,6 @@ const submit = () => {
                 <EmailInputWithIcon
                     v-model="form.email"
                     :input-auto-focus="true"
-                    :tabindex="1"
                     :error="form.errors.email"
                     :label="$t('trans.email')"
                     :placeholder="$t('trans.email')"
@@ -42,20 +41,15 @@ const submit = () => {
             <BaseButton
                 :variant="ColorVariant.primary"
                 type="submit"
-                :tabindex="2"
                 :processing="form.processing"
                 classes="min-h-11 w-full rounded-xl dark:text-white"
             >
                 {{ $t('trans.ui_email_password_reset_link') }}
             </BaseButton>
 
-            <div class="text-center text-sm text-muted-foreground space-x-2">
+            <div class="text-muted-foreground space-x-2 text-center text-sm">
                 <span>{{ $t('trans.ui_or_return_to') }} </span>
-                <TextLink
-                    :href="route('login')"
-                    class="underline-offset-4 transition-colors hover:text-primary hover:underline"
-                    :tabindex="3"
-                >
+                <TextLink :href="route('login')" class="hover:text-primary underline-offset-4 transition-colors hover:underline">
                     {{ $t('trans.login') }}
                 </TextLink>
             </div>

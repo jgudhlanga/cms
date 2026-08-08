@@ -99,7 +99,8 @@
                 font-family: Georgia, "Times New Roman", serif;
                 font-size: clamp(1.15rem, 2vw, 1.55rem);
                 font-weight: 700;
-                letter-spacing: 0.01em;
+                letter-spacing: 0.06em;
+                text-transform: uppercase;
                 animation: content-in .7s .05s ease-out both;
             }
 

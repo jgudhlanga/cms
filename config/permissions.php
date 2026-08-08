@@ -416,7 +416,7 @@ return [
             'export:hostel-amenities',
             'crud-settings:hostel-amenities',
             'viewAuditTrail:hostel-amenities',
-            'viewAny:hostels',
+            'viewAny:hostel-rooms',
             'view:hostel-rooms',
             'create:hostel-rooms',
             'update:hostel-rooms',

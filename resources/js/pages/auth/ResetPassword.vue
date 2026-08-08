@@ -46,7 +46,6 @@ const submit = () => {
                     v-model="form.password"
                     input-id="password"
                     :input-auto-focus="true"
-                    :tabindex="1"
                     :error="form.errors.password"
                     :label="$t('trans.password')"
                     :placeholder="$t('trans.password')"
@@ -57,7 +56,6 @@ const submit = () => {
                 <PasswordInputWithToggle
                     v-model="form.password_confirmation"
                     input-id="password_confirmation"
-                    :tabindex="2"
                     :error="form.errors.password_confirmation"
                     :label="$t('trans.confirm_password')"
                     :placeholder="$t('trans.ui_confirm_password_2')"
@@ -70,7 +68,6 @@ const submit = () => {
             <BaseButton
                 :variant="ColorVariant.primary"
                 type="submit"
-                :tabindex="3"
                 :processing="form.processing"
                 classes="min-h-11 w-full rounded-xl dark:text-white"
             >

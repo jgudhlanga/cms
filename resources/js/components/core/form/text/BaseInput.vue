@@ -48,32 +48,12 @@ onMounted(() => setAutoFocus());
 </script>
 
 <template>
-    <div
-        :class="
-            cn(
-                'w-full',
-                verticalLayout ? 'flex flex-col' : 'grid grid-cols-[11rem_minmax(0,1fr)] items-center gap-x-3 gap-y-1',
-            )
-        "
-    >
-        <div
-            :class="
-                cn(
-                    verticalLayout ? 'flex flex-col space-y-2' : 'contents',
-                )
-            "
-        >
+    <div :class="cn('w-full', verticalLayout ? 'flex flex-col' : 'grid grid-cols-[11rem_minmax(0,1fr)] items-center gap-x-3 gap-y-1')">
+        <div :class="cn(verticalLayout ? 'flex flex-col space-y-2' : 'contents')">
             <Label
                 v-if="label"
                 :for="inputId"
-                :class="
-                    cn(
-                        'font-medium',
-                        error && 'text-destructive',
-                        labelUppercase && 'uppercase',
-                        !verticalLayout && 'leading-snug',
-                    )
-                "
+                :class="cn('font-medium', error && 'text-destructive', labelUppercase && 'uppercase', !verticalLayout && 'leading-snug')"
             >
                 {{ label }}<RequiredIndicator v-if="isRequired" />
             </Label>
@@ -83,10 +63,13 @@ onMounted(() => setAutoFocus());
                 :id="inputId"
                 :class="cn(baseClasses, classes, !verticalLayout && 'min-w-0')"
                 :type="type"
+                :aria-invalid="Boolean(error)"
+                :aria-describedby="error ? `${inputId}-error` : undefined"
             />
         </div>
 
         <InputError
+            :id="`${inputId}-error`"
             :message="error"
             :class="cn('flex w-full lowercase', !verticalLayout && (label ? 'col-start-2' : 'col-span-2'))"
         />

@@ -48,7 +48,6 @@ const loginNavigateTo = () => {
                 <EmailInputWithIcon
                     v-model="form.email"
                     :input-auto-focus="true"
-                    :tabindex="1"
                     :error="form.errors.email"
                     :label="$t('trans.email')"
                     :placeholder="$t('trans.email')"
@@ -57,7 +56,6 @@ const loginNavigateTo = () => {
                 />
                 <PasswordInputWithToggle
                     v-model="form.password"
-                    :tabindex="2"
                     :error="form.errors.password"
                     :label="$t('trans.password')"
                     :placeholder="$t('trans.password')"
@@ -67,11 +65,10 @@ const loginNavigateTo = () => {
             </div>
 
             <div class="flex items-center justify-between gap-4">
-                <BaseCheckbox input-id="remember" v-model="form.remember" :tabindex="3" :label="$t('trans.remember_me')" />
+                <BaseCheckbox input-id="remember" v-model="form.remember" :label="$t('trans.remember_me')" />
                 <TextLink
                     :href="route('password.request')"
-                    class="text-sm text-muted-foreground underline-offset-4 pointer-anchor transition-colors hover:text-primary hover:underline"
-                    :tabindex="4"
+                    class="text-muted-foreground pointer-anchor hover:text-primary text-sm underline-offset-4 transition-colors hover:underline"
                 >
                     {{ $t('trans.forgot_password') }}
                 </TextLink>
@@ -81,7 +78,6 @@ const loginNavigateTo = () => {
                 <BaseButton
                     :variant="ColorVariant.primary"
                     type="submit"
-                    :tabindex="5"
                     :processing="form.processing"
                     classes="min-h-11 w-full rounded-xl dark:text-white"
                 >
@@ -91,7 +87,6 @@ const loginNavigateTo = () => {
                     @click="() => loginNavigateTo()"
                     :variant="ColorVariant.primary_outline"
                     type="button"
-                    :tabindex="6"
                     :disabled="form.processing"
                     classes="min-h-11 w-full rounded-xl dark:border-white dark:text-white dark:hover:border-white/80 dark:hover:bg-white/10 dark:hover:text-white"
                 >
