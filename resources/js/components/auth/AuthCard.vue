@@ -10,7 +10,7 @@ defineProps<{
 
 <template>
     <div
-        class="relative flex w-full flex-col gap-6 rounded-3xl border border-white/40 bg-white/60 p-8 text-card-foreground shadow-xl backdrop-blur-xl dark:border-border/50 dark:bg-card/70"
+        class="relative flex w-full flex-col gap-6 rounded-3xl border border-slate-300 bg-slate-100/80 p-8 text-card-foreground shadow-xl backdrop-blur-xl dark:border-slate-700 dark:bg-slate-900/80"
     >
         <div class="absolute top-4 right-4">
             <AppearanceCycleToggle />

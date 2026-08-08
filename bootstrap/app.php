@@ -89,9 +89,14 @@ return Application::configure(basePath: dirname(__DIR__))
             }
 
             if ($request->is('api*') || $request->expectsJson()) {
+                $fallbackMessage = match ($e->getStatusCode()) {
+                    403 => __('trans.forbidden'),
+                    404 => __('Not Found'),
+                    default => __('Server Error'),
+                };
+
                 return response()->json([
-                    'message' => $e->getMessage() ?: 'Not Found',
-                    'exception' => class_basename($e),
+                    'message' => $e->getMessage() ?: $fallbackMessage,
                 ], $e->getStatusCode());
             }
         });

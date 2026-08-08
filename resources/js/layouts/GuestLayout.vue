@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import LoginSkyBackground from '@/components/auth/LoginSkyBackground.vue';
+import AuthBackground from '@/components/auth/AuthBackground.vue';
 import AppearanceCycleToggle from '@/components/core/util/AppearanceCycleToggle.vue';
 import AppLogoMark from '@/components/core/image/AppLogoMark.vue';
 import PublicShell from '@/layouts/PublicShell.vue';
@@ -16,7 +16,7 @@ const appName = import.meta.env.VITE_APP_NAME || 'Harare Polytechnic';
 
 <template>
 	<PublicShell transparent-background :show-appearance-toggle="false">
-		<LoginSkyBackground />
+		<AuthBackground />
 		<div class="relative isolate flex min-h-svh flex-col p-6 md:p-10">
 			<header
 				v-if="showHeader"
@@ -40,7 +40,7 @@ const appName = import.meta.env.VITE_APP_NAME || 'Harare Polytechnic';
 			<div class="relative z-10 mx-auto flex w-full max-w-md flex-1 flex-col items-center justify-center gap-6">
 				<slot />
 				<div
-					class="text-center text-xs text-muted-foreground text-balance [&_a]:underline [&_a]:underline-offset-4 hover:[&_a]:text-primary"
+					class="rounded-full bg-slate-950/50 px-4 py-2 text-center text-xs text-white/90 shadow-sm backdrop-blur-sm text-balance [&_a]:font-medium [&_a]:text-white [&_a]:underline [&_a]:underline-offset-4 hover:[&_a]:text-white"
 				>
 					<a href="#">{{ $t('trans.terms_of_service') }}</a> {{ $t('trans.and') }}
 					<a href="#">{{ $t('trans.privacy_policy') }}</a>.

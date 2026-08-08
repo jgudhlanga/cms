@@ -78,7 +78,6 @@ import {
     SquareArrowOutUpRight as OpenLink,
     Sun as Light,
     Trash2 as Trash,
-    User as Scheme,
     UserCheck,
     UserPlus,
     Users,
@@ -101,6 +100,7 @@ import {
     Plug,
     Grid2x2,
 } from 'lucide-vue-next';
+import { MonitorCog as Scheme } from '@lucide/vue';
 import type { Component } from 'vue';
 
 const icons: Record<IconName, Component> = {

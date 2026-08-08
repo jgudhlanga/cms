@@ -244,6 +244,7 @@ return [
             'view:lecturer-dashboard',
             'view:lecturer-classes',
             'view:lecturer-modules',
+            'manage:institution-features',
         ], $expandResources($institutionConfigResources)),
         'shared' => [
             'viewAny:bank-details',
@@ -304,6 +305,13 @@ return [
             'export:students',
             'crud-settings:students',
             'viewAuditTrail:students',
+            'student-clearance:accounts',
+            'student-clearance:library',
+            'student-clearance:security',
+            'student-clearance:hostel',
+            'student-clearance:department',
+            'viewOwnExamResults:students',
+            'viewStudentExamResults:students',
         ],
         'enrolments' => [
             'viewAny:student-applications',

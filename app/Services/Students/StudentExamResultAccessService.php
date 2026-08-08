@@ -1,0 +1,345 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Services\Students;
+
+use App\Enums\AcademicCalendars\AcademicCalendarTypeEnum;
+use App\Enums\Students\StudentClearanceSection;
+use App\Models\Students\Student;
+use App\Models\Students\StudentClearance;
+use App\Models\Students\StudentEnrolment;
+use App\Rules\ZimbabweanIdNumber;
+use App\Services\Institution\InstitutionFeatureService;
+use Carbon\CarbonInterface;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
+
+class StudentExamResultAccessService
+{
+    public function __construct(
+        private readonly InstitutionFeatureService $featureService,
+        private readonly StudentFeeClearanceService $feeClearanceService,
+    ) {}
+
+    /**
+     * @return array{
+     *     canViewResults: bool,
+     *     gate: 'clearance'|'fees',
+     *     allowOnlineClearance: bool,
+     *     fees: array<string, mixed>|null,
+     *     clearance: array<string, mixed>|null,
+     *     idValidation: array{required: bool, isValid: bool, needsCorrection: bool},
+     *     academicCalendarId: int|null,
+     *     calendarYear: int|null,
+     *     semesterId: int|null,
+     *     calendarType: string
+     * }
+     */
+    public function evaluate(Student $student): array
+    {
+        $allowOnlineClearance = $this->featureService->allowsOnlineClearance((int) $student->tenant_id);
+        $enrolment = $this->resolveEnrolmentContext($student);
+        $idValidation = $this->idValidation($student);
+        $calendarType = $this->resolveCalendarType($enrolment)->value;
+        $calendarYear = $this->resolveCalendarYear($enrolment);
+
+        $clearanceStatus = $this->clearanceStatus($student, $enrolment);
+        $clearanceForDisplay = $allowOnlineClearance
+            ? $clearanceStatus
+            : $this->filterClearanceToAccountsOnly($clearanceStatus);
+
+        if ($allowOnlineClearance) {
+            return [
+                'canViewResults' => $clearanceStatus['isFullyCleared'] && ! $idValidation['needsCorrection'],
+                'gate' => 'clearance',
+                'allowOnlineClearance' => true,
+                'fees' => null,
+                'clearance' => $clearanceForDisplay,
+                'idValidation' => $idValidation,
+                'academicCalendarId' => $enrolment?->academic_calendar_id,
+                'calendarYear' => $calendarYear,
+                'semesterId' => $enrolment?->semester_id,
+                'calendarType' => $calendarType,
+            ];
+        }
+
+        if ($clearanceStatus['accountsCleared']) {
+            return [
+                'canViewResults' => ! $idValidation['needsCorrection'],
+                'gate' => 'clearance',
+                'allowOnlineClearance' => false,
+                'fees' => null,
+                'clearance' => $clearanceForDisplay,
+                'idValidation' => $idValidation,
+                'academicCalendarId' => $enrolment?->academic_calendar_id,
+                'calendarYear' => $calendarYear,
+                'semesterId' => $enrolment?->semester_id,
+                'calendarType' => $calendarType,
+            ];
+        }
+
+        $fees = $this->feeClearanceService->evaluate($student);
+
+        return [
+            'canViewResults' => $fees['isFullyPaid'] && ! $idValidation['needsCorrection'],
+            'gate' => 'fees',
+            'allowOnlineClearance' => false,
+            'fees' => $fees,
+            'clearance' => $clearanceForDisplay,
+            'idValidation' => $idValidation,
+            'academicCalendarId' => $enrolment?->academic_calendar_id,
+            'calendarYear' => $calendarYear,
+            'semesterId' => $enrolment?->semester_id,
+            'calendarType' => $calendarType,
+        ];
+    }
+
+    /**
+     * @return array{
+     *     isFullyCleared: bool,
+     *     accountsCleared: bool,
+     *     pendingSections: list<string>,
+     *     sections: list<array{key: string, label: string, cleared: bool}>,
+     *     recordId: int|null,
+     *     calendarYear: int|null,
+     *     semesterId: int|null
+     * }
+     */
+    public function clearanceStatus(Student $student, ?StudentEnrolment $enrolment = null): array
+    {
+        $enrolment ??= $this->resolveEnrolmentContext($student);
+        $sections = [];
+        $calendarYear = $this->resolveCalendarYear($enrolment);
+
+        foreach (StudentClearanceSection::all() as $section) {
+            $sections[] = [
+                'key' => $section->value,
+                'label' => $section->label(),
+                'cleared' => false,
+            ];
+        }
+
+        if ($enrolment === null || $calendarYear === null || $enrolment->semester_id === null) {
+            return [
+                'isFullyCleared' => false,
+                'accountsCleared' => false,
+                'pendingSections' => array_column($sections, 'key'),
+                'sections' => $sections,
+                'recordId' => null,
+                'calendarYear' => $calendarYear,
+                'semesterId' => null,
+            ];
+        }
+
+        $clearance = StudentClearance::query()
+            ->where('student_id', $student->id)
+            ->where('calendar_year', $calendarYear)
+            ->where('semester_id', $enrolment->semester_id)
+            ->first();
+
+        if ($clearance === null) {
+            return [
+                'isFullyCleared' => false,
+                'accountsCleared' => false,
+                'pendingSections' => array_column($sections, 'key'),
+                'sections' => $sections,
+                'recordId' => null,
+                'calendarYear' => $calendarYear,
+                'semesterId' => $enrolment->semester_id,
+            ];
+        }
+
+        $sections = [];
+        foreach (StudentClearanceSection::all() as $section) {
+            $sections[] = [
+                'key' => $section->value,
+                'label' => $section->label(),
+                'cleared' => (bool) $clearance->getAttribute($section->clearedColumn()),
+            ];
+        }
+
+        return [
+            'isFullyCleared' => $clearance->isFullyCleared(),
+            'accountsCleared' => $clearance->isAccountsCleared(),
+            'pendingSections' => $clearance->pendingSections(),
+            'sections' => $sections,
+            'recordId' => $clearance->id,
+            'calendarYear' => $calendarYear,
+            'semesterId' => $enrolment->semester_id,
+        ];
+    }
+
+    /**
+     * @return array{required: bool, isValid: bool, needsCorrection: bool}
+     */
+    public function idValidation(Student $student): array
+    {
+        if (! $student->isZimbabwean()) {
+            return [
+                'required' => false,
+                'isValid' => true,
+                'needsCorrection' => false,
+            ];
+        }
+
+        $isValid = ZimbabweanIdNumber::isValid($student->id_number);
+
+        return [
+            'required' => true,
+            'isValid' => $isValid,
+            'needsCorrection' => ! $isValid,
+        ];
+    }
+
+    public function resolveEnrolmentContext(Student $student): ?StudentEnrolment
+    {
+        /** @var Collection<int, StudentEnrolment> $enrolments */
+        $enrolments = StudentEnrolment::query()
+            ->where('student_id', $student->id)
+            ->with([
+                'institutionDepartment.department',
+                'departmentLevel.level',
+                'departmentCourse',
+                'modeOfStudy',
+                'academicCalendar',
+                'semester',
+                'studentEnrolmentStatus',
+            ])
+            ->get();
+
+        if ($enrolments->isEmpty()) {
+            return null;
+        }
+
+        $active = $enrolments
+            ->filter(fn (StudentEnrolment $enrolment): bool => $this->isActiveEnrolmentStatus(
+                $enrolment->studentEnrolmentStatus?->slug ?? $enrolment->studentEnrolmentStatus?->name
+            ))
+            ->sortByDesc(fn (StudentEnrolment $enrolment): array => $this->enrolmentSortKey($enrolment))
+            ->first();
+
+        if ($active !== null) {
+            return $active;
+        }
+
+        return $enrolments
+            ->sortByDesc(fn (StudentEnrolment $enrolment): array => $this->enrolmentSortKey($enrolment))
+            ->first();
+    }
+
+    public function resolveCalendarType(?StudentEnrolment $enrolment): AcademicCalendarTypeEnum
+    {
+        $fromLevel = $enrolment?->departmentLevel?->level?->calendar_type;
+
+        if ($fromLevel instanceof AcademicCalendarTypeEnum) {
+            return $fromLevel;
+        }
+
+        if (is_string($fromLevel) && $fromLevel !== '') {
+            $parsed = AcademicCalendarTypeEnum::tryFrom($fromLevel);
+            if ($parsed instanceof AcademicCalendarTypeEnum) {
+                return $parsed;
+            }
+        }
+
+        $fromCalendar = $enrolment?->academicCalendar?->type;
+
+        if ($fromCalendar instanceof AcademicCalendarTypeEnum) {
+            return $fromCalendar;
+        }
+
+        return AcademicCalendarTypeEnum::SEMESTER;
+    }
+
+    public function resolveCalendarYear(?StudentEnrolment $enrolment): ?int
+    {
+        return $this->parseCalendarYear($enrolment?->academicCalendar?->calendar_year);
+    }
+
+    public function parseCalendarYear(mixed $value): ?int
+    {
+        if (is_int($value)) {
+            return $value >= 2000 && $value <= 2100 ? $value : null;
+        }
+
+        if (is_numeric($value)) {
+            $year = (int) $value;
+
+            return $year >= 2000 && $year <= 2100 ? $year : null;
+        }
+
+        if (! is_string($value) || trim($value) === '') {
+            return null;
+        }
+
+        if (preg_match_all('/(20\d{2}|19\d{2})/', $value, $matches) >= 1) {
+            $years = array_map('intval', $matches[1]);
+            $year = max($years);
+
+            return $year >= 2000 && $year <= 2100 ? $year : null;
+        }
+
+        return null;
+    }
+
+    private function isActiveEnrolmentStatus(?string $status): bool
+    {
+        return Str::lower(trim((string) $status)) === 'active';
+    }
+
+    /**
+     * @param array{
+     *     isFullyCleared: bool,
+     *     accountsCleared: bool,
+     *     pendingSections: list<string>,
+     *     sections: list<array{key: string, label: string, cleared: bool}>,
+     *     recordId: int|null,
+     *     calendarYear: int|null,
+     *     semesterId: int|null
+     * } $clearanceStatus
+     * @return array{
+     *     isFullyCleared: bool,
+     *     accountsCleared: bool,
+     *     pendingSections: list<string>,
+     *     sections: list<array{key: string, label: string, cleared: bool}>,
+     *     recordId: int|null,
+     *     calendarYear: int|null,
+     *     semesterId: int|null
+     * }
+     */
+    private function filterClearanceToAccountsOnly(array $clearanceStatus): array
+    {
+        $accountsKey = StudentClearanceSection::Accounts->value;
+
+        $clearanceStatus['sections'] = array_values(array_filter(
+            $clearanceStatus['sections'],
+            fn (array $section): bool => $section['key'] === $accountsKey,
+        ));
+
+        $clearanceStatus['pendingSections'] = array_values(array_filter(
+            $clearanceStatus['pendingSections'],
+            fn (string $key): bool => $key === $accountsKey,
+        ));
+
+        return $clearanceStatus;
+    }
+
+    /**
+     * @return array{0: string, 1: string, 2: int}
+     */
+    private function enrolmentSortKey(StudentEnrolment $enrolment): array
+    {
+        $openingDate = $enrolment->academicCalendar?->opening_date;
+
+        if ($openingDate instanceof CarbonInterface) {
+            $openingDate = $openingDate->toDateString();
+        }
+
+        return [
+            (string) ($enrolment->academicCalendar?->calendar_year ?? ''),
+            (string) ($openingDate ?? ''),
+            (int) $enrolment->id,
+        ];
+    }
+}

@@ -11,10 +11,14 @@ interface Props {
 
 const props = defineProps<Props>();
 
-const hasInvoicedAmount = computed(() => {
-    const amount = Number(props.summary.totalInvoiced ?? 0);
+const outstandingValueClass = computed(() => {
+    const amount = Number(props.summary.outstandingBalance ?? 0);
 
-    return Number.isFinite(amount) && amount > 0;
+    if (Number.isFinite(amount) && amount < 0) {
+        return 'text-emerald-600 dark:text-emerald-400';
+    }
+
+    return 'text-amber-600 dark:text-amber-400';
 });
 </script>
 
@@ -39,10 +43,10 @@ const hasInvoicedAmount = computed(() => {
         <FinancialSummaryCard
             :title-key="'finance.outstanding_balance'"
             :hint-key="'finance.outstanding_balance_hint'"
-            :value="hasInvoicedAmount ? formatUsd(summary.outstandingBalance) : $t('finance.not_available')"
+            :value="formatUsd(summary.outstandingBalance)"
             :icon="CircleDollarSign"
             icon-class="bg-amber-500/15 text-amber-600 dark:text-amber-400"
-            value-class="text-amber-600 dark:text-amber-400"
+            :value-class="outstandingValueClass"
         />
     </div>
 </template>

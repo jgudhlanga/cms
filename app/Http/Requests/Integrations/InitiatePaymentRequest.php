@@ -5,8 +5,10 @@ namespace App\Http\Requests\Integrations;
 use App\Enums\Integrations\PaymentCurrencyCodeEnum;
 use App\Enums\Shared\FeeTypeEnum;
 use App\Models\Shared\FeeType;
+use App\Models\Students\StudentApplication;
 use App\Services\HMS\AccommodationPaymentQuoteService;
 use App\Services\HMS\StudentAccommodationFeeService;
+use App\Services\Students\StudentFeeClearanceService;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Validator;
 
@@ -50,6 +52,12 @@ class InitiatePaymentRequest extends FormRequest
 
             if ($feeTypeEnum?->isAccommodationFee()) {
                 $this->validateAccommodationPaymentQuote($validator);
+
+                return;
+            }
+
+            if ($feeTypeEnum === FeeTypeEnum::TUITION_FEE) {
+                $this->validateTuitionPaymentQuote($validator);
             }
         });
     }
@@ -95,6 +103,45 @@ class InitiatePaymentRequest extends FormRequest
 
         if (bccomp((string) $this->input('amount'), $quote['paymentAmount'], 2) !== 0) {
             $validator->errors()->add('amount', __('students.accommodation_payment_quote_invalid'));
+        }
+    }
+
+    private function validateTuitionPaymentQuote(Validator $validator): void
+    {
+        if ((string) $this->input('currencyCode') !== PaymentCurrencyCodeEnum::Usd->value) {
+            $validator->errors()->add('currencyCode', __('trans.tuition_fee_payment_currency_invalid'));
+        }
+
+        $student = $this->user()?->studentProfile;
+
+        if ($student === null) {
+            $validator->errors()->add('amount', __('trans.tuition_fee_payment_quote_invalid'));
+
+            return;
+        }
+
+        $ledgerableId = (int) $this->input('ledgerableId');
+        $studentApplication = StudentApplication::query()
+            ->with('student')
+            ->find($ledgerableId);
+
+        if ($studentApplication === null || (int) $studentApplication->student_id !== (int) $student->id) {
+            $validator->errors()->add('ledgerableId', __('trans.ledgerable_required'));
+
+            return;
+        }
+
+        $fees = app(StudentFeeClearanceService::class)->evaluate($student);
+        $outstanding = number_format((float) ($fees['outstanding'] ?? 0), 2, '.', '');
+
+        if ((float) $outstanding < 0.01) {
+            $validator->errors()->add('amount', __('trans.tuition_fee_nothing_outstanding'));
+
+            return;
+        }
+
+        if (bccomp((string) $this->input('amount'), $outstanding, 2) !== 0) {
+            $validator->errors()->add('amount', __('trans.tuition_fee_payment_quote_invalid'));
         }
     }
 }

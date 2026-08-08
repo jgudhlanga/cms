@@ -67,6 +67,8 @@ use App\Services\Students\RegistrationLevelOptionsService;
 use App\Services\Students\RegistrationProgrammeAvailabilityService;
 use App\Services\Students\ReturningStudentApplicationPrefillService;
 use App\Services\Students\ReturningStudentContextService;
+use App\Services\Students\StudentExamResultAccessService;
+use App\Services\Students\StudentFeeClearanceService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -763,9 +765,23 @@ class PortalController extends Controller
     /**
      * @throws AuthorizationException
      */
-    public function profileFinancials(): Response
-    {
-        return $this->renderProfileSection('financials', 'manageStudentFinancialRecords');
+    public function profileFinancials(
+        StudentFeeClearanceService $feeClearanceService,
+        StudentExamResultAccessService $examResultAccessService,
+    ): Response {
+        $this->authorize('manageStudentFinancialRecords');
+
+        $student = $this->profileStudent();
+        $accountsCleared = $examResultAccessService->clearanceStatus($student)['accountsCleared'];
+
+        return Inertia::render('portal/student/profile/Section', [
+            'student' => StudentResource::make($student),
+            'activeTab' => 'financials',
+            'feeSummary' => $feeClearanceService->evaluate($student),
+            'payRoute' => $accountsCleared
+                ? null
+                : route('portal.profile.financials.pay', ['returnTo' => 'financials']),
+        ]);
     }
 
     /**

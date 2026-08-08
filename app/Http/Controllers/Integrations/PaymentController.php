@@ -26,11 +26,15 @@ use App\Services\HMS\StudentAccommodationFeeService;
 use App\Services\Integrations\LedgerEmailSearchService;
 use App\Services\Integrations\OnlinePaymentContextResolver;
 use App\Services\Students\ApplicationFeeService;
+use App\Services\Students\StudentExamResultAccessService;
+use App\Services\Students\StudentFeeClearanceService;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Redirector;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
@@ -47,7 +51,7 @@ class PaymentController extends Controller
     /**
      * @throws ConnectionException
      */
-    public function initiatePayment(InitiatePaymentRequest $request): array
+    public function initiatePayment(InitiatePaymentRequest $request): array|JsonResponse
     {
         $context = $this->paymentContextResolver->resolveForInitiate($request);
         $orderReference = $request->orderReference;
@@ -88,20 +92,29 @@ class PaymentController extends Controller
         $data = $response->json() ?? [];
         $tenantId = (int) ($context->ledgerable->tenant_id ?? $request->user()->tenant_id);
 
-        if (! empty($data['paymentUrl'])) {
-            PaymentHelper::createInvoiceEntry(
-                PaymentHelper::assembleInvoiceData($request, $data, $tenantId),
-                $context->ledgerable,
-                $context->intakePeriod,
-                studentApplicationId: $context->studentApplicationId,
-            );
-            PaymentHelper::createReceiptEntry(
-                PaymentHelper::assembleReceiptData($request, $data, $tenantId),
-                $context->ledgerable,
-                $context->intakePeriod,
-                studentApplicationId: $context->studentApplicationId,
-            );
+        if (empty($data['paymentUrl'])) {
+            $gatewayMessage = $data['responseMessage'] ?? null;
+
+            return response()->json([
+                'responseMessage' => filled($gatewayMessage)
+                    ? $gatewayMessage
+                    : __('trans.payment_error_description'),
+                'responseCode' => $data['responseCode'] ?? null,
+            ], 502);
         }
+
+        PaymentHelper::createInvoiceEntry(
+            PaymentHelper::assembleInvoiceData($request, $data, $tenantId),
+            $context->ledgerable,
+            $context->intakePeriod,
+            studentApplicationId: $context->studentApplicationId,
+        );
+        PaymentHelper::createReceiptEntry(
+            PaymentHelper::assembleReceiptData($request, $data, $tenantId),
+            $context->ledgerable,
+            $context->intakePeriod,
+            studentApplicationId: $context->studentApplicationId,
+        );
 
         return $data;
     }
@@ -158,7 +171,7 @@ class PaymentController extends Controller
         $this->assertValidPaymentWebhook($request);
 
         $ledgerRequest = UpdateLedgerRequest::createFrom($request);
-        $ledgerRequest->setContainer(app())->setRedirector(app('redirect'))->validateResolved();
+        $ledgerRequest->setContainer(app())->setRedirector(app(Redirector::class))->validateResolved();
 
         $this->updateLedgerRecords($ledgerRequest);
 
@@ -345,6 +358,7 @@ class PaymentController extends Controller
             $orderReference, $paymentReference, $paymentStatus,
         ] = $this->extractFilters($request);
 
+        /** @var Collection<int, Ledger> $records */
         $records = Ledger::where('system_reference', $orderReference)->get();
 
         if (! $records->isEmpty()) {
@@ -427,6 +441,66 @@ class PaymentController extends Controller
             'levelName' => $applicationFee->level?->name,
             'intakeName' => $applicationFee->intakePeriod?->name,
             'applicationStep' => 'fee',
+        ]);
+    }
+
+    /**
+     * @throws AuthorizationException
+     */
+    public function tuitionFeePaymentOptions(
+        StudentFeeClearanceService $feeClearanceService,
+        StudentExamResultAccessService $examResultAccessService,
+    ): Response|RedirectResponse {
+        $this->authorize('manageStudentFinancialRecords');
+
+        $student = $this->profileStudent();
+        $student->loadMissing(['user', 'latestApplication']);
+
+        $studentApplication = $student->latestApplication;
+
+        if (! ($studentApplication instanceof StudentApplication)) {
+            return redirect()
+                ->route('portal.profile.financials')
+                ->with('error', __('trans.tuition_fee_payment_unavailable'));
+        }
+
+        $feeType = PaymentHelper::getFeeTypeBySlug(FeeTypeEnum::TUITION_FEE->slug());
+
+        if ($feeType === null) {
+            return redirect()
+                ->route('portal.profile.financials')
+                ->with('error', __('trans.tuition_fee_payment_unavailable'));
+        }
+
+        if ($examResultAccessService->clearanceStatus($student)['accountsCleared']) {
+            return redirect()
+                ->route('portal.profile.financials')
+                ->with('error', __('trans.tuition_fee_accounts_cleared'));
+        }
+
+        $fees = $feeClearanceService->evaluate($student);
+
+        if ((float) $fees['outstanding'] < 0.01 || ! ($fees['hasStudentNumber'] ?? false)) {
+            return redirect()
+                ->route('portal.profile.financials')
+                ->with('error', __('trans.tuition_fee_nothing_outstanding'));
+        }
+
+        return Inertia::render('portal/student/TuitionFeePaymentOptions', [
+            'student' => [
+                'id' => $student->id,
+                'name' => $student->user?->full_name,
+                'studentNumber' => $student->student_number,
+            ],
+            'tuitionFee' => [
+                'feeTypeId' => $feeType->id,
+                'ledgerableId' => $studentApplication->id,
+                'paymentAmount' => number_format((float) $fees['outstanding'], 2, '.', ''),
+                'currencyCode' => PaymentCurrencyCodeEnum::Usd->value,
+                'itemName' => $feeType->name,
+            ],
+            'feeSummary' => $fees,
+            'returnTo' => request()->string('returnTo')->toString() ?: 'financials',
         ]);
     }
 

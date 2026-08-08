@@ -9,6 +9,8 @@ export type StudentProfileTabValue =
     | 'financials'
     | 'accommodations'
     | 'documents'
+    | 'exam_results'
+    | 'clearance'
     | 'authentication';
 
 export type StudentProfileTabDefinition = {
@@ -24,13 +26,15 @@ export type StudentProfileTabContext = 'admin' | 'portal';
 const adminStudentAbilities = ['view:students', 'manageStudentMetadata:admin'] as const;
 const adminFinanceAbilities = ['view:finances', 'viewAny:finances'] as const;
 
-const portalRouteNames: Record<StudentProfileTabValue, string> = {
+const portalRouteNames: Record<StudentProfileTabValue, string | undefined> = {
     basic_info: 'portal.profile.personal-information',
     programs: 'portal.profile.programs',
     applications: 'portal.profile.applications',
     financials: 'portal.profile.financials',
     accommodations: 'portal.profile.accommodations',
     documents: 'portal.profile.documents',
+    exam_results: undefined,
+    clearance: undefined,
     authentication: 'portal.profile.authentication',
 };
 
@@ -66,6 +70,21 @@ const tabShowChecks: Record<
     documents: {
         admin: () => hasAbility([...adminStudentAbilities]),
         portal: () => hasAbility('manageOwnStudentPersonalDetails:students'),
+    },
+    exam_results: {
+        admin: () => hasAbility('viewStudentExamResults:students'),
+        portal: () => false,
+    },
+    clearance: {
+        admin: () =>
+            hasAbility([
+                'student-clearance:accounts',
+                'student-clearance:library',
+                'student-clearance:security',
+                'student-clearance:hostel',
+                'student-clearance:department',
+            ]),
+        portal: () => false,
     },
     authentication: {
         admin: () => hasAbility(['manageOwnStudentPersonalDetails:students', 'root:manage']),
@@ -109,6 +128,18 @@ const studentProfileTabCatalog: Omit<StudentProfileTabDefinition, 'show'>[] = [
         icon: IconName.files,
         routeName: portalRouteNames.documents,
         transLabel: () => trans_choice('students.document', 2),
+    },
+    {
+        value: 'exam_results',
+        icon: IconName.file_search,
+        routeName: portalRouteNames.exam_results,
+        transLabel: () => trans('examinations.exam_results_title'),
+    },
+    {
+        value: 'clearance',
+        icon: IconName.check_done,
+        routeName: portalRouteNames.clearance,
+        transLabel: () => trans('trans.clearance'),
     },
     {
         value: 'authentication',

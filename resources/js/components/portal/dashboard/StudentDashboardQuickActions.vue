@@ -16,6 +16,7 @@ const accentByKey: Record<string, string> = {
     accommodations: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400',
     documents: 'bg-blue-500/15 text-blue-600 dark:text-blue-400',
     o_levels: 'bg-red-500/15 text-red-600 dark:text-red-400',
+    exam_results: 'bg-indigo-500/15 text-indigo-600 dark:text-indigo-400',
     authentication: 'bg-sky-500/15 text-sky-600 dark:text-sky-400',
 };
 
@@ -43,6 +44,16 @@ const quickActions = computed(() => {
         }]
         : [];
 
+    const examResultsAction = hasAbility('viewOwnExamResults:students')
+        ? [{
+            key: 'exam_results',
+            label: 'Exam Results',
+            icon: icons[IconName.file_search],
+            accent: accentByKey.exam_results,
+            url: route('portal.exam-results'),
+        }]
+        : [];
+
     const authTab = tabs.find((tab) => tab.value === 'authentication');
     const authAction = authTab
         ? [{
@@ -54,7 +65,7 @@ const quickActions = computed(() => {
         }]
         : [];
 
-    return [...profileActions, ...oLevelAction, ...authAction];
+    return [...profileActions, ...oLevelAction, ...examResultsAction, ...authAction];
 });
 
 const openAction = (url: string): void => {

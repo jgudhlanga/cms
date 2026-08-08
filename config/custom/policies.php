@@ -72,6 +72,7 @@ return [
         'manageStudentContacts',
         'manageStudentFinancialRecords',
         'manageStudentAcademicRecords',
+        'viewOwnExamResults',
         'manageStudentAccommodationDetails',
     ],
 

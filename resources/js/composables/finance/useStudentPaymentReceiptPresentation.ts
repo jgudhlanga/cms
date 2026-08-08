@@ -219,13 +219,13 @@ export function useStudentPaymentReceiptPresentation(context: MaybeRefOrGetter<S
 
     const formatRunningBalance = (receipt: ParsedStudentPaymentReceipt): string => {
         const balance = receipt.attributes.runningBalance ?? receipt.attributes.clearedRunningBalance;
-        const numeric = toAmount(balance);
+        const trimmed = String(balance ?? '').trim();
 
-        if (numeric > 0 || (balance && String(balance).trim() !== '')) {
-            return formatLedgerUsdAmount(numeric > 0 ? numeric : toAmount(balance));
+        if (trimmed === '') {
+            return notAvailable();
         }
 
-        return notAvailable();
+        return formatUsdAmount(toAmount(balance));
     };
 
     return {

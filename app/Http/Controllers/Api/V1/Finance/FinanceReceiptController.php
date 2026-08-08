@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1\Finance;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Finance\StudentPaymentReceiptResource;
+use App\Http\Resources\Finance\StudentStatementLineResource;
 use App\Models\Integrations\Banks\ZBBankStatement;
 use App\Models\Students\Student;
 use App\Models\Users\User;
@@ -36,7 +37,7 @@ class FinanceReceiptController extends Controller
 
         $ledger = $this->studentLedgerService->build($student);
 
-        return StudentPaymentReceiptResource::collection($ledger['entries'])->additional([
+        return StudentStatementLineResource::collection($ledger['entries'])->additional([
             'summary' => $ledger['summary'],
         ]);
     }
