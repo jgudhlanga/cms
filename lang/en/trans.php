@@ -1437,6 +1437,7 @@ return [
     'exam_results_outstanding' => 'Outstanding',
     'exam_results_fully_paid' => 'Fees are fully paid. You can look up your results.',
     'exam_results_not_fully_paid' => 'Pay outstanding fees to unlock exam results.',
+    'exam_results_apprentice_exempt' => 'School fees for apprentices are paid in bulk by the employer. You can look up your results.',
     'exam_results_no_student_number' => 'A student number is required to match bank payments.',
     'exam_results_id_invalid_banner' => 'Your national ID number appears invalid. Correct it before viewing exam results.',
     'clearance' => 'Period end clearance',

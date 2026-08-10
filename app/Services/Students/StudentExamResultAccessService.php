@@ -7,6 +7,7 @@ namespace App\Services\Students;
 use App\Enums\AcademicCalendars\AcademicCalendarTypeEnum;
 use App\Enums\Students\StudentClearanceSection;
 use App\Models\Students\Student;
+use App\Models\Students\StudentApprentice;
 use App\Models\Students\StudentClearance;
 use App\Models\Students\StudentEnrolment;
 use App\Rules\ZimbabweanIdNumber;
@@ -20,12 +21,13 @@ class StudentExamResultAccessService
     public function __construct(
         private readonly InstitutionFeatureService $featureService,
         private readonly StudentFeeClearanceService $feeClearanceService,
+        private readonly ReturningStudentContextService $returningStudentContextService,
     ) {}
 
     /**
      * @return array{
      *     canViewResults: bool,
-     *     gate: 'clearance'|'fees',
+     *     gate: 'clearance'|'fees'|'apprentice',
      *     allowOnlineClearance: bool,
      *     fees: array<string, mixed>|null,
      *     clearance: array<string, mixed>|null,
@@ -79,6 +81,21 @@ class StudentExamResultAccessService
             ];
         }
 
+        if ($this->isApprenticeExemptFromSchoolFees($student, $calendarYear)) {
+            return [
+                'canViewResults' => ! $idValidation['needsCorrection'],
+                'gate' => 'apprentice',
+                'allowOnlineClearance' => false,
+                'fees' => null,
+                'clearance' => $clearanceForDisplay,
+                'idValidation' => $idValidation,
+                'academicCalendarId' => $enrolment?->academic_calendar_id,
+                'calendarYear' => $calendarYear,
+                'semesterId' => $enrolment?->semester_id,
+                'calendarType' => $calendarType,
+            ];
+        }
+
         $fees = $this->feeClearanceService->evaluate($student);
 
         return [
@@ -93,6 +110,28 @@ class StudentExamResultAccessService
             'semesterId' => $enrolment?->semester_id,
             'calendarType' => $calendarType,
         ];
+    }
+
+    /**
+     * Current-year apprentices are exempt from the exam-results school-fees gate
+     * (employer pays tuition in bulk). Does not alter fee clearance / payment flows.
+     */
+    private function isApprenticeExemptFromSchoolFees(Student $student, ?int $calendarYear): bool
+    {
+        if ($calendarYear !== null) {
+            if ($student->relationLoaded('apprentices')) {
+                return $student->apprentices->contains(
+                    fn (StudentApprentice $apprentice): bool => (int) $apprentice->calendar_year === $calendarYear
+                );
+            }
+
+            return StudentApprentice::query()
+                ->where('student_id', $student->id)
+                ->where('calendar_year', $calendarYear)
+                ->exists();
+        }
+
+        return $this->returningStudentContextService->currentApprenticeForStudentProfile($student) instanceof StudentApprentice;
     }
 
     /**

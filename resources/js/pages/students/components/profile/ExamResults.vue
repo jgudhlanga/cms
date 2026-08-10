@@ -16,7 +16,7 @@ import { computed, onMounted, ref } from 'vue';
 
 type AccessPayload = {
     canViewResults: boolean;
-    gate: 'clearance' | 'fees';
+    gate: 'clearance' | 'fees' | 'apprentice';
     allowOnlineClearance: boolean;
     fees: {
         tuition: number;
@@ -311,7 +311,13 @@ onMounted(fetchIndex);
         </template>
 
         <template v-else-if="access">
-            <div v-if="access.gate === 'fees' && access.fees" class="rounded-lg border border-border p-4 space-y-3">
+            <BaseAlert
+                v-if="access.gate === 'apprentice'"
+                :type="TypeVariant.success"
+                :description="$t('trans.exam_results_apprentice_exempt')"
+            />
+
+            <div v-else-if="access.gate === 'fees' && access.fees" class="rounded-lg border border-border p-4 space-y-3">
                 <h2 class="text-base font-semibold">{{ $t('trans.exam_results_fee_status') }}</h2>
                 <BaseAlert
                     v-if="!access.fees.hasStudentNumber"
