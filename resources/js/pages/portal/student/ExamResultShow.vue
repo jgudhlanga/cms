@@ -249,10 +249,17 @@ const printStatement = () => {
         </div>
 
         <div v-if="allowed" class="exam-results-statement">
+            <p class="mb-3 text-xs font-medium text-red-600 print:mb-2 print:text-red-600">
+                {{ $t('examinations.exam_results_unofficial_use') }}
+            </p>
+
             <div class="mb-3 hidden rounded-lg border border-black p-3 print:block">
                 <h1 class="text-base font-bold">{{ $t('examinations.exam_results_title') }}</h1>
                 <p class="text-sm">
                     {{ summary.candidateNumber }} · {{ summary.session }} · {{ summary.calendarYear }}
+                </p>
+                <p class="mt-2 text-xs font-medium text-red-600 print:text-red-600">
+                    {{ $t('examinations.exam_results_unofficial_use') }}
                 </p>
                 <p v-if="summaryComment" class="mt-1">
                     <span class="text-[11px] text-muted-foreground">{{ $t('examinations.course_comment') }}:</span>

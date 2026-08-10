@@ -71,6 +71,54 @@ function createPortalExamStudent(array $overrides = []): array
     return compact('tenant', 'user', 'student');
 }
 
+/**
+ * @return array{surname: string|null, first_names: string|null}
+ */
+function examinationIdentityForStudent(Student $student, bool $withMiddleName = true): array
+{
+    $student->loadMissing('user');
+
+    $firstNames = trim(implode(' ', array_filter([
+        $student->user?->first_name,
+        $withMiddleName ? $student->user?->middle_name : null,
+    ])));
+
+    return [
+        'surname' => $student->user?->last_name,
+        'first_names' => $firstNames !== '' ? $firstNames : $student->user?->first_name,
+    ];
+}
+
+function mockPortalExamResultAccess(): void
+{
+    test()->mock(StudentExamResultAccessService::class, function ($mock): void {
+        $mock->shouldReceive('evaluate')->andReturn([
+            'canViewResults' => true,
+            'gate' => 'fees',
+            'allowOnlineClearance' => false,
+            'fees' => [
+                'tuition' => 100,
+                'autoCardFee' => 0,
+                'partTimeLevy' => 0,
+                'expectedTotal' => 100,
+                'paidFromBank' => 100,
+                'paidFromLedger' => 0,
+                'paidTotal' => 100,
+                'outstanding' => 0,
+                'isFullyPaid' => true,
+                'breakdown' => [],
+                'hasStudentNumber' => true,
+                'source' => 'enrolment',
+            ],
+            'clearance' => null,
+            'idValidation' => ['required' => false, 'isValid' => true, 'needsCorrection' => false],
+            'academicCalendarId' => null,
+            'semesterId' => null,
+        ]);
+        $mock->shouldReceive('resolveEnrolmentContext')->andReturn(null);
+    });
+}
+
 test('guest cannot access portal exam results', function () {
     $this->get(route('portal.exam-results'))->assertRedirect();
 });
@@ -295,7 +343,7 @@ test('successful lookup redirects to the saved session show page', function () {
         $mock->shouldReceive('resolveEnrolmentContext')->andReturn(null);
     });
 
-    ExaminationResult::query()->create([
+    ExaminationResult::query()->create(array_merge([
         'tenant_id' => $tenant->id,
         'student_id' => $student->id,
         'candidate_number' => 'LOOKUP01',
@@ -305,7 +353,7 @@ test('successful lookup redirects to the saved session show page', function () {
         'session' => '2026-06-01',
         'session_date' => '2026-06-01',
         'course_comment' => 'AWARD',
-    ]);
+    ], examinationIdentityForStudent($student)));
 
     $response = $this->actingAs($user)
         ->post(route('portal.exam-results.lookup'), [
@@ -319,6 +367,130 @@ test('successful lookup redirects to the saved session show page', function () {
 
     expect($saved)->not->toBeNull();
     $response->assertRedirect(route('portal.exam-results.show', $saved));
+});
+
+test('portal lookup fails when profile names do not match examination record', function () {
+    ['user' => $user, 'student' => $student, 'tenant' => $tenant] = createPortalExamStudent([
+        'student_number' => 'NAME-MIS',
+    ]);
+
+    mockPortalExamResultAccess();
+
+    ExaminationResult::query()->create([
+        'tenant_id' => $tenant->id,
+        'student_id' => null,
+        'candidate_number' => 'NAME-MIS',
+        'surname' => 'Different',
+        'first_names' => 'Person',
+        'subject_code' => 'SUB1',
+        'subject' => 'Maths',
+        'grade' => 'P',
+        'session' => '2026-06-01',
+        'session_date' => '2026-06-01',
+        'course_comment' => 'AWARD',
+    ]);
+
+    $this->actingAs($user)
+        ->from(route('portal.exam-results'))
+        ->post(route('portal.exam-results.lookup'), [
+            'candidate_number' => 'NAME-MIS',
+        ])
+        ->assertRedirect(route('portal.exam-results'))
+        ->assertSessionHasErrors([
+            'candidate_number' => __('trans.exam_results_name_mismatch'),
+        ]);
+});
+
+test('portal lookup succeeds when examination first names include middle name', function () {
+    ['user' => $user, 'student' => $student, 'tenant' => $tenant] = createPortalExamStudent([
+        'student_number' => 'MIDNAME1',
+    ]);
+
+    mockPortalExamResultAccess();
+
+    ExaminationResult::query()->create(array_merge([
+        'tenant_id' => $tenant->id,
+        'student_id' => null,
+        'candidate_number' => 'MIDNAME1',
+        'subject_code' => 'SUB1',
+        'subject' => 'Maths',
+        'grade' => 'P',
+        'session' => '2026-06-01',
+        'session_date' => '2026-06-01',
+        'course_comment' => 'AWARD',
+    ], examinationIdentityForStudent($student)));
+
+    $this->actingAs($user)
+        ->post(route('portal.exam-results.lookup'), [
+            'candidate_number' => 'MIDNAME1',
+        ])
+        ->assertRedirect();
+
+    expect(
+        StudentExamResult::query()
+            ->where('student_id', $student->id)
+            ->where('candidate_number', 'MIDNAME1')
+            ->exists()
+    )->toBeTrue();
+});
+
+test('portal lookup backfills student_id on unlinked examination rows', function () {
+    ['user' => $user, 'student' => $student, 'tenant' => $tenant] = createPortalExamStudent([
+        'student_number' => 'BACKFILL',
+    ]);
+
+    mockPortalExamResultAccess();
+
+    $examinationResult = ExaminationResult::query()->create(array_merge([
+        'tenant_id' => $tenant->id,
+        'student_id' => null,
+        'candidate_number' => 'BACKFILL',
+        'subject_code' => 'SUB1',
+        'subject' => 'Maths',
+        'grade' => 'P',
+        'session' => '2026-06-01',
+        'session_date' => '2026-06-01',
+        'course_comment' => 'AWARD',
+    ], examinationIdentityForStudent($student)));
+
+    $this->actingAs($user)
+        ->post(route('portal.exam-results.lookup'), [
+            'candidate_number' => 'BACKFILL',
+        ])
+        ->assertRedirect();
+
+    expect($examinationResult->fresh()->student_id)->toBe($student->id);
+});
+
+test('portal lookup fails when candidate is linked to another student', function () {
+    ['user' => $user, 'tenant' => $tenant] = createPortalExamStudent([
+        'student_number' => 'LINKED1',
+    ]);
+    ['student' => $otherStudent] = createPortalExamStudent();
+
+    mockPortalExamResultAccess();
+
+    ExaminationResult::query()->create(array_merge([
+        'tenant_id' => $tenant->id,
+        'student_id' => $otherStudent->id,
+        'candidate_number' => 'LINKED1',
+        'subject_code' => 'SUB1',
+        'subject' => 'Maths',
+        'grade' => 'P',
+        'session' => '2026-06-01',
+        'session_date' => '2026-06-01',
+        'course_comment' => 'AWARD',
+    ], examinationIdentityForStudent($otherStudent)));
+
+    $this->actingAs($user)
+        ->from(route('portal.exam-results'))
+        ->post(route('portal.exam-results.lookup'), [
+            'candidate_number' => 'LINKED1',
+        ])
+        ->assertRedirect(route('portal.exam-results'))
+        ->assertSessionHasErrors([
+            'candidate_number' => __('trans.exam_results_candidate_mismatch'),
+        ]);
 });
 
 test('unmatched candidate lookup redirects back with candidate number errors', function () {

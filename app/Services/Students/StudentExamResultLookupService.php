@@ -264,6 +264,19 @@ class StudentExamResultLookupService
             ]);
         }
 
+        if (! $this->namesMatchStudent($student, $results)) {
+            Log::warning('exam_results.candidate_name_mismatch', [
+                'student_id' => $student->id,
+                'candidate_number' => $candidateNumber,
+            ]);
+
+            throw ValidationException::withMessages([
+                'candidate_number' => [__('trans.exam_results_name_mismatch')],
+            ]);
+        }
+
+        $this->linkExaminationResultsToStudent($student, $candidateNumber);
+
         $latestSession = (string) $results->first()?->session;
         $sessionResults = $results->where('session', $latestSession)->values();
         $summary = $this->upsertSummary($student, $candidateNumber, $sessionResults);
@@ -334,5 +347,65 @@ class StudentExamResultLookupService
         }
 
         return (int) Carbon::now()->year;
+    }
+
+    /**
+     * @param  Collection<int, ExaminationResult>  $results
+     */
+    private function namesMatchStudent(Student $student, Collection $results): bool
+    {
+        $student->loadMissing('user');
+        $user = $student->user;
+
+        if ($user === null) {
+            return false;
+        }
+
+        $studentLastName = $this->normalizeName((string) $user->last_name);
+        $studentFirstName = $this->normalizeName((string) $user->first_name);
+        $studentFirstAndMiddle = $this->normalizeName(trim(implode(' ', array_filter([
+            $user->first_name,
+            $user->middle_name,
+        ]))));
+
+        if ($studentLastName === '' || ($studentFirstName === '' && $studentFirstAndMiddle === '')) {
+            return false;
+        }
+
+        $identity = $results->first(
+            fn (ExaminationResult $row): bool => $this->normalizeName((string) ($row->surname ?? '')) !== ''
+                && $this->normalizeName((string) ($row->first_names ?? '')) !== ''
+        );
+
+        if (! $identity instanceof ExaminationResult) {
+            return false;
+        }
+
+        $examSurname = $this->normalizeName((string) $identity->surname);
+        $examFirstNames = $this->normalizeName((string) $identity->first_names);
+
+        if ($examSurname !== $studentLastName) {
+            return false;
+        }
+
+        return $examFirstNames === $studentFirstName
+            || ($studentFirstAndMiddle !== '' && $examFirstNames === $studentFirstAndMiddle);
+    }
+
+    private function normalizeName(string $value): string
+    {
+        $normalized = preg_replace('/\s+/u', ' ', trim($value));
+
+        return mb_strtolower((string) $normalized);
+    }
+
+    private function linkExaminationResultsToStudent(Student $student, string $candidateNumber): void
+    {
+        ExaminationResult::query()
+            ->withoutGlobalScopes()
+            ->where('tenant_id', $student->tenant_id)
+            ->where('candidate_number', $candidateNumber)
+            ->whereNull('student_id')
+            ->update(['student_id' => $student->id]);
     }
 }

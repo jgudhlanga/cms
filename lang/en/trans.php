@@ -1428,6 +1428,8 @@ return [
     'exam_results_candidate_required' => 'Candidate number is required.',
     'exam_results_not_found' => 'No results were found for that candidate number.',
     'exam_results_candidate_mismatch' => 'That candidate number is linked to a different student record.',
+    'exam_results_name_mismatch' => 'Your profile first name and surname do not match the examination record for that candidate number. Please correct your names on your profile, then try again.',
+    'exam_results_unofficial_use' => 'These results are not for official use.',
     'exam_results_fee_status' => 'Tuition fee status',
     'exam_results_clearance_status' => 'Period end clearance',
     'exam_results_expected_total' => 'Expected total',
