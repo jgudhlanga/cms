@@ -3,6 +3,8 @@ import BaseAlert from '@/components/core/alert/BaseAlert.vue';
 import { BaseButton } from '@/components/core/button';
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import InvalidIdNumberBanner from '@/components/students/profile/InvalidIdNumberBanner.vue';
+import { ButtonSize } from '@/enums/buttons';
+import { ColorVariant } from '@/enums/colors';
 import { TypeVariant } from '@/enums/type-variants';
 import {
     formatFeeClearanceUsd,
@@ -13,6 +15,8 @@ import { AuthObject } from '@/types/data-pagination';
 import { Student } from '@/types/students';
 import { BreadcrumbItemInterface } from '@/types/ui';
 import { Head, Link } from '@inertiajs/vue3';
+import { Printer } from '@lucide/vue';
+import { computed } from 'vue';
 
 type AccessPayload = {
     canViewResults: boolean;
@@ -78,6 +82,40 @@ const canPayOutstanding = () =>
     && !!props.access.fees?.hasStudentNumber
     && Number(props.access.fees?.outstanding ?? 0) > 0;
 
+const SUCCESS_COMMENTS = new Set(['AWARD', 'PROCEED']);
+const NEGATIVE_COMMENTS = new Set(['ABSENT', 'DEFERRED', 'DISQUALIFIED', 'REFERRED']);
+
+const COMMENT_CHIP_BASE =
+    'inline-flex rounded-md px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide';
+
+const normalizeCourseComment = (value: string | null | undefined): string | null => {
+    const normalized = value?.trim();
+    return normalized ? normalized : null;
+};
+
+const courseCommentToneClass = (value: string | null | undefined): string => {
+    const normalized = normalizeCourseComment(value)?.toUpperCase();
+    if (!normalized) {
+        return 'bg-muted text-foreground';
+    }
+    if (SUCCESS_COMMENTS.has(normalized)) {
+        return 'bg-emerald-100 text-emerald-900 dark:bg-emerald-950 dark:text-emerald-100';
+    }
+    if (NEGATIVE_COMMENTS.has(normalized)) {
+        return 'bg-red-100 text-red-900 dark:bg-red-950 dark:text-red-100';
+    }
+    return 'bg-muted text-foreground';
+};
+
+const summaryComment = computed(() => normalizeCourseComment(props.summary.comment));
+
+const subjectRows = computed(() =>
+    props.subjects.map((row) => ({
+        ...row,
+        displayComment: normalizeCourseComment(row.courseComment),
+    })),
+);
+
 const printStatement = () => {
     window.print();
 };
@@ -86,7 +124,7 @@ const printStatement = () => {
 <template>
     <Head :title="`${$t('examinations.exam_results_title')} — ${summary.session}`" />
     <PageContainer :breadcrumbs="breadcrumbs" :back-url="route('portal.exam-results')">
-        <div class="print:hidden space-y-4 mb-4">
+        <div class="print:hidden mb-3 space-y-3">
             <InvalidIdNumberBanner :student="student" />
 
             <BaseAlert
@@ -101,7 +139,10 @@ const printStatement = () => {
                     :description="$t('trans.exam_results_access_denied')"
                 />
 
-                <div v-if="access.gate === 'fees' && access.fees" class="rounded-xl border border-border bg-card p-4 space-y-2 text-sm">
+                <div
+                    v-if="access.gate === 'fees' && access.fees"
+                    class="space-y-1.5 rounded-lg border border-border bg-card p-3 text-sm"
+                >
                     <p class="font-medium">{{ $t('trans.exam_results_fee_status') }}</p>
                     <ul class="space-y-1">
                         <li
@@ -137,7 +178,7 @@ const printStatement = () => {
                             <span>{{ $t('trans.exam_results_paid_total') }}</span>
                             <span class="font-mono">{{ money(access.fees.paidTotal) }}</span>
                         </li>
-                        <li class="flex justify-between gap-4 border-t pt-2 font-medium">
+                        <li class="flex justify-between gap-4 border-t pt-1.5 font-medium">
                             <span>{{ $t('trans.exam_results_outstanding') }}</span>
                             <span class="font-mono">{{ money(access.fees.outstanding) }}</span>
                         </li>
@@ -154,9 +195,12 @@ const printStatement = () => {
                     <p v-if="logBookFeeGapNotice" class="text-xs text-muted-foreground">{{ logBookFeeGapNotice }}</p>
                 </div>
 
-                <div v-else-if="access.gate === 'clearance' && access.clearance" class="rounded-xl border border-border bg-card p-4 space-y-2">
+                <div
+                    v-else-if="access.gate === 'clearance' && access.clearance"
+                    class="space-y-1.5 rounded-lg border border-border bg-card p-3"
+                >
                     <p class="text-sm font-medium">{{ $t('trans.exam_results_pending_offices') }}</p>
-                    <ul class="space-y-2 text-sm">
+                    <ul class="space-y-1.5 text-sm">
                         <li
                             v-for="section in access.clearance.sections"
                             :key="section.key"
@@ -178,70 +222,103 @@ const printStatement = () => {
                 </Link>
             </template>
 
-            <div v-else class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div v-else class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div class="min-w-0">
-                    <h2 class="text-lg font-semibold leading-tight">{{ summary.session }}</h2>
-                    <p class="mt-1 text-sm text-muted-foreground wrap-break-word">
-                        {{ summary.candidateNumber }} · {{ summary.calendarYear }}
-                        <span v-if="summary.comment"> · {{ summary.comment }}</span>
-                    </p>
+                    <h2 class="text-base font-semibold leading-tight">{{ summary.session }}</h2>
+                    <div class="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
+                        <span class="wrap-break-word">{{ summary.candidateNumber }} · {{ summary.calendarYear }}</span>
+                        <span
+                            v-if="summaryComment"
+                            :class="[COMMENT_CHIP_BASE, courseCommentToneClass(summaryComment)]"
+                        >
+                            {{ summaryComment }}
+                        </span>
+                    </div>
                 </div>
-                <BaseButton type="button" class="w-full sm:w-auto" @click="printStatement">
-                    {{ $t('examinations.exam_results_print') }}
+                <BaseButton
+                    type="button"
+                    :size="ButtonSize.sm"
+                    :variant="ColorVariant.danger"
+                    class="w-full shrink-0 sm:w-auto"
+                    @click="printStatement"
+                >
+                    <Printer class="h-3.5 w-3.5" aria-hidden="true" />
+                    {{ $t('finance.print_statement') }}
                 </BaseButton>
             </div>
         </div>
 
-        <div v-if="allowed" class="exam-results-statement space-y-3">
-            <div class="hidden print:block rounded-xl border border-black p-4">
-                <h1 class="text-lg font-bold">{{ $t('examinations.exam_results_title') }}</h1>
+        <div v-if="allowed" class="exam-results-statement">
+            <div class="mb-3 hidden rounded-lg border border-black p-3 print:block">
+                <h1 class="text-base font-bold">{{ $t('examinations.exam_results_title') }}</h1>
                 <p class="text-sm">
                     {{ summary.candidateNumber }} · {{ summary.session }} · {{ summary.calendarYear }}
                 </p>
-                <p v-if="summary.comment" class="text-sm font-medium">
-                    {{ $t('examinations.course_comment') }}: {{ summary.comment }}
+                <p v-if="summaryComment" class="mt-1">
+                    <span class="text-[11px] text-muted-foreground">{{ $t('examinations.course_comment') }}:</span>
+                    <span
+                        class="ml-1.5"
+                        :class="[COMMENT_CHIP_BASE, courseCommentToneClass(summaryComment)]"
+                    >
+                        {{ summaryComment }}
+                    </span>
                 </p>
             </div>
 
             <div
-                v-for="row in subjects"
-                :key="row.id"
-                class="rounded-xl border border-border bg-card p-4 text-card-foreground shadow-sm print:border-black print:shadow-none"
+                v-if="subjectRows.length > 0"
+                class="overflow-hidden rounded-lg border border-border bg-card text-card-foreground print:border-black"
             >
-                <div class="flex items-start justify-between gap-3">
-                    <div class="min-w-0 space-y-1">
-                        <p class="text-base font-semibold leading-snug">
-                            {{ row.subject || $t('examinations.subject') }}
-                        </p>
-                        <p v-if="row.subjectCode" class="font-mono text-xs text-muted-foreground">
-                            {{ row.subjectCode }}
-                        </p>
-                    </div>
-                    <div
-                        class="shrink-0 rounded-lg bg-muted px-3 py-2 text-center print:bg-transparent print:border print:border-black"
-                    >
-                        <p class="text-[0.65rem] font-semibold uppercase tracking-wide text-muted-foreground">
-                            {{ $t('examinations.grade') }}
-                        </p>
-                        <p class="text-xl font-bold leading-none">{{ row.grade || '—' }}</p>
-                    </div>
+                <div
+                    class="flex items-center justify-between gap-3 border-b border-border px-3 py-1.5 print:border-black"
+                >
+                    <span class="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                        {{ $t('examinations.subject') }}
+                    </span>
+                    <span class="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                        {{ $t('examinations.grade') }}
+                    </span>
                 </div>
 
-                <div class="mt-3 grid grid-cols-1 gap-2 border-t border-border pt-3 text-sm sm:grid-cols-2">
-                    <div>
-                        <p class="text-xs text-muted-foreground">{{ $t('examinations.session') }}</p>
-                        <p>{{ row.session || '—' }}</p>
-                    </div>
-                    <div>
-                        <p class="text-xs text-muted-foreground">{{ $t('examinations.course_comment') }}</p>
-                        <p>{{ row.courseComment || '—' }}</p>
-                    </div>
-                </div>
+                <ul class="divide-y divide-border print:divide-black">
+                    <li
+                        v-for="row in subjectRows"
+                        :key="row.id"
+                        class="flex items-center gap-3 px-3 py-2"
+                    >
+                        <div class="min-w-0 flex-1">
+                            <div class="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                                <p v-if="row.subjectCode" class="font-mono text-xs text-muted-foreground">
+                                    {{ row.subjectCode }}
+                                </p>
+                                <p class="text-sm font-medium leading-snug">
+                                    {{ row.subject || $t('examinations.subject') }}
+                                </p>
+                            </div>
+                            <div class="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-1">
+                                <span class="text-[11px] text-muted-foreground">
+                                    {{ row.session || '—' }}
+                                </span>
+                                <span
+                                    v-if="row.displayComment"
+                                    :class="[COMMENT_CHIP_BASE, courseCommentToneClass(row.displayComment)]"
+                                >
+                                    {{ row.displayComment }}
+                                </span>
+                            </div>
+                        </div>
+                        <span
+                            class="inline-flex min-w-10 shrink-0 items-center justify-center rounded-md bg-muted px-2 py-1 text-center text-sm font-semibold tabular-nums print:border print:border-black print:bg-transparent"
+                        >
+                            {{ row.grade || '—' }}
+                        </span>
+                    </li>
+                </ul>
             </div>
 
             <div
-                v-if="subjects.length === 0"
-                class="rounded-xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground"
+                v-else
+                class="rounded-lg border border-dashed border-border p-4 text-center text-sm text-muted-foreground"
             >
                 {{ $t('examinations.no_results') }}
             </div>

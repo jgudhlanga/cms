@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AuthBackground from '@/components/auth/AuthBackground.vue';
 import type { EnrollmentPath, GuestStep, StepperVariant } from '@/components/portal/RegistrationStepper.vue';
 import { cn } from '@/lib/utils';
 import { Check } from 'lucide-vue-next';
@@ -85,9 +86,7 @@ const isCurrent = (id: string) => props.highlightedStep === id;
 
 const isInstructions = computed(() => props.highlightedStep === 'read-instructions');
 
-const isIdentityStep = computed(() =>
-    ['verify-identity', 'lookup', 'verify-passport'].includes(props.highlightedStep),
-);
+const isIdentityStep = computed(() => ['verify-identity', 'lookup', 'verify-passport'].includes(props.highlightedStep));
 
 const isCreateAccount = computed(() => props.highlightedStep === 'create-account');
 
@@ -146,12 +145,7 @@ const currentStepItems = computed((): GuideItem[] => {
     }
 
     if (isCreateAccount.value) {
-        return [
-            { key: 'trans.first_name' },
-            { key: 'trans.last_name' },
-            { key: 'trans.email' },
-            { key: 'trans.password' },
-        ];
+        return [{ key: 'trans.first_name' }, { key: 'trans.last_name' }, { key: 'trans.email' }, { key: 'trans.password' }];
     }
 
     return [{ key: 'trans.ui_follow_these_steps_to_complete_your_application' }];
@@ -174,44 +168,44 @@ const instructionRequirements = computed((): GuideItem[] => {
 </script>
 
 <template>
-    <div class="hidden min-h-svh items-start border-l border-border bg-muted/30 p-4 pt-2 text-foreground sm:p-6 md:pt-6 lg:flex lg:flex-1 lg:p-10 xl:p-12">
-        <div class="mx-auto max-w-sm space-y-6 xl:max-w-md">
+    <div
+        class="relative isolate hidden min-h-svh items-start overflow-hidden border-l border-white/10 p-4 pt-2 text-white sm:p-6 md:pt-6 lg:flex lg:flex-1 lg:p-10 xl:p-12"
+    >
+        <AuthBackground contained />
+
+        <div class="relative z-10 mx-auto max-w-sm space-y-6 xl:max-w-md">
             <header v-if="!isInstructions">
-                <h2 class="text-lg font-semibold text-foreground">{{ $t(headerTitleKey) }}</h2>
-                <p class="mt-1 text-sm text-muted-foreground">{{ $t(headerSubtitleKey) }}</p>
+                <h2 class="text-lg font-semibold text-white">{{ $t(headerTitleKey) }}</h2>
+                <p class="mt-1 text-sm text-white/70">{{ $t(headerSubtitleKey) }}</p>
             </header>
 
             <section v-if="isInstructions">
-                <h3 class="text-sm font-medium text-foreground">{{ $t('trans.registration_what_you_need') }}</h3>
-                <ul class="mt-3 space-y-3 text-sm text-muted-foreground">
+                <h3 class="text-sm font-medium text-white">{{ $t('trans.registration_what_you_need') }}</h3>
+                <ul class="mt-3 space-y-3 text-sm text-white/70">
                     <li v-for="(item, index) in instructionRequirements" :key="`${item.key}-${index}`" class="flex items-start gap-2">
-                        <span class="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" aria-hidden="true" />
+                        <span class="bg-primary mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full" aria-hidden="true" />
                         {{ $t(item.key) }}
                     </li>
                 </ul>
             </section>
 
             <section v-else-if="currentStepItems.length">
-                <h3 class="text-sm font-medium text-foreground">{{ $t(currentStepSectionTitleKey) }}</h3>
-                <ul class="mt-3 space-y-3 text-sm text-muted-foreground">
+                <h3 class="text-sm font-medium text-white">{{ $t(currentStepSectionTitleKey) }}</h3>
+                <ul class="mt-3 space-y-3 text-sm text-white/70">
                     <li
                         v-for="(item, index) in currentStepItems"
                         :key="`${item.key}-${index}`"
                         class="flex items-start gap-2"
-                        :class="item.variant === 'notice' && 'rounded-md border border-border/60 bg-background/60 p-3'"
+                        :class="item.variant === 'notice' && 'rounded-md border border-white/15 bg-white/10 p-3'"
                     >
-                        <span
-                            v-if="item.variant !== 'notice'"
-                            class="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary"
-                            aria-hidden="true"
-                        />
+                        <span v-if="item.variant !== 'notice'" class="bg-primary mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full" aria-hidden="true" />
                         {{ $t(item.key) }}
                     </li>
                 </ul>
             </section>
 
             <section>
-                <h3 class="text-sm font-medium text-foreground">{{ $t('trans.registration_guide_your_progress') }}</h3>
+                <h3 class="text-sm font-medium text-white">{{ $t('trans.registration_guide_your_progress') }}</h3>
                 <ol class="mt-3 space-y-2">
                     <li
                         v-for="(step, index) in steps"
@@ -224,16 +218,12 @@ const instructionRequirements = computed((): GuideItem[] => {
                             :class="
                                 cn(
                                     isCurrent(step.id) && 'bg-primary text-primary-foreground',
-                                    isComplete(step.id) && !isCurrent(step.id) && 'bg-primary/15 text-primary',
-                                    !isCurrent(step.id) && !isComplete(step.id) && 'bg-muted text-muted-foreground',
+                                    isComplete(step.id) && !isCurrent(step.id) && 'bg-white/15 text-white',
+                                    !isCurrent(step.id) && !isComplete(step.id) && 'bg-white/10 text-white/60',
                                 )
                             "
                         >
-                            <Check
-                                v-if="isComplete(step.id) && !isCurrent(step.id)"
-                                class="size-3.5"
-                                aria-hidden="true"
-                            />
+                            <Check v-if="isComplete(step.id) && !isCurrent(step.id)" class="size-3.5" aria-hidden="true" />
                             <template v-else>
                                 {{ index + 1 }}
                             </template>
@@ -241,9 +231,9 @@ const instructionRequirements = computed((): GuideItem[] => {
                         <span
                             :class="
                                 cn(
-                                    isCurrent(step.id) && 'font-medium text-foreground',
-                                    isComplete(step.id) && 'text-primary',
-                                    !isCurrent(step.id) && !isComplete(step.id) && 'text-muted-foreground',
+                                    isCurrent(step.id) && 'font-medium text-white',
+                                    isComplete(step.id) && 'text-white/90',
+                                    !isCurrent(step.id) && !isComplete(step.id) && 'text-white/60',
                                 )
                             "
                         >

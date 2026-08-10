@@ -4,7 +4,7 @@ import { useDataTables } from '@/composables/core/useDataTables';
 import { ColorVariant } from '@/enums/colors';
 import { PAGINATION_ITEMS_PER_PAGE } from '@/lib/constants';
 import { DataFilters, PaginationMeta, PaginationRootLink } from '@/types/data-pagination';
-import { computed, onMounted, ref, useSlots, watch } from 'vue';
+import { computed, nextTick, onMounted, ref, useSlots, watch } from 'vue';
 import DataLoadingSpinner from '@/components/core/loader/DataLoadingSpinner.vue';
 import { Archived, ColumnFilter, GotoPage, Paginator, PerPageSize, Search, TableBody, TableHead } from './';
 
@@ -53,6 +53,7 @@ const filter = ref(props?.filters?.search ?? '');
 const trashed = ref(props?.filters?.trashed ?? '0');
 const pageSize = ref(props?.pagination?.per_page || props.pageSize);
 const currentPage = ref(props?.pagination?.current_page || 1);
+const syncingFromProps = ref(false);
 const { initialize, toggleColumnVisibility, tableSearch, setPageSize, goToPage, loadTrashed } = useDataTables();
 const table = initialize(props);
 
@@ -61,15 +62,35 @@ const pageSizeWatcher = setPageSize(filter, table, currentPage, trashed, props.s
 const goToPageWatcher = goToPage(filter, pageSize, trashed, props.searchUrl, props.useApi, props.apiFetchAction, props.useJsonApi);
 const trashedWatcher = loadTrashed(filter, pageSize, currentPage, props.searchUrl, props.useApi, props.apiFetchAction, props.useJsonApi);
 
+const syncFromPaginationProp = async (assign: () => void) => {
+    syncingFromProps.value = true;
+    assign();
+    await nextTick();
+    syncingFromProps.value = false;
+};
+
 // Sync pageSize / currentPage when the pagination prop delivers real data
 // after an async API load (per_page starts as 0 before data arrives).
+// Guard prevents prop sync from re-triggering fetch/slice watchers.
 watch(
     () => props.pagination?.per_page,
-    (val) => { if (val && val !== pageSize.value) pageSize.value = val; },
+    (val) => {
+        if (val && val !== pageSize.value) {
+            void syncFromPaginationProp(() => {
+                pageSize.value = val;
+            });
+        }
+    },
 );
 watch(
     () => props.pagination?.current_page,
-    (val) => { if (val && val !== currentPage.value) currentPage.value = val; },
+    (val) => {
+        if (val && val !== currentPage.value) {
+            void syncFromPaginationProp(() => {
+                currentPage.value = val;
+            });
+        }
+    },
 );
 
 onMounted(() => {
@@ -80,8 +101,19 @@ const handleArchived = (archived: any) => {
     trashed.value = archived;
 };
 watch(filter, searchWatcher);
-watch(pageSize, pageSizeWatcher);
-watch(currentPage, goToPageWatcher);
+watch(pageSize, (value) => {
+    if (syncingFromProps.value) {
+        table.setPageSize(+value);
+        return;
+    }
+    pageSizeWatcher(value);
+});
+watch(currentPage, (value) => {
+    if (syncingFromProps.value) {
+        return;
+    }
+    void goToPageWatcher(value);
+});
 watch(trashed, trashedWatcher);
 
 const slots = useSlots();
