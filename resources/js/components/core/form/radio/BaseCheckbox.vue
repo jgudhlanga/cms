@@ -13,14 +13,14 @@ defineProps<Props>();
 </script>
 
 <template>
-    <div class="inline-flex items-center">
-        <label :class="cn('relative flex cursor-pointer items-center rounded-full p-1')" :for="inputId" data-ripple-dark="true">
+    <div class="inline-flex items-center gap-1">
+        <label :class="cn('relative flex size-11 cursor-pointer items-center justify-center rounded-full')" :for="inputId" data-ripple-dark="true">
             <input
                 v-bind="$attrs"
                 type="checkbox"
                 v-model="model"
                 :id="inputId"
-                class="peer relative h-5 w-5 cursor-pointer appearance-none rounded border border-slate-300 shadow transition-all before:absolute before:top-2/4 before:left-2/4 before:block before:h-12 before:w-12 before:-translate-x-2/4 before:-translate-y-2/4 before:rounded-full before:bg-slate-400 before:opacity-0 before:transition-opacity checked:border-slate-800 checked:bg-slate-800 checked:before:bg-slate-400 hover:shadow-md hover:before:opacity-10"
+                class="peer focus-visible:ring-ring relative h-5 w-5 cursor-pointer appearance-none rounded border border-slate-300 shadow transition-all before:absolute before:top-2/4 before:left-2/4 before:block before:h-12 before:w-12 before:-translate-x-2/4 before:-translate-y-2/4 before:rounded-full before:bg-slate-400 before:opacity-0 before:transition-opacity checked:border-slate-800 checked:bg-slate-800 checked:before:bg-slate-400 hover:shadow-md hover:before:opacity-10 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
             />
             <span
                 class="pointer-events-none absolute top-2/4 left-2/4 -translate-x-2/4 -translate-y-2/4 text-white opacity-0 transition-opacity peer-checked:opacity-100"

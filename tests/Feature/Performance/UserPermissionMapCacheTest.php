@@ -101,7 +101,7 @@ it('forgets permission map when user roles are synced via user repository', func
     expect($service->forUser($user->fresh())->has('view:users'))->toBeFalse();
 });
 
-it('excludes finance permissions for super users in cached map', function (): void {
+it('includes finance permissions for super users in cached map', function (): void {
     $superUserRoleName = RoleEnum::SUPER_USER->name();
     Role::query()->firstOrCreate(
         ['name' => $superUserRoleName],
@@ -114,6 +114,6 @@ it('excludes finance permissions for super users in cached map', function (): vo
     $map = app(UserPermissionMapService::class)->forUser($user);
 
     expect($map->has('view:users'))->toBeTrue()
-        ->and($map->has('view:finances'))->toBeFalse()
-        ->and($map->has('viewAny:finance-settings'))->toBeFalse();
+        ->and($map->has('view:finances'))->toBeTrue()
+        ->and($map->has('viewAny:finance-settings'))->toBeTrue();
 });

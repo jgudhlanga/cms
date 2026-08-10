@@ -4,6 +4,8 @@ use App\Enums\HMS\HostelApplicationStatusEnum;
 use App\Enums\HMS\HostelApplicationTypeEnum;
 use App\Enums\Shared\FeeTypeEnum;
 use App\Enums\Shared\WorkflowStepEnum;
+use App\Models\AcademicCalendars\AcademicCalendar;
+use App\Models\AcademicCalendars\Semester;
 use App\Models\Finance\FinanceExchangeRate;
 use App\Models\HMS\HostelApplication;
 use App\Models\Institution\Course;
@@ -20,8 +22,12 @@ use App\Models\Shared\FeeType;
 use App\Models\Shared\WorkflowStep;
 use App\Models\Students\Student;
 use App\Models\Students\StudentApplication;
+use App\Models\Students\StudentClearance;
+use App\Models\Students\StudentEnrolment;
+use App\Models\Students\StudentEnrolmentStatus;
 use App\Models\Tenants\Tenant;
 use App\Models\Users\User;
+use App\Services\HMS\AccommodationPaymentQuoteService;
 use Illuminate\Support\Facades\DB;
 
 test('portal profile personal information route renders for authorized student', function () {
@@ -216,6 +222,227 @@ test('portal profile accommodations route renders for authorized student', funct
         ->component('portal/student/profile/Section')
         ->where('activeTab', 'accommodations')
         ->where('student.id', $student->id));
+});
+
+test('portal profile financials exposes outstanding tuition payment route', function () {
+    $studentApplication = createVerifiedStudentApplication('PORTAL-FIN-001');
+    $student = $studentApplication->student;
+    $user = $student->user;
+    $user->givePermissionTo('manageOwnStudentFinancialDetails:students');
+
+    $feeType = FeeType::query()->firstOrCreate(
+        ['slug' => FeeTypeEnum::TUITION_FEE->slug()],
+        [
+            'name' => FeeTypeEnum::TUITION_FEE->name(),
+            'description' => FeeTypeEnum::TUITION_FEE->description(),
+            'position' => FeeTypeEnum::TUITION_FEE->position(),
+        ],
+    );
+
+    FeeStructure::query()->updateOrCreate(
+        [
+            'tenant_id' => $studentApplication->tenant_id,
+            'fee_type_id' => $feeType->id,
+            'level_id' => $studentApplication->departmentLevel->level_id,
+            'mode_of_study_id' => $studentApplication->mode_of_study_id,
+        ],
+        [
+            'amount' => 100,
+            'local_fca_amount' => 100,
+        ],
+    );
+
+    $this->actingAs($user)
+        ->get(route('portal.profile.financials'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('portal/student/profile/Section')
+            ->where('activeTab', 'financials')
+            ->where('payRoute', route('portal.profile.financials.pay', ['returnTo' => 'financials']))
+            ->where('feeSummary.outstanding', 100)
+        );
+});
+
+test('portal profile financials hides pay route when accounts are cleared', function () {
+    $studentApplication = createVerifiedStudentApplication('PORTAL-FIN-CLR-001');
+    $student = $studentApplication->student;
+    $user = $student->user;
+    $user->givePermissionTo('manageOwnStudentFinancialDetails:students');
+
+    $feeType = FeeType::query()->firstOrCreate(
+        ['slug' => FeeTypeEnum::TUITION_FEE->slug()],
+        [
+            'name' => FeeTypeEnum::TUITION_FEE->name(),
+            'description' => FeeTypeEnum::TUITION_FEE->description(),
+            'position' => FeeTypeEnum::TUITION_FEE->position(),
+        ],
+    );
+
+    FeeStructure::query()->updateOrCreate(
+        [
+            'tenant_id' => $studentApplication->tenant_id,
+            'fee_type_id' => $feeType->id,
+            'level_id' => $studentApplication->departmentLevel->level_id,
+            'mode_of_study_id' => $studentApplication->mode_of_study_id,
+        ],
+        [
+            'amount' => 100,
+            'local_fca_amount' => 100,
+        ],
+    );
+
+    $calendar = AcademicCalendar::query()->create([
+        'calendar_year' => '2026',
+        'type' => 'semester',
+        'opening_date' => '2026-02-01',
+        'closing_date' => '2026-06-30',
+    ]);
+    $semester = Semester::query()->firstOrCreate(
+        ['slug' => 'semester-1'],
+        ['name' => 'Semester 1', 'description' => null],
+    );
+    $status = StudentEnrolmentStatus::query()->firstOrCreate(
+        ['slug' => 'active'],
+        ['name' => 'Active', 'description' => 'Test'],
+    );
+
+    StudentEnrolment::query()->create([
+        'student_id' => $student->id,
+        'student_application_id' => $studentApplication->id,
+        'institution_department_id' => $studentApplication->institution_department_id,
+        'department_level_id' => $studentApplication->department_level_id,
+        'department_course_id' => $studentApplication->department_course_id,
+        'semester_id' => $semester->id,
+        'academic_calendar_id' => $calendar->id,
+        'mode_of_study_id' => $studentApplication->mode_of_study_id,
+        'student_enrolment_status_id' => $status->id,
+    ]);
+
+    StudentClearance::query()->create([
+        'tenant_id' => $student->tenant_id,
+        'student_id' => $student->id,
+        'calendar_year' => 2026,
+        'semester_id' => $semester->id,
+        'accounts_cleared' => true,
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('portal.profile.financials'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('portal/student/profile/Section')
+            ->where('activeTab', 'financials')
+            ->where('payRoute', null)
+            ->where('feeSummary.outstanding', 100)
+        );
+});
+
+test('portal tuition payment page redirects when accounts are cleared', function () {
+    $studentApplication = createVerifiedStudentApplication('PORTAL-FIN-CLR-002');
+    $student = $studentApplication->student;
+    $user = $student->user;
+    $user->givePermissionTo('manageOwnStudentFinancialDetails:students');
+
+    $feeType = FeeType::query()->firstOrCreate(
+        ['slug' => FeeTypeEnum::TUITION_FEE->slug()],
+        [
+            'name' => FeeTypeEnum::TUITION_FEE->name(),
+            'description' => FeeTypeEnum::TUITION_FEE->description(),
+            'position' => FeeTypeEnum::TUITION_FEE->position(),
+        ],
+    );
+
+    FeeStructure::query()->updateOrCreate(
+        [
+            'tenant_id' => $studentApplication->tenant_id,
+            'fee_type_id' => $feeType->id,
+            'level_id' => $studentApplication->departmentLevel->level_id,
+            'mode_of_study_id' => $studentApplication->mode_of_study_id,
+        ],
+        [
+            'amount' => 100,
+            'local_fca_amount' => 100,
+        ],
+    );
+
+    $calendar = AcademicCalendar::query()->create([
+        'calendar_year' => '2026',
+        'type' => 'semester',
+        'opening_date' => '2026-02-01',
+        'closing_date' => '2026-06-30',
+    ]);
+    $semester = Semester::query()->firstOrCreate(
+        ['slug' => 'semester-1'],
+        ['name' => 'Semester 1', 'description' => null],
+    );
+    $status = StudentEnrolmentStatus::query()->firstOrCreate(
+        ['slug' => 'active'],
+        ['name' => 'Active', 'description' => 'Test'],
+    );
+
+    StudentEnrolment::query()->create([
+        'student_id' => $student->id,
+        'student_application_id' => $studentApplication->id,
+        'institution_department_id' => $studentApplication->institution_department_id,
+        'department_level_id' => $studentApplication->department_level_id,
+        'department_course_id' => $studentApplication->department_course_id,
+        'semester_id' => $semester->id,
+        'academic_calendar_id' => $calendar->id,
+        'mode_of_study_id' => $studentApplication->mode_of_study_id,
+        'student_enrolment_status_id' => $status->id,
+    ]);
+
+    StudentClearance::query()->create([
+        'tenant_id' => $student->tenant_id,
+        'student_id' => $student->id,
+        'calendar_year' => 2026,
+        'semester_id' => $semester->id,
+        'accounts_cleared' => true,
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('portal.profile.financials.pay'))
+        ->assertRedirect(route('portal.profile.financials'))
+        ->assertSessionHas('error', __('trans.tuition_fee_accounts_cleared'));
+});
+
+test('portal tuition payment page renders for authorized student with outstanding balance', function () {
+    $studentApplication = createVerifiedStudentApplication('PORTAL-FIN-002');
+    $student = $studentApplication->student;
+    $user = $student->user;
+    $user->givePermissionTo('manageOwnStudentFinancialDetails:students');
+
+    $feeType = FeeType::query()->firstOrCreate(
+        ['slug' => FeeTypeEnum::TUITION_FEE->slug()],
+        [
+            'name' => FeeTypeEnum::TUITION_FEE->name(),
+            'description' => FeeTypeEnum::TUITION_FEE->description(),
+            'position' => FeeTypeEnum::TUITION_FEE->position(),
+        ],
+    );
+
+    FeeStructure::query()->updateOrCreate(
+        [
+            'tenant_id' => $studentApplication->tenant_id,
+            'fee_type_id' => $feeType->id,
+            'level_id' => $studentApplication->departmentLevel->level_id,
+            'mode_of_study_id' => $studentApplication->mode_of_study_id,
+        ],
+        [
+            'amount' => 100,
+            'local_fca_amount' => 100,
+        ],
+    );
+
+    $this->actingAs($user)
+        ->get(route('portal.profile.financials.pay'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('portal/student/TuitionFeePaymentOptions')
+            ->where('tuitionFee.paymentAmount', '100.00')
+            ->where('tuitionFee.currencyCode', '840')
+            ->where('feeSummary.outstanding', 100)
+        );
 });
 
 test('portal profile accommodations pay route returns not found when fee structure is missing', function () {
@@ -551,7 +778,7 @@ test('accommodation payment quote falls back to fee structure when ledger due is
         'check_out' => now()->addMonths(4)->toDateString(),
     ]));
 
-    $quoteService = app(\App\Services\HMS\AccommodationPaymentQuoteService::class);
+    $quoteService = app(AccommodationPaymentQuoteService::class);
     $quote = $quoteService->previewForStudent($student, $feeStructure);
 
     expect($quote['usdDue'])->toBe('250.00')

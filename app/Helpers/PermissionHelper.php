@@ -43,6 +43,7 @@ class PermissionHelper
             'manageOwnStudentFinancialDetails:students',
             'manageOwnStudentAcademicDetails:students',
             'manageOwnStudentAccommodationDetails:students',
+            'viewOwnExamResults:students',
             'view:next-of-kins',
             'create:next-of-kins',
             'update:next-of-kins',
@@ -322,6 +323,7 @@ class PermissionHelper
 
         return $permissions;
     }
+
     /**
      * @return list<string>
      */

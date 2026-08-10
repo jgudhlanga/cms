@@ -123,31 +123,6 @@
             padding-bottom: 4px;
         }
 
-        .summary-grid {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 16px;
-        }
-
-        .summary-grid td {
-            width: 25%;
-            border: 1px solid #d1d5db;
-            padding: 8px;
-            text-align: center;
-        }
-
-        .summary-grid .summary-label {
-            font-size: 9px;
-            text-transform: uppercase;
-            color: #6b7280;
-            margin-bottom: 4px;
-        }
-
-        .summary-grid .summary-value {
-            font-size: 12px;
-            font-weight: 700;
-        }
-
         .ledger-table {
             width: 100%;
             border-collapse: collapse;
@@ -198,44 +173,24 @@
         </div>
     </div>
 
-    <div class="section-title">Financial Summary</div>
-    <table class="summary-grid">
-        <tr>
-            <td>
-                <div class="summary-label">Total Invoiced</div>
-                <div class="summary-value">{{ $summary['totalInvoiced'] }}</div>
-            </td>
-            <td>
-                <div class="summary-label">Total Payments</div>
-                <div class="summary-value">{{ $summary['totalPayments'] }}</div>
-            </td>
-            <td>
-                <div class="summary-label">Outstanding Balance</div>
-                <div class="summary-value">{{ $summary['outstandingBalance'] }}</div>
-            </td>
-            <td>
-                <div class="summary-label">Paid %</div>
-                <div class="summary-value">{{ $summary['paidPercent'] }}</div>
-            </td>
-        </tr>
-    </table>
-
     <div class="section-title">Transaction Statement</div>
     @if (count($ledgerRows) > 0)
         <table class="ledger-table">
             <thead>
             <tr>
-                <th style="width: 14%;">Date</th>
+                <th style="width: 12%;">Date</th>
+                <th style="width: 10%;">Source</th>
                 <th>Description</th>
                 <th style="width: 14%;">Debit (DB)</th>
                 <th style="width: 14%;">Credit (CR)</th>
-                <th style="width: 16%;">Balance</th>
+                <th style="width: 14%;">Balance</th>
             </tr>
             </thead>
             <tbody>
             @foreach ($ledgerRows as $row)
                 <tr>
                     <td>{{ $row['transactionDate'] }}</td>
+                    <td>{{ $row['source'] }}</td>
                     <td>{{ $row['description'] }}</td>
                     <td class="amount">{{ $row['debit'] }}</td>
                     <td class="amount">{{ $row['credit'] }}</td>

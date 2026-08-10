@@ -28,6 +28,8 @@ interface Props {
     activeTab: StudentProfileTabValue;
     auth: AuthObject;
     errors: object;
+    feeSummary?: Record<string, unknown> | null;
+    payRoute?: string | null;
     activeIntakePeriodIds?: Array<string | number>;
     offerLetterIntakePeriodIds?: Array<string | number>;
     applicationHub?: Record<string, unknown> | null;
@@ -63,7 +65,12 @@ const pageTitle = computed(() => tabDefinition.value?.transLabel() ?? '');
                     :offer-letter-intake-period-ids="offerLetterIntakePeriodIds"
                     :application-hub="applicationHub"
                 />
-                <Financials v-else-if="activeTab === 'financials'" :student="student" />
+                <Financials
+                    v-else-if="activeTab === 'financials'"
+                    :student="student"
+                    :fee-summary="feeSummary"
+                    :pay-route="payRoute"
+                />
                 <Hostels
                     v-else-if="activeTab === 'accommodations'"
                     :student="student"

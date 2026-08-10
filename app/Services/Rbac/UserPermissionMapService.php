@@ -104,7 +104,7 @@ class UserPermissionMapService
 
     private function isExcludedPermission(string $permission): bool
     {
-        if (in_array($permission, [
+        return in_array($permission, [
             'viewOwnDashboard:students',
             'manageOwnStudentPersonalDetails:students',
             'manageOwnStudentApplicationDetails:students',
@@ -123,10 +123,6 @@ class UserPermissionMapService
             'view:lecturer-dashboard',
             'view:lecturer-classes',
             'view:lecturer-modules',
-        ], true)) {
-            return true;
-        }
-
-        return str($permission)->endsWith([':finances', ':finance-settings']);
+        ], true);
     }
 }

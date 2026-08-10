@@ -21,6 +21,11 @@ export function useInstitutionSetup() {
             show: hasAbility('viewAny:fee-structures'),
         },
         {
+            transKey: 'institution_features',
+            url: route('institution-features.index'),
+            show: hasAbility('manage:institution-features'),
+        },
+        {
             transChoiceKey: 'academic_calendar.academic_calendar',
             url: route('academic-calendars.index'),
             show: hasAbility('viewAny:academic-calendars'),

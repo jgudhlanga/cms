@@ -7,7 +7,7 @@ use App\Models\Users\User;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
-test('super user excludes all finance permissions from shared auth can map', function () {
+test('super user includes finance permissions in shared auth can map', function () {
     $superUserRoleName = RoleEnum::SUPER_USER->name();
 
     Role::query()->firstOrCreate(
@@ -29,8 +29,8 @@ test('super user excludes all finance permissions from shared auth can map', fun
     $permissions = $reflection->invoke($middleware, $user);
 
     expect($permissions->has('view:users'))->toBeTrue()
-        ->and($permissions->has('view:finances'))->toBeFalse()
-        ->and($permissions->has('create:finances'))->toBeFalse()
-        ->and($permissions->has('viewAny:finance-settings'))->toBeFalse()
-        ->and($permissions->has('update:finance-settings'))->toBeFalse();
+        ->and($permissions->has('view:finances'))->toBeTrue()
+        ->and($permissions->has('create:finances'))->toBeTrue()
+        ->and($permissions->has('viewAny:finance-settings'))->toBeTrue()
+        ->and($permissions->has('update:finance-settings'))->toBeTrue();
 });

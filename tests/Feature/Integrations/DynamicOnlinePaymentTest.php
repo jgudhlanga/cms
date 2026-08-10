@@ -5,8 +5,8 @@ use App\Enums\HMS\HostelApplicationTypeEnum;
 use App\Enums\Shared\FeeTypeEnum;
 use App\Enums\Students\ApplicationFeeStatusEnum;
 use App\Helpers\PaymentHelper;
-use App\Models\HMS\HostelApplication;
 use App\Models\Finance\FinanceExchangeRate;
+use App\Models\HMS\HostelApplication;
 use App\Models\Institution\FeeStructure;
 use App\Models\Institution\Level;
 use App\Models\Ledgers\Ledger;
@@ -14,7 +14,6 @@ use App\Models\Shared\FeeType;
 use App\Models\Students\ApplicationFee;
 use App\Models\Students\StudentApplication;
 use App\Services\HMS\StudentAccommodationFeeService;
-use App\Services\Students\ApplicationFeeService;
 use Illuminate\Support\Facades\Http;
 
 function paymentTestFeeType(FeeTypeEnum $feeTypeEnum): FeeType
@@ -58,6 +57,27 @@ function createAccommodationFeeStructureForStudentApplication(
         ],
         [
             'mode_of_study_id' => null,
+            'amount' => $usdAmount,
+            'local_fca_amount' => $usdAmount,
+        ],
+    );
+}
+
+function createTuitionFeeStructureForStudentApplication(
+    StudentApplication $studentApplication,
+    float $usdAmount = 100.00,
+): FeeStructure {
+    $studentApplication->loadMissing('departmentLevel');
+    $feeType = paymentTestFeeType(FeeTypeEnum::TUITION_FEE);
+
+    return FeeStructure::query()->updateOrCreate(
+        [
+            'tenant_id' => $studentApplication->tenant_id,
+            'fee_type_id' => $feeType->id,
+            'level_id' => $studentApplication->departmentLevel->level_id,
+            'mode_of_study_id' => $studentApplication->mode_of_study_id,
+        ],
+        [
             'amount' => $usdAmount,
             'local_fca_amount' => $usdAmount,
         ],
@@ -225,6 +245,165 @@ test('initiate accommodation payment rejects mismatched amount', function () {
         ])
         ->assertUnprocessable()
         ->assertJsonValidationErrors(['amount']);
+});
+
+test('initiate tuition payment creates ledgers on student application', function () {
+    configurePaymentGateway();
+
+    $studentApplication = createVerifiedStudentApplication('PAY-TUIT-001');
+    $user = $studentApplication->student->user;
+    createTuitionFeeStructureForStudentApplication($studentApplication, 100.00);
+    $feeType = paymentTestFeeType(FeeTypeEnum::TUITION_FEE);
+    $orderReference = 'ORD-TUIT-001';
+
+    Http::fake([
+        'gateway.test/payments/initiate-transaction' => Http::response([
+            'paymentUrl' => 'https://pay.test/tuition',
+            'transactionReference' => 'TXN-TUIT-001',
+            'responseCode' => '00',
+            'responseMessage' => 'OK',
+        ]),
+    ]);
+
+    $this->actingAs($user)
+        ->postJson(route('integrations.payments.initiate'), [
+            'orderReference' => $orderReference,
+            'feeTypeId' => $feeType->id,
+            'ledgerableId' => $studentApplication->id,
+            'amount' => 100,
+            'itemName' => 'Tuition Fee',
+            'itemDescription' => 'Tuition Fee',
+            'currencyCode' => '840',
+            'firstName' => 'Test',
+            'lastName' => 'Student',
+            'email' => $user->email,
+        ])
+        ->assertSuccessful()
+        ->assertJsonPath('paymentUrl', 'https://pay.test/tuition');
+
+    expect(Ledger::query()->where('system_reference', $orderReference)->count())->toBe(2);
+    expect(Ledger::query()
+        ->where('system_reference', $orderReference)
+        ->where('ledgerable_type', StudentApplication::class)
+        ->where('ledgerable_id', $studentApplication->id)
+        ->where('student_application_id', $studentApplication->id)
+        ->count())->toBe(2);
+});
+
+test('initiate tuition payment rejects mismatched outstanding amount', function () {
+    configurePaymentGateway();
+
+    $studentApplication = createVerifiedStudentApplication('PAY-TUIT-002');
+    $user = $studentApplication->student->user;
+    createTuitionFeeStructureForStudentApplication($studentApplication, 100.00);
+    $feeType = paymentTestFeeType(FeeTypeEnum::TUITION_FEE);
+
+    $this->actingAs($user)
+        ->postJson(route('integrations.payments.initiate'), [
+            'orderReference' => 'ORD-TUIT-002',
+            'feeTypeId' => $feeType->id,
+            'ledgerableId' => $studentApplication->id,
+            'amount' => 60,
+            'itemName' => 'Tuition Fee',
+            'itemDescription' => 'Tuition Fee',
+            'currencyCode' => '840',
+            'firstName' => 'Test',
+            'lastName' => 'Student',
+            'email' => $user->email,
+        ])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['amount']);
+});
+
+test('initiate tuition payment rejects another students application', function () {
+    configurePaymentGateway();
+
+    $ownerApplication = createVerifiedStudentApplication('PAY-TUIT-003');
+    $intruderApplication = createVerifiedStudentApplication('PAY-TUIT-004');
+    $user = $ownerApplication->student->user;
+    createTuitionFeeStructureForStudentApplication($ownerApplication, 100.00);
+    paymentTestFeeType(FeeTypeEnum::TUITION_FEE);
+
+    $this->actingAs($user)
+        ->postJson(route('integrations.payments.initiate'), [
+            'orderReference' => 'ORD-TUIT-003',
+            'feeTypeId' => paymentTestFeeType(FeeTypeEnum::TUITION_FEE)->id,
+            'ledgerableId' => $intruderApplication->id,
+            'amount' => 100,
+            'itemName' => 'Tuition Fee',
+            'itemDescription' => 'Tuition Fee',
+            'currencyCode' => '840',
+            'firstName' => 'Test',
+            'lastName' => 'Student',
+            'email' => $user->email,
+        ])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['ledgerableId']);
+});
+
+test('initiate payment returns error when gateway omits paymentUrl', function () {
+    configurePaymentGateway();
+
+    $studentApplication = createVerifiedStudentApplication('PAY-TUIT-005');
+    $user = $studentApplication->student->user;
+    createTuitionFeeStructureForStudentApplication($studentApplication, 100.00);
+    $feeType = paymentTestFeeType(FeeTypeEnum::TUITION_FEE);
+
+    Http::fake([
+        'gateway.test/payments/initiate-transaction' => Http::response([
+            'responseCode' => '91',
+            'responseMessage' => 'Gateway unavailable',
+        ]),
+    ]);
+
+    $this->actingAs($user)
+        ->postJson(route('integrations.payments.initiate'), [
+            'orderReference' => 'ORD-TUIT-005',
+            'feeTypeId' => $feeType->id,
+            'ledgerableId' => $studentApplication->id,
+            'amount' => 100,
+            'itemName' => 'Tuition Fee',
+            'itemDescription' => 'Tuition Fee',
+            'currencyCode' => '840',
+            'firstName' => 'Test',
+            'lastName' => 'Student',
+            'email' => $user->email,
+        ])
+        ->assertStatus(502)
+        ->assertJsonPath('responseMessage', 'Gateway unavailable');
+
+    expect(Ledger::query()->where('system_reference', 'ORD-TUIT-005')->count())->toBe(0);
+});
+
+test('initiate payment returns fallback message when gateway body is empty', function () {
+    configurePaymentGateway();
+
+    $studentApplication = createVerifiedStudentApplication('PAY-TUIT-006');
+    $user = $studentApplication->student->user;
+    createTuitionFeeStructureForStudentApplication($studentApplication, 100.00);
+    $feeType = paymentTestFeeType(FeeTypeEnum::TUITION_FEE);
+
+    Http::fake([
+        'gateway.test/payments/initiate-transaction' => Http::response('', 500),
+    ]);
+
+    $this->actingAs($user)
+        ->postJson(route('integrations.payments.initiate'), [
+            'orderReference' => 'ORD-TUIT-006',
+            'feeTypeId' => $feeType->id,
+            'ledgerableId' => $studentApplication->id,
+            'amount' => 100,
+            'itemName' => 'Tuition Fee',
+            'itemDescription' => 'Tuition Fee',
+            'currencyCode' => '840',
+            'firstName' => 'Test',
+            'lastName' => 'Student',
+            'email' => $user->email,
+        ])
+        ->assertStatus(502)
+        ->assertJsonPath('responseMessage', __('trans.payment_error_description'));
+
+    expect(Ledger::query()->where('system_reference', 'ORD-TUIT-006')->count())->toBe(0);
 });
 
 test('feedback updates accommodation ledgers by order reference', function () {

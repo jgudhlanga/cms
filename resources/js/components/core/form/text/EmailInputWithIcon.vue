@@ -59,11 +59,7 @@ onMounted(() => setAutoFocus());
 
 <template>
     <div class="flex w-full flex-col gap-2">
-        <Label
-            v-if="label"
-            :for="inputId"
-            :class="cn('font-medium', error && 'text-destructive', labelUppercase && 'uppercase')"
-        >
+        <Label v-if="label" :for="inputId" :class="cn('font-medium', error && 'text-destructive', labelUppercase && 'uppercase')">
             {{ label }}<RequiredIndicator v-if="isRequired" />
         </Label>
 
@@ -77,14 +73,16 @@ onMounted(() => setAutoFocus());
                 :tabindex="tabindex"
                 :readonly="readonly"
                 :disabled="disabled"
+                :aria-invalid="Boolean(error)"
+                :aria-describedby="error ? `${inputId}-error` : undefined"
                 autocomplete="email"
                 @input="emit('input')"
             />
             <span class="pointer-events-none absolute inset-y-0 start-0 flex items-center px-3">
-                <Mail class="size-4 text-muted-foreground" />
+                <Mail class="text-muted-foreground size-4" />
             </span>
         </div>
 
-        <InputError :message="error" class="lowercase" />
+        <InputError :id="`${inputId}-error`" :message="error" class="lowercase" />
     </div>
 </template>

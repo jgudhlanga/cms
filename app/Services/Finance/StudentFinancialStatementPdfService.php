@@ -6,7 +6,6 @@ namespace App\Services\Finance;
 
 use App\Helpers\DateHelper;
 use App\Helpers\DocumentHelper;
-use App\Models\Integrations\Banks\ZBBankStatement;
 use App\Models\Students\Student;
 use Illuminate\Support\Collection;
 
@@ -26,7 +25,6 @@ class StudentFinancialStatementPdfService
         $enrolment = $student->latestEnrolment;
 
         $studentName = $student->user?->full_name ?? '';
-        $summary = $ledger['summary'];
 
         return [
             'documentTemplate' => DocumentHelper::resolvePdfHeaderTemplate($student->tenant_id),
@@ -43,15 +41,8 @@ class StudentFinancialStatementPdfService
                 'department' => $enrolment?->institutionDepartment?->department?->name,
                 'modeOfStudy' => $enrolment?->modeOfStudy?->name,
                 'academicCalendar' => $enrolment?->academicCalendar?->calendar_year,
-                //'semester' => $enrolment?->semester?->name,
                 'enrolmentStatus' => $enrolment?->studentEnrolmentStatus?->name,
             ], fn (?string $value) => filled($value)),
-            'summary' => [
-                'totalInvoiced' => $this->formatUsd($summary['totalInvoiced']),
-                'totalPayments' => $this->formatUsd($summary['totalPayments']),
-                'outstandingBalance' => $this->formatUsd($summary['outstandingBalance']),
-                'paidPercent' => (string) $summary['paidPercent'].'%',
-            ],
             'ledgerRows' => $this->ledgerRows($ledger['entries']),
         ];
     }
@@ -88,21 +79,31 @@ class StudentFinancialStatementPdfService
     }
 
     /**
-     * @param  Collection<int, ZBBankStatement>  $entries
-     * @return list<array{transactionDate: string, description: string, debit: string, credit: string, runningBalance: string}>
+     * @param  Collection<int, array<string, mixed>>  $entries
+     * @return list<array{transactionDate: string, description: string, source: string, debit: string, credit: string, runningBalance: string}>
      */
     private function ledgerRows(Collection $entries): array
     {
-        return $entries->map(function (ZBBankStatement $statement): array {
-            $debit = $statement->amountDebitInUsd();
-            $credit = $statement->amountCreditInUsd();
+        return $entries->map(function (array $line): array {
+            $debit = (float) ($line['debit'] ?? 0);
+            $credit = (float) ($line['credit'] ?? 0);
+            $source = (string) ($line['source'] ?? 'bank');
+            $sourceKey = match ($source) {
+                'online' => 'finance.source_online',
+                'assessed' => 'finance.source_assessed',
+                default => 'finance.source_bank',
+            };
 
             return [
-                'transactionDate' => $this->displayValue(DateHelper::formatDate($statement->transaction_date, 'd/m/Y')),
-                'description' => $this->displayValue($statement->narration ?: $statement->transaction_details),
-                'debit' => $debit !== null && $debit !== '' ? $this->formatUsd($debit) : '—',
-                'credit' => $credit !== null && $credit !== '' ? $this->formatUsd($credit) : '—',
-                'runningBalance' => $this->formatUsd((string) ($statement->computed_running_balance ?? '0')),
+                'transactionDate' => $this->displayValue(
+                    DateHelper::formatDate($line['transaction_date'] ?? null, 'd/m/Y')
+                    ?? $line['transaction_date']
+                ),
+                'description' => $this->displayValue($line['description'] ?? $line['narration'] ?? null),
+                'source' => __($sourceKey),
+                'debit' => $debit > 0 ? $this->formatUsd($debit) : '—',
+                'credit' => $credit > 0 ? $this->formatUsd($credit) : '—',
+                'runningBalance' => $this->formatUsd((string) ($line['running_balance'] ?? '0')),
             ];
         })->all();
     }

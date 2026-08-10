@@ -1,6 +1,8 @@
 import Authentication from '@/components/users/Authentication.vue';
 import Applications from '@/pages/students/components/profile/Applications.vue';
+import Clearance from '@/pages/students/components/profile/Clearance.vue';
 import Documents from '@/pages/students/components/profile/Documents.vue';
+import ExamResults from '@/pages/students/components/profile/ExamResults.vue';
 import Financials from '@/pages/students/components/profile/Financials.vue';
 import Hostels from '@/pages/students/components/profile/Hostels.vue';
 import Info from '@/pages/students/components/profile/Info.vue';
@@ -43,6 +45,8 @@ const tabComponents: Record<StudentProfileTabValue, (student: Student, options?:
     financials: (student) => h(Financials, { student }),
     accommodations: (student) => h(Hostels, { student }),
     documents: () => h(Documents),
+    exam_results: (student) => h(ExamResults, { student }),
+    clearance: (student) => h(Clearance, { student }),
     authentication: (student) => h(Authentication, { user: student?.relationships?.user }),
 };
 

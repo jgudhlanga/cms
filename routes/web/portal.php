@@ -3,6 +3,7 @@
 use App\Http\Controllers\Integrations\PaymentController;
 use App\Http\Controllers\Students\GuestRegistrationController;
 use App\Http\Controllers\Students\PortalController;
+use App\Http\Controllers\Students\PortalExamResultController;
 use App\Http\Controllers\Students\ReturningStudentController;
 use App\Http\Controllers\Students\StudentOLevelResultsController;
 use Illuminate\Support\Facades\Route;
@@ -77,6 +78,7 @@ Route::prefix('portal')->group(function () {
             Route::post('applications/acknowledge', [PortalController::class, 'acknowledgeApplicationHub'])->name('applications.acknowledge');
             Route::post('applications/select-level', [PortalController::class, 'selectApplicationLevel'])->name('applications.select-level');
             Route::get('financials', [PortalController::class, 'profileFinancials'])->name('financials');
+            Route::get('financials/pay', [PaymentController::class, 'tuitionFeePaymentOptions'])->name('financials.pay');
             Route::get('accommodations', [PortalController::class, 'profileAccommodations'])->name('accommodations');
             Route::get('accommodations/pay/currency', [PaymentController::class, 'accommodationFeeCurrencySelection'])->name('accommodations.pay.currency');
             Route::get('accommodations/pay', [PaymentController::class, 'accommodationFeePaymentOptions'])->name('accommodations.pay');
@@ -89,6 +91,12 @@ Route::prefix('portal')->group(function () {
         Route::get('programs', [PortalController::class, 'programs'])->name('portal.programs');
         Route::get('financial-record', [PortalController::class, 'financialRecord'])->name('portal.financial-record');
         Route::get('academic-record', [PortalController::class, 'academicRecord'])->name('portal.academic-record');
+        Route::get('exam-results', [PortalExamResultController::class, 'index'])->name('portal.exam-results');
+        Route::post('exam-results/lookup', [PortalExamResultController::class, 'lookup'])
+            ->middleware('throttle:10,1')
+            ->name('portal.exam-results.lookup');
+        Route::get('exam-results/{student_exam_result}', [PortalExamResultController::class, 'show'])
+            ->name('portal.exam-results.show');
         Route::get('list-o-levels', [StudentOLevelResultsController::class, 'index'])->name('portal.list-o-levels');
         Route::get('manage-o-level-results', [StudentOLevelResultsController::class, 'manage'])->name('portal.manage-o-level-results');
         Route::post('store-o-level-results/{student}', [StudentOLevelResultsController::class, 'store'])->name('portal.store-o-level-results');

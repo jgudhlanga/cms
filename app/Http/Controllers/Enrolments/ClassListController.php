@@ -313,7 +313,7 @@ class ClassListController extends Controller
         $student = $studentApplication->student;
         $otherApplications = $student->applications()
             ->where('id', '!=', $studentApplication->id)
-            ->with(['institutionDepartment', 'departmentLevel.level', 'departmentCourse.course', 'intakePeriod', 'modeOfStudy', 'classList'])
+            ->with(['institutionDepartment.department', 'departmentLevel.level', 'departmentCourse.course', 'intakePeriod', 'modeOfStudy', 'classList'])
             ->get();
 
         return Inertia::render('enrolments/ApplicationVerification', [

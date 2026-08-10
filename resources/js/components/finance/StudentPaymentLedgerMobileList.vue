@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import StudentPaymentEntryBadge from '@/components/finance/StudentPaymentEntryBadge.vue';
+import StudentPaymentSourceBadge from '@/components/finance/StudentPaymentSourceBadge.vue';
 import Empty from '@/components/core/util/Empty.vue';
 import DataLoadingSpinner from '@/components/core/loader/DataLoadingSpinner.vue';
 import type { ParsedStudentPaymentReceipt } from '@/types/finance';
@@ -33,7 +34,10 @@ withDefaults(defineProps<Props>(), {
                         <span class="font-medium text-foreground">
                             {{ formatLedgerDate(receipt.attributes.transactionDate) }}
                         </span>
-                        <StudentPaymentEntryBadge :is-charge="isChargeEntry(receipt)" />
+                        <div class="flex flex-wrap items-center justify-end gap-1.5">
+                            <StudentPaymentEntryBadge :is-charge="isChargeEntry(receipt)" />
+                            <StudentPaymentSourceBadge :source="receipt.attributes.source" />
+                        </div>
                     </div>
                     <p class="mt-1.5 wrap-break-word leading-snug text-muted-foreground">
                         {{ sanitizeReceiptDescription(receipt) }}

@@ -23,7 +23,7 @@ interface Props {
 
 const props = defineProps<Props>();
 
-const validTabValues = ['basic_info', 'programs', 'applications', 'financials', 'accommodations', 'documents', 'authentication'] as const;
+const validTabValues = ['basic_info', 'programs', 'applications', 'financials', 'accommodations', 'documents', 'exam_results', 'clearance', 'authentication'] as const;
 
 const { profileTabs } = useStudentProfile();
 const { backUrl, backDestination, breadcrumbs, showBack } = useStudentShowNavigation();

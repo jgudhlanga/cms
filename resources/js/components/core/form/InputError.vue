@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 
 const props = defineProps<{
+    id?: string;
     message?: string | object;
 }>();
 
@@ -22,7 +23,7 @@ const errorMessage = computed(() => {
 </script>
 
 <template>
-    <div v-show="message">
+    <div :id="id" v-show="errorMessage" role="alert" aria-live="polite">
         <p class="text-sm font-extralight text-red-600 dark:text-red-500">
             {{ errorMessage }}
         </p>

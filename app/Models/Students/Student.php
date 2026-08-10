@@ -127,6 +127,16 @@ class Student extends Model
         return $this->hasMany(StudentEnrolment::class, 'student_id');
     }
 
+    public function clearances(): HasMany
+    {
+        return $this->hasMany(StudentClearance::class, 'student_id');
+    }
+
+    public function examResults(): HasMany
+    {
+        return $this->hasMany(StudentExamResult::class, 'student_id');
+    }
+
     public function apprentices(): HasMany
     {
         return $this->hasMany(StudentApprentice::class, 'student_id');

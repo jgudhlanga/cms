@@ -60,11 +60,7 @@ onMounted(() => setAutoFocus());
 
 <template>
     <div class="flex w-full flex-col gap-2">
-        <Label
-            v-if="label"
-            :for="inputId"
-            :class="cn('font-medium', error && 'text-destructive', labelUppercase && 'uppercase')"
-        >
+        <Label v-if="label" :for="inputId" :class="cn('font-medium', error && 'text-destructive', labelUppercase && 'uppercase')">
             {{ label }}<RequiredIndicator v-if="isRequired" />
         </Label>
 
@@ -77,15 +73,16 @@ onMounted(() => setAutoFocus());
                 :placeholder="placeholder"
                 :tabindex="tabindex"
                 :autocomplete="autocomplete"
+                :aria-invalid="Boolean(error)"
+                :aria-describedby="error ? `${inputId}-error` : undefined"
                 @input="emit('input')"
             />
             <span class="pointer-events-none absolute inset-y-0 start-0 flex items-center px-3">
-                <Lock class="size-4 text-muted-foreground" />
+                <Lock class="text-muted-foreground size-4" />
             </span>
             <button
                 type="button"
-                tabindex="-1"
-                class="absolute inset-y-0 end-0 flex min-h-11 min-w-11 items-center justify-center px-3 text-muted-foreground transition-colors hover:text-foreground"
+                class="text-muted-foreground hover:text-foreground focus-visible:ring-ring absolute inset-y-0 end-0 flex min-h-11 min-w-11 items-center justify-center rounded-e-xl px-3 transition-colors focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset"
                 :aria-label="showPassword ? $t('trans.hide_password') : $t('trans.show_password')"
                 :aria-pressed="showPassword"
                 @click="showPassword = !showPassword"
@@ -95,6 +92,6 @@ onMounted(() => setAutoFocus());
             </button>
         </div>
 
-        <InputError :message="error" class="lowercase" />
+        <InputError :id="`${inputId}-error`" :message="error" class="lowercase" />
     </div>
 </template>

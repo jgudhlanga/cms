@@ -2,8 +2,6 @@
 import BaseInput from '@/components/core/form/text/BaseInput.vue';
 import BaseModal from '@/components/core/modal/BaseModal.vue';
 import BaseButton from '@/components/core/button/BaseButton.vue';
-import FinancialTotalsProgress from '@/components/finance/FinancialTotalsProgress.vue';
-import StudentFinancialSummaryRow from '@/components/finance/StudentFinancialSummaryRow.vue';
 import StudentPaymentLedgerTable from '@/components/finance/StudentPaymentLedgerTable.vue';
 import {
     useParsedStudentPaymentReceipts,
@@ -18,12 +16,23 @@ import { clearFormErrors } from '@/lib/forms';
 import type { Student } from '@/types/students';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
-import { useForm } from '@inertiajs/vue3';
+import { Link, useForm } from '@inertiajs/vue3';
 import { ChevronDown } from 'lucide-vue-next';
 import { computed, onMounted } from 'vue';
 
+type FeeSummary = {
+    expectedTotal: number;
+    paidFromBank?: number;
+    paidFromLedger?: number;
+    paidTotal: number;
+    outstanding: number;
+    hasStudentNumber: boolean;
+};
+
 interface Props {
     student: Student;
+    feeSummary?: FeeSummary | null;
+    payRoute?: string | null;
 }
 
 const props = defineProps<Props>();
@@ -31,7 +40,6 @@ const props = defineProps<Props>();
 const {
     fetchStudentLedger,
     ledgerEntries,
-    ledgerSummary,
     isLedgerLoading,
     fetchStudentTransactionQueries,
     submitStudentTransactionQuery,
@@ -67,6 +75,9 @@ const parsedLedgerEntries = useParsedStudentPaymentReceipts(
 );
 
 const formatSummaryUsd = formatUsdAmount;
+const canPayOutstanding = computed(
+    () => !!props.payRoute && !!props.feeSummary?.hasStudentNumber && Number(props.feeSummary?.outstanding ?? 0) > 0,
+);
 
 onMounted(async () => {
     if (props.student?.id) {
@@ -114,27 +125,47 @@ const exportTransactionStatementPdf = (): void => {
 
 <template>
     <div class="flex flex-col gap-4 py-4">
-        <div class="rounded-lg border p-3 sm:p-4">
-            <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div class="min-w-0">
-                    <h4 class="text-sm font-semibold">{{ $t('finance.transaction_statement') }}</h4>
-                    <p class="mt-1 text-xs text-muted-foreground">
-                        {{ $t('finance.transaction_statement_help') }}
+        <div v-if="feeSummary" class="rounded-lg border p-3 sm:p-4">
+            <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div class="space-y-3">
+                    <div>
+                        <h4 class="text-sm font-semibold">{{ $t('finance.tuition_summary') }}</h4>
+                        <p class="mt-1 text-xs text-muted-foreground">
+                            {{ $t('finance.tuition_summary_hint') }}
+                        </p>
+                    </div>
+                    <dl class="grid gap-2 text-sm sm:grid-cols-2">
+                        <div>
+                            <dt class="text-muted-foreground">{{ $t('trans.paid_from_bank') }}</dt>
+                            <dd class="font-medium">{{ formatSummaryUsd(String(feeSummary.paidFromBank ?? 0)) }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-muted-foreground">{{ $t('trans.paid_online') }}</dt>
+                            <dd class="font-medium">{{ formatSummaryUsd(String(feeSummary.paidFromLedger ?? 0)) }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-muted-foreground">{{ $t('trans.exam_results_paid_total') }}</dt>
+                            <dd class="font-medium">{{ formatSummaryUsd(String(feeSummary.paidTotal ?? 0)) }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-muted-foreground">{{ $t('trans.exam_results_outstanding') }}</dt>
+                            <dd class="font-medium">{{ formatSummaryUsd(String(feeSummary.outstanding ?? 0)) }}</dd>
+                        </div>
+                    </dl>
+                </div>
+
+                <div v-if="canPayOutstanding" class="sm:max-w-xs sm:text-right">
+                    <Link :href="payRoute ?? '#'" class="block">
+                        <BaseButton type="button" :size="ButtonSize.sm" :variant="ColorVariant.primary" class="w-full sm:w-auto">
+                            {{ $t('trans.pay_outstanding_tuition') }}
+                        </BaseButton>
+                    </Link>
+                    <p class="mt-2 text-xs text-muted-foreground">
+                        {{ $t('trans.tuition_fee_accounts_disclaimer') }}
                     </p>
                 </div>
-                <BaseButton
-                    type="button"
-                    :size="ButtonSize.sm"
-                    :variant="ColorVariant.primary_outline"
-                    class="w-full shrink-0 sm:w-auto"
-                    @click="exportTransactionStatementPdf"
-                >
-                    {{ $t('finance.export_statement_pdf') }}
-                </BaseButton>
             </div>
         </div>
-        <StudentFinancialSummaryRow :summary="ledgerSummary" :format-usd="formatSummaryUsd" />
-        <FinancialTotalsProgress :summary="ledgerSummary" :format-usd="formatSummaryUsd" />
         <StudentPaymentLedgerTable
             :receipts="parsedLedgerEntries"
             :is-loading="isLedgerLoading"
@@ -143,6 +174,7 @@ const exportTransactionStatementPdf = (): void => {
             :format-ledger-usd-amount="formatLedgerUsdAmount"
             :format-running-balance="formatRunningBalance"
             :is-charge-entry="isChargeEntry"
+            @print="exportTransactionStatementPdf"
         />
 
         <div class="rounded-lg border p-3 sm:p-4">

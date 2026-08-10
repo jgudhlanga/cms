@@ -5,6 +5,7 @@ use App\Http\Controllers\Institution\Config\AssessmentCalendarController;
 use App\Http\Controllers\Institution\Config\AssessmentTypeController;
 use App\Http\Controllers\Institution\Config\FeeStructureController;
 use App\Http\Controllers\Institution\Config\InstitutionConfigController;
+use App\Http\Controllers\Institution\Config\InstitutionFeatureController;
 use App\Http\Controllers\Institution\Config\IntakePeriodController;
 use App\Http\Controllers\Institution\Departments\CourseSyllabusController;
 use App\Http\Controllers\Institution\Departments\CourseSyllabusModuleController;
@@ -100,6 +101,9 @@ Route::prefix('institution')->middleware('auth')->group(function () {
     Route::put('fee-structures/{fee_structure}/restore', [FeeStructureController::class, 'restore'])->name('fee-structures.restore');
     Route::delete('fee-structures/{fee_structure}/force-delete', [FeeStructureController::class, 'forceDelete'])->name('fee-structures.force-delete');
     Route::resource('fee-structures', FeeStructureController::class)->names('fee-structures');
+    // ==================================== INSTITUTION FEATURES =======================================================
+    Route::get('features', [InstitutionFeatureController::class, 'index'])->name('institution-features.index');
+    Route::put('features', [InstitutionFeatureController::class, 'update'])->name('institution-features.update');
     // ==================================== DEPARTMENT STAFF ============================================================
     Route::put('staff/{staff}/restore', [StaffController::class, 'restore'])->name('staff.restore');
     Route::delete('staff/{staff}/force-delete', [StaffController::class, 'forceDelete'])->name('staff.force-delete');

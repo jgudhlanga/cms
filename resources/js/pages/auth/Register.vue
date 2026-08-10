@@ -29,7 +29,6 @@ const submit = () => {
                     v-model="form.name"
                     input-id="name"
                     :input-auto-focus="true"
-                    :tabindex="1"
                     :error="form.errors.name"
                     :label="$tChoice('trans.name', 1)"
                     :placeholder="$t('trans.ui_full_name')"
@@ -40,7 +39,6 @@ const submit = () => {
                 />
                 <EmailInputWithIcon
                     v-model="form.email"
-                    :tabindex="2"
                     :error="form.errors.email"
                     :label="$t('trans.email')"
                     :placeholder="$t('trans.email')"
@@ -50,7 +48,6 @@ const submit = () => {
                 <PasswordInputWithToggle
                     v-model="form.password"
                     input-id="password"
-                    :tabindex="3"
                     :error="form.errors.password"
                     :label="$t('trans.password')"
                     :placeholder="$t('trans.password')"
@@ -61,7 +58,6 @@ const submit = () => {
                 <PasswordInputWithToggle
                     v-model="form.password_confirmation"
                     input-id="password_confirmation"
-                    :tabindex="4"
                     :error="form.errors.password_confirmation"
                     :label="$t('trans.ui_confirm_password_2')"
                     :placeholder="$t('trans.ui_confirm_password_2')"
@@ -74,20 +70,15 @@ const submit = () => {
             <BaseButton
                 :variant="ColorVariant.primary"
                 type="submit"
-                :tabindex="5"
                 :processing="form.processing"
                 classes="min-h-11 w-full rounded-xl dark:text-white"
             >
                 {{ $t('trans.ui_create_account') }}
             </BaseButton>
 
-            <div class="text-center text-sm text-muted-foreground">
+            <div class="text-muted-foreground text-center text-sm">
                 <span>{{ $t('trans.ui_already_have_an_account') }} </span>
-                <TextLink
-                    :href="route('login')"
-                    class="underline-offset-4 transition-colors hover:text-primary hover:underline"
-                    :tabindex="6"
-                >
+                <TextLink :href="route('login')" class="hover:text-primary underline-offset-4 transition-colors hover:underline">
                     {{ $t('trans.ui_log_in') }}
                 </TextLink>
             </div>

@@ -203,6 +203,11 @@ export function useSidebarMenu() {
                     show: institutionModuleOn && hasAbility('viewAny:fee-structures'),
                 },
                 {
+                    transKey: 'trans.institution_features',
+                    url: route('institution-features.index'),
+                    show: institutionModuleOn && hasAbility('manage:institution-features'),
+                },
+                {
                     transChoiceKey: 'academic_calendar.academic_calendar',
                     url: route('academic-calendars.index'),
                     show: institutionModuleOn && hasAbility('viewAny:academic-calendars'),
@@ -418,6 +423,13 @@ export function useSidebarMenu() {
             icon: icons[IconName.award],
             url: route('portal.list-o-levels'),
             show: hasStudentProfile() && hasAbility('manageOwnStudentAcademicDetails:students'),
+        },
+        {
+            groupKey: 'portal',
+            transKey: 'trans.exam_results',
+            icon: icons[IconName.file_search],
+            url: route('portal.exam-results'),
+            show: hasStudentProfile() && hasAbility('viewOwnExamResults:students'),
         },
         ...portalSidebarProfileTabs()
             .filter((tab) => tab.value === 'authentication')
