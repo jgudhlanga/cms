@@ -87,7 +87,7 @@ const tabShowChecks: Record<
         portal: () => false,
     },
     authentication: {
-        admin: () => hasAbility(['manageOwnStudentPersonalDetails:students', 'root:manage']),
+        admin: () => hasAbility(['manageOwnStudentPersonalDetails:students', 'root:manage', 'update:users']),
         portal: () => hasAbility('manageOwnStudentPersonalDetails:students'),
     },
 };

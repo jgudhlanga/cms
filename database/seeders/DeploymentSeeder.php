@@ -15,6 +15,7 @@ use Database\Seeders\Institution\ContinuousIntakePeriodSeeder;
 use Database\Seeders\Students\StudentEnrolmentStatusSeeder;
 use Illuminate\Database\Seeder;
 use Database\Seeders\Rbac\RoleGroupSeeder;
+use Database\Seeders\Users\UsersTableSeeder;
 
 class DeploymentSeeder extends Seeder
 {
@@ -28,6 +29,7 @@ class DeploymentSeeder extends Seeder
             PermissionsTableSeeder::class,
             RoleGroupSeeder::class,
             RolesTableSeeder::class,
+            UsersTableSeeder::class,
             SemesterSeeder::class,
             ClassMetaDataTypeSeeder::class,
             StudentEnrolmentStatusSeeder::class,

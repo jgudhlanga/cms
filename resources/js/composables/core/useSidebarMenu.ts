@@ -364,7 +364,7 @@ export function useSidebarMenu() {
             show: canShowMenuItem('view:users', 'users', moduleState),
         },
         (() => {
-            const canMaintain = canShowMenuItem('root:manage', 'root', moduleState);
+            const canMaintain = canShowMenuItem(['root:manage', 'manage:data-maintenance'], 'root', moduleState);
             const maintenanceChildren: MenuItemInterface[] = [
                 {
                     transChoiceKey: 'trans.user',

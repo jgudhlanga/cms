@@ -256,4 +256,6 @@ return [
     'lecturer_average_mark' => 'Average mark',
     'lecturer_assessment_window_open' => 'Open',
     'lecturer_assessment_window_closed' => 'Closed',
+    'my_recent_activity' => 'My recent activity',
+    'my_recent_activity_empty' => 'No recent activity recorded yet.',
 ];

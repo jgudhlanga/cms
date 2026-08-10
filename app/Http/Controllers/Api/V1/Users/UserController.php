@@ -20,6 +20,7 @@ use App\Models\Users\User;
 use App\Repositories\Users\interface\IUserRepository;
 use App\Traits\HttpUtil;
 use Inertia\Inertia;
+use Spatie\Activitylog\Models\Activity;
 
 class UserController extends ApiDropdownController
 {
@@ -129,6 +130,21 @@ class UserController extends ApiDropdownController
         $this->authorize('view', $user);
 
         $activities = $user->activities()
+            ->latest()
+            ->paginate(request()->integer('per_page', 20));
+
+        return AuditTrailResource::collection($activities);
+    }
+
+    public function getMyActivities()
+    {
+        $user = request()->user();
+
+        abort_unless($user instanceof User, 401);
+
+        $activities = Activity::query()
+            ->where('causer_type', $user->getMorphClass())
+            ->where('causer_id', $user->getKey())
             ->latest()
             ->paginate(request()->integer('per_page', 20));
 

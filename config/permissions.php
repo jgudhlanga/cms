@@ -164,6 +164,7 @@ return [
         ],
         'root' => [
             'root:manage',
+            'manage:data-maintenance',
         ],
         'settings' => array_merge(
             [

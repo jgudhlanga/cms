@@ -11,6 +11,7 @@ use App\Models\AcademicCalendars\CourseWorkMark;
 use App\Models\Examinations\ExaminationResult;
 use App\Models\Institution\AssessmentCalendar\AssessmentCalendar;
 use App\Models\Institution\Syllabus\CourseSyllabus;
+use App\Models\Users\User;
 use App\Policies\AcademicCalendars\CourseWorkPolicy;
 use App\Policies\Examinations\ExaminationPolicy;
 use App\Policies\Institution\AssessmentCalendarPolicy;
@@ -76,7 +77,16 @@ class AppServiceProvider extends ServiceProvider
         // Restrict Log Viewer access
         $this->registerLogViewerAuthorization();
 
+        $this->registerDataMaintenanceGate();
+
         $this->registerLocalMailRedirect();
+    }
+
+    private function registerDataMaintenanceGate(): void
+    {
+        Gate::define('accessDataMaintenance', function (User $user): bool {
+            return $user->can('root:manage') || $user->can('manage:data-maintenance');
+        });
     }
 
     private function registerLocalMailRedirect(): void
