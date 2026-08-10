@@ -43,6 +43,24 @@ function createAdminExamResultsStudent(array $overrides = []): array
     return compact('tenant', 'student');
 }
 
+/**
+ * @return array{surname: string|null, first_names: string|null}
+ */
+function adminExaminationIdentityForStudent(Student $student, bool $withMiddleName = true): array
+{
+    $student->loadMissing('user');
+
+    $firstNames = trim(implode(' ', array_filter([
+        $student->user?->first_name,
+        $withMiddleName ? $student->user?->middle_name : null,
+    ])));
+
+    return [
+        'surname' => $student->user?->last_name,
+        'first_names' => $firstNames !== '' ? $firstNames : $student->user?->first_name,
+    ];
+}
+
 function createAdminExamResultsStaff(int $tenantId, array $permissions = ['viewStudentExamResults:students']): User
 {
     $user = User::factory()->create(['tenant_id' => $tenantId]);
@@ -172,7 +190,7 @@ test('admin exam results lookup upserts a saved result for the student', functio
         );
     });
 
-    ExaminationResult::query()->create([
+    ExaminationResult::query()->create(array_merge([
         'tenant_id' => $tenant->id,
         'student_id' => $student->id,
         'candidate_number' => $student->student_number,
@@ -182,7 +200,7 @@ test('admin exam results lookup upserts a saved result for the student', functio
         'session' => '2026-06-01',
         'session_date' => '2026-06-01',
         'course_comment' => 'AWARD',
-    ]);
+    ], adminExaminationIdentityForStudent($student)));
 
     $staff = createAdminExamResultsStaff((int) $tenant->id);
     Sanctum::actingAs($staff);
@@ -199,4 +217,124 @@ test('admin exam results lookup upserts a saved result for the student', functio
             ->where('candidate_number', $student->student_number)
             ->exists()
     )->toBeTrue();
+});
+
+test('admin exam results lookup fails when profile names do not match examination record', function () {
+    ['tenant' => $tenant, 'student' => $student] = createAdminExamResultsStudent([
+        'student_number' => 'ADM-MIS'.strtoupper(Str::random(3)),
+    ]);
+
+    $this->mock(StudentExamResultAccessService::class, function ($mock) {
+        $mock->shouldReceive('evaluate')->andReturn([
+            'canViewResults' => true,
+            'gate' => 'fees',
+            'allowOnlineClearance' => false,
+            'fees' => [
+                'tuition' => 100,
+                'autoCardFee' => 0,
+                'partTimeLevy' => 0,
+                'expectedTotal' => 100,
+                'paidFromBank' => 100,
+                'paidFromLedger' => 0,
+                'paidTotal' => 100,
+                'outstanding' => 0,
+                'isFullyPaid' => true,
+                'breakdown' => [],
+                'hasStudentNumber' => true,
+                'source' => 'enrolment',
+            ],
+            'clearance' => null,
+            'idValidation' => ['required' => false, 'isValid' => true, 'needsCorrection' => false],
+            'academicCalendarId' => null,
+            'semesterId' => null,
+            'calendarType' => 'semester',
+        ]);
+        $mock->shouldReceive('resolveEnrolmentContext')->andReturn(null);
+        $mock->shouldReceive('resolveCalendarType')->andReturn(
+            AcademicCalendarTypeEnum::SEMESTER
+        );
+    });
+
+    ExaminationResult::query()->create([
+        'tenant_id' => $tenant->id,
+        'student_id' => null,
+        'candidate_number' => $student->student_number,
+        'surname' => 'Mismatch',
+        'first_names' => 'Candidate',
+        'subject_code' => 'SUB1',
+        'subject' => 'Maths',
+        'grade' => 'P',
+        'session' => '2026-06-01',
+        'session_date' => '2026-06-01',
+        'course_comment' => 'AWARD',
+    ]);
+
+    $staff = createAdminExamResultsStaff((int) $tenant->id);
+    Sanctum::actingAs($staff);
+
+    $this->postJson(route('v1.students.exam-results.lookup', $student->id), [
+        'candidate_number' => $student->student_number,
+    ])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors([
+            'candidate_number' => __('trans.exam_results_name_mismatch'),
+        ]);
+});
+
+test('admin exam results lookup backfills student_id on unlinked examination rows', function () {
+    ['tenant' => $tenant, 'student' => $student] = createAdminExamResultsStudent([
+        'student_number' => 'ADM-BF'.strtoupper(Str::random(3)),
+    ]);
+
+    $this->mock(StudentExamResultAccessService::class, function ($mock) {
+        $mock->shouldReceive('evaluate')->andReturn([
+            'canViewResults' => true,
+            'gate' => 'fees',
+            'allowOnlineClearance' => false,
+            'fees' => [
+                'tuition' => 100,
+                'autoCardFee' => 0,
+                'partTimeLevy' => 0,
+                'expectedTotal' => 100,
+                'paidFromBank' => 100,
+                'paidFromLedger' => 0,
+                'paidTotal' => 100,
+                'outstanding' => 0,
+                'isFullyPaid' => true,
+                'breakdown' => [],
+                'hasStudentNumber' => true,
+                'source' => 'enrolment',
+            ],
+            'clearance' => null,
+            'idValidation' => ['required' => false, 'isValid' => true, 'needsCorrection' => false],
+            'academicCalendarId' => null,
+            'semesterId' => null,
+            'calendarType' => 'semester',
+        ]);
+        $mock->shouldReceive('resolveEnrolmentContext')->andReturn(null);
+        $mock->shouldReceive('resolveCalendarType')->andReturn(
+            AcademicCalendarTypeEnum::SEMESTER
+        );
+    });
+
+    $examinationResult = ExaminationResult::query()->create(array_merge([
+        'tenant_id' => $tenant->id,
+        'student_id' => null,
+        'candidate_number' => $student->student_number,
+        'subject_code' => 'SUB1',
+        'subject' => 'Maths',
+        'grade' => 'P',
+        'session' => '2026-06-01',
+        'session_date' => '2026-06-01',
+        'course_comment' => 'AWARD',
+    ], adminExaminationIdentityForStudent($student)));
+
+    $staff = createAdminExamResultsStaff((int) $tenant->id);
+    Sanctum::actingAs($staff);
+
+    $this->postJson(route('v1.students.exam-results.lookup', $student->id), [
+        'candidate_number' => $student->student_number,
+    ])->assertOk();
+
+    expect($examinationResult->fresh()->student_id)->toBe($student->id);
 });

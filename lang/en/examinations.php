@@ -82,5 +82,6 @@ return [
     'exam_results_lookup_another_hint' => 'Enter a candidate number to collect results for another exam session.',
     'exam_results_back_to_list' => 'Back to exam results',
     'exam_results_permission_denied' => 'You do not have permission to view exam results.',
+    'exam_results_unofficial_use' => 'These results are not for official use.',
     'calendar_year' => 'Year',
 ];

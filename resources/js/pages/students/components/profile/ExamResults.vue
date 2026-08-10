@@ -269,6 +269,10 @@ onMounted(fetchIndex);
             </div>
 
             <div v-if="statementAllowed" class="exam-results-statement space-y-3">
+                <p class="text-xs font-medium text-red-600 print:text-red-600">
+                    {{ $t('examinations.exam_results_unofficial_use') }}
+                </p>
+
                 <div
                     v-for="row in activeSubjects"
                     :key="row.id"
