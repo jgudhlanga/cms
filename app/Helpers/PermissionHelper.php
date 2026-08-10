@@ -412,6 +412,34 @@ class PermissionHelper
     }
 
     /**
+     * @return list<string>
+     */
+    public static function itSupportTechnicianPermissions(): array
+    {
+        return [
+            'view:dashboards',
+            'view-hostel:dashboards',
+            'viewAny:students',
+            'view:students',
+            'viewAny:users',
+            'view:users',
+            'update:users',
+            'manage:data-maintenance',
+            ...self::resourceAbilities([
+                'hostels',
+                'hostel-amenities',
+                'hostel-rooms',
+                'hostel-room-allocations',
+                'hostel-applications',
+                'hms-settings',
+                'hostel-queries',
+                'hostel-leaves',
+                'hostel-notices',
+            ], ['viewAny', 'view']),
+        ];
+    }
+
+    /**
      * @param  array<int, string>  $permissionNames
      */
     public static function resolvePermissions(array $permissionNames): Collection

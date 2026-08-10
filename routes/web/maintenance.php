@@ -3,7 +3,7 @@
 use App\Http\Controllers\Maintenance\MaintenanceController;
 use Illuminate\Support\Facades\Route;
 
-Route::prefix('maintenance')->middleware(['auth', 'can:root:manage'])->group(function (): void {
+Route::prefix('maintenance')->middleware(['auth', 'can:accessDataMaintenance'])->group(function (): void {
     Route::get('/', [MaintenanceController::class, 'index'])->name('maintenance.index');
     Route::get('/account-purge-archives', [MaintenanceController::class, 'accountPurgeArchives'])
         ->name('maintenance.account-purge-archives');

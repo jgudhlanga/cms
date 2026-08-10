@@ -33,6 +33,28 @@ test('authorized user can fetch paginated user activities', function () {
         ]);
 });
 
+test('authenticated user can fetch their own caused activities', function () {
+    $tenant = Tenant::query()->firstOrFail();
+    $user = User::factory()->create(['tenant_id' => $tenant->id]);
+
+    $user->update(['phone_number' => '0779998877']);
+
+    Sanctum::actingAs($user);
+
+    $this->getJson(route('v1.me.activities'))
+        ->assertSuccessful()
+        ->assertJsonStructure([
+            'data',
+            'links',
+            'meta',
+        ]);
+});
+
+test('guests cannot fetch me activities', function () {
+    $this->getJson(route('v1.me.activities'))
+        ->assertUnauthorized();
+});
+
 test('unauthorized user cannot fetch user activities', function () {
     $tenant = Tenant::query()->firstOrFail();
     $viewer = User::factory()->create(['tenant_id' => $tenant->id]);

@@ -55,12 +55,33 @@ test('roles table seeder syncs permission packs onto leadership roles', function
         RoleEnum::PRINCIPAL->name() => 'view-hostel:dashboards',
         RoleEnum::DEAN->name() => 'viewAny:hostels',
         RoleEnum::WARDEN->name() => 'viewOnlyOwnHostel:hostels',
+        RoleEnum::IT_SUPPORT_TECHNICIAN->name() => 'manage:data-maintenance',
     ];
 
     foreach ($expectations as $roleName => $permission) {
         $role = Role::query()->where('name', $roleName)->firstOrFail();
         expect($role->permissions->pluck('name')->all())->toContain($permission);
     }
+});
+
+test('it support technician pack is read-only for hms and excludes root manage', function () {
+    $role = Role::query()->where('name', RoleEnum::IT_SUPPORT_TECHNICIAN->name())->firstOrFail();
+    $permissions = $role->permissions->pluck('name')->all();
+
+    expect($permissions)->toContain('viewAny:students')
+        ->and($permissions)->toContain('view:students')
+        ->and($permissions)->toContain('viewAny:users')
+        ->and($permissions)->toContain('view:users')
+        ->and($permissions)->toContain('update:users')
+        ->and($permissions)->toContain('view:dashboards')
+        ->and($permissions)->toContain('view-hostel:dashboards')
+        ->and($permissions)->toContain('viewAny:hostels')
+        ->and($permissions)->toContain('view:hostels')
+        ->and($permissions)->toContain('manage:data-maintenance')
+        ->and($permissions)->not->toContain('root:manage')
+        ->and($permissions)->not->toContain('create:hostels')
+        ->and($permissions)->not->toContain('update:hostels')
+        ->and($permissions)->not->toContain('delete:hostels');
 });
 
 test('vice principal academics pack excludes hostel and finance dashboard tabs', function () {

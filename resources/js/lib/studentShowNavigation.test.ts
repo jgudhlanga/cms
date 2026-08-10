@@ -43,7 +43,7 @@ describe('studentShowBackPermission', () => {
     it('maps each from slug to the correct abilities', () => {
         expect(studentShowBackPermission('students')).toBe('view:students');
         expect(studentShowBackPermission('users')).toBe('view:users');
-        expect(studentShowBackPermission('maintenance')).toBe('root:manage');
+        expect(studentShowBackPermission('maintenance')).toEqual(['root:manage', 'manage:data-maintenance']);
         expect(studentShowBackPermission('hms')).toBe('view:hostels');
         expect(studentShowBackPermission('academic-calendar')).toEqual([
             'viewAny:academic-calendars',

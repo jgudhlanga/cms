@@ -17,6 +17,17 @@ function actingAsRootMaintenanceUser(): User
     return $user;
 }
 
+function actingAsDataMaintenanceUser(): User
+{
+    Permission::findOrCreate('manage:data-maintenance', 'web');
+
+    $user = User::factory()->create();
+    $user->givePermissionTo('manage:data-maintenance');
+    test()->actingAs($user);
+
+    return $user;
+}
+
 it('redirects guests from maintenance index', function (): void {
     $this->get(route('maintenance.index'))
         ->assertRedirect('/login');
@@ -31,6 +42,18 @@ it('forbids users without root manage from maintenance index', function (): void
 
 it('renders maintenance index for root users', function (): void {
     actingAsRootMaintenanceUser();
+
+    $this->get(route('maintenance.index'))
+        ->assertSuccessful()
+        ->assertInertia(fn ($page) => $page
+            ->component('maintenance/Index')
+            ->has('exportCounts.studentEnrolments')
+            ->has('exportCounts.applications')
+            ->has('exportCounts.faultyStudentIds'));
+});
+
+it('renders maintenance index for data maintenance users', function (): void {
+    actingAsDataMaintenanceUser();
 
     $this->get(route('maintenance.index'))
         ->assertSuccessful()

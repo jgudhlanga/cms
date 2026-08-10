@@ -17,7 +17,7 @@ export function useStudentIdNumberCorrection(studentSource: Ref<Student> | (() =
 
     const canEditPersonal = hasAbility('manageOwnStudentPersonalDetails:students');
     const canUpdateStudents = hasAbility('update:students');
-    const canManageMaintenance = hasAbility('root:manage');
+    const canManageMaintenance = hasAbility(['root:manage', 'manage:data-maintenance']);
 
     const isProfileOwner = computed(() => {
         const authStudentId = page.props.auth?.user?.attributes?.studentId;

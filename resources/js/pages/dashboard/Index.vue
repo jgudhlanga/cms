@@ -22,6 +22,7 @@ import HostelTab from './tabs/HostelTab.vue';
 import OverviewTab from './tabs/OverviewTab.vue';
 import StaffTab from './tabs/StaffTab.vue';
 import TeachingTab from './tabs/TeachingTab.vue';
+import MyRecentActivity from './components/MyRecentActivity.vue';
 
 const breadcrumbs: BreadcrumbItemInterface[] = [{ transChoiceKey: 'dashboard' }];
 
@@ -103,6 +104,10 @@ const handleFilterChange = (option: SelectOption) => {
                 <p class="mt-0.5 text-[11px] text-gray-500">
                     {{ academicContextSubtitle }}
                 </p>
+            </div>
+
+            <div class="mb-6">
+                <MyRecentActivity />
             </div>
 
             <!-- Tabs Layout -->

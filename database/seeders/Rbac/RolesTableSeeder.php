@@ -65,6 +65,7 @@ class RolesTableSeeder extends Seeder
             RoleEnum::PRINCIPAL->name() => PermissionHelper::principalPermissions(),
             RoleEnum::DEAN->name() => PermissionHelper::deanPermissions(),
             RoleEnum::WARDEN->name() => PermissionHelper::wardenPermissions(),
+            RoleEnum::IT_SUPPORT_TECHNICIAN->name() => PermissionHelper::itSupportTechnicianPermissions(),
             default => null,
         };
     }

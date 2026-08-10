@@ -20,7 +20,7 @@ export type StudentShowNavigationQuery = {
 export const STUDENT_SHOW_FROM_PERMISSIONS: Record<StudentShowFrom, string | string[]> = {
     students: 'view:students',
     users: 'view:users',
-    maintenance: 'root:manage',
+    maintenance: ['root:manage', 'manage:data-maintenance'],
     hms: 'view:hostels',
     'academic-calendar': ['viewAny:academic-calendars', 'view:academic-calendars'],
 };
