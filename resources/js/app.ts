@@ -10,6 +10,7 @@ import PlainLayout from '@/layouts/PlainLayout.vue';
 import { PageModule } from '@/types';
 import { createInertiaApp } from '@inertiajs/vue3';
 import { MotionPlugin } from '@vueuse/motion';
+import axios from 'axios';
 import { i18nVue } from 'laravel-vue-i18n';
 import { createPinia } from 'pinia';
 import piniaPluginPersistedstate from 'pinia-plugin-persistedstate';
@@ -23,6 +24,9 @@ import 'vue3-toastify/dist/index.css';
 import { ZiggyVue } from 'ziggy-js';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
+
+// Keep Laravel session previous URL on Inertia pages, not API/XHR endpoints.
+axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 
 initializeTheme();
 

@@ -7,6 +7,7 @@ use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\RedirectImpersonatedToPortal;
 use App\Http\Middleware\RedirectStudentMiddleware;
+use App\Http\Middleware\RestorePreviousUrlAfterApiRequest;
 use App\Services\Students\RegistrationAvailabilityService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Application;
@@ -39,6 +40,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
         $middleware->api(append: [
             EnsureFrontendRequestsAreStateful::class,
+            RestorePreviousUrlAfterApiRequest::class,
         ]);
         $middleware->alias([
             'redirect.student' => RedirectStudentMiddleware::class,
