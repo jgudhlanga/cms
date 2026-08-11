@@ -27,7 +27,7 @@ class StudentExamResultAccessService
     /**
      * @return array{
      *     canViewResults: bool,
-     *     gate: 'clearance'|'fees'|'apprentice'|'not_enrolled',
+     *     gate: 'clearance'|'fees'|'apprentice'|'not_enrolled'|'non_hexco',
      *     allowOnlineClearance: bool,
      *     fees: array<string, mixed>|null,
      *     clearance: array<string, mixed>|null,
@@ -43,7 +43,8 @@ class StudentExamResultAccessService
         $allowOnlineClearance = $this->featureService->allowsOnlineClearance((int) $student->tenant_id);
         $enrolment = $this->resolveEnrolmentContext($student);
         $idValidation = $this->idValidation($student);
-        $calendarType = $this->resolveCalendarType($enrolment)->value;
+        $calendarTypeEnum = $this->resolveCalendarType($enrolment);
+        $calendarType = $calendarTypeEnum->value;
         $calendarYear = $this->resolveCalendarYear($enrolment);
 
         $clearanceStatus = $this->clearanceStatus($student, $enrolment);
@@ -62,6 +63,24 @@ class StudentExamResultAccessService
                 'academicCalendarId' => null,
                 'calendarYear' => $calendarYear,
                 'semesterId' => null,
+                'calendarType' => $calendarType,
+            ];
+        }
+
+        if (in_array($calendarTypeEnum, [
+            AcademicCalendarTypeEnum::ABMA,
+            AcademicCalendarTypeEnum::TERM,
+        ], true)) {
+            return [
+                'canViewResults' => false,
+                'gate' => 'non_hexco',
+                'allowOnlineClearance' => $allowOnlineClearance,
+                'fees' => null,
+                'clearance' => $clearanceForDisplay,
+                'idValidation' => $idValidation,
+                'academicCalendarId' => $enrolment->academic_calendar_id,
+                'calendarYear' => $calendarYear,
+                'semesterId' => $enrolment->semester_id,
                 'calendarType' => $calendarType,
             ];
         }

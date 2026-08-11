@@ -634,3 +634,99 @@ test('evaluate uses not_enrolled gate when student has no enrolment', function (
         ->and($fees['expectedTotal'])->toBe(0.0)
         ->and($fees['source'])->toBeNull();
 });
+
+test('evaluate uses non_hexco gate for abma and term calendar levels while fees still assess', function (AcademicCalendarTypeEnum $calendarType) {
+    $application = createVerifiedStudentApplication('CLR-NH-'.strtoupper(Str::random(4)));
+    $application->departmentLevel->level->update(['calendar_type' => $calendarType->value]);
+
+    $feeType = FeeType::query()->firstOrCreate(
+        ['slug' => FeeTypeEnum::TUITION_FEE->slug()],
+        [
+            'name' => FeeTypeEnum::TUITION_FEE->name(),
+            'description' => FeeTypeEnum::TUITION_FEE->description(),
+            'position' => FeeTypeEnum::TUITION_FEE->position(),
+        ],
+    );
+
+    FeeStructure::query()->updateOrCreate(
+        [
+            'tenant_id' => $application->tenant_id,
+            'fee_type_id' => $feeType->id,
+            'level_id' => $application->departmentLevel->level_id,
+            'mode_of_study_id' => $application->mode_of_study_id,
+        ],
+        [
+            'amount' => 200,
+            'local_fca_amount' => 200,
+        ],
+    );
+
+    $calendar = AcademicCalendar::query()->create([
+        'calendar_year' => '2026',
+        'type' => $calendarType,
+        'opening_date' => '2026-02-01',
+        'closing_date' => '2026-06-30',
+    ]);
+    $semesterId = (int) Semester::query()->where('slug', 'semester-1')->value('id');
+    $activeStatusId = (int) StudentEnrolmentStatus::query()->where('slug', 'active')->value('id');
+
+    StudentEnrolment::query()->create([
+        'student_id' => $application->student_id,
+        'student_application_id' => $application->id,
+        'institution_department_id' => $application->institution_department_id,
+        'department_level_id' => $application->department_level_id,
+        'department_course_id' => $application->department_course_id,
+        'semester_id' => $semesterId,
+        'academic_calendar_id' => $calendar->id,
+        'mode_of_study_id' => $application->mode_of_study_id,
+        'student_enrolment_status_id' => $activeStatusId,
+    ]);
+
+    $student = $application->student->fresh();
+    $access = app(StudentExamResultAccessService::class)->evaluate($student);
+    $fees = app(StudentFeeClearanceService::class)->evaluate($student);
+
+    expect($access['gate'])->toBe('non_hexco')
+        ->and($access['canViewResults'])->toBeFalse()
+        ->and($access['fees'])->toBeNull()
+        ->and($access['calendarType'])->toBe($calendarType->value)
+        ->and($fees['isEnrolled'])->toBeTrue()
+        ->and($fees['expectedTotal'])->toBe(200.0)
+        ->and($fees['source'])->toBe('enrolment');
+})->with([
+    AcademicCalendarTypeEnum::TERM,
+    AcademicCalendarTypeEnum::ABMA,
+]);
+
+test('evaluate still uses fee gate for semester calendar levels', function () {
+    $application = createVerifiedStudentApplication('CLR-SEM-'.strtoupper(Str::random(4)));
+    $application->departmentLevel->level->update(['calendar_type' => AcademicCalendarTypeEnum::SEMESTER->value]);
+
+    $calendar = AcademicCalendar::query()->create([
+        'calendar_year' => '2026',
+        'type' => AcademicCalendarTypeEnum::SEMESTER,
+        'opening_date' => '2026-02-01',
+        'closing_date' => '2026-06-30',
+    ]);
+    $semesterId = (int) Semester::query()->where('slug', 'semester-1')->value('id');
+    $activeStatusId = (int) StudentEnrolmentStatus::query()->where('slug', 'active')->value('id');
+
+    StudentEnrolment::query()->create([
+        'student_id' => $application->student_id,
+        'student_application_id' => $application->id,
+        'institution_department_id' => $application->institution_department_id,
+        'department_level_id' => $application->department_level_id,
+        'department_course_id' => $application->department_course_id,
+        'semester_id' => $semesterId,
+        'academic_calendar_id' => $calendar->id,
+        'mode_of_study_id' => $application->mode_of_study_id,
+        'student_enrolment_status_id' => $activeStatusId,
+    ]);
+
+    $access = app(StudentExamResultAccessService::class)->evaluate($application->student->fresh());
+
+    expect($access['gate'])->toBe('fees')
+        ->and($access['canViewResults'])->toBeFalse()
+        ->and($access['fees'])->not->toBeNull()
+        ->and($access['calendarType'])->toBe(AcademicCalendarTypeEnum::SEMESTER->value);
+});

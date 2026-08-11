@@ -20,7 +20,7 @@ import { computed } from 'vue';
 
 type AccessPayload = {
     canViewResults: boolean;
-    gate: 'clearance' | 'fees' | 'apprentice' | 'not_enrolled';
+    gate: 'clearance' | 'fees' | 'apprentice' | 'not_enrolled' | 'non_hexco';
     allowOnlineClearance: boolean;
     fees: {
         expectedTotal: number;
@@ -140,6 +140,12 @@ const printStatement = () => {
             />
 
             <BaseAlert
+                v-else-if="access.gate === 'non_hexco'"
+                :type="TypeVariant.warning"
+                :description="$t('trans.exam_results_non_hexco')"
+            />
+
+            <BaseAlert
                 v-else-if="access.gate === 'apprentice'"
                 :type="TypeVariant.success"
                 :description="$t('trans.exam_results_apprentice_exempt')"
@@ -147,7 +153,7 @@ const printStatement = () => {
 
             <template v-if="!allowed">
                 <BaseAlert
-                    v-if="access.gate !== 'not_enrolled'"
+                    v-if="access.gate !== 'not_enrolled' && access.gate !== 'non_hexco'"
                     :type="TypeVariant.warning"
                     :description="$t('trans.exam_results_access_denied')"
                 />
