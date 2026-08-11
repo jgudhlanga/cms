@@ -252,6 +252,33 @@ test('portal profile financials exposes outstanding tuition payment route', func
         ],
     );
 
+    $calendar = AcademicCalendar::query()->create([
+        'calendar_year' => '2026',
+        'type' => 'semester',
+        'opening_date' => '2026-02-01',
+        'closing_date' => '2026-06-30',
+    ]);
+    $semester = Semester::query()->firstOrCreate(
+        ['slug' => 'semester-1'],
+        ['name' => 'Semester 1', 'description' => null],
+    );
+    $status = StudentEnrolmentStatus::query()->firstOrCreate(
+        ['slug' => 'active'],
+        ['name' => 'Active', 'description' => 'Test'],
+    );
+
+    StudentEnrolment::query()->create([
+        'student_id' => $student->id,
+        'student_application_id' => $studentApplication->id,
+        'institution_department_id' => $studentApplication->institution_department_id,
+        'department_level_id' => $studentApplication->department_level_id,
+        'department_course_id' => $studentApplication->department_course_id,
+        'semester_id' => $semester->id,
+        'academic_calendar_id' => $calendar->id,
+        'mode_of_study_id' => $studentApplication->mode_of_study_id,
+        'student_enrolment_status_id' => $status->id,
+    ]);
+
     $this->actingAs($user)
         ->get(route('portal.profile.financials'))
         ->assertOk()
@@ -260,6 +287,48 @@ test('portal profile financials exposes outstanding tuition payment route', func
             ->where('activeTab', 'financials')
             ->where('payRoute', route('portal.profile.financials.pay', ['returnTo' => 'financials']))
             ->where('feeSummary.outstanding', 100)
+            ->where('feeSummary.isEnrolled', true)
+        );
+});
+
+test('portal profile financials hides pay route and assessed fees when student is not enrolled', function () {
+    $studentApplication = createVerifiedStudentApplication('PORTAL-FIN-NE-001');
+    $student = $studentApplication->student;
+    $user = $student->user;
+    $user->givePermissionTo('manageOwnStudentFinancialDetails:students');
+
+    $feeType = FeeType::query()->firstOrCreate(
+        ['slug' => FeeTypeEnum::TUITION_FEE->slug()],
+        [
+            'name' => FeeTypeEnum::TUITION_FEE->name(),
+            'description' => FeeTypeEnum::TUITION_FEE->description(),
+            'position' => FeeTypeEnum::TUITION_FEE->position(),
+        ],
+    );
+
+    FeeStructure::query()->updateOrCreate(
+        [
+            'tenant_id' => $studentApplication->tenant_id,
+            'fee_type_id' => $feeType->id,
+            'level_id' => $studentApplication->departmentLevel->level_id,
+            'mode_of_study_id' => $studentApplication->mode_of_study_id,
+        ],
+        [
+            'amount' => 100,
+            'local_fca_amount' => 100,
+        ],
+    );
+
+    $this->actingAs($user)
+        ->get(route('portal.profile.financials'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('portal/student/profile/Section')
+            ->where('activeTab', 'financials')
+            ->where('payRoute', null)
+            ->where('feeSummary.outstanding', 0)
+            ->where('feeSummary.isEnrolled', false)
+            ->where('feeSummary.expectedTotal', 0)
         );
 });
 
@@ -434,6 +503,33 @@ test('portal tuition payment page renders for authorized student with outstandin
         ],
     );
 
+    $calendar = AcademicCalendar::query()->create([
+        'calendar_year' => '2026',
+        'type' => 'semester',
+        'opening_date' => '2026-02-01',
+        'closing_date' => '2026-06-30',
+    ]);
+    $semester = Semester::query()->firstOrCreate(
+        ['slug' => 'semester-1'],
+        ['name' => 'Semester 1', 'description' => null],
+    );
+    $status = StudentEnrolmentStatus::query()->firstOrCreate(
+        ['slug' => 'active'],
+        ['name' => 'Active', 'description' => 'Test'],
+    );
+
+    StudentEnrolment::query()->create([
+        'student_id' => $student->id,
+        'student_application_id' => $studentApplication->id,
+        'institution_department_id' => $studentApplication->institution_department_id,
+        'department_level_id' => $studentApplication->department_level_id,
+        'department_course_id' => $studentApplication->department_course_id,
+        'semester_id' => $semester->id,
+        'academic_calendar_id' => $calendar->id,
+        'mode_of_study_id' => $studentApplication->mode_of_study_id,
+        'student_enrolment_status_id' => $status->id,
+    ]);
+
     $this->actingAs($user)
         ->get(route('portal.profile.financials.pay'))
         ->assertOk()
@@ -443,6 +539,40 @@ test('portal tuition payment page renders for authorized student with outstandin
             ->where('tuitionFee.currencyCode', '840')
             ->where('feeSummary.outstanding', 100)
         );
+});
+
+test('portal tuition payment page redirects when student is not enrolled', function () {
+    $studentApplication = createVerifiedStudentApplication('PORTAL-FIN-NE-PAY-001');
+    $student = $studentApplication->student;
+    $user = $student->user;
+    $user->givePermissionTo('manageOwnStudentFinancialDetails:students');
+
+    $feeType = FeeType::query()->firstOrCreate(
+        ['slug' => FeeTypeEnum::TUITION_FEE->slug()],
+        [
+            'name' => FeeTypeEnum::TUITION_FEE->name(),
+            'description' => FeeTypeEnum::TUITION_FEE->description(),
+            'position' => FeeTypeEnum::TUITION_FEE->position(),
+        ],
+    );
+
+    FeeStructure::query()->updateOrCreate(
+        [
+            'tenant_id' => $studentApplication->tenant_id,
+            'fee_type_id' => $feeType->id,
+            'level_id' => $studentApplication->departmentLevel->level_id,
+            'mode_of_study_id' => $studentApplication->mode_of_study_id,
+        ],
+        [
+            'amount' => 100,
+            'local_fca_amount' => 100,
+        ],
+    );
+
+    $this->actingAs($user)
+        ->get(route('portal.profile.financials.pay'))
+        ->assertRedirect(route('portal.profile.financials'))
+        ->assertSessionHas('error', __('trans.student_not_enrolled_contact_it'));
 });
 
 test('portal profile accommodations pay route returns not found when fee structure is missing', function () {

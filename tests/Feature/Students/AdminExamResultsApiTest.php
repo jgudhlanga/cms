@@ -130,7 +130,8 @@ test('admin exam results index returns access payload for permitted staff', func
 
     $this->getJson(route('v1.students.exam-results.index', $student->id))
         ->assertOk()
-        ->assertJsonPath('data.access.gate', 'fees')
+        ->assertJsonPath('data.access.gate', 'not_enrolled')
+        ->assertJsonPath('data.access.canViewResults', false)
         ->assertJsonPath('data.savedResults.0.candidateNumber', 'CAND-ADMIN-1');
 });
 

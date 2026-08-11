@@ -572,6 +572,33 @@ test('portal exam results unlock when a paid tuition ledger receipt covers the e
         ],
     );
 
+    $calendar = AcademicCalendar::query()->create([
+        'calendar_year' => '2026',
+        'type' => 'semester',
+        'opening_date' => '2026-02-01',
+        'closing_date' => '2026-06-30',
+    ]);
+    $semester = Semester::query()->firstOrCreate(
+        ['slug' => 'semester-1'],
+        ['name' => 'Semester 1', 'description' => null],
+    );
+    $status = StudentEnrolmentStatus::query()->firstOrCreate(
+        ['slug' => 'active'],
+        ['name' => 'Active', 'description' => 'Test'],
+    );
+
+    StudentEnrolment::query()->create([
+        'student_id' => $student->id,
+        'student_application_id' => $studentApplication->id,
+        'institution_department_id' => $studentApplication->institution_department_id,
+        'department_level_id' => $studentApplication->department_level_id,
+        'department_course_id' => $studentApplication->department_course_id,
+        'semester_id' => $semester->id,
+        'academic_calendar_id' => $calendar->id,
+        'mode_of_study_id' => $studentApplication->mode_of_study_id,
+        'student_enrolment_status_id' => $status->id,
+    ]);
+
     Ledger::query()->create([
         'tenant_id' => $studentApplication->tenant_id,
         'ledgerable_type' => StudentApplication::class,
@@ -594,6 +621,7 @@ test('portal exam results unlock when a paid tuition ledger receipt covers the e
         ->assertInertia(fn ($page) => $page
             ->component('portal/student/ExamResults')
             ->where('access.canViewResults', true)
+            ->where('access.gate', 'fees')
             ->where('access.fees.paidFromLedger', 100)
             ->where('access.fees.outstanding', 0)
         );

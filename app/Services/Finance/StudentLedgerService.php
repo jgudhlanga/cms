@@ -30,7 +30,8 @@ class StudentLedgerService
      *         totalInvoiced: string,
      *         totalPayments: string,
      *         outstandingBalance: string,
-     *         paidPercent: float
+     *         paidPercent: float,
+     *         isEnrolled: bool
      *     }
      * }
      */
@@ -83,6 +84,7 @@ class StudentLedgerService
                 'totalPayments' => number_format($totalPayments, 2, '.', ''),
                 'outstandingBalance' => number_format($outstandingBalance, 2, '.', ''),
                 'paidPercent' => $paidPercent,
+                'isEnrolled' => $student->exists && $student->latestEnrolment()->exists(),
             ],
         ];
     }

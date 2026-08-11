@@ -27,7 +27,7 @@ class StudentExamResultAccessService
     /**
      * @return array{
      *     canViewResults: bool,
-     *     gate: 'clearance'|'fees'|'apprentice',
+     *     gate: 'clearance'|'fees'|'apprentice'|'not_enrolled',
      *     allowOnlineClearance: bool,
      *     fees: array<string, mixed>|null,
      *     clearance: array<string, mixed>|null,
@@ -51,6 +51,21 @@ class StudentExamResultAccessService
             ? $clearanceStatus
             : $this->filterClearanceToAccountsOnly($clearanceStatus);
 
+        if ($enrolment === null) {
+            return [
+                'canViewResults' => false,
+                'gate' => 'not_enrolled',
+                'allowOnlineClearance' => $allowOnlineClearance,
+                'fees' => null,
+                'clearance' => $clearanceForDisplay,
+                'idValidation' => $idValidation,
+                'academicCalendarId' => null,
+                'calendarYear' => $calendarYear,
+                'semesterId' => null,
+                'calendarType' => $calendarType,
+            ];
+        }
+
         if ($allowOnlineClearance) {
             return [
                 'canViewResults' => $clearanceStatus['isFullyCleared'] && ! $idValidation['needsCorrection'],
@@ -59,9 +74,9 @@ class StudentExamResultAccessService
                 'fees' => null,
                 'clearance' => $clearanceForDisplay,
                 'idValidation' => $idValidation,
-                'academicCalendarId' => $enrolment?->academic_calendar_id,
+                'academicCalendarId' => $enrolment->academic_calendar_id,
                 'calendarYear' => $calendarYear,
-                'semesterId' => $enrolment?->semester_id,
+                'semesterId' => $enrolment->semester_id,
                 'calendarType' => $calendarType,
             ];
         }
@@ -74,9 +89,9 @@ class StudentExamResultAccessService
                 'fees' => null,
                 'clearance' => $clearanceForDisplay,
                 'idValidation' => $idValidation,
-                'academicCalendarId' => $enrolment?->academic_calendar_id,
+                'academicCalendarId' => $enrolment->academic_calendar_id,
                 'calendarYear' => $calendarYear,
-                'semesterId' => $enrolment?->semester_id,
+                'semesterId' => $enrolment->semester_id,
                 'calendarType' => $calendarType,
             ];
         }
@@ -89,9 +104,9 @@ class StudentExamResultAccessService
                 'fees' => null,
                 'clearance' => $clearanceForDisplay,
                 'idValidation' => $idValidation,
-                'academicCalendarId' => $enrolment?->academic_calendar_id,
+                'academicCalendarId' => $enrolment->academic_calendar_id,
                 'calendarYear' => $calendarYear,
-                'semesterId' => $enrolment?->semester_id,
+                'semesterId' => $enrolment->semester_id,
                 'calendarType' => $calendarType,
             ];
         }
@@ -105,9 +120,9 @@ class StudentExamResultAccessService
             'fees' => $fees,
             'clearance' => $clearanceForDisplay,
             'idValidation' => $idValidation,
-            'academicCalendarId' => $enrolment?->academic_calendar_id,
+            'academicCalendarId' => $enrolment->academic_calendar_id,
             'calendarYear' => $calendarYear,
-            'semesterId' => $enrolment?->semester_id,
+            'semesterId' => $enrolment->semester_id,
             'calendarType' => $calendarType,
         ];
     }

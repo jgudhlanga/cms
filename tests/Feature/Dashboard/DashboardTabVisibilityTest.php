@@ -20,13 +20,17 @@ test('dashboard returns forbidden when module is disabled', function () {
         ->assertForbidden();
 });
 
-test('dashboard returns forbidden when user has no tab permissions', function () {
+test('dashboard is accessible with activity tab when user has no other tab permissions', function () {
     $user = User::factory()->create();
     seedDashboardIntakePeriod($user->tenant_id);
 
     $this->actingAs($user)
         ->get(dashboardUrlFor($user))
-        ->assertForbidden();
+        ->assertSuccessful()
+        ->assertInertia(fn ($page) => $page
+            ->component('dashboard/Index')
+            ->where('visibleTabs', ['activity'])
+        );
 });
 
 test('dashboard is accessible with academic tab permission only', function () {
@@ -42,7 +46,7 @@ test('dashboard is accessible with academic tab permission only', function () {
         ->assertSuccessful()
         ->assertInertia(fn ($page) => $page
             ->component('dashboard/Index')
-            ->where('visibleTabs', ['academic'])
+            ->where('visibleTabs', ['academic', 'activity'])
         );
 });
 
@@ -56,6 +60,7 @@ test('dashboard hides tabs disabled in module settings', function () {
         'staff' => false,
         'finance' => false,
         'hostel' => false,
+        'activity' => false,
     ]);
 
     $this->actingAs($user)

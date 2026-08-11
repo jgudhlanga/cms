@@ -37,6 +37,7 @@ declare module 'vue' {
     AccountPurgeArchiveFlushConfirmDialog: typeof import('./../components/account-purge/AccountPurgeArchiveFlushConfirmDialog.vue')['default']
     AccountPurgeArchiveRestoreConfirmDialog: typeof import('./../components/account-purge/AccountPurgeArchiveRestoreConfirmDialog.vue')['default']
     AccountPurgeConfirmDialog: typeof import('./../components/account-purge/AccountPurgeConfirmDialog.vue')['default']
+    ActivityTimeline: typeof import('./../components/audit/ActivityTimeline.vue')['default']
     Address1: typeof import('./../components/core/form/text/Address1.vue')['default']
     Address2: typeof import('./../components/core/form/text/Address2.vue')['default']
     Address3: typeof import('./../components/core/form/text/Address3.vue')['default']

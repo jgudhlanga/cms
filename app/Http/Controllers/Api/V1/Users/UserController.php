@@ -11,9 +11,9 @@ use App\Http\Filters\Users\UserFilter;
 use App\Http\Requests\Preferences\UserPreferenceRequest;
 use App\Http\Requests\Users\UpdateUserRequest;
 use App\Http\Requests\Users\UserRequest;
-use App\Http\Resources\Rbac\PermissionResource;
 use App\Http\Resources\AuditTrail\AuditTrailResource;
 use App\Http\Resources\Preferences\UserPreferenceResource;
+use App\Http\Resources\Rbac\PermissionResource;
 use App\Http\Resources\Users\UserResource;
 use App\Models\Preferences\UserPreference;
 use App\Models\Users\User;
@@ -129,7 +129,7 @@ class UserController extends ApiDropdownController
     {
         $this->authorize('view', $user);
 
-        $activities = $user->activities()
+        $activities = $this->applyActivityEventFilter($user->activities())
             ->latest()
             ->paginate(request()->integer('per_page', 20));
 
@@ -142,13 +142,26 @@ class UserController extends ApiDropdownController
 
         abort_unless($user instanceof User, 401);
 
-        $activities = Activity::query()
-            ->where('causer_type', $user->getMorphClass())
-            ->where('causer_id', $user->getKey())
+        $activities = $this->applyActivityEventFilter(
+            Activity::query()
+                ->where('causer_type', $user->getMorphClass())
+                ->where('causer_id', $user->getKey())
+        )
             ->latest()
             ->paginate(request()->integer('per_page', 20));
 
         return AuditTrailResource::collection($activities);
+    }
+
+    private function applyActivityEventFilter(mixed $query): mixed
+    {
+        $event = request()->string('event')->toString();
+
+        if (in_array($event, ['created', 'updated'], true)) {
+            $query->where('description', $event);
+        }
+
+        return $query;
     }
 
     public function updateUserPreferences(UserPreferenceRequest $request, User $user)

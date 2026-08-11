@@ -16,7 +16,7 @@ import { computed, onMounted, ref } from 'vue';
 
 type AccessPayload = {
     canViewResults: boolean;
-    gate: 'clearance' | 'fees' | 'apprentice';
+    gate: 'clearance' | 'fees' | 'apprentice' | 'not_enrolled';
     allowOnlineClearance: boolean;
     fees: {
         tuition: number;
@@ -312,7 +312,13 @@ onMounted(fetchIndex);
 
         <template v-else-if="access">
             <BaseAlert
-                v-if="access.gate === 'apprentice'"
+                v-if="access.gate === 'not_enrolled'"
+                :type="TypeVariant.warning"
+                :description="$t('trans.exam_results_not_enrolled')"
+            />
+
+            <BaseAlert
+                v-else-if="access.gate === 'apprentice'"
                 :type="TypeVariant.success"
                 :description="$t('trans.exam_results_apprentice_exempt')"
             />
@@ -398,43 +404,45 @@ onMounted(fetchIndex);
                 </ul>
             </div>
 
-            <div v-if="hasSavedResults" class="space-y-3">
-                <div>
-                    <h2 class="text-base font-semibold">{{ $t('examinations.exam_results_saved_list') }}</h2>
-                    <p class="text-sm text-muted-foreground">{{ $t('examinations.exam_results_saved_list_hint') }}</p>
+            <template v-if="access.gate !== 'not_enrolled'">
+                <div v-if="hasSavedResults" class="space-y-3">
+                    <div>
+                        <h2 class="text-base font-semibold">{{ $t('examinations.exam_results_saved_list') }}</h2>
+                        <p class="text-sm text-muted-foreground">{{ $t('examinations.exam_results_saved_list_hint') }}</p>
+                    </div>
+
+                    <button
+                        v-for="row in savedResults"
+                        :key="row.id"
+                        type="button"
+                        class="block w-full rounded-xl border border-border bg-card p-4 text-left text-card-foreground shadow-sm transition-colors hover:bg-muted/40"
+                        @click="openStatement(row.id)"
+                    >
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="min-w-0 space-y-1">
+                                <p class="text-base font-semibold leading-tight">{{ row.session }}</p>
+                                <p class="text-sm text-muted-foreground">
+                                    {{ $t('examinations.calendar_year') }}: {{ row.calendarYear }}
+                                </p>
+                                <p class="font-mono text-sm">{{ row.candidateNumber }}</p>
+                                <p v-if="row.comment || row.rawCourseComment" class="text-sm">
+                                    <span class="text-muted-foreground">{{ $t('examinations.course_comment') }}:</span>
+                                    {{ row.comment || row.rawCourseComment }}
+                                </p>
+                            </div>
+                            <span class="shrink-0 text-sm font-medium text-primary">
+                                {{ $t('examinations.exam_results_view') }}
+                            </span>
+                        </div>
+                    </button>
                 </div>
 
-                <button
-                    v-for="row in savedResults"
-                    :key="row.id"
-                    type="button"
-                    class="block w-full rounded-xl border border-border bg-card p-4 text-left text-card-foreground shadow-sm transition-colors hover:bg-muted/40"
-                    @click="openStatement(row.id)"
-                >
-                    <div class="flex items-start justify-between gap-3">
-                        <div class="min-w-0 space-y-1">
-                            <p class="text-base font-semibold leading-tight">{{ row.session }}</p>
-                            <p class="text-sm text-muted-foreground">
-                                {{ $t('examinations.calendar_year') }}: {{ row.calendarYear }}
-                            </p>
-                            <p class="font-mono text-sm">{{ row.candidateNumber }}</p>
-                            <p v-if="row.comment || row.rawCourseComment" class="text-sm">
-                                <span class="text-muted-foreground">{{ $t('examinations.course_comment') }}:</span>
-                                {{ row.comment || row.rawCourseComment }}
-                            </p>
-                        </div>
-                        <span class="shrink-0 text-sm font-medium text-primary">
-                            {{ $t('examinations.exam_results_view') }}
-                        </span>
-                    </div>
-                </button>
-            </div>
-
-            <BaseAlert
-                v-else
-                :type="TypeVariant.info"
-                :description="$t('examinations.exam_results_empty')"
-            />
+                <BaseAlert
+                    v-else
+                    :type="TypeVariant.info"
+                    :description="$t('examinations.exam_results_empty')"
+                />
+            </template>
 
             <div v-if="canLookupAnother && !showLookupForm" class="flex justify-start">
                 <BaseButton type="button" @click="showLookupForm = true">

@@ -31,6 +31,10 @@ class DashboardPolicy
             return false;
         }
 
+        if ($dashboardTab === DashboardTab::Activity) {
+            return true;
+        }
+
         return $user->can('viewAny:dashboards') || $user->can($dashboardTab->permission());
     }
 }

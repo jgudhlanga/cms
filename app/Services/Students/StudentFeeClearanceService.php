@@ -11,7 +11,6 @@ use App\Models\Integrations\Banks\ZBBankStatement;
 use App\Models\Ledgers\Ledger;
 use App\Models\Shared\FeeType;
 use App\Models\Students\Student;
-use App\Models\Students\StudentApplication;
 use App\Models\Students\StudentEnrolment;
 use App\Services\Finance\StudentBankStatementMatchPatterns;
 use Illuminate\Database\Eloquent\Builder;
@@ -31,6 +30,7 @@ class StudentFeeClearanceService
      *     isFullyPaid: bool,
      *     breakdown: list<array{key: string, label: string, amount: float}>,
      *     hasStudentNumber: bool,
+     *     isEnrolled: bool,
      *     source: string|null,
      *     currency: string,
      *     bankConversions: list<array{
@@ -58,6 +58,7 @@ class StudentFeeClearanceService
         $breakdown = $this->buildBreakdown($tuition, $autoCardFee, $partTimeLevy);
 
         $hasStudentNumber = trim((string) $student->student_number) !== '';
+        $isEnrolled = $context['source'] === 'enrolment';
 
         return [
             'tuition' => $tuition,
@@ -71,6 +72,7 @@ class StudentFeeClearanceService
             'isFullyPaid' => $hasStudentNumber && $expectedTotal > 0 && $paidTotal >= $expectedTotal,
             'breakdown' => $breakdown,
             'hasStudentNumber' => $hasStudentNumber,
+            'isEnrolled' => $isEnrolled,
             'source' => $context['source'],
             'currency' => 'USD',
             'bankConversions' => $bankPayment['bankConversions'],
@@ -140,18 +142,6 @@ class StudentFeeClearanceService
             return $this->amountsFromEnrolment($student, $enrolment);
         }
 
-        $application = $student->latestApplication()
-            ->with([
-                'institutionDepartment.department',
-                'departmentLevel.level',
-                'modeOfStudy',
-            ])
-            ->first();
-
-        if ($application instanceof StudentApplication) {
-            return $this->amountsFromApplication($student, $application);
-        }
-
         return [
             'tuition' => 0.0,
             'autoCardFee' => 0.0,
@@ -175,24 +165,6 @@ class StudentFeeClearanceService
             'autoCardFee' => (float) (DepartmentHelper::requiredAutoCardFee($departmentName) ?? 0),
             'partTimeLevy' => (float) (DepartmentHelper::partTimeLevy($modeName) ?? 0),
             'source' => 'enrolment',
-        ];
-    }
-
-    /**
-     * @return array{tuition: float, autoCardFee: float, partTimeLevy: float, source: string}
-     */
-    private function amountsFromApplication(Student $student, StudentApplication $application): array
-    {
-        $levelId = $application->departmentLevel?->level?->id;
-        $modeOfStudyId = $application->mode_of_study_id;
-        $departmentName = $application->institutionDepartment?->department?->name ?? '';
-        $modeName = $application->modeOfStudy?->name ?? '';
-
-        return [
-            'tuition' => $this->resolveTuition((int) $student->tenant_id, $levelId, $modeOfStudyId),
-            'autoCardFee' => (float) (DepartmentHelper::requiredAutoCardFee($departmentName) ?? 0),
-            'partTimeLevy' => (float) (DepartmentHelper::partTimeLevy($modeName) ?? 0),
-            'source' => 'application',
         ];
     }
 

@@ -2,9 +2,9 @@
 
 use App\Enums\AcademicCalendars\AcademicCalendarTypeEnum;
 use App\Models\AcademicCalendars\AcademicCalendar;
+use App\Models\Institution\IntakePeriod;
 use App\Models\Rbac\Module;
 use App\Models\Rbac\Permission;
-use App\Models\Institution\IntakePeriod;
 use App\Models\Tenants\Tenant;
 use App\Models\Users\User;
 use App\Services\Dashboard\DashboardModuleService;
@@ -80,6 +80,7 @@ function enableDashboardModule(array $tabSettings = []): void
         'staff' => true,
         'finance' => true,
         'hostel' => true,
+        'activity' => true,
     ];
 
     dashboardsModule()->update([

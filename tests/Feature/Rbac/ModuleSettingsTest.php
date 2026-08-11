@@ -42,6 +42,7 @@ test('dashboard module settings can be updated', function () {
                 'staff' => true,
                 'finance' => false,
                 'hostel' => true,
+                'activity' => true,
             ],
         ],
     ];

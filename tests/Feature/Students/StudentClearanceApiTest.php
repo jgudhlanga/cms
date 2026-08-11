@@ -3,10 +3,13 @@
 declare(strict_types=1);
 
 use App\Enums\AcademicCalendars\AcademicCalendarTypeEnum;
+use App\Enums\Shared\FeeTypeEnum;
 use App\Enums\Shared\IdTypeEnum;
 use App\Enums\Students\StudentClearanceSection;
 use App\Models\AcademicCalendars\AcademicCalendar;
 use App\Models\AcademicCalendars\Semester;
+use App\Models\Institution\FeeStructure;
+use App\Models\Shared\FeeType;
 use App\Models\Shared\IdType;
 use App\Models\Students\StudentApprentice;
 use App\Models\Students\StudentClearance;
@@ -593,4 +596,41 @@ test('evaluate does not use apprentice fee exemption when period end clearance i
         ->and($access['gate'])->toBe('clearance')
         ->and($access['canViewResults'])->toBeFalse()
         ->and($access['fees'])->toBeNull();
+});
+
+test('evaluate uses not_enrolled gate when student has no enrolment', function () {
+    $application = createVerifiedStudentApplication('CLR-NE-'.strtoupper(Str::random(4)));
+
+    $feeType = FeeType::query()->firstOrCreate(
+        ['slug' => FeeTypeEnum::TUITION_FEE->slug()],
+        [
+            'name' => FeeTypeEnum::TUITION_FEE->name(),
+            'description' => FeeTypeEnum::TUITION_FEE->description(),
+            'position' => FeeTypeEnum::TUITION_FEE->position(),
+        ],
+    );
+
+    FeeStructure::query()->updateOrCreate(
+        [
+            'tenant_id' => $application->tenant_id,
+            'fee_type_id' => $feeType->id,
+            'level_id' => $application->departmentLevel->level_id,
+            'mode_of_study_id' => $application->mode_of_study_id,
+        ],
+        [
+            'amount' => 425,
+            'local_fca_amount' => 425,
+        ],
+    );
+
+    $student = $application->student->fresh();
+    $access = app(StudentExamResultAccessService::class)->evaluate($student);
+    $fees = app(StudentFeeClearanceService::class)->evaluate($student);
+
+    expect($access['gate'])->toBe('not_enrolled')
+        ->and($access['canViewResults'])->toBeFalse()
+        ->and($access['fees'])->toBeNull()
+        ->and($fees['isEnrolled'])->toBeFalse()
+        ->and($fees['expectedTotal'])->toBe(0.0)
+        ->and($fees['source'])->toBeNull();
 });

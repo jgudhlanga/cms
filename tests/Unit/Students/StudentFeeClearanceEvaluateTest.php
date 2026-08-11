@@ -25,6 +25,7 @@ test('fee clearance treats zero expected as not fully paid', function () {
                 'isFullyPaid' => $hasStudentNumber && $expectedTotal > 0 && $paidTotal >= $expectedTotal,
                 'breakdown' => [],
                 'hasStudentNumber' => $hasStudentNumber,
+                'isEnrolled' => false,
                 'source' => null,
             ];
         }
