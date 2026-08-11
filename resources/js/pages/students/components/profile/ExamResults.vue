@@ -16,7 +16,7 @@ import { computed, onMounted, ref } from 'vue';
 
 type AccessPayload = {
     canViewResults: boolean;
-    gate: 'clearance' | 'fees' | 'apprentice' | 'not_enrolled';
+    gate: 'clearance' | 'fees' | 'apprentice' | 'not_enrolled' | 'non_hexco';
     allowOnlineClearance: boolean;
     fees: {
         tuition: number;
@@ -318,6 +318,12 @@ onMounted(fetchIndex);
             />
 
             <BaseAlert
+                v-else-if="access.gate === 'non_hexco'"
+                :type="TypeVariant.warning"
+                :description="$t('trans.exam_results_non_hexco')"
+            />
+
+            <BaseAlert
                 v-else-if="access.gate === 'apprentice'"
                 :type="TypeVariant.success"
                 :description="$t('trans.exam_results_apprentice_exempt')"
@@ -404,7 +410,7 @@ onMounted(fetchIndex);
                 </ul>
             </div>
 
-            <template v-if="access.gate !== 'not_enrolled'">
+            <template v-if="access.gate !== 'not_enrolled' && access.gate !== 'non_hexco'">
                 <div v-if="hasSavedResults" class="space-y-3">
                     <div>
                         <h2 class="text-base font-semibold">{{ $t('examinations.exam_results_saved_list') }}</h2>
