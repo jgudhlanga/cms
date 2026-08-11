@@ -58,6 +58,7 @@ const emptySummary = (): StudentLedgerSummary => ({
     totalPayments: '0.00',
     outstandingBalance: '0.00',
     paidPercent: 0,
+    isEnrolled: undefined,
 });
 
 export const useStudentsFinancials = () => {

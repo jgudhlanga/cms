@@ -773,12 +773,13 @@ class PortalController extends Controller
 
         $student = $this->profileStudent();
         $accountsCleared = $examResultAccessService->clearanceStatus($student)['accountsCleared'];
+        $feeSummary = $feeClearanceService->evaluate($student);
 
         return Inertia::render('portal/student/profile/Section', [
             'student' => StudentResource::make($student),
             'activeTab' => 'financials',
-            'feeSummary' => $feeClearanceService->evaluate($student),
-            'payRoute' => $accountsCleared
+            'feeSummary' => $feeSummary,
+            'payRoute' => $accountsCleared || ! ($feeSummary['isEnrolled'] ?? false)
                 ? null
                 : route('portal.profile.financials.pay', ['returnTo' => 'financials']),
         ]);

@@ -480,6 +480,12 @@ class PaymentController extends Controller
 
         $fees = $feeClearanceService->evaluate($student);
 
+        if (! ($fees['isEnrolled'] ?? false)) {
+            return redirect()
+                ->route('portal.profile.financials')
+                ->with('error', __('trans.student_not_enrolled_contact_it'));
+        }
+
         if ((float) $fees['outstanding'] < 0.01 || ! ($fees['hasStudentNumber'] ?? false)) {
             return redirect()
                 ->route('portal.profile.financials')

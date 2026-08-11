@@ -50,6 +50,44 @@ test('authenticated user can fetch their own caused activities', function () {
         ]);
 });
 
+test('activity endpoints filter by event description', function () {
+    $tenant = Tenant::query()->firstOrFail();
+    $admin = User::factory()->create(['tenant_id' => $tenant->id]);
+    $targetUser = User::factory()->create(['tenant_id' => $tenant->id]);
+    $admin->givePermissionTo('view:users');
+
+    $targetUser->update(['phone_number' => '0771112233']);
+
+    Sanctum::actingAs($admin);
+
+    $updated = $this->getJson(route('v1.users.activities', [
+        'user' => $targetUser->id,
+        'event' => 'updated',
+    ]))->assertSuccessful();
+
+    expect(collect($updated->json('data'))->every(
+        fn (array $row) => ($row['attributes']['description'] ?? null) === 'updated'
+    ))->toBeTrue();
+
+    Sanctum::actingAs($admin);
+
+    $admin->update(['phone_number' => '0774445566']);
+
+    $meUpdated = $this->getJson(route('v1.me.activities', ['event' => 'updated']))
+        ->assertSuccessful();
+
+    expect(collect($meUpdated->json('data'))->every(
+        fn (array $row) => ($row['attributes']['description'] ?? null) === 'updated'
+    ))->toBeTrue();
+
+    $meCreated = $this->getJson(route('v1.me.activities', ['event' => 'created']))
+        ->assertSuccessful();
+
+    expect(collect($meCreated->json('data'))->every(
+        fn (array $row) => ($row['attributes']['description'] ?? null) === 'created'
+    ))->toBeTrue();
+});
+
 test('guests cannot fetch me activities', function () {
     $this->getJson(route('v1.me.activities'))
         ->assertUnauthorized();

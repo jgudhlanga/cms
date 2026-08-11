@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import BaseAlert from '@/components/core/alert/BaseAlert.vue';
 import BaseInput from '@/components/core/form/text/BaseInput.vue';
 import BaseModal from '@/components/core/modal/BaseModal.vue';
 import BaseButton from '@/components/core/button/BaseButton.vue';
@@ -10,6 +11,7 @@ import {
 import { useStudentsFinancials } from '@/composables/finance/useStudentsFinancials';
 import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
+import { TypeVariant } from '@/enums/type-variants';
 import { closeModal, openModal } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
 import { clearFormErrors } from '@/lib/forms';
@@ -27,6 +29,7 @@ type FeeSummary = {
     paidTotal: number;
     outstanding: number;
     hasStudentNumber: boolean;
+    isEnrolled?: boolean;
 };
 
 interface Props {
@@ -40,6 +43,7 @@ const props = defineProps<Props>();
 const {
     fetchStudentLedger,
     ledgerEntries,
+    ledgerSummary,
     isLedgerLoading,
     fetchStudentTransactionQueries,
     submitStudentTransactionQuery,
@@ -75,8 +79,22 @@ const parsedLedgerEntries = useParsedStudentPaymentReceipts(
 );
 
 const formatSummaryUsd = formatUsdAmount;
+const isEnrolled = computed(() => {
+    if (typeof props.feeSummary?.isEnrolled === 'boolean') {
+        return props.feeSummary.isEnrolled;
+    }
+
+    if (typeof ledgerSummary.value.isEnrolled === 'boolean') {
+        return ledgerSummary.value.isEnrolled;
+    }
+
+    return true;
+});
 const canPayOutstanding = computed(
-    () => !!props.payRoute && !!props.feeSummary?.hasStudentNumber && Number(props.feeSummary?.outstanding ?? 0) > 0,
+    () => isEnrolled.value
+        && !!props.payRoute
+        && !!props.feeSummary?.hasStudentNumber
+        && Number(props.feeSummary?.outstanding ?? 0) > 0,
 );
 
 onMounted(async () => {
@@ -125,7 +143,13 @@ const exportTransactionStatementPdf = (): void => {
 
 <template>
     <div class="flex flex-col gap-4 py-4">
-        <div v-if="feeSummary" class="rounded-lg border p-3 sm:p-4">
+        <BaseAlert
+            v-if="!isEnrolled"
+            :type="TypeVariant.warning"
+            :description="$t('trans.student_not_enrolled_contact_it')"
+        />
+
+        <div v-if="feeSummary && isEnrolled" class="rounded-lg border p-3 sm:p-4">
             <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div class="space-y-3">
                     <div>

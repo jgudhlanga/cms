@@ -88,6 +88,7 @@ export type StudentLedgerSummary = {
     totalPayments: string;
     outstandingBalance: string;
     paidPercent: number;
+    isEnrolled?: boolean;
 };
 
 export type StudentLedgerResponse = {

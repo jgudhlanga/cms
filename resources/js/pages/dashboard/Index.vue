@@ -15,6 +15,7 @@ import { computed, ref, watch } from 'vue';
 
 // Tab Components
 import AcademicTab from './tabs/AcademicTab.vue';
+import ActivityTab from './tabs/ActivityTab.vue';
 import AttendanceTab from './tabs/AttendanceTab.vue';
 import EnrolmentsTab from './tabs/EnrolmentsTab.vue';
 import FinanceTab from './tabs/FinanceTab.vue';
@@ -22,7 +23,6 @@ import HostelTab from './tabs/HostelTab.vue';
 import OverviewTab from './tabs/OverviewTab.vue';
 import StaffTab from './tabs/StaffTab.vue';
 import TeachingTab from './tabs/TeachingTab.vue';
-import MyRecentActivity from './components/MyRecentActivity.vue';
 
 const breadcrumbs: BreadcrumbItemInterface[] = [{ transChoiceKey: 'dashboard' }];
 
@@ -106,10 +106,6 @@ const handleFilterChange = (option: SelectOption) => {
                 </p>
             </div>
 
-            <div class="mb-6">
-                <MyRecentActivity />
-            </div>
-
             <!-- Tabs Layout -->
             <Tabs v-model="resolvedActiveTab" class="w-full">
                 <TabsList class="flex h-auto w-fit flex-wrap justify-start rounded-md bg-gray-100/80 p-1">
@@ -162,6 +158,13 @@ const handleFilterChange = (option: SelectOption) => {
                     >
                         {{ $t('dashboard.hostel') }}
                     </TabsTrigger>
+                    <TabsTrigger
+                        v-if="showTab('activity')"
+                        value="activity"
+                        class="px-3 py-1.5 text-xs data-[state=active]:bg-white data-[state=active]:shadow-sm"
+                    >
+                        {{ $t('dashboard.activity') }}
+                    </TabsTrigger>
                 </TabsList>
 
                 <!-- Tab Contents -->
@@ -206,6 +209,10 @@ const handleFilterChange = (option: SelectOption) => {
 
                 <TabsContent v-if="showTab('hostel')" value="hostel" class="mt-0">
                     <HostelTab v-if="hostelDashboard" :hostel-dashboard="hostelDashboard" />
+                </TabsContent>
+
+                <TabsContent v-if="showTab('activity')" value="activity" class="mt-0">
+                    <ActivityTab />
                 </TabsContent>
             </Tabs>
         </div>
