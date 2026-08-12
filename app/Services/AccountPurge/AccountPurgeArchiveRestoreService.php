@@ -231,6 +231,9 @@ class AccountPurgeArchiveRestoreService
         $this->insertRows('hostel_leaves', $payload['hostel_leaves'] ?? []);
         $this->insertRows('hostel_notice_student', $payload['hostel_notice_student'] ?? []);
         $this->insertRows('finance_transaction_queries', $payload['finance_transaction_queries'] ?? []);
+        $this->insertRows('student_clearances', $payload['student_clearances'] ?? []);
+        $this->insertRows('student_exam_results', $payload['student_exam_results'] ?? []);
+        $this->insertRows('examination_results', $payload['examination_results'] ?? []);
 
         if ($userId !== null) {
             $user = User::query()->findOrFail($userId);

@@ -101,6 +101,13 @@ class AccountPurgeSnapshotBuilder
             'addresses' => $student->addresses()->withTrashed()->get()->map->toArray()->all(),
             'next_of_kin' => $student->nextOfKins()->withTrashed()->get()->map->toArray()->all(),
             'student_notes' => $student->notes()->withTrashed()->get()->map->toArray()->all(),
+            'student_clearances' => $student->clearances()->get()->map->toArray()->all(),
+            'student_exam_results' => $student->examResults()->get()->map->toArray()->all(),
+            'examination_results' => DB::table('examination_results')
+                ->where('student_id', $student->id)
+                ->get()
+                ->map(fn ($row) => (array) $row)
+                ->all(),
         ];
 
         if ($user) {

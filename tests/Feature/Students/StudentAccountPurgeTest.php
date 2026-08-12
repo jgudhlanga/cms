@@ -2,6 +2,8 @@
 
 use App\Enums\AccountPurge\AccountPurgeTypeEnum;
 use App\Models\AccountPurge\AccountPurgeArchive;
+use App\Models\AcademicCalendars\Semester;
+use App\Models\Examinations\ExaminationResult;
 use App\Models\Rbac\Permission;
 use App\Models\Shared\Gender;
 use App\Models\Shared\IdType;
@@ -13,9 +15,12 @@ require_once __DIR__.'/../../Support/BulkFinaliseTestHelpers.php';
 
 use App\Models\Students\Student;
 use App\Models\Students\StudentApplication;
+use App\Models\Students\StudentClearance;
 use App\Models\Students\StudentEnrolment;
+use App\Models\Students\StudentExamResult;
 use App\Models\Students\StudentNote;
 use App\Models\Users\User;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 require_once __DIR__.'/../Maintenance/MaintenanceControllerTest.php';
@@ -156,4 +161,55 @@ it('redirects to users index when purging from users context', function (): void
     $this->deleteJson(route('students.purge', $student).'?from=users', [
         'reason' => 'Valid purge reason for testing.',
     ])->assertRedirect(route('users.index'));
+});
+
+it('purges student clearances exam results and examination results', function (): void {
+    $rootUser = actingAsRootStudentPurgeUser();
+    $student = createStudentForPurge($rootUser->tenant_id);
+    $semester = Semester::query()->firstOrCreate(
+        ['slug' => 'semester-1'],
+        ['name' => 'Semester 1', 'description' => null],
+    );
+
+    $clearance = StudentClearance::query()->create([
+        'tenant_id' => $rootUser->tenant_id,
+        'student_id' => $student->id,
+        'calendar_year' => 2026,
+        'semester_id' => $semester->id,
+        'accounts_cleared' => true,
+    ]);
+
+    $examResult = StudentExamResult::query()->create([
+        'tenant_id' => $rootUser->tenant_id,
+        'student_id' => $student->id,
+        'candidate_number' => 'PURGE-CAND-1',
+        'calendar_year' => 2026,
+        'session' => '2026-06-01',
+        'comment' => 'AWARD',
+    ]);
+
+    $examinationResult = ExaminationResult::factory()->create([
+        'tenant_id' => $rootUser->tenant_id,
+        'student_id' => $student->id,
+    ]);
+
+    $this->deleteJson(route('students.purge', $student), [
+        'reason' => 'Purge student with clearance and exam result records.',
+    ])->assertRedirect(route('students.index'));
+
+    expect(DB::table('student_clearances')->where('student_id', $student->id)->exists())->toBeFalse()
+        ->and(DB::table('student_exam_results')->where('student_id', $student->id)->exists())->toBeFalse()
+        ->and(DB::table('examination_results')->where('student_id', $student->id)->exists())->toBeFalse();
+
+    $archive = AccountPurgeArchive::query()
+        ->where('original_student_id', $student->id)
+        ->first();
+
+    expect($archive)->not->toBeNull()
+        ->and($archive->payload['student_clearances'] ?? null)->toBeArray()
+        ->and($archive->payload['student_clearances'][0]['id'] ?? null)->toBe($clearance->id)
+        ->and($archive->payload['student_exam_results'] ?? null)->toBeArray()
+        ->and($archive->payload['student_exam_results'][0]['id'] ?? null)->toBe($examResult->id)
+        ->and($archive->payload['examination_results'] ?? null)->toBeArray()
+        ->and($archive->payload['examination_results'][0]['id'] ?? null)->toBe($examinationResult->id);
 });
