@@ -35,9 +35,8 @@ class Helper
     {
         $student = $program->student;
         $department = $program->institutionDepartment;
-        // next year in 2-digit format
         $intakePeriod = $program->intakePeriod;
-        $year = $intakePeriod ? Carbon::parse($intakePeriod->calendar_year)->format('y') : Carbon::now()->addYear()->format('y');
+        $year = self::resolveStudentNumberYear($intakePeriod?->calendar_year);
 
         // department code (uppercased)
         $departmentCode = strtoupper($department->department_code);
@@ -49,6 +48,23 @@ class Helper
         $collegeCode = 'HP';
 
         return $year.$departmentCode.$studentIdPadded.$collegeCode;
+    }
+
+    private static function resolveStudentNumberYear(?string $calendarYear): string
+    {
+        if ($calendarYear !== null && $calendarYear !== '') {
+            if (preg_match('/(\d{4})/', $calendarYear, $matches) === 1) {
+                return substr($matches[1], -2);
+            }
+
+            try {
+                return Carbon::parse($calendarYear)->format('y');
+            } catch (\Throwable) {
+                // Fall through to current year.
+            }
+        }
+
+        return Carbon::now()->format('y');
     }
 
     public static function lookupLegacyStudentNumber(string $studentIdentity): ?string

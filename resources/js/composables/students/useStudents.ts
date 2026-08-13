@@ -90,12 +90,15 @@ export const useStudents = () => {
         offerLetterIntakePeriodIds: Array<string | number> = [],
     ) => {
         const status = getApplicationStatus(application)?.toLowerCase();
-        const isAcceptedOrEnrolled = status === 'accepted' || status === 'enrolled';
+        if (status !== 'accepted') {
+            return false;
+        }
+
         const intakePeriodId = String(application?.attributes?.intakePeriodId ?? '');
         const isEligibleIntake = offerLetterIntakePeriodIds.some((id) => String(id) === intakePeriodId);
         const isOjet = (application?.attributes?.modeOfStudy ?? '').trim().toLowerCase() === 'ojet';
 
-        return isAcceptedOrEnrolled && (isEligibleIntake || isOjet);
+        return isEligibleIntake || isOjet;
     };
 
     const statusMessage = (application: Enrolment) => {
