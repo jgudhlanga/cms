@@ -12,7 +12,7 @@ import Sidebar from '@/pages/enrolments/partials/shared/Sidebar.vue';
 import { AuthObject } from '@/types/data-pagination';
 import { ClassListAttributeParams, ClassListTopNext, ClassListType, Enrolment } from '@/types/enrolments';
 import { Link } from '@/types/ui';
-import { Head, useForm } from '@inertiajs/vue3';
+import { Head, useForm, usePage } from '@inertiajs/vue3';
 import { trans } from 'laravel-vue-i18n';
 import { computed, onMounted } from 'vue';
 
@@ -194,6 +194,11 @@ const saveConfirmation = async () => {
     if (confirmed) {
         form.put(route('enrolments.update-class-list', { student_application: String(application.id) }), {
             onSuccess: () => {
+                const flashError = (usePage().props.flash as { error?: string | null } | undefined)?.error;
+                if (typeof flashError === 'string' && flashError.length > 0) {
+                    return;
+                }
+
                 successAlert(trans('enrolments.success_student_confirmed'));
                 if (nextConfirmHref.value) {
                     navigateTo(nextConfirmHref.value);

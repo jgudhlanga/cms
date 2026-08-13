@@ -6,7 +6,6 @@ use App\DTO\Enrolments\ClassListDto;
 use App\Enums\Shared\ClassListTypeEnum;
 use App\Enums\Shared\FeeTypeEnum;
 use App\Enums\Shared\WorkflowStepEnum;
-use App\Exceptions\Students\StudentEnrolmentResolutionException;
 use App\Helpers\DepartmentHelper;
 use App\Helpers\DropdownHelper;
 use App\Helpers\EnrolmentHelper;
@@ -33,8 +32,8 @@ use App\Models\Institution\FeeStructure;
 use App\Models\Institution\InstitutionDepartment;
 use App\Models\Shared\FeeType;
 use App\Models\Shared\WorkflowStep;
-use App\Models\Students\StudentEnrolment;
 use App\Models\Students\StudentApplication;
+use App\Models\Students\StudentEnrolment;
 use App\Repositories\Institution\interface\IClassListRepository;
 use App\Services\DepartmentEnrolmentService;
 use App\Services\Students\ResolveStudentEnrolmentAttributesService;
@@ -187,14 +186,15 @@ class ClassListController extends Controller
     {
         try {
             $type = $request->input('type', 'provisional');
-            // Get class list
+            $isVerification = $type === 'provisional' || $type === 'waiting';
+            $isConfirmation = $type === 'verified';
+
             $entry = ClassList::where('student_application_id', $studentApplication->id)->first();
             if (! $entry) {
                 return back()->with('error', 'Class list entry not found for the specified student program.');
             }
 
-            // Update class list entry only if identity_confirmed  disability_confirmed names_confirmed are true
-            $entry->attributes = array_merge($entry->attributes ?? [], [
+            $attributes = array_merge($entry->attributes ?? [], [
                 'identity_confirmed' => $request->boolean('identity_confirmed'),
                 'disability_confirmed' => $request->boolean('disability_confirmed'),
                 'names_confirmed' => $request->boolean('names_confirmed'),
@@ -208,81 +208,121 @@ class ClassListController extends Controller
                 'original_national_identity_confirmed' => $request->boolean('original_national_identity_confirmed'),
                 'original_education_certificates_confirmed' => $request->boolean('original_education_certificates_confirmed'),
             ]);
-            // Now check actual stored values, not request only
-            if (
-                $entry->attributes['identity_confirmed'] &&
-                $entry->attributes['disability_confirmed'] &&
-                $entry->attributes['names_confirmed']
-            ) {
-                $entry->type = ($type === 'provisional' || $type === 'waiting') ? ClassListTypeEnum::VERIFIED->value : ClassListTypeEnum::FINAL->value;
+
+            $entry->attributes = $attributes;
+            $entry->save();
+
+            if ($isVerification) {
+                if (
+                    ! $attributes['identity_confirmed']
+                    || ! $attributes['disability_confirmed']
+                    || ! $attributes['names_confirmed']
+                ) {
+                    return back()->with(
+                        'error',
+                        'Identity, disability, and names must be confirmed before verifying this student.'
+                    );
+                }
+            } elseif ($isConfirmation) {
+                if (
+                    ! $attributes['passport_photos_confirmed']
+                    || ! $attributes['original_birth_certificate_confirmed']
+                    || ! $attributes['original_national_identity_confirmed']
+                    || ! $attributes['original_education_certificates_confirmed']
+                ) {
+                    return back()->with(
+                        'error',
+                        'Passport photos, birth certificate, national identity, and education certificates must be confirmed before elevating this student to the final class list.'
+                    );
+                }
+            } else {
+                return back()->with('error', "Unsupported class list update type \"{$type}\".");
+            }
+
+            DB::transaction(function () use ($request, $studentApplication, $entry, $isVerification, $isConfirmation): void {
+                $entry->type = $isVerification
+                    ? ClassListTypeEnum::VERIFIED->value
+                    : ClassListTypeEnum::FINAL->value;
                 $entry->save();
-                // Generate student number
+
                 $studentNumber = EnrolmentHelper::resolveStudentNumber($studentApplication);
                 $student = $studentApplication->student;
                 $student->fresh()->update([
                     'student_number' => $studentNumber,
                     'student_number_generated' => true,
                 ]);
-                // Change student application status to accepted
-                $step = WorkflowStep::where('slug', WorkflowStepEnum::ACCEPTED->slug())->first();
-                // Send email with offer letter
-                $user = $student->user;
-                if ($type === 'provisional' || $type === 'waiting') {
+
+                $workflowSlug = $isVerification
+                    ? WorkflowStepEnum::ACCEPTED->slug()
+                    : WorkflowStepEnum::ENROLLED->slug();
+                $step = WorkflowStep::where('slug', $workflowSlug)->first();
+                if ($step === null) {
+                    throw new \RuntimeException("Workflow step \"{$workflowSlug}\" was not found.");
+                }
+
+                if ($isVerification) {
+                    $user = $student->user;
                     SendOfferLetterJob::dispatch($user->full_name, $user->email, $studentApplication->id)->withoutDelay();
                     if (EnrolmentHelper::isEntryLevel($studentApplication)) {
                         EnrolmentHelper::rejectOtherApplications($studentApplication->student, $studentApplication);
                     }
                 }
-                if ($type === 'verified') {
-                    $step = WorkflowStep::where('slug', WorkflowStepEnum::ENROLLED->slug())->first();
+
+                if ($isConfirmation) {
                     $this->createStudentEnrolment($studentApplication);
                 }
-                // Update step
-                $departmentStep = DepartmentApplicationStep::where('institution_department_id', $studentApplication->institution_department_id)->where('workflow_step_id', $step->id)->first();
-                $studentApplication->update(['department_application_step_id' => $departmentStep->id]);
-                // Create notes / remarks
-                if ($request->has('remarks') && ! empty($request->remarks)) {
-                    $studentApplication->notes()->create(['title' => 'Application confirmation', 'body' => $request->remarks]);
+
+                $departmentStep = DepartmentApplicationStep::where('institution_department_id', $studentApplication->institution_department_id)
+                    ->where('workflow_step_id', $step->id)
+                    ->first();
+                if ($departmentStep === null) {
+                    throw new \RuntimeException(
+                        "Department application step for workflow \"{$workflowSlug}\" was not found for institution department {$studentApplication->institution_department_id}."
+                    );
                 }
-            }
+
+                $studentApplication->update(['department_application_step_id' => $departmentStep->id]);
+
+                if ($request->filled('remarks')) {
+                    $studentApplication->notes()->create([
+                        'title' => 'Application confirmation',
+                        'body' => $request->remarks,
+                    ]);
+                }
+            });
 
             return back()->with('success', 'Class list entry updated successfully.');
         } catch (Throwable $e) {
-            return back()->with('error', 'An error occurred while updating class list entry. All changes have been rolled back.');
+            report($e);
+
+            return back()->with('error', $e->getMessage());
         }
     }
 
     private function createStudentEnrolment(StudentApplication $studentApplication): void
     {
-        try {
-            $enrolmentAttributes = $this->resolveStudentEnrolmentAttributes->resolve(
-                (int) $studentApplication->student_id,
-                (int) $studentApplication->id,
-            );
+        $enrolmentAttributes = $this->resolveStudentEnrolmentAttributes->resolve(
+            (int) $studentApplication->student_id,
+            (int) $studentApplication->id,
+        );
 
-            StudentEnrolment::query()->updateOrCreate(
-                [
-                    'student_id' => $studentApplication->student_id,
-                    'student_application_id' => $studentApplication->id,
-                    'institution_department_id' => $studentApplication->institution_department_id,
-                    'department_level_id' => $studentApplication->department_level_id,
-                    'department_course_id' => $studentApplication->department_course_id,
-                    'semester_id' => $enrolmentAttributes['semester_id'],
-                    'academic_calendar_id' => $enrolmentAttributes['academic_calendar_id'],
-                    'mode_of_study_id' => $studentApplication->mode_of_study_id,
-                ],
-                [
-                    'student_application_id' => $studentApplication->id,
-                    'student_enrolment_status_id' => $enrolmentAttributes['student_enrolment_status_id'],
-                    'mode_of_study_id' => $studentApplication->mode_of_study_id,
-                ],
-            );
-        } catch (StudentEnrolmentResolutionException $exception) {
-            logger()->warning('Class list update: student enrolment not created.', [
-                'student_application_id' => (int) $studentApplication->id,
-                'message' => $exception->getMessage(),
-            ]);
-        }
+        StudentEnrolment::query()->updateOrCreate(
+            [
+                'student_id' => $studentApplication->student_id,
+                'student_application_id' => $studentApplication->id,
+                'institution_department_id' => $studentApplication->institution_department_id,
+                'department_level_id' => $studentApplication->department_level_id,
+                'department_course_id' => $studentApplication->department_course_id,
+                'semester_id' => $enrolmentAttributes['semester_id'],
+                'academic_calendar_id' => $enrolmentAttributes['academic_calendar_id'],
+                'mode_of_study_id' => $studentApplication->mode_of_study_id,
+            ],
+            [
+                'student_application_id' => $studentApplication->id,
+                'student_enrolment_status_id' => $enrolmentAttributes['student_enrolment_status_id'],
+                'mode_of_study_id' => $studentApplication->mode_of_study_id,
+            ],
+        );
     }
 
     public function rejectApplication(StudentApplication $studentApplication)
