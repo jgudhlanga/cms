@@ -69,4 +69,12 @@ Route::prefix('maintenance')->middleware(['auth', 'can:accessDataMaintenance'])-
         ->name('maintenance.apprentice-management.process');
     Route::post('/apprentice-management/refresh-row', [MaintenanceController::class, 'refreshApprenticeImportRow'])
         ->name('maintenance.apprentice-management.refresh-row');
+    Route::get('/sponsored-students', [MaintenanceController::class, 'sponsoredStudents'])
+        ->name('maintenance.sponsored-students');
+    Route::get('/sponsored-students/template', [MaintenanceController::class, 'downloadSponsoredStudentImportTemplate'])
+        ->name('maintenance.sponsored-students.template');
+    Route::post('/sponsored-students/preview', [MaintenanceController::class, 'previewSponsoredStudentImport'])
+        ->name('maintenance.sponsored-students.preview');
+    Route::post('/sponsored-students/process', [MaintenanceController::class, 'processSponsoredStudentImport'])
+        ->name('maintenance.sponsored-students.process');
 });

@@ -8,8 +8,9 @@ use App\Http\Resources\Shared\ContactResource;
 use App\Http\Resources\Shared\NextOfKinResource;
 use App\Http\Resources\Users\UserSummaryResource;
 use App\Models\Students\StudentApplication;
-use App\Models\Students\StudentEnrolment;
 use App\Models\Students\StudentApprentice;
+use App\Models\Students\StudentEnrolment;
+use App\Models\Students\StudentSponsor;
 use App\Rules\ZimbabweanIdNumber;
 use App\Services\Maintenance\Students\FaultyStudentIdNumberAnalysis;
 use App\Services\Students\ReturningStudentContextService;
@@ -54,6 +55,7 @@ class StudentResource extends JsonResource
         $profileSummary = $this->resolveProfileSummary();
         $idNumberValidation = $this->resolveIdNumberValidation($request);
         $apprenticeSummary = $this->resolveApprenticeSummary();
+        $sponsorSummary = $this->resolveSponsorSummary();
 
         return [
             'type' => 'student',
@@ -103,6 +105,8 @@ class StudentResource extends JsonResource
                 'isApprenticeThisYear' => $apprenticeSummary['isApprenticeThisYear'],
                 'employer' => $apprenticeSummary['employer'],
                 'apprenticeNumber' => $apprenticeSummary['apprenticeNumber'],
+                'isSponsoredThisYear' => $sponsorSummary['isSponsoredThisYear'],
+                'sponsor' => $sponsorSummary['sponsor'],
             ],
             'relationships' => [
                 'user' => UserSummaryResource::make($this->user),
@@ -273,6 +277,30 @@ class StudentResource extends JsonResource
             'isApprenticeThisYear' => true,
             'employer' => $apprentice->employer,
             'apprenticeNumber' => $apprentice->apprentice_number,
+        ];
+    }
+
+    /**
+     * @return array{
+     *     isSponsoredThisYear: bool,
+     *     sponsor: ?string
+     * }
+     */
+    private function resolveSponsorSummary(): array
+    {
+        $sponsor = app(ReturningStudentContextService::class)
+            ->currentSponsorForStudentProfile($this->resource);
+
+        if (! $sponsor instanceof StudentSponsor) {
+            return [
+                'isSponsoredThisYear' => false,
+                'sponsor' => null,
+            ];
+        }
+
+        return [
+            'isSponsoredThisYear' => true,
+            'sponsor' => $sponsor->sponsor,
         ];
     }
 }

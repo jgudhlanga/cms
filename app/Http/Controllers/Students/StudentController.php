@@ -132,7 +132,7 @@ class StudentController extends Controller
 
     public function showProfile(Student $student)
     {
-        $student->loadMissing('apprentices');
+        $student->loadMissing('apprentices', 'studentSponsors');
         $student = StudentResource::make($student);
 
         return Inertia::render('enrolments/Show', compact('student'));
@@ -143,6 +143,7 @@ class StudentController extends Controller
         $this->authorize('view', $student);
         $student->loadMissing([
             'apprentices',
+            'studentSponsors',
             'latestApplication.intakePeriod',
             'latestEnrolment.academicCalendar',
         ]);

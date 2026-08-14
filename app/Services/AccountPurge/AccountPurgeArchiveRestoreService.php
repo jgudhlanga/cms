@@ -225,6 +225,7 @@ class AccountPurgeArchiveRestoreService
         $this->insertRows('academic_records', $payload['academic_records'] ?? []);
         $this->insertRows('student_academic_results', $payload['student_academic_results'] ?? []);
         $this->insertRows('student_apprentices', $payload['student_apprentices'] ?? []);
+        $this->insertRows('student_sponsors', $payload['student_sponsors'] ?? []);
         $this->insertRows('hostel_applications', $payload['hostel_applications'] ?? []);
         $this->insertRows('hostel_room_allocations', $payload['hostel_room_allocations'] ?? []);
         $this->insertRows('hostel_queries', $payload['hostel_queries'] ?? []);

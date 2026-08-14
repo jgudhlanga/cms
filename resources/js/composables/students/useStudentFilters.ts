@@ -311,6 +311,8 @@ export function useStudentFilters({ filters, variant, onChange }: UseStudentFilt
             mode_of_study: normalizeNumberArray(state.mode_of_study),
             gender: state.gender || undefined,
             student_type: state.student_type || undefined,
+            sponsored: state.sponsored || undefined,
+            disability: state.disability || undefined,
             academic_year: normalizeNumberArray(state.academic_year),
             calendar_type: normalizeStringArray(state.calendar_type),
             with_trashed: state.with_trashed || undefined,
@@ -327,8 +329,10 @@ export function useStudentFilters({ filters, variant, onChange }: UseStudentFilt
     };
 
     const buildFiltersState = (): StudentFiltersState => {
-        const preserved: Pick<StudentFiltersState, 'student_type' | 'search' | 'name' | 'with_trashed'> = {
+        const preserved: Pick<StudentFiltersState, 'student_type' | 'sponsored' | 'disability' | 'search' | 'name' | 'with_trashed'> = {
             student_type: filters.value.student_type,
+            sponsored: filters.value.sponsored,
+            disability: filters.value.disability,
             search: filters.value.search || undefined,
             name: filters.value.name || undefined,
             with_trashed: filters.value.with_trashed || undefined,
@@ -360,6 +364,8 @@ export function useStudentFilters({ filters, variant, onChange }: UseStudentFilt
                 mode_of_study: comboboxFilters.mode_of_study,
                 gender: comboboxFilters.gender,
                 student_type: preserved.student_type,
+                sponsored: preserved.sponsored,
+                disability: preserved.disability,
                 with_trashed: preserved.with_trashed,
             };
         }
@@ -369,6 +375,8 @@ export function useStudentFilters({ filters, variant, onChange }: UseStudentFilt
             name: name.value || undefined,
             ...comboboxFilters,
             student_type: preserved.student_type,
+            sponsored: preserved.sponsored,
+            disability: preserved.disability,
             with_trashed: preserved.with_trashed,
         };
     };

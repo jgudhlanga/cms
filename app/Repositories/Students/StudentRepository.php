@@ -11,6 +11,7 @@ use App\DTO\Students\StudentApplicationDto;
 use App\DTO\Students\UpdateStudentDto;
 use App\Enums\AcademicCalendars\AcademicCalendarTypeEnum;
 use App\Enums\Shared\AcademicLevelEnum;
+use App\Enums\Shared\DisabilityStatusEnum;
 use App\Enums\Shared\GenderEnum;
 use App\Helpers\Helper;
 use App\Http\Filters\Students\StudentFilter;
@@ -139,7 +140,7 @@ class StudentRepository extends BaseRepository implements IStudentRepository
     }
 
     /**
-     * @return array{total: int, male: int, female: int, byLevel: list<array{id: int, name: string, count: int}>, byModeOfStudy: list<array{id: int, name: string, count: int}>, byStudentType: list<array{id: string, name: string, count: int}>}
+     * @return array{total: int, male: int, female: int, byLevel: list<array{id: int, name: string, count: int}>, byModeOfStudy: list<array{id: int, name: string, count: int}>, byStudentType: list<array{id: string, name: string, count: int}>, bySponsored: list<array{id: string, name: string, count: int}>, byDisability: list<array{id: string, name: string, count: int}>}
      */
     private function aggregateGlobalStats(Builder $query): array
     {
@@ -160,6 +161,16 @@ class StudentRepository extends BaseRepository implements IStudentRepository
             (clone $query)->whereHas('apprentices')
         );
         $directCount = max(0, $total - $apprenticeCount);
+
+        $sponsoredCount = $this->distinctStudentCount(
+            (clone $query)->whereHas('studentSponsors')
+        );
+        $notSponsoredCount = max(0, $total - $sponsoredCount);
+
+        $disabilityCount = $this->distinctStudentCount(
+            (clone $query)->where('students.disability_status', DisabilityStatusEnum::YES->value)
+        );
+        $noDisabilityCount = max(0, $total - $disabilityCount);
 
         // Students with multiple enrolments may appear in more than one level/mode bucket.
         $byLevel = (clone $query)
@@ -209,6 +220,30 @@ class StudentRepository extends BaseRepository implements IStudentRepository
                     'id' => 'apprentice',
                     'name' => __('students.stat_student_type_apprentice'),
                     'count' => $apprenticeCount,
+                ],
+            ],
+            'bySponsored' => [
+                [
+                    'id' => 'sponsored',
+                    'name' => __('students.stat_sponsored'),
+                    'count' => $sponsoredCount,
+                ],
+                [
+                    'id' => 'not_sponsored',
+                    'name' => __('students.stat_not_sponsored'),
+                    'count' => $notSponsoredCount,
+                ],
+            ],
+            'byDisability' => [
+                [
+                    'id' => 'yes',
+                    'name' => __('students.stat_disability'),
+                    'count' => $disabilityCount,
+                ],
+                [
+                    'id' => 'no',
+                    'name' => __('students.stat_no_disability'),
+                    'count' => $noDisabilityCount,
                 ],
             ],
         ];
@@ -321,6 +356,23 @@ class StudentRepository extends BaseRepository implements IStudentRepository
             $query->whereHas('apprentices');
         } elseif ($studentType === 'direct') {
             $query->whereDoesntHave('apprentices');
+        }
+
+        $sponsored = strtolower(trim((string) ($filters['sponsored'] ?? '')));
+        if ($sponsored === 'sponsored') {
+            $query->whereHas('studentSponsors');
+        } elseif ($sponsored === 'not_sponsored') {
+            $query->whereDoesntHave('studentSponsors');
+        }
+
+        $disability = strtolower(trim((string) ($filters['disability'] ?? '')));
+        if ($disability === 'yes') {
+            $query->where('students.disability_status', DisabilityStatusEnum::YES->value);
+        } elseif ($disability === 'no') {
+            $query->where(function ($q): void {
+                $q->whereNull('students.disability_status')
+                    ->orWhere('students.disability_status', '!=', DisabilityStatusEnum::YES->value);
+            });
         }
 
         // Trashed records

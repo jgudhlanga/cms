@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { BookOpen, Briefcase, GraduationCap, User, UserRound, X } from '@lucide/vue';
+import { BookOpen, Briefcase, GraduationCap, Handshake, HeartPulse, User, UserRound, X } from '@lucide/vue';
 import { computed, toRef } from 'vue';
 
 import BaseCombobox from '@/components/core/form/combobox/BaseCombobox.vue';
@@ -49,7 +49,7 @@ const {
     onChange: (filters) => emit('change', filters),
 });
 
-const groupLabelClass = 'shrink-0 w-14 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground';
+const groupLabelClass = 'shrink-0 w-16 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground';
 
 const globalStats = computed(
     () =>
@@ -60,6 +60,8 @@ const globalStats = computed(
             byLevel: [],
             byModeOfStudy: [],
             byStudentType: [],
+            bySponsored: [],
+            byDisability: [],
         },
 );
 
@@ -75,6 +77,8 @@ const isGenderActive = (gender: 'male' | 'female') => props.filters.gender === g
 const isLevelActive = (id: number) => props.filters.level?.includes(id) ?? false;
 const isModeActive = (id: number) => props.filters.mode_of_study?.includes(id) ?? false;
 const isStudentTypeActive = (type: 'direct' | 'apprentice') => props.filters.student_type === type;
+const isSponsoredActive = (value: 'sponsored' | 'not_sponsored') => props.filters.sponsored === value;
+const isDisabilityActive = (value: 'yes' | 'no') => props.filters.disability === value;
 
 const toggleGender = (gender: 'male' | 'female') => {
     emit('filter', { gender: isGenderActive(gender) ? undefined : gender });
@@ -92,6 +96,14 @@ const toggleMode = (id: number) => {
 
 const toggleStudentType = (type: 'direct' | 'apprentice') => {
     emit('filter', { student_type: isStudentTypeActive(type) ? undefined : type });
+};
+
+const toggleSponsored = (value: 'sponsored' | 'not_sponsored') => {
+    emit('filter', { sponsored: isSponsoredActive(value) ? undefined : value });
+};
+
+const toggleDisability = (value: 'yes' | 'no') => {
+    emit('filter', { disability: isDisabilityActive(value) ? undefined : value });
 };
 
 const clearField = (partial: Partial<StudentFiltersState>) => {
@@ -135,6 +147,24 @@ const activeTags = computed<ActiveTag[]>(() => {
             id: `type-${filters.student_type}`,
             label: typeRow?.name ?? filters.student_type,
             clear: () => clearField({ student_type: undefined }),
+        });
+    }
+
+    if (filters.sponsored) {
+        const sponsoredRow = globalStats.value.bySponsored.find((row) => row.id === filters.sponsored);
+        tags.push({
+            id: `sponsored-${filters.sponsored}`,
+            label: sponsoredRow?.name ?? filters.sponsored,
+            clear: () => clearField({ sponsored: undefined }),
+        });
+    }
+
+    if (filters.disability) {
+        const disabilityRow = globalStats.value.byDisability.find((row) => row.id === filters.disability);
+        tags.push({
+            id: `disability-${filters.disability}`,
+            label: disabilityRow?.name ?? filters.disability,
+            clear: () => clearField({ disability: undefined }),
         });
     }
 
@@ -268,6 +298,42 @@ defineExpose({ resetFilters });
                         :active="isStudentTypeActive(type.id)"
                         :icon="type.id === 'apprentice' ? Briefcase : User"
                         @click="toggleStudentType(type.id)"
+                    />
+                </div>
+            </div>
+
+            <div
+                v-if="globalStats.bySponsored.length"
+                class="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1"
+            >
+                <span :class="groupLabelClass">{{ $t('students.filter_sponsored') }}</span>
+                <div class="flex flex-wrap items-center gap-1">
+                    <StudentFilterChip
+                        v-for="row in globalStats.bySponsored"
+                        :key="`sponsored-${row.id}`"
+                        :label="row.name"
+                        :count="row.count.toLocaleString()"
+                        :active="isSponsoredActive(row.id)"
+                        :icon="row.id === 'sponsored' ? Handshake : User"
+                        @click="toggleSponsored(row.id)"
+                    />
+                </div>
+            </div>
+
+            <div
+                v-if="globalStats.byDisability.length"
+                class="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1"
+            >
+                <span :class="groupLabelClass">{{ $t('students.filter_disability') }}</span>
+                <div class="flex flex-wrap items-center gap-1">
+                    <StudentFilterChip
+                        v-for="row in globalStats.byDisability"
+                        :key="`disability-${row.id}`"
+                        :label="row.name"
+                        :count="row.count.toLocaleString()"
+                        :active="isDisabilityActive(row.id)"
+                        :icon="HeartPulse"
+                        @click="toggleDisability(row.id)"
                     />
                 </div>
             </div>

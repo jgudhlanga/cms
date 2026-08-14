@@ -87,6 +87,11 @@ class AccountPurgeSnapshotBuilder
                 ->get()
                 ->map(fn ($row) => (array) $row)
                 ->all(),
+            'student_sponsors' => DB::table('student_sponsors')
+                ->where('student_id', $student->id)
+                ->get()
+                ->map(fn ($row) => (array) $row)
+                ->all(),
             'hostel_applications' => $student->hostelApplications()->withTrashed()->get()->map->toArray()->all(),
             'hostel_room_allocations' => $student->hostelRoomAllocations()->withTrashed()->get()->map->toArray()->all(),
             'hostel_queries' => $student->hostelQueries()->withTrashed()->get()->map->toArray()->all(),

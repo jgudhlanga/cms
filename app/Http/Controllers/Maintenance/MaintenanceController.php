@@ -8,6 +8,7 @@ use App\Enums\Enrolments\BulkFinaliseEnrolmentAuditEventEnum;
 use App\Exceptions\AccountPurge\AccountPurgeArchiveRestoreException;
 use App\Exceptions\Maintenance\StudentIdNumberConflictException;
 use App\Exports\Maintenance\ApprenticeImportTemplateExport;
+use App\Exports\Maintenance\SponsoredStudentImportTemplateExport;
 use App\Exports\Maintenance\StaffImportTemplateExport;
 use App\Exports\Maintenance\StaffListExport;
 use App\Http\Controllers\Controller;
@@ -23,6 +24,8 @@ use App\Http\Requests\Maintenance\MaintenanceUserBulkPurgeRequest;
 use App\Http\Requests\Maintenance\MaintenanceUserPurgeRequest;
 use App\Http\Requests\Maintenance\MergeStudentAccountsRequest;
 use App\Http\Requests\Maintenance\RejectMergePreviewApplicationRequest;
+use App\Http\Requests\Maintenance\SponsoredStudentImportPreviewRequest;
+use App\Http\Requests\Maintenance\SponsoredStudentImportProcessRequest;
 use App\Http\Requests\Maintenance\StaffImportCreateLookupRequest;
 use App\Http\Requests\Maintenance\StaffImportPreviewRequest;
 use App\Http\Requests\Maintenance\StaffImportProcessRequest;
@@ -55,6 +58,8 @@ use App\Services\Maintenance\Students\FaultyStudentIdNumbersService;
 use App\Services\Maintenance\Students\FixStudentIdNumberService;
 use App\Services\Maintenance\Students\MaintenanceExportCountsService;
 use App\Services\Maintenance\Students\RejectStudentApplicationService;
+use App\Services\Maintenance\Students\SponsoredStudentImportService;
+use App\Services\Maintenance\Students\SponsoredStudentImportTemplateService;
 use App\Services\Maintenance\Students\StudentAccountMergePreviewService;
 use App\Services\Maintenance\Students\StudentAccountMergeService;
 use App\Services\Maintenance\Students\VerifiedStudentsForFinalEnrolmentService;
@@ -342,6 +347,60 @@ class MaintenanceController extends Controller
         $result = $importService->refreshPreviewRow(
             $parsedRow,
             (int) $validated['institution_department_id'],
+            (int) $validated['calendar_year'],
+        );
+
+        return response()->json($result);
+    }
+
+    public function sponsoredStudents(): Response
+    {
+        return Inertia::render('maintenance/SponsoredStudentsManager', [
+            'calendarYear' => (int) now()->format('Y'),
+        ]);
+    }
+
+    public function downloadSponsoredStudentImportTemplate(
+        SponsoredStudentImportTemplateService $templateService,
+    ): BinaryFileResponse {
+        $data = $templateService->assemble();
+
+        return Excel::download(
+            new SponsoredStudentImportTemplateExport($data),
+            $templateService->downloadFileName(),
+        );
+    }
+
+    public function previewSponsoredStudentImport(
+        SponsoredStudentImportPreviewRequest $request,
+        SponsoredStudentImportService $importService,
+    ): JsonResponse {
+        $validated = $request->validated();
+        $file = $request->file('file');
+
+        if ($file === null) {
+            abort(422);
+        }
+
+        $preview = $importService->preview(
+            $file,
+            (int) $validated['calendar_year'],
+        );
+
+        return response()->json($preview);
+    }
+
+    public function processSponsoredStudentImport(
+        SponsoredStudentImportProcessRequest $request,
+        SponsoredStudentImportService $importService,
+    ): JsonResponse {
+        $validated = $request->validated();
+
+        /** @var list<array{rowNumber: int, studentApplicationId: int, sponsor?: string|null}> $rows */
+        $rows = $validated['rows'];
+
+        $result = $importService->process(
+            $rows,
             (int) $validated['calendar_year'],
         );
 

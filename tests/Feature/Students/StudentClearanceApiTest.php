@@ -15,6 +15,7 @@ use App\Models\Students\StudentApprentice;
 use App\Models\Students\StudentClearance;
 use App\Models\Students\StudentEnrolment;
 use App\Models\Students\StudentEnrolmentStatus;
+use App\Models\Students\StudentSponsor;
 use App\Models\Users\User;
 use App\Services\Institution\InstitutionFeatureService;
 use App\Services\Students\StudentExamResultAccessService;
@@ -588,6 +589,127 @@ test('evaluate does not use apprentice fee exemption when period end clearance i
         'calendar_year' => 2026,
         'employer' => 'Test Employer',
         'apprentice_number' => 'APP-2026-2',
+    ]);
+
+    $access = app(StudentExamResultAccessService::class)->evaluate($application->student->fresh());
+
+    expect($access['allowOnlineClearance'])->toBeTrue()
+        ->and($access['gate'])->toBe('clearance')
+        ->and($access['canViewResults'])->toBeFalse()
+        ->and($access['fees'])->toBeNull();
+});
+
+test('evaluate unlocks exam results for current-year sponsored students without fee payment', function () {
+    $application = createVerifiedStudentApplication('CLR-SPN-'.strtoupper(Str::random(4)));
+
+    $calendar = AcademicCalendar::query()->create([
+        'calendar_year' => '2026',
+        'type' => AcademicCalendarTypeEnum::SEMESTER,
+        'opening_date' => '2026-02-01',
+        'closing_date' => '2026-06-30',
+    ]);
+    $semesterId = (int) Semester::query()->where('slug', 'semester-1')->value('id');
+    $activeStatusId = (int) StudentEnrolmentStatus::query()->where('slug', 'active')->value('id');
+
+    StudentEnrolment::query()->create([
+        'student_id' => $application->student_id,
+        'student_application_id' => $application->id,
+        'institution_department_id' => $application->institution_department_id,
+        'department_level_id' => $application->department_level_id,
+        'department_course_id' => $application->department_course_id,
+        'semester_id' => $semesterId,
+        'academic_calendar_id' => $calendar->id,
+        'mode_of_study_id' => $application->mode_of_study_id,
+        'student_enrolment_status_id' => $activeStatusId,
+    ]);
+
+    StudentSponsor::query()->create([
+        'tenant_id' => $application->tenant_id,
+        'student_id' => $application->student_id,
+        'calendar_year' => 2026,
+        'sponsor' => 'Test Sponsor',
+    ]);
+
+    $student = $application->student->fresh();
+    $access = app(StudentExamResultAccessService::class)->evaluate($student);
+    $fees = app(StudentFeeClearanceService::class)->evaluate($student);
+
+    expect($access['allowOnlineClearance'])->toBeFalse()
+        ->and($access['gate'])->toBe('sponsored')
+        ->and($access['canViewResults'])->toBeTrue()
+        ->and($access['fees'])->toBeNull()
+        ->and($fees['isFullyPaid'])->toBeFalse();
+});
+
+test('evaluate keeps fee gate when sponsor record is for a different year', function () {
+    $application = createVerifiedStudentApplication('CLR-SPN-YR-'.strtoupper(Str::random(4)));
+
+    $calendar = AcademicCalendar::query()->create([
+        'calendar_year' => '2026',
+        'type' => AcademicCalendarTypeEnum::SEMESTER,
+        'opening_date' => '2026-02-01',
+        'closing_date' => '2026-06-30',
+    ]);
+    $semesterId = (int) Semester::query()->where('slug', 'semester-1')->value('id');
+    $activeStatusId = (int) StudentEnrolmentStatus::query()->where('slug', 'active')->value('id');
+
+    StudentEnrolment::query()->create([
+        'student_id' => $application->student_id,
+        'student_application_id' => $application->id,
+        'institution_department_id' => $application->institution_department_id,
+        'department_level_id' => $application->department_level_id,
+        'department_course_id' => $application->department_course_id,
+        'semester_id' => $semesterId,
+        'academic_calendar_id' => $calendar->id,
+        'mode_of_study_id' => $application->mode_of_study_id,
+        'student_enrolment_status_id' => $activeStatusId,
+    ]);
+
+    StudentSponsor::query()->create([
+        'tenant_id' => $application->tenant_id,
+        'student_id' => $application->student_id,
+        'calendar_year' => 2025,
+        'sponsor' => 'Prior Sponsor',
+    ]);
+
+    $access = app(StudentExamResultAccessService::class)->evaluate($application->student->fresh());
+
+    expect($access['gate'])->toBe('fees')
+        ->and($access['canViewResults'])->toBeFalse()
+        ->and($access['fees'])->not->toBeNull();
+});
+
+test('evaluate does not use sponsored fee exemption when period end clearance is enabled', function () {
+    $application = createVerifiedStudentApplication('CLR-SPN-CLR-'.strtoupper(Str::random(4)));
+
+    app(InstitutionFeatureService::class)->setAllowOnlineClearance((int) $application->tenant_id, true);
+
+    $calendar = AcademicCalendar::query()->create([
+        'calendar_year' => '2026',
+        'type' => AcademicCalendarTypeEnum::SEMESTER,
+        'opening_date' => '2026-02-01',
+        'closing_date' => '2026-06-30',
+    ]);
+    $semesterId = (int) Semester::query()->where('slug', 'semester-1')->value('id');
+    $activeStatusId = (int) StudentEnrolmentStatus::query()->where('slug', 'active')->value('id');
+
+    StudentEnrolment::query()->create([
+        'student_id' => $application->student_id,
+        'student_application_id' => $application->id,
+        'institution_department_id' => $application->institution_department_id,
+        'department_level_id' => $application->department_level_id,
+        'department_course_id' => $application->department_course_id,
+        'semester_id' => $semesterId,
+        'academic_calendar_id' => $calendar->id,
+        'mode_of_study_id' => $application->mode_of_study_id,
+        'student_enrolment_status_id' => $activeStatusId,
+    ]);
+
+    StudentSponsor::query()->create([
+        'tenant_id' => $application->tenant_id,
+        'student_id' => $application->student_id,
+        'calendar_year' => 2026,
+        'sponsor' => 'Test Sponsor',
     ]);
 
     $access = app(StudentExamResultAccessService::class)->evaluate($application->student->fresh());

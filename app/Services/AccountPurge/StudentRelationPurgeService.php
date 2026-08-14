@@ -35,6 +35,7 @@ class StudentRelationPurgeService
         $student->oLevelResults()->withTrashed()->forceDelete();
 
         DB::table('student_apprentices')->where('student_id', $student->id)->delete();
+        DB::table('student_sponsors')->where('student_id', $student->id)->delete();
         $student->financeTransactionQueries()->delete();
         $student->clearances()->delete();
         $student->examResults()->delete();

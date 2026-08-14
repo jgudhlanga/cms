@@ -10,6 +10,7 @@ use App\Models\Students\Student;
 use App\Models\Students\StudentApprentice;
 use App\Models\Students\StudentClearance;
 use App\Models\Students\StudentEnrolment;
+use App\Models\Students\StudentSponsor;
 use App\Rules\ZimbabweanIdNumber;
 use App\Services\Institution\InstitutionFeatureService;
 use Carbon\CarbonInterface;
@@ -27,7 +28,7 @@ class StudentExamResultAccessService
     /**
      * @return array{
      *     canViewResults: bool,
-     *     gate: 'clearance'|'fees'|'apprentice'|'not_enrolled'|'non_hexco',
+     *     gate: 'clearance'|'fees'|'apprentice'|'sponsored'|'not_enrolled'|'non_hexco',
      *     allowOnlineClearance: bool,
      *     fees: array<string, mixed>|null,
      *     clearance: array<string, mixed>|null,
@@ -130,6 +131,21 @@ class StudentExamResultAccessService
             ];
         }
 
+        if ($this->isSponsoredExemptFromSchoolFees($student, $calendarYear)) {
+            return [
+                'canViewResults' => ! $idValidation['needsCorrection'],
+                'gate' => 'sponsored',
+                'allowOnlineClearance' => false,
+                'fees' => null,
+                'clearance' => $clearanceForDisplay,
+                'idValidation' => $idValidation,
+                'academicCalendarId' => $enrolment->academic_calendar_id,
+                'calendarYear' => $calendarYear,
+                'semesterId' => $enrolment->semester_id,
+                'calendarType' => $calendarType,
+            ];
+        }
+
         $fees = $this->feeClearanceService->evaluate($student);
 
         return [
@@ -166,6 +182,28 @@ class StudentExamResultAccessService
         }
 
         return $this->returningStudentContextService->currentApprenticeForStudentProfile($student) instanceof StudentApprentice;
+    }
+
+    /**
+     * Current-year sponsored students are exempt from the exam-results school-fees gate
+     * (sponsor pays tuition in bulk). Does not alter fee clearance / payment flows.
+     */
+    private function isSponsoredExemptFromSchoolFees(Student $student, ?int $calendarYear): bool
+    {
+        if ($calendarYear !== null) {
+            if ($student->relationLoaded('studentSponsors')) {
+                return $student->studentSponsors->contains(
+                    fn (StudentSponsor $sponsor): bool => (int) $sponsor->calendar_year === $calendarYear
+                );
+            }
+
+            return StudentSponsor::query()
+                ->where('student_id', $student->id)
+                ->where('calendar_year', $calendarYear)
+                ->exists();
+        }
+
+        return $this->returningStudentContextService->currentSponsorForStudentProfile($student) instanceof StudentSponsor;
     }
 
     /**

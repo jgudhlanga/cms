@@ -1,15 +1,20 @@
 <?php
 
+use App\Enums\Shared\DisabilityStatusEnum;
 use App\Models\AcademicCalendars\AcademicCalendar;
 use App\Models\AcademicCalendars\Semester;
+use App\Models\Institution\DepartmentLevel;
+use App\Models\Institution\Level;
+use App\Models\Institution\ModeOfStudy;
 use App\Models\Institution\Staff;
 use App\Models\Shared\Gender;
 use App\Models\Shared\MaritalStatus;
 use App\Models\Shared\Title;
-use App\Models\Students\StudentEnrolment;
-use App\Models\Students\StudentEnrolmentStatus;
 use App\Models\Students\StudentApplication;
 use App\Models\Students\StudentApprentice;
+use App\Models\Students\StudentEnrolment;
+use App\Models\Students\StudentEnrolmentStatus;
+use App\Models\Students\StudentSponsor;
 use App\Models\Users\User;
 use Illuminate\Support\Str;
 use Laravel\Sanctum\Sanctum;
@@ -229,28 +234,146 @@ it('matches filtered stats total with index meta total when student type filter 
     expect($indexResponse->json('meta.total'))->toBe($statsResponse->json('filtered.total'));
 });
 
+it('filters students by sponsored status', function (): void {
+    $sponsoredProgram = createVerifiedStudentApplication('STU-SPN-'.strtoupper(Str::random(4)));
+    $notSponsoredProgram = createVerifiedStudentApplication('STU-NSP-'.strtoupper(Str::random(4)));
+
+    createStudentEnrolmentForProgram($sponsoredProgram);
+    createStudentEnrolmentForProgram($notSponsoredProgram);
+
+    StudentSponsor::query()->create([
+        'tenant_id' => $sponsoredProgram->tenant_id,
+        'student_id' => $sponsoredProgram->student_id,
+        'calendar_year' => 2026,
+        'sponsor' => 'Test Sponsor',
+    ]);
+
+    $user = User::factory()->create(['tenant_id' => $sponsoredProgram->tenant_id]);
+    Sanctum::actingAs($user);
+
+    $sponsoredResponse = $this->getJson(route('v1.students.index').'?sponsored=sponsored');
+    $sponsoredResponse->assertOk();
+    $sponsoredIds = collect($sponsoredResponse->json('data'))->pluck('id')->map(static fn ($id) => (int) $id)->all();
+    expect($sponsoredIds)->toContain((int) $sponsoredProgram->student_id)
+        ->and($sponsoredIds)->not->toContain((int) $notSponsoredProgram->student_id)
+        ->and($sponsoredResponse->json('meta.total'))->toBe(1);
+
+    $notSponsoredResponse = $this->getJson(route('v1.students.index').'?sponsored=not_sponsored');
+    $notSponsoredResponse->assertOk();
+    $notSponsoredIds = collect($notSponsoredResponse->json('data'))->pluck('id')->map(static fn ($id) => (int) $id)->all();
+    expect($notSponsoredIds)->toContain((int) $notSponsoredProgram->student_id)
+        ->and($notSponsoredIds)->not->toContain((int) $sponsoredProgram->student_id)
+        ->and($notSponsoredResponse->json('meta.total'))->toBe(1);
+});
+
+it('matches filtered stats total with index meta total when sponsored filter is applied', function (): void {
+    $sponsoredProgram = createVerifiedStudentApplication('STU-SPN-M-'.strtoupper(Str::random(4)));
+    $notSponsoredProgram = createVerifiedStudentApplication('STU-NSP-M-'.strtoupper(Str::random(4)));
+
+    createStudentEnrolmentForProgram($sponsoredProgram);
+    createStudentEnrolmentForProgram($notSponsoredProgram);
+
+    StudentSponsor::query()->create([
+        'tenant_id' => $sponsoredProgram->tenant_id,
+        'student_id' => $sponsoredProgram->student_id,
+        'calendar_year' => 2026,
+        'sponsor' => 'Match Sponsor',
+    ]);
+
+    $user = User::factory()->create(['tenant_id' => $sponsoredProgram->tenant_id]);
+    Sanctum::actingAs($user);
+
+    $indexResponse = $this->getJson(route('v1.students.index').'?sponsored=sponsored');
+    $statsResponse = $this->getJson(route('v1.students.stats').'?sponsored=sponsored');
+
+    $indexResponse->assertOk();
+    $statsResponse->assertOk();
+
+    expect($indexResponse->json('meta.total'))->toBe($statsResponse->json('filtered.total'));
+});
+
+it('filters students by disability status', function (): void {
+    $yesProgram = createVerifiedStudentApplication('STU-DIS-Y-'.strtoupper(Str::random(4)));
+    $noProgram = createVerifiedStudentApplication('STU-DIS-N-'.strtoupper(Str::random(4)));
+    $preferProgram = createVerifiedStudentApplication('STU-DIS-P-'.strtoupper(Str::random(4)));
+    $nullProgram = createVerifiedStudentApplication('STU-DIS-U-'.strtoupper(Str::random(4)));
+
+    $yesProgram->student->update(['disability_status' => DisabilityStatusEnum::YES->value]);
+    $noProgram->student->update(['disability_status' => DisabilityStatusEnum::NO->value]);
+    $preferProgram->student->update(['disability_status' => DisabilityStatusEnum::PREFER_NOT_TO_SAY->value]);
+    $nullProgram->student->update(['disability_status' => null]);
+
+    createStudentEnrolmentForProgram($yesProgram);
+    createStudentEnrolmentForProgram($noProgram);
+    createStudentEnrolmentForProgram($preferProgram);
+    createStudentEnrolmentForProgram($nullProgram);
+
+    $user = User::factory()->create(['tenant_id' => $yesProgram->tenant_id]);
+    Sanctum::actingAs($user);
+
+    $yesResponse = $this->getJson(route('v1.students.index').'?disability=yes');
+    $yesResponse->assertOk();
+    $yesIds = collect($yesResponse->json('data'))->pluck('id')->map(static fn ($id) => (int) $id)->all();
+    expect($yesIds)->toContain((int) $yesProgram->student_id)
+        ->and($yesIds)->not->toContain((int) $noProgram->student_id)
+        ->and($yesIds)->not->toContain((int) $preferProgram->student_id)
+        ->and($yesIds)->not->toContain((int) $nullProgram->student_id)
+        ->and($yesResponse->json('meta.total'))->toBe(1);
+
+    $noResponse = $this->getJson(route('v1.students.index').'?disability=no');
+    $noResponse->assertOk();
+    $noIds = collect($noResponse->json('data'))->pluck('id')->map(static fn ($id) => (int) $id)->all();
+    expect($noIds)->toContain((int) $noProgram->student_id)
+        ->and($noIds)->toContain((int) $preferProgram->student_id)
+        ->and($noIds)->toContain((int) $nullProgram->student_id)
+        ->and($noIds)->not->toContain((int) $yesProgram->student_id)
+        ->and($noResponse->json('meta.total'))->toBe(3);
+});
+
+it('matches filtered stats total with index meta total when disability filter is applied', function (): void {
+    $yesProgram = createVerifiedStudentApplication('STU-DIS-MY-'.strtoupper(Str::random(4)));
+    $noProgram = createVerifiedStudentApplication('STU-DIS-MN-'.strtoupper(Str::random(4)));
+
+    $yesProgram->student->update(['disability_status' => DisabilityStatusEnum::YES->value]);
+    $noProgram->student->update(['disability_status' => DisabilityStatusEnum::NO->value]);
+
+    createStudentEnrolmentForProgram($yesProgram);
+    createStudentEnrolmentForProgram($noProgram);
+
+    $user = User::factory()->create(['tenant_id' => $yesProgram->tenant_id]);
+    Sanctum::actingAs($user);
+
+    $indexResponse = $this->getJson(route('v1.students.index').'?disability=yes');
+    $statsResponse = $this->getJson(route('v1.students.stats').'?disability=yes');
+
+    $indexResponse->assertOk();
+    $statsResponse->assertOk();
+
+    expect($indexResponse->json('meta.total'))->toBe($statsResponse->json('filtered.total'));
+});
+
 it('requires department, level, and mode to match on the same enrolment', function (): void {
     $matchedProgram = createVerifiedStudentApplication('STU-SAME-'.strtoupper(Str::random(4)));
     createStudentEnrolmentForProgram($matchedProgram);
 
     $splitProgram = createVerifiedStudentApplication('STU-SPLIT-'.strtoupper(Str::random(4)));
-    $ojet = \App\Models\Institution\ModeOfStudy::query()->firstOrCreate(['name' => 'Ojet']);
-    $fullTime = \App\Models\Institution\ModeOfStudy::query()->firstOrCreate(['name' => 'Full Time']);
+    $ojet = ModeOfStudy::query()->firstOrCreate(['name' => 'Ojet']);
+    $fullTime = ModeOfStudy::query()->firstOrCreate(['name' => 'Full Time']);
 
     $splitProgram->update(['mode_of_study_id' => $fullTime->id]);
     createStudentEnrolmentForProgram($splitProgram);
 
-    $secondLevel = \App\Models\Institution\Level::factory()->create([
+    $secondLevel = Level::factory()->create([
         'name' => 'ND-'.strtoupper(Str::random(4)),
         'calendar_type' => 'semester',
     ]);
-    $secondDepartmentLevel = \App\Models\Institution\DepartmentLevel::query()->create([
+    $secondDepartmentLevel = DepartmentLevel::query()->create([
         'tenant_id' => $splitProgram->tenant_id,
         'institution_department_id' => $splitProgram->institution_department_id,
         'level_id' => $secondLevel->id,
     ]);
 
-    $secondApplication = \App\Models\Students\StudentApplication::query()->create([
+    $secondApplication = StudentApplication::query()->create([
         'tenant_id' => $splitProgram->tenant_id,
         'student_id' => $splitProgram->student_id,
         'institution_department_id' => $splitProgram->institution_department_id,
