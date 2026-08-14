@@ -24,6 +24,8 @@ export function useStudentProfileHeader(student: MaybeRefOrGetter<Student | null
             isApprenticeThisYear: value?.attributes.isApprenticeThisYear ?? false,
             employer: value?.attributes.employer ?? '',
             apprenticeNumber: value?.attributes.apprenticeNumber ?? '',
+            isSponsoredThisYear: value?.attributes.isSponsoredThisYear ?? false,
+            sponsor: value?.attributes.sponsor ?? '',
         };
     });
 

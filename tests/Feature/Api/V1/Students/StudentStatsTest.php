@@ -1,10 +1,12 @@
 <?php
 
+use App\Enums\Shared\DisabilityStatusEnum;
 use App\Models\Institution\Staff;
 use App\Models\Shared\Gender;
 use App\Models\Shared\MaritalStatus;
 use App\Models\Shared\Title;
 use App\Models\Students\StudentApprentice;
+use App\Models\Students\StudentSponsor;
 use App\Models\Users\User;
 use Laravel\Sanctum\Sanctum;
 
@@ -38,6 +40,12 @@ it('returns aggregated student stats for enrolled students', function (): void {
 
     $typeIds = collect($response->json('global.byStudentType'))->pluck('id')->all();
     expect($typeIds)->toContain('direct', 'apprentice');
+
+    $sponsoredIds = collect($response->json('global.bySponsored'))->pluck('id')->all();
+    expect($sponsoredIds)->toContain('sponsored', 'not_sponsored');
+
+    $disabilityIds = collect($response->json('global.byDisability'))->pluck('id')->all();
+    expect($disabilityIds)->toContain('yes', 'no');
 });
 
 it('returns student type breakdown counts in stats', function (): void {
@@ -63,6 +71,98 @@ it('returns student type breakdown counts in stats', function (): void {
 
     expect($byType->get('direct')['count'])->toBe(1)
         ->and($byType->get('apprentice')['count'])->toBe(1);
+});
+
+it('returns sponsored breakdown counts in stats', function (): void {
+    $sponsoredProgram = createVerifiedStudentApplication('STU-STAT-S-'.strtoupper(str()->random(4)));
+    $notSponsoredProgram = createVerifiedStudentApplication('STU-STAT-NS-'.strtoupper(str()->random(4)));
+
+    createStudentEnrolmentForProgram($sponsoredProgram);
+    createStudentEnrolmentForProgram($notSponsoredProgram);
+
+    StudentSponsor::query()->create([
+        'tenant_id' => $sponsoredProgram->tenant_id,
+        'student_id' => $sponsoredProgram->student_id,
+        'calendar_year' => 2026,
+        'sponsor' => 'Stats Sponsor',
+    ]);
+
+    $user = User::factory()->create(['tenant_id' => $sponsoredProgram->tenant_id]);
+    Sanctum::actingAs($user);
+
+    $response = $this->getJson(route('v1.students.stats'));
+    $response->assertOk();
+
+    $bySponsored = collect($response->json('global.bySponsored'))->keyBy('id');
+
+    expect($bySponsored->get('sponsored')['count'])->toBe(1)
+        ->and($bySponsored->get('not_sponsored')['count'])->toBe(1);
+});
+
+it('returns disability breakdown counts treating prefer_not_to_say and null as no', function (): void {
+    $yesProgram = createVerifiedStudentApplication('STU-STAT-DY-'.strtoupper(str()->random(4)));
+    $noProgram = createVerifiedStudentApplication('STU-STAT-DN-'.strtoupper(str()->random(4)));
+    $preferProgram = createVerifiedStudentApplication('STU-STAT-DP-'.strtoupper(str()->random(4)));
+    $nullProgram = createVerifiedStudentApplication('STU-STAT-DU-'.strtoupper(str()->random(4)));
+
+    $yesProgram->student->update(['disability_status' => DisabilityStatusEnum::YES->value]);
+    $noProgram->student->update(['disability_status' => DisabilityStatusEnum::NO->value]);
+    $preferProgram->student->update(['disability_status' => DisabilityStatusEnum::PREFER_NOT_TO_SAY->value]);
+    $nullProgram->student->update(['disability_status' => null]);
+
+    createStudentEnrolmentForProgram($yesProgram);
+    createStudentEnrolmentForProgram($noProgram);
+    createStudentEnrolmentForProgram($preferProgram);
+    createStudentEnrolmentForProgram($nullProgram);
+
+    $user = User::factory()->create(['tenant_id' => $yesProgram->tenant_id]);
+    Sanctum::actingAs($user);
+
+    $response = $this->getJson(route('v1.students.stats'));
+    $response->assertOk();
+
+    $byDisability = collect($response->json('global.byDisability'))->keyBy('id');
+
+    expect($byDisability->get('yes')['count'])->toBe(1)
+        ->and($byDisability->get('no')['count'])->toBe(3);
+});
+
+it('keeps global sponsored and disability chip counts when gender filter is applied', function (): void {
+    $maleSponsored = createVerifiedStudentApplication('STU-STAT-MS-'.strtoupper(str()->random(4)));
+    $femaleUnsponsored = createVerifiedStudentApplication('STU-STAT-FU-'.strtoupper(str()->random(4)));
+
+    $femaleGender = Gender::query()->firstOrCreate(['title' => 'Female']);
+    $femaleUnsponsored->student->update([
+        'gender_id' => $femaleGender->id,
+        'disability_status' => DisabilityStatusEnum::YES->value,
+    ]);
+    $maleSponsored->student->update(['disability_status' => DisabilityStatusEnum::NO->value]);
+
+    createStudentEnrolmentForProgram($maleSponsored);
+    createStudentEnrolmentForProgram($femaleUnsponsored);
+
+    StudentSponsor::query()->create([
+        'tenant_id' => $maleSponsored->tenant_id,
+        'student_id' => $maleSponsored->student_id,
+        'calendar_year' => 2026,
+        'sponsor' => 'Chip Sponsor',
+    ]);
+
+    $user = User::factory()->create(['tenant_id' => $maleSponsored->tenant_id]);
+    Sanctum::actingAs($user);
+
+    $response = $this->getJson(route('v1.students.stats').'?gender=male');
+    $response->assertOk()
+        ->assertJsonPath('global.total', 2)
+        ->assertJsonPath('filtered.total', 1);
+
+    $bySponsored = collect($response->json('global.bySponsored'))->keyBy('id');
+    $byDisability = collect($response->json('global.byDisability'))->keyBy('id');
+
+    expect($bySponsored->get('sponsored')['count'])->toBe(1)
+        ->and($bySponsored->get('not_sponsored')['count'])->toBe(1)
+        ->and($byDisability->get('yes')['count'])->toBe(1)
+        ->and($byDisability->get('no')['count'])->toBe(1);
 });
 
 it('returns a lower filtered total when gender filter is applied', function (): void {

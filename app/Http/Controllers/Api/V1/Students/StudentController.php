@@ -34,6 +34,8 @@ class StudentController
                 'mode_of_study',
                 'gender',
                 'student_type',
+                'sponsored',
+                'disability',
                 'academic_year',
                 'calendar_type',
                 'with_trashed',
@@ -56,6 +58,8 @@ class StudentController
                     'mode_of_study',
                     'gender',
                     'student_type',
+                    'sponsored',
+                    'disability',
                     'with_trashed',
                 ])
             )

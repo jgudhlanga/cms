@@ -57,6 +57,8 @@ export type Student = {
         isApprenticeThisYear?: boolean;
         employer?: string | null;
         apprenticeNumber?: string | null;
+        isSponsoredThisYear?: boolean;
+        sponsor?: string | null;
         createdAt?: string;
         updatedAt?: string;
         deletedAt?: string;
@@ -89,6 +91,8 @@ export type StudentHeader = {
     isApprenticeThisYear?: boolean;
     employer?: string;
     apprenticeNumber?: string;
+    isSponsoredThisYear?: boolean;
+    sponsor?: string;
 };
 
 export type StudentProgrammeModule = {
@@ -344,6 +348,8 @@ export type StudentFiltersState = {
     mode_of_study?: number[] | null;
     gender?: 'male' | 'female';
     student_type?: 'direct' | 'apprentice';
+    sponsored?: 'sponsored' | 'not_sponsored';
+    disability?: 'yes' | 'no';
     academic_year?: number[] | null;
     calendar_type?: string[] | null;
     with_trashed?: boolean | null;
@@ -361,6 +367,18 @@ export type StudentTypeStatBreakdown = {
     count: number;
 };
 
+export type StudentSponsoredStatBreakdown = {
+    id: 'sponsored' | 'not_sponsored';
+    name: string;
+    count: number;
+};
+
+export type StudentDisabilityStatBreakdown = {
+    id: 'yes' | 'no';
+    name: string;
+    count: number;
+};
+
 export type StudentStats = {
     global: {
         total: number;
@@ -369,6 +387,8 @@ export type StudentStats = {
         byLevel: StudentStatBreakdown[];
         byModeOfStudy: StudentStatBreakdown[];
         byStudentType: StudentTypeStatBreakdown[];
+        bySponsored: StudentSponsoredStatBreakdown[];
+        byDisability: StudentDisabilityStatBreakdown[];
     };
     filtered: {
         total: number;

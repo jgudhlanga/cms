@@ -1,13 +1,13 @@
 <?php
 
-use App\Models\AcademicCalendars\AcademicCalendar;
-use App\Models\AcademicCalendars\Semester;
-use App\Models\Students\StudentEnrolment;
-use App\Models\Students\StudentEnrolmentStatus;
-use App\Models\Students\StudentApplication;
+use App\Enums\Shared\DisabilityStatusEnum;
+use App\Models\Institution\ModeOfStudy;
+use App\Models\Students\StudentApprentice;
+use App\Models\Students\StudentSponsor;
 use App\Models\Users\User;
 use Illuminate\Support\Str;
 use Laravel\Sanctum\Sanctum;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 use Spatie\Permission\Models\Permission;
 
 require_once __DIR__.'/../Api/V1/Students/StudentIndexFilterTest.php';
@@ -55,7 +55,7 @@ it('exports students filtered by department', function (): void {
     $response->assertSuccessful();
     expect($response->headers->get('content-type'))->toContain('spreadsheet');
 
-    $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($response->getFile()->getPathname());
+    $spreadsheet = IOFactory::load($response->getFile()->getPathname());
     $rows = $spreadsheet->getActiveSheet()->toArray();
     $flat = collect($rows)->flatten()->filter()->implode(' ');
 
@@ -67,8 +67,8 @@ it('matches export row count with index and stats for department, level, and mod
     $matchedProgram = createVerifiedStudentApplication('STU-EXP-M-'.strtoupper(Str::random(4)));
     $otherModeProgram = createVerifiedStudentApplication('STU-EXP-O-'.strtoupper(Str::random(4)));
 
-    $ojet = \App\Models\Institution\ModeOfStudy::query()->firstOrCreate(['name' => 'Ojet']);
-    $fullTime = \App\Models\Institution\ModeOfStudy::query()->firstOrCreate(['name' => 'Full Time']);
+    $ojet = ModeOfStudy::query()->firstOrCreate(['name' => 'Ojet']);
+    $fullTime = ModeOfStudy::query()->firstOrCreate(['name' => 'Full Time']);
 
     $matchedProgram->update(['mode_of_study_id' => $ojet->id]);
     $otherModeProgram->update([
@@ -101,7 +101,7 @@ it('matches export row count with index and stats for department, level, and mod
     $exportResponse = $this->actingAs($user)->get(route('students.export', $filters));
     $exportResponse->assertSuccessful();
 
-    $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($exportResponse->getFile()->getPathname());
+    $spreadsheet = IOFactory::load($exportResponse->getFile()->getPathname());
     $rows = $spreadsheet->getActiveSheet()->toArray();
     $dataRows = collect($rows)->slice(1)->filter(fn ($row) => collect($row)->filter()->isNotEmpty())->values();
 
@@ -129,7 +129,7 @@ it('applies student_type filter on student list export', function (): void {
     createStudentEnrolmentForProgram($directProgram);
     createStudentEnrolmentForProgram($apprenticeProgram);
 
-    \App\Models\Students\StudentApprentice::query()->create([
+    StudentApprentice::query()->create([
         'tenant_id' => $apprenticeProgram->tenant_id,
         'student_id' => $apprenticeProgram->student_id,
         'calendar_year' => 2026,
@@ -148,12 +148,88 @@ it('applies student_type filter on student list export', function (): void {
 
     $response->assertSuccessful();
 
-    $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($response->getFile()->getPathname());
+    $spreadsheet = IOFactory::load($response->getFile()->getPathname());
     $rows = $spreadsheet->getActiveSheet()->toArray();
     $flat = collect($rows)->flatten()->filter()->implode(' ');
 
     expect($flat)->toContain('STU-EXP-A-')
         ->and($flat)->not->toContain('STU-EXP-D-');
+});
+
+it('applies sponsored filter on student list export', function (): void {
+    $sponsoredProgram = createVerifiedStudentApplication('STU-EXP-S-'.strtoupper(Str::random(4)));
+    $notSponsoredProgram = createVerifiedStudentApplication('STU-EXP-U-'.strtoupper(Str::random(4)));
+
+    $notSponsoredProgram->update([
+        'institution_department_id' => $sponsoredProgram->institution_department_id,
+        'department_level_id' => $sponsoredProgram->department_level_id,
+        'department_course_id' => $sponsoredProgram->department_course_id,
+        'mode_of_study_id' => $sponsoredProgram->mode_of_study_id,
+    ]);
+
+    createStudentEnrolmentForProgram($sponsoredProgram);
+    createStudentEnrolmentForProgram($notSponsoredProgram);
+
+    StudentSponsor::query()->create([
+        'tenant_id' => $sponsoredProgram->tenant_id,
+        'student_id' => $sponsoredProgram->student_id,
+        'calendar_year' => 2026,
+        'sponsor' => 'Export Sponsor',
+    ]);
+
+    $user = User::factory()->create(['tenant_id' => $sponsoredProgram->tenant_id]);
+    Permission::findOrCreate('export:students', 'web');
+    $user->givePermissionTo(['viewAny:students', 'export:students']);
+
+    $response = $this->actingAs($user)->get(route('students.export', [
+        'department' => [$sponsoredProgram->institution_department_id],
+        'sponsored' => 'sponsored',
+    ]));
+
+    $response->assertSuccessful();
+
+    $spreadsheet = IOFactory::load($response->getFile()->getPathname());
+    $rows = $spreadsheet->getActiveSheet()->toArray();
+    $flat = collect($rows)->flatten()->filter()->implode(' ');
+
+    expect($flat)->toContain('STU-EXP-S-')
+        ->and($flat)->not->toContain('STU-EXP-U-');
+});
+
+it('applies disability filter on student list export', function (): void {
+    $yesProgram = createVerifiedStudentApplication('STU-EXP-Y-'.strtoupper(Str::random(4)));
+    $noProgram = createVerifiedStudentApplication('STU-EXP-N-'.strtoupper(Str::random(4)));
+
+    $noProgram->update([
+        'institution_department_id' => $yesProgram->institution_department_id,
+        'department_level_id' => $yesProgram->department_level_id,
+        'department_course_id' => $yesProgram->department_course_id,
+        'mode_of_study_id' => $yesProgram->mode_of_study_id,
+    ]);
+
+    $yesProgram->student->update(['disability_status' => DisabilityStatusEnum::YES->value]);
+    $noProgram->student->update(['disability_status' => DisabilityStatusEnum::PREFER_NOT_TO_SAY->value]);
+
+    createStudentEnrolmentForProgram($yesProgram);
+    createStudentEnrolmentForProgram($noProgram);
+
+    $user = User::factory()->create(['tenant_id' => $yesProgram->tenant_id]);
+    Permission::findOrCreate('export:students', 'web');
+    $user->givePermissionTo(['viewAny:students', 'export:students']);
+
+    $response = $this->actingAs($user)->get(route('students.export', [
+        'department' => [$yesProgram->institution_department_id],
+        'disability' => 'yes',
+    ]));
+
+    $response->assertSuccessful();
+
+    $spreadsheet = IOFactory::load($response->getFile()->getPathname());
+    $rows = $spreadsheet->getActiveSheet()->toArray();
+    $flat = collect($rows)->flatten()->filter()->implode(' ');
+
+    expect($flat)->toContain('STU-EXP-Y-')
+        ->and($flat)->not->toContain('STU-EXP-N-');
 });
 
 it('does not duplicate multi-enrolment students in export versus index total', function (): void {
@@ -176,7 +252,7 @@ it('does not duplicate multi-enrolment students in export versus index total', f
     $exportResponse = $this->actingAs($user)->get(route('students.export', $filters));
     $exportResponse->assertSuccessful();
 
-    $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($exportResponse->getFile()->getPathname());
+    $spreadsheet = IOFactory::load($exportResponse->getFile()->getPathname());
     $rows = $spreadsheet->getActiveSheet()->toArray();
     $dataRows = collect($rows)->slice(1)->filter(fn ($row) => collect($row)->filter()->isNotEmpty())->values();
     $studentNumbers = $dataRows->map(fn ($row) => $row[2] ?? null)->filter();

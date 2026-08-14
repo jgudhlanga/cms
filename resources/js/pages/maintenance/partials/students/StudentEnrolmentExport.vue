@@ -119,6 +119,7 @@ const confirmApplicationExport = () => {
 const goToFaultyData = () => navigateTo(route('maintenance.faulty-student-ids'));
 const goToVerifiedStudentsFinalEnrolment = () => navigateTo(route('maintenance.verified-students-final-enrolment'));
 const goToApprenticeManagement = () => navigateTo(route('maintenance.apprentice-management'));
+const goToSponsoredStudents = () => navigateTo(route('maintenance.sponsored-students'));
 </script>
 
 <template>
@@ -217,6 +218,24 @@ const goToApprenticeManagement = () => navigateTo(route('maintenance.apprentice-
                 </p>
                 <p class="text-xs text-muted-foreground">
                     {{ trans('trans.maintenance_apprentice_management_description') }}
+                </p>
+            </div>
+            <ChevronRight class="h-4 w-4 shrink-0 text-muted-foreground" />
+        </button>
+
+        <Separator />
+
+        <button
+            type="button"
+            class="flex w-full cursor-pointer items-center justify-between gap-3 rounded-md py-1 text-left transition-colors hover:bg-muted/50"
+            @click="goToSponsoredStudents"
+        >
+            <div class="min-w-0 flex-1">
+                <p class="text-sm font-medium text-foreground">
+                    {{ trans('trans.maintenance_sponsored_students') }}
+                </p>
+                <p class="text-xs text-muted-foreground">
+                    {{ trans('trans.maintenance_sponsored_students_description') }}
                 </p>
             </div>
             <ChevronRight class="h-4 w-4 shrink-0 text-muted-foreground" />

@@ -100,8 +100,17 @@ const apprenticeFacts = computed<HeaderFact[]>(() => {
   return facts;
 });
 
+const sponsorName = computed(() => {
+  if (!props.data?.isSponsoredThisYear) {
+    return '';
+  }
+
+  return props.data?.sponsor?.trim() || '';
+});
+
 const hasProgrammeFacts = computed(() => programmeFacts.value.length > 0);
 const hasApprenticeFacts = computed(() => apprenticeFacts.value.length > 0);
+const hasSponsoredFacts = computed(() => sponsorName.value !== '');
 </script>
 
 <template>
@@ -144,7 +153,7 @@ const hasApprenticeFacts = computed(() => apprenticeFacts.value.length > 0);
       </p>
 
       <div
-        v-if="hasProgrammeFacts || hasApprenticeFacts"
+        v-if="hasProgrammeFacts || hasApprenticeFacts || hasSponsoredFacts"
         class="flex w-full min-w-0 flex-col gap-1"
       >
         <dl
@@ -192,6 +201,18 @@ const hasApprenticeFacts = computed(() => apprenticeFacts.value.length > 0);
               </div>
             </template>
           </dl>
+        </div>
+
+        <div
+          v-if="hasSponsoredFacts"
+          class="flex min-w-0 max-w-full flex-wrap items-baseline gap-x-1 gap-y-0.5 text-[10px] leading-snug sm:text-[11px]"
+        >
+          <span class="shrink-0 font-semibold text-primary">
+            {{ $t('trans.sponsored_by') }}
+          </span>
+          <span class="min-w-0 font-bold wrap-break-word text-foreground">
+            {{ sponsorName }}
+          </span>
         </div>
       </div>
     </div>

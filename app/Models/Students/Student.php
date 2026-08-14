@@ -142,6 +142,11 @@ class Student extends Model
         return $this->hasMany(StudentApprentice::class, 'student_id');
     }
 
+    public function studentSponsors(): HasMany
+    {
+        return $this->hasMany(StudentSponsor::class, 'student_id');
+    }
+
     public function latestEnrolment(): HasOne
     {
         return $this->hasOne(StudentEnrolment::class)->latestOfMany();

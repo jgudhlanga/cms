@@ -47,6 +47,8 @@ const stats = ref<StudentStats>({
         byLevel: [],
         byModeOfStudy: [],
         byStudentType: [],
+        bySponsored: [],
+        byDisability: [],
     },
     filtered: {
         total: 0,
@@ -64,6 +66,8 @@ const normalizeFilters = (filters: StudentFiltersState): string =>
         mode_of_study: filters.mode_of_study?.length ? [...filters.mode_of_study].sort((a, b) => a - b) : undefined,
         gender: filters.gender || undefined,
         student_type: filters.student_type || undefined,
+        sponsored: filters.sponsored || undefined,
+        disability: filters.disability || undefined,
         with_trashed: filters.with_trashed || undefined,
     });
 

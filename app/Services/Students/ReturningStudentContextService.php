@@ -11,8 +11,9 @@ use App\Helpers\PaymentHelper;
 use App\Http\Resources\Institution\IntakePeriodResource;
 use App\Models\Institution\IntakePeriod;
 use App\Models\Students\Student;
-use App\Models\Students\StudentApprentice;
 use App\Models\Students\StudentApplication;
+use App\Models\Students\StudentApprentice;
+use App\Models\Students\StudentSponsor;
 use App\Models\Users\User;
 use Illuminate\Support\Collection;
 
@@ -70,6 +71,28 @@ class ReturningStudentContextService
         return $this->apprenticeForCalendarYears($student, $this->profileCalendarYears($student));
     }
 
+    public function currentSponsorForStudentProfile(Student $student): ?StudentSponsor
+    {
+        $openMatch = $this->currentSponsorForOpenIntakeYear($student);
+
+        if ($openMatch instanceof StudentSponsor) {
+            return $openMatch;
+        }
+
+        return $this->sponsorForCalendarYears($student, $this->profileCalendarYears($student));
+    }
+
+    public function currentSponsorForOpenIntakeYear(Student $student): ?StudentSponsor
+    {
+        $years = $this->openIntakes()
+            ->map(fn (IntakePeriod $intake): int => $intake->calendarYearInteger())
+            ->unique()
+            ->values()
+            ->all();
+
+        return $this->sponsorForCalendarYears($student, $years);
+    }
+
     /**
      * @param  list<int>  $years
      */
@@ -90,6 +113,32 @@ class ReturningStudentContextService
         }
 
         return StudentApprentice::query()
+            ->where('student_id', $student->id)
+            ->whereIn('calendar_year', $years)
+            ->orderByDesc('calendar_year')
+            ->first();
+    }
+
+    /**
+     * @param  list<int>  $years
+     */
+    private function sponsorForCalendarYears(Student $student, array $years): ?StudentSponsor
+    {
+        if ($years === []) {
+            return null;
+        }
+
+        if ($student->relationLoaded('studentSponsors')) {
+            /** @var StudentSponsor|null $match */
+            $match = $student->studentSponsors
+                ->filter(fn (StudentSponsor $sponsor): bool => in_array((int) $sponsor->calendar_year, $years, true))
+                ->sortByDesc(fn (StudentSponsor $sponsor): int => (int) $sponsor->calendar_year)
+                ->first();
+
+            return $match;
+        }
+
+        return StudentSponsor::query()
             ->where('student_id', $student->id)
             ->whereIn('calendar_year', $years)
             ->orderByDesc('calendar_year')
