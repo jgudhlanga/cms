@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Integrations\PaymentController;
 use App\Http\Controllers\Students\GuestRegistrationController;
+use App\Http\Controllers\Students\IdCardRequestController;
 use App\Http\Controllers\Students\PortalController;
 use App\Http\Controllers\Students\PortalExamResultController;
 use App\Http\Controllers\Students\ReturningStudentController;
@@ -97,6 +98,12 @@ Route::prefix('portal')->group(function () {
             ->name('portal.exam-results.lookup');
         Route::get('exam-results/{student_exam_result}', [PortalExamResultController::class, 'show'])
             ->name('portal.exam-results.show');
+        Route::get('id-card', [IdCardRequestController::class, 'index'])
+            ->name('portal.id-card.index');
+        Route::post('id-card/photo', [IdCardRequestController::class, 'uploadPhoto'])
+            ->name('portal.id-card.photo');
+        Route::post('id-card', [IdCardRequestController::class, 'store'])
+            ->name('portal.id-card.store');
         Route::get('list-o-levels', [StudentOLevelResultsController::class, 'index'])->name('portal.list-o-levels');
         Route::get('manage-o-level-results', [StudentOLevelResultsController::class, 'manage'])->name('portal.manage-o-level-results');
         Route::post('store-o-level-results/{student}', [StudentOLevelResultsController::class, 'store'])->name('portal.store-o-level-results');

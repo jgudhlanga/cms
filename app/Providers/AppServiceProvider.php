@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Contracts\Students\StudentIdCardPrinter;
 use App\Enums\Rbac\RoleEnum;
 use App\Importers\Finance\FinanceExchangeRateImporter;
 use App\Importers\Institution\CourseSyllabusImporter;
@@ -16,6 +17,8 @@ use App\Policies\AcademicCalendars\CourseWorkPolicy;
 use App\Policies\Examinations\ExaminationPolicy;
 use App\Policies\Institution\AssessmentCalendarPolicy;
 use App\Policies\Institution\CourseSyllabusPolicy;
+use App\Services\Students\PdfCardPrinter;
+use App\Services\Students\PhysicalCardPrinter;
 use App\Support\Auth\SyncSessionPasswordHash;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Database\Eloquent\Model;
@@ -41,6 +44,13 @@ class AppServiceProvider extends ServiceProvider
             CourseSyllabusImporter::class,
             CourseSyllabusModuleImporter::class,
         ], IngestServiceProvider::INGEST_DEFINITION_TAG);
+
+        $this->app->bind(StudentIdCardPrinter::class, function (): StudentIdCardPrinter {
+            return match (config('id_cards.printer.driver')) {
+                'physical' => new PhysicalCardPrinter,
+                default => new PdfCardPrinter,
+            };
+        });
     }
 
     /**

@@ -71,4 +71,38 @@ describe('useSidebarNavActive', () => {
         expect(isActive('/settings')).toBe(true);
         expect(isActive('/rbac')).toBe(false);
     });
+
+    it('keeps nested prefix matching when no siblings are passed', () => {
+        pageState.url = '/institution/config';
+        const { isActive } = useSidebarNavActive();
+        expect(isActive('/institution')).toBe(true);
+        expect(isActive('/institution', [])).toBe(true);
+    });
+
+    it('does not activate Students when a longer Student IDs sibling matches', () => {
+        pageState.url = '/students/id-card-requests';
+        const { isActive } = useSidebarNavActive();
+        const siblings = ['/students', '/students/id-card-requests'];
+
+        expect(isActive('/students', siblings)).toBe(false);
+        expect(isActive('/students/id-card-requests', siblings)).toBe(true);
+    });
+
+    it('does not activate Students on a nested Student IDs show URL', () => {
+        pageState.url = '/students/id-card-requests/12';
+        const { isActive } = useSidebarNavActive();
+        const siblings = ['/students', '/students/id-card-requests'];
+
+        expect(isActive('/students', siblings)).toBe(false);
+        expect(isActive('/students/id-card-requests', siblings)).toBe(true);
+    });
+
+    it('still activates Students on a student show URL', () => {
+        pageState.url = '/students/123';
+        const { isActive } = useSidebarNavActive();
+        const siblings = ['/students', '/students/id-card-requests'];
+
+        expect(isActive('/students', siblings)).toBe(true);
+        expect(isActive('/students/id-card-requests', siblings)).toBe(false);
+    });
 });

@@ -107,4 +107,5 @@ export enum IconName {
     lamp = "lamp",
     plug = "plug",
     windows = "windows",
+    printer = "printer",
 }

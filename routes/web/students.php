@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Admin\Students\IdCardRequestController;
+use App\Http\Controllers\Admin\Students\IdCardSettingController;
 use App\Http\Controllers\Students\AcademicRecordController;
 use App\Http\Controllers\Students\SponsorController;
 use App\Http\Controllers\Students\StudentController;
@@ -29,6 +31,17 @@ Route::prefix('students')->middleware('auth')->group(function () {
     Route::delete('{student}/purge', [StudentController::class, 'purge'])
         ->middleware('can:root:manage')
         ->name('students.purge');
+});
+
+Route::prefix('students/id-card-requests')->middleware('auth')->name('admin.students.id-card-requests.')->group(function () {
+    Route::get('/', [IdCardRequestController::class, 'index'])->name('index');
+    Route::get('bulk-print', [IdCardRequestController::class, 'bulkPrint'])->name('bulk-print');
+    Route::post('settings', [IdCardSettingController::class, 'update'])->name('settings.update');
+    Route::get('{idCardRequest}', [IdCardRequestController::class, 'show'])->name('show');
+    Route::post('{idCardRequest}/approve', [IdCardRequestController::class, 'approve'])->name('approve');
+    Route::post('{idCardRequest}/reject', [IdCardRequestController::class, 'reject'])->name('reject');
+    Route::get('{idCardRequest}/print', [IdCardRequestController::class, 'print'])->name('print');
+    Route::post('{idCardRequest}/issue', [IdCardRequestController::class, 'issue'])->name('issue');
 });
 Route::prefix('students')->middleware('auth')->group(function () {
     // get student and programs through user account

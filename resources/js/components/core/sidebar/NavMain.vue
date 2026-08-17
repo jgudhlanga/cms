@@ -13,6 +13,7 @@ import { useCloseMobileSidebar } from '@/composables/core/useCloseMobileSidebar'
 import { provideSidebarAccordion } from '@/composables/core/useSidebarAccordion';
 import { getMenuItemKey, useSidebarMenu } from '@/composables/core/useSidebarMenu';
 import { useSidebarNavActive } from '@/composables/core/useSidebarNavActive';
+import type { MenuGroupInterface } from '@/types/ui';
 import { Link } from '@inertiajs/vue3';
 import MenuIcon from './MenuIcon.vue';
 import NavMainNestedItem from './NavMainNestedItem.vue';
@@ -22,6 +23,11 @@ provideSidebarAccordion();
 const { menuGroups, getTranslation, getGroupLabel } = useSidebarMenu();
 const { isActive } = useSidebarNavActive();
 const closeMobileSidebar = useCloseMobileSidebar();
+
+const siblingUrls = (group: MenuGroupInterface): Array<string | undefined> =>
+	group.items
+		.filter((item) => item.show && !item.items?.length)
+		.map((item) => item.url);
 </script>
 <template>
 	<template v-for="group in menuGroups" :key="group.key">
@@ -40,7 +46,7 @@ const closeMobileSidebar = useCloseMobileSidebar();
 							v-else-if="item.show && !item.items?.length"
 							class="group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center"
 						>
-							<SidebarMenuButton as-child :is-active="isActive(item.url)" :tooltip="getTranslation(item)">
+							<SidebarMenuButton as-child :is-active="isActive(item.url, siblingUrls(group))" :tooltip="getTranslation(item)">
 								<Link :href="item.url ?? ''" @click="closeMobileSidebar">
 									<MenuIcon :icon="item.icon" />
 									<TransText :item="item" variant="nav" />

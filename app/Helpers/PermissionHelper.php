@@ -221,6 +221,49 @@ class PermissionHelper
     /**
      * @return list<string>
      */
+    public static function idCardAdminPermissions(): array
+    {
+        return [
+            'viewAny:student-id-card-requests',
+            'view:student-id-card-requests',
+            'review:student-id-card-requests',
+            'print:student-id-card-requests',
+            'issue:student-id-card-requests',
+            'viewAuditTrail:student-id-card-requests',
+            'view:student-id-card-settings',
+            'update:student-id-card-settings',
+        ];
+    }
+
+    /**
+     * @return list<string>
+     */
+    public static function registrarPermissions(): array
+    {
+        return array_values(array_unique(array_merge(
+            [
+                'view:dashboards',
+                'viewAny:students',
+                'view:students',
+                'export:students',
+                'viewAny:student-applications',
+                'view:student-applications',
+            ],
+            self::idCardAdminPermissions()
+        )));
+    }
+
+    /**
+     * @return list<string>
+     */
+    public static function registryOfficerPermissions(): array
+    {
+        return self::registrarPermissions();
+    }
+
+    /**
+     * @return list<string>
+     */
     public static function vpAdminPermissions(): array
     {
         return array_values(array_unique(array_merge(
@@ -234,7 +277,8 @@ class PermissionHelper
                 'viewAny:finance-settings',
                 'view:finance-settings',
             ],
-            self::deanPermissions()
+            self::deanPermissions(),
+            self::idCardAdminPermissions()
         )));
     }
 

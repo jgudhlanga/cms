@@ -2,6 +2,8 @@
 
 namespace App\Enums\Shared;
 
+use Illuminate\Support\Str;
+
 enum ModuleEnum: string
 {
     case RBAC = 'Rbac';
@@ -16,6 +18,7 @@ enum ModuleEnum: string
     case SETTINGS = 'Settings';
     case SHARED = 'Shared';
     case STUDENTS = 'Students';
+    case STUDENT_IDS = 'Student IDs';
     case TENANTS = 'Tenants';
     case USERS = 'Users';
     case FINANCE = 'Finance';
@@ -37,12 +40,18 @@ enum ModuleEnum: string
             self::SETTINGS => 'Settings',
             self::SHARED => 'Shared',
             self::STUDENTS => 'Students',
+            self::STUDENT_IDS => 'Student IDs',
             self::TENANTS => 'Tenants',
             self::USERS => 'Users',
             self::FINANCE => 'Finance',
             self::HMS => 'HMS',
             self::COURSE_WORK => 'Course Work',
         };
+    }
+
+    public function slug(): string
+    {
+        return Str::slug($this->value);
     }
 
     public static function all(): array

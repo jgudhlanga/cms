@@ -314,6 +314,16 @@ return [
             'viewOwnExamResults:students',
             'viewStudentExamResults:students',
         ],
+        'student-ids' => [
+            'viewAny:student-id-card-requests',
+            'view:student-id-card-requests',
+            'review:student-id-card-requests',
+            'print:student-id-card-requests',
+            'issue:student-id-card-requests',
+            'viewAuditTrail:student-id-card-requests',
+            'view:student-id-card-settings',
+            'update:student-id-card-settings',
+        ],
         'enrolments' => [
             'viewAny:student-applications',
             'view:student-applications',

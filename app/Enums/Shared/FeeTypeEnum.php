@@ -6,6 +6,7 @@ use App\Models\HMS\HostelApplication;
 use App\Models\Shared\FeeType;
 use App\Models\Students\ApplicationFee;
 use App\Models\Students\StudentApplication;
+use App\Models\Students\StudentIdCardRequest;
 use App\Models\Users\User;
 use Illuminate\Support\Str;
 
@@ -96,13 +97,14 @@ enum FeeTypeEnum: string
             self::APPLICATION_FEE => ApplicationFee::class,
             self::STUDENT_ACCOMMODATION_FEE, self::GUEST_ACCOMMODATION_FEE => HostelApplication::class,
             self::TUITION_FEE => StudentApplication::class,
+            self::STUDENT_ID_FEE => StudentIdCardRequest::class,
             default => User::class,
         };
     }
 
     public function requiresLedgerableId(): bool
     {
-        return in_array($this, [self::TUITION_FEE, self::APPLICATION_FEE], true);
+        return in_array($this, [self::TUITION_FEE, self::APPLICATION_FEE, self::STUDENT_ID_FEE], true);
     }
 
     public function postPaymentRoute(): string
@@ -111,6 +113,7 @@ enum FeeTypeEnum: string
             self::APPLICATION_FEE => 'portal.application.create',
             self::STUDENT_ACCOMMODATION_FEE, self::GUEST_ACCOMMODATION_FEE => 'portal.profile.accommodations',
             self::TUITION_FEE => 'portal.profile.financials',
+            self::STUDENT_ID_FEE => 'portal.id-card.index',
             default => 'portal.dashboard',
         };
     }
@@ -121,6 +124,7 @@ enum FeeTypeEnum: string
             self::APPLICATION_FEE => 'portal.application.fee-payment',
             self::STUDENT_ACCOMMODATION_FEE, self::GUEST_ACCOMMODATION_FEE => 'portal.profile.accommodations',
             self::TUITION_FEE => 'portal.profile.financials',
+            self::STUDENT_ID_FEE => 'portal.id-card.index',
             default => 'portal.dashboard',
         };
     }
