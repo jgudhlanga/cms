@@ -416,6 +416,7 @@ return [
             'viewAuditTrail:hostels',
             'viewOnlyOwnHostel:hostels',
             'manage:hostel-check-in',
+            'confirm:hostel-payments',
             'viewAny:hostel-amenities',
             'view:hostel-amenities',
             'create:hostel-amenities',

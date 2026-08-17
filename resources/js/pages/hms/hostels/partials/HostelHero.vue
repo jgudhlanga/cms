@@ -5,7 +5,8 @@ import { computed } from 'vue';
 import { IconName } from '@/enums/icons';
 import { ColorVariant } from '@/enums/colors';
 import { icons } from '@/lib/icons';
-import {ButtonSize} from '@/enums/buttons';
+import { ButtonSize } from '@/enums/buttons';
+import { Link } from '@inertiajs/vue3';
 
 interface Props {
     hostel: HostelShowSnapshot;
@@ -13,10 +14,12 @@ interface Props {
     occupiedBeds: number;
     availableBeds: number;
     canEdit?: boolean;
+    canImport?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
     canEdit: true,
+    canImport: false,
 });
 
 const emit = defineEmits<{
@@ -107,6 +110,21 @@ const metricItems = computed(() => [
                     <component :is="icons[IconName.edit]" />
                     {{ $t('trans.edit') }}
                 </BaseButton>
+                <Link
+                    v-if="canImport"
+                    :href="route('hostels.occupants.import', hostel.id)"
+                    class="inline-flex"
+                >
+                    <BaseButton
+                        :id="`hostel-import-${hostel.id}`"
+                        :size="ButtonSize.sm"
+                        classes="rounded-full"
+                        :variant="ColorVariant.primary_outline"
+                    >
+                        <component :is="icons[IconName.import]" />
+                        {{ $t('hms.import_occupants') }}
+                    </BaseButton>
+                </Link>
             </div>
         </div>
 

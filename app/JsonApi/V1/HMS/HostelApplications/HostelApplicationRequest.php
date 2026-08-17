@@ -4,7 +4,10 @@ namespace App\JsonApi\V1\HMS\HostelApplications;
 
 use App\Enums\HMS\HostelApplicationStatusEnum;
 use App\Enums\HMS\HostelApplicationTypeEnum;
+use App\Models\HMS\HostelApplication;
+use App\Support\HMS\HostelApplicationPaymentVerification;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 use LaravelJsonApi\Laravel\Http\Requests\ResourceRequest;
 
 class HostelApplicationRequest extends ResourceRequest
@@ -78,5 +81,39 @@ class HostelApplicationRequest extends ResourceRequest
             'paymentVerification.tuitionFeesPaidConfirmed' => ['sometimes', 'boolean'],
             'paymentVerification.accommodationFeesPaidConfirmed' => ['sometimes', 'boolean'],
         ];
+    }
+
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function (Validator $validator): void {
+            if ($this->user()?->can('confirm:hostel-payments')) {
+                return;
+            }
+
+            $confirmed = filter_var(
+                data_get($validator->getData(), 'paymentVerification.accommodationFeesPaidConfirmed'),
+                FILTER_VALIDATE_BOOLEAN,
+            );
+
+            if (! $confirmed) {
+                return;
+            }
+
+            $application = collect($this->route()?->parameters() ?? [])
+                ->first(fn (mixed $value): bool => $value instanceof HostelApplication);
+
+            if ($application instanceof HostelApplication) {
+                $normalized = HostelApplicationPaymentVerification::normalize($application->payment_verification);
+
+                if ((bool) ($normalized[HostelApplicationPaymentVerification::KEY_ACCOMMODATION_FEES_PAID] ?? false)) {
+                    return;
+                }
+            }
+
+            $validator->errors()->add(
+                'paymentVerification.accommodationFeesPaidConfirmed',
+                __('hms.cannot_confirm_hostel_payments'),
+            );
+        });
     }
 }

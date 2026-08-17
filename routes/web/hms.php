@@ -1,8 +1,9 @@
 <?php
 
-use App\Http\Controllers\HMS\HostelApplicationController;
 use App\Http\Controllers\HMS\HostelAmenityController;
+use App\Http\Controllers\HMS\HostelApplicationController;
 use App\Http\Controllers\HMS\HostelController;
+use App\Http\Controllers\HMS\HostelOccupantImportController;
 use App\Http\Controllers\HMS\HostelRoomController;
 use Illuminate\Support\Facades\Route;
 
@@ -12,6 +13,15 @@ Route::prefix('hms')->middleware('auth')->group(function () {
 
     Route::get('hostels/applications/{hostel_application}', [HostelApplicationController::class, 'showApplication'])
         ->name('hostels.applications.show');
+
+    Route::get('hostels/{hostel}/occupants/import', [HostelOccupantImportController::class, 'show'])
+        ->name('hostels.occupants.import');
+    Route::get('hostels/{hostel}/occupants/import/template', [HostelOccupantImportController::class, 'template'])
+        ->name('hostels.occupants.import.template');
+    Route::post('hostels/{hostel}/occupants/import/preview', [HostelOccupantImportController::class, 'preview'])
+        ->name('hostels.occupants.import.preview');
+    Route::post('hostels/{hostel}/occupants/import/process', [HostelOccupantImportController::class, 'process'])
+        ->name('hostels.occupants.import.process');
 
     Route::resource('hostels', HostelController::class)->only(['index', 'show', 'store', 'update', 'destroy'])->names('hostels');
 

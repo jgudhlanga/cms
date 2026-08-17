@@ -53,7 +53,7 @@ test('roles table seeder syncs permission packs onto leadership roles', function
         RoleEnum::VICE_PRINCIPAL->name() => 'view-academic:dashboards',
         RoleEnum::VICE_PRINCIPAL_ADMIN->name() => 'view-finance:dashboards',
         RoleEnum::PRINCIPAL->name() => 'view-hostel:dashboards',
-        RoleEnum::DEAN->name() => 'viewAny:hostels',
+        RoleEnum::DEAN->name() => 'confirm:hostel-payments',
         RoleEnum::WARDEN->name() => 'viewOnlyOwnHostel:hostels',
         RoleEnum::IT_SUPPORT_TECHNICIAN->name() => 'manage:data-maintenance',
     ];

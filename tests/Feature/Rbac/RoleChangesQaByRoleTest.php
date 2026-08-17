@@ -242,7 +242,7 @@ test('phase5 vp academics can open institution config pages but not settings or 
 test('phase5 sidebar nests institution config items under institution config parent', function () {
     $sidebar = file_get_contents(resource_path('js/composables/core/useSidebarMenu.ts'));
 
-    expect($sidebar)->toContain("trans.institution_config")
+    expect($sidebar)->toContain('trans.institution_config')
         ->and($sidebar)->toContain("route('institution.setup')")
         ->and($sidebar)->toContain("route('intake-periods.index')")
         ->and($sidebar)->toContain("route('document-templates.index')")
@@ -298,6 +298,8 @@ test('phase8 dean has hostel dashboard and full hostel management abilities', fu
         ->and($permissions)->toContain('create:hostels')
         ->and($permissions)->toContain('update:hostels')
         ->and($permissions)->toContain('viewAny:hostel-applications')
+        ->and($permissions)->toContain('import:hostel-applications')
+        ->and($permissions)->toContain('confirm:hostel-payments')
         ->and($permissions)->not->toContain('viewOnlyOwnHostel:hostels');
 
     $policy = new HostelPolicy;
