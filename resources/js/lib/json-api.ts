@@ -18,6 +18,7 @@ import type {
     HostelStudentFiltersState,
     HmsSettings,
 } from '@/types/hms';
+import type { IdCardRequest, IdCardRequestFiltersState } from '@/types/id-cards';
 
 export const JSON_API_ACCEPT = 'application/vnd.api+json';
 
@@ -589,4 +590,26 @@ export function parseJsonApiHostelLeaves(document: JsonApiCollectionDocument): D
 
 export function parseJsonApiHostelNotices(document: JsonApiCollectionDocument): DataListProps<HostelNotice> {
     return parseJsonApiCollection<HostelNotice>(document);
+}
+
+export function toIdCardRequestJsonApiFilters(filters: IdCardRequestFiltersState): Record<string, string> {
+    const out: Record<string, string> = {};
+
+    if (filters.search) {
+        out.search = String(filters.search);
+    }
+    if (filters.status) {
+        out.status = String(filters.status);
+    }
+    if (filters.reason) {
+        out.reason = String(filters.reason);
+    }
+
+    return out;
+}
+
+export function parseJsonApiStudentIdCardRequests(
+    document: JsonApiCollectionDocument,
+): DataListProps<IdCardRequest> {
+    return parseJsonApiCollection<IdCardRequest>(document);
 }

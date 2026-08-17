@@ -5,6 +5,7 @@ namespace App\Services\Integrations;
 use App\DTO\Integrations\OnlinePaymentContext;
 use App\Enums\HMS\HostelApplicationStatusEnum;
 use App\Enums\Shared\FeeTypeEnum;
+use App\Enums\Students\IdCardRequestStatusEnum;
 use App\Helpers\Helper;
 use App\Helpers\PaymentHelper;
 use App\Models\HMS\HostelApplication;
@@ -14,6 +15,7 @@ use App\Models\Shared\FeeType;
 use App\Models\Students\ApplicationFee;
 use App\Models\Students\Student;
 use App\Models\Students\StudentApplication;
+use App\Models\Students\StudentIdCardRequest;
 use App\Models\Users\User;
 use App\Services\Students\ApplicationFeeService;
 use Illuminate\Database\Eloquent\Model;
@@ -117,6 +119,7 @@ class OnlinePaymentContextResolver
             ApplicationFee::class => $this->resolveApplicationFee($user, $request),
             HostelApplication::class => $this->resolveHostelApplication($user, $request),
             StudentApplication::class => $this->resolveStudentApplication($user, $request),
+            StudentIdCardRequest::class => $this->resolveStudentIdCardRequest($user, $request),
             default => $user,
         };
     }
@@ -225,6 +228,43 @@ class OnlinePaymentContextResolver
         }
 
         return $studentApplication;
+    }
+
+    private function resolveStudentIdCardRequest(User $user, Request $request): StudentIdCardRequest
+    {
+        $student = Student::query()
+            ->where('user_id', $user->id)
+            ->first();
+
+        if ($student === null) {
+            throw ValidationException::withMessages([
+                'ledgerableId' => [__('students.id_card_payment_request_required')],
+            ]);
+        }
+
+        $requestId = $request->input('ledgerableId');
+
+        $idCardRequest = $requestId
+            ? StudentIdCardRequest::query()->find($requestId)
+            : StudentIdCardRequest::query()
+                ->where('student_id', $student->id)
+                ->where('status', IdCardRequestStatusEnum::AWAITING_PAYMENT)
+                ->latest()
+                ->first();
+
+        if ($idCardRequest === null || (int) $idCardRequest->student_id !== (int) $student->id) {
+            throw ValidationException::withMessages([
+                'ledgerableId' => [__('students.id_card_payment_request_required')],
+            ]);
+        }
+
+        if ($idCardRequest->status !== IdCardRequestStatusEnum::AWAITING_PAYMENT) {
+            throw ValidationException::withMessages([
+                'ledgerableId' => [__('students.id_card_payment_request_required')],
+            ]);
+        }
+
+        return $idCardRequest;
     }
 
     private function resolveIntakePeriod(FeeTypeEnum $feeTypeEnum, Model $ledgerable): IntakePeriod

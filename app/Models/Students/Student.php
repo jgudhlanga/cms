@@ -34,15 +34,20 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 /**
  * @mixin Builder
  *
  * @method static filter(StudentFilter $filters)
  */
-class Student extends Model
+class Student extends Model implements HasMedia
 {
-    use BelongsToTenant, Filterable, HasFactory, LogsActivity, Paginatable, SoftDeletes;
+    use BelongsToTenant, Filterable, HasFactory, InteractsWithMedia, LogsActivity, Paginatable, SoftDeletes;
+
+    public const ID_PHOTO_COLLECTION = 'id-photo';
 
     protected $fillable = [
         'tenant_id',
@@ -240,6 +245,40 @@ class Student extends Model
     public function financeTransactionQueries(): HasMany
     {
         return $this->hasMany(FinanceTransactionQuery::class, 'student_id');
+    }
+
+    public function idCardRequests(): HasMany
+    {
+        return $this->hasMany(StudentIdCardRequest::class, 'student_id');
+    }
+
+    public function latestIdCardRequest(): HasOne
+    {
+        return $this->hasOne(StudentIdCardRequest::class, 'student_id')->latestOfMany();
+    }
+
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection(self::ID_PHOTO_COLLECTION)
+            ->acceptsMimeTypes(['image/jpeg', 'image/png']);
+    }
+
+    public function registerMediaConversions(?Media $media = null): void
+    {
+        $this->addMediaConversion('thumb')
+            ->width(200)
+            ->height(257)
+            ->nonQueued();
+
+        $this->addMediaConversion('card')
+            ->width(413)
+            ->height(531)
+            ->nonQueued();
+    }
+
+    public function latestIdPhoto(): ?Media
+    {
+        return $this->getMedia(self::ID_PHOTO_COLLECTION)->last();
     }
 
     public function getActivitylogOptions(): LogOptions

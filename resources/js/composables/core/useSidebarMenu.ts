@@ -96,6 +96,13 @@ export function useSidebarMenu() {
         },
         {
             groupKey: 'students',
+            transChoiceKey: 'trans.student_id',
+            icon: icons[IconName.card],
+            url: route('admin.students.id-card-requests.index'),
+            show: canShowMenuItem('viewAny:student-id-card-requests', 'student-ids', moduleState),
+        },
+        {
+            groupKey: 'students',
             transChoiceKey: 'trans.examination',
             icon: icons[IconName.book_check],
             url: route('examinations.index'),
@@ -430,6 +437,15 @@ export function useSidebarMenu() {
             icon: icons[IconName.file_search],
             url: route('portal.exam-results'),
             show: hasStudentProfile() && hasAbility('viewOwnExamResults:students'),
+        },
+        {
+            groupKey: 'portal',
+            transKey: 'trans.student_id_card',
+            icon: icons[IconName.card],
+            url: route('portal.id-card.index'),
+            show: hasStudentProfile()
+                && isModuleEnabled('student-ids', moduleState)
+                && hasAbility('manageOwnStudentPersonalDetails:students'),
         },
         ...portalSidebarProfileTabs()
             .filter((tab) => tab.value === 'authentication')

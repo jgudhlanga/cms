@@ -7,6 +7,7 @@ namespace App\Services\AccountPurge;
 use App\Models\Ledgers\Ledger;
 use App\Models\Students\Student;
 use App\Models\Students\StudentApplication;
+use App\Models\Students\StudentIdCardRequest;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
@@ -25,6 +26,8 @@ class StudentRelationPurgeService
         $this->purgeApplications($applicationIds);
 
         DB::table('hostel_notice_student')->where('student_id', $student->id)->delete();
+
+        $this->purgeIdCardRequests($student);
 
         $student->hostelApplications()->withTrashed()->forceDelete();
         $student->hostelRoomAllocations()->withTrashed()->forceDelete();
@@ -50,6 +53,31 @@ class StudentRelationPurgeService
             $notesQuery->whereKeyNot($preserveNoteId);
         }
         $notesQuery->forceDelete();
+    }
+
+    private function purgeIdCardRequests(Student $student): void
+    {
+        $student->idCardRequests()
+            ->withTrashed()
+            ->get()
+            ->each(function (StudentIdCardRequest $request): void {
+                $request->ledgerTransactions()
+                    ->withTrashed()
+                    ->get()
+                    ->each(function (Ledger $ledger): void {
+                        if ($ledger->proof_of_payment_id) {
+                            Media::query()->whereKey($ledger->proof_of_payment_id)->delete();
+                        }
+
+                        $ledger->clearMediaCollection('receipts');
+                        $ledger->forceDelete();
+                    });
+
+                $request->clearMediaCollection(StudentIdCardRequest::MEDIA_COLLECTION);
+                $request->forceDelete();
+            });
+
+        $student->clearMediaCollection(Student::ID_PHOTO_COLLECTION);
     }
 
     /**

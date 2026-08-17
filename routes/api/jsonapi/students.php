@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\V1\Students\StudentApplicationController;
+use LaravelJsonApi\Laravel\Http\Controllers\JsonApiController;
 use LaravelJsonApi\Laravel\Routing\ActionRegistrar;
 use LaravelJsonApi\Laravel\Routing\ResourceRegistrar;
 
@@ -14,3 +15,10 @@ $server->resource('student-applications', StudentApplicationController::class)
     ->actions('-actions', function (ActionRegistrar $actions) {
         $actions->get('dashboard-stats', 'dashboardStats');
     });
+
+$server->resource('student-id-card-requests', JsonApiController::class)
+    ->readOnly()
+    ->names([
+        'index' => 'students.student-id-card-requests.index',
+        'show' => 'students.student-id-card-requests.show',
+    ]);

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { portalSidebarProfileTabs } from '@/composables/students/useStudentProfileTabs';
 import { useUtils } from '@/composables/core/useUtils';
-import { hasAbility } from '@/lib/permissions';
+import { hasAbility, isModuleEnabled } from '@/lib/permissions';
 import { icons } from '@/lib/icons';
 import { IconName } from '@/enums/icons';
 import { computed } from 'vue';
@@ -17,6 +17,7 @@ const accentByKey: Record<string, string> = {
     documents: 'bg-blue-500/15 text-blue-600 dark:text-blue-400',
     o_levels: 'bg-red-500/15 text-red-600 dark:text-red-400',
     exam_results: 'bg-indigo-500/15 text-indigo-600 dark:text-indigo-400',
+    id_card: 'bg-cyan-500/15 text-cyan-600 dark:text-cyan-400',
     authentication: 'bg-sky-500/15 text-sky-600 dark:text-sky-400',
 };
 
@@ -54,6 +55,17 @@ const quickActions = computed(() => {
         }]
         : [];
 
+    const idCardAction = isModuleEnabled('student-ids')
+        && hasAbility('manageOwnStudentPersonalDetails:students')
+        ? [{
+            key: 'id_card',
+            label: 'Student ID card',
+            icon: icons[IconName.card],
+            accent: accentByKey.id_card,
+            url: route('portal.id-card.index'),
+        }]
+        : [];
+
     const authTab = tabs.find((tab) => tab.value === 'authentication');
     const authAction = authTab
         ? [{
@@ -65,7 +77,7 @@ const quickActions = computed(() => {
         }]
         : [];
 
-    return [...profileActions, ...oLevelAction, ...examResultsAction, ...authAction];
+    return [...profileActions, ...oLevelAction, ...examResultsAction, ...idCardAction, ...authAction];
 });
 
 const openAction = (url: string): void => {

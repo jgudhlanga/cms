@@ -5,12 +5,14 @@ namespace App\Observers\Ledgers;
 use App\Models\Ledgers\Ledger;
 use App\Services\HMS\HostelApplicationPaymentService;
 use App\Services\Students\ApplicationFeePaymentService;
+use App\Services\Students\StudentIdCardRequestService;
 
 class LedgerObserver
 {
     public function __construct(
         protected HostelApplicationPaymentService $hostelApplicationPaymentService,
         protected ApplicationFeePaymentService $applicationFeePaymentService,
+        protected StudentIdCardRequestService $idCardRequestService,
     ) {}
 
     public function created(Ledger $ledger): void
@@ -41,6 +43,7 @@ class LedgerObserver
 
         if ($ledger->payment_status === 'paid') {
             $this->hostelApplicationPaymentService->syncStatusFromReceipt($ledger);
+            $this->idCardRequestService->markPaidFromLedger($ledger);
         }
     }
 }

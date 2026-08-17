@@ -38,13 +38,46 @@ function queryParamsMatch(hrefParams: URLSearchParams, currentParams: URLSearchP
     return true;
 }
 
+function pathMatchesHref(currentPathname: string, hrefPathname: string): boolean {
+    return currentPathname === hrefPathname
+        || (hrefPathname !== '/' && currentPathname.startsWith(`${hrefPathname}/`));
+}
+
+function hasMoreSpecificSiblingMatch(
+    hrefPathname: string,
+    currentPathname: string,
+    siblingUrls: Array<string | undefined>,
+): boolean {
+    return siblingUrls.some((sibling) => {
+        if (!sibling || sibling === '#') {
+            return false;
+        }
+
+        const siblingHref = parseUrl(sibling);
+        if (!siblingHref) {
+            return false;
+        }
+
+        if (
+            siblingHref.pathname.length <= hrefPathname.length
+            || !siblingHref.pathname.startsWith(`${hrefPathname}/`)
+        ) {
+            return false;
+        }
+
+        return pathMatchesHref(currentPathname, siblingHref.pathname);
+    });
+}
+
 /**
  * Whether a sidebar link href matches the current Inertia page URL.
  * Path match (exact or nested). When the href includes query params (e.g. tab, is_academic),
  * the pathname must be exact and those values must match so sibling links stay distinct.
+ * Pass siblingUrls so a shorter prefix (e.g. /students) does not stay active when a longer
+ * sibling (e.g. /students/id-card-requests) also matches.
  */
 export function useSidebarNavActive(): {
-    isActive: (url: string | undefined) => boolean;
+    isActive: (url: string | undefined, siblingUrls?: Array<string | undefined>) => boolean;
     isExactActive: (url: string | undefined) => boolean;
     isAnyActive: (urls: Array<string | undefined> | undefined) => boolean;
 } {
@@ -72,7 +105,7 @@ export function useSidebarNavActive(): {
         return true;
     }
 
-    function isActive(url: string | undefined): boolean {
+    function isActive(url: string | undefined, siblingUrls: Array<string | undefined> = []): boolean {
         if (!url || url === '#') {
             return false;
         }
@@ -83,11 +116,11 @@ export function useSidebarNavActive(): {
         }
 
         const current = currentPageUrl(page.url);
-        const pathMatches =
-            current.pathname === href.pathname
-            || (href.pathname !== '/' && current.pathname.startsWith(`${href.pathname}/`));
+        if (!pathMatchesHref(current.pathname, href.pathname)) {
+            return false;
+        }
 
-        if (!pathMatches) {
+        if (hasMoreSpecificSiblingMatch(href.pathname, current.pathname, siblingUrls)) {
             return false;
         }
 

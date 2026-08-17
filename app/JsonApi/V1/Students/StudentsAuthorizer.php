@@ -4,6 +4,7 @@ namespace App\JsonApi\V1\Students;
 
 use App\Models\Students\Student;
 use App\Models\Students\StudentApplication;
+use App\Models\Students\StudentIdCardRequest;
 use App\Models\Users\User;
 use Illuminate\Http\Request;
 use LaravelJsonApi\Contracts\Auth\Authorizer;
@@ -14,7 +15,15 @@ class StudentsAuthorizer implements Authorizer
     {
         $user = $request->user();
 
-        if ($user === null || $modelClass !== StudentApplication::class) {
+        if ($user === null) {
+            return false;
+        }
+
+        if ($modelClass === StudentIdCardRequest::class) {
+            return $user->can('viewAny', StudentIdCardRequest::class);
+        }
+
+        if ($modelClass !== StudentApplication::class) {
             return false;
         }
 
@@ -52,7 +61,15 @@ class StudentsAuthorizer implements Authorizer
     {
         $user = $request->user();
 
-        if ($user === null || ! $model instanceof StudentApplication) {
+        if ($user === null) {
+            return false;
+        }
+
+        if ($model instanceof StudentIdCardRequest) {
+            return $user->can('view', $model);
+        }
+
+        if (! $model instanceof StudentApplication) {
             return false;
         }
 
