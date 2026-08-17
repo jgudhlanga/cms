@@ -17,8 +17,8 @@ use App\Models\HMS\HostelApplication;
 use App\Models\HMS\HostelRoom;
 use App\Models\HMS\HostelRoomAllocation;
 use App\Models\Ledgers\Ledger;
-use App\Models\Shared\FeeType;
 use App\Models\Shared\Address;
+use App\Models\Shared\FeeType;
 use App\Models\Students\Student;
 use App\Models\Tenants\Tenant;
 use App\Models\Users\User;
@@ -796,7 +796,7 @@ test('json api hostel applications update can approve awaiting payment applicati
 
     $tenant = Tenant::query()->firstOrFail();
     $user = User::factory()->create(['tenant_id' => $tenant->id]);
-    $user->givePermissionTo('update:hostel-applications');
+    $user->givePermissionTo(['update:hostel-applications', 'confirm:hostel-payments']);
     Sanctum::actingAs($user);
 
     HmsSetting::resolveForTenant($tenant->id)->update([
@@ -1074,10 +1074,45 @@ test('json api hostel applications update can persist payment verification', fun
     expect($application->fresh()->status)->toBe(HostelApplicationStatusEnum::AWAITING_PAYMENT);
 });
 
-test('json api hostel applications cannot approve from pending status when requirements enabled', function () {
+test('json api hostel applications cannot confirm accommodation fees without permission', function () {
     $tenant = Tenant::query()->firstOrFail();
     $user = User::factory()->create(['tenant_id' => $tenant->id]);
     $user->givePermissionTo('update:hostel-applications');
+    Sanctum::actingAs($user);
+
+    $student = createStudentForAllocationIndexTest();
+    $application = HostelApplication::withoutEvents(fn () => HostelApplication::query()->create([
+        'tenant_id' => TenantEnum::HARARE_POLY->id(),
+        'student_id' => $student->id,
+        'gender_id' => $student->gender_id,
+        'type' => HostelApplicationTypeEnum::STUDENT,
+        'status' => HostelApplicationStatusEnum::AWAITING_PAYMENT,
+        'next_of_kin_name' => 'Kin Name',
+        'next_of_kin_contact' => '0771234567',
+        'check_in' => now()->toDateString(),
+        'check_out' => now()->addMonths(4)->toDateString(),
+    ]));
+
+    $this
+        ->jsonApi('hostel-applications')
+        ->withData([
+            'type' => 'hostel-applications',
+            'id' => (string) $application->id,
+            'attributes' => [
+                'paymentVerification' => [
+                    'accommodationFeesPaidConfirmed' => true,
+                ],
+            ],
+        ])
+        ->patch(route('v1.json.hms.hostel-applications.update', $application))
+        ->assertStatus(422)
+        ->assertJsonPath('errors.0.detail', __('hms.cannot_confirm_hostel_payments'));
+});
+
+test('json api hostel applications cannot approve from pending status when requirements enabled', function () {
+    $tenant = Tenant::query()->firstOrFail();
+    $user = User::factory()->create(['tenant_id' => $tenant->id]);
+    $user->givePermissionTo(['update:hostel-applications', 'confirm:hostel-payments']);
     Sanctum::actingAs($user);
 
     HmsSetting::resolveForTenant($tenant->id)->update([

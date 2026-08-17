@@ -24,7 +24,7 @@ const selectedHostel = computed({
 
 <template>
     <div class="flex items-center">
-        <div class="flex w-[200px] items-center space-x-2">
+        <div class="flex w-50 items-center space-x-2">
             <component :is="icons[IconName.hostel]" class="h-4 w-4 shrink-0 text-muted-foreground" />
             <span class="text-sm font-medium uppercase text-foreground">{{ $t('hms.ui_switch_hostel') }}</span>
         </div>

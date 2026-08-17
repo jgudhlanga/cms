@@ -418,6 +418,8 @@ class PermissionHelper
             'create:hostel-notices',
             'update:hostel-notices',
             'manage:hostel-check-in',
+            'import:hostel-applications',
+            'confirm:hostel-payments',
         ];
     }
 

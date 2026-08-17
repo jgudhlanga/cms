@@ -191,6 +191,7 @@ const hostelAsJsonApi = computed((): Hostel => ({
 
 const canEditHostel = computed(() => hasAbility('update:hostels'));
 const canAddRoom = computed(() => hasAbility('create:hostel-rooms'));
+const canImportOccupants = computed(() => hasAbility('import:hostel-applications'));
 
 const openEditHostel = () => {
     openModal({ name: APP_MODULE_KEYS.hostels, edit: hostelAsJsonApi.value });
@@ -219,6 +220,7 @@ const openAddRoom = () => {
                 :occupied-beds="occupiedBeds"
                 :available-beds="availableBeds"
                 :can-edit="canEditHostel"
+                :can-import="canImportOccupants"
                 @edit="openEditHostel"
             />
 

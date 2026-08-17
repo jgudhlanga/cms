@@ -163,6 +163,8 @@ const canOverrideRoom = computed(
     () => hasAbility('update:hostel-applications') || hasAbility('update:hostel-room-allocations'),
 );
 
+const canConfirmAccommodation = computed(() => hasAbility('confirm:hostel-payments'));
+
 const showRoomSelection = computed(
     () =>
         (options.value?.canApprove ?? false)
@@ -398,14 +400,23 @@ const approveAndAllocate = async (): Promise<void> => {
             <div
                 v-for="field in activeVerificationFields"
                 :key="field.key"
-                class="flex items-center space-x-5"
+                class="flex flex-col gap-1"
             >
-                <Label class="font-bold">{{ $t(field.labelKey) }}</Label>
-                <BaseRadioGroup
-                    :options="radioOptionsForPrefix(field.prefix) as any"
-                    v-model="form[field.key]"
-                    :vertical-layout="false"
-                />
+                <div class="flex items-center space-x-5">
+                    <Label class="font-bold">{{ $t(field.labelKey) }}</Label>
+                    <BaseRadioGroup
+                        :options="radioOptionsForPrefix(field.prefix) as any"
+                        v-model="form[field.key]"
+                        :vertical-layout="false"
+                        :disabled="field.key === 'accommodationFeesPaidConfirmed' && !canConfirmAccommodation"
+                    />
+                </div>
+                <p
+                    v-if="field.key === 'accommodationFeesPaidConfirmed' && !canConfirmAccommodation"
+                    class="text-xs text-muted-foreground"
+                >
+                    {{ $t('hms.cannot_confirm_hostel_payments') }}
+                </p>
             </div>
         </div>
 
