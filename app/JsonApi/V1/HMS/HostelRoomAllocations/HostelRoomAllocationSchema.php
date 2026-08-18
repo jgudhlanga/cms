@@ -77,6 +77,9 @@ class HostelRoomAllocationSchema extends Schema
             Str::make('studentName')->extractUsing(
                 fn (HostelRoomAllocation $allocation) => $allocation->student?->user?->full_name
             )->readOnly(),
+            Str::make('disabilityStatus')->extractUsing(
+                fn (HostelRoomAllocation $allocation) => $allocation->student?->disability_status
+            )->readOnly(),
             Str::make('gender')->extractUsing(
                 fn (HostelRoomAllocation $allocation) => $allocation->student?->gender?->title
             )->readOnly(),

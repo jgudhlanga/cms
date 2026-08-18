@@ -7,6 +7,7 @@ interface Props {
     studentNumber?: string | null;
     serialNumber?: string | null;
     nationalId?: string | null;
+    identityLabel?: string | null;
     returnName?: string | null;
     returnAddress?: string | null;
     returnPhone?: string | null;
@@ -19,6 +20,7 @@ const props = withDefaults(defineProps<Props>(), {
     studentNumber: null,
     serialNumber: null,
     nationalId: null,
+    identityLabel: null,
     returnName: null,
     returnAddress: null,
     returnPhone: null,
@@ -36,14 +38,13 @@ const present = (value: string | null | undefined): string | null => {
 };
 
 const qrPayload = computed((): string | null => {
-    const studentNumber = present(props.studentNumber);
     const serialNumber = present(props.serialNumber);
 
-    if (studentNumber !== null && serialNumber !== null) {
-        return `${studentNumber}|${serialNumber}`;
+    if (serialNumber === null) {
+        return null;
     }
 
-    return studentNumber ?? serialNumber;
+    return route('id-cards.verify', { serial: serialNumber });
 });
 
 watch(
@@ -106,7 +107,7 @@ watch(
             </div>
             <div>
                 <p class="m-0 text-[7px] font-semibold tracking-[0.09em] text-[#647089] uppercase">
-                    {{ $t('trans.student_id_card_national_id') }}
+                    {{ identityLabel || $t('trans.student_id_card_national_id') }}
                 </p>
                 <p class="m-0 font-mono text-[9px] font-semibold tracking-wide">
                     {{ present(nationalId) ?? '—' }}

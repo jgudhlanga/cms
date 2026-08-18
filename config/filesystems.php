@@ -60,6 +60,13 @@ return [
             'url' => env('APP_URL').'/students',
             'visibility' => 'public',
         ],
+        'id-card-photos' => [
+            'driver' => 'local',
+            'root' => storage_path('app/id-card-photos'),
+            'visibility' => 'private',
+            'throw' => false,
+            'report' => false,
+        ],
 
         's3' => [
             'driver' => 's3',

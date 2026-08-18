@@ -87,7 +87,7 @@ class IntakePeriodResolver
         return array_values(array_unique($ids));
     }
 
-    public function isApplicationEligibleForOfferLetter(StudentApplication $application): bool
+    public function isCurrentOfferIntake(StudentApplication $application): bool
     {
         if (in_array(
             $application->intake_period_id,
@@ -104,5 +104,10 @@ class IntakePeriodResolver
         }
 
         return app(ApplicationEligibilityService::class)->isOjetMode($application->modeOfStudy);
+    }
+
+    public function isApplicationEligibleForOfferLetter(StudentApplication $application): bool
+    {
+        return $this->isCurrentOfferIntake($application);
     }
 }

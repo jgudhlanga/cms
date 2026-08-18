@@ -43,6 +43,7 @@ export type HostelRoomStudentView = {
     sectionName: string;
     initials: string;
     color: string;
+    isDisabled: boolean;
 };
 
 export type HostelRoomViewModel = {
@@ -144,6 +145,7 @@ function buildRoomViewModels(rooms: HostelRoom[], allocations: HostelAllocation[
             sectionName: allocation.attributes.sectionName?.trim() || '',
             initials: studentInitials(allocation.attributes.studentName),
             color: avatarColorForName(allocation.attributes.studentName),
+            isDisabled: allocation.attributes.disabilityStatus === 'yes',
         };
 
         const existing = studentsByRoomId.get(roomKey) ?? [];
@@ -220,6 +222,13 @@ export function useHostelShow(hostelId: Ref<string | number>, hostelSnapshot: Re
     });
 
     const occupiedBeds = computed(() => rooms.value.reduce((total, room) => total + room.current, 0));
+
+    const disabledOccupants = computed(() =>
+        rooms.value.reduce(
+            (total, room) => total + room.students.filter((student) => student.isDisabled).length,
+            0,
+        ),
+    );
 
     const totalBedCapacity = computed(() => {
         const fromRooms = rooms.value.reduce((total, room) => total + room.max, 0);
@@ -349,6 +358,7 @@ export function useHostelShow(hostelId: Ref<string | number>, hostelSnapshot: Re
         searchQuery,
         occupiedBeds,
         availableBeds,
+        disabledOccupants,
         occupancyRate,
         stats,
         floorTabs,

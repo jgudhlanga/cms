@@ -44,7 +44,10 @@ const tabComponents: Record<StudentProfileTabValue, (student: Student, options?:
     }),
     financials: (student) => h(Financials, { student }),
     accommodations: (student) => h(Hostels, { student }),
-    documents: () => h(Documents),
+    documents: (student, options) => h(Documents, {
+        student,
+        offerLetterIntakePeriodIds: options?.offerLetterIntakePeriodIds,
+    }),
     exam_results: (student) => h(ExamResults, { student }),
     clearance: (student) => h(Clearance, { student }),
     authentication: (student) => h(Authentication, { user: student?.relationships?.user }),

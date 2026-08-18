@@ -100,6 +100,7 @@ import {
     Plug,
     Grid2x2,
     Printer,
+    Accessibility,
 } from 'lucide-vue-next';
 import { MonitorCog as Scheme } from '@lucide/vue';
 import type { Component } from 'vue';
@@ -214,6 +215,7 @@ const icons: Record<IconName, Component> = {
     [IconName.plug]: Plug,
     [IconName.windows]: Grid2x2,
     [IconName.printer]: Printer,
+    [IconName.accessibility]: Accessibility,
 };
 
 export { IconName, icons };

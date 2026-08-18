@@ -96,6 +96,9 @@ const totalRooms = computed(() =>
 const totalOccupied = computed(() =>
     hostelsList.value.data.reduce((sum, h) => sum + (h.attributes.occupiedCount ?? 0), 0),
 );
+const totalDisabledOccupants = computed(() =>
+    hostelsList.value.data.reduce((sum, h) => sum + (h.attributes.disabledOccupantCount ?? 0), 0),
+);
 </script>
 
 <template>
@@ -128,6 +131,13 @@ const totalOccupied = computed(() =>
                 :icon="icons[IconName.users]"
                 icon-class="text-rose-500"
                 value-class="text-rose-600"
+            />
+            <HostelStatsBadge
+                :label="$t('hms.stat_disabled_students')"
+                :value="String(totalDisabledOccupants)"
+                :icon="icons[IconName.accessibility]"
+                icon-class="text-sky-500"
+                value-class="text-sky-700"
             />
         </div>
 

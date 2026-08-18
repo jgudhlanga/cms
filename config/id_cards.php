@@ -14,4 +14,11 @@ return [
     'printer' => [
         'driver' => env('ID_CARD_PRINTER_DRIVER', 'pdf'),
     ],
+    'photo' => [
+        'disk' => 'id-card-photos',
+        'max_kilobytes' => 2048,
+        'min_width' => 200,
+        'min_height' => 240,
+        'mimes' => ['jpeg', 'jpg', 'png'],
+    ],
 ];

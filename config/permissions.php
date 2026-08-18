@@ -303,6 +303,7 @@ return [
             'restore:students',
             'forceDelete:students',
             'import:students',
+            'uploadIdPhoto:students',
             'export:students',
             'crud-settings:students',
             'viewAuditTrail:students',

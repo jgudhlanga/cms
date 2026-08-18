@@ -8,14 +8,17 @@ use App\Enums\Shared\FeeTypeEnum;
 use App\Models\HMS\HmsSetting;
 use App\Models\HMS\HostelApplication;
 use App\Models\Shared\Address;
+use App\Models\Students\StudentApplication;
 use App\Models\Students\Student;
 use App\Models\Students\StudentEnrolment;
 use App\Services\Finance\StudentLedgerService;
+use App\Services\Students\StudentOfferLetterService;
 
 class HostelApplicationEligibilityService
 {
     public function __construct(
         protected StudentLedgerService $studentLedgerService,
+        protected StudentOfferLetterService $offerLetterService,
     ) {}
     /**
      * @return list<array{key: string, passed: bool, message: string, severity: string, modeOfStudy?: string|null}>
@@ -30,6 +33,17 @@ class HostelApplicationEligibilityService
         $enrolment ??= $student->latestEnrolment;
 
         $rules = [];
+
+        $hasCurrentOfferLetter = $this->hasCurrentOfferLetter($student);
+
+        $rules[] = [
+            'key' => 'current_offer_letter',
+            'passed' => $hasCurrentOfferLetter,
+            'severity' => $hasCurrentOfferLetter ? 'success' : 'warning',
+            'message' => $hasCurrentOfferLetter
+                ? __('hms.eligibility_current_offer_letter_passed')
+                : __('hms.eligibility_current_offer_letter_failed'),
+        ];
 
         if ($settings->require_full_time_study) {
             $modeOfStudy = trim((string) $enrolment?->modeOfStudy?->name);
@@ -166,5 +180,15 @@ class HostelApplicationEligibilityService
         }
 
         return true;
+    }
+
+    private function hasCurrentOfferLetter(Student $student): bool
+    {
+        return StudentApplication::query()
+            ->where('student_id', $student->id)
+            ->with(['classList', 'departmentWorkflowStep.workflowStep', 'modeOfStudy'])
+            ->get()
+            ->contains(fn (StudentApplication $application): bool => $this->offerLetterService->isDownloadable($application)
+                && $this->offerLetterService->isCurrentIntake($application));
     }
 }

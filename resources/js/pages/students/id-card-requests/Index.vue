@@ -17,7 +17,7 @@ import type { IdCardFilterOption, IdCardRequest, IdCardRequestFiltersState, Stud
 import type { BreadcrumbItemInterface } from '@/types/ui';
 import type { SelectOption } from '@/types/utils';
 import { useDebounceFn } from '@vueuse/core';
-import { Head } from '@inertiajs/vue3';
+import { Head, router } from '@inertiajs/vue3';
 import { onMounted, ref, watch } from 'vue';
 
 interface Props {
@@ -153,6 +153,15 @@ onMounted(() => loadRequests());
             </template>
             <template #head-right>
                 <div class="ml-8 flex items-center gap-3">
+                    <GenericButton
+                        v-if="hasAbility('print:student-id-card-requests')"
+                        :icon="IconName.import"
+                        class="h-8 w-36 justify-center rounded-full"
+                        :icon-variant="ColorVariant.white"
+                        :variant="ColorVariant.primary"
+                        :title="$t('trans.student_id_card_import_list')"
+                        @click="router.visit(route('admin.students.id-card-requests.import'))"
+                    />
                     <GenericButton
                         v-if="hasAbility('print:student-id-card-requests')"
                         :icon="IconName.printer"

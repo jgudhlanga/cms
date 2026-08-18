@@ -6,6 +6,7 @@ use App\Http\Controllers\Students\IdCardRequestController;
 use App\Http\Controllers\Students\PortalController;
 use App\Http\Controllers\Students\PortalExamResultController;
 use App\Http\Controllers\Students\ReturningStudentController;
+use App\Http\Controllers\Students\StudentGalleryController;
 use App\Http\Controllers\Students\StudentOLevelResultsController;
 use Illuminate\Support\Facades\Route;
 
@@ -104,6 +105,14 @@ Route::prefix('portal')->group(function () {
             ->name('portal.id-card.photo');
         Route::post('id-card', [IdCardRequestController::class, 'store'])
             ->name('portal.id-card.store');
+        Route::get('gallery', [StudentGalleryController::class, 'index'])
+            ->name('portal.gallery.index');
+        Route::post('gallery/id-photo', [StudentGalleryController::class, 'storeIdPhoto'])
+            ->name('portal.gallery.id-photo');
+        Route::post('gallery', [StudentGalleryController::class, 'store'])
+            ->name('portal.gallery.store');
+        Route::delete('gallery/{media}', [StudentGalleryController::class, 'destroy'])
+            ->name('portal.gallery.destroy');
         Route::get('list-o-levels', [StudentOLevelResultsController::class, 'index'])->name('portal.list-o-levels');
         Route::get('manage-o-level-results', [StudentOLevelResultsController::class, 'manage'])->name('portal.manage-o-level-results');
         Route::post('store-o-level-results/{student}', [StudentOLevelResultsController::class, 'store'])->name('portal.store-o-level-results');

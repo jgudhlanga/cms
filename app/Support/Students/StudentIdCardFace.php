@@ -35,6 +35,7 @@ final readonly class StudentIdCardFace
         public string $residence,
         public string $expiryDate,
         public string $nationalId,
+        public string $identityLabel,
         public string $returnName,
         public string $returnAddress,
         public string $returnPhone,
@@ -65,7 +66,8 @@ final readonly class StudentIdCardFace
             sdp: self::isSdp($levelName) ? 'Yes' : 'No',
             residence: $student?->activeHostelAllocation !== null ? 'RES' : 'NON Res',
             expiryDate: $now->copy()->endOfYear()->format('d M Y'),
-            nationalId: self::nationalId($student),
+            nationalId: self::identityNumber($student),
+            identityLabel: self::identityLabelFor($student),
             returnName: (string) ($settings->return_name ?: $defaults['return_name']),
             returnAddress: (string) ($settings->return_address ?: $defaults['return_address']),
             returnPhone: (string) ($settings->return_phone ?: $defaults['return_phone']),
@@ -92,6 +94,7 @@ final readonly class StudentIdCardFace
             'residence' => $this->residence,
             'expiryDate' => $this->expiryDate,
             'nationalId' => $this->nationalId,
+            'identityLabel' => $this->identityLabel,
             'returnName' => $this->returnName,
             'returnAddress' => $this->returnAddress,
             'returnPhone' => $this->returnPhone,
@@ -118,14 +121,26 @@ final readonly class StudentIdCardFace
         return strcasecmp($levelName, LevelEnum::SDP->value) === 0;
     }
 
-    private static function nationalId(?Student $student): string
+    private static function identityNumber(?Student $student): string
     {
-        $idNumber = trim((string) ($student?->id_number ?? ''));
-        if ($idNumber !== '') {
-            return $idNumber;
+        if ($student === null) {
+            return '';
         }
 
-        return trim((string) ($student?->passport_number ?? ''));
+        if ($student->isZimbabwean()) {
+            return trim((string) $student->id_number);
+        }
+
+        return trim((string) $student->passport_number);
+    }
+
+    private static function identityLabelFor(?Student $student): string
+    {
+        if ($student !== null && ! $student->isZimbabwean()) {
+            return __('trans.student_id_card_passport_number');
+        }
+
+        return __('trans.student_id_card_national_id');
     }
 
     private static function modeLabel(?string $name): string

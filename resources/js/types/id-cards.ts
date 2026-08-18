@@ -51,6 +51,7 @@ export type StudentIdCardFace = {
     residence: string;
     expiryDate: string;
     nationalId: string;
+    identityLabel?: string;
     returnName: string;
     returnAddress: string;
     returnPhone: string;

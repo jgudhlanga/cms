@@ -5,6 +5,8 @@ use App\Enums\Institution\IntakePeriodStatusEnum;
 use App\Enums\Institution\ModeOfStudyEnum;
 use App\Enums\Shared\DocumentTypeEnum;
 use App\Enums\Shared\FeeTypeEnum;
+use App\Helpers\DocumentHelper;
+use App\Models\Institution\FeeStructure;
 use App\Models\Rbac\Role;
 use App\Models\Institution\DocumentTemplate;
 use App\Models\Institution\IntakePeriod;
@@ -13,6 +15,7 @@ use App\Models\Shared\DocumentType;
 use App\Models\Shared\FeeType;
 use App\Models\Students\StudentApplication;
 use App\Models\Users\User;
+use Carbon\Carbon;
 
 function seedOfferLetterDocumentPrerequisites(StudentApplication $studentApplication): void
 {
@@ -112,7 +115,7 @@ it('allows offer letter download for applications on the latest suspended intake
     expect($response->headers->get('content-type'))->toContain('application/pdf');
 });
 
-it('blocks offer letter download for applications in a past closed intake that is not latest', function (): void {
+it('allows offer letter download for applications in a past closed intake that is not latest', function (): void {
     $studentApplication = createVerifiedStudentApplication('OFFER-PAST-'.strtoupper(str()->random(4)));
 
     $studentApplication->intakePeriod->update([
@@ -134,9 +137,12 @@ it('blocks offer letter download for applications in a past closed intake that i
 
     seedOfferLetterDocumentPrerequisites($studentApplication);
 
-    $this->get(route('documents.offer-letter', [
+    $response = $this->get(route('documents.offer-letter', [
         'student_application' => $studentApplication->id,
-    ]))->assertNotFound();
+    ]));
+
+    $response->assertSuccessful();
+    expect($response->headers->get('content-type'))->toContain('application/pdf');
 });
 
 it('allows offer letter download for OJET applications on a past closed intake that is not latest', function (): void {
@@ -201,4 +207,66 @@ it('allows offer letter download while impersonating a student', function (): vo
     $response->assertSuccessful();
     expect($response->headers->get('content-type'))->toContain('application/pdf');
     expect($response->headers->get('content-disposition'))->toContain('attachment');
+});
+
+it('assembles offer letters using the accepted date, application tuition, and intake-specific template', function (): void {
+    Carbon::setTestNow('2024-01-15 10:00:00');
+    $studentApplication = createVerifiedStudentApplication('OFFER-META-'.strtoupper(str()->random(4)));
+    Carbon::setTestNow();
+
+    $tuitionFeeType = FeeType::query()->firstOrCreate(
+        ['name' => FeeTypeEnum::TUITION_FEE->name()],
+        ['description' => FeeTypeEnum::TUITION_FEE->description()],
+    );
+
+    $documentType = DocumentType::query()->firstOrCreate(
+        ['name' => DocumentTypeEnum::OFFER_LETTER->name()],
+        ['description' => DocumentTypeEnum::OFFER_LETTER->description()],
+    );
+
+    FeeStructure::query()->create([
+        'tenant_id' => $studentApplication->tenant_id,
+        'fee_type_id' => $tuitionFeeType->id,
+        'level_id' => $studentApplication->departmentLevel->level->id,
+        'mode_of_study_id' => $studentApplication->mode_of_study_id,
+        'amount' => 456.78,
+        'local_fca_amount' => 456.78,
+    ]);
+
+    DocumentTemplate::query()->create([
+        'tenant_id' => $studentApplication->tenant_id,
+        'document_type_id' => $documentType->id,
+        'name' => 'Generic Offer Letter',
+        'body' => '<p>Generic</p>',
+        'header_line_1' => 'Republic of Zimbabwe',
+        'header_line_2' => 'Harare Polytechnic',
+    ]);
+
+    $intakeTemplate = DocumentTemplate::query()->create([
+        'tenant_id' => $studentApplication->tenant_id,
+        'document_type_id' => $documentType->id,
+        'intake_period_id' => $studentApplication->intake_period_id,
+        'name' => 'Intake Offer Letter',
+        'body' => '<p>Intake specific</p>',
+        'header_line_1' => 'Republic of Zimbabwe',
+        'header_line_2' => 'Harare Polytechnic',
+    ]);
+
+    [
+        $documentTemplate,
+        ,
+        ,
+        ,
+        ,
+        ,
+        ,
+        ,
+        ,
+        $tuition,
+        $offerLetterDate,
+    ] = DocumentHelper::assembleOfferLetter($studentApplication->fresh());
+
+    expect($documentTemplate->is($intakeTemplate))->toBeTrue()
+        ->and($tuition)->toBe('456.78')
+        ->and($offerLetterDate)->toBe('15 Jan 2024');
 });

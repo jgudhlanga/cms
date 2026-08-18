@@ -49,6 +49,8 @@ class Student extends Model implements HasMedia
 
     public const ID_PHOTO_COLLECTION = 'id-photo';
 
+    public const GALLERY_COLLECTION = 'gallery';
+
     protected $fillable = [
         'tenant_id',
         'user_id',
@@ -260,6 +262,9 @@ class Student extends Model implements HasMedia
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection(self::ID_PHOTO_COLLECTION)
+            ->acceptsMimeTypes(['image/jpeg', 'image/png']);
+
+        $this->addMediaCollection(self::GALLERY_COLLECTION)
             ->acceptsMimeTypes(['image/jpeg', 'image/png']);
     }
 

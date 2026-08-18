@@ -25,6 +25,7 @@ test('id card admin permissions are registered', function () {
         'viewAuditTrail:student-id-card-requests',
         'view:student-id-card-settings',
         'update:student-id-card-settings',
+        'uploadIdPhoto:students',
     );
 });
 

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { HostelRoomViewModel } from '@/composables/hms/useHostelShow';
+import StudentDisabilityIcon from '@/components/students/StudentDisabilityIcon.vue';
 import { formatFloorLabel } from '@/lib/hms/hostelRoomDisplay';
 import { buildHostelRoomShowUrl, currentHostelPageReturnPath } from '@/lib/hms/hostelRoomNavigation';
 import { Bed } from '@lucide/vue';
@@ -117,7 +118,10 @@ const roomTypeLabel = computed(() => `hms.room_type_${props.room.roomType}`);
                         {{ student.initials }}
                     </div>
                     <div class="min-w-0 flex-1">
-                        <div class="text-foreground truncate text-xs font-semibold">{{ student.name }}</div>
+                        <div class="text-foreground flex min-w-0 items-center gap-1 truncate text-xs font-semibold">
+                            <span class="truncate">{{ student.name }}</span>
+                            <StudentDisabilityIcon :show="student.isDisabled" />
+                        </div>
                         <div v-if="student.level" class="text-muted-foreground truncate text-[10px]">
                             {{ student.level }}
                         </div>

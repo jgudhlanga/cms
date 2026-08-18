@@ -1,5 +1,5 @@
 import { IconName } from '@/lib/icons';
-import { hasAbility, hasStudentProfile } from '@/lib/permissions';
+import { hasAbility, hasStudentProfile, isModuleEnabled } from '@/lib/permissions';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 
 export type StudentProfileTabValue =
@@ -69,7 +69,9 @@ const tabShowChecks: Record<
     },
     documents: {
         admin: () => hasAbility([...adminStudentAbilities]),
-        portal: () => hasAbility('manageOwnStudentPersonalDetails:students'),
+        portal: () =>
+            isModuleEnabled('gallery')
+            && hasAbility('manageOwnStudentPersonalDetails:students'),
     },
     exam_results: {
         admin: () => hasAbility('viewStudentExamResults:students'),
@@ -125,9 +127,9 @@ const studentProfileTabCatalog: Omit<StudentProfileTabDefinition, 'show'>[] = [
     },
     {
         value: 'documents',
-        icon: IconName.files,
-        routeName: portalRouteNames.documents,
-        transLabel: () => trans_choice('students.document', 2),
+        icon: IconName.folder,
+        routeName: 'portal.gallery.index',
+        transLabel: () => trans('trans.student_id_card_gallery'),
     },
     {
         value: 'exam_results',

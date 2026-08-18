@@ -8,6 +8,7 @@ use App\Exceptions\Maintenance\StudentIdNumberConflictException;
 use App\Models\Students\Student;
 use App\Rules\ZimbabweanIdNumber;
 use App\Services\Enrollment\EnrollmentLookupService;
+use App\Services\Students\StudentIdCardPhotoService;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Validation\ValidationException;
 use Throwable;
@@ -17,6 +18,7 @@ class FixStudentIdNumberService
     public function __construct(
         private readonly EnrollmentLookupService $enrollmentLookup,
         private readonly FaultyStudentIdNumberAnalysis $analysis,
+        private readonly StudentIdCardPhotoService $photoService,
     ) {}
 
     public function fix(Student $student, string $idNumber): Student
@@ -34,6 +36,11 @@ class FixStudentIdNumberService
             throw new StudentIdNumberConflictException($conflict->id, $normalized);
         }
 
+        $previousValues = array_filter([
+            (string) $student->id_number,
+            (string) $student->passport_number,
+        ]);
+
         try {
             $student->update([
                 'id_number' => $normalized,
@@ -48,7 +55,12 @@ class FixStudentIdNumberService
             throw $exception;
         }
 
-        return $student->fresh(['user']);
+        $fresh = $student->fresh(['user']);
+        if ($fresh instanceof Student) {
+            $this->photoService->replaceNamedCopy($fresh, $previousValues);
+        }
+
+        return $fresh ?? $student;
     }
 
     /**

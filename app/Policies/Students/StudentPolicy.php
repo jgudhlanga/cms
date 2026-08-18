@@ -2,11 +2,17 @@
 
 namespace App\Policies\Students;
 
+use App\Enums\Shared\ModuleEnum;
 use App\Models\Students\Student;
 use App\Models\Users\User;
+use App\Services\Rbac\RbacModuleStateService;
 
 class StudentPolicy
 {
+    public function __construct(
+        private readonly RbacModuleStateService $moduleState,
+    ) {}
+
     public function viewAny(User $user): bool
     {
         return $user->can('viewAny:students');
@@ -35,6 +41,25 @@ class StudentPolicy
     public function update(User $user, Student $student): bool
     {
         return $user->can('update:students', $student);
+    }
+
+    public function uploadIdPhoto(User $user, Student $student): bool
+    {
+        if ($user->studentProfile?->id === $student->id) {
+            return $user->can('manageOwnStudentPersonalDetails:students');
+        }
+
+        return $user->can('uploadIdPhoto:students') || $user->can('update:students');
+    }
+
+    public function manageGallery(User $user, Student $student): bool
+    {
+        if (! $this->moduleState->isEnabled(ModuleEnum::GALLERY->slug())) {
+            return false;
+        }
+
+        return $user->studentProfile?->id === $student->id
+            && $user->can('manageOwnStudentPersonalDetails:students');
     }
 
     public function delete(User $user, Student $student): bool

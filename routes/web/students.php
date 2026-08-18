@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\Students\IdCardImportController;
 use App\Http\Controllers\Admin\Students\IdCardRequestController;
 use App\Http\Controllers\Admin\Students\IdCardSettingController;
 use App\Http\Controllers\Students\AcademicRecordController;
@@ -28,6 +29,8 @@ Route::prefix('students')->middleware('auth')->group(function () {
     Route::get('export', [StudentController::class, 'export'])->name('students.export');
     Route::patch('{student}/id-number', [StudentController::class, 'updateIdNumber'])
         ->name('students.id-number.update');
+    Route::post('{student}/id-photo', [StudentController::class, 'uploadIdPhoto'])
+        ->name('students.id-photo.store');
     Route::delete('{student}/purge', [StudentController::class, 'purge'])
         ->middleware('can:root:manage')
         ->name('students.purge');
@@ -36,6 +39,10 @@ Route::prefix('students')->middleware('auth')->group(function () {
 Route::prefix('students/id-card-requests')->middleware('auth')->name('admin.students.id-card-requests.')->group(function () {
     Route::get('/', [IdCardRequestController::class, 'index'])->name('index');
     Route::get('bulk-print', [IdCardRequestController::class, 'bulkPrint'])->name('bulk-print');
+    Route::get('import', [IdCardImportController::class, 'show'])->name('import');
+    Route::get('import/template', [IdCardImportController::class, 'template'])->name('import.template');
+    Route::post('import/preview', [IdCardImportController::class, 'preview'])->name('import.preview');
+    Route::post('import/process', [IdCardImportController::class, 'process'])->name('import.process');
     Route::post('settings', [IdCardSettingController::class, 'update'])->name('settings.update');
     Route::get('{idCardRequest}', [IdCardRequestController::class, 'show'])->name('show');
     Route::post('{idCardRequest}/approve', [IdCardRequestController::class, 'approve'])->name('approve');

@@ -1,12 +1,24 @@
 <script setup lang="ts">
-import ProfileTabComingSoon from '@/components/core/util/ProfileTabComingSoon.vue';
-import { IconName } from '@/lib/icons';
+import IdPhotoPanel from '@/pages/students/components/profile/IdPhotoPanel.vue';
+import OfferLettersPanel from '@/components/students/profile/OfferLettersPanel.vue';
+import type { Student } from '@/types/students';
+
+interface Props {
+    student: Student;
+    offerLetterIntakePeriodIds?: Array<string | number>;
+}
+
+withDefaults(defineProps<Props>(), {
+    offerLetterIntakePeriodIds: () => [],
+});
 </script>
 
 <template>
-    <ProfileTabComingSoon
-        :icon="IconName.files"
-        :title="$t('students.documents_coming_soon_title')"
-        :description="$t('students.documents_coming_soon_description')"
-    />
+    <div class="space-y-4">
+        <IdPhotoPanel :student="student" />
+        <OfferLettersPanel
+            :student="student"
+            :offer-letter-intake-period-ids="offerLetterIntakePeriodIds"
+        />
+    </div>
 </template>

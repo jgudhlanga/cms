@@ -19,6 +19,7 @@ enum ModuleEnum: string
     case SHARED = 'Shared';
     case STUDENTS = 'Students';
     case STUDENT_IDS = 'Student IDs';
+    case GALLERY = 'Gallery';
     case TENANTS = 'Tenants';
     case USERS = 'Users';
     case FINANCE = 'Finance';
@@ -41,6 +42,7 @@ enum ModuleEnum: string
             self::SHARED => 'Shared',
             self::STUDENTS => 'Students',
             self::STUDENT_IDS => 'Student IDs',
+            self::GALLERY => 'Gallery',
             self::TENANTS => 'Tenants',
             self::USERS => 'Users',
             self::FINANCE => 'Finance',

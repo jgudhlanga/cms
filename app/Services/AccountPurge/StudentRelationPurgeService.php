@@ -78,6 +78,7 @@ class StudentRelationPurgeService
             });
 
         $student->clearMediaCollection(Student::ID_PHOTO_COLLECTION);
+        $student->clearMediaCollection(Student::GALLERY_COLLECTION);
     }
 
     /**

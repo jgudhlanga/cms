@@ -16,6 +16,7 @@ use App\Services\Maintenance\Students\FaultyStudentIdNumberAnalysis;
 use App\Services\Students\ReturningStudentContextService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class StudentResource extends JsonResource
 {
@@ -107,6 +108,8 @@ class StudentResource extends JsonResource
                 'apprenticeNumber' => $apprenticeSummary['apprenticeNumber'],
                 'isSponsoredThisYear' => $sponsorSummary['isSponsoredThisYear'],
                 'sponsor' => $sponsorSummary['sponsor'],
+                'idPhotoUrl' => $this->idPhotoUrl('card'),
+                'idPhotoThumbUrl' => $this->idPhotoUrl('thumb'),
             ],
             'relationships' => [
                 'user' => UserSummaryResource::make($this->user),
@@ -302,5 +305,15 @@ class StudentResource extends JsonResource
             'isSponsoredThisYear' => true,
             'sponsor' => $sponsor->sponsor,
         ];
+    }
+
+    private function idPhotoUrl(string $conversion): ?string
+    {
+        $photo = $this->resource->latestIdPhoto();
+        if (! $photo instanceof Media) {
+            return null;
+        }
+
+        return $photo->getFullUrl($conversion) ?: $photo->getFullUrl();
     }
 }

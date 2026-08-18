@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Policies\Students;
 
 use App\Enums\Shared\ModuleEnum;
+use App\Models\Students\Student;
 use App\Models\Students\StudentIdCardRequest;
 use App\Models\Users\User;
 use App\Services\Rbac\RbacModuleStateService;
@@ -41,9 +42,28 @@ class StudentIdCardRequestPolicy
             && $user->can('manageOwnStudentPersonalDetails:students');
     }
 
-    public function uploadPhoto(User $user): bool
+    public function uploadPhoto(User $user, ?Student $student = null): bool
     {
-        return $this->create($user);
+        if (! $this->moduleEnabled()) {
+            return false;
+        }
+
+        if ($student instanceof Student) {
+            if ($user->studentProfile?->id === $student->id) {
+                return $user->can('manageOwnStudentPersonalDetails:students');
+            }
+
+            return $user->can('uploadIdPhoto:students') || $user->can('update:students');
+        }
+
+        return ($user->studentProfile !== null && $user->can('manageOwnStudentPersonalDetails:students'))
+            || $user->can('uploadIdPhoto:students')
+            || $user->can('update:students');
+    }
+
+    public function import(User $user): bool
+    {
+        return $this->print($user);
     }
 
     public function review(User $user, ?StudentIdCardRequest $studentIdCardRequest = null): bool

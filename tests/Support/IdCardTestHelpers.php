@@ -15,14 +15,28 @@ use Illuminate\Http\UploadedFile;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Spatie\Permission\Models\Permission;
 
+function ensureIdCardIdType(IdTypeEnum $idType): IdType
+{
+    $existing = IdType::query()->find($idType->id());
+
+    if ($existing instanceof IdType) {
+        return $existing;
+    }
+
+    return IdType::query()->forceCreate([
+        'id' => $idType->id(),
+        'name' => $idType->value,
+        'description' => $idType->description(),
+    ]);
+}
+
 function createIdCardStudent(array $overrides = []): array
 {
     $tenant = Tenant::query()->first() ?? Tenant::factory()->create();
     $suffix = uniqid();
 
-    $idType = IdType::query()->firstOrCreate(
-        ['name' => IdTypeEnum::FOREIGN_PASSPORT_NUMBER->label()],
-    );
+    ensureIdCardIdType(IdTypeEnum::ZIMBABWEAN_ID_NUMBER);
+    $idType = ensureIdCardIdType(IdTypeEnum::FOREIGN_PASSPORT_NUMBER);
 
     $user = User::factory()->create(['tenant_id' => $tenant->id]);
 
@@ -72,6 +86,16 @@ function disableStudentIdsModule(): void
 {
     Module::query()
         ->where('slug', ModuleEnum::STUDENT_IDS->slug())
+        ->firstOrFail()
+        ->update(['status' => false]);
+
+    app(RbacModuleStateService::class)->clearCache();
+}
+
+function disableGalleryModule(): void
+{
+    Module::query()
+        ->where('slug', ModuleEnum::GALLERY->slug())
         ->firstOrFail()
         ->update(['status' => false]);
 
