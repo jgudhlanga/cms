@@ -19,6 +19,7 @@ class StudentProgrammeDataService
     public function __construct(
         protected CourseWorkAggregationService $aggregationService,
         protected CourseSyllabusCodeResolver $courseSyllabusCodeResolver,
+        protected StudentEnrolmentProgressionService $progression,
     ) {}
 
     /**
@@ -155,6 +156,9 @@ class StudentProgrammeDataService
             'year' => $enrolment->academicCalendar?->calendar_year,
             'status' => $enrolment->studentEnrolmentStatus?->name,
             'studentEnrolmentId' => $studentEnrolmentId,
+            'canAdvanceToNextPhase' => $this->progression->canAdvanceToNextPhase($enrolment),
+            'canCompleteLevel' => $this->progression->canCompleteLevel($enrolment),
+            'canApplyToNextLevel' => $this->progression->canApplyToNextLevel($enrolment),
             'module' => $modules,
         ];
     }

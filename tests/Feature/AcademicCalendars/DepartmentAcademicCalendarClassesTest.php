@@ -6,6 +6,7 @@ use App\Models\AcademicCalendars\AcademicCalendarStudentEnrolment;
 use App\Models\AcademicCalendars\ClassConfig;
 use App\Models\Institution\Department;
 use App\Models\Institution\InstitutionDepartment;
+use App\Models\Institution\IntakePeriod;
 use Illuminate\Support\Facades\DB;
 
 require_once __DIR__.'/../../Support/AcademicCalendarClassTestHelpers.php';
@@ -141,8 +142,8 @@ test('department academic calendar api returns assigned and ready class counts',
 
     $this->getJson($apiRoute)
         ->assertSuccessful()
-        ->assertJsonPath('data.0.levels.0.classesCount', 0)
-        ->assertJsonPath('data.0.levels.0.totalnClass', 3)
+        ->assertJsonPath('data.0.levels.0.configs.0.classesCount', 0)
+        ->assertJsonPath('data.0.levels.0.configs.0.totalnClass', 3)
         ->assertJsonPath('data.0.levels.0.totalFinalList', 3);
 
     $this->post(route('academic-calendars.department-classes.store', [
@@ -166,8 +167,8 @@ test('department academic calendar api returns assigned and ready class counts',
 
     $this->getJson($apiRoute)
         ->assertSuccessful()
-        ->assertJsonPath('data.0.levels.0.classesCount', $expectedClassesCount)
-        ->assertJsonPath('data.0.levels.0.totalnClass', 3)
+        ->assertJsonPath('data.0.levels.0.configs.0.classesCount', $expectedClassesCount)
+        ->assertJsonPath('data.0.levels.0.configs.0.totalnClass', 3)
         ->assertJsonPath('data.0.levels.0.totalFinalList', 3);
 });
 

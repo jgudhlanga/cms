@@ -81,7 +81,9 @@ onMounted(async () => {
                         v-for="semester in programme.semesters"
                         :key="semester.id"
                         :semester="semester"
+                        :student-id="studentId"
                         :expand-modules-with-marks="programme.isActive === true"
+                        @status-updated="fetchProgrammes(studentId)"
                     />
                 </div>
             </BaseAccordionItem>

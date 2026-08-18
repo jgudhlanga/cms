@@ -3,6 +3,8 @@
 namespace App\Http\Requests\AcademicCalendars;
 
 use App\Enums\AcademicCalendars\AcademicCalendarTypeEnum;
+use App\Models\AcademicCalendars\AcademicCalendar;
+use App\Models\AcademicCalendars\ClassConfig;
 use App\Models\Institution\DepartmentLevel;
 use App\Models\Institution\DepartmentLevelCourse;
 use App\Models\Institution\InstitutionDepartment;
@@ -25,7 +27,7 @@ class ClassConfigRequest extends FormRequest
             $merge['students_per_class'] = (int) $this->input('students_per_class');
         }
 
-        foreach (['department_level_id', 'department_course_id', 'mode_of_study_id', 'semester_id'] as $key) {
+        foreach (['department_level_id', 'department_course_id', 'mode_of_study_id', 'semester_id', 'class_config_id'] as $key) {
             if ($this->has($key) && $this->input($key) !== '' && $this->input($key) !== null) {
                 $merge[$key] = (int) $this->input($key);
             }
@@ -70,13 +72,20 @@ class ClassConfigRequest extends FormRequest
                 ),
             ],
             'mode_of_study_id' => ['required', 'exists:mode_of_studies,id'],
+            'class_config_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('class_configs', 'id')->where(
+                    static fn ($query) => $query
+                        ->where('institution_department_id', $institutionDepartmentId)
+                        ->whereNull('deleted_at'),
+                ),
+            ],
             'semester_id' => [
                 'required',
                 'integer',
                 Rule::exists('semesters', 'id')->where(function ($query): void {
-                    $prefix = $this->calendarTypeSlugPrefix();
-
-                    $query->where('slug', 'like', $prefix.'-%');
+                    $query->whereIn('slug', $this->resolveCalendarType()->allowedSemesterSlugs());
                 }),
             ],
             'course_syllabus_ids' => ['nullable', 'array'],
@@ -98,28 +107,107 @@ class ClassConfigRequest extends FormRequest
     {
         $validator->after(function (Validator $validator): void {
             $ids = $this->input('course_syllabus_ids') ?? [];
-            if ($ids === [] || ! is_array($ids)) {
-                return;
-            }
+            if (is_array($ids) && $ids !== []) {
+                $seen = [];
+                foreach ($ids as $id) {
+                    $intId = (int) $id;
+                    if (isset($seen[$intId])) {
+                        $validator->errors()->add('course_syllabus_ids', __('validation.distinct', ['attribute' => 'course_syllabus_ids']));
 
-            $seen = [];
-            foreach ($ids as $id) {
-                $intId = (int) $id;
-                if (isset($seen[$intId])) {
-                    $validator->errors()->add('course_syllabus_ids', __('validation.distinct', ['attribute' => 'course_syllabus_ids']));
-
-                    return;
+                        break;
+                    }
+                    $seen[$intId] = true;
                 }
-                $seen[$intId] = true;
+
+                if ($this->resolveDepartmentLevelCourseId() === null) {
+                    $validator->errors()->add(
+                        'department_course_id',
+                        __('validation.exists', ['attribute' => 'department course']),
+                    );
+                }
             }
 
-            if ($this->resolveDepartmentLevelCourseId() === null) {
-                $validator->errors()->add(
-                    'department_course_id',
-                    __('validation.exists', ['attribute' => 'department course']),
-                );
-            }
+            $this->rejectSemesterCollision($validator);
+            $this->rejectYearCap($validator);
         });
+    }
+
+    private function rejectSemesterCollision(Validator $validator): void
+    {
+        if ($validator->errors()->isNotEmpty()) {
+            return;
+        }
+
+        $classConfigId = $this->input('class_config_id');
+        $classConfigId = is_numeric($classConfigId) ? (int) $classConfigId : null;
+
+        $institutionDepartment = $this->route('institution_department');
+        $academicCalendar = $this->route('academic_calendar');
+
+        if (! $institutionDepartment instanceof InstitutionDepartment
+            || ! $academicCalendar instanceof AcademicCalendar) {
+            return;
+        }
+
+        $collision = ClassConfig::query()
+            ->where('calendar_year', (string) $academicCalendar->calendar_year)
+            ->where('institution_department_id', $institutionDepartment->id)
+            ->where('department_course_id', (int) $this->input('department_course_id'))
+            ->where('department_level_id', (int) $this->input('department_level_id'))
+            ->where('mode_of_study_id', (int) $this->input('mode_of_study_id'))
+            ->where('semester_id', (int) $this->input('semester_id'))
+            ->whereNull('deleted_at')
+            ->when(
+                $classConfigId !== null && $classConfigId > 0,
+                fn ($query) => $query->where('id', '!=', $classConfigId),
+            )
+            ->exists();
+
+        if ($collision) {
+            $validator->errors()->add('semester_id', __('academic_calendar.class_config_semester_collision'));
+        }
+    }
+
+    private function rejectYearCap(Validator $validator): void
+    {
+        if ($validator->errors()->isNotEmpty()) {
+            return;
+        }
+
+        $classConfigId = $this->input('class_config_id');
+        $classConfigId = is_numeric($classConfigId) ? (int) $classConfigId : null;
+
+        if ($classConfigId !== null && $classConfigId > 0) {
+            return;
+        }
+
+        $institutionDepartment = $this->route('institution_department');
+        $academicCalendar = $this->route('academic_calendar');
+
+        if (! $institutionDepartment instanceof InstitutionDepartment
+            || ! $academicCalendar instanceof AcademicCalendar) {
+            return;
+        }
+
+        $calendarType = $this->resolveCalendarType();
+        $max = $calendarType->maxAssessmentCalendarsPerYear();
+
+        $existingCount = ClassConfig::query()
+            ->where('calendar_year', (string) $academicCalendar->calendar_year)
+            ->where('institution_department_id', $institutionDepartment->id)
+            ->where('department_course_id', (int) $this->input('department_course_id'))
+            ->where('department_level_id', (int) $this->input('department_level_id'))
+            ->where('mode_of_study_id', (int) $this->input('mode_of_study_id'))
+            ->whereNull('deleted_at')
+            ->count();
+
+        if ($existingCount >= $max) {
+            $validator->errors()->add('semester_id', __('academic_calendar.class_config_year_limit_reached', [
+                'type' => ucfirst($calendarType->value),
+                'max' => $max,
+                'year' => $academicCalendar->calendar_year,
+            ]));
+        }
     }
 
     private function resolveDepartmentLevelCourseId(): ?int
@@ -149,21 +237,21 @@ class ClassConfigRequest extends FormRequest
     /**
      * When a level has no calendar type, semester options are allowed (matches UI default).
      */
-    private function calendarTypeSlugPrefix(): string
+    private function resolveCalendarType(): AcademicCalendarTypeEnum
     {
         $departmentLevelId = $this->input('department_level_id');
         if ($departmentLevelId === null || $departmentLevelId === '') {
-            return AcademicCalendarTypeEnum::SEMESTER->value;
+            return AcademicCalendarTypeEnum::SEMESTER;
         }
 
         $departmentLevel = DepartmentLevel::query()->with('level')->find((int) $departmentLevelId);
         $calendarType = $departmentLevel?->level?->calendar_type;
 
         if ($calendarType instanceof AcademicCalendarTypeEnum) {
-            return $calendarType->value;
+            return $calendarType;
         }
 
-        return AcademicCalendarTypeEnum::tryFrom((string) $calendarType)?->value
-            ?? AcademicCalendarTypeEnum::SEMESTER->value;
+        return AcademicCalendarTypeEnum::tryFrom((string) $calendarType)
+            ?? AcademicCalendarTypeEnum::SEMESTER;
     }
 }

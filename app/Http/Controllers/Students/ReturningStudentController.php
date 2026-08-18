@@ -4,13 +4,16 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Students;
 
+use App\Actions\Students\AdvanceToNextSemesterAction;
 use App\Actions\Students\ContinueStudentEnrolmentAction;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Institution\IntakePeriodResource;
 use App\Models\Students\Student;
+use App\Models\Students\StudentEnrolment;
+use App\Services\Enrollment\EnrollmentLookupService;
 use App\Services\Students\ApplicationFeeService;
 use App\Services\Students\ReturningStudentContextService;
-use App\Services\Enrollment\EnrollmentLookupService;
+use App\Services\Students\StudentEnrolmentProgressionService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -24,6 +27,8 @@ class ReturningStudentController extends Controller
         protected ReturningStudentContextService $returningStudentContext,
         protected ApplicationFeeService $applicationFeeService,
         protected ContinueStudentEnrolmentAction $continueStudentEnrolmentAction,
+        protected AdvanceToNextSemesterAction $advanceToNextSemesterAction,
+        protected StudentEnrolmentProgressionService $progression,
     ) {}
 
     /**
@@ -76,7 +81,19 @@ class ReturningStudentController extends Controller
         }
 
         DB::transaction(function () use ($student, $application, $intakePeriod): void {
-            $this->continueStudentEnrolmentAction->execute($application);
+            $latestEnrolment = StudentEnrolment::query()
+                ->where('student_application_id', $application->id)
+                ->whereNull('deleted_at')
+                ->latest('id')
+                ->first();
+
+            if ($latestEnrolment instanceof StudentEnrolment
+                && $this->progression->canAdvanceToNextPhase($latestEnrolment)) {
+                $this->advanceToNextSemesterAction->execute($latestEnrolment);
+            } else {
+                $this->continueStudentEnrolmentAction->execute($application);
+            }
+
             $this->returningStudentContext->persistAcknowledgement(
                 $student,
                 'continuation',

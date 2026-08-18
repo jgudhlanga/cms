@@ -21,6 +21,7 @@ export interface ApplicationHubProps {
     hasReapplyAcknowledgement: boolean;
     canContinueInClass: boolean;
     continueInClassUrl: string;
+    canApplyToNextLevel?: boolean;
     requiresIntakeSelection: boolean;
 }
 

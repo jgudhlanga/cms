@@ -6,8 +6,8 @@ namespace App\Services\Students;
 
 use App\Models\AcademicCalendars\ClassConfig;
 use App\Models\Institution\Syllabus\CourseSyllabus;
-use App\Models\Students\StudentEnrolment;
 use App\Models\Students\StudentApplication;
+use App\Models\Students\StudentEnrolment;
 
 class CourseSyllabusCodeResolver
 {
@@ -73,6 +73,15 @@ class CourseSyllabusCodeResolver
      */
     public function resolveSyllabusIds(StudentEnrolment $enrolment): array
     {
+        $fromPinned = array_values(array_map(
+            'intval',
+            array_filter($enrolment->course_syllabus_ids ?? []),
+        ));
+
+        if ($fromPinned !== []) {
+            return $fromPinned;
+        }
+
         $fromAssignedClass = array_values(array_map(
             'intval',
             array_filter($enrolment->academicCalendarStudentEnrolment

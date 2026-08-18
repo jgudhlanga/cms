@@ -2,12 +2,17 @@
 
 namespace App\Http\Controllers\AcademicCalendars;
 
+use App\Actions\Students\AdvanceToNextSemesterAction;
+use App\Actions\Students\CompleteLevelEnrolmentAction;
+use App\Enums\AcademicCalendars\AcademicCalendarTypeEnum;
 use App\Enums\Shared\GenderEnum;
+use App\Exceptions\Students\StudentEnrolmentProgressionException;
 use App\Exports\AcademicCalendars\CourseWorkImportTemplateExport;
 use App\Exports\AcademicCalendars\CourseWorkMarksheetExport;
 use App\Http\Controllers\Concerns\ResolvesAcademicCalendarFromCalendarYear;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AcademicCalendars\AcademicCalendarRequest;
+use App\Http\Requests\AcademicCalendars\BulkAcademicCalendarClassStudentsRequest;
 use App\Http\Requests\AcademicCalendars\ClassConfigRequest;
 use App\Http\Requests\AcademicCalendars\CourseWorkImportPreviewRequest;
 use App\Http\Requests\AcademicCalendars\CourseWorkImportProcessRequest;
@@ -39,6 +44,7 @@ use App\Services\AcademicCalendars\CourseWorkImportTemplateService;
 use App\Services\AcademicCalendars\CourseWorkMarksheetDataService;
 use App\Services\AcademicCalendars\CourseWorkMarksheetPdfService;
 use App\Services\Lecturer\LecturerCourseWorkAccess;
+use App\Services\Students\StudentEnrolmentProgressionService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -59,6 +65,9 @@ class AcademicCalendarController extends Controller
     public function __construct(
         private readonly AcademicCalendarClassNameFormatter $classNameFormatter,
         private readonly ClassStaffingService $classStaffingService,
+        private readonly StudentEnrolmentProgressionService $enrolmentProgression,
+        private readonly AdvanceToNextSemesterAction $advanceToNextSemester,
+        private readonly CompleteLevelEnrolmentAction $completeLevelEnrolment,
     ) {}
 
     public function index()
@@ -520,6 +529,7 @@ class AcademicCalendarController extends Controller
             'calendarType' => $level?->level?->calendar_type?->value ?? 'semester',
             'semesterConfigHasSyllabi' => $staffingContext['semesterConfigHasSyllabi'],
             'canAssignStaffing' => auth()->user()?->can('update', $academicCalendar) ?? false,
+            'isLastProgrammePhase' => $this->isLastProgrammePhase($classConfig, $level),
         ]);
     }
 
@@ -674,9 +684,121 @@ class AcademicCalendarController extends Controller
         return back()->with('success', __('academic_calendar.move_students_success'));
     }
 
+    public function advanceDepartmentAcademicCalendarClassStudents(
+        InstitutionDepartment $institutionDepartment,
+        string $calendar_year,
+        AcademicCalendarClass $academicCalendarClass,
+        BulkAcademicCalendarClassStudentsRequest $request,
+    ): RedirectResponse {
+        $this->authorize('update:academic-calendar-student-enrolments');
+
+        $enrolments = $this->enrolmentsOnClass(
+            $academicCalendarClass,
+            array_map('intval', $request->validated('student_enrolment_ids')),
+        );
+
+        $advanced = 0;
+
+        foreach ($enrolments as $enrolment) {
+            try {
+                $this->advanceToNextSemester->execute($enrolment);
+                $advanced++;
+            } catch (StudentEnrolmentProgressionException) {
+                continue;
+            }
+        }
+
+        if ($advanced < 1) {
+            return back()->withErrors(['student_enrolment_ids' => __('academic_calendar.advance_phase_none')]);
+        }
+
+        return back()->with('success', __('academic_calendar.advance_phase_success', ['count' => $advanced]));
+    }
+
+    public function completeDepartmentAcademicCalendarClassStudents(
+        InstitutionDepartment $institutionDepartment,
+        string $calendar_year,
+        AcademicCalendarClass $academicCalendarClass,
+        BulkAcademicCalendarClassStudentsRequest $request,
+    ): RedirectResponse {
+        $this->authorize('update:academic-calendar-student-enrolments');
+
+        $enrolments = $this->enrolmentsOnClass(
+            $academicCalendarClass,
+            array_map('intval', $request->validated('student_enrolment_ids')),
+        );
+
+        $completed = 0;
+
+        foreach ($enrolments as $enrolment) {
+            try {
+                $this->completeLevelEnrolment->execute($enrolment);
+                $completed++;
+            } catch (StudentEnrolmentProgressionException) {
+                continue;
+            }
+        }
+
+        if ($completed < 1) {
+            return back()->withErrors(['student_enrolment_ids' => __('academic_calendar.complete_level_none')]);
+        }
+
+        return back()->with('success', __('academic_calendar.complete_level_success', ['count' => $completed]));
+    }
+
+    /**
+     * @param  list<int>  $studentEnrolmentIds
+     * @return \Illuminate\Database\Eloquent\Collection<int, StudentEnrolment>
+     */
+    private function enrolmentsOnClass(AcademicCalendarClass $academicCalendarClass, array $studentEnrolmentIds)
+    {
+        return StudentEnrolment::query()
+            ->whereIn('id', $studentEnrolmentIds)
+            ->whereHas('academicCalendarStudentEnrolment', function ($query) use ($academicCalendarClass): void {
+                $query->where('academic_calendar_class_id', $academicCalendarClass->id)
+                    ->whereNull('deleted_at');
+            })
+            ->get();
+    }
+
+    private function isLastProgrammePhase(ClassConfig $classConfig, ?DepartmentLevel $level): bool
+    {
+        $calendarType = $level?->level?->calendar_type;
+
+        if (! $calendarType instanceof AcademicCalendarTypeEnum) {
+            $calendarType = AcademicCalendarTypeEnum::tryFrom((string) $calendarType) ?? AcademicCalendarTypeEnum::SEMESTER;
+        }
+
+        return $this->enrolmentProgression->isLastPhaseSemesterId(
+            $classConfig->semester_id !== null ? (int) $classConfig->semester_id : null,
+            $calendarType,
+        );
+    }
+
     public function storePerClassSizeConfig(InstitutionDepartment $institutionDepartment, AcademicCalendar $academicCalendar, ClassConfigRequest $request)
     {
         $validated = $request->validated();
+        $classConfigId = isset($validated['class_config_id']) ? (int) $validated['class_config_id'] : 0;
+
+        if ($classConfigId > 0) {
+            $classConfig = ClassConfig::query()
+                ->whereKey($classConfigId)
+                ->where('institution_department_id', $institutionDepartment->id)
+                ->where('calendar_year', (string) $academicCalendar->calendar_year)
+                ->first();
+
+            if (! $classConfig instanceof ClassConfig) {
+                return back()->withErrors(['class_config_id' => __('academic_calendar.class_config_not_found')]);
+            }
+
+            $classConfig->update([
+                'students_per_class' => (int) $validated['students_per_class'],
+                'semester_id' => (int) $validated['semester_id'],
+                'course_syllabus_ids' => $validated['course_syllabus_ids'] ?? [],
+            ]);
+
+            return back()->with('success', 'Class config successfully saved.');
+        }
 
         ClassConfig::query()->updateOrCreate(
             [
@@ -720,7 +842,8 @@ class AcademicCalendarController extends Controller
             $calendarIdsForYear,
             (int) $validated['department_level_id'],
             (int) $validated['department_course_id'],
-            (int) $validated['mode_of_study_id']
+            (int) $validated['mode_of_study_id'],
+            $classConfig->semester_id !== null ? (int) $classConfig->semester_id : null,
         );
         $assignedStudentEnrolmentIds = $this->resolveAssignedStudentEnrolmentIds($classConfig);
         $unassignedFinalStudentApplications = $this->filterUnassignedFinalStudentApplications($finalStudentApplications, $assignedStudentEnrolmentIds);
@@ -752,6 +875,7 @@ class AcademicCalendarController extends Controller
                         'student_enrolment_id' => (int) $student->student_enrolment_id,
                         'academic_calendar_class_id' => (int) $existingClass->id,
                     ]);
+                    $this->pinSyllabusFromClassConfig((int) $student->student_enrolment_id, $classConfig);
                 }
 
                 $remainingStudents = $this->filterUnassignedFinalStudentApplications(
@@ -789,6 +913,7 @@ class AcademicCalendarController extends Controller
                         'student_enrolment_id' => $student['studentEnrolmentId'],
                         'academic_calendar_class_id' => $academicClass->id,
                     ]);
+                    $this->pinSyllabusFromClassConfig((int) $student['studentEnrolmentId'], $classConfig);
                 }
             }
         });
@@ -843,7 +968,8 @@ class AcademicCalendarController extends Controller
         array $academicCalendarIds,
         int $departmentLevelId,
         int $departmentCourseId,
-        int $modeOfStudyId
+        int $modeOfStudyId,
+        ?int $semesterId = null,
     ): Collection {
         return app(ConfirmedStudentsQuery::class)->listForClassAllocation(
             (int) $institutionDepartment->id,
@@ -851,6 +977,21 @@ class AcademicCalendarController extends Controller
             $departmentCourseId,
             $modeOfStudyId,
             $academicCalendarIds,
+            $semesterId,
+        );
+    }
+
+    private function pinSyllabusFromClassConfig(int $studentEnrolmentId, ClassConfig $classConfig): void
+    {
+        $enrolment = StudentEnrolment::query()->find($studentEnrolmentId);
+
+        if (! $enrolment instanceof StudentEnrolment) {
+            return;
+        }
+
+        $this->enrolmentProgression->pinSyllabusIds(
+            $enrolment,
+            $this->enrolmentProgression->syllabusIdsForClassConfig($classConfig),
         );
     }
 

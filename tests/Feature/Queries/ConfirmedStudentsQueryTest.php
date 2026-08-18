@@ -18,9 +18,9 @@ use App\Models\Shared\IdType;
 use App\Models\Shared\MaritalStatus;
 use App\Models\Shared\Title;
 use App\Models\Students\Student;
+use App\Models\Students\StudentApplication;
 use App\Models\Students\StudentEnrolment;
 use App\Models\Students\StudentEnrolmentStatus;
-use App\Models\Students\StudentApplication;
 use App\Models\Tenants\Tenant;
 use App\Models\Users\User;
 use App\Queries\Enrolments\ConfirmedStudentsQuery;
@@ -485,7 +485,7 @@ test('listForClassAllocation matches student enrolment when any calendar id in t
         ['name' => 'Q List Option Multi', 'description' => null],
     );
     $activeEnrolmentStatus = StudentEnrolmentStatus::query()->firstOrCreate(
-        ['name' => 'Active Multi Cal'],
+        ['name' => 'Active'],
         ['description' => 'Test'],
     );
 
@@ -553,4 +553,26 @@ test('listForClassAllocation matches student enrolment when any calendar id in t
 
     expect($allForYear)->toHaveCount(1)
         ->and((int) $allForYear->first()->student_enrolment_id)->toBe((int) $enrolment->id);
+
+    $wrongSemester = $this->query->listForClassAllocation(
+        (int) $institutionDepartment->id,
+        $departmentLevel->id,
+        $departmentCourse->id,
+        $modeOfStudy->id,
+        [$calendarOlder->id, $calendarNewer->id],
+        $semester->id + 999,
+    );
+
+    expect($wrongSemester)->toHaveCount(0);
+
+    $matchingSemester = $this->query->listForClassAllocation(
+        (int) $institutionDepartment->id,
+        $departmentLevel->id,
+        $departmentCourse->id,
+        $modeOfStudy->id,
+        [$calendarOlder->id, $calendarNewer->id],
+        (int) $semester->id,
+    );
+
+    expect($matchingSemester)->toHaveCount(1);
 });

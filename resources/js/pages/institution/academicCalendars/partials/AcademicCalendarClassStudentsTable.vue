@@ -13,6 +13,8 @@ defineProps<{
     sortedStudents: AcademicCalendarClassPreviewStudent[];
     canMoveStudents: boolean;
     canViewCourseWork: boolean;
+    canAdvancePhase: boolean;
+    canCompleteLevel: boolean;
     moveTargetClasses: AcademicCalendarClassMoveTarget[];
     studentCourseWorkUrl: (student: AcademicCalendarClassPreviewStudent) => string;
 }>();
@@ -29,6 +31,8 @@ const emit = defineEmits<{
     toggleSelectAll: [];
     selectAllKeydown: [event: KeyboardEvent];
     openMoveStudents: [];
+    advancePhase: [];
+    completeLevel: [];
 }>();
 
 const selectedStudentEnrolmentIds = defineModel<number[]>('selectedStudentEnrolmentIds', { required: true });
@@ -72,16 +76,38 @@ const selectAllChangeClassModel = defineModel<boolean>('selectAllChangeClassMode
                 </td>
                 <td v-if="canViewCourseWork" class="j-td" />
                 <td class="j-td text-right" @click.stop>
-                    <BaseButton
-                        v-if="selectedStudentEnrolmentIds.length > 0 && moveTargetClasses.length > 0"
-                        :size="ButtonSize.xs"
-                        :variant="ColorVariant.danger"
-                        type="button"
-                        classes="rounded-full"
-                        @click="emit('openMoveStudents')"
-                    >
-                        {{ $t('academic_calendar.move_students') }}
-                    </BaseButton>
+                    <div class="flex flex-wrap justify-end gap-1">
+                        <BaseButton
+                            v-if="canAdvancePhase && selectedStudentEnrolmentIds.length > 0"
+                            :size="ButtonSize.xs"
+                            :variant="ColorVariant.primary"
+                            type="button"
+                            classes="rounded-full"
+                            @click="emit('advancePhase')"
+                        >
+                            {{ $t('academic_calendar.continue_next_phase') }}
+                        </BaseButton>
+                        <BaseButton
+                            v-if="canCompleteLevel && selectedStudentEnrolmentIds.length > 0"
+                            :size="ButtonSize.xs"
+                            :variant="ColorVariant.success"
+                            type="button"
+                            classes="rounded-full"
+                            @click="emit('completeLevel')"
+                        >
+                            {{ $t('academic_calendar.mark_level_completed') }}
+                        </BaseButton>
+                        <BaseButton
+                            v-if="selectedStudentEnrolmentIds.length > 0 && moveTargetClasses.length > 0"
+                            :size="ButtonSize.xs"
+                            :variant="ColorVariant.danger"
+                            type="button"
+                            classes="rounded-full"
+                            @click="emit('openMoveStudents')"
+                        >
+                            {{ $t('academic_calendar.move_students') }}
+                        </BaseButton>
+                    </div>
                 </td>
             </tr>
             <tr v-for="(student, index) in sortedStudents" :key="student.studentEnrolmentId" class="j-tr">

@@ -12,11 +12,11 @@ class StudentEnrolmentStatusSeeder extends Seeder
         $rows = [
             [
                 'name' => 'Active',
-                'description' => 'The student is currently registered, attending classes, and actively participating in the program.',
+                'description' => 'The student is currently registered on this level (any semester, term, or ABMA period).',
             ],
             [
                 'name' => 'Completed',
-                'description' => 'The student has passed all modules/subjects and has a "Full Award".',
+                'description' => 'The student has finished the last phase of this level (full award). They may apply for the next level if the course has one.',
             ],
             [
                 'name' => 'Repeat/Re-write',

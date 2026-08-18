@@ -139,6 +139,9 @@ export type StudentProgrammeSemester = {
     year: string | null;
     status: string | null;
     studentEnrolmentId?: number;
+    canAdvanceToNextPhase?: boolean;
+    canCompleteLevel?: boolean;
+    canApplyToNextLevel?: boolean;
     module: StudentProgrammeModule[];
 };
 

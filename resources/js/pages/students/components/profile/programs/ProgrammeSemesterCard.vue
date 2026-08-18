@@ -1,18 +1,25 @@
 <script setup lang="ts">
 import Empty from '@/components/core/util/Empty.vue';
 import StudentCourseWorkModuleRow from '@/components/students/course-work/StudentCourseWorkModuleRow.vue';
+import { useCustomConfirmDialog } from '@/composables/core/useCustomConfirmDialog';
 import {
     mapProgrammeModuleToListItem,
     semesterHeaderMeta,
     statusBadgeClass,
 } from '@/composables/students/studentProgrammeDisplay';
+import { errorAlert } from '@/lib/alerts';
+import { firstInertiaErrorMessage } from '@/lib/inertia-errors';
+import { hasAbility } from '@/lib/permissions';
 import ProgrammeModuleDetails from '@/pages/students/components/profile/programs/ProgrammeModuleDetails.vue';
 import type { StudentProgrammeSemester } from '@/types/students';
+import { router } from '@inertiajs/vue3';
+import { trans } from 'laravel-vue-i18n';
 import { CalendarDays } from 'lucide-vue-next';
 import { computed, onMounted, ref, watch } from 'vue';
 
 interface Props {
     semester: StudentProgrammeSemester;
+    studentId: string | number;
     expandModulesWithMarks?: boolean;
 }
 
@@ -20,7 +27,13 @@ const props = withDefaults(defineProps<Props>(), {
     expandModulesWithMarks: false,
 });
 
+const emit = defineEmits<{
+    statusUpdated: [];
+}>();
+
 const header = computed(() => semesterHeaderMeta(props.semester));
+const canUpdateStatus = computed(() => hasAbility(['update:students']) && Boolean(props.semester.studentEnrolmentId));
+const { open: openConfirmDialog } = useCustomConfirmDialog();
 
 const openMap = ref<Record<number, boolean>>({});
 
@@ -58,6 +71,38 @@ watch(
     },
     { deep: true },
 );
+
+const updateStatus = async (status: string, message: string): Promise<void> => {
+    if (!props.semester.studentEnrolmentId) {
+        return;
+    }
+
+    const confirmed = await openConfirmDialog({
+        title: trans('students.enrolment_status_confirm_title'),
+        message,
+        confirmText: trans('trans.save'),
+        cancelText: trans('trans.cancel'),
+    });
+
+    if (!confirmed) {
+        return;
+    }
+
+    router.patch(
+        route('students.enrolments.status.update', {
+            student: String(props.studentId),
+            student_enrolment: String(props.semester.studentEnrolmentId),
+        }),
+        { status },
+        {
+            preserveScroll: true,
+            onSuccess: () => emit('statusUpdated'),
+            onError: (errors) => {
+                errorAlert(firstInertiaErrorMessage(errors, trans('students.enrolment_status_invalid')));
+            },
+        },
+    );
+};
 </script>
 
 <template>
@@ -92,13 +137,39 @@ watch(
                     </span>
                 </p>
             </div>
-            <span
-                v-if="semester.status"
-                :class="statusBadgeClass(semester.status)"
-                class="shrink-0 text-[0.65rem] uppercase tracking-wide"
-            >
-                {{ semester.status }}
-            </span>
+            <div class="flex shrink-0 flex-col items-end gap-1">
+                <span
+                    v-if="semester.status"
+                    :class="statusBadgeClass(semester.status)"
+                    class="text-[0.65rem] uppercase tracking-wide"
+                >
+                    {{ semester.status }}
+                </span>
+                <div v-if="canUpdateStatus" class="flex flex-wrap justify-end gap-1">
+                    <button
+                        type="button"
+                        class="text-[0.65rem] text-primary underline-offset-2 hover:underline"
+                        @click="updateStatus('repeatre-write', $t('students.enrolment_status_confirm_repeat'))"
+                    >
+                        {{ $t('students.enrolment_repeat') }}
+                    </button>
+                    <button
+                        type="button"
+                        class="text-[0.65rem] text-primary underline-offset-2 hover:underline"
+                        @click="updateStatus('deferredpostponed', $t('students.enrolment_status_confirm_deferred'))"
+                    >
+                        {{ $t('students.enrolment_deferred') }}
+                    </button>
+                    <button
+                        v-if="semester.canCompleteLevel"
+                        type="button"
+                        class="text-[0.65rem] text-primary underline-offset-2 hover:underline"
+                        @click="updateStatus('completed', $t('students.enrolment_status_confirm_completed'))"
+                    >
+                        {{ $t('students.enrolment_mark_completed') }}
+                    </button>
+                </div>
+            </div>
         </div>
 
         <div

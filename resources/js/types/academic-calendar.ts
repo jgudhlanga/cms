@@ -27,20 +27,32 @@ export type DepartmentCourseClassCount = {
     levels: ClassLevelSummary[];
 };
 
+export type ClassConfigPeriodOption = {
+    id: number | string;
+    name: string;
+    isCurrent?: boolean;
+};
+
+export type ClassLevelConfigSummary = {
+    classConfigId: number;
+    semesterId: number | string | null;
+    semester: string | null;
+    studentsPerClass: number;
+    classesCount: number;
+    totalnClass: number;
+    courseSyllabusIds?: (string | number)[];
+    courseSyllabusCodes?: string[];
+};
+
 export type ClassLevelSummary = {
     departmentLevelId: string | number;
     levelName: string;
     /** From `Level.calendar_type` — drives which academic year options apply (semester / term / abma). */
     calendarType?: 'term' | 'semester' | 'abma' | null;
-    studentsPerClass: string | number | null;
-    classConfigId: string | number | null;
-    classesCount: number;
-    totalnClass: string | number | null;
     totalFinalList: string | number | null;
-    semester: string | null;
-    semesterId: string | number | null;
-    courseSyllabusIds?: (string | number)[];
-    courseSyllabusCodes?: string[];
+    currentSemesterId: number | string | null;
+    configs: ClassLevelConfigSummary[];
+    remainingPeriods: ClassConfigPeriodOption[];
 };
 
 export type AcademicClassConfigPayload = {
@@ -51,8 +63,12 @@ export type AcademicClassConfigPayload = {
     students_per_class: string | number | null;
     calendarType?: 'term' | 'semester' | 'abma' | null;
     semester_id?: string | number | null;
+    semester?: string | null;
+    class_config_id?: string | number | null;
+    named_classes_count?: number;
     course_syllabus_ids?: (string | number)[];
     courseSyllabusCodes?: string[];
+    remaining_periods?: ClassConfigPeriodOption[];
 };
 
 export type ClassConfig = {

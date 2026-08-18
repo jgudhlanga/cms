@@ -4,6 +4,7 @@ namespace App\Queries\Enrolments;
 
 use App\Enums\Shared\ClassListTypeEnum;
 use App\Models\Students\StudentApplication;
+use App\Services\Students\StudentEnrolmentProgressionService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
@@ -46,7 +47,8 @@ class ConfirmedStudentsQuery
         int $departmentLevelId,
         int $departmentCourseId,
         int $modeOfStudyId,
-        array $academicCalendarIds
+        array $academicCalendarIds,
+        ?int $semesterId = null,
     ): Collection {
         if ($academicCalendarIds === []) {
             return collect();
@@ -54,12 +56,24 @@ class ConfirmedStudentsQuery
 
         return $this->baseQueryWithFinalClassList($institutionDepartmentId, $modeOfStudyId)
             ->join('students', 'students.id', '=', 'student_applications.student_id')
-            ->join('student_enrolments', function ($join) use ($academicCalendarIds): void {
+            ->join('student_enrolments', function ($join) use ($academicCalendarIds, $semesterId): void {
                 $join->on('student_enrolments.student_application_id', '=', 'student_applications.id')
                     ->whereIn('student_enrolments.academic_calendar_id', $academicCalendarIds)
                     ->whereColumn('student_enrolments.mode_of_study_id', 'student_applications.mode_of_study_id')
                     ->whereNull('student_enrolments.deleted_at');
+
+                if ($semesterId !== null) {
+                    $join->where('student_enrolments.semester_id', $semesterId);
+                }
             })
+            ->join('student_enrolment_statuses', 'student_enrolment_statuses.id', '=', 'student_enrolments.student_enrolment_status_id')
+            ->whereNotIn('student_enrolment_statuses.slug', [
+                StudentEnrolmentProgressionService::STATUS_REPEAT,
+                StudentEnrolmentProgressionService::STATUS_DEFERRED,
+                StudentEnrolmentProgressionService::STATUS_COMPLETED,
+                'repeat-re-write',
+                'deferred-postponed',
+            ])
             ->leftJoin('genders', 'genders.id', '=', 'students.gender_id')
             ->join('users', 'users.id', '=', 'students.user_id')
             ->where('student_applications.department_level_id', $departmentLevelId)
