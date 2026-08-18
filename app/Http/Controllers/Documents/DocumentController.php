@@ -23,7 +23,7 @@ class DocumentController extends Controller
     {
         // Get the StudentApplication only if it has a verified class list
         [$documentTemplate, $studentName, $studentIdNumber, $studentNumber, $intakePeriod, $department,
-            $level, $course, $modeOfStudy, $tuition] = DocumentHelper::assembleOfferLetter($studentApplication);
+            $level, $course, $modeOfStudy, $tuition, $offerLetterDate] = DocumentHelper::assembleOfferLetter($studentApplication);
         // PDF Filename
         $fileName = Str::slug($studentName).'-offer-letter-'.time().'.pdf';
         // Generate PDF
@@ -37,7 +37,8 @@ class DocumentController extends Controller
             'level',
             'course',
             'modeOfStudy',
-            'tuition'
+            'tuition',
+            'offerLetterDate',
         ));
 
         return $pdf->download($fileName);

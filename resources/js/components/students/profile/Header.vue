@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import StudentDisabilityIcon from '@/components/students/StudentDisabilityIcon.vue';
 import { StudentHeader } from '@/types/students';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 
@@ -121,6 +122,7 @@ const hasSponsoredFacts = computed(() => sponsorName.value !== '');
           <h1 class="min-w-0 text-sm font-extrabold uppercase leading-tight tracking-tight wrap-break-word text-foreground sm:text-base">
             {{ data?.studentName }}
           </h1>
+          <StudentDisabilityIcon :status="data?.disabilityStatus" />
           <span
             v-if="data?.enrolmentStatus"
             class="inline-flex shrink-0 items-center rounded-full border border-emerald-500/30 bg-emerald-500/15 px-1.5 py-px text-[10px] font-semibold leading-none text-emerald-600 dark:text-emerald-400"

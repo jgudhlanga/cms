@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import BaseButton from '@/components/core/button/BaseButton.vue';
 import BaseIcon from '@/components/core/icon/BaseIcon.vue';
+import StudentDisabilityIcon from '@/components/students/StudentDisabilityIcon.vue';
 import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
 import { IconName } from '@/enums/icons';
@@ -13,6 +14,7 @@ type StudentCard = {
     name: string;
     studentNumber?: string | null;
     course?: string | null;
+    isDisabled?: boolean;
 };
 
 type SectionAmenity = {
@@ -107,7 +109,10 @@ const onUnlink = (amenityId: number | string) => {
                             <p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
                                 {{ $t('hms.section_occupant') }}
                             </p>
-                            <p class="truncate text-sm font-semibold text-foreground">{{ assignedStudent.name }}</p>
+                            <p class="flex min-w-0 items-center gap-1.5 truncate text-sm font-semibold text-foreground">
+                                <span class="truncate">{{ assignedStudent.name }}</span>
+                                <StudentDisabilityIcon :show="Boolean(assignedStudent.isDisabled)" />
+                            </p>
                             <p class="truncate text-xs text-muted-foreground">
                                 {{ assignedStudent.studentNumber || '---' }}
                                 <span v-if="assignedStudent.course"> · {{ assignedStudent.course }}</span>

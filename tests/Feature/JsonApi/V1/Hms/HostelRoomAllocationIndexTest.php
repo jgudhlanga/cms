@@ -2,6 +2,7 @@
 
 use App\Enums\HMS\HostelAllocationStatusEnum;
 use App\Enums\HMS\HostelAllocationTypeEnum;
+use App\Enums\Shared\DisabilityStatusEnum;
 use App\Enums\Shared\TenantEnum;
 use App\Models\HMS\HostelRoomAllocation;
 use App\Models\Tenants\Tenant;
@@ -129,6 +130,33 @@ test('json api hostel allocations index filters by student search', function () 
     $response->assertSuccessful()
         ->assertJsonCount(1, 'data')
         ->assertJsonPath('data.0.attributes.studentNumber', 'UNIQUE-HMS-42');
+});
+
+test('json api hostel allocations index includes student disability status', function () {
+    $tenant = Tenant::query()->firstOrFail();
+    $user = User::factory()->create(['tenant_id' => $tenant->id]);
+    $user->givePermissionTo('viewAny:hostel-room-allocations');
+    Sanctum::actingAs($user);
+
+    $room = createHostelRoomForAllocationIndexTest();
+    $student = createStudentForAllocationIndexTest();
+    $student->update(['disability_status' => DisabilityStatusEnum::YES->value]);
+
+    HostelRoomAllocation::query()->create([
+        'tenant_id' => TenantEnum::HARARE_POLY->id(),
+        'hostel_room_id' => $room->id,
+        'student_id' => $student->id,
+        'type' => HostelAllocationTypeEnum::DIRECT,
+        'status' => HostelAllocationStatusEnum::ACTIVE,
+    ]);
+
+    $response = $this
+        ->jsonApi('hostel-room-allocations')
+        ->get(route('v1.json.hms.hostel-room-allocations.index'));
+
+    $response->assertSuccessful()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.attributes.disabilityStatus', DisabilityStatusEnum::YES->value);
 });
 
 test('json api hostel allocations index requires authentication', function () {

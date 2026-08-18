@@ -62,6 +62,8 @@ export type Student = {
         createdAt?: string;
         updatedAt?: string;
         deletedAt?: string;
+        idPhotoUrl?: string | null;
+        idPhotoThumbUrl?: string | null;
     };
     relationships?: {
         user: User;
@@ -93,6 +95,7 @@ export type StudentHeader = {
     apprenticeNumber?: string;
     isSponsoredThisYear?: boolean;
     sponsor?: string;
+    disabilityStatus?: 'yes' | 'no' | 'prefer_not_to_say' | null;
 };
 
 export type StudentProgrammeModule = {

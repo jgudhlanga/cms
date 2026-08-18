@@ -2,6 +2,8 @@
 
 namespace App\JsonApi\V1\HMS\Hostels;
 
+use App\Enums\HMS\HostelAllocationStatusEnum;
+use App\Enums\Shared\DisabilityStatusEnum;
 use App\Helpers\Helper;
 use App\JsonApi\V1\HMS\Filters\TrashedFilter;
 use App\JsonApi\V1\HMS\Hostels\Filters\HostelSearchFilter;
@@ -46,6 +48,9 @@ class HostelSchema extends Schema
             Str::make('description'),
             Number::make('occupiedCount')->extractUsing(
                 fn (Hostel $hostel) => (int) ($hostel->occupied_beds_sum ?? 0),
+            )->readOnly(),
+            Number::make('disabledOccupantCount')->extractUsing(
+                fn (Hostel $hostel) => (int) ($hostel->disabled_occupants_count ?? 0),
             )->readOnly(),
             Number::make('vacantCount')->extractUsing(
                 fn (Hostel $hostel) => (int) ($hostel->vacant_rooms_count ?? 0),
@@ -137,6 +142,18 @@ class HostelSchema extends Schema
                     ->where('hostel_room_allocations.status', 'active')
                     ->limit(1),
                 'occupied_sections_count',
+            )
+            ->selectSub(
+                DB::table('hostel_room_allocations')
+                    ->join('hostel_rooms', 'hostel_rooms.id', '=', 'hostel_room_allocations.hostel_room_id')
+                    ->join('students', 'students.id', '=', 'hostel_room_allocations.student_id')
+                    ->selectRaw('count(*)')
+                    ->whereColumn('hostel_rooms.hostel_id', 'hostels.id')
+                    ->where('hostel_room_allocations.status', HostelAllocationStatusEnum::ACTIVE->value)
+                    ->where('students.disability_status', DisabilityStatusEnum::YES->value)
+                    ->whereNull('students.deleted_at')
+                    ->limit(1),
+                'disabled_occupants_count',
             )
             ->selectSub(
                 DB::table('hostel_room_amenity')

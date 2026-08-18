@@ -8,6 +8,7 @@ use App\Http\Resources\Institution\DepartmentApplicationStepResource;
 use App\Http\Resources\Institution\DepartmentLevelRequirementResource;
 use App\Http\Resources\Integrations\LedgerResource;
 use App\Http\Resources\Students\AcademicLevelResource;
+use App\Services\Students\StudentOfferLetterService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -36,6 +37,7 @@ class EnrolmentResource extends JsonResource
         ]);
 
         $contact = $this->student?->contacts?->first();
+        $offerLetterService = app(StudentOfferLetterService::class);
 
         return [
             'type' => 'enrolments',
@@ -76,6 +78,12 @@ class EnrolmentResource extends JsonResource
                 'requiredLevelCompleted' => $this->required_level_completed,
                 'readWriteAcknowledged' => $this->read_write_acknowledged,
                 'disabilityStatus' => $this->student?->disability_status,
+                'offerLetterAvailable' => $offerLetterService->isDownloadable($this->resource),
+                'offerLetterCurrentIntake' => $offerLetterService->isCurrentIntake($this->resource),
+                'offerLetterIssuedAt' => $offerLetterService->issuedAt($this->resource)?->toIso8601String(),
+                'offerLetterDownloadUrl' => $offerLetterService->isDownloadable($this->resource)
+                    ? route('documents.offer-letter', ['student_application' => $this->id])
+                    : null,
                 'createdAt' => $this->created_at,
                 'updatedAt' => $this->updated_at,
                 'deletedAt' => $this->deleted_at,

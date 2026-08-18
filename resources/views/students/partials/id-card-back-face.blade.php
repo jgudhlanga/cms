@@ -12,7 +12,7 @@
         <div class="back-bar"></div>
         <div class="back-terms-label">{{ __('trans.student_id_card_terms_title') }}</div>
         <div class="back-terms">{{ __('trans.student_id_card_terms') }}</div>
-        <div class="back-nid-label">{{ __('trans.student_id_card_national_id') }}</div>
+        <div class="back-nid-label">{{ $identityLabel ?? __('trans.student_id_card_national_id') }}</div>
         <div class="back-nid">{{ $nationalId !== '' ? $nationalId : '—' }}</div>
         <div class="back-sign">
             @if (! empty($signatureSrc))

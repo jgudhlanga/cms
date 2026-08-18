@@ -258,6 +258,7 @@ const issue = async () => {
                     :photo-url="request.photoUrl"
                     :serial-number="request.serialNumber"
                     :national-id="request.student.nationalId"
+                    :identity-label="request.student.identityLabel"
                     :return-name="request.student.returnName"
                     :return-address="request.student.returnAddress"
                     :return-phone="request.student.returnPhone"

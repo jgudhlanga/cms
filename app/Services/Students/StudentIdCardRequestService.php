@@ -27,27 +27,12 @@ class StudentIdCardRequestService
     public function __construct(
         private readonly StudentIdCardSerialGenerator $serialGenerator,
         private readonly StudentIdCardPrinter $printer,
+        private readonly StudentIdCardPhotoService $photoService,
     ) {}
 
     public function uploadPhoto(Student $student, UploadedFile $photo): Media
     {
-        $this->assertHasStudentNumber($student);
-
-        $media = $student
-            ->addMedia($photo)
-            ->usingFileName($this->photoFileName($student, $photo))
-            ->toMediaCollection(Student::ID_PHOTO_COLLECTION);
-
-        $pending = $student->idCardRequests()
-            ->where('status', IdCardRequestStatusEnum::PENDING)
-            ->latest()
-            ->first();
-
-        if ($pending instanceof StudentIdCardRequest) {
-            $this->attachLatestPhoto($student, $pending);
-        }
-
-        return $media;
+        return $this->photoService->uploadIdPhoto($student, $photo);
     }
 
     public function submit(Student $student, IdCardRequestReasonEnum $reason, ?string $notes = null): StudentIdCardRequest
@@ -55,7 +40,7 @@ class StudentIdCardRequestService
         $this->assertHasStudentNumber($student);
         $this->assertNoActiveRequest($student);
 
-        $photo = $student->latestIdPhoto();
+        $photo = $this->photoService->ensureMediaFromPrintFolder($student);
         if (! $photo instanceof Media) {
             throw InvalidIdCardRequestTransitionException::because('students.id_card_photo_required');
         }
@@ -89,7 +74,7 @@ class StudentIdCardRequestService
             throw InvalidIdCardRequestTransitionException::because('students.id_card_photo_frozen');
         }
 
-        $photo = $student->latestIdPhoto();
+        $photo = $this->photoService->ensureMediaFromPrintFolder($student);
         if (! $photo instanceof Media) {
             throw InvalidIdCardRequestTransitionException::because('students.id_card_photo_required');
         }
@@ -239,6 +224,31 @@ class StudentIdCardRequestService
         });
     }
 
+    public function importApproved(Student $student, User $admin): StudentIdCardRequest
+    {
+        $this->assertHasStudentNumber($student);
+        $this->assertNoActiveRequest($student);
+
+        $photo = $this->photoService->ensureMediaFromPrintFolder($student);
+        if (! $photo instanceof Media) {
+            throw InvalidIdCardRequestTransitionException::because('students.id_card_photo_required');
+        }
+
+        return DB::transaction(function () use ($student, $admin, $photo): StudentIdCardRequest {
+            $request = $student->idCardRequests()->create([
+                'tenant_id' => $student->tenant_id,
+                'status' => IdCardRequestStatusEnum::APPROVED,
+                'reason' => IdCardRequestReasonEnum::NEW,
+                'reviewed_by' => $admin->id,
+                'reviewed_at' => now(),
+            ]);
+
+            $this->snapshotPhoto($photo, $request);
+
+            return $request->fresh(['photo']) ?? $request;
+        });
+    }
+
     public function feeAmount(): float
     {
         return (float) config('id_cards.reissue_fee', config('custom.system.autoCardFee', 45));
@@ -354,12 +364,5 @@ class StudentIdCardRequestService
             ->pluck('supersedes_request_id');
 
         return $issued->first(fn (StudentIdCardRequest $card): bool => ! $supersededIds->contains($card->id));
-    }
-
-    private function photoFileName(Student $student, UploadedFile $photo): string
-    {
-        $extension = strtolower($photo->getClientOriginalExtension() ?: 'jpg');
-
-        return sprintf('id-photo-%s-%s.%s', $student->id, now()->format('YmdHis'), $extension);
     }
 }

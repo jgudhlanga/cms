@@ -246,6 +246,7 @@ class PermissionHelper
                 'viewAny:students',
                 'view:students',
                 'export:students',
+                'uploadIdPhoto:students',
                 'viewAny:student-applications',
                 'view:student-applications',
             ],

@@ -14,6 +14,7 @@ import { TextFieldType } from '@/enums/inputs';
 import { TypeVariant } from '@/enums/type-variants';
 import { errorAlert } from '@/lib/alerts';
 import { formatFeeClearanceUsd } from '@/lib/feeClearanceMoney';
+import { isModuleEnabled } from '@/lib/permissions';
 import IdCardPreviewStack from '@/pages/portal/student/id-card/partials/IdCardPreviewStack.vue';
 import type { AuthObject } from '@/types/data-pagination';
 import type { StudentIdCardFace, StudentIdCardRequestPayload } from '@/types/id-cards';
@@ -21,7 +22,7 @@ import type { Student } from '@/types/students';
 import type { BreadcrumbItemInterface } from '@/types/ui';
 import type { SelectOption } from '@/types/utils';
 import axios from 'axios';
-import { Head, useForm } from '@inertiajs/vue3';
+import { Head, Link, useForm } from '@inertiajs/vue3';
 import { trans } from 'laravel-vue-i18n';
 import { computed, ref } from 'vue';
 
@@ -162,6 +163,13 @@ const payFee = async () => {
                     </h1>
                     <p class="mt-1 text-sm text-muted-foreground">
                         {{ $t('trans.student_id_card_photo_help') }}
+                        <Link
+                            v-if="isModuleEnabled('gallery')"
+                            :href="route('portal.gallery.index')"
+                            class="ml-1 font-medium text-primary underline-offset-4 hover:underline"
+                        >
+                            {{ $t('trans.student_id_card_open_gallery') }}
+                        </Link>
                     </p>
                 </div>
 
@@ -292,6 +300,7 @@ const payFee = async () => {
                     :photo-url="previewPhotoUrl"
                     :serial-number="latest?.serialNumber"
                     :national-id="cardFace.nationalId"
+                    :identity-label="cardFace.identityLabel"
                     :return-name="cardFace.returnName"
                     :return-address="cardFace.returnAddress"
                     :return-phone="cardFace.returnPhone"

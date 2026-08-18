@@ -32,6 +32,7 @@ type RoomAmenity = {
 type RoomStudent = {
     id: number | string;
     student_number?: string | null;
+    disability_status?: string | null;
     user?: {
         full_name?: string | null;
     } | null;
@@ -170,7 +171,7 @@ const assignedStudentsBySection = computed(() => {
         return carry;
     }, {});
 
-    return props.room.sections.reduce<Record<string, { id: number | string; name: string; studentNumber: string; course: string } | null>>(
+    return props.room.sections.reduce<Record<string, { id: number | string; name: string; studentNumber: string; course: string; isDisabled: boolean } | null>>(
         (carry, section) => {
             const student = studentsBySectionId[String(section.id)] ?? null;
             carry[String(section.id)] = student
@@ -179,6 +180,7 @@ const assignedStudentsBySection = computed(() => {
                     name: student.user?.full_name?.trim() || '---',
                     studentNumber: student.student_number?.trim() || '---',
                     course: student.course?.trim() || '',
+                    isDisabled: student.disability_status === 'yes',
                 }
                 : null;
 

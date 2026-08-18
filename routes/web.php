@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\ImpersonationController;
 use App\Http\Controllers\Dashboard\DashboardController;
+use App\Http\Controllers\Students\IdCardVerifyController;
 use App\Support\Auth\DefaultHome;
 use Illuminate\Support\Facades\Route;
 use Lab404\Impersonate\Controllers\ImpersonateController as VendorImpersonateController;
@@ -9,6 +10,10 @@ use Lab404\Impersonate\Controllers\ImpersonateController as VendorImpersonateCon
 Route::get('/', function () {
     return to_route(DefaultHome::routeName(auth()->user()));
 })->middleware(['auth', 'verified'])->name('home');
+
+Route::get('id-cards/verify/{serial}', IdCardVerifyController::class)
+    ->where('serial', '[A-Za-z0-9\\-]+')
+    ->name('id-cards.verify');
 
 Route::middleware(['web', 'auth'])->group(function () {
     Route::get('impersonate/take/{id}/{guardName?}', [ImpersonationController::class, 'take'])->name('impersonate');

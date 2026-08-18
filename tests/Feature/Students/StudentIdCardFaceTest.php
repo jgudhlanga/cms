@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Enums\Institution\LevelEnum;
 use App\Enums\Institution\ModeOfStudyEnum;
+use App\Enums\Shared\IdTypeEnum;
 use App\Models\HMS\HostelRoomAllocation;
 use App\Models\Institution\Course;
 use App\Models\Institution\Department;
@@ -72,27 +73,31 @@ test('id card face maps enrolment fields block mode and year-end expiry', functi
         ->and($face->sdp)->toBe('No')
         ->and($face->residence)->toBe('NON Res')
         ->and($face->expiryDate)->toBe('31 Dec 2026')
-        ->and($face->nationalId)->toBe((string) $student->passport_number);
+        ->and($face->nationalId)->toBe((string) $student->passport_number)
+        ->and($face->identityLabel)->toBe(__('trans.student_id_card_passport_number'));
 });
 
-test('id card face prefers national id over passport number', function () {
+test('id card face uses national id and label for zimbabwean students', function () {
     $student = studentWithIdCardFace();
+    $student->id_type_id = IdTypeEnum::ZIMBABWEAN_ID_NUMBER->id();
     $student->id_number = '63-123456A63';
     $student->passport_number = 'P12345678';
 
     $face = StudentIdCardFace::fromStudent($student);
 
-    expect($face->nationalId)->toBe('63-123456A63');
+    expect($face->nationalId)->toBe('63-123456A63')
+        ->and($face->identityLabel)->toBe(__('trans.student_id_card_national_id'));
 });
 
-test('id card face falls back to passport when national id is missing', function () {
+test('id card face uses passport and label for non-citizen students', function () {
     $student = studentWithIdCardFace();
-    $student->id_number = '  ';
+    $student->id_number = '63-123456A63';
     $student->passport_number = 'P87654321';
 
     $face = StudentIdCardFace::fromStudent($student);
 
-    expect($face->nationalId)->toBe('P87654321');
+    expect($face->nationalId)->toBe('P87654321')
+        ->and($face->identityLabel)->toBe(__('trans.student_id_card_passport_number'));
 });
 
 test('id card face marks sdp yes when the enrolment level is sdp', function () {

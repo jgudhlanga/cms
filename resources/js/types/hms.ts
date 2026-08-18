@@ -44,6 +44,7 @@ export type Hostel = {
         status: string;
         location: string;
         occupiedCount: number;
+        disabledOccupantCount?: number;
         vacantCount: number;
         maintenanceCount: number;
         sectionCount?: number;
@@ -145,6 +146,7 @@ export type HostelAllocation = {
         studentId?: number | string | null;
         studentNumber?: string | null;
         studentName?: string | null;
+        disabilityStatus?: 'yes' | 'no' | 'prefer_not_to_say' | null;
         gender?: string | null;
         course?: string | null;
         level?: string | null;

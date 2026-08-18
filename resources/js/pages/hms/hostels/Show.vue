@@ -121,6 +121,7 @@ const {
     searchQuery,
     occupiedBeds,
     availableBeds,
+    disabledOccupants,
     stats,
     floorTabs,
     filteredRooms,
@@ -219,6 +220,7 @@ const openAddRoom = () => {
                 :stats="stats"
                 :occupied-beds="occupiedBeds"
                 :available-beds="availableBeds"
+                :disabled-occupants="disabledOccupants"
                 :can-edit="canEditHostel"
                 :can-import="canImportOccupants"
                 @edit="openEditHostel"

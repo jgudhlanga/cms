@@ -39,6 +39,10 @@ export type Enrolment = {
         requiredLevelCompleted: boolean;
         readWriteAcknowledged: boolean;
         disabilityStatus?: 'yes' | 'no' | 'prefer_not_to_say' | null;
+        offerLetterAvailable?: boolean;
+        offerLetterCurrentIntake?: boolean;
+        offerLetterIssuedAt?: string | null;
+        offerLetterDownloadUrl?: string | null;
         createdAt: string;
         deletedAt: string;
         updatedAt: string;

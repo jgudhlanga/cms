@@ -224,6 +224,7 @@ const otherDetails = computed<ValueAndLabel[]>(() => {
 </script>
 
 <template>
+    <div class="space-y-6">
     <div v-if="canEditProfile" class="flex justify-end pb-2">
         <DropdownMenu>
             <DropdownMenuTrigger as-child>
@@ -280,5 +281,6 @@ const otherDetails = computed<ValueAndLabel[]>(() => {
             :value="field.value"
             :icon="field.icon"
         />
+    </div>
     </div>
 </template>

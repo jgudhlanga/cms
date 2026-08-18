@@ -17,6 +17,7 @@ use App\Http\Requests\Students\ExportStudentListRequest;
 use App\Http\Requests\Students\FixStudentIdNumberRequest;
 use App\Http\Requests\Students\PurgeStudentAccountRequest;
 use App\Http\Requests\Students\UpdateStudentRequest;
+use App\Http\Requests\Students\UploadStudentIdCardPhotoRequest;
 use App\Http\Resources\Students\StudentResource;
 use App\Http\Resources\Users\UserResource;
 use App\Models\Institution\FeeStructure;
@@ -33,6 +34,7 @@ use App\Repositories\Users\interface\IUserRepository;
 use App\Services\AccountPurge\StudentAccountPurgeService;
 use App\Services\Maintenance\Students\FixStudentIdNumberService;
 use App\Services\Students\IntakePeriodResolver;
+use App\Services\Students\StudentIdCardPhotoService;
 use App\Services\Students\StudentListExportService;
 use Exception;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -191,6 +193,17 @@ class StudentController extends Controller
             'message' => __('trans.item_saved', ['item' => __('trans.id_number')]),
             'data' => StudentResource::make($student),
         ]);
+    }
+
+    public function uploadIdPhoto(
+        UploadStudentIdCardPhotoRequest $request,
+        Student $student,
+        StudentIdCardPhotoService $photoService,
+    ): RedirectResponse {
+        $this->authorize('uploadIdPhoto', $student);
+        $photoService->uploadIdPhoto($student, $request->file('photo'));
+
+        return back()->with('success', __('students.id_card_photo_uploaded'));
     }
 
     public function destroy(string $id)

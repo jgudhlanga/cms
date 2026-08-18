@@ -76,7 +76,11 @@ const pageTitle = computed(() => tabDefinition.value?.transLabel() ?? '');
                     :student="student"
                     context="portal"
                 />
-                <Documents v-else-if="activeTab === 'documents'" />
+                <Documents
+                    v-else-if="activeTab === 'documents'"
+                    :student="student"
+                    :offer-letter-intake-period-ids="offerLetterIntakePeriodIds"
+                />
                 <Authentication
                     v-else-if="activeTab === 'authentication'"
                     :user="student?.relationships?.user"

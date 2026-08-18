@@ -15,6 +15,7 @@ interface Props {
     photoUrl?: string | null;
     serialNumber?: string | null;
     nationalId?: string | null;
+    identityLabel?: string | null;
     returnName?: string | null;
     returnAddress?: string | null;
     returnPhone?: string | null;
@@ -35,6 +36,7 @@ withDefaults(defineProps<Props>(), {
     photoUrl: null,
     serialNumber: null,
     nationalId: null,
+    identityLabel: null,
     returnName: null,
     returnAddress: null,
     returnPhone: null,
@@ -76,6 +78,7 @@ withDefaults(defineProps<Props>(), {
                 :student-number="studentNumber"
                 :serial-number="serialNumber"
                 :national-id="nationalId"
+                :identity-label="identityLabel"
                 :return-name="returnName"
                 :return-address="returnAddress"
                 :return-phone="returnPhone"

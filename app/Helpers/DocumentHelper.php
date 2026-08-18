@@ -13,7 +13,7 @@ use App\Models\Institution\FeeStructure;
 use App\Models\Shared\DocumentType;
 use App\Models\Shared\FeeType;
 use App\Models\Students\StudentApplication;
-use App\Services\Students\IntakePeriodResolver;
+use App\Services\Students\StudentOfferLetterService;
 
 class DocumentHelper
 {
@@ -31,13 +31,9 @@ class DocumentHelper
             ->where('id', $studentApplication->id)
             ->whereHas('classList', fn ($q) => $q->whereIn('type', ['verified', 'final']))->firstOrFail();
 
-        abort_unless(
-            app(IntakePeriodResolver::class)->isApplicationEligibleForOfferLetter($studentApplication),
-            404
-        );
-
         $student = $studentApplication->student;
         $user = $student->user;
+        $offerLetterService = app(StudentOfferLetterService::class);
 
         // Determine correct ID number (national vs passport)
         $studentIdNumber = $student->id_type_id == IdTypeEnum::FOREIGN_PASSPORT_NUMBER->id()
@@ -62,7 +58,7 @@ class DocumentHelper
             ->where('fee_type_id', $tuitionFeeType->id)
             ->first();
 
-        $tuition = $feeStructure->local_fca_amount ?? 0;
+        $tuition = number_format((float) ($feeStructure?->local_fca_amount ?? 0), 2, '.', '');
 
         // Document type
         $documentType = DocumentType::where('name', DocumentTypeEnum::OFFER_LETTER->name())->firstOrFail();
@@ -88,20 +84,26 @@ class DocumentHelper
         $isSDP = in_array($level, array_map(fn ($l) => $l->name(), $sdpLevels), true);
         if ($isSDP && strtolower($department) === strtolower(DepartmentEnum::MECHANICAL_AND_PRODUCTION_ENGINEERING->label())) {
             $tuition = '375.00';
-            if(strtolower($modeOfStudy) === strtolower(ModeOfStudyEnum::OJET->label())) {
+            if (strtolower($modeOfStudy) === strtolower(ModeOfStudyEnum::OJET->label())) {
                 $tuition = '237.00';
             }
         }
-        // Base query
-        $query = DocumentTemplate::query()
-            // ->where('intake_period_id', $studentApplication->intakePeriod->id ?? null)
-            ->where('document_type_id', $documentType->id);
 
-        // Apply USD-only constraint if needed
-        $documentTemplate = $query
+        $templateQuery = DocumentTemplate::query()
+            ->where('document_type_id', $documentType->id)
             ->when($isUsdOnly, fn ($q) => $q->whereRaw('LOWER(name) LIKE ?', ['%usd only%']))
-            ->when($isSDP, fn ($q) => $q->whereRaw('LOWER(name) LIKE ?', ['%sdp%']))
-            ->firstOrFail();
+            ->when($isSDP, fn ($q) => $q->whereRaw('LOWER(name) LIKE ?', ['%sdp%']));
+
+        $documentTemplate = (clone $templateQuery)
+            ->where('intake_period_id', $studentApplication->intake_period_id)
+            ->first()
+            ?? (clone $templateQuery)
+                ->whereNull('intake_period_id')
+                ->first()
+            ?? $templateQuery->firstOrFail();
+
+        $offerLetterDate = $offerLetterService->issuedAt($studentApplication)?->format('d M Y')
+            ?? now()->format('d M Y');
 
         return [
             $documentTemplate,
@@ -114,6 +116,7 @@ class DocumentHelper
             $course,
             $modeOfStudy,
             $tuition,
+            $offerLetterDate,
         ];
     }
 
@@ -132,14 +135,14 @@ class DocumentHelper
         if ($documentType !== null) {
             $offerLetterTemplate = (clone $query)->where('document_type_id', $documentType->id)->first();
 
-            if ($offerLetterTemplate !== null) {
+            if ($offerLetterTemplate instanceof DocumentTemplate) {
                 return $offerLetterTemplate;
             }
         }
 
         $template = $query->first();
 
-        if ($template !== null) {
+        if ($template instanceof DocumentTemplate) {
             return $template;
         }
 

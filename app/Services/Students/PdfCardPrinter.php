@@ -93,7 +93,7 @@ class PdfCardPrinter implements StudentIdCardPrinter
             ...$face->toArray(),
             'serialNumber' => $serial,
             'barcode' => base64_encode($generator->getBarcode($serial, $generator::TYPE_CODE_128, 1, 12)),
-            'qrSrc' => $this->qrSrc((string) ($student?->student_number ?? ''), $serial),
+            'qrSrc' => $this->qrSrc($serial),
             'photoSrc' => $this->photoSrc($request),
             'logoSrc' => $this->logoSrc($settings->logoPath()),
             'signatureSrc' => $this->imageDataUri($settings->signaturePath()),
@@ -109,16 +109,14 @@ class PdfCardPrinter implements StudentIdCardPrinter
         $pdf->setPaper([0, 0, self::CARD_WIDTH_PT, self::CARD_HEIGHT_PT], 'portrait');
     }
 
-    private function qrSrc(string $studentNumber, string $serial): ?string
+    private function qrSrc(string $serial): ?string
     {
-        $studentNumber = trim($studentNumber);
-        $payload = $studentNumber !== '' && $serial !== ''
-            ? $studentNumber.'|'.$serial
-            : ($studentNumber !== '' ? $studentNumber : $serial);
-
-        if ($payload === '') {
+        $serial = trim($serial);
+        if ($serial === '') {
             return null;
         }
+
+        $payload = route('id-cards.verify', ['serial' => $serial], absolute: true);
 
         $qrCode = new QrCode(data: $payload, size: 96, margin: 0);
         $png = (new PngWriter)->write($qrCode)->getString();

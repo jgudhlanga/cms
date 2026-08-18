@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\HMS;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\HMS\SyncHostelRoomSectionAmenitiesRequest;
 use App\Http\Requests\HMS\StoreHostelRoomRequest;
+use App\Http\Requests\HMS\SyncHostelRoomSectionAmenitiesRequest;
 use App\Http\Requests\HMS\UpdateHostelRoomRequest;
 use App\Models\HMS\HostelAmenity;
 use App\Models\HMS\HostelRoom;
@@ -87,6 +87,7 @@ class HostelRoomController extends Controller
                         'student' => $allocation->student ? [
                             'id' => $allocation->student->id,
                             'student_number' => $allocation->student->student_number,
+                            'disability_status' => $allocation->student->disability_status,
                             'user' => [
                                 'full_name' => $allocation->student->user?->full_name,
                             ],

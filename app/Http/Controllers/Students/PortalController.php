@@ -796,9 +796,11 @@ class PortalController extends Controller
     /**
      * @throws AuthorizationException
      */
-    public function profileDocuments(): Response
+    public function profileDocuments(): RedirectResponse
     {
-        return $this->renderProfileSection('documents', 'manageStudentPersonalDetails');
+        $this->authorize('manageStudentPersonalDetails');
+
+        return redirect()->route('portal.gallery.index');
     }
 
     /**

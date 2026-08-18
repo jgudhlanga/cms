@@ -13,6 +13,7 @@ interface Props {
     stats: HostelShowStats;
     occupiedBeds: number;
     availableBeds: number;
+    disabledOccupants?: number;
     canEdit?: boolean;
     canImport?: boolean;
 }
@@ -20,6 +21,7 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
     canEdit: true,
     canImport: false,
+    disabledOccupants: 0,
 });
 
 const emit = defineEmits<{
@@ -62,6 +64,7 @@ const metricItems = computed(() => [
     { labelKey: 'hms.capacity', value: props.hostel.capacity, valueClass: 'text-foreground', choice: 1 },
     { labelKey: 'hms.show_occupied_beds', value: props.occupiedBeds, valueClass: 'text-emerald-600' },
     { labelKey: 'hms.show_available_beds', value: props.availableBeds, valueClass: 'text-orange-500' },
+    { labelKey: 'hms.show_stat_disabled_students', value: props.disabledOccupants, valueClass: 'text-sky-600' },
 ]);
 </script>
 

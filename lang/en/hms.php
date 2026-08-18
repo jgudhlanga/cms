@@ -76,6 +76,8 @@ return [
     // ── Hostel show page ───────────────────────────────────────────────────
     'show_occupied_beds' => 'Occupied beds',
     'show_available_beds' => 'Available beds',
+    'show_stat_disabled_students' => 'Disabled students',
+    'student_has_disability' => 'Has a disability',
     'show_stat_total_rooms' => 'Total rooms',
     'show_stat_occupied_rooms' => 'Occupied rooms',
     'show_stat_available_rooms' => 'Available rooms',
@@ -119,6 +121,7 @@ return [
     'stat_total_capacity' => 'Total capacity',
     'stat_rooms' => 'Rooms',
     'stat_occupied_beds' => 'Occupied beds',
+    'stat_disabled_students' => 'Disabled students',
     'stat_sections' => 'Sections',
     'stat_amenities' => 'Amenities',
 
@@ -325,6 +328,8 @@ return [
     'eligibility_full_time_passed' => 'Mode of study: :mode (full-time)',
     'eligibility_full_time_failed' => 'Mode of study: :mode (not full-time)',
     'eligibility_advisory_notice' => 'Eligibility items below are advisory and do not block submission.',
+    'eligibility_current_offer_letter_passed' => 'A current intake offer letter is available',
+    'eligibility_current_offer_letter_failed' => 'A current intake offer letter is required before claiming accommodation.',
     'eligibility_tuition_paid_passed' => 'Tuition fees are fully paid',
     'eligibility_tuition_paid_failed' => 'Tuition fees are not fully paid',
     'eligibility_accommodation_paid_passed' => 'Accommodation fees are fully paid',

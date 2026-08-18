@@ -2,6 +2,7 @@
 
 use App\Enums\HMS\HostelAllocationStatusEnum;
 use App\Enums\HMS\HostelAllocationTypeEnum;
+use App\Enums\Shared\DisabilityStatusEnum;
 use App\Enums\Shared\TenantEnum;
 use App\Models\HMS\Hostel;
 use App\Models\HMS\HostelRoom;
@@ -100,7 +101,8 @@ test('json api hostels index returns occupied bed count from room occupancy', fu
 
     $response->assertSuccessful()
         ->assertJsonPath('data.0.attributes.occupiedCount', 1)
-        ->assertJsonPath('data.0.attributes.vacantCount', 0);
+        ->assertJsonPath('data.0.attributes.vacantCount', 0)
+        ->assertJsonPath('data.0.attributes.disabledOccupantCount', 0);
 });
 
 test('json api hostels index filters by type female case insensitively', function () {
@@ -129,4 +131,78 @@ test('json api hostels index filters by type female case insensitively', functio
 
     expect(collect($response->json('data'))->pluck('attributes.type')->unique()->values()->all())
         ->toBe(['female']);
+});
+
+test('json api hostels index counts only active occupants with disability yes', function () {
+    $tenant = Tenant::query()->firstOrFail();
+    $user = User::factory()->create(['tenant_id' => $tenant->id]);
+    Sanctum::actingAs($user);
+
+    $tenantId = TenantEnum::HARARE_POLY->id();
+
+    $hostel = Hostel::query()->create([
+        'tenant_id' => $tenantId,
+        'name' => 'Disability Block '.uniqid(),
+        'location' => 'North',
+        'floor_count' => 1,
+        'rooms_count' => 1,
+        'capacity' => 8,
+        'status' => 'active',
+        'type' => 'male',
+    ]);
+
+    $room = HostelRoom::query()->create([
+        'tenant_id' => $tenantId,
+        'hostel_id' => $hostel->id,
+        'name' => 'DIS-01',
+        'room_type' => 'double',
+        'capacity' => 4,
+        'max_occupancy' => 4,
+        'current_occupancy' => 0,
+        'status' => 'vacant',
+        'floor_number' => 0,
+    ]);
+
+    $disabledStudent = createStudentForAllocationIndexTest();
+    $disabledStudent->update(['disability_status' => DisabilityStatusEnum::YES->value]);
+
+    $noDisabilityStudent = createStudentForAllocationIndexTest();
+    $noDisabilityStudent->update(['disability_status' => DisabilityStatusEnum::NO->value]);
+
+    $preferNotStudent = createStudentForAllocationIndexTest();
+    $preferNotStudent->update(['disability_status' => DisabilityStatusEnum::PREFER_NOT_TO_SAY->value]);
+
+    $inactiveDisabledStudent = createStudentForAllocationIndexTest();
+    $inactiveDisabledStudent->update(['disability_status' => DisabilityStatusEnum::YES->value]);
+
+    foreach ([$disabledStudent, $noDisabilityStudent, $preferNotStudent] as $student) {
+        HostelRoomAllocation::query()->create([
+            'tenant_id' => $tenantId,
+            'hostel_room_id' => $room->id,
+            'student_id' => $student->id,
+            'type' => HostelAllocationTypeEnum::DIRECT,
+            'status' => HostelAllocationStatusEnum::ACTIVE,
+            'check_in' => now()->toDateString(),
+            'check_out' => now()->addMonths(4)->toDateString(),
+        ]);
+    }
+
+    HostelRoomAllocation::query()->create([
+        'tenant_id' => $tenantId,
+        'hostel_room_id' => $room->id,
+        'student_id' => $inactiveDisabledStudent->id,
+        'type' => HostelAllocationTypeEnum::DIRECT,
+        'status' => HostelAllocationStatusEnum::CHECKED_OUT,
+        'check_in' => now()->subMonths(4)->toDateString(),
+        'check_out' => now()->toDateString(),
+    ]);
+
+    $room->syncOccupancyFromAllocations();
+
+    $response = $this
+        ->jsonApi('hostels')
+        ->get(route('v1.json.hms.hostels.index', ['filter' => ['search' => $hostel->name]]));
+
+    $response->assertSuccessful()
+        ->assertJsonPath('data.0.attributes.disabledOccupantCount', 1);
 });

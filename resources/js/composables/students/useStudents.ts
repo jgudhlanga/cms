@@ -89,6 +89,10 @@ export const useStudents = () => {
         application: Enrolment,
         offerLetterIntakePeriodIds: Array<string | number> = [],
     ) => {
+        if (typeof application?.attributes?.offerLetterAvailable === 'boolean') {
+            return application.attributes.offerLetterAvailable;
+        }
+
         const status = getApplicationStatus(application)?.toLowerCase();
         if (status !== 'accepted') {
             return false;
