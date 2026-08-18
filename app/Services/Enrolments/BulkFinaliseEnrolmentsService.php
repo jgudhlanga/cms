@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Services\Enrolments;
 
 use App\DataTransferObjects\Enrolments\BulkFinaliseEnrolmentsResult;
-use App\Enums\Rbac\RoleEnum;
 use App\Enums\Enrolments\BulkFinaliseEnrolmentAuditEventEnum;
+use App\Enums\Rbac\RoleEnum;
 use App\Enums\Shared\ClassListTypeEnum;
 use App\Enums\Shared\WorkflowStepEnum;
 use App\Exceptions\Students\StudentEnrolmentResolutionException;
@@ -14,7 +14,6 @@ use App\Exports\Enrolments\BulkFinaliseDryRunExport;
 use App\Exports\Enrolments\BulkFinaliseFailuresExport;
 use App\Mail\Enrolments\BulkFinaliseEnrolmentsReportMail;
 use App\Models\Enrolments\ClassList;
-use App\Models\Institution\DepartmentApplicationStep;
 use App\Models\Shared\WorkflowStep;
 use App\Models\Students\StudentApplication;
 use App\Models\Students\StudentEnrolment;
@@ -458,7 +457,7 @@ class BulkFinaliseEnrolmentsService
 
         if (! $dryRun) {
             $this->finaliseClassList($studentApplication);
-            $this->updateDepartmentApplicationStep($studentApplication, $step);
+            $this->updateWorkflowStep($studentApplication, $step);
             $this->upsertStudentEnrolment($studentApplication, $enrolmentAttributes);
 
             $this->logStudentFinalised(
@@ -533,18 +532,10 @@ class BulkFinaliseEnrolmentsService
         $classList->update(['type' => ClassListTypeEnum::FINAL->value]);
     }
 
-    private function updateDepartmentApplicationStep(StudentApplication $studentApplication, ?WorkflowStep $step): void
+    private function updateWorkflowStep(StudentApplication $studentApplication, ?WorkflowStep $step): void
     {
-        $departmentStep = null;
-        if ($step !== null) {
-            $departmentStep = DepartmentApplicationStep::query()
-                ->where('institution_department_id', $studentApplication->institution_department_id)
-                ->where('workflow_step_id', $step->id)
-                ->first();
-        }
-
         $studentApplication->update([
-            'department_application_step_id' => $departmentStep?->id,
+            'workflow_step_id' => $step?->id,
         ]);
     }
 

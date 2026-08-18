@@ -5,7 +5,6 @@ use App\Enums\Shared\WorkflowStepEnum;
 use App\Models\Enrolments\ClassList;
 use App\Models\Institution\Course;
 use App\Models\Institution\Department;
-use App\Models\Institution\DepartmentApplicationStep;
 use App\Models\Institution\DepartmentCourse;
 use App\Models\Institution\DepartmentLevel;
 use App\Models\Institution\DepartmentLevelCourse;
@@ -106,10 +105,10 @@ if (! function_exists('createVerifiedStudentApplication')) {
             'attributes' => [],
         ]);
 
-        $acceptedDepartmentStep = resolveDepartmentApplicationStep($studentApplication, WorkflowStepEnum::ACCEPTED);
+        $acceptedStep = resolveWorkflowStep(WorkflowStepEnum::ACCEPTED);
 
         $studentApplication->update([
-            'department_application_step_id' => $acceptedDepartmentStep->id,
+            'workflow_step_id' => $acceptedStep->id,
         ]);
 
         return $studentApplication;
@@ -132,39 +131,28 @@ if (! function_exists('createBankCreditReceipt')) {
 }
 
 if (! function_exists('createEnrolledDepartmentStep')) {
-    function createEnrolledDepartmentStep(StudentApplication $studentApplication): DepartmentApplicationStep
+    function createEnrolledDepartmentStep(StudentApplication $studentApplication): WorkflowStep
     {
-        return resolveDepartmentApplicationStep($studentApplication, WorkflowStepEnum::ENROLLED);
+        return resolveWorkflowStep(WorkflowStepEnum::ENROLLED);
     }
 }
 
 if (! function_exists('createRejectedDepartmentStep')) {
-    function createRejectedDepartmentStep(StudentApplication $studentApplication): DepartmentApplicationStep
+    function createRejectedDepartmentStep(StudentApplication $studentApplication): WorkflowStep
     {
-        return resolveDepartmentApplicationStep($studentApplication, WorkflowStepEnum::REJECTED);
+        return resolveWorkflowStep(WorkflowStepEnum::REJECTED);
     }
 }
 
-if (! function_exists('resolveDepartmentApplicationStep')) {
-    function resolveDepartmentApplicationStep(StudentApplication $studentApplication, WorkflowStepEnum $workflowStep): DepartmentApplicationStep
+if (! function_exists('resolveWorkflowStep')) {
+    function resolveWorkflowStep(WorkflowStepEnum $workflowStep): WorkflowStep
     {
-        $step = WorkflowStep::query()->firstOrCreate(
+        return WorkflowStep::query()->firstOrCreate(
             ['slug' => $workflowStep->slug()],
             [
                 'name' => $workflowStep->name(),
                 'description' => $workflowStep->description(),
                 'position' => $workflowStep->position(),
-            ]
-        );
-
-        return DepartmentApplicationStep::query()->firstOrCreate(
-            [
-                'tenant_id' => $studentApplication->tenant_id,
-                'institution_department_id' => $studentApplication->institution_department_id,
-                'workflow_step_id' => $step->id,
-            ],
-            [
-                'position' => $step->position,
             ]
         );
     }

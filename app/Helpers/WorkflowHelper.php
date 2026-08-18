@@ -2,31 +2,28 @@
 
 namespace App\Helpers;
 
-use App\Models\Institution\DepartmentApplicationStep;
+use App\Models\Shared\WorkflowStep;
 use Illuminate\Database\Eloquent\Collection;
 
 class WorkflowHelper
 {
-    /**
-     * Get a step by its position.
-    */
-    public static function getDepartmentApplicationStepByPosition(int $departmentId, int $position): ?DepartmentApplicationStep
+    public static function getStepByPosition(int $position): ?WorkflowStep
     {
-        return DepartmentApplicationStep::where('institution_department_id', $departmentId)->where('position', $position)->first();
+        return WorkflowStep::query()->where('position', $position)->first();
     }
 
-    public static function getAllPendingSteps(int $departmentId, int $currentPosition): Collection
+    public static function getAllPendingSteps(int $currentPosition): Collection
     {
-        return DepartmentApplicationStep::where('institution_department_id', $departmentId)->where('position' , '>', $currentPosition)->get();
+        return WorkflowStep::query()->where('position', '>', $currentPosition)->orderBy('position')->get();
     }
 
-     public static function getAllSteps(int $departmentId): Collection
+    public static function getAllSteps(): Collection
     {
-        return DepartmentApplicationStep::where('institution_department_id', $departmentId)->get();
+        return WorkflowStep::query()->orderBy('position')->get();
     }
 
-    public static function getMaxStep(int $departmentId): ?DepartmentApplicationStep
+    public static function getMaxStep(): ?WorkflowStep
     {
-        return DepartmentApplicationStep::where('institution_department_id', $departmentId)->orderByDesc('position')->first();
+        return WorkflowStep::query()->orderByDesc('position')->first();
     }
 }

@@ -105,7 +105,7 @@ it('prefers enrolled programmes over accepted when deduplicating by student', fu
 
     $enrolledProgram = createVerifiedStudentApplication('APP-DEDUP');
     $enrolledStep = createEnrolledDepartmentStep($enrolledProgram);
-    $enrolledProgram->update(['department_application_step_id' => $enrolledStep->id]);
+    $enrolledProgram->update(['workflow_step_id' => $enrolledStep->id]);
 
     $enrolledDepartmentLevelCourse = DepartmentLevelCourse::query()
         ->where('department_level_id', $enrolledProgram->department_level_id)
@@ -152,7 +152,7 @@ it('matches application export row count with the export query count', function 
 
     $enrolledProgram = createVerifiedStudentApplication('APP-COUNT');
     $enrolledStep = createEnrolledDepartmentStep($enrolledProgram);
-    $enrolledProgram->update(['department_application_step_id' => $enrolledStep->id]);
+    $enrolledProgram->update(['workflow_step_id' => $enrolledStep->id]);
 
     createAdditionalStudentApplicationForStudent(
         $enrolledProgram->student()->firstOrFail(),
@@ -248,13 +248,7 @@ function createAdditionalStudentApplicationForStudent(
         'status' => 'active',
     ]);
 
-    $departmentStep = resolveDepartmentApplicationStep(
-        StudentApplication::query()->make([
-            'tenant_id' => $template->tenant_id,
-            'institution_department_id' => $institutionDepartment->id,
-        ]),
-        $workflowStep,
-    );
+    $departmentStep = resolveWorkflowStep($workflowStep);
 
     return StudentApplication::query()->create([
         'tenant_id' => $template->tenant_id,
@@ -265,6 +259,6 @@ function createAdditionalStudentApplicationForStudent(
         'intake_period_id' => $template->intake_period_id,
         'mode_of_study_id' => $template->mode_of_study_id,
         'application_tracking_number' => 'APP-'.strtoupper(str()->random(8)),
-        'department_application_step_id' => $departmentStep->id,
+        'workflow_step_id' => $departmentStep->id,
     ]);
 }

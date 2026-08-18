@@ -1,22 +1,20 @@
 <?php
 
-use App\Enums\Rbac\RoleEnum;
 use App\Enums\Institution\IntakePeriodStatusEnum;
+use App\Enums\Rbac\RoleEnum;
 use App\Enums\Shared\ClassListTypeEnum;
 use App\Enums\Shared\FeeTypeEnum;
 use App\Enums\Shared\WorkflowStepEnum;
 use App\Enums\Students\ApplicationFeeStatusEnum;
-use App\Models\Rbac\Role;
 use App\Models\Enrolments\ClassList;
-use App\Models\Institution\DepartmentApplicationStep;
-use App\Models\Institution\IntakePeriod;
 use App\Models\Institution\Level;
 use App\Models\Ledgers\Ledger;
+use App\Models\Rbac\Role;
 use App\Models\Shared\Address;
 use App\Models\Shared\Contact;
+use App\Models\Shared\FeeType;
 use App\Models\Shared\NextOfKin;
 use App\Models\Shared\Relationship;
-use App\Models\Shared\FeeType;
 use App\Models\Shared\WorkflowStep;
 use App\Models\Students\ApplicationFee;
 use App\Models\Students\Student;
@@ -330,13 +328,6 @@ test('continue in class page is accessible for eligible student', function () {
         $this->markTestSkipped('Institution program structure not seeded.');
     }
 
-    $departmentStep = DepartmentApplicationStep::query()->firstOrCreate([
-        'institution_department_id' => $institutionDepartmentId,
-        'workflow_step_id' => $acceptedStep->id,
-    ], [
-        'position' => 1,
-    ]);
-
     $application = StudentApplication::query()->create([
         'tenant_id' => $student->tenant_id,
         'student_id' => $student->id,
@@ -345,7 +336,7 @@ test('continue in class page is accessible for eligible student', function () {
         'department_level_id' => $departmentLevelId,
         'department_course_id' => $departmentCourseId,
         'mode_of_study_id' => $modeOfStudyId,
-        'department_application_step_id' => $departmentStep->id,
+        'workflow_step_id' => $acceptedStep->id,
     ]);
 
     ClassList::query()->create([
@@ -377,13 +368,6 @@ test('returning student continuation rejects mismatched student number', functio
         $this->markTestSkipped('Institution program structure not seeded.');
     }
 
-    $departmentStep = DepartmentApplicationStep::query()->firstOrCreate([
-        'institution_department_id' => $institutionDepartmentId,
-        'workflow_step_id' => $acceptedStep->id,
-    ], [
-        'position' => 1,
-    ]);
-
     $application = StudentApplication::query()->create([
         'tenant_id' => $student->tenant_id,
         'student_id' => $student->id,
@@ -392,7 +376,7 @@ test('returning student continuation rejects mismatched student number', functio
         'department_level_id' => $departmentLevelId,
         'department_course_id' => $departmentCourseId,
         'mode_of_study_id' => $modeOfStudyId,
-        'department_application_step_id' => $departmentStep->id,
+        'workflow_step_id' => $acceptedStep->id,
     ]);
 
     ClassList::query()->create([

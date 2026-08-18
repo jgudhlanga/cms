@@ -5,18 +5,13 @@ namespace App\Http\Controllers\Institution\DocumentTemplates;
 use App\DTO\DocumentTemplates\DocumentTemplateDto;
 use App\Enums\Shared\FeeTypeEnum;
 use App\Enums\Shared\IdTypeEnum;
-use App\Enums\Shared\WorkflowStepEnum;
 use App\Http\Controllers\Controller;
-use App\Http\Filters\Shared\SharedNameFilter;
-use App\Http\Requests\DocumentTemplates\DocumentTemplateRequest;
-use App\Http\Resources\DocumentTemplates\DocumentTemplateResource;
-use App\Models\Institution\DepartmentApplicationStep;
 use App\Models\Institution\DocumentTemplate;
 use App\Models\Institution\FeeStructure;
 use App\Models\Shared\FeeType;
-use App\Models\Shared\WorkflowStep;
 use App\Models\Students\StudentApplication;
 use App\Repositories\Institution\interface\IDocumentTemplateRepository;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -24,14 +19,10 @@ use Inertia\Response;
 use Spatie\MediaLibrary\MediaCollections\Exceptions\FileDoesNotExist;
 use Spatie\MediaLibrary\MediaCollections\Exceptions\FileIsTooBig;
 use Throwable;
-use Barryvdh\DomPDF\Facade\Pdf;
-
 
 class DocumentTemplateController extends Controller
 {
-    public function __construct(protected IDocumentTemplateRepository $repository)
-    {
-    }
+    public function __construct(protected IDocumentTemplateRepository $repository) {}
 
     /**
      * @throws AuthorizationException
@@ -40,6 +31,7 @@ class DocumentTemplateController extends Controller
     {
         $this->authorize('viewAny', DocumentTemplate::class);
         $documentTemplates = DocumentTemplateResource::collection($this->repository->allFilter(['*'], $filters));
+
         return Inertia::render('institution/document-templates/Index', [
             'documentTemplates' => $documentTemplates,
             'filters' => request()->only(['search', 'trashed']),
@@ -53,6 +45,7 @@ class DocumentTemplateController extends Controller
     public function create(): Response
     {
         $this->authorize('create', DocumentTemplate::class);
+
         return Inertia::render('institution/document-templates/Create');
     }
 
@@ -67,6 +60,7 @@ class DocumentTemplateController extends Controller
             $template = $this->repository->create(DocumentTemplateDto::fromDocumentTemplateRequest($request));
             $this->uploadLogos($request, $template);
         });
+
         return to_route('document-templates.index');
     }
 
@@ -84,6 +78,7 @@ class DocumentTemplateController extends Controller
         $this->authorize('update', $documentTemplate);
         $documentTemplate->loadMissing(['documentType', 'headerLogoOne', 'headerLogoTwo']);
         $documentTemplate = DocumentTemplateResource::make($documentTemplate);
+
         return Inertia::render('institution/document-templates/Edit', compact('documentTemplate'));
     }
 
@@ -98,6 +93,7 @@ class DocumentTemplateController extends Controller
             $template = $this->repository->update($documentTemplate, DocumentTemplateDto::fromDocumentTemplateRequest($request));
             $this->uploadLogos($request, $template);
         });
+
         return to_route('document-templates.index');
     }
 
@@ -156,17 +152,16 @@ class DocumentTemplateController extends Controller
         $feeStructure = FeeStructure::where('tenant_id', $studentApplication->tenant_id)->where('level_id', $studentApplication?->departmentLevel?->level?->id)
             ->where('mode_of_study_id', $studentApplication?->modeOfStudy->id)->where('fee_type_id', $tuitionFeeType?->id)->first();
         $tuition = $feeStructure?->local_fca_amount ?? 0;
-        $nameParts = array_filter([$user->first_name,$user->middle_name,$user->last_name]);
-        $fileName =  implode('_', $nameParts).'_offer_letter_' . time() . '.pdf';
+        $nameParts = array_filter([$user->first_name, $user->middle_name, $user->last_name]);
+        $fileName = implode('_', $nameParts).'_offer_letter_'.time().'.pdf';
         $pdf = Pdf::loadView('students.offer-letter',
             compact('documentTemplate', 'studentName', 'studentIdNumber', 'studentNumber',
                 'intakePeriod', 'department', 'level', 'course', 'modeOfStudy', 'tuition'));
+
         return $pdf->stream($fileName);
     }
 
     /**
-     * @param DocumentTemplateRequest $request
-     * @param DocumentTemplate $template
      * @throws FileDoesNotExist
      * @throws FileIsTooBig
      */

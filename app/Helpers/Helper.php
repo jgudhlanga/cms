@@ -279,22 +279,15 @@ class Helper
 
     public static function initializeProgramWorkflow($program): void
     {
-        $stepOne = WorkflowHelper::getDepartmentApplicationStepByPosition(
-            $program->institution_department_id,
-            1
-        );
-
-        $stepTwo = WorkflowHelper::getDepartmentApplicationStepByPosition(
-            $program->institution_department_id,
-            2
-        );
+        $stepOne = WorkflowHelper::getStepByPosition(1);
+        $stepTwo = WorkflowHelper::getStepByPosition(2);
 
         if ($stepOne) {
-            $program->update(['department_application_step_id' => $stepOne->id]);
+            $program->update(['workflow_step_id' => $stepOne->id]);
         }
 
         if ($stepTwo) {
-            $program->update(['department_application_step_id' => $stepTwo->id]);
+            $program->update(['workflow_step_id' => $stepTwo->id]);
         }
     }
 

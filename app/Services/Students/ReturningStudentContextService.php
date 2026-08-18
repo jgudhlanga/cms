@@ -260,7 +260,7 @@ class ReturningStudentContextService
     {
         $application = $student->applications()
             ->whereNull('student_applications.deleted_at')
-            ->whereHas('departmentWorkflowStep.workflowStep', function ($query): void {
+            ->whereHas('workflowStep', function ($query): void {
                 $query->where('slug', WorkflowStepEnum::ACCEPTED->slug());
             })
             ->whereHas('classList', function ($query): void {

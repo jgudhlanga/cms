@@ -155,7 +155,7 @@ export const useDepartmentCourses = (isEditingProgram?: boolean) => {
                 header: trans_choice('trans.status', 1),
                 accessorKey: 'status',
                 cell: ({ row }: { row: { original: Enrolment } }) => {
-                    return row.original.relationships?.departmentWorkflowStep?.attributes?.workflowStep ?? '---';
+                    return row.original.relationships?.workflowStep?.attributes?.name ?? '---';
                 },
             },
             {

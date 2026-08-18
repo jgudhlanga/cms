@@ -60,11 +60,6 @@ class InstitutionDepartment extends Model
         return $this->hasOne(InstitutionDepartmentMetadata::class, 'institution_department_id');
     }
 
-    public function applicationSteps(): HasMany
-    {
-        return $this->hasMany(DepartmentApplicationStep::class, 'institution_department_id');
-    }
-
     public function intakeClassSizes(): HasMany
     {
         return $this->hasMany(DepartmentIntakeClassSize::class, 'institution_department_id');

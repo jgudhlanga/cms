@@ -6,7 +6,6 @@ use App\Jobs\Enrolments\SendOfferLetterJob;
 use App\Models\AcademicCalendars\AcademicCalendar;
 use App\Models\AcademicCalendars\Semester;
 use App\Models\Enrolments\ClassList;
-use App\Models\Institution\DepartmentApplicationStep;
 use App\Models\Rbac\Permission;
 use App\Models\Shared\WorkflowStep;
 use App\Models\Students\StudentEnrolment;
@@ -123,7 +122,7 @@ it('elevates a verified student to final class even when verification flags are 
     $enrolment = StudentEnrolment::query()->where('student_application_id', $studentApplication->id)->first();
 
     expect($classList?->type)->toBe(ClassListTypeEnum::FINAL)
-        ->and($studentApplication->fresh()->department_application_step_id)->toBe($enrolledStep->id)
+        ->and($studentApplication->fresh()->workflow_step_id)->toBe($enrolledStep->id)
         ->and($enrolment)->not->toBeNull()
         ->and($classList?->attributes['passport_photos_confirmed'])->toBeTrue()
         ->and($classList?->attributes['original_birth_certificate_confirmed'])->toBeTrue()
@@ -134,7 +133,7 @@ it('elevates a verified student to final class even when verification flags are 
 it('rejects verified confirmation when document flags are missing', function () {
     $studentApplication = createVerifiedStudentApplication('CL-CONFIRM-002');
     $user = actingAsClassListStaff((int) $studentApplication->tenant_id);
-    $acceptedStepId = $studentApplication->department_application_step_id;
+    $acceptedStepId = $studentApplication->workflow_step_id;
 
     $this->actingAs($user)
         ->from(route('enrolments.confirm', $studentApplication))
@@ -148,7 +147,7 @@ it('rejects verified confirmation when document flags are missing', function () 
     $classList = ClassList::query()->where('student_application_id', $studentApplication->id)->first();
 
     expect($classList?->type)->toBe(ClassListTypeEnum::VERIFIED)
-        ->and($studentApplication->fresh()->department_application_step_id)->toBe($acceptedStepId)
+        ->and($studentApplication->fresh()->workflow_step_id)->toBe($acceptedStepId)
         ->and(StudentEnrolment::query()->where('student_application_id', $studentApplication->id)->exists())->toBeFalse();
 });
 
@@ -191,7 +190,7 @@ it('verifies a provisional student when identity names and disability are confir
     ClassList::query()->where('student_application_id', $studentApplication->id)->update([
         'type' => ClassListTypeEnum::PROVISIONAL->value,
     ]);
-    $acceptedStep = resolveDepartmentApplicationStep($studentApplication, WorkflowStepEnum::ACCEPTED);
+    $acceptedStep = resolveWorkflowStep(WorkflowStepEnum::ACCEPTED);
 
     $this->actingAs($user)
         ->from(route('enrolments.verify', $studentApplication))
@@ -203,7 +202,7 @@ it('verifies a provisional student when identity names and disability are confir
     $classList = ClassList::query()->where('student_application_id', $studentApplication->id)->first();
 
     expect($classList?->type)->toBe(ClassListTypeEnum::VERIFIED)
-        ->and($studentApplication->fresh()->department_application_step_id)->toBe($acceptedStep->id);
+        ->and($studentApplication->fresh()->workflow_step_id)->toBe($acceptedStep->id);
 
     Queue::assertPushed(SendOfferLetterJob::class);
 });
@@ -232,23 +231,11 @@ it('flashes the enrolment resolution exception message when academic calendar is
         ->and(StudentEnrolment::query()->where('student_application_id', $studentApplication->id)->exists())->toBeFalse();
 });
 
-it('flashes the missing department enrolled step cause instead of a generic rollback message', function () {
+it('flashes the missing enrolled workflow step cause instead of a generic rollback message', function () {
     $studentApplication = createVerifiedStudentApplication('CL-CONFIRM-NO-STEP');
     $user = actingAsClassListStaff((int) $studentApplication->tenant_id);
 
-    WorkflowStep::query()->firstOrCreate(
-        ['slug' => WorkflowStepEnum::ENROLLED->slug()],
-        [
-            'name' => WorkflowStepEnum::ENROLLED->name(),
-            'description' => WorkflowStepEnum::ENROLLED->description(),
-            'position' => WorkflowStepEnum::ENROLLED->position(),
-        ],
-    );
-
-    DepartmentApplicationStep::query()
-        ->where('institution_department_id', $studentApplication->institution_department_id)
-        ->whereHas('workflowStep', fn ($query) => $query->where('slug', WorkflowStepEnum::ENROLLED->slug()))
-        ->delete();
+    WorkflowStep::query()->where('slug', WorkflowStepEnum::ENROLLED->slug())->delete();
 
     $this->actingAs($user)
         ->from(route('enrolments.confirm', $studentApplication))
@@ -260,7 +247,7 @@ it('flashes the missing department enrolled step cause instead of a generic roll
     $error = session('error');
 
     expect($error)->toBeString()
-        ->and($error)->toContain('Department application step for workflow "enrolled" was not found')
+        ->and($error)->toContain('Workflow step "enrolled" was not found')
         ->and($error)->not->toContain('All changes have been rolled back')
         ->and(ClassList::query()->where('student_application_id', $studentApplication->id)->value('type'))
         ->toBe(ClassListTypeEnum::VERIFIED)

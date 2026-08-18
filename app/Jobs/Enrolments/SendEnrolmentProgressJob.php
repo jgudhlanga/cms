@@ -7,7 +7,6 @@ use App\Enums\Shared\WorkflowStepEnum;
 use App\Mail\Enrolments\ProvisionalClassListMail;
 use App\Mail\Enrolments\RejectedApplicationMail;
 use App\Mail\Enrolments\WaitingClassListMail;
-use App\Models\Institution\DepartmentApplicationStep;
 use App\Models\Shared\WorkflowStep;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -60,8 +59,7 @@ class SendEnrolmentProgressJob implements ShouldQueue
                 default => null,
             };
             $step = WorkflowStep::where('slug', $type)->first();
-            $departmentStep = DepartmentApplicationStep::where('institution_department_id', $this->institutionDepartmentId)->where('workflow_step_id', $step->id)->first();
-            DB::table('student_applications')->where('id', $details->application_id)->update(['department_application_step_id' => $departmentStep->id]);
+            DB::table('student_applications')->where('id', $details->application_id)->update(['workflow_step_id' => $step->id]);
             Mail::to($email)->send($mailable);
         }
     }

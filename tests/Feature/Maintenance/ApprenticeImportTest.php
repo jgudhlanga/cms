@@ -20,8 +20,8 @@ use App\Models\Shared\IdType;
 use App\Models\Shared\MaritalStatus;
 use App\Models\Shared\Title;
 use App\Models\Students\Student;
-use App\Models\Students\StudentApprentice;
 use App\Models\Students\StudentApplication;
+use App\Models\Students\StudentApprentice;
 use App\Models\Students\StudentEnrolment;
 use App\Models\Students\StudentEnrolmentStatus;
 use App\Models\Users\User;
@@ -182,11 +182,11 @@ function createApprenticeImportStudent(
     ]);
 
     if ($options['createAcceptedWorkflow'] ?? true) {
-        $acceptedStep = resolveDepartmentApplicationStep($studentApplication, WorkflowStepEnum::ACCEPTED);
+        $acceptedStep = resolveWorkflowStep(WorkflowStepEnum::ACCEPTED);
         $studentApplication->update([
-            'department_application_step_id' => $acceptedStep->id,
+            'workflow_step_id' => $acceptedStep->id,
         ]);
-        resolveDepartmentApplicationStep($studentApplication, WorkflowStepEnum::ENROLLED);
+        resolveWorkflowStep(WorkflowStepEnum::ENROLLED);
     }
 
     if ($options['createClassList'] ?? true) {
@@ -722,7 +722,7 @@ it('moves verified students to final class and creates apprentice records', func
         ->first();
 
     $application = $created['application']->fresh();
-    $enrolledStep = resolveDepartmentApplicationStep($application, WorkflowStepEnum::ENROLLED);
+    $enrolledStep = resolveWorkflowStep(WorkflowStepEnum::ENROLLED);
 
     expect($classList)->not->toBeNull()
         ->and($classList->type)->toBe(ClassListTypeEnum::FINAL)
@@ -730,7 +730,7 @@ it('moves verified students to final class and creates apprentice records', func
         ->and($apprentice)->not->toBeNull()
         ->and($apprentice->employer)->toBe('RASM')
         ->and($apprentice->apprentice_number)->toBe('2500178J')
-        ->and($application->department_application_step_id)->toBe($enrolledStep->id);
+        ->and($application->workflow_step_id)->toBe($enrolledStep->id);
 });
 
 it('creates apprentice records for already final students without error', function (): void {

@@ -36,7 +36,7 @@ function intakeGroupSortKey(application: Enrolment): string {
 }
 
 function applicationStatus(application: Enrolment): string {
-    return application.relationships?.departmentWorkflowStep?.attributes?.workflowStep ?? '';
+    return application.relationships?.workflowStep?.attributes?.name ?? '';
 }
 
 export function sortApplicationsByStatusPriority(applications: Enrolment[]): Enrolment[] {

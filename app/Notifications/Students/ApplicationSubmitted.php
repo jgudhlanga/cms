@@ -2,7 +2,7 @@
 
 namespace App\Notifications\Students;
 
-use App\Models\Institution\DepartmentApplicationStep;
+use App\Models\Shared\WorkflowStep;
 use App\Models\Students\StudentApplication;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -16,12 +16,11 @@ class ApplicationSubmitted extends Notification
      * Create a new notification instance.
      */
     public function __construct(
-        public string                    $name,
-        public StudentApplication            $program,
-        public DepartmentApplicationStep $newStep,
-        public DepartmentApplicationStep $oldStep
-    )
-    {
+        public string $name,
+        public StudentApplication $program,
+        public WorkflowStep $newStep,
+        public WorkflowStep $oldStep
+    ) {
         //
     }
 
@@ -41,9 +40,9 @@ class ApplicationSubmitted extends Notification
             ->subject('Application Status: Update')
             ->greeting("Hello {$this->name},")
             ->line("The status of your application with reference: **{$this->program->application_tracking_number}** has changed.")
-            ->line("**Previous Status:** {$this->oldStep->workflowStep->name}")
-            ->line("**New Status:** {$this->newStep->workflowStep->name}")
-            ->line("You can track the progress of your application by logging into your student portal.")
+            ->line("**Previous Status:** {$this->oldStep->name}")
+            ->line("**New Status:** {$this->newStep->name}")
+            ->line('You can track the progress of your application by logging into your student portal.')
             ->action('Track your application', url(route('portal.application.view', $this->program->id)))
             ->line('If you have any questions, please contact support.');
     }
@@ -56,7 +55,7 @@ class ApplicationSubmitted extends Notification
     public function toArray(object $notifiable): array
     {
         return [
-            #
+            //
         ];
     }
 }

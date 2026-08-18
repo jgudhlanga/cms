@@ -213,8 +213,7 @@ class ApplicationMetricsService
             $applications = $this->studentApplicationsBaseQuery($intakePeriod->id)->count();
 
             $offersMade = $this->studentApplicationsBaseQuery($intakePeriod->id)
-                ->join('department_application_steps', 'student_applications.department_application_step_id', '=', 'department_application_steps.id')
-                ->join('workflow_steps', 'department_application_steps.workflow_step_id', '=', 'workflow_steps.id')
+                ->join('workflow_steps', 'student_applications.workflow_step_id', '=', 'workflow_steps.id')
                 ->whereIn('workflow_steps.slug', [
                     WorkflowStepEnum::ACCEPTED->slug(),
                     WorkflowStepEnum::ENROLLED->slug(),
@@ -222,8 +221,7 @@ class ApplicationMetricsService
                 ->count();
 
             $waitlisted = $this->studentApplicationsBaseQuery($intakePeriod->id)
-                ->join('department_application_steps', 'student_applications.department_application_step_id', '=', 'department_application_steps.id')
-                ->join('workflow_steps', 'department_application_steps.workflow_step_id', '=', 'workflow_steps.id')
+                ->join('workflow_steps', 'student_applications.workflow_step_id', '=', 'workflow_steps.id')
                 ->where('workflow_steps.slug', WorkflowStepEnum::WAITLISTED->slug())
                 ->count();
 

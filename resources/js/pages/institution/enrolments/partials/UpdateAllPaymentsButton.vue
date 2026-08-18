@@ -5,7 +5,7 @@ import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
 import { IconName } from '@/enums/icons';
 import { icons } from '@/lib/icons';
-import { DepartmentApplicationStep } from '@/types/department-meta-data';
+import { WorkflowStep } from '@/types/settings';
 import { BulkUpdatePaymentStatus, Enrolment } from '@/types/enrolments';
 import { computed } from 'vue';
 import BaseButton from '../../../../components/core/button/BaseButton.vue';
@@ -22,9 +22,9 @@ const { params, departmentId, enrolments } = props;
 const { registrationFeePaymentRequired, tuitionFeePaymentRequired, bulkUpdatePaymentStatus } = useStudentApplications();
 
 const feeType = computed(() => {
-    if (registrationFeePaymentRequired(params.step as DepartmentApplicationStep)) {
+    if (registrationFeePaymentRequired(params.step as WorkflowStep)) {
         return 'registration';
-    } else if (tuitionFeePaymentRequired(params.step as DepartmentApplicationStep)) {
+    } else if (tuitionFeePaymentRequired(params.step as WorkflowStep)) {
         return 'tuition';
     }
     return null;

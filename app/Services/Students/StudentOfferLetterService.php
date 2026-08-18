@@ -6,7 +6,6 @@ namespace App\Services\Students;
 
 use App\Enums\Shared\ClassListTypeEnum;
 use App\Enums\Shared\WorkflowStepEnum;
-use App\Models\Institution\DepartmentApplicationStep;
 use App\Models\Shared\WorkflowStep;
 use App\Models\Students\StudentApplication;
 use Carbon\CarbonInterface;
@@ -22,7 +21,7 @@ class StudentOfferLetterService
     {
         $application->loadMissing(['classList']);
 
-        $acceptedStepId = $this->acceptedDepartmentStepId($application);
+        $acceptedStepId = $this->acceptedWorkflowStepId();
         if ($acceptedStepId !== null) {
             $activity = Activity::query()
                 ->where('subject_type', $application->getMorphClass())
@@ -33,7 +32,7 @@ class StudentOfferLetterService
                     $attributes = $activity->properties['attributes'] ?? null;
 
                     return is_array($attributes)
-                        && (int) ($attributes['department_application_step_id'] ?? 0) === $acceptedStepId;
+                        && (int) ($attributes['workflow_step_id'] ?? 0) === $acceptedStepId;
                 });
 
             if ($activity instanceof Activity && $activity->created_at !== null) {
@@ -50,10 +49,10 @@ class StudentOfferLetterService
 
     public function isDownloadable(StudentApplication $application): bool
     {
-        $application->loadMissing(['classList', 'departmentWorkflowStep.workflowStep']);
+        $application->loadMissing(['classList', 'workflowStep']);
 
         $classListType = $application->classList?->type?->value ?? $application->classList?->type;
-        $status = strtolower((string) $application->departmentWorkflowStep?->workflowStep?->name);
+        $status = strtolower((string) $application->workflowStep?->name);
 
         return in_array($classListType, [
             ClassListTypeEnum::VERIFIED->value,
@@ -69,21 +68,12 @@ class StudentOfferLetterService
         return $this->intakePeriodResolver->isCurrentOfferIntake($application);
     }
 
-    private function acceptedDepartmentStepId(StudentApplication $application): ?int
+    private function acceptedWorkflowStepId(): ?int
     {
         $workflowStepId = WorkflowStep::query()
             ->where('slug', WorkflowStepEnum::ACCEPTED->slug())
             ->value('id');
 
-        if ($workflowStepId === null) {
-            return null;
-        }
-
-        $stepId = DepartmentApplicationStep::query()
-            ->where('institution_department_id', $application->institution_department_id)
-            ->where('workflow_step_id', $workflowStepId)
-            ->value('id');
-
-        return $stepId !== null ? (int) $stepId : null;
+        return $workflowStepId !== null ? (int) $workflowStepId : null;
     }
 }

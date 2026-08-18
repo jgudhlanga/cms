@@ -136,7 +136,7 @@ class StudentPortalDashboardService
         $programs = StudentApplication::query()
             ->where('student_id', $student->id)
             ->with([
-                'departmentWorkflowStep.workflowStep',
+                'workflowStep',
                 'departmentCourse.course',
             ])
             ->get();
@@ -148,7 +148,7 @@ class StudentPortalDashboardService
         ];
 
         $pendingPrograms = $programs->filter(function (StudentApplication $program) use ($terminalSlugs): bool {
-            $slug = Str::slug((string) ($program->departmentWorkflowStep?->workflowStep?->name ?? ''));
+            $slug = Str::slug((string) ($program->workflowStep?->name ?? ''));
 
             return ! in_array($slug, $terminalSlugs, true);
         });
@@ -174,7 +174,7 @@ class StudentPortalDashboardService
                 break;
             }
 
-            $stepName = $program->departmentWorkflowStep?->workflowStep?->name ?? __('students.application_in_progress');
+            $stepName = $program->workflowStep?->name ?? __('students.application_in_progress');
             $courseName = $program->departmentCourse?->course?->name ?? __('students.application');
 
             $activities[] = [

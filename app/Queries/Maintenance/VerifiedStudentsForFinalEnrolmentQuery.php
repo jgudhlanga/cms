@@ -31,7 +31,7 @@ class VerifiedStudentsForFinalEnrolmentQuery
                 fn (Builder $query) => $query->where('type', ClassListTypeEnum::VERIFIED->value),
             )
             ->whereHas(
-                'departmentWorkflowStep.workflowStep',
+                'workflowStep',
                 fn (Builder $query) => $query->where('name', WorkflowStepEnum::ACCEPTED->name()),
             );
     }

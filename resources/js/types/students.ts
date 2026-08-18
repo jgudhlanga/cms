@@ -1,5 +1,6 @@
-import { DepartmentApplicationStep, DepartmentCourse, DepartmentLevel } from '@/types/department-meta-data';
+import { DepartmentCourse, DepartmentLevel } from '@/types/department-meta-data';
 import { CourseSyllabus, InstitutionDepartment } from '@/types/institution';
+import { WorkflowStep } from '@/types/settings';
 import { User } from '@/types/users';
 import { SelectOption } from '@/types/utils';
 import type { Address, Contact } from '@/types/shared';
@@ -266,7 +267,7 @@ export type StudentApplication = {
         institutionDepartment?: InstitutionDepartment;
         departmentLevel?: DepartmentLevel;
         departmentCourse?: DepartmentCourse;
-        departmentWorkflowStep?: DepartmentApplicationStep;
+        workflowStep?: WorkflowStep;
     };
 };
 

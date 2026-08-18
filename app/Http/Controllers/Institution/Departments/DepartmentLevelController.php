@@ -2,35 +2,33 @@
 
 namespace App\Http\Controllers\Institution\Departments;
 
+use App\DTO\Institution\DepartmentLevelDto;
+use App\DTO\Institution\DepartmentLevelRequirementsDto;
 use App\Helpers\DropdownHelper;
 use App\Helpers\Helper;
-use App\Http\Resources\Enrolments\EnrolmentGroupResource;
-use App\Models\Institution\DepartmentCourse;
-use App\Services\DepartmentEnrolmentService;
-use App\DTO\Institution\{DepartmentLevelDto, DepartmentLevelRequirementsDto};
+use App\Helpers\WorkflowHelper;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Institution\{DepartmentLevelRequest, DepartmentLevelRequirementRequest};
-use App\Http\Resources\Institution\{
-    DepartmentLevelResource,
-    InstitutionDepartmentResource,
-    DepartmentApplicationStepResource,
-    DepartmentLevelRequirementResource,
-    IntakePeriodResource,
-    ModeOfStudyResource
-};
+use App\Http\Requests\Institution\DepartmentLevelRequest;
+use App\Http\Requests\Institution\DepartmentLevelRequirementRequest;
+use App\Http\Resources\Enrolments\EnrolmentGroupResource;
+use App\Http\Resources\Institution\DepartmentLevelRequirementResource;
+use App\Http\Resources\Institution\DepartmentLevelResource;
+use App\Http\Resources\Institution\InstitutionDepartmentResource;
+use App\Http\Resources\Institution\IntakePeriodResource;
+use App\Http\Resources\Institution\ModeOfStudyResource;
+use App\Http\Resources\Shared\WorkflowStepResource;
+use App\Models\Institution\DepartmentCourse;
 use App\Models\Institution\DepartmentLevel;
 use App\Models\Institution\InstitutionDepartment;
 use App\Repositories\Institution\interface\IDepartmentLevelRepository;
+use App\Services\DepartmentEnrolmentService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Inertia\Inertia;
 use Inertia\Response;
-use App\Helpers\WorkflowHelper;
 
 class DepartmentLevelController extends Controller
 {
-    public function __construct(protected IDepartmentLevelRepository $repository, protected DepartmentEnrolmentService $departmentEnrolmentService)
-    {
-    }
+    public function __construct(protected IDepartmentLevelRepository $repository, protected DepartmentEnrolmentService $departmentEnrolmentService) {}
 
     /**
      * @throws AuthorizationException
@@ -42,6 +40,7 @@ class DepartmentLevelController extends Controller
         $institutionDepartment = InstitutionDepartmentResource::make($departmentLevel->institutionDepartment);
         $levels = DepartmentLevelResource::collection($institutionDepartment->departmentLevels);
         $requirements = $departmentLevel->requirement ? DepartmentLevelRequirementResource::make($departmentLevel->requirement) : null;
+
         return Inertia::render('institution/departments/DepartmentLevelRequirements',
             compact('departmentLevel', 'institutionDepartment', 'levels', 'requirements'));
     }
@@ -132,7 +131,7 @@ class DepartmentLevelController extends Controller
             'level' => DepartmentLevelResource::make($departmentLevel),
             'intakePeriod' => IntakePeriodResource::make($intakePeriod),
             'modeOfStudy' => ModeOfStudyResource::make($modeOfStudy),
-            'workflowSteps' => DepartmentApplicationStepResource::collection(WorkflowHelper::getAllSteps($institutionDepartment->id)),
+            'workflowSteps' => WorkflowStepResource::collection(WorkflowHelper::getAllSteps()),
             'classSize' => $courseId
                 ? $this->departmentEnrolmentService->getClassSize($institutionDepartment, $departmentLevel->id, $courseId, $intakePeriod->id, $modeOfStudy->id)
                 : 0,

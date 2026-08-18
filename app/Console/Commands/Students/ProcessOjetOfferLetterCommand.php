@@ -7,7 +7,6 @@ use App\Enums\Shared\WorkflowStepEnum;
 use App\Helpers\EnrolmentHelper;
 use App\Jobs\Enrolments\SendOfferLetterJob;
 use App\Models\Enrolments\ClassList;
-use App\Models\Institution\DepartmentApplicationStep;
 use App\Models\Institution\ModeOfStudy;
 use App\Models\Shared\WorkflowStep;
 use App\Models\Students\StudentApplication;
@@ -24,7 +23,7 @@ class ProcessOjetOfferLetterCommand extends Command
     public function handle(): void
     {
         $ojet = ModeOfStudy::where('name', ModeOfStudyEnum::OJET)->first();
-        if (!$ojet) {
+        if (! $ojet) {
             return;
         }
 
@@ -33,14 +32,15 @@ class ProcessOjetOfferLetterCommand extends Command
             WorkflowStepEnum::ACCEPTED->slug()
         )->first();
 
-        if (!$acceptedStep) {
+        if (! $acceptedStep) {
             $this->error('Accepted workflow step not found.');
+
             return;
         }
 
-        StudentApplication::with(['departmentWorkflowStep.workflowStep', 'student.user'])
+        StudentApplication::with(['workflowStep', 'student.user'])
             ->where('mode_of_study_id', $ojet->id)
-            ->whereHas('departmentWorkflowStep.workflowStep', function ($query) {
+            ->whereHas('workflowStep', function ($query) {
                 $query->whereNotIn('name', [
                     WorkflowStepEnum::ENROLLED,
                     WorkflowStepEnum::REJECTED,
@@ -76,18 +76,8 @@ class ProcessOjetOfferLetterCommand extends Command
                                 'student_number' => $studentNumber,
                                 'student_number_generated' => true,
                             ]);
-                            $departmentStep = DepartmentApplicationStep::where(
-                                'institution_department_id',
-                                $program->institution_department_id
-                            )->where(
-                                'workflow_step_id',
-                                $acceptedStep->id
-                            )->first();
-                            if (!$departmentStep) {
-                                throw new \Exception('Department step not found.');
-                            }
                             $program->update([
-                                'department_application_step_id' => $departmentStep->id
+                                'workflow_step_id' => $acceptedStep->id,
                             ]);
                             $user = $program->student->user;
                             SendOfferLetterJob::dispatch($user->full_name, $user->email, $program->id)->withoutDelay();

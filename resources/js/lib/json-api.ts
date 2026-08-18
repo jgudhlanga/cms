@@ -459,19 +459,14 @@ export function mapJsonApiStudentApplicationToEnrolment(resource: JsonApiResourc
         },
         relationships: {
             oLevelResults: [],
-            departmentWorkflowStep: {
-                type: 'department-application-step',
+            workflowStep: {
+                type: 'workflow-step',
                 id: '',
                 attributes: {
-                    institutionDepartmentId: '',
-                    workflowStepId: '',
-                    workflowStep: attributes.workflowStep ?? '',
+                    name: attributes.workflowStep ?? '',
                     slug: '',
-                    workflowStepDescription: '',
+                    description: '',
                     position: 0,
-                    createdAt: '',
-                    updatedAt: '',
-                    deletedAt: '',
                 },
             },
         },

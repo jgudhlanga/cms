@@ -7,12 +7,10 @@ import { buildFormOptions } from '@/lib/forms';
 import { hasAbility } from '@/lib/permissions';
 import { getIdParams } from '@/lib/utils';
 import HttpService from '@/services/http.service';
-import { PageProps } from '@/types';
-import { Role } from '@/types/rbac';
-import { DepartmentApplicationStep } from '@/types/department-meta-data';
 import { BulkApplicationApprovalParams, BulkUpdatePaymentStatusParams, Enrolment, PaymentProofPreview } from '@/types/enrolments';
 import { StudentApplication } from '@/types/students';
-import { InertiaForm, router, usePage } from '@inertiajs/vue3';
+import { WorkflowStep } from '@/types/settings';
+import { InertiaForm, router } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 
 export const useStudentApplications = () => {
@@ -59,7 +57,7 @@ export const useStudentApplications = () => {
                 accessorKey: 'applicationStatus',
                 meta: { align: 'center' },
                 cell: ({ row }: { row: { original: Enrolment } }) => {
-                    const step = row.original?.relationships?.departmentWorkflowStep?.attributes?.workflowStep ?? '';
+                    const step = row.original?.relationships?.workflowStep?.attributes?.name ?? '';
                     return actionButton({
                         title: step,
                         onClick: () => navigateTo(route('portal.application.view', row.original.id)),
@@ -114,7 +112,7 @@ export const useStudentApplications = () => {
         }
     };
 
-    const approveApplication = async (enrolment: Enrolment, nextStepId: string, currentStep: DepartmentApplicationStep) => {
+    const approveApplication = async (enrolment: Enrolment, nextStepId: string, currentStep: WorkflowStep) => {
         if (registrationFeePaymentRequired(currentStep) && !enrolment.attributes.registrationFeeConfirmed) {
             const applicationFeeRequiredMessage = () => trans('trans.application_fee_required');
             errorAlert(applicationFeeRequiredMessage());
@@ -131,7 +129,7 @@ export const useStudentApplications = () => {
         try {
             warningDialog(async () => {
                 await HttpService.post(
-                    route('students.approve-application', { student_application: enrolment.id.toString(), department_application_step: nextStepId }),
+                    route('students.approve-application', { student_application: enrolment.id.toString(), workflow_step: nextStepId }),
                     {},
                 );
                 successAlert(successMessage());
@@ -146,7 +144,7 @@ export const useStudentApplications = () => {
         institutionDepartmentId: string,
         params: BulkApplicationApprovalParams,
         enrolments: Enrolment[],
-        step: DepartmentApplicationStep,
+        step: WorkflowStep,
     ) => {
         if (!allRegistrationFeesPaid(enrolments) && registrationFeePaymentRequired(step)) {
             const applicationFeeRequiredMessage = () => trans('trans.all_application_fee_required_to_be_paid');
@@ -174,7 +172,7 @@ export const useStudentApplications = () => {
 
     const bulkUpdatePaymentStatus = async (
         institutionDepartmentId: string,
-        step: DepartmentApplicationStep,
+        step: WorkflowStep,
         enrolments: Enrolment[],
         params: BulkUpdatePaymentStatusParams,
     ) => {
@@ -193,7 +191,7 @@ export const useStudentApplications = () => {
         const errorMessage = () => trans('trans.bulk_payment_status_update_failure');
         const alertMessage = () =>
             trans('trans.mark_all_payment_as', {
-                step: step?.attributes?.workflowStep,
+                step: step?.attributes?.name,
                 as: params.field_value ? trans('trans.paid') : trans('trans.unpaid'),
             });
         try {
@@ -236,24 +234,24 @@ export const useStudentApplications = () => {
         }
     };
 
-    const registrationFeePaymentRequired = (step: DepartmentApplicationStep) => {
-        return step?.relationships?.metadata?.actions?.some((action) => action.action == 'verify-application-fee-payment-with-accounts');
+    const registrationFeePaymentRequired = (step: WorkflowStep) => {
+        return step?.attributes?.slug === 'registration-fee';
     };
 
-    const awaitApplicationPaymentProof = (step: DepartmentApplicationStep) => {
-        return step?.attributes?.slug == 'awaiting-application-fee-payment';
+    const awaitApplicationPaymentProof = (step: WorkflowStep) => {
+        return step?.attributes?.slug === 'registration-fee';
     };
 
-    const awaitTuitionPaymentProof = (step: DepartmentApplicationStep) => {
-        return step?.attributes?.slug == 'awaiting-tuition-fee-payment';
+    const awaitTuitionPaymentProof = (step: WorkflowStep) => {
+        return step?.attributes?.slug === 'awaiting-tuition-fee-payment';
     };
 
-    const tuitionFeePaymentRequired = (step: DepartmentApplicationStep) => {
-        return step?.relationships?.metadata?.actions?.some((action) => action.action == 'verify-tuition-fee-payment-with-accounts');
+    const tuitionFeePaymentRequired = (step: WorkflowStep) => {
+        return false;
     };
 
-    const proofOfPaymentRequired = (step: DepartmentApplicationStep) => {
-        return step?.relationships?.metadata?.actions?.some((action) => action.action == 'upload-proof-of-payment');
+    const proofOfPaymentRequired = (step: WorkflowStep) => {
+        return step?.attributes?.slug === 'registration-fee';
     };
 
     const allRegistrationFeesPaid = (enrolments: Enrolment[]): boolean => {
@@ -262,33 +260,6 @@ export const useStudentApplications = () => {
 
     const allTuitionFeesPaid = (enrolments: Enrolment[]): boolean => {
         return enrolments.every((e) => Number(e?.relationships?.tuitionReceipt?.attributes?.amount) > 0);
-    };
-
-    /* const allProofOfPaymentUploaded = (enrolments: Enrolment[], type: 'application-fee' | 'tuition-fee'): boolean => {
-        if (type === 'application-fee') {
-            return enrolments.every((e) => Number(e.attributes.applicationFeeProofOfPaymentId) > 0);
-        } else if (type === 'tuition-fee') {
-            return enrolments.every((e) => Number(e.attributes.tuitionFeeProofOfPaymentId) > 0);
-        }
-        return false;
-    };*/
-
-    const canApproveWorkflowStepApplications = (step: DepartmentApplicationStep): boolean => {
-        const { user } = usePage<PageProps>().props?.auth;
-        if (!user) {
-            return false; // no user means no approval rights
-        }
-        // super roles always have access
-        const roles = user.relationships?.roles ?? [];
-        if (roles.some((role: Role) => ['super-user', 'super-administrator'].includes(role.attributes.slug))) {
-            return true;
-        }
-        // get user role IDs (normalize to number, filter out null/undefined)
-        const userRoleIds = user?.relationships?.roles?.map((role: Role) => Number(role.id)) ?? [];
-
-        // normalize step role IDs to number (filter out null/undefined)
-        const stepRoleIds = (step?.relationships?.metadata?.roleIds ?? []).filter((id): id is string => id != null).map((id) => Number(id));
-        return userRoleIds.some((roleId: any) => stepRoleIds.includes(roleId));
     };
 
     return {
@@ -308,7 +279,6 @@ export const useStudentApplications = () => {
         onPaymentProofModal,
         awaitApplicationPaymentProof,
         awaitTuitionPaymentProof,
-        canApproveWorkflowStepApplications,
         bulkUpdatePaymentStatus,
     };
 };

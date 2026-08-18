@@ -6,13 +6,13 @@ use App\Enums\Institution\LevelEnum;
 use App\Enums\Shared\FeeTypeEnum;
 use App\Http\Filters\Students\StudentApplicationFilter;
 use App\Models\Enrolments\ClassList;
-use App\Models\Institution\DepartmentApplicationStep;
 use App\Models\Institution\DepartmentCourse;
 use App\Models\Institution\DepartmentLevel;
 use App\Models\Institution\InstitutionDepartment;
 use App\Models\Institution\IntakePeriod;
 use App\Models\Institution\ModeOfStudy;
 use App\Models\Ledgers\Ledger;
+use App\Models\Shared\WorkflowStep;
 use App\Observers\Students\StudentApplicationObserver;
 use App\Traits\BelongsToTenant;
 use App\Traits\Filterable;
@@ -52,7 +52,7 @@ class StudentApplication extends Model implements HasMedia
         'required_level_completed',
         'read_write_acknowledged',
         'application_tracking_number',
-        'department_application_step_id',
+        'workflow_step_id',
         'program_status_id',
         'intake_period_id',
         'offer_letter_id',
@@ -81,9 +81,9 @@ class StudentApplication extends Model implements HasMedia
         return $this->belongsTo(DepartmentCourse::class, 'department_course_id');
     }
 
-    public function departmentWorkflowStep(): BelongsTo
+    public function workflowStep(): BelongsTo
     {
-        return $this->belongsTo(DepartmentApplicationStep::class, 'department_application_step_id');
+        return $this->belongsTo(WorkflowStep::class, 'workflow_step_id');
     }
 
     public function intakePeriod(): BelongsTo

@@ -5,18 +5,18 @@ use App\Enums\Shared\FeeTypeEnum;
 use App\Enums\Shared\WorkflowStepEnum;
 use App\Models\AcademicCalendars\AcademicCalendar;
 use App\Models\AcademicCalendars\Semester;
-use App\Models\Rbac\Role;
 use App\Models\Enrolments\ClassList;
 use App\Models\Ledgers\Ledger;
+use App\Models\Rbac\Role;
 use App\Models\Shared\FeeType;
 use App\Models\Shared\Gender;
 use App\Models\Shared\IdType;
 use App\Models\Shared\MaritalStatus;
 use App\Models\Shared\Title;
 use App\Models\Students\Student;
+use App\Models\Students\StudentApplication;
 use App\Models\Students\StudentEnrolment;
 use App\Models\Students\StudentEnrolmentStatus;
-use App\Models\Students\StudentApplication;
 use App\Models\Users\User;
 use Illuminate\Support\Str;
 
@@ -55,10 +55,10 @@ function createFeeType(FeeTypeEnum $feeTypeEnum): FeeType
 function createReviewStudentApplication(string $studentNumber): StudentApplication
 {
     $program = createVerifiedStudentApplication($studentNumber);
-    $reviewStep = resolveDepartmentApplicationStep($program, WorkflowStepEnum::REVIEW);
+    $reviewStep = resolveWorkflowStep(WorkflowStepEnum::REVIEW);
 
     $program->update([
-        'department_application_step_id' => $reviewStep->id,
+        'workflow_step_id' => $reviewStep->id,
     ]);
 
     ClassList::query()->where('student_application_id', $program->id)->delete();

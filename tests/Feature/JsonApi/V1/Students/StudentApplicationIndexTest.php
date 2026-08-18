@@ -3,7 +3,6 @@
 use App\Enums\Shared\WorkflowStepEnum;
 use App\Models\Institution\Course;
 use App\Models\Institution\Department;
-use App\Models\Institution\DepartmentApplicationStep;
 use App\Models\Institution\DepartmentCourse;
 use App\Models\Institution\DepartmentLevel;
 use App\Models\Institution\InstitutionDepartment;
@@ -63,15 +62,6 @@ function createStudentApplicationForJsonApiTest(): array
         ],
     );
 
-    $departmentApplicationStep = DepartmentApplicationStep::query()->firstOrCreate(
-        [
-            'tenant_id' => $tenant->id,
-            'institution_department_id' => $institutionDepartment->id,
-            'workflow_step_id' => $workflowStep->id,
-        ],
-        ['position' => $workflowStep->position],
-    );
-
     $studentUser = User::factory()->create(['tenant_id' => $tenant->id]);
     $student = Student::query()->create([
         'tenant_id' => $tenant->id,
@@ -108,7 +98,7 @@ function createStudentApplicationForJsonApiTest(): array
         'department_course_id' => $departmentCourse->id,
         'intake_period_id' => $intakePeriod->id,
         'mode_of_study_id' => $modeOfStudy->id,
-        'department_application_step_id' => $departmentApplicationStep->id,
+        'workflow_step_id' => $workflowStep->id,
         'application_tracking_number' => 'TRK-JSON-001',
     ]);
 

@@ -207,7 +207,6 @@ return [
             'department-setup:levels',
             'department-setup:courses',
             'department-setup:class-sizes',
-            'department-setup:workflows',
             'viewOnlyOwnDepartment:departments',
             'viewAny:document-templates',
             'view:document-templates',

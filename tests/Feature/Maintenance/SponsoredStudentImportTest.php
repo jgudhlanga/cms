@@ -187,11 +187,11 @@ function createSponsoredStudentImportStudent(
     ]);
 
     if ($options['createAcceptedWorkflow'] ?? true) {
-        $acceptedStep = resolveDepartmentApplicationStep($studentApplication, WorkflowStepEnum::ACCEPTED);
+        $acceptedStep = resolveWorkflowStep(WorkflowStepEnum::ACCEPTED);
         $studentApplication->update([
-            'department_application_step_id' => $acceptedStep->id,
+            'workflow_step_id' => $acceptedStep->id,
         ]);
-        resolveDepartmentApplicationStep($studentApplication, WorkflowStepEnum::ENROLLED);
+        resolveWorkflowStep(WorkflowStepEnum::ENROLLED);
     }
 
     if ($options['createClassList'] ?? true) {
@@ -631,14 +631,14 @@ it('moves verified students to final class and creates sponsor records', functio
         ->first();
 
     $application = $created['application']->fresh();
-    $enrolledStep = resolveDepartmentApplicationStep($application, WorkflowStepEnum::ENROLLED);
+    $enrolledStep = resolveWorkflowStep(WorkflowStepEnum::ENROLLED);
 
     expect($classList)->not->toBeNull()
         ->and($classList->type)->toBe(ClassListTypeEnum::FINAL)
         ->and($enrolment)->not->toBeNull()
         ->and($sponsor)->not->toBeNull()
         ->and($sponsor->sponsor)->toBe('Ministry of Higher Education')
-        ->and($application->department_application_step_id)->toBe($enrolledStep->id);
+        ->and($application->workflow_step_id)->toBe($enrolledStep->id);
 });
 
 it('updates an existing sponsor for the same student and calendar year without duplicating', function (): void {

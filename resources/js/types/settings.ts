@@ -212,6 +212,7 @@ export type WorkflowStep = {
     id: string;
     attributes: {
         name: string;
+        slug?: string;
         description: string;
         position?: number | string;
         createdAt?: string;
