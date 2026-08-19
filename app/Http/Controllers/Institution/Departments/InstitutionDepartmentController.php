@@ -84,7 +84,7 @@ class InstitutionDepartmentController extends Controller
     public function update(InstitutionDepartmentRequest $request, InstitutionDepartment $department): void
     {
         $this->authorize('updateDepartmentMetaData');
-        $department->update($request->only(['division_id', 'department_code', 'description']));
+        $department->update($request->only(['division_id', 'department_code', 'description', 'has_apprentice_courses']));
     }
 
     /**

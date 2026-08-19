@@ -22,12 +22,13 @@ class UpdateStudentEnrolmentStatusRequest extends FormRequest
                 'required',
                 'string',
                 Rule::in([
-                    StudentEnrolmentProgressionService::STATUS_REPEAT,
-                    StudentEnrolmentProgressionService::STATUS_DEFERRED,
-                    StudentEnrolmentProgressionService::STATUS_COMPLETED,
                     StudentEnrolmentProgressionService::STATUS_ACTIVE,
-                    'repeat-re-write',
-                    'deferred-postponed',
+                    StudentEnrolmentProgressionService::STATUS_ABSENT,
+                    StudentEnrolmentProgressionService::STATUS_AWARD,
+                    StudentEnrolmentProgressionService::STATUS_DEFERRED,
+                    StudentEnrolmentProgressionService::STATUS_DISQUALIFIED,
+                    StudentEnrolmentProgressionService::STATUS_PROCEED,
+                    StudentEnrolmentProgressionService::STATUS_REFERRED,
                 ]),
             ],
         ];

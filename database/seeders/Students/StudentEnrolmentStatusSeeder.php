@@ -12,19 +12,31 @@ class StudentEnrolmentStatusSeeder extends Seeder
         $rows = [
             [
                 'name' => 'Active',
-                'description' => 'The student is currently registered on this level (any semester, term, or ABMA period).',
+                'description' => 'The student is currently registered on this semester/phase.',
             ],
             [
-                'name' => 'Completed',
-                'description' => 'The student has finished the last phase of this level (full award). They may apply for the next level if the course has one.',
+                'name' => 'Absent',
+                'description' => 'The student was absent from the examination session.',
             ],
             [
-                'name' => 'Repeat/Re-write',
-                'description' => 'The student failed one or more modules in a previous session and is retaking them to obtain a full award.',
+                'name' => 'Award',
+                'description' => 'The student has been awarded the qualification for this semester/phase.',
             ],
             [
-                'name' => 'Deferred/Postponed',
-                'description' => 'The student, usually due to failure to complete registration or pay fees, has postponed their studies to a later session.',
+                'name' => 'Deferred',
+                'description' => 'The student has deferred their studies to a later session.',
+            ],
+            [
+                'name' => 'Disqualified',
+                'description' => 'The student has been disqualified from this examination session.',
+            ],
+            [
+                'name' => 'Proceed',
+                'description' => 'The student has passed and may proceed to the next semester/phase.',
+            ],
+            [
+                'name' => 'Referred',
+                'description' => 'The student has been referred and must retake one or more modules.',
             ],
         ];
 

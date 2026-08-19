@@ -72,6 +72,12 @@ watch(
     { deep: true },
 );
 
+const isDisabled = computed(() => props.semester.isDisabled === true);
+const hasExamResult = computed(() => props.semester.hasExamResult === true);
+const showStatusDropdown = computed(
+    () => !hasExamResult.value && canUpdateStatus.value && (props.semester.availableStatuses?.length ?? 0) > 0,
+);
+
 const updateStatus = async (status: string, message: string): Promise<void> => {
     if (!props.semester.studentEnrolmentId) {
         return;
@@ -103,10 +109,27 @@ const updateStatus = async (status: string, message: string): Promise<void> => {
         },
     );
 };
+
+const onStatusDropdownChange = (event: Event) => {
+    const target = event.target as HTMLSelectElement;
+    const slug = target.value;
+
+    if (!slug) {
+        return;
+    }
+
+    const statusOption = props.semester.availableStatuses?.find((s) => s.slug === slug);
+    const label = statusOption?.name ?? slug;
+
+    updateStatus(slug, trans('students.enrolment_status_confirm_change', { status: label }));
+};
 </script>
 
 <template>
-    <div class="overflow-hidden rounded border border-border bg-card">
+    <div
+        class="overflow-hidden rounded border border-border bg-card"
+        :class="{ 'opacity-50 pointer-events-none': isDisabled }"
+    >
         <div class="flex min-w-0 items-start justify-between gap-2 border-b border-border px-2 py-1.5 sm:items-center sm:px-3">
             <div class="flex min-w-0 flex-1 items-start gap-1.5 sm:items-center sm:gap-2">
                 <CalendarDays
@@ -145,29 +168,21 @@ const updateStatus = async (status: string, message: string): Promise<void> => {
                 >
                     {{ semester.status }}
                 </span>
-                <div v-if="canUpdateStatus" class="flex flex-wrap justify-end gap-1">
-                    <button
-                        type="button"
-                        class="text-[0.65rem] text-primary underline-offset-2 hover:underline"
-                        @click="updateStatus('repeatre-write', $t('students.enrolment_status_confirm_repeat'))"
+                <div v-if="showStatusDropdown" class="flex flex-wrap justify-end gap-1">
+                    <select
+                        class="h-5 rounded border border-border bg-background px-1 text-[0.65rem] text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                        :value="(semester.status ?? '').toLowerCase()"
+                        @change="onStatusDropdownChange"
                     >
-                        {{ $t('students.enrolment_repeat') }}
-                    </button>
-                    <button
-                        type="button"
-                        class="text-[0.65rem] text-primary underline-offset-2 hover:underline"
-                        @click="updateStatus('deferredpostponed', $t('students.enrolment_status_confirm_deferred'))"
-                    >
-                        {{ $t('students.enrolment_deferred') }}
-                    </button>
-                    <button
-                        v-if="semester.canCompleteLevel"
-                        type="button"
-                        class="text-[0.65rem] text-primary underline-offset-2 hover:underline"
-                        @click="updateStatus('completed', $t('students.enrolment_status_confirm_completed'))"
-                    >
-                        {{ $t('students.enrolment_mark_completed') }}
-                    </button>
+                        <option value="" disabled>{{ $t('students.select_status') }}</option>
+                        <option
+                            v-for="option in semester.availableStatuses"
+                            :key="option.slug"
+                            :value="option.slug"
+                        >
+                            {{ option.name }}
+                        </option>
+                    </select>
                 </div>
             </div>
         </div>

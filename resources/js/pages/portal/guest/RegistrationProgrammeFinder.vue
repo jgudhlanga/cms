@@ -99,12 +99,6 @@ const selectedCourse = computed(
 
 const modes = computed(() => selectedCourse.value?.modes ?? []);
 
-const isApprenticeExpress = computed(() => props.stepperVariant === 'apprentice');
-
-const singleModeLocked = computed(
-    () => isApprenticeExpress.value && modes.value.length === 1,
-);
-
 const canContinue = computed(
     () =>
         props.programmes.available &&
@@ -132,7 +126,7 @@ watch(courseId, () => {
 watch(
     modes,
     (nextModes) => {
-        if (isApprenticeExpress.value && nextModes.length === 1) {
+        if (nextModes.length === 1) {
             modeOfStudyId.value = nextModes[0].id;
         }
     },
@@ -245,7 +239,7 @@ const submit = () => {
                                 </select>
                             </label>
 
-                            <label v-if="!singleModeLocked" class="block space-y-1">
+                            <label class="block space-y-1">
                                 <span class="text-xs font-medium text-foreground">{{ $tChoice('trans.mode_of_study', 1) }}</span>
                                 <select
                                     v-model.number="modeOfStudyId"
@@ -258,13 +252,6 @@ const submit = () => {
                                     </option>
                                 </select>
                             </label>
-                            <p
-                                v-else-if="modes[0]"
-                                class="rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm text-muted-foreground"
-                            >
-                                <span class="font-medium text-foreground">{{ $tChoice('trans.mode_of_study', 1) }}:</span>
-                                {{ modes[0].name }}
-                            </p>
                         </div>
 
                         <div class="mt-5 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">

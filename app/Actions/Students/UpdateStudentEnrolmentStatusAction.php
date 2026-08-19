@@ -15,12 +15,13 @@ class UpdateStudentEnrolmentStatusAction
      * @var list<string>
      */
     private const ALLOWED_SLUGS = [
-        StudentEnrolmentProgressionService::STATUS_REPEAT,
-        StudentEnrolmentProgressionService::STATUS_DEFERRED,
-        StudentEnrolmentProgressionService::STATUS_COMPLETED,
         StudentEnrolmentProgressionService::STATUS_ACTIVE,
-        'repeat-re-write',
-        'deferred-postponed',
+        StudentEnrolmentProgressionService::STATUS_ABSENT,
+        StudentEnrolmentProgressionService::STATUS_AWARD,
+        StudentEnrolmentProgressionService::STATUS_DEFERRED,
+        StudentEnrolmentProgressionService::STATUS_DISQUALIFIED,
+        StudentEnrolmentProgressionService::STATUS_PROCEED,
+        StudentEnrolmentProgressionService::STATUS_REFERRED,
     ];
 
     public function __construct(
@@ -37,7 +38,7 @@ class UpdateStudentEnrolmentStatusAction
             );
         }
 
-        if ($statusSlug === StudentEnrolmentProgressionService::STATUS_COMPLETED
+        if ($statusSlug === StudentEnrolmentProgressionService::STATUS_AWARD
             && ! $this->progression->isLastPhase($enrolment)
         ) {
             throw new StudentEnrolmentProgressionException(
@@ -45,17 +46,16 @@ class UpdateStudentEnrolmentStatusAction
             );
         }
 
-        $studentApplication = $enrolment->studentApplication;
         $statusId = $this->progression->statusIdBySlug($statusSlug);
 
-        if ($studentApplication === null || $statusId === null) {
+        if ($statusId === null) {
             throw new StudentEnrolmentProgressionException(
                 __('students.enrolment_status_invalid'),
             );
         }
 
-        DB::transaction(function () use ($studentApplication, $statusId): void {
-            $this->progression->syncStatusForApplication($studentApplication, $statusId);
+        DB::transaction(function () use ($enrolment, $statusId): void {
+            $this->progression->updateEnrolmentStatus($enrolment, $statusId);
         });
     }
 }

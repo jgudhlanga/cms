@@ -22,7 +22,7 @@ beforeEach(function (): void {
         );
     }
 
-    foreach (['Active', 'Completed', 'Repeat/Re-write', 'Deferred/Postponed'] as $name) {
+    foreach (['Active', 'Award', 'Absent', 'Deferred', 'Disqualified', 'Proceed', 'Referred'] as $name) {
         StudentEnrolmentStatus::query()->firstOrCreate(
             ['name' => $name],
             ['description' => 'Test'],
@@ -84,14 +84,15 @@ it('refuses to advance a last-phase enrolment', function (): void {
     app(AdvanceToNextSemesterAction::class)->execute($enrolment);
 })->throws(StudentEnrolmentProgressionException::class);
 
-it('refuses to advance a repeat enrolment', function (): void {
-    $enrolment = createPhaseEnrolment('ADV-REPEAT', 'semester-1', 'Repeat/Re-write');
+it('refuses to advance a referred enrolment', function (): void {
+    $enrolment = createPhaseEnrolment('ADV-REFERRED', 'semester-1', 'Referred');
 
     app(AdvanceToNextSemesterAction::class)->execute($enrolment);
 })->throws(StudentEnrolmentProgressionException::class);
 
-it('completes the level on the last phase for every enrolment of the application', function (): void {
+it('completes the level on the last phase for that enrolment only (per-semester)', function (): void {
     $first = createPhaseEnrolment('COMPLETE-LEVEL', 'semester-1');
+    $activeId = (int) $first->student_enrolment_status_id;
     $second = StudentEnrolment::query()->create([
         'student_id' => $first->student_id,
         'student_application_id' => $first->student_application_id,
@@ -106,10 +107,10 @@ it('completes the level on the last phase for every enrolment of the application
 
     app(CompleteLevelEnrolmentAction::class)->execute($second->fresh());
 
-    $completedId = (int) StudentEnrolmentStatus::query()->where('slug', 'completed')->value('id');
+    $awardId = (int) StudentEnrolmentStatus::query()->where('slug', 'award')->value('id');
 
-    expect((int) $first->fresh()?->student_enrolment_status_id)->toBe($completedId)
-        ->and((int) $second->fresh()?->student_enrolment_status_id)->toBe($completedId);
+    expect((int) $first->fresh()?->student_enrolment_status_id)->toBe($activeId)
+        ->and((int) $second->fresh()?->student_enrolment_status_id)->toBe($awardId);
 });
 
 it('refuses to complete the level on the first phase', function (): void {
@@ -118,17 +119,17 @@ it('refuses to complete the level on the first phase', function (): void {
     app(CompleteLevelEnrolmentAction::class)->execute($enrolment);
 })->throws(StudentEnrolmentProgressionException::class);
 
-it('sets repeat status on every enrolment for the application', function (): void {
-    $enrolment = createPhaseEnrolment('STATUS-REPEAT');
+it('sets referred status on the target enrolment only (per-semester)', function (): void {
+    $enrolment = createPhaseEnrolment('STATUS-REFERRED');
 
     app(UpdateStudentEnrolmentStatusAction::class)->execute(
         $enrolment,
-        StudentEnrolmentProgressionService::STATUS_REPEAT,
+        StudentEnrolmentProgressionService::STATUS_REFERRED,
     );
 
-    $repeatId = (int) StudentEnrolmentStatus::query()->where('slug', 'repeatre-write')->value('id');
+    $referredId = (int) StudentEnrolmentStatus::query()->where('slug', 'referred')->value('id');
 
-    expect((int) $enrolment->fresh()?->student_enrolment_status_id)->toBe($repeatId);
+    expect((int) $enrolment->fresh()?->student_enrolment_status_id)->toBe($referredId);
 });
 
 it('dry-runs advance-phase without creating a next enrolment', function (): void {

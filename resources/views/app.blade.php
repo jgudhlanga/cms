@@ -72,6 +72,10 @@
 
         <title inertia>{{ config('app.name', 'Laravel') }}</title>
 
+        @if (request()->routeIs('login', 'register', 'password.request', 'password.reset', 'password.confirm', 'verification.notice'))
+            <link rel="preload" as="image" href="{{ asset('assets/images/poly.webp') }}" type="image/webp" fetchpriority="high">
+        @endif
+
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet" />
         <!-- Google Fonts -->

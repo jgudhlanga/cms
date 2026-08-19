@@ -82,7 +82,7 @@ onMounted(async () => {
                         :key="semester.id"
                         :semester="semester"
                         :student-id="studentId"
-                        :expand-modules-with-marks="programme.isActive === true"
+                        :expand-modules-with-marks="programme.isActive === true && semester.isCurrent === true"
                         @status-updated="fetchProgrammes(studentId)"
                     />
                 </div>

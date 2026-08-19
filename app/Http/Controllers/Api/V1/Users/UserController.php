@@ -130,6 +130,7 @@ class UserController extends ApiDropdownController
         $this->authorize('view', $user);
 
         $activities = $this->applyActivityEventFilter($user->activities())
+            ->with('subject')
             ->latest()
             ->paginate(request()->integer('per_page', 20));
 
@@ -147,6 +148,7 @@ class UserController extends ApiDropdownController
                 ->where('causer_type', $user->getMorphClass())
                 ->where('causer_id', $user->getKey())
         )
+            ->with('subject')
             ->latest()
             ->paginate(request()->integer('per_page', 20));
 

@@ -54,6 +54,8 @@ class StudentPortalDashboardService
                 'gradeDisplay' => $this->moduleGradeDisplay($module),
                 'statusKey' => $this->moduleStatusKey($module),
                 'progressPercent' => $module['score'] !== null ? (int) round($module['score']) : 0,
+                'examGrade' => $module['grade'] ?? null,
+                'examSession' => $module['examSession'] ?? null,
             ])
             ->values()
             ->all();
@@ -118,14 +120,14 @@ class StudentPortalDashboardService
 
         $semesters = $activeProgramme['semesters'] ?? [];
         $activeSemester = collect($semesters)->first(
-            fn (array $semester): bool => $this->isActiveEnrolmentStatus($semester['status'] ?? null)
+            fn (array $semester): bool => ($semester['isCurrent'] ?? false) === true
         );
 
         if ($activeSemester !== null) {
             return $activeSemester;
         }
 
-        return collect($semesters)->last() ?? ['module' => []];
+        return collect($semesters)->first() ?? ['module' => []];
     }
 
     /**
@@ -248,6 +250,10 @@ class StudentPortalDashboardService
      */
     private function moduleStatusKey(array $module): string
     {
+        if (! empty($module['grade'])) {
+            return 'graded';
+        }
+
         $courseWork = $module['courseWork'] ?? null;
         $total = $courseWork['aggregation']['courseWorkTotal60'] ?? null;
 

@@ -31,6 +31,7 @@ class InstitutionDepartmentRequest extends FormRequest
                 'division_id' => ['nullable', 'integer', Rule::exists('divisions', 'id')],
                 'department_code' => ['nullable', 'string', 'max:50'],
                 'description' => ['nullable', 'string', 'max:1000'],
+                'has_apprentice_courses' => ['sometimes', 'boolean'],
             ];
         }
 

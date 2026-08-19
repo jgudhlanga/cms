@@ -67,13 +67,7 @@ class ConfirmedStudentsQuery
                 }
             })
             ->join('student_enrolment_statuses', 'student_enrolment_statuses.id', '=', 'student_enrolments.student_enrolment_status_id')
-            ->whereNotIn('student_enrolment_statuses.slug', [
-                StudentEnrolmentProgressionService::STATUS_REPEAT,
-                StudentEnrolmentProgressionService::STATUS_DEFERRED,
-                StudentEnrolmentProgressionService::STATUS_COMPLETED,
-                'repeat-re-write',
-                'deferred-postponed',
-            ])
+            ->whereNotIn('student_enrolment_statuses.slug', StudentEnrolmentProgressionService::BLOCKING_STATUSES)
             ->leftJoin('genders', 'genders.id', '=', 'students.gender_id')
             ->join('users', 'users.id', '=', 'students.user_id')
             ->where('student_applications.department_level_id', $departmentLevelId)

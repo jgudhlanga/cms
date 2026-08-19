@@ -105,6 +105,7 @@ export type StudentProgrammeModule = {
     name: string | null;
     durationInHours: number | null;
     grade: string | null;
+    examSession?: string | null;
     score: number | null;
     lecturer: string | null;
     type: string | null;
@@ -139,7 +140,12 @@ export type StudentProgrammeSemester = {
     label: string | null;
     year: string | null;
     status: string | null;
-    studentEnrolmentId?: number;
+    isCurrent?: boolean;
+    isDisabled?: boolean;
+    hasExamResult?: boolean;
+    examResultStatus?: string | null;
+    availableStatuses?: Array<{ slug: string; name: string }>;
+    studentEnrolmentId?: number | null;
     canAdvanceToNextPhase?: boolean;
     canCompleteLevel?: boolean;
     canApplyToNextLevel?: boolean;
@@ -436,6 +442,8 @@ export type CourseWorkModuleListItem = {
     code: string | null;
     name: string | null;
     statusKey: CourseWorkModuleStatusKey;
+    examGrade?: string | null;
+    examSession?: string | null;
 };
 
 export type StudentPortalDashboardModule = {
@@ -446,6 +454,8 @@ export type StudentPortalDashboardModule = {
     gradeDisplay: string;
     statusKey: CourseWorkModuleStatusKey;
     progressPercent: number;
+    examGrade?: string | null;
+    examSession?: string | null;
 };
 
 export type StudentPortalDashboardActivity = {

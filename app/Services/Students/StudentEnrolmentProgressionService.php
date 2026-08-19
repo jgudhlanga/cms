@@ -17,11 +17,35 @@ class StudentEnrolmentProgressionService
 {
     public const STATUS_ACTIVE = 'active';
 
-    public const STATUS_COMPLETED = 'completed';
+    public const STATUS_ABSENT = 'absent';
 
-    public const STATUS_REPEAT = 'repeatre-write';
+    public const STATUS_AWARD = 'award';
 
-    public const STATUS_DEFERRED = 'deferredpostponed';
+    public const STATUS_DEFERRED = 'deferred';
+
+    public const STATUS_DISQUALIFIED = 'disqualified';
+
+    public const STATUS_PROCEED = 'proceed';
+
+    public const STATUS_REFERRED = 'referred';
+
+    /** @deprecated Use STATUS_AWARD instead */
+    public const STATUS_COMPLETED = 'award';
+
+    /** @deprecated Use STATUS_REFERRED instead */
+    public const STATUS_REPEAT = 'referred';
+
+    /**
+     * Statuses that block the student from proceeding to the next semester.
+     *
+     * @var list<string>
+     */
+    public const BLOCKING_STATUSES = [
+        self::STATUS_ABSENT,
+        self::STATUS_DEFERRED,
+        self::STATUS_DISQUALIFIED,
+        self::STATUS_REFERRED,
+    ];
 
     /**
      * @return Collection<int, Semester>
@@ -97,19 +121,23 @@ class StudentEnrolmentProgressionService
 
     public function canAdvanceToNextPhase(StudentEnrolment $enrolment): bool
     {
-        return $this->statusSlug($enrolment) === self::STATUS_ACTIVE
+        $slug = $this->statusSlug($enrolment);
+
+        return ($slug === self::STATUS_ACTIVE || $slug === self::STATUS_PROCEED)
             && ! $this->isLastPhase($enrolment);
     }
 
     public function canCompleteLevel(StudentEnrolment $enrolment): bool
     {
-        return $this->statusSlug($enrolment) === self::STATUS_ACTIVE
+        $slug = $this->statusSlug($enrolment);
+
+        return ($slug === self::STATUS_ACTIVE || $slug === self::STATUS_AWARD)
             && $this->isLastPhase($enrolment);
     }
 
     public function canApplyToNextLevel(StudentEnrolment $enrolment): bool
     {
-        return $this->statusSlug($enrolment) === self::STATUS_COMPLETED
+        return $this->statusSlug($enrolment) === self::STATUS_AWARD
             && $this->hasFurtherDepartmentLevel($enrolment);
     }
 
@@ -138,8 +166,9 @@ class StudentEnrolmentProgressionService
     public function statusIdBySlug(string $slug): ?int
     {
         $candidates = match ($slug) {
-            'repeat-re-write', 'repeatre-write' => ['repeat-re-write', 'repeatre-write'],
-            'deferred-postponed', 'deferredpostponed' => ['deferred-postponed', 'deferredpostponed'],
+            'repeat-re-write', 'repeatre-write' => ['repeat-re-write', 'repeatre-write', 'referred'],
+            'deferred-postponed', 'deferredpostponed' => ['deferred-postponed', 'deferredpostponed', 'deferred'],
+            'completed' => ['completed', 'award'],
             default => [$slug],
         };
 
@@ -206,11 +235,44 @@ class StudentEnrolmentProgressionService
         $this->pinSyllabusIds($enrolment, $ids);
     }
 
+    public function updateEnrolmentStatus(StudentEnrolment $enrolment, int $statusId): void
+    {
+        $enrolment->update(['student_enrolment_status_id' => $statusId]);
+    }
+
+    /**
+     * @deprecated Use updateEnrolmentStatus() for per-semester status updates.
+     */
     public function syncStatusForApplication(StudentApplication $studentApplication, int $statusId): void
     {
         StudentEnrolment::query()
             ->where('student_application_id', $studentApplication->id)
             ->whereNull('deleted_at')
             ->update(['student_enrolment_status_id' => $statusId]);
+    }
+
+    /**
+     * @return list<array{slug: string, name: string}>
+     */
+    public function availableStatuses(): array
+    {
+        return StudentEnrolmentStatus::query()
+            ->whereNull('deleted_at')
+            ->orderBy('name')
+            ->get()
+            ->map(fn (StudentEnrolmentStatus $status): array => [
+                'slug' => (string) $status->slug,
+                'name' => (string) $status->name,
+            ])
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @param  list<string>  $slugs
+     */
+    public static function isBlockingStatus(?string $slug): bool
+    {
+        return $slug !== null && in_array($slug, self::BLOCKING_STATUSES, true);
     }
 }

@@ -14,6 +14,7 @@ import { AuthObject, DataFilters, DataListProps } from '@/types/data-pagination'
 import { Link } from '@/types/ui';
 
 const { createInstitutionDepartmentColumns, openInstitutionDepartmentsModal } = useInstitutionDepartments();
+const isAcademic = Number(route().params?.is_academic) === 1;
 
 interface Props {
     departments: DataListProps;
@@ -48,7 +49,7 @@ const breadcrumbs: Array<Link> = [
             :show-archived-filter="false"
             :search-url="route('institution-departments.index', { is_academic: params?.is_academic })"
             :pagination="{ ...departments.links, ...departments.meta }"
-            :columns="createInstitutionDepartmentColumns()"
+            :columns="createInstitutionDepartmentColumns(isAcademic)"
         >
             <template #head-right v-if="hasAbility('create:department-metadata')">
                 <GenericButton

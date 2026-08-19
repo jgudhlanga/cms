@@ -25,17 +25,16 @@ class CompleteLevelEnrolmentAction
             );
         }
 
-        $studentApplication = $enrolment->studentApplication;
-        $statusId = $this->progression->statusIdBySlug(StudentEnrolmentProgressionService::STATUS_COMPLETED);
+        $statusId = $this->progression->statusIdBySlug(StudentEnrolmentProgressionService::STATUS_AWARD);
 
-        if ($studentApplication === null || $statusId === null) {
+        if ($statusId === null) {
             throw new StudentEnrolmentProgressionException(
                 __('students.enrolment_cannot_complete_level'),
             );
         }
 
-        DB::transaction(function () use ($studentApplication, $statusId): void {
-            $this->progression->syncStatusForApplication($studentApplication, $statusId);
+        DB::transaction(function () use ($enrolment, $statusId): void {
+            $this->progression->updateEnrolmentStatus($enrolment, $statusId);
         });
     }
 }

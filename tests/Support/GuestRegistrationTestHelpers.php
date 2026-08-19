@@ -40,8 +40,9 @@ function seedGuestRegistrationProgramme(?Level $level = null): array
             'tenant_id' => $tenantId,
             'department_id' => $department->id,
         ],
-        ['department_code' => 'GRD'],
+        ['department_code' => 'GRD', 'has_apprentice_courses' => true],
     );
+    $institutionDepartment->update(['has_apprentice_courses' => true]);
 
     $departmentLevel = DepartmentLevel::query()->firstOrCreate(
         [

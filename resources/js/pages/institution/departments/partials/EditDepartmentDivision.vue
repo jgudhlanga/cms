@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { BaseCheckbox } from '@/components/core/form';
 import BaseCombobox from '@/components/core/form/combobox/BaseCombobox.vue';
 import BaseModal from '@/components/core/modal/BaseModal.vue';
 import { getModalEdit } from '@/lib/alerts';
@@ -19,6 +20,7 @@ const props = defineProps<{
 const department = ref<InstitutionDepartment>();
 const form = useForm({
     division_id: null as number | null,
+    has_apprentice_courses: false,
 });
 const divisionOption = ref<SelectOption | null>(null);
 const { modals } = useModalStore();
@@ -33,6 +35,7 @@ const options = computed<SelectOption[]>(() =>
 watch(modals!, () => {
     department.value = getModalEdit(APP_MODULE_KEYS.institution_department_division);
     form.division_id = department.value?.attributes?.divisionId ? Number(department.value.attributes.divisionId) : null;
+    form.has_apprentice_courses = !!department.value?.attributes?.hasApprenticeCourses;
     divisionOption.value =
         form.division_id != null ? (options.value.find((option) => Number(option.value) === Number(form.division_id)) ?? null) : null;
     form.defaults();
@@ -73,6 +76,13 @@ const save = () => {
                 :options="options"
                 :error="form.errors.division_id"
             />
+            <div v-if="department?.attributes?.isAcademic" class="mt-4">
+                <BaseCheckbox
+                    input-id="has_apprentice_courses"
+                    v-model="form.has_apprentice_courses"
+                    :label="$t('trans.has_apprentice_courses')"
+                />
+            </div>
         </template>
     </BaseModal>
 </template>

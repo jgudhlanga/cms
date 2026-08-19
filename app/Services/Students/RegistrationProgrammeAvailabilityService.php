@@ -67,11 +67,14 @@ class RegistrationProgrammeAvailabilityService
             );
         }
 
+        if ($track === ApplicationTrackEnum::Apprentice) {
+            $departmentLevels = $departmentLevels->filter(
+                fn (DepartmentLevel $dl) => (bool) $dl->institutionDepartment?->has_apprentice_courses
+            )->values();
+        }
+
         $ojetModeId = ModeOfStudy::query()->where('name', ModeOfStudyEnum::OJET->value)->value('id');
         $ojetModeId = $ojetModeId !== null ? (int) $ojetModeId : null;
-
-        $blockReleaseModeId = ModeOfStudy::query()->where('name', ModeOfStudyEnum::BLOCK_RELEASE->value)->value('id');
-        $blockReleaseModeId = $blockReleaseModeId !== null ? (int) $blockReleaseModeId : null;
 
         $departments = [];
 
@@ -89,7 +92,6 @@ class RegistrationProgrammeAvailabilityService
                     $track,
                     $continuousFocus,
                     $ojetModeId,
-                    $blockReleaseModeId,
                 );
 
                 $levelNodes[] = [
@@ -249,7 +251,6 @@ class RegistrationProgrammeAvailabilityService
         ApplicationTrackEnum $track,
         ?string $continuousFocus,
         ?int $ojetModeId,
-        ?int $blockReleaseModeId,
     ): array {
         $levelCourses = DepartmentLevelCourse::query()
             ->with(['departmentCourse.course'])
@@ -272,7 +273,6 @@ class RegistrationProgrammeAvailabilityService
                 $track,
                 $continuousFocus,
                 $ojetModeId,
-                $blockReleaseModeId,
             );
 
             if ($modes === []) {
@@ -300,7 +300,6 @@ class RegistrationProgrammeAvailabilityService
         ApplicationTrackEnum $track,
         ?string $continuousFocus,
         ?int $ojetModeId,
-        ?int $blockReleaseModeId,
     ): array {
         $courseLevelMode = CourseLevelMode::query()
             ->where('department_course_id', $departmentCourseId)
@@ -318,12 +317,6 @@ class RegistrationProgrammeAvailabilityService
         $result = [];
 
         foreach ($modes as $mode) {
-            if ($track === ApplicationTrackEnum::Apprentice) {
-                if ($blockReleaseModeId === null || (int) $mode->id !== $blockReleaseModeId) {
-                    continue;
-                }
-            }
-
             if ($track === ApplicationTrackEnum::Continuous && $continuousFocus === 'ojet') {
                 if ($ojetModeId === null || (int) $mode->id !== $ojetModeId) {
                     continue;

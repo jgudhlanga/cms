@@ -1,13 +1,14 @@
 <?php
 
-use App\Enums\Rbac\RoleEnum;
 use App\Enums\Institution\IntakePeriodStatusEnum;
 use App\Enums\Institution\LevelEnum;
+use App\Enums\Rbac\RoleEnum;
 use App\Enums\Students\ApplicationTrackEnum;
 use App\Helpers\DropdownHelper;
-use App\Models\Rbac\Role;
 use App\Models\Institution\DepartmentLevel;
+use App\Models\Institution\InstitutionDepartment;
 use App\Models\Institution\Level;
+use App\Models\Rbac\Role;
 use App\Services\Students\ApplicationEligibilityService;
 use App\Services\Students\IntakePeriodOrderingService;
 use App\Services\Students\RegistrationIntentSession;
@@ -292,7 +293,7 @@ test('guest programmes api returns empty when no programmes shown', function () 
         ->assertJsonPath('available', false);
 });
 
-test('apprentice programmes api only returns block release modes', function () {
+test('apprentice programmes api returns all configured modes for flagged departments', function () {
     $seeded = seedGuestRegistrationProgramme();
 
     $response = $this->getJson(route('v1.guest.enrollment.programmes', [
@@ -308,11 +309,26 @@ test('apprentice programmes api only returns block release modes', function () {
         ->flatMap(fn ($course) => $course['modes'])
         ->pluck('id')
         ->unique()
+        ->sort()
         ->values()
         ->all();
 
-    expect($modeIds)->toBe([$seeded['blockReleaseModeId']])
-        ->and($modeIds)->not->toContain($seeded['modeId']);
+    $expected = collect([$seeded['modeId'], $seeded['blockReleaseModeId']])->sort()->values()->all();
+
+    expect($modeIds)->toBe($expected);
+});
+
+test('apprentice programmes api hides departments without has_apprentice_courses flag', function () {
+    $seeded = seedGuestRegistrationProgramme();
+
+    InstitutionDepartment::query()->whereKey($seeded['departmentId'])->update(['has_apprentice_courses' => false]);
+
+    $response = $this->getJson(route('v1.guest.enrollment.programmes', [
+        'track' => ApplicationTrackEnum::Apprentice->value,
+        'level_id' => $seeded['level']->id,
+    ]));
+
+    $response->assertOk()->assertJsonPath('available', false);
 });
 
 test('apprentice guest store redirects to create application wizard', function () {
