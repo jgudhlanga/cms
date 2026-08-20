@@ -101,17 +101,33 @@ export function useSidebarMenu() {
             url: route('admin.students.id-card-requests.index'),
             show: canShowMenuItem('viewAny:student-id-card-requests', 'student-ids', moduleState),
         },
-        {
-            groupKey: 'students',
-            transChoiceKey: 'trans.examination',
-            icon: icons[IconName.book_check],
-            url: route('examinations.index'),
-            show: canShowMenuItem(
+        (() => {
+            const canViewExaminations = canShowMenuItem(
                 ['viewAny:examinations', 'view:examinations'],
                 'examinations',
                 moduleState,
-            ),
-        },
+            );
+            const examinationChildren: MenuItemInterface[] = [
+                {
+                    transKey: 'examinations.search',
+                    url: route('examinations.index'),
+                    show: canViewExaminations,
+                },
+                {
+                    transKey: 'examinations.dashboard',
+                    url: route('examinations.dashboard'),
+                    show: canViewExaminations,
+                },
+            ].filter((child) => child.show);
+
+            return {
+                groupKey: 'students' as const,
+                transChoiceKey: 'trans.examination',
+                icon: icons[IconName.book_check],
+                items: examinationChildren,
+                show: canViewExaminations,
+            };
+        })(),
         {
             groupKey: 'students',
             transChoiceKey: 'trans.communication',
@@ -128,6 +144,7 @@ export function useSidebarMenu() {
         },
         (() => {
             const canViewFinance = canShowMenuItem('view:finances', 'finance', moduleState);
+            const canExportToPastel = canShowMenuItem('export-to-pastel:finances', 'finance', moduleState);
             const canViewFinanceChildren = hasAbility(['view:finances', 'view:finance-settings']);
             const financeChildren: MenuItemInterface[] = [
                 {
@@ -140,6 +157,11 @@ export function useSidebarMenu() {
                     url: route('finance.exchange-rates.index'),
                     show: canViewFinanceChildren,
                 },
+                {
+                    transChoiceKey: 'finance.pastel_export',
+                    url: route('finance.pastel-export.index'),
+                    show: canExportToPastel,
+                },
             ].filter((child) => child.show);
 
             return {
@@ -148,7 +170,7 @@ export function useSidebarMenu() {
                 url: route('finance.index'),
                 icon: icons[IconName.dollar],
                 items: financeChildren,
-                show: canViewFinance,
+                show: canViewFinance || canExportToPastel,
             };
         })(),
         (() => {

@@ -6,6 +6,7 @@ use App\Enums\HMS\HostelAllocationStatusEnum;
 use App\Enums\Shared\AcademicLevelEnum;
 use App\Enums\Shared\IdTypeEnum;
 use App\Models\Finance\FinanceTransactionQuery;
+use App\Models\Finance\PastelLinkedStudent;
 use App\Models\HMS\HostelApplication;
 use App\Models\HMS\HostelLeave;
 use App\Models\HMS\HostelQuery;
@@ -247,6 +248,11 @@ class Student extends Model implements HasMedia
     public function financeTransactionQueries(): HasMany
     {
         return $this->hasMany(FinanceTransactionQuery::class, 'student_id');
+    }
+
+    public function pastelLink(): HasOne
+    {
+        return $this->hasOne(PastelLinkedStudent::class, 'student_id');
     }
 
     public function idCardRequests(): HasMany

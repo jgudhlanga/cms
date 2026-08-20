@@ -105,4 +105,22 @@ describe('useSidebarNavActive', () => {
         expect(isActive('/students', siblings)).toBe(true);
         expect(isActive('/students/id-card-requests', siblings)).toBe(false);
     });
+
+    it('does not activate Examinations Search when Dashboard sibling matches', () => {
+        pageState.url = '/examinations/dashboard';
+        const { isActive } = useSidebarNavActive();
+        const siblings = ['/examinations', '/examinations/dashboard'];
+
+        expect(isActive('/examinations', siblings)).toBe(false);
+        expect(isActive('/examinations/dashboard', siblings)).toBe(true);
+    });
+
+    it('activates Examinations Search on index without lighting Dashboard', () => {
+        pageState.url = '/examinations';
+        const { isActive } = useSidebarNavActive();
+        const siblings = ['/examinations', '/examinations/dashboard'];
+
+        expect(isActive('/examinations', siblings)).toBe(true);
+        expect(isActive('/examinations/dashboard', siblings)).toBe(false);
+    });
 });

@@ -22,6 +22,14 @@ const tabs: Array<Link> = [
         transChoiceKey: 'finance.exchange_rate',
         url: route('finance.exchange-rates.index'),
     },
+    ...(can?.['export-to-pastel:finances']
+        ? [
+              {
+                  transChoiceKey: 'finance.pastel_export',
+                  url: route('finance.pastel-export.index'),
+              },
+          ]
+        : []),
 ];
 </script>
 
@@ -29,6 +37,9 @@ const tabs: Array<Link> = [
     <Head :title="$tChoice('finance.finance', 1)" />
     <PageContainer :breadcrumbs="breadcrumbs">
         <HeadingSmall :title="$tChoice('finance.finance', 1)" :description="$t('finance.finance_module_description')" />
-        <AvatarTitleList v-if="can['view:finance-settings'] || can['view:finances']" :tabs="tabs" />
+        <AvatarTitleList
+            v-if="can['view:finance-settings'] || can['view:finances'] || can['export-to-pastel:finances']"
+            :tabs="tabs"
+        />
     </PageContainer>
 </template>

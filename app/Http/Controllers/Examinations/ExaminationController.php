@@ -1,37 +1,26 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Examinations;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Examinations\ExaminationIndexRequest;
 use App\Http\Resources\Examinations\ExaminationResultResource;
 use App\Models\Examinations\ExaminationResult;
+use App\Queries\Examinations\ExaminationResultQuery;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class ExaminationController extends Controller
 {
-    public function index(Request $request): Response
+    public function index(ExaminationIndexRequest $request, ExaminationResultQuery $query): Response
     {
-        $this->authorize('viewAny', ExaminationResult::class);
+        $filters = $query->resolveFilters($request->filters());
 
-        $search = trim((string) $request->query('search', ''));
-
-        $paginator = ExaminationResult::query()
-            ->when($search !== '', function ($query) use ($search): void {
-                $query->where(function ($inner) use ($search): void {
-                    $inner->where('candidate_number', 'like', "%{$search}%")
-                        ->orWhere('surname', 'like', "%{$search}%")
-                        ->orWhere('first_names', 'like', "%{$search}%")
-                        ->orWhere('discipline', 'like', "%{$search}%")
-                        ->orWhere('course_code', 'like', "%{$search}%")
-                        ->orWhere('subject_code', 'like', "%{$search}%")
-                        ->orWhere('subject', 'like', "%{$search}%")
-                        ->orWhere('grade', 'like', "%{$search}%")
-                        ->orWhere('session', 'like', "%{$search}%")
-                        ->orWhere('course_comment', 'like', "%{$search}%");
-                });
-            })
+        $paginator = $query
+            ->filtered($filters)
             ->orderBy('candidate_number')
             ->orderBy('subject_code')
             ->orderBy('session')
@@ -40,7 +29,19 @@ class ExaminationController extends Controller
 
         return Inertia::render('examinations/Index', [
             'results' => ExaminationResultResource::collection($paginator),
-            'filters' => $request->only(['search']),
+            'filters' => [
+                'session' => $filters['session'],
+                'discipline' => $filters['discipline'],
+                'subject_code' => $filters['subject_code'],
+                'surname' => $filters['surname'],
+                'first_names' => $filters['first_names'],
+                'candidate_number' => $filters['candidate_number'],
+            ],
+            'filterOptions' => [
+                'sessions' => $query->sessionOptions(),
+                'disciplines' => $query->disciplineOptions($filters['session']),
+                'subjects' => $query->subjectOptions($filters['session'], $filters['discipline']),
+            ],
             'canImport' => $request->user()?->can('import', ExaminationResult::class) ?? false,
         ]);
     }

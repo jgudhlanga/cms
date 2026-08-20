@@ -12,4 +12,10 @@ class FinancePolicy
             || $user->can('viewAny:finances')
             || $user->can('view:finances');
     }
+
+    public function exportToPastel(User $user): bool
+    {
+        return $user->can('root:manage')
+            || $user->can('export-to-pastel:finances');
+    }
 }

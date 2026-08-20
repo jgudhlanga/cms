@@ -19,6 +19,36 @@ export type FinanceExchangeRateParams = {
     rate: string;
 };
 
+export type PastelExportFiltersState = {
+    intake_period_id?: number;
+    workflow_step_ids?: number[];
+    student_number_starts_with?: string;
+    search?: string | null;
+};
+
+export const PASTEL_EXPORT_DEFAULT_STUDENT_NUMBER_PREFIX = '26';
+
+export type PastelLinkedStats = {
+    total: number;
+    linkedToday: number;
+    readyToExport: number | null;
+};
+
+export type PastelLinkedStudent = {
+    type: string;
+    id: number | string;
+    attributes: {
+        studentId: number;
+        studentNumber: string | null;
+        studentName: string | null;
+        intakePeriodId: number | null;
+        intakePeriodName: string | null;
+        linkedByName: string | null;
+        linkedAt: string | null;
+        createdAt: string | null;
+    };
+};
+
 export type StudentPaymentReceipt = {
     type: string;
     id: string | number;

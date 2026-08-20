@@ -390,6 +390,7 @@ return [
             'forceDelete:finances',
             'import:finances',
             'export:finances',
+            'export-to-pastel:finances',
             'viewAuditTrail:finances',
             'viewAny:finance-settings',
             'view:finance-settings',

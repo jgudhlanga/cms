@@ -11,7 +11,12 @@ class FinanceController extends Controller
 {
     public function index(Request $request): Response
     {
-        $this->authorize('viewFinances');
+        $user = $request->user();
+
+        abort_unless(
+            $user !== null && ($user->can('viewFinances') || $user->can('exportToPastel')),
+            403,
+        );
 
         return Inertia::render('finance/Index', []);
     }

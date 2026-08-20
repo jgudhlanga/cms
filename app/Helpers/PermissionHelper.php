@@ -273,6 +273,7 @@ class PermissionHelper
                 'viewAny:finances',
                 'view:finances',
                 'export:finances',
+                'export-to-pastel:finances',
                 'viewAny:finance-settings',
                 'view:finance-settings',
             ],

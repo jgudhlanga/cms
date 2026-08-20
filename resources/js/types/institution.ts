@@ -219,6 +219,7 @@ export type IntakePeriod = {
         status?: IntakePeriodStatus;
         isContinuous?: boolean;
         description?: string;
+        calendarYear?: string | null;
         createdAt?: string;
         updatedAt?: string;
         deletedAt?: string;

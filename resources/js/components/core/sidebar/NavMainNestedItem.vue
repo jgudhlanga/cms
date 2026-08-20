@@ -114,7 +114,7 @@ function onChildNavigate() {
 					:key="getMenuItemKey(subItem)"
 					:href="subItem.url ?? ''"
 					class="flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-hidden transition-colors hover:bg-sidebar-accent/10 focus:bg-sidebar-accent/10"
-					:class="isActive(subItem.url) ? 'bg-sidebar-primary/12 font-medium text-sidebar-foreground shadow-[inset_-1px_0_0_0_hsl(var(--sidebar-primary))]' : ''"
+					:class="isActive(subItem.url, childUrls) ? 'bg-sidebar-primary/12 font-medium text-sidebar-foreground shadow-[inset_-1px_0_0_0_hsl(var(--sidebar-primary))]' : ''"
 					@click="onChildNavigate"
 				>
 					<TransText :item="subItem" variant="nav" />
@@ -156,7 +156,7 @@ function onChildNavigate() {
 						v-for="subItem in visibleChildren"
 						:key="getMenuItemKey(subItem)"
 					>
-						<SidebarMenuSubButton as-child :is-active="isActive(subItem.url)">
+						<SidebarMenuSubButton as-child :is-active="isActive(subItem.url, childUrls)">
 							<Link :href="subItem.url ?? ''" @click="onChildNavigate">
 								<TransText :item="subItem" variant="nav" />
 							</Link>
