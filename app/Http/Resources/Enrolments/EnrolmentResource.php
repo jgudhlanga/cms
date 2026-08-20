@@ -4,9 +4,9 @@ namespace App\Http\Resources\Enrolments;
 
 use App\Enums\Shared\FeeTypeEnum;
 use App\Http\Resources\Institution\CourseRequirementResource;
-use App\Http\Resources\Institution\DepartmentApplicationStepResource;
 use App\Http\Resources\Institution\DepartmentLevelRequirementResource;
 use App\Http\Resources\Integrations\LedgerResource;
+use App\Http\Resources\Shared\WorkflowStepResource;
 use App\Http\Resources\Students\AcademicLevelResource;
 use App\Services\Students\StudentOfferLetterService;
 use Illuminate\Http\Request;
@@ -32,8 +32,7 @@ class EnrolmentResource extends JsonResource
             'departmentCourse.requirement',
             'intakePeriod',
             'classList',
-            'departmentWorkflowStep.workflowStep',
-            'departmentWorkflowStep.metadata',
+            'workflowStep',
         ]);
 
         $contact = $this->student?->contacts?->first();
@@ -93,7 +92,7 @@ class EnrolmentResource extends JsonResource
                 'registrationReceipt' => $this->hasPaid(FeeTypeEnum::APPLICATION_FEE) ? LedgerResource::make($this->receipt(FeeTypeEnum::APPLICATION_FEE)) : null,
                 'tuitionReceipt' => $this->hasPaid(FeeTypeEnum::TUITION_FEE) ? LedgerResource::make($this->receipt(FeeTypeEnum::TUITION_FEE)) : null,
                 'oLevelResults' => AcademicLevelResource::collection($this->student?->oLevelResults),
-                'departmentWorkflowStep' => DepartmentApplicationStepResource::make($this->departmentWorkflowStep),
+                'workflowStep' => WorkflowStepResource::make($this->workflowStep),
                 'requirements' => $this->departmentLevel?->requirement ? DepartmentLevelRequirementResource::make($this->departmentLevel->requirement) : null,
                 'courseRequirements' => $this->departmentCourse?->requirement ? CourseRequirementResource::make($this->departmentCourse->requirement) : null,
             ],

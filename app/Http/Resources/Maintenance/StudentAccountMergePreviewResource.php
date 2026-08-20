@@ -80,7 +80,7 @@ class StudentAccountMergePreviewResource extends JsonResource
             ? $classListType->value
             : (is_string($classListType) ? $classListType : null);
 
-        $workflowSlug = $program->departmentWorkflowStep?->workflowStep?->slug;
+        $workflowSlug = $program->workflowStep?->slug;
 
         return [
             'id' => $program->id,
@@ -89,7 +89,7 @@ class StudentAccountMergePreviewResource extends JsonResource
             'course' => $program->departmentCourse?->course?->name,
             'intakePeriod' => $program->intakePeriod?->name,
             'modeOfStudy' => $program->modeOfStudy?->name,
-            'applicationStatus' => $program->departmentWorkflowStep?->workflowStep?->name,
+            'applicationStatus' => $program->workflowStep?->name,
             'classListType' => $resolvedClassListType,
             'canReject' => ! in_array($workflowSlug, [
                 WorkflowStepEnum::REJECTED->slug(),

@@ -38,7 +38,7 @@ class ApplicationExportQuery
                 'departmentCourse',
                 'intakePeriod',
                 'modeOfStudy',
-                'departmentWorkflowStep.workflowStep',
+                'workflowStep',
             ]);
     }
 
@@ -51,20 +51,14 @@ class ApplicationExportQuery
     {
         return StudentApplication::query()
             ->leftJoin(
-                'department_application_steps',
-                'student_applications.department_application_step_id',
-                '=',
-                'department_application_steps.id',
-            )
-            ->leftJoin(
                 'workflow_steps',
-                'department_application_steps.workflow_step_id',
+                'student_applications.workflow_step_id',
                 '=',
                 'workflow_steps.id',
             )
             ->whereNull('student_applications.deleted_at')
             ->where(function (Builder $query): void {
-                $query->whereNotNull('student_applications.department_application_step_id')
+                $query->whereNotNull('student_applications.workflow_step_id')
                     ->orWhereExists(function ($subQuery): void {
                         $subQuery->selectRaw('1')
                             ->from('student_enrolments')

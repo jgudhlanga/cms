@@ -1,5 +1,6 @@
-import { CourseRequirement, DepartmentApplicationStep, DepartmentLevelRequirement } from '@/types/department-meta-data';
+import { CourseRequirement, DepartmentLevelRequirement } from '@/types/department-meta-data';
 import { Ledger } from '@/types/integrations';
+import { WorkflowStep } from '@/types/settings';
 import { User } from '@/types/users';
 
 export type Enrolment = {
@@ -52,7 +53,7 @@ export type Enrolment = {
         registrationReceipt?: Ledger;
         tuitionReceipt?: Ledger;
         oLevelResults: AcademicOLevelResult[];
-        departmentWorkflowStep: DepartmentApplicationStep;
+        workflowStep: WorkflowStep;
         requirements: DepartmentLevelRequirement;
         courseRequirements: CourseRequirement;
     };
@@ -111,7 +112,7 @@ export type BulkUpdatePaymentStatus = {
     intake_period_id: string;
     department_level_id: string;
     mode_of_study_id: string;
-    step: DepartmentApplicationStep | null;
+    step: WorkflowStep | null;
 };
 
 export type BulkUpdatePaymentStatusParams = {

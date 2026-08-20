@@ -53,13 +53,13 @@ class DepartmentEnrolmentService
                 'student.user:id,first_name,last_name,email',
                 'student.gender:id,title',
                 'student.contacts' => fn ($q) => $q->orderBy('created_at')->limit(1),
-                'departmentWorkflowStep.workflowStep:id,name',
+                'workflowStep:id,name',
             ])
             ->whereIn('id', $subQuery)
             ->select([
                 'id as application_id',
                 'student_id',
-                'department_application_step_id',
+                'workflow_step_id',
                 'application_tracking_number',
                 'created_at as application_date',
                 'required_level_completed',
@@ -141,7 +141,7 @@ class DepartmentEnrolmentService
             $sp->gender = $student?->gender?->title;
 
             // Workflow
-            $sp->workflow_step = $sp->departmentWorkflowStep?->workflowStep?->name;
+            $sp->workflow_step = $sp->workflowStep?->name;
 
             // Flags
             $sp->required_level_completed = (bool) $sp->required_level_completed;
@@ -182,7 +182,7 @@ class DepartmentEnrolmentService
             $sp->student_number = $student->student_number;
             $sp->disability_status = $student->disability_status;
             $sp->gender = $student->gender->title ?? null;
-            $sp->workflow_step = $sp->departmentWorkflowStep?->workflowStep?->name;
+            $sp->workflow_step = $sp->workflowStep?->name;
             $sp->application_date = $sp->application_date;
             $sp->required_level_completed = $sp->required_level_completed ?? false;
             $sp->read_write_acknowledged = $sp->read_write_acknowledged ?? false;
@@ -286,14 +286,14 @@ class DepartmentEnrolmentService
                 'student.user:id,first_name,last_name,email',
                 'student.gender:id,title',
                 'student.contacts' => fn ($q) => $q->orderBy('created_at')->limit(1),
-                'departmentWorkflowStep.workflowStep:id,name',
+                'workflowStep:id,name',
             ])
             ->whereIn('student_applications.id', $subQuery)
             ->whereIn('class_lists.type', [$type])
             ->select([
                 'student_applications.id as application_id',
                 'student_applications.student_id',
-                'student_applications.department_application_step_id',
+                'student_applications.workflow_step_id',
                 'student_applications.application_tracking_number',
                 'student_applications.created_at as application_date',
                 'student_applications.required_level_completed',

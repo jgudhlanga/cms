@@ -67,7 +67,15 @@
                 position: absolute;
                 z-index: -3;
                 inset: -3%;
-                background: url("/assets/images/poly.png") center / cover no-repeat;
+                background-color: #020617;
+                background-image: url("/assets/images/poly.png");
+                background-image: image-set(
+                    url("/assets/images/poly.webp") type("image/webp"),
+                    url("/assets/images/poly.png") type("image/png")
+                );
+                background-position: center;
+                background-size: cover;
+                background-repeat: no-repeat;
                 content: "";
                 animation: scene-in 1.4s cubic-bezier(.2, .8, .2, 1) both;
             }

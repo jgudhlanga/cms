@@ -13,7 +13,6 @@ interface Props {
     residence?: string | null;
     expiryDate?: string | null;
     photoUrl?: string | null;
-    serialNumber?: string | null;
     logoUrl?: string | null;
     institutionName?: string | null;
     website?: string | null;
@@ -28,16 +27,10 @@ const props = withDefaults(defineProps<Props>(), {
     residence: null,
     expiryDate: null,
     photoUrl: null,
-    serialNumber: null,
     logoUrl: null,
     institutionName: null,
     website: null,
 });
-
-type BarcodeBar = {
-    x: number;
-    width: number;
-};
 
 const present = (value: string | null | undefined): string | null => {
     const trimmed = value?.trim() ?? '';
@@ -82,37 +75,6 @@ const residenceBadge = computed((): string | null => {
 });
 
 const showSdp = computed((): boolean => present(props.sdp)?.toLowerCase() === 'yes');
-
-const barcodeBars = computed((): BarcodeBar[] => {
-    const id = present(props.studentNumber) ?? present(props.serialNumber) ?? 'ID';
-    let seed = 0;
-
-    for (let index = 0; index < id.length; index++) {
-        seed = (seed * 31 + id.charCodeAt(index)) >>> 0;
-    }
-
-    const rand = (): number => {
-        seed = (seed * 1103515245 + 12345) >>> 0;
-
-        return (seed >>> 16) / 65535;
-    };
-
-    const bars: BarcodeBar[] = [];
-    const totalWidth = 440;
-    let x = 0;
-
-    while (x < totalWidth - 4) {
-        const width = 1.5 + Math.floor(rand() * 3);
-
-        if (rand() > 0.42) {
-            bars.push({ x: Number(x.toFixed(1)), width });
-        }
-
-        x += width;
-    }
-
-    return bars;
-});
 </script>
 
 <template>
@@ -219,27 +181,11 @@ const barcodeBars = computed((): BarcodeBar[] => {
         </div>
 
         <div class="mx-3 border-t border-[#E4E8F1] pt-1.5">
-            <svg
-                class="block h-4 w-full"
-                viewBox="0 0 440 34"
-                preserveAspectRatio="none"
-                aria-hidden="true"
-            >
-                <rect
-                    v-for="(bar, index) in barcodeBars"
-                    :key="`${bar.x}-${index}`"
-                    :x="bar.x"
-                    y="0"
-                    :width="bar.width"
-                    height="34"
-                    fill="#1A2233"
-                />
-            </svg>
-            <p
-                v-if="present(studentNumber)"
-                class="mt-0.5 text-center font-mono text-[8px] font-medium tracking-[0.14em]"
-            >
-                {{ studentNumber }}
+            <p class="m-0 text-[7px] font-semibold tracking-[0.09em] text-[#647089] uppercase">
+                {{ $tChoice('trans.student_number', 1) }}
+            </p>
+            <p class="m-0 font-mono text-[9px] font-semibold tracking-wide">
+                {{ present(studentNumber) ?? '—' }}
             </p>
         </div>
 

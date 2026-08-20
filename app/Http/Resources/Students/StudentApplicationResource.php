@@ -3,10 +3,10 @@
 namespace App\Http\Resources\Students;
 
 use App\Enums\Shared\FeeTypeEnum;
-use App\Http\Resources\Institution\DepartmentApplicationStepResource;
 use App\Http\Resources\Institution\DepartmentCourseResource;
 use App\Http\Resources\Institution\DepartmentLevelResource;
 use App\Http\Resources\Institution\InstitutionDepartmentResource;
+use App\Http\Resources\Shared\WorkflowStepResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -17,7 +17,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
  * @property mixed $institutionDepartment
  * @property mixed $departmentLevel
  * @property mixed $departmentCourse
- * @property mixed $departmentWorkflowStep
+ * @property mixed $workflowStep
  */
 class StudentApplicationResource extends JsonResource
 {
@@ -33,8 +33,7 @@ class StudentApplicationResource extends JsonResource
             'departmentCourse.requirement',
             'departmentCourse.departmentCourseLevels',
             'intakePeriod',
-            'departmentWorkflowStep.workflowStep',
-            'departmentWorkflowStep.metadata',
+            'workflowStep',
         ]);
 
         return [
@@ -51,7 +50,7 @@ class StudentApplicationResource extends JsonResource
                 'course' => $this->departmentCourse?->course?->name,
                 'intakePeriodId' => $this->intakePeriod?->id,
                 'intakePeriod' => $this->intakePeriod?->name,
-                'applicationStatus' => $this->departmentWorkflowStep?->workflowStep?->name,
+                'applicationStatus' => $this->workflowStep?->name,
                 'applicationTrackingNumber' => $this->application_tracking_number,
                 'registrationFeePaid' => $this->hasPaid(FeeTypeEnum::APPLICATION_FEE),
                 'tuitionFeePaid' => $this->hasPaid(FeeTypeEnum::TUITION_FEE),
@@ -67,7 +66,7 @@ class StudentApplicationResource extends JsonResource
                 'institutionDepartment' => InstitutionDepartmentResource::make($this->institutionDepartment),
                 'departmentLevel' => DepartmentLevelResource::make($this->departmentLevel),
                 'departmentCourse' => DepartmentCourseResource::make($this->departmentCourse),
-                'departmentWorkflowStep' => DepartmentApplicationStepResource::make($this->departmentWorkflowStep),
+                'workflowStep' => WorkflowStepResource::make($this->workflowStep),
             ],
         ];
     }

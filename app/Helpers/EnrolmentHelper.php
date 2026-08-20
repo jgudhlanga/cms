@@ -6,7 +6,6 @@ use App\Enums\Institution\LevelEnum;
 use App\Enums\Shared\ClassListTypeEnum;
 use App\Enums\Shared\WorkflowStepEnum;
 use App\Models\Enrolments\ClassList;
-use App\Models\Institution\DepartmentApplicationStep;
 use App\Models\Shared\WorkflowStep;
 use App\Models\Students\Student;
 use App\Models\Students\StudentApplication;
@@ -20,13 +19,13 @@ class EnrolmentHelper
         // Try to find an existing legacy student number
         $studentNumber = Helper::lookupLegacyStudentNumber($identity);
         // If legacy student number exists, return it
-        if (!empty($studentNumber)) {
+        if (! empty($studentNumber)) {
             return $studentNumber;
         }
+
         // Otherwise generate a new student number
         return Helper::generateStudentNumber($program);
     }
-
 
     public static function isEntryLevel(StudentApplication $program): bool
     {
@@ -51,12 +50,7 @@ class EnrolmentHelper
             ->get();
 
         foreach ($otherPrograms as $program) {
-            $stepId = DepartmentApplicationStep::where([
-                'institution_department_id' => $program->institution_department_id,
-                'workflow_step_id' => $rejectedStepId,
-            ])->value('id');
-
-            $program->update(['department_application_step_id' => $stepId]);
+            $program->update(['workflow_step_id' => $rejectedStepId]);
 
             if ($program->classList instanceof ClassList) {
                 $program->classList()->update([

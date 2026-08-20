@@ -8,7 +8,6 @@ use App\Enums\Shared\WorkflowStepEnum;
 use App\Helpers\EnrolmentHelper;
 use App\Jobs\Enrolments\SendOfferLetterJob;
 use App\Models\Enrolments\ClassList;
-use App\Models\Institution\DepartmentApplicationStep;
 use App\Models\Shared\WorkflowStep;
 use App\Models\Students\StudentApplication;
 use Carbon\Carbon;
@@ -31,19 +30,20 @@ class BulkProcessOfferLettersCommand extends Command
 
         $acceptedStep = WorkflowStep::where('slug', WorkflowStepEnum::ACCEPTED->slug())->first();
 
-        if (!$acceptedStep) {
+        if (! $acceptedStep) {
             $this->error('Accepted workflow step not found.');
+
             return;
         }
 
-        $query = StudentApplication::with(['departmentWorkflowStep.workflowStep', 'student.user'])
+        $query = StudentApplication::with(['workflowStep', 'student.user'])
             ->whereHas('departmentLevel.level', function ($query) {
                 $query->whereIn('name', [LevelEnum::ND, LevelEnum::HND]);
             })
             ->whereHas('departmentCourse.course', function ($query) {
                 $query->whereNotIn('name', [CourseEnum::PHARMACEUTICAL_TECHNOLOGY]);
             })
-            ->whereHas('departmentWorkflowStep.workflowStep', function ($query) {
+            ->whereHas('workflowStep', function ($query) {
                 $query->whereNotIn('name', [
                     WorkflowStepEnum::ENROLLED,
                     WorkflowStepEnum::REJECTED,
@@ -59,7 +59,7 @@ class BulkProcessOfferLettersCommand extends Command
                     DB::transaction(function () use ($program, $acceptedStep) {
 
                         $classList = ClassList::firstOrNew([
-                            'student_application_id' => $program->id
+                            'student_application_id' => $program->id,
                         ]);
                         $classList->fill([
                             'tenant_id' => $program->tenant_id,
@@ -85,20 +85,8 @@ class BulkProcessOfferLettersCommand extends Command
                             'student_number_generated' => true,
                         ]);
 
-                        $departmentStep = DepartmentApplicationStep::where(
-                            'institution_department_id',
-                            $program->institution_department_id
-                        )->where(
-                            'workflow_step_id',
-                            $acceptedStep->id
-                        )->first();
-
-                        if (!$departmentStep) {
-                            throw new \Exception('Department step not found.');
-                        }
-
                         $program->update([
-                            'department_application_step_id' => $departmentStep->id
+                            'workflow_step_id' => $acceptedStep->id,
                         ]);
 
                         $user = $program->student->user;
@@ -121,7 +109,7 @@ class BulkProcessOfferLettersCommand extends Command
         });
 
         $this->line('');
-        $this->info("Bulk processing completed.");
+        $this->info('Bulk processing completed.');
         $this->info("Successful: {$successCount}");
         $this->error("Failed: {$failedCount}");
     }

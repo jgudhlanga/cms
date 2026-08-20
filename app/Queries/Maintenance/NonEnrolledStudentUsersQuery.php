@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Queries\Maintenance;
 
-use App\Enums\Rbac\RoleEnum;
 use App\Enums\Maintenance\MaintenanceApplicationStatusFilterEnum;
+use App\Enums\Rbac\RoleEnum;
 use App\Enums\Shared\ClassListTypeEnum;
 use App\Enums\Shared\WorkflowStepEnum;
 use App\Models\Users\User;
@@ -25,7 +25,7 @@ class NonEnrolledStudentUsersQuery
                         ->whereNull('student_applications.deleted_at')
                         ->where(function (Builder $status): void {
                             $status->whereHas(
-                                'departmentWorkflowStep.workflowStep',
+                                'workflowStep',
                                 fn (Builder $workflowStep) => $workflowStep->whereIn('slug', [
                                     WorkflowStepEnum::REVIEW->slug(),
                                     WorkflowStepEnum::WAITLISTED->slug(),
@@ -51,7 +51,7 @@ class NonEnrolledStudentUsersQuery
                 'status',
                 'roles',
                 'studentProfile',
-                'studentProfile.applications.departmentWorkflowStep.workflowStep',
+                'studentProfile.applications.workflowStep',
                 'studentProfile.applications.classList',
             ])
             ->orderBy('first_name')
@@ -116,7 +116,7 @@ class NonEnrolledStudentUsersQuery
                         ->whereNull('student_applications.deleted_at')
                         ->where(function (Builder $status): void {
                             $status->whereHas(
-                                'departmentWorkflowStep.workflowStep',
+                                'workflowStep',
                                 fn (Builder $workflowStep) => $workflowStep->whereIn('slug', [
                                     WorkflowStepEnum::REVIEW->slug(),
                                     WorkflowStepEnum::WAITLISTED->slug(),
@@ -138,7 +138,7 @@ class NonEnrolledStudentUsersQuery
         $program
             ->whereNull('student_applications.deleted_at')
             ->whereHas(
-                'departmentWorkflowStep.workflowStep',
+                'workflowStep',
                 fn (Builder $workflowStep) => $workflowStep->where(
                     'slug',
                     WorkflowStepEnum::REVIEW->slug(),
@@ -151,7 +151,7 @@ class NonEnrolledStudentUsersQuery
         $program
             ->whereNull('student_applications.deleted_at')
             ->whereHas(
-                'departmentWorkflowStep.workflowStep',
+                'workflowStep',
                 fn (Builder $workflowStep) => $workflowStep->where(
                     'slug',
                     WorkflowStepEnum::WAITLISTED->slug(),

@@ -16,4 +16,23 @@ enum AcademicCalendarTypeEnum: string
             self::ABMA => 4,
         };
     }
+
+    /**
+     * @return list<string>
+     */
+    public function allowedSemesterSlugs(): array
+    {
+        $slugs = [];
+
+        for ($number = 1; $number <= $this->maxAssessmentCalendarsPerYear(); $number++) {
+            $slugs[] = $this->value.'-'.$number;
+        }
+
+        return $slugs;
+    }
+
+    public function fallbackSemesterSlug(): string
+    {
+        return $this->value.'-1';
+    }
 }

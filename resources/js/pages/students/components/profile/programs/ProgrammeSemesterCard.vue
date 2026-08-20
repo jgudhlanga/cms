@@ -1,18 +1,25 @@
 <script setup lang="ts">
 import Empty from '@/components/core/util/Empty.vue';
 import StudentCourseWorkModuleRow from '@/components/students/course-work/StudentCourseWorkModuleRow.vue';
+import { useCustomConfirmDialog } from '@/composables/core/useCustomConfirmDialog';
 import {
     mapProgrammeModuleToListItem,
     semesterHeaderMeta,
     statusBadgeClass,
 } from '@/composables/students/studentProgrammeDisplay';
+import { errorAlert } from '@/lib/alerts';
+import { firstInertiaErrorMessage } from '@/lib/inertia-errors';
+import { hasAbility } from '@/lib/permissions';
 import ProgrammeModuleDetails from '@/pages/students/components/profile/programs/ProgrammeModuleDetails.vue';
 import type { StudentProgrammeSemester } from '@/types/students';
+import { router } from '@inertiajs/vue3';
+import { trans } from 'laravel-vue-i18n';
 import { CalendarDays } from 'lucide-vue-next';
 import { computed, onMounted, ref, watch } from 'vue';
 
 interface Props {
     semester: StudentProgrammeSemester;
+    studentId: string | number;
     expandModulesWithMarks?: boolean;
 }
 
@@ -20,7 +27,13 @@ const props = withDefaults(defineProps<Props>(), {
     expandModulesWithMarks: false,
 });
 
+const emit = defineEmits<{
+    statusUpdated: [];
+}>();
+
 const header = computed(() => semesterHeaderMeta(props.semester));
+const canUpdateStatus = computed(() => hasAbility(['update:students']) && Boolean(props.semester.studentEnrolmentId));
+const { open: openConfirmDialog } = useCustomConfirmDialog();
 
 const openMap = ref<Record<number, boolean>>({});
 
@@ -58,10 +71,65 @@ watch(
     },
     { deep: true },
 );
+
+const isDisabled = computed(() => props.semester.isDisabled === true);
+const hasExamResult = computed(() => props.semester.hasExamResult === true);
+const showStatusDropdown = computed(
+    () => !hasExamResult.value && canUpdateStatus.value && (props.semester.availableStatuses?.length ?? 0) > 0,
+);
+
+const updateStatus = async (status: string, message: string): Promise<void> => {
+    if (!props.semester.studentEnrolmentId) {
+        return;
+    }
+
+    const confirmed = await openConfirmDialog({
+        title: trans('students.enrolment_status_confirm_title'),
+        message,
+        confirmText: trans('trans.save'),
+        cancelText: trans('trans.cancel'),
+    });
+
+    if (!confirmed) {
+        return;
+    }
+
+    router.patch(
+        route('students.enrolments.status.update', {
+            student: String(props.studentId),
+            student_enrolment: String(props.semester.studentEnrolmentId),
+        }),
+        { status },
+        {
+            preserveScroll: true,
+            onSuccess: () => emit('statusUpdated'),
+            onError: (errors) => {
+                errorAlert(firstInertiaErrorMessage(errors, trans('students.enrolment_status_invalid')));
+            },
+        },
+    );
+};
+
+const onStatusDropdownChange = (event: Event) => {
+    const target = event.target as HTMLSelectElement;
+    const slug = target.value;
+
+    if (!slug) {
+        return;
+    }
+
+    const statusOption = props.semester.availableStatuses?.find((s) => s.slug === slug);
+    const label = statusOption?.name ?? slug;
+
+    updateStatus(slug, trans('students.enrolment_status_confirm_change', { status: label }));
+};
 </script>
 
 <template>
-    <div class="overflow-hidden rounded border border-border bg-card">
+    <div
+        class="overflow-hidden rounded border border-border bg-card"
+        :class="{ 'opacity-50 pointer-events-none': isDisabled }"
+    >
         <div class="flex min-w-0 items-start justify-between gap-2 border-b border-border px-2 py-1.5 sm:items-center sm:px-3">
             <div class="flex min-w-0 flex-1 items-start gap-1.5 sm:items-center sm:gap-2">
                 <CalendarDays
@@ -92,13 +160,31 @@ watch(
                     </span>
                 </p>
             </div>
-            <span
-                v-if="semester.status"
-                :class="statusBadgeClass(semester.status)"
-                class="shrink-0 text-[0.65rem] uppercase tracking-wide"
-            >
-                {{ semester.status }}
-            </span>
+            <div class="flex shrink-0 flex-col items-end gap-1">
+                <span
+                    v-if="semester.status"
+                    :class="statusBadgeClass(semester.status)"
+                    class="text-[0.65rem] uppercase tracking-wide"
+                >
+                    {{ semester.status }}
+                </span>
+                <div v-if="showStatusDropdown" class="flex flex-wrap justify-end gap-1">
+                    <select
+                        class="h-5 rounded border border-border bg-background px-1 text-[0.65rem] text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                        :value="(semester.status ?? '').toLowerCase()"
+                        @change="onStatusDropdownChange"
+                    >
+                        <option value="" disabled>{{ $t('students.select_status') }}</option>
+                        <option
+                            v-for="option in semester.availableStatuses"
+                            :key="option.slug"
+                            :value="option.slug"
+                        >
+                            {{ option.name }}
+                        </option>
+                    </select>
+                </div>
+            </div>
         </div>
 
         <div

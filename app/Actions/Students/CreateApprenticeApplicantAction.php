@@ -16,8 +16,8 @@ use App\Models\Shared\IdType;
 use App\Models\Shared\MaritalStatus;
 use App\Models\Shared\Title;
 use App\Models\Students\Student;
-use App\Models\Students\StudentApprentice;
 use App\Models\Students\StudentApplication;
+use App\Models\Students\StudentApprentice;
 use App\Models\Users\User;
 use App\Repositories\Students\interface\IStudentApplicationRepository;
 use App\Services\Students\ApplicationEligibilityService;
@@ -99,12 +99,12 @@ class CreateApprenticeApplicantAction
             read_write_acknowledged: null,
         ));
 
-        $stepOne = WorkflowHelper::getDepartmentApplicationStepByPosition($application->institution_department_id, 1);
-        $stepTwo = WorkflowHelper::getDepartmentApplicationStepByPosition($application->institution_department_id, 2);
-        $application->update(['department_application_step_id' => $stepOne?->id ?? $stepTwo?->id]);
+        $stepOne = WorkflowHelper::getStepByPosition(1);
+        $stepTwo = WorkflowHelper::getStepByPosition(2);
+        $application->update(['workflow_step_id' => $stepOne?->id ?? $stepTwo?->id]);
 
         if ($stepTwo !== null && $stepOne !== null) {
-            $application->update(['department_application_step_id' => $stepTwo->id]);
+            $application->update(['workflow_step_id' => $stepTwo->id]);
         }
 
         return [

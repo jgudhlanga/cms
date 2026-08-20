@@ -151,50 +151,6 @@ export type DepartmentLevelCourse = {
     course: string;
 };
 
-export type DepartmentApplicationStep = {
-    type: string;
-    id: string | number;
-    attributes: {
-        institutionDepartmentId: string | number;
-        workflowStepId: string | number;
-        workflowStep: string;
-        slug: string;
-        workflowStepDescription?: string;
-        position: number;
-        createdAt?: string;
-        updatedAt?: string;
-        deletedAt?: string | null;
-    };
-    relationships?: {
-        metadata?: DepartmentWorkflowStepMetadata;
-    };
-};
-
-export type DepartmentWorkflowStepMetadata = {
-    type: string;
-    id: string;
-    roleIds: Array<string | undefined | null>;
-    staffIds: Array<string | undefined | null>;
-    workflowActionIds: Array<string | undefined | null>;
-    roles?: Array<string | undefined | null>;
-    staff?: Array<string | undefined | null>;
-    actions?: Array<{
-        title: string;
-        action: string;
-    }>;
-};
-
-export type DepartmentApplicationStepParams = {
-    workflow_step_ids: Array<string | undefined | null> | null;
-};
-
-export type DepartmentApplicationStepActionParams = {
-    department_application_step_id: string | number | null;
-    workflow_action_ids: Array<string | undefined | null>;
-    role_ids: Array<string | undefined | null>;
-    staff_ids: Array<string | undefined | null>;
-};
-
 export type ClassSizeEntry = {
     department_course_id: number;
     department_level_id: number;

@@ -25,7 +25,6 @@ use App\Http\Resources\Institution\ModeOfStudyResource;
 use App\Jobs\Enrolments\SendEnrolmentProgressJob;
 use App\Jobs\Enrolments\SendOfferLetterJob;
 use App\Models\Enrolments\ClassList;
-use App\Models\Institution\DepartmentApplicationStep;
 use App\Models\Institution\DepartmentCourse;
 use App\Models\Institution\DepartmentLevel;
 use App\Models\Institution\FeeStructure;
@@ -272,16 +271,7 @@ class ClassListController extends Controller
                     $this->createStudentEnrolment($studentApplication);
                 }
 
-                $departmentStep = DepartmentApplicationStep::where('institution_department_id', $studentApplication->institution_department_id)
-                    ->where('workflow_step_id', $step->id)
-                    ->first();
-                if ($departmentStep === null) {
-                    throw new \RuntimeException(
-                        "Department application step for workflow \"{$workflowSlug}\" was not found for institution department {$studentApplication->institution_department_id}."
-                    );
-                }
-
-                $studentApplication->update(['department_application_step_id' => $departmentStep->id]);
+                $studentApplication->update(['workflow_step_id' => $step->id]);
 
                 if ($request->filled('remarks')) {
                     $studentApplication->notes()->create([
@@ -337,8 +327,7 @@ class ClassListController extends Controller
             $entry->save();
             // change student application status to rejected
             $step = WorkflowStep::where('slug', WorkflowStepEnum::REJECTED->slug())->first();
-            $departmentStep = DepartmentApplicationStep::where('institution_department_id', $studentApplication->institution_department_id)->where('workflow_step_id', $step->id)->first();
-            $studentApplication->update(['department_application_step_id' => $departmentStep->id]);
+            $studentApplication->update(['workflow_step_id' => $step->id]);
 
             return back()->with('success', 'Class list entry updated successfully.');
         } catch (Throwable $e) {
@@ -444,7 +433,7 @@ class ClassListController extends Controller
     public function getStudent(StudentApplication $studentApplication): Collection
     {
         $studentApplication->load([
-            'departmentWorkflowStep',
+            'workflowStep',
             'institutionDepartment',
             'departmentLevel.level',
             'departmentLevel.requirement',

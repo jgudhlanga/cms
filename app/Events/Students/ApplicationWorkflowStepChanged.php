@@ -2,7 +2,7 @@
 
 namespace App\Events\Students;
 
-use App\Models\Institution\DepartmentApplicationStep;
+use App\Models\Shared\WorkflowStep;
 use App\Models\Students\Student;
 use App\Models\Students\StudentApplication;
 use Illuminate\Broadcasting\Channel;
@@ -15,21 +15,14 @@ class ApplicationWorkflowStepChanged
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    /**
-     * Create a new event instance.
-     */
     public function __construct(
-        public Student                    $student,
-        public StudentApplication             $program,
-        public DepartmentApplicationStep  $newStep,
-        public ?DepartmentApplicationStep $oldStep = null)
-    {
-        //
-    }
+        public Student $student,
+        public StudentApplication $program,
+        public WorkflowStep $newStep,
+        public ?WorkflowStep $oldStep = null,
+    ) {}
 
     /**
-     * Get the channels the event should broadcast on.
-     *
      * @return array<int, Channel>
      */
     public function broadcastOn(): array

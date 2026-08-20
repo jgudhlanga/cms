@@ -6,8 +6,8 @@ use App\Enums\Shared\WorkflowStepEnum;
 use App\Mail\Enrolments\BulkFinaliseEnrolmentsReportMail;
 use App\Models\AcademicCalendars\AcademicCalendar;
 use App\Models\AcademicCalendars\Semester;
-use App\Models\Rbac\Role;
 use App\Models\Enrolments\ClassList;
+use App\Models\Rbac\Role;
 use App\Models\Students\StudentEnrolment;
 use App\Models\Students\StudentEnrolmentStatus;
 use App\Models\Users\User;
@@ -68,7 +68,7 @@ it('finalises verified students with matching payments in the date window', func
     $calendarId = AcademicCalendar::query()->where('calendar_year', '2025/2026')->value('id');
 
     expect($freshStudentApplication->program_status_id)->toBe(ClassListTypeEnum::VERIFIED->value)
-        ->and($freshStudentApplication->department_application_step_id)->toBe($departmentStep->id)
+        ->and($freshStudentApplication->workflow_step_id)->toBe($departmentStep->id)
         ->and($classList)->not->toBeNull()
         ->and($classList->type)->toBe(ClassListTypeEnum::FINAL)
         ->and($enrolment)->not->toBeNull()
@@ -190,7 +190,7 @@ it('skips verified students that are not on the accepted workflow step', functio
     $studentApplication = createVerifiedStudentApplication('STU003B');
     $rejectedDepartmentStep = createRejectedDepartmentStep($studentApplication);
     $studentApplication->update([
-        'department_application_step_id' => $rejectedDepartmentStep->id,
+        'workflow_step_id' => $rejectedDepartmentStep->id,
     ]);
     createEnrolledDepartmentStep($studentApplication);
     createBankCreditReceipt('STU003B', '2026-01-10 09:00:00', 'TXN-BULK-003B');
@@ -199,11 +199,11 @@ it('skips verified students that are not on the accepted workflow step', functio
 
     $classList = ClassList::query()->where('student_application_id', $studentApplication->id)->first();
 
-    expect($studentApplication->fresh()->department_application_step_id)->toBe($rejectedDepartmentStep->id)
+    expect($studentApplication->fresh()->workflow_step_id)->toBe($rejectedDepartmentStep->id)
         ->and($classList)->not->toBeNull()
         ->and($classList->type)->toBe(ClassListTypeEnum::VERIFIED)
         ->and(StudentEnrolment::query()->where('student_id', $studentApplication->student_id)->exists())->toBeFalse()
-        ->and($rejectedDepartmentStep->workflowStep->name)->toBe(WorkflowStepEnum::REJECTED->name());
+        ->and($rejectedDepartmentStep->name)->toBe(WorkflowStepEnum::REJECTED->name());
 });
 
 it('writes an XLSX failure report to local storage', function () {

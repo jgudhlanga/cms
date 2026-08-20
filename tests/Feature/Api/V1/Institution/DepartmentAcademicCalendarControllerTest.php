@@ -6,8 +6,8 @@ use App\Enums\Shared\ClassListTypeEnum;
 use App\Models\AcademicCalendars\AcademicCalendar;
 use App\Models\AcademicCalendars\AcademicCalendarClass;
 use App\Models\AcademicCalendars\AcademicCalendarStudentEnrolment;
-use App\Models\AcademicCalendars\Semester;
 use App\Models\AcademicCalendars\ClassConfig;
+use App\Models\AcademicCalendars\Semester;
 use App\Models\Enrolments\ClassList;
 use App\Models\Institution\Course;
 use App\Models\Institution\Department;
@@ -24,9 +24,9 @@ use App\Models\Shared\IdType;
 use App\Models\Shared\MaritalStatus;
 use App\Models\Shared\Title;
 use App\Models\Students\Student;
+use App\Models\Students\StudentApplication;
 use App\Models\Students\StudentEnrolment;
 use App\Models\Students\StudentEnrolmentStatus;
-use App\Models\Students\StudentApplication;
 use App\Models\Tenants\Tenant;
 use App\Models\Users\User;
 use Laravel\Sanctum\Sanctum;
@@ -247,14 +247,16 @@ test('department academic calendar returns totalnClass and totalFinalList counts
     $response = $this->getJson("/api/v1/departments/{$institutionDepartment->id}/academic-calendars?academic_year={$calendar->calendar_year}&mode_of_study_id={$modeOfStudy->id}");
 
     $response->assertOk();
-    $response->assertJsonPath('meta.resolvedSemesterId', $semesterOneId);
+    $response->assertJsonPath('meta.resolvedSemesterId', null);
     $response->assertJsonFragment([
         'departmentLevelId' => (string) $departmentLevel->id,
         'calendarType' => 'semester',
+        'totalFinalList' => 1,
+    ]);
+    $response->assertJsonFragment([
         'classConfigId' => $classConfig->id,
         'classesCount' => 2,
         'totalnClass' => 3,
-        'totalFinalList' => 1,
         'semesterId' => $semesterOneId,
         'semester' => 'Semester 1',
         'courseSyllabusIds' => [$courseSyllabus->id],
@@ -262,7 +264,7 @@ test('department academic calendar returns totalnClass and totalFinalList counts
     ]);
 });
 
-test('department academic calendar auto seeds class config from final list count when config is missing', function () {
+test('department academic calendar does not auto seed class config on get', function () {
     $this->travelTo('2026-05-15');
 
     $tenant = Tenant::query()->firstOrFail();
@@ -355,28 +357,19 @@ test('department academic calendar auto seeds class config from final list count
 
     $response->assertOk();
 
-    $classConfig = ClassConfig::query()
+    expect(ClassConfig::query()
         ->where('calendar_year', $calendar->calendar_year)
         ->where('institution_department_id', $institutionDepartment->id)
         ->where('department_course_id', $departmentCourse->id)
         ->where('department_level_id', $departmentLevel->id)
         ->where('mode_of_study_id', $modeOfStudy->id)
-        ->where('semester_id', $semesterOneId)
-        ->sole();
-
-    expect($classConfig->students_per_class)->toBe(1)
-        ->and($classConfig->semester_id)->toBe($semesterOneId);
+        ->exists())->toBeFalse();
 
     $response->assertJsonFragment([
         'departmentLevelId' => (string) $departmentLevel->id,
         'calendarType' => 'semester',
-        'classConfigId' => $classConfig->id,
-        'classesCount' => 0,
-        'totalnClass' => 0,
         'totalFinalList' => 1,
-        'studentsPerClass' => 1,
-        'semesterId' => $semesterOneId,
-        'semester' => 'Semester 1',
+        'configs' => [],
     ]);
 });
 
@@ -485,9 +478,11 @@ test('department academic calendar does not overwrite existing class config stud
     $response->assertJsonFragment([
         'departmentLevelId' => (string) $departmentLevel->id,
         'calendarType' => 'semester',
+        'totalFinalList' => 1,
+    ]);
+    $response->assertJsonFragment([
         'classConfigId' => $existingConfig->id,
         'studentsPerClass' => 99,
-        'totalFinalList' => 1,
         'semesterId' => $semesterOneId,
         'semester' => 'Semester 1',
     ]);
@@ -601,9 +596,11 @@ test('department academic calendar does not replace existing class config when s
     $response->assertJsonFragment([
         'departmentLevelId' => (string) $departmentLevel->id,
         'calendarType' => 'semester',
+        'totalFinalList' => 1,
+    ]);
+    $response->assertJsonFragment([
         'classConfigId' => $existingConfig->id,
         'studentsPerClass' => 0,
-        'totalFinalList' => 1,
         'semesterId' => $semesterOneId,
         'semester' => 'Semester 1',
     ]);
@@ -720,8 +717,11 @@ test('department academic calendar does not violate class config unique index wh
     $response->assertJsonFragment([
         'departmentLevelId' => (string) $departmentLevel->id,
         'totalFinalList' => 1,
-        'semesterId' => $semesterOneId,
-        'semester' => 'Semester 1',
+    ]);
+    $response->assertJsonFragment([
+        'semesterId' => $semesterTwoId,
+        'semester' => 'Semester 2',
+        'classConfigId' => $existingConfig->id,
     ]);
 
     expect($existingConfig->fresh())
@@ -735,7 +735,7 @@ test('department academic calendar does not violate class config unique index wh
         ->where('mode_of_study_id', $modeOfStudy->id)
         ->where('calendar_year', $calendar->calendar_year)
         ->where('semester_id', $semesterOneId)
-        ->exists())->toBeTrue();
+        ->exists())->toBeFalse();
 });
 
 test('department academic calendar returns zero totalFinalList when class config and final list are missing', function () {
@@ -800,11 +800,306 @@ test('department academic calendar returns zero totalFinalList when class config
     $response->assertJsonFragment([
         'departmentLevelId' => (string) $departmentLevel->id,
         'calendarType' => 'semester',
-        'classConfigId' => null,
-        'classesCount' => 0,
-        'totalnClass' => 0,
         'totalFinalList' => 0,
-        'semesterId' => null,
-        'semester' => null,
+        'configs' => [],
     ]);
+});
+
+test('department academic calendar groups multiple year configs onto one level row', function () {
+    $this->travelTo('2026-05-15');
+
+    $tenant = Tenant::query()->firstOrFail();
+    $user = User::factory()->create(['tenant_id' => $tenant->id]);
+
+    $semesterOne = Semester::query()->firstOrCreate(
+        ['slug' => 'semester-1'],
+        ['name' => 'Semester 1', 'description' => null],
+    );
+    $semesterTwo = Semester::query()->firstOrCreate(
+        ['slug' => 'semester-2'],
+        ['name' => 'Semester 2', 'description' => null],
+    );
+
+    $department = Department::factory()->create();
+    $institutionDepartment = InstitutionDepartment::query()->create([
+        'tenant_id' => $tenant->id,
+        'department_id' => $department->id,
+        'department_code' => 'cal-api-group-configs',
+        'description' => 'Two semester configs share one level row',
+    ]);
+
+    $course = Course::factory()->create();
+    $departmentCourse = DepartmentCourse::query()->create([
+        'tenant_id' => $tenant->id,
+        'institution_department_id' => $institutionDepartment->id,
+        'course_id' => $course->id,
+    ]);
+
+    $level = Level::factory()->create([
+        'name' => 'NC',
+        'calendar_type' => AcademicCalendarTypeEnum::SEMESTER,
+    ]);
+    $departmentLevel = DepartmentLevel::query()->create([
+        'tenant_id' => $tenant->id,
+        'institution_department_id' => $institutionDepartment->id,
+        'level_id' => $level->id,
+    ]);
+    DepartmentLevelCourse::query()->create([
+        'department_course_id' => $departmentCourse->id,
+        'department_level_id' => $departmentLevel->id,
+    ]);
+
+    $modeOfStudy = ModeOfStudy::query()->create(['name' => 'Full Time Group']);
+    $calendar = AcademicCalendar::query()->create([
+        'calendar_year' => '2026',
+        'type' => AcademicCalendarTypeEnum::SEMESTER,
+        'opening_date' => '2026-01-15',
+        'closing_date' => '2026-06-30',
+    ]);
+
+    $configOne = ClassConfig::query()->create([
+        'calendar_year' => '2026',
+        'semester_id' => $semesterOne->id,
+        'institution_department_id' => $institutionDepartment->id,
+        'department_course_id' => $departmentCourse->id,
+        'department_level_id' => $departmentLevel->id,
+        'mode_of_study_id' => $modeOfStudy->id,
+        'students_per_class' => 20,
+    ]);
+    $configTwo = ClassConfig::query()->create([
+        'calendar_year' => '2026',
+        'semester_id' => $semesterTwo->id,
+        'institution_department_id' => $institutionDepartment->id,
+        'department_course_id' => $departmentCourse->id,
+        'department_level_id' => $departmentLevel->id,
+        'mode_of_study_id' => $modeOfStudy->id,
+        'students_per_class' => 25,
+    ]);
+
+    Sanctum::actingAs($user);
+
+    $response = $this->getJson("/api/v1/departments/{$institutionDepartment->id}/academic-calendars?academic_year=2026&mode_of_study_id={$modeOfStudy->id}");
+
+    $response->assertOk();
+    $levels = $response->json('data.0.levels');
+    expect($levels)->toHaveCount(1)
+        ->and($levels[0]['departmentLevelId'])->toBe((string) $departmentLevel->id)
+        ->and($levels[0]['configs'])->toHaveCount(2)
+        ->and($levels[0]['remainingPeriods'])->toBe([])
+        ->and(collect($levels[0]['configs'])->pluck('classConfigId')->all())->toEqualCanonicalizing([
+            $configOne->id,
+            $configTwo->id,
+        ]);
+});
+
+test('department academic calendar remaining periods flag the current period for the selected year', function () {
+    $this->travelTo('2026-05-15');
+
+    $tenant = Tenant::query()->firstOrFail();
+    $user = User::factory()->create(['tenant_id' => $tenant->id]);
+
+    $semesterOne = Semester::query()->firstOrCreate(
+        ['slug' => 'semester-1'],
+        ['name' => 'Semester 1', 'description' => null],
+    );
+    $semesterTwo = Semester::query()->firstOrCreate(
+        ['slug' => 'semester-2'],
+        ['name' => 'Semester 2', 'description' => null],
+    );
+
+    $department = Department::factory()->create();
+    $institutionDepartment = InstitutionDepartment::query()->create([
+        'tenant_id' => $tenant->id,
+        'department_id' => $department->id,
+        'department_code' => 'cal-api-remaining',
+        'description' => 'Remaining periods for 2026',
+    ]);
+
+    $course = Course::factory()->create();
+    $departmentCourse = DepartmentCourse::query()->create([
+        'tenant_id' => $tenant->id,
+        'institution_department_id' => $institutionDepartment->id,
+        'course_id' => $course->id,
+    ]);
+
+    $level = Level::factory()->create([
+        'name' => 'ND',
+        'calendar_type' => AcademicCalendarTypeEnum::SEMESTER,
+    ]);
+    $departmentLevel = DepartmentLevel::query()->create([
+        'tenant_id' => $tenant->id,
+        'institution_department_id' => $institutionDepartment->id,
+        'level_id' => $level->id,
+    ]);
+    DepartmentLevelCourse::query()->create([
+        'department_course_id' => $departmentCourse->id,
+        'department_level_id' => $departmentLevel->id,
+    ]);
+
+    $modeOfStudy = ModeOfStudy::query()->create(['name' => 'Full Time Remaining']);
+    AcademicCalendar::query()->create([
+        'calendar_year' => '2026',
+        'type' => AcademicCalendarTypeEnum::SEMESTER,
+        'opening_date' => '2026-01-15',
+        'closing_date' => '2026-06-30',
+    ]);
+    AcademicCalendar::query()->create([
+        'calendar_year' => '2026',
+        'type' => AcademicCalendarTypeEnum::SEMESTER,
+        'opening_date' => '2026-07-01',
+        'closing_date' => '2026-12-15',
+    ]);
+
+    Sanctum::actingAs($user);
+
+    $response = $this->getJson("/api/v1/departments/{$institutionDepartment->id}/academic-calendars?academic_year=2026&mode_of_study_id={$modeOfStudy->id}");
+
+    $response->assertOk();
+    $levelRow = $response->json('data.0.levels.0');
+    expect($levelRow['configs'])->toBe([])
+        ->and($levelRow['currentSemesterId'])->toBe($semesterOne->id)
+        ->and($levelRow['remainingPeriods'])->toEqual([
+            ['id' => $semesterOne->id, 'name' => 'Semester 1', 'isCurrent' => true],
+            ['id' => $semesterTwo->id, 'name' => 'Semester 2', 'isCurrent' => false],
+        ]);
+});
+
+test('department academic calendar hides other-year configs from the selected year', function () {
+    $this->travelTo('2026-05-15');
+
+    $tenant = Tenant::query()->firstOrFail();
+    $user = User::factory()->create(['tenant_id' => $tenant->id]);
+
+    $semesterOneId = (int) Semester::query()->firstOrCreate(
+        ['slug' => 'semester-1'],
+        ['name' => 'Semester 1', 'description' => null],
+    )->id;
+
+    $department = Department::factory()->create();
+    $institutionDepartment = InstitutionDepartment::query()->create([
+        'tenant_id' => $tenant->id,
+        'department_id' => $department->id,
+        'department_code' => 'cal-api-year-scope',
+        'description' => '2025 configs stay out of 2026',
+    ]);
+
+    $course = Course::factory()->create();
+    $departmentCourse = DepartmentCourse::query()->create([
+        'tenant_id' => $tenant->id,
+        'institution_department_id' => $institutionDepartment->id,
+        'course_id' => $course->id,
+    ]);
+
+    $level = Level::factory()->create(['name' => 'HND']);
+    $departmentLevel = DepartmentLevel::query()->create([
+        'tenant_id' => $tenant->id,
+        'institution_department_id' => $institutionDepartment->id,
+        'level_id' => $level->id,
+    ]);
+    DepartmentLevelCourse::query()->create([
+        'department_course_id' => $departmentCourse->id,
+        'department_level_id' => $departmentLevel->id,
+    ]);
+
+    $modeOfStudy = ModeOfStudy::query()->create(['name' => 'Full Time Year Scope']);
+    AcademicCalendar::query()->create([
+        'calendar_year' => '2026',
+        'type' => AcademicCalendarTypeEnum::SEMESTER,
+        'opening_date' => '2026-01-15',
+        'closing_date' => '2026-06-30',
+    ]);
+
+    $config2025 = ClassConfig::query()->create([
+        'calendar_year' => '2025',
+        'semester_id' => $semesterOneId,
+        'institution_department_id' => $institutionDepartment->id,
+        'department_course_id' => $departmentCourse->id,
+        'department_level_id' => $departmentLevel->id,
+        'mode_of_study_id' => $modeOfStudy->id,
+        'students_per_class' => 40,
+    ]);
+
+    Sanctum::actingAs($user);
+
+    $response = $this->getJson("/api/v1/departments/{$institutionDepartment->id}/academic-calendars?academic_year=2026&mode_of_study_id={$modeOfStudy->id}");
+
+    $response->assertOk();
+    $levelRow = $response->json('data.0.levels.0');
+    expect($levelRow['configs'])->toBe([])
+        ->and(collect($levelRow['configs'])->pluck('classConfigId')->all())->not->toContain($config2025->id);
+});
+
+test('department academic calendar semester filter hides other pills but keeps remaining math', function () {
+    $this->travelTo('2026-05-15');
+
+    $tenant = Tenant::query()->firstOrFail();
+    $user = User::factory()->create(['tenant_id' => $tenant->id]);
+
+    $semesterOne = Semester::query()->firstOrCreate(
+        ['slug' => 'semester-1'],
+        ['name' => 'Semester 1', 'description' => null],
+    );
+    $semesterTwo = Semester::query()->firstOrCreate(
+        ['slug' => 'semester-2'],
+        ['name' => 'Semester 2', 'description' => null],
+    );
+
+    $department = Department::factory()->create();
+    $institutionDepartment = InstitutionDepartment::query()->create([
+        'tenant_id' => $tenant->id,
+        'department_id' => $department->id,
+        'department_code' => 'cal-api-filter-pills',
+        'description' => 'Filter hides other semester pills',
+    ]);
+
+    $course = Course::factory()->create();
+    $departmentCourse = DepartmentCourse::query()->create([
+        'tenant_id' => $tenant->id,
+        'institution_department_id' => $institutionDepartment->id,
+        'course_id' => $course->id,
+    ]);
+
+    $level = Level::factory()->create([
+        'name' => 'NC Filter',
+        'calendar_type' => AcademicCalendarTypeEnum::SEMESTER,
+    ]);
+    $departmentLevel = DepartmentLevel::query()->create([
+        'tenant_id' => $tenant->id,
+        'institution_department_id' => $institutionDepartment->id,
+        'level_id' => $level->id,
+    ]);
+    DepartmentLevelCourse::query()->create([
+        'department_course_id' => $departmentCourse->id,
+        'department_level_id' => $departmentLevel->id,
+    ]);
+
+    $modeOfStudy = ModeOfStudy::query()->create(['name' => 'Full Time Filter']);
+    AcademicCalendar::query()->create([
+        'calendar_year' => '2026',
+        'type' => AcademicCalendarTypeEnum::SEMESTER,
+        'opening_date' => '2026-01-15',
+        'closing_date' => '2026-06-30',
+    ]);
+
+    $configOne = ClassConfig::query()->create([
+        'calendar_year' => '2026',
+        'semester_id' => $semesterOne->id,
+        'institution_department_id' => $institutionDepartment->id,
+        'department_course_id' => $departmentCourse->id,
+        'department_level_id' => $departmentLevel->id,
+        'mode_of_study_id' => $modeOfStudy->id,
+        'students_per_class' => 18,
+    ]);
+
+    Sanctum::actingAs($user);
+
+    $response = $this->getJson("/api/v1/departments/{$institutionDepartment->id}/academic-calendars?academic_year=2026&mode_of_study_id={$modeOfStudy->id}&semester_id={$semesterTwo->id}");
+
+    $response->assertOk();
+    $levelRow = $response->json('data.0.levels.0');
+    expect($levelRow['configs'])->toBe([])
+        ->and(collect($levelRow['configs'])->pluck('classConfigId')->all())->not->toContain($configOne->id)
+        ->and($levelRow['remainingPeriods'])->toEqual([
+            ['id' => $semesterTwo->id, 'name' => 'Semester 2', 'isCurrent' => false],
+        ]);
 });

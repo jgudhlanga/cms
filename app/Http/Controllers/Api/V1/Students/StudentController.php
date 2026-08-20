@@ -97,7 +97,7 @@ class StudentController
             'applications.departmentCourse.requirement',
             'applications.intakePeriod',
             'applications.classList',
-            'applications.departmentWorkflowStep.workflowStep',
+            'applications.workflowStep',
         ]);
 
         return EnrolmentResource::collection($student->applications);

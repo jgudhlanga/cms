@@ -1,5 +1,6 @@
-import { DepartmentApplicationStep, DepartmentCourse, DepartmentLevel } from '@/types/department-meta-data';
+import { DepartmentCourse, DepartmentLevel } from '@/types/department-meta-data';
 import { CourseSyllabus, InstitutionDepartment } from '@/types/institution';
+import { WorkflowStep } from '@/types/settings';
 import { User } from '@/types/users';
 import { SelectOption } from '@/types/utils';
 import type { Address, Contact } from '@/types/shared';
@@ -104,6 +105,7 @@ export type StudentProgrammeModule = {
     name: string | null;
     durationInHours: number | null;
     grade: string | null;
+    examSession?: string | null;
     score: number | null;
     lecturer: string | null;
     type: string | null;
@@ -138,7 +140,15 @@ export type StudentProgrammeSemester = {
     label: string | null;
     year: string | null;
     status: string | null;
-    studentEnrolmentId?: number;
+    isCurrent?: boolean;
+    isDisabled?: boolean;
+    hasExamResult?: boolean;
+    examResultStatus?: string | null;
+    availableStatuses?: Array<{ slug: string; name: string }>;
+    studentEnrolmentId?: number | null;
+    canAdvanceToNextPhase?: boolean;
+    canCompleteLevel?: boolean;
+    canApplyToNextLevel?: boolean;
     module: StudentProgrammeModule[];
 };
 
@@ -263,7 +273,7 @@ export type StudentApplication = {
         institutionDepartment?: InstitutionDepartment;
         departmentLevel?: DepartmentLevel;
         departmentCourse?: DepartmentCourse;
-        departmentWorkflowStep?: DepartmentApplicationStep;
+        workflowStep?: WorkflowStep;
     };
 };
 
@@ -432,6 +442,8 @@ export type CourseWorkModuleListItem = {
     code: string | null;
     name: string | null;
     statusKey: CourseWorkModuleStatusKey;
+    examGrade?: string | null;
+    examSession?: string | null;
 };
 
 export type StudentPortalDashboardModule = {
@@ -442,6 +454,8 @@ export type StudentPortalDashboardModule = {
     gradeDisplay: string;
     statusKey: CourseWorkModuleStatusKey;
     progressPercent: number;
+    examGrade?: string | null;
+    examSession?: string | null;
 };
 
 export type StudentPortalDashboardActivity = {

@@ -1,11 +1,13 @@
 <?php
 
 use App\Http\Controllers\Examinations\ExaminationController;
+use App\Http\Controllers\Examinations\ExaminationDashboardController;
 use App\Http\Controllers\Examinations\ExaminationImportController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('examinations')->middleware(['auth', 'verified'])->group(function (): void {
     Route::get('/', [ExaminationController::class, 'index'])->name('examinations.index');
+    Route::get('/dashboard', ExaminationDashboardController::class)->name('examinations.dashboard');
     Route::get('/candidates/{candidateNumber}', [ExaminationController::class, 'show'])
         ->where('candidateNumber', '[^/]+')
         ->name('examinations.candidates.show');

@@ -64,7 +64,6 @@ withDefaults(defineProps<Props>(), {
                 :residence="residence"
                 :expiry-date="expiryDate"
                 :photo-url="photoUrl"
-                :serial-number="serialNumber"
                 :logo-url="logoUrl"
                 :institution-name="institutionName"
                 :website="website"

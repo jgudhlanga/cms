@@ -19,7 +19,7 @@ class NonEnrolledStudentUserResource extends JsonResource
         $this->resource->loadMissing([
             'roles',
             'studentProfile.applications.classList',
-            'studentProfile.applications.departmentWorkflowStep.workflowStep',
+            'studentProfile.applications.workflowStep',
         ]);
 
         return [
@@ -79,7 +79,7 @@ class NonEnrolledStudentUserResource extends JsonResource
             return __('trans.maintenance_users_status_verified');
         }
 
-        $workflowSlug = $program->departmentWorkflowStep?->workflowStep?->slug;
+        $workflowSlug = $program->workflowStep?->slug;
 
         return match ($workflowSlug) {
             WorkflowStepEnum::REVIEW->slug() => __('trans.maintenance_users_status_review'),

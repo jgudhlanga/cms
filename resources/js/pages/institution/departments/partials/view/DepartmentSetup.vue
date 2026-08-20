@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import CustomSeparator from '@/components/core/util/CustomSeparator.vue';
 import HeadingSmall from '@/components/core/util/HeadingSmall.vue';
-import ApplicationWorkflowSteps from '@/pages/institution/departments/partials/view/ApplicationWorkflowSteps.vue';
 import Courses from '@/pages/institution/departments/partials/view/Courses.vue';
 import IntakePeriodClassSizeConfig from '@/pages/institution/departments/partials/view/IntakePeriodClassSizeConfig.vue';
 import Levels from '@/pages/institution/departments/partials/view/Levels.vue';
@@ -33,16 +32,6 @@ const { department } = props;
         <div class="flex flex-col">
             <HeadingSmall :title="`${$t('trans.enrolment_class_size_setup')}`" :description="$t('trans.intake_class_size_config_description')" />
             <IntakePeriodClassSizeConfig :department="department" />
-            <CustomSeparator classes="h-1 my-4" />
-        </div>
-        <!-- APPLICATION WORKFLOW SETUP -->
-        <div class="flex flex-col">
-            <HeadingSmall
-                :title="`${$tChoice('trans.application', 2)} ${$t('trans.workflow_config')}`"
-                :description="$t('trans.application_workflow_config_description')"
-            />
-            <ApplicationWorkflowSteps :department="department" />
-            <CustomSeparator classes="h-1 my-4" />
         </div>
     </div>
 </template>

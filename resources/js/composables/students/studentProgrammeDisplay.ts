@@ -90,12 +90,20 @@ export const semesterHeaderMeta = (semester: StudentProgrammeSemester): Semester
 export const statusBadgeClass = (status: string | null | undefined): string => {
     const normalized = (status ?? '').toLowerCase();
 
-    if (normalized.includes('complete')) {
+    if (['award', 'proceed'].includes(normalized)) {
         return 'text-emerald-400';
     }
 
-    if (normalized.includes('active') || normalized.includes('progress')) {
+    if (normalized === 'active') {
         return 'text-primary';
+    }
+
+    if (['absent', 'deferred', 'disqualified', 'referred'].includes(normalized)) {
+        return 'text-amber-500';
+    }
+
+    if (normalized.includes('complete')) {
+        return 'text-emerald-400';
     }
 
     return 'text-muted-foreground';
@@ -176,6 +184,10 @@ export const moduleGradeDisplay = (module: StudentProgrammeModule): string => {
 };
 
 export const moduleStatusKey = (module: StudentProgrammeModule): CourseWorkModuleStatusKey => {
+    if (module.grade) {
+        return 'graded';
+    }
+
     const total = module.courseWork?.aggregation.courseWorkTotal60;
 
     if (total !== null && total !== undefined) {
@@ -227,7 +239,9 @@ export const mapDashboardModuleToListItem = (
     id: module.id,
     code: module.code,
     name: module.name,
-    statusKey: module.statusKey,
+    statusKey: module.examGrade ? 'graded' : module.statusKey,
+    examGrade: module.examGrade,
+    examSession: module.examSession,
 });
 
 export const mapProgrammeModuleToListItem = (
@@ -238,6 +252,8 @@ export const mapProgrammeModuleToListItem = (
     code: module.code,
     name: module.name,
     statusKey: moduleStatusKey(module),
+    examGrade: module.grade,
+    examSession: module.examSession,
 });
 
 export const moduleGradeBadgeClass = (module: StudentProgrammeModule): string => {

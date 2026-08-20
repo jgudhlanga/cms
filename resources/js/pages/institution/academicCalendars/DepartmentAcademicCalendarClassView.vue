@@ -47,6 +47,7 @@ const props = withDefaults(
         calendarType?: 'term' | 'semester' | 'abma';
         semesterConfigHasSyllabi?: boolean;
         canAssignStaffing?: boolean;
+        isLastProgrammePhase?: boolean;
     }>(),
     {
         moveTargetClasses: () => [],
@@ -59,13 +60,14 @@ const props = withDefaults(
         calendarType: 'semester',
         semesterConfigHasSyllabi: false,
         canAssignStaffing: false,
+        isLastProgrammePhase: false,
     },
 );
 
 const { department, academicCalendar, academicCalendarClass, course, level, mode, classConfig, moveTargetClasses, siblingAcademicCalendarClasses, selectedSemesterId } =
     toRefs(props);
 
-const { departmentClassesUrl, moveStudentsUrl, updateClassUrl, breadcrumbs, studentCourseWorkUrl, classConfigQuery } =
+const { departmentClassesUrl, moveStudentsUrl, advancePhaseUrl, completeLevelUrl, updateClassUrl, breadcrumbs, studentCourseWorkUrl, classConfigQuery } =
     useDepartmentAcademicCalendarClassNavigation(
     department,
     academicCalendar,
@@ -101,6 +103,8 @@ const { editClassForm, openEditClassModal, submitEditClass, resetEditClassFormOn
 );
 
 const canMoveStudents = computed(() => hasAbility(['update:academic-calendar-student-enrolments']));
+const canAdvancePhase = computed(() => canMoveStudents.value && props.isLastProgrammePhase !== true);
+const canCompleteLevel = computed(() => canMoveStudents.value && props.isLastProgrammePhase === true);
 
 const singleClassExportOption = computed(() => [
     {
@@ -118,6 +122,68 @@ const onAssignTutor = (): void => {
 };
 
 const { open: openConfirmDialog } = useCustomConfirmDialog();
+
+const onAdvancePhase = async (): Promise<void> => {
+    if (selectedStudentEnrolmentIds.value.length === 0) {
+        return;
+    }
+
+    const confirmed = await openConfirmDialog({
+        title: trans('academic_calendar.advance_phase_confirm_title'),
+        message: trans('academic_calendar.advance_phase_confirm_message'),
+        confirmText: trans('academic_calendar.continue_next_phase'),
+        cancelText: trans('trans.cancel'),
+    });
+
+    if (!confirmed) {
+        return;
+    }
+
+    router.post(
+        advancePhaseUrl.value,
+        { student_enrolment_ids: selectedStudentEnrolmentIds.value },
+        {
+            preserveScroll: true,
+            onSuccess: () => {
+                selectedStudentEnrolmentIds.value = [];
+            },
+            onError: (errors) => {
+                errorAlert(firstInertiaErrorMessage(errors, trans('academic_calendar.advance_phase_none')));
+            },
+        },
+    );
+};
+
+const onCompleteLevel = async (): Promise<void> => {
+    if (selectedStudentEnrolmentIds.value.length === 0) {
+        return;
+    }
+
+    const confirmed = await openConfirmDialog({
+        title: trans('academic_calendar.complete_level_confirm_title'),
+        message: trans('academic_calendar.complete_level_confirm_message'),
+        confirmText: trans('academic_calendar.mark_level_completed'),
+        cancelText: trans('trans.cancel'),
+    });
+
+    if (!confirmed) {
+        return;
+    }
+
+    router.post(
+        completeLevelUrl.value,
+        { student_enrolment_ids: selectedStudentEnrolmentIds.value },
+        {
+            preserveScroll: true,
+            onSuccess: () => {
+                selectedStudentEnrolmentIds.value = [];
+            },
+            onError: (errors) => {
+                errorAlert(firstInertiaErrorMessage(errors, trans('academic_calendar.complete_level_none')));
+            },
+        },
+    );
+};
 
 const onRemoveTutor = async (): Promise<void> => {
     const confirmed = await openConfirmDialog({
@@ -199,11 +265,15 @@ const onRemoveTutor = async (): Promise<void> => {
                     :sorted-students="filteredStudents"
                     :can-move-students="canMoveStudents"
                     :can-view-course-work="canViewCourseWork"
+                    :can-advance-phase="canAdvancePhase"
+                    :can-complete-level="canCompleteLevel"
                     :move-target-classes="moveTargetClasses"
                     :student-course-work-url="studentCourseWorkUrl"
                     @toggle-select-all="toggleSelectAllChangeClassFromRow"
                     @select-all-keydown="onSelectAllRowKeydown"
                     @open-move-students="openMoveStudentsModal"
+                    @advance-phase="onAdvancePhase"
+                    @complete-level="onCompleteLevel"
                 />
             </div>
             <EditAcademicCalendarClassModal

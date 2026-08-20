@@ -12,8 +12,9 @@ import { useModalStore } from '@/store/core/useModalStore';
 import { AcademicClassConfigPayload } from '@/types/academic-calendar';
 import { SelectOption } from '@/types/utils';
 import { useForm } from '@inertiajs/vue3';
-import { ref, watch } from 'vue';
 import { trans, trans_choice } from 'laravel-vue-i18n';
+import { ref, watch } from 'vue';
+import { useCustomConfirmDialog } from '@/composables/core/useCustomConfirmDialog';
 
 interface Props {
     institutionDepartmentId: string;
@@ -31,10 +32,13 @@ const form = useForm<AcademicClassConfigPayload>({
     department_course_id: null,
     mode_of_study_id: null,
     semester_id: null,
+    class_config_id: null,
+    named_classes_count: 0,
     course_syllabus_ids: [],
 });
 
 const modalStore = useModalStore();
+const { open: openConfirmDialog } = useCustomConfirmDialog();
 
 const { yearOptions, yearOptionsLoading, loadYearOptions } = useSemestersByCalendarType();
 
@@ -103,14 +107,28 @@ watch(
         form.mode_of_study_id = edit.mode_of_study_id ?? null;
         form.students_per_class = edit.students_per_class ?? null;
         form.semester_id = null;
+        form.class_config_id = edit.class_config_id ?? null;
+        form.named_classes_count = edit.named_classes_count ?? 0;
         form.course_syllabus_ids = [];
 
-        await loadYearOptions(edit.calendarType ?? 'semester');
+        const remaining = edit.remaining_periods ?? [];
+        if (remaining.length > 0) {
+            yearOptions.value = remaining.map((period) => ({
+                value: String(period.id),
+                label: period.name,
+            }));
+            const selectedId = edit.semester_id != null ? String(edit.semester_id) : '';
+            if (selectedId !== '' && !yearOptions.value.some((option) => String(option.value) === selectedId) && edit.semester) {
+                yearOptions.value = [{ value: selectedId, label: edit.semester }, ...yearOptions.value];
+            }
+        } else {
+            await loadYearOptions(edit.calendarType ?? 'semester');
+        }
 
         const preferred = edit.semester_id != null && edit.semester_id !== ''
             ? String(edit.semester_id)
             : null;
-        if (preferred !== null && yearOptions.value.some((o) => o.value === preferred)) {
+        if (preferred !== null && yearOptions.value.some((o) => String(o.value) === preferred)) {
             form.semester_id = preferred;
         } else if (yearOptions.value.length > 0) {
             form.semester_id = yearOptions.value[0].value;
@@ -124,7 +142,7 @@ watch(
     },
 );
 
-const submitForm = (): void => {
+const submitForm = async (): Promise<void> => {
     const calendarId = String(form.academic_calendar_id ?? config.value?.academic_calendar_id ?? '').trim();
     if (!calendarId) {
         errorAlert(
@@ -143,6 +161,26 @@ const submitForm = (): void => {
         );
         return;
     }
+
+    const originalSemesterId = config.value?.semester_id != null ? String(config.value.semester_id) : null;
+    const namedCount = Number(form.named_classes_count ?? config.value?.named_classes_count ?? 0);
+    if (
+        form.class_config_id
+        && originalSemesterId !== null
+        && String(optionId) !== originalSemesterId
+        && namedCount > 0
+    ) {
+        const confirmed = await openConfirmDialog({
+            title: trans('academic_calendar.class_config_semester_change_warning_title'),
+            message: trans('academic_calendar.class_config_semester_change_warning'),
+            confirmText: trans('trans.save'),
+            cancelText: trans('trans.cancel'),
+        });
+        if (!confirmed) {
+            return;
+        }
+    }
+
     storePerClassSizeConfig(form, props.institutionDepartmentId, calendarId);
 };
 

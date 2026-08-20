@@ -6,9 +6,8 @@ use App\Enums\AcademicCalendars\AcademicCalendarTypeEnum;
 use App\Exceptions\Students\StudentEnrolmentResolutionException;
 use App\Models\AcademicCalendars\AcademicCalendar;
 use App\Models\AcademicCalendars\Semester;
-use App\Models\Students\StudentEnrolment;
-use App\Models\Students\StudentEnrolmentStatus;
 use App\Models\Students\StudentApplication;
+use App\Models\Students\StudentEnrolmentStatus;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Carbon;
 
@@ -22,6 +21,10 @@ class ResolveStudentEnrolmentAttributesService
 
     public const STUDENT_ENROLMENT_STATUS_SLUG_COMPLETED = 'completed';
 
+    public function __construct(
+        protected StudentEnrolmentProgressionService $progression,
+    ) {}
+
     /**
      * @return array{academic_calendar_id: int, semester_id: int, student_enrolment_status_id: int}
      */
@@ -32,7 +35,7 @@ class ResolveStudentEnrolmentAttributesService
 
         return [
             'academic_calendar_id' => $this->resolveAcademicCalendarId($studentApplication, $asOf),
-            'semester_id' => $this->resolveSemesterId($studentId, $studentApplication),
+            'semester_id' => $this->resolveSemesterId($studentApplication),
             'student_enrolment_status_id' => $this->resolveActiveStudentEnrolmentStatusId(),
         ];
     }
@@ -54,11 +57,8 @@ class ResolveStudentEnrolmentAttributesService
     {
         $today = $asOf->copy()->timezone((string) config('app.timezone'))->toDateString();
         $calendarType = $this->resolveCalendarType($studentApplication)->value;
-        $calendarYear = $this->resolveCalendarYear($studentApplication);
 
-        $calendarQuery = AcademicCalendar::query()
-            ->where('type', $calendarType)
-            ->where('calendar_year', $calendarYear);
+        $calendarQuery = AcademicCalendar::query()->where('type', $calendarType);
 
         $current = (clone $calendarQuery)
             ->whereDate('opening_date', '<=', $today)
@@ -80,7 +80,7 @@ class ResolveStudentEnrolmentAttributesService
         }
 
         throw new StudentEnrolmentResolutionException(
-            "No academic calendar was found for calendar year \"{$calendarYear}\" and type \"{$calendarType}\"."
+            "No academic calendar was found for type \"{$calendarType}\"."
         );
     }
 
@@ -97,20 +97,7 @@ class ResolveStudentEnrolmentAttributesService
         return $calendarType;
     }
 
-    private function resolveCalendarYear(StudentApplication $studentApplication): string
-    {
-        $calendarYear = $studentApplication->intakePeriod?->calendar_year;
-
-        if ($calendarYear === null || $calendarYear === '') {
-            throw new StudentEnrolmentResolutionException(
-                "Calendar year is missing on intake period for student program id \"{$studentApplication->id}\"."
-            );
-        }
-
-        return $calendarYear;
-    }
-
-    private function resolveSemesterId(int $studentId, StudentApplication $studentApplication): int
+    private function resolveSemesterId(StudentApplication $studentApplication): int
     {
         $prefix = $this->resolveCalendarType($studentApplication)->value;
         $options = Semester::query()
@@ -129,8 +116,8 @@ class ResolveStudentEnrolmentAttributesService
             );
         }
 
-        $completedEnrolments = $this->completedEnrolmentCount($studentId, $studentApplication);
-        $optionIndex = min($completedEnrolments, $options->count() - 1);
+        $existingPhaseCount = $this->progression->existingPhaseCount($studentApplication);
+        $optionIndex = min($existingPhaseCount, $options->count() - 1);
         $option = $options->get($optionIndex);
 
         if ($option === null) {
@@ -155,18 +142,5 @@ class ResolveStudentEnrolmentAttributesService
         }
 
         return (int) $status->id;
-    }
-
-    private function completedEnrolmentCount(int $studentId, StudentApplication $studentApplication): int
-    {
-        return (int) StudentEnrolment::query()
-            ->where('student_enrolments.student_id', $studentId)
-            ->where('student_enrolments.institution_department_id', $studentApplication->institution_department_id)
-            ->where('student_enrolments.department_level_id', $studentApplication->department_level_id)
-            ->where('student_enrolments.department_course_id', $studentApplication->department_course_id)
-            ->whereHas('studentEnrolmentStatus', function ($query): void {
-                $query->where('slug', self::STUDENT_ENROLMENT_STATUS_SLUG_COMPLETED);
-            })
-            ->count();
     }
 }

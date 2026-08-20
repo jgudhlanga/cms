@@ -6,6 +6,7 @@ import { SelectOption } from '@/types/utils';
 
 interface Props {
     semesters: SelectOption[];
+    programmeSemesters: SelectOption[];
     modesOfStudy: ModeOfStudy[];
     handleFilterChange: () => void;
 }
@@ -13,6 +14,7 @@ defineProps<Props>();
 
 const academicYearModel = defineModel<SelectOption | null>('academicYearModel');
 const modeOfStudyModel = defineModel<SelectOption | null>('modeOfStudyModel');
+const programmeSemesterModel = defineModel<SelectOption | null>('programmeSemesterModel');
 </script>
 
 <template>
@@ -44,6 +46,20 @@ const modeOfStudyModel = defineModel<SelectOption | null>('modeOfStudyModel');
                 v-model="modeOfStudyModel!"
                 :vertical-layout="false"
                 :is-required="true"
+                width-class="w-full"
+                class="min-w-0 flex-1"
+                @update:modelValue="handleFilterChange"
+            />
+        </div>
+        <div class="flex min-w-0 flex-1 items-center gap-2 sm:min-w-[220px] sm:max-w-sm">
+            <component :is="icons[IconName.calendar]" class="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+            <span class="shrink-0 text-sm font-medium text-muted-foreground">{{ $t('academic_calendar.programme_semester') }}</span>
+            <BaseCombobox
+                label=""
+                :options="programmeSemesters ?? []"
+                v-model="programmeSemesterModel"
+                :vertical-layout="false"
+                :is-required="false"
                 width-class="w-full"
                 class="min-w-0 flex-1"
                 @update:modelValue="handleFilterChange"

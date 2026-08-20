@@ -6,7 +6,6 @@ namespace App\Services\Maintenance\Students;
 
 use App\Enums\Shared\ClassListTypeEnum;
 use App\Enums\Shared\WorkflowStepEnum;
-use App\Models\Institution\DepartmentApplicationStep;
 use App\Models\Shared\WorkflowStep;
 use App\Models\Students\StudentApplication;
 use Illuminate\Validation\ValidationException;
@@ -15,7 +14,7 @@ class RejectStudentApplicationService
 {
     public function reject(StudentApplication $studentApplication): StudentApplication
     {
-        $workflowSlug = $studentApplication->departmentWorkflowStep?->workflowStep?->slug;
+        $workflowSlug = $studentApplication->workflowStep?->slug;
 
         if (in_array($workflowSlug, [
             WorkflowStepEnum::REJECTED->slug(),
@@ -26,10 +25,10 @@ class RejectStudentApplicationService
             ]);
         }
 
-        $departmentStep = $this->resolveRejectedDepartmentStep($studentApplication);
+        $rejectedStep = $this->resolveRejectedStep();
 
         $studentApplication->update([
-            'department_application_step_id' => $departmentStep->id,
+            'workflow_step_id' => $rejectedStep->id,
         ]);
 
         if ($studentApplication->classList !== null) {
@@ -44,30 +43,19 @@ class RejectStudentApplicationService
             'departmentCourse.course',
             'intakePeriod',
             'modeOfStudy',
-            'departmentWorkflowStep.workflowStep',
+            'workflowStep',
             'classList',
         ]);
     }
 
-    private function resolveRejectedDepartmentStep(StudentApplication $studentApplication): DepartmentApplicationStep
+    private function resolveRejectedStep(): WorkflowStep
     {
-        $rejectedStep = WorkflowStep::query()->firstOrCreate(
+        return WorkflowStep::query()->firstOrCreate(
             ['slug' => WorkflowStepEnum::REJECTED->slug()],
             [
                 'name' => WorkflowStepEnum::REJECTED->name(),
                 'description' => WorkflowStepEnum::REJECTED->description(),
                 'position' => WorkflowStepEnum::REJECTED->position(),
-            ],
-        );
-
-        return DepartmentApplicationStep::query()->firstOrCreate(
-            [
-                'tenant_id' => $studentApplication->tenant_id,
-                'institution_department_id' => $studentApplication->institution_department_id,
-                'workflow_step_id' => $rejectedStep->id,
-            ],
-            [
-                'position' => $rejectedStep->position,
             ],
         );
     }

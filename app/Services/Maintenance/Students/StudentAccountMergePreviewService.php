@@ -41,7 +41,7 @@ class StudentAccountMergePreviewService
                 'departmentCourse.course',
                 'intakePeriod',
                 'modeOfStudy',
-                'departmentWorkflowStep.workflowStep',
+                'workflowStep',
                 'classList',
             ]),
         ];

@@ -2,13 +2,13 @@
 
 namespace Database\Seeders\Students;
 
-use App\Enums\Rbac\RoleEnum;
 use App\Enums\Institution\CourseEnum;
 use App\Enums\Institution\DepartmentEnum;
 use App\Enums\Institution\GradeEnum;
 use App\Enums\Institution\LevelEnum;
 use App\Enums\Institution\ModeOfStudyEnum;
 use App\Enums\Institution\SubjectEnum;
+use App\Enums\Rbac\RoleEnum;
 use App\Enums\Shared\AcademicLevelEnum;
 use App\Enums\Shared\IdTypeEnum;
 use App\Enums\Shared\TenantEnum;
@@ -16,7 +16,6 @@ use App\Helpers\Helper;
 use App\Helpers\WorkflowHelper;
 use App\Models\Institution\Course;
 use App\Models\Institution\Department;
-use App\Models\Institution\DepartmentApplicationStep;
 use App\Models\Institution\DepartmentCourse;
 use App\Models\Institution\DepartmentLevel;
 use App\Models\Institution\InstitutionDepartment;
@@ -26,8 +25,12 @@ use App\Models\Institution\ModeOfStudy;
 use App\Models\Shared\AcademicLevel;
 use App\Models\Shared\Gender;
 use App\Models\Shared\MaritalStatus;
+use App\Models\Shared\MaritalStatus;
+use App\Models\Shared\Race;
 use App\Models\Shared\Race;
 use App\Models\Shared\Title;
+use App\Models\Shared\Title;
+use App\Models\Shared\WorkflowStep;
 use App\Models\Students\Student;
 use App\Models\Students\StudentApplication;
 use App\Models\Users\User;
@@ -57,22 +60,22 @@ class StudentApplicationSeeder extends Seeder
             $raceIds = Race::all()->pluck('id')->toArray();
             $modesOfStudyIds = ModeOfStudy::whereIn('name', [ModeOfStudyEnum::FULL_TIME->value, ModeOfStudyEnum::PART_TIME->value])->pluck('id')->toArray();
 
-            if (!$intakePeriod) {
+            if (! $intakePeriod) {
                 $intakePeriod = IntakePeriod::create(['name' => 'Default Intake Period', 'start_date' => now()->subMonth(),
                     'end_date' => now()->addMonth(), 'is_active' => 1, 'tenant_id' => $this->getTenantId()]);
             }
-            # date of birth range for students
+            // date of birth range for students
             $dateOfBirthStart = Carbon::now()->subYears(70);
             $dateOfBirthEnd = Carbon::now()->subYears(16);
 
-            # department, level, course
+            // department, level, course
             $institutionDepartmentId = $this->getInstitutionDepartmentId();
             $departmentLevelId = $this->getDepartmentLevelId($institutionDepartmentId);
             $departmentCourseId = $this->getNcInformationTechnologyCourseId($institutionDepartmentId);
-            # o-level
+            // o-level
             $oLevel = AcademicLevel::where('name', AcademicLevelEnum::SECONDARY_SCHOOL->value)->first();
-            # workflow step
-            $stepOne = WorkflowHelper::getDepartmentApplicationStepByPosition($institutionDepartmentId, 1);
+            // workflow step
+            $stepOne = WorkflowHelper::getStepByPosition(1);
             foreach ($users as $user) {
                 $user->assignRole(RoleEnum::STUDENT);
                 $student = Student::create([
@@ -101,12 +104,12 @@ class StudentApplicationSeeder extends Seeder
     }
 
     private function saveProgram(
-        Student                   $student,
-                                  $intakePeriodId,
-                                  $institutionDepartmentId,
-                                  $departmentLevelId,
-                                  $departmentCourseId,
-        DepartmentApplicationStep $step, array $modesOfStudyIds): void
+        Student $student,
+        $intakePeriodId,
+        $institutionDepartmentId,
+        $departmentLevelId,
+        $departmentCourseId,
+        ?WorkflowStep $step, array $modesOfStudyIds): void
     {
         StudentApplication::create([
             'tenant_id' => $this->getTenantId(),
@@ -115,7 +118,7 @@ class StudentApplicationSeeder extends Seeder
             'department_level_id' => $departmentLevelId,
             'department_course_id' => $departmentCourseId,
             'intake_period_id' => $intakePeriodId,
-            'department_application_step_id' => $step->id,
+            'workflow_step_id' => $step?->id,
             'mode_of_study_id' => fake()->randomElement($modesOfStudyIds),
         ]);
     }
@@ -124,6 +127,7 @@ class StudentApplicationSeeder extends Seeder
     {
         $itDepartment = DepartmentEnum::INFORMATION_COMMUNICATION_TECHNOLOGY->value;
         $itDepartmentId = Department::where('name', $itDepartment)->value('id');
+
         return InstitutionDepartment::where('department_id', $itDepartmentId)
             ->where('tenant_id', $this->getTenantId())
             ->value('id');
@@ -133,6 +137,7 @@ class StudentApplicationSeeder extends Seeder
     {
         $ncLevel = LevelEnum::NC->value;
         $ncLevelId = Level::where('name', $ncLevel)->value('id');
+
         return DepartmentLevel::where('level_id', $ncLevelId)
             ->where('institution_department_id', $institutionDepartmentId)
             ->where('tenant_id', $this->getTenantId())
@@ -143,6 +148,7 @@ class StudentApplicationSeeder extends Seeder
     {
         $itCourse = CourseEnum::IT->value;
         $itCourseId = Course::where('name', $itCourse)->value('id');
+
         return DepartmentCourse::where('course_id', $itCourseId)
             ->where('institution_department_id', $institutionDepartmentId)
             ->where('tenant_id', $this->getTenantId())

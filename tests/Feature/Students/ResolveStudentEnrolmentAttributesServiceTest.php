@@ -3,9 +3,9 @@
 use App\Exceptions\Students\StudentEnrolmentResolutionException;
 use App\Models\AcademicCalendars\AcademicCalendar;
 use App\Models\AcademicCalendars\Semester;
+use App\Models\Students\StudentApplication;
 use App\Models\Students\StudentEnrolment;
 use App\Models\Students\StudentEnrolmentStatus;
-use App\Models\Students\StudentApplication;
 use App\Services\Students\ResolveStudentEnrolmentAttributesService;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
@@ -114,11 +114,10 @@ it('resolves semester one when the student has no completed enrolment', function
     expect($resolved['semester_id'])->toBe($semesterOneId);
 });
 
-it('resolves semester two when the student has a completed enrolment', function (): void {
+it('resolves semester two when the student already has an active first-phase enrolment', function (): void {
     Carbon::setTestNow(Carbon::parse('2026-03-01', config('app.timezone')));
 
-    $sp1 = createResolverStudentApplication('RESOLVER-S1', 'semester', '2025/2026');
-    $sp2 = createSiblingProgram($sp1);
+    $studentApplication = createResolverStudentApplication('RESOLVER-S1', 'semester', '2025/2026');
 
     $calendar = AcademicCalendar::query()->create([
         'calendar_year' => '2025/2026',
@@ -127,25 +126,25 @@ it('resolves semester two when the student has a completed enrolment', function 
         'closing_date' => '2026-12-31',
     ]);
 
-    $completedId = (int) StudentEnrolmentStatus::query()->where('slug', 'completed')->value('id');
+    $activeId = (int) StudentEnrolmentStatus::query()->where('slug', 'active')->value('id');
     $semesterOneId = (int) Semester::query()->where('slug', 'semester-1')->value('id');
 
     StudentEnrolment::query()->create([
-        'student_id' => $sp1->student_id,
-        'student_application_id' => $sp1->id,
-        'institution_department_id' => $sp1->institution_department_id,
-        'department_level_id' => $sp1->department_level_id,
-        'department_course_id' => $sp1->department_course_id,
+        'student_id' => $studentApplication->student_id,
+        'student_application_id' => $studentApplication->id,
+        'institution_department_id' => $studentApplication->institution_department_id,
+        'department_level_id' => $studentApplication->department_level_id,
+        'department_course_id' => $studentApplication->department_course_id,
         'semester_id' => $semesterOneId,
         'academic_calendar_id' => $calendar->id,
-        'mode_of_study_id' => $sp1->mode_of_study_id,
-        'student_enrolment_status_id' => $completedId,
+        'mode_of_study_id' => $studentApplication->mode_of_study_id,
+        'student_enrolment_status_id' => $activeId,
     ]);
 
     $semesterTwoId = (int) Semester::query()->where('slug', 'semester-2')->value('id');
 
     $service = app(ResolveStudentEnrolmentAttributesService::class);
-    $resolved = $service->resolve((int) $sp2->student_id, (int) $sp2->id);
+    $resolved = $service->resolve((int) $studentApplication->student_id, (int) $studentApplication->id);
 
     expect($resolved['semester_id'])->toBe($semesterTwoId);
 });

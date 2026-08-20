@@ -124,7 +124,7 @@ class StudentRepository extends BaseRepository implements IStudentRepository
                 'latestApplication.departmentLevel.level',
                 'latestApplication.departmentCourse.course',
                 'latestApplication.modeOfStudy',
-                'latestApplication.departmentWorkflowStep.workflowStep',
+                'latestApplication.workflowStep',
                 'latestApplication.intakePeriod',
             ])
             ->whereHas('enrolments')

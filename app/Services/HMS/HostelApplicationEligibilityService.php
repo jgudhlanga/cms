@@ -8,8 +8,8 @@ use App\Enums\Shared\FeeTypeEnum;
 use App\Models\HMS\HmsSetting;
 use App\Models\HMS\HostelApplication;
 use App\Models\Shared\Address;
-use App\Models\Students\StudentApplication;
 use App\Models\Students\Student;
+use App\Models\Students\StudentApplication;
 use App\Models\Students\StudentEnrolment;
 use App\Services\Finance\StudentLedgerService;
 use App\Services\Students\StudentOfferLetterService;
@@ -20,6 +20,7 @@ class HostelApplicationEligibilityService
         protected StudentLedgerService $studentLedgerService,
         protected StudentOfferLetterService $offerLetterService,
     ) {}
+
     /**
      * @return list<array{key: string, passed: bool, message: string, severity: string, modeOfStudy?: string|null}>
      */
@@ -186,7 +187,7 @@ class HostelApplicationEligibilityService
     {
         return StudentApplication::query()
             ->where('student_id', $student->id)
-            ->with(['classList', 'departmentWorkflowStep.workflowStep', 'modeOfStudy'])
+            ->with(['classList', 'workflowStep', 'modeOfStudy'])
             ->get()
             ->contains(fn (StudentApplication $application): bool => $this->offerLetterService->isDownloadable($application)
                 && $this->offerLetterService->isCurrentIntake($application));

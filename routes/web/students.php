@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\Students\IdCardSettingController;
 use App\Http\Controllers\Students\AcademicRecordController;
 use App\Http\Controllers\Students\SponsorController;
 use App\Http\Controllers\Students\StudentController;
+use App\Http\Controllers\Students\StudentEnrolmentProgressController;
 use App\Http\Controllers\Students\UserStudentController;
 use Illuminate\Support\Facades\Route;
 
@@ -29,6 +30,8 @@ Route::prefix('students')->middleware('auth')->group(function () {
     Route::get('export', [StudentController::class, 'export'])->name('students.export');
     Route::patch('{student}/id-number', [StudentController::class, 'updateIdNumber'])
         ->name('students.id-number.update');
+    Route::patch('{student}/enrolments/{student_enrolment}/status', [StudentEnrolmentProgressController::class, 'updateStatus'])
+        ->name('students.enrolments.status.update');
     Route::post('{student}/id-photo', [StudentController::class, 'uploadIdPhoto'])
         ->name('students.id-photo.store');
     Route::delete('{student}/purge', [StudentController::class, 'purge'])

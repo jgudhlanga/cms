@@ -5,12 +5,12 @@ import PageContainer from '@/components/core/page/PageContainer.vue';
 import StepAction from '@/components/core/timelines/StepAction.vue';
 import TimelineTwo from '@/components/core/timelines/TimelineTwo.vue';
 import UploadPop from '@/components/shared/workflows/UploadPop.vue';
-import { useInstitutionDepartmentMetadata } from '@/composables/institution/useInstitutionDepartmentMetadata';
 import { useStudentApplications } from '@/composables/students/useStudentApplications';
+import { useWorkflowSteps } from '@/composables/shared/useWorkflowSteps';
 import { Audit } from '@/types/audit';
 import { AuthObject } from '@/types/data-pagination';
-import { DepartmentApplicationStep } from '@/types/department-meta-data';
 import { Student, StudentApplication } from '@/types/students';
+import { WorkflowStep } from '@/types/settings';
 import { BreadcrumbItemInterface } from '@/types/ui';
 import { TimelineStep } from '@/types/utils';
 import { Head } from '@inertiajs/vue3';
@@ -34,28 +34,22 @@ const breadcrumbs: BreadcrumbItemInterface[] = [
     { title: props.application?.attributes?.applicationTrackingNumber },
 ];
 
-const workflowSteps = ref<DepartmentApplicationStep[]>([]);
-const { loadDepartmentMetadata, isLoading } = useInstitutionDepartmentMetadata();
+const workflowSteps = ref<WorkflowStep[]>([]);
+const { isLoading, listWorkflowSteps, workflowSteps: loadedSteps } = useWorkflowSteps();
 const { awaitTuitionPaymentProof, awaitApplicationPaymentProof } = useStudentApplications();
 
 onMounted(async () => {
-    const data = await loadDepartmentMetadata(
-        route('v1.department-metadata.workflow-steps', props.application?.attributes?.institutionDepartmentId?.toString()),
-    );
-    workflowSteps.value = data?.steps;
-});
-
-const auditSteps = computed(() => {
-    return props.audit?.map((entry) => entry.attributes.properties.department_application_step_id).filter((id) => id !== undefined && id !== null);
+    await listWorkflowSteps();
+    workflowSteps.value = loadedSteps.value ?? [];
 });
 
 const steps = computed(() => {
     if (!workflowSteps.value || currentStep.value == null) return [];
     return workflowSteps.value?.map(
-        (step: DepartmentApplicationStep, index: number) =>
+        (step: WorkflowStep, index: number) =>
             <TimelineStep>{
-                title: step.attributes?.workflowStep,
-                description: step.attributes?.workflowStepDescription,
+                title: step.attributes?.name,
+                description: step.attributes?.description,
                 timelineMarker: step.attributes?.position?.toString() ?? '',
                 label: `${trans_choice('trans.step', 1)} ${index + 1}`,
                 status: getStepStatus(step),
@@ -69,16 +63,14 @@ const steps = computed(() => {
 const completedActiveSteps = computed(() => {
     if (!workflowSteps.value || currentStep.value == null) return [];
 
+    const currentPosition = Number(currentStep.value?.attributes?.position ?? 0);
+
     return workflowSteps.value
-        .filter((step) => {
-            const position = Number(step.attributes?.position);
-            const inAudit = auditSteps.value.includes(step.id); // check audit
-            return position <= Number(currentStep.value?.attributes.position) && inAudit;
-        })
+        .filter((step) => Number(step.attributes?.position) <= currentPosition)
         .map((step, index) => {
             return <TimelineStep>{
-                title: step.attributes?.workflowStep,
-                description: step.attributes?.workflowStepDescription,
+                title: step.attributes?.name,
+                description: step.attributes?.description,
                 timelineMarker: step.attributes?.position?.toString() ?? '',
                 label: `${trans_choice('trans.step', 1)} ${index + 1}`,
                 status: getStepStatus(step),
@@ -90,14 +82,9 @@ const completedActiveSteps = computed(() => {
             };
         });
 });
-// Current step index based on status
-const currentStepIndex = computed(() => {
-    const index = workflowSteps.value.findIndex((step: DepartmentApplicationStep) => step.id == currentStep.value?.id);
-    return index >= 0 ? index : 0;
-});
 
 const currentStep = computed(() => {
-    return props.application?.relationships?.departmentWorkflowStep;
+    return props.application?.relationships?.workflowStep;
 });
 
 const paymentProofType = computed(() => {
@@ -110,12 +97,17 @@ const paymentProofType = computed(() => {
     return 'other';
 });
 
-const getStepStatus = (step: DepartmentApplicationStep): string => {
+const getStepStatus = (step: WorkflowStep): string => {
+    const currentPosition = Number(currentStep.value?.attributes?.position ?? 0);
+
     if (step.id === currentStep.value?.id) {
         return 'active';
-    } else if (workflowSteps.value.indexOf(step) < currentStepIndex.value) {
+    }
+
+    if (Number(step.attributes?.position) < currentPosition) {
         return 'completed';
     }
+
     return 'pending';
 };
 </script>

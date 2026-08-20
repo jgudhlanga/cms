@@ -25,6 +25,7 @@ class InstitutionDepartmentResource extends JsonResource
                 'divisionId' => $this->resource->division_id,
                 'division' => $this->resource->division?->name,
                 'isAcademic' => $this->department?->is_academic,
+                'hasApprenticeCourses' => (bool) $this->resource->has_apprentice_courses,
                 'description' => $this->resource->description,
                 $this->mergeWhen($request->routeIs('institution.departments.*'), [
                     'createdAt' => $this->resource->created_at,

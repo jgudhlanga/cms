@@ -4,10 +4,8 @@ import BaseSectionNav from '@/components/core/tabs/BaseSectionNav.vue';
 import { useInstitution } from '@/composables/institution/useInstitution';
 import ClassConfig from '@/pages/institution/academicCalendars/partials/ClassConfig.vue';
 import DepartmentContextBar from '@/pages/institution/departments/partials/DepartmentContextBar.vue';
-import LinkApplicationStepsToDepartment from '@/pages/institution/departments/partials/LinkApplicationStepsToDepartment.vue';
 import LinkCoursesToDepartment from '@/pages/institution/departments/partials/LinkCoursesToDepartment.vue';
 import LinkLevelsToDepartment from '@/pages/institution/departments/partials/LinkLevelsToDepartment.vue';
-import StepActions from '@/pages/institution/departments/partials/StepActions.vue';
 import { useDepartmentMetaStore } from '@/store/institution/useDepartmentMetaStore';
 import { AuthObject } from '@/types/data-pagination';
 import { InstitutionDepartment } from '@/types/institution';
@@ -99,8 +97,6 @@ const activeTabDescription = computed(() => activeSection.value?.transDescriptio
 
         <LinkLevelsToDepartment :institution-department-id="institutionDepartmentId" />
         <LinkCoursesToDepartment :institution-department-id="institutionDepartmentId" />
-        <LinkApplicationStepsToDepartment :institution-department-id="institutionDepartmentId" />
-        <StepActions :institution-department-id="institutionDepartmentId" />
         <ClassConfig :institution-department-id="institutionDepartmentId" />
     </PageContainer>
 </template>

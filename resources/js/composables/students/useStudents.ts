@@ -80,8 +80,8 @@ export const useStudents = () => {
     };
 
     const getApplicationStatus = (application: Enrolment) => {
-        return application?.relationships?.departmentWorkflowStep?.attributes?.workflowStep;
-        //const step = application?.relationships?.departmentWorkflowStep?.attributes?.workflowStep;
+        return application?.relationships?.workflowStep?.attributes?.name;
+        //const step = application?.relationships?.workflowStep?.attributes?.name;
         //return step?.toLowerCase() === 'review' ? 'Unsuccessful' : step;
     };
 
@@ -106,7 +106,7 @@ export const useStudents = () => {
     };
 
     const statusMessage = (application: Enrolment) => {
-        const workflowStep = application?.relationships?.departmentWorkflowStep?.attributes?.workflowStep ?? '';
+        const workflowStep = application?.relationships?.workflowStep?.attributes?.name ?? '';
         //const step =  workflowStep?.toLowerCase() === 'review' ? 'Unsuccessful' : workflowStep;
         switch (workflowStep) {
             case 'Review':
@@ -129,7 +129,7 @@ export const useStudents = () => {
     };
     const showCreateNewProgramButton = (applications: Enrolment[], currentIntakePeriod: string): boolean => {
         return !applications.some((application) => {
-            const workflowStep = application?.relationships?.departmentWorkflowStep?.attributes?.workflowStep;
+            const workflowStep = application?.relationships?.workflowStep?.attributes?.name;
 
             const intakePeriodId = application?.attributes?.intakePeriodId;
 
@@ -139,7 +139,7 @@ export const useStudents = () => {
 
     const showEditProgramButton = (application: Enrolment, activeIntakePeriodIds: Array<string | number>): boolean => {
         const { isItTrue } = useUtils();
-        const workflowStep = application?.relationships?.departmentWorkflowStep?.attributes?.workflowStep;
+        const workflowStep = application?.relationships?.workflowStep?.attributes?.name;
         const verificationMode = isItTrue(import.meta.env.VITE_VERIFICATION_MODE);
         const intakePeriodId = String(application?.attributes?.intakePeriodId ?? '');
         const isActiveIntake = activeIntakePeriodIds.some((id) => String(id) === intakePeriodId);

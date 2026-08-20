@@ -2,8 +2,8 @@
 
 use App\Enums\Shared\ClassListTypeEnum;
 use App\Models\AcademicCalendars\AcademicCalendar;
-use App\Models\AcademicCalendars\Semester;
 use App\Models\AcademicCalendars\ClassConfig;
+use App\Models\AcademicCalendars\Semester;
 use App\Models\Enrolments\ClassList;
 use App\Models\Institution\Course;
 use App\Models\Institution\Department;
@@ -127,10 +127,15 @@ function createFinalStudentApplication(array $context, string $email, string $ge
         'attributes' => [],
     ]);
 
-    $semester = Semester::query()->create([
-        'name' => 'Test year option '.$studentApplication->id,
-        'description' => null,
-    ]);
+    $semesterId = $context['classConfig']->semester_id;
+
+    if ($semesterId === null) {
+        $semesterId = Semester::query()->create([
+            'name' => 'Test year option '.$studentApplication->id,
+            'description' => null,
+        ])->id;
+    }
+
     $enrolmentStatus = StudentEnrolmentStatus::query()->create([
         'name' => 'Active enrolment '.$studentApplication->id,
         'description' => 'Test',
@@ -142,7 +147,7 @@ function createFinalStudentApplication(array $context, string $email, string $ge
         'institution_department_id' => $context['institutionDepartment']->id,
         'department_level_id' => $context['departmentLevel']->id,
         'department_course_id' => $context['departmentCourse']->id,
-        'semester_id' => $semester->id,
+        'semester_id' => $semesterId,
         'academic_calendar_id' => $context['calendar']->id,
         'mode_of_study_id' => $context['modeOfStudy']->id,
         'student_enrolment_status_id' => $enrolmentStatus->id,

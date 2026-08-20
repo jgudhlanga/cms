@@ -54,11 +54,13 @@ function makeApplication(
             updatedAt: options.createdAt ?? '2025-01-01',
         },
         relationships: {
-            departmentWorkflowStep: {
-                type: 'department-workflow-step',
+            workflowStep: {
+                type: 'workflow-step',
                 id: '1',
                 attributes: {
-                    workflowStep: options.workflowStep ?? 'Review',
+                    name: options.workflowStep ?? 'Review',
+                    description: '',
+                    slug: (options.workflowStep ?? 'Review').toLowerCase(),
                 },
             },
         } as Enrolment['relationships'],

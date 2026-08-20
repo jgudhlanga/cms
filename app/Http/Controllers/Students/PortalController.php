@@ -127,7 +127,7 @@ class PortalController extends Controller
             'latestApplication.departmentCourse.course',
             'latestApplication.modeOfStudy',
             'latestApplication.intakePeriod',
-            'latestApplication.departmentWorkflowStep.workflowStep',
+            'latestApplication.workflowStep',
         ]);
 
         return Inertia::render('portal/student/Index', [
@@ -507,9 +507,9 @@ class PortalController extends Controller
                 CreateApplicationDto::fromCreateApplicationRequest($request, $user, $intakePeriod)
             );
             $application = $student->applications()->latest()->first();
-            $stepOne = WorkflowHelper::getDepartmentApplicationStepByPosition($application->institution_department_id, 1);
-            $stepTwo = WorkflowHelper::getDepartmentApplicationStepByPosition($application->institution_department_id, 2);
-            $application->update(['department_application_step_id' => $stepOne?->id ?? null]);
+            $stepOne = WorkflowHelper::getStepByPosition(1);
+            $stepTwo = WorkflowHelper::getStepByPosition(2);
+            $application->update(['workflow_step_id' => $stepOne?->id ?? null]);
             // update payment status of registration fee to 'paid'
             PaymentHelper::updateRegistrationFeeLedgerEntries($application);
 
@@ -540,7 +540,7 @@ class PortalController extends Controller
             ]);
             if ($stepTwo) {
                 $application->update([
-                    'department_application_step_id' => $stepTwo->id,
+                    'workflow_step_id' => $stepTwo->id,
                 ]);
             }
 
@@ -649,10 +649,10 @@ class PortalController extends Controller
                 read_write_acknowledged: $request->has('read_write_acknowledged') ? $request->read_write_acknowledged : null,
             );
             $program = $this->studentApplicationRepository->create($programDto);
-            $stepTwo = WorkflowHelper::getDepartmentApplicationStepByPosition($program->institution_department_id, 2);
+            $stepTwo = WorkflowHelper::getStepByPosition(2);
             if ($stepTwo) {
                 $program->update([
-                    'department_application_step_id' => $stepTwo->id,
+                    'workflow_step_id' => $stepTwo->id,
                 ]);
             }
             $filters = $this->extractRequestFilters();
@@ -929,7 +929,7 @@ class PortalController extends Controller
             'latestApplication.departmentCourse.course',
             'latestApplication.modeOfStudy',
             'latestApplication.intakePeriod',
-            'latestApplication.departmentWorkflowStep.workflowStep',
+            'latestApplication.workflowStep',
             'contacts',
             'addresses',
             'nextOfKins',
@@ -1423,16 +1423,16 @@ class PortalController extends Controller
             $dto = CreateApplicationDto::fromReturningApplicationRequest($request, $user, $intakePeriod);
             $application = $this->studentRepository->applyReturningApplication($student, $dto);
 
-            $stepOne = WorkflowHelper::getDepartmentApplicationStepByPosition($application->institution_department_id, 1);
-            $stepTwo = WorkflowHelper::getDepartmentApplicationStepByPosition($application->institution_department_id, 2);
-            $application->update(['department_application_step_id' => $stepOne?->id ?? null]);
+            $stepOne = WorkflowHelper::getStepByPosition(1);
+            $stepTwo = WorkflowHelper::getStepByPosition(2);
+            $application->update(['workflow_step_id' => $stepOne?->id ?? null]);
 
             PaymentHelper::updateRegistrationFeeLedgerEntries($application);
 
             DB::commit();
 
             if ($stepTwo) {
-                $application->update(['department_application_step_id' => $stepTwo->id]);
+                $application->update(['workflow_step_id' => $stepTwo->id]);
             }
 
             return to_route('portal.profile.applications');

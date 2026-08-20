@@ -50,6 +50,26 @@ final class AcademicCalendarPeriodResolver
         };
     }
 
+    /**
+     * Programme-phase slug that is current inside the selected calendar year (never another year).
+     */
+    public static function currentSemesterSlugForYear(string $calendarYear, AcademicCalendarTypeEnum $type): string
+    {
+        $current = AcademicCalendar::resolveCurrentPeriodForDate($calendarYear, $type);
+
+        if (! $current instanceof AcademicCalendar) {
+            return $type->fallbackSemesterSlug();
+        }
+
+        $slug = self::semesterSlugForCalendar($current);
+
+        if (! in_array($slug, $type->allowedSemesterSlugs(), true)) {
+            return $type->fallbackSemesterSlug();
+        }
+
+        return $slug;
+    }
+
     public static function displayPeriodLabel(AcademicCalendar $row): string
     {
         $opening = Carbon::parse($row->opening_date);

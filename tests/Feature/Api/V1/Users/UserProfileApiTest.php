@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Preferences\UserPreference;
+use App\Models\Shared\Status;
 use App\Models\Tenants\Tenant;
 use App\Models\Users\User;
 use Laravel\Sanctum\Sanctum;
@@ -86,6 +87,46 @@ test('activity endpoints filter by event description', function () {
     expect(collect($meCreated->json('data'))->every(
         fn (array $row) => ($row['attributes']['description'] ?? null) === 'created'
     ))->toBeTrue();
+});
+
+test('user activity endpoint resolves belongs to foreign keys to labels', function () {
+    $tenant = Tenant::factory()->create(['name' => 'Main Campus']);
+    $alternateTenant = Tenant::factory()->create(['name' => 'Engineering School']);
+    $status = Status::factory()->create(['title' => 'Suspended']);
+    $admin = User::factory()->create(['tenant_id' => $tenant->id]);
+    $targetUser = User::factory()->create(['tenant_id' => $tenant->id]);
+    $admin->givePermissionTo('view:users');
+
+    Sanctum::actingAs($admin);
+
+    $targetUser->update([
+        'tenant_id' => $alternateTenant->id,
+        'status_id' => $status->id,
+    ]);
+
+    $this->getJson(route('v1.users.activities', [
+        'user' => $targetUser->id,
+        'event' => 'updated',
+    ]))
+        ->assertSuccessful()
+        ->assertJsonPath('data.0.attributes.properties.tenant_id', $alternateTenant->name)
+        ->assertJsonPath('data.0.attributes.properties.status_id', $status->title);
+});
+
+test('me activity endpoint keeps unresolved foreign keys as raw values', function () {
+    $tenant = Tenant::factory()->create();
+    $user = User::factory()->create([
+        'tenant_id' => $tenant->id,
+        'avatar_id' => null,
+    ]);
+
+    Sanctum::actingAs($user);
+
+    $user->update(['avatar_id' => 99999]);
+
+    $this->getJson(route('v1.me.activities'))
+        ->assertSuccessful()
+        ->assertJsonPath('data.0.attributes.properties.avatar_id', 99999);
 });
 
 test('guests cannot fetch me activities', function () {

@@ -24,7 +24,7 @@ class StudentApplicationSchema extends Schema
         'institutionDepartment.department',
         'departmentLevel.level',
         'departmentCourse.course',
-        'departmentWorkflowStep.workflowStep',
+        'workflowStep',
         'intakePeriod',
         'modeOfStudy',
     ];
@@ -62,7 +62,7 @@ class StudentApplicationSchema extends Schema
             )->readOnly(),
             Str::make('applicationTrackingNumber', 'application_tracking_number')->readOnly(),
             Str::make('workflowStep')->extractUsing(
-                fn (StudentApplication $program) => $program->departmentWorkflowStep?->workflowStep?->name
+                fn (StudentApplication $program) => $program->workflowStep?->name
             )->readOnly(),
             DateTime::make('createdAt', 'created_at')->sortable()->readOnly(),
             DateTime::make('updatedAt', 'updated_at')->sortable()->readOnly(),

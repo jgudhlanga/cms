@@ -55,12 +55,12 @@ function createMergePreviewStudentApplication(
     WorkflowStepEnum $workflowStep = WorkflowStepEnum::REVIEW,
 ): StudentApplication {
     $template = createVerifiedStudentApplication('TMP-'.strtoupper(Str::random(4)));
-    $departmentStep = resolveDepartmentApplicationStep($template, $workflowStep);
+    $departmentStep = resolveWorkflowStep($workflowStep);
 
     $template->update([
         'tenant_id' => $student->tenant_id,
         'student_id' => $student->id,
-        'department_application_step_id' => $departmentStep->id,
+        'workflow_step_id' => $departmentStep->id,
     ]);
 
     $template->institutionDepartment()->update(['tenant_id' => $student->tenant_id]);
@@ -76,7 +76,7 @@ function createMergePreviewStudentApplication(
         'departmentCourse.course',
         'intakePeriod',
         'modeOfStudy',
-        'departmentWorkflowStep.workflowStep',
+        'workflowStep',
         'classList',
     ]);
 }
@@ -547,7 +547,7 @@ it('rejects an application from the merge preview page', function (): void {
     ])->assertRedirect()
         ->assertSessionHas('success');
 
-    expect($program->fresh()->departmentWorkflowStep?->workflowStep?->slug)
+    expect($program->fresh()->workflowStep?->slug)
         ->toBe(WorkflowStepEnum::REJECTED->slug())
         ->and(ClassList::query()->where('student_application_id', $program->id)->first()?->type)
         ->toBe(ClassListTypeEnum::FAILED);

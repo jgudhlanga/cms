@@ -13,6 +13,7 @@ use App\Models\Institution\IntakePeriod;
 use App\Models\Students\Student;
 use App\Models\Students\StudentApplication;
 use App\Models\Students\StudentApprentice;
+use App\Models\Students\StudentEnrolment;
 use App\Models\Students\StudentSponsor;
 use App\Models\Users\User;
 use Illuminate\Support\Collection;
@@ -21,6 +22,7 @@ class ReturningStudentContextService
 {
     public function __construct(
         protected ApplicationFeeService $applicationFeeService,
+        protected StudentEnrolmentProgressionService $progression,
     ) {}
 
     public function canStartApplication(Student $student): bool
@@ -221,6 +223,7 @@ class ReturningStudentContextService
                 && $this->hasReapplyAcknowledgementForIntake($student, $intakePeriod),
             'canContinueInClass' => $this->canContinueInClass($student),
             'continueInClassUrl' => route('portal.returning-student.continue.show'),
+            'canApplyToNextLevel' => $this->canApplyToNextLevel($student),
             'requiresIntakeSelection' => $openIntakes->count() > 1,
         ];
     }
@@ -255,9 +258,9 @@ class ReturningStudentContextService
 
     public function qualifyingApplicationForContinuation(Student $student): ?StudentApplication
     {
-        return $student->applications()
+        $application = $student->applications()
             ->whereNull('student_applications.deleted_at')
-            ->whereHas('departmentWorkflowStep.workflowStep', function ($query): void {
+            ->whereHas('workflowStep', function ($query): void {
                 $query->where('slug', WorkflowStepEnum::ACCEPTED->slug());
             })
             ->whereHas('classList', function ($query): void {
@@ -265,6 +268,22 @@ class ReturningStudentContextService
             })
             ->latest('student_applications.id')
             ->first();
+
+        if (! $application instanceof StudentApplication) {
+            return null;
+        }
+
+        $latestEnrolment = StudentEnrolment::query()
+            ->where('student_application_id', $application->id)
+            ->whereNull('deleted_at')
+            ->latest('id')
+            ->first();
+
+        if (! $latestEnrolment instanceof StudentEnrolment) {
+            return $application;
+        }
+
+        return $this->progression->canAdvanceToNextPhase($latestEnrolment) ? $application : null;
     }
 
     /**
@@ -311,6 +330,7 @@ class ReturningStudentContextService
             'needsContinueInClassPage' => $this->needsContinueInClassPage($student),
             'canStartApplication' => $this->canStartApplication($student),
             'canContinueInClass' => $this->canContinueInClass($student),
+            'canApplyToNextLevel' => $this->canApplyToNextLevel($student),
             'openIntakeIds' => $openIntakes->pluck('id')->values()->all(),
             'openIntakeNames' => $openIntakes->pluck('name')->values()->all(),
             'hasReapplyAcknowledgement' => $openIntakes->contains(
@@ -335,6 +355,20 @@ class ReturningStudentContextService
         ];
 
         $student->update(['meta_data' => $meta]);
+    }
+
+    public function canApplyToNextLevel(Student $student): bool
+    {
+        $latestEnrolment = $student->enrolments()
+            ->with(['studentEnrolmentStatus', 'departmentLevel.level', 'studentApplication.departmentLevel.level'])
+            ->latest('id')
+            ->first();
+
+        if (! $latestEnrolment instanceof StudentEnrolment) {
+            return false;
+        }
+
+        return $this->progression->canApplyToNextLevel($latestEnrolment);
     }
 
     private function hasActiveEnrolment(Student $student): bool

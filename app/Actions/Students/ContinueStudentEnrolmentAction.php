@@ -7,11 +7,11 @@ namespace App\Actions\Students;
 use App\Enums\Shared\ClassListTypeEnum;
 use App\Enums\Shared\WorkflowStepEnum;
 use App\Models\Enrolments\ClassList;
-use App\Models\Institution\DepartmentApplicationStep;
 use App\Models\Shared\WorkflowStep;
 use App\Models\Students\StudentApplication;
 use App\Models\Students\StudentEnrolment;
 use App\Services\Students\ResolveStudentEnrolmentAttributesService;
+use App\Services\Students\StudentEnrolmentProgressionService;
 
 class ContinueStudentEnrolmentAction
 {
@@ -45,13 +45,8 @@ class ContinueStudentEnrolmentAction
             ->first();
 
         if ($enrolledStep !== null) {
-            $departmentStep = DepartmentApplicationStep::query()
-                ->where('institution_department_id', $studentApplication->institution_department_id)
-                ->where('workflow_step_id', $enrolledStep->id)
-                ->first();
-
             $studentApplication->update([
-                'department_application_step_id' => $departmentStep?->id,
+                'workflow_step_id' => $enrolledStep->id,
             ]);
         }
 
@@ -60,7 +55,7 @@ class ContinueStudentEnrolmentAction
             (int) $studentApplication->id,
         );
 
-        return StudentEnrolment::query()->updateOrCreate(
+        $enrolment = StudentEnrolment::query()->updateOrCreate(
             [
                 'student_id' => $studentApplication->student_id,
                 'student_application_id' => $studentApplication->id,
@@ -77,5 +72,9 @@ class ContinueStudentEnrolmentAction
                 'mode_of_study_id' => $studentApplication->mode_of_study_id,
             ],
         );
+
+        app(StudentEnrolmentProgressionService::class)->pinSyllabusFromMatchingClassConfig($enrolment);
+
+        return $enrolment;
     }
 }

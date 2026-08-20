@@ -7,13 +7,13 @@ import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
 import { IconName } from '@/enums/icons';
 import { cn } from '@/lib/utils';
-import { DepartmentApplicationStep } from '@/types/department-meta-data';
+import { WorkflowStep } from '@/types/settings';
 import { Enrolment } from '@/types/enrolments';
 import { computed } from 'vue';
 
 interface Props {
     enrolment: Enrolment;
-    step: DepartmentApplicationStep;
+    step: WorkflowStep;
     type: 'registration' | 'tuition';
 }
 const props = defineProps<Props>();

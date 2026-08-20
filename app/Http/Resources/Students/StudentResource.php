@@ -49,7 +49,7 @@ class StudentResource extends JsonResource
             'latestApplication.departmentLevel.level',
             'latestApplication.departmentCourse.course',
             'latestApplication.modeOfStudy',
-            'latestApplication.departmentWorkflowStep.workflowStep',
+            'latestApplication.workflowStep',
             'latestApplication.intakePeriod',
         ]);
 
@@ -226,7 +226,7 @@ class StudentResource extends JsonResource
                 'departmentLevel.level',
                 'departmentCourse.course',
                 'modeOfStudy',
-                'departmentWorkflowStep.workflowStep',
+                'workflowStep',
                 'intakePeriod',
             ]);
 
@@ -236,7 +236,7 @@ class StudentResource extends JsonResource
                 'course' => $application->departmentCourse?->course?->name,
                 'modeOfStudy' => $application->modeOfStudy?->name,
                 'enrolmentStatus' => null,
-                'applicationStatus' => $application->departmentWorkflowStep?->workflowStep?->name,
+                'applicationStatus' => $application->workflowStep?->name,
                 'intakePeriod' => $application->intakePeriod?->name,
                 'applicationTrackingNumber' => $application->application_tracking_number,
                 'profileContext' => 'applicant',

@@ -102,8 +102,8 @@ class StudentApplicationPolicy
 
     private function isAcceptedApplication(StudentApplication $studentApplication): bool
     {
-        $studentApplication->loadMissing('departmentWorkflowStep.workflowStep');
+        $studentApplication->loadMissing('workflowStep');
 
-        return $studentApplication->departmentWorkflowStep?->workflowStep?->name === 'Accepted';
+        return $studentApplication->workflowStep?->name === 'Accepted';
     }
 }

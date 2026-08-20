@@ -12,9 +12,9 @@ import { trans, trans_choice } from 'laravel-vue-i18n';
 import { ref } from 'vue';
 
 export const useInstitutionDepartments = () => {
-    const { moreActionButton, onDelete, onForceDelete, onRestore, onView, textLink, textEditLink } = useDataTables();
-    const createInstitutionDepartmentColumns = () => {
-        return [
+    const { moreActionButton, onDelete, onForceDelete, onRestore, onView, textLink, textEditLink, checkStatusIcon } = useDataTables();
+    const createInstitutionDepartmentColumns = (isAcademic = false) => {
+        const columns: any[] = [
             {
                 header: trans_choice('trans.department', 1),
                 accessorKey: 'department',
@@ -37,26 +37,40 @@ export const useInstitutionDepartments = () => {
                     return row.original?.attributes?.division ?? '—';
                 },
             },
-            {
-                header: trans_choice('trans.action', 2),
-                accessorKey: 'actions',
-                enableSorting: false,
-                meta: { align: 'right' },
-                cell: ({ row }: { row: { original: InstitutionDepartment } }) => {
-                    const id = row.original.id?.toString() ?? '';
-                    return moreActionButton(!!row.original?.attributes?.deletedAt, [
-                        {
-                            key: 'view',
-                            action: () => viewDepartment(id),
-                        },
-                        {
-                            key: 'edit',
-                            action: () => openDepartmentDivisionModal(row.original),
-                        },
-                    ]);
-                },
-            },
         ];
+
+        if (isAcademic) {
+            columns.push({
+                header: trans('trans.has_apprentice_courses'),
+                accessorKey: 'hasApprenticeCourses',
+                meta: { align: 'center' },
+                cell: ({ row }: { row: { original: InstitutionDepartment } }) => {
+                    return checkStatusIcon(row.original.attributes?.hasApprenticeCourses);
+                },
+            });
+        }
+
+        columns.push({
+            header: trans_choice('trans.action', 2),
+            accessorKey: 'actions',
+            enableSorting: false,
+            meta: { align: 'right' },
+            cell: ({ row }: { row: { original: InstitutionDepartment } }) => {
+                const id = row.original.id?.toString() ?? '';
+                return moreActionButton(!!row.original?.attributes?.deletedAt, [
+                    {
+                        key: 'view',
+                        action: () => viewDepartment(id),
+                    },
+                    {
+                        key: 'edit',
+                        action: () => openDepartmentDivisionModal(row.original),
+                    },
+                ]);
+            },
+        });
+
+        return columns;
     };
 
     const openDepartmentDivisionModal = (department: InstitutionDepartment) => {

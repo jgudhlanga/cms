@@ -15,7 +15,8 @@ import GeneralEnrolments from '@/pages/institution/enrolments/partials/GeneralEn
 import OLevelClassList from '@/pages/institution/enrolments/partials/OLevelClassList.vue';
 import ScoringFormula from '@/pages/institution/enrolments/partials/ScoringFormula.vue';
 import { AuthObject } from '@/types/data-pagination';
-import { DepartmentApplicationStep, DepartmentLevel } from '@/types/department-meta-data';
+import { DepartmentLevel } from '@/types/department-meta-data';
+import { WorkflowStep } from '@/types/settings';
 import { ClassListParams, EnrolmentGroup, EnrolmentGroupResponse } from '@/types/enrolments';
 import { InstitutionDepartment, IntakePeriod, ModeOfStudy } from '@/types/institution';
 import { Link } from '@/types/ui';
@@ -27,7 +28,7 @@ interface Props {
     department: InstitutionDepartment;
     level: DepartmentLevel;
     course: object;
-    workflowSteps: DepartmentApplicationStep[];
+    workflowSteps: WorkflowStep[];
     intakePeriod: IntakePeriod;
     modeOfStudy: ModeOfStudy;
     auth: AuthObject;

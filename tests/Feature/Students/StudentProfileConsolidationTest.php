@@ -5,8 +5,8 @@ use App\Models\AcademicCalendars\AcademicCalendar;
 use App\Models\AcademicCalendars\Semester;
 use App\Models\Institution\DepartmentCourse;
 use App\Models\Institution\DepartmentLevel;
-use App\Models\Institution\IntakePeriod;
 use App\Models\Institution\InstitutionDepartment;
+use App\Models\Institution\IntakePeriod;
 use App\Models\Institution\ModeOfStudy;
 use App\Models\Students\StudentApplication;
 use App\Models\Students\StudentEnrolment;
@@ -323,10 +323,10 @@ test('users edit redirects student users to student show page', function () {
 function createReviewStudentApplicationForConsolidation(string $studentNumber): StudentApplication
 {
     $program = createVerifiedStudentApplication($studentNumber);
-    $reviewStep = resolveDepartmentApplicationStep($program, WorkflowStepEnum::REVIEW);
+    $reviewStep = resolveWorkflowStep(WorkflowStepEnum::REVIEW);
 
     $program->update([
-        'department_application_step_id' => $reviewStep->id,
+        'workflow_step_id' => $reviewStep->id,
     ]);
 
     return $program->fresh();

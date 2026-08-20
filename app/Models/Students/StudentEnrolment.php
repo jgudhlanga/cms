@@ -3,6 +3,7 @@
 namespace App\Models\Students;
 
 use App\Models\AcademicCalendars\AcademicCalendar;
+use App\Models\AcademicCalendars\AcademicCalendarStudentEnrolment;
 use App\Models\AcademicCalendars\Semester;
 use App\Models\Institution\DepartmentCourse;
 use App\Models\Institution\DepartmentLevel;
@@ -13,11 +14,10 @@ use App\Traits\Paginatable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
-use App\Models\AcademicCalendars\AcademicCalendarStudentEnrolment;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
  * @mixin Builder
@@ -38,6 +38,11 @@ class StudentEnrolment extends Model
         'academic_calendar_id',
         'mode_of_study_id',
         'student_enrolment_status_id',
+        'course_syllabus_ids',
+    ];
+
+    protected $casts = [
+        'course_syllabus_ids' => 'array',
     ];
 
     public function student(): BelongsTo
@@ -50,7 +55,7 @@ class StudentEnrolment extends Model
         return $this->belongsTo(StudentApplication::class, 'student_application_id');
     }
 
-    public function institutionDepartment(): BelongsTo 
+    public function institutionDepartment(): BelongsTo
     {
         return $this->belongsTo(InstitutionDepartment::class, 'institution_department_id');
     }

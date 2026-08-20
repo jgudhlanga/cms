@@ -25,8 +25,13 @@ const emit = defineEmits<{
     activate: [];
 }>();
 
-const statusLabel = computed(() => courseWorkModuleStatusLabel(props.module.statusKey));
-const statusBadgeClass = computed(() => courseWorkModuleStatusBadgeClass(props.module.statusKey));
+const hasExamGrade = computed(() => !!props.module.examGrade);
+const statusLabel = computed(() => hasExamGrade.value ? props.module.examGrade! : courseWorkModuleStatusLabel(props.module.statusKey));
+const statusBadgeClass = computed(() =>
+    hasExamGrade.value
+        ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+        : courseWorkModuleStatusBadgeClass(props.module.statusKey),
+);
 const dotAccent = computed(() => courseWorkModuleDotAccent(props.accentIndex));
 </script>
 
@@ -49,6 +54,14 @@ const dotAccent = computed(() => courseWorkModuleDotAccent(props.accentIndex));
                 class="mt-0.5 font-mono text-xs text-muted-foreground"
             >
                 {{ module.code }}
+                <template v-if="module.examGrade">
+                    <span class="mx-1">·</span>
+                    <span class="font-semibold text-emerald-600 dark:text-emerald-400">{{ module.examGrade }}</span>
+                </template>
+                <template v-if="module.examSession">
+                    <span class="mx-1">·</span>
+                    <span>{{ module.examSession }}</span>
+                </template>
             </p>
         </div>
         <span
