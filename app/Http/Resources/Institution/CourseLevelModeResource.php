@@ -9,6 +9,11 @@ class CourseLevelModeResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
+        $this->resource->loadMissing([
+            'departmentCourse.course',
+            'departmentLevel.level',
+        ]);
+
         return [
             'type' => 'course-level-mode',
             'id' => $this->id,
@@ -24,4 +29,3 @@ class CourseLevelModeResource extends JsonResource
         ];
     }
 }
-
